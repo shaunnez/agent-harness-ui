@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { readdir } from "node:fs/promises";
+import { mkdir, readdir } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 
@@ -95,6 +96,7 @@ export function parseCodexEvent(line) {
       tone: succeeded ? "success" : "warning",
       title: succeeded ? "Repository command completed" : "Repository command returned a warning",
       detail: formatCommand(event.item.command),
+      commandFailed: !succeeded,
     };
   }
 
@@ -151,6 +153,11 @@ export async function runCodex({
   const childEnv = { ...process.env };
   delete childEnv.OPENAI_API_KEY;
   delete childEnv.CODEX_API_KEY;
+  const runtimeTemp = process.env.AGENT_HARNESS_TEMP ?? (process.platform === "win32" ? "C:\\tmp\\agent-harness" : path.join(os.tmpdir(), "agent-harness"));
+  await mkdir(runtimeTemp, { recursive: true });
+  childEnv.TEMP = runtimeTemp;
+  childEnv.TMP = runtimeTemp;
+  childEnv.TMPDIR = runtimeTemp;
 
   const result = await runProcess(binary, args, {
     timeoutMs,

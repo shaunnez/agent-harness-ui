@@ -169,8 +169,9 @@ export class TaskOrchestrator {
         draft.activeRunKind = null;
         const candidate = draft.candidates?.at(-1);
         if (candidate) {
-          const candidateStatus = {
-            repair: "repair_required",
+        const candidateStatus = {
+          implementation: "failed",
+          repair: "repair_required",
             review: "ready_for_review",
             test: "ready_for_test",
             "final-review": "ready_for_final_review",
@@ -257,7 +258,7 @@ export class TaskOrchestrator {
     const candidate = currentCandidate(task);
     await this.#worktrees.verifyCandidate(candidate);
     const result = await this.#executeAgent(task, stageId, signal, candidate.worktreePath, "read-only", candidate);
-    const verdict = parseVerdict(result.finalText);
+    const verdict = evaluationVerdict(stageId, result);
     await this.#retainAgentResult(id, stageId, result, {
       replace: false,
       name: `${stageId}-${candidate.id.toLowerCase()}-r${candidate.revisionNumber}.md`,
@@ -399,6 +400,11 @@ function currentCandidate(task) {
   const candidate = task.candidates?.at(-1);
   if (!candidate) throw new Error("This task does not have an integration candidate.");
   return candidate;
+}
+
+export function evaluationVerdict(stageId, result) {
+  if (stageId === "test" && result.runtimeEvents?.some((event) => event.commandFailed)) return "REPAIR";
+  return parseVerdict(result.finalText);
 }
 
 function parseVerdict(text) {

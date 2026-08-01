@@ -349,12 +349,14 @@ function RuntimeCommandBar({
     task.status === "blocked" ||
     (currentAttempts >= task.stageRunLimit && (task.status === "failed" || task.status === "cancelled"));
   const failed = !blocked && (task.status === "failed" || task.status === "cancelled");
+  const repairRequired = task.status === "repair-required";
   const ready =
     task.status.startsWith("awaiting-") ||
     task.status.startsWith("ready-for-") ||
     task.status === "completed";
   const next = nextAction(task);
-  const Icon = running ? CircleNotch : failed || blocked ? WarningCircle : CheckCircle;
+  const actionable = ready || failed || repairRequired;
+  const Icon = running ? CircleNotch : failed || blocked || repairRequired ? WarningCircle : CheckCircle;
   const invoke = async () => {
     if (!next?.action) return;
     setPending(true);
@@ -369,7 +371,7 @@ function RuntimeCommandBar({
   };
   return (
     <section
-      className={`stage-command-bar stage-command-bar--${running ? "active" : failed || blocked ? "blocked" : ready ? "ready" : "waiting"}`}
+      className={`stage-command-bar stage-command-bar--${running ? "active" : failed || blocked || repairRequired ? "blocked" : ready ? "ready" : "waiting"}`}
     >
       <Icon className={running ? "spin" : ""} size={18} weight="fill" />
       <span className="stage-command-bar__copy">
@@ -378,33 +380,39 @@ function RuntimeCommandBar({
             ? "Agent active"
             : blocked
               ? "Blocked"
-              : failed
-                ? "Action required"
-                : ready
-                  ? "Next step"
-                  : "Ready"}
+              : repairRequired
+                ? "Repair required"
+                : failed
+                  ? "Action required"
+                  : ready
+                    ? "Next step"
+                    : "Ready"}
         </small>
         <strong>
           {running
             ? `${workflowStages.find((stage) => stage.id === task.currentStage)?.label} is running`
             : blocked
               ? "Repair allowance exhausted"
-              : failed
-                ? "Retry the failed stage"
-                : ready
-                  ? (next?.title ?? "Workflow gate ready")
-                  : "Start the read-only investigation"}
+              : repairRequired
+                ? (next?.title ?? "Candidate repair required")
+                : failed
+                  ? "Retry the failed stage"
+                  : ready
+                    ? (next?.title ?? "Workflow gate ready")
+                    : "Start the read-only investigation"}
         </strong>
         <span>
           {running
             ? "Codex is inspecting the selected repository in a read-only sandbox."
             : blocked
               ? "Review the retained activity, revise the task, or grant a human override in a future slice."
-              : failed
-                ? task.error
-                : ready
-                  ? (next?.detail ?? "The retained workflow evidence is ready for review.")
-                  : "Four focused agents will produce durable Markdown handoffs."}
+              : repairRequired
+                ? (next?.detail ?? "The retained gate evidence identifies the required repair.")
+                : failed
+                  ? task.error
+                  : ready
+                    ? (next?.detail ?? "The retained workflow evidence is ready for review.")
+                    : "Four focused agents will produce durable Markdown handoffs."}
         </span>
       </span>
       <div className="stage-command-bar__actions">
@@ -421,7 +429,7 @@ function RuntimeCommandBar({
             {failed ? "Retry stage" : "Run investigation"}
           </Button>
         )}
-        {(ready || failed) && next?.action ? (
+        {actionable && next?.action ? (
           <Button tone="primary" compact icon={Play} disabled={pending} onClick={() => void invoke()}>
             {pending ? "Starting..." : next.label}
           </Button>

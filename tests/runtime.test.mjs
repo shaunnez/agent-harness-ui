@@ -11,6 +11,12 @@ test("parses Codex final messages and usage", () => {
     parseCodexEvent(JSON.stringify({ type: "item.completed", item: { type: "agent_message", text: "Ready" } })),
     { type: "message", text: "Ready" },
   );
+  assert.equal(
+    parseCodexEvent(
+      JSON.stringify({ type: "item.completed", item: { type: "command_execution", command: "npm test", exit_code: 1 } }),
+    ).commandFailed,
+    true,
+  );
   assert.deepEqual(
     parseCodexEvent(
       JSON.stringify({ type: "turn.completed", usage: { input_tokens: 10, cached_input_tokens: 4, output_tokens: 5 } }),

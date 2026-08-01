@@ -52,7 +52,7 @@ const STAGE_PROMPTS = {
     label: "Focused test",
     artifactName: "test-evidence.md",
     instruction:
-      "Verify the exact reviewed candidate. Run only focused, non-interactive checks already defined by the repository; do not install dependencies or run end-to-end suites. Record every command and result. Put PASS or REPAIR on the first line.",
+      "Verify the exact reviewed candidate. Run only focused, non-interactive checks already defined by the repository; do not install dependencies or run end-to-end suites. Record every command and result. Any verification command that exits nonzero or cannot run requires REPAIR, even if the cause appears environmental. Put PASS or REPAIR on the first line.",
     headings: ["Verdict", "Candidate tested", "Checks", "Failures", "Coverage notes"],
   },
   "final-review": {

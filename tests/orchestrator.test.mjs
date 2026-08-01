@@ -3,8 +3,19 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { TaskOrchestrator } from "../server/orchestrator.mjs";
+import { evaluationVerdict, TaskOrchestrator } from "../server/orchestrator.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
+
+test("fails a test verdict closed when any verification command fails", () => {
+  assert.equal(
+    evaluationVerdict("test", {
+      finalText: "PASS\n\n## Verdict\n\nPASS",
+      runtimeEvents: [{ commandFailed: true }],
+    }),
+    "REPAIR",
+  );
+  assert.equal(evaluationVerdict("dev-review", { finalText: "PASS", runtimeEvents: [{ commandFailed: true }] }), "PASS");
+});
 
 test("runs the investigation frontier and retains each stage handoff", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-orchestrator-"));
