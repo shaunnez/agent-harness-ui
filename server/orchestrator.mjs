@@ -190,6 +190,7 @@ export class TaskOrchestrator {
       if (signal.aborted) throw new Error("Codex run cancelled.");
       task = await this.#store.get(id);
       const result = await this.#executeAgent(task, stageId, signal, task.repositoryPath, "read-only");
+      throwIfAborted(signal);
       await this.#retainAgentResult(id, stageId, result, { replace: true });
     }
     await this.#store.update(id, (draft) => {
@@ -203,6 +204,7 @@ export class TaskOrchestrator {
   async #runPlanning(id, signal) {
     const task = await this.#store.get(id);
     const result = await this.#executeAgent(task, "plan", signal, task.repositoryPath, "read-only");
+    throwIfAborted(signal);
     await this.#retainAgentResult(id, "plan", result, { replace: true });
     await this.#store.update(id, (draft) => {
       draft.status = "awaiting-plan-approval";
@@ -224,6 +226,7 @@ export class TaskOrchestrator {
     });
     task = await this.#store.get(id);
     const result = await this.#executeAgent(task, "implement", signal, candidate.worktreePath, "workspace-write", candidate);
+    throwIfAborted(signal);
     let committed;
     try {
       committed = await this.#worktrees.commit(candidate, `agent-harness(${task.id}): implement approved plan`);
@@ -258,6 +261,7 @@ export class TaskOrchestrator {
     const candidate = currentCandidate(task);
     await this.#worktrees.verifyCandidate(candidate);
     const result = await this.#executeAgent(task, stageId, signal, candidate.worktreePath, "read-only", candidate);
+    throwIfAborted(signal);
     const verdict = evaluationVerdict(stageId, result);
     await this.#retainAgentResult(id, stageId, result, {
       replace: false,
@@ -303,6 +307,7 @@ export class TaskOrchestrator {
     await this.#worktrees.verifyCandidate(candidate);
     const nextRevision = candidate.revisionNumber + 1;
     const result = await this.#executeAgent(task, "implement", signal, candidate.worktreePath, "workspace-write", candidate);
+    throwIfAborted(signal);
     const committed = await this.#worktrees.commit(
       candidate,
       `agent-harness(${task.id}): repair ${candidate.id} revision ${nextRevision}`,
@@ -394,6 +399,10 @@ function summarizeAgentReport(text) {
     .trim()
     .slice(0, 500);
   return summary ? `Agent report: ${summary}` : "";
+}
+
+function throwIfAborted(signal) {
+  if (signal.aborted) throw new Error("Codex run cancelled.");
 }
 
 function currentCandidate(task) {

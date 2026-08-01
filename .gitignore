@@ -3,6 +3,7 @@ dist/
 output/
 .playwright-cli/
 .tmp/
+.pnpm-store/
 .data/
 .env
 .env.*

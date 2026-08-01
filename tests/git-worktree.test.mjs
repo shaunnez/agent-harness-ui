@@ -41,6 +41,11 @@ test("creates, commits, and fast-forward merges an isolated candidate", async ()
     await mkdir(path.join(generatedCandidate.worktreePath, ".tmp", "npm-cache"), { recursive: true });
     await writeFile(path.join(generatedCandidate.worktreePath, ".tmp", "npm-cache", "state.json"), "{}\n", "utf8");
     await assert.rejects(() => manager.commit(generatedCandidate, "generated"), /generated tool state/);
+
+    const pnpmCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C4");
+    await mkdir(path.join(pnpmCandidate.worktreePath, ".pnpm-store", "v11"), { recursive: true });
+    await writeFile(path.join(pnpmCandidate.worktreePath, ".pnpm-store", "v11", "state.json"), "{}\n", "utf8");
+    await assert.rejects(() => manager.commit(pnpmCandidate, "pnpm cache"), /generated tool state/);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }

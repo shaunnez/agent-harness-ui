@@ -130,6 +130,7 @@ function isGeneratedPath(file) {
   const normalized = file.replaceAll("\\", "/").toLowerCase();
   return [
     ".tmp/",
+    ".pnpm-store/",
     ".playwright-cli/",
     ".data/",
     ".cache/",
