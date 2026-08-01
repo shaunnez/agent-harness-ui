@@ -3,6 +3,7 @@ import { createServer } from "node:http";
 import path from "node:path";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
+const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
 
 function send(response, status, value) {
   response.writeHead(status, JSON_HEADERS);
@@ -60,11 +61,12 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
       if (request.method === "POST" && url.pathname === "/api/tasks") {
         const input = await readJson(request);
         if (!input.title?.trim() || !input.description?.trim()) throw new Error("Title and description are required.");
+        if (!VALID_WORKFLOWS.has(input.workflow)) throw new Error("invalid workflow");
         const task = await store.create({
           title: input.title.trim().slice(0, 300),
           description: input.description.trim().slice(0, 20_000),
           repositoryPath: await validateRepository(input.repositoryPath),
-          workflow: input.workflow === "investigate" ? "investigate" : "implement",
+          workflow: input.workflow,
           priority: ["low", "medium", "high"].includes(input.priority) ? input.priority : "medium",
         });
         send(response, 201, { task });
