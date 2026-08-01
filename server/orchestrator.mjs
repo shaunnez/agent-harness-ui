@@ -223,7 +223,20 @@ export class TaskOrchestrator {
     });
     task = await this.#store.get(id);
     const result = await this.#executeAgent(task, "implement", signal, candidate.worktreePath, "workspace-write", candidate);
-    const committed = await this.#worktrees.commit(candidate, `agent-harness(${task.id}): implement approved plan`);
+    let committed;
+    try {
+      committed = await this.#worktrees.commit(candidate, `agent-harness(${task.id}): implement approved plan`);
+    } catch (error) {
+      await this.#retainAgentResult(id, "implement", result, {
+        complete: false,
+        name: `candidate-${candidate.id.toLowerCase()}-failed-attempt.md`,
+        candidateId: candidate.id,
+        candidateRevision: 1,
+        artifactTone: "warning",
+        artifactTitle: "Failed implementation attempt retained",
+      });
+      throw new Error(`${error.message} ${summarizeAgentReport(result.finalText)}`.trim());
+    }
     const content = `${result.finalText}\n\n## Harness candidate evidence\n\n- Candidate: ${candidate.id} revision 1\n- Base: ${candidate.baseRevision}\n- Head: ${committed.headRevision}\n- Branch: ${candidate.branch}\n- Changed files: ${committed.files.length}\n\n\`\`\`text\n${committed.summary || "No diff stat returned."}\n\`\`\`\n\n<details><summary>Patch</summary>\n\n\`\`\`diff\n${committed.diff}\n\`\`\`\n\n</details>`;
     await this.#retainAgentResult(id, "implement", { ...result, finalText: content }, { replace: false, name: `candidate-${candidate.id.toLowerCase()}-r1.md`, candidateId, candidateRevision: 1 });
     await this.#store.update(id, (draft) => {
@@ -361,9 +374,25 @@ export class TaskOrchestrator {
       for (const key of ["inputTokens", "cachedInputTokens", "outputTokens", "totalTokens"]) {
         draft.usage[key] += result.usage[key] ?? 0;
       }
-      draft.events.push(activity(stageId, `${metadata.label} artifact ready`, options.name ?? metadata.artifactName, "success", "artifact"));
+      draft.events.push(
+        activity(
+          stageId,
+          options.artifactTitle ?? `${metadata.label} artifact ready`,
+          options.name ?? metadata.artifactName,
+          options.artifactTone ?? "success",
+          "artifact",
+        ),
+      );
     });
   }
+}
+
+function summarizeAgentReport(text) {
+  const summary = String(text ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 500);
+  return summary ? `Agent report: ${summary}` : "";
 }
 
 function currentCandidate(task) {

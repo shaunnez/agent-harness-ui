@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { parseCodexEvent } from "../server/codex-runtime.mjs";
+import { parseCodexEvent, selectCodexCandidate } from "../server/codex-runtime.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 
 test("parses Codex final messages and usage", () => {
@@ -17,6 +17,14 @@ test("parses Codex final messages and usage", () => {
     ),
     { type: "usage", usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 } },
   );
+});
+
+test("prefers a Windows Codex runtime with its sandbox helper", () => {
+  const candidates = ["C:\\standalone\\codex.exe", "C:\\desktop\\codex.exe"];
+  const selected = selectCodexCandidate(candidates, (candidate) =>
+    candidate.endsWith("desktop\\codex-windows-sandbox-setup.exe"),
+  );
+  assert.equal(selected, process.platform === "win32" ? candidates[1] : candidates[0]);
 });
 
 test("persists tasks and recovers interrupted runs", async () => {

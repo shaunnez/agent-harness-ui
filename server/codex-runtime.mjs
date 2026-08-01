@@ -1,4 +1,7 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { readdir } from "node:fs/promises";
+import path from "node:path";
 import process from "node:process";
 
 const STDOUT_LIMIT = 2 * 1024 * 1024;
@@ -11,12 +14,35 @@ export async function locateCodex() {
   if (process.env.CODEX_BIN) return process.env.CODEX_BIN;
   const command = process.platform === "win32" ? "where.exe" : "which";
   const result = await runProcess(command, ["codex"], { timeoutMs: 5_000 });
-  const candidates = result.stdout
+  const pathCandidates = result.stdout
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  const executable = candidates.find((candidate) => candidate.toLowerCase().endsWith(".exe"));
-  return executable ?? candidates[0] ?? null;
+  const candidates = [...(await desktopCodexCandidates()), ...pathCandidates];
+  return selectCodexCandidate(candidates);
+}
+
+export function selectCodexCandidate(candidates, fileExists = existsSync) {
+  const executableCandidates = candidates.filter((candidate) =>
+    process.platform === "win32" ? candidate.toLowerCase().endsWith(".exe") : true,
+  );
+  if (process.platform === "win32") {
+    const sandboxReady = executableCandidates.find((candidate) =>
+      fileExists(path.join(path.dirname(candidate), "codex-windows-sandbox-setup.exe")),
+    );
+    if (sandboxReady) return sandboxReady;
+  }
+  return executableCandidates[0] ?? candidates[0] ?? null;
+}
+
+async function desktopCodexCandidates() {
+  if (process.platform !== "win32" || !process.env.LOCALAPPDATA) return [];
+  const binRoot = path.join(process.env.LOCALAPPDATA, "OpenAI", "Codex", "bin");
+  const entries = await readdir(binRoot, { withFileTypes: true }).catch(() => []);
+  return entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(binRoot, entry.name, "codex.exe"))
+    .filter((candidate) => existsSync(candidate));
 }
 
 export async function getCodexStatus() {
