@@ -10,14 +10,25 @@ async function createServer() {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-"));
   const store = new JsonTaskStore(path.join(directory, "tasks.json"));
   await store.init();
+  let startedId = null;
+  let recordedDecision = null;
+  let approvedSpecification = null;
   const orchestrator = {
     status: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
-    start: () => false,
+    start(id) {
+      startedId = id;
+      return true;
+    },
     cancel: () => false,
-    async recordDecision() {},
-    async approveSpecification() {
+    async recordDecision(id, input) {
+      recordedDecision = { id, ...input };
+    },
+    async approveSpecification(id, note) {
+      approvedSpecification = { id, note };
       return { started: false, completed: true };
     },
+    async approvePlan() {},
+    async approveMerge() {},
   };
   const server = createApiServer({ store, orchestrator, suggestedRepository: directory });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -27,6 +38,9 @@ async function createServer() {
     origin: `http://127.0.0.1:${address.port}`,
     server,
     store,
+    startedIdRef: () => startedId,
+    recordedDecisionRef: () => recordedDecision,
+    approvedSpecificationRef: () => approvedSpecification,
   };
 }
 
@@ -36,26 +50,63 @@ async function cleanup(server, directory) {
 }
 
 async function createTask(origin, payload) {
-  const response = await fetch(`${origin}/api/tasks`, {
+  return fetch(`${origin}/api/tasks`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload),
   });
-  return response;
 }
 
-test("creates a task with workflow investigate", async () => {
-  const { directory, origin, server } = await createServer();
+test("creates, lists, and starts a local task", async () => {
+  const { directory, origin, server, store, startedIdRef, recordedDecisionRef, approvedSpecificationRef } =
+    await createServer();
   try {
-    const response = await createTask(origin, {
-      title: "Investigate task",
+    const createResponse = await createTask(origin, {
+      title: "Real task",
       description: "Inspect the local repository.",
       repositoryPath: directory,
       workflow: "investigate",
+      priority: "high",
     });
-    assert.equal(response.status, 201);
-    const { task } = await response.json();
+    assert.equal(createResponse.status, 201);
+    const { task } = await createResponse.json();
+    assert.equal(task.id, "AH-001");
     assert.equal(task.workflow, "investigate");
+
+    const prematureReview = await fetch(`${origin}/api/tasks/${task.id}/review`, { method: "POST" });
+    assert.equal(prematureReview.status, 409);
+
+    const listResponse = await fetch(`${origin}/api/tasks`);
+    assert.equal(listResponse.status, 200);
+    const list = await listResponse.json();
+    assert.equal(list.tasks.length, 1);
+
+    const decisionResponse = await fetch(`${origin}/api/tasks/${task.id}/decisions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ question: "Compatibility", answer: "Preserve it." }),
+    });
+    assert.equal(decisionResponse.status, 201);
+    assert.deepEqual(recordedDecisionRef(), {
+      id: task.id,
+      question: "Compatibility",
+      answer: "Preserve it.",
+    });
+
+    const runResponse = await fetch(`${origin}/api/tasks/${task.id}/run`, { method: "POST" });
+    assert.equal(runResponse.status, 202);
+    assert.equal(startedIdRef(), task.id);
+
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-spec-approval";
+    });
+    const approvalResponse = await fetch(`${origin}/api/tasks/${task.id}/approve-spec`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ note: "Approved for handoff." }),
+    });
+    assert.equal(approvalResponse.status, 200);
+    assert.deepEqual(approvedSpecificationRef(), { id: task.id, note: "Approved for handoff." });
   } finally {
     await cleanup(server, directory);
   }
@@ -78,49 +129,24 @@ test("creates a task with workflow implement", async () => {
   }
 });
 
-test("rejects invalid workflow values", async () => {
-  const { directory, origin, server } = await createServer();
-  try {
-    const response = await createTask(origin, {
-      title: "Invalid workflow task",
-      description: "This should fail.",
-      repositoryPath: directory,
-      workflow: "review",
-    });
-    assert.equal(response.status, 400);
-    await assert.deepEqual(await response.json(), { error: "invalid workflow" });
-  } finally {
-    await cleanup(server, directory);
-  }
-});
-
-test("rejects missing workflow values", async () => {
-  const { directory, origin, server } = await createServer();
-  try {
-    const response = await createTask(origin, {
-      title: "Missing workflow task",
-      description: "This should fail.",
-      repositoryPath: directory,
-    });
-    assert.equal(response.status, 400);
-    await assert.deepEqual(await response.json(), { error: "invalid workflow" });
-  } finally {
-    await cleanup(server, directory);
-  }
-});
-
-test("rejects empty workflow values", async () => {
-  const { directory, origin, server } = await createServer();
-  try {
-    const response = await createTask(origin, {
-      title: "Empty workflow task",
-      description: "This should fail.",
-      repositoryPath: directory,
-      workflow: "",
-    });
-    assert.equal(response.status, 400);
-    await assert.deepEqual(await response.json(), { error: "invalid workflow" });
-  } finally {
-    await cleanup(server, directory);
-  }
-});
+for (const [name, payload] of [
+  ["rejects invalid workflow values", { workflow: "review" }],
+  ["rejects missing workflow values", {}],
+  ["rejects empty workflow values", { workflow: "" }],
+]) {
+  test(name, async () => {
+    const { directory, origin, server } = await createServer();
+    try {
+      const response = await createTask(origin, {
+        title: "Invalid workflow task",
+        description: "This should fail.",
+        repositoryPath: directory,
+        ...payload,
+      });
+      assert.equal(response.status, 400);
+      assert.deepEqual(await response.json(), { error: "invalid workflow" });
+    } finally {
+      await cleanup(server, directory);
+    }
+  });
+}
