@@ -128,6 +128,7 @@ export async function runCodex({
   signal,
   timeoutMs = 240_000,
   sandbox = "read-only",
+  tempDirectory = null,
   model = DEFAULT_MODEL,
   reasoning = DEFAULT_REASONING,
   onEvent = () => {},
@@ -153,7 +154,10 @@ export async function runCodex({
   const childEnv = { ...process.env };
   delete childEnv.OPENAI_API_KEY;
   delete childEnv.CODEX_API_KEY;
-  const runtimeTemp = process.env.AGENT_HARNESS_TEMP ?? (process.platform === "win32" ? "C:\\tmp\\agent-harness" : path.join(os.tmpdir(), "agent-harness"));
+  const runtimeTemp =
+    tempDirectory ??
+    process.env.AGENT_HARNESS_TEMP ??
+    (process.platform === "win32" ? "C:\\tmp\\agent-harness" : path.join(os.tmpdir(), "agent-harness"));
   await mkdir(runtimeTemp, { recursive: true });
   childEnv.TEMP = runtimeTemp;
   childEnv.TMP = runtimeTemp;

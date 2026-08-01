@@ -262,6 +262,7 @@ export class TaskOrchestrator {
     await this.#worktrees.verifyCandidate(candidate);
     const result = await this.#executeAgent(task, stageId, signal, candidate.worktreePath, "read-only", candidate);
     throwIfAborted(signal);
+    if (stageId === "test") await this.#worktrees.verifyCandidate(candidate);
     const verdict = evaluationVerdict(stageId, result);
     await this.#retainAgentResult(id, stageId, result, {
       replace: false,
@@ -338,17 +339,23 @@ export class TaskOrchestrator {
 
   async #executeAgent(task, stageId, signal, cwd, sandbox, candidate = null) {
     const metadata = getStageMetadata(stageId);
+    const testRuntime = stageId === "test";
+    const effectiveSandbox = testRuntime ? "workspace-write" : sandbox;
     await this.#store.update(task.id, (draft) => {
       draft.currentStage = stageId;
-      draft.events.push(activity(stageId, `${metadata.label} agent started`, `${sandbox === "read-only" ? "Reading" : "Working in"} ${cwd}`, "info", "agent"));
+      const detail = testRuntime
+        ? `Verifying ${cwd}; source changes are checked before and after the run`
+        : `${sandbox === "read-only" ? "Reading" : "Working in"} ${cwd}`;
+      draft.events.push(activity(stageId, `${metadata.label} agent started`, detail, "info", "agent"));
     });
     const runtimeEvents = [];
     const result = await this.#runCodex({
       cwd,
       prompt: candidate ? buildExecutionPrompt(task, stageId, candidate) : buildStagePrompt(task, stageId),
       signal,
-      sandbox,
-      timeoutMs: sandbox === "workspace-write" ? 600_000 : 240_000,
+      sandbox: effectiveSandbox,
+      tempDirectory: testRuntime ? path.join(cwd, ".data", "runtime-temp") : undefined,
+      timeoutMs: effectiveSandbox === "workspace-write" ? 600_000 : 240_000,
       onEvent(event) {
         if (event.type === "activity") runtimeEvents.push(event);
       },

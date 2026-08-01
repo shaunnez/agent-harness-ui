@@ -72,6 +72,8 @@ test("advances an approved implementation task through a revision-bound candidat
     let merged = false;
     let commitCount = 0;
     let reviewCount = 0;
+    let verifyCount = 0;
+    const runtimeCalls = [];
     const worktreeManager = {
       async prepare(_task, candidateId) {
         return {
@@ -102,13 +104,16 @@ test("advances an approved implementation task through a revision-bound candidat
         merged = true;
       },
       async verifyCandidate() {
+        verifyCount += 1;
         return true;
       },
     };
     const orchestrator = new TaskOrchestrator(store, {
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       worktreeManager,
-      runCodex: async ({ prompt }) => {
+      runCodex: async (options) => {
+        const { prompt } = options;
+        runtimeCalls.push(options);
         let finalText = "## Outcome\n\nReady";
         if (/Development review/.test(prompt)) {
           reviewCount += 1;
@@ -152,6 +157,10 @@ test("advances an approved implementation task through a revision-bound candidat
     );
     assert.equal(approvalTask.decisions.length, 1);
     assert.equal(approvalTask.artifacts.length, 11);
+    const testCall = runtimeCalls.find((call) => /Focused test/.test(call.prompt));
+    assert.equal(testCall.sandbox, "workspace-write");
+    assert.equal(testCall.tempDirectory, path.join(directory, ".data", "runtime-temp"));
+    assert.equal(verifyCount, 6, "test must verify the candidate both before and after execution");
     await orchestrator.approveMerge(task.id);
     const complete = await store.get(task.id);
     assert.equal(complete.status, "completed");
