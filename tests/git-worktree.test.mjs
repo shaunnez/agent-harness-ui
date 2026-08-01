@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -36,6 +36,11 @@ test("creates, commits, and fast-forward merges an isolated candidate", async ()
     const unsafeCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C2");
     await writeFile(path.join(unsafeCandidate.worktreePath, ".env"), "SECRET=do-not-commit\n", "utf8");
     await assert.rejects(() => manager.commit(unsafeCandidate, "unsafe"), /potentially sensitive file/);
+
+    const generatedCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C3");
+    await mkdir(path.join(generatedCandidate.worktreePath, ".tmp", "npm-cache"), { recursive: true });
+    await writeFile(path.join(generatedCandidate.worktreePath, ".tmp", "npm-cache", "state.json"), "{}\n", "utf8");
+    await assert.rejects(() => manager.commit(generatedCandidate, "generated"), /generated tool state/);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }

@@ -2,8 +2,8 @@ node_modules/
 dist/
 output/
 .playwright-cli/
+.tmp/
 .data/
 .env
 .env.*
 *.log
-

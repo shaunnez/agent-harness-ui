@@ -38,7 +38,7 @@ const STAGE_PROMPTS = {
     label: "Implementation",
     artifactName: "implementation-candidate.md",
     instruction:
-      "Implement the approved specification and plan in this isolated Git worktree. Make only the scoped changes, follow repository conventions, and run focused checks when practical. Do not commit, push, merge, install dependencies, or contact external services; the harness owns Git integration.",
+      "Implement the approved specification and plan in this isolated Git worktree. Make only the scoped changes, follow repository conventions, and run focused checks when practical. Do not commit, push, merge, install dependencies, run browser/end-to-end UI QA, or contact external services; the harness owns Git integration and the operator owns browser QA. Never create or retain tool caches, browser state, test reports, or generated files in the candidate.",
     headings: ["Outcome", "Changes", "Verification", "Remaining risks"],
   },
   "dev-review": {

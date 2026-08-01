@@ -129,6 +129,38 @@ test("creates a task with workflow implement", async () => {
   }
 });
 
+test("grants one bounded repair attempt to a blocked candidate", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Repair candidate",
+      description: "Recover a blocked candidate without discarding its history.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "implement";
+      draft.attemptsByStage.implement = draft.stageRunLimit;
+      draft.candidates.push({ id: "C1", status: "repair_required" });
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200);
+    assert.deepEqual(await grantResponse.json(), { granted: true });
+
+    const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
+    assert.equal(updated.status, "failed");
+    assert.equal(updated.stageRunLimit, 4);
+    assert.equal(updated.attemptsByStage.implement, 3);
+    assert.equal(updated.candidates.at(-1).status, "repair_required");
+    assert.equal(updated.events.at(-1).title, "One repair attempt granted");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 for (const [name, payload] of [
   ["rejects invalid workflow values", { workflow: "review" }],
   ["rejects missing workflow values", {}],

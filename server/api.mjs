@@ -97,7 +97,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
       }
 
       const actionMatch = url.pathname.match(
-        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|plan|implement|repair|review|test|final-review|approve-merge)$/,
+        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|plan|implement|repair|review|test|final-review|approve-merge|grant-retry)$/,
       );
       if (request.method === "POST" && actionMatch) {
         const id = decodeURIComponent(actionMatch[1]);
@@ -129,6 +129,29 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
         if (action === "approve-merge") {
           await orchestrator.approveMerge(id, notes.note ?? "");
           send(response, 200, { merged: true });
+          return;
+        }
+        if (action === "grant-retry") {
+          const candidate = task.candidates?.at(-1);
+          if (task.status !== "blocked" || candidate?.status !== "repair_required") {
+            send(response, 409, { error: "A retry can only be granted to a blocked candidate awaiting repair." });
+            return;
+          }
+          await store.update(id, (draft) => {
+            draft.stageRunLimit += 1;
+            draft.status = "failed";
+            draft.error = null;
+            draft.events.push({
+              id: crypto.randomUUID(),
+              at: new Date().toISOString(),
+              category: "decision",
+              tone: "warning",
+              stage: draft.currentStage,
+              title: "One repair attempt granted",
+              detail: `Human override increased the stage allowance to ${draft.stageRunLimit}.`,
+            });
+          });
+          send(response, 200, { granted: true });
           return;
         }
 

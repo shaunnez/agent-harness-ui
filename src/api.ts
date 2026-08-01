@@ -62,7 +62,8 @@ export async function runTaskAction(
     | "review"
     | "test"
     | "final-review"
-    | "approve-merge",
+    | "approve-merge"
+    | "grant-retry",
   note = "",
 ) {
   return request<Record<string, boolean>>(`/api/tasks/${encodeURIComponent(id)}/${action}`, {

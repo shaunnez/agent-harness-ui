@@ -51,6 +51,12 @@ export class GitWorktreeManager {
     if (!files.length) throw new Error("The implementation agent completed without changing any files.");
     const suspicious = files.find(isSensitivePath);
     if (suspicious) throw new Error(`Candidate contains a potentially sensitive file (${suspicious}); it was preserved but not committed.`);
+    const generated = files.find(isGeneratedPath);
+    if (generated) {
+      throw new Error(
+        `Candidate contains generated tool state (${generated}); remove generated caches and browser/test output before retrying.`,
+      );
+    }
 
     await git(candidate.worktreePath, ["add", "-A"]);
     await git(candidate.worktreePath, ["commit", "-m", message]);
@@ -118,6 +124,21 @@ function isSensitivePath(file) {
     name === "id_rsa" ||
     name === "id_ed25519"
   );
+}
+
+function isGeneratedPath(file) {
+  const normalized = file.replaceAll("\\", "/").toLowerCase();
+  return [
+    ".tmp/",
+    ".playwright-cli/",
+    ".data/",
+    ".cache/",
+    ".npm/",
+    "node_modules/",
+    "playwright-report/",
+    "test-results/",
+    "coverage/",
+  ].some((segment) => normalized === segment.slice(0, -1) || normalized.startsWith(segment));
 }
 
 function safeSegment(value) {

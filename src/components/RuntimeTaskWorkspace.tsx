@@ -44,7 +44,8 @@ export function RuntimeTaskWorkspace({
       | "review"
       | "test"
       | "final-review"
-      | "approve-merge",
+      | "approve-merge"
+      | "grant-retry",
     note?: string,
   ) => Promise<void>;
   onDecision: (question: string, answer: string) => Promise<void>;
@@ -338,7 +339,8 @@ function RuntimeCommandBar({
       | "review"
       | "test"
       | "final-review"
-      | "approve-merge",
+      | "approve-merge"
+      | "grant-retry",
   ) => Promise<void>;
 }) {
   const [pending, setPending] = useState(false);
@@ -355,7 +357,7 @@ function RuntimeCommandBar({
     task.status.startsWith("ready-for-") ||
     task.status === "completed";
   const next = nextAction(task);
-  const actionable = ready || failed || repairRequired;
+  const actionable = ready || failed || repairRequired || blocked;
   const Icon = running ? CircleNotch : failed || blocked || repairRequired ? WarningCircle : CheckCircle;
   const invoke = async () => {
     if (!next?.action) return;
@@ -392,7 +394,7 @@ function RuntimeCommandBar({
           {running
             ? `${workflowStages.find((stage) => stage.id === task.currentStage)?.label} is running`
             : blocked
-              ? "Repair allowance exhausted"
+              ? (next?.title ?? "Repair allowance exhausted")
               : repairRequired
                 ? (next?.title ?? "Candidate repair required")
                 : failed
@@ -405,7 +407,7 @@ function RuntimeCommandBar({
           {running
             ? "Codex is inspecting the selected repository in a read-only sandbox."
             : blocked
-              ? "Review the retained activity, revise the task, or grant a human override in a future slice."
+              ? (next?.detail ?? "Review the retained activity before granting another attempt.")
               : repairRequired
                 ? (next?.detail ?? "The retained gate evidence identifies the required repair.")
                 : failed
@@ -441,6 +443,14 @@ function RuntimeCommandBar({
 }
 
 function nextAction(task: RuntimeTask) {
+  if (task.status === "blocked" && task.candidates?.at(-1)?.status === "repair_required")
+    return {
+      action: "grant-retry" as const,
+      label: "Grant one repair attempt",
+      title: "Repair allowance exhausted",
+      detail:
+        "A human may grant exactly one additional attempt. The retained candidate and every failed review remain unchanged.",
+    };
   if (task.status === "awaiting-spec-approval") {
     return task.workflow === "implement"
       ? {
