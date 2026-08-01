@@ -70,6 +70,7 @@ export function RuntimeTaskWorkspace({
     viewedStageId === task.currentStage && ["failed", "cancelled", "blocked"].includes(task.status);
   const repoName = task.repositoryPath.split(/[\\/]/).filter(Boolean).at(-1) ?? task.repositoryPath;
   const candidate = task.candidates?.at(-1);
+  const accessBoundary = getAccessBoundaryCopy(task);
 
   const rerun = async () => {
     setRunError(null);
@@ -246,10 +247,7 @@ export function RuntimeTaskWorkspace({
               <RuntimeRow label="Agent" value={`${viewedStage.label} agent`} />
               <RuntimeRow label="Model" value={task.models[0]?.model ?? "GPT-5.4-mini · ChatGPT plan"} />
               <RuntimeRow label="Access" value="Local OAuth session" />
-              <RuntimeRow
-                label="Sandbox"
-                value={viewedStageId === "implement" ? "Isolated worktree" : "Read-only"}
-              />
+              <RuntimeRow label="Sandbox" value={accessBoundary.sandbox} />
               <RuntimeRow label="Repository" value={repoName} mono />
             </InspectorSection>
             <InspectorSection title="Decision frontier" meta={`${task.decisions?.length ?? 0} recorded`}>
@@ -360,6 +358,7 @@ function RuntimeCommandBar({
     task.status.startsWith("awaiting-") ||
     task.status.startsWith("ready-for-") ||
     task.status === "completed";
+  const accessBoundary = getAccessBoundaryCopy(task);
   const next = nextAction(task);
   const actionable = ready || failed || repairRequired || blocked;
   const Icon = running ? CircleNotch : failed || blocked || repairRequired ? WarningCircle : CheckCircle;
@@ -383,7 +382,7 @@ function RuntimeCommandBar({
       <span className="stage-command-bar__copy">
         <small>
           {running
-            ? "Agent active"
+            ? accessBoundary.kicker
             : blocked
               ? "Blocked"
               : repairRequired
@@ -396,7 +395,7 @@ function RuntimeCommandBar({
         </small>
         <strong>
           {running
-            ? `${workflowStages.find((stage) => stage.id === task.currentStage)?.label} is running`
+            ? accessBoundary.title
             : blocked
               ? (next?.title ?? "Repair allowance exhausted")
               : repairRequired
@@ -409,7 +408,7 @@ function RuntimeCommandBar({
         </strong>
         <span>
           {running
-            ? "Codex is inspecting the selected repository in a read-only sandbox."
+            ? accessBoundary.detail
             : blocked
               ? (next?.detail ?? "Review the retained activity before granting another attempt.")
               : repairRequired
@@ -557,6 +556,33 @@ function nextAction(task: RuntimeTask) {
         "The repair agent works in the same isolated worktree, creates a new candidate revision, and sends it through review again.",
     };
   return null;
+}
+
+export function getAccessBoundaryCopy(task: RuntimeTask) {
+  const stage = workflowStages.find((entry) => entry.id === task.currentStage);
+  const stageLabel = stage?.label ?? "Current stage";
+  if (task.currentStage === "implement" || task.status === "repair-required") {
+    return {
+      kicker: "Worktree write scope",
+      title: `${stageLabel} is confined to the isolated candidate worktree`,
+      detail: "Codex may write only inside the isolated candidate worktree for this stage.",
+      sandbox: "Isolated candidate worktree",
+    };
+  }
+  if (task.currentStage === "test") {
+    return {
+      kicker: "Candidate cleanliness boundary",
+      title: `${stageLabel} may create temporary files while testing`,
+      detail: "Temporary files are allowed, but the exact candidate revision must be left clean when the gate completes.",
+      sandbox: "Temporary writes allowed, candidate must remain clean",
+    };
+  }
+  return {
+    kicker: "Read-only boundary",
+    title: `${stageLabel} is read-only`,
+    detail: "Codex reads the repository without writing to it in this stage.",
+    sandbox: "Read-only",
+  };
 }
 
 function DecisionFrontier({

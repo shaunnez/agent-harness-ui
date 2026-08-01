@@ -170,6 +170,63 @@ test("renders approvals history in the runtime task inspector", () => {
   });
 });
 
+test("renders truthful active-stage access boundaries", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace, getAccessBoundaryCopy }) => {
+    const renderWorkspace = (task) =>
+      renderToStaticMarkup(
+        React.createElement(RuntimeTaskWorkspace, {
+          task,
+          onBack: async () => {},
+          onRun: async () => {},
+          onCancel: async () => {},
+          onAction: async () => {},
+          onDecision: async () => {},
+        }),
+      );
+
+    const readOnlyMarkup = renderWorkspace(createTask({ currentStage: "plan", status: "running" }));
+    assert.match(readOnlyMarkup, /Read-only boundary/);
+    assert.match(readOnlyMarkup, /plan is read-only/i);
+    assert.match(readOnlyMarkup, /Read-only/);
+    assert.deepEqual(
+      (({ kicker, detail, sandbox }) => ({ kicker, detail, sandbox }))(getAccessBoundaryCopy(createTask({ currentStage: "plan" }))),
+      (({ kicker, detail, sandbox }) => ({ kicker, detail, sandbox }))(getAccessBoundaryCopy(createTask({ currentStage: "specification" }))),
+    );
+
+    const implementMarkup = renderWorkspace(createTask({ currentStage: "implement", status: "running" }));
+    assert.match(implementMarkup, /Worktree write scope/);
+    assert.match(implementMarkup, /isolated candidate worktree/i);
+    assert.match(implementMarkup, /Isolated candidate worktree/);
+
+    const testMarkup = renderWorkspace(createTask({ currentStage: "test", status: "running" }));
+    assert.match(testMarkup, /Candidate cleanliness boundary/);
+    assert.match(testMarkup, /temporary files/i);
+    assert.match(testMarkup, /must be left clean/i);
+
+    const viewedArtifactMarkup = renderWorkspace(
+      createTask({
+        currentStage: "implement",
+        status: "running",
+        artifacts: [
+          {
+            id: "artifact-1",
+            stage: "specification",
+            kind: "markdown",
+            name: "Specification",
+            content: "# Spec",
+            createdAt: "2026-08-01T11:00:00.000Z",
+            model: "GPT-5.4-mini",
+            usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+          },
+        ],
+      }),
+    );
+    assert.match(viewedArtifactMarkup, /Viewing/);
+    assert.match(viewedArtifactMarkup, /Active/);
+    assert.match(viewedArtifactMarkup, /Worktree write scope/);
+  });
+});
+
 async function waitUntil(predicate) {
   for (let attempt = 0; attempt < 100; attempt += 1) {
     if (predicate()) return;
