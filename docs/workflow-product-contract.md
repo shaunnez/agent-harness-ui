@@ -1,0 +1,333 @@
+# Workflow product and backend contract
+
+This document records the product model behind the prototype. It is the source of truth for the future UI and orchestration backend unless a later product decision explicitly supersedes it.
+
+## 1. Product premise
+
+One task can use multiple providers, models, agents, skills, worktrees, and attempts. The UI must preserve that plurality without making the human reconstruct the workflow from logs.
+
+The workflow has two levels of execution:
+
+1. **Slice qualification** — implementation slices run in isolated worktrees and prove that their own outputs are ready to integrate.
+2. **Candidate qualification** — the orchestrator assembles the compatible slice commits into a versioned integration candidate. Dev Review, Test, Final Review, and Human Approval make authoritative task-level decisions about that exact candidate revision.
+
+A green slice is therefore **ready for integration**, not “the task passed.” The merged candidate is the unit that passes or fails the downstream gates.
+
+## 2. Shared terminology
+
+Use these terms consistently in the product, API, database, events, and documentation.
+
+- **Provider**: the company or runtime that serves a model, such as OpenAI or Anthropic.
+- **Model**: the exact model/version used by an agent run.
+- **Agent**: a configured execution role with provider/model, reasoning, tools, skills, permissions, and budget policy.
+- **Skill**: an inspectable and optionally editable instruction/tool bundle invoked by an agent.
+- **Stage**: one of the ten visible workflow phases.
+- **Stage run**: one execution attempt of a stage. Attempts belong to individual stage/agent/gate runs, not vaguely to the entire task.
+- **Slice / work package**: an independently executable part of the implementation plan.
+- **Worktree**: the isolated repository checkout in which a slice or integration operation runs.
+- **Integration candidate**: an immutable, versioned combination of slice commits plus integration changes, identified as `C1`, `C2`, and so on and pinned to a revision SHA.
+- **Gate**: a review, test, policy, or approval decision bound to one exact candidate revision.
+- **Repair packet**: structured failure evidence routed to the smallest responsible owner.
+- **Artifact**: a durable, inspectable handoff created by a stage or run.
+- **Run activity**: chronological operational telemetry. It is not a second representation of stage content.
+
+Avoid using “model” when the UI means an agent, and avoid showing a singular model field for a task that used several models. Task summaries should show **Models** or a provider/model mix.
+
+## 3. Canonical workflow
+
+1. **Triage** — classify the request, risk, affected surface, and required policy.
+2. **Repo Scouts** — run parallel, read-only repository investigations and retain their evidence.
+3. **Grill Me** — resolve material ambiguities using repository/document evidence and record the decision frontier.
+4. **Task Spec** — synthesize the full implementation contract, not just acceptance criteria.
+5. **Implementation Plan** — create dependency-aware slices, interfaces, ownership, verification commands, and an integration strategy.
+6. **Implement** — execute slices in isolated worktrees, qualify them, then assemble a versioned integration candidate.
+7. **Dev Review** — a fresh-context code review of the whole candidate with the code-specific rubric and repair lineage.
+8. **Test** — deterministic and/or agent-assisted candidate-level gates with drillable pass and failure evidence.
+9. **Final Review** — a legible summary of every prior stage, costs, evidence, repairs, candidate identity, and outstanding risk.
+10. **Human Approval** — explicitly approve and merge the qualified candidate using a visible target branch and merge method.
+
+The stage navigator distinguishes:
+
+- **Current execution stage** — where the workflow can advance.
+- **Selected/viewed stage** — what the human is inspecting.
+- **Completed stage** — recorded history before the current execution stage.
+- **Failed/blocked stage** — the current gate that cannot advance.
+
+Inspecting history must never accidentally mutate or advance the current workflow.
+
+## 4. Slice and candidate lifecycle
+
+### Slice state machine
+
+`planned → queued → running → ready_for_integration`
+
+Exceptional states:
+
+- `failed` — slice-local verification failed.
+- `blocked` — policy, dependency, or human input prevents progress.
+- `superseded` — a replacement slice revision exists.
+- `integrated` — its exact commit is a member of a candidate.
+
+Each slice records:
+
+- dependency IDs and topological batch;
+- owning agent and provider/model revision;
+- worktree/branch;
+- base revision and output commit;
+- touched files and declared interfaces;
+- local verification commands/results;
+- tokens, cache usage, approximate cost, and duration;
+- artifacts and attempt history.
+
+### Candidate state machine
+
+`assembling → ready_for_review → reviewing → testing → ready_for_final_review → awaiting_human_approval → merging → merged`
+
+Exceptional states:
+
+- `conflicted` — assembly cannot complete automatically.
+- `review_failed` — the candidate failed Dev Review.
+- `test_failed` — the candidate failed one or more required test gates.
+- `blocked` — repair allowance, policy, or human decision is required.
+- `superseded` — a newer candidate revision exists.
+- `merge_failed` — the approved revision could not be merged as recorded.
+
+Candidate membership is explicit and ordered. It records every included slice commit, any integration-only commit, base revision, worktree, conflict resolutions, and merge order. A candidate ID is human-friendly; the revision SHA is the immutable identity.
+
+## 5. Why review and test happen after integration
+
+Slice-local checks are useful and should fail fast, but they cannot prove cross-slice behavior. The authoritative Dev Review and Test gates run against the assembled candidate because that is what can expose:
+
+- incompatible interfaces;
+- migration/API/UI mismatches;
+- merge-order defects;
+- hidden assumptions between parallel agents;
+- integration-only edits;
+- whole-product regressions.
+
+This is a hybrid pipeline, not a choice between “review every slice” and “review only once.” Slices receive cheap local qualification; the candidate receives the expensive authoritative gates.
+
+## 6. Gate binding, freshness, and invalidation
+
+Every gate result must include:
+
+- `candidate_id` and immutable `candidate_revision`;
+- gate definition/version;
+- status, start/end timestamps, and attempt number;
+- runner/agent/provider/model/toolchain versions;
+- command or rubric used;
+- tokens, approximate cost, duration, and cache data;
+- artifacts, findings, and structured failure reasons.
+
+A gate is current only when its recorded candidate revision equals the current candidate revision and its definition/version is still accepted by policy.
+
+Creating `C2` from a repair to `C1` makes `C1` review/test verdicts historical. They remain visible for audit and comparison but cannot count toward approval. The UI labels them **stale** or **superseded**, never silently discards them, and reruns every gate affected by the change.
+
+The backend should compute invalidation from changed files, declared interfaces, dependency relationships, and gate coverage. Conservative policy may rerun the entire candidate gate suite. The UI must show which gates were invalidated and why.
+
+## 7. Repair ownership and routing
+
+A failure produces a structured repair packet containing:
+
+- failing candidate and gate identity;
+- concise symptom and expected/actual behavior;
+- relevant logs, files, lines, test IDs, and artifacts;
+- suspected ownership: slice, integration, plan/spec, or environment;
+- required reruns and invalidated verdicts;
+- remaining repair allowance.
+
+Route repair to the smallest responsible boundary:
+
+- slice-owned defect → reopen that slice in a repair worktree;
+- integration defect → repair the integration worktree;
+- interface/spec defect → return to Implementation Plan or Task Spec;
+- flaky/environment issue → Test/environment owner without changing product code.
+
+Any source change creates a new immutable candidate revision. Do not mutate a candidate that already has recorded gate verdicts.
+
+Attempts belong to the run being retried. The task UI may show a compact repair summary, but the backend must retain per-slice, per-agent, per-stage, and per-gate attempts.
+
+## 8. UI contract
+
+### Stage command bar
+
+Every stage has a consistent action area at the top of the stage canvas. It communicates:
+
+- current status and the exact object in scope;
+- the next safe action;
+- any secondary inspect/retry/repair action;
+- why an action is disabled or blocked.
+
+Primary actions should not be hidden below long evidence. Examples include `Start scouts`, `Confirm answer`, `Approve plan & start worktrees`, `Assemble candidate`, `Send C1 to tests`, `Send to repair`, `Send C2 to human approval`, and `Approve & merge C2`.
+
+### Implement
+
+Implement is a work-package overview plus a distinct integration object.
+
+- Slice rows drill into worktree, agent, provider/model, interfaces, checks, commits, usage, and artifacts.
+- Dependency batches and arrows make execution order legible.
+- The integration candidate card shows membership, revision, conflicts, integration worktree, merge queue, and candidate diff.
+- `Inspect diff` opens a large inline candidate-bound code diff in the main canvas, with an obvious return path.
+
+### Dev Review
+
+Dev Review always names the candidate revision under review. It uses a fresh-context reviewer, code-specific rubric, P0–P3 findings, file/line evidence, suggested changes, and repair lineage. A repaired candidate shows that prior verdicts became stale and that the current review applies to the new revision.
+
+### Test
+
+The default is a mixed result list showing passed and failed tests. Each result can expand or drill into commands, duration, logs, assertions, artifacts, ownership, and prior attempts. The UI must make the return to the result list obvious. Global actions such as retry or send to repair sit outside individual result details.
+
+### Final Review
+
+Final Review summarizes Triage, Repo Scouts, Grill Me, Task Spec, Implementation Plan, Implement, Dev Review, and Test. Each row shows state, key outcome, tokens, cost, and artifacts/repairs when relevant. It explicitly identifies the candidate that cleared the gates and what will happen next.
+
+### Human Approval
+
+Approval is not merely “approve.” It is `Approve & merge Cx` and shows:
+
+- exact candidate ID and revision;
+- target repository and branch;
+- merge method;
+- current required gate count;
+- residual risks and policy acknowledgements;
+- identity and timestamp of the approver;
+- resulting merge commit or structured merge failure.
+
+### Universal inspector
+
+Keep one right sidebar across stages. It contains:
+
+1. task title and description;
+2. current execution stage vs selected stage;
+3. active agent/skill/provider/model;
+4. execution metadata and safeguards;
+5. current integration candidate and gate freshness after Implement;
+6. stage-specific decisions, artifacts, findings, or selected telemetry.
+
+“Harness evidence” should not appear as unexplained jargon. Use concrete labels such as repository evidence, decision, artifact, gate result, or selected event.
+
+### Run activity
+
+Run activity is collapsed by default and opens into a chronological telemetry table. It answers “what just happened?” while the stage canvas answers “what does it mean and what can I do?”
+
+Filters are **Activity**, **Agent runs**, **Test runs**, and **Decisions**. Events are not a separate user-facing category because all rows are events.
+
+Each row records time, event, scope, model/agent, tokens/cost, duration, and artifact. Scope must identify the candidate, slice, stage, or test run. Selecting a row sends its full evidence to the universal inspector. Avoid duplicating stage summaries or artifacts here.
+
+## 9. Durable artifacts
+
+Artifacts are first-class, versioned records, not transient UI copy. Important examples include:
+
+- triage report;
+- scout findings and cited code excerpts;
+- Grill decision frontier and evidence;
+- full task specification;
+- dependency graph and implementation plan;
+- slice manifests, commits, and local check results;
+- candidate manifest, lineage, diff, and conflict record;
+- Dev Review rubric/findings;
+- test result bundle/JUnit/logs;
+- repair packets and invalidation decisions;
+- final workflow summary;
+- approval packet and merge record.
+
+Artifact viewers should be wide, read-only by default, version-aware, linkable, and able to show provenance. Editable skills/prompts belong to their own configuration/editor flow, not an artifact viewer.
+
+## 10. Suggested backend entities
+
+Minimum relational/event model:
+
+- `tasks`
+- `workflow_stages`
+- `stage_runs`
+- `agents`
+- `agent_revisions`
+- `skills`
+- `skill_revisions`
+- `agent_runs`
+- `work_packages`
+- `work_package_dependencies`
+- `worktrees`
+- `slice_attempts`
+- `integration_candidates`
+- `candidate_members`
+- `candidate_revisions`
+- `gate_definitions`
+- `gate_runs`
+- `repair_packets`
+- `repair_actions`
+- `artifacts`
+- `decisions`
+- `usage_records`
+- `approvals`
+- `merge_records`
+- `harness_events`
+
+Use immutable revision tables for agents, skills, candidates, and gate definitions so historical runs remain reproducible.
+
+## 11. API and event boundaries
+
+Representative commands:
+
+- create/update task title and description;
+- start or pause a workflow;
+- submit Grill answer/decision;
+- approve specification or implementation plan;
+- start/retry/cancel a slice attempt;
+- assemble candidate from an ordered commit set;
+- start/retry a candidate gate;
+- create/route/resolve repair packet;
+- grant one additional repair attempt;
+- submit final review;
+- approve and merge an exact candidate revision.
+
+Representative queries:
+
+- task summary with model/provider mix, tokens, cost, and stage status;
+- workflow stage history and current command eligibility;
+- dependency graph and slice attempts;
+- current candidate membership, lineage, diff, and gate freshness;
+- test/review results and repair ancestry;
+- artifact content and provenance;
+- filtered run activity stream.
+
+Representative emitted events:
+
+- `stage_run.started|completed|failed|blocked`
+- `slice_attempt.started|qualified|failed`
+- `candidate.assembling|ready|superseded|merged|merge_failed`
+- `gate_run.started|passed|failed|invalidated`
+- `repair_packet.created|routed|resolved`
+- `artifact.created`
+- `decision.recorded`
+- `approval.requested|granted|rejected`
+
+Commands that mutate workflow state require idempotency keys and optimistic concurrency against the expected task/candidate revision. Event records should be append-only.
+
+## 12. Cost and usage
+
+Store usage at the lowest available run granularity, then aggregate upward by slice, stage, candidate, task, provider, model, and day. Preserve:
+
+- input/output/cache tokens when available;
+- provider-reported cost when available;
+- pricing-table version and calculated approximate cost otherwise;
+- currency and rounding rules;
+- non-model infrastructure/test costs separately.
+
+Label calculated values **Approx. cost**. A task can display a total plus a provider/model breakdown.
+
+## 13. Concurrency, auditability, and safety
+
+- Only one candidate revision can be current, but historical candidates remain inspectable.
+- Candidate assembly must verify expected base and member SHAs before writing.
+- Gate completion uses compare-and-set so a late result cannot bless a superseded candidate.
+- Approve-and-merge revalidates candidate identity, gate freshness, target head, permissions, and mergeability.
+- Human actions record actor, timestamp, rationale, and acknowledged warnings.
+- Secrets and raw model context must be redacted from artifacts and activity rows according to policy.
+- Agent/skill configuration changes create revisions; they never rewrite the configuration attached to past runs.
+
+## 14. Prototype-only behavior vs production behavior
+
+The current prototype uses hard-coded data and a **Prototype states** menu to expose active, Grill, failed, blocked, and approval scenarios. That menu is intentionally not part of the production workflow.
+
+Production replaces these controls with persisted task/candidate state, streamed run events, command eligibility from the orchestration service, repository/worktree operations, real model usage, and auditable merge APIs. The visual semantics and state distinctions in this document should remain stable across that transition.
