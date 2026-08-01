@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import { createApiServer } from "../server/api.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
+import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
 
 async function createServer() {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-"));
@@ -110,6 +111,43 @@ test("creates, lists, and starts a local task", async () => {
   } finally {
     await cleanup(server, directory);
   }
+});
+
+test("exposes approval history in the task payload", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Approval history",
+      description: "Return persisted approval records.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.approvals.push(
+        { id: "A1", stage: "specification", note: "Specification approved.", createdAt: "2026-08-01T10:15:00.000Z" },
+        { id: "A2", stage: "plan", note: "Plan approved.", createdAt: "2026-08-01T10:20:00.000Z" },
+      );
+    });
+
+    const fetched = await (await fetch(`${origin}/api/tasks/${task.id}`)).json();
+    assert.deepEqual(fetched.task.approvals, [
+      { id: "A1", stage: "specification", note: "Specification approved.", createdAt: "2026-08-01T10:15:00.000Z" },
+      { id: "A2", stage: "plan", note: "Plan approved.", createdAt: "2026-08-01T10:20:00.000Z" },
+    ]);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("formats approval history for the inspector", () => {
+  const approvals = getApprovalHistory([
+    { id: "A1", stage: "specification", note: "Specification approved.", createdAt: "2026-08-01T10:15:00.000Z" },
+  ]);
+  assert.equal(approvals.length, 1);
+  assert.equal(formatApprovalStage(approvals[0].stage), "Task specification");
+  assert.notEqual(formatApprovalTimestamp(approvals[0].createdAt), approvals[0].createdAt);
+  assert.deepEqual(getApprovalHistory(undefined), []);
 });
 
 test("creates a task with workflow implement", async () => {
