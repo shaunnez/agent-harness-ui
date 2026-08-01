@@ -10,7 +10,7 @@ import {
   Robot,
   SidebarSimple,
 } from "@phosphor-icons/react";
-import type { AppScreen } from "../domain";
+import type { AppScreen, RuntimeStatus } from "../domain";
 import { Button } from "./Primitives";
 
 interface ShellProps {
@@ -19,6 +19,7 @@ interface ShellProps {
   onToggleCollapsed: () => void;
   onNavigate: (screen: AppScreen) => void;
   onNewTask: () => void;
+  runtimeStatus: RuntimeStatus | null;
 }
 
 const navItems = [
@@ -29,7 +30,16 @@ const navItems = [
   { id: "settings" as const, label: "Settings", icon: GearSix },
 ];
 
-export function Shell({ screen, collapsed, onToggleCollapsed, onNavigate, onNewTask }: ShellProps) {
+export function Shell({
+  screen,
+  collapsed,
+  onToggleCollapsed,
+  onNavigate,
+  onNewTask,
+  runtimeStatus,
+}: ShellProps) {
+  const repositoryName =
+    runtimeStatus?.suggestedRepository.split(/[\\/]/).filter(Boolean).at(-1) ?? "local workspace";
   return (
     <aside className={`sidebar ${collapsed ? "sidebar--collapsed" : ""}`} aria-label="Primary navigation">
       <div className="brand-row">
@@ -49,9 +59,9 @@ export function Shell({ screen, collapsed, onToggleCollapsed, onNavigate, onNewT
 
       <section className="repository-switcher" aria-label="Active repository">
         <span className="repository-switcher__label">Repository</span>
-        <strong>goose-hub</strong>
-        <span className="connection-dot" aria-hidden />
-        <span className="sr-only">Repository healthy</span>
+        <strong>{repositoryName}</strong>
+        <span className={`connection-dot ${runtimeStatus ? "" : "connection-dot--muted"}`} aria-hidden />
+        <span className="sr-only">Repository configured</span>
       </section>
 
       <nav className="primary-nav">
@@ -91,18 +101,20 @@ export function Shell({ screen, collapsed, onToggleCollapsed, onNavigate, onNewT
         <span className="sidebar-label">Connections</span>
         <div className="provider-connection provider-connection--codex">
           <span className="provider-orb" aria-hidden />
-          <span>OpenAI models</span>
-          <span className="provider-connection__state">Connected</span>
+          <span>{runtimeStatus?.model?.toUpperCase() ?? "OpenAI model"}</span>
+          <span className="provider-connection__state">
+            {runtimeStatus?.authenticated ? "Connected" : "Offline"}
+          </span>
         </div>
-        <div className="provider-connection provider-connection--claude">
+        <div className="provider-connection provider-connection--harness">
           <span className="provider-orb" aria-hidden />
-          <span>Anthropic models</span>
-          <span className="provider-connection__state">Connected</span>
+          <span>ChatGPT plan</span>
+          <span className="provider-connection__state">{runtimeStatus?.authMethod ?? "Checking"}</span>
         </div>
         <div className="provider-connection provider-connection--harness">
           <span className="provider-orb" aria-hidden />
           <span>Local harness</span>
-          <span className="provider-connection__state">Healthy</span>
+          <span className="provider-connection__state">{runtimeStatus ? "Healthy" : "Checking"}</span>
         </div>
       </section>
 

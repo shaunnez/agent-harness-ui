@@ -4263,6 +4263,342 @@ small {
   gap: 7px;
 }
 
+/* Local runtime vertical slice */
+.health-summary--warning {
+  color: var(--amber);
+  border-color: #6a4c19;
+  background: #211c13;
+}
+.attention-empty {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 0;
+  color: var(--green);
+}
+.attention-empty > span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.attention-empty strong {
+  color: var(--text);
+  font-size: 10px;
+}
+.attention-empty small {
+  font-size: 8px;
+}
+.new-task-dialog {
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+}
+.field-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.field-with-icon > svg {
+  position: absolute;
+  left: 10px;
+  z-index: 1;
+  color: var(--muted);
+}
+.field .field-with-icon > input {
+  padding-left: 34px;
+}
+.field > small {
+  color: var(--faint);
+  font-size: 8px;
+  line-height: 1.45;
+}
+.dialog-error,
+.runtime-error {
+  padding: 9px 10px;
+  border: 1px solid #6c3030;
+  border-radius: 5px;
+  background: var(--red-soft);
+  color: #ffdada;
+  font-size: 9px;
+  line-height: 1.45;
+}
+.dialog-error {
+  margin-top: 10px;
+}
+.runtime-stage-main {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.runtime-stage-main .stage-command-bar {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+}
+.runtime-stage-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.runtime-stage-heading h2 {
+  font-size: 18px;
+}
+.runtime-stage-heading > p:last-child {
+  max-width: 760px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+.runtime-artifact-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 300px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #11110f;
+}
+.runtime-artifact-card > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 46px;
+  padding: 7px 10px 7px 13px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.runtime-artifact-card > header > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--blue);
+}
+.runtime-artifact-card > header strong {
+  color: var(--text);
+  font:
+    10px "SFMono-Regular",
+    Consolas,
+    monospace;
+}
+.runtime-artifact-card > pre {
+  max-height: 560px;
+  padding: 18px;
+  margin: 0;
+  overflow: auto;
+  color: #d8d6ce;
+  font-size: 10px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+.runtime-stage-empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  min-height: 270px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 7px;
+  color: var(--faint);
+  background: #131311;
+  text-align: center;
+}
+.runtime-stage-empty > strong {
+  color: var(--text);
+  font-size: 11px;
+}
+.runtime-stage-empty > span {
+  max-width: 440px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+.runtime-stage-empty--failed {
+  border-color: #6c3030;
+  color: var(--red);
+  background: #1c1414;
+}
+.runtime-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.runtime-inspector-section {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border);
+}
+.runtime-inspector-section > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.runtime-inspector-section > header > strong {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.runtime-inspector-section > header > small {
+  font-size: 8px;
+}
+.runtime-inspector-section > strong {
+  font-size: 11px;
+}
+.runtime-inspector-section > p {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.55;
+}
+.runtime-meta-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+.runtime-meta-row small {
+  font-size: 8px;
+}
+.runtime-meta-row strong {
+  max-width: 70%;
+  overflow: hidden;
+  font-size: 9px;
+  font-weight: 550;
+  text-align: right;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+.runtime-artifact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.runtime-artifact-list > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--blue);
+  text-align: left;
+  cursor: pointer;
+}
+.runtime-artifact-list > button:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+.runtime-artifact-list > button > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+.runtime-artifact-list strong {
+  overflow: hidden;
+  color: var(--text);
+  font:
+    9px "SFMono-Regular",
+    Consolas,
+    monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.runtime-artifact-list small {
+  font-size: 8px;
+}
+.runtime-activity {
+  flex: 0 0 auto;
+  max-height: 260px;
+  overflow: auto;
+  border-top: 1px solid var(--border);
+  background: #141412;
+}
+.runtime-activity > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 46px;
+  padding: 0 18px;
+  cursor: pointer;
+  list-style: none;
+}
+.runtime-activity > summary::-webkit-details-marker {
+  display: none;
+}
+.runtime-activity > summary > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 9px;
+}
+.runtime-activity > summary strong {
+  color: var(--text);
+  font-size: 10px;
+}
+.runtime-activity > summary small {
+  font-size: 8px;
+}
+.runtime-activity-list {
+  border-top: 1px solid var(--border);
+}
+.runtime-activity-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 100px;
+  gap: 12px;
+  align-items: center;
+  min-height: 42px;
+  padding: 7px 18px;
+  border-bottom: 1px solid #282821;
+  border-left: 2px solid var(--blue);
+}
+.runtime-activity-row--success {
+  border-left-color: var(--green);
+}
+.runtime-activity-row--warning {
+  border-left-color: var(--amber);
+}
+.runtime-activity-row--danger {
+  border-left-color: var(--red);
+}
+.runtime-activity-row time,
+.runtime-activity-row em {
+  color: var(--faint);
+  font-size: 8px;
+  font-style: normal;
+}
+.runtime-activity-row > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+.runtime-activity-row strong {
+  font-size: 9px;
+}
+.runtime-activity-row small {
+  overflow: hidden;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.runtime-activity-row em {
+  text-align: right;
+}
+.runtime-next-cut {
+  color: var(--muted);
+  font-size: 8px;
+}
+.artifact-viewer > footer > span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
 @media (max-width: 1180px) {
   :root {
     --sidebar-width: 66px;

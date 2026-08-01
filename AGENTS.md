@@ -30,3 +30,12 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Human Approval must show the candidate revision, target branch, merge method, and gate freshness, and the primary action must say **Approve & merge**.
 - Keep **Run activity** collapsed by default. It is scoped chronological telemetry with Activity, Agent runs, Test runs, and Decisions filters; stage content and artifacts remain the source of truth.
 - The full terminology, state machines, UI behavior, entity model, event contract, repair policy, cost model, and prototype-to-backend handoff are recorded in `docs/workflow-product-contract.md`.
+
+## Current implementation boundary
+
+- The first real slice uses `gpt-5.4` through the user's existing ChatGPT-authenticated Codex CLI. Never request, read, store, or pass an OpenAI API key for this path.
+- Keep the local companion bound to loopback. Real agent stages are read-only until worktree creation, mutation policy, and candidate gates are implemented.
+- Persist local task state simply in `.data/tasks.json`; do not introduce an immutable event ledger without a concrete concurrency or audit requirement.
+- Treat ChatGPT-plan dollar cost as unavailable. Show real token counts and `Plan included`, not a fabricated API-price estimate.
+- The hosted Sites build is a UI artifact only. Local Codex execution and repository access require the Node companion.
+- Keep real and preview states truthful: Triage through Task Specification are wired; later stages remain design previews until their backend contracts exist.

@@ -69,13 +69,129 @@ export interface RecentTask {
 export interface NewTaskDraft {
   title: string;
   description: string;
+  repositoryPath: string;
   workflow: "investigate" | "implement";
   priority: "low" | "medium" | "high";
+}
+
+export type RuntimeTaskStatus =
+  | "queued"
+  | "running"
+  | "failed"
+  | "blocked"
+  | "cancelled"
+  | "awaiting-approval"
+  | "completed";
+
+export interface RuntimeUsage {
+  inputTokens: number;
+  cachedInputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  cost: null;
+}
+
+export interface RuntimeArtifact {
+  id: string;
+  stage: StageId;
+  name: string;
+  kind: "markdown";
+  content: string;
+  createdAt: string;
+  model: string;
+  usage: Omit<RuntimeUsage, "cost">;
+}
+
+export interface RuntimeEvent {
+  id: string;
+  at: string;
+  category: "activity" | "agent" | "artifact" | "decision";
+  tone: "success" | "info" | "warning" | "danger";
+  stage: StageId;
+  title: string;
+  detail: string;
+}
+
+export interface RuntimeTask {
+  id: string;
+  title: string;
+  description: string;
+  repositoryPath: string;
+  workflow: "investigate" | "implement";
+  priority: "low" | "medium" | "high";
+  status: RuntimeTaskStatus;
+  currentStage: StageId;
+  completedStages: StageId[];
+  stageRun: number;
+  stageRunLimit: number;
+  createdAt: string;
+  updatedAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  error: string | null;
+  models: Array<{ provider: "openai"; model: string }>;
+  usage: RuntimeUsage;
+  artifacts: RuntimeArtifact[];
+  events: RuntimeEvent[];
+}
+
+export interface RuntimeStatus {
+  available: boolean;
+  authenticated: boolean;
+  authMethod: string | null;
+  model: string;
+  reasoning: string;
+  binary: string | null;
+  message: string;
+  suggestedRepository: string;
 }
 
 export const EXAMPLE_TITLE = "Add task priority";
 export const EXAMPLE_DESCRIPTION =
   "Add task priority (`low | medium | high`). Default new tasks to `medium`, expose it through the API, show a coloured badge in the UI, and add tests.";
+
+export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
+  const stageIndex = Math.max(
+    0,
+    workflowStages.findIndex((stage) => stage.id === task.currentStage),
+  );
+  const status: RecentTask["status"] =
+    task.status === "completed"
+      ? "Completed"
+      : task.status === "awaiting-approval"
+        ? "Needs input"
+        : task.status === "failed" || task.status === "blocked" || task.status === "cancelled"
+          ? "Blocked"
+          : "Running";
+  return {
+    id: task.id,
+    title: task.title,
+    status,
+    stage: workflowStages[stageIndex]?.shortLabel ?? "Triage",
+    stageIndex,
+    duration: formatRuntimeDuration(task.startedAt, task.completedAt),
+    stageRun: task.stageRun,
+    stageRunLimit: task.stageRunLimit,
+    tokens: formatTokenCount(task.usage.totalTokens),
+    cost: "Plan",
+    models: [{ provider: "codex", model: task.models[0]?.model ?? "GPT-5.4-mini · ChatGPT plan" }],
+    priority: `${task.priority[0]?.toUpperCase()}${task.priority.slice(1)}` as RecentTask["priority"],
+  };
+}
+
+export function formatTokenCount(value: number) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}m`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+  return String(value);
+}
+
+function formatRuntimeDuration(startedAt: string | null, completedAt: string | null) {
+  if (!startedAt) return "Not started";
+  const elapsed = Math.max(0, new Date(completedAt ?? Date.now()).getTime() - new Date(startedAt).getTime());
+  const minutes = Math.floor(elapsed / 60_000);
+  const seconds = Math.floor((elapsed % 60_000) / 1_000);
+  return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+}
 
 export const workflowStages: WorkflowStage[] = [
   { id: "triage", label: "Triage", shortLabel: "Triage", provider: "harness", skill: "classify-task" },

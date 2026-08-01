@@ -17,14 +17,21 @@ import {
   TerminalWindow,
 } from "@phosphor-icons/react";
 import { useState } from "react";
-import { recentTasks, workflowStages } from "../domain";
+import { type RuntimeTask, recentTasks, runtimeTaskToRecentTask, workflowStages } from "../domain";
 import { Button, ModelStack, PriorityBadge, ProviderTag, SectionHeader, StateBadge } from "./Primitives";
 
-export function TasksScreen({ onOpenTask }: { onOpenTask: () => void }) {
+export function TasksScreen({
+  onOpenTask,
+  runtimeTasks,
+}: {
+  onOpenTask: (taskId?: string) => void;
+  runtimeTasks: RuntimeTask[];
+}) {
+  const tasks = runtimeTasks.length ? runtimeTasks.map(runtimeTaskToRecentTask) : recentTasks;
   return (
     <div className="page library-page">
       <SectionHeader
-        eyebrow="goose-hub"
+        eyebrow="Agent Harness"
         title="Tasks"
         description="Every development goal, model assignment, and deterministic workflow state."
         action={
@@ -36,7 +43,9 @@ export function TasksScreen({ onOpenTask }: { onOpenTask: () => void }) {
       <div className="toolbar">
         <MagnifyingGlass size={17} />
         <input aria-label="Search tasks" placeholder="Search tasks, IDs, models, or artifacts…" />
-        <span>4 tasks</span>
+        <span>
+          {tasks.length} tasks · {runtimeTasks.length ? "local" : "prototype"}
+        </span>
       </div>
       <div className="library-table library-table--tasks">
         <div className="library-table__header">
@@ -48,8 +57,13 @@ export function TasksScreen({ onOpenTask }: { onOpenTask: () => void }) {
           <span>Approx. cost</span>
           <span>Models</span>
         </div>
-        {recentTasks.map((task) => (
-          <button className="library-table__row" type="button" key={task.id} onClick={onOpenTask}>
+        {tasks.map((task) => (
+          <button
+            className="library-table__row"
+            type="button"
+            key={task.id}
+            onClick={() => onOpenTask(task.id.startsWith("AH-") ? task.id : undefined)}
+          >
             <span>
               <span className="task-title-line">
                 <span className="mono">{task.id}</span>

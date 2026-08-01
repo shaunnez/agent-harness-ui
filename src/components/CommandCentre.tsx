@@ -9,22 +9,57 @@ import {
   ShieldCheck,
   Warning,
 } from "@phosphor-icons/react";
-import { recentTasks } from "../domain";
+import {
+  formatTokenCount,
+  type RuntimeStatus,
+  type RuntimeTask,
+  recentTasks,
+  runtimeTaskToRecentTask,
+} from "../domain";
 import { Button, ModelStack, PriorityBadge, SectionHeader } from "./Primitives";
 
-export function CommandCentre({ onOpenTask }: { onOpenTask: () => void }) {
+export function CommandCentre({
+  onOpenTask,
+  runtimeTasks,
+  runtimeStatus,
+}: {
+  onOpenTask: (taskId?: string) => void;
+  runtimeTasks: RuntimeTask[];
+  runtimeStatus: RuntimeStatus | null;
+}) {
+  const tasks = runtimeTasks.length ? runtimeTasks.map(runtimeTaskToRecentTask) : recentTasks;
+  const activeRuntimeTask = runtimeTasks.find((task) => task.status === "running") ?? runtimeTasks[0];
+  const activeTask = activeRuntimeTask ? runtimeTaskToRecentTask(activeRuntimeTask) : recentTasks[0];
+  const totalTokens = runtimeTasks.reduce((total, task) => total + task.usage.totalTokens, 0);
+  const attentionTasks = runtimeTasks.filter((task) =>
+    ["failed", "blocked", "cancelled", "awaiting-approval"].includes(task.status),
+  );
+
   return (
     <div className="page command-centre-page">
       <header className="page-heading">
         <div>
-          <p className="eyebrow">goose-hub · local workspace</p>
+          <p className="eyebrow">Agent Harness · local workspace</p>
           <h1>Command Centre</h1>
           <p>One deterministic view of active work, evidence, and human decisions.</p>
         </div>
-        <div className="health-summary" role="status" aria-label="Project health">
+        <div
+          className={`health-summary ${runtimeStatus && !runtimeStatus.authenticated ? "health-summary--warning" : ""}`}
+          role="status"
+          aria-label="Local runtime health"
+        >
           <ShieldCheck size={18} weight="fill" />
           <span>
-            <strong>Healthy</strong> · main clean · 142 tests passing
+            <strong>
+              {runtimeStatus?.authenticated
+                ? "Codex connected"
+                : runtimeStatus
+                  ? "Login required"
+                  : "Checking runtime"}
+            </strong>
+            {runtimeStatus?.authenticated
+              ? ` · ${runtimeStatus.authMethod} plan session`
+              : " · local runtime"}
           </span>
         </div>
       </header>
@@ -33,27 +68,28 @@ export function CommandCentre({ onOpenTask }: { onOpenTask: () => void }) {
         <div className="current-run__main">
           <div className="current-run__status">
             <span className="live-pulse" aria-hidden />
-            Active workflow
+            {activeRuntimeTask ? "Local workflow" : "Prototype workflow"}
           </div>
-          <h2 id="current-run-title">Add task priority and expose it through the API</h2>
+          <h2 id="current-run-title">{activeTask?.title}</h2>
           <p>
-            Implementation agent is updating schema, routes, UI badges, and deterministic acceptance tests.
+            {activeRuntimeTask
+              ? activeRuntimeTask.status === "running"
+                ? `The ${activeTask?.stage} agent is inspecting ${activeRuntimeTask.repositoryPath}.`
+                : "The latest real local task is ready to inspect."
+              : "Implementation agent is updating schema, routes, UI badges, and deterministic acceptance tests."}
           </p>
           <div className="current-run__meta">
-            <span className="mono">GH-241</span>
-            <PriorityBadge priority="medium" />
-            <ModelStack
-              models={[
-                { provider: "codex", model: "Codex 1.2" },
-                { provider: "claude", model: "Claude 3.7 Sonnet" },
-              ]}
-              compact
-            />
+            <span className="mono">{activeTask?.id}</span>
+            {activeTask ? (
+              <PriorityBadge priority={activeTask.priority.toLowerCase() as "low" | "medium" | "high"} />
+            ) : null}
+            <ModelStack models={activeTask?.models ?? []} compact />
             <span>
-              <Clock size={15} /> 12m 44s
+              <Clock size={15} /> {activeTask?.duration}
             </span>
             <span>
-              <GitBranch size={15} /> Implement run 1 of 3
+              <GitBranch size={15} /> {activeTask?.stage} run {activeTask?.stageRun} of{" "}
+              {activeTask?.stageRunLimit}
             </span>
           </div>
         </div>
@@ -64,16 +100,20 @@ export function CommandCentre({ onOpenTask }: { onOpenTask: () => void }) {
             aria-label="Workflow progress"
             aria-valuemin={0}
             aria-valuemax={10}
-            aria-valuenow={6}
+            aria-valuenow={(activeTask?.stageIndex ?? 5) + 1}
           >
-            <span>6/10</span>
+            <span>{(activeTask?.stageIndex ?? 5) + 1}/10</span>
           </div>
           <div>
-            <strong>Implement</strong>
-            <span>Patch produced · schema validated</span>
+            <strong>{activeTask?.stage}</strong>
+            <span>
+              {activeRuntimeTask
+                ? activeRuntimeTask.status.replace("-", " ")
+                : "Patch produced · schema validated"}
+            </span>
           </div>
         </div>
-        <Button tone="primary" icon={ArrowRight} onClick={onOpenTask}>
+        <Button tone="primary" icon={ArrowRight} onClick={() => onOpenTask(activeRuntimeTask?.id)}>
           Open workspace
         </Button>
       </section>
@@ -82,7 +122,11 @@ export function CommandCentre({ onOpenTask }: { onOpenTask: () => void }) {
         <section className="recent-runs">
           <SectionHeader
             title="Recent tasks"
-            description="Deterministic status across the active repository"
+            description={
+              runtimeTasks.length
+                ? "Real tasks persisted by the local harness"
+                : "Prototype data · create a task to start a real run"
+            }
           />
           <div className="task-table">
             <div className="task-table__header">
@@ -93,8 +137,13 @@ export function CommandCentre({ onOpenTask }: { onOpenTask: () => void }) {
               <span>Approx. cost</span>
               <span>Models</span>
             </div>
-            {recentTasks.map((task) => (
-              <button className="task-table__row" type="button" key={task.id} onClick={onOpenTask}>
+            {tasks.map((task) => (
+              <button
+                className="task-table__row"
+                type="button"
+                key={task.id}
+                onClick={() => onOpenTask(task.id.startsWith("AH-") ? task.id : undefined)}
+              >
                 <span className="task-table__title">
                   <span className="mono">{task.id}</span>
                   <strong>{task.title}</strong>
@@ -106,7 +155,14 @@ export function CommandCentre({ onOpenTask }: { onOpenTask: () => void }) {
                 </span>
                 <span>{task.stage}</span>
                 <span className="mono">{task.tokens}</span>
-                <span className="mono" title="Estimate from configured input, output, and cache rates">
+                <span
+                  className="mono"
+                  title={
+                    task.cost === "Plan"
+                      ? "ChatGPT plan usage does not expose a per-task dollar charge"
+                      : "Estimate from configured rates"
+                  }
+                >
                   {task.cost}
                 </span>
                 <ModelStack models={task.models} compact />
@@ -118,63 +174,79 @@ export function CommandCentre({ onOpenTask }: { onOpenTask: () => void }) {
         <aside className="command-side">
           <section className="attention-list">
             <SectionHeader title="Needs attention" />
-            <button type="button" className="attention-row" onClick={onOpenTask}>
-              <span className="attention-row__icon">
-                <Warning size={17} weight="fill" />
-              </span>
-              <span>
-                <strong>GH-238 · Repair runs exhausted</strong>
-                <small>Choose override, re-plan, or mark blocked</small>
-              </span>
-              <ArrowRight size={15} />
-            </button>
-            <button type="button" className="attention-row" onClick={onOpenTask}>
-              <span className="attention-row__icon attention-row__icon--amber">
-                <HourglassMedium size={17} />
-              </span>
-              <span>
-                <strong>GH-235 · Clarification waiting</strong>
-                <small>One repository policy decision required</small>
-              </span>
-              <ArrowRight size={15} />
-            </button>
+            {attentionTasks.length ? (
+              attentionTasks.slice(0, 2).map((task) => (
+                <button
+                  type="button"
+                  className="attention-row"
+                  key={task.id}
+                  onClick={() => onOpenTask(task.id)}
+                >
+                  <span
+                    className={`attention-row__icon ${task.status === "awaiting-approval" ? "attention-row__icon--amber" : ""}`}
+                  >
+                    {task.status === "awaiting-approval" ? (
+                      <HourglassMedium size={17} />
+                    ) : (
+                      <Warning size={17} weight="fill" />
+                    )}
+                  </span>
+                  <span>
+                    <strong>
+                      {task.id} ·{" "}
+                      {task.status === "awaiting-approval" ? "Artifacts ready" : "Run needs repair"}
+                    </strong>
+                    <small>{task.error ?? "Review the investigation handoff"}</small>
+                  </span>
+                  <ArrowRight size={15} />
+                </button>
+              ))
+            ) : (
+              <div className="attention-empty">
+                <CheckCircle size={17} weight="fill" />
+                <span>
+                  <strong>No live task needs attention</strong>
+                  <small>Failed runs and approvals will appear here.</small>
+                </span>
+              </div>
+            )}
           </section>
 
           <section className="usage-summary">
-            <SectionHeader title="Usage · today" />
+            <SectionHeader title="Usage · local tasks" />
             <div className="usage-line">
               <span>
-                <Cpu size={16} />
-                Agent runs
+                <Cpu size={16} /> Agent runs
               </span>
-              <strong>18</strong>
-              <small>12 Codex · 6 Claude</small>
+              <strong>
+                {runtimeTasks.length ? runtimeTasks.reduce((total, task) => total + task.stageRun, 0) : 18}
+              </strong>
+              <small>{runtimeTasks.length ? "Codex · ChatGPT plan" : "12 Codex · 6 Claude"}</small>
             </div>
             <div className="usage-line">
               <span>
-                <CheckCircle size={16} />
-                Tokens
+                <CheckCircle size={16} /> Tokens
               </span>
-              <strong>284k</strong>
-              <small>71% cache hit</small>
+              <strong>{runtimeTasks.length ? formatTokenCount(totalTokens) : "284k"}</strong>
+              <small>{runtimeTasks.length ? "Reported by Codex sessions" : "71% cache hit"}</small>
             </div>
             <div className="usage-line">
               <span>
-                <CurrencyDollar size={16} />
-                Approx. cost
+                <CurrencyDollar size={16} /> Approx. cost
               </span>
-              <strong>$6.42</strong>
-              <small title="Illustrative estimate from configured model rates and cache discounts">
-                Estimated · cached rates included
+              <strong>{runtimeTasks.length ? "Plan" : "$6.42"}</strong>
+              <small>
+                {runtimeTasks.length
+                  ? "Dollar cost unavailable for plan usage"
+                  : "Estimated · cached rates included"}
               </small>
             </div>
             <div className="usage-line">
               <span>
-                <Clock size={16} />
-                Elapsed
+                <Clock size={16} /> Runtime
               </span>
-              <strong>2h 18m</strong>
-              <small>1h 46m saved</small>
+              <strong>{runtimeStatus?.authenticated ? "Ready" : "Offline"}</strong>
+              <small>{runtimeStatus?.authMethod ?? "Start the local companion"}</small>
             </div>
           </section>
         </aside>
