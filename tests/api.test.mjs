@@ -93,3 +93,34 @@ test("rejects invalid workflow values", async () => {
     await cleanup(server, directory);
   }
 });
+
+test("rejects missing workflow values", async () => {
+  const { directory, origin, server } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Missing workflow task",
+      description: "This should fail.",
+      repositoryPath: directory,
+    });
+    assert.equal(response.status, 400);
+    await assert.deepEqual(await response.json(), { error: "invalid workflow" });
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects empty workflow values", async () => {
+  const { directory, origin, server } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Empty workflow task",
+      description: "This should fail.",
+      repositoryPath: directory,
+      workflow: "",
+    });
+    assert.equal(response.status, 400);
+    await assert.deepEqual(await response.json(), { error: "invalid workflow" });
+  } finally {
+    await cleanup(server, directory);
+  }
+});
