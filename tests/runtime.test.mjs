@@ -5,10 +5,11 @@ import path from "node:path";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { createServer as createViteServer } from "vite";
 import { parseCodexEvent, selectCodexCandidate } from "../server/codex-runtime.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
-import { ApprovalHistorySection, formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
+import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
 
 test("parses Codex final messages and usage", () => {
   assert.deepEqual(
@@ -130,24 +131,43 @@ test("cancellation wins when an implementation agent completes after abort", asy
 });
 
 test("renders approvals history in the runtime task inspector", () => {
-  const markup = renderToStaticMarkup(
-    React.createElement(ApprovalHistorySection, {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const taskWithApprovals = createTask({
       approvals: [
         { id: "A1", stage: "specification", note: "Specification approved.", createdAt: "2026-08-01T10:15:00.000Z" },
         { id: "A2", stage: "plan", note: "Plan approved.", createdAt: "2026-08-01T10:20:00.000Z" },
       ],
-    }),
-  );
+    });
+    const populatedMarkup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task: taskWithApprovals,
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+      }),
+    );
 
-  assert.match(markup, /Task specification/);
-  assert.match(markup, /Specification approved\./);
-  assert.match(markup, /Plan approved\./);
-  assert.doesNotMatch(markup, /No approvals recorded yet\./);
-});
+    assert.match(populatedMarkup, /<strong>Approvals<\/strong>/);
+    assert.match(populatedMarkup, /Task specification/);
+    assert.match(populatedMarkup, /Specification approved\./);
+    assert.match(populatedMarkup, /Plan approved\./);
+    assert.doesNotMatch(populatedMarkup, /No approvals recorded yet\./);
 
-test("shows the empty approvals state when no approvals exist", () => {
-  const markup = renderToStaticMarkup(React.createElement(ApprovalHistorySection, { approvals: [] }));
-  assert.match(markup, /No approvals recorded yet\./);
+    const emptyMarkup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task: createTask({ approvals: [] }),
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+      }),
+    );
+    assert.match(emptyMarkup, /<strong>Approvals<\/strong>/);
+    assert.match(emptyMarkup, /No approvals recorded yet\./);
+  });
 });
 
 async function waitUntil(predicate) {
@@ -156,4 +176,50 @@ async function waitUntil(predicate) {
     await new Promise((resolve) => setTimeout(resolve, 5));
   }
   throw new Error("Timed out waiting for condition.");
+}
+
+function createTask(overrides = {}) {
+  const now = "2026-08-01T12:00:00.000Z";
+  return {
+    id: "AH-999",
+    title: "Approval history",
+    description: "Render approval history in the inspector.",
+    repositoryPath: "C:/repo/task",
+    workflow: "implement",
+    priority: "medium",
+    status: "awaiting-spec-approval",
+    currentStage: "specification",
+    completedStages: [],
+    stageRun: 1,
+    stageRunLimit: 3,
+    createdAt: now,
+    updatedAt: now,
+    startedAt: null,
+    completedAt: null,
+    error: null,
+    activeRunKind: null,
+    attemptsByStage: {},
+    models: [{ provider: "openai", model: "GPT-5.4-mini" }],
+    usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2, cost: null },
+    artifacts: [],
+    decisions: [],
+    approvals: [],
+    candidates: [],
+    events: [],
+    ...overrides,
+  };
+}
+
+async function withWorkspace(run) {
+  const vite = await createViteServer({
+    configFile: false,
+    logLevel: "error",
+    server: { middlewareMode: true },
+  });
+  try {
+    const module = await vite.ssrLoadModule("/src/components/RuntimeTaskWorkspace.tsx");
+    return await run(module);
+  } finally {
+    await vite.close();
+  }
 }
