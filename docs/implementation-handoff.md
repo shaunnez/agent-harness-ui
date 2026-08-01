@@ -1,43 +1,45 @@
 # Agent Harness implementation handoff
 
-Updated: 2026-08-01
+Updated: 2026-08-02
 
 ## Delivered cut
 
-This repository now contains two coherent layers:
+The repository now contains both the approved ten-stage interaction prototype and a real local vertical slice that can carry an implementation-mode task through every workflow gate:
 
-1. The approved full-product interaction prototype. It covers the command centre, libraries, agents/skills/settings, all ten workflow stages, parallel implementation slices, candidate assembly, review, mixed tests, repair, final review, and human approval.
-2. A real local investigation slice. It persists tasks and runs four separate GPT-5.4-mini Codex sessions—Triage, Repository Scouts, Decision Brief, and Task Specification—inside a read-only sandbox against a user-selected repository.
+1. Triage, Repository Scouts, Decision Brief, and Task Specification run read-only against a selected repository.
+2. Human decisions are persisted as authoritative context. Specification approval either completes an investigate-only task or starts planning for an implementation task.
+3. Implementation Plan runs read-only and waits for explicit approval.
+4. Implement verifies that the selected Git repository is clean, creates an isolated worktree and harness-owned branch, runs Codex with write access only in that worktree, and commits a versioned integration candidate.
+5. Development Review, Focused Test, and Final Review run read-only against the exact candidate worktree and revision.
+6. A failed review or test retains its evidence and enables a repair agent. Repair creates a new commit/revision and requires development review again.
+7. Human Approval revalidates the clean source checkout, unchanged base SHA, and candidate worktree SHA before performing a fast-forward-only merge.
 
-The real slice is intentionally smaller than the full workflow. It proves the critical product seam: a task created in the UI becomes plan-backed local model work, progresses through visible stages, and leaves durable artifacts that can be inspected from downstream context.
+The current backend intentionally models one implementation session as one candidate. The richer prototype still demonstrates dependency batches, multiple slice worktrees, mixed test drill-down, candidate assembly, and multi-provider work; those remain the next product expansion rather than being falsely represented as real runtime behavior.
 
-## Runtime contract
-
-### Authentication
+## Runtime and authentication contract
 
 - Binary discovery uses `CODEX_BIN` when set, otherwise `where.exe codex` on Windows or `which codex` elsewhere.
-- Readiness uses `codex login status` and reports only availability, authentication state, method, configured model, and the binary path.
-- Agent runs explicitly remove API-key environment variables. They rely on the user's existing Codex ChatGPT session.
-- The selected default is `gpt-5.4-mini` at low reasoning because the installed CLI currently rejects the desktop app's newer configured default and the user's global `xhigh` reasoning setting is too expensive for compact pipeline stages. Override with `AGENT_HARNESS_MODEL` and `AGENT_HARNESS_REASONING`.
+- Readiness uses `codex login status` and reports availability, authentication method, configured model, and binary path.
+- Every agent child removes `OPENAI_API_KEY` and `CODEX_API_KEY`; it relies on the user's existing Codex ChatGPT session.
+- The default is `gpt-5.4-mini` at low reasoning. Override with `AGENT_HARNESS_MODEL` and `AGENT_HARNESS_REASONING`.
+- Prompts are streamed over stdin so accumulated artifacts do not hit the Windows command-line length limit.
+- Investigation, planning, review, test, and final review use the `read-only` Codex sandbox. Implement and repair use `workspace-write` inside the isolated worktree.
+- Read-only runs have a four-minute timeout. Write runs have a ten-minute timeout. All runs retain bounded stdout/stderr and enforce a 2.5 MB evidence-output budget.
 
-### Process boundary
+## Git safety contract
 
-Each stage launches:
+Implementation will not start unless:
 
-```text
-codex exec --json --skip-git-repo-check --sandbox read-only \
-  --model gpt-5.4-mini --cd <selected repository> <stage prompt>
-```
+- the selected directory is inside a Git repository;
+- the source checkout has no tracked or untracked changes;
+- the harness candidate branch does not already exist; and
+- the resolved worktree destination remains below `.data/worktrees/<task>/<candidate>`.
 
-Stdout is parsed as JSONL. Final agent messages become Markdown artifacts; `turn.completed` usage becomes task/artifact token metadata; bounded command/session events become scoped activity. Each process has a four-minute timeout, a 2.5 MB evidence-output budget, bounded retained stdout/stderr, Windows-hidden execution, and an abort signal.
+The Codex implementation prompt prohibits commits, pushes, merges, dependency installation, credential access, and external contact. The harness inspects the resulting status, rejects likely secret files such as `.env`, private keys, and certificate bundles, and then creates the commit itself. A candidate artifact records base/head SHA, branch, file count, diff stat, and a capped patch.
 
-### Safety boundary
+Merge is deliberately narrow: `Approve & fast-forward merge` succeeds only if the original checkout is clean, still at the candidate base SHA, the candidate worktree still matches the reviewed head SHA, and `git merge --ff-only <candidate SHA>` succeeds. Worktrees and branches are retained for inspection; there is no automated cleanup yet.
 
-- The companion binds to `127.0.0.1`, not the LAN.
-- Repository paths must be absolute, readable directories.
-- Real stages are read-only and prompts explicitly prohibit mutation, installs, commits, pushes, destructive commands, or contacting external services.
-- Credentials and OAuth tokens are not read, copied, persisted, or returned by the API.
-- Dollar cost is `null` for plan-backed work; the UI never fabricates a per-task charge.
+Repository hooks and configured Git identity are respected. A hook or missing identity can stop candidate creation and leave the worktree intact for diagnosis.
 
 ## API surface
 
@@ -47,66 +49,67 @@ Stdout is parsed as JSONL. Final agent messages become Markdown artifacts; `turn
 | `GET` | `/api/runtime/status` | Codex/ChatGPT readiness and suggested repository |
 | `GET` | `/api/tasks` | Persisted task list |
 | `POST` | `/api/tasks` | Validate and create a task |
-| `GET` | `/api/tasks/:id` | Full task, artifacts, usage, and activity |
-| `POST` | `/api/tasks/:id/run` | Start or retry the current stage frontier |
-| `POST` | `/api/tasks/:id/cancel` | Abort an in-memory active subprocess |
+| `GET` | `/api/tasks/:id` | Full task, decisions, approvals, candidates, artifacts, usage, and activity |
+| `POST` | `/api/tasks/:id/run` | Start or retry investigation |
+| `POST` | `/api/tasks/:id/cancel` | Abort the active Codex subprocess |
+| `POST` | `/api/tasks/:id/decisions` | Record an authoritative human question/answer pair |
+| `POST` | `/api/tasks/:id/approve-spec` | Approve the specification; complete investigation or start planning |
+| `POST` | `/api/tasks/:id/plan` | Retry a failed planning run |
+| `POST` | `/api/tasks/:id/approve-plan` | Authorize isolated implementation |
+| `POST` | `/api/tasks/:id/implement` | Create a worktree and candidate |
+| `POST` | `/api/tasks/:id/review` | Run candidate-bound development review |
+| `POST` | `/api/tasks/:id/test` | Run candidate-bound focused test agent |
+| `POST` | `/api/tasks/:id/repair` | Create a repaired candidate revision |
+| `POST` | `/api/tasks/:id/final-review` | Run the holdout final review |
+| `POST` | `/api/tasks/:id/approve-merge` | Revalidate and fast-forward merge the exact candidate |
 
-The UI polls an open running task every 1.25 seconds and backs off to five seconds when idle. Polling is sufficient for this cut; Server-Sent Events can replace it when command output needs to feel truly live.
+The API validates action eligibility from persisted task status. A task has one in-memory active run, and retry allowance is counted per stage. The UI polls an open running task every 1.25 seconds and backs off to five seconds when idle.
 
 ## Persistence contract
 
-`.data/tasks.json` holds a deliberately straightforward document:
+`.data/tasks.json` remains a deliberately straightforward local document. In addition to the original task brief, stage state, usage, artifacts, and capped activity, a task now stores:
 
-- monotonically assigned `AH-###` task IDs;
-- task brief, repository, priority, and workflow;
-- status/current/completed stages and retry counter;
-- model list and cumulative token usage;
-- retained Markdown artifacts, including per-stage usage;
-- a capped list of 250 scoped activity records.
+- `attemptsByStage` rather than presenting a global run counter as a stage retry count;
+- `decisions` and `approvals` with timestamps;
+- `candidates` with base/head SHA, branch, repository/worktree paths, lifecycle status, revision number, and revision lineage;
+- artifact-level candidate ID/revision provenance; and
+- `activeRunKind` for interruption recovery.
 
-Writes use a temporary file plus rename and are serialized in-process. A task found in `running` state after restart is marked failed with an explicit interruption event so it can be retried. This is not an immutable ledger and should not become one unless multi-process durability genuinely requires it.
+Writes use a temporary file plus rename and are serialized in-process. Startup adds defaults to older task documents and converts the old `awaiting-approval` state. A task found in `running` state is marked failed with an explicit interruption event. This is intentionally not an immutable temporal ledger.
 
 ## Frontend behavior
 
-- App launch lands on the Command Centre.
-- When real tasks exist, command/task tables show them instead of prototype rows.
-- A real task opens the same approved shell with Tasks highlighted.
-- Completed stages remain green while a separately selected historical stage remains blue.
-- The main canvas shows the selected living artifact; the universal inspector keeps task brief, stage context, execution metadata, and all artifacts visible.
-- Artifact drill-down uses the existing wide read-only viewer.
-- Run activity is collapsed and scoped; artifacts remain the source of truth.
-- The footer reports real token/cached-token usage and `Plan included` for cost.
+- Real tasks use the approved shell and keep Tasks highlighted while drilled in.
+- The global next action is in the stage command bar; duplicate header actions were removed.
+- Completed stages remain green while a selected historical stage remains blue.
+- The universal inspector preserves task brief, viewed/active stage context, model/access/sandbox metadata, decision frontier, current candidate identity, and living artifacts.
+- Human decisions can be recorded inline and are injected into every downstream prompt.
+- Candidate artifacts, failed gate evidence, and repaired revisions remain drillable.
+- The footer reports real tokens/cached tokens and `Plan included`; ChatGPT plan usage does not expose a reliable per-task dollar charge.
+- Queued and gated tasks appear as needing input rather than pretending they are actively running.
 
-## Known limitations
+## Known limitations and next work
 
-- Real execution stops after Task Specification and waits for review. The implementation-stage UI is still prototype data.
-- No interactive Grill answer endpoint exists yet. The current Decision Brief agent settles low-risk assumptions and surfaces consequential questions for human review.
-- One Node process owns run locks. A future multi-process service needs a database lease.
-- The JSON store is appropriate for one local user, not concurrent remote users.
-- There is no repository browser picker yet; the modal accepts an absolute path.
-- The hosted Sites artifact is UI-only because Cloudflare cannot access a local Codex session or filesystem.
-
-## Next vertical slices
-
-1. Add an explicit specification approval and interactive decision-answer contract.
-2. Turn the implementation plan into persisted work packages with dependency batches.
-3. Create isolated Git worktrees and run one Codex implementation session per ready package.
-4. Assemble versioned integration candidates and bind review/test evidence to a commit SHA.
-5. Add deterministic test commands, mixed result drill-down, repair packets, and candidate invalidation.
-6. Add final review and a guarded `Approve & merge` action with target branch/method confirmation.
-7. Replace polling with SSE, then add configurable agent profiles and additional model providers without changing task terminology.
-
-Track these against the repository epic and focused issues. Keep implementation incremental: every slice should leave the UI truthful and runnable even if downstream stages remain preview-only.
+1. The planner produces useful Markdown but not yet a parsed dependency graph or executable work-package records. One Codex implementation session creates one candidate; parallel/ordered slices still need a scheduler and candidate assembly step.
+2. Focused Test is agent-assisted. It is told to run only existing, non-interactive, non-E2E repository checks, but results are not yet normalized into a per-command/per-test list with accordion drill-down.
+3. Gate verdict parsing is conservative but simple: a top-line `PASS` advances; any other response requires repair. Structured output schemas and a code-specific rubric model should replace this.
+4. Repairs update the current candidate branch and retain revision history/artifacts, but the data model does not yet represent a separate immutable candidate object for every revision.
+5. API mutations do not yet use idempotency keys or optimistic revision tokens. Process-local locks prevent duplicate active agents only within one companion process.
+6. No worktree/branch cleanup, rebase, conflict-resolution, repository picker, streamed activity, or PR publishing exists in the product UI.
+7. The JSON store is appropriate for one local user, not concurrent or remote workers.
+8. The hosted Sites artifact is UI-only: a Cloudflare worker cannot access the user's local Codex login, Git checkouts, or filesystem.
+9. The real runtime uses one OpenAI/Codex model today. Agent profiles and additional providers remain represented in the complete prototype but are not wired into task execution.
 
 ## Fast verification record
 
 - `npm run lint`
 - `npm run typecheck`
-- `npm test`
+- `npm test` (10 focused tests at this handoff)
 - `npm run build`
-- `GET /api/runtime/status` returns `authenticated: true`, `authMethod: ChatGPT`, and the configured GPT model on the current machine.
-- Browser smoke: Command Centre → real task → stage workspace → New Task modal at 1440×1000.
+- Real OAuth subprocess smoke through stdin: GPT-5.4-mini returned the requested Markdown and usage without API keys.
+- Real temporary-Git test: create nested ignored worktree, commit candidate, validate SHA, and fast-forward merge.
+- Browser smoke at 1440 x 1000: Command Centre -> queued implementation task -> task workspace -> persisted decision frontier. Zero browser console errors.
 
 ### Live-run calibration note
 
-The first end-to-end Goose Hub investigation used GPT-5.4 with the user's inherited high-context settings. It produced strong `triage.md` and `repository-scout.md` artifacts, but reported 974.8k total tokens (843.3k cached) before the downstream Grill run was manually cancelled. That was too expensive for a compact stage even on a large plan. The shipped defaults were therefore changed to GPT-5.4-mini at low reasoning, prompts now cap repository commands, and the subprocess now enforces a 2.5 MB evidence-output budget. The retained local QA task remains useful for testing completed-stage history, a blocked active frontier, artifact drill-down, and honest usage display; it is not checked into Git.
+The first Goose Hub investigation used GPT-5.4 with inherited high-context settings. It produced strong `triage.md` and `repository-scout.md` artifacts, but reported 974.8k total tokens (843.3k cached) before Grill was manually cancelled. Defaults were changed to GPT-5.4-mini at low reasoning, prompts cap repository commands, and subprocess output is bounded. That retained local task is useful for testing historical artifacts, a blocked frontier, and honest usage display; it is not committed to Git.

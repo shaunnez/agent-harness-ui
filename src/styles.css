@@ -4594,6 +4594,68 @@ small {
   color: var(--muted);
   font-size: 8px;
 }
+.runtime-command-error {
+  grid-column: 1 / -1;
+  color: var(--red);
+  font-size: 8px;
+}
+.runtime-decisions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.runtime-decisions > small {
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.45;
+}
+.runtime-decisions details {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+}
+.runtime-decisions summary {
+  padding: 7px 8px;
+  color: var(--text);
+  font-size: 8px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.runtime-decisions details p {
+  padding: 0 8px 8px;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.5;
+}
+.runtime-decisions form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 3px;
+}
+.runtime-decisions input,
+.runtime-decisions textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: #11110f;
+  color: var(--text);
+  font:
+    8px Inter,
+    sans-serif;
+  line-height: 1.45;
+  resize: vertical;
+}
+.runtime-decisions input {
+  min-height: 29px;
+  padding: 0 8px;
+}
+.runtime-decisions textarea {
+  padding: 7px 8px;
+}
+.runtime-decisions form .button {
+  align-self: flex-start;
+}
 .artifact-viewer > footer > span {
   color: var(--muted);
   font-size: 9px;

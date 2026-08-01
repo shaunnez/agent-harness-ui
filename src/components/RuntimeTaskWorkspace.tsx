@@ -27,11 +27,27 @@ export function RuntimeTaskWorkspace({
   onBack,
   onRun,
   onCancel,
+  onAction,
+  onDecision,
 }: {
   task: RuntimeTask;
   onBack: () => void;
   onRun: () => Promise<void>;
   onCancel: () => Promise<void>;
+  onAction: (
+    action:
+      | "approve-spec"
+      | "approve-plan"
+      | "plan"
+      | "implement"
+      | "repair"
+      | "review"
+      | "test"
+      | "final-review"
+      | "approve-merge",
+    note?: string,
+  ) => Promise<void>;
+  onDecision: (question: string, answer: string) => Promise<void>;
 }) {
   const currentIndex = Math.max(
     0,
@@ -46,13 +62,12 @@ export function RuntimeTaskWorkspace({
   );
   const viewedStage = workflowStages[viewedIndex];
   if (!viewedStage) throw new Error(`Unknown workflow stage: ${viewedStageId}`);
-  const stageArtifact = task.artifacts.find((artifact) => artifact.stage === viewedStageId);
+  const stageArtifact = [...task.artifacts].reverse().find((artifact) => artifact.stage === viewedStageId);
   const state = toTaskRunState(task.status);
   const viewedStageStopped =
     viewedStageId === task.currentStage && ["failed", "cancelled", "blocked"].includes(task.status);
-  const retryExhausted =
-    task.stageRun >= task.stageRunLimit && ["failed", "cancelled", "blocked"].includes(task.status);
   const repoName = task.repositoryPath.split(/[\\/]/).filter(Boolean).at(-1) ?? task.repositoryPath;
+  const candidate = task.candidates?.at(-1);
 
   const rerun = async () => {
     setRunError(null);
@@ -90,24 +105,11 @@ export function RuntimeTaskWorkspace({
             <strong>{currentIndex + 1} / 10</strong>
           </span>
           <span>
-            <small>Stage run</small>
+            <small>Stage attempts</small>
             <strong>
-              {task.stageRun} / {task.stageRunLimit}
+              {task.attemptsByStage?.[task.currentStage] ?? 0} / {task.stageRunLimit}
             </strong>
           </span>
-        </div>
-        <div className="task-header__actions">
-          {task.status === "running" ? (
-            <Button tone="danger" compact icon={X} onClick={() => void onCancel()}>
-              Cancel run
-            </Button>
-          ) : null}
-          {(task.status === "queued" ||
-            (!retryExhausted && (task.status === "failed" || task.status === "cancelled"))) && (
-            <Button tone="primary" compact icon={Play} onClick={() => void rerun()}>
-              {task.status === "queued" ? "Run" : "Retry stage"}
-            </Button>
-          )}
         </div>
       </header>
 
@@ -154,7 +156,7 @@ export function RuntimeTaskWorkspace({
       <div className="workspace-scroll">
         <div className="workspace-grid">
           <main className="stage-main runtime-stage-main">
-            <RuntimeCommandBar task={task} onRun={rerun} />
+            <RuntimeCommandBar task={task} onRun={rerun} onCancel={onCancel} onAction={onAction} />
             {runError ? (
               <div className="runtime-error" role="alert">
                 {runError}
@@ -170,7 +172,9 @@ export function RuntimeTaskWorkspace({
                     ? "This stage stopped before it produced a handoff. Earlier artifacts remain available and the activity panel preserves the failure context."
                     : viewedIndex > currentIndex
                       ? "This stage is downstream of the current execution frontier."
-                      : "The agent is working on this stage; activity will appear below when the subprocess completes."}
+                      : task.status === "running" && viewedStageId === task.currentStage
+                        ? "The agent is working on this stage; activity will appear below when the subprocess completes."
+                        : "This stage has not started. Its artifact will appear here after the gate runs."}
               </p>
             </header>
 
@@ -225,17 +229,34 @@ export function RuntimeTaskWorkspace({
               <RuntimeRow label="Active" value={workflowStages[currentIndex]?.label ?? "Triage"} />
               <RuntimeRow label="State" value={task.status.replace("-", " ")} />
             </InspectorSection>
+            {candidate ? (
+              <InspectorSection
+                title="Integration candidate"
+                meta={`${candidate.id} r${candidate.revisionNumber}`}
+              >
+                <RuntimeRow label="State" value={candidate.status.replaceAll("_", " ")} />
+                <RuntimeRow label="Base" value={candidate.baseRevision.slice(0, 8)} mono />
+                <RuntimeRow label="Head" value={candidate.headRevision?.slice(0, 8) ?? "pending"} mono />
+                <RuntimeRow label="Branch" value={candidate.branch} mono />
+              </InspectorSection>
+            ) : null}
             <InspectorSection title="Execution metadata">
               <RuntimeRow label="Agent" value={`${viewedStage.label} agent`} />
               <RuntimeRow label="Model" value={task.models[0]?.model ?? "GPT-5.4-mini · ChatGPT plan"} />
               <RuntimeRow label="Access" value="Local OAuth session" />
-              <RuntimeRow label="Sandbox" value="Read-only" />
+              <RuntimeRow
+                label="Sandbox"
+                value={viewedStageId === "implement" ? "Isolated worktree" : "Read-only"}
+              />
               <RuntimeRow label="Repository" value={repoName} mono />
+            </InspectorSection>
+            <InspectorSection title="Decision frontier" meta={`${task.decisions?.length ?? 0} recorded`}>
+              <DecisionFrontier task={task} onDecision={onDecision} />
             </InspectorSection>
             <InspectorSection title="Living artifacts" meta={`${task.artifacts.length} retained`}>
               <div className="runtime-artifact-list">
                 {task.artifacts.length ? (
-                  task.artifacts.map((artifact) => (
+                  [...task.artifacts].reverse().map((artifact) => (
                     <button
                       type="button"
                       key={artifact.id}
@@ -298,14 +319,54 @@ export function RuntimeTaskWorkspace({
   );
 }
 
-function RuntimeCommandBar({ task, onRun }: { task: RuntimeTask; onRun: () => Promise<void> }) {
+function RuntimeCommandBar({
+  task,
+  onRun,
+  onCancel,
+  onAction,
+}: {
+  task: RuntimeTask;
+  onRun: () => Promise<void>;
+  onCancel: () => Promise<void>;
+  onAction: (
+    action:
+      | "approve-spec"
+      | "approve-plan"
+      | "plan"
+      | "implement"
+      | "repair"
+      | "review"
+      | "test"
+      | "final-review"
+      | "approve-merge",
+  ) => Promise<void>;
+}) {
+  const [pending, setPending] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const running = task.status === "running";
+  const currentAttempts = task.attemptsByStage?.[task.currentStage] ?? 0;
   const blocked =
     task.status === "blocked" ||
-    (task.stageRun >= task.stageRunLimit && (task.status === "failed" || task.status === "cancelled"));
+    (currentAttempts >= task.stageRunLimit && (task.status === "failed" || task.status === "cancelled"));
   const failed = !blocked && (task.status === "failed" || task.status === "cancelled");
-  const ready = task.status === "awaiting-approval";
+  const ready =
+    task.status.startsWith("awaiting-") ||
+    task.status.startsWith("ready-for-") ||
+    task.status === "completed";
+  const next = nextAction(task);
   const Icon = running ? CircleNotch : failed || blocked ? WarningCircle : CheckCircle;
+  const invoke = async () => {
+    if (!next?.action) return;
+    setPending(true);
+    setActionError(null);
+    try {
+      await onAction(next.action);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "The action could not be completed.");
+    } finally {
+      setPending(false);
+    }
+  };
   return (
     <section
       className={`stage-command-bar stage-command-bar--${running ? "active" : failed || blocked ? "blocked" : ready ? "ready" : "waiting"}`}
@@ -331,7 +392,7 @@ function RuntimeCommandBar({ task, onRun }: { task: RuntimeTask; onRun: () => Pr
               : failed
                 ? "Retry the failed stage"
                 : ready
-                  ? "Review the investigation before implementation"
+                  ? (next?.title ?? "Workflow gate ready")
                   : "Start the read-only investigation"}
         </strong>
         <span>
@@ -342,21 +403,203 @@ function RuntimeCommandBar({ task, onRun }: { task: RuntimeTask; onRun: () => Pr
               : failed
                 ? task.error
                 : ready
-                  ? "Triage, repository evidence, decisions, and specification are retained below."
+                  ? (next?.detail ?? "The retained workflow evidence is ready for review.")
                   : "Four focused agents will produce durable Markdown handoffs."}
         </span>
       </span>
       <div className="stage-command-bar__actions">
-        {(task.status === "queued" || failed) && (
+        {running ? (
+          <Button tone="danger" compact icon={X} onClick={() => void onCancel()}>
+            Cancel run
+          </Button>
+        ) : null}
+        {(task.status === "queued" ||
+          (failed &&
+            task.currentStage !== "plan" &&
+            !["implement", "dev-review", "test", "final-review"].includes(task.currentStage))) && (
           <Button tone="primary" compact icon={Play} onClick={() => void onRun()}>
             {failed ? "Retry stage" : "Run investigation"}
           </Button>
         )}
-        {ready ? (
-          <span className="runtime-next-cut">Implementation planning is the next vertical slice</span>
+        {(ready || failed) && next?.action ? (
+          <Button tone="primary" compact icon={Play} disabled={pending} onClick={() => void invoke()}>
+            {pending ? "Starting..." : next.label}
+          </Button>
         ) : null}
       </div>
+      {actionError ? <span className="runtime-command-error">{actionError}</span> : null}
     </section>
+  );
+}
+
+function nextAction(task: RuntimeTask) {
+  if (task.status === "awaiting-spec-approval") {
+    return task.workflow === "implement"
+      ? {
+          action: "approve-spec" as const,
+          label: "Approve spec & create plan",
+          title: "Approve the specification",
+          detail: "Approval records this specification and starts a read-only planning agent.",
+        }
+      : {
+          action: "approve-spec" as const,
+          label: "Approve investigation",
+          title: "Approve the investigation handoff",
+          detail: "Approval closes this investigate-only task with the specification retained.",
+        };
+  }
+  if (task.status === "awaiting-plan-approval")
+    return {
+      action: "approve-plan" as const,
+      label: "Approve plan",
+      title: "Approve the dependency-ordered plan",
+      detail: "No repository changes happen until the approved plan is explicitly started.",
+    };
+  if (task.status === "ready-for-implementation")
+    return {
+      action: "implement" as const,
+      label: "Start isolated implementation",
+      title: "Create an isolated implementation candidate",
+      detail:
+        "The harness verifies a clean repository, creates a Git worktree, and gives Codex write access only there.",
+    };
+  if (task.status === "ready-for-review")
+    return {
+      action: "review" as const,
+      label: "Run development review",
+      title: "Review the exact candidate revision",
+      detail: "The reviewer is bound to the candidate commit and cannot modify it.",
+    };
+  if (task.status === "ready-for-test")
+    return {
+      action: "test" as const,
+      label: "Run focused tests",
+      title: "Test the reviewed candidate",
+      detail:
+        "The test agent runs focused repository-defined checks without installing dependencies or running end-to-end suites.",
+    };
+  if (task.status === "ready-for-final-review")
+    return {
+      action: "final-review" as const,
+      label: "Run final review",
+      title: "Run the holdout final review",
+      detail: "This gate summarizes every retained artifact against the approved acceptance criteria.",
+    };
+  if (task.status === "awaiting-human-approval")
+    return {
+      action: "approve-merge" as const,
+      label: "Approve & fast-forward merge",
+      title: "Human merge approval required",
+      detail:
+        "The harness will merge only if the source branch is clean, unchanged, and can fast-forward to the reviewed commit.",
+    };
+  if (task.status === "completed")
+    return {
+      action: null,
+      label: "Completed",
+      title: task.workflow === "implement" ? "Candidate merged" : "Investigation approved",
+      detail: "The durable task evidence remains available from every completed stage.",
+    };
+  if (task.status === "failed") {
+    if (task.candidates?.at(-1)?.status === "repair_required") {
+      return {
+        action: "repair" as const,
+        label: "Retry repair",
+        title: "Retry the candidate repair",
+        detail:
+          task.error ?? "The failed repair attempt left the last committed candidate revision unchanged.",
+      };
+    }
+    const actions: Partial<Record<StageId, "plan" | "implement" | "review" | "test" | "final-review">> = {
+      plan: "plan",
+      implement: "implement",
+      "dev-review": "review",
+      test: "test",
+      "final-review": "final-review",
+    };
+    const action = actions[task.currentStage];
+    if (action)
+      return {
+        action,
+        label: `Retry ${workflowStages.find((stage) => stage.id === task.currentStage)?.shortLabel ?? "stage"}`,
+        title: "Retry the failed stage",
+        detail: task.error ?? "The prior attempt failed; retained evidence will remain available.",
+      };
+  }
+  if (task.status === "repair-required")
+    return {
+      action: "repair" as const,
+      label: "Repair candidate",
+      title: "Candidate repair required",
+      detail:
+        "The repair agent works in the same isolated worktree, creates a new candidate revision, and sends it through review again.",
+    };
+  return null;
+}
+
+function DecisionFrontier({
+  task,
+  onDecision,
+}: {
+  task: RuntimeTask;
+  onDecision: (question: string, answer: string) => Promise<void>;
+}) {
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="runtime-decisions">
+      {task.decisions?.length ? (
+        task.decisions.map((decision) => (
+          <details key={decision.id}>
+            <summary>{decision.question}</summary>
+            <p>{decision.answer}</p>
+          </details>
+        ))
+      ) : (
+        <small>
+          No human decisions recorded. Recommended assumptions remain visible in the decision brief.
+        </small>
+      )}
+      {!task.status.startsWith("running") &&
+      !["completed", "awaiting-human-approval"].includes(task.status) ? (
+        <form
+          onSubmit={async (event) => {
+            event.preventDefault();
+            setPending(true);
+            setError(null);
+            try {
+              await onDecision(question, answer);
+              setQuestion("");
+              setAnswer("");
+            } catch (reason) {
+              setError(reason instanceof Error ? reason.message : "Decision could not be saved.");
+            } finally {
+              setPending(false);
+            }
+          }}
+        >
+          <input
+            aria-label="Decision question"
+            placeholder="Decision or constraint"
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+          />
+          <textarea
+            aria-label="Decision answer"
+            placeholder="Authoritative answer"
+            rows={2}
+            value={answer}
+            onChange={(event) => setAnswer(event.target.value)}
+          />
+          <Button tone="ghost" compact type="submit" disabled={pending || !question.trim() || !answer.trim()}>
+            {pending ? "Saving..." : "Record decision"}
+          </Button>
+          {error ? <small className="text-red">{error}</small> : null}
+        </form>
+      ) : null}
+    </div>
   );
 }
 
@@ -473,5 +716,6 @@ function RuntimeArtifactViewer({ artifact, onClose }: { artifact: RuntimeArtifac
 function toTaskRunState(status: RuntimeTask["status"]): TaskRunState {
   if (status === "queued") return "paused";
   if (status === "cancelled" || status === "blocked") return "blocked";
-  return status;
+  if (status === "running" || status === "failed" || status === "completed") return status;
+  return "needs-input";
 }

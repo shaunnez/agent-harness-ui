@@ -80,7 +80,14 @@ export type RuntimeTaskStatus =
   | "failed"
   | "blocked"
   | "cancelled"
-  | "awaiting-approval"
+  | "awaiting-spec-approval"
+  | "awaiting-plan-approval"
+  | "ready-for-implementation"
+  | "ready-for-review"
+  | "ready-for-test"
+  | "ready-for-final-review"
+  | "repair-required"
+  | "awaiting-human-approval"
   | "completed";
 
 export interface RuntimeUsage {
@@ -100,6 +107,37 @@ export interface RuntimeArtifact {
   createdAt: string;
   model: string;
   usage: Omit<RuntimeUsage, "cost">;
+  candidateId?: string | null;
+  candidateRevision?: number | null;
+}
+
+export interface RuntimeDecision {
+  id: string;
+  question: string;
+  answer: string;
+  createdAt: string;
+}
+
+export interface RuntimeApproval {
+  id: string;
+  stage: StageId;
+  note: string;
+  createdAt: string;
+}
+
+export interface RuntimeCandidate {
+  id: string;
+  revisionNumber: number;
+  baseRevision: string;
+  baseBranch: string;
+  headRevision: string | null;
+  branch: string;
+  repositoryRoot: string;
+  worktreePath: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  revisions: Array<{ number: number; headRevision: string; reason: string; createdAt: string }>;
 }
 
 export interface RuntimeEvent {
@@ -129,9 +167,14 @@ export interface RuntimeTask {
   startedAt: string | null;
   completedAt: string | null;
   error: string | null;
+  activeRunKind: string | null;
+  attemptsByStage: Partial<Record<StageId, number>>;
   models: Array<{ provider: "openai"; model: string }>;
   usage: RuntimeUsage;
   artifacts: RuntimeArtifact[];
+  decisions: RuntimeDecision[];
+  approvals: RuntimeApproval[];
+  candidates: RuntimeCandidate[];
   events: RuntimeEvent[];
 }
 
@@ -158,9 +201,14 @@ export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
   const status: RecentTask["status"] =
     task.status === "completed"
       ? "Completed"
-      : task.status === "awaiting-approval"
+      : task.status === "queued" ||
+          task.status.startsWith("awaiting-") ||
+          task.status.startsWith("ready-for-")
         ? "Needs input"
-        : task.status === "failed" || task.status === "blocked" || task.status === "cancelled"
+        : task.status === "failed" ||
+            task.status === "blocked" ||
+            task.status === "cancelled" ||
+            task.status === "repair-required"
           ? "Blocked"
           : "Running";
   return {
@@ -169,8 +217,11 @@ export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
     status,
     stage: workflowStages[stageIndex]?.shortLabel ?? "Triage",
     stageIndex,
-    duration: formatRuntimeDuration(task.startedAt, task.completedAt),
-    stageRun: task.stageRun,
+    duration: formatRuntimeDuration(
+      task.startedAt,
+      task.status === "running" ? null : (task.completedAt ?? task.updatedAt),
+    ),
+    stageRun: task.attemptsByStage?.[task.currentStage] ?? 0,
     stageRunLimit: task.stageRunLimit,
     tokens: formatTokenCount(task.usage.totalTokens),
     cost: "Plan",

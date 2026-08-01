@@ -1,16 +1,16 @@
 # Agent Harness
 
-A local-first AI development workflow that turns a task into inspectable, persistent agent work. The approved Evidence Gate prototype is still available across all ten stages; the first real vertical slice now creates tasks and runs Triage, Repository Scouts, Decision Brief, and Task Specification agents against a selected local repository.
+A local-first AI development workflow that turns a task into inspectable, persistent agent work. The approved Evidence Gate prototype is available across all ten stages, and the real local runtime can now carry an implementation task from investigation through an explicitly approved, revision-bound Git candidate.
 
 ## What works now
 
 - Real task creation with title, description, priority, workflow, and an absolute local repository path.
 - GPT-5.4-mini agents launched through the local Codex CLI using the existing ChatGPT login. No API key is requested, stored, or passed to child processes.
-- A read-only four-stage investigation pipeline with persisted state, retry protection, timeouts, bounded output, and retained Markdown artifacts.
-- A live task workspace with viewed-versus-active stages, task/stage/execution context, living artifact drill-down, scoped run activity, token counts, and honest plan-cost treatment.
-- The original complete workflow prototype for implementation slices, integration candidates, review, mixed test results, repair lineage, final review, and human approval.
-
-The real runtime deliberately stops at a specification handoff. Implementation worktrees, candidate assembly, review/test/repair, and merge approval are the next backend slices; the UI for those states is already present.
+- A read-only four-stage investigation pipeline with persisted state, per-stage retry protection, timeouts, bounded output, and retained Markdown artifacts.
+- Persisted human decisions plus explicit specification and implementation-plan approvals.
+- Guarded Git worktree creation, a harness-owned candidate commit, candidate-bound development review, focused test evidence, final review, repair revisions, and a revalidated fast-forward-only human merge action.
+- A live task workspace with viewed-versus-active stages, top-of-stage actions, task/stage/candidate context, living artifact drill-down, scoped run activity, token counts, and honest plan-cost treatment.
+- The original full prototype for the richer multiple-slice, multiple-provider workflow that remains ahead of the single-candidate runtime.
 
 ## Run locally
 
@@ -51,7 +51,8 @@ React/Vite UI :4173
 Node companion :4310
     ├── JSON task store (.data/tasks.json)
     ├── task orchestrator (one active run per task)
-    └── Codex CLI subprocess (OAuth session, read-only sandbox)
+    ├── Codex CLI subprocess (OAuth session; read-only or isolated workspace-write)
+    └── Git worktree manager (.data/worktrees; guarded fast-forward merge)
             ▼
        selected local repository
 ```
@@ -67,6 +68,6 @@ npm test
 npm run build
 ```
 
-The focused test suite covers the JSON store, interrupted-run recovery, Codex JSONL parsing, task API, and Sites fallback worker. Browser smoke artifacts are written to `output/playwright/` and intentionally ignored by Git.
+The focused test suite covers the JSON store, interrupted-run recovery, Codex JSONL parsing, task/API gating, the complete mocked candidate lifecycle including repair, a real temporary Git worktree/commit/merge, and the Sites fallback worker. Browser smoke artifacts are written to `output/playwright/` and intentionally ignored by Git.
 
 See [docs/implementation-handoff.md](docs/implementation-handoff.md) for API/data contracts, safety boundaries, current limitations, and the next build slices. The complete intended workflow remains in [docs/workflow-product-contract.md](docs/workflow-product-contract.md).

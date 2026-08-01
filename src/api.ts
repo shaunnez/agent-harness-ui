@@ -43,3 +43,30 @@ export async function runTask(id: string) {
 export async function cancelTask(id: string) {
   return request<{ cancelled: true }>(`/api/tasks/${encodeURIComponent(id)}/cancel`, { method: "POST" });
 }
+
+export async function recordTaskDecision(id: string, question: string, answer: string) {
+  return request<{ recorded: true }>(`/api/tasks/${encodeURIComponent(id)}/decisions`, {
+    method: "POST",
+    body: JSON.stringify({ question, answer }),
+  });
+}
+
+export async function runTaskAction(
+  id: string,
+  action:
+    | "approve-spec"
+    | "approve-plan"
+    | "plan"
+    | "implement"
+    | "repair"
+    | "review"
+    | "test"
+    | "final-review"
+    | "approve-merge",
+  note = "",
+) {
+  return request<Record<string, boolean>>(`/api/tasks/${encodeURIComponent(id)}/${action}`, {
+    method: "POST",
+    body: JSON.stringify({ note }),
+  });
+}

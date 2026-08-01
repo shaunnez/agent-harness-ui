@@ -78,7 +78,25 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
         return;
       }
 
-      const actionMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/(run|cancel)$/);
+      const decisionMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/decisions$/);
+      if (request.method === "POST" && decisionMatch) {
+        const id = decodeURIComponent(decisionMatch[1]);
+        const task = await store.get(id);
+        if (!task) {
+          send(response, 404, { error: "Task not found." });
+          return;
+        }
+        if (task.status === "running") throw new Error("Wait for the active agent before recording a decision.");
+        const input = await readJson(request);
+        if (!input.question?.trim() || !input.answer?.trim()) throw new Error("Decision question and answer are required.");
+        await orchestrator.recordDecision(id, input);
+        send(response, 201, { recorded: true });
+        return;
+      }
+
+      const actionMatch = url.pathname.match(
+        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|plan|implement|repair|review|test|final-review|approve-merge)$/,
+      );
       if (request.method === "POST" && actionMatch) {
         const id = decodeURIComponent(actionMatch[1]);
         const task = await store.get(id);
@@ -86,17 +104,77 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
           send(response, 404, { error: "Task not found." });
           return;
         }
-        if (actionMatch[2] === "run") {
-          if (task.status === "blocked" || task.stageRun >= task.stageRunLimit) {
-            send(response, 409, { error: "The task has exhausted its stage repair allowance." });
-            return;
-          }
-          const started = orchestrator.start(id);
-          send(response, started ? 202 : 409, started ? { started: true } : { error: "Task is already running." });
+        const action = actionMatch[2];
+        if (action === "cancel") {
+          const cancelled = orchestrator.cancel(id);
+          send(response, cancelled ? 202 : 409, cancelled ? { cancelled: true } : { error: "Task is not running." });
           return;
         }
-        const cancelled = orchestrator.cancel(id);
-        send(response, cancelled ? 202 : 409, cancelled ? { cancelled: true } : { error: "Task is not running." });
+
+        const notes = ["approve-spec", "approve-plan", "approve-merge"].includes(action)
+          ? await readJson(request)
+          : {};
+        if (action === "approve-spec") {
+          const result = await orchestrator.approveSpecification(id, notes.note ?? "");
+          send(response, result.started ? 202 : 200, result);
+          return;
+        }
+        if (action === "approve-plan") {
+          await orchestrator.approvePlan(id, notes.note ?? "");
+          send(response, 200, { approved: true });
+          return;
+        }
+        if (action === "approve-merge") {
+          await orchestrator.approveMerge(id, notes.note ?? "");
+          send(response, 200, { merged: true });
+          return;
+        }
+
+        const runConfiguration = {
+          run: {
+            kind: "investigation",
+            statuses: ["queued", "failed", "cancelled"],
+            stages: ["triage", "scouts", "grill", "specification"],
+          },
+          plan: { kind: "planning", statuses: ["failed", "cancelled"], stages: ["plan"] },
+          implement: {
+            kind: "implementation",
+            statuses: ["ready-for-implementation", "failed", "cancelled"],
+            stages: ["implement"],
+          },
+          repair: {
+            kind: "repair",
+            statuses: ["repair-required", "failed", "cancelled"],
+            stages: ["implement", "dev-review", "test"],
+          },
+          review: { kind: "review", statuses: ["ready-for-review", "failed", "cancelled"], stages: ["dev-review"] },
+          test: { kind: "test", statuses: ["ready-for-test", "failed", "cancelled"], stages: ["test"] },
+          "final-review": {
+            kind: "final-review",
+            statuses: ["ready-for-final-review", "failed", "cancelled"],
+            stages: ["final-review"],
+          },
+        }[action];
+        if (!runConfiguration?.statuses.includes(task.status) || !runConfiguration.stages.includes(task.currentStage)) {
+          send(response, 409, { error: `Task cannot run ${action} while it is ${task.status}.` });
+          return;
+        }
+        const candidate = task.candidates?.at(-1);
+        if (action === "implement" && candidate?.status === "repair_required") {
+          send(response, 409, { error: "Use the repair action to create a new revision of this candidate." });
+          return;
+        }
+        if (action === "repair" && candidate?.status !== "repair_required") {
+          send(response, 409, { error: "The current candidate is not awaiting repair." });
+          return;
+        }
+        const stageAttempts = task.attemptsByStage?.[task.currentStage] ?? 0;
+        if (task.status === "blocked" || stageAttempts >= task.stageRunLimit) {
+          send(response, 409, { error: "The current stage has exhausted its retry allowance." });
+          return;
+        }
+        const started = orchestrator.start(id, runConfiguration.kind);
+        send(response, started ? 202 : 409, started ? { started: true } : { error: "Task is already running." });
         return;
       }
 

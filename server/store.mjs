@@ -57,6 +57,8 @@ export class JsonTaskStore {
         startedAt: null,
         completedAt: null,
         error: null,
+        activeRunKind: null,
+        attemptsByStage: {},
         models: [
           {
             provider: "openai",
@@ -65,6 +67,9 @@ export class JsonTaskStore {
         ],
         usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0, cost: null },
         artifacts: [],
+        decisions: [],
+        approvals: [],
+        candidates: [],
         events: [
           {
             id: crypto.randomUUID(),
@@ -99,6 +104,26 @@ export class JsonTaskStore {
       const now = new Date().toISOString();
       let changed = false;
       for (const task of state.tasks) {
+        for (const [key, fallback] of [
+          ["activeRunKind", null],
+          ["attemptsByStage", {}],
+          ["decisions", []],
+          ["approvals", []],
+          ["candidates", []],
+        ]) {
+          if (task[key] === undefined) {
+            task[key] = clone(fallback);
+            changed = true;
+          }
+        }
+        if (task.status === "awaiting-approval") {
+          task.status = "awaiting-spec-approval";
+          changed = true;
+        }
+        if (!Object.keys(task.attemptsByStage).length && task.stageRun > 0) {
+          task.attemptsByStage[task.currentStage] = task.stageRun;
+          changed = true;
+        }
         if (task.models?.[0]?.model === "Codex CLI · ChatGPT plan") {
           task.models = [{ provider: "openai", model: "GPT-5.4 · ChatGPT plan" }];
           changed = true;
@@ -106,6 +131,7 @@ export class JsonTaskStore {
         if (task.status !== "running") continue;
         changed = true;
         task.status = "failed";
+        task.activeRunKind = null;
         task.error = "The local harness stopped while this task was running. Start it again to retry the stage.";
         task.updatedAt = now;
         task.events.push({

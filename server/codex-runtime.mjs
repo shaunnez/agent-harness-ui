@@ -94,23 +94,33 @@ export function parseCodexEvent(line) {
   return null;
 }
 
-export async function runCodex({ cwd, prompt, signal, timeoutMs = 240_000, onEvent = () => {} }) {
+export async function runCodex({
+  cwd,
+  prompt,
+  signal,
+  timeoutMs = 240_000,
+  sandbox = "read-only",
+  model = DEFAULT_MODEL,
+  reasoning = DEFAULT_REASONING,
+  onEvent = () => {},
+}) {
   const binary = await locateCodex();
   if (!binary) throw new Error("Codex CLI was not found. Install Codex and sign in with ChatGPT first.");
+  if (!["read-only", "workspace-write"].includes(sandbox)) throw new Error(`Unsupported Codex sandbox: ${sandbox}`);
 
   const args = [
     "exec",
     "--json",
     "--skip-git-repo-check",
     "--sandbox",
-    "read-only",
+    sandbox,
     "--model",
-    DEFAULT_MODEL,
+    model,
     "-c",
-    `model_reasoning_effort=\"${DEFAULT_REASONING}\"`,
+    `model_reasoning_effort=\"${reasoning}\"`,
     "--cd",
     cwd,
-    prompt,
+    "-",
   ];
   const childEnv = { ...process.env };
   delete childEnv.OPENAI_API_KEY;
@@ -120,6 +130,7 @@ export async function runCodex({ cwd, prompt, signal, timeoutMs = 240_000, onEve
     timeoutMs,
     signal,
     env: childEnv,
+    input: prompt,
     onStdoutLine(line) {
       const parsed = parseCodexEvent(line);
       if (parsed) onEvent(parsed);
@@ -180,13 +191,15 @@ function runProcess(command, args, options = {}) {
       cwd: options.cwd,
       env: options.env ?? process.env,
       windowsHide: true,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
     });
     let stdout = "";
     let stdoutBytes = 0;
     let stderr = "";
     let pending = "";
     let settled = false;
+
+    if (options.input !== undefined) child.stdin.end(options.input);
 
     const finish = (callback, value) => {
       if (settled) return;

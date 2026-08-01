@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import { cancelTask, createTask, getRuntimeStatus, getTask, listTasks, runTask } from "./api";
+import {
+  cancelTask,
+  createTask,
+  getRuntimeStatus,
+  getTask,
+  listTasks,
+  recordTaskDecision,
+  runTask,
+  runTaskAction,
+} from "./api";
 import { CommandCentre } from "./components/CommandCentre";
 import { AgentsScreen, SettingsScreen, SkillsScreen, TasksScreen } from "./components/LibraryScreens";
 import { NewTaskDialog } from "./components/NewTaskDialog";
@@ -143,6 +152,37 @@ export function App() {
                   status: "cancelled",
                   error: "Codex run cancelled.",
                 });
+              }}
+              onAction={async (action, note) => {
+                await runTaskAction(activeRuntimeTask.id, action, note);
+                const startsAgent = [
+                  "approve-spec",
+                  "plan",
+                  "implement",
+                  "repair",
+                  "review",
+                  "test",
+                  "final-review",
+                ].includes(action);
+                setActiveRuntimeTask({
+                  ...activeRuntimeTask,
+                  status:
+                    action === "approve-spec" && activeRuntimeTask.workflow === "investigate"
+                      ? "completed"
+                      : action === "approve-plan"
+                        ? "ready-for-implementation"
+                        : action === "approve-merge"
+                          ? "completed"
+                          : startsAgent
+                            ? "running"
+                            : activeRuntimeTask.status,
+                  error: null,
+                });
+              }}
+              onDecision={async (question, answer) => {
+                await recordTaskDecision(activeRuntimeTask.id, question, answer);
+                const refreshed = await getTask(activeRuntimeTask.id);
+                setActiveRuntimeTask(refreshed);
               }}
             />
           ) : (

@@ -18,6 +18,10 @@ import {
 } from "../domain";
 import { Button, ModelStack, PriorityBadge, SectionHeader } from "./Primitives";
 
+function isGateStatus(status: RuntimeTask["status"]) {
+  return status.startsWith("awaiting-") || status.startsWith("ready-for-");
+}
+
 export function CommandCentre({
   onOpenTask,
   runtimeTasks,
@@ -31,8 +35,10 @@ export function CommandCentre({
   const activeRuntimeTask = runtimeTasks.find((task) => task.status === "running") ?? runtimeTasks[0];
   const activeTask = activeRuntimeTask ? runtimeTaskToRecentTask(activeRuntimeTask) : recentTasks[0];
   const totalTokens = runtimeTasks.reduce((total, task) => total + task.usage.totalTokens, 0);
-  const attentionTasks = runtimeTasks.filter((task) =>
-    ["failed", "blocked", "cancelled", "awaiting-approval"].includes(task.status),
+  const attentionTasks = runtimeTasks.filter(
+    (task) =>
+      ["failed", "blocked", "cancelled", "repair-required"].includes(task.status) ||
+      isGateStatus(task.status),
   );
 
   return (
@@ -183,9 +189,9 @@ export function CommandCentre({
                   onClick={() => onOpenTask(task.id)}
                 >
                   <span
-                    className={`attention-row__icon ${task.status === "awaiting-approval" ? "attention-row__icon--amber" : ""}`}
+                    className={`attention-row__icon ${isGateStatus(task.status) ? "attention-row__icon--amber" : ""}`}
                   >
-                    {task.status === "awaiting-approval" ? (
+                    {isGateStatus(task.status) ? (
                       <HourglassMedium size={17} />
                     ) : (
                       <Warning size={17} weight="fill" />
@@ -193,8 +199,7 @@ export function CommandCentre({
                   </span>
                   <span>
                     <strong>
-                      {task.id} ·{" "}
-                      {task.status === "awaiting-approval" ? "Artifacts ready" : "Run needs repair"}
+                      {task.id} · {isGateStatus(task.status) ? "Workflow gate ready" : "Run needs repair"}
                     </strong>
                     <small>{task.error ?? "Review the investigation handoff"}</small>
                   </span>
@@ -219,7 +224,9 @@ export function CommandCentre({
                 <Cpu size={16} /> Agent runs
               </span>
               <strong>
-                {runtimeTasks.length ? runtimeTasks.reduce((total, task) => total + task.stageRun, 0) : 18}
+                {runtimeTasks.length
+                  ? runtimeTasks.reduce((total, task) => total + task.artifacts.length, 0)
+                  : 18}
               </strong>
               <small>{runtimeTasks.length ? "Codex · ChatGPT plan" : "12 Codex · 6 Claude"}</small>
             </div>

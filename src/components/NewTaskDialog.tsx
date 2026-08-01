@@ -108,7 +108,9 @@ export function NewTaskDialog({
               spellCheck={false}
             />
           </span>
-          <small>The first slice is read-only: agents may inspect this folder but cannot change it.</small>
+          <small>
+            Investigation is read-only. Approved implementation runs only in an isolated Git worktree.
+          </small>
         </label>
 
         <fieldset className="segmented-field">
@@ -130,12 +132,11 @@ export function NewTaskDialog({
               type="radio"
               name="workflow"
               checked={draft.workflow === "implement"}
-              disabled
               onChange={() => setDraft({ ...draft, workflow: "implement" })}
             />
             <span>
-              <strong>Investigate + Implement · next</strong>
-              <small>Implementation stages remain a design preview</small>
+              <strong>Investigate + implement</strong>
+              <small>Human-gated plan, worktree, review, tests, and merge</small>
             </span>
           </label>
         </fieldset>
