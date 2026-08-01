@@ -3,9 +3,12 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { parseCodexEvent, selectCodexCandidate } from "../server/codex-runtime.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
+import { ApprovalHistorySection, formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
 
 test("parses Codex final messages and usage", () => {
   assert.deepEqual(
@@ -124,6 +127,27 @@ test("cancellation wins when an implementation agent completes after abort", asy
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("renders approvals history in the runtime task inspector", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(ApprovalHistorySection, {
+      approvals: [
+        { id: "A1", stage: "specification", note: "Specification approved.", createdAt: "2026-08-01T10:15:00.000Z" },
+        { id: "A2", stage: "plan", note: "Plan approved.", createdAt: "2026-08-01T10:20:00.000Z" },
+      ],
+    }),
+  );
+
+  assert.match(markup, /Task specification/);
+  assert.match(markup, /Specification approved\./);
+  assert.match(markup, /Plan approved\./);
+  assert.doesNotMatch(markup, /No approvals recorded yet\./);
+});
+
+test("shows the empty approvals state when no approvals exist", () => {
+  const markup = renderToStaticMarkup(React.createElement(ApprovalHistorySection, { approvals: [] }));
+  assert.match(markup, /No approvals recorded yet\./);
 });
 
 async function waitUntil(predicate) {

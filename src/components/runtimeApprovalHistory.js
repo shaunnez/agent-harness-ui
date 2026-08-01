@@ -1,3 +1,5 @@
+import React from "react";
+
 const STAGE_LABELS = {
   triage: "Triage",
   scouts: "Repository scouts",
@@ -21,4 +23,37 @@ export function formatApprovalStage(stage) {
 
 export function formatApprovalTimestamp(createdAt) {
   return new Date(createdAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" });
+}
+
+export function ApprovalHistorySection({ approvals = [] }) {
+  return React.createElement(
+    "div",
+    { className: "runtime-approval-history" },
+    approvals.length
+      ? approvals.map((approval) =>
+          React.createElement(
+            "div",
+            { className: "runtime-approval-row", key: approval.id },
+            React.createElement(
+              "span",
+              { className: "runtime-meta-row" },
+              React.createElement("small", null, "Stage"),
+              React.createElement("strong", null, formatApprovalStage(approval.stage)),
+            ),
+            React.createElement(
+              "span",
+              { className: "runtime-meta-row" },
+              React.createElement("small", null, "Note"),
+              React.createElement("strong", null, approval.note),
+            ),
+            React.createElement(
+              "span",
+              { className: "runtime-meta-row" },
+              React.createElement("small", null, "Timestamp"),
+              React.createElement("strong", { className: "mono" }, formatApprovalTimestamp(approval.createdAt)),
+            ),
+          ),
+        )
+      : React.createElement("small", null, "No approvals recorded yet."),
+  );
 }

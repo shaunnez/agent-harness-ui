@@ -21,7 +21,7 @@ import {
   workflowStages,
 } from "../domain";
 import { Button, PriorityBadge, StateBadge } from "./Primitives";
-import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "./runtimeApprovalHistory.js";
+import { ApprovalHistorySection, getApprovalHistory } from "./runtimeApprovalHistory.js";
 
 export function RuntimeTaskWorkspace({
   task,
@@ -256,7 +256,7 @@ export function RuntimeTaskWorkspace({
               <DecisionFrontier task={task} onDecision={onDecision} />
             </InspectorSection>
             <InspectorSection title="Approvals" meta={`${getApprovalHistory(task.approvals).length} recorded`}>
-              <ApprovalHistory approvals={task.approvals} />
+              <ApprovalHistorySection approvals={task.approvals ?? []} />
             </InspectorSection>
             <InspectorSection title="Living artifacts" meta={`${task.artifacts.length} retained`}>
               <div className="runtime-artifact-list">
@@ -621,25 +621,6 @@ function DecisionFrontier({
           {error ? <small className="text-red">{error}</small> : null}
         </form>
       ) : null}
-    </div>
-  );
-}
-
-function ApprovalHistory({ approvals }: { approvals?: RuntimeTask["approvals"] }) {
-  const history = getApprovalHistory(approvals);
-  return (
-    <div className="runtime-approval-history">
-      {history.length ? (
-        history.map((approval) => (
-          <div className="runtime-approval-row" key={approval.id}>
-            <RuntimeRow label="Stage" value={formatApprovalStage(approval.stage)} />
-            <RuntimeRow label="Note" value={approval.note} />
-            <RuntimeRow label="Timestamp" value={formatApprovalTimestamp(approval.createdAt)} mono />
-          </div>
-        ))
-      ) : (
-        <small>No approvals recorded yet.</small>
-      )}
     </div>
   );
 }
