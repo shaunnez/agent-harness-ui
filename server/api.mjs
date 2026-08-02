@@ -1,10 +1,14 @@
 import { access, stat } from "node:fs/promises";
 import { createServer } from "node:http";
+import { spawn } from "node:child_process";
 import path from "node:path";
+import { GitWorktreeManager } from "./git-worktree.mjs";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
 const RUNTIME_SCHEMA_VERSION = 1;
+const DIFF_CHAR_LIMIT = 300_000;
+const OUTPUT_LIMIT = 512 * 1024;
 
 function send(response, status, value) {
   response.writeHead(status, JSON_HEADERS);
@@ -33,6 +37,7 @@ async function validateRepository(repositoryPath) {
 }
 
 export function createApiServer({ store, orchestrator, suggestedRepository }) {
+  const worktrees = new GitWorktreeManager(process.cwd());
   return createServer(async (request, response) => {
     const url = new URL(request.url, "http://127.0.0.1");
     if (request.method === "OPTIONS") {
@@ -53,6 +58,39 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
       if (request.method === "GET" && url.pathname === "/api/runtime/status") {
         const runtime = await orchestrator.status();
         send(response, 200, { ...runtime, suggestedRepository, runtimeSchemaVersion: RUNTIME_SCHEMA_VERSION });
+        return;
+      }
+      const candidateDiffMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/candidates\/([^/]+)\/diff$/);
+      if (request.method === "GET" && candidateDiffMatch) {
+        const taskId = decodeURIComponent(candidateDiffMatch[1]);
+        const candidateId = decodeURIComponent(candidateDiffMatch[2]);
+        const task = await store.get(taskId);
+        if (!task) {
+          send(response, 404, { error: "Task not found." });
+          return;
+        }
+        const candidate = task.candidates?.find((entry) => entry?.id === candidateId);
+        if (!candidate) {
+          send(response, 404, { error: "Candidate not found." });
+          return;
+        }
+        await worktrees.verifyCandidate(candidate);
+        const diff = await git(candidate.worktreePath, [
+          "diff",
+          "--no-ext-diff",
+          "--unified=3",
+          candidate.baseRevision,
+          candidate.headRevision,
+        ]);
+        const cappedDiff = diff.slice(0, DIFF_CHAR_LIMIT);
+        send(response, 200, {
+          candidateId: candidate.id,
+          revisionNumber: candidate.revisionNumber,
+          headRevision: candidate.headRevision,
+          worktreePath: candidate.worktreePath,
+          diff: cappedDiff,
+          truncated: diff.length > DIFF_CHAR_LIMIT,
+        });
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/tasks") {
@@ -230,5 +268,24 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
     } catch (error) {
       send(response, 400, { error: error.message });
     }
+  });
+}
+
+function git(cwd, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn("git", args, { cwd, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => {
+      stdout = `${stdout}${chunk}`.slice(-OUTPUT_LIMIT);
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr = `${stderr}${chunk}`.slice(-OUTPUT_LIMIT);
+    });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) resolve(stdout);
+      else reject(new Error(stderr.trim() || `git ${args[0]} failed with code ${code ?? 1}.`));
+    });
   });
 }
