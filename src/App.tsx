@@ -19,7 +19,10 @@ import {
 } from "./api";
 import { CommandCentre } from "./components/CommandCentre";
 import { ChangelogModal } from "./components/ChangelogModal";
-import { AgentsScreen, SettingsScreen, SkillsScreen, TasksScreen } from "./components/LibraryScreens";
+import { AgentsScreen } from "./components/AgentsScreen";
+import { TasksScreen } from "./components/LibraryScreens";
+import { SettingsScreen } from "./components/SettingsScreen";
+import { SkillsScreen } from "./components/SkillsScreen";
 import { NewTaskDialog } from "./components/NewTaskDialog";
 import { RuntimeTaskWorkspace } from "./components/RuntimeTaskWorkspace";
 import { Shell } from "./components/Shell";
@@ -29,6 +32,7 @@ import {
   type AgentRoleId,
   type NewTaskDraft,
   type RuntimeEvaluationSummary,
+  type RuntimeSettings,
   type RuntimeStatus,
   type RuntimeTask,
   type StageId,
@@ -186,6 +190,17 @@ export function App() {
     }
   };
 
+  const saveRuntimeSettings = async (
+    settings: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies">,
+  ) => {
+    const saved = await updateRuntimeSettings(settings);
+    const [status, evaluation] = await Promise.all([getRuntimeStatus(), getEvaluationSummary()]);
+    setRuntimeStatus(status);
+    setEvaluationSummary(evaluation);
+    setRuntimeError(null);
+    return saved;
+  };
+
   return (
     <div className={`app-shell ${sidebarCollapsed ? "app-shell--collapsed" : ""}`}>
       <Shell screen={screen} collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed((value) => !value)} onNavigate={navigate} onNewTask={() => setNewTaskOpen(true)} onOpenChangelog={() => setChangelogOpen(true)} runtimeStatus={runtimeStatus} />
@@ -249,6 +264,7 @@ export function App() {
             runtimeStatus={runtimeStatus}
             selectedId={selectedAgentId}
             onSelect={(agentId) => { window.location.hash = agentId ? `#/agents/${agentId}` : screenHash("agents"); }}
+            onSave={saveRuntimeSettings}
           />
         ) : null}
         {!workspaceOpen && screen === "settings" ? (
@@ -256,12 +272,7 @@ export function App() {
             runtimeStatus={runtimeStatus}
             evaluationSummary={evaluationSummary}
             onRefresh={refreshRuntime}
-            onSave={async (settings) => {
-              await updateRuntimeSettings(settings);
-              await refreshRuntime();
-              setEvaluationSummary(await getEvaluationSummary());
-              showToast("success", "Model policy saved. New tasks will use the updated defaults.");
-            }}
+            onSave={saveRuntimeSettings}
             onVerifyPricing={async () => {
               const result = await verifyRuntimePricing();
               await refreshRuntime();
