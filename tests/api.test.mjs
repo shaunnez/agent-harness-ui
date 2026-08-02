@@ -7,6 +7,7 @@ import test from "node:test";
 import { createApiServer } from "../server/api.mjs";
 import { GitWorktreeManager } from "../server/git-worktree.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
+import { parseFocusedTestEvidence } from "../server/structured-output.mjs";
 import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
 import { promisify } from "node:util";
 
@@ -207,6 +208,47 @@ test("exposes approval history in the task payload", async () => {
       { id: "A1", stage: "specification", note: "Specification approved.", createdAt: "2026-08-01T10:15:00.000Z" },
       { id: "A2", stage: "plan", note: "Plan approved.", createdAt: "2026-08-01T10:20:00.000Z" },
     ]);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("returns persisted focused test evidence without dropping the Markdown artifact", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Focused test payload",
+      description: "Return structured test evidence.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-final-review";
+      draft.currentStage = "test";
+      draft.artifacts.push({
+        id: "artifact-1",
+        stage: "test",
+        name: "test-c1-r2.md",
+        kind: "markdown",
+        content:
+          "PASS\n\n<focused-test-evidence>\n{\"candidateId\":\"C1\",\"candidateRevision\":2,\"command\":\"npm.cmd run test:runtime\",\"status\":\"passed\",\"durationMs\":900,\"rows\":[{\"id\":\"row-1\",\"candidateId\":\"C1\",\"candidateRevision\":2,\"command\":\"npm.cmd run test:runtime\",\"status\":\"passed\",\"durationMs\":900,\"title\":\"runtime.test.mjs\",\"artifactReferences\":[{\"name\":\"Markdown test artifact\",\"kind\":\"markdown\",\"path\":\"artifacts/test.md\"}],\"assertions\":[{\"label\":\"workspace renders the test artifact\",\"actual\":\"present\",\"expected\":\"present\"}],\"failureDetails\":null}]}\n</focused-test-evidence>",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        model: "GPT-5.4-mini",
+        usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+        candidateId: "C1",
+        candidateRevision: 2,
+        focusedTest: parseFocusedTestEvidence(
+          "PASS\n\n<focused-test-evidence>\n{\"candidateId\":\"C1\",\"candidateRevision\":2,\"command\":\"npm.cmd run test:runtime\",\"status\":\"passed\",\"durationMs\":900,\"rows\":[{\"id\":\"row-1\",\"candidateId\":\"C1\",\"candidateRevision\":2,\"command\":\"npm.cmd run test:runtime\",\"status\":\"passed\",\"durationMs\":900,\"title\":\"runtime.test.mjs\",\"artifactReferences\":[{\"name\":\"Markdown test artifact\",\"kind\":\"markdown\",\"path\":\"artifacts/test.md\"}],\"assertions\":[{\"label\":\"workspace renders the test artifact\",\"actual\":\"present\",\"expected\":\"present\"}],\"failureDetails\":null}]}\n</focused-test-evidence>",
+        ),
+      });
+    });
+
+    const fetched = await (await fetch(`${origin}/api/tasks/${task.id}`)).json();
+    assert.equal(fetched.task.artifacts[0].kind, "markdown");
+    assert.equal(fetched.task.artifacts[0].focusedTest.candidateId, "C1");
+    assert.equal(fetched.task.artifacts[0].focusedTest.rows[0].candidateRevision, 2);
+    assert.equal(fetched.task.artifacts[0].focusedTest.rows[0].artifactReferences[0].kind, "markdown");
   } finally {
     await cleanup(server, directory);
   }

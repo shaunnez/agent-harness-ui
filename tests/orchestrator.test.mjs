@@ -9,7 +9,7 @@ import { parseFocusedTestEvidence, parseGrillQuestions, parseWorkPackages } from
 
 const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"questions":[{"question":"Compatibility?","whyItMatters":"Changes the public contract.","options":[{"label":"Preserve it","description":"Keep existing clients working.","recommended":true},{"label":"Break it","description":"Allow a clean break.","recommended":false}],"allowCustom":true}]}\n</grill-questions>`;
 const PLAN_OUTPUT = `## Plan summary\n\nTwo independent slices.\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verification":["npm test"]},{"id":"S2","title":"UI","description":"Implement the task UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verification":["npm run typecheck"]}]}\n</work-packages>`;
-const TEST_OUTPUT = `PASS\n\n## Verdict\n\nPASS\n\n<focused-test-evidence>\n{"candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":1240,"rows":[{"id":"row-1","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":1240,"title":"orchestrator.test.mjs","artifactReferences":[{"name":"Markdown test artifact","kind":"markdown","path":"artifacts/test.md"}],"assertions":[{"label":"all packages qualified","actual":"pass","expected":"pass"}],"failureDetails":null},{"id":"row-2","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"failed","durationMs":350,"title":"api.test.mjs","artifactReferences":[{"name":"JUnit report","kind":"junit","path":"artifacts/junit.xml"}],"assertions":[{"label":"failing assertion","actual":"Expected 400, received 201","expected":"Expected 400"}],"failureDetails":"Request accepted invalid priority."}]}\n</focused-test-evidence>`;
+const TEST_OUTPUT = `PASS\n\n## Verdict\n\nPASS\n\n<focused-test-evidence>\n{"candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","startedAt":"2026-08-01T12:00:00.000Z","completedAt":"2026-08-01T12:00:01.240Z","durationMs":1240,"rows":[{"id":"row-1","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":1240,"title":"orchestrator.test.mjs","artifactReferences":[{"name":"Markdown test artifact","kind":"markdown","path":"artifacts/test.md"}],"assertions":[{"label":"all packages qualified","actual":"pass","expected":"pass"}],"failureDetails":null},{"id":"row-2","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"failed","durationMs":350,"title":"api.test.mjs","artifactReferences":[{"name":"JUnit report","kind":"junit","path":"artifacts/junit.xml"}],"assertions":[{"label":"failing assertion","actual":"Expected 400, received 201","expected":"Expected 400"}],"failureDetails":"Request accepted invalid priority."}]}\n</focused-test-evidence>`;
 
 test("parses grounded Grill questions and dependency batches", () => {
   assert.equal(parseGrillQuestions(GRILL_OUTPUT)[0].options[0].recommended, true);
@@ -39,6 +39,10 @@ test("parses focused test evidence with candidate-bound rows", () => {
   assert.equal(evidence.rows[1].status, "failed");
   assert.equal(evidence.rows[1].failureDetails, "Request accepted invalid priority.");
   assert.equal(evidence.rows[1].artifactReferences[0].kind, "junit");
+  assert.equal(evidence.rows[0].candidateId, "C1");
+  assert.equal(evidence.rows[0].candidateRevision, 2);
+  assert.equal(evidence.startedAt, "2026-08-01T12:00:00.000Z");
+  assert.equal(evidence.completedAt, "2026-08-01T12:00:01.240Z");
 });
 
 test("persists structured focused test evidence beside the Markdown artifact", async () => {
@@ -92,6 +96,8 @@ test("persists structured focused test evidence beside the Markdown artifact", a
     assert.equal(saved.artifacts[0].kind, "markdown");
     assert.equal(saved.artifacts[0].focusedTest.rows.length, 2);
     assert.equal(saved.artifacts[0].focusedTest.rows[1].candidateRevision, 2);
+    assert.equal(saved.artifacts[0].focusedTest.rows[0].candidateId, "C1");
+    assert.equal(saved.artifacts[0].focusedTest.command, "npm.cmd run test:orchestrator");
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -366,6 +372,10 @@ test("advances an approved implementation task through a revision-bound candidat
     assert.equal(
       approvalTask.artifacts.find((artifact) => artifact.stage === "test")?.focusedTest?.rows?.[1].status,
       "failed",
+    );
+    assert.equal(
+      approvalTask.artifacts.find((artifact) => artifact.stage === "test")?.focusedTest?.rows?.[1].candidateRevision,
+      2,
     );
     await orchestrator.approveMerge(task.id);
     const complete = await store.get(task.id);

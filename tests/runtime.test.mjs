@@ -476,6 +476,84 @@ test("renders artifact copy affordance and normalizes clipboard outcomes", () =>
   });
 });
 
+test("keeps focused test evidence attached to the persisted Markdown artifact in the runtime workspace", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const markup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task: createTask({
+          status: "ready-for-final-review",
+          currentStage: "test",
+          completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test"],
+          candidates: [
+            {
+              id: "C1",
+              revisionNumber: 2,
+              status: "ready_for_final_review",
+              baseRevision: "a".repeat(40),
+              headRevision: "b".repeat(40),
+              baseBranch: "main",
+              branch: "agent-harness/ah-999-c1",
+              revisions: [],
+            },
+          ],
+          artifacts: [
+            {
+              id: "artifact-1",
+              stage: "test",
+              kind: "markdown",
+              name: "test-c1-r2.md",
+              content:
+                "PASS\n\n<focused-test-evidence>\n{\"candidateId\":\"C1\",\"candidateRevision\":2,\"command\":\"npm.cmd run test:runtime\",\"status\":\"passed\",\"durationMs\":900,\"rows\":[{\"id\":\"row-1\",\"candidateId\":\"C1\",\"candidateRevision\":2,\"command\":\"npm.cmd run test:runtime\",\"status\":\"passed\",\"durationMs\":900,\"title\":\"runtime.test.mjs\",\"artifactReferences\":[{\"name\":\"Markdown test artifact\",\"kind\":\"markdown\",\"path\":\"artifacts/test.md\"}],\"assertions\":[{\"label\":\"workspace renders the test artifact\",\"actual\":\"present\",\"expected\":\"present\"}],\"failureDetails\":null}]}\n</focused-test-evidence>",
+              createdAt: "2026-08-01T12:00:00.000Z",
+              model: "GPT-5.4-mini",
+              usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+              candidateId: "C1",
+              candidateRevision: 2,
+              focusedTest: {
+                candidateId: "C1",
+                candidateRevision: 2,
+                command: "npm.cmd run test:runtime",
+                status: "passed",
+                startedAt: "2026-08-01T12:00:00.000Z",
+                completedAt: "2026-08-01T12:00:00.900Z",
+                durationMs: 900,
+                rows: [
+                  {
+                    id: "row-1",
+                    candidateId: "C1",
+                    candidateRevision: 2,
+                    command: "npm.cmd run test:runtime",
+                    status: "passed",
+                    durationMs: 900,
+                    title: "runtime.test.mjs",
+                    artifactReferences: [
+                      { name: "Markdown test artifact", kind: "markdown", path: "artifacts/test.md" },
+                    ],
+                    assertions: [
+                      { label: "workspace renders the test artifact", actual: "present", expected: "present" },
+                    ],
+                    failureDetails: null,
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+        onGrillAnswer: async () => {},
+        onFinishGrill: async () => {},
+      }),
+    );
+    assert.match(markup, /test-c1-r2\.md/);
+    assert.match(markup, /Viewing/);
+    assert.match(markup, /Run the holdout final review/);
+  });
+});
+
 test("renders dependency batches and package status during implementation", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const markup = renderToStaticMarkup(
