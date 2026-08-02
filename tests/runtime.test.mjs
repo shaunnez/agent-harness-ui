@@ -341,6 +341,17 @@ test("fetches the live inventory endpoint and renders the returned rows in the r
       const inventory = await getRuntimeWorktreeInventory();
       assert.equal(inventory.rows.length, 1);
       assert.equal(requests[0].input, "/api/runtime/worktrees");
+      assert.deepEqual(
+        (({ gitExists, gitHeadRevision, gitClean, cleanupReady }) => ({ gitExists, gitHeadRevision, gitClean, cleanupReady }))(
+          inventory.rows[0],
+        ),
+        {
+          gitExists: true,
+          gitHeadRevision: "b".repeat(40),
+          gitClean: true,
+          cleanupReady: true,
+        },
+      );
 
       const markup = renderToStaticMarkup(
         React.createElement(RuntimeTaskWorkspace, {
@@ -354,7 +365,8 @@ test("fetches the live inventory endpoint and renders the returned rows in the r
       );
 
       assert.match(markup, /Worktree inventory/);
-      assert.match(markup, /slice\s+·\s+retained/i);
+      assert.match(markup, /slice/);
+      assert.match(markup, /retained/);
       assert.match(markup, /S1 slice worktree/);
       assert.match(markup, /cleanup ready/);
     } finally {

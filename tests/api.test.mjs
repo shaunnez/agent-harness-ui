@@ -399,14 +399,14 @@ test("returns a read-only worktree inventory with slice and candidate rows", asy
     assert.equal(sliceRow.workPackageId, "S1");
     assert.equal(sliceRow.currentState, "retained");
     assert.equal(sliceRow.cleanupReady, true);
-    assert.equal(sliceRow.exists, true);
-    assert.equal(sliceRow.clean, true);
+    assert.equal(sliceRow.gitExists, true);
+    assert.equal(sliceRow.gitClean, true);
     assert.equal(candidateRow.label, "candidate");
     assert.equal(candidateRow.taskId, candidateTask.id);
     assert.equal(candidateRow.workPackageId, "C1");
     assert.equal(candidateRow.currentState, "retained");
     assert.equal(candidateRow.recordedHeadRevision, candidateCommitted.headRevision);
-    assert.equal(candidateRow.currentHeadRevision, candidateCommitted.headRevision);
+    assert.equal(candidateRow.gitHeadRevision, candidateCommitted.headRevision);
   } finally {
     await cleanup(server, directory);
     await rm(sliceRepository, { recursive: true, force: true });
@@ -451,9 +451,9 @@ test("marks missing or dirty inventory rows as stale without mutating them", asy
     const payload = await response.json();
     const row = payload.rows.find((item) => item.kind === "candidate");
     assert.equal(row.currentState, "stale");
-    assert.equal(row.exists, false);
+    assert.equal(row.gitExists, false);
     assert.equal(row.cleanupReady, false);
-    assert.equal(row.currentHeadRevision, null);
+    assert.equal(row.gitHeadRevision, null);
     assert.equal(row.headRevision, committed.headRevision);
   } finally {
     await cleanup(server, directory);
