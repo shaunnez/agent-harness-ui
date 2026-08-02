@@ -366,6 +366,49 @@ test("renders an open Grill session as active decisions and completed Grill as h
   });
 });
 
+test("renders artifact copy affordance and normalizes clipboard outcomes", () => {
+  return withWorkspace(async ({ RuntimeArtifactViewer, copyArtifactContent }) => {
+    const artifact = {
+      id: "artifact-1",
+      stage: "specification",
+      kind: "markdown",
+      name: "Specification",
+      content: "# Spec\n\nRetained text.",
+      createdAt: "2026-08-01T11:00:00.000Z",
+      model: "GPT-5.4-mini",
+      usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+    };
+    const markup = renderToStaticMarkup(
+      React.createElement(RuntimeArtifactViewer, { artifact, onClose: async () => {} }),
+    );
+    assert.match(markup, /Copy artifact/);
+    assert.match(markup, /Real agent output · read-only/);
+
+    const writes = [];
+    await assert.doesNotReject(
+      copyArtifactContent(artifact.content, {
+        writeText: async (text) => {
+          writes.push(text);
+        },
+      }),
+    );
+    assert.deepEqual(writes, [artifact.content]);
+
+    assert.deepEqual(
+      await copyArtifactContent(artifact.content, {
+        writeText: async () => {
+          throw new Error("blocked");
+        },
+      }),
+      { ok: false, message: "Clipboard access failed. The browser blocked copying this artifact." },
+    );
+    assert.deepEqual(
+      await copyArtifactContent(artifact.content, null),
+      { ok: false, message: "Clipboard access failed. Your browser did not expose clipboard write support." },
+    );
+  });
+});
+
 test("renders dependency batches and package status during implementation", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const markup = renderToStaticMarkup(

@@ -10,7 +10,7 @@ import {
   WarningCircle,
   X,
 } from "@phosphor-icons/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   formatTokenCount,
   type RuntimeArtifact,
@@ -1075,7 +1075,43 @@ function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
   );
 }
 
-function RuntimeArtifactViewer({ artifact, onClose }: { artifact: RuntimeArtifact; onClose: () => void }) {
+export async function copyArtifactContent(
+  content: string,
+  clipboard: Pick<Clipboard, "writeText"> | null | undefined = globalThis.navigator?.clipboard,
+) {
+  if (!clipboard?.writeText) {
+    return { ok: false as const, message: "Clipboard access failed. Your browser did not expose clipboard write support." };
+  }
+  try {
+    await clipboard.writeText(content);
+    return { ok: true as const };
+  } catch {
+    return { ok: false as const, message: "Clipboard access failed. The browser blocked copying this artifact." };
+  }
+}
+
+export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: RuntimeArtifact; onClose: () => void }) {
+  const [copyStatus, setCopyStatus] = useState<"copied" | "error" | null>(null);
+  const [copyError, setCopyError] = useState<string | null>(null);
+  useEffect(() => {
+    setCopyStatus(null);
+    setCopyError(null);
+  }, [artifact.id]);
+  useEffect(() => {
+    if (copyStatus !== "copied") return;
+    const timer = window.setTimeout(() => setCopyStatus(null), 1800);
+    return () => window.clearTimeout(timer);
+  }, [copyStatus]);
+  const handleCopy = async () => {
+    const result = await copyArtifactContent(artifact.content);
+    if (result.ok) {
+      setCopyError(null);
+      setCopyStatus("copied");
+      return;
+    }
+    setCopyStatus("error");
+    setCopyError(result.message);
+  };
   return (
     <div
       className="artifact-overlay"
@@ -1100,13 +1136,20 @@ function RuntimeArtifactViewer({ artifact, onClose }: { artifact: RuntimeArtifac
               <strong>{artifact.name}</strong>
             </span>
           </span>
-          <button type="button" className="icon-button" onClick={onClose} aria-label="Close artifact viewer">
-            <X size={18} />
-          </button>
+          <div className="artifact-viewer__actions">
+            <Button tone="ghost" compact onClick={handleCopy}>
+              Copy artifact
+            </Button>
+            <button type="button" className="icon-button" onClick={onClose} aria-label="Close artifact viewer">
+              <X size={18} />
+            </button>
+          </div>
         </header>
         <div className="artifact-viewer__summary">
           <span>Real agent output · read-only</span>
           <p>Produced by {artifact.model}; retained as the handoff to downstream stages.</p>
+          {copyStatus === "copied" ? <small className="text-green">Copied</small> : null}
+          {copyError ? <small className="text-red">{copyError}</small> : null}
         </div>
         <pre>{artifact.content}</pre>
         <footer>

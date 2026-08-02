@@ -2923,6 +2923,11 @@ small {
     Consolas,
     monospace;
 }
+.artifact-viewer__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .artifact-viewer__summary {
   padding: 13px 16px;
   border-bottom: 1px solid var(--border);
@@ -2938,6 +2943,10 @@ small {
   margin-top: 5px;
   color: var(--muted);
   font-size: 10px;
+}
+.artifact-viewer__summary small {
+  display: block;
+  margin-top: 6px;
 }
 .artifact-viewer > pre {
   min-height: 0;
