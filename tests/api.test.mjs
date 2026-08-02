@@ -403,6 +403,97 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
   }
 });
 
+test("grants one bounded repair attempt when review exhausts the allowance", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Exhausted review repair",
+      description: "Recover a repair-required candidate after the review allowance is exhausted.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimit;
+      draft.candidates.push({ id: "C1", status: "repair_required" });
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200);
+    assert.deepEqual(await grantResponse.json(), { granted: true });
+
+    const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
+    assert.equal(updated.status, "failed");
+    assert.equal(updated.stageRunLimit, 4);
+    assert.equal(updated.attemptsByStage["dev-review"], 3);
+    assert.equal(updated.candidates.at(-1).status, "repair_required");
+    assert.equal(updated.events.at(-1).title, "One repair attempt granted");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("grants one bounded stage attempt to a repaired candidate at an exhausted ready gate", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Exhausted ready gate",
+      description: "Allow a repaired candidate to re-enter review after its prior review allowance was exhausted.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimit;
+      draft.candidates.push({ id: "C1", status: "ready_for_review" });
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200);
+    assert.deepEqual(await grantResponse.json(), { granted: true });
+
+    const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
+    assert.equal(updated.status, "failed");
+    assert.equal(updated.stageRunLimit, 4);
+    assert.equal(updated.candidates.at(-1).status, "ready_for_review");
+    assert.equal(updated.events.at(-1).title, "One stage attempt granted");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("grants a usable slot when a failed repair already exceeded the allowance", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Exceeded repair allowance",
+      description: "Guarantee one usable slot after a failed repair crosses the prior limit.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "failed";
+      draft.currentStage = "implement";
+      draft.attemptsByStage.implement = draft.stageRunLimit + 1;
+      draft.candidates.push({ id: "C1", status: "repair_required" });
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200);
+    const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
+    assert.equal(updated.stageRunLimit, updated.attemptsByStage.implement + 1);
+    assert.equal(updated.status, "failed");
+    assert.equal(updated.events.at(-1).title, "One repair attempt granted");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 for (const [name, payload] of [
   ["rejects invalid workflow values", { workflow: "review" }],
   ["rejects missing workflow values", {}],

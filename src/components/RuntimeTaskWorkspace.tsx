@@ -426,11 +426,16 @@ function RuntimeCommandBar({
   const [actionError, setActionError] = useState<string | null>(null);
   const running = task.status === "running";
   const currentAttempts = task.attemptsByStage?.[task.currentStage] ?? 0;
+  const repairRequired = task.status === "repair-required";
+  const exhaustedReadyGate =
+    currentAttempts >= task.stageRunLimit &&
+    ["ready-for-review", "ready-for-test", "ready-for-final-review"].includes(task.status);
   const blocked =
     task.status === "blocked" ||
-    (currentAttempts >= task.stageRunLimit && (task.status === "failed" || task.status === "cancelled"));
+    exhaustedReadyGate ||
+    (currentAttempts >= task.stageRunLimit &&
+      (task.status === "failed" || task.status === "cancelled" || repairRequired));
   const failed = !blocked && (task.status === "failed" || task.status === "cancelled");
-  const repairRequired = task.status === "repair-required";
   const ready =
     task.status.startsWith("awaiting-") ||
     task.status.startsWith("ready-for-") ||
@@ -545,13 +550,29 @@ function RuntimeCommandBar({
 }
 
 function nextAction(task: RuntimeTask) {
-  if (task.status === "blocked" && task.candidates?.at(-1)?.status === "repair_required")
+  const currentAttempts = task.attemptsByStage?.[task.currentStage] ?? 0;
+  const retryAllowanceExhausted = currentAttempts >= task.stageRunLimit;
+  if (
+    (task.status === "blocked" ||
+      (["repair-required", "failed"].includes(task.status) && retryAllowanceExhausted)) &&
+    task.candidates?.at(-1)?.status === "repair_required"
+  )
     return {
       action: "grant-retry" as const,
       label: "Grant one repair attempt",
       title: "Repair allowance exhausted",
       detail:
         "A human may grant exactly one additional attempt. The retained candidate and every failed review remain unchanged.",
+    };
+  if (
+    retryAllowanceExhausted &&
+    ["ready-for-review", "ready-for-test", "ready-for-final-review"].includes(task.status)
+  )
+    return {
+      action: "grant-retry" as const,
+      label: "Grant one stage attempt",
+      title: "Stage retry allowance exhausted",
+      detail: "A human may grant one additional attempt before this retained candidate enters the next gate.",
     };
   if (task.status === "blocked")
     return {

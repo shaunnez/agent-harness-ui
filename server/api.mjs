@@ -194,12 +194,23 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
         if (action === "grant-retry") {
           const candidate = task.candidates?.at(-1);
           const recoverableImplementation = task.currentStage === "implement";
-          if (task.status !== "blocked" || (candidate?.status !== "repair_required" && !recoverableImplementation)) {
+          const currentAttempts = task.attemptsByStage?.[task.currentStage] ?? 0;
+          const exhaustedRepair =
+            ["repair-required", "failed"].includes(task.status) &&
+            candidate?.status === "repair_required" &&
+            currentAttempts >= task.stageRunLimit;
+          const exhaustedReadyGate =
+            ["ready-for-review", "ready-for-test", "ready-for-final-review"].includes(task.status) &&
+            currentAttempts >= task.stageRunLimit;
+          const blockedRetry =
+            task.status === "blocked" && (candidate?.status === "repair_required" || recoverableImplementation);
+          if (!exhaustedRepair && !exhaustedReadyGate && !blockedRetry) {
             send(response, 409, { error: "A retry can only be granted to a blocked repair or implementation attempt." });
             return;
           }
           await store.update(id, (draft) => {
-            draft.stageRunLimit += 1;
+            const attempts = draft.attemptsByStage?.[draft.currentStage] ?? 0;
+            draft.stageRunLimit = Math.max(draft.stageRunLimit + 1, attempts + 1);
             draft.status = "failed";
             draft.error = null;
             draft.events.push({
@@ -208,7 +219,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
               category: "decision",
               tone: "warning",
               stage: draft.currentStage,
-              title: candidate?.status === "repair_required" ? "One repair attempt granted" : "One implementation attempt granted",
+              title: candidate?.status === "repair_required" ? "One repair attempt granted" : "One stage attempt granted",
               detail: `Human override increased the stage allowance to ${draft.stageRunLimit}.`,
             });
           });
