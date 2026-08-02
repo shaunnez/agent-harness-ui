@@ -1,3 +1,5 @@
+import path from "node:path";
+
 function parseLabelledJson(text, label) {
   const expression = new RegExp(`<${label}>\\s*([\\s\\S]*?)\\s*</${label}>`, "i");
   const match = String(text ?? "").match(expression);
@@ -43,7 +45,7 @@ export function parseGrillQuestions(text) {
   });
 }
 
-export function parseWorkPackages(text) {
+export function parseWorkPackages(text, repositoryPath = null) {
   const value = parseLabelledJson(text, "work-packages");
   if (!Array.isArray(value.packages) || value.packages.length < 1 || value.packages.length > 8) {
     throw new Error("The plan must contain 1-8 work packages.");
@@ -66,7 +68,10 @@ export function parseWorkPackages(text) {
       dependencies: [...new Set(dependencies)],
       batch: 0,
       ownedPaths: Array.isArray(item.ownedPaths)
-        ? item.ownedPaths.map((entry) => String(entry).trim()).filter(Boolean).slice(0, 40)
+        ? item.ownedPaths
+            .map((entry) => normalizeOwnedPath(entry, repositoryPath))
+            .filter(Boolean)
+            .slice(0, 40)
         : [],
       verification: Array.isArray(item.verification)
         ? item.verification.map((entry) => String(entry).trim()).filter(Boolean).slice(0, 20)
@@ -109,6 +114,28 @@ export function parseWorkPackages(text) {
     }
   }
   return packages;
+}
+
+function normalizeOwnedPath(value, repositoryPath) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  let normalized = raw.replaceAll("\\", "/");
+  if (path.isAbsolute(raw)) {
+    if (!repositoryPath) throw new Error(`Owned path must be repository-relative: ${raw}`);
+    const repositoryRoot = path.resolve(repositoryPath);
+    const resolved = path.resolve(raw);
+    const relative = path.relative(repositoryRoot, resolved);
+    if (!relative || relative === ".") throw new Error("A work package cannot own the repository root.");
+    if (relative.startsWith(`..${path.sep}`) || relative === ".." || path.isAbsolute(relative)) {
+      throw new Error(`Owned path is outside the selected repository: ${raw}`);
+    }
+    normalized = relative.replaceAll("\\", "/");
+  }
+  const segments = normalized.split("/").filter(Boolean);
+  if (!segments.length || segments.some((segment) => segment === ".." || segment === ".")) {
+    throw new Error(`Owned path must be a safe repository-relative path: ${raw}`);
+  }
+  return segments.join("/");
 }
 
 function dependsOn(item, targetId, byId, seen = new Set()) {

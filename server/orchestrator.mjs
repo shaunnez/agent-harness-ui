@@ -334,7 +334,7 @@ export class TaskOrchestrator {
     const task = await this.#store.get(id);
     const result = await this.#executeAgent(task, "plan", signal, task.repositoryPath, "read-only");
     throwIfAborted(signal);
-    const workPackages = parseWorkPackages(result.finalText);
+    const workPackages = parseWorkPackages(result.finalText, task.repositoryPath);
     await this.#retainAgentResult(id, "plan", result, { replace: true });
     await this.#store.update(id, (draft) => {
       draft.workPackages = workPackages;

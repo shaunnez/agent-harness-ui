@@ -31,7 +31,7 @@ const STAGE_PROMPTS = {
     label: "Implementation plan",
     artifactName: "implementation-plan.md",
     instruction:
-      "Turn the approved specification and recorded human decisions into a concrete implementation plan. Group work into the smallest coherent work packages that can safely execute in parallel, make dependencies explicit, name owned paths, and give focused verification commands. Independent packages must not own the same path. Do not implement anything.",
+      "Turn the approved specification and recorded human decisions into a concrete implementation plan. Group work into the smallest coherent work packages that can safely execute in parallel, make dependencies explicit, name repository-relative owned paths (never absolute filesystem paths), and give focused verification commands. Independent packages must not own the same path. Do not implement anything.",
     headings: ["Plan summary", "Dependency order", "Implementation slices", "Verification", "Risks and rollback", "Work package manifest"],
   },
   implement: {
