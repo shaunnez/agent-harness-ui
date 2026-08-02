@@ -367,7 +367,7 @@ test("renders an open Grill session as active decisions and completed Grill as h
 });
 
 test("renders artifact copy affordance and normalizes clipboard outcomes", () => {
-  return withWorkspace(async ({ RuntimeArtifactViewer, copyArtifactContent }) => {
+  return withWorkspace(async ({ RuntimeArtifactViewer, copyArtifactContent, shouldApplyArtifactCopyFeedback }) => {
     const artifact = {
       id: "artifact-1",
       stage: "specification",
@@ -406,6 +406,8 @@ test("renders artifact copy affordance and normalizes clipboard outcomes", () =>
       await copyArtifactContent(artifact.content, null),
       { ok: false, message: "Clipboard access failed. Your browser did not expose clipboard write support." },
     );
+    assert.equal(shouldApplyArtifactCopyFeedback("artifact-1", "artifact-1"), true);
+    assert.equal(shouldApplyArtifactCopyFeedback("artifact-1", "artifact-2"), false);
   });
 });
 

@@ -10,7 +10,7 @@ import {
   WarningCircle,
   X,
 } from "@phosphor-icons/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   formatTokenCount,
   type RuntimeArtifact,
@@ -1090,10 +1090,16 @@ export async function copyArtifactContent(
   }
 }
 
+export function shouldApplyArtifactCopyFeedback(requestedArtifactId: string, activeArtifactId: string) {
+  return requestedArtifactId === activeArtifactId;
+}
+
 export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: RuntimeArtifact; onClose: () => void }) {
   const [copyStatus, setCopyStatus] = useState<"copied" | "error" | null>(null);
   const [copyError, setCopyError] = useState<string | null>(null);
+  const activeArtifactIdRef = useRef(artifact.id);
   useEffect(() => {
+    activeArtifactIdRef.current = artifact.id;
     setCopyStatus(null);
     setCopyError(null);
   }, [artifact.id]);
@@ -1103,7 +1109,11 @@ export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: Runtime
     return () => window.clearTimeout(timer);
   }, [copyStatus]);
   const handleCopy = async () => {
+    const requestedArtifactId = artifact.id;
     const result = await copyArtifactContent(artifact.content);
+    if (!shouldApplyArtifactCopyFeedback(requestedArtifactId, activeArtifactIdRef.current)) {
+      return;
+    }
     if (result.ok) {
       setCopyError(null);
       setCopyStatus("copied");
