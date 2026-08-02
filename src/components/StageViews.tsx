@@ -2282,7 +2282,7 @@ function ContextInspector({
   );
 }
 
-function CandidateDiffViewer({
+export function CandidateDiffViewer({
   candidateIdentity,
   diff,
   onClose,
@@ -2340,7 +2340,7 @@ function CandidateDiffViewer({
   );
 }
 
-function CandidateDiffErrorViewer({
+export function CandidateDiffErrorViewer({
   candidateIdentity,
   error,
   onClose,

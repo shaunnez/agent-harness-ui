@@ -226,6 +226,36 @@ test("fetches candidate diffs by active candidate identity and surfaces stale fa
   });
 });
 
+test("renders the candidate diff overlay with the current identity and return control", () => {
+  return withWorkspace(async ({ CandidateDiffViewer }) => {
+    let closed = 0;
+    const markup = renderToStaticMarkup(
+      React.createElement(CandidateDiffViewer, {
+        candidateIdentity: "C1 · deadbeef",
+        taskId: "TASK-1",
+        diff: {
+          candidateId: "C1",
+          revisionNumber: 2,
+          headRevision: "c".repeat(40),
+          worktreePath: "C:/worktrees/C1",
+          diff: "diff --git a/file.txt b/file.txt\n+change",
+          truncated: false,
+        },
+        onClose: () => {
+          closed += 1;
+        },
+      }),
+    );
+
+    assert.match(markup, /Candidate diff/);
+    assert.match(markup, /C1 · deadbeef/);
+    assert.match(markup, /Task TASK-1/);
+    assert.match(markup, /Return to inspector/);
+    assert.match(markup, /Close candidate diff/);
+    assert.equal(closed, 0);
+  });
+});
+
 test("renders truthful active-stage access boundaries", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace, getAccessBoundaryCopy }) => {
     const renderWorkspace = (task) =>
@@ -594,7 +624,8 @@ async function withWorkspace(run) {
   });
   try {
     const module = await vite.ssrLoadModule("/src/components/RuntimeTaskWorkspace.tsx");
-    return await run({ ...module, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
+    const stageViews = await vite.ssrLoadModule("/src/components/StageViews.tsx");
+    return await run({ ...module, ...stageViews, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
   } finally {
     await vite.close();
   }
