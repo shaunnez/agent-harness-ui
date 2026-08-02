@@ -25,6 +25,7 @@ import {
   workflowStages,
 } from "../domain";
 import { Button, SectionHeader } from "./Primitives";
+import { EvaluationScorecard } from "./EvaluationScorecard";
 import { TaskTable } from "./TaskTable";
 
 export function TasksScreen({
@@ -438,13 +439,7 @@ export function SettingsScreen({
         ) : null}
       </section>
       <section className="settings-section">
-        <div className="settings-section__head"><span><h3>Model dogfooding scorecard</h3><p>{evaluationSummary?.methodology ?? "Observational runtime results grouped by exact role, model, and reasoning."} Human quality scores are recorded separately from tokens and cost.</p></span><strong>{evaluationSummary?.evaluatedTasks ?? 0} evaluated tasks</strong></div>
-        <div className="evaluation-table">
-          <div className="evaluation-table__header"><span>Variant</span><span>Runs</span><span>Cache</span><span>Credits</span><span>API est.</span><span>Quality</span></div>
-          {(evaluationSummary?.variants ?? []).slice(0, 20).map((variant) => <div className="evaluation-table__row" key={`${variant.role}:${variant.model}:${variant.reasoning}`}><span><strong>{variant.role}</strong><small>{variant.model} · {variant.reasoning}</small></span><code>{variant.runs}</code><code>{variant.cacheRate == null ? "—" : `${Math.round(variant.cacheRate * 100)}%`}</code><code>{variant.credits == null ? "—" : variant.credits.toFixed(2)}</code><code>{variant.cost == null ? "—" : formatApproximateCost(variant.cost)}</code><code>{variant.averageHumanScore == null ? "Not rated" : `${variant.averageHumanScore.toFixed(1)} / 5`}</code></div>)}
-          {!evaluationSummary?.variants?.length ? <div className="evaluation-table__empty">No observed agent runs yet. The scorecard fills from real retained artifacts; it does not use mock success rates.</div> : null}
-        </div>
-        <p className="settings-section__intro">Recommended experiment: run the same small, medium, and high-risk task suite against Luna XHigh, Luna Max, and Sol High; blind-score the final patch, then compare gate pass rate, repair count, wall time, cache rate, credits, and API-equivalent cost.</p>
+        <EvaluationScorecard summary={evaluationSummary} />
       </section>
       <section className="settings-section">
         <h3>Local environment</h3>

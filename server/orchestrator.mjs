@@ -790,6 +790,7 @@ export class TaskOrchestrator {
       draft.events.push(activity(stageId, `${eventLabel ?? metadata.label} agent started`, `${detail} · ${policy.model} · ${policy.reasoning}`, "info", "agent"));
     });
     const runtimeEvents = [];
+    const startedAt = now();
     const result = await this.#runCodex({
       cwd,
       prompt: agentRequest.prompt,
@@ -803,10 +804,14 @@ export class TaskOrchestrator {
         if (event.type === "activity") runtimeEvents.push(event);
       },
     });
+    const completedAt = now();
     result.model = policy.model;
     result.reasoning = policy.reasoning;
     result.agentRole = policyId;
     result.contextManifest = agentRequest.contextManifest;
+    result.startedAt = startedAt;
+    result.completedAt = completedAt;
+    result.durationMs = Math.max(0, new Date(completedAt).getTime() - new Date(startedAt).getTime());
     result.usage = enrichUsage(
       result.model,
       result.usage,
@@ -841,6 +846,9 @@ export class TaskOrchestrator {
         kind: "markdown",
         content: result.finalText,
         createdAt: now(),
+        startedAt: result.startedAt ?? null,
+        completedAt: result.completedAt ?? null,
+        durationMs: result.durationMs ?? null,
         model: resultModel,
         reasoning: result.reasoning !== undefined ? result.reasoning : fallbackPolicy.reasoning,
         agentRole: options.agentRole ?? result.agentRole ?? stageId,
