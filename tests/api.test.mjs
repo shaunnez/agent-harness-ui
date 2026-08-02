@@ -324,6 +324,143 @@ test("returns the current candidate diff only after verifying the recorded workt
   }
 });
 
+test("returns a read-only worktree inventory with slice and candidate rows", async () => {
+  const { directory, origin, server, store } = await createServer();
+  const sliceRepository = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-inventory-slice-"));
+  const candidateRepository = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-inventory-candidate-"));
+  try {
+    for (const repository of [sliceRepository, candidateRepository]) {
+      await git(repository, ["init"]);
+      await git(repository, ["config", "user.name", "Agent Harness Test"]);
+      await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+      await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+      await git(repository, ["add", "README.md"]);
+      await git(repository, ["commit", "-m", "base"]);
+    }
+
+    const sliceTask = await store.create({
+      title: "Inventory rows",
+      description: "Expose retained harness worktrees.",
+      repositoryPath: sliceRepository,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const sliceManager = new GitWorktreeManager(path.join(sliceRepository, ".data", "worktrees"));
+    const sliceBase = await sliceManager.base(sliceTask);
+    const slice = await sliceManager.prepare(sliceTask, "S1", { baseRevision: sliceBase.baseRevision, branchId: "slice-1" });
+    await writeFile(path.join(slice.worktreePath, "slice.txt"), "slice\n", "utf8");
+    const sliceCommitted = await sliceManager.commit(slice, "slice worktree");
+
+    const candidateTask = await store.create({
+      title: "Inventory candidate",
+      description: "Expose retained candidate worktrees.",
+      repositoryPath: candidateRepository,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const candidateManager = new GitWorktreeManager(path.join(candidateRepository, ".data", "worktrees"));
+    const candidateBase = await candidateManager.base(candidateTask);
+    const candidate = await candidateManager.prepare(candidateTask, "C1", { baseRevision: candidateBase.baseRevision });
+    await writeFile(path.join(candidate.worktreePath, "candidate.txt"), "candidate\n", "utf8");
+    const candidateCommitted = await candidateManager.commit(candidate, "candidate worktree");
+
+    await store.update(sliceTask.id, (draft) => {
+      draft.workPackages.push({
+        id: "S1",
+        batch: 1,
+        title: "Read-only inventory contract",
+        description: "Backend inventory projection.",
+        status: "retained",
+        attempts: 1,
+        dependencies: [],
+        ownedPaths: ["server/git-worktree.mjs", "server/api.mjs", "tests/api.test.mjs"],
+        worktreePath: slice.worktreePath,
+        branch: slice.branch,
+        baseRevision: slice.baseRevision,
+        headRevision: sliceCommitted.headRevision,
+      });
+    });
+    await store.update(candidateTask.id, (draft) => {
+      draft.candidates.push({
+        ...candidate,
+        headRevision: candidateCommitted.headRevision,
+        status: "ready_for_review",
+      });
+    });
+
+    const response = await fetch(`${origin}/api/runtime/worktrees`);
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.rows.length, 2);
+    const sliceRow = payload.rows.find((row) => row.kind === "slice");
+    const candidateRow = payload.rows.find((row) => row.kind === "candidate");
+    assert.equal(sliceRow.label, "slice");
+    assert.equal(sliceRow.taskId, sliceTask.id);
+    assert.equal(sliceRow.workPackageId, "S1");
+    assert.equal(sliceRow.currentState, "retained");
+    assert.equal(sliceRow.cleanupReady, true);
+    assert.equal(sliceRow.exists, true);
+    assert.equal(sliceRow.clean, true);
+    assert.equal(candidateRow.label, "candidate");
+    assert.equal(candidateRow.taskId, candidateTask.id);
+    assert.equal(candidateRow.workPackageId, "C1");
+    assert.equal(candidateRow.currentState, "retained");
+    assert.equal(candidateRow.recordedHeadRevision, candidateCommitted.headRevision);
+    assert.equal(candidateRow.currentHeadRevision, candidateCommitted.headRevision);
+  } finally {
+    await cleanup(server, directory);
+    await rm(sliceRepository, { recursive: true, force: true });
+    await rm(candidateRepository, { recursive: true, force: true });
+  }
+});
+
+test("marks missing or dirty inventory rows as stale without mutating them", async () => {
+  const { directory, origin, server, store } = await createServer();
+  const repository = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-stale-inventory-"));
+  try {
+    await git(repository, ["init"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+
+    const task = await store.create({
+      title: "Stale inventory rows",
+      description: "Surface honest Git state.",
+      repositoryPath: repository,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const manager = new GitWorktreeManager(path.join(repository, ".data", "worktrees"));
+    const base = await manager.base(task);
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+    await writeFile(path.join(candidate.worktreePath, "candidate.txt"), "candidate\n", "utf8");
+    const committed = await manager.commit(candidate, "candidate worktree");
+    await store.update(task.id, (draft) => {
+      draft.candidates.push({
+        ...candidate,
+        headRevision: committed.headRevision,
+        status: "ready_for_review",
+      });
+    });
+    await rm(candidate.worktreePath, { recursive: true, force: true });
+
+    const response = await fetch(`${origin}/api/runtime/worktrees`);
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    const row = payload.rows.find((item) => item.kind === "candidate");
+    assert.equal(row.currentState, "stale");
+    assert.equal(row.exists, false);
+    assert.equal(row.cleanupReady, false);
+    assert.equal(row.currentHeadRevision, null);
+    assert.equal(row.headRevision, committed.headRevision);
+  } finally {
+    await cleanup(server, directory);
+    await rm(repository, { recursive: true, force: true });
+  }
+});
+
 test("rejects stale or mismatched candidate diff requests", async () => {
   const { directory, origin, server, store } = await createServer();
   const repository = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-stale-"));

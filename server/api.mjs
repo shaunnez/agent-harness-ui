@@ -60,6 +60,46 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
         send(response, 200, { ...runtime, suggestedRepository, runtimeSchemaVersion: RUNTIME_SCHEMA_VERSION });
         return;
       }
+      if (request.method === "GET" && url.pathname === "/api/runtime/worktrees") {
+        const tasks = await store.list();
+        const entries = [];
+        for (const task of tasks) {
+          const workPackages = task.workPackages ?? [];
+          for (const workPackage of workPackages) {
+            if (!workPackage?.worktreePath) continue;
+            entries.push({
+              kind: "slice",
+              label: "slice",
+              taskId: task.id,
+              workPackageId: workPackage.id ?? null,
+              worktreePath: workPackage.worktreePath,
+              branch: workPackage.branch ?? null,
+              baseRevision: workPackage.baseRevision ?? null,
+              headRevision: workPackage.headRevision ?? null,
+              recordedHeadRevision: workPackage.headRevision ?? null,
+              lifecycleState: workPackage.status ?? "retained",
+            });
+          }
+          for (const candidate of task.candidates ?? []) {
+            if (!candidate?.worktreePath) continue;
+            entries.push({
+              kind: "candidate",
+              label: "candidate",
+              taskId: task.id,
+              workPackageId: candidate.packageId ?? candidate.id ?? null,
+              worktreePath: candidate.worktreePath,
+              branch: candidate.branch ?? null,
+              baseRevision: candidate.baseRevision ?? null,
+              headRevision: candidate.headRevision ?? null,
+              recordedHeadRevision: candidate.headRevision ?? null,
+              lifecycleState: candidate.status ?? "retained",
+            });
+          }
+        }
+        const rows = await worktrees.inventory(entries);
+        send(response, 200, { rows });
+        return;
+      }
       const candidateDiffMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/candidates\/([^/]+)\/diff$/);
       if (request.method === "GET" && candidateDiffMatch) {
         const taskId = decodeURIComponent(candidateDiffMatch[1]);

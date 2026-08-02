@@ -159,10 +159,69 @@ export class GitWorktreeManager {
     return headRevision;
   }
 
+  async inventory(entries = []) {
+    const rows = [];
+    for (const entry of entries) {
+      rows.push(await this.#inventoryRow(entry));
+    }
+    return rows;
+  }
+
+  async #inventoryRow(entry) {
+    const worktreePath = path.resolve(entry.worktreePath);
+    const exists = await stat(worktreePath)
+      .then((result) => result.isDirectory())
+      .catch(() => false);
+    let headRevision = null;
+    let clean = false;
+    let repositoryRoot = null;
+    if (exists) {
+      try {
+        repositoryRoot = await this.repositoryRoot(worktreePath);
+        headRevision = (await git(repositoryRoot, ["rev-parse", "HEAD"])).stdout.trim();
+        const status = (await git(repositoryRoot, ["status", "--porcelain=v1", "--untracked-files=normal"])).stdout.trim();
+        clean = !status;
+      } catch {
+        clean = false;
+      }
+    }
+    const lifecycleState = normalizeLifecycleState(entry.lifecycleState);
+    const currentState = !exists
+      ? "stale"
+      : lifecycleState === "active" || lifecycleState === "running"
+        ? "active"
+        : lifecycleState === "stale" || lifecycleState === "missing"
+          ? "stale"
+          : "retained";
+    return {
+      kind: entry.kind,
+      taskId: entry.taskId,
+      workPackageId: entry.workPackageId ?? null,
+      label: entry.label,
+      worktreePath,
+      branch: entry.branch ?? null,
+      baseRevision: entry.baseRevision ?? null,
+      headRevision: entry.headRevision ?? null,
+      recordedHeadRevision: entry.recordedHeadRevision ?? entry.headRevision ?? null,
+      exists,
+      currentHeadRevision: headRevision,
+      clean,
+      lifecycleState,
+      currentState,
+      cleanupReady: Boolean(exists && clean && currentState !== "active"),
+    };
+  }
+
   async repositoryRoot(repositoryPath) {
     const result = await git(repositoryPath, ["rev-parse", "--show-toplevel"]);
     return path.resolve(result.stdout.trim());
   }
+}
+
+function normalizeLifecycleState(value) {
+  const normalized = String(value ?? "").trim().toLowerCase().replaceAll("_", "-");
+  if (["active", "running", "retained", "stale", "missing", "cleaning", "ready"].includes(normalized)) return normalized;
+  return "retained";
 }
 
 async function assertClean(repositoryRoot) {
