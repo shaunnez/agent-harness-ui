@@ -42,6 +42,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Default new tasks to Luna XHigh for triage, selected scouts, Grill, specification, implementation, and test. Use Sol High for planning, repair, development review, and final review. Keep Luna Max available for controlled dogfood comparisons rather than silently making it the default.
 - Use the Goose scout taxonomy: code path, dependency, pattern, schema, test inventory, and user journey. Dispatch only the evidence needed for the task (normally one low-risk, up to two medium-risk, and up to three high-risk scouts), retain the selected/skipped set, and pass a compact deterministic synthesis downstream.
 - Evaluate model variants on repeated task suites using observed quality, gate pass rate, repair count, wall time, tokens, cache rate, work credits, and API-equivalent cost. Never infer quality from cost or completion alone.
+- Keep production source files below roughly 500 lines where practical. Extract cohesive components and contracts instead of cosmetically splitting files, and remove legacy prototype paths only after proving they are unreachable through imports, routes, builds, and tests.
 
 ## Current implementation boundary
 
