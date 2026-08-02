@@ -134,6 +134,121 @@ test("creates, lists, and starts a local task", async () => {
   }
 });
 
+test("snapshots controlled experiment inputs and reports measured outcomes separately", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    await git(directory, ["init"]);
+    await git(directory, ["config", "user.name", "Agent Harness Test"]);
+    await git(directory, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(directory, "README.md"), "experiment base\n", "utf8");
+    await git(directory, ["add", "README.md"]);
+    await git(directory, ["commit", "-m", "experiment base"]);
+    const baseSha = (await git(directory, ["rev-parse", "HEAD"])).stdout.trim();
+
+    const createResponse = await createTask(origin, {
+      title: "Frozen experiment case",
+      description: "Compare the same task brief under an explicit policy variant.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+      experiment: {
+        groupId: "overnight-2026-08-03",
+        variantId: "opaque-a",
+        frozenBaseSha: baseSha,
+        acceptanceCriteria: ["The result preserves the runtime contract."],
+        verificationCommands: ["npm test"],
+      },
+    });
+    assert.equal(createResponse.status, 201);
+    const { task } = await createResponse.json();
+    assert.equal(task.experiment.frozenBaseSha, baseSha);
+    assert.match(task.experiment.taskBriefHash, /^[a-f0-9]{64}$/);
+    assert.deepEqual(task.experiment.policyMatrix, task.agentConfig.stagePolicies);
+
+    await store.update(task.id, (draft) => {
+      draft.startedAt = "2026-08-03T00:00:00.000Z";
+      draft.completedAt = "2026-08-03T00:10:00.000Z";
+      draft.status = "awaiting-human-approval";
+      draft.attemptsByStage["dev-review"] = 2;
+      draft.candidates.push({ revisions: [{ reason: "assembly" }, { reason: "repair" }] });
+      draft.usage = { inputTokens: 100, cachedInputTokens: 40, outputTokens: 20, totalTokens: 120, cost: 0.01, credits: 0.5 };
+      const artifact = (stage, content, id) => ({
+        id,
+        stage,
+        name: `${id}.md`,
+        kind: "markdown",
+        content,
+        createdAt: "2026-08-03T00:01:00.000Z",
+        startedAt: "2026-08-03T00:00:00.000Z",
+        completedAt: "2026-08-03T00:01:00.000Z",
+        durationMs: 60_000,
+        model: "gpt-5.6-sol",
+        reasoning: "high",
+        agentRole: stage,
+        usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 2, totalTokens: 12, cost: 0.001, credits: 0.05 },
+        contextManifest: { promptCharacters: 1_000, estimatedPromptTokens: 250 },
+      });
+      draft.artifacts.push(
+        artifact("dev-review", "REPAIR", "review-1"),
+        artifact("dev-review", "PASS", "review-2"),
+        artifact("test", "PASS", "test-1"),
+      );
+    });
+
+    const humanResponse = await fetch(`${origin}/api/tasks/${task.id}/evaluation`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ score: 4, outcome: "accepted", rubric: { correctness: 5, maintainability: 3 }, notes: "Human review" }),
+    });
+    assert.equal(humanResponse.status, 200);
+    const blindResponse = await fetch(`${origin}/api/tasks/${task.id}/evaluation`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: "blind", score: 5, outcome: "accepted", rubric: { overall: 5 }, notes: "Locked blind review" }),
+    });
+    assert.equal(blindResponse.status, 200);
+
+    const summaryResponse = await fetch(`${origin}/api/evaluations/summary`);
+    assert.equal(summaryResponse.status, 200);
+    const summary = await summaryResponse.json();
+    assert.equal(summary.experiments.taskCount, 1);
+    assert.equal(summary.observations.evaluatedTasks, 0);
+    const variant = summary.experiments.variants[0];
+    assert.equal(variant.sampleCount, 1);
+    assert.equal(variant.firstPassGateSuccesses, 1);
+    assert.equal(variant.firstPassGateSuccessRate, 0.5);
+    assert.equal(variant.eventualGateSuccessRate, 1);
+    assert.equal(variant.repairCount, 1);
+    assert.equal(variant.retryCount, 1);
+    assert.equal(variant.averageWallTimeMs, 600_000);
+    assert.equal(variant.averageHumanScore, 4);
+    assert.equal(variant.averageBlindScore, 5);
+    assert.equal(variant.estimatedContextTokens, 750);
+
+    await writeFile(path.join(directory, "README.md"), "repository moved\n", "utf8");
+    await git(directory, ["add", "README.md"]);
+    await git(directory, ["commit", "-m", "move experiment head"]);
+    const movedResponse = await createTask(origin, {
+      title: "Stale frozen base",
+      description: "Reject a controlled task whose checkout no longer matches its declared base.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+      experiment: {
+        groupId: "overnight-2026-08-03",
+        variantId: "opaque-b",
+        frozenBaseSha: baseSha,
+        acceptanceCriteria: ["Reject a moved base."],
+        verificationCommands: ["npm test"],
+      },
+    });
+    assert.equal(movedResponse.status, 400);
+    assert.match((await movedResponse.json()).error, /checked out at the frozen experiment base/i);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("persists supported task attachments outside the repository", async () => {
   const { directory, origin, server } = await createServer();
   try {

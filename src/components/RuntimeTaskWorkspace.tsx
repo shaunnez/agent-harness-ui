@@ -343,6 +343,15 @@ export function RuntimeTaskWorkspace({
                 </div>
               ) : null}
             </InspectorSection>
+            {task.experiment ? (
+              <InspectorSection title="Controlled experiment" meta={`${task.experiment.groupId} · ${task.experiment.variantId}`}>
+                <RuntimeRow label="Frozen base" value={task.experiment.frozenBaseSha.slice(0, 12)} mono />
+                <RuntimeRow label="Brief hash" value={task.experiment.taskBriefHash.slice(0, 12)} mono />
+                <RuntimeRow label="Policy snapshot" value={`${Object.keys(task.experiment.policyMatrix).length} model-driven roles`} />
+                <RuntimeRow label="Acceptance" value={`${task.experiment.acceptanceCriteria.length} criteria`} />
+                <RuntimeRow label="Verification" value={`${task.experiment.verificationCommands.length} commands`} />
+              </InspectorSection>
+            ) : null}
             <InspectorSection title="Stage context">
               <RuntimeRow label="Viewing" value={`${viewedStage.label}${historical ? " · recorded history" : " · current execution"}`} />
               <RuntimeRow label="Active" value={workflowStages[currentIndex]?.label ?? "Triage"} />
@@ -439,7 +448,7 @@ export function RuntimeTaskWorkspace({
             >
               <ApprovalHistorySection approvals={task.approvals ?? []} />
             </InspectorSection>
-            <InspectorSection title="Outcome evaluation" meta={task.evaluation ? `${task.evaluation.score} / 5` : "Not rated"}>
+            <InspectorSection title="Outcome evaluation" meta={task.evaluation?.scores?.blind?.score ? `Blind ${task.evaluation.scores.blind.score} / 5` : task.evaluation?.score ? `${task.evaluation.score} / 5` : "Not rated"}>
               <TaskEvaluation evaluation={task.evaluation} disabled={task.status === "running"} onEvaluate={onEvaluate} />
             </InspectorSection>
             {worktreeInventory.length ? (

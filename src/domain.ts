@@ -87,6 +87,13 @@ export interface NewTaskDraft {
   priority: "low" | "medium" | "high";
   model?: string;
   reasoning?: string;
+  experiment?: {
+    groupId: string;
+    variantId: string;
+    frozenBaseSha: string;
+    acceptanceCriteria: string[];
+    verificationCommands: string[];
+  } | null;
   attachments?: Array<{ name: string; type: string; size: number; data: string }>;
 }
 
@@ -150,6 +157,9 @@ export interface RuntimeArtifact {
   kind: "markdown";
   content: string;
   createdAt: string;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  durationMs?: number | null;
   model: string;
   reasoning?: string | null;
   agentRole?: string | null;
@@ -315,7 +325,8 @@ export interface RuntimeTask {
   attachments?: Array<{ id: string; name: string; type: string; size: number; path: string }>;
   status: RuntimeTaskStatus;
   closure?: { reason: "not-needed" | "superseded" | "duplicate"; supersededBy: string | null; note: string; closedAt: string } | null;
-  evaluation?: { score: number; outcome: "accepted" | "rejected" | "mixed"; notes: string; suiteId: string | null; caseId: string | null; evaluatedAt: string } | null;
+  evaluation?: RuntimeTaskEvaluation | null;
+  experiment?: RuntimeExperimentSnapshot | null;
   scoutDispatch?: {
     selected: Array<{ name: string; focus: string; reason: string; status: "queued" | "complete" | "failed"; error?: string }>;
     skipped: string[];
@@ -370,6 +381,38 @@ export interface RuntimeStatus {
 export interface RuntimeAgentPolicy {
   model: string;
   reasoning: string;
+}
+
+export interface RuntimeExperimentSnapshot {
+  groupId: string;
+  variantId: string;
+  frozenBaseSha: string;
+  taskBriefHash: string;
+  policyMatrix: Record<string, RuntimeAgentPolicy>;
+  acceptanceCriteria: string[];
+  verificationCommands: string[];
+  createdAt: string;
+}
+
+export interface RuntimeQualityScore {
+  score: number;
+  outcome: "accepted" | "rejected" | "mixed";
+  rubric: Record<string, number>;
+  notes: string;
+  evaluator: string | null;
+  evaluatedAt: string;
+}
+
+export interface RuntimeTaskEvaluation {
+  score?: number;
+  outcome?: "accepted" | "rejected" | "mixed";
+  rubric?: Record<string, number>;
+  notes?: string;
+  evaluator?: string | null;
+  suiteId: string | null;
+  caseId: string | null;
+  evaluatedAt?: string;
+  scores?: Partial<Record<"human" | "blind", RuntimeQualityScore>>;
 }
 
 export interface RuntimeModelPriceBand {
@@ -437,6 +480,48 @@ export interface RuntimeEvaluationSummary {
   methodology: string;
   evaluatedTasks: number;
   variants: RuntimeEvaluationVariant[];
+  observations: {
+    methodology: string;
+    evaluatedTasks: number;
+    variants: RuntimeEvaluationVariant[];
+  };
+  experiments: {
+    methodology: string;
+    taskCount: number;
+    variants: RuntimeExperimentVariant[];
+  };
+}
+
+export interface RuntimeExperimentVariant {
+  groupId: string;
+  variantId: string;
+  frozenBaseSha: string;
+  taskIds: string[];
+  sampleCount: number;
+  taskBriefHashes: string[];
+  policyMatrices: Array<Record<string, RuntimeAgentPolicy>>;
+  acceptanceDefinitions: string[][];
+  verificationDefinitions: string[][];
+  gateAttempts: number;
+  firstPassGateSuccesses: number;
+  firstPassGateSuccessRate: number | null;
+  eventualGateSuccesses: number;
+  eventualGateSuccessRate: number | null;
+  repairCount: number;
+  retryCount: number;
+  wallTimeMs: number | null;
+  averageWallTimeMs: number | null;
+  roleDurations: Record<string, number>;
+  inputTokens: number;
+  cachedInputTokens: number;
+  outputTokens: number;
+  cacheRate: number | null;
+  credits: number | null;
+  apiEstimate: number | null;
+  contextCharacters: number;
+  estimatedContextTokens: number;
+  averageHumanScore: number | null;
+  averageBlindScore: number | null;
 }
 
 export interface RuntimeChangelogCommit {

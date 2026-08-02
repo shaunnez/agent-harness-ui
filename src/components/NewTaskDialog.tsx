@@ -9,6 +9,7 @@ const initialDraft: NewTaskDraft = {
   repositoryPath: "",
   workflow: "investigate",
   priority: "medium",
+  experiment: null,
   attachments: [],
 };
 
@@ -38,6 +39,11 @@ export function NewTaskDialog({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const updateExperiment = (value: Partial<NonNullable<NewTaskDraft["experiment"]>>) => {
+    setDraft((current) => current.experiment
+      ? { ...current, experiment: { ...current.experiment, ...value } }
+      : current);
+  };
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -175,6 +181,50 @@ export function NewTaskDialog({
           <small>Change these defaults in Settings. Individual runs retain the exact policy they used.</small>
         </div>
 
+        <div className="dialog-role-policy">
+          <span>Controlled experiment <small className="wired-field">Optional frozen comparison</small></span>
+          <label>
+            <input
+              type="checkbox"
+              checked={Boolean(draft.experiment)}
+              onChange={(event) => setDraft({
+                ...draft,
+                experiment: event.target.checked
+                  ? { groupId: "", variantId: "", frozenBaseSha: "", acceptanceCriteria: [], verificationCommands: [] }
+                  : null,
+              })}
+            />
+            <strong>Record this task as a controlled variant</strong>
+          </label>
+          <small>Experiment identity, the exact base, task-brief hash, role policies, acceptance criteria, and verification commands are snapshotted on creation.</small>
+        </div>
+
+        {draft.experiment ? (
+          <fieldset className="segmented-field">
+            <legend>Experiment definition <small className="wired-field">Persisted with task</small></legend>
+            <label className="field">
+              <span>Group ID</span>
+              <input value={draft.experiment.groupId} onChange={(event) => updateExperiment({ groupId: event.target.value })} />
+            </label>
+            <label className="field">
+              <span>Variant ID</span>
+              <input value={draft.experiment.variantId} onChange={(event) => updateExperiment({ variantId: event.target.value })} />
+            </label>
+            <label className="field">
+              <span>Frozen base commit SHA</span>
+              <input className="mono" spellCheck={false} value={draft.experiment.frozenBaseSha} onChange={(event) => updateExperiment({ frozenBaseSha: event.target.value })} />
+            </label>
+            <label className="field">
+              <span>Acceptance criteria <small>One per line</small></span>
+              <textarea rows={3} value={draft.experiment.acceptanceCriteria.join("\n")} onChange={(event) => updateExperiment({ acceptanceCriteria: event.target.value.split(/\r?\n/) })} />
+            </label>
+            <label className="field">
+              <span>Verification commands <small>One per line</small></span>
+              <textarea rows={3} className="mono" spellCheck={false} value={draft.experiment.verificationCommands.join("\n")} onChange={(event) => updateExperiment({ verificationCommands: event.target.value.split(/\r?\n/) })} />
+            </label>
+          </fieldset>
+        ) : null}
+
         <div className="field attachment-field">
           <span>Reference artifacts <small className="wired-field">Available to stage agents</small></span>
           <label className="attachment-picker">
@@ -232,7 +282,14 @@ export function NewTaskDialog({
                 !runtimeStatus?.authenticated ||
                 !draft.title.trim() ||
                 !draft.description.trim() ||
-                !draft.repositoryPath.trim()
+                !draft.repositoryPath.trim() ||
+                Boolean(draft.experiment && (
+                  !draft.experiment.groupId.trim() ||
+                  !draft.experiment.variantId.trim() ||
+                  !draft.experiment.frozenBaseSha.trim() ||
+                  !draft.experiment.acceptanceCriteria.some((item) => item.trim()) ||
+                  !draft.experiment.verificationCommands.some((item) => item.trim())
+                ))
               }
             >
               {pending ? "Creating…" : "Start task"}

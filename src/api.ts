@@ -84,10 +84,16 @@ export async function closeTask(id: string, reason: "not-needed" | "superseded" 
   });
 }
 
-export async function evaluateTask(id: string, score: number, outcome: "accepted" | "rejected" | "mixed", notes = "") {
+export async function evaluateTask(
+  id: string,
+  score: number,
+  outcome: "accepted" | "rejected" | "mixed",
+  notes = "",
+  options?: { kind?: "human" | "blind"; rubric?: Record<string, number>; evaluator?: string; suiteId?: string; caseId?: string },
+) {
   return request<{ task: RuntimeTask }>(`/api/tasks/${encodeURIComponent(id)}/evaluation`, {
     method: "POST",
-    body: JSON.stringify({ score, outcome, notes }),
+    body: JSON.stringify({ score, outcome, notes, ...options }),
   });
 }
 

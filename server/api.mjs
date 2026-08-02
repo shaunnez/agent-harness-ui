@@ -2,12 +2,18 @@ import { access, mkdir, stat, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import path from "node:path";
+import {
+  buildEvaluationSummary,
+  hashTaskBrief,
+  normalizeEvaluationInput,
+  normalizeExperimentInput,
+} from "./evaluation.mjs";
 import { GitWorktreeManager } from "./git-worktree.mjs";
 import { normalizeModelId, POLICY_IDS, readCodexModelCatalog } from "./model-catalog.mjs";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
-const RUNTIME_SCHEMA_VERSION = 3;
+const RUNTIME_SCHEMA_VERSION = 4;
 const DIFF_CHAR_LIMIT = 300_000;
 const OUTPUT_LIMIT = 512 * 1024;
 
@@ -260,15 +266,31 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
         const taskPolicies = input.model || input.reasoning
           ? Object.fromEntries(POLICY_IDS.map((policyId) => [policyId, { model: requestedModel, reasoning: requestedReasoning }]))
           : structuredClone(settings.stagePolicies);
+        const repositoryPath = await validateRepository(input.repositoryPath);
+        const priority = ["low", "medium", "high"].includes(input.priority) ? input.priority : "medium";
+        let experiment = null;
+        if (input.experiment != null) {
+          const requestedBase = String(input.experiment.frozenBaseSha ?? "").trim();
+          if (!/^[a-f0-9]{40,64}$/i.test(requestedBase)) throw new Error("Controlled experiments require a full frozen base commit SHA.");
+          const frozenBaseSha = String(await git(repositoryPath, ["rev-parse", "--verify", `${requestedBase}^{commit}`])).trim();
+          const repositoryHead = String(await git(repositoryPath, ["rev-parse", "HEAD"])).trim();
+          if (repositoryHead !== frozenBaseSha) throw new Error("The selected repository must be checked out at the frozen experiment base.");
+          experiment = normalizeExperimentInput(input.experiment, {
+            taskBriefHash: hashTaskBrief({ ...input, priority, attachments }),
+            policyMatrix: taskPolicies,
+            frozenBaseSha,
+          });
+        }
         let task = await store.create({
           title: input.title.trim().slice(0, 300),
           description: input.description.trim().slice(0, 20_000),
-          repositoryPath: await validateRepository(input.repositoryPath),
+          repositoryPath,
           workflow: input.workflow,
-          priority: ["low", "medium", "high"].includes(input.priority) ? input.priority : "medium",
+          priority,
           model: requestedModel,
           reasoning: requestedReasoning,
           stagePolicies: taskPolicies,
+          experiment,
         });
         if (attachments.length) {
           const attachmentRoot = path.join(store.dataDirectory(), "attachments", task.id);
@@ -334,18 +356,8 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
           return;
         }
         const input = await readJson(request);
-        const score = Number(input.score);
-        if (!Number.isInteger(score) || score < 1 || score > 5) throw new Error("Evaluation score must be an integer from 1 to 5.");
-        const evaluatedAt = new Date().toISOString();
         const task = await store.update(id, (draft) => {
-          draft.evaluation = {
-            score,
-            outcome: ["accepted", "rejected", "mixed"].includes(input.outcome) ? input.outcome : "mixed",
-            notes: String(input.notes ?? "").trim().slice(0, 5_000),
-            suiteId: String(input.suiteId ?? "").trim().slice(0, 120) || null,
-            caseId: String(input.caseId ?? "").trim().slice(0, 120) || null,
-            evaluatedAt,
-          };
+          draft.evaluation = normalizeEvaluationInput(input, draft.evaluation);
         });
         send(response, 200, { task });
         return;
@@ -512,76 +524,6 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
       send(response, 400, { error: error.message });
     }
   });
-}
-
-function buildEvaluationSummary(tasks) {
-  const groups = new Map();
-  for (const task of tasks) {
-    for (const artifact of task.artifacts ?? []) {
-      if (!String(artifact.model ?? "").startsWith("gpt-")) continue;
-      const role = artifact.agentRole ?? artifact.stage;
-      const reasoning = artifact.reasoning ?? "not-recorded";
-      const key = `${role}|${artifact.model}|${reasoning}`;
-      const group = groups.get(key) ?? {
-        role,
-        model: artifact.model,
-        reasoning,
-        runs: 0,
-        taskIds: new Set(),
-        inputTokens: 0,
-        cachedInputTokens: 0,
-        outputTokens: 0,
-        cost: 0,
-        credits: 0,
-        pricedRuns: 0,
-        gatePasses: 0,
-        gateRepairs: 0,
-        evaluatedScores: [],
-      };
-      group.runs += 1;
-      group.taskIds.add(task.id);
-      group.inputTokens += artifact.usage?.inputTokens ?? 0;
-      group.cachedInputTokens += artifact.usage?.cachedInputTokens ?? 0;
-      group.outputTokens += artifact.usage?.outputTokens ?? 0;
-      if (artifact.usage?.cost != null) {
-        group.cost += artifact.usage.cost;
-        group.pricedRuns += 1;
-      }
-      if (artifact.usage?.credits != null) group.credits += artifact.usage.credits;
-      if (["dev-review", "test", "final-review"].includes(artifact.stage)) {
-        if (/^\s*PASS\b/i.test(artifact.content ?? "")) group.gatePasses += 1;
-        else group.gateRepairs += 1;
-      }
-      if (task.evaluation?.score) group.evaluatedScores.push(task.evaluation.score);
-      groups.set(key, group);
-    }
-  }
-  const variants = [...groups.values()]
-    .map((group) => ({
-      role: group.role,
-      model: group.model,
-      reasoning: group.reasoning,
-      runs: group.runs,
-      tasks: group.taskIds.size,
-      inputTokens: group.inputTokens,
-      cachedInputTokens: group.cachedInputTokens,
-      outputTokens: group.outputTokens,
-      cacheRate: group.inputTokens ? group.cachedInputTokens / group.inputTokens : null,
-      cost: group.pricedRuns ? Math.round(group.cost * 1_000_000) / 1_000_000 : null,
-      credits: group.credits ? Math.round(group.credits * 1_000_000) / 1_000_000 : null,
-      gatePasses: group.gatePasses,
-      gateRepairs: group.gateRepairs,
-      averageHumanScore: group.evaluatedScores.length
-        ? Math.round((group.evaluatedScores.reduce((total, value) => total + value, 0) / group.evaluatedScores.length) * 100) / 100
-        : null,
-    }))
-    .sort((left, right) => left.role.localeCompare(right.role) || right.runs - left.runs);
-  return {
-    generatedAt: new Date().toISOString(),
-    methodology: "Observational stage-run metrics. Controlled model comparisons still require the same frozen task, repository revision, context policy, and evaluator rubric.",
-    evaluatedTasks: tasks.filter((task) => task.evaluation).length,
-    variants,
-  };
 }
 
 async function listChangelog(repositoryPath, limit) {
