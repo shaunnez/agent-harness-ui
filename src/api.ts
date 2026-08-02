@@ -28,10 +28,10 @@ export async function getRuntimeStatus() {
   return request<RuntimeStatus>("/api/runtime/status");
 }
 
-export async function getCandidateDiff(candidateId: string, headRevision: string) {
+export async function getCandidateDiff(taskId: string, candidateId: string, headRevision: string) {
   const params = new URLSearchParams({ headRevision });
   return request<CandidateDiffResponse>(
-    `/api/runtime/candidates/${encodeURIComponent(candidateId)}/diff?${params.toString()}`,
+    `/api/tasks/${encodeURIComponent(taskId)}/candidates/${encodeURIComponent(candidateId)}/diff?${params.toString()}`,
   );
 }
 

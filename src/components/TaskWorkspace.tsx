@@ -9,12 +9,14 @@ type DemoState = "active" | "grill" | "failed" | "blocked" | "completed";
 
 export function TaskWorkspace({
   initialStage = 5,
+  taskId = "GH-241",
   taskTitle,
   taskDescription,
   taskPriority,
   onBack,
 }: {
   initialStage?: number;
+  taskId?: string;
   taskTitle: string;
   taskDescription: string;
   taskPriority: "low" | "medium" | "high";
@@ -245,6 +247,7 @@ export function TaskWorkspace({
             runState={runState}
             attempts={attempts}
             testResult={testResult}
+            taskId={taskId}
             taskTitle={taskTitle}
             taskDescription={taskDescription}
             selectedEvent={selectedEvent}

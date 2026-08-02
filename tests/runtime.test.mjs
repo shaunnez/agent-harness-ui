@@ -212,14 +212,14 @@ test("fetches candidate diffs by active candidate identity and surfaces stale fa
         );
       };
 
-      const diff = await getCandidateDiff("C1", "c".repeat(40));
+      const diff = await getCandidateDiff("TASK-1", "C1", "c".repeat(40));
       assert.equal(diff.candidateId, "C1");
       assert.equal(diff.headRevision, "c".repeat(40));
-      assert.match(requests[0].input, /\/api\/runtime\/candidates\/C1\/diff\?headRevision=/);
+      assert.match(requests[0].input, /\/api\/tasks\/TASK-1\/candidates\/C1\/diff\?headRevision=/);
       assert.match(requests[0].input, /headRevision=c{40}/);
 
       globalThis.fetch = async () => new Response(JSON.stringify({ error: "stale" }), { status: 409 });
-      await assert.rejects(() => getCandidateDiff("C1", "d".repeat(40)), /stale/);
+      await assert.rejects(() => getCandidateDiff("TASK-1", "C1", "d".repeat(40)), /stale/);
     } finally {
       globalThis.fetch = originalFetch;
     }

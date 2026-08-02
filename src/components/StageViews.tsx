@@ -18,7 +18,7 @@ import {
   X,
   XCircle,
 } from "@phosphor-icons/react";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { getCandidateDiff, type CandidateDiffResponse } from "../api";
 import { acceptanceCriteria, type HarnessEvent, type TaskRunState, workflowStages } from "../domain";
 import { Button, EvidenceState, ProviderTag, SectionHeader } from "./Primitives";
@@ -29,6 +29,7 @@ export interface StageViewProps {
   runState: TaskRunState;
   attempts: number;
   testResult: "running" | "passed" | "failed";
+  taskId: string;
   taskTitle: string;
   taskDescription: string;
   candidateId: string;
@@ -52,6 +53,7 @@ const TaskBriefContext = createContext({
   viewedStageIndex: 0,
   candidateId: "C1",
   candidateSha: "a16f29d",
+  taskId: "",
 });
 
 export function StageView(props: StageViewProps) {
@@ -79,6 +81,7 @@ export function StageView(props: StageViewProps) {
           repairing={props.runState === "repairing"}
           attempts={props.attempts}
           selectedEvent={props.selectedEvent}
+          taskId={props.taskId}
           candidateId={props.candidateId}
           candidateSha={props.candidateSha}
         />
@@ -90,6 +93,7 @@ export function StageView(props: StageViewProps) {
           onAdvance={props.onAdvance}
           attempts={props.attempts}
           selectedEvent={props.selectedEvent}
+          taskId={props.taskId}
           candidateId={props.candidateId}
           candidateSha={props.candidateSha}
         />
@@ -104,6 +108,7 @@ export function StageView(props: StageViewProps) {
           onAdvance={props.onAdvance}
           attempts={props.attempts}
           selectedEvent={props.selectedEvent}
+          taskId={props.taskId}
           candidateId={props.candidateId}
           candidateSha={props.candidateSha}
         />
@@ -115,6 +120,7 @@ export function StageView(props: StageViewProps) {
           state={props.runState}
           onApprove={props.onApprove}
           selectedEvent={props.selectedEvent}
+          taskId={props.taskId}
           candidateId={props.candidateId}
           candidateSha={props.candidateSha}
         />
@@ -129,6 +135,7 @@ export function StageView(props: StageViewProps) {
         viewedStageIndex: props.stageIndex,
         candidateId: props.candidateId,
         candidateSha: props.candidateSha,
+        taskId: props.taskId,
       }}
     >
       {view}
@@ -2140,11 +2147,16 @@ function ContextInspector({
   const model = stageModels[stage] ?? "Deterministic harness";
   const agent = stageAgents[stage] ?? "Orchestration agent";
   const candidateIdentity = `${task.candidateId} · ${task.candidateSha}`;
+  useEffect(() => {
+    setCandidateDiff(null);
+    setCandidateDiffError(null);
+    setCandidateDiffLoading(false);
+  }, [candidateIdentity]);
   const openCandidateDiff = async () => {
     setCandidateDiffLoading(true);
     setCandidateDiffError(null);
     try {
-      const response = await getCandidateDiff(task.candidateId, task.candidateSha);
+      const response = await getCandidateDiff(task.taskId, task.candidateId, task.candidateSha);
       setCandidateDiff(response);
     } catch (error) {
       setCandidateDiff(null);
@@ -2253,6 +2265,7 @@ function ContextInspector({
         <CandidateDiffViewer
           candidateIdentity={candidateIdentity}
           diff={candidateDiff}
+          taskId={task.taskId}
           onClose={() => setCandidateDiff(null)}
         />
       ) : null}
@@ -2260,6 +2273,7 @@ function ContextInspector({
         <CandidateDiffErrorViewer
           candidateIdentity={candidateIdentity}
           error={candidateDiffError}
+          taskId={task.taskId}
           onClose={() => setCandidateDiffError(null)}
           onRetry={openCandidateDiff}
         />
@@ -2272,10 +2286,12 @@ function CandidateDiffViewer({
   candidateIdentity,
   diff,
   onClose,
+  taskId,
 }: {
   candidateIdentity: string;
   diff: CandidateDiffResponse;
   onClose: () => void;
+  taskId: string;
 }) {
   const lines = diff.diff.split("\n");
   return (
@@ -2290,6 +2306,7 @@ function CandidateDiffViewer({
               <strong>{candidateIdentity}</strong>
             </span>
           </span>
+          <code>Task {taskId}</code>
           <button type="button" className="icon-button" onClick={onClose} aria-label="Return to inspector">
             <X size={17} />
           </button>
@@ -2328,11 +2345,13 @@ function CandidateDiffErrorViewer({
   error,
   onClose,
   onRetry,
+  taskId,
 }: {
   candidateIdentity: string;
   error: string;
   onClose: () => void;
   onRetry: () => void;
+  taskId: string;
 }) {
   return (
     <div className="artifact-overlay candidate-diff-overlay" role="dialog" aria-modal="true" aria-label="Candidate diff error">
@@ -2346,6 +2365,7 @@ function CandidateDiffErrorViewer({
               <strong>{candidateIdentity}</strong>
             </span>
           </span>
+          <code>Task {taskId}</code>
           <button type="button" className="icon-button" onClick={onClose} aria-label="Close error viewer">
             <X size={17} />
           </button>
