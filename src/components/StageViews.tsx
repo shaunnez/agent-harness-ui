@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowLeft,
   ArrowRight,
   Browser,
@@ -81,7 +81,6 @@ export function StageView(props: StageViewProps) {
           repairing={props.runState === "repairing"}
           attempts={props.attempts}
           selectedEvent={props.selectedEvent}
-          taskId={props.taskId}
           candidateId={props.candidateId}
           candidateSha={props.candidateSha}
         />
@@ -93,7 +92,6 @@ export function StageView(props: StageViewProps) {
           onAdvance={props.onAdvance}
           attempts={props.attempts}
           selectedEvent={props.selectedEvent}
-          taskId={props.taskId}
           candidateId={props.candidateId}
           candidateSha={props.candidateSha}
         />
@@ -108,7 +106,6 @@ export function StageView(props: StageViewProps) {
           onAdvance={props.onAdvance}
           attempts={props.attempts}
           selectedEvent={props.selectedEvent}
-          taskId={props.taskId}
           candidateId={props.candidateId}
           candidateSha={props.candidateSha}
         />
@@ -120,7 +117,6 @@ export function StageView(props: StageViewProps) {
           state={props.runState}
           onApprove={props.onApprove}
           selectedEvent={props.selectedEvent}
-          taskId={props.taskId}
           candidateId={props.candidateId}
           candidateSha={props.candidateSha}
         />
@@ -192,7 +188,7 @@ function TriageView({ onAdvance, selectedEvent }: Pick<StageViewProps, "onAdvanc
     <>
       <div className="stage-main">
         <SectionHeader
-          eyebrow="Triage · Deterministic classification"
+          eyebrow="Triage Â· Deterministic classification"
           title="Feature work with API surface change"
           description="The harness classifies scope and risk before any agent and model are selected."
         />
@@ -206,10 +202,10 @@ function TriageView({ onAdvance, selectedEvent }: Pick<StageViewProps, "onAdvanc
         </StageCommandBar>
         <div className="structured-list">
           <StructuredRow label="Task type" value="Feature" />
-          <StructuredRow label="Severity" value="S2 · Moderate" tone="amber" />
+          <StructuredRow label="Severity" value="S2 Â· Moderate" tone="amber" />
           <StructuredRow label="Workflow" value="Investigate + Implement" />
-          <StructuredRow label="Affected surfaces" value="Schema · API · UI · Tests" />
-          <StructuredRow label="Risk gates" value="API contract · migration · browser behaviour" />
+          <StructuredRow label="Affected surfaces" value="Schema Â· API Â· UI Â· Tests" />
+          <StructuredRow label="Risk gates" value="API contract Â· migration Â· browser behaviour" />
         </div>
         <div className="rationale-block">
           <strong>Routing rationale</strong>
@@ -257,9 +253,9 @@ function ScoutsView({ onAdvance, selectedEvent }: Pick<StageViewProps, "onAdvanc
     <>
       <div className="stage-main">
         <SectionHeader
-          eyebrow="Repository scouts · 3 parallel scouts"
+          eyebrow="Repository scouts Â· 3 parallel scouts"
           title="Evidence before assumptions"
-          description="142 files inspected · 4 relevant findings · no write access"
+          description="142 files inspected Â· 4 relevant findings Â· no write access"
           action={<ProviderTag provider="codex" model="Codex 1.2 Mini" />}
         />
         <StageCommandBar
@@ -292,7 +288,7 @@ function ScoutsView({ onAdvance, selectedEvent }: Pick<StageViewProps, "onAdvanc
               </button>
               {openFinding === index ? (
                 <div className="finding-evidence">
-                  <span>Scout evidence · read-only</span>
+                  <span>Scout evidence Â· read-only</span>
                   <pre>
                     <code>{finding.snippet}</code>
                   </pre>
@@ -316,7 +312,7 @@ function SpecificationView({
     <>
       <div className="stage-main">
         <SectionHeader
-          eyebrow="Task specification · to-spec · v1"
+          eyebrow="Task specification Â· to-spec Â· v1"
           title="Settled context synthesized into a complete specification"
           description="No second interview: the spec carries Grill decisions, domain language, and repository evidence forward."
         />
@@ -448,11 +444,11 @@ function GrillView({ onComplete, selectedEvent }: { onComplete: () => void; sele
   const questions = [
     {
       question: "Should priority be required in API create requests?",
-      recommended: "No — default to medium",
+      recommended: "No â€” default to medium",
       rationale: "Preserves existing creation behaviour and keeps client integrations simple.",
       choices: [
-        "No — default to medium",
-        "Yes — require explicit value",
+        "No â€” default to medium",
+        "Yes â€” require explicit value",
         "Inherit from project policy",
         "Custom answer",
       ],
@@ -466,13 +462,13 @@ function GrillView({ onComplete, selectedEvent }: { onComplete: () => void; sele
   ];
   const [questionIndex, setQuestionIndex] = useState(0);
   const [choice, setChoice] = useState(questions[0]?.recommended ?? "");
-  const [decisions, setDecisions] = useState(["Values · low / medium / high"]);
+  const [decisions, setDecisions] = useState(["Values Â· low / medium / high"]);
   const question = questions[questionIndex] ?? questions[0];
   if (!question) return null;
   const advanceQuestion = () => {
     const nextDecisions = [
       ...decisions,
-      questionIndex === 0 ? "API create · optional, defaults medium" : "Badge · quiet coloured label",
+      questionIndex === 0 ? "API create Â· optional, defaults medium" : "Badge Â· quiet coloured label",
     ];
     setDecisions(nextDecisions);
     if (questionIndex < questions.length - 1) {
@@ -487,7 +483,7 @@ function GrillView({ onComplete, selectedEvent }: { onComplete: () => void; sele
     <>
       <div className="stage-main grill-main">
         <SectionHeader
-          eyebrow="Grill with docs · One question at a time"
+          eyebrow="Grill with docs Â· One question at a time"
           title={question.question}
           description="The interview keeps going until the decision frontier is clear; it does not promise a fixed question count."
         />
@@ -567,7 +563,7 @@ function GrillView({ onComplete, selectedEvent }: { onComplete: () => void; sele
               <div className="decision-item decision-item--complete" key={decision}>
                 <EvidenceState tone="passed" />
                 <span>
-                  <small>Settled · Q{index + 1}</small>
+                  <small>Settled Â· Q{index + 1}</small>
                   <strong>{decision}</strong>
                 </span>
               </div>
@@ -616,13 +612,13 @@ function PlanView({ onAdvance, selectedEvent }: Pick<StageViewProps, "onAdvance"
       batch: 1,
       title: "Persist priority",
       status: "Ready",
-      files: "src/db/schema.ts · migrations/0042_priority.sql",
+      files: "src/db/schema.ts Â· migrations/0042_priority.sql",
       owner: "Schema agent",
-      model: "Codex 1.2 · High",
+      model: "Codex 1.2 Â· High",
       dependency: "None",
       purpose: "Create the constrained persistence seam without changing existing task creation behavior.",
       change: "Add TaskPriority enum, a non-null priority field, and a medium database default.",
-      produces: "TaskPriority type · priority column",
+      produces: "TaskPriority type Â· priority column",
       consumes: "Existing tasks table",
       verify: "pnpm vitest run tests/db/task-schema.test.ts",
       cost: "$0.12",
@@ -632,14 +628,14 @@ function PlanView({ onAdvance, selectedEvent }: Pick<StageViewProps, "onAdvance"
       batch: 2,
       title: "Expose API contract",
       status: "Blocked",
-      files: "src/api/routes/tasks.ts · src/api/types.ts",
+      files: "src/api/routes/tasks.ts Â· src/api/types.ts",
       owner: "API agent",
-      model: "Codex 1.2 · High",
+      model: "Codex 1.2 Â· High",
       dependency: "S1",
       purpose: "Carry the approved priority contract through create and read APIs.",
       change: "Accept low, medium, or high; default omission; reject invalid values before persistence.",
-      produces: "CreateTaskInput · TaskResponse.priority",
-      consumes: "S1 · TaskPriority type",
+      produces: "CreateTaskInput Â· TaskResponse.priority",
+      consumes: "S1 Â· TaskPriority type",
       verify: "pnpm vitest run tests/api/priority.test.ts",
       cost: "$0.16",
     },
@@ -648,14 +644,14 @@ function PlanView({ onAdvance, selectedEvent }: Pick<StageViewProps, "onAdvance"
       batch: 2,
       title: "Render priority badge",
       status: "Blocked",
-      files: "src/ui/PriorityBadge.tsx · src/ui/TaskListItem.tsx",
+      files: "src/ui/PriorityBadge.tsx Â· src/ui/TaskListItem.tsx",
       owner: "UI agent",
-      model: "Codex 1.2 Mini · Medium",
+      model: "Codex 1.2 Mini Â· Medium",
       dependency: "S1",
       purpose: "Make urgency scannable without competing with deterministic workflow status.",
       change: "Add the quiet text-labelled badge and render it in compact task rows.",
       produces: "PriorityBadge component",
-      consumes: "S1 · TaskPriority type",
+      consumes: "S1 Â· TaskPriority type",
       verify: "pnpm playwright test task-priority.spec.ts",
       cost: "$0.14",
     },
@@ -664,7 +660,7 @@ function PlanView({ onAdvance, selectedEvent }: Pick<StageViewProps, "onAdvance"
       batch: 3,
       title: "Assemble integration candidate",
       status: "Gate",
-      files: ".worktrees/gh-241/integration · merge-queue.json",
+      files: ".worktrees/gh-241/integration Â· merge-queue.json",
       owner: "Integration orchestrator",
       model: "Deterministic harness",
       dependency: "S1 + S2 + S3",
@@ -672,8 +668,8 @@ function PlanView({ onAdvance, selectedEvent }: Pick<StageViewProps, "onAdvance"
         "Create the only candidate that can enter authoritative Dev Review and the complete Test gate.",
       change:
         "Apply ready slice commits in dependency order, detect overlap, and record a versioned merged diff.",
-      produces: "Candidate C1 · merged diff · provenance manifest",
-      consumes: "S1 81ac09f · S2 4f7e2bd · S3 962e11a",
+      produces: "Candidate C1 Â· merged diff Â· provenance manifest",
+      consumes: "S1 81ac09f Â· S2 4f7e2bd Â· S3 962e11a",
       verify: "pnpm verify:candidate --scope integration",
       cost: "$0.02",
     },
@@ -683,7 +679,7 @@ function PlanView({ onAdvance, selectedEvent }: Pick<StageViewProps, "onAdvance"
     <>
       <div className="stage-main">
         <SectionHeader
-          eyebrow="Implementation plan · 3 worktree slices + 1 integration gate"
+          eyebrow="Implementation plan Â· 3 worktree slices + 1 integration gate"
           title="Slices qualify in isolation; the merged candidate earns the final verdict"
           description="Dependencies, file ownership, worktree outputs, and the authoritative integration boundary are explicit before implementation."
         />
@@ -744,7 +740,7 @@ function PlanView({ onAdvance, selectedEvent }: Pick<StageViewProps, "onAdvance"
                             <span className="plan-package__meta">
                               <small>{slice.model}</small>
                               <small>
-                                Depends on {slice.dependency} · {slice.cost}
+                                Depends on {slice.dependency} Â· {slice.cost}
                               </small>
                             </span>
                             <CaretDown size={15} weight="bold" />
@@ -801,8 +797,8 @@ function PlanView({ onAdvance, selectedEvent }: Pick<StageViewProps, "onAdvance"
         </section>
         <div className="plan-frontier">
           <span>Ready frontier</span>
-          <strong>S1 · Persist priority</strong>
-          <small>Execution order: S1 → S2 + S3 in parallel → assemble Candidate C1.</small>
+          <strong>S1 Â· Persist priority</strong>
+          <small>Execution order: S1 â†’ S2 + S3 in parallel â†’ assemble Candidate C1.</small>
         </div>
       </div>
       <ContextInspector stage="plan" selectedEvent={selectedEvent} />
@@ -838,7 +834,7 @@ function ImplementView({
       status: "ready",
       agent: "Schema agent",
       provider: "codex" as const,
-      model: "Codex 1.2 · High",
+      model: "Codex 1.2 Â· High",
       dependency: "None",
       files: "2 files",
       tokens: "4.8k",
@@ -854,7 +850,7 @@ function ImplementView({
       status: "ready",
       agent: "API agent",
       provider: "codex" as const,
-      model: "Codex 1.2 · High",
+      model: "Codex 1.2 Â· High",
       dependency: "S1",
       files: "2 files",
       tokens: "6.2k",
@@ -870,7 +866,7 @@ function ImplementView({
       status: "ready",
       agent: "UI agent",
       provider: "codex" as const,
-      model: "Codex 1.2 Mini · Medium",
+      model: "Codex 1.2 Mini Â· Medium",
       dependency: "S1",
       files: "2 files",
       tokens: "5.9k",
@@ -883,13 +879,13 @@ function ImplementView({
     kind: "integration" as const,
     id: candidateId,
     batch: 3,
-    title: repairing ? `${candidateId} · Repair candidate` : `${candidateId} · Integration candidate`,
+    title: repairing ? `${candidateId} Â· Repair candidate` : `${candidateId} Â· Integration candidate`,
     status: repairing ? "repairing" : "assembling",
     agent: repairing ? "Integration repair agent" : "Integration orchestrator",
     provider: "harness" as const,
     model: "Deterministic merge harness",
     dependency: "S1 + S2 + S3",
-    files: repairing ? "2 repaired · 6 candidate files" : "6 candidate files",
+    files: repairing ? "2 repaired Â· 6 candidate files" : "6 candidate files",
     tokens: repairing ? "2.7k" : "No model tokens",
     cost: repairing ? "$0.08" : "$0.02",
     worktree: ".worktrees/gh-241/integration",
@@ -910,9 +906,9 @@ function ImplementView({
     ["Scope discipline", "8 / 10"],
   ];
   const diffFiles = [
-    { name: "src/api/routes/tasks.ts", change: "+18 −4" },
-    { name: "src/db/schema.ts", change: "+9 −1" },
-    { name: "tests/api/priority.test.ts", change: "+24 −3" },
+    { name: "src/api/routes/tasks.ts", change: "+18 âˆ’4" },
+    { name: "src/db/schema.ts", change: "+9 âˆ’1" },
+    { name: "tests/api/priority.test.ts", change: "+24 âˆ’3" },
   ];
   const diffLines = [
     { tone: "context", line: "88", value: " const parsed = createTaskSchema.parse(req.body);" },
@@ -932,7 +928,7 @@ function ImplementView({
               <ArrowLeft size={14} /> Implement / {selectedPackage.id} / Diff
             </button>
             <SectionHeader
-              eyebrow={`Live patch · ${selectedPackage.id} · ${diffScope === "package" ? "selected slice" : "merged candidate"}`}
+              eyebrow={`Live patch Â· ${selectedPackage.id} Â· ${diffScope === "package" ? "selected slice" : "merged candidate"}`}
               title="Inline code diff"
               description="This diff is tied to a versioned candidate; later review and test verdicts must reference the same revision."
               action={<CandidateBadge candidateId={candidateId} candidateSha={candidateSha} />}
@@ -1010,8 +1006,8 @@ function ImplementView({
             <SectionHeader
               eyebrow={
                 selectedPackage.kind === "integration"
-                  ? `Implement · Integration boundary · ${candidateId}`
-                  : `Implement · Batch ${selectedPackage.batch} · ${selectedPackage.id}`
+                  ? `Implement Â· Integration boundary Â· ${candidateId}`
+                  : `Implement Â· Batch ${selectedPackage.batch} Â· ${selectedPackage.id}`
               }
               title={selectedPackage.title}
               description={
@@ -1089,14 +1085,14 @@ function ImplementView({
                 <section className="merge-queue" aria-label="Integration merge queue">
                   <header>
                     <span>Merge queue</span>
-                    <strong>S1 → S2 → S3</strong>
-                    <small>Topological order · candidate manifest retained</small>
+                    <strong>S1 â†’ S2 â†’ S3</strong>
+                    <small>Topological order Â· candidate manifest retained</small>
                   </header>
                   {slices.map((slice, index) => (
                     <button type="button" onClick={() => setSelectedPackageId(slice.id)} key={slice.id}>
                       <span>{index + 1}</span>
                       <strong>
-                        {slice.id} · {slice.title}
+                        {slice.id} Â· {slice.title}
                       </strong>
                       <code>{slice.commit}</code>
                       <small>{slice.worktree}</small>
@@ -1114,7 +1110,7 @@ function ImplementView({
                   <RunStep
                     status="done"
                     title="Commits applied in dependency order"
-                    detail="81ac09f → 4f7e2bd → 962e11a"
+                    detail="81ac09f â†’ 4f7e2bd â†’ 962e11a"
                     meta="9s"
                   />
                   <RunStep
@@ -1128,7 +1124,7 @@ function ImplementView({
                     title={
                       repairing ? "Rebuilding repaired candidate evidence" : "Packaging candidate evidence"
                     }
-                    detail="Merged diff · provenance · affected gate map"
+                    detail="Merged diff Â· provenance Â· affected gate map"
                     meta="running"
                   />
                 </div>
@@ -1142,7 +1138,7 @@ function ImplementView({
                   <StructuredRow label="Owned scope" value={selectedPackage.files} />
                   <StructuredRow
                     label="Usage"
-                    value={`${selectedPackage.tokens} tokens · ${selectedPackage.cost}`}
+                    value={`${selectedPackage.tokens} tokens Â· ${selectedPackage.cost}`}
                   />
                 </div>
                 <div className="run-steps">
@@ -1154,26 +1150,26 @@ function ImplementView({
                   />
                   <RunStep
                     status="done"
-                    title="RED · acceptance seam reproduced"
+                    title="RED Â· acceptance seam reproduced"
                     detail="Targeted contract failed before the owned patch"
                     meta="6s"
                   />
                   <RunStep
                     status="done"
-                    title="GREEN · minimal owned patch"
-                    detail={`${selectedPackage.files} changed · commit ${selectedPackage.commit}`}
+                    title="GREEN Â· minimal owned patch"
+                    detail={`${selectedPackage.files} changed Â· commit ${selectedPackage.commit}`}
                     meta="1m 52s"
                   />
                   <RunStep
                     status="done"
                     title="Slice qualification passed"
-                    detail="Owned tests · lint · typecheck · contract checks"
+                    detail="Owned tests Â· lint Â· typecheck Â· contract checks"
                     meta="11s"
                   />
                 </div>
                 <section className="quality-self-score">
                   <header>
-                    <span>Developer self-score · 8-part rubric</span>
+                    <span>Developer self-score Â· 8-part rubric</span>
                     <strong>82 / 100</strong>
                   </header>
                   <div>
@@ -1197,13 +1193,13 @@ function ImplementView({
             <SectionHeader
               eyebrow={
                 repairing
-                  ? `Implement · Repair run ${attempts} of 3`
-                  : "Implement · Isolated slices + integration"
+                  ? `Implement Â· Repair run ${attempts} of 3`
+                  : "Implement Â· Isolated slices + integration"
               }
               title={
                 repairing
                   ? `${candidateId} rebuilding from a targeted repair`
-                  : `3 of 3 slices ready · ${candidateId} assembling`
+                  : `3 of 3 slices ready Â· ${candidateId} assembling`
               }
               description="Each slice qualifies inside its own worktree. The integration candidate below is the only revision that advances to authoritative review and tests."
               action={<CandidateBadge candidateId={candidateId} candidateSha={candidateSha} />}
@@ -1229,11 +1225,11 @@ function ImplementView({
               </Button>
             </StageCommandBar>
             <div className="package-flow-summary">
-              <span>Batch 1 · S1</span>
+              <span>Batch 1 Â· S1</span>
               <ArrowRight size={15} />
-              <span>Batch 2 · S2 + S3 parallel</span>
+              <span>Batch 2 Â· S2 + S3 parallel</span>
               <ArrowRight size={15} />
-              <span className="active">Integration · {candidateId} assembling</span>
+              <span className="active">Integration Â· {candidateId} assembling</span>
             </div>
             <div className="work-package-list">
               {slices.map((item) => {
@@ -1252,7 +1248,7 @@ function ImplementView({
                       <span>
                         <strong>{item.title}</strong>
                         <small>
-                          {item.worktree} · commit {item.commit} · ready for integration
+                          {item.worktree} Â· commit {item.commit} Â· ready for integration
                         </small>
                       </span>
                     </span>
@@ -1260,7 +1256,7 @@ function ImplementView({
                     <span className="work-package__usage">
                       <strong>{item.tokens}</strong>
                       <small>
-                        {item.cost} · {item.files}
+                        {item.cost} Â· {item.files}
                       </small>
                     </span>
                     <ArrowRight size={15} />
@@ -1279,11 +1275,11 @@ function ImplementView({
               <span>
                 <small>Authoritative integration boundary</small>
                 <strong>{candidate.title}</strong>
-                <span>S1 81ac09f → S2 4f7e2bd → S3 962e11a</span>
+                <span>S1 81ac09f â†’ S2 4f7e2bd â†’ S3 962e11a</span>
               </span>
               <span className="integration-candidate__meta">
                 <strong>{candidateSha}</strong>
-                <small>0 conflicts · 6 files</small>
+                <small>0 conflicts Â· 6 files</small>
               </span>
               <ArrowRight size={16} />
             </button>
@@ -1306,13 +1302,13 @@ function DevReviewView({
     <>
       <div className="stage-main">
         <SectionHeader
-          eyebrow="Dev review · Fresh-context code advisor"
+          eyebrow="Dev review Â· Fresh-context code advisor"
           title={`${candidateId} has no blocking findings`}
           description="A separate reviewer inspected the merged candidate for correctness, security, edge cases, design, and performance without implementation reasoning."
           action={
             <span className="header-identity-stack">
               <CandidateBadge candidateId={candidateId} candidateSha={candidateSha} />
-              <ProviderTag provider="codex" model="Codex 1.2 · Medium" />
+              <ProviderTag provider="codex" model="Codex 1.2 Â· Medium" />
             </span>
           }
         />
@@ -1332,7 +1328,7 @@ function DevReviewView({
             <Wrench size={18} weight="fill" />
             <span>
               <strong>Reviewed after repair run {attempts}</strong>
-              <small>C1 superseded → {candidateId} · PKT-0094 resolved before the fresh review started</small>
+              <small>C1 superseded â†’ {candidateId} Â· PKT-0094 resolved before the fresh review started</small>
             </span>
             <span className="badge badge--success">Repaired</span>
           </div>
@@ -1340,7 +1336,7 @@ function DevReviewView({
         <div className="review-verdict review-verdict--detailed">
           <CheckCircle size={28} weight="fill" />
           <span>
-            <strong>Verdict · no blockers</strong>
+            <strong>Verdict Â· no blockers</strong>
             <small>One non-blocking P2 suggestion is recorded with a file, line, and proposed change.</small>
           </span>
           <section className="severity-counts" aria-label="Finding counts">
@@ -1366,9 +1362,9 @@ function DevReviewView({
           <div>
             <span className="badge badge--neutral">P2</span>
             <span>
-              <strong>Maintainability · extract priority colours into semantic tokens</strong>
+              <strong>Maintainability Â· extract priority colours into semantic tokens</strong>
               <small>
-                src/ui/PriorityBadge.tsx:18 · suggestion: map low, medium, and high through the existing badge
+                src/ui/PriorityBadge.tsx:18 Â· suggestion: map low, medium, and high through the existing badge
                 token table
               </small>
             </span>
@@ -1376,16 +1372,16 @@ function DevReviewView({
           <div>
             <span className="badge badge--success">Passed</span>
             <span>
-              <strong>Correctness · API default matches the approved decision</strong>
+              <strong>Correctness Â· API default matches the approved decision</strong>
               <small>
-                src/api/routes/tasks.ts:94 · omission defaults to medium and invalid values fail before writes
+                src/api/routes/tasks.ts:94 Â· omission defaults to medium and invalid values fail before writes
               </small>
             </span>
           </div>
           <div>
             <span className="badge badge--success">Passed</span>
             <span>
-              <strong>Security and scope · no untrusted value reaches persistence</strong>
+              <strong>Security and scope Â· no untrusted value reaches persistence</strong>
               <small>6 of 6 changed paths are owned by the approved work packages</small>
             </span>
           </div>
@@ -1395,7 +1391,7 @@ function DevReviewView({
             <strong>Revision allowance</strong>
             <small>One focused revision turn may be requested for blocking findings.</small>
           </span>
-          <strong>1 available · unused</strong>
+          <strong>1 available Â· unused</strong>
         </div>
       </div>
       <ContextInspector stage="dev-review" attempts={attempts} selectedEvent={selectedEvent}>
@@ -1403,8 +1399,8 @@ function DevReviewView({
           <InspectorSection title="Repair lineage">
             <StructuredRow label="Failure packet" value="PKT-0094" />
             <StructuredRow label="Repair run" value={`${attempts} of 3`} />
-            <StructuredRow label="Superseded candidate" value="C1 · review and test stale" />
-            <StructuredRow label="Current candidate" value={`${candidateId} · ${candidateSha}`} />
+            <StructuredRow label="Superseded candidate" value="C1 Â· review and test stale" />
+            <StructuredRow label="Current candidate" value={`${candidateId} Â· ${candidateSha}`} />
             <StructuredRow label="Resolution" value="Validation before persistence" />
           </InspectorSection>
         ) : null}
@@ -1430,16 +1426,21 @@ function TestView(props: StageViewProps) {
     {
       id: "unit",
       label: "Unit tests",
+      candidateId: props.candidateId,
+      candidateSha: props.candidateSha,
       command: "pnpm vitest run src/**/*.test.ts",
       status: "passed" as const,
       duration: "4.1s",
       count: "28 passed",
-      artifact: "unit-results.json",
+      artifact: { name: "unit-results.json", kind: "json" },
       detail: "Priority parsing, defaulting, badge labels, and schema helpers all passed in isolation.",
+      assertions: ["src/domain.ts:92", "src/components/StageViews.tsx:1450"],
     },
     {
       id: "api",
       label: "API contract",
+      candidateId: props.candidateId,
+      candidateSha: props.candidateSha,
       command: "pnpm vitest run tests/api/priority.test.ts",
       status: hasFailure
         ? ("failed" as const)
@@ -1447,44 +1448,63 @@ function TestView(props: StageViewProps) {
           ? ("passed" as const)
           : ("running" as const),
       duration: "8.2s",
-      count: hasFailure ? "8 passed · 1 failed" : props.testResult === "passed" ? "9 passed" : "9 tests",
-      artifact: "junit.xml",
+      count: hasFailure ? "8 passed Â· 1 failed" : props.testResult === "passed" ? "9 passed" : "9 tests",
+      artifact: { name: "junit.xml", kind: "xml" },
       detail: hasFailure
         ? "The invalid-value contract failed: urgent was persisted instead of returning a validation error."
         : "Create, read, omitted, valid, and invalid priority contracts are verified at the HTTP boundary.",
+      assertions: hasFailure ? ["tests/api/priority.test.ts:94"] : ["tests/api/priority.test.ts:61", "tests/api/priority.test.ts:94"],
+      failure: hasFailure
+        ? {
+            expected: "HTTP 400 · Bad Request",
+            received: "HTTP 201 · Created",
+            assertion: "tests/api/priority.test.ts:94",
+            excerpt: [
+              { line: 92, code: '.send({ title: "Test", priority: "urgent" })' },
+              { line: 93, code: "expect(res.status).toBe(400)" },
+              { line: 94, code: "expect(res.body.error).toMatch(/invalid priority/i)", highlight: true },
+            ],
+          }
+        : undefined,
     },
     {
       id: "types",
       label: "Typecheck",
+      candidateId: props.candidateId,
+      candidateSha: props.candidateSha,
       command: "pnpm tsc --noEmit",
       status: "passed" as const,
       duration: "3.7s",
       count: "0 errors",
-      artifact: "typecheck.log",
+      artifact: { name: "typecheck.log", kind: "log" },
       detail: "TaskPriority stays consistent across schema, API response, and UI component props.",
+      assertions: ["tsconfig.json", "src/components/TaskWorkspace.tsx"],
     },
     {
       id: "browser",
       label: "Browser",
+      candidateId: props.candidateId,
+      candidateSha: props.candidateSha,
       command: "pnpm playwright test task-priority.spec.ts",
       status: props.testResult === "passed" ? ("passed" as const) : ("pending" as const),
-      duration: props.testResult === "passed" ? "12.4s" : "—",
+      duration: props.testResult === "passed" ? "12.4s" : "â€”",
       count: props.testResult === "passed" ? "5 passed" : "Waiting on API gate",
-      artifact: "playwright-report/index.html",
+      artifact: { name: "playwright-report/index.html", kind: "html" },
       detail: "The task list badge and create-task default are checked in the rendered application.",
+      assertions: ["task list badge", "create-task default"],
     },
   ];
   return (
     <>
       <div className="stage-main">
         <SectionHeader
-          eyebrow="Test · Deterministic gate"
+          eyebrow="Test Â· Deterministic gate"
           title={
             hasFailure
-              ? `${props.candidateId} · 37 checks passed · 1 failed`
+              ? `${props.candidateId} Â· 37 checks passed Â· 1 failed`
               : props.testResult === "passed"
-                ? `${props.candidateId} · all 46 acceptance checks passed`
-                : `${props.candidateId} · 37 checks passed · API contract running`
+                ? `${props.candidateId} Â· all 46 acceptance checks passed`
+                : `${props.candidateId} Â· 37 checks passed Â· API contract running`
           }
           description="Open any result for its command, cases, evidence, and artifact. Gate-level actions stay outside individual test details."
           action={<CandidateBadge candidateId={props.candidateId} candidateSha={props.candidateSha} />}
@@ -1560,7 +1580,7 @@ function TestView(props: StageViewProps) {
             <span>
               <strong>Prior candidate evidence retained</strong>
               <small>
-                C1 · API contract failed · superseded by {props.candidateId}; affected review and test results
+                C1 Â· API contract failed Â· superseded by {props.candidateId}; affected review and test results
                 were rerun.
               </small>
             </span>
@@ -1605,7 +1625,7 @@ function TestView(props: StageViewProps) {
                 </span>
                 <ArrowRight size={18} />
                 <span>
-                  <Code size={16} /> Repair → next candidate
+                  <Code size={16} /> Repair â†’ next candidate
                 </span>
               </div>
             </div>
@@ -1623,9 +1643,9 @@ function TestView(props: StageViewProps) {
       </div>
       <ContextInspector stage="test" attempts={props.attempts} selectedEvent={props.selectedEvent}>
         <InspectorSection title="Candidate gate">
-          <StructuredRow label="Tested revision" value={`${props.candidateId} · ${props.candidateSha}`} />
+          <StructuredRow label="Tested revision" value={`${props.candidateId} Â· ${props.candidateSha}`} />
           <StructuredRow label="Verdict freshness" value="Current" />
-          <StructuredRow label="Prior candidate" value={props.attempts > 1 ? "C1 · superseded" : "None"} />
+          <StructuredRow label="Prior candidate" value={props.attempts > 1 ? "C1 Â· superseded" : "None"} />
         </InspectorSection>
       </ContextInspector>
     </>
@@ -1652,7 +1672,7 @@ function BlockedTestView({
           <Prohibit size={30} weight="fill" />
         </div>
         <SectionHeader
-          eyebrow={`Test · ${attempts} of 3 repair runs used`}
+          eyebrow={`Test Â· ${attempts} of 3 repair runs used`}
           title={`${candidateId} is blocked by deterministic validation`}
           description="The same API contract criterion failed after every permitted repair. The harness has stopped automatic routing."
           action={<CandidateBadge candidateId={candidateId} candidateSha={candidateSha} />}
@@ -1689,7 +1709,7 @@ function BlockedTestView({
       <ContextInspector stage="test" attempts={attempts} selectedEvent={selectedEvent}>
         <InspectorSection title="Blocked state record">
           <StructuredRow label="Blocker" value="AC-5 failed 3 times" tone="red" />
-          <StructuredRow label="Resume from" value="Implement → Test" />
+          <StructuredRow label="Resume from" value="Implement â†’ Test" />
           <StructuredRow label="Automatic retries" value="Exhausted" />
           <StructuredRow label="Human decision" value="Required" tone="amber" />
         </InspectorSection>
@@ -1727,35 +1747,35 @@ function FinalReviewView({
       state: "Passed",
       tokens: "1.2k",
       cost: "$0.03",
-      finding: "Feature · moderate API and migration risk",
+      finding: "Feature Â· moderate API and migration risk",
     },
     {
       stage: "Repo scouts",
       state: "Passed",
       tokens: "3.9k",
       cost: "$0.07",
-      finding: "142 files inspected · 4 findings retained",
+      finding: "142 files inspected Â· 4 findings retained",
     },
     {
       stage: "Grill",
       state: "Passed",
       tokens: "6.1k",
       cost: "$0.18",
-      finding: "3 decisions settled · no open ambiguity",
+      finding: "3 decisions settled Â· no open ambiguity",
     },
     {
       stage: "Task spec",
       state: "Passed",
       tokens: "7.4k",
       cost: "$0.21",
-      finding: "5 acceptance criteria · scope fixed",
+      finding: "5 acceptance criteria Â· scope fixed",
     },
     {
       stage: "Impl plan",
       state: "Passed",
       tokens: "4.2k",
       cost: "$0.11",
-      finding: "4 work packages · 3 dependency batches",
+      finding: "4 work packages Â· 3 dependency batches",
     },
     {
       stage: "Implement",
@@ -1764,35 +1784,35 @@ function FinalReviewView({
       cost: "$0.56",
       finding:
         attempts > 1
-          ? `3 slices → ${candidateId} · repair run ${attempts} resolved PKT-0094`
-          : `3 slices → ${candidateId} · 6 merged files`,
+          ? `3 slices â†’ ${candidateId} Â· repair run ${attempts} resolved PKT-0094`
+          : `3 slices â†’ ${candidateId} Â· 6 merged files`,
     },
     {
       stage: "Dev review",
       state: "Passed",
       tokens: "6.4k",
       cost: "$0.19",
-      finding: "0 blockers · 1 non-blocking P2",
+      finding: "0 blockers Â· 1 non-blocking P2",
     },
     {
       stage: "Test",
       state: "Passed",
-      tokens: "—",
+      tokens: "â€”",
       cost: "$0.04",
-      finding: attempts > 1 ? "46 passed after targeted repair" : "46 passed · unit, API, type, browser",
+      finding: attempts > 1 ? "46 passed after targeted repair" : "46 passed Â· unit, API, type, browser",
     },
   ];
   return (
     <>
       <div className="stage-main">
         <SectionHeader
-          eyebrow="Final review · Holdout"
+          eyebrow="Final review Â· Holdout"
           title={`${candidateId} passed independent holdout review`}
           description="Claude reviewed the merged candidate, specification, and test evidence without access to implementation reasoning."
           action={
             <span className="header-identity-stack">
               <CandidateBadge candidateId={candidateId} candidateSha={candidateSha} />
-              <ProviderTag provider="claude" model="Claude 3.7 Sonnet · High" />
+              <ProviderTag provider="claude" model="Claude 3.7 Sonnet Â· High" />
             </span>
           }
         />
@@ -1890,9 +1910,9 @@ function FinalReviewView({
           </div>
         </InspectorSection>
         <InspectorSection title="Approval handoff">
-          <StructuredRow label="Candidate" value={`${candidateId} · ${candidateSha}`} />
-          <StructuredRow label="Target" value="main · squash merge" />
-          <StructuredRow label="Verdicts" value="Dev Review · Test · Holdout current" />
+          <StructuredRow label="Candidate" value={`${candidateId} Â· ${candidateSha}`} />
+          <StructuredRow label="Target" value="main Â· squash merge" />
+          <StructuredRow label="Verdicts" value="Dev Review Â· Test Â· Holdout current" />
         </InspectorSection>
       </ContextInspector>
     </>
@@ -1917,7 +1937,7 @@ function ApprovalView({
     <>
       <div className="stage-main approval-view">
         <SectionHeader
-          eyebrow={approved ? "Completed · Merged by s.k.dev" : "Human approval · Final gate"}
+          eyebrow={approved ? "Completed Â· Merged by s.k.dev" : "Human approval Â· Final gate"}
           title={approved ? `${candidateId} merged to main` : `Approve and merge ${candidateId}`}
           description={
             approved
@@ -1962,7 +1982,7 @@ function ApprovalView({
           <div>
             <span>Candidate</span>
             <strong>
-              {candidateId} · {candidateSha}
+              {candidateId} Â· {candidateSha}
             </strong>
           </div>
           <div>
@@ -1982,7 +2002,7 @@ function ApprovalView({
           <div>
             <span>Files changed</span>
             <strong>6</strong>
-            <small>+148 −22</small>
+            <small>+148 âˆ’22</small>
           </div>
           <div>
             <span>Acceptance criteria</span>
@@ -2010,7 +2030,7 @@ function ApprovalView({
                 <strong>{criterion}</strong>
               </span>
               <span>
-                {index === 2 ? "API · 9 passed" : index === 3 ? "Browser · 5 passed" : "Unit · passed"}
+                {index === 2 ? "API Â· 9 passed" : index === 3 ? "Browser Â· 5 passed" : "Unit Â· passed"}
               </span>
             </div>
           ))}
@@ -2020,16 +2040,16 @@ function ApprovalView({
             <h3>Files changed</h3>
             <ul>
               <li>
-                src/db/schema.ts <span>+18 −2</span>
+                src/db/schema.ts <span>+18 âˆ’2</span>
               </li>
               <li>
-                src/api/tasks.ts <span>+42 −8</span>
+                src/api/tasks.ts <span>+42 âˆ’8</span>
               </li>
               <li>
                 src/ui/PriorityBadge.tsx <span>+38</span>
               </li>
               <li>
-                tests/api/priority.test.ts <span>+50 −12</span>
+                tests/api/priority.test.ts <span>+50 âˆ’12</span>
               </li>
             </ul>
           </section>
@@ -2058,11 +2078,11 @@ function ApprovalView({
         <div className="screenshot-strip">
           <div>
             <Browser size={24} />
-            <span>Task list · medium priority</span>
+            <span>Task list Â· medium priority</span>
           </div>
           <div>
             <Browser size={24} />
-            <span>Create task · default priority</span>
+            <span>Create task Â· default priority</span>
           </div>
         </div>
       </div>
@@ -2084,13 +2104,13 @@ function ApprovalView({
           </div>
         </InspectorSection>
         <InspectorSection title="Model usage">
-          <StructuredRow label="Codex" value="32.1k tokens · 78% cache" />
-          <StructuredRow label="Claude" value="12.1k tokens · 64% cache" />
+          <StructuredRow label="Codex" value="32.1k tokens Â· 78% cache" />
+          <StructuredRow label="Claude" value="12.1k tokens Â· 64% cache" />
           <StructuredRow label="Harness" value="7 deterministic gates" />
           <StructuredRow label="Elapsed" value="24m 18s" />
         </InspectorSection>
         <InspectorSection title="Merge contract">
-          <StructuredRow label="Candidate" value={`${candidateId} · ${candidateSha}`} />
+          <StructuredRow label="Candidate" value={`${candidateId} Â· ${candidateSha}`} />
           <StructuredRow label="Target" value={approved ? "main@c842e1b" : "main@9b6c0fa"} />
           <StructuredRow label="Method" value="Squash merge" />
           <StructuredRow label="Decision" value={approved ? "Approved and merged" : "Awaiting s.k.dev"} />
@@ -2140,14 +2160,14 @@ function ContextInspector({
         : "Current execution";
   const artifacts = stageArtifacts[stage] ?? [];
   const metrics = stageMetrics[stage] ?? {
-    duration: "—",
+    duration: "â€”",
     tokens: "No model tokens",
     cost: "$0.00",
     cache: "Not applicable",
   };
   const model = stageModels[stage] ?? "Deterministic harness";
   const agent = stageAgents[stage] ?? "Orchestration agent";
-  const candidateIdentity = `${task.candidateId} · ${task.candidateSha}`;
+  const candidateIdentity = `${task.candidateId} Â· ${task.candidateSha}`;
   useEffect(() => {
     setCandidateDiff(null);
     setCandidateDiffError(null);
@@ -2181,7 +2201,7 @@ function ContextInspector({
       <aside className="stage-inspector">
         <TaskBrief />
         <InspectorHeader title="Stage context" />
-        <StructuredRow label="Viewed stage" value={`${current.shortLabel} · ${relation}`} />
+        <StructuredRow label="Viewed stage" value={`${current.shortLabel} Â· ${relation}`} />
         <StructuredRow label="Active stage" value={active?.shortLabel ?? "Triage"} />
         <StructuredRow label="Skill" value={current.skill} />
         <StructuredRow label="Agent" value={agent} />
@@ -2207,8 +2227,8 @@ function ContextInspector({
         {index >= 5 ? (
           <InspectorSection title="Integration candidate">
             <StructuredRow label="Candidate" value={candidateIdentity} />
-            <StructuredRow label="Includes" value="S1 81ac09f · S2 4f7e2bd · S3 962e11a" />
-            <StructuredRow label="Target" value="main@9b6c0fa · squash merge" />
+            <StructuredRow label="Includes" value="S1 81ac09f Â· S2 4f7e2bd Â· S3 962e11a" />
+            <StructuredRow label="Target" value="main@9b6c0fa Â· squash merge" />
             <StructuredRow
               label="Verdict freshness"
               value={index === task.activeStageIndex ? "Current for this revision" : relation}
@@ -2228,7 +2248,7 @@ function ContextInspector({
               {relation === "Recorded history"
                 ? "3 passed"
                 : relation === "Current execution"
-                  ? "2 passed · 1 active"
+                  ? "2 passed Â· 1 active"
                   : "Not started"}
             </strong>
             <CaretDown size={14} />
@@ -2324,11 +2344,11 @@ export function CandidateDiffViewer({
         </header>
         <div className="artifact-viewer__summary">
           <span>
-            Revision {diff.revisionNumber} · {diff.worktreePath}
+            Revision {diff.revisionNumber} Â· {diff.worktreePath}
           </span>
           <p>
             Head revision <code>{diff.headRevision}</code>
-            {diff.truncated ? " · diff capped at 300000 characters" : ""}
+            {diff.truncated ? " Â· diff capped at 300000 characters" : ""}
           </p>
         </div>
         <pre className="candidate-diff-viewer__diff">
@@ -2408,7 +2428,7 @@ interface ArtifactRecord {
 
 const stageAgents: Record<string, string> = {
   triage: "Routing harness",
-  scouts: "Repository scouts ×3",
+  scouts: "Repository scouts Ã—3",
   grill: "Clarification agent",
   specification: "Specification agent",
   plan: "Planning agent",
@@ -2434,14 +2454,14 @@ const stageModels: Record<string, string> = {
 
 const stageMetrics: Record<string, { duration: string; tokens: string; cost: string; cache: string }> = {
   triage: { duration: "2s", tokens: "No model tokens", cost: "$0.00", cache: "Not applicable" },
-  scouts: { duration: "41s", tokens: "3.9k", cost: "$0.07", cache: "82% · 11.2k" },
-  grill: { duration: "2m 18s", tokens: "6.1k", cost: "$0.18", cache: "91% · 18.4k" },
-  specification: { duration: "1m 06s", tokens: "7.4k", cost: "$0.21", cache: "88% · 22.1k" },
-  plan: { duration: "52s", tokens: "4.2k", cost: "$0.11", cache: "86% · 13.6k" },
-  implement: { duration: "8m 44s", tokens: "20.5k", cost: "$0.56", cache: "76% · 31.8k" },
-  "dev-review": { duration: "1m 42s", tokens: "6.4k", cost: "$0.19", cache: "64% · 9.8k" },
+  scouts: { duration: "41s", tokens: "3.9k", cost: "$0.07", cache: "82% Â· 11.2k" },
+  grill: { duration: "2m 18s", tokens: "6.1k", cost: "$0.18", cache: "91% Â· 18.4k" },
+  specification: { duration: "1m 06s", tokens: "7.4k", cost: "$0.21", cache: "88% Â· 22.1k" },
+  plan: { duration: "52s", tokens: "4.2k", cost: "$0.11", cache: "86% Â· 13.6k" },
+  implement: { duration: "8m 44s", tokens: "20.5k", cost: "$0.56", cache: "76% Â· 31.8k" },
+  "dev-review": { duration: "1m 42s", tokens: "6.4k", cost: "$0.19", cache: "64% Â· 9.8k" },
   test: { duration: "28.4s", tokens: "No model tokens", cost: "$0.04", cache: "Not applicable" },
-  "final-review": { duration: "1m 34s", tokens: "6.2k", cost: "$0.18", cache: "71% · 12.4k" },
+  "final-review": { duration: "1m 34s", tokens: "6.2k", cost: "$0.18", cache: "71% Â· 12.4k" },
   approval: { duration: "Waiting", tokens: "No model tokens", cost: "$0.00", cache: "Not applicable" },
 };
 
@@ -2449,7 +2469,7 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
   triage: [
     {
       name: "triage-result.json",
-      status: "Validated · retained",
+      status: "Validated Â· retained",
       type: "Structured output",
       summary: "Classification, risk, and routing decision.",
       content:
@@ -2459,7 +2479,7 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
   scouts: [
     {
       name: "scout-synthesis.md",
-      status: "4 findings · retained",
+      status: "4 findings Â· retained",
       type: "Repository evidence",
       summary: "Merged findings from three read-only scouts.",
       content:
@@ -2485,7 +2505,7 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
     },
     {
       name: "glossary.json",
-      status: "3 terms · current",
+      status: "3 terms Â· current",
       type: "Domain glossary",
       summary: "Stable meanings carried into the specification.",
       content:
@@ -2495,7 +2515,7 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
   specification: [
     {
       name: "task-spec.md",
-      status: "v1 · validated",
+      status: "v1 Â· validated",
       type: "Specification",
       summary: "Problem, solution, stories, scope, and decisions.",
       content:
@@ -2513,7 +2533,7 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
   plan: [
     {
       name: "execution-plan.json",
-      status: "4 packages · approved",
+      status: "4 packages Â· approved",
       type: "Dependency plan",
       summary: "Batches, ownership, interfaces, and commands.",
       content:
@@ -2521,7 +2541,7 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
     },
     {
       name: "interface-contracts.md",
-      status: "3 interfaces · retained",
+      status: "3 interfaces Â· retained",
       type: "Package handoff",
       summary: "Outputs produced and consumed across packages.",
       content:
@@ -2531,7 +2551,7 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
   implement: [
     {
       name: "candidate-manifest.json",
-      status: "C1 · 3 slice commits",
+      status: "C1 Â· 3 slice commits",
       type: "Integration provenance",
       summary: "Base, merge order, worktrees, included commits, and candidate revision.",
       content:
@@ -2539,7 +2559,7 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
     },
     {
       name: "candidate-C1.diff",
-      status: "Merged · +51 −8",
+      status: "Merged Â· +51 âˆ’8",
       type: "Candidate diff",
       summary: "Complete merged candidate reviewed and tested downstream.",
       content:
@@ -2547,7 +2567,7 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
     },
     {
       name: "developer-self-score.json",
-      status: "82 / 100 · advisory",
+      status: "82 / 100 Â· advisory",
       type: "Quality self-score",
       summary: "Eight-category implementation assessment.",
       content:
@@ -2557,7 +2577,7 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
   "dev-review": [
     {
       name: "dev-review.json",
-      status: "C1 · no blockers · 1 P2",
+      status: "C1 Â· no blockers Â· 1 P2",
       type: "Review verdict",
       summary: "Categorized, line-specific fresh-context findings.",
       content:
@@ -2565,7 +2585,7 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
     },
     {
       name: "repair-lineage.json",
-      status: "PKT-0094 · resolved",
+      status: "PKT-0094 Â· resolved",
       type: "Repair history",
       summary: "Failure, affected package, repair, and re-review record.",
       content:
@@ -2575,7 +2595,7 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
   test: [
     {
       name: "junit.xml",
-      status: "Candidate-bound · 42 passed · 1 historical failure",
+      status: "Candidate-bound Â· 42 passed Â· 1 historical failure",
       type: "Test results",
       summary: "Case-level unit and API results.",
       content:
@@ -2583,17 +2603,17 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
     },
     {
       name: "playwright-report/index.html",
-      status: "5 checks · passed",
+      status: "5 checks Â· passed",
       type: "Browser report",
       summary: "Rendered UI checks and screenshots.",
       content:
-        "Browser verification\n\n✓ Medium priority renders by default\n✓ Low, medium, and high labels remain readable\n✓ Create task request omits priority safely\n✓ API response is reflected in the task row\n✓ Workflow status remains visually dominant",
+        "Browser verification\n\nâœ“ Medium priority renders by default\nâœ“ Low, medium, and high labels remain readable\nâœ“ Create task request omits priority safely\nâœ“ API response is reflected in the task row\nâœ“ Workflow status remains visually dominant",
     },
   ],
   "final-review": [
     {
       name: "workflow-summary.json",
-      status: "8 stages · complete",
+      status: "8 stages Â· complete",
       type: "End-to-end record",
       summary: "State, usage, cost, and key output from every stage.",
       content:
@@ -2601,7 +2621,7 @@ const stageArtifacts: Record<string, ArtifactRecord[]> = {
     },
     {
       name: "holdout-review.md",
-      status: "Passed · retained",
+      status: "Passed Â· retained",
       type: "Independent conclusion",
       summary: "Patch-to-spec and evidence conclusion.",
       content:
@@ -2754,22 +2774,43 @@ function RunStep({
     </div>
   );
 }
+
+type TestEvidenceStatus = "running" | "passed" | "failed" | "pending";
+
+interface TestArtifactRef {
+  name: string;
+  kind: string;
+}
+
+interface TestFailureEvidence {
+  expected: string;
+  received: string;
+  assertion: string;
+  excerpt: Array<{ line: number; code: string; highlight?: boolean }>;
+}
+
+interface TestEvidenceRow {
+  id: string;
+  label: string;
+  candidateId: string;
+  candidateSha: string;
+  command: string;
+  status: TestEvidenceStatus;
+  duration: string;
+  count: string;
+  artifact: TestArtifactRef;
+  detail: string;
+  assertions: string[];
+  failure?: TestFailureEvidence;
+}
+
 function TestAccordionRow({
   test,
   open,
   onToggle,
   onBack,
 }: {
-  test: {
-    id: string;
-    label: string;
-    command: string;
-    status: "running" | "passed" | "failed" | "pending";
-    duration: string;
-    count: string;
-    artifact: string;
-    detail: string;
-  };
+  test: TestEvidenceRow;
   open: boolean;
   onToggle: () => void;
   onBack: () => void;
@@ -2805,7 +2846,7 @@ function TestAccordionRow({
         <span>
           <strong>{statusLabel}</strong>
           <small>
-            {test.duration} · {test.count}
+            {test.duration} Â· {test.count}
           </small>
         </span>
         <CaretDown size={15} weight="bold" />
@@ -2816,41 +2857,57 @@ function TestAccordionRow({
             <span>
               <small>Tests / {test.label}</small>
               <strong>{statusLabel} result details</strong>
+              <small>
+                Candidate {test.candidateId} Ã‚Â· {test.candidateSha}
+              </small>
             </span>
             <button type="button" className="test-back-button" onClick={onBack}>
               <ArrowLeft size={14} /> Back to test list
             </button>
           </header>
           <p>{test.detail}</p>
-          {test.status === "failed" ? (
+          <div className="test-detail__facts">
+            <StructuredRow label="Command" value={test.command} />
+            <StructuredRow label="Candidate" value={`${test.candidateId} · ${test.candidateSha}`} />
+            <StructuredRow label="Artifact" value={`${test.artifact.name} · ${test.artifact.kind}`} />
+            <StructuredRow label="Duration" value={test.duration} />
+            <StructuredRow label="Cases" value={test.count} />
+          </div>
+          {test.status === "failed" && test.failure ? (
             <>
               <div className="failure-evidence">
-                <StructuredRow label="Expected" value="HTTP 400 · Bad Request" />
-                <StructuredRow label="Received" value="HTTP 201 · Created" tone="red" />
-                <StructuredRow label="Failing assertion" value="tests/api/priority.test.ts:94" />
-                <StructuredRow label="Duration / artifact" value={`${test.duration} · ${test.artifact}`} />
+                <StructuredRow label="Expected" value={test.failure.expected} />
+                <StructuredRow label="Received" value={test.failure.received} tone="red" />
+                <StructuredRow label="Failing assertion" value={test.failure.assertion} />
+                {test.assertions.map((assertion) => (
+                  <StructuredRow key={assertion} label="Assertion" value={assertion} />
+                ))}
               </div>
               <pre className="code-excerpt">
                 <code>
-                  <span>92</span>
-                  {' .send({ title: "Test", priority: "urgent" })\n'}
-                  <span>93</span>
-                  {" expect(res.status).toBe(400)\n"}
-                  <mark>
-                    <span>94</span> expect(res.body.error).toMatch(/invalid priority/i)
-                  </mark>
+                  {test.failure.excerpt.map((line) =>
+                    line.highlight ? (
+                      <mark key={line.line}>
+                        <span>{line.line}</span> {line.code}
+                      </mark>
+                    ) : (
+                      <span key={line.line}>
+                        <span>{line.line}</span> {line.code}
+                      </span>
+                    ),
+                  )}
                 </code>
               </pre>
             </>
           ) : (
             <div className="test-detail__facts">
-              <StructuredRow label="Command" value={test.command} />
               <StructuredRow
                 label="Exit"
                 value={test.status === "passed" ? "0 · success" : "Waiting for upstream gate"}
               />
-              <StructuredRow label="Cases" value={test.count} />
-              <StructuredRow label="Artifact" value={test.artifact} />
+              {test.assertions.map((assertion) => (
+                <StructuredRow key={assertion} label="Assertion" value={assertion} />
+              ))}
             </div>
           )}
           <button type="button" className="test-back-button test-back-button--footer" onClick={onBack}>
@@ -2861,3 +2918,5 @@ function TestAccordionRow({
     </div>
   );
 }
+
+
