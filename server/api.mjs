@@ -1,12 +1,13 @@
-import { access, stat } from "node:fs/promises";
+import { access, mkdir, stat, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { GitWorktreeManager } from "./git-worktree.mjs";
+import { normalizeModelId, POLICY_IDS, readCodexModelCatalog } from "./model-catalog.mjs";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
-const RUNTIME_SCHEMA_VERSION = 1;
+const RUNTIME_SCHEMA_VERSION = 3;
 const DIFF_CHAR_LIMIT = 300_000;
 const OUTPUT_LIMIT = 512 * 1024;
 
@@ -19,7 +20,7 @@ async function readJson(request) {
   let body = "";
   for await (const chunk of request) {
     body += chunk;
-    if (body.length > 1_000_000) throw new Error("Request body is too large.");
+    if (body.length > 10_000_000) throw new Error("Request body is too large.");
   }
   try {
     return body ? JSON.parse(body) : {};
@@ -34,6 +35,81 @@ async function validateRepository(repositoryPath) {
   if (!info?.isDirectory()) throw new Error("The selected repository path is not a readable directory.");
   await access(repositoryPath);
   return path.resolve(repositoryPath);
+}
+
+function validateAttachments(input) {
+  if (input == null) return [];
+  if (!Array.isArray(input) || input.length > 6) throw new Error("Attach no more than six files.");
+  const allowed = new Set([".html", ".htm", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".zip"]);
+  let total = 0;
+  return input.map((item) => {
+    const name = path.basename(String(item?.name ?? "")).slice(0, 180);
+    const size = Number(item?.size ?? 0);
+    const data = String(item?.data ?? "");
+    if (!name || !allowed.has(path.extname(name).toLowerCase())) throw new Error("Attachments must be HTML, an image, or a ZIP file.");
+    if (!Number.isFinite(size) || size <= 0 || size > 5_000_000) throw new Error(`${name} must be 5 MB or smaller.`);
+    total += size;
+    if (total > 6_000_000) throw new Error("Attachments must total 6 MB or less.");
+    const decoded = Buffer.from(data, "base64");
+    if (!data || Math.abs(decoded.length - size) > 2) throw new Error(`${name} could not be decoded safely.`);
+    return { name, type: String(item.type ?? "application/octet-stream").slice(0, 120), size, data };
+  });
+}
+
+function validateStagePolicies(input, known, allowedModels, fallback) {
+  const policies = {};
+  for (const policyId of POLICY_IDS) {
+    const fallbackPolicy = fallback?.[policyId];
+    const requested = input?.[policyId] ?? (
+      allowedModels.includes(normalizeModelId(fallbackPolicy?.model))
+        ? fallbackPolicy
+        : { model: allowedModels[0], reasoning: known.get(allowedModels[0])?.defaultReasoning }
+    );
+    const modelId = normalizeModelId(requested?.model);
+    const model = known.get(modelId);
+    const reasoning = String(requested?.reasoning ?? "");
+    if (!model || !allowedModels.includes(modelId)) throw new Error(`${policyId} must use an allowed model.`);
+    if (!model.reasoningLevels.includes(reasoning)) throw new Error(`${model.label} does not support ${reasoning || "that"} reasoning for ${policyId}.`);
+    policies[policyId] = { model: modelId, reasoning };
+  }
+  return policies;
+}
+
+function worktreeEntriesForTask(task) {
+  const entries = [];
+  for (const workPackage of task.workPackages ?? []) {
+    if (!workPackage?.worktreePath) continue;
+    entries.push({
+      id: `slice:${task.id}:${workPackage.id ?? workPackage.worktreePath}`,
+      kind: "slice",
+      label: `${workPackage.id ?? "Work package"} slice`,
+      taskId: task.id,
+      workPackageId: workPackage.id ?? null,
+      worktreePath: workPackage.worktreePath,
+      branch: workPackage.branch ?? null,
+      baseRevision: workPackage.baseRevision ?? null,
+      headRevision: workPackage.headRevision ?? null,
+      recordedHeadRevision: workPackage.headRevision ?? null,
+      lifecycleState: task.status === "closed" ? "stale" : workPackage.status ?? "retained",
+    });
+  }
+  for (const candidate of task.candidates ?? []) {
+    if (!candidate?.worktreePath) continue;
+    entries.push({
+      id: `candidate:${task.id}:${candidate.id ?? candidate.worktreePath}`,
+      kind: "candidate",
+      label: `${candidate.id ?? "Integration"} candidate`,
+      taskId: task.id,
+      workPackageId: candidate.packageId ?? candidate.id ?? null,
+      worktreePath: candidate.worktreePath,
+      branch: candidate.branch ?? null,
+      baseRevision: candidate.baseRevision ?? null,
+      headRevision: candidate.headRevision ?? null,
+      recordedHeadRevision: candidate.headRevision ?? null,
+      lifecycleState: task.status === "closed" ? "stale" : candidate.status ?? "retained",
+    });
+  }
+  return entries;
 }
 
 export function createApiServer({ store, orchestrator, suggestedRepository }) {
@@ -60,44 +136,72 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
         send(response, 200, { ...runtime, suggestedRepository, runtimeSchemaVersion: RUNTIME_SCHEMA_VERSION });
         return;
       }
+      if (request.method === "GET" && url.pathname === "/api/settings") {
+        send(response, 200, { settings: await store.settings(), runtimeSchemaVersion: RUNTIME_SCHEMA_VERSION });
+        return;
+      }
+      if (request.method === "PUT" && url.pathname === "/api/settings") {
+        const input = await readJson(request);
+        const catalog = await readCodexModelCatalog();
+        const known = new Map(catalog.models.map((model) => [model.id, model]));
+        const allowedModels = [...new Set((Array.isArray(input.allowedModels) ? input.allowedModels : []).map(normalizeModelId))]
+          .filter((modelId) => known.has(modelId));
+        const defaultModel = normalizeModelId(input.defaultModel);
+        const selected = known.get(defaultModel);
+        if (!allowedModels.length) throw new Error("Allow at least one model.");
+        if (!allowedModels.includes(defaultModel) || !selected) throw new Error("The default model must be in the allowed model list.");
+        const defaultReasoning = String(input.defaultReasoning ?? "");
+        if (!selected.reasoningLevels.includes(defaultReasoning)) throw new Error(`${selected.label} does not support ${defaultReasoning || "that"} reasoning.`);
+        const currentSettings = await store.settings();
+        const stagePolicies = validateStagePolicies(input.stagePolicies, known, allowedModels, currentSettings.stagePolicies);
+        const settings = await store.updateSettings((draft) => {
+          draft.allowedModels = allowedModels;
+          draft.defaultModel = defaultModel;
+          draft.defaultReasoning = defaultReasoning;
+          draft.stagePolicies = stagePolicies;
+        });
+        send(response, 200, { settings });
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/api/runtime/pricing/verify") {
+        if (typeof orchestrator.verifyPricing !== "function") throw new Error("Pricing verification is unavailable in this runtime.");
+        send(response, 200, await orchestrator.verifyPricing());
+        return;
+      }
       if (request.method === "GET" && url.pathname === "/api/runtime/worktrees") {
         const tasks = await store.list();
-        const entries = [];
-        for (const task of tasks) {
-          const workPackages = task.workPackages ?? [];
-          for (const workPackage of workPackages) {
-            if (!workPackage?.worktreePath) continue;
-            entries.push({
-              kind: "slice",
-              label: "slice",
-              taskId: task.id,
-              workPackageId: workPackage.id ?? null,
-              worktreePath: workPackage.worktreePath,
-              branch: workPackage.branch ?? null,
-              baseRevision: workPackage.baseRevision ?? null,
-              headRevision: workPackage.headRevision ?? null,
-              recordedHeadRevision: workPackage.headRevision ?? null,
-              lifecycleState: workPackage.status ?? "retained",
-            });
-          }
-          for (const candidate of task.candidates ?? []) {
-            if (!candidate?.worktreePath) continue;
-            entries.push({
-              kind: "candidate",
-              label: "candidate",
-              taskId: task.id,
-              workPackageId: candidate.packageId ?? candidate.id ?? null,
-              worktreePath: candidate.worktreePath,
-              branch: candidate.branch ?? null,
-              baseRevision: candidate.baseRevision ?? null,
-              headRevision: candidate.headRevision ?? null,
-              recordedHeadRevision: candidate.headRevision ?? null,
-              lifecycleState: candidate.status ?? "retained",
-            });
-          }
-        }
+        const entries = tasks.flatMap(worktreeEntriesForTask);
         const rows = await worktrees.inventory(entries);
         send(response, 200, { rows });
+        return;
+      }
+      if (request.method === "GET" && url.pathname === "/api/changelog") {
+        send(response, 200, { commits: await listChangelog(suggestedRepository, 10) });
+        return;
+      }
+      const changelogFileMatch = url.pathname.match(/^\/api\/changelog\/([0-9a-f]{7,64})\/file$/i);
+      if (request.method === "GET" && changelogFileMatch) {
+        const sha = changelogFileMatch[1];
+        const filePath = String(url.searchParams.get("path") ?? "");
+        const detail = await changelogDetail(suggestedRepository, sha);
+        if (!detail.files.some((file) => file.path === filePath)) throw new Error("Choose a file changed by this commit.");
+        const diff = await git(suggestedRepository, ["show", "--format=", "--no-ext-diff", "--unified=3", sha, "--", filePath]);
+        send(response, 200, { sha: detail.sha, path: filePath, diff: diff.slice(0, DIFF_CHAR_LIMIT), truncated: diff.length > DIFF_CHAR_LIMIT });
+        return;
+      }
+      const changelogDetailMatch = url.pathname.match(/^\/api\/changelog\/([0-9a-f]{7,64})$/i);
+      if (request.method === "GET" && changelogDetailMatch) {
+        send(response, 200, { commit: await changelogDetail(suggestedRepository, changelogDetailMatch[1]) });
+        return;
+      }
+      const taskWorktreesMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/worktrees$/);
+      if (request.method === "GET" && taskWorktreesMatch) {
+        const task = await store.get(decodeURIComponent(taskWorktreesMatch[1]));
+        if (!task) {
+          send(response, 404, { error: "Task not found." });
+          return;
+        }
+        send(response, 200, { rows: await worktrees.inventory(worktreeEntriesForTask(task)) });
         return;
       }
       const candidateDiffMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/candidates\/([^/]+)\/diff$/);
@@ -137,17 +241,47 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
         send(response, 200, { tasks: await store.list() });
         return;
       }
+      if (request.method === "GET" && url.pathname === "/api/evaluations/summary") {
+        send(response, 200, buildEvaluationSummary(await store.list()));
+        return;
+      }
       if (request.method === "POST" && url.pathname === "/api/tasks") {
         const input = await readJson(request);
         if (!input.title?.trim() || !input.description?.trim()) throw new Error("Title and description are required.");
         if (!VALID_WORKFLOWS.has(input.workflow)) throw new Error("invalid workflow");
-        const task = await store.create({
+        const attachments = validateAttachments(input.attachments);
+        const settings = await store.settings();
+        const catalog = await readCodexModelCatalog();
+        const requestedModel = normalizeModelId(input.model ?? settings.defaultModel);
+        const selectedModel = catalog.models.find((model) => model.id === requestedModel);
+        if (!settings.allowedModels.includes(requestedModel) || !selectedModel) throw new Error("Choose a model from the allowed runtime list in Settings.");
+        const requestedReasoning = String(input.reasoning ?? settings.defaultReasoning);
+        if (!selectedModel.reasoningLevels.includes(requestedReasoning)) throw new Error(`${selectedModel.label} does not support ${requestedReasoning} reasoning.`);
+        const taskPolicies = input.model || input.reasoning
+          ? Object.fromEntries(POLICY_IDS.map((policyId) => [policyId, { model: requestedModel, reasoning: requestedReasoning }]))
+          : structuredClone(settings.stagePolicies);
+        let task = await store.create({
           title: input.title.trim().slice(0, 300),
           description: input.description.trim().slice(0, 20_000),
           repositoryPath: await validateRepository(input.repositoryPath),
           workflow: input.workflow,
           priority: ["low", "medium", "high"].includes(input.priority) ? input.priority : "medium",
+          model: requestedModel,
+          reasoning: requestedReasoning,
+          stagePolicies: taskPolicies,
         });
+        if (attachments.length) {
+          const attachmentRoot = path.join(store.dataDirectory(), "attachments", task.id);
+          await mkdir(attachmentRoot, { recursive: true });
+          const saved = [];
+          for (const attachment of attachments) {
+            const extension = path.extname(attachment.name).toLowerCase();
+            const storedPath = path.join(attachmentRoot, `${crypto.randomUUID()}${extension}`);
+            await writeFile(storedPath, Buffer.from(attachment.data, "base64"));
+            saved.push({ id: crypto.randomUUID(), name: attachment.name, type: attachment.type, size: attachment.size, path: storedPath });
+          }
+          task = await store.update(task.id, (draft) => { draft.attachments = saved; });
+        }
         send(response, 201, { task });
         return;
       }
@@ -156,6 +290,64 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
       if (request.method === "GET" && taskMatch) {
         const task = await store.get(decodeURIComponent(taskMatch[1]));
         send(response, task ? 200 : 404, task ? { task } : { error: "Task not found." });
+        return;
+      }
+
+      const closeMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/close$/);
+      if (request.method === "POST" && closeMatch) {
+        const id = decodeURIComponent(closeMatch[1]);
+        const task = await store.get(id);
+        if (!task) {
+          send(response, 404, { error: "Task not found." });
+          return;
+        }
+        if (task.status === "running") throw new Error("Cancel the active run before closing this task.");
+        const input = await readJson(request);
+        const reason = ["not-needed", "superseded", "duplicate"].includes(input.reason) ? input.reason : "not-needed";
+        const supersededBy = reason === "superseded" ? String(input.supersededBy ?? "").trim().slice(0, 80) : null;
+        const note = String(input.note ?? "").trim().slice(0, 2_000);
+        const closedAt = new Date().toISOString();
+        const closed = await store.update(id, (draft) => {
+          draft.status = "closed";
+          draft.activeRunKind = null;
+          draft.error = null;
+          draft.closure = { reason, supersededBy: supersededBy || null, note, closedAt };
+          draft.events.push({
+            id: crypto.randomUUID(),
+            at: closedAt,
+            category: "decision",
+            tone: "info",
+            stage: draft.currentStage,
+            title: reason === "superseded" ? "Task marked superseded" : "Task closed",
+            detail: supersededBy ? `Superseded by ${supersededBy}${note ? ` - ${note}` : ""}` : note || "No further work is required.",
+          });
+        });
+        send(response, 200, { task: closed });
+        return;
+      }
+
+      const evaluationMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/evaluation$/);
+      if (request.method === "POST" && evaluationMatch) {
+        const id = decodeURIComponent(evaluationMatch[1]);
+        if (!(await store.get(id))) {
+          send(response, 404, { error: "Task not found." });
+          return;
+        }
+        const input = await readJson(request);
+        const score = Number(input.score);
+        if (!Number.isInteger(score) || score < 1 || score > 5) throw new Error("Evaluation score must be an integer from 1 to 5.");
+        const evaluatedAt = new Date().toISOString();
+        const task = await store.update(id, (draft) => {
+          draft.evaluation = {
+            score,
+            outcome: ["accepted", "rejected", "mixed"].includes(input.outcome) ? input.outcome : "mixed",
+            notes: String(input.notes ?? "").trim().slice(0, 5_000),
+            suiteId: String(input.suiteId ?? "").trim().slice(0, 120) || null,
+            caseId: String(input.caseId ?? "").trim().slice(0, 120) || null,
+            evaluatedAt,
+          };
+        });
+        send(response, 200, { task });
         return;
       }
 
@@ -320,6 +512,115 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
       send(response, 400, { error: error.message });
     }
   });
+}
+
+function buildEvaluationSummary(tasks) {
+  const groups = new Map();
+  for (const task of tasks) {
+    for (const artifact of task.artifacts ?? []) {
+      if (!String(artifact.model ?? "").startsWith("gpt-")) continue;
+      const role = artifact.agentRole ?? artifact.stage;
+      const reasoning = artifact.reasoning ?? "not-recorded";
+      const key = `${role}|${artifact.model}|${reasoning}`;
+      const group = groups.get(key) ?? {
+        role,
+        model: artifact.model,
+        reasoning,
+        runs: 0,
+        taskIds: new Set(),
+        inputTokens: 0,
+        cachedInputTokens: 0,
+        outputTokens: 0,
+        cost: 0,
+        credits: 0,
+        pricedRuns: 0,
+        gatePasses: 0,
+        gateRepairs: 0,
+        evaluatedScores: [],
+      };
+      group.runs += 1;
+      group.taskIds.add(task.id);
+      group.inputTokens += artifact.usage?.inputTokens ?? 0;
+      group.cachedInputTokens += artifact.usage?.cachedInputTokens ?? 0;
+      group.outputTokens += artifact.usage?.outputTokens ?? 0;
+      if (artifact.usage?.cost != null) {
+        group.cost += artifact.usage.cost;
+        group.pricedRuns += 1;
+      }
+      if (artifact.usage?.credits != null) group.credits += artifact.usage.credits;
+      if (["dev-review", "test", "final-review"].includes(artifact.stage)) {
+        if (/^\s*PASS\b/i.test(artifact.content ?? "")) group.gatePasses += 1;
+        else group.gateRepairs += 1;
+      }
+      if (task.evaluation?.score) group.evaluatedScores.push(task.evaluation.score);
+      groups.set(key, group);
+    }
+  }
+  const variants = [...groups.values()]
+    .map((group) => ({
+      role: group.role,
+      model: group.model,
+      reasoning: group.reasoning,
+      runs: group.runs,
+      tasks: group.taskIds.size,
+      inputTokens: group.inputTokens,
+      cachedInputTokens: group.cachedInputTokens,
+      outputTokens: group.outputTokens,
+      cacheRate: group.inputTokens ? group.cachedInputTokens / group.inputTokens : null,
+      cost: group.pricedRuns ? Math.round(group.cost * 1_000_000) / 1_000_000 : null,
+      credits: group.credits ? Math.round(group.credits * 1_000_000) / 1_000_000 : null,
+      gatePasses: group.gatePasses,
+      gateRepairs: group.gateRepairs,
+      averageHumanScore: group.evaluatedScores.length
+        ? Math.round((group.evaluatedScores.reduce((total, value) => total + value, 0) / group.evaluatedScores.length) * 100) / 100
+        : null,
+    }))
+    .sort((left, right) => left.role.localeCompare(right.role) || right.runs - left.runs);
+  return {
+    generatedAt: new Date().toISOString(),
+    methodology: "Observational stage-run metrics. Controlled model comparisons still require the same frozen task, repository revision, context policy, and evaluator rubric.",
+    evaluatedTasks: tasks.filter((task) => task.evaluation).length,
+    variants,
+  };
+}
+
+async function listChangelog(repositoryPath, limit) {
+  await git(repositoryPath, ["rev-parse", "--is-inside-work-tree"]);
+  const output = await git(repositoryPath, [
+    "log",
+    `--max-count=${Math.min(10, Math.max(1, limit))}`,
+    "--pretty=format:%H%x1f%h%x1f%an%x1f%aI%x1f%s%x1e",
+  ]);
+  return output
+    .split("\x1e")
+    .map((record) => record.trim())
+    .filter(Boolean)
+    .map((record) => {
+      const [sha, shortSha, author, authoredAt, subject] = record.split("\x1f");
+      return { sha, shortSha, author, authoredAt, subject };
+    });
+}
+
+async function changelogDetail(repositoryPath, revision) {
+  const sha = (await git(repositoryPath, ["rev-parse", "--verify", `${revision}^{commit}`])).trim();
+  const [metadata, filesOutput] = await Promise.all([
+    git(repositoryPath, ["show", "-s", "--pretty=format:%H%x1f%h%x1f%an%x1f%aI%x1f%s%x1f%b", sha]),
+    git(repositoryPath, ["diff-tree", "--root", "--no-commit-id", "--name-status", "-r", "-M", sha, "--"]),
+  ]);
+  const [fullSha, shortSha, author, authoredAt, subject, ...bodyParts] = metadata.split("\x1f");
+  const files = filesOutput
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((line) => {
+      const [status, ...paths] = line.split("\t");
+      return {
+        status,
+        path: paths.at(-1) ?? "",
+        previousPath: paths.length > 1 ? paths[0] : null,
+      };
+    })
+    .filter((file) => file.path);
+  return { sha: fullSha, shortSha, author, authoredAt, subject, body: bodyParts.join("\x1f").trim(), files };
 }
 
 function git(cwd, args) {

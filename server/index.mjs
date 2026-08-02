@@ -1,4 +1,3 @@
-import { access } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -8,10 +7,8 @@ import { JsonTaskStore } from "./store.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dataPath = process.env.AGENT_HARNESS_DATA ?? path.join(root, ".data", "tasks.json");
-const siblingGooseHub = path.resolve(root, "..", "goose-hub");
 const configuredRepository = process.env.AGENT_HARNESS_REPOSITORY;
-const suggestedRepository =
-  configuredRepository ?? ((await access(siblingGooseHub).then(() => true).catch(() => false)) ? siblingGooseHub : root);
+const suggestedRepository = configuredRepository ?? root;
 const port = Number(process.env.AGENT_HARNESS_PORT ?? 4310);
 
 const store = new JsonTaskStore(dataPath);

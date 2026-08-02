@@ -79,16 +79,19 @@ export class GitWorktreeManager {
     };
   }
 
-  async commit(candidate, message) {
+  async commit(candidate, message, options = {}) {
     const status = (await git(candidate.worktreePath, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout;
-    const files = changedFiles(status);
+    const entries = statusEntries(status);
+    const files = entries.map((entry) => entry.file);
     if (!files.length) throw new Error("The implementation agent completed without changing any files.");
     const suspicious = files.find(isSensitivePath);
     if (suspicious) throw new Error(`Candidate contains a potentially sensitive file (${suspicious}); it was preserved but not committed.`);
-    const generated = files.find(isGeneratedPath);
+    const generated = entries.find(
+      (entry) => isGeneratedPath(entry.file) && !(options.allowGeneratedDeletions && entry.code.trim() === "D"),
+    );
     if (generated) {
       throw new Error(
-        `Candidate contains generated tool state (${generated}); remove generated caches and browser/test output before retrying.`,
+        `Candidate contains generated tool state (${generated.file}); remove generated caches and browser/test output before retrying.`,
       );
     }
 
@@ -159,6 +162,28 @@ export class GitWorktreeManager {
     return headRevision;
   }
 
+  async recoverCandidate(candidate) {
+    const worktreePath = path.resolve(candidate.worktreePath);
+    if (!worktreePath.startsWith(`${this.#root}${path.sep}`)) {
+      throw new Error("Candidate recovery refused a worktree outside harness storage.");
+    }
+    const worktreeRoot = await this.repositoryRoot(worktreePath);
+    if (worktreeRoot !== worktreePath) throw new Error("Candidate recovery could not verify the recorded worktree root.");
+    if (!candidate.headRevision) throw new Error("Candidate recovery requires a recorded revision.");
+    const currentHead = (await git(worktreeRoot, ["rev-parse", "HEAD"])).stdout.trim();
+    const status = (await git(worktreeRoot, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout.trim();
+    if (currentHead === candidate.headRevision && !status) return false;
+    if (currentHead !== candidate.headRevision) {
+      await git(worktreeRoot, ["reset", "--mixed", candidate.headRevision]);
+    }
+    await git(worktreeRoot, ["restore", "--source", candidate.headRevision, "--staged", "--worktree", "--", "."]);
+    await git(worktreeRoot, ["clean", "-fdx"]);
+    await assertClean(worktreeRoot);
+    const recoveredHead = (await git(worktreeRoot, ["rev-parse", "HEAD"])).stdout.trim();
+    if (recoveredHead !== candidate.headRevision) throw new Error("Candidate recovery did not restore the recorded revision.");
+    return true;
+  }
+
   async inventory(entries = []) {
     const rows = [];
     for (const entry of entries) {
@@ -194,6 +219,7 @@ export class GitWorktreeManager {
           ? "stale"
           : "retained";
     return {
+      id: entry.id ?? `${entry.kind}:${entry.taskId}:${entry.workPackageId ?? worktreePath}`,
       kind: entry.kind,
       taskId: entry.taskId,
       workPackageId: entry.workPackageId ?? null,
@@ -230,11 +256,18 @@ async function assertClean(repositoryRoot) {
 }
 
 function changedFiles(status) {
+  return statusEntries(status).map((entry) => entry.file);
+}
+
+function statusEntries(status) {
   return status
     .split(/\r?\n/)
     .filter(Boolean)
-    .map((line) => line.slice(3).split(" -> ").at(-1)?.replace(/^\"|\"$/g, "") ?? "")
-    .filter(Boolean);
+    .map((line) => ({
+      code: line.slice(0, 2),
+      file: line.slice(3).split(" -> ").at(-1)?.replace(/^\"|\"$/g, "") ?? "",
+    }))
+    .filter((entry) => entry.file);
 }
 
 function isSensitivePath(file) {

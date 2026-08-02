@@ -12,6 +12,10 @@ export const stageIds = [
 ] as const;
 
 export type StageId = (typeof stageIds)[number];
+export const scoutRoleIds = ["scout-code-path", "scout-dependency", "scout-pattern", "scout-schema", "scout-test-inventory", "scout-user-journey"] as const;
+export type ScoutRoleId = (typeof scoutRoleIds)[number];
+export type AgentRoleId = StageId | "repair" | ScoutRoleId;
+export const agentRoleIds: AgentRoleId[] = [...stageIds.slice(0, -1), "repair", ...scoutRoleIds, "approval"];
 export type Provider = "codex" | "claude" | "harness";
 export type TaskRunState =
   | "running"
@@ -21,7 +25,8 @@ export type TaskRunState =
   | "repairing"
   | "blocked"
   | "awaiting-approval"
-  | "completed";
+  | "completed"
+  | "closed";
 export type EventCategory = "events" | "agents" | "tests" | "decisions";
 export type AppScreen = "command" | "tasks" | "skills" | "agents" | "settings";
 
@@ -54,7 +59,7 @@ export interface HarnessEvent {
 export interface RecentTask {
   id: string;
   title: string;
-  status: "Running" | "Blocked" | "Completed" | "Needs input";
+  status: "Running" | "Blocked" | "Completed" | "Needs input" | "Closed";
   stage: string;
   stageIndex: number;
   duration: string;
@@ -62,8 +67,16 @@ export interface RecentTask {
   stageRunLimit: number;
   tokens: string;
   cost: string;
+  inputTokens?: string;
+  uncachedInputTokens?: string;
+  outputTokens?: string;
+  cachedTokens?: string;
+  cacheRate?: string;
   models: Array<{ provider: Exclude<Provider, "harness">; model: string }>;
   priority: "Low" | "Medium" | "High";
+  startedAt?: string;
+  endedAt?: string;
+  updatedAt?: string;
 }
 
 export interface NewTaskDraft {
@@ -72,6 +85,9 @@ export interface NewTaskDraft {
   repositoryPath: string;
   workflow: "investigate" | "implement";
   priority: "low" | "medium" | "high";
+  model?: string;
+  reasoning?: string;
+  attachments?: Array<{ name: string; type: string; size: number; data: string }>;
 }
 
 export type RuntimeTaskStatus =
@@ -89,14 +105,42 @@ export type RuntimeTaskStatus =
   | "ready-for-final-review"
   | "repair-required"
   | "awaiting-human-approval"
-  | "completed";
+  | "completed"
+  | "closed";
 
 export interface RuntimeUsage {
   inputTokens: number;
   cachedInputTokens: number;
+  cacheWriteTokens?: number;
   outputTokens: number;
   totalTokens: number;
-  cost: null;
+  cost?: number | null;
+  credits?: number | null;
+  pricingVersion?: string | null;
+}
+
+export interface RuntimeContextSource {
+  kind: "task" | "decisions" | "attachments" | "artifact" | "repository";
+  id: string;
+  label: string;
+  stage?: StageId;
+  includedCharacters: number | null;
+  originalCharacters: number | null;
+  truncated: boolean;
+}
+
+export interface RuntimeContextManifest {
+  stage: StageId;
+  promptCharacters: number;
+  estimatedPromptTokens: number;
+  repositoryAccess: "read-only" | "workspace-write";
+  policy: string;
+  candidateId?: string | null;
+  candidateRevision?: number | null;
+  workPackageId?: string | null;
+  scoutName?: string | null;
+  scoutFocus?: string | null;
+  sources: RuntimeContextSource[];
 }
 
 export interface RuntimeArtifact {
@@ -107,7 +151,10 @@ export interface RuntimeArtifact {
   content: string;
   createdAt: string;
   model: string;
-  usage: Omit<RuntimeUsage, "cost">;
+  reasoning?: string | null;
+  agentRole?: string | null;
+  usage: RuntimeUsage;
+  contextManifest?: RuntimeContextManifest | null;
   candidateId?: string | null;
   candidateRevision?: number | null;
   workPackageId?: string | null;
@@ -259,7 +306,22 @@ export interface RuntimeTask {
   repositoryPath: string;
   workflow: "investigate" | "implement";
   priority: "low" | "medium" | "high";
+  agentConfig?: {
+    model: string;
+    reasoning: string;
+    stagePolicies?: Record<string, RuntimeAgentPolicy>;
+    policySnapshotVersion?: number;
+  };
+  attachments?: Array<{ id: string; name: string; type: string; size: number; path: string }>;
   status: RuntimeTaskStatus;
+  closure?: { reason: "not-needed" | "superseded" | "duplicate"; supersededBy: string | null; note: string; closedAt: string } | null;
+  evaluation?: { score: number; outcome: "accepted" | "rejected" | "mixed"; notes: string; suiteId: string | null; caseId: string | null; evaluatedAt: string } | null;
+  scoutDispatch?: {
+    selected: Array<{ name: string; focus: string; reason: string; status: "queued" | "complete" | "failed"; error?: string }>;
+    skipped: string[];
+    createdAt: string;
+    completedAt: string | null;
+  } | null;
   currentStage: StageId;
   completedStages: StageId[];
   stageRun: number;
@@ -292,6 +354,115 @@ export interface RuntimeStatus {
   binary: string | null;
   message: string;
   suggestedRepository: string;
+  catalog?: RuntimeModelCatalog;
+  settings?: RuntimeSettings;
+  providers?: Array<{
+    id: "codex" | "claude" | "local";
+    label: string;
+    available: boolean;
+    authenticated: boolean;
+    executionEnabled: boolean;
+    detail: string;
+  }>;
+  scouts?: Array<{ id: string; label: string; instruction: string; limits: string }>;
+}
+
+export interface RuntimeAgentPolicy {
+  model: string;
+  reasoning: string;
+}
+
+export interface RuntimeModelPriceBand {
+  input: number;
+  cachedInput: number;
+  cacheWrite: number | null;
+  output: number;
+}
+
+export interface RuntimeModelPricing {
+  short: RuntimeModelPriceBand;
+  long: RuntimeModelPriceBand | null;
+}
+
+export interface RuntimeModelOption {
+  id: string;
+  label: string;
+  description: string;
+  defaultReasoning: string;
+  reasoningLevels: string[];
+  pricing: RuntimeModelPricing | null;
+}
+
+export interface RuntimeModelCatalog {
+  models: RuntimeModelOption[];
+  fetchedAt: string | null;
+  source: string;
+}
+
+export interface RuntimeSettings {
+  allowedModels: string[];
+  defaultModel: string;
+  defaultReasoning: string;
+  stagePolicies: Record<string, RuntimeAgentPolicy>;
+  pricing: {
+    version: string;
+    sourceUrl: string;
+    verifiedAt: string;
+    verifiedBy: string;
+    rates: Record<string, RuntimeModelPricing>;
+    creditRates?: Record<string, { input: number; cachedInput: number; output: number }>;
+    creditSourceUrl?: string;
+  };
+}
+
+export interface RuntimeEvaluationVariant {
+  role: string;
+  model: string;
+  reasoning: string;
+  runs: number;
+  tasks: number;
+  inputTokens: number;
+  cachedInputTokens: number;
+  outputTokens: number;
+  cacheRate: number | null;
+  cost: number | null;
+  credits: number | null;
+  gatePasses: number;
+  gateRepairs: number;
+  averageHumanScore: number | null;
+}
+
+export interface RuntimeEvaluationSummary {
+  generatedAt: string;
+  methodology: string;
+  evaluatedTasks: number;
+  variants: RuntimeEvaluationVariant[];
+}
+
+export interface RuntimeChangelogCommit {
+  sha: string;
+  shortSha: string;
+  author: string;
+  authoredAt: string;
+  subject: string;
+}
+
+export interface RuntimeChangelogFile {
+  status: string;
+  path: string;
+  previousPath: string | null;
+}
+
+export interface RuntimeChangelogDetail extends RuntimeChangelogCommit {
+  body: string;
+  files: RuntimeChangelogFile[];
+}
+
+export interface RuntimeChangelogDiff {
+  sha: string;
+  path: string;
+  diff: string;
+  truncated: boolean;
 }
 
 export const EXAMPLE_TITLE = "Add task priority";
@@ -304,7 +475,9 @@ export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
     workflowStages.findIndex((stage) => stage.id === task.currentStage),
   );
   const status: RecentTask["status"] =
-    task.status === "completed"
+    task.status === "closed"
+      ? "Closed"
+      : task.status === "completed"
       ? "Completed"
       : task.status === "queued" ||
           task.status.startsWith("awaiting-") ||
@@ -329,10 +502,48 @@ export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
     stageRun: task.attemptsByStage?.[task.currentStage] ?? 0,
     stageRunLimit: task.stageRunLimit,
     tokens: formatTokenCount(task.usage.totalTokens),
-    cost: "Plan",
-    models: [{ provider: "codex", model: task.models[0]?.model ?? "GPT-5.4-mini · ChatGPT plan" }],
+    cost: formatApproximateCost(task.usage.cost),
+    inputTokens: formatTokenCount(task.usage.inputTokens),
+    uncachedInputTokens: formatTokenCount(
+      Math.max(
+        0,
+        task.usage.inputTokens - task.usage.cachedInputTokens - (task.usage.cacheWriteTokens ?? 0),
+      ),
+    ),
+    outputTokens: formatTokenCount(task.usage.outputTokens),
+    cachedTokens: formatTokenCount(task.usage.cachedInputTokens),
+    cacheRate: formatCacheRate(task.usage),
+    models: (task.models?.length ? task.models : [{ provider: "openai" as const, model: task.agentConfig?.model ?? "gpt-5.6-luna" }]).map((item) => ({ provider: "codex" as const, model: item.model })),
     priority: `${task.priority[0]?.toUpperCase()}${task.priority.slice(1)}` as RecentTask["priority"],
+    startedAt: formatTaskDate(task.startedAt),
+    endedAt: formatTaskDate(task.closure?.closedAt ?? task.completedAt ?? (task.status === "running" ? null : task.updatedAt)),
+    updatedAt: formatTaskDate(task.updatedAt),
   };
+}
+
+export function formatApproximateCost(value: number | null | undefined) {
+  if (value == null || !Number.isFinite(value)) return "Unavailable";
+  if (value === 0) return "$0.00";
+  if (value < 0.01) return `$${value.toFixed(4)}`;
+  return `$${value.toFixed(2)}`;
+}
+
+export function formatCacheRate(
+  usage: Pick<RuntimeUsage, "inputTokens" | "cachedInputTokens">,
+) {
+  if (!usage.inputTokens) return "—";
+  return `${Math.round((usage.cachedInputTokens / usage.inputTokens) * 100)}%`;
+}
+
+export function formatTaskDate(value: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  return `${day}/${month} ${hour}:${minute}`;
 }
 
 export function formatTokenCount(value: number) {
@@ -350,7 +561,7 @@ function formatRuntimeDuration(startedAt: string | null, completedAt: string | n
 }
 
 export const workflowStages: WorkflowStage[] = [
-  { id: "triage", label: "Triage", shortLabel: "Triage", provider: "harness", skill: "classify-task" },
+  { id: "triage", label: "Triage", shortLabel: "Triage", provider: "codex", skill: "classify-task" },
   {
     id: "scouts",
     label: "Repository scouts",
@@ -362,21 +573,21 @@ export const workflowStages: WorkflowStage[] = [
     id: "grill",
     label: "Grill with docs",
     shortLabel: "Grill",
-    provider: "claude",
+    provider: "codex",
     skill: "grill-with-docs",
   },
   {
     id: "specification",
     label: "Task specification",
     shortLabel: "Task spec",
-    provider: "claude",
+    provider: "codex",
     skill: "to-spec",
   },
   {
     id: "plan",
     label: "Implementation plan",
     shortLabel: "Impl plan",
-    provider: "claude",
+    provider: "codex",
     skill: "to-tickets",
   },
   {
@@ -393,12 +604,12 @@ export const workflowStages: WorkflowStage[] = [
     provider: "codex",
     skill: "code-review",
   },
-  { id: "test", label: "Test", shortLabel: "Test", provider: "harness", skill: "verify-acceptance" },
+  { id: "test", label: "Test", shortLabel: "Test", provider: "codex", skill: "verify-acceptance" },
   {
     id: "final-review",
     label: "Final review",
     shortLabel: "Final review",
-    provider: "claude",
+    provider: "codex",
     skill: "holdout-review",
   },
   {

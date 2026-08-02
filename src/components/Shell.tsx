@@ -3,6 +3,7 @@ import {
   CaretDoubleLeft,
   CaretDoubleRight,
   CirclesFour,
+  ClockCounterClockwise,
   Code,
   GearSix,
   ListChecks,
@@ -19,6 +20,7 @@ interface ShellProps {
   onToggleCollapsed: () => void;
   onNavigate: (screen: AppScreen) => void;
   onNewTask: () => void;
+  onOpenChangelog: () => void;
   runtimeStatus: RuntimeStatus | null;
 }
 
@@ -36,6 +38,7 @@ export function Shell({
   onToggleCollapsed,
   onNavigate,
   onNewTask,
+  onOpenChangelog,
   runtimeStatus,
 }: ShellProps) {
   const repositoryName =
@@ -94,28 +97,27 @@ export function Shell({
         New task
         <kbd>N</kbd>
       </Button>
+      <Button
+        tone="ghost"
+        icon={ClockCounterClockwise}
+        className="sidebar__changelog"
+        onClick={onOpenChangelog}
+        aria-label="View changelog"
+      >
+        View changelog
+      </Button>
 
       <div className="sidebar__spacer" />
 
       <section className="provider-connections" aria-label="Model connections">
         <span className="sidebar-label">Connections</span>
-        <div className="provider-connection provider-connection--codex">
-          <span className="provider-orb" aria-hidden />
-          <span>{runtimeStatus?.model?.toUpperCase() ?? "OpenAI model"}</span>
-          <span className="provider-connection__state">
-            {runtimeStatus?.authenticated ? "Connected" : "Offline"}
-          </span>
-        </div>
-        <div className="provider-connection provider-connection--harness">
-          <span className="provider-orb" aria-hidden />
-          <span>ChatGPT plan</span>
-          <span className="provider-connection__state">{runtimeStatus?.authMethod ?? "Checking"}</span>
-        </div>
-        <div className="provider-connection provider-connection--harness">
-          <span className="provider-orb" aria-hidden />
-          <span>Local harness</span>
-          <span className="provider-connection__state">{runtimeStatus ? "Healthy" : "Checking"}</span>
-        </div>
+        {(runtimeStatus?.providers ?? [{ id: "codex", label: "Codex", available: Boolean(runtimeStatus?.available), authenticated: Boolean(runtimeStatus?.authenticated), executionEnabled: true, detail: runtimeStatus?.message ?? "Runtime unavailable" }]).filter((provider) => provider.available).map((provider) => (
+          <div className={`provider-connection provider-connection--${provider.id === "codex" ? "codex" : "harness"}`} key={provider.id} title={provider.detail}>
+            <span className="provider-orb" aria-hidden />
+            <span>{provider.label}</span>
+            <span className="provider-connection__state">{provider.executionEnabled ? (provider.authenticated ? "Connected" : "Offline") : provider.authenticated ? "Signed in" : "Unavailable"}</span>
+          </div>
+        ))}
       </section>
 
       <div className="sidebar-profile">

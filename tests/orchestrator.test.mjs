@@ -12,6 +12,69 @@ const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"ques
 const PLAN_OUTPUT = `## Plan summary\n\nTwo independent slices.\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verification":["npm test"]},{"id":"S2","title":"UI","description":"Implement the task UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verification":["npm run typecheck"]}]}\n</work-packages>`;
 const TEST_OUTPUT = `PASS\n\n## Verdict\n\nPASS\n\n<focused-test-evidence>\n{"candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","startedAt":"2026-08-01T12:00:00.000Z","completedAt":"2026-08-01T12:00:01.240Z","durationMs":1240,"rows":[{"id":"row-1","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":1240,"title":"orchestrator.test.mjs","artifactReferences":[{"name":"Markdown test artifact","kind":"markdown","path":"artifacts/test.md"}],"assertions":[{"label":"all packages qualified","actual":"pass","expected":"pass"}],"failureDetails":null},{"id":"row-2","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"failed","durationMs":350,"title":"api.test.mjs","artifactReferences":[{"name":"JUnit report","kind":"junit","path":"artifacts/junit.xml"}],"assertions":[{"label":"failing assertion","actual":"Expected 400, received 201","expected":"Expected 400"}],"failureDetails":"Request accepted invalid priority."}]}\n</focused-test-evidence>`;
 
+const SCOUT_OUTPUT = `<scout-report>
+{"status":"ok","findings":[{"file":"src/mock.ts","line":1,"fact":"Mock repository fact for the selected scout.","confidence":"high"}],"uncertainties":[]}
+</scout-report>`;
+
+test("refreshes the pricing registry without rewriting legacy task estimates", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-pricing-verifier-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Reprice recorded usage",
+      description: "Keep historical API-rate estimates aligned with the verified rate card.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "medium",
+      model: "gpt-5.6-luna",
+      reasoning: "low",
+    });
+    await store.update(task.id, (draft) => {
+      const usage = { inputTokens: 200_000, cachedInputTokens: 0, outputTokens: 1_000_000, totalTokens: 1_200_000 };
+      draft.usage = usage;
+      draft.artifacts.push({
+        id: "priced-artifact",
+        stage: "triage",
+        name: "triage.md",
+        kind: "markdown",
+        content: "Recorded usage",
+        createdAt: new Date().toISOString(),
+        model: "gpt-5.6-luna",
+        reasoning: "low",
+        usage,
+      });
+    });
+    let call;
+    const orchestrator = new TaskOrchestrator(store, {
+      runCodex: async (options) => {
+        call = options;
+        return {
+          finalText: `<pricing-rates>${JSON.stringify({
+            "gpt-5.6-sol": { short: { input: 5, cachedInput: 0.5, cacheWrite: 6.25, output: 30 } },
+            "gpt-5.6-terra": { short: { input: 2, cachedInput: 0.2, cacheWrite: 2.5, output: 12 } },
+            "gpt-5.6-luna": { short: { input: 0.25, cachedInput: 0.03, cacheWrite: 0.3, output: 1.3 } },
+          })}</pricing-rates>`,
+          usage: { inputTokens: 1_000, cachedInputTokens: 800, outputTokens: 100, totalTokens: 1_100 },
+        };
+      },
+    });
+
+    const result = await orchestrator.verifyPricing();
+    assert.equal(call.sandbox, "read-only");
+    assert.equal(call.reasoning, "low");
+    assert.match(call.prompt, /official OpenAI documentation only/);
+    assert.equal(result.settings.pricing.rates["gpt-5.6-sol"].short.output, 30);
+    assert.match(result.settings.pricing.verifiedBy, /read-only verification agent/);
+    assert.equal(result.usage.cachedInputTokens, 800);
+    const historical = await store.get(task.id);
+    assert.equal(historical.artifacts[0].usage.cost, undefined);
+    assert.equal(historical.usage.cost, undefined);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("parses grounded Grill questions and dependency batches", () => {
   assert.equal(parseGrillQuestions(GRILL_OUTPUT)[0].options[0].recommended, true);
   const packages = parseWorkPackages(`<work-packages>{"packages":[{"id":"S1","title":"API","description":"Add API.","dependencies":[],"ownedPaths":["server/api.mjs"],"verification":[]},{"id":"S2","title":"UI","description":"Add UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verification":[]},{"id":"S3","title":"Contract","description":"Join both.","dependencies":["S1","S2"],"ownedPaths":["tests/contract.test.mjs"],"verification":[]}]}</work-packages>`);
@@ -234,9 +297,11 @@ test("runs the investigation frontier and retains each stage handoff", async () 
       runCodex: async ({ prompt, onEvent }) => {
         onEvent({ type: "activity", tone: "success", title: "Repository inspected", detail: "mock" });
         return {
-          finalText: /<grill-questions>/.test(prompt)
-            ? GRILL_OUTPUT
-            : `## Artifact\n\n${prompt.match(/Your stage assignment:\n([^\n]+)/)?.[1] ?? "Ready"}`,
+          finalText: /<scout-report>/.test(prompt)
+            ? SCOUT_OUTPUT
+            : /<grill-questions>/.test(prompt)
+              ? GRILL_OUTPUT
+              : `## Artifact\n\n${prompt.match(/Your stage assignment:\n([^\n]+)/)?.[1] ?? "Ready"}`,
           usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
         };
       },
@@ -252,14 +317,14 @@ test("runs the investigation frontier and retains each stage handoff", async () 
 
     assert.equal(finished.status, "awaiting-grill", finished.error);
     assert.deepEqual(finished.completedStages, ["triage", "scouts"]);
-    assert.equal(finished.artifacts.length, 3);
+    assert.equal(finished.artifacts.length, 5);
     assert.equal(finished.grillSession.questions.length, 1);
     await orchestrator.answerGrillQuestion(task.id, { questionId: "Q1", answer: "Preserve it" });
     await orchestrator.finishGrill(task.id);
     finished = await waitForStatus(store, task.id, "awaiting-spec-approval");
     assert.deepEqual(finished.completedStages, ["triage", "scouts", "grill", "specification"]);
-    assert.equal(finished.artifacts.length, 4);
-    assert.equal(finished.usage.totalTokens, 60);
+    assert.equal(finished.artifacts.length, 6);
+    assert.equal(finished.usage.totalTokens, 75);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -336,6 +401,7 @@ test("advances an approved implementation task through a revision-bound candidat
         const { prompt } = options;
         runtimeCalls.push(options);
         let finalText = "## Outcome\n\nReady";
+        if (/<scout-report>/.test(prompt)) finalText = SCOUT_OUTPUT;
         if (/<grill-questions>/.test(prompt)) finalText = GRILL_OUTPUT;
         if (/<work-packages>/.test(prompt)) finalText = PLAN_OUTPUT;
         if (/Development review/.test(prompt)) {
@@ -383,7 +449,7 @@ test("advances an approved implementation task through a revision-bound candidat
     assert.equal(approvalTask.decisions.length, 1);
     assert.deepEqual(approvalTask.workPackages.map((item) => item.status), ["integrated", "integrated"]);
     assert.deepEqual(approvalTask.candidates[0].members.map((member) => member.packageId), ["S1", "S2"]);
-    assert.equal(approvalTask.artifacts.length, 13);
+    assert.equal(approvalTask.artifacts.length, 15);
     const testCall = runtimeCalls.find((call) => /Focused test/.test(call.prompt));
     assert.equal(testCall.sandbox, "workspace-write");
     assert.equal(testCall.tempDirectory, path.join(directory, "C1", ".data", "runtime-temp"));
@@ -404,7 +470,7 @@ test("advances an approved implementation task through a revision-bound candidat
     const complete = await store.get(task.id);
     assert.equal(complete.status, "completed");
     assert.equal(complete.candidates[0].status, "merged");
-    assert.equal(complete.artifacts.length, 14);
+    assert.equal(complete.artifacts.length, 16);
     assert.equal(complete.artifacts.at(-1).stage, "approval");
     assert.equal(complete.artifacts.at(-1).candidateId, "C1");
     assert.equal(complete.artifacts.at(-1).candidateRevision, 2);

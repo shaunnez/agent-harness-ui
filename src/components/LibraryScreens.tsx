@@ -1,308 +1,207 @@
 import {
   ArrowLeft,
   ArrowRight,
-  Brain,
-  ChartLineUp,
   CheckCircle,
   Code,
-  CurrencyDollar,
-  Database,
-  FileCode,
-  FloppyDisk,
-  GitBranch,
   MagnifyingGlass,
   Robot,
-  ShieldCheck,
   SlidersHorizontal,
-  TerminalWindow,
+  WarningCircle,
 } from "@phosphor-icons/react";
-import { useState } from "react";
-import { type RuntimeTask, runtimeTaskToRecentTask, workflowStages } from "../domain";
-import { Button, ModelStack, PriorityBadge, ProviderTag, SectionHeader, StateBadge } from "./Primitives";
+import { useEffect, useMemo, useState } from "react";
+import promptRuntimeSource from "../../server/prompts.mjs?raw";
+import {
+  formatApproximateCost,
+  formatCacheRate,
+  formatTokenCount,
+  type AgentRoleId,
+  type RuntimeEvaluationSummary,
+  type RuntimeAgentPolicy,
+  type RuntimeSettings,
+  type RuntimeStatus,
+  type RuntimeTask,
+  scoutRoleIds,
+  type StageId,
+  workflowStages,
+} from "../domain";
+import { Button, SectionHeader } from "./Primitives";
+import { TaskTable } from "./TaskTable";
 
 export function TasksScreen({
   onOpenTask,
   runtimeTasks,
 }: {
-  onOpenTask: (taskId?: string) => void;
+  onOpenTask: (taskId: string) => void;
   runtimeTasks: RuntimeTask[];
 }) {
-  const tasks = runtimeTasks.map(runtimeTaskToRecentTask);
+  const [query, setQuery] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [status, setStatus] = useState("open");
+  const [stage, setStage] = useState("all");
+  const [priority, setPriority] = useState("all");
+  const tasks = useMemo(
+    () =>
+      [...runtimeTasks]
+        .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
+        .filter((task) => {
+          const haystack = [
+            task.id,
+            task.title,
+            task.description,
+            task.status,
+            task.currentStage,
+            task.priority,
+            task.repositoryPath,
+            ...task.models.map((model) => model.model),
+            ...task.artifacts.map((artifact) => artifact.name),
+          ]
+            .join(" ")
+            .toLowerCase();
+          const statusMatches =
+            status === "all" ||
+            (status === "open" && task.status !== "closed") ||
+            (status === "attention"
+              ? ["failed", "blocked", "cancelled", "repair-required"].includes(task.status)
+              : status === "waiting"
+                ? task.status.startsWith("awaiting-") || task.status.startsWith("ready-for-")
+                : task.status === status);
+          return (
+            haystack.includes(query.trim().toLowerCase()) &&
+            statusMatches &&
+            (stage === "all" || task.currentStage === stage) &&
+            (priority === "all" || task.priority === priority)
+          );
+        }),
+    [priority, query, runtimeTasks, stage, status],
+  );
+  const hasFilters = Boolean(query.trim()) || !["all", "open"].includes(status) || stage !== "all" || priority !== "all";
+
   return (
     <div className="page library-page">
       <SectionHeader
         eyebrow="Agent Harness"
         title="Tasks"
-        description="Every development goal, model assignment, and deterministic workflow state."
+        description="Every persisted task, its current gate, dates, real token usage, cache rate, and approximate API-rate cost."
         action={
-          <Button tone="secondary" icon={SlidersHorizontal}>
-            Filter
+          <Button tone={filtersOpen || hasFilters ? "primary" : "secondary"} icon={SlidersHorizontal} onClick={() => setFiltersOpen((value) => !value)}>
+            Filters{hasFilters ? " active" : ""}
           </Button>
         }
       />
       <div className="toolbar">
-        <MagnifyingGlass size={17} />
-        <input aria-label="Search tasks" placeholder="Search tasks, IDs, models, or artifacts…" />
-        <span>
-          {tasks.length} local task{tasks.length === 1 ? "" : "s"}
-        </span>
+        <MagnifyingGlass size={18} />
+        <input
+          aria-label="Search tasks"
+          placeholder="Search tasks, IDs, models, repositories, or artifacts…"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        <span>{tasks.length} of {runtimeTasks.length} tasks</span>
       </div>
-      <div className="library-table library-table--tasks">
-        <div className="library-table__header">
-          <span>Task</span>
-          <span>Status</span>
-          <span>Stage trail</span>
-          <span>Stage run</span>
-          <span>Tokens</span>
-          <span>Approx. cost</span>
-          <span>Models</span>
+      {filtersOpen ? (
+        <div className="task-filters">
+          <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="open">Open tasks</option><option value="all">All statuses</option><option value="attention">Needs attention</option><option value="waiting">Waiting for action</option><option value="running">Running</option><option value="completed">Completed</option><option value="closed">Closed</option></select></label>
+          <label>Stage<select value={stage} onChange={(event) => setStage(event.target.value)}><option value="all">All stages</option>{workflowStages.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+          <label>Priority<select value={priority} onChange={(event) => setPriority(event.target.value)}><option value="all">All priorities</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
+          <Button tone="ghost" onClick={() => { setQuery(""); setStatus("open"); setStage("all"); setPriority("all"); }} disabled={!hasFilters}>Clear filters</Button>
         </div>
-        {tasks.map((task) => (
-          <button
-            className="library-table__row"
-            type="button"
-            key={task.id}
-            onClick={() => onOpenTask(task.id.startsWith("AH-") ? task.id : undefined)}
-          >
-            <span>
-              <span className="task-title-line">
-                <span className="mono">{task.id}</span>
-                <PriorityBadge priority={task.priority.toLowerCase() as "low" | "medium" | "high"} />
-              </span>
-              <strong>{task.title}</strong>
-            </span>
-            <StateBadge
-              state={
-                task.status === "Running"
-                  ? "running"
-                  : task.status === "Blocked"
-                    ? "blocked"
-                    : task.status === "Completed"
-                      ? "completed"
-                      : "needs-input"
-              }
-            />
-            <StageTrail
-              activeIndex={task.stageIndex}
-              stage={task.stage}
-              completed={task.status === "Completed"}
-            />
-            <span className="stage-run-cell">
-              <strong className="mono">
-                {task.stageRun} / {task.stageRunLimit}
-              </strong>
-              <small>current stage</small>
-            </span>
-            <span className="mono">{task.tokens}</span>
-            <span className="mono" title="Estimate from configured input, output, and cache rates">
-              {task.cost}
-            </span>
-            <ModelStack models={task.models} compact />
-          </button>
-        ))}
-        {!tasks.length ? (
-          <div className="library-table__empty">
-            <strong>No local tasks yet</strong>
-            <small>Create a task from the sidebar to begin a real Evidence Gate workflow.</small>
-          </div>
-        ) : null}
-      </div>
+      ) : null}
+      <TaskTable
+        tasks={tasks}
+        onOpenTask={onOpenTask}
+        emptyTitle={hasFilters ? "No tasks match these filters" : "No local tasks yet"}
+        emptyCopy={hasFilters ? "Clear one or more filters to broaden the result." : "Create a task to begin a real Evidence Gate workflow."}
+      />
     </div>
   );
 }
 
-function StageTrail({
-  activeIndex,
-  stage,
-  completed,
-}: {
-  activeIndex: number;
-  stage: string;
-  completed: boolean;
-}) {
-  return (
-    <span className="stage-trail" role="img" aria-label={`Current stage ${stage}, ${activeIndex + 1} of 10`}>
-      <span className="stage-trail__label">{stage}</span>
-      <span className="stage-trail__nodes" aria-hidden>
-        {workflowStages.map((item, index) => (
-          <i
-            key={item.id}
-            className={
-              completed || index < activeIndex
-                ? "stage-trail__done"
-                : index === activeIndex
-                  ? "stage-trail__active"
-                  : ""
-            }
-          >
-            {completed || index < activeIndex ? "✓" : index === activeIndex ? activeIndex + 1 : ""}
-          </i>
-        ))}
-      </span>
-    </span>
-  );
+const skillContracts: Record<StageId, { input: string; output: string }> = {
+  triage: { input: "Task title, description, workflow, priority, and repository", output: "triage.md with verdict, verified facts, scope, risks, and route" },
+  scouts: { input: "Task plus repository and retained triage evidence", output: "repository-scout.md with architecture, files, tests, constraints, and seams" },
+  grill: { input: "Repository facts and consequential unresolved product decisions", output: "decision-brief.md plus structured Grill questions and recorded decisions" },
+  specification: { input: "Approved evidence and authoritative recorded decisions", output: "task-specification.md with scope, acceptance criteria, tests, and notes" },
+  plan: { input: "Approved specification", output: "implementation-plan.md plus dependency-ordered work-package manifest" },
+  implement: { input: "Approved spec and plan in an isolated candidate worktree", output: "Committed candidate revision and implementation-candidate.md" },
+  "dev-review": { input: "Exact candidate revision plus approved specification and plan", output: "development-review.md with PASS/REPAIR and P0–P3 findings" },
+  test: { input: "Exact reviewed candidate revision", output: "test-evidence.md plus candidate-bound focused-test result rows" },
+  "final-review": { input: "Exact tested candidate and every retained stage artifact", output: "final-review.md with holdout verdict and human approval brief" },
+  approval: { input: "Exact candidate revision and fresh review/test/final gates", output: "Human approval record and fast-forward merge" },
+};
+
+function sourceExcerpt(stageId: StageId) {
+  const key = stageId.includes("-") ? `"${stageId}"` : stageId;
+  const start = promptRuntimeSource.indexOf(`  ${key}: {`);
+  if (start < 0) return "This is a deterministic harness stage and has no model prompt definition.";
+  const end = promptRuntimeSource.indexOf("\n  },", start);
+  return promptRuntimeSource.slice(start, end < 0 ? start + 1_600 : end + 5).trim();
 }
 
-const skillRecords = [
-  {
-    id: "triage",
-    name: "triage",
-    description: "Verify and classify incoming work before it reaches an implementation agent.",
-    version: "v2.4",
-    success: "97%",
-    avgCost: "$0.08",
-    avgTokens: "3.2k",
-    source: "https://github.com/mattpocock/skills/blob/main/docs/engineering/triage.md",
-    usedBy: "Triage agent",
-    input: "Issue, PR, or task description; repository and tracker context",
-    output: "Verified category, workflow state, rationale, and ready-for-agent brief",
-    prompt:
-      "Verify the claim before promoting work. Recommend exactly one category role and one workflow state, explain why, and wait for human direction before changing tracker state.",
-  },
-  {
-    id: "research",
-    name: "research",
-    description: "Read primary sources and leave a cited Markdown research artifact.",
-    version: "v1.8",
-    success: "99%",
-    avgCost: "$0.14",
-    avgTokens: "6.8k",
-    source: "https://github.com/mattpocock/skills/blob/main/docs/engineering/research.md",
-    usedBy: "Repository research agent",
-    input: "A factual question plus allowed repositories, documentation, and APIs",
-    output: "Cited Markdown findings sourced only from primary material",
-    prompt:
-      "Answer the question from sources that own the answer. Prefer repository code, official docs, specs, and first-party APIs. Save one cited Markdown artifact.",
-  },
-  {
-    id: "grill-with-docs",
-    name: "grill-with-docs",
-    description: "Walk the decision tree one question at a time and preserve settled language.",
-    version: "v3.1",
-    success: "94%",
-    avgCost: "$0.22",
-    avgTokens: "9.6k",
-    source: "https://github.com/mattpocock/skills/blob/main/docs/engineering/grill-with-docs.md",
-    usedBy: "Clarification agent",
-    input: "A fuzzy plan or design plus repository evidence",
-    output: "Settled decisions, CONTEXT.md glossary updates, and rare ADR proposals",
-    prompt:
-      "Run a grilling session using domain modeling. Ask one decision at a time, recommend an answer, read the codebase for facts, and do not act until shared understanding is confirmed.",
-  },
-  {
-    id: "to-spec",
-    name: "to-spec",
-    description: "Synthesize settled context into a complete specification without re-interviewing.",
-    version: "v2.6",
-    success: "96%",
-    avgCost: "$0.31",
-    avgTokens: "12.4k",
-    source: "https://github.com/mattpocock/skills/blob/main/docs/engineering/to-spec.md",
-    usedBy: "Specification agent",
-    input: "Conversation, repository evidence, glossary, ADRs, and agreed test seams",
-    output: "Problem, solution, user stories, decisions, testing, scope, and notes",
-    prompt:
-      "Synthesize what is already known. Prefer existing test seams, include extensive independently checkable user stories, and publish the finished spec without another interview.",
-  },
-  {
-    id: "to-tickets",
-    name: "to-tickets",
-    description: "Split a settled spec into tracer-bullet tickets with explicit blocking edges.",
-    version: "v2.2",
-    success: "93%",
-    avgCost: "$0.19",
-    avgTokens: "7.1k",
-    source: "https://github.com/mattpocock/skills/blob/main/docs/engineering/to-tickets.md",
-    usedBy: "Planning agent",
-    input: "Approved specification and configured tracker",
-    output: "Vertical-slice tickets, dependencies, frontier, and publication record",
-    prompt:
-      "Create thin vertical slices that are demoable end-to-end. Declare blockers on every ticket, publish blockers first, and use expand-contract only for unavoidable wide refactors.",
-  },
-  {
-    id: "implement",
-    name: "implement",
-    description: "Build approved tickets through TDD, typechecking, the full suite, and review.",
-    version: "v4.0",
-    success: "92%",
-    avgCost: "$0.74",
-    avgTokens: "28.5k",
-    source: "https://github.com/mattpocock/skills/blob/main/docs/engineering/implement.md",
-    usedBy: "Implementation agent",
-    input: "Approved spec or tickets with pre-agreed seams",
-    output: "Test-driven patch, verification evidence, review findings, and commit",
-    prompt:
-      "Implement only the settled work. Use TDD at pre-agreed seams, typecheck and run focused tests regularly, run the full suite once, then request code review.",
-  },
-  {
-    id: "code-review",
-    name: "code-review",
-    description: "Review a fixed diff independently against repository standards and the spec.",
-    version: "v3.3",
-    success: "98%",
-    avgCost: "$0.42",
-    avgTokens: "15.7k",
-    source: "https://github.com/mattpocock/skills/blob/main/docs/engineering/code-review.md",
-    usedBy: "Standards reviewer + Spec reviewer",
-    input: "Fixed point, non-empty diff, standards sources, and originating spec",
-    output: "Separate Standards and Spec findings; no blended verdict",
-    prompt:
-      "Pin the fixed point, then run Standards and Spec reviews in separate contexts. Preserve both reports side by side and never merge or re-rank their findings.",
-  },
-  {
-    id: "tdd",
-    name: "tdd",
-    description: "Drive one observable behavior at a time through a red-green loop.",
-    version: "v2.9",
-    success: "95%",
-    avgCost: "$0.37",
-    avgTokens: "13.9k",
-    source: "https://github.com/mattpocock/skills/blob/main/docs/engineering/tdd.md",
-    usedBy: "Implementation agent",
-    input: "Concrete behavior, stable public seam, and independent expected values",
-    output: "Tracer test plus iterative red-green implementation evidence",
-    prompt:
-      "Write one behavior test, make it pass, then choose the next. Test public interfaces, use independent expected values, and refactor only while green.",
-  },
-] as const;
+function stageUsage(tasks: RuntimeTask[], stageId: AgentRoleId) {
+  const artifacts = tasks
+    .flatMap((task) => task.artifacts)
+    .filter((artifact) => (artifact.agentRole ?? artifact.stage) === stageId);
+  const usage = artifacts.reduce(
+    (total, artifact) => ({
+      inputTokens: total.inputTokens + artifact.usage.inputTokens,
+      cachedInputTokens: total.cachedInputTokens + artifact.usage.cachedInputTokens,
+      outputTokens: total.outputTokens + artifact.usage.outputTokens,
+      totalTokens: total.totalTokens + artifact.usage.totalTokens,
+      cost: total.cost + (artifact.usage.cost ?? 0),
+    }),
+    { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0, cost: 0 },
+  );
+  return {
+    runs: artifacts.length,
+    artifacts,
+    pricedRuns: artifacts.filter((artifact) => artifact.usage.cost != null).length,
+    tokens: usage.totalTokens,
+    ...usage,
+  };
+}
 
-export function SkillsScreen() {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = skillRecords.find((skill) => skill.id === selectedId);
-  if (selected) return <SkillDetail skill={selected} onBack={() => setSelectedId(null)} />;
-  const icons = [MagnifyingGlass, Database, Brain, FileCode, GitBranch, TerminalWindow, ShieldCheck, Code];
+export function SkillsScreen({ runtimeTasks }: { runtimeTasks: RuntimeTask[] }) {
+  const [selectedId, setSelectedId] = useState<StageId | null>(null);
+  const selected = workflowStages.find((stage) => stage.id === selectedId);
+  if (selected) {
+    const usage = stageUsage(runtimeTasks, selected.id);
+    return (
+      <div className="page library-page detail-page">
+        <button type="button" className="detail-back" onClick={() => setSelectedId(null)}><ArrowLeft size={16} /> Back to Skills</button>
+        <SectionHeader eyebrow="Runtime capability" title={selected.skill} description={`${selected.label} is a workflow-stage contract executed by ${selected.provider === "harness" ? "the deterministic harness" : "the configured Codex runtime"}.`} />
+        <div className="detail-metrics detail-metrics--truthful">
+          <Metric label="Recorded artifacts" value={String(usage.runs)} />
+          <Metric label="Recorded tokens" value={formatTokenCount(usage.tokens)} />
+          <Metric label="Approx. API-rate cost" value={usage.pricedRuns ? formatApproximateCost(usage.cost) : "Unavailable"} />
+          <Metric label="Source" value="server/prompts.mjs" />
+        </div>
+        <div className="detail-grid">
+          <section className="detail-panel detail-panel--prompt">
+            <header><span><h3>Runtime source</h3><p>Read-only excerpt from the JavaScript that builds this stage prompt. It is not invented TypeScript or an editable override.</p></span></header>
+            <pre className="runtime-source"><code>{sourceExcerpt(selected.id)}</code></pre>
+          </section>
+          <aside className="detail-panel detail-contracts">
+            <h3>Input / output contract</h3>
+            <div><span>Input</span><p>{skillContracts[selected.id].input}</p></div>
+            <div><span>Output</span><p>{skillContracts[selected.id].output}</p></div>
+            <div><span>Measurement</span><p>Runs and tokens come from persisted artifacts. Cost is an API-rate estimate after cached-input discounts, not the ChatGPT-plan charge.</p></div>
+          </aside>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="page library-page">
-      <SectionHeader
-        eyebrow="Model-neutral capabilities"
-        title="Skills"
-        description="Reusable instructions define how work is done; agent profiles decide which model runs them."
-      />
+      <SectionHeader eyebrow="Runtime contracts" title="Skills" description="These are the ten actual workflow-stage capabilities. Metrics are limited to persisted artifacts and reported tokens." />
       <div className="skill-list">
-        {skillRecords.map((skill, index) => {
-          const SkillIcon = icons[index] ?? Code;
+        {workflowStages.map((stage) => {
+          const usage = stageUsage(runtimeTasks, stage.id);
           return (
-            <button
-              className="skill-row"
-              type="button"
-              key={skill.id}
-              onClick={() => setSelectedId(skill.id)}
-            >
-              <SkillIcon size={20} />
-              <span>
-                <strong>{skill.name}</strong>
-                <small>
-                  {skill.description} · {skill.version}
-                </small>
-              </span>
-              <span className="skill-metric">
-                <strong>{skill.success}</strong>
-                <small>successful gates</small>
-              </span>
-              <span className="skill-metric">
-                <strong>{skill.avgCost}</strong>
-                <small>average cost</small>
-              </span>
+            <button className="skill-row" type="button" key={stage.id} onClick={() => setSelectedId(stage.id)}>
+              <Code size={20} />
+              <span><strong>{stage.skill}</strong><small>{stage.label} · {stage.provider === "harness" ? "deterministic harness" : "Codex prompt"}</small></span>
+              <span className="skill-metric"><strong>{usage.runs}</strong><small>recorded artifacts</small></span>
+              <span className="skill-metric"><strong>{formatTokenCount(usage.tokens)}</strong><small>recorded tokens</small></span>
               <ArrowRight size={16} />
             </button>
           );
@@ -312,421 +211,256 @@ export function SkillsScreen() {
   );
 }
 
-function SkillDetail({ skill, onBack }: { skill: (typeof skillRecords)[number]; onBack: () => void }) {
-  const [prompt, setPrompt] = useState<string>(skill.prompt);
-  const [saved, setSaved] = useState(false);
-  return (
-    <div className="page library-page detail-page">
-      <button type="button" className="detail-back" onClick={onBack}>
-        <ArrowLeft size={16} /> Back to Skills
-      </button>
-      <SectionHeader
-        eyebrow={`Installed skill · ${skill.version}`}
-        title={skill.name}
-        description={skill.description}
-        action={<span className="badge badge--success">Enabled</span>}
-      />
-      <div className="detail-metrics">
-        <Metric icon={CheckCircle} label="Successful gates" value={skill.success} />
-        <Metric icon={CurrencyDollar} label="Average cost" value={skill.avgCost} />
-        <Metric icon={ChartLineUp} label="Average tokens" value={skill.avgTokens} />
-        <Metric icon={Robot} label="Used by" value={skill.usedBy} />
-      </div>
-      <div className="detail-grid">
-        <section className="detail-panel detail-panel--prompt">
-          <header>
-            <span>
-              <h3>Installed prompt</h3>
-              <p>Editable prototype copy; a real save would create a versioned local override.</p>
-            </span>
-            <a href={skill.source} target="_blank" rel="noreferrer">
-              View source <ArrowRight size={13} />
-            </a>
-          </header>
-          <textarea
-            aria-label={`${skill.name} prompt`}
-            value={prompt}
-            onChange={(event) => {
-              setPrompt(event.target.value);
-              setSaved(false);
-            }}
-            rows={10}
-          />
-          <div className="detail-panel__actions">
-            <Button tone="primary" icon={FloppyDisk} onClick={() => setSaved(true)}>
-              Save local override
-            </Button>
-            {saved ? (
-              <span className="saved-note">Saved as draft v{Number(skill.version.slice(1)) + 0.1}</span>
-            ) : null}
-          </div>
-        </section>
-        <aside className="detail-panel detail-contracts">
-          <h3>Contract</h3>
-          <div>
-            <span>Input</span>
-            <p>{skill.input}</p>
-          </div>
-          <div>
-            <span>Output</span>
-            <p>{skill.output}</p>
-          </div>
-          <div>
-            <span>Success definition</span>
-            <p>Output schema valid, required evidence recorded, and the owning deterministic gate passed.</p>
-          </div>
-        </aside>
-      </div>
-    </div>
-  );
+const agentRoles: Array<{ id: AgentRoleId; label: string; skill: string; provider: "codex" | "harness" }> = [
+  ...workflowStages
+    .filter((stage) => stage.id !== "approval")
+    .map((stage) => ({ id: stage.id, label: stage.label, skill: stage.skill, provider: "codex" as const })),
+  { id: "repair", label: "Candidate repair", skill: "repair-candidate", provider: "codex" },
+  ...scoutRoleIds.map((id) => ({ id, label: id.replace(/^scout-/, "").replaceAll("-", " ").replace(/^./, (value) => value.toUpperCase()), skill: id, provider: "codex" as const })),
+  { id: "approval", label: "Human approval", skill: "request-approval", provider: "harness" },
+];
+
+function rolePolicy(runtimeStatus: RuntimeStatus | null, roleId: AgentRoleId): RuntimeAgentPolicy | null {
+  if (roleId === "approval") return null;
+  return runtimeStatus?.settings?.stagePolicies?.[roleId.startsWith("scout-") ? "scouts" : roleId] ?? null;
 }
 
-const agentProfiles = [
-  {
-    id: "triage-agent",
-    name: "Triage agent",
-    status: "Available",
-    provider: "codex" as const,
-    model: "Codex 1.2 Mini",
-    fallback: "Claude 3.7 Haiku",
-    reasoning: "Medium",
-    skills: ["triage", "domain-modeling"],
-    runs: 24,
-    success: "97%",
-    avgCost: "$0.09",
-    mission:
-      "Verify and classify work, then produce a concise brief without changing tracker state before human confirmation.",
-  },
-  {
-    id: "research-agent",
-    name: "Repository research agent",
-    status: "Available",
-    provider: "codex" as const,
-    model: "Codex 1.2 Mini",
-    fallback: "Claude 3.7 Haiku",
-    reasoning: "Medium",
-    skills: ["research", "codebase-design"],
-    runs: 18,
-    success: "99%",
-    avgCost: "$0.16",
-    mission:
-      "Collect primary-source facts from code, docs, history, and tests. Never turn a missing fact into a question for the user.",
-  },
-  {
-    id: "clarification-agent",
-    name: "Clarification agent",
-    status: "Waiting on GH-235",
-    provider: "claude" as const,
-    model: "Claude 3.7 Sonnet",
-    fallback: "Codex 1.2",
-    reasoning: "High",
-    skills: ["grill-with-docs", "domain-modeling"],
-    runs: 9,
-    success: "94%",
-    avgCost: "$0.24",
-    mission:
-      "Walk the decision tree one question at a time, recommend an answer, and persist settled vocabulary without over-producing ADRs.",
-  },
-  {
-    id: "implementation-agent",
-    name: "Implementation agent",
-    status: "Running GH-241",
-    provider: "codex" as const,
-    model: "Codex 1.2",
-    fallback: "Claude 3.7 Sonnet",
-    reasoning: "High",
-    skills: ["implement", "tdd"],
-    runs: 12,
-    success: "92%",
-    avgCost: "$0.78",
-    mission:
-      "Execute only approved tickets through vertical red-green slices at the seams agreed in the specification.",
-  },
-  {
-    id: "standards-reviewer",
-    name: "Standards reviewer",
-    status: "Available",
-    provider: "codex" as const,
-    model: "Codex 1.2",
-    fallback: "Claude 3.7 Sonnet",
-    reasoning: "High",
-    skills: ["code-review"],
-    runs: 14,
-    success: "98%",
-    avgCost: "$0.39",
-    mission:
-      "Review a pinned diff only against documented repository standards and the explicit smell baseline.",
-  },
-  {
-    id: "spec-reviewer",
-    name: "Spec reviewer",
-    status: "Available",
-    provider: "claude" as const,
-    model: "Claude 3.7 Sonnet",
-    fallback: "Codex 1.2",
-    reasoning: "High",
-    skills: ["code-review"],
-    runs: 14,
-    success: "96%",
-    avgCost: "$0.46",
-    mission:
-      "Review the same pinned diff only against the originating spec, keeping findings separate from standards review.",
-  },
-] as const;
-
-export function AgentsScreen() {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = agentProfiles.find((agent) => agent.id === selectedId);
-  if (selected) return <AgentDetail key={selected.id} agent={selected} onBack={() => setSelectedId(null)} />;
+export function AgentsScreen({
+  runtimeTasks,
+  runtimeStatus,
+  selectedId,
+  onSelect,
+}: {
+  runtimeTasks: RuntimeTask[];
+  runtimeStatus: RuntimeStatus | null;
+  selectedId: AgentRoleId | null;
+  onSelect: (stageId: AgentRoleId | null) => void;
+}) {
+  const selected = agentRoles.find((stage) => stage.id === selectedId) ?? null;
+  if (selected) {
+    const usage = stageUsage(runtimeTasks, selected.id);
+    const latestArtifact = [...usage.artifacts].sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
+    const deterministic = selected.provider === "harness";
+    const configuredPolicy = rolePolicy(runtimeStatus, selected.id);
+    return (
+      <div className="page library-page detail-page">
+        <button type="button" className="detail-back" onClick={() => onSelect(null)}><ArrowLeft size={16} /> Back to Agents</button>
+        <SectionHeader
+          eyebrow="Execution role"
+          title={`${selected.label} agent`}
+          description={deterministic ? "A deterministic human-owned gate with no model context." : `An ephemeral ${selected.skill} run. Each artifact below records its exact model, reasoning, usage, and supplied context.`}
+        />
+        <div className="detail-metrics detail-metrics--truthful">
+          <Metric label="Default policy" value={configuredPolicy ? `${configuredPolicy.model} · ${configuredPolicy.reasoning}` : "Deterministic"} />
+          <Metric label="Recorded runs" value={String(usage.runs)} />
+          <Metric label="Input / output" value={`${formatTokenCount(usage.inputTokens)} / ${formatTokenCount(usage.outputTokens)}`} />
+          <Metric label="Cache rate" value={formatCacheRate(usage)} />
+          <Metric label="Approx. cost" value={usage.pricedRuns ? formatApproximateCost(usage.cost) : deterministic ? "$0.00" : "Unavailable"} />
+        </div>
+        <div className="detail-grid">
+          <section className="detail-panel agent-run-history">
+            <header><span><h3>Recorded agent runs</h3><p>These are persisted stage artifacts, not a simulated success rate.</p></span></header>
+            {usage.artifacts.length ? [...usage.artifacts].reverse().map((artifact) => (
+              <article key={artifact.id} className="agent-run-row">
+                <div><strong>{artifact.name}</strong><small>{new Date(artifact.createdAt).toLocaleString()} · {artifact.model} · {artifact.reasoning ?? "reasoning not recorded"}</small></div>
+                <dl>
+                  <div><dt>Input</dt><dd>{formatTokenCount(artifact.usage.inputTokens)}</dd></div>
+                  <div><dt>Output</dt><dd>{formatTokenCount(artifact.usage.outputTokens)}</dd></div>
+                  <div><dt>Cached</dt><dd>{formatCacheRate(artifact.usage)} · {formatTokenCount(artifact.usage.cachedInputTokens)}</dd></div>
+                  <div><dt>Work credits</dt><dd>{artifact.usage.credits == null ? "—" : artifact.usage.credits.toFixed(3)}</dd></div>
+                  <div><dt>Approx. cost</dt><dd>{formatApproximateCost(artifact.usage.cost)}</dd></div>
+                </dl>
+              </article>
+            )) : <p>No persisted runs for this role yet.</p>}
+          </section>
+          <aside className="detail-panel agent-context-panel">
+            <h3>Context boundary</h3>
+            {latestArtifact?.contextManifest ? (
+              <>
+                <p>{latestArtifact.contextManifest.policy}</p>
+                <div className="agent-context-summary"><span>Rendered prompt</span><strong>~{formatTokenCount(latestArtifact.contextManifest.estimatedPromptTokens)} tokens</strong><small>{latestArtifact.contextManifest.promptCharacters.toLocaleString()} characters before CLI/runtime instructions</small></div>
+                <ul>
+                  {latestArtifact.contextManifest.sources.map((source) => (
+                    <li key={`${source.kind}-${source.id}`}><span><strong>{source.label}</strong><small>{source.kind}{source.stage ? ` · ${source.stage}` : ""}{source.truncated ? " · truncated" : ""}</small></span>{source.includedCharacters != null ? <code>{source.includedCharacters.toLocaleString()} chars</code> : <code>{latestArtifact.contextManifest?.repositoryAccess}</code>}</li>
+                  ))}
+                </ul>
+                <small>“Supplied” means placed in the prompt or made available through repository access. The runtime cannot prove which supplied text the model semantically relied on.</small>
+              </>
+            ) : (
+              <p>{deterministic ? "No model context is sent for this gate." : "Older runs did not record a context manifest. New runs will show every supplied artifact and access boundary here."}</p>
+            )}
+          </aside>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="page library-page">
-      <SectionHeader
-        eyebrow="Execution roster"
-        title="Agents"
-        description="Agents are configurable roles that combine one or more skills with a primary model, fallback, and reasoning policy."
-      />
-      <div className="agent-grid">
-        {agentProfiles.map((agent) => (
-          <button
-            className="agent-panel"
-            type="button"
-            key={agent.id}
-            onClick={() => setSelectedId(agent.id)}
-          >
-            <div className="agent-panel__head">
-              <span className={`agent-icon agent-icon--${agent.provider}`}>
-                <Robot size={22} />
-              </span>
-              <span>
-                <strong>{agent.name}</strong>
-                <small>{agent.status}</small>
-              </span>
-              <ArrowRight size={16} />
-            </div>
-            <dl>
-              <div>
-                <dt>Primary model</dt>
-                <dd>
-                  <ProviderTag provider={agent.provider} model={agent.model} />
-                </dd>
-              </div>
-              <div>
-                <dt>Skills</dt>
-                <dd>{agent.skills.join(" · ")}</dd>
-              </div>
-              <div>
-                <dt>Reasoning</dt>
-                <dd>{agent.reasoning}</dd>
-              </div>
-              <div>
-                <dt>Success / avg. cost</dt>
-                <dd>
-                  {agent.success} · {agent.avgCost}
-                </dd>
-              </div>
-            </dl>
-          </button>
-        ))}
+      <SectionHeader eyebrow="Execution roles" title="Agents" description="Each temporary role has a snapshotted model and reasoning policy. Candidate Repair is a separate quality-critical role; Human Approval is deterministic." />
+      <div className="truth-banner"><Robot size={20} /><span><strong>{runtimeStatus?.model ?? "Configured Codex model"} · {runtimeStatus?.reasoning ?? "unknown"} reasoning</strong><small>Current single-provider execution policy. Claude and local model execution are not wired into the harness.</small></span></div>
+      <div className="agent-grid agent-grid--roles">
+        {agentRoles.map((stage) => {
+          const usage = stageUsage(runtimeTasks, stage.id);
+          const deterministic = stage.provider === "harness";
+          const configuredPolicy = rolePolicy(runtimeStatus, stage.id);
+          return (
+            <button className="agent-panel" type="button" key={stage.id} onClick={() => onSelect(stage.id)}>
+              <div className="agent-panel__head"><span className={`agent-icon agent-icon--${deterministic ? "harness" : "codex"}`}><Robot size={22} /></span><span><strong>{stage.label}</strong><small>{deterministic ? "Harness-owned gate" : "Ephemeral Codex agent run"}</small></span></div>
+              <dl>
+                <div><dt>Capability</dt><dd>{stage.skill}</dd></div>
+                <div><dt>Runtime</dt><dd>{deterministic ? "Local harness" : configuredPolicy?.model ?? "Codex (checking)"}</dd></div>
+                <div><dt>Reasoning</dt><dd>{deterministic ? "Deterministic" : configuredPolicy?.reasoning ?? "Checking"}</dd></div>
+                <div><dt>Observed usage</dt><dd>{usage.runs} runs · {formatTokenCount(usage.inputTokens)} in · {formatTokenCount(usage.outputTokens)} out</dd></div>
+                <div><dt>Cache / cost</dt><dd>{formatCacheRate(usage)} cached · {usage.pricedRuns ? formatApproximateCost(usage.cost) : deterministic ? "$0.00" : "Unavailable"}</dd></div>
+              </dl>
+              <span className="agent-panel__open">Inspect role <ArrowRight size={15} /></span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function AgentDetail({ agent, onBack }: { agent: (typeof agentProfiles)[number]; onBack: () => void }) {
-  const [saved, setSaved] = useState(false);
-  return (
-    <div className="page library-page detail-page">
-      <button type="button" className="detail-back" onClick={onBack}>
-        <ArrowLeft size={16} /> Back to Agents
-      </button>
-      <SectionHeader
-        eyebrow="Agent profile"
-        title={agent.name}
-        description={agent.mission}
-        action={<span className="badge badge--success">Enabled</span>}
-      />
-      <div className="detail-metrics">
-        <Metric icon={TerminalWindow} label="Runs today" value={String(agent.runs)} />
-        <Metric icon={CheckCircle} label="Successful gates" value={agent.success} />
-        <Metric icon={CurrencyDollar} label="Average cost" value={agent.avgCost} />
-        <Metric icon={Code} label="Skills" value={agent.skills.join(" + ")} />
-      </div>
-      <div className="detail-grid">
-        <section className="detail-panel agent-config-panel">
-          <h3>Execution policy</h3>
-          <div className="agent-config-grid">
-            <label className="field">
-              <span>Primary model</span>
-              <select defaultValue={agent.model} onChange={() => setSaved(false)}>
-                <option>Codex 1.2</option>
-                <option>Codex 1.2 Mini</option>
-                <option>Claude 3.7 Sonnet</option>
-                <option>Claude 3.7 Haiku</option>
-              </select>
-            </label>
-            <label className="field">
-              <span>Fallback model</span>
-              <select defaultValue={agent.fallback} onChange={() => setSaved(false)}>
-                <option>Codex 1.2</option>
-                <option>Codex 1.2 Mini</option>
-                <option>Claude 3.7 Sonnet</option>
-                <option>Claude 3.7 Haiku</option>
-                <option>Pause and ask human</option>
-              </select>
-            </label>
-            <label className="field">
-              <span>Reasoning</span>
-              <select defaultValue={agent.reasoning} onChange={() => setSaved(false)}>
-                <option>Low</option>
-                <option>Medium</option>
-                <option>High</option>
-              </select>
-            </label>
-            <label className="field">
-              <span>Maximum stage runs</span>
-              <select defaultValue="3" onChange={() => setSaved(false)}>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="5">5</option>
-              </select>
-            </label>
-          </div>
-          <label className="field">
-            <span>Role instructions</span>
-            <textarea defaultValue={agent.mission} rows={6} onChange={() => setSaved(false)} />
-          </label>
-          <div className="detail-panel__actions">
-            <Button tone="primary" icon={FloppyDisk} onClick={() => setSaved(true)}>
-              Save agent profile
-            </Button>
-            {saved ? <span className="saved-note">Agent profile saved locally</span> : null}
-          </div>
-        </section>
-        <aside className="detail-panel detail-contracts">
-          <h3>Assignment boundary</h3>
-          <div>
-            <span>Skills</span>
-            <p>{agent.skills.join(", ")}</p>
-          </div>
-          <div>
-            <span>Model ownership</span>
-            <p>This profile chooses the model. Tasks never override it globally.</p>
-          </div>
-          <div>
-            <span>Run policy</span>
-            <p>Each stage run is counted independently. Exhaustion pauses only the owning stage.</p>
-          </div>
-        </aside>
-      </div>
-    </div>
-  );
-}
-
-function Metric({ icon: Icon, label, value }: { icon: typeof Code; label: string; value: string }) {
-  return (
-    <div>
-      <span>
-        <Icon size={16} /> {label}
-      </span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-export function SettingsScreen() {
+export function SettingsScreen({
+  runtimeStatus,
+  evaluationSummary,
+  onRefresh,
+  onSave,
+  onVerifyPricing,
+  refreshing,
+}: {
+  runtimeStatus: RuntimeStatus | null;
+  evaluationSummary: RuntimeEvaluationSummary | null;
+  onRefresh: () => Promise<void>;
+  onSave: (settings: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies">) => Promise<void>;
+  onVerifyPricing: () => Promise<void>;
+  refreshing: boolean;
+}) {
+  const claude = runtimeStatus?.providers?.find((provider) => provider.id === "claude");
+  const [allowedModels, setAllowedModels] = useState<string[]>([]);
+  const [defaultModel, setDefaultModel] = useState("");
+  const [defaultReasoning, setDefaultReasoning] = useState("");
+  const [stagePolicies, setStagePolicies] = useState<Record<string, RuntimeAgentPolicy>>({});
+  const [saving, setSaving] = useState(false);
+  const [verifyingPricing, setVerifyingPricing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const settings = runtimeStatus?.settings;
+    if (!settings) return;
+    setAllowedModels(settings.allowedModels);
+    setDefaultModel(settings.defaultModel);
+    setDefaultReasoning(settings.defaultReasoning);
+    setStagePolicies(settings.stagePolicies ?? {});
+  }, [runtimeStatus?.settings]);
+  const selectedModel = runtimeStatus?.catalog?.models.find((model) => model.id === defaultModel);
+  const pricing = runtimeStatus?.settings?.pricing;
   return (
     <div className="page library-page settings-page">
-      <SectionHeader
-        eyebrow="Local orchestration"
-        title="Settings"
-        description="Repository-wide deterministic policy. Model routing lives with each agent profile."
-      />
+      <SectionHeader eyebrow="Local orchestration" title="Settings" description="Choose the model allowlist and defaults used for new tasks. Each task snapshots its model and reasoning level so later settings changes do not rewrite history." action={<Button tone="secondary" icon={MagnifyingGlass} onClick={() => void onRefresh()} disabled={refreshing}>{refreshing ? "Searching…" : "Search available models"}</Button>} />
       <section className="settings-section">
-        <h3>Workflow policy</h3>
-        <SettingRow
-          title="Default workflow"
-          copy="Investigate + Implement"
-          control={
-            <select aria-label="Default workflow">
-              <option>Investigate + Implement</option>
-              <option>Investigate only</option>
-            </select>
-          }
-        />
-        <SettingRow
-          title="Maximum stage runs"
-          copy="Default repair limit per agent-owned stage"
-          control={
-            <select aria-label="Maximum stage runs">
-              <option>3 runs</option>
-              <option>5 runs</option>
-            </select>
-          }
-        />
-        <SettingRow
-          title="Require human final approval"
-          copy="Never publish without a person"
-          control={<Toggle checked label="Require human final approval" />}
-        />
+        <h3>Allowed models</h3>
+        <p className="settings-section__intro">Discovered from the local Codex model catalog{runtimeStatus?.catalog?.fetchedAt ? ` · refreshed ${new Date(runtimeStatus.catalog.fetchedAt).toLocaleString()}` : ""}. Enabling a model makes it selectable on New task.</p>
+        <div className="model-allowlist">
+          {(runtimeStatus?.catalog?.models ?? []).map((model) => {
+            const allowed = allowedModels.includes(model.id);
+            const inUse = Object.values(stagePolicies).some((policy) => policy.model === model.id);
+            return (
+              <label className={allowed ? "model-option model-option--allowed" : "model-option"} key={model.id}>
+                <input
+                  type="checkbox"
+                  checked={allowed}
+                  disabled={allowed && inUse}
+                  title={allowed && inUse ? "Move every role away from this model before removing it." : undefined}
+                  onChange={(event) => {
+                    const next = event.target.checked
+                      ? [...new Set([...allowedModels, model.id])]
+                      : allowedModels.filter((id) => id !== model.id);
+                    setAllowedModels(next);
+                    if (!next.includes(defaultModel) && next[0]) {
+                      const fallback = runtimeStatus?.catalog?.models.find((item) => item.id === next[0]);
+                      setDefaultModel(next[0]);
+                      setDefaultReasoning(fallback?.defaultReasoning ?? "medium");
+                    }
+                  }}
+                />
+                <span><strong>{model.label}</strong><small>{model.description}</small></span>
+                <code>{model.id}</code>
+              </label>
+            );
+          })}
+        </div>
+        <div className="settings-default-grid">
+          <label>Default model<select value={defaultModel} onChange={(event) => { const model = runtimeStatus?.catalog?.models.find((item) => item.id === event.target.value); setDefaultModel(event.target.value); setDefaultReasoning(model?.defaultReasoning ?? "medium"); }}>{(runtimeStatus?.catalog?.models ?? []).filter((model) => allowedModels.includes(model.id)).map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}</select></label>
+          <label>Default reasoning<select value={defaultReasoning} onChange={(event) => setDefaultReasoning(event.target.value)}>{(selectedModel?.reasoningLevels ?? []).map((level) => <option key={level} value={level}>{level}</option>)}</select></label>
+          <Button tone="primary" disabled={saving || !allowedModels.length || !defaultModel || !defaultReasoning} onClick={async () => { setError(null); setSaving(true); try { await onSave({ allowedModels, defaultModel, defaultReasoning, stagePolicies }); } catch (reason) { setError(reason instanceof Error ? reason.message : "Settings could not be saved."); } finally { setSaving(false); } }}>{saving ? "Saving…" : "Save model policy"}</Button>
+        </div>
+        <fieldset className="role-policy-grid">
+          <legend className="sr-only">Agent role model policies</legend>
+          {agentRoles.filter((role) => role.provider === "codex" && !role.id.startsWith("scout-")).map((role) => {
+            const policy = stagePolicies[role.id] ?? { model: defaultModel, reasoning: defaultReasoning };
+            const model = runtimeStatus?.catalog?.models.find((item) => item.id === policy.model);
+            return (
+              <div className="role-policy-row" key={role.id}>
+                <span><strong>{role.label}</strong><small>{role.skill}</small></span>
+                <label>Model<select value={policy.model} onChange={(event) => { const nextModel = runtimeStatus?.catalog?.models.find((item) => item.id === event.target.value); setStagePolicies((current) => ({ ...current, [role.id]: { model: event.target.value, reasoning: nextModel?.reasoningLevels.includes(policy.reasoning) ? policy.reasoning : nextModel?.defaultReasoning ?? "medium" } })); }}>{(runtimeStatus?.catalog?.models ?? []).filter((item) => allowedModels.includes(item.id)).map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+                <label>Reasoning<select value={policy.reasoning} onChange={(event) => setStagePolicies((current) => ({ ...current, [role.id]: { ...policy, reasoning: event.target.value } }))}>{(model?.reasoningLevels ?? [policy.reasoning]).map((level) => <option key={level} value={level}>{level}</option>)}</select></label>
+              </div>
+            );
+          })}
+        </fieldset>
+        {error ? <p className="dialog-error" role="alert">{error}</p> : null}
       </section>
       <section className="settings-section">
-        <h3>Cost estimates</h3>
-        <SettingRow
-          title="Show approximate cost"
-          copy="Derived from configured model input, output, and cached-token rates"
-          control={<Toggle checked label="Show approximate cost" />}
-        />
-        <SettingRow
-          title="Currency"
-          copy="Display currency for local estimates"
-          control={
-            <select aria-label="Cost currency">
-              <option>USD</option>
-              <option>NZD</option>
-            </select>
-          }
-        />
+        <h3>Runtime connection</h3>
+        <SettingRow title="Authentication" copy="No API key is read or stored" control={<strong>{runtimeStatus?.authenticated ? `${runtimeStatus.authMethod} signed in` : "Not connected"}</strong>} />
+        <SettingRow title="Claude" copy={claude?.detail ?? "Discovery runs when the local companion status is refreshed"} control={<span className="capability-gap">{claude?.authenticated ? "Signed in · not executable" : claude?.available ? "Login required" : "Not found"}</span>} />
+      </section>
+      <section className="settings-section">
+        <div className="settings-section__head"><span><h3>Approximate cost rate card</h3><p>Standard short-context API prices per 1M tokens. Calculated task costs are comparison estimates; ChatGPT-plan charges are not exposed.</p></span><Button tone="secondary" disabled={verifyingPricing || !runtimeStatus?.authenticated} onClick={async () => { setError(null); setVerifyingPricing(true); try { await onVerifyPricing(); } catch (reason) { setError(reason instanceof Error ? reason.message : "Pricing could not be verified."); } finally { setVerifyingPricing(false); } }}>{verifyingPricing ? "Agent checking…" : "Verify with agent"}</Button></div>
+        <div className="pricing-table">
+          <div className="pricing-table__header"><span>Model</span><span>Input</span><span>Cached input</span><span>Cache write</span><span>Output</span></div>
+          {(runtimeStatus?.catalog?.models ?? []).filter((model) => allowedModels.includes(model.id)).map((model) => {
+            const rate = pricing?.rates?.[model.id]?.short ?? model.pricing?.short;
+            return <div className="pricing-table__row" key={model.id}><strong>{model.label}</strong><code>{rate ? `$${rate.input}` : "—"}</code><code>{rate ? `$${rate.cachedInput}` : "—"}</code><code>{rate?.cacheWrite == null ? "—" : `$${rate.cacheWrite}`}</code><code>{rate ? `$${rate.output}` : "—"}</code></div>;
+          })}
+        </div>
+        <small className="settings-pricing-source">{pricing ? `Version ${pricing.version} · ${pricing.verifiedBy} · ${new Date(pricing.verifiedAt).toLocaleString()}` : "Pricing metadata unavailable"}</small>
+        {pricing?.creditRates ? (
+          <>
+            <div className="settings-section__head settings-section__head--nested"><span><h3>ChatGPT work credits</h3><p>Current Codex credit units per 1M tokens. Credits measure plan usage; they are not dollars.</p></span></div>
+            <div className="pricing-table pricing-table--credits">
+              <div className="pricing-table__header"><span>Model</span><span>Input</span><span>Cached input</span><span>Output</span></div>
+              {(runtimeStatus?.catalog?.models ?? []).filter((model) => allowedModels.includes(model.id) && pricing.creditRates?.[model.id]).map((model) => { const rate = pricing.creditRates?.[model.id]; return <div className="pricing-table__row" key={model.id}><strong>{model.label}</strong><code>{rate?.input}</code><code>{rate?.cachedInput}</code><code>{rate?.output}</code></div>; })}
+            </div>
+            <small className="settings-pricing-source">Source: {pricing.creditSourceUrl ?? "OpenAI ChatGPT pricing"}</small>
+          </>
+        ) : null}
+      </section>
+      <section className="settings-section">
+        <div className="settings-section__head"><span><h3>Model dogfooding scorecard</h3><p>{evaluationSummary?.methodology ?? "Observational runtime results grouped by exact role, model, and reasoning."} Human quality scores are recorded separately from tokens and cost.</p></span><strong>{evaluationSummary?.evaluatedTasks ?? 0} evaluated tasks</strong></div>
+        <div className="evaluation-table">
+          <div className="evaluation-table__header"><span>Variant</span><span>Runs</span><span>Cache</span><span>Credits</span><span>API est.</span><span>Quality</span></div>
+          {(evaluationSummary?.variants ?? []).slice(0, 20).map((variant) => <div className="evaluation-table__row" key={`${variant.role}:${variant.model}:${variant.reasoning}`}><span><strong>{variant.role}</strong><small>{variant.model} · {variant.reasoning}</small></span><code>{variant.runs}</code><code>{variant.cacheRate == null ? "—" : `${Math.round(variant.cacheRate * 100)}%`}</code><code>{variant.credits == null ? "—" : variant.credits.toFixed(2)}</code><code>{variant.cost == null ? "—" : formatApproximateCost(variant.cost)}</code><code>{variant.averageHumanScore == null ? "Not rated" : `${variant.averageHumanScore.toFixed(1)} / 5`}</code></div>)}
+          {!evaluationSummary?.variants?.length ? <div className="evaluation-table__empty">No observed agent runs yet. The scorecard fills from real retained artifacts; it does not use mock success rates.</div> : null}
+        </div>
+        <p className="settings-section__intro">Recommended experiment: run the same small, medium, and high-risk task suite against Luna XHigh, Luna Max, and Sol High; blind-score the final patch, then compare gate pass rate, repair count, wall time, cache rate, credits, and API-equivalent cost.</p>
       </section>
       <section className="settings-section">
         <h3>Local environment</h3>
-        <SettingRow
-          title="Repository root"
-          copy="Validated before each run"
-          control={<code>C:\Users\nimbl\projects\goose-hub</code>}
-        />
-        <SettingRow
-          title="Worktree root"
-          copy="Ephemeral isolated changes"
-          control={<code>.worktrees/</code>}
-        />
+        <SettingRow title="Repository root" copy="Default for new tasks; AGENT_HARNESS_REPOSITORY may override it" control={<code>{runtimeStatus?.suggestedRepository ?? "Checking…"}</code>} />
+        <SettingRow title="Codex binary" copy="Discovered by the local companion" control={<code>{runtimeStatus?.binary ?? "Not found"}</code>} />
+        <SettingRow title="Worktree policy" copy="Implement and Repair write only inside isolated candidate worktrees" control={<strong>Enforced by backend</strong>} />
       </section>
+      <div className="settings-note"><WarningCircle size={18} /><p>The estimate subtracts cached input from ordinary input, applies the cached-input rate, and prices output separately. Cache-write tokens are included only when the CLI reports them.</p></div>
     </div>
   );
 }
 
-function Toggle({ checked, label }: { checked: boolean; label: string }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      className={`toggle ${checked ? "toggle--on" : ""}`}
-    >
-      <span />
-    </button>
-  );
+function Metric({ label, value }: { label: string; value: string }) {
+  return <div><span><CheckCircle size={16} /> {label}</span><strong>{value}</strong></div>;
 }
 
 function SettingRow({ title, copy, control }: { title: string; copy: string; control: React.ReactNode }) {
-  return (
-    <div className="setting-row">
-      <span>
-        <strong>{title}</strong>
-        <small>{copy}</small>
-      </span>
-      <div>{control}</div>
-    </div>
-  );
+  return <div className="setting-row"><span><strong>{title}</strong><small>{copy}</small></span><div>{control}</div></div>;
 }

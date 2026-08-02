@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  ArrowClockwise,
   CheckCircle,
   Clock,
   Cpu,
@@ -10,12 +11,15 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 import {
+  formatApproximateCost,
+  formatCacheRate,
   formatTokenCount,
   type RuntimeStatus,
   type RuntimeTask,
   runtimeTaskToRecentTask,
 } from "../domain";
 import { Button, ModelStack, PriorityBadge, SectionHeader } from "./Primitives";
+import { TaskTable } from "./TaskTable";
 
 function isGateStatus(status: RuntimeTask["status"]) {
   return status.startsWith("awaiting-") || status.startsWith("ready-for-");
@@ -28,18 +32,37 @@ export function CommandCentre({
   runtimeLoading,
   runtimeError,
   onNewTask,
+  onSeeAllTasks,
+  onRefreshRuntime,
+  runtimeRefreshing,
 }: {
   onOpenTask: (taskId?: string) => void;
   onNewTask: () => void;
+  onSeeAllTasks: () => void;
+  onRefreshRuntime: () => void;
+  runtimeRefreshing: boolean;
   runtimeTasks: RuntimeTask[];
   runtimeStatus: RuntimeStatus | null;
   runtimeLoading: boolean;
   runtimeError: string | null;
 }) {
-  const tasks = runtimeTasks.map(runtimeTaskToRecentTask);
-  const activeRuntimeTask = runtimeTasks.find((task) => task.status === "running") ?? runtimeTasks[0];
+  const openTasks = runtimeTasks.filter((task) => task.status !== "closed");
+  const recentTasks = [...openTasks]
+    .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
+    .slice(0, 5);
+  const activeRuntimeTask = openTasks.find((task) => task.status === "running") ?? openTasks[0];
   const activeTask = activeRuntimeTask ? runtimeTaskToRecentTask(activeRuntimeTask) : null;
   const totalTokens = runtimeTasks.reduce((total, task) => total + task.usage.totalTokens, 0);
+  const totalUsage = runtimeTasks.reduce(
+    (total, task) => ({
+      inputTokens: total.inputTokens + task.usage.inputTokens,
+      cachedInputTokens: total.cachedInputTokens + task.usage.cachedInputTokens,
+      outputTokens: total.outputTokens + task.usage.outputTokens,
+      cost: total.cost + (task.usage.cost ?? 0),
+    }),
+    { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, cost: 0 },
+  );
+  const hasCost = runtimeTasks.some((task) => task.usage.cost != null);
   const attentionTasks = runtimeTasks.filter(
     (task) =>
       ["failed", "blocked", "cancelled", "repair-required"].includes(task.status) ||
@@ -54,10 +77,12 @@ export function CommandCentre({
           <h1>Command Centre</h1>
           <p>One deterministic view of active work, evidence, and human decisions.</p>
         </div>
-        <div
+        <button
+          type="button"
           className={`health-summary ${runtimeError || (runtimeStatus && !runtimeStatus.authenticated) ? "health-summary--warning" : ""}`}
-          role="status"
           aria-label="Local runtime health"
+          onClick={onRefreshRuntime}
+          title="Refresh local runtime and provider status"
         >
           <ShieldCheck size={18} weight="fill" />
           <span>
@@ -78,7 +103,8 @@ export function CommandCentre({
               ? ` · ${runtimeStatus.authMethod} plan session`
               : " · local runtime"}
           </span>
-        </div>
+          <ArrowClockwise className={runtimeRefreshing ? "spin" : ""} size={16} />
+        </button>
       </header>
 
       <section className="current-run" aria-labelledby="current-run-title">
@@ -140,8 +166,8 @@ export function CommandCentre({
         </Button>
       </section>
 
-      <div className="command-grid">
-        <section className="recent-runs">
+      <div className="command-grid command-grid--stacked">
+        <section className="recent-runs recent-runs--full">
           <SectionHeader
             title="Recent tasks"
             description={
@@ -152,60 +178,20 @@ export function CommandCentre({
                   : "Real tasks persisted by the local harness"
             }
           />
-          <div className="task-table">
-            <div className="task-table__header">
-              <span>Task</span>
-              <span>Status</span>
-              <span>Stage</span>
-              <span>Tokens</span>
-              <span>Approx. cost</span>
-              <span>Models</span>
-            </div>
-            {tasks.map((task) => (
-              <button
-                className="task-table__row"
-                type="button"
-                key={task.id}
-                onClick={() => onOpenTask(task.id.startsWith("AH-") ? task.id : undefined)}
-              >
-                <span className="task-table__title">
-                  <span className="mono">{task.id}</span>
-                  <strong>{task.title}</strong>
-                  <PriorityBadge priority={task.priority.toLowerCase() as "low" | "medium" | "high"} />
-                </span>
-                <span>
-                  <span className={`status-dot status-dot--${task.status.toLowerCase().replace(" ", "-")}`} />
-                  {task.status}
-                </span>
-                <span>{task.stage}</span>
-                <span className="mono">{task.tokens}</span>
-                <span
-                  className="mono"
-                  title={
-                    task.cost === "Plan"
-                      ? "ChatGPT plan usage does not expose a per-task dollar charge"
-                      : "Estimate from configured rates"
-                  }
-                >
-                  {task.cost}
-                </span>
-                <ModelStack models={task.models} compact />
-              </button>
-            ))}
-            {!tasks.length ? (
-              <div className="task-table__empty">
-                <strong>{runtimeLoading ? "Loading tasks…" : runtimeError ? "Runtime disconnected" : "No tasks persisted"}</strong>
-                <small>{runtimeError ?? "Create a task to begin a real local workflow."}</small>
-              </div>
-            ) : null}
-          </div>
+          <TaskTable
+            tasks={recentTasks}
+            onOpenTask={(taskId) => onOpenTask(taskId)}
+            onSeeAll={onSeeAllTasks}
+            emptyTitle={runtimeLoading ? "Loading tasks…" : runtimeError ? "Runtime disconnected" : "No tasks persisted"}
+            emptyCopy={runtimeError ?? "Create a task to begin a real local workflow."}
+          />
         </section>
 
-        <aside className="command-side">
+        <aside className="command-side command-side--split">
           <section className="attention-list">
             <SectionHeader title="Needs attention" />
             {attentionTasks.length ? (
-              attentionTasks.slice(0, 2).map((task) => (
+              attentionTasks.slice(0, 10).map((task) => (
                 <button
                   type="button"
                   className="attention-row"
@@ -258,17 +244,24 @@ export function CommandCentre({
             </div>
             <div className="usage-line">
               <span>
-                <CheckCircle size={16} /> Tokens
+                <CheckCircle size={16} /> Input / output
               </span>
-              <strong>{formatTokenCount(totalTokens)}</strong>
-              <small>Reported by Codex sessions</small>
+              <strong>{formatTokenCount(totalUsage.inputTokens)} / {formatTokenCount(totalUsage.outputTokens)}</strong>
+              <small>{formatTokenCount(totalTokens)} total reported tokens</small>
+            </div>
+            <div className="usage-line">
+              <span>
+                <ShieldCheck size={16} /> Cache rate
+              </span>
+              <strong className="text-green">{formatCacheRate(totalUsage)}</strong>
+              <small>{formatTokenCount(totalUsage.cachedInputTokens)} cached input tokens</small>
             </div>
             <div className="usage-line">
               <span>
                 <CurrencyDollar size={16} /> Approx. cost
               </span>
-              <strong>Plan</strong>
-              <small>Dollar cost unavailable for plan usage</small>
+              <strong>{hasCost ? formatApproximateCost(totalUsage.cost) : "Unavailable"}</strong>
+              <small>Standard API-rate estimate after cache; ChatGPT plan charge is not exposed</small>
             </div>
             <div className="usage-line">
               <span>

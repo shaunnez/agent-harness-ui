@@ -4,11 +4,12 @@ import { mkdir, readdir } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+import { normalizeModelId, readCodexModelCatalog } from "./model-catalog.mjs";
 
 const STDOUT_LIMIT = 2 * 1024 * 1024;
 const STDERR_LIMIT = 256 * 1024;
 const STDOUT_BUDGET = 2.5 * 1024 * 1024;
-export const DEFAULT_MODEL = process.env.AGENT_HARNESS_MODEL ?? "gpt-5.4-mini";
+export const DEFAULT_MODEL = normalizeModelId(process.env.AGENT_HARNESS_MODEL ?? "gpt-5.4-mini");
 export const DEFAULT_REASONING = process.env.AGENT_HARNESS_REASONING ?? "low";
 
 export async function locateCodex() {
@@ -48,12 +49,14 @@ async function desktopCodexCandidates() {
 
 export async function getCodexStatus() {
   try {
+    const catalog = await readCodexModelCatalog();
     const binary = await locateCodex();
     if (!binary) {
-      return { available: false, authenticated: false, authMethod: null, model: DEFAULT_MODEL, reasoning: DEFAULT_REASONING, binary: null, message: "Codex CLI was not found." };
+      return { available: false, authenticated: false, authMethod: null, model: DEFAULT_MODEL, reasoning: DEFAULT_REASONING, binary: null, message: "Codex CLI was not found.", catalog };
     }
     const result = await runProcess(binary, ["login", "status"], { timeoutMs: 10_000 });
     const message = `${result.stdout}\n${result.stderr}`.trim();
+    const claude = await getClaudeStatus();
     return {
       available: true,
       authenticated: result.code === 0 && /logged in/i.test(message),
@@ -62,9 +65,32 @@ export async function getCodexStatus() {
       reasoning: DEFAULT_REASONING,
       binary,
       message: message || "Codex CLI is available.",
+      catalog,
+      providers: [
+        { id: "codex", label: "Codex", available: true, authenticated: result.code === 0 && /logged in/i.test(message), executionEnabled: true, detail: /chatgpt/i.test(message) ? "ChatGPT signed in" : "Codex login" },
+        claude,
+      ],
     };
   } catch (error) {
-    return { available: false, authenticated: false, authMethod: null, model: DEFAULT_MODEL, reasoning: DEFAULT_REASONING, binary: null, message: error.message };
+    return { available: false, authenticated: false, authMethod: null, model: DEFAULT_MODEL, reasoning: DEFAULT_REASONING, binary: null, message: error.message, catalog: await readCodexModelCatalog() };
+  }
+}
+
+async function getClaudeStatus() {
+  try {
+    const locator = await runProcess(process.platform === "win32" ? "where.exe" : "which", ["claude"], { timeoutMs: 5_000 });
+    const binary = locator.stdout.split(/\r?\n/).map((line) => line.trim()).find(Boolean);
+    if (!binary) return { id: "claude", label: "Claude", available: false, authenticated: false, executionEnabled: false, detail: "Not found" };
+    const status = await runProcess(binary, ["auth", "status"], { timeoutMs: 10_000 });
+    let authenticated = status.code === 0;
+    try {
+      authenticated = Boolean(JSON.parse(status.stdout).loggedIn);
+    } catch {
+      authenticated = status.code === 0 && /logged.?in|authenticated/i.test(`${status.stdout}\n${status.stderr}`);
+    }
+    return { id: "claude", label: "Claude", available: true, authenticated, executionEnabled: false, detail: authenticated ? "Signed in; execution not wired" : "Login required" };
+  } catch {
+    return { id: "claude", label: "Claude", available: false, authenticated: false, executionEnabled: false, detail: "Not found" };
   }
 }
 
@@ -107,12 +133,14 @@ export function parseCodexEvent(line) {
   if (event.type === "turn.completed" && event.usage) {
     const inputTokens = Number(event.usage.input_tokens ?? 0);
     const cachedInputTokens = Number(event.usage.cached_input_tokens ?? 0);
+    const cacheWriteTokens = Number(event.usage.cache_write_input_tokens ?? event.usage.cache_write_tokens ?? 0);
     const outputTokens = Number(event.usage.output_tokens ?? 0);
     return {
       type: "usage",
       usage: {
         inputTokens,
         cachedInputTokens,
+        cacheWriteTokens,
         outputTokens,
         totalTokens: inputTokens + outputTokens,
       },
@@ -178,7 +206,7 @@ export async function runCodex({
   }
 
   let finalText = "";
-  let usage = { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0 };
+  let usage = { inputTokens: 0, cachedInputTokens: 0, cacheWriteTokens: 0, outputTokens: 0, totalTokens: 0 };
   for (const line of result.stdout.split(/\r?\n/)) {
     const parsed = parseCodexEvent(line);
     if (parsed?.type === "message" && parsed.text.trim()) finalText = parsed.text.trim();

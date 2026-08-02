@@ -7,6 +7,8 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createServer as createViteServer } from "vite";
 import { parseCodexEvent, selectCodexCandidate } from "../server/codex-runtime.mjs";
+import { normalizeModelId, priceUsage } from "../server/model-catalog.mjs";
+import { buildStageRequest } from "../server/prompts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
@@ -26,7 +28,7 @@ test("parses Codex final messages and usage", () => {
     parseCodexEvent(
       JSON.stringify({ type: "turn.completed", usage: { input_tokens: 10, cached_input_tokens: 4, output_tokens: 5 } }),
     ),
-    { type: "usage", usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 } },
+    { type: "usage", usage: { inputTokens: 10, cachedInputTokens: 4, cacheWriteTokens: 0, outputTokens: 5, totalTokens: 15 } },
   );
 });
 
@@ -36,6 +38,40 @@ test("prefers a Windows Codex runtime with its sandbox helper", () => {
     candidate.endsWith("desktop\\codex-windows-sandbox-setup.exe"),
   );
   assert.equal(selected, process.platform === "win32" ? candidates[1] : candidates[0]);
+});
+
+test("calculates an API-rate estimate after cached-input discounts", () => {
+  assert.equal(normalizeModelId("GPT-5.4-mini · ChatGPT plan"), "gpt-5.4-mini");
+  assert.equal(
+    priceUsage("gpt-5.6-sol", {
+      inputTokens: 1_000,
+      cachedInputTokens: 800,
+      cacheWriteTokens: 0,
+      outputTokens: 500,
+    }),
+    0.0164,
+  );
+});
+
+test("records the exact prior artifacts and repository permission supplied to an agent", () => {
+  const task = createTask({
+    artifacts: [
+      {
+        id: "artifact-triage",
+        stage: "triage",
+        name: "triage.md",
+        content: "Grounded triage evidence.",
+        createdAt: "2026-08-02T00:00:00.000Z",
+        model: "gpt-5.6-luna",
+        usage: { inputTokens: 10, cachedInputTokens: 8, outputTokens: 2, totalTokens: 12 },
+      },
+    ],
+  });
+  const request = buildStageRequest(task, "scouts");
+  assert.match(request.prompt, /Grounded triage evidence/);
+  assert.equal(request.contextManifest.repositoryAccess, "read-only");
+  assert.equal(request.contextManifest.sources.some((source) => source.id === "artifact-triage"), true);
+  assert.equal(request.contextManifest.sources.find((source) => source.id === "artifact-triage").includedCharacters, 25);
 });
 
 test("persists tasks and recovers interrupted runs", async () => {
@@ -242,7 +278,7 @@ test("renders the retained worktree inventory with drill-in detail and a return 
       }),
     );
 
-    assert.match(listMarkup, /Worktree inventory/);
+    assert.match(listMarkup, /Isolated worktrees/);
     assert.match(listMarkup, /slice · retained/i);
     assert.match(listMarkup, /candidate · active/i);
     assert.match(listMarkup, /S1 slice worktree/);
@@ -364,7 +400,7 @@ test("fetches the live inventory endpoint and renders the returned rows in the r
         }),
       );
 
-      assert.match(markup, /Worktree inventory/);
+      assert.match(markup, /Isolated worktrees/);
       assert.match(markup, /slice/);
       assert.match(markup, /retained/);
       assert.match(markup, /S1 slice worktree/);

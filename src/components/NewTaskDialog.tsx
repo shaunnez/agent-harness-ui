@@ -1,4 +1,4 @@
-import { FolderOpen, Lightning, X } from "@phosphor-icons/react";
+import { FolderOpen, Lightning, Paperclip, Trash, X } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { EXAMPLE_DESCRIPTION, EXAMPLE_TITLE, type NewTaskDraft, type RuntimeStatus } from "../domain";
 import { Button } from "./Primitives";
@@ -9,7 +9,17 @@ const initialDraft: NewTaskDraft = {
   repositoryPath: "",
   workflow: "investigate",
   priority: "medium",
+  attachments: [],
 };
+
+function readAttachment(file: File) {
+  return new Promise<{ name: string; type: string; size: number; data: string }>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error(`${file.name} could not be read.`));
+    reader.onload = () => resolve({ name: file.name, type: file.type || "application/octet-stream", size: file.size, data: String(reader.result).split(",")[1] ?? "" });
+    reader.readAsDataURL(file);
+  });
+}
 
 export function NewTaskDialog({
   open,
@@ -70,8 +80,8 @@ export function NewTaskDialog({
             <p className="eyebrow">Deterministic workflow</p>
             <h2 id="new-task-title">New task</h2>
             <p>
-              Give the work a scannable title and enough context for triage. This cut uses
-              {` ${runtimeStatus?.model?.toUpperCase() ?? "GPT"}`} through your ChatGPT plan.
+              Give the work a scannable title and enough context for triage. The configured role
+              policies are snapshotted so every agent run records its model and reasoning level.
             </p>
           </div>
           <button type="button" className="icon-button" aria-label="Close new task" onClick={onClose}>
@@ -80,7 +90,7 @@ export function NewTaskDialog({
         </header>
 
         <label className="field">
-          <span>Task title</span>
+          <span>Task title <small className="wired-field">Creates persisted task</small></span>
           <input
             value={draft.title}
             onChange={(event) => setDraft({ ...draft, title: event.target.value })}
@@ -89,7 +99,7 @@ export function NewTaskDialog({
         </label>
 
         <label className="field">
-          <span>Description</span>
+          <span>Description <small className="wired-field">Sent to every stage</small></span>
           <textarea
             rows={5}
             value={draft.description}
@@ -98,7 +108,7 @@ export function NewTaskDialog({
         </label>
 
         <label className="field">
-          <span>Local repository</span>
+          <span>Local repository <small className="wired-field">Validated by backend</small></span>
           <span className="field-with-icon">
             <FolderOpen size={16} />
             <input
@@ -114,7 +124,7 @@ export function NewTaskDialog({
         </label>
 
         <fieldset className="segmented-field">
-          <legend>Workflow</legend>
+          <legend>Workflow <small className="wired-field">Controls stopping point</small></legend>
           <label className={draft.workflow === "investigate" ? "selected" : ""}>
             <input
               type="radio"
@@ -142,7 +152,7 @@ export function NewTaskDialog({
         </fieldset>
 
         <label className="field dialog-priority-field">
-          <span>Priority</span>
+          <span>Priority <small className="wired-field">Persisted and shown in task views</small></span>
           <select
             value={draft.priority}
             onChange={(event) =>
@@ -154,6 +164,51 @@ export function NewTaskDialog({
             <option value="high">High</option>
           </select>
         </label>
+
+        <div className="dialog-role-policy">
+          <span>Agent policy <small className="wired-field">Snapshotted on creation</small></span>
+          <div>
+            {Object.entries(runtimeStatus?.settings?.stagePolicies ?? {}).map(([role, policy]) => (
+              <span key={role}><strong>{role.replaceAll("-", " ")}</strong><code>{policy.model.replace("gpt-5.6-", "")} · {policy.reasoning}</code></span>
+            ))}
+          </div>
+          <small>Change these defaults in Settings. Individual runs retain the exact policy they used.</small>
+        </div>
+
+        <div className="field attachment-field">
+          <span>Reference artifacts <small className="wired-field">Available to stage agents</small></span>
+          <label className="attachment-picker">
+            <Paperclip size={17} />
+            <span><strong>Attach HTML, images, or ZIP files</strong><small>Up to 6 files, 5 MB each and 6 MB total</small></span>
+            <input
+              type="file"
+              multiple
+              accept=".html,.htm,.png,.jpg,.jpeg,.webp,.gif,.zip,text/html,image/*,application/zip"
+              onChange={async (event) => {
+                setError(null);
+                try {
+                  const files = [...(event.target.files ?? [])];
+                  if (files.length + (draft.attachments?.length ?? 0) > 6) throw new Error("Attach no more than six files.");
+                  if (files.some((file) => file.size > 5_000_000)) throw new Error("Each attachment must be 5 MB or smaller.");
+                  const next = [...(draft.attachments ?? []), ...(await Promise.all(files.map(readAttachment)))];
+                  if (next.reduce((total, file) => total + file.size, 0) > 6_000_000) throw new Error("Attachments must total 6 MB or less.");
+                  setDraft({ ...draft, attachments: next });
+                } catch (reason) {
+                  setError(reason instanceof Error ? reason.message : "The attachment could not be added.");
+                } finally {
+                  event.target.value = "";
+                }
+              }}
+            />
+          </label>
+          {draft.attachments?.length ? (
+            <ul className="attachment-list">
+              {draft.attachments.map((attachment, index) => (
+                <li key={`${attachment.name}-${attachment.size}-${attachment.data.slice(0, 16)}`}><span><strong>{attachment.name}</strong><small>{Math.ceil(attachment.size / 1024)} KB</small></span><button type="button" className="icon-button" aria-label={`Remove ${attachment.name}`} onClick={() => setDraft({ ...draft, attachments: draft.attachments?.filter((_, itemIndex) => itemIndex !== index) })}><Trash size={15} /></button></li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
 
         <footer className="dialog-footer">
           <span>

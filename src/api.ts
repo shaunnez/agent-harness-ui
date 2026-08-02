@@ -1,4 +1,15 @@
-import type { NewTaskDraft, RuntimeStatus, RuntimeTask, RuntimeWorktreeInventoryRow } from "./domain";
+import type {
+  NewTaskDraft,
+  RuntimeChangelogCommit,
+  RuntimeChangelogDetail,
+  RuntimeChangelogDiff,
+  RuntimeEvaluationSummary,
+  RuntimeSettings,
+  RuntimeStatus,
+  RuntimeTask,
+  RuntimeUsage,
+  RuntimeWorktreeInventoryRow,
+} from "./domain";
 
 export interface CandidateDiffResponse {
   candidateId: string;
@@ -28,8 +39,56 @@ export async function getRuntimeStatus() {
   return request<RuntimeStatus>("/api/runtime/status");
 }
 
-export async function getRuntimeWorktreeInventory() {
-  return request<{ rows: RuntimeWorktreeInventoryRow[] }>("/api/runtime/worktrees");
+export async function updateRuntimeSettings(input: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies">) {
+  return (
+    await request<{ settings: RuntimeSettings }>("/api/settings", {
+      method: "PUT",
+      body: JSON.stringify(input),
+    })
+  ).settings;
+}
+
+export async function verifyRuntimePricing() {
+  return request<{ settings: RuntimeSettings; usage: RuntimeUsage }>("/api/runtime/pricing/verify", {
+    method: "POST",
+  });
+}
+
+export async function getRuntimeWorktreeInventory(taskId?: string) {
+  return request<{ rows: RuntimeWorktreeInventoryRow[] }>(
+    taskId ? `/api/tasks/${encodeURIComponent(taskId)}/worktrees` : "/api/runtime/worktrees",
+  );
+}
+
+export async function getEvaluationSummary() {
+  return request<RuntimeEvaluationSummary>("/api/evaluations/summary");
+}
+
+export async function listChangelog() {
+  return (await request<{ commits: RuntimeChangelogCommit[] }>("/api/changelog")).commits;
+}
+
+export async function getChangelogCommit(sha: string) {
+  return (await request<{ commit: RuntimeChangelogDetail }>(`/api/changelog/${encodeURIComponent(sha)}`)).commit;
+}
+
+export async function getChangelogFileDiff(sha: string, filePath: string) {
+  const params = new URLSearchParams({ path: filePath });
+  return request<RuntimeChangelogDiff>(`/api/changelog/${encodeURIComponent(sha)}/file?${params.toString()}`);
+}
+
+export async function closeTask(id: string, reason: "not-needed" | "superseded" | "duplicate", note = "", supersededBy = "") {
+  return request<{ task: RuntimeTask }>(`/api/tasks/${encodeURIComponent(id)}/close`, {
+    method: "POST",
+    body: JSON.stringify({ reason, note, supersededBy }),
+  });
+}
+
+export async function evaluateTask(id: string, score: number, outcome: "accepted" | "rejected" | "mixed", notes = "") {
+  return request<{ task: RuntimeTask }>(`/api/tasks/${encodeURIComponent(id)}/evaluation`, {
+    method: "POST",
+    body: JSON.stringify({ score, outcome, notes }),
+  });
 }
 
 export async function getCandidateDiff(taskId: string, candidateId: string, headRevision: string) {

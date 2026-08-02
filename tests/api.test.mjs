@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -134,6 +134,29 @@ test("creates, lists, and starts a local task", async () => {
   }
 });
 
+test("persists supported task attachments outside the repository", async () => {
+  const { directory, origin, server } = await createServer();
+  try {
+    const content = "<main>Reference artifact</main>";
+    const response = await createTask(origin, {
+      title: "Attached evidence",
+      description: "Use the supplied HTML as task evidence.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "medium",
+      attachments: [{ name: "reference.html", type: "text/html", size: Buffer.byteLength(content), data: Buffer.from(content).toString("base64") }],
+    });
+    assert.equal(response.status, 201);
+    const { task } = await response.json();
+    assert.equal(task.attachments.length, 1);
+    assert.equal(task.attachments[0].name, "reference.html");
+    assert.equal(await readFile(task.attachments[0].path, "utf8"), content);
+    assert.equal(task.attachments[0].path.startsWith(directory), true);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("exposes a shared runtime schema version on local runtime endpoints", async () => {
   const { directory, origin, server } = await createServer();
   try {
@@ -147,6 +170,105 @@ test("exposes a shared runtime schema version on local runtime endpoints", async
     const runtime = await runtimeResponse.json();
     assert.equal(Number.isInteger(runtime.runtimeSchemaVersion), true);
     assert.equal(runtime.runtimeSchemaVersion, health.runtimeSchemaVersion);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("returns live changelog commits, changed files, and a selected file diff", async () => {
+  const { directory, origin, server } = await createServer();
+  try {
+    await exec("git", ["init", "-b", "main"], { cwd: directory });
+    await exec("git", ["config", "user.name", "Harness Test"], { cwd: directory });
+    await exec("git", ["config", "user.email", "harness@example.test"], { cwd: directory });
+    const tracked = path.join(directory, "CHANGELOG_TEST.txt");
+    await writeFile(tracked, "first\n", "utf8");
+    await exec("git", ["add", "CHANGELOG_TEST.txt"], { cwd: directory });
+    await exec("git", ["commit", "-m", "first changelog commit"], { cwd: directory });
+    await writeFile(tracked, "first\nsecond\n", "utf8");
+    await exec("git", ["add", "CHANGELOG_TEST.txt"], { cwd: directory });
+    await exec("git", ["commit", "-m", "second changelog commit"], { cwd: directory });
+
+    const commitsResponse = await fetch(`${origin}/api/changelog`);
+    assert.equal(commitsResponse.status, 200);
+    const commits = (await commitsResponse.json()).commits;
+    assert.equal(commits.length, 2);
+    assert.equal(commits[0].subject, "second changelog commit");
+
+    const detailResponse = await fetch(`${origin}/api/changelog/${commits[0].sha}`);
+    assert.equal(detailResponse.status, 200);
+    const commit = (await detailResponse.json()).commit;
+    assert.equal(commit.files[0].path, "CHANGELOG_TEST.txt");
+
+    const diffResponse = await fetch(`${origin}/api/changelog/${commits[0].sha}/file?path=${encodeURIComponent("CHANGELOG_TEST.txt")}`);
+    assert.equal(diffResponse.status, 200);
+    const diff = await diffResponse.json();
+    assert.match(diff.diff, /\+second/);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("persists an allowed Sol model policy and snapshots it on new tasks", async () => {
+  const { directory, origin, server } = await createServer();
+  try {
+    const settingsResponse = await fetch(`${origin}/api/settings`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna"],
+        defaultModel: "gpt-5.6-sol",
+        defaultReasoning: "xhigh",
+      }),
+    });
+    assert.equal(settingsResponse.status, 200);
+    const settings = (await settingsResponse.json()).settings;
+    assert.equal(settings.defaultModel, "gpt-5.6-sol");
+    assert.equal(settings.defaultReasoning, "xhigh");
+
+    const createResponse = await createTask(origin, {
+      title: "Sol task",
+      description: "Use the selected model policy.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "medium",
+      model: "gpt-5.6-sol",
+      reasoning: "xhigh",
+    });
+    assert.equal(createResponse.status, 201);
+    const task = (await createResponse.json()).task;
+    assert.equal(task.agentConfig.model, "gpt-5.6-sol");
+    assert.equal(task.agentConfig.reasoning, "xhigh");
+    assert.equal(task.agentConfig.stagePolicies.plan.model, "gpt-5.6-sol");
+    assert.equal(task.agentConfig.stagePolicies.test.reasoning, "xhigh");
+    assert.equal(task.models[0].model, "gpt-5.6-sol");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects a task model outside the configured allowlist", async () => {
+  const { directory, origin, server } = await createServer();
+  try {
+    await fetch(`${origin}/api/settings`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        allowedModels: ["gpt-5.6-luna"],
+        defaultModel: "gpt-5.6-luna",
+        defaultReasoning: "medium",
+      }),
+    });
+    const response = await createTask(origin, {
+      title: "Disallowed model",
+      description: "This should not run with Sol.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      model: "gpt-5.6-sol",
+      reasoning: "xhigh",
+    });
+    assert.equal(response.status, 400);
+    assert.match((await response.json()).error, /allowed runtime list/i);
   } finally {
     await cleanup(server, directory);
   }
@@ -394,14 +516,16 @@ test("returns a read-only worktree inventory with slice and candidate rows", asy
     assert.equal(payload.rows.length, 2);
     const sliceRow = payload.rows.find((row) => row.kind === "slice");
     const candidateRow = payload.rows.find((row) => row.kind === "candidate");
-    assert.equal(sliceRow.label, "slice");
+    assert.equal(sliceRow.id, `slice:${sliceTask.id}:S1`);
+    assert.equal(sliceRow.label, "S1 slice");
     assert.equal(sliceRow.taskId, sliceTask.id);
     assert.equal(sliceRow.workPackageId, "S1");
     assert.equal(sliceRow.currentState, "retained");
     assert.equal(sliceRow.cleanupReady, true);
     assert.equal(sliceRow.gitExists, true);
     assert.equal(sliceRow.gitClean, true);
-    assert.equal(candidateRow.label, "candidate");
+    assert.equal(candidateRow.id, `candidate:${candidateTask.id}:C1`);
+    assert.equal(candidateRow.label, "C1 candidate");
     assert.equal(candidateRow.taskId, candidateTask.id);
     assert.equal(candidateRow.workPackageId, "C1");
     assert.equal(candidateRow.currentState, "retained");

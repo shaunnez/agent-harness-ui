@@ -1,13 +1,29 @@
 import path from "node:path";
 import {
-  buildExecutionPrompt,
-  buildStagePrompt,
-  buildWorkPackagePrompt,
+  buildExecutionRequest,
+  buildRepairRequest,
+  buildStageRequest,
+  buildWorkPackageRequest,
   getStageMetadata,
   INVESTIGATION_PIPELINE,
 } from "./prompts.mjs";
 import { getCodexStatus, runCodex } from "./codex-runtime.mjs";
 import { GitWorktreeManager } from "./git-worktree.mjs";
+import {
+  CREDIT_SOURCE_URL,
+  enrichUsage,
+  PRICING_SOURCE_URL,
+  resolveAgentPolicy,
+  validatePricingRates,
+} from "./model-catalog.mjs";
+import {
+  aggregateScoutReports,
+  buildScoutRequest,
+  parseScoutReport,
+  scoutCatalog,
+  scoutReportMarkdown,
+  selectScoutDispatch,
+} from "./scouts.mjs";
 import { parseGrillQuestions, parseWorkPackages, tryParseFocusedTestEvidence } from "./structured-output.mjs";
 
 const RUN_KINDS = new Set([
@@ -43,8 +59,42 @@ export class TaskOrchestrator {
     this.#worktrees = options.worktreeManager ?? new GitWorktreeManager(path.resolve(".data", "worktrees"));
   }
 
-  status() {
-    return this.#getStatus();
+  async status() {
+    const [runtime, settings] = await Promise.all([this.#getStatus(), this.#store.settings()]);
+    return {
+      ...runtime,
+      model: settings.defaultModel,
+      reasoning: settings.defaultReasoning,
+      settings,
+      scouts: scoutCatalog(),
+    };
+  }
+
+  async verifyPricing() {
+    const settings = await this.#store.settings();
+    const result = await this.#runCodex({
+      cwd: process.cwd(),
+      prompt: `You are verifying a local GPT-5.6 pricing registry. Use current official OpenAI documentation only: API prices from ${PRICING_SOURCE_URL} and ChatGPT/Codex credit rates from ${CREDIT_SOURCE_URL}. Do not modify files. Return exactly one JSON object between <pricing-rates> and </pricing-rates>. Include gpt-5.6-sol, gpt-5.6-terra, and gpt-5.6-luna. Each value must have short and, when documented, long objects with numeric input, cachedInput, cacheWrite (or null), and output USD prices per 1M tokens. Do not include prose inside the tags.`,
+      sandbox: "read-only",
+      model: settings.defaultModel,
+      reasoning: "low",
+      timeoutMs: 180_000,
+    });
+    const match = result.finalText.match(/<pricing-rates>\s*([\s\S]*?)\s*<\/pricing-rates>/i);
+    if (!match) throw new Error("The pricing verifier did not return the required structured rate card.");
+    const rates = validatePricingRates(JSON.parse(match[1]));
+    const updated = await this.#store.updateSettings((draft) => {
+      draft.pricing = {
+        version: new Date().toISOString().slice(0, 10),
+        sourceUrl: PRICING_SOURCE_URL,
+        verifiedAt: now(),
+        verifiedBy: `${settings.defaultModel} read-only verification agent`,
+        rates: { ...draft.pricing.rates, ...rates },
+        creditRates: draft.pricing.creditRates,
+        creditSourceUrl: draft.pricing.creditSourceUrl ?? CREDIT_SOURCE_URL,
+      };
+    });
+    return { settings: updated, usage: enrichUsage(settings.defaultModel, result.usage, updated.pricing.rates, updated.pricing.version) };
   }
 
   isRunning(id) {
@@ -292,6 +342,10 @@ export class TaskOrchestrator {
     for (const stageId of stages) {
       if (signal.aborted) throw new Error("Codex run cancelled.");
       task = await this.#store.get(id);
+      if (stageId === "scouts") {
+        await this.#runScouts(id, task, signal);
+        continue;
+      }
       const result = await this.#executeAgent(task, stageId, signal, task.repositoryPath, "read-only");
       throwIfAborted(signal);
       const grillQuestions = stageId === "grill" ? parseGrillQuestions(result.finalText) : null;
@@ -315,6 +369,101 @@ export class TaskOrchestrator {
       const count = draft.grillSession?.questions.length ?? 0;
       draft.events.push(activity("grill", "Grill Me ready", count ? `${count} material question${count === 1 ? "" : "s"} need a decision.` : "No material questions remain; finish the session to build the specification.", "success", "decision"));
     });
+  }
+
+  async #runScouts(id, task, signal) {
+    const triageArtifact = [...task.artifacts].reverse().find((artifact) => artifact.stage === "triage");
+    const dispatch = selectScoutDispatch(task, triageArtifact?.content ?? "");
+    await this.#store.update(id, (draft) => {
+      draft.artifacts = draft.artifacts.filter((artifact) => artifact.stage !== "scouts");
+      draft.scoutDispatch = {
+        selected: dispatch.map((spec) => ({ ...spec, status: "queued" })),
+        skipped: scoutCatalog().filter((scout) => !dispatch.some((spec) => spec.name === scout.id)).map((scout) => scout.id),
+        createdAt: now(),
+        completedAt: null,
+      };
+      draft.events.push(activity("scouts", "Scout dispatch selected", dispatch.map((spec) => spec.name).join(", "), "info", "agent"));
+    });
+
+    const reports = await Promise.all(
+      dispatch.map(async (spec) => {
+        try {
+          const request = buildScoutRequest(task, spec, triageArtifact);
+          const result = await this.#executeAgent(
+            task,
+            "scouts",
+            signal,
+            task.repositoryPath,
+            "read-only",
+            null,
+            request,
+            `${spec.name} scout`,
+            "scouts",
+          );
+          const report = parseScoutReport(result.finalText);
+          await this.#retainAgentResult(id, "scouts", { ...result, finalText: scoutReportMarkdown(spec, report) }, {
+            complete: false,
+            replace: false,
+            name: `${spec.name}.md`,
+            artifactTitle: `${spec.name} report ready`,
+            agentRole: spec.name,
+          });
+          await this.#store.update(id, (draft) => {
+            const selected = draft.scoutDispatch?.selected.find((entry) => entry.name === spec.name);
+            if (selected) selected.status = "complete";
+          });
+          return { spec, report, status: "ok" };
+        } catch (error) {
+          await this.#store.update(id, (draft) => {
+            const selected = draft.scoutDispatch?.selected.find((entry) => entry.name === spec.name);
+            if (selected) {
+              selected.status = "failed";
+              selected.error = error.message;
+            }
+            draft.events.push(activity("scouts", `${spec.name} failed`, error.message, "warning", "agent"));
+          });
+          return { spec, status: "error", error: error.message, report: { findings: [], uncertainties: [] } };
+        }
+      }),
+    );
+    throwIfAborted(signal);
+    const successful = reports.filter((entry) => entry.status === "ok").length;
+    const required = Math.max(1, dispatch.length - 1);
+    const aggregate = aggregateScoutReports(dispatch, reports);
+    await this.#retainAgentResult(
+      id,
+      "scouts",
+      {
+        finalText: aggregate,
+        usage: { inputTokens: 0, cachedInputTokens: 0, cacheWriteTokens: 0, outputTokens: 0, totalTokens: 0 },
+        runtimeEvents: [],
+        model: "deterministic-aggregation",
+        reasoning: null,
+        contextManifest: {
+          stage: "scouts",
+          promptCharacters: 0,
+          estimatedPromptTokens: 0,
+          repositoryAccess: "read-only",
+          policy: "Deterministic aggregation of selected scout reports; no additional model or repository access.",
+          sources: reports.filter((entry) => entry.status === "ok").map((entry) => ({
+            kind: "artifact",
+            id: entry.spec.name,
+            label: `${entry.spec.name}.md`,
+            stage: "scouts",
+            includedCharacters: null,
+            originalCharacters: null,
+            truncated: false,
+          })),
+        },
+      },
+      { replace: false, name: "repository-scout.md", artifactTitle: "Scout evidence aggregated" },
+    );
+    await this.#store.update(id, (draft) => {
+      if (draft.scoutDispatch) draft.scoutDispatch.completedAt = now();
+    });
+    if (successful < required) {
+      throw new Error(`Scout coverage was incomplete: ${successful} of ${dispatch.length} selected scouts completed; ${required} required.`);
+    }
   }
 
   async #runSpecification(id, signal) {
@@ -412,7 +561,7 @@ export class TaskOrchestrator {
     const manifest = candidate.members
       .map((member) => `- ${member.order}. ${member.packageId}: ${member.headRevision}`)
       .join("\n");
-    const content = `## Outcome\n\nAll ${candidate.members.length} work packages were assembled into ${candidate.id}.\n\n## Candidate membership\n\n${manifest}\n\n## Harness candidate evidence\n\n- Candidate: ${candidate.id} revision 1\n- Base: ${candidate.baseRevision}\n- Head: ${assembled.headRevision}\n- Branch: ${candidate.branch}\n- Changed files: ${assembled.files.length}\n\n\`\`\`text\n${assembled.summary || "No diff stat returned."}\n\`\`\`\n\n<details><summary>Candidate patch</summary>\n\n\`\`\`diff\n${assembled.diff}\n\`\`\`\n\n</details>`;
+    const content = `## Outcome\n\nAll ${candidate.members.length} work packages were assembled into ${candidate.id}.\n\n## Candidate membership\n\n${manifest}\n\n## Harness candidate evidence\n\n- Candidate: ${candidate.id} revision 1\n- Base: ${candidate.baseRevision}\n- Head: ${assembled.headRevision}\n- Branch: ${candidate.branch}\n- Changed files: ${assembled.files.length}\n\n\`\`\`text\n${assembled.summary || "No diff stat returned."}\n\`\`\`\n\nThe exact candidate patch is loaded on demand from the recorded revision.`;
     await this.#retainAgentResult(
       id,
       "implement",
@@ -472,7 +621,7 @@ export class TaskOrchestrator {
         slice.worktreePath,
         "workspace-write",
         null,
-        buildWorkPackagePrompt(task, currentPackage, slice),
+        buildWorkPackageRequest(task, currentPackage, slice),
         `${workPackageId} implementation`,
       );
       throwIfAborted(signal);
@@ -480,7 +629,7 @@ export class TaskOrchestrator {
         slice,
         `agent-harness(${task.id}): ${workPackageId} ${currentPackage.title}`,
       );
-      const content = `${result.finalText}\n\n## Harness slice evidence\n\n- Work package: ${workPackageId}\n- Attempt: ${attempt}\n- Dependencies: ${currentPackage.dependencies.join(", ") || "None"}\n- Base: ${slice.baseRevision}\n- Package commit: ${committed.headRevision}\n- Branch: ${slice.branch}\n- Changed files: ${committed.files.length}\n\n\`\`\`text\n${committed.ownSummary || "No diff stat returned."}\n\`\`\`\n\n<details><summary>Package patch</summary>\n\n\`\`\`diff\n${committed.ownDiff}\n\`\`\`\n\n</details>`;
+      const content = `${result.finalText}\n\n## Harness slice evidence\n\n- Work package: ${workPackageId}\n- Attempt: ${attempt}\n- Dependencies: ${currentPackage.dependencies.join(", ") || "None"}\n- Base: ${slice.baseRevision}\n- Package commit: ${committed.headRevision}\n- Branch: ${slice.branch}\n- Changed files: ${committed.files.length}\n\n\`\`\`text\n${committed.ownSummary || "No diff stat returned."}\n\`\`\`\n\nThe exact package commit remains available through Git; its full patch is not copied into downstream prompts.`;
       await this.#retainAgentResult(id, "implement", { ...result, finalText: content }, {
         complete: false,
         replace: false,
@@ -557,15 +706,41 @@ export class TaskOrchestrator {
     if (!["repair_required", "repairing"].includes(candidate.status)) {
       throw new Error("The current candidate is not awaiting repair.");
     }
+    const recovered = typeof this.#worktrees.recoverCandidate === "function"
+      ? await this.#worktrees.recoverCandidate(candidate)
+      : false;
+    if (recovered) {
+      await this.#store.update(id, (draft) => {
+        draft.events.push(activity("implement", "Candidate worktree recovered", `${candidate.id} was restored to recorded revision ${candidate.headRevision.slice(0, 8)} before repair.`, "warning", "decision"));
+      });
+    }
     await this.#worktrees.verifyCandidate(candidate);
     const nextRevision = candidate.revisionNumber + 1;
-    const result = await this.#executeAgent(task, "implement", signal, candidate.worktreePath, "workspace-write", candidate);
-    throwIfAborted(signal);
-    const committed = await this.#worktrees.commit(
-      candidate,
-      `agent-harness(${task.id}): repair ${candidate.id} revision ${nextRevision}`,
-    );
-    const content = `${result.finalText}\n\n## Harness repair evidence\n\n- Candidate: ${candidate.id} revision ${nextRevision}\n- Previous: ${candidate.headRevision}\n- Head: ${committed.headRevision}\n- Changed files in repair: ${committed.files.length}\n\n\`\`\`text\n${committed.summary || "No diff stat returned."}\n\`\`\`\n\n<details><summary>Candidate patch from base</summary>\n\n\`\`\`diff\n${committed.diff}\n\`\`\`\n\n</details>`;
+    let result;
+    let committed;
+    try {
+      result = await this.#executeAgent(
+        task,
+        "implement",
+        signal,
+        candidate.worktreePath,
+        "workspace-write",
+        candidate,
+        buildRepairRequest(task, candidate),
+        "Candidate repair",
+        "repair",
+      );
+      throwIfAborted(signal);
+      committed = await this.#worktrees.commit(
+        candidate,
+        `agent-harness(${task.id}): repair ${candidate.id} revision ${nextRevision}`,
+        { allowGeneratedDeletions: true },
+      );
+    } catch (error) {
+      if (typeof this.#worktrees.recoverCandidate === "function") await this.#worktrees.recoverCandidate(candidate);
+      throw error;
+    }
+    const content = `${result.finalText}\n\n## Harness repair evidence\n\n- Candidate: ${candidate.id} revision ${nextRevision}\n- Previous: ${candidate.headRevision}\n- Head: ${committed.headRevision}\n- Changed files in repair: ${committed.files.length}\n\n\`\`\`text\n${committed.summary || "No diff stat returned."}\n\`\`\`\n\nThe exact repaired candidate patch is loaded on demand from the recorded revision.`;
     await this.#retainAgentResult(id, "implement", { ...result, finalText: content }, {
       replace: false,
       name: `candidate-${candidate.id.toLowerCase()}-r${nextRevision}-repair.md`,
@@ -598,35 +773,62 @@ export class TaskOrchestrator {
     candidate = null,
     promptOverride = null,
     eventLabel = null,
+    policyId = stageId,
   ) {
     const metadata = getStageMetadata(stageId);
     const testRuntime = stageId === "test";
     const effectiveSandbox = testRuntime ? "workspace-write" : sandbox;
+    const agentRequest =
+      promptOverride ?? (candidate ? buildExecutionRequest(task, stageId, candidate) : buildStageRequest(task, stageId));
+    const settings = await this.#store.settings();
+    const policy = resolveAgentPolicy(task, policyId, settings);
     await this.#store.update(task.id, (draft) => {
       draft.currentStage = stageId;
       const detail = testRuntime
         ? `Verifying ${cwd}; source changes are checked before and after the run`
         : `${sandbox === "read-only" ? "Reading" : "Working in"} ${cwd}`;
-      draft.events.push(activity(stageId, `${eventLabel ?? metadata.label} agent started`, detail, "info", "agent"));
+      draft.events.push(activity(stageId, `${eventLabel ?? metadata.label} agent started`, `${detail} · ${policy.model} · ${policy.reasoning}`, "info", "agent"));
     });
     const runtimeEvents = [];
     const result = await this.#runCodex({
       cwd,
-      prompt: promptOverride ?? (candidate ? buildExecutionPrompt(task, stageId, candidate) : buildStagePrompt(task, stageId)),
+      prompt: agentRequest.prompt,
       signal,
       sandbox: effectiveSandbox,
+      model: policy.model,
+      reasoning: policy.reasoning,
       tempDirectory: testRuntime ? path.join(cwd, ".data", "runtime-temp") : undefined,
       timeoutMs: effectiveSandbox === "workspace-write" ? 600_000 : 240_000,
       onEvent(event) {
         if (event.type === "activity") runtimeEvents.push(event);
       },
     });
+    result.model = policy.model;
+    result.reasoning = policy.reasoning;
+    result.agentRole = policyId;
+    result.contextManifest = agentRequest.contextManifest;
+    result.usage = enrichUsage(
+      result.model,
+      result.usage,
+      settings.pricing?.rates,
+      settings.pricing?.version,
+    );
     result.runtimeEvents = runtimeEvents;
     return result;
   }
 
   async #retainAgentResult(id, stageId, result, options = {}) {
     const metadata = getStageMetadata(stageId);
+    const task = await this.#store.get(id);
+    const settings = await this.#store.settings();
+    const fallbackPolicy = resolveAgentPolicy(task, stageId, settings);
+    const resultModel = result.model ?? fallbackPolicy.model ?? task.models[0]?.model ?? "gpt-5.6-luna";
+    const resultUsage = enrichUsage(
+      resultModel,
+      result.usage,
+      settings.pricing?.rates,
+      settings.pricing?.version,
+    );
     await this.#store.update(id, (draft) => {
       for (const event of result.runtimeEvents?.slice(-30) ?? []) {
         draft.events.push(activity(stageId, event.title, event.detail, event.tone, "agent"));
@@ -639,17 +841,23 @@ export class TaskOrchestrator {
         kind: "markdown",
         content: result.finalText,
         createdAt: now(),
-        model: draft.models[0]?.model ?? "GPT-5.4-mini - ChatGPT plan",
-        usage: result.usage,
+        model: resultModel,
+        reasoning: result.reasoning !== undefined ? result.reasoning : fallbackPolicy.reasoning,
+        agentRole: options.agentRole ?? result.agentRole ?? stageId,
+        usage: resultUsage,
         candidateId: options.candidateId ?? null,
         candidateRevision: options.candidateRevision ?? null,
         workPackageId: options.workPackageId ?? null,
         focusedTest: options.focusedTestEvidence ?? null,
+        contextManifest: result.contextManifest ?? null,
       });
       if (options.complete !== false && !draft.completedStages.includes(stageId)) draft.completedStages.push(stageId);
-      for (const key of ["inputTokens", "cachedInputTokens", "outputTokens", "totalTokens"]) {
-        draft.usage[key] += result.usage[key] ?? 0;
+      for (const key of ["inputTokens", "cachedInputTokens", "cacheWriteTokens", "outputTokens", "totalTokens"]) {
+        draft.usage[key] += resultUsage[key] ?? 0;
       }
+      draft.usage.cost = (draft.usage.cost ?? 0) + (resultUsage.cost ?? 0);
+      draft.usage.credits = (draft.usage.credits ?? 0) + (resultUsage.credits ?? 0);
+      draft.usage.pricingVersion = resultUsage.pricingVersion ?? draft.usage.pricingVersion;
       draft.events.push(
         activity(
           stageId,

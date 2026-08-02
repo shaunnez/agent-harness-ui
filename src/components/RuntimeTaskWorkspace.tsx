@@ -1,8 +1,10 @@
 import {
   ArrowLeft,
   ArrowSquareOut,
+  Archive,
   Check,
   CheckCircle,
+  CaretDown,
   CircleNotch,
   FileCode,
   GitDiff,
@@ -17,6 +19,8 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCandidateDiff, type CandidateDiffResponse } from "../api";
 import {
+  formatApproximateCost,
+  formatCacheRate,
   formatTokenCount,
   type RuntimeArtifact,
   type RuntimeFocusedTestEvidence,
@@ -29,6 +33,7 @@ import {
   workflowStages,
 } from "../domain";
 import { Button, PriorityBadge, StateBadge } from "./Primitives";
+import { MarkdownContent } from "./MarkdownContent";
 import { CandidateDiffErrorViewer, CandidateDiffViewer } from "./StageViews";
 import { ApprovalHistorySection, getApprovalHistory } from "./runtimeApprovalHistory.js";
 
@@ -37,17 +42,22 @@ export function RuntimeTaskWorkspace({
   onBack,
   onRun,
   onCancel,
+  onCloseTask,
+  onEvaluate,
   onAction,
   onDecision,
   onGrillAnswer,
   onFinishGrill,
   initialViewedStageId,
   initialSelectedWorktreeId,
+  onViewedStageChange,
 }: {
   task: RuntimeTask;
   onBack: () => void;
   onRun: () => Promise<void>;
   onCancel: () => Promise<void>;
+  onCloseTask: (reason: "not-needed" | "superseded", note: string, supersededBy?: string) => Promise<void>;
+  onEvaluate: (score: number, outcome: "accepted" | "rejected" | "mixed", notes: string) => Promise<void>;
   onAction: (
     action:
       | "approve-spec"
@@ -67,6 +77,7 @@ export function RuntimeTaskWorkspace({
   onFinishGrill: (acceptRemaining: boolean) => Promise<void>;
   initialViewedStageId?: StageId;
   initialSelectedWorktreeId?: string | null;
+  onViewedStageChange?: (stageId: StageId) => void;
 }) {
   const currentIndex = Math.max(
     0,
@@ -103,6 +114,20 @@ export function RuntimeTaskWorkspace({
     candidate?.status === "merged";
   const stageSummary = getRuntimeStageSummary(task, viewedStageId, stageArtifact);
   const historical = viewedStageId !== task.currentStage;
+  const activeAgentRole = task.activeRunKind === "repair" ? "repair" : task.currentStage;
+  const activePolicy = task.agentConfig?.stagePolicies?.[activeAgentRole] ?? {
+    model: task.agentConfig?.model ?? task.models[0]?.model ?? "gpt-5.6-luna",
+    reasoning: task.agentConfig?.reasoning ?? "xhigh",
+  };
+
+  useEffect(() => {
+    if (initialViewedStageId) setViewedStageId(initialViewedStageId);
+  }, [initialViewedStageId]);
+
+  const selectViewedStage = (stageId: StageId) => {
+    setViewedStageId(stageId);
+    onViewedStageChange?.(stageId);
+  };
 
   const openRuntimeArtifact = (artifact: RuntimeArtifact) => {
     artifactReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -144,6 +169,17 @@ export function RuntimeTaskWorkspace({
     }
   };
 
+  const closeTask = async () => {
+    const supersededBy = window.prompt("Optional superseding task ID. Leave blank to close this task as not needed.", "");
+    if (supersededBy === null) return;
+    const replacement = supersededBy.trim();
+    await onCloseTask(
+      replacement ? "superseded" : "not-needed",
+      "Closed from the universal task inspector.",
+      replacement || undefined,
+    );
+  };
+
   return (
     <div className="task-workspace runtime-workspace">
       <header className="task-header">
@@ -182,6 +218,16 @@ export function RuntimeTaskWorkspace({
           <Button
             tone="secondary"
             compact
+            icon={Archive}
+            disabled={task.status === "running" || task.status === "closed"}
+            title={task.status === "running" ? "Cancel the active run before closing this task." : task.status === "closed" ? "This task is already closed." : "Close as not needed or record the superseding task."}
+            onClick={() => void closeTask()}
+          >
+            Close task
+          </Button>
+          <Button
+            tone="secondary"
+            compact
             icon={Pause}
             disabled
             title="Pause is not supported by the current local runtime contract."
@@ -203,7 +249,8 @@ export function RuntimeTaskWorkspace({
 
       <nav className="stage-navigator" aria-label="Workflow stages">
         {workflowStages.map((stage, index) => {
-          const complete = task.completedStages.includes(stage.id);
+          const invalidated = isStageInvalidatedByRepair(task, stage.id);
+          const complete = task.completedStages.includes(stage.id) && !invalidated;
           const active = stage.id === task.currentStage;
           const selected = stage.id === viewedStageId;
           const failed = active && (task.status === "failed" || task.status === "blocked");
@@ -211,8 +258,8 @@ export function RuntimeTaskWorkspace({
             <button
               type="button"
               key={stage.id}
-              className={`stage-step ${complete ? "stage-step--complete" : ""} ${active ? "stage-step--active" : ""} ${selected ? "stage-step--selected" : ""} ${failed ? "stage-step--failed" : ""}`}
-              onClick={() => setViewedStageId(stage.id)}
+              className={`stage-step ${complete ? "stage-step--complete" : ""} ${active ? "stage-step--active" : ""} ${selected ? "stage-step--selected" : ""} ${failed ? "stage-step--failed" : ""} ${invalidated ? "stage-step--stale" : ""}`}
+              onClick={() => selectViewedStage(stage.id)}
               aria-current={selected ? "step" : undefined}
             >
               <span className="stage-step__node">
@@ -227,7 +274,9 @@ export function RuntimeTaskWorkspace({
               <span>
                 <strong>{stage.shortLabel}</strong>
                 <small>
-                  {active
+                  {invalidated
+                    ? "rerun required"
+                    : active
                     ? task.status === "running"
                       ? "current"
                       : task.status.replace("-", " ")
@@ -286,7 +335,13 @@ export function RuntimeTaskWorkspace({
           <aside className="stage-inspector runtime-inspector">
             <InspectorSection title="Task brief">
               <strong>{task.title}</strong>
-              <p>{task.description}</p>
+              <MarkdownContent content={task.description} className="runtime-task-brief-markdown" />
+              {task.attachments?.length ? (
+                <div className="runtime-attachments">
+                  <small>{task.attachments.length} reference artifact{task.attachments.length === 1 ? "" : "s"}</small>
+                  {task.attachments.map((attachment) => <span key={attachment.id}><FileCode size={14} /><strong>{attachment.name}</strong><small>{Math.ceil(attachment.size / 1024)} KB</small></span>)}
+                </div>
+              ) : null}
             </InspectorSection>
             <InspectorSection title="Stage context">
               <RuntimeRow label="Viewing" value={`${viewedStage.label}${historical ? " · recorded history" : " · current execution"}`} />
@@ -318,11 +373,23 @@ export function RuntimeTaskWorkspace({
                   }
                 />
               ) : null}
-              <RuntimeRow label="Model" value={task.models[0]?.model ?? "GPT-5.4-mini · ChatGPT plan"} />
+              <RuntimeRow label="Model / reasoning" value={`${activePolicy.model} · ${activePolicy.reasoning}`} />
               <RuntimeRow label="Stage run" value={`${task.attemptsByStage?.[task.currentStage] ?? 0} of ${task.stageRunLimit}`} />
               <RuntimeRow label="Run" value={task.activeRunKind ?? "No active agent run"} />
               <RuntimeRow label="Repository" value={repoName} mono />
             </InspectorSection>
+            {stageArtifact ? (
+              <InspectorSection title="Viewed agent run" meta={stageArtifact.name}>
+                <RuntimeRow label="Model" value={stageArtifact.model} mono />
+                <RuntimeRow label="Reasoning" value={stageArtifact.reasoning ?? "Not recorded"} />
+                <RuntimeRow label="Input" value={`${formatTokenCount(stageArtifact.usage.inputTokens)} total · ${formatTokenCount(Math.max(0, stageArtifact.usage.inputTokens - stageArtifact.usage.cachedInputTokens - (stageArtifact.usage.cacheWriteTokens ?? 0)))} uncached`} />
+                <RuntimeRow label="Output" value={formatTokenCount(stageArtifact.usage.outputTokens)} />
+                <RuntimeRow label="Cached input" value={`${formatCacheRate(stageArtifact.usage)} · ${formatTokenCount(stageArtifact.usage.cachedInputTokens)}`} />
+                <RuntimeRow label="Work credits" value={stageArtifact.usage.credits == null ? "Not reported for this model" : stageArtifact.usage.credits.toFixed(3)} />
+                <RuntimeRow label="Approx. cost" value={`${formatApproximateCost(stageArtifact.usage.cost)} · API-rate estimate`} />
+                <RuntimeContextDisclosure artifact={stageArtifact} />
+              </InspectorSection>
+            ) : null}
             <details className="runtime-safeguards">
               <summary>
                 <ShieldCheck size={15} />
@@ -333,7 +400,7 @@ export function RuntimeTaskWorkspace({
                 <RuntimeRow label="Access" value="Local OAuth session" />
                 <RuntimeRow label="Sandbox" value={accessBoundary.sandbox} />
                 <RuntimeRow label="Write boundary" value={accessBoundary.detail} />
-                <RuntimeRow label="Cost" value="Plan included" />
+                <RuntimeRow label="Billing" value="ChatGPT plan · API-rate estimate shown separately" />
               </div>
             </details>
             {candidate ? (
@@ -372,8 +439,12 @@ export function RuntimeTaskWorkspace({
             >
               <ApprovalHistorySection approvals={task.approvals ?? []} />
             </InspectorSection>
+            <InspectorSection title="Outcome evaluation" meta={task.evaluation ? `${task.evaluation.score} / 5` : "Not rated"}>
+              <TaskEvaluation evaluation={task.evaluation} disabled={task.status === "running"} onEvaluate={onEvaluate} />
+            </InspectorSection>
             {worktreeInventory.length ? (
-              <InspectorSection title="Worktree inventory" meta={`${worktreeInventory.length} retained`}>
+              <InspectorSection title="Isolated worktrees" meta={`${worktreeInventory.length} for this task`}>
+                <p className="runtime-worktree-explainer">Temporary Git copies that keep Implement and Repair changes away from your main checkout until approval.</p>
                 <RuntimeWorktreeInventory
                   inventory={worktreeInventory}
                   selectedId={selectedWorktreeId}
@@ -389,7 +460,7 @@ export function RuntimeTaskWorkspace({
                       type="button"
                       key={artifact.id}
                       onClick={() => {
-                        setViewedStageId(artifact.stage);
+                        selectViewedStage(artifact.stage);
                         openRuntimeArtifact(artifact);
                       }}
                     >
@@ -421,25 +492,33 @@ export function RuntimeTaskWorkspace({
           </strong>
         </span>
         <span>
-          <small>Tokens</small>
-          <strong className="mono">{formatTokenCount(task.usage.totalTokens)}</strong>
+          <small>Input</small>
+          <strong className="mono">{formatTokenCount(task.usage.inputTokens)}</strong>
         </span>
         <span>
-          <small>Cached input</small>
-          <strong className="mono text-green">{formatTokenCount(task.usage.cachedInputTokens)}</strong>
+          <small>Output</small>
+          <strong className="mono">{formatTokenCount(task.usage.outputTokens)}</strong>
+        </span>
+        <span>
+          <small>Cache rate</small>
+          <strong className="mono text-green">{formatCacheRate(task.usage)}</strong>
         </span>
         <span>
           <small>Artifacts</small>
           <strong className="mono">{task.artifacts.length}</strong>
         </span>
         <span className="workspace-footer__usage">
-          <small>Model usage</small>
+          <small>Configured models</small>
           <i className="provider-dot provider-dot--codex" />
-          {task.models[0]?.model ?? "GPT-5.4-mini via ChatGPT"}
+          {[...new Set(task.models.map((item) => item.model))].join(" + ") || activePolicy.model}
+        </span>
+        <span>
+          <small>Work credits</small>
+          <strong className="mono">{task.usage.credits == null ? "—" : task.usage.credits.toFixed(3)}</strong>
         </span>
         <span>
           <small>Approx. cost</small>
-          <strong className="mono">Plan included</strong>
+          <strong className="mono" title="API-rate estimate; ChatGPT-plan charge is not provider-reported">{formatApproximateCost(task.usage.cost)}</strong>
         </span>
       </footer>
 
@@ -479,6 +558,17 @@ const runtimeStageSkills: Record<StageId, string> = {
   "final-review": "holdout-review",
   approval: "approve-fast-forward",
 };
+
+function isStageInvalidatedByRepair(task: RuntimeTask, stageId: StageId) {
+  if (!["dev-review", "test", "final-review", "approval"].includes(stageId)) return false;
+  const repairPending =
+    task.status === "repair-required" ||
+    task.activeRunKind === "repair" ||
+    task.candidates?.at(-1)?.status === "repair_required";
+  const hasPriorEvidence =
+    task.completedStages.includes(stageId) || task.artifacts.some((artifact) => artifact.stage === stageId);
+  return Boolean(repairPending && hasPriorEvidence);
+}
 
 const runtimeStageAgents: Record<StageId, string> = {
   triage: "Triage agent",
@@ -664,6 +754,19 @@ function RuntimeStagePresentation({
     case "scouts":
       return (
         <div className="runtime-stage-stack">
+          {task.scoutDispatch ? (
+            <section className="scout-dispatch-panel">
+              <header><span><Robot size={18} /><strong>Selective scout dispatch</strong></span><small>{task.scoutDispatch.selected.length} dispatched · {task.scoutDispatch.skipped.length} skipped</small></header>
+              <div>
+                {task.scoutDispatch.selected.map((scout) => (
+                  <article key={scout.name}>
+                    <span className={`scout-dispatch-state scout-dispatch-state--${scout.status}`} />
+                    <span><strong>{scout.name}</strong><small>{scout.focus}</small><p>{scout.reason}</p>{scout.error ? <p className="text-red">{scout.error}</p> : null}</span>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ) : null}
           <section className="runtime-evidence-source">
             <CheckCircle size={18} weight="fill" />
             <span>
@@ -824,7 +927,8 @@ function RuntimeArtifactCard({
   onOpen: () => void;
 }) {
   const fresh = isArtifactFresh(artifact, candidate);
-  const content = hideStructuredTestPayload ? stripFocusedTestPayload(artifact.content) : artifact.content;
+  const focusedContent = hideStructuredTestPayload ? stripFocusedTestPayload(artifact.content) : artifact.content;
+  const content = stripEmbeddedCandidatePatch(focusedContent);
   return (
     <article className={`runtime-artifact-card ${fresh ? "" : "runtime-artifact-card--stale"}`}>
       <header>
@@ -840,10 +944,10 @@ function RuntimeArtifactCard({
       {!fresh ? (
         <div className="runtime-stale-banner">A repair created a newer candidate revision. This handoff remains for audit only.</div>
       ) : null}
-      <pre>{content.trim() || "The structured result list above is the authoritative test evidence."}</pre>
+      <MarkdownContent content={content.trim() || "The structured result list above is the authoritative test evidence."} />
       <footer>
         <span>{new Date(artifact.createdAt).toLocaleString()}</span>
-        <span>{artifact.model} · {formatTokenCount(artifact.usage.totalTokens)} tokens · Plan included</span>
+        <span>{artifact.model} · {formatTokenCount(artifact.usage.inputTokens)} in / {formatTokenCount(artifact.usage.outputTokens)} out · {formatCacheRate(artifact.usage)} cached · {formatApproximateCost(artifact.usage.cost)}</span>
       </footer>
     </article>
   );
@@ -855,6 +959,17 @@ function stripFocusedTestPayload(content: string) {
   const end = content.indexOf(endTag);
   if (start < 0 || end < start) return content;
   return `${content.slice(0, start)}${content.slice(end + endTag.length)}`;
+}
+
+function stripEmbeddedCandidatePatch(content: string) {
+  const withoutPatch = content.replace(
+    /\n?<details><summary>(?:Patch|Candidate patch[^<]*)<\/summary>[\s\S]*?<\/details>/gi,
+    "\n\n> The full candidate diff is loaded on demand from Inspect diff.\n",
+  );
+  return withoutPatch.replace(/```([\w-]*)\n([\s\S]*?)```/g, (block, language, body) => {
+    if (body.length <= 8_000) return block;
+    return `\`\`\`${language}\nLarge generated/stat output omitted from this view. Open Inspect diff for the exact candidate changes.\n\`\`\``;
+  });
 }
 
 function RuntimeStageEmpty({ task, viewedStageStopped }: { task: RuntimeTask; viewedStageStopped: boolean }) {
@@ -933,6 +1048,7 @@ function RuntimeCandidateDesk({
         <details className="runtime-repair-lineage" open={candidate.revisions.length > 1}>
           <summary>
             <Wrench size={15} /> Repair lineage · {candidate.revisions.length} revision{candidate.revisions.length === 1 ? "" : "s"}
+            <CaretDown className="disclosure-caret" size={15} />
           </summary>
           {candidate.revisions.map((revision) => (
             <div key={revision.number}>
@@ -978,6 +1094,8 @@ function RuntimeFinalReviewSummary({
           const artifacts = task.artifacts.filter((artifact) => artifact.stage === stage.id);
           const latest = artifacts.at(-1);
           const tokens = artifacts.reduce((total, item) => total + item.usage.totalTokens, 0);
+          const cost = artifacts.reduce((total, item) => total + (item.usage.cost ?? 0), 0);
+          const hasCost = artifacts.some((item) => item.usage.cost != null);
           const stale = latest ? !isArtifactFresh(latest, candidate) : false;
           return (
             <div className="runtime-final-review__row" key={stage.id}>
@@ -986,7 +1104,7 @@ function RuntimeFinalReviewSummary({
                 {stale ? "Stale" : task.completedStages.includes(stage.id) ? "Passed" : "Pending"}
               </span>
               <span className="mono">{formatTokenCount(tokens)}</span>
-              <span>Plan included</span>
+              <span>{hasCost ? formatApproximateCost(cost) : "Unavailable"}</span>
               <span>{latest?.name ?? "No artifact retained"}</span>
             </div>
           );
@@ -1025,6 +1143,7 @@ function RuntimeCommandBar({
   const [actionError, setActionError] = useState<string | null>(null);
   const historical = viewedStageId !== task.currentStage;
   const running = task.status === "running";
+  const repairRunning = running && task.activeRunKind === "repair";
   const currentAttempts = task.attemptsByStage?.[task.currentStage] ?? 0;
   const repairRequired = task.status === "repair-required";
   const exhaustedReadyGate =
@@ -1089,9 +1208,11 @@ function RuntimeCommandBar({
     >
       <Icon className={running ? "spin" : ""} size={18} weight="fill" />
       <span className="stage-command-bar__copy">
-        <small>{accessBoundary.kicker}</small>
+        <small>{repairRunning ? "Candidate repair in progress" : accessBoundary.kicker}</small>
         <strong>
-          {running
+          {repairRunning
+            ? "Repairing the retained integration candidate"
+            : running
             ? accessBoundary.title
             : blocked
               ? (next?.title ?? "Repair allowance exhausted")
@@ -1106,7 +1227,9 @@ function RuntimeCommandBar({
                       : "Start the read-only investigation"}
         </strong>
         <span>
-          {running
+          {repairRunning
+            ? "The Implement agent is writing inside the isolated candidate worktree. Dev Review, Test, Final Review, and Approval require fresh evidence after the new revision is assembled."
+            : running
             ? accessBoundary.detail
             : blocked
               ? (next?.detail ?? "Review the retained activity before granting another attempt.")
@@ -1367,7 +1490,7 @@ function RuntimeGrillPanel({
           />
           {settled ? (
             <details className="runtime-grill-history">
-              <summary>{settled} accumulated decision{settled === 1 ? "" : "s"}</summary>
+              <summary><span>{settled} accumulated decision{settled === 1 ? "" : "s"}</span><CaretDown className="disclosure-caret" size={15} /></summary>
               {session.questions.filter((question) => question.answer).map((question) => (
                 <RuntimeGrillQuestionCard
                   key={question.id}
@@ -1401,6 +1524,23 @@ function RuntimeGrillPanel({
           </span>
         </div>
       )}
+      {task.decisions.length ? (
+        <details className="runtime-grill-history runtime-grill-history--all" open>
+          <summary>
+            <span>{task.decisions.length} accumulated task decision{task.decisions.length === 1 ? "" : "s"}</span>
+            <CaretDown size={16} />
+          </summary>
+          <div className="runtime-task-decisions">
+            {task.decisions.map((decision) => (
+              <article key={decision.id}>
+                <small>{new Date(decision.createdAt).toLocaleString()}</small>
+                <strong>{decision.question}</strong>
+                <p>{decision.answer}</p>
+              </article>
+            ))}
+          </div>
+        </details>
+      ) : null}
     </section>
   );
 }
@@ -1430,6 +1570,7 @@ function RuntimeGrillQuestionCard({
             <small>Question {index + 1} · settled</small>
             <strong>{question.question}</strong>
           </span>
+          <CaretDown className="disclosure-caret" size={15} />
         </summary>
         <p>{question.whyItMatters}</p>
         <div className="runtime-grill-answer">
@@ -1558,7 +1699,9 @@ function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
             <div>
               {task.workPackages
                 .filter((item) => item.batch === batch)
-                .map((workPackage) => (
+                .map((workPackage) => {
+                  const packageArtifact = [...task.artifacts].reverse().find((artifact) => artifact.workPackageId === workPackage.id);
+                  return (
                   <details
                     key={workPackage.id}
                     className={`runtime-package runtime-package--${workPackage.status}`}
@@ -1579,6 +1722,7 @@ function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
                         </small>
                         <strong>{workPackage.title}</strong>
                       </span>
+                      <CaretDown className="disclosure-caret" size={15} />
                     </summary>
                     <p>{workPackage.description}</p>
                     <RuntimeRow label="Depends on" value={workPackage.dependencies.join(", ") || "None"} />
@@ -1592,8 +1736,8 @@ function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
                       mono
                     />
                     <RuntimeRow label="Interfaces" value="Not recorded by the runtime" />
-                    <RuntimeRow label="Agent / model" value="Not recorded per package" />
-                    <RuntimeRow label="Usage" value="Not recorded per package · Plan included" />
+                    <RuntimeRow label="Agent / model" value={packageArtifact ? `${packageArtifact.model} · ${packageArtifact.reasoning ?? "reasoning not recorded"}` : "Not run yet"} />
+                    <RuntimeRow label="Usage" value={packageArtifact ? `${formatTokenCount(packageArtifact.usage.inputTokens)} in · ${formatTokenCount(packageArtifact.usage.outputTokens)} out · ${formatCacheRate(packageArtifact.usage)} cached · ${formatApproximateCost(packageArtifact.usage.cost)}` : "Not run yet"} />
                     <RuntimeRow label="Attempts" value={String(workPackage.attempts)} />
                     <RuntimeRow label="Branch" value={workPackage.branch ?? "Not created"} mono />
                     <RuntimeRow label="Worktree" value={workPackage.worktreePath ?? "Not created"} mono />
@@ -1603,7 +1747,8 @@ function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
                     ) : null}
                     {workPackage.error ? <small className="text-red">{workPackage.error}</small> : null}
                   </details>
-                ))}
+                  );
+                })}
             </div>
             {index < batches.length - 1 ? (
               <span className="runtime-package-arrow">↓ dependencies unlock</span>
@@ -1684,6 +1829,32 @@ function RuntimeWorktreeInventory({
         </button>
       ))}
     </div>
+  );
+}
+
+function RuntimeContextDisclosure({ artifact }: { artifact: RuntimeArtifact }) {
+  const manifest = artifact.contextManifest;
+  return (
+    <details className="runtime-context-disclosure">
+      <summary>
+        <span><strong>Context supplied</strong><small>{manifest ? `${manifest.sources.length} sources · ~${formatTokenCount(manifest.estimatedPromptTokens)} rendered prompt tokens` : "Not recorded for this historical run"}</small></span>
+        <CaretDown className="disclosure-caret" size={15} />
+      </summary>
+      {manifest ? (
+        <div>
+          <p>{manifest.policy}</p>
+          <ul>
+            {manifest.sources.map((source) => (
+              <li key={`${source.kind}-${source.id}`}>
+                <span><strong>{source.label}</strong><small>{source.kind}{source.stage ? ` · ${source.stage}` : ""}{source.truncated ? " · truncated" : ""}</small></span>
+                <code>{source.includedCharacters == null ? manifest.repositoryAccess : `${source.includedCharacters.toLocaleString()} chars`}</code>
+              </li>
+            ))}
+          </ul>
+          <small>Supplied context records what was included or accessible. It cannot prove which text the model relied on.</small>
+        </div>
+      ) : <p>Context manifests are recorded for new agent runs. Older artifacts retain usage but cannot reconstruct the exact prompt boundary.</p>}
+    </details>
   );
 }
 
@@ -1839,6 +2010,34 @@ function DecisionFrontier({
   );
 }
 
+function TaskEvaluation({
+  evaluation,
+  disabled,
+  onEvaluate,
+}: {
+  evaluation: RuntimeTask["evaluation"];
+  disabled: boolean;
+  onEvaluate: (score: number, outcome: "accepted" | "rejected" | "mixed", notes: string) => Promise<void>;
+}) {
+  const [score, setScore] = useState(evaluation?.score ?? 0);
+  const [outcome, setOutcome] = useState<"accepted" | "rejected" | "mixed">(evaluation?.outcome ?? "mixed");
+  const [notes, setNotes] = useState(evaluation?.notes ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="task-evaluation">
+      <fieldset className="task-evaluation__scores">
+        <legend className="sr-only">Outcome quality score</legend>
+        {[1, 2, 3, 4, 5].map((value) => <button type="button" key={value} className={score === value ? "is-selected" : ""} onClick={() => setScore(value)} aria-label={`${value} out of 5`}>{value}</button>)}
+      </fieldset>
+      <label>Outcome<select value={outcome} onChange={(event) => setOutcome(event.target.value as typeof outcome)}><option value="accepted">Accepted</option><option value="mixed">Mixed</option><option value="rejected">Rejected</option></select></label>
+      <label>Evaluator notes<textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="What made the output good or poor?" /></label>
+      <Button tone="secondary" compact disabled={disabled || !score || saving} onClick={async () => { setSaving(true); setError(null); try { await onEvaluate(score, outcome, notes); } catch (reason) { setError(reason instanceof Error ? reason.message : "The evaluation could not be saved."); } finally { setSaving(false); } }}>{saving ? "Saving…" : evaluation ? "Update evaluation" : "Add to scorecard"}</Button>
+      {error ? <small className="text-red">{error}</small> : null}
+    </div>
+  );
+}
+
 function InspectorSection({
   title,
   meta,
@@ -1893,7 +2092,7 @@ function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
         <span>
           <Robot size={16} />
           <strong>Run activity</strong>
-          <small>Scoped subprocess telemetry · {events.length} events</small>
+          <small>Agent sessions, repository commands, artifacts, and decisions · {events.length} events</small>
         </span>
         <span>
           <span className="connection-dot" />
@@ -1918,7 +2117,7 @@ function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
             {label}
           </button>
         ))}
-        <small>Model, token, duration, and artifact linkage are shown only when recorded by the runtime.</small>
+        <small>These are persisted runtime events. Model, token, duration, and artifact linkage appear only when the Codex event stream records them.</small>
       </div>
       <div className="runtime-activity-list">
         {visibleEvents.length ? visibleEvents.map((event) => (
@@ -2041,14 +2240,25 @@ export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: Runtime
         </header>
         <div className="artifact-viewer__summary">
           <span>Real agent output · read-only</span>
-          <p>Produced by {artifact.model}; retained as the handoff to downstream stages.</p>
+          <p>Produced by {artifact.model}{artifact.reasoning ? ` at ${artifact.reasoning} reasoning` : ""}; retained as the handoff to downstream stages.</p>
           {copyStatus === "copied" ? <small className="text-green">Copied</small> : null}
           {copyError ? <small className="text-red">{copyError}</small> : null}
         </div>
-        <pre>{artifact.content}</pre>
+        <div className="artifact-viewer__usage">
+          <span><small>Input</small><strong>{formatTokenCount(artifact.usage.inputTokens)}</strong></span>
+          <span><small>Output</small><strong>{formatTokenCount(artifact.usage.outputTokens)}</strong></span>
+          <span><small>Cached input</small><strong className="text-green">{formatCacheRate(artifact.usage)} · {formatTokenCount(artifact.usage.cachedInputTokens)}</strong></span>
+          <span><small>Approx. cost</small><strong>{formatApproximateCost(artifact.usage.cost)}</strong></span>
+        </div>
+        <MarkdownContent content={stripEmbeddedCandidatePatch(artifact.content)} className="artifact-viewer__markdown" />
+        <RuntimeContextDisclosure artifact={artifact} />
+        <details className="artifact-viewer__raw">
+          <summary>View raw Markdown source</summary>
+          <pre>{artifact.content}</pre>
+        </details>
         <footer>
           <small>{new Date(artifact.createdAt).toLocaleString()}</small>
-          <span className="mono">{formatTokenCount(artifact.usage.totalTokens)} tokens</span>
+          <span className="mono">API-rate estimate · ChatGPT plan session</span>
         </footer>
       </section>
     </div>
@@ -2056,6 +2266,7 @@ export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: Runtime
 }
 
 function toTaskRunState(status: RuntimeTask["status"]): TaskRunState {
+  if (status === "closed") return "closed";
   if (status === "queued") return "paused";
   if (status === "cancelled" || status === "blocked") return "blocked";
   if (status === "running" || status === "failed" || status === "completed") return status;

@@ -58,6 +58,27 @@ test("creates, commits, and fast-forward merges an isolated candidate", async ()
     await mkdir(path.join(pnpmCandidate.worktreePath, ".pnpm-store", "v11"), { recursive: true });
     await writeFile(path.join(pnpmCandidate.worktreePath, ".pnpm-store", "v11", "state.json"), "{}\n", "utf8");
     await assert.rejects(() => manager.commit(pnpmCandidate, "pnpm cache"), /generated tool state/);
+
+    const recoveryCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C5");
+    await writeFile(path.join(recoveryCandidate.worktreePath, "repair-target.txt"), "committed\n", "utf8");
+    const recoveryCommit = await manager.commit(recoveryCandidate, "recorded candidate");
+    recoveryCandidate.headRevision = recoveryCommit.headRevision;
+    await writeFile(path.join(recoveryCandidate.worktreePath, "repair-target.txt"), "dirty partial repair\n", "utf8");
+    await mkdir(path.join(recoveryCandidate.worktreePath, ".pnpm-store", "partial"), { recursive: true });
+    await writeFile(path.join(recoveryCandidate.worktreePath, ".pnpm-store", "partial", "state.json"), "{}\n", "utf8");
+    assert.equal(await manager.recoverCandidate(recoveryCandidate), true);
+    assert.equal((await readFile(path.join(recoveryCandidate.worktreePath, "repair-target.txt"), "utf8")).replaceAll("\r\n", "\n"), "committed\n");
+    assert.equal((await git(recoveryCandidate.worktreePath, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout.trim(), "");
+
+    const cleanupCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C6");
+    await mkdir(path.join(cleanupCandidate.worktreePath, ".pnpm-store"), { recursive: true });
+    await writeFile(path.join(cleanupCandidate.worktreePath, ".pnpm-store", "tracked.json"), "{}\n", "utf8");
+    await git(cleanupCandidate.worktreePath, ["add", "-f", ".pnpm-store/tracked.json"]);
+    await git(cleanupCandidate.worktreePath, ["commit", "-m", "candidate accidentally tracks generated state"]);
+    cleanupCandidate.headRevision = (await git(cleanupCandidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
+    await rm(path.join(cleanupCandidate.worktreePath, ".pnpm-store", "tracked.json"));
+    const cleaned = await manager.commit(cleanupCandidate, "repair removes generated state", { allowGeneratedDeletions: true });
+    assert.equal(cleaned.files.includes(".pnpm-store/tracked.json"), true);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }

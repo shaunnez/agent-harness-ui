@@ -23,6 +23,7 @@ import { getCandidateDiff, type CandidateDiffResponse } from "../api";
 import { acceptanceCriteria, type HarnessEvent, type TaskRunState, workflowStages } from "../domain";
 import type { RuntimeFocusedTestEvidence } from "../domain";
 import { Button, EvidenceState, ProviderTag, SectionHeader } from "./Primitives";
+import { UnifiedDiff } from "./UnifiedDiff";
 
 export interface StageViewProps {
   stageIndex: number;
@@ -2334,9 +2335,7 @@ export function CandidateDiffViewer({
             {diff.truncated ? " Â· diff capped at 300000 characters" : ""}
           </p>
         </div>
-        <pre className="candidate-diff-viewer__diff">
-          <code>{diff.diff}</code>
-        </pre>
+        <UnifiedDiff diff={diff.diff} />
         <footer>
           <Button tone="secondary" icon={ArrowLeft} onClick={onClose}>
             Back to inspector

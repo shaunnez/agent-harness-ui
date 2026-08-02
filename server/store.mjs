@@ -1,11 +1,39 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 import path from "node:path";
+import { defaultRuntimeSettings, enrichUsage, normalizeModelId } from "./model-catalog.mjs";
 
-const EMPTY_STATE = { nextId: 1, tasks: [] };
+const EMPTY_STATE = { nextId: 1, tasks: [], settings: defaultRuntimeSettings() };
 
 function clone(value) {
   return structuredClone(value);
+}
+
+function repriceTaskUsage(task, settings) {
+  const taskModel = normalizeModelId(task.agentConfig?.model ?? task.models?.[0]?.model ?? settings.defaultModel);
+  let taskCost = 0;
+  let hasTaskCost = false;
+  for (const artifact of task.artifacts ?? []) {
+    const artifactModel = normalizeModelId(artifact.model ?? taskModel);
+    artifact.usage = enrichUsage(
+      artifactModel,
+      artifact.usage,
+      settings.pricing?.rates,
+      settings.pricing?.version,
+    );
+    if (artifact.usage.cost != null) {
+      taskCost += artifact.usage.cost;
+      hasTaskCost = true;
+    }
+  }
+  const taskUsage = enrichUsage(
+    taskModel,
+    task.usage,
+    settings.pricing?.rates,
+    settings.pricing?.version,
+  );
+  taskUsage.cost = hasTaskCost ? Math.round(taskCost * 1_000_000) / 1_000_000 : taskUsage.cost;
+  task.usage = taskUsage;
 }
 
 export class JsonTaskStore {
@@ -15,6 +43,10 @@ export class JsonTaskStore {
 
   constructor(filePath) {
     this.#filePath = filePath;
+  }
+
+  dataDirectory() {
+    return path.dirname(this.#filePath);
   }
 
   async init() {
@@ -38,6 +70,17 @@ export class JsonTaskStore {
     return task ? clone(task) : null;
   }
 
+  async settings() {
+    return clone(this.#state.settings);
+  }
+
+  async updateSettings(updater) {
+    return this.#mutate((state) => {
+      updater(state.settings);
+      return state.settings;
+    });
+  }
+
   async create(input) {
     return this.#mutate((state) => {
       const now = new Date().toISOString();
@@ -48,6 +91,16 @@ export class JsonTaskStore {
         repositoryPath: input.repositoryPath,
         workflow: input.workflow,
         priority: input.priority,
+        agentConfig: {
+          model: normalizeModelId(input.model ?? this.#state.settings.defaultModel),
+          reasoning: input.reasoning ?? this.#state.settings.defaultReasoning,
+          stagePolicies: clone(input.stagePolicies ?? this.#state.settings.stagePolicies),
+          policySnapshotVersion: 1,
+        },
+        attachments: [],
+        closure: null,
+        evaluation: null,
+        scoutDispatch: null,
         status: "queued",
         currentStage: "triage",
         completedStages: [],
@@ -60,13 +113,8 @@ export class JsonTaskStore {
         error: null,
         activeRunKind: null,
         attemptsByStage: {},
-        models: [
-          {
-            provider: "openai",
-            model: `${process.env.AGENT_HARNESS_MODEL ?? "GPT-5.4-mini"} · ChatGPT plan`,
-          },
-        ],
-        usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0, cost: null },
+        models: configuredModels(input.stagePolicies ?? this.#state.settings.stagePolicies),
+        usage: enrichUsage(normalizeModelId(input.model ?? this.#state.settings.defaultModel), {}),
         artifacts: [],
         decisions: [],
         grillSession: null,
@@ -106,9 +154,33 @@ export class JsonTaskStore {
     return this.#mutate((state) => {
       const now = new Date().toISOString();
       let changed = false;
+      if (!state.settings) {
+        state.settings = defaultRuntimeSettings();
+        changed = true;
+      } else {
+        const defaults = defaultRuntimeSettings();
+        for (const [key, value] of Object.entries(defaults)) {
+          if (state.settings[key] === undefined) {
+            state.settings[key] = clone(value);
+            changed = true;
+          }
+        }
+        if (!state.settings.pricing?.creditRates) {
+          state.settings.pricing.creditRates = clone(defaults.pricing.creditRates);
+          changed = true;
+        }
+        if (!state.settings.pricing?.creditSourceUrl) {
+          state.settings.pricing.creditSourceUrl = defaults.pricing.creditSourceUrl;
+          changed = true;
+        }
+      }
       for (const task of state.tasks) {
         for (const [key, fallback] of [
           ["activeRunKind", null],
+          ["attachments", []],
+          ["closure", null],
+          ["evaluation", null],
+          ["scoutDispatch", null],
           ["attemptsByStage", {}],
           ["decisions", []],
           ["grillSession", null],
@@ -121,16 +193,74 @@ export class JsonTaskStore {
             changed = true;
           }
         }
+        const taskModel = normalizeModelId(task.agentConfig?.model ?? task.models?.[0]?.model ?? state.settings.defaultModel);
+        if (!task.agentConfig) {
+          task.agentConfig = {
+            model: taskModel,
+            reasoning: state.settings.defaultReasoning ?? "xhigh",
+            stagePolicies: clone(state.settings.stagePolicies),
+          };
+          changed = true;
+        }
+        if (task.agentConfig.policySnapshotVersion !== 1) {
+          task.agentConfig.stagePolicies = Object.fromEntries(
+            Object.keys(state.settings.stagePolicies).map((policyId) => [
+              policyId,
+              { model: taskModel, reasoning: task.agentConfig.reasoning ?? state.settings.defaultReasoning },
+            ]),
+          );
+          task.agentConfig.policySnapshotVersion = 1;
+          changed = true;
+        }
+        const configured = configuredModels(task.agentConfig.stagePolicies);
+        if (JSON.stringify(task.models) !== JSON.stringify(configured)) {
+          task.models = configured;
+          changed = true;
+        }
+        let taskCost = 0;
+        let hasTaskCost = false;
+        for (const artifact of task.artifacts ?? []) {
+          const artifactModel = normalizeModelId(artifact.model ?? taskModel);
+          if (artifact.model !== artifactModel) {
+            artifact.model = artifactModel;
+            changed = true;
+          }
+          if (artifact.reasoning === undefined) {
+            artifact.reasoning = null;
+            changed = true;
+          }
+          const enriched = enrichUsage(
+            artifactModel,
+            artifact.usage,
+            state.settings.pricing?.rates,
+            state.settings.pricing?.version,
+          );
+          if (JSON.stringify(artifact.usage) !== JSON.stringify(enriched)) {
+            artifact.usage = enriched;
+            changed = true;
+          }
+          if (enriched.cost != null) {
+            taskCost += enriched.cost;
+            hasTaskCost = true;
+          }
+        }
+        const enrichedTaskUsage = enrichUsage(
+          taskModel,
+          { ...task.usage, cost: hasTaskCost ? taskCost : null },
+          state.settings.pricing?.rates,
+          state.settings.pricing?.version,
+        );
+        enrichedTaskUsage.cost = hasTaskCost ? Math.round(taskCost * 1_000_000) / 1_000_000 : enrichedTaskUsage.cost;
+        if (JSON.stringify(task.usage) !== JSON.stringify(enrichedTaskUsage)) {
+          task.usage = enrichedTaskUsage;
+          changed = true;
+        }
         if (task.status === "awaiting-approval") {
           task.status = "awaiting-spec-approval";
           changed = true;
         }
         if (!Object.keys(task.attemptsByStage).length && task.stageRun > 0) {
           task.attemptsByStage[task.currentStage] = task.stageRun;
-          changed = true;
-        }
-        if (task.models?.[0]?.model === "Codex CLI · ChatGPT plan") {
-          task.models = [{ provider: "openai", model: "GPT-5.4 · ChatGPT plan" }];
           changed = true;
         }
         if (task.status !== "running") continue;
@@ -174,6 +304,11 @@ export class JsonTaskStore {
     );
     return pending;
   }
+}
+
+function configuredModels(stagePolicies) {
+  const models = [...new Set(Object.values(stagePolicies ?? {}).map((policy) => normalizeModelId(policy?.model)).filter(Boolean))];
+  return (models.length ? models : ["gpt-5.6-luna"]).map((model) => ({ provider: "openai", model }));
 }
 
 async function renameWithRetry(sourcePath, targetPath) {

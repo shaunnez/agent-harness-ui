@@ -29,13 +29,25 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Keep primary and global workflow actions in a consistent command bar at the top of every stage. Long evidence must not hide the next safe action.
 - Human Approval must show the candidate revision, target branch, merge method, and gate freshness, and the primary action must say **Approve & merge**.
 - Keep **Run activity** collapsed by default. It is scoped chronological telemetry with Activity, Agent runs, Test runs, and Decisions filters; stage content and artifacts remain the source of truth.
+- Discover selectable Codex models from the local model catalog, keep an explicit allowlist/default model/default reasoning policy in Settings, and snapshot that selection on each task so historical runs remain reproducible.
+- Show model usage at task and agent-run granularity: input, output, cached input and cache rate. Label calculated dollar values **Approx. cost** and **API-rate estimate** because ChatGPT-plan execution does not expose an attributable provider charge.
+- Persist a context manifest with every new model-owned artifact. Distinguish context supplied in the prompt from repository access permission, show truncation/size, and never claim that supplied context proves what the model semantically used.
+- Describe retained worktrees as temporary isolated Git copies, scope the inspector list to the active task, and use compact inline rows rather than card-like white boxes.
 - The full terminology, state machines, UI behavior, entity model, event contract, repair policy, cost model, and prototype-to-backend handoff are recorded in `docs/workflow-product-contract.md`.
+- When a repair starts or is required, make that state explicit in Implement and visually invalidate every downstream candidate-bound gate. Prior Dev Review and Test evidence remains inspectable for audit, but must read as stale / rerun required rather than completed.
+- Use one shared task-table component on Command Centre and Tasks. Recent tasks are the five most recently updated rows, include dates, and end with a full-width **See all tasks** link; search and filters must change the visible rows.
+- Body and control text should normally be 14–16px, with metadata and other small text no smaller than 12px. Clickable disclosure rows need a visible hover treatment and caret.
+- Render Markdown artifacts as styled HTML with raw source still available. Render candidate diffs as file-grouped, syntax-coloured unified diffs.
+- Product metrics must be truthful. Do not show invented skill or agent success rates, model availability, connection health, or editable settings. Dollar values may be calculated only from recorded tokens and an identified API rate card; label them **Approx. cost** and **API-rate estimate**, and distinguish configured, discovered, and unsupported capabilities.
+- Default new tasks to Luna XHigh for triage, selected scouts, Grill, specification, implementation, and test. Use Sol High for planning, repair, development review, and final review. Keep Luna Max available for controlled dogfood comparisons rather than silently making it the default.
+- Use the Goose scout taxonomy: code path, dependency, pattern, schema, test inventory, and user journey. Dispatch only the evidence needed for the task (normally one low-risk, up to two medium-risk, and up to three high-risk scouts), retain the selected/skipped set, and pass a compact deterministic synthesis downstream.
+- Evaluate model variants on repeated task suites using observed quality, gate pass rate, repair count, wall time, tokens, cache rate, work credits, and API-equivalent cost. Never infer quality from cost or completion alone.
 
 ## Current implementation boundary
 
-- The real runtime defaults to `gpt-5.4-mini` at low reasoning through the user's existing ChatGPT-authenticated Codex CLI. Never request, read, store, or pass an OpenAI API key for this path.
+- The real runtime uses role-specific GPT-5.6 policies through the user's existing ChatGPT-authenticated Codex CLI, with Luna XHigh as the general worker and Sol High at the high-leverage planning and review gates. Never request, read, store, or pass an OpenAI API key for this path.
 - Keep the local companion bound to loopback. Investigation, planning, review, and final review are read-only; Implement and Repair may write only inside the isolated candidate worktree; Test may create temporary files inside the candidate but must leave the exact candidate revision clean.
 - Persist local task state simply in `.data/tasks.json`; do not introduce an immutable event ledger without a concrete concurrency or audit requirement.
-- Treat ChatGPT-plan dollar cost as unavailable. Show real token counts and `Plan included`, not a fabricated API-price estimate.
+- Treat the attributable ChatGPT-plan dollar charge as unavailable. Show real token counts and cache rate; when a model has a verified rate card, show a clearly labeled API-rate estimate after cached-input discounts rather than presenting it as the user's actual billed charge.
 - The hosted Sites build is a UI artifact only. Local Codex execution and repository access require the Node companion.
 - Keep real and preview states truthful: the full single-candidate workflow is wired through human fast-forward merge. Multi-package scheduling, candidate assembly, normalized test results, and multiple providers remain prototype-only until their backend contracts exist.
