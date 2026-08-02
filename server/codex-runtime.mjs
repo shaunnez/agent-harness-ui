@@ -112,6 +112,13 @@ export function parseCodexEvent(line) {
       tone: "info",
       title: "Inspecting repository",
       detail: formatCommand(event.item.command),
+      toolCall: {
+        id: event.item.id ?? null,
+        name: "command_execution",
+        category: "repository-command",
+        phase: "started",
+        result: null,
+      },
     };
   }
 
@@ -123,6 +130,36 @@ export function parseCodexEvent(line) {
       title: succeeded ? "Repository command completed" : "Repository command returned a warning",
       detail: formatCommand(event.item.command),
       commandFailed: !succeeded,
+      toolCall: {
+        id: event.item.id ?? null,
+        name: "command_execution",
+        category: "repository-command",
+        phase: "completed",
+        result: commandResult(event.item),
+      },
+    };
+  }
+
+  if (["item.started", "item.completed"].includes(event.type) && event.item?.type === "mcp_tool_call") {
+    const toolName = String(event.item.tool ?? event.item.name ?? "").trim();
+    if (!toolName) return null;
+    const completed = event.type === "item.completed";
+    const failed = completed && (event.item.status === "failed" || event.item.error != null);
+    return {
+      type: "activity",
+      tone: failed ? "warning" : completed ? "success" : "info",
+      title: completed ? `Tool ${failed ? "failed" : "completed"}` : "Tool started",
+      detail: [event.item.server, toolName].filter(Boolean).join(" · "),
+      toolCall: {
+        id: event.item.id ?? null,
+        name: toolName,
+        category: "mcp",
+        server: event.item.server ?? null,
+        phase: completed ? "completed" : "started",
+        result: completed
+          ? conciseToolResult(event.item.result ?? event.item.output ?? event.item.error?.message ?? event.item.error)
+          : null,
+      },
     };
   }
 
@@ -275,6 +312,20 @@ function cleanStderr(stderr) {
 function formatCommand(command) {
   if (Array.isArray(command)) return command.join(" ").slice(0, 220);
   return String(command ?? "Repository inspection").replace(/\s+/g, " ").slice(0, 220);
+}
+
+function commandResult(item) {
+  if (Number.isInteger(item.exit_code)) return `Exit code ${item.exit_code}`;
+  const exposed = item.aggregated_output ?? item.output ?? item.stderr ?? item.stdout;
+  return exposed == null ? null : "Command completed with output (content not retained)";
+}
+
+function conciseToolResult(value) {
+  if (value == null) return null;
+  if (typeof value === "string") return `Text result · ${value.length} characters (content not retained)`;
+  if (Array.isArray(value)) return `Array result · ${value.length} items (content not retained)`;
+  if (typeof value === "object") return "Structured result (content not retained)";
+  return `${typeof value} result (content not retained)`;
 }
 
 function runProcess(command, args, options = {}) {

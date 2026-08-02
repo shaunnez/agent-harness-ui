@@ -19,6 +19,7 @@ import {
   workflowStages,
 } from "../domain";
 import { MarkdownContent } from "./MarkdownContent";
+import { RunActivity } from "./RunActivity";
 import { CandidateDiffErrorViewer, CandidateDiffViewer } from "./CandidateDiffViewer";
 import { Button, PriorityBadge, StateBadge } from "./Primitives";
 import { ApprovalHistorySection, getApprovalHistory } from "./runtimeApprovalHistory.js";
@@ -29,11 +30,7 @@ import {
   RuntimeContextDisclosure,
   RuntimeWorktreeInventory,
 } from "./runtime/RuntimeEvidencePanels";
-import {
-  RuntimeActivity,
-  RuntimeArtifactViewer,
-  TaskEvaluation,
-} from "./runtime/RuntimeInspectorPanels";
+import { RuntimeArtifactViewer, TaskEvaluation } from "./runtime/RuntimeInspectorPanels";
 import { InspectorSection, RuntimeRow } from "./runtime/RuntimeInspectorPrimitives";
 import { RuntimeStagePresentation } from "./runtime/RuntimeStagePresentation";
 import { RuntimeWorkspaceFooter } from "./runtime/RuntimeWorkspaceFooter";
@@ -479,7 +476,13 @@ export function RuntimeTaskWorkspace({
             </InspectorSection>
           </aside>
         </div>
-        <RuntimeActivity events={task.events} />
+        <RunActivity
+          task={task}
+          onOpenArtifact={(artifact) => {
+            selectViewedStage(artifact.stage);
+            openRuntimeArtifact(artifact);
+          }}
+        />
       </div>
 
       <RuntimeWorkspaceFooter task={task} activeModel={activePolicy.model} />

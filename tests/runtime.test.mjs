@@ -859,6 +859,86 @@ test("renders a truthful completion summary for historical merges without an app
   });
 });
 
+test("filters structured activity and renders test run and artifact drilldown", () => {
+  return withWorkspace(async ({ RunActivity, filterRunActivity }) => {
+    const runBase = {
+      status: "completed",
+      role: "dev-review",
+      model: "gpt-5.6-sol",
+      reasoning: "high",
+      startedAt: "2026-08-01T12:00:00.000Z",
+      completedAt: "2026-08-01T12:00:03.000Z",
+      durationMs: 3_000,
+      artifactId: null,
+      usage: { inputTokens: 100, cachedInputTokens: 80, outputTokens: 20, totalTokens: 120, credits: 0.25, cost: 0.002 },
+      credits: 0.25,
+      apiEstimate: 0.002,
+      candidateId: "C1",
+      candidateRevision: 2,
+      workPackageId: null,
+      attempt: 1,
+      retryOfRunId: null,
+      repairOfRunId: null,
+      toolCalls: [],
+      test: null,
+      gateResult: { verdict: "PASS", candidateId: "C1", candidateRevision: 2, evaluatedAt: "2026-08-01T12:00:03.000Z", blockingReasons: [] },
+      error: null,
+      source: "codex-jsonl",
+    };
+    const task = createTask({
+      runs: [
+        { ...runBase, id: "RUN-REVIEW", kind: "review", stage: "dev-review" },
+        {
+          ...runBase,
+          id: "RUN-TEST",
+          kind: "test",
+          stage: "test",
+          role: "test",
+          artifactId: "artifact-test",
+          retryOfRunId: "RUN-REVIEW",
+          toolCalls: [{ id: "cmd-1", name: "command_execution", category: "repository-command", phase: "completed", result: "Exit code 0" }],
+          test: { candidateId: "C1", candidateRevision: 2, status: "passed", command: "npm.cmd test", durationMs: 900, rowCount: 1, failedRowIds: [] },
+        },
+      ],
+      artifacts: [{
+        id: "artifact-test",
+        runId: "RUN-TEST",
+        stage: "test",
+        name: "test.md",
+        kind: "markdown",
+        content: "PASS",
+        createdAt: "2026-08-01T12:00:03.000Z",
+        model: "gpt-5.6-sol",
+        usage: runBase.usage,
+      }],
+      events: [
+        { id: "E1", at: "2026-08-01T12:00:00.000Z", category: "agent", tone: "info", stage: "dev-review", title: "Review started", detail: "Fresh context", runId: "RUN-REVIEW" },
+        { id: "E2", at: "2026-08-01T12:00:01.000Z", category: "tool", tone: "success", stage: "test", title: "Repository command completed", detail: "npm.cmd test", runId: "RUN-TEST", toolCall: { id: "cmd-1", name: "command_execution", category: "repository-command", phase: "completed", result: "Exit code 0" } },
+        { id: "E3", at: "2026-08-01T12:00:02.000Z", category: "decision", tone: "success", stage: "approval", title: "Approved", detail: "Proceed", approvalId: "A1" },
+      ],
+    });
+
+    assert.equal(filterRunActivity(task, "activity").length, 3);
+    assert.deepEqual(filterRunActivity(task, "agent").map((item) => item.run.id), ["RUN-REVIEW"]);
+    assert.deepEqual(filterRunActivity(task, "test").map((item) => item.run.id), ["RUN-TEST"]);
+    assert.deepEqual(filterRunActivity(task, "decision").map((item) => item.event.id), ["E3"]);
+    assert.deepEqual(filterRunActivity(task, "tool").map((item) => item.event.id), ["E2"]);
+
+    const markup = renderToStaticMarkup(React.createElement(RunActivity, {
+      task,
+      initialFilter: "test",
+      initialSelectedId: "run:RUN-TEST",
+      onOpenArtifact: () => {},
+    }));
+    assert.match(markup, /Tool calls/);
+    assert.match(markup, /Run drilldown/);
+    assert.match(markup, /RUN-TEST/);
+    assert.match(markup, /Focused tests/);
+    assert.match(markup, /Open test\.md/);
+    assert.match(markup, /API-rate estimate/);
+  });
+});
+
 async function waitUntil(predicate) {
   for (let attempt = 0; attempt < 100; attempt += 1) {
     if (predicate()) return;
@@ -887,6 +967,7 @@ function createTask(overrides = {}) {
     completedAt: null,
     error: null,
     activeRunKind: null,
+    activeRunIds: [],
     attemptsByStage: {},
     models: [{ provider: "openai", model: "GPT-5.4-mini" }],
     usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2, cost: null },
@@ -896,6 +977,7 @@ function createTask(overrides = {}) {
     approvals: [],
     workPackages: [],
     candidates: [],
+    runs: [],
     events: [],
     ...overrides,
   };
@@ -911,7 +993,8 @@ async function withWorkspace(run) {
   try {
     const module = await vite.ssrLoadModule("/src/components/RuntimeTaskWorkspace.tsx");
     const candidateDiffViewer = await vite.ssrLoadModule("/src/components/CandidateDiffViewer.tsx");
-    return await run({ ...module, ...candidateDiffViewer, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
+    const runActivity = await vite.ssrLoadModule("/src/components/RunActivity.tsx");
+    return await run({ ...module, ...candidateDiffViewer, ...runActivity, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
   } finally {
     await vite.close();
   }

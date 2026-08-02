@@ -17,6 +17,7 @@ export type ScoutRoleId = (typeof scoutRoleIds)[number];
 export type AgentRoleId = StageId | "repair" | ScoutRoleId;
 export const agentRoleIds: AgentRoleId[] = [...stageIds.slice(0, -1), "repair", ...scoutRoleIds, "approval"];
 export type Provider = "codex" | "claude" | "harness";
+export type { RuntimeEvent, RuntimeRun, RuntimeToolCall } from "./runtime-activity";
 export type TaskRunState =
   | "running"
   | "paused"

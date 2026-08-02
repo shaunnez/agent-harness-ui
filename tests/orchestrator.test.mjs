@@ -413,6 +413,20 @@ test("advances an approved implementation task through a revision-bound candidat
       runCodex: async (options) => {
         const { prompt } = options;
         runtimeCalls.push(options);
+        options.onEvent?.({
+          type: "activity",
+          tone: "success",
+          title: "Repository command completed",
+          detail: "npm.cmd test",
+          commandFailed: false,
+          toolCall: {
+            id: `cmd-${runtimeCalls.length}`,
+            name: "command_execution",
+            category: "repository-command",
+            phase: "completed",
+            result: "Exit code 0",
+          },
+        });
         let finalText = "## Outcome\n\nReady";
         if (/<scout-report>/.test(prompt)) finalText = SCOUT_OUTPUT;
         if (/<grill-questions>/.test(prompt)) finalText = GRILL_OUTPUT;
@@ -479,6 +493,18 @@ test("advances an approved implementation task through a revision-bound candidat
       approvalTask.artifacts.find((artifact) => artifact.stage === "test")?.focusedTest?.rows?.[1].candidateRevision,
       2,
     );
+    const reviewRuns = approvalTask.runs.filter((run) => run.stage === "dev-review");
+    const repairRun = approvalTask.runs.find((run) => run.kind === "repair");
+    const testRun = approvalTask.runs.find((run) => run.stage === "test");
+    assert.equal(reviewRuns.length, 2);
+    assert.equal(reviewRuns[1].retryOfRunId, reviewRuns[0].id);
+    assert.equal(repairRun.repairOfRunId, reviewRuns[0].id);
+    assert.equal(testRun.test.rowCount, 2);
+    assert.equal(testRun.toolCalls[0].name, "command_execution");
+    assert.equal(testRun.artifactId, approvalTask.artifacts.find((artifact) => artifact.stage === "test").id);
+    assert.equal(approvalTask.artifacts.find((artifact) => artifact.stage === "test").runId, testRun.id);
+    assert.equal(approvalTask.runs.every((run) => run.status === "completed"), true);
+    assert.deepEqual(approvalTask.activeRunIds, []);
     await orchestrator.approveMerge(task.id);
     const complete = await store.get(task.id);
     assert.equal(complete.status, "completed");
