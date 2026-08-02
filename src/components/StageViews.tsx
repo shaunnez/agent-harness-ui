@@ -2152,7 +2152,7 @@ function ContextInspector({
     setCandidateDiff(null);
     setCandidateDiffError(null);
     setCandidateDiffLoading(false);
-    candidateDiffRequestRef.current = 0;
+    candidateDiffRequestRef.current += 1;
   }, [candidateIdentity]);
   const openCandidateDiff = async () => {
     const requestId = candidateDiffRequestRef.current + 1;
