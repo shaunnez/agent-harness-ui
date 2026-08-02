@@ -1,0 +1,364 @@
+/* 2026 readability and runtime-truth convergence */
+body {
+  font-size: 14px;
+}
+
+small,
+.eyebrow,
+.task-table__header,
+.attention-row small,
+.usage-line > small,
+.runtime-stage-heading > p:last-child,
+.runtime-inspector-section > header > small,
+.runtime-inspector-section > p,
+.runtime-meta-row small,
+.runtime-artifact-list small,
+.runtime-activity > summary small,
+.runtime-activity-row time,
+.runtime-activity-row em,
+.runtime-activity-row small,
+.runtime-decisions > small,
+.runtime-decisions summary,
+.runtime-decisions details p,
+.runtime-command-error,
+.field > small {
+  font-size: 12px;
+}
+
+.command-grid--stacked {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+
+.recent-runs--full {
+  min-width: 0;
+}
+
+.command-side--split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+  gap: 32px;
+  padding-left: 0;
+  border-left: 0;
+}
+
+.task-table--shared {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #131311;
+}
+
+.task-table--shared .task-table__header,
+.task-table--shared .task-table__row {
+  grid-template-columns: minmax(250px, 1.8fr) 105px 100px 130px 130px 70px 105px minmax(135px, 1fr);
+  gap: 12px;
+  min-width: 1180px;
+}
+
+.task-table--shared .task-table__header {
+  padding: 12px 14px;
+  font-size: 12px;
+}
+
+.task-table--shared .task-table__row {
+  min-height: 72px;
+  padding: 11px 14px;
+  font-size: 13px;
+}
+
+.task-table--shared .task-table__title {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.task-table--shared .task-table__title strong {
+  max-width: 100%;
+  font-size: 14px;
+}
+
+.task-table--shared time,
+.task-table__cost {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.task-table__see-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 46px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.task-table__see-all:hover {
+  background: var(--surface-2);
+}
+
+.task-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(170px, 1fr)) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 14px;
+  margin: -4px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.task-filters label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.task-filters select {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-deep);
+  color: var(--text);
+}
+
+.toolbar {
+  height: 46px;
+}
+
+.toolbar input,
+.toolbar > span {
+  font-size: 14px;
+}
+
+.attention-row {
+  padding: 13px 8px;
+}
+
+.attention-row:hover {
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.attention-row strong,
+.usage-line > span,
+.usage-line > strong {
+  font-size: 14px;
+}
+
+.skill-row {
+  min-height: 76px;
+}
+
+.skill-row strong,
+.agent-panel__head strong,
+.setting-row strong,
+.detail-panel h3 {
+  font-size: 14px;
+}
+
+.skill-row small,
+.skill-row__provider,
+.agent-panel__head small,
+.setting-row small,
+.detail-panel header p {
+  font-size: 12px;
+}
+
+.truth-banner,
+.settings-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.truth-banner > span {
+  display: grid;
+  gap: 5px;
+}
+
+.agent-grid--roles .agent-panel {
+  cursor: default;
+}
+
+.runtime-source {
+  max-height: 520px;
+  padding: 16px;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #0d0e0d;
+  color: #d8d6ce;
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.capability-gap {
+  display: inline-flex;
+  padding: 5px 8px;
+  border: 1px solid #6a4c19;
+  border-radius: 999px;
+  color: var(--amber);
+  background: var(--amber-soft);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.stage-step--stale .stage-step__node {
+  border-color: var(--amber);
+  color: var(--amber);
+  background: var(--amber-soft);
+}
+
+.stage-step--stale small {
+  color: var(--amber);
+}
+
+.runtime-stage-heading h2 {
+  font-size: 22px;
+}
+
+.runtime-stage-heading > p:last-child,
+.stage-command-bar__copy > span,
+.runtime-stage-empty > span,
+.runtime-inspector-section > p,
+.runtime-meta-row strong,
+.runtime-artifact-list strong,
+.runtime-activity-row strong {
+  font-size: 13px;
+}
+
+.stage-command-bar__copy > strong,
+.runtime-stage-empty > strong,
+.runtime-inspector-section > strong {
+  font-size: 15px;
+}
+
+.runtime-inspector {
+  gap: 18px;
+}
+
+.runtime-inspector-section {
+  gap: 11px;
+  padding-bottom: 18px;
+}
+
+.runtime-inspector-section > header > strong {
+  font-size: 12px;
+}
+
+.runtime-approval-history,
+.runtime-approval-row {
+  display: grid;
+  gap: 10px;
+}
+
+.runtime-approval-row {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.runtime-grill,
+.runtime-packages {
+  gap: 18px;
+  padding: 20px;
+}
+
+.runtime-grill > header strong,
+.runtime-packages > header strong,
+.runtime-grill-question summary strong,
+.runtime-grill-question header strong,
+.runtime-package summary strong {
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.runtime-grill-question > p,
+.runtime-package > p,
+.runtime-grill-recommendation span,
+.runtime-grill-question fieldset small {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.runtime-grill-question > summary,
+.runtime-package > summary,
+.runtime-repair-lineage > summary,
+.runtime-grill-history > summary,
+.runtime-safeguards > summary,
+.runtime-decisions summary {
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.runtime-grill-question > summary:hover,
+.runtime-package > summary:hover,
+.runtime-repair-lineage > summary:hover,
+.runtime-grill-history > summary:hover,
+.runtime-safeguards > summary:hover,
+.runtime-decisions summary:hover {
+  background: var(--surface-3);
+}
+
+.disclosure-caret {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--muted) !important;
+  transition: transform 120ms ease;
+}
+
+details[open] > summary .disclosure-caret {
+  transform: rotate(180deg);
+}
+
+.runtime-grill-history--all {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.runtime-grill-history--all > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.runtime-grill-history--all[open] > summary svg,
+.unified-diff details[open] > summary > svg:last-child {
+  transform: rotate(180deg);
+}
+
+.runtime-task-decisions {
+  display: grid;
+  gap: 1px;
+  background: var(--border);
+}
+
+.runtime-task-decisions article {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  background: var(--surface);
+}

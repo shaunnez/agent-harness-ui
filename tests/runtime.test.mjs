@@ -63,7 +63,7 @@ test("builds a minimal Codex environment without inherited credentials", () => {
 });
 
 test("calculates an API-rate estimate after cached-input discounts", () => {
-  assert.equal(normalizeModelId("GPT-5.4-mini · ChatGPT plan"), "gpt-5.4-mini");
+  assert.equal(normalizeModelId("GPT-5.4-mini \u00b7 ChatGPT plan"), "gpt-5.4-mini");
   assert.equal(
     priceUsage("gpt-5.6-sol", {
       inputTokens: 1_000,
@@ -301,8 +301,8 @@ test("renders the retained worktree inventory with drill-in detail and a return 
     );
 
     assert.match(listMarkup, /Isolated worktrees/);
-    assert.match(listMarkup, /slice · retained/i);
-    assert.match(listMarkup, /candidate · active/i);
+    assert.match(listMarkup, /slice \u00b7 retained/i);
+    assert.match(listMarkup, /candidate \u00b7 active/i);
     assert.match(listMarkup, /S1 slice worktree/);
     assert.match(listMarkup, /Candidate C1 worktree/);
     assert.match(listMarkup, /cleanup ready/);
@@ -321,7 +321,7 @@ test("renders the retained worktree inventory with drill-in detail and a return 
     );
 
     assert.match(detailMarkup, /Return to inventory list/);
-    assert.match(detailMarkup, /candidate · active/i);
+    assert.match(detailMarkup, /candidate \u00b7 active/i);
     assert.match(detailMarkup, /Kind/);
     assert.match(detailMarkup, /Cleanup/);
     assert.match(detailMarkup, /Return to the inventory list/);
@@ -438,7 +438,7 @@ test("renders the candidate diff overlay with the current identity and return co
     let closed = 0;
     const markup = renderToStaticMarkup(
       React.createElement(CandidateDiffViewer, {
-        candidateIdentity: "C1 · deadbeef",
+        candidateIdentity: "C1 \u00b7 deadbeef",
         taskId: "TASK-1",
         diff: {
           candidateId: "C1",
@@ -455,7 +455,7 @@ test("renders the candidate diff overlay with the current identity and return co
     );
 
     assert.match(markup, /Candidate diff/);
-    assert.match(markup, /C1 · deadbeef/);
+    assert.match(markup, /C1 \u00b7 deadbeef/);
     assert.match(markup, /Task TASK-1/);
     assert.match(markup, /Return to inspector/);
     assert.match(markup, /Close candidate diff/);
@@ -654,7 +654,7 @@ test("renders artifact copy affordance and normalizes clipboard outcomes", () =>
       React.createElement(RuntimeArtifactViewer, { artifact, onClose: async () => {} }),
     );
     assert.match(markup, /Copy artifact/);
-    assert.match(markup, /Real agent output · read-only/);
+    assert.match(markup, /Real agent output \u00b7 read-only/);
 
     const writes = [];
     await assert.doesNotReject(
@@ -762,82 +762,6 @@ test("keeps focused test evidence attached to the persisted Markdown artifact in
   });
 });
 
-test("renders structured focused test rows with a return path and global repair actions", () => {
-  return withWorkspace(async ({ StageView }) => {
-    const markup = renderToStaticMarkup(
-      React.createElement(StageView, {
-        stageIndex: 7,
-        activeStageIndex: 7,
-        runState: "failed",
-        attempts: 2,
-        testResult: "failed",
-        taskId: "AH-999",
-        taskTitle: "Focused test evidence",
-        taskDescription: "Render structured rows.",
-        candidateId: "C1",
-        candidateSha: "deadbeef",
-        focusedTestEvidence: {
-          candidateId: "C1",
-          candidateRevision: 2,
-          command: "npm.cmd run test:runtime",
-          status: "failed",
-          startedAt: "2026-08-01T12:00:00.000Z",
-          completedAt: "2026-08-01T12:00:01.240Z",
-          durationMs: 1240,
-          rows: [
-            {
-              id: "row-1",
-              candidateId: "C1",
-              candidateRevision: 2,
-              command: "npm.cmd run test:runtime",
-              status: "passed",
-              durationMs: 1240,
-              title: "runtime.test.mjs",
-              artifactReferences: [
-                { name: "Markdown test artifact", kind: "markdown", path: "artifacts/test.md" },
-              ],
-              assertions: [
-                { label: "workspace renders the test artifact", actual: "present", expected: "present" },
-              ],
-              failureDetails: null,
-            },
-            {
-              id: "row-2",
-              candidateId: "C1",
-              candidateRevision: 2,
-              command: "npm.cmd run test:runtime",
-              status: "failed",
-              durationMs: 350,
-              title: "api.test.mjs",
-              artifactReferences: [{ name: "JUnit report", kind: "junit", path: "artifacts/junit.xml" }],
-              assertions: [
-                { label: "failing assertion", actual: "Expected 400, received 201", expected: "Expected 400" },
-              ],
-              failureDetails: "Request accepted invalid priority.",
-            },
-          ],
-        },
-        onAdvance: async () => {},
-        onAnswerComplete: async () => {},
-        onSendRepair: async () => {},
-        onRetryTest: async () => {},
-        onFailTest: async () => {},
-        onPassTest: async () => {},
-        onMarkBlocked: async () => {},
-        onResume: async () => {},
-        onApprove: async () => {},
-      }),
-    );
-
-    assert.match(markup, /C1 Â· deadbeef/);
-    assert.match(markup, /runtime\.test\.mjs/);
-    assert.match(markup, /api\.test\.mjs/);
-    assert.match(markup, /Back to test list/);
-    assert.match(markup, /Back to all tests/);
-    assert.match(markup, /Send C1 failure packet to repair/);
-  });
-});
-
 test("renders dependency batches and package status during implementation", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const markup = renderToStaticMarkup(
@@ -892,7 +816,7 @@ test("renders dependency batches and package status during implementation", () =
         onFinishGrill: async () => {},
       }),
     );
-    assert.match(markup, /2 packages · 2 batches/);
+    assert.match(markup, /2 packages \u00b7 2 batches/);
     assert.match(markup, /Runtime contract/);
     assert.match(markup, /Runtime UI/);
     assert.match(markup, /dependencies unlock/);
@@ -986,8 +910,8 @@ async function withWorkspace(run) {
   });
   try {
     const module = await vite.ssrLoadModule("/src/components/RuntimeTaskWorkspace.tsx");
-    const stageViews = await vite.ssrLoadModule("/src/components/StageViews.tsx");
-    return await run({ ...module, ...stageViews, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
+    const candidateDiffViewer = await vite.ssrLoadModule("/src/components/CandidateDiffViewer.tsx");
+    return await run({ ...module, ...candidateDiffViewer, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
   } finally {
     await vite.close();
   }

@@ -1,0 +1,327 @@
+.runtime-activity {
+  flex: 0 0 auto;
+  max-height: 260px;
+  overflow: auto;
+  border-top: 1px solid var(--border);
+  background: #141412;
+}
+.runtime-activity > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 46px;
+  padding: 0 18px;
+  cursor: pointer;
+  list-style: none;
+}
+.runtime-activity > summary::-webkit-details-marker {
+  display: none;
+}
+.runtime-activity > summary > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.runtime-activity > summary strong {
+  color: var(--text);
+  font-size: 12px;
+}
+.runtime-activity > summary small {
+  font-size: 12px;
+}
+.runtime-activity-list {
+  border-top: 1px solid var(--border);
+}
+.runtime-activity-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 100px;
+  gap: 12px;
+  align-items: center;
+  min-height: 42px;
+  padding: 7px 18px;
+  border-bottom: 1px solid #282821;
+  border-left: 2px solid var(--blue);
+}
+.runtime-activity-row--success {
+  border-left-color: var(--green);
+}
+.runtime-activity-row--warning {
+  border-left-color: var(--amber);
+}
+.runtime-activity-row--danger {
+  border-left-color: var(--red);
+}
+.runtime-activity-row time,
+.runtime-activity-row em {
+  color: var(--faint);
+  font-size: 12px;
+  font-style: normal;
+}
+.runtime-activity-row > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+.runtime-activity-row strong {
+  font-size: 12px;
+}
+.runtime-activity-row small {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.runtime-activity-row em {
+  text-align: right;
+}
+.runtime-next-cut {
+  color: var(--muted);
+  font-size: 12px;
+}
+.runtime-command-error {
+  grid-column: 1 / -1;
+  color: var(--red);
+  font-size: 12px;
+}
+.runtime-decisions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.runtime-decisions > small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.runtime-decisions details {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+}
+.runtime-decisions summary {
+  padding: 7px 8px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.runtime-decisions details p {
+  padding: 0 8px 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.runtime-decisions form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 3px;
+}
+
+.runtime-grill,
+.runtime-packages {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.runtime-grill > header,
+.runtime-packages > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.runtime-grill > header > span,
+.runtime-packages > header > span,
+.runtime-grill-question header > span,
+.runtime-grill-question summary > span {
+  display: grid;
+  gap: 4px;
+}
+
+.runtime-grill__reason {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--green);
+  background: color-mix(in srgb, var(--green) 8%, transparent);
+}
+
+.runtime-grill__questions,
+.runtime-package-batches {
+  display: grid;
+  gap: 10px;
+}
+
+.runtime-grill-question,
+.runtime-package {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.runtime-grill-question:not(details) {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.runtime-grill-question > header,
+.runtime-grill-question > summary,
+.runtime-package > summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.runtime-grill-question > summary,
+.runtime-package > summary {
+  cursor: pointer;
+  padding: 14px;
+}
+
+.runtime-grill-question--settled > summary svg,
+.runtime-package--ready_for_integration > summary svg,
+.runtime-package--integrated > summary svg {
+  color: var(--green);
+}
+
+.runtime-grill-question > p,
+.runtime-package > p,
+.runtime-grill-question form {
+  margin: 0 14px 14px;
+}
+.runtime-grill-question > p,
+.runtime-package > p {
+  padding-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.runtime-grill-question summary strong,
+.runtime-package summary strong {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.runtime-grill-question:not(details) > p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.runtime-grill-question fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+}
+
+.runtime-grill-question fieldset label {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.runtime-grill-question fieldset label.selected {
+  border-color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 7%, transparent);
+}
+
+.runtime-grill-question fieldset label > span {
+  display: grid;
+  gap: 3px;
+}
+
+.runtime-grill-question fieldset em {
+  color: var(--green);
+  font-size: 12px;
+  font-style: normal;
+  text-transform: uppercase;
+}
+
+.runtime-grill-question textarea {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.runtime-grill-answer {
+  display: grid;
+  gap: 3px;
+  margin: 0 14px 14px;
+  padding: 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--green) 8%, transparent);
+}
+
+.runtime-package-batch {
+  display: grid;
+  gap: 8px;
+}
+
+.runtime-package-batch > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 8px;
+}
+
+.runtime-package > summary {
+  justify-content: flex-start;
+}
+
+.runtime-package > summary > span {
+  display: grid;
+  gap: 3px;
+}
+
+.runtime-package .runtime-meta-row,
+.runtime-package > .text-red {
+  margin: 0 14px 10px;
+}
+
+.runtime-package-arrow {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+  text-align: center;
+  text-transform: uppercase;
+}
+.runtime-decisions input,
+.runtime-decisions textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: #11110f;
+  color: var(--text);
+  font:
+    8px Inter,
+    sans-serif;
+  line-height: 1.45;
+  resize: vertical;
+}
+.runtime-decisions input {
+  min-height: 29px;
+  padding: 0 8px;
+}
+.runtime-decisions textarea {
+  padding: 7px 8px;
+}
+.runtime-decisions form .button {
+  align-self: flex-start;
+}
+.artifact-viewer > footer > span {
+  color: var(--muted);
+  font-size: 12px;
+}

@@ -1,0 +1,478 @@
+import type { StageId } from "../domain";
+
+export type RuntimeTaskStatus =
+  | "queued"
+  | "running"
+  | "failed"
+  | "blocked"
+  | "cancelled"
+  | "awaiting-grill"
+  | "awaiting-spec-approval"
+  | "awaiting-plan-approval"
+  | "ready-for-implementation"
+  | "ready-for-review"
+  | "ready-for-test"
+  | "ready-for-final-review"
+  | "repair-required"
+  | "awaiting-human-approval"
+  | "merging"
+  | "completed"
+  | "closed";
+
+export interface RuntimeUsage {
+  inputTokens: number;
+  cachedInputTokens: number;
+  cacheWriteTokens?: number;
+  outputTokens: number;
+  totalTokens: number;
+  cost?: number | null;
+  credits?: number | null;
+  pricingVersion?: string | null;
+}
+
+export interface RuntimeContextSource {
+  kind: "task" | "decisions" | "attachments" | "artifact" | "repository";
+  id: string;
+  label: string;
+  stage?: StageId;
+  includedCharacters: number | null;
+  originalCharacters: number | null;
+  truncated: boolean;
+}
+
+export interface RuntimeContextManifest {
+  stage: StageId;
+  promptCharacters: number;
+  estimatedPromptTokens: number;
+  repositoryAccess: "read-only" | "workspace-write";
+  policy: string;
+  candidateId?: string | null;
+  candidateRevision?: number | null;
+  workPackageId?: string | null;
+  scoutName?: string | null;
+  scoutFocus?: string | null;
+  sources: RuntimeContextSource[];
+}
+
+export interface RuntimeArtifact {
+  id: string;
+  stage: StageId;
+  name: string;
+  kind: "markdown";
+  content: string;
+  createdAt: string;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  durationMs?: number | null;
+  model: string;
+  reasoning?: string | null;
+  agentRole?: string | null;
+  usage: RuntimeUsage;
+  contextManifest?: RuntimeContextManifest | null;
+  candidateId?: string | null;
+  candidateRevision?: number | null;
+  workPackageId?: string | null;
+  focusedTest?: RuntimeFocusedTestEvidence | null;
+  gateResult?: {
+    verdict: "PASS" | "REPAIR";
+    candidateId: string;
+    candidateRevision: number;
+    evaluatedAt: string;
+    blockingReasons: string[];
+  } | null;
+}
+
+export interface RuntimeFocusedTestArtifactReference {
+  name: string;
+  path?: string | null;
+  kind: string;
+}
+
+export interface RuntimeFocusedTestAssertion {
+  label: string;
+  actual: string;
+  expected?: string | null;
+}
+
+export interface RuntimeFocusedTestRow {
+  id: string;
+  candidateId: string;
+  candidateRevision: number;
+  command: string;
+  status: "passed" | "failed";
+  durationMs: number | null;
+  title: string;
+  artifactReferences: RuntimeFocusedTestArtifactReference[];
+  assertions: RuntimeFocusedTestAssertion[];
+  failureDetails: string | null;
+}
+
+export interface RuntimeFocusedTestEvidence {
+  candidateId: string;
+  candidateRevision: number;
+  command: string;
+  status: "passed" | "failed";
+  startedAt?: string | null;
+  completedAt?: string | null;
+  durationMs: number | null;
+  rows: RuntimeFocusedTestRow[];
+}
+
+export interface RuntimeDecision {
+  id: string;
+  grillQuestionId?: string;
+  question: string;
+  answer: string;
+  createdAt: string;
+}
+
+export interface RuntimeScoutDispatch {
+  selected: Array<{ name: string; focus: string; reason: string; status: "queued" | "complete" | "failed"; error?: string }>;
+  skipped: string[];
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface RuntimeGrillOption {
+  id: string;
+  label: string;
+  description: string;
+  recommended: boolean;
+}
+
+export interface RuntimeGrillQuestion {
+  id: string;
+  question: string;
+  whyItMatters: string;
+  options: RuntimeGrillOption[];
+  allowCustom: boolean;
+  answer: string | null;
+  answerSource: "user" | "accepted-assumption" | null;
+  resolvedAt: string | null;
+}
+
+export interface RuntimeGrillSession {
+  status: "open" | "completed";
+  questions: RuntimeGrillQuestion[];
+  createdAt: string;
+  completedAt: string | null;
+  completionReason: string | null;
+}
+
+export interface RuntimeWorkPackage {
+  id: string;
+  title: string;
+  description: string;
+  dependencies: string[];
+  batch: number;
+  ownedPaths: string[];
+  verification: string[];
+  status: "planned" | "running" | "ready_for_integration" | "failed" | "integrated";
+  attempts: number;
+  branch: string | null;
+  worktreePath: string | null;
+  baseRevision: string | null;
+  headRevision: string | null;
+  files: string[];
+  error: string | null;
+}
+
+export interface RuntimeWorktreeInventoryRow {
+  id: string;
+  kind: "slice" | "candidate";
+  label: string;
+  worktreePath: string;
+  branch: string;
+  baseRevision: string | null;
+  headRevision: string | null;
+  taskId: string;
+  workPackageId: string | null;
+  lifecycleState: "retained" | "active" | "stale";
+  gitExists: boolean;
+  gitHeadRevision: string | null;
+  gitClean: boolean | null;
+  cleanupReady: boolean;
+}
+
+export interface RuntimeApproval {
+  id: string;
+  stage: StageId;
+  note: string;
+  createdAt: string;
+}
+
+export interface RuntimeCandidate {
+  id: string;
+  revisionNumber: number;
+  baseRevision: string;
+  baseBranch: string;
+  baseRef?: string | null;
+  headRevision: string | null;
+  branch: string;
+  repositoryRoot: string;
+  worktreePath: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  revisions: Array<{ number: number; headRevision: string; reason: string; createdAt: string }>;
+  members?: Array<{ packageId: string; headRevision: string; order: number }>;
+}
+
+export interface RuntimeEvent {
+  id: string;
+  at: string;
+  category: "activity" | "agent" | "artifact" | "decision";
+  tone: "success" | "info" | "warning" | "danger";
+  stage: StageId;
+  title: string;
+  detail: string;
+}
+
+export interface RuntimeTask {
+  id: string;
+  title: string;
+  description: string;
+  repositoryPath: string;
+  workflow: "investigate" | "implement";
+  priority: "low" | "medium" | "high";
+  agentConfig?: {
+    model: string;
+    reasoning: string;
+    stagePolicies?: Record<string, RuntimeAgentPolicy>;
+    policySnapshotVersion?: number;
+  };
+  attachments?: Array<{ id: string; name: string; type: string; size: number; path: string }>;
+  status: RuntimeTaskStatus;
+  closure?: { reason: "not-needed" | "superseded" | "duplicate"; supersededBy: string | null; note: string; closedAt: string } | null;
+  evaluation?: RuntimeTaskEvaluation | null;
+  experiment?: RuntimeExperimentSnapshot | null;
+  mergeIntent?: {
+    candidateId: string;
+    candidateRevision: number;
+    baseRevision: string;
+    headRevision: string;
+    targetRef: string;
+    note: string;
+    status: "pending" | "completed" | "failed";
+    startedAt: string;
+    completedAt: string | null;
+    error: string | null;
+  } | null;
+  scoutDispatch?: RuntimeScoutDispatch | null;
+  currentStage: StageId;
+  completedStages: StageId[];
+  stageRun: number;
+  stageRunLimit: number;
+  createdAt: string;
+  updatedAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  error: string | null;
+  activeRunKind: string | null;
+  attemptsByStage: Partial<Record<StageId, number>>;
+  models: Array<{ provider: "openai"; model: string }>;
+  usage: RuntimeUsage;
+  artifacts: RuntimeArtifact[];
+  decisions: RuntimeDecision[];
+  grillSession: RuntimeGrillSession | null;
+  approvals: RuntimeApproval[];
+  workPackages: RuntimeWorkPackage[];
+  candidates: RuntimeCandidate[];
+  worktreeInventory?: RuntimeWorktreeInventoryRow[];
+  events: RuntimeEvent[];
+}
+
+export interface RuntimeStatus {
+  available: boolean;
+  authenticated: boolean;
+  authMethod: string | null;
+  model: string;
+  reasoning: string;
+  binary: string | null;
+  message: string;
+  suggestedRepository: string;
+  csrfToken?: string;
+  catalog?: RuntimeModelCatalog;
+  settings?: RuntimeSettings;
+  providers?: Array<{
+    id: "codex" | "claude" | "local";
+    label: string;
+    available: boolean;
+    authenticated: boolean;
+    executionEnabled: boolean;
+    detail: string;
+  }>;
+  scouts?: Array<{ id: string; label: string; instruction: string; limits: string }>;
+}
+
+export interface RuntimeAgentPolicy {
+  model: string;
+  reasoning: string;
+}
+
+export interface RuntimeExperimentSnapshot {
+  groupId: string;
+  variantId: string;
+  frozenBaseSha: string;
+  taskBriefHash: string;
+  policyMatrix: Record<string, RuntimeAgentPolicy>;
+  acceptanceCriteria: string[];
+  verificationCommands: string[];
+  createdAt: string;
+}
+
+export interface RuntimeQualityScore {
+  score: number;
+  outcome: "accepted" | "rejected" | "mixed";
+  rubric: Record<string, number>;
+  notes: string;
+  evaluator: string | null;
+  evaluatedAt: string;
+}
+
+export interface RuntimeTaskEvaluation {
+  score?: number;
+  outcome?: "accepted" | "rejected" | "mixed";
+  rubric?: Record<string, number>;
+  notes?: string;
+  evaluator?: string | null;
+  suiteId: string | null;
+  caseId: string | null;
+  evaluatedAt?: string;
+  scores?: Partial<Record<"human" | "blind", RuntimeQualityScore>>;
+}
+
+export interface RuntimeModelPriceBand {
+  input: number;
+  cachedInput: number;
+  cacheWrite: number | null;
+  output: number;
+}
+
+export interface RuntimeModelPricing {
+  short: RuntimeModelPriceBand;
+  long: RuntimeModelPriceBand | null;
+}
+
+export interface RuntimeModelOption {
+  id: string;
+  label: string;
+  description: string;
+  defaultReasoning: string;
+  reasoningLevels: string[];
+  pricing: RuntimeModelPricing | null;
+}
+
+export interface RuntimeModelCatalog {
+  models: RuntimeModelOption[];
+  fetchedAt: string | null;
+  source: string;
+}
+
+export interface RuntimeSettings {
+  allowedModels: string[];
+  defaultModel: string;
+  defaultReasoning: string;
+  stagePolicies: Record<string, RuntimeAgentPolicy>;
+  pricing: {
+    version: string;
+    sourceUrl: string;
+    verifiedAt: string;
+    verifiedBy: string;
+    rates: Record<string, RuntimeModelPricing>;
+    creditRates?: Record<string, { input: number; cachedInput: number; output: number }>;
+    creditSourceUrl?: string;
+  };
+}
+
+export interface RuntimeEvaluationVariant {
+  role: string;
+  model: string;
+  reasoning: string;
+  runs: number;
+  tasks: number;
+  inputTokens: number;
+  cachedInputTokens: number;
+  outputTokens: number;
+  cacheRate: number | null;
+  cost: number | null;
+  credits: number | null;
+  gatePasses: number;
+  gateRepairs: number;
+  averageHumanScore: number | null;
+}
+
+export interface RuntimeEvaluationSummary {
+  generatedAt: string;
+  methodology: string;
+  evaluatedTasks: number;
+  variants: RuntimeEvaluationVariant[];
+  observations: {
+    methodology: string;
+    evaluatedTasks: number;
+    variants: RuntimeEvaluationVariant[];
+  };
+  experiments: {
+    methodology: string;
+    taskCount: number;
+    variants: RuntimeExperimentVariant[];
+  };
+}
+
+export interface RuntimeExperimentVariant {
+  groupId: string;
+  variantId: string;
+  frozenBaseSha: string;
+  taskIds: string[];
+  sampleCount: number;
+  taskBriefHashes: string[];
+  policyMatrices: Array<Record<string, RuntimeAgentPolicy>>;
+  acceptanceDefinitions: string[][];
+  verificationDefinitions: string[][];
+  gateAttempts: number;
+  firstPassGateSuccesses: number;
+  firstPassGateSuccessRate: number | null;
+  eventualGateSuccesses: number;
+  eventualGateSuccessRate: number | null;
+  repairCount: number;
+  retryCount: number;
+  wallTimeMs: number | null;
+  averageWallTimeMs: number | null;
+  roleDurations: Record<string, number>;
+  inputTokens: number;
+  cachedInputTokens: number;
+  outputTokens: number;
+  cacheRate: number | null;
+  credits: number | null;
+  apiEstimate: number | null;
+  contextCharacters: number;
+  estimatedContextTokens: number;
+  averageHumanScore: number | null;
+  averageBlindScore: number | null;
+}
+
+export interface RuntimeChangelogCommit {
+  sha: string;
+  shortSha: string;
+  author: string;
+  authoredAt: string;
+  subject: string;
+}
+
+export interface RuntimeChangelogFile {
+  status: string;
+  path: string;
+  previousPath: string | null;
+}
+
+export interface RuntimeChangelogDetail extends RuntimeChangelogCommit {
+  body: string;
+  files: RuntimeChangelogFile[];
+}
+
+export interface RuntimeChangelogDiff {
+  sha: string;
+  path: string;
+  diff: string;
+  truncated: boolean;
+}
