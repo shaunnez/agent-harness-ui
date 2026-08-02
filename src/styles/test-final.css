@@ -1,0 +1,260 @@
+.runtime-grill-recommendation {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--amber);
+  background: var(--amber-soft);
+}
+.runtime-grill-recommendation small {
+  color: var(--amber);
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+.runtime-grill-recommendation strong {
+  font-size: 15px;
+}
+.runtime-grill-recommendation span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.runtime-grill-history > summary {
+  padding: 9px 0;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.runtime-grill-history {
+  display: grid;
+  gap: 8px;
+}
+.runtime-focused-test {
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.runtime-focused-test > header,
+.runtime-focused-test > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 13px;
+}
+.runtime-focused-test > header {
+  border-bottom: 1px solid var(--border);
+}
+.runtime-focused-test > header > span:first-child {
+  display: grid;
+  gap: 4px;
+}
+.runtime-focused-test > header small,
+.runtime-focused-test > footer small {
+  color: var(--faint);
+  font-size: 12px;
+}
+.runtime-focused-test > header strong {
+  font-size: 12px;
+}
+.runtime-focused-test > header > span:last-child {
+  color: var(--muted);
+  font-size: 12px;
+}
+.runtime-focused-test > footer {
+  border-top: 1px solid var(--border);
+}
+.runtime-focused-test__rows {
+  display: grid;
+}
+.runtime-focused-test__rows > button {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 100px 18px;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 9px 13px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.runtime-focused-test__rows > button:hover {
+  background: var(--surface-2);
+}
+.runtime-focused-test__rows > button > svg:first-child {
+  color: var(--green);
+}
+.runtime-focused-test__rows > button > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.runtime-focused-test__rows > button > span:nth-child(3) {
+  text-align: right;
+}
+.runtime-focused-test__rows strong {
+  font-size: 12px;
+}
+.runtime-focused-test__rows small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.runtime-focused-test__detail {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+}
+.runtime-focused-test__detail .detail-back {
+  width: max-content;
+  margin: 0;
+}
+.runtime-focused-test__detail-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.runtime-focused-test__detail-title > span {
+  display: grid;
+  gap: 3px;
+}
+.runtime-test-assertions {
+  display: grid;
+  gap: 7px;
+  padding-top: 5px;
+}
+.runtime-test-assertions > small {
+  color: var(--faint);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.runtime-test-assertions > div {
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.runtime-test-assertions strong,
+.runtime-test-assertions span,
+.runtime-test-failure {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.runtime-test-assertions span {
+  color: var(--muted);
+}
+.runtime-test-failure {
+  padding: 9px;
+  color: #ffd4d4;
+  background: var(--red-soft);
+}
+.runtime-final-review {
+  border-color: var(--border);
+  background: var(--surface);
+}
+.runtime-final-review > header > span {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+.runtime-final-review > header small {
+  color: var(--faint);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.runtime-final-review__table {
+  overflow-x: auto;
+  border-top: 1px solid var(--border);
+}
+.runtime-final-review__row {
+  display: grid;
+  grid-template-columns: 105px 70px 75px 80px minmax(180px, 1fr);
+  gap: 10px;
+  min-width: 620px;
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.runtime-final-review__row--head {
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.runtime-activity-filters {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 14px;
+  border-top: 1px solid var(--border);
+}
+.runtime-activity-filters button {
+  padding: 5px 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.runtime-activity-filters button.selected {
+  border-bottom-color: var(--blue);
+  color: var(--text);
+}
+.runtime-activity-filters small {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: 7px;
+}
+.runtime-activity-empty,
+.task-table__empty,
+.library-table__empty {
+  display: grid;
+  gap: 5px;
+  place-items: center;
+  min-height: 110px;
+  padding: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  text-align: center;
+}
+.runtime-activity-empty,
+.task-table__empty small,
+.library-table__empty small {
+  font-size: 12px;
+}
+.task-table__empty strong,
+.library-table__empty strong {
+  color: var(--text);
+  font-size: 12px;
+}
+.task-table,
+.recent-runs {
+  min-width: 0;
+}
+.command-grid,
+.command-side,
+.attention-list,
+.attention-row,
+.attention-row > span {
+  min-width: 0;
+}
+.attention-row small {
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+}
+.task-table__header,
+.task-table__row {
+  grid-template-columns: minmax(190px, 1.7fr) 76px 70px 52px 58px minmax(118px, 0.9fr);
+  min-width: 610px;
+}

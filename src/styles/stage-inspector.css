@@ -1,0 +1,201 @@
+.inspector-header {
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--border);
+}
+.inspector-header h3 {
+  font-size: 12px;
+}
+.inspector-section {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+}
+.inspector-section > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.inspector-section h4 {
+  font-size: 12px;
+}
+.inspector-section header span {
+  color: var(--muted);
+  font:
+    9px "SFMono-Regular",
+    Consolas,
+    monospace;
+}
+.inspector-section .button {
+  width: 100%;
+  margin-top: 11px;
+}
+.decision-list {
+  padding: 8px 0 3px;
+  border-bottom: 1px solid var(--border);
+}
+.decision-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 5px 6px;
+  border-left: 1px solid var(--border-strong);
+}
+.decision-item--active {
+  border: 1px solid #8c6218;
+  border-radius: 5px;
+  background: #241f15;
+}
+.decision-item > span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.decision-item small {
+  font-size: 12px;
+}
+.decision-item strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+.trace-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding-inline: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.trace-row > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.trace-row small {
+  color: var(--faint);
+}
+.trace-row--failed {
+  margin: 2px 0;
+  padding-inline: 7px;
+  color: #f3b5b5;
+  background: var(--red-soft);
+  border-radius: 4px;
+}
+.progress-line {
+  height: 6px;
+  margin: 9px 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #4b4a45;
+}
+.progress-line span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--amber);
+}
+.progress-line--amber span {
+  background: var(--amber);
+}
+.muted-note {
+  display: block;
+  margin-top: 8px;
+  color: var(--faint);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.4;
+}
+.slice-list {
+  margin-bottom: 16px;
+  border-block: 1px solid var(--border);
+}
+.slice-row {
+  display: grid;
+  grid-template-columns: 31px minmax(240px, 1fr) 100px 95px;
+  align-items: center;
+  gap: 11px;
+  min-height: 63px;
+  border-bottom: 1px solid var(--border);
+}
+.slice-row__number {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  color: var(--muted);
+  font:
+    9px "SFMono-Regular",
+    Consolas,
+    monospace;
+}
+.slice-row > span:nth-child(2) {
+  display: grid;
+  grid-template-columns: 31px 1fr;
+  gap: 3px 9px;
+}
+.slice-row code {
+  color: var(--blue);
+  font-size: 12px;
+}
+.slice-row strong {
+  font-size: 12px;
+}
+.slice-row small {
+  grid-column: 2;
+  font-size: 12px;
+}
+.slice-row > span:nth-child(n + 3) {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+}
+.slice-row > span:nth-child(n + 3) small {
+  grid-column: auto;
+}
+.run-steps {
+  position: relative;
+  border-block: 1px solid var(--border);
+}
+.run-step {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  min-height: 58px;
+  border-bottom: 1px solid var(--border);
+}
+.run-step__icon {
+  color: var(--blue);
+}
+.run-step--done .run-step__icon {
+  color: var(--green);
+}
+.run-step > span:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.run-step strong {
+  font-size: 12px;
+}
+.run-step small {
+  font-size: 12px;
+}
+.run-step code {
+  color: var(--muted);
+  font-size: 12px;
+}
+.spin {
+  animation: spin 1.2s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

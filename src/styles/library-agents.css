@@ -1,0 +1,256 @@
+.task-table--shared .task-table__header,
+.task-table--shared .task-table__row {
+  grid-template-columns: minmax(220px, 1.6fr) 86px 112px 86px 100px 68px 62px 80px 96px 102px;
+  column-gap: 10px;
+  min-width: 1102px;
+}
+
+.task-table__stage {
+  display: grid !important;
+  gap: 6px !important;
+}
+
+.task-table__stage > strong {
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.task-table__stage-icons {
+  display: flex !important;
+  align-items: center;
+  gap: 2px !important;
+  color: #4d4f49;
+}
+
+.task-table__stage-icons .is-complete { color: var(--green); }
+.task-table__stage-icons .is-failed { color: var(--red); }
+.task-table__stage-icons .is-running { color: var(--blue); }
+
+.task-table__usage,
+.task-table__cost {
+  display: grid !important;
+  align-content: center;
+  gap: 3px !important;
+}
+
+.task-table__usage strong,
+.task-table__cost {
+  color: var(--text);
+}
+
+.task-table__usage small,
+.task-table__cost small {
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.agent-grid--roles .agent-panel {
+  cursor: pointer;
+}
+
+.agent-panel:focus-visible,
+.model-option:has(input:focus-visible) {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.agent-panel__open {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 13px;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.agent-run-history,
+.agent-context-panel {
+  align-content: start;
+}
+
+.agent-run-row {
+  display: grid;
+  gap: 12px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.agent-run-row > div {
+  display: grid;
+  gap: 4px;
+}
+
+.agent-run-row > div small {
+  color: var(--muted);
+}
+
+.agent-run-row dl {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.agent-run-row dl > div,
+.agent-context-summary {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-left: 2px solid var(--border-strong);
+  background: var(--surface);
+}
+
+.agent-run-row dt,
+.agent-context-summary span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.agent-run-row dd {
+  margin: 0;
+  color: var(--text);
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.agent-context-panel > p,
+.agent-context-panel > small,
+.agent-context-summary small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.agent-context-panel ul,
+.runtime-context-disclosure ul {
+  display: grid;
+  gap: 0;
+  padding: 0;
+  margin: 14px 0;
+  list-style: none;
+  border-top: 1px solid var(--border);
+}
+
+.agent-context-panel li,
+.runtime-context-disclosure li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.agent-context-panel li > span,
+.runtime-context-disclosure li > span {
+  display: grid;
+  gap: 3px;
+}
+
+.agent-context-panel li small,
+.runtime-context-disclosure li small {
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.agent-context-panel code,
+.runtime-context-disclosure code {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.settings-section__intro,
+.settings-section__head p,
+.settings-pricing-source {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.settings-section__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-section__head h3,
+.settings-section__head p {
+  margin: 0;
+}
+
+.settings-section__head span {
+  display: grid;
+  gap: 6px;
+}
+
+.model-allowlist {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.model-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.model-option--allowed {
+  border-color: #355f7d;
+  background: #15212a;
+}
+
+.model-option > span {
+  display: grid;
+  gap: 4px;
+}
+
+.model-option small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.model-option code {
+  grid-column: 2;
+  color: var(--blue);
+  font-size: 12px;
+}
+
+.settings-default-grid,
+.dialog-model-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(160px, 0.7fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.dialog-model-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.settings-default-grid > label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.settings-default-grid select,
+.dialog-model-grid select {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-deep);
+  color: var(--text);
+}
