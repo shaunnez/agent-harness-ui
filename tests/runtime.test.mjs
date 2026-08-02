@@ -550,7 +550,84 @@ test("keeps focused test evidence attached to the persisted Markdown artifact in
     );
     assert.match(markup, /test-c1-r2\.md/);
     assert.match(markup, /Viewing/);
-    assert.match(markup, /Run the holdout final review/);
+    assert.match(markup, /Candidate-bound structured evidence/);
+    assert.match(markup, /workspace renders the test artifact/);
+  });
+});
+
+test("renders structured focused test rows with a return path and global repair actions", () => {
+  return withWorkspace(async ({ StageView }) => {
+    const markup = renderToStaticMarkup(
+      React.createElement(StageView, {
+        stageIndex: 7,
+        activeStageIndex: 7,
+        runState: "failed",
+        attempts: 2,
+        testResult: "failed",
+        taskId: "AH-999",
+        taskTitle: "Focused test evidence",
+        taskDescription: "Render structured rows.",
+        candidateId: "C1",
+        candidateSha: "deadbeef",
+        focusedTestEvidence: {
+          candidateId: "C1",
+          candidateRevision: 2,
+          command: "npm.cmd run test:runtime",
+          status: "failed",
+          startedAt: "2026-08-01T12:00:00.000Z",
+          completedAt: "2026-08-01T12:00:01.240Z",
+          durationMs: 1240,
+          rows: [
+            {
+              id: "row-1",
+              candidateId: "C1",
+              candidateRevision: 2,
+              command: "npm.cmd run test:runtime",
+              status: "passed",
+              durationMs: 1240,
+              title: "runtime.test.mjs",
+              artifactReferences: [
+                { name: "Markdown test artifact", kind: "markdown", path: "artifacts/test.md" },
+              ],
+              assertions: [
+                { label: "workspace renders the test artifact", actual: "present", expected: "present" },
+              ],
+              failureDetails: null,
+            },
+            {
+              id: "row-2",
+              candidateId: "C1",
+              candidateRevision: 2,
+              command: "npm.cmd run test:runtime",
+              status: "failed",
+              durationMs: 350,
+              title: "api.test.mjs",
+              artifactReferences: [{ name: "JUnit report", kind: "junit", path: "artifacts/junit.xml" }],
+              assertions: [
+                { label: "failing assertion", actual: "Expected 400, received 201", expected: "Expected 400" },
+              ],
+              failureDetails: "Request accepted invalid priority.",
+            },
+          ],
+        },
+        onAdvance: async () => {},
+        onAnswerComplete: async () => {},
+        onSendRepair: async () => {},
+        onRetryTest: async () => {},
+        onFailTest: async () => {},
+        onPassTest: async () => {},
+        onMarkBlocked: async () => {},
+        onResume: async () => {},
+        onApprove: async () => {},
+      }),
+    );
+
+    assert.match(markup, /C1 Â· deadbeef/);
+    assert.match(markup, /runtime\.test\.mjs/);
+    assert.match(markup, /api\.test\.mjs/);
+    assert.match(markup, /Back to test list/);
+    assert.match(markup, /Back to all tests/);
+    assert.match(markup, /Send C1 failure packet to repair/);
   });
 });
 

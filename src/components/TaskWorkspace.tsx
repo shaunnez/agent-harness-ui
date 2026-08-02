@@ -1,6 +1,6 @@
 import { ArrowLeft, CaretDown, Check, CheckCircle, DotsThree, Pause, Play, X } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
-import { baseEvents, type HarnessEvent, type TaskRunState, workflowStages } from "../domain";
+import { baseEvents, type HarnessEvent, type RuntimeFocusedTestEvidence, type TaskRunState, workflowStages } from "../domain";
 import { LiveRun } from "./LiveRun";
 import { Button, PriorityBadge, StateBadge } from "./Primitives";
 import { StageView } from "./StageViews";
@@ -144,6 +144,29 @@ export function TaskWorkspace({
   const progress = activeStageIndex + 1;
   const candidateId = `C${candidateVersion}`;
   const candidateSha = candidateVersion === 1 ? "a16f29d" : candidateVersion === 2 ? "f3b90c8" : "bd29170";
+  const focusedTestEvidence: RuntimeFocusedTestEvidence = {
+    candidateId,
+    candidateRevision: candidateVersion,
+    command: "npm.cmd run test:runtime",
+    status: testResult === "failed" ? "failed" : testResult === "passed" ? "passed" : "passed",
+    startedAt: "2026-08-01T12:00:00.000Z",
+    completedAt: "2026-08-01T12:00:01.240Z",
+    durationMs: 1240,
+    rows: [
+      {
+        id: "runtime-row-1",
+        candidateId,
+        candidateRevision: candidateVersion,
+        command: "npm.cmd run test:runtime",
+        status: testResult === "failed" ? "failed" : "passed",
+        durationMs: 1240,
+        title: "runtime.test.mjs",
+        artifactReferences: [{ name: "Markdown test artifact", kind: "markdown", path: "artifacts/test.md" }],
+        assertions: [{ label: "workspace renders the test artifact", actual: "present", expected: "present" }],
+        failureDetails: testResult === "failed" ? "A focused runtime check failed." : null,
+      },
+    ],
+  };
 
   return (
     <div className="task-workspace">
@@ -253,6 +276,7 @@ export function TaskWorkspace({
             selectedEvent={selectedEvent}
             candidateId={candidateId}
             candidateSha={candidateSha}
+            focusedTestEvidence={focusedTestEvidence}
             onAdvance={advance}
             onAnswerComplete={() => {
               if (viewedStageIndex !== activeStageIndex) {

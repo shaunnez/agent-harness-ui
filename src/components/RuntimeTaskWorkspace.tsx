@@ -14,6 +14,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   formatTokenCount,
   type RuntimeArtifact,
+  type RuntimeFocusedTestEvidence,
   type RuntimeEvent,
   type RuntimeGrillQuestion,
   type RuntimeTask,
@@ -72,6 +73,7 @@ export function RuntimeTaskWorkspace({
   const viewedStage = workflowStages[viewedIndex];
   if (!viewedStage) throw new Error(`Unknown workflow stage: ${viewedStageId}`);
   const stageArtifact = [...task.artifacts].reverse().find((artifact) => artifact.stage === viewedStageId);
+  const focusedTestEvidence = stageArtifact?.focusedTest ?? null;
   const state = toTaskRunState(task.status);
   const viewedStageStopped =
     viewedStageId === task.currentStage && ["failed", "cancelled", "blocked"].includes(task.status);
@@ -232,6 +234,9 @@ export function RuntimeTaskWorkspace({
                     Open artifact
                   </Button>
                 </header>
+                {viewedStageId === "test" && focusedTestEvidence ? (
+                  <RuntimeFocusedTestEvidencePanel evidence={focusedTestEvidence} candidate={candidate} />
+                ) : null}
                 <pre>{stageArtifact.content}</pre>
               </article>
             ) : completedApprovalWithoutArtifact ? (
@@ -959,6 +964,66 @@ function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+function RuntimeFocusedTestEvidencePanel({
+  evidence,
+  candidate,
+}: {
+  evidence: RuntimeFocusedTestEvidence;
+  candidate: RuntimeTask["candidates"][number] | undefined;
+}) {
+  return (
+    <section className="runtime-focused-test" aria-label="Focused test evidence">
+      <header>
+        <span>
+          <small>Candidate-bound structured evidence</small>
+          <strong>
+            {evidence.candidateId} r{evidence.candidateRevision}
+          </strong>
+        </span>
+        <span className="mono">{evidence.command}</span>
+      </header>
+      <div className="runtime-focused-test__rows">
+        {evidence.rows.map((row) => (
+          <details key={row.id} open={row.status === "failed"}>
+            <summary>
+              <span>
+                <strong>{row.title}</strong>
+                <small>
+                  {row.status} · {row.durationMs == null ? "n/a" : `${row.durationMs}ms`} · {row.candidateId} r
+                  {row.candidateRevision}
+                </small>
+              </span>
+              <span className={`badge badge--${row.status === "failed" ? "red" : "green"}`}>{row.status}</span>
+            </summary>
+            <div className="test-detail__facts">
+              <RuntimeRow label="Command" value={row.command} mono />
+              <RuntimeRow label="Candidate" value={`${row.candidateId} r${row.candidateRevision}`} mono />
+              <RuntimeRow
+                label="Artifact"
+                value={
+                  row.artifactReferences.map((artifact) => `${artifact.name} · ${artifact.kind}`).join(", ") ||
+                  "Markdown test artifact"
+                }
+              />
+              <RuntimeRow
+                label="Assertions"
+                value={row.assertions.map((assertion) => assertion.label).join(" · ") || "None recorded"}
+              />
+              {row.failureDetails ? <p className="text-red">{row.failureDetails}</p> : null}
+            </div>
+          </details>
+        ))}
+      </div>
+      <footer>
+        <small>
+          {candidate ? `Current candidate ${candidate.id} r${candidate.revisionNumber}` : "No active candidate"}
+        </small>
+        <small>{evidence.status === "passed" ? "Pass" : "Failure"} evidence retained with Markdown output</small>
+      </footer>
     </section>
   );
 }

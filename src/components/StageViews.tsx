@@ -21,6 +21,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { getCandidateDiff, type CandidateDiffResponse } from "../api";
 import { acceptanceCriteria, type HarnessEvent, type TaskRunState, workflowStages } from "../domain";
+import type { RuntimeFocusedTestEvidence } from "../domain";
 import { Button, EvidenceState, ProviderTag, SectionHeader } from "./Primitives";
 
 export interface StageViewProps {
@@ -34,6 +35,7 @@ export interface StageViewProps {
   taskDescription: string;
   candidateId: string;
   candidateSha: string;
+  focusedTestEvidence?: RuntimeFocusedTestEvidence | null;
   selectedEvent?: HarnessEvent;
   onAdvance: () => void;
   onAnswerComplete: () => void;
@@ -1411,7 +1413,11 @@ function DevReviewView({
 
 function TestView(props: StageViewProps) {
   const hasFailure = props.testResult === "failed" || props.runState === "failed";
-  const [openTest, setOpenTest] = useState<string | null>(hasFailure ? "api" : null);
+  const evidence = props.focusedTestEvidence ?? null;
+  const initialOpenTest = hasFailure
+    ? evidence?.rows.find((row) => row.status === "failed")?.id ?? evidence?.rows[0]?.id ?? null
+    : evidence?.rows[0]?.id ?? null;
+  const [openTest, setOpenTest] = useState<string | null>(initialOpenTest);
   if (props.runState === "blocked")
     return (
       <BlockedTestView
@@ -1422,78 +1428,32 @@ function TestView(props: StageViewProps) {
         candidateSha={props.candidateSha}
       />
     );
-  const tests = [
-    {
-      id: "unit",
-      label: "Unit tests",
-      candidateId: props.candidateId,
+  const tests =
+    evidence?.rows.map((row) => ({
+      id: row.id,
+      label: row.title,
+      candidateId: row.candidateId,
       candidateSha: props.candidateSha,
-      command: "pnpm vitest run src/**/*.test.ts",
-      status: "passed" as const,
-      duration: "4.1s",
-      count: "28 passed",
-      artifact: { name: "unit-results.json", kind: "json" },
-      detail: "Priority parsing, defaulting, badge labels, and schema helpers all passed in isolation.",
-      assertions: ["src/domain.ts:92", "src/components/StageViews.tsx:1450"],
-    },
-    {
-      id: "api",
-      label: "API contract",
-      candidateId: props.candidateId,
-      candidateSha: props.candidateSha,
-      command: "pnpm vitest run tests/api/priority.test.ts",
-      status: hasFailure
-        ? ("failed" as const)
-        : props.testResult === "passed"
-          ? ("passed" as const)
-          : ("running" as const),
-      duration: "8.2s",
-      count: hasFailure ? "8 passed Â· 1 failed" : props.testResult === "passed" ? "9 passed" : "9 tests",
-      artifact: { name: "junit.xml", kind: "xml" },
-      detail: hasFailure
-        ? "The invalid-value contract failed: urgent was persisted instead of returning a validation error."
-        : "Create, read, omitted, valid, and invalid priority contracts are verified at the HTTP boundary.",
-      assertions: hasFailure ? ["tests/api/priority.test.ts:94"] : ["tests/api/priority.test.ts:61", "tests/api/priority.test.ts:94"],
-      failure: hasFailure
-        ? {
-            expected: "HTTP 400 · Bad Request",
-            received: "HTTP 201 · Created",
-            assertion: "tests/api/priority.test.ts:94",
-            excerpt: [
-              { line: 92, code: '.send({ title: "Test", priority: "urgent" })' },
-              { line: 93, code: "expect(res.status).toBe(400)" },
-              { line: 94, code: "expect(res.body.error).toMatch(/invalid priority/i)", highlight: true },
-            ],
-          }
-        : undefined,
-    },
-    {
-      id: "types",
-      label: "Typecheck",
-      candidateId: props.candidateId,
-      candidateSha: props.candidateSha,
-      command: "pnpm tsc --noEmit",
-      status: "passed" as const,
-      duration: "3.7s",
-      count: "0 errors",
-      artifact: { name: "typecheck.log", kind: "log" },
-      detail: "TaskPriority stays consistent across schema, API response, and UI component props.",
-      assertions: ["tsconfig.json", "src/components/TaskWorkspace.tsx"],
-    },
-    {
-      id: "browser",
-      label: "Browser",
-      candidateId: props.candidateId,
-      candidateSha: props.candidateSha,
-      command: "pnpm playwright test task-priority.spec.ts",
-      status: props.testResult === "passed" ? ("passed" as const) : ("pending" as const),
-      duration: props.testResult === "passed" ? "12.4s" : "â€”",
-      count: props.testResult === "passed" ? "5 passed" : "Waiting on API gate",
-      artifact: { name: "playwright-report/index.html", kind: "html" },
-      detail: "The task list badge and create-task default are checked in the rendered application.",
-      assertions: ["task list badge", "create-task default"],
-    },
-  ];
+      command: row.command,
+      status: row.status,
+      duration: row.durationMs == null ? "—" : `${(row.durationMs / 1_000).toFixed(1)}s`,
+      count: row.assertions.length ? `${row.assertions.length} assertion${row.assertions.length === 1 ? "" : "s"}` : "0 assertions",
+      artifact: row.artifactReferences[0] ?? { name: "Markdown test artifact", kind: "markdown" },
+      detail:
+        row.failureDetails ?? "Structured focused-test evidence retained with the Markdown artifact for auditability.",
+      assertions: row.assertions.map((assertion) => `${assertion.label}: ${assertion.actual}`),
+      failure:
+        row.status === "failed"
+          ? {
+              expected: row.assertions[0]?.expected ?? "Failure recorded",
+              received: row.assertions[0]?.actual ?? "Failure recorded",
+              assertion: row.assertions[0]?.label ?? "Focused test assertion",
+              excerpt: row.failureDetails
+                ? [{ line: 1, code: row.failureDetails, highlight: true }]
+                : [{ line: 1, code: "Focused test failed", highlight: true }],
+            }
+          : undefined,
+    })) ?? [];
   return (
     <>
       <div className="stage-main">
@@ -1501,10 +1461,10 @@ function TestView(props: StageViewProps) {
           eyebrow="Test Â· Deterministic gate"
           title={
             hasFailure
-              ? `${props.candidateId} Â· 37 checks passed Â· 1 failed`
+              ? `${props.candidateId} Â· focused evidence available`
               : props.testResult === "passed"
-                ? `${props.candidateId} Â· all 46 acceptance checks passed`
-                : `${props.candidateId} Â· 37 checks passed Â· API contract running`
+                ? `${props.candidateId} Â· focused checks passed`
+                : `${props.candidateId} Â· focused checks running`
           }
           description="Open any result for its command, cases, evidence, and artifact. Gate-level actions stay outside individual test details."
           action={<CandidateBadge candidateId={props.candidateId} candidateSha={props.candidateSha} />}
@@ -1518,7 +1478,7 @@ function TestView(props: StageViewProps) {
                 : "Test gate active"
           }
           title={
-            hasFailure
+              hasFailure
               ? `Repair ${props.candidateId} or stop automatic routing`
               : props.testResult === "passed"
                 ? `Send ${props.candidateId} to holdout Final Review`
@@ -1542,7 +1502,7 @@ function TestView(props: StageViewProps) {
                 tone="secondary"
                 icon={Play}
                 onClick={() => {
-                  setOpenTest("api");
+                  setOpenTest(evidence?.rows.find((row) => row.status === "failed")?.id ?? evidence?.rows[0]?.id ?? null);
                   props.onRetryTest();
                 }}
               >
@@ -1565,7 +1525,7 @@ function TestView(props: StageViewProps) {
                 tone="secondary"
                 icon={XCircle}
                 onClick={() => {
-                  setOpenTest("api");
+                  setOpenTest(evidence?.rows.find((row) => row.status === "failed")?.id ?? evidence?.rows[0]?.id ?? null);
                   props.onFailTest();
                 }}
               >
@@ -1598,17 +1558,25 @@ function TestView(props: StageViewProps) {
             <strong>All results</strong>
           )}
         </div>
-        <div className="test-suite test-suite--accordion">
-          {tests.map((test) => (
-            <TestAccordionRow
-              key={test.id}
-              test={test}
-              open={openTest === test.id}
-              onToggle={() => setOpenTest(openTest === test.id ? null : test.id)}
-              onBack={() => setOpenTest(null)}
-            />
-          ))}
-        </div>
+        {tests.length ? (
+          <div className="test-suite test-suite--accordion">
+            {tests.map((test) => (
+              <TestAccordionRow
+                key={test.id}
+                test={test}
+                open={openTest === test.id}
+                onToggle={() => setOpenTest(openTest === test.id ? null : test.id)}
+                onBack={() => setOpenTest(null)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="runtime-stage-empty">
+            <FileCode size={22} />
+            <strong>No focused test evidence yet</strong>
+            <span>The persisted test payload will appear here after the gate emits structured rows.</span>
+          </div>
+        )}
         {hasFailure ? (
           <div className="test-gate-summary">
             <div className="resume-route">

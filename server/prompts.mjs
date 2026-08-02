@@ -166,6 +166,9 @@ function structuredOutputInstruction(stageId) {
   if (stageId === "plan") {
     return `\n\nAt the end of the Work package manifest section, include exactly one JSON block between <work-packages> and </work-packages> tags with this shape:\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Small outcome","description":"Exact implementation responsibility","dependencies":[],"ownedPaths":["src/example.ts"],"verification":["npm test -- example"]}]}\n</work-packages>\n\nUse 1-8 packages. IDs must be S1, S2, and so on. Dependencies must reference earlier package IDs and form an acyclic graph. Split only where ownership and verification are genuinely separable.`;
   }
+  if (stageId === "test") {
+    return `\n\nAt the end of the Checks section, include exactly one JSON block between <focused-test-evidence> and </focused-test-evidence> tags with this shape:\n\n<focused-test-evidence>\n{"candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:runtime","status":"passed","startedAt":"2026-08-01T12:00:00.000Z","completedAt":"2026-08-01T12:00:01.240Z","durationMs":1240,"rows":[{"id":"row-1","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:runtime","status":"passed","durationMs":1240,"title":"runtime.test.mjs","artifactReferences":[{"name":"Markdown test artifact","kind":"markdown","path":"artifacts/test.md"}],"assertions":[{"label":"workspace renders the test artifact","actual":"present","expected":"present"}],"failureDetails":null}]}\n</focused-test-evidence>\n\nKeep the Markdown artifact as the narrative test evidence. The structured block must be candidate-bound, include one row per focused check, and preserve any failure details alongside the markdown output.`;
+  }
   return "";
 }
 
