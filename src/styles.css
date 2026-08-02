@@ -714,19 +714,31 @@ small {
 .progress-ring {
   display: grid;
   place-items: center;
-  width: 47px;
-  height: 47px;
-  border: 3px solid #4e4a3d;
-  border-top-color: var(--amber);
-  border-right-color: var(--amber);
+  width: 50px;
+  height: 50px;
+  padding: 3px;
   border-radius: 50%;
+  background: conic-gradient(var(--amber) var(--workflow-progress, 0%), #4e4a3d 0);
 }
 .progress-ring span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  padding-top: 1px;
+  border-radius: 50%;
+  background: var(--bg);
   color: var(--text);
   font:
-    10px "SFMono-Regular",
+    12px "SFMono-Regular",
     Consolas,
     monospace;
+}
+.progress-ring strong {
+  font-size: 14px;
+  font-weight: 650;
 }
 .command-grid {
   display: grid;
@@ -6583,9 +6595,9 @@ details[open] > summary .disclosure-caret {
 
 .task-table--shared .task-table__header,
 .task-table--shared .task-table__row {
-  grid-template-columns: minmax(210px, 1.6fr) 92px 135px 92px 102px 76px 62px 82px 100px 112px;
-  gap: 8px;
-  min-width: 1165px;
+  grid-template-columns: minmax(220px, 1.6fr) 86px 112px 86px 100px 68px 62px 80px 96px 102px;
+  column-gap: 10px;
+  min-width: 1102px;
 }
 
 .task-table__stage {
@@ -7282,6 +7294,155 @@ details[open] > summary .disclosure-caret {
 .runtime-context-disclosure > p {
   padding-bottom: 12px;
   color: var(--muted);
+}
+
+/* Dashboard and stage-desk spacing polish. */
+.runtime-stage-main {
+  gap: 18px;
+}
+
+.runtime-stage-heading {
+  gap: 8px;
+}
+
+.runtime-stage-heading > p:last-child,
+.runtime-evidence-source p,
+.runtime-contract-note p,
+.runtime-context-disclosure > div > p,
+.runtime-context-disclosure > p {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.runtime-stage-stack {
+  gap: 16px;
+}
+
+.runtime-evidence-source,
+.runtime-contract-note {
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.runtime-evidence-source strong,
+.runtime-contract-note strong {
+  font-size: 15px;
+}
+
+.runtime-grill-question:not(details) {
+  gap: 14px;
+  padding: 16px;
+}
+
+.runtime-grill-question fieldset {
+  gap: 10px;
+}
+
+.runtime-grill-question fieldset label {
+  gap: 12px;
+  padding: 12px;
+}
+
+.runtime-grill-recommendation {
+  gap: 5px;
+  padding: 12px 14px;
+}
+
+.runtime-packages {
+  gap: 16px;
+  padding: 18px;
+}
+
+.runtime-package-batches,
+.runtime-package-batch {
+  gap: 12px;
+}
+
+.runtime-package-batch > div {
+  gap: 10px;
+}
+
+.runtime-candidate-desk,
+.runtime-final-review {
+  gap: 16px;
+  padding: 16px;
+}
+
+.runtime-candidate-desk .runtime-fact-grid > div {
+  gap: 7px;
+  padding: 14px 15px;
+}
+
+.runtime-candidate-desk .runtime-fact-grid strong {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.runtime-repair-lineage {
+  margin-top: 2px;
+}
+
+.runtime-repair-lineage > summary {
+  min-height: 46px;
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.runtime-repair-lineage > div {
+  grid-template-columns: minmax(124px, auto) minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.runtime-repair-lineage > div strong {
+  font-size: 13px;
+}
+
+.runtime-repair-lineage > div small {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.runtime-candidate-desk__actions {
+  gap: 12px;
+  padding-top: 2px;
+}
+
+.runtime-context-disclosure {
+  margin-top: 14px;
+}
+
+.runtime-context-disclosure > summary {
+  min-height: 48px;
+  padding: 12px 0;
+}
+
+.runtime-context-disclosure > summary > span > strong {
+  font-size: 14px;
+}
+
+.runtime-context-disclosure li {
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.runtime-context-disclosure li > span > strong {
+  font-size: 14px;
+}
+
+@media (max-width: 850px) {
+  .runtime-repair-lineage > div {
+    grid-template-columns: 110px minmax(0, 1fr);
+  }
+
+  .runtime-repair-lineage > div small {
+    grid-column: 2;
+    white-space: normal;
+  }
 }
 
 .artifact-viewer__usage {

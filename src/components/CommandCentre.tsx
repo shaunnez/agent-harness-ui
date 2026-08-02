@@ -17,9 +17,11 @@ import {
   type RuntimeStatus,
   type RuntimeTask,
   runtimeTaskToRecentTask,
+  workflowStages,
 } from "../domain";
 import { Button, ModelStack, PriorityBadge, SectionHeader } from "./Primitives";
 import { TaskTable } from "./TaskTable";
+import { WorkflowProgressRing } from "./WorkflowProgressRing";
 
 function isGateStatus(status: RuntimeTask["status"]) {
   return status.startsWith("awaiting-") || status.startsWith("ready-for-");
@@ -52,6 +54,9 @@ export function CommandCentre({
     .slice(0, 5);
   const activeRuntimeTask = openTasks.find((task) => task.status === "running") ?? openTasks[0];
   const activeTask = activeRuntimeTask ? runtimeTaskToRecentTask(activeRuntimeTask) : null;
+  const completedActiveStages = activeRuntimeTask
+    ? workflowStages.filter((stage) => activeRuntimeTask.completedStages.includes(stage.id)).length
+    : 0;
   const totalTokens = runtimeTasks.reduce((total, task) => total + task.usage.totalTokens, 0);
   const totalUsage = runtimeTasks.reduce(
     (total, task) => ({
@@ -140,16 +145,7 @@ export function CommandCentre({
           ) : null}
         </div>
         <div className="current-run__progress">
-          <div
-            className="progress-ring"
-            role="progressbar"
-            aria-label="Workflow progress"
-            aria-valuemin={0}
-            aria-valuemax={10}
-            aria-valuenow={activeTask ? activeTask.stageIndex + 1 : 0}
-          >
-            <span>{activeTask ? activeTask.stageIndex + 1 : 0}/10</span>
-          </div>
+          <WorkflowProgressRing completed={completedActiveStages} total={workflowStages.length} />
           <div>
             <strong>{activeTask?.stage ?? "Not started"}</strong>
             <span>
