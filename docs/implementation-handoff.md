@@ -48,6 +48,7 @@ Repository hooks and configured Git identity are respected. A hook or missing id
 | --- | --- | --- |
 | `GET` | `/api/health` | Local companion liveness |
 | `GET` | `/api/runtime/status` | Codex/ChatGPT readiness and suggested repository |
+Both endpoints include the same stable integer `runtimeSchemaVersion`, which local companion clients may use for compatibility checks.
 | `GET` | `/api/tasks` | Persisted task list |
 | `POST` | `/api/tasks` | Validate and create a task |
 | `GET` | `/api/tasks/:id` | Full task, decisions, approvals, candidates, artifacts, usage, and activity |

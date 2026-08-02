@@ -124,6 +124,24 @@ test("creates, lists, and starts a local task", async () => {
   }
 });
 
+test("exposes a shared runtime schema version on local runtime endpoints", async () => {
+  const { directory, origin, server } = await createServer();
+  try {
+    const healthResponse = await fetch(`${origin}/api/health`);
+    assert.equal(healthResponse.status, 200);
+    const health = await healthResponse.json();
+    assert.equal(Number.isInteger(health.runtimeSchemaVersion), true);
+
+    const runtimeResponse = await fetch(`${origin}/api/runtime/status`);
+    assert.equal(runtimeResponse.status, 200);
+    const runtime = await runtimeResponse.json();
+    assert.equal(Number.isInteger(runtime.runtimeSchemaVersion), true);
+    assert.equal(runtime.runtimeSchemaVersion, health.runtimeSchemaVersion);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("records Grill answers and requires an explicit finish mode", async () => {
   const { directory, origin, server, grillAnswerRef, grillFinishRef } = await createServer();
   try {

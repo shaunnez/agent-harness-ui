@@ -4,6 +4,7 @@ import path from "node:path";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
+const RUNTIME_SCHEMA_VERSION = 1;
 
 function send(response, status, value) {
   response.writeHead(status, JSON_HEADERS);
@@ -46,12 +47,12 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
 
     try {
       if (request.method === "GET" && url.pathname === "/api/health") {
-        send(response, 200, { ok: true, service: "agent-harness-local" });
+        send(response, 200, { ok: true, service: "agent-harness-local", runtimeSchemaVersion: RUNTIME_SCHEMA_VERSION });
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/runtime/status") {
         const runtime = await orchestrator.status();
-        send(response, 200, { ...runtime, suggestedRepository });
+        send(response, 200, { ...runtime, suggestedRepository, runtimeSchemaVersion: RUNTIME_SCHEMA_VERSION });
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/tasks") {
