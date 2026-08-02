@@ -73,6 +73,11 @@ export function RuntimeTaskWorkspace({
   const repoName = task.repositoryPath.split(/[\\/]/).filter(Boolean).at(-1) ?? task.repositoryPath;
   const candidate = task.candidates?.at(-1);
   const accessBoundary = getAccessBoundaryCopy(task);
+  const completedApprovalWithoutArtifact =
+    viewedStageId === "approval" &&
+    task.status === "completed" &&
+    !stageArtifact &&
+    candidate?.status === "merged";
 
   const rerun = async () => {
     setRunError(null);
@@ -169,17 +174,25 @@ export function RuntimeTaskWorkspace({
             ) : null}
             <header className="runtime-stage-heading">
               <p className="eyebrow">{viewedStage.label} · living artifact</p>
-              <h2>{stageArtifact ? stageArtifact.name : `${viewedStage.label} is not ready yet`}</h2>
+              <h2>
+                {stageArtifact
+                  ? stageArtifact.name
+                  : completedApprovalWithoutArtifact
+                    ? "Candidate merged successfully"
+                    : `${viewedStage.label} is not ready yet`}
+              </h2>
               <p>
                 {stageArtifact
                   ? "This is the durable handoff produced by the real stage agent. Open it wide or inspect the next artifact without losing task context."
-                  : viewedStageStopped
-                    ? "This stage stopped before it produced a handoff. Earlier artifacts remain available and the activity panel preserves the failure context."
-                    : viewedIndex > currentIndex
-                      ? "This stage is downstream of the current execution frontier."
-                      : task.status === "running" && viewedStageId === task.currentStage
-                        ? "The agent is working on this stage; activity will appear below when the subprocess completes."
-                        : "This stage has not started. Its artifact will appear here after the gate runs."}
+                  : completedApprovalWithoutArtifact
+                    ? `${candidate.id} revision ${candidate.revisionNumber} was approved and fast-forwarded to ${candidate.baseBranch}.`
+                    : viewedStageStopped
+                      ? "This stage stopped before it produced a handoff. Earlier artifacts remain available and the activity panel preserves the failure context."
+                      : viewedIndex > currentIndex
+                        ? "This stage is downstream of the current execution frontier."
+                        : task.status === "running" && viewedStageId === task.currentStage
+                          ? "The agent is working on this stage; activity will appear below when the subprocess completes."
+                          : "This stage has not started. Its artifact will appear here after the gate runs."}
               </p>
             </header>
 
@@ -201,6 +214,17 @@ export function RuntimeTaskWorkspace({
                 </header>
                 <pre>{stageArtifact.content}</pre>
               </article>
+            ) : completedApprovalWithoutArtifact ? (
+              <div className="runtime-stage-empty">
+                <CheckCircle size={22} weight="fill" />
+                <strong>
+                  {candidate.id} revision {candidate.revisionNumber} merged
+                </strong>
+                <span>
+                  Reviewed commit <span className="mono">{candidate.headRevision?.slice(0, 8)}</span> is now
+                  on {candidate.baseBranch}.
+                </span>
+              </div>
             ) : (
               <div
                 className={`runtime-stage-empty ${viewedStageStopped ? "runtime-stage-empty--failed" : ""}`}
@@ -246,7 +270,14 @@ export function RuntimeTaskWorkspace({
               </InspectorSection>
             ) : null}
             <InspectorSection title="Execution metadata">
-              <RuntimeRow label="Agent" value={`${viewedStage.label} agent`} />
+              <RuntimeRow
+                label="Agent"
+                value={
+                  task.currentStage === "approval"
+                    ? "Human approval gate"
+                    : `${workflowStages[currentIndex]?.label ?? "Triage"} agent`
+                }
+              />
               <RuntimeRow label="Model" value={task.models[0]?.model ?? "GPT-5.4-mini · ChatGPT plan"} />
               <RuntimeRow label="Access" value="Local OAuth session" />
               <RuntimeRow label="Sandbox" value={accessBoundary.sandbox} />
@@ -255,7 +286,10 @@ export function RuntimeTaskWorkspace({
             <InspectorSection title="Decision frontier" meta={`${task.decisions?.length ?? 0} recorded`}>
               <DecisionFrontier task={task} onDecision={onDecision} />
             </InspectorSection>
-            <InspectorSection title="Approvals" meta={`${getApprovalHistory(task.approvals).length} recorded`}>
+            <InspectorSection
+              title="Approvals"
+              meta={`${getApprovalHistory(task.approvals).length} recorded`}
+            >
               <ApprovalHistorySection approvals={task.approvals ?? []} />
             </InspectorSection>
             <InspectorSection title="Living artifacts" meta={`${task.artifacts.length} retained`}>
@@ -382,15 +416,13 @@ function RuntimeCommandBar({
     >
       <Icon className={running ? "spin" : ""} size={18} weight="fill" />
       <span className="stage-command-bar__copy">
-        <small>
-          {accessBoundary.kicker}
-        </small>
+        <small>{accessBoundary.kicker}</small>
         <strong>
           {running
             ? accessBoundary.title
-              : blocked
-                ? (next?.title ?? "Repair allowance exhausted")
-                : repairRequired
+            : blocked
+              ? (next?.title ?? "Repair allowance exhausted")
+              : repairRequired
                 ? `${accessBoundary.title} - repair the retained candidate`
                 : failed
                   ? "Retry the failed stage"
@@ -565,7 +597,8 @@ export function getAccessBoundaryCopy(task: RuntimeTask) {
     return {
       kicker: "Candidate cleanliness boundary",
       title: `${stageLabel} may create temporary files while testing`,
-      detail: "Temporary files are allowed, but the exact candidate revision must be left clean when the gate completes.",
+      detail:
+        "Temporary files are allowed, but the exact candidate revision must be left clean when the gate completes.",
       sandbox: "Temporary writes allowed, candidate must remain clean",
     };
   }

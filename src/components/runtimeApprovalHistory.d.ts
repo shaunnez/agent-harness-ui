@@ -1,5 +1,5 @@
-import type { RuntimeApproval } from "../domain";
 import type { ReactNode } from "react";
+import type { RuntimeApproval } from "../domain";
 
 export function getApprovalHistory(approvals?: RuntimeApproval[]): RuntimeApproval[];
 export function formatApprovalStage(stage: RuntimeApproval["stage"]): string;

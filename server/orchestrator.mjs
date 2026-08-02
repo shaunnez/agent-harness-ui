@@ -106,15 +106,30 @@ export class TaskOrchestrator {
     await this.#worktrees.merge(candidate);
     return this.#store.update(id, (draft) => {
       const activeCandidate = currentCandidate(draft);
+      const approvedAt = now();
+      const approvalNote = note.trim().slice(0, 5_000);
       draft.approvals ??= [];
-      draft.approvals.push({ id: crypto.randomUUID(), stage: "approval", note: note.trim().slice(0, 5_000), createdAt: now() });
+      draft.approvals.push({ id: crypto.randomUUID(), stage: "approval", note: approvalNote, createdAt: approvedAt });
       activeCandidate.status = "merged";
-      activeCandidate.updatedAt = now();
+      activeCandidate.updatedAt = approvedAt;
       draft.status = "completed";
       draft.currentStage = "approval";
-      draft.completedAt = now();
+      draft.completedAt = approvedAt;
       if (!draft.completedStages.includes("approval")) draft.completedStages.push("approval");
-      draft.events.push(activity("approval", "Human approval recorded", note.trim() || "Approved without an additional note.", "success", "decision"));
+      draft.artifacts.push({
+        id: crypto.randomUUID(),
+        stage: "approval",
+        name: `approval-${activeCandidate.id.toLowerCase()}-r${activeCandidate.revisionNumber}.md`,
+        kind: "markdown",
+        content: `# Human approval and merge\n\n- Candidate: ${activeCandidate.id} revision ${activeCandidate.revisionNumber}\n- Repository: ${draft.repositoryPath}\n- Target branch: ${activeCandidate.baseBranch}\n- Merge method: fast-forward only\n- Base revision: ${activeCandidate.baseRevision}\n- Merged revision: ${activeCandidate.headRevision}\n- Approved at: ${approvedAt}\n- Note: ${approvalNote || "Approved without an additional note."}`,
+        createdAt: approvedAt,
+        model: "Human approval",
+        usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0 },
+        candidateId: activeCandidate.id,
+        candidateRevision: activeCandidate.revisionNumber,
+      });
+      draft.events.push(activity("approval", "Human approval recorded", approvalNote || "Approved without an additional note.", "success", "decision"));
+      draft.events.push(activity("approval", "Approval artifact ready", `approval-${activeCandidate.id.toLowerCase()}-r${activeCandidate.revisionNumber}.md`, "success", "artifact"));
       draft.events.push(activity("approval", "Candidate merged", `${activeCandidate.id} fast-forwarded ${activeCandidate.baseBranch} to ${activeCandidate.headRevision.slice(0, 8)}.`, "success", "decision"));
     });
   }

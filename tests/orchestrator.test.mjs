@@ -165,6 +165,12 @@ test("advances an approved implementation task through a revision-bound candidat
     const complete = await store.get(task.id);
     assert.equal(complete.status, "completed");
     assert.equal(complete.candidates[0].status, "merged");
+    assert.equal(complete.artifacts.length, 12);
+    assert.equal(complete.artifacts.at(-1).stage, "approval");
+    assert.equal(complete.artifacts.at(-1).candidateId, "C1");
+    assert.equal(complete.artifacts.at(-1).candidateRevision, 2);
+    assert.match(complete.artifacts.at(-1).content, /Merge method: fast-forward only/);
+    assert.match(complete.artifacts.at(-1).content, new RegExp(`Merged revision: ${"c".repeat(40)}`));
     assert.equal(merged, true);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });

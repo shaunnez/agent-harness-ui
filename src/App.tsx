@@ -134,6 +134,7 @@ export function App() {
         {workspaceOpen ? (
           activeRuntimeTask ? (
             <RuntimeTaskWorkspace
+              key={activeRuntimeTask.id}
               task={activeRuntimeTask}
               onBack={() => {
                 setScreen(returnScreen);

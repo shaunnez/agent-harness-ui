@@ -44,13 +44,17 @@ export function ApprovalHistorySection({ approvals = [] }) {
               "span",
               { className: "runtime-meta-row" },
               React.createElement("small", null, "Note"),
-              React.createElement("strong", null, approval.note),
+              React.createElement("strong", null, approval.note?.trim() || "Approved without a note."),
             ),
             React.createElement(
               "span",
               { className: "runtime-meta-row" },
               React.createElement("small", null, "Timestamp"),
-              React.createElement("strong", { className: "mono" }, formatApprovalTimestamp(approval.createdAt)),
+              React.createElement(
+                "strong",
+                { className: "mono" },
+                formatApprovalTimestamp(approval.createdAt),
+              ),
             ),
           ),
         )

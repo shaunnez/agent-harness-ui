@@ -10,7 +10,7 @@ The repository now contains both the approved ten-stage interaction prototype an
 2. Human decisions are persisted as authoritative context. Specification approval either completes an investigate-only task or starts planning for an implementation task.
 3. Implementation Plan runs read-only and waits for explicit approval.
 4. Implement verifies that the selected Git repository is clean, creates an isolated worktree and harness-owned branch, runs Codex with write access only in that worktree, and commits a versioned integration candidate.
-5. Development Review, Focused Test, and Final Review run read-only against the exact candidate worktree and revision.
+5. Development Review and Final Review run read-only against the exact candidate worktree and revision. Focused Test uses guarded worktree access for temporary test files, with exact-SHA and clean-status checks before and after the run.
 6. A failed review or test retains its evidence and enables a repair agent. Repair creates a new commit/revision and requires development review again.
 7. Human Approval revalidates the clean source checkout, unchanged base SHA, and candidate worktree SHA before performing a fast-forward-only merge.
 
@@ -23,7 +23,7 @@ The current backend intentionally models one implementation session as one candi
 - Every agent child removes `OPENAI_API_KEY` and `CODEX_API_KEY`; it relies on the user's existing Codex ChatGPT session.
 - The default is `gpt-5.4-mini` at low reasoning. Override with `AGENT_HARNESS_MODEL` and `AGENT_HARNESS_REASONING`.
 - Prompts are streamed over stdin so accumulated artifacts do not hit the Windows command-line length limit.
-- Investigation, planning, review, test, and final review use the `read-only` Codex sandbox. Implement and repair use `workspace-write` inside the isolated worktree.
+- Investigation, planning, review, and final review use the `read-only` Codex sandbox. Implement and repair use `workspace-write` inside the isolated worktree. Focused Test uses `workspace-write` with its temp directory redirected below the candidate's ignored `.data/runtime-temp`; the orchestrator verifies the candidate SHA and a clean Git status both before and after the agent exits.
 - Read-only runs have a four-minute timeout. Write runs have a ten-minute timeout. All runs retain bounded stdout/stderr and enforce a 2.5 MB evidence-output budget.
 
 ## Git safety contract
@@ -85,6 +85,8 @@ Writes use a temporary file plus rename and are serialized in-process. Startup a
 - The universal inspector preserves task brief, viewed/active stage context, model/access/sandbox metadata, decision frontier, current candidate identity, and living artifacts.
 - Human decisions can be recorded inline and are injected into every downstream prompt.
 - Candidate artifacts, failed gate evidence, and repaired revisions remain drillable.
+- Approval history is visible in the universal inspector with stage, note fallback, and timestamp; switching tasks resets the viewed-stage context to the new task.
+- Access-boundary copy and the inspector's agent/sandbox metadata are derived from the active stage, while viewed-stage artifacts remain independently selectable.
 - The footer reports real tokens/cached tokens and `Plan included`; ChatGPT plan usage does not expose a reliable per-task dollar charge.
 - Queued and gated tasks appear as needing input rather than pretending they are actively running.
 
@@ -104,11 +106,13 @@ Writes use a temporary file plus rename and are serialized in-process. Startup a
 
 - `npm run lint`
 - `npm run typecheck`
-- `npm test` (10 focused tests at this handoff)
+- `npm test` (23 tests at this handoff)
 - `npm run build`
+- `npm run test:sites`
 - Real OAuth subprocess smoke through stdin: GPT-5.4-mini returned the requested Markdown and usage without API keys.
 - Real temporary-Git test: create nested ignored worktree, commit candidate, validate SHA, and fast-forward merge.
-- Browser smoke at 1440 x 1000: Command Centre -> queued implementation task -> task workspace -> persisted decision frontier. Zero browser console errors.
+- Three complete dogfood tasks reached human-approved fast-forward merge; see `docs/dogfood-report.md` for candidate revisions, failure-budget accounting, and remediations.
+- Browser smoke: completed-task merge summary, approval history, active/viewed-stage separation, historical Test evidence, task switching, and task-list aggregates rendered without console errors.
 
 ### Live-run calibration note
 

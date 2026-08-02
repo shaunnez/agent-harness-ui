@@ -135,7 +135,7 @@ test("renders approvals history in the runtime task inspector", () => {
     const taskWithApprovals = createTask({
       approvals: [
         { id: "A1", stage: "specification", note: "Specification approved.", createdAt: "2026-08-01T10:15:00.000Z" },
-        { id: "A2", stage: "plan", note: "Plan approved.", createdAt: "2026-08-01T10:20:00.000Z" },
+        { id: "A2", stage: "plan", note: "", createdAt: "2026-08-01T10:20:00.000Z" },
       ],
     });
     const populatedMarkup = renderToStaticMarkup(
@@ -152,7 +152,7 @@ test("renders approvals history in the runtime task inspector", () => {
     assert.match(populatedMarkup, /<strong>Approvals<\/strong>/);
     assert.match(populatedMarkup, /Task specification/);
     assert.match(populatedMarkup, /Specification approved\./);
-    assert.match(populatedMarkup, /Plan approved\./);
+    assert.match(populatedMarkup, /Approved without a note\./);
     assert.doesNotMatch(populatedMarkup, /No approvals recorded yet\./);
 
     const emptyMarkup = renderToStaticMarkup(
@@ -255,6 +255,8 @@ test("renders truthful active-stage access boundaries", () => {
 
     assert.match(viewedStageMarkup, /Viewing/);
     assert.match(viewedStageMarkup, /Active/);
+    assert.match(viewedStageMarkup, /<small>Agent<\/small><strong class="">Implement agent<\/strong>/);
+    assert.doesNotMatch(viewedStageMarkup, /<small>Agent<\/small><strong class="">Task specification agent<\/strong>/);
     assert.match(viewedStageMarkup, /Worktree write scope/);
     assert.match(viewedStageMarkup, /isolated candidate worktree/i);
     assert.match(sameActiveDifferentViewedMarkup, /Worktree write scope/);
@@ -263,6 +265,42 @@ test("renders truthful active-stage access boundaries", () => {
       viewedStageMarkup.match(/<small>Sandbox<\/small><strong class="">([^<]+)<\/strong>/)?.[1],
       sameActiveDifferentViewedMarkup.match(/<small>Sandbox<\/small><strong class="">([^<]+)<\/strong>/)?.[1],
     );
+  });
+});
+
+test("renders a truthful completion summary for historical merges without an approval artifact", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const markup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task: createTask({
+          status: "completed",
+          currentStage: "approval",
+          completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review", "approval"],
+          candidates: [
+            {
+              id: "C1",
+              revisionNumber: 3,
+              status: "merged",
+              baseRevision: "a".repeat(40),
+              headRevision: "b".repeat(40),
+              baseBranch: "codex/vertical-slice",
+              branch: "agent-harness/ah-999-c1",
+              revisions: [],
+            },
+          ],
+        }),
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+      }),
+    );
+
+    assert.match(markup, /Candidate merged successfully/);
+    assert.match(markup, /C1 revision 3 merged/);
+    assert.match(markup, /Human approval gate/);
+    assert.doesNotMatch(markup, /Human approval is not ready yet/);
   });
 });
 
@@ -310,6 +348,7 @@ async function withWorkspace(run) {
   const vite = await createViteServer({
     configFile: false,
     logLevel: "error",
+    optimizeDeps: { noDiscovery: true },
     server: { middlewareMode: true },
   });
   try {

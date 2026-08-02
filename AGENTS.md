@@ -33,9 +33,9 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Current implementation boundary
 
-- The first real slice uses `gpt-5.4` through the user's existing ChatGPT-authenticated Codex CLI. Never request, read, store, or pass an OpenAI API key for this path.
-- Keep the local companion bound to loopback. Real agent stages are read-only until worktree creation, mutation policy, and candidate gates are implemented.
+- The real runtime defaults to `gpt-5.4-mini` at low reasoning through the user's existing ChatGPT-authenticated Codex CLI. Never request, read, store, or pass an OpenAI API key for this path.
+- Keep the local companion bound to loopback. Investigation, planning, review, and final review are read-only; Implement and Repair may write only inside the isolated candidate worktree; Test may create temporary files inside the candidate but must leave the exact candidate revision clean.
 - Persist local task state simply in `.data/tasks.json`; do not introduce an immutable event ledger without a concrete concurrency or audit requirement.
 - Treat ChatGPT-plan dollar cost as unavailable. Show real token counts and `Plan included`, not a fabricated API-price estimate.
 - The hosted Sites build is a UI artifact only. Local Codex execution and repository access require the Node companion.
-- Keep real and preview states truthful: Triage through Task Specification are wired; later stages remain design previews until their backend contracts exist.
+- Keep real and preview states truthful: the full single-candidate workflow is wired through human fast-forward merge. Multi-package scheduling, candidate assembly, normalized test results, and multiple providers remain prototype-only until their backend contracts exist.
