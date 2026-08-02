@@ -48,7 +48,6 @@ Repository hooks and configured Git identity are respected. A hook or missing id
 | --- | --- | --- |
 | `GET` | `/api/health` | Local companion liveness |
 | `GET` | `/api/runtime/status` | Codex/ChatGPT readiness and suggested repository |
-Both endpoints include the same stable integer `runtimeSchemaVersion`, which local companion clients may use for compatibility checks.
 | `GET` | `/api/tasks` | Persisted task list |
 | `POST` | `/api/tasks` | Validate and create a task |
 | `GET` | `/api/tasks/:id` | Full task, decisions, approvals, candidates, artifacts, usage, and activity |
@@ -66,6 +65,8 @@ Both endpoints include the same stable integer `runtimeSchemaVersion`, which loc
 | `POST` | `/api/tasks/:id/repair` | Create a repaired candidate revision |
 | `POST` | `/api/tasks/:id/final-review` | Run the holdout final review |
 | `POST` | `/api/tasks/:id/approve-merge` | Revalidate and fast-forward merge the exact candidate |
+
+Both endpoints include the same stable integer `runtimeSchemaVersion`, which local companion clients may use for compatibility checks.
 
 The API validates action eligibility from persisted task status. A task has one in-memory active run, and retry allowance is counted per stage. The UI polls an open running task every 1.25 seconds and backs off to five seconds when idle.
 
