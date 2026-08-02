@@ -17,7 +17,7 @@ import {
   TerminalWindow,
 } from "@phosphor-icons/react";
 import { useState } from "react";
-import { type RuntimeTask, recentTasks, runtimeTaskToRecentTask, workflowStages } from "../domain";
+import { type RuntimeTask, runtimeTaskToRecentTask, workflowStages } from "../domain";
 import { Button, ModelStack, PriorityBadge, ProviderTag, SectionHeader, StateBadge } from "./Primitives";
 
 export function TasksScreen({
@@ -27,7 +27,7 @@ export function TasksScreen({
   onOpenTask: (taskId?: string) => void;
   runtimeTasks: RuntimeTask[];
 }) {
-  const tasks = runtimeTasks.length ? runtimeTasks.map(runtimeTaskToRecentTask) : recentTasks;
+  const tasks = runtimeTasks.map(runtimeTaskToRecentTask);
   return (
     <div className="page library-page">
       <SectionHeader
@@ -44,7 +44,7 @@ export function TasksScreen({
         <MagnifyingGlass size={17} />
         <input aria-label="Search tasks" placeholder="Search tasks, IDs, models, or artifacts…" />
         <span>
-          {tasks.length} tasks · {runtimeTasks.length ? "local" : "prototype"}
+          {tasks.length} local task{tasks.length === 1 ? "" : "s"}
         </span>
       </div>
       <div className="library-table library-table--tasks">
@@ -100,6 +100,12 @@ export function TasksScreen({
             <ModelStack models={task.models} compact />
           </button>
         ))}
+        {!tasks.length ? (
+          <div className="library-table__empty">
+            <strong>No local tasks yet</strong>
+            <small>Create a task from the sidebar to begin a real Evidence Gate workflow.</small>
+          </div>
+        ) : null}
       </div>
     </div>
   );

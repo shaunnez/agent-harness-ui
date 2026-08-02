@@ -13,7 +13,6 @@ import {
   formatTokenCount,
   type RuntimeStatus,
   type RuntimeTask,
-  recentTasks,
   runtimeTaskToRecentTask,
 } from "../domain";
 import { Button, ModelStack, PriorityBadge, SectionHeader } from "./Primitives";
@@ -26,14 +25,20 @@ export function CommandCentre({
   onOpenTask,
   runtimeTasks,
   runtimeStatus,
+  runtimeLoading,
+  runtimeError,
+  onNewTask,
 }: {
   onOpenTask: (taskId?: string) => void;
+  onNewTask: () => void;
   runtimeTasks: RuntimeTask[];
   runtimeStatus: RuntimeStatus | null;
+  runtimeLoading: boolean;
+  runtimeError: string | null;
 }) {
-  const tasks = runtimeTasks.length ? runtimeTasks.map(runtimeTaskToRecentTask) : recentTasks;
+  const tasks = runtimeTasks.map(runtimeTaskToRecentTask);
   const activeRuntimeTask = runtimeTasks.find((task) => task.status === "running") ?? runtimeTasks[0];
-  const activeTask = activeRuntimeTask ? runtimeTaskToRecentTask(activeRuntimeTask) : recentTasks[0];
+  const activeTask = activeRuntimeTask ? runtimeTaskToRecentTask(activeRuntimeTask) : null;
   const totalTokens = runtimeTasks.reduce((total, task) => total + task.usage.totalTokens, 0);
   const attentionTasks = runtimeTasks.filter(
     (task) =>
@@ -50,20 +55,26 @@ export function CommandCentre({
           <p>One deterministic view of active work, evidence, and human decisions.</p>
         </div>
         <div
-          className={`health-summary ${runtimeStatus && !runtimeStatus.authenticated ? "health-summary--warning" : ""}`}
+          className={`health-summary ${runtimeError || (runtimeStatus && !runtimeStatus.authenticated) ? "health-summary--warning" : ""}`}
           role="status"
           aria-label="Local runtime health"
         >
           <ShieldCheck size={18} weight="fill" />
           <span>
             <strong>
-              {runtimeStatus?.authenticated
+              {runtimeError
+                ? "Runtime disconnected"
+                : runtimeStatus?.authenticated
                 ? "Codex connected"
                 : runtimeStatus
                   ? "Login required"
-                  : "Checking runtime"}
+                  : runtimeLoading
+                    ? "Checking runtime"
+                    : "Runtime unavailable"}
             </strong>
-            {runtimeStatus?.authenticated
+            {runtimeError
+              ? " · last persisted view unavailable"
+              : runtimeStatus?.authenticated
               ? ` · ${runtimeStatus.authMethod} plan session`
               : " · local runtime"}
           </span>
@@ -74,30 +85,33 @@ export function CommandCentre({
         <div className="current-run__main">
           <div className="current-run__status">
             <span className="live-pulse" aria-hidden />
-            {activeRuntimeTask ? "Local workflow" : "Prototype workflow"}
+            {activeRuntimeTask ? "Local workflow" : runtimeLoading ? "Loading local workflow" : "Local workflow"}
           </div>
-          <h2 id="current-run-title">{activeTask?.title}</h2>
+          <h2 id="current-run-title">{activeTask?.title ?? (runtimeError ? "Local companion disconnected" : runtimeLoading ? "Loading persisted tasks…" : "No persisted tasks yet")}</h2>
           <p>
             {activeRuntimeTask
               ? activeRuntimeTask.status === "running"
                 ? `The ${activeTask?.stage} agent is inspecting ${activeRuntimeTask.repositoryPath}.`
                 : "The latest real local task is ready to inspect."
-              : "Implementation agent is updating schema, routes, UI badges, and deterministic acceptance tests."}
+              : runtimeError
+                ? runtimeError
+                : runtimeLoading
+                  ? "Checking the loopback companion and persisted task store."
+                  : "Create a task to start a real ten-stage Evidence Gate workflow."}
           </p>
-          <div className="current-run__meta">
-            <span className="mono">{activeTask?.id}</span>
-            {activeTask ? (
+          {activeTask ? (
+            <div className="current-run__meta">
+              <span className="mono">{activeTask.id}</span>
               <PriorityBadge priority={activeTask.priority.toLowerCase() as "low" | "medium" | "high"} />
-            ) : null}
-            <ModelStack models={activeTask?.models ?? []} compact />
-            <span>
-              <Clock size={15} /> {activeTask?.duration}
-            </span>
-            <span>
-              <GitBranch size={15} /> {activeTask?.stage} run {activeTask?.stageRun} of{" "}
-              {activeTask?.stageRunLimit}
-            </span>
-          </div>
+              <ModelStack models={activeTask.models} compact />
+              <span>
+                <Clock size={15} /> {activeTask.duration}
+              </span>
+              <span>
+                <GitBranch size={15} /> {activeTask.stage} run {activeTask.stageRun} of {activeTask.stageRunLimit}
+              </span>
+            </div>
+          ) : null}
         </div>
         <div className="current-run__progress">
           <div
@@ -106,21 +120,23 @@ export function CommandCentre({
             aria-label="Workflow progress"
             aria-valuemin={0}
             aria-valuemax={10}
-            aria-valuenow={(activeTask?.stageIndex ?? 5) + 1}
+            aria-valuenow={activeTask ? activeTask.stageIndex + 1 : 0}
           >
-            <span>{(activeTask?.stageIndex ?? 5) + 1}/10</span>
+            <span>{activeTask ? activeTask.stageIndex + 1 : 0}/10</span>
           </div>
           <div>
-            <strong>{activeTask?.stage}</strong>
+            <strong>{activeTask?.stage ?? "Not started"}</strong>
             <span>
               {activeRuntimeTask
                 ? activeRuntimeTask.status.replace("-", " ")
-                : "Patch produced · schema validated"}
+                : runtimeLoading
+                  ? "Loading"
+                  : "No active workflow"}
             </span>
           </div>
         </div>
-        <Button tone="primary" icon={ArrowRight} onClick={() => onOpenTask(activeRuntimeTask?.id)}>
-          Open workspace
+        <Button tone="primary" icon={ArrowRight} onClick={activeRuntimeTask ? () => onOpenTask(activeRuntimeTask.id) : onNewTask} disabled={runtimeLoading || Boolean(runtimeError)}>
+          {activeRuntimeTask ? "Open workspace" : "Create task"}
         </Button>
       </section>
 
@@ -129,9 +145,11 @@ export function CommandCentre({
           <SectionHeader
             title="Recent tasks"
             description={
-              runtimeTasks.length
-                ? "Real tasks persisted by the local harness"
-                : "Prototype data · create a task to start a real run"
+              runtimeLoading
+                ? "Loading persisted tasks from the local harness"
+                : runtimeError
+                  ? "The local companion did not return a task list"
+                  : "Real tasks persisted by the local harness"
             }
           />
           <div className="task-table">
@@ -174,6 +192,12 @@ export function CommandCentre({
                 <ModelStack models={task.models} compact />
               </button>
             ))}
+            {!tasks.length ? (
+              <div className="task-table__empty">
+                <strong>{runtimeLoading ? "Loading tasks…" : runtimeError ? "Runtime disconnected" : "No tasks persisted"}</strong>
+                <small>{runtimeError ?? "Create a task to begin a real local workflow."}</small>
+              </div>
+            ) : null}
           </div>
         </section>
 
@@ -210,8 +234,12 @@ export function CommandCentre({
               <div className="attention-empty">
                 <CheckCircle size={17} weight="fill" />
                 <span>
-                  <strong>No live task needs attention</strong>
-                  <small>Failed runs and approvals will appear here.</small>
+                  <strong>{runtimeLoading ? "Checking persisted tasks" : "No live task needs attention"}</strong>
+                  <small>
+                    {runtimeLoading
+                      ? "Attention states will appear after the local companion responds."
+                      : "Failed runs and approvals will appear here."}
+                  </small>
                 </span>
               </div>
             )}
@@ -224,36 +252,34 @@ export function CommandCentre({
                 <Cpu size={16} /> Agent runs
               </span>
               <strong>
-                {runtimeTasks.length
-                  ? runtimeTasks.reduce((total, task) => total + task.artifacts.length, 0)
-                  : 18}
+                {runtimeTasks.reduce((total, task) => total + task.artifacts.length, 0)}
               </strong>
-              <small>{runtimeTasks.length ? "Codex · ChatGPT plan" : "12 Codex · 6 Claude"}</small>
+              <small>Codex · ChatGPT plan</small>
             </div>
             <div className="usage-line">
               <span>
                 <CheckCircle size={16} /> Tokens
               </span>
-              <strong>{runtimeTasks.length ? formatTokenCount(totalTokens) : "284k"}</strong>
-              <small>{runtimeTasks.length ? "Reported by Codex sessions" : "71% cache hit"}</small>
+              <strong>{formatTokenCount(totalTokens)}</strong>
+              <small>Reported by Codex sessions</small>
             </div>
             <div className="usage-line">
               <span>
                 <CurrencyDollar size={16} /> Approx. cost
               </span>
-              <strong>{runtimeTasks.length ? "Plan" : "$6.42"}</strong>
-              <small>
-                {runtimeTasks.length
-                  ? "Dollar cost unavailable for plan usage"
-                  : "Estimated · cached rates included"}
-              </small>
+              <strong>Plan</strong>
+              <small>Dollar cost unavailable for plan usage</small>
             </div>
             <div className="usage-line">
               <span>
                 <Clock size={16} /> Runtime
               </span>
-              <strong>{runtimeStatus?.authenticated ? "Ready" : "Offline"}</strong>
-              <small>{runtimeStatus?.authMethod ?? "Start the local companion"}</small>
+              <strong>{runtimeLoading ? "Checking" : runtimeStatus?.authenticated ? "Ready" : "Offline"}</strong>
+              <small>
+                {runtimeLoading
+                  ? "Contacting the local companion"
+                  : runtimeStatus?.authMethod ?? "Start the local companion"}
+              </small>
             </div>
           </section>
         </aside>

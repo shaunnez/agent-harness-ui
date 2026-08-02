@@ -2293,6 +2293,15 @@ export function CandidateDiffViewer({
   onClose: () => void;
   taskId: string;
 }) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
   return (
     <div className="artifact-overlay candidate-diff-overlay" role="dialog" aria-modal="true" aria-label="Candidate diff">
       <button type="button" className="artifact-overlay__backdrop" onClick={onClose} aria-label="Close candidate diff" />
@@ -2306,7 +2315,13 @@ export function CandidateDiffViewer({
             </span>
           </span>
           <code>Task {taskId}</code>
-          <button type="button" className="icon-button" onClick={onClose} aria-label="Return to inspector">
+          <button
+            ref={closeButtonRef}
+            type="button"
+            className="icon-button"
+            onClick={onClose}
+            aria-label="Return to inspector"
+          >
             <X size={17} />
           </button>
         </header>
@@ -2346,6 +2361,15 @@ export function CandidateDiffErrorViewer({
   onRetry: () => void;
   taskId: string;
 }) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
   return (
     <div className="artifact-overlay candidate-diff-overlay" role="dialog" aria-modal="true" aria-label="Candidate diff error">
       <button type="button" className="artifact-overlay__backdrop" onClick={onClose} aria-label="Dismiss candidate diff error" />
@@ -2359,7 +2383,13 @@ export function CandidateDiffErrorViewer({
             </span>
           </span>
           <code>Task {taskId}</code>
-          <button type="button" className="icon-button" onClick={onClose} aria-label="Close error viewer">
+          <button
+            ref={closeButtonRef}
+            type="button"
+            className="icon-button"
+            onClick={onClose}
+            aria-label="Close error viewer"
+          >
             <X size={17} />
           </button>
         </header>

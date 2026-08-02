@@ -99,3 +99,69 @@ Responsive checks used the user's in-app browser at full width, an approximately
 - P2 findings: none after fixes
 
 final result: passed
+
+## Real runtime Evidence Gate convergence — 2026-08-02
+
+### Review setup and source truth
+
+- Local implementation: `http://127.0.0.1:4173/`
+- Product contract: `C:\Users\nimbl\projects\agent-harness-ui\docs\workflow-product-contract.md`
+- Approved Grill source: `C:\Users\nimbl\projects\agent-harness-ui\design\reference-grill-approved.png`
+- Approved workflow sources: `C:\Users\nimbl\projects\agent-harness-ui\output\playwright\workflow-refinement\`
+- Approved candidate-lifecycle sources: `C:\Users\nimbl\projects\agent-harness-ui\output\design-qa\candidate-lifecycle\`
+- Baseline real-runtime captures: `C:\Users\nimbl\projects\agent-harness-ui\output\ui-convergence-audit\current\`
+- Final implementation captures: `C:\Users\nimbl\projects\agent-harness-ui\output\ui-convergence-qa\`
+- Same-input comparison sheets: `C:\Users\nimbl\projects\agent-harness-ui\output\ui-convergence-qa\comparisons\`
+- Viewports: 1440 × 1024, 1024 × 768, and 768 × 900 CSS pixels
+- Browser: the user's selected in-app browser
+
+The reference and runtime screenshots were joined into the same comparison inputs for Implement, repaired Dev Review, Final Review, and Human Approval. The comparison judged the complete frame first, then the command bar, candidate desk, content hierarchy, inspector, and footer as focused regions. The runtime intentionally carries denser persisted evidence than the clean prototype states, but it now uses the same Evidence Gate shell, warm ink surfaces, compact typography, semantic colour, stage rail, candidate anatomy, and low-height activity treatment.
+
+### States and interactions exercised
+
+- Command Centre: real task list, attention rows, usage, loading, no persisted tasks, and disconnected companion.
+- All ten stages: selected through the real `AH-015` navigator without changing task state.
+- Grill Me: completed question history, reopened answer, repository evidence, recommendation, visible keyboard focus, 1024px, and 768px layouts.
+- Implement: dependency batches, qualified package detail, exact candidate/revision, repair-required blocked task `AH-007`, and stale retained evidence.
+- Dev Review: exact candidate context, review artifact, and two-revision repair lineage.
+- Test: structured success list, result drill-down, assertions, artifact references, Back to test list, and global historical-action suppression. A current structured failure was not persisted, so failure behavior remains render-test/reference coverage rather than fabricated runtime evidence.
+- Final Review: real stage states, summed token usage, `Plan included`, durable artifact outcomes, candidate freshness, and repair lineage.
+- Human Approval: repository, target branch, fast-forward-only method, required gates, derived exact-revision freshness, residual-risk handoff, approval artifact, and merged state.
+- Viewers: artifact open/copy/close and exact candidate diff. Dialog close receives focus, Escape is supported, and closing restores the invoking button.
+- Run activity: collapsed by default, expanded ledger, and Activity/Agent runs/Test runs/Decisions filters.
+- Responsive: no document-level horizontal overflow at 1440, 1024, or 768; the stage rail alone remains intentionally horizontally scrollable; the inspector stacks below the main canvas at compact width.
+- Console: a clean real-runtime reload and exercised flows produced no application errors or warnings after the HMR timestamp used for the final pass.
+
+### Findings and fixes
+
+1. P1 — Historical stages exposed mutations belonging to the active stage. Replaced those controls with a read-only retained-evidence command bar and an explicit route back to the active stage.
+2. P1 — The runtime rendered several stages as generic Markdown and exposed raw focused-test JSON in the Test canvas. Added typed stage presentations and retained the machine payload only in the full artifact viewer.
+3. P1 — Candidate identity, target, freshness, and repair lineage were scattered. Added one shared candidate desk across Implement, Dev Review, Test, Final Review, and Human Approval.
+4. P1 — Empty and disconnected states could fall back to prototype fixtures. Removed the fallback and added explicit loading, empty, and disconnected presentations backed by request state.
+5. P2 — Long attention evidence widened the Command Centre. Added bounded columns and safe wrapping; final document and grid widths match the viewport.
+6. P2 — Test results lacked a clean list/detail hierarchy. Added row drill-down, expected/actual assertions, artifact references, duration/failure detail, and two explicit return controls.
+7. P2 — Run activity hid persisted telemetry. Added the four approved filters while leaving unrecorded run/model/token linkage explicitly unavailable.
+8. P2 — Dialogs did not return keyboard focus to the opener. Added close-button autofocus, Escape dismissal, and opener focus restoration for artifact and candidate-diff viewers.
+9. P2 — Approval facts truncated repository and gate text. Allowed evidence facts to wrap without widening the workspace.
+10. P3 — Final Review remains intentionally dense and scrolls within its stage canvas. This is acceptable because the command bar, candidate identity, inspector, and global activity/footer remain fixed and reachable.
+
+### Final evidence
+
+- Command Centre: `18-command-centre-final-1440x1024.png`
+- Final Review: `19-final-review-final-1440x1024.png`
+- Human Approval: `20-human-approval-final-1440x1024.png`
+- Loading / empty / disconnected: `21-loading-1440x1024.png`, `22-empty-1440x1024.png`, `23-disconnected-1440x1024.png`
+- Compact approval: `24-approval-1024x768.png`, `25-approval-768x900.png`
+- Exact diff and activity: `11-candidate-diff-1440x1024.png`, `12-run-activity-test-filter-1440x1024.png`
+- Blocked repair and Grill: `13-blocked-repair-1440x1024.png` through `17-grill-768x900.png`
+
+### Remaining findings
+
+- P0: none.
+- P1: none.
+- P2: none after fixes.
+- P3: accepted Final Review density and intentional horizontal stage-rail scrolling at 768px.
+
+Runtime capability caps are tracked separately in `docs/ui-capability-gaps.md`; they are not presented as completed interactions or invented data.
+
+final result: passed

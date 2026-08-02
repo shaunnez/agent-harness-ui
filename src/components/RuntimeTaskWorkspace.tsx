@@ -5,12 +5,17 @@ import {
   CheckCircle,
   CircleNotch,
   FileCode,
+  GitDiff,
+  Pause,
   Play,
   Robot,
+  ShieldCheck,
   WarningCircle,
+  Wrench,
   X,
 } from "@phosphor-icons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getCandidateDiff, type CandidateDiffResponse } from "../api";
 import {
   formatTokenCount,
   type RuntimeArtifact,
@@ -24,6 +29,7 @@ import {
   workflowStages,
 } from "../domain";
 import { Button, PriorityBadge, StateBadge } from "./Primitives";
+import { CandidateDiffErrorViewer, CandidateDiffViewer } from "./StageViews";
 import { ApprovalHistorySection, getApprovalHistory } from "./runtimeApprovalHistory.js";
 
 export function RuntimeTaskWorkspace({
@@ -69,7 +75,12 @@ export function RuntimeTaskWorkspace({
   const [viewedStageId, setViewedStageId] = useState<StageId>(initialViewedStageId ?? task.currentStage);
   const [selectedWorktreeId, setSelectedWorktreeId] = useState<string | null>(initialSelectedWorktreeId ?? null);
   const [openArtifact, setOpenArtifact] = useState<RuntimeArtifact | null>(null);
+  const [candidateDiff, setCandidateDiff] = useState<CandidateDiffResponse | null>(null);
+  const [candidateDiffError, setCandidateDiffError] = useState<string | null>(null);
+  const [candidateDiffLoading, setCandidateDiffLoading] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
+  const artifactReturnFocusRef = useRef<HTMLElement | null>(null);
+  const candidateDiffReturnFocusRef = useRef<HTMLElement | null>(null);
   const viewedIndex = Math.max(
     0,
     workflowStages.findIndex((stage) => stage.id === viewedStageId),
@@ -77,7 +88,6 @@ export function RuntimeTaskWorkspace({
   const viewedStage = workflowStages[viewedIndex];
   if (!viewedStage) throw new Error(`Unknown workflow stage: ${viewedStageId}`);
   const stageArtifact = [...task.artifacts].reverse().find((artifact) => artifact.stage === viewedStageId);
-  const focusedTestEvidence = stageArtifact?.focusedTest ?? null;
   const state = toTaskRunState(task.status);
   const viewedStageStopped =
     viewedStageId === task.currentStage && ["failed", "cancelled", "blocked"].includes(task.status);
@@ -91,6 +101,39 @@ export function RuntimeTaskWorkspace({
     task.status === "completed" &&
     !stageArtifact &&
     candidate?.status === "merged";
+  const stageSummary = getRuntimeStageSummary(task, viewedStageId, stageArtifact);
+  const historical = viewedStageId !== task.currentStage;
+
+  const openRuntimeArtifact = (artifact: RuntimeArtifact) => {
+    artifactReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setOpenArtifact(artifact);
+  };
+
+  const closeRuntimeArtifact = () => {
+    setOpenArtifact(null);
+    window.requestAnimationFrame(() => artifactReturnFocusRef.current?.focus());
+  };
+
+  const closeCandidateDiff = () => {
+    setCandidateDiff(null);
+    setCandidateDiffError(null);
+    window.requestAnimationFrame(() => candidateDiffReturnFocusRef.current?.focus());
+  };
+
+  const openCandidateDiff = async () => {
+    if (!candidate?.headRevision) return;
+    candidateDiffReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setCandidateDiffLoading(true);
+    setCandidateDiffError(null);
+    try {
+      setCandidateDiff(await getCandidateDiff(task.id, candidate.id, candidate.headRevision));
+    } catch (error) {
+      setCandidateDiff(null);
+      setCandidateDiffError(error instanceof Error ? error.message : "The exact candidate diff could not be loaded.");
+    } finally {
+      setCandidateDiffLoading(false);
+    }
+  };
 
   const rerun = async () => {
     setRunError(null);
@@ -134,6 +177,28 @@ export function RuntimeTaskWorkspace({
             </strong>
           </span>
         </div>
+        <fieldset className="task-header__actions">
+          <legend className="sr-only">Global task controls</legend>
+          <Button
+            tone="secondary"
+            compact
+            icon={Pause}
+            disabled
+            title="Pause is not supported by the current local runtime contract."
+          >
+            Pause
+          </Button>
+          <Button
+            tone="danger"
+            compact
+            icon={X}
+            disabled={task.status !== "running"}
+            title={task.status === "running" ? "Cancel the active Codex run" : "No active run to cancel"}
+            onClick={() => void onCancel()}
+          >
+            Cancel
+          </Button>
+        </fieldset>
       </header>
 
       <nav className="stage-navigator" aria-label="Workflow stages">
@@ -179,103 +244,43 @@ export function RuntimeTaskWorkspace({
       <div className="workspace-scroll">
         <div className="workspace-grid">
           <main className="stage-main runtime-stage-main">
-            <RuntimeCommandBar
-              task={task}
-              onRun={rerun}
-              onCancel={onCancel}
-              onAction={onAction}
-              onFinishGrill={onFinishGrill}
-            />
             {runError ? (
               <div className="runtime-error" role="alert">
                 {runError}
               </div>
             ) : null}
             <header className="runtime-stage-heading">
-              <p className="eyebrow">{viewedStage.label} · living artifact</p>
-              <h2>
-                {stageArtifact
-                  ? stageArtifact.name
-                  : completedApprovalWithoutArtifact
-                    ? "Candidate merged successfully"
-                    : `${viewedStage.label} is not ready yet`}
-              </h2>
-              <p>
-                {stageArtifact
-                  ? "This is the durable handoff produced by the real stage agent. Open it wide or inspect the next artifact without losing task context."
-                  : completedApprovalWithoutArtifact
-                    ? `${candidate.id} revision ${candidate.revisionNumber} was approved and fast-forwarded to ${candidate.baseBranch}.`
-                    : viewedStageStopped
-                      ? "This stage stopped before it produced a handoff. Earlier artifacts remain available and the activity panel preserves the failure context."
-                      : viewedIndex > currentIndex
-                        ? "This stage is downstream of the current execution frontier."
-                        : task.status === "running" && viewedStageId === task.currentStage
-                          ? "The agent is working on this stage; activity will appear below when the subprocess completes."
-                          : "This stage has not started. Its artifact will appear here after the gate runs."}
-              </p>
+              <p className="eyebrow">{stageSummary.kicker}</p>
+              <div className="runtime-stage-heading__title">
+                <h2>{stageSummary.title}</h2>
+                {historical ? <span className="badge badge--blue">Recorded history</span> : null}
+                {stageArtifact && !isArtifactFresh(stageArtifact, candidate) ? (
+                  <span className="badge badge--yellow">Stale after repair</span>
+                ) : null}
+              </div>
+              <p>{stageSummary.detail}</p>
             </header>
 
-            {viewedStageId === "grill" && task.grillSession ? (
-              <RuntimeGrillPanel task={task} onAnswer={onGrillAnswer} />
-            ) : null}
+            <RuntimeCommandBar
+              task={task}
+              viewedStageId={viewedStageId}
+              onRun={rerun}
+              onAction={onAction}
+              onFinishGrill={onFinishGrill}
+            />
 
-            {viewedStageId === "implement" && task.workPackages?.length ? (
-              <RuntimeWorkPackages task={task} />
-            ) : null}
-
-            {stageArtifact ? (
-              <article className="runtime-artifact-card">
-                <header>
-                  <span>
-                    <FileCode size={17} />
-                    <strong>{stageArtifact.name}</strong>
-                  </span>
-                  <Button
-                    tone="ghost"
-                    compact
-                    icon={ArrowSquareOut}
-                    onClick={() => setOpenArtifact(stageArtifact)}
-                  >
-                    Open artifact
-                  </Button>
-                </header>
-                {viewedStageId === "test" && focusedTestEvidence ? (
-                  <RuntimeFocusedTestEvidencePanel evidence={focusedTestEvidence} candidate={candidate} />
-                ) : null}
-                <pre>{stageArtifact.content}</pre>
-              </article>
-            ) : completedApprovalWithoutArtifact ? (
-              <div className="runtime-stage-empty">
-                <CheckCircle size={22} weight="fill" />
-                <strong>
-                  {candidate.id} revision {candidate.revisionNumber} merged
-                </strong>
-                <span>
-                  Reviewed commit <span className="mono">{candidate.headRevision?.slice(0, 8)}</span> is now
-                  on {candidate.baseBranch}.
-                </span>
-              </div>
-            ) : (
-              <div
-                className={`runtime-stage-empty ${viewedStageStopped ? "runtime-stage-empty--failed" : ""}`}
-              >
-                {task.status === "running" && viewedStageId === task.currentStage ? (
-                  <CircleNotch className="spin" size={22} />
-                ) : viewedStageStopped ? (
-                  <WarningCircle size={22} />
-                ) : (
-                  <FileCode size={22} />
-                )}
-                <strong>
-                  {viewedStageStopped
-                    ? "The stage stopped before producing an artifact"
-                    : "No artifact for this stage yet"}
-                </strong>
-                <span>
-                  {viewedStageStopped ? task.error : "Completed stages leave inspectable Markdown here."}
-                </span>
-              </div>
-            )}
+            <RuntimeStagePresentation
+              task={task}
+              viewedStageId={viewedStageId}
+              artifact={stageArtifact}
+              candidate={candidate}
+              completedApprovalWithoutArtifact={completedApprovalWithoutArtifact}
+              viewedStageStopped={viewedStageStopped}
+              onAnswer={onGrillAnswer}
+              onOpenArtifact={openRuntimeArtifact}
+              onOpenCandidateDiff={() => void openCandidateDiff()}
+              candidateDiffLoading={candidateDiffLoading}
+            />
           </main>
 
           <aside className="stage-inspector runtime-inspector">
@@ -283,39 +288,16 @@ export function RuntimeTaskWorkspace({
               <strong>{task.title}</strong>
               <p>{task.description}</p>
             </InspectorSection>
-            {worktreeInventory.length ? (
-              <InspectorSection title="Worktree inventory" meta={`${worktreeInventory.length} retained`}>
-                <RuntimeWorktreeInventory
-                  inventory={worktreeInventory}
-                  selectedId={selectedWorktreeId}
-                  onSelect={setSelectedWorktreeId}
-                />
-              </InspectorSection>
-            ) : null}
             <InspectorSection title="Stage context">
-              <RuntimeRow label="Viewing" value={viewedStage.label} />
+              <RuntimeRow label="Viewing" value={`${viewedStage.label}${historical ? " · recorded history" : " · current execution"}`} />
               <RuntimeRow label="Active" value={workflowStages[currentIndex]?.label ?? "Triage"} />
               <RuntimeRow label="State" value={task.status.replace("-", " ")} />
             </InspectorSection>
-            {candidate ? (
-              <InspectorSection
-                title="Integration candidate"
-                meta={`${candidate.id} r${candidate.revisionNumber}`}
-              >
-                <RuntimeRow label="State" value={candidate.status.replaceAll("_", " ")} />
-                <RuntimeRow label="Base" value={candidate.baseRevision.slice(0, 8)} mono />
-                <RuntimeRow label="Head" value={candidate.headRevision?.slice(0, 8) ?? "pending"} mono />
-                <RuntimeRow label="Branch" value={candidate.branch} mono />
-                <RuntimeRow
-                  label="Members"
-                  value={
-                    candidate.members?.map((item) => item.packageId).join(" -> ") ||
-                    (candidate.status === "merged" ? "Legacy single-session candidate" : "Pending assembly")
-                  }
-                />
-              </InspectorSection>
-            ) : null}
             <InspectorSection title="Execution metadata">
+              <RuntimeRow
+                label="Skill"
+                value={runtimeStageSkills[task.currentStage]}
+              />
               <RuntimeRow
                 label="Agent"
                 value={
@@ -323,7 +305,7 @@ export function RuntimeTaskWorkspace({
                     ? "Human approval gate"
                     : task.currentStage === "implement" && runningPackages.length
                       ? `${runningPackages.map((item) => item.id).join(", ")} implementation agents`
-                      : `${workflowStages[currentIndex]?.label ?? "Triage"} agent`
+                      : runtimeStageAgents[task.currentStage]
                 }
               />
               {task.currentStage === "implement" && task.workPackages?.length ? (
@@ -337,12 +319,52 @@ export function RuntimeTaskWorkspace({
                 />
               ) : null}
               <RuntimeRow label="Model" value={task.models[0]?.model ?? "GPT-5.4-mini · ChatGPT plan"} />
-              <RuntimeRow label="Access" value="Local OAuth session" />
-              <RuntimeRow label="Sandbox" value={accessBoundary.sandbox} />
+              <RuntimeRow label="Stage run" value={`${task.attemptsByStage?.[task.currentStage] ?? 0} of ${task.stageRunLimit}`} />
+              <RuntimeRow label="Run" value={task.activeRunKind ?? "No active agent run"} />
               <RuntimeRow label="Repository" value={repoName} mono />
             </InspectorSection>
+            <details className="runtime-safeguards">
+              <summary>
+                <ShieldCheck size={15} />
+                <strong>Run safeguards</strong>
+                <small>{accessBoundary.kicker}</small>
+              </summary>
+              <div>
+                <RuntimeRow label="Access" value="Local OAuth session" />
+                <RuntimeRow label="Sandbox" value={accessBoundary.sandbox} />
+                <RuntimeRow label="Write boundary" value={accessBoundary.detail} />
+                <RuntimeRow label="Cost" value="Plan included" />
+              </div>
+            </details>
+            {candidate ? (
+              <InspectorSection
+                title="Integration candidate"
+                meta={`${candidate.id} r${candidate.revisionNumber}`}
+              >
+                <RuntimeRow label="State" value={candidate.status.replaceAll("_", " ")} />
+                <RuntimeRow label="Base" value={candidate.baseRevision.slice(0, 8)} mono />
+                <RuntimeRow label="Head" value={candidate.headRevision?.slice(0, 8) ?? "pending"} mono />
+                <RuntimeRow label="Branch" value={candidate.branch} mono />
+                <RuntimeRow
+                  label="Members"
+                  value={
+                    candidate.members?.map((item) => item.packageId).join(" → ") ||
+                    (candidate.status === "merged" ? "Legacy single-session candidate" : "Pending assembly")
+                  }
+                />
+                <Button
+                  tone="ghost"
+                  compact
+                  icon={GitDiff}
+                  disabled={!candidate.headRevision || candidateDiffLoading}
+                  onClick={() => void openCandidateDiff()}
+                >
+                  {candidateDiffLoading ? "Loading exact diff…" : "Inspect exact diff"}
+                </Button>
+              </InspectorSection>
+            ) : null}
             <InspectorSection title="Decision frontier" meta={`${task.decisions?.length ?? 0} recorded`}>
-              <DecisionFrontier task={task} onDecision={onDecision} />
+              <DecisionFrontier task={task} canRecord={!historical} onDecision={onDecision} />
             </InspectorSection>
             <InspectorSection
               title="Approvals"
@@ -350,6 +372,15 @@ export function RuntimeTaskWorkspace({
             >
               <ApprovalHistorySection approvals={task.approvals ?? []} />
             </InspectorSection>
+            {worktreeInventory.length ? (
+              <InspectorSection title="Worktree inventory" meta={`${worktreeInventory.length} retained`}>
+                <RuntimeWorktreeInventory
+                  inventory={worktreeInventory}
+                  selectedId={selectedWorktreeId}
+                  onSelect={setSelectedWorktreeId}
+                />
+              </InspectorSection>
+            ) : null}
             <InspectorSection title="Living artifacts" meta={`${task.artifacts.length} retained`}>
               <div className="runtime-artifact-list">
                 {task.artifacts.length ? (
@@ -359,13 +390,16 @@ export function RuntimeTaskWorkspace({
                       key={artifact.id}
                       onClick={() => {
                         setViewedStageId(artifact.stage);
-                        setOpenArtifact(artifact);
+                        openRuntimeArtifact(artifact);
                       }}
                     >
                       <FileCode size={15} />
                       <span>
                         <strong>{artifact.name}</strong>
-                        <small>{workflowStages.find((stage) => stage.id === artifact.stage)?.label}</small>
+                        <small>
+                          {workflowStages.find((stage) => stage.id === artifact.stage)?.label}
+                          {!isArtifactFresh(artifact, candidate) ? " · stale" : ""}
+                        </small>
                       </span>
                     </button>
                   ))
@@ -410,22 +444,568 @@ export function RuntimeTaskWorkspace({
       </footer>
 
       {openArtifact ? (
-        <RuntimeArtifactViewer artifact={openArtifact} onClose={() => setOpenArtifact(null)} />
+        <RuntimeArtifactViewer artifact={openArtifact} onClose={closeRuntimeArtifact} />
+      ) : null}
+      {candidateDiff && candidate ? (
+        <CandidateDiffViewer
+          taskId={task.id}
+          candidateIdentity={`${candidate.id} r${candidate.revisionNumber}`}
+          diff={candidateDiff}
+          onClose={closeCandidateDiff}
+        />
+      ) : null}
+      {candidateDiffError && candidate ? (
+        <CandidateDiffErrorViewer
+          taskId={task.id}
+          candidateIdentity={`${candidate.id} r${candidate.revisionNumber}`}
+          error={candidateDiffError}
+          onClose={closeCandidateDiff}
+          onRetry={() => void openCandidateDiff()}
+        />
       ) : null}
     </div>
   );
 }
 
+const runtimeStageSkills: Record<StageId, string> = {
+  triage: "classify-task",
+  scouts: "scout-repository",
+  grill: "grill-with-docs",
+  specification: "build-specification",
+  plan: "plan-work-packages",
+  implement: "implement-isolated-slices",
+  "dev-review": "fresh-context-review",
+  test: "verify-candidate",
+  "final-review": "holdout-review",
+  approval: "approve-fast-forward",
+};
+
+const runtimeStageAgents: Record<StageId, string> = {
+  triage: "Triage agent",
+  scouts: "Repository scout agent",
+  grill: "Clarification agent",
+  specification: "Task specification agent",
+  plan: "Planning agent",
+  implement: "Implement agent",
+  "dev-review": "Fresh-context review agent",
+  test: "Verification agent",
+  "final-review": "Holdout review agent",
+  approval: "Human approval gate",
+};
+
+function isArtifactFresh(
+  artifact: RuntimeArtifact,
+  candidate: RuntimeTask["candidates"][number] | undefined,
+) {
+  if (!artifact.candidateId || artifact.candidateRevision == null || !candidate) return true;
+  return artifact.candidateId === candidate.id && artifact.candidateRevision === candidate.revisionNumber;
+}
+
+function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, artifact?: RuntimeArtifact) {
+  const candidate = task.candidates?.at(-1);
+  const packages = task.workPackages ?? [];
+  const focused = [...task.artifacts].reverse().find((item) => item.stage === "test" && item.focusedTest)?.focusedTest;
+  const completedPackages = packages.filter((item) => ["integrated", "ready_for_integration"].includes(item.status)).length;
+  const stageLabel = workflowStages.find((stage) => stage.id === stageId)?.label ?? stageId;
+  const waiting = !artifact && !task.completedStages.includes(stageId);
+  const fallback = {
+    kicker: `${stageLabel} · ${stageId === task.currentStage ? "current execution" : "living artifact"}`,
+    title: waiting ? `${stageLabel} is not ready yet` : (artifact?.name ?? stageLabel),
+    detail: waiting
+      ? "This stage has not produced an authoritative handoff yet. Earlier evidence remains inspectable."
+      : "The persisted handoff remains read-only and available to downstream gates.",
+  };
+  switch (stageId) {
+    case "triage":
+      return {
+        kicker: "Triage · routing gate",
+        title: artifact ? `${task.priority.charAt(0).toUpperCase()}${task.priority.slice(1)} priority · ${task.workflow} workflow` : fallback.title,
+        detail: artifact
+          ? "Task scope, repository, priority, and workflow are fixed before repository investigation begins."
+          : fallback.detail,
+      };
+    case "scouts":
+      return {
+        kicker: "Repo scouts · evidence gate",
+        title: artifact ? "Repository evidence retained" : fallback.title,
+        detail: artifact
+          ? "The real scout handoff is preserved with its model provenance and token usage; file-level claims remain inside the artifact."
+          : fallback.detail,
+      };
+    case "grill": {
+      const unresolved = task.grillSession?.questions.filter((question) => !question.answer) ?? [];
+      return {
+        kicker: "Grill with docs · one question at a time",
+        title: unresolved[0]?.question ?? (artifact ? "Decision frontier settled" : fallback.title),
+        detail: unresolved[0]
+          ? "Repository evidence comes first, followed by one recommended answer and explicit alternatives."
+          : task.grillSession?.completionReason ?? fallback.detail,
+      };
+    }
+    case "specification":
+      return {
+        kicker: "Task specification · durable handoff",
+        title: artifact ? "Specification ready for downstream use" : fallback.title,
+        detail: artifact
+          ? "The approved specification is shown as real agent output; acceptance criteria are not re-created outside that artifact."
+          : fallback.detail,
+      };
+    case "plan":
+      return {
+        kicker: "Implementation plan · dependency batches",
+        title: packages.length ? `${packages.length} work packages · ${new Set(packages.map((item) => item.batch)).size} batches` : fallback.title,
+        detail: packages.length
+          ? "Each package exposes real dependencies, ownership, verification commands, attempts, and integration readiness."
+          : fallback.detail,
+      };
+    case "implement":
+      return {
+        kicker: "Implement · isolated work packages",
+        title: packages.length ? `${completedPackages} of ${packages.length} packages qualified` : fallback.title,
+        detail: candidate
+          ? `${candidate.id} revision ${candidate.revisionNumber} is the explicit integration candidate for every downstream gate.`
+          : fallback.detail,
+      };
+    case "dev-review":
+      return {
+        kicker: "Dev review · fresh-context advisor",
+        title: artifact ? `Review retained for ${candidate?.id ?? "candidate"} r${artifact.candidateRevision ?? candidate?.revisionNumber ?? "—"}` : fallback.title,
+        detail: artifact
+          ? "The authoritative review remains in the candidate-bound artifact; prose findings are not converted into synthetic P0–P3 records."
+          : fallback.detail,
+      };
+    case "test": {
+      const passed = focused?.rows.filter((row) => row.status === "passed").length ?? 0;
+      const failed = focused?.rows.filter((row) => row.status === "failed").length ?? 0;
+      return {
+        kicker: "Test · candidate-bound gate",
+        title: focused ? `${passed} checks passed · ${failed} failed` : fallback.title,
+        detail: focused
+          ? "Open any persisted result for its command, assertions, evidence, and failure detail. Gate actions remain in the command bar."
+          : fallback.detail,
+      };
+    }
+    case "final-review":
+      return {
+        kicker: "Final review · holdout",
+        title: artifact ? `Independent workflow review retained for ${candidate?.id ?? "candidate"} r${candidate?.revisionNumber ?? "—"}` : fallback.title,
+        detail: artifact
+          ? "Every prior stage is summarized from persisted state, real token usage, and its durable artifact reference."
+          : fallback.detail,
+      };
+    case "approval":
+      return {
+        kicker: "Human approval · exact candidate",
+        title:
+          candidate?.status === "merged"
+            ? `Candidate merged successfully · ${candidate.id} r${candidate.revisionNumber}`
+            : candidate
+              ? `${candidate.id} r${candidate.revisionNumber} awaits approval`
+              : fallback.title,
+        detail: candidate
+          ? `Target ${candidate.baseBranch} · fast-forward only · reviewed head ${candidate.headRevision?.slice(0, 8) ?? "pending"}.`
+          : fallback.detail,
+      };
+  }
+}
+
+function RuntimeStagePresentation({
+  task,
+  viewedStageId,
+  artifact,
+  candidate,
+  completedApprovalWithoutArtifact,
+  viewedStageStopped,
+  onAnswer,
+  onOpenArtifact,
+  onOpenCandidateDiff,
+  candidateDiffLoading,
+}: {
+  task: RuntimeTask;
+  viewedStageId: StageId;
+  artifact?: RuntimeArtifact;
+  candidate: RuntimeTask["candidates"][number] | undefined;
+  completedApprovalWithoutArtifact: boolean;
+  viewedStageStopped: boolean;
+  onAnswer: (questionId: string, answer: string) => Promise<void>;
+  onOpenArtifact: (artifact: RuntimeArtifact) => void;
+  onOpenCandidateDiff: () => void;
+  candidateDiffLoading: boolean;
+}) {
+  const stageArtifacts = task.artifacts.filter((item) => item.stage === viewedStageId);
+  const focusedArtifact = [...stageArtifacts].reverse().find((item) => item.focusedTest);
+  const artifactCard = artifact ? (
+    <RuntimeArtifactCard
+      artifact={artifact}
+      candidate={candidate}
+      hideStructuredTestPayload={viewedStageId === "test"}
+      onOpen={() => onOpenArtifact(artifact)}
+    />
+  ) : null;
+  const empty = !artifact && !completedApprovalWithoutArtifact ? (
+    <RuntimeStageEmpty task={task} viewedStageStopped={viewedStageStopped} />
+  ) : null;
+
+  switch (viewedStageId) {
+    case "triage":
+      return (
+        <div className="runtime-stage-stack">
+          <RuntimeFactGrid
+            facts={[
+              ["Classification", `${task.workflow} task`],
+              ["Priority", task.priority],
+              ["Risk", artifact ? "Retained in triage artifact" : "Not recorded"],
+              ["Repository", task.repositoryPath],
+            ]}
+          />
+          {artifactCard ?? empty}
+        </div>
+      );
+    case "scouts":
+      return (
+        <div className="runtime-stage-stack">
+          <section className="runtime-evidence-source">
+            <CheckCircle size={18} weight="fill" />
+            <span>
+              <small>Repository evidence · real agent handoff</small>
+              <strong>{artifact?.name ?? "No scout artifact yet"}</strong>
+              <p>{artifact ? `${artifact.model} · ${formatTokenCount(artifact.usage.totalTokens)} tokens · ${new Date(artifact.createdAt).toLocaleString()}` : "The scout stage has not produced an artifact."}</p>
+            </span>
+          </section>
+          {artifactCard ?? empty}
+        </div>
+      );
+    case "grill":
+      return (
+        <div className="runtime-stage-stack">
+          <section className="runtime-evidence-source">
+            <FileCode size={18} />
+            <span>
+              <small>Repository evidence</small>
+              <strong>{task.artifacts.find((item) => item.stage === "scouts")?.name ?? "Scout handoff unavailable"}</strong>
+              <p>Open the retained scout artifact from Living artifacts for the exact repository claims behind this decision.</p>
+            </span>
+          </section>
+          {task.grillSession ? <RuntimeGrillPanel task={task} onAnswer={onAnswer} /> : empty}
+          {artifactCard}
+        </div>
+      );
+    case "specification":
+      return (
+        <div className="runtime-stage-stack">
+          <RuntimeFactGrid
+            facts={[
+              ["Artifact", artifact?.name ?? "Pending"],
+              ["Approval", task.approvals.some((item) => item.stage === "specification") ? "Approved" : "Awaiting approval"],
+              ["Decisions", `${task.decisions.length} retained`],
+              ["Provenance", artifact?.model ?? "Not recorded"],
+            ]}
+          />
+          {artifactCard ?? empty}
+        </div>
+      );
+    case "plan":
+      return (
+        <div className="runtime-stage-stack">
+          {task.workPackages.length ? <RuntimeWorkPackages task={task} /> : null}
+          {artifactCard ?? empty}
+        </div>
+      );
+    case "implement":
+      return (
+        <div className="runtime-stage-stack">
+          {candidate ? (
+            <RuntimeCandidateDesk
+              task={task}
+              candidate={candidate}
+              onOpenDiff={onOpenCandidateDiff}
+              diffLoading={candidateDiffLoading}
+            />
+          ) : null}
+          {task.workPackages.length ? <RuntimeWorkPackages task={task} /> : null}
+          {artifactCard ?? empty}
+        </div>
+      );
+    case "dev-review":
+      return (
+        <div className="runtime-stage-stack">
+          {candidate ? (
+            <RuntimeCandidateDesk
+              task={task}
+              candidate={candidate}
+              onOpenDiff={onOpenCandidateDiff}
+              diffLoading={candidateDiffLoading}
+              compact
+            />
+          ) : null}
+          <section className="runtime-contract-note">
+            <ShieldCheck size={18} />
+            <span>
+              <strong>Fresh-context review boundary</strong>
+              <p>Review findings remain authoritative inside the retained artifact because the runtime does not persist typed P0–P3 finding records.</p>
+            </span>
+          </section>
+          {artifactCard ?? empty}
+        </div>
+      );
+    case "test":
+      return (
+        <div className="runtime-stage-stack">
+          {focusedArtifact?.focusedTest ? (
+            <RuntimeFocusedTestEvidencePanel evidence={focusedArtifact.focusedTest} candidate={candidate} />
+          ) : null}
+          {artifactCard ?? empty}
+        </div>
+      );
+    case "final-review":
+      return (
+        <div className="runtime-stage-stack">
+          {candidate ? (
+            <RuntimeCandidateDesk
+              task={task}
+              candidate={candidate}
+              onOpenDiff={onOpenCandidateDiff}
+              diffLoading={candidateDiffLoading}
+              compact
+            />
+          ) : null}
+          <RuntimeFinalReviewSummary task={task} candidate={candidate} />
+          {artifactCard ?? empty}
+        </div>
+      );
+    case "approval":
+      return (
+        <div className="runtime-stage-stack">
+          {candidate ? (
+            <RuntimeCandidateDesk
+              task={task}
+              candidate={candidate}
+              onOpenDiff={onOpenCandidateDiff}
+              diffLoading={candidateDiffLoading}
+              approval
+            />
+          ) : null}
+          {artifactCard}
+          {completedApprovalWithoutArtifact ? (
+            <div className="runtime-stage-empty runtime-stage-empty--success">
+              <CheckCircle size={22} weight="fill" />
+              <strong>{candidate?.id} revision {candidate?.revisionNumber} merged</strong>
+              <span>Reviewed commit <span className="mono">{candidate?.headRevision?.slice(0, 8)}</span> is now on {candidate?.baseBranch}.</span>
+            </div>
+          ) : null}
+          {!artifact && !completedApprovalWithoutArtifact ? empty : null}
+        </div>
+      );
+  }
+}
+
+function RuntimeFactGrid({ facts }: { facts: Array<[string, string]> }) {
+  return (
+    <section className="runtime-fact-grid" aria-label="Stage facts">
+      {facts.map(([label, value]) => (
+        <div key={label}>
+          <small>{label}</small>
+          <strong className={label === "Repository" ? "mono" : ""}>{value}</strong>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function RuntimeArtifactCard({
+  artifact,
+  candidate,
+  hideStructuredTestPayload = false,
+  onOpen,
+}: {
+  artifact: RuntimeArtifact;
+  candidate: RuntimeTask["candidates"][number] | undefined;
+  hideStructuredTestPayload?: boolean;
+  onOpen: () => void;
+}) {
+  const fresh = isArtifactFresh(artifact, candidate);
+  const content = hideStructuredTestPayload ? stripFocusedTestPayload(artifact.content) : artifact.content;
+  return (
+    <article className={`runtime-artifact-card ${fresh ? "" : "runtime-artifact-card--stale"}`}>
+      <header>
+        <span>
+          <FileCode size={17} />
+          <strong>{artifact.name}</strong>
+          <small>{fresh ? "Current evidence" : "Superseded evidence"}</small>
+        </span>
+        <Button tone="ghost" compact icon={ArrowSquareOut} onClick={onOpen}>
+          Open artifact
+        </Button>
+      </header>
+      {!fresh ? (
+        <div className="runtime-stale-banner">A repair created a newer candidate revision. This handoff remains for audit only.</div>
+      ) : null}
+      <pre>{content.trim() || "The structured result list above is the authoritative test evidence."}</pre>
+      <footer>
+        <span>{new Date(artifact.createdAt).toLocaleString()}</span>
+        <span>{artifact.model} · {formatTokenCount(artifact.usage.totalTokens)} tokens · Plan included</span>
+      </footer>
+    </article>
+  );
+}
+
+function stripFocusedTestPayload(content: string) {
+  const start = content.indexOf("<focused-test-evidence>");
+  const endTag = "</focused-test-evidence>";
+  const end = content.indexOf(endTag);
+  if (start < 0 || end < start) return content;
+  return `${content.slice(0, start)}${content.slice(end + endTag.length)}`;
+}
+
+function RuntimeStageEmpty({ task, viewedStageStopped }: { task: RuntimeTask; viewedStageStopped: boolean }) {
+  return (
+    <div className={`runtime-stage-empty ${viewedStageStopped ? "runtime-stage-empty--failed" : ""}`}>
+      {task.status === "running" ? (
+        <CircleNotch className="spin" size={22} />
+      ) : viewedStageStopped ? (
+        <WarningCircle size={22} />
+      ) : (
+        <FileCode size={22} />
+      )}
+      <strong>{viewedStageStopped ? "The stage stopped before producing an artifact" : "No artifact for this stage yet"}</strong>
+      <span>{viewedStageStopped ? task.error : "The durable handoff will appear here when the stage completes."}</span>
+    </div>
+  );
+}
+
+function RuntimeCandidateDesk({
+  task,
+  candidate,
+  onOpenDiff,
+  diffLoading,
+  compact = false,
+  approval = false,
+}: {
+  task: RuntimeTask;
+  candidate: RuntimeTask["candidates"][number];
+  onOpenDiff: () => void;
+  diffLoading: boolean;
+  compact?: boolean;
+  approval?: boolean;
+}) {
+  const gateStages: StageId[] = ["dev-review", "test", "final-review"];
+  const freshGates = gateStages.filter((stage) =>
+    task.artifacts.some(
+      (artifact) =>
+        artifact.stage === stage &&
+        artifact.candidateId === candidate.id &&
+        artifact.candidateRevision === candidate.revisionNumber,
+    ),
+  );
+  const facts: Array<[string, string]> = approval
+    ? [
+        ["Repository", task.repositoryPath],
+        ["Target branch", candidate.baseBranch],
+        ["Merge method", "Fast-forward only"],
+        ["Required gates", "Dev Review · Test · Final Review"],
+        ["Gate freshness", `${freshGates.length} of ${gateStages.length} candidate-bound gates fresh`],
+        ["Residual risks", task.artifacts.some((artifact) => artifact.stage === "final-review") ? "See retained Final Review" : "Not yet recorded"],
+      ]
+    : [
+        ["Target branch", candidate.baseBranch],
+        ["Merge method", "Fast-forward only"],
+        ["Qualified slices", candidate.members?.map((item) => item.packageId).join(" → ") || "Pending assembly"],
+        ["Gate freshness", `${freshGates.length} of ${gateStages.length} candidate-bound gates fresh`],
+        ["Conflict status", "Not recorded by the runtime"],
+      ];
+  return (
+    <section className={`runtime-candidate-desk ${compact ? "runtime-candidate-desk--compact" : ""}`}>
+      <header>
+        <span className="candidate-badge">
+          <GitDiff size={16} />
+          <span>
+            <small>Integration candidate</small>
+            <strong>{candidate.id} r{candidate.revisionNumber}</strong>
+          </span>
+          <code>{candidate.headRevision?.slice(0, 8) ?? "pending"}</code>
+        </span>
+        <span className={`badge badge--${candidate.status === "merged" ? "green" : candidate.status === "repair_required" ? "red" : "blue"}`}>
+          {candidate.status.replaceAll("_", " ")}
+        </span>
+      </header>
+      <RuntimeFactGrid facts={facts} />
+      {candidate.revisions.length ? (
+        <details className="runtime-repair-lineage" open={candidate.revisions.length > 1}>
+          <summary>
+            <Wrench size={15} /> Repair lineage · {candidate.revisions.length} revision{candidate.revisions.length === 1 ? "" : "s"}
+          </summary>
+          {candidate.revisions.map((revision) => (
+            <div key={revision.number}>
+              <strong>r{revision.number} · {revision.headRevision.slice(0, 8)}</strong>
+              <span>{revision.reason}</span>
+              <small>{new Date(revision.createdAt).toLocaleString()}</small>
+            </div>
+          ))}
+        </details>
+      ) : null}
+      <div className="runtime-candidate-desk__actions">
+        <Button tone={approval ? "secondary" : "primary"} compact icon={GitDiff} disabled={!candidate.headRevision || diffLoading} onClick={onOpenDiff}>
+          {diffLoading ? "Loading exact diff…" : "Inspect exact candidate diff"}
+        </Button>
+        {approval ? <small>Primary merge action remains in the command bar above.</small> : null}
+      </div>
+    </section>
+  );
+}
+
+function RuntimeFinalReviewSummary({
+  task,
+  candidate,
+}: {
+  task: RuntimeTask;
+  candidate: RuntimeTask["candidates"][number] | undefined;
+}) {
+  const stages = workflowStages.slice(0, 8);
+  return (
+    <section className="runtime-final-review">
+      <header>
+        <span>
+          <small>Workflow record</small>
+          <strong>What was done</strong>
+        </span>
+        <small>{candidate ? `${candidate.id} r${candidate.revisionNumber}` : "No candidate assembled"}</small>
+      </header>
+      <div className="runtime-final-review__table">
+        <div className="runtime-final-review__row runtime-final-review__row--head">
+          <span>Stage</span><span>State</span><span>Tokens</span><span>Cost</span><span>Durable outcome</span>
+        </div>
+        {stages.map((stage) => {
+          const artifacts = task.artifacts.filter((artifact) => artifact.stage === stage.id);
+          const latest = artifacts.at(-1);
+          const tokens = artifacts.reduce((total, item) => total + item.usage.totalTokens, 0);
+          const stale = latest ? !isArtifactFresh(latest, candidate) : false;
+          return (
+            <div className="runtime-final-review__row" key={stage.id}>
+              <strong>{stage.shortLabel}</strong>
+              <span className={stale ? "text-amber" : task.completedStages.includes(stage.id) ? "text-green" : ""}>
+                {stale ? "Stale" : task.completedStages.includes(stage.id) ? "Passed" : "Pending"}
+              </span>
+              <span className="mono">{formatTokenCount(tokens)}</span>
+              <span>Plan included</span>
+              <span>{latest?.name ?? "No artifact retained"}</span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function RuntimeCommandBar({
   task,
+  viewedStageId,
   onRun,
-  onCancel,
   onAction,
   onFinishGrill,
 }: {
   task: RuntimeTask;
+  viewedStageId: StageId;
   onRun: () => Promise<void>;
-  onCancel: () => Promise<void>;
   onAction: (
     action:
       | "approve-spec"
@@ -443,6 +1023,7 @@ function RuntimeCommandBar({
 }) {
   const [pending, setPending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const historical = viewedStageId !== task.currentStage;
   const running = task.status === "running";
   const currentAttempts = task.attemptsByStage?.[task.currentStage] ?? 0;
   const repairRequired = task.status === "repair-required";
@@ -488,6 +1069,20 @@ function RuntimeCommandBar({
       setPending(false);
     }
   };
+  if (historical) {
+    const activeStage = workflowStages.find((stage) => stage.id === task.currentStage)?.label ?? task.currentStage;
+    return (
+      <section className="stage-command-bar stage-command-bar--history">
+        <FileCode size={18} />
+        <span className="stage-command-bar__copy">
+          <small>Historical stage · read-only</small>
+          <strong>Viewing retained evidence</strong>
+          <span>Workflow actions are hidden here. Return to {activeStage} to operate on the current state.</span>
+        </span>
+        <span className="badge badge--neutral">Recorded history</span>
+      </section>
+    );
+  }
   return (
     <section
       className={`stage-command-bar stage-command-bar--${running ? "active" : failed || blocked || repairRequired ? "blocked" : ready ? "ready" : "waiting"}`}
@@ -529,11 +1124,6 @@ function RuntimeCommandBar({
         </span>
       </span>
       <div className="stage-command-bar__actions">
-        {running ? (
-          <Button tone="danger" compact icon={X} onClick={() => void onCancel()}>
-            Cancel run
-          </Button>
-        ) : null}
         {(task.status === "queued" ||
           (failed &&
             task.currentStage !== "plan" &&
@@ -656,7 +1246,7 @@ function nextAction(task: RuntimeTask) {
   if (task.status === "awaiting-human-approval")
     return {
       action: "approve-merge" as const,
-      label: "Approve & fast-forward merge",
+      label: `Approve & merge ${task.candidates?.at(-1)?.id ?? "candidate"}`,
       title: "Human merge approval required",
       detail:
         "The harness will merge only if the source branch is clean, unchanged, and can fast-forward to the reviewed commit.",
@@ -753,6 +1343,7 @@ function RuntimeGrillPanel({
   if (!session) return null;
   const settled = session.questions.filter((question) => question.answer).length;
   const interactive = session.status === "open" && task.status === "awaiting-grill";
+  const activeQuestion = session.questions.find((question) => !question.answer);
   return (
     <section className="runtime-grill" aria-label="Grill Me decision session">
       <header>
@@ -765,14 +1356,38 @@ function RuntimeGrillPanel({
         <StateBadge state={session.status === "completed" ? "completed" : "needs-input"} />
       </header>
       {session.completionReason ? <p className="runtime-grill__reason">{session.completionReason}</p> : null}
-      {session.questions.length ? (
+      {activeQuestion ? (
         <div className="runtime-grill__questions">
-          {session.questions.map((question, index) => (
+          <RuntimeGrillQuestionCard
+            key={activeQuestion.id}
+            question={activeQuestion}
+            index={session.questions.indexOf(activeQuestion)}
+            interactive={interactive}
+            onAnswer={onAnswer}
+          />
+          {settled ? (
+            <details className="runtime-grill-history">
+              <summary>{settled} accumulated decision{settled === 1 ? "" : "s"}</summary>
+              {session.questions.filter((question) => question.answer).map((question) => (
+                <RuntimeGrillQuestionCard
+                  key={question.id}
+                  question={question}
+                  index={session.questions.indexOf(question)}
+                  interactive={false}
+                  onAnswer={onAnswer}
+                />
+              ))}
+            </details>
+          ) : null}
+        </div>
+      ) : session.questions.length ? (
+        <div className="runtime-grill__questions">
+          {session.questions.map((question) => (
             <RuntimeGrillQuestionCard
               key={question.id}
               question={question}
-              index={index}
-              interactive={interactive}
+              index={session.questions.indexOf(question)}
+              interactive={false}
               onAnswer={onAnswer}
             />
           ))}
@@ -836,6 +1451,13 @@ function RuntimeGrillQuestionCard({
         <StateBadge state="needs-input" />
       </header>
       <p>{question.whyItMatters}</p>
+      {recommended ? (
+        <div className="runtime-grill-recommendation">
+          <small>Recommended answer</small>
+          <strong>{recommended.label}</strong>
+          <span>{recommended.description}</span>
+        </div>
+      ) : null}
       {interactive ? (
         <form
           onSubmit={async (event) => {
@@ -953,7 +1575,7 @@ function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
                       )}
                       <span>
                         <small>
-                          {workPackage.id} · {workPackage.status.replaceAll("_", " ")}
+                          {workPackage.id} · {workPackage.status === "ready_for_integration" ? "ready for integration" : workPackage.status.replaceAll("_", " ")}
                         </small>
                         <strong>{workPackage.title}</strong>
                       </span>
@@ -964,7 +1586,18 @@ function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
                       label="Owned paths"
                       value={workPackage.ownedPaths.join(", ") || "Plan-defined scope"}
                     />
+                    <RuntimeRow
+                      label="Verification"
+                      value={workPackage.verification.join(" · ") || "No command recorded"}
+                      mono
+                    />
+                    <RuntimeRow label="Interfaces" value="Not recorded by the runtime" />
+                    <RuntimeRow label="Agent / model" value="Not recorded per package" />
+                    <RuntimeRow label="Usage" value="Not recorded per package · Plan included" />
                     <RuntimeRow label="Attempts" value={String(workPackage.attempts)} />
+                    <RuntimeRow label="Branch" value={workPackage.branch ?? "Not created"} mono />
+                    <RuntimeRow label="Worktree" value={workPackage.worktreePath ?? "Not created"} mono />
+                    <RuntimeRow label="Changed files" value={workPackage.files.join(", ") || "None recorded"} />
                     {workPackage.headRevision ? (
                       <RuntimeRow label="Package commit" value={workPackage.headRevision.slice(0, 8)} mono />
                     ) : null}
@@ -1061,49 +1694,73 @@ function RuntimeFocusedTestEvidencePanel({
   evidence: RuntimeFocusedTestEvidence;
   candidate: RuntimeTask["candidates"][number] | undefined;
 }) {
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+  const selectedRow = evidence.rows.find((row) => row.id === selectedRowId) ?? null;
+  const passed = evidence.rows.filter((row) => row.status === "passed").length;
+  const failed = evidence.rows.length - passed;
   return (
     <section className="runtime-focused-test" aria-label="Focused test evidence">
       <header>
         <span>
           <small>Candidate-bound structured evidence</small>
           <strong>
-            {evidence.candidateId} r{evidence.candidateRevision}
+            {passed} passed · {failed} failed · {evidence.candidateId} r{evidence.candidateRevision}
           </strong>
         </span>
         <span className="mono">{evidence.command}</span>
       </header>
-      <div className="runtime-focused-test__rows">
-        {evidence.rows.map((row) => (
-          <details key={row.id} open={row.status === "failed"}>
-            <summary>
+      {selectedRow ? (
+        <div className="runtime-focused-test__detail">
+          <button type="button" className="detail-back" onClick={() => setSelectedRowId(null)}>
+            <ArrowLeft size={15} /> Back to test list
+          </button>
+          <div className="runtime-focused-test__detail-title">
+            {selectedRow.status === "passed" ? <CheckCircle size={18} weight="fill" /> : <WarningCircle size={18} weight="fill" />}
+            <span>
+              <small>{selectedRow.status} result details</small>
+              <strong>{selectedRow.title}</strong>
+            </span>
+          </div>
+          <RuntimeRow label="Command" value={selectedRow.command} mono />
+          <RuntimeRow label="Candidate" value={`${selectedRow.candidateId} r${selectedRow.candidateRevision}`} mono />
+          <RuntimeRow label="Duration" value={selectedRow.durationMs == null ? "Not recorded" : `${selectedRow.durationMs}ms`} />
+          <RuntimeRow
+            label="Artifacts"
+            value={selectedRow.artifactReferences.map((item) => `${item.name} · ${item.kind}`).join(", ") || "Markdown test artifact"}
+          />
+          <div className="runtime-test-assertions">
+            <small>Assertions</small>
+            {selectedRow.assertions.map((assertion) => (
+              <div key={assertion.label}>
+                <strong>{assertion.label}</strong>
+                <span>Expected: {assertion.expected ?? "Not recorded"}</span>
+                <span>Actual: {assertion.actual}</span>
+              </div>
+            ))}
+          </div>
+          {selectedRow.failureDetails ? <p className="runtime-test-failure">{selectedRow.failureDetails}</p> : null}
+          <Button tone="ghost" compact icon={ArrowLeft} onClick={() => setSelectedRowId(null)}>
+            Back to all tests
+          </Button>
+        </div>
+      ) : (
+        <div className="runtime-focused-test__rows">
+          {evidence.rows.map((row) => (
+            <button type="button" key={row.id} onClick={() => setSelectedRowId(row.id)}>
+              {row.status === "passed" ? <CheckCircle size={18} weight="fill" /> : <WarningCircle size={18} weight="fill" />}
               <span>
                 <strong>{row.title}</strong>
-                <small>
-                  {row.status} · {row.durationMs == null ? "n/a" : `${row.durationMs}ms`} · {row.candidateId} r
-                  {row.candidateRevision}
-                </small>
+                <small>{row.command} · {row.assertions.map((assertion) => assertion.label).join(" · ") || "No assertions recorded"}</small>
               </span>
-              <span className={`badge badge--${row.status === "failed" ? "red" : "green"}`}>{row.status}</span>
-            </summary>
-            <div className="test-detail__facts">
-              <RuntimeRow label="Command" value={row.command} mono />
-              <RuntimeRow label="Candidate" value={`${row.candidateId} r${row.candidateRevision}`} mono />
-              <RuntimeRow
-                label="Artifact"
-                value={
-                  row.artifactReferences.map((artifact) => `${artifact.name} · ${artifact.kind}`).join(", ") ||
-                  "Markdown test artifact"
-                }
-              />
-              <RuntimeRow
-                label="Assertions"
-                value={row.assertions.map((assertion) => assertion.label).join(" · ") || "None recorded"}
-              />
-              {row.failureDetails ? <p className="text-red">{row.failureDetails}</p> : null}
-            </div>
-          </details>
-        ))}
-      </div>
+              <span>
+                <strong className={row.status === "failed" ? "text-red" : "text-green"}>{row.status}</strong>
+                <small>{row.durationMs == null ? "Duration not recorded" : `${row.durationMs}ms`}</small>
+              </span>
+              <ArrowSquareOut size={15} />
+            </button>
+          ))}
+        </div>
+      )}
       <footer>
         <small>
           {candidate ? `Current candidate ${candidate.id} r${candidate.revisionNumber}` : "No active candidate"}
@@ -1116,9 +1773,11 @@ function RuntimeFocusedTestEvidencePanel({
 
 function DecisionFrontier({
   task,
+  canRecord,
   onDecision,
 }: {
   task: RuntimeTask;
+  canRecord: boolean;
   onDecision: (question: string, answer: string) => Promise<void>;
 }) {
   const [question, setQuestion] = useState("");
@@ -1139,7 +1798,7 @@ function DecisionFrontier({
           No human decisions recorded. Recommended assumptions remain visible in the decision brief.
         </small>
       )}
-      {!task.status.startsWith("running") &&
+      {canRecord && !task.status.startsWith("running") &&
       !["completed", "awaiting-human-approval"].includes(task.status) ? (
         <form
           onSubmit={async (event) => {
@@ -1211,7 +1870,23 @@ function RuntimeRow({ label, value, mono = false }: { label: string; value: stri
 
 function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
   const [open, setOpen] = useState(false);
-  const visibleEvents = useMemo(() => [...events].reverse().slice(0, 30), [events]);
+  const [filter, setFilter] = useState<"activity" | "agent" | "test" | "decision">("activity");
+  const visibleEvents = useMemo(
+    () =>
+      [...events]
+        .reverse()
+        .filter((event) =>
+          filter === "activity"
+            ? true
+            : filter === "agent"
+              ? event.category === "agent"
+              : filter === "test"
+                ? event.stage === "test"
+                : event.category === "decision",
+        )
+        .slice(0, 40),
+    [events, filter],
+  );
   return (
     <details className="runtime-activity" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
       <summary>
@@ -1225,23 +1900,45 @@ function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
           {events.at(-1)?.title ?? "Waiting to start"}
         </span>
       </summary>
-      <div className="runtime-activity-list">
-        {visibleEvents.map((event) => (
-          <div className={`runtime-activity-row runtime-activity-row--${event.tone}`} key={event.id}>
-            <time className="mono">
-              {new Date(event.at).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              })}
-            </time>
-            <span>
-              <strong>{event.title}</strong>
-              <small>{event.detail}</small>
-            </span>
-            <em>{workflowStages.find((stage) => stage.id === event.stage)?.shortLabel ?? event.stage}</em>
-          </div>
+      <div className="runtime-activity-filters" role="tablist" aria-label="Run activity filters">
+        {([
+          ["activity", "Activity"],
+          ["agent", "Agent runs"],
+          ["test", "Test runs"],
+          ["decision", "Decisions"],
+        ] as const).map(([id, label]) => (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === id}
+            className={filter === id ? "selected" : ""}
+            key={id}
+            onClick={() => setFilter(id)}
+          >
+            {label}
+          </button>
         ))}
+        <small>Model, token, duration, and artifact linkage are shown only when recorded by the runtime.</small>
+      </div>
+      <div className="runtime-activity-list">
+        {visibleEvents.length ? visibleEvents.map((event) => (
+            <div className={`runtime-activity-row runtime-activity-row--${event.tone}`} key={event.id}>
+              <time className="mono">
+                {new Date(event.at).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })}
+              </time>
+              <span>
+                <strong>{event.title}</strong>
+                <small>{event.detail}</small>
+              </span>
+              <em>{workflowStages.find((stage) => stage.id === event.stage)?.shortLabel ?? event.stage}</em>
+            </div>
+          )) : (
+            <div className="runtime-activity-empty">No recorded events match this filter.</div>
+          )}
       </div>
     </details>
   );
@@ -1270,6 +1967,7 @@ export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: Runtime
   const [copyStatus, setCopyStatus] = useState<"copied" | "error" | null>(null);
   const [copyError, setCopyError] = useState<string | null>(null);
   const activeArtifactIdRef = useRef(artifact.id);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     activeArtifactIdRef.current = artifact.id;
     setCopyStatus(null);
@@ -1280,6 +1978,14 @@ export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: Runtime
     const timer = window.setTimeout(() => setCopyStatus(null), 1800);
     return () => window.clearTimeout(timer);
   }, [copyStatus]);
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
   const handleCopy = async () => {
     const requestedArtifactId = artifact.id;
     const result = await copyArtifactContent(artifact.content);
@@ -1322,7 +2028,13 @@ export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: Runtime
             <Button tone="ghost" compact onClick={handleCopy}>
               Copy artifact
             </Button>
-            <button type="button" className="icon-button" onClick={onClose} aria-label="Close artifact viewer">
+            <button
+              ref={closeButtonRef}
+              type="button"
+              className="icon-button"
+              onClick={onClose}
+              aria-label="Close artifact viewer"
+            >
               <X size={18} />
             </button>
           </div>

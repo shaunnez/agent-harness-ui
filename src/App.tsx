@@ -37,6 +37,8 @@ export function App() {
   const [returnScreen, setReturnScreen] = useState<AppScreen>("command");
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus | null>(null);
   const [runtimeTasks, setRuntimeTasks] = useState<RuntimeTask[]>([]);
+  const [runtimeLoading, setRuntimeLoading] = useState(true);
+  const [runtimeError, setRuntimeError] = useState<string | null>(null);
   const [activeRuntimeTask, setActiveRuntimeTask] = useState<RuntimeTask | null>(null);
   const [taskDraft, setTaskDraft] = useState<NewTaskDraft>({
     title: EXAMPLE_TITLE,
@@ -53,8 +55,19 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    void Promise.allSettled([getRuntimeStatus().then(setRuntimeStatus), refreshTasks()]);
-  }, [refreshTasks]);
+    let current = true;
+    void Promise.allSettled([getRuntimeStatus(), listTasks()]).then(([statusResult, tasksResult]) => {
+      if (!current) return;
+      if (statusResult.status === "fulfilled") setRuntimeStatus(statusResult.value);
+      if (tasksResult.status === "fulfilled") setRuntimeTasks(tasksResult.value);
+      const failure = statusResult.status === "rejected" ? statusResult.reason : tasksResult.status === "rejected" ? tasksResult.reason : null;
+      setRuntimeError(failure instanceof Error ? failure.message : failure ? "The local Agent Harness runtime is unavailable." : null);
+      setRuntimeLoading(false);
+    });
+    return () => {
+      current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const id = activeRuntimeTask?.id;
@@ -216,6 +229,9 @@ export function App() {
           <CommandCentre
             runtimeTasks={runtimeTasks}
             runtimeStatus={runtimeStatus}
+            runtimeLoading={runtimeLoading}
+            runtimeError={runtimeError}
+            onNewTask={() => setNewTaskOpen(true)}
             onOpenTask={(taskId) => openWorkspace("command", taskId)}
           />
         ) : null}
