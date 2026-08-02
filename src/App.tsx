@@ -5,6 +5,7 @@ import {
   createTask,
   finishGrill,
   getRuntimeStatus,
+  getRuntimeWorktreeInventory,
   getTask,
   listTasks,
   recordTaskDecision,
@@ -61,7 +62,8 @@ export function App() {
     const refresh = async () => {
       try {
         const task = await getTask(id);
-        setActiveRuntimeTask(task);
+        const inventory = await getRuntimeWorktreeInventory();
+        setActiveRuntimeTask({ ...task, worktreeInventory: inventory.rows });
         setRuntimeTasks((tasks) => [task, ...tasks.filter((item) => item.id !== task.id)]);
       } catch {
         // Keep the last good task snapshot while the local runtime restarts.

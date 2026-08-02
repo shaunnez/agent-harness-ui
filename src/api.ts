@@ -1,4 +1,4 @@
-import type { NewTaskDraft, RuntimeStatus, RuntimeTask } from "./domain";
+import type { NewTaskDraft, RuntimeStatus, RuntimeTask, RuntimeWorktreeInventoryRow } from "./domain";
 
 export interface CandidateDiffResponse {
   candidateId: string;
@@ -26,6 +26,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export async function getRuntimeStatus() {
   return request<RuntimeStatus>("/api/runtime/status");
+}
+
+export async function getRuntimeWorktreeInventory() {
+  return request<{ rows: RuntimeWorktreeInventoryRow[] }>("/api/runtime/worktrees");
 }
 
 export async function getCandidateDiff(taskId: string, candidateId: string, headRevision: string) {

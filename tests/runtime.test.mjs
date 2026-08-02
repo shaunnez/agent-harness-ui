@@ -305,6 +305,64 @@ test("fetches candidate diffs by active candidate identity and surfaces stale fa
   });
 });
 
+test("fetches the live inventory endpoint and renders the returned rows in the runtime workspace", async () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace, loadApiModule }) => {
+    const { getRuntimeWorktreeInventory } = await loadApiModule();
+    const requests = [];
+    const originalFetch = globalThis.fetch;
+    try {
+      globalThis.fetch = async (input, init) => {
+        requests.push({ input: String(input), init });
+        return new Response(
+          JSON.stringify({
+            rows: [
+              {
+                id: "slice-S1",
+                kind: "slice",
+                label: "S1 slice worktree",
+                worktreePath: "C:/worktrees/AH-015-S2-A1-S1",
+                branch: "agent-harness/AH-015-S2-A1-S1",
+                baseRevision: "a".repeat(40),
+                headRevision: "b".repeat(40),
+                taskId: "AH-015",
+                workPackageId: "S1",
+                lifecycleState: "retained",
+                gitExists: true,
+                gitHeadRevision: "b".repeat(40),
+                gitClean: true,
+                cleanupReady: true,
+              },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      };
+
+      const inventory = await getRuntimeWorktreeInventory();
+      assert.equal(inventory.rows.length, 1);
+      assert.equal(requests[0].input, "/api/runtime/worktrees");
+
+      const markup = renderToStaticMarkup(
+        React.createElement(RuntimeTaskWorkspace, {
+          task: createTask({ worktreeInventory: inventory.rows }),
+          onBack: async () => {},
+          onRun: async () => {},
+          onCancel: async () => {},
+          onAction: async () => {},
+          onDecision: async () => {},
+        }),
+      );
+
+      assert.match(markup, /Worktree inventory/);
+      assert.match(markup, /slice\s+·\s+retained/i);
+      assert.match(markup, /S1 slice worktree/);
+      assert.match(markup, /cleanup ready/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
 test("renders the candidate diff overlay with the current identity and return control", () => {
   return withWorkspace(async ({ CandidateDiffViewer }) => {
     let closed = 0;
