@@ -202,6 +202,23 @@ export interface RuntimeWorkPackage {
   error: string | null;
 }
 
+export interface RuntimeWorktreeInventoryRow {
+  id: string;
+  kind: "slice" | "candidate";
+  label: string;
+  worktreePath: string;
+  branch: string;
+  baseRevision: string | null;
+  headRevision: string | null;
+  taskId: string;
+  workPackageId: string | null;
+  lifecycleState: "retained" | "active" | "stale";
+  gitExists: boolean;
+  gitHeadRevision: string | null;
+  gitClean: boolean | null;
+  cleanupReady: boolean;
+}
+
 export interface RuntimeApproval {
   id: string;
   stage: StageId;
@@ -262,6 +279,7 @@ export interface RuntimeTask {
   approvals: RuntimeApproval[];
   workPackages: RuntimeWorkPackage[];
   candidates: RuntimeCandidate[];
+  worktreeInventory?: RuntimeWorktreeInventoryRow[];
   events: RuntimeEvent[];
 }
 

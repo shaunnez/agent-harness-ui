@@ -18,6 +18,7 @@ import {
   type RuntimeEvent,
   type RuntimeGrillQuestion,
   type RuntimeTask,
+  type RuntimeWorktreeInventoryRow,
   type StageId,
   type TaskRunState,
   workflowStages,
@@ -35,6 +36,7 @@ export function RuntimeTaskWorkspace({
   onGrillAnswer,
   onFinishGrill,
   initialViewedStageId,
+  initialSelectedWorktreeId,
 }: {
   task: RuntimeTask;
   onBack: () => void;
@@ -58,12 +60,14 @@ export function RuntimeTaskWorkspace({
   onGrillAnswer: (questionId: string, answer: string) => Promise<void>;
   onFinishGrill: (acceptRemaining: boolean) => Promise<void>;
   initialViewedStageId?: StageId;
+  initialSelectedWorktreeId?: string | null;
 }) {
   const currentIndex = Math.max(
     0,
     workflowStages.findIndex((stage) => stage.id === task.currentStage),
   );
   const [viewedStageId, setViewedStageId] = useState<StageId>(initialViewedStageId ?? task.currentStage);
+  const [selectedWorktreeId, setSelectedWorktreeId] = useState<string | null>(initialSelectedWorktreeId ?? null);
   const [openArtifact, setOpenArtifact] = useState<RuntimeArtifact | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const viewedIndex = Math.max(
@@ -80,6 +84,7 @@ export function RuntimeTaskWorkspace({
   const repoName = task.repositoryPath.split(/[\\/]/).filter(Boolean).at(-1) ?? task.repositoryPath;
   const candidate = task.candidates?.at(-1);
   const runningPackages = task.workPackages?.filter((item) => item.status === "running") ?? [];
+  const worktreeInventory = task.worktreeInventory ?? [];
   const accessBoundary = getAccessBoundaryCopy(task);
   const completedApprovalWithoutArtifact =
     viewedStageId === "approval" &&
@@ -278,6 +283,15 @@ export function RuntimeTaskWorkspace({
               <strong>{task.title}</strong>
               <p>{task.description}</p>
             </InspectorSection>
+            {worktreeInventory.length ? (
+              <InspectorSection title="Worktree inventory" meta={`${worktreeInventory.length} retained`}>
+                <RuntimeWorktreeInventory
+                  inventory={worktreeInventory}
+                  selectedId={selectedWorktreeId}
+                  onSelect={setSelectedWorktreeId}
+                />
+              </InspectorSection>
+            ) : null}
             <InspectorSection title="Stage context">
               <RuntimeRow label="Viewing" value={viewedStage.label} />
               <RuntimeRow label="Active" value={workflowStages[currentIndex]?.label ?? "Triage"} />
@@ -965,6 +979,79 @@ function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
         ))}
       </div>
     </section>
+  );
+}
+
+function RuntimeWorktreeInventory({
+  inventory,
+  selectedId,
+  onSelect,
+}: {
+  inventory: RuntimeWorktreeInventoryRow[];
+  selectedId: string | null;
+  onSelect: (rowId: string | null) => void;
+}) {
+  const selectedRow = inventory.find((row) => row.id === selectedId) ?? null;
+  if (selectedRow) {
+    return (
+      <div className="runtime-worktree-inventory runtime-worktree-inventory--detail">
+        <button type="button" className="icon-button" onClick={() => onSelect(null)} aria-label="Return to inventory list">
+          <ArrowLeft size={16} />
+        </button>
+        <details className="runtime-worktree-inventory__detail" open>
+          <summary>
+            <span>
+              <small>
+                {selectedRow.kind} · {selectedRow.lifecycleState}
+              </small>
+              <strong>{selectedRow.label}</strong>
+            </span>
+          </summary>
+          <div className="runtime-worktree-inventory__detail-grid">
+            <RuntimeRow label="Kind" value={selectedRow.kind} />
+            <RuntimeRow label="Lifecycle" value={selectedRow.lifecycleState} />
+            <RuntimeRow label="Worktree" value={selectedRow.worktreePath} mono />
+            <RuntimeRow label="Branch" value={selectedRow.branch} mono />
+            <RuntimeRow label="Base" value={selectedRow.baseRevision ?? "n/a"} mono />
+            <RuntimeRow label="Head" value={selectedRow.headRevision ?? "n/a"} mono />
+            <RuntimeRow label="Task" value={selectedRow.taskId} mono />
+            <RuntimeRow label="Work package" value={selectedRow.workPackageId ?? "n/a"} mono />
+            <RuntimeRow label="Git exists" value={selectedRow.gitExists ? "present" : "missing"} />
+            <RuntimeRow label="Git head" value={selectedRow.gitHeadRevision ?? "n/a"} mono />
+            <RuntimeRow label="Cleanliness" value={selectedRow.gitClean == null ? "unknown" : selectedRow.gitClean ? "clean" : "dirty"} />
+            <RuntimeRow label="Cleanup" value={selectedRow.cleanupReady ? "ready" : "not ready"} />
+          </div>
+        </details>
+        <p className="runtime-worktree-inventory__return">Return to the inventory list to inspect another retained worktree.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="runtime-worktree-inventory" role="list" aria-label="Harness worktree inventory">
+      {inventory.map((row) => (
+        <button
+          key={row.id}
+          type="button"
+          className={`runtime-worktree-row runtime-worktree-row--${row.lifecycleState}`}
+          onClick={() => onSelect(row.id)}
+          role="listitem"
+        >
+          <span className="runtime-worktree-row__identity">
+            <small>
+              {row.kind} · {row.lifecycleState}
+            </small>
+            <strong>{row.label}</strong>
+          </span>
+          <span className="runtime-worktree-row__badges">
+            <span className={`badge badge--${row.kind === "candidate" ? "red" : "green"}`}>{row.kind}</span>
+            <span className={`badge badge--${row.lifecycleState === "active" ? "green" : row.lifecycleState === "retained" ? "yellow" : "red"}`}>{row.lifecycleState}</span>
+            <span className={`badge badge--${row.cleanupReady ? "green" : "yellow"}`}>{row.cleanupReady ? "cleanup ready" : "keep retained"}</span>
+          </span>
+          <span className="runtime-worktree-row__path mono">{row.worktreePath}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 

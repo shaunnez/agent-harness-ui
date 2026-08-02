@@ -191,6 +191,85 @@ test("renders approvals history in the runtime task inspector", () => {
   });
 });
 
+test("renders the retained worktree inventory with drill-in detail and a return path", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const task = createTask({
+      worktreeInventory: [
+        {
+          id: "slice-S1",
+          kind: "slice",
+          label: "S1 slice worktree",
+          worktreePath: "C:/worktrees/AH-015-S2-A1-S1",
+          branch: "agent-harness/AH-015-S2-A1-S1",
+          baseRevision: "a".repeat(40),
+          headRevision: "b".repeat(40),
+          taskId: "AH-015",
+          workPackageId: "S1",
+          lifecycleState: "retained",
+          gitExists: true,
+          gitHeadRevision: "b".repeat(40),
+          gitClean: true,
+          cleanupReady: true,
+        },
+        {
+          id: "candidate-C1",
+          kind: "candidate",
+          label: "Candidate C1 worktree",
+          worktreePath: "C:/worktrees/AH-015-C1",
+          branch: "agent-harness/AH-015-C1",
+          baseRevision: "c".repeat(40),
+          headRevision: null,
+          taskId: "AH-015",
+          workPackageId: null,
+          lifecycleState: "active",
+          gitExists: true,
+          gitHeadRevision: "d".repeat(40),
+          gitClean: false,
+          cleanupReady: false,
+        },
+      ],
+    });
+
+    const listMarkup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task,
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+        initialSelectedWorktreeId: null,
+      }),
+    );
+
+    assert.match(listMarkup, /Worktree inventory/);
+    assert.match(listMarkup, /slice · retained/i);
+    assert.match(listMarkup, /candidate · active/i);
+    assert.match(listMarkup, /S1 slice worktree/);
+    assert.match(listMarkup, /Candidate C1 worktree/);
+    assert.match(listMarkup, /cleanup ready/);
+    assert.match(listMarkup, /keep retained/);
+
+    const detailMarkup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task,
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+        initialSelectedWorktreeId: "candidate-C1",
+      }),
+    );
+
+    assert.match(detailMarkup, /Return to inventory list/);
+    assert.match(detailMarkup, /candidate · active/i);
+    assert.match(detailMarkup, /Kind/);
+    assert.match(detailMarkup, /Cleanup/);
+    assert.match(detailMarkup, /Return to the inventory list/);
+  });
+});
+
 test("fetches candidate diffs by active candidate identity and surfaces stale failures", async () => {
   return withWorkspace(async ({ loadApiModule }) => {
     const { getCandidateDiff } = await loadApiModule();
