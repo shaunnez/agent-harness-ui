@@ -179,17 +179,12 @@ export async function runCodex({
     cwd,
     "-",
   ];
-  const childEnv = { ...process.env };
-  delete childEnv.OPENAI_API_KEY;
-  delete childEnv.CODEX_API_KEY;
   const runtimeTemp =
     tempDirectory ??
     process.env.AGENT_HARNESS_TEMP ??
     (process.platform === "win32" ? "C:\\tmp\\agent-harness" : path.join(os.tmpdir(), "agent-harness"));
   await mkdir(runtimeTemp, { recursive: true });
-  childEnv.TEMP = runtimeTemp;
-  childEnv.TMP = runtimeTemp;
-  childEnv.TMPDIR = runtimeTemp;
+  const childEnv = buildCodexEnvironment(process.env, runtimeTemp);
 
   const result = await runProcess(binary, args, {
     timeoutMs,
@@ -214,6 +209,38 @@ export async function runCodex({
   }
   if (!finalText) throw new Error("Codex completed without returning an artifact.");
   return { finalText, usage };
+}
+
+export function buildCodexEnvironment(source, runtimeTemp) {
+  const allowed = [
+    "PATH",
+    "PATHEXT",
+    "SYSTEMROOT",
+    "WINDIR",
+    "COMSPEC",
+    "USERPROFILE",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "APPDATA",
+    "LOCALAPPDATA",
+    "CODEX_HOME",
+    "CODEX_BIN",
+    "LANG",
+    "LC_ALL",
+    "TERM",
+    "SSL_CERT_FILE",
+    "SSL_CERT_DIR",
+  ];
+  const entries = Object.entries(source ?? {});
+  const environment = {};
+  for (const name of allowed) {
+    const entry = entries.find(([key]) => key.toUpperCase() === name);
+    if (entry?.[1] != null && entry[1] !== "") environment[entry[0]] = entry[1];
+  }
+  environment.TEMP = runtimeTemp;
+  environment.TMP = runtimeTemp;
+  environment.TMPDIR = runtimeTemp;
+  return environment;
 }
 
 function extractFailure(stdout) {

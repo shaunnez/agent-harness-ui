@@ -6,11 +6,11 @@ import test from "node:test";
 import { evaluationVerdict, TaskOrchestrator } from "../server/orchestrator.mjs";
 import { buildExecutionPrompt } from "../server/prompts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
-import { parseFocusedTestEvidence, parseGrillQuestions, parseWorkPackages } from "../server/structured-output.mjs";
+import { parseFocusedTestEvidence, parseGrillQuestions, parseWorkPackages, validateFocusedTestEvidence } from "../server/structured-output.mjs";
 
 const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"questions":[{"question":"Compatibility?","whyItMatters":"Changes the public contract.","options":[{"label":"Preserve it","description":"Keep existing clients working.","recommended":true},{"label":"Break it","description":"Allow a clean break.","recommended":false}],"allowCustom":true}]}\n</grill-questions>`;
 const PLAN_OUTPUT = `## Plan summary\n\nTwo independent slices.\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verification":["npm test"]},{"id":"S2","title":"UI","description":"Implement the task UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verification":["npm run typecheck"]}]}\n</work-packages>`;
-const TEST_OUTPUT = `PASS\n\n## Verdict\n\nPASS\n\n<focused-test-evidence>\n{"candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","startedAt":"2026-08-01T12:00:00.000Z","completedAt":"2026-08-01T12:00:01.240Z","durationMs":1240,"rows":[{"id":"row-1","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":1240,"title":"orchestrator.test.mjs","artifactReferences":[{"name":"Markdown test artifact","kind":"markdown","path":"artifacts/test.md"}],"assertions":[{"label":"all packages qualified","actual":"pass","expected":"pass"}],"failureDetails":null},{"id":"row-2","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"failed","durationMs":350,"title":"api.test.mjs","artifactReferences":[{"name":"JUnit report","kind":"junit","path":"artifacts/junit.xml"}],"assertions":[{"label":"failing assertion","actual":"Expected 400, received 201","expected":"Expected 400"}],"failureDetails":"Request accepted invalid priority."}]}\n</focused-test-evidence>`;
+const TEST_OUTPUT = `PASS\n\n## Verdict\n\nPASS\n\n<focused-test-evidence>\n{"candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","startedAt":"2026-08-01T12:00:00.000Z","completedAt":"2026-08-01T12:00:01.240Z","durationMs":1240,"rows":[{"id":"row-1","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":1240,"title":"orchestrator.test.mjs","artifactReferences":[{"name":"Markdown test artifact","kind":"markdown","path":"artifacts/test.md"}],"assertions":[{"label":"all packages qualified","actual":"pass","expected":"pass"}],"failureDetails":null},{"id":"row-2","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":350,"title":"api.test.mjs","artifactReferences":[{"name":"JUnit report","kind":"junit","path":"artifacts/junit.xml"}],"assertions":[{"label":"API contract","actual":"pass","expected":"pass"}],"failureDetails":null}]}\n</focused-test-evidence>`;
 
 const SCOUT_OUTPUT = `<scout-report>
 {"status":"ok","findings":[{"file":"src/mock.ts","line":1,"fact":"Mock repository fact for the selected scout.","confidence":"high"}],"uncertainties":[]}
@@ -100,13 +100,26 @@ test("parses focused test evidence with candidate-bound rows", () => {
   assert.equal(evidence.candidateId, "C1");
   assert.equal(evidence.rows.length, 2);
   assert.equal(evidence.rows[0].status, "passed");
-  assert.equal(evidence.rows[1].status, "failed");
-  assert.equal(evidence.rows[1].failureDetails, "Request accepted invalid priority.");
+  assert.equal(evidence.rows[1].status, "passed");
+  assert.equal(evidence.rows[1].failureDetails, null);
   assert.equal(evidence.rows[1].artifactReferences[0].kind, "junit");
   assert.equal(evidence.rows[0].candidateId, "C1");
   assert.equal(evidence.rows[0].candidateRevision, 2);
   assert.equal(evidence.startedAt, "2026-08-01T12:00:00.000Z");
   assert.equal(evidence.completedAt, "2026-08-01T12:00:01.240Z");
+  assert.equal(validateFocusedTestEvidence(evidence, { id: "C1", revisionNumber: 2 }), evidence);
+  assert.throws(
+    () => validateFocusedTestEvidence(evidence, { id: "C1", revisionNumber: 3 }),
+    /does not match the active candidate revision/i,
+  );
+  assert.throws(
+    () => parseFocusedTestEvidence(`<focused-test-evidence>{"candidateId":"C1","candidateRevision":2,"command":"npm test","status":"passed","rows":[{"id":"failed","status":"failed"}]}</focused-test-evidence>`),
+    /contradicts its failed rows/i,
+  );
+  assert.throws(
+    () => parseFocusedTestEvidence(`<focused-test-evidence>{"candidateId":"C1","candidateRevision":2,"command":"npm test","status":"unknown","rows":[{"id":"row","status":"passed"}]}</focused-test-evidence>`),
+    /status must be passed or failed/i,
+  );
 });
 
 test("builds the focused test execution prompt with the structured evidence contract and Windows command rule", () => {
@@ -260,7 +273,7 @@ test("runs independent work packages concurrently before candidate assembly", as
       },
     });
 
-    assert.equal(orchestrator.start(task.id, "implementation"), true);
+    assert.equal(await orchestrator.start(task.id, "implementation"), true);
     const finished = await waitForStatus(store, task.id, "ready-for-review");
     assert.equal(maximumActiveAgents, 2);
     assert.deepEqual(finished.candidates[0].members.map((member) => member.packageId), ["S1", "S2"]);
@@ -307,7 +320,7 @@ test("runs the investigation frontier and retains each stage handoff", async () 
       },
     });
 
-    assert.equal(orchestrator.start(task.id), true);
+    assert.equal(await orchestrator.start(task.id), true);
     let finished = null;
     for (let attempt = 0; attempt < 50; attempt += 1) {
       await new Promise((resolve) => setTimeout(resolve, 5));
@@ -417,7 +430,7 @@ test("advances an approved implementation task through a revision-bound candidat
       },
     });
 
-    orchestrator.start(task.id);
+    await orchestrator.start(task.id);
     await waitForStatus(store, task.id, "awaiting-grill");
     await orchestrator.answerGrillQuestion(task.id, { questionId: "Q1", answer: "Keep it backwards compatible." });
     await orchestrator.finishGrill(task.id);
@@ -427,17 +440,17 @@ test("advances an approved implementation task through a revision-bound candidat
     await orchestrator.approvePlan(task.id);
     assert.equal((await store.get(task.id)).status, "ready-for-implementation");
 
-    orchestrator.start(task.id, "implementation");
+    await orchestrator.start(task.id, "implementation");
     await waitForStatus(store, task.id, "ready-for-review");
-    orchestrator.start(task.id, "review");
+    await orchestrator.start(task.id, "review");
     await waitForStatus(store, task.id, "repair-required");
-    orchestrator.start(task.id, "repair");
+    await orchestrator.start(task.id, "repair");
     await waitForStatus(store, task.id, "ready-for-review");
-    orchestrator.start(task.id, "review");
+    await orchestrator.start(task.id, "review");
     await waitForStatus(store, task.id, "ready-for-test");
-    orchestrator.start(task.id, "test");
+    await orchestrator.start(task.id, "test");
     await waitForStatus(store, task.id, "ready-for-final-review");
-    orchestrator.start(task.id, "final-review");
+    await orchestrator.start(task.id, "final-review");
     const approvalTask = await waitForStatus(store, task.id, "awaiting-human-approval");
 
     assert.equal(approvalTask.candidates[0].headRevision, "c".repeat(40));
@@ -460,7 +473,7 @@ test("advances an approved implementation task through a revision-bound candidat
     );
     assert.equal(
       approvalTask.artifacts.find((artifact) => artifact.stage === "test")?.focusedTest?.rows?.[1].status,
-      "failed",
+      "passed",
     );
     assert.equal(
       approvalTask.artifacts.find((artifact) => artifact.stage === "test")?.focusedTest?.rows?.[1].candidateRevision,
@@ -476,9 +489,116 @@ test("advances an approved implementation task through a revision-bound candidat
     assert.equal(complete.artifacts.at(-1).candidateRevision, 2);
     assert.match(complete.artifacts.at(-1).content, /Merge method: fast-forward only/);
     assert.match(complete.artifacts.at(-1).content, new RegExp(`Merged revision: ${"c".repeat(40)}`));
+    assert.equal(complete.mergeIntent.status, "completed");
+    assert.equal(complete.approvals.filter((approval) => approval.stage === "approval").length, 1);
+    await assert.rejects(() => orchestrator.approveMerge(task.id), /not awaiting merge approval/i);
     assert.equal(merged, true);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("reserves a run exactly once across concurrent start requests", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-start-race-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Reserve once",
+      description: "Concurrent starts must produce one durable run reservation.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "medium",
+      model: "gpt-5.6-luna",
+      reasoning: "xhigh",
+    });
+    let release;
+    const orchestrator = new TaskOrchestrator(store, {
+      runCodex: () => new Promise((resolve) => {
+        release = () => resolve({ finalText: "Done", usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0 } });
+      }),
+    });
+
+    const results = await Promise.all([orchestrator.start(task.id), orchestrator.start(task.id)]);
+    assert.deepEqual(results.sort(), [false, true]);
+    const reserved = await store.get(task.id);
+    assert.equal(reserved.status, "running");
+    assert.equal(reserved.activeRunKind, "investigation");
+    assert.equal(reserved.attemptsByStage.triage, 1);
+    for (let attempt = 0; !release && attempt < 100; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    assert.equal(typeof release, "function");
+    assert.equal(orchestrator.cancel(task.id), true);
+    release();
+    await waitForStatus(store, task.id, "cancelled");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("reconciles a recorded merge intent without duplicating approval", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-merge-recovery-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Recover merge",
+      description: "Finalize a merge that completed before task persistence.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+      model: "gpt-5.6-luna",
+      reasoning: "xhigh",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "merging";
+      draft.currentStage = "approval";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 1,
+        baseRevision: "a".repeat(40),
+        baseBranch: "feature",
+        baseRef: "refs/heads/feature",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/ah-001-c1",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "awaiting_human_approval",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        revisions: [],
+      }];
+      draft.mergeIntent = {
+        candidateId: "C1",
+        candidateRevision: 1,
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        targetRef: "refs/heads/feature",
+        note: "Approved before restart.",
+        status: "pending",
+        startedAt: new Date().toISOString(),
+        completedAt: null,
+        error: null,
+      };
+    });
+    let mergeCalls = 0;
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        mergeState: async () => "merged",
+        merge: async () => { mergeCalls += 1; },
+      },
+    });
+
+    await orchestrator.recoverMergeIntents();
+    await orchestrator.recoverMergeIntents();
+    const recovered = await store.get(task.id);
+    assert.equal(recovered.status, "completed");
+    assert.equal(recovered.mergeIntent.status, "completed");
+    assert.equal(recovered.approvals.filter((approval) => approval.stage === "approval").length, 1);
+    assert.equal(mergeCalls, 0);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
   }
 });
 

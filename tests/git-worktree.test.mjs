@@ -84,6 +84,36 @@ test("creates, commits, and fast-forward merges an isolated candidate", async ()
   }
 });
 
+test("refuses to merge a candidate into a sibling branch at the same base revision", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-target-ref-"));
+  const repository = path.join(directory, "repository");
+  try {
+    await git(directory, ["init", "repository"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+    const manager = new GitWorktreeManager(path.join(directory, "worktrees"));
+    const task = { id: "AH-REF", repositoryPath: repository };
+    const base = await manager.base(task);
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+    await writeFile(path.join(candidate.worktreePath, "feature.txt"), "candidate\n", "utf8");
+    const committed = await manager.commit(candidate, "candidate");
+    candidate.headRevision = committed.headRevision;
+
+    await git(repository, ["checkout", "-b", "sibling", base.baseRevision]);
+    await assert.rejects(() => manager.merge(candidate), /recorded target ref/i);
+    assert.equal((await git(repository, ["rev-parse", "HEAD"])).stdout.trim(), base.baseRevision);
+    await git(repository, ["checkout", "--detach", base.baseRevision]);
+    await assert.rejects(() => manager.merge(candidate), /recorded target ref/i);
+    await git(repository, ["checkout", candidate.baseBranch]);
+    assert.equal(await manager.merge(candidate), committed.headRevision);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 async function git(cwd, args) {
   return exec("git", args, { cwd, windowsHide: true });
 }

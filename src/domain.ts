@@ -112,6 +112,7 @@ export type RuntimeTaskStatus =
   | "ready-for-final-review"
   | "repair-required"
   | "awaiting-human-approval"
+  | "merging"
   | "completed"
   | "closed";
 
@@ -169,6 +170,13 @@ export interface RuntimeArtifact {
   candidateRevision?: number | null;
   workPackageId?: string | null;
   focusedTest?: RuntimeFocusedTestEvidence | null;
+  gateResult?: {
+    verdict: "PASS" | "REPAIR";
+    candidateId: string;
+    candidateRevision: number;
+    evaluatedAt: string;
+    blockingReasons: string[];
+  } | null;
 }
 
 export interface RuntimeFocusedTestArtifactReference {
@@ -288,6 +296,7 @@ export interface RuntimeCandidate {
   revisionNumber: number;
   baseRevision: string;
   baseBranch: string;
+  baseRef?: string | null;
   headRevision: string | null;
   branch: string;
   repositoryRoot: string;
@@ -327,6 +336,18 @@ export interface RuntimeTask {
   closure?: { reason: "not-needed" | "superseded" | "duplicate"; supersededBy: string | null; note: string; closedAt: string } | null;
   evaluation?: RuntimeTaskEvaluation | null;
   experiment?: RuntimeExperimentSnapshot | null;
+  mergeIntent?: {
+    candidateId: string;
+    candidateRevision: number;
+    baseRevision: string;
+    headRevision: string;
+    targetRef: string;
+    note: string;
+    status: "pending" | "completed" | "failed";
+    startedAt: string;
+    completedAt: string | null;
+    error: string | null;
+  } | null;
   scoutDispatch?: {
     selected: Array<{ name: string; focus: string; reason: string; status: "queued" | "complete" | "failed"; error?: string }>;
     skipped: string[];
@@ -365,6 +386,7 @@ export interface RuntimeStatus {
   binary: string | null;
   message: string;
   suggestedRepository: string;
+  csrfToken?: string;
   catalog?: RuntimeModelCatalog;
   settings?: RuntimeSettings;
   providers?: Array<{

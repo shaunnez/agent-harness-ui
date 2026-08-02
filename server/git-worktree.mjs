@@ -15,10 +15,12 @@ export class GitWorktreeManager {
   async base(task) {
     const repositoryRoot = await this.repositoryRoot(task.repositoryPath);
     await assertClean(repositoryRoot);
+    const baseBranch = (await git(repositoryRoot, ["branch", "--show-current"])).stdout.trim() || "detached";
     return {
       repositoryRoot,
       baseRevision: (await git(repositoryRoot, ["rev-parse", "HEAD"])).stdout.trim(),
-      baseBranch: (await git(repositoryRoot, ["branch", "--show-current"])).stdout.trim() || "detached",
+      baseBranch,
+      baseRef: baseBranch === "detached" ? null : `refs/heads/${baseBranch}`,
     };
   }
 
@@ -41,6 +43,7 @@ export class GitWorktreeManager {
       throw new Error("The source checkout moved after implementation scheduling began.");
     }
     const baseBranch = (await git(repositoryRoot, ["branch", "--show-current"])).stdout.trim() || "detached";
+    const baseRef = baseBranch === "detached" ? null : `refs/heads/${baseBranch}`;
     const branch = `agent-harness/${task.id.toLowerCase()}-${safeSegment(options.branchId ?? candidateId).toLowerCase()}`;
     const branchCheck = await git(repositoryRoot, ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`], {
       allowFailure: true,
@@ -67,6 +70,7 @@ export class GitWorktreeManager {
       revisionNumber: 1,
       baseRevision,
       baseBranch,
+      baseRef,
       headRevision: null,
       branch,
       repositoryRoot,
@@ -141,12 +145,34 @@ export class GitWorktreeManager {
     if (currentRevision !== candidate.baseRevision) {
       throw new Error("The source branch moved after this candidate was created. Rebase or recreate the candidate before merging.");
     }
+    const targetRef = candidate.baseRef ?? (candidate.baseBranch && candidate.baseBranch !== "detached" ? `refs/heads/${candidate.baseBranch}` : null);
+    const currentRefResult = await git(repositoryRoot, ["symbolic-ref", "--quiet", "HEAD"], { allowFailure: true });
+    const currentRef = currentRefResult.code === 0 ? currentRefResult.stdout.trim() : null;
+    if (!targetRef || currentRef !== targetRef) {
+      throw new Error("The checked-out target branch no longer matches the candidate's recorded target ref.");
+    }
     const candidateRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
     if (candidateRevision !== candidate.headRevision) {
       throw new Error("The candidate worktree no longer matches the reviewed revision.");
     }
     await git(repositoryRoot, ["merge", "--ff-only", candidate.headRevision]);
     return candidate.headRevision;
+  }
+
+  async mergeState(candidate) {
+    const repositoryRoot = await this.repositoryRoot(candidate.repositoryRoot);
+    const targetRef = candidate.baseRef ?? (candidate.baseBranch && candidate.baseBranch !== "detached" ? `refs/heads/${candidate.baseBranch}` : null);
+    if (!targetRef) throw new Error("The candidate does not have a recorded target ref.");
+    const candidateRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
+    if (!candidate.headRevision || candidateRevision !== candidate.headRevision) {
+      throw new Error("The candidate worktree no longer matches the reviewed revision.");
+    }
+    const targetResult = await git(repositoryRoot, ["rev-parse", "--verify", targetRef], { allowFailure: true });
+    if (targetResult.code !== 0) throw new Error("The candidate target ref no longer exists.");
+    const targetRevision = targetResult.stdout.trim();
+    if (targetRevision === candidate.headRevision) return "merged";
+    if (targetRevision === candidate.baseRevision) return "pending";
+    return "diverged";
   }
 
   async verifyCandidate(candidate) {

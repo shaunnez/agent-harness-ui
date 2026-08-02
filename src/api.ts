@@ -25,7 +25,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     response = await fetch(path, {
       ...init,
-      headers: { "content-type": "application/json", ...init?.headers },
+      headers: {
+        "content-type": "application/json",
+        ...(init?.method && init.method !== "GET" && runtimeCsrfToken ? { "x-agent-harness-csrf": runtimeCsrfToken } : {}),
+        ...init?.headers,
+      },
     });
   } catch {
     throw new Error("The local Agent Harness runtime is offline. Start the app with npm run dev.");
@@ -35,8 +39,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return value;
 }
 
+let runtimeCsrfToken: string | null = null;
+
 export async function getRuntimeStatus() {
-  return request<RuntimeStatus>("/api/runtime/status");
+  const status = await request<RuntimeStatus>("/api/runtime/status");
+  runtimeCsrfToken = status.csrfToken ?? null;
+  return status;
 }
 
 export async function updateRuntimeSettings(input: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies">) {

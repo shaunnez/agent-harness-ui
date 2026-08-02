@@ -15,7 +15,7 @@ function safeDuration(startedAt, completedAt) {
 }
 
 function passesGate(artifact) {
-  return /^\s*(?:PASS\b|(?:#+\s*)?Verdict\s*:?\s*(?:\r?\n)+\s*PASS\b)/i.test(artifact?.content ?? "");
+  return artifact?.gateResult?.verdict === "PASS";
 }
 
 function qualityScore(evaluation, kind) {
@@ -149,8 +149,8 @@ function observationalSummary(tasks) {
       group.taskIds.add(task.id);
       addUsage(group, artifact.usage);
       if (GATE_STAGES.includes(artifact.stage)) {
-        if (passesGate(artifact)) group.gatePasses += 1;
-        else group.gateRepairs += 1;
+        if (artifact.gateResult?.verdict === "PASS") group.gatePasses += 1;
+        if (artifact.gateResult?.verdict === "REPAIR") group.gateRepairs += 1;
       }
       const humanScore = qualityScore(task.evaluation, "human");
       if (humanScore) group.humanScores.push(humanScore);
@@ -179,7 +179,7 @@ function observationalSummary(tasks) {
 
 function experimentTaskMetrics(task) {
   const gateResults = GATE_STAGES.map((stage) => {
-    const attempts = (task.artifacts ?? []).filter((artifact) => artifact.stage === stage);
+    const attempts = (task.artifacts ?? []).filter((artifact) => artifact.stage === stage && artifact.gateResult);
     return {
       stage,
       attempts: attempts.length,

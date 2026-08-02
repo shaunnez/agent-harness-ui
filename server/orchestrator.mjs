@@ -24,7 +24,7 @@ import {
   scoutReportMarkdown,
   selectScoutDispatch,
 } from "./scouts.mjs";
-import { parseGrillQuestions, parseWorkPackages, tryParseFocusedTestEvidence } from "./structured-output.mjs";
+import { parseFocusedTestEvidence, parseGrillQuestions, parseWorkPackages, validateFocusedTestEvidence } from "./structured-output.mjs";
 
 const RUN_KINDS = new Set([
   "investigation",
@@ -48,6 +48,7 @@ function activity(stage, title, detail, tone = "info", category = "activity") {
 export class TaskOrchestrator {
   #store;
   #active = new Map();
+  #mergeActive = new Set();
   #runCodex;
   #getStatus;
   #worktrees;
@@ -101,12 +102,34 @@ export class TaskOrchestrator {
     return this.#active.has(id);
   }
 
-  start(id, kind = "investigation") {
+  async start(id, kind = "investigation", options = {}) {
     if (!RUN_KINDS.has(kind)) throw new Error(`Unknown run kind: ${kind}`);
     if (this.#active.has(id)) return false;
     const controller = new AbortController();
-    const promise = this.#run(id, kind, controller.signal).finally(() => this.#active.delete(id));
-    this.#active.set(id, { controller, kind, promise });
+    const reservation = { controller, kind, promise: null };
+    this.#active.set(id, reservation);
+    try {
+      const reserved = await this.#store.transition(
+        id,
+        (draft) => !draft.activeRunKind && (options.canStart ? options.canStart(draft) : canStartRun(draft, kind)),
+        (draft) => {
+          options.onReserve?.(draft);
+          reserveRun(draft, kind);
+        },
+      );
+      if (!reserved) {
+        this.#active.delete(id);
+        return false;
+      }
+    } catch (error) {
+      this.#active.delete(id);
+      if (error.code === "TASK_TRANSITION_CONFLICT") return false;
+      throw error;
+    }
+    const promise = this.#run(id, kind, controller.signal).finally(() => {
+      if (this.#active.get(id) === reservation) this.#active.delete(id);
+    });
+    reservation.promise = promise;
     return true;
   }
 
@@ -132,16 +155,17 @@ export class TaskOrchestrator {
   }
 
   async answerGrillQuestion(id, input) {
-    const task = await this.#store.get(id);
-    if (!task) throw new Error("Task not found.");
-    if (task.status !== "awaiting-grill" || task.grillSession?.status !== "open") {
-      throw new Error("This task does not have an open Grill Me session.");
-    }
-    const question = task.grillSession.questions.find((item) => item.id === input.questionId);
-    if (!question) throw new Error("Grill question not found.");
     const answer = String(input.answer ?? "").trim().slice(0, 5_000);
     if (!answer) throw new Error("An answer is required.");
-    return this.#store.update(id, (draft) => {
+    const updated = await this.#store.transition(id, (draft) => {
+      if (draft.status !== "awaiting-grill" || draft.grillSession?.status !== "open") {
+        throw new Error("This task does not have an open Grill Me session.");
+      }
+      if (!draft.grillSession.questions.some((item) => item.id === input.questionId)) {
+        throw new Error("Grill question not found.");
+      }
+      return true;
+    }, (draft) => {
       const target = draft.grillSession.questions.find((item) => item.id === input.questionId);
       target.answer = answer;
       target.answerSource = "user";
@@ -161,43 +185,48 @@ export class TaskOrchestrator {
       }
       draft.events.push(activity("grill", "Grill answer recorded", `${target.id}: ${answer}`, "success", "decision"));
     });
+    if (!updated) throw new Error("Task not found.");
+    return updated;
   }
 
   async finishGrill(id, { acceptRemaining = false } = {}) {
-    const task = await this.#store.get(id);
-    if (!task) throw new Error("Task not found.");
-    if (task.status !== "awaiting-grill" || task.grillSession?.status !== "open") {
-      throw new Error("This task does not have an open Grill Me session.");
-    }
-    const unresolved = task.grillSession.questions.filter((question) => !question.answer);
-    if (unresolved.length && !acceptRemaining) {
-      throw new Error("Answer every Grill question or explicitly accept the recommended assumptions.");
-    }
-    await this.#store.update(id, (draft) => {
-      for (const question of draft.grillSession.questions.filter((item) => !item.answer)) {
-        const recommendation = question.options.find((option) => option.recommended);
-        question.answer = recommendation.label;
-        question.answerSource = "accepted-assumption";
-        question.resolvedAt = now();
-        draft.decisions.push({
-          id: crypto.randomUUID(),
-          grillQuestionId: question.id,
-          question: question.question,
-          answer: recommendation.label,
-          createdAt: now(),
-        });
-      }
-      draft.grillSession.status = "completed";
-      draft.grillSession.completedAt = now();
-      draft.grillSession.completionReason = unresolved.length
-        ? `Finished by the user with ${unresolved.length} recommended assumption${unresolved.length === 1 ? "" : "s"} accepted.`
-        : draft.grillSession.questions.length
-          ? "All material questions were answered."
-          : "No material product decisions remained after repository investigation.";
-      if (!draft.completedStages.includes("grill")) draft.completedStages.push("grill");
-      draft.events.push(activity("grill", "Grill Me completed", draft.grillSession.completionReason, "success", "decision"));
+    let unresolvedCount = 0;
+    const started = await this.start(id, "specification", {
+      canStart: (draft) => {
+        if (draft.status !== "awaiting-grill" || draft.grillSession?.status !== "open") {
+          throw new Error("This task does not have an open Grill Me session.");
+        }
+        unresolvedCount = draft.grillSession.questions.filter((question) => !question.answer).length;
+        if (unresolvedCount && !acceptRemaining) {
+          throw new Error("Answer every Grill question or explicitly accept the recommended assumptions.");
+        }
+        return true;
+      },
+      onReserve: (draft) => {
+        for (const question of draft.grillSession.questions.filter((item) => !item.answer)) {
+          const recommendation = question.options.find((option) => option.recommended);
+          question.answer = recommendation.label;
+          question.answerSource = "accepted-assumption";
+          question.resolvedAt = now();
+          draft.decisions.push({
+            id: crypto.randomUUID(),
+            grillQuestionId: question.id,
+            question: question.question,
+            answer: recommendation.label,
+            createdAt: now(),
+          });
+        }
+        draft.grillSession.status = "completed";
+        draft.grillSession.completedAt = now();
+        draft.grillSession.completionReason = unresolvedCount
+          ? `Finished by the user with ${unresolvedCount} recommended assumption${unresolvedCount === 1 ? "" : "s"} accepted.`
+          : draft.grillSession.questions.length
+            ? "All material questions were answered."
+            : "No material product decisions remained after repository investigation.";
+        if (!draft.completedStages.includes("grill")) draft.completedStages.push("grill");
+        draft.events.push(activity("grill", "Grill Me completed", draft.grillSession.completionReason, "success", "decision"));
+      },
     });
-    const started = this.start(id, "specification");
     if (!started) throw new Error("Task is already running.");
     return { started: true };
   }
@@ -208,16 +237,19 @@ export class TaskOrchestrator {
     if (!["awaiting-spec-approval", "awaiting-approval"].includes(task.status)) {
       throw new Error("The task is not awaiting specification approval.");
     }
-    await this.#recordApproval(id, "specification", note);
     if (task.workflow === "investigate") {
-      await this.#store.update(id, (draft) => {
+      await this.#store.transition(id, (draft) => ["awaiting-spec-approval", "awaiting-approval"].includes(draft.status), (draft) => {
+        recordApproval(draft, "specification", note);
         draft.status = "completed";
         draft.completedAt = now();
         draft.events.push(activity("specification", "Investigation approved", "The approved specification is the final deliverable for this task.", "success", "decision"));
       });
       return { started: false, completed: true };
     }
-    const started = this.start(id, "planning");
+    const started = await this.start(id, "planning", {
+      canStart: (draft) => ["awaiting-spec-approval", "awaiting-approval"].includes(draft.status),
+      onReserve: (draft) => recordApproval(draft, "specification", note),
+    });
     if (!started) throw new Error("Task is already running.");
     return { started: true, completed: false };
   }
@@ -226,8 +258,8 @@ export class TaskOrchestrator {
     const task = await this.#store.get(id);
     if (!task) throw new Error("Task not found.");
     if (task.status !== "awaiting-plan-approval") throw new Error("The task is not awaiting plan approval.");
-    await this.#recordApproval(id, "plan", note);
-    return this.#store.update(id, (draft) => {
+    return this.#store.transition(id, (draft) => draft.status === "awaiting-plan-approval", (draft) => {
+      recordApproval(draft, "plan", note);
       draft.status = "ready-for-implementation";
       draft.currentStage = "implement";
       draft.events.push(activity("implement", "Implementation authorized", "The approved plan may now run in an isolated Git worktree.", "success", "decision"));
@@ -235,16 +267,91 @@ export class TaskOrchestrator {
   }
 
   async approveMerge(id, note = "") {
-    const task = await this.#store.get(id);
+    if (this.#mergeActive.has(id)) throw new Error("This task already has a merge reconciliation in progress.");
+    this.#mergeActive.add(id);
+    return this.#approveMerge(id, note).finally(() => this.#mergeActive.delete(id));
+  }
+
+  async #approveMerge(id, note = "") {
+    let task = await this.#store.get(id);
     if (!task) throw new Error("Task not found.");
-    if (task.status !== "awaiting-human-approval") throw new Error("The task is not awaiting merge approval.");
+    if (task.status === "awaiting-human-approval") {
+      const candidate = currentCandidate(task);
+      if (candidate.status !== "awaiting_human_approval") throw new Error("The current candidate has not cleared every gate.");
+      const targetRef = candidate.baseRef ?? (candidate.baseBranch && candidate.baseBranch !== "detached" ? `refs/heads/${candidate.baseBranch}` : null);
+      if (!targetRef || !candidate.headRevision) throw new Error("The candidate does not have a mergeable target revision.");
+      task = await this.#store.transition(id, (draft) => {
+        const activeCandidate = currentCandidate(draft);
+        return draft.status === "awaiting-human-approval" && activeCandidate.status === "awaiting_human_approval";
+      }, (draft) => {
+        const activeCandidate = currentCandidate(draft);
+        draft.status = "merging";
+        draft.mergeIntent = {
+          candidateId: activeCandidate.id,
+          candidateRevision: activeCandidate.revisionNumber,
+          baseRevision: activeCandidate.baseRevision,
+          headRevision: activeCandidate.headRevision,
+          targetRef,
+          note: note.trim().slice(0, 5_000),
+          status: "pending",
+          startedAt: now(),
+          completedAt: null,
+          error: null,
+        };
+        draft.events.push(activity("approval", "Merge intent recorded", `${activeCandidate.id} revision ${activeCandidate.revisionNumber} is reserved for ${targetRef}.`, "warning", "decision"));
+      });
+    } else if (task.status !== "merging" || task.mergeIntent?.status !== "pending") {
+      throw new Error("The task is not awaiting merge approval.");
+    }
+
     const candidate = currentCandidate(task);
-    if (candidate.status !== "awaiting_human_approval") throw new Error("The current candidate has not cleared every gate.");
-    await this.#worktrees.merge(candidate);
-    return this.#store.update(id, (draft) => {
+    try {
+      const mergeState = typeof this.#worktrees.mergeState === "function"
+        ? await this.#worktrees.mergeState(candidate)
+        : "pending";
+      if (mergeState === "diverged") throw new Error("The recorded target ref moved after merge approval was reserved.");
+      if (mergeState === "pending") await this.#worktrees.merge(candidate);
+      return this.#finalizeMerge(id);
+    } catch (error) {
+      await this.#store.update(id, (draft) => {
+        if (draft.status !== "merging" || draft.mergeIntent?.status !== "pending") return;
+        draft.error = error.message;
+        draft.mergeIntent.error = error.message;
+        draft.events.push(activity("approval", "Merge reconciliation required", error.message, "danger", "decision"));
+      });
+      throw error;
+    }
+  }
+
+  async recoverMergeIntents() {
+    const tasks = await this.#store.list();
+    for (const task of tasks.filter((item) => item.status === "merging" && item.mergeIntent?.status === "pending")) {
+      try {
+        const candidate = currentCandidate(task);
+        const mergeState = typeof this.#worktrees.mergeState === "function"
+          ? await this.#worktrees.mergeState(candidate)
+          : "pending";
+        if (mergeState === "diverged") throw new Error("The recorded target ref diverged while recovering a pending merge.");
+        if (mergeState === "pending") await this.#worktrees.merge(candidate);
+        await this.#finalizeMerge(task.id);
+      } catch (error) {
+        await this.#store.update(task.id, (draft) => {
+          if (draft.status !== "merging" || draft.mergeIntent?.status !== "pending") return;
+          draft.status = "blocked";
+          draft.error = error.message;
+          draft.mergeIntent.status = "failed";
+          draft.mergeIntent.error = error.message;
+          draft.events.push(activity("approval", "Pending merge blocked", error.message, "danger", "decision"));
+        });
+      }
+    }
+  }
+
+  async #finalizeMerge(id) {
+    return this.#store.transition(id, (draft) => draft.status === "merging" && draft.mergeIntent?.status === "pending", (draft) => {
       const activeCandidate = currentCandidate(draft);
       const approvedAt = now();
-      const approvalNote = note.trim().slice(0, 5_000);
+      const approvalNote = draft.mergeIntent.note;
       draft.approvals ??= [];
       draft.approvals.push({ id: crypto.randomUUID(), stage: "approval", note: approvalNote, createdAt: approvedAt });
       activeCandidate.status = "merged";
@@ -253,6 +360,10 @@ export class TaskOrchestrator {
       draft.currentStage = "approval";
       draft.completedAt = approvedAt;
       if (!draft.completedStages.includes("approval")) draft.completedStages.push("approval");
+      draft.mergeIntent.status = "completed";
+      draft.mergeIntent.completedAt = approvedAt;
+      draft.mergeIntent.error = null;
+      draft.error = null;
       draft.artifacts.push({
         id: crypto.randomUUID(),
         stage: "approval",
@@ -271,40 +382,7 @@ export class TaskOrchestrator {
     });
   }
 
-  async #recordApproval(id, stage, note) {
-    await this.#store.update(id, (draft) => {
-      draft.approvals ??= [];
-      draft.approvals.push({ id: crypto.randomUUID(), stage, note: note.trim().slice(0, 5_000), createdAt: now() });
-      draft.events.push(activity(stage, `${getStageMetadata(stage)?.label ?? stage} approved`, note.trim() || "Approved without an additional note.", "success", "decision"));
-    });
-  }
-
   async #run(id, kind, signal) {
-    const initial = await this.#store.get(id);
-    if (!initial) return;
-    const stage = stageForRun(kind, initial.currentStage);
-    await this.#store.update(id, (draft) => {
-      draft.status = "running";
-      draft.error = null;
-      draft.startedAt ??= now();
-      draft.completedAt = null;
-      draft.stageRun += 1;
-      draft.attemptsByStage ??= {};
-      draft.attemptsByStage[stage] = (draft.attemptsByStage[stage] ?? 0) + 1;
-      draft.activeRunKind = kind;
-      const candidate = draft.candidates?.at(-1);
-      if (candidate) {
-        const candidateStatus = {
-          repair: "repairing",
-          review: "reviewing",
-          test: "testing",
-          "final-review": "final_reviewing",
-        }[kind];
-        if (candidateStatus) candidate.status = candidateStatus;
-      }
-      draft.events.push(activity(stage, `${labelForRun(kind)} started`, runDetail(kind), "info", "agent"));
-    });
-
     try {
       if (kind === "investigation") await this.#runInvestigation(id, signal);
       if (kind === "specification") await this.#runSpecification(id, signal);
@@ -662,8 +740,20 @@ export class TaskOrchestrator {
     const result = await this.#executeAgent(task, stageId, signal, candidate.worktreePath, "read-only", candidate);
     throwIfAborted(signal);
     if (stageId === "test") await this.#worktrees.verifyCandidate(candidate);
-    const verdict = evaluationVerdict(stageId, result);
-    const focusedTestEvidence = stageId === "test" ? tryParseFocusedTestEvidence(result.finalText) : null;
+    const focusedTestEvidence = stageId === "test"
+      ? validateFocusedTestEvidence(parseFocusedTestEvidence(result.finalText), candidate)
+      : null;
+    const verdict = evaluationVerdict(stageId, result, focusedTestEvidence);
+    const gateResult = {
+      verdict,
+      candidateId: candidate.id,
+      candidateRevision: candidate.revisionNumber,
+      evaluatedAt: now(),
+      blockingReasons: [
+        ...(result.runtimeEvents?.some((event) => event.commandFailed) ? ["A verification command failed."] : []),
+        ...(focusedTestEvidence?.status === "failed" ? ["Structured test evidence contains a failed result."] : []),
+      ],
+    };
     await this.#retainAgentResult(id, stageId, result, {
       replace: false,
       name: `${stageId}-${candidate.id.toLowerCase()}-r${candidate.revisionNumber}.md`,
@@ -671,6 +761,7 @@ export class TaskOrchestrator {
       candidateRevision: candidate.revisionNumber,
       complete: verdict === "PASS",
       focusedTestEvidence,
+      gateResult,
     });
     await this.#store.update(id, (draft) => {
       const activeCandidate = currentCandidate(draft);
@@ -857,6 +948,7 @@ export class TaskOrchestrator {
         candidateRevision: options.candidateRevision ?? null,
         workPackageId: options.workPackageId ?? null,
         focusedTest: options.focusedTestEvidence ?? null,
+        gateResult: options.gateResult ?? null,
         contextManifest: result.contextManifest ?? null,
       });
       if (options.complete !== false && !draft.completedStages.includes(stageId)) draft.completedStages.push(stageId);
@@ -897,9 +989,60 @@ function currentCandidate(task) {
   return candidate;
 }
 
-export function evaluationVerdict(stageId, result) {
+export function evaluationVerdict(stageId, result, focusedTestEvidence = null) {
   if (stageId === "test" && result.runtimeEvents?.some((event) => event.commandFailed)) return "REPAIR";
+  if (stageId === "test" && focusedTestEvidence?.status !== "passed") return "REPAIR";
   return parseVerdict(result.finalText);
+}
+
+function canStartRun(task, kind) {
+  const stage = stageForRun(kind, task.currentStage);
+  const attempts = task.attemptsByStage?.[stage] ?? 0;
+  if (task.status === "blocked" || attempts >= task.stageRunLimit) return false;
+  const allowed = {
+    investigation: ["queued", "failed", "cancelled"],
+    specification: ["awaiting-grill"],
+    planning: ["failed", "cancelled"],
+    implementation: ["ready-for-implementation", "failed", "cancelled"],
+    repair: ["repair-required", "failed", "cancelled"],
+    review: ["ready-for-review", "failed", "cancelled"],
+    test: ["ready-for-test", "failed", "cancelled"],
+    "final-review": ["ready-for-final-review", "failed", "cancelled"],
+  }[kind];
+  if (!allowed.includes(task.status)) return false;
+  if (kind === "repair" && currentCandidate(task).status !== "repair_required") return false;
+  if (kind === "implementation" && task.candidates?.at(-1)?.status === "repair_required") return false;
+  return true;
+}
+
+function reserveRun(task, kind) {
+  const stage = stageForRun(kind, task.currentStage);
+  task.status = "running";
+  task.error = null;
+  task.startedAt ??= now();
+  task.completedAt = null;
+  task.stageRun += 1;
+  task.attemptsByStage ??= {};
+  task.attemptsByStage[stage] = (task.attemptsByStage[stage] ?? 0) + 1;
+  task.activeRunKind = kind;
+  const candidate = task.candidates?.at(-1);
+  if (candidate) {
+    const candidateStatus = {
+      repair: "repairing",
+      review: "reviewing",
+      test: "testing",
+      "final-review": "final_reviewing",
+    }[kind];
+    if (candidateStatus) candidate.status = candidateStatus;
+  }
+  task.events.push(activity(stage, `${labelForRun(kind)} started`, runDetail(kind), "info", "agent"));
+}
+
+function recordApproval(task, stage, note) {
+  const approvalNote = note.trim().slice(0, 5_000);
+  task.approvals ??= [];
+  task.approvals.push({ id: crypto.randomUUID(), stage, note: approvalNote, createdAt: now() });
+  task.events.push(activity(stage, `${getStageMetadata(stage)?.label ?? stage} approved`, approvalNote || "Approved without an additional note.", "success", "decision"));
 }
 
 function parseVerdict(text) {

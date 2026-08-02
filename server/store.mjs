@@ -101,6 +101,7 @@ export class JsonTaskStore {
         closure: null,
         evaluation: null,
         experiment: clone(input.experiment ?? null),
+        mergeIntent: null,
         scoutDispatch: null,
         status: "queued",
         currentStage: "triage",
@@ -151,6 +152,23 @@ export class JsonTaskStore {
     });
   }
 
+  async transition(id, condition, updater) {
+    return this.#mutate((state) => {
+      const task = state.tasks.find((item) => item.id === id);
+      if (!task) return null;
+      if (!condition(task)) {
+        const error = new Error("Task state changed before the requested action could be reserved.");
+        error.code = "TASK_TRANSITION_CONFLICT";
+        error.statusCode = 409;
+        throw error;
+      }
+      updater(task);
+      task.updatedAt = new Date().toISOString();
+      task.events = task.events.slice(-250);
+      return task;
+    });
+  }
+
   async recoverInterrupted() {
     return this.#mutate((state) => {
       const now = new Date().toISOString();
@@ -182,6 +200,7 @@ export class JsonTaskStore {
           ["closure", null],
           ["evaluation", null],
           ["experiment", null],
+          ["mergeIntent", null],
           ["scoutDispatch", null],
           ["attemptsByStage", {}],
           ["decisions", []],

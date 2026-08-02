@@ -54,16 +54,34 @@ export function parseFocusedTestEvidence(text) {
   if (!value.command?.trim()) throw new Error("Focused test evidence must include a command.");
   const rows = Array.isArray(value.rows) ? value.rows : [];
   if (!rows.length) throw new Error("Focused test evidence must include at least one row.");
-  return {
+  if (!["passed", "failed"].includes(value.status)) throw new Error("Focused test evidence status must be passed or failed.");
+  const normalized = {
     candidateId: value.candidateId.trim(),
     candidateRevision: value.candidateRevision,
     command: value.command.trim().slice(0, 2_000),
-    status: value.status === "failed" ? "failed" : "passed",
+    status: value.status,
     startedAt: value.startedAt ?? null,
     completedAt: value.completedAt ?? null,
     durationMs: normalizeDuration(value.durationMs),
     rows: rows.map((row, rowIndex) => normalizeFocusedTestRow(row, rowIndex, value)),
   };
+  const derivedStatus = normalized.rows.every((row) => row.status === "passed") ? "passed" : "failed";
+  if (normalized.status !== derivedStatus) {
+    throw new Error(`Focused test evidence status ${normalized.status} contradicts its ${derivedStatus} rows.`);
+  }
+  return normalized;
+}
+
+export function validateFocusedTestEvidence(evidence, candidate) {
+  if (!candidate?.id || !Number.isInteger(candidate.revisionNumber)) throw new Error("Focused test evidence requires an active candidate identity.");
+  if (evidence.candidateId !== candidate.id || evidence.candidateRevision !== candidate.revisionNumber) {
+    throw new Error("Focused test evidence does not match the active candidate revision.");
+  }
+  const mismatchedRow = evidence.rows.find(
+    (row) => row.candidateId !== candidate.id || row.candidateRevision !== candidate.revisionNumber,
+  );
+  if (mismatchedRow) throw new Error(`Focused test row ${mismatchedRow.id} does not match the active candidate revision.`);
+  return evidence;
 }
 
 export function tryParseFocusedTestEvidence(text) {
@@ -185,7 +203,10 @@ function normalizeFocusedTestRow(row, rowIndex, parent) {
   if (!Number.isInteger(candidateRevision) || candidateRevision < 1) {
     throw new Error(`Focused test row ${rowIndex + 1} must include a positive candidateRevision.`);
   }
-  const status = row?.status === "failed" ? "failed" : "passed";
+  if (!["passed", "failed"].includes(row?.status)) {
+    throw new Error(`Focused test row ${rowIndex + 1} status must be passed or failed.`);
+  }
+  const status = row.status;
   const assertions = Array.isArray(row?.assertions)
     ? row.assertions.map((assertion, assertionIndex) => ({
         label: String(assertion?.label ?? "").trim().slice(0, 300) || `Assertion ${assertionIndex + 1}`,

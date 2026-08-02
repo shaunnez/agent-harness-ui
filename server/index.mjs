@@ -14,6 +14,7 @@ const port = Number(process.env.AGENT_HARNESS_PORT ?? 4310);
 const store = new JsonTaskStore(dataPath);
 await store.init();
 const orchestrator = new TaskOrchestrator(store);
+await orchestrator.recoverMergeIntents();
 const server = createApiServer({ store, orchestrator, suggestedRepository });
 
 server.listen(port, "127.0.0.1", () => {

@@ -9,6 +9,7 @@ import {
   normalizeExperimentInput,
 } from "./evaluation.mjs";
 import { GitWorktreeManager } from "./git-worktree.mjs";
+import { assertHttpBoundary, corsHeaders } from "./http-security.mjs";
 import { normalizeModelId, POLICY_IDS, readCodexModelCatalog } from "./model-catalog.mjs";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
@@ -118,28 +119,30 @@ function worktreeEntriesForTask(task) {
   return entries;
 }
 
-export function createApiServer({ store, orchestrator, suggestedRepository }) {
+export function createApiServer({ store, orchestrator, suggestedRepository, csrfToken = crypto.randomUUID() }) {
   const worktrees = new GitWorktreeManager(process.cwd());
   return createServer(async (request, response) => {
     const url = new URL(request.url, "http://127.0.0.1");
     if (request.method === "OPTIONS") {
-      response.writeHead(204, {
-        "access-control-allow-origin": "http://127.0.0.1:4173",
-        "access-control-allow-methods": "GET,POST,OPTIONS",
-        "access-control-allow-headers": "content-type",
-      });
-      response.end();
+      try {
+        assertHttpBoundary(request, csrfToken);
+        response.writeHead(204, corsHeaders(request.headers.origin));
+        response.end();
+      } catch (error) {
+        send(response, error.statusCode ?? 400, { error: error.message });
+      }
       return;
     }
 
     try {
+      assertHttpBoundary(request, csrfToken);
       if (request.method === "GET" && url.pathname === "/api/health") {
         send(response, 200, { ok: true, service: "agent-harness-local", runtimeSchemaVersion: RUNTIME_SCHEMA_VERSION });
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/runtime/status") {
         const runtime = await orchestrator.status();
-        send(response, 200, { ...runtime, suggestedRepository, runtimeSchemaVersion: RUNTIME_SCHEMA_VERSION });
+        send(response, 200, { ...runtime, suggestedRepository, runtimeSchemaVersion: RUNTIME_SCHEMA_VERSION, csrfToken });
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/settings") {
@@ -329,7 +332,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
         const supersededBy = reason === "superseded" ? String(input.supersededBy ?? "").trim().slice(0, 80) : null;
         const note = String(input.note ?? "").trim().slice(0, 2_000);
         const closedAt = new Date().toISOString();
-        const closed = await store.update(id, (draft) => {
+        const closed = await store.transition(id, (draft) => draft.status !== "running" && !draft.activeRunKind && draft.status !== "closed", (draft) => {
           draft.status = "closed";
           draft.activeRunKind = null;
           draft.error = null;
@@ -514,14 +517,14 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
           send(response, 409, { error: "The current stage has exhausted its retry allowance." });
           return;
         }
-        const started = orchestrator.start(id, runConfiguration.kind);
+        const started = await orchestrator.start(id, runConfiguration.kind);
         send(response, started ? 202 : 409, started ? { started: true } : { error: "Task is already running." });
         return;
       }
 
       send(response, 404, { error: "Not found." });
     } catch (error) {
-      send(response, 400, { error: error.message });
+      send(response, error.statusCode ?? 400, { error: error.message });
     }
   });
 }

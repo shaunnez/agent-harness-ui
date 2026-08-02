@@ -6,7 +6,7 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createServer as createViteServer } from "vite";
-import { parseCodexEvent, selectCodexCandidate } from "../server/codex-runtime.mjs";
+import { buildCodexEnvironment, parseCodexEvent, selectCodexCandidate } from "../server/codex-runtime.mjs";
 import { normalizeModelId, priceUsage } from "../server/model-catalog.mjs";
 import { buildStageRequest } from "../server/prompts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
@@ -38,6 +38,28 @@ test("prefers a Windows Codex runtime with its sandbox helper", () => {
     candidate.endsWith("desktop\\codex-windows-sandbox-setup.exe"),
   );
   assert.equal(selected, process.platform === "win32" ? candidates[1] : candidates[0]);
+});
+
+test("builds a minimal Codex environment without inherited credentials", () => {
+  const environment = buildCodexEnvironment({
+    PATH: "C:\\Windows\\System32",
+    USERPROFILE: "C:\\Users\\agent",
+    LOCALAPPDATA: "C:\\Users\\agent\\AppData\\Local",
+    CODEX_HOME: "C:\\Users\\agent\\.codex",
+    GH_TOKEN: "secret-github-token",
+    AWS_SECRET_ACCESS_KEY: "secret-aws-key",
+    DATABASE_URL: "postgres://secret",
+    OPENAI_API_KEY: "secret-openai-key",
+    ARBITRARY_SECRET: "secret-value",
+  }, "C:\\tmp\\agent-harness-runtime");
+  assert.equal(environment.PATH, "C:\\Windows\\System32");
+  assert.equal(environment.CODEX_HOME, "C:\\Users\\agent\\.codex");
+  assert.equal(environment.TEMP, "C:\\tmp\\agent-harness-runtime");
+  assert.equal(environment.GH_TOKEN, undefined);
+  assert.equal(environment.AWS_SECRET_ACCESS_KEY, undefined);
+  assert.equal(environment.DATABASE_URL, undefined);
+  assert.equal(environment.OPENAI_API_KEY, undefined);
+  assert.equal(environment.ARBITRARY_SECRET, undefined);
 });
 
 test("calculates an API-rate estimate after cached-input discounts", () => {
@@ -171,7 +193,7 @@ test("cancellation wins when an implementation agent completes after abort", asy
       },
     });
 
-    assert.equal(orchestrator.start(task.id, "implementation"), true);
+    assert.equal(await orchestrator.start(task.id, "implementation"), true);
     await waitUntil(() => typeof finishAgent === "function");
     assert.equal(orchestrator.cancel(task.id), true);
     finishAgent();

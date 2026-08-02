@@ -12,6 +12,17 @@ import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from
 import { promisify } from "node:util";
 
 const exec = promisify(execFile);
+const TEST_CSRF_TOKEN = "test-csrf-token";
+const nativeFetch = globalThis.fetch;
+
+function fetch(input, init = {}) {
+  const headers = new Headers(init.headers);
+  if (init.method && init.method !== "GET") {
+    if (!headers.has("content-type")) headers.set("content-type", "application/json");
+    if (!headers.has("x-agent-harness-csrf")) headers.set("x-agent-harness-csrf", TEST_CSRF_TOKEN);
+  }
+  return nativeFetch(input, { ...init, headers });
+}
 
 async function createServer() {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-"));
@@ -46,7 +57,7 @@ async function createServer() {
     async approvePlan() {},
     async approveMerge() {},
   };
-  const server = createApiServer({ store, orchestrator, suggestedRepository: directory });
+  const server = createApiServer({ store, orchestrator, suggestedRepository: directory, csrfToken: TEST_CSRF_TOKEN });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
   return {
@@ -134,6 +145,44 @@ test("creates, lists, and starts a local task", async () => {
   }
 });
 
+test("rejects untrusted browser mutations before invoking task creation", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const payload = JSON.stringify({
+      title: "Rejected mutation",
+      description: "This request must not cross the local browser boundary.",
+      repositoryPath: directory,
+      workflow: "investigate",
+    });
+    const foreignOrigin = await nativeFetch(`${origin}/api/tasks`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-agent-harness-csrf": TEST_CSRF_TOKEN, origin: "https://hostile.example" },
+      body: payload,
+    });
+    assert.equal(foreignOrigin.status, 403);
+    const simplePost = await nativeFetch(`${origin}/api/tasks`, {
+      method: "POST",
+      headers: { "content-type": "text/plain" },
+      body: payload,
+    });
+    assert.equal(simplePost.status, 415);
+    const missingToken = await nativeFetch(`${origin}/api/tasks`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: payload,
+    });
+    assert.equal(missingToken.status, 403);
+    const hostilePreflight = await nativeFetch(`${origin}/api/tasks`, {
+      method: "OPTIONS",
+      headers: { origin: "https://hostile.example" },
+    });
+    assert.equal(hostilePreflight.status, 403);
+    assert.equal((await store.list()).length, 0);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("snapshots controlled experiment inputs and reports measured outcomes separately", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
@@ -187,6 +236,13 @@ test("snapshots controlled experiment inputs and reports measured outcomes separ
         agentRole: stage,
         usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 2, totalTokens: 12, cost: 0.001, credits: 0.05 },
         contextManifest: { promptCharacters: 1_000, estimatedPromptTokens: 250 },
+        gateResult: {
+          verdict: content === "PASS" ? "PASS" : "REPAIR",
+          candidateId: "C1",
+          candidateRevision: 1,
+          evaluatedAt: "2026-08-03T00:01:00.000Z",
+          blockingReasons: content === "PASS" ? [] : ["Fixture repair"],
+        },
       });
       draft.artifacts.push(
         artifact("dev-review", "REPAIR", "review-1"),
