@@ -203,27 +203,55 @@ test("renders truthful active-stage access boundaries", () => {
     assert.match(testMarkup, /temporary files/i);
     assert.match(testMarkup, /must be left clean/i);
 
-    const viewedArtifactMarkup = renderWorkspace(
-      createTask({
-        currentStage: "implement",
-        status: "running",
-        artifacts: [
-          {
-            id: "artifact-1",
-            stage: "specification",
-            kind: "markdown",
-            name: "Specification",
-            content: "# Spec",
-            createdAt: "2026-08-01T11:00:00.000Z",
-            model: "GPT-5.4-mini",
-            usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
-          },
-        ],
+    const activeTask = createTask({
+      currentStage: "implement",
+      status: "running",
+      artifacts: [
+        {
+          id: "artifact-1",
+          stage: "specification",
+          kind: "markdown",
+          name: "Specification",
+          content: "# Spec",
+          createdAt: "2026-08-01T11:00:00.000Z",
+          model: "GPT-5.4-mini",
+          usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+        },
+      ],
+    });
+    const viewedStageMarkup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task: activeTask,
+        initialViewedStageId: "specification",
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
       }),
     );
-    assert.match(viewedArtifactMarkup, /Viewing/);
-    assert.match(viewedArtifactMarkup, /Active/);
-    assert.match(viewedArtifactMarkup, /Worktree write scope/);
+    const sameActiveDifferentViewedMarkup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task: activeTask,
+        initialViewedStageId: "plan",
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+      }),
+    );
+
+    assert.match(viewedStageMarkup, /Viewing/);
+    assert.match(viewedStageMarkup, /Active/);
+    assert.match(viewedStageMarkup, /Worktree write scope/);
+    assert.match(viewedStageMarkup, /isolated candidate worktree/i);
+    assert.match(sameActiveDifferentViewedMarkup, /Worktree write scope/);
+    assert.match(sameActiveDifferentViewedMarkup, /isolated candidate worktree/i);
+    assert.equal(
+      viewedStageMarkup.match(/Worktree write scope[^<]*/)?.[0],
+      sameActiveDifferentViewedMarkup.match(/Worktree write scope[^<]*/)?.[0],
+    );
   });
 });
 

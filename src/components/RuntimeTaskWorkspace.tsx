@@ -30,6 +30,7 @@ export function RuntimeTaskWorkspace({
   onCancel,
   onAction,
   onDecision,
+  initialViewedStageId,
 }: {
   task: RuntimeTask;
   onBack: () => void;
@@ -50,12 +51,13 @@ export function RuntimeTaskWorkspace({
     note?: string,
   ) => Promise<void>;
   onDecision: (question: string, answer: string) => Promise<void>;
+  initialViewedStageId?: StageId;
 }) {
   const currentIndex = Math.max(
     0,
     workflowStages.findIndex((stage) => stage.id === task.currentStage),
   );
-  const [viewedStageId, setViewedStageId] = useState<StageId>(task.currentStage);
+  const [viewedStageId, setViewedStageId] = useState<StageId>(initialViewedStageId ?? task.currentStage);
   const [openArtifact, setOpenArtifact] = useState<RuntimeArtifact | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const viewedIndex = Math.max(
@@ -381,25 +383,15 @@ function RuntimeCommandBar({
       <Icon className={running ? "spin" : ""} size={18} weight="fill" />
       <span className="stage-command-bar__copy">
         <small>
-          {running
-            ? accessBoundary.kicker
-            : blocked
-              ? "Blocked"
-              : repairRequired
-                ? "Repair required"
-                : failed
-                  ? "Action required"
-                  : ready
-                    ? "Next step"
-                    : "Ready"}
+          {accessBoundary.kicker}
         </small>
         <strong>
           {running
             ? accessBoundary.title
-            : blocked
-              ? (next?.title ?? "Repair allowance exhausted")
-              : repairRequired
-                ? (next?.title ?? "Candidate repair required")
+              : blocked
+                ? (next?.title ?? "Repair allowance exhausted")
+                : repairRequired
+                ? accessBoundary.title
                 : failed
                   ? "Retry the failed stage"
                   : ready
@@ -412,7 +404,7 @@ function RuntimeCommandBar({
             : blocked
               ? (next?.detail ?? "Review the retained activity before granting another attempt.")
               : repairRequired
-                ? (next?.detail ?? "The retained gate evidence identifies the required repair.")
+                ? `${accessBoundary.detail} ${next?.detail ?? "The retained gate evidence identifies the required repair."}`
                 : failed
                   ? task.error
                   : ready
