@@ -1,4 +1,5 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { setTimeout as delay } from "node:timers/promises";
 import path from "node:path";
 
 const EMPTY_STATE = { nextId: 1, tasks: [] };
@@ -155,7 +156,7 @@ export class JsonTaskStore {
   async #write(state) {
     const temporaryPath = `${this.#filePath}.${process.pid}.tmp`;
     await writeFile(temporaryPath, `${JSON.stringify(state, null, 2)}\n`, "utf8");
-    await rename(temporaryPath, this.#filePath);
+    await renameWithRetry(temporaryPath, this.#filePath);
   }
 
   #mutate(operation) {
@@ -172,5 +173,21 @@ export class JsonTaskStore {
       () => undefined,
     );
     return pending;
+  }
+}
+
+async function renameWithRetry(sourcePath, targetPath) {
+  const retryableCodes = new Set(["EPERM", "EACCES", "EBUSY"]);
+  const maxAttempts = 5;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      await rename(sourcePath, targetPath);
+      return;
+    } catch (error) {
+      if (!retryableCodes.has(error?.code) || attempt === maxAttempts) {
+        throw error;
+      }
+      await delay(25 * attempt);
+    }
   }
 }
