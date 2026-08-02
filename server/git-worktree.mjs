@@ -6,17 +6,42 @@ const OUTPUT_LIMIT = 512 * 1024;
 
 export class GitWorktreeManager {
   #root;
+  #prepareQueue = Promise.resolve();
 
   constructor(root) {
     this.#root = path.resolve(root);
   }
 
-  async prepare(task, candidateId) {
+  async base(task) {
     const repositoryRoot = await this.repositoryRoot(task.repositoryPath);
     await assertClean(repositoryRoot);
-    const baseRevision = (await git(repositoryRoot, ["rev-parse", "HEAD"])).stdout.trim();
+    return {
+      repositoryRoot,
+      baseRevision: (await git(repositoryRoot, ["rev-parse", "HEAD"])).stdout.trim(),
+      baseBranch: (await git(repositoryRoot, ["branch", "--show-current"])).stdout.trim() || "detached",
+    };
+  }
+
+  prepare(task, candidateId, options = {}) {
+    const run = () => this.#prepare(task, candidateId, options);
+    const pending = this.#prepareQueue.then(run, run);
+    this.#prepareQueue = pending.then(
+      () => undefined,
+      () => undefined,
+    );
+    return pending;
+  }
+
+  async #prepare(task, candidateId, options = {}) {
+    const repositoryRoot = await this.repositoryRoot(task.repositoryPath);
+    await assertClean(repositoryRoot);
+    const sourceRevision = (await git(repositoryRoot, ["rev-parse", "HEAD"])).stdout.trim();
+    const baseRevision = options.baseRevision ?? sourceRevision;
+    if (sourceRevision !== baseRevision) {
+      throw new Error("The source checkout moved after implementation scheduling began.");
+    }
     const baseBranch = (await git(repositoryRoot, ["branch", "--show-current"])).stdout.trim() || "detached";
-    const branch = `agent-harness/${task.id.toLowerCase()}-${candidateId.toLowerCase()}`;
+    const branch = `agent-harness/${task.id.toLowerCase()}-${safeSegment(options.branchId ?? candidateId).toLowerCase()}`;
     const branchCheck = await git(repositoryRoot, ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`], {
       allowFailure: true,
     });
@@ -29,6 +54,14 @@ export class GitWorktreeManager {
     }
     await mkdir(path.dirname(worktreePath), { recursive: true });
     await git(repositoryRoot, ["worktree", "add", "-b", branch, worktreePath, baseRevision]);
+    for (const dependencyRevision of options.dependencyRevisions ?? []) {
+      try {
+        await git(worktreePath, ["cherry-pick", dependencyRevision]);
+      } catch (error) {
+        await git(worktreePath, ["cherry-pick", "--abort"], { allowFailure: true });
+        throw new Error(`Could not prepare ${candidateId} with dependency ${dependencyRevision.slice(0, 8)}: ${error.message}`);
+      }
+    }
     return {
       id: candidateId,
       revisionNumber: 1,
@@ -39,6 +72,7 @@ export class GitWorktreeManager {
       repositoryRoot,
       worktreePath,
       status: "implementing",
+      dependencyRevisions: options.dependencyRevisions ?? [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       revisions: [],
@@ -58,11 +92,42 @@ export class GitWorktreeManager {
       );
     }
 
+    const parentRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
     await git(candidate.worktreePath, ["add", "-A"]);
     await git(candidate.worktreePath, ["commit", "-m", message]);
     const headRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
     const summary = (await git(candidate.worktreePath, ["diff", "--stat", candidate.baseRevision, headRevision])).stdout.trim();
     const diff = (await git(candidate.worktreePath, ["diff", "--no-ext-diff", "--unified=3", candidate.baseRevision, headRevision])).stdout;
+    const ownSummary = (await git(candidate.worktreePath, ["diff", "--stat", parentRevision, headRevision])).stdout.trim();
+    const ownDiff = (await git(candidate.worktreePath, ["diff", "--no-ext-diff", "--unified=3", parentRevision, headRevision])).stdout;
+    return {
+      headRevision,
+      parentRevision,
+      files,
+      summary,
+      diff: diff.slice(0, 300_000),
+      ownSummary,
+      ownDiff: ownDiff.slice(0, 300_000),
+    };
+  }
+
+  async assemble(candidate, members) {
+    if (!members.length) throw new Error("An integration candidate needs at least one work-package commit.");
+    for (const member of members) {
+      try {
+        await git(candidate.worktreePath, ["cherry-pick", member.headRevision]);
+      } catch (error) {
+        await git(candidate.worktreePath, ["cherry-pick", "--abort"], { allowFailure: true });
+        throw new Error(`Candidate assembly conflicted while applying ${member.packageId}: ${error.message}`);
+      }
+    }
+    await assertClean(candidate.worktreePath);
+    const headRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
+    const summary = (await git(candidate.worktreePath, ["diff", "--stat", candidate.baseRevision, headRevision])).stdout.trim();
+    const diff = (await git(candidate.worktreePath, ["diff", "--no-ext-diff", "--unified=3", candidate.baseRevision, headRevision])).stdout;
+    const files = (await git(candidate.worktreePath, ["diff", "--name-only", candidate.baseRevision, headRevision])).stdout
+      .split(/\r?\n/)
+      .filter(Boolean);
     return { headRevision, files, summary, diff: diff.slice(0, 300_000) };
   }
 

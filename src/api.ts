@@ -51,6 +51,20 @@ export async function recordTaskDecision(id: string, question: string, answer: s
   });
 }
 
+export async function answerGrillQuestion(id: string, questionId: string, answer: string) {
+  return request<{ recorded: true }>(`/api/tasks/${encodeURIComponent(id)}/grill/answers`, {
+    method: "POST",
+    body: JSON.stringify({ questionId, answer }),
+  });
+}
+
+export async function finishGrill(id: string, acceptRemaining: boolean) {
+  return request<{ started: true }>(`/api/tasks/${encodeURIComponent(id)}/grill/finish`, {
+    method: "POST",
+    body: JSON.stringify({ acceptRemaining }),
+  });
+}
+
 export async function runTaskAction(
   id: string,
   action:

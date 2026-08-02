@@ -15,6 +15,7 @@ import {
   formatTokenCount,
   type RuntimeArtifact,
   type RuntimeEvent,
+  type RuntimeGrillQuestion,
   type RuntimeTask,
   type StageId,
   type TaskRunState,
@@ -30,6 +31,8 @@ export function RuntimeTaskWorkspace({
   onCancel,
   onAction,
   onDecision,
+  onGrillAnswer,
+  onFinishGrill,
   initialViewedStageId,
 }: {
   task: RuntimeTask;
@@ -51,6 +54,8 @@ export function RuntimeTaskWorkspace({
     note?: string,
   ) => Promise<void>;
   onDecision: (question: string, answer: string) => Promise<void>;
+  onGrillAnswer: (questionId: string, answer: string) => Promise<void>;
+  onFinishGrill: (acceptRemaining: boolean) => Promise<void>;
   initialViewedStageId?: StageId;
 }) {
   const currentIndex = Math.max(
@@ -72,6 +77,7 @@ export function RuntimeTaskWorkspace({
     viewedStageId === task.currentStage && ["failed", "cancelled", "blocked"].includes(task.status);
   const repoName = task.repositoryPath.split(/[\\/]/).filter(Boolean).at(-1) ?? task.repositoryPath;
   const candidate = task.candidates?.at(-1);
+  const runningPackages = task.workPackages?.filter((item) => item.status === "running") ?? [];
   const accessBoundary = getAccessBoundaryCopy(task);
   const completedApprovalWithoutArtifact =
     viewedStageId === "approval" &&
@@ -166,7 +172,13 @@ export function RuntimeTaskWorkspace({
       <div className="workspace-scroll">
         <div className="workspace-grid">
           <main className="stage-main runtime-stage-main">
-            <RuntimeCommandBar task={task} onRun={rerun} onCancel={onCancel} onAction={onAction} />
+            <RuntimeCommandBar
+              task={task}
+              onRun={rerun}
+              onCancel={onCancel}
+              onAction={onAction}
+              onFinishGrill={onFinishGrill}
+            />
             {runError ? (
               <div className="runtime-error" role="alert">
                 {runError}
@@ -195,6 +207,14 @@ export function RuntimeTaskWorkspace({
                           : "This stage has not started. Its artifact will appear here after the gate runs."}
               </p>
             </header>
+
+            {viewedStageId === "grill" && task.grillSession ? (
+              <RuntimeGrillPanel task={task} onAnswer={onGrillAnswer} />
+            ) : null}
+
+            {viewedStageId === "implement" && task.workPackages?.length ? (
+              <RuntimeWorkPackages task={task} />
+            ) : null}
 
             {stageArtifact ? (
               <article className="runtime-artifact-card">
@@ -267,6 +287,13 @@ export function RuntimeTaskWorkspace({
                 <RuntimeRow label="Base" value={candidate.baseRevision.slice(0, 8)} mono />
                 <RuntimeRow label="Head" value={candidate.headRevision?.slice(0, 8) ?? "pending"} mono />
                 <RuntimeRow label="Branch" value={candidate.branch} mono />
+                <RuntimeRow
+                  label="Members"
+                  value={
+                    candidate.members?.map((item) => item.packageId).join(" -> ") ||
+                    (candidate.status === "merged" ? "Legacy single-session candidate" : "Pending assembly")
+                  }
+                />
               </InspectorSection>
             ) : null}
             <InspectorSection title="Execution metadata">
@@ -275,9 +302,21 @@ export function RuntimeTaskWorkspace({
                 value={
                   task.currentStage === "approval"
                     ? "Human approval gate"
-                    : `${workflowStages[currentIndex]?.label ?? "Triage"} agent`
+                    : task.currentStage === "implement" && runningPackages.length
+                      ? `${runningPackages.map((item) => item.id).join(", ")} implementation agents`
+                      : `${workflowStages[currentIndex]?.label ?? "Triage"} agent`
                 }
               />
+              {task.currentStage === "implement" && task.workPackages?.length ? (
+                <RuntimeRow
+                  label="Active slices"
+                  value={
+                    runningPackages.length
+                      ? runningPackages.map((item) => item.id).join(", ")
+                      : "Assembly or gate handoff"
+                  }
+                />
+              ) : null}
               <RuntimeRow label="Model" value={task.models[0]?.model ?? "GPT-5.4-mini · ChatGPT plan"} />
               <RuntimeRow label="Access" value="Local OAuth session" />
               <RuntimeRow label="Sandbox" value={accessBoundary.sandbox} />
@@ -363,6 +402,7 @@ function RuntimeCommandBar({
   onRun,
   onCancel,
   onAction,
+  onFinishGrill,
 }: {
   task: RuntimeTask;
   onRun: () => Promise<void>;
@@ -380,6 +420,7 @@ function RuntimeCommandBar({
       | "approve-merge"
       | "grant-retry",
   ) => Promise<void>;
+  onFinishGrill: (acceptRemaining: boolean) => Promise<void>;
 }) {
   const [pending, setPending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -396,6 +437,8 @@ function RuntimeCommandBar({
     task.status === "completed";
   const accessBoundary = getAccessBoundaryCopy(task);
   const next = nextAction(task);
+  const openGrill = task.status === "awaiting-grill" && task.grillSession?.status === "open";
+  const unresolvedGrill = task.grillSession?.questions.filter((question) => !question.answer).length ?? 0;
   const actionable = ready || failed || repairRequired || blocked;
   const Icon = running ? CircleNotch : failed || blocked || repairRequired ? WarningCircle : CheckCircle;
   const invoke = async () => {
@@ -406,6 +449,17 @@ function RuntimeCommandBar({
       await onAction(next.action);
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "The action could not be completed.");
+    } finally {
+      setPending(false);
+    }
+  };
+  const finishGrillSession = async () => {
+    setPending(true);
+    setActionError(null);
+    try {
+      await onFinishGrill(unresolvedGrill > 0);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Grill Me could not be completed.");
     } finally {
       setPending(false);
     }
@@ -426,9 +480,11 @@ function RuntimeCommandBar({
                 ? `${accessBoundary.title} - repair the retained candidate`
                 : failed
                   ? "Retry the failed stage"
-                  : ready
-                    ? (next?.title ?? "Workflow gate ready")
-                    : "Start the read-only investigation"}
+                  : openGrill
+                    ? "Resolve the decision frontier"
+                    : ready
+                      ? (next?.title ?? "Workflow gate ready")
+                      : "Start the read-only investigation"}
         </strong>
         <span>
           {running
@@ -439,9 +495,13 @@ function RuntimeCommandBar({
                 ? `${accessBoundary.detail} ${next?.detail ?? "The retained gate evidence identifies the required repair."}`
                 : failed
                   ? task.error
-                  : ready
-                    ? (next?.detail ?? "The retained workflow evidence is ready for review.")
-                    : "Four focused agents will produce durable Markdown handoffs."}
+                  : openGrill
+                    ? unresolvedGrill
+                      ? `${unresolvedGrill} material question${unresolvedGrill === 1 ? "" : "s"} remain. You can answer them below or explicitly accept the recommended assumptions.`
+                      : "Every material question is settled. Finish Grill Me to build the task specification."
+                    : ready
+                      ? (next?.detail ?? "The retained workflow evidence is ready for review.")
+                      : "Four focused agents will produce durable Markdown handoffs."}
         </span>
       </span>
       <div className="stage-command-bar__actions">
@@ -463,6 +523,21 @@ function RuntimeCommandBar({
             {pending ? "Starting..." : next.label}
           </Button>
         ) : null}
+        {openGrill ? (
+          <Button
+            tone="primary"
+            compact
+            icon={Play}
+            disabled={pending}
+            onClick={() => void finishGrillSession()}
+          >
+            {pending
+              ? "Starting specification..."
+              : unresolvedGrill
+                ? `Finish with ${unresolvedGrill} recommendation${unresolvedGrill === 1 ? "" : "s"}`
+                : "Finish Grill & build specification"}
+          </Button>
+        ) : null}
       </div>
       {actionError ? <span className="runtime-command-error">{actionError}</span> : null}
     </section>
@@ -477,6 +552,14 @@ function nextAction(task: RuntimeTask) {
       title: "Repair allowance exhausted",
       detail:
         "A human may grant exactly one additional attempt. The retained candidate and every failed review remain unchanged.",
+    };
+  if (task.status === "blocked")
+    return {
+      action: "grant-retry" as const,
+      label: "Grant one stage attempt",
+      title: "Stage retry allowance exhausted",
+      detail:
+        "A human may grant one additional attempt. Qualified package commits and all failure evidence remain retained.",
     };
   if (task.status === "awaiting-spec-approval") {
     return task.workflow === "implement"
@@ -585,6 +668,15 @@ function nextAction(task: RuntimeTask) {
 export function getAccessBoundaryCopy(task: RuntimeTask) {
   const stage = workflowStages.find((entry) => entry.id === task.currentStage);
   const stageLabel = stage?.label ?? "Current stage";
+  if (task.status === "awaiting-grill") {
+    return {
+      kicker: "Human decision boundary",
+      title: "Grill Me is waiting for your decisions",
+      detail:
+        "No agent is running. Answer the material questions or explicitly accept the recommended assumptions.",
+      sandbox: "No agent running",
+    };
+  }
   if (task.currentStage === "implement" || task.status === "repair-required") {
     return {
       kicker: "Worktree write scope",
@@ -608,6 +700,246 @@ export function getAccessBoundaryCopy(task: RuntimeTask) {
     detail: "Codex reads the repository without writing to it in this stage.",
     sandbox: "Read-only",
   };
+}
+
+function RuntimeGrillPanel({
+  task,
+  onAnswer,
+}: {
+  task: RuntimeTask;
+  onAnswer: (questionId: string, answer: string) => Promise<void>;
+}) {
+  const session = task.grillSession;
+  if (!session) return null;
+  const settled = session.questions.filter((question) => question.answer).length;
+  const interactive = session.status === "open" && task.status === "awaiting-grill";
+  return (
+    <section className="runtime-grill" aria-label="Grill Me decision session">
+      <header>
+        <span>
+          <small>Decision frontier</small>
+          <strong>
+            {settled} of {session.questions.length} material questions settled
+          </strong>
+        </span>
+        <StateBadge state={session.status === "completed" ? "completed" : "needs-input"} />
+      </header>
+      {session.completionReason ? <p className="runtime-grill__reason">{session.completionReason}</p> : null}
+      {session.questions.length ? (
+        <div className="runtime-grill__questions">
+          {session.questions.map((question, index) => (
+            <RuntimeGrillQuestionCard
+              key={question.id}
+              question={question}
+              index={index}
+              interactive={interactive}
+              onAnswer={onAnswer}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="runtime-stage-empty">
+          <CheckCircle size={22} weight="fill" />
+          <strong>No material questions remain</strong>
+          <span>
+            Repository evidence and safe reversible defaults are sufficient to build the specification.
+          </span>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RuntimeGrillQuestionCard({
+  question,
+  index,
+  interactive,
+  onAnswer,
+}: {
+  question: RuntimeGrillQuestion;
+  index: number;
+  interactive: boolean;
+  onAnswer: (questionId: string, answer: string) => Promise<void>;
+}) {
+  const recommended = question.options.find((option) => option.recommended);
+  const [choice, setChoice] = useState(recommended?.id ?? question.options[0]?.id ?? "custom");
+  const [custom, setCustom] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (question.answer) {
+    return (
+      <details className="runtime-grill-question runtime-grill-question--settled">
+        <summary>
+          <CheckCircle size={18} weight="fill" />
+          <span>
+            <small>Question {index + 1} · settled</small>
+            <strong>{question.question}</strong>
+          </span>
+        </summary>
+        <p>{question.whyItMatters}</p>
+        <div className="runtime-grill-answer">
+          <small>
+            {question.answerSource === "accepted-assumption" ? "Accepted recommendation" : "Your answer"}
+          </small>
+          <strong>{question.answer}</strong>
+        </div>
+      </details>
+    );
+  }
+  return (
+    <article className="runtime-grill-question">
+      <header>
+        <span>
+          <small>Question {index + 1}</small>
+          <strong>{question.question}</strong>
+        </span>
+        <StateBadge state="needs-input" />
+      </header>
+      <p>{question.whyItMatters}</p>
+      {interactive ? (
+        <form
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const selected = question.options.find((option) => option.id === choice);
+            const answer = choice === "custom" ? custom.trim() : selected?.label;
+            if (!answer) return;
+            setPending(true);
+            setError(null);
+            try {
+              await onAnswer(question.id, answer);
+            } catch (reason) {
+              setError(reason instanceof Error ? reason.message : "Answer could not be saved.");
+            } finally {
+              setPending(false);
+            }
+          }}
+        >
+          <fieldset>
+            <legend className="sr-only">Answer {question.question}</legend>
+            {question.options.map((option) => (
+              <label key={option.id} className={choice === option.id ? "selected" : ""}>
+                <input
+                  type="radio"
+                  name={`answer-${question.id}`}
+                  value={option.id}
+                  checked={choice === option.id}
+                  onChange={() => setChoice(option.id)}
+                />
+                <span>
+                  <strong>
+                    {option.label} {option.recommended ? <em>Recommended</em> : null}
+                  </strong>
+                  <small>{option.description}</small>
+                </span>
+              </label>
+            ))}
+            {question.allowCustom ? (
+              <label className={choice === "custom" ? "selected" : ""}>
+                <input
+                  type="radio"
+                  name={`answer-${question.id}`}
+                  value="custom"
+                  checked={choice === "custom"}
+                  onChange={() => setChoice("custom")}
+                />
+                <span>
+                  <strong>Custom answer</strong>
+                  <small>Provide a different authoritative decision.</small>
+                </span>
+              </label>
+            ) : null}
+          </fieldset>
+          {choice === "custom" ? (
+            <textarea
+              aria-label={`Custom answer for ${question.question}`}
+              rows={3}
+              value={custom}
+              onChange={(event) => setCustom(event.target.value)}
+              placeholder="Describe the decision and any constraints"
+            />
+          ) : null}
+          <Button
+            tone="primary"
+            compact
+            type="submit"
+            disabled={pending || (choice === "custom" && !custom.trim())}
+          >
+            {pending ? "Saving..." : "Confirm answer"}
+          </Button>
+          {error ? <small className="text-red">{error}</small> : null}
+        </form>
+      ) : (
+        <small>This question was not settled before the session closed.</small>
+      )}
+    </article>
+  );
+}
+
+function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
+  const batches = [...new Set(task.workPackages.map((item) => item.batch))].sort((a, b) => a - b);
+  return (
+    <section className="runtime-packages" aria-label="Implementation work packages">
+      <header>
+        <span>
+          <small>Dependency-aware implementation</small>
+          <strong>
+            {task.workPackages.length} package{task.workPackages.length === 1 ? "" : "s"} · {batches.length}{" "}
+            batch
+            {batches.length === 1 ? "" : "es"}
+          </strong>
+        </span>
+      </header>
+      <div className="runtime-package-batches">
+        {batches.map((batch, index) => (
+          <div className="runtime-package-batch" key={batch}>
+            <small>Batch {batch}</small>
+            <div>
+              {task.workPackages
+                .filter((item) => item.batch === batch)
+                .map((workPackage) => (
+                  <details
+                    key={workPackage.id}
+                    className={`runtime-package runtime-package--${workPackage.status}`}
+                  >
+                    <summary>
+                      {workPackage.status === "running" ? (
+                        <CircleNotch className="spin" size={17} />
+                      ) : workPackage.status === "failed" ? (
+                        <WarningCircle size={17} />
+                      ) : workPackage.status === "planned" ? (
+                        <FileCode size={17} />
+                      ) : (
+                        <CheckCircle size={17} weight="fill" />
+                      )}
+                      <span>
+                        <small>
+                          {workPackage.id} · {workPackage.status.replaceAll("_", " ")}
+                        </small>
+                        <strong>{workPackage.title}</strong>
+                      </span>
+                    </summary>
+                    <p>{workPackage.description}</p>
+                    <RuntimeRow label="Depends on" value={workPackage.dependencies.join(", ") || "None"} />
+                    <RuntimeRow
+                      label="Owned paths"
+                      value={workPackage.ownedPaths.join(", ") || "Plan-defined scope"}
+                    />
+                    <RuntimeRow label="Attempts" value={String(workPackage.attempts)} />
+                    {workPackage.headRevision ? (
+                      <RuntimeRow label="Package commit" value={workPackage.headRevision.slice(0, 8)} mono />
+                    ) : null}
+                    {workPackage.error ? <small className="text-red">{workPackage.error}</small> : null}
+                  </details>
+                ))}
+            </div>
+            {index < batches.length - 1 ? (
+              <span className="runtime-package-arrow">↓ dependencies unlock</span>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function DecisionFrontier({

@@ -22,16 +22,28 @@ test("creates, commits, and fast-forward merges an isolated candidate", async ()
     await git(repository, ["commit", "-m", "base"]);
 
     const manager = new GitWorktreeManager(path.join(repository, ".data", "worktrees"));
-    const candidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C1");
-    await writeFile(path.join(candidate.worktreePath, "feature.txt"), "candidate\n", "utf8");
-    const committed = await manager.commit(candidate, "candidate");
-    candidate.headRevision = committed.headRevision;
+    const task = { id: "AH-001", repositoryPath: repository };
+    const base = await manager.base(task);
+    const firstSlice = await manager.prepare(task, "S1-A1", { baseRevision: base.baseRevision });
+    await writeFile(path.join(firstSlice.worktreePath, "feature.txt"), "candidate\n", "utf8");
+    const firstCommit = await manager.commit(firstSlice, "first slice");
+    const secondSlice = await manager.prepare(task, "S2-A1", { baseRevision: base.baseRevision });
+    await writeFile(path.join(secondSlice.worktreePath, "second.txt"), "parallel\n", "utf8");
+    const secondCommit = await manager.commit(secondSlice, "second slice");
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+    const assembled = await manager.assemble(candidate, [
+      { packageId: "S1", headRevision: firstCommit.headRevision },
+      { packageId: "S2", headRevision: secondCommit.headRevision },
+    ]);
+    candidate.headRevision = assembled.headRevision;
 
-    assert.deepEqual(committed.files, ["feature.txt"]);
-    assert.match(committed.summary, /feature\.txt/);
-    assert.equal(await manager.verifyCandidate(candidate), committed.headRevision);
+    assert.deepEqual(firstCommit.files, ["feature.txt"]);
+    assert.match(assembled.summary, /feature\.txt/);
+    assert.match(assembled.summary, /second\.txt/);
+    assert.equal(await manager.verifyCandidate(candidate), assembled.headRevision);
     await manager.merge(candidate);
     assert.equal((await readFile(path.join(repository, "feature.txt"), "utf8")).replaceAll("\r\n", "\n"), "candidate\n");
+    assert.equal((await readFile(path.join(repository, "second.txt"), "utf8")).replaceAll("\r\n", "\n"), "parallel\n");
 
     const unsafeCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C2");
     await writeFile(path.join(unsafeCandidate.worktreePath, ".env"), "SECRET=do-not-commit\n", "utf8");

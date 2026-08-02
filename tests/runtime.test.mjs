@@ -79,6 +79,25 @@ test("cancellation wins when an implementation agent completes after abort", asy
     await store.update(task.id, (draft) => {
       draft.status = "ready-for-implementation";
       draft.currentStage = "implement";
+      draft.workPackages = [
+        {
+          id: "S1",
+          title: "Cancel race",
+          description: "Exercise cancellation.",
+          dependencies: [],
+          batch: 1,
+          ownedPaths: ["feature.txt"],
+          verification: [],
+          status: "planned",
+          attempts: 0,
+          branch: null,
+          worktreePath: null,
+          baseRevision: null,
+          headRevision: null,
+          files: [],
+          error: null,
+        },
+      ];
     });
 
     let finishAgent;
@@ -107,6 +126,7 @@ test("cancellation wins when an implementation agent completes after abort", asy
             });
         }),
       worktreeManager: {
+        base: async () => ({ repositoryRoot: directory, baseRevision: "base", baseBranch: "main" }),
         prepare: async () => structuredClone(candidate),
         commit: async () => {
           commitCalled = true;
@@ -123,7 +143,8 @@ test("cancellation wins when an implementation agent completes after abort", asy
 
     const cancelled = await store.get(task.id);
     assert.equal(cancelled.status, "cancelled");
-    assert.equal(cancelled.candidates.at(-1).status, "failed");
+    assert.equal(cancelled.candidates.length, 0);
+    assert.equal(cancelled.workPackages[0].status, "failed");
     assert.equal(commitCalled, false);
   } finally {
     await rm(directory, { recursive: true, force: true });
@@ -268,6 +289,144 @@ test("renders truthful active-stage access boundaries", () => {
   });
 });
 
+test("renders an open Grill session as active decisions and completed Grill as history", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const question = {
+      id: "Q1",
+      question: "Preserve the existing API contract?",
+      whyItMatters: "The answer changes compatibility behavior.",
+      options: [
+        { id: "Q1-O1", label: "Preserve it", description: "Keep clients working.", recommended: true },
+        { id: "Q1-O2", label: "Break it", description: "Adopt the new shape.", recommended: false },
+      ],
+      allowCustom: true,
+      answer: null,
+      answerSource: null,
+      resolvedAt: null,
+    };
+    const sharedProps = {
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onGrillAnswer: async () => {},
+      onFinishGrill: async () => {},
+    };
+    const openMarkup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        ...sharedProps,
+        task: createTask({
+          status: "awaiting-grill",
+          currentStage: "grill",
+          completedStages: ["triage", "scouts"],
+          grillSession: {
+            status: "open",
+            questions: [question],
+            createdAt: "2026-08-01T12:00:00.000Z",
+            completedAt: null,
+            completionReason: null,
+          },
+        }),
+      }),
+    );
+    assert.match(openMarkup, /Preserve the existing API contract/);
+    assert.match(openMarkup, /Custom answer/);
+    assert.match(openMarkup, /Finish with 1 recommendation/);
+
+    const completedMarkup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        ...sharedProps,
+        initialViewedStageId: "grill",
+        task: createTask({
+          status: "awaiting-spec-approval",
+          currentStage: "specification",
+          completedStages: ["triage", "scouts", "grill", "specification"],
+          grillSession: {
+            status: "completed",
+            questions: [
+              {
+                ...question,
+                answer: "Preserve it",
+                answerSource: "user",
+                resolvedAt: "2026-08-01T12:05:00.000Z",
+              },
+            ],
+            createdAt: "2026-08-01T12:00:00.000Z",
+            completedAt: "2026-08-01T12:05:00.000Z",
+            completionReason: "All material questions were answered.",
+          },
+        }),
+      }),
+    );
+    assert.match(completedMarkup, /All material questions were answered/);
+    assert.match(completedMarkup, /Your answer/);
+    assert.doesNotMatch(completedMarkup, /Confirm answer/);
+    assert.doesNotMatch(completedMarkup, /Finish with 1 recommendation/);
+  });
+});
+
+test("renders dependency batches and package status during implementation", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const markup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task: createTask({
+          status: "running",
+          currentStage: "implement",
+          completedStages: ["triage", "scouts", "grill", "specification", "plan"],
+          workPackages: [
+            {
+              id: "S1",
+              title: "Runtime contract",
+              description: "Add the API behavior.",
+              dependencies: [],
+              batch: 1,
+              ownedPaths: ["server/api.mjs"],
+              verification: ["npm test"],
+              status: "ready_for_integration",
+              attempts: 1,
+              branch: "agent-harness/ah-999-s1-a1",
+              worktreePath: "C:/worktrees/S1-A1",
+              baseRevision: "a".repeat(40),
+              headRevision: "b".repeat(40),
+              files: ["server/api.mjs"],
+              error: null,
+            },
+            {
+              id: "S2",
+              title: "Runtime UI",
+              description: "Render the API result.",
+              dependencies: ["S1"],
+              batch: 2,
+              ownedPaths: ["src/App.tsx"],
+              verification: ["npm run typecheck"],
+              status: "running",
+              attempts: 1,
+              branch: "agent-harness/ah-999-s2-a1",
+              worktreePath: "C:/worktrees/S2-A1",
+              baseRevision: "a".repeat(40),
+              headRevision: null,
+              files: [],
+              error: null,
+            },
+          ],
+        }),
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+        onGrillAnswer: async () => {},
+        onFinishGrill: async () => {},
+      }),
+    );
+    assert.match(markup, /2 packages · 2 batches/);
+    assert.match(markup, /Runtime contract/);
+    assert.match(markup, /Runtime UI/);
+    assert.match(markup, /dependencies unlock/);
+  });
+});
+
 test("renders a truthful completion summary for historical merges without an approval artifact", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const markup = renderToStaticMarkup(
@@ -337,7 +496,9 @@ function createTask(overrides = {}) {
     usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2, cost: null },
     artifacts: [],
     decisions: [],
+    grillSession: null,
     approvals: [],
+    workPackages: [],
     candidates: [],
     events: [],
     ...overrides,
@@ -349,7 +510,7 @@ async function withWorkspace(run) {
     configFile: false,
     logLevel: "error",
     optimizeDeps: { noDiscovery: true },
-    server: { middlewareMode: true },
+    server: { middlewareMode: true, hmr: false },
   });
   try {
     const module = await vite.ssrLoadModule("/src/components/RuntimeTaskWorkspace.tsx");

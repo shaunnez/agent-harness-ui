@@ -68,7 +68,9 @@ export class JsonTaskStore {
         usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0, cost: null },
         artifacts: [],
         decisions: [],
+        grillSession: null,
         approvals: [],
+        workPackages: [],
         candidates: [],
         events: [
           {
@@ -108,7 +110,9 @@ export class JsonTaskStore {
           ["activeRunKind", null],
           ["attemptsByStage", {}],
           ["decisions", []],
+          ["grillSession", null],
           ["approvals", []],
+          ["workPackages", []],
           ["candidates", []],
         ]) {
           if (task[key] === undefined) {

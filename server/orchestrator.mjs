@@ -1,9 +1,25 @@
 import path from "node:path";
-import { buildExecutionPrompt, buildStagePrompt, getStageMetadata, INVESTIGATION_PIPELINE } from "./prompts.mjs";
+import {
+  buildExecutionPrompt,
+  buildStagePrompt,
+  buildWorkPackagePrompt,
+  getStageMetadata,
+  INVESTIGATION_PIPELINE,
+} from "./prompts.mjs";
 import { getCodexStatus, runCodex } from "./codex-runtime.mjs";
 import { GitWorktreeManager } from "./git-worktree.mjs";
+import { parseGrillQuestions, parseWorkPackages } from "./structured-output.mjs";
 
-const RUN_KINDS = new Set(["investigation", "planning", "implementation", "repair", "review", "test", "final-review"]);
+const RUN_KINDS = new Set([
+  "investigation",
+  "specification",
+  "planning",
+  "implementation",
+  "repair",
+  "review",
+  "test",
+  "final-review",
+]);
 
 function now() {
   return new Date().toISOString();
@@ -63,6 +79,77 @@ export class TaskOrchestrator {
       draft.decisions.push(decision);
       draft.events.push(activity("grill", "Human decision recorded", `${decision.question}: ${decision.answer}`, "success", "decision"));
     });
+  }
+
+  async answerGrillQuestion(id, input) {
+    const task = await this.#store.get(id);
+    if (!task) throw new Error("Task not found.");
+    if (task.status !== "awaiting-grill" || task.grillSession?.status !== "open") {
+      throw new Error("This task does not have an open Grill Me session.");
+    }
+    const question = task.grillSession.questions.find((item) => item.id === input.questionId);
+    if (!question) throw new Error("Grill question not found.");
+    const answer = String(input.answer ?? "").trim().slice(0, 5_000);
+    if (!answer) throw new Error("An answer is required.");
+    return this.#store.update(id, (draft) => {
+      const target = draft.grillSession.questions.find((item) => item.id === input.questionId);
+      target.answer = answer;
+      target.answerSource = "user";
+      target.resolvedAt = now();
+      const existing = draft.decisions.find((decision) => decision.grillQuestionId === target.id);
+      if (existing) {
+        existing.answer = answer;
+        existing.createdAt = now();
+      } else {
+        draft.decisions.push({
+          id: crypto.randomUUID(),
+          grillQuestionId: target.id,
+          question: target.question,
+          answer,
+          createdAt: now(),
+        });
+      }
+      draft.events.push(activity("grill", "Grill answer recorded", `${target.id}: ${answer}`, "success", "decision"));
+    });
+  }
+
+  async finishGrill(id, { acceptRemaining = false } = {}) {
+    const task = await this.#store.get(id);
+    if (!task) throw new Error("Task not found.");
+    if (task.status !== "awaiting-grill" || task.grillSession?.status !== "open") {
+      throw new Error("This task does not have an open Grill Me session.");
+    }
+    const unresolved = task.grillSession.questions.filter((question) => !question.answer);
+    if (unresolved.length && !acceptRemaining) {
+      throw new Error("Answer every Grill question or explicitly accept the recommended assumptions.");
+    }
+    await this.#store.update(id, (draft) => {
+      for (const question of draft.grillSession.questions.filter((item) => !item.answer)) {
+        const recommendation = question.options.find((option) => option.recommended);
+        question.answer = recommendation.label;
+        question.answerSource = "accepted-assumption";
+        question.resolvedAt = now();
+        draft.decisions.push({
+          id: crypto.randomUUID(),
+          grillQuestionId: question.id,
+          question: question.question,
+          answer: recommendation.label,
+          createdAt: now(),
+        });
+      }
+      draft.grillSession.status = "completed";
+      draft.grillSession.completedAt = now();
+      draft.grillSession.completionReason = unresolved.length
+        ? `Finished by the user with ${unresolved.length} recommended assumption${unresolved.length === 1 ? "" : "s"} accepted.`
+        : draft.grillSession.questions.length
+          ? "All material questions were answered."
+          : "No material product decisions remained after repository investigation.";
+      if (!draft.completedStages.includes("grill")) draft.completedStages.push("grill");
+      draft.events.push(activity("grill", "Grill Me completed", draft.grillSession.completionReason, "success", "decision"));
+    });
+    const started = this.start(id, "specification");
+    if (!started) throw new Error("Task is already running.");
+    return { started: true };
   }
 
   async approveSpecification(id, note = "") {
@@ -170,6 +257,7 @@ export class TaskOrchestrator {
 
     try {
       if (kind === "investigation") await this.#runInvestigation(id, signal);
+      if (kind === "specification") await this.#runSpecification(id, signal);
       if (kind === "planning") await this.#runPlanning(id, signal);
       if (kind === "implementation") await this.#runImplementation(id, signal);
       if (kind === "repair") await this.#runRepair(id, signal);
@@ -184,9 +272,9 @@ export class TaskOrchestrator {
         draft.activeRunKind = null;
         const candidate = draft.candidates?.at(-1);
         if (candidate) {
-        const candidateStatus = {
-          implementation: "failed",
-          repair: "repair_required",
+          const candidateStatus = {
+            implementation: "failed",
+            repair: "repair_required",
             review: "ready_for_review",
             test: "ready_for_test",
             "final-review": "ready_for_final_review",
@@ -206,13 +294,39 @@ export class TaskOrchestrator {
       task = await this.#store.get(id);
       const result = await this.#executeAgent(task, stageId, signal, task.repositoryPath, "read-only");
       throwIfAborted(signal);
-      await this.#retainAgentResult(id, stageId, result, { replace: true });
+      const grillQuestions = stageId === "grill" ? parseGrillQuestions(result.finalText) : null;
+      await this.#retainAgentResult(id, stageId, result, { replace: true, complete: stageId !== "grill" });
+      if (grillQuestions) {
+        await this.#store.update(id, (draft) => {
+          draft.grillSession = {
+            status: "open",
+            questions: grillQuestions,
+            createdAt: now(),
+            completedAt: null,
+            completionReason: null,
+          };
+        });
+      }
     }
+    await this.#store.update(id, (draft) => {
+      draft.status = "awaiting-grill";
+      draft.currentStage = "grill";
+      draft.activeRunKind = null;
+      const count = draft.grillSession?.questions.length ?? 0;
+      draft.events.push(activity("grill", "Grill Me ready", count ? `${count} material question${count === 1 ? "" : "s"} need a decision.` : "No material questions remain; finish the session to build the specification.", "success", "decision"));
+    });
+  }
+
+  async #runSpecification(id, signal) {
+    const task = await this.#store.get(id);
+    const result = await this.#executeAgent(task, "specification", signal, task.repositoryPath, "read-only");
+    throwIfAborted(signal);
+    await this.#retainAgentResult(id, "specification", result, { replace: true });
     await this.#store.update(id, (draft) => {
       draft.status = "awaiting-spec-approval";
       draft.currentStage = "specification";
       draft.activeRunKind = null;
-      draft.events.push(activity("specification", "Specification ready for approval", "Review the evidence, record any consequential decisions, then approve or stop.", "success", "decision"));
+      draft.events.push(activity("specification", "Specification ready for approval", "Review the evidence and approve or stop.", "success", "decision"));
     });
   }
 
@@ -220,55 +334,176 @@ export class TaskOrchestrator {
     const task = await this.#store.get(id);
     const result = await this.#executeAgent(task, "plan", signal, task.repositoryPath, "read-only");
     throwIfAborted(signal);
+    const workPackages = parseWorkPackages(result.finalText);
     await this.#retainAgentResult(id, "plan", result, { replace: true });
     await this.#store.update(id, (draft) => {
+      draft.workPackages = workPackages;
       draft.status = "awaiting-plan-approval";
       draft.currentStage = "plan";
       draft.activeRunKind = null;
-      draft.events.push(activity("plan", "Implementation plan ready", "Approve the dependency-ordered plan before any worktree is created.", "success", "decision"));
+      const batches = Math.max(...workPackages.map((item) => item.batch));
+      draft.events.push(activity("plan", "Implementation plan ready", `${workPackages.length} work package${workPackages.length === 1 ? "" : "s"} across ${batches} dependency batch${batches === 1 ? "" : "es"}.`, "success", "decision"));
     });
   }
 
   async #runImplementation(id, signal) {
     let task = await this.#store.get(id);
+    if (!task.workPackages?.length) {
+      throw new Error("The approved plan does not contain executable work packages. Rerun planning with the current planner.");
+    }
+    const base = await this.#worktrees.base(task);
+    const batchNumbers = [...new Set(task.workPackages.map((item) => item.batch))].sort((a, b) => a - b);
+    for (const batch of batchNumbers) {
+      throwIfAborted(signal);
+      task = await this.#store.get(id);
+      const packages = task.workPackages.filter(
+        (item) => item.batch === batch && item.status !== "ready_for_integration" && item.status !== "integrated",
+      );
+      if (!packages.length) continue;
+      const blocked = packages.find((item) =>
+        item.dependencies.some((dependency) => {
+          const dependencyPackage = task.workPackages.find((candidate) => candidate.id === dependency);
+          return !["ready_for_integration", "integrated"].includes(dependencyPackage?.status);
+        }),
+      );
+      if (blocked) throw new Error(`${blocked.id} cannot start because one or more dependency packages are not ready.`);
+      await this.#store.update(id, (draft) => {
+        draft.events.push(activity("implement", `Dependency batch ${batch} started`, `${packages.map((item) => item.id).join(", ")} running in isolated worktrees.`, "info", "agent"));
+      });
+      const outcomes = await Promise.allSettled(
+        packages.map((workPackage) => this.#runWorkPackage(id, workPackage.id, base.baseRevision, signal)),
+      );
+      const failures = outcomes
+        .map((outcome, index) => ({ outcome, workPackage: packages[index] }))
+        .filter((entry) => entry.outcome.status === "rejected");
+      if (failures.length) {
+        throw new Error(
+          failures
+            .map((entry) => `${entry.workPackage.id}: ${entry.outcome.reason?.message ?? "implementation failed"}`)
+            .join(" | "),
+        );
+      }
+      await this.#store.update(id, (draft) => {
+        draft.events.push(activity("implement", `Dependency batch ${batch} qualified`, `${packages.map((item) => item.id).join(", ")} ready for integration.`, "success", "decision"));
+      });
+    }
+
+    throwIfAborted(signal);
+    task = await this.#store.get(id);
+    const orderedPackages = [...task.workPackages].sort((a, b) => a.batch - b.batch || a.id.localeCompare(b.id));
+    if (orderedPackages.some((item) => item.status !== "ready_for_integration" && item.status !== "integrated")) {
+      throw new Error("Candidate assembly cannot start until every work package is ready for integration.");
+    }
     const candidateId = `C${(task.candidates?.length ?? 0) + 1}`;
-    const candidate = await this.#worktrees.prepare(task, candidateId);
+    const candidate = await this.#worktrees.prepare(task, candidateId, { baseRevision: base.baseRevision });
+    candidate.status = "assembling";
+    candidate.members = orderedPackages.map((item, index) => ({
+      packageId: item.id,
+      headRevision: item.headRevision,
+      order: index + 1,
+    }));
     await this.#store.update(id, (draft) => {
       draft.currentStage = "implement";
       draft.candidates ??= [];
       draft.candidates.push(candidate);
-      draft.events.push(activity("implement", "Isolated worktree created", `${candidate.id} at ${candidate.worktreePath}`, "success"));
+      draft.events.push(activity("implement", "Candidate assembly started", `${candidate.id} will apply ${candidate.members.map((item) => item.packageId).join(" -> ")}.`, "info", "agent"));
     });
-    task = await this.#store.get(id);
-    const result = await this.#executeAgent(task, "implement", signal, candidate.worktreePath, "workspace-write", candidate);
-    throwIfAborted(signal);
-    let committed;
-    try {
-      committed = await this.#worktrees.commit(candidate, `agent-harness(${task.id}): implement approved plan`);
-    } catch (error) {
-      await this.#retainAgentResult(id, "implement", result, {
-        complete: false,
-        name: `candidate-${candidate.id.toLowerCase()}-failed-attempt.md`,
-        candidateId: candidate.id,
-        candidateRevision: 1,
-        artifactTone: "warning",
-        artifactTitle: "Failed implementation attempt retained",
-      });
-      throw new Error(`${error.message} ${summarizeAgentReport(result.finalText)}`.trim());
-    }
-    const content = `${result.finalText}\n\n## Harness candidate evidence\n\n- Candidate: ${candidate.id} revision 1\n- Base: ${candidate.baseRevision}\n- Head: ${committed.headRevision}\n- Branch: ${candidate.branch}\n- Changed files: ${committed.files.length}\n\n\`\`\`text\n${committed.summary || "No diff stat returned."}\n\`\`\`\n\n<details><summary>Patch</summary>\n\n\`\`\`diff\n${committed.diff}\n\`\`\`\n\n</details>`;
-    await this.#retainAgentResult(id, "implement", { ...result, finalText: content }, { replace: false, name: `candidate-${candidate.id.toLowerCase()}-r1.md`, candidateId, candidateRevision: 1 });
+    const assembled = await this.#worktrees.assemble(candidate, candidate.members);
+    const manifest = candidate.members
+      .map((member) => `- ${member.order}. ${member.packageId}: ${member.headRevision}`)
+      .join("\n");
+    const content = `## Outcome\n\nAll ${candidate.members.length} work packages were assembled into ${candidate.id}.\n\n## Candidate membership\n\n${manifest}\n\n## Harness candidate evidence\n\n- Candidate: ${candidate.id} revision 1\n- Base: ${candidate.baseRevision}\n- Head: ${assembled.headRevision}\n- Branch: ${candidate.branch}\n- Changed files: ${assembled.files.length}\n\n\`\`\`text\n${assembled.summary || "No diff stat returned."}\n\`\`\`\n\n<details><summary>Candidate patch</summary>\n\n\`\`\`diff\n${assembled.diff}\n\`\`\`\n\n</details>`;
+    await this.#retainAgentResult(
+      id,
+      "implement",
+      {
+        finalText: content,
+        usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0 },
+        runtimeEvents: [],
+      },
+      { replace: false, name: `candidate-${candidate.id.toLowerCase()}-r1.md`, candidateId, candidateRevision: 1 },
+    );
     await this.#store.update(id, (draft) => {
       const activeCandidate = currentCandidate(draft);
-      activeCandidate.headRevision = committed.headRevision;
+      activeCandidate.headRevision = assembled.headRevision;
       activeCandidate.status = "ready_for_review";
       activeCandidate.updatedAt = now();
-      activeCandidate.revisions.push({ number: 1, headRevision: committed.headRevision, reason: "implementation", createdAt: now() });
+      activeCandidate.revisions.push({ number: 1, headRevision: assembled.headRevision, reason: "assembly", createdAt: now() });
+      for (const workPackage of draft.workPackages) workPackage.status = "integrated";
       draft.status = "ready-for-review";
       draft.currentStage = "dev-review";
       draft.activeRunKind = null;
-      draft.events.push(activity("implement", "Integration candidate ready", `${candidate.id} @ ${committed.headRevision.slice(0, 8)} is ready for development review.`, "success", "artifact"));
+      draft.events.push(activity("implement", "Integration candidate ready", `${candidate.id} @ ${assembled.headRevision.slice(0, 8)} contains ${candidate.members.length} work packages and is ready for development review.`, "success", "artifact"));
     });
+  }
+
+  async #runWorkPackage(id, workPackageId, baseRevision, signal) {
+    let task = await this.#store.get(id);
+    const workPackage = task.workPackages.find((item) => item.id === workPackageId);
+    const attempt = workPackage.attempts + 1;
+    const dependencyIds = dependencyClosure(workPackage, task.workPackages);
+    const dependencyRevisions = task.workPackages
+      .filter((item) => dependencyIds.includes(item.id))
+      .sort((a, b) => a.batch - b.batch || a.id.localeCompare(b.id))
+      .map((item) => item.headRevision);
+    const sliceId = `${workPackage.id}-A${attempt}`;
+    try {
+      const slice = await this.#worktrees.prepare(task, sliceId, {
+        baseRevision,
+        dependencyRevisions,
+        branchId: sliceId,
+      });
+      await this.#store.update(id, (draft) => {
+        const target = draft.workPackages.find((item) => item.id === workPackageId);
+        target.status = "running";
+        target.attempts = attempt;
+        target.branch = slice.branch;
+        target.worktreePath = slice.worktreePath;
+        target.baseRevision = slice.baseRevision;
+        target.error = null;
+        draft.events.push(activity("implement", `${workPackageId} agent started`, `${slice.branch} in dependency batch ${target.batch}.`, "info", "agent"));
+      });
+      task = await this.#store.get(id);
+      const currentPackage = task.workPackages.find((item) => item.id === workPackageId);
+      const result = await this.#executeAgent(
+        task,
+        "implement",
+        signal,
+        slice.worktreePath,
+        "workspace-write",
+        null,
+        buildWorkPackagePrompt(task, currentPackage, slice),
+        `${workPackageId} implementation`,
+      );
+      throwIfAborted(signal);
+      const committed = await this.#worktrees.commit(
+        slice,
+        `agent-harness(${task.id}): ${workPackageId} ${currentPackage.title}`,
+      );
+      const content = `${result.finalText}\n\n## Harness slice evidence\n\n- Work package: ${workPackageId}\n- Attempt: ${attempt}\n- Dependencies: ${currentPackage.dependencies.join(", ") || "None"}\n- Base: ${slice.baseRevision}\n- Package commit: ${committed.headRevision}\n- Branch: ${slice.branch}\n- Changed files: ${committed.files.length}\n\n\`\`\`text\n${committed.ownSummary || "No diff stat returned."}\n\`\`\`\n\n<details><summary>Package patch</summary>\n\n\`\`\`diff\n${committed.ownDiff}\n\`\`\`\n\n</details>`;
+      await this.#retainAgentResult(id, "implement", { ...result, finalText: content }, {
+        complete: false,
+        replace: false,
+        name: `slice-${workPackageId.toLowerCase()}-a${attempt}.md`,
+        workPackageId,
+      });
+      await this.#store.update(id, (draft) => {
+        const target = draft.workPackages.find((item) => item.id === workPackageId);
+        target.status = "ready_for_integration";
+        target.headRevision = committed.headRevision;
+        target.files = committed.files;
+        target.error = null;
+        draft.events.push(activity("implement", `${workPackageId} ready for integration`, `${committed.headRevision.slice(0, 8)} changed ${committed.files.length} file${committed.files.length === 1 ? "" : "s"}.`, "success", "artifact"));
+      });
+    } catch (error) {
+      await this.#store.update(id, (draft) => {
+        const target = draft.workPackages.find((item) => item.id === workPackageId);
+        target.status = "failed";
+        target.error = error.message;
+        draft.events.push(activity("implement", `${workPackageId} failed`, error.message, "danger", "decision"));
+      });
+      throw error;
+    }
   }
 
   async #runEvaluation(id, stageId, signal) {
@@ -352,7 +587,16 @@ export class TaskOrchestrator {
     });
   }
 
-  async #executeAgent(task, stageId, signal, cwd, sandbox, candidate = null) {
+  async #executeAgent(
+    task,
+    stageId,
+    signal,
+    cwd,
+    sandbox,
+    candidate = null,
+    promptOverride = null,
+    eventLabel = null,
+  ) {
     const metadata = getStageMetadata(stageId);
     const testRuntime = stageId === "test";
     const effectiveSandbox = testRuntime ? "workspace-write" : sandbox;
@@ -361,12 +605,12 @@ export class TaskOrchestrator {
       const detail = testRuntime
         ? `Verifying ${cwd}; source changes are checked before and after the run`
         : `${sandbox === "read-only" ? "Reading" : "Working in"} ${cwd}`;
-      draft.events.push(activity(stageId, `${metadata.label} agent started`, detail, "info", "agent"));
+      draft.events.push(activity(stageId, `${eventLabel ?? metadata.label} agent started`, detail, "info", "agent"));
     });
     const runtimeEvents = [];
     const result = await this.#runCodex({
       cwd,
-      prompt: candidate ? buildExecutionPrompt(task, stageId, candidate) : buildStagePrompt(task, stageId),
+      prompt: promptOverride ?? (candidate ? buildExecutionPrompt(task, stageId, candidate) : buildStagePrompt(task, stageId)),
       signal,
       sandbox: effectiveSandbox,
       tempDirectory: testRuntime ? path.join(cwd, ".data", "runtime-temp") : undefined,
@@ -397,6 +641,7 @@ export class TaskOrchestrator {
         usage: result.usage,
         candidateId: options.candidateId ?? null,
         candidateRevision: options.candidateRevision ?? null,
+        workPackageId: options.workPackageId ?? null,
       });
       if (options.complete !== false && !draft.completedStages.includes(stageId)) draft.completedStages.push(stageId);
       for (const key of ["inputTokens", "cachedInputTokens", "outputTokens", "totalTokens"]) {
@@ -447,6 +692,7 @@ function parseVerdict(text) {
 function stageForRun(kind, currentStage) {
   return {
     investigation: ["triage", "scouts", "grill", "specification"].includes(currentStage) ? currentStage : "triage",
+    specification: "specification",
     planning: "plan",
     implementation: "implement",
     repair: "implement",
@@ -459,6 +705,7 @@ function stageForRun(kind, currentStage) {
 function labelForRun(kind) {
   return {
     investigation: "Investigation workflow",
+    specification: "Specification synthesis",
     planning: "Planning gate",
     implementation: "Implementation candidate",
     repair: "Candidate repair",
@@ -471,4 +718,14 @@ function labelForRun(kind) {
 function runDetail(kind) {
   if (kind === "implementation" || kind === "repair") return "Using the local ChatGPT-authenticated Codex CLI inside an isolated Git worktree.";
   return "Using the local ChatGPT-authenticated Codex CLI with retained workflow context.";
+}
+
+function dependencyClosure(workPackage, packages, seen = new Set()) {
+  for (const dependencyId of workPackage.dependencies) {
+    if (seen.has(dependencyId)) continue;
+    seen.add(dependencyId);
+    const dependency = packages.find((item) => item.id === dependencyId);
+    if (dependency) dependencyClosure(dependency, packages, seen);
+  }
+  return [...seen];
 }

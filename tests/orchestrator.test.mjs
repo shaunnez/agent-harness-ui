@@ -5,6 +5,96 @@ import path from "node:path";
 import test from "node:test";
 import { evaluationVerdict, TaskOrchestrator } from "../server/orchestrator.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
+import { parseGrillQuestions, parseWorkPackages } from "../server/structured-output.mjs";
+
+const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"questions":[{"question":"Compatibility?","whyItMatters":"Changes the public contract.","options":[{"label":"Preserve it","description":"Keep existing clients working.","recommended":true},{"label":"Break it","description":"Allow a clean break.","recommended":false}],"allowCustom":true}]}\n</grill-questions>`;
+const PLAN_OUTPUT = `## Plan summary\n\nTwo independent slices.\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verification":["npm test"]},{"id":"S2","title":"UI","description":"Implement the task UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verification":["npm run typecheck"]}]}\n</work-packages>`;
+
+test("parses grounded Grill questions and dependency batches", () => {
+  assert.equal(parseGrillQuestions(GRILL_OUTPUT)[0].options[0].recommended, true);
+  const packages = parseWorkPackages(`<work-packages>{"packages":[{"id":"S1","title":"API","description":"Add API.","dependencies":[],"ownedPaths":["server/api.mjs"],"verification":[]},{"id":"S2","title":"UI","description":"Add UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verification":[]},{"id":"S3","title":"Contract","description":"Join both.","dependencies":["S1","S2"],"ownedPaths":["tests/contract.test.mjs"],"verification":[]}]}</work-packages>`);
+  assert.deepEqual(packages.map((item) => item.batch), [1, 1, 2]);
+});
+
+test("runs independent work packages concurrently before candidate assembly", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-parallel-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Parallel implementation",
+      description: "Run independent slices concurrently.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-implementation";
+      draft.currentStage = "implement";
+      draft.workPackages = parseWorkPackages(PLAN_OUTPUT);
+    });
+    let activeAgents = 0;
+    let maximumActiveAgents = 0;
+    const releases = [];
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        base: async () => ({ repositoryRoot: directory, baseRevision: "a".repeat(40), baseBranch: "main" }),
+        prepare: async (_task, id) => ({
+          id,
+          revisionNumber: 1,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: null,
+          branch: `agent-harness/${id.toLowerCase()}`,
+          repositoryRoot: directory,
+          worktreePath: path.join(directory, id),
+          status: "implementing",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          revisions: [],
+        }),
+        commit: async (slice) => ({
+          headRevision: (slice.id.startsWith("S1") ? "b" : "c").repeat(40),
+          files: [`${slice.id}.txt`],
+          summary: "1 file changed",
+          diff: "+change",
+          ownSummary: "1 file changed",
+          ownDiff: "+change",
+        }),
+        assemble: async () => ({
+          headRevision: "d".repeat(40),
+          files: ["S1.txt", "S2.txt"],
+          summary: "2 files changed",
+          diff: "+changes",
+        }),
+      },
+      runCodex: async () => {
+        activeAgents += 1;
+        maximumActiveAgents = Math.max(maximumActiveAgents, activeAgents);
+        await new Promise((resolve) => {
+          const fallback = setTimeout(resolve, 100);
+          releases.push(() => {
+            clearTimeout(fallback);
+            resolve();
+          });
+          if (releases.length === 2) releases.forEach((release) => release());
+        });
+        activeAgents -= 1;
+        return {
+          finalText: "## Outcome\n\nReady",
+          usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+        };
+      },
+    });
+
+    assert.equal(orchestrator.start(task.id, "implementation"), true);
+    const finished = await waitForStatus(store, task.id, "ready-for-review");
+    assert.equal(maximumActiveAgents, 2);
+    assert.deepEqual(finished.candidates[0].members.map((member) => member.packageId), ["S1", "S2"]);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
 
 test("fails a test verdict closed when any verification command fails", () => {
   assert.equal(
@@ -34,7 +124,9 @@ test("runs the investigation frontier and retains each stage handoff", async () 
       runCodex: async ({ prompt, onEvent }) => {
         onEvent({ type: "activity", tone: "success", title: "Repository inspected", detail: "mock" });
         return {
-          finalText: `## Artifact\n\n${prompt.match(/Your stage assignment:\n([^\n]+)/)?.[1] ?? "Ready"}`,
+          finalText: /<grill-questions>/.test(prompt)
+            ? GRILL_OUTPUT
+            : `## Artifact\n\n${prompt.match(/Your stage assignment:\n([^\n]+)/)?.[1] ?? "Ready"}`,
           usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
         };
       },
@@ -48,7 +140,13 @@ test("runs the investigation frontier and retains each stage handoff", async () 
       if (finished.status !== "running" && finished.status !== "queued") break;
     }
 
-    assert.equal(finished.status, "awaiting-spec-approval", finished.error);
+    assert.equal(finished.status, "awaiting-grill", finished.error);
+    assert.deepEqual(finished.completedStages, ["triage", "scouts"]);
+    assert.equal(finished.artifacts.length, 3);
+    assert.equal(finished.grillSession.questions.length, 1);
+    await orchestrator.answerGrillQuestion(task.id, { questionId: "Q1", answer: "Preserve it" });
+    await orchestrator.finishGrill(task.id);
+    finished = await waitForStatus(store, task.id, "awaiting-spec-approval");
     assert.deepEqual(finished.completedStages, ["triage", "scouts", "grill", "specification"]);
     assert.equal(finished.artifacts.length, 4);
     assert.equal(finished.usage.totalTokens, 60);
@@ -75,6 +173,9 @@ test("advances an approved implementation task through a revision-bound candidat
     let verifyCount = 0;
     const runtimeCalls = [];
     const worktreeManager = {
+      async base() {
+        return { repositoryRoot: directory, baseRevision: "a".repeat(40), baseBranch: "main" };
+      },
       async prepare(_task, candidateId) {
         return {
           id: candidateId,
@@ -84,17 +185,27 @@ test("advances an approved implementation task through a revision-bound candidat
           headRevision: null,
           branch: "agent-harness/test-c1",
           repositoryRoot: directory,
-          worktreePath: directory,
+          worktreePath: path.join(directory, candidateId),
           status: "implementing",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           revisions: [],
         };
       },
-      async commit() {
+      async commit(candidate) {
         commitCount += 1;
         return {
-          headRevision: (commitCount === 1 ? "b" : "c").repeat(40),
+          headRevision: (candidate.id === "S1-A1" ? "s" : candidate.id === "S2-A1" ? "t" : "c").repeat(40),
+          files: ["src/change.ts"],
+          summary: "1 file changed",
+          diff: "+change",
+          ownSummary: "1 file changed",
+          ownDiff: "+change",
+        };
+      },
+      async assemble() {
+        return {
+          headRevision: "b".repeat(40),
           files: ["src/change.ts"],
           summary: "1 file changed",
           diff: "+change",
@@ -115,6 +226,8 @@ test("advances an approved implementation task through a revision-bound candidat
         const { prompt } = options;
         runtimeCalls.push(options);
         let finalText = "## Outcome\n\nReady";
+        if (/<grill-questions>/.test(prompt)) finalText = GRILL_OUTPUT;
+        if (/<work-packages>/.test(prompt)) finalText = PLAN_OUTPUT;
         if (/Development review/.test(prompt)) {
           reviewCount += 1;
           finalText = reviewCount === 1 ? "REPAIR\n\n## Verdict\n\nREPAIR" : "PASS\n\n## Verdict\n\nPASS";
@@ -129,8 +242,10 @@ test("advances an approved implementation task through a revision-bound candidat
     });
 
     orchestrator.start(task.id);
+    await waitForStatus(store, task.id, "awaiting-grill");
+    await orchestrator.answerGrillQuestion(task.id, { questionId: "Q1", answer: "Keep it backwards compatible." });
+    await orchestrator.finishGrill(task.id);
     await waitForStatus(store, task.id, "awaiting-spec-approval");
-    await orchestrator.recordDecision(task.id, { question: "Compatibility", answer: "Keep it backwards compatible." });
     await orchestrator.approveSpecification(task.id);
     await waitForStatus(store, task.id, "awaiting-plan-approval");
     await orchestrator.approvePlan(task.id);
@@ -156,16 +271,18 @@ test("advances an approved implementation task through a revision-bound candidat
       ["b".repeat(40), "c".repeat(40)],
     );
     assert.equal(approvalTask.decisions.length, 1);
-    assert.equal(approvalTask.artifacts.length, 11);
+    assert.deepEqual(approvalTask.workPackages.map((item) => item.status), ["integrated", "integrated"]);
+    assert.deepEqual(approvalTask.candidates[0].members.map((member) => member.packageId), ["S1", "S2"]);
+    assert.equal(approvalTask.artifacts.length, 13);
     const testCall = runtimeCalls.find((call) => /Focused test/.test(call.prompt));
     assert.equal(testCall.sandbox, "workspace-write");
-    assert.equal(testCall.tempDirectory, path.join(directory, ".data", "runtime-temp"));
+    assert.equal(testCall.tempDirectory, path.join(directory, "C1", ".data", "runtime-temp"));
     assert.equal(verifyCount, 6, "test must verify the candidate both before and after execution");
     await orchestrator.approveMerge(task.id);
     const complete = await store.get(task.id);
     assert.equal(complete.status, "completed");
     assert.equal(complete.candidates[0].status, "merged");
-    assert.equal(complete.artifacts.length, 12);
+    assert.equal(complete.artifacts.length, 14);
     assert.equal(complete.artifacts.at(-1).stage, "approval");
     assert.equal(complete.artifacts.at(-1).candidateId, "C1");
     assert.equal(complete.artifacts.at(-1).candidateRevision, 2);

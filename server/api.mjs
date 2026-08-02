@@ -96,6 +96,24 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
         return;
       }
 
+      const grillAnswerMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/grill\/answers$/);
+      if (request.method === "POST" && grillAnswerMatch) {
+        const id = decodeURIComponent(grillAnswerMatch[1]);
+        const input = await readJson(request);
+        await orchestrator.answerGrillQuestion(id, input);
+        send(response, 201, { recorded: true });
+        return;
+      }
+
+      const finishGrillMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/grill\/finish$/);
+      if (request.method === "POST" && finishGrillMatch) {
+        const id = decodeURIComponent(finishGrillMatch[1]);
+        const input = await readJson(request);
+        const result = await orchestrator.finishGrill(id, { acceptRemaining: input.acceptRemaining === true });
+        send(response, 202, result);
+        return;
+      }
+
       const actionMatch = url.pathname.match(
         /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|plan|implement|repair|review|test|final-review|approve-merge|grant-retry)$/,
       );
@@ -133,8 +151,9 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
         }
         if (action === "grant-retry") {
           const candidate = task.candidates?.at(-1);
-          if (task.status !== "blocked" || candidate?.status !== "repair_required") {
-            send(response, 409, { error: "A retry can only be granted to a blocked candidate awaiting repair." });
+          const recoverableImplementation = task.currentStage === "implement";
+          if (task.status !== "blocked" || (candidate?.status !== "repair_required" && !recoverableImplementation)) {
+            send(response, 409, { error: "A retry can only be granted to a blocked repair or implementation attempt." });
             return;
           }
           await store.update(id, (draft) => {
@@ -147,7 +166,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
               category: "decision",
               tone: "warning",
               stage: draft.currentStage,
-              title: "One repair attempt granted",
+              title: candidate?.status === "repair_required" ? "One repair attempt granted" : "One implementation attempt granted",
               detail: `Human override increased the stage allowance to ${draft.stageRunLimit}.`,
             });
           });
@@ -159,7 +178,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
           run: {
             kind: "investigation",
             statuses: ["queued", "failed", "cancelled"],
-            stages: ["triage", "scouts", "grill", "specification"],
+            stages: ["triage", "scouts", "grill"],
           },
           plan: { kind: "planning", statuses: ["failed", "cancelled"], stages: ["plan"] },
           implement: {

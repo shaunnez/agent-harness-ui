@@ -6,15 +6,16 @@ Updated: 2026-08-02
 
 The repository now contains both the approved ten-stage interaction prototype and a real local vertical slice that can carry an implementation-mode task through every workflow gate:
 
-1. Triage, Repository Scouts, Decision Brief, and Task Specification run read-only against a selected repository.
-2. Human decisions are persisted as authoritative context. Specification approval either completes an investigate-only task or starts planning for an implementation task.
-3. Implementation Plan runs read-only and waits for explicit approval.
-4. Implement verifies that the selected Git repository is clean, creates an isolated worktree and harness-owned branch, runs Codex with write access only in that worktree, and commits a versioned integration candidate.
-5. Development Review and Final Review run read-only against the exact candidate worktree and revision. Focused Test uses guarded worktree access for temporary test files, with exact-SHA and clean-status checks before and after the run.
-6. A failed review or test retains its evidence and enables a repair agent. Repair creates a new commit/revision and requires development review again.
-7. Human Approval revalidates the clean source checkout, unchanged base SHA, and candidate worktree SHA before performing a fast-forward-only merge.
+1. Triage and Repository Scouts run read-only against a selected repository.
+2. Grill Me produces real, mutually exclusive questions and pauses for persisted answers. The user can answer every question or explicitly finish by accepting the remaining recommendations before specification synthesis begins.
+3. Task Specification runs only after Grill is explicitly completed. Specification approval either completes an investigate-only task or starts planning for an implementation task.
+4. Implementation Plan emits a validated work-package manifest with dependencies, topological batches, path ownership, and focused verification commands, then waits for explicit approval.
+5. Implement creates one isolated worktree and harness-owned branch per work package. Packages in the same dependency batch run concurrently; dependent slices start with their complete dependency commit closure applied.
+6. The harness assembles qualified package commits in deterministic topological order into a separate versioned integration candidate.
+7. Development Review and Final Review run read-only against the exact candidate worktree and revision. Focused Test uses guarded worktree access for temporary test files, with exact-SHA and clean-status checks before and after the run.
+8. A failed review or test retains its evidence and enables a candidate repair agent. Human Approval revalidates the clean source checkout, unchanged base SHA, and candidate worktree SHA before a fast-forward-only merge.
 
-The current backend intentionally models one implementation session as one candidate. The richer prototype still demonstrates dependency batches, multiple slice worktrees, mixed test drill-down, candidate assembly, and multi-provider work; those remain the next product expansion rather than being falsely represented as real runtime behavior.
+The runtime models slices separately from the integration candidate. Downstream review, test, repair, and approval gates bind to the assembled candidate because that exact revision is the unit that can safely merge.
 
 ## Runtime and authentication contract
 
@@ -53,6 +54,8 @@ Repository hooks and configured Git identity are respected. A hook or missing id
 | `POST` | `/api/tasks/:id/run` | Start or retry investigation |
 | `POST` | `/api/tasks/:id/cancel` | Abort the active Codex subprocess |
 | `POST` | `/api/tasks/:id/decisions` | Record an authoritative human question/answer pair |
+| `POST` | `/api/tasks/:id/grill/answers` | Answer one generated Grill question |
+| `POST` | `/api/tasks/:id/grill/finish` | Complete Grill, optionally accept remaining recommendations, and start specification synthesis |
 | `POST` | `/api/tasks/:id/approve-spec` | Approve the specification; complete investigation or start planning |
 | `POST` | `/api/tasks/:id/plan` | Retry a failed planning run |
 | `POST` | `/api/tasks/:id/approve-plan` | Authorize isolated implementation |
@@ -71,7 +74,10 @@ The API validates action eligibility from persisted task status. A task has one 
 
 - `attemptsByStage` rather than presenting a global run counter as a stage retry count;
 - `decisions` and `approvals` with timestamps;
+- a `grillSession` with generated options, recommendation provenance, answer source, completion reason, and timestamps;
+- `workPackages` with dependencies, topological batch, ownership, verification, attempt state, worktree/branch, files, and exact package commit;
 - `candidates` with base/head SHA, branch, repository/worktree paths, lifecycle status, revision number, and revision lineage;
+- ordered candidate membership linking every assembled package ID and commit;
 - artifact-level candidate ID/revision provenance; and
 - `activeRunKind` for interruption recovery.
 
@@ -84,6 +90,8 @@ Writes use a temporary file plus rename and are serialized in-process. Startup a
 - Completed stages remain green while a selected historical stage remains blue.
 - The universal inspector preserves task brief, viewed/active stage context, model/access/sandbox metadata, decision frontier, current candidate identity, and living artifacts.
 - Human decisions can be recorded inline and are injected into every downstream prompt.
+- Grill Me distinguishes an open decision session from recorded history, reveals a text field for a custom single-choice answer, and makes finishing with recommendations explicit.
+- Implement shows packages by dependency batch with status, declared ownership, attempts, and package commit; candidate membership is visible in the inspector.
 - Candidate artifacts, failed gate evidence, and repaired revisions remain drillable.
 - Approval history is visible in the universal inspector with stage, note fallback, and timestamp; switching tasks resets the viewed-stage context to the new task.
 - Access-boundary copy and the inspector's agent/sandbox metadata are derived from the active stage, while viewed-stage artifacts remain independently selectable.
@@ -92,27 +100,30 @@ Writes use a temporary file plus rename and are serialized in-process. Startup a
 
 ## Known limitations and next work
 
-1. The planner produces useful Markdown but not yet a parsed dependency graph or executable work-package records. One Codex implementation session creates one candidate; parallel/ordered slices still need a scheduler and candidate assembly step.
-2. Focused Test is agent-assisted. It is told to run only existing, non-interactive, non-E2E repository checks, but results are not yet normalized into a per-command/per-test list with accordion drill-down.
-3. Gate verdict parsing is conservative but simple: a top-line `PASS` advances; any other response requires repair. Structured output schemas and a code-specific rubric model should replace this.
-4. Repairs update the current candidate branch and retain revision history/artifacts, but the data model does not yet represent a separate immutable candidate object for every revision.
-5. API mutations do not yet use idempotency keys or optimistic revision tokens. Process-local locks prevent duplicate active agents only within one companion process.
-6. No worktree/branch cleanup, rebase, conflict-resolution, repository picker, streamed activity, or PR publishing exists in the product UI.
-7. The JSON store is appropriate for one local user, not concurrent or remote workers.
-8. The hosted Sites artifact is UI-only: a Cloudflare worker cannot access the user's local Codex login, Git checkouts, or filesystem.
-9. The real runtime uses one OpenAI/Codex model today. Agent profiles and additional providers remain represented in the complete prototype but are not wired into task execution.
+1. Work-package concurrency is one agent per package in the active dependency batch with no configurable global concurrency limit. Git worktree preparation is serialized to avoid repository lock contention; agent executions are concurrent.
+2. Slice qualification is still agent-reported focused verification. The candidate receives authoritative review/test gates, but slice checks are not yet normalized into structured command/test records.
+3. Assembly conflicts stop safely with all slice commits retained, but there is no dedicated conflict-resolution UI or integration-repair agent yet.
+4. Focused Test is agent-assisted. It is told to run only existing, non-interactive, non-E2E repository checks, but results are not yet normalized into a per-command/per-test list with accordion drill-down.
+5. Gate verdict parsing is conservative but simple: a top-line `PASS` advances; any other response requires repair. Structured output schemas and a code-specific rubric model should replace this.
+6. Repairs update the current candidate branch and retain revision history/artifacts, but the data model does not yet represent a separate immutable candidate object for every revision.
+7. API mutations do not yet use idempotency keys or optimistic revision tokens. Process-local locks prevent duplicate active agents only within one companion process.
+8. No worktree/branch cleanup, rebase, conflict-resolution, repository picker, streamed activity, or PR publishing exists in the product UI.
+9. The JSON store is appropriate for one local user, not concurrent or remote workers.
+10. The hosted Sites artifact is UI-only: a Cloudflare worker cannot access the user's local Codex login, Git checkouts, or filesystem.
+11. The real runtime uses one OpenAI/Codex model today. Agent profiles and additional providers remain represented in the complete prototype but are not wired into task execution.
 
 ## Fast verification record
 
 - `npm run lint`
 - `npm run typecheck`
-- `npm test` (23 tests at this handoff)
+- `npm test` (28 tests at this handoff)
 - `npm run build`
 - `npm run test:sites`
 - Real OAuth subprocess smoke through stdin: GPT-5.4-mini returned the requested Markdown and usage without API keys.
-- Real temporary-Git test: create nested ignored worktree, commit candidate, validate SHA, and fast-forward merge.
+- Real temporary-Git test: create two isolated slice commits, assemble them into one candidate, validate its SHA, and fast-forward merge.
 - Three complete dogfood tasks reached human-approved fast-forward merge; see `docs/dogfood-report.md` for candidate revisions, failure-budget accounting, and remediations.
 - Browser smoke: completed-task merge summary, approval history, active/viewed-stage separation, historical Test evidence, task switching, and task-list aggregates rendered without console errors.
+- Browser smoke after the scheduler cut: existing completed tasks render without console errors; focused server-render coverage exercises open/completed Grill and mixed package batches.
 
 ### Live-run calibration note
 

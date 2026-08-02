@@ -80,6 +80,7 @@ export type RuntimeTaskStatus =
   | "failed"
   | "blocked"
   | "cancelled"
+  | "awaiting-grill"
   | "awaiting-spec-approval"
   | "awaiting-plan-approval"
   | "ready-for-implementation"
@@ -109,13 +110,59 @@ export interface RuntimeArtifact {
   usage: Omit<RuntimeUsage, "cost">;
   candidateId?: string | null;
   candidateRevision?: number | null;
+  workPackageId?: string | null;
 }
 
 export interface RuntimeDecision {
   id: string;
+  grillQuestionId?: string;
   question: string;
   answer: string;
   createdAt: string;
+}
+
+export interface RuntimeGrillOption {
+  id: string;
+  label: string;
+  description: string;
+  recommended: boolean;
+}
+
+export interface RuntimeGrillQuestion {
+  id: string;
+  question: string;
+  whyItMatters: string;
+  options: RuntimeGrillOption[];
+  allowCustom: boolean;
+  answer: string | null;
+  answerSource: "user" | "accepted-assumption" | null;
+  resolvedAt: string | null;
+}
+
+export interface RuntimeGrillSession {
+  status: "open" | "completed";
+  questions: RuntimeGrillQuestion[];
+  createdAt: string;
+  completedAt: string | null;
+  completionReason: string | null;
+}
+
+export interface RuntimeWorkPackage {
+  id: string;
+  title: string;
+  description: string;
+  dependencies: string[];
+  batch: number;
+  ownedPaths: string[];
+  verification: string[];
+  status: "planned" | "running" | "ready_for_integration" | "failed" | "integrated";
+  attempts: number;
+  branch: string | null;
+  worktreePath: string | null;
+  baseRevision: string | null;
+  headRevision: string | null;
+  files: string[];
+  error: string | null;
 }
 
 export interface RuntimeApproval {
@@ -138,6 +185,7 @@ export interface RuntimeCandidate {
   createdAt: string;
   updatedAt: string;
   revisions: Array<{ number: number; headRevision: string; reason: string; createdAt: string }>;
+  members?: Array<{ packageId: string; headRevision: string; order: number }>;
 }
 
 export interface RuntimeEvent {
@@ -173,7 +221,9 @@ export interface RuntimeTask {
   usage: RuntimeUsage;
   artifacts: RuntimeArtifact[];
   decisions: RuntimeDecision[];
+  grillSession: RuntimeGrillSession | null;
   approvals: RuntimeApproval[];
+  workPackages: RuntimeWorkPackage[];
   candidates: RuntimeCandidate[];
   events: RuntimeEvent[];
 }

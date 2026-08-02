@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  answerGrillQuestion,
   cancelTask,
   createTask,
+  finishGrill,
   getRuntimeStatus,
   getTask,
   listTasks,
@@ -184,6 +186,14 @@ export function App() {
                 await recordTaskDecision(activeRuntimeTask.id, question, answer);
                 const refreshed = await getTask(activeRuntimeTask.id);
                 setActiveRuntimeTask(refreshed);
+              }}
+              onGrillAnswer={async (questionId, answer) => {
+                await answerGrillQuestion(activeRuntimeTask.id, questionId, answer);
+                setActiveRuntimeTask(await getTask(activeRuntimeTask.id));
+              }}
+              onFinishGrill={async (acceptRemaining) => {
+                await finishGrill(activeRuntimeTask.id, acceptRemaining);
+                setActiveRuntimeTask({ ...activeRuntimeTask, status: "running", error: null });
               }}
             />
           ) : (

@@ -13,6 +13,8 @@ async function createServer() {
   await store.init();
   let startedId = null;
   let recordedDecision = null;
+  let grillAnswer = null;
+  let grillFinish = null;
   let approvedSpecification = null;
   const orchestrator = {
     status: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
@@ -23,6 +25,13 @@ async function createServer() {
     cancel: () => false,
     async recordDecision(id, input) {
       recordedDecision = { id, ...input };
+    },
+    async answerGrillQuestion(id, input) {
+      grillAnswer = { id, ...input };
+    },
+    async finishGrill(id, input) {
+      grillFinish = { id, ...input };
+      return { started: true };
     },
     async approveSpecification(id, note) {
       approvedSpecification = { id, note };
@@ -41,6 +50,8 @@ async function createServer() {
     store,
     startedIdRef: () => startedId,
     recordedDecisionRef: () => recordedDecision,
+    grillAnswerRef: () => grillAnswer,
+    grillFinishRef: () => grillFinish,
     approvedSpecificationRef: () => approvedSpecification,
   };
 }
@@ -108,6 +119,40 @@ test("creates, lists, and starts a local task", async () => {
     });
     assert.equal(approvalResponse.status, 200);
     assert.deepEqual(approvedSpecificationRef(), { id: task.id, note: "Approved for handoff." });
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("records Grill answers and requires an explicit finish mode", async () => {
+  const { directory, origin, server, grillAnswerRef, grillFinishRef } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Grill contract",
+      description: "Persist an authoritative decision frontier.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    const answerResponse = await fetch(`${origin}/api/tasks/${task.id}/grill/answers`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ questionId: "Q1", answer: "Preserve compatibility" }),
+    });
+    assert.equal(answerResponse.status, 201);
+    assert.deepEqual(grillAnswerRef(), {
+      id: task.id,
+      questionId: "Q1",
+      answer: "Preserve compatibility",
+    });
+
+    const finishResponse = await fetch(`${origin}/api/tasks/${task.id}/grill/finish`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ acceptRemaining: true }),
+    });
+    assert.equal(finishResponse.status, 202);
+    assert.deepEqual(grillFinishRef(), { id: task.id, acceptRemaining: true });
   } finally {
     await cleanup(server, directory);
   }
