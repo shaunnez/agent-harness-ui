@@ -1,5 +1,14 @@
 import type { NewTaskDraft, RuntimeStatus, RuntimeTask } from "./domain";
 
+export interface CandidateDiffResponse {
+  candidateId: string;
+  revisionNumber: number;
+  headRevision: string;
+  worktreePath: string;
+  diff: string;
+  truncated: boolean;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
@@ -17,6 +26,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export async function getRuntimeStatus() {
   return request<RuntimeStatus>("/api/runtime/status");
+}
+
+export async function getCandidateDiff(candidateId: string, headRevision: string) {
+  const params = new URLSearchParams({ headRevision });
+  return request<CandidateDiffResponse>(
+    `/api/runtime/candidates/${encodeURIComponent(candidateId)}/diff?${params.toString()}`,
+  );
 }
 
 export async function listTasks() {

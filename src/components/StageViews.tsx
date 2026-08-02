@@ -19,6 +19,7 @@ import {
   XCircle,
 } from "@phosphor-icons/react";
 import { createContext, useContext, useState } from "react";
+import { getCandidateDiff, type CandidateDiffResponse } from "../api";
 import { acceptanceCriteria, type HarnessEvent, type TaskRunState, workflowStages } from "../domain";
 import { Button, EvidenceState, ProviderTag, SectionHeader } from "./Primitives";
 
@@ -2116,6 +2117,9 @@ function ContextInspector({
 }) {
   const task = useContext(TaskBriefContext);
   const [openArtifact, setOpenArtifact] = useState<ArtifactRecord | null>(null);
+  const [candidateDiff, setCandidateDiff] = useState<CandidateDiffResponse | null>(null);
+  const [candidateDiffError, setCandidateDiffError] = useState<string | null>(null);
+  const [candidateDiffLoading, setCandidateDiffLoading] = useState(false);
   const index = workflowStages.findIndex((item) => item.id === stage);
   const current = workflowStages[index >= 0 ? index : 0] ?? workflowStages[0];
   if (!current) return null;
@@ -2135,6 +2139,20 @@ function ContextInspector({
   };
   const model = stageModels[stage] ?? "Deterministic harness";
   const agent = stageAgents[stage] ?? "Orchestration agent";
+  const candidateIdentity = `${task.candidateId} · ${task.candidateSha}`;
+  const openCandidateDiff = async () => {
+    setCandidateDiffLoading(true);
+    setCandidateDiffError(null);
+    try {
+      const response = await getCandidateDiff(task.candidateId, task.candidateSha);
+      setCandidateDiff(response);
+    } catch (error) {
+      setCandidateDiff(null);
+      setCandidateDiffError(error instanceof Error ? error.message : "Failed to load candidate diff.");
+    } finally {
+      setCandidateDiffLoading(false);
+    }
+  };
   return (
     <>
       <aside className="stage-inspector">
@@ -2165,13 +2183,16 @@ function ContextInspector({
         </InspectorSection>
         {index >= 5 ? (
           <InspectorSection title="Integration candidate">
-            <StructuredRow label="Candidate" value={`${task.candidateId} · ${task.candidateSha}`} />
+            <StructuredRow label="Candidate" value={candidateIdentity} />
             <StructuredRow label="Includes" value="S1 81ac09f · S2 4f7e2bd · S3 962e11a" />
             <StructuredRow label="Target" value="main@9b6c0fa · squash merge" />
             <StructuredRow
               label="Verdict freshness"
               value={index === task.activeStageIndex ? "Current for this revision" : relation}
             />
+            <Button tone="secondary" icon={GitDiff} onClick={openCandidateDiff} disabled={candidateDiffLoading}>
+              {candidateDiffLoading ? "Loading candidate diff" : "Inspect candidate diff"}
+            </Button>
           </InspectorSection>
         ) : null}
         <details className="safeguard-details">
@@ -2228,7 +2249,121 @@ function ContextInspector({
         {selectedEvent ? <SelectedEvent event={selectedEvent} /> : null}
       </aside>
       {openArtifact ? <ArtifactViewer artifact={openArtifact} onClose={() => setOpenArtifact(null)} /> : null}
+      {candidateDiff ? (
+        <CandidateDiffViewer
+          candidateIdentity={candidateIdentity}
+          diff={candidateDiff}
+          onClose={() => setCandidateDiff(null)}
+        />
+      ) : null}
+      {candidateDiffError ? (
+        <CandidateDiffErrorViewer
+          candidateIdentity={candidateIdentity}
+          error={candidateDiffError}
+          onClose={() => setCandidateDiffError(null)}
+          onRetry={openCandidateDiff}
+        />
+      ) : null}
     </>
+  );
+}
+
+function CandidateDiffViewer({
+  candidateIdentity,
+  diff,
+  onClose,
+}: {
+  candidateIdentity: string;
+  diff: CandidateDiffResponse;
+  onClose: () => void;
+}) {
+  const lines = diff.diff.split("\n");
+  return (
+    <div className="artifact-overlay candidate-diff-overlay" role="dialog" aria-modal="true" aria-label="Candidate diff">
+      <button type="button" className="artifact-overlay__backdrop" onClick={onClose} aria-label="Close candidate diff" />
+      <section className="artifact-viewer candidate-diff-viewer">
+        <header>
+          <span>
+            <FileCode size={18} />
+            <span>
+              <small>Candidate diff</small>
+              <strong>{candidateIdentity}</strong>
+            </span>
+          </span>
+          <button type="button" className="icon-button" onClick={onClose} aria-label="Return to inspector">
+            <X size={17} />
+          </button>
+        </header>
+        <div className="artifact-viewer__summary">
+          <span>
+            Revision {diff.revisionNumber} · {diff.worktreePath}
+          </span>
+          <p>
+            Head revision <code>{diff.headRevision}</code>
+            {diff.truncated ? " · diff capped at 300000 characters" : ""}
+          </p>
+        </div>
+        <pre className="candidate-diff-viewer__diff">
+          <code>
+            {lines.map((line, index) => (
+              <span className="diff-line diff-line--context" key={`${index}-${line}`}>
+                {line}
+              </span>
+            ))}
+          </code>
+        </pre>
+        <footer>
+          <Button tone="secondary" icon={ArrowLeft} onClick={onClose}>
+            Back to inspector
+          </Button>
+          <small>Read-only candidate-bound diff</small>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
+function CandidateDiffErrorViewer({
+  candidateIdentity,
+  error,
+  onClose,
+  onRetry,
+}: {
+  candidateIdentity: string;
+  error: string;
+  onClose: () => void;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="artifact-overlay candidate-diff-overlay" role="dialog" aria-modal="true" aria-label="Candidate diff error">
+      <button type="button" className="artifact-overlay__backdrop" onClick={onClose} aria-label="Dismiss candidate diff error" />
+      <section className="artifact-viewer candidate-diff-viewer">
+        <header>
+          <span>
+            <FileCode size={18} />
+            <span>
+              <small>Candidate diff unavailable</small>
+              <strong>{candidateIdentity}</strong>
+            </span>
+          </span>
+          <button type="button" className="icon-button" onClick={onClose} aria-label="Close error viewer">
+            <X size={17} />
+          </button>
+        </header>
+        <div className="artifact-viewer__summary">
+          <span>Fresh candidate verification failed</span>
+          <p>{error}</p>
+        </div>
+        <footer>
+          <Button tone="primary" icon={GitDiff} onClick={onRetry}>
+            Retry fresh fetch
+          </Button>
+          <Button tone="secondary" icon={ArrowLeft} onClick={onClose}>
+            Back to inspector
+          </Button>
+        </footer>
+      </section>
+    </div>
   );
 }
 
