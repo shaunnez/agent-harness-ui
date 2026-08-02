@@ -18,7 +18,7 @@ import {
   X,
   XCircle,
 } from "@phosphor-icons/react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { getCandidateDiff, type CandidateDiffResponse } from "../api";
 import { acceptanceCriteria, type HarnessEvent, type TaskRunState, workflowStages } from "../domain";
 import { Button, EvidenceState, ProviderTag, SectionHeader } from "./Primitives";
@@ -2127,6 +2127,7 @@ function ContextInspector({
   const [candidateDiff, setCandidateDiff] = useState<CandidateDiffResponse | null>(null);
   const [candidateDiffError, setCandidateDiffError] = useState<string | null>(null);
   const [candidateDiffLoading, setCandidateDiffLoading] = useState(false);
+  const candidateDiffRequestRef = useRef(0);
   const index = workflowStages.findIndex((item) => item.id === stage);
   const current = workflowStages[index >= 0 ? index : 0] ?? workflowStages[0];
   if (!current) return null;
@@ -2151,18 +2152,28 @@ function ContextInspector({
     setCandidateDiff(null);
     setCandidateDiffError(null);
     setCandidateDiffLoading(false);
+    candidateDiffRequestRef.current = 0;
   }, [candidateIdentity]);
   const openCandidateDiff = async () => {
+    const requestId = candidateDiffRequestRef.current + 1;
+    candidateDiffRequestRef.current = requestId;
     setCandidateDiffLoading(true);
     setCandidateDiffError(null);
     try {
       const response = await getCandidateDiff(task.taskId, task.candidateId, task.candidateSha);
-      setCandidateDiff(response);
+      if (requestId === candidateDiffRequestRef.current) {
+        setCandidateDiff(response);
+      }
     } catch (error) {
+      if (requestId !== candidateDiffRequestRef.current) {
+        return;
+      }
       setCandidateDiff(null);
       setCandidateDiffError(error instanceof Error ? error.message : "Failed to load candidate diff.");
     } finally {
-      setCandidateDiffLoading(false);
+      if (requestId === candidateDiffRequestRef.current) {
+        setCandidateDiffLoading(false);
+      }
     }
   };
   return (
