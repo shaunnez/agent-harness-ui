@@ -203,6 +203,17 @@ test("renders truthful active-stage access boundaries", () => {
     assert.match(testMarkup, /temporary files/i);
     assert.match(testMarkup, /must be left clean/i);
 
+    const repairRequiredMarkup = renderWorkspace(
+      createTask({
+        currentStage: "test",
+        status: "repair-required",
+        error: "The test gate failed.",
+      }),
+    );
+    assert.match(repairRequiredMarkup, /Worktree write scope/);
+    assert.match(repairRequiredMarkup, /isolated candidate worktree/i);
+    assert.match(repairRequiredMarkup, /repair the retained candidate/i);
+
     const activeTask = createTask({
       currentStage: "implement",
       status: "running",
@@ -249,8 +260,8 @@ test("renders truthful active-stage access boundaries", () => {
     assert.match(sameActiveDifferentViewedMarkup, /Worktree write scope/);
     assert.match(sameActiveDifferentViewedMarkup, /isolated candidate worktree/i);
     assert.equal(
-      viewedStageMarkup.match(/Worktree write scope[^<]*/)?.[0],
-      sameActiveDifferentViewedMarkup.match(/Worktree write scope[^<]*/)?.[0],
+      viewedStageMarkup.match(/<small>Sandbox<\/small><strong class="">([^<]+)<\/strong>/)?.[1],
+      sameActiveDifferentViewedMarkup.match(/<small>Sandbox<\/small><strong class="">([^<]+)<\/strong>/)?.[1],
     );
   });
 });

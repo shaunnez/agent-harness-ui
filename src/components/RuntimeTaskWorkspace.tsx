@@ -391,7 +391,7 @@ function RuntimeCommandBar({
               : blocked
                 ? (next?.title ?? "Repair allowance exhausted")
                 : repairRequired
-                ? accessBoundary.title
+                ? `${accessBoundary.title} - repair the retained candidate`
                 : failed
                   ? "Retry the failed stage"
                   : ready
