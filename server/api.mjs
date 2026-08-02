@@ -101,6 +101,9 @@ export function createApiServer({ store, orchestrator, suggestedRepository }) {
       if (request.method === "POST" && grillAnswerMatch) {
         const id = decodeURIComponent(grillAnswerMatch[1]);
         const input = await readJson(request);
+        if (!input.questionId?.trim() || !input.answer?.trim()) throw new Error("Question ID and answer are required.");
+        input.questionId = input.questionId.trim();
+        input.answer = input.answer.trim();
         await orchestrator.answerGrillQuestion(id, input);
         send(response, 201, { recorded: true });
         return;

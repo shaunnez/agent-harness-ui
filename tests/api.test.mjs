@@ -283,3 +283,33 @@ for (const [name, payload] of [
     }
   });
 }
+
+for (const [name, payload] of [
+  ["rejects missing grill question IDs", { answer: "Preserve compatibility" }],
+  ["rejects blank grill question IDs", { questionId: "   ", answer: "Preserve compatibility" }],
+  ["rejects missing grill answers", { questionId: "Q1" }],
+  ["rejects blank grill answers", { questionId: "Q1", answer: "   " }],
+]) {
+  test(name, async () => {
+    const { directory, origin, server, grillAnswerRef } = await createServer();
+    try {
+      const response = await createTask(origin, {
+        title: "Grill boundary validation",
+        description: "Keep malformed grill answers out of orchestration.",
+        repositoryPath: directory,
+        workflow: "implement",
+      });
+      const { task } = await response.json();
+      const answerResponse = await fetch(`${origin}/api/tasks/${task.id}/grill/answers`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      assert.equal(answerResponse.status, 400);
+      assert.deepEqual(await answerResponse.json(), { error: "Question ID and answer are required." });
+      assert.equal(grillAnswerRef(), null);
+    } finally {
+      await cleanup(server, directory);
+    }
+  });
+}
