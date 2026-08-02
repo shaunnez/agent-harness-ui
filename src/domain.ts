@@ -111,6 +111,43 @@ export interface RuntimeArtifact {
   candidateId?: string | null;
   candidateRevision?: number | null;
   workPackageId?: string | null;
+  focusedTest?: RuntimeFocusedTestEvidence | null;
+}
+
+export interface RuntimeFocusedTestArtifactReference {
+  name: string;
+  path?: string | null;
+  kind: string;
+}
+
+export interface RuntimeFocusedTestAssertion {
+  label: string;
+  actual: string;
+  expected?: string | null;
+}
+
+export interface RuntimeFocusedTestRow {
+  id: string;
+  candidateId: string;
+  candidateRevision: number;
+  command: string;
+  status: "passed" | "failed";
+  durationMs: number | null;
+  title: string;
+  artifactReferences: RuntimeFocusedTestArtifactReference[];
+  assertions: RuntimeFocusedTestAssertion[];
+  failureDetails: string | null;
+}
+
+export interface RuntimeFocusedTestEvidence {
+  candidateId: string;
+  candidateRevision: number;
+  command: string;
+  status: "passed" | "failed";
+  startedAt?: string | null;
+  completedAt?: string | null;
+  durationMs: number | null;
+  rows: RuntimeFocusedTestRow[];
 }
 
 export interface RuntimeDecision {

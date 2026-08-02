@@ -45,6 +45,37 @@ export function parseGrillQuestions(text) {
   });
 }
 
+export function parseFocusedTestEvidence(text) {
+  const value = parseLabelledJson(text, "focused-test-evidence");
+  if (!value?.candidateId?.trim()) throw new Error("Focused test evidence must include a candidateId.");
+  if (!Number.isInteger(value.candidateRevision) || value.candidateRevision < 1) {
+    throw new Error("Focused test evidence must include a positive candidateRevision.");
+  }
+  if (!value.command?.trim()) throw new Error("Focused test evidence must include a command.");
+  const rows = Array.isArray(value.rows) ? value.rows : [];
+  if (!rows.length) throw new Error("Focused test evidence must include at least one row.");
+  return {
+    candidateId: value.candidateId.trim(),
+    candidateRevision: value.candidateRevision,
+    command: value.command.trim().slice(0, 2_000),
+    status: value.status === "failed" ? "failed" : "passed",
+    startedAt: value.startedAt ?? null,
+    completedAt: value.completedAt ?? null,
+    durationMs: normalizeDuration(value.durationMs),
+    rows: rows.map((row, rowIndex) => normalizeFocusedTestRow(row, rowIndex, value)),
+  };
+}
+
+export function tryParseFocusedTestEvidence(text) {
+  try {
+    return parseFocusedTestEvidence(text);
+  } catch (error) {
+    if (String(error?.message ?? "").includes("focused-test-evidence")) return null;
+    if (String(error?.message ?? "").includes("Focused test evidence must include")) throw error;
+    return null;
+  }
+}
+
 export function parseWorkPackages(text, repositoryPath = null) {
   const value = parseLabelledJson(text, "work-packages");
   if (!Array.isArray(value.packages) || value.packages.length < 1 || value.packages.length > 8) {
@@ -143,4 +174,47 @@ function dependsOn(item, targetId, byId, seen = new Set()) {
   seen.add(item.id);
   if (item.dependencies.includes(targetId)) return true;
   return item.dependencies.some((dependency) => dependsOn(byId.get(dependency), targetId, byId, seen));
+}
+
+function normalizeFocusedTestRow(row, rowIndex, parent) {
+  const candidateId = String(row?.candidateId ?? parent.candidateId ?? "").trim();
+  const candidateRevision = Number.isInteger(row?.candidateRevision)
+    ? row.candidateRevision
+    : parent.candidateRevision;
+  if (!candidateId) throw new Error(`Focused test row ${rowIndex + 1} must include a candidateId.`);
+  if (!Number.isInteger(candidateRevision) || candidateRevision < 1) {
+    throw new Error(`Focused test row ${rowIndex + 1} must include a positive candidateRevision.`);
+  }
+  const status = row?.status === "failed" ? "failed" : "passed";
+  const assertions = Array.isArray(row?.assertions)
+    ? row.assertions.map((assertion, assertionIndex) => ({
+        label: String(assertion?.label ?? "").trim().slice(0, 300) || `Assertion ${assertionIndex + 1}`,
+        actual: String(assertion?.actual ?? "").trim().slice(0, 1_000),
+        expected: assertion?.expected == null ? null : String(assertion.expected).trim().slice(0, 1_000),
+      }))
+    : [];
+  return {
+    id: String(row?.id ?? `row-${rowIndex + 1}`).trim() || `row-${rowIndex + 1}`,
+    candidateId,
+    candidateRevision,
+    command: String(row?.command ?? parent.command ?? "").trim().slice(0, 2_000),
+    status,
+    durationMs: normalizeDuration(row?.durationMs),
+    title: String(row?.title ?? "").trim().slice(0, 300) || `Focused test ${rowIndex + 1}`,
+    artifactReferences: Array.isArray(row?.artifactReferences)
+      ? row.artifactReferences.map((reference) => ({
+          name: String(reference?.name ?? "").trim().slice(0, 300),
+          path: reference?.path == null ? null : String(reference.path).trim().slice(0, 1_000),
+          kind: String(reference?.kind ?? "artifact").trim().slice(0, 100),
+        }))
+      : [],
+    assertions,
+    failureDetails: row?.failureDetails == null ? null : String(row.failureDetails).trim().slice(0, 5_000),
+  };
+}
+
+function normalizeDuration(value) {
+  if (value == null || value === "") return null;
+  const duration = Number(value);
+  return Number.isFinite(duration) && duration >= 0 ? duration : null;
 }

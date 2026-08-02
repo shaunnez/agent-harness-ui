@@ -8,7 +8,7 @@ import {
 } from "./prompts.mjs";
 import { getCodexStatus, runCodex } from "./codex-runtime.mjs";
 import { GitWorktreeManager } from "./git-worktree.mjs";
-import { parseGrillQuestions, parseWorkPackages } from "./structured-output.mjs";
+import { parseGrillQuestions, parseWorkPackages, tryParseFocusedTestEvidence } from "./structured-output.mjs";
 
 const RUN_KINDS = new Set([
   "investigation",
@@ -514,12 +514,14 @@ export class TaskOrchestrator {
     throwIfAborted(signal);
     if (stageId === "test") await this.#worktrees.verifyCandidate(candidate);
     const verdict = evaluationVerdict(stageId, result);
+    const focusedTestEvidence = stageId === "test" ? tryParseFocusedTestEvidence(result.finalText) : null;
     await this.#retainAgentResult(id, stageId, result, {
       replace: false,
       name: `${stageId}-${candidate.id.toLowerCase()}-r${candidate.revisionNumber}.md`,
       candidateId: candidate.id,
       candidateRevision: candidate.revisionNumber,
       complete: verdict === "PASS",
+      focusedTestEvidence,
     });
     await this.#store.update(id, (draft) => {
       const activeCandidate = currentCandidate(draft);
@@ -642,6 +644,7 @@ export class TaskOrchestrator {
         candidateId: options.candidateId ?? null,
         candidateRevision: options.candidateRevision ?? null,
         workPackageId: options.workPackageId ?? null,
+        focusedTest: options.focusedTestEvidence ?? null,
       });
       if (options.complete !== false && !draft.completedStages.includes(stageId)) draft.completedStages.push(stageId);
       for (const key of ["inputTokens", "cachedInputTokens", "outputTokens", "totalTokens"]) {
