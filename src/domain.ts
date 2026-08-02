@@ -205,6 +205,13 @@ export interface RuntimeDecision {
   createdAt: string;
 }
 
+export interface RuntimeScoutDispatch {
+  selected: Array<{ name: string; focus: string; reason: string; status: "queued" | "complete" | "failed"; error?: string }>;
+  skipped: string[];
+  createdAt: string;
+  completedAt: string | null;
+}
+
 export interface RuntimeGrillOption {
   id: string;
   label: string;
@@ -316,12 +323,7 @@ export interface RuntimeTask {
   status: RuntimeTaskStatus;
   closure?: { reason: "not-needed" | "superseded" | "duplicate"; supersededBy: string | null; note: string; closedAt: string } | null;
   evaluation?: { score: number; outcome: "accepted" | "rejected" | "mixed"; notes: string; suiteId: string | null; caseId: string | null; evaluatedAt: string } | null;
-  scoutDispatch?: {
-    selected: Array<{ name: string; focus: string; reason: string; status: "queued" | "complete" | "failed"; error?: string }>;
-    skipped: string[];
-    createdAt: string;
-    completedAt: string | null;
-  } | null;
+  scoutDispatch?: RuntimeScoutDispatch | null;
   currentStage: StageId;
   completedStages: StageId[];
   stageRun: number;

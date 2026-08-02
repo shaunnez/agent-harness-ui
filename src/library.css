@@ -1,0 +1,304 @@
+.settings-default-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.settings-default-grid select {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-deep);
+  color: var(--text);
+}
+
+.role-policy-row {
+  grid-template-columns: minmax(190px, 0.8fr) minmax(0, 1.4fr);
+}
+
+.role-policy-row > span {
+  display: grid;
+  gap: 5px;
+}
+
+.agent-policy-editor {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) minmax(145px, 0.72fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.agent-policy-editor > label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.agent-policy-editor select {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-deep);
+  color: var(--text);
+}
+
+.agent-policy-panel {
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.agent-policy-panel > header {
+  margin-bottom: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.agent-policy-panel__body {
+  display: grid;
+  gap: 14px;
+  padding-top: 16px;
+}
+
+.agent-policy-panel__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.agent-policy-panel__actions > small {
+  max-width: 520px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.agent-policy-panel--deterministic {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+}
+
+.agent-policy-panel--deterministic h3 {
+  color: var(--text);
+}
+
+.agent-policy-panel--deterministic p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.agent-policy-feedback {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.agent-policy-feedback--success {
+  border-color: #2b6b45;
+  color: #b9eac9;
+  background: #10261a;
+}
+
+.agent-policy-feedback--error {
+  border-color: #7a3434;
+  color: #ffc0c0;
+  background: var(--red-soft);
+}
+
+.role-policy-grid > legend {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.role-policy-grid > p {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.skill-contract-map,
+.skill-runtime-sources {
+  margin-bottom: 24px;
+  border-block: 1px solid var(--border);
+}
+
+.skill-contract-map > header,
+.skill-runtime-sources > header {
+  padding: 17px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.skill-contract-map > header span,
+.skill-runtime-sources > header span {
+  display: grid;
+  gap: 5px;
+}
+
+.skill-contract-map h3,
+.skill-runtime-sources h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.skill-contract-map p,
+.skill-runtime-sources p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.skill-contract-map__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.skill-type-card,
+.skill-source {
+  min-width: 0;
+}
+
+.skill-type-card + .skill-type-card {
+  border-left: 1px solid var(--border);
+}
+
+.skill-type-card > summary,
+.skill-source > summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 16px;
+  align-items: start;
+  gap: 12px;
+  padding: 15px 16px;
+  cursor: pointer;
+  list-style: none;
+  transition: background 120ms ease;
+}
+
+.skill-type-card > summary::-webkit-details-marker,
+.skill-source > summary::-webkit-details-marker {
+  display: none;
+}
+
+.skill-type-card > summary:hover,
+.skill-source > summary:hover {
+  background: var(--surface-2);
+}
+
+.skill-type-card summary > span,
+.skill-source summary > span {
+  display: grid;
+  gap: 5px;
+}
+
+.skill-type-card summary small,
+.skill-source summary small {
+  color: var(--faint);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.skill-type-card summary strong,
+.skill-source summary strong {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 13px;
+}
+
+.skill-type-card summary em,
+.skill-source summary em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.5;
+}
+
+.skill-type-card summary code,
+.skill-source summary code {
+  max-width: 190px;
+  overflow: hidden;
+  color: var(--blue);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skill-type-card summary svg,
+.skill-source summary svg {
+  color: var(--muted);
+  transition: transform 120ms ease;
+}
+
+.skill-type-card[open] summary svg,
+.skill-source[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.skill-type-card .runtime-source,
+.skill-source .runtime-source {
+  margin: 0 16px 16px;
+}
+
+.skill-source-list {
+  display: grid;
+}
+
+.skill-source + .skill-source,
+.skill-source-note + .skill-source,
+.skill-source + .skill-source-note {
+  border-top: 1px solid var(--border);
+}
+
+.skill-source-note {
+  display: grid;
+  gap: 6px;
+  padding: 15px 16px;
+}
+
+.skill-source-note strong {
+  font-size: 13px;
+}
+
+.skill-source-note span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1120px) {
+  .settings-default-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .agent-policy-editor {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .agent-policy-editor > .button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .role-policy-row,
+  .skill-contract-map__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .skill-type-card + .skill-type-card {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+}
