@@ -2118,7 +2118,6 @@ function ContextInspector({
   const candidateDiffRequestRef = useRef(0);
   const index = workflowStages.findIndex((item) => item.id === stage);
   const current = workflowStages[index >= 0 ? index : 0] ?? workflowStages[0];
-  if (!current) return null;
   const active = workflowStages[task.activeStageIndex] ?? workflowStages[0];
   const relation =
     index < task.activeStageIndex
@@ -2137,11 +2136,13 @@ function ContextInspector({
   const agent = stageAgents[stage] ?? "Orchestration agent";
   const candidateIdentity = `${task.candidateId} Â· ${task.candidateSha}`;
   useEffect(() => {
+    if (!candidateIdentity) return;
     setCandidateDiff(null);
     setCandidateDiffError(null);
     setCandidateDiffLoading(false);
     candidateDiffRequestRef.current += 1;
   }, [candidateIdentity]);
+  if (!current) return null;
   const openCandidateDiff = async () => {
     const requestId = candidateDiffRequestRef.current + 1;
     candidateDiffRequestRef.current = requestId;
@@ -2292,7 +2293,6 @@ export function CandidateDiffViewer({
   onClose: () => void;
   taskId: string;
 }) {
-  const lines = diff.diff.split("\n");
   return (
     <div className="artifact-overlay candidate-diff-overlay" role="dialog" aria-modal="true" aria-label="Candidate diff">
       <button type="button" className="artifact-overlay__backdrop" onClick={onClose} aria-label="Close candidate diff" />
@@ -2320,13 +2320,7 @@ export function CandidateDiffViewer({
           </p>
         </div>
         <pre className="candidate-diff-viewer__diff">
-          <code>
-            {lines.map((line, index) => (
-              <span className="diff-line diff-line--context" key={`${index}-${line}`}>
-                {line}
-              </span>
-            ))}
-          </code>
+          <code>{diff.diff}</code>
         </pre>
         <footer>
           <Button tone="secondary" icon={ArrowLeft} onClick={onClose}>

@@ -1028,14 +1028,13 @@ function RuntimeWorktreeInventory({
   }
 
   return (
-    <div className="runtime-worktree-inventory" role="list" aria-label="Harness worktree inventory">
+    <div className="runtime-worktree-inventory">
       {inventory.map((row) => (
         <button
           key={row.id}
           type="button"
           className={`runtime-worktree-row runtime-worktree-row--${row.lifecycleState}`}
           onClick={() => onSelect(row.id)}
-          role="listitem"
         >
           <span className="runtime-worktree-row__identity">
             <small>

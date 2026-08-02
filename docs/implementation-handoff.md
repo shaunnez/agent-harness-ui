@@ -14,6 +14,9 @@ The repository now contains both the approved ten-stage interaction prototype an
 6. The harness assembles qualified package commits in deterministic topological order into a separate versioned integration candidate.
 7. Development Review and Final Review run read-only against the exact candidate worktree and revision. Focused Test uses guarded worktree access for temporary test files, with exact-SHA and clean-status checks before and after the run.
 8. A failed review or test retains its evidence and enables a candidate repair agent. Human Approval revalidates the clean source checkout, unchanged base SHA, and candidate worktree SHA before a fast-forward-only merge.
+9. Candidate diff inspection verifies the recorded worktree and head revision before returning a capped unified diff, and the runtime viewer invalidates stale in-flight requests when candidate identity changes.
+10. Focused Test emits a structured, candidate-bound result contract alongside its Markdown artifact. The real runtime renders drillable success/failure rows with return controls and keeps global repair actions outside individual results.
+11. A read-only worktree inventory reports retained slice and candidate paths, branches, recorded/live revisions, cleanliness, lifecycle, and cleanup readiness without deleting or mutating anything.
 
 The runtime models slices separately from the integration candidate. Downstream review, test, repair, and approval gates bind to the assembled candidate because that exact revision is the unit that can safely merge.
 
@@ -48,9 +51,11 @@ Repository hooks and configured Git identity are respected. A hook or missing id
 | --- | --- | --- |
 | `GET` | `/api/health` | Local companion liveness |
 | `GET` | `/api/runtime/status` | Codex/ChatGPT readiness and suggested repository |
+| `GET` | `/api/runtime/worktrees` | Read-only retained slice/candidate worktree inventory with live Git state |
 | `GET` | `/api/tasks` | Persisted task list |
 | `POST` | `/api/tasks` | Validate and create a task |
 | `GET` | `/api/tasks/:id` | Full task, decisions, approvals, candidates, artifacts, usage, and activity |
+| `GET` | `/api/tasks/:id/candidates/:candidateId/diff` | Verified, capped unified diff for the recorded candidate revision |
 | `POST` | `/api/tasks/:id/run` | Start or retry investigation |
 | `POST` | `/api/tasks/:id/cancel` | Abort the active Codex subprocess |
 | `POST` | `/api/tasks/:id/decisions` | Record an authoritative human question/answer pair |
@@ -65,6 +70,7 @@ Repository hooks and configured Git identity are respected. A hook or missing id
 | `POST` | `/api/tasks/:id/repair` | Create a repaired candidate revision |
 | `POST` | `/api/tasks/:id/final-review` | Run the holdout final review |
 | `POST` | `/api/tasks/:id/approve-merge` | Revalidate and fast-forward merge the exact candidate |
+| `POST` | `/api/tasks/:id/grant-retry` | Human-grant one bounded, usable stage or repair attempt after exhaustion |
 
 Both endpoints include the same stable integer `runtimeSchemaVersion`, which local companion clients may use for compatibility checks.
 
@@ -81,9 +87,10 @@ The API validates action eligibility from persisted task status. A task has one 
 - `candidates` with base/head SHA, branch, repository/worktree paths, lifecycle status, revision number, and revision lineage;
 - ordered candidate membership linking every assembled package ID and commit;
 - artifact-level candidate ID/revision provenance; and
+- structured focused-test evidence retained beside the Markdown artifact; and
 - `activeRunKind` for interruption recovery.
 
-Writes use a temporary file plus rename and are serialized in-process. Startup adds defaults to older task documents and converts the old `awaiting-approval` state. A task found in `running` state is marked failed with an explicit interruption event. This is intentionally not an immutable temporal ledger.
+Writes use a temporary file plus rename and are serialized in-process. Atomic replacement has bounded backoff for transient Windows rename errors only. Startup adds defaults to older task documents and converts the old `awaiting-approval` state. A task found in `running` state is marked failed with an explicit interruption event. This is intentionally not an immutable temporal ledger.
 
 ## Frontend behavior
 
@@ -94,6 +101,9 @@ Writes use a temporary file plus rename and are serialized in-process. Startup a
 - Human decisions can be recorded inline and are injected into every downstream prompt.
 - Grill Me distinguishes an open decision session from recorded history, reveals a text field for a custom single-choice answer, and makes finishing with recommendations explicit.
 - Implement shows packages by dependency batch with status, declared ownership, attempts, and package commit; candidate membership is visible in the inspector.
+- Candidate diff inspection opens a verified, revision-bound inline diff and prevents stale asynchronous responses from crossing candidate changes.
+- Test artifacts include structured candidate-bound rows with command, duration, assertions, failure details, and drill-back controls while preserving the Markdown narrative.
+- The real runtime exposes a drillable, read-only inventory of retained slice and candidate worktrees with live Git state and cleanup readiness.
 - Candidate artifacts, failed gate evidence, and repaired revisions remain drillable.
 - Approval history is visible in the universal inspector with stage, note fallback, and timestamp; switching tasks resets the viewed-stage context to the new task.
 - Access-boundary copy and the inspector's agent/sandbox metadata are derived from the active stage, while viewed-stage artifacts remain independently selectable.
@@ -103,13 +113,13 @@ Writes use a temporary file plus rename and are serialized in-process. Startup a
 ## Known limitations and next work
 
 1. Work-package concurrency is one agent per package in the active dependency batch with no configurable global concurrency limit. Git worktree preparation is serialized to avoid repository lock contention; agent executions are concurrent.
-2. Slice qualification is still agent-reported focused verification. The candidate receives authoritative review/test gates, but slice checks are not yet normalized into structured command/test records.
+2. Slice qualification is still agent-reported focused verification. Candidate-level Focused Test is normalized into structured records, but per-slice qualification is not yet captured in the same contract.
 3. Assembly conflicts stop safely with all slice commits retained, but there is no dedicated conflict-resolution UI or integration-repair agent yet.
-4. Focused Test is agent-assisted. It is told to run only existing, non-interactive, non-E2E repository checks, but results are not yet normalized into a per-command/per-test list with accordion drill-down.
+4. Focused Test is agent-assisted and its result list is normalized, but the harness still relies on the agent to choose appropriate repository-defined commands and summarize individual framework test cases.
 5. Gate verdict parsing is conservative but simple: a top-line `PASS` advances; any other response requires repair. Structured output schemas and a code-specific rubric model should replace this.
 6. Repairs update the current candidate branch and retain revision history/artifacts, but the data model does not yet represent a separate immutable candidate object for every revision.
 7. API mutations do not yet use idempotency keys or optimistic revision tokens. Process-local locks prevent duplicate active agents only within one companion process.
-8. No worktree/branch cleanup, rebase, conflict-resolution, repository picker, streamed activity, or PR publishing exists in the product UI.
+8. Worktree cleanup readiness is visible but deliberately read-only. No cleanup mutation, rebase, conflict-resolution, repository picker, streamed activity, or PR publishing exists in the product UI.
 9. The JSON store is appropriate for one local user, not concurrent or remote workers.
 10. The hosted Sites artifact is UI-only: a Cloudflare worker cannot access the user's local Codex login, Git checkouts, or filesystem.
 11. The real runtime uses one OpenAI/Codex model today. Agent profiles and additional providers remain represented in the complete prototype but are not wired into task execution.
@@ -118,12 +128,12 @@ Writes use a temporary file plus rename and are serialized in-process. Startup a
 
 - `npm run lint`
 - `npm run typecheck`
-- `npm test` (28 tests at this handoff)
+- `npm test` (48 tests at this handoff)
 - `npm run build`
 - `npm run test:sites`
 - Real OAuth subprocess smoke through stdin: GPT-5.4-mini returned the requested Markdown and usage without API keys.
 - Real temporary-Git test: create two isolated slice commits, assemble them into one candidate, validate its SHA, and fast-forward merge.
-- Three complete dogfood tasks reached human-approved fast-forward merge; see `docs/dogfood-report.md` for candidate revisions, failure-budget accounting, and remediations.
+- The latest campaign completed three legacy and three parallel-scheduler dogfood tasks; all six reached human-approved fast-forward merge. See `docs/dogfood-report.md` for candidate revisions, failure-budget accounting, and remediations.
 - Browser smoke: completed-task merge summary, approval history, active/viewed-stage separation, historical Test evidence, task switching, and task-list aggregates rendered without console errors.
 - Browser smoke after the scheduler cut: existing completed tasks render without console errors; focused server-render coverage exercises open/completed Grill and mixed package batches.
 

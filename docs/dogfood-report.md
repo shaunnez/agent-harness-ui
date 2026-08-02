@@ -2,7 +2,55 @@
 
 Updated: 2026-08-02
 
-## Outcome
+## Regression and parallel-scheduler campaign
+
+Six additional implementation tasks were run through the real local workflow. The first three deliberately exercised the legacy single-package path; the next three exercised dependency-batched work packages, isolated slice worktrees, deterministic candidate assembly, candidate-bound review/test, repair, and fast-forward merge.
+
+| Task | Path | Shipped change | Candidate | Merged revision | Tokens | Artifacts |
+| --- | --- | --- | --- | --- | ---: | ---: |
+| AH-010 | Legacy, 1 package | Shared local runtime schema version | C1 r2 | `67a0831b` | 1,093,252 | 14 |
+| AH-011 | Legacy, 1 package | Grill answer payload validation | C1 r1 | `ea09f933` | 702,989 | 11 |
+| AH-012 | Legacy, 1 package | Artifact copy feedback with stale-result protection | C1 r3 | `933c8121` | 2,018,800 | 16 |
+| AH-013 | Parallel, 3 packages | Verified candidate-bound inline diff inspection | C1 r7 | `3a44706c` | 8,052,076 | 28 |
+| AH-014 | Parallel, 3 packages | Persisted structured focused-test evidence and drilldowns | C1 r3 | `c5707804` | 8,896,506 | 18 |
+| AH-015 | Parallel, 3 packages | Read-only retained worktree inventory and runtime drilldown | C1 r2 | `10703391` | 3,989,393 | 15 |
+
+All six tasks completed and merged. Together they retained 102 artifacts, 18 approvals, and 24,753,016 reported tokens. AH-013, AH-014, and AH-015 each ran two independent packages concurrently in dependency batch 1, started their integration package only after both dependencies qualified, and assembled three exact package commits into one candidate.
+
+### Failure accounting
+
+The initial 12-failure ceiling was reached exactly and the run stopped as requested:
+
+- 4 failures during the three legacy regressions;
+- 7 failures during AH-013, including real cross-package contract findings, stale-response races, Windows command invocation failures, and a transient atomic-store rename failure; and
+- 1 AH-014 Development Review failure that proved the initial parser/UI slices were not actually wired end to end.
+
+After an explicit resume, a fresh allowance used 2 of 12 failures:
+
+1. AH-014 Focused Test failed closed because the test agent used Bash-style `&&` under Windows PowerShell. The execution prompt now includes the structured evidence contract and a Windows-safe command rule.
+2. AH-015 Development Review found a real backend/UI field-name mismatch. The repair aligned the shared contract and added an API-to-render integration assertion.
+
+No failure evidence was bypassed. Every failed candidate revision remained retained, and only revisions that subsequently passed Development Review, Focused Test, Final Review, and Human Approval were merged.
+
+### Harness and product defects fixed
+
+- Planner ownership paths are normalized to repository-relative paths and rejected when they escape the repository.
+- Ordinary `npm test` no longer implicitly requires a prebuilt Sites bundle; hosted-worker checks remain explicit under `test:sites`.
+- Bounded retry overrides now work after exhausted repair, review, test, and final-review gates, including when the recorded attempt count has already crossed the prior allowance.
+- Atomic JSON-store replacement retries only transient Windows `EPERM`, `EACCES`, and `EBUSY` rename failures with bounded backoff.
+- Candidate diff inspection verifies the recorded worktree and exact head revision, returns capped unified diff data, and guards the UI against stale in-flight responses.
+- Focused-test agents emit a candidate-bound structured evidence block that is parsed and persisted beside the Markdown artifact. The real runtime renders drillable pass/fail rows and AH-015 proved the feature with two live persisted rows.
+- The runtime exposes retained slice and candidate worktrees through a strictly read-only inventory contract, including recorded/live revisions, branch, cleanliness, lifecycle, and cleanup readiness.
+
+### What the parallel run proves
+
+- Independent package agents really overlap in time and work in different Git worktrees.
+- Dependent packages receive the complete dependency commit closure before starting.
+- Candidate assembly is deterministic and downstream gates bind to the assembled candidate, not individual slice branches.
+- Parallel contract mismatches are caught by candidate-level review and can be repaired without discarding qualified package commits.
+- A newly merged workflow feature can be dogfooded immediately by the next task: AH-015 produced and persisted the structured test evidence introduced by AH-014.
+
+## Earlier vertical-slice outcome
 
 Three real implementation tasks were created in the UI and carried through investigation, specification approval, plan approval, isolated implementation, development review, Focused Test, holdout Final Review, explicit human approval, and fast-forward merge:
 
@@ -42,4 +90,4 @@ No root cause appeared three times. AH-008 and AH-009 both passed Development Re
 
 ## Next product slice
 
-The current runtime intentionally creates one implementation candidate from one implementation session. The next major cut is the already-designed multi-package scheduler and assembly layer: dependency-aware work packages, per-slice worktrees and local qualification, explicit candidate membership and merge order, conflict handling, then authoritative candidate-level review and test gates.
+Run a bounded pilot against a real repository such as `Eversor-MyStrataAssist`, starting with one small, reversible issue. The scheduler and assembly layer are now proven locally; the next unknowns are repository-specific commands, multi-project boundaries, real assembly conflicts, and how much task decomposition guidance is needed before broadening concurrency or adding cleanup actions.
