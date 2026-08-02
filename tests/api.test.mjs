@@ -1,11 +1,16 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { createApiServer } from "../server/api.mjs";
+import { GitWorktreeManager } from "../server/git-worktree.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
+import { promisify } from "node:util";
+
+const exec = promisify(execFile);
 
 async function createServer() {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-"));
@@ -67,6 +72,10 @@ async function createTask(origin, payload) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload),
   });
+}
+
+async function git(cwd, args) {
+  return exec("git", args, { cwd, windowsHide: true });
 }
 
 test("creates, lists, and starts a local task", async () => {
@@ -227,6 +236,138 @@ test("creates a task with workflow implement", async () => {
     assert.equal(task.workflow, "implement");
   } finally {
     await cleanup(server, directory);
+  }
+});
+
+test("returns the current candidate diff only after verifying the recorded worktree and head revision", async () => {
+  const { directory, origin, server, store } = await createServer();
+  const repository = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-repo-"));
+  try {
+    await git(repository, ["init"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+
+    const task = await store.create({
+      title: "Inspect diff",
+      description: "Return the current candidate diff.",
+      repositoryPath: repository,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const manager = new GitWorktreeManager(path.join(repository, ".data", "worktrees"));
+    const base = await manager.base(task);
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+    await writeFile(path.join(candidate.worktreePath, "feature.txt"), "candidate\n", "utf8");
+    const committed = await manager.commit(candidate, "candidate diff");
+    candidate.headRevision = committed.headRevision;
+    await store.update(task.id, (draft) => {
+      draft.candidates.push({ ...candidate, files: committed.files, summary: committed.summary });
+    });
+
+    const response = await fetch(`${origin}/api/tasks/${task.id}/candidates/C1/diff`);
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.candidateId, "C1");
+    assert.equal(payload.revisionNumber, 1);
+    assert.equal(payload.headRevision, committed.headRevision);
+    assert.equal(payload.worktreePath, candidate.worktreePath);
+    assert.match(payload.diff, /feature\.txt/);
+    assert.equal(payload.truncated, false);
+  } finally {
+    await cleanup(server, directory);
+    await rm(repository, { recursive: true, force: true });
+  }
+});
+
+test("rejects stale or mismatched candidate diff requests", async () => {
+  const { directory, origin, server, store } = await createServer();
+  const repository = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-stale-"));
+  try {
+    await git(repository, ["init"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+
+    const task = await store.create({
+      title: "Reject stale diff",
+      description: "Reject mismatched candidate metadata.",
+      repositoryPath: repository,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const manager = new GitWorktreeManager(path.join(repository, ".data", "worktrees"));
+    const base = await manager.base(task);
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+    await writeFile(path.join(candidate.worktreePath, "feature.txt"), "candidate\n", "utf8");
+    const committed = await manager.commit(candidate, "candidate diff");
+    candidate.headRevision = committed.headRevision;
+    await store.update(task.id, (draft) => {
+      draft.candidates.push({ ...candidate, files: committed.files, summary: committed.summary });
+    });
+
+    await store.update(task.id, (draft) => {
+      draft.candidates[0].headRevision = "f".repeat(40);
+    });
+    const staleHead = await fetch(`${origin}/api/tasks/${task.id}/candidates/C1/diff`);
+    assert.equal(staleHead.status, 400);
+    assert.match((await staleHead.json()).error, /no longer matches its recorded revision/i);
+
+    await store.update(task.id, (draft) => {
+      draft.candidates[0].headRevision = committed.headRevision;
+      draft.candidates[0].worktreePath = path.join(candidate.worktreePath, "nested");
+    });
+    await mkdir(path.join(candidate.worktreePath, "nested"), { recursive: true });
+    const staleWorktree = await fetch(`${origin}/api/tasks/${task.id}/candidates/C1/diff`);
+    assert.equal(staleWorktree.status, 400);
+    assert.match((await staleWorktree.json()).error, /no longer resolves to its recorded path/i);
+  } finally {
+    await cleanup(server, directory);
+    await rm(repository, { recursive: true, force: true });
+  }
+});
+
+test("caps oversized candidate diffs and marks them truncated", async () => {
+  const { directory, origin, server, store } = await createServer();
+  const repository = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-trunc-"));
+  try {
+    await git(repository, ["init"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+
+    const task = await store.create({
+      title: "Truncate diff",
+      description: "Return a capped unified diff.",
+      repositoryPath: repository,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const manager = new GitWorktreeManager(path.join(repository, ".data", "worktrees"));
+    const base = await manager.base(task);
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+    await writeFile(path.join(candidate.worktreePath, "feature.txt"), `${"x".repeat(1000)}\n`.repeat(400), "utf8");
+    const committed = await manager.commit(candidate, "candidate diff");
+    candidate.headRevision = committed.headRevision;
+    await store.update(task.id, (draft) => {
+      draft.candidates.push({ ...candidate, files: committed.files, summary: committed.summary });
+    });
+
+    const response = await fetch(`${origin}/api/tasks/${task.id}/candidates/C1/diff`);
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.candidateId, "C1");
+    assert.equal(payload.truncated, true);
+    assert.equal(payload.diff.length <= 300_000, true);
+  } finally {
+    await cleanup(server, directory);
+    await rm(repository, { recursive: true, force: true });
   }
 });
 

@@ -191,6 +191,41 @@ test("renders approvals history in the runtime task inspector", () => {
   });
 });
 
+test("fetches candidate diffs by active candidate identity and surfaces stale failures", async () => {
+  return withWorkspace(async ({ loadApiModule }) => {
+    const { getCandidateDiff } = await loadApiModule();
+    const requests = [];
+    const originalFetch = globalThis.fetch;
+    try {
+      globalThis.fetch = async (input, init) => {
+        requests.push({ input: String(input), init });
+        return new Response(
+          JSON.stringify({
+            candidateId: "C1",
+            revisionNumber: 2,
+            headRevision: "c".repeat(40),
+            worktreePath: "C:/worktrees/C1",
+            diff: "diff --git a/file.txt b/file.txt\n+change",
+            truncated: false,
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      };
+
+      const diff = await getCandidateDiff("C1", "c".repeat(40));
+      assert.equal(diff.candidateId, "C1");
+      assert.equal(diff.headRevision, "c".repeat(40));
+      assert.match(requests[0].input, /\/api\/runtime\/candidates\/C1\/diff\?headRevision=/);
+      assert.match(requests[0].input, /headRevision=c{40}/);
+
+      globalThis.fetch = async () => new Response(JSON.stringify({ error: "stale" }), { status: 409 });
+      await assert.rejects(() => getCandidateDiff("C1", "d".repeat(40)), /stale/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
 test("renders truthful active-stage access boundaries", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace, getAccessBoundaryCopy }) => {
     const renderWorkspace = (task) =>
@@ -559,7 +594,7 @@ async function withWorkspace(run) {
   });
   try {
     const module = await vite.ssrLoadModule("/src/components/RuntimeTaskWorkspace.tsx");
-    return await run(module);
+    return await run({ ...module, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
   } finally {
     await vite.close();
   }

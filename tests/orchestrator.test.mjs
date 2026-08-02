@@ -14,6 +14,7 @@ test("parses grounded Grill questions and dependency batches", () => {
   assert.equal(parseGrillQuestions(GRILL_OUTPUT)[0].options[0].recommended, true);
   const packages = parseWorkPackages(`<work-packages>{"packages":[{"id":"S1","title":"API","description":"Add API.","dependencies":[],"ownedPaths":["server/api.mjs"],"verification":[]},{"id":"S2","title":"UI","description":"Add UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verification":[]},{"id":"S3","title":"Contract","description":"Join both.","dependencies":["S1","S2"],"ownedPaths":["tests/contract.test.mjs"],"verification":[]}]}</work-packages>`);
   assert.deepEqual(packages.map((item) => item.batch), [1, 1, 2]);
+  assert.deepEqual(packages.find((item) => item.id === "S3")?.dependencies, ["S1", "S2"]);
   const absolute = parseWorkPackages(
     `<work-packages>{"packages":[{"id":"S1","title":"API","description":"Add API.","dependencies":[],"ownedPaths":["C:/repo/server/api.mjs"],"verification":[]}]}</work-packages>`,
     "C:/repo",
