@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { evaluationVerdict, TaskOrchestrator } from "../server/orchestrator.mjs";
+import { buildExecutionPrompt } from "../server/prompts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { parseFocusedTestEvidence, parseGrillQuestions, parseWorkPackages } from "../server/structured-output.mjs";
 
@@ -43,6 +44,28 @@ test("parses focused test evidence with candidate-bound rows", () => {
   assert.equal(evidence.rows[0].candidateRevision, 2);
   assert.equal(evidence.startedAt, "2026-08-01T12:00:00.000Z");
   assert.equal(evidence.completedAt, "2026-08-01T12:00:01.240Z");
+});
+
+test("builds the focused test execution prompt with the structured evidence contract and Windows command rule", () => {
+  const prompt = buildExecutionPrompt(
+    {
+      id: "AH-014",
+      title: "Structure focused-test evidence",
+      description: "Normalize focused test evidence.",
+      decisions: [],
+      artifacts: [],
+    },
+    "test",
+    {
+      id: "C1",
+      revisionNumber: 2,
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+    },
+  );
+  assert.match(prompt, /<focused-test-evidence>/);
+  assert.match(prompt, /On Windows PowerShell, run every verification command separately with npm\.cmd/);
+  assert.match(prompt, /never chain them with Bash-style &&, invoke npm\.ps1, or use npm test -- <file>/);
 });
 
 test("persists structured focused test evidence beside the Markdown artifact", async () => {
