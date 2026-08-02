@@ -2,8 +2,18 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 import path from "node:path";
 import { defaultRuntimeSettings, enrichUsage, normalizeModelId } from "./model-catalog.mjs";
+import {
+  interruptActiveRuns,
+  migrateRunActivityState,
+  TASK_STORE_SCHEMA_VERSION,
+} from "./run-activity.mjs";
 
-const EMPTY_STATE = { nextId: 1, tasks: [], settings: defaultRuntimeSettings() };
+const EMPTY_STATE = {
+  schemaVersion: TASK_STORE_SCHEMA_VERSION,
+  nextId: 1,
+  tasks: [],
+  settings: defaultRuntimeSettings(),
+};
 
 function clone(value) {
   return structuredClone(value);
@@ -114,6 +124,7 @@ export class JsonTaskStore {
         completedAt: null,
         error: null,
         activeRunKind: null,
+        activeRunIds: [],
         attemptsByStage: {},
         models: configuredModels(input.stagePolicies ?? this.#state.settings.stagePolicies),
         usage: enrichUsage(normalizeModelId(input.model ?? this.#state.settings.defaultModel), {}),
@@ -123,6 +134,7 @@ export class JsonTaskStore {
         approvals: [],
         workPackages: [],
         candidates: [],
+        runs: [],
         events: [
           {
             id: crypto.randomUUID(),
@@ -172,7 +184,7 @@ export class JsonTaskStore {
   async recoverInterrupted() {
     return this.#mutate((state) => {
       const now = new Date().toISOString();
-      let changed = false;
+      let changed = migrateRunActivityState(state);
       if (!state.settings) {
         state.settings = defaultRuntimeSettings();
         changed = true;
@@ -196,6 +208,7 @@ export class JsonTaskStore {
       for (const task of state.tasks) {
         for (const [key, fallback] of [
           ["activeRunKind", null],
+          ["activeRunIds", []],
           ["attachments", []],
           ["closure", null],
           ["evaluation", null],
@@ -208,6 +221,7 @@ export class JsonTaskStore {
           ["approvals", []],
           ["workPackages", []],
           ["candidates", []],
+          ["runs", []],
         ]) {
           if (task[key] === undefined) {
             task[key] = clone(fallback);
@@ -289,7 +303,9 @@ export class JsonTaskStore {
         task.status = "failed";
         task.activeRunKind = null;
         task.error = "The local harness stopped while this task was running. Start it again to retry the stage.";
+        interruptActiveRuns(task, now, task.error);
         task.updatedAt = now;
+        const interruptedRun = [...task.runs].reverse().find((run) => run.status === "interrupted");
         task.events.push({
           id: crypto.randomUUID(),
           at: now,
@@ -298,6 +314,18 @@ export class JsonTaskStore {
           stage: task.currentStage,
           title: "Run interrupted",
           detail: task.error,
+          ...(interruptedRun
+            ? {
+                runId: interruptedRun.id,
+                runKind: interruptedRun.kind,
+                role: interruptedRun.role,
+                model: interruptedRun.model,
+                reasoning: interruptedRun.reasoning,
+                startedAt: interruptedRun.startedAt,
+                completedAt: interruptedRun.completedAt,
+                durationMs: interruptedRun.durationMs,
+              }
+            : {}),
         });
       }
       return changed;

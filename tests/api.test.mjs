@@ -145,6 +145,71 @@ test("creates, lists, and starts a local task", async () => {
   }
 });
 
+test("returns backward-compatible structured run activity through task APIs", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Structured run API",
+      description: "Expose only telemetry retained from the runtime.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "medium",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.runs.push({
+        id: "RUN-API",
+        kind: "agent",
+        status: "completed",
+        stage: "triage",
+        role: "triage",
+        model: "gpt-5.6-luna",
+        reasoning: "xhigh",
+        startedAt: "2026-08-03T00:00:00.000Z",
+        completedAt: "2026-08-03T00:00:01.000Z",
+        durationMs: 1_000,
+        artifactId: null,
+        usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 2, totalTokens: 12, credits: 0.1, cost: 0.001 },
+        credits: 0.1,
+        apiEstimate: 0.001,
+        candidateId: null,
+        candidateRevision: null,
+        workPackageId: null,
+        attempt: 1,
+        retryOfRunId: null,
+        repairOfRunId: null,
+        toolCalls: [{ id: "cmd-api", name: "command_execution", category: "repository-command", phase: "completed", result: "Exit code 0" }],
+        test: null,
+        gateResult: null,
+        error: null,
+        source: "codex-jsonl",
+      });
+      draft.events.push({
+        id: "event-api",
+        at: "2026-08-03T00:00:01.000Z",
+        category: "tool",
+        tone: "success",
+        stage: "triage",
+        title: "Repository command completed",
+        detail: "git status --short",
+        runId: "RUN-API",
+        toolCall: draft.runs[0].toolCalls[0],
+      });
+    });
+
+    const detail = await (await fetch(`${origin}/api/tasks/${task.id}`)).json();
+    const list = await (await fetch(`${origin}/api/tasks`)).json();
+    const health = await (await fetch(`${origin}/api/health`)).json();
+    assert.equal(health.runtimeSchemaVersion, 5);
+    assert.equal(detail.task.runs[0].id, "RUN-API");
+    assert.equal(detail.task.runs[0].toolCalls[0].result, "Exit code 0");
+    assert.equal(detail.task.events.at(-1).runId, "RUN-API");
+    assert.equal(list.tasks[0].runs[0].apiEstimate, 0.001);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("rejects untrusted browser mutations before invoking task creation", async () => {
   const { directory, origin, server, store } = await createServer();
   try {

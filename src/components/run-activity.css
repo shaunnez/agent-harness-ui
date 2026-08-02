@@ -1,0 +1,104 @@
+.runtime-activity-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.42fr);
+  min-height: 0;
+}
+
+.runtime-activity-row {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--line, #ded9cf);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.runtime-activity-row:hover,
+.runtime-activity-row.is-selected {
+  background: color-mix(in srgb, var(--ink, #24211d) 6%, transparent);
+}
+
+.run-activity-detail {
+  border-left: 1px solid var(--line, #ded9cf);
+  padding: 14px 16px;
+  overflow: auto;
+}
+
+.run-activity-detail header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.run-activity-detail header span,
+.run-activity-detail dl > div {
+  display: grid;
+  gap: 3px;
+}
+
+.run-activity-detail header small,
+.run-activity-detail dt {
+  color: var(--muted, #706b63);
+  font-size: 12px;
+}
+
+.run-activity-detail header button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.run-activity-detail p {
+  margin: 10px 0 14px;
+  color: var(--muted, #706b63);
+  font-size: 14px;
+}
+
+.run-activity-detail dl {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.run-activity-detail dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+.run-activity-link {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 0;
+  border-top: 1px solid var(--line, #ded9cf);
+  background: transparent;
+  padding: 10px 0;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.run-activity-link:hover {
+  color: var(--accent, #795b39);
+}
+
+@media (max-width: 900px) {
+  .runtime-activity-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .run-activity-detail {
+    border-top: 1px solid var(--line, #ded9cf);
+    border-left: 0;
+  }
+}

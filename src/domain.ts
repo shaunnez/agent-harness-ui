@@ -1,3 +1,7 @@
+import type { RuntimeEvent, RuntimeRun } from "./runtime-activity";
+
+export type { RuntimeEvent, RuntimeRun, RuntimeToolCall } from "./runtime-activity";
+
 export const stageIds = [
   "triage",
   "scouts",
@@ -153,6 +157,7 @@ export interface RuntimeContextManifest {
 
 export interface RuntimeArtifact {
   id: string;
+  runId?: string | null;
   stage: StageId;
   name: string;
   kind: "markdown";
@@ -315,16 +320,6 @@ export interface RuntimeCandidate {
   members?: Array<{ packageId: string; headRevision: string; order: number }>;
 }
 
-export interface RuntimeEvent {
-  id: string;
-  at: string;
-  category: "activity" | "agent" | "artifact" | "decision";
-  tone: "success" | "info" | "warning" | "danger";
-  stage: StageId;
-  title: string;
-  detail: string;
-}
-
 export interface RuntimeTask {
   id: string;
   title: string;
@@ -366,6 +361,7 @@ export interface RuntimeTask {
   completedAt: string | null;
   error: string | null;
   activeRunKind: string | null;
+  activeRunIds?: string[];
   attemptsByStage: Partial<Record<StageId, number>>;
   models: Array<{ provider: "openai"; model: string }>;
   usage: RuntimeUsage;
@@ -375,6 +371,7 @@ export interface RuntimeTask {
   approvals: RuntimeApproval[];
   workPackages: RuntimeWorkPackage[];
   candidates: RuntimeCandidate[];
+  runs?: RuntimeRun[];
   worktreeInventory?: RuntimeWorktreeInventoryRow[];
   events: RuntimeEvent[];
 }

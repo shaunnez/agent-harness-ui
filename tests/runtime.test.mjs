@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -18,12 +18,45 @@ test("parses Codex final messages and usage", () => {
     parseCodexEvent(JSON.stringify({ type: "item.completed", item: { type: "agent_message", text: "Ready" } })),
     { type: "message", text: "Ready" },
   );
-  assert.equal(
-    parseCodexEvent(
-      JSON.stringify({ type: "item.completed", item: { type: "command_execution", command: "npm test", exit_code: 1 } }),
-    ).commandFailed,
-    true,
+  const command = parseCodexEvent(
+    JSON.stringify({
+      type: "item.completed",
+      item: {
+        id: "cmd-1",
+        type: "command_execution",
+        command: "npm test",
+        exit_code: 1,
+        aggregated_output: "1 test failed\nfull output omitted",
+      },
+    }),
   );
+  assert.equal(command.commandFailed, true);
+  assert.deepEqual(command.toolCall, {
+    id: "cmd-1",
+    name: "command_execution",
+    category: "repository-command",
+    phase: "completed",
+    result: "Exit code 1",
+  });
+  const mcp = parseCodexEvent(JSON.stringify({
+    type: "item.completed",
+    item: {
+      id: "tool-1",
+      type: "mcp_tool_call",
+      server: "github",
+      tool: "get_pull_request",
+      status: "completed",
+      result: { number: 42, state: "open" },
+    },
+  }));
+  assert.deepEqual(mcp.toolCall, {
+    id: "tool-1",
+    name: "get_pull_request",
+    category: "mcp",
+    server: "github",
+    phase: "completed",
+    result: "Structured result (content not retained)",
+  });
   assert.deepEqual(
     parseCodexEvent(
       JSON.stringify({ type: "turn.completed", usage: { input_tokens: 10, cached_input_tokens: 4, output_tokens: 5 } }),
@@ -111,12 +144,97 @@ test("persists tasks and recovers interrupted runs", async () => {
     });
     await store.update(task.id, (draft) => {
       draft.status = "running";
+      draft.activeRunIds = ["RUN-INTERRUPTED"];
+      draft.runs.push({
+        id: "RUN-INTERRUPTED",
+        kind: "test",
+        status: "running",
+        stage: "test",
+        role: "test",
+        model: "gpt-5.6-luna",
+        reasoning: "xhigh",
+        startedAt: "2026-08-01T12:00:00.000Z",
+        completedAt: null,
+        durationMs: null,
+        artifactId: null,
+        usage: null,
+        credits: null,
+        apiEstimate: null,
+        candidateId: "C1",
+        candidateRevision: 1,
+        workPackageId: null,
+        attempt: 1,
+        retryOfRunId: null,
+        repairOfRunId: null,
+        toolCalls: [],
+        test: null,
+        gateResult: null,
+        error: null,
+        source: "codex-jsonl",
+      });
     });
     const reloaded = new JsonTaskStore(filePath);
     await reloaded.init();
     const recovered = await reloaded.get(task.id);
     assert.equal(recovered.status, "failed");
     assert.match(recovered.error, /stopped while this task was running/i);
+    assert.equal(recovered.runs[0].status, "interrupted");
+    assert.equal(recovered.runs[0].completedAt, recovered.updatedAt);
+    assert.equal(recovered.runs[0].durationMs > 0, true);
+    assert.deepEqual(recovered.activeRunIds, []);
+    assert.equal(recovered.events.at(-1).runId, "RUN-INTERRUPTED");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("migrates historical artifacts into stable backward-compatible run records", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-run-migration-"));
+  try {
+    const filePath = path.join(directory, "tasks.json");
+    const store = new JsonTaskStore(filePath);
+    await store.init();
+    const task = await store.create({
+      title: "Historical activity",
+      description: "Migrate retained artifact timing without inventing tool calls.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.artifacts.push({
+        id: "artifact-legacy",
+        stage: "triage",
+        name: "triage.md",
+        kind: "markdown",
+        content: "Historical evidence",
+        createdAt: "2026-08-01T12:00:02.000Z",
+        startedAt: "2026-08-01T12:00:00.000Z",
+        completedAt: "2026-08-01T12:00:02.000Z",
+        durationMs: 2_000,
+        model: "gpt-5.6-luna",
+        reasoning: "xhigh",
+        agentRole: "triage",
+        usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 2, totalTokens: 12, credits: 0.5, cost: 0.001 },
+      });
+    });
+    const legacy = JSON.parse(await readFile(filePath, "utf8"));
+    delete legacy.schemaVersion;
+    delete legacy.tasks[0].runs;
+    delete legacy.tasks[0].activeRunIds;
+    await writeFile(filePath, `${JSON.stringify(legacy, null, 2)}\n`, "utf8");
+
+    const migratedStore = new JsonTaskStore(filePath);
+    await migratedStore.init();
+    const migrated = await migratedStore.get(task.id);
+    const persisted = JSON.parse(await readFile(filePath, "utf8"));
+    assert.equal(persisted.schemaVersion, 2);
+    assert.equal(migrated.runs.length, 1);
+    assert.equal(migrated.runs[0].id, "legacy:artifact-legacy");
+    assert.equal(migrated.runs[0].source, "artifact-migration");
+    assert.equal(migrated.runs[0].durationMs, 2_000);
+    assert.equal(migrated.runs[0].toolCalls.length, 0);
+    assert.equal(migrated.artifacts[0].runId, migrated.runs[0].id);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -935,6 +1053,86 @@ test("renders a truthful completion summary for historical merges without an app
   });
 });
 
+test("filters structured activity and renders test run and artifact drilldown", () => {
+  return withWorkspace(async ({ RunActivity, filterRunActivity }) => {
+    const runBase = {
+      status: "completed",
+      role: "dev-review",
+      model: "gpt-5.6-sol",
+      reasoning: "high",
+      startedAt: "2026-08-01T12:00:00.000Z",
+      completedAt: "2026-08-01T12:00:03.000Z",
+      durationMs: 3_000,
+      artifactId: null,
+      usage: { inputTokens: 100, cachedInputTokens: 80, outputTokens: 20, totalTokens: 120, credits: 0.25, cost: 0.002 },
+      credits: 0.25,
+      apiEstimate: 0.002,
+      candidateId: "C1",
+      candidateRevision: 2,
+      workPackageId: null,
+      attempt: 1,
+      retryOfRunId: null,
+      repairOfRunId: null,
+      toolCalls: [],
+      test: null,
+      gateResult: { verdict: "PASS", candidateId: "C1", candidateRevision: 2, evaluatedAt: "2026-08-01T12:00:03.000Z", blockingReasons: [] },
+      error: null,
+      source: "codex-jsonl",
+    };
+    const task = createTask({
+      runs: [
+        { ...runBase, id: "RUN-REVIEW", kind: "review", stage: "dev-review" },
+        {
+          ...runBase,
+          id: "RUN-TEST",
+          kind: "test",
+          stage: "test",
+          role: "test",
+          artifactId: "artifact-test",
+          retryOfRunId: "RUN-REVIEW",
+          toolCalls: [{ id: "cmd-1", name: "command_execution", category: "repository-command", phase: "completed", result: "Exit code 0" }],
+          test: { candidateId: "C1", candidateRevision: 2, status: "passed", command: "npm.cmd test", durationMs: 900, rowCount: 1, failedRowIds: [] },
+        },
+      ],
+      artifacts: [{
+        id: "artifact-test",
+        runId: "RUN-TEST",
+        stage: "test",
+        name: "test.md",
+        kind: "markdown",
+        content: "PASS",
+        createdAt: "2026-08-01T12:00:03.000Z",
+        model: "gpt-5.6-sol",
+        usage: runBase.usage,
+      }],
+      events: [
+        { id: "E1", at: "2026-08-01T12:00:00.000Z", category: "agent", tone: "info", stage: "dev-review", title: "Review started", detail: "Fresh context", runId: "RUN-REVIEW" },
+        { id: "E2", at: "2026-08-01T12:00:01.000Z", category: "tool", tone: "success", stage: "test", title: "Repository command completed", detail: "npm.cmd test", runId: "RUN-TEST", toolCall: { id: "cmd-1", name: "command_execution", category: "repository-command", phase: "completed", result: "Exit code 0" } },
+        { id: "E3", at: "2026-08-01T12:00:02.000Z", category: "decision", tone: "success", stage: "approval", title: "Approved", detail: "Proceed", approvalId: "A1" },
+      ],
+    });
+
+    assert.equal(filterRunActivity(task, "activity").length, 3);
+    assert.deepEqual(filterRunActivity(task, "agent").map((item) => item.run.id), ["RUN-REVIEW"]);
+    assert.deepEqual(filterRunActivity(task, "test").map((item) => item.run.id), ["RUN-TEST"]);
+    assert.deepEqual(filterRunActivity(task, "decision").map((item) => item.event.id), ["E3"]);
+    assert.deepEqual(filterRunActivity(task, "tool").map((item) => item.event.id), ["E2"]);
+
+    const markup = renderToStaticMarkup(React.createElement(RunActivity, {
+      task,
+      initialFilter: "test",
+      initialSelectedId: "run:RUN-TEST",
+      onOpenArtifact: () => {},
+    }));
+    assert.match(markup, /Tool calls/);
+    assert.match(markup, /Run drilldown/);
+    assert.match(markup, /RUN-TEST/);
+    assert.match(markup, /Focused tests/);
+    assert.match(markup, /Open test\.md/);
+    assert.match(markup, /API-rate estimate/);
+  });
+});
+
 async function waitUntil(predicate) {
   for (let attempt = 0; attempt < 100; attempt += 1) {
     if (predicate()) return;
@@ -963,6 +1161,7 @@ function createTask(overrides = {}) {
     completedAt: null,
     error: null,
     activeRunKind: null,
+    activeRunIds: [],
     attemptsByStage: {},
     models: [{ provider: "openai", model: "GPT-5.4-mini" }],
     usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2, cost: null },
@@ -972,6 +1171,7 @@ function createTask(overrides = {}) {
     approvals: [],
     workPackages: [],
     candidates: [],
+    runs: [],
     events: [],
     ...overrides,
   };
@@ -987,7 +1187,8 @@ async function withWorkspace(run) {
   try {
     const module = await vite.ssrLoadModule("/src/components/RuntimeTaskWorkspace.tsx");
     const stageViews = await vite.ssrLoadModule("/src/components/StageViews.tsx");
-    return await run({ ...module, ...stageViews, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
+    const runActivity = await vite.ssrLoadModule("/src/components/RunActivity.tsx");
+    return await run({ ...module, ...stageViews, ...runActivity, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
   } finally {
     await vite.close();
   }

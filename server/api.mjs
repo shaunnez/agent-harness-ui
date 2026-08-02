@@ -14,7 +14,7 @@ import { normalizeModelId, POLICY_IDS, readCodexModelCatalog } from "./model-cat
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
-const RUNTIME_SCHEMA_VERSION = 4;
+const RUNTIME_SCHEMA_VERSION = 5;
 const DIFF_CHAR_LIMIT = 300_000;
 const OUTPUT_LIMIT = 512 * 1024;
 
@@ -460,14 +460,25 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
             draft.stageRunLimit = Math.max(draft.stageRunLimit + 1, attempts + 1);
             draft.status = "failed";
             draft.error = null;
+            const retrySource = [...(draft.runs ?? [])].reverse().find((run) => run.stage === draft.currentStage) ?? null;
+            const decision = {
+              id: crypto.randomUUID(),
+              question: candidate?.status === "repair_required" ? "Grant another repair attempt?" : "Grant another stage attempt?",
+              answer: `Human override increased the stage allowance to ${draft.stageRunLimit}.`,
+              createdAt: new Date().toISOString(),
+            };
+            draft.decisions ??= [];
+            draft.decisions.push(decision);
             draft.events.push({
               id: crypto.randomUUID(),
-              at: new Date().toISOString(),
+              at: decision.createdAt,
               category: "decision",
               tone: "warning",
               stage: draft.currentStage,
               title: candidate?.status === "repair_required" ? "One repair attempt granted" : "One stage attempt granted",
-              detail: `Human override increased the stage allowance to ${draft.stageRunLimit}.`,
+              detail: decision.answer,
+              decisionId: decision.id,
+              retryOfRunId: retrySource?.id ?? null,
             });
           });
           send(response, 200, { granted: true });

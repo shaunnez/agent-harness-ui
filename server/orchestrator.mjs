@@ -24,6 +24,13 @@ import {
   scoutReportMarkdown,
   selectScoutDispatch,
 } from "./scouts.mjs";
+import {
+  attachRunArtifact,
+  beginAgentRun,
+  completeAgentRun,
+  runEventMetadata,
+  runKindFor,
+} from "./run-activity.mjs";
 import { parseFocusedTestEvidence, parseGrillQuestions, parseWorkPackages, validateFocusedTestEvidence } from "./structured-output.mjs";
 
 const RUN_KINDS = new Set([
@@ -41,8 +48,8 @@ function now() {
   return new Date().toISOString();
 }
 
-function activity(stage, title, detail, tone = "info", category = "activity") {
-  return { id: crypto.randomUUID(), at: now(), category, tone, stage, title, detail };
+function activity(stage, title, detail, tone = "info", category = "activity", metadata = {}) {
+  return { id: crypto.randomUUID(), at: now(), category, tone, stage, title, detail, ...metadata };
 }
 
 export class TaskOrchestrator {
@@ -150,7 +157,14 @@ export class TaskOrchestrator {
         createdAt: now(),
       };
       draft.decisions.push(decision);
-      draft.events.push(activity("grill", "Human decision recorded", `${decision.question}: ${decision.answer}`, "success", "decision"));
+      draft.events.push(activity(
+        "grill",
+        "Human decision recorded",
+        `${decision.question}: ${decision.answer}`,
+        "success",
+        "decision",
+        { decisionId: decision.id },
+      ));
     });
   }
 
@@ -183,7 +197,15 @@ export class TaskOrchestrator {
           createdAt: now(),
         });
       }
-      draft.events.push(activity("grill", "Grill answer recorded", `${target.id}: ${answer}`, "success", "decision"));
+      const decision = draft.decisions.find((item) => item.grillQuestionId === target.id);
+      draft.events.push(activity(
+        "grill",
+        "Grill answer recorded",
+        `${target.id}: ${answer}`,
+        "success",
+        "decision",
+        { decisionId: decision?.id ?? null },
+      ));
     });
     if (!updated) throw new Error("Task not found.");
     return updated;
@@ -203,18 +225,21 @@ export class TaskOrchestrator {
         return true;
       },
       onReserve: (draft) => {
+        const acceptedDecisionIds = [];
         for (const question of draft.grillSession.questions.filter((item) => !item.answer)) {
           const recommendation = question.options.find((option) => option.recommended);
           question.answer = recommendation.label;
           question.answerSource = "accepted-assumption";
           question.resolvedAt = now();
-          draft.decisions.push({
+          const decision = {
             id: crypto.randomUUID(),
             grillQuestionId: question.id,
             question: question.question,
             answer: recommendation.label,
             createdAt: now(),
-          });
+          };
+          draft.decisions.push(decision);
+          acceptedDecisionIds.push(decision.id);
         }
         draft.grillSession.status = "completed";
         draft.grillSession.completedAt = now();
@@ -224,7 +249,14 @@ export class TaskOrchestrator {
             ? "All material questions were answered."
             : "No material product decisions remained after repository investigation.";
         if (!draft.completedStages.includes("grill")) draft.completedStages.push("grill");
-        draft.events.push(activity("grill", "Grill Me completed", draft.grillSession.completionReason, "success", "decision"));
+        draft.events.push(activity(
+          "grill",
+          "Grill Me completed",
+          draft.grillSession.completionReason,
+          "success",
+          "decision",
+          { decisionIds: acceptedDecisionIds },
+        ));
       },
     });
     if (!started) throw new Error("Task is already running.");
@@ -353,7 +385,8 @@ export class TaskOrchestrator {
       const approvedAt = now();
       const approvalNote = draft.mergeIntent.note;
       draft.approvals ??= [];
-      draft.approvals.push({ id: crypto.randomUUID(), stage: "approval", note: approvalNote, createdAt: approvedAt });
+      const approval = { id: crypto.randomUUID(), stage: "approval", note: approvalNote, createdAt: approvedAt };
+      draft.approvals.push(approval);
       activeCandidate.status = "merged";
       activeCandidate.updatedAt = approvedAt;
       draft.status = "completed";
@@ -364,7 +397,7 @@ export class TaskOrchestrator {
       draft.mergeIntent.completedAt = approvedAt;
       draft.mergeIntent.error = null;
       draft.error = null;
-      draft.artifacts.push({
+      const approvalArtifact = {
         id: crypto.randomUUID(),
         stage: "approval",
         name: `approval-${activeCandidate.id.toLowerCase()}-r${activeCandidate.revisionNumber}.md`,
@@ -375,10 +408,11 @@ export class TaskOrchestrator {
         usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0 },
         candidateId: activeCandidate.id,
         candidateRevision: activeCandidate.revisionNumber,
-      });
-      draft.events.push(activity("approval", "Human approval recorded", approvalNote || "Approved without an additional note.", "success", "decision"));
-      draft.events.push(activity("approval", "Approval artifact ready", `approval-${activeCandidate.id.toLowerCase()}-r${activeCandidate.revisionNumber}.md`, "success", "artifact"));
-      draft.events.push(activity("approval", "Candidate merged", `${activeCandidate.id} fast-forwarded ${activeCandidate.baseBranch} to ${activeCandidate.headRevision.slice(0, 8)}.`, "success", "decision"));
+      };
+      draft.artifacts.push(approvalArtifact);
+      draft.events.push(activity("approval", "Human approval recorded", approvalNote || "Approved without an additional note.", "success", "decision", { approvalId: approval.id }));
+      draft.events.push(activity("approval", "Approval artifact ready", approvalArtifact.name, "success", "artifact", { artifactId: approvalArtifact.id, approvalId: approval.id }));
+      draft.events.push(activity("approval", "Candidate merged", `${activeCandidate.id} fast-forwarded ${activeCandidate.baseBranch} to ${activeCandidate.headRevision.slice(0, 8)}.`, "success", "decision", { approvalId: approval.id }));
     });
   }
 
@@ -701,6 +735,8 @@ export class TaskOrchestrator {
         null,
         buildWorkPackageRequest(task, currentPackage, slice),
         `${workPackageId} implementation`,
+        "implement",
+        workPackageId,
       );
       throwIfAborted(signal);
       const committed = await this.#worktrees.commit(
@@ -865,6 +901,7 @@ export class TaskOrchestrator {
     promptOverride = null,
     eventLabel = null,
     policyId = stageId,
+    workPackageId = null,
   ) {
     const metadata = getStageMetadata(stageId);
     const testRuntime = stageId === "test";
@@ -873,44 +910,115 @@ export class TaskOrchestrator {
       promptOverride ?? (candidate ? buildExecutionRequest(task, stageId, candidate) : buildStageRequest(task, stageId));
     const settings = await this.#store.settings();
     const policy = resolveAgentPolicy(task, policyId, settings);
+    const runId = crypto.randomUUID();
+    const startedAt = now();
+    const runKind = runKindFor(stageId, policyId, workPackageId);
     await this.#store.update(task.id, (draft) => {
       draft.currentStage = stageId;
       const detail = testRuntime
         ? `Verifying ${cwd}; source changes are checked before and after the run`
         : `${sandbox === "read-only" ? "Reading" : "Working in"} ${cwd}`;
-      draft.events.push(activity(stageId, `${eventLabel ?? metadata.label} agent started`, `${detail} · ${policy.model} · ${policy.reasoning}`, "info", "agent"));
+      const run = beginAgentRun(draft, {
+        id: runId,
+        kind: runKind,
+        stage: stageId,
+        role: policyId,
+        model: policy.model,
+        reasoning: policy.reasoning,
+        startedAt,
+        candidateId: candidate?.id ?? null,
+        candidateRevision: candidate?.revisionNumber ?? null,
+        workPackageId,
+      });
+      draft.events.push(activity(
+        stageId,
+        `${eventLabel ?? metadata.label} agent started`,
+        `${detail} · ${policy.model} · ${policy.reasoning}`,
+        "info",
+        "agent",
+        runEventMetadata(run),
+      ));
     });
     const runtimeEvents = [];
-    const startedAt = now();
-    const result = await this.#runCodex({
-      cwd,
-      prompt: agentRequest.prompt,
-      signal,
-      sandbox: effectiveSandbox,
-      model: policy.model,
-      reasoning: policy.reasoning,
-      tempDirectory: testRuntime ? path.join(cwd, ".data", "runtime-temp") : undefined,
-      timeoutMs: effectiveSandbox === "workspace-write" ? 600_000 : 240_000,
-      onEvent(event) {
-        if (event.type === "activity") runtimeEvents.push(event);
-      },
+    try {
+      const result = await this.#runCodex({
+        cwd,
+        prompt: agentRequest.prompt,
+        signal,
+        sandbox: effectiveSandbox,
+        model: policy.model,
+        reasoning: policy.reasoning,
+        tempDirectory: testRuntime ? path.join(cwd, ".data", "runtime-temp") : undefined,
+        timeoutMs: effectiveSandbox === "workspace-write" ? 600_000 : 240_000,
+        onEvent(event) {
+          if (event.type === "activity") runtimeEvents.push(event);
+        },
+      });
+      const completedAt = now();
+      result.runId = runId;
+      result.model = policy.model;
+      result.reasoning = policy.reasoning;
+      result.agentRole = policyId;
+      result.contextManifest = agentRequest.contextManifest;
+      result.startedAt = startedAt;
+      result.completedAt = completedAt;
+      result.durationMs = Math.max(0, new Date(completedAt).getTime() - new Date(startedAt).getTime());
+      result.usage = enrichUsage(
+        result.model,
+        result.usage,
+        settings.pricing?.rates,
+        settings.pricing?.version,
+      );
+      result.runtimeEvents = runtimeEvents;
+      await this.#finishAgentRun(task.id, stageId, eventLabel ?? metadata.label, result, "completed");
+      return result;
+    } catch (error) {
+      const completedAt = now();
+      await this.#finishAgentRun(task.id, stageId, eventLabel ?? metadata.label, {
+        runId,
+        startedAt,
+        completedAt,
+        durationMs: Math.max(0, new Date(completedAt).getTime() - new Date(startedAt).getTime()),
+        runtimeEvents,
+        usage: null,
+        error: error instanceof Error ? error.message : String(error),
+      }, signal.aborted ? "cancelled" : "failed");
+      throw error;
+    }
+  }
+
+  async #finishAgentRun(id, stageId, label, result, status) {
+    await this.#store.update(id, (draft) => {
+      const run = completeAgentRun(draft, result.runId, {
+        status,
+        completedAt: result.completedAt,
+        durationMs: result.durationMs,
+        usage: result.usage,
+        runtimeEvents: result.runtimeEvents,
+        error: result.error,
+      });
+      for (const event of result.runtimeEvents?.slice(-100) ?? []) {
+        draft.events.push(activity(
+          stageId,
+          event.title,
+          event.detail,
+          event.tone,
+          event.toolCall ? "tool" : "agent",
+          runEventMetadata(run, { toolCall: event.toolCall ?? null }),
+        ));
+      }
+      const duration = result.durationMs == null
+        ? "Duration unavailable"
+        : `${(result.durationMs / 1_000).toFixed(1)}s`;
+      draft.events.push(activity(
+        stageId,
+        `${label} agent ${status === "completed" ? "completed" : status}`,
+        status === "completed" ? duration : (result.error ?? duration),
+        status === "completed" ? "success" : "danger",
+        "agent",
+        runEventMetadata(run),
+      ));
     });
-    const completedAt = now();
-    result.model = policy.model;
-    result.reasoning = policy.reasoning;
-    result.agentRole = policyId;
-    result.contextManifest = agentRequest.contextManifest;
-    result.startedAt = startedAt;
-    result.completedAt = completedAt;
-    result.durationMs = Math.max(0, new Date(completedAt).getTime() - new Date(startedAt).getTime());
-    result.usage = enrichUsage(
-      result.model,
-      result.usage,
-      settings.pricing?.rates,
-      settings.pricing?.version,
-    );
-    result.runtimeEvents = runtimeEvents;
-    return result;
   }
 
   async #retainAgentResult(id, stageId, result, options = {}) {
@@ -926,12 +1034,10 @@ export class TaskOrchestrator {
       settings.pricing?.version,
     );
     await this.#store.update(id, (draft) => {
-      for (const event of result.runtimeEvents?.slice(-30) ?? []) {
-        draft.events.push(activity(stageId, event.title, event.detail, event.tone, "agent"));
-      }
       if (options.replace) draft.artifacts = draft.artifacts.filter((artifact) => artifact.stage !== stageId);
-      draft.artifacts.push({
+      const artifact = {
         id: crypto.randomUUID(),
+        runId: result.runId ?? null,
         stage: stageId,
         name: options.name ?? metadata.artifactName,
         kind: "markdown",
@@ -950,7 +1056,9 @@ export class TaskOrchestrator {
         focusedTest: options.focusedTestEvidence ?? null,
         gateResult: options.gateResult ?? null,
         contextManifest: result.contextManifest ?? null,
-      });
+      };
+      draft.artifacts.push(artifact);
+      const run = attachRunArtifact(draft, result.runId, artifact);
       if (options.complete !== false && !draft.completedStages.includes(stageId)) draft.completedStages.push(stageId);
       for (const key of ["inputTokens", "cachedInputTokens", "cacheWriteTokens", "outputTokens", "totalTokens"]) {
         draft.usage[key] += resultUsage[key] ?? 0;
@@ -965,6 +1073,7 @@ export class TaskOrchestrator {
           options.name ?? metadata.artifactName,
           options.artifactTone ?? "success",
           "artifact",
+          runEventMetadata(run, { artifactId: artifact.id }),
         ),
       );
     });
@@ -1041,8 +1150,16 @@ function reserveRun(task, kind) {
 function recordApproval(task, stage, note) {
   const approvalNote = note.trim().slice(0, 5_000);
   task.approvals ??= [];
-  task.approvals.push({ id: crypto.randomUUID(), stage, note: approvalNote, createdAt: now() });
-  task.events.push(activity(stage, `${getStageMetadata(stage)?.label ?? stage} approved`, approvalNote || "Approved without an additional note.", "success", "decision"));
+  const approval = { id: crypto.randomUUID(), stage, note: approvalNote, createdAt: now() };
+  task.approvals.push(approval);
+  task.events.push(activity(
+    stage,
+    `${getStageMetadata(stage)?.label ?? stage} approved`,
+    approvalNote || "Approved without an additional note.",
+    "success",
+    "decision",
+    { approvalId: approval.id },
+  ));
 }
 
 function parseVerdict(text) {

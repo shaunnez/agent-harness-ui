@@ -16,7 +16,7 @@ import {
   Wrench,
   X,
 } from "@phosphor-icons/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getCandidateDiff, type CandidateDiffResponse } from "../api";
 import {
   formatApproximateCost,
@@ -24,7 +24,6 @@ import {
   formatTokenCount,
   type RuntimeArtifact,
   type RuntimeFocusedTestEvidence,
-  type RuntimeEvent,
   type RuntimeGrillQuestion,
   type RuntimeTask,
   type RuntimeWorktreeInventoryRow,
@@ -34,6 +33,7 @@ import {
 } from "../domain";
 import { Button, PriorityBadge, StateBadge } from "./Primitives";
 import { MarkdownContent } from "./MarkdownContent";
+import { RunActivity } from "./RunActivity";
 import { CandidateDiffErrorViewer, CandidateDiffViewer } from "./StageViews";
 import { ApprovalHistorySection, getApprovalHistory } from "./runtimeApprovalHistory.js";
 
@@ -490,7 +490,13 @@ export function RuntimeTaskWorkspace({
             </InspectorSection>
           </aside>
         </div>
-        <RuntimeActivity events={task.events} />
+        <RunActivity
+          task={task}
+          onOpenArtifact={(artifact) => {
+            selectViewedStage(artifact.stage);
+            openRuntimeArtifact(artifact);
+          }}
+        />
       </div>
 
       <footer className="workspace-footer">
@@ -2073,82 +2079,6 @@ function RuntimeRow({ label, value, mono = false }: { label: string; value: stri
       <small>{label}</small>
       <strong className={mono ? "mono" : ""}>{value}</strong>
     </span>
-  );
-}
-
-function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
-  const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState<"activity" | "agent" | "test" | "decision">("activity");
-  const visibleEvents = useMemo(
-    () =>
-      [...events]
-        .reverse()
-        .filter((event) =>
-          filter === "activity"
-            ? true
-            : filter === "agent"
-              ? event.category === "agent"
-              : filter === "test"
-                ? event.stage === "test"
-                : event.category === "decision",
-        )
-        .slice(0, 40),
-    [events, filter],
-  );
-  return (
-    <details className="runtime-activity" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
-      <summary>
-        <span>
-          <Robot size={16} />
-          <strong>Run activity</strong>
-          <small>Agent sessions, repository commands, artifacts, and decisions · {events.length} events</small>
-        </span>
-        <span>
-          <span className="connection-dot" />
-          {events.at(-1)?.title ?? "Waiting to start"}
-        </span>
-      </summary>
-      <div className="runtime-activity-filters" role="tablist" aria-label="Run activity filters">
-        {([
-          ["activity", "Activity"],
-          ["agent", "Agent runs"],
-          ["test", "Test runs"],
-          ["decision", "Decisions"],
-        ] as const).map(([id, label]) => (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={filter === id}
-            className={filter === id ? "selected" : ""}
-            key={id}
-            onClick={() => setFilter(id)}
-          >
-            {label}
-          </button>
-        ))}
-        <small>These are persisted runtime events. Model, token, duration, and artifact linkage appear only when the Codex event stream records them.</small>
-      </div>
-      <div className="runtime-activity-list">
-        {visibleEvents.length ? visibleEvents.map((event) => (
-            <div className={`runtime-activity-row runtime-activity-row--${event.tone}`} key={event.id}>
-              <time className="mono">
-                {new Date(event.at).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })}
-              </time>
-              <span>
-                <strong>{event.title}</strong>
-                <small>{event.detail}</small>
-              </span>
-              <em>{workflowStages.find((stage) => stage.id === event.stage)?.shortLabel ?? event.stage}</em>
-            </div>
-          )) : (
-            <div className="runtime-activity-empty">No recorded events match this filter.</div>
-          )}
-      </div>
-    </details>
   );
 }
 
