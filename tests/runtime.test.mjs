@@ -1196,12 +1196,71 @@ test("renders workspace artifact freshness from persisted run evidence", () => {
 
     assert.doesNotMatch(markup, /Stale after repair/);
     assert.match(markup, /ART-CURRENT\.md/);
-    assert.match(markup, /ART-OLD\.md[\s\S]*stale/);
+    assert.match(markup, new RegExp(`ART-OLD\\.md[\\s\\S]*Rerun required[\\s\\S]*${staleReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
     assert.equal(isArtifactFresh(
       { ...artifact("ART-OLD", "RUN-OLD", "2026-08-01T12:01:00.000Z", oldFreshness) },
       candidate,
     ), false);
     assert.equal(oldFreshness.reasonCopy, staleReason);
+  });
+});
+
+test("renders the exact persisted reason for a stale viewed-stage artifact", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const candidate = {
+      id: "C1",
+      revisionNumber: 7,
+      status: "under_review",
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/ah-005-c1",
+      revisions: [],
+    };
+    const staleReason = "Candidate evidence belongs to a previous candidate revision.";
+    const freshness = makeGateFreshness("dev-review", {
+      sourceRunId: "RUN-R6",
+      sourceArtifactId: "ART-R6",
+      reasonCode: "revision_change",
+      reasonCopy: staleReason,
+    });
+    const artifact = {
+      id: "ART-R6",
+      runId: "RUN-R6",
+      stage: "dev-review",
+      kind: "markdown",
+      name: "dev-review-c1-r6.md",
+      content: "# Prior review",
+      createdAt: "2026-08-04T12:00:00.000Z",
+      model: "gpt-5.6-sol",
+      usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+      candidateId: "C1",
+      candidateRevision: 6,
+      freshness,
+    };
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task: createTask({
+        status: "ready-for-review",
+        currentStage: "dev-review",
+        completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement"],
+        candidates: [candidate],
+        artifacts: [artifact],
+        runs: [{ id: "RUN-R6", artifactId: "ART-R6", freshness }],
+        gateFreshness: { "dev-review": freshness },
+      }),
+      initialViewedStageId: "dev-review",
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onGrillAnswer: async () => {},
+      onFinishGrill: async () => {},
+    }));
+
+    assert.match(markup, /Rerun required/);
+    assert.match(markup, new RegExp(staleReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.doesNotMatch(markup, /Stale after repair/);
   });
 });
 
