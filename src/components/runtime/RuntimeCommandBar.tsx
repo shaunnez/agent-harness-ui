@@ -1,13 +1,8 @@
-import {
-  CheckCircle,
-  CircleNotch,
-  FileCode,
-  Play,
-  WarningCircle,
-} from "@phosphor-icons/react";
+import { CheckCircle, CircleNotch, FileCode, Play, WarningCircle } from "@phosphor-icons/react";
 import { useState } from "react";
 import { type RuntimeTask, type StageId, workflowStages } from "../../domain";
 import { Button } from "../Primitives";
+import { getCandidateStageFreshness, getFreshnessMessage } from "./workflow";
 
 export function RuntimeCommandBar({
   task,
@@ -85,14 +80,17 @@ export function RuntimeCommandBar({
     }
   };
   if (historical) {
-    const activeStage = workflowStages.find((stage) => stage.id === task.currentStage)?.label ?? task.currentStage;
+    const activeStage =
+      workflowStages.find((stage) => stage.id === task.currentStage)?.label ?? task.currentStage;
     return (
       <section className="stage-command-bar stage-command-bar--history">
         <FileCode size={18} />
         <span className="stage-command-bar__copy">
           <small>Historical stage &middot; read-only</small>
           <strong>Viewing retained evidence</strong>
-          <span>Workflow actions are hidden here. Return to {activeStage} to operate on the current state.</span>
+          <span>
+            Workflow actions are hidden here. Return to {activeStage} to operate on the current state.
+          </span>
         </span>
         <span className="badge badge--neutral">Recorded history</span>
       </section>
@@ -109,41 +107,41 @@ export function RuntimeCommandBar({
           {cancelling
             ? "Terminating the active process tree"
             : repairRunning
-            ? "Repairing the retained integration candidate"
-            : running
-            ? accessBoundary.title
-            : blocked
-              ? (next?.title ?? "Repair allowance exhausted")
-              : repairRequired
-                ? `${accessBoundary.title} - repair the retained candidate`
-                : failed
-                  ? "Retry the failed stage"
-                  : openGrill
-                    ? "Resolve the decision frontier"
-                    : ready
-                      ? (next?.title ?? "Workflow gate ready")
-                      : "Start the read-only investigation"}
+              ? "Repairing the retained integration candidate"
+              : running
+                ? accessBoundary.title
+                : blocked
+                  ? (next?.title ?? "Repair allowance exhausted")
+                  : repairRequired
+                    ? `${accessBoundary.title} - repair the retained candidate`
+                    : failed
+                      ? "Retry the failed stage"
+                      : openGrill
+                        ? "Resolve the decision frontier"
+                        : ready
+                          ? (next?.title ?? "Workflow gate ready")
+                          : "Start the read-only investigation"}
         </strong>
         <span>
           {cancelling
             ? "The task remains reserved until the operating system confirms that the agent and its descendants have closed. Retries stay disabled."
             : repairRunning
-            ? "The Implement agent is writing inside the isolated candidate worktree. Dev Review, Test, Final Review, and Approval require fresh evidence after the new revision is assembled."
-            : running
-            ? accessBoundary.detail
-            : blocked
-              ? (next?.detail ?? "Review the retained activity before granting another attempt.")
-              : repairRequired
-                ? `${accessBoundary.detail} ${next?.detail ?? "The retained gate evidence identifies the required repair."}`
-                : failed
-                  ? task.error
-                  : openGrill
-                    ? unresolvedGrill
-                      ? `${unresolvedGrill} material question${unresolvedGrill === 1 ? "" : "s"} remain. You can answer them below or explicitly accept the recommended assumptions.`
-                      : "Every material question is settled. Finish Grill Me to build the task specification."
-                    : ready
-                      ? (next?.detail ?? "The retained workflow evidence is ready for review.")
-                      : "Four focused agents will produce durable Markdown handoffs."}
+              ? "The Implement agent is writing inside the isolated candidate worktree. Dev Review, Test, Final Review, and Approval require fresh evidence after the new revision is assembled."
+              : running
+                ? accessBoundary.detail
+                : blocked
+                  ? (next?.detail ?? "Review the retained activity before granting another attempt.")
+                  : repairRequired
+                    ? `${accessBoundary.detail} ${next?.detail ?? "The retained gate evidence identifies the required repair."}`
+                    : failed
+                      ? task.error
+                      : openGrill
+                        ? unresolvedGrill
+                          ? `${unresolvedGrill} material question${unresolvedGrill === 1 ? "" : "s"} remain. You can answer them below or explicitly accept the recommended assumptions.`
+                          : "Every material question is settled. Finish Grill Me to build the task specification."
+                        : ready
+                          ? (next?.detail ?? "The retained workflow evidence is ready for review.")
+                          : "Four focused agents will produce durable Markdown handoffs."}
         </span>
       </span>
       <div className="stage-command-bar__actions">
@@ -214,6 +212,14 @@ function nextAction(task: RuntimeTask) {
       detail:
         "A human may grant one additional attempt. Qualified package commits and all failure evidence remain retained.",
     };
+  const rerunAction = getCandidateRerunAction(task);
+  if (
+    rerunAction &&
+    !retryAllowanceExhausted &&
+    ["ready-for-review", "ready-for-test", "ready-for-final-review"].includes(task.status)
+  ) {
+    return rerunAction;
+  }
   if (task.status === "awaiting-spec-approval") {
     return task.workflow === "implement"
       ? {
@@ -316,6 +322,26 @@ function nextAction(task: RuntimeTask) {
         "The repair agent works in the same isolated worktree, creates a new candidate revision, and sends it through review again.",
     };
   return null;
+}
+
+export function getCandidateRerunAction(task: RuntimeTask) {
+  const stage = task.currentStage;
+  const freshness = getCandidateStageFreshness(task, stage);
+  if (freshness?.state !== "stale") return null;
+  const actionByStage: Partial<Record<StageId, "review" | "test" | "final-review">> = {
+    "dev-review": "review",
+    test: "test",
+    "final-review": "final-review",
+  };
+  const action = actionByStage[stage];
+  if (!action) return null;
+  const label = workflowStages.find((entry) => entry.id === stage)?.shortLabel ?? stage;
+  return {
+    action,
+    label: `Rerun ${label}`,
+    title: `${label} requires rerun`,
+    detail: `${getFreshnessMessage(freshness)} Superseded evidence remains available for audit.`,
+  } as const;
 }
 
 export function getAccessBoundaryCopy(task: RuntimeTask) {
