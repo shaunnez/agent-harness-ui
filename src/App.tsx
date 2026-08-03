@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   answerGrillQuestion,
   cancelTask,
@@ -47,6 +47,7 @@ import {
   type PrimaryRoute,
   type TaskRoute,
 } from "./routes";
+import { isCurrentRequest } from "./requestIdentity";
 
 export function App() {
   const [screen, setScreen] = useState<AppScreen>("command");
@@ -67,6 +68,8 @@ export function App() {
   const [currentRoute, setCurrentRoute] = useState<HashRoute>(() => parseHashRoute(window.location.hash).route);
   const [runtimeRefreshing, setRuntimeRefreshing] = useState(false);
   const [toast, setToast] = useState<{ tone: "success" | "error"; message: string } | null>(null);
+  const activeTaskIdentityRef = useRef<string | null>(null);
+  const activeTaskRequestRef = useRef(0);
 
   const showToast = useCallback((tone: "success" | "error", message: string) => {
     setToast({ tone, message });
@@ -80,10 +83,15 @@ export function App() {
   }, []);
 
   const refreshActiveTask = useCallback(async (id: string) => {
+    const requestId = activeTaskRequestRef.current + 1;
+    activeTaskRequestRef.current = requestId;
+    const requested = { identity: id, generation: requestId };
     const task = await getTask(id);
+    if (!isCurrentRequest(requested, { identity: activeTaskIdentityRef.current, generation: activeTaskRequestRef.current })) return null;
     setActiveRuntimeTask((current) => ({ ...task, worktreeInventory: current?.id === id ? current.worktreeInventory : [] }));
     setRuntimeTasks((tasks) => [task, ...tasks.filter((item) => item.id !== task.id)]);
     const inventory = await getRuntimeWorktreeInventory(id);
+    if (!isCurrentRequest(requested, { identity: activeTaskIdentityRef.current, generation: activeTaskRequestRef.current })) return null;
     const enriched = { ...task, worktreeInventory: inventory.rows };
     setActiveRuntimeTask((current) => current?.id === id ? enriched : current);
     return enriched;
@@ -122,6 +130,8 @@ export function App() {
       setSelectedSkillId(primaryRoute.kind === "skill" ? primaryRoute.skillId : null);
       setSelectedAgentId(primaryRoute.kind === "agent" ? primaryRoute.agentId : null);
       if (primaryRoute.kind !== "task") {
+        activeTaskIdentityRef.current = null;
+        activeTaskRequestRef.current += 1;
         setActiveTaskLoading(false);
         setWorkspaceOpen(false);
         setActiveRuntimeTask(null);
@@ -130,12 +140,14 @@ export function App() {
         return;
       }
       const { taskId, stageId, detail } = primaryRoute;
+      activeTaskIdentityRef.current = taskId;
       setViewedStageId(stageId);
       setTaskRouteDetail(detail);
       setWorkspaceOpen(true);
       setActiveTaskLoading(true);
       setActiveRuntimeTask((current) => current?.id === taskId ? current : null);
       void refreshActiveTask(taskId).catch((error) => {
+        if (activeTaskIdentityRef.current !== taskId) return;
         showToast("error", error instanceof Error ? error.message : "The task could not be loaded.");
         navigateToRoute({ kind: "screen", screen: "tasks" });
       }).finally(() => setActiveTaskLoading(false));

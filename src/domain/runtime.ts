@@ -4,6 +4,7 @@ import type { RuntimeEvent, RuntimeRun } from "../runtime-activity";
 export type RuntimeTaskStatus =
   | "queued"
   | "running"
+  | "cancelling"
   | "failed"
   | "blocked"
   | "cancelled"
@@ -76,11 +77,22 @@ export interface RuntimeArtifact {
   workPackageId?: string | null;
   focusedTest?: RuntimeFocusedTestEvidence | null;
   gateResult?: {
+    schemaVersion?: number;
+    stage?: StageId;
     verdict: "PASS" | "REPAIR";
     candidateId: string;
     candidateRevision: number;
     evaluatedAt: string;
     blockingReasons: string[];
+    findings?: Array<{
+      severity: "P0" | "P1" | "P2" | "P3";
+      title: string;
+      detail: string;
+      file: string | null;
+      line: number | null;
+      candidateId: string;
+      candidateRevision: number;
+    }>;
   } | null;
 }
 
@@ -355,6 +367,9 @@ export interface RuntimeModelOption {
   defaultReasoning: string;
   reasoningLevels: string[];
   pricing: RuntimeModelPricing | null;
+  provenance: "discovered" | "configured" | "bundled-fallback";
+  availability: "discovered" | "configured" | "unsupported";
+  editable: boolean;
 }
 
 export interface RuntimeModelCatalog {

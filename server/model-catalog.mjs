@@ -107,6 +107,9 @@ export async function readCodexModelCatalog() {
         defaultReasoning: String(entry.default_reasoning_level ?? "medium"),
         reasoningLevels: (entry.supported_reasoning_levels ?? []).map((level) => String(level.effort)).filter(Boolean),
         pricing: MODEL_PRICING[entry.slug] ?? null,
+        provenance: "discovered",
+        availability: "discovered",
+        editable: true,
       }));
     return {
       models: models.length ? models : FALLBACK_MODELS,
@@ -116,6 +119,35 @@ export async function readCodexModelCatalog() {
   } catch {
     return { models: FALLBACK_MODELS, fetchedAt: null, source: "Bundled fallback catalog" };
   }
+}
+
+export function withConfiguredModels(catalog, settings) {
+  const configuredIds = new Set([
+    settings?.defaultModel,
+    ...(settings?.allowedModels ?? []),
+    ...Object.values(settings?.stagePolicies ?? {}).map((policy) => policy?.model),
+  ].filter(Boolean).map(normalizeModelId));
+  const models = (catalog?.models ?? []).map((entry) =>
+    configuredIds.has(entry.id) && entry.provenance !== "discovered"
+      ? { ...entry, provenance: "configured", availability: "configured", editable: false }
+      : entry,
+  );
+  const known = new Set(models.map((entry) => entry.id));
+  for (const id of configuredIds) {
+    if (known.has(id)) continue;
+    models.push({
+      id,
+      label: id,
+      description: "Configured in persisted settings but not reported by the local Codex model catalog.",
+      defaultReasoning: settings?.defaultReasoning ?? "medium",
+      reasoningLevels: [],
+      pricing: MODEL_PRICING[id] ?? null,
+      provenance: "configured",
+      availability: "unsupported",
+      editable: false,
+    });
+  }
+  return { ...(catalog ?? { fetchedAt: null, source: "Unavailable model catalog" }), models };
 }
 
 export function normalizeModelId(value) {
@@ -207,7 +239,17 @@ function rate(input, cachedInput, cacheWrite, output, longInput, longCachedInput
 }
 
 function model(id, label, description, defaultReasoning, reasoningLevels) {
-  return { id, label, description, defaultReasoning, reasoningLevels, pricing: MODEL_PRICING[id] ?? null };
+  return {
+    id,
+    label,
+    description,
+    defaultReasoning,
+    reasoningLevels,
+    pricing: MODEL_PRICING[id] ?? null,
+    provenance: "bundled-fallback",
+    availability: "unsupported",
+    editable: false,
+  };
 }
 
 function validateRate(entry) {

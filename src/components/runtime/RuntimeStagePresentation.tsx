@@ -26,7 +26,7 @@ import {
   RuntimeFocusedTestEvidencePanel,
   RuntimeWorkPackages,
 } from "./RuntimeEvidencePanels";
-import { isArtifactFresh } from "./workflow";
+import { isArtifactFresh, isStageComplete } from "./workflow";
 
 export function RuntimeStagePresentation({
   task,
@@ -56,7 +56,12 @@ export function RuntimeStagePresentation({
   onSelectTestResult: (resultId: string | null) => void;
 }) {
   const stageArtifacts = task.artifacts.filter((item) => item.stage === viewedStageId);
-  const focusedArtifact = [...stageArtifacts].reverse().find((item) => item.focusedTest);
+  const focusedArtifact = [...stageArtifacts].reverse().find(
+    (item) =>
+      item.focusedTest &&
+      item.candidateId === candidate?.id &&
+      item.candidateRevision === candidate?.revisionNumber,
+  );
   const artifactCard = artifact ? (
     <RuntimeArtifactCard
       artifact={artifact}
@@ -347,7 +352,10 @@ function RuntimeCandidateDesk({
       (artifact) =>
         artifact.stage === stage &&
         artifact.candidateId === candidate.id &&
-        artifact.candidateRevision === candidate.revisionNumber,
+        artifact.candidateRevision === candidate.revisionNumber &&
+        artifact.gateResult?.candidateId === candidate.id &&
+        artifact.gateResult?.candidateRevision === candidate.revisionNumber &&
+        artifact.gateResult?.verdict === "PASS",
     ),
   );
   const facts: Array<[string, string]> = approval
@@ -438,8 +446,8 @@ function RuntimeFinalReviewSummary({
           return (
             <div className="runtime-final-review__row" key={stage.id}>
               <strong>{stage.shortLabel}</strong>
-              <span className={stale ? "text-amber" : task.completedStages.includes(stage.id) ? "text-green" : ""}>
-                {stale ? "Stale" : task.completedStages.includes(stage.id) ? "Passed" : "Pending"}
+              <span className={stale ? "text-amber" : isStageComplete(task, stage.id) ? "text-green" : ""}>
+                {stale ? "Stale" : isStageComplete(task, stage.id) ? "Passed" : "Pending"}
               </span>
               <span className="mono">{formatTokenCount(tokens)}</span>
               <span>{hasCost ? formatApproximateCost(cost) : "Unavailable"}</span>

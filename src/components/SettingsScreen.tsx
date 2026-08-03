@@ -71,7 +71,7 @@ export function SettingsScreen({
       <SectionHeader eyebrow="Local orchestration" title="Settings" description="Choose the model allowlist and defaults used for new tasks. Each task snapshots its model and reasoning level so later settings changes do not rewrite history." action={<Button tone="secondary" icon={MagnifyingGlass} onClick={() => void onRefresh()} disabled={refreshing}>{refreshing ? "Searching…" : "Search available models"}</Button>} />
       <section className="settings-section">
         <h3>Allowed models</h3>
-        <p className="settings-section__intro">Discovered from the local Codex model catalog{runtimeStatus?.catalog?.fetchedAt ? ` · refreshed ${new Date(runtimeStatus.catalog.fetchedAt).toLocaleString()}` : ""}. Enabling a model makes it selectable on New task.</p>
+        <p className="settings-section__intro">Entries identify whether they were discovered locally, retained from configuration, or supplied only as unsupported bundled reference metadata{runtimeStatus?.catalog?.fetchedAt ? ` · refreshed ${new Date(runtimeStatus.catalog.fetchedAt).toLocaleString()}` : ""}. Only discovered models are editable.</p>
         <div className="model-allowlist">
           {catalog.map((model) => {
             const allowed = allowedModels.includes(model.id);
@@ -81,8 +81,8 @@ export function SettingsScreen({
                 <input
                   type="checkbox"
                   checked={allowed}
-                  disabled={allowed && inUse}
-                  title={allowed && inUse ? "Move every role away from this model before removing it." : undefined}
+                  disabled={!model.editable || (allowed && inUse)}
+                  title={!model.editable ? "This model was not discovered as an editable local capability." : allowed && inUse ? "Move every role away from this model before removing it." : undefined}
                   onChange={(event) => {
                     const next = event.target.checked
                       ? [...new Set([...allowedModels, model.id])]
@@ -96,7 +96,7 @@ export function SettingsScreen({
                     }
                   }}
                 />
-                <span><strong>{model.label}</strong><small>{model.description}</small></span>
+                <span><strong>{model.label}</strong><small>{model.description} · {model.provenance.replace("-", " ")} · {model.availability}</small></span>
                 <code>{model.id}</code>
               </label>
             );

@@ -4,6 +4,9 @@ const ALLOWED_BROWSER_ORIGINS = new Set([
   "http://localhost:4173",
 ]);
 
+export const MISSING_ORIGIN_POLICY =
+  "Allowed only for loopback non-browser clients that provide the per-process CSRF token and application/json.";
+
 export function assertHttpBoundary(request, csrfToken) {
   const host = parseHost(request.headers.host);
   if (!host || !isLoopback(host.hostname)) throw httpError(403, "The local companion only accepts loopback hosts.");

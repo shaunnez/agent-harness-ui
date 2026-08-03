@@ -1,4 +1,6 @@
 import path from "node:path";
+import os from "node:os";
+import { rm } from "node:fs/promises";
 import {
   buildExecutionRequest,
   buildRepairRequest,
@@ -15,6 +17,7 @@ import {
   PRICING_SOURCE_URL,
   resolveAgentPolicy,
   validatePricingRates,
+  withConfiguredModels,
 } from "./model-catalog.mjs";
 import {
   aggregateScoutReports,
@@ -31,7 +34,13 @@ import {
   runEventMetadata,
   runKindFor,
 } from "./run-activity.mjs";
-import { parseFocusedTestEvidence, parseGrillQuestions, parseWorkPackages, validateFocusedTestEvidence } from "./structured-output.mjs";
+import {
+  parseFocusedTestEvidence,
+  parseGateEvidence,
+  parseGrillQuestions,
+  parseWorkPackages,
+  validateFocusedTestEvidence,
+} from "./structured-output.mjs";
 
 const RUN_KINDS = new Set([
   "investigation",
@@ -71,6 +80,7 @@ export class TaskOrchestrator {
     const [runtime, settings] = await Promise.all([this.#getStatus(), this.#store.settings()]);
     return {
       ...runtime,
+      catalog: withConfiguredModels(runtime.catalog, settings),
       model: settings.defaultModel,
       reasoning: settings.defaultReasoning,
       settings,
@@ -140,9 +150,13 @@ export class TaskOrchestrator {
     return true;
   }
 
-  cancel(id) {
+  async cancel(id) {
     const active = this.#active.get(id);
     if (!active) return false;
+    await this.#store.update(id, (draft) => {
+      draft.status = "cancelling";
+      draft.events.push(activity(draft.currentStage, "Cancellation requested", "The active process tree is being terminated before this task can run again.", "warning", "decision"));
+    });
     active.controller.abort();
     return true;
   }
@@ -742,6 +756,7 @@ export class TaskOrchestrator {
       const committed = await this.#worktrees.commit(
         slice,
         `agent-harness(${task.id}): ${workPackageId} ${currentPackage.title}`,
+        { ownedPaths: currentPackage.ownedPaths },
       );
       const content = `${result.finalText}\n\n## Harness slice evidence\n\n- Work package: ${workPackageId}\n- Attempt: ${attempt}\n- Dependencies: ${currentPackage.dependencies.join(", ") || "None"}\n- Base: ${slice.baseRevision}\n- Package commit: ${committed.headRevision}\n- Branch: ${slice.branch}\n- Changed files: ${committed.files.length}\n\n\`\`\`text\n${committed.ownSummary || "No diff stat returned."}\n\`\`\`\n\nThe exact package commit remains available through Git; its full patch is not copied into downstream prompts.`;
       await this.#retainAgentResult(id, "implement", { ...result, finalText: content }, {
@@ -773,21 +788,37 @@ export class TaskOrchestrator {
     const task = await this.#store.get(id);
     const candidate = currentCandidate(task);
     await this.#worktrees.verifyCandidate(candidate);
-    const result = await this.#executeAgent(task, stageId, signal, candidate.worktreePath, "read-only", candidate);
+    let result;
+    try {
+      result = await this.#executeAgent(task, stageId, signal, candidate.worktreePath, "read-only", candidate);
+    } finally {
+      if (stageId === "test") {
+        if (typeof this.#worktrees.recoverCandidate === "function") {
+          await this.#worktrees.recoverCandidate(candidate);
+        }
+        await this.#worktrees.verifyCandidate(candidate);
+      }
+    }
     throwIfAborted(signal);
-    if (stageId === "test") await this.#worktrees.verifyCandidate(candidate);
     const focusedTestEvidence = stageId === "test"
       ? validateFocusedTestEvidence(parseFocusedTestEvidence(result.finalText), candidate)
       : null;
-    const verdict = evaluationVerdict(stageId, result, focusedTestEvidence);
+    const structuredGateEvidence = ["dev-review", "final-review"].includes(stageId)
+      ? parseGateEvidence(result.finalText, candidate, stageId)
+      : null;
+    const verdict = evaluationVerdict(stageId, result, focusedTestEvidence, structuredGateEvidence);
     const gateResult = {
       verdict,
       candidateId: candidate.id,
       candidateRevision: candidate.revisionNumber,
+      schemaVersion: 1,
+      stage: stageId,
       evaluatedAt: now(),
+      findings: structuredGateEvidence?.findings ?? [],
       blockingReasons: [
         ...(result.runtimeEvents?.some((event) => event.commandFailed) ? ["A verification command failed."] : []),
         ...(focusedTestEvidence?.status === "failed" ? ["Structured test evidence contains a failed result."] : []),
+        ...(structuredGateEvidence?.blockingReasons ?? []),
       ],
     };
     await this.#retainAgentResult(id, stageId, result, {
@@ -913,6 +944,7 @@ export class TaskOrchestrator {
     const runId = crypto.randomUUID();
     const startedAt = now();
     const runKind = runKindFor(stageId, policyId, workPackageId);
+    const runtimeTemp = path.join(os.tmpdir(), "agent-harness", task.id, runId);
     await this.#store.update(task.id, (draft) => {
       draft.currentStage = stageId;
       const detail = testRuntime
@@ -948,8 +980,8 @@ export class TaskOrchestrator {
         sandbox: effectiveSandbox,
         model: policy.model,
         reasoning: policy.reasoning,
-        tempDirectory: testRuntime ? path.join(cwd, ".data", "runtime-temp") : undefined,
-        timeoutMs: effectiveSandbox === "workspace-write" ? 600_000 : 240_000,
+        tempDirectory: runtimeTemp,
+        timeoutMs: stageTimeoutMs(stageId, effectiveSandbox),
         onEvent(event) {
           if (event.type === "activity") runtimeEvents.push(event);
         },
@@ -984,6 +1016,8 @@ export class TaskOrchestrator {
         error: error instanceof Error ? error.message : String(error),
       }, signal.aborted ? "cancelled" : "failed");
       throw error;
+    } finally {
+      await rm(runtimeTemp, { recursive: true, force: true });
     }
   }
 
@@ -1098,10 +1132,18 @@ function currentCandidate(task) {
   return candidate;
 }
 
-export function evaluationVerdict(stageId, result, focusedTestEvidence = null) {
+function stageTimeoutMs(stageId, sandbox) {
+  if (["implement", "repair"].includes(stageId)) return 900_000;
+  if (sandbox === "workspace-write" || ["plan", "dev-review", "final-review"].includes(stageId)) return 600_000;
+  return 360_000;
+}
+
+export function evaluationVerdict(stageId, result, focusedTestEvidence = null, structuredGateEvidence = null) {
   if (stageId === "test" && result.runtimeEvents?.some((event) => event.commandFailed)) return "REPAIR";
   if (stageId === "test" && focusedTestEvidence?.status !== "passed") return "REPAIR";
-  return parseVerdict(result.finalText);
+  if (stageId === "test") return "PASS";
+  if (["dev-review", "final-review"].includes(stageId)) return structuredGateEvidence?.verdict ?? "REPAIR";
+  return "REPAIR";
 }
 
 function canStartRun(task, kind) {
@@ -1160,12 +1202,6 @@ function recordApproval(task, stage, note) {
     "decision",
     { approvalId: approval.id },
   ));
-}
-
-function parseVerdict(text) {
-  const first = text.slice(0, 1_000);
-  if (/^\s*(?:PASS\b|(?:#+\s*)?Verdict\s*:?\s*(?:\r?\n)+\s*PASS\b)/i.test(first)) return "PASS";
-  return "REPAIR";
 }
 
 function stageForRun(kind, currentStage) {

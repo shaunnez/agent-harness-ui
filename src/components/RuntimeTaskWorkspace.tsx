@@ -10,6 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getCandidateDiff, type CandidateDiffResponse } from "../api";
+import { matchesCandidateDiffResponse } from "../requestIdentity";
 import {
   formatApproximateCost,
   formatCacheRate,
@@ -38,6 +39,7 @@ import { RuntimeWorkspaceFooter } from "./runtime/RuntimeWorkspaceFooter";
 import {
   getRuntimeStageSummary,
   isArtifactFresh,
+  isStageComplete,
   isStageInvalidatedByRepair,
   runtimeStageAgents,
   runtimeStageSkills,
@@ -154,6 +156,9 @@ export function RuntimeTaskWorkspace({
     setCandidateDiffTarget(target);
     try {
       const diff = await getCandidateDiff(task.id, target.id, target.headRevision);
+      if (!matchesCandidateDiffResponse(target, diff)) {
+        throw new Error("The candidate diff response did not match the requested candidate revision.");
+      }
       if (candidateDiffRequestRef.current === requestId) setCandidateDiff(diff);
     } catch (error) {
       if (candidateDiffRequestRef.current === requestId) {
@@ -274,8 +279,8 @@ export function RuntimeTaskWorkspace({
             tone="secondary"
             compact
             icon={Archive}
-            disabled={task.status === "running" || task.status === "closed"}
-            title={task.status === "running" ? "Cancel the active run before closing this task." : task.status === "closed" ? "This task is already closed." : "Close as not needed or record the superseding task."}
+            disabled={["running", "cancelling"].includes(task.status) || task.status === "closed"}
+            title={["running", "cancelling"].includes(task.status) ? "Wait for the active process tree to terminate before closing this task." : task.status === "closed" ? "This task is already closed." : "Close as not needed or record the superseding task."}
             onClick={() => void closeTask()}
           >
             Close task
@@ -294,7 +299,7 @@ export function RuntimeTaskWorkspace({
             compact
             icon={X}
             disabled={task.status !== "running"}
-            title={task.status === "running" ? "Cancel the active Codex run" : "No active run to cancel"}
+            title={task.status === "cancelling" ? "Process-tree termination is already in progress" : task.status === "running" ? "Cancel the active Codex run" : "No active run to cancel"}
             onClick={() => void onCancel()}
           >
             Cancel
@@ -305,7 +310,7 @@ export function RuntimeTaskWorkspace({
       <nav className="stage-navigator" aria-label="Workflow stages">
         {workflowStages.map((stage, index) => {
           const invalidated = isStageInvalidatedByRepair(task, stage.id);
-          const complete = task.completedStages.includes(stage.id) && !invalidated;
+          const complete = isStageComplete(task, stage.id) && !invalidated;
           const active = stage.id === task.currentStage;
           const selected = stage.id === viewedStageId;
           const failed = active && (task.status === "failed" || task.status === "blocked");

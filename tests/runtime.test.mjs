@@ -1,14 +1,15 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createServer as createViteServer } from "vite";
-import { buildCodexEnvironment, parseCodexEvent, selectCodexCandidate } from "../server/codex-runtime.mjs";
-import { normalizeModelId, priceUsage } from "../server/model-catalog.mjs";
-import { buildStageRequest } from "../server/prompts.mjs";
+import { buildCodexEnvironment, parseCodexEvent, runProcess, selectCodexCandidate } from "../server/codex-runtime.mjs";
+import { normalizeModelId, priceUsage, readCodexModelCatalog, withConfiguredModels } from "../server/model-catalog.mjs";
+import { buildExecutionRequest, buildStageRequest, buildWorkPackageRequest } from "../server/prompts.mjs";
+import { buildScoutRequest } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
@@ -38,6 +39,61 @@ test("prefers a Windows Codex runtime with its sandbox helper", () => {
     candidate.endsWith("desktop\\codex-windows-sandbox-setup.exe"),
   );
   assert.equal(selected, process.platform === "win32" ? candidates[1] : candidates[0]);
+});
+
+test("rejects an already-aborted process before spawning", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-aborted-process-"));
+  const marker = path.join(directory, "spawned.txt");
+  try {
+    const controller = new AbortController();
+    controller.abort();
+    await assert.rejects(
+      () => runProcess(process.execPath, ["-e", `require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'spawned')`], { signal: controller.signal }),
+      /before launch/i,
+    );
+    await assert.rejects(() => access(marker));
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("cancellation terminates descendants before the process reservation settles", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-process-tree-"));
+  const marker = path.join(directory, "writes.txt");
+  const childScript = `const fs=require('node:fs');setInterval(()=>fs.appendFileSync(${JSON.stringify(marker)},'x'),15);`;
+  const parentScript = `const {spawn}=require('node:child_process');spawn(process.execPath,['-e',${JSON.stringify(childScript)}],{stdio:'ignore'});setInterval(()=>{},1000);`;
+  try {
+    const controller = new AbortController();
+    const running = runProcess(process.execPath, ["-e", parentScript], { signal: controller.signal, timeoutMs: 5_000 });
+    await waitUntil(async () => (await readFile(marker, "utf8").catch(() => "")).length > 1);
+    controller.abort();
+    await assert.rejects(() => running, /cancelled/i);
+    const sizeAfterClose = (await readFile(marker, "utf8")).length;
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    assert.equal((await readFile(marker, "utf8")).length, sizeAfterClose);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("timeout terminates descendants before allowing a retry", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-process-timeout-"));
+  const marker = path.join(directory, "writes.txt");
+  const childScript = `const fs=require('node:fs');setInterval(()=>fs.appendFileSync(${JSON.stringify(marker)},'x'),15);`;
+  const parentScript = `const {spawn}=require('node:child_process');spawn(process.execPath,['-e',${JSON.stringify(childScript)}],{stdio:'ignore'});setInterval(()=>{},1000);`;
+  try {
+    await assert.rejects(
+      () => runProcess(process.execPath, ["-e", parentScript], { timeoutMs: 120 }),
+      /exceeded/i,
+    );
+    const sizeAfterClose = (await readFile(marker, "utf8").catch(() => "")).length;
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    assert.equal((await readFile(marker, "utf8").catch(() => "")).length, sizeAfterClose);
+    const retry = await runProcess(process.execPath, ["-e", "process.stdout.write('retry')"], { timeoutMs: 1_000 });
+    assert.equal(retry.stdout, "retry");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test("builds a minimal Codex environment without inherited credentials", () => {
@@ -75,6 +131,45 @@ test("calculates an API-rate estimate after cached-input discounts", () => {
   );
 });
 
+test("distinguishes discovered, configured, fallback, and unsupported model provenance", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-model-catalog-"));
+  const previousCodexHome = process.env.CODEX_HOME;
+  try {
+    process.env.CODEX_HOME = directory;
+    await writeFile(path.join(directory, "models_cache.json"), JSON.stringify({
+      fetched_at: "2026-08-03T00:00:00.000Z",
+      models: [{
+        slug: "gpt-5.6-luna",
+        display_name: "GPT-5.6-Luna",
+        description: "Local cache entry",
+        visibility: "list",
+        default_reasoning_level: "xhigh",
+        supported_reasoning_levels: [{ effort: "high" }, { effort: "xhigh" }],
+      }],
+    }));
+    const discovered = await readCodexModelCatalog();
+    assert.equal(discovered.models[0].provenance, "discovered");
+    assert.equal(discovered.models[0].editable, true);
+
+    await writeFile(path.join(directory, "models_cache.json"), JSON.stringify({ models: [] }));
+    const fallback = await readCodexModelCatalog();
+    assert.equal(fallback.models.every((model) => model.provenance === "bundled-fallback"), true);
+    assert.equal(fallback.models.every((model) => model.availability === "unsupported" && !model.editable), true);
+    const configured = withConfiguredModels(fallback, {
+      allowedModels: ["gpt-5.6-luna"],
+      defaultModel: "gpt-5.6-luna",
+      defaultReasoning: "xhigh",
+      stagePolicies: { triage: { model: "gpt-5.6-luna", reasoning: "xhigh" } },
+    });
+    assert.equal(configured.models.find((model) => model.id === "gpt-5.6-luna").provenance, "configured");
+    assert.equal(configured.models.find((model) => model.id === "gpt-5.6-sol").availability, "unsupported");
+  } finally {
+    if (previousCodexHome == null) delete process.env.CODEX_HOME;
+    else process.env.CODEX_HOME = previousCodexHome;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("records the exact prior artifacts and repository permission supplied to an agent", () => {
   const task = createTask({
     artifacts: [
@@ -94,6 +189,61 @@ test("records the exact prior artifacts and repository permission supplied to an
   assert.equal(request.contextManifest.repositoryAccess, "read-only");
   assert.equal(request.contextManifest.sources.some((source) => source.id === "artifact-triage"), true);
   assert.equal(request.contextManifest.sources.find((source) => source.id === "artifact-triage").includedCharacters, 25);
+});
+
+test("context manifests count the exact capped task text supplied to every prompt shape", () => {
+  for (const length of [5_999, 6_000, 6_001, 10_000, 10_001]) {
+    const marker = "__TASK_CONTEXT_SENTINEL__";
+    const description = `${"x".repeat(length - marker.length)}${marker}`;
+    const task = createTask({
+      id: "AH-CONTEXT",
+      title: "T".repeat(320),
+      description,
+      workflow: "implement",
+      priority: "high",
+      artifacts: [],
+      decisions: [],
+      attachments: [],
+    });
+    const candidate = {
+      id: "C1",
+      revisionNumber: 3,
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+    };
+    const workPackage = {
+      id: "S1",
+      title: "Context",
+      description: "Keep accounting exact.",
+      dependencies: [],
+      ownedPaths: ["server/prompts.mjs"],
+      verification: ["npm test"],
+    };
+    const requests = [
+      buildStageRequest(task, "triage"),
+      buildExecutionRequest(task, "dev-review", candidate),
+      buildWorkPackageRequest(task, workPackage, { baseRevision: candidate.baseRevision }),
+      buildScoutRequest(
+        task,
+        { name: "scout-code-path", focus: "Trace prompt construction.", reason: "Verify accounting." },
+        null,
+      ),
+    ];
+    for (const request of requests) {
+      const source = request.contextManifest.sources.find((item) => item.kind === "task");
+      const expectedDescriptionLength = Math.min(length, 6_000);
+      const includesWorkflow = source.label.includes("workflow");
+      const expectedIncluded =
+        task.id.length + 300 + expectedDescriptionLength + task.priority.length + (includesWorkflow ? task.workflow.length : 0);
+      const expectedOriginal =
+        task.id.length + task.title.length + description.length + task.priority.length + (includesWorkflow ? task.workflow.length : 0);
+      assert.equal(source.includedCharacters, expectedIncluded);
+      assert.equal(source.originalCharacters, expectedOriginal);
+      assert.equal(source.truncated, length > 6_000 || task.title.length > 300);
+      assert.equal(request.contextManifest.promptCharacters, request.prompt.length);
+      assert.equal(request.prompt.includes(marker), length <= 6_000);
+    }
+  }
 });
 
 test("persists tasks and recovers interrupted runs", async () => {
@@ -195,7 +345,9 @@ test("cancellation wins when an implementation agent completes after abort", asy
 
     assert.equal(await orchestrator.start(task.id, "implementation"), true);
     await waitUntil(() => typeof finishAgent === "function");
-    assert.equal(orchestrator.cancel(task.id), true);
+    assert.equal(await orchestrator.cancel(task.id), true);
+    assert.equal((await store.get(task.id)).status, "cancelling");
+    assert.equal(await orchestrator.start(task.id, "implementation"), false);
     finishAgent();
     await waitUntil(() => !orchestrator.isRunning(task.id));
 
@@ -460,6 +612,26 @@ test("renders the candidate diff overlay with the current identity and return co
     assert.match(markup, /Return to inspector/);
     assert.match(markup, /Close candidate diff/);
     assert.equal(closed, 0);
+  });
+});
+
+test("rejects late task and candidate-diff responses after identity changes", () => {
+  return withWorkspace(async ({ isCurrentRequest, matchesCandidateDiffResponse }) => {
+    const requestA = { identity: "AH-A", generation: 1 };
+    const requestB = { identity: "AH-B", generation: 2 };
+    assert.equal(isCurrentRequest(requestA, requestB), false);
+    assert.equal(isCurrentRequest(requestB, requestB), true);
+    const requested = { id: "C2", revisionNumber: 3, headRevision: "b".repeat(40) };
+    assert.equal(matchesCandidateDiffResponse(requested, {
+      candidateId: "C2",
+      revisionNumber: 2,
+      headRevision: "a".repeat(40),
+    }), false);
+    assert.equal(matchesCandidateDiffResponse(requested, {
+      candidateId: "C2",
+      revisionNumber: 3,
+      headRevision: "b".repeat(40),
+    }), true);
   });
 });
 
@@ -762,6 +934,60 @@ test("keeps focused test evidence attached to the persisted Markdown artifact in
   });
 });
 
+test("treats missing and mismatched candidate bindings as stale in navigation and approval counts", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const candidate = {
+      id: "C1",
+      revisionNumber: 2,
+      status: "awaiting_human_approval",
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/ah-999-c1",
+      revisions: [{ number: 1, headRevision: "c".repeat(40), reason: "assembly", createdAt: "2026-08-01T11:00:00.000Z" }, { number: 2, headRevision: "b".repeat(40), reason: "repair", createdAt: "2026-08-01T12:00:00.000Z" }],
+    };
+    const gateArtifact = (stage, revision, withBinding = true) => ({
+      id: `${stage}-${revision}`,
+      stage,
+      kind: "markdown",
+      name: `${stage}-c1-r${revision}.md`,
+      content: "PASS",
+      createdAt: "2026-08-01T12:00:00.000Z",
+      model: "gpt-5.6-sol",
+      usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+      ...(withBinding ? { candidateId: "C1", candidateRevision: revision } : {}),
+      gateResult: withBinding
+        ? { verdict: "PASS", candidateId: "C1", candidateRevision: revision, evaluatedAt: "2026-08-01T12:00:00.000Z", blockingReasons: [] }
+        : null,
+    });
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task: createTask({
+        status: "awaiting-human-approval",
+        currentStage: "approval",
+        completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review"],
+        candidates: [candidate],
+        artifacts: [
+          gateArtifact("dev-review", 2),
+          gateArtifact("test", 1),
+          gateArtifact("test", 2, false),
+          gateArtifact("final-review", 2),
+        ],
+      }),
+      initialViewedStageId: "approval",
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onGrillAnswer: async () => {},
+      onFinishGrill: async () => {},
+    }));
+    assert.match(markup, /2 of 3 candidate-bound gates fresh/);
+    assert.match(markup, /rerun required/);
+    assert.match(markup, /test-c1-r2\.md/);
+  });
+});
+
 test("renders dependency batches and package status during implementation", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const markup = renderToStaticMarkup(
@@ -941,7 +1167,7 @@ test("filters structured activity and renders test run and artifact drilldown", 
 
 async function waitUntil(predicate) {
   for (let attempt = 0; attempt < 100; attempt += 1) {
-    if (predicate()) return;
+    if (await predicate()) return;
     await new Promise((resolve) => setTimeout(resolve, 5));
   }
   throw new Error("Timed out waiting for condition.");
@@ -994,7 +1220,8 @@ async function withWorkspace(run) {
     const module = await vite.ssrLoadModule("/src/components/RuntimeTaskWorkspace.tsx");
     const candidateDiffViewer = await vite.ssrLoadModule("/src/components/CandidateDiffViewer.tsx");
     const runActivity = await vite.ssrLoadModule("/src/components/RunActivity.tsx");
-    return await run({ ...module, ...candidateDiffViewer, ...runActivity, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
+    const requestIdentity = await vite.ssrLoadModule("/src/requestIdentity.ts");
+    return await run({ ...module, ...candidateDiffViewer, ...runActivity, ...requestIdentity, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
   } finally {
     await vite.close();
   }

@@ -79,6 +79,19 @@ test("creates, commits, and fast-forward merges an isolated candidate", async ()
     await rm(path.join(cleanupCandidate.worktreePath, ".pnpm-store", "tracked.json"));
     const cleaned = await manager.commit(cleanupCandidate, "repair removes generated state", { allowGeneratedDeletions: true });
     assert.equal(cleaned.files.includes(".pnpm-store/tracked.json"), true);
+
+    const scopedCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C7");
+    await mkdir(path.join(scopedCandidate.worktreePath, "src"), { recursive: true });
+    await writeFile(path.join(scopedCandidate.worktreePath, "src", "owned.ts"), "export {};\n", "utf8");
+    const scopedCommit = await manager.commit(scopedCandidate, "owned change", { ownedPaths: ["SRC"] });
+    assert.deepEqual(scopedCommit.files, ["src/owned.ts"]);
+
+    const escapedCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C8");
+    await writeFile(path.join(escapedCandidate.worktreePath, "outside.txt"), "not owned\n", "utf8");
+    await assert.rejects(
+      () => manager.commit(escapedCandidate, "out of scope", { ownedPaths: ["src"] }),
+      /outside the work package ownership/i,
+    );
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }

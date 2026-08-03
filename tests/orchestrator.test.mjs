@@ -6,11 +6,21 @@ import test from "node:test";
 import { evaluationVerdict, TaskOrchestrator } from "../server/orchestrator.mjs";
 import { buildExecutionPrompt } from "../server/prompts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
-import { parseFocusedTestEvidence, parseGrillQuestions, parseWorkPackages, validateFocusedTestEvidence } from "../server/structured-output.mjs";
+import {
+  parseFocusedTestEvidence,
+  parseGateEvidence,
+  parseGrillQuestions,
+  parseWorkPackages,
+  validateFocusedTestEvidence,
+} from "../server/structured-output.mjs";
 
 const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"questions":[{"question":"Compatibility?","whyItMatters":"Changes the public contract.","options":[{"label":"Preserve it","description":"Keep existing clients working.","recommended":true},{"label":"Break it","description":"Allow a clean break.","recommended":false}],"allowCustom":true}]}\n</grill-questions>`;
 const PLAN_OUTPUT = `## Plan summary\n\nTwo independent slices.\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verification":["npm test"]},{"id":"S2","title":"UI","description":"Implement the task UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verification":["npm run typecheck"]}]}\n</work-packages>`;
 const TEST_OUTPUT = `PASS\n\n## Verdict\n\nPASS\n\n<focused-test-evidence>\n{"candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","startedAt":"2026-08-01T12:00:00.000Z","completedAt":"2026-08-01T12:00:01.240Z","durationMs":1240,"rows":[{"id":"row-1","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":1240,"title":"orchestrator.test.mjs","artifactReferences":[{"name":"Markdown test artifact","kind":"markdown","path":"artifacts/test.md"}],"assertions":[{"label":"all packages qualified","actual":"pass","expected":"pass"}],"failureDetails":null},{"id":"row-2","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":350,"title":"api.test.mjs","artifactReferences":[{"name":"JUnit report","kind":"junit","path":"artifacts/junit.xml"}],"assertions":[{"label":"API contract","actual":"pass","expected":"pass"}],"failureDetails":null}]}\n</focused-test-evidence>`;
+
+function gateOutput(revision, verdict = "PASS", findings = []) {
+  return `${verdict}\n\n## Verdict\n\n${verdict}\n\n<gate-evidence>\n${JSON.stringify({ candidateId: "C1", candidateRevision: revision, verdict, summary: "Candidate-bound result", findings })}\n</gate-evidence>`;
+}
 
 const SCOUT_OUTPUT = `<scout-report>
 {"status":"ok","findings":[{"file":"src/mock.ts","line":1,"fact":"Mock repository fact for the selected scout.","confidence":"high"}],"uncertainties":[]}
@@ -93,6 +103,18 @@ test("parses grounded Grill questions and dependency batches", () => {
       ),
     /outside the selected repository/,
   );
+  assert.throws(
+    () => parseWorkPackages(
+        `<work-packages>{"packages":[{"id":"S1","title":"Directory","description":"Own src.","dependencies":[],"ownedPaths":["src"],"verification":[]},{"id":"S2","title":"File","description":"Own nested file.","dependencies":[],"ownedPaths":["SRC\\\\App.tsx"],"verification":[]}]}</work-packages>`,
+    ),
+    /both own/i,
+  );
+  assert.throws(
+    () => parseWorkPackages(
+      `<work-packages>{"packages":[{"id":"S1","title":"Missing scope","description":"Unsafe scope.","dependencies":[],"ownedPaths":[],"verification":[]}]}</work-packages>`,
+    ),
+    /explicit repository-relative owned path/i,
+  );
 });
 
 test("parses focused test evidence with candidate-bound rows", () => {
@@ -119,6 +141,30 @@ test("parses focused test evidence with candidate-bound rows", () => {
   assert.throws(
     () => parseFocusedTestEvidence(`<focused-test-evidence>{"candidateId":"C1","candidateRevision":2,"command":"npm test","status":"unknown","rows":[{"id":"row","status":"passed"}]}</focused-test-evidence>`),
     /status must be passed or failed/i,
+  );
+});
+
+test("derives candidate-bound review gates from structured evidence", () => {
+  const candidate = { id: "C1", revisionNumber: 2 };
+  const pass = parseGateEvidence(gateOutput(2), candidate, "dev-review");
+  assert.equal(pass.verdict, "PASS");
+  const contradictory = parseGateEvidence(
+    gateOutput(2, "PASS", [{ severity: "P1", title: "Blocking defect", detail: "The candidate can advance incorrectly." }]),
+    candidate,
+    "dev-review",
+  );
+  assert.equal(contradictory.reportedVerdict, "PASS");
+  assert.equal(contradictory.verdict, "REPAIR");
+  assert.match(contradictory.blockingReasons[0], /P1/);
+  assert.throws(() => parseGateEvidence("PASS", candidate, "dev-review"), /exactly one gate-evidence/i);
+  assert.throws(() => parseGateEvidence(gateOutput(1), candidate, "dev-review"), /does not match/i);
+  assert.throws(
+    () => parseGateEvidence(
+      gateOutput(2, "REPAIR", [{ severity: "P2", title: "Mixed", detail: "Wrong candidate", candidateId: "C2" }]),
+      candidate,
+      "final-review",
+    ),
+    /different candidate revision/i,
   );
 });
 
@@ -290,7 +336,8 @@ test("fails a test verdict closed when any verification command fails", () => {
     }),
     "REPAIR",
   );
-  assert.equal(evaluationVerdict("dev-review", { finalText: "PASS", runtimeEvents: [{ commandFailed: true }] }), "PASS");
+  assert.equal(evaluationVerdict("dev-review", { finalText: "PASS", runtimeEvents: [] }, null, { verdict: "PASS" }), "PASS");
+  assert.equal(evaluationVerdict("dev-review", { finalText: "PASS", runtimeEvents: [] }), "REPAIR");
 });
 
 test("runs the investigation frontier and retains each stage handoff", async () => {
@@ -433,9 +480,13 @@ test("advances an approved implementation task through a revision-bound candidat
         if (/<work-packages>/.test(prompt)) finalText = PLAN_OUTPUT;
         if (/Development review/.test(prompt)) {
           reviewCount += 1;
-          finalText = reviewCount === 1 ? "REPAIR\n\n## Verdict\n\nREPAIR" : "PASS\n\n## Verdict\n\nPASS";
-        } else if (/Focused test|Final review/.test(prompt)) {
+          finalText = reviewCount === 1
+            ? gateOutput(1, "REPAIR", [{ severity: "P1", title: "Repair required", detail: "Fix the candidate." }])
+            : gateOutput(2);
+        } else if (/Focused test/.test(prompt)) {
           finalText = TEST_OUTPUT;
+        } else if (/Final review/.test(prompt)) {
+          finalText = gateOutput(2);
         }
         return {
           finalText,
@@ -479,7 +530,9 @@ test("advances an approved implementation task through a revision-bound candidat
     assert.equal(approvalTask.artifacts.length, 15);
     const testCall = runtimeCalls.find((call) => /Focused test/.test(call.prompt));
     assert.equal(testCall.sandbox, "workspace-write");
-    assert.equal(testCall.tempDirectory, path.join(directory, "C1", ".data", "runtime-temp"));
+    assert.equal(testCall.timeoutMs, 600_000);
+    assert.match(testCall.tempDirectory, new RegExp(`^${escapeRegex(path.join(os.tmpdir(), "agent-harness", task.id))}`));
+    assert.equal(testCall.tempDirectory.startsWith(path.join(directory, "C1")), false);
     assert.equal(verifyCount, 6, "test must verify the candidate both before and after execution");
     assert.equal(
       approvalTask.artifacts.find((artifact) => artifact.stage === "test")?.focusedTest?.rows?.length,
@@ -555,11 +608,82 @@ test("reserves a run exactly once across concurrent start requests", async () =>
       await new Promise((resolve) => setTimeout(resolve, 5));
     }
     assert.equal(typeof release, "function");
-    assert.equal(orchestrator.cancel(task.id), true);
+    assert.equal(await orchestrator.cancel(task.id), true);
     release();
     await waitForStatus(store, task.id, "cancelled");
   } finally {
     await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("cleans a failed Test run before allowing its retry", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-test-cleanup-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Clean Test retries",
+      description: "A failed Test run must not strand the candidate.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-test";
+      draft.currentStage = "test";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 2,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/test-cleanup",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "ready_for_test",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        revisions: [],
+      }];
+    });
+    let dirty = false;
+    let attempts = 0;
+    let recoveries = 0;
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        async verifyCandidate() {
+          if (dirty) throw new Error("candidate is dirty");
+          return true;
+        },
+        async recoverCandidate() {
+          recoveries += 1;
+          const changed = dirty;
+          dirty = false;
+          return changed;
+        },
+      },
+      runCodex: async () => {
+        attempts += 1;
+        if (attempts === 1) {
+          dirty = true;
+          throw new Error("Focused test runner failed after writing temporary output.");
+        }
+        return {
+          finalText: TEST_OUTPUT,
+          usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+        };
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id, "test"), true);
+    await waitForStatus(store, task.id, "failed");
+    assert.equal(dirty, false);
+    assert.equal(await orchestrator.start(task.id, "test"), true);
+    await waitForStatus(store, task.id, "ready-for-final-review");
+    assert.equal(attempts, 2);
+    assert.equal(recoveries, 2);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 });
 
@@ -638,4 +762,8 @@ async function waitForStatus(store, id, expected) {
     await new Promise((resolve) => setTimeout(resolve, 5));
   }
   assert.fail(`Task did not reach ${expected}.`);
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

@@ -37,7 +37,8 @@ export function RuntimeCommandBar({
   const [pending, setPending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const historical = viewedStageId !== task.currentStage;
-  const running = task.status === "running";
+  const running = task.status === "running" || task.status === "cancelling";
+  const cancelling = task.status === "cancelling";
   const repairRunning = running && task.activeRunKind === "repair";
   const currentAttempts = task.attemptsByStage?.[task.currentStage] ?? 0;
   const repairRequired = task.status === "repair-required";
@@ -105,7 +106,9 @@ export function RuntimeCommandBar({
       <span className="stage-command-bar__copy">
         <small>{repairRunning ? "Candidate repair in progress" : accessBoundary.kicker}</small>
         <strong>
-          {repairRunning
+          {cancelling
+            ? "Terminating the active process tree"
+            : repairRunning
             ? "Repairing the retained integration candidate"
             : running
             ? accessBoundary.title
@@ -122,7 +125,9 @@ export function RuntimeCommandBar({
                       : "Start the read-only investigation"}
         </strong>
         <span>
-          {repairRunning
+          {cancelling
+            ? "The task remains reserved until the operating system confirms that the agent and its descendants have closed. Retries stay disabled."
+            : repairRunning
             ? "The Implement agent is writing inside the isolated candidate worktree. Dev Review, Test, Final Review, and Approval require fresh evidence after the new revision is assembled."
             : running
             ? accessBoundary.detail

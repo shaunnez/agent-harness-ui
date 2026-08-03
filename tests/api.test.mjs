@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { request as httpRequest } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -210,7 +211,7 @@ test("returns backward-compatible structured run activity through task APIs", as
   }
 });
 
-test("rejects untrusted browser mutations before invoking task creation", async () => {
+test("enforces one Host, Origin, content-type, CSRF, and missing-Origin policy across mutations", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
     const payload = JSON.stringify({
@@ -242,6 +243,51 @@ test("rejects untrusted browser mutations before invoking task creation", async 
       headers: { origin: "https://hostile.example" },
     });
     assert.equal(hostilePreflight.status, 403);
+    const hostileHost = await rawHttpRequest(origin, "/api/tasks", {
+      method: "POST",
+      headers: { host: "hostile.example", "content-type": "application/json", "x-agent-harness-csrf": TEST_CSRF_TOKEN },
+      body: payload,
+    });
+    assert.equal(hostileHost.status, 403);
+    const missingOriginWithToken = await nativeFetch(`${origin}/api/tasks`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-agent-harness-csrf": TEST_CSRF_TOKEN },
+      body: "{}",
+    });
+    assert.equal(missingOriginWithToken.status, 400);
+
+    const mutationTargets = [
+      ["PUT", "/api/settings"],
+      ["POST", "/api/runtime/pricing/verify"],
+      ["POST", "/api/tasks/AH-999/close"],
+      ["POST", "/api/tasks/AH-999/evaluation"],
+      ["POST", "/api/tasks/AH-999/decisions"],
+      ["POST", "/api/tasks/AH-999/grill/answers"],
+      ["POST", "/api/tasks/AH-999/grill/finish"],
+      ["POST", "/api/tasks/AH-999/run"],
+      ["POST", "/api/tasks/AH-999/cancel"],
+      ["POST", "/api/tasks/AH-999/approve-merge"],
+    ];
+    for (const [method, target] of mutationTargets) {
+      const hostile = await nativeFetch(`${origin}${target}`, {
+        method,
+        headers: { origin: "https://hostile.example", "content-type": "application/json", "x-agent-harness-csrf": TEST_CSRF_TOKEN },
+        body: "{}",
+      });
+      assert.equal(hostile.status, 403, `${method} ${target} must reject a hostile Origin`);
+      const wrongType = await nativeFetch(`${origin}${target}`, {
+        method,
+        headers: { "content-type": "text/plain", "x-agent-harness-csrf": TEST_CSRF_TOKEN },
+        body: "{}",
+      });
+      assert.equal(wrongType.status, 415, `${method} ${target} must reject text/plain`);
+      const noToken = await nativeFetch(`${origin}${target}`, {
+        method,
+        headers: { "content-type": "application/json" },
+        body: "{}",
+      });
+      assert.equal(noToken.status, 403, `${method} ${target} must require CSRF`);
+    }
     assert.equal((await store.list()).length, 0);
   } finally {
     await cleanup(server, directory);
@@ -1052,6 +1098,18 @@ for (const [name, payload] of [
     } finally {
       await cleanup(server, directory);
     }
+  });
+}
+
+function rawHttpRequest(origin, pathname, { method, headers, body }) {
+  const url = new URL(origin);
+  return new Promise((resolve, reject) => {
+    const request = httpRequest({ hostname: url.hostname, port: url.port, path: pathname, method, headers }, (response) => {
+      response.resume();
+      response.on("end", () => resolve({ status: response.statusCode }));
+    });
+    request.on("error", reject);
+    request.end(body);
   });
 }
 

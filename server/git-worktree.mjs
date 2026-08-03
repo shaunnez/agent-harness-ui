@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
-import { mkdir, stat } from "node:fs/promises";
+import { mkdir, realpath, stat } from "node:fs/promises";
 import path from "node:path";
+import { isOwnedFile } from "./structured-output.mjs";
 
 const OUTPUT_LIMIT = 512 * 1024;
 
@@ -98,6 +99,14 @@ export class GitWorktreeManager {
         `Candidate contains generated tool state (${generated.file}); remove generated caches and browser/test output before retrying.`,
       );
     }
+    if (options.ownedPaths) {
+      const outOfScope = files.find((file) => !isOwnedFile(file, options.ownedPaths));
+      if (outOfScope) {
+        throw new Error(
+          `Candidate changed ${outOfScope}, which is outside the work package ownership (${options.ownedPaths.join(", ")}).`,
+        );
+      }
+    }
 
     const parentRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
     await git(candidate.worktreePath, ["add", "-A"]);
@@ -177,7 +186,8 @@ export class GitWorktreeManager {
 
   async verifyCandidate(candidate) {
     const worktreeRoot = await this.repositoryRoot(candidate.worktreePath);
-    if (worktreeRoot !== path.resolve(candidate.worktreePath)) {
+    const recordedPath = await realpath(path.resolve(candidate.worktreePath));
+    if (worktreeRoot !== recordedPath) {
       throw new Error("The candidate worktree no longer resolves to its recorded path.");
     }
     await assertClean(worktreeRoot);
@@ -189,8 +199,9 @@ export class GitWorktreeManager {
   }
 
   async recoverCandidate(candidate) {
-    const worktreePath = path.resolve(candidate.worktreePath);
-    if (!worktreePath.startsWith(`${this.#root}${path.sep}`)) {
+    const worktreePath = await realpath(path.resolve(candidate.worktreePath));
+    const worktreeRootBoundary = await realpath(this.#root).catch(() => this.#root);
+    if (!worktreePath.startsWith(`${worktreeRootBoundary}${path.sep}`)) {
       throw new Error("Candidate recovery refused a worktree outside harness storage.");
     }
     const worktreeRoot = await this.repositoryRoot(worktreePath);
@@ -266,7 +277,7 @@ export class GitWorktreeManager {
 
   async repositoryRoot(repositoryPath) {
     const result = await git(repositoryPath, ["rev-parse", "--show-toplevel"]);
-    return path.resolve(result.stdout.trim());
+    return realpath(path.resolve(result.stdout.trim()));
   }
 }
 

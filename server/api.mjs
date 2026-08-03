@@ -152,7 +152,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
       if (request.method === "PUT" && url.pathname === "/api/settings") {
         const input = await readJson(request);
         const catalog = await readCodexModelCatalog();
-        const known = new Map(catalog.models.map((model) => [model.id, model]));
+        const known = new Map(catalog.models.filter((model) => model.editable).map((model) => [model.id, model]));
         const allowedModels = [...new Set((Array.isArray(input.allowedModels) ? input.allowedModels : []).map(normalizeModelId))]
           .filter((modelId) => known.has(modelId));
         const defaultModel = normalizeModelId(input.defaultModel);
@@ -262,7 +262,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         const settings = await store.settings();
         const catalog = await readCodexModelCatalog();
         const requestedModel = normalizeModelId(input.model ?? settings.defaultModel);
-        const selectedModel = catalog.models.find((model) => model.id === requestedModel);
+        const selectedModel = catalog.models.find((model) => model.id === requestedModel && model.editable);
         if (!settings.allowedModels.includes(requestedModel) || !selectedModel) throw new Error("Choose a model from the allowed runtime list in Settings.");
         const requestedReasoning = String(input.reasoning ?? settings.defaultReasoning);
         if (!selectedModel.reasoningLevels.includes(requestedReasoning)) throw new Error(`${selectedModel.label} does not support ${requestedReasoning} reasoning.`);
@@ -415,7 +415,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         }
         const action = actionMatch[2];
         if (action === "cancel") {
-          const cancelled = orchestrator.cancel(id);
+          const cancelled = await orchestrator.cancel(id);
           send(response, cancelled ? 202 : 409, cancelled ? { cancelled: true } : { error: "Task is not running." });
           return;
         }

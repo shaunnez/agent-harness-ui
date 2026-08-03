@@ -21,7 +21,7 @@ export function AgentPolicyEditor({
   disabled?: boolean;
   idPrefix: string;
 }) {
-  const availableModels = models.filter((model) => allowedModels.includes(model.id));
+  const availableModels = models.filter((model) => allowedModels.includes(model.id) && model.editable);
   const selectedModel = availableModels.find((model) => model.id === value.model);
   const isGlobalDefault = Boolean(globalDefault && value.model === globalDefault.model && value.reasoning === globalDefault.reasoning);
   const updateModel = (modelId: string) => {

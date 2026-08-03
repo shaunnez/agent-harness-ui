@@ -84,6 +84,70 @@ export function validateFocusedTestEvidence(evidence, candidate) {
   return evidence;
 }
 
+export function parseGateEvidence(text, candidate, stageId) {
+  if (!["dev-review", "final-review"].includes(stageId)) {
+    throw new Error(`Structured gate evidence is not supported for ${stageId}.`);
+  }
+  const matches = [...String(text ?? "").matchAll(/<gate-evidence>\s*([\s\S]*?)\s*<\/gate-evidence>/gi)];
+  if (matches.length !== 1) {
+    throw new Error(`The ${stageId} agent must return exactly one gate-evidence JSON block.`);
+  }
+  let value;
+  try {
+    value = JSON.parse(matches[0][1].trim());
+  } catch (error) {
+    throw new Error(`The gate-evidence JSON block was invalid: ${error.message}`);
+  }
+  if (!candidate?.id || !Number.isInteger(candidate.revisionNumber)) {
+    throw new Error("Gate evidence requires an active candidate identity.");
+  }
+  const candidateId = String(value?.candidateId ?? "").trim();
+  const candidateRevision = value?.candidateRevision;
+  if (candidateId !== candidate.id || candidateRevision !== candidate.revisionNumber) {
+    throw new Error("Gate evidence does not match the active candidate revision.");
+  }
+  if (!["PASS", "REPAIR"].includes(value?.verdict)) {
+    throw new Error("Gate evidence verdict must be PASS or REPAIR.");
+  }
+  if (!Array.isArray(value.findings)) throw new Error("Gate evidence must include a findings array.");
+  const findings = value.findings.map((finding, index) => {
+    const severity = String(finding?.severity ?? "").toUpperCase();
+    if (!["P0", "P1", "P2", "P3"].includes(severity)) {
+      throw new Error(`Gate finding ${index + 1} must have severity P0, P1, P2, or P3.`);
+    }
+    const title = String(finding?.title ?? "").trim().slice(0, 500);
+    const detail = String(finding?.detail ?? "").trim().slice(0, 4_000);
+    if (!title || !detail) throw new Error(`Gate finding ${index + 1} is missing its title or detail.`);
+    const findingCandidateId = String(finding?.candidateId ?? candidateId).trim();
+    const findingCandidateRevision = finding?.candidateRevision ?? candidateRevision;
+    if (findingCandidateId !== candidate.id || findingCandidateRevision !== candidate.revisionNumber) {
+      throw new Error(`Gate finding ${index + 1} is bound to a different candidate revision.`);
+    }
+    return {
+      severity,
+      title,
+      detail,
+      file: finding?.file == null ? null : String(finding.file).trim().slice(0, 1_000),
+      line: Number.isInteger(finding?.line) && finding.line > 0 ? finding.line : null,
+      candidateId,
+      candidateRevision,
+    };
+  });
+  const blockingFindings = findings.filter((finding) => finding.severity === "P0" || finding.severity === "P1");
+  const verdict = value.verdict === "PASS" && blockingFindings.length === 0 ? "PASS" : "REPAIR";
+  return {
+    schemaVersion: 1,
+    stage: stageId,
+    candidateId,
+    candidateRevision,
+    verdict,
+    reportedVerdict: value.verdict,
+    summary: String(value.summary ?? "").trim().slice(0, 4_000),
+    findings,
+    blockingReasons: blockingFindings.map((finding) => `${finding.severity}: ${finding.title}`),
+  };
+}
+
 export function tryParseFocusedTestEvidence(text) {
   try {
     return parseFocusedTestEvidence(text);
@@ -138,6 +202,9 @@ export function parseWorkPackages(text, repositoryPath = null) {
   if (packages.some((item) => !item.title || !item.description)) {
     throw new Error("Every work package needs a title and description.");
   }
+  if (packages.some((item) => item.ownedPaths.length === 0)) {
+    throw new Error("Every work package needs at least one explicit repository-relative owned path.");
+  }
   const byId = new Map(packages.map((item) => [item.id, item]));
   const visiting = new Set();
   const visited = new Set();
@@ -158,7 +225,7 @@ export function parseWorkPackages(text, repositoryPath = null) {
       const a = packages[left];
       const b = packages[right];
       const independent = !dependsOn(a, b.id, byId) && !dependsOn(b, a.id, byId);
-      const overlap = a.ownedPaths.find((entry) => b.ownedPaths.includes(entry));
+      const overlap = a.ownedPaths.find((entry) => b.ownedPaths.some((other) => ownedPathsOverlap(entry, other)));
       if (independent && overlap) throw new Error(`${a.id} and ${b.id} both own ${overlap} without a dependency.`);
     }
   }
@@ -169,13 +236,16 @@ function normalizeOwnedPath(value, repositoryPath) {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
   let normalized = raw.replaceAll("\\", "/");
-  if (path.isAbsolute(raw)) {
+  const pathApi = path.win32.isAbsolute(raw) ? path.win32 : path;
+  if (pathApi.isAbsolute(raw)) {
     if (!repositoryPath) throw new Error(`Owned path must be repository-relative: ${raw}`);
-    const repositoryRoot = path.resolve(repositoryPath);
-    const resolved = path.resolve(raw);
-    const relative = path.relative(repositoryRoot, resolved);
+    const repositoryApi = path.win32.isAbsolute(repositoryPath) ? path.win32 : path;
+    if (repositoryApi !== pathApi) throw new Error(`Owned path uses a different path style than the repository: ${raw}`);
+    const repositoryRoot = repositoryApi.resolve(repositoryPath);
+    const resolved = repositoryApi.resolve(raw);
+    const relative = repositoryApi.relative(repositoryRoot, resolved);
     if (!relative || relative === ".") throw new Error("A work package cannot own the repository root.");
-    if (relative.startsWith(`..${path.sep}`) || relative === ".." || path.isAbsolute(relative)) {
+    if (relative.startsWith(`..${repositoryApi.sep}`) || relative === ".." || repositoryApi.isAbsolute(relative)) {
       throw new Error(`Owned path is outside the selected repository: ${raw}`);
     }
     normalized = relative.replaceAll("\\", "/");
@@ -185,6 +255,24 @@ function normalizeOwnedPath(value, repositoryPath) {
     throw new Error(`Owned path must be a safe repository-relative path: ${raw}`);
   }
   return segments.join("/");
+}
+
+export function isOwnedFile(file, ownedPaths) {
+  const normalizedFile = canonicalOwnedPath(file);
+  return ownedPaths.some((ownedPath) => {
+    const normalizedOwned = canonicalOwnedPath(ownedPath);
+    return normalizedFile === normalizedOwned || normalizedFile.startsWith(`${normalizedOwned}/`);
+  });
+}
+
+function ownedPathsOverlap(left, right) {
+  const a = canonicalOwnedPath(left);
+  const b = canonicalOwnedPath(right);
+  return a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
+}
+
+function canonicalOwnedPath(value) {
+  return String(value ?? "").trim().replaceAll("\\", "/").replace(/^\.\//, "").replace(/\/+$/g, "").toLowerCase();
 }
 
 function dependsOn(item, targetId, byId, seen = new Set()) {

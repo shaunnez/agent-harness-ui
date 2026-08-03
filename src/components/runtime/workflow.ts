@@ -21,13 +21,9 @@ export const runtimeStageSkills: Record<StageId, string> = {
 
 export function isStageInvalidatedByRepair(task: RuntimeTask, stageId: StageId) {
   if (!["dev-review", "test", "final-review", "approval"].includes(stageId)) return false;
-  const repairPending =
-    task.status === "repair-required" ||
-    task.activeRunKind === "repair" ||
-    task.candidates?.at(-1)?.status === "repair_required";
   const hasPriorEvidence =
     task.completedStages.includes(stageId) || task.artifacts.some((artifact) => artifact.stage === stageId);
-  return Boolean(repairPending && hasPriorEvidence);
+  return Boolean(hasPriorEvidence && !isStageComplete(task, stageId));
 }
 
 export const runtimeStageAgents: Record<StageId, string> = {
@@ -47,17 +43,44 @@ export function isArtifactFresh(
   artifact: RuntimeArtifact,
   candidate: RuntimeTask["candidates"][number] | undefined,
 ) {
-  if (!artifact.candidateId || artifact.candidateRevision == null || !candidate) return true;
+  const candidateBound = ["dev-review", "test", "final-review", "approval"].includes(artifact.stage);
+  if (!artifact.candidateId || artifact.candidateRevision == null || !candidate) return !candidateBound;
   return artifact.candidateId === candidate.id && artifact.candidateRevision === candidate.revisionNumber;
+}
+
+export function isStageComplete(task: RuntimeTask, stageId: StageId) {
+  if (!["dev-review", "test", "final-review", "approval"].includes(stageId)) {
+    return task.completedStages.includes(stageId);
+  }
+  const candidate = task.candidates?.at(-1);
+  if (!candidate) return false;
+  if (stageId === "approval") {
+    return task.status === "completed" && candidate.status === "merged";
+  }
+  return task.artifacts.some(
+    (artifact) =>
+      artifact.stage === stageId &&
+      artifact.candidateId === candidate.id &&
+      artifact.candidateRevision === candidate.revisionNumber &&
+      artifact.gateResult?.candidateId === candidate.id &&
+      artifact.gateResult?.candidateRevision === candidate.revisionNumber &&
+      artifact.gateResult?.verdict === "PASS",
+  );
 }
 
 export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, artifact?: RuntimeArtifact) {
   const candidate = task.candidates?.at(-1);
   const packages = task.workPackages ?? [];
-  const focused = [...task.artifacts].reverse().find((item) => item.stage === "test" && item.focusedTest)?.focusedTest;
+  const focused = [...task.artifacts].reverse().find(
+    (item) =>
+      item.stage === "test" &&
+      item.focusedTest &&
+      item.candidateId === candidate?.id &&
+      item.candidateRevision === candidate?.revisionNumber,
+  )?.focusedTest;
   const completedPackages = packages.filter((item) => ["integrated", "ready_for_integration"].includes(item.status)).length;
   const stageLabel = workflowStages.find((stage) => stage.id === stageId)?.label ?? stageId;
-  const waiting = !artifact && !task.completedStages.includes(stageId);
+  const waiting = !artifact && !isStageComplete(task, stageId);
   const fallback = {
     kicker: `${stageLabel} \u00b7 ${stageId === task.currentStage ? "current execution" : "living artifact"}`,
     title: waiting ? `${stageLabel} is not ready yet` : (artifact?.name ?? stageLabel),
@@ -164,6 +187,7 @@ export function toTaskRunState(status: RuntimeTask["status"]): TaskRunState {
   if (status === "closed") return "closed";
   if (status === "queued") return "paused";
   if (status === "cancelled" || status === "blocked") return "blocked";
-  if (status === "running" || status === "failed" || status === "completed") return status;
+  if (status === "running" || status === "cancelling") return "running";
+  if (status === "failed" || status === "completed") return status;
   return "needs-input";
 }

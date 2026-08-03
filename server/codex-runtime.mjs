@@ -328,12 +328,14 @@ function conciseToolResult(value) {
   return `${typeof value} result (content not retained)`;
 }
 
-function runProcess(command, args, options = {}) {
+export function runProcess(command, args, options = {}) {
+  if (options.signal?.aborted) return Promise.reject(new Error("Codex run cancelled before launch."));
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: options.cwd,
       env: options.env ?? process.env,
       windowsHide: true,
+      detached: process.platform !== "win32",
       stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
     });
     let stdout = "";
@@ -341,6 +343,12 @@ function runProcess(command, args, options = {}) {
     let stderr = "";
     let pending = "";
     let settled = false;
+    let terminating = false;
+    let closeResult = null;
+    let resolveClose;
+    const closePromise = new Promise((resolveClosePromise) => {
+      resolveClose = resolveClosePromise;
+    });
 
     if (options.input !== undefined) child.stdin.end(options.input);
 
@@ -351,22 +359,35 @@ function runProcess(command, args, options = {}) {
       options.signal?.removeEventListener("abort", abort);
       callback(value);
     };
-    const abort = () => {
-      child.kill();
-      finish(reject, new Error("Codex run cancelled."));
+    const terminate = async (error) => {
+      if (settled || terminating) return;
+      terminating = true;
+      clearTimeout(timer);
+      await terminateProcessTree(child, false);
+      let closed = await waitForClose(closePromise, 2_000);
+      if (!closed) {
+        await terminateProcessTree(child, true);
+        closed = await waitForClose(closePromise, 3_000);
+      } else {
+        await terminateProcessTree(child, true);
+      }
+      finish(
+        reject,
+        closed ? error : new Error(`${error.message} The process tree did not close after forced termination.`),
+      );
     };
+    const abort = () => void terminate(new Error("Codex run cancelled."));
     const timer = setTimeout(() => {
-      child.kill();
-      finish(reject, new Error(`Codex run exceeded ${Math.round((options.timeoutMs ?? 0) / 1000)} seconds.`));
+      void terminate(new Error(`Codex run exceeded ${Math.round((options.timeoutMs ?? 0) / 1000)} seconds.`));
     }, options.timeoutMs ?? 240_000);
 
     options.signal?.addEventListener("abort", abort, { once: true });
+    if (options.signal?.aborted) abort();
     child.stdout.on("data", (chunk) => {
       const text = chunk.toString();
       stdoutBytes += Buffer.byteLength(chunk);
       if (stdoutBytes > STDOUT_BUDGET) {
-        child.kill();
-        finish(reject, new Error("Codex exceeded the stage evidence-output budget. Narrow the task and retry."));
+        void terminate(new Error("Codex exceeded the stage evidence-output budget. Narrow the task and retry."));
         return;
       }
       stdout = `${stdout}${text}`.slice(-STDOUT_LIMIT);
@@ -378,10 +399,49 @@ function runProcess(command, args, options = {}) {
     child.stderr.on("data", (chunk) => {
       stderr = `${stderr}${chunk.toString()}`.slice(-STDERR_LIMIT);
     });
-    child.on("error", (error) => finish(reject, error));
+    child.on("error", (error) => {
+      resolveClose?.(null);
+      if (!terminating) finish(reject, error);
+    });
     child.on("close", (code, signalName) => {
       if (pending.trim()) options.onStdoutLine?.(pending);
-      finish(resolve, { code: code ?? (signalName ? 1 : 0), signal: signalName, stdout, stderr });
+      closeResult = { code: code ?? (signalName ? 1 : 0), signal: signalName, stdout, stderr };
+      resolveClose?.(closeResult);
+      if (!terminating) finish(resolve, closeResult);
     });
   });
+}
+
+async function terminateProcessTree(child, force) {
+  if (!child.pid) return;
+  if (process.platform === "win32") {
+    await runTreeKill(["/pid", String(child.pid), "/T", ...(force ? ["/F"] : [])]);
+    return;
+  }
+  try {
+    process.kill(-child.pid, force ? "SIGKILL" : "SIGTERM");
+  } catch (error) {
+    if (error?.code !== "ESRCH") {
+      try {
+        child.kill(force ? "SIGKILL" : "SIGTERM");
+      } catch {
+        // The close wait below remains the authoritative termination check.
+      }
+    }
+  }
+}
+
+function runTreeKill(args) {
+  return new Promise((resolve) => {
+    const killer = spawn("taskkill.exe", args, { windowsHide: true, stdio: "ignore" });
+    killer.on("error", () => resolve());
+    killer.on("close", () => resolve());
+  });
+}
+
+async function waitForClose(closePromise, timeoutMs) {
+  return Promise.race([
+    closePromise.then(() => true),
+    new Promise((resolve) => setTimeout(() => resolve(false), timeoutMs)),
+  ]);
 }
