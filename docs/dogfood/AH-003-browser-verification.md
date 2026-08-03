@@ -123,7 +123,11 @@ if (!task) throw new Error("AH-003 task was not found in the disposable store.")
 const candidate = task.candidates?.at(-1);
 if (!candidate) throw new Error("The fixture needs an assembled candidate.");
 const downstream = new Set(["dev-review", "test", "final-review", "approval"]);
-const artifactFor = (stage) => task.artifacts?.find((item) => item.stage === stage);
+const artifactFor = (stage) => [...(task.artifacts ?? [])].reverse().find((item) =>
+  item.stage === stage &&
+  item.candidateId === candidate.id &&
+  item.candidateRevision === candidate.revisionNumber
+);
 
 if (mode === "missing-active-candidate") {
   task.candidates = [];

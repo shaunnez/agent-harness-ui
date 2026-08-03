@@ -215,8 +215,9 @@ function nextAction(task: RuntimeTask) {
   const rerunAction = getCandidateRerunAction(task);
   if (
     rerunAction &&
-    !retryAllowanceExhausted &&
-    ["ready-for-review", "ready-for-test", "ready-for-final-review"].includes(task.status)
+    (task.status === "awaiting-human-approval" ||
+      (!retryAllowanceExhausted &&
+        ["ready-for-review", "ready-for-test", "ready-for-final-review"].includes(task.status)))
   ) {
     return rerunAction;
   }
@@ -272,7 +273,16 @@ function nextAction(task: RuntimeTask) {
       title: "Run the holdout final review",
       detail: "This gate summarizes every retained artifact against the approved acceptance criteria.",
     };
-  if (task.status === "awaiting-human-approval")
+  if (task.status === "awaiting-human-approval") {
+    if (!task.candidateFreshness?.activeCandidate) {
+      return {
+        action: null,
+        label: "Candidate unavailable",
+        title: "Merge approval is unavailable",
+        detail:
+          "The server has no authoritative active candidate. Restore an assembled candidate before rerunning candidate-bound gates.",
+      };
+    }
     return {
       action: "approve-merge" as const,
       label: `Approve & merge ${task.candidates?.at(-1)?.id ?? "candidate"}`,
@@ -280,6 +290,7 @@ function nextAction(task: RuntimeTask) {
       detail:
         "The harness will merge only if the source branch is clean, unchanged, and can fast-forward to the reviewed commit.",
     };
+  }
   if (task.status === "completed")
     return {
       action: null,
@@ -325,9 +336,18 @@ function nextAction(task: RuntimeTask) {
 }
 
 export function getCandidateRerunAction(task: RuntimeTask) {
-  const stage = task.currentStage;
+  const approvalPrerequisites: StageId[] = ["dev-review", "test", "final-review"];
+  const stage =
+    task.currentStage === "approval"
+      ? approvalPrerequisites.find(
+          (candidateStage) => getCandidateStageFreshness(task, candidateStage)?.state !== "fresh",
+        )
+      : task.currentStage;
+  if (!stage || (task.currentStage === "approval" && !task.candidateFreshness?.activeCandidate)) {
+    return null;
+  }
   const freshness = getCandidateStageFreshness(task, stage);
-  if (freshness?.state !== "stale") return null;
+  if (freshness?.state === "fresh") return null;
   const actionByStage: Partial<Record<StageId, "review" | "test" | "final-review">> = {
     "dev-review": "review",
     test: "test",

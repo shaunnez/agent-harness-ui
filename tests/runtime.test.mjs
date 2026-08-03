@@ -1317,6 +1317,78 @@ test("renders missing pre-merge Approval evidence as awaiting approval rather th
   });
 });
 
+test("suppresses merge approval and reruns the first stale prerequisite gate", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const candidate = {
+      id: "C1",
+      revisionNumber: 2,
+      status: "awaiting_human_approval",
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/ah-999-c1",
+      revisions: [],
+    };
+    const gateArtifact = (stage, revision) => ({
+      id: `${stage}-artifact`,
+      stage,
+      kind: "markdown",
+      name: `${stage}.md`,
+      content: "PASS",
+      createdAt: "2026-08-01T12:00:00.000Z",
+      model: "gpt-5.6-sol",
+      usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+      candidateId: "C1",
+      candidateRevision: revision,
+      gateResult: { verdict: "PASS", candidateId: "C1", candidateRevision: revision, blockingReasons: [] },
+    });
+    const task = projectRuntimeTask(createTask({
+      status: "awaiting-human-approval",
+      currentStage: "approval",
+      attemptsByStage: { approval: 3 },
+      candidates: [candidate],
+      artifacts: [gateArtifact("dev-review", 1), gateArtifact("final-review", 2)],
+    }));
+
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task,
+      initialViewedStageId: "approval",
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onGrillAnswer: async () => {},
+      onFinishGrill: async () => {},
+    }));
+    assert.match(markup, /Rerun Dev review/);
+    assert.doesNotMatch(markup, /Approve &amp; merge/);
+  });
+});
+
+test("suppresses merge approval when the server projects no active candidate", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const task = projectRuntimeTask(createTask({
+      status: "awaiting-human-approval",
+      currentStage: "approval",
+      candidates: [],
+    }));
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task,
+      initialViewedStageId: "approval",
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onGrillAnswer: async () => {},
+      onFinishGrill: async () => {},
+    }));
+    assert.match(markup, /Merge approval is unavailable/);
+    assert.doesNotMatch(markup, /Approve &amp; merge/);
+  });
+});
+
 test("filters structured activity and renders test run and artifact drilldown", () => {
   return withWorkspace(async ({ RunActivity, filterRunActivity }) => {
     const runBase = {
