@@ -34,6 +34,7 @@ import {
   runEventMetadata,
   runKindFor,
 } from "./run-activity.mjs";
+import { projectRuntimeTask } from "./candidate-freshness.mjs";
 import {
   parseFocusedTestEvidence,
   parseGateEvidence,
@@ -324,11 +325,14 @@ export class TaskOrchestrator {
     if (task.status === "awaiting-human-approval") {
       const candidate = currentCandidate(task);
       if (candidate.status !== "awaiting_human_approval") throw new Error("The current candidate has not cleared every gate.");
+      assertCandidateGatesFresh(task);
       const targetRef = candidate.baseRef ?? (candidate.baseBranch && candidate.baseBranch !== "detached" ? `refs/heads/${candidate.baseBranch}` : null);
       if (!targetRef || !candidate.headRevision) throw new Error("The candidate does not have a mergeable target revision.");
       task = await this.#store.transition(id, (draft) => {
         const activeCandidate = currentCandidate(draft);
-        return draft.status === "awaiting-human-approval" && activeCandidate.status === "awaiting_human_approval";
+        return draft.status === "awaiting-human-approval" &&
+          activeCandidate.status === "awaiting_human_approval" &&
+          candidateGatesAreFresh(draft);
       }, (draft) => {
         const activeCandidate = currentCandidate(draft);
         draft.status = "merging";
@@ -399,7 +403,14 @@ export class TaskOrchestrator {
       const approvedAt = now();
       const approvalNote = draft.mergeIntent.note;
       draft.approvals ??= [];
-      const approval = { id: crypto.randomUUID(), stage: "approval", note: approvalNote, createdAt: approvedAt };
+      const approval = {
+        id: crypto.randomUUID(),
+        stage: "approval",
+        note: approvalNote,
+        createdAt: approvedAt,
+        candidateId: activeCandidate.id,
+        candidateRevision: activeCandidate.revisionNumber,
+      };
       draft.approvals.push(approval);
       activeCandidate.status = "merged";
       activeCandidate.updatedAt = approvedAt;
@@ -1153,6 +1164,24 @@ function currentCandidate(task) {
   const candidate = task.candidates?.at(-1);
   if (!candidate) throw new Error("This task does not have an integration candidate.");
   return candidate;
+}
+
+function candidateGatesAreFresh(task) {
+  const projection = projectRuntimeTask(task).candidateFreshness;
+  return ["dev-review", "test", "final-review"].every(
+    (stage) => projection?.stages?.[stage]?.state === "fresh",
+  );
+}
+
+function assertCandidateGatesFresh(task) {
+  const projection = projectRuntimeTask(task).candidateFreshness;
+  const staleStage = ["dev-review", "test", "final-review"].find(
+    (stage) => projection?.stages?.[stage]?.state !== "fresh",
+  );
+  if (staleStage) {
+    const reason = projection?.stages?.[staleStage]?.message ?? "The candidate gate is stale.";
+    throw new Error(`Cannot approve the candidate: ${staleStage} requires a rerun. ${reason}`);
+  }
 }
 
 function stageTimeoutMs(stageId, sandbox) {

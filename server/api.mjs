@@ -11,10 +11,11 @@ import {
 import { GitWorktreeManager } from "./git-worktree.mjs";
 import { assertHttpBoundary, corsHeaders } from "./http-security.mjs";
 import { normalizeModelId, POLICY_IDS, readCodexModelCatalog } from "./model-catalog.mjs";
+import { projectRuntimeTask, projectRuntimeTasks } from "./candidate-freshness.mjs";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
-const RUNTIME_SCHEMA_VERSION = 5;
+const RUNTIME_SCHEMA_VERSION = 6;
 const DIFF_CHAR_LIMIT = 300_000;
 const OUTPUT_LIMIT = 512 * 1024;
 
@@ -247,7 +248,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/tasks") {
-        send(response, 200, { tasks: await store.list() });
+        send(response, 200, { tasks: projectRuntimeTasks(await store.list()) });
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/evaluations/summary") {
@@ -307,14 +308,14 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
           }
           task = await store.update(task.id, (draft) => { draft.attachments = saved; });
         }
-        send(response, 201, { task });
+        send(response, 201, { task: projectRuntimeTask(task) });
         return;
       }
 
       const taskMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)$/);
       if (request.method === "GET" && taskMatch) {
         const task = await store.get(decodeURIComponent(taskMatch[1]));
-        send(response, task ? 200 : 404, task ? { task } : { error: "Task not found." });
+        send(response, task ? 200 : 404, task ? { task: projectRuntimeTask(task) } : { error: "Task not found." });
         return;
       }
 
@@ -347,7 +348,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
             detail: supersededBy ? `Superseded by ${supersededBy}${note ? ` - ${note}` : ""}` : note || "No further work is required.",
           });
         });
-        send(response, 200, { task: closed });
+        send(response, 200, { task: projectRuntimeTask(closed) });
         return;
       }
 
@@ -362,7 +363,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         const task = await store.update(id, (draft) => {
           draft.evaluation = normalizeEvaluationInput(input, draft.evaluation);
         });
-        send(response, 200, { task });
+        send(response, 200, { task: projectRuntimeTask(task) });
         return;
       }
 

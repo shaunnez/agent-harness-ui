@@ -21,6 +21,26 @@ export type RuntimeTaskStatus =
   | "completed"
   | "closed";
 
+export type RuntimeFreshnessState = "fresh" | "stale";
+export type RuntimeFreshnessReason =
+  | "matched-active-candidate"
+  | "not-candidate-bound"
+  | "missing-active-candidate"
+  | "missing-candidate-binding"
+  | "candidate-id-mismatch"
+  | "candidate-revision-mismatch"
+  | "missing-stage-evidence"
+  | "missing-gate-result"
+  | "missing-focused-test-evidence"
+  | "missing-run-summary"
+  | "gate-not-passed";
+
+export interface RuntimeFreshness {
+  state: RuntimeFreshnessState;
+  reason: RuntimeFreshnessReason;
+  message: string;
+}
+
 export interface RuntimeUsage {
   inputTokens: number;
   cachedInputTokens: number;
@@ -75,6 +95,7 @@ export interface RuntimeArtifact {
   candidateId?: string | null;
   candidateRevision?: number | null;
   workPackageId?: string | null;
+  freshness?: RuntimeFreshness;
   focusedTest?: RuntimeFocusedTestEvidence | null;
   gateResult?: {
     schemaVersion?: number;
@@ -92,6 +113,7 @@ export interface RuntimeArtifact {
       line: number | null;
       candidateId: string;
       candidateRevision: number;
+      freshness?: RuntimeFreshness;
     }>;
   } | null;
 }
@@ -119,6 +141,7 @@ export interface RuntimeFocusedTestRow {
   artifactReferences: RuntimeFocusedTestArtifactReference[];
   assertions: RuntimeFocusedTestAssertion[];
   failureDetails: string | null;
+  freshness?: RuntimeFreshness;
 }
 
 export interface RuntimeFocusedTestEvidence {
@@ -130,6 +153,7 @@ export interface RuntimeFocusedTestEvidence {
   completedAt?: string | null;
   durationMs: number | null;
   rows: RuntimeFocusedTestRow[];
+  freshness?: RuntimeFreshness;
 }
 
 export interface RuntimeDecision {
@@ -214,6 +238,8 @@ export interface RuntimeApproval {
   stage: StageId;
   note: string;
   createdAt: string;
+  candidateId?: string | null;
+  candidateRevision?: number | null;
 }
 
 export interface RuntimeCandidate {
@@ -231,6 +257,30 @@ export interface RuntimeCandidate {
   updatedAt: string;
   revisions: Array<{ number: number; headRevision: string; reason: string; createdAt: string }>;
   members?: Array<{ packageId: string; headRevision: string; order: number }>;
+}
+
+export type RuntimeCandidateGateStage = Extract<StageId, "dev-review" | "test" | "final-review" | "approval">;
+
+export interface RuntimeCandidateStageFreshness extends RuntimeFreshness {
+  artifactId: string | null;
+  runId: string | null;
+}
+
+export interface RuntimeCurrentFocusedTest {
+  artifactId: string;
+  runId: string | null;
+  evidence: RuntimeFocusedTestEvidence;
+  freshness: RuntimeFreshness;
+}
+
+export interface RuntimeCandidateFreshness {
+  activeCandidate: {
+    id: string;
+    revisionNumber: number;
+    headRevision: string | null;
+  } | null;
+  stages: Record<RuntimeCandidateGateStage, RuntimeCandidateStageFreshness>;
+  currentFocusedTest: RuntimeCurrentFocusedTest | null;
 }
 
 export interface RuntimeTask {
@@ -284,6 +334,7 @@ export interface RuntimeTask {
   approvals: RuntimeApproval[];
   workPackages: RuntimeWorkPackage[];
   candidates: RuntimeCandidate[];
+  candidateFreshness?: RuntimeCandidateFreshness;
   runs?: RuntimeRun[];
   worktreeInventory?: RuntimeWorktreeInventoryRow[];
   events: RuntimeEvent[];

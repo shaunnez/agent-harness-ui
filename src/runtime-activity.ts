@@ -1,4 +1,4 @@
-import type { RuntimeUsage, StageId } from "./domain";
+import type { RuntimeFreshness, RuntimeUsage, StageId } from "./domain";
 
 export type RuntimeRunStatus = "running" | "completed" | "failed" | "cancelled" | "interrupted";
 
@@ -19,6 +19,7 @@ export interface RuntimeRunTestSummary {
   durationMs: number | null;
   rowCount: number;
   failedRowIds: string[];
+  freshness?: RuntimeFreshness;
 }
 
 export interface RuntimeRun {
@@ -50,9 +51,11 @@ export interface RuntimeRun {
     candidateRevision: number;
     evaluatedAt: string;
     blockingReasons: string[];
+    freshness?: RuntimeFreshness;
   } | null;
   error: string | null;
   source: "codex-jsonl" | "artifact-migration";
+  freshness?: RuntimeFreshness;
 }
 
 export interface RuntimeEvent {
