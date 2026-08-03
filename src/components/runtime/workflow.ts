@@ -98,7 +98,15 @@ export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, arti
   ).length;
   const stageLabel = workflowStages.find((stage) => stage.id === stageId)?.label ?? stageId;
   const waiting = !artifact && !isStageComplete(task, stageId);
-  const stale = stageFreshness?.state === "stale";
+  const awaitingApproval =
+    stageId === "approval" &&
+    task.status === "awaiting-human-approval" &&
+    candidate?.status === "awaiting_human_approval" &&
+    stageFreshness?.reason === "missing-stage-evidence" &&
+    (["dev-review", "test", "final-review"] as RuntimeCandidateGateStage[]).every(
+      (stage) => task.candidateFreshness?.stages[stage]?.state === "fresh",
+    );
+  const stale = stageFreshness?.state === "stale" && !awaitingApproval;
   const staleDetail = stale
     ? `${getFreshnessMessage(stageFreshness)} Superseded evidence remains inspectable for audit.`
     : null;

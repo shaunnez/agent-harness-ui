@@ -860,7 +860,7 @@ test("keeps focused test evidence attached to the persisted Markdown artifact in
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const markup = renderToStaticMarkup(
       React.createElement(RuntimeTaskWorkspace, {
-        task: createTask({
+        task: projectRuntimeTask(createTask({
           status: "ready-for-final-review",
           currentStage: "test",
           completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test"],
@@ -879,6 +879,7 @@ test("keeps focused test evidence attached to the persisted Markdown artifact in
           artifacts: [
             {
               id: "artifact-1",
+              runId: "run-1",
               stage: "test",
               kind: "markdown",
               name: "test-c1-r2.md",
@@ -916,9 +917,18 @@ test("keeps focused test evidence attached to the persisted Markdown artifact in
                   },
                 ],
               },
+              gateResult: { verdict: "PASS", candidateId: "C1", candidateRevision: 2, blockingReasons: [] },
             },
           ],
-        }),
+          runs: [{
+            id: "run-1",
+            stage: "test",
+            status: "completed",
+            candidateId: "C1",
+            candidateRevision: 2,
+            test: { candidateId: "C1", candidateRevision: 2, status: "passed", command: "npm.cmd run test:runtime", rowCount: 1, failedRowIds: [] },
+          }],
+        })),
         onBack: async () => {},
         onRun: async () => {},
         onCancel: async () => {},
@@ -1010,17 +1020,17 @@ test("renders a projected stale reason with a visible rerun-required state and g
         id: "stale-test",
         stage: "test",
         kind: "markdown",
-        name: "test-c9-r2.md",
+        name: "test-c1-r1.md",
         content: "PASS",
         createdAt: "2026-08-01T12:00:00.000Z",
         model: "gpt-5.6-sol",
         usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
-        candidateId: "C9",
-        candidateRevision: 2,
-        gateResult: { verdict: "PASS", candidateId: "C9", candidateRevision: 2, blockingReasons: [] },
+        candidateId: "C1",
+        candidateRevision: 1,
+        gateResult: { verdict: "PASS", candidateId: "C1", candidateRevision: 1, blockingReasons: [] },
       }],
     }));
-    assert.equal(projectedTask.candidateFreshness.stages.test.reason, "candidate-id-mismatch");
+    assert.equal(projectedTask.candidateFreshness.stages.test.reason, "candidate-revision-mismatch");
     const markup = renderToStaticMarkup(
       React.createElement(RuntimeTaskWorkspace, {
         task: projectedTask,
@@ -1035,7 +1045,7 @@ test("renders a projected stale reason with a visible rerun-required state and g
     );
     assert.match(markup, /Stale after repair/);
     assert.match(markup, /rerun required/);
-    assert.match(markup, /Run focused tests/);
+    assert.match(markup, /Rerun Test/);
     assert.doesNotMatch(markup, /Current evidence/);
   });
 });
@@ -1214,9 +1224,96 @@ test("renders a truthful completion summary for historical merges without an app
     );
 
     assert.match(markup, /Candidate merged successfully/);
-    assert.match(markup, /C1 revision 3 merged/);
+    assert.match(markup, /C1 r3/);
     assert.match(markup, /Human approval gate/);
     assert.doesNotMatch(markup, /Human approval is not ready yet/);
+  });
+});
+
+test("renders missing pre-merge Approval evidence as awaiting approval rather than requiring rerun", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const candidate = {
+      id: "C1",
+      revisionNumber: 1,
+      status: "awaiting_human_approval",
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/ah-999-c1",
+      revisions: [],
+    };
+    const usage = { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 };
+    const gateResult = { verdict: "PASS", candidateId: "C1", candidateRevision: 1, blockingReasons: [] };
+    const gateArtifact = (stage) => ({
+      id: `${stage}-artifact`,
+      stage,
+      kind: "markdown",
+      name: `${stage}.md`,
+      content: "PASS",
+      createdAt: "2026-08-01T12:00:00.000Z",
+      model: "gpt-5.6-sol",
+      usage,
+      candidateId: "C1",
+      candidateRevision: 1,
+      gateResult,
+    });
+    const task = projectRuntimeTask(createTask({
+      status: "awaiting-human-approval",
+      currentStage: "approval",
+      completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review"],
+      candidates: [candidate],
+      artifacts: [
+        gateArtifact("dev-review"),
+        {
+          ...gateArtifact("test"),
+          runId: "test-run",
+          focusedTest: {
+            candidateId: "C1",
+            candidateRevision: 1,
+            command: "npm run test:runtime",
+            status: "passed",
+            durationMs: 100,
+            rows: [{
+              id: "runtime",
+              candidateId: "C1",
+              candidateRevision: 1,
+              command: "npm run test:runtime",
+              status: "passed",
+              durationMs: 100,
+              title: "runtime.test.mjs",
+              artifactReferences: [],
+              assertions: [],
+              failureDetails: null,
+            }],
+          },
+        },
+        gateArtifact("final-review"),
+      ],
+      runs: [{
+        id: "test-run",
+        stage: "test",
+        status: "completed",
+        candidateId: "C1",
+        candidateRevision: 1,
+        test: { candidateId: "C1", candidateRevision: 1, status: "passed", command: "npm run test:runtime", rowCount: 1, failedRowIds: [] },
+      }],
+    }));
+    assert.equal(task.candidateFreshness.stages.approval.reason, "missing-stage-evidence");
+
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task,
+      initialViewedStageId: "approval",
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onGrillAnswer: async () => {},
+      onFinishGrill: async () => {},
+    }));
+    assert.match(markup, /C1 r1 awaits approval/);
+    assert.match(markup, /Approve &amp; merge C1/);
+    assert.doesNotMatch(markup, /Human approval requires rerun/);
   });
 });
 

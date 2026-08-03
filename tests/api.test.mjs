@@ -797,7 +797,7 @@ test("projects candidate freshness independently for persisted artifacts, gates,
   assert.equal(runs["missing-run-binding"].freshness.reason, CANDIDATE_FRESHNESS_REASONS.MISSING_CANDIDATE_BINDING);
   assert.equal(runs["test-run"].test.freshness.reason, CANDIDATE_FRESHNESS_REASONS.MISSING_CANDIDATE_BINDING);
   assert.equal(runs["id-mismatch-run"].freshness.reason, CANDIDATE_FRESHNESS_REASONS.CANDIDATE_ID_MISMATCH);
-  assert.equal(projected.candidateFreshness.stages.test.reason, CANDIDATE_FRESHNESS_REASONS.CANDIDATE_ID_MISMATCH);
+  assert.equal(projected.candidateFreshness.stages.test.reason, CANDIDATE_FRESHNESS_REASONS.MISSING_CANDIDATE_BINDING);
   assert.equal(projected.candidateFreshness.currentFocusedTest, null, "a stale focused-test row cannot become current evidence");
   assert.deepEqual(projected.completedStages, [], "stale candidate stages cannot remain complete");
 });
@@ -851,6 +851,67 @@ test("selects only the exact active candidate focused-Test summary and rows", ()
   assert.equal(projected.candidateFreshness.currentFocusedTest.runId, "active-run");
   assert.equal(projected.candidateFreshness.currentFocusedTest.evidence.rows[0].id, "active-candidate");
   assert.equal(projected.candidateFreshness.currentFocusedTest.freshness.state, "fresh");
+});
+
+test("fails Test freshness closed when its persisted run summary is absent", () => {
+  const focusedTest = {
+    candidateId: "C1",
+    candidateRevision: 1,
+    command: "npm run test:runtime",
+    status: "passed",
+    durationMs: 100,
+    rows: [{
+      id: "runtime",
+      candidateId: "C1",
+      candidateRevision: 1,
+      command: "npm run test:runtime",
+      status: "passed",
+      durationMs: 100,
+      title: "runtime.test.mjs",
+      artifactReferences: [],
+      assertions: [],
+      failureDetails: null,
+    }],
+  };
+  const exactRun = {
+    id: "test-run",
+    stage: "test",
+    status: "completed",
+    candidateId: "C1",
+    candidateRevision: 1,
+    gateResult: null,
+  };
+
+  for (const fixture of [
+    { name: "missing runId", runId: undefined, runs: [] },
+    { name: "dangling runId", runId: "missing-run", runs: [] },
+    { name: "missing run.test summary", runId: "test-run", runs: [exactRun] },
+  ]) {
+    const projected = projectRuntimeTask({
+      candidates: [{ id: "C1", revisionNumber: 1, headRevision: "b".repeat(40) }],
+      completedStages: ["test"],
+      artifacts: [{
+        id: `test-${fixture.name}`,
+        runId: fixture.runId,
+        stage: "test",
+        name: "test.md",
+        kind: "markdown",
+        content: "PASS",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        model: "gpt-5.6-sol",
+        usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+        candidateId: "C1",
+        candidateRevision: 1,
+        focusedTest,
+        gateResult: { verdict: "PASS", candidateId: "C1", candidateRevision: 1, blockingReasons: [] },
+      }],
+      runs: fixture.runs,
+    });
+
+    assert.equal(projected.candidateFreshness.stages.test.reason, CANDIDATE_FRESHNESS_REASONS.MISSING_RUN_SUMMARY, fixture.name);
+    assert.equal(projected.candidateFreshness.currentFocusedTest, null, fixture.name);
+    assert.equal(projected.completedStages.includes("test"), false, fixture.name);
+  }
 });
 
 test("projects all candidate-bound stages stale when no active candidate exists", () => {

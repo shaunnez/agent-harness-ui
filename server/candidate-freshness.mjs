@@ -147,7 +147,24 @@ function projectStageFreshness(stage, artifacts, runs, activeCandidate) {
     );
   }
 
+  const run = artifact.runId ? runs.find((item) => item.id === artifact.runId) ?? null : null;
   if (stage === "test") {
+    if (!run) {
+      return stageFreshness(
+        stale(CANDIDATE_FRESHNESS_REASONS.MISSING_RUN_SUMMARY, "The Test artifact does not resolve to a persisted run summary; rerun Test."),
+        artifact,
+        null,
+      );
+    }
+    if (run.freshness.state === "stale") return stageFreshness(run.freshness, artifact, run);
+    if (!run.test) {
+      return stageFreshness(
+        stale(CANDIDATE_FRESHNESS_REASONS.MISSING_RUN_SUMMARY, "The Test run has no persisted candidate summary; rerun Test."),
+        artifact,
+        run,
+      );
+    }
+    if (run.test.freshness.state === "stale") return stageFreshness(run.test.freshness, artifact, run);
     if (!artifact.focusedTest) {
       return stageFreshness(
         stale(CANDIDATE_FRESHNESS_REASONS.MISSING_FOCUSED_TEST, "The Test artifact has no focused-Test evidence; rerun Test."),
@@ -162,19 +179,8 @@ function projectStageFreshness(stage, artifacts, runs, activeCandidate) {
     if (staleRow) return stageFreshness(staleRow.freshness, artifact, null);
   }
 
-  const run = artifact.runId ? runs.find((item) => item.id === artifact.runId) ?? null : null;
   if (run) {
     if (run.freshness.state === "stale") return stageFreshness(run.freshness, artifact, run);
-    if (stage === "test") {
-      if (!run.test) {
-        return stageFreshness(
-          stale(CANDIDATE_FRESHNESS_REASONS.MISSING_RUN_SUMMARY, "The Test run has no persisted candidate summary; rerun Test."),
-          artifact,
-          run,
-        );
-      }
-      if (run.test.freshness.state === "stale") return stageFreshness(run.test.freshness, artifact, run);
-    }
   }
   return stageFreshness(freshnessForBinding(artifact, activeCandidate, true), artifact, run);
 }
@@ -184,8 +190,9 @@ function selectCurrentFocusedTest(artifacts, runs, activeCandidate) {
     if (item.stage !== "test" || item.freshness.state !== "fresh" || !item.focusedTest) return false;
     if (item.focusedTest.freshness.state !== "fresh") return false;
     if (item.focusedTest.rows.some((row) => row.freshness.state !== "fresh")) return false;
-    const run = item.runId ? runs.find((candidate) => candidate.id === item.runId) : null;
-    return !run || (run.freshness.state === "fresh" && run.test?.freshness.state === "fresh");
+    if (!item.runId) return false;
+    const run = runs.find((candidate) => candidate.id === item.runId) ?? null;
+    return Boolean(run && run.freshness.state === "fresh" && run.test?.freshness.state === "fresh");
   });
   if (!artifact) return null;
   return {

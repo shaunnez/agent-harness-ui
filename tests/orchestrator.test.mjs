@@ -743,6 +743,113 @@ test("repair increments the candidate revision and invalidates every downstream 
   }
 });
 
+test("rejects merge authorization when Test has no authoritative persisted run summary", async () => {
+  for (const fixture of [
+    { name: "missing runId", runId: undefined, runs: [] },
+    { name: "dangling runId", runId: "missing-run", runs: [] },
+    {
+      name: "missing run.test summary",
+      runId: "test-run",
+      runs: [{ id: "test-run", stage: "test", status: "completed", candidateId: "C1", candidateRevision: 1 }],
+    },
+  ]) {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-missing-test-run-"));
+    try {
+      const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+      await store.init();
+      const task = await store.create({
+        title: `Reject merge with ${fixture.name}`,
+        description: "Merge authorization must fail closed without complete Test run evidence.",
+        repositoryPath: directory,
+        workflow: "implement",
+        priority: "high",
+      });
+      const candidate = {
+        id: "C1",
+        revisionNumber: 1,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        baseRef: "refs/heads/main",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/missing-test-run",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "awaiting_human_approval",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        updatedAt: "2026-08-01T12:00:00.000Z",
+        revisions: [{ number: 1, headRevision: "b".repeat(40), reason: "assembly", createdAt: "2026-08-01T12:00:00.000Z" }],
+      };
+      const usage = { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 };
+      const gateResult = { verdict: "PASS", candidateId: "C1", candidateRevision: 1, blockingReasons: [] };
+      const artifact = (stage) => ({
+        id: `${stage}-artifact`,
+        stage,
+        name: `${stage}.md`,
+        kind: "markdown",
+        content: "PASS",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        model: "gpt-5.6-sol",
+        usage,
+        candidateId: "C1",
+        candidateRevision: 1,
+        gateResult,
+      });
+      await store.update(task.id, (draft) => {
+        draft.status = "awaiting-human-approval";
+        draft.currentStage = "approval";
+        draft.completedStages = ["dev-review", "test", "final-review"];
+        draft.candidates = [candidate];
+        draft.artifacts = [
+          artifact("dev-review"),
+          {
+            ...artifact("test"),
+            runId: fixture.runId,
+            focusedTest: {
+              candidateId: "C1",
+              candidateRevision: 1,
+              command: "npm run test:runtime",
+              status: "passed",
+              durationMs: 100,
+              rows: [{
+                id: "runtime",
+                candidateId: "C1",
+                candidateRevision: 1,
+                command: "npm run test:runtime",
+                status: "passed",
+                durationMs: 100,
+                title: "runtime.test.mjs",
+                artifactReferences: [],
+                assertions: [],
+                failureDetails: null,
+              }],
+            },
+          },
+          artifact("final-review"),
+        ];
+        draft.runs = fixture.runs;
+      });
+      let mergeCalled = false;
+      const orchestrator = new TaskOrchestrator(store, {
+        worktreeManager: {
+          async merge() {
+            mergeCalled = true;
+          },
+        },
+      });
+
+      await assert.rejects(
+        () => orchestrator.approveMerge(task.id),
+        /test requires a rerun.*persisted.*summary/i,
+        fixture.name,
+      );
+      assert.equal(mergeCalled, false, fixture.name);
+      assert.equal((await store.get(task.id)).status, "awaiting-human-approval", fixture.name);
+    } finally {
+      await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    }
+  }
+});
+
 test("reserves a run exactly once across concurrent start requests", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-start-race-"));
   try {
