@@ -91,7 +91,7 @@ export function ChangelogModal({
 
   return (
     <div className="changelog-overlay" role="dialog" aria-modal="true" aria-label="Repository changelog">
-      <button type="button" className="changelog-overlay__backdrop" aria-label="Close changelog" onClick={onClose} />
+      <button type="button" className="changelog-overlay__backdrop" aria-label="Dismiss changelog" onClick={onClose} />
       <section className="changelog-modal">
         <header>
           <span><GitCommit size={20} /><span><small>Live git history · read-only</small><strong>Repository changelog</strong></span></span>

@@ -166,7 +166,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 function typeReference(name: string, label: string, description: string): TypeReference {
-  return { label, file: "src/domain.ts", description, code: sourceBlock(domainRuntimeSource, `export interface ${name}`, "\n}\n") };
+  return { label, file: "src/domain/runtime.ts", description, code: sourceBlock(domainRuntimeSource, `export interface ${name}`, "\n}\n") };
 }
 
 function stageDefinition(stageId: StageId): SourceReference {
