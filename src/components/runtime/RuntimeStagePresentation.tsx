@@ -39,6 +39,8 @@ export function RuntimeStagePresentation({
   onOpenArtifact,
   onOpenCandidateDiff,
   candidateDiffLoading,
+  selectedTestResultId,
+  onSelectTestResult,
 }: {
   task: RuntimeTask;
   viewedStageId: StageId;
@@ -50,6 +52,8 @@ export function RuntimeStagePresentation({
   onOpenArtifact: (artifact: RuntimeArtifact) => void;
   onOpenCandidateDiff: () => void;
   candidateDiffLoading: boolean;
+  selectedTestResultId: string | null;
+  onSelectTestResult: (resultId: string | null) => void;
 }) {
   const stageArtifacts = task.artifacts.filter((item) => item.stage === viewedStageId);
   const focusedArtifact = [...stageArtifacts].reverse().find((item) => item.focusedTest);
@@ -184,7 +188,12 @@ export function RuntimeStagePresentation({
       return (
         <div className="runtime-stage-stack">
           {focusedArtifact?.focusedTest ? (
-            <RuntimeFocusedTestEvidencePanel evidence={focusedArtifact.focusedTest} candidate={candidate} />
+            <RuntimeFocusedTestEvidencePanel
+              evidence={focusedArtifact.focusedTest}
+              candidate={candidate}
+              selectedResultId={selectedTestResultId}
+              onSelectResult={onSelectTestResult}
+            />
           ) : null}
           {artifactCard ?? empty}
         </div>

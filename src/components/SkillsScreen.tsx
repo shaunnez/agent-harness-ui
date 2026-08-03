@@ -1,6 +1,5 @@
 import { ArrowLeft, ArrowRight, CaretDown, Code } from "@phosphor-icons/react";
-import { useState } from "react";
-import domainRuntimeSource from "../domain.ts?raw";
+import domainRuntimeSource from "../domain/runtime.ts?raw";
 import type { RuntimeTask, StageId } from "../domain";
 import apiRuntimeSource from "../../server/api.mjs?raw";
 import promptRuntimeSource from "../../server/prompts.mjs?raw";
@@ -81,15 +80,22 @@ function contractFor(stageId: StageId): SkillContract {
   return base;
 }
 
-export function SkillsScreen({ runtimeTasks }: { runtimeTasks: RuntimeTask[] }) {
-  const [selectedId, setSelectedId] = useState<StageId | null>(null);
+export function SkillsScreen({
+  runtimeTasks,
+  selectedId,
+  onSelect,
+}: {
+  runtimeTasks: RuntimeTask[];
+  selectedId: StageId | null;
+  onSelect: (stageId: StageId | null) => void;
+}) {
   const selected = workflowStages.find((stage) => stage.id === selectedId);
   if (selected) {
     const usage = stageUsage(runtimeTasks, selected.id);
     const contract = contractFor(selected.id);
     return (
       <div className="page library-page detail-page skill-detail-page">
-        <button type="button" className="detail-back" onClick={() => setSelectedId(null)}><ArrowLeft size={16} /> Back to Skills</button>
+        <button type="button" className="detail-back" onClick={() => onSelect(null)}><ArrowLeft size={16} /> Back to Skills</button>
         <SectionHeader eyebrow="Runtime capability" title={selected.skill} description={`${selected.label} is a workflow-stage contract executed by ${selected.provider === "harness" ? "the deterministic harness" : "the configured Codex runtime"}.`} />
         <div className="detail-metrics detail-metrics--truthful">
           <Metric label="Recorded artifacts" value={String(usage.runs)} />
@@ -123,7 +129,7 @@ export function SkillsScreen({ runtimeTasks }: { runtimeTasks: RuntimeTask[] }) 
         {workflowStages.map((stage) => {
           const usage = stageUsage(runtimeTasks, stage.id);
           return (
-            <button className="skill-row" type="button" key={stage.id} onClick={() => setSelectedId(stage.id)}>
+            <button className="skill-row" type="button" key={stage.id} onClick={() => onSelect(stage.id)}>
               <Code size={20} />
               <span><strong>{stage.skill}</strong><small>{stage.label} · {stage.provider === "harness" ? "deterministic harness" : "Codex prompt"}</small></span>
               <span className="skill-metric"><strong>{usage.runs}</strong><small>recorded artifacts</small></span>

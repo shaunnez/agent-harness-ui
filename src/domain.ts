@@ -80,9 +80,9 @@ export interface NewTaskDraft {
 }
 
 
-import type { RuntimeTask, RuntimeUsage } from "./domain/runtime";
+import type { RuntimeTask, RuntimeUsage } from "./domain/runtime.ts";
 
-export * from "./domain/runtime";
+export * from "./domain/runtime.ts";
 
 export const EXAMPLE_TITLE = "Add task priority";
 export const EXAMPLE_DESCRIPTION =

@@ -8,7 +8,7 @@ import {
   ShieldCheck,
   X,
 } from "@phosphor-icons/react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getCandidateDiff, type CandidateDiffResponse } from "../api";
 import {
   formatApproximateCost,
@@ -20,6 +20,7 @@ import {
 } from "../domain";
 import { MarkdownContent } from "./MarkdownContent";
 import { RunActivity } from "./RunActivity";
+import type { TaskRouteDetail } from "../routes";
 import { CandidateDiffErrorViewer, CandidateDiffViewer } from "./CandidateDiffViewer";
 import { Button, PriorityBadge, StateBadge } from "./Primitives";
 import { ApprovalHistorySection, getApprovalHistory } from "./runtimeApprovalHistory.js";
@@ -64,6 +65,8 @@ export function RuntimeTaskWorkspace({
   initialViewedStageId,
   initialSelectedWorktreeId,
   onViewedStageChange,
+  routeDetail,
+  onRouteDetailChange,
 }: RuntimeTaskWorkspaceProps) {
   const currentIndex = Math.max(
     0,
@@ -75,9 +78,11 @@ export function RuntimeTaskWorkspace({
   const [candidateDiff, setCandidateDiff] = useState<CandidateDiffResponse | null>(null);
   const [candidateDiffError, setCandidateDiffError] = useState<string | null>(null);
   const [candidateDiffLoading, setCandidateDiffLoading] = useState(false);
+  const [candidateDiffTarget, setCandidateDiffTarget] = useState<RuntimeTaskWorkspaceProps["task"]["candidates"][number] | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const artifactReturnFocusRef = useRef<HTMLElement | null>(null);
   const candidateDiffReturnFocusRef = useRef<HTMLElement | null>(null);
+  const candidateDiffRequestRef = useRef(0);
   const viewedIndex = Math.max(
     0,
     workflowStages.findIndex((stage) => stage.id === viewedStageId),
@@ -107,8 +112,8 @@ export function RuntimeTaskWorkspace({
   };
 
   useEffect(() => {
-    if (initialViewedStageId) setViewedStageId(initialViewedStageId);
-  }, [initialViewedStageId]);
+    setViewedStageId(initialViewedStageId ?? task.currentStage);
+  }, [initialViewedStageId, task.currentStage]);
 
   const selectViewedStage = (stageId: StageId) => {
     setViewedStageId(stageId);
@@ -117,34 +122,98 @@ export function RuntimeTaskWorkspace({
 
   const openRuntimeArtifact = (artifact: RuntimeArtifact) => {
     artifactReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (onRouteDetailChange) {
+      onRouteDetailChange({ kind: "artifact", artifactId: artifact.id }, artifact.stage);
+      return;
+    }
     setOpenArtifact(artifact);
   };
 
   const closeRuntimeArtifact = () => {
     setOpenArtifact(null);
+    onRouteDetailChange?.(null);
     window.requestAnimationFrame(() => artifactReturnFocusRef.current?.focus());
   };
 
   const closeCandidateDiff = () => {
+    candidateDiffRequestRef.current += 1;
     setCandidateDiff(null);
     setCandidateDiffError(null);
+    setCandidateDiffTarget(null);
+    onRouteDetailChange?.(null);
     window.requestAnimationFrame(() => candidateDiffReturnFocusRef.current?.focus());
   };
 
-  const openCandidateDiff = async () => {
-    if (!candidate?.headRevision) return;
+  const openCandidateDiff = useCallback(async (target = candidate) => {
+    if (!target?.headRevision) return;
+    const requestId = candidateDiffRequestRef.current + 1;
+    candidateDiffRequestRef.current = requestId;
     candidateDiffReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setCandidateDiffLoading(true);
     setCandidateDiffError(null);
+    setCandidateDiffTarget(target);
     try {
-      setCandidateDiff(await getCandidateDiff(task.id, candidate.id, candidate.headRevision));
+      const diff = await getCandidateDiff(task.id, target.id, target.headRevision);
+      if (candidateDiffRequestRef.current === requestId) setCandidateDiff(diff);
     } catch (error) {
-      setCandidateDiff(null);
-      setCandidateDiffError(error instanceof Error ? error.message : "The exact candidate diff could not be loaded.");
+      if (candidateDiffRequestRef.current === requestId) {
+        setCandidateDiff(null);
+        setCandidateDiffError(error instanceof Error ? error.message : "The exact candidate diff could not be loaded.");
+      }
     } finally {
-      setCandidateDiffLoading(false);
+      if (candidateDiffRequestRef.current === requestId) setCandidateDiffLoading(false);
     }
+  }, [candidate, task.id]);
+
+  const requestCandidateDiff = (target = candidate) => {
+    if (!target) return;
+    candidateDiffReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (onRouteDetailChange) {
+      onRouteDetailChange(
+        { kind: "candidate-diff", candidateId: target.id, revision: target.revisionNumber },
+        viewedStageId,
+      );
+      return;
+    }
+    void openCandidateDiff(target);
   };
+
+  useEffect(() => {
+    if (!routeDetail) {
+      setOpenArtifact(null);
+      return;
+    }
+    if (routeDetail.kind === "artifact") {
+      const artifact = task.artifacts.find((item) => item.id === routeDetail.artifactId);
+      if (artifact) setOpenArtifact(artifact);
+      else onRouteDetailChange?.(null);
+      return;
+    }
+    setOpenArtifact(null);
+    if (routeDetail.kind !== "candidate-diff") return;
+    const target = task.candidates.find(
+      (item) => item.id === routeDetail.candidateId && item.revisionNumber === routeDetail.revision,
+    );
+    if (!target) {
+      onRouteDetailChange?.(null);
+      return;
+    }
+    const alreadyRequested =
+      candidateDiffTarget?.id === target.id &&
+      candidateDiffTarget.revisionNumber === target.revisionNumber &&
+      (candidateDiffLoading || candidateDiff != null || candidateDiffError != null);
+    if (!alreadyRequested) void openCandidateDiff(target);
+  }, [
+    candidateDiff,
+    candidateDiffError,
+    candidateDiffLoading,
+    candidateDiffTarget,
+    onRouteDetailChange,
+    openCandidateDiff,
+    routeDetail,
+    task.artifacts,
+    task.candidates,
+  ]);
 
   const rerun = async () => {
     setRunError(null);
@@ -313,8 +382,13 @@ export function RuntimeTaskWorkspace({
               viewedStageStopped={viewedStageStopped}
               onAnswer={onGrillAnswer}
               onOpenArtifact={openRuntimeArtifact}
-              onOpenCandidateDiff={() => void openCandidateDiff()}
+              onOpenCandidateDiff={requestCandidateDiff}
               candidateDiffLoading={candidateDiffLoading}
+              selectedTestResultId={routeDetail?.kind === "test-result" ? routeDetail.resultId : null}
+              onSelectTestResult={(resultId) => onRouteDetailChange?.(
+                resultId ? { kind: "test-result", resultId } satisfies TaskRouteDetail : null,
+                "test",
+              )}
             />
           </main>
 
@@ -419,7 +493,7 @@ export function RuntimeTaskWorkspace({
                   compact
                   icon={GitDiff}
                   disabled={!candidate.headRevision || candidateDiffLoading}
-                  onClick={() => void openCandidateDiff()}
+                  onClick={() => requestCandidateDiff()}
                 >
                   {candidateDiffLoading ? "Loading exact diff\u2026" : "Inspect exact diff"}
                 </Button>
@@ -490,21 +564,21 @@ export function RuntimeTaskWorkspace({
       {openArtifact ? (
         <RuntimeArtifactViewer artifact={openArtifact} onClose={closeRuntimeArtifact} />
       ) : null}
-      {candidateDiff && candidate ? (
+      {candidateDiff && candidateDiffTarget ? (
         <CandidateDiffViewer
           taskId={task.id}
-          candidateIdentity={`${candidate.id} r${candidate.revisionNumber}`}
+          candidateIdentity={`${candidateDiffTarget.id} r${candidateDiffTarget.revisionNumber}`}
           diff={candidateDiff}
           onClose={closeCandidateDiff}
         />
       ) : null}
-      {candidateDiffError && candidate ? (
+      {candidateDiffError && candidateDiffTarget ? (
         <CandidateDiffErrorViewer
           taskId={task.id}
-          candidateIdentity={`${candidate.id} r${candidate.revisionNumber}`}
+          candidateIdentity={`${candidateDiffTarget.id} r${candidateDiffTarget.revisionNumber}`}
           error={candidateDiffError}
           onClose={closeCandidateDiff}
-          onRetry={() => void openCandidateDiff()}
+          onRetry={() => void openCandidateDiff(candidateDiffTarget)}
         />
       ) : null}
     </div>

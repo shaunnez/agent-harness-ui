@@ -1,4 +1,5 @@
 import type { RuntimeTask, StageId } from "../../domain";
+import type { TaskRouteDetail } from "../../routes";
 
 export type RuntimeWorkflowAction =
   | "approve-spec"
@@ -26,4 +27,6 @@ export interface RuntimeTaskWorkspaceProps {
   initialViewedStageId?: StageId;
   initialSelectedWorktreeId?: string | null;
   onViewedStageChange?: (stageId: StageId) => void;
+  routeDetail?: TaskRouteDetail;
+  onRouteDetailChange?: (detail: TaskRouteDetail | null, stageId?: StageId) => void;
 }

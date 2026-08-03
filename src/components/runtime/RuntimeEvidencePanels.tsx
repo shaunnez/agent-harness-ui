@@ -7,7 +7,7 @@ import {
   FileCode,
   WarningCircle,
 } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   formatApproximateCost,
   formatCacheRate,
@@ -203,14 +203,28 @@ export function RuntimeContextDisclosure({ artifact }: { artifact: RuntimeArtifa
 export function RuntimeFocusedTestEvidencePanel({
   evidence,
   candidate,
+  selectedResultId,
+  onSelectResult,
 }: {
   evidence: RuntimeFocusedTestEvidence;
   candidate: RuntimeTask["candidates"][number] | undefined;
+  selectedResultId: string | null;
+  onSelectResult: (resultId: string | null) => void;
 }) {
-  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
-  const selectedRow = evidence.rows.find((row) => row.id === selectedRowId) ?? null;
+  const selectedRow = evidence.rows.find((row) => row.id === selectedResultId) ?? null;
   const passed = evidence.rows.filter((row) => row.status === "passed").length;
   const failed = evidence.rows.length - passed;
+  useEffect(() => {
+    if (selectedResultId && !selectedRow) onSelectResult(null);
+  }, [onSelectResult, selectedResultId, selectedRow]);
+  useEffect(() => {
+    if (!selectedRow) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onSelectResult(null);
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onSelectResult, selectedRow]);
   return (
     <section className="runtime-focused-test" aria-label="Focused test evidence">
       <header>
@@ -224,7 +238,7 @@ export function RuntimeFocusedTestEvidencePanel({
       </header>
       {selectedRow ? (
         <div className="runtime-focused-test__detail">
-          <button type="button" className="detail-back" onClick={() => setSelectedRowId(null)}>
+          <button type="button" className="detail-back" onClick={() => onSelectResult(null)}>
             <ArrowLeft size={15} /> Back to test list
           </button>
           <div className="runtime-focused-test__detail-title">
@@ -252,14 +266,14 @@ export function RuntimeFocusedTestEvidencePanel({
             ))}
           </div>
           {selectedRow.failureDetails ? <p className="runtime-test-failure">{selectedRow.failureDetails}</p> : null}
-          <Button tone="ghost" compact icon={ArrowLeft} onClick={() => setSelectedRowId(null)}>
+          <Button tone="ghost" compact icon={ArrowLeft} onClick={() => onSelectResult(null)}>
             Back to all tests
           </Button>
         </div>
       ) : (
         <div className="runtime-focused-test__rows">
           {evidence.rows.map((row) => (
-            <button type="button" key={row.id} onClick={() => setSelectedRowId(row.id)}>
+            <button type="button" key={row.id} onClick={() => onSelectResult(row.id)}>
               {row.status === "passed" ? <CheckCircle size={18} weight="fill" /> : <WarningCircle size={18} weight="fill" />}
               <span>
                 <strong>{row.title}</strong>
