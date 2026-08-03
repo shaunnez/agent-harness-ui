@@ -1,4 +1,24 @@
-export const TASK_STORE_SCHEMA_VERSION = 2;
+export const TASK_STORE_SCHEMA_VERSION = 3;
+
+export const CANDIDATE_GATE_STAGES = Object.freeze(["dev-review", "test", "final-review"]);
+
+export const RUNTIME_FRESHNESS_REASONS = Object.freeze({
+  fresh: "The latest terminal run is authoritative for the active candidate.",
+  missing_binding: "Candidate evidence is missing explicit candidateId and candidateRevision fields.",
+  malformed_binding: "Candidate evidence has malformed explicit candidate identity fields.",
+  mixed_evidence: "Candidate evidence contains more than one candidate identity.",
+  candidate_mismatch: "Candidate evidence does not match the active candidate.",
+  revision_change: "Candidate evidence belongs to a previous candidate revision.",
+  missing_authoritative_summary: "No authoritative persisted terminal run summary is available for this gate.",
+  contradictory_evidence: "Candidate evidence contains contradictory result fields.",
+  repair_required: "The terminal run requires candidate repair before this gate can be fresh.",
+  failed_execution: "The terminal run failed, so its evidence is not fresh.",
+  timeout: "The terminal run timed out, so its evidence requires rerun.",
+  run_in_progress: "The run is still in progress; authoritative evidence is not available yet.",
+  superseded_attempt: "A later terminal attempt superseded this historical evidence.",
+});
+
+const TERMINAL_STATUSES = new Set(["completed", "failed", "cancelled", "interrupted", "timed-out", "timed_out", "timeout"]);
 
 export function migrateRunActivityState(state) {
   const incomingVersion = Number.isInteger(state.schemaVersion) ? state.schemaVersion : 1;
@@ -19,9 +39,34 @@ export function migrateRunActivityState(state) {
       changed = true;
     }
     if (incomingVersion < 2) changed = migrateArtifactRuns(task) || changed;
+    const before = JSON.stringify({ gateFreshness: task.gateFreshness, runs: task.runs.map((run) => run.freshness ?? null) });
+    refreshGateFreshness(task);
+    changed = before !== JSON.stringify({ gateFreshness: task.gateFreshness, runs: task.runs.map((run) => run.freshness ?? null) }) || changed;
   }
   state.schemaVersion = TASK_STORE_SCHEMA_VERSION;
   return changed;
+}
+
+/**
+ * Read only the schema-owned candidate identity fields. A candidate record's
+ * `id` and `revisionNumber` are intentionally not accepted here.
+ */
+export function readExplicitCandidateBinding(value) {
+  const object = value && typeof value === "object" ? value : {};
+  const hasCandidateId = Object.prototype.hasOwnProperty.call(object, "candidateId");
+  const hasCandidateRevision = Object.prototype.hasOwnProperty.call(object, "candidateRevision");
+  if (!hasCandidateId && !hasCandidateRevision) return invalidBinding("missing_binding");
+  if (!hasCandidateId || !hasCandidateRevision) return invalidBinding("malformed_binding");
+  if (object.candidateId == null && object.candidateRevision == null) return invalidBinding("missing_binding");
+  if (typeof object.candidateId !== "string" || !object.candidateId.trim()) return invalidBinding("malformed_binding");
+  if (!Number.isInteger(object.candidateRevision) || object.candidateRevision < 1) return invalidBinding("malformed_binding");
+  return {
+    valid: true,
+    candidateId: object.candidateId.trim(),
+    candidateRevision: object.candidateRevision,
+    code: "fresh",
+    copy: RUNTIME_FRESHNESS_REASONS.fresh,
+  };
 }
 
 export function beginAgentRun(task, input) {
@@ -29,7 +74,7 @@ export function beginAgentRun(task, input) {
   task.activeRunIds ??= [];
   const startedAt = input.startedAt ?? new Date().toISOString();
   const relatedRuns = task.runs.filter((run) => sameRunScope(run, input));
-  const retryOfRunId = relatedRuns.at(-1)?.id ?? null;
+  const retryOfRunId = findRetrySource(task, input);
   const repairOfRunId = input.kind === "repair" ? findRepairSource(task, input) : null;
   const run = {
     id: input.id ?? crypto.randomUUID(),
@@ -55,11 +100,14 @@ export function beginAgentRun(task, input) {
     toolCalls: [],
     test: null,
     gateResult: null,
+    evidenceError: null,
+    freshness: null,
     error: null,
     source: "codex-jsonl",
   };
   task.runs.push(run);
   task.activeRunIds.push(run.id);
+  refreshGateFreshness(task);
   return run;
 }
 
@@ -78,6 +126,7 @@ export function completeAgentRun(task, runId, input) {
   run.error = input.error ? String(input.error).slice(0, 5_000) : null;
   run.toolCalls = mergeToolCalls(run.toolCalls, input.runtimeEvents);
   task.activeRunIds = (task.activeRunIds ?? []).filter((id) => id !== runId);
+  refreshGateFreshness(task);
   return run;
 }
 
@@ -85,9 +134,15 @@ export function attachRunArtifact(task, runId, artifact) {
   if (!runId) return null;
   const run = task.runs?.find((item) => item.id === runId);
   if (!run) return null;
-  run.artifactId = artifact.id;
+  run.artifactId = artifact.id ?? null;
   run.test = summarizeTest(artifact.focusedTest);
   run.gateResult = artifact.gateResult ? structuredClone(artifact.gateResult) : null;
+  run.evidenceError = artifact.evidenceError
+    ? structuredClone(artifact.evidenceError)
+    : attachmentEvidenceError(run, artifact);
+  // Attachment is only persistence. Freshness is recomputed from the complete
+  // terminal run summary and never inferred from the artifact itself.
+  refreshGateFreshness(task);
   return run;
 }
 
@@ -102,6 +157,7 @@ export function interruptActiveRuns(task, completedAt, error) {
     changed = true;
   }
   task.activeRunIds = [];
+  if (changed) refreshGateFreshness(task);
   return changed;
 }
 
@@ -122,6 +178,7 @@ export function runEventMetadata(run, overrides = {}) {
     apiEstimate: run.apiEstimate,
     retryOfRunId: run.retryOfRunId,
     repairOfRunId: run.repairOfRunId,
+    freshness: run.freshness ? structuredClone(run.freshness) : null,
     ...overrides,
   };
 }
@@ -134,6 +191,301 @@ export function runKindFor(stage, role, workPackageId = null) {
   if (stage === "test") return "test";
   if (stage === "final-review") return "final-review";
   return "agent";
+}
+
+export function resolveGateFreshness(task, stage) {
+  if (!CANDIDATE_GATE_STAGES.includes(stage)) return null;
+  const targetResult = activeCandidateBinding(task);
+  const target = targetResult.valid ? targetResult : null;
+  if (!target) {
+    return createFreshness(stage, null, null, null, targetResult.code, null);
+  }
+  const stageRuns = terminalStageRuns(task, stage);
+  const selected = latestRun(stageRuns);
+  if (!selected) {
+    return createFreshness(stage, target, null, null, "missing_authoritative_summary", null);
+  }
+  const artifact = findRunArtifact(task, selected);
+  return evaluateRunFreshness(selected, artifact, target, stage);
+}
+
+/** Recompute the authoritative task projection and every gate run's audit state. */
+export function refreshGateFreshness(task) {
+  const projection = {};
+  for (const stage of CANDIDATE_GATE_STAGES) {
+    const targetResult = activeCandidateBinding(task);
+    const target = targetResult.valid ? targetResult : null;
+    const selected = latestRun(terminalStageRuns(task, stage));
+    projection[stage] = resolveGateFreshness(task, stage);
+    for (const run of task.runs ?? []) {
+      if (run.stage !== stage) continue;
+      const artifact = findRunArtifact(task, run);
+      const runFreshness = evaluateRunFreshness(run, artifact, target, stage);
+      run.freshness = runFreshness;
+      if (selected?.id === run.id && runFreshness.fresh) continue;
+      if (selected?.id !== run.id && runFreshness.fresh) {
+        run.freshness = createFreshness(stage, target, run.id, run.artifactId ?? null, "superseded_attempt", null);
+      }
+    }
+  }
+  task.gateFreshness = projection;
+  const runsById = new Map((task.runs ?? []).map((run) => [run.id, run]));
+  for (const event of task.events ?? []) {
+    const run = event.runId ? runsById.get(event.runId) : null;
+    if (run?.freshness && CANDIDATE_GATE_STAGES.includes(run.stage)) {
+      event.freshness = structuredClone(run.freshness);
+    }
+  }
+  return projection;
+}
+
+function evaluateRunFreshness(run, artifact, target, stage) {
+  const sourceRunId = run?.id ?? null;
+  const sourceArtifactId = run?.artifactId ?? artifact?.id ?? null;
+  if (!target) {
+    return createFreshness(stage, null, sourceRunId, sourceArtifactId, "missing_binding", null);
+  }
+  if (!run || typeof run !== "object") {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "missing_authoritative_summary", null);
+  }
+
+  const runBinding = readExplicitCandidateBinding(run);
+  if (!runBinding.valid) return createFreshness(stage, target, sourceRunId, sourceArtifactId, runBinding.code, null);
+  const runIdentityReason = compareCandidateBinding(runBinding, target);
+  if (runIdentityReason) return createFreshness(stage, target, sourceRunId, sourceArtifactId, runIdentityReason, null);
+
+  if (artifact) {
+    const artifactBinding = readExplicitCandidateBinding(artifact);
+    if (!artifactBinding.valid) return createFreshness(stage, target, sourceRunId, sourceArtifactId, artifactBinding.code, null);
+    const artifactReason = compareCandidateBinding(artifactBinding, target);
+    if (artifactReason) return createFreshness(stage, target, sourceRunId, sourceArtifactId, artifactReason, null);
+    if (artifact.stage !== stage) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  }
+
+  if (run.evidenceError?.code && RUNTIME_FRESHNESS_REASONS[run.evidenceError.code]) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, run.evidenceError.code, null);
+  }
+  if (run.status === "running") return createFreshness(stage, target, sourceRunId, sourceArtifactId, "run_in_progress", null);
+  if (isTimeoutRun(run)) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "timeout", null);
+  if (run.status !== "completed") return createFreshness(stage, target, sourceRunId, sourceArtifactId, "failed_execution", null);
+
+  if (stage === "test") return evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId);
+  return evaluateGateRun(run, target, stage, sourceRunId, sourceArtifactId);
+}
+
+function evaluateGateRun(run, target, stage, sourceRunId, sourceArtifactId) {
+  const summary = run.gateResult;
+  if (!summary || typeof summary !== "object") {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "missing_authoritative_summary", null);
+  }
+  const summaryBinding = readExplicitCandidateBinding(summary);
+  if (!summaryBinding.valid) return createFreshness(stage, target, sourceRunId, sourceArtifactId, summaryBinding.code, null);
+  const identityReason = compareCandidateBinding(summaryBinding, target);
+  if (identityReason) return createFreshness(stage, target, sourceRunId, sourceArtifactId, identityReason, null);
+  if (summary.stage && summary.stage !== stage) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  if (!Array.isArray(summary.blockingReasons)) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  if (Array.isArray(summary.findings)) {
+    const findingBindings = summary.findings.map((finding) => ({
+      binding: readExplicitCandidateBinding(finding),
+      explicit: finding?.bindingExplicit !== false && hasExplicitCandidateFields(finding),
+    }));
+    if (findingBindings.some(({ binding }) => !binding.valid || !binding.explicit)) {
+      return createFreshness(stage, target, sourceRunId, sourceArtifactId, "missing_binding", null);
+    }
+    const findingIdentities = new Set(findingBindings.map(({ binding }) => `${binding.candidateId}:${binding.candidateRevision}`));
+    if (findingIdentities.size > 1) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "mixed_evidence", null);
+    if (findingBindings.some(({ binding }) => compareCandidateBinding(binding, target))) {
+      return createFreshness(stage, target, sourceRunId, sourceArtifactId, "candidate_mismatch", null);
+    }
+  }
+  const hasBlockingReasons = summary.blockingReasons.length > 0;
+  const blockingFindings = Array.isArray(summary.findings)
+    ? summary.findings.some((finding) => ["P0", "P1"].includes(finding?.severity))
+    : false;
+  if (summary.reportedVerdict === "PASS" && (summary.verdict !== "PASS" || hasBlockingReasons || blockingFindings)) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  }
+  if (summary.verdict !== "PASS" || hasBlockingReasons || blockingFindings) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "repair_required", null);
+  }
+  return createFreshness(stage, target, sourceRunId, sourceArtifactId, "fresh", null);
+}
+
+function evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId) {
+  const summary = run.test;
+  if (!summary || typeof summary !== "object") {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "missing_authoritative_summary", null);
+  }
+  if (summary.bindingExplicit === false) return createFreshness("test", target, sourceRunId, sourceArtifactId, "missing_binding", null);
+  const summaryBinding = readExplicitCandidateBinding(summary);
+  if (!summaryBinding.valid) return createFreshness("test", target, sourceRunId, sourceArtifactId, summaryBinding.code, null);
+  const identityReason = compareCandidateBinding(summaryBinding, target);
+  if (identityReason) return createFreshness("test", target, sourceRunId, sourceArtifactId, identityReason, null);
+  if (!Array.isArray(summary.rows) || !summary.rows.length || summary.rowCount !== summary.rows.length) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "missing_authoritative_summary", null);
+  }
+  const identities = new Set();
+  const rowBindings = [];
+  for (const row of summary.rows) {
+    const rowBinding = readExplicitCandidateBinding(row);
+    if (!rowBinding.valid) return createFreshness("test", target, sourceRunId, sourceArtifactId, rowBinding.code, null);
+    if (row.bindingExplicit === false) return createFreshness("test", target, sourceRunId, sourceArtifactId, "missing_binding", null);
+    identities.add(`${rowBinding.candidateId}:${rowBinding.candidateRevision}`);
+    rowBindings.push(rowBinding);
+    if (!["passed", "failed"].includes(row.status)) {
+      return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+    }
+  }
+  if (identities.size > 1) return createFreshness("test", target, sourceRunId, sourceArtifactId, "mixed_evidence", null);
+  const rowReason = compareCandidateBinding(rowBindings[0], target);
+  if (rowReason) return createFreshness("test", target, sourceRunId, sourceArtifactId, rowReason, null);
+  const failedRows = summary.rows.filter((row) => row.status === "failed");
+  const recordedFailedRows = Array.isArray(summary.failedRowIds) ? summary.failedRowIds : [];
+  if (summary.status === "passed" && (failedRows.length || recordedFailedRows.length)) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  }
+  if (summary.status !== "passed" || failedRows.length || recordedFailedRows.length) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "failed_execution", null);
+  }
+  if (run.gateResult && run.gateResult.verdict !== "PASS") {
+    const code = run.gateResult.blockingReasons?.some((reason) => /command failed|test/i.test(reason))
+      ? "failed_execution"
+      : "repair_required";
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, code, null);
+  }
+  const focusedTest = focusedTestFromRunSummary(summary, artifact?.focusedTest ?? null);
+  return createFreshness("test", target, sourceRunId, sourceArtifactId, "fresh", focusedTest);
+}
+
+function focusedTestFromRunSummary(summary, artifactEvidence) {
+  const rows = structuredClone(summary.rows);
+  return {
+    candidateId: summary.candidateId,
+    candidateRevision: summary.candidateRevision,
+    bindingExplicit: true,
+    command: summary.command,
+    status: summary.status,
+    startedAt: summary.startedAt ?? artifactEvidence?.startedAt ?? null,
+    completedAt: summary.completedAt ?? artifactEvidence?.completedAt ?? null,
+    durationMs: summary.durationMs ?? null,
+    rows,
+  };
+}
+
+function createFreshness(stage, target, sourceRunId, sourceArtifactId, code, focusedTest) {
+  const reasonCode = RUNTIME_FRESHNESS_REASONS[code] ? code : "malformed_binding";
+  const fresh = reasonCode === "fresh";
+  const reasonCopy = RUNTIME_FRESHNESS_REASONS[reasonCode];
+  const reason = { code: reasonCode, copy: reasonCopy };
+  return {
+    stage,
+    candidateId: target?.candidateId ?? null,
+    candidateRevision: target?.candidateRevision ?? null,
+    target: target ? { candidateId: target.candidateId, candidateRevision: target.candidateRevision } : null,
+    state: fresh ? "fresh" : "stale",
+    fresh,
+    sourceRunId,
+    sourceArtifactId,
+    reasonCode,
+    reasonCopy,
+    reason,
+    staleReasonCode: fresh ? null : reasonCode,
+    staleReasonCopy: fresh ? null : reasonCopy,
+    staleReason: fresh ? null : reason,
+    focusedTest: focusedTest ? structuredClone(focusedTest) : null,
+    focusedTestRows: focusedTest ? structuredClone(focusedTest.rows) : [],
+  };
+}
+
+function activeCandidateBinding(task) {
+  const candidate = task.candidates?.at(-1);
+  return readExplicitCandidateBinding(candidate ? {
+    candidateId: candidate.id,
+    candidateRevision: candidate.revisionNumber,
+  } : null);
+}
+
+function terminalStageRuns(task, stage) {
+  return (task.runs ?? [])
+    .map((run, index) => ({ run, index }))
+    .filter(({ run }) => run?.stage === stage && isTerminalRun(run));
+}
+
+function latestRun(entries) {
+  const latest = entries.reduce((current, entry) => {
+    if (!current || isLaterRun(entry, current)) return entry;
+    return current;
+  }, null);
+  return latest?.run ?? null;
+}
+
+function isLaterRun(left, right) {
+  const leftAttempt = validAttempt(left.run.attempt);
+  const rightAttempt = validAttempt(right.run.attempt);
+  if (leftAttempt != null && rightAttempt != null && leftAttempt !== rightAttempt) return leftAttempt > rightAttempt;
+  if (leftAttempt != null && rightAttempt == null) return true;
+  if (leftAttempt == null && rightAttempt != null) return false;
+  return left.index > right.index;
+}
+
+function validAttempt(value) {
+  return Number.isInteger(value) && value > 0 ? value : null;
+}
+
+function isTerminalRun(run) {
+  return run && run.status !== "running" && (TERMINAL_STATUSES.has(run.status) || run.completedAt != null || run.status == null);
+}
+
+function findRunArtifact(task, run) {
+  if (!run?.artifactId) return null;
+  return (task.artifacts ?? []).find((artifact) => artifact.id === run.artifactId) ?? null;
+}
+
+function attachmentEvidenceError(run, artifact) {
+  if (!CANDIDATE_GATE_STAGES.includes(run.stage)) return null;
+  const runBinding = readExplicitCandidateBinding(run);
+  if (!runBinding.valid) return reasonRecord(runBinding.code);
+  const artifactBinding = readExplicitCandidateBinding(artifact);
+  if (!artifactBinding.valid) return reasonRecord(artifactBinding.code);
+  const artifactReason = compareCandidateBinding(artifactBinding, runBinding);
+  if (artifactReason) return reasonRecord(artifactReason);
+  if (run.stage === "test" && artifact.focusedTest) {
+    if (artifact.focusedTest.bindingExplicit === false) return reasonRecord("missing_binding");
+    const summaryBinding = readExplicitCandidateBinding(artifact.focusedTest);
+    if (!summaryBinding.valid) return reasonRecord(summaryBinding.code);
+    const identities = new Set();
+    for (const row of artifact.focusedTest.rows ?? []) {
+      const rowBinding = readExplicitCandidateBinding(row);
+      if (!rowBinding.valid) return reasonRecord(rowBinding.code);
+      if (row.bindingExplicit === false) return reasonRecord("missing_binding");
+      identities.add(`${rowBinding.candidateId}:${rowBinding.candidateRevision}`);
+    }
+    if (identities.size > 1) return reasonRecord("mixed_evidence");
+  }
+  return null;
+}
+
+function reasonRecord(code) {
+  return { code, copy: RUNTIME_FRESHNESS_REASONS[code] ?? RUNTIME_FRESHNESS_REASONS.malformed_binding };
+}
+
+function compareCandidateBinding(binding, target) {
+  if (binding.candidateId !== target.candidateId) return "candidate_mismatch";
+  if (binding.candidateRevision !== target.candidateRevision) return "revision_change";
+  return null;
+}
+
+function invalidBinding(code) {
+  return { valid: false, candidateId: null, candidateRevision: null, code, copy: RUNTIME_FRESHNESS_REASONS[code] };
+}
+
+function hasExplicitCandidateFields(value) {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      Object.prototype.hasOwnProperty.call(value, "candidateId") &&
+      Object.prototype.hasOwnProperty.call(value, "candidateRevision"),
+  );
 }
 
 function migrateArtifactRuns(task) {
@@ -169,6 +521,8 @@ function migrateArtifactRuns(task) {
       toolCalls: [],
       test: summarizeTest(artifact.focusedTest),
       gateResult: artifact.gateResult ? structuredClone(artifact.gateResult) : null,
+      evidenceError: artifact.evidenceError ? structuredClone(artifact.evidenceError) : null,
+      freshness: null,
       error: null,
       source: "artifact-migration",
     };
@@ -184,7 +538,8 @@ function sameRunScope(run, input) {
   return run.stage === input.stage &&
     run.role === (input.role ?? null) &&
     run.workPackageId === (input.workPackageId ?? null) &&
-    run.candidateId === (input.candidateId ?? null);
+    run.candidateId === (input.candidateId ?? null) &&
+    run.candidateRevision === (input.candidateRevision ?? null);
 }
 
 function findRepairSource(task, input) {
@@ -194,16 +549,31 @@ function findRepairSource(task, input) {
   })?.id ?? null;
 }
 
+function findRetrySource(task, input) {
+  return [...(task.runs ?? [])].reverse().find((run) =>
+    run.stage === input.stage &&
+    run.role === (input.role ?? null) &&
+    run.workPackageId === (input.workPackageId ?? null) &&
+    run.candidateId === (input.candidateId ?? null),
+  )?.id ?? null;
+}
+
 function summarizeTest(evidence) {
-  if (!evidence) return null;
+  if (!evidence || typeof evidence !== "object") return null;
+  const rows = Array.isArray(evidence.rows) ? structuredClone(evidence.rows) : [];
   return {
-    candidateId: evidence.candidateId,
-    candidateRevision: evidence.candidateRevision,
-    status: evidence.status,
-    command: evidence.command,
+    candidateId: evidence.candidateId ?? null,
+    candidateRevision: evidence.candidateRevision ?? null,
+    command: evidence.command ?? "",
+    status: evidence.status ?? null,
+    startedAt: evidence.startedAt ?? null,
+    completedAt: evidence.completedAt ?? null,
     durationMs: evidence.durationMs ?? null,
-    rowCount: evidence.rows?.length ?? 0,
-    failedRowIds: (evidence.rows ?? []).filter((row) => row.status === "failed").map((row) => row.id),
+    rowCount: evidence.rowCount ?? rows.length,
+    failedRowIds: Array.isArray(evidence.failedRowIds)
+      ? [...evidence.failedRowIds]
+      : rows.filter((row) => row.status === "failed").map((row) => row.id),
+    rows,
   };
 }
 
@@ -243,4 +613,8 @@ function durationBetween(startedAt, completedAt) {
   if (!startedAt || !completedAt) return null;
   const duration = new Date(completedAt).getTime() - new Date(startedAt).getTime();
   return Number.isFinite(duration) ? Math.max(0, duration) : null;
+}
+
+function isTimeoutRun(run) {
+  return ["timed-out", "timed_out", "timeout"].includes(run.status) || /\btime(?:d)?\s*out\b|\btimeout\b/i.test(String(run.error ?? ""));
 }

@@ -31,6 +31,8 @@ import {
   attachRunArtifact,
   beginAgentRun,
   completeAgentRun,
+  RUNTIME_FRESHNESS_REASONS,
+  refreshGateFreshness,
   runEventMetadata,
   runKindFor,
 } from "./run-activity.mjs";
@@ -457,6 +459,7 @@ export class TaskOrchestrator {
           }[kind];
           if (candidateStatus) candidate.status = candidateStatus;
         }
+        refreshGateFreshness(draft);
         draft.events.push(activity(draft.currentStage, signal.aborted ? "Run cancelled" : "Stage failed", error.message, "danger"));
       });
     }
@@ -729,6 +732,7 @@ export class TaskOrchestrator {
       draft.status = "ready-for-review";
       draft.currentStage = "dev-review";
       draft.activeRunKind = null;
+      refreshGateFreshness(draft);
       draft.events.push(activity("implement", "Integration candidate ready", `${candidate.id} @ ${assembled.headRevision.slice(0, 8)} contains ${candidate.members.length} work packages and is ready for development review.`, "success", "artifact"));
     });
   }
@@ -821,22 +825,33 @@ export class TaskOrchestrator {
       }
     }
     throwIfAborted(signal);
-    const focusedTestEvidence = stageId === "test"
-      ? validateFocusedTestEvidence(parseFocusedTestEvidence(result.finalText), candidate)
-      : null;
-    const structuredGateEvidence = ["dev-review", "final-review"].includes(stageId)
-      ? parseGateEvidence(result.finalText, candidate, stageId)
-      : null;
-    const verdict = evaluationVerdict(stageId, result, focusedTestEvidence, structuredGateEvidence);
+    let focusedTestEvidence = null;
+    let structuredGateEvidence = null;
+    let evidenceError = null;
+    try {
+      focusedTestEvidence = stageId === "test"
+        ? validateFocusedTestEvidence(parseFocusedTestEvidence(result.finalText), candidate)
+        : null;
+      structuredGateEvidence = ["dev-review", "final-review"].includes(stageId)
+        ? parseGateEvidence(result.finalText, candidate, stageId)
+        : null;
+    } catch (error) {
+      evidenceError = structuredEvidenceError(error);
+    }
+    const verdict = evidenceError
+      ? "REPAIR"
+      : evaluationVerdict(stageId, result, focusedTestEvidence, structuredGateEvidence);
     const gateResult = {
       verdict,
       candidateId: candidate.id,
       candidateRevision: candidate.revisionNumber,
       schemaVersion: 1,
       stage: stageId,
+      reportedVerdict: structuredGateEvidence?.reportedVerdict ?? null,
       evaluatedAt: now(),
       findings: structuredGateEvidence?.findings ?? [],
       blockingReasons: [
+        ...(evidenceError ? [evidenceError.copy] : []),
         ...(stageId === "test" && result.runtimeEvents?.some((event) => event.commandFailed)
           ? ["A verification command failed."]
           : []),
@@ -852,6 +867,7 @@ export class TaskOrchestrator {
       complete: verdict === "PASS",
       focusedTestEvidence,
       gateResult,
+      evidenceError,
     });
     await this.#store.update(id, (draft) => {
       const activeCandidate = currentCandidate(draft);
@@ -941,6 +957,7 @@ export class TaskOrchestrator {
       draft.status = "ready-for-review";
       draft.currentStage = "dev-review";
       draft.activeRunKind = null;
+      refreshGateFreshness(draft);
       draft.events.push(activity("implement", "Repaired candidate ready", `${candidate.id} revision ${nextRevision} @ ${committed.headRevision.slice(0, 8)} must pass review again.`, "success", "artifact"));
     });
   }
@@ -1112,6 +1129,7 @@ export class TaskOrchestrator {
         candidateRevision: options.candidateRevision ?? null,
         workPackageId: options.workPackageId ?? null,
         focusedTest: options.focusedTestEvidence ?? null,
+        evidenceError: options.evidenceError ?? null,
         gateResult: options.gateResult ?? null,
         contextManifest: result.contextManifest ?? null,
       };
@@ -1168,6 +1186,20 @@ export function evaluationVerdict(stageId, result, focusedTestEvidence = null, s
   if (stageId === "test") return "PASS";
   if (["dev-review", "final-review"].includes(stageId)) return structuredGateEvidence?.verdict ?? "REPAIR";
   return "REPAIR";
+}
+
+function structuredEvidenceError(error) {
+  const message = String(error?.message ?? "Structured candidate evidence was invalid.");
+  const code = message.includes("missing_binding") || /missing explicit candidate identity|must include a candidateId|must include a positive candidateRevision/i.test(message)
+    ? "missing_binding"
+    : message.includes("malformed_binding") || /invalid|malformed|explicit candidate identity fields/i.test(message)
+      ? "malformed_binding"
+      : /different candidate|does not match the active candidate/i.test(message)
+        ? "candidate_mismatch"
+        : /contradict/i.test(message)
+          ? "contradictory_evidence"
+          : "malformed_binding";
+  return { code, copy: RUNTIME_FRESHNESS_REASONS[code] };
 }
 
 function canStartRun(task, kind) {

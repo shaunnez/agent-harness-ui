@@ -1,5 +1,5 @@
 import type { StageId } from "../domain";
-import type { RuntimeEvent, RuntimeRun } from "../runtime-activity";
+import type { RuntimeEvent, RuntimeGateFreshness, RuntimeGateStage, RuntimeRun } from "../runtime-activity";
 
 export type RuntimeTaskStatus =
   | "queued"
@@ -76,10 +76,12 @@ export interface RuntimeArtifact {
   candidateRevision?: number | null;
   workPackageId?: string | null;
   focusedTest?: RuntimeFocusedTestEvidence | null;
+  evidenceError?: { code: string; copy: string } | null;
   gateResult?: {
     schemaVersion?: number;
     stage?: StageId;
     verdict: "PASS" | "REPAIR";
+    reportedVerdict?: "PASS" | "REPAIR";
     candidateId: string;
     candidateRevision: number;
     evaluatedAt: string;
@@ -92,6 +94,7 @@ export interface RuntimeArtifact {
       line: number | null;
       candidateId: string;
       candidateRevision: number;
+      bindingExplicit?: boolean;
     }>;
   } | null;
 }
@@ -112,6 +115,7 @@ export interface RuntimeFocusedTestRow {
   id: string;
   candidateId: string;
   candidateRevision: number;
+  bindingExplicit?: boolean;
   command: string;
   status: "passed" | "failed";
   durationMs: number | null;
@@ -124,6 +128,7 @@ export interface RuntimeFocusedTestRow {
 export interface RuntimeFocusedTestEvidence {
   candidateId: string;
   candidateRevision: number;
+  bindingExplicit?: boolean;
   command: string;
   status: "passed" | "failed";
   startedAt?: string | null;
@@ -285,6 +290,7 @@ export interface RuntimeTask {
   workPackages: RuntimeWorkPackage[];
   candidates: RuntimeCandidate[];
   runs?: RuntimeRun[];
+  gateFreshness?: Record<RuntimeGateStage, RuntimeGateFreshness> | null;
   worktreeInventory?: RuntimeWorktreeInventoryRow[];
   events: RuntimeEvent[];
 }

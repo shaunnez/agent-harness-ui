@@ -1,4 +1,5 @@
 import path from "node:path";
+import { readExplicitCandidateBinding } from "./run-activity.mjs";
 
 function parseLabelledJson(text, label) {
   const expression = new RegExp(`<${label}>\\s*([\\s\\S]*?)\\s*</${label}>`, "i");
@@ -47,17 +48,16 @@ export function parseGrillQuestions(text) {
 
 export function parseFocusedTestEvidence(text) {
   const value = parseLabelledJson(text, "focused-test-evidence");
-  if (!value?.candidateId?.trim()) throw new Error("Focused test evidence must include a candidateId.");
-  if (!Number.isInteger(value.candidateRevision) || value.candidateRevision < 1) {
-    throw new Error("Focused test evidence must include a positive candidateRevision.");
-  }
+  const binding = readExplicitCandidateBinding(value);
+  if (!binding.valid) throw new Error(`Focused test evidence has ${binding.code}: ${binding.copy}`);
   if (!value.command?.trim()) throw new Error("Focused test evidence must include a command.");
   const rows = Array.isArray(value.rows) ? value.rows : [];
   if (!rows.length) throw new Error("Focused test evidence must include at least one row.");
   if (!["passed", "failed"].includes(value.status)) throw new Error("Focused test evidence status must be passed or failed.");
   const normalized = {
-    candidateId: value.candidateId.trim(),
-    candidateRevision: value.candidateRevision,
+    candidateId: binding.candidateId,
+    candidateRevision: binding.candidateRevision,
+    bindingExplicit: true,
     command: value.command.trim().slice(0, 2_000),
     status: value.status,
     startedAt: value.startedAt ?? null,
@@ -74,6 +74,10 @@ export function parseFocusedTestEvidence(text) {
 
 export function validateFocusedTestEvidence(evidence, candidate) {
   if (!candidate?.id || !Number.isInteger(candidate.revisionNumber)) throw new Error("Focused test evidence requires an active candidate identity.");
+  if (!Array.isArray(evidence?.rows)) throw new Error("Focused test evidence must include a rows array.");
+  if (evidence?.bindingExplicit !== true) throw new Error("Focused test evidence must use explicit candidate identity fields.");
+  const implicitRow = evidence.rows.find((row) => row?.bindingExplicit !== true);
+  if (implicitRow) throw new Error(`Focused test row ${implicitRow.id} must use explicit candidate identity fields.`);
   if (evidence.candidateId !== candidate.id || evidence.candidateRevision !== candidate.revisionNumber) {
     throw new Error("Focused test evidence does not match the active candidate revision.");
   }
@@ -101,8 +105,10 @@ export function parseGateEvidence(text, candidate, stageId) {
   if (!candidate?.id || !Number.isInteger(candidate.revisionNumber)) {
     throw new Error("Gate evidence requires an active candidate identity.");
   }
-  const candidateId = String(value?.candidateId ?? "").trim();
-  const candidateRevision = value?.candidateRevision;
+  const binding = readExplicitCandidateBinding(value);
+  if (!binding.valid) throw new Error(`Gate evidence has ${binding.code}: ${binding.copy}`);
+  const candidateId = binding.candidateId;
+  const candidateRevision = binding.candidateRevision;
   if (candidateId !== candidate.id || candidateRevision !== candidate.revisionNumber) {
     throw new Error("Gate evidence does not match the active candidate revision.");
   }
@@ -118,6 +124,9 @@ export function parseGateEvidence(text, candidate, stageId) {
     const title = String(finding?.title ?? "").trim().slice(0, 500);
     const detail = String(finding?.detail ?? "").trim().slice(0, 4_000);
     if (!title || !detail) throw new Error(`Gate finding ${index + 1} is missing its title or detail.`);
+    const findingExplicitBinding =
+      Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateId") &&
+      Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateRevision");
     const findingCandidateId = String(finding?.candidateId ?? candidateId).trim();
     const findingCandidateRevision = finding?.candidateRevision ?? candidateRevision;
     if (findingCandidateId !== candidate.id || findingCandidateRevision !== candidate.revisionNumber) {
@@ -131,10 +140,13 @@ export function parseGateEvidence(text, candidate, stageId) {
       line: Number.isInteger(finding?.line) && finding.line > 0 ? finding.line : null,
       candidateId,
       candidateRevision,
+      bindingExplicit: findingExplicitBinding,
     };
   });
   const blockingFindings = findings.filter((finding) => finding.severity === "P0" || finding.severity === "P1");
-  const verdict = value.verdict === "PASS" && blockingFindings.length === 0 ? "PASS" : "REPAIR";
+  const verdict = value.verdict === "PASS" && blockingFindings.length === 0 && findings.every((finding) => finding.bindingExplicit)
+    ? "PASS"
+    : "REPAIR";
   return {
     schemaVersion: 1,
     stage: stageId,
@@ -144,7 +156,12 @@ export function parseGateEvidence(text, candidate, stageId) {
     reportedVerdict: value.verdict,
     summary: String(value.summary ?? "").trim().slice(0, 4_000),
     findings,
-    blockingReasons: blockingFindings.map((finding) => `${finding.severity}: ${finding.title}`),
+    blockingReasons: [
+      ...blockingFindings.map((finding) => `${finding.severity}: ${finding.title}`),
+      ...findings
+        .filter((finding) => !finding.bindingExplicit)
+        .map((finding) => `Finding ${finding.title} is missing explicit candidate identity fields.`),
+    ],
   };
 }
 
@@ -283,6 +300,9 @@ function dependsOn(item, targetId, byId, seen = new Set()) {
 }
 
 function normalizeFocusedTestRow(row, rowIndex, parent) {
+  const explicitBinding =
+    Object.prototype.hasOwnProperty.call(row ?? {}, "candidateId") &&
+    Object.prototype.hasOwnProperty.call(row ?? {}, "candidateRevision");
   const candidateId = String(row?.candidateId ?? parent.candidateId ?? "").trim();
   const candidateRevision = Number.isInteger(row?.candidateRevision)
     ? row.candidateRevision
@@ -304,6 +324,7 @@ function normalizeFocusedTestRow(row, rowIndex, parent) {
     : [];
   return {
     id: String(row?.id ?? `row-${rowIndex + 1}`).trim() || `row-${rowIndex + 1}`,
+    bindingExplicit: explicitBinding,
     candidateId,
     candidateRevision,
     command: String(row?.command ?? parent.command ?? "").trim().slice(0, 2_000),
