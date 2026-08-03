@@ -26,7 +26,15 @@ import {
   RuntimeFocusedTestEvidencePanel,
   RuntimeWorkPackages,
 } from "./RuntimeEvidencePanels";
-import { isArtifactFresh, isStageComplete } from "./workflow";
+import {
+  candidateGateStages,
+  getRuntimeArtifactFreshness,
+  getRuntimeFocusedTest,
+  getRuntimeGateFreshness,
+  isCandidateBoundStage,
+  isArtifactFresh,
+  isStageComplete,
+} from "./workflow";
 
 export function RuntimeStagePresentation({
   task,
@@ -55,17 +63,13 @@ export function RuntimeStagePresentation({
   selectedTestResultId: string | null;
   onSelectTestResult: (resultId: string | null) => void;
 }) {
-  const stageArtifacts = task.artifacts.filter((item) => item.stage === viewedStageId);
-  const focusedArtifact = [...stageArtifacts].reverse().find(
-    (item) =>
-      item.focusedTest &&
-      item.candidateId === candidate?.id &&
-      item.candidateRevision === candidate?.revisionNumber,
-  );
+  const focusedTest = getRuntimeFocusedTest(task);
+  const artifactFreshness = artifact ? getRuntimeArtifactFreshness(task, artifact) : null;
   const artifactCard = artifact ? (
     <RuntimeArtifactCard
       artifact={artifact}
       candidate={candidate}
+      freshness={artifactFreshness}
       hideStructuredTestPayload={viewedStageId === "test"}
       onOpen={() => onOpenArtifact(artifact)}
     />
@@ -194,9 +198,9 @@ export function RuntimeStagePresentation({
     case "test":
       return (
         <div className="runtime-stage-stack">
-          {focusedArtifact?.focusedTest ? (
+          {focusedTest ? (
             <RuntimeFocusedTestEvidencePanel
-              evidence={focusedArtifact.focusedTest}
+              evidence={focusedTest}
               candidate={candidate}
               selectedResultId={selectedTestResultId}
               onSelectResult={onSelectTestResult}
@@ -263,17 +267,24 @@ function RuntimeFactGrid({ facts }: { facts: Array<[string, string]> }) {
 function RuntimeArtifactCard({
   artifact,
   candidate,
+  freshness,
   hideStructuredTestPayload = false,
   onOpen,
 }: {
   artifact: RuntimeArtifact;
   candidate: RuntimeTask["candidates"][number] | undefined;
+  freshness: ReturnType<typeof getRuntimeArtifactFreshness>;
   hideStructuredTestPayload?: boolean;
   onOpen: () => void;
 }) {
-  const fresh = isArtifactFresh(artifact, candidate);
+  const fresh = isCandidateBoundStage(artifact.stage)
+    ? Boolean(freshness?.fresh && isArtifactFresh(artifact, candidate, freshness))
+    : true;
   const focusedContent = hideStructuredTestPayload ? stripFocusedTestPayload(artifact.content) : artifact.content;
   const content = stripEmbeddedCandidatePatch(focusedContent);
+  const staleCopy = freshness?.fresh
+    ? "This retained handoff is superseded by the authoritative persisted run summary and remains available for audit."
+    : freshness?.reasonCopy ?? "No authoritative persisted terminal run summary is available for this candidate.";
   return (
     <article className={`runtime-artifact-card ${fresh ? "" : "runtime-artifact-card--stale"}`}>
       <header>
@@ -287,7 +298,9 @@ function RuntimeArtifactCard({
         </Button>
       </header>
       {!fresh ? (
-        <div className="runtime-stale-banner">A repair created a newer candidate revision. This handoff remains for audit only.</div>
+        <div className="runtime-stale-banner">
+          <strong>{freshness?.fresh ? "Superseded evidence" : "Rerun required"}</strong> {staleCopy} This handoff remains for audit only.
+        </div>
       ) : null}
       <MarkdownContent content={content.trim() || "The structured result list above is the authoritative test evidence."} />
       <footer>
@@ -348,22 +361,31 @@ function RuntimeCandidateDesk({
   compact?: boolean;
   approval?: boolean;
 }) {
-  const gateStages: StageId[] = ["dev-review", "test", "final-review"];
-  const freshGates = gateStages.filter((stage) => isStageComplete(task, stage));
+  const freshGates = candidateGateStages.filter((stage) => getRuntimeGateFreshness(task, stage)?.fresh);
+  const gateSummaries = candidateGateStages.map((stage) => {
+    const freshness = getRuntimeGateFreshness(task, stage);
+    return {
+      label: workflowStages.find((item) => item.id === stage)?.shortLabel ?? stage,
+      state: freshness?.fresh ? "Fresh" : "Rerun required",
+      reason: freshness?.fresh ? "Latest terminal run is authoritative for this candidate." : freshness?.reasonCopy ?? "No authoritative persisted terminal run summary is available for this candidate.",
+    };
+  });
   const facts: Array<[string, string]> = approval
     ? [
         ["Repository", task.repositoryPath],
+        ["Candidate revision", `${candidate.id} r${candidate.revisionNumber}`],
         ["Target branch", candidate.baseBranch],
         ["Merge method", "Fast-forward only"],
         ["Required gates", "Dev Review \u00b7 Test \u00b7 Final Review"],
-        ["Gate freshness", `${freshGates.length} of ${gateStages.length} candidate-bound gates fresh`],
+        ["Gate freshness", `${freshGates.length} of ${candidateGateStages.length} candidate-bound gates fresh`],
         ["Residual risks", task.artifacts.some((artifact) => artifact.stage === "final-review") ? "See retained Final Review" : "Not yet recorded"],
       ]
     : [
+        ["Candidate revision", `${candidate.id} r${candidate.revisionNumber}`],
         ["Target branch", candidate.baseBranch],
         ["Merge method", "Fast-forward only"],
         ["Qualified slices", candidate.members?.map((item) => item.packageId).join(" \u2192 ") || "Pending assembly"],
-        ["Gate freshness", `${freshGates.length} of ${gateStages.length} candidate-bound gates fresh`],
+        ["Gate freshness", `${freshGates.length} of ${candidateGateStages.length} candidate-bound gates fresh`],
         ["Conflict status", "Not recorded by the runtime"],
       ];
   return (
@@ -397,6 +419,17 @@ function RuntimeCandidateDesk({
           ))}
         </details>
       ) : null}
+      <section className="runtime-gate-summary" aria-label="Candidate-bound gate freshness">
+        {gateSummaries.map((gate) => (
+          <div key={gate.label}>
+            <span>
+              <strong>{gate.label}</strong>
+              <small>{gate.reason}</small>
+            </span>
+            <em className={gate.state === "Fresh" ? "text-green" : "text-amber"}>{gate.state}</em>
+          </div>
+        ))}
+      </section>
       <div className="runtime-candidate-desk__actions">
         <Button tone={approval ? "secondary" : "primary"} compact icon={GitDiff} disabled={!candidate.headRevision || diffLoading} onClick={onOpenDiff}>
           {diffLoading ? "Loading exact diff\u2026" : "Inspect exact candidate diff"}
@@ -434,16 +467,22 @@ function RuntimeFinalReviewSummary({
           const tokens = artifacts.reduce((total, item) => total + item.usage.totalTokens, 0);
           const cost = artifacts.reduce((total, item) => total + (item.usage.cost ?? 0), 0);
           const hasCost = artifacts.some((item) => item.usage.cost != null);
-          const stale = latest ? !isArtifactFresh(latest, candidate) : false;
+          const freshness = stage.id === "dev-review" || stage.id === "test" || stage.id === "final-review"
+            ? getRuntimeGateFreshness(task, stage.id)
+            : null;
+          const stale = freshness ? !freshness.fresh : false;
+          const state = freshness
+            ? freshness.fresh ? "Fresh" : "Rerun required"
+            : isStageComplete(task, stage.id) ? "Passed" : "Pending";
           return (
             <div className="runtime-final-review__row" key={stage.id}>
               <strong>{stage.shortLabel}</strong>
-              <span className={stale ? "text-amber" : isStageComplete(task, stage.id) ? "text-green" : ""}>
-                {stale ? "Stale" : isStageComplete(task, stage.id) ? "Passed" : "Pending"}
+              <span className={stale ? "text-amber" : state === "Fresh" || state === "Passed" ? "text-green" : ""}>
+                {state}
               </span>
               <span className="mono">{formatTokenCount(tokens)}</span>
               <span>{hasCost ? formatApproximateCost(cost) : "Unavailable"}</span>
-              <span>{latest?.name ?? "No artifact retained"}</span>
+              <span>{freshness && !freshness.fresh ? freshness.reasonCopy : latest?.name ?? "No artifact retained"}</span>
             </div>
           );
         })}

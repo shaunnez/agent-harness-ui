@@ -96,7 +96,7 @@ export function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
       </div>
       <div className="runtime-activity-list">
         {visibleEvents.length ? visibleEvents.map((event) => (
-            <div className={`runtime-activity-row runtime-activity-row--${event.tone}`} key={event.id}>
+            <div className={`runtime-activity-row runtime-activity-row--${runtimeEventPresentation(event).tone}`} key={event.id}>
               <time className="mono">
                 {new Date(event.at).toLocaleTimeString([], {
                   hour: "2-digit",
@@ -105,8 +105,8 @@ export function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
                 })}
               </time>
               <span>
-                <strong>{event.title}</strong>
-                <small>{event.detail}</small>
+                <strong>{runtimeEventPresentation(event).title}</strong>
+                <small>{runtimeEventPresentation(event).detail}</small>
               </span>
               <em>{workflowStages.find((stage) => stage.id === event.stage)?.shortLabel ?? event.stage}</em>
             </div>
@@ -116,6 +116,19 @@ export function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
       </div>
     </details>
   );
+}
+
+export function runtimeEventPresentation(event: RuntimeEvent) {
+  const freshness = event.freshness;
+  if (!freshness || freshness.fresh) {
+    return { tone: event.tone, title: event.title, detail: event.detail, stale: false };
+  }
+  return {
+    tone: "warning" as const,
+    title: `${event.title} · Rerun required`,
+    detail: `${event.detail} · ${freshness.reasonCopy}`,
+    stale: true,
+  };
 }
 
 export async function copyArtifactContent(
