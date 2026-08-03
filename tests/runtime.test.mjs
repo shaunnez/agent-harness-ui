@@ -194,13 +194,13 @@ test("records the exact prior artifacts and repository permission supplied to an
   assert.equal(artifactSource.truncated, false);
 });
 
-test("context manifests count the exact capped task text supplied to every prompt shape", () => {
+test("context manifests report description truncation independently across every prompt shape", () => {
   for (const length of [5_999, 6_000, 6_001, 10_000, 10_001]) {
     const marker = "__TASK_CONTEXT_SENTINEL__";
     const description = `${"x".repeat(length - marker.length)}${marker}`;
     const task = createTask({
       id: "AH-CONTEXT",
-      title: "T".repeat(320),
+      title: "T".repeat(299),
       description,
       workflow: "implement",
       priority: "high",
@@ -244,7 +244,7 @@ test("context manifests count the exact capped task text supplied to every promp
       const includesWorkflow = source.label.includes("workflow");
       const includesPriority = source.label.includes("priority");
       const expectedIncluded =
-        task.id.length + 300 + expectedDescriptionLength +
+        task.id.length + task.title.length + expectedDescriptionLength +
         (includesWorkflow ? task.workflow.length : 0) +
         (includesPriority ? task.priority.length : 0);
       const expectedOriginal =
@@ -254,11 +254,72 @@ test("context manifests count the exact capped task text supplied to every promp
       assert.equal(source.label, expectedLabels[index]);
       assert.equal(source.includedCharacters, expectedIncluded);
       assert.equal(source.originalCharacters, expectedOriginal);
-      assert.equal(source.truncated, length > 6_000 || task.title.length > 300);
+      assert.equal(source.truncated, length > 6_000);
       assert.equal(request.contextManifest.promptCharacters, request.prompt.length);
       assert.equal(request.prompt.includes(marker), length <= 6_000);
       assert.equal(request.prompt.includes("\nWorkflow:"), includesWorkflow);
       assert.equal(request.prompt.includes("\nPriority:"), includesPriority);
+    }
+  }
+});
+
+test("context manifests report title truncation at 299, 300, and 301 characters", () => {
+  for (const length of [299, 300, 301]) {
+    const marker = "__TASK_TITLE_SENTINEL__";
+    const title = `${"T".repeat(length - marker.length)}${marker}`;
+    const task = createTask({
+      id: "AH-TITLE-CONTEXT",
+      title,
+      description: "Short untruncated description.",
+      workflow: "implement",
+      priority: "high",
+      artifacts: [],
+      decisions: [],
+      attachments: [],
+    });
+    const candidate = {
+      id: "C1",
+      revisionNumber: 3,
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+    };
+    const workPackage = {
+      id: "S1",
+      title: "Context",
+      description: "Keep accounting exact.",
+      dependencies: [],
+      ownedPaths: ["server/prompts.mjs"],
+      verification: ["npm test"],
+    };
+    const requests = [
+      buildStageRequest(task, "triage"),
+      buildExecutionRequest(task, "dev-review", candidate),
+      buildWorkPackageRequest(task, workPackage, { baseRevision: candidate.baseRevision }),
+      buildScoutRequest(
+        task,
+        { name: "scout-code-path", focus: "Trace prompt construction.", reason: "Verify accounting." },
+        null,
+      ),
+    ];
+
+    for (const request of requests) {
+      const source = request.contextManifest.sources.find((item) => item.kind === "task");
+      const includesWorkflow = source.label.includes("workflow");
+      const includesPriority = source.label.includes("priority");
+      const expectedIncluded =
+        task.id.length + Math.min(length, 300) + task.description.length +
+        (includesWorkflow ? task.workflow.length : 0) +
+        (includesPriority ? task.priority.length : 0);
+      const expectedOriginal =
+        task.id.length + length + task.description.length +
+        (includesWorkflow ? task.workflow.length : 0) +
+        (includesPriority ? task.priority.length : 0);
+
+      assert.equal(source.includedCharacters, expectedIncluded);
+      assert.equal(source.originalCharacters, expectedOriginal);
+      assert.equal(source.truncated, length > 300);
+      assert.equal(request.prompt.includes(marker), length <= 300);
+      assert.equal(request.contextManifest.promptCharacters, request.prompt.length);
     }
   }
 });
