@@ -857,6 +857,33 @@ test("renders artifact copy affordance and normalizes clipboard outcomes", () =>
 
 test("keeps focused test evidence attached to the persisted Markdown artifact in the runtime workspace", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const focusedTest = {
+      candidateId: "C1",
+      candidateRevision: 2,
+      command: "npm.cmd run test:runtime",
+      status: "passed",
+      startedAt: "2026-08-01T12:00:00.000Z",
+      completedAt: "2026-08-01T12:00:00.900Z",
+      durationMs: 900,
+      rows: [
+        {
+          id: "row-1",
+          candidateId: "C1",
+          candidateRevision: 2,
+          command: "npm.cmd run test:runtime",
+          status: "passed",
+          durationMs: 900,
+          title: "runtime.test.mjs",
+          artifactReferences: [
+            { name: "Markdown test artifact", kind: "markdown", path: "artifacts/test.md" },
+          ],
+          assertions: [
+            { label: "workspace renders the test artifact", actual: "present", expected: "present" },
+          ],
+          failureDetails: null,
+        },
+      ],
+    };
     const markup = renderToStaticMarkup(
       React.createElement(RuntimeTaskWorkspace, {
         task: createTask({
@@ -888,35 +915,17 @@ test("keeps focused test evidence attached to the persisted Markdown artifact in
               usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
               candidateId: "C1",
               candidateRevision: 2,
-              focusedTest: {
-                candidateId: "C1",
-                candidateRevision: 2,
-                command: "npm.cmd run test:runtime",
-                status: "passed",
-                startedAt: "2026-08-01T12:00:00.000Z",
-                completedAt: "2026-08-01T12:00:00.900Z",
-                durationMs: 900,
-                rows: [
-                  {
-                    id: "row-1",
-                    candidateId: "C1",
-                    candidateRevision: 2,
-                    command: "npm.cmd run test:runtime",
-                    status: "passed",
-                    durationMs: 900,
-                    title: "runtime.test.mjs",
-                    artifactReferences: [
-                      { name: "Markdown test artifact", kind: "markdown", path: "artifacts/test.md" },
-                    ],
-                    assertions: [
-                      { label: "workspace renders the test artifact", actual: "present", expected: "present" },
-                    ],
-                    failureDetails: null,
-                  },
-                ],
-              },
+              focusedTest,
             },
           ],
+          gateFreshness: {
+            test: makeGateFreshness("test", {
+              fresh: true,
+              sourceRunId: "run-1",
+              sourceArtifactId: "artifact-1",
+              focusedTest,
+            }),
+          },
         }),
         onBack: async () => {},
         onRun: async () => {},
@@ -972,6 +981,25 @@ test("treats missing and mismatched candidate bindings as stale in navigation an
           gateArtifact("test", 2, false),
           gateArtifact("final-review", 2),
         ],
+        gateFreshness: {
+          "dev-review": makeGateFreshness("dev-review", {
+            sourceRunId: "run-dev-review",
+            sourceArtifactId: "dev-review-2",
+            reasonCode: "contradictory_evidence",
+            reasonCopy: "Candidate evidence contains contradictory result fields.",
+          }),
+          test: makeGateFreshness("test", {
+            sourceRunId: "run-test",
+            sourceArtifactId: "test-2",
+            reasonCode: "missing_binding",
+            reasonCopy: "Candidate evidence is missing explicit candidateId and candidateRevision fields.",
+          }),
+          "final-review": makeGateFreshness("final-review", {
+            fresh: true,
+            sourceRunId: "run-final-review",
+            sourceArtifactId: "final-review-2",
+          }),
+        },
       }),
       initialViewedStageId: "approval",
       onBack: async () => {},
@@ -1271,6 +1299,37 @@ function createTask(overrides = {}) {
     runs: [],
     events: [],
     ...overrides,
+  };
+}
+
+function makeGateFreshness(stage, {
+  fresh = false,
+  sourceRunId = null,
+  sourceArtifactId = null,
+  reasonCode = fresh ? "fresh" : "missing_authoritative_summary",
+  reasonCopy = fresh
+    ? "The latest terminal run is authoritative for the active candidate."
+    : "No authoritative persisted terminal run summary is available for this gate.",
+  focusedTest = null,
+} = {}) {
+  const reason = { code: reasonCode, copy: reasonCopy };
+  return {
+    stage,
+    candidateId: "C1",
+    candidateRevision: 2,
+    target: { candidateId: "C1", candidateRevision: 2 },
+    state: fresh ? "fresh" : "stale",
+    fresh,
+    sourceRunId,
+    sourceArtifactId,
+    reasonCode,
+    reasonCopy,
+    reason,
+    staleReasonCode: fresh ? null : reasonCode,
+    staleReasonCopy: fresh ? null : reasonCopy,
+    staleReason: fresh ? null : reason,
+    focusedTest,
+    focusedTestRows: focusedTest?.rows ?? [],
   };
 }
 

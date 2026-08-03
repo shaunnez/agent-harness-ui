@@ -201,9 +201,18 @@ export function resolveGateFreshness(task, stage) {
     return createFreshness(stage, null, null, null, targetResult.code, null);
   }
   const stageRuns = terminalStageRuns(task, stage);
-  const selected = latestRun(stageRuns);
+  const selected = latestRun(exactCandidateRuns(stageRuns, target));
   if (!selected) {
-    return createFreshness(stage, target, null, null, "missing_authoritative_summary", null);
+    const diagnosticRun = latestPersistedRun(stageRuns);
+    if (!diagnosticRun) {
+      return createFreshness(stage, target, null, null, "missing_authoritative_summary", null);
+    }
+    return evaluateRunFreshness(
+      diagnosticRun,
+      findRunArtifact(task, diagnosticRun),
+      target,
+      stage,
+    );
   }
   const artifact = findRunArtifact(task, selected);
   return evaluateRunFreshness(selected, artifact, target, stage);
@@ -215,7 +224,9 @@ export function refreshGateFreshness(task) {
   for (const stage of CANDIDATE_GATE_STAGES) {
     const targetResult = activeCandidateBinding(task);
     const target = targetResult.valid ? targetResult : null;
-    const selected = latestRun(terminalStageRuns(task, stage));
+    const selected = target
+      ? latestRun(exactCandidateRuns(terminalStageRuns(task, stage), target))
+      : null;
     projection[stage] = resolveGateFreshness(task, stage);
     for (const run of task.runs ?? []) {
       if (run.stage !== stage) continue;
@@ -289,11 +300,19 @@ function evaluateGateRun(run, target, stage, sourceRunId, sourceArtifactId) {
       binding: readExplicitCandidateBinding(finding),
       explicit: finding?.bindingExplicit !== false && hasExplicitCandidateFields(finding),
     }));
-    if (findingBindings.some(({ binding }) => !binding.valid || !binding.explicit)) {
+    const findingIdentities = new Set(
+      findingBindings
+        .filter(({ binding }) => binding.valid)
+        .map(({ binding }) => `${binding.candidateId}:${binding.candidateRevision}`),
+    );
+    if (findingIdentities.size > 1) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "mixed_evidence", null);
+    if (findingBindings.some(({ explicit }) => !explicit)) {
       return createFreshness(stage, target, sourceRunId, sourceArtifactId, "missing_binding", null);
     }
-    const findingIdentities = new Set(findingBindings.map(({ binding }) => `${binding.candidateId}:${binding.candidateRevision}`));
-    if (findingIdentities.size > 1) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "mixed_evidence", null);
+    const invalidFinding = findingBindings.find(({ binding }) => !binding.valid);
+    if (invalidFinding) {
+      return createFreshness(stage, target, sourceRunId, sourceArtifactId, invalidFinding.binding.code, null);
+    }
     if (findingBindings.some(({ binding }) => compareCandidateBinding(binding, target))) {
       return createFreshness(stage, target, sourceRunId, sourceArtifactId, "candidate_mismatch", null);
     }
@@ -411,12 +430,26 @@ function terminalStageRuns(task, stage) {
     .filter(({ run }) => run?.stage === stage && isTerminalRun(run));
 }
 
+function exactCandidateRuns(entries, target) {
+  return entries.filter(({ run }) => {
+    const binding = readExplicitCandidateBinding(run);
+    return binding.valid && compareCandidateBinding(binding, target) == null;
+  });
+}
+
 function latestRun(entries) {
   const latest = entries.reduce((current, entry) => {
     if (!current || isLaterRun(entry, current)) return entry;
     return current;
   }, null);
   return latest?.run ?? null;
+}
+
+function latestPersistedRun(entries) {
+  return entries.reduce((current, entry) => {
+    if (!current || entry.index > current.index) return entry;
+    return current;
+  }, null)?.run ?? null;
 }
 
 function isLaterRun(left, right) {

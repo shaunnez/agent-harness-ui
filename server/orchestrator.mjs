@@ -30,6 +30,7 @@ import {
 import {
   attachRunArtifact,
   beginAgentRun,
+  CANDIDATE_GATE_STAGES,
   completeAgentRun,
   RUNTIME_FRESHNESS_REASONS,
   refreshGateFreshness,
@@ -326,11 +327,14 @@ export class TaskOrchestrator {
     if (task.status === "awaiting-human-approval") {
       const candidate = currentCandidate(task);
       if (candidate.status !== "awaiting_human_approval") throw new Error("The current candidate has not cleared every gate.");
+      assertCandidateGatesFresh(task, candidate);
       const targetRef = candidate.baseRef ?? (candidate.baseBranch && candidate.baseBranch !== "detached" ? `refs/heads/${candidate.baseBranch}` : null);
       if (!targetRef || !candidate.headRevision) throw new Error("The candidate does not have a mergeable target revision.");
       task = await this.#store.transition(id, (draft) => {
         const activeCandidate = currentCandidate(draft);
-        return draft.status === "awaiting-human-approval" && activeCandidate.status === "awaiting_human_approval";
+        return draft.status === "awaiting-human-approval" &&
+          activeCandidate.status === "awaiting_human_approval" &&
+          candidateGateFailure(draft, activeCandidate) == null;
       }, (draft) => {
         const activeCandidate = currentCandidate(draft);
         draft.status = "merging";
@@ -353,6 +357,7 @@ export class TaskOrchestrator {
     }
 
     const candidate = currentCandidate(task);
+    assertCandidateGatesFresh(task, candidate);
     try {
       const mergeState = typeof this.#worktrees.mergeState === "function"
         ? await this.#worktrees.mergeState(candidate)
@@ -376,6 +381,7 @@ export class TaskOrchestrator {
     for (const task of tasks.filter((item) => item.status === "merging" && item.mergeIntent?.status === "pending")) {
       try {
         const candidate = currentCandidate(task);
+        assertCandidateGatesFresh(task, candidate);
         const mergeState = typeof this.#worktrees.mergeState === "function"
           ? await this.#worktrees.mergeState(candidate)
           : "pending";
@@ -871,13 +877,20 @@ export class TaskOrchestrator {
     });
     await this.#store.update(id, (draft) => {
       const activeCandidate = currentCandidate(draft);
+      const gateFailure = candidateGateFailure(draft, activeCandidate, [stageId]);
       activeCandidate.updatedAt = now();
       draft.activeRunKind = null;
-      if (verdict !== "PASS") {
+      if (gateFailure) {
         activeCandidate.status = "repair_required";
         draft.status = "repair-required";
         draft.currentStage = stageId;
-        draft.events.push(activity(stageId, "Candidate requires repair", `${activeCandidate.id} revision ${activeCandidate.revisionNumber} did not pass ${getStageMetadata(stageId).label}.`, "warning", "decision"));
+        draft.events.push(activity(
+          stageId,
+          "Candidate requires repair",
+          `${activeCandidate.id} revision ${activeCandidate.revisionNumber} did not pass ${getStageMetadata(stageId).label}. ${gateFailure.freshness.reasonCopy}`,
+          "warning",
+          "decision",
+        ));
         return;
       }
       if (stageId === "dev-review") {
@@ -1135,7 +1148,10 @@ export class TaskOrchestrator {
       };
       draft.artifacts.push(artifact);
       const run = attachRunArtifact(draft, result.runId, artifact);
-      if (options.complete !== false && !draft.completedStages.includes(stageId)) draft.completedStages.push(stageId);
+      const stageIsAuthoritative = !CANDIDATE_GATE_STAGES.includes(stageId) || run?.freshness?.fresh === true;
+      if (options.complete !== false && stageIsAuthoritative && !draft.completedStages.includes(stageId)) {
+        draft.completedStages.push(stageId);
+      }
       for (const key of ["inputTokens", "cachedInputTokens", "cacheWriteTokens", "outputTokens", "totalTokens"]) {
         draft.usage[key] += resultUsage[key] ?? 0;
       }
@@ -1166,6 +1182,27 @@ function summarizeAgentReport(text) {
 
 function throwIfAborted(signal) {
   if (signal.aborted) throw new Error("Codex run cancelled.");
+}
+
+function candidateGateFailure(task, candidate, stages = CANDIDATE_GATE_STAGES) {
+  const projection = refreshGateFreshness(task);
+  for (const stage of stages) {
+    const freshness = projection[stage];
+    const exactCandidate = freshness?.candidateId === candidate.id &&
+      freshness?.candidateRevision === candidate.revisionNumber;
+    if (!freshness?.fresh || !exactCandidate) return { stage, freshness };
+  }
+  return null;
+}
+
+function assertCandidateGatesFresh(task, candidate) {
+  const failure = candidateGateFailure(task, candidate);
+  if (!failure) return;
+  const stageLabel = getStageMetadata(failure.stage).label;
+  const reason = failure.freshness?.reasonCopy ?? RUNTIME_FRESHNESS_REASONS.missing_authoritative_summary;
+  throw new Error(
+    `${candidate.id} revision ${candidate.revisionNumber} cannot be approved because ${stageLabel} is not fresh. ${reason}`,
+  );
 }
 
 function currentCandidate(task) {

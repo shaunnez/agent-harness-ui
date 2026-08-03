@@ -381,6 +381,85 @@ test("latest terminal exact-candidate attempt wins and older passes become super
   assert.equal(nextRevisionRun.attempt, 1, "attempt numbering is scoped to the exact candidate revision");
 });
 
+test("merge approval fails closed when persisted candidate-bound gates are stale", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-stale-approval-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Reject stale approval",
+      description: "Status fields cannot override authoritative gate freshness.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-human-approval";
+      draft.currentStage = "approval";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 2,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        status: "awaiting_human_approval",
+      }];
+      const devReview = makeRuntimeRun({ id: "RUN-DEV", stage: "dev-review", artifactId: "ART-DEV" });
+      const testRun = makeRuntimeRun({
+        id: "RUN-TEST",
+        stage: "test",
+        kind: "test",
+        artifactId: "ART-TEST",
+        gateResult: makeGateResult({ stage: "test" }),
+      });
+      const finalReview = makeRuntimeRun({
+        id: "RUN-FINAL",
+        stage: "final-review",
+        artifactId: "ART-FINAL",
+        gateResult: makeGateResult({
+          stage: "final-review",
+          verdict: "REPAIR",
+          reportedVerdict: "REPAIR",
+          blockingReasons: ["P1: stale final review"],
+        }),
+      });
+      const focusedTest = {
+        candidateId: "C1",
+        candidateRevision: 2,
+        bindingExplicit: true,
+        command: "npm test",
+        status: "passed",
+        rows: [makeTestRow()],
+      };
+      draft.runs = [devReview, testRun, finalReview];
+      draft.artifacts = [
+        makeArtifact({ id: "ART-DEV" }),
+        makeArtifact({ id: "ART-TEST", stage: "test", gateResult: testRun.gateResult, focusedTest }),
+        makeArtifact({ id: "ART-FINAL", stage: "final-review", gateResult: finalReview.gateResult }),
+      ];
+      attachRunArtifact(draft, "RUN-TEST", draft.artifacts[1]);
+      refreshGateFreshness(draft);
+    });
+
+    let merged = false;
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        async merge() {
+          merged = true;
+        },
+      },
+    });
+
+    await assert.rejects(() => orchestrator.approveMerge(task.id), /cannot be approved.*not fresh/i);
+    const rejected = await store.get(task.id);
+    assert.equal(rejected.status, "awaiting-human-approval");
+    assert.equal(rejected.mergeIntent, null);
+    assert.equal(merged, false);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("repair revision invalidates all candidate-bound gates while retaining evidence and lineage", () => {
   const stages = ["dev-review", "test", "final-review"];
   const runs = stages.map((stage) => makeRuntimeRun({
@@ -1079,6 +1158,55 @@ test("reconciles a recorded merge intent without duplicating approval", async ()
         completedAt: null,
         error: null,
       };
+      const devReview = makeRuntimeRun({
+        id: "RUN-DEV-RECOVERY",
+        stage: "dev-review",
+        candidateRevision: 1,
+        artifactId: "ART-DEV-RECOVERY",
+        gateResult: makeGateResult({ candidateRevision: 1 }),
+      });
+      const testRun = makeRuntimeRun({
+        id: "RUN-TEST-RECOVERY",
+        stage: "test",
+        kind: "test",
+        candidateRevision: 1,
+        artifactId: "ART-TEST-RECOVERY",
+        gateResult: makeGateResult({ stage: "test", candidateRevision: 1 }),
+      });
+      const finalReview = makeRuntimeRun({
+        id: "RUN-FINAL-RECOVERY",
+        stage: "final-review",
+        candidateRevision: 1,
+        artifactId: "ART-FINAL-RECOVERY",
+        gateResult: makeGateResult({ stage: "final-review", candidateRevision: 1 }),
+      });
+      const focusedTest = {
+        candidateId: "C1",
+        candidateRevision: 1,
+        bindingExplicit: true,
+        command: "npm test",
+        status: "passed",
+        rows: [makeTestRow({ candidateRevision: 1 })],
+      };
+      draft.runs = [devReview, testRun, finalReview];
+      draft.artifacts = [
+        makeArtifact({ id: "ART-DEV-RECOVERY", candidateRevision: 1, gateResult: devReview.gateResult }),
+        makeArtifact({
+          id: "ART-TEST-RECOVERY",
+          stage: "test",
+          candidateRevision: 1,
+          gateResult: testRun.gateResult,
+          focusedTest,
+        }),
+        makeArtifact({
+          id: "ART-FINAL-RECOVERY",
+          stage: "final-review",
+          candidateRevision: 1,
+          gateResult: finalReview.gateResult,
+        }),
+      ];
+      attachRunArtifact(draft, testRun.id, draft.artifacts[1]);
+      refreshGateFreshness(draft);
     });
     let mergeCalls = 0;
     const orchestrator = new TaskOrchestrator(store, {
