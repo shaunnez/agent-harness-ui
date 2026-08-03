@@ -95,6 +95,7 @@ export function RuntimeStagePresentation({
           {task.scoutDispatch ? (
             <section className="scout-dispatch-panel">
               <header><span><Robot size={18} /><strong>Selective scout dispatch</strong></span><small>{task.scoutDispatch.selected.length} dispatched &middot; {task.scoutDispatch.skipped.length} skipped</small></header>
+              <p>{task.scoutDispatch.rationale ?? "No dispatch rationale was retained for this historical task."}</p>
               <div>
                 {task.scoutDispatch.selected.map((scout) => (
                   <article key={scout.name}>
@@ -102,6 +103,7 @@ export function RuntimeStagePresentation({
                     <span><strong>{scout.name}</strong><small>{scout.focus}</small><p>{scout.reason}</p>{scout.error ? <p className="text-red">{scout.error}</p> : null}</span>
                   </article>
                 ))}
+                {task.scoutDispatch.selected.length === 0 ? <p>No scouts were dispatched; triage explicitly determined that no additional repository evidence was needed.</p> : null}
               </div>
             </section>
           ) : null}

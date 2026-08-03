@@ -39,6 +39,12 @@ export function NewTaskDialog({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const policyEntries = Object.entries(runtimeStatus?.settings?.stagePolicies ?? {});
+  const policySummary = [...policyEntries.reduce((groups, [, policy]) => {
+    const label = `${formatModelName(policy.model)} ${formatReasoning(policy.reasoning)}`;
+    groups.set(label, (groups.get(label) ?? 0) + 1);
+    return groups;
+  }, new Map<string, number>())].map(([label, count]) => `${label} · ${count} role${count === 1 ? "" : "s"}`).join("  /  ");
   const updateExperiment = (value: Partial<NonNullable<NewTaskDraft["experiment"]>>) => {
     setDraft((current) => current.experiment
       ? { ...current, experiment: { ...current.experiment, ...value } }
@@ -171,15 +177,19 @@ export function NewTaskDialog({
           </select>
         </label>
 
-        <div className="dialog-role-policy">
-          <span>Agent policy <small className="wired-field">Snapshotted on creation</small></span>
-          <div>
-            {Object.entries(runtimeStatus?.settings?.stagePolicies ?? {}).map(([role, policy]) => (
-              <span key={role}><strong>{role.replaceAll("-", " ")}</strong><code>{policy.model.replace("gpt-5.6-", "")} · {policy.reasoning}</code></span>
+        <details className="dialog-policy-summary">
+          <summary>
+            <span><strong>Agent policy</strong><small className="wired-field">Snapshotted on creation</small></span>
+            <span>{policySummary || "No editable model policy is available"}</span>
+            <small>Show role details</small>
+          </summary>
+          <ul className="dialog-policy-details" aria-label="Agent role policy details">
+            {policyEntries.map(([role, policy]) => (
+              <li key={role}><strong>{role.replaceAll("-", " ")}</strong><code>{formatModelName(policy.model)} · {formatReasoning(policy.reasoning)}</code></li>
             ))}
-          </div>
-          <small>Change these defaults in Settings. Individual runs retain the exact policy they used.</small>
-        </div>
+          </ul>
+          <p>Change these defaults in Settings. Every run retains the exact policy it used.</p>
+        </details>
 
         <div className="dialog-role-policy">
           <span>Controlled experiment <small className="wired-field">Optional frozen comparison</small></span>
@@ -260,6 +270,11 @@ export function NewTaskDialog({
           ) : null}
         </div>
 
+        {error ? (
+          <p className="dialog-error" role="alert">
+            {error}
+          </p>
+        ) : null}
         <footer className="dialog-footer">
           <span>
             <span
@@ -296,12 +311,17 @@ export function NewTaskDialog({
             </Button>
           </div>
         </footer>
-        {error ? (
-          <p className="dialog-error" role="alert">
-            {error}
-          </p>
-        ) : null}
       </form>
     </dialog>
   );
+}
+
+function formatModelName(model: string) {
+  const short = model.replace(/^gpt-5\.6-/, "");
+  return short.charAt(0).toUpperCase() + short.slice(1);
+}
+
+function formatReasoning(reasoning: string) {
+  if (reasoning.toLowerCase() === "xhigh") return "XHigh";
+  return reasoning.charAt(0).toUpperCase() + reasoning.slice(1);
 }

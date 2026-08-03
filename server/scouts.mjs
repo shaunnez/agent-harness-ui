@@ -40,7 +40,8 @@ export function scoutCatalog() {
 }
 
 export function selectScoutDispatch(task, triageText = "") {
-  const requested = parseTaggedJson(triageText, "scout-dispatch")?.scouts;
+  const selection = parseTaggedJson(triageText, "scout-dispatch");
+  const requested = selection?.scouts;
   const cap = task.priority === "high" ? 3 : task.priority === "low" ? 1 : 2;
   const valid = Array.isArray(requested)
     ? requested
@@ -52,7 +53,22 @@ export function selectScoutDispatch(task, triageText = "") {
         .filter((entry) => SCOUTS[entry.name] && entry.focus)
     : [];
   const unique = dedupe(valid).slice(0, cap);
-  return unique.length ? unique : fallbackDispatch(task, cap);
+  if (Array.isArray(requested) && requested.length === 0) {
+    return {
+      selected: [],
+      rationale: String(selection?.rationale ?? "Triage found enough repository evidence and explicitly requested no scouts.").trim().slice(0, 1_000),
+    };
+  }
+  if (unique.length) {
+    return {
+      selected: unique,
+      rationale: String(selection?.rationale ?? "Triage selected the smallest evidence set needed for this task.").trim().slice(0, 1_000),
+    };
+  }
+  return {
+    selected: fallbackDispatch(task, cap),
+    rationale: "The triage response did not contain a usable explicit dispatch, so deterministic fallback routing was applied.",
+  };
 }
 
 export function buildScoutRequest(task, spec, triageArtifact) {

@@ -449,4 +449,11 @@
     width: 100%;
     justify-content: flex-end;
   }
+  .dialog-policy-summary summary,
+  .dialog-policy-details {
+    grid-template-columns: 1fr;
+  }
+  .dialog-policy-summary summary > small {
+    text-align: left;
+  }
 }

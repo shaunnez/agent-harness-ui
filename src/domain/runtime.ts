@@ -143,6 +143,7 @@ export interface RuntimeDecision {
 export interface RuntimeScoutDispatch {
   selected: Array<{ name: string; focus: string; reason: string; status: "queued" | "complete" | "failed"; error?: string }>;
   skipped: string[];
+  rationale?: string;
   createdAt: string;
   completedAt: string | null;
 }
