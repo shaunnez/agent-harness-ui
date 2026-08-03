@@ -559,6 +559,8 @@ test("latest terminal exact-candidate attempt wins and older passes become super
   assert.equal(task.gateFreshness["dev-review"].reasonCode, "repair_required");
   assert.equal(task.runs[0].freshness.reasonCode, "superseded_attempt");
   assert.equal(task.runs[1].freshness.reasonCode, "repair_required");
+  assert.equal(task.artifacts[0].freshness.reasonCode, "superseded_attempt");
+  assert.equal(task.artifacts[1].freshness.reasonCode, "repair_required");
 
   const unrelated = makeRuntimeRun({
     id: "RUN-C2",
@@ -721,6 +723,7 @@ test("repair revision invalidates all candidate-bound gates while retaining evid
     assert.equal(task.gateFreshness[stage].reasonCode, "revision_change", stage);
   }
   assert.equal(task.runs.every((run) => run.freshness.reasonCode === "revision_change"), true);
+  assert.equal(task.artifacts.every((artifact) => artifact.freshness.reasonCode === "revision_change"), true);
   assert.equal(task.events.every((event) => event.freshness.reasonCode === "revision_change"), true);
   assert.equal(task.artifacts.length, 3);
   assert.equal(task.artifacts[0].content, "# retained evidence");

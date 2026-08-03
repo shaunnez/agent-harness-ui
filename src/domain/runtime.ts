@@ -77,6 +77,7 @@ export interface RuntimeArtifact {
   workPackageId?: string | null;
   focusedTest?: RuntimeFocusedTestEvidence | null;
   evidenceError?: { code: string; copy: string } | null;
+  freshness?: RuntimeGateFreshness | null;
   gateResult?: {
     schemaVersion?: number;
     stage?: StageId;

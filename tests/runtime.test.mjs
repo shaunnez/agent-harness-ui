@@ -1097,6 +1097,8 @@ test("resolves same-revision superseded artifacts with authoritative stale reaso
     });
     const oldArtifact = artifact("ART-OLD", "RUN-OLD", "2026-08-01T12:01:00.000Z");
     const currentArtifact = artifact("ART-CURRENT", "RUN-CURRENT", "2026-08-01T12:02:00.000Z");
+    oldArtifact.freshness = superseded;
+    currentArtifact.freshness = authoritative;
     const task = createTask({
       candidates: [candidate],
       artifacts: [oldArtifact, currentArtifact],
@@ -1111,13 +1113,24 @@ test("resolves same-revision superseded artifacts with authoritative stale reaso
     const currentFreshness = getRuntimeArtifactFreshness(task, currentArtifact);
     assert.equal(oldFreshness.reasonCode, "superseded_attempt");
     assert.equal(oldFreshness.reasonCopy, "A later terminal attempt superseded this historical evidence.");
+    assert.equal(isArtifactFresh(oldArtifact, candidate), false);
+    assert.equal(isArtifactFresh(currentArtifact, candidate), true);
     assert.equal(isArtifactFresh(oldArtifact, candidate, oldFreshness), false);
     assert.equal(isArtifactFresh(currentArtifact, candidate, currentFreshness), true);
+    assert.equal(getRuntimeArtifactFreshness(
+      createTask({
+        candidates: [candidate],
+        artifacts: [oldArtifact],
+        runs: [],
+        gateFreshness: { "dev-review": authoritative },
+      }),
+      oldArtifact,
+    ).reasonCode, "superseded_attempt");
   });
 });
 
 test("renders workspace artifact freshness from persisted run evidence", () => {
-  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace, isArtifactFresh }) => {
     const candidate = {
       id: "C1",
       revisionNumber: 2,
@@ -1129,7 +1142,7 @@ test("renders workspace artifact freshness from persisted run evidence", () => {
       revisions: [],
     };
     const usage = { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 };
-    const artifact = (id, runId, createdAt) => ({
+    const artifact = (id, runId, createdAt, freshness) => ({
       id,
       runId,
       stage: "dev-review",
@@ -1141,6 +1154,7 @@ test("renders workspace artifact freshness from persisted run evidence", () => {
       usage,
       candidateId: "C1",
       candidateRevision: 2,
+      freshness,
     });
     const staleReason = "A later terminal attempt superseded this historical evidence.";
     const oldFreshness = makeGateFreshness("dev-review", {
@@ -1161,8 +1175,8 @@ test("renders workspace artifact freshness from persisted run evidence", () => {
         completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement"],
         candidates: [candidate],
         artifacts: [
-          artifact("ART-OLD", "RUN-OLD", "2026-08-01T12:01:00.000Z"),
-          artifact("ART-CURRENT", "RUN-CURRENT", "2026-08-01T12:02:00.000Z"),
+          artifact("ART-OLD", "RUN-OLD", "2026-08-01T12:01:00.000Z", oldFreshness),
+          artifact("ART-CURRENT", "RUN-CURRENT", "2026-08-01T12:02:00.000Z", currentFreshness),
         ],
         runs: [
           { id: "RUN-OLD", artifactId: "ART-OLD", freshness: oldFreshness },
@@ -1182,8 +1196,12 @@ test("renders workspace artifact freshness from persisted run evidence", () => {
 
     assert.doesNotMatch(markup, /Stale after repair/);
     assert.match(markup, /ART-CURRENT\.md/);
-    assert.equal(markup.split(staleReason).length - 1, 1);
-    assert.match(markup, /ART-OLD\.md[\s\S]*rerun required/);
+    assert.match(markup, /ART-OLD\.md[\s\S]*stale/);
+    assert.equal(isArtifactFresh(
+      { ...artifact("ART-OLD", "RUN-OLD", "2026-08-01T12:01:00.000Z", oldFreshness) },
+      candidate,
+    ), false);
+    assert.equal(oldFreshness.reasonCopy, staleReason);
   });
 });
 

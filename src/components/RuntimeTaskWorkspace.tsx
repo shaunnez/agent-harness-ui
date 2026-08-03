@@ -37,7 +37,6 @@ import { InspectorSection, RuntimeRow } from "./runtime/RuntimeInspectorPrimitiv
 import { RuntimeStagePresentation } from "./runtime/RuntimeStagePresentation";
 import { RuntimeWorkspaceFooter } from "./runtime/RuntimeWorkspaceFooter";
 import {
-  getRuntimeArtifactFreshness,
   getRuntimeStageSummary,
   isArtifactFresh,
   isStageComplete,
@@ -98,12 +97,6 @@ export function RuntimeTaskWorkspace({
     viewedStageId === task.currentStage && ["failed", "cancelled", "blocked"].includes(task.status);
   const repoName = task.repositoryPath.split(/[\\/]/).filter(Boolean).at(-1) ?? task.repositoryPath;
   const candidate = task.candidates?.at(-1);
-  const stageArtifactFreshness = stageArtifact
-    ? getRuntimeArtifactFreshness(task, stageArtifact)
-    : null;
-  const stageArtifactIsFresh = stageArtifact
-    ? isArtifactFresh(stageArtifact, candidate, stageArtifactFreshness)
-    : true;
   const runningPackages = task.workPackages?.filter((item) => item.status === "running") ?? [];
   const worktreeInventory = task.worktreeInventory ?? [];
   const accessBoundary = getAccessBoundaryCopy(task);
@@ -370,15 +363,10 @@ export function RuntimeTaskWorkspace({
               <div className="runtime-stage-heading__title">
                 <h2>{stageSummary.title}</h2>
                 {historical ? <span className="badge badge--blue">Recorded history</span> : null}
-                {stageArtifact && !stageArtifactIsFresh ? (
-                  <span className="badge badge--yellow">Rerun required</span>
+                {stageArtifact && !isArtifactFresh(stageArtifact, candidate) ? (
+                  <span className="badge badge--yellow">Stale after repair</span>
                 ) : null}
               </div>
-              {stageArtifact && !stageArtifactIsFresh ? (
-                <p>
-                  Rerun required: {stageArtifactFreshness?.reasonCopy ?? "No authoritative persisted terminal run summary is available for this candidate."}
-                </p>
-              ) : null}
               <p>{stageSummary.detail}</p>
             </header>
 
@@ -541,31 +529,25 @@ export function RuntimeTaskWorkspace({
             <InspectorSection title="Living artifacts" meta={`${task.artifacts.length} retained`}>
               <div className="runtime-artifact-list">
                 {task.artifacts.length ? (
-                  [...task.artifacts].reverse().map((artifact) => {
-                    const freshness = getRuntimeArtifactFreshness(task, artifact);
-                    const fresh = isArtifactFresh(artifact, candidate, freshness);
-                    return (
-                      <button
-                        type="button"
-                        key={artifact.id}
-                        onClick={() => {
-                          selectViewedStage(artifact.stage);
-                          openRuntimeArtifact(artifact);
-                        }}
-                      >
-                        <FileCode size={15} />
-                        <span>
-                          <strong>{artifact.name}</strong>
-                          <small>
-                            {workflowStages.find((stage) => stage.id === artifact.stage)?.label}
-                            {!fresh
-                              ? ` \u00b7 rerun required \u00b7 ${freshness?.reasonCopy ?? "No authoritative persisted terminal run summary is available for this candidate."}`
-                              : ""}
-                          </small>
-                        </span>
-                      </button>
-                    );
-                  })
+                  [...task.artifacts].reverse().map((artifact) => (
+                    <button
+                      type="button"
+                      key={artifact.id}
+                      onClick={() => {
+                        selectViewedStage(artifact.stage);
+                        openRuntimeArtifact(artifact);
+                      }}
+                    >
+                      <FileCode size={15} />
+                      <span>
+                        <strong>{artifact.name}</strong>
+                        <small>
+                          {workflowStages.find((stage) => stage.id === artifact.stage)?.label}
+                          {!isArtifactFresh(artifact, candidate) ? " \u00b7 stale" : ""}
+                        </small>
+                      </span>
+                    </button>
+                  ))
                 ) : (
                   <small>Artifacts appear as stage agents complete.</small>
                 )}

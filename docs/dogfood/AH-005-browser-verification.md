@@ -1,7 +1,7 @@
 # AH-005 browser verification handoff
 
 Status: **repair in progress; not READY**. This handoff is bound to the exact
-reviewed input candidate `C1` revision `4`. The current Repair agent may not
+reviewed input candidate `C1` revision `5`. The current Repair agent may not
 commit or run browser QA, so the harness must assemble a new candidate revision
 and rerun every candidate-bound gate before Human Approval.
 
@@ -11,49 +11,44 @@ and rerun every candidate-bound gate before Human Approval.
 | --- | --- |
 | Task | `AH-005` |
 | Exact task base | `1591dca9869f50e9fbad20253f8100348463f9eb` |
-| Reviewed input candidate | `C1` revision `4` |
-| Reviewed input candidate SHA | `994213d79565740ece853a67d4eb7b0798213440` |
-| Prior candidate SHA | `24ae21061c96fc1b8a236cd6564aaf3f301d51be` (`C1` revision `3`) |
+| Reviewed input candidate | `C1` revision `5` |
+| Reviewed input candidate SHA | `06329a0d8158ba6cbf70fbb8b912331acf440ee1` |
+| Prior candidate SHA | `994213d79565740ece853a67d4eb7b0798213440` (`C1` revision `4`) |
 | Current repair SHA | Pending harness integration; this Repair agent is prohibited from committing |
-| Fresh Dev Review / Test / Final Review for the repair | None; revision 4 evidence becomes historical when the repair is assembled |
+| Fresh Dev Review / Test / Final Review for the repair | None; revision 5 evidence becomes historical when the repair is assembled |
 | Approval state | Blocked; stop before Human Approval |
 
-Preserve the four-revision lineage and all prior run summaries, artifacts, and
-stale-reason code/copy for audit. Do not present revision 4 evidence as fresh
+Preserve the five-revision lineage and all prior run summaries, artifacts, and
+stale-reason code/copy for audit. Do not present revision 5 evidence as fresh
 for the future repaired candidate.
 
 ## Package record
 
 Dependency order: `S1 → S2 + S3 → S4`.
 
-The Dev Review-authorized workspace consistency repair adds one explicit S2
-ownership exception: `src/components/RuntimeTaskWorkspace.tsx`. This is the
-caller that omitted the S1 persisted freshness interface. No other top-level
-component path is authorized by this repair.
-
 | Package | Explicit owned paths | Dependencies and interfaces | Verification commands | Exact local commit | Qualification | Tokens / elapsed |
 | --- | --- | --- | --- | --- | --- | --- |
-| S1 | `server/**`, `src/domain/runtime.ts`, `src/runtime-activity.ts` | Foundation; persists `RuntimeGateFreshness`, exact stale reason code/copy, and exact-candidate Test evidence | `node --test tests/orchestrator.test.mjs`; `npm run lint`; `npm run typecheck` | Original package `59ebe0baa913a4127a0efe8cccf8fd17dcf37739`; reviewed input assembled at `994213d79565740ece853a67d4eb7b0798213440`; current repair commit pending | Current focused repair checks pass; ready for integration only | Not recorded per package / not recorded per package |
-| S2 | `src/components/runtime/**`; Dev Review-authorized exception `src/components/RuntimeTaskWorkspace.tsx` | Depends on S1; all workspace artifact labels now consume persisted run freshness and exact reason copy | `node --test tests/runtime.test.mjs`; `npm run lint`; `npm run typecheck` | Original package `ea67d529742541ac606593d0866a50d35b036edf`; reviewed input assembled at `994213d79565740ece853a67d4eb7b0798213440`; current repair commit pending | Current focused repair checks pass; ready for integration only | Not recorded per package / not recorded per package |
-| S3 | `tests/**` | Depends on S1 and S2; covers complete Dev/Final summaries and workspace artifact agreement | `node --test tests/orchestrator.test.mjs tests/runtime.test.mjs`; `npm run lint`; `npm run typecheck` | Original package `f735bfb3d5c0cc5622f0dcd27f349324acd56f38`; reviewed input assembled at `994213d79565740ece853a67d4eb7b0798213440`; current repair commit pending | Focused tests pass, 56/56; ready for integration only | Not recorded per package / not recorded per package |
-| S4 | `docs/dogfood/AH-005-browser-verification.md` | Depends on the exact assembled S1-S3 revision and retained operator evidence | Full candidate matrix below | Original package `bb99f710a2c48ffebecb18a9b3b387948d42f509`; reviewed input assembled at `994213d79565740ece853a67d4eb7b0798213440`; current repair commit pending | Rebound to exact revision 4; future repaired-candidate QA remains harness/operator-owned | Not recorded per package / not recorded per package |
+| S1 | `server/**`, `src/domain/runtime.ts`, `src/runtime-activity.ts` | Foundation; persists `RuntimeGateFreshness`, exact stale reason code/copy, exact-candidate Test evidence, and run-derived artifact freshness | `node --test tests/orchestrator.test.mjs`; `npm run lint`; `npm run typecheck` | Original package `59ebe0baa913a4127a0efe8cccf8fd17dcf37739`; reviewed input assembled at `06329a0d8158ba6cbf70fbb8b912331acf440ee1`; current repair commit pending | Focused checks pass; ready for integration only | No package usage fields persisted / unavailable |
+| S2 | `src/components/runtime/**` | Depends on S1; the owned `isArtifactFresh` helper consumes persisted artifact freshness for unchanged workspace callers | `node --test tests/runtime.test.mjs`; `npm run lint`; `npm run typecheck` | Original package `ea67d529742541ac606593d0866a50d35b036edf`; reviewed input assembled at `06329a0d8158ba6cbf70fbb8b912331acf440ee1`; current repair commit pending | Focused checks pass; ready for integration only | No package usage fields persisted / unavailable |
+| S3 | `tests/**` | Depends on S1 and S2; covers complete Dev/Final summaries and unchanged-caller artifact agreement | `node --test tests/orchestrator.test.mjs tests/runtime.test.mjs`; `npm run lint`; `npm run typecheck` | Original package `f735bfb3d5c0cc5622f0dcd27f349324acd56f38`; reviewed input assembled at `06329a0d8158ba6cbf70fbb8b912331acf440ee1`; current repair commit pending | Focused tests pass, 56/56; ready for integration only | No package usage fields persisted / unavailable |
+| S4 | `docs/dogfood/AH-005-browser-verification.md` | Depends on the exact assembled S1-S3 revision and retained operator evidence | Full candidate matrix below | Original package `bb99f710a2c48ffebecb18a9b3b387948d42f509`; reviewed input assembled at `06329a0d8158ba6cbf70fbb8b912331acf440ee1`; current repair commit pending | Strict ownership and revision-5 handoff corrected; ready for integration only | No package usage fields persisted / unavailable |
 
-Package-specific token and elapsed-time figures were absent from the retained
-package records and are not inferred from stage-wide usage. A locally green
+Package-specific token and elapsed-time fields are absent from the retained
+package records and the accessible persisted task store contains no AH-005 task.
+Stage-wide usage is not redistributed among packages. A locally green
 package is ready for integration only, never a whole-task pass.
 
 ## Current repair verification
 
 | Check | Result | Evidence / limitation |
 | --- | --- | --- |
-| `node --test tests/orchestrator.test.mjs tests/runtime.test.mjs` | PASS, 56/56 | Includes malformed Dev/Final summary and persisted workspace artifact-freshness regressions; Vite emitted non-failing sandbox `listen EPERM` WebSocket warnings |
+| `node --test tests/orchestrator.test.mjs tests/runtime.test.mjs` | PASS, 56/56 | Covers malformed summaries and persisted artifact freshness without an out-of-scope workspace edit; Vite emitted non-failing sandbox `listen EPERM` WebSocket warnings |
 | `npm run lint` | PASS | Biome checked 65 source files; no fixes applied |
 | `npm run typecheck` | PASS | `tsc --noEmit` exited 0 |
-| `npm run format:check` | NOT PASSED | Existing repository-wide formatting baseline reports 37 formatter errors; no formatting rewrite was applied |
-| `git diff --check` | PASS | No whitespace errors at the time of the focused check |
+| `git diff --check` | PASS | Exact base-to-worktree diff has no whitespace errors; strict ownership review excludes `src/components/RuntimeTaskWorkspace.tsx` |
 | Full suite, build, Sites checks, repaired patch apply, exact cleanliness, browser QA, fresh downstream gates | NOT RUN | Harness/operator-owned after exact repair integration; no generated state retained |
 
-## Authoritative revision 4 qualification
+## Authoritative prior revision 4 qualification
 
 The operator recorded the following whole-candidate evidence for exact `C1`
 revision `4` at `994213d79565740ece853a67d4eb7b0798213440` before this repair:
@@ -95,8 +90,8 @@ No browser or end-to-end QA was run by this Repair agent.
 
 After the harness integrates this repair as a new exact candidate revision:
 
-1. Reject any committed file outside the package ownership above, including
-   any top-level component other than the explicit workspace exception.
+1. Reject any committed file outside the package ownership above. In particular,
+   `src/components/RuntimeTaskWorkspace.tsx` must match the exact task base.
 2. Run `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`,
    `npm run test:sites`, `git diff --check`, and required Sites artifact checks.
 3. Export the exact repaired candidate patch and run `git apply --check`

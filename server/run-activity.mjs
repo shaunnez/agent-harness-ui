@@ -39,9 +39,17 @@ export function migrateRunActivityState(state) {
       changed = true;
     }
     if (incomingVersion < 2) changed = migrateArtifactRuns(task) || changed;
-    const before = JSON.stringify({ gateFreshness: task.gateFreshness, runs: task.runs.map((run) => run.freshness ?? null) });
+    const before = JSON.stringify({
+      gateFreshness: task.gateFreshness,
+      runs: task.runs.map((run) => run.freshness ?? null),
+      artifacts: (task.artifacts ?? []).map((artifact) => artifact.freshness ?? null),
+    });
     refreshGateFreshness(task);
-    changed = before !== JSON.stringify({ gateFreshness: task.gateFreshness, runs: task.runs.map((run) => run.freshness ?? null) }) || changed;
+    changed = before !== JSON.stringify({
+      gateFreshness: task.gateFreshness,
+      runs: task.runs.map((run) => run.freshness ?? null),
+      artifacts: (task.artifacts ?? []).map((artifact) => artifact.freshness ?? null),
+    }) || changed;
   }
   state.schemaVersion = TASK_STORE_SCHEMA_VERSION;
   return changed;
@@ -241,6 +249,27 @@ export function refreshGateFreshness(task) {
   }
   task.gateFreshness = projection;
   const runsById = new Map((task.runs ?? []).map((run) => [run.id, run]));
+  const runsByArtifactId = new Map(
+    (task.runs ?? [])
+      .filter((run) => run.artifactId)
+      .map((run) => [run.artifactId, run]),
+  );
+  const artifactTargetResult = activeCandidateBinding(task);
+  const artifactTarget = artifactTargetResult.valid ? artifactTargetResult : null;
+  for (const artifact of task.artifacts ?? []) {
+    if (!CANDIDATE_GATE_STAGES.includes(artifact.stage)) continue;
+    const run = (artifact.runId ? runsById.get(artifact.runId) : null) ?? runsByArtifactId.get(artifact.id);
+    artifact.freshness = run?.freshness
+      ? structuredClone(run.freshness)
+      : createFreshness(
+          artifact.stage,
+          artifactTarget,
+          null,
+          artifact.id ?? null,
+          "missing_authoritative_summary",
+          null,
+        );
+  }
   for (const event of task.events ?? []) {
     const run = event.runId ? runsById.get(event.runId) : null;
     if (run?.freshness && CANDIDATE_GATE_STAGES.includes(run.stage)) {

@@ -51,19 +51,20 @@ export function isArtifactFresh(
   candidate: RuntimeTask["candidates"][number] | undefined,
   freshness?: RuntimeGateFreshness | RuntimeRunFreshness | null,
 ) {
+  const persistedFreshness = freshness ?? artifact.freshness;
   const candidateBound = candidateBoundStages.includes(artifact.stage);
   if (!artifact.candidateId || artifact.candidateRevision == null || !candidate) return !candidateBound;
-  if (!freshness) {
+  if (!persistedFreshness) {
     return artifact.stage === "approval" &&
       artifact.candidateId === candidate.id &&
       artifact.candidateRevision === candidate.revisionNumber;
   }
-  if (!freshness.fresh) return false;
+  if (!persistedFreshness.fresh) return false;
   if (
-    freshness.target?.candidateId !== candidate.id ||
-    freshness.target.candidateRevision !== candidate.revisionNumber
+    persistedFreshness.target?.candidateId !== candidate.id ||
+    persistedFreshness.target.candidateRevision !== candidate.revisionNumber
   ) return false;
-  return freshness.sourceArtifactId === artifact.id;
+  return persistedFreshness.sourceArtifactId === artifact.id;
 }
 
 export function isStageComplete(task: RuntimeTask, stageId: StageId): boolean {
@@ -116,7 +117,7 @@ export function getRuntimeArtifactFreshness(task: RuntimeTask, artifact: Runtime
   const run = task.runs?.find(
     (item) => item.id === artifact.runId || item.artifactId === artifact.id,
   );
-  return run?.freshness ?? getRuntimeGateFreshness(task, artifact.stage);
+  return run?.freshness ?? artifact.freshness ?? getRuntimeGateFreshness(task, artifact.stage);
 }
 
 export function getRuntimeFocusedTest(task: RuntimeTask) {
