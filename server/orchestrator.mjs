@@ -475,40 +475,61 @@ export class TaskOrchestrator {
       const result = await this.#executeAgent(task, stageId, signal, task.repositoryPath, "read-only");
       throwIfAborted(signal);
       const grillQuestions = stageId === "grill" ? parseGrillQuestions(result.finalText) : null;
-      await this.#retainAgentResult(id, stageId, result, { replace: true, complete: stageId !== "grill" });
+      await this.#retainAgentResult(id, stageId, result, {
+        replace: true,
+        complete: stageId !== "grill" || grillQuestions?.length === 0,
+      });
       if (grillQuestions) {
         await this.#store.update(id, (draft) => {
           draft.grillSession = {
-            status: "open",
+            status: grillQuestions.length ? "open" : "completed",
             questions: grillQuestions,
             createdAt: now(),
-            completedAt: null,
-            completionReason: null,
+            completedAt: grillQuestions.length ? null : now(),
+            completionReason: grillQuestions.length ? null : "No material product decisions remained after repository investigation.",
           };
         });
       }
+    }
+    task = await this.#store.get(id);
+    if (task.grillSession?.status === "completed" && task.grillSession.questions.length === 0) {
+      await this.#store.update(id, (draft) => {
+        draft.status = "running";
+        draft.currentStage = "specification";
+        draft.events.push(activity(
+          "grill",
+          "Grill Me completed automatically",
+          draft.grillSession.completionReason,
+          "success",
+          "decision",
+        ));
+      });
+      await this.#runSpecification(id, signal);
+      return;
     }
     await this.#store.update(id, (draft) => {
       draft.status = "awaiting-grill";
       draft.currentStage = "grill";
       draft.activeRunKind = null;
       const count = draft.grillSession?.questions.length ?? 0;
-      draft.events.push(activity("grill", "Grill Me ready", count ? `${count} material question${count === 1 ? "" : "s"} need a decision.` : "No material questions remain; finish the session to build the specification.", "success", "decision"));
+      draft.events.push(activity("grill", "Grill Me ready", `${count} material question${count === 1 ? "" : "s"} need a decision.`, "success", "decision"));
     });
   }
 
   async #runScouts(id, task, signal) {
     const triageArtifact = [...task.artifacts].reverse().find((artifact) => artifact.stage === "triage");
-    const dispatch = selectScoutDispatch(task, triageArtifact?.content ?? "");
+    const selection = selectScoutDispatch(task, triageArtifact?.content ?? "");
+    const dispatch = selection.selected;
     await this.#store.update(id, (draft) => {
       draft.artifacts = draft.artifacts.filter((artifact) => artifact.stage !== "scouts");
       draft.scoutDispatch = {
         selected: dispatch.map((spec) => ({ ...spec, status: "queued" })),
         skipped: scoutCatalog().filter((scout) => !dispatch.some((spec) => spec.name === scout.id)).map((scout) => scout.id),
+        rationale: selection.rationale,
         createdAt: now(),
         completedAt: null,
       };
-      draft.events.push(activity("scouts", "Scout dispatch selected", dispatch.map((spec) => spec.name).join(", "), "info", "agent"));
+      draft.events.push(activity("scouts", "Scout dispatch selected", `${dispatch.length} selected · ${selection.rationale}`, "info", "agent"));
     });
 
     const reports = await Promise.all(
@@ -554,7 +575,7 @@ export class TaskOrchestrator {
     );
     throwIfAborted(signal);
     const successful = reports.filter((entry) => entry.status === "ok").length;
-    const required = Math.max(1, dispatch.length - 1);
+    const required = dispatch.length === 0 ? 0 : Math.max(1, dispatch.length - 1);
     const aggregate = aggregateScoutReports(dispatch, reports);
     await this.#retainAgentResult(
       id,

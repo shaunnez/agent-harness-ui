@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import { evaluationVerdict, TaskOrchestrator } from "../server/orchestrator.mjs";
 import { buildExecutionPrompt } from "../server/prompts.mjs";
+import { selectScoutDispatch } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import {
   parseFocusedTestEvidence,
@@ -385,6 +386,62 @@ test("runs the investigation frontier and retains each stage handoff", async () 
     assert.deepEqual(finished.completedStages, ["triage", "scouts", "grill", "specification"]);
     assert.equal(finished.artifacts.length, 6);
     assert.equal(finished.usage.totalTokens, 75);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("honours an explicit empty triage scout dispatch without fallback", () => {
+  const selection = selectScoutDispatch(
+    { title: "Small known change", description: "The exact file is already identified.", priority: "high" },
+    `<scout-dispatch>{"scouts":[],"rationale":"The triage evidence already identifies the complete code path."}</scout-dispatch>`,
+  );
+  assert.deepEqual(selection.selected, []);
+  assert.equal(selection.rationale, "The triage evidence already identifies the complete code path.");
+});
+
+test("auto-advances a zero-question Grill session into specification", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-zero-grill-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Known bounded change",
+      description: "No unresolved product decision remains.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "low",
+    });
+    let scoutCalls = 0;
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      runCodex: async ({ prompt }) => {
+        if (/<scout-report>/.test(prompt)) {
+          scoutCalls += 1;
+          throw new Error("An explicit empty dispatch must not launch a fallback scout.");
+        }
+        const finalText = /Your stage assignment:\nClassify the task/.test(prompt)
+          ? `<scout-dispatch>{"scouts":[],"rationale":"No additional scout evidence is needed."}</scout-dispatch>`
+          : /Your stage assignment:\nSeparate repository facts/.test(prompt)
+            ? `<grill-questions>{"questions":[]}</grill-questions>`
+            : "## Specification\n\nThe bounded change is ready for approval.";
+        return {
+          finalText,
+          usage: { inputTokens: 10, cachedInputTokens: 5, outputTokens: 5, totalTokens: 15 },
+        };
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id), true);
+    const finished = await waitForStatus(store, task.id, "awaiting-spec-approval");
+    assert.equal(scoutCalls, 0);
+    assert.deepEqual(finished.scoutDispatch.selected, []);
+    assert.equal(finished.scoutDispatch.skipped.length, 6);
+    assert.equal(finished.scoutDispatch.rationale, "No additional scout evidence is needed.");
+    assert.equal(finished.grillSession.status, "completed");
+    assert.equal(finished.grillSession.questions.length, 0);
+    assert.deepEqual(finished.completedStages, ["triage", "scouts", "grill", "specification"]);
+    assert.equal(finished.events.some((event) => event.title === "Grill Me completed automatically"), true);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }

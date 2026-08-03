@@ -349,13 +349,19 @@
   gap: 8px;
 }
 .dialog-footer {
+  position: sticky;
+  z-index: 2;
+  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 17px;
+  padding: 17px 20px 20px;
+  margin-right: -20px;
+  margin-left: -20px;
   margin-top: 18px;
   border-top: 1px solid var(--border);
+  background: #1c1c19;
 }
 .dialog-footer > span {
   display: flex;
@@ -367,4 +373,87 @@
 .dialog-footer > div {
   display: flex;
   gap: 7px;
+}
+.dialog-policy-summary,
+.dialog-role-policy {
+  padding: 11px 12px;
+  margin-top: 15px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #181816;
+}
+.dialog-policy-summary summary {
+  display: grid;
+  grid-template-columns: minmax(130px, auto) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.dialog-policy-summary summary > span:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dialog-policy-summary summary > span:nth-child(2),
+.dialog-policy-summary summary > small,
+.dialog-policy-summary > p {
+  color: var(--muted);
+  font-size: 12px;
+}
+.dialog-policy-summary summary > small {
+  text-align: right;
+}
+.dialog-policy-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 14px;
+  padding: 11px 0 0;
+  margin-top: 11px;
+  border-top: 1px solid var(--border);
+  list-style: none;
+}
+.dialog-policy-details > li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+}
+.dialog-policy-details strong {
+  overflow: hidden;
+  font-weight: 550;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+.dialog-policy-details code {
+  color: var(--muted);
+  white-space: nowrap;
+}
+.dialog-policy-summary > p {
+  margin-top: 10px;
+}
+.dialog-role-policy > span {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: #c9c7bf;
+  font-size: 12px;
+  font-weight: 550;
+}
+.dialog-role-policy > label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 9px 0 6px;
+  font-size: 12px;
+}
+.dialog-role-policy > label input {
+  flex: 0 0 auto;
+}
+.dialog-role-policy > small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
 }
