@@ -292,6 +292,17 @@ test("rejects mixed candidate summaries with the exact stale reason", () => {
   const mixedGateTask = makeRuntimeTask({ runs: [mixedGate] });
   refreshGateFreshness(mixedGateTask);
   assert.equal(mixedGateTask.gateFreshness["dev-review"].reasonCode, "mixed_evidence");
+
+  const mixedWithParentOnly = makeRuntimeRun({
+    gateResult: makeGateResult({
+      findings: [
+        { severity: "P2", title: "C2 finding", detail: "Bound to C2.", candidateId: "C2", candidateRevision: 2 },
+      ],
+    }),
+  });
+  const parentMixedTask = makeRuntimeTask({ runs: [mixedWithParentOnly] });
+  refreshGateFreshness(parentMixedTask);
+  assert.equal(parentMixedTask.gateFreshness["dev-review"].reasonCode, "mixed_evidence");
 });
 
 test("rejects incomplete or contradictory Dev and Final Review summaries", () => {
@@ -535,6 +546,24 @@ test("filters focused Test rows to the exact candidate and retains invalid rows 
   attachRunArtifact(exactTestTask, exactTestRun.id, exactTestArtifact);
   assert.equal(exactTestTask.gateFreshness.test.fresh, true);
   assert.deepEqual(exactTestTask.gateFreshness.test.focusedTestRows.map((row) => row.id), ["row-exact-1", "row-exact-2"]);
+
+  const parentMixedRun = makeRuntimeRun({ id: "RUN-TEST-PARENT-MIXED", stage: "test", kind: "test", artifactId: "ART-TEST-PARENT-MIXED" });
+  const parentMixedArtifact = makeArtifact({
+    id: "ART-TEST-PARENT-MIXED",
+    stage: "test",
+    focusedTest: {
+      candidateId: "C1",
+      candidateRevision: 2,
+      bindingExplicit: true,
+      command: "npm test",
+      status: "passed",
+      rows: [makeTestRow({ id: "row-other-candidate", candidateId: "C2" })],
+    },
+  });
+  const parentMixedTask = makeRuntimeTask({ runs: [parentMixedRun], artifacts: [parentMixedArtifact] });
+  attachRunArtifact(parentMixedTask, parentMixedRun.id, parentMixedArtifact);
+  assert.equal(parentMixedTask.gateFreshness.test.reasonCode, "mixed_evidence");
+  assert.deepEqual(parentMixedTask.gateFreshness.test.focusedTestRows, []);
 });
 
 test("latest terminal exact-candidate attempt wins and older passes become superseded", () => {
@@ -578,6 +607,22 @@ test("latest terminal exact-candidate attempt wins and older passes become super
   refreshGateFreshness(exactTask);
   assert.equal(exactTask.gateFreshness["dev-review"].sourceRunId, "RUN-EXACT");
   assert.equal(exactTask.gateFreshness["dev-review"].fresh, true);
+
+  const malformed = makeRuntimeRun({
+    id: "RUN-MALFORMED",
+    attempt: 2,
+    candidateRevision: "2",
+    artifactId: null,
+  });
+  const malformedTask = makeRuntimeTask({
+    runs: [exact, malformed],
+    artifacts: [makeArtifact({ id: "ART-EXACT" })],
+  });
+  refreshGateFreshness(malformedTask);
+  assert.equal(malformedTask.gateFreshness["dev-review"].sourceRunId, "RUN-MALFORMED");
+  assert.equal(malformedTask.gateFreshness["dev-review"].fresh, false);
+  assert.equal(malformedTask.gateFreshness["dev-review"].reasonCode, "malformed_binding");
+  assert.equal(malformedTask.runs[0].freshness.reasonCode, "superseded_attempt");
 
   const revisionTask = makeRuntimeTask({
     runs: [makeRuntimeRun({ id: "RUN-R1", candidateRevision: 1, gateResult: makeGateResult({ candidateRevision: 1 }) })],

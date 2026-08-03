@@ -209,7 +209,7 @@ export function resolveGateFreshness(task, stage) {
     return createFreshness(stage, null, null, null, targetResult.code, null);
   }
   const stageRuns = terminalStageRuns(task, stage);
-  const selected = latestRun(exactCandidateRuns(stageRuns, target));
+  const selected = latestRun(candidateRelevantRuns(stageRuns, target));
   if (!selected) {
     const diagnosticRun = latestPersistedRun(stageRuns);
     if (!diagnosticRun) {
@@ -233,7 +233,7 @@ export function refreshGateFreshness(task) {
     const targetResult = activeCandidateBinding(task);
     const target = targetResult.valid ? targetResult : null;
     const selected = target
-      ? latestRun(exactCandidateRuns(terminalStageRuns(task, stage), target))
+      ? latestRun(candidateRelevantRuns(terminalStageRuns(task, stage), target))
       : null;
     projection[stage] = resolveGateFreshness(task, stage);
     for (const run of task.runs ?? []) {
@@ -336,11 +336,12 @@ function evaluateGateRun(run, target, stage, sourceRunId, sourceArtifactId) {
     binding: readExplicitCandidateBinding(finding),
     explicit: finding?.bindingExplicit !== false && hasExplicitCandidateFields(finding),
   }));
-  const findingIdentities = new Set(
-    findingBindings
+  const findingIdentities = new Set([
+    `${summaryBinding.candidateId}:${summaryBinding.candidateRevision}`,
+    ...findingBindings
       .filter(({ binding }) => binding.valid)
       .map(({ binding }) => `${binding.candidateId}:${binding.candidateRevision}`),
-  );
+  ]);
   if (findingIdentities.size > 1) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "mixed_evidence", null);
   if (findingBindings.some(({ explicit }) => !explicit)) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "missing_binding", null);
@@ -376,7 +377,9 @@ function evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId) {
   if (!Array.isArray(summary.rows) || !summary.rows.length || summary.rowCount !== summary.rows.length) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "missing_authoritative_summary", null);
   }
-  const identities = new Set();
+  const identities = new Set([
+    `${summaryBinding.candidateId}:${summaryBinding.candidateRevision}`,
+  ]);
   const rowBindings = [];
   for (const row of summary.rows) {
     const rowBinding = readExplicitCandidateBinding(row);
@@ -511,10 +514,12 @@ function terminalStageRuns(task, stage) {
     .filter(({ run }) => run?.stage === stage && isTerminalRun(run));
 }
 
-function exactCandidateRuns(entries, target) {
+function candidateRelevantRuns(entries, target) {
   return entries.filter(({ run }) => {
     const binding = readExplicitCandidateBinding(run);
-    return binding.valid && compareCandidateBinding(binding, target) == null;
+    // Invalid bindings remain in precedence so a later malformed attempt fails
+    // closed. Explicitly valid evidence for another candidate tuple is unrelated.
+    return !binding.valid || compareCandidateBinding(binding, target) == null;
   });
 }
 
