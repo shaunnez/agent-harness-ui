@@ -62,8 +62,8 @@ export function filterRunActivity(task: RuntimeTask, filter: RunActivityFilter):
       kind: "event",
       at: event.at,
       title: event.title,
-      detail: eventDetail(event),
-      tone: eventTone(event),
+      detail: event.detail,
+      tone: event.tone,
       stage: event.stage,
       event,
     }));
@@ -199,12 +199,6 @@ function RunDetails({ run }: { run: RuntimeRun }) {
     <>
       <Detail label="Run ID" value={run.id} mono />
       <Detail label="Kind / status" value={`${run.kind} · ${run.status}`} />
-      {run.freshness ? (
-        <Detail
-          label="Evidence freshness"
-          value={run.freshness.fresh ? "Fresh" : `Rerun required · ${run.freshness.reasonCopy}`}
-        />
-      ) : null}
       <Detail label="Role" value={run.role ?? "Unavailable"} />
       <Detail label="Model / reasoning" value={run.model ? `${run.model} · ${run.reasoning ?? "reasoning unavailable"}` : "Unavailable"} />
       <Detail label="Started" value={formatDate(run.startedAt)} />
@@ -242,27 +236,12 @@ function runLabel(run: RuntimeRun) {
 
 function runDetail(run: RuntimeRun) {
   const policy = run.model ? `${run.model} · ${run.reasoning ?? "reasoning unavailable"}` : "Policy unavailable";
-  if (run.freshness && !run.freshness.fresh) {
-    return `Rerun required · ${run.freshness.reasonCopy} · Historical status: ${run.status} · ${policy} · ${formatDuration(run.durationMs)}`;
-  }
   return `${run.status} · ${policy} · ${formatDuration(run.durationMs)}`;
 }
 
 function runTone(run: RuntimeRun): RuntimeEvent["tone"] {
-  if (run.freshness && !run.freshness.fresh) return "warning";
   if (["failed", "cancelled", "interrupted"].includes(run.status)) return "danger";
   return run.status === "running" ? "info" : run.gateResult?.verdict === "REPAIR" ? "warning" : "success";
-}
-
-function eventDetail(event: RuntimeEvent) {
-  if (event.freshness && !event.freshness.fresh) {
-    return `Rerun required · ${event.freshness.reasonCopy} · Historical event: ${event.detail}`;
-  }
-  return event.detail;
-}
-
-function eventTone(event: RuntimeEvent): RuntimeEvent["tone"] {
-  return event.freshness && !event.freshness.fresh ? "warning" : event.tone;
 }
 
 function stageLabel(stage: string) {

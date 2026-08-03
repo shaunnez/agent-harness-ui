@@ -141,7 +141,7 @@ test("parses focused test evidence with candidate-bound rows", () => {
   assert.equal(validateFocusedTestEvidence(evidence, { id: "C1", revisionNumber: 2 }), evidence);
   assert.throws(
     () => validateFocusedTestEvidence(evidence, { id: "C1", revisionNumber: 3 }),
-    /does not match the active candidate revision/i,
+    (error) => error.code === "revision_change",
   );
   assert.throws(
     () => parseFocusedTestEvidence(`<focused-test-evidence>{"candidateId":"C1","candidateRevision":2,"command":"npm test","status":"passed","rows":[{"id":"failed","status":"failed"}]}</focused-test-evidence>`),
@@ -166,14 +166,17 @@ test("derives candidate-bound review gates from structured evidence", () => {
   assert.equal(contradictory.verdict, "REPAIR");
   assert.match(contradictory.blockingReasons[0], /P1/);
   assert.throws(() => parseGateEvidence("PASS", candidate, "dev-review"), /exactly one gate-evidence/i);
-  assert.throws(() => parseGateEvidence(gateOutput(1), candidate, "dev-review"), /does not match/i);
+  assert.throws(
+    () => parseGateEvidence(gateOutput(1), candidate, "dev-review"),
+    (error) => error.code === "revision_change",
+  );
   assert.throws(
     () => parseGateEvidence(
-      gateOutput(2, "REPAIR", [{ severity: "P2", title: "Mixed", detail: "Wrong candidate", candidateId: "C2" }]),
+      gateOutput(2, "REPAIR", [{ severity: "P2", title: "Mixed", detail: "Wrong candidate", candidateId: "C2", candidateRevision: 2 }]),
       candidate,
       "final-review",
     ),
-    /different candidate revision/i,
+    (error) => error.code === "mixed_evidence",
   );
 });
 
@@ -189,7 +192,7 @@ test("rejects generic candidate identity fields at every structured evidence bou
     () => parseFocusedTestEvidence(
       `<focused-test-evidence>{"id":"C1","revisionNumber":2,"command":"npm test","status":"passed","rows":[{"id":"row-1","status":"passed"}]}</focused-test-evidence>`,
     ),
-    /missing_binding/i,
+    (error) => error.code === "missing_binding",
   );
   assert.throws(
     () => parseGateEvidence(
@@ -197,7 +200,7 @@ test("rejects generic candidate identity fields at every structured evidence bou
       { id: "C1", revisionNumber: 2 },
       "dev-review",
     ),
-    /missing_binding/i,
+    (error) => error.code === "missing_binding",
   );
   assert.equal(readExplicitCandidateBinding({ candidateId: "C1", candidateRevision: 0 }).code, "malformed_binding");
   assert.equal(readExplicitCandidateBinding({ candidateId: "C1", candidateRevision: "2" }).code, "malformed_binding");
@@ -289,6 +292,181 @@ test("rejects mixed candidate summaries with the exact stale reason", () => {
   const mixedGateTask = makeRuntimeTask({ runs: [mixedGate] });
   refreshGateFreshness(mixedGateTask);
   assert.equal(mixedGateTask.gateFreshness["dev-review"].reasonCode, "mixed_evidence");
+});
+
+test("rejects mismatched and contradictory persisted Test gate summaries", () => {
+  const focusedTest = {
+    candidateId: "C1",
+    candidateRevision: 2,
+    bindingExplicit: true,
+    command: "npm test",
+    status: "passed",
+    rows: [makeTestRow()],
+  };
+  const cases = [
+    {
+      name: "candidate mismatch",
+      gateResult: makeGateResult({ stage: "test", candidateId: "C2" }),
+      code: "candidate_mismatch",
+    },
+    {
+      name: "revision change",
+      gateResult: makeGateResult({ stage: "test", candidateRevision: 1 }),
+      code: "revision_change",
+    },
+    {
+      name: "wrong stage",
+      gateResult: makeGateResult({ stage: "dev-review" }),
+      code: "contradictory_evidence",
+    },
+    {
+      name: "missing binding",
+      gateResult: { ...makeGateResult({ stage: "test" }), candidateId: undefined, candidateRevision: undefined },
+      code: "missing_binding",
+    },
+    {
+      name: "mixed findings",
+      gateResult: makeGateResult({
+        stage: "test",
+        findings: [
+          {
+            severity: "P2",
+            title: "Other candidate",
+            detail: "This finding is not bound to the Test candidate.",
+            candidateId: "C2",
+            candidateRevision: 2,
+            bindingExplicit: true,
+          },
+        ],
+      }),
+      code: "mixed_evidence",
+    },
+  ];
+
+  for (const item of cases) {
+    const run = makeRuntimeRun({ id: `RUN-${item.code}`, stage: "test", kind: "test", gateResult: item.gateResult });
+    const artifact = makeArtifact({
+      id: `ART-${item.code}`,
+      stage: "test",
+      gateResult: item.gateResult,
+      focusedTest,
+    });
+    const task = makeRuntimeTask({ runs: [run], artifacts: [artifact] });
+    attachRunArtifact(task, run.id, artifact);
+    assert.equal(task.gateFreshness.test.fresh, false, item.name);
+    assert.equal(task.gateFreshness.test.reasonCode, item.code, item.name);
+  }
+});
+
+test("structured ingestion preserves mixed, revision-change, and candidate-mismatch reason codes", () => {
+  const candidate = { id: "C1", revisionNumber: 2 };
+  const oldRevision = gateOutput(1);
+  const otherCandidate = gateOutput(2).replace('"candidateId":"C1"', '"candidateId":"C2"');
+  const mixedGate = gateOutput(2, "PASS", [
+    {
+      severity: "P2",
+      title: "Old revision",
+      detail: "Retained historical finding.",
+      candidateId: "C1",
+      candidateRevision: 1,
+    },
+  ]);
+  const mixedTest = `<focused-test-evidence>${JSON.stringify({
+    candidateId: "C1",
+    candidateRevision: 2,
+    command: "npm test",
+    status: "passed",
+    rows: [makeTestRow(), makeTestRow({ id: "row-old", candidateRevision: 1 })],
+  })}</focused-test-evidence>`;
+
+  assert.throws(() => parseGateEvidence(oldRevision, candidate, "dev-review"), (error) => error.code === "revision_change");
+  assert.throws(() => parseGateEvidence(otherCandidate, candidate, "dev-review"), (error) => error.code === "candidate_mismatch");
+  assert.throws(() => parseGateEvidence(mixedGate, candidate, "dev-review"), (error) => error.code === "mixed_evidence");
+  assert.throws(() => parseFocusedTestEvidence(mixedTest), (error) => error.code === "mixed_evidence");
+
+  const parsedOldTest = parseFocusedTestEvidence(
+    `<focused-test-evidence>${JSON.stringify({
+      candidateId: "C1",
+      candidateRevision: 1,
+      command: "npm test",
+      status: "passed",
+      rows: [makeTestRow({ candidateRevision: 1 })],
+    })}</focused-test-evidence>`,
+  );
+  assert.throws(
+    () => validateFocusedTestEvidence(parsedOldTest, candidate),
+    (error) => error.code === "revision_change",
+  );
+});
+
+test("persists exact structured-evidence reason codes through a failed review run", async () => {
+  const cases = [
+    { name: "old revision", output: gateOutput(1), code: "revision_change" },
+    {
+      name: "mixed findings",
+      output: gateOutput(2, "PASS", [
+        {
+          severity: "P2",
+          title: "Old revision",
+          detail: "Retained historical finding.",
+          candidateId: "C1",
+          candidateRevision: 1,
+        },
+      ]),
+      code: "mixed_evidence",
+    },
+  ];
+
+  for (const item of cases) {
+    const directory = await mkdtemp(path.join(os.tmpdir(), `agent-harness-evidence-${item.code}-`));
+    try {
+      const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+      await store.init();
+      const task = await store.create({
+        title: `Reject ${item.name}`,
+        description: "Persist the exact structured evidence failure.",
+        repositoryPath: directory,
+        workflow: "implement",
+        priority: "medium",
+      });
+      await store.update(task.id, (draft) => {
+        draft.status = "ready-for-review";
+        draft.currentStage = "dev-review";
+        draft.candidates = [{
+          id: "C1",
+          revisionNumber: 2,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: "b".repeat(40),
+          branch: "agent-harness/ah-005-c1",
+          repositoryRoot: directory,
+          worktreePath: directory,
+          status: "under_review",
+          createdAt: "2026-08-01T12:00:00.000Z",
+          updatedAt: "2026-08-01T12:00:00.000Z",
+          revisions: [],
+        }];
+      });
+      const orchestrator = new TaskOrchestrator(store, {
+        getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+        worktreeManager: { verifyCandidate: async () => {} },
+        runCodex: async () => ({
+          finalText: item.output,
+          usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+        }),
+      });
+
+      assert.equal(await orchestrator.start(task.id, "review"), true);
+      const finished = await waitForStatus(store, task.id, "repair-required");
+      const run = finished.runs.find((entry) => entry.stage === "dev-review");
+      assert.equal(run.evidenceError.code, item.code, item.name);
+      assert.equal(run.evidenceError.copy, RUNTIME_FRESHNESS_REASONS[item.code], item.name);
+      assert.equal(run.freshness.reasonCode, item.code, item.name);
+      assert.equal(finished.gateFreshness["dev-review"].reasonCode, item.code, item.name);
+    } finally {
+      await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    }
+  }
 });
 
 test("filters focused Test rows to the exact candidate and retains invalid rows for audit", () => {

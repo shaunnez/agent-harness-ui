@@ -1227,7 +1227,10 @@ export function evaluationVerdict(stageId, result, focusedTestEvidence = null, s
 
 function structuredEvidenceError(error) {
   const message = String(error?.message ?? "Structured candidate evidence was invalid.");
-  const code = message.includes("missing_binding") || /missing explicit candidate identity|must include a candidateId|must include a positive candidateRevision/i.test(message)
+  const typedCode = typeof error?.code === "string" && RUNTIME_FRESHNESS_REASONS[error.code]
+    ? error.code
+    : null;
+  const code = typedCode ?? (message.includes("missing_binding") || /missing explicit candidate identity|must include a candidateId|must include a positive candidateRevision/i.test(message)
     ? "missing_binding"
     : message.includes("malformed_binding") || /invalid|malformed|explicit candidate identity fields/i.test(message)
       ? "malformed_binding"
@@ -1235,7 +1238,7 @@ function structuredEvidenceError(error) {
         ? "candidate_mismatch"
         : /contradict/i.test(message)
           ? "contradictory_evidence"
-          : "malformed_binding";
+          : "malformed_binding");
   return { code, copy: RUNTIME_FRESHNESS_REASONS[code] };
 }
 

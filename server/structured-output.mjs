@@ -1,5 +1,22 @@
 import path from "node:path";
-import { readExplicitCandidateBinding } from "./run-activity.mjs";
+import { readExplicitCandidateBinding, RUNTIME_FRESHNESS_REASONS } from "./run-activity.mjs";
+
+function candidateEvidenceError(code, detail = null) {
+  const reasonCode = Object.prototype.hasOwnProperty.call(RUNTIME_FRESHNESS_REASONS, code)
+    ? code
+    : "malformed_binding";
+  const error = new Error(detail ?? RUNTIME_FRESHNESS_REASONS[reasonCode]);
+  error.name = "CandidateEvidenceError";
+  error.code = reasonCode;
+  error.copy = RUNTIME_FRESHNESS_REASONS[reasonCode];
+  return error;
+}
+
+function compareEvidenceBinding(binding, candidate) {
+  if (binding.candidateId !== candidate.id) return "candidate_mismatch";
+  if (binding.candidateRevision !== candidate.revisionNumber) return "revision_change";
+  return null;
+}
 
 function parseLabelledJson(text, label) {
   const expression = new RegExp(`<${label}>\\s*([\\s\\S]*?)\\s*</${label}>`, "i");
@@ -49,7 +66,7 @@ export function parseGrillQuestions(text) {
 export function parseFocusedTestEvidence(text) {
   const value = parseLabelledJson(text, "focused-test-evidence");
   const binding = readExplicitCandidateBinding(value);
-  if (!binding.valid) throw new Error(`Focused test evidence has ${binding.code}: ${binding.copy}`);
+  if (!binding.valid) throw candidateEvidenceError(binding.code);
   if (!value.command?.trim()) throw new Error("Focused test evidence must include a command.");
   const rows = Array.isArray(value.rows) ? value.rows : [];
   if (!rows.length) throw new Error("Focused test evidence must include at least one row.");
@@ -65,9 +82,17 @@ export function parseFocusedTestEvidence(text) {
     durationMs: normalizeDuration(value.durationMs),
     rows: rows.map((row, rowIndex) => normalizeFocusedTestRow(row, rowIndex, value)),
   };
+  const identities = new Set([
+    `${normalized.candidateId}:${normalized.candidateRevision}`,
+    ...normalized.rows.map((row) => `${row.candidateId}:${row.candidateRevision}`),
+  ]);
+  if (identities.size > 1) throw candidateEvidenceError("mixed_evidence");
   const derivedStatus = normalized.rows.every((row) => row.status === "passed") ? "passed" : "failed";
   if (normalized.status !== derivedStatus) {
-    throw new Error(`Focused test evidence status ${normalized.status} contradicts its ${derivedStatus} rows.`);
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      `Focused test evidence status ${normalized.status} contradicts its ${derivedStatus} rows.`,
+    );
   }
   return normalized;
 }
@@ -75,16 +100,16 @@ export function parseFocusedTestEvidence(text) {
 export function validateFocusedTestEvidence(evidence, candidate) {
   if (!candidate?.id || !Number.isInteger(candidate.revisionNumber)) throw new Error("Focused test evidence requires an active candidate identity.");
   if (!Array.isArray(evidence?.rows)) throw new Error("Focused test evidence must include a rows array.");
-  if (evidence?.bindingExplicit !== true) throw new Error("Focused test evidence must use explicit candidate identity fields.");
+  if (evidence?.bindingExplicit !== true) throw candidateEvidenceError("missing_binding");
   const implicitRow = evidence.rows.find((row) => row?.bindingExplicit !== true);
-  if (implicitRow) throw new Error(`Focused test row ${implicitRow.id} must use explicit candidate identity fields.`);
-  if (evidence.candidateId !== candidate.id || evidence.candidateRevision !== candidate.revisionNumber) {
-    throw new Error("Focused test evidence does not match the active candidate revision.");
-  }
-  const mismatchedRow = evidence.rows.find(
-    (row) => row.candidateId !== candidate.id || row.candidateRevision !== candidate.revisionNumber,
-  );
-  if (mismatchedRow) throw new Error(`Focused test row ${mismatchedRow.id} does not match the active candidate revision.`);
+  if (implicitRow) throw candidateEvidenceError("missing_binding");
+  const identities = new Set([
+    `${evidence.candidateId}:${evidence.candidateRevision}`,
+    ...evidence.rows.map((row) => `${row.candidateId}:${row.candidateRevision}`),
+  ]);
+  if (identities.size > 1) throw candidateEvidenceError("mixed_evidence");
+  const identityReason = compareEvidenceBinding(evidence, candidate);
+  if (identityReason) throw candidateEvidenceError(identityReason);
   return evidence;
 }
 
@@ -106,12 +131,9 @@ export function parseGateEvidence(text, candidate, stageId) {
     throw new Error("Gate evidence requires an active candidate identity.");
   }
   const binding = readExplicitCandidateBinding(value);
-  if (!binding.valid) throw new Error(`Gate evidence has ${binding.code}: ${binding.copy}`);
+  if (!binding.valid) throw candidateEvidenceError(binding.code);
   const candidateId = binding.candidateId;
   const candidateRevision = binding.candidateRevision;
-  if (candidateId !== candidate.id || candidateRevision !== candidate.revisionNumber) {
-    throw new Error("Gate evidence does not match the active candidate revision.");
-  }
   if (!["PASS", "REPAIR"].includes(value?.verdict)) {
     throw new Error("Gate evidence verdict must be PASS or REPAIR.");
   }
@@ -124,25 +146,30 @@ export function parseGateEvidence(text, candidate, stageId) {
     const title = String(finding?.title ?? "").trim().slice(0, 500);
     const detail = String(finding?.detail ?? "").trim().slice(0, 4_000);
     if (!title || !detail) throw new Error(`Gate finding ${index + 1} is missing its title or detail.`);
-    const findingExplicitBinding =
-      Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateId") &&
-      Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateRevision");
-    const findingCandidateId = String(finding?.candidateId ?? candidateId).trim();
-    const findingCandidateRevision = finding?.candidateRevision ?? candidateRevision;
-    if (findingCandidateId !== candidate.id || findingCandidateRevision !== candidate.revisionNumber) {
-      throw new Error(`Gate finding ${index + 1} is bound to a different candidate revision.`);
-    }
+    const hasFindingCandidateId = Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateId");
+    const hasFindingCandidateRevision = Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateRevision");
+    const findingExplicitBinding = hasFindingCandidateId && hasFindingCandidateRevision;
+    if (hasFindingCandidateId !== hasFindingCandidateRevision) throw candidateEvidenceError("malformed_binding");
+    const findingBinding = findingExplicitBinding ? readExplicitCandidateBinding(finding) : binding;
+    if (!findingBinding.valid) throw candidateEvidenceError(findingBinding.code);
     return {
       severity,
       title,
       detail,
       file: finding?.file == null ? null : String(finding.file).trim().slice(0, 1_000),
       line: Number.isInteger(finding?.line) && finding.line > 0 ? finding.line : null,
-      candidateId,
-      candidateRevision,
+      candidateId: findingBinding.candidateId,
+      candidateRevision: findingBinding.candidateRevision,
       bindingExplicit: findingExplicitBinding,
     };
   });
+  const identities = new Set([
+    `${candidateId}:${candidateRevision}`,
+    ...findings.map((finding) => `${finding.candidateId}:${finding.candidateRevision}`),
+  ]);
+  if (identities.size > 1) throw candidateEvidenceError("mixed_evidence");
+  const identityReason = compareEvidenceBinding(binding, candidate);
+  if (identityReason) throw candidateEvidenceError(identityReason);
   const blockingFindings = findings.filter((finding) => finding.severity === "P0" || finding.severity === "P1");
   const verdict = value.verdict === "PASS" && blockingFindings.length === 0 && findings.every((finding) => finding.bindingExplicit)
     ? "PASS"
@@ -300,17 +327,12 @@ function dependsOn(item, targetId, byId, seen = new Set()) {
 }
 
 function normalizeFocusedTestRow(row, rowIndex, parent) {
-  const explicitBinding =
-    Object.prototype.hasOwnProperty.call(row ?? {}, "candidateId") &&
-    Object.prototype.hasOwnProperty.call(row ?? {}, "candidateRevision");
-  const candidateId = String(row?.candidateId ?? parent.candidateId ?? "").trim();
-  const candidateRevision = Number.isInteger(row?.candidateRevision)
-    ? row.candidateRevision
-    : parent.candidateRevision;
-  if (!candidateId) throw new Error(`Focused test row ${rowIndex + 1} must include a candidateId.`);
-  if (!Number.isInteger(candidateRevision) || candidateRevision < 1) {
-    throw new Error(`Focused test row ${rowIndex + 1} must include a positive candidateRevision.`);
-  }
+  const hasCandidateId = Object.prototype.hasOwnProperty.call(row ?? {}, "candidateId");
+  const hasCandidateRevision = Object.prototype.hasOwnProperty.call(row ?? {}, "candidateRevision");
+  const explicitBinding = hasCandidateId && hasCandidateRevision;
+  if (hasCandidateId !== hasCandidateRevision) throw candidateEvidenceError("malformed_binding");
+  const binding = explicitBinding ? readExplicitCandidateBinding(row) : readExplicitCandidateBinding(parent);
+  if (!binding.valid) throw candidateEvidenceError(binding.code);
   if (!["passed", "failed"].includes(row?.status)) {
     throw new Error(`Focused test row ${rowIndex + 1} status must be passed or failed.`);
   }
@@ -325,8 +347,8 @@ function normalizeFocusedTestRow(row, rowIndex, parent) {
   return {
     id: String(row?.id ?? `row-${rowIndex + 1}`).trim() || `row-${rowIndex + 1}`,
     bindingExplicit: explicitBinding,
-    candidateId,
-    candidateRevision,
+    candidateId: binding.candidateId,
+    candidateRevision: binding.candidateRevision,
     command: String(row?.command ?? parent.command ?? "").trim().slice(0, 2_000),
     status,
     durationMs: normalizeDuration(row?.durationMs),

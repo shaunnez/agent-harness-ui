@@ -366,14 +366,62 @@ function evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId) {
   if (summary.status !== "passed" || failedRows.length || recordedFailedRows.length) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "failed_execution", null);
   }
-  if (run.gateResult && run.gateResult.verdict !== "PASS") {
-    const code = run.gateResult.blockingReasons?.some((reason) => /command failed|test/i.test(reason))
+  const gateFailure = evaluateTestGateResult(run.gateResult, target, sourceRunId, sourceArtifactId);
+  if (gateFailure) return gateFailure;
+  const focusedTest = focusedTestFromRunSummary(summary, artifact?.focusedTest ?? null);
+  return createFreshness("test", target, sourceRunId, sourceArtifactId, "fresh", focusedTest);
+}
+
+function evaluateTestGateResult(summary, target, sourceRunId, sourceArtifactId) {
+  if (!summary || typeof summary !== "object") {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "missing_authoritative_summary", null);
+  }
+  const summaryBinding = readExplicitCandidateBinding(summary);
+  if (!summaryBinding.valid) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, summaryBinding.code, null);
+  }
+  const identityReason = compareCandidateBinding(summaryBinding, target);
+  if (identityReason) return createFreshness("test", target, sourceRunId, sourceArtifactId, identityReason, null);
+  if (summary.stage !== "test" || !["PASS", "REPAIR"].includes(summary.verdict)) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  }
+  if (!Array.isArray(summary.blockingReasons) || !Array.isArray(summary.findings)) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  }
+
+  const findingBindings = summary.findings.map((finding) => ({
+    binding: readExplicitCandidateBinding(finding),
+    explicit: finding?.bindingExplicit !== false && hasExplicitCandidateFields(finding),
+  }));
+  const identities = new Set([
+    `${summaryBinding.candidateId}:${summaryBinding.candidateRevision}`,
+    ...findingBindings
+      .filter(({ binding }) => binding.valid)
+      .map(({ binding }) => `${binding.candidateId}:${binding.candidateRevision}`),
+  ]);
+  if (identities.size > 1) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "mixed_evidence", null);
+  }
+  if (findingBindings.some(({ explicit }) => !explicit)) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "missing_binding", null);
+  }
+  const invalidFinding = findingBindings.find(({ binding }) => !binding.valid);
+  if (invalidFinding) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, invalidFinding.binding.code, null);
+  }
+
+  const blockingFindings = summary.findings.some((finding) => ["P0", "P1"].includes(finding?.severity));
+  const hasBlockingReasons = summary.blockingReasons.length > 0;
+  if (summary.reportedVerdict === "PASS" && (summary.verdict !== "PASS" || hasBlockingReasons || blockingFindings)) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  }
+  if (summary.verdict !== "PASS" || hasBlockingReasons || blockingFindings) {
+    const code = summary.blockingReasons.some((reason) => /command failed|test/i.test(reason))
       ? "failed_execution"
       : "repair_required";
     return createFreshness("test", target, sourceRunId, sourceArtifactId, code, null);
   }
-  const focusedTest = focusedTestFromRunSummary(summary, artifact?.focusedTest ?? null);
-  return createFreshness("test", target, sourceRunId, sourceArtifactId, "fresh", focusedTest);
+  return null;
 }
 
 function focusedTestFromRunSummary(summary, artifactEvidence) {
