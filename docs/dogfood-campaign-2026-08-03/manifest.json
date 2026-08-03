@@ -1,0 +1,370 @@
+{
+  "schemaVersion": 1,
+  "campaign": "2026-08-03",
+  "frozenBaseSha": "4c9d56813ae1787f9099d24efd5a8f67ed90234f",
+  "methodology": "Nine bounded implementation tasks: three identical issue briefs under three hidden policy variants. Labels are randomized; execution-policy identities and task IDs are excluded. Candidate diffs remain unredacted. No candidate was merged.",
+  "verificationCommands": [
+    "npm run lint",
+    "npm run typecheck",
+    "npm test",
+    "npm run build",
+    "npm run test:sites",
+    "git diff --check"
+  ],
+  "candidates": [
+    {
+      "label": "A",
+      "issueId": "dashboard-progress",
+      "briefHash": "124231b22f57d1404b1ca469b3d0c9f7b9435e88e6c9074679d3abdea7578720",
+      "frozenBaseSha": "4c9d56813ae1787f9099d24efd5a8f67ed90234f",
+      "terminalState": "blocked",
+      "candidateRevision": null,
+      "candidateHead": null,
+      "candidateStatus": null,
+      "metrics": {
+        "status": "blocked",
+        "stage": "implement",
+        "wallTimeMs": 2687742,
+        "attemptsByStage": {
+          "triage": 1,
+          "specification": 1,
+          "plan": 2,
+          "implement": 3
+        },
+        "repairCount": 0,
+        "usage": {
+          "inputTokens": 2187310,
+          "cachedInputTokens": 1983232,
+          "cacheWriteTokens": 0,
+          "outputTokens": 32913,
+          "totalTokens": 2220223,
+          "apiRateEstimateUsd": 0.184421,
+          "workCredits": 2.999396,
+          "pricingVersion": "2026-08-02"
+        },
+        "cacheRate": 0.9066990961500656,
+        "context": {
+          "characters": 61976,
+          "estimatedTokens": 15498
+        }
+      },
+      "gates": []
+    },
+    {
+      "label": "B",
+      "issueId": "agent-skill-contracts",
+      "briefHash": "ad22f5c77a69b5245e4ef9ad0ce878811b7fc81375c7245352e27dcbbabff32c",
+      "frozenBaseSha": "4c9d56813ae1787f9099d24efd5a8f67ed90234f",
+      "terminalState": "blocked",
+      "candidateRevision": 1,
+      "candidateHead": "4e3b1d550d51fa3a7c65c0e3742e5af952d302c4",
+      "candidateStatus": "ready_for_review",
+      "metrics": {
+        "status": "blocked",
+        "stage": "dev-review",
+        "wallTimeMs": 4145343,
+        "attemptsByStage": {
+          "triage": 1,
+          "specification": 1,
+          "plan": 1,
+          "implement": 3,
+          "dev-review": 3
+        },
+        "repairCount": 0,
+        "usage": {
+          "inputTokens": 14145624,
+          "cachedInputTokens": 13419520,
+          "cacheWriteTokens": 0,
+          "outputTokens": 118206,
+          "totalTokens": 14263830,
+          "apiRateEstimateUsd": 0.9793969999999999,
+          "workCredits": 13.886460000000001,
+          "pricingVersion": "2026-08-02"
+        },
+        "cacheRate": 0.9486693552719908,
+        "context": {
+          "characters": 146438,
+          "estimatedTokens": 36614
+        }
+      },
+      "gates": []
+    },
+    {
+      "label": "C",
+      "issueId": "agent-skill-contracts",
+      "briefHash": "ad22f5c77a69b5245e4ef9ad0ce878811b7fc81375c7245352e27dcbbabff32c",
+      "frozenBaseSha": "4c9d56813ae1787f9099d24efd5a8f67ed90234f",
+      "terminalState": "blocked",
+      "candidateRevision": null,
+      "candidateHead": null,
+      "candidateStatus": null,
+      "metrics": {
+        "status": "blocked",
+        "stage": "implement",
+        "wallTimeMs": 5168118,
+        "attemptsByStage": {
+          "triage": 1,
+          "specification": 1,
+          "plan": 2,
+          "implement": 3
+        },
+        "repairCount": 0,
+        "usage": {
+          "inputTokens": 6900065,
+          "cachedInputTokens": 6475008,
+          "cacheWriteTokens": 0,
+          "outputTokens": 80231,
+          "totalTokens": 6980296,
+          "apiRateEstimateUsd": 0.778371,
+          "workCredits": 13.982239000000002,
+          "pricingVersion": "2026-08-02"
+        },
+        "cacheRate": 0.9383981165394819,
+        "context": {
+          "characters": 116438,
+          "estimatedTokens": 29113
+        }
+      },
+      "gates": []
+    },
+    {
+      "label": "D",
+      "issueId": "dashboard-progress",
+      "briefHash": "124231b22f57d1404b1ca469b3d0c9f7b9435e88e6c9074679d3abdea7578720",
+      "frozenBaseSha": "4c9d56813ae1787f9099d24efd5a8f67ed90234f",
+      "terminalState": "blocked",
+      "candidateRevision": null,
+      "candidateHead": null,
+      "candidateStatus": null,
+      "metrics": {
+        "status": "blocked",
+        "stage": "implement",
+        "wallTimeMs": 2604317,
+        "attemptsByStage": {
+          "triage": 1,
+          "specification": 1,
+          "plan": 1,
+          "implement": 3
+        },
+        "repairCount": 0,
+        "usage": {
+          "inputTokens": 2628094,
+          "cachedInputTokens": 2335488,
+          "cacheWriteTokens": 0,
+          "outputTokens": 50716,
+          "totalTokens": 2678810,
+          "apiRateEstimateUsd": 0.49393699999999996,
+          "workCredits": 10.208174,
+          "pricingVersion": "2026-08-02"
+        },
+        "cacheRate": 0.8886622776810875,
+        "context": {
+          "characters": 75797,
+          "estimatedTokens": 18953
+        }
+      },
+      "gates": []
+    },
+    {
+      "label": "E",
+      "issueId": "agent-skill-contracts",
+      "briefHash": "ad22f5c77a69b5245e4ef9ad0ce878811b7fc81375c7245352e27dcbbabff32c",
+      "frozenBaseSha": "4c9d56813ae1787f9099d24efd5a8f67ed90234f",
+      "terminalState": "blocked",
+      "candidateRevision": null,
+      "candidateHead": null,
+      "candidateStatus": null,
+      "metrics": {
+        "status": "blocked",
+        "stage": "implement",
+        "wallTimeMs": 2513581,
+        "attemptsByStage": {
+          "triage": 1,
+          "specification": 1,
+          "plan": 1,
+          "implement": 3
+        },
+        "repairCount": 0,
+        "usage": {
+          "inputTokens": 3688461,
+          "cachedInputTokens": 3354368,
+          "cacheWriteTokens": 0,
+          "outputTokens": 57729,
+          "totalTokens": 3746190,
+          "apiRateEstimateUsd": 0.641528,
+          "workCredits": 12.978278999999999,
+          "pricingVersion": "2026-08-02"
+        },
+        "cacheRate": 0.9094221139928008,
+        "context": {
+          "characters": 82258,
+          "estimatedTokens": 20568
+        }
+      },
+      "gates": []
+    },
+    {
+      "label": "F",
+      "issueId": "structured-activity",
+      "briefHash": "6a6b46e06ad20779988e319d7e3f71cdf84de32f22bebe2e72f88f712a564943",
+      "frozenBaseSha": "4c9d56813ae1787f9099d24efd5a8f67ed90234f",
+      "terminalState": "blocked",
+      "candidateRevision": null,
+      "candidateHead": null,
+      "candidateStatus": null,
+      "metrics": {
+        "status": "blocked",
+        "stage": "implement",
+        "wallTimeMs": 2701035,
+        "attemptsByStage": {
+          "triage": 1,
+          "specification": 1,
+          "plan": 2,
+          "implement": 3
+        },
+        "repairCount": 0,
+        "usage": {
+          "inputTokens": 4098672,
+          "cachedInputTokens": 3727872,
+          "cacheWriteTokens": 0,
+          "outputTokens": 68414,
+          "totalTokens": 4167086,
+          "apiRateEstimateUsd": 0.646513,
+          "workCredits": 12.825108,
+          "pricingVersion": "2026-08-02"
+        },
+        "cacheRate": 0.9095316726978885,
+        "context": {
+          "characters": 86621,
+          "estimatedTokens": 21658
+        }
+      },
+      "gates": []
+    },
+    {
+      "label": "G",
+      "issueId": "structured-activity",
+      "briefHash": "6a6b46e06ad20779988e319d7e3f71cdf84de32f22bebe2e72f88f712a564943",
+      "frozenBaseSha": "4c9d56813ae1787f9099d24efd5a8f67ed90234f",
+      "terminalState": "blocked",
+      "candidateRevision": null,
+      "candidateHead": null,
+      "candidateStatus": null,
+      "metrics": {
+        "status": "blocked",
+        "stage": "implement",
+        "wallTimeMs": 2883610,
+        "attemptsByStage": {
+          "triage": 1,
+          "specification": 1,
+          "plan": 1,
+          "implement": 3
+        },
+        "repairCount": 0,
+        "usage": {
+          "inputTokens": 6294241,
+          "cachedInputTokens": 5871360,
+          "cacheWriteTokens": 0,
+          "outputTokens": 72817,
+          "totalTokens": 6367058,
+          "apiRateEstimateUsd": 0.737472,
+          "workCredits": 13.796963,
+          "pricingVersion": "2026-08-02"
+        },
+        "cacheRate": 0.9328146157733712,
+        "context": {
+          "characters": 98877,
+          "estimatedTokens": 24722
+        }
+      },
+      "gates": []
+    },
+    {
+      "label": "H",
+      "issueId": "structured-activity",
+      "briefHash": "6a6b46e06ad20779988e319d7e3f71cdf84de32f22bebe2e72f88f712a564943",
+      "frozenBaseSha": "4c9d56813ae1787f9099d24efd5a8f67ed90234f",
+      "terminalState": "blocked",
+      "candidateRevision": null,
+      "candidateHead": null,
+      "candidateStatus": null,
+      "metrics": {
+        "status": "blocked",
+        "stage": "implement",
+        "wallTimeMs": 3399547,
+        "attemptsByStage": {
+          "triage": 1,
+          "specification": 1,
+          "plan": 1,
+          "implement": 3
+        },
+        "repairCount": 0,
+        "usage": {
+          "inputTokens": 6972561,
+          "cachedInputTokens": 6460160,
+          "cacheWriteTokens": 0,
+          "outputTokens": 92652,
+          "totalTokens": 7065213,
+          "apiRateEstimateUsd": 0.564419,
+          "workCredits": 8.571645,
+          "pricingVersion": "2026-08-02"
+        },
+        "cacheRate": 0.9265117938731551,
+        "context": {
+          "characters": 116529,
+          "estimatedTokens": 29137
+        }
+      },
+      "gates": []
+    },
+    {
+      "label": "I",
+      "issueId": "dashboard-progress",
+      "briefHash": "124231b22f57d1404b1ca469b3d0c9f7b9435e88e6c9074679d3abdea7578720",
+      "frozenBaseSha": "4c9d56813ae1787f9099d24efd5a8f67ed90234f",
+      "terminalState": "blocked",
+      "candidateRevision": 2,
+      "candidateHead": "d4bb3788ab75d2c2012e2ed94bac2b053233489a",
+      "candidateStatus": "ready_for_review",
+      "metrics": {
+        "status": "blocked",
+        "stage": "dev-review",
+        "wallTimeMs": 3254052,
+        "attemptsByStage": {
+          "triage": 1,
+          "specification": 1,
+          "plan": 1,
+          "implement": 3,
+          "dev-review": 3
+        },
+        "repairCount": 1,
+        "usage": {
+          "inputTokens": 11275127,
+          "cachedInputTokens": 10573824,
+          "cacheWriteTokens": 0,
+          "outputTokens": 77868,
+          "totalTokens": 11352995,
+          "apiRateEstimateUsd": 3.7203690000000003,
+          "workCredits": 52.753147,
+          "pricingVersion": "2026-08-02"
+        },
+        "cacheRate": 0.9378008779856759,
+        "context": {
+          "characters": 126840,
+          "estimatedTokens": 31716
+        }
+      },
+      "gates": [
+        {
+          "stage": "dev-review",
+          "candidateRevision": 1,
+          "verdict": "REPAIR",
+          "startedAt": null,
+          "completedAt": "2026-08-03T02:23:09.914Z",
+          "durationMs": null,
+          "focusedTest": null
+        }
+      ]
+    }
+  ]
+}
