@@ -53,7 +53,11 @@ export function isArtifactFresh(
 ) {
   const candidateBound = candidateBoundStages.includes(artifact.stage);
   if (!artifact.candidateId || artifact.candidateRevision == null || !candidate) return !candidateBound;
-  if (!freshness) return artifact.candidateId === candidate.id && artifact.candidateRevision === candidate.revisionNumber;
+  if (!freshness) {
+    return artifact.stage === "approval" &&
+      artifact.candidateId === candidate.id &&
+      artifact.candidateRevision === candidate.revisionNumber;
+  }
   if (!freshness.fresh) return false;
   if (
     freshness.target?.candidateId !== candidate.id ||

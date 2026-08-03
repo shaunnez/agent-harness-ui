@@ -38,6 +38,7 @@ import { RuntimeStagePresentation } from "./runtime/RuntimeStagePresentation";
 import { RuntimeWorkspaceFooter } from "./runtime/RuntimeWorkspaceFooter";
 import {
   getRuntimeStageSummary,
+  getRuntimeArtifactFreshness,
   isArtifactFresh,
   isStageComplete,
   isStageInvalidatedByRepair,
@@ -91,12 +92,16 @@ export function RuntimeTaskWorkspace({
   );
   const viewedStage = workflowStages[viewedIndex];
   if (!viewedStage) throw new Error(`Unknown workflow stage: ${viewedStageId}`);
+  const candidate = task.candidates?.at(-1);
   const stageArtifact = [...task.artifacts].reverse().find((artifact) => artifact.stage === viewedStageId);
+  const stageArtifactFreshness = stageArtifact ? getRuntimeArtifactFreshness(task, stageArtifact) : null;
+  const stageArtifactIsFresh = stageArtifact
+    ? isArtifactFresh(stageArtifact, candidate, stageArtifactFreshness)
+    : true;
   const state = toTaskRunState(task.status);
   const viewedStageStopped =
     viewedStageId === task.currentStage && ["failed", "cancelled", "blocked"].includes(task.status);
   const repoName = task.repositoryPath.split(/[\\/]/).filter(Boolean).at(-1) ?? task.repositoryPath;
-  const candidate = task.candidates?.at(-1);
   const runningPackages = task.workPackages?.filter((item) => item.status === "running") ?? [];
   const worktreeInventory = task.worktreeInventory ?? [];
   const accessBoundary = getAccessBoundaryCopy(task);
@@ -363,8 +368,10 @@ export function RuntimeTaskWorkspace({
               <div className="runtime-stage-heading__title">
                 <h2>{stageSummary.title}</h2>
                 {historical ? <span className="badge badge--blue">Recorded history</span> : null}
-                {stageArtifact && !isArtifactFresh(stageArtifact, candidate) ? (
-                  <span className="badge badge--yellow">Stale after repair</span>
+                {stageArtifact && !stageArtifactIsFresh ? (
+                  <span className="badge badge--yellow">
+                    Rerun required · {stageArtifactFreshness?.reasonCopy ?? "Artifact evidence is not authoritative for the active candidate."}
+                  </span>
                 ) : null}
               </div>
               <p>{stageSummary.detail}</p>
@@ -529,25 +536,31 @@ export function RuntimeTaskWorkspace({
             <InspectorSection title="Living artifacts" meta={`${task.artifacts.length} retained`}>
               <div className="runtime-artifact-list">
                 {task.artifacts.length ? (
-                  [...task.artifacts].reverse().map((artifact) => (
-                    <button
-                      type="button"
-                      key={artifact.id}
-                      onClick={() => {
-                        selectViewedStage(artifact.stage);
-                        openRuntimeArtifact(artifact);
-                      }}
-                    >
-                      <FileCode size={15} />
-                      <span>
-                        <strong>{artifact.name}</strong>
-                        <small>
-                          {workflowStages.find((stage) => stage.id === artifact.stage)?.label}
-                          {!isArtifactFresh(artifact, candidate) ? " \u00b7 stale" : ""}
-                        </small>
-                      </span>
-                    </button>
-                  ))
+                  [...task.artifacts].reverse().map((artifact) => {
+                    const freshness = getRuntimeArtifactFreshness(task, artifact);
+                    const fresh = isArtifactFresh(artifact, candidate, freshness);
+                    return (
+                      <button
+                        type="button"
+                        key={artifact.id}
+                        onClick={() => {
+                          selectViewedStage(artifact.stage);
+                          openRuntimeArtifact(artifact);
+                        }}
+                      >
+                        <FileCode size={15} />
+                        <span>
+                          <strong>{artifact.name}</strong>
+                          <small>
+                            {workflowStages.find((stage) => stage.id === artifact.stage)?.label}
+                            {!fresh
+                              ? ` · stale · ${freshness?.reasonCopy ?? "Artifact evidence is not authoritative for the active candidate."}`
+                              : ""}
+                          </small>
+                        </span>
+                      </button>
+                    );
+                  })
                 ) : (
                   <small>Artifacts appear as stage agents complete.</small>
                 )}

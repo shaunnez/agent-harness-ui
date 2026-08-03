@@ -649,5 +649,6 @@ function durationBetween(startedAt, completedAt) {
 }
 
 function isTimeoutRun(run) {
-  return ["timed-out", "timed_out", "timeout"].includes(run.status) || /\btime(?:d)?\s*out\b|\btimeout\b/i.test(String(run.error ?? ""));
+  return ["timed-out", "timed_out", "timeout"].includes(run.status) ||
+    /\btime(?:d)?\s*out\b|\btimeout\b|\bcodex run exceeded\s+\d+(?:\.\d+)?\s+seconds?\b/i.test(String(run.error ?? ""));
 }

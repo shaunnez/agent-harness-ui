@@ -1,104 +1,91 @@
 # AH-005 browser verification handoff
 
-Status: **blocked; not READY**. This is the S4 qualification handoff. The
-assembled source candidate has not passed the required whole-candidate gates,
-and no approval, merge, push, or external-service action was performed.
+Status: **repair in progress; not READY**. This handoff is bound to the known
+input candidate below. The Repair agent did not run browser QA, commit, approve,
+merge, push, or contact an external service. The harness must create a new
+candidate revision for the uncommitted repair before any downstream gate can be
+fresh.
 
-## Candidate and package identity
-
-The exact task base and dependency closure verified in this slice are:
+## Candidate and repair identity
 
 | Field | Value |
 | --- | --- |
 | Task | `AH-005` |
-| Slice base SHA | `1591dca9869f50e9fbad20253f8100348463f9eb` |
-| S1 commit | `014e0f956f731b1254404481f768bbf43b01ec3b` |
-| S2 commit | `328a87182a5a4db15e2a3a90c33c9f4dde8269d1` |
-| S3 commit / pre-S4 assembled SHA | `0c3c7a9d320b4af73e92581c1b0424c754fe9abf` |
-| Candidate ID / revision | Not persisted in this isolated slice; do not infer from the branch name |
-| Fresh Dev Review run ID | None available |
-| Fresh Test run ID | None available |
-| Fresh Final Review run ID | None available |
-| Final S4 candidate SHA | Harness-owned commit not yet available |
+| Exact task base | `1591dca9869f50e9fbad20253f8100348463f9eb` |
+| Reviewed input candidate | `C1` revision `2` |
+| Reviewed input candidate SHA | `b13fe891c388a2b20beaa7cccddb83c93e5f5b09` |
+| Current repair SHA | Pending harness integration; this agent was prohibited from committing |
+| Fresh Dev Review / Test / Final Review run IDs | None for the uncommitted repair |
+| Approval state | Blocked; stop before Human Approval |
 
-The base-to-pre-S4 diff contains only the declared S1, S2, and S3 paths. The
-only S4 path added by this package is this document. Dependency token usage,
-elapsed time, and package qualification records were not supplied in the
-isolated slice metadata, so they are recorded as unavailable rather than
-invented.
+The input candidate was clean at `b13fe891c388a2b20beaa7cccddb83c93e5f5b09`
+before this repair. The current worktree intentionally differs from that SHA, so
+neither the input SHA nor its prior evidence may be presented as fresh for the
+eventual repaired candidate.
 
-| Package | Owned paths | Exact commit | Qualification result | Token / elapsed |
-| --- | --- | --- | --- | --- |
-| S1 | `server/**`, `src/domain/runtime.ts`, `src/runtime-activity.ts` | `014e0f956f731b1254404481f768bbf43b01ec3b` | Supplied dependency; integration exposed two resolver failures | Unavailable |
-| S2 | `src/components/runtime/**` | `328a87182a5a4db15e2a3a90c33c9f4dde8269d1` | Supplied dependency; integration exposed two runtime-render failures | Unavailable |
-| S3 | `tests/**` | `0c3c7a9d320b4af73e92581c1b0424c754fe9abf` | Supplied dependency; full candidate test gate failed | Unavailable |
-| S4 | `docs/dogfood/AH-005-browser-verification.md` | Harness-owned commit pending | Handoff recorded; candidate blocked | Unavailable |
+## Package record
 
-## Verification commands and results
+The dependency order remains `S1 → S2 + S3 → S4`. The newest Dev Review
+explicitly amends S2 ownership to include the two mounted consumers that were
+missing from the approved slice.
 
-Commands were run from the S4 slice at the pre-S4 assembled SHA above.
+| Package | Owned paths | Dependencies and interface | Exact local commit record | Verification command | Qualification |
+| --- | --- | --- | --- | --- | --- |
+| S1 | `server/**`, `src/domain/runtime.ts`, `src/runtime-activity.ts` | Foundation; exports persisted `RuntimeGateFreshness`, exact stale reason, and candidate-filtered Test evidence | `59ebe0baa913a4127a0efe8cccf8fd17dcf37739`, repaired in `b13fe891c388a2b20beaa7cccddb83c93e5f5b09`; current timeout amendment pending harness commit | `node --test tests/orchestrator.test.mjs` | Focused resolver coverage passes; ready for integration only |
+| S2 | `src/components/runtime/**`, `src/components/RunActivity.tsx`, `src/components/RuntimeTaskWorkspace.tsx` | Depends on S1; all mounted surfaces consume persisted freshness and exact reason copy | `ea67d529742541ac606593d0866a50d35b036edf`; mounted-consumer amendment pending harness commit | `npm run lint`, `npm run typecheck`, `node --test tests/runtime.test.mjs` | Focused UI coverage passes; ready for integration only |
+| S3 | `tests/**` | Depends on fixed S1 contract and mounted S2 consumers | `f735bfb3d5c0cc5622f0dcd27f349324acd56f38`, repaired in `b13fe891c388a2b20beaa7cccddb83c93e5f5b09`; current regressions pending harness commit | `node --test tests/orchestrator.test.mjs tests/runtime.test.mjs` | 51/51 focused tests pass; ready for integration only |
+| S4 | `docs/dogfood/AH-005-browser-verification.md` | Depends on the exact integrated S1–S3 revision and operator browser evidence | `bb99f710a2c48ffebecb18a9b3b387948d42f509`; this correction pending harness commit | Required full gate matrix below | Blocked pending integration and operator verification |
+
+Package-level token and elapsed-time figures were not present in the retained
+package records. They remain **unavailable** rather than being inferred from
+stage-wide model usage. The prior locally green packages and this focused repair
+are ready for integration only; they are not a whole-task pass.
+
+## Repair verification
+
+Commands were run in the repair worktree based on input candidate
+`b13fe891c388a2b20beaa7cccddb83c93e5f5b09`.
 
 | Check | Result | Evidence / limitation |
 | --- | --- | --- |
 | `npm run lint` | PASS | Biome checked 65 source files; no fixes applied |
 | `npm run typecheck` | PASS | `tsc --noEmit` exited 0 |
-| `npm test` | FAIL | 88 tests: 54 passed, 34 failed. The API failures could not bind loopback sockets (`EPERM`); two resolver assertions and two runtime-render assertions also failed. |
-| `npm run build` | BLOCKED | Vite attempted to write the shared parent `node_modules/.vite-temp` and received `EPERM`. No dependency was installed or changed. |
-| Equivalent Vite build using `--configLoader runner` plus `scripts/prepare-sites-build.mjs` | PASS | Built the client and prepared the Sites server bundle |
-| `npm run test:sites` after the equivalent build | PASS | 4 of 4 Sites tests passed |
-| Required Sites artifacts | PASS | `dist/client/index.html`, `dist/server/index.js`, and `dist/.openai/hosting.json` existed during the check; disposable `dist/` output was removed afterward |
-| `git diff --check 1591dca9869f50e9fbad20253f8100348463f9eb..0c3c7a9d320b4af73e92581c1b0424c754fe9abf` | PASS | No whitespace errors |
-| Exported patch `git apply --check` against the exact task-base worktree | PASS | The binary patch from the exact base applied cleanly in check mode |
-| Pre-S4 assembled candidate cleanliness | PASS | The worktree was clean before adding this owned handoff document |
-| Final exact-candidate cleanliness | NOT VERIFIED | The harness owns the S4 commit; this agent did not commit |
-
-The focused failure details that prevent a READY claim are:
-
-- mixed-candidate evidence resolved as `missing_binding` instead of the
-  expected `mixed_evidence` reason;
-- latest-terminal exact-candidate precedence returned `RUN-C2` instead of
-  `RUN-EXACT`;
-- retained focused-Test evidence did not render the expected
-  `Candidate-bound structured evidence` text in the runtime render test;
-- the missing/mismatched binding render test observed `0 of 3` fresh gates while
-  expecting `1 of 3`.
-
-These are dependency/integration findings. S4 did not modify their owned paths.
+| `node --test tests/orchestrator.test.mjs tests/runtime.test.mjs` | PASS | 51/51 focused tests passed; Vite logged sandbox `EPERM` WebSocket-listener warnings without failing the tests |
+| `git diff --check` | PASS | No whitespace errors in the final repair diff |
+| `npm test` | NOT RUN by Repair agent | Prior API runs could not bind loopback sockets in this sandbox; timeout is not a pass |
+| `npm run build`, `npm run test:sites`, required Sites artifacts | NOT RUN by Repair agent | Harness-owned whole-candidate qualification; no generated build state may be retained here |
+| Exported patch `git apply --check` against exact base | NOT YET VERIFIED | Must use the exact harness-integrated repair revision |
+| Exact candidate cleanliness | NOT YET VERIFIED | Current repair is intentionally uncommitted |
+| Fresh candidate-bound Dev Review, Test, and Final Review | NOT AVAILABLE | Repair invalidates the prior candidate-bound evidence |
 
 ## Browser matrix
 
-No browser row is a pass. The local runtime could not be launched: both the
-companion and Vite were rejected by the environment with `EPERM` when opening
-loopback listeners. The existing `localhost:5173` preview could not be claimed
-after browser permission was denied, and the current candidate's static
-`file://` artifact was also refused by browser URL policy. No screenshot or
-browser state was created or retained.
+Browser and end-to-end QA are operator-owned for this repair stage and were not
+run. No screenshot or browser state was created or retained. Every required row
+therefore remains blocked, not passed.
 
-The following records the required states without fabricating observations:
-
-| State | Route / viewport | Candidate tuple and run IDs | Result | Screenshot |
+| State | Route / viewport | Required binding | Result | Screenshot |
 | --- | --- | --- | --- | --- |
-| Fresh candidate-bound Dev Review, Test, Final Review | Approval route; 1440px, 1024px, 768px | Unavailable; no persisted AH-005 task | BLOCKED: no exact runtime candidate or fresh run summaries available | None retained |
-| Missing binding / stale evidence | Dev Review route; 1440px, 1024px, 768px | Unavailable | BLOCKED: browser could not reach the API-backed fixture | None retained |
-| Mixed-candidate evidence | Test route; 1440px, 1024px, 768px | Unavailable | BLOCKED in browser; resolver test failed the expected reason-code assertion | None retained |
-| Repaired candidate and downstream invalidation | Dev Review, Test, Final Review, Approval routes; 1440px, 1024px, 768px | Unavailable | BLOCKED: no disposable persisted candidate store could be served | None retained |
-| Human Approval | Approval route; 1440px, 1024px, 768px | Unavailable | BLOCKED: no candidate-bound gate freshness could be verified in-browser | None retained |
+| Fresh Dev Review, Test, Final Review | Approval; 1440px, 1024px, 768px | Exact future repaired candidate and terminal run IDs | NOT RUN | None retained |
+| Missing binding / stale evidence | Dev Review; 1440px, 1024px, 768px | Exact persisted stale reason code and copy | NOT RUN | None retained |
+| Mixed-candidate evidence | Test; 1440px, 1024px, 768px | Exact persisted `mixed_evidence` result | NOT RUN | None retained |
+| Repaired candidate invalidation | Dev Review, Test, Final Review, Approval; all viewports | New candidate revision with prior evidence retained | NOT RUN | None retained |
+| Human Approval | Approval; 1440px, 1024px, 768px | Exact revision, branch, merge method, and three fresh gates | BLOCKED | None retained |
 
-The test suite did retain evidence that the repaired-candidate resolver path
-invalidates downstream gates and that stale Run Activity keeps terminal status
-separate from freshness, but those are automated checks, not browser
-observations or screenshots.
+## Required operator completion
 
-## Handoff rules
+After the harness integrates this repair into a new exact candidate revision:
 
-- Do not call this candidate READY. The required `npm test`, literal
-  `npm run build`, exact candidate cleanliness after the harness commit, and
-  browser matrix are not all green.
-- Do not infer the candidate ID, revision, head, or run IDs from this branch or
-  from test fixtures. The harness must populate those from the persisted task
-  record before any future browser attempt.
-- Preserve the S1/S2/S3 commits and their failed evidence. Repairing the
-  authoritative resolver or UI contract creates a new candidate revision and
-  invalidates downstream gate evidence again.
-- Stop at Human Approval. Do not approve, merge, close, deploy, push, or delete
-  any candidate or retained evidence.
+1. Reject any integrated file outside the amended S1–S4 owned paths.
+2. Run `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`,
+   `npm run test:sites`, `git diff --check`, and the required Sites artifact
+   checks.
+3. Export that exact candidate patch and run `git apply --check` against
+   `1591dca9869f50e9fbad20253f8100348463f9eb`.
+4. Verify exact candidate cleanliness.
+5. Retain and inspect screenshots at 1440px, 1024px, and 768px.
+6. Produce fresh candidate-bound Dev Review, Test, and Final Review summaries.
+
+Do not call the candidate READY until every item passes. Preserve the input
+candidate, stale evidence, exact reason code/copy, and repair lineage. Stop at
+Human Approval; do not approve or merge.

@@ -1016,6 +1016,116 @@ test("treats missing and mismatched candidate bindings as stale in navigation an
   });
 });
 
+test("renders same-revision superseded artifacts with authoritative stale reason copy", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const candidate = {
+      id: "C1",
+      revisionNumber: 2,
+      status: "under_review",
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/ah-999-c1",
+      revisions: [],
+    };
+    const usage = { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 };
+    const artifact = (id, runId, createdAt) => ({
+      id,
+      runId,
+      stage: "dev-review",
+      kind: "markdown",
+      name: `${id}.md`,
+      content: "PASS",
+      createdAt,
+      model: "gpt-5.6-sol",
+      usage,
+      candidateId: "C1",
+      candidateRevision: 2,
+      gateResult: {
+        verdict: "PASS",
+        candidateId: "C1",
+        candidateRevision: 2,
+        evaluatedAt: createdAt,
+        blockingReasons: [],
+      },
+    });
+    const run = (id, artifactId, attempt, freshness) => ({
+      id,
+      kind: "review",
+      status: "completed",
+      stage: "dev-review",
+      role: "dev-review",
+      model: "gpt-5.6-sol",
+      reasoning: "high",
+      startedAt: "2026-08-01T12:00:00.000Z",
+      completedAt: "2026-08-01T12:01:00.000Z",
+      durationMs: 60_000,
+      artifactId,
+      usage,
+      credits: null,
+      apiEstimate: null,
+      candidateId: "C1",
+      candidateRevision: 2,
+      workPackageId: null,
+      attempt,
+      retryOfRunId: null,
+      repairOfRunId: null,
+      toolCalls: [],
+      test: null,
+      evidenceError: null,
+      freshness,
+      gateResult: {
+        verdict: "PASS",
+        candidateId: "C1",
+        candidateRevision: 2,
+        evaluatedAt: "2026-08-01T12:01:00.000Z",
+        blockingReasons: [],
+      },
+      error: null,
+      source: "codex-jsonl",
+    });
+    const superseded = makeGateFreshness("dev-review", {
+      sourceRunId: "RUN-OLD",
+      sourceArtifactId: "ART-OLD",
+      reasonCode: "superseded_attempt",
+      reasonCopy: "A later terminal attempt superseded this historical evidence.",
+    });
+    const authoritative = makeGateFreshness("dev-review", {
+      fresh: true,
+      sourceRunId: "RUN-CURRENT",
+      sourceArtifactId: "ART-CURRENT",
+    });
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task: createTask({
+        status: "awaiting-human-approval",
+        currentStage: "dev-review",
+        completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review"],
+        candidates: [candidate],
+        artifacts: [
+          artifact("ART-OLD", "RUN-OLD", "2026-08-01T12:01:00.000Z"),
+          artifact("ART-CURRENT", "RUN-CURRENT", "2026-08-01T12:02:00.000Z"),
+        ],
+        runs: [
+          run("RUN-OLD", "ART-OLD", 1, superseded),
+          run("RUN-CURRENT", "ART-CURRENT", 2, authoritative),
+        ],
+        gateFreshness: { "dev-review": authoritative },
+      }),
+      initialViewedStageId: "dev-review",
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+    }));
+
+    assert.match(markup, /ART-OLD\.md/);
+    assert.match(markup, /ART-CURRENT\.md/);
+    assert.match(markup, /stale · A later terminal attempt superseded this historical evidence\./);
+    assert.doesNotMatch(markup, /Stale after repair/);
+  });
+});
+
 test("renders dependency batches and package status during implementation", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const markup = renderToStaticMarkup(
@@ -1193,8 +1303,8 @@ test("filters structured activity and renders test run and artifact drilldown", 
   });
 });
 
-test("preserves stale freshness and exact reason data for Run Activity without rewriting terminal status", () => {
-  return withWorkspace(async ({ filterRunActivity }) => {
+test("renders stale Run Activity evidence as rerun-required without rewriting terminal status", () => {
+  return withWorkspace(async ({ RunActivity, filterRunActivity }) => {
     const staleReason = {
       code: "revision_change",
       copy: "Candidate evidence belongs to a previous candidate revision.",
@@ -1254,7 +1364,20 @@ test("preserves stale freshness and exact reason data for Run Activity without r
     assert.equal(item.run.freshness.fresh, false);
     assert.equal(item.run.freshness.reasonCode, "revision_change");
     assert.equal(item.run.freshness.reasonCopy, staleReason.copy);
-    assert.match(item.detail, /completed/);
+    assert.match(item.detail, /Rerun required/);
+    assert.match(item.detail, /Historical status: completed/);
+
+    const markup = renderToStaticMarkup(React.createElement(RunActivity, {
+      task,
+      initialFilter: "agent",
+      initialSelectedId: "run:RUN-STALE",
+    }));
+    assert.match(markup, /runtime-activity-row--warning/);
+    assert.doesNotMatch(markup, /runtime-activity-row--success/);
+    assert.match(markup, /Evidence freshness/);
+    assert.match(markup, /Rerun required/);
+    assert.match(markup, new RegExp(staleReason.copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(markup, /review · completed/);
   });
 });
 

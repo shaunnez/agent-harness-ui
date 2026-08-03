@@ -243,6 +243,16 @@ test("resolves candidate-bound gate failures closed with exact stale reasons", (
       code: "timeout",
     },
     {
+      name: "production Codex timeout error",
+      run: makeRuntimeRun({
+        status: "failed",
+        error: "Codex run exceeded 900 seconds.",
+        gateResult: makeGateResult(),
+      }),
+      artifacts: [],
+      code: "timeout",
+    },
+    {
       name: "repair result",
       run: makeRuntimeRun({ gateResult: makeGateResult({ verdict: "REPAIR", reportedVerdict: "REPAIR", blockingReasons: ["P1: defect"] }) }),
       artifacts: [],
