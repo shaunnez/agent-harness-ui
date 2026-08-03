@@ -64,7 +64,8 @@ export function isStageComplete(task: RuntimeTask, stageId: StageId) {
       artifact.candidateRevision === candidate.revisionNumber &&
       artifact.gateResult?.candidateId === candidate.id &&
       artifact.gateResult?.candidateRevision === candidate.revisionNumber &&
-      artifact.gateResult?.verdict === "PASS",
+      artifact.gateResult?.verdict === "PASS" &&
+      (artifact.gateResult.blockingReasons?.length ?? 0) === 0,
   );
 }
 

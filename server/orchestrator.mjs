@@ -816,7 +816,9 @@ export class TaskOrchestrator {
       evaluatedAt: now(),
       findings: structuredGateEvidence?.findings ?? [],
       blockingReasons: [
-        ...(result.runtimeEvents?.some((event) => event.commandFailed) ? ["A verification command failed."] : []),
+        ...(stageId === "test" && result.runtimeEvents?.some((event) => event.commandFailed)
+          ? ["A verification command failed."]
+          : []),
         ...(focusedTestEvidence?.status === "failed" ? ["Structured test evidence contains a failed result."] : []),
         ...(structuredGateEvidence?.blockingReasons ?? []),
       ],

@@ -946,7 +946,7 @@ test("treats missing and mismatched candidate bindings as stale in navigation an
       branch: "agent-harness/ah-999-c1",
       revisions: [{ number: 1, headRevision: "c".repeat(40), reason: "assembly", createdAt: "2026-08-01T11:00:00.000Z" }, { number: 2, headRevision: "b".repeat(40), reason: "repair", createdAt: "2026-08-01T12:00:00.000Z" }],
     };
-    const gateArtifact = (stage, revision, withBinding = true) => ({
+    const gateArtifact = (stage, revision, withBinding = true, blockingReasons = []) => ({
       id: `${stage}-${revision}`,
       stage,
       kind: "markdown",
@@ -957,7 +957,7 @@ test("treats missing and mismatched candidate bindings as stale in navigation an
       usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
       ...(withBinding ? { candidateId: "C1", candidateRevision: revision } : {}),
       gateResult: withBinding
-        ? { verdict: "PASS", candidateId: "C1", candidateRevision: revision, evaluatedAt: "2026-08-01T12:00:00.000Z", blockingReasons: [] }
+        ? { verdict: "PASS", candidateId: "C1", candidateRevision: revision, evaluatedAt: "2026-08-01T12:00:00.000Z", blockingReasons }
         : null,
     });
     const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
@@ -967,7 +967,7 @@ test("treats missing and mismatched candidate bindings as stale in navigation an
         completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review"],
         candidates: [candidate],
         artifacts: [
-          gateArtifact("dev-review", 2),
+          gateArtifact("dev-review", 2, true, ["A contradictory blocker remains."]),
           gateArtifact("test", 1),
           gateArtifact("test", 2, false),
           gateArtifact("final-review", 2),
@@ -982,7 +982,7 @@ test("treats missing and mismatched candidate bindings as stale in navigation an
       onGrillAnswer: async () => {},
       onFinishGrill: async () => {},
     }));
-    assert.match(markup, /2 of 3 candidate-bound gates fresh/);
+    assert.match(markup, /1 of 3 candidate-bound gates fresh/);
     assert.match(markup, /rerun required/);
     assert.match(markup, /test-c1-r2\.md/);
   });

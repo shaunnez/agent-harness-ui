@@ -347,17 +347,7 @@ function RuntimeCandidateDesk({
   approval?: boolean;
 }) {
   const gateStages: StageId[] = ["dev-review", "test", "final-review"];
-  const freshGates = gateStages.filter((stage) =>
-    task.artifacts.some(
-      (artifact) =>
-        artifact.stage === stage &&
-        artifact.candidateId === candidate.id &&
-        artifact.candidateRevision === candidate.revisionNumber &&
-        artifact.gateResult?.candidateId === candidate.id &&
-        artifact.gateResult?.candidateRevision === candidate.revisionNumber &&
-        artifact.gateResult?.verdict === "PASS",
-    ),
-  );
+  const freshGates = gateStages.filter((stage) => isStageComplete(task, stage));
   const facts: Array<[string, string]> = approval
     ? [
         ["Repository", task.repositoryPath],

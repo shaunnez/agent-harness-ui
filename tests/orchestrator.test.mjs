@@ -465,7 +465,7 @@ test("advances an approved implementation task through a revision-bound candidat
           tone: "success",
           title: "Repository command completed",
           detail: "npm.cmd test",
-          commandFailed: false,
+          commandFailed: /Development review/.test(prompt),
           toolCall: {
             id: `cmd-${runtimeCalls.length}`,
             name: "command_execution",
@@ -550,6 +550,7 @@ test("advances an approved implementation task through a revision-bound candidat
     const repairRun = approvalTask.runs.find((run) => run.kind === "repair");
     const testRun = approvalTask.runs.find((run) => run.stage === "test");
     assert.equal(reviewRuns.length, 2);
+    assert.deepEqual(reviewRuns[1].gateResult.blockingReasons, []);
     assert.equal(reviewRuns[1].retryOfRunId, reviewRuns[0].id);
     assert.equal(repairRun.repairOfRunId, reviewRuns[0].id);
     assert.equal(testRun.test.rowCount, 2);
