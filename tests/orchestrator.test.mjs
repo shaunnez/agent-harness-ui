@@ -530,6 +530,8 @@ test("advances an approved implementation task through a revision-bound candidat
     assert.equal(approvalTask.artifacts.length, 15);
     const testCall = runtimeCalls.find((call) => /Focused test/.test(call.prompt));
     assert.equal(testCall.sandbox, "workspace-write");
+    assert.equal(testCall.networkAccess, true, "Test agents need loopback access for repository HTTP tests");
+    assert.equal(runtimeCalls.find((call) => /Development review/.test(call.prompt)).networkAccess, false);
     assert.equal(testCall.timeoutMs, 600_000);
     assert.match(testCall.tempDirectory, new RegExp(`^${escapeRegex(path.join(os.tmpdir(), "agent-harness", task.id))}`));
     assert.equal(testCall.tempDirectory.startsWith(path.join(directory, "C1")), false);

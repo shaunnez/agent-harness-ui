@@ -980,6 +980,7 @@ export class TaskOrchestrator {
         prompt: agentRequest.prompt,
         signal,
         sandbox: effectiveSandbox,
+        networkAccess: testRuntime,
         model: policy.model,
         reasoning: policy.reasoning,
         tempDirectory: runtimeTemp,

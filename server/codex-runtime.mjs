@@ -193,6 +193,7 @@ export async function runCodex({
   signal,
   timeoutMs = 240_000,
   sandbox = "read-only",
+  networkAccess = false,
   tempDirectory = null,
   model = DEFAULT_MODEL,
   reasoning = DEFAULT_REASONING,
@@ -208,6 +209,9 @@ export async function runCodex({
     "--skip-git-repo-check",
     "--sandbox",
     sandbox,
+    ...(networkAccess && sandbox === "workspace-write"
+      ? ["-c", "sandbox_workspace_write.network_access=true"]
+      : []),
     "--model",
     model,
     "-c",
