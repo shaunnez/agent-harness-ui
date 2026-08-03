@@ -135,6 +135,20 @@ test("parses focused test evidence with candidate-bound rows", () => {
     () => validateFocusedTestEvidence(evidence, { id: "C1", revisionNumber: 3 }),
     /does not match the active candidate revision/i,
   );
+  const mismatchedRowEvidence = parseFocusedTestEvidence(
+    `<focused-test-evidence>${JSON.stringify({
+      ...evidence,
+      rows: [{ ...evidence.rows[0], candidateId: "C2" }],
+    })}</focused-test-evidence>`,
+  );
+  assert.throws(
+    () => validateFocusedTestEvidence(mismatchedRowEvidence, { id: "C1", revisionNumber: 2 }),
+    /row row-1 does not match the active candidate revision/i,
+  );
+  assert.throws(
+    () => parseFocusedTestEvidence(`<focused-test-evidence>${JSON.stringify({ ...evidence, candidateId: "" })}</focused-test-evidence>`),
+    /must include a candidateId/i,
+  );
   assert.throws(
     () => parseFocusedTestEvidence(`<focused-test-evidence>{"candidateId":"C1","candidateRevision":2,"command":"npm test","status":"passed","rows":[{"id":"failed","status":"failed"}]}</focused-test-evidence>`),
     /contradicts its failed rows/i,
@@ -167,6 +181,7 @@ test("derives candidate-bound review gates from structured evidence", () => {
     ),
     /different candidate revision/i,
   );
+  assert.throws(() => parseGateEvidence(gateOutput(2), null, "dev-review"), /active candidate identity/i);
 });
 
 test("builds the focused test execution prompt with the structured evidence contract and Windows command rule", () => {
@@ -630,6 +645,99 @@ test("advances an approved implementation task through a revision-bound candidat
     assert.equal(complete.approvals.filter((approval) => approval.stage === "approval").length, 1);
     await assert.rejects(() => orchestrator.approveMerge(task.id), /not awaiting merge approval/i);
     assert.equal(merged, true);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("repair increments the candidate revision and invalidates every downstream gate while retaining audit evidence", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-repair-freshness-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Invalidate candidate gates after repair",
+      description: "Every downstream gate must rerun after a new candidate revision.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+    });
+    const candidate = {
+      id: "C1",
+      revisionNumber: 1,
+      baseRevision: "a".repeat(40),
+      baseBranch: "main",
+      headRevision: "b".repeat(40),
+      branch: "agent-harness/repair-freshness",
+      repositoryRoot: directory,
+      worktreePath: directory,
+      status: "repair_required",
+      createdAt: "2026-08-01T12:00:00.000Z",
+      updatedAt: "2026-08-01T12:00:00.000Z",
+      revisions: [{ number: 1, headRevision: "b".repeat(40), reason: "assembly", createdAt: "2026-08-01T12:00:00.000Z" }],
+    };
+    const priorArtifacts = ["dev-review", "test", "final-review", "approval"].map((stage) => ({
+      id: `prior-${stage}`,
+      stage,
+      name: `${stage}-c1-r1.md`,
+      kind: "markdown",
+      content: "PASS",
+      createdAt: "2026-08-01T12:00:00.000Z",
+      model: "gpt-5.6-sol",
+      usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+      candidateId: "C1",
+      candidateRevision: 1,
+      gateResult: stage === "approval" ? null : {
+        verdict: "PASS",
+        candidateId: "C1",
+        candidateRevision: 1,
+        blockingReasons: [],
+      },
+    }));
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "dev-review";
+      draft.completedStages = ["dev-review", "test", "final-review", "approval"];
+      draft.candidates = [candidate];
+      draft.artifacts = priorArtifacts;
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        async verifyCandidate() {
+          return true;
+        },
+        async commit() {
+          return {
+            headRevision: "c".repeat(40),
+            files: ["src/repair.ts"],
+            summary: "1 file changed",
+          };
+        },
+      },
+      runCodex: async () => ({
+        finalText: "Repair completed.",
+        usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    assert.equal(await orchestrator.start(task.id, "repair"), true);
+    const repaired = await waitForStatus(store, task.id, "ready-for-review");
+    const activeCandidate = repaired.candidates.at(-1);
+    assert.equal(activeCandidate.id, "C1");
+    assert.equal(activeCandidate.revisionNumber, 2);
+    assert.equal(activeCandidate.headRevision, "c".repeat(40));
+    assert.deepEqual(activeCandidate.revisions.map((revision) => revision.number), [1, 2]);
+    assert.equal(activeCandidate.revisions.at(-1).reason, "repair");
+    assert.deepEqual(
+      repaired.completedStages.filter((stage) => ["dev-review", "test", "final-review", "approval"].includes(stage)),
+      [],
+    );
+    assert.deepEqual(
+      repaired.artifacts.filter((artifact) => artifact.id.startsWith("prior-")).map((artifact) => artifact.candidateRevision),
+      [1, 1, 1, 1],
+    );
+    assert.equal(repaired.artifacts.some((artifact) => artifact.stage === "implement" && artifact.candidateRevision === 2), true);
+    assert.equal(repaired.events.at(-1).title, "Repaired candidate ready");
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }

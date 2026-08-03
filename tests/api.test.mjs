@@ -6,6 +6,10 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { createApiServer } from "../server/api.mjs";
+import {
+  CANDIDATE_FRESHNESS_REASONS,
+  projectRuntimeTask,
+} from "../server/candidate-freshness.mjs";
 import { GitWorktreeManager } from "../server/git-worktree.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { parseFocusedTestEvidence } from "../server/structured-output.mjs";
@@ -656,6 +660,226 @@ test("returns persisted focused test evidence without dropping the Markdown arti
   } finally {
     await cleanup(server, directory);
   }
+});
+
+test("projects candidate freshness independently for persisted artifacts, gates, focused tests, rows, and runs", () => {
+  const candidate = { id: "C1", revisionNumber: 2, headRevision: "b".repeat(40) };
+  const usage = { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 };
+  const gate = (candidateId, candidateRevision) => ({
+    verdict: "PASS",
+    candidateId,
+    candidateRevision,
+    evaluatedAt: "2026-08-01T12:00:00.000Z",
+    blockingReasons: [],
+  });
+  const focused = {
+    candidateId: "C1",
+    candidateRevision: 2,
+    command: "npm.cmd run test:runtime",
+    status: "passed",
+    durationMs: 100,
+    rows: [{
+      id: "wrong-row",
+      candidateId: "C9",
+      candidateRevision: 2,
+      command: "npm.cmd run test:runtime",
+      status: "passed",
+      durationMs: 100,
+      title: "runtime.test.mjs",
+      artifactReferences: [],
+      assertions: [],
+      failureDetails: null,
+    }],
+  };
+  const task = {
+    candidates: [candidate],
+    completedStages: ["dev-review", "test", "final-review", "approval"],
+    artifacts: [
+      {
+        id: "missing-artifact-binding",
+        stage: "dev-review",
+        name: "review.md",
+        kind: "markdown",
+        content: "PASS",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        model: "gpt-5.6-sol",
+        usage,
+        gateResult: gate("C1", 2),
+      },
+      {
+        id: "row-mismatch",
+        stage: "test",
+        name: "test.md",
+        kind: "markdown",
+        content: "PASS",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        model: "gpt-5.6-sol",
+        usage,
+        runId: "test-run",
+        candidateId: "C1",
+        candidateRevision: 2,
+        focusedTest: focused,
+        gateResult: gate("C1", 2),
+      },
+      {
+        id: "id-mismatch",
+        stage: "final-review",
+        name: "final.md",
+        kind: "markdown",
+        content: "PASS",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        model: "gpt-5.6-sol",
+        usage,
+        candidateId: "C9",
+        candidateRevision: 2,
+        gateResult: gate("C9", 2),
+      },
+      {
+        id: "revision-mismatch",
+        stage: "approval",
+        name: "approval.md",
+        kind: "markdown",
+        content: "Approved",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        model: "gpt-5.6-sol",
+        usage,
+        candidateId: "C1",
+        candidateRevision: 1,
+      },
+    ],
+    runs: [
+      {
+        id: "missing-run-binding",
+        stage: "dev-review",
+        status: "completed",
+        test: null,
+        gateResult: null,
+      },
+      {
+        id: "test-run",
+        stage: "test",
+        status: "completed",
+        candidateId: "C1",
+        candidateRevision: 2,
+        test: {
+          status: "passed",
+          command: "npm.cmd run test:runtime",
+          durationMs: 100,
+          rowCount: 1,
+          failedRowIds: [],
+        },
+        gateResult: gate("C1", 2),
+      },
+      {
+        id: "id-mismatch-run",
+        stage: "final-review",
+        status: "completed",
+        candidateId: "C9",
+        candidateRevision: 2,
+        test: null,
+        gateResult: gate("C9", 2),
+      },
+    ],
+  };
+  const persisted = structuredClone(task);
+  const projected = projectRuntimeTask(task);
+  const artifacts = Object.fromEntries(projected.artifacts.map((artifact) => [artifact.id, artifact]));
+  const runs = Object.fromEntries(projected.runs.map((run) => [run.id, run]));
+
+  assert.deepEqual(task, persisted, "projection must not rewrite persisted evidence");
+  assert.equal(artifacts["missing-artifact-binding"].freshness.reason, CANDIDATE_FRESHNESS_REASONS.MISSING_CANDIDATE_BINDING);
+  assert.equal(artifacts["missing-artifact-binding"].gateResult.freshness.state, "fresh");
+  assert.equal(artifacts["row-mismatch"].focusedTest.freshness.state, "fresh");
+  assert.equal(artifacts["row-mismatch"].focusedTest.rows[0].freshness.reason, CANDIDATE_FRESHNESS_REASONS.CANDIDATE_ID_MISMATCH);
+  assert.equal(artifacts["id-mismatch"].freshness.reason, CANDIDATE_FRESHNESS_REASONS.CANDIDATE_ID_MISMATCH);
+  assert.equal(artifacts["id-mismatch"].gateResult.freshness.reason, CANDIDATE_FRESHNESS_REASONS.CANDIDATE_ID_MISMATCH);
+  assert.equal(artifacts["revision-mismatch"].freshness.reason, CANDIDATE_FRESHNESS_REASONS.CANDIDATE_REVISION_MISMATCH);
+  assert.equal(runs["missing-run-binding"].freshness.reason, CANDIDATE_FRESHNESS_REASONS.MISSING_CANDIDATE_BINDING);
+  assert.equal(runs["test-run"].test.freshness.reason, CANDIDATE_FRESHNESS_REASONS.MISSING_CANDIDATE_BINDING);
+  assert.equal(runs["id-mismatch-run"].freshness.reason, CANDIDATE_FRESHNESS_REASONS.CANDIDATE_ID_MISMATCH);
+  assert.equal(projected.candidateFreshness.stages.test.reason, CANDIDATE_FRESHNESS_REASONS.CANDIDATE_ID_MISMATCH);
+  assert.equal(projected.candidateFreshness.currentFocusedTest, null, "a stale focused-test row cannot become current evidence");
+  assert.deepEqual(projected.completedStages, [], "stale candidate stages cannot remain complete");
+});
+
+test("selects only the exact active candidate focused-Test summary and rows", () => {
+  const focusedTest = (candidateId, candidateRevision, rowId) => ({
+    candidateId,
+    candidateRevision,
+    command: "npm.cmd run test:runtime",
+    status: "passed",
+    durationMs: 100,
+    rows: [{
+      id: rowId,
+      candidateId,
+      candidateRevision,
+      command: "npm.cmd run test:runtime",
+      status: "passed",
+      durationMs: 100,
+      title: rowId,
+      artifactReferences: [],
+      assertions: [],
+      failureDetails: null,
+    }],
+  });
+  const artifact = (id, revision, runId) => ({
+    id,
+    runId,
+    stage: "test",
+    name: `${id}.md`,
+    kind: "markdown",
+    content: "PASS",
+    createdAt: "2026-08-01T12:00:00.000Z",
+    model: "gpt-5.6-sol",
+    usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+    candidateId: "C1",
+    candidateRevision: revision,
+    focusedTest: focusedTest("C1", revision, id),
+    gateResult: { verdict: "PASS", candidateId: "C1", candidateRevision: revision, blockingReasons: [] },
+  });
+  const task = {
+    candidates: [{ id: "C1", revisionNumber: 2, headRevision: "b".repeat(40) }],
+    artifacts: [artifact("old-candidate", 1, "old-run"), artifact("active-candidate", 2, "active-run")],
+    runs: [
+      { id: "old-run", stage: "test", status: "completed", candidateId: "C1", candidateRevision: 1, test: { candidateId: "C1", candidateRevision: 1, status: "passed" }, gateResult: null },
+      { id: "active-run", stage: "test", status: "completed", candidateId: "C1", candidateRevision: 2, test: { candidateId: "C1", candidateRevision: 2, status: "passed" }, gateResult: null },
+    ],
+  };
+  const projected = projectRuntimeTask(task);
+  assert.equal(projected.artifacts[0].freshness.reason, CANDIDATE_FRESHNESS_REASONS.CANDIDATE_REVISION_MISMATCH);
+  assert.equal(projected.candidateFreshness.currentFocusedTest.artifactId, "active-candidate");
+  assert.equal(projected.candidateFreshness.currentFocusedTest.runId, "active-run");
+  assert.equal(projected.candidateFreshness.currentFocusedTest.evidence.rows[0].id, "active-candidate");
+  assert.equal(projected.candidateFreshness.currentFocusedTest.freshness.state, "fresh");
+});
+
+test("projects all candidate-bound stages stale when no active candidate exists", () => {
+  const projected = projectRuntimeTask({
+    candidates: [],
+    completedStages: ["dev-review", "test", "final-review", "approval"],
+    artifacts: [{
+      id: "orphaned-test",
+      stage: "test",
+      name: "orphaned-test.md",
+      kind: "markdown",
+      content: "PASS",
+      createdAt: "2026-08-01T12:00:00.000Z",
+      model: "gpt-5.6-sol",
+      usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+      candidateId: "C1",
+      candidateRevision: 1,
+      gateResult: { verdict: "PASS", candidateId: "C1", candidateRevision: 1, blockingReasons: [] },
+    }],
+    runs: [],
+  });
+  assert.equal(projected.candidateFreshness.activeCandidate, null);
+  for (const stage of ["dev-review", "test", "final-review", "approval"]) {
+    assert.equal(projected.candidateFreshness.stages[stage].state, "stale");
+    assert.equal(projected.candidateFreshness.stages[stage].reason, CANDIDATE_FRESHNESS_REASONS.MISSING_ACTIVE_CANDIDATE);
+  }
+  assert.equal(projected.artifacts[0].freshness.reason, CANDIDATE_FRESHNESS_REASONS.MISSING_ACTIVE_CANDIDATE);
+  assert.equal(projected.artifacts[0].gateResult.freshness.reason, CANDIDATE_FRESHNESS_REASONS.MISSING_ACTIVE_CANDIDATE);
+  assert.deepEqual(projected.completedStages, []);
 });
 
 test("formats approval history for the inspector", () => {

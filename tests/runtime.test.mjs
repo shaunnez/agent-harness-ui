@@ -12,6 +12,7 @@ import { buildExecutionRequest, buildStageRequest, buildWorkPackageRequest } fro
 import { buildScoutRequest } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
+import { projectRuntimeTask } from "../server/candidate-freshness.mjs";
 import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
 
 test("parses Codex final messages and usage", () => {
@@ -960,19 +961,20 @@ test("treats missing and mismatched candidate bindings as stale in navigation an
         ? { verdict: "PASS", candidateId: "C1", candidateRevision: revision, evaluatedAt: "2026-08-01T12:00:00.000Z", blockingReasons }
         : null,
     });
+    const task = projectRuntimeTask(createTask({
+      status: "awaiting-human-approval",
+      currentStage: "approval",
+      completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review"],
+      candidates: [candidate],
+      artifacts: [
+        gateArtifact("dev-review", 2, true, ["A contradictory blocker remains."]),
+        gateArtifact("test", 1),
+        gateArtifact("test", 2, false),
+        gateArtifact("final-review", 2),
+      ],
+    }));
     const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
-      task: createTask({
-        status: "awaiting-human-approval",
-        currentStage: "approval",
-        completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review"],
-        candidates: [candidate],
-        artifacts: [
-          gateArtifact("dev-review", 2, true, ["A contradictory blocker remains."]),
-          gateArtifact("test", 1),
-          gateArtifact("test", 2, false),
-          gateArtifact("final-review", 2),
-        ],
-      }),
+      task,
       initialViewedStageId: "approval",
       onBack: async () => {},
       onRun: async () => {},
@@ -985,6 +987,139 @@ test("treats missing and mismatched candidate bindings as stale in navigation an
     assert.match(markup, /1 of 3 candidate-bound gates fresh/);
     assert.match(markup, /rerun required/);
     assert.match(markup, /test-c1-r2\.md/);
+  });
+});
+
+test("renders a projected stale reason with a visible rerun-required state and global rerun action", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const projectedTask = projectRuntimeTask(createTask({
+      status: "ready-for-test",
+      currentStage: "test",
+      completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review"],
+      candidates: [{
+        id: "C1",
+        revisionNumber: 2,
+        status: "ready_for_test",
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        baseBranch: "main",
+        branch: "agent-harness/ah-999-c1",
+        revisions: [],
+      }],
+      artifacts: [{
+        id: "stale-test",
+        stage: "test",
+        kind: "markdown",
+        name: "test-c9-r2.md",
+        content: "PASS",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        model: "gpt-5.6-sol",
+        usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+        candidateId: "C9",
+        candidateRevision: 2,
+        gateResult: { verdict: "PASS", candidateId: "C9", candidateRevision: 2, blockingReasons: [] },
+      }],
+    }));
+    assert.equal(projectedTask.candidateFreshness.stages.test.reason, "candidate-id-mismatch");
+    const markup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task: projectedTask,
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+        onGrillAnswer: async () => {},
+        onFinishGrill: async () => {},
+      }),
+    );
+    assert.match(markup, /Stale after repair/);
+    assert.match(markup, /rerun required/);
+    assert.match(markup, /Run focused tests/);
+    assert.doesNotMatch(markup, /Current evidence/);
+  });
+});
+
+test("renders the exact active candidate focused-Test summary and rows", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const candidate = {
+      id: "C1",
+      revisionNumber: 2,
+      status: "ready_for_final_review",
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/ah-999-c1",
+      revisions: [],
+    };
+    const row = (id, candidateId, candidateRevision) => ({
+      id,
+      candidateId,
+      candidateRevision,
+      command: "npm.cmd run test:runtime",
+      status: "passed",
+      durationMs: 100,
+      title: id,
+      artifactReferences: [],
+      assertions: [{ label: "candidate binding", actual: "exact", expected: "exact" }],
+      failureDetails: null,
+    });
+    const evidence = (candidateId, candidateRevision, resultId) => ({
+      candidateId,
+      candidateRevision,
+      command: "npm.cmd run test:runtime",
+      status: "passed",
+      durationMs: 100,
+      rows: [row(resultId, candidateId, candidateRevision)],
+    });
+    const exactArtifact = {
+      id: "test-c1-r2",
+      runId: "run-c1-r2",
+      stage: "test",
+      kind: "markdown",
+      name: "test-c1-r2.md",
+      content: "PASS",
+      createdAt: "2026-08-01T12:00:00.000Z",
+      model: "gpt-5.6-sol",
+      usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+      candidateId: "C1",
+      candidateRevision: 2,
+      focusedTest: evidence("C1", 2, "active-result"),
+      gateResult: { verdict: "PASS", candidateId: "C1", candidateRevision: 2, blockingReasons: [] },
+    };
+    const projectedTask = projectRuntimeTask(createTask({
+      status: "ready-for-final-review",
+      currentStage: "final-review",
+      candidates: [candidate],
+      artifacts: [exactArtifact],
+      runs: [{
+        id: "run-c1-r2",
+        stage: "test",
+        status: "completed",
+        candidateId: "C1",
+        candidateRevision: 2,
+        test: { candidateId: "C1", candidateRevision: 2, status: "passed", command: "npm.cmd run test:runtime", rowCount: 1, failedRowIds: [] },
+        gateResult: null,
+      }],
+    }));
+    assert.equal(projectedTask.candidateFreshness.currentFocusedTest.artifactId, "test-c1-r2");
+    const markup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task: projectedTask,
+        initialViewedStageId: "test",
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+        onGrillAnswer: async () => {},
+        onFinishGrill: async () => {},
+      }),
+    );
+    assert.match(markup, /test-c1-r2.md/);
+    assert.match(markup, /active-result/);
+    assert.match(markup, /C1 r2/);
+    assert.doesNotMatch(markup, /C9 r1/);
   });
 });
 
