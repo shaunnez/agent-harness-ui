@@ -294,6 +294,28 @@ test("rejects mixed candidate summaries with the exact stale reason", () => {
   assert.equal(mixedGateTask.gateFreshness["dev-review"].reasonCode, "mixed_evidence");
 });
 
+test("rejects incomplete or contradictory Dev and Final Review summaries", () => {
+  for (const stage of ["dev-review", "final-review"]) {
+    const valid = makeGateResult({ stage });
+    const cases = [
+      { name: "missing stage", gateResult: { ...valid, stage: undefined } },
+      { name: "missing findings", gateResult: { ...valid, findings: undefined } },
+      { name: "missing reported verdict", gateResult: { ...valid, reportedVerdict: undefined } },
+      { name: "reported repair but evaluated pass", gateResult: { ...valid, reportedVerdict: "REPAIR" } },
+      { name: "reported pass but evaluated repair", gateResult: { ...valid, verdict: "REPAIR" } },
+    ];
+
+    for (const item of cases) {
+      const run = makeRuntimeRun({ id: `RUN-${stage}-${item.name}`, stage, gateResult: item.gateResult });
+      const task = makeRuntimeTask({ runs: [run] });
+      refreshGateFreshness(task);
+      const freshness = task.gateFreshness[stage];
+      assert.equal(freshness.fresh, false, `${stage}: ${item.name}`);
+      assert.equal(freshness.reasonCode, "contradictory_evidence", `${stage}: ${item.name}`);
+    }
+  }
+});
+
 test("rejects mismatched and contradictory persisted Test gate summaries", () => {
   const focusedTest = {
     candidateId: "C1",

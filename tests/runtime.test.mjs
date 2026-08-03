@@ -1116,6 +1116,77 @@ test("resolves same-revision superseded artifacts with authoritative stale reaso
   });
 });
 
+test("renders workspace artifact freshness from persisted run evidence", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const candidate = {
+      id: "C1",
+      revisionNumber: 2,
+      status: "under_review",
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/ah-999-c1",
+      revisions: [],
+    };
+    const usage = { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 };
+    const artifact = (id, runId, createdAt) => ({
+      id,
+      runId,
+      stage: "dev-review",
+      kind: "markdown",
+      name: `${id}.md`,
+      content: "# Candidate-bound review",
+      createdAt,
+      model: "gpt-5.6-sol",
+      usage,
+      candidateId: "C1",
+      candidateRevision: 2,
+    });
+    const staleReason = "A later terminal attempt superseded this historical evidence.";
+    const oldFreshness = makeGateFreshness("dev-review", {
+      sourceRunId: "RUN-OLD",
+      sourceArtifactId: "ART-OLD",
+      reasonCode: "superseded_attempt",
+      reasonCopy: staleReason,
+    });
+    const currentFreshness = makeGateFreshness("dev-review", {
+      fresh: true,
+      sourceRunId: "RUN-CURRENT",
+      sourceArtifactId: "ART-CURRENT",
+    });
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task: createTask({
+        status: "awaiting-human-approval",
+        currentStage: "dev-review",
+        completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement"],
+        candidates: [candidate],
+        artifacts: [
+          artifact("ART-OLD", "RUN-OLD", "2026-08-01T12:01:00.000Z"),
+          artifact("ART-CURRENT", "RUN-CURRENT", "2026-08-01T12:02:00.000Z"),
+        ],
+        runs: [
+          { id: "RUN-OLD", artifactId: "ART-OLD", freshness: oldFreshness },
+          { id: "RUN-CURRENT", artifactId: "ART-CURRENT", freshness: currentFreshness },
+        ],
+        gateFreshness: { "dev-review": currentFreshness },
+      }),
+      initialViewedStageId: "dev-review",
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onGrillAnswer: async () => {},
+      onFinishGrill: async () => {},
+    }));
+
+    assert.doesNotMatch(markup, /Stale after repair/);
+    assert.match(markup, /ART-CURRENT\.md/);
+    assert.equal(markup.split(staleReason).length - 1, 1);
+    assert.match(markup, /ART-OLD\.md[\s\S]*rerun required/);
+  });
+});
+
 test("renders dependency batches and package status during implementation", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const markup = renderToStaticMarkup(

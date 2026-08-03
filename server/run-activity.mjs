@@ -293,35 +293,39 @@ function evaluateGateRun(run, target, stage, sourceRunId, sourceArtifactId) {
   if (!summaryBinding.valid) return createFreshness(stage, target, sourceRunId, sourceArtifactId, summaryBinding.code, null);
   const identityReason = compareCandidateBinding(summaryBinding, target);
   if (identityReason) return createFreshness(stage, target, sourceRunId, sourceArtifactId, identityReason, null);
-  if (summary.stage && summary.stage !== stage) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
-  if (!Array.isArray(summary.blockingReasons)) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
-  if (Array.isArray(summary.findings)) {
-    const findingBindings = summary.findings.map((finding) => ({
-      binding: readExplicitCandidateBinding(finding),
-      explicit: finding?.bindingExplicit !== false && hasExplicitCandidateFields(finding),
-    }));
-    const findingIdentities = new Set(
-      findingBindings
-        .filter(({ binding }) => binding.valid)
-        .map(({ binding }) => `${binding.candidateId}:${binding.candidateRevision}`),
-    );
-    if (findingIdentities.size > 1) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "mixed_evidence", null);
-    if (findingBindings.some(({ explicit }) => !explicit)) {
-      return createFreshness(stage, target, sourceRunId, sourceArtifactId, "missing_binding", null);
-    }
-    const invalidFinding = findingBindings.find(({ binding }) => !binding.valid);
-    if (invalidFinding) {
-      return createFreshness(stage, target, sourceRunId, sourceArtifactId, invalidFinding.binding.code, null);
-    }
-    if (findingBindings.some(({ binding }) => compareCandidateBinding(binding, target))) {
-      return createFreshness(stage, target, sourceRunId, sourceArtifactId, "candidate_mismatch", null);
-    }
+  if (
+    summary.stage !== stage ||
+    !["PASS", "REPAIR"].includes(summary.verdict) ||
+    !["PASS", "REPAIR"].includes(summary.reportedVerdict) ||
+    summary.reportedVerdict !== summary.verdict ||
+    !Array.isArray(summary.blockingReasons) ||
+    !Array.isArray(summary.findings)
+  ) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  }
+  const findingBindings = summary.findings.map((finding) => ({
+    binding: readExplicitCandidateBinding(finding),
+    explicit: finding?.bindingExplicit !== false && hasExplicitCandidateFields(finding),
+  }));
+  const findingIdentities = new Set(
+    findingBindings
+      .filter(({ binding }) => binding.valid)
+      .map(({ binding }) => `${binding.candidateId}:${binding.candidateRevision}`),
+  );
+  if (findingIdentities.size > 1) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "mixed_evidence", null);
+  if (findingBindings.some(({ explicit }) => !explicit)) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "missing_binding", null);
+  }
+  const invalidFinding = findingBindings.find(({ binding }) => !binding.valid);
+  if (invalidFinding) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, invalidFinding.binding.code, null);
+  }
+  if (findingBindings.some(({ binding }) => compareCandidateBinding(binding, target))) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "candidate_mismatch", null);
   }
   const hasBlockingReasons = summary.blockingReasons.length > 0;
-  const blockingFindings = Array.isArray(summary.findings)
-    ? summary.findings.some((finding) => ["P0", "P1"].includes(finding?.severity))
-    : false;
-  if (summary.reportedVerdict === "PASS" && (summary.verdict !== "PASS" || hasBlockingReasons || blockingFindings)) {
+  const blockingFindings = summary.findings.some((finding) => ["P0", "P1"].includes(finding?.severity));
+  if (summary.verdict === "PASS" && (hasBlockingReasons || blockingFindings)) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
   if (summary.verdict !== "PASS" || hasBlockingReasons || blockingFindings) {
