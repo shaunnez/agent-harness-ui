@@ -28,7 +28,6 @@ import { RuntimeTaskWorkspace } from "./components/RuntimeTaskWorkspace";
 import { Shell } from "./components/Shell";
 import {
   type AppScreen,
-  agentRoleIds,
   type AgentRoleId,
   type NewTaskDraft,
   type RuntimeEvaluationSummary,
@@ -38,29 +37,22 @@ import {
   type StageId,
   workflowStages,
 } from "./domain";
-
-function readHashRoute() {
-  const parts = window.location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
-  const screenPart = parts[0];
-  const screen = (screenPart && ["command", "tasks", "skills", "agents", "settings"].includes(screenPart) ? screenPart : "command") as AppScreen;
-  const taskId = screen === "tasks" && parts[1] ? decodeURIComponent(parts[1]) : null;
-  const agentId = screen === "agents" && parts[1] && agentRoleIds.includes(parts[1] as AgentRoleId) ? (parts[1] as AgentRoleId) : null;
-  const stagePart = parts[2];
-  const stageId = stagePart && workflowStages.some((stage) => stage.id === stagePart) ? (stagePart as StageId) : null;
-  return { screen, taskId, stageId, agentId };
-}
-
-function screenHash(screen: AppScreen) {
-  return `#/${screen}`;
-}
+import {
+  appScreenForRoute,
+  changelogRoute as createChangelogRoute,
+  parseHashRoute,
+  parentTaskRoute,
+  serializeHashRoute,
+  type HashRoute,
+  type PrimaryRoute,
+  type TaskRoute,
+} from "./routes";
 
 export function App() {
   const [screen, setScreen] = useState<AppScreen>("command");
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
-  const [changelogOpen, setChangelogOpen] = useState(false);
-  const [returnScreen, setReturnScreen] = useState<AppScreen>("tasks");
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus | null>(null);
   const [runtimeTasks, setRuntimeTasks] = useState<RuntimeTask[]>([]);
   const [runtimeLoading, setRuntimeLoading] = useState(true);
@@ -70,6 +62,9 @@ export function App() {
   const [evaluationSummary, setEvaluationSummary] = useState<RuntimeEvaluationSummary | null>(null);
   const [viewedStageId, setViewedStageId] = useState<StageId | undefined>();
   const [selectedAgentId, setSelectedAgentId] = useState<AgentRoleId | null>(null);
+  const [selectedSkillId, setSelectedSkillId] = useState<StageId | null>(null);
+  const [taskRouteDetail, setTaskRouteDetail] = useState<TaskRoute["detail"]>();
+  const [currentRoute, setCurrentRoute] = useState<HashRoute>(() => parseHashRoute(window.location.hash).route);
   const [runtimeRefreshing, setRuntimeRefreshing] = useState(false);
   const [toast, setToast] = useState<{ tone: "success" | "error"; message: string } | null>(null);
 
@@ -94,6 +89,13 @@ export function App() {
     return enriched;
   }, []);
 
+  const navigateToRoute = useCallback((route: HashRoute, replace = false) => {
+    const hash = serializeHashRoute(route);
+    if (window.location.hash === hash) return;
+    if (replace) window.history.replaceState(null, "", hash);
+    else window.location.hash = hash;
+  }, []);
+
   useEffect(() => {
     let current = true;
     void Promise.allSettled([getRuntimeStatus(), listTasks(), getEvaluationSummary()]).then(([statusResult, tasksResult, evaluationResult]) => {
@@ -109,24 +111,33 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (!window.location.hash) window.history.replaceState(null, "", screenHash("command"));
+    if (!window.location.hash) window.history.replaceState(null, "", serializeHashRoute({ kind: "screen", screen: "command" }));
     const applyRoute = () => {
-      const route = readHashRoute();
-      setScreen(route.screen);
-      setViewedStageId(route.stageId ?? undefined);
-      setSelectedAgentId(route.agentId);
-      if (!route.taskId) {
+      const parsed = parseHashRoute(window.location.hash);
+      if (!parsed.valid) window.history.replaceState(null, "", serializeHashRoute(parsed.route));
+      const route = parsed.route;
+      const primaryRoute = route.kind === "changelog" ? route.returnTo : route;
+      setCurrentRoute(route);
+      setScreen(appScreenForRoute(primaryRoute));
+      setSelectedSkillId(primaryRoute.kind === "skill" ? primaryRoute.skillId : null);
+      setSelectedAgentId(primaryRoute.kind === "agent" ? primaryRoute.agentId : null);
+      if (primaryRoute.kind !== "task") {
         setActiveTaskLoading(false);
         setWorkspaceOpen(false);
         setActiveRuntimeTask(null);
+        setViewedStageId(undefined);
+        setTaskRouteDetail(undefined);
         return;
       }
+      const { taskId, stageId, detail } = primaryRoute;
+      setViewedStageId(stageId);
+      setTaskRouteDetail(detail);
       setWorkspaceOpen(true);
       setActiveTaskLoading(true);
-      setActiveRuntimeTask((current) => current?.id === route.taskId ? current : null);
-      void refreshActiveTask(route.taskId).catch((error) => {
+      setActiveRuntimeTask((current) => current?.id === taskId ? current : null);
+      void refreshActiveTask(taskId).catch((error) => {
         showToast("error", error instanceof Error ? error.message : "The task could not be loaded.");
-        window.location.hash = screenHash("tasks");
+        navigateToRoute({ kind: "screen", screen: "tasks" });
       }).finally(() => setActiveTaskLoading(false));
     };
     applyRoute();
@@ -136,7 +147,7 @@ export function App() {
       window.removeEventListener("hashchange", applyRoute);
       window.removeEventListener("popstate", applyRoute);
     };
-  }, [refreshActiveTask, showToast]);
+  }, [navigateToRoute, refreshActiveTask, showToast]);
 
   useEffect(() => {
     const id = activeRuntimeTask?.id;
@@ -159,20 +170,18 @@ export function App() {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
-  const navigate = (nextScreen: AppScreen) => { window.location.hash = screenHash(nextScreen); };
+  const navigate = (nextScreen: AppScreen) => navigateToRoute({ kind: "screen", screen: nextScreen });
 
   const openWorkspace = (from: "command" | "tasks", taskId?: string) => {
-    setReturnScreen(from);
-    if (taskId) window.location.hash = `#/tasks/${encodeURIComponent(taskId)}`;
+    if (taskId) navigateToRoute({ kind: "task", taskId, returnTo: from === "command" ? "command" : undefined });
   };
 
   const startTask = async (draft: NewTaskDraft) => {
     const task = await createTask(draft);
     await runTask(task.id);
     setNewTaskOpen(false);
-    setReturnScreen("tasks");
     setRuntimeTasks((tasks) => [task, ...tasks.filter((item) => item.id !== task.id)]);
-    window.location.hash = `#/tasks/${encodeURIComponent(task.id)}/${task.currentStage}`;
+    navigateToRoute({ kind: "task", taskId: task.id, stageId: task.currentStage });
   };
 
   const refreshRuntime = async () => {
@@ -201,9 +210,12 @@ export function App() {
     return saved;
   };
 
+  const primaryRoute: PrimaryRoute = currentRoute.kind === "changelog" ? currentRoute.returnTo : currentRoute;
+  const taskRoute = primaryRoute.kind === "task" ? primaryRoute : null;
+
   return (
     <div className={`app-shell ${sidebarCollapsed ? "app-shell--collapsed" : ""}`}>
-      <Shell screen={screen} collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed((value) => !value)} onNavigate={navigate} onNewTask={() => setNewTaskOpen(true)} onOpenChangelog={() => setChangelogOpen(true)} runtimeStatus={runtimeStatus} />
+      <Shell screen={screen} collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed((value) => !value)} onNavigate={navigate} onNewTask={() => setNewTaskOpen(true)} onOpenChangelog={() => navigateToRoute(createChangelogRoute(primaryRoute))} runtimeStatus={runtimeStatus} />
       <main className="app-main">
         {workspaceOpen && activeRuntimeTask ? (
           <RuntimeTaskWorkspace
@@ -212,9 +224,25 @@ export function App() {
             initialViewedStageId={viewedStageId}
             onViewedStageChange={(stageId) => {
               setViewedStageId(stageId);
-              window.history.pushState(null, "", `#/tasks/${encodeURIComponent(activeRuntimeTask.id)}/${stageId}`);
+              navigateToRoute({
+                ...(taskRoute ?? { kind: "task", taskId: activeRuntimeTask.id }),
+                stageId,
+                detail: undefined,
+              });
             }}
-            onBack={() => { window.location.hash = screenHash(returnScreen); void refreshTasks(); }}
+            routeDetail={taskRouteDetail}
+            onRouteDetailChange={(detail, stageId) => {
+              const baseRoute = taskRoute ?? { kind: "task" as const, taskId: activeRuntimeTask.id };
+              navigateToRoute({
+                ...parentTaskRoute(baseRoute),
+                stageId: stageId ?? baseRoute.stageId ?? activeRuntimeTask.currentStage,
+                detail: detail ?? undefined,
+              });
+            }}
+            onBack={() => {
+              navigateToRoute({ kind: "screen", screen: taskRoute?.returnTo ?? "tasks" });
+              void refreshTasks();
+            }}
             onRun={async () => { await runTask(activeRuntimeTask.id); await refreshActiveTask(activeRuntimeTask.id); showToast("success", "Task run started."); }}
             onCancel={async () => { await cancelTask(activeRuntimeTask.id); await refreshActiveTask(activeRuntimeTask.id); showToast("success", "Active run cancelled."); }}
             onCloseTask={async (reason, note, supersededBy) => {
@@ -257,13 +285,13 @@ export function App() {
         ) : workspaceOpen && activeTaskLoading ? <TaskWorkspaceSkeleton /> : null}
         {!workspaceOpen && screen === "command" ? <CommandCentre runtimeTasks={runtimeTasks} runtimeStatus={runtimeStatus} runtimeLoading={runtimeLoading} runtimeError={runtimeError} onNewTask={() => setNewTaskOpen(true)} onOpenTask={(taskId) => openWorkspace("command", taskId)} onSeeAllTasks={() => navigate("tasks")} onRefreshRuntime={() => void refreshRuntime()} runtimeRefreshing={runtimeRefreshing} /> : null}
         {!workspaceOpen && screen === "tasks" ? <TasksScreen runtimeTasks={runtimeTasks} onOpenTask={(taskId) => openWorkspace("tasks", taskId)} /> : null}
-        {!workspaceOpen && screen === "skills" ? <SkillsScreen runtimeTasks={runtimeTasks} /> : null}
+        {!workspaceOpen && screen === "skills" ? <SkillsScreen runtimeTasks={runtimeTasks} selectedId={selectedSkillId} onSelect={(skillId) => navigateToRoute(skillId ? { kind: "skill", skillId } : { kind: "screen", screen: "skills" })} /> : null}
         {!workspaceOpen && screen === "agents" ? (
           <AgentsScreen
             runtimeTasks={runtimeTasks}
             runtimeStatus={runtimeStatus}
             selectedId={selectedAgentId}
-            onSelect={(agentId) => { window.location.hash = agentId ? `#/agents/${agentId}` : screenHash("agents"); }}
+            onSelect={(agentId) => navigateToRoute(agentId ? { kind: "agent", agentId } : { kind: "screen", screen: "agents" })}
             onSave={saveRuntimeSettings}
           />
         ) : null}
@@ -286,7 +314,15 @@ export function App() {
         ) : null}
       </main>
       <NewTaskDialog open={newTaskOpen} defaultRepository={runtimeStatus?.suggestedRepository ?? ""} runtimeStatus={runtimeStatus} onClose={() => setNewTaskOpen(false)} onStart={startTask} />
-      {changelogOpen ? <ChangelogModal onClose={() => setChangelogOpen(false)} /> : null}
+      {currentRoute.kind === "changelog" ? (
+        <ChangelogModal
+          commitSha={currentRoute.commitSha}
+          filePath={currentRoute.filePath}
+          onClose={() => navigateToRoute(currentRoute.returnTo)}
+          onSelectCommit={(commitSha) => navigateToRoute(createChangelogRoute(currentRoute.returnTo, commitSha))}
+          onSelectFile={(filePath) => navigateToRoute(createChangelogRoute(currentRoute.returnTo, currentRoute.commitSha, filePath))}
+        />
+      ) : null}
       {toast ? <div className={`app-toast app-toast--${toast.tone}`} role="status">{toast.message}</div> : null}
     </div>
   );
