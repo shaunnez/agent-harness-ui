@@ -14,6 +14,14 @@ import {
   parseWorkPackages,
   validateFocusedTestEvidence,
 } from "../server/structured-output.mjs";
+import {
+  attachRunArtifact,
+  beginAgentRun,
+  migrateRunActivityState,
+  readExplicitCandidateBinding,
+  refreshGateFreshness,
+  RUNTIME_FRESHNESS_REASONS,
+} from "../server/run-activity.mjs";
 
 const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"questions":[{"question":"Compatibility?","whyItMatters":"Changes the public contract.","options":[{"label":"Preserve it","description":"Keep existing clients working.","recommended":true},{"label":"Break it","description":"Allow a clean break.","recommended":false}],"allowCustom":true}]}\n</grill-questions>`;
 const PLAN_OUTPUT = `## Plan summary\n\nTwo independent slices.\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verification":["npm test"]},{"id":"S2","title":"UI","description":"Implement the task UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verification":["npm run typecheck"]}]}\n</work-packages>`;
@@ -167,6 +175,286 @@ test("derives candidate-bound review gates from structured evidence", () => {
     ),
     /different candidate revision/i,
   );
+});
+
+test("rejects generic candidate identity fields at every structured evidence boundary", () => {
+  assert.deepEqual(readExplicitCandidateBinding({ id: "C1", revisionNumber: 2 }), {
+    valid: false,
+    candidateId: null,
+    candidateRevision: null,
+    code: "missing_binding",
+    copy: RUNTIME_FRESHNESS_REASONS.missing_binding,
+  });
+  assert.throws(
+    () => parseFocusedTestEvidence(
+      `<focused-test-evidence>{"id":"C1","revisionNumber":2,"command":"npm test","status":"passed","rows":[{"id":"row-1","status":"passed"}]}</focused-test-evidence>`,
+    ),
+    /missing_binding/i,
+  );
+  assert.throws(
+    () => parseGateEvidence(
+      `<gate-evidence>{"id":"C1","revisionNumber":2,"verdict":"PASS","findings":[]}</gate-evidence>`,
+      { id: "C1", revisionNumber: 2 },
+      "dev-review",
+    ),
+    /missing_binding/i,
+  );
+  assert.equal(readExplicitCandidateBinding({ candidateId: "C1", candidateRevision: 0 }).code, "malformed_binding");
+  assert.equal(readExplicitCandidateBinding({ candidateId: "C1", candidateRevision: "2" }).code, "malformed_binding");
+  assert.equal(readExplicitCandidateBinding({ candidateId: "", candidateRevision: 2 }).code, "malformed_binding");
+});
+
+test("resolves candidate-bound gate failures closed with exact stale reasons", () => {
+  const cases = [
+    {
+      name: "missing authoritative summary",
+      run: makeRuntimeRun({ artifactId: null, gateResult: null }),
+      artifacts: [],
+      code: "missing_authoritative_summary",
+    },
+    {
+      name: "malformed run binding",
+      run: makeRuntimeRun({ candidateRevision: "2" }),
+      artifacts: [],
+      code: "malformed_binding",
+    },
+    {
+      name: "candidate mismatch",
+      run: makeRuntimeRun({ candidateId: "C2", gateResult: makeGateResult({ candidateId: "C2" }) }),
+      artifacts: [],
+      code: "candidate_mismatch",
+    },
+    {
+      name: "stale revision",
+      run: makeRuntimeRun({ candidateRevision: 1, gateResult: makeGateResult({ candidateRevision: 1 }) }),
+      artifacts: [],
+      code: "revision_change",
+    },
+    {
+      name: "failed execution",
+      run: makeRuntimeRun({ status: "failed", gateResult: makeGateResult() }),
+      artifacts: [],
+      code: "failed_execution",
+    },
+    {
+      name: "timed out execution",
+      run: makeRuntimeRun({ status: "timed-out", gateResult: makeGateResult() }),
+      artifacts: [],
+      code: "timeout",
+    },
+    {
+      name: "repair result",
+      run: makeRuntimeRun({ gateResult: makeGateResult({ verdict: "REPAIR", reportedVerdict: "REPAIR", blockingReasons: ["P1: defect"] }) }),
+      artifacts: [],
+      code: "repair_required",
+    },
+    {
+      name: "contradictory result",
+      run: makeRuntimeRun({ gateResult: makeGateResult({ verdict: "REPAIR", reportedVerdict: "PASS", blockingReasons: ["P1: defect"] }) }),
+      artifacts: [],
+      code: "contradictory_evidence",
+    },
+  ];
+
+  for (const item of cases) {
+    const task = makeRuntimeTask({ runs: [item.run], artifacts: item.artifacts });
+    refreshGateFreshness(task);
+    const freshness = task.gateFreshness["dev-review"];
+    assert.equal(freshness.fresh, false, item.name);
+    assert.equal(freshness.reasonCode, item.code, item.name);
+    assert.equal(freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS[item.code], item.name);
+    assert.deepEqual(freshness.staleReason, { code: item.code, copy: RUNTIME_FRESHNESS_REASONS[item.code] }, item.name);
+  }
+});
+
+test("rejects mixed candidate summaries with the exact stale reason", () => {
+  const mixedGate = makeRuntimeRun({
+    gateResult: makeGateResult({
+      findings: [
+        { severity: "P2", title: "C1 finding", detail: "Bound to C1.", candidateId: "C1", candidateRevision: 2 },
+        { severity: "P2", title: "C2 finding", detail: "Bound to C2.", candidateId: "C2", candidateRevision: 2 },
+      ],
+    }),
+  });
+  const mixedGateTask = makeRuntimeTask({ runs: [mixedGate] });
+  refreshGateFreshness(mixedGateTask);
+  assert.equal(mixedGateTask.gateFreshness["dev-review"].reasonCode, "mixed_evidence");
+});
+
+test("filters focused Test rows to the exact candidate and retains invalid rows for audit", () => {
+  const testRun = makeRuntimeRun({ id: "RUN-TEST", stage: "test", kind: "test", artifactId: "ART-TEST" });
+  const testArtifact = makeArtifact({
+    id: "ART-TEST",
+    stage: "test",
+    focusedTest: {
+      candidateId: "C1",
+      candidateRevision: 2,
+      bindingExplicit: true,
+      command: "npm test",
+      status: "passed",
+      rows: [
+        makeTestRow({ id: "row-current", candidateId: "C1", candidateRevision: 2 }),
+        makeTestRow({ id: "row-old", candidateId: "C1", candidateRevision: 1 }),
+      ],
+    },
+  });
+  const testTask = makeRuntimeTask({ runs: [testRun], artifacts: [testArtifact] });
+  attachRunArtifact(testTask, testRun.id, testArtifact);
+  assert.equal(testTask.gateFreshness.test.fresh, false);
+  assert.equal(testTask.gateFreshness.test.reasonCode, "mixed_evidence");
+  assert.deepEqual(testTask.gateFreshness.test.focusedTestRows, []);
+  assert.equal(testTask.runs[0].test.rows.length, 2, "historical rows remain retained for audit");
+
+  const exactTestRun = makeRuntimeRun({ id: "RUN-TEST-EXACT", stage: "test", kind: "test", artifactId: "ART-TEST-EXACT" });
+  const exactTestArtifact = makeArtifact({
+    id: "ART-TEST-EXACT",
+    stage: "test",
+    focusedTest: {
+      candidateId: "C1",
+      candidateRevision: 2,
+      bindingExplicit: true,
+      command: "npm test",
+      status: "passed",
+      rows: [
+        makeTestRow({ id: "row-exact-1" }),
+        makeTestRow({ id: "row-exact-2" }),
+      ],
+    },
+  });
+  const exactTestTask = makeRuntimeTask({ runs: [exactTestRun], artifacts: [exactTestArtifact] });
+  attachRunArtifact(exactTestTask, exactTestRun.id, exactTestArtifact);
+  assert.equal(exactTestTask.gateFreshness.test.fresh, true);
+  assert.deepEqual(exactTestTask.gateFreshness.test.focusedTestRows.map((row) => row.id), ["row-exact-1", "row-exact-2"]);
+});
+
+test("latest terminal exact-candidate attempt wins and older passes become superseded", () => {
+  const first = makeRuntimeRun({
+    id: "RUN-1",
+    attempt: 1,
+    artifactId: "ART-1",
+    gateResult: makeGateResult(),
+  });
+  const second = makeRuntimeRun({
+    id: "RUN-2",
+    attempt: 2,
+    artifactId: "ART-2",
+    gateResult: makeGateResult({ verdict: "REPAIR", reportedVerdict: "REPAIR", blockingReasons: ["P1: repair"] }),
+  });
+  const task = makeRuntimeTask({
+    runs: [first, second],
+    artifacts: [makeArtifact({ id: "ART-1" }), makeArtifact({ id: "ART-2", gateResult: second.gateResult })],
+  });
+  refreshGateFreshness(task);
+  assert.equal(task.gateFreshness["dev-review"].sourceRunId, "RUN-2");
+  assert.equal(task.gateFreshness["dev-review"].reasonCode, "repair_required");
+  assert.equal(task.runs[0].freshness.reasonCode, "superseded_attempt");
+  assert.equal(task.runs[1].freshness.reasonCode, "repair_required");
+
+  const unrelated = makeRuntimeRun({
+    id: "RUN-C2",
+    candidateId: "C2",
+    candidateRevision: 8,
+    attempt: 99,
+    artifactId: "ART-C2",
+    gateResult: makeGateResult({ candidateId: "C2", candidateRevision: 8 }),
+  });
+  const exact = makeRuntimeRun({ id: "RUN-EXACT", attempt: 1, artifactId: "ART-EXACT", gateResult: makeGateResult() });
+  const exactTask = makeRuntimeTask({
+    runs: [exact, unrelated],
+    artifacts: [makeArtifact({ id: "ART-EXACT" }), makeArtifact({ id: "ART-C2", candidateId: "C2", candidateRevision: 8, gateResult: unrelated.gateResult })],
+  });
+  refreshGateFreshness(exactTask);
+  assert.equal(exactTask.gateFreshness["dev-review"].sourceRunId, "RUN-EXACT");
+  assert.equal(exactTask.gateFreshness["dev-review"].fresh, true);
+
+  const revisionTask = makeRuntimeTask({
+    runs: [makeRuntimeRun({ id: "RUN-R1", candidateRevision: 1, gateResult: makeGateResult({ candidateRevision: 1 }) })],
+  });
+  const nextRevisionRun = beginAgentRun(revisionTask, {
+    id: "RUN-R2",
+    kind: "review",
+    stage: "dev-review",
+    role: "dev-review",
+    candidateId: "C1",
+    candidateRevision: 2,
+  });
+  assert.equal(nextRevisionRun.attempt, 1, "attempt numbering is scoped to the exact candidate revision");
+});
+
+test("repair revision invalidates all candidate-bound gates while retaining evidence and lineage", () => {
+  const stages = ["dev-review", "test", "final-review"];
+  const runs = stages.map((stage) => makeRuntimeRun({
+    id: `RUN-${stage}`,
+    stage,
+    kind: stage === "test" ? "test" : "review",
+    candidateRevision: 1,
+    artifactId: `ART-${stage}`,
+    gateResult: stage === "test" ? null : makeGateResult({ stage, candidateRevision: 1 }),
+  }));
+  const testRun = runs.find((run) => run.stage === "test");
+  const testArtifact = makeArtifact({
+    id: "ART-test",
+    stage: "test",
+    candidateRevision: 1,
+    gateResult: makeGateResult({ stage: "test", candidateRevision: 1 }),
+    focusedTest: {
+      candidateId: "C1",
+      candidateRevision: 1,
+      bindingExplicit: true,
+      command: "npm test",
+      status: "passed",
+      rows: [makeTestRow({ candidateRevision: 1 })],
+    },
+  });
+  const artifacts = runs.map((run) => run.stage === "test" ? testArtifact : makeArtifact({
+    id: run.artifactId,
+    stage: run.stage,
+    candidateRevision: 1,
+    gateResult: makeGateResult({ stage: run.stage, candidateRevision: 1 }),
+  }));
+  const events = runs.map((run) => ({ id: `EVENT-${run.id}`, runId: run.id }));
+  const task = makeRuntimeTask({
+    candidateRevision: 1,
+    runs,
+    artifacts,
+    events,
+    revisions: [{ number: 1, reason: "assembly", headRevision: "a".repeat(40) }],
+  });
+  attachRunArtifact(task, testRun.id, testArtifact);
+  refreshGateFreshness(task);
+  assert.deepEqual(stages.map((stage) => task.gateFreshness[stage].fresh), [true, true, true]);
+
+  task.candidates[0].revisionNumber = 2;
+  task.candidates[0].revisions.push({ number: 2, reason: "repair", headRevision: "b".repeat(40) });
+  refreshGateFreshness(task);
+
+  for (const stage of stages) {
+    assert.equal(task.gateFreshness[stage].reasonCode, "revision_change", stage);
+  }
+  assert.equal(task.runs.every((run) => run.freshness.reasonCode === "revision_change"), true);
+  assert.equal(task.events.every((event) => event.freshness.reasonCode === "revision_change"), true);
+  assert.equal(task.artifacts.length, 3);
+  assert.equal(task.artifacts[0].content, "# retained evidence");
+  assert.deepEqual(task.candidates[0].revisions.map((revision) => revision.reason), ["assembly", "repair"]);
+  assert.equal(testRun.test.rows.length, 1);
+});
+
+test("legacy artifact migration is idempotent and assigns a deterministic stale reason", () => {
+  const state = {
+    schemaVersion: 1,
+    tasks: [makeRuntimeTask({
+      runs: [],
+      artifacts: [makeArtifact({ id: "LEGACY-ART", candidateId: null, candidateRevision: null, gateResult: null })],
+    })],
+  };
+  assert.equal(migrateRunActivityState(state), true);
+  const task = state.tasks[0];
+  assert.equal(task.runs.length, 1);
+  assert.equal(task.runs[0].id, "legacy:LEGACY-ART");
+  assert.equal(task.runs[0].freshness.reasonCode, "missing_binding");
+  assert.equal(task.runs[0].freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.missing_binding);
+  assert.equal(migrateRunActivityState(state), false);
+  assert.equal(state.tasks[0].runs.length, 1);
 });
 
 test("builds the focused test execution prompt with the structured evidence contract and Windows command rule", () => {
@@ -811,6 +1099,119 @@ test("reconciles a recorded merge intent without duplicating approval", async ()
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+function makeRuntimeTask({ candidateId = "C1", candidateRevision = 2, runs = [], artifacts = [], events = [], revisions = [] } = {}) {
+  return {
+    candidates: [{ id: candidateId, revisionNumber: candidateRevision, revisions }],
+    runs,
+    artifacts,
+    events,
+  };
+}
+
+function makeRuntimeRun({
+  id = "RUN-1",
+  stage = "dev-review",
+  kind = "review",
+  candidateId = "C1",
+  candidateRevision = 2,
+  status = "completed",
+  attempt = 1,
+  artifactId = null,
+  gateResult = makeGateResult({ stage, candidateId, candidateRevision }),
+  test = null,
+  error = null,
+} = {}) {
+  return {
+    id,
+    kind,
+    status,
+    stage,
+    role: stage,
+    model: "gpt-5.6-luna",
+    reasoning: "xhigh",
+    startedAt: "2026-08-01T12:00:00.000Z",
+    completedAt: "2026-08-01T12:01:00.000Z",
+    durationMs: 60_000,
+    artifactId,
+    usage: null,
+    credits: null,
+    apiEstimate: null,
+    candidateId,
+    candidateRevision,
+    workPackageId: null,
+    attempt,
+    retryOfRunId: null,
+    repairOfRunId: null,
+    toolCalls: [],
+    test,
+    gateResult,
+    evidenceError: null,
+    freshness: null,
+    error,
+    source: "codex-jsonl",
+  };
+}
+
+function makeGateResult({
+  stage = "dev-review",
+  candidateId = "C1",
+  candidateRevision = 2,
+  verdict = "PASS",
+  reportedVerdict = verdict,
+  blockingReasons = [],
+  findings = [],
+} = {}) {
+  return {
+    schemaVersion: 1,
+    stage,
+    verdict,
+    reportedVerdict,
+    candidateId,
+    candidateRevision,
+    evaluatedAt: "2026-08-01T12:01:00.000Z",
+    blockingReasons,
+    findings,
+  };
+}
+
+function makeTestRow({ id = "row-1", candidateId = "C1", candidateRevision = 2, status = "passed" } = {}) {
+  return {
+    id,
+    candidateId,
+    candidateRevision,
+    bindingExplicit: true,
+    command: "npm test",
+    status,
+    durationMs: 100,
+    title: `${id}.test.mjs`,
+    artifactReferences: [],
+    assertions: [],
+    failureDetails: null,
+  };
+}
+
+function makeArtifact({
+  id = "ART-1",
+  stage = "dev-review",
+  candidateId = "C1",
+  candidateRevision = 2,
+  gateResult = makeGateResult({ stage, candidateId, candidateRevision }),
+  focusedTest = null,
+} = {}) {
+  return {
+    id,
+    stage,
+    kind: "markdown",
+    name: `${id}.md`,
+    content: "# retained evidence",
+    createdAt: "2026-08-01T12:01:00.000Z",
+    candidateId,
+    candidateRevision,
+    gateResult,
+    focusedTest,
+  };
+}
 
 async function waitForStatus(store, id, expected) {
   for (let attempt = 0; attempt < 100; attempt += 1) {

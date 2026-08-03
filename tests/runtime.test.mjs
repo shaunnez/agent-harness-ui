@@ -1165,6 +1165,71 @@ test("filters structured activity and renders test run and artifact drilldown", 
   });
 });
 
+test("preserves stale freshness and exact reason data for Run Activity without rewriting terminal status", () => {
+  return withWorkspace(async ({ filterRunActivity }) => {
+    const staleReason = {
+      code: "revision_change",
+      copy: "Candidate evidence belongs to a previous candidate revision.",
+    };
+    const task = createTask({
+      runs: [
+        {
+          id: "RUN-STALE",
+          kind: "review",
+          status: "completed",
+          stage: "dev-review",
+          role: "dev-review",
+          model: "gpt-5.6-luna",
+          reasoning: "xhigh",
+          startedAt: "2026-08-01T12:00:00.000Z",
+          completedAt: "2026-08-01T12:01:00.000Z",
+          durationMs: 60_000,
+          candidateId: "C1",
+          candidateRevision: 1,
+          attempt: 1,
+          retryOfRunId: null,
+          repairOfRunId: null,
+          artifactId: "ART-STALE",
+          usage: null,
+          credits: null,
+          apiEstimate: null,
+          toolCalls: [],
+          test: null,
+          gateResult: { verdict: "PASS", candidateId: "C1", candidateRevision: 1, blockingReasons: [] },
+          evidenceError: null,
+          freshness: {
+            stage: "dev-review",
+            candidateId: "C1",
+            candidateRevision: 2,
+            target: { candidateId: "C1", candidateRevision: 2 },
+            state: "stale",
+            fresh: false,
+            sourceRunId: "RUN-STALE",
+            sourceArtifactId: "ART-STALE",
+            reasonCode: staleReason.code,
+            reasonCopy: staleReason.copy,
+            reason: staleReason,
+            staleReasonCode: staleReason.code,
+            staleReasonCopy: staleReason.copy,
+            staleReason,
+            focusedTest: null,
+            focusedTestRows: [],
+          },
+          error: null,
+          source: "codex-jsonl",
+        },
+      ],
+    });
+
+    const [item] = filterRunActivity(task, "agent");
+    assert.equal(item.run.status, "completed");
+    assert.equal(item.run.freshness.fresh, false);
+    assert.equal(item.run.freshness.reasonCode, "revision_change");
+    assert.equal(item.run.freshness.reasonCopy, staleReason.copy);
+    assert.match(item.detail, /completed/);
+  });
+});
+
 async function waitUntil(predicate) {
   for (let attempt = 0; attempt < 100; attempt += 1) {
     if (await predicate()) return;
