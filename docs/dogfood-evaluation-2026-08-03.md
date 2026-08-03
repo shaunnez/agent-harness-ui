@@ -83,4 +83,100 @@ Browser QA used a real local companion and Vite server at approximately 1440px, 
 
 ## Revealed comparison
 
-_Intentionally withheld until the locked blind-score commit exists._
+The private map was first read after locked-score commit `1519efbd91265f3da31ac3ff19b3919eed00c4f9`. It maps the opaque labels and task IDs as follows:
+
+| Issue | H — hybrid | X — all Luna XHigh | M — Max hybrid |
+| --- | --- | --- | --- |
+| Dashboard progress | I · AH-001 | A · AH-002 | D · AH-003 |
+| Agent and Skill contracts | C · AH-004 | B · AH-005 | E · AH-006 |
+| Structured activity | G · AH-007 | H · AH-008 | F · AH-009 |
+
+H uses Luna XHigh for production roles and Sol High for plan, repair, Dev Review, and Final Review. X uses Luna XHigh for every model-driven role. M uses Luna Max for production roles and Sol High for plan, repair, Dev Review, and Final Review. The mapping records the Max variant as model `gpt-5.6-luna` with reasoning `max`; it is a reasoning-policy variant of the same catalog model ID, not evidence of a separate provider.
+
+“First gate” below means the first recorded candidate-bound Dev Review verdict. `Not reached/unrecorded` is not counted as either pass or failure. There were zero recorded first-pass `PASS` results: I recorded `REPAIR`, B reached Dev Review but its three runs exceeded 240 seconds without producing a verdict, and the other seven tasks never assembled a candidate.
+
+### Dashboard progress
+
+| Policy | Label · task | Locked quality | Candidate | First gate | Repairs | Completed | Wall time | Terminal blocker |
+| --- | --- | ---: | --- | --- | ---: | --- | ---: | --- |
+| H | I · AH-001 | 3.67 | revision 2 | REPAIR on revision 1 | 1 | No | 54.2 min | Revision-2 Dev Review exceeded 240 seconds on repeated attempts |
+| X | A · AH-002 | 1.00 | None | Not reached | 0 | No | 44.8 min | Work package S2 exceeded 600 seconds |
+| M | D · AH-003 | 1.00 | None | Not reached | 0 | No | 43.4 min | Work package S2 exceeded 600 seconds |
+
+| Policy | Input | Output | Cached input | Cache rate | Work credits | API-rate estimate | Context size |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| H | 11,275,127 | 77,868 | 10,573,824 | 93.8% | 52.753 | $3.720369 | 126,840 chars · ~31,716 tokens |
+| X | 2,187,310 | 32,913 | 1,983,232 | 90.7% | 2.999 | $0.184421 | 61,976 chars · ~15,498 tokens |
+| M | 2,628,094 | 50,716 | 2,335,488 | 88.9% | 10.208 | $0.493937 | 75,797 chars · ~18,953 tokens |
+
+H is the only Dashboard policy that produced an assessable patch, and the repaired patch scored 3.67. That is a delivery signal worth retesting, not a quality win: its first review found a P1, its repaired revision never obtained a fresh verdict, and it consumed more resources because it progressed through assembly, review, and repair while X and M stopped in Implement. The usage rows are therefore stage-depth-censored and cannot establish relative efficiency.
+
+### Agent and Skill contracts
+
+| Policy | Label · task | Locked quality | Candidate | First gate | Repairs | Completed | Wall time | Terminal blocker |
+| --- | --- | ---: | --- | --- | ---: | --- | ---: | --- |
+| H | C · AH-004 | 1.00 | None | Not reached | 0 | No | 86.1 min | Work package S4 exceeded 600 seconds |
+| X | B · AH-005 | 3.78 | revision 1 | Unrecorded | 0 | No | 69.1 min | Dev Review exceeded 240 seconds on repeated attempts |
+| M | E · AH-006 | 1.00 | None | Not reached | 0 | No | 41.9 min | Work packages S1 and S2 exceeded 600 seconds |
+
+| Policy | Input | Output | Cached input | Cache rate | Work credits | API-rate estimate | Context size |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| H | 6,900,065 | 80,231 | 6,475,008 | 93.8% | 13.982 | $0.778371 | 116,438 chars · ~29,113 tokens |
+| X | 14,145,624 | 118,206 | 13,419,520 | 94.9% | 13.886 | $0.979397 | 146,438 chars · ~36,614 tokens |
+| M | 3,688,461 | 57,729 | 3,354,368 | 90.9% | 12.978 | $0.641528 | 82,258 chars · ~20,568 tokens |
+
+X is the only policy that produced an assessable Agent and Skill patch, which scored 3.78 and passed every evaluator-run check. It still has no candidate-bound review verdict, so the result supports a larger X trial only after the timeout path is fixed. X's higher token and context totals reflect deeper progress and five assembled work packages; they cannot be compared as like-for-like execution cost against earlier H and M failures.
+
+### Structured activity
+
+| Policy | Label · task | Locked quality | Candidate | First gate | Repairs | Completed | Wall time | Terminal blocker |
+| --- | --- | ---: | --- | --- | ---: | --- | ---: | --- |
+| H | G · AH-007 | 1.00 | None | Not reached | 0 | No | 48.1 min | Work package S3 exceeded 600 seconds |
+| X | H · AH-008 | 1.00 | None | Not reached | 0 | No | 56.7 min | Work package S3 exceeded 600 seconds |
+| M | F · AH-009 | 1.00 | None | Not reached | 0 | No | 45.0 min | Work package S1 exceeded 600 seconds |
+
+| Policy | Input | Output | Cached input | Cache rate | Work credits | API-rate estimate | Context size |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| H | 6,294,241 | 72,817 | 5,871,360 | 93.3% | 13.797 | $0.737472 | 98,877 chars · ~24,722 tokens |
+| X | 6,972,561 | 92,652 | 6,460,160 | 92.7% | 8.572 | $0.564419 | 116,529 chars · ~29,137 tokens |
+| M | 4,098,672 | 68,414 | 3,727,872 | 91.0% | 12.825 | $0.646513 | 86,621 chars · ~21,658 tokens |
+
+No Structured activity policy produced a patch. Token, cache, credit, cost, and wall-time differences measure three censored failures rather than quality or successful throughput. This issue is too confounded to interpret and should not influence a model-policy recommendation.
+
+### Campaign totals by policy
+
+The quality mean below is delivery-weighted: absent candidates retain their locked 1.00 scores. It is not a mean over comparable completed patches.
+
+| Policy | Locked mean | Assessable candidates | Completed | Repairs | Wall time | Input | Output | Cached input | Cache rate |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| H | 1.89 | 1/3 | 0/3 | 1 | 188.4 min | 24,469,433 | 230,916 | 22,920,192 | 93.7% |
+| X | 1.93 | 1/3 | 0/3 | 0 | 170.5 min | 23,305,495 | 243,771 | 21,862,912 | 93.8% |
+| M | 1.00 | 0/3 | 0/3 | 0 | 130.3 min | 10,415,227 | 176,859 | 9,417,728 | 90.4% |
+
+| Policy | Work credits | API-rate estimate | Aggregate context size |
+| --- | ---: | ---: | ---: |
+| H | 80.532 | $5.236212 | 342,155 chars · ~85,551 tokens |
+| X | 25.458 | $1.728237 | 324,943 chars · ~81,249 tokens |
+| M | 36.012 | $1.781978 | 244,676 chars · ~61,179 tokens |
+
+H and X each produced one assessable candidate and completed none; their delivery-weighted means differ by only 0.04 and come from different issues. M consumed less wall time and fewer tokens but produced no candidate, so the lower totals are failure truncation rather than evidence of efficiency. H's much higher credit and API estimate is dominated by the Dashboard run that reached review and repair. Aggregate context sizes likewise grow with stage depth and are not controlled prompt-size measurements.
+
+## Limitations and confounds
+
+- This is one task per issue-policy cell, with no completed task and only two assessable patches. No statistical significance or stable ranking can be claimed.
+- Seven outcomes are censored by 600-second implementation timeouts. The two assembled candidates are censored by 240-second Dev Review timeouts. Timeout behavior is the dominant campaign outcome.
+- H and X share Luna XHigh for many production stages; they differ most at planning and review gates. A paired outcome therefore does not isolate one model from work-package decomposition, gate behavior, or timeout sensitivity.
+- Candidate depth differs substantially. Wall time, tokens, cache, credits, API-rate estimates, and context size are not normalized to the same completed stage frontier.
+- B has no recorded candidate-bound verdict despite three Dev Review attempts. I's revision-1 verdict is stale for repaired revision 2. First-pass and eventual gate success are therefore mostly unavailable, not negative measurements.
+- The anonymized B and I diffs were malformed unified patches. The evaluator repaired serialization only, but future bundles should pass `git apply --check` before READY is published.
+- Browser evaluation of I used the truthful empty local state because the anonymized bundle did not include a populated browser fixture. Source and render tests covered populated rows and workflow surfaces, but the evaluator did not claim full live-state visual coverage.
+
+## Recommendations
+
+1. **Run a larger balanced trial of H and X only after fixing the timeout and evidence path.** Both produced one assessable candidate across three attempts, on different issues. Repeat frozen small, medium, and high-risk briefs enough times to measure candidate yield, first-pass gate success, repairs, completion, and normalized per-stage usage. Keep blind scoring and exact policy snapshots.
+2. **Treat M as a bounded diagnostic variant before a larger trial.** M produced zero candidates in three runs. Start with low-risk, single-package tasks and determine whether Luna Max work regularly exceeds the 600-second slice limit. Do not infer low quality from this campaign, but do not spend a full suite until candidate yield is demonstrated.
+3. **Repair campaign infrastructure before comparing model quality.** Make timeout causes and partial outputs durable, validate bundle diffs with `git apply --check`, ensure every candidate-bound attempt records a verdict or explicit timeout result, and distinguish not-reached, timed-out, first-pass failure, repaired pass, and completed gates in the experiment manifest.
+4. **Rerun the two surviving patches through fresh candidate-bound gates.** For I, remove the unnecessary 1440 table scrollbar and rerun Dev Review and Test on revision 2 or a successor. For B, remove duplicate shared-scout controls, extract the oversized contract panel, make post-save refresh failure truthful, and run Dev Review and Test.
+5. **Keep cost interpretation stage-normalized.** Compare tokens, work credits, API-rate estimates, cache rate, wall time, and context size only at a common stage frontier or per successful candidate/gate. Continue labeling dollar values as API-rate estimates, not attributable ChatGPT-plan charges.
+
+The human decision is whether to prioritize H's evidence of repair-capable delivery or X's evidence of a slightly higher-scoring first assembled patch. This sample does not justify choosing between them. The safest next step is an infrastructure-corrected H-versus-X trial, with M retained as a small diagnostic arm.
