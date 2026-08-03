@@ -1,0 +1,12 @@
+[
+  {
+    "stage": "dev-review",
+    "candidateRevision": 1,
+    "verdict": "REPAIR",
+    "startedAt": null,
+    "completedAt": "2026-08-03T02:23:09.914Z",
+    "durationMs": null,
+    "focusedTest": null,
+    "narrative": "REPAIR\n\n## Verdict\n\nThe progress count and ARIA semantics are truthful, but the visible ring does not reflect that progress.\n\n## Candidate reviewed\n\nBase `4c9d5681` → candidate `14542082` (C1 revision 1), six changed files.\n\nAll required checks passed. `test:sites` was invoked through `npm.cmd` after PowerShell blocked the `npm.ps1` wrapper.\n\n## Findings\n\n- P1 — The workflow ring remains visually fixed at approximately 50%. `CommandCentre` sets `--workflow-progress` and adds `progress-ring--complete` (`src/components/CommandCentre.tsx:59`, `src/components/CommandCentre.tsx:151`), but `.progress-ring` uses static amber top/right borders and never consumes that property or styles the complete class (`src/styles.css:714`). Consequently, 0/10, 4/10, and 10/10 render the same ring. The new test only checks that the unused property and class exist (`tests/runtime.test.mjs:947`), so it passes despite the visual failure.\n\n## Rubric\n\n- Correctness: Blocked by the nonfunctional ring visualization.\n- Architecture/conventions: Progress normalization is cohesive and uses `workflowStages`.\n- Security: No concerns found.\n- Maintainability: Shared-table layout rules are consolidated appropriately.\n- Scope control: Changes remain within the approved surfaces.\n- Compatibility: Contained table scrolling provides reasonable narrow-width fallback.\n- Tests: All pass, but ring styling coverage is insufficient.\n- Operability: Lint, typecheck, tests, build, Sites tests, and diff checks pass.\n\n## Required repairs\n\n- Make `.progress-ring` consume `--workflow-progress`—for example through a conic-gradient/SVG implementation—and ensure `progress-ring--complete` renders a genuinely complete ring.\n- Add coverage that verifies the styling mechanism, so 0%, partial, and 100% cannot all render identically."
+  }
+]

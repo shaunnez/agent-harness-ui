@@ -1,0 +1,1606 @@
+diff --git a/src/App.tsx b/src/App.tsx
+index 324e9c0..6c912fd 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -21,6 +21,7 @@ import { CommandCentre } from "./components/CommandCentre";
+ import { ChangelogModal } from "./components/ChangelogModal";
+ import { AgentsScreen, SettingsScreen, SkillsScreen, TasksScreen } from "./components/LibraryScreens";
+ import { NewTaskDialog } from "./components/NewTaskDialog";
++import type { RuntimeSettingsPayload } from "./components/PolicyEditor";
+ import { RuntimeTaskWorkspace } from "./components/RuntimeTaskWorkspace";
+ import { Shell } from "./components/Shell";
+ import {
+@@ -186,6 +187,17 @@ export function App() {
+     }
+   };
+
++  const saveRuntimeSettings = async (settings: RuntimeSettingsPayload) => {
++    await updateRuntimeSettings(settings);
++    await refreshRuntime();
++    try {
++      setEvaluationSummary(await getEvaluationSummary());
++    } catch {
++      // A scorecard refresh is ancillary; the settings API already succeeded.
++    }
++    showToast("success", "Model policy saved. New tasks will use the updated defaults.");
++  };
++
+   return (
+     <div className={`app-shell ${sidebarCollapsed ? "app-shell--collapsed" : ""}`}>
+       <Shell screen={screen} collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed((value) => !value)} onNavigate={navigate} onNewTask={() => setNewTaskOpen(true)} onOpenChangelog={() => setChangelogOpen(true)} runtimeStatus={runtimeStatus} />
+@@ -249,6 +261,7 @@ export function App() {
+             runtimeStatus={runtimeStatus}
+             selectedId={selectedAgentId}
+             onSelect={(agentId) => { window.location.hash = agentId ? `#/agents/${agentId}` : screenHash("agents"); }}
++            onSave={saveRuntimeSettings}
+           />
+         ) : null}
+         {!workspaceOpen && screen === "settings" ? (
+@@ -256,12 +269,7 @@ export function App() {
+             runtimeStatus={runtimeStatus}
+             evaluationSummary={evaluationSummary}
+             onRefresh={refreshRuntime}
+-            onSave={async (settings) => {
+-              await updateRuntimeSettings(settings);
+-              await refreshRuntime();
+-              setEvaluationSummary(await getEvaluationSummary());
+-              showToast("success", "Model policy saved. New tasks will use the updated defaults.");
+-            }}
++            onSave={saveRuntimeSettings}
+             onVerifyPricing={async () => {
+               const result = await verifyRuntimePricing();
+               await refreshRuntime();
+diff --git a/src/components/LibraryScreens.tsx b/src/components/LibraryScreens.tsx
+index 346326e..d382913 100644
+--- a/src/components/LibraryScreens.tsx
++++ b/src/components/LibraryScreens.tsx
+@@ -9,7 +9,6 @@ import {
+   WarningCircle,
+ } from "@phosphor-icons/react";
+ import { useEffect, useMemo, useState } from "react";
+-import promptRuntimeSource from "../../server/prompts.mjs?raw";
+ import {
+   formatApproximateCost,
+   formatCacheRate,
+@@ -17,14 +16,15 @@ import {
+   type AgentRoleId,
+   type RuntimeEvaluationSummary,
+   type RuntimeAgentPolicy,
+-  type RuntimeSettings,
+   type RuntimeStatus,
+   type RuntimeTask,
+   scoutRoleIds,
+   type StageId,
+   workflowStages,
+ } from "../domain";
++import { getSkillContract, type JavascriptSourceReference, type SkillContract, type SkillTypeReference } from "../contracts/skillContracts";
+ import { Button, SectionHeader } from "./Primitives";
++import { PolicyEditor, type RuntimeSettingsPayload } from "./PolicyEditor";
+ import { TaskTable } from "./TaskTable";
+
+ export function TasksScreen({
+@@ -116,27 +116,6 @@ export function TasksScreen({
+   );
+ }
+
+-const skillContracts: Record<StageId, { input: string; output: string }> = {
+-  triage: { input: "Task title, description, workflow, priority, and repository", output: "triage.md with verdict, verified facts, scope, risks, and route" },
+-  scouts: { input: "Task plus repository and retained triage evidence", output: "repository-scout.md with architecture, files, tests, constraints, and seams" },
+-  grill: { input: "Repository facts and consequential unresolved product decisions", output: "decision-brief.md plus structured Grill questions and recorded decisions" },
+-  specification: { input: "Approved evidence and authoritative recorded decisions", output: "task-specification.md with scope, acceptance criteria, tests, and notes" },
+-  plan: { input: "Approved specification", output: "implementation-plan.md plus dependency-ordered work-package manifest" },
+-  implement: { input: "Approved spec and plan in an isolated candidate worktree", output: "Committed candidate revision and implementation-candidate.md" },
+-  "dev-review": { input: "Exact candidate revision plus approved specification and plan", output: "development-review.md with PASS/REPAIR and P0–P3 findings" },
+-  test: { input: "Exact reviewed candidate revision", output: "test-evidence.md plus candidate-bound focused-test result rows" },
+-  "final-review": { input: "Exact tested candidate and every retained stage artifact", output: "final-review.md with holdout verdict and human approval brief" },
+-  approval: { input: "Exact candidate revision and fresh review/test/final gates", output: "Human approval record and fast-forward merge" },
+-};
+-
+-function sourceExcerpt(stageId: StageId) {
+-  const key = stageId.includes("-") ? `"${stageId}"` : stageId;
+-  const start = promptRuntimeSource.indexOf(`  ${key}: {`);
+-  if (start < 0) return "This is a deterministic harness stage and has no model prompt definition.";
+-  const end = promptRuntimeSource.indexOf("\n  },", start);
+-  return promptRuntimeSource.slice(start, end < 0 ? start + 1_600 : end + 5).trim();
+-}
+-
+ function stageUsage(tasks: RuntimeTask[], stageId: AgentRoleId) {
+   const artifacts = tasks
+     .flatMap((task) => task.artifacts)
+@@ -160,11 +139,71 @@ function stageUsage(tasks: RuntimeTask[], stageId: AgentRoleId) {
+   };
+ }
+
++function ContractTypeList({ title, references }: { title: string; references: SkillTypeReference[] }) {
++  return (
++    <div className="contract-layer">
++      <h4>{title}</h4>
++      {references.length ? references.map((reference) => (
++        <div className="contract-reference" key={`${reference.role}:${reference.typeName}`}>
++          <strong>{reference.typeName}</strong>
++          <code>{reference.sourceFile} · {reference.symbol}</code>
++          <small>{reference.role} boundary</small>
++          <p>{reference.description}</p>
++        </div>
++      )) : <p className="contract-empty">No {title.toLowerCase()} is defined for this stage.</p>}
++    </div>
++  );
++}
++
++function SourceReferenceList({ title, references }: { title: string; references: JavascriptSourceReference[] }) {
++  return (
++    <div className="contract-layer">
++      <h4>{title}</h4>
++      {references.length ? references.map((reference) => (
++        <details className="contract-source" key={`${reference.filename}:${reference.symbol}`} open>
++          <summary><strong>{reference.symbol}</strong><code>{reference.filename} · lines {reference.lineStart}–{reference.lineEnd}</code></summary>
++          <p>{reference.description}</p>
++          <pre className="runtime-source"><code>{reference.excerpt}</code></pre>
++        </details>
++      )) : <p className="contract-empty">No JavaScript {title.toLowerCase()} is defined for this stage.</p>}
++    </div>
++  );
++}
++
++function SkillContractPanel({ contract }: { contract: SkillContract }) {
++  return (
++    <section className="detail-panel detail-contracts" aria-label="Skill provenance contract">
++      <h3>Boundary contracts and source provenance</h3>
++      <p className="settings-section__intro">These layers are related, but not interchangeable: TypeScript/API types describe boundaries, JavaScript excerpts show runtime prompt/parser code, persisted types describe stored records, and the final presentation is UI-only.</p>
++      <ContractTypeList title="TypeScript / API input" references={contract.input} />
++      <ContractTypeList title="TypeScript / API output" references={contract.output} />
++      {contract.configuration ? <ContractTypeList title="Runtime configuration and policy" references={[contract.configuration.settings, contract.configuration.policy]} /> : null}
++      <SourceReferenceList title="Prompt source" references={contract.prompts} />
++      <SourceReferenceList title="Parser source" references={contract.parsers} />
++      {contract.persistedArtifact ? (
++        <ContractTypeList title="Persisted artifact" references={[contract.persistedArtifact.type]} />
++      ) : null}
++      {contract.persistedRecords.length ? <ContractTypeList title="Persisted records" references={contract.persistedRecords.map((record) => record.type)} /> : null}
++      <div className="contract-layer">
++        <h4>UI presentation (UI-only)</h4>
++        <div className="contract-reference">
++          <strong>{contract.presentation.typeName}</strong>
++          <code>{contract.presentation.sourceFile} · {contract.presentation.symbol}</code>
++          <small>not an API or persisted contract</small>
++          <p>{contract.presentation.description}</p>
++        </div>
++      </div>
++      {contract.notes.length ? <div className="contract-layer"><h4>Truthful notes</h4><ul>{contract.notes.map((note) => <li key={note}>{note}</li>)}</ul></div> : null}
++    </section>
++  );
++}
++
+ export function SkillsScreen({ runtimeTasks }: { runtimeTasks: RuntimeTask[] }) {
+   const [selectedId, setSelectedId] = useState<StageId | null>(null);
+   const selected = workflowStages.find((stage) => stage.id === selectedId);
+   if (selected) {
+     const usage = stageUsage(runtimeTasks, selected.id);
++    const contract = getSkillContract(selected.id);
+     return (
+       <div className="page library-page detail-page">
+         <button type="button" className="detail-back" onClick={() => setSelectedId(null)}><ArrowLeft size={16} /> Back to Skills</button>
+@@ -173,18 +212,14 @@ export function SkillsScreen({ runtimeTasks }: { runtimeTasks: RuntimeTask[] })
+           <Metric label="Recorded artifacts" value={String(usage.runs)} />
+           <Metric label="Recorded tokens" value={formatTokenCount(usage.tokens)} />
+           <Metric label="Approx. API-rate cost" value={usage.pricedRuns ? formatApproximateCost(usage.cost) : "Unavailable"} />
+-          <Metric label="Source" value="server/prompts.mjs" />
++          <Metric label="Source layers" value={`${contract.prompts.length} prompt · ${contract.parsers.length} parser`} />
+         </div>
+         <div className="detail-grid">
+-          <section className="detail-panel detail-panel--prompt">
+-            <header><span><h3>Runtime source</h3><p>Read-only excerpt from the JavaScript that builds this stage prompt. It is not invented TypeScript or an editable override.</p></span></header>
+-            <pre className="runtime-source"><code>{sourceExcerpt(selected.id)}</code></pre>
+-          </section>
+-          <aside className="detail-panel detail-contracts">
+-            <h3>Input / output contract</h3>
+-            <div><span>Input</span><p>{skillContracts[selected.id].input}</p></div>
+-            <div><span>Output</span><p>{skillContracts[selected.id].output}</p></div>
+-            <div><span>Measurement</span><p>Runs and tokens come from persisted artifacts. Cost is an API-rate estimate after cached-input discounts, not the ChatGPT-plan charge.</p></div>
++          <SkillContractPanel contract={contract} />
++          <aside className="detail-panel">
++            <h3>Observed runtime evidence</h3>
++            <div className="contract-layer"><h4>Persisted artifacts</h4><p>Runs and tokens come from real <code>RuntimeArtifact</code> records. Cost is an API-rate estimate after cached-input discounts, not the ChatGPT-plan charge.</p></div>
++            <div className="contract-layer"><h4>Current capability</h4><p>{selected.provider === "harness" ? "The harness owns this deterministic stage; no model prompt or parser is involved." : "This stage uses the configured Codex runtime and the snapshotted policy on each task."}</p></div>
+           </aside>
+         </div>
+       </div>
+@@ -230,11 +265,13 @@ export function AgentsScreen({
+   runtimeStatus,
+   selectedId,
+   onSelect,
++  onSave,
+ }: {
+   runtimeTasks: RuntimeTask[];
+   runtimeStatus: RuntimeStatus | null;
+   selectedId: AgentRoleId | null;
+   onSelect: (stageId: AgentRoleId | null) => void;
++  onSave: (settings: RuntimeSettingsPayload) => Promise<void>;
+ }) {
+   const selected = agentRoles.find((stage) => stage.id === selectedId) ?? null;
+   if (selected) {
+@@ -291,6 +328,29 @@ export function AgentsScreen({
+             )}
+           </aside>
+         </div>
++        {deterministic ? (
++          <PolicyEditor
++            roleId={selected.id}
++            roleLabel={selected.label}
++            settings={runtimeStatus?.settings ?? { allowedModels: [], defaultModel: "", defaultReasoning: "", stagePolicies: {} }}
++            catalog={runtimeStatus?.catalog}
++            onSave={onSave}
++            deterministic
++          />
++        ) : runtimeStatus?.settings ? (
++          <PolicyEditor
++            roleId={selected.id}
++            roleLabel={selected.label}
++            settings={runtimeStatus.settings}
++            catalog={runtimeStatus.catalog}
++            onSave={onSave}
++          />
++        ) : (
++          <section className="detail-panel policy-editor" aria-live="polite">
++            <h3>{selected.label} policy</h3>
++            <p className="settings-section__intro">Runtime settings are still loading. Refresh the local runtime status before editing this policy.</p>
++          </section>
++        )}
+       </div>
+     );
+   }
+@@ -333,7 +393,7 @@ export function SettingsScreen({
+   runtimeStatus: RuntimeStatus | null;
+   evaluationSummary: RuntimeEvaluationSummary | null;
+   onRefresh: () => Promise<void>;
+-  onSave: (settings: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies">) => Promise<void>;
++  onSave: (settings: RuntimeSettingsPayload) => Promise<void>;
+   onVerifyPricing: () => Promise<void>;
+   refreshing: boolean;
+ }) {
+@@ -355,6 +415,15 @@ export function SettingsScreen({
+   }, [runtimeStatus?.settings]);
+   const selectedModel = runtimeStatus?.catalog?.models.find((model) => model.id === defaultModel);
+   const pricing = runtimeStatus?.settings?.pricing;
++  const policySettings = useMemo<RuntimeSettingsPayload>(
++    () => ({
++      allowedModels: [...allowedModels],
++      defaultModel,
++      defaultReasoning,
++      stagePolicies: { ...stagePolicies },
++    }),
++    [allowedModels, defaultModel, defaultReasoning, stagePolicies],
++  );
+   return (
+     <div className="page library-page settings-page">
+       <SectionHeader eyebrow="Local orchestration" title="Settings" description="Choose the model allowlist and defaults used for new tasks. Each task snapshots its model and reasoning level so later settings changes do not rewrite history." action={<Button tone="secondary" icon={MagnifyingGlass} onClick={() => void onRefresh()} disabled={refreshing}>{refreshing ? "Searching…" : "Search available models"}</Button>} />
+@@ -397,17 +466,16 @@ export function SettingsScreen({
+         </div>
+         <fieldset className="role-policy-grid">
+           <legend className="sr-only">Agent role model policies</legend>
+-          {agentRoles.filter((role) => role.provider === "codex" && !role.id.startsWith("scout-")).map((role) => {
+-            const policy = stagePolicies[role.id] ?? { model: defaultModel, reasoning: defaultReasoning };
+-            const model = runtimeStatus?.catalog?.models.find((item) => item.id === policy.model);
+-            return (
+-              <div className="role-policy-row" key={role.id}>
+-                <span><strong>{role.label}</strong><small>{role.skill}</small></span>
+-                <label>Model<select value={policy.model} onChange={(event) => { const nextModel = runtimeStatus?.catalog?.models.find((item) => item.id === event.target.value); setStagePolicies((current) => ({ ...current, [role.id]: { model: event.target.value, reasoning: nextModel?.reasoningLevels.includes(policy.reasoning) ? policy.reasoning : nextModel?.defaultReasoning ?? "medium" } })); }}>{(runtimeStatus?.catalog?.models ?? []).filter((item) => allowedModels.includes(item.id)).map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+-                <label>Reasoning<select value={policy.reasoning} onChange={(event) => setStagePolicies((current) => ({ ...current, [role.id]: { ...policy, reasoning: event.target.value } }))}>{(model?.reasoningLevels ?? [policy.reasoning]).map((level) => <option key={level} value={level}>{level}</option>)}</select></label>
+-              </div>
+-            );
+-          })}
++          {agentRoles.filter((role) => role.provider === "codex").map((role) => (
++            <PolicyEditor
++              key={role.id}
++              roleId={role.id}
++              roleLabel={role.label}
++              settings={policySettings}
++              catalog={runtimeStatus?.catalog}
++              onSave={onSave}
++            />
++          ))}
+         </fieldset>
+         {error ? <p className="dialog-error" role="alert">{error}</p> : null}
+       </section>
+diff --git a/src/components/PolicyEditor.tsx b/src/components/PolicyEditor.tsx
+new file mode 100644
+index 0000000..629d34e
+--- /dev/null
++++ b/src/components/PolicyEditor.tsx
+@@ -0,0 +1,283 @@
++import { CheckCircle, WarningCircle } from "@phosphor-icons/react";
++import { useEffect, useMemo, useState } from "react";
++import type {
++  RuntimeAgentPolicy,
++  RuntimeModelCatalog,
++  RuntimeModelOption,
++  RuntimeSettings,
++} from "../domain";
++import { Button } from "./Primitives";
++
++export type RuntimeSettingsPayload = Pick<
++  RuntimeSettings,
++  "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies"
++>;
++
++export type PolicyEditorSaveState = "idle" | "saving" | "saved" | "error";
++
++export interface PolicyEditorProps {
++  /** The role shown to the user, such as `plan` or `scout-schema`. */
++  roleId: string;
++  roleLabel: string;
++  settings: RuntimeSettingsPayload;
++  catalog?: RuntimeModelCatalog | null;
++  onSave: (settings: RuntimeSettingsPayload) => Promise<void>;
++  /** Optional override for callers that use a role id outside the workflow taxonomy. */
++  policyId?: string;
++  /** Use this for deterministic harness-owned roles. Approval is deterministic by default. */
++  deterministic?: boolean;
++}
++
++export interface PolicyDraftValidation {
++  valid: boolean;
++  message: string | null;
++  model: RuntimeModelOption | null;
++}
++
++export function policyIdForRole(roleId: string, policyId?: string): string | null {
++  if (roleId === "approval") return null;
++  if (roleId.startsWith("scout-")) return "scouts";
++  return policyId ?? roleId;
++}
++
++export function availablePolicyModels(
++  catalog: RuntimeModelCatalog | null | undefined,
++  allowedModels: string[],
++): RuntimeModelOption[] {
++  if (!catalog) return [];
++  const allowed = new Set(allowedModels);
++  return catalog.models.filter((model) => allowed.has(model.id));
++}
++
++export function validatePolicyDraft(
++  draft: RuntimeAgentPolicy,
++  catalog: RuntimeModelCatalog | null | undefined,
++  allowedModels: string[],
++): PolicyDraftValidation {
++  if (!catalog) {
++    return { valid: false, message: "The local model catalog is unavailable. Refresh runtime status and try again.", model: null };
++  }
++
++  const model = catalog.models.find((candidate) => candidate.id === draft.model) ?? null;
++  if (!model || !allowedModels.includes(draft.model)) {
++    return { valid: false, message: "Choose a model from the configured local catalog allowlist.", model };
++  }
++  if (!model.reasoningLevels.includes(draft.reasoning)) {
++    return {
++      valid: false,
++      message: `“${draft.reasoning}” is not supported by ${model.label}. Choose one of its catalog-backed reasoning levels.`,
++      model,
++    };
++  }
++  return { valid: true, message: null, model };
++}
++
++export function policySettingsPayload(
++  settings: RuntimeSettingsPayload,
++  policyId: string,
++  policy: RuntimeAgentPolicy,
++): RuntimeSettingsPayload {
++  return {
++    allowedModels: [...settings.allowedModels],
++    defaultModel: settings.defaultModel,
++    defaultReasoning: settings.defaultReasoning,
++    stagePolicies: {
++      ...settings.stagePolicies,
++      [policyId]: { model: policy.model, reasoning: policy.reasoning },
++    },
++  };
++}
++
++function initialPolicy(settings: RuntimeSettingsPayload, policyId: string): RuntimeAgentPolicy {
++  return settings.stagePolicies[policyId] ?? {
++    model: settings.defaultModel,
++    reasoning: settings.defaultReasoning,
++  };
++}
++
++function errorMessage(reason: unknown): string {
++  return reason instanceof Error ? reason.message : "The policy could not be saved.";
++}
++
++export function PolicyEditor({
++  roleId,
++  roleLabel,
++  settings,
++  catalog,
++  onSave,
++  policyId: policyIdOverride,
++  deterministic: deterministicOverride,
++}: PolicyEditorProps) {
++  const policyId = policyIdForRole(roleId, policyIdOverride);
++  const deterministic = deterministicOverride ?? roleId === "approval";
++  const [draft, setDraft] = useState<RuntimeAgentPolicy>(() =>
++    policyId ? initialPolicy(settings, policyId) : { model: "", reasoning: "" },
++  );
++  const [saveState, setSaveState] = useState<PolicyEditorSaveState>("idle");
++  const [error, setError] = useState<string | null>(null);
++
++  useEffect(() => {
++    if (policyId) setDraft(initialPolicy(settings, policyId));
++    setSaveState("idle");
++    setError(null);
++  }, [policyId, settings]);
++
++  const modelOptions = useMemo(
++    () => availablePolicyModels(catalog, settings.allowedModels),
++    [catalog, settings.allowedModels],
++  );
++  const selectedModel = catalog?.models.find((model) => model.id === draft.model) ?? null;
++  const validation = useMemo(
++    () =>
++      policyId
++        ? validatePolicyDraft(draft, catalog, settings.allowedModels)
++        : { valid: true, message: null, model: null },
++    [catalog, draft, policyId, settings.allowedModels],
++  );
++
++  if (deterministic || !policyId) {
++    return (
++      <section className="policy-editor" aria-labelledby={`policy-editor-${roleId}`}>
++        <h3 id={`policy-editor-${roleId}`}>{roleLabel} policy</h3>
++        <p className="settings-section__intro">
++          Human Approval is deterministic and harness-owned. It has no model or reasoning policy to edit.
++        </p>
++      </section>
++    );
++  }
++
++  const editablePolicyId = policyId;
++  const scoutPolicy = roleId.startsWith("scout-");
++
++  function updateDraft(next: RuntimeAgentPolicy) {
++    setDraft(next);
++    setSaveState("idle");
++    setError(null);
++  }
++
++  async function savePolicy(nextPolicy = draft) {
++    const nextValidation = validatePolicyDraft(nextPolicy, catalog, settings.allowedModels);
++    if (!nextValidation.valid) {
++      setSaveState("error");
++      setError(nextValidation.message);
++      return;
++    }
++
++    setSaveState("saving");
++    setError(null);
++    try {
++      await onSave(policySettingsPayload(settings, editablePolicyId, nextPolicy));
++      setSaveState("saved");
++    } catch (reason) {
++      setSaveState("error");
++      setError(errorMessage(reason));
++    }
++  }
++
++  async function resetToGlobalDefault() {
++    const resetPolicy = {
++      model: settings.defaultModel,
++      reasoning: settings.defaultReasoning,
++    };
++    updateDraft(resetPolicy);
++    await savePolicy(resetPolicy);
++  }
++
++  return (
++    <section className="policy-editor" aria-labelledby={`policy-editor-${roleId}`}>
++      <div className="settings-section__head">
++        <span>
++          <h3 id={`policy-editor-${roleId}`}>{roleLabel} policy</h3>
++          <p>
++            Choose only models enabled in the local runtime catalog. Reasoning choices come from the selected model.
++          </p>
++        </span>
++      </div>
++      {scoutPolicy ? (
++        <p className="settings-section__intro">
++          This scout edits the shared <code>scouts</code> policy. The same model and reasoning apply to every Goose scout.
++        </p>
++      ) : null}
++      <div className="role-policy-row">
++        <span>
++          <strong>{roleLabel}</strong>
++          <small>Policy id: {editablePolicyId}</small>
++        </span>
++        <label>
++          Model
++          <select
++            aria-label={`${roleLabel} model`}
++            value={draft.model}
++            disabled={!catalog || saveState === "saving"}
++            onChange={(event) => {
++              const model = catalog?.models.find((candidate) => candidate.id === event.target.value);
++              updateDraft({
++                model: event.target.value,
++                reasoning: model?.reasoningLevels.includes(draft.reasoning)
++                  ? draft.reasoning
++                  : model?.defaultReasoning ?? "",
++              });
++            }}
++          >
++            {!modelOptions.some((model) => model.id === draft.model) ? (
++              <option value={draft.model} disabled>
++                {draft.model || "No model selected"}
++              </option>
++            ) : null}
++            {modelOptions.map((model) => (
++              <option key={model.id} value={model.id}>
++                {model.label}
++              </option>
++            ))}
++          </select>
++        </label>
++        <label>
++          Reasoning
++          <select
++            aria-label={`${roleLabel} reasoning`}
++            value={draft.reasoning}
++            disabled={!selectedModel || saveState === "saving"}
++            onChange={(event) => updateDraft({ ...draft, reasoning: event.target.value })}
++          >
++            {selectedModel?.reasoningLevels.map((level) => (
++              <option key={level} value={level}>
++                {level}
++              </option>
++            ))}
++          </select>
++        </label>
++      </div>
++      <p className="settings-section__intro">
++        Applies to new tasks only. Existing tasks retain their snapshotted policy.
++      </p>
++      <div className="detail-panel__actions">
++        <Button type="button" tone="secondary" disabled={saveState === "saving"} onClick={() => void resetToGlobalDefault()}>
++          Reset to global default
++        </Button>
++        <Button
++          type="button"
++          tone="primary"
++          disabled={saveState === "saving" || !validation.valid}
++          onClick={() => void savePolicy()}
++        >
++          {saveState === "saving" ? "Saving…" : "Save policy"}
++        </Button>
++      </div>
++      {validation.message && !error ? (
++        <p className="dialog-error" role="alert">
++          <WarningCircle aria-hidden size={14} weight="fill" /> {validation.message}
++        </p>
++      ) : null}
++      {saveState === "saved" ? (
++        <p className="saved-note" role="status">
++          <CheckCircle aria-hidden size={14} weight="fill" /> Policy saved for new tasks.
++        </p>
++      ) : null}
++      {error ? (
++        <p className="dialog-error" role="alert">
++          <WarningCircle aria-hidden size={14} weight="fill" /> {error}
++        </p>
++      ) : null}
++    </section>
++  );
++}
+diff --git a/src/contracts/skillContracts.ts b/src/contracts/skillContracts.ts
+new file mode 100644
+index 0000000..d1fac39
+--- /dev/null
++++ b/src/contracts/skillContracts.ts
+@@ -0,0 +1,480 @@
++import type {
++  RuntimeAgentPolicy,
++  RuntimeApproval,
++  RuntimeArtifact,
++  RuntimeFocusedTestEvidence,
++  RuntimeGrillQuestion,
++  RuntimeSettings,
++  RuntimeTask,
++  RuntimeWorkPackage,
++  StageId,
++} from "../domain";
++import promptSource from "../../server/prompts.mjs?raw";
++import scoutSource from "../../server/scouts.mjs?raw";
++import parserSource from "../../server/structured-output.mjs?raw";
++
++/**
++ * These names are references to real TypeScript boundary types, not runtime
++ * validators. Keeping the map here gives consumers a type-safe vocabulary
++ * without pretending that the JavaScript prompt/parser modules have types
++ * they do not currently export.
++ */
++export type SkillBoundaryTypeName =
++  | "RuntimeAgentPolicy"
++  | "RuntimeApproval"
++  | "RuntimeArtifact"
++  | "RuntimeFocusedTestEvidence"
++  | "RuntimeGrillQuestion[]"
++  | "RuntimeSettings"
++  | "RuntimeTask"
++  | "RuntimeWorkPackage[]";
++
++export type SkillBoundaryTypeMap = {
++  RuntimeAgentPolicy: RuntimeAgentPolicy;
++  RuntimeApproval: RuntimeApproval;
++  RuntimeArtifact: RuntimeArtifact;
++  RuntimeFocusedTestEvidence: RuntimeFocusedTestEvidence;
++  "RuntimeGrillQuestion[]": RuntimeGrillQuestion[];
++  RuntimeSettings: RuntimeSettings;
++  RuntimeTask: RuntimeTask;
++  "RuntimeWorkPackage[]": RuntimeWorkPackage[];
++};
++
++export type SkillBoundaryValue<Name extends SkillBoundaryTypeName> = SkillBoundaryTypeMap[Name];
++
++export type SkillBoundaryRole = "input" | "output" | "configuration" | "policy" | "persisted";
++
++export interface SkillTypeReference<Name extends SkillBoundaryTypeName = SkillBoundaryTypeName> {
++  layer: "typescript-api";
++  role: SkillBoundaryRole;
++  typeName: Name;
++  sourceFile: "src/domain.ts";
++  symbol: Name;
++  description: string;
++}
++
++export type JavascriptSourceLayer = "prompt-source" | "parser-source";
++
++export interface JavascriptSourceReference {
++  layer: JavascriptSourceLayer;
++  filename: "server/prompts.mjs" | "server/scouts.mjs" | "server/structured-output.mjs";
++  symbol: string;
++  lineStart: number;
++  lineEnd: number;
++  excerpt: string;
++  description: string;
++}
++
++export interface SkillParserReference extends JavascriptSourceReference {
++  layer: "parser-source";
++  parsedType?: SkillBoundaryTypeName;
++}
++
++export interface SkillPromptReference extends JavascriptSourceReference {
++  layer: "prompt-source";
++}
++
++export interface SkillPersistedReference {
++  layer: "persisted-artifact" | "persisted-record";
++  type: SkillTypeReference;
++  field: "artifacts" | "approvals";
++  description: string;
++}
++
++export interface SkillUiPresentationReference {
++  layer: "ui-presentation";
++  uiOnly: true;
++  typeName: "SkillDetailPresentation";
++  sourceFile: "src/components/LibraryScreens.tsx";
++  symbol: "SkillsScreen";
++  description: string;
++}
++
++export interface SkillContract {
++  id: StageId;
++  skill: string;
++  label: string;
++  provider: "codex" | "harness";
++  input: SkillTypeReference[];
++  output: SkillTypeReference[];
++  configuration: {
++    settings: SkillTypeReference<"RuntimeSettings">;
++    policy: SkillTypeReference<"RuntimeAgentPolicy">;
++  } | null;
++  prompts: SkillPromptReference[];
++  parsers: SkillParserReference[];
++  persistedArtifact: SkillPersistedReference | null;
++  persistedRecords: SkillPersistedReference[];
++  presentation: SkillUiPresentationReference;
++  notes: string[];
++}
++
++const DOMAIN_SOURCE = "src/domain.ts" as const;
++const UI_SOURCE = "src/components/LibraryScreens.tsx" as const;
++const PROMPT_FILENAME = "server/prompts.mjs" as const;
++const SCOUT_FILENAME = "server/scouts.mjs" as const;
++const PARSER_FILENAME = "server/structured-output.mjs" as const;
++
++function typeReference<Name extends SkillBoundaryTypeName>(
++  role: SkillBoundaryRole,
++  typeName: Name,
++  description: string,
++): SkillTypeReference<Name> {
++  return {
++    layer: "typescript-api",
++    role,
++    typeName,
++    sourceFile: DOMAIN_SOURCE,
++    symbol: typeName,
++    description,
++  };
++}
++
++function presentation(description: string): SkillUiPresentationReference {
++  return {
++    layer: "ui-presentation",
++    uiOnly: true,
++    typeName: "SkillDetailPresentation",
++    sourceFile: UI_SOURCE,
++    symbol: "SkillsScreen",
++    description,
++  };
++}
++
++function excerpt(source: string, symbol: string, limit = 2_400) {
++  const markers = [`export function ${symbol}`, `export const ${symbol}`, `function ${symbol}`];
++  const start = markers.map((marker) => source.indexOf(marker)).find((index) => index >= 0) ?? -1;
++  if (start < 0) {
++    throw new Error(`Skill provenance source no longer contains ${symbol}.`);
++  }
++  const text = source.slice(start, start + limit).trim();
++  const lineStart = source.slice(0, start).split("\n").length;
++  return {
++    lineStart,
++    lineEnd: lineStart + text.split("\n").length - 1,
++    excerpt: text,
++  };
++}
++
++function prompt(
++  filename: typeof PROMPT_FILENAME | typeof SCOUT_FILENAME,
++  source: string,
++  symbol: string,
++  description: string,
++): SkillPromptReference {
++  return {
++    layer: "prompt-source",
++    filename,
++    symbol,
++    description,
++    ...excerpt(source, symbol),
++  };
++}
++
++function parser(
++  symbol: string,
++  description: string,
++  parsedType?: SkillBoundaryTypeName,
++  filename: typeof PARSER_FILENAME | typeof SCOUT_FILENAME = PARSER_FILENAME,
++  source: string = parserSource,
++): SkillParserReference {
++  return {
++    layer: "parser-source",
++    filename,
++    symbol,
++    description,
++    parsedType,
++    ...excerpt(source, symbol),
++  };
++}
++
++function modelConfiguration(): SkillContract["configuration"] {
++  return {
++    settings: typeReference(
++      "configuration",
++      "RuntimeSettings",
++      "The current runtime settings provide the catalog-backed policy and pricing context to the harness.",
++    ),
++    policy: typeReference(
++      "policy",
++      "RuntimeAgentPolicy",
++      "The task snapshot selects the model and reasoning passed to the Codex runtime for this skill.",
++    ),
++  };
++}
++
++function modelInput(): SkillTypeReference<"RuntimeTask">[] {
++  return [
++    typeReference(
++      "input",
++      "RuntimeTask",
++      "The persisted task, including its approved handoffs and snapshotted agent configuration.",
++    ),
++  ];
++}
++
++function modelOutput(): SkillTypeReference<"RuntimeArtifact">[] {
++  return [
++    typeReference(
++      "output",
++      "RuntimeArtifact",
++      "The Markdown result and usage/context provenance retained on the task artifact boundary.",
++    ),
++  ];
++}
++
++function persistedArtifact(description: string): SkillPersistedReference {
++  return {
++    layer: "persisted-artifact",
++    field: "artifacts",
++    type: typeReference("persisted", "RuntimeArtifact", description),
++    description,
++  };
++}
++
++function baseModelContract(
++  id: Exclude<StageId, "approval">,
++  skill: string,
++  label: string,
++  prompts: SkillPromptReference[],
++  parsers: SkillParserReference[],
++  notes: string[] = [],
++): SkillContract {
++  const artifactDescription = `The ${label} Markdown handoff is retained as a RuntimeArtifact; parser results, when present, are normalized before persistence.`;
++  return {
++    id,
++    skill,
++    label,
++    provider: "codex",
++    input: modelInput(),
++    output: modelOutput(),
++    configuration: modelConfiguration(),
++    prompts,
++    parsers,
++    persistedArtifact: persistedArtifact(artifactDescription),
++    persistedRecords: [],
++    presentation: presentation(
++      "A UI-only detail projection combines this registry metadata with recorded RuntimeArtifact usage; it is not an API or persisted contract.",
++    ),
++    notes,
++  };
++}
++
++const stagePrompt = (stageId: Exclude<StageId, "approval">) => [
++  prompt(
++    PROMPT_FILENAME,
++    promptSource,
++    "buildStagePrompt",
++    `Builds the ${stageId} investigation or handoff prompt.`,
++  ),
++  prompt(
++    PROMPT_FILENAME,
++    promptSource,
++    "buildStageRequest",
++    "Builds the prompt together with its context manifest.",
++  ),
++];
++
++const executionPrompt = (stageId: Exclude<StageId, "approval">) => [
++  prompt(
++    PROMPT_FILENAME,
++    promptSource,
++    "buildExecutionPrompt",
++    `Builds the ${stageId} candidate-bound prompt.`,
++  ),
++  prompt(
++    PROMPT_FILENAME,
++    promptSource,
++    "buildExecutionRequest",
++    "Builds the prompt and repository-access context manifest.",
++  ),
++];
++
++export const skillContractRegistry = {
++  triage: baseModelContract(
++    "triage",
++    "classify-task",
++    "Triage",
++    stagePrompt("triage"),
++    [],
++    ["The model returns Markdown; no structured parser is applied before the RuntimeArtifact is saved."],
++  ),
++  scouts: baseModelContract(
++    "scouts",
++    "scout-repository",
++    "Repository scouts",
++    [
++      prompt(
++        SCOUT_FILENAME,
++        scoutSource,
++        "buildScoutRequest",
++        "Builds the fresh-context prompt for an individual selected scout.",
++      ),
++    ],
++    [
++      parser(
++        "parseScoutReport",
++        "Parses one scout's tagged JSON report before it is rendered into Markdown.",
++        undefined,
++        SCOUT_FILENAME,
++        scoutSource,
++      ),
++    ],
++    [
++      "Each scout uses the shared RuntimeAgentPolicy for stagePolicies.scouts; the individual scout name is an agentRole, not a new policy.",
++      "The deterministic aggregation report is also retained as a RuntimeArtifact and does not represent another model run.",
++    ],
++  ),
++  grill: baseModelContract(
++    "grill",
++    "grill-with-docs",
++    "Grill Me",
++    stagePrompt("grill"),
++    [
++      parser(
++        "parseGrillQuestions",
++        "Normalizes the tagged Grill JSON into the persisted question shape.",
++        "RuntimeGrillQuestion[]",
++      ),
++    ],
++    ["The Markdown RuntimeArtifact and the parsed RuntimeGrillQuestion[] session are separate outputs."],
++  ),
++  specification: baseModelContract(
++    "specification",
++    "to-spec",
++    "Task specification",
++    stagePrompt("specification"),
++    [],
++  ),
++  plan: baseModelContract(
++    "plan",
++    "to-tickets",
++    "Implementation plan",
++    stagePrompt("plan"),
++    [
++      parser(
++        "parseWorkPackages",
++        "Normalizes the tagged plan JSON into dependency-ordered work packages.",
++        "RuntimeWorkPackage[]",
++      ),
++    ],
++    [
++      "The plan Markdown is retained as a RuntimeArtifact; the parsed RuntimeWorkPackage[] is persisted on RuntimeTask.workPackages.",
++    ],
++  ),
++  implement: baseModelContract(
++    "implement",
++    "implement",
++    "Implementation",
++    [
++      prompt(
++        PROMPT_FILENAME,
++        promptSource,
++        "buildWorkPackagePrompt",
++        "Builds the scoped implementation prompt for a work package.",
++      ),
++      prompt(
++        PROMPT_FILENAME,
++        promptSource,
++        "buildWorkPackageRequest",
++        "Builds the implementation prompt and context manifest.",
++      ),
++      prompt(
++        PROMPT_FILENAME,
++        promptSource,
++        "buildRepairRequest",
++        "Builds the repair prompt when a candidate gate requires a revision.",
++      ),
++    ],
++    [],
++    [
++      "The harness commits the isolated work package separately; the retained implementation evidence remains a RuntimeArtifact.",
++    ],
++  ),
++  "dev-review": baseModelContract(
++    "dev-review",
++    "code-review",
++    "Development review",
++    executionPrompt("dev-review"),
++    [],
++    ["The P0–P3 verdict is Markdown in a candidate-bound RuntimeArtifact; it is not a test result type."],
++  ),
++  test: baseModelContract(
++    "test",
++    "verify-acceptance",
++    "Focused test",
++    executionPrompt("test"),
++    [
++      parser(
++        "tryParseFocusedTestEvidence",
++        "Detects and parses optional focused-test evidence without changing the Markdown artifact.",
++        "RuntimeFocusedTestEvidence",
++      ),
++      parser(
++        "parseFocusedTestEvidence",
++        "Validates and normalizes the focused-test evidence payload.",
++        "RuntimeFocusedTestEvidence",
++      ),
++    ],
++    [
++      "Focused test rows are persisted in RuntimeArtifact.focusedTest, while the full report remains RuntimeArtifact.content.",
++    ],
++  ),
++  "final-review": baseModelContract(
++    "final-review",
++    "holdout-review",
++    "Final review",
++    executionPrompt("final-review"),
++    [],
++    [
++      "The holdout verdict and human approval brief are Markdown retained on a candidate-bound RuntimeArtifact.",
++    ],
++  ),
++  approval: {
++    id: "approval",
++    skill: "request-approval",
++    label: "Human approval",
++    provider: "harness",
++    input: [
++      typeReference(
++        "input",
++        "RuntimeTask",
++        "The candidate task and its fresh review, test, and final-review gates.",
++      ),
++    ],
++    output: [
++      typeReference(
++        "output",
++        "RuntimeApproval",
++        "The human decision record retained on RuntimeTask.approvals.",
++      ),
++    ],
++    configuration: null,
++    prompts: [],
++    parsers: [],
++    persistedArtifact: null,
++    persistedRecords: [
++      {
++        layer: "persisted-record",
++        field: "approvals",
++        type: typeReference(
++          "persisted",
++          "RuntimeApproval",
++          "A human-owned approval record; no model or reasoning is involved.",
++        ),
++        description: "Human Approval is deterministic and harness-owned, not a configurable agent policy.",
++      },
++    ],
++    presentation: presentation(
++      "A UI-only approval detail shows candidate freshness and merge controls; it does not expose model or reasoning controls.",
++    ),
++    notes: ["Human Approval has no prompt, parser, RuntimeAgentPolicy, or model-owned artifact."],
++  },
++} satisfies Record<StageId, SkillContract>;
++
++/** Backwards-friendly name for screens that refer to the registry as contracts. */
++export const skillContracts = skillContractRegistry;
++
++export function getSkillContract(stageId: StageId): SkillContract {
++  return skillContractRegistry[stageId];
++}
+diff --git a/tests/api.test.mjs b/tests/api.test.mjs
+index 1ecfb76..b65375c 100644
+--- a/tests/api.test.mjs
++++ b/tests/api.test.mjs
+@@ -75,6 +75,30 @@ async function createTask(origin, payload) {
+   });
+ }
+
++function settingsInput(settings, overrides = {}) {
++  return {
++    allowedModels: [...settings.allowedModels],
++    defaultModel: settings.defaultModel,
++    defaultReasoning: settings.defaultReasoning,
++    stagePolicies: structuredClone(settings.stagePolicies),
++    ...overrides,
++  };
++}
++
++async function getSettings(origin) {
++  const response = await fetch(`${origin}/api/settings`);
++  assert.equal(response.status, 200);
++  return (await response.json()).settings;
++}
++
++async function updateSettings(origin, settings) {
++  return fetch(`${origin}/api/settings`, {
++    method: "PUT",
++    headers: { "content-type": "application/json" },
++    body: JSON.stringify(settings),
++  });
++}
++
+ async function git(cwd, args) {
+   return exec("git", args, { cwd, windowsHide: true });
+ }
+@@ -247,6 +271,181 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
+   }
+ });
+
++test("persists catalog-validated stage policies through runtime settings", async () => {
++  const { directory, origin, server } = await createServer();
++  try {
++    const current = await getSettings(origin);
++    const stagePolicies = {
++      ...current.stagePolicies,
++      scouts: { model: "gpt-5.6-luna", reasoning: "xhigh" },
++      plan: { model: "gpt-5.6-sol", reasoning: "high" },
++    };
++    const response = await updateSettings(
++      origin,
++      settingsInput(current, {
++        allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol"],
++        defaultModel: "gpt-5.6-luna",
++        defaultReasoning: "xhigh",
++        stagePolicies,
++      }),
++    );
++
++    assert.equal(response.status, 200);
++    const saved = (await response.json()).settings;
++    assert.deepEqual(saved.stagePolicies, stagePolicies);
++    assert.deepEqual((await getSettings(origin)).stagePolicies, stagePolicies);
++  } finally {
++    await cleanup(server, directory);
++  }
++});
++
++test("rejects a stage policy model that is not in the local catalog", async () => {
++  const { directory, origin, server } = await createServer();
++  try {
++    const current = await getSettings(origin);
++    const stagePolicies = {
++      ...current.stagePolicies,
++      plan: { model: "gpt-9-not-in-catalog", reasoning: "high" },
++    };
++    const response = await updateSettings(
++      origin,
++      settingsInput(current, {
++        allowedModels: ["gpt-5.6-luna"],
++        defaultModel: "gpt-5.6-luna",
++        defaultReasoning: "xhigh",
++        stagePolicies,
++      }),
++    );
++
++    assert.equal(response.status, 400);
++    assert.match((await response.json()).error, /plan must use an allowed model/i);
++  } finally {
++    await cleanup(server, directory);
++  }
++});
++
++test("rejects a stage policy reasoning value unsupported by its catalog model", async () => {
++  const { directory, origin, server } = await createServer();
++  try {
++    const current = await getSettings(origin);
++    const stagePolicies = {
++      ...current.stagePolicies,
++      plan: { model: "gpt-5.6-luna", reasoning: "unsupported-reasoning" },
++    };
++    const response = await updateSettings(
++      origin,
++      settingsInput(current, {
++        allowedModels: ["gpt-5.6-luna"],
++        defaultModel: "gpt-5.6-luna",
++        defaultReasoning: "xhigh",
++        stagePolicies,
++      }),
++    );
++
++    assert.equal(response.status, 400);
++    assert.match((await response.json()).error, /does not support unsupported-reasoning reasoning for plan/i);
++  } finally {
++    await cleanup(server, directory);
++  }
++});
++
++for (const [name, overrides, expectedError] of [
++  [
++    "rejects a default model outside the local catalog",
++    { defaultModel: "gpt-9-not-in-catalog" },
++    /default model must be in the allowed model list/i,
++  ],
++  [
++    "rejects a default reasoning value unsupported by the default model",
++    { defaultReasoning: "unsupported-reasoning" },
++    /does not support unsupported-reasoning/i,
++  ],
++]) {
++  test(name, async () => {
++    const { directory, origin, server } = await createServer();
++    try {
++      const current = await getSettings(origin);
++      const response = await updateSettings(
++        origin,
++        settingsInput(current, {
++          allowedModels: ["gpt-5.6-luna"],
++          defaultModel: "gpt-5.6-luna",
++          defaultReasoning: "xhigh",
++          ...overrides,
++        }),
++      );
++
++      assert.equal(response.status, 400);
++      assert.match((await response.json()).error, expectedError);
++    } finally {
++      await cleanup(server, directory);
++    }
++  });
++}
++
++test("keeps task stage-policy snapshots unchanged after later settings updates", async () => {
++  const { directory, origin, server } = await createServer();
++  try {
++    const current = await getSettings(origin);
++    const initialPolicies = {
++      ...current.stagePolicies,
++      triage: { model: "gpt-5.6-luna", reasoning: "medium" },
++      plan: { model: "gpt-5.6-sol", reasoning: "high" },
++    };
++    const initialSettingsResponse = await updateSettings(
++      origin,
++      settingsInput(current, {
++        allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol"],
++        defaultModel: "gpt-5.6-luna",
++        defaultReasoning: "xhigh",
++        stagePolicies: initialPolicies,
++      }),
++    );
++    assert.equal(initialSettingsResponse.status, 200);
++
++    const firstTaskResponse = await createTask(origin, {
++      title: "Snapshot policy task",
++      description: "Retain the policy used when the task was created.",
++      repositoryPath: directory,
++      workflow: "investigate",
++    });
++    assert.equal(firstTaskResponse.status, 201);
++    const firstTask = (await firstTaskResponse.json()).task;
++    assert.deepEqual(firstTask.agentConfig.stagePolicies, initialPolicies);
++
++    const updatedPolicies = {
++      ...initialPolicies,
++      triage: { model: "gpt-5.6-sol", reasoning: "high" },
++      plan: { model: "gpt-5.6-luna", reasoning: "xhigh" },
++    };
++    const updatedSettingsResponse = await updateSettings(
++      origin,
++      settingsInput(current, {
++        allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol"],
++        defaultModel: "gpt-5.6-sol",
++        defaultReasoning: "high",
++        stagePolicies: updatedPolicies,
++      }),
++    );
++    assert.equal(updatedSettingsResponse.status, 200);
++
++    const firstTaskAfterUpdate = (await (await fetch(`${origin}/api/tasks/${firstTask.id}`)).json()).task;
++    assert.deepEqual(firstTaskAfterUpdate.agentConfig.stagePolicies, initialPolicies);
++
++    const secondTaskResponse = await createTask(origin, {
++      title: "Updated policy task",
++      description: "Use the latest runtime policy snapshot.",
++      repositoryPath: directory,
++      workflow: "investigate",
++    });
++    assert.equal(secondTaskResponse.status, 201);
++    const secondTask = (await secondTaskResponse.json()).task;
++    assert.deepEqual(secondTask.agentConfig.stagePolicies, updatedPolicies);
++  } finally {
++    await cleanup(server, directory);
++  }
++});
++
+ test("rejects a task model outside the configured allowlist", async () => {
+   const { directory, origin, server } = await createServer();
+   try {
+diff --git a/tests/runtime.test.mjs b/tests/runtime.test.mjs
+index 447875d..cf6686f 100644
+--- a/tests/runtime.test.mjs
++++ b/tests/runtime.test.mjs
+@@ -74,6 +74,209 @@ test("records the exact prior artifacts and repository permission supplied to an
+   assert.equal(request.contextManifest.sources.find((source) => source.id === "artifact-triage").includedCharacters, 25);
+ });
+
++test("renders shared catalog-backed policy controls and truthful role states", () => {
++  return withWorkspace(async ({ AgentsScreen, SettingsScreen, PolicyEditor, loadModule }) => {
++    const catalog = createPolicyCatalog();
++    const settings = createPolicySettings();
++    const runtimeStatus = createRuntimeStatus({ catalog, settings });
++    const onSave = async () => {};
++
++    const planMarkup = renderToStaticMarkup(
++      React.createElement(PolicyEditor, {
++        roleId: "plan",
++        roleLabel: "Implementation plan",
++        settings,
++        catalog,
++        onSave,
++      }),
++    );
++    assert.match(planMarkup, /Implementation plan policy/);
++    assert.match(planMarkup, /<option value="gpt-5\.6-sol"(?: selected="")?>GPT-5\.6 Sol<\/option>/);
++    assert.doesNotMatch(planMarkup, /gpt-5\.6-terra/);
++    assert.match(planMarkup, /<option value="max"(?: selected="")?>max<\/option>/);
++    assert.match(planMarkup, /Reset to global default/);
++    assert.match(planMarkup, /Save policy/);
++    assert.match(planMarkup, /Applies to new tasks only\. Existing tasks retain their snapshotted policy\./);
++
++    const invalidMarkup = renderToStaticMarkup(
++      React.createElement(PolicyEditor, {
++        roleId: "triage",
++        roleLabel: "Triage",
++        settings: {
++          ...settings,
++          stagePolicies: {
++            ...settings.stagePolicies,
++            triage: { model: "gpt-5.6-luna", reasoning: "max" },
++          },
++        },
++        catalog,
++        onSave,
++      }),
++    );
++    assert.match(invalidMarkup, /not supported by GPT-5\.6 Luna/i);
++    assert.match(invalidMarkup, /role="alert"/);
++
++    const scoutMarkup = renderToStaticMarkup(
++      React.createElement(AgentsScreen, {
++        runtimeTasks: [],
++        runtimeStatus,
++        selectedId: "scout-schema",
++        onSelect: () => {},
++        onSave,
++      }),
++    );
++    assert.match(scoutMarkup, /This scout edits the shared .*scouts.* policy/);
++    assert.match(scoutMarkup, /Policy id: scouts/);
++
++    const approvalMarkup = renderToStaticMarkup(
++      React.createElement(AgentsScreen, {
++        runtimeTasks: [],
++        runtimeStatus,
++        selectedId: "approval",
++        onSelect: () => {},
++        onSave,
++      }),
++    );
++    assert.match(approvalMarkup, /Human Approval is deterministic and harness-owned/);
++    assert.doesNotMatch(approvalMarkup, /Save policy/);
++    assert.doesNotMatch(approvalMarkup, /<select/);
++
++    const settingsMarkup = renderToStaticMarkup(
++      React.createElement(SettingsScreen, {
++        runtimeStatus,
++        evaluationSummary: null,
++        onRefresh: async () => {},
++        onSave,
++        onVerifyPricing: async () => {},
++        refreshing: false,
++      }),
++    );
++    assert.match(settingsMarkup, /Each task snapshots its model and reasoning level/);
++    assert.equal((settingsMarkup.match(/Reset to global default/g) ?? []).length, 16);
++    assert.match(settingsMarkup, /Applies to new tasks only\. Existing tasks retain their snapshotted policy\./);
++
++    const policySource = (await loadModule("/src/components/PolicyEditor.tsx?raw")).default;
++    assert.match(policySource, /setSaveState\("saved"\)/);
++    assert.match(policySource, /Policy saved for new tasks\./);
++    assert.match(policySource, /catch \(reason\)/);
++    assert.match(policySource, /setSaveState\("error"\)/);
++    assert.match(policySource, /role="status"/);
++    assert.match(policySource, /role="alert"/);
++  });
++});
++
++test("restricts policy drafts to the allowlist and preserves reset payload semantics", () => {
++  return withWorkspace(async ({ availablePolicyModels, validatePolicyDraft, policySettingsPayload, policyIdForRole }) => {
++    const catalog = createPolicyCatalog();
++    const settings = createPolicySettings();
++
++    assert.deepEqual(
++      availablePolicyModels(catalog, settings.allowedModels).map((model) => model.id),
++      ["gpt-5.6-sol", "gpt-5.6-luna"],
++    );
++    assert.equal(policyIdForRole("scout-test-inventory"), "scouts");
++    assert.equal(policyIdForRole("approval"), null);
++    assert.equal(policyIdForRole("plan"), "plan");
++
++    const valid = validatePolicyDraft({ model: "gpt-5.6-sol", reasoning: "max" }, catalog, settings.allowedModels);
++    assert.equal(valid.valid, true);
++    assert.equal(valid.model.id, "gpt-5.6-sol");
++
++    const unsupportedReasoning = validatePolicyDraft(
++      { model: "gpt-5.6-luna", reasoning: "max" },
++      catalog,
++      settings.allowedModels,
++    );
++    assert.equal(unsupportedReasoning.valid, false);
++    assert.match(unsupportedReasoning.message, /not supported/i);
++
++    const disallowedModel = validatePolicyDraft(
++      { model: "gpt-5.6-terra", reasoning: "medium" },
++      catalog,
++      settings.allowedModels,
++    );
++    assert.equal(disallowedModel.valid, false);
++    assert.match(disallowedModel.message, /allowlist/i);
++
++    const resetPayload = policySettingsPayload(settings, "plan", {
++      model: settings.defaultModel,
++      reasoning: settings.defaultReasoning,
++    });
++    assert.deepEqual(resetPayload.stagePolicies.plan, {
++      model: "gpt-5.6-luna",
++      reasoning: "xhigh",
++    });
++    assert.deepEqual(resetPayload.allowedModels, settings.allowedModels);
++    assert.deepEqual(resetPayload.stagePolicies.scouts, settings.stagePolicies.scouts);
++    assert.deepEqual(settings.stagePolicies.plan, { model: "gpt-5.6-sol", reasoning: "max" });
++
++    const unavailable = validatePolicyDraft(
++      { model: "gpt-5.6-sol", reasoning: "max" },
++      null,
++      settings.allowedModels,
++    );
++    assert.equal(unavailable.valid, false);
++    assert.match(unavailable.message, /catalog is unavailable/i);
++  });
++});
++
++test("renders Skill provenance with distinct boundary, source, persisted, and UI layers", () => {
++  return withWorkspace(async ({ getSkillContract }) => {
++    const modelStages = ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review"];
++    for (const stageId of modelStages) {
++      const contract = getSkillContract(stageId);
++      assert.equal(contract.provider, "codex");
++      assert.equal(contract.input[0].sourceFile, "src/domain.ts");
++      assert.equal(contract.input[0].typeName, "RuntimeTask");
++      assert.equal(contract.output[0].typeName, "RuntimeArtifact");
++      assert.equal(contract.persistedArtifact.type.typeName, "RuntimeArtifact");
++      assert.equal(contract.presentation.layer, "ui-presentation");
++      assert.equal(contract.presentation.uiOnly, true);
++      assert.equal(contract.presentation.sourceFile, "src/components/LibraryScreens.tsx");
++      assert.equal(contract.presentation.symbol, "SkillsScreen");
++      assert.ok(contract.prompts.length > 0);
++      for (const source of [...contract.prompts, ...contract.parsers]) {
++        assert.ok(source.excerpt.includes(source.symbol), `${stageId} source excerpt names ${source.symbol}`);
++        assert.ok(source.lineStart > 0);
++        assert.ok(source.lineEnd >= source.lineStart);
++      }
++    }
++
++    const scouts = getSkillContract("scouts");
++    assert.deepEqual(
++      { filename: scouts.prompts[0].filename, symbol: scouts.prompts[0].symbol, layer: scouts.prompts[0].layer },
++      { filename: "server/scouts.mjs", symbol: "buildScoutRequest", layer: "prompt-source" },
++    );
++    assert.deepEqual(
++      { filename: scouts.parsers[0].filename, symbol: scouts.parsers[0].symbol, layer: scouts.parsers[0].layer },
++      { filename: "server/scouts.mjs", symbol: "parseScoutReport", layer: "parser-source" },
++    );
++
++    const grill = getSkillContract("grill");
++    assert.equal(grill.parsers[0].filename, "server/structured-output.mjs");
++    assert.equal(grill.parsers[0].symbol, "parseGrillQuestions");
++    assert.equal(grill.parsers[0].parsedType, "RuntimeGrillQuestion[]");
++
++    const plan = getSkillContract("plan");
++    assert.equal(plan.parsers[0].symbol, "parseWorkPackages");
++    assert.equal(plan.parsers[0].parsedType, "RuntimeWorkPackage[]");
++
++    const focusedTest = getSkillContract("test");
++    assert.equal(focusedTest.parsers.find((parser) => parser.symbol === "parseFocusedTestEvidence").parsedType, "RuntimeFocusedTestEvidence");
++
++    const approval = getSkillContract("approval");
++    assert.equal(approval.provider, "harness");
++    assert.equal(approval.configuration, null);
++    assert.deepEqual(approval.prompts, []);
++    assert.deepEqual(approval.parsers, []);
++    assert.equal(approval.persistedArtifact, null);
++    assert.equal(approval.persistedRecords[0].type.typeName, "RuntimeApproval");
++    assert.match(approval.notes.join(" "), /no prompt, parser, RuntimeAgentPolicy/i);
++    assert.match(approval.persistedRecords[0].description, /deterministic and harness-owned/i);
++    assert.equal(approval.presentation.uiOnly, true);
++  });
++});
++
+ test("persists tasks and recovers interrupted runs", async () => {
+   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-store-"));
+   try {
+@@ -955,6 +1158,76 @@ function createTask(overrides = {}) {
+   };
+ }
+
++function createPolicyCatalog() {
++  return {
++    models: [
++      {
++        id: "gpt-5.6-sol",
++        label: "GPT-5.6 Sol",
++        description: "Frontier agentic coding model.",
++        defaultReasoning: "high",
++        reasoningLevels: ["low", "medium", "high", "xhigh", "max"],
++        pricing: null,
++      },
++      {
++        id: "gpt-5.6-luna",
++        label: "GPT-5.6 Luna",
++        description: "Fast agentic coding model.",
++        defaultReasoning: "xhigh",
++        reasoningLevels: ["low", "medium", "xhigh"],
++        pricing: null,
++      },
++      {
++        id: "gpt-5.6-terra",
++        label: "GPT-5.6 Terra",
++        description: "Balanced agentic coding model.",
++        defaultReasoning: "medium",
++        reasoningLevels: ["low", "medium", "high", "xhigh"],
++        pricing: null,
++      },
++    ],
++    fetchedAt: "2026-08-02T00:00:00.000Z",
++    source: "Focused test catalog",
++  };
++}
++
++function createPolicySettings() {
++  return {
++    allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna"],
++    defaultModel: "gpt-5.6-luna",
++    defaultReasoning: "xhigh",
++    stagePolicies: {
++      triage: { model: "gpt-5.6-luna", reasoning: "xhigh" },
++      scouts: { model: "gpt-5.6-luna", reasoning: "xhigh" },
++      grill: { model: "gpt-5.6-luna", reasoning: "xhigh" },
++      specification: { model: "gpt-5.6-luna", reasoning: "xhigh" },
++      plan: { model: "gpt-5.6-sol", reasoning: "max" },
++      implement: { model: "gpt-5.6-luna", reasoning: "xhigh" },
++      repair: { model: "gpt-5.6-sol", reasoning: "max" },
++      "dev-review": { model: "gpt-5.6-sol", reasoning: "max" },
++      test: { model: "gpt-5.6-luna", reasoning: "xhigh" },
++      "final-review": { model: "gpt-5.6-sol", reasoning: "max" },
++    },
++  };
++}
++
++function createRuntimeStatus({ catalog, settings }) {
++  return {
++    available: true,
++    authenticated: true,
++    authMethod: "Codex login",
++    model: settings.defaultModel,
++    reasoning: settings.defaultReasoning,
++    binary: "codex",
++    message: "Ready",
++    suggestedRepository: "C:/repo/task",
++    catalog,
++    settings,
++    providers: [],
++    scouts: [],
++  };
++}
++
+ async function withWorkspace(run) {
+   const vite = await createViteServer({
+     configFile: false,
+@@ -965,7 +1238,18 @@ async function withWorkspace(run) {
+   try {
+     const module = await vite.ssrLoadModule("/src/components/RuntimeTaskWorkspace.tsx");
+     const stageViews = await vite.ssrLoadModule("/src/components/StageViews.tsx");
+-    return await run({ ...module, ...stageViews, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
++    const libraryScreens = await vite.ssrLoadModule("/src/components/LibraryScreens.tsx");
++    const policyEditor = await vite.ssrLoadModule("/src/components/PolicyEditor.tsx");
++    const skillContracts = await vite.ssrLoadModule("/src/contracts/skillContracts.ts");
++    return await run({
++      ...module,
++      ...stageViews,
++      ...libraryScreens,
++      ...policyEditor,
++      ...skillContracts,
++      loadModule: (id) => vite.ssrLoadModule(id),
++      loadApiModule: () => vite.ssrLoadModule("/src/api.ts"),
++    });
+   } finally {
+     await vite.close();
+   }

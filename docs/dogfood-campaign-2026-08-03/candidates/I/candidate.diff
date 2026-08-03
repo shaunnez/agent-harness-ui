@@ -1,0 +1,829 @@
+diff --git a/src/components/CommandCentre.tsx b/src/components/CommandCentre.tsx
+index 585c132..8a395c6 100644
+--- a/src/components/CommandCentre.tsx
++++ b/src/components/CommandCentre.tsx
+@@ -17,7 +17,9 @@ import {
+   type RuntimeStatus,
+   type RuntimeTask,
+   runtimeTaskToRecentTask,
++  workflowStages,
+ } from "../domain";
++import type { CSSProperties } from "react";
+ import { Button, ModelStack, PriorityBadge, SectionHeader } from "./Primitives";
+ import { TaskTable } from "./TaskTable";
+
+@@ -52,6 +54,11 @@ export function CommandCentre({
+     .slice(0, 5);
+   const activeRuntimeTask = openTasks.find((task) => task.status === "running") ?? openTasks[0];
+   const activeTask = activeRuntimeTask ? runtimeTaskToRecentTask(activeRuntimeTask) : null;
++  const completedStageCount = activeTask?.completedStageCount ?? 0;
++  const completedStagePercentage = activeTask?.completedStagePercentage ?? 0;
++  const progressRingStyle = {
++    "--workflow-progress": `${completedStagePercentage}%`,
++  } as CSSProperties;
+   const totalTokens = runtimeTasks.reduce((total, task) => total + task.usage.totalTokens, 0);
+   const totalUsage = runtimeTasks.reduce(
+     (total, task) => ({
+@@ -141,14 +148,16 @@ export function CommandCentre({
+         </div>
+         <div className="current-run__progress">
+           <div
+-            className="progress-ring"
++            className={`progress-ring ${completedStageCount === workflowStages.length ? "progress-ring--complete" : ""}`}
++            style={progressRingStyle}
+             role="progressbar"
+             aria-label="Workflow progress"
+             aria-valuemin={0}
+-            aria-valuemax={10}
+-            aria-valuenow={activeTask ? activeTask.stageIndex + 1 : 0}
++            aria-valuemax={workflowStages.length}
++            aria-valuenow={completedStageCount}
++            aria-valuetext={`${completedStageCount} of ${workflowStages.length} workflow stages complete`}
+           >
+-            <span>{activeTask ? activeTask.stageIndex + 1 : 0}/10</span>
++            <span>{completedStageCount}/{workflowStages.length}</span>
+           </div>
+           <div>
+             <strong>{activeTask?.stage ?? "Not started"}</strong>
+diff --git a/src/components/RuntimeTaskWorkspace.tsx b/src/components/RuntimeTaskWorkspace.tsx
+index b4ce533..46f692f 100644
+--- a/src/components/RuntimeTaskWorkspace.tsx
++++ b/src/components/RuntimeTaskWorkspace.tsx
+@@ -816,7 +816,7 @@ function RuntimeStagePresentation({
+       );
+     case "implement":
+       return (
+-        <div className="runtime-stage-stack">
++        <div className="runtime-stage-stack runtime-stage-stack--implement">
+           {candidate ? (
+             <RuntimeCandidateDesk
+               task={task}
+@@ -878,7 +878,7 @@ function RuntimeStagePresentation({
+       );
+     case "approval":
+       return (
+-        <div className="runtime-stage-stack">
++        <div className="runtime-stage-stack runtime-stage-stack--approval">
+           {candidate ? (
+             <RuntimeCandidateDesk
+               task={task}
+@@ -1029,7 +1029,7 @@ function RuntimeCandidateDesk({
+         ["Conflict status", "Not recorded by the runtime"],
+       ];
+   return (
+-    <section className={`runtime-candidate-desk ${compact ? "runtime-candidate-desk--compact" : ""}`}>
++    <section className={`runtime-candidate-desk ${compact ? "runtime-candidate-desk--compact" : ""} ${approval ? "runtime-candidate-desk--approval" : ""}`}>
+       <header>
+         <span className="candidate-badge">
+           <GitDiff size={16} />
+diff --git a/src/components/TaskTable.tsx b/src/components/TaskTable.tsx
+index 3d4ea17..cde3434 100644
+--- a/src/components/TaskTable.tsx
++++ b/src/components/TaskTable.tsx
+@@ -18,69 +18,71 @@ export function TaskTable({
+   const rows = tasks.map(runtimeTaskToRecentTask);
+   return (
+     <div className="task-table task-table--shared">
+-      <div className="task-table__header">
+-        <span>Task</span>
+-        <span>Status</span>
+-        <span>Stage</span>
+-        <span>Started</span>
+-        <span>Ended / updated</span>
+-        <span>Input</span>
+-        <span>Output</span>
+-        <span>Cache</span>
+-        <span>Approx. cost</span>
+-        <span>Model</span>
+-      </div>
+-      {rows.map((task) => {
+-        const runtimeTask = tasks.find((item) => item.id === task.id);
+-        if (!runtimeTask) return null;
+-        return (
+-        <button className="task-table__row" type="button" key={task.id} onClick={() => onOpenTask(task.id)}>
+-          <span className="task-table__title">
+-            <span className="task-title-line">
+-              <span className="mono">{task.id}</span>
+-              <PriorityBadge priority={task.priority.toLowerCase() as "low" | "medium" | "high"} />
+-            </span>
+-            <strong>{task.title}</strong>
+-          </span>
+-          <StateBadge
+-            state={
+-              task.status === "Running"
+-                ? "running"
+-                : task.status === "Blocked"
+-                  ? "blocked"
+-                  : task.status === "Completed"
+-                    ? "completed"
+-                    : task.status === "Closed"
+-                      ? "closed"
+-                      : "needs-input"
+-            }
+-          />
+-          <span className="task-table__stage"><strong>{task.stage}</strong><StageProgress task={runtimeTask} /></span>
+-          <time>{task.startedAt}</time>
+-          <time>{task.endedAt === "—" ? task.updatedAt : task.endedAt}</time>
+-          <span className="task-table__usage" title={`${task.uncachedInputTokens ?? "—"} uncached input · ${task.cachedTokens ?? "—"} cached input`}>
+-            <strong className="mono">{task.inputTokens ?? task.tokens}</strong>
+-            <small>{task.uncachedInputTokens ?? "—"} uncached</small>
+-          </span>
+-          <span className="mono">{task.outputTokens ?? "—"}</span>
+-          <span className="task-table__usage" title={`${task.cachedTokens ?? "—"} cached input tokens`}>
+-            <strong className="mono text-green">{task.cacheRate ?? "—"}</strong>
+-            <small>{task.cachedTokens ?? "—"} cached</small>
+-          </span>
+-          <span className="task-table__cost" title={`${runtimeTask.usage.credits == null ? "Work credits unavailable" : `${runtimeTask.usage.credits.toFixed(3)} ChatGPT work credits`} · API-rate estimate after cached-input discounts. Your ChatGPT-plan session does not report an attributable dollar charge.`}>
+-            {task.cost}
+-            <small>{runtimeTask.usage.credits == null ? "API-rate estimate" : `${runtimeTask.usage.credits.toFixed(2)} credits`}</small>
+-          </span>
+-          <ModelStack models={task.models} compact />
+-        </button>
+-        );
+-      })}
+-      {!rows.length ? (
+-        <div className="task-table__empty">
+-          <strong>{emptyTitle}</strong>
+-          <small>{emptyCopy}</small>
++      <div className="task-table__viewport">
++        <div className="task-table__header">
++          <span>Task</span>
++          <span>Status</span>
++          <span>Stage</span>
++          <span>Started</span>
++          <span>Ended / updated</span>
++          <span>Input</span>
++          <span>Output</span>
++          <span>Cache</span>
++          <span>Approx. cost</span>
++          <span>Model</span>
+         </div>
+-      ) : null}
++        {rows.map((task) => {
++          const runtimeTask = tasks.find((item) => item.id === task.id);
++          if (!runtimeTask) return null;
++          return (
++            <button className="task-table__row" type="button" key={task.id} onClick={() => onOpenTask(task.id)}>
++              <span className="task-table__title">
++                <span className="task-title-line">
++                  <span className="mono">{task.id}</span>
++                  <PriorityBadge priority={task.priority.toLowerCase() as "low" | "medium" | "high"} />
++                </span>
++                <strong>{task.title}</strong>
++              </span>
++              <StateBadge
++                state={
++                  task.status === "Running"
++                    ? "running"
++                    : task.status === "Blocked"
++                      ? "blocked"
++                      : task.status === "Completed"
++                        ? "completed"
++                        : task.status === "Closed"
++                          ? "closed"
++                          : "needs-input"
++                }
++              />
++              <span className="task-table__stage"><strong>{task.stage}</strong><StageProgress task={runtimeTask} /></span>
++              <time>{task.startedAt}</time>
++              <time>{task.endedAt === "—" ? task.updatedAt : task.endedAt}</time>
++              <span className="task-table__usage" title={`${task.uncachedInputTokens ?? "—"} uncached input · ${task.cachedTokens ?? "—"} cached input`}>
++                <strong className="mono">{task.inputTokens ?? task.tokens}</strong>
++                <small>{task.uncachedInputTokens ?? "—"} uncached</small>
++              </span>
++              <span className="mono">{task.outputTokens ?? "—"}</span>
++              <span className="task-table__usage" title={`${task.cachedTokens ?? "—"} cached input tokens`}>
++                <strong className="mono text-green">{task.cacheRate ?? "—"}</strong>
++                <small>{task.cachedTokens ?? "—"} cached</small>
++              </span>
++              <span className="task-table__cost" title={`${runtimeTask.usage.credits == null ? "Work credits unavailable" : `${runtimeTask.usage.credits.toFixed(3)} ChatGPT work credits`} · API-rate estimate after cached-input discounts. Your ChatGPT-plan session does not report an attributable dollar charge.`}>
++                {task.cost}
++                <small>{runtimeTask.usage.credits == null ? "API-rate estimate" : `${runtimeTask.usage.credits.toFixed(2)} credits`}</small>
++              </span>
++              <ModelStack models={task.models} compact />
++            </button>
++          );
++        })}
++        {!rows.length ? (
++          <div className="task-table__empty">
++            <strong>{emptyTitle}</strong>
++            <small>{emptyCopy}</small>
++          </div>
++        ) : null}
++      </div>
+       {onSeeAll ? (
+         <button type="button" className="task-table__see-all" onClick={onSeeAll}>
+           <span>See all tasks</span>
+diff --git a/src/domain.ts b/src/domain.ts
+index bdf7a38..87397a0 100644
+--- a/src/domain.ts
++++ b/src/domain.ts
+@@ -62,6 +62,8 @@ export interface RecentTask {
+   status: "Running" | "Blocked" | "Completed" | "Needs input" | "Closed";
+   stage: string;
+   stageIndex: number;
++  completedStageCount?: number;
++  completedStagePercentage?: number;
+   duration: string;
+   stageRun: number;
+   stageRunLimit: number;
+@@ -469,11 +471,30 @@ export const EXAMPLE_TITLE = "Add task priority";
+ export const EXAMPLE_DESCRIPTION =
+   "Add task priority (`low | medium | high`). Default new tasks to `medium`, expose it through the API, show a coloured badge in the UI, and add tests.";
+
++export function getCompletedStageProgress(completedStages: readonly string[]) {
++  const totalStages = workflowStages.length;
++  const validStageIds = new Set(workflowStages.map((stage) => stage.id));
++  const uniqueCompletedStageCount = new Set(
++    completedStages.filter((stageId) => validStageIds.has(stageId as StageId)),
++  ).size;
++  const completedStageCount = Math.min(uniqueCompletedStageCount, totalStages, 10);
++
++  return {
++    completedStageCount,
++    completedStagePercentage: totalStages
++      ? Math.round((completedStageCount / totalStages) * 100)
++      : 0,
++  };
++}
++
+ export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
+   const stageIndex = Math.max(
+     0,
+     workflowStages.findIndex((stage) => stage.id === task.currentStage),
+   );
++  const { completedStageCount, completedStagePercentage } = getCompletedStageProgress(
++    task.completedStages,
++  );
+   const status: RecentTask["status"] =
+     task.status === "closed"
+       ? "Closed"
+@@ -495,6 +516,8 @@ export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
+     status,
+     stage: workflowStages[stageIndex]?.shortLabel ?? "Triage",
+     stageIndex,
++    completedStageCount,
++    completedStagePercentage,
+     duration: formatRuntimeDuration(
+       task.startedAt,
+       task.status === "running" ? null : (task.completedAt ?? task.updatedAt),
+diff --git a/src/styles.css b/src/styles.css
+index 2086b91..3195934 100644
+--- a/src/styles.css
++++ b/src/styles.css
+@@ -712,16 +712,31 @@ small {
+   font-size: 12px;
+ }
+ .progress-ring {
++  --workflow-progress: 0%;
++
++  position: relative;
+   display: grid;
+   place-items: center;
+   width: 47px;
+   height: 47px;
+-  border: 3px solid #4e4a3d;
+-  border-top-color: var(--amber);
+-  border-right-color: var(--amber);
+   border-radius: 50%;
++  background: conic-gradient(
++    var(--amber) 0 var(--workflow-progress),
++    #4e4a3d var(--workflow-progress) 100%
++  );
++}
++.progress-ring::before {
++  position: absolute;
++  inset: 3px;
++  border-radius: inherit;
++  background: var(--bg);
++  content: "";
++}
++.progress-ring--complete {
++  background: var(--amber);
+ }
+ .progress-ring span {
++  position: relative;
+   color: var(--text);
+   font:
+     10px "SFMono-Regular",
+@@ -5975,13 +5990,6 @@ small,
+   background: #131311;
+ }
+
+-.task-table--shared .task-table__header,
+-.task-table--shared .task-table__row {
+-  grid-template-columns: minmax(250px, 1.8fr) 105px 100px 130px 130px 70px 105px minmax(135px, 1fr);
+-  gap: 12px;
+-  min-width: 1180px;
+-}
+-
+ .task-table--shared .task-table__header {
+   padding: 12px 14px;
+   font-size: 12px;
+@@ -6581,13 +6589,6 @@ details[open] > summary .disclosure-caret {
+   background: var(--red-soft);
+ }
+
+-.task-table--shared .task-table__header,
+-.task-table--shared .task-table__row {
+-  grid-template-columns: minmax(210px, 1.6fr) 92px 135px 92px 102px 76px 62px 82px 100px 112px;
+-  gap: 8px;
+-  min-width: 1165px;
+-}
+-
+ .task-table__stage {
+   display: grid !important;
+   gap: 6px !important;
+@@ -7309,6 +7310,209 @@ details[open] > summary .disclosure-caret {
+   font-family: "SFMono-Regular", Consolas, monospace;
+ }
+
++/* S2: contained shared-table scrolling and Evidence Gate stage spacing */
++.task-table--shared {
++  min-width: 0;
++  max-width: 100%;
++  overflow: hidden;
++}
++
++.task-table--shared .task-table__viewport {
++  min-width: 0;
++  max-width: 100%;
++  overflow-x: auto;
++  overflow-y: hidden;
++  overscroll-behavior-inline: contain;
++}
++
++.task-table--shared .task-table__header,
++.task-table--shared .task-table__row {
++  grid-template-columns: minmax(208px, 1.8fr) 88px 116px 94px 112px 76px 68px 84px 106px minmax(108px, 1.1fr);
++  gap: 12px;
++  min-width: 1168px;
++}
++
++.task-table--shared .task-table__header {
++  width: 100%;
++  padding: 12px 16px 10px;
++  font-size: 12px;
++}
++
++.task-table--shared .task-table__row {
++  width: 100%;
++  min-height: 72px;
++  padding: 12px 16px;
++  font-size: 14px;
++}
++
++.task-table--shared .task-table__row > span,
++.task-table--shared .task-table__row > time {
++  min-width: 0;
++}
++
++.task-table--shared .task-table__title {
++  gap: 8px;
++}
++
++.task-table--shared .task-table__title strong,
++.task-table--shared .task-table__stage > strong,
++.task-table--shared .task-table__usage strong {
++  font-size: 14px;
++}
++
++.task-table--shared time,
++.task-table--shared .task-table__cost,
++.task-table--shared .task-table__usage small,
++.task-table--shared .task-table__cost small {
++  font-size: 12px;
++}
++
++.task-table--shared .task-table__see-all {
++  min-width: 0;
++}
++
++.runtime-stage-stack--implement,
++.runtime-stage-stack--approval {
++  gap: 16px;
++}
++
++.runtime-grill,
++.runtime-packages {
++  gap: 18px;
++  padding: 20px;
++}
++
++.runtime-grill-question:not(details) {
++  gap: 14px;
++  padding: 16px;
++}
++
++.runtime-grill-question > summary,
++.runtime-package > summary {
++  padding: 15px 16px;
++}
++
++.runtime-grill-history > summary {
++  padding: 10px 0;
++  font-size: 14px;
++}
++
++.runtime-grill-question fieldset label {
++  padding: 12px;
++  font-size: 14px;
++  line-height: 1.45;
++}
++
++.runtime-grill-recommendation {
++  gap: 6px;
++  padding: 12px 14px;
++}
++
++.runtime-grill-recommendation span,
++.runtime-grill-answer strong {
++  font-size: 14px;
++  line-height: 1.55;
++}
++
++.runtime-package > p {
++  margin: 0 16px 16px;
++  font-size: 14px;
++  line-height: 1.55;
++}
++
++.runtime-package .runtime-meta-row,
++.runtime-package > .text-red {
++  margin-inline: 16px;
++}
++
++.runtime-package-arrow,
++.runtime-grill-recommendation small {
++  font-size: 12px;
++}
++
++.runtime-candidate-desk {
++  gap: 16px;
++  padding: 18px;
++}
++
++.runtime-candidate-desk .runtime-fact-grid > div {
++  padding: 14px;
++}
++
++.runtime-candidate-desk .runtime-fact-grid strong {
++  font-size: 14px;
++}
++
++.runtime-repair-lineage > summary {
++  padding: 12px 0;
++  font-size: 14px;
++}
++
++.runtime-repair-lineage > div {
++  gap: 12px;
++  padding: 10px 0;
++  font-size: 14px;
++  line-height: 1.45;
++}
++
++.runtime-repair-lineage > div small,
++.runtime-candidate-desk__actions small {
++  font-size: 12px;
++}
++
++.runtime-candidate-desk__actions {
++  gap: 12px;
++  padding-top: 2px;
++}
++
++.runtime-candidate-desk--approval {
++  gap: 18px;
++  border-color: #5a7057;
++  background: #171c18;
++}
++
++.runtime-context-disclosure {
++  margin-top: 14px;
++}
++
++.runtime-context-disclosure > summary {
++  padding: 12px 0;
++}
++
++.runtime-context-disclosure > summary > span {
++  gap: 4px;
++}
++
++.runtime-context-disclosure > summary > span > strong,
++.runtime-context-disclosure li > span > strong {
++  font-size: 14px;
++}
++
++.runtime-context-disclosure > summary small,
++.runtime-context-disclosure li small,
++.runtime-context-disclosure > div > small {
++  font-size: 12px;
++}
++
++.runtime-context-disclosure > div,
++.runtime-context-disclosure > p {
++  padding-bottom: 14px;
++  font-size: 14px;
++  line-height: 1.55;
++}
++
++.runtime-context-disclosure > div > ul {
++  margin-block: 16px;
++}
++
++.runtime-context-disclosure li {
++  padding: 11px 0;
++}
++
++.runtime-context-disclosure code {
++  font-size: 12px;
++}
++
+ @media (max-width: 1120px) {
+   .command-side--split,
+   .task-filters,
+diff --git a/tests/runtime.test.mjs b/tests/runtime.test.mjs
+index 447875d..80091f0 100644
+--- a/tests/runtime.test.mjs
++++ b/tests/runtime.test.mjs
+@@ -1,5 +1,5 @@
+ import assert from "node:assert/strict";
+-import { mkdtemp, rm } from "node:fs/promises";
++import { mkdtemp, readFile, rm } from "node:fs/promises";
+ import os from "node:os";
+ import path from "node:path";
+ import test from "node:test";
+@@ -913,6 +913,254 @@ test("renders a truthful completion summary for historical merges without an app
+   });
+ });
+
++test("renders workflow progress for zero, partial, normalized, and complete stages", () => {
++  return withWorkspace(async ({ CommandCentre }) => {
++    const renderCommandCentre = (task) =>
++      renderToStaticMarkup(
++        React.createElement(CommandCentre, {
++          runtimeTasks: [task],
++          runtimeStatus: {
++            available: true,
++            authenticated: true,
++            authMethod: "codex-cli",
++            model: "gpt-5.6-luna",
++            reasoning: "xhigh",
++            binary: "codex",
++          },
++          runtimeLoading: false,
++          runtimeError: null,
++          runtimeRefreshing: false,
++          onNewTask: () => {},
++          onOpenTask: () => {},
++          onSeeAllTasks: () => {},
++          onRefreshRuntime: () => {},
++        }),
++      );
++
++    const assertProgress = (markup, { count, percentage, complete = false }) => {
++      const progress = markup.match(/<div class="[^"]*progress-ring[^"]*"[^>]*>/)?.[0];
++      assert.ok(progress, "workflow progress ring should render");
++      assert.match(progress, new RegExp(`aria-valuemin="0"`));
++      assert.match(progress, new RegExp(`aria-valuemax="10"`));
++      assert.match(progress, new RegExp(`aria-valuenow="${count}"`));
++      assert.match(progress, new RegExp(`aria-valuetext="${count} of 10 workflow stages complete"`));
++      assert.match(progress, new RegExp(`style="--workflow-progress:${percentage}%"`));
++      assert.match(markup, new RegExp(`<span>${count}\/10<\\/span>`));
++      if (complete) {
++        assert.match(progress, /class="progress-ring progress-ring--complete"/);
++      } else {
++        assert.doesNotMatch(progress, /progress-ring--complete/);
++      }
++    };
++
++    assertProgress(renderCommandCentre(createTask({ completedStages: [] })), { count: 0, percentage: 0 });
++    assertProgress(
++      renderCommandCentre(
++        createTask({
++          completedStages: ["triage", "triage", "scouts", "unknown-stage", "grill", "grill", "specification"],
++        }),
++      ),
++      { count: 4, percentage: 40 },
++    );
++    assertProgress(
++      renderCommandCentre(
++        createTask({
++          status: "completed",
++          currentStage: "approval",
++          completedStages: [
++            "triage",
++            "scouts",
++            "grill",
++            "specification",
++            "plan",
++            "implement",
++            "dev-review",
++            "test",
++            "final-review",
++            "approval",
++          ],
++        }),
++      ),
++      { count: 10, percentage: 100, complete: true },
++    );
++  });
++});
++
++test("binds workflow progress values to the visible ring treatment", async () => {
++  const styles = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
++
++  assert.match(
++    styles,
++    /\.progress-ring\s*\{[^}]*background:\s*conic-gradient\([^;]*var\(--workflow-progress\)[^;]*\);/s,
++    "the ring gradient should consume the rendered workflow percentage",
++  );
++  assert.match(
++    styles,
++    /\.progress-ring--complete\s*\{[^}]*background:\s*var\(--amber\);[^}]*\}/s,
++    "the complete state should render a full amber ring",
++  );
++});
++
++test("renders the shared task table with its ten-column structure", () => {
++  return withWorkspace(async ({ TaskTable }) => {
++    const markup = renderToStaticMarkup(
++      React.createElement(TaskTable, {
++        tasks: [createTask({ title: "Shared table regression" })],
++        onOpenTask: () => {},
++        onSeeAll: () => {},
++      }),
++    );
++    const header = markup.match(/<div class="task-table__header">([\s\S]*?)<\/div>/)?.[1];
++
++    assert.match(markup, /class="task-table task-table--shared"/);
++    assert.match(markup, /class="task-table__viewport"/);
++    assert.match(markup, /class="task-table__row"/);
++    assert.match(markup, /class="task-table__see-all"/);
++    assert.ok(header, "shared task table should render a column header");
++    assert.deepEqual(
++      [...header.matchAll(/<span>([^<]*)<\/span>/g)].map((match) => match[1]),
++      ["Task", "Status", "Stage", "Started", "Ended / updated", "Input", "Output", "Cache", "Approx. cost", "Model"],
++    );
++  });
++});
++
++test("renders the scoped runtime spacing hooks for Grill Me, Implement, repair lineage, approval, and context", () => {
++  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
++    const renderWorkspace = (task, initialViewedStageId) =>
++      renderToStaticMarkup(
++        React.createElement(RuntimeTaskWorkspace, {
++          task,
++          initialViewedStageId,
++          onBack: () => {},
++          onRun: async () => {},
++          onCancel: async () => {},
++          onCloseTask: async () => {},
++          onEvaluate: async () => {},
++          onAction: async () => {},
++          onDecision: async () => {},
++          onGrillAnswer: async () => {},
++          onFinishGrill: async () => {},
++        }),
++      );
++    const grillMarkup = renderWorkspace(
++      createTask({
++        status: "awaiting-grill",
++        currentStage: "grill",
++        grillSession: {
++          status: "open",
++          questions: [
++            {
++              id: "Q1",
++              question: "Keep the existing contract?",
++              whyItMatters: "This protects current callers.",
++              options: [{ id: "Q1-O1", label: "Keep it", description: "Preserve compatibility.", recommended: true }],
++              allowCustom: false,
++              answer: null,
++              answerSource: null,
++              resolvedAt: null,
++            },
++          ],
++          createdAt: "2026-08-01T12:00:00.000Z",
++          completedAt: null,
++          completionReason: null,
++        },
++      }),
++    );
++    assert.match(grillMarkup, /class="runtime-grill"/);
++    assert.match(grillMarkup, /class="runtime-grill-recommendation"/);
++
++    const candidate = {
++      id: "C1",
++      revisionNumber: 2,
++      baseRevision: "a".repeat(40),
++      baseBranch: "main",
++      headRevision: "b".repeat(40),
++      branch: "agent-harness/ah-999-c1",
++      repositoryRoot: "C:/repo/task",
++      worktreePath: "C:/worktrees/ah-999-c1",
++      status: "ready_for_review",
++      createdAt: "2026-08-01T12:00:00.000Z",
++      updatedAt: "2026-08-01T12:00:00.000Z",
++      revisions: [
++        { number: 1, headRevision: "c".repeat(40), reason: "Initial candidate assembly.", createdAt: "2026-08-01T12:01:00.000Z" },
++        { number: 2, headRevision: "b".repeat(40), reason: "Repair addressed the failed gate.", createdAt: "2026-08-01T12:02:00.000Z" },
++      ],
++    };
++    const implementMarkup = renderWorkspace(
++      createTask({
++        status: "running",
++        currentStage: "implement",
++        candidates: [candidate],
++        workPackages: [
++          {
++            id: "S1",
++            title: "Runtime polish",
++            description: "Refine the shared runtime surfaces.",
++            dependencies: [],
++            batch: 1,
++            ownedPaths: ["src/styles.css"],
++            verification: ["npm test"],
++            status: "running",
++            attempts: 1,
++            branch: "agent-harness/ah-999-s1",
++            worktreePath: "C:/worktrees/ah-999-s1",
++            baseRevision: "a".repeat(40),
++            headRevision: null,
++            files: [],
++            error: null,
++          },
++        ],
++        artifacts: [
++          {
++            id: "artifact-implement",
++            stage: "implement",
++            name: "implementation.md",
++            kind: "markdown",
++            content: "# Implementation\n\nScoped runtime changes.",
++            createdAt: "2026-08-01T12:03:00.000Z",
++            model: "gpt-5.6-luna",
++            usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 6, totalTokens: 16 },
++            contextManifest: {
++              stage: "implement",
++              promptCharacters: 240,
++              estimatedPromptTokens: 60,
++              repositoryAccess: "workspace-write",
++              policy: "Use the isolated candidate worktree.",
++              candidateId: "C1",
++              candidateRevision: 2,
++              sources: [
++                {
++                  kind: "repository",
++                  id: "repo",
++                  label: "Repository snapshot",
++                  includedCharacters: 240,
++                  originalCharacters: 240,
++                  truncated: false,
++                },
++              ],
++            },
++          },
++        ],
++      }),
++    );
++    assert.match(implementMarkup, /class="runtime-stage-stack runtime-stage-stack--implement"/);
++    assert.match(implementMarkup, /class="runtime-packages"/);
++    assert.match(implementMarkup, /class="runtime-candidate-desk\b[^\"]*"/);
++    assert.match(implementMarkup, /class="runtime-repair-lineage" open/);
++    assert.match(implementMarkup, /class="runtime-context-disclosure"/);
++
++    const approvalMarkup = renderWorkspace(
++      createTask({
++        status: "awaiting-human-approval",
++        currentStage: "approval",
++        candidates: [{ ...candidate, status: "ready_for_approval" }],
++      }),
++    );
++    assert.match(approvalMarkup, /class="runtime-stage-stack runtime-stage-stack--approval"/);
++    assert.match(approvalMarkup, /class="runtime-candidate-desk\b[^\"]*runtime-candidate-desk--approval/);
++  });
++});
++
+ async function waitUntil(predicate) {
+   for (let attempt = 0; attempt < 100; attempt += 1) {
+     if (predicate()) return;
+@@ -965,7 +1213,15 @@ async function withWorkspace(run) {
+   try {
+     const module = await vite.ssrLoadModule("/src/components/RuntimeTaskWorkspace.tsx");
+     const stageViews = await vite.ssrLoadModule("/src/components/StageViews.tsx");
+-    return await run({ ...module, ...stageViews, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
++    const commandCentre = await vite.ssrLoadModule("/src/components/CommandCentre.tsx");
++    const taskTable = await vite.ssrLoadModule("/src/components/TaskTable.tsx");
++    return await run({
++      ...module,
++      ...stageViews,
++      ...commandCentre,
++      ...taskTable,
++      loadApiModule: () => vite.ssrLoadModule("/src/api.ts"),
++    });
+   } finally {
+     await vite.close();
+   }
