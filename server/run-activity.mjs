@@ -360,7 +360,6 @@ function evaluateGateRun(run, target, stage, sourceRunId, sourceArtifactId) {
   const identityReason = compareCandidateBinding(summaryBinding, target);
   if (identityReason) return createFreshness(stage, target, sourceRunId, sourceArtifactId, identityReason, null);
   if (
-    summary.stage !== stage ||
     !["PASS", "REPAIR"].includes(summary.verdict) ||
     !["PASS", "REPAIR"].includes(summary.reportedVerdict) ||
     !Array.isArray(summary.blockingReasons) ||
@@ -390,6 +389,9 @@ function evaluateGateRun(run, target, stage, sourceRunId, sourceArtifactId) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "candidate_mismatch", null);
   }
   if (summary.findings.some((finding) => !isValidPersistedGateFinding(finding))) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  }
+  if (!isValidPersistedGateSummaryEnvelope(summary, stage)) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
   if (summary.reportedVerdict !== summary.verdict) {
@@ -482,7 +484,7 @@ function evaluateTestGateResult(summary, target, sourceRunId, sourceArtifactId) 
   }
   const identityReason = compareCandidateBinding(summaryBinding, target);
   if (identityReason) return createFreshness("test", target, sourceRunId, sourceArtifactId, identityReason, null);
-  if (summary.stage !== "test" || !["PASS", "REPAIR"].includes(summary.verdict)) {
+  if (!["PASS", "REPAIR"].includes(summary.verdict)) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
   if (!Array.isArray(summary.blockingReasons) || !Array.isArray(summary.findings)) {
@@ -510,6 +512,9 @@ function evaluateTestGateResult(summary, target, sourceRunId, sourceArtifactId) 
     return createFreshness("test", target, sourceRunId, sourceArtifactId, invalidFinding.binding.code, null);
   }
   if (summary.findings.some((finding) => !isValidPersistedGateFinding(finding))) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  }
+  if (!isValidPersistedGateSummaryEnvelope(summary, "test")) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
 
@@ -691,6 +696,14 @@ function isValidPersistedGateFinding(finding) {
   if (finding.line != null && (!Number.isInteger(finding.line) || finding.line < 1)) return false;
   if (finding.bindingExplicit != null && typeof finding.bindingExplicit !== "boolean") return false;
   return true;
+}
+
+function isValidPersistedGateSummaryEnvelope(summary, stage) {
+  if (!summary || typeof summary !== "object" || Array.isArray(summary)) return false;
+  if (summary.schemaVersion !== 1 || summary.stage !== stage) return false;
+  if (typeof summary.evaluatedAt !== "string" || !summary.evaluatedAt.trim()) return false;
+  const evaluatedAt = new Date(summary.evaluatedAt);
+  return Number.isFinite(evaluatedAt.getTime()) && evaluatedAt.toISOString() === summary.evaluatedAt;
 }
 
 function isValidPersistedTestRow(row) {

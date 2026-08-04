@@ -153,6 +153,45 @@ test("parses focused test evidence with candidate-bound rows", () => {
   );
 });
 
+test("rejects malformed focused Test row fields before normalization", () => {
+  const malformedRows = [
+    { id: { value: "row-1" } },
+    { command: { value: "npm test" } },
+    { title: ["test title"] },
+    { artifactReferences: [{ name: { value: "report" }, kind: "markdown", path: "report.md" }] },
+    { artifactReferences: [{ name: "report", kind: "markdown", path: { value: "report.md" } }] },
+    { assertions: [{ label: { value: "result" }, actual: "pass", expected: "pass" }] },
+    { assertions: [{ label: "result", actual: { value: "pass" }, expected: "pass" }] },
+    { failureDetails: { message: "failed" } },
+  ];
+
+  for (const [index, fields] of malformedRows.entries()) {
+    const output = `<focused-test-evidence>${JSON.stringify({
+      candidateId: "C1",
+      candidateRevision: 2,
+      command: "npm test",
+      status: "passed",
+      rows: [{
+        id: `row-${index + 1}`,
+        candidateId: "C1",
+        candidateRevision: 2,
+        command: "npm test",
+        status: "passed",
+        title: "focused test",
+        artifactReferences: [],
+        assertions: [],
+        failureDetails: null,
+        ...fields,
+      }],
+    })}</focused-test-evidence>`;
+    assert.throws(
+      () => parseFocusedTestEvidence(output),
+      (error) => error.code === "contradictory_evidence",
+      `malformed row case ${index + 1}`,
+    );
+  }
+});
+
 test("derives candidate-bound review gates from structured evidence", () => {
   const candidate = { id: "C1", revisionNumber: 2 };
   const pass = parseGateEvidence(gateOutput(2), candidate, "dev-review");
@@ -722,6 +761,27 @@ test("merge approval fails closed for malformed persisted errors and failed-row 
         runs[1].test.rows[0].bindingExplicit = "not-a-boolean";
       },
     },
+    {
+      name: "missing Dev Review schema version",
+      expectedStage: "Development Review",
+      mutate(runs) {
+        delete runs[0].gateResult.schemaVersion;
+      },
+    },
+    {
+      name: "unsupported Test schema version",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].gateResult.schemaVersion = 999;
+      },
+    },
+    {
+      name: "malformed Final Review evaluation timestamp",
+      expectedStage: "Final Review",
+      mutate(runs) {
+        runs[2].gateResult.evaluatedAt = { timestamp: "2026-08-01T12:01:00.000Z" };
+      },
+    },
   ];
 
   for (const item of cases) {
@@ -765,8 +825,13 @@ test("merge approval fails closed for malformed persisted errors and failed-row 
         item.mutate(runs);
         draft.runs = runs;
         refreshGateFreshness(draft);
-        if (item.expectedStage === "Test") {
-          assert.equal(draft.gateFreshness.test.reasonCode, "contradictory_evidence", item.name);
+        if (item.expectedStage === "Test" || item.name.includes("schema") || item.name.includes("timestamp")) {
+          const stage = {
+            "Development Review": "dev-review",
+            Test: "test",
+            "Final Review": "final-review",
+          }[item.expectedStage];
+          assert.equal(draft.gateFreshness[stage].reasonCode, "contradictory_evidence", item.name);
         }
       });
 
@@ -826,6 +891,100 @@ test("structured ingestion preserves mixed, revision-change, and candidate-misma
     () => validateFocusedTestEvidence(parsedOldTest, candidate),
     (error) => error.code === "revision_change",
   );
+});
+
+test("malformed focused Test row ingestion persists the exact reason and blocks approval", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-malformed-test-row-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Reject malformed focused Test row",
+      description: "Object-valued row fields must fail closed from ingestion through approval.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-test";
+      draft.currentStage = "test";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 2,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/ah-005-c1",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "ready_for_test",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        updatedAt: "2026-08-01T12:00:00.000Z",
+        revisions: [],
+      }];
+    });
+
+    let merged = false;
+    const malformedOutput = `<focused-test-evidence>${JSON.stringify({
+      candidateId: "C1",
+      candidateRevision: 2,
+      command: "npm test",
+      status: "passed",
+      rows: [{
+        id: { value: "row-1" },
+        candidateId: "C1",
+        candidateRevision: 2,
+        command: "npm test",
+        status: "passed",
+        title: "focused test",
+        artifactReferences: [],
+        assertions: [],
+        failureDetails: null,
+      }],
+    })}</focused-test-evidence>`;
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      worktreeManager: {
+        async verifyCandidate() {},
+        async recoverCandidate() {},
+        async merge() { merged = true; },
+      },
+      runCodex: async () => ({
+        finalText: malformedOutput,
+        usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    assert.equal(await orchestrator.start(task.id, "test"), true);
+    const finished = await waitForStatus(store, task.id, "ready-for-test");
+    const testRun = finished.runs.find((run) => run.stage === "test");
+    assert.equal(testRun.evidenceError.code, "contradictory_evidence");
+    assert.equal(testRun.evidenceError.copy, RUNTIME_FRESHNESS_REASONS.contradictory_evidence);
+    assert.equal(finished.gateFreshness.test.reasonCode, "contradictory_evidence");
+
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-human-approval";
+      draft.currentStage = "approval";
+      draft.candidates.at(-1).status = "awaiting_human_approval";
+      draft.runs.push(
+        makeRuntimeRun({ id: "RUN-DEV-FRESH-AFTER-MALFORMED-TEST" }),
+        makeRuntimeRun({
+          id: "RUN-FINAL-FRESH-AFTER-MALFORMED-TEST",
+          stage: "final-review",
+          gateResult: makeGateResult({ stage: "final-review" }),
+        }),
+      );
+      refreshGateFreshness(draft);
+    });
+
+    await assert.rejects(
+      () => orchestrator.approveMerge(task.id),
+      /cannot be approved.*Test is not fresh.*contradictory/i,
+    );
+    assert.equal(merged, false);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
 });
 
 test("persists exact structured-evidence reason codes through a failed review run", async () => {

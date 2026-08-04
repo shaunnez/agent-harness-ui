@@ -1677,6 +1677,14 @@ test("renders stale evidence in the mounted Run Activity views with exact persis
         reasonCopy: failureReason,
       }),
     });
+    const freshReviewRun = run({
+      id: "RUN-REVIEW-FRESH",
+      candidateRevision: 2,
+      freshness: makeGateFreshness("dev-review", {
+        fresh: true,
+        sourceRunId: "RUN-REVIEW-FRESH",
+      }),
+    });
     const linkedStagePass = {
       id: "EVENT-STAGE-PASS",
       at: "2026-08-01T12:01:00.000Z",
@@ -1711,9 +1719,24 @@ test("renders stale evidence in the mounted Run Activity views with exact persis
         reasonCopy: missingBindingReason,
       }),
     };
+    const persistedStaleWithFreshLink = {
+      id: "EVENT-PERSISTED-STALE-FRESH-LINK",
+      at: "2026-08-01T12:04:00.000Z",
+      category: "decision",
+      tone: "success",
+      stage: "dev-review",
+      title: "Development Review passed",
+      detail: "Historical gate event with invalid linkage.",
+      runId: freshReviewRun.id,
+      freshness: makeGateFreshness("dev-review", {
+        sourceRunId: null,
+        reasonCode: "missing_binding",
+        reasonCopy: missingBindingReason,
+      }),
+    };
     const task = createTask({
-      runs: [reviewRun, testRun],
-      events: [linkedStagePass, persistedStaleEvent, legacyUnlinkedStagePass],
+      runs: [freshReviewRun, reviewRun, testRun],
+      events: [linkedStagePass, persistedStaleEvent, legacyUnlinkedStagePass, persistedStaleWithFreshLink],
     });
 
     const activityItems = filterRunActivity(task, "activity");
@@ -1728,6 +1751,10 @@ test("renders stale evidence in the mounted Run Activity views with exact persis
     assert.equal(legacyItem.tone, "warning");
     assert.match(legacyItem.title, /Rerun required/);
     assert.match(legacyItem.detail, new RegExp(missingBindingReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    const invalidLinkItem = activityItems.find((item) => item.event.id === persistedStaleWithFreshLink.id);
+    assert.equal(invalidLinkItem.tone, "warning");
+    assert.match(invalidLinkItem.title, /Rerun required/);
+    assert.match(invalidLinkItem.detail, new RegExp(missingBindingReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 
     const agentItem = filterRunActivity(task, "agent")[0];
     assert.equal(agentItem.tone, "warning");
@@ -1744,6 +1771,7 @@ test("renders stale evidence in the mounted Run Activity views with exact persis
       ["test", `run:${testRun.id}`, failureReason],
       ["decision", `event:${linkedStagePass.id}`, revisionReason],
       ["decision", `event:${legacyUnlinkedStagePass.id}`, missingBindingReason],
+      ["decision", `event:${persistedStaleWithFreshLink.id}`, missingBindingReason],
     ]) {
       const markup = renderToStaticMarkup(React.createElement(RunActivity, { task, initialFilter, initialSelectedId: selectedId }));
       assert.match(markup, /runtime-activity-row--warning/);

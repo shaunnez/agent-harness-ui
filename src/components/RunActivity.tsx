@@ -70,7 +70,7 @@ export function filterRunActivity(task: RuntimeTask, filter: RunActivityFilter):
         event.title,
         event.detail,
         event.tone,
-        linkedRun?.freshness ?? event.freshness,
+        event.freshness ?? linkedRunFreshness(event, linkedRun),
       );
       return {
         id: `event:${event.id}`,
@@ -81,6 +81,14 @@ export function filterRunActivity(task: RuntimeTask, filter: RunActivityFilter):
         event,
       };
     });
+}
+
+function linkedRunFreshness(event: RuntimeEvent, linkedRun: RuntimeRun | null | undefined) {
+  const freshness = linkedRun?.freshness;
+  if (!freshness || linkedRun.stage !== event.stage || freshness.stage !== event.stage) return null;
+  if (event.runId !== linkedRun.id || freshness.sourceRunId !== linkedRun.id) return null;
+  if (event.artifactId && freshness.sourceArtifactId !== event.artifactId) return null;
+  return freshness;
 }
 
 export function RunActivity({

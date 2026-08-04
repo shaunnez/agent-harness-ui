@@ -67,7 +67,12 @@ export function parseFocusedTestEvidence(text) {
   const value = parseLabelledJson(text, "focused-test-evidence");
   const binding = readExplicitCandidateBinding(value);
   if (!binding.valid) throw candidateEvidenceError(binding.code);
-  if (!value.command?.trim()) throw new Error("Focused test evidence must include a command.");
+  if (typeof value.command !== "string" || !value.command.trim()) {
+    throw candidateEvidenceError("contradictory_evidence", "Focused test evidence must include a string command.");
+  }
+  if (value.durationMs != null && (!Number.isFinite(value.durationMs) || value.durationMs < 0)) {
+    throw candidateEvidenceError("contradictory_evidence", "Focused test evidence durationMs must be a non-negative number or null.");
+  }
   const rows = Array.isArray(value.rows) ? value.rows : [];
   if (!rows.length) throw new Error("Focused test evidence must include at least one row.");
   if (!["passed", "failed"].includes(value.status)) throw new Error("Focused test evidence status must be passed or failed.");
@@ -342,6 +347,10 @@ function dependsOn(item, targetId, byId, seen = new Set()) {
 }
 
 function normalizeFocusedTestRow(row, rowIndex, parent) {
+  if (!row || typeof row !== "object" || Array.isArray(row)) {
+    throw candidateEvidenceError("contradictory_evidence", `Focused test row ${rowIndex + 1} must be an object.`);
+  }
+  validateFocusedTestRowFields(row, rowIndex);
   const hasCandidateId = Object.prototype.hasOwnProperty.call(row ?? {}, "candidateId");
   const hasCandidateRevision = Object.prototype.hasOwnProperty.call(row ?? {}, "candidateRevision");
   const explicitBinding = hasCandidateId && hasCandidateRevision;
@@ -378,6 +387,51 @@ function normalizeFocusedTestRow(row, rowIndex, parent) {
     assertions,
     failureDetails: row?.failureDetails == null ? null : String(row.failureDetails).trim().slice(0, 5_000),
   };
+}
+
+function validateFocusedTestRowFields(row, rowIndex) {
+  const label = `Focused test row ${rowIndex + 1}`;
+  for (const field of ["id", "command", "title", "failureDetails"]) {
+    if (row[field] != null && typeof row[field] !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `${label} ${field} must be a string or null.`);
+    }
+  }
+  if (row.durationMs != null && (!Number.isFinite(row.durationMs) || row.durationMs < 0)) {
+    throw candidateEvidenceError("contradictory_evidence", `${label} durationMs must be a non-negative number or null.`);
+  }
+  if (row.artifactReferences != null && !Array.isArray(row.artifactReferences)) {
+    throw candidateEvidenceError("contradictory_evidence", `${label} artifactReferences must be an array.`);
+  }
+  for (const [referenceIndex, reference] of (row.artifactReferences ?? []).entries()) {
+    if (!reference || typeof reference !== "object" || Array.isArray(reference)) {
+      throw candidateEvidenceError("contradictory_evidence", `${label} artifact reference ${referenceIndex + 1} must be an object.`);
+    }
+    if (reference.name != null && typeof reference.name !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `${label} artifact reference ${referenceIndex + 1} name must be a string or null.`);
+    }
+    if (reference.path != null && typeof reference.path !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `${label} artifact reference ${referenceIndex + 1} path must be a string or null.`);
+    }
+    if (reference.kind != null && typeof reference.kind !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `${label} artifact reference ${referenceIndex + 1} kind must be a string or null.`);
+    }
+  }
+  if (row.assertions != null && !Array.isArray(row.assertions)) {
+    throw candidateEvidenceError("contradictory_evidence", `${label} assertions must be an array.`);
+  }
+  for (const [assertionIndex, assertion] of (row.assertions ?? []).entries()) {
+    if (!assertion || typeof assertion !== "object" || Array.isArray(assertion)) {
+      throw candidateEvidenceError("contradictory_evidence", `${label} assertion ${assertionIndex + 1} must be an object.`);
+    }
+    for (const field of ["label", "actual", "expected"]) {
+      if (assertion[field] != null && typeof assertion[field] !== "string") {
+        throw candidateEvidenceError(
+          "contradictory_evidence",
+          `${label} assertion ${assertionIndex + 1} ${field} must be a string or null.`,
+        );
+      }
+    }
+  }
 }
 
 function normalizeDuration(value) {
