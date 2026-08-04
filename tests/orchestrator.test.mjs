@@ -2197,6 +2197,9 @@ test("builds the focused test execution prompt with the structured evidence cont
     },
   );
   assert.match(prompt, /<focused-test-evidence>/);
+  assert.match(prompt, /Begin candidate verification with a standalone `git rev-parse HEAD`/);
+  assert.match(prompt, /Every command executed against the candidate is authoritative gate telemetry/);
+  assert.match(prompt, /expected-negative searches as explicit assertions that exit zero/);
   assert.match(prompt, /On Windows PowerShell, run every verification command separately with npm\.cmd/);
   assert.match(prompt, /never chain them with Bash-style &&, invoke npm\.ps1, or use npm test -- <file>/);
 });
@@ -2339,12 +2342,33 @@ test("runs independent work packages concurrently before candidate assembly", as
   }
 });
 
-test("fails a test verdict closed when any verification command fails", () => {
+test("excludes only runtime-scoped context preflight from candidate test telemetry", () => {
   assert.equal(
     evaluationVerdict("test", {
       finalText: "PASS\n\n## Verdict\n\nPASS",
-      runtimeEvents: [{ commandFailed: true }],
-    }),
+      runtimeEvents: [
+        { commandFailed: true, runtimeScope: "context-preflight", detail: "rg MEMORY.md" },
+        { commandFailed: false, detail: "/bin/zsh -lc 'git rev-parse HEAD'" },
+        { commandFailed: false, detail: "/bin/zsh -lc 'npm test'" },
+      ],
+    }, { status: "passed" }),
+    "PASS",
+  );
+  assert.equal(
+    evaluationVerdict("test", {
+      finalText: "PASS\n\n## Verdict\n\nPASS",
+      runtimeEvents: [
+        { commandFailed: true, detail: "/bin/zsh -lc 'npm test'" },
+        { commandFailed: false, detail: "/bin/zsh -lc 'git rev-parse HEAD'" },
+      ],
+    }, { status: "passed" }),
+    "REPAIR",
+  );
+  assert.equal(
+    evaluationVerdict("test", {
+      finalText: "PASS\n\n## Verdict\n\nPASS",
+      runtimeEvents: [{ commandFailed: true, detail: "rg /Users/shaun/.codex/memories/MEMORY.md" }],
+    }, { status: "passed" }),
     "REPAIR",
   );
   assert.equal(evaluationVerdict("dev-review", { finalText: "PASS", runtimeEvents: [] }, null, { verdict: "PASS" }), "PASS");

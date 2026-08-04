@@ -33,6 +33,83 @@ test("parses Codex final messages and usage", () => {
     ).commandFailed,
     true,
   );
+  const memoryPreflight = parseCodexEvent(JSON.stringify({
+    type: "item.completed",
+    item: {
+      type: "command_execution",
+      command: "/bin/zsh -lc \"rg -n AH-100 /Users/shaun/.codex/memories/MEMORY.md\"",
+      exit_code: 1,
+    },
+  }));
+  assert.equal(memoryPreflight.commandFailed, true);
+  assert.equal(memoryPreflight.runtimeScope, "context-preflight");
+  assert.equal(
+    parseCodexEvent(JSON.stringify({
+      type: "item.completed",
+      item: {
+        type: "command_execution",
+        command: "/bin/zsh -lc \"rg -n AH-100 /Users/shaun/.codex/memories/MEMORY.md\"",
+        exit_code: 0,
+      },
+    })).runtimeScope,
+    "candidate",
+  );
+  assert.equal(
+    parseCodexEvent(JSON.stringify({
+      type: "item.completed",
+      item: { type: "command_execution", command: "rg -n defect tests", exit_code: 1 },
+    })).runtimeScope,
+    "candidate",
+  );
+  for (const command of [
+    "/bin/zsh -lc 'rg needle ./src /Users/shaun/.codex/memories/MEMORY.md'",
+    "/bin/zsh -lc 'rg needle | npm test /Users/shaun/.codex/memories/MEMORY.md'",
+    "/bin/zsh -lc 'rg needle & npm test /Users/shaun/.codex/memories/MEMORY.md'",
+    "/bin/zsh -lc 'rg --pre npm-test-wrapper needle /Users/shaun/.codex/memories/MEMORY.md'",
+    "/bin/zsh -lc 'rg needle ./src > /Users/shaun/.codex/memories/MEMORY.md'",
+    "/bin/zsh -lc 'rg needle\n/Users/shaun/.codex/memories/MEMORY.md'",
+    "/bin/zsh -lc 'rg needle\r\n/Users/shaun/.codex/memories/MEMORY.md'",
+    "/bin/zsh -lc 'rg needle /tmp/candidate/.codex/memories/MEMORY.md'",
+    "/bin/zsh -lc 'rg needle ${PWD}/.codex/memories/MEMORY.md'",
+    "/bin/zsh -lc 'rg * /Users/shaun/.codex/memories/MEMORY.md'",
+    "/bin/bash -lc 'rg *.ts /Users/shaun/.codex/memories/MEMORY.md'",
+    "/bin/zsh -lc 'rg {needle,./src} /Users/shaun/.codex/memories/MEMORY.md'",
+    "/bin/zsh -lc 'rg [A-Z] /Users/shaun/.codex/memories/MEMORY.md'",
+    "/bin/zsh -lc 'rg =(false) /Users/shaun/.codex/memories/MEMORY.md'",
+    "/bin/zsh -lc 'rg needle =(false)/../../../../../../Users/shaun/.codex/memories/MEMORY.md'",
+  ]) {
+    assert.equal(
+      parseCodexEvent(JSON.stringify({
+        type: "item.completed",
+        item: { type: "command_execution", command, exit_code: 1 },
+      })).runtimeScope,
+      "candidate",
+      command,
+    );
+  }
+  for (const command of [
+    ["rg", "'needle", "./src", "'", "/Users/shaun/.codex/memories/MEMORY.md"],
+    ["rg", "\"needle", "./src", "\"", "/Users/shaun/.codex/memories/MEMORY.md"],
+  ]) {
+    assert.equal(
+      parseCodexEvent(JSON.stringify({
+        type: "item.completed",
+        item: { type: "command_execution", command, exit_code: 1 },
+      })).runtimeScope,
+      "candidate",
+    );
+  }
+  assert.equal(
+    parseCodexEvent(JSON.stringify({
+      type: "item.completed",
+      item: {
+        type: "command_execution",
+        command: "/bin/zsh -lc \"rg AH-100 /Users/shaun/.codex/memories/MEMORY.md && npm test\"",
+        exit_code: 1,
+      },
+    })).runtimeScope,
+    "candidate",
+  );
   assert.deepEqual(
     parseCodexEvent(
       JSON.stringify({ type: "turn.completed", usage: { input_tokens: 10, cached_input_tokens: 4, output_tokens: 5 } }),

@@ -137,12 +137,16 @@ export function parseCodexEvent(line) {
 
   if (event.type === "item.completed" && event.item?.type === "command_execution") {
     const succeeded = event.item.status === "completed" || event.item.exit_code === 0;
+    const runtimeScope = !succeeded && isRuntimeContextPreflightCommand(event.item.command)
+      ? "context-preflight"
+      : "candidate";
     return {
       type: "activity",
       tone: succeeded ? "success" : "warning",
       title: succeeded ? "Repository command completed" : "Repository command returned a warning",
       detail: formatCommand(event.item.command),
       commandFailed: !succeeded,
+      runtimeScope,
       toolCall: {
         id: event.item.id ?? null,
         name: "command_execution",
@@ -198,6 +202,82 @@ export function parseCodexEvent(line) {
   }
 
   return null;
+}
+
+function isRuntimeContextPreflightCommand(command) {
+  const tokens = tokenizeRuntimePreflight(command);
+  if (!tokens || tokens[0] !== "rg") return false;
+  const positional = [];
+  for (let index = 1; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    if (["-n", "--line-number", "-F", "--fixed-strings"].includes(token)) continue;
+    if (["-C", "--context"].includes(token)) {
+      index += 1;
+      if (!/^\d+$/.test(tokens[index] ?? "")) return false;
+      continue;
+    }
+    if (token.startsWith("-")) return false;
+    positional.push(token);
+  }
+  if (positional.length !== 2 || !/^[A-Za-z0-9_.|\\:\-\s]+$/.test(positional[0])) return false;
+  if (/[\$~]/.test(positional[1])) return false;
+  const memoryRoot = path.resolve(process.env.CODEX_HOME ?? path.join(os.homedir(), ".codex"), "memories");
+  return ["MEMORY.md", "memory_summary.md"].some((name) => positional[1] === path.join(memoryRoot, name));
+}
+
+function tokenizeRuntimePreflight(command) {
+  if (Array.isArray(command)) return null;
+  let source = String(command ?? "").trim();
+  if (/[\r\n]/.test(source)) return null;
+  const shell = source.match(/^(?:(?:\/bin\/)?(?:zsh|bash|sh))\s+-lc\s+([\s\S]+)$/);
+  if (shell) {
+    const argument = shell[1].trim();
+    const quote = argument[0];
+    if (!["'", "\""].includes(quote) || argument.at(-1) !== quote) return null;
+    source = argument.slice(1, -1);
+  }
+  const tokens = [];
+  let token = "";
+  let quote = null;
+  let escaped = false;
+  const flush = () => {
+    if (!token) return;
+    tokens.push(token);
+    token = "";
+  };
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index];
+    if (escaped) {
+      token += character;
+      escaped = false;
+      continue;
+    }
+    if (quote) {
+      if (character === quote) quote = null;
+      else if (character === "\\" && quote === "\"") escaped = true;
+      else token += character;
+      continue;
+    }
+    if (["'", "\""].includes(character)) {
+      quote = character;
+      continue;
+    }
+    if (/\s/.test(character)) {
+      flush();
+      continue;
+    }
+    if (["|", "&", ";", ">", "<", "`"].includes(character) || (character === "$" && source[index + 1] === "(")) {
+      return null;
+    }
+    if (character === "\\") {
+      escaped = true;
+      continue;
+    }
+    token += character;
+  }
+  if (quote || escaped) return null;
+  flush();
+  return tokens;
 }
 
 export async function runCodex({

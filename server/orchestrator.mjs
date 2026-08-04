@@ -940,7 +940,7 @@ export class TaskOrchestrator {
       findings: structuredGateEvidence?.findings ?? [],
       blockingReasons: [
         ...(evidenceError ? [evidenceError.copy] : []),
-        ...(stageId === "test" && result.runtimeEvents?.some((event) => event.commandFailed)
+        ...(stageId === "test" && candidateVerificationCommandFailed(result.runtimeEvents)
           ? ["A verification command failed."]
           : []),
         ...(focusedTestEvidence?.status === "failed" ? ["Structured test evidence contains a failed result."] : []),
@@ -1394,11 +1394,17 @@ function stageTimeoutMs(stageId, sandbox) {
 }
 
 export function evaluationVerdict(stageId, result, focusedTestEvidence = null, structuredGateEvidence = null) {
-  if (stageId === "test" && result.runtimeEvents?.some((event) => event.commandFailed)) return "REPAIR";
+  if (stageId === "test" && candidateVerificationCommandFailed(result.runtimeEvents)) return "REPAIR";
   if (stageId === "test" && focusedTestEvidence?.status !== "passed") return "REPAIR";
   if (stageId === "test") return "PASS";
   if (["dev-review", "final-review"].includes(stageId)) return structuredGateEvidence?.verdict ?? "REPAIR";
   return "REPAIR";
+}
+
+function candidateVerificationCommandFailed(runtimeEvents = []) {
+  return runtimeEvents.some((event) =>
+    event?.commandFailed === true && event?.runtimeScope !== "context-preflight",
+  );
 }
 
 export function structuredEvidenceError(error) {
