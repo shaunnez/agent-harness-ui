@@ -680,14 +680,9 @@ function retryGrantContext(task) {
   ))) {
     return { error: "The exhausted workflow attempt contains conflicting run reservations; resolve it before granting a retry." };
   }
-  const reservationAllowsMultipleRuns = exactReservation?.kind === "implementation" ||
-    exactReservation?.stage === "scouts";
-  if (reservationRuns.length > 1 && !reservationAllowsMultipleRuns) {
-    return { error: "The exhausted workflow reservation has multiple source runs for a singleton stage; resolve the inconsistent history before granting a retry." };
-  }
-  const reservationAuthorizesCandidate = exactReservation &&
-    validRetrySourceCandidateBinding(exactReservation, candidateBoundGrant, candidate, grantedStage);
-  const sourceRuns = reservationAuthorizesCandidate ? reservationRuns : [];
+  const multiRunScopeError = validateRetryRunScopes(task, exactReservation, reservationRuns);
+  if (multiRunScopeError) return { error: multiRunScopeError };
+  const sourceRuns = orderRetrySourceRuns(exactReservation, reservationRuns);
   const retrySource = sourceRuns.at(-1) ?? null;
   const sourceRunIds = sourceRuns.map((run) => run.id);
   const historySnapshot = JSON.stringify({
@@ -765,6 +760,8 @@ function validAdjacentRepairLineage(candidate, priorReservation, repairReservati
   const revisions = candidate?.revisions;
   if (!Array.isArray(revisions) || revisions.length !== candidate.revisionNumber) return false;
   const byNumber = new Map();
+  const heads = new Set();
+  const sourceReservations = new Set();
   for (const revision of revisions) {
     if (
       !Number.isInteger(revision?.number) ||
@@ -773,24 +770,39 @@ function validAdjacentRepairLineage(candidate, priorReservation, repairReservati
       byNumber.has(revision.number) ||
       typeof revision.headRevision !== "string" ||
       !revision.headRevision.trim() ||
+      heads.has(revision.headRevision) ||
       revision.reason !== (revision.number === 1 ? "assembly" : "repair") ||
       !Number.isInteger(revision.sourceWorkflowAttempt) ||
       revision.sourceWorkflowAttempt < 1 ||
       typeof revision.sourceWorkflowReservationId !== "string" ||
       !revision.sourceWorkflowReservationId.trim() ||
+      sourceReservations.has(revision.sourceWorkflowReservationId) ||
       !validPersistedTimestamp(revision.createdAt)
     ) {
       return false;
     }
     byNumber.set(revision.number, revision);
+    heads.add(revision.headRevision);
+    sourceReservations.add(revision.sourceWorkflowReservationId);
   }
+  let previousAttempt = 0;
+  let previousCreatedAt = -Infinity;
   for (let number = 1; number <= candidate.revisionNumber; number += 1) {
-    if (!byNumber.has(number)) return false;
+    const revision = byNumber.get(number);
+    if (!revision) return false;
+    const createdAt = Date.parse(revision.createdAt);
+    if (revision.sourceWorkflowAttempt <= previousAttempt || createdAt <= previousCreatedAt) return false;
+    previousAttempt = revision.sourceWorkflowAttempt;
+    previousCreatedAt = createdAt;
   }
   const priorRevision = byNumber.get(priorReservation.candidateRevision);
   const currentRevision = byNumber.get(candidate.revisionNumber);
   const sourceReservationId = currentRevision?.sourceWorkflowReservationId;
   const sourceAttempt = currentRevision?.sourceWorkflowAttempt;
+  const priorCreatedAt = Date.parse(priorRevision?.createdAt);
+  const currentCreatedAt = Date.parse(currentRevision?.createdAt);
+  const priorReservedAt = Date.parse(priorReservation?.reservedAt);
+  const repairReservedAt = Date.parse(repairReservation?.reservedAt);
   return priorReservation.candidateRevision + 1 === candidate.revisionNumber &&
     priorRevision?.headRevision === priorReservation.candidateHeadRevision &&
     currentRevision?.headRevision === candidate.headRevision &&
@@ -809,6 +821,10 @@ function validAdjacentRepairLineage(candidate, priorReservation, repairReservati
     repairReservation.candidateRevision === priorRevision.number &&
     repairReservation.candidateHeadRevision === priorRevision.headRevision &&
     validPersistedTimestamp(repairReservation.reservedAt) &&
+    priorReservedAt >= priorCreatedAt &&
+    priorReservedAt < currentCreatedAt &&
+    repairReservedAt > priorCreatedAt &&
+    repairReservedAt <= currentCreatedAt &&
     (priorReservation.stage === "implement" || repairReservation.id !== priorReservation.id);
 }
 
@@ -816,21 +832,6 @@ function validPersistedTimestamp(value) {
   if (typeof value !== "string" || !value.trim()) return false;
   const timestamp = new Date(value);
   return Number.isFinite(timestamp.getTime()) && timestamp.toISOString() === value;
-}
-
-function validRetrySourceCandidateBinding(reservation, candidateRequired, candidate, grantedStage) {
-  if (!candidateRequired) {
-    return reservation.candidateId == null &&
-      reservation.candidateRevision == null &&
-      reservation.candidateHeadRevision == null;
-  }
-  const exactCurrentCandidate = reservation.candidateId === candidate?.id &&
-    reservation.candidateRevision === candidate?.revisionNumber &&
-    reservation.candidateHeadRevision === candidate?.headRevision;
-  if (exactCurrentCandidate) return true;
-  if (grantedStage !== "implement") return false;
-  return reservation.id === candidate?.sourceWorkflowReservationId &&
-    reservation.workflowAttempt === candidate?.sourceWorkflowAttempt;
 }
 
 function validRetryWorkflowIdentities(stageRuns, reservation, currentAttempts) {
@@ -877,7 +878,9 @@ function validRetryRunTuple(run, reservation, stageRuns) {
       ? { kind: "implementation", role: "implement", workPackage: "required" }
       : {
           triage: { kind: "agent", role: "triage", workPackage: "none" },
-          scouts: { kind: "agent", role: "scouts", workPackage: "none" },
+          scouts: Array.isArray(reservation.authorizedRunScopes) && reservation.authorizedRunScopes.length
+            ? { kind: "scout", role: "authorized-scout", workPackage: "none" }
+            : { kind: "agent", role: "scouts", workPackage: "none" },
           grill: { kind: "agent", role: "grill", workPackage: "none" },
           specification: { kind: "agent", role: "specification", workPackage: "none" },
           plan: { kind: "agent", role: "plan", workPackage: "none" },
@@ -886,7 +889,10 @@ function validRetryRunTuple(run, reservation, stageRuns) {
           "final-review": { kind: "final-review", role: "final-review", workPackage: "none" },
         }[reservation.stage];
   if (typeof run.id !== "string" || !run.id.trim()) return false;
-  if (!expected || run.kind !== expected.kind || run.role !== expected.role) return false;
+  if (!expected || run.kind !== expected.kind) return false;
+  if (expected.role === "authorized-scout") {
+    if (!reservation.authorizedRunScopes.includes(run.role)) return false;
+  } else if (run.role !== expected.role) return false;
   if (expected.workPackage === "none" && run.workPackageId != null) return false;
   if (expected.workPackage === "required" && (typeof run.workPackageId !== "string" || !run.workPackageId.trim())) return false;
   if (!Number.isInteger(run.attempt) || run.attempt < 1) return false;
@@ -904,6 +910,51 @@ function validRetryRunTuple(run, reservation, stageRuns) {
     if (scopedRun.id === run.id) return run.attempt === scopeAttempt;
   }
   return false;
+}
+
+function validateRetryRunScopes(task, reservation, reservationRuns) {
+  const multiRunStage = reservation?.kind === "implementation" || reservation?.stage === "scouts";
+  if (!multiRunStage) {
+    if (reservationRuns.length <= 1) return null;
+    return "The exhausted workflow reservation has multiple source runs for a singleton stage; resolve the inconsistent history before granting a retry.";
+  }
+  const authorized = reservation.authorizedRunScopes;
+  if (reservationRuns.length <= 1 && (!Array.isArray(authorized) || !authorized.length)) return null;
+  if (
+    !Array.isArray(authorized) ||
+    !authorized.length ||
+    authorized.some((scope) => typeof scope !== "string" || !scope.trim()) ||
+    new Set(authorized).size !== authorized.length
+  ) {
+    return "The exhausted multi-run reservation is missing unique authorized run scopes; resolve the inconsistent history before granting a retry.";
+  }
+  if (reservation.stage === "scouts") {
+    const selected = (task.scoutDispatch?.selected ?? []).map((scout) => scout?.name);
+    if (
+      selected.length !== authorized.length ||
+      new Set(selected).size !== selected.length ||
+      selected.some((scope) => !authorized.includes(scope))
+    ) {
+      return "The exhausted Scout reservation does not match its persisted dispatch; resolve the inconsistent history before granting a retry.";
+    }
+  }
+  const runScopes = reservationRuns.map((run) => (
+    reservation.kind === "implementation" ? run.workPackageId : run.role
+  ));
+  if (new Set(runScopes).size !== runScopes.length || runScopes.some((scope) => !authorized.includes(scope))) {
+    return "The exhausted multi-run reservation contains duplicate or unauthorized run scopes; resolve the inconsistent history before granting a retry.";
+  }
+  return null;
+}
+
+function orderRetrySourceRuns(reservation, runs) {
+  const authorized = reservation?.authorizedRunScopes;
+  if (!Array.isArray(authorized) || !authorized.length || runs.length <= 1) return runs;
+  return [...runs].sort((left, right) => {
+    const leftScope = reservation.kind === "implementation" ? left.workPackageId : left.role;
+    const rightScope = reservation.kind === "implementation" ? right.workPackageId : right.role;
+    return authorized.indexOf(leftScope) - authorized.indexOf(rightScope);
+  });
 }
 
 function sameRetryGrantContext(expected, current) {

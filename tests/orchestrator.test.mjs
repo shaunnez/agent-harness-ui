@@ -2394,6 +2394,11 @@ test("runs the investigation frontier and retains each stage handoff", async () 
         assert.equal(run.workflowReservationId, reservation.id, `${stage} run retains its own reservation`);
       }
     }
+    const dispatchedScoutNames = finished.scoutDispatch.selected.map((scout) => scout.name).sort();
+    assert.deepEqual(finished.stageRunReservations.scouts.authorizedRunScopes.toSorted(), dispatchedScoutNames);
+    const scoutRuns = finished.runs.filter((run) => run.stage === "scouts");
+    assert.deepEqual(scoutRuns.map((run) => run.role).sort(), dispatchedScoutNames);
+    assert.equal(scoutRuns.every((run) => run.kind === "scout" && run.attempt === 1), true);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }

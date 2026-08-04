@@ -589,6 +589,8 @@ export class TaskOrchestrator {
     const dispatch = selection.selected;
     await this.#store.update(id, (draft) => {
       draft.artifacts = draft.artifacts.filter((artifact) => artifact.stage !== "scouts");
+      const reservation = requireActiveRunReservation(draft, "investigation", "scouts");
+      reservation.authorizedRunScopes = dispatch.map((spec) => spec.name);
       draft.scoutDispatch = {
         selected: dispatch.map((spec) => ({ ...spec, status: "queued" })),
         skipped: scoutCatalog().filter((scout) => !dispatch.some((spec) => spec.name === scout.id)).map((scout) => scout.id),
@@ -613,6 +615,8 @@ export class TaskOrchestrator {
             request,
             `${spec.name} scout`,
             "scouts",
+            null,
+            spec.name,
           );
           const report = parseScoutReport(result.finalText);
           await this.#retainAgentResult(id, "scouts", { ...result, finalText: scoutReportMarkdown(spec, report) }, {
@@ -1104,6 +1108,7 @@ export class TaskOrchestrator {
     eventLabel = null,
     policyId = stageId,
     workPackageId = null,
+    runScopeId = null,
   ) {
     const metadata = getStageMetadata(stageId);
     const testRuntime = stageId === "test";
@@ -1114,7 +1119,8 @@ export class TaskOrchestrator {
     const policy = resolveAgentPolicy(task, policyId, settings);
     const runId = crypto.randomUUID();
     const startedAt = now();
-    const runKind = runKindFor(stageId, policyId, workPackageId);
+    const runRole = runScopeId ?? policyId;
+    const runKind = runKindFor(stageId, runRole, workPackageId);
     const runtimeTemp = path.join(os.tmpdir(), "agent-harness", task.id, runId);
     await this.#store.update(task.id, (draft) => {
       const reservation = Object.values(draft.stageRunReservations ?? {}).find(
@@ -1131,7 +1137,7 @@ export class TaskOrchestrator {
         id: runId,
         kind: runKind,
         stage: stageId,
-        role: policyId,
+        role: runRole,
         model: policy.model,
         reasoning: policy.reasoning,
         startedAt,
@@ -1414,6 +1420,11 @@ function reserveRun(task, kind) {
 
 function createStageRunReservation(task, kind, stage) {
   const candidate = kind === "implementation" ? null : (task.candidates?.at(-1) ?? null);
+  const authorizedRunScopes = kind === "implementation"
+    ? (task.workPackages ?? [])
+        .filter((workPackage) => !["ready_for_integration", "integrated"].includes(workPackage.status))
+        .map((workPackage) => workPackage.id)
+    : [];
   return {
     id: crypto.randomUUID(),
     stage,
@@ -1422,6 +1433,7 @@ function createStageRunReservation(task, kind, stage) {
     candidateId: candidate?.id ?? null,
     candidateRevision: candidate?.revisionNumber ?? null,
     candidateHeadRevision: candidate?.headRevision ?? null,
+    authorizedRunScopes,
     reservedAt: now(),
   };
 }
