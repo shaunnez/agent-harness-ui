@@ -591,7 +591,9 @@ function retryGrantContext(task) {
     reservation.stage !== grantedStage ||
     !Number.isInteger(reservation.workflowAttempt) ||
     reservation.workflowAttempt < 1 ||
-    reservation.workflowAttempt > currentAttempts
+    reservation.workflowAttempt !== currentAttempts ||
+    !validRetryReservationCandidateBinding(reservation) ||
+    !validRetryReservationKind(grantedStage, reservation.kind)
   )) {
     return { error: "The exhausted stage has an inconsistent workflow reservation; resolve it before granting a retry." };
   }
@@ -608,7 +610,8 @@ function retryGrantContext(task) {
     run.workflowAttempt !== exactReservation.workflowAttempt ||
     run.candidateId !== exactReservation.candidateId ||
     run.candidateRevision !== exactReservation.candidateRevision ||
-    run.candidateHeadRevision !== exactReservation.candidateHeadRevision
+    run.candidateHeadRevision !== exactReservation.candidateHeadRevision ||
+    !validRetryRunTuple(run, exactReservation, stageRuns)
   ))) {
     return { error: "The exhausted stage run does not match its workflow reservation; resolve the inconsistent history before granting a retry." };
   }
@@ -649,6 +652,66 @@ function retryGrantContext(task) {
     sourceRunStatus: retrySource?.status ?? null,
     error: null,
   };
+}
+
+function validRetryReservationCandidateBinding(reservation) {
+  const allNull = reservation.candidateId == null &&
+    reservation.candidateRevision == null &&
+    reservation.candidateHeadRevision == null;
+  if (allNull) return true;
+  return typeof reservation.candidateId === "string" && reservation.candidateId.length > 0 &&
+    Number.isInteger(reservation.candidateRevision) && reservation.candidateRevision > 0 &&
+    typeof reservation.candidateHeadRevision === "string" && reservation.candidateHeadRevision.length > 0;
+}
+
+function validRetryReservationKind(stage, kind) {
+  const allowed = {
+    triage: ["investigation"],
+    scouts: ["investigation"],
+    grill: ["investigation"],
+    specification: ["investigation", "specification"],
+    plan: ["planning"],
+    implement: ["implementation", "repair"],
+    "dev-review": ["review"],
+    test: ["test"],
+    "final-review": ["final-review"],
+  }[stage] ?? [];
+  return allowed.includes(kind);
+}
+
+function validRetryRunTuple(run, reservation, stageRuns) {
+  const expected = reservation.kind === "repair"
+    ? { kind: "repair", role: "repair", workPackage: "none" }
+    : reservation.kind === "implementation"
+      ? { kind: "implementation", role: "implement", workPackage: "required" }
+      : {
+          triage: { kind: "agent", role: "triage", workPackage: "none" },
+          scouts: { kind: "agent", role: "scouts", workPackage: "none" },
+          grill: { kind: "agent", role: "grill", workPackage: "none" },
+          specification: { kind: "agent", role: "specification", workPackage: "none" },
+          plan: { kind: "agent", role: "plan", workPackage: "none" },
+          "dev-review": { kind: "review", role: "dev-review", workPackage: "none" },
+          test: { kind: "test", role: "test", workPackage: "none" },
+          "final-review": { kind: "final-review", role: "final-review", workPackage: "none" },
+        }[reservation.stage];
+  if (!expected || run.kind !== expected.kind || run.role !== expected.role) return false;
+  if (expected.workPackage === "none" && run.workPackageId != null) return false;
+  if (expected.workPackage === "required" && (typeof run.workPackageId !== "string" || !run.workPackageId)) return false;
+  if (!Number.isInteger(run.attempt) || run.attempt < 1) return false;
+  let scopeAttempt = 0;
+  for (const scopedRun of stageRuns) {
+    if (
+      scopedRun.stage === run.stage &&
+      scopedRun.role === run.role &&
+      scopedRun.workPackageId === run.workPackageId &&
+      scopedRun.candidateId === run.candidateId &&
+      scopedRun.candidateRevision === run.candidateRevision
+    ) {
+      scopeAttempt += 1;
+    }
+    if (scopedRun.id === run.id) return run.attempt === scopeAttempt;
+  }
+  return false;
 }
 
 function sameRetryGrantContext(expected, current) {

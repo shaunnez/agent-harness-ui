@@ -119,6 +119,20 @@ async function git(cwd, args) {
 function bindLatestWorkflowAttempt(draft, stage, kind) {
   const candidate = draft.candidates.at(-1) ?? null;
   const workflowAttempt = draft.attemptsByStage[stage];
+  const expectedRun = kind === "repair"
+    ? { kind: "repair", role: "repair", workPackageId: null }
+    : kind === "implementation"
+      ? { kind: "implementation", role: "implement", workPackageId: "S1" }
+      : {
+          triage: { kind: "agent", role: "triage", workPackageId: null },
+          scouts: { kind: "agent", role: "scouts", workPackageId: null },
+          grill: { kind: "agent", role: "grill", workPackageId: null },
+          specification: { kind: "agent", role: "specification", workPackageId: null },
+          plan: { kind: "agent", role: "plan", workPackageId: null },
+          "dev-review": { kind: "review", role: "dev-review", workPackageId: null },
+          test: { kind: "test", role: "test", workPackageId: null },
+          "final-review": { kind: "final-review", role: "final-review", workPackageId: null },
+        }[stage];
   const reservation = {
     id: `reservation-${draft.id}-${stage}-${workflowAttempt}`,
     stage,
@@ -130,12 +144,19 @@ function bindLatestWorkflowAttempt(draft, stage, kind) {
     reservedAt: "2026-08-04T00:00:00.000Z",
   };
   draft.stageRunReservations[stage] = reservation;
-  const latestRun = [...draft.runs].reverse().find((run) => run.stage === stage);
-  if (latestRun) {
-    Object.assign(latestRun, {
+  const stageRuns = draft.runs.filter((run) => run.stage === stage);
+  for (const [index, run] of stageRuns.entries()) {
+    Object.assign(run, {
+      ...expectedRun,
       candidateId: reservation.candidateId,
       candidateRevision: reservation.candidateRevision,
       candidateHeadRevision: reservation.candidateHeadRevision,
+      attempt: index + 1,
+    });
+  }
+  const latestRun = stageRuns.at(-1);
+  if (latestRun) {
+    Object.assign(latestRun, {
       workflowAttempt,
       workflowReservationId: reservation.id,
     });
@@ -1367,7 +1388,7 @@ test("does not attribute a repaired candidate grant to the prior candidate revis
         candidateRevision: 1,
         candidateHeadRevision: "candidate-c1-r1",
         workPackageId: null,
-        attempt: 3,
+        attempt: 1,
         workflowAttempt: 3,
         workflowReservationId: "reservation-c1-r1-review-3",
       });
@@ -1570,6 +1591,88 @@ test("rejects a retry grant when reserved run metadata drifts before the atomic 
     const updated = await store.get(task.id);
     assert.equal(updated.stageRunLimits["dev-review"], 3);
     assert.equal(updated.decisions.length, 0);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects a retry grant when the persisted source run tuple is already impossible for the stage", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Malformed review lineage",
+      description: "Reject package-scoped repair metadata presented as Dev Review provenance.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+      draft.candidates.push({
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "ready_for_review",
+      });
+      draft.runs.push(...[1, 2, 3].map((attempt) => ({
+        id: `run-malformed-review-${attempt}`,
+        stage: "dev-review",
+        status: "failed",
+      })));
+      bindLatestWorkflowAttempt(draft, "dev-review", "review");
+      Object.assign(draft.runs.at(-1), {
+        kind: "repair",
+        role: "repair",
+        workPackageId: "S1",
+        attempt: 99,
+      });
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 409);
+    assert.match((await grantResponse.json()).error, /does not match its workflow reservation/i);
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits["dev-review"], 3);
+    assert.equal(updated.decisions.length, 0);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("records null provenance when an exhausted preflight attempt has no persisted run", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Preflight-only exhaustion",
+      description: "Grant a bounded retry without inventing run provenance.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "plan";
+      draft.attemptsByStage.plan = draft.stageRunLimits.plan;
+      draft.stageRunReservations.plan = {
+        id: "reservation-plan-preflight-3",
+        stage: "plan",
+        kind: "planning",
+        workflowAttempt: 3,
+        candidateId: null,
+        candidateRevision: null,
+        candidateHeadRevision: null,
+        reservedAt: "2026-08-04T00:00:00.000Z",
+      };
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200);
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits.plan, 4);
+    assert.equal(updated.decisions.at(-1).sourceRunId, null);
+    assert.equal(updated.events.at(-1).sourceRunId, null);
   } finally {
     await cleanup(server, directory);
   }
