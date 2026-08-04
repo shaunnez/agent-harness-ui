@@ -19,10 +19,15 @@ import {
 import {
   attachRunArtifact,
   beginAgentRun,
+  CANONICAL_RUN_STAGES,
+  DEFAULT_STAGE_RUN_LIMIT,
   migrateRunActivityState,
   readExplicitCandidateBinding,
   refreshGateFreshness,
+  retainRunActivityEvents,
   RUNTIME_FRESHNESS_REASONS,
+  RUN_ACTIVITY_EVENT_LIMIT,
+  stageRunLimitFor,
 } from "../server/run-activity.mjs";
 
 const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"questions":[{"question":"Compatibility?","whyItMatters":"Changes the public contract.","options":[{"label":"Preserve it","description":"Keep existing clients working.","recommended":true},{"label":"Break it","description":"Allow a clean break.","recommended":false}],"allowCustom":true}]}\n</grill-questions>`;
@@ -697,6 +702,71 @@ test("preserves falsey persisted evidence errors through attachment and legacy m
     assert.equal(migratedTask.runs[0].evidenceError, evidenceError, `${name}: migration retains the original value`);
     assert.equal(migratedTask.gateFreshness["dev-review"].reasonCode, "malformed_binding", `${name}: migration fails closed`);
   }
+});
+
+test("migrates legacy and partial stage limits without changing attempt counters", () => {
+  const task = makeRuntimeTask({ events: [] });
+  task.stageRunLimit = 5;
+  task.stageRunLimits = { implement: 7, test: 0, "dev-review": null };
+  task.attemptsByStage = { implement: 4, test: 2, "dev-review": 1 };
+  const state = { schemaVersion: 3, tasks: [task] };
+
+  assert.equal(migrateRunActivityState(state), true);
+  assert.deepEqual(task.stageRunLimits, Object.fromEntries(
+    CANONICAL_RUN_STAGES.map((stage) => [stage, stage === "implement" ? 7 : stage === "test" ? 0 : 5]),
+  ));
+  assert.deepEqual(task.attemptsByStage, { implement: 4, test: 2, "dev-review": 1 });
+  assert.equal(task.stageRunLimit, 5, "the legacy scalar remains available for compatibility");
+  assert.equal(stageRunLimitFor(task, "implement"), 7);
+  assert.equal(stageRunLimitFor(task, "test"), 0);
+  assert.equal(stageRunLimitFor(task, "dev-review"), 5);
+  assert.equal(stageRunLimitFor(task, "unknown"), DEFAULT_STAGE_RUN_LIMIT);
+
+  const migrated = structuredClone(state);
+  assert.equal(migrateRunActivityState(state), false, "a complete migration is idempotent");
+  assert.deepEqual(state, migrated);
+
+  const defaultedTask = makeRuntimeTask({ events: [] });
+  const defaultedState = { schemaVersion: 3, tasks: [defaultedTask] };
+  assert.equal(migrateRunActivityState(defaultedState), true);
+  assert.deepEqual(
+    defaultedTask.stageRunLimits,
+    Object.fromEntries(CANONICAL_RUN_STAGES.map((stage) => [stage, DEFAULT_STAGE_RUN_LIMIT])),
+  );
+});
+
+test("retains decisions while capping aggregate high-volume events during migration", () => {
+  const telemetry = Array.from({ length: RUN_ACTIVITY_EVENT_LIMIT }, (_, index) => ({
+    id: `telemetry-${index}`,
+    category: ["activity", "agent", "tool", "artifact"][index % 4],
+  }));
+  const task = makeRuntimeTask({
+    events: [
+      { id: "evicted-telemetry", category: "tool" },
+      { id: "decision-before", category: "decision" },
+      { id: "other-before", category: "audit" },
+      ...telemetry,
+      { id: "decision-after", category: "decision" },
+    ],
+  });
+  const state = { schemaVersion: 3, tasks: [task] };
+
+  assert.equal(retainRunActivityEvents(task.events).length, RUN_ACTIVITY_EVENT_LIMIT + 3);
+  assert.equal(migrateRunActivityState(state), true);
+  const ids = task.events.map((event) => event.id);
+  assert.equal(ids.includes("evicted-telemetry"), false);
+  assert.equal(ids.includes("decision-before"), true);
+  assert.equal(ids.includes("decision-after"), true);
+  assert.equal(ids.includes("other-before"), true);
+  assert.equal(task.events.filter((event) => ["activity", "agent", "tool", "artifact"].includes(event.category)).length, RUN_ACTIVITY_EVENT_LIMIT);
+  assert.equal(task.events[0].id, "decision-before");
+  assert.equal(task.events[1].id, "other-before");
+  assert.equal(task.events[2].id, "telemetry-0");
+  assert.equal(task.events.at(-1).id, "decision-after");
+
+  const migrated = structuredClone(state);
+  assert.equal(migrateRunActivityState(state), false, "retention and migration remain idempotent");
+  assert.deepEqual(state, migrated);
 });
 
 test("retains missing binding as the exact reason when gate ingestion also changes the verdict", () => {

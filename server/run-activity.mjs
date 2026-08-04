@@ -1,4 +1,22 @@
-export const TASK_STORE_SCHEMA_VERSION = 3;
+export const TASK_STORE_SCHEMA_VERSION = 4;
+
+export const CANONICAL_RUN_STAGES = Object.freeze([
+  "triage",
+  "scouts",
+  "grill",
+  "specification",
+  "plan",
+  "implement",
+  "dev-review",
+  "test",
+  "final-review",
+]);
+
+export const DEFAULT_STAGE_RUN_LIMIT = 3;
+export const RUN_ACTIVITY_EVENT_LIMIT = 2_000;
+export const HIGH_VOLUME_EVENT_CATEGORIES = Object.freeze(["activity", "agent", "tool", "artifact"]);
+
+const HIGH_VOLUME_EVENT_CATEGORY_SET = new Set(HIGH_VOLUME_EVENT_CATEGORIES);
 
 export const CANDIDATE_GATE_STAGES = Object.freeze(["dev-review", "test", "final-review"]);
 
@@ -30,6 +48,12 @@ export function migrateRunActivityState(state) {
 
   let changed = state.schemaVersion !== TASK_STORE_SCHEMA_VERSION;
   for (const task of state.tasks ?? []) {
+    changed = migrateStageRunLimits(task) || changed;
+    const retainedEvents = retainRunActivityEvents(task.events);
+    if (retainedEvents !== task.events) {
+      task.events = retainedEvents;
+      changed = true;
+    }
     if (!Array.isArray(task.runs)) {
       task.runs = [];
       changed = true;
@@ -61,6 +85,56 @@ export function migrateRunActivityState(state) {
   }
   state.schemaVersion = TASK_STORE_SCHEMA_VERSION;
   return changed;
+}
+
+/**
+ * Return the authoritative retry allowance for a canonical run stage.
+ * `stageRunLimit` is retained only for legacy compatibility and migration.
+ */
+export function stageRunLimitFor(task, stage) {
+  const limit = task?.stageRunLimits?.[stage];
+  return isValidStageRunLimit(limit) ? limit : DEFAULT_STAGE_RUN_LIMIT;
+}
+
+/**
+ * Keep every decision and non-telemetry event, while bounding the aggregate
+ * high-volume event categories to the newest retained window.
+ */
+export function retainRunActivityEvents(events) {
+  if (!Array.isArray(events)) return events;
+  const highVolumeIndexes = [];
+  for (const [index, event] of events.entries()) {
+    if (HIGH_VOLUME_EVENT_CATEGORY_SET.has(event?.category)) highVolumeIndexes.push(index);
+  }
+  if (highVolumeIndexes.length <= RUN_ACTIVITY_EVENT_LIMIT) return events;
+
+  const firstRetainedIndex = highVolumeIndexes[highVolumeIndexes.length - RUN_ACTIVITY_EVENT_LIMIT];
+  return events.filter((event, index) => (
+    !HIGH_VOLUME_EVENT_CATEGORY_SET.has(event?.category) || index >= firstRetainedIndex
+  ));
+}
+
+function migrateStageRunLimits(task) {
+  const legacyLimit = isValidStageRunLimit(task.stageRunLimit)
+    ? task.stageRunLimit
+    : DEFAULT_STAGE_RUN_LIMIT;
+  const existing = task.stageRunLimits && typeof task.stageRunLimits === "object" && !Array.isArray(task.stageRunLimits)
+    ? task.stageRunLimits
+    : {};
+  let changed = task.stageRunLimits !== existing;
+  const migrated = { ...existing };
+  for (const stage of CANONICAL_RUN_STAGES) {
+    if (!isValidStageRunLimit(existing[stage])) {
+      migrated[stage] = legacyLimit;
+      changed = true;
+    }
+  }
+  if (changed) task.stageRunLimits = migrated;
+  return changed;
+}
+
+function isValidStageRunLimit(value) {
+  return Number.isInteger(value) && value >= 0;
 }
 
 /**
