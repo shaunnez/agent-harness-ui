@@ -6,7 +6,13 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createServer as createViteServer } from "vite";
-import { buildCodexEnvironment, parseCodexEvent, runProcess, selectCodexCandidate } from "../server/codex-runtime.mjs";
+import {
+  buildCodexEnvironment,
+  parseCodexEvent,
+  ProcessTimeoutError,
+  runProcess,
+  selectCodexCandidate,
+} from "../server/codex-runtime.mjs";
 import { normalizeModelId, priceUsage, readCodexModelCatalog, withConfiguredModels } from "../server/model-catalog.mjs";
 import { buildExecutionRequest, buildStageRequest, buildWorkPackageRequest } from "../server/prompts.mjs";
 import { buildScoutRequest } from "../server/scouts.mjs";
@@ -84,7 +90,7 @@ test("timeout terminates descendants before allowing a retry", async () => {
   try {
     await assert.rejects(
       () => runProcess(process.execPath, ["-e", parentScript], { timeoutMs: 120 }),
-      /exceeded/i,
+      (error) => error instanceof ProcessTimeoutError && error.code === "PROCESS_TIMEOUT" && error.timeoutMs === 120,
     );
     const sizeAfterClose = (await readFile(marker, "utf8").catch(() => "")).length;
     await new Promise((resolve) => setTimeout(resolve, 120));
@@ -857,6 +863,33 @@ test("renders artifact copy affordance and normalizes clipboard outcomes", () =>
 
 test("keeps focused test evidence attached to the persisted Markdown artifact in the runtime workspace", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const focusedTest = {
+      candidateId: "C1",
+      candidateRevision: 2,
+      command: "npm.cmd run test:runtime",
+      status: "passed",
+      startedAt: "2026-08-01T12:00:00.000Z",
+      completedAt: "2026-08-01T12:00:00.900Z",
+      durationMs: 900,
+      rows: [
+        {
+          id: "row-1",
+          candidateId: "C1",
+          candidateRevision: 2,
+          command: "npm.cmd run test:runtime",
+          status: "passed",
+          durationMs: 900,
+          title: "runtime.test.mjs",
+          artifactReferences: [
+            { name: "Markdown test artifact", kind: "markdown", path: "artifacts/test.md" },
+          ],
+          assertions: [
+            { label: "workspace renders the test artifact", actual: "present", expected: "present" },
+          ],
+          failureDetails: null,
+        },
+      ],
+    };
     const markup = renderToStaticMarkup(
       React.createElement(RuntimeTaskWorkspace, {
         task: createTask({
@@ -888,35 +921,17 @@ test("keeps focused test evidence attached to the persisted Markdown artifact in
               usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
               candidateId: "C1",
               candidateRevision: 2,
-              focusedTest: {
-                candidateId: "C1",
-                candidateRevision: 2,
-                command: "npm.cmd run test:runtime",
-                status: "passed",
-                startedAt: "2026-08-01T12:00:00.000Z",
-                completedAt: "2026-08-01T12:00:00.900Z",
-                durationMs: 900,
-                rows: [
-                  {
-                    id: "row-1",
-                    candidateId: "C1",
-                    candidateRevision: 2,
-                    command: "npm.cmd run test:runtime",
-                    status: "passed",
-                    durationMs: 900,
-                    title: "runtime.test.mjs",
-                    artifactReferences: [
-                      { name: "Markdown test artifact", kind: "markdown", path: "artifacts/test.md" },
-                    ],
-                    assertions: [
-                      { label: "workspace renders the test artifact", actual: "present", expected: "present" },
-                    ],
-                    failureDetails: null,
-                  },
-                ],
-              },
+              focusedTest,
             },
           ],
+          gateFreshness: {
+            test: makeGateFreshness("test", {
+              fresh: true,
+              sourceRunId: "run-1",
+              sourceArtifactId: "artifact-1",
+              focusedTest,
+            }),
+          },
         }),
         onBack: async () => {},
         onRun: async () => {},
@@ -931,6 +946,73 @@ test("keeps focused test evidence attached to the persisted Markdown artifact in
     assert.match(markup, /Viewing/);
     assert.match(markup, /Candidate-bound structured evidence/);
     assert.match(markup, /workspace renders the test artifact/);
+  });
+});
+
+test("renders exact-candidate failed Test rows while the gate remains rerun-required", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace, getRuntimeFocusedTest }) => {
+    const failedFocusedTest = {
+      candidateId: "C1",
+      candidateRevision: 2,
+      bindingExplicit: true,
+      command: "npm test",
+      status: "failed",
+      durationMs: 740,
+      rows: [
+        {
+          id: "row-failed",
+          candidateId: "C1",
+          candidateRevision: 2,
+          bindingExplicit: true,
+          command: "npm test",
+          status: "failed",
+          durationMs: 740,
+          title: "candidate-bound regression",
+          artifactReferences: [],
+          assertions: [{ label: "authoritative candidate", actual: "failed", expected: "passed" }],
+          failureDetails: "The exact-candidate assertion failed.",
+        },
+      ],
+    };
+    const task = createTask({
+      status: "repair-required",
+      currentStage: "test",
+      completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review"],
+      candidates: [{
+        id: "C1",
+        revisionNumber: 2,
+        status: "repair_required",
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        baseBranch: "main",
+        branch: "agent-harness/ah-999-c1",
+        revisions: [],
+      }],
+      gateFreshness: {
+        test: makeGateFreshness("test", {
+          sourceRunId: "run-test-failed",
+          reasonCode: "failed_execution",
+          reasonCopy: "The authoritative run did not complete successfully.",
+          focusedTest: failedFocusedTest,
+        }),
+      },
+    });
+
+    assert.equal(getRuntimeFocusedTest(task)?.rows[0].id, "row-failed");
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task,
+      initialViewedStageId: "test",
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onGrillAnswer: async () => {},
+      onFinishGrill: async () => {},
+    }));
+    assert.match(markup, /0 passed.*1 failed.*C1 r2/);
+    assert.match(markup, /candidate-bound regression/);
+    assert.match(markup, /failed/);
   });
 });
 
@@ -972,6 +1054,25 @@ test("treats missing and mismatched candidate bindings as stale in navigation an
           gateArtifact("test", 2, false),
           gateArtifact("final-review", 2),
         ],
+        gateFreshness: {
+          "dev-review": makeGateFreshness("dev-review", {
+            sourceRunId: "run-dev-review",
+            sourceArtifactId: "dev-review-2",
+            reasonCode: "contradictory_evidence",
+            reasonCopy: "Candidate evidence contains contradictory result fields.",
+          }),
+          test: makeGateFreshness("test", {
+            sourceRunId: "run-test",
+            sourceArtifactId: "test-2",
+            reasonCode: "missing_binding",
+            reasonCopy: "Candidate evidence is missing explicit candidateId and candidateRevision fields.",
+          }),
+          "final-review": makeGateFreshness("final-review", {
+            fresh: true,
+            sourceRunId: "run-final-review",
+            sourceArtifactId: "final-review-2",
+          }),
+        },
       }),
       initialViewedStageId: "approval",
       onBack: async () => {},
@@ -985,6 +1086,264 @@ test("treats missing and mismatched candidate bindings as stale in navigation an
     assert.match(markup, /1 of 3 candidate-bound gates fresh/);
     assert.match(markup, /rerun required/);
     assert.match(markup, /test-c1-r2\.md/);
+  });
+});
+
+test("resolves same-revision superseded artifacts with authoritative stale reason copy", () => {
+  return withWorkspace(async ({ getRuntimeArtifactFreshness, isArtifactFresh }) => {
+    const candidate = {
+      id: "C1",
+      revisionNumber: 2,
+      status: "under_review",
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/ah-999-c1",
+      revisions: [],
+    };
+    const usage = { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 };
+    const artifact = (id, runId, createdAt) => ({
+      id,
+      runId,
+      stage: "dev-review",
+      kind: "markdown",
+      name: `${id}.md`,
+      content: "PASS",
+      createdAt,
+      model: "gpt-5.6-sol",
+      usage,
+      candidateId: "C1",
+      candidateRevision: 2,
+      gateResult: {
+        verdict: "PASS",
+        candidateId: "C1",
+        candidateRevision: 2,
+        evaluatedAt: createdAt,
+        blockingReasons: [],
+      },
+    });
+    const run = (id, artifactId, attempt, freshness) => ({
+      id,
+      kind: "review",
+      status: "completed",
+      stage: "dev-review",
+      role: "dev-review",
+      model: "gpt-5.6-sol",
+      reasoning: "high",
+      startedAt: "2026-08-01T12:00:00.000Z",
+      completedAt: "2026-08-01T12:01:00.000Z",
+      durationMs: 60_000,
+      artifactId,
+      usage,
+      credits: null,
+      apiEstimate: null,
+      candidateId: "C1",
+      candidateRevision: 2,
+      workPackageId: null,
+      attempt,
+      retryOfRunId: null,
+      repairOfRunId: null,
+      toolCalls: [],
+      test: null,
+      evidenceError: null,
+      freshness,
+      gateResult: {
+        verdict: "PASS",
+        candidateId: "C1",
+        candidateRevision: 2,
+        evaluatedAt: "2026-08-01T12:01:00.000Z",
+        blockingReasons: [],
+      },
+      error: null,
+      source: "codex-jsonl",
+    });
+    const superseded = makeGateFreshness("dev-review", {
+      sourceRunId: "RUN-OLD",
+      sourceArtifactId: "ART-OLD",
+      reasonCode: "superseded_attempt",
+      reasonCopy: "A later terminal attempt superseded this historical evidence.",
+    });
+    const authoritative = makeGateFreshness("dev-review", {
+      fresh: true,
+      sourceRunId: "RUN-CURRENT",
+      sourceArtifactId: "ART-CURRENT",
+    });
+    const oldArtifact = artifact("ART-OLD", "RUN-OLD", "2026-08-01T12:01:00.000Z");
+    const currentArtifact = artifact("ART-CURRENT", "RUN-CURRENT", "2026-08-01T12:02:00.000Z");
+    oldArtifact.freshness = superseded;
+    currentArtifact.freshness = authoritative;
+    const task = createTask({
+      candidates: [candidate],
+      artifacts: [oldArtifact, currentArtifact],
+      runs: [
+        run("RUN-OLD", "ART-OLD", 1, superseded),
+        run("RUN-CURRENT", "ART-CURRENT", 2, authoritative),
+      ],
+      gateFreshness: { "dev-review": authoritative },
+    });
+
+    const oldFreshness = getRuntimeArtifactFreshness(task, oldArtifact);
+    const currentFreshness = getRuntimeArtifactFreshness(task, currentArtifact);
+    assert.equal(oldFreshness.reasonCode, "superseded_attempt");
+    assert.equal(oldFreshness.reasonCopy, "A later terminal attempt superseded this historical evidence.");
+    assert.equal(isArtifactFresh(oldArtifact, candidate), false);
+    assert.equal(isArtifactFresh(currentArtifact, candidate), true);
+    assert.equal(isArtifactFresh(oldArtifact, candidate, oldFreshness), false);
+    assert.equal(isArtifactFresh(currentArtifact, candidate, currentFreshness), true);
+    assert.equal(getRuntimeArtifactFreshness(
+      createTask({
+        candidates: [candidate],
+        artifacts: [oldArtifact],
+        runs: [],
+        gateFreshness: { "dev-review": authoritative },
+      }),
+      oldArtifact,
+    ).reasonCode, "superseded_attempt");
+  });
+});
+
+test("renders workspace artifact freshness from persisted run evidence", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace, isArtifactFresh }) => {
+    const candidate = {
+      id: "C1",
+      revisionNumber: 2,
+      status: "under_review",
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/ah-999-c1",
+      revisions: [],
+    };
+    const usage = { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 };
+    const artifact = (id, runId, createdAt, freshness) => ({
+      id,
+      runId,
+      stage: "dev-review",
+      kind: "markdown",
+      name: `${id}.md`,
+      content: "# Candidate-bound review",
+      createdAt,
+      model: "gpt-5.6-sol",
+      usage,
+      candidateId: "C1",
+      candidateRevision: 2,
+      freshness,
+    });
+    const staleReason = "A later terminal attempt superseded this historical evidence.";
+    const oldFreshness = makeGateFreshness("dev-review", {
+      sourceRunId: "RUN-OLD",
+      sourceArtifactId: "ART-OLD",
+      reasonCode: "superseded_attempt",
+      reasonCopy: staleReason,
+    });
+    const currentFreshness = makeGateFreshness("dev-review", {
+      fresh: true,
+      sourceRunId: "RUN-CURRENT",
+      sourceArtifactId: "ART-CURRENT",
+    });
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task: createTask({
+        status: "awaiting-human-approval",
+        currentStage: "dev-review",
+        completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement"],
+        candidates: [candidate],
+        artifacts: [
+          artifact("ART-OLD", "RUN-OLD", "2026-08-01T12:01:00.000Z", oldFreshness),
+          artifact("ART-CURRENT", "RUN-CURRENT", "2026-08-01T12:02:00.000Z", currentFreshness),
+          {
+            ...artifact("ART-UNRELATED", "RUN-UNRELATED", "2026-08-01T12:03:00.000Z", oldFreshness),
+            candidateId: "C2",
+          },
+        ],
+        runs: [
+          { id: "RUN-OLD", artifactId: "ART-OLD", freshness: oldFreshness },
+          { id: "RUN-CURRENT", artifactId: "ART-CURRENT", freshness: currentFreshness },
+        ],
+        gateFreshness: { "dev-review": currentFreshness },
+      }),
+      initialViewedStageId: "dev-review",
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onGrillAnswer: async () => {},
+      onFinishGrill: async () => {},
+    }));
+
+    assert.doesNotMatch(markup, /Stale after repair/);
+    assert.match(markup, /ART-CURRENT\.md/);
+    const viewedRun = markup.slice(markup.indexOf("Viewed agent run"), markup.indexOf("Viewed agent run") + 500);
+    assert.match(viewedRun, /ART-CURRENT\.md/);
+    assert.doesNotMatch(viewedRun, /ART-UNRELATED\.md/);
+    assert.match(markup, new RegExp(`ART-OLD\\.md[\\s\\S]*Rerun required[\\s\\S]*${staleReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
+    assert.equal(isArtifactFresh(
+      { ...artifact("ART-OLD", "RUN-OLD", "2026-08-01T12:01:00.000Z", oldFreshness) },
+      candidate,
+    ), false);
+    assert.equal(oldFreshness.reasonCopy, staleReason);
+  });
+});
+
+test("renders the exact persisted reason for a stale viewed-stage artifact", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const candidate = {
+      id: "C1",
+      revisionNumber: 7,
+      status: "under_review",
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/ah-005-c1",
+      revisions: [],
+    };
+    const staleReason = "Candidate evidence belongs to a previous candidate revision.";
+    const freshness = makeGateFreshness("dev-review", {
+      sourceRunId: "RUN-R6",
+      sourceArtifactId: "ART-R6",
+      reasonCode: "revision_change",
+      reasonCopy: staleReason,
+    });
+    const artifact = {
+      id: "ART-R6",
+      runId: "RUN-R6",
+      stage: "dev-review",
+      kind: "markdown",
+      name: "dev-review-c1-r6.md",
+      content: "# Prior review",
+      createdAt: "2026-08-04T12:00:00.000Z",
+      model: "gpt-5.6-sol",
+      usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+      candidateId: "C1",
+      candidateRevision: 6,
+      freshness,
+    };
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task: createTask({
+        status: "ready-for-review",
+        currentStage: "dev-review",
+        completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement"],
+        candidates: [candidate],
+        artifacts: [artifact],
+        runs: [{ id: "RUN-R6", artifactId: "ART-R6", freshness }],
+        gateFreshness: { "dev-review": freshness },
+      }),
+      initialViewedStageId: "dev-review",
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onGrillAnswer: async () => {},
+      onFinishGrill: async () => {},
+    }));
+
+    assert.match(markup, /Rerun required/);
+    assert.match(markup, new RegExp(staleReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.doesNotMatch(markup, /Stale after repair/);
+    assert.match(markup, /Typed P0.P3 findings are persisted for gate evaluation/);
+    assert.match(markup, /retained artifact remains the full prose review record/);
+    assert.doesNotMatch(markup, /does not persist typed P0.P3 finding records/);
   });
 });
 
@@ -1085,6 +1444,58 @@ test("renders a truthful completion summary for historical merges without an app
   });
 });
 
+test("renders an exact-candidate approval artifact as current after a successful merge", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const approvalArtifact = {
+      id: "approval-c1-r3",
+      stage: "approval",
+      kind: "markdown",
+      name: "approval-c1-r3.md",
+      content: "# Human approval and merge\n\n- Candidate: C1 revision 3",
+      createdAt: "2026-08-01T12:05:00.000Z",
+      model: "Human approval",
+      usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0 },
+      candidateId: "C1",
+      candidateRevision: 3,
+    };
+    const markup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task: createTask({
+          status: "completed",
+          currentStage: "approval",
+          completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review", "approval"],
+          candidates: [{
+            id: "C1",
+            revisionNumber: 3,
+            status: "merged",
+            baseRevision: "a".repeat(40),
+            headRevision: "b".repeat(40),
+            baseBranch: "codex/vertical-slice",
+            branch: "agent-harness/ah-999-c1",
+            revisions: [],
+          }],
+          artifacts: [approvalArtifact],
+          gateFreshness: {
+            "dev-review": makeGateFreshness("dev-review", { fresh: true, candidateRevision: 3 }),
+            test: makeGateFreshness("test", { fresh: true, candidateRevision: 3 }),
+            "final-review": makeGateFreshness("final-review", { fresh: true, candidateRevision: 3 }),
+          },
+        }),
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+      }),
+    );
+
+    assert.match(markup, /Candidate merged successfully/);
+    assert.match(markup, /approval-c1-r3\.md/);
+    assert.match(markup, /Current evidence/);
+    assert.doesNotMatch(markup, /Rerun required|Superseded evidence/);
+  });
+});
+
 test("filters structured activity and renders test run and artifact drilldown", () => {
   return withWorkspace(async ({ RunActivity, filterRunActivity }) => {
     const runBase = {
@@ -1165,6 +1576,220 @@ test("filters structured activity and renders test run and artifact drilldown", 
   });
 });
 
+test("renders retained malformed Test metadata without crashing Run Activity", () => {
+  return withWorkspace(async ({ RunActivity }) => {
+    const freshness = makeGateFreshness("test", {
+      sourceRunId: "RUN-TEST-MALFORMED",
+      reasonCode: "malformed_binding",
+      reasonCopy: "Persisted candidate evidence has a malformed candidate binding.",
+    });
+    const task = createTask({
+      runs: [{
+        id: "RUN-TEST-MALFORMED",
+        kind: "test",
+        status: "completed",
+        stage: "test",
+        role: "test",
+        model: "gpt-5.6-luna",
+        reasoning: "xhigh",
+        startedAt: "2026-08-01T12:00:00.000Z",
+        completedAt: "2026-08-01T12:00:01.000Z",
+        durationMs: 1_000,
+        artifactId: null,
+        usage: null,
+        credits: null,
+        apiEstimate: null,
+        candidateId: "C1",
+        candidateRevision: 2,
+        workPackageId: null,
+        attempt: 1,
+        retryOfRunId: null,
+        repairOfRunId: null,
+        toolCalls: [],
+        test: {
+          candidateId: "C1",
+          candidateRevision: 2,
+          status: "failed",
+          command: "npm test",
+          durationMs: 1_000,
+          rowCount: 1,
+          failedRowIds: "row-failed",
+          rows: [],
+        },
+        gateResult: null,
+        evidenceError: null,
+        freshness,
+        error: null,
+        source: "codex-jsonl",
+      }],
+    });
+
+    const markup = renderToStaticMarkup(React.createElement(RunActivity, {
+      task,
+      initialFilter: "test",
+      initialSelectedId: "run:RUN-TEST-MALFORMED",
+    }));
+    assert.match(markup, /failed count unavailable/);
+    assert.match(markup, /Rerun required/);
+    assert.match(markup, /Persisted candidate evidence has a malformed candidate binding\./);
+  });
+});
+
+test("renders stale evidence in the mounted Run Activity views with exact persisted reasons", () => {
+  return withWorkspace(async ({ RunActivity, filterRunActivity }) => {
+    const revisionReason = "Candidate evidence belongs to a previous candidate revision.";
+    const failureReason = "The terminal run failed, so its evidence is not fresh.";
+    const missingBindingReason = "Candidate evidence is missing explicit candidateId and candidateRevision fields.";
+    const run = (overrides) => ({
+      id: "RUN-REVIEW-STALE",
+      kind: "review",
+      status: "completed",
+      stage: "dev-review",
+      role: "dev-review",
+      model: "gpt-5.6-sol",
+      reasoning: "high",
+      startedAt: "2026-08-01T12:00:00.000Z",
+      completedAt: "2026-08-01T12:00:03.000Z",
+      durationMs: 3_000,
+      artifactId: null,
+      usage: null,
+      credits: null,
+      apiEstimate: null,
+      candidateId: "C1",
+      candidateRevision: 1,
+      workPackageId: null,
+      attempt: 1,
+      retryOfRunId: null,
+      repairOfRunId: null,
+      toolCalls: [],
+      test: null,
+      gateResult: null,
+      evidenceError: null,
+      error: null,
+      source: "codex-jsonl",
+      freshness: makeGateFreshness("dev-review", {
+        sourceRunId: "RUN-REVIEW-STALE",
+        reasonCode: "revision_change",
+        reasonCopy: revisionReason,
+      }),
+      ...overrides,
+    });
+    const reviewRun = run({});
+    const testRun = run({
+      id: "RUN-TEST-STALE",
+      kind: "test",
+      stage: "test",
+      role: "test",
+      freshness: makeGateFreshness("test", {
+        sourceRunId: "RUN-TEST-STALE",
+        reasonCode: "failed_execution",
+        reasonCopy: failureReason,
+      }),
+    });
+    const freshReviewRun = run({
+      id: "RUN-REVIEW-FRESH",
+      candidateRevision: 2,
+      freshness: makeGateFreshness("dev-review", {
+        fresh: true,
+        sourceRunId: "RUN-REVIEW-FRESH",
+      }),
+    });
+    const linkedStagePass = {
+      id: "EVENT-STAGE-PASS",
+      at: "2026-08-01T12:01:00.000Z",
+      category: "decision",
+      tone: "success",
+      stage: "dev-review",
+      title: "Development Review passed",
+      detail: "C1 revision 1 advanced to the next gate.",
+      runId: reviewRun.id,
+    };
+    const persistedStaleEvent = {
+      id: "EVENT-PERSISTED-STALE",
+      at: "2026-08-01T12:02:00.000Z",
+      category: "agent",
+      tone: "success",
+      stage: "test",
+      title: "Focused Test completed",
+      detail: "Historical status: completed",
+      freshness: testRun.freshness,
+    };
+    const legacyUnlinkedStagePass = {
+      id: "EVENT-LEGACY-UNLINKED-PASS",
+      at: "2026-08-01T12:03:00.000Z",
+      category: "decision",
+      tone: "success",
+      stage: "dev-review",
+      title: "Development Review passed",
+      detail: "Historical C1 revision 1 gate result.",
+      freshness: makeGateFreshness("dev-review", {
+        sourceRunId: null,
+        reasonCode: "missing_binding",
+        reasonCopy: missingBindingReason,
+      }),
+    };
+    const persistedStaleWithFreshLink = {
+      id: "EVENT-PERSISTED-STALE-FRESH-LINK",
+      at: "2026-08-01T12:04:00.000Z",
+      category: "decision",
+      tone: "success",
+      stage: "dev-review",
+      title: "Development Review passed",
+      detail: "Historical gate event with invalid linkage.",
+      runId: freshReviewRun.id,
+      freshness: makeGateFreshness("dev-review", {
+        sourceRunId: null,
+        reasonCode: "missing_binding",
+        reasonCopy: missingBindingReason,
+      }),
+    };
+    const task = createTask({
+      runs: [freshReviewRun, reviewRun, testRun],
+      events: [linkedStagePass, persistedStaleEvent, legacyUnlinkedStagePass, persistedStaleWithFreshLink],
+    });
+
+    const activityItems = filterRunActivity(task, "activity");
+    const linkedItem = activityItems.find((item) => item.event.id === linkedStagePass.id);
+    assert.equal(linkedItem.tone, "warning");
+    assert.match(linkedItem.title, /Rerun required/);
+    assert.match(linkedItem.detail, new RegExp(revisionReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    const persistedItem = activityItems.find((item) => item.event.id === persistedStaleEvent.id);
+    assert.equal(persistedItem.tone, "warning");
+    assert.match(persistedItem.detail, new RegExp(failureReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    const legacyItem = activityItems.find((item) => item.event.id === legacyUnlinkedStagePass.id);
+    assert.equal(legacyItem.tone, "warning");
+    assert.match(legacyItem.title, /Rerun required/);
+    assert.match(legacyItem.detail, new RegExp(missingBindingReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    const invalidLinkItem = activityItems.find((item) => item.event.id === persistedStaleWithFreshLink.id);
+    assert.equal(invalidLinkItem.tone, "warning");
+    assert.match(invalidLinkItem.title, /Rerun required/);
+    assert.match(invalidLinkItem.detail, new RegExp(missingBindingReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+
+    const agentItem = filterRunActivity(task, "agent")[0];
+    assert.equal(agentItem.tone, "warning");
+    assert.match(agentItem.title, /Rerun required/);
+    assert.match(agentItem.detail, /completed/);
+    assert.match(agentItem.detail, new RegExp(revisionReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    const testItem = filterRunActivity(task, "test")[0];
+    assert.equal(testItem.tone, "warning");
+    assert.match(testItem.detail, new RegExp(failureReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+
+    for (const [initialFilter, selectedId, reason] of [
+      ["activity", `event:${linkedStagePass.id}`, revisionReason],
+      ["agent", `run:${reviewRun.id}`, revisionReason],
+      ["test", `run:${testRun.id}`, failureReason],
+      ["decision", `event:${linkedStagePass.id}`, revisionReason],
+      ["decision", `event:${legacyUnlinkedStagePass.id}`, missingBindingReason],
+      ["decision", `event:${persistedStaleWithFreshLink.id}`, missingBindingReason],
+    ]) {
+      const markup = renderToStaticMarkup(React.createElement(RunActivity, { task, initialFilter, initialSelectedId: selectedId }));
+      assert.match(markup, /runtime-activity-row--warning/);
+      assert.match(markup, /Rerun required/);
+      assert.match(markup, new RegExp(reason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    }
+  });
+});
+
 async function waitUntil(predicate) {
   for (let attempt = 0; attempt < 100; attempt += 1) {
     if (await predicate()) return;
@@ -1209,6 +1834,39 @@ function createTask(overrides = {}) {
   };
 }
 
+function makeGateFreshness(stage, {
+  fresh = false,
+  sourceRunId = null,
+  sourceArtifactId = null,
+  candidateId = "C1",
+  candidateRevision = 2,
+  reasonCode = fresh ? "fresh" : "missing_authoritative_summary",
+  reasonCopy = fresh
+    ? "The latest terminal run is authoritative for the active candidate."
+    : "No authoritative persisted terminal run summary is available for this gate.",
+  focusedTest = null,
+} = {}) {
+  const reason = { code: reasonCode, copy: reasonCopy };
+  return {
+    stage,
+    candidateId,
+    candidateRevision,
+    target: { candidateId, candidateRevision },
+    state: fresh ? "fresh" : "stale",
+    fresh,
+    sourceRunId,
+    sourceArtifactId,
+    reasonCode,
+    reasonCopy,
+    reason,
+    staleReasonCode: fresh ? null : reasonCode,
+    staleReasonCopy: fresh ? null : reasonCopy,
+    staleReason: fresh ? null : reason,
+    focusedTest,
+    focusedTestRows: focusedTest?.rows ?? [],
+  };
+}
+
 async function withWorkspace(run) {
   const vite = await createViteServer({
     configFile: false,
@@ -1220,8 +1878,10 @@ async function withWorkspace(run) {
     const module = await vite.ssrLoadModule("/src/components/RuntimeTaskWorkspace.tsx");
     const candidateDiffViewer = await vite.ssrLoadModule("/src/components/CandidateDiffViewer.tsx");
     const runActivity = await vite.ssrLoadModule("/src/components/RunActivity.tsx");
+    const runtimeInspector = await vite.ssrLoadModule("/src/components/runtime/RuntimeInspectorPanels.tsx");
+    const runtimeWorkflow = await vite.ssrLoadModule("/src/components/runtime/workflow.ts");
     const requestIdentity = await vite.ssrLoadModule("/src/requestIdentity.ts");
-    return await run({ ...module, ...candidateDiffViewer, ...runActivity, ...requestIdentity, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
+    return await run({ ...module, ...candidateDiffViewer, ...runActivity, ...runtimeInspector, ...runtimeWorkflow, ...requestIdentity, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
   } finally {
     await vite.close();
   }

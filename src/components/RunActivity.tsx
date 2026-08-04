@@ -34,20 +34,27 @@ const FILTERS: Array<[RunActivityFilter, string]> = [
 ];
 
 export function filterRunActivity(task: RuntimeTask, filter: RunActivityFilter): ActivityItem[] {
+  const runsById = new Map((task.runs ?? []).map((run) => [run.id, run]));
   if (filter === "agent" || filter === "test") {
     return [...(task.runs ?? [])]
       .filter((run) => filter === "test" ? run.stage === "test" || run.kind === "test" : run.stage !== "test")
       .reverse()
-      .map((run) => ({
-        id: `run:${run.id}`,
-        kind: "run",
-        at: run.startedAt,
-        title: runLabel(run),
-        detail: runDetail(run),
-        tone: runTone(run),
-        stage: run.stage,
-        run,
-      }));
+      .map((run) => {
+        const presentation = freshnessPresentation(
+          runLabel(run),
+          runDetail(run),
+          runTone(run),
+          run.freshness,
+        );
+        return {
+          id: `run:${run.id}`,
+          kind: "run" as const,
+          at: run.startedAt,
+          ...presentation,
+          stage: run.stage,
+          run,
+        };
+      });
   }
 
   return [...task.events]
@@ -57,16 +64,31 @@ export function filterRunActivity(task: RuntimeTask, filter: RunActivityFilter):
       return Boolean(event.toolCall);
     })
     .reverse()
-    .map((event) => ({
-      id: `event:${event.id}`,
-      kind: "event",
-      at: event.at,
-      title: event.title,
-      detail: event.detail,
-      tone: event.tone,
-      stage: event.stage,
-      event,
-    }));
+    .map((event) => {
+      const linkedRun = event.runId ? runsById.get(event.runId) : null;
+      const presentation = freshnessPresentation(
+        event.title,
+        event.detail,
+        event.tone,
+        event.freshness ?? linkedRunFreshness(event, linkedRun),
+      );
+      return {
+        id: `event:${event.id}`,
+        kind: "event" as const,
+        at: event.at,
+        ...presentation,
+        stage: event.stage,
+        event,
+      };
+    });
+}
+
+function linkedRunFreshness(event: RuntimeEvent, linkedRun: RuntimeRun | null | undefined) {
+  const freshness = linkedRun?.freshness;
+  if (!freshness || linkedRun.stage !== event.stage || freshness.stage !== event.stage) return null;
+  if (event.runId !== linkedRun.id || freshness.sourceRunId !== linkedRun.id) return null;
+  if (event.artifactId && freshness.sourceArtifactId !== event.artifactId) return null;
+  return freshness;
 }
 
 export function RunActivity({
@@ -84,6 +106,7 @@ export function RunActivity({
   const [filter, setFilter] = useState<RunActivityFilter>(initialFilter);
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
   const items = useMemo(() => filterRunActivity(task, filter).slice(0, 60), [task, filter]);
+  const latestActivity = useMemo(() => filterRunActivity(task, "activity")[0] ?? null, [task]);
   const selected = items.find((item) => item.id === selectedId) ?? null;
   const selectedRun = selected?.run ?? (selected?.event?.runId
     ? task.runs?.find((run) => run.id === selected.event?.runId)
@@ -115,7 +138,7 @@ export function RunActivity({
         </span>
         <span>
           <span className="connection-dot" />
-          {task.events.at(-1)?.title ?? "Waiting to start"}
+          {latestActivity?.title ?? "Waiting to start"}
         </span>
       </summary>
       <div className="runtime-activity-filters" role="tablist" aria-label="Run activity filters">
@@ -207,12 +230,25 @@ function RunDetails({ run }: { run: RuntimeRun }) {
       <Detail label="Credits" value={run.credits == null ? "Unavailable" : run.credits.toFixed(3)} />
       <Detail label="API-rate estimate" value={formatApproximateCost(run.apiEstimate)} />
       {run.candidateId ? <Detail label="Candidate" value={`${run.candidateId} revision ${run.candidateRevision ?? "?"}`} /> : null}
+      {run.freshness ? <Detail label="Evidence freshness" value={run.freshness.fresh ? "Fresh" : "Rerun required"} /> : null}
+      {run.freshness && !run.freshness.fresh ? <Detail label="Stale reason" value={run.freshness.reasonCopy} /> : null}
       {run.workPackageId ? <Detail label="Work package" value={run.workPackageId} /> : null}
-      {run.test ? <Detail label="Focused tests" value={`${run.test.status} · ${run.test.rowCount} row${run.test.rowCount === 1 ? "" : "s"}${run.test.failedRowIds.length ? ` · ${run.test.failedRowIds.length} failed` : ""}`} /> : null}
+      {run.test ? <Detail label="Focused tests" value={formatFocusedTestSummary(run.test)} /> : null}
       {run.error ? <Detail label="Error" value={run.error} /> : null}
       {run.toolCalls.length ? <Detail label="Tool calls" value={`${run.toolCalls.length} captured from Codex JSONL`} /> : null}
     </>
   );
+}
+
+function formatFocusedTestSummary(test: RuntimeRun["test"] & object) {
+  const failedRowCount = Array.isArray(test.failedRowIds) ? test.failedRowIds.length : null;
+  return `${test.status} · ${test.rowCount} row${test.rowCount === 1 ? "" : "s"}${
+    failedRowCount == null
+      ? " · failed count unavailable"
+      : failedRowCount > 0
+        ? ` · ${failedRowCount} failed`
+        : ""
+  }`;
 }
 
 function ToolDetails({ toolCall }: { toolCall: NonNullable<RuntimeEvent["toolCall"]> }) {
@@ -242,6 +278,20 @@ function runDetail(run: RuntimeRun) {
 function runTone(run: RuntimeRun): RuntimeEvent["tone"] {
   if (["failed", "cancelled", "interrupted"].includes(run.status)) return "danger";
   return run.status === "running" ? "info" : run.gateResult?.verdict === "REPAIR" ? "warning" : "success";
+}
+
+function freshnessPresentation(
+  title: string,
+  detail: string,
+  tone: RuntimeEvent["tone"],
+  freshness: RuntimeRun["freshness"] | RuntimeEvent["freshness"],
+) {
+  if (!freshness || freshness.fresh) return { title, detail, tone };
+  return {
+    title: `${title} · Rerun required`,
+    detail: `${detail} · ${freshness.reasonCopy}`,
+    tone: "warning" as const,
+  };
 }
 
 function stageLabel(stage: string) {

@@ -1,6 +1,49 @@
-import type { RuntimeUsage, StageId } from "./domain";
+import type { StageId } from "./domain";
+import type { RuntimeFocusedTestEvidence, RuntimeFocusedTestRow, RuntimeUsage } from "./domain/runtime";
 
-export type RuntimeRunStatus = "running" | "completed" | "failed" | "cancelled" | "interrupted";
+export type RuntimeRunStatus = "running" | "completed" | "failed" | "cancelled" | "interrupted" | "timed-out" | "timed_out" | "timeout";
+
+export type RuntimeGateStage = "dev-review" | "test" | "final-review";
+export type RuntimeFreshnessReasonCode =
+  | "fresh"
+  | "missing_binding"
+  | "malformed_binding"
+  | "mixed_evidence"
+  | "candidate_mismatch"
+  | "revision_change"
+  | "missing_authoritative_summary"
+  | "contradictory_evidence"
+  | "repair_required"
+  | "failed_execution"
+  | "timeout"
+  | "run_in_progress"
+  | "superseded_attempt";
+
+export interface RuntimeFreshnessReason {
+  code: RuntimeFreshnessReasonCode;
+  copy: string;
+}
+
+export interface RuntimeRunFreshness {
+  stage: RuntimeGateStage;
+  candidateId: string | null;
+  candidateRevision: number | null;
+  target: { candidateId: string; candidateRevision: number } | null;
+  state: "fresh" | "stale";
+  fresh: boolean;
+  sourceRunId: string | null;
+  sourceArtifactId: string | null;
+  reasonCode: RuntimeFreshnessReasonCode;
+  reasonCopy: string;
+  reason: RuntimeFreshnessReason;
+  staleReasonCode: Exclude<RuntimeFreshnessReasonCode, "fresh"> | null;
+  staleReasonCopy: string | null;
+  staleReason: RuntimeFreshnessReason | null;
+  focusedTest: RuntimeFocusedTestEvidence | null;
+  focusedTestRows: RuntimeFocusedTestRow[];
+}
+
+export type RuntimeGateFreshness = RuntimeRunFreshness;
 
 export interface RuntimeToolCall {
   id: string | null;
@@ -12,13 +55,16 @@ export interface RuntimeToolCall {
 }
 
 export interface RuntimeRunTestSummary {
-  candidateId: string;
-  candidateRevision: number;
-  status: "passed" | "failed";
+  candidateId: string | null;
+  candidateRevision: number | null;
+  status: "passed" | "failed" | null;
   command: string;
+  startedAt?: string | null;
+  completedAt?: string | null;
   durationMs: number | null;
   rowCount: number;
   failedRowIds: string[];
+  rows: RuntimeFocusedTestRow[];
 }
 
 export interface RuntimeRun {
@@ -44,8 +90,11 @@ export interface RuntimeRun {
   repairOfRunId: string | null;
   toolCalls: RuntimeToolCall[];
   test: RuntimeRunTestSummary | null;
+  evidenceError: RuntimeFreshnessReason | null;
+  freshness: RuntimeRunFreshness | null;
   gateResult: {
     verdict: "PASS" | "REPAIR";
+    reportedVerdict?: "PASS" | "REPAIR" | null;
     candidateId: string;
     candidateRevision: number;
     evaluatedAt: string;
@@ -75,6 +124,7 @@ export interface RuntimeEvent {
   usage?: RuntimeUsage | null;
   credits?: number | null;
   apiEstimate?: number | null;
+  freshness?: RuntimeRunFreshness | null;
   decisionId?: string | null;
   decisionIds?: string[];
   approvalId?: string | null;

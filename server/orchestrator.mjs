@@ -9,7 +9,7 @@ import {
   getStageMetadata,
   INVESTIGATION_PIPELINE,
 } from "./prompts.mjs";
-import { getCodexStatus, runCodex } from "./codex-runtime.mjs";
+import { getCodexStatus, isProcessTimeoutError, runCodex } from "./codex-runtime.mjs";
 import { GitWorktreeManager } from "./git-worktree.mjs";
 import {
   CREDIT_SOURCE_URL,
@@ -30,11 +30,15 @@ import {
 import {
   attachRunArtifact,
   beginAgentRun,
+  CANDIDATE_GATE_STAGES,
   completeAgentRun,
+  RUNTIME_FRESHNESS_REASONS,
+  refreshGateFreshness,
   runEventMetadata,
   runKindFor,
 } from "./run-activity.mjs";
 import {
+  isCandidateEvidenceError,
   parseFocusedTestEvidence,
   parseGateEvidence,
   parseGrillQuestions,
@@ -324,11 +328,14 @@ export class TaskOrchestrator {
     if (task.status === "awaiting-human-approval") {
       const candidate = currentCandidate(task);
       if (candidate.status !== "awaiting_human_approval") throw new Error("The current candidate has not cleared every gate.");
+      assertCandidateGatesFresh(task, candidate);
       const targetRef = candidate.baseRef ?? (candidate.baseBranch && candidate.baseBranch !== "detached" ? `refs/heads/${candidate.baseBranch}` : null);
       if (!targetRef || !candidate.headRevision) throw new Error("The candidate does not have a mergeable target revision.");
       task = await this.#store.transition(id, (draft) => {
         const activeCandidate = currentCandidate(draft);
-        return draft.status === "awaiting-human-approval" && activeCandidate.status === "awaiting_human_approval";
+        return draft.status === "awaiting-human-approval" &&
+          activeCandidate.status === "awaiting_human_approval" &&
+          candidateGateFailure(draft, activeCandidate) == null;
       }, (draft) => {
         const activeCandidate = currentCandidate(draft);
         draft.status = "merging";
@@ -351,6 +358,7 @@ export class TaskOrchestrator {
     }
 
     const candidate = currentCandidate(task);
+    assertCandidateGatesFresh(task, candidate);
     try {
       const mergeState = typeof this.#worktrees.mergeState === "function"
         ? await this.#worktrees.mergeState(candidate)
@@ -374,6 +382,7 @@ export class TaskOrchestrator {
     for (const task of tasks.filter((item) => item.status === "merging" && item.mergeIntent?.status === "pending")) {
       try {
         const candidate = currentCandidate(task);
+        assertCandidateGatesFresh(task, candidate);
         const mergeState = typeof this.#worktrees.mergeState === "function"
           ? await this.#worktrees.mergeState(candidate)
           : "pending";
@@ -457,6 +466,7 @@ export class TaskOrchestrator {
           }[kind];
           if (candidateStatus) candidate.status = candidateStatus;
         }
+        refreshGateFreshness(draft);
         draft.events.push(activity(draft.currentStage, signal.aborted ? "Run cancelled" : "Stage failed", error.message, "danger"));
       });
     }
@@ -729,6 +739,7 @@ export class TaskOrchestrator {
       draft.status = "ready-for-review";
       draft.currentStage = "dev-review";
       draft.activeRunKind = null;
+      refreshGateFreshness(draft);
       draft.events.push(activity("implement", "Integration candidate ready", `${candidate.id} @ ${assembled.headRevision.slice(0, 8)} contains ${candidate.members.length} work packages and is ready for development review.`, "success", "artifact"));
     });
   }
@@ -821,22 +832,33 @@ export class TaskOrchestrator {
       }
     }
     throwIfAborted(signal);
-    const focusedTestEvidence = stageId === "test"
-      ? validateFocusedTestEvidence(parseFocusedTestEvidence(result.finalText), candidate)
-      : null;
-    const structuredGateEvidence = ["dev-review", "final-review"].includes(stageId)
-      ? parseGateEvidence(result.finalText, candidate, stageId)
-      : null;
-    const verdict = evaluationVerdict(stageId, result, focusedTestEvidence, structuredGateEvidence);
+    let focusedTestEvidence = null;
+    let structuredGateEvidence = null;
+    let evidenceError = null;
+    try {
+      focusedTestEvidence = stageId === "test"
+        ? validateFocusedTestEvidence(parseFocusedTestEvidence(result.finalText), candidate)
+        : null;
+      structuredGateEvidence = ["dev-review", "final-review"].includes(stageId)
+        ? parseGateEvidence(result.finalText, candidate, stageId)
+        : null;
+    } catch (error) {
+      evidenceError = structuredEvidenceError(error);
+    }
+    const verdict = evidenceError
+      ? "REPAIR"
+      : evaluationVerdict(stageId, result, focusedTestEvidence, structuredGateEvidence);
     const gateResult = {
       verdict,
       candidateId: candidate.id,
       candidateRevision: candidate.revisionNumber,
       schemaVersion: 1,
       stage: stageId,
+      reportedVerdict: structuredGateEvidence?.reportedVerdict ?? null,
       evaluatedAt: now(),
       findings: structuredGateEvidence?.findings ?? [],
       blockingReasons: [
+        ...(evidenceError ? [evidenceError.copy] : []),
         ...(stageId === "test" && result.runtimeEvents?.some((event) => event.commandFailed)
           ? ["A verification command failed."]
           : []),
@@ -852,16 +874,44 @@ export class TaskOrchestrator {
       complete: verdict === "PASS",
       focusedTestEvidence,
       gateResult,
+      evidenceError,
     });
     await this.#store.update(id, (draft) => {
       const activeCandidate = currentCandidate(draft);
+      const gateFailure = candidateGateFailure(draft, activeCandidate, [stageId]);
+      const stageFreshness = gateFailure?.freshness ?? draft.gateFreshness?.[stageId] ?? null;
+      const authoritativeRun = stageFreshness?.sourceRunId
+        ? draft.runs?.find((run) => run.id === stageFreshness.sourceRunId)
+        : null;
       activeCandidate.updatedAt = now();
       draft.activeRunKind = null;
-      if (verdict !== "PASS") {
+      if (gateFailure) {
+        if (evidenceError) {
+          const rerunState = evaluationRerunState(stageId);
+          activeCandidate.status = rerunState.candidateStatus;
+          draft.status = rerunState.taskStatus;
+          draft.currentStage = stageId;
+          draft.events.push(activity(
+            stageId,
+            `${getStageMetadata(stageId).label} rerun required`,
+            `${activeCandidate.id} revision ${activeCandidate.revisionNumber} could not accept the persisted gate evidence. ${gateFailure.freshness.reasonCopy}`,
+            "warning",
+            "decision",
+            runEventMetadata(authoritativeRun),
+          ));
+          return;
+        }
         activeCandidate.status = "repair_required";
         draft.status = "repair-required";
         draft.currentStage = stageId;
-        draft.events.push(activity(stageId, "Candidate requires repair", `${activeCandidate.id} revision ${activeCandidate.revisionNumber} did not pass ${getStageMetadata(stageId).label}.`, "warning", "decision"));
+        draft.events.push(activity(
+          stageId,
+          "Candidate requires repair",
+          `${activeCandidate.id} revision ${activeCandidate.revisionNumber} did not pass ${getStageMetadata(stageId).label}. ${gateFailure.freshness.reasonCopy}`,
+          "warning",
+          "decision",
+          runEventMetadata(authoritativeRun),
+        ));
         return;
       }
       if (stageId === "dev-review") {
@@ -877,7 +927,14 @@ export class TaskOrchestrator {
         draft.status = "awaiting-human-approval";
         draft.currentStage = "approval";
       }
-      draft.events.push(activity(stageId, `${getStageMetadata(stageId).label} passed`, `${activeCandidate.id} revision ${activeCandidate.revisionNumber} advanced to the next gate.`, "success", "decision"));
+      draft.events.push(activity(
+        stageId,
+        `${getStageMetadata(stageId).label} passed`,
+        `${activeCandidate.id} revision ${activeCandidate.revisionNumber} advanced to the next gate.`,
+        "success",
+        "decision",
+        runEventMetadata(authoritativeRun),
+      ));
     });
   }
 
@@ -941,6 +998,7 @@ export class TaskOrchestrator {
       draft.status = "ready-for-review";
       draft.currentStage = "dev-review";
       draft.activeRunKind = null;
+      refreshGateFreshness(draft);
       draft.events.push(activity("implement", "Repaired candidate ready", `${candidate.id} revision ${nextRevision} @ ${committed.headRevision.slice(0, 8)} must pass review again.`, "success", "artifact"));
     });
   }
@@ -1038,7 +1096,7 @@ export class TaskOrchestrator {
         runtimeEvents,
         usage: null,
         error: error instanceof Error ? error.message : String(error),
-      }, signal.aborted ? "cancelled" : "failed");
+      }, signal.aborted ? "cancelled" : isProcessTimeoutError(error) ? "timed-out" : "failed");
       throw error;
     } finally {
       await rm(runtimeTemp, { recursive: true, force: true });
@@ -1112,12 +1170,16 @@ export class TaskOrchestrator {
         candidateRevision: options.candidateRevision ?? null,
         workPackageId: options.workPackageId ?? null,
         focusedTest: options.focusedTestEvidence ?? null,
+        evidenceError: options.evidenceError ?? null,
         gateResult: options.gateResult ?? null,
         contextManifest: result.contextManifest ?? null,
       };
       draft.artifacts.push(artifact);
       const run = attachRunArtifact(draft, result.runId, artifact);
-      if (options.complete !== false && !draft.completedStages.includes(stageId)) draft.completedStages.push(stageId);
+      const stageIsAuthoritative = !CANDIDATE_GATE_STAGES.includes(stageId) || run?.freshness?.fresh === true;
+      if (options.complete !== false && stageIsAuthoritative && !draft.completedStages.includes(stageId)) {
+        draft.completedStages.push(stageId);
+      }
       for (const key of ["inputTokens", "cachedInputTokens", "cacheWriteTokens", "outputTokens", "totalTokens"]) {
         draft.usage[key] += resultUsage[key] ?? 0;
       }
@@ -1150,6 +1212,27 @@ function throwIfAborted(signal) {
   if (signal.aborted) throw new Error("Codex run cancelled.");
 }
 
+function candidateGateFailure(task, candidate, stages = CANDIDATE_GATE_STAGES) {
+  const projection = refreshGateFreshness(task);
+  for (const stage of stages) {
+    const freshness = projection[stage];
+    const exactCandidate = freshness?.candidateId === candidate.id &&
+      freshness?.candidateRevision === candidate.revisionNumber;
+    if (!freshness?.fresh || !exactCandidate) return { stage, freshness };
+  }
+  return null;
+}
+
+function assertCandidateGatesFresh(task, candidate) {
+  const failure = candidateGateFailure(task, candidate);
+  if (!failure) return;
+  const stageLabel = getStageMetadata(failure.stage).label;
+  const reason = failure.freshness?.reasonCopy ?? RUNTIME_FRESHNESS_REASONS.missing_authoritative_summary;
+  throw new Error(
+    `${candidate.id} revision ${candidate.revisionNumber} cannot be approved because ${stageLabel} is not fresh. ${reason}`,
+  );
+}
+
 function currentCandidate(task) {
   const candidate = task.candidates?.at(-1);
   if (!candidate) throw new Error("This task does not have an integration candidate.");
@@ -1168,6 +1251,21 @@ export function evaluationVerdict(stageId, result, focusedTestEvidence = null, s
   if (stageId === "test") return "PASS";
   if (["dev-review", "final-review"].includes(stageId)) return structuredGateEvidence?.verdict ?? "REPAIR";
   return "REPAIR";
+}
+
+export function structuredEvidenceError(error) {
+  const code = isCandidateEvidenceError(error)
+    ? error.code
+    : "contradictory_evidence";
+  return { code, copy: RUNTIME_FRESHNESS_REASONS[code] };
+}
+
+function evaluationRerunState(stageId) {
+  return {
+    "dev-review": { taskStatus: "ready-for-review", candidateStatus: "ready_for_review" },
+    test: { taskStatus: "ready-for-test", candidateStatus: "ready_for_test" },
+    "final-review": { taskStatus: "ready-for-final-review", candidateStatus: "ready_for_final_review" },
+  }[stageId];
 }
 
 function canStartRun(task, kind) {

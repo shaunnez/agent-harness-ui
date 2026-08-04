@@ -9,6 +9,7 @@ import { createApiServer } from "../server/api.mjs";
 import { GitWorktreeManager } from "../server/git-worktree.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { parseFocusedTestEvidence } from "../server/structured-output.mjs";
+import { attachRunArtifact, refreshGateFreshness, RUNTIME_FRESHNESS_REASONS } from "../server/run-activity.mjs";
 import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
 import { promisify } from "node:util";
 
@@ -653,6 +654,96 @@ test("returns persisted focused test evidence without dropping the Markdown arti
     assert.equal(fetched.task.artifacts[0].focusedTest.candidateId, "C1");
     assert.equal(fetched.task.artifacts[0].focusedTest.rows[0].candidateRevision, 2);
     assert.equal(fetched.task.artifacts[0].focusedTest.rows[0].artifactReferences[0].kind, "markdown");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("serializes the authoritative freshness projection, stale reason, run status, and Markdown audit artifact", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Freshness projection payload",
+      description: "Expose exact candidate-bound gate state.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.candidates.push({
+        id: "C1",
+        revisionNumber: 2,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        status: "ready_for_review",
+        revisions: [],
+      });
+      draft.artifacts.push({
+        id: "ART-DEV",
+        stage: "dev-review",
+        kind: "markdown",
+        name: "dev-review-c1-r2.md",
+        content: "# retained review evidence\n\nPASS",
+        createdAt: "2026-08-03T00:01:00.000Z",
+        candidateId: "C1",
+        candidateRevision: 2,
+        gateResult: {
+          schemaVersion: 1,
+          stage: "dev-review",
+          verdict: "PASS",
+          reportedVerdict: "PASS",
+          candidateId: "C1",
+          candidateRevision: 2,
+          evaluatedAt: "2026-08-03T00:01:00.000Z",
+          blockingReasons: [],
+          findings: [],
+        },
+        usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+      });
+      draft.runs.push({
+        id: "RUN-DEV",
+        kind: "review",
+        status: "completed",
+        stage: "dev-review",
+        role: "dev-review",
+        model: "gpt-5.6-luna",
+        reasoning: "xhigh",
+        startedAt: "2026-08-03T00:00:00.000Z",
+        completedAt: "2026-08-03T00:01:00.000Z",
+        durationMs: 60_000,
+        artifactId: "ART-DEV",
+        usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+        credits: null,
+        apiEstimate: null,
+        candidateId: "C1",
+        candidateRevision: 2,
+        workPackageId: null,
+        attempt: 1,
+        retryOfRunId: null,
+        repairOfRunId: null,
+        toolCalls: [],
+        test: null,
+        gateResult: null,
+        evidenceError: null,
+        freshness: null,
+        error: null,
+        source: "codex-jsonl",
+      });
+      draft.events.push({ id: "EVENT-DEV", runId: "RUN-DEV", category: "agent", tone: "success", stage: "dev-review", title: "Review complete", detail: "PASS" });
+      attachRunArtifact(draft, "RUN-DEV", draft.artifacts[0]);
+      refreshGateFreshness(draft);
+    });
+
+    const fetched = await (await fetch(`${origin}/api/tasks/${task.id}`)).json();
+    const freshness = fetched.task.gateFreshness["dev-review"];
+    assert.equal(freshness.fresh, true);
+    assert.deepEqual(freshness.target, { candidateId: "C1", candidateRevision: 2 });
+    assert.equal(freshness.sourceRunId, "RUN-DEV");
+    assert.equal(fetched.task.runs[0].status, "completed");
+    assert.equal(fetched.task.runs[0].freshness.reasonCode, "fresh");
+    assert.equal(fetched.task.events.at(-1).freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.fresh);
+    assert.equal(fetched.task.artifacts[0].content, "# retained review evidence\n\nPASS");
   } finally {
     await cleanup(server, directory);
   }

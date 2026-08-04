@@ -3,7 +3,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { evaluationVerdict, TaskOrchestrator } from "../server/orchestrator.mjs";
+import { ProcessTimeoutError } from "../server/codex-runtime.mjs";
+import { evaluationVerdict, structuredEvidenceError, TaskOrchestrator } from "../server/orchestrator.mjs";
 import { buildExecutionPrompt } from "../server/prompts.mjs";
 import { selectScoutDispatch } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
@@ -12,8 +13,17 @@ import {
   parseGateEvidence,
   parseGrillQuestions,
   parseWorkPackages,
+  tryParseFocusedTestEvidence,
   validateFocusedTestEvidence,
 } from "../server/structured-output.mjs";
+import {
+  attachRunArtifact,
+  beginAgentRun,
+  migrateRunActivityState,
+  readExplicitCandidateBinding,
+  refreshGateFreshness,
+  RUNTIME_FRESHNESS_REASONS,
+} from "../server/run-activity.mjs";
 
 const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"questions":[{"question":"Compatibility?","whyItMatters":"Changes the public contract.","options":[{"label":"Preserve it","description":"Keep existing clients working.","recommended":true},{"label":"Break it","description":"Allow a clean break.","recommended":false}],"allowCustom":true}]}\n</grill-questions>`;
 const PLAN_OUTPUT = `## Plan summary\n\nTwo independent slices.\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verification":["npm test"]},{"id":"S2","title":"UI","description":"Implement the task UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verification":["npm run typecheck"]}]}\n</work-packages>`;
@@ -133,7 +143,7 @@ test("parses focused test evidence with candidate-bound rows", () => {
   assert.equal(validateFocusedTestEvidence(evidence, { id: "C1", revisionNumber: 2 }), evidence);
   assert.throws(
     () => validateFocusedTestEvidence(evidence, { id: "C1", revisionNumber: 3 }),
-    /does not match the active candidate revision/i,
+    (error) => error.code === "revision_change",
   );
   assert.throws(
     () => parseFocusedTestEvidence(`<focused-test-evidence>{"candidateId":"C1","candidateRevision":2,"command":"npm test","status":"passed","rows":[{"id":"failed","status":"failed"}]}</focused-test-evidence>`),
@@ -143,6 +153,127 @@ test("parses focused test evidence with candidate-bound rows", () => {
     () => parseFocusedTestEvidence(`<focused-test-evidence>{"candidateId":"C1","candidateRevision":2,"command":"npm test","status":"unknown","rows":[{"id":"row","status":"passed"}]}</focused-test-evidence>`),
     /status must be passed or failed/i,
   );
+});
+
+test("classifies candidate evidence only from typed parser errors", () => {
+  for (const message of [
+    "missing_binding: must include a candidateId",
+    "The candidate binding is malformed.",
+    "The evidence belongs to a different candidate.",
+    "A test command failed.",
+  ]) {
+    assert.deepEqual(
+      structuredEvidenceError(new Error(message)),
+      {
+        code: "contradictory_evidence",
+        copy: RUNTIME_FRESHNESS_REASONS.contradictory_evidence,
+      },
+      message,
+    );
+  }
+
+  let typedError;
+  try {
+    parseFocusedTestEvidence(
+      `<focused-test-evidence>{"candidateId":"C1","candidateRevision":"2"}</focused-test-evidence>`,
+    );
+  } catch (error) {
+    typedError = error;
+  }
+  assert.ok(typedError);
+  typedError.message = "Arbitrary human-readable copy mentioning a failed test.";
+  assert.deepEqual(structuredEvidenceError(typedError), {
+    code: "malformed_binding",
+    copy: RUNTIME_FRESHNESS_REASONS.malformed_binding,
+  });
+});
+
+test("optional focused Test parsing distinguishes absent from invalid evidence by typed code", () => {
+  assert.equal(tryParseFocusedTestEvidence("No focused Test envelope was returned."), null);
+  assert.throws(
+    () => tryParseFocusedTestEvidence(
+      `<focused-test-evidence>{"candidateId":"C1","candidateRevision":"2"}</focused-test-evidence>`,
+    ),
+    (error) => error.code === "malformed_binding",
+  );
+  assert.throws(
+    () => tryParseFocusedTestEvidence(`<focused-test-evidence>{not-json}</focused-test-evidence>`),
+    (error) => error.code === "contradictory_evidence",
+  );
+});
+
+test("rejects malformed focused Test row fields before normalization", () => {
+  const malformedRows = [
+    { id: { value: "row-1" } },
+    { command: { value: "npm test" } },
+    { title: ["test title"] },
+    { artifactReferences: [{ name: { value: "report" }, kind: "markdown", path: "report.md" }] },
+    { artifactReferences: [{ name: "report", kind: "markdown", path: { value: "report.md" } }] },
+    { assertions: [{ label: { value: "result" }, actual: "pass", expected: "pass" }] },
+    { assertions: [{ label: "result", actual: { value: "pass" }, expected: "pass" }] },
+    { failureDetails: { message: "failed" } },
+  ];
+
+  for (const [index, fields] of malformedRows.entries()) {
+    const output = `<focused-test-evidence>${JSON.stringify({
+      candidateId: "C1",
+      candidateRevision: 2,
+      command: "npm test",
+      status: "passed",
+      rows: [{
+        id: `row-${index + 1}`,
+        candidateId: "C1",
+        candidateRevision: 2,
+        command: "npm test",
+        status: "passed",
+        title: "focused test",
+        artifactReferences: [],
+        assertions: [],
+        failureDetails: null,
+        ...fields,
+      }],
+    })}</focused-test-evidence>`;
+    assert.throws(
+      () => parseFocusedTestEvidence(output),
+      (error) => error.code === "contradictory_evidence",
+      `malformed row case ${index + 1}`,
+    );
+  }
+});
+
+test("rejects malformed focused Test timestamps before normalization", () => {
+  for (const [field, value] of [
+    ["startedAt", { timestamp: "2026-08-01T12:00:00.000Z" }],
+    ["completedAt", ["2026-08-01T12:01:00.000Z"]],
+    ["startedAt", "not-a-timestamp"],
+    ["completedAt", ""],
+    ["startedAt", "2026-08-01T12:00:00Z"],
+    ["completedAt", "2026-08-01T14:01:00.000+02:00"],
+  ]) {
+    const output = `<focused-test-evidence>${JSON.stringify({
+      candidateId: "C1",
+      candidateRevision: 2,
+      command: "npm test",
+      status: "passed",
+      [field]: value,
+      rows: [{
+        id: "row-1",
+        candidateId: "C1",
+        candidateRevision: 2,
+        command: "npm test",
+        status: "passed",
+        title: "focused test",
+        artifactReferences: [],
+        assertions: [],
+        failureDetails: null,
+      }],
+    })}</focused-test-evidence>`;
+    assert.throws(
+      () => parseFocusedTestEvidence(output),
+      (error) => error.code === "contradictory_evidence" && error.message.includes(field),
+      field,
+    );
+  }
 });
 
 test("derives candidate-bound review gates from structured evidence", () => {
@@ -157,16 +288,1813 @@ test("derives candidate-bound review gates from structured evidence", () => {
   assert.equal(contradictory.reportedVerdict, "PASS");
   assert.equal(contradictory.verdict, "REPAIR");
   assert.match(contradictory.blockingReasons[0], /P1/);
-  assert.throws(() => parseGateEvidence("PASS", candidate, "dev-review"), /exactly one gate-evidence/i);
-  assert.throws(() => parseGateEvidence(gateOutput(1), candidate, "dev-review"), /does not match/i);
+  assert.throws(
+    () => parseGateEvidence("PASS", candidate, "dev-review"),
+    (error) => error.code === "missing_authoritative_summary" &&
+      error.copy === RUNTIME_FRESHNESS_REASONS.missing_authoritative_summary,
+  );
+  assert.throws(
+    () => parseGateEvidence(gateOutput(1), candidate, "dev-review"),
+    (error) => error.code === "revision_change",
+  );
   assert.throws(
     () => parseGateEvidence(
-      gateOutput(2, "REPAIR", [{ severity: "P2", title: "Mixed", detail: "Wrong candidate", candidateId: "C2" }]),
+      gateOutput(2, "REPAIR", [{ severity: "P2", title: "Mixed", detail: "Wrong candidate", candidateId: "C2", candidateRevision: 2 }]),
       candidate,
       "final-review",
     ),
-    /different candidate revision/i,
+    (error) => error.code === "mixed_evidence",
   );
+});
+
+test("rejects unsupported gate finding field types before normalization", () => {
+  const candidate = { id: "C1", revisionNumber: 2 };
+  const malformedFindings = [
+    { severity: 2, title: "Numeric severity", detail: "Must not be coerced." },
+    { severity: "P2", title: 42, detail: "Must not be coerced." },
+    { severity: "P2", title: "Object detail", detail: { text: "Must not be coerced." } },
+    { severity: "P2", title: "Numeric file", detail: "Must not be coerced.", file: 42 },
+    { severity: "P2", title: "String line", detail: "Must not be coerced.", line: "142" },
+  ];
+
+  for (const finding of malformedFindings) {
+    assert.throws(
+      () => parseGateEvidence(gateOutput(2, "PASS", [{
+        ...finding,
+        candidateId: "C1",
+        candidateRevision: 2,
+      }]), candidate, "dev-review"),
+      (error) => error.code === "contradictory_evidence",
+    );
+  }
+});
+
+test("rejects generic candidate identity fields at every structured evidence boundary", () => {
+  assert.deepEqual(readExplicitCandidateBinding({ id: "C1", revisionNumber: 2 }), {
+    valid: false,
+    candidateId: null,
+    candidateRevision: null,
+    code: "missing_binding",
+    copy: RUNTIME_FRESHNESS_REASONS.missing_binding,
+  });
+  assert.throws(
+    () => parseFocusedTestEvidence(
+      `<focused-test-evidence>{"id":"C1","revisionNumber":2,"command":"npm test","status":"passed","rows":[{"id":"row-1","status":"passed"}]}</focused-test-evidence>`,
+    ),
+    (error) => error.code === "missing_binding",
+  );
+  assert.throws(
+    () => parseGateEvidence(
+      `<gate-evidence>{"id":"C1","revisionNumber":2,"verdict":"PASS","findings":[]}</gate-evidence>`,
+      { id: "C1", revisionNumber: 2 },
+      "dev-review",
+    ),
+    (error) => error.code === "missing_binding",
+  );
+  assert.equal(readExplicitCandidateBinding({ candidateId: "C1", candidateRevision: 0 }).code, "malformed_binding");
+  assert.equal(readExplicitCandidateBinding({ candidateId: "C1", candidateRevision: "2" }).code, "malformed_binding");
+  assert.equal(readExplicitCandidateBinding({ candidateId: "", candidateRevision: 2 }).code, "malformed_binding");
+});
+
+test("resolves candidate-bound gate failures closed with exact stale reasons", () => {
+  const cases = [
+    {
+      name: "missing authoritative summary",
+      run: makeRuntimeRun({ artifactId: null, gateResult: null }),
+      artifacts: [],
+      code: "missing_authoritative_summary",
+    },
+    {
+      name: "malformed run binding",
+      run: makeRuntimeRun({ candidateRevision: "2" }),
+      artifacts: [],
+      code: "malformed_binding",
+    },
+    {
+      name: "candidate mismatch",
+      run: makeRuntimeRun({ candidateId: "C2", gateResult: makeGateResult({ candidateId: "C2" }) }),
+      artifacts: [],
+      code: "candidate_mismatch",
+    },
+    {
+      name: "stale revision",
+      run: makeRuntimeRun({ candidateRevision: 1, gateResult: makeGateResult({ candidateRevision: 1 }) }),
+      artifacts: [],
+      code: "revision_change",
+    },
+    {
+      name: "failed execution",
+      run: makeRuntimeRun({ status: "failed", gateResult: makeGateResult() }),
+      artifacts: [],
+      code: "failed_execution",
+    },
+    {
+      name: "timed out execution",
+      run: makeRuntimeRun({ status: "timed-out", gateResult: makeGateResult() }),
+      artifacts: [],
+      code: "timeout",
+    },
+    {
+      name: "misleading timeout prose",
+      run: makeRuntimeRun({
+        status: "failed",
+        error: "Codex run exceeded 900 seconds.",
+        gateResult: makeGateResult(),
+      }),
+      artifacts: [],
+      code: "failed_execution",
+    },
+    {
+      name: "repair result",
+      run: makeRuntimeRun({ gateResult: makeGateResult({ verdict: "REPAIR", reportedVerdict: "REPAIR", blockingReasons: ["P1: defect"] }) }),
+      artifacts: [],
+      code: "repair_required",
+    },
+    {
+      name: "contradictory result",
+      run: makeRuntimeRun({ gateResult: makeGateResult({ verdict: "REPAIR", reportedVerdict: "PASS", blockingReasons: ["P1: defect"] }) }),
+      artifacts: [],
+      code: "contradictory_evidence",
+    },
+  ];
+
+  for (const item of cases) {
+    const task = makeRuntimeTask({ runs: [item.run], artifacts: item.artifacts });
+    refreshGateFreshness(task);
+    const freshness = task.gateFreshness["dev-review"];
+    assert.equal(freshness.fresh, false, item.name);
+    assert.equal(freshness.reasonCode, item.code, item.name);
+    assert.equal(freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS[item.code], item.name);
+    assert.deepEqual(freshness.staleReason, { code: item.code, copy: RUNTIME_FRESHNESS_REASONS[item.code] }, item.name);
+  }
+});
+
+test("rejects mixed candidate summaries with the exact stale reason", () => {
+  const mixedGate = makeRuntimeRun({
+    gateResult: makeGateResult({
+      findings: [
+        { severity: "P2", title: "C1 finding", detail: "Bound to C1.", candidateId: "C1", candidateRevision: 2 },
+        { severity: "P2", title: "C2 finding", detail: "Bound to C2.", candidateId: "C2", candidateRevision: 2 },
+      ],
+    }),
+  });
+  const mixedGateTask = makeRuntimeTask({ runs: [mixedGate] });
+  refreshGateFreshness(mixedGateTask);
+  assert.equal(mixedGateTask.gateFreshness["dev-review"].reasonCode, "mixed_evidence");
+
+  const mixedWithParentOnly = makeRuntimeRun({
+    gateResult: makeGateResult({
+      findings: [
+        { severity: "P2", title: "C2 finding", detail: "Bound to C2.", candidateId: "C2", candidateRevision: 2 },
+      ],
+    }),
+  });
+  const parentMixedTask = makeRuntimeTask({ runs: [mixedWithParentOnly] });
+  refreshGateFreshness(parentMixedTask);
+  assert.equal(parentMixedTask.gateFreshness["dev-review"].reasonCode, "mixed_evidence");
+});
+
+test("classifies cross-layer persisted candidate conflicts as mixed evidence before target comparison", () => {
+  const cases = [
+    {
+      name: "stale run with current summary",
+      run: makeRuntimeRun({
+        candidateRevision: 1,
+        gateResult: makeGateResult({ candidateRevision: 2 }),
+      }),
+      artifacts: [],
+    },
+    {
+      name: "current run with stale summary",
+      run: makeRuntimeRun({
+        candidateRevision: 2,
+        gateResult: makeGateResult({ candidateRevision: 1 }),
+      }),
+      artifacts: [],
+    },
+    {
+      name: "current run and summary with stale artifact",
+      run: makeRuntimeRun({ artifactId: "ART-STALE" }),
+      artifacts: [makeArtifact({
+        id: "ART-STALE",
+        candidateRevision: 1,
+        gateResult: makeGateResult({ candidateRevision: 2 }),
+      })],
+    },
+  ];
+
+  for (const item of cases) {
+    const task = makeRuntimeTask({ runs: [item.run], artifacts: item.artifacts });
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness["dev-review"].fresh, false, item.name);
+    assert.equal(task.gateFreshness["dev-review"].reasonCode, "mixed_evidence", item.name);
+    assert.equal(
+      task.gateFreshness["dev-review"].reasonCopy,
+      RUNTIME_FRESHNESS_REASONS.mixed_evidence,
+      item.name,
+    );
+    assert.deepEqual(task.gateFreshness["dev-review"].staleReason, {
+      code: "mixed_evidence",
+      copy: RUNTIME_FRESHNESS_REASONS.mixed_evidence,
+    }, item.name);
+    assert.equal(item.run.freshness.reasonCode, "mixed_evidence", `${item.name}: run audit state`);
+  }
+});
+
+test("rejects incomplete or contradictory Dev and Final Review summaries", () => {
+  for (const stage of ["dev-review", "final-review"]) {
+    const valid = makeGateResult({ stage });
+    const cases = [
+      { name: "missing stage", gateResult: { ...valid, stage: undefined } },
+      { name: "missing findings", gateResult: { ...valid, findings: undefined } },
+      { name: "missing reported verdict", gateResult: { ...valid, reportedVerdict: undefined } },
+      { name: "reported repair but evaluated pass", gateResult: { ...valid, reportedVerdict: "REPAIR" } },
+      { name: "reported pass but evaluated repair", gateResult: { ...valid, verdict: "REPAIR" } },
+    ];
+
+    for (const item of cases) {
+      const run = makeRuntimeRun({ id: `RUN-${stage}-${item.name}`, stage, gateResult: item.gateResult });
+      const task = makeRuntimeTask({ runs: [run] });
+      refreshGateFreshness(task);
+      const freshness = task.gateFreshness[stage];
+      assert.equal(freshness.fresh, false, `${stage}: ${item.name}`);
+      assert.equal(freshness.reasonCode, "contradictory_evidence", `${stage}: ${item.name}`);
+    }
+  }
+});
+
+test("rejects malformed persisted finding shapes for every candidate-bound gate", () => {
+  const cases = [
+    { name: "unsupported severity", finding: makePersistedFinding({ severity: "p0" }), code: "contradictory_evidence" },
+    { name: "empty title", finding: makePersistedFinding({ title: "   " }), code: "contradictory_evidence" },
+    { name: "non-string detail", finding: makePersistedFinding({ detail: 42 }), code: "contradictory_evidence" },
+    { name: "unsupported file type", finding: makePersistedFinding({ file: { path: "server/run-activity.mjs" } }), code: "contradictory_evidence" },
+    { name: "unsupported line type", finding: makePersistedFinding({ line: "371" }), code: "contradictory_evidence" },
+    { name: "unsupported binding marker type", finding: makePersistedFinding({ bindingExplicit: "true" }), code: "contradictory_evidence" },
+    {
+      name: "missing explicit finding binding",
+      finding: makePersistedFinding({ candidateId: undefined, candidateRevision: undefined }),
+      code: "missing_binding",
+    },
+  ];
+  const focusedTest = {
+    candidateId: "C1",
+    candidateRevision: 2,
+    bindingExplicit: true,
+    command: "npm test",
+    status: "passed",
+    rows: [makeTestRow()],
+  };
+
+  for (const stage of ["dev-review", "test", "final-review"]) {
+    for (const item of cases) {
+      const gateResult = makeGateResult({ stage, findings: [item.finding] });
+      const run = makeRuntimeRun({
+        id: `RUN-${stage}-${item.name}`,
+        stage,
+        kind: stage === "test" ? "test" : "review",
+        artifactId: stage === "test" ? `ART-${stage}-${item.name}` : null,
+        gateResult,
+      });
+      const artifact = stage === "test"
+        ? makeArtifact({ id: run.artifactId, stage, gateResult, focusedTest })
+        : null;
+      const task = makeRuntimeTask({ runs: [run], artifacts: artifact ? [artifact] : [] });
+      if (artifact) attachRunArtifact(task, run.id, artifact);
+      else refreshGateFreshness(task);
+
+      assert.equal(task.gateFreshness[stage].fresh, false, `${stage}: ${item.name}`);
+      assert.equal(task.gateFreshness[stage].reasonCode, item.code, `${stage}: ${item.name}`);
+      assert.deepEqual(run.gateResult.findings, [item.finding], `${stage}: ${item.name}: retained for audit`);
+    }
+  }
+});
+
+test("rejects mismatched and contradictory persisted Test gate summaries", () => {
+  const focusedTest = {
+    candidateId: "C1",
+    candidateRevision: 2,
+    bindingExplicit: true,
+    command: "npm test",
+    status: "passed",
+    rows: [makeTestRow()],
+  };
+  const cases = [
+    {
+      name: "candidate mismatch",
+      gateResult: makeGateResult({ stage: "test", candidateId: "C2" }),
+      code: "mixed_evidence",
+    },
+    {
+      name: "revision change",
+      gateResult: makeGateResult({ stage: "test", candidateRevision: 1 }),
+      code: "mixed_evidence",
+    },
+    {
+      name: "wrong stage",
+      gateResult: makeGateResult({ stage: "dev-review" }),
+      code: "contradictory_evidence",
+    },
+    {
+      name: "missing binding",
+      gateResult: { ...makeGateResult({ stage: "test" }), candidateId: undefined, candidateRevision: undefined },
+      code: "missing_binding",
+    },
+    {
+      name: "mixed findings",
+      gateResult: makeGateResult({
+        stage: "test",
+        findings: [
+          {
+            severity: "P2",
+            title: "Other candidate",
+            detail: "This finding is not bound to the Test candidate.",
+            candidateId: "C2",
+            candidateRevision: 2,
+            bindingExplicit: true,
+          },
+        ],
+      }),
+      code: "mixed_evidence",
+    },
+    {
+      name: "reported repair but evaluated pass",
+      gateResult: makeGateResult({ stage: "test", verdict: "PASS", reportedVerdict: "REPAIR" }),
+      code: "contradictory_evidence",
+    },
+    {
+      name: "reported pass but evaluated repair",
+      gateResult: makeGateResult({ stage: "test", verdict: "REPAIR", reportedVerdict: "PASS" }),
+      code: "contradictory_evidence",
+    },
+  ];
+
+  for (const item of cases) {
+    const run = makeRuntimeRun({ id: `RUN-${item.code}`, stage: "test", kind: "test", gateResult: item.gateResult });
+    const artifact = makeArtifact({
+      id: `ART-${item.code}`,
+      stage: "test",
+      gateResult: item.gateResult,
+      focusedTest,
+    });
+    const task = makeRuntimeTask({ runs: [run], artifacts: [artifact] });
+    attachRunArtifact(task, run.id, artifact);
+    assert.equal(task.gateFreshness.test.fresh, false, item.name);
+    assert.equal(task.gateFreshness.test.reasonCode, item.code, item.name);
+    assert.deepEqual(run.gateResult, item.gateResult, `${item.name}: retained for audit`);
+  }
+});
+
+test("rejects every non-null malformed or unknown persisted evidence error", () => {
+  const cases = [
+    { name: "unknown code", evidenceError: { code: "unknown_schema_error", copy: "Unknown schema error." } },
+    { name: "primitive value", evidenceError: "malformed evidence error" },
+    { name: "empty string", evidenceError: "" },
+    { name: "zero", evidenceError: 0 },
+    { name: "false", evidenceError: false },
+    {
+      name: "success code used as an error",
+      evidenceError: { code: "fresh", copy: RUNTIME_FRESHNESS_REASONS.fresh },
+    },
+    {
+      name: "known code with malformed copy",
+      evidenceError: { code: "timeout", copy: "Different timeout copy." },
+    },
+  ];
+
+  for (const item of cases) {
+    const run = makeRuntimeRun({ id: `RUN-EVIDENCE-ERROR-${item.name}`, evidenceError: item.evidenceError });
+    const task = makeRuntimeTask({ runs: [run] });
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness["dev-review"].fresh, false, item.name);
+    assert.equal(task.gateFreshness["dev-review"].reasonCode, "malformed_binding", item.name);
+    assert.equal(task.gateFreshness["dev-review"].reasonCopy, RUNTIME_FRESHNESS_REASONS.malformed_binding, item.name);
+    assert.deepEqual(run.evidenceError, item.evidenceError, `${item.name}: retained for audit`);
+  }
+
+  const knownError = { code: "timeout", copy: RUNTIME_FRESHNESS_REASONS.timeout };
+  const knownRun = makeRuntimeRun({ id: "RUN-EVIDENCE-ERROR-KNOWN", evidenceError: knownError });
+  const knownTask = makeRuntimeTask({ runs: [knownRun] });
+  refreshGateFreshness(knownTask);
+  assert.equal(knownTask.gateFreshness["dev-review"].reasonCode, "timeout");
+  assert.deepEqual(knownRun.evidenceError, knownError, "valid persisted error remains intact for audit");
+});
+
+test("preserves falsey persisted evidence errors through attachment and legacy migration", () => {
+  for (const [name, evidenceError] of [["empty string", ""], ["zero", 0], ["false", false]]) {
+    const attachedRun = makeRuntimeRun({ id: `RUN-ATTACH-${name}` });
+    const attachedArtifact = { ...makeArtifact({ id: `ART-ATTACH-${name}` }), evidenceError };
+    const attachedTask = makeRuntimeTask({ runs: [attachedRun], artifacts: [attachedArtifact] });
+    attachRunArtifact(attachedTask, attachedRun.id, attachedArtifact);
+    assert.equal(attachedRun.evidenceError, evidenceError, `${name}: attachment retains the original value`);
+    assert.equal(attachedTask.gateFreshness["dev-review"].reasonCode, "malformed_binding", `${name}: attachment fails closed`);
+
+    const migratedArtifact = { ...makeArtifact({ id: `ART-MIGRATE-${name}` }), evidenceError };
+    const migratedTask = makeRuntimeTask({ artifacts: [migratedArtifact] });
+    migrateRunActivityState({ schemaVersion: 1, tasks: [migratedTask] });
+    assert.equal(migratedTask.runs[0].evidenceError, evidenceError, `${name}: migration retains the original value`);
+    assert.equal(migratedTask.gateFreshness["dev-review"].reasonCode, "malformed_binding", `${name}: migration fails closed`);
+  }
+});
+
+test("retains missing binding as the exact reason when gate ingestion also changes the verdict", () => {
+  const candidate = { id: "C1", revisionNumber: 2 };
+  const parsed = parseGateEvidence(gateOutput(2, "PASS", [{
+    severity: "P2",
+    title: "Unbound retained finding",
+    detail: "The finding omitted its explicit candidate identity.",
+  }]), candidate, "dev-review");
+  assert.equal(parsed.reportedVerdict, "PASS");
+  assert.equal(parsed.verdict, "REPAIR");
+  assert.equal(parsed.findings[0].bindingExplicit, false);
+
+  const run = makeRuntimeRun({ gateResult: parsed });
+  const task = makeRuntimeTask({ runs: [run] });
+  refreshGateFreshness(task);
+  assert.equal(task.gateFreshness["dev-review"].reasonCode, "missing_binding");
+  assert.equal(task.gateFreshness["dev-review"].reasonCopy, RUNTIME_FRESHNESS_REASONS.missing_binding);
+  assert.deepEqual(run.gateResult, parsed, "the unbound finding remains retained for audit");
+});
+
+test("requires persisted Test failedRowIds to match the exact failed-row set", () => {
+  const passedSummary = makeFocusedTestSummary();
+  const failedRow = makeTestRow({ id: "row-failed", status: "failed" });
+  const cases = [
+    { name: "missing failedRowIds", summary: { ...passedSummary, failedRowIds: undefined } },
+    { name: "non-array failedRowIds", summary: { ...passedSummary, failedRowIds: "row-1" } },
+    { name: "unknown failed row", summary: { ...passedSummary, failedRowIds: ["row-missing"] } },
+    { name: "passed row reported failed", summary: { ...passedSummary, failedRowIds: ["row-1"] } },
+    {
+      name: "failed row omitted",
+      summary: makeFocusedTestSummary({ status: "failed", rows: [failedRow], failedRowIds: [] }),
+    },
+    {
+      name: "duplicate failed row id",
+      summary: makeFocusedTestSummary({
+        status: "failed",
+        rows: [failedRow],
+        failedRowIds: ["row-failed", "row-failed"],
+      }),
+    },
+  ];
+
+  for (const item of cases) {
+    const run = makeRuntimeRun({
+      id: `RUN-FAILED-ROWS-${item.name}`,
+      stage: "test",
+      kind: "test",
+      gateResult: makeGateResult({ stage: "test" }),
+      test: item.summary,
+    });
+    const task = makeRuntimeTask({ runs: [run] });
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness.test.fresh, false, item.name);
+    assert.equal(task.gateFreshness.test.reasonCode, "contradictory_evidence", item.name);
+    assert.deepEqual(run.test.failedRowIds, item.summary.failedRowIds, `${item.name}: retained for audit`);
+  }
+
+  const validFailedSummary = makeFocusedTestSummary({
+    status: "failed",
+    rows: [failedRow],
+    failedRowIds: ["row-failed"],
+  });
+  const validFailedRun = makeRuntimeRun({
+    id: "RUN-FAILED-ROWS-VALID",
+    stage: "test",
+    kind: "test",
+    gateResult: makeGateResult({
+      stage: "test",
+      verdict: "REPAIR",
+      reportedVerdict: "REPAIR",
+      blockingReasons: ["A verification command failed."],
+    }),
+    test: validFailedSummary,
+  });
+  const validFailedTask = makeRuntimeTask({ runs: [validFailedRun] });
+  refreshGateFreshness(validFailedTask);
+  assert.equal(validFailedTask.gateFreshness.test.reasonCode, "failed_execution");
+  assert.deepEqual(validFailedTask.gateFreshness.test.focusedTestRows.map((row) => row.id), ["row-failed"]);
+});
+
+test("rejects malformed persisted focused Test timestamps while retaining them for audit", () => {
+  for (const [field, value] of [
+    ["startedAt", { timestamp: "2026-08-01T12:00:00.000Z" }],
+    ["completedAt", ["2026-08-01T12:01:00.000Z"]],
+    ["startedAt", "not-a-timestamp"],
+    ["completedAt", ""],
+    ["startedAt", "2026-08-01T12:00:00Z"],
+    ["completedAt", "2026-08-01T14:01:00.000+02:00"],
+  ]) {
+    const summary = { ...makeFocusedTestSummary(), [field]: value };
+    const run = makeRuntimeRun({
+      id: `RUN-MALFORMED-TEST-${field}`,
+      stage: "test",
+      kind: "test",
+      gateResult: makeGateResult({ stage: "test" }),
+      test: summary,
+    });
+    const task = makeRuntimeTask({ runs: [run] });
+
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness.test.fresh, false, field);
+    assert.equal(task.gateFreshness.test.reasonCode, "contradictory_evidence", field);
+    assert.deepEqual(
+      task.gateFreshness.test.focusedTestRows.map((row) => row.id),
+      ["row-1"],
+      `${field}: valid exact-candidate rows remain inspectable`,
+    );
+    assert.equal(task.gateFreshness.test.focusedTest[field], null, `${field}: malformed metadata is sanitized`);
+    assert.deepEqual(run.test[field], value, `${field}: malformed evidence remains retained`);
+  }
+});
+
+test("rejects malformed persisted Test binding markers and preserves explicit false as missing", () => {
+  const cases = [
+    {
+      name: "summary marker is not boolean",
+      summary: { ...makeFocusedTestSummary(), bindingExplicit: "true" },
+      code: "contradictory_evidence",
+    },
+    {
+      name: "row marker is not boolean",
+      summary: makeFocusedTestSummary({
+        rows: [{ ...makeTestRow(), bindingExplicit: "not-a-boolean" }],
+      }),
+      code: "contradictory_evidence",
+    },
+    {
+      name: "summary explicitly lacks a binding",
+      summary: { ...makeFocusedTestSummary(), bindingExplicit: false },
+      code: "missing_binding",
+    },
+    {
+      name: "row explicitly lacks a binding",
+      summary: makeFocusedTestSummary({
+        rows: [{ ...makeTestRow(), bindingExplicit: false }],
+      }),
+      code: "missing_binding",
+    },
+  ];
+
+  for (const item of cases) {
+    const run = makeRuntimeRun({
+      id: `RUN-TEST-BINDING-MARKER-${item.name}`,
+      stage: "test",
+      kind: "test",
+      gateResult: makeGateResult({ stage: "test" }),
+      test: item.summary,
+    });
+    const task = makeRuntimeTask({ runs: [run] });
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness.test.fresh, false, item.name);
+    assert.equal(task.gateFreshness.test.reasonCode, item.code, item.name);
+    assert.deepEqual(run.test, item.summary, `${item.name}: retained for audit`);
+  }
+});
+
+test("persists malformed attached Test binding markers as contradictory evidence", () => {
+  for (const [name, focusedTest] of [
+    ["summary marker", { ...makeFocusedTestSummary(), bindingExplicit: "true" }],
+    [
+      "row marker",
+      makeFocusedTestSummary({ rows: [{ ...makeTestRow(), bindingExplicit: "not-a-boolean" }] }),
+    ],
+  ]) {
+    const run = makeRuntimeRun({
+      id: `RUN-ATTACHED-TEST-BINDING-${name}`,
+      stage: "test",
+      kind: "test",
+      artifactId: `ART-ATTACHED-TEST-BINDING-${name}`,
+      gateResult: null,
+      test: null,
+    });
+    const artifact = makeArtifact({
+      id: run.artifactId,
+      stage: "test",
+      gateResult: makeGateResult({ stage: "test" }),
+      focusedTest,
+    });
+    const task = makeRuntimeTask({ runs: [run], artifacts: [artifact] });
+
+    attachRunArtifact(task, run.id, artifact);
+
+    assert.equal(task.gateFreshness.test.fresh, false, name);
+    assert.equal(task.gateFreshness.test.reasonCode, "contradictory_evidence", name);
+    assert.deepEqual(run.evidenceError, {
+      code: "contradictory_evidence",
+      copy: RUNTIME_FRESHNESS_REASONS.contradictory_evidence,
+    }, `${name}: exact reason is persisted`);
+    assert.deepEqual(artifact.focusedTest, focusedTest, `${name}: source evidence is retained for audit`);
+  }
+});
+
+test("merge approval fails closed for malformed persisted errors and failed-row metadata", async () => {
+  const cases = [
+    {
+      name: "unknown Dev Review evidence error",
+      expectedStage: "Development Review",
+      mutate(runs) {
+        runs[0].evidenceError = { code: "unknown_schema_error", copy: "Unknown schema error." };
+      },
+    },
+    {
+      name: "missing Test failedRowIds",
+      expectedStage: "Test",
+      mutate(runs) {
+        delete runs[1].test.failedRowIds;
+      },
+    },
+    {
+      name: "mismatched Test failedRowIds",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.failedRowIds = ["row-missing"];
+      },
+    },
+    {
+      name: "malformed Test summary binding marker",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.bindingExplicit = "true";
+      },
+    },
+    {
+      name: "malformed Test row binding marker",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.rows[0].bindingExplicit = "not-a-boolean";
+      },
+    },
+    {
+      name: "malformed Test start timestamp",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.startedAt = { timestamp: "2026-08-01T12:00:00.000Z" };
+      },
+    },
+    {
+      name: "malformed Test completion timestamp",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.completedAt = ["2026-08-01T12:01:00.000Z"];
+      },
+    },
+    {
+      name: "invalid Test start timestamp string",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.startedAt = "not-a-timestamp";
+      },
+    },
+    {
+      name: "empty Test completion timestamp string",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.completedAt = "";
+      },
+    },
+    {
+      name: "non-canonical Test start timestamp string",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.startedAt = "2026-08-01T12:00:00Z";
+      },
+    },
+    {
+      name: "missing Dev Review schema version",
+      expectedStage: "Development Review",
+      mutate(runs) {
+        delete runs[0].gateResult.schemaVersion;
+      },
+    },
+    {
+      name: "unsupported Test schema version",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].gateResult.schemaVersion = 999;
+      },
+    },
+    {
+      name: "malformed Final Review evaluation timestamp",
+      expectedStage: "Final Review",
+      mutate(runs) {
+        runs[2].gateResult.evaluatedAt = { timestamp: "2026-08-01T12:01:00.000Z" };
+      },
+    },
+    {
+      name: "Test repair with misleading failure prose",
+      expectedStage: "Test",
+      expectedReason: "repair_required",
+      mutate(runs) {
+        runs[1].gateResult = makeGateResult({
+          stage: "test",
+          verdict: "REPAIR",
+          reportedVerdict: "REPAIR",
+          blockingReasons: ["A test command failed, according to this human-readable copy."],
+        });
+      },
+    },
+  ];
+
+  for (const item of cases) {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-malformed-gate-approval-"));
+    try {
+      const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+      await store.init();
+      const task = await store.create({
+        title: `Reject ${item.name}`,
+        description: "Malformed persisted candidate evidence must block merge approval.",
+        repositoryPath: directory,
+        workflow: "implement",
+        priority: "medium",
+      });
+      await store.update(task.id, (draft) => {
+        draft.status = "awaiting-human-approval";
+        draft.currentStage = "approval";
+        draft.candidates = [{
+          id: "C1",
+          revisionNumber: 2,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: "b".repeat(40),
+          status: "awaiting_human_approval",
+        }];
+        const runs = [
+          makeRuntimeRun({ id: "RUN-DEV-MALFORMED-APPROVAL" }),
+          makeRuntimeRun({
+            id: "RUN-TEST-MALFORMED-APPROVAL",
+            stage: "test",
+            kind: "test",
+            gateResult: makeGateResult({ stage: "test" }),
+            test: makeFocusedTestSummary(),
+          }),
+          makeRuntimeRun({
+            id: "RUN-FINAL-MALFORMED-APPROVAL",
+            stage: "final-review",
+            gateResult: makeGateResult({ stage: "final-review" }),
+          }),
+        ];
+        item.mutate(runs);
+        draft.runs = runs;
+        refreshGateFreshness(draft);
+        if (item.expectedStage === "Test" || item.name.includes("schema") || item.name.includes("timestamp")) {
+          const stage = {
+            "Development Review": "dev-review",
+            Test: "test",
+            "Final Review": "final-review",
+          }[item.expectedStage];
+          assert.equal(
+            draft.gateFreshness[stage].reasonCode,
+            item.expectedReason ?? "contradictory_evidence",
+            item.name,
+          );
+        }
+      });
+
+      let merged = false;
+      const orchestrator = new TaskOrchestrator(store, {
+        worktreeManager: { async merge() { merged = true; } },
+      });
+      await assert.rejects(
+        () => orchestrator.approveMerge(task.id),
+        new RegExp(`cannot be approved.*${item.expectedStage} is not fresh`, "i"),
+      );
+      const rejected = await store.get(task.id);
+      assert.equal(rejected.mergeIntent, null, item.name);
+      assert.equal(merged, false, item.name);
+    } finally {
+      await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    }
+  }
+});
+
+test("merge approval fails closed for cross-layer mixed candidate evidence", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-mixed-gate-approval-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Reject cross-layer mixed evidence",
+      description: "Conflicting persisted candidate identities must block merge approval.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-human-approval";
+      draft.currentStage = "approval";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 2,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        status: "awaiting_human_approval",
+      }];
+      draft.runs = [
+        makeRuntimeRun({
+          id: "RUN-DEV-MIXED-APPROVAL",
+          gateResult: makeGateResult({ candidateRevision: 1 }),
+        }),
+        makeRuntimeRun({
+          id: "RUN-TEST-MIXED-APPROVAL",
+          stage: "test",
+          kind: "test",
+          gateResult: makeGateResult({ stage: "test" }),
+          test: makeFocusedTestSummary(),
+        }),
+        makeRuntimeRun({
+          id: "RUN-FINAL-MIXED-APPROVAL",
+          stage: "final-review",
+          gateResult: makeGateResult({ stage: "final-review" }),
+        }),
+      ];
+      refreshGateFreshness(draft);
+      assert.equal(draft.gateFreshness["dev-review"].reasonCode, "mixed_evidence");
+      assert.equal(
+        draft.gateFreshness["dev-review"].reasonCopy,
+        RUNTIME_FRESHNESS_REASONS.mixed_evidence,
+      );
+    });
+
+    let merged = false;
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: { async merge() { merged = true; } },
+    });
+    await assert.rejects(
+      () => orchestrator.approveMerge(task.id),
+      /cannot be approved.*Development Review is not fresh/i,
+    );
+    const rejected = await store.get(task.id);
+    assert.equal(rejected.gateFreshness["dev-review"].reasonCode, "mixed_evidence");
+    assert.equal(rejected.mergeIntent, null);
+    assert.equal(merged, false);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("structured ingestion preserves mixed, revision-change, and candidate-mismatch reason codes", () => {
+  const candidate = { id: "C1", revisionNumber: 2 };
+  const oldRevision = gateOutput(1);
+  const otherCandidate = gateOutput(2).replace('"candidateId":"C1"', '"candidateId":"C2"');
+  const mixedGate = gateOutput(2, "PASS", [
+    {
+      severity: "P2",
+      title: "Old revision",
+      detail: "Retained historical finding.",
+      candidateId: "C1",
+      candidateRevision: 1,
+    },
+  ]);
+  const mixedTest = `<focused-test-evidence>${JSON.stringify({
+    candidateId: "C1",
+    candidateRevision: 2,
+    command: "npm test",
+    status: "passed",
+    rows: [makeTestRow(), makeTestRow({ id: "row-old", candidateRevision: 1 })],
+  })}</focused-test-evidence>`;
+
+  assert.throws(() => parseGateEvidence(oldRevision, candidate, "dev-review"), (error) => error.code === "revision_change");
+  assert.throws(() => parseGateEvidence(otherCandidate, candidate, "dev-review"), (error) => error.code === "candidate_mismatch");
+  assert.throws(() => parseGateEvidence(mixedGate, candidate, "dev-review"), (error) => error.code === "mixed_evidence");
+  assert.throws(() => parseFocusedTestEvidence(mixedTest), (error) => error.code === "mixed_evidence");
+
+  const parsedOldTest = parseFocusedTestEvidence(
+    `<focused-test-evidence>${JSON.stringify({
+      candidateId: "C1",
+      candidateRevision: 1,
+      command: "npm test",
+      status: "passed",
+      rows: [makeTestRow({ candidateRevision: 1 })],
+    })}</focused-test-evidence>`,
+  );
+  assert.throws(
+    () => validateFocusedTestEvidence(parsedOldTest, candidate),
+    (error) => error.code === "revision_change",
+  );
+});
+
+test("malformed focused Test ingestion persists the exact reason and blocks approval", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-malformed-test-evidence-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Reject malformed focused Test evidence",
+      description: "Malformed row and timestamp fields must fail closed from ingestion through approval.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-test";
+      draft.currentStage = "test";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 2,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/ah-005-c1",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "ready_for_test",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        updatedAt: "2026-08-01T12:00:00.000Z",
+        revisions: [],
+      }];
+    });
+
+    let merged = false;
+    const malformedRowOutput = `<focused-test-evidence>${JSON.stringify({
+      candidateId: "C1",
+      candidateRevision: 2,
+      command: "npm test",
+      status: "passed",
+      rows: [{
+        id: { value: "row-1" },
+        candidateId: "C1",
+        candidateRevision: 2,
+        command: "npm test",
+        status: "passed",
+        title: "focused test",
+        artifactReferences: [],
+        assertions: [],
+        failureDetails: null,
+      }],
+    })}</focused-test-evidence>`;
+    const malformedTimestampOutput = `<focused-test-evidence>${JSON.stringify({
+      candidateId: "C1",
+      candidateRevision: 2,
+      command: "npm test",
+      status: "passed",
+      startedAt: { timestamp: "2026-08-01T12:00:00.000Z" },
+      completedAt: "2026-08-01T12:01:00.000Z",
+      rows: [{
+        id: "row-1",
+        candidateId: "C1",
+        candidateRevision: 2,
+        command: "npm test",
+        status: "passed",
+        title: "focused test",
+        artifactReferences: [],
+        assertions: [],
+        failureDetails: null,
+      }],
+    })}</focused-test-evidence>`;
+    const malformedOutputs = [malformedRowOutput, malformedTimestampOutput];
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      worktreeManager: {
+        async verifyCandidate() {},
+        async recoverCandidate() {},
+        async merge() { merged = true; },
+      },
+      runCodex: async () => ({
+        finalText: malformedOutputs.shift(),
+        usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    assert.equal(await orchestrator.start(task.id, "test"), true);
+    const afterMalformedRow = await waitForStatus(store, task.id, "ready-for-test");
+    assert.equal(afterMalformedRow.runs.find((run) => run.stage === "test").evidenceError.code, "contradictory_evidence");
+
+    assert.equal(await orchestrator.start(task.id, "test"), true);
+    const finished = await waitForStatus(store, task.id, "ready-for-test");
+    const testRuns = finished.runs.filter((run) => run.stage === "test");
+    assert.equal(testRuns.length, 2);
+    assert.equal(testRuns.at(-1).evidenceError.code, "contradictory_evidence");
+    assert.equal(testRuns.at(-1).evidenceError.copy, RUNTIME_FRESHNESS_REASONS.contradictory_evidence);
+    assert.equal(finished.gateFreshness.test.sourceRunId, testRuns.at(-1).id);
+    assert.equal(finished.gateFreshness.test.reasonCode, "contradictory_evidence");
+
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-human-approval";
+      draft.currentStage = "approval";
+      draft.candidates.at(-1).status = "awaiting_human_approval";
+      draft.runs.push(
+        makeRuntimeRun({ id: "RUN-DEV-FRESH-AFTER-MALFORMED-TEST" }),
+        makeRuntimeRun({
+          id: "RUN-FINAL-FRESH-AFTER-MALFORMED-TEST",
+          stage: "final-review",
+          gateResult: makeGateResult({ stage: "final-review" }),
+        }),
+      );
+      refreshGateFreshness(draft);
+    });
+
+    await assert.rejects(
+      () => orchestrator.approveMerge(task.id),
+      /cannot be approved.*Test is not fresh.*contradictory/i,
+    );
+    assert.equal(merged, false);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("persists exact structured-evidence reason codes through a failed review run", async () => {
+  const cases = [
+    { name: "old revision", output: gateOutput(1), code: "revision_change" },
+    {
+      name: "mixed findings",
+      output: gateOutput(2, "PASS", [
+        {
+          severity: "P2",
+          title: "Old revision",
+          detail: "Retained historical finding.",
+          candidateId: "C1",
+          candidateRevision: 1,
+        },
+      ]),
+      code: "mixed_evidence",
+    },
+    {
+      name: "unsupported finding field type",
+      output: gateOutput(2, "PASS", [{
+        severity: "P2",
+        title: 42,
+        detail: "A numeric title must not be normalized into persisted evidence.",
+        candidateId: "C1",
+        candidateRevision: 2,
+      }]),
+      code: "contradictory_evidence",
+      verifyApprovalBlocked: true,
+    },
+    {
+      name: "unsupported finding severity",
+      output: gateOutput(2, "PASS", [{
+        severity: "critical",
+        title: "Unsupported severity",
+        detail: "The severity is outside the persisted gate schema.",
+        candidateId: "C1",
+        candidateRevision: 2,
+      }]),
+      code: "contradictory_evidence",
+      verifyApprovalBlocked: true,
+    },
+    {
+      name: "empty finding title",
+      output: gateOutput(2, "PASS", [{
+        severity: "P2",
+        title: "   ",
+        detail: "The title is required by the persisted gate schema.",
+        candidateId: "C1",
+        candidateRevision: 2,
+      }]),
+      code: "contradictory_evidence",
+      verifyApprovalBlocked: true,
+    },
+    {
+      name: "invalid verdict",
+      output: gateOutput(2).replace('"verdict":"PASS"', '"verdict":"UNKNOWN"'),
+      code: "contradictory_evidence",
+      verifyApprovalBlocked: true,
+    },
+  ];
+
+  for (const item of cases) {
+    const directory = await mkdtemp(path.join(os.tmpdir(), `agent-harness-evidence-${item.code}-`));
+    try {
+      const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+      await store.init();
+      const task = await store.create({
+        title: `Reject ${item.name}`,
+        description: "Persist the exact structured evidence failure.",
+        repositoryPath: directory,
+        workflow: "implement",
+        priority: "medium",
+      });
+      await store.update(task.id, (draft) => {
+        draft.status = "ready-for-review";
+        draft.currentStage = "dev-review";
+        draft.candidates = [{
+          id: "C1",
+          revisionNumber: 2,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: "b".repeat(40),
+          branch: "agent-harness/ah-005-c1",
+          repositoryRoot: directory,
+          worktreePath: directory,
+          status: "under_review",
+          createdAt: "2026-08-01T12:00:00.000Z",
+          updatedAt: "2026-08-01T12:00:00.000Z",
+          revisions: [],
+        }];
+      });
+      const orchestrator = new TaskOrchestrator(store, {
+        getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+        worktreeManager: { verifyCandidate: async () => {} },
+        runCodex: async () => ({
+          finalText: item.output,
+          usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+        }),
+      });
+
+      assert.equal(await orchestrator.start(task.id, "review"), true);
+      const finished = await waitForStatus(store, task.id, "ready-for-review");
+      const run = finished.runs.find((entry) => entry.stage === "dev-review");
+      assert.equal(run.evidenceError.code, item.code, item.name);
+      assert.equal(run.evidenceError.copy, RUNTIME_FRESHNESS_REASONS[item.code], item.name);
+      assert.equal(run.freshness.reasonCode, item.code, item.name);
+      assert.equal(finished.gateFreshness["dev-review"].reasonCode, item.code, item.name);
+      assert.match(finished.events.at(-1).title, /rerun required/i, item.name);
+      assert.match(finished.events.at(-1).detail, new RegExp(RUNTIME_FRESHNESS_REASONS[item.code]), item.name);
+      assert.equal(finished.candidates.at(-1).revisionNumber, 2, item.name);
+      assert.equal(finished.candidates.at(-1).status, "ready_for_review", item.name);
+      if (item.verifyApprovalBlocked) {
+        await store.update(task.id, (draft) => {
+          draft.status = "awaiting-human-approval";
+          draft.currentStage = "approval";
+          draft.candidates.at(-1).status = "awaiting_human_approval";
+        });
+        await assert.rejects(
+          () => orchestrator.approveMerge(task.id),
+          /cannot be approved.*Development Review is not fresh.*contradictory/i,
+        );
+      }
+    } finally {
+      await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    }
+  }
+});
+
+test("missing authoritative output retains the candidate and permits only the same gate rerun", async () => {
+  const cases = [
+    {
+      stage: "dev-review",
+      kind: "review",
+      taskStatus: "ready-for-review",
+      candidateStatus: "ready_for_review",
+      label: "Development review",
+    },
+    {
+      stage: "test",
+      kind: "test",
+      taskStatus: "ready-for-test",
+      candidateStatus: "ready_for_test",
+      label: "Focused test",
+    },
+    {
+      stage: "final-review",
+      kind: "final-review",
+      taskStatus: "ready-for-final-review",
+      candidateStatus: "ready_for_final_review",
+      label: "Final review",
+    },
+  ];
+
+  for (const item of cases) {
+    const directory = await mkdtemp(path.join(os.tmpdir(), `agent-harness-${item.stage}-rerun-`));
+    try {
+      const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+      await store.init();
+      const task = await store.create({
+        title: `Rerun malformed ${item.stage}`,
+        description: "Malformed gate evidence must not create a candidate repair.",
+        repositoryPath: directory,
+        workflow: "implement",
+        priority: "medium",
+      });
+      await store.update(task.id, (draft) => {
+        draft.status = item.taskStatus;
+        draft.currentStage = item.stage;
+        draft.candidates = [{
+          id: "C1",
+          revisionNumber: 2,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: "b".repeat(40),
+          branch: "agent-harness/ah-005-c1",
+          repositoryRoot: directory,
+          worktreePath: directory,
+          status: item.candidateStatus,
+          createdAt: "2026-08-01T12:00:00.000Z",
+          updatedAt: "2026-08-01T12:00:00.000Z",
+          revisions: [],
+        }];
+      });
+      const orchestrator = new TaskOrchestrator(store, {
+        getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+        worktreeManager: { verifyCandidate: async () => {} },
+        runCodex: async () => ({
+          finalText: "## Verdict\n\nPASS without the required structured evidence block.",
+          usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+        }),
+      });
+
+      assert.equal(await orchestrator.start(task.id, item.kind), true);
+      let finished = await waitForStatus(store, task.id, item.taskStatus);
+      assert.equal(finished.candidates.at(-1).revisionNumber, 2, item.stage);
+      assert.equal(finished.candidates.at(-1).status, item.candidateStatus, item.stage);
+      assert.equal(finished.attemptsByStage[item.stage], 1, item.stage);
+      assert.equal(finished.runs.at(-1).evidenceError.code, "missing_authoritative_summary", item.stage);
+      assert.equal(finished.runs.at(-1).freshness.reasonCode, "missing_authoritative_summary", item.stage);
+      assert.equal(finished.events.at(-1).title, `${item.label} rerun required`, item.stage);
+      assert.equal(
+        finished.events.at(-1).detail,
+        `C1 revision 2 could not accept the persisted gate evidence. ${RUNTIME_FRESHNESS_REASONS.missing_authoritative_summary}`,
+        item.stage,
+      );
+
+      for (const otherKind of ["review", "test", "final-review", "repair"].filter((kind) => kind !== item.kind)) {
+        assert.equal(await orchestrator.start(task.id, otherKind), false, `${item.stage}: ${otherKind}`);
+      }
+      assert.equal(await orchestrator.start(task.id, item.kind), true, `${item.stage}: same gate rerun`);
+      finished = await waitForStatus(store, task.id, item.taskStatus);
+      assert.equal(finished.candidates.at(-1).revisionNumber, 2, `${item.stage}: rerun revision`);
+      assert.equal(finished.attemptsByStage[item.stage], 2, `${item.stage}: retained attempts`);
+      assert.equal(finished.runs.filter((run) => run.stage === item.stage).length, 2, `${item.stage}: retained runs`);
+    } finally {
+      await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    }
+  }
+});
+
+test("filters focused Test rows to the exact candidate and retains invalid rows for audit", () => {
+  const testRun = makeRuntimeRun({ id: "RUN-TEST", stage: "test", kind: "test", artifactId: "ART-TEST" });
+  const testArtifact = makeArtifact({
+    id: "ART-TEST",
+    stage: "test",
+    focusedTest: {
+      candidateId: "C1",
+      candidateRevision: 2,
+      bindingExplicit: true,
+      command: "npm test",
+      status: "passed",
+      rows: [
+        makeTestRow({ id: "row-current", candidateId: "C1", candidateRevision: 2 }),
+        makeTestRow({ id: "row-old", candidateId: "C1", candidateRevision: 1 }),
+      ],
+    },
+  });
+  const testTask = makeRuntimeTask({ runs: [testRun], artifacts: [testArtifact] });
+  attachRunArtifact(testTask, testRun.id, testArtifact);
+  assert.equal(testTask.gateFreshness.test.fresh, false);
+  assert.equal(testTask.gateFreshness.test.reasonCode, "mixed_evidence");
+  assert.deepEqual(testTask.gateFreshness.test.focusedTestRows, []);
+  assert.equal(testTask.runs[0].test.rows.length, 2, "historical rows remain retained for audit");
+
+  const exactTestRun = makeRuntimeRun({ id: "RUN-TEST-EXACT", stage: "test", kind: "test", artifactId: "ART-TEST-EXACT" });
+  const exactTestArtifact = makeArtifact({
+    id: "ART-TEST-EXACT",
+    stage: "test",
+    focusedTest: {
+      candidateId: "C1",
+      candidateRevision: 2,
+      bindingExplicit: true,
+      command: "npm test",
+      status: "passed",
+      rows: [
+        makeTestRow({ id: "row-exact-1" }),
+        makeTestRow({ id: "row-exact-2" }),
+      ],
+    },
+  });
+  const exactTestTask = makeRuntimeTask({ runs: [exactTestRun], artifacts: [exactTestArtifact] });
+  attachRunArtifact(exactTestTask, exactTestRun.id, exactTestArtifact);
+  assert.equal(exactTestTask.gateFreshness.test.fresh, true);
+  assert.deepEqual(exactTestTask.gateFreshness.test.focusedTestRows.map((row) => row.id), ["row-exact-1", "row-exact-2"]);
+
+  const parentMixedRun = makeRuntimeRun({ id: "RUN-TEST-PARENT-MIXED", stage: "test", kind: "test", artifactId: "ART-TEST-PARENT-MIXED" });
+  const parentMixedArtifact = makeArtifact({
+    id: "ART-TEST-PARENT-MIXED",
+    stage: "test",
+    focusedTest: {
+      candidateId: "C1",
+      candidateRevision: 2,
+      bindingExplicit: true,
+      command: "npm test",
+      status: "passed",
+      rows: [makeTestRow({ id: "row-other-candidate", candidateId: "C2" })],
+    },
+  });
+  const parentMixedTask = makeRuntimeTask({ runs: [parentMixedRun], artifacts: [parentMixedArtifact] });
+  attachRunArtifact(parentMixedTask, parentMixedRun.id, parentMixedArtifact);
+  assert.equal(parentMixedTask.gateFreshness.test.reasonCode, "mixed_evidence");
+  assert.deepEqual(parentMixedTask.gateFreshness.test.focusedTestRows, []);
+
+  const failedTestRun = makeRuntimeRun({
+    id: "RUN-TEST-FAILED",
+    stage: "test",
+    kind: "test",
+    artifactId: "ART-TEST-FAILED",
+  });
+  const failedFocusedTest = {
+    candidateId: "C1",
+    candidateRevision: 2,
+    bindingExplicit: true,
+    command: "npm test",
+    status: "failed",
+    rows: [makeTestRow({ id: "row-failed", status: "failed" })],
+  };
+  const failedTestArtifact = makeArtifact({
+    id: "ART-TEST-FAILED",
+    stage: "test",
+    gateResult: makeGateResult({
+      stage: "test",
+      verdict: "REPAIR",
+      reportedVerdict: "REPAIR",
+      blockingReasons: ["A verification command failed."],
+    }),
+    focusedTest: failedFocusedTest,
+  });
+  const failedTestTask = makeRuntimeTask({ runs: [failedTestRun], artifacts: [failedTestArtifact] });
+  attachRunArtifact(failedTestTask, failedTestRun.id, failedTestArtifact);
+  assert.equal(failedTestTask.gateFreshness.test.fresh, false);
+  assert.equal(failedTestTask.gateFreshness.test.reasonCode, "failed_execution");
+  assert.equal(failedTestTask.gateFreshness.test.focusedTest.status, "failed");
+  assert.deepEqual(failedTestTask.gateFreshness.test.focusedTestRows.map((row) => row.id), ["row-failed"]);
+
+  for (const blockingReason of [
+    "A test command failed.",
+    "Editorial guidance only; no execution failure is represented by this field.",
+  ]) {
+    const repairRun = makeRuntimeRun({
+      id: `RUN-TEST-REPAIR-${blockingReason.slice(0, 8)}`,
+      stage: "test",
+      kind: "test",
+      gateResult: makeGateResult({
+        stage: "test",
+        verdict: "REPAIR",
+        reportedVerdict: "REPAIR",
+        blockingReasons: [blockingReason],
+      }),
+      test: makeFocusedTestSummary(),
+    });
+    const repairTask = makeRuntimeTask({ runs: [repairRun] });
+    refreshGateFreshness(repairTask);
+    assert.equal(repairTask.gateFreshness.test.reasonCode, "repair_required", blockingReason);
+  }
+});
+
+test("latest terminal exact-candidate attempt wins and older passes become superseded", () => {
+  const first = makeRuntimeRun({
+    id: "RUN-1",
+    attempt: 1,
+    artifactId: "ART-1",
+    gateResult: makeGateResult(),
+  });
+  const second = makeRuntimeRun({
+    id: "RUN-2",
+    attempt: 2,
+    artifactId: "ART-2",
+    gateResult: makeGateResult({ verdict: "REPAIR", reportedVerdict: "REPAIR", blockingReasons: ["P1: repair"] }),
+  });
+  const task = makeRuntimeTask({
+    runs: [first, second],
+    artifacts: [makeArtifact({ id: "ART-1" }), makeArtifact({ id: "ART-2", gateResult: second.gateResult })],
+  });
+  refreshGateFreshness(task);
+  assert.equal(task.gateFreshness["dev-review"].sourceRunId, "RUN-2");
+  assert.equal(task.gateFreshness["dev-review"].reasonCode, "repair_required");
+  assert.equal(task.runs[0].freshness.reasonCode, "superseded_attempt");
+  assert.equal(task.runs[1].freshness.reasonCode, "repair_required");
+  assert.equal(task.artifacts[0].freshness.reasonCode, "superseded_attempt");
+  assert.equal(task.artifacts[1].freshness.reasonCode, "repair_required");
+
+  for (const { earlierAttempt, laterAttempt } of [
+    { earlierAttempt: 2, laterAttempt: 1 },
+    { earlierAttempt: 2, laterAttempt: 2 },
+  ]) {
+    const earlierPass = makeRuntimeRun({
+      id: `RUN-EARLIER-${earlierAttempt}-${laterAttempt}`,
+      attempt: earlierAttempt,
+      gateResult: makeGateResult(),
+    });
+    const laterRepair = makeRuntimeRun({
+      id: `RUN-LATER-${earlierAttempt}-${laterAttempt}`,
+      attempt: laterAttempt,
+      gateResult: makeGateResult({ verdict: "REPAIR", reportedVerdict: "REPAIR", blockingReasons: ["P1: repair"] }),
+    });
+    const conflictingAttemptTask = makeRuntimeTask({ runs: [earlierPass, laterRepair] });
+    refreshGateFreshness(conflictingAttemptTask);
+    assert.equal(conflictingAttemptTask.gateFreshness["dev-review"].sourceRunId, laterRepair.id);
+    assert.equal(conflictingAttemptTask.gateFreshness["dev-review"].reasonCode, "repair_required");
+    assert.equal(conflictingAttemptTask.runs[0].freshness.reasonCode, "superseded_attempt");
+  }
+
+  const unrelated = makeRuntimeRun({
+    id: "RUN-C2",
+    candidateId: "C2",
+    candidateRevision: 8,
+    attempt: 99,
+    artifactId: "ART-C2",
+    gateResult: makeGateResult({ candidateId: "C2", candidateRevision: 8 }),
+  });
+  const exact = makeRuntimeRun({ id: "RUN-EXACT", attempt: 1, artifactId: "ART-EXACT", gateResult: makeGateResult() });
+  const exactTask = makeRuntimeTask({
+    runs: [exact, unrelated],
+    artifacts: [makeArtifact({ id: "ART-EXACT" }), makeArtifact({ id: "ART-C2", candidateId: "C2", candidateRevision: 8, gateResult: unrelated.gateResult })],
+  });
+  refreshGateFreshness(exactTask);
+  assert.equal(exactTask.gateFreshness["dev-review"].sourceRunId, "RUN-EXACT");
+  assert.equal(exactTask.gateFreshness["dev-review"].fresh, true);
+
+  const malformed = makeRuntimeRun({
+    id: "RUN-MALFORMED",
+    attempt: 2,
+    candidateRevision: "2",
+    artifactId: null,
+  });
+  const malformedTask = makeRuntimeTask({
+    runs: [exact, malformed],
+    artifacts: [makeArtifact({ id: "ART-EXACT" })],
+  });
+  refreshGateFreshness(malformedTask);
+  assert.equal(malformedTask.gateFreshness["dev-review"].sourceRunId, "RUN-MALFORMED");
+  assert.equal(malformedTask.gateFreshness["dev-review"].fresh, false);
+  assert.equal(malformedTask.gateFreshness["dev-review"].reasonCode, "malformed_binding");
+  assert.equal(malformedTask.runs[0].freshness.reasonCode, "superseded_attempt");
+
+  const revisionTask = makeRuntimeTask({
+    runs: [makeRuntimeRun({ id: "RUN-R1", candidateRevision: 1, gateResult: makeGateResult({ candidateRevision: 1 }) })],
+  });
+  const nextRevisionRun = beginAgentRun(revisionTask, {
+    id: "RUN-R2",
+    kind: "review",
+    stage: "dev-review",
+    role: "dev-review",
+    candidateId: "C1",
+    candidateRevision: 2,
+  });
+  assert.equal(nextRevisionRun.attempt, 1, "attempt numbering is scoped to the exact candidate revision");
+});
+
+test("later persisted terminal evidence supersedes attempt metadata and blocks approval", async () => {
+  for (const { earlierAttempt, laterAttempt, laterStatus, expectedReason } of [
+    { earlierAttempt: 1, laterAttempt: null, laterStatus: "completed", expectedReason: "missing_authoritative_summary" },
+    { earlierAttempt: 1, laterAttempt: "2", laterStatus: "completed", expectedReason: "missing_authoritative_summary" },
+    { earlierAttempt: 2, laterAttempt: 1, laterStatus: "failed", expectedReason: "failed_execution" },
+    { earlierAttempt: 2, laterAttempt: 2, laterStatus: "failed", expectedReason: "failed_execution" },
+  ]) {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-legacy-attempt-"));
+    try {
+      const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+      await store.init();
+      const task = await store.create({
+        title: "Reject superseded pass",
+        description: "Persisted terminal order controls when attempt metadata is unavailable.",
+        repositoryPath: directory,
+        workflow: "implement",
+        priority: "medium",
+      });
+      await store.update(task.id, (draft) => {
+        draft.status = "awaiting-human-approval";
+        draft.currentStage = "approval";
+        draft.candidates = [{
+          id: "C1",
+          revisionNumber: 2,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: "b".repeat(40),
+          status: "awaiting_human_approval",
+        }];
+        draft.runs = [
+          makeRuntimeRun({ id: "RUN-EARLIER-PASS", attempt: earlierAttempt, gateResult: makeGateResult() }),
+          makeRuntimeRun({ id: "RUN-LATER-TERMINAL", attempt: laterAttempt, status: laterStatus, gateResult: null }),
+        ];
+        refreshGateFreshness(draft);
+      });
+
+      const persisted = await store.get(task.id);
+      assert.equal(persisted.gateFreshness["dev-review"].sourceRunId, "RUN-LATER-TERMINAL");
+      assert.equal(persisted.gateFreshness["dev-review"].reasonCode, expectedReason);
+      assert.equal(persisted.runs[0].freshness.reasonCode, "superseded_attempt");
+
+      let merged = false;
+      const orchestrator = new TaskOrchestrator(store, {
+        worktreeManager: { async merge() { merged = true; } },
+      });
+      await assert.rejects(
+        () => orchestrator.approveMerge(task.id),
+        /cannot be approved.*Development Review is not fresh/i,
+      );
+      assert.equal(merged, false);
+    } finally {
+      await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    }
+  }
+});
+
+test("merge approval fails closed when persisted Test verdicts contradict", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-stale-approval-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Reject stale approval",
+      description: "Status fields cannot override authoritative gate freshness.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-human-approval";
+      draft.currentStage = "approval";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 2,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        status: "awaiting_human_approval",
+      }];
+      const devReview = makeRuntimeRun({ id: "RUN-DEV", stage: "dev-review", artifactId: "ART-DEV" });
+      const testRun = makeRuntimeRun({
+        id: "RUN-TEST",
+        stage: "test",
+        kind: "test",
+        artifactId: "ART-TEST",
+        gateResult: makeGateResult({ stage: "test", verdict: "PASS", reportedVerdict: "REPAIR" }),
+      });
+      const finalReview = makeRuntimeRun({
+        id: "RUN-FINAL",
+        stage: "final-review",
+        artifactId: "ART-FINAL",
+        gateResult: makeGateResult({ stage: "final-review" }),
+      });
+      const focusedTest = {
+        candidateId: "C1",
+        candidateRevision: 2,
+        bindingExplicit: true,
+        command: "npm test",
+        status: "passed",
+        rows: [makeTestRow()],
+      };
+      draft.runs = [devReview, testRun, finalReview];
+      draft.artifacts = [
+        makeArtifact({ id: "ART-DEV" }),
+        makeArtifact({ id: "ART-TEST", stage: "test", gateResult: testRun.gateResult, focusedTest }),
+        makeArtifact({ id: "ART-FINAL", stage: "final-review", gateResult: finalReview.gateResult }),
+      ];
+      attachRunArtifact(draft, "RUN-TEST", draft.artifacts[1]);
+      refreshGateFreshness(draft);
+    });
+
+    const beforeApproval = await store.get(task.id);
+    assert.equal(beforeApproval.gateFreshness["dev-review"].fresh, true);
+    assert.equal(beforeApproval.gateFreshness.test.fresh, false);
+    assert.equal(beforeApproval.gateFreshness.test.reasonCode, "contradictory_evidence");
+    assert.equal(beforeApproval.gateFreshness["final-review"].fresh, true);
+    assert.equal(beforeApproval.runs.find((run) => run.id === "RUN-TEST").gateResult.reportedVerdict, "REPAIR");
+
+    let merged = false;
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        async merge() {
+          merged = true;
+        },
+      },
+    });
+
+    await assert.rejects(() => orchestrator.approveMerge(task.id), /cannot be approved.*not fresh/i);
+    const rejected = await store.get(task.id);
+    assert.equal(rejected.status, "awaiting-human-approval");
+    assert.equal(rejected.mergeIntent, null);
+    assert.equal(merged, false);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("merge approval fails closed when persisted gate findings are malformed", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-malformed-finding-approval-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Reject malformed gate findings",
+      description: "Persisted finding shapes must not authorize a merge.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-human-approval";
+      draft.currentStage = "approval";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 2,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        status: "awaiting_human_approval",
+      }];
+      const malformedFinding = makePersistedFinding({ severity: "p0" });
+      const devReview = makeRuntimeRun({
+        id: "RUN-DEV-MALFORMED",
+        stage: "dev-review",
+        gateResult: makeGateResult({ stage: "dev-review", findings: [malformedFinding] }),
+      });
+      const testRun = makeRuntimeRun({
+        id: "RUN-TEST-MALFORMED",
+        stage: "test",
+        kind: "test",
+        artifactId: "ART-TEST-MALFORMED",
+        gateResult: makeGateResult({ stage: "test", findings: [malformedFinding] }),
+      });
+      const finalReview = makeRuntimeRun({
+        id: "RUN-FINAL-MALFORMED",
+        stage: "final-review",
+        gateResult: makeGateResult({ stage: "final-review", findings: [malformedFinding] }),
+      });
+      const focusedTest = {
+        candidateId: "C1",
+        candidateRevision: 2,
+        bindingExplicit: true,
+        command: "npm test",
+        status: "passed",
+        rows: [makeTestRow()],
+      };
+      const testArtifact = makeArtifact({
+        id: "ART-TEST-MALFORMED",
+        stage: "test",
+        gateResult: testRun.gateResult,
+        focusedTest,
+      });
+      draft.runs = [devReview, testRun, finalReview];
+      draft.artifacts = [testArtifact];
+      attachRunArtifact(draft, testRun.id, testArtifact);
+      refreshGateFreshness(draft);
+    });
+
+    const beforeApproval = await store.get(task.id);
+    for (const stage of ["dev-review", "test", "final-review"]) {
+      assert.equal(beforeApproval.gateFreshness[stage].fresh, false, stage);
+      assert.equal(beforeApproval.gateFreshness[stage].reasonCode, "contradictory_evidence", stage);
+    }
+
+    let merged = false;
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: { async merge() { merged = true; } },
+    });
+    await assert.rejects(() => orchestrator.approveMerge(task.id), /cannot be approved.*not fresh/i);
+    const rejected = await store.get(task.id);
+    assert.equal(rejected.mergeIntent, null);
+    assert.equal(merged, false);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("repair revision invalidates all candidate-bound gates while retaining evidence and lineage", () => {
+  const stages = ["dev-review", "test", "final-review"];
+  const runs = stages.map((stage) => makeRuntimeRun({
+    id: `RUN-${stage}`,
+    stage,
+    kind: stage === "test" ? "test" : "review",
+    candidateRevision: 1,
+    artifactId: `ART-${stage}`,
+    gateResult: stage === "test" ? null : makeGateResult({ stage, candidateRevision: 1 }),
+  }));
+  const testRun = runs.find((run) => run.stage === "test");
+  const testArtifact = makeArtifact({
+    id: "ART-test",
+    stage: "test",
+    candidateRevision: 1,
+    gateResult: makeGateResult({ stage: "test", candidateRevision: 1 }),
+    focusedTest: {
+      candidateId: "C1",
+      candidateRevision: 1,
+      bindingExplicit: true,
+      command: "npm test",
+      status: "passed",
+      rows: [makeTestRow({ candidateRevision: 1 })],
+    },
+  });
+  const artifacts = runs.map((run) => run.stage === "test" ? testArtifact : makeArtifact({
+    id: run.artifactId,
+    stage: run.stage,
+    candidateRevision: 1,
+    gateResult: makeGateResult({ stage: run.stage, candidateRevision: 1 }),
+  }));
+  const events = runs.map((run) => ({
+    id: `EVENT-${run.id}`,
+    runId: run.id,
+    stage: run.stage,
+  }));
+  events.push({
+    id: "EVENT-LEGACY-DEV-REVIEW-PASS",
+    at: "2026-08-01T12:02:00.000Z",
+    category: "decision",
+    tone: "success",
+    stage: "dev-review",
+    title: "Development review passed",
+    detail: "C1 revision 1 advanced to the next gate.",
+  });
+  const task = makeRuntimeTask({
+    candidateRevision: 1,
+    runs,
+    artifacts,
+    events,
+    revisions: [{ number: 1, reason: "assembly", headRevision: "a".repeat(40) }],
+  });
+  attachRunArtifact(task, testRun.id, testArtifact);
+  refreshGateFreshness(task);
+  assert.deepEqual(stages.map((stage) => task.gateFreshness[stage].fresh), [true, true, true]);
+
+  task.candidates[0].revisionNumber = 2;
+  task.candidates[0].revisions.push({ number: 2, reason: "repair", headRevision: "b".repeat(40) });
+  refreshGateFreshness(task);
+
+  for (const stage of stages) {
+    assert.equal(task.gateFreshness[stage].reasonCode, "revision_change", stage);
+  }
+  assert.equal(task.runs.every((run) => run.freshness.reasonCode === "revision_change"), true);
+  assert.equal(task.artifacts.every((artifact) => artifact.freshness.reasonCode === "revision_change"), true);
+  assert.equal(task.events.filter((event) => event.runId).every((event) => event.freshness.reasonCode === "revision_change"), true);
+  const legacyPassEvent = task.events.find((event) => event.id === "EVENT-LEGACY-DEV-REVIEW-PASS");
+  assert.equal(legacyPassEvent.runId, undefined);
+  assert.equal(legacyPassEvent.freshness.sourceRunId, null);
+  assert.deepEqual(legacyPassEvent.freshness.target, { candidateId: "C1", candidateRevision: 2 });
+  assert.equal(legacyPassEvent.freshness.reasonCode, "missing_binding");
+  assert.equal(legacyPassEvent.freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.missing_binding);
+  assert.equal(legacyPassEvent.title, "Development review passed", "historical event copy remains intact for audit");
+  assert.equal(legacyPassEvent.tone, "success", "historical execution tone remains intact in persisted evidence");
+  assert.equal(task.artifacts.length, 3);
+  assert.equal(task.artifacts[0].content, "# retained evidence");
+  assert.deepEqual(task.candidates[0].revisions.map((revision) => revision.reason), ["assembly", "repair"]);
+  assert.equal(testRun.test.rows.length, 1);
+});
+
+test("migration keeps unlinked historical gate outcomes stale when the current gate is fresh", () => {
+  const task = makeRuntimeTask({
+    runs: [makeRuntimeRun()],
+    events: [],
+  });
+  refreshGateFreshness(task);
+  task.events.push({
+    id: "EVENT-LEGACY-UNLINKED-PASS",
+    at: "2026-08-01T12:02:00.000Z",
+    category: "decision",
+    tone: "success",
+    stage: "dev-review",
+    title: "Development review passed",
+    detail: "Historical gate outcome.",
+    runId: "RUN-WRONG-OR-MISSING",
+  });
+  const state = { schemaVersion: 3, tasks: [task] };
+
+  assert.equal(migrateRunActivityState(state), true);
+  assert.equal(task.gateFreshness["dev-review"].fresh, true, "the current gate remains fresh");
+  assert.equal(task.events[0].runId, "RUN-WRONG-OR-MISSING", "the historical audit linkage is not rewritten");
+  assert.equal(task.events[0].freshness.sourceRunId, null);
+  assert.equal(task.events[0].freshness.fresh, false);
+  assert.equal(task.events[0].freshness.reasonCode, "missing_binding");
+  assert.equal(task.events[0].freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.missing_binding);
+  assert.equal(migrateRunActivityState(state), false, "the fail-closed event repair is idempotent once persisted");
+});
+
+test("legacy gate outcomes inherit freshness only through persisted artifact linkage", () => {
+  const run = makeRuntimeRun({ artifactId: "ART-REVIEW" });
+  const artifact = makeArtifact({ id: "ART-REVIEW" });
+  artifact.runId = run.id;
+  const event = {
+    id: "EVENT-LEGACY-ARTIFACT-PASS",
+    at: "2026-08-01T12:02:00.000Z",
+    category: "decision",
+    tone: "success",
+    stage: "dev-review",
+    title: "Development review passed",
+    detail: "Historical gate outcome with a retained artifact link.",
+    artifactId: artifact.id,
+  };
+  const task = makeRuntimeTask({ runs: [run], artifacts: [artifact], events: [event] });
+
+  refreshGateFreshness(task);
+
+  assert.equal(task.gateFreshness["dev-review"].fresh, true);
+  assert.equal(event.runId, undefined, "artifact resolution does not rewrite historical linkage");
+  assert.equal(event.freshness.fresh, true);
+  assert.equal(event.freshness.sourceRunId, run.id);
+  assert.equal(event.freshness.sourceArtifactId, artifact.id);
+});
+
+test("legacy artifact migration is idempotent and assigns a deterministic stale reason", () => {
+  const state = {
+    schemaVersion: 1,
+    tasks: [makeRuntimeTask({
+      runs: [],
+      artifacts: [makeArtifact({ id: "LEGACY-ART", candidateId: null, candidateRevision: null, gateResult: null })],
+    })],
+  };
+  assert.equal(migrateRunActivityState(state), true);
+  const task = state.tasks[0];
+  assert.equal(task.runs.length, 1);
+  assert.equal(task.runs[0].id, "legacy:LEGACY-ART");
+  assert.equal(task.runs[0].freshness.reasonCode, "missing_binding");
+  assert.equal(task.runs[0].freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.missing_binding);
+  assert.equal(migrateRunActivityState(state), false);
+  assert.equal(state.tasks[0].runs.length, 1);
 });
 
 test("builds the focused test execution prompt with the structured evidence contract and Windows command rule", () => {
@@ -618,6 +2546,11 @@ test("advances an approved implementation task through a revision-bound candidat
     assert.equal(approvalTask.artifacts.find((artifact) => artifact.stage === "test").runId, testRun.id);
     assert.equal(approvalTask.runs.every((run) => run.status === "completed"), true);
     assert.deepEqual(approvalTask.activeRunIds, []);
+    for (const stage of ["dev-review", "test", "final-review"]) {
+      const passEvent = approvalTask.events.find((event) => event.stage === stage && event.title.endsWith(" passed"));
+      assert.equal(passEvent.runId, approvalTask.gateFreshness[stage].sourceRunId, `${stage} pass event links its authoritative run`);
+      assert.equal(passEvent.freshness.fresh, true, `${stage} pass event carries authoritative freshness`);
+    }
     await orchestrator.approveMerge(task.id);
     const complete = await store.get(task.id);
     assert.equal(complete.status, "completed");
@@ -671,6 +2604,34 @@ test("reserves a run exactly once across concurrent start requests", async () =>
     assert.equal(await orchestrator.cancel(task.id), true);
     release();
     await waitForStatus(store, task.id, "cancelled");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("persists typed process timeouts as a terminal timed-out run", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-typed-timeout-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Persist typed timeout",
+      description: "Record a structured terminal outcome when Codex exceeds its deadline.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "medium",
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      runCodex: async () => {
+        throw new ProcessTimeoutError(180_000);
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id), true);
+    const failed = await waitForStatus(store, task.id, "failed");
+    assert.equal(failed.runs.length, 1);
+    assert.equal(failed.runs[0].status, "timed-out");
+    assert.equal(failed.runs[0].error, "Codex run exceeded 180 seconds.");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -791,6 +2752,55 @@ test("reconciles a recorded merge intent without duplicating approval", async ()
         completedAt: null,
         error: null,
       };
+      const devReview = makeRuntimeRun({
+        id: "RUN-DEV-RECOVERY",
+        stage: "dev-review",
+        candidateRevision: 1,
+        artifactId: "ART-DEV-RECOVERY",
+        gateResult: makeGateResult({ candidateRevision: 1 }),
+      });
+      const testRun = makeRuntimeRun({
+        id: "RUN-TEST-RECOVERY",
+        stage: "test",
+        kind: "test",
+        candidateRevision: 1,
+        artifactId: "ART-TEST-RECOVERY",
+        gateResult: makeGateResult({ stage: "test", candidateRevision: 1 }),
+      });
+      const finalReview = makeRuntimeRun({
+        id: "RUN-FINAL-RECOVERY",
+        stage: "final-review",
+        candidateRevision: 1,
+        artifactId: "ART-FINAL-RECOVERY",
+        gateResult: makeGateResult({ stage: "final-review", candidateRevision: 1 }),
+      });
+      const focusedTest = {
+        candidateId: "C1",
+        candidateRevision: 1,
+        bindingExplicit: true,
+        command: "npm test",
+        status: "passed",
+        rows: [makeTestRow({ candidateRevision: 1 })],
+      };
+      draft.runs = [devReview, testRun, finalReview];
+      draft.artifacts = [
+        makeArtifact({ id: "ART-DEV-RECOVERY", candidateRevision: 1, gateResult: devReview.gateResult }),
+        makeArtifact({
+          id: "ART-TEST-RECOVERY",
+          stage: "test",
+          candidateRevision: 1,
+          gateResult: testRun.gateResult,
+          focusedTest,
+        }),
+        makeArtifact({
+          id: "ART-FINAL-RECOVERY",
+          stage: "final-review",
+          candidateRevision: 1,
+          gateResult: finalReview.gateResult,
+        }),
+      ];
+      attachRunArtifact(draft, testRun.id, draft.artifacts[1]);
+      refreshGateFreshness(draft);
     });
     let mergeCalls = 0;
     const orchestrator = new TaskOrchestrator(store, {
@@ -811,6 +2821,156 @@ test("reconciles a recorded merge intent without duplicating approval", async ()
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+function makeRuntimeTask({ candidateId = "C1", candidateRevision = 2, runs = [], artifacts = [], events = [], revisions = [] } = {}) {
+  return {
+    candidates: [{ id: candidateId, revisionNumber: candidateRevision, revisions }],
+    runs,
+    artifacts,
+    events,
+  };
+}
+
+function makeRuntimeRun({
+  id = "RUN-1",
+  stage = "dev-review",
+  kind = "review",
+  candidateId = "C1",
+  candidateRevision = 2,
+  status = "completed",
+  attempt = 1,
+  artifactId = null,
+  gateResult = makeGateResult({ stage, candidateId, candidateRevision }),
+  test = null,
+  evidenceError = null,
+  error = null,
+} = {}) {
+  return {
+    id,
+    kind,
+    status,
+    stage,
+    role: stage,
+    model: "gpt-5.6-luna",
+    reasoning: "xhigh",
+    startedAt: "2026-08-01T12:00:00.000Z",
+    completedAt: "2026-08-01T12:01:00.000Z",
+    durationMs: 60_000,
+    artifactId,
+    usage: null,
+    credits: null,
+    apiEstimate: null,
+    candidateId,
+    candidateRevision,
+    workPackageId: null,
+    attempt,
+    retryOfRunId: null,
+    repairOfRunId: null,
+    toolCalls: [],
+    test,
+    gateResult,
+    evidenceError,
+    freshness: null,
+    error,
+    source: "codex-jsonl",
+  };
+}
+
+function makeGateResult({
+  stage = "dev-review",
+  candidateId = "C1",
+  candidateRevision = 2,
+  verdict = "PASS",
+  reportedVerdict = verdict,
+  blockingReasons = [],
+  findings = [],
+} = {}) {
+  return {
+    schemaVersion: 1,
+    stage,
+    verdict,
+    reportedVerdict,
+    candidateId,
+    candidateRevision,
+    evaluatedAt: "2026-08-01T12:01:00.000Z",
+    blockingReasons,
+    findings,
+  };
+}
+
+function makePersistedFinding(overrides = {}) {
+  return {
+    severity: "P2",
+    title: "Persisted finding",
+    detail: "Persisted finding detail.",
+    file: "server/run-activity.mjs",
+    line: 371,
+    candidateId: "C1",
+    candidateRevision: 2,
+    bindingExplicit: true,
+    ...overrides,
+  };
+}
+
+function makeTestRow({ id = "row-1", candidateId = "C1", candidateRevision = 2, status = "passed" } = {}) {
+  return {
+    id,
+    candidateId,
+    candidateRevision,
+    bindingExplicit: true,
+    command: "npm test",
+    status,
+    durationMs: 100,
+    title: `${id}.test.mjs`,
+    artifactReferences: [],
+    assertions: [],
+    failureDetails: null,
+  };
+}
+
+function makeFocusedTestSummary({
+  candidateId = "C1",
+  candidateRevision = 2,
+  command = "npm test",
+  status = "passed",
+  durationMs = 100,
+  rows = [makeTestRow({ candidateId, candidateRevision, status })],
+  failedRowIds = rows.filter((row) => row.status === "failed").map((row) => row.id),
+} = {}) {
+  return {
+    candidateId,
+    candidateRevision,
+    bindingExplicit: true,
+    command,
+    status,
+    durationMs,
+    rowCount: rows.length,
+    failedRowIds,
+    rows,
+  };
+}
+
+function makeArtifact({
+  id = "ART-1",
+  stage = "dev-review",
+  candidateId = "C1",
+  candidateRevision = 2,
+  gateResult = makeGateResult({ stage, candidateId, candidateRevision }),
+  focusedTest = null,
+} = {}) {
+  return {
+    id,
+    stage,
+    kind: "markdown",
+    name: `${id}.md`,
+    content: "# retained evidence",
+    createdAt: "2026-08-01T12:01:00.000Z",
+    candidateId,
+    candidateRevision,
+    gateResult,
+    focusedTest,
+  };
+}
 
 async function waitForStatus(store, id, expected) {
   for (let attempt = 0; attempt < 100; attempt += 1) {

@@ -1,4 +1,37 @@
 import path from "node:path";
+import {
+  isCanonicalIsoTimestamp,
+  readExplicitCandidateBinding,
+  RUNTIME_FRESHNESS_REASONS,
+} from "./run-activity.mjs";
+
+class CandidateEvidenceError extends Error {
+  constructor(code, detail = null) {
+    const reasonCode = Object.prototype.hasOwnProperty.call(RUNTIME_FRESHNESS_REASONS, code)
+      ? code
+      : "contradictory_evidence";
+    super(detail ?? RUNTIME_FRESHNESS_REASONS[reasonCode]);
+    this.name = "CandidateEvidenceError";
+    this.code = reasonCode;
+    this.copy = RUNTIME_FRESHNESS_REASONS[reasonCode];
+  }
+}
+
+function candidateEvidenceError(code, detail = null) {
+  return new CandidateEvidenceError(code, detail);
+}
+
+export function isCandidateEvidenceError(error) {
+  return error instanceof CandidateEvidenceError &&
+    typeof error.code === "string" &&
+    Object.prototype.hasOwnProperty.call(RUNTIME_FRESHNESS_REASONS, error.code);
+}
+
+function compareEvidenceBinding(binding, candidate) {
+  if (binding.candidateId !== candidate.id) return "candidate_mismatch";
+  if (binding.candidateRevision !== candidate.revisionNumber) return "revision_change";
+  return null;
+}
 
 function parseLabelledJson(text, label) {
   const expression = new RegExp(`<${label}>\\s*([\\s\\S]*?)\\s*</${label}>`, "i");
@@ -8,6 +41,26 @@ function parseLabelledJson(text, label) {
     return JSON.parse(match[1].trim());
   } catch (error) {
     throw new Error(`The ${label} JSON block was invalid: ${error.message}`);
+  }
+}
+
+function parseCandidateEvidenceJson(text, label) {
+  const expression = new RegExp(`<${label}>\\s*([\\s\\S]*?)\\s*</${label}>`, "gi");
+  const matches = [...String(text ?? "").matchAll(expression)];
+  if (matches.length === 0) throw candidateEvidenceError("missing_authoritative_summary");
+  if (matches.length > 1) {
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      `The agent returned more than one ${label} JSON block.`,
+    );
+  }
+  try {
+    return JSON.parse(matches[0][1].trim());
+  } catch (error) {
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      `The ${label} JSON block was invalid: ${error.message}`,
+    );
   }
 }
 
@@ -46,18 +99,34 @@ export function parseGrillQuestions(text) {
 }
 
 export function parseFocusedTestEvidence(text) {
-  const value = parseLabelledJson(text, "focused-test-evidence");
-  if (!value?.candidateId?.trim()) throw new Error("Focused test evidence must include a candidateId.");
-  if (!Number.isInteger(value.candidateRevision) || value.candidateRevision < 1) {
-    throw new Error("Focused test evidence must include a positive candidateRevision.");
+  const value = parseCandidateEvidenceJson(text, "focused-test-evidence");
+  const binding = readExplicitCandidateBinding(value);
+  if (!binding.valid) throw candidateEvidenceError(binding.code);
+  if (typeof value.command !== "string" || !value.command.trim()) {
+    throw candidateEvidenceError("contradictory_evidence", "Focused test evidence must include a string command.");
   }
-  if (!value.command?.trim()) throw new Error("Focused test evidence must include a command.");
+  if (value.durationMs != null && (!Number.isFinite(value.durationMs) || value.durationMs < 0)) {
+    throw candidateEvidenceError("contradictory_evidence", "Focused test evidence durationMs must be a non-negative number or null.");
+  }
+  for (const field of ["startedAt", "completedAt"]) {
+    if (value[field] != null && !isCanonicalIsoTimestamp(value[field])) {
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `Focused test evidence ${field} must be a canonical ISO timestamp or null.`,
+      );
+    }
+  }
   const rows = Array.isArray(value.rows) ? value.rows : [];
-  if (!rows.length) throw new Error("Focused test evidence must include at least one row.");
-  if (!["passed", "failed"].includes(value.status)) throw new Error("Focused test evidence status must be passed or failed.");
+  if (!rows.length) {
+    throw candidateEvidenceError("contradictory_evidence", "Focused test evidence must include at least one row.");
+  }
+  if (!["passed", "failed"].includes(value.status)) {
+    throw candidateEvidenceError("contradictory_evidence", "Focused test evidence status must be passed or failed.");
+  }
   const normalized = {
-    candidateId: value.candidateId.trim(),
-    candidateRevision: value.candidateRevision,
+    candidateId: binding.candidateId,
+    candidateRevision: binding.candidateRevision,
+    bindingExplicit: true,
     command: value.command.trim().slice(0, 2_000),
     status: value.status,
     startedAt: value.startedAt ?? null,
@@ -65,22 +134,34 @@ export function parseFocusedTestEvidence(text) {
     durationMs: normalizeDuration(value.durationMs),
     rows: rows.map((row, rowIndex) => normalizeFocusedTestRow(row, rowIndex, value)),
   };
+  const identities = new Set([
+    `${normalized.candidateId}:${normalized.candidateRevision}`,
+    ...normalized.rows.map((row) => `${row.candidateId}:${row.candidateRevision}`),
+  ]);
+  if (identities.size > 1) throw candidateEvidenceError("mixed_evidence");
   const derivedStatus = normalized.rows.every((row) => row.status === "passed") ? "passed" : "failed";
   if (normalized.status !== derivedStatus) {
-    throw new Error(`Focused test evidence status ${normalized.status} contradicts its ${derivedStatus} rows.`);
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      `Focused test evidence status ${normalized.status} contradicts its ${derivedStatus} rows.`,
+    );
   }
   return normalized;
 }
 
 export function validateFocusedTestEvidence(evidence, candidate) {
   if (!candidate?.id || !Number.isInteger(candidate.revisionNumber)) throw new Error("Focused test evidence requires an active candidate identity.");
-  if (evidence.candidateId !== candidate.id || evidence.candidateRevision !== candidate.revisionNumber) {
-    throw new Error("Focused test evidence does not match the active candidate revision.");
-  }
-  const mismatchedRow = evidence.rows.find(
-    (row) => row.candidateId !== candidate.id || row.candidateRevision !== candidate.revisionNumber,
-  );
-  if (mismatchedRow) throw new Error(`Focused test row ${mismatchedRow.id} does not match the active candidate revision.`);
+  if (!Array.isArray(evidence?.rows)) throw new Error("Focused test evidence must include a rows array.");
+  if (evidence?.bindingExplicit !== true) throw candidateEvidenceError("missing_binding");
+  const implicitRow = evidence.rows.find((row) => row?.bindingExplicit !== true);
+  if (implicitRow) throw candidateEvidenceError("missing_binding");
+  const identities = new Set([
+    `${evidence.candidateId}:${evidence.candidateRevision}`,
+    ...evidence.rows.map((row) => `${row.candidateId}:${row.candidateRevision}`),
+  ]);
+  if (identities.size > 1) throw candidateEvidenceError("mixed_evidence");
+  const identityReason = compareEvidenceBinding(evidence, candidate);
+  if (identityReason) throw candidateEvidenceError(identityReason);
   return evidence;
 }
 
@@ -88,53 +169,79 @@ export function parseGateEvidence(text, candidate, stageId) {
   if (!["dev-review", "final-review"].includes(stageId)) {
     throw new Error(`Structured gate evidence is not supported for ${stageId}.`);
   }
-  const matches = [...String(text ?? "").matchAll(/<gate-evidence>\s*([\s\S]*?)\s*<\/gate-evidence>/gi)];
-  if (matches.length !== 1) {
-    throw new Error(`The ${stageId} agent must return exactly one gate-evidence JSON block.`);
-  }
-  let value;
-  try {
-    value = JSON.parse(matches[0][1].trim());
-  } catch (error) {
-    throw new Error(`The gate-evidence JSON block was invalid: ${error.message}`);
-  }
+  const value = parseCandidateEvidenceJson(text, "gate-evidence");
   if (!candidate?.id || !Number.isInteger(candidate.revisionNumber)) {
     throw new Error("Gate evidence requires an active candidate identity.");
   }
-  const candidateId = String(value?.candidateId ?? "").trim();
-  const candidateRevision = value?.candidateRevision;
-  if (candidateId !== candidate.id || candidateRevision !== candidate.revisionNumber) {
-    throw new Error("Gate evidence does not match the active candidate revision.");
-  }
+  const binding = readExplicitCandidateBinding(value);
+  if (!binding.valid) throw candidateEvidenceError(binding.code);
+  const candidateId = binding.candidateId;
+  const candidateRevision = binding.candidateRevision;
   if (!["PASS", "REPAIR"].includes(value?.verdict)) {
-    throw new Error("Gate evidence verdict must be PASS or REPAIR.");
+    throw candidateEvidenceError("contradictory_evidence", "Gate evidence verdict must be PASS or REPAIR.");
   }
-  if (!Array.isArray(value.findings)) throw new Error("Gate evidence must include a findings array.");
+  if (!Array.isArray(value.findings)) {
+    throw candidateEvidenceError("contradictory_evidence", "Gate evidence must include a findings array.");
+  }
   const findings = value.findings.map((finding, index) => {
-    const severity = String(finding?.severity ?? "").toUpperCase();
+    if (!finding || typeof finding !== "object" || Array.isArray(finding)) {
+      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} must be an object.`);
+    }
+    if (typeof finding.severity !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} severity must be a string.`);
+    }
+    const severity = finding.severity.toUpperCase();
     if (!["P0", "P1", "P2", "P3"].includes(severity)) {
-      throw new Error(`Gate finding ${index + 1} must have severity P0, P1, P2, or P3.`);
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `Gate finding ${index + 1} must have severity P0, P1, P2, or P3.`,
+      );
     }
-    const title = String(finding?.title ?? "").trim().slice(0, 500);
-    const detail = String(finding?.detail ?? "").trim().slice(0, 4_000);
-    if (!title || !detail) throw new Error(`Gate finding ${index + 1} is missing its title or detail.`);
-    const findingCandidateId = String(finding?.candidateId ?? candidateId).trim();
-    const findingCandidateRevision = finding?.candidateRevision ?? candidateRevision;
-    if (findingCandidateId !== candidate.id || findingCandidateRevision !== candidate.revisionNumber) {
-      throw new Error(`Gate finding ${index + 1} is bound to a different candidate revision.`);
+    if (typeof finding.title !== "string" || typeof finding.detail !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} title and detail must be strings.`);
     }
+    if (finding.file != null && typeof finding.file !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} file must be a string or null.`);
+    }
+    if (finding.line != null && (!Number.isInteger(finding.line) || finding.line < 1)) {
+      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} line must be a positive integer or null.`);
+    }
+    const title = finding.title.trim().slice(0, 500);
+    const detail = finding.detail.trim().slice(0, 4_000);
+    if (!title || !detail) {
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `Gate finding ${index + 1} is missing its title or detail.`,
+      );
+    }
+    const hasFindingCandidateId = Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateId");
+    const hasFindingCandidateRevision = Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateRevision");
+    const findingExplicitBinding = hasFindingCandidateId && hasFindingCandidateRevision;
+    if (hasFindingCandidateId !== hasFindingCandidateRevision) throw candidateEvidenceError("malformed_binding");
+    const findingBinding = findingExplicitBinding ? readExplicitCandidateBinding(finding) : binding;
+    if (!findingBinding.valid) throw candidateEvidenceError(findingBinding.code);
     return {
       severity,
       title,
       detail,
-      file: finding?.file == null ? null : String(finding.file).trim().slice(0, 1_000),
-      line: Number.isInteger(finding?.line) && finding.line > 0 ? finding.line : null,
-      candidateId,
-      candidateRevision,
+      file: finding.file == null ? null : finding.file.trim().slice(0, 1_000),
+      line: finding.line ?? null,
+      candidateId: findingBinding.candidateId,
+      candidateRevision: findingBinding.candidateRevision,
+      bindingExplicit: findingExplicitBinding,
     };
   });
+  const identities = new Set([
+    `${candidateId}:${candidateRevision}`,
+    ...findings.map((finding) => `${finding.candidateId}:${finding.candidateRevision}`),
+  ]);
+  if (identities.size > 1) throw candidateEvidenceError("mixed_evidence");
+  const identityReason = compareEvidenceBinding(binding, candidate);
+  if (identityReason) throw candidateEvidenceError(identityReason);
   const blockingFindings = findings.filter((finding) => finding.severity === "P0" || finding.severity === "P1");
-  const verdict = value.verdict === "PASS" && blockingFindings.length === 0 ? "PASS" : "REPAIR";
+  const verdict = value.verdict === "PASS" && blockingFindings.length === 0 && findings.every((finding) => finding.bindingExplicit)
+    ? "PASS"
+    : "REPAIR";
   return {
     schemaVersion: 1,
     stage: stageId,
@@ -144,7 +251,12 @@ export function parseGateEvidence(text, candidate, stageId) {
     reportedVerdict: value.verdict,
     summary: String(value.summary ?? "").trim().slice(0, 4_000),
     findings,
-    blockingReasons: blockingFindings.map((finding) => `${finding.severity}: ${finding.title}`),
+    blockingReasons: [
+      ...blockingFindings.map((finding) => `${finding.severity}: ${finding.title}`),
+      ...findings
+        .filter((finding) => !finding.bindingExplicit)
+        .map((finding) => `Finding ${finding.title} is missing explicit candidate identity fields.`),
+    ],
   };
 }
 
@@ -152,9 +264,9 @@ export function tryParseFocusedTestEvidence(text) {
   try {
     return parseFocusedTestEvidence(text);
   } catch (error) {
-    if (String(error?.message ?? "").includes("focused-test-evidence")) return null;
-    if (String(error?.message ?? "").includes("Focused test evidence must include")) throw error;
-    return null;
+    if (isCandidateEvidenceError(error) && error.code === "missing_authoritative_summary") return null;
+    if (isCandidateEvidenceError(error)) throw error;
+    throw candidateEvidenceError("contradictory_evidence");
   }
 }
 
@@ -283,16 +395,21 @@ function dependsOn(item, targetId, byId, seen = new Set()) {
 }
 
 function normalizeFocusedTestRow(row, rowIndex, parent) {
-  const candidateId = String(row?.candidateId ?? parent.candidateId ?? "").trim();
-  const candidateRevision = Number.isInteger(row?.candidateRevision)
-    ? row.candidateRevision
-    : parent.candidateRevision;
-  if (!candidateId) throw new Error(`Focused test row ${rowIndex + 1} must include a candidateId.`);
-  if (!Number.isInteger(candidateRevision) || candidateRevision < 1) {
-    throw new Error(`Focused test row ${rowIndex + 1} must include a positive candidateRevision.`);
+  if (!row || typeof row !== "object" || Array.isArray(row)) {
+    throw candidateEvidenceError("contradictory_evidence", `Focused test row ${rowIndex + 1} must be an object.`);
   }
+  validateFocusedTestRowFields(row, rowIndex);
+  const hasCandidateId = Object.prototype.hasOwnProperty.call(row ?? {}, "candidateId");
+  const hasCandidateRevision = Object.prototype.hasOwnProperty.call(row ?? {}, "candidateRevision");
+  const explicitBinding = hasCandidateId && hasCandidateRevision;
+  if (hasCandidateId !== hasCandidateRevision) throw candidateEvidenceError("malformed_binding");
+  const binding = explicitBinding ? readExplicitCandidateBinding(row) : readExplicitCandidateBinding(parent);
+  if (!binding.valid) throw candidateEvidenceError(binding.code);
   if (!["passed", "failed"].includes(row?.status)) {
-    throw new Error(`Focused test row ${rowIndex + 1} status must be passed or failed.`);
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      `Focused test row ${rowIndex + 1} status must be passed or failed.`,
+    );
   }
   const status = row.status;
   const assertions = Array.isArray(row?.assertions)
@@ -304,8 +421,9 @@ function normalizeFocusedTestRow(row, rowIndex, parent) {
     : [];
   return {
     id: String(row?.id ?? `row-${rowIndex + 1}`).trim() || `row-${rowIndex + 1}`,
-    candidateId,
-    candidateRevision,
+    bindingExplicit: explicitBinding,
+    candidateId: binding.candidateId,
+    candidateRevision: binding.candidateRevision,
     command: String(row?.command ?? parent.command ?? "").trim().slice(0, 2_000),
     status,
     durationMs: normalizeDuration(row?.durationMs),
@@ -320,6 +438,51 @@ function normalizeFocusedTestRow(row, rowIndex, parent) {
     assertions,
     failureDetails: row?.failureDetails == null ? null : String(row.failureDetails).trim().slice(0, 5_000),
   };
+}
+
+function validateFocusedTestRowFields(row, rowIndex) {
+  const label = `Focused test row ${rowIndex + 1}`;
+  for (const field of ["id", "command", "title", "failureDetails"]) {
+    if (row[field] != null && typeof row[field] !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `${label} ${field} must be a string or null.`);
+    }
+  }
+  if (row.durationMs != null && (!Number.isFinite(row.durationMs) || row.durationMs < 0)) {
+    throw candidateEvidenceError("contradictory_evidence", `${label} durationMs must be a non-negative number or null.`);
+  }
+  if (row.artifactReferences != null && !Array.isArray(row.artifactReferences)) {
+    throw candidateEvidenceError("contradictory_evidence", `${label} artifactReferences must be an array.`);
+  }
+  for (const [referenceIndex, reference] of (row.artifactReferences ?? []).entries()) {
+    if (!reference || typeof reference !== "object" || Array.isArray(reference)) {
+      throw candidateEvidenceError("contradictory_evidence", `${label} artifact reference ${referenceIndex + 1} must be an object.`);
+    }
+    if (reference.name != null && typeof reference.name !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `${label} artifact reference ${referenceIndex + 1} name must be a string or null.`);
+    }
+    if (reference.path != null && typeof reference.path !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `${label} artifact reference ${referenceIndex + 1} path must be a string or null.`);
+    }
+    if (reference.kind != null && typeof reference.kind !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `${label} artifact reference ${referenceIndex + 1} kind must be a string or null.`);
+    }
+  }
+  if (row.assertions != null && !Array.isArray(row.assertions)) {
+    throw candidateEvidenceError("contradictory_evidence", `${label} assertions must be an array.`);
+  }
+  for (const [assertionIndex, assertion] of (row.assertions ?? []).entries()) {
+    if (!assertion || typeof assertion !== "object" || Array.isArray(assertion)) {
+      throw candidateEvidenceError("contradictory_evidence", `${label} assertion ${assertionIndex + 1} must be an object.`);
+    }
+    for (const field of ["label", "actual", "expected"]) {
+      if (assertion[field] != null && typeof assertion[field] !== "string") {
+        throw candidateEvidenceError(
+          "contradictory_evidence",
+          `${label} assertion ${assertionIndex + 1} ${field} must be a string or null.`,
+        );
+      }
+    }
+  }
 }
 
 function normalizeDuration(value) {

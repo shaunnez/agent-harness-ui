@@ -8,6 +8,7 @@ import {
 import { useState } from "react";
 import { type RuntimeTask, type StageId, workflowStages } from "../../domain";
 import { Button } from "../Primitives";
+import { candidateGateStages, getRuntimeGateFreshness, isStageComplete } from "./workflow";
 
 export function RuntimeCommandBar({
   task,
@@ -57,10 +58,11 @@ export function RuntimeCommandBar({
     task.status === "completed";
   const accessBoundary = getAccessBoundaryCopy(task);
   const next = nextAction(task);
+  const approvalBlocked = task.status === "awaiting-human-approval" && !candidateGateStages.every((stage) => isStageComplete(task, stage));
   const openGrill = task.status === "awaiting-grill" && task.grillSession?.status === "open";
   const unresolvedGrill = task.grillSession?.questions.filter((question) => !question.answer).length ?? 0;
   const actionable = ready || failed || repairRequired || blocked;
-  const Icon = running ? CircleNotch : failed || blocked || repairRequired ? WarningCircle : CheckCircle;
+  const Icon = running ? CircleNotch : failed || blocked || repairRequired || approvalBlocked ? WarningCircle : CheckCircle;
   const invoke = async () => {
     if (!next?.action) return;
     setPending(true);
@@ -100,7 +102,7 @@ export function RuntimeCommandBar({
   }
   return (
     <section
-      className={`stage-command-bar stage-command-bar--${running ? "active" : failed || blocked || repairRequired ? "blocked" : ready ? "ready" : "waiting"}`}
+      className={`stage-command-bar stage-command-bar--${running ? "active" : failed || blocked || repairRequired || approvalBlocked ? "blocked" : ready ? "ready" : "waiting"}`}
     >
       <Icon className={running ? "spin" : ""} size={18} weight="fill" />
       <span className="stage-command-bar__copy">
@@ -156,7 +158,14 @@ export function RuntimeCommandBar({
           </Button>
         )}
         {actionable && next?.action ? (
-          <Button tone="primary" compact icon={Play} disabled={pending} onClick={() => void invoke()}>
+          <Button
+            tone="primary"
+            compact
+            icon={Play}
+            disabled={pending || approvalBlocked}
+            title={approvalBlocked ? "Approval is blocked until every candidate-bound gate is fresh." : undefined}
+            onClick={() => void invoke()}
+          >
             {pending ? "Starting..." : next.label}
           </Button>
         ) : null}
@@ -266,14 +275,19 @@ function nextAction(task: RuntimeTask) {
       title: "Run the holdout final review",
       detail: "This gate summarizes every retained artifact against the approved acceptance criteria.",
     };
-  if (task.status === "awaiting-human-approval")
+  if (task.status === "awaiting-human-approval") {
+    const staleGate = candidateGateStages
+      .map((stage) => ({ stage, freshness: getRuntimeGateFreshness(task, stage) }))
+      .find(({ freshness }) => !freshness?.fresh);
     return {
       action: "approve-merge" as const,
-      label: `Approve & merge ${task.candidates?.at(-1)?.id ?? "candidate"}`,
-      title: "Human merge approval required",
-      detail:
-        "The harness will merge only if the source branch is clean, unchanged, and can fast-forward to the reviewed commit.",
+      label: "Approve & merge",
+      title: staleGate ? "Human approval blocked" : "Human merge approval required",
+      detail: staleGate
+        ? `Approval is blocked until ${workflowStages.find((stage) => stage.id === staleGate.stage)?.shortLabel ?? staleGate.stage} is fresh. ${staleGate.freshness?.reasonCopy ?? "No authoritative persisted terminal run summary is available for this candidate."}`
+        : "The harness will merge only if the source branch is clean, unchanged, and can fast-forward to the reviewed commit.",
     };
+  }
   if (task.status === "completed")
     return {
       action: null,
