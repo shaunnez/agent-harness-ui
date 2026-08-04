@@ -445,18 +445,19 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
             send(response, 409, { error: grant.error });
             return;
           }
-          await store.update(id, (draft) => {
+          let reservedGrant = null;
+          await store.transition(id, (draft) => {
             const currentGrant = retryGrantContext(draft);
-            if (currentGrant.error || currentGrant.grantedStage !== grant.grantedStage) {
-              throw new Error(currentGrant.error ?? "Task state changed before the retry grant could be recorded.");
-            }
-            const { candidate, grantedStage, currentLimit } = currentGrant;
+            if (!sameRetryGrantContext(grant, currentGrant)) return false;
+            reservedGrant = currentGrant;
+            return true;
+          }, (draft) => {
+            const { candidate, grantedStage, currentLimit, retrySource } = reservedGrant;
             const nextStageLimit = currentLimit + 1;
             draft.stageRunLimits ??= {};
             draft.stageRunLimits[grantedStage] = nextStageLimit;
             draft.status = "failed";
             draft.error = null;
-            const retrySource = [...(draft.runs ?? [])].reverse().find((run) => run.stage === grantedStage) ?? null;
             const decision = {
               id: crypto.randomUUID(),
               question: candidate?.status === "repair_required" ? "Grant another repair attempt?" : "Grant another stage attempt?",
@@ -569,7 +570,48 @@ function retryGrantContext(task) {
   if (!exhaustedRepair && !exhaustedReadyGate && !exhaustedBlockedStage) {
     return { error: "A retry can only be granted to an exhausted blocked stage or repair attempt." };
   }
-  return { candidate, grantedStage, currentAttempts, currentLimit, error: null };
+  const stageRuns = (task.runs ?? []).filter((run) => run.stage === grantedStage);
+  if (stageRuns.length > currentAttempts) {
+    return { error: "The recorded stage runs exceed the attempt counter; resolve the inconsistent task state before granting a retry." };
+  }
+  const latestStageRun = stageRuns.at(-1) ?? null;
+  if (latestStageRun?.status === "running") {
+    return { error: "The latest stage run is still active; resolve it before granting a retry." };
+  }
+  const retrySource = stageRuns.length === currentAttempts ? latestStageRun : null;
+  return {
+    candidate,
+    grantedStage,
+    currentAttempts,
+    currentLimit,
+    taskStatus: task.status,
+    candidateId: candidate?.id ?? null,
+    candidateRevision: candidate?.revisionNumber ?? null,
+    candidateHeadRevision: candidate?.headRevision ?? null,
+    candidateStatus: candidate?.status ?? null,
+    stageRunCount: stageRuns.length,
+    retrySource,
+    sourceRunId: retrySource?.id ?? null,
+    sourceRunStatus: retrySource?.status ?? null,
+    error: null,
+  };
+}
+
+function sameRetryGrantContext(expected, current) {
+  if (expected.error || current.error) return false;
+  return [
+    "grantedStage",
+    "currentAttempts",
+    "currentLimit",
+    "taskStatus",
+    "candidateId",
+    "candidateRevision",
+    "candidateHeadRevision",
+    "candidateStatus",
+    "stageRunCount",
+    "sourceRunId",
+    "sourceRunStatus",
+  ].every((field) => expected[field] === current[field]);
 }
 
 async function listChangelog(repositoryPath, limit) {

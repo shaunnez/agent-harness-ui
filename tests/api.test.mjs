@@ -32,7 +32,7 @@ function fetch(input, init = {}) {
   return nativeFetch(input, { ...init, headers });
 }
 
-async function createServer() {
+async function createServer(options = {}) {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-"));
   const store = new JsonTaskStore(path.join(directory, "tasks.json"));
   await store.init();
@@ -65,7 +65,25 @@ async function createServer() {
     async approvePlan() {},
     async approveMerge() {},
   };
-  const server = createApiServer({ store, orchestrator, suggestedRepository: directory, csrfToken: TEST_CSRF_TOKEN });
+  let transitionIntercepted = false;
+  const apiStore = options.beforeTransition
+    ? new Proxy(store, {
+        get(target, property) {
+          if (property === "transition") {
+            return async (...args) => {
+              if (!transitionIntercepted) {
+                transitionIntercepted = true;
+                await options.beforeTransition(store, ...args);
+              }
+              return target.transition(...args);
+            };
+          }
+          const value = Reflect.get(target, property, target);
+          return typeof value === "function" ? value.bind(target) : value;
+        },
+      })
+    : store;
+  const server = createApiServer({ store: apiStore, orchestrator, suggestedRepository: directory, csrfToken: TEST_CSRF_TOKEN });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
   return {
@@ -1145,7 +1163,11 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
       draft.currentStage = "implement";
       draft.attemptsByStage.implement = draft.stageRunLimits.implement;
       draft.candidates.push({ id: "C1", status: "repair_required" });
-      draft.runs.push({ id: "run-failed-repair", stage: "implement", status: "failed" });
+      draft.runs.push(...[1, 2, 3].map((attempt) => ({
+        id: `run-failed-repair-${attempt}`,
+        stage: "implement",
+        status: "failed",
+      })));
     });
 
     const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
@@ -1159,11 +1181,11 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
     assert.equal(updated.decisions.at(-1).grantedStage, "implement");
     assert.equal(updated.decisions.at(-1).previousLimit, 3);
     assert.equal(updated.decisions.at(-1).newLimit, 4);
-    assert.equal(updated.decisions.at(-1).sourceRunId, "run-failed-repair");
+    assert.equal(updated.decisions.at(-1).sourceRunId, "run-failed-repair-3");
     assert.equal(updated.attemptsByStage.implement, 3);
     assert.equal(updated.candidates.at(-1).status, "repair_required");
     assert.equal(updated.events.at(-1).title, "One repair attempt granted");
-    assert.equal(updated.events.at(-1).sourceRunId, "run-failed-repair");
+    assert.equal(updated.events.at(-1).sourceRunId, "run-failed-repair-3");
 
     const repeatedResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
     assert.equal(repeatedResponse.status, 409);
@@ -1295,12 +1317,16 @@ test("grants exactly one retry to each exhausted blocked canonical stage", async
         workflow: "implement",
       });
       const { task } = await response.json();
-      const sourceRunId = `run-${stage}`;
+      const sourceRunId = `run-${stage}-3`;
       await store.update(task.id, (draft) => {
         draft.status = "blocked";
         draft.currentStage = stage;
         draft.attemptsByStage[stage] = draft.stageRunLimits[stage];
-        draft.runs.push({ id: sourceRunId, stage, status: "failed" });
+        draft.runs.push(...[1, 2, 3].map((attempt) => ({
+          id: `run-${stage}-${attempt}`,
+          stage,
+          status: "failed",
+        })));
         if (candidateStatus) draft.candidates.push({ id: "C1", status: candidateStatus });
       });
       const before = await store.get(task.id);
@@ -1345,6 +1371,83 @@ test("grants exactly one retry to each exhausted blocked canonical stage", async
       assert.deepEqual(repeated.stageRunLimits, updated.stageRunLimits);
       assert.equal(repeated.decisions.length, updated.decisions.length);
     }
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects a retry grant when the reviewed exhaustion tuple changes before reservation", async () => {
+  let taskId = null;
+  const { directory, origin, server, store } = await createServer({
+    async beforeTransition(targetStore, id) {
+      if (id !== taskId) return;
+      await targetStore.update(id, (draft) => {
+        draft.attemptsByStage.plan += 1;
+        draft.stageRunLimits.plan += 1;
+        draft.runs.push({ id: "run-plan-4", stage: "plan", status: "failed" });
+      });
+    },
+  });
+  try {
+    const response = await createTask(origin, {
+      title: "Racing retry grant",
+      description: "Reject a grant when the exact exhaustion snapshot changes before reservation.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    taskId = task.id;
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "plan";
+      draft.attemptsByStage.plan = draft.stageRunLimits.plan;
+      draft.runs.push(...[1, 2, 3].map((attempt) => ({
+        id: `run-plan-${attempt}`,
+        stage: "plan",
+        status: "failed",
+      })));
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 409);
+    assert.match((await grantResponse.json()).error, /state changed/i);
+    const updated = await store.get(task.id);
+    assert.equal(updated.attemptsByStage.plan, 4);
+    assert.equal(updated.stageRunLimits.plan, 4);
+    assert.equal(updated.decisions.length, 0);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects a retry grant while the latest exhausted-stage run is still active", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Active retry source",
+      description: "Do not grant over an unresolved terminal source.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "test";
+      draft.attemptsByStage.test = draft.stageRunLimits.test;
+      draft.candidates.push({ id: "C1", revisionNumber: 2, status: "ready_for_test" });
+      draft.runs.push(
+        { id: "run-test-1", stage: "test", status: "failed" },
+        { id: "run-test-2", stage: "test", status: "failed" },
+        { id: "run-test-3", stage: "test", status: "running" },
+      );
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 409);
+    assert.match((await grantResponse.json()).error, /still active/i);
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits.test, 3);
+    assert.equal(updated.decisions.length, 0);
   } finally {
     await cleanup(server, directory);
   }
