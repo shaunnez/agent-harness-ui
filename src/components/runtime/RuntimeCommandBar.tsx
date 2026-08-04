@@ -12,6 +12,7 @@ import {
   getEffectiveStageRunAttempts,
   getEffectiveStageRunLimit,
 } from "../../runtime-stage-limits";
+import type { RuntimeWorkflowAction } from "./contracts";
 import { candidateGateStages, getRuntimeGateFreshness, isStageComplete } from "./workflow";
 
 export function RuntimeCommandBar({
@@ -24,19 +25,7 @@ export function RuntimeCommandBar({
   task: RuntimeTask;
   viewedStageId: StageId;
   onRun: () => Promise<void>;
-  onAction: (
-    action:
-      | "approve-spec"
-      | "approve-plan"
-      | "plan"
-      | "implement"
-      | "repair"
-      | "review"
-      | "test"
-      | "final-review"
-      | "approve-merge"
-      | "grant-retry",
-  ) => Promise<void>;
+  onAction: (action: RuntimeWorkflowAction) => Promise<void>;
   onFinishGrill: (acceptRemaining: boolean) => Promise<void>;
 }) {
   const [pending, setPending] = useState(false);
@@ -68,12 +57,11 @@ export function RuntimeCommandBar({
   const unresolvedGrill = task.grillSession?.questions.filter((question) => !question.answer).length ?? 0;
   const actionable = ready || failed || repairRequired || blocked;
   const Icon = running ? CircleNotch : failed || blocked || repairRequired || approvalBlocked ? WarningCircle : CheckCircle;
-  const invoke = async () => {
-    if (!next?.action) return;
+  const invoke = async (action: RuntimeWorkflowAction) => {
     setPending(true);
     setActionError(null);
     try {
-      await onAction(next.action);
+      await onAction(action);
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "The action could not be completed.");
     } finally {
@@ -156,23 +144,19 @@ export function RuntimeCommandBar({
       <div className="stage-command-bar__actions">
         {(task.status === "queued" ||
           (failed &&
-            task.currentStage !== "plan" &&
-            !["implement", "dev-review", "test", "final-review"].includes(task.currentStage))) && (
+            !["specification", "plan", "implement", "dev-review", "test", "final-review"].includes(task.currentStage))) && (
           <Button tone="primary" compact icon={Play} onClick={() => void onRun()}>
             {failed ? "Retry stage" : "Run investigation"}
           </Button>
         )}
         {actionable && next?.action ? (
-          <Button
-            tone="primary"
-            compact
-            icon={Play}
-            disabled={pending || approvalBlocked}
-            title={approvalBlocked ? "Approval is blocked until every candidate-bound gate is fresh." : undefined}
-            onClick={() => void invoke()}
-          >
-            {pending ? "Starting..." : next.label}
-          </Button>
+          <RuntimeWorkflowActionButton
+            action={next.action}
+            label={next.label}
+            pending={pending}
+            approvalBlocked={approvalBlocked}
+            onInvoke={invoke}
+          />
         ) : null}
         {openGrill ? (
           <Button
@@ -195,9 +179,47 @@ export function RuntimeCommandBar({
   );
 }
 
-function nextAction(task: RuntimeTask) {
+export function RuntimeWorkflowActionButton({
+  action,
+  label,
+  pending,
+  approvalBlocked,
+  onInvoke,
+}: {
+  action: RuntimeWorkflowAction;
+  label: string;
+  pending: boolean;
+  approvalBlocked: boolean;
+  onInvoke: (action: RuntimeWorkflowAction) => Promise<void>;
+}) {
+  return (
+    <Button
+      tone="primary"
+      compact
+      icon={Play}
+      disabled={pending || approvalBlocked}
+      title={approvalBlocked ? "Approval is blocked until every candidate-bound gate is fresh." : undefined}
+      onClick={() => onInvoke(action)}
+    >
+      {pending ? "Starting..." : label}
+    </Button>
+  );
+}
+
+export function nextAction(task: RuntimeTask) {
   const currentAttempts = getEffectiveStageRunAttempts(task);
   const retryAllowanceExhausted = currentAttempts >= getEffectiveStageRunLimit(task);
+  if (
+    ["failed", "cancelled"].includes(task.status) &&
+    task.currentStage === "specification" &&
+    !retryAllowanceExhausted
+  )
+    return {
+      action: "specification" as const,
+      label: "Retry specification",
+      title: "Retry the failed specification synthesis",
+      detail: task.error ?? "The prior specification synthesis failed; retained evidence remains available.",
+    };
   if (
     (task.status === "blocked" ||
       (["repair-required", "failed"].includes(task.status) && retryAllowanceExhausted)) &&

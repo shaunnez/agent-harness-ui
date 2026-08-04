@@ -1371,9 +1371,12 @@ function canStartRun(task, kind) {
   const stage = stageForRun(kind, task.currentStage);
   const attempts = task.attemptsByStage?.[stage] ?? 0;
   if (task.status === "blocked" || attempts >= stageRunLimitFor(task, stage)) return false;
+  if (kind === "specification" && ["failed", "cancelled"].includes(task.status) && task.currentStage !== "specification") {
+    return false;
+  }
   const allowed = {
     investigation: ["queued", "failed", "cancelled"],
-    specification: ["awaiting-grill"],
+    specification: ["awaiting-grill", "failed", "cancelled"],
     planning: ["failed", "cancelled"],
     implementation: ["ready-for-implementation", "failed", "cancelled"],
     repair: ["repair-required", "failed", "cancelled"],

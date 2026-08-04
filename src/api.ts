@@ -163,6 +163,7 @@ export async function runTaskAction(
   action:
     | "approve-spec"
     | "approve-plan"
+    | "specification"
     | "plan"
     | "implement"
     | "repair"

@@ -4,6 +4,7 @@ import type { TaskRouteDetail } from "../../routes";
 export type RuntimeWorkflowAction =
   | "approve-spec"
   | "approve-plan"
+  | "specification"
   | "plan"
   | "implement"
   | "repair"

@@ -405,7 +405,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
       }
 
       const actionMatch = url.pathname.match(
-        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|plan|implement|repair|review|test|final-review|approve-merge|grant-retry)$/,
+        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|specification|plan|implement|repair|review|test|final-review|approve-merge|grant-retry)$/,
       );
       if (request.method === "POST" && actionMatch) {
         const id = decodeURIComponent(actionMatch[1]);
@@ -525,6 +525,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
             statuses: ["queued", "failed", "cancelled"],
             stages: ["triage", "scouts", "grill"],
           },
+          specification: { kind: "specification", statuses: ["failed", "cancelled"], stages: ["specification"] },
           plan: { kind: "planning", statuses: ["failed", "cancelled"], stages: ["plan"] },
           implement: {
             kind: "implementation",
@@ -619,14 +620,20 @@ function retryGrantContext(task) {
   if (candidateBoundGrant && !validRetryCandidate(candidate)) {
     return { error: "The exhausted candidate-bound stage is missing an exact candidate identity; resolve it before granting a retry." };
   }
-  if (reservation && (
+  if (!reservation || (
     typeof reservation.id !== "string" ||
     !reservation.id.trim() ||
     reservation.stage !== grantedStage ||
     !Number.isInteger(reservation.workflowAttempt) ||
     reservation.workflowAttempt < 1 ||
     reservation.workflowAttempt !== currentAttempts ||
-    !validRetryReservationCandidateBinding(reservation, candidateBoundGrant, candidate, grantedStage) ||
+    !validRetryReservationCandidateBinding(
+      reservation,
+      candidateBoundGrant,
+      candidate,
+      grantedStage,
+      task.stageRunReservations,
+    ) ||
     !validRetryReservationKind(grantedStage, reservation.kind)
   )) {
     return { error: "The exhausted stage has an inconsistent workflow reservation; resolve it before granting a retry." };
@@ -696,7 +703,7 @@ function validRetryCandidate(candidate) {
     typeof candidate.headRevision === "string" && candidate.headRevision.trim().length > 0;
 }
 
-function validRetryReservationCandidateBinding(reservation, candidateRequired, candidate, grantedStage) {
+function validRetryReservationCandidateBinding(reservation, candidateRequired, candidate, grantedStage, reservations) {
   const allNull = reservation.candidateId == null &&
     reservation.candidateRevision == null &&
     reservation.candidateHeadRevision == null;
@@ -721,16 +728,52 @@ function validRetryReservationCandidateBinding(reservation, candidateRequired, c
     ) {
       return false;
     }
-    if (!candidate?.revisions?.length) return false;
-    const priorRevision = candidate.revisions.find((revision) => revision.number === reservation.candidateRevision);
-    const currentRevision = candidate.revisions.find((revision) => revision.number === candidate.revisionNumber);
-    return priorRevision?.headRevision === reservation.candidateHeadRevision &&
-      currentRevision?.headRevision === candidate.headRevision;
+    return validAdjacentRepairLineage(candidate, reservation, reservations?.implement);
   }
   if (!sourceReservation || reservation.kind !== "repair" || reservation.candidateId !== candidate?.id) return false;
-  const previousRevision = candidate?.revisions?.find((revision) => revision.number === reservation.candidateRevision);
-  return reservation.candidateRevision + 1 === candidate?.revisionNumber &&
-    previousRevision?.headRevision === reservation.candidateHeadRevision;
+  return validAdjacentRepairLineage(candidate, reservation, reservation);
+}
+
+function validAdjacentRepairLineage(candidate, priorReservation, repairReservation) {
+  const revisions = candidate?.revisions;
+  if (!Array.isArray(revisions) || revisions.length !== candidate.revisionNumber) return false;
+  const byNumber = new Map();
+  for (const revision of revisions) {
+    if (
+      !Number.isInteger(revision?.number) ||
+      revision.number < 1 ||
+      revision.number > candidate.revisionNumber ||
+      byNumber.has(revision.number)
+    ) {
+      return false;
+    }
+    byNumber.set(revision.number, revision);
+  }
+  for (let number = 1; number <= candidate.revisionNumber; number += 1) {
+    if (!byNumber.has(number)) return false;
+  }
+  const priorRevision = byNumber.get(priorReservation.candidateRevision);
+  const currentRevision = byNumber.get(candidate.revisionNumber);
+  const sourceReservationId = currentRevision?.sourceWorkflowReservationId;
+  const sourceAttempt = currentRevision?.sourceWorkflowAttempt;
+  return priorReservation.candidateRevision + 1 === candidate.revisionNumber &&
+    priorRevision?.headRevision === priorReservation.candidateHeadRevision &&
+    currentRevision?.headRevision === candidate.headRevision &&
+    currentRevision?.reason === "repair" &&
+    typeof sourceReservationId === "string" &&
+    sourceReservationId.trim().length > 0 &&
+    Number.isInteger(sourceAttempt) &&
+    sourceAttempt > 0 &&
+    candidate.sourceWorkflowReservationId === sourceReservationId &&
+    candidate.sourceWorkflowAttempt === sourceAttempt &&
+    repairReservation?.id === sourceReservationId &&
+    repairReservation.workflowAttempt === sourceAttempt &&
+    repairReservation.stage === "implement" &&
+    repairReservation.kind === "repair" &&
+    repairReservation.candidateId === candidate.id &&
+    repairReservation.candidateRevision === priorRevision.number &&
+    repairReservation.candidateHeadRevision === priorRevision.headRevision &&
+    (priorReservation.stage === "implement" || repairReservation.id !== priorReservation.id);
 }
 
 function validRetrySourceCandidateBinding(reservation, candidateRequired, candidate, grantedStage) {

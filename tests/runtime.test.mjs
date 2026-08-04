@@ -2368,6 +2368,75 @@ test("resolves the current-stage retry allowance with zero and legacy fallbacks"
   });
 });
 
+test("renders and dispatches the bounded specification retry action", () => {
+  return withWorkspace(async ({ RuntimeCommandBar, RuntimeWorkflowActionButton, nextAction }) => {
+    const baseProps = {
+      onRun: async () => {},
+      onAction: async () => {},
+      onFinishGrill: async () => {},
+    };
+    const failedSpecification = createTask({
+      status: "failed",
+      currentStage: "specification",
+      attemptsByStage: { specification: 1 },
+      error: "Synthesis timed out.",
+    });
+    const retryAction = nextAction(failedSpecification);
+    assert.equal(retryAction.action, "specification");
+    assert.equal(retryAction.label, "Retry specification");
+    assert.equal(nextAction({ ...failedSpecification, status: "cancelled" }).action, "specification");
+
+    const retryMarkup = renderToStaticMarkup(React.createElement(RuntimeCommandBar, {
+      ...baseProps,
+      task: failedSpecification,
+      viewedStageId: "specification",
+    }));
+    assert.match(retryMarkup, />Retry specification</);
+    assert.doesNotMatch(retryMarkup, /Run investigation/);
+
+    const dispatchedActions = [];
+    const retryButton = RuntimeWorkflowActionButton({
+      action: retryAction.action,
+      label: retryAction.label,
+      pending: false,
+      approvalBlocked: false,
+      onInvoke: async (action) => dispatchedActions.push(action),
+    });
+    await retryButton.props.onClick();
+    assert.deepEqual(dispatchedActions, ["specification"]);
+
+    const blockedTask = createTask({
+      status: "blocked",
+      currentStage: "specification",
+      attemptsByStage: { specification: 3 },
+      stageRunLimits: { specification: 3 },
+    });
+    assert.equal(nextAction(blockedTask).action, "grant-retry");
+    const blockedMarkup = renderToStaticMarkup(React.createElement(RuntimeCommandBar, {
+      ...baseProps,
+      task: blockedTask,
+      viewedStageId: "specification",
+    }));
+    assert.match(blockedMarkup, />Grant one stage attempt</);
+    assert.doesNotMatch(blockedMarkup, /Retry specification/);
+
+    const postGrantTask = createTask({
+      status: "failed",
+      currentStage: "specification",
+      attemptsByStage: { specification: 3 },
+      stageRunLimits: { specification: 4 },
+    });
+    assert.equal(nextAction(postGrantTask).action, "specification");
+    const postGrantMarkup = renderToStaticMarkup(React.createElement(RuntimeCommandBar, {
+      ...baseProps,
+      task: postGrantTask,
+      viewedStageId: "specification",
+    }));
+    assert.match(postGrantMarkup, />Retry specification</);
+    assert.doesNotMatch(postGrantMarkup, /Grant one stage attempt/);
+  });
+});
+
 test("uses the authoritative current-stage allowance for workspace attempts and retry actions", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const task = createTask({
@@ -2683,9 +2752,10 @@ async function withWorkspace(run) {
     const runActivity = await vite.ssrLoadModule("/src/components/RunActivity.tsx");
     const runtimeInspector = await vite.ssrLoadModule("/src/components/runtime/RuntimeInspectorPanels.tsx");
     const runtimeWorkflow = await vite.ssrLoadModule("/src/components/runtime/workflow.ts");
+    const runtimeCommandBar = await vite.ssrLoadModule("/src/components/runtime/RuntimeCommandBar.tsx");
     const runtimeStageLimits = await vite.ssrLoadModule("/src/runtime-stage-limits.ts");
     const requestIdentity = await vite.ssrLoadModule("/src/requestIdentity.ts");
-    return await run({ ...module, ...candidateDiffViewer, ...runActivity, ...runtimeInspector, ...runtimeWorkflow, ...runtimeStageLimits, ...requestIdentity, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
+    return await run({ ...module, ...candidateDiffViewer, ...runActivity, ...runtimeInspector, ...runtimeWorkflow, ...runtimeCommandBar, ...runtimeStageLimits, ...requestIdentity, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
   } finally {
     await vite.close();
   }

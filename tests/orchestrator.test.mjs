@@ -2466,6 +2466,125 @@ test("auto-advances a zero-question Grill session into specification", async () 
   }
 });
 
+test("specification retry succeeds through the read-only specification path", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-specification-retry-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Retry failed specification",
+      description: "Recover the specification handoff after a failed synthesis.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "failed";
+      draft.currentStage = "specification";
+      draft.completedStages = ["triage", "scouts", "grill"];
+      draft.attemptsByStage.specification = 1;
+      draft.error = "The prior specification synthesis failed.";
+    });
+    let request;
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      runCodex: async (options) => {
+        request = options;
+        return {
+          finalText: "## Specification\n\nThe retry produced a grounded handoff.",
+          usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+        };
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id, "specification"), true);
+    const finished = await waitForStatus(store, task.id, "awaiting-spec-approval");
+    assert.equal(request.sandbox, "read-only");
+    assert.equal(request.networkAccess, false);
+    assert.equal(finished.currentStage, "specification");
+    assert.equal(finished.attemptsByStage.specification, 2);
+    assert.equal(finished.stageRunReservations.specification.kind, "specification");
+    assert.equal(finished.runs.at(-1).role, "specification");
+    assert.equal(finished.artifacts.at(-1).stage, "specification");
+    assert.deepEqual(finished.completedStages, ["triage", "scouts", "grill", "specification"]);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("specification retry cancellation does not advance beyond specification", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-specification-cancel-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Cancel specification retry",
+      description: "Cancellation must preserve the failed specification boundary.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "cancelled";
+      draft.currentStage = "specification";
+      draft.completedStages = ["triage", "scouts", "grill"];
+      draft.attemptsByStage.specification = 1;
+    });
+    let request;
+    const orchestrator = new TaskOrchestrator(store, {
+      runCodex: ({ signal, ...options }) => {
+        request = { signal, ...options };
+        return new Promise((_, reject) => {
+          signal.addEventListener("abort", () => reject(new Error("Codex run cancelled.")), { once: true });
+        });
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id, "specification"), true);
+    for (let attempt = 0; !request && attempt < 100; attempt += 1) await new Promise((resolve) => setTimeout(resolve, 5));
+    assert.equal(typeof request?.signal?.aborted, "boolean");
+    assert.equal(await orchestrator.cancel(task.id), true);
+    const cancelled = await waitForStatus(store, task.id, "cancelled");
+    assert.equal(cancelled.currentStage, "specification");
+    assert.deepEqual(cancelled.completedStages, ["triage", "scouts", "grill"]);
+    assert.equal(cancelled.attemptsByStage.specification, 2);
+    assert.equal(cancelled.activeRunKind, null);
+    assert.equal(cancelled.runs.at(-1).status, "cancelled");
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("specification retry rejects blocked, exhausted, and wrong-stage states", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-specification-boundary-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Guard specification retry",
+      description: "Keep specification retry eligibility explicit.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const orchestrator = new TaskOrchestrator(store, { runCodex: async () => { throw new Error("must not run"); } });
+    for (const item of [
+      { status: "blocked", currentStage: "specification", attempts: 1 },
+      { status: "failed", currentStage: "specification", attempts: 3 },
+      { status: "failed", currentStage: "plan", attempts: 0 },
+    ]) {
+      await store.update(task.id, (draft) => {
+        draft.status = item.status;
+        draft.currentStage = item.currentStage;
+        draft.attemptsByStage.specification = item.attempts;
+      });
+      assert.equal(await orchestrator.start(task.id, "specification"), false, `${item.status}:${item.currentStage}`);
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("counts each failed investigation stage against its own retry allowance", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-investigation-budget-"));
   try {
