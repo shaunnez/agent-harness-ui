@@ -226,6 +226,93 @@ test("creates, lists, and starts a local task", async () => {
   }
 });
 
+test("rejects closing a task while merge reconciliation is pending", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Pending merge reconciliation",
+      description: "Preserve approval finalization after the Git fast-forward starts.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "merging";
+      draft.currentStage = "approval";
+      draft.mergeIntent = {
+        status: "pending",
+        candidateId: "C1",
+        candidateRevision: 1,
+        candidateHeadRevision: "candidate-c1-r1",
+        targetBranch: "main",
+        targetHeadRevision: "target-r1",
+        mergeMethod: "fast-forward",
+        requestedAt: "2026-08-04T00:00:00.000Z",
+      };
+    });
+
+    const closeResponse = await fetch(`${origin}/api/tasks/${task.id}/close`, {
+      method: "POST",
+      body: JSON.stringify({ reason: "not-needed", note: "Close during merge." }),
+    });
+    assert.equal(closeResponse.status, 409);
+    assert.match((await closeResponse.json()).error, /pending merge reconciliation/i);
+    const unchanged = await store.get(task.id);
+    assert.equal(unchanged.status, "merging");
+    assert.equal(unchanged.mergeIntent.status, "pending");
+    assert.equal(unchanged.closure, null);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("atomically rejects close when merge reconciliation begins after the initial read", async () => {
+  let taskId = null;
+  const { directory, origin, server, store } = await createServer({
+    async beforeTransition(targetStore, id) {
+      if (id !== taskId) return;
+      await targetStore.update(id, (draft) => {
+        draft.status = "merging";
+        draft.currentStage = "approval";
+        draft.mergeIntent = {
+          status: "pending",
+          candidateId: "C1",
+          candidateRevision: 1,
+          candidateHeadRevision: "candidate-c1-r1",
+          targetBranch: "main",
+          targetHeadRevision: "target-r1",
+          mergeMethod: "fast-forward",
+          requestedAt: "2026-08-04T00:00:00.000Z",
+        };
+      });
+    },
+  });
+  try {
+    const response = await createTask(origin, {
+      title: "Close merge race",
+      description: "A pending close must lose to merge reconciliation.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    taskId = task.id;
+
+    const closeResponse = await fetch(`${origin}/api/tasks/${task.id}/close`, {
+      method: "POST",
+      body: JSON.stringify({ reason: "not-needed", note: "Racing close." }),
+    });
+    assert.equal(closeResponse.status, 409);
+    assert.match((await closeResponse.json()).error, /state changed|merge reconciliation/i);
+    const preserved = await store.get(task.id);
+    assert.equal(preserved.status, "merging");
+    assert.equal(preserved.mergeIntent.status, "pending");
+    assert.equal(preserved.closure, null);
+    assert.doesNotMatch(preserved.events.map((event) => event.title).join("\n"), /Task closed/);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("returns backward-compatible structured run activity through task APIs", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
@@ -1307,6 +1394,7 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
     assert.equal(updated.decisions.at(-1).previousLimit, 3);
     assert.equal(updated.decisions.at(-1).newLimit, 4);
     assert.equal(updated.decisions.at(-1).sourceRunId, "run-failed-repair-3");
+    assert.deepEqual(updated.decisions.at(-1).sourceRunIds, ["run-failed-repair-3"]);
     assert.equal(updated.decisions.at(-1).candidateId, "C1");
     assert.equal(updated.decisions.at(-1).candidateRevision, 1);
     assert.equal(updated.decisions.at(-1).candidateHeadRevision, "candidate-c1-r1");
@@ -1319,6 +1407,7 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
     assert.equal(updated.candidates.at(-1).status, "repair_required");
     assert.equal(updated.events.at(-1).title, "One repair attempt granted");
     assert.equal(updated.events.at(-1).sourceRunId, "run-failed-repair-3");
+    assert.deepEqual(updated.events.at(-1).sourceRunIds, ["run-failed-repair-3"]);
     assert.equal(updated.events.at(-1).candidateId, "C1");
     assert.equal(updated.events.at(-1).candidateRevision, 1);
     assert.equal(updated.events.at(-1).candidateHeadRevision, "candidate-c1-r1");
@@ -1630,13 +1719,21 @@ test("does not attribute a repaired candidate grant to the prior candidate revis
         sourceWorkflowAttempt: 1,
         sourceWorkflowReservationId: "reservation-c1-r1-repair-1",
         revisions: [
-          { number: 1, headRevision: "candidate-c1-r1", reason: "assembly" },
+          {
+            number: 1,
+            headRevision: "candidate-c1-r1",
+            reason: "assembly",
+            sourceWorkflowAttempt: 1,
+            sourceWorkflowReservationId: "reservation-c1-r1-implementation-1",
+            createdAt: "2026-08-04T00:00:00.000Z",
+          },
           {
             number: 2,
             headRevision: "candidate-c1-r2",
             reason: "repair",
             sourceWorkflowAttempt: 1,
             sourceWorkflowReservationId: "reservation-c1-r1-repair-1",
+            createdAt: "2026-08-04T00:01:00.000Z",
           },
         ],
       });
@@ -1764,6 +1861,12 @@ test("rejects adjacent prior-revision grants without unique repair provenance", 
           candidate.revisions[1].sourceWorkflowReservationId = "different-repair-reservation";
         },
       },
+      {
+        name: "malformed older revision",
+        mutate(candidate) {
+          delete candidate.revisions[0].createdAt;
+        },
+      },
     ]) {
       const response = await createTask(origin, {
         title: `Reject ${item.name}`,
@@ -1784,13 +1887,21 @@ test("rejects adjacent prior-revision grants without unique repair provenance", 
           sourceWorkflowAttempt: 1,
           sourceWorkflowReservationId: "reservation-c1-r1-repair-1",
           revisions: [
-            { number: 1, headRevision: "candidate-c1-r1", reason: "assembly" },
+            {
+              number: 1,
+              headRevision: "candidate-c1-r1",
+              reason: "assembly",
+              sourceWorkflowAttempt: 1,
+              sourceWorkflowReservationId: "reservation-c1-r1-implementation-1",
+              createdAt: "2026-08-04T00:00:00.000Z",
+            },
             {
               number: 2,
               headRevision: "candidate-c1-r2",
               reason: "repair",
               sourceWorkflowAttempt: 1,
               sourceWorkflowReservationId: "reservation-c1-r1-repair-1",
+              createdAt: "2026-08-04T00:01:00.000Z",
             },
           ],
         };
@@ -1822,6 +1933,151 @@ test("rejects adjacent prior-revision grants without unique repair provenance", 
       assert.equal(grantResponse.status, 409, item.name);
       assert.match((await grantResponse.json()).error, /inconsistent workflow reservation/i, item.name);
       assert.equal((await store.get(task.id)).stageRunLimits["dev-review"], 3, item.name);
+    }
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects duplicate source runs for a singleton workflow reservation", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Duplicate singleton provenance",
+      description: "A Plan retry must identify one exact source run at most.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "plan";
+      draft.attemptsByStage.plan = draft.stageRunLimits.plan;
+      draft.stageRunReservations.plan = {
+        id: "reservation-plan-3",
+        stage: "plan",
+        kind: "planning",
+        workflowAttempt: 3,
+        candidateId: null,
+        candidateRevision: null,
+        candidateHeadRevision: null,
+        reservedAt: "2026-08-04T00:00:00.000Z",
+      };
+      draft.runs.push(...[1, 2].map((attempt) => ({
+        id: `run-plan-duplicate-${attempt}`,
+        stage: "plan",
+        kind: "agent",
+        role: "plan",
+        status: "failed",
+        candidateId: null,
+        candidateRevision: null,
+        candidateHeadRevision: null,
+        workPackageId: null,
+        attempt,
+        workflowAttempt: 3,
+        workflowReservationId: "reservation-plan-3",
+      })));
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 409);
+    assert.match((await grantResponse.json()).error, /multiple source runs for a singleton stage/i);
+    const unchanged = await store.get(task.id);
+    assert.equal(unchanged.stageRunLimits.plan, 3);
+    assert.equal(unchanged.decisions.length, 0);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("persists every source run for a multi-package implementation reservation", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Multi-package implementation provenance",
+      description: "An implementation retry retains every authorized slice run.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "implement";
+      draft.attemptsByStage.implement = draft.stageRunLimits.implement;
+      draft.stageRunReservations.implement = {
+        id: "reservation-implement-3",
+        stage: "implement",
+        kind: "implementation",
+        workflowAttempt: 3,
+        candidateId: null,
+        candidateRevision: null,
+        candidateHeadRevision: null,
+        reservedAt: "2026-08-04T00:00:00.000Z",
+      };
+      draft.runs.push(...["S1", "S2"].map((workPackageId) => ({
+        id: `run-implement-${workPackageId}`,
+        stage: "implement",
+        kind: "implementation",
+        role: "implement",
+        status: "failed",
+        candidateId: null,
+        candidateRevision: null,
+        candidateHeadRevision: null,
+        workPackageId,
+        attempt: 1,
+        workflowAttempt: 3,
+        workflowReservationId: "reservation-implement-3",
+      })));
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200);
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits.implement, 4);
+    assert.equal(updated.decisions.at(-1).sourceRunId, "run-implement-S2");
+    assert.deepEqual(updated.decisions.at(-1).sourceRunIds, ["run-implement-S1", "run-implement-S2"]);
+    assert.equal(updated.events.at(-1).sourceRunId, "run-implement-S2");
+    assert.deepEqual(updated.events.at(-1).sourceRunIds, ["run-implement-S1", "run-implement-S2"]);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects retry reservations without a valid persisted reservation timestamp", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    for (const [name, reservedAt] of [
+      ["missing", undefined],
+      ["invalid", "not-a-timestamp"],
+      ["noncanonical", "2026-08-04"],
+    ]) {
+      const response = await createTask(origin, {
+        title: `${name} reservation timestamp`,
+        description: "Retry authority requires a durable reservation timestamp.",
+        repositoryPath: directory,
+        workflow: "implement",
+      });
+      const { task } = await response.json();
+      await store.update(task.id, (draft) => {
+        draft.status = "blocked";
+        draft.currentStage = "plan";
+        draft.attemptsByStage.plan = draft.stageRunLimits.plan;
+        draft.stageRunReservations.plan = {
+          id: `reservation-plan-${name}-3`,
+          stage: "plan",
+          kind: "planning",
+          workflowAttempt: 3,
+          candidateId: null,
+          candidateRevision: null,
+          candidateHeadRevision: null,
+          ...(reservedAt === undefined ? {} : { reservedAt }),
+        };
+      });
+
+      const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+      assert.equal(grantResponse.status, 409, name);
+      assert.match((await grantResponse.json()).error, /inconsistent workflow reservation/i, name);
+      assert.equal((await store.get(task.id)).stageRunLimits.plan, 3, name);
     }
   } finally {
     await cleanup(server, directory);

@@ -126,6 +126,7 @@ export function RuntimeTaskWorkspace({
   const runningPackages = task.workPackages?.filter((item) => item.status === "running") ?? [];
   const worktreeInventory = task.worktreeInventory ?? [];
   const accessBoundary = getAccessBoundaryCopy(task);
+  const mergeReconciliationPending = task.status === "merging" || task.mergeIntent?.status === "pending";
   const completedApprovalWithoutArtifact =
     viewedStageId === "approval" &&
     task.status === "completed" &&
@@ -305,8 +306,14 @@ export function RuntimeTaskWorkspace({
             tone="secondary"
             compact
             icon={Archive}
-            disabled={["running", "cancelling"].includes(task.status) || task.status === "closed"}
-            title={["running", "cancelling"].includes(task.status) ? "Wait for the active process tree to terminate before closing this task." : task.status === "closed" ? "This task is already closed." : "Close as not needed or record the superseding task."}
+            disabled={["running", "cancelling"].includes(task.status) || task.status === "closed" || mergeReconciliationPending}
+            title={mergeReconciliationPending
+              ? "Wait for the pending merge reconciliation before closing this task."
+              : ["running", "cancelling"].includes(task.status)
+                ? "Wait for the active process tree to terminate before closing this task."
+                : task.status === "closed"
+                  ? "This task is already closed."
+                  : "Close as not needed or record the superseding task."}
             onClick={() => void closeTask()}
           >
             Close task

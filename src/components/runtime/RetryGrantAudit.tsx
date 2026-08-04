@@ -6,6 +6,7 @@ export interface RetryGrantAuditFields {
   previousLimit?: number;
   newLimit?: number;
   sourceRunId?: string | null;
+  sourceRunIds?: string[];
   candidateId?: string | null;
   candidateRevision?: number | null;
   candidateHeadRevision?: string | null;
@@ -22,6 +23,7 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
     audit.previousLimit !== undefined ||
     audit.newLimit !== undefined ||
     audit.sourceRunId !== undefined ||
+    audit.sourceRunIds !== undefined ||
     audit.candidateId !== undefined ||
     audit.candidateRevision !== undefined ||
     audit.candidateHeadRevision !== undefined ||
@@ -52,7 +54,13 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
       {audit.newLimit !== undefined && audit.previousLimit === undefined ? (
         <RuntimeRow label="New limit" value={String(audit.newLimit)} />
       ) : null}
-      {audit.sourceRunId !== undefined ? (
+      {audit.sourceRunIds !== undefined ? (
+        <RuntimeRow
+          label="Source run IDs"
+          value={audit.sourceRunIds.length ? audit.sourceRunIds.join(", ") : "No persisted source runs"}
+          mono={audit.sourceRunIds.length > 0}
+        />
+      ) : audit.sourceRunId !== undefined ? (
         <RuntimeRow
           label="Source run ID"
           value={audit.sourceRunId === null ? "No persisted source run" : audit.sourceRunId}

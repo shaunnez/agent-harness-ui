@@ -148,6 +148,7 @@ export interface RuntimeDecision {
   previousLimit?: number;
   newLimit?: number;
   sourceRunId?: string | null;
+  sourceRunIds?: string[];
   candidateId?: string | null;
   candidateRevision?: number | null;
   candidateHeadRevision?: string | null;

@@ -328,26 +328,43 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
           return;
         }
         if (task.status === "running") throw new Error("Cancel the active run before closing this task.");
+        if (task.status === "merging" || task.mergeIntent?.status === "pending") {
+          send(response, 409, { error: "Wait for the pending merge reconciliation before closing this task." });
+          return;
+        }
         const input = await readJson(request);
         const reason = ["not-needed", "superseded", "duplicate"].includes(input.reason) ? input.reason : "not-needed";
         const supersededBy = reason === "superseded" ? String(input.supersededBy ?? "").trim().slice(0, 80) : null;
         const note = String(input.note ?? "").trim().slice(0, 2_000);
         const closedAt = new Date().toISOString();
-        const closed = await store.transition(id, (draft) => draft.status !== "running" && !draft.activeRunKind && draft.status !== "closed", (draft) => {
-          draft.status = "closed";
-          draft.activeRunKind = null;
-          draft.error = null;
-          draft.closure = { reason, supersededBy: supersededBy || null, note, closedAt };
-          draft.events.push({
-            id: crypto.randomUUID(),
-            at: closedAt,
-            category: "decision",
-            tone: "info",
-            stage: draft.currentStage,
-            title: reason === "superseded" ? "Task marked superseded" : "Task closed",
-            detail: supersededBy ? `Superseded by ${supersededBy}${note ? ` - ${note}` : ""}` : note || "No further work is required.",
+        let closed;
+        try {
+          closed = await store.transition(id, (draft) => (
+            draft.status !== "running" &&
+            !draft.activeRunKind &&
+            draft.status !== "closed" &&
+            draft.status !== "merging" &&
+            draft.mergeIntent?.status !== "pending"
+          ), (draft) => {
+            draft.status = "closed";
+            draft.activeRunKind = null;
+            draft.error = null;
+            draft.closure = { reason, supersededBy: supersededBy || null, note, closedAt };
+            draft.events.push({
+              id: crypto.randomUUID(),
+              at: closedAt,
+              category: "decision",
+              tone: "info",
+              stage: draft.currentStage,
+              title: reason === "superseded" ? "Task marked superseded" : "Task closed",
+              detail: supersededBy ? `Superseded by ${supersededBy}${note ? ` - ${note}` : ""}` : note || "No further work is required.",
+            });
           });
-        });
+        } catch (error) {
+          if (error.code !== "TASK_TRANSITION_CONFLICT") throw error;
+          send(response, 409, { error: "Task state changed or merge reconciliation began before it could be closed." });
+          return;
+        }
         send(response, 200, { task: closed });
         return;
       }
@@ -460,6 +477,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               grantedStage,
               currentLimit,
               retrySource,
+              sourceRunIds,
               workflowAttempt,
               workflowCandidateHeadRevision,
               workflowCandidateId,
@@ -479,6 +497,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               previousLimit: currentLimit,
               newLimit: nextStageLimit,
               sourceRunId: retrySource?.id ?? null,
+              sourceRunIds,
               candidateId,
               candidateRevision,
               candidateHeadRevision,
@@ -504,6 +523,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               previousLimit: currentLimit,
               newLimit: nextStageLimit,
               sourceRunId: retrySource?.id ?? null,
+              sourceRunIds,
               candidateId,
               candidateRevision,
               candidateHeadRevision,
@@ -627,6 +647,7 @@ function retryGrantContext(task) {
     !Number.isInteger(reservation.workflowAttempt) ||
     reservation.workflowAttempt < 1 ||
     reservation.workflowAttempt !== currentAttempts ||
+    !validPersistedTimestamp(reservation.reservedAt) ||
     !validRetryReservationCandidateBinding(
       reservation,
       candidateBoundGrant,
@@ -659,11 +680,16 @@ function retryGrantContext(task) {
   ))) {
     return { error: "The exhausted workflow attempt contains conflicting run reservations; resolve it before granting a retry." };
   }
+  const reservationAllowsMultipleRuns = exactReservation?.kind === "implementation" ||
+    exactReservation?.stage === "scouts";
+  if (reservationRuns.length > 1 && !reservationAllowsMultipleRuns) {
+    return { error: "The exhausted workflow reservation has multiple source runs for a singleton stage; resolve the inconsistent history before granting a retry." };
+  }
   const reservationAuthorizesCandidate = exactReservation &&
     validRetrySourceCandidateBinding(exactReservation, candidateBoundGrant, candidate, grantedStage);
-  const retrySource = reservationAuthorizesCandidate && reservationRuns.length === 1
-    ? reservationRuns[0]
-    : null;
+  const sourceRuns = reservationAuthorizesCandidate ? reservationRuns : [];
+  const retrySource = sourceRuns.at(-1) ?? null;
+  const sourceRunIds = sourceRuns.map((run) => run.id);
   const historySnapshot = JSON.stringify({
     currentStage: task.currentStage,
     activeRunKind: task.activeRunKind ?? null,
@@ -687,6 +713,7 @@ function retryGrantContext(task) {
     historySnapshot,
     retrySource,
     sourceRunId: retrySource?.id ?? null,
+    sourceRunIds,
     sourceRunStatus: retrySource?.status ?? null,
     workflowAttempt: exactReservation?.workflowAttempt ?? currentAttempts,
     workflowCandidateId: exactReservation?.candidateId ?? null,
@@ -743,7 +770,15 @@ function validAdjacentRepairLineage(candidate, priorReservation, repairReservati
       !Number.isInteger(revision?.number) ||
       revision.number < 1 ||
       revision.number > candidate.revisionNumber ||
-      byNumber.has(revision.number)
+      byNumber.has(revision.number) ||
+      typeof revision.headRevision !== "string" ||
+      !revision.headRevision.trim() ||
+      revision.reason !== (revision.number === 1 ? "assembly" : "repair") ||
+      !Number.isInteger(revision.sourceWorkflowAttempt) ||
+      revision.sourceWorkflowAttempt < 1 ||
+      typeof revision.sourceWorkflowReservationId !== "string" ||
+      !revision.sourceWorkflowReservationId.trim() ||
+      !validPersistedTimestamp(revision.createdAt)
     ) {
       return false;
     }
@@ -773,7 +808,14 @@ function validAdjacentRepairLineage(candidate, priorReservation, repairReservati
     repairReservation.candidateId === candidate.id &&
     repairReservation.candidateRevision === priorRevision.number &&
     repairReservation.candidateHeadRevision === priorRevision.headRevision &&
+    validPersistedTimestamp(repairReservation.reservedAt) &&
     (priorReservation.stage === "implement" || repairReservation.id !== priorReservation.id);
+}
+
+function validPersistedTimestamp(value) {
+  if (typeof value !== "string" || !value.trim()) return false;
+  const timestamp = new Date(value);
+  return Number.isFinite(timestamp.getTime()) && timestamp.toISOString() === value;
 }
 
 function validRetrySourceCandidateBinding(reservation, candidateRequired, candidate, grantedStage) {
@@ -883,7 +925,8 @@ function sameRetryGrantContext(expected, current) {
     "workflowCandidateRevision",
     "workflowCandidateHeadRevision",
     "workflowReservationId",
-  ].every((field) => expected[field] === current[field]);
+  ].every((field) => expected[field] === current[field]) &&
+    JSON.stringify(expected.sourceRunIds) === JSON.stringify(current.sourceRunIds);
 }
 
 async function listChangelog(repositoryPath, limit) {

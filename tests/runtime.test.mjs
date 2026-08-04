@@ -2573,6 +2573,7 @@ test("renders retry grant provenance in activity and decision surfaces without f
       previousLimit: 3,
       newLimit: 4,
       sourceRunId: "run-source",
+      sourceRunIds: ["run-source-S1", "run-source-S2"],
       candidateId: "C1",
       candidateRevision: 2,
       candidateHeadRevision: "candidate-c1-r2",
@@ -2592,6 +2593,7 @@ test("renders retry grant provenance in activity and decision surfaces without f
         previousLimit: 3,
         newLimit: 4,
         sourceRunId: "run-source",
+        sourceRunIds: ["run-source-S1", "run-source-S2"],
         candidateId: "C1",
         candidateRevision: 2,
         candidateHeadRevision: "candidate-c1-r2",
@@ -2616,7 +2618,8 @@ test("renders retry grant provenance in activity and decision surfaces without f
     assert.match(workspaceMarkup, /Granted stage/);
     assert.match(workspaceMarkup, /Implement \(implement\)/);
     assert.match(workspaceMarkup, /3 → 4/);
-    assert.match(workspaceMarkup, /run-source/);
+    assert.match(workspaceMarkup, /Source run IDs/);
+    assert.match(workspaceMarkup, /run-source-S1, run-source-S2/);
     assert.match(workspaceMarkup, /C1 revision 2/);
     assert.match(workspaceMarkup, /candidate-c1-r2/);
     assert.match(workspaceMarkup, /Workflow attempt/);
@@ -2632,6 +2635,7 @@ test("renders retry grant provenance in activity and decision surfaces without f
         previousLimit: undefined,
         newLimit: undefined,
         sourceRunId: undefined,
+        sourceRunIds: undefined,
         candidateId: undefined,
         candidateRevision: undefined,
         candidateHeadRevision: undefined,
@@ -2650,15 +2654,44 @@ test("renders retry grant provenance in activity and decision surfaces without f
     assert.doesNotMatch(legacyMarkup, /Retry grant audit/);
     assert.doesNotMatch(legacyMarkup, /No persisted source run/);
 
-    const nullAudit = { ...auditEvent, sourceRunId: null };
+    const nullAudit = { ...auditEvent, sourceRunId: null, sourceRunIds: [] };
     const nullMarkup = renderToStaticMarkup(React.createElement(RuntimeActivity, { events: [nullAudit] }));
-    assert.match(nullMarkup, /No persisted source run/);
+    assert.match(nullMarkup, /No persisted source runs/);
     const nullRunActivityMarkup = renderToStaticMarkup(React.createElement(RunActivity, {
       task: createTask({ events: [nullAudit] }),
       initialFilter: "activity",
       initialSelectedId: "event:grant-event",
     }));
-    assert.match(nullRunActivityMarkup, /No persisted source run/);
+    assert.match(nullRunActivityMarkup, /No persisted source runs/);
+  });
+});
+
+test("disables task closure while merge reconciliation is pending", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const task = createTask({
+      status: "merging",
+      currentStage: "approval",
+      mergeIntent: {
+        status: "pending",
+        candidateId: "C1",
+        candidateRevision: 1,
+        candidateHeadRevision: "candidate-c1-r1",
+        targetBranch: "main",
+        targetHeadRevision: "target-r1",
+        mergeMethod: "fast-forward",
+        requestedAt: "2026-08-04T00:00:00.000Z",
+      },
+    });
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task,
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onCloseTask: async () => {},
+    }));
+    assert.match(markup, /disabled=""[^>]*title="Wait for the pending merge reconciliation before closing this task\."[^>]*>.*Close task/s);
   });
 });
 
