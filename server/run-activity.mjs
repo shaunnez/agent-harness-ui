@@ -411,7 +411,10 @@ function evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId) {
   if (!summary || typeof summary !== "object") {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "missing_authoritative_summary", null);
   }
-  if (summary.bindingExplicit === false) return createFreshness("test", target, sourceRunId, sourceArtifactId, "missing_binding", null);
+  const summaryBindingMarkerReason = persistedBindingMarkerReason(summary);
+  if (summaryBindingMarkerReason) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, summaryBindingMarkerReason, null);
+  }
   const summaryBinding = readExplicitCandidateBinding(summary);
   if (!summaryBinding.valid) return createFreshness("test", target, sourceRunId, sourceArtifactId, summaryBinding.code, null);
   const identityReason = compareCandidateBinding(summaryBinding, target);
@@ -432,9 +435,12 @@ function evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId) {
   ]);
   const rowBindings = [];
   for (const row of summary.rows) {
+    const rowBindingMarkerReason = persistedBindingMarkerReason(row);
+    if (rowBindingMarkerReason) {
+      return createFreshness("test", target, sourceRunId, sourceArtifactId, rowBindingMarkerReason, null);
+    }
     const rowBinding = readExplicitCandidateBinding(row);
     if (!rowBinding.valid) return createFreshness("test", target, sourceRunId, sourceArtifactId, rowBinding.code, null);
-    if (row.bindingExplicit === false) return createFreshness("test", target, sourceRunId, sourceArtifactId, "missing_binding", null);
     identities.add(`${rowBinding.candidateId}:${rowBinding.candidateRevision}`);
     rowBindings.push(rowBinding);
     if (!["passed", "failed"].includes(row.status)) {
@@ -629,14 +635,16 @@ function attachmentEvidenceError(run, artifact) {
   const artifactReason = compareCandidateBinding(artifactBinding, runBinding);
   if (artifactReason) return reasonRecord(artifactReason);
   if (run.stage === "test" && artifact.focusedTest) {
-    if (artifact.focusedTest.bindingExplicit === false) return reasonRecord("missing_binding");
+    const summaryBindingMarkerReason = persistedBindingMarkerReason(artifact.focusedTest);
+    if (summaryBindingMarkerReason) return reasonRecord(summaryBindingMarkerReason);
     const summaryBinding = readExplicitCandidateBinding(artifact.focusedTest);
     if (!summaryBinding.valid) return reasonRecord(summaryBinding.code);
     const identities = new Set();
     for (const row of artifact.focusedTest.rows ?? []) {
+      const rowBindingMarkerReason = persistedBindingMarkerReason(row);
+      if (rowBindingMarkerReason) return reasonRecord(rowBindingMarkerReason);
       const rowBinding = readExplicitCandidateBinding(row);
       if (!rowBinding.valid) return reasonRecord(rowBinding.code);
-      if (row.bindingExplicit === false) return reasonRecord("missing_binding");
       identities.add(`${rowBinding.candidateId}:${rowBinding.candidateRevision}`);
     }
     if (identities.size > 1) return reasonRecord("mixed_evidence");
@@ -685,6 +693,14 @@ function hasExplicitCandidateFields(value) {
   );
 }
 
+function persistedBindingMarkerReason(value) {
+  if (!value || typeof value !== "object") return null;
+  if (!Object.prototype.hasOwnProperty.call(value, "bindingExplicit")) return null;
+  if (value.bindingExplicit === false) return "missing_binding";
+  if (value.bindingExplicit !== true) return "contradictory_evidence";
+  return null;
+}
+
 function isValidPersistedGateFinding(finding) {
   if (!finding || typeof finding !== "object" || Array.isArray(finding)) return false;
   if (!["P0", "P1", "P2", "P3"].includes(finding.severity)) return false;
@@ -720,6 +736,10 @@ function isValidPersistedTestRow(row) {
     (assertion.expected == null || typeof assertion.expected === "string")
   ))) return false;
   if (row.failureDetails != null && typeof row.failureDetails !== "string") return false;
+  if (
+    Object.prototype.hasOwnProperty.call(row, "bindingExplicit") &&
+    typeof row.bindingExplicit !== "boolean"
+  ) return false;
   return true;
 }
 

@@ -604,6 +604,87 @@ test("requires persisted Test failedRowIds to match the exact failed-row set", (
   assert.deepEqual(validFailedTask.gateFreshness.test.focusedTestRows.map((row) => row.id), ["row-failed"]);
 });
 
+test("rejects malformed persisted Test binding markers and preserves explicit false as missing", () => {
+  const cases = [
+    {
+      name: "summary marker is not boolean",
+      summary: { ...makeFocusedTestSummary(), bindingExplicit: "true" },
+      code: "contradictory_evidence",
+    },
+    {
+      name: "row marker is not boolean",
+      summary: makeFocusedTestSummary({
+        rows: [{ ...makeTestRow(), bindingExplicit: "not-a-boolean" }],
+      }),
+      code: "contradictory_evidence",
+    },
+    {
+      name: "summary explicitly lacks a binding",
+      summary: { ...makeFocusedTestSummary(), bindingExplicit: false },
+      code: "missing_binding",
+    },
+    {
+      name: "row explicitly lacks a binding",
+      summary: makeFocusedTestSummary({
+        rows: [{ ...makeTestRow(), bindingExplicit: false }],
+      }),
+      code: "missing_binding",
+    },
+  ];
+
+  for (const item of cases) {
+    const run = makeRuntimeRun({
+      id: `RUN-TEST-BINDING-MARKER-${item.name}`,
+      stage: "test",
+      kind: "test",
+      gateResult: makeGateResult({ stage: "test" }),
+      test: item.summary,
+    });
+    const task = makeRuntimeTask({ runs: [run] });
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness.test.fresh, false, item.name);
+    assert.equal(task.gateFreshness.test.reasonCode, item.code, item.name);
+    assert.deepEqual(run.test, item.summary, `${item.name}: retained for audit`);
+  }
+});
+
+test("persists malformed attached Test binding markers as contradictory evidence", () => {
+  for (const [name, focusedTest] of [
+    ["summary marker", { ...makeFocusedTestSummary(), bindingExplicit: "true" }],
+    [
+      "row marker",
+      makeFocusedTestSummary({ rows: [{ ...makeTestRow(), bindingExplicit: "not-a-boolean" }] }),
+    ],
+  ]) {
+    const run = makeRuntimeRun({
+      id: `RUN-ATTACHED-TEST-BINDING-${name}`,
+      stage: "test",
+      kind: "test",
+      artifactId: `ART-ATTACHED-TEST-BINDING-${name}`,
+      gateResult: null,
+      test: null,
+    });
+    const artifact = makeArtifact({
+      id: run.artifactId,
+      stage: "test",
+      gateResult: makeGateResult({ stage: "test" }),
+      focusedTest,
+    });
+    const task = makeRuntimeTask({ runs: [run], artifacts: [artifact] });
+
+    attachRunArtifact(task, run.id, artifact);
+
+    assert.equal(task.gateFreshness.test.fresh, false, name);
+    assert.equal(task.gateFreshness.test.reasonCode, "contradictory_evidence", name);
+    assert.deepEqual(run.evidenceError, {
+      code: "contradictory_evidence",
+      copy: RUNTIME_FRESHNESS_REASONS.contradictory_evidence,
+    }, `${name}: exact reason is persisted`);
+    assert.deepEqual(artifact.focusedTest, focusedTest, `${name}: source evidence is retained for audit`);
+  }
+});
+
 test("merge approval fails closed for malformed persisted errors and failed-row metadata", async () => {
   const cases = [
     {
@@ -625,6 +706,20 @@ test("merge approval fails closed for malformed persisted errors and failed-row 
       expectedStage: "Test",
       mutate(runs) {
         runs[1].test.failedRowIds = ["row-missing"];
+      },
+    },
+    {
+      name: "malformed Test summary binding marker",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.bindingExplicit = "true";
+      },
+    },
+    {
+      name: "malformed Test row binding marker",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.rows[0].bindingExplicit = "not-a-boolean";
       },
     },
   ];
@@ -670,6 +765,9 @@ test("merge approval fails closed for malformed persisted errors and failed-row 
         item.mutate(runs);
         draft.runs = runs;
         refreshGateFreshness(draft);
+        if (item.expectedStage === "Test") {
+          assert.equal(draft.gateFreshness.test.reasonCode, "contradictory_evidence", item.name);
+        }
       });
 
       let merged = false;
