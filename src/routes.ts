@@ -5,6 +5,7 @@ import {
   type StageId,
   workflowStages,
 } from "./domain.ts";
+import { isCanonicalCommitId } from "./commit-id.ts";
 
 export type TaskRouteDetail =
   | { kind: "artifact"; artifactId: string }
@@ -43,6 +44,12 @@ export function parseHashRoute(hash: string): ParsedHashRoute {
 
 export function serializeHashRoute(route: HashRoute): string {
   if (route.kind === "changelog") {
+    if (route.filePath !== undefined && route.commitSha === undefined) {
+      throw new Error("A changelog file route requires a canonical commit ID.");
+    }
+    if (route.commitSha !== undefined && !isCanonicalCommitId(route.commitSha)) {
+      throw new Error("Commit ID must be exactly 40 or 64 hexadecimal characters.");
+    }
     const detail = route.filePath
       ? `/commit/${encode(route.commitSha ?? "")}/file/${encode(route.filePath)}`
       : route.commitSha
@@ -133,10 +140,10 @@ function parseTask(parts: string[], query: string): ParsedHashRoute {
 function parseChangelog(parts: string[], query: string): ParsedHashRoute {
   const returnTo = parseReturnTo(query);
   if (parts.length === 0) return { route: changelogRoute(returnTo), valid: true };
-  if (parts.length === 2 && parts[0] === "commit" && parts[1]) {
+  if (parts.length === 2 && parts[0] === "commit" && isCanonicalCommitId(parts[1])) {
     return { route: changelogRoute(returnTo, parts[1]), valid: true };
   }
-  if (parts.length === 4 && parts[0] === "commit" && parts[1] && parts[2] === "file" && parts[3]) {
+  if (parts.length === 4 && parts[0] === "commit" && isCanonicalCommitId(parts[1]) && parts[2] === "file" && parts[3]) {
     return { route: changelogRoute(returnTo, parts[1], parts[3]), valid: true };
   }
   return invalidRoute();

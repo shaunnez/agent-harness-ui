@@ -31,11 +31,11 @@ export function ChangelogModal({
   const [error, setError] = useState<string | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
-  const loadCommit = useCallback(async (sha: string) => {
+  const loadCommit = useCallback(async (commitId: string) => {
     setError(null);
     setDetailLoading(true);
     try {
-      setSelected(await getChangelogCommit(sha));
+      setSelected(await getChangelogCommit(commitId));
     } catch (reason) {
       setSelected(null);
       setError(reason instanceof Error ? reason.message : "Commit details could not be loaded.");
@@ -44,11 +44,11 @@ export function ChangelogModal({
     }
   }, []);
 
-  const loadFileDiff = useCallback(async (sha: string, path: string) => {
+  const loadFileDiff = useCallback(async (commitId: string, path: string) => {
     setError(null);
     setDetailLoading(true);
     try {
-      setFileDiff(await getChangelogFileDiff(sha, path));
+      setFileDiff(await getChangelogFileDiff(commitId, path));
     } catch (reason) {
       setFileDiff(null);
       setError(reason instanceof Error ? reason.message : "The file diff could not be loaded.");
@@ -100,7 +100,7 @@ export function ChangelogModal({
         {error ? <div className="changelog-error" role="alert">{error}</div> : null}
         {fileDiff ? (
           <div className="changelog-diff">
-            <div className="changelog-detail__bar"><Button tone="ghost" compact icon={ArrowLeft} onClick={() => onSelectCommit(fileDiff.sha)}>Back to commit</Button><span><strong>{fileDiff.path}</strong><small>{fileDiff.sha.slice(0, 8)}{fileDiff.truncated ? " · truncated" : ""}</small></span></div>
+            <div className="changelog-detail__bar"><Button tone="ghost" compact icon={ArrowLeft} onClick={() => onSelectCommit(commitSha ?? fileDiff.sha)}>Back to commit</Button><span><strong>{fileDiff.path}</strong><small>{fileDiff.sha.slice(0, 8)}{fileDiff.truncated ? " · truncated" : ""}</small></span></div>
             {fileDiff.diff.trim() ? <UnifiedDiff diff={fileDiff.diff} /> : <div className="changelog-empty">Git returned no textual diff for this file.</div>}
           </div>
         ) : (

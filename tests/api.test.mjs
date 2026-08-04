@@ -1185,16 +1185,45 @@ test("returns live changelog commits, changed files, and a selected file diff", 
     const commits = (await commitsResponse.json()).commits;
     assert.equal(commits.length, 2);
     assert.equal(commits[0].subject, "second changelog commit");
+    const fullSha = commits[0].sha;
+    assert.match(fullSha, /^[0-9a-f]{40}$/i);
 
-    const detailResponse = await fetch(`${origin}/api/changelog/${commits[0].sha}`);
+    const detailResponse = await fetch(`${origin}/api/changelog/${fullSha}`);
     assert.equal(detailResponse.status, 200);
     const commit = (await detailResponse.json()).commit;
+    assert.equal(commit.sha, fullSha);
     assert.equal(commit.files[0].path, "CHANGELOG_TEST.txt");
 
-    const diffResponse = await fetch(`${origin}/api/changelog/${commits[0].sha}/file?path=${encodeURIComponent("CHANGELOG_TEST.txt")}`);
+    const diffResponse = await fetch(`${origin}/api/changelog/${fullSha}/file?path=${encodeURIComponent("CHANGELOG_TEST.txt")}`);
     assert.equal(diffResponse.status, 200);
     const diff = await diffResponse.json();
+    assert.equal(diff.sha, fullSha);
     assert.match(diff.diff, /\+second/);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects noncanonical changelog commit IDs before Git lookup", async () => {
+  const { directory, origin, server } = await createServer();
+  try {
+    const invalidIds = [
+      "2f9a8bcd",
+      "a".repeat(39),
+      "a".repeat(41),
+      "a".repeat(63),
+      "a".repeat(65),
+      "g".repeat(40),
+    ];
+    for (const commitSha of invalidIds) {
+      for (const suffix of ["", "/file?path=CHANGELOG_TEST.txt"]) {
+        const response = await fetch(`${origin}/api/changelog/${commitSha}${suffix}`);
+        assert.equal(response.status, 400, `${commitSha}${suffix}`);
+        assert.deepEqual(await response.json(), {
+          error: "Commit ID must be exactly 40 or 64 hexadecimal characters.",
+        });
+      }
+    }
   } finally {
     await cleanup(server, directory);
   }

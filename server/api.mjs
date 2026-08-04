@@ -19,6 +19,7 @@ import {
   stageRunLimitFor,
 } from "./run-activity.mjs";
 import { SCOUT_NAMES } from "./scouts.mjs";
+import { isCanonicalCommitId } from "../src/commit-id.ts";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
@@ -196,9 +197,10 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         send(response, 200, { commits: await listChangelog(suggestedRepository, 10) });
         return;
       }
-      const changelogFileMatch = url.pathname.match(/^\/api\/changelog\/([0-9a-f]{7,64})\/file$/i);
+      const changelogFileMatch = url.pathname.match(/^\/api\/changelog\/([^/]+)\/file$/);
       if (request.method === "GET" && changelogFileMatch) {
         const sha = changelogFileMatch[1];
+        if (!isCanonicalCommitId(sha)) throw new Error("Commit ID must be exactly 40 or 64 hexadecimal characters.");
         const filePath = String(url.searchParams.get("path") ?? "");
         const detail = await changelogDetail(suggestedRepository, sha);
         if (!detail.files.some((file) => file.path === filePath)) throw new Error("Choose a file changed by this commit.");
@@ -206,9 +208,11 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         send(response, 200, { sha: detail.sha, path: filePath, diff: diff.slice(0, DIFF_CHAR_LIMIT), truncated: diff.length > DIFF_CHAR_LIMIT });
         return;
       }
-      const changelogDetailMatch = url.pathname.match(/^\/api\/changelog\/([0-9a-f]{7,64})$/i);
+      const changelogDetailMatch = url.pathname.match(/^\/api\/changelog\/([^/]+)$/);
       if (request.method === "GET" && changelogDetailMatch) {
-        send(response, 200, { commit: await changelogDetail(suggestedRepository, changelogDetailMatch[1]) });
+        const sha = changelogDetailMatch[1];
+        if (!isCanonicalCommitId(sha)) throw new Error("Commit ID must be exactly 40 or 64 hexadecimal characters.");
+        send(response, 200, { commit: await changelogDetail(suggestedRepository, sha) });
         return;
       }
       const taskWorktreesMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/worktrees$/);

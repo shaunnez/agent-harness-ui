@@ -76,13 +76,13 @@ export async function listChangelog() {
   return (await request<{ commits: RuntimeChangelogCommit[] }>("/api/changelog")).commits;
 }
 
-export async function getChangelogCommit(sha: string) {
-  return (await request<{ commit: RuntimeChangelogDetail }>(`/api/changelog/${encodeURIComponent(sha)}`)).commit;
+export async function getChangelogCommit(commitId: string) {
+  return (await request<{ commit: RuntimeChangelogDetail }>(`/api/changelog/${encodeURIComponent(commitId)}`)).commit;
 }
 
-export async function getChangelogFileDiff(sha: string, filePath: string) {
+export async function getChangelogFileDiff(commitId: string, filePath: string) {
   const params = new URLSearchParams({ path: filePath });
-  return request<RuntimeChangelogDiff>(`/api/changelog/${encodeURIComponent(sha)}/file?${params.toString()}`);
+  return request<RuntimeChangelogDiff>(`/api/changelog/${encodeURIComponent(commitId)}/file?${params.toString()}`);
 }
 
 export async function closeTask(id: string, reason: "not-needed" | "superseded" | "duplicate", note = "", supersededBy = "") {
