@@ -484,7 +484,8 @@ function evaluateTestGateResult(summary, target, sourceRunId, sourceArtifactId) 
 
   const blockingFindings = summary.findings.some((finding) => ["P0", "P1"].includes(finding?.severity));
   const hasBlockingReasons = summary.blockingReasons.length > 0;
-  if (summary.reportedVerdict === "PASS" && (summary.verdict !== "PASS" || hasBlockingReasons || blockingFindings)) {
+  const verdictsDisagree = summary.reportedVerdict != null && summary.reportedVerdict !== summary.verdict;
+  if (verdictsDisagree || (summary.reportedVerdict === "PASS" && (hasBlockingReasons || blockingFindings))) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
   if (summary.verdict !== "PASS" || hasBlockingReasons || blockingFindings) {

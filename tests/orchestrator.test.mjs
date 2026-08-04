@@ -374,6 +374,16 @@ test("rejects mismatched and contradictory persisted Test gate summaries", () =>
       }),
       code: "mixed_evidence",
     },
+    {
+      name: "reported repair but evaluated pass",
+      gateResult: makeGateResult({ stage: "test", verdict: "PASS", reportedVerdict: "REPAIR" }),
+      code: "contradictory_evidence",
+    },
+    {
+      name: "reported pass but evaluated repair",
+      gateResult: makeGateResult({ stage: "test", verdict: "REPAIR", reportedVerdict: "PASS" }),
+      code: "contradictory_evidence",
+    },
   ];
 
   for (const item of cases) {
@@ -388,6 +398,7 @@ test("rejects mismatched and contradictory persisted Test gate summaries", () =>
     attachRunArtifact(task, run.id, artifact);
     assert.equal(task.gateFreshness.test.fresh, false, item.name);
     assert.equal(task.gateFreshness.test.reasonCode, item.code, item.name);
+    assert.deepEqual(run.gateResult, item.gateResult, `${item.name}: retained for audit`);
   }
 });
 
@@ -638,7 +649,7 @@ test("latest terminal exact-candidate attempt wins and older passes become super
   assert.equal(nextRevisionRun.attempt, 1, "attempt numbering is scoped to the exact candidate revision");
 });
 
-test("merge approval fails closed when persisted candidate-bound gates are stale", async () => {
+test("merge approval fails closed when persisted Test verdicts contradict", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-stale-approval-"));
   try {
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
@@ -667,18 +678,13 @@ test("merge approval fails closed when persisted candidate-bound gates are stale
         stage: "test",
         kind: "test",
         artifactId: "ART-TEST",
-        gateResult: makeGateResult({ stage: "test" }),
+        gateResult: makeGateResult({ stage: "test", verdict: "PASS", reportedVerdict: "REPAIR" }),
       });
       const finalReview = makeRuntimeRun({
         id: "RUN-FINAL",
         stage: "final-review",
         artifactId: "ART-FINAL",
-        gateResult: makeGateResult({
-          stage: "final-review",
-          verdict: "REPAIR",
-          reportedVerdict: "REPAIR",
-          blockingReasons: ["P1: stale final review"],
-        }),
+        gateResult: makeGateResult({ stage: "final-review" }),
       });
       const focusedTest = {
         candidateId: "C1",
@@ -697,6 +703,13 @@ test("merge approval fails closed when persisted candidate-bound gates are stale
       attachRunArtifact(draft, "RUN-TEST", draft.artifacts[1]);
       refreshGateFreshness(draft);
     });
+
+    const beforeApproval = await store.get(task.id);
+    assert.equal(beforeApproval.gateFreshness["dev-review"].fresh, true);
+    assert.equal(beforeApproval.gateFreshness.test.fresh, false);
+    assert.equal(beforeApproval.gateFreshness.test.reasonCode, "contradictory_evidence");
+    assert.equal(beforeApproval.gateFreshness["final-review"].fresh, true);
+    assert.equal(beforeApproval.runs.find((run) => run.id === "RUN-TEST").gateResult.reportedVerdict, "REPAIR");
 
     let merged = false;
     const orchestrator = new TaskOrchestrator(store, {
