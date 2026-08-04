@@ -3,8 +3,11 @@ import { setTimeout as delay } from "node:timers/promises";
 import path from "node:path";
 import { defaultRuntimeSettings, enrichUsage, normalizeModelId } from "./model-catalog.mjs";
 import {
+  CANONICAL_RUN_STAGES,
+  DEFAULT_STAGE_RUN_LIMIT,
   interruptActiveRuns,
   migrateRunActivityState,
+  retainRunActivityEvents,
   TASK_STORE_SCHEMA_VERSION,
 } from "./run-activity.mjs";
 
@@ -117,7 +120,10 @@ export class JsonTaskStore {
         currentStage: "triage",
         completedStages: [],
         stageRun: 0,
-        stageRunLimit: 3,
+        stageRunLimit: DEFAULT_STAGE_RUN_LIMIT,
+        stageRunLimits: Object.fromEntries(
+          CANONICAL_RUN_STAGES.map((stage) => [stage, DEFAULT_STAGE_RUN_LIMIT]),
+        ),
         createdAt: now,
         updatedAt: now,
         startedAt: null,
@@ -159,7 +165,7 @@ export class JsonTaskStore {
       if (!task) return null;
       updater(task);
       task.updatedAt = new Date().toISOString();
-      task.events = task.events.slice(-250);
+      task.events = retainRunActivityEvents(task.events);
       return task;
     });
   }
@@ -176,7 +182,7 @@ export class JsonTaskStore {
       }
       updater(task);
       task.updatedAt = new Date().toISOString();
-      task.events = task.events.slice(-250);
+      task.events = retainRunActivityEvents(task.events);
       return task;
     });
   }
@@ -333,6 +339,9 @@ export class JsonTaskStore {
   }
 
   async #write(state) {
+    for (const task of state.tasks ?? []) {
+      task.events = retainRunActivityEvents(task.events);
+    }
     const temporaryPath = `${this.#filePath}.${process.pid}.tmp`;
     await writeFile(temporaryPath, `${JSON.stringify(state, null, 2)}\n`, "utf8");
     await renameWithRetry(temporaryPath, this.#filePath);

@@ -9,7 +9,13 @@ import { createApiServer } from "../server/api.mjs";
 import { GitWorktreeManager } from "../server/git-worktree.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { parseFocusedTestEvidence } from "../server/structured-output.mjs";
-import { attachRunArtifact, refreshGateFreshness, RUNTIME_FRESHNESS_REASONS } from "../server/run-activity.mjs";
+import {
+  attachRunArtifact,
+  CANONICAL_RUN_STAGES,
+  refreshGateFreshness,
+  RUNTIME_FRESHNESS_REASONS,
+  RUN_ACTIVITY_EVENT_LIMIT,
+} from "../server/run-activity.mjs";
 import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
 import { promisify } from "node:util";
 
@@ -107,6 +113,10 @@ test("creates, lists, and starts a local task", async () => {
     const { task } = await createResponse.json();
     assert.equal(task.id, "AH-001");
     assert.equal(task.workflow, "investigate");
+    assert.deepEqual(
+      task.stageRunLimits,
+      Object.fromEntries(CANONICAL_RUN_STAGES.map((stage) => [stage, 3])),
+    );
 
     const prematureReview = await fetch(`${origin}/api/tasks/${task.id}/review`, { method: "POST" });
     assert.equal(prematureReview.status, 409);
@@ -207,6 +217,79 @@ test("returns backward-compatible structured run activity through task APIs", as
     assert.equal(detail.task.runs[0].toolCalls[0].result, "Exit code 0");
     assert.equal(detail.task.events.at(-1).runId, "RUN-API");
     assert.equal(list.tasks[0].runs[0].apiEstimate, 0.001);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("retains decisions while store writes cap aggregate telemetry", async () => {
+  const { directory, server, store } = await createServer();
+  try {
+    const task = await store.create({
+      title: "Retention boundary",
+      description: "Keep decisions through high-volume runtime telemetry.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.events.push({ id: "decision-before", category: "decision", title: "Decision retained" });
+      draft.events.push(...Array.from({ length: RUN_ACTIVITY_EVENT_LIMIT + 100 }, (_, index) => ({
+        id: `tool-${index}`,
+        category: "tool",
+      })));
+    });
+    await store.transition(task.id, () => true, (draft) => {
+      draft.events.push({ id: "transition-tool", category: "tool" });
+    });
+
+    const updated = await store.get(task.id);
+    assert.equal(updated.events.some((event) => event.id === "decision-before"), true);
+    assert.equal(updated.events.some((event) => event.id === "tool-0"), false);
+    assert.equal(
+      updated.events.filter((event) => ["activity", "agent", "tool", "artifact"].includes(event.category)).length,
+      RUN_ACTIVITY_EVENT_LIMIT,
+    );
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("retains decisions when a legacy store is migrated", async () => {
+  const { directory, server, store } = await createServer();
+  try {
+    const task = await store.create({
+      title: "Legacy retention boundary",
+      description: "Migrate retained decisions without losing audit history.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "medium",
+    });
+    const storePath = path.join(directory, "tasks.json");
+    const state = JSON.parse(await readFile(storePath, "utf8"));
+    const persistedTask = state.tasks.find((item) => item.id === task.id);
+    persistedTask.events = [
+      { id: "legacy-decision", category: "decision", title: "Legacy decision" },
+      ...Array.from({ length: RUN_ACTIVITY_EVENT_LIMIT + 25 }, (_, index) => ({
+        id: `legacy-tool-${index}`,
+        category: "tool",
+      })),
+    ];
+    state.schemaVersion = 3;
+    delete persistedTask.stageRunLimits;
+    await writeFile(storePath, `${JSON.stringify(state)}\n`, "utf8");
+
+    const migratedStore = new JsonTaskStore(storePath);
+    await migratedStore.init();
+    const migrated = await migratedStore.get(task.id);
+    assert.equal(migrated.events.some((event) => event.id === "legacy-decision"), true);
+    assert.equal(migrated.events.some((event) => event.id === "legacy-tool-0"), false);
+    assert.equal(
+      migrated.events.filter((event) => ["activity", "agent", "tool", "artifact"].includes(event.category)).length,
+      RUN_ACTIVITY_EVENT_LIMIT,
+    );
+    const migratedAgain = await migratedStore.get(task.id);
+    assert.deepEqual(migratedAgain.events, migrated.events);
   } finally {
     await cleanup(server, directory);
   }
@@ -1060,7 +1143,7 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
     await store.update(task.id, (draft) => {
       draft.status = "blocked";
       draft.currentStage = "implement";
-      draft.attemptsByStage.implement = draft.stageRunLimit;
+      draft.attemptsByStage.implement = draft.stageRunLimits.implement;
       draft.candidates.push({ id: "C1", status: "repair_required" });
     });
 
@@ -1070,7 +1153,9 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
 
     const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
     assert.equal(updated.status, "failed");
-    assert.equal(updated.stageRunLimit, 4);
+    assert.equal(updated.stageRunLimits.implement, 4);
+    assert.equal(updated.stageRunLimits["dev-review"], 3);
+    assert.equal(updated.decisions.at(-1).grantedStage, "implement");
     assert.equal(updated.attemptsByStage.implement, 3);
     assert.equal(updated.candidates.at(-1).status, "repair_required");
     assert.equal(updated.events.at(-1).title, "One repair attempt granted");
@@ -1092,7 +1177,7 @@ test("grants one bounded repair attempt when review exhausts the allowance", asy
     await store.update(task.id, (draft) => {
       draft.status = "repair-required";
       draft.currentStage = "dev-review";
-      draft.attemptsByStage["dev-review"] = draft.stageRunLimit;
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
       draft.candidates.push({ id: "C1", status: "repair_required" });
     });
 
@@ -1102,7 +1187,12 @@ test("grants one bounded repair attempt when review exhausts the allowance", asy
 
     const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
     assert.equal(updated.status, "failed");
-    assert.equal(updated.stageRunLimit, 4);
+    assert.deepEqual(
+      updated.stageRunLimits,
+      Object.fromEntries(CANONICAL_RUN_STAGES.map((stage) => [stage, stage === "dev-review" ? 4 : 3])),
+    );
+    assert.equal(updated.decisions.at(-1).grantedStage, "dev-review");
+    assert.equal(updated.events.at(-1).grantedStage, "dev-review");
     assert.equal(updated.attemptsByStage["dev-review"], 3);
     assert.equal(updated.candidates.at(-1).status, "repair_required");
     assert.equal(updated.events.at(-1).title, "One repair attempt granted");
@@ -1124,7 +1214,7 @@ test("grants one bounded stage attempt to a repaired candidate at an exhausted r
     await store.update(task.id, (draft) => {
       draft.status = "ready-for-review";
       draft.currentStage = "dev-review";
-      draft.attemptsByStage["dev-review"] = draft.stageRunLimit;
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
       draft.candidates.push({ id: "C1", status: "ready_for_review" });
     });
 
@@ -1134,7 +1224,8 @@ test("grants one bounded stage attempt to a repaired candidate at an exhausted r
 
     const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
     assert.equal(updated.status, "failed");
-    assert.equal(updated.stageRunLimit, 4);
+    assert.equal(updated.stageRunLimits["dev-review"], 4);
+    assert.equal(updated.stageRunLimits.implement, 3);
     assert.equal(updated.candidates.at(-1).status, "ready_for_review");
     assert.equal(updated.events.at(-1).title, "One stage attempt granted");
   } finally {
@@ -1155,14 +1246,14 @@ test("grants a usable slot when a failed repair already exceeded the allowance",
     await store.update(task.id, (draft) => {
       draft.status = "failed";
       draft.currentStage = "implement";
-      draft.attemptsByStage.implement = draft.stageRunLimit + 1;
+      draft.attemptsByStage.implement = draft.stageRunLimits.implement + 1;
       draft.candidates.push({ id: "C1", status: "repair_required" });
     });
 
     const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
     assert.equal(grantResponse.status, 200);
     const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
-    assert.equal(updated.stageRunLimit, updated.attemptsByStage.implement + 1);
+    assert.equal(updated.stageRunLimits.implement, updated.attemptsByStage.implement + 1);
     assert.equal(updated.status, "failed");
     assert.equal(updated.events.at(-1).title, "One repair attempt granted");
   } finally {

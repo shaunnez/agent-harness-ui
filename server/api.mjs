@@ -11,6 +11,7 @@ import {
 import { GitWorktreeManager } from "./git-worktree.mjs";
 import { assertHttpBoundary, corsHeaders } from "./http-security.mjs";
 import { normalizeModelId, POLICY_IDS, readCodexModelCatalog } from "./model-catalog.mjs";
+import { CANONICAL_RUN_STAGES, stageRunLimitFor } from "./run-activity.mjs";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
@@ -440,15 +441,21 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         }
         if (action === "grant-retry") {
           const candidate = task.candidates?.at(-1);
+          const grantedStage = task.currentStage;
+          if (!CANONICAL_RUN_STAGES.includes(grantedStage)) {
+            send(response, 409, { error: "The current stage cannot receive a retry grant." });
+            return;
+          }
           const recoverableImplementation = task.currentStage === "implement";
-          const currentAttempts = task.attemptsByStage?.[task.currentStage] ?? 0;
+          const currentAttempts = task.attemptsByStage?.[grantedStage] ?? 0;
+          const currentLimit = stageRunLimitFor(task, grantedStage);
           const exhaustedRepair =
             ["repair-required", "failed"].includes(task.status) &&
             candidate?.status === "repair_required" &&
-            currentAttempts >= task.stageRunLimit;
+            currentAttempts >= currentLimit;
           const exhaustedReadyGate =
             ["ready-for-review", "ready-for-test", "ready-for-final-review"].includes(task.status) &&
-            currentAttempts >= task.stageRunLimit;
+            currentAttempts >= currentLimit;
           const blockedRetry =
             task.status === "blocked" && (candidate?.status === "repair_required" || recoverableImplementation);
           if (!exhaustedRepair && !exhaustedReadyGate && !blockedRetry) {
@@ -456,15 +463,19 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
             return;
           }
           await store.update(id, (draft) => {
-            const attempts = draft.attemptsByStage?.[draft.currentStage] ?? 0;
-            draft.stageRunLimit = Math.max(draft.stageRunLimit + 1, attempts + 1);
+            const attempts = draft.attemptsByStage?.[grantedStage] ?? 0;
+            const currentStageLimit = stageRunLimitFor(draft, grantedStage);
+            const nextStageLimit = Math.max(currentStageLimit + 1, attempts + 1);
+            draft.stageRunLimits ??= {};
+            draft.stageRunLimits[grantedStage] = nextStageLimit;
             draft.status = "failed";
             draft.error = null;
-            const retrySource = [...(draft.runs ?? [])].reverse().find((run) => run.stage === draft.currentStage) ?? null;
+            const retrySource = [...(draft.runs ?? [])].reverse().find((run) => run.stage === grantedStage) ?? null;
             const decision = {
               id: crypto.randomUUID(),
               question: candidate?.status === "repair_required" ? "Grant another repair attempt?" : "Grant another stage attempt?",
-              answer: `Human override increased the stage allowance to ${draft.stageRunLimit}.`,
+              answer: `Human override increased the ${grantedStage} allowance to ${nextStageLimit}.`,
+              grantedStage,
               createdAt: new Date().toISOString(),
             };
             draft.decisions ??= [];
@@ -478,6 +489,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               title: candidate?.status === "repair_required" ? "One repair attempt granted" : "One stage attempt granted",
               detail: decision.answer,
               decisionId: decision.id,
+              grantedStage,
               retryOfRunId: retrySource?.id ?? null,
             });
           });
@@ -524,7 +536,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
           return;
         }
         const stageAttempts = task.attemptsByStage?.[task.currentStage] ?? 0;
-        if (task.status === "blocked" || stageAttempts >= task.stageRunLimit) {
+        if (task.status === "blocked" || stageAttempts >= stageRunLimitFor(task, task.currentStage)) {
           send(response, 409, { error: "The current stage has exhausted its retry allowance." });
           return;
         }
