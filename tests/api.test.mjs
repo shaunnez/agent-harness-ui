@@ -1816,8 +1816,24 @@ test("records null provenance when an exhausted preflight attempt has no persist
     assert.equal(grantResponse.status, 200);
     const updated = await store.get(task.id);
     assert.equal(updated.stageRunLimits.plan, 4);
-    assert.equal(updated.decisions.at(-1).sourceRunId, null);
-    assert.equal(updated.events.at(-1).sourceRunId, null);
+    assert.deepEqual(
+      {
+        grantedStage: updated.decisions.at(-1).grantedStage,
+        previousLimit: updated.decisions.at(-1).previousLimit,
+        newLimit: updated.decisions.at(-1).newLimit,
+        sourceRunId: updated.decisions.at(-1).sourceRunId,
+      },
+      { grantedStage: "plan", previousLimit: 3, newLimit: 4, sourceRunId: null },
+    );
+    assert.deepEqual(
+      {
+        grantedStage: updated.events.at(-1).grantedStage,
+        previousLimit: updated.events.at(-1).previousLimit,
+        newLimit: updated.events.at(-1).newLimit,
+        sourceRunId: updated.events.at(-1).sourceRunId,
+      },
+      { grantedStage: "plan", previousLimit: 3, newLimit: 4, sourceRunId: null },
+    );
   } finally {
     await cleanup(server, directory);
   }

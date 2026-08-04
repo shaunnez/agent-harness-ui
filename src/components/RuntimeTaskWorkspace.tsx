@@ -36,6 +36,7 @@ import { RuntimeArtifactViewer, TaskEvaluation } from "./runtime/RuntimeInspecto
 import { InspectorSection, RuntimeRow } from "./runtime/RuntimeInspectorPrimitives";
 import { RuntimeStagePresentation } from "./runtime/RuntimeStagePresentation";
 import { RuntimeWorkspaceFooter } from "./runtime/RuntimeWorkspaceFooter";
+import { getCurrentStageRunLimit } from "../runtime-stage-limits";
 import {
   getRuntimeArtifactFreshness,
   getRuntimeGateFreshness,
@@ -77,6 +78,7 @@ export function RuntimeTaskWorkspace({
     0,
     workflowStages.findIndex((stage) => stage.id === task.currentStage),
   );
+  const currentStageRunLimit = getCurrentStageRunLimit(task);
   const [viewedStageId, setViewedStageId] = useState<StageId>(initialViewedStageId ?? task.currentStage);
   const [selectedWorktreeId, setSelectedWorktreeId] = useState<string | null>(initialSelectedWorktreeId ?? null);
   const [openArtifact, setOpenArtifact] = useState<RuntimeArtifact | null>(null);
@@ -286,7 +288,7 @@ export function RuntimeTaskWorkspace({
           <span>
             <small>Stage attempts</small>
             <strong>
-              {task.attemptsByStage?.[task.currentStage] ?? 0} / {task.stageRunLimit}
+              {task.attemptsByStage?.[task.currentStage] ?? 0} / {currentStageRunLimit}
             </strong>
           </span>
         </div>
@@ -468,7 +470,7 @@ export function RuntimeTaskWorkspace({
                 />
               ) : null}
               <RuntimeRow label="Model / reasoning" value={`${activePolicy.model} \u00b7 ${activePolicy.reasoning}`} />
-              <RuntimeRow label="Stage run" value={`${task.attemptsByStage?.[task.currentStage] ?? 0} of ${task.stageRunLimit}`} />
+              <RuntimeRow label="Stage run" value={`${task.attemptsByStage?.[task.currentStage] ?? 0} of ${currentStageRunLimit}`} />
               <RuntimeRow label="Run" value={task.activeRunKind ?? "No active agent run"} />
               <RuntimeRow label="Repository" value={repoName} mono />
             </InspectorSection>

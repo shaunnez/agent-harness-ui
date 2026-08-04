@@ -128,6 +128,10 @@ export interface RuntimeEvent {
   decisionId?: string | null;
   decisionIds?: string[];
   approvalId?: string | null;
+  grantedStage?: StageId;
+  previousLimit?: number;
+  newLimit?: number;
+  sourceRunId?: string | null;
   retryOfRunId?: string | null;
   repairOfRunId?: string | null;
   toolCall?: RuntimeToolCall | null;

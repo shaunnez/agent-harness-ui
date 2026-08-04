@@ -144,6 +144,10 @@ export interface RuntimeDecision {
   question: string;
   answer: string;
   createdAt: string;
+  grantedStage?: StageId;
+  previousLimit?: number;
+  newLimit?: number;
+  sourceRunId?: string | null;
 }
 
 export interface RuntimeScoutDispatch {
@@ -274,6 +278,7 @@ export interface RuntimeTask {
   completedStages: StageId[];
   stageRun: number;
   stageRunLimit: number;
+  stageRunLimits?: Partial<Record<StageId, number | null>> | null;
   createdAt: string;
   updatedAt: string;
   startedAt: string | null;

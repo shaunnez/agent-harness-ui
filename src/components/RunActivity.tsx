@@ -9,6 +9,7 @@ import {
   type RuntimeTask,
   workflowStages,
 } from "../domain";
+import { RetryGrantAudit } from "./runtime/RetryGrantAudit";
 import "./run-activity.css";
 
 export type RunActivityFilter = "activity" | "agent" | "test" | "decision" | "tool";
@@ -170,6 +171,7 @@ export function RunActivity({
               <span>
                 <strong>{item.title}</strong>
                 <small>{item.detail}</small>
+                {item.event ? <RetryGrantAudit audit={item.event} /> : null}
               </span>
               <em>{stageLabel(item.stage)}</em>
             </button>
@@ -195,6 +197,7 @@ export function RunActivity({
               {selected.event?.approvalId ? <Detail label="Approval ID" value={selected.event.approvalId} mono /> : null}
               {selected.event?.toolCall ? <ToolDetails toolCall={selected.event.toolCall} /> : null}
             </dl>
+            {selected.event ? <RetryGrantAudit audit={selected.event} /> : null}
             {selectedRun?.retryOfRunId ? (
               <button className="run-activity-link" type="button" onClick={() => selectRelatedRun(selectedRun.retryOfRunId)}>
                 Previous attempt <span className="mono">{shortId(selectedRun.retryOfRunId)}</span>

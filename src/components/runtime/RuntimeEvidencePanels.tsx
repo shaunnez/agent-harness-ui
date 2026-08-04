@@ -19,6 +19,7 @@ import {
 } from "../../domain";
 import { Button } from "../Primitives";
 import { RuntimeRow } from "./RuntimeInspectorPrimitives";
+import { RetryGrantAudit } from "./RetryGrantAudit";
 
 export function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
   const batches = [...new Set(task.workPackages.map((item) => item.batch))].sort((a, b) => a - b);
@@ -318,6 +319,7 @@ export function DecisionFrontier({
           <details key={decision.id}>
             <summary>{decision.question}</summary>
             <p>{decision.answer}</p>
+            <RetryGrantAudit audit={decision} />
           </details>
         ))
       ) : (

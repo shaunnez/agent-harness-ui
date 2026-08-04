@@ -2338,6 +2338,153 @@ test("renders stale evidence in the mounted Run Activity views with exact persis
   });
 });
 
+test("resolves the current-stage retry allowance with zero and legacy fallbacks", () => {
+  return withWorkspace(async ({ getCurrentStageRunLimit }) => {
+    assert.equal(
+      getCurrentStageRunLimit(createTask({
+        currentStage: "implement",
+        stageRunLimit: 3,
+        stageRunLimits: { implement: 0, plan: 9 },
+      })),
+      0,
+    );
+    assert.equal(
+      getCurrentStageRunLimit(createTask({
+        currentStage: "implement",
+        stageRunLimit: 3,
+        stageRunLimits: { implement: null },
+      })),
+      3,
+    );
+    assert.equal(
+      getCurrentStageRunLimit(createTask({
+        currentStage: "implement",
+        stageRunLimit: 3,
+        stageRunLimits: {},
+      })),
+      3,
+    );
+  });
+});
+
+test("uses the authoritative current-stage allowance for workspace attempts and retry actions", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const task = createTask({
+      status: "failed",
+      currentStage: "implement",
+      stageRunLimit: 3,
+      stageRunLimits: { implement: 0, plan: 9 },
+      attemptsByStage: { implement: 0 },
+      candidates: [{
+        id: "C1",
+        revisionNumber: 1,
+        status: "repair_required",
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        baseBranch: "main",
+        branch: "agent-harness/ah-999-c1",
+        repositoryRoot: "C:/repo/task",
+        worktreePath: "C:/worktrees/ah-999-c1",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        updatedAt: "2026-08-01T12:00:00.000Z",
+        revisions: [],
+      }],
+    });
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task,
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+    }));
+
+    assert.match(markup, /0 \/ 0/);
+    assert.match(markup, /0 of 0/);
+    assert.match(markup, /Grant one repair attempt/);
+    assert.doesNotMatch(markup, /0 \/ 9|0 of 9/);
+
+    const historicalMarkup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task,
+      initialViewedStageId: "plan",
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+    }));
+    assert.match(historicalMarkup, /0 \/ 0/);
+    assert.match(historicalMarkup, /0 of 0/);
+    assert.doesNotMatch(historicalMarkup, /Grant one repair attempt/);
+  });
+});
+
+test("renders retry grant provenance in activity and decision surfaces without fabricating legacy audit", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace, RuntimeActivity, RunActivity }) => {
+    const auditEvent = {
+      id: "grant-event",
+      at: "2026-08-01T12:00:01.000Z",
+      category: "decision",
+      tone: "success",
+      stage: "dev-review",
+      title: "Retry allowance granted",
+      detail: "A human granted one retry.",
+      grantedStage: "implement",
+      previousLimit: 3,
+      newLimit: 4,
+      sourceRunId: "run-source",
+    };
+    const task = createTask({
+      decisions: [{
+        id: "grant-decision",
+        question: "Retry grant",
+        answer: "Granted for repair.",
+        createdAt: "2026-08-01T12:00:01.000Z",
+        grantedStage: "implement",
+        previousLimit: 3,
+        newLimit: 4,
+        sourceRunId: "run-source",
+      }],
+      events: [auditEvent],
+    });
+
+    const workspaceMarkup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task,
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+    }));
+    assert.match(workspaceMarkup, /Retry grant audit/);
+    assert.match(workspaceMarkup, /Granted stage/);
+    assert.match(workspaceMarkup, /Implement \(implement\)/);
+    assert.match(workspaceMarkup, /3 → 4/);
+    assert.match(workspaceMarkup, /run-source/);
+
+    const legacyMarkup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task: createTask({ events: [{ ...auditEvent, grantedStage: undefined, previousLimit: undefined, newLimit: undefined, sourceRunId: undefined }] }),
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+    }));
+    assert.doesNotMatch(legacyMarkup, /Retry grant audit/);
+    assert.doesNotMatch(legacyMarkup, /No persisted source run/);
+
+    const nullAudit = { ...auditEvent, sourceRunId: null };
+    const nullMarkup = renderToStaticMarkup(React.createElement(RuntimeActivity, { events: [nullAudit] }));
+    assert.match(nullMarkup, /No persisted source run/);
+    const nullRunActivityMarkup = renderToStaticMarkup(React.createElement(RunActivity, {
+      task: createTask({ events: [nullAudit] }),
+      initialFilter: "activity",
+      initialSelectedId: "event:grant-event",
+    }));
+    assert.match(nullRunActivityMarkup, /No persisted source run/);
+  });
+});
+
 async function waitUntil(predicate) {
   for (let attempt = 0; attempt < 100; attempt += 1) {
     if (await predicate()) return;
@@ -2428,8 +2575,9 @@ async function withWorkspace(run) {
     const runActivity = await vite.ssrLoadModule("/src/components/RunActivity.tsx");
     const runtimeInspector = await vite.ssrLoadModule("/src/components/runtime/RuntimeInspectorPanels.tsx");
     const runtimeWorkflow = await vite.ssrLoadModule("/src/components/runtime/workflow.ts");
+    const runtimeStageLimits = await vite.ssrLoadModule("/src/runtime-stage-limits.ts");
     const requestIdentity = await vite.ssrLoadModule("/src/requestIdentity.ts");
-    return await run({ ...module, ...candidateDiffViewer, ...runActivity, ...runtimeInspector, ...runtimeWorkflow, ...requestIdentity, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
+    return await run({ ...module, ...candidateDiffViewer, ...runActivity, ...runtimeInspector, ...runtimeWorkflow, ...runtimeStageLimits, ...requestIdentity, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
   } finally {
     await vite.close();
   }

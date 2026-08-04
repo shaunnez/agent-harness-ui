@@ -12,6 +12,7 @@ import {
 import { MarkdownContent } from "../MarkdownContent";
 import { Button } from "../Primitives";
 import { RuntimeContextDisclosure } from "./RuntimeEvidencePanels";
+import { RetryGrantAudit } from "./RetryGrantAudit";
 import { stripEmbeddedCandidatePatch } from "./RuntimeStagePresentation";
 
 export function TaskEvaluation({
@@ -95,8 +96,10 @@ export function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
         <small>These are persisted runtime events. Model, token, duration, and artifact linkage appear only when the Codex event stream records them.</small>
       </div>
       <div className="runtime-activity-list">
-        {visibleEvents.length ? visibleEvents.map((event) => (
-            <div className={`runtime-activity-row runtime-activity-row--${runtimeEventPresentation(event).tone}`} key={event.id}>
+        {visibleEvents.length ? visibleEvents.map((event) => {
+          const presentation = runtimeEventPresentation(event);
+          return (
+            <div className={`runtime-activity-row runtime-activity-row--${presentation.tone}`} key={event.id}>
               <time className="mono">
                 {new Date(event.at).toLocaleTimeString([], {
                   hour: "2-digit",
@@ -105,12 +108,14 @@ export function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
                 })}
               </time>
               <span>
-                <strong>{runtimeEventPresentation(event).title}</strong>
-                <small>{runtimeEventPresentation(event).detail}</small>
+                <strong>{presentation.title}</strong>
+                <small>{presentation.detail}</small>
+                <RetryGrantAudit audit={event} />
               </span>
               <em>{workflowStages.find((stage) => stage.id === event.stage)?.shortLabel ?? event.stage}</em>
             </div>
-          )) : (
+          );
+        }) : (
             <div className="runtime-activity-empty">No recorded events match this filter.</div>
           )}
       </div>
