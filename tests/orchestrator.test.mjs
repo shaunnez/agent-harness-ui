@@ -471,6 +471,185 @@ test("rejects mismatched and contradictory persisted Test gate summaries", () =>
   }
 });
 
+test("rejects every non-null malformed or unknown persisted evidence error", () => {
+  const cases = [
+    { name: "unknown code", evidenceError: { code: "unknown_schema_error", copy: "Unknown schema error." } },
+    { name: "primitive value", evidenceError: "malformed evidence error" },
+    {
+      name: "success code used as an error",
+      evidenceError: { code: "fresh", copy: RUNTIME_FRESHNESS_REASONS.fresh },
+    },
+    {
+      name: "known code with malformed copy",
+      evidenceError: { code: "timeout", copy: "Different timeout copy." },
+    },
+  ];
+
+  for (const item of cases) {
+    const run = makeRuntimeRun({ id: `RUN-EVIDENCE-ERROR-${item.name}`, evidenceError: item.evidenceError });
+    const task = makeRuntimeTask({ runs: [run] });
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness["dev-review"].fresh, false, item.name);
+    assert.equal(task.gateFreshness["dev-review"].reasonCode, "malformed_binding", item.name);
+    assert.equal(task.gateFreshness["dev-review"].reasonCopy, RUNTIME_FRESHNESS_REASONS.malformed_binding, item.name);
+    assert.deepEqual(run.evidenceError, item.evidenceError, `${item.name}: retained for audit`);
+  }
+
+  const knownError = { code: "timeout", copy: RUNTIME_FRESHNESS_REASONS.timeout };
+  const knownRun = makeRuntimeRun({ id: "RUN-EVIDENCE-ERROR-KNOWN", evidenceError: knownError });
+  const knownTask = makeRuntimeTask({ runs: [knownRun] });
+  refreshGateFreshness(knownTask);
+  assert.equal(knownTask.gateFreshness["dev-review"].reasonCode, "timeout");
+  assert.deepEqual(knownRun.evidenceError, knownError, "valid persisted error remains intact for audit");
+});
+
+test("requires persisted Test failedRowIds to match the exact failed-row set", () => {
+  const passedSummary = makeFocusedTestSummary();
+  const failedRow = makeTestRow({ id: "row-failed", status: "failed" });
+  const cases = [
+    { name: "missing failedRowIds", summary: { ...passedSummary, failedRowIds: undefined } },
+    { name: "non-array failedRowIds", summary: { ...passedSummary, failedRowIds: "row-1" } },
+    { name: "unknown failed row", summary: { ...passedSummary, failedRowIds: ["row-missing"] } },
+    { name: "passed row reported failed", summary: { ...passedSummary, failedRowIds: ["row-1"] } },
+    {
+      name: "failed row omitted",
+      summary: makeFocusedTestSummary({ status: "failed", rows: [failedRow], failedRowIds: [] }),
+    },
+    {
+      name: "duplicate failed row id",
+      summary: makeFocusedTestSummary({
+        status: "failed",
+        rows: [failedRow],
+        failedRowIds: ["row-failed", "row-failed"],
+      }),
+    },
+  ];
+
+  for (const item of cases) {
+    const run = makeRuntimeRun({
+      id: `RUN-FAILED-ROWS-${item.name}`,
+      stage: "test",
+      kind: "test",
+      gateResult: makeGateResult({ stage: "test" }),
+      test: item.summary,
+    });
+    const task = makeRuntimeTask({ runs: [run] });
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness.test.fresh, false, item.name);
+    assert.equal(task.gateFreshness.test.reasonCode, "contradictory_evidence", item.name);
+    assert.deepEqual(run.test.failedRowIds, item.summary.failedRowIds, `${item.name}: retained for audit`);
+  }
+
+  const validFailedSummary = makeFocusedTestSummary({
+    status: "failed",
+    rows: [failedRow],
+    failedRowIds: ["row-failed"],
+  });
+  const validFailedRun = makeRuntimeRun({
+    id: "RUN-FAILED-ROWS-VALID",
+    stage: "test",
+    kind: "test",
+    gateResult: makeGateResult({
+      stage: "test",
+      verdict: "REPAIR",
+      reportedVerdict: "REPAIR",
+      blockingReasons: ["A verification command failed."],
+    }),
+    test: validFailedSummary,
+  });
+  const validFailedTask = makeRuntimeTask({ runs: [validFailedRun] });
+  refreshGateFreshness(validFailedTask);
+  assert.equal(validFailedTask.gateFreshness.test.reasonCode, "failed_execution");
+  assert.deepEqual(validFailedTask.gateFreshness.test.focusedTestRows.map((row) => row.id), ["row-failed"]);
+});
+
+test("merge approval fails closed for malformed persisted errors and failed-row metadata", async () => {
+  const cases = [
+    {
+      name: "unknown Dev Review evidence error",
+      expectedStage: "Development Review",
+      mutate(runs) {
+        runs[0].evidenceError = { code: "unknown_schema_error", copy: "Unknown schema error." };
+      },
+    },
+    {
+      name: "missing Test failedRowIds",
+      expectedStage: "Test",
+      mutate(runs) {
+        delete runs[1].test.failedRowIds;
+      },
+    },
+    {
+      name: "mismatched Test failedRowIds",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.failedRowIds = ["row-missing"];
+      },
+    },
+  ];
+
+  for (const item of cases) {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-malformed-gate-approval-"));
+    try {
+      const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+      await store.init();
+      const task = await store.create({
+        title: `Reject ${item.name}`,
+        description: "Malformed persisted candidate evidence must block merge approval.",
+        repositoryPath: directory,
+        workflow: "implement",
+        priority: "medium",
+      });
+      await store.update(task.id, (draft) => {
+        draft.status = "awaiting-human-approval";
+        draft.currentStage = "approval";
+        draft.candidates = [{
+          id: "C1",
+          revisionNumber: 2,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: "b".repeat(40),
+          status: "awaiting_human_approval",
+        }];
+        const runs = [
+          makeRuntimeRun({ id: "RUN-DEV-MALFORMED-APPROVAL" }),
+          makeRuntimeRun({
+            id: "RUN-TEST-MALFORMED-APPROVAL",
+            stage: "test",
+            kind: "test",
+            gateResult: makeGateResult({ stage: "test" }),
+            test: makeFocusedTestSummary(),
+          }),
+          makeRuntimeRun({
+            id: "RUN-FINAL-MALFORMED-APPROVAL",
+            stage: "final-review",
+            gateResult: makeGateResult({ stage: "final-review" }),
+          }),
+        ];
+        item.mutate(runs);
+        draft.runs = runs;
+        refreshGateFreshness(draft);
+      });
+
+      let merged = false;
+      const orchestrator = new TaskOrchestrator(store, {
+        worktreeManager: { async merge() { merged = true; } },
+      });
+      await assert.rejects(
+        () => orchestrator.approveMerge(task.id),
+        new RegExp(`cannot be approved.*${item.expectedStage} is not fresh`, "i"),
+      );
+      const rejected = await store.get(task.id);
+      assert.equal(rejected.mergeIntent, null, item.name);
+      assert.equal(merged, false, item.name);
+    } finally {
+      await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    }
+  }
+});
+
 test("structured ingestion preserves mixed, revision-change, and candidate-mismatch reason codes", () => {
   const candidate = { id: "C1", revisionNumber: 2 };
   const oldRevision = gateOutput(1);
@@ -1853,6 +2032,7 @@ function makeRuntimeRun({
   artifactId = null,
   gateResult = makeGateResult({ stage, candidateId, candidateRevision }),
   test = null,
+  evidenceError = null,
   error = null,
 } = {}) {
   return {
@@ -1879,7 +2059,7 @@ function makeRuntimeRun({
     toolCalls: [],
     test,
     gateResult,
-    evidenceError: null,
+    evidenceError,
     freshness: null,
     error,
     source: "codex-jsonl",
@@ -1935,6 +2115,28 @@ function makeTestRow({ id = "row-1", candidateId = "C1", candidateRevision = 2, 
     artifactReferences: [],
     assertions: [],
     failureDetails: null,
+  };
+}
+
+function makeFocusedTestSummary({
+  candidateId = "C1",
+  candidateRevision = 2,
+  command = "npm test",
+  status = "passed",
+  durationMs = 100,
+  rows = [makeTestRow({ candidateId, candidateRevision, status })],
+  failedRowIds = rows.filter((row) => row.status === "failed").map((row) => row.id),
+} = {}) {
+  return {
+    candidateId,
+    candidateRevision,
+    bindingExplicit: true,
+    command,
+    status,
+    durationMs,
+    rowCount: rows.length,
+    failedRowIds,
+    rows,
   };
 }
 

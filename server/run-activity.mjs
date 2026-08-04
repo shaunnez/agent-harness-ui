@@ -338,8 +338,9 @@ function evaluateRunFreshness(run, artifact, target, stage) {
     if (artifact.stage !== stage) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
 
-  if (run.evidenceError?.code && RUNTIME_FRESHNESS_REASONS[run.evidenceError.code]) {
-    return createFreshness(stage, target, sourceRunId, sourceArtifactId, run.evidenceError.code, null);
+  const evidenceErrorReason = persistedEvidenceErrorReason(run.evidenceError);
+  if (evidenceErrorReason) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, evidenceErrorReason, null);
   }
   if (run.status === "running") return createFreshness(stage, target, sourceRunId, sourceArtifactId, "run_in_progress", null);
   if (isTimeoutRun(run)) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "timeout", null);
@@ -446,7 +447,10 @@ function evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId) {
   if (rowReason) return createFreshness("test", target, sourceRunId, sourceArtifactId, rowReason, null);
   const focusedTest = focusedTestFromRunSummary(summary, artifact?.focusedTest ?? null);
   const failedRows = summary.rows.filter((row) => row.status === "failed");
-  const recordedFailedRows = Array.isArray(summary.failedRowIds) ? summary.failedRowIds : [];
+  const recordedFailedRows = summary.failedRowIds;
+  if (!hasExactFailedRowIds(recordedFailedRows, failedRows, summary.rows)) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", focusedTest);
+  }
   if (summary.status === "passed" && (failedRows.length || recordedFailedRows.length)) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", focusedTest);
   }
@@ -642,6 +646,24 @@ function reasonRecord(code) {
   return { code, copy: RUNTIME_FRESHNESS_REASONS[code] ?? RUNTIME_FRESHNESS_REASONS.malformed_binding };
 }
 
+function persistedEvidenceErrorReason(evidenceError) {
+  if (evidenceError == null) return null;
+  if (!evidenceError || typeof evidenceError !== "object" || Array.isArray(evidenceError)) {
+    return "malformed_binding";
+  }
+  const { code, copy } = evidenceError;
+  if (
+    typeof code !== "string" ||
+    code === "fresh" ||
+    !RUNTIME_FRESHNESS_REASONS[code] ||
+    typeof copy !== "string" ||
+    copy !== RUNTIME_FRESHNESS_REASONS[code]
+  ) {
+    return "malformed_binding";
+  }
+  return code;
+}
+
 function compareCandidateBinding(binding, target) {
   if (binding.candidateId !== target.candidateId) return "candidate_mismatch";
   if (binding.candidateRevision !== target.candidateRevision) return "revision_change";
@@ -697,6 +719,18 @@ function isValidPersistedTestRow(row) {
   ))) return false;
   if (row.failureDetails != null && typeof row.failureDetails !== "string") return false;
   return true;
+}
+
+function hasExactFailedRowIds(recordedFailedRowIds, failedRows, rows) {
+  if (!Array.isArray(recordedFailedRowIds)) return false;
+  if (!recordedFailedRowIds.every((id) => typeof id === "string" && id.trim())) return false;
+
+  const rowIds = rows.map((row) => row.id);
+  const recordedIds = new Set(recordedFailedRowIds);
+  const expectedIds = new Set(failedRows.map((row) => row.id));
+  if (new Set(rowIds).size !== rowIds.length || recordedIds.size !== recordedFailedRowIds.length) return false;
+  if (recordedIds.size !== expectedIds.size) return false;
+  return [...expectedIds].every((id) => recordedIds.has(id));
 }
 
 function migrateArtifactRuns(task) {
