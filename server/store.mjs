@@ -130,8 +130,10 @@ export class JsonTaskStore {
         completedAt: null,
         error: null,
         activeRunKind: null,
+        activeRunReservationId: null,
         activeRunIds: [],
         attemptsByStage: {},
+        stageRunReservations: {},
         models: configuredModels(input.stagePolicies ?? this.#state.settings.stagePolicies),
         usage: enrichUsage(normalizeModelId(input.model ?? this.#state.settings.defaultModel), {}),
         artifacts: [],
@@ -214,6 +216,7 @@ export class JsonTaskStore {
       for (const task of state.tasks) {
         for (const [key, fallback] of [
           ["activeRunKind", null],
+          ["activeRunReservationId", null],
           ["activeRunIds", []],
           ["attachments", []],
           ["closure", null],
@@ -222,6 +225,7 @@ export class JsonTaskStore {
           ["mergeIntent", null],
           ["scoutDispatch", null],
           ["attemptsByStage", {}],
+          ["stageRunReservations", {}],
           ["decisions", []],
           ["grillSession", null],
           ["approvals", []],
@@ -308,6 +312,7 @@ export class JsonTaskStore {
         changed = true;
         task.status = "failed";
         task.activeRunKind = null;
+        task.activeRunReservationId = null;
         task.error = "The local harness stopped while this task was running. Start it again to retry the stage.";
         interruptActiveRuns(task, now, task.error);
         task.updatedAt = now;

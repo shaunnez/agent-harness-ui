@@ -116,6 +116,33 @@ async function git(cwd, args) {
   return exec("git", args, { cwd, windowsHide: true });
 }
 
+function bindLatestWorkflowAttempt(draft, stage, kind) {
+  const candidate = draft.candidates.at(-1) ?? null;
+  const workflowAttempt = draft.attemptsByStage[stage];
+  const reservation = {
+    id: `reservation-${draft.id}-${stage}-${workflowAttempt}`,
+    stage,
+    kind,
+    workflowAttempt,
+    candidateId: candidate?.id ?? null,
+    candidateRevision: candidate?.revisionNumber ?? null,
+    candidateHeadRevision: candidate?.headRevision ?? null,
+    reservedAt: "2026-08-04T00:00:00.000Z",
+  };
+  draft.stageRunReservations[stage] = reservation;
+  const latestRun = [...draft.runs].reverse().find((run) => run.stage === stage);
+  if (latestRun) {
+    Object.assign(latestRun, {
+      candidateId: reservation.candidateId,
+      candidateRevision: reservation.candidateRevision,
+      candidateHeadRevision: reservation.candidateHeadRevision,
+      workflowAttempt,
+      workflowReservationId: reservation.id,
+    });
+  }
+  return reservation;
+}
+
 test("creates, lists, and starts a local task", async () => {
   const { directory, origin, server, store, startedIdRef, recordedDecisionRef, approvedSpecificationRef } =
     await createServer();
@@ -1162,12 +1189,13 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
       draft.status = "blocked";
       draft.currentStage = "implement";
       draft.attemptsByStage.implement = draft.stageRunLimits.implement;
-      draft.candidates.push({ id: "C1", status: "repair_required" });
+      draft.candidates.push({ id: "C1", revisionNumber: 1, headRevision: "candidate-c1-r1", status: "repair_required" });
       draft.runs.push(...[1, 2, 3].map((attempt) => ({
         id: `run-failed-repair-${attempt}`,
         stage: "implement",
         status: "failed",
       })));
+      bindLatestWorkflowAttempt(draft, "implement", "repair");
     });
 
     const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
@@ -1299,6 +1327,63 @@ test("grants one bounded stage attempt to a repaired candidate at an exhausted r
   }
 });
 
+test("does not attribute a repaired candidate grant to the prior candidate revision", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Repaired candidate lineage",
+      description: "Do not reuse the exhausted review run from the candidate before repair.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+      draft.candidates.push({
+        id: "C1",
+        revisionNumber: 2,
+        headRevision: "candidate-c1-r2",
+        status: "ready_for_review",
+      });
+      draft.stageRunReservations["dev-review"] = {
+        id: "reservation-c1-r1-review-3",
+        stage: "dev-review",
+        kind: "review",
+        workflowAttempt: 3,
+        candidateId: "C1",
+        candidateRevision: 1,
+        candidateHeadRevision: "candidate-c1-r1",
+        reservedAt: "2026-08-04T00:00:00.000Z",
+      };
+      draft.runs.push({
+        id: "run-c1-r1-review-3",
+        stage: "dev-review",
+        kind: "review",
+        role: "dev-review",
+        status: "completed",
+        candidateId: "C1",
+        candidateRevision: 1,
+        candidateHeadRevision: "candidate-c1-r1",
+        workPackageId: null,
+        attempt: 3,
+        workflowAttempt: 3,
+        workflowReservationId: "reservation-c1-r1-review-3",
+      });
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200);
+    const updated = await store.get(task.id);
+    assert.equal(updated.decisions.at(-1).sourceRunId, null);
+    assert.equal(updated.events.at(-1).sourceRunId, null);
+    assert.equal(updated.stageRunLimits["dev-review"], 4);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("grants exactly one retry to each exhausted blocked canonical stage", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
@@ -1327,7 +1412,21 @@ test("grants exactly one retry to each exhausted blocked canonical stage", async
           stage,
           status: "failed",
         })));
-        if (candidateStatus) draft.candidates.push({ id: "C1", status: candidateStatus });
+        if (candidateStatus) {
+          draft.candidates.push({
+            id: "C1",
+            revisionNumber: 1,
+            headRevision: "candidate-c1-r1",
+            status: candidateStatus,
+          });
+        }
+        bindLatestWorkflowAttempt(draft, stage, {
+          triage: "investigation",
+          plan: "planning",
+          "dev-review": "review",
+          test: "test",
+          "final-review": "final-review",
+        }[stage]);
       });
       const before = await store.get(task.id);
 
@@ -1420,6 +1519,62 @@ test("rejects a retry grant when the reviewed exhaustion tuple changes before re
   }
 });
 
+test("rejects a retry grant when reserved run metadata drifts before the atomic transition", async () => {
+  let taskId = null;
+  const { directory, origin, server, store } = await createServer({
+    async beforeTransition(targetStore, id) {
+      if (id !== taskId) return;
+      await targetStore.update(id, (draft) => {
+        const sourceRun = draft.runs.find((run) => run.id === "run-review-3");
+        sourceRun.workPackageId = "unexpected-package";
+      });
+    },
+  });
+  try {
+    const response = await createTask(origin, {
+      title: "Atomic run history",
+      description: "Reserve the complete exhausted run tuple before granting an allowance.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    taskId = task.id;
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+      draft.candidates.push({
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "ready_for_review",
+      });
+      draft.runs.push(...[1, 2, 3].map((attempt) => ({
+        id: `run-review-${attempt}`,
+        stage: "dev-review",
+        kind: "review",
+        role: "dev-review",
+        status: "failed",
+        candidateId: "C1",
+        candidateRevision: 1,
+        candidateHeadRevision: "candidate-c1-r1",
+        workPackageId: null,
+        attempt,
+      })));
+      bindLatestWorkflowAttempt(draft, "dev-review", "review");
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 409);
+    assert.match((await grantResponse.json()).error, /state changed/i);
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits["dev-review"], 3);
+    assert.equal(updated.decisions.length, 0);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("rejects a retry grant while the latest exhausted-stage run is still active", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
@@ -1444,7 +1599,40 @@ test("rejects a retry grant while the latest exhausted-stage run is still active
 
     const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
     assert.equal(grantResponse.status, 409);
-    assert.match((await grantResponse.json()).error, /still active/i);
+    assert.match((await grantResponse.json()).error, /active or inconsistent run history/i);
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits.test, 3);
+    assert.equal(updated.decisions.length, 0);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects a retry grant when an earlier exhausted-stage run remains active", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Earlier active retry source",
+      description: "Do not grant while any run in the exhausted stage remains active.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "test";
+      draft.attemptsByStage.test = draft.stageRunLimits.test;
+      draft.candidates.push({ id: "C1", revisionNumber: 1, headRevision: "candidate-c1-r1", status: "ready_for_test" });
+      draft.runs.push(
+        { id: "run-test-1", stage: "test", status: "failed" },
+        { id: "run-test-2", stage: "test", status: "running" },
+        { id: "run-test-3", stage: "test", status: "failed" },
+      );
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 409);
+    assert.match((await grantResponse.json()).error, /active or inconsistent run history/i);
     const updated = await store.get(task.id);
     assert.equal(updated.stageRunLimits.test, 3);
     assert.equal(updated.decisions.length, 0);

@@ -2667,10 +2667,32 @@ test("reserves a run exactly once across concurrent start requests", async () =>
     assert.equal(reserved.status, "running");
     assert.equal(reserved.activeRunKind, "investigation");
     assert.equal(reserved.attemptsByStage.triage, 1);
+    assert.equal(reserved.stageRunReservations.triage.id, reserved.activeRunReservationId);
+    assert.deepEqual(
+      {
+        stage: reserved.stageRunReservations.triage.stage,
+        kind: reserved.stageRunReservations.triage.kind,
+        workflowAttempt: reserved.stageRunReservations.triage.workflowAttempt,
+        candidateId: reserved.stageRunReservations.triage.candidateId,
+        candidateRevision: reserved.stageRunReservations.triage.candidateRevision,
+        candidateHeadRevision: reserved.stageRunReservations.triage.candidateHeadRevision,
+      },
+      {
+        stage: "triage",
+        kind: "investigation",
+        workflowAttempt: 1,
+        candidateId: null,
+        candidateRevision: null,
+        candidateHeadRevision: null,
+      },
+    );
     for (let attempt = 0; !release && attempt < 100; attempt += 1) {
       await new Promise((resolve) => setTimeout(resolve, 5));
     }
     assert.equal(typeof release, "function");
+    const running = await store.get(task.id);
+    assert.equal(running.runs[0].workflowReservationId, reserved.activeRunReservationId);
+    assert.equal(running.runs[0].workflowAttempt, 1);
     assert.equal(await orchestrator.cancel(task.id), true);
     release();
     await waitForStatus(store, task.id, "cancelled");

@@ -134,7 +134,7 @@ export class TaskOrchestrator {
     try {
       const reserved = await this.#store.transition(
         id,
-        (draft) => !draft.activeRunKind && (options.canStart ? options.canStart(draft) : canStartRun(draft, kind)),
+        (draft) => !draft.activeRunKind && !draft.activeRunReservationId && (options.canStart ? options.canStart(draft) : canStartRun(draft, kind)),
         (draft) => {
           options.onReserve?.(draft);
           reserveRun(draft, kind);
@@ -459,6 +459,7 @@ export class TaskOrchestrator {
         draft.status = signal.aborted ? "cancelled" : attempts >= stageRunLimitFor(draft, stage) ? "blocked" : "failed";
         draft.error = error.message;
         draft.activeRunKind = null;
+        draft.activeRunReservationId = null;
         const candidate = draft.candidates?.at(-1);
         if (candidate) {
           const candidateStatus = {
@@ -525,6 +526,7 @@ export class TaskOrchestrator {
       draft.status = "awaiting-grill";
       draft.currentStage = "grill";
       draft.activeRunKind = null;
+      draft.activeRunReservationId = null;
       const count = draft.grillSession?.questions.length ?? 0;
       draft.events.push(activity("grill", "Grill Me ready", `${count} material question${count === 1 ? "" : "s"} need a decision.`, "success", "decision"));
     });
@@ -636,6 +638,7 @@ export class TaskOrchestrator {
       draft.status = "awaiting-spec-approval";
       draft.currentStage = "specification";
       draft.activeRunKind = null;
+      draft.activeRunReservationId = null;
       draft.events.push(activity("specification", "Specification ready for approval", "Review the evidence and approve or stop.", "success", "decision"));
     });
   }
@@ -651,6 +654,7 @@ export class TaskOrchestrator {
       draft.status = "awaiting-plan-approval";
       draft.currentStage = "plan";
       draft.activeRunKind = null;
+      draft.activeRunReservationId = null;
       const batches = Math.max(...workPackages.map((item) => item.batch));
       draft.events.push(activity("plan", "Implementation plan ready", `${workPackages.length} work package${workPackages.length === 1 ? "" : "s"} across ${batches} dependency batch${batches === 1 ? "" : "es"}.`, "success", "decision"));
     });
@@ -743,6 +747,7 @@ export class TaskOrchestrator {
       draft.status = "ready-for-review";
       draft.currentStage = "dev-review";
       draft.activeRunKind = null;
+      draft.activeRunReservationId = null;
       refreshGateFreshness(draft);
       draft.events.push(activity("implement", "Integration candidate ready", `${candidate.id} @ ${assembled.headRevision.slice(0, 8)} contains ${candidate.members.length} work packages and is ready for development review.`, "success", "artifact"));
     });
@@ -889,6 +894,7 @@ export class TaskOrchestrator {
         : null;
       activeCandidate.updatedAt = now();
       draft.activeRunKind = null;
+      draft.activeRunReservationId = null;
       if (gateFailure) {
         if (evidenceError) {
           const rerunState = evaluationRerunState(stageId);
@@ -1010,6 +1016,7 @@ export class TaskOrchestrator {
       draft.status = "ready-for-review";
       draft.currentStage = "dev-review";
       draft.activeRunKind = null;
+      draft.activeRunReservationId = null;
       refreshGateFreshness(draft);
       draft.events.push(activity("implement", "Repaired candidate ready", `${candidate.id} revision ${nextRevision} @ ${committed.headRevision.slice(0, 8)} must pass review again.`, "success", "artifact"));
     });
@@ -1039,6 +1046,12 @@ export class TaskOrchestrator {
     const runKind = runKindFor(stageId, policyId, workPackageId);
     const runtimeTemp = path.join(os.tmpdir(), "agent-harness", task.id, runId);
     await this.#store.update(task.id, (draft) => {
+      const reservation = Object.values(draft.stageRunReservations ?? {}).find(
+        (entry) => entry?.id === draft.activeRunReservationId,
+      );
+      if (!reservation || reservation.kind !== draft.activeRunKind) {
+        throw new Error("The active workflow attempt is missing its persisted run reservation.");
+      }
       draft.currentStage = stageId;
       const detail = testRuntime
         ? `Verifying ${cwd}; source changes are checked before and after the run`
@@ -1053,7 +1066,10 @@ export class TaskOrchestrator {
         startedAt,
         candidateId: candidate?.id ?? null,
         candidateRevision: candidate?.revisionNumber ?? null,
+        candidateHeadRevision: candidate?.headRevision ?? null,
         workPackageId,
+        workflowAttempt: reservation?.workflowAttempt ?? null,
+        workflowReservationId: reservation?.id ?? null,
       });
       draft.events.push(activity(
         stageId,
@@ -1302,15 +1318,29 @@ function canStartRun(task, kind) {
 
 function reserveRun(task, kind) {
   const stage = stageForRun(kind, task.currentStage);
+  const candidate = task.candidates?.at(-1) ?? null;
+  const workflowAttempt = (task.attemptsByStage?.[stage] ?? 0) + 1;
+  const reservation = {
+    id: crypto.randomUUID(),
+    stage,
+    kind,
+    workflowAttempt,
+    candidateId: candidate?.id ?? null,
+    candidateRevision: candidate?.revisionNumber ?? null,
+    candidateHeadRevision: candidate?.headRevision ?? null,
+    reservedAt: now(),
+  };
   task.status = "running";
   task.error = null;
   task.startedAt ??= now();
   task.completedAt = null;
   task.stageRun += 1;
   task.attemptsByStage ??= {};
-  task.attemptsByStage[stage] = (task.attemptsByStage[stage] ?? 0) + 1;
+  task.attemptsByStage[stage] = workflowAttempt;
+  task.stageRunReservations ??= {};
+  task.stageRunReservations[stage] = reservation;
   task.activeRunKind = kind;
-  const candidate = task.candidates?.at(-1);
+  task.activeRunReservationId = reservation.id;
   if (candidate) {
     const candidateStatus = {
       repair: "repairing",

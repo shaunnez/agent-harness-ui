@@ -570,15 +570,69 @@ function retryGrantContext(task) {
   if (!exhaustedRepair && !exhaustedReadyGate && !exhaustedBlockedStage) {
     return { error: "A retry can only be granted to an exhausted blocked stage or repair attempt." };
   }
+  if (task.activeRunKind || task.activeRunReservationId || (task.activeRunIds?.length ?? 0) > 0) {
+    return { error: "An active or inconsistent run reservation must be resolved before granting a retry." };
+  }
+  if ((task.runs ?? []).some((run) => run?.status === "running")) {
+    return { error: "An active or inconsistent run history must be resolved before granting a retry." };
+  }
   const stageRuns = (task.runs ?? []).filter((run) => run.stage === grantedStage);
-  if (stageRuns.length > currentAttempts) {
-    return { error: "The recorded stage runs exceed the attempt counter; resolve the inconsistent task state before granting a retry." };
+  const terminalStatuses = new Set(["completed", "failed", "cancelled", "interrupted", "timed-out", "timed_out", "timeout"]);
+  if (stageRuns.some((run) => !terminalStatuses.has(run.status))) {
+    return { error: "The exhausted stage contains a non-terminal run; resolve the inconsistent history before granting a retry." };
   }
-  const latestStageRun = stageRuns.at(-1) ?? null;
-  if (latestStageRun?.status === "running") {
-    return { error: "The latest stage run is still active; resolve it before granting a retry." };
+  if (new Set(stageRuns.map((run) => run.id)).size !== stageRuns.length) {
+    return { error: "The exhausted stage has duplicate run identities; resolve the inconsistent task state before granting a retry." };
   }
-  const retrySource = stageRuns.length === currentAttempts ? latestStageRun : null;
+  const reservation = task.stageRunReservations?.[grantedStage] ?? null;
+  if (reservation && (
+    typeof reservation.id !== "string" ||
+    !reservation.id ||
+    reservation.stage !== grantedStage ||
+    !Number.isInteger(reservation.workflowAttempt) ||
+    reservation.workflowAttempt < 1 ||
+    reservation.workflowAttempt > currentAttempts
+  )) {
+    return { error: "The exhausted stage has an inconsistent workflow reservation; resolve it before granting a retry." };
+  }
+  const candidateBinding = {
+    candidateId: candidate?.id ?? null,
+    candidateRevision: candidate?.revisionNumber ?? null,
+    candidateHeadRevision: candidate?.headRevision ?? null,
+  };
+  const exactReservation = reservation?.workflowAttempt === currentAttempts ? reservation : null;
+  const reservationRuns = exactReservation
+    ? stageRuns.filter((run) => run.workflowReservationId === exactReservation.id)
+    : [];
+  if (exactReservation && reservationRuns.some((run) => (
+    run.workflowAttempt !== exactReservation.workflowAttempt ||
+    run.candidateId !== exactReservation.candidateId ||
+    run.candidateRevision !== exactReservation.candidateRevision ||
+    run.candidateHeadRevision !== exactReservation.candidateHeadRevision
+  ))) {
+    return { error: "The exhausted stage run does not match its workflow reservation; resolve the inconsistent history before granting a retry." };
+  }
+  if (exactReservation && stageRuns.some((run) => (
+    run.workflowAttempt === currentAttempts && run.workflowReservationId !== exactReservation.id
+  ))) {
+    return { error: "The exhausted workflow attempt contains conflicting run reservations; resolve it before granting a retry." };
+  }
+  const reservationMatchesCandidate = exactReservation &&
+    exactReservation.candidateId === candidateBinding.candidateId &&
+    exactReservation.candidateRevision === candidateBinding.candidateRevision &&
+    exactReservation.candidateHeadRevision === candidateBinding.candidateHeadRevision;
+  const retrySource = reservationMatchesCandidate && reservationRuns.length === 1
+    ? reservationRuns[0]
+    : null;
+  const historySnapshot = JSON.stringify({
+    currentStage: task.currentStage,
+    activeRunKind: task.activeRunKind ?? null,
+    activeRunReservationId: task.activeRunReservationId ?? null,
+    activeRunIds: task.activeRunIds ?? [],
+    candidate: candidate ?? null,
+    reservation,
+    stageRuns,
+  });
   return {
     candidate,
     grantedStage,
@@ -589,7 +643,7 @@ function retryGrantContext(task) {
     candidateRevision: candidate?.revisionNumber ?? null,
     candidateHeadRevision: candidate?.headRevision ?? null,
     candidateStatus: candidate?.status ?? null,
-    stageRunCount: stageRuns.length,
+    historySnapshot,
     retrySource,
     sourceRunId: retrySource?.id ?? null,
     sourceRunStatus: retrySource?.status ?? null,
@@ -608,7 +662,7 @@ function sameRetryGrantContext(expected, current) {
     "candidateRevision",
     "candidateHeadRevision",
     "candidateStatus",
-    "stageRunCount",
+    "historySnapshot",
     "sourceRunId",
     "sourceRunStatus",
   ].every((field) => expected[field] === current[field]);

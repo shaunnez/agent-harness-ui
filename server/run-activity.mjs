@@ -1,4 +1,4 @@
-export const TASK_STORE_SCHEMA_VERSION = 4;
+export const TASK_STORE_SCHEMA_VERSION = 5;
 
 export const CANONICAL_RUN_STAGES = Object.freeze([
   "triage",
@@ -49,6 +49,10 @@ export function migrateRunActivityState(state) {
   let changed = state.schemaVersion !== TASK_STORE_SCHEMA_VERSION;
   for (const task of state.tasks ?? []) {
     changed = migrateStageRunLimits(task) || changed;
+    if (!task.stageRunReservations || typeof task.stageRunReservations !== "object" || Array.isArray(task.stageRunReservations)) {
+      task.stageRunReservations = {};
+      changed = true;
+    }
     const retainedEvents = retainRunActivityEvents(task.events);
     if (retainedEvents !== task.events) {
       task.events = retainedEvents;
@@ -183,7 +187,10 @@ export function beginAgentRun(task, input) {
     apiEstimate: null,
     candidateId: input.candidateId ?? null,
     candidateRevision: input.candidateRevision ?? null,
+    candidateHeadRevision: input.candidateHeadRevision ?? null,
     workPackageId: input.workPackageId ?? null,
+    workflowAttempt: input.workflowAttempt ?? null,
+    workflowReservationId: input.workflowReservationId ?? null,
     attempt: relatedRuns.length + 1,
     retryOfRunId,
     repairOfRunId,
