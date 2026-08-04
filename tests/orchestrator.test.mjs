@@ -1757,11 +1757,15 @@ test("latest terminal exact-candidate attempt wins and older passes become super
       attempt: laterAttempt,
       gateResult: makeGateResult({ verdict: "REPAIR", reportedVerdict: "REPAIR", blockingReasons: ["P1: repair"] }),
     });
+    // Attempts are assigned monotonically as runs are appended, so a repeated or
+    // decreasing attempt means persisted order and attempt order disagree. Neither
+    // signal may silently win: the gate fails closed and no run is authoritative.
     const conflictingAttemptTask = makeRuntimeTask({ runs: [earlierPass, laterRepair] });
     refreshGateFreshness(conflictingAttemptTask);
-    assert.equal(conflictingAttemptTask.gateFreshness["dev-review"].sourceRunId, laterRepair.id);
-    assert.equal(conflictingAttemptTask.gateFreshness["dev-review"].reasonCode, "repair_required");
-    assert.equal(conflictingAttemptTask.runs[0].freshness.reasonCode, "superseded_attempt");
+    assert.equal(conflictingAttemptTask.gateFreshness["dev-review"].sourceRunId, null);
+    assert.equal(conflictingAttemptTask.gateFreshness["dev-review"].fresh, false);
+    assert.equal(conflictingAttemptTask.gateFreshness["dev-review"].reasonCode, "ambiguous_attempt");
+    assert.equal(laterRepair.id.length > 0, true);
   }
 
   const unrelated = makeRuntimeRun({
@@ -1811,12 +1815,15 @@ test("latest terminal exact-candidate attempt wins and older passes become super
   assert.equal(nextRevisionRun.attempt, 1, "attempt numbering is scoped to the exact candidate revision");
 });
 
-test("later persisted terminal evidence supersedes attempt metadata and blocks approval", async () => {
+test("unresolvable attempt evidence fails closed and blocks approval", async () => {
+  // Malformed, missing, repeated, or decreasing attempt evidence cannot identify an
+  // authoritative terminal run. Every case fails closed rather than falling back to
+  // persisted array position, which could otherwise resurrect an older PASS.
   for (const { earlierAttempt, laterAttempt, laterStatus, expectedReason } of [
-    { earlierAttempt: 1, laterAttempt: null, laterStatus: "completed", expectedReason: "missing_authoritative_summary" },
-    { earlierAttempt: 1, laterAttempt: "2", laterStatus: "completed", expectedReason: "missing_authoritative_summary" },
-    { earlierAttempt: 2, laterAttempt: 1, laterStatus: "failed", expectedReason: "failed_execution" },
-    { earlierAttempt: 2, laterAttempt: 2, laterStatus: "failed", expectedReason: "failed_execution" },
+    { earlierAttempt: 1, laterAttempt: null, laterStatus: "completed", expectedReason: "malformed_attempt" },
+    { earlierAttempt: 1, laterAttempt: "2", laterStatus: "completed", expectedReason: "malformed_attempt" },
+    { earlierAttempt: 2, laterAttempt: 1, laterStatus: "failed", expectedReason: "ambiguous_attempt" },
+    { earlierAttempt: 2, laterAttempt: 2, laterStatus: "failed", expectedReason: "ambiguous_attempt" },
   ]) {
     const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-legacy-attempt-"));
     try {
@@ -1848,9 +1855,9 @@ test("later persisted terminal evidence supersedes attempt metadata and blocks a
       });
 
       const persisted = await store.get(task.id);
-      assert.equal(persisted.gateFreshness["dev-review"].sourceRunId, "RUN-LATER-TERMINAL");
+      assert.equal(persisted.gateFreshness["dev-review"].sourceRunId, null);
+      assert.equal(persisted.gateFreshness["dev-review"].fresh, false);
       assert.equal(persisted.gateFreshness["dev-review"].reasonCode, expectedReason);
-      assert.equal(persisted.runs[0].freshness.reasonCode, "superseded_attempt");
 
       let merged = false;
       const orchestrator = new TaskOrchestrator(store, {

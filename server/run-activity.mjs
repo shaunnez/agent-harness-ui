@@ -34,6 +34,9 @@ export const RUNTIME_FRESHNESS_REASONS = Object.freeze({
   timeout: "The terminal run timed out, so its evidence requires rerun.",
   run_in_progress: "The run is still in progress; authoritative evidence is not available yet.",
   superseded_attempt: "A later terminal attempt superseded this historical evidence.",
+  malformed_attempt: "Candidate evidence has a malformed or missing terminal attempt number.",
+  ambiguous_attempt: "Candidate evidence records more than one terminal run at the same attempt number.",
+  ambiguous_candidate: "Persisted candidate revisions are out of order, so the active candidate is ambiguous.",
 });
 
 const TERMINAL_STATUSES = new Set(["completed", "failed", "cancelled", "interrupted", "timed-out", "timed_out", "timeout"]);
@@ -67,6 +70,7 @@ export function migrateRunActivityState(state) {
       changed = true;
     }
     if (incomingVersion < 2) changed = migrateArtifactRuns(task) || changed;
+    changed = backfillRunAttempts(task) || changed;
     const before = JSON.stringify({
       gateFreshness: task.gateFreshness,
       runs: task.runs.map((run) => run.freshness ?? null),
@@ -298,15 +302,22 @@ export function resolveGateFreshness(task, stage) {
     return createFreshness(stage, null, null, null, targetResult.code, null);
   }
   const stageRuns = terminalStageRuns(task, stage);
-  const selected = latestPersistedRun(candidateRelevantRuns(stageRuns, target));
+  const selection = selectAuthoritativeRun(candidateRelevantRuns(task, stageRuns, target, stage));
+  if (selection.reasonCode) {
+    return createFreshness(stage, target, null, null, selection.reasonCode, null);
+  }
+  const selected = selection.run;
   if (!selected) {
-    const diagnosticRun = latestPersistedRun(stageRuns);
-    if (!diagnosticRun) {
+    const diagnostic = selectAuthoritativeRun(stageRuns);
+    if (diagnostic.reasonCode) {
+      return createFreshness(stage, target, null, null, diagnostic.reasonCode, null);
+    }
+    if (!diagnostic.run) {
       return createFreshness(stage, target, null, null, "missing_authoritative_summary", null);
     }
     return evaluateRunFreshness(
-      diagnosticRun,
-      findRunArtifact(task, diagnosticRun),
+      diagnostic.run,
+      findRunArtifact(task, diagnostic.run),
       target,
       stage,
     );
@@ -327,7 +338,7 @@ export function refreshGateFreshness(task) {
     const targetResult = activeCandidateBinding(task);
     const target = targetResult.valid ? targetResult : null;
     const selected = target
-      ? latestPersistedRun(candidateRelevantRuns(terminalStageRuns(task, stage), target))
+      ? selectAuthoritativeRun(candidateRelevantRuns(task, terminalStageRuns(task, stage), target, stage)).run
       : null;
     projection[stage] = resolveGateFreshness(task, stage);
     for (const run of task.runs ?? []) {
@@ -675,11 +686,25 @@ function createFreshness(stage, target, sourceRunId, sourceArtifactId, code, foc
 }
 
 function activeCandidateBinding(task) {
-  const candidate = task.candidates?.at(-1);
-  return readExplicitCandidateBinding(candidate ? {
+  const candidates = Array.isArray(task.candidates) ? task.candidates : [];
+  const candidate = candidates.at(-1);
+  if (!candidate) return readExplicitCandidateBinding(null);
+  const revision = candidate.revisionNumber;
+  if (typeof candidate.id !== "string" || !candidate.id.trim()) return invalidBinding("malformed_binding");
+  if (!Number.isInteger(revision) || revision < 1) return invalidBinding("malformed_binding");
+  // The trailing entry is authoritative only when no earlier entry for the same
+  // candidate records a higher validated revision. Out-of-order persistence fails
+  // closed instead of binding every gate to a superseded revision.
+  const superseding = candidates.some((entry) =>
+    entry !== candidate &&
+    entry?.id === candidate.id &&
+    Number.isInteger(entry.revisionNumber) &&
+    entry.revisionNumber > revision);
+  if (superseding) return invalidBinding("ambiguous_candidate");
+  return readExplicitCandidateBinding({
     candidateId: candidate.id,
-    candidateRevision: candidate.revisionNumber,
-  } : null);
+    candidateRevision: revision,
+  });
 }
 
 function terminalStageRuns(task, stage) {
@@ -688,20 +713,45 @@ function terminalStageRuns(task, stage) {
     .filter(({ run }) => run?.stage === stage && isTerminalRun(run));
 }
 
-function candidateRelevantRuns(entries, target) {
+/**
+ * Resolve every persisted candidate identity a run carries before deciding whether
+ * the run is relevant to the target. A run whose run-level binding names another
+ * candidate but whose summaries bind the target is unresolvable, not unrelated, so
+ * it must remain in precedence and fail closed rather than yield to an older PASS.
+ */
+function candidateRelevantRuns(task, entries, target, stage) {
   return entries.filter(({ run }) => {
-    const binding = readExplicitCandidateBinding(run);
-    // Invalid bindings remain in precedence so a later malformed attempt fails
-    // closed. Explicitly valid evidence for another candidate tuple is unrelated.
-    return !binding.valid || compareCandidateBinding(binding, target) == null;
+    const resolution = persistedEvidenceIdentityResolution(run, findRunArtifact(task, run), stage);
+    if (resolution.reasonCode || !resolution.binding) return true;
+    return compareCandidateBinding(resolution.binding, target) == null;
   });
 }
 
-function latestPersistedRun(entries) {
-  return entries.reduce((current, entry) => {
-    if (!current || entry.index > current.index) return entry;
-    return current;
-  }, null)?.run ?? null;
+function validatedAttempt(run) {
+  const attempt = run?.attempt;
+  return Number.isInteger(attempt) && attempt >= 1 ? attempt : null;
+}
+
+/**
+ * Select the authoritative terminal run by validated attempt number. Persisted array
+ * order is never consulted, so a lower-attempt PASS stored after a higher-attempt
+ * REPAIR cannot win. Missing, malformed, or tied attempt evidence fails closed.
+ */
+function selectAuthoritativeRun(entries) {
+  if (!entries.length) return { run: null, reasonCode: null };
+  const ordered = [...entries].sort((left, right) => left.index - right.index);
+  let previousAttempt = 0;
+  for (const entry of ordered) {
+    const attempt = validatedAttempt(entry.run);
+    if (attempt == null) return { run: null, reasonCode: "malformed_attempt" };
+    // Attempts are assigned monotonically as runs are appended, so validated attempt
+    // order and persisted order must agree. A repeated or decreasing attempt means the
+    // two disagree and no run can be proven authoritative, so the gate fails closed
+    // instead of letting either signal silently win.
+    if (attempt <= previousAttempt) return { run: null, reasonCode: "ambiguous_attempt" };
+    previousAttempt = attempt;
+  }
+  return { run: ordered.at(-1).run, reasonCode: null };
 }
 
 function isTerminalRun(run) {
@@ -923,6 +973,34 @@ function migrateArtifactRuns(task) {
     artifact.runId = runId;
     knownRunIds.add(runId);
     changed = true;
+  }
+  return changed;
+}
+
+/**
+ * Terminal-run selection requires a validated attempt number on every gate run.
+ * Historical and migrated runs were persisted without one; position within the run
+ * scope is the only evidence available for them, so it is recorded once here as an
+ * explicit typed field rather than being re-derived at selection time.
+ */
+function backfillRunAttempts(task) {
+  let changed = false;
+  const counters = new Map();
+  for (const run of task.runs ?? []) {
+    if (!run || typeof run !== "object") continue;
+    const scope = JSON.stringify([
+      run.stage ?? null,
+      run.role ?? null,
+      run.workPackageId ?? null,
+      run.candidateId ?? null,
+      run.candidateRevision ?? null,
+    ]);
+    const next = (counters.get(scope) ?? 0) + 1;
+    counters.set(scope, next);
+    if (validatedAttempt(run) == null) {
+      run.attempt = next;
+      changed = true;
+    }
   }
   return changed;
 }
