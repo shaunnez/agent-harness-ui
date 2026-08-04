@@ -424,16 +424,6 @@ function evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId) {
   if (!Array.isArray(summary.rows) || !summary.rows.length || summary.rowCount !== summary.rows.length) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "missing_authoritative_summary", null);
   }
-  if (
-    typeof summary.command !== "string" ||
-    !summary.command.trim() ||
-    !["passed", "failed"].includes(summary.status) ||
-    (summary.startedAt != null && typeof summary.startedAt !== "string") ||
-    (summary.completedAt != null && typeof summary.completedAt !== "string") ||
-    (summary.durationMs != null && (!Number.isFinite(summary.durationMs) || summary.durationMs < 0))
-  ) {
-    return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
-  }
   const identities = new Set([
     `${summaryBinding.candidateId}:${summaryBinding.candidateRevision}`,
   ]);
@@ -458,6 +448,16 @@ function evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId) {
   const rowReason = compareCandidateBinding(rowBindings[0], target);
   if (rowReason) return createFreshness("test", target, sourceRunId, sourceArtifactId, rowReason, null);
   const focusedTest = focusedTestFromRunSummary(summary, artifact?.focusedTest ?? null);
+  if (
+    typeof summary.command !== "string" ||
+    !summary.command.trim() ||
+    !["passed", "failed"].includes(summary.status) ||
+    (summary.startedAt != null && !isCanonicalIsoTimestamp(summary.startedAt)) ||
+    (summary.completedAt != null && !isCanonicalIsoTimestamp(summary.completedAt)) ||
+    (summary.durationMs != null && (!Number.isFinite(summary.durationMs) || summary.durationMs < 0))
+  ) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", focusedTest);
+  }
   const failedRows = summary.rows.filter((row) => row.status === "failed");
   const recordedFailedRows = summary.failedRowIds;
   if (!hasExactFailedRowIds(recordedFailedRows, failedRows, summary.rows)) {
@@ -541,13 +541,20 @@ function focusedTestFromRunSummary(summary, artifactEvidence) {
     candidateId: summary.candidateId,
     candidateRevision: summary.candidateRevision,
     bindingExplicit: true,
-    command: summary.command,
-    status: summary.status,
-    startedAt: summary.startedAt ?? artifactEvidence?.startedAt ?? null,
-    completedAt: summary.completedAt ?? artifactEvidence?.completedAt ?? null,
-    durationMs: summary.durationMs ?? null,
+    command: typeof summary.command === "string" ? summary.command : "",
+    status: ["passed", "failed"].includes(summary.status)
+      ? summary.status
+      : (rows.every((row) => row.status === "passed") ? "passed" : "failed"),
+    startedAt: canonicalTimestampOrNull(summary.startedAt, artifactEvidence?.startedAt),
+    completedAt: canonicalTimestampOrNull(summary.completedAt, artifactEvidence?.completedAt),
+    durationMs: validDuration(summary.durationMs) ? summary.durationMs : null,
     rows,
   };
+}
+
+function canonicalTimestampOrNull(value, fallback) {
+  if (isCanonicalIsoTimestamp(value)) return value;
+  return isCanonicalIsoTimestamp(fallback) ? fallback : null;
 }
 
 function createFreshness(stage, target, sourceRunId, sourceArtifactId, code, focusedTest) {
@@ -700,12 +707,16 @@ function isValidPersistedGateFinding(finding) {
   return true;
 }
 
+export function isCanonicalIsoTimestamp(value) {
+  if (typeof value !== "string" || !value.trim()) return false;
+  const timestamp = new Date(value);
+  return Number.isFinite(timestamp.getTime()) && timestamp.toISOString() === value;
+}
+
 function isValidPersistedGateSummaryEnvelope(summary, stage) {
   if (!summary || typeof summary !== "object" || Array.isArray(summary)) return false;
   if (summary.schemaVersion !== 1 || summary.stage !== stage) return false;
-  if (typeof summary.evaluatedAt !== "string" || !summary.evaluatedAt.trim()) return false;
-  const evaluatedAt = new Date(summary.evaluatedAt);
-  return Number.isFinite(evaluatedAt.getTime()) && evaluatedAt.toISOString() === summary.evaluatedAt;
+  return isCanonicalIsoTimestamp(summary.evaluatedAt);
 }
 
 function isValidPersistedTestRow(row) {

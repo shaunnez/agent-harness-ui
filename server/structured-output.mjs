@@ -1,5 +1,9 @@
 import path from "node:path";
-import { readExplicitCandidateBinding, RUNTIME_FRESHNESS_REASONS } from "./run-activity.mjs";
+import {
+  isCanonicalIsoTimestamp,
+  readExplicitCandidateBinding,
+  RUNTIME_FRESHNESS_REASONS,
+} from "./run-activity.mjs";
 
 function candidateEvidenceError(code, detail = null) {
   const reasonCode = Object.prototype.hasOwnProperty.call(RUNTIME_FRESHNESS_REASONS, code)
@@ -94,8 +98,11 @@ export function parseFocusedTestEvidence(text) {
     throw candidateEvidenceError("contradictory_evidence", "Focused test evidence durationMs must be a non-negative number or null.");
   }
   for (const field of ["startedAt", "completedAt"]) {
-    if (value[field] != null && typeof value[field] !== "string") {
-      throw candidateEvidenceError("contradictory_evidence", `Focused test evidence ${field} must be a string or null.`);
+    if (value[field] != null && !isCanonicalIsoTimestamp(value[field])) {
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `Focused test evidence ${field} must be a canonical ISO timestamp or null.`,
+      );
     }
   }
   const rows = Array.isArray(value.rows) ? value.rows : [];

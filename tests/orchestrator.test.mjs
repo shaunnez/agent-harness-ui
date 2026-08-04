@@ -196,6 +196,10 @@ test("rejects malformed focused Test timestamps before normalization", () => {
   for (const [field, value] of [
     ["startedAt", { timestamp: "2026-08-01T12:00:00.000Z" }],
     ["completedAt", ["2026-08-01T12:01:00.000Z"]],
+    ["startedAt", "not-a-timestamp"],
+    ["completedAt", ""],
+    ["startedAt", "2026-08-01T12:00:00Z"],
+    ["completedAt", "2026-08-01T14:01:00.000+02:00"],
   ]) {
     const output = `<focused-test-evidence>${JSON.stringify({
       candidateId: "C1",
@@ -682,6 +686,10 @@ test("rejects malformed persisted focused Test timestamps while retaining them f
   for (const [field, value] of [
     ["startedAt", { timestamp: "2026-08-01T12:00:00.000Z" }],
     ["completedAt", ["2026-08-01T12:01:00.000Z"]],
+    ["startedAt", "not-a-timestamp"],
+    ["completedAt", ""],
+    ["startedAt", "2026-08-01T12:00:00Z"],
+    ["completedAt", "2026-08-01T14:01:00.000+02:00"],
   ]) {
     const summary = { ...makeFocusedTestSummary(), [field]: value };
     const run = makeRuntimeRun({
@@ -697,6 +705,12 @@ test("rejects malformed persisted focused Test timestamps while retaining them f
 
     assert.equal(task.gateFreshness.test.fresh, false, field);
     assert.equal(task.gateFreshness.test.reasonCode, "contradictory_evidence", field);
+    assert.deepEqual(
+      task.gateFreshness.test.focusedTestRows.map((row) => row.id),
+      ["row-1"],
+      `${field}: valid exact-candidate rows remain inspectable`,
+    );
+    assert.equal(task.gateFreshness.test.focusedTest[field], null, `${field}: malformed metadata is sanitized`);
     assert.deepEqual(run.test[field], value, `${field}: malformed evidence remains retained`);
   }
 });
@@ -831,6 +845,27 @@ test("merge approval fails closed for malformed persisted errors and failed-row 
       expectedStage: "Test",
       mutate(runs) {
         runs[1].test.completedAt = ["2026-08-01T12:01:00.000Z"];
+      },
+    },
+    {
+      name: "invalid Test start timestamp string",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.startedAt = "not-a-timestamp";
+      },
+    },
+    {
+      name: "empty Test completion timestamp string",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.completedAt = "";
+      },
+    },
+    {
+      name: "non-canonical Test start timestamp string",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.startedAt = "2026-08-01T12:00:00Z";
       },
     },
     {
