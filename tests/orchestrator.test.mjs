@@ -845,8 +845,19 @@ test("requires persisted Test failedRowIds to match the exact failed-row set", (
   });
   const validFailedTask = makeRuntimeTask({ runs: [validFailedRun] });
   refreshGateFreshness(validFailedTask);
-  assert.equal(validFailedTask.gateFreshness.test.reasonCode, "failed_execution");
+  assert.equal(validFailedTask.gateFreshness.test.reasonCode, "repair_required");
   assert.deepEqual(validFailedTask.gateFreshness.test.focusedTestRows.map((row) => row.id), ["row-failed"]);
+
+  const contradictoryFailedRun = makeRuntimeRun({
+    id: "RUN-FAILED-ROWS-PASS-GATE",
+    stage: "test",
+    kind: "test",
+    gateResult: makeGateResult({ stage: "test" }),
+    test: validFailedSummary,
+  });
+  const contradictoryFailedTask = makeRuntimeTask({ runs: [contradictoryFailedRun] });
+  refreshGateFreshness(contradictoryFailedTask);
+  assert.equal(contradictoryFailedTask.gateFreshness.test.reasonCode, "contradictory_evidence");
 });
 
 test("rejects malformed persisted focused Test timestamps while retaining them for audit", () => {
@@ -1680,7 +1691,7 @@ test("filters focused Test rows to the exact candidate and retains invalid rows 
   const failedTestTask = makeRuntimeTask({ runs: [failedTestRun], artifacts: [failedTestArtifact] });
   attachRunArtifact(failedTestTask, failedTestRun.id, failedTestArtifact);
   assert.equal(failedTestTask.gateFreshness.test.fresh, false);
-  assert.equal(failedTestTask.gateFreshness.test.reasonCode, "failed_execution");
+  assert.equal(failedTestTask.gateFreshness.test.reasonCode, "repair_required");
   assert.equal(failedTestTask.gateFreshness.test.focusedTest.status, "failed");
   assert.deepEqual(failedTestTask.gateFreshness.test.focusedTestRows.map((row) => row.id), ["row-failed"]);
 

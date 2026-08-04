@@ -1804,6 +1804,90 @@ test("grants repair after a candidate is assembled on the final implementation a
   }
 });
 
+test("grants repair after a completed structured Test failure on the final implementation allowance", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Repair completed Test failure",
+      description: "A valid failed focused Test must authorize repair without another Implement allowance.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "test";
+      const candidate = attachAssemblyLineage(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "repair_required",
+      }, {
+        workflowAttempt: 3,
+        reservationId: "reservation-c1-assembly-3",
+      });
+      draft.candidates.push(candidate);
+      const authorizer = attachExactCandidateGate(draft, candidate, {
+        stage: "test",
+        reservationId: "reservation-c1-test-1",
+        reservedAt: "2026-08-04T00:02:00.000Z",
+      });
+      const testRun = draft.runs.find((run) => run.id === authorizer.sourceRunId);
+      const testArtifact = draft.artifacts.find((artifact) => artifact.id === authorizer.sourceArtifactId);
+      const row = {
+        id: "test-row-failed",
+        candidateId: "C1",
+        candidateRevision: 1,
+        bindingExplicit: true,
+        command: "node --test tests/api.test.mjs",
+        status: "failed",
+        durationMs: 5,
+        title: "Focused API contract",
+        artifactReferences: [],
+        assertions: [{ label: "exit code", expected: "0", actual: "1" }],
+        failureDetails: "One focused assertion failed.",
+      };
+      const focusedTest = {
+        candidateId: "C1",
+        candidateRevision: 1,
+        bindingExplicit: true,
+        command: row.command,
+        status: "failed",
+        startedAt: testRun.startedAt,
+        completedAt: testRun.completedAt,
+        durationMs: 1_000,
+        rowCount: 1,
+        failedRowIds: [row.id],
+        rows: [row],
+      };
+      testRun.test = {
+        candidateId: "C1",
+        candidateRevision: 1,
+        command: focusedTest.command,
+        status: "failed",
+        startedAt: focusedTest.startedAt,
+        completedAt: focusedTest.completedAt,
+        durationMs: focusedTest.durationMs,
+        rowCount: 1,
+        failedRowIds: [row.id],
+        rows: [row],
+      };
+      testArtifact.focusedTest = focusedTest;
+      refreshGateFreshness(draft);
+    });
+
+    const before = await store.get(task.id);
+    assert.equal(before.gateFreshness.test.reasonCode, "repair_required");
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits.implement, 4);
+    assert.equal(updated.decisions.at(-1).authorizingGateStage, "test");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("rejects assembly-only scope exceptions without exact ordered package commit membership", async () => {
   const { directory, origin, server, store } = await createServer();
   try {

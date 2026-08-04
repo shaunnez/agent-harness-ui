@@ -544,10 +544,21 @@ function evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId) {
   if (summary.status === "passed" && (failedRows.length || recordedFailedRows.length)) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", focusedTest);
   }
-  if (summary.status !== "passed" || failedRows.length || recordedFailedRows.length) {
-    return createFreshness("test", target, sourceRunId, sourceArtifactId, "failed_execution", focusedTest);
-  }
+  const testFailed = summary.status !== "passed" || failedRows.length > 0 || recordedFailedRows.length > 0;
   const gateFailure = evaluateTestGateResult(run.gateResult, target, sourceRunId, sourceArtifactId);
+  if (testFailed) {
+    if (gateFailure?.reasonCode === "repair_required") {
+      return createFreshness("test", target, sourceRunId, sourceArtifactId, "repair_required", focusedTest);
+    }
+    return gateFailure ?? createFreshness(
+      "test",
+      target,
+      sourceRunId,
+      sourceArtifactId,
+      "contradictory_evidence",
+      focusedTest,
+    );
+  }
   if (gateFailure) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, gateFailure.reasonCode, focusedTest);
   }
