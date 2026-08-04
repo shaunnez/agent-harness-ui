@@ -153,7 +153,7 @@ export function attachRunArtifact(task, runId, artifact) {
   run.artifactId = artifact.id ?? null;
   run.test = summarizeTest(artifact.focusedTest);
   run.gateResult = artifact.gateResult ? structuredClone(artifact.gateResult) : null;
-  run.evidenceError = artifact.evidenceError
+  run.evidenceError = artifact.evidenceError != null
     ? structuredClone(artifact.evidenceError)
     : attachmentEvidenceError(run, artifact);
   // Attachment is only persistence. Freshness is recomputed from the complete
@@ -363,7 +363,6 @@ function evaluateGateRun(run, target, stage, sourceRunId, sourceArtifactId) {
     summary.stage !== stage ||
     !["PASS", "REPAIR"].includes(summary.verdict) ||
     !["PASS", "REPAIR"].includes(summary.reportedVerdict) ||
-    summary.reportedVerdict !== summary.verdict ||
     !Array.isArray(summary.blockingReasons) ||
     !Array.isArray(summary.findings)
   ) {
@@ -391,6 +390,9 @@ function evaluateGateRun(run, target, stage, sourceRunId, sourceArtifactId) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "candidate_mismatch", null);
   }
   if (summary.findings.some((finding) => !isValidPersistedGateFinding(finding))) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  }
+  if (summary.reportedVerdict !== summary.verdict) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
   const hasBlockingReasons = summary.blockingReasons.length > 0;
@@ -766,7 +768,7 @@ function migrateArtifactRuns(task) {
       toolCalls: [],
       test: summarizeTest(artifact.focusedTest),
       gateResult: artifact.gateResult ? structuredClone(artifact.gateResult) : null,
-      evidenceError: artifact.evidenceError ? structuredClone(artifact.evidenceError) : null,
+      evidenceError: artifact.evidenceError != null ? structuredClone(artifact.evidenceError) : null,
       freshness: null,
       error: null,
       source: "artifact-migration",

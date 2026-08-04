@@ -1244,6 +1244,10 @@ test("renders workspace artifact freshness from persisted run evidence", () => {
         artifacts: [
           artifact("ART-OLD", "RUN-OLD", "2026-08-01T12:01:00.000Z", oldFreshness),
           artifact("ART-CURRENT", "RUN-CURRENT", "2026-08-01T12:02:00.000Z", currentFreshness),
+          {
+            ...artifact("ART-UNRELATED", "RUN-UNRELATED", "2026-08-01T12:03:00.000Z", oldFreshness),
+            candidateId: "C2",
+          },
         ],
         runs: [
           { id: "RUN-OLD", artifactId: "ART-OLD", freshness: oldFreshness },
@@ -1263,6 +1267,9 @@ test("renders workspace artifact freshness from persisted run evidence", () => {
 
     assert.doesNotMatch(markup, /Stale after repair/);
     assert.match(markup, /ART-CURRENT\.md/);
+    const viewedRun = markup.slice(markup.indexOf("Viewed agent run"), markup.indexOf("Viewed agent run") + 500);
+    assert.match(viewedRun, /ART-CURRENT\.md/);
+    assert.doesNotMatch(viewedRun, /ART-UNRELATED\.md/);
     assert.match(markup, new RegExp(`ART-OLD\\.md[\\s\\S]*Rerun required[\\s\\S]*${staleReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
     assert.equal(isArtifactFresh(
       { ...artifact("ART-OLD", "RUN-OLD", "2026-08-01T12:01:00.000Z", oldFreshness) },
@@ -1505,6 +1512,65 @@ test("filters structured activity and renders test run and artifact drilldown", 
     assert.match(markup, /Focused tests/);
     assert.match(markup, /Open test\.md/);
     assert.match(markup, /API-rate estimate/);
+  });
+});
+
+test("renders retained malformed Test metadata without crashing Run Activity", () => {
+  return withWorkspace(async ({ RunActivity }) => {
+    const freshness = makeGateFreshness("test", {
+      sourceRunId: "RUN-TEST-MALFORMED",
+      reasonCode: "malformed_binding",
+      reasonCopy: "Persisted candidate evidence has a malformed candidate binding.",
+    });
+    const task = createTask({
+      runs: [{
+        id: "RUN-TEST-MALFORMED",
+        kind: "test",
+        status: "completed",
+        stage: "test",
+        role: "test",
+        model: "gpt-5.6-luna",
+        reasoning: "xhigh",
+        startedAt: "2026-08-01T12:00:00.000Z",
+        completedAt: "2026-08-01T12:00:01.000Z",
+        durationMs: 1_000,
+        artifactId: null,
+        usage: null,
+        credits: null,
+        apiEstimate: null,
+        candidateId: "C1",
+        candidateRevision: 2,
+        workPackageId: null,
+        attempt: 1,
+        retryOfRunId: null,
+        repairOfRunId: null,
+        toolCalls: [],
+        test: {
+          candidateId: "C1",
+          candidateRevision: 2,
+          status: "failed",
+          command: "npm test",
+          durationMs: 1_000,
+          rowCount: 1,
+          failedRowIds: "row-failed",
+          rows: [],
+        },
+        gateResult: null,
+        evidenceError: null,
+        freshness,
+        error: null,
+        source: "codex-jsonl",
+      }],
+    });
+
+    const markup = renderToStaticMarkup(React.createElement(RunActivity, {
+      task,
+      initialFilter: "test",
+      initialSelectedId: "run:RUN-TEST-MALFORMED",
+    }));
+    assert.match(markup, /failed count unavailable/);
+    assert.match(markup, /Rerun required/);
+    assert.match(markup, /Persisted candidate evidence has a malformed candidate binding\./);
   });
 });
 

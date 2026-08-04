@@ -38,8 +38,10 @@ import { RuntimeStagePresentation } from "./runtime/RuntimeStagePresentation";
 import { RuntimeWorkspaceFooter } from "./runtime/RuntimeWorkspaceFooter";
 import {
   getRuntimeArtifactFreshness,
+  getRuntimeGateFreshness,
   getRuntimeStageSummary,
   isArtifactFresh,
+  isCandidateGateStage,
   isStageComplete,
   isStageInvalidatedByRepair,
   runtimeStageAgents,
@@ -93,7 +95,14 @@ export function RuntimeTaskWorkspace({
   const viewedStage = workflowStages[viewedIndex];
   if (!viewedStage) throw new Error(`Unknown workflow stage: ${viewedStageId}`);
   const candidate = task.candidates?.at(-1);
-  const stageArtifact = [...task.artifacts].reverse().find((artifact) => artifact.stage === viewedStageId);
+  const gateFreshness = isCandidateGateStage(viewedStageId)
+    ? getRuntimeGateFreshness(task, viewedStageId)
+    : null;
+  const stageArtifact = isCandidateGateStage(viewedStageId)
+    ? task.artifacts.find((artifact) => (
+        artifact.stage === viewedStageId && artifact.id === gateFreshness?.sourceArtifactId
+      ))
+    : [...task.artifacts].reverse().find((artifact) => artifact.stage === viewedStageId);
   const stageArtifactFreshness = stageArtifact
     ? getRuntimeArtifactFreshness(task, stageArtifact)
     : null;

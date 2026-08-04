@@ -225,11 +225,22 @@ function RunDetails({ run }: { run: RuntimeRun }) {
       {run.freshness ? <Detail label="Evidence freshness" value={run.freshness.fresh ? "Fresh" : "Rerun required"} /> : null}
       {run.freshness && !run.freshness.fresh ? <Detail label="Stale reason" value={run.freshness.reasonCopy} /> : null}
       {run.workPackageId ? <Detail label="Work package" value={run.workPackageId} /> : null}
-      {run.test ? <Detail label="Focused tests" value={`${run.test.status} · ${run.test.rowCount} row${run.test.rowCount === 1 ? "" : "s"}${run.test.failedRowIds.length ? ` · ${run.test.failedRowIds.length} failed` : ""}`} /> : null}
+      {run.test ? <Detail label="Focused tests" value={formatFocusedTestSummary(run.test)} /> : null}
       {run.error ? <Detail label="Error" value={run.error} /> : null}
       {run.toolCalls.length ? <Detail label="Tool calls" value={`${run.toolCalls.length} captured from Codex JSONL`} /> : null}
     </>
   );
+}
+
+function formatFocusedTestSummary(test: RuntimeRun["test"] & object) {
+  const failedRowCount = Array.isArray(test.failedRowIds) ? test.failedRowIds.length : null;
+  return `${test.status} · ${test.rowCount} row${test.rowCount === 1 ? "" : "s"}${
+    failedRowCount == null
+      ? " · failed count unavailable"
+      : failedRowCount > 0
+        ? ` · ${failedRowCount} failed`
+        : ""
+  }`;
 }
 
 function ToolDetails({ toolCall }: { toolCall: NonNullable<RuntimeEvent["toolCall"]> }) {

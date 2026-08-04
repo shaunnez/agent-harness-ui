@@ -475,6 +475,9 @@ test("rejects every non-null malformed or unknown persisted evidence error", () 
   const cases = [
     { name: "unknown code", evidenceError: { code: "unknown_schema_error", copy: "Unknown schema error." } },
     { name: "primitive value", evidenceError: "malformed evidence error" },
+    { name: "empty string", evidenceError: "" },
+    { name: "zero", evidenceError: 0 },
+    { name: "false", evidenceError: false },
     {
       name: "success code used as an error",
       evidenceError: { code: "fresh", copy: RUNTIME_FRESHNESS_REASONS.fresh },
@@ -502,6 +505,42 @@ test("rejects every non-null malformed or unknown persisted evidence error", () 
   refreshGateFreshness(knownTask);
   assert.equal(knownTask.gateFreshness["dev-review"].reasonCode, "timeout");
   assert.deepEqual(knownRun.evidenceError, knownError, "valid persisted error remains intact for audit");
+});
+
+test("preserves falsey persisted evidence errors through attachment and legacy migration", () => {
+  for (const [name, evidenceError] of [["empty string", ""], ["zero", 0], ["false", false]]) {
+    const attachedRun = makeRuntimeRun({ id: `RUN-ATTACH-${name}` });
+    const attachedArtifact = { ...makeArtifact({ id: `ART-ATTACH-${name}` }), evidenceError };
+    const attachedTask = makeRuntimeTask({ runs: [attachedRun], artifacts: [attachedArtifact] });
+    attachRunArtifact(attachedTask, attachedRun.id, attachedArtifact);
+    assert.equal(attachedRun.evidenceError, evidenceError, `${name}: attachment retains the original value`);
+    assert.equal(attachedTask.gateFreshness["dev-review"].reasonCode, "malformed_binding", `${name}: attachment fails closed`);
+
+    const migratedArtifact = { ...makeArtifact({ id: `ART-MIGRATE-${name}` }), evidenceError };
+    const migratedTask = makeRuntimeTask({ artifacts: [migratedArtifact] });
+    migrateRunActivityState({ schemaVersion: 1, tasks: [migratedTask] });
+    assert.equal(migratedTask.runs[0].evidenceError, evidenceError, `${name}: migration retains the original value`);
+    assert.equal(migratedTask.gateFreshness["dev-review"].reasonCode, "malformed_binding", `${name}: migration fails closed`);
+  }
+});
+
+test("retains missing binding as the exact reason when gate ingestion also changes the verdict", () => {
+  const candidate = { id: "C1", revisionNumber: 2 };
+  const parsed = parseGateEvidence(gateOutput(2, "PASS", [{
+    severity: "P2",
+    title: "Unbound retained finding",
+    detail: "The finding omitted its explicit candidate identity.",
+  }]), candidate, "dev-review");
+  assert.equal(parsed.reportedVerdict, "PASS");
+  assert.equal(parsed.verdict, "REPAIR");
+  assert.equal(parsed.findings[0].bindingExplicit, false);
+
+  const run = makeRuntimeRun({ gateResult: parsed });
+  const task = makeRuntimeTask({ runs: [run] });
+  refreshGateFreshness(task);
+  assert.equal(task.gateFreshness["dev-review"].reasonCode, "missing_binding");
+  assert.equal(task.gateFreshness["dev-review"].reasonCopy, RUNTIME_FRESHNESS_REASONS.missing_binding);
+  assert.deepEqual(run.gateResult, parsed, "the unbound finding remains retained for audit");
 });
 
 test("requires persisted Test failedRowIds to match the exact failed-row set", () => {
