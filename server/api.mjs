@@ -654,6 +654,7 @@ function retryGrantContext(task) {
       candidate,
       grantedStage,
       task.stageRunReservations,
+      task.attemptsByStage?.implement ?? 0,
     ) ||
     !validRetryReservationKind(grantedStage, reservation.kind)
   )) {
@@ -725,20 +726,28 @@ function validRetryCandidate(candidate) {
     typeof candidate.headRevision === "string" && candidate.headRevision.trim().length > 0;
 }
 
-function validRetryReservationCandidateBinding(reservation, candidateRequired, candidate, grantedStage, reservations) {
+function validRetryReservationCandidateBinding(
+  reservation,
+  candidateRequired,
+  candidate,
+  grantedStage,
+  reservations,
+  implementationAttempt,
+) {
   const allNull = reservation.candidateId == null &&
     reservation.candidateRevision == null &&
     reservation.candidateHeadRevision == null;
   if (!candidateRequired) return allNull;
   const lineage = candidateRevisionLineage(candidate);
   if (!lineage) return false;
+  if (grantedStage !== "implement" && lineage.sourceReservations.has(reservation.id)) return false;
   const sourceReservation = reservation.id === candidate?.sourceWorkflowReservationId &&
     reservation.workflowAttempt === candidate?.sourceWorkflowAttempt;
   if (allNull) {
     return grantedStage === "implement" &&
       sourceReservation &&
       reservation.kind === "implementation" &&
-      validCandidateProducerReservation(candidate, reservation, lineage);
+      validCandidateProducerReservation(candidate, reservation, lineage, implementationAttempt);
   }
   const completeBinding = typeof reservation.candidateId === "string" && reservation.candidateId.trim().length > 0 &&
     Number.isInteger(reservation.candidateRevision) && reservation.candidateRevision > 0 &&
@@ -754,8 +763,11 @@ function validRetryReservationCandidateBinding(reservation, candidateRequired, c
     ) {
       return false;
     }
-    if (grantedStage === "implement" && reservation.kind === "repair") return true;
-    return validCandidateProducerReservation(candidate, reservations?.implement, lineage);
+    if (grantedStage === "implement" && reservation.kind === "repair") {
+      return reservation.workflowAttempt > candidate.sourceWorkflowAttempt &&
+        !lineage.sourceReservations.has(reservation.id);
+    }
+    return validCandidateProducerReservation(candidate, reservations?.implement, lineage, implementationAttempt);
   }
   if (grantedStage !== "implement") {
     if (
@@ -764,11 +776,17 @@ function validRetryReservationCandidateBinding(reservation, candidateRequired, c
     ) {
       return false;
     }
-    return validAdjacentRepairLineage(candidate, reservation, reservations?.implement, lineage);
+    return validAdjacentRepairLineage(
+      candidate,
+      reservation,
+      reservations?.implement,
+      lineage,
+      implementationAttempt,
+    );
   }
   return sourceReservation &&
     ["implementation", "repair"].includes(reservation.kind) &&
-    validCandidateProducerReservation(candidate, reservation, lineage);
+    validCandidateProducerReservation(candidate, reservation, lineage, implementationAttempt);
 }
 
 function candidateRevisionLineage(candidate) {
@@ -818,15 +836,16 @@ function candidateRevisionLineage(candidate) {
   ) {
     return null;
   }
-  return { byNumber, currentRevision };
+  return { byNumber, currentRevision, sourceReservations };
 }
 
-function validCandidateProducerReservation(candidate, producerReservation, lineage) {
+function validCandidateProducerReservation(candidate, producerReservation, lineage, implementationAttempt) {
   if (!producerReservation || !validPersistedTimestamp(producerReservation.reservedAt)) return false;
   const currentRevision = lineage.currentRevision;
   if (
     producerReservation.id !== currentRevision.sourceWorkflowReservationId ||
     producerReservation.workflowAttempt !== currentRevision.sourceWorkflowAttempt ||
+    producerReservation.workflowAttempt !== implementationAttempt ||
     producerReservation.stage !== "implement"
   ) {
     return false;
@@ -849,8 +868,8 @@ function validCandidateProducerReservation(candidate, producerReservation, linea
     producerReservedAt <= currentCreatedAt;
 }
 
-function validAdjacentRepairLineage(candidate, priorReservation, repairReservation, lineage) {
-  if (!validCandidateProducerReservation(candidate, repairReservation, lineage)) return false;
+function validAdjacentRepairLineage(candidate, priorReservation, repairReservation, lineage, implementationAttempt) {
+  if (!validCandidateProducerReservation(candidate, repairReservation, lineage, implementationAttempt)) return false;
   const currentRevision = lineage.currentRevision;
   const priorRevision = lineage.byNumber.get(currentRevision.number - 1);
   const priorCreatedAt = Date.parse(priorRevision?.createdAt);
@@ -965,7 +984,11 @@ function validateRetryRunScopes(task, reservation, reservationRuns) {
   ) {
     return "The exhausted multi-run reservation is missing unique authorized run scopes; resolve the inconsistent history before granting a retry.";
   }
-  if (reservation.kind === "implementation" && !authorized.length) {
+  if (
+    reservation.kind === "implementation" &&
+    !authorized.length &&
+    !validAssemblyOnlyCandidateProducer(task, reservation, reservationRuns)
+  ) {
     return "The exhausted Implementation reservation is missing an authorized work-package scope; resolve the inconsistent history before granting a retry.";
   }
   if (reservation.stage === "scouts") {
@@ -985,6 +1008,34 @@ function validateRetryRunScopes(task, reservation, reservationRuns) {
     return "The exhausted multi-run reservation contains duplicate or unauthorized run scopes; resolve the inconsistent history before granting a retry.";
   }
   return null;
+}
+
+function validAssemblyOnlyCandidateProducer(task, reservation, reservationRuns) {
+  if (reservationRuns.length > 0) return false;
+  const candidate = task.candidates?.at(-1);
+  const currentRevision = candidate?.revisions?.find((revision) => revision.number === candidate?.revisionNumber);
+  const workPackages = task.workPackages ?? [];
+  const members = candidate?.members ?? [];
+  const packageIds = workPackages.map((workPackage) => workPackage?.id);
+  const memberPackageIds = members.map((member) => member?.packageId);
+  return candidate?.status === "repair_required" &&
+    candidate.revisionNumber === 1 &&
+    candidate.sourceWorkflowAttempt === reservation.workflowAttempt &&
+    candidate.sourceWorkflowReservationId === reservation.id &&
+    currentRevision?.reason === "assembly" &&
+    currentRevision.sourceWorkflowAttempt === reservation.workflowAttempt &&
+    currentRevision.sourceWorkflowReservationId === reservation.id &&
+    reservation.candidateId == null &&
+    reservation.candidateRevision == null &&
+    reservation.candidateHeadRevision == null &&
+    workPackages.length > 0 &&
+    workPackages.every((workPackage) => workPackage.status === "integrated") &&
+    packageIds.every((packageId) => typeof packageId === "string" && packageId.trim().length > 0) &&
+    packageIds.length === new Set(packageIds).size &&
+    memberPackageIds.every((packageId) => typeof packageId === "string" && packageId.trim().length > 0) &&
+    memberPackageIds.length === packageIds.length &&
+    memberPackageIds.length === new Set(memberPackageIds).size &&
+    packageIds.every((packageId) => memberPackageIds.includes(packageId));
 }
 
 function orderRetrySourceRuns(reservation, runs) {

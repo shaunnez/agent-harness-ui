@@ -174,6 +174,7 @@ function attachAssemblyLineage(draft, candidate, {
   reservedAt = "2026-08-04T00:00:00.000Z",
   createdAt = "2026-08-04T00:01:00.000Z",
 } = {}) {
+  draft.attemptsByStage.implement ??= workflowAttempt;
   Object.assign(candidate, {
     sourceWorkflowAttempt: workflowAttempt,
     sourceWorkflowReservationId: reservationId,
@@ -198,6 +199,43 @@ function attachAssemblyLineage(draft, candidate, {
     reservedAt,
   };
   return candidate;
+}
+
+function threeRevisionCandidate(status = "ready_for_review") {
+  return {
+    id: "C1",
+    revisionNumber: 3,
+    headRevision: "candidate-c1-r3",
+    status,
+    sourceWorkflowAttempt: 3,
+    sourceWorkflowReservationId: "reservation-c1-r2-repair-3",
+    revisions: [
+      {
+        number: 1,
+        headRevision: "candidate-c1-r1",
+        reason: "assembly",
+        sourceWorkflowAttempt: 1,
+        sourceWorkflowReservationId: "reservation-c1-assembly-1",
+        createdAt: "2026-08-04T00:00:00.000Z",
+      },
+      {
+        number: 2,
+        headRevision: "candidate-c1-r2",
+        reason: "repair",
+        sourceWorkflowAttempt: 2,
+        sourceWorkflowReservationId: "reservation-c1-r1-repair-2",
+        createdAt: "2026-08-04T00:01:00.000Z",
+      },
+      {
+        number: 3,
+        headRevision: "candidate-c1-r3",
+        reason: "repair",
+        sourceWorkflowAttempt: 3,
+        sourceWorkflowReservationId: "reservation-c1-r2-repair-3",
+        createdAt: "2026-08-04T00:02:00.000Z",
+      },
+    ],
+  };
 }
 
 test("creates, lists, and starts a local task", async () => {
@@ -1479,17 +1517,25 @@ test("grants repair after a candidate is assembled on the final implementation a
       draft.status = "repair-required";
       draft.currentStage = "dev-review";
       draft.attemptsByStage.implement = draft.stageRunLimits.implement;
-      draft.runs.push(...[1, 2, 3].map((attempt) => ({
-        id: `run-implementation-${attempt}`,
+      draft.workPackages = ["S1", "S2"].map((id) => ({ id, status: "integrated" }));
+      reservation = {
+        id: "reservation-assembly-only-3",
         stage: "implement",
-        status: "completed",
-      })));
-      reservation = bindLatestWorkflowAttempt(draft, "implement", "implementation");
+        kind: "implementation",
+        workflowAttempt: 3,
+        candidateId: null,
+        candidateRevision: null,
+        candidateHeadRevision: null,
+        authorizedRunScopes: [],
+        reservedAt: "2026-08-04T00:02:00.000Z",
+      };
+      draft.stageRunReservations.implement = reservation;
       draft.candidates.push({
         id: "C1",
         revisionNumber: 1,
         headRevision: "candidate-c1-r1",
         status: "repair_required",
+        members: ["S1", "S2"].map((packageId, index) => ({ packageId, order: index + 1 })),
         sourceWorkflowAttempt: reservation.workflowAttempt,
         sourceWorkflowReservationId: reservation.id,
         revisions: [{
@@ -1517,7 +1563,8 @@ test("grants repair after a candidate is assembled on the final implementation a
     assert.equal(updated.decisions.at(-1).workflowCandidateRevision, null);
     assert.equal(updated.decisions.at(-1).workflowCandidateHeadRevision, null);
     assert.equal(updated.decisions.at(-1).workflowReservationId, reservation.id);
-    assert.equal(updated.decisions.at(-1).sourceRunId, "run-implementation-3");
+    assert.equal(updated.decisions.at(-1).sourceRunId, null);
+    assert.deepEqual(updated.decisions.at(-1).sourceRunIds, []);
   } finally {
     await cleanup(server, directory);
   }
@@ -1752,6 +1799,7 @@ test("retains exact run provenance for an authorized adjacent prior-candidate gr
     await store.update(task.id, (draft) => {
       draft.status = "ready-for-review";
       draft.currentStage = "dev-review";
+      draft.attemptsByStage.implement = 2;
       draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
       draft.candidates.push({
         id: "C1",
@@ -1922,6 +1970,7 @@ test("rejects adjacent prior-revision grants without unique repair provenance", 
       await store.update(task.id, (draft) => {
         draft.status = "ready-for-review";
         draft.currentStage = "dev-review";
+        draft.attemptsByStage.implement = 2;
         draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
         const candidate = {
           id: "C1",
@@ -2028,6 +2077,7 @@ test("rejects impossible older repair lineage before authorizing an adjacent gat
       await store.update(task.id, (draft) => {
         draft.status = "ready-for-review";
         draft.currentStage = "dev-review";
+        draft.attemptsByStage.implement = 3;
         draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
         const candidate = {
           id: "C1",
@@ -2125,6 +2175,18 @@ test("rejects exact-current gate grants when the retained candidate history or p
           candidate.sourceWorkflowReservationId = "different-current-producer";
         },
       },
+      {
+        name: "producer attempt differs from Implement counter",
+        mutate(_candidate, draft) {
+          draft.attemptsByStage.implement = 2;
+        },
+      },
+      {
+        name: "gate reservation reuses producer identity",
+        mutate(candidate, draft) {
+          draft.stageRunReservations["dev-review"].id = candidate.sourceWorkflowReservationId;
+        },
+      },
     ]) {
       const response = await createTask(origin, {
         title: `Reject exact-current ${item.name}`,
@@ -2136,6 +2198,7 @@ test("rejects exact-current gate grants when the retained candidate history or p
       await store.update(task.id, (draft) => {
         draft.status = "ready-for-review";
         draft.currentStage = "dev-review";
+        draft.attemptsByStage.implement = 3;
         draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
         const candidate = {
           id: "C1",
@@ -2203,6 +2266,101 @@ test("rejects exact-current gate grants when the retained candidate history or p
       const unchanged = await store.get(task.id);
       assert.equal(unchanged.stageRunLimits["dev-review"], 3, item.name);
       assert.equal(unchanged.decisions.length, 0, item.name);
+    }
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("grants an exact-current repaired candidate only with distinct gate and current producer reservations", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Exact current repaired candidate",
+      description: "Authorize a gate retry only when the current repair producer matches the Implement counter.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage.implement = 3;
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+      draft.candidates.push(threeRevisionCandidate());
+      draft.stageRunReservations.implement = {
+        id: "reservation-c1-r2-repair-3",
+        stage: "implement",
+        kind: "repair",
+        workflowAttempt: 3,
+        candidateId: "C1",
+        candidateRevision: 2,
+        candidateHeadRevision: "candidate-c1-r2",
+        authorizedRunScopes: [],
+        reservedAt: "2026-08-04T00:01:30.000Z",
+      };
+      draft.stageRunReservations["dev-review"] = {
+        id: "reservation-c1-r3-review-3",
+        stage: "dev-review",
+        kind: "review",
+        workflowAttempt: 3,
+        candidateId: "C1",
+        candidateRevision: 3,
+        candidateHeadRevision: "candidate-c1-r3",
+        authorizedRunScopes: [],
+        reservedAt: "2026-08-04T00:03:00.000Z",
+      };
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200);
+    assert.deepEqual(await grantResponse.json(), { granted: true });
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits["dev-review"], 4);
+    assert.equal(updated.decisions.at(-1).workflowReservationId, "reservation-c1-r3-review-3");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects failed repair reservations that reuse or fail to advance the current producer identity", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    for (const [name, reservationId] of [
+      ["reused producer reservation", "reservation-c1-r2-repair-3"],
+      ["fresh ID with non-increasing attempt", "reservation-failed-repair-3"],
+    ]) {
+      const response = await createTask(origin, {
+        title: `Reject ${name}`,
+        description: "A failed repair attempt must be newer than and distinct from every candidate producer.",
+        repositoryPath: directory,
+        workflow: "implement",
+      });
+      const { task } = await response.json();
+      await store.update(task.id, (draft) => {
+        draft.status = "repair-required";
+        draft.currentStage = "dev-review";
+        draft.attemptsByStage.implement = draft.stageRunLimits.implement;
+        draft.candidates.push(threeRevisionCandidate("repair_required"));
+        draft.stageRunReservations.implement = {
+          id: reservationId,
+          stage: "implement",
+          kind: "repair",
+          workflowAttempt: 3,
+          candidateId: "C1",
+          candidateRevision: 3,
+          candidateHeadRevision: "candidate-c1-r3",
+          authorizedRunScopes: [],
+          reservedAt: "2026-08-04T00:03:00.000Z",
+        };
+      });
+
+      const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+      assert.equal(grantResponse.status, 409, name);
+      assert.match((await grantResponse.json()).error, /inconsistent workflow reservation/i, name);
+      const unchanged = await store.get(task.id);
+      assert.equal(unchanged.stageRunLimits.implement, 3, name);
+      assert.equal(unchanged.decisions.length, 0, name);
     }
   } finally {
     await cleanup(server, directory);
