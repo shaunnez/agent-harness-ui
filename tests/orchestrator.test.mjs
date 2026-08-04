@@ -796,6 +796,7 @@ test("requires persisted Test failedRowIds to match the exact failed-row set", (
     { name: "non-array failedRowIds", summary: { ...passedSummary, failedRowIds: "row-1" } },
     { name: "unknown failed row", summary: { ...passedSummary, failedRowIds: ["row-missing"] } },
     { name: "passed row reported failed", summary: { ...passedSummary, failedRowIds: ["row-1"] } },
+    { name: "failed summary with all passed rows", summary: { ...passedSummary, status: "failed" } },
     {
       name: "failed row omitted",
       summary: makeFocusedTestSummary({ status: "failed", rows: [failedRow], failedRowIds: [] }),

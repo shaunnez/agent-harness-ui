@@ -2258,6 +2258,70 @@ test("retains exact run provenance for an authorized adjacent prior-candidate gr
         candidateHeadRevision: "candidate-c1-r1",
         reservedAt: "2026-08-04T00:00:30.000Z",
       };
+      attachExactCandidateGate(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+      }, {
+        workflowAttempt: 3,
+        reservationId: "reservation-c1-r1-review-3",
+        reservedAt: "2026-08-04T00:00:10.000Z",
+      });
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
+    const updated = await store.get(task.id);
+    assert.equal(updated.decisions.at(-1).sourceRunId, "run-reservation-c1-r1-review-3");
+    assert.deepEqual(updated.decisions.at(-1).sourceRunIds, ["run-reservation-c1-r1-review-3"]);
+    assert.equal(updated.decisions.at(-1).candidateId, "C1");
+    assert.equal(updated.decisions.at(-1).candidateRevision, 2);
+    assert.equal(updated.decisions.at(-1).candidateHeadRevision, "candidate-c1-r2");
+    assert.equal(updated.decisions.at(-1).workflowCandidateId, "C1");
+    assert.equal(updated.decisions.at(-1).workflowCandidateRevision, 1);
+    assert.equal(updated.decisions.at(-1).workflowCandidateHeadRevision, "candidate-c1-r1");
+    assert.equal(updated.decisions.at(-1).workflowReservationId, "reservation-c1-r1-review-3");
+    assert.equal(updated.decisions.at(-1).authorizingGateReservationId, "reservation-c1-r1-review-3");
+    assert.equal(updated.decisions.at(-1).authorizingGateRunId, "run-reservation-c1-r1-review-3");
+    assert.match(updated.decisions.at(-1).authorizingGateArtifactId, /run-reservation-c1-r1-review-3/);
+    assert.equal(updated.events.at(-1).sourceRunId, "run-reservation-c1-r1-review-3");
+    assert.deepEqual(updated.events.at(-1).sourceRunIds, ["run-reservation-c1-r1-review-3"]);
+    assert.equal(updated.events.at(-1).authorizingGateRunId, "run-reservation-c1-r1-review-3");
+    assert.equal(updated.stageRunLimits["dev-review"], 4);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects an adjacent repaired-candidate gate grant without its prior repair authorizer", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Missing adjacent repair authorizer",
+      description: "A prior-revision gate cannot authorize a retry without the exact evidence that requested Repair.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage.implement = 2;
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+      const candidate = twoRevisionCandidate();
+      draft.candidates.push(candidate);
+      attachCandidateProducerEvidence(draft, candidate);
+      draft.stageRunReservations.implement = {
+        id: candidate.sourceWorkflowReservationId,
+        stage: "implement",
+        kind: "repair",
+        workflowAttempt: 2,
+        candidateId: "C1",
+        candidateRevision: 1,
+        candidateHeadRevision: "candidate-c1-r1",
+        authorizedRunScopes: [],
+        reservedAt: "2026-08-04T00:00:30.000Z",
+      };
       draft.stageRunReservations["dev-review"] = {
         id: "reservation-c1-r1-review-3",
         stage: "dev-review",
@@ -2266,39 +2330,17 @@ test("retains exact run provenance for an authorized adjacent prior-candidate gr
         candidateId: "C1",
         candidateRevision: 1,
         candidateHeadRevision: "candidate-c1-r1",
-        reservedAt: "2026-08-04T00:00:00.000Z",
+        authorizedRunScopes: [],
+        reservedAt: "2026-08-04T00:00:10.000Z",
       };
-      draft.runs.push({
-        id: "run-c1-r1-review-3",
-        stage: "dev-review",
-        kind: "review",
-        role: "dev-review",
-        status: "completed",
-        candidateId: "C1",
-        candidateRevision: 1,
-        candidateHeadRevision: "candidate-c1-r1",
-        workPackageId: null,
-        attempt: 1,
-        workflowAttempt: 3,
-        workflowReservationId: "reservation-c1-r1-review-3",
-      });
     });
 
     const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
-    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
-    const updated = await store.get(task.id);
-    assert.equal(updated.decisions.at(-1).sourceRunId, "run-c1-r1-review-3");
-    assert.deepEqual(updated.decisions.at(-1).sourceRunIds, ["run-c1-r1-review-3"]);
-    assert.equal(updated.decisions.at(-1).candidateId, "C1");
-    assert.equal(updated.decisions.at(-1).candidateRevision, 2);
-    assert.equal(updated.decisions.at(-1).candidateHeadRevision, "candidate-c1-r2");
-    assert.equal(updated.decisions.at(-1).workflowCandidateId, "C1");
-    assert.equal(updated.decisions.at(-1).workflowCandidateRevision, 1);
-    assert.equal(updated.decisions.at(-1).workflowCandidateHeadRevision, "candidate-c1-r1");
-    assert.equal(updated.decisions.at(-1).workflowReservationId, "reservation-c1-r1-review-3");
-    assert.equal(updated.events.at(-1).sourceRunId, "run-c1-r1-review-3");
-    assert.deepEqual(updated.events.at(-1).sourceRunIds, ["run-c1-r1-review-3"]);
-    assert.equal(updated.stageRunLimits["dev-review"], 4);
+    assert.equal(grantResponse.status, 409);
+    assert.match((await grantResponse.json()).error, /inconsistent workflow reservation|authorizing gate/i);
+    const unchanged = await store.get(task.id);
+    assert.equal(unchanged.stageRunLimits["dev-review"], 3);
+    assert.equal(unchanged.decisions.length, 0);
   } finally {
     await cleanup(server, directory);
   }

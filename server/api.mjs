@@ -11,7 +11,12 @@ import {
 import { GitWorktreeManager } from "./git-worktree.mjs";
 import { assertHttpBoundary, corsHeaders } from "./http-security.mjs";
 import { normalizeModelId, POLICY_IDS, readCodexModelCatalog } from "./model-catalog.mjs";
-import { CANONICAL_RUN_STAGES, resolveGateFreshness, stageRunLimitFor } from "./run-activity.mjs";
+import {
+  CANONICAL_RUN_STAGES,
+  resolveGateFreshness,
+  resolvePersistedRunFreshness,
+  stageRunLimitFor,
+} from "./run-activity.mjs";
 import { SCOUT_NAMES } from "./scouts.mjs";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
@@ -730,10 +735,24 @@ function retryGrantContext(task) {
   const sourceRuns = orderRetrySourceRuns(exactReservation, reservationRuns);
   const retrySource = sourceRuns.at(-1) ?? null;
   const sourceRunIds = sourceRuns.map((run) => run.id);
+  const lineage = candidateBoundGrant ? candidateRevisionLineage(candidate) : null;
+  const adjacentPriorRevision = candidateBoundGrant &&
+    candidate?.status !== "repair_required" &&
+    reservation.candidateId === candidate?.id &&
+    reservation.candidateRevision + 1 === candidate?.revisionNumber;
   const authorizingGate = candidate?.status === "repair_required"
-    ? failedRepairAuthorizingGate(task, candidate, candidateRevisionLineage(candidate))
-    : null;
-  if (candidate?.status === "repair_required" && !authorizingGate) {
+    ? failedRepairAuthorizingGate(task, candidate, lineage)
+    : adjacentPriorRevision
+      ? adjacentRepairAuthorizingGate(
+          task,
+          candidate,
+          reservation,
+          task.stageRunReservations?.implement,
+          lineage,
+          task.attemptsByStage?.implement ?? 0,
+        )
+      : null;
+  if ((candidate?.status === "repair_required" || adjacentPriorRevision) && !authorizingGate) {
     return { error: "The exhausted candidate repair is missing an exact authorizing gate; resolve the inconsistent history before granting a retry." };
   }
   const authorizingGateRun = authorizingGate?.sourceRunId
@@ -742,7 +761,6 @@ function retryGrantContext(task) {
   const authorizingGateArtifact = authorizingGateRun?.artifactId
     ? (task.artifacts ?? []).find((artifact) => artifact.id === authorizingGateRun.artifactId) ?? null
     : null;
-  const lineage = candidateBoundGrant ? candidateRevisionLineage(candidate) : null;
   const producerEvidence = lineage ? candidateRevisionProducerEvidence(task, candidate, lineage) : null;
   if (candidateBoundGrant && !producerEvidence) {
     return { error: "The exhausted candidate is missing exact producer evidence; resolve the inconsistent history before granting a retry." };
@@ -900,14 +918,14 @@ function validRetryReservationCandidateBinding(
     ) {
       return false;
     }
-    return validAdjacentRepairLineage(
+    return Boolean(adjacentRepairAuthorizingGate(
       task,
       candidate,
       reservation,
       reservations?.implement,
       lineage,
       implementationAttempt,
-    );
+    ));
   }
   return sourceReservation &&
     ["implementation", "repair"].includes(reservation.kind) &&
@@ -966,58 +984,76 @@ function failedRepairAuthorizingGate(
     }
   }
   if (authorizingGate?.stage !== task.currentStage) return null;
-  const freshness = resolveGateFreshness(task, authorizingGate.stage);
-  const gateStageRuns = (task.runs ?? []).filter((run) => run.stage === authorizingGate.stage);
-  const reservationRuns = gateStageRuns.filter((run) => run.workflowReservationId === authorizingGate.id);
-  const sourceRun = freshness?.sourceRunId
-    ? (task.runs ?? []).find((run) => run.id === freshness.sourceRunId)
+  const authoritativeGate = candidateGateAuthorizerEvidence(
+    task,
+    authorizingGate,
+    { candidateId: candidate.id, candidateRevision: candidate.revisionNumber },
+    { latestArtifactAt: repairReservation?.reservedAt ?? null },
+  );
+  const currentFreshness = resolveGateFreshness(task, authorizingGate.stage);
+  if (
+    !authoritativeGate ||
+    currentFreshness?.reasonCode !== "repair_required" ||
+    currentFreshness.sourceRunId !== authoritativeGate.sourceRunId ||
+    currentFreshness.sourceArtifactId !== authoritativeGate.sourceArtifactId
+  ) {
+    return null;
+  }
+  if (!repairReservation) return authoritativeGate;
+  const sourceArtifact = (task.artifacts ?? []).find((artifact) => artifact.id === authoritativeGate.sourceArtifactId);
+  return repairReservation.workflowAttempt > candidate.sourceWorkflowAttempt &&
+    !lineage.sourceReservations.has(repairReservation.id) &&
+    Date.parse(repairReservation.reservedAt) > latestGateReservedAt &&
+    Date.parse(repairReservation.reservedAt) > Date.parse(sourceArtifact.createdAt)
+    ? authoritativeGate
     : null;
+}
+
+function candidateGateAuthorizerEvidence(task, gateReservation, target, { latestArtifactAt = null } = {}) {
+  const gateStageRuns = (task.runs ?? []).filter((run) => run.stage === gateReservation?.stage);
+  const reservationRuns = gateStageRuns.filter((run) => run.workflowReservationId === gateReservation?.id);
+  const sourceRun = reservationRuns[0] ?? null;
   const sourceArtifacts = sourceRun?.artifactId
     ? (task.artifacts ?? []).filter((artifact) => artifact.id === sourceRun.artifactId)
     : [];
   const sourceArtifact = sourceArtifacts[0] ?? null;
+  const freshness = sourceRun
+    ? resolvePersistedRunFreshness(sourceRun, sourceArtifact, target, gateReservation.stage)
+    : null;
   if (
-    !sourceRun ||
     reservationRuns.length !== 1 ||
-    reservationRuns[0].id !== sourceRun.id ||
-    freshness.reasonCode !== "repair_required" ||
+    freshness?.reasonCode !== "repair_required" ||
     sourceRun.status !== "completed" ||
-    sourceRun.workflowReservationId !== authorizingGate.id ||
-    sourceRun.workflowAttempt !== authorizingGate.workflowAttempt ||
+    sourceRun.workflowReservationId !== gateReservation.id ||
+    sourceRun.workflowAttempt !== gateReservation.workflowAttempt ||
     sourceRun.gateResult?.verdict !== "REPAIR" ||
-    !validRetryRunTuple(sourceRun, authorizingGate, gateStageRuns) ||
+    !validRetryRunTuple(sourceRun, gateReservation, gateStageRuns) ||
     sourceArtifacts.length !== 1 ||
     sourceArtifact.runId !== sourceRun.id ||
-    sourceArtifact.stage !== authorizingGate.stage ||
+    sourceArtifact.stage !== gateReservation.stage ||
     sourceArtifact.kind !== "markdown" ||
     typeof sourceArtifact.name !== "string" ||
     !sourceArtifact.name.trim() ||
     typeof sourceArtifact.content !== "string" ||
     !sourceArtifact.content.trim() ||
-    sourceArtifact.candidateId !== candidate.id ||
-    sourceArtifact.candidateRevision !== candidate.revisionNumber ||
+    sourceArtifact.candidateId !== target.candidateId ||
+    sourceArtifact.candidateRevision !== target.candidateRevision ||
     JSON.stringify(sourceArtifact.gateResult) !== JSON.stringify(sourceRun.gateResult) ||
     !validDurableRunArtifactEnvelope(sourceRun, sourceArtifact, {
-      earliestStartedAt: authorizingGate.reservedAt,
+      earliestStartedAt: gateReservation.reservedAt,
       latestCompletedAt: sourceRun.gateResult?.evaluatedAt,
-      latestArtifactAt: null,
+      latestArtifactAt,
     }) ||
     !validPersistedTimestamp(sourceRun.gateResult?.evaluatedAt) ||
     Date.parse(sourceRun.gateResult.evaluatedAt) > Date.parse(sourceArtifact.createdAt)
   ) {
     return null;
   }
-  const authoritativeGate = {
-    ...authorizingGate,
+  return {
+    ...gateReservation,
     sourceArtifactId: sourceArtifact.id,
     sourceRunId: sourceRun.id,
   };
-  if (!repairReservation) return authoritativeGate;
-  return repairReservation.workflowAttempt > candidate.sourceWorkflowAttempt &&
-    !lineage.sourceReservations.has(repairReservation.id) &&
-    Date.parse(repairReservation.reservedAt) > latestGateReservedAt
-    ? authoritativeGate
-    : null;
 }
 
 function candidateRevisionLineage(candidate) {
@@ -1233,7 +1269,7 @@ function validCandidateProducerReservation(task, candidate, producerReservation,
     producerReservedAt <= currentCreatedAt;
 }
 
-function validAdjacentRepairLineage(task, candidate, priorReservation, repairReservation, lineage, implementationAttempt) {
+function adjacentRepairAuthorizingGate(task, candidate, priorReservation, repairReservation, lineage, implementationAttempt) {
   if (!validCandidateProducerReservation(task, candidate, repairReservation, lineage, implementationAttempt)) return false;
   const currentRevision = lineage.currentRevision;
   const priorRevision = lineage.byNumber.get(currentRevision.number - 1);
@@ -1241,7 +1277,7 @@ function validAdjacentRepairLineage(task, candidate, priorReservation, repairRes
   const currentCreatedAt = Date.parse(currentRevision?.createdAt);
   const priorReservedAt = Date.parse(priorReservation?.reservedAt);
   const repairReservedAt = Date.parse(repairReservation?.reservedAt);
-  return priorReservation.candidateRevision + 1 === candidate.revisionNumber &&
+  const validLineage = priorReservation.candidateRevision + 1 === candidate.revisionNumber &&
     priorReservation.candidateId === candidate.id &&
     priorRevision?.headRevision === priorReservation.candidateHeadRevision &&
     priorReservation.id !== repairReservation.id &&
@@ -1249,6 +1285,19 @@ function validAdjacentRepairLineage(task, candidate, priorReservation, repairRes
     priorReservedAt < currentCreatedAt &&
     repairReservedAt > priorReservedAt &&
     repairReservedAt <= currentCreatedAt;
+  if (!validLineage) return null;
+  const authorizingGate = candidateGateAuthorizerEvidence(
+    task,
+    priorReservation,
+    {
+      candidateId: priorReservation.candidateId,
+      candidateRevision: priorReservation.candidateRevision,
+    },
+    { latestArtifactAt: repairReservation.reservedAt },
+  );
+  if (!authorizingGate) return null;
+  const sourceArtifact = (task.artifacts ?? []).find((artifact) => artifact.id === authorizingGate.sourceArtifactId);
+  return Date.parse(sourceArtifact.createdAt) < repairReservedAt ? authorizingGate : null;
 }
 
 function validPersistedTimestamp(value) {

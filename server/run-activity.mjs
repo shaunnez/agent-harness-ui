@@ -315,6 +315,11 @@ export function resolveGateFreshness(task, stage) {
   return evaluateRunFreshness(selected, artifact, target, stage);
 }
 
+export function resolvePersistedRunFreshness(run, artifact, target, stage) {
+  if (!CANDIDATE_GATE_STAGES.includes(stage)) return null;
+  return evaluateRunFreshness(run, artifact, target, stage);
+}
+
 /** Recompute the authoritative task projection and every gate run's audit state. */
 export function refreshGateFreshness(task) {
   const projection = {};
@@ -541,10 +546,11 @@ function evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId) {
   if (!hasExactFailedRowIds(recordedFailedRows, failedRows, summary.rows)) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", focusedTest);
   }
-  if (summary.status === "passed" && (failedRows.length || recordedFailedRows.length)) {
+  const derivedStatus = failedRows.length > 0 ? "failed" : "passed";
+  if (summary.status !== derivedStatus) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", focusedTest);
   }
-  const testFailed = summary.status !== "passed" || failedRows.length > 0 || recordedFailedRows.length > 0;
+  const testFailed = summary.status === "failed";
   const gateFailure = evaluateTestGateResult(run.gateResult, target, sourceRunId, sourceArtifactId);
   if (testFailed) {
     if (gateFailure?.reasonCode === "repair_required") {
