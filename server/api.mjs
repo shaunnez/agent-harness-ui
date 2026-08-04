@@ -340,8 +340,18 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
           return;
         }
         const input = await readJson(request);
-        const reason = ["not-needed", "superseded", "duplicate"].includes(input.reason) ? input.reason : "not-needed";
-        const supersededBy = reason === "superseded" ? String(input.supersededBy ?? "").trim().slice(0, 80) : null;
+        const supportedClosureReasons = ["not-needed", "superseded", "duplicate"];
+        if (typeof input?.reason !== "string" || !supportedClosureReasons.includes(input.reason)) {
+          throw new Error("Closure reason must be one of not-needed, superseded, or duplicate.");
+        }
+        const reason = input.reason;
+        let supersededBy = null;
+        if (reason === "superseded") {
+          if (typeof input.supersededBy !== "string" || !input.supersededBy.trim()) {
+            throw new Error("Superseded tasks require a nonblank supersededBy identifier.");
+          }
+          supersededBy = input.supersededBy.trim().slice(0, 80);
+        }
         const note = String(input.note ?? "").trim().slice(0, 2_000);
         const closedAt = new Date().toISOString();
         let closed;

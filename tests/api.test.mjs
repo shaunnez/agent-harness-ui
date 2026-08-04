@@ -572,6 +572,128 @@ test("creates, lists, and starts a local task", async () => {
   }
 });
 
+test("rejects invalid closure reasons without mutating task state", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Invalid closure reason",
+      description: "Unsupported closure metadata must fail closed.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    const unchanged = await store.get(task.id);
+    const unchangedState = {
+      status: unchanged.status,
+      closure: unchanged.closure,
+      events: unchanged.events,
+    };
+
+    for (const payload of [{}, { reason: 42 }, { reason: "obsolete" }]) {
+      const closeResponse = await fetch(`${origin}/api/tasks/${task.id}/close`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      assert.equal(closeResponse.status, 400);
+      const body = await closeResponse.json();
+      assert.deepEqual(Object.keys(body), ["error"]);
+      assert.equal(typeof body.error, "string");
+
+      const current = await store.get(task.id);
+      assert.deepEqual(
+        { status: current.status, closure: current.closure, events: current.events },
+        unchangedState,
+      );
+    }
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects invalid supersededBy values without mutating task state", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Invalid supersession metadata",
+      description: "Superseded closures require a usable replacement identifier.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    const unchanged = await store.get(task.id);
+    const unchangedState = {
+      status: unchanged.status,
+      closure: unchanged.closure,
+      events: unchanged.events,
+    };
+
+    for (const payload of [
+      { reason: "superseded" },
+      { reason: "superseded", supersededBy: "   " },
+      { reason: "superseded", supersededBy: 123 },
+    ]) {
+      const closeResponse = await fetch(`${origin}/api/tasks/${task.id}/close`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      assert.equal(closeResponse.status, 400);
+      const body = await closeResponse.json();
+      assert.deepEqual(Object.keys(body), ["error"]);
+      assert.equal(typeof body.error, "string");
+
+      const current = await store.get(task.id);
+      assert.deepEqual(
+        { status: current.status, closure: current.closure, events: current.events },
+        unchangedState,
+      );
+    }
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("normalizes valid supersession and clears supersededBy for other closure reasons", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const supersededResponse = await createTask(origin, {
+      title: "Valid supersession metadata",
+      description: "A valid replacement identifier is normalized before persistence.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task: supersededTask } = await supersededResponse.json();
+    const closeSupersededResponse = await fetch(`${origin}/api/tasks/${supersededTask.id}/close`, {
+      method: "POST",
+      body: JSON.stringify({ reason: "superseded", supersededBy: "  AH-202  " }),
+    });
+    assert.equal(closeSupersededResponse.status, 200);
+    const closedSuperseded = await closeSupersededResponse.json();
+    assert.equal(closedSuperseded.task.closure.supersededBy, "AH-202");
+    assert.equal((await store.get(supersededTask.id)).closure.supersededBy, "AH-202");
+
+    for (const reason of ["not-needed", "duplicate"]) {
+      const nonSupersededResponse = await createTask(origin, {
+        title: `Non-superseded ${reason}`,
+        description: "Non-superseded reasons do not retain replacement identifiers.",
+        repositoryPath: directory,
+        workflow: "implement",
+      });
+      const { task } = await nonSupersededResponse.json();
+      const closeResponse = await fetch(`${origin}/api/tasks/${task.id}/close`, {
+        method: "POST",
+        body: JSON.stringify({ reason, supersededBy: "AH-202" }),
+      });
+      assert.equal(closeResponse.status, 200);
+      const closed = await closeResponse.json();
+      assert.equal(closed.task.closure.reason, reason);
+      assert.equal(closed.task.closure.supersededBy, null);
+      assert.equal((await store.get(task.id)).closure.supersededBy, null);
+    }
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("rejects closing a task while merge reconciliation is pending", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
