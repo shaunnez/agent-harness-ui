@@ -16,6 +16,9 @@ export const RUNTIME_FRESHNESS_REASONS = Object.freeze({
   timeout: "The terminal run timed out, so its evidence requires rerun.",
   run_in_progress: "The run is still in progress; authoritative evidence is not available yet.",
   superseded_attempt: "A later terminal attempt superseded this historical evidence.",
+  missing_attempt: "Candidate evidence is missing an explicit positive attempt number.",
+  malformed_attempt: "Candidate evidence has a malformed explicit attempt number.",
+  ambiguous_attempt: "Candidate evidence has ambiguous attempt numbers for authoritative selection.",
 });
 
 const TERMINAL_STATUSES = new Set(["completed", "failed", "cancelled", "interrupted", "timed-out", "timed_out", "timeout"]);
@@ -217,21 +220,35 @@ export function resolveGateFreshness(task, stage) {
     return createFreshness(stage, null, null, null, targetResult.code, null);
   }
   const stageRuns = terminalStageRuns(task, stage);
-  const selected = latestPersistedRun(candidateRelevantRuns(stageRuns, target));
-  if (!selected) {
-    const diagnosticRun = latestPersistedRun(stageRuns);
-    if (!diagnosticRun) {
+  const relevantRuns = candidateRelevantRuns(stageRuns, target);
+  const selected = latestPersistedRun(relevantRuns, target);
+  if (selected.reasonCode) {
+    return createFreshness(
+      stage,
+      target,
+      selected.run?.id ?? null,
+      selected.entry?.artifact?.id ?? null,
+      selected.reasonCode,
+      null,
+    );
+  }
+  if (!selected.run) {
+    const diagnostic = latestPersistedRun(stageRuns);
+    if (diagnostic.reasonCode) {
+      return createFreshness(stage, target, diagnostic.run?.id ?? null, diagnostic.entry?.artifact?.id ?? null, diagnostic.reasonCode, null);
+    }
+    if (!diagnostic.run) {
       return createFreshness(stage, target, null, null, "missing_authoritative_summary", null);
     }
     return evaluateRunFreshness(
-      diagnosticRun,
-      findRunArtifact(task, diagnosticRun),
+      diagnostic.run,
+      diagnostic.entry?.artifact ?? findRunArtifact(task, diagnostic.run),
       target,
       stage,
     );
   }
-  const artifact = findRunArtifact(task, selected);
-  return evaluateRunFreshness(selected, artifact, target, stage);
+  const artifact = selected.entry?.artifact ?? findRunArtifact(task, selected.run);
+  return evaluateRunFreshness(selected.run, artifact, target, stage);
 }
 
 /** Recompute the authoritative task projection and every gate run's audit state. */
@@ -240,17 +257,29 @@ export function refreshGateFreshness(task) {
   for (const stage of CANDIDATE_GATE_STAGES) {
     const targetResult = activeCandidateBinding(task);
     const target = targetResult.valid ? targetResult : null;
-    const selected = target
-      ? latestPersistedRun(candidateRelevantRuns(terminalStageRuns(task, stage), target))
-      : null;
+    const stageRuns = terminalStageRuns(task, stage);
+    const relevantRuns = target ? candidateRelevantRuns(stageRuns, target) : [];
+    const selected = target ? latestPersistedRun(relevantRuns, target) : emptyRunSelection();
     projection[stage] = resolveGateFreshness(task, stage);
     for (const run of task.runs ?? []) {
       if (run.stage !== stage) continue;
       const artifact = findRunArtifact(task, run);
-      const runFreshness = evaluateRunFreshness(run, artifact, target, stage);
-      run.freshness = runFreshness;
-      if (selected?.id === run.id && runFreshness.fresh) continue;
-      if (selected?.id !== run.id && runFreshness.fresh) {
+      const evaluatedFreshness = evaluateRunFreshness(run, artifact, target, stage);
+      const relevantEntry = selected.entries.find((entry) => entry.run?.id === run.id);
+      if (selected.reasonCode && relevantEntry) {
+        run.freshness = createFreshness(
+          stage,
+          target,
+          run.id,
+          run.artifactId ?? artifact?.id ?? null,
+          selected.reasonCode,
+          evaluatedFreshness.focusedTest,
+        );
+        continue;
+      }
+      run.freshness = evaluatedFreshness;
+      if (selected.entry?.run?.id === run.id && evaluatedFreshness.fresh) continue;
+      if (selected.entry && evaluatedFreshness.fresh && isStrictlyLowerValidatedAttempt(run, selected.entry.run)) {
         run.freshness = createFreshness(stage, target, run.id, run.artifactId ?? null, "superseded_attempt", null);
       }
     }
@@ -586,24 +615,104 @@ function activeCandidateBinding(task) {
 
 function terminalStageRuns(task, stage) {
   return (task.runs ?? [])
-    .map((run, index) => ({ run, index }))
+    .map((run) => ({ run, artifact: findRunArtifact(task, run) }))
     .filter(({ run }) => run?.stage === stage && isTerminalRun(run));
 }
 
 function candidateRelevantRuns(entries, target) {
-  return entries.filter(({ run }) => {
-    const binding = readExplicitCandidateBinding(run);
-    // Invalid bindings remain in precedence so a later malformed attempt fails
-    // closed. Explicitly valid evidence for another candidate tuple is unrelated.
-    return !binding.valid || compareCandidateBinding(binding, target) == null;
-  });
+  return entries
+    .map((entry) => ({
+      ...entry,
+      identityResolution: entry.identityResolution ?? persistedEvidenceIdentityResolution(
+        entry.run,
+        entry.artifact,
+        entry.run?.stage,
+      ),
+    }))
+    .filter(({ identityResolution }) => {
+      // Invalid bindings remain in precedence so a later malformed attempt fails
+      // closed. Explicitly valid evidence for another candidate tuple is unrelated.
+      return identityResolution.reasonCode || compareCandidateBinding(identityResolution.binding, target) == null;
+    });
 }
 
-function latestPersistedRun(entries) {
-  return entries.reduce((current, entry) => {
-    if (!current || entry.index > current.index) return entry;
-    return current;
-  }, null)?.run ?? null;
+function latestPersistedRun(entries, target = null) {
+  const scopedEntries = target ? entries.filter((entry) => isInCandidateRevisionScope(entry, target)) : entries;
+  const resolvedEntries = scopedEntries.map((entry) => ({
+    ...entry,
+    attemptReason: persistedAttemptReason(entry.run),
+  }));
+  if (!resolvedEntries.length) return emptyRunSelection();
+
+  const validAttempts = new Map();
+  for (const entry of resolvedEntries) {
+    if (entry.attemptReason) continue;
+    const attemptEntries = validAttempts.get(entry.run.attempt) ?? [];
+    attemptEntries.push(entry);
+    validAttempts.set(entry.run.attempt, attemptEntries);
+  }
+  const identityFailureForInvalidAttempt = resolvedEntries.find((entry) =>
+    entry.attemptReason && entry.identityResolution?.reasonCode,
+  )?.identityResolution?.reasonCode;
+  if ([...validAttempts.values()].some((attemptEntries) => attemptEntries.length > 1)) {
+    const identityEntry = resolvedEntries.find((entry) => entry.identityResolution?.reasonCode);
+    return failedRunSelection(
+      identityEntry?.identityResolution?.reasonCode ?? "ambiguous_attempt",
+      identityEntry ?? stableRunEntry(resolvedEntries),
+      resolvedEntries,
+    );
+  }
+  const malformed = resolvedEntries.find(({ attemptReason }) => attemptReason === "malformed_attempt");
+  if (malformed) {
+    const entry = identityFailureForInvalidAttempt
+      ? resolvedEntries.find(({ identityResolution }) => identityResolution?.reasonCode)
+      : malformed;
+    return failedRunSelection(identityFailureForInvalidAttempt ?? malformed.attemptReason, entry, resolvedEntries);
+  }
+  const missing = resolvedEntries.find(({ attemptReason }) => attemptReason === "missing_attempt");
+  if (missing) {
+    const entry = identityFailureForInvalidAttempt
+      ? resolvedEntries.find(({ identityResolution }) => identityResolution?.reasonCode)
+      : missing;
+    return failedRunSelection(identityFailureForInvalidAttempt ?? missing.attemptReason, entry, resolvedEntries);
+  }
+
+  const entry = resolvedEntries.reduce((current, candidate) => (
+    !current || candidate.run.attempt > current.run.attempt ? candidate : current
+  ), null);
+  return { entry, run: entry?.run ?? null, reasonCode: null, entries: resolvedEntries };
+}
+
+function failedRunSelection(reasonCode, entry, entries) {
+  return { entry, run: entry?.run ?? null, reasonCode, entries };
+}
+
+function stableRunEntry(entries) {
+  return [...entries]
+    .sort((left, right) => String(left.run?.id ?? "").localeCompare(String(right.run?.id ?? "")))[0] ?? null;
+}
+
+function isInCandidateRevisionScope(entry, target) {
+  const binding = readExplicitCandidateBinding(entry.run);
+  if (!binding.valid) return true;
+  return compareCandidateBinding(binding, target) == null || entry.identityResolution?.reasonCode === "mixed_evidence";
+}
+
+function emptyRunSelection() {
+  return { entry: null, run: null, reasonCode: null, entries: [] };
+}
+
+function persistedAttemptReason(run) {
+  if (!run || !Object.prototype.hasOwnProperty.call(run, "attempt") || run.attempt == null) {
+    return "missing_attempt";
+  }
+  return Number.isSafeInteger(run.attempt) && run.attempt > 0 ? null : "malformed_attempt";
+}
+
+function isStrictlyLowerValidatedAttempt(run, selectedRun) {
+  return persistedAttemptReason(run) == null &&
+    persistedAttemptReason(selectedRun) == null &&
+    run.attempt < selectedRun.attempt;
 }
 
 function isTerminalRun(run) {
@@ -611,8 +720,10 @@ function isTerminalRun(run) {
 }
 
 function findRunArtifact(task, run) {
-  if (!run?.artifactId) return null;
-  return (task.artifacts ?? []).find((artifact) => artifact.id === run.artifactId) ?? null;
+  if (!run) return null;
+  return (task.artifacts ?? []).find((artifact) =>
+    (run.artifactId && artifact.id === run.artifactId) || artifact.runId === run.id,
+  ) ?? null;
 }
 
 function attachmentEvidenceError(run, artifact) {

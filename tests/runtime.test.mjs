@@ -16,6 +16,7 @@ import {
 import { normalizeModelId, priceUsage, readCodexModelCatalog, withConfiguredModels } from "../server/model-catalog.mjs";
 import { buildExecutionRequest, buildStageRequest, buildWorkPackageRequest } from "../server/prompts.mjs";
 import { buildScoutRequest } from "../server/scouts.mjs";
+import { refreshGateFreshness, RUNTIME_FRESHNESS_REASONS } from "../server/run-activity.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
@@ -1958,6 +1959,131 @@ test("renders stale evidence in the mounted Run Activity views with exact persis
       assert.match(markup, /Rerun required/);
       assert.match(markup, new RegExp(reason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }
+  });
+});
+
+test("projects the authoritative mixed-identity reason identically into activity and task UI", () => {
+  return withWorkspace(async ({ RunActivity, RuntimeTaskWorkspace, filterRunActivity }) => {
+    const candidate = {
+      id: "C1",
+      revisionNumber: 2,
+      status: "ready_for_review",
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/ah-006-c1",
+      revisions: [],
+    };
+    const gateResult = {
+      schemaVersion: 1,
+      stage: "dev-review",
+      verdict: "PASS",
+      reportedVerdict: "PASS",
+      candidateId: "C1",
+      candidateRevision: 2,
+      evaluatedAt: "2026-08-04T12:00:00.000Z",
+      blockingReasons: [],
+      findings: [{
+        severity: "P2",
+        title: "Retained mixed finding",
+        detail: "This finding belongs to another candidate.",
+        candidateId: "C2",
+        candidateRevision: 8,
+        bindingExplicit: true,
+      }],
+    };
+    const oldRun = {
+      id: "RUN-OLD-RUNTIME",
+      kind: "review",
+      status: "completed",
+      stage: "dev-review",
+      role: "dev-review",
+      candidateId: "C1",
+      candidateRevision: 2,
+      attempt: 1,
+      artifactId: "ART-OLD-RUNTIME",
+      gateResult: { ...gateResult, findings: [] },
+      freshness: null,
+    };
+    const mixedRun = {
+      ...oldRun,
+      id: "RUN-MIXED-RUNTIME",
+      attempt: 2,
+      artifactId: "ART-MIXED-RUNTIME",
+      gateResult,
+      freshness: null,
+    };
+    const oldArtifact = {
+      id: "ART-OLD-RUNTIME",
+      runId: oldRun.id,
+      stage: "dev-review",
+      kind: "markdown",
+      name: "old-review.md",
+      content: "# Older PASS",
+      createdAt: "2026-08-04T12:00:00.000Z",
+      model: "gpt-5.6-sol",
+      reasoning: "high",
+      usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2, cost: null },
+      candidateId: "C1",
+      candidateRevision: 2,
+      gateResult: { ...gateResult, findings: [] },
+      freshness: null,
+    };
+    const mixedArtifact = {
+      ...oldArtifact,
+      id: "ART-MIXED-RUNTIME",
+      runId: mixedRun.id,
+      name: "mixed-review.md",
+      gateResult,
+      freshness: null,
+    };
+    const task = createTask({
+      status: "ready-for-review",
+      currentStage: "dev-review",
+      completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement"],
+      candidates: [candidate],
+      runs: [oldRun, mixedRun],
+      artifacts: [oldArtifact, mixedArtifact],
+      events: [{
+        id: "EVENT-MIXED-RUNTIME",
+        at: "2026-08-04T12:00:01.000Z",
+        category: "agent",
+        tone: "success",
+        stage: "dev-review",
+        title: "Development review completed",
+        detail: "Persisted terminal evidence",
+        runId: mixedRun.id,
+      }],
+      gateFreshness: {},
+    });
+
+    refreshGateFreshness(task);
+    assert.equal(task.gateFreshness["dev-review"].reasonCode, "mixed_evidence");
+    assert.equal(task.runs[1].freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.mixed_evidence);
+    assert.equal(task.artifacts[1].freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.mixed_evidence);
+    assert.equal(task.events[0].freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.mixed_evidence);
+    assert.equal(filterRunActivity(task, "activity")[0].event.freshness.reasonCode, "mixed_evidence");
+
+    const runActivityMarkup = renderToStaticMarkup(React.createElement(RunActivity, {
+      task,
+      initialFilter: "activity",
+      initialSelectedId: "run:RUN-MIXED-RUNTIME",
+      onOpenArtifact: () => {},
+    }));
+    const workspaceMarkup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task,
+      initialViewedStageId: "dev-review",
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onGrillAnswer: async () => {},
+      onFinishGrill: async () => {},
+    }));
+    const escapedReason = RUNTIME_FRESHNESS_REASONS.mixed_evidence.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    assert.match(runActivityMarkup, new RegExp(escapedReason));
+    assert.match(workspaceMarkup, new RegExp(escapedReason));
   });
 });
 

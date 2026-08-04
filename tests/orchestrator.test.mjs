@@ -695,7 +695,7 @@ test("preserves falsey persisted evidence errors through attachment and legacy m
     const migratedTask = makeRuntimeTask({ artifacts: [migratedArtifact] });
     migrateRunActivityState({ schemaVersion: 1, tasks: [migratedTask] });
     assert.equal(migratedTask.runs[0].evidenceError, evidenceError, `${name}: migration retains the original value`);
-    assert.equal(migratedTask.gateFreshness["dev-review"].reasonCode, "malformed_binding", `${name}: migration fails closed`);
+    assert.equal(migratedTask.gateFreshness["dev-review"].reasonCode, "missing_attempt", `${name}: migration fails closed`);
   }
 });
 
@@ -1661,26 +1661,22 @@ test("latest terminal exact-candidate attempt wins and older passes become super
   assert.equal(task.artifacts[0].freshness.reasonCode, "superseded_attempt");
   assert.equal(task.artifacts[1].freshness.reasonCode, "repair_required");
 
-  for (const { earlierAttempt, laterAttempt } of [
-    { earlierAttempt: 2, laterAttempt: 1 },
-    { earlierAttempt: 2, laterAttempt: 2 },
-  ]) {
-    const earlierPass = makeRuntimeRun({
-      id: `RUN-EARLIER-${earlierAttempt}-${laterAttempt}`,
-      attempt: earlierAttempt,
-      gateResult: makeGateResult(),
-    });
-    const laterRepair = makeRuntimeRun({
-      id: `RUN-LATER-${earlierAttempt}-${laterAttempt}`,
-      attempt: laterAttempt,
-      gateResult: makeGateResult({ verdict: "REPAIR", reportedVerdict: "REPAIR", blockingReasons: ["P1: repair"] }),
-    });
-    const conflictingAttemptTask = makeRuntimeTask({ runs: [earlierPass, laterRepair] });
-    refreshGateFreshness(conflictingAttemptTask);
-    assert.equal(conflictingAttemptTask.gateFreshness["dev-review"].sourceRunId, laterRepair.id);
-    assert.equal(conflictingAttemptTask.gateFreshness["dev-review"].reasonCode, "repair_required");
-    assert.equal(conflictingAttemptTask.runs[0].freshness.reasonCode, "superseded_attempt");
-  }
+  const higherAttemptRepair = makeRuntimeRun({
+    id: "RUN-HIGH-REPAIR",
+    attempt: 2,
+    gateResult: makeGateResult({ verdict: "REPAIR", reportedVerdict: "REPAIR", blockingReasons: ["P1: repair"] }),
+  });
+  const lowerAttemptPass = makeRuntimeRun({
+    id: "RUN-LOW-PASS-STORED-LATER",
+    attempt: 1,
+    gateResult: makeGateResult(),
+  });
+  const outOfOrderTask = makeRuntimeTask({ runs: [higherAttemptRepair, lowerAttemptPass] });
+  refreshGateFreshness(outOfOrderTask);
+  assert.equal(outOfOrderTask.gateFreshness["dev-review"].sourceRunId, higherAttemptRepair.id);
+  assert.equal(outOfOrderTask.gateFreshness["dev-review"].reasonCode, "repair_required");
+  assert.equal(outOfOrderTask.runs[0].freshness.reasonCode, "repair_required");
+  assert.equal(outOfOrderTask.runs[1].freshness.reasonCode, "superseded_attempt");
 
   const unrelated = makeRuntimeRun({
     id: "RUN-C2",
@@ -1729,12 +1725,153 @@ test("latest terminal exact-candidate attempt wins and older passes become super
   assert.equal(nextRevisionRun.attempt, 1, "attempt numbering is scoped to the exact candidate revision");
 });
 
-test("later persisted terminal evidence supersedes attempt metadata and blocks approval", async () => {
-  for (const { earlierAttempt, laterAttempt, laterStatus, expectedReason } of [
-    { earlierAttempt: 1, laterAttempt: null, laterStatus: "completed", expectedReason: "missing_authoritative_summary" },
-    { earlierAttempt: 1, laterAttempt: "2", laterStatus: "completed", expectedReason: "missing_authoritative_summary" },
-    { earlierAttempt: 2, laterAttempt: 1, laterStatus: "failed", expectedReason: "failed_execution" },
-    { earlierAttempt: 2, laterAttempt: 2, laterStatus: "failed", expectedReason: "failed_execution" },
+test("retains newer mixed-identity runs instead of allowing an older PASS to stay fresh", () => {
+  const cases = [
+    {
+      name: "gate finding identity",
+      stage: "dev-review",
+      newerGateResult: makeGateResult({ findings: [makePersistedFinding({ candidateId: "C2" })] }),
+    },
+    {
+      name: "linked artifact identity",
+      stage: "dev-review",
+      newerArtifact: makeArtifact({ candidateId: "C2", gateResult: makeGateResult() }),
+    },
+    {
+      name: "focused test summary identity",
+      stage: "test",
+      newerTest: makeFocusedTestSummary({ candidateId: "C2", rows: [makeTestRow({ candidateId: "C2" })] }),
+      newerGateResult: makeGateResult({ stage: "test" }),
+    },
+    {
+      name: "focused test row identity",
+      stage: "test",
+      newerTest: makeFocusedTestSummary({ rows: [makeTestRow({ candidateId: "C2" })] }),
+      newerGateResult: makeGateResult({ stage: "test" }),
+    },
+  ];
+
+  for (const item of cases) {
+    const oldRun = makeRuntimeRun({
+      id: `RUN-OLD-${item.name}`,
+      stage: item.stage,
+      kind: item.stage === "test" ? "test" : "review",
+      attempt: 1,
+      artifactId: `ART-OLD-${item.name}`,
+      gateResult: makeGateResult({ stage: item.stage }),
+      test: item.stage === "test" ? makeFocusedTestSummary() : null,
+    });
+    const newRun = makeRuntimeRun({
+      id: `RUN-MIXED-${item.name}`,
+      stage: item.stage,
+      kind: item.stage === "test" ? "test" : "review",
+      attempt: 2,
+      artifactId: `ART-MIXED-${item.name}`,
+      gateResult: item.newerGateResult ?? makeGateResult({ stage: item.stage }),
+      test: item.newerTest ?? null,
+    });
+    const oldArtifact = makeArtifact({
+      id: oldRun.artifactId,
+      stage: item.stage,
+      gateResult: oldRun.gateResult,
+      focusedTest: oldRun.test,
+    });
+    const newArtifact = item.newerArtifact ?? makeArtifact({
+      id: newRun.artifactId,
+      stage: item.stage,
+      gateResult: newRun.gateResult,
+      focusedTest: newRun.test,
+    });
+    newArtifact.runId = newRun.id;
+    oldArtifact.runId = oldRun.id;
+    const oldEvent = { id: `EVENT-OLD-${item.name}`, runId: oldRun.id, stage: item.stage };
+    const newEvent = { id: `EVENT-MIXED-${item.name}`, runId: newRun.id, stage: item.stage };
+    const task = makeRuntimeTask({
+      runs: [oldRun, newRun],
+      artifacts: [oldArtifact, newArtifact],
+      events: [oldEvent, newEvent],
+    });
+
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness[item.stage].sourceRunId, newRun.id, item.name);
+    assert.equal(task.gateFreshness[item.stage].reasonCode, "mixed_evidence", item.name);
+    assert.equal(task.runs[0].freshness.reasonCode, "superseded_attempt", `${item.name}: old run`);
+    assert.equal(task.runs[1].freshness.reasonCode, "mixed_evidence", `${item.name}: mixed run`);
+    assert.equal(task.artifacts[0].freshness.reasonCode, "superseded_attempt", `${item.name}: old artifact`);
+    assert.equal(task.artifacts[1].freshness.reasonCode, "mixed_evidence", `${item.name}: mixed artifact`);
+    assert.equal(task.events[1].freshness.reasonCode, "mixed_evidence", `${item.name}: mixed event`);
+    assert.equal(task.events[1].freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.mixed_evidence, item.name);
+  }
+});
+
+test("excludes only fully validated non-target tuples while retaining mismatch audit evidence", () => {
+  const exact = makeRuntimeRun({ id: "RUN-EXACT-AUDIT", attempt: 1, artifactId: "ART-EXACT-AUDIT" });
+  const unrelated = makeRuntimeRun({
+    id: "RUN-OTHER-AUDIT",
+    candidateId: "C2",
+    candidateRevision: 8,
+    attempt: 99,
+    artifactId: "ART-OTHER-AUDIT",
+    gateResult: makeGateResult({ candidateId: "C2", candidateRevision: 8 }),
+  });
+  const exactArtifact = makeArtifact({ id: exact.artifactId });
+  const unrelatedArtifact = makeArtifact({
+    id: unrelated.artifactId,
+    candidateId: "C2",
+    candidateRevision: 8,
+    gateResult: unrelated.gateResult,
+  });
+  const task = makeRuntimeTask({
+    runs: [exact, unrelated],
+    artifacts: [exactArtifact, unrelatedArtifact],
+    events: [{ id: "EVENT-OTHER-AUDIT", runId: unrelated.id, stage: "dev-review" }],
+  });
+
+  refreshGateFreshness(task);
+
+  assert.equal(task.gateFreshness["dev-review"].sourceRunId, exact.id);
+  assert.equal(task.gateFreshness["dev-review"].fresh, true);
+  assert.equal(unrelated.freshness.reasonCode, "candidate_mismatch");
+  assert.equal(unrelatedArtifact.freshness.reasonCode, "candidate_mismatch");
+  assert.equal(task.events[0].freshness.reasonCode, "candidate_mismatch");
+  assert.equal(task.events[0].freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.candidate_mismatch);
+});
+
+test("persisted terminal attempt evidence fails closed without array-order fallback", async () => {
+  for (const { earlierAttempt, laterAttempt, laterStatus, expectedReason, expectedSource, expectedHistoricalReason } of [
+    {
+      earlierAttempt: 1,
+      laterAttempt: null,
+      laterStatus: "completed",
+      expectedReason: "missing_attempt",
+      expectedSource: "RUN-LATER-TERMINAL",
+      expectedHistoricalReason: "missing_attempt",
+    },
+    {
+      earlierAttempt: 1,
+      laterAttempt: "2",
+      laterStatus: "completed",
+      expectedReason: "malformed_attempt",
+      expectedSource: "RUN-LATER-TERMINAL",
+      expectedHistoricalReason: "malformed_attempt",
+    },
+    {
+      earlierAttempt: 2,
+      laterAttempt: 1,
+      laterStatus: "failed",
+      expectedReason: "fresh",
+      expectedSource: "RUN-EARLIER-PASS",
+      expectedHistoricalReason: "fresh",
+    },
+    {
+      earlierAttempt: 2,
+      laterAttempt: 2,
+      laterStatus: "failed",
+      expectedReason: "ambiguous_attempt",
+      expectedSource: "RUN-EARLIER-PASS",
+      expectedHistoricalReason: "ambiguous_attempt",
+    },
   ]) {
     const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-legacy-attempt-"));
     try {
@@ -1742,7 +1879,7 @@ test("later persisted terminal evidence supersedes attempt metadata and blocks a
       await store.init();
       const task = await store.create({
         title: "Reject superseded pass",
-        description: "Persisted terminal order controls when attempt metadata is unavailable.",
+        description: "Persisted attempt metadata controls terminal evidence selection.",
         repositoryPath: directory,
         workflow: "implement",
         priority: "medium",
@@ -1766,9 +1903,10 @@ test("later persisted terminal evidence supersedes attempt metadata and blocks a
       });
 
       const persisted = await store.get(task.id);
-      assert.equal(persisted.gateFreshness["dev-review"].sourceRunId, "RUN-LATER-TERMINAL");
+      assert.equal(persisted.gateFreshness["dev-review"].sourceRunId, expectedSource);
       assert.equal(persisted.gateFreshness["dev-review"].reasonCode, expectedReason);
-      assert.equal(persisted.runs[0].freshness.reasonCode, "superseded_attempt");
+      assert.equal(persisted.runs[0].freshness.reasonCode, expectedHistoricalReason);
+      assert.equal(persisted.gateFreshness["dev-review"].reasonCopy, RUNTIME_FRESHNESS_REASONS[expectedReason]);
 
       let merged = false;
       const orchestrator = new TaskOrchestrator(store, {
@@ -1776,7 +1914,9 @@ test("later persisted terminal evidence supersedes attempt metadata and blocks a
       });
       await assert.rejects(
         () => orchestrator.approveMerge(task.id),
-        /cannot be approved.*Development Review is not fresh/i,
+        expectedReason === "fresh"
+          ? /cannot be approved.*Focused test is not fresh/i
+          : /cannot be approved.*Development Review is not fresh/i,
       );
       assert.equal(merged, false);
     } finally {
