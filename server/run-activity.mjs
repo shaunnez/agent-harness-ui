@@ -221,7 +221,7 @@ export function resolveGateFreshness(task, stage) {
   }
   const stageRuns = terminalStageRuns(task, stage);
   const relevantRuns = candidateRelevantRuns(stageRuns, target);
-  const selected = latestPersistedRun(relevantRuns, target);
+  const selected = latestPersistedRun(relevantRuns);
   if (selected.reasonCode) {
     return createFreshness(
       stage,
@@ -259,20 +259,23 @@ export function refreshGateFreshness(task) {
     const target = targetResult.valid ? targetResult : null;
     const stageRuns = terminalStageRuns(task, stage);
     const relevantRuns = target ? candidateRelevantRuns(stageRuns, target) : [];
-    const selected = target ? latestPersistedRun(relevantRuns, target) : emptyRunSelection();
+    const selected = target ? latestPersistedRun(relevantRuns) : emptyRunSelection();
     projection[stage] = resolveGateFreshness(task, stage);
     for (const run of task.runs ?? []) {
       if (run.stage !== stage) continue;
       const artifact = findRunArtifact(task, run);
       const evaluatedFreshness = evaluateRunFreshness(run, artifact, target, stage);
       const relevantEntry = selected.entries.find((entry) => entry.run?.id === run.id);
-      if (selected.reasonCode && relevantEntry) {
+      const retainedReason = relevantEntry?.identityResolution?.reasonCode
+        ?? relevantEntry?.attemptReason
+        ?? (hasAmbiguousValidatedAttempt(relevantEntry, selected.entries) ? "ambiguous_attempt" : null);
+      if (retainedReason) {
         run.freshness = createFreshness(
           stage,
           target,
           run.id,
           run.artifactId ?? artifact?.id ?? null,
-          selected.reasonCode,
+          retainedReason,
           evaluatedFreshness.focusedTest,
         );
         continue;
@@ -636,9 +639,8 @@ function candidateRelevantRuns(entries, target) {
     });
 }
 
-function latestPersistedRun(entries, target = null) {
-  const scopedEntries = target ? entries.filter((entry) => isInCandidateRevisionScope(entry, target)) : entries;
-  const resolvedEntries = scopedEntries.map((entry) => ({
+function latestPersistedRun(entries) {
+  const resolvedEntries = entries.map((entry) => ({
     ...entry,
     attemptReason: persistedAttemptReason(entry.run),
   }));
@@ -692,12 +694,6 @@ function stableRunEntry(entries) {
     .sort((left, right) => String(left.run?.id ?? "").localeCompare(String(right.run?.id ?? "")))[0] ?? null;
 }
 
-function isInCandidateRevisionScope(entry, target) {
-  const binding = readExplicitCandidateBinding(entry.run);
-  if (!binding.valid) return true;
-  return compareCandidateBinding(binding, target) == null || entry.identityResolution?.reasonCode === "mixed_evidence";
-}
-
 function emptyRunSelection() {
   return { entry: null, run: null, reasonCode: null, entries: [] };
 }
@@ -713,6 +709,15 @@ function isStrictlyLowerValidatedAttempt(run, selectedRun) {
   return persistedAttemptReason(run) == null &&
     persistedAttemptReason(selectedRun) == null &&
     run.attempt < selectedRun.attempt;
+}
+
+function hasAmbiguousValidatedAttempt(entry, entries) {
+  if (!entry || entry.attemptReason) return false;
+  return entries.some((candidate) =>
+    candidate !== entry &&
+    !candidate.attemptReason &&
+    candidate.run.attempt === entry.run.attempt,
+  );
 }
 
 function isTerminalRun(run) {

@@ -17,7 +17,10 @@ export type RuntimeFreshnessReasonCode =
   | "failed_execution"
   | "timeout"
   | "run_in_progress"
-  | "superseded_attempt";
+  | "superseded_attempt"
+  | "missing_attempt"
+  | "malformed_attempt"
+  | "ambiguous_attempt";
 
 export interface RuntimeFreshnessReason {
   code: RuntimeFreshnessReasonCode;

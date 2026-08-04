@@ -1805,6 +1805,108 @@ test("retains newer mixed-identity runs instead of allowing an older PASS to sta
   }
 });
 
+test("retains uncertain non-target evidence after resolving nested identities", () => {
+  const cases = [
+    {
+      name: "missing nested identity",
+      reasonCode: "missing_binding",
+      finding: makePersistedFinding({
+        candidateId: undefined,
+        candidateRevision: undefined,
+        bindingExplicit: false,
+      }),
+    },
+    {
+      name: "malformed nested identity",
+      reasonCode: "malformed_binding",
+      finding: makePersistedFinding({ candidateId: "C2", candidateRevision: "8" }),
+    },
+  ];
+
+  for (const item of cases) {
+    const oldRun = makeRuntimeRun({ id: `RUN-OLD-${item.reasonCode}`, attempt: 1 });
+    const gateResult = makeGateResult({
+      candidateId: "C2",
+      candidateRevision: 8,
+      findings: [item.finding],
+    });
+    const uncertainRun = makeRuntimeRun({
+      id: `RUN-UNCERTAIN-${item.reasonCode}`,
+      candidateId: "C2",
+      candidateRevision: 8,
+      attempt: 2,
+      artifactId: `ART-UNCERTAIN-${item.reasonCode}`,
+      gateResult,
+    });
+    const uncertainArtifact = makeArtifact({
+      id: uncertainRun.artifactId,
+      candidateId: "C2",
+      candidateRevision: 8,
+      gateResult,
+    });
+    uncertainArtifact.runId = uncertainRun.id;
+    const event = {
+      id: `EVENT-UNCERTAIN-${item.reasonCode}`,
+      runId: uncertainRun.id,
+      stage: "dev-review",
+    };
+    const task = makeRuntimeTask({
+      runs: [oldRun, uncertainRun],
+      artifacts: [uncertainArtifact],
+      events: [event],
+    });
+
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness["dev-review"].sourceRunId, uncertainRun.id, item.name);
+    assert.equal(task.gateFreshness["dev-review"].reasonCode, item.reasonCode, item.name);
+    assert.equal(oldRun.freshness.reasonCode, "superseded_attempt", item.name);
+    assert.equal(uncertainRun.freshness.reasonCode, item.reasonCode, item.name);
+    assert.equal(uncertainArtifact.freshness.reasonCode, item.reasonCode, item.name);
+    assert.equal(event.freshness.reasonCode, item.reasonCode, item.name);
+  }
+});
+
+test("preserves distinct identity and attempt reasons when selection fails", () => {
+  const mixedRun = makeRuntimeRun({
+    id: "RUN-MIXED-WITH-ATTEMPT-FAILURE",
+    attempt: 1,
+    artifactId: "ART-MIXED-WITH-ATTEMPT-FAILURE",
+    gateResult: makeGateResult({ findings: [makePersistedFinding({ candidateId: "C2" })] }),
+  });
+  const missingAttemptRun = makeRuntimeRun({
+    id: "RUN-MISSING-ATTEMPT-WITH-MIXED",
+    attempt: null,
+    artifactId: "ART-MISSING-ATTEMPT-WITH-MIXED",
+  });
+  const mixedArtifact = makeArtifact({
+    id: mixedRun.artifactId,
+    gateResult: mixedRun.gateResult,
+  });
+  const missingAttemptArtifact = makeArtifact({ id: missingAttemptRun.artifactId });
+  mixedArtifact.runId = mixedRun.id;
+  missingAttemptArtifact.runId = missingAttemptRun.id;
+  const mixedEvent = { id: "EVENT-MIXED-WITH-ATTEMPT-FAILURE", runId: mixedRun.id, stage: "dev-review" };
+  const missingAttemptEvent = { id: "EVENT-MISSING-ATTEMPT-WITH-MIXED", runId: missingAttemptRun.id, stage: "dev-review" };
+  const task = makeRuntimeTask({
+    runs: [mixedRun, missingAttemptRun],
+    artifacts: [mixedArtifact, missingAttemptArtifact],
+    events: [mixedEvent, missingAttemptEvent],
+  });
+
+  refreshGateFreshness(task);
+
+  assert.equal(task.gateFreshness["dev-review"].reasonCode, "missing_attempt");
+  for (const evidence of [mixedRun, mixedArtifact, mixedEvent]) {
+    assert.equal(evidence.freshness.reasonCode, "mixed_evidence");
+    assert.equal(evidence.freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.mixed_evidence);
+  }
+  for (const evidence of [missingAttemptRun, missingAttemptArtifact, missingAttemptEvent]) {
+    assert.equal(evidence.freshness.reasonCode, "missing_attempt");
+    assert.equal(evidence.freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.missing_attempt);
+  }
+});
+
 test("excludes only fully validated non-target tuples while retaining mismatch audit evidence", () => {
   const exact = makeRuntimeRun({ id: "RUN-EXACT-AUDIT", attempt: 1, artifactId: "ART-EXACT-AUDIT" });
   const unrelated = makeRuntimeRun({
@@ -1839,14 +1941,15 @@ test("excludes only fully validated non-target tuples while retaining mismatch a
 });
 
 test("persisted terminal attempt evidence fails closed without array-order fallback", async () => {
-  for (const { earlierAttempt, laterAttempt, laterStatus, expectedReason, expectedSource, expectedHistoricalReason } of [
+  for (const { earlierAttempt, laterAttempt, laterStatus, expectedReason, expectedSource, expectedHistoricalReason, expectedLaterReason } of [
     {
       earlierAttempt: 1,
       laterAttempt: null,
       laterStatus: "completed",
       expectedReason: "missing_attempt",
       expectedSource: "RUN-LATER-TERMINAL",
-      expectedHistoricalReason: "missing_attempt",
+      expectedHistoricalReason: "fresh",
+      expectedLaterReason: "missing_attempt",
     },
     {
       earlierAttempt: 1,
@@ -1854,7 +1957,8 @@ test("persisted terminal attempt evidence fails closed without array-order fallb
       laterStatus: "completed",
       expectedReason: "malformed_attempt",
       expectedSource: "RUN-LATER-TERMINAL",
-      expectedHistoricalReason: "malformed_attempt",
+      expectedHistoricalReason: "fresh",
+      expectedLaterReason: "malformed_attempt",
     },
     {
       earlierAttempt: 2,
@@ -1863,6 +1967,7 @@ test("persisted terminal attempt evidence fails closed without array-order fallb
       expectedReason: "fresh",
       expectedSource: "RUN-EARLIER-PASS",
       expectedHistoricalReason: "fresh",
+      expectedLaterReason: "failed_execution",
     },
     {
       earlierAttempt: 2,
@@ -1871,6 +1976,7 @@ test("persisted terminal attempt evidence fails closed without array-order fallb
       expectedReason: "ambiguous_attempt",
       expectedSource: "RUN-EARLIER-PASS",
       expectedHistoricalReason: "ambiguous_attempt",
+      expectedLaterReason: "ambiguous_attempt",
     },
   ]) {
     const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-legacy-attempt-"));
@@ -1906,6 +2012,7 @@ test("persisted terminal attempt evidence fails closed without array-order fallb
       assert.equal(persisted.gateFreshness["dev-review"].sourceRunId, expectedSource);
       assert.equal(persisted.gateFreshness["dev-review"].reasonCode, expectedReason);
       assert.equal(persisted.runs[0].freshness.reasonCode, expectedHistoricalReason);
+      assert.equal(persisted.runs[1].freshness.reasonCode, expectedLaterReason);
       assert.equal(persisted.gateFreshness["dev-review"].reasonCopy, RUNTIME_FRESHNESS_REASONS[expectedReason]);
 
       let merged = false;
@@ -2606,7 +2713,13 @@ test("advances an approved implementation task through a revision-bound candidat
         if (/Development review/.test(prompt)) {
           reviewCount += 1;
           finalText = reviewCount === 1
-            ? gateOutput(1, "REPAIR", [{ severity: "P1", title: "Repair required", detail: "Fix the candidate." }])
+            ? gateOutput(1, "REPAIR", [{
+                severity: "P1",
+                title: "Repair required",
+                detail: "Fix the candidate.",
+                candidateId: "C1",
+                candidateRevision: 1,
+              }])
             : gateOutput(2);
         } else if (/Focused test/.test(prompt)) {
           finalText = TEST_OUTPUT;
