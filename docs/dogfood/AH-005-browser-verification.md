@@ -1,12 +1,29 @@
 # AH-005 browser verification handoff
 
-Status: **repair in progress; not READY**. This handoff records the exact
-reviewed input `C1` revision `6` at
-`37f5ad3e71375dbbae95fbcffa4b189679754af8`. The current Repair agent may not
-commit or run browser QA. The harness must assemble this repair as a new
-candidate revision, persist that exact identity in task state, and rerun every
-candidate-bound gate before Human Approval. This document does not predict or
-invent the future assembled candidate SHA.
+Status: **durable historical handoff; not candidate qualification evidence**.
+This tracked file records the S4 package boundary and retained historical
+evidence for exact `C1` revision `6` at
+`37f5ad3e71375dbbae95fbcffa4b189679754af8`.
+
+## Authority boundary
+
+This file cannot authoritatively bind itself to the SHA of the candidate that
+contains it. Recording that containing SHA in the tracked file would change the
+file, create a new Git revision, and immediately make the recorded identity
+stale. It therefore must not declare its containing candidate qualified,
+browser-verified, gate-fresh, or READY.
+
+After assembling a repair, the harness must persist the exact current
+`candidateId`, candidate revision, candidate SHA, task base, package commits,
+and repair lineage in task state. Operator-owned whole-candidate qualification,
+exported-patch identity and apply-check result, and retained browser screenshot
+paths and hashes must live in persisted task decisions or authoritative run
+summaries bound to that exact unchanged candidate. Fresh Dev Review, Test, and
+Final Review summaries must resolve to the same explicit candidate ID and
+revision.
+
+Evidence for an earlier revision, including revision 6 and revision 21, remains
+historical audit evidence only. It must never qualify a newly assembled repair.
 
 ## Candidate and repair identity
 
@@ -16,13 +33,14 @@ invent the future assembled candidate SHA.
 | Exact task base | `1591dca9869f50e9fbad20253f8100348463f9eb` |
 | Reviewed input | `C1` revision `6` |
 | Reviewed input SHA | `37f5ad3e71375dbbae95fbcffa4b189679754af8` |
-| Current repair identity | Assigned only after harness assembly; persisted task state is authoritative |
-| Fresh Dev Review / Test / Final Review for the assembled repair | None yet; revision 6 evidence becomes retained historical evidence |
+| Containing candidate identity | Not represented here; persisted task state is authoritative |
+| Current-candidate qualification and browser proof | Persisted task decisions and authoritative run summaries only |
+| Fresh Dev Review / Test / Final Review | Persisted exact-candidate terminal run summaries only |
 | Approval state | Blocked; stop before Human Approval |
 
-Preserve all six input revisions, run summaries, artifacts, repair lineage, and
-exact stale-reason code/copy for audit. Do not present revision 6 evidence as
-fresh for the newly assembled repair candidate.
+Preserve every candidate revision, run summary, artifact, repair lineage, and
+exact stale-reason code/copy for audit. Do not present the historical revision
+6 evidence below as fresh for any later candidate.
 
 ## Package record
 
@@ -34,12 +52,13 @@ ready for integration only; none was a whole-task pass.
 | S1 | `server/**`, `src/domain/runtime.ts`, `src/runtime-activity.ts` | Foundation; persisted `RuntimeGateFreshness`, stale-reason code/copy, exact-candidate Test evidence, and run-derived artifact freshness | `node --test tests/orchestrator.test.mjs`; `npm run lint`; `npm run typecheck` | `10d2385222d49e6ccddd0b7bc60840da3c50503d` | Qualified by the harness and integrated into revision 6; ready for integration only | 9,748,203 tokens / 801,395ms |
 | S2 | `src/components/runtime/**` | Depends on S1; consumes the persisted projection across gate UI surfaces | `node --test tests/runtime.test.mjs`; `npm run lint`; `npm run typecheck` | `5e942cb30c2477bdb75679ced16422cc97b65e3b` | Qualified by the harness and integrated into revision 6; ready for integration only | 5,615,363 tokens / 899,751ms |
 | S3 | `tests/**` | Depends on S1 and S2; focused contract and cross-surface coverage | `node --test tests/orchestrator.test.mjs tests/runtime.test.mjs`; `npm run lint`; `npm run typecheck` | `6a4b939c29343a1c624d6e5da8787a2dde1c5aa5` | Qualified by the harness and integrated into revision 6; ready for integration only | 6,029,724 tokens / 853,230ms |
-| S4 | `docs/dogfood/AH-005-browser-verification.md` | Depends on the exact assembled S1-S3 revision and retained operator evidence | Candidate-wide matrix and three-width inspection below | `ff6879fabf08f33e1c2a6f56a13f8ab575deb463` | Qualified handoff input integrated into revision 6; this repair remains pending harness assembly | 3,568,303 tokens / 319,466ms |
+| S4 | `docs/dogfood/AH-005-browser-verification.md` | Depends on the exact assembled S1-S3 revision and retained operator evidence | Candidate-wide matrix and three-width inspection below | `ff6879fabf08f33e1c2a6f56a13f8ab575deb463` | Historical handoff input integrated into revision 6; not current-candidate qualification | 3,568,303 tokens / 319,466ms |
 
 The immutable package commits and persisted usage above are package records;
-they are not the SHA or qualification result of the current uncommitted repair.
+they are not the SHA or qualification result of this file's containing
+candidate.
 
-## Authoritative revision 6 qualification
+## Historical revision 6 qualification
 
 The operator recorded the following whole-candidate evidence for exact `C1`
 revision `6` at `37f5ad3e71375dbbae95fbcffa4b189679754af8`:
@@ -59,8 +78,8 @@ revision `6` at `37f5ad3e71375dbbae95fbcffa4b189679754af8`:
 | Exported patch | `AH-005-C1-r6.patch`; SHA-256 `0c5f5262b98c6d6af48f406eed13a027f935fedc6b1f4cf7b65982a896a6a09b` |
 | Patch apply against clean exact base | PASS |
 
-These facts qualify revision 6 only. They do not qualify the current repair or
-the future candidate revision assembled from it.
+These retained facts qualified revision 6 only. They do not qualify revision
+21, this file's containing candidate, or any later repair candidate.
 
 ## Retained revision 6 browser evidence
 
@@ -76,22 +95,15 @@ required**.
 | 1024x1200 | `/private/tmp/agent-harness-authoritative-freshness-2026-08-04/browser-evidence/AH-005-C1-r6-stale-gates-1024.png` | `f536a94fa15bb1b92206d5c1a0cb5b851c3b83a73ab0f9c281023db2b981a69a` | PASS for exact revision 6 stale-state inspection |
 | 768x1200 | `/private/tmp/agent-harness-authoritative-freshness-2026-08-04/browser-evidence/AH-005-C1-r6-stale-gates-768.png` | `661de818d0bfee0512550b3bcbe871b5b7060e0ff4ce2b85e36464603ea5659c` | PASS for exact revision 6 stale-state inspection |
 
-No browser or end-to-end QA was run by this Repair agent.
-
-## Current repair verification
-
-| Check | Result | Evidence / limitation |
-| --- | --- | --- |
-| `node --test tests/orchestrator.test.mjs tests/runtime.test.mjs` | PASS, 56/56 | Includes latest-malformed-attempt precedence and parent/child mixed-evidence regressions; Vite emitted non-failing sandbox `listen EPERM` WebSocket warnings |
-| `npm run lint` | PASS | Biome checked 65 source files; no fixes applied |
-| `npm run typecheck` | PASS | `tsc --noEmit` exited 0 |
-| `git diff --check` and owned-path review | PASS | Current repair changes only S1 `server/run-activity.mjs`, S3 `tests/orchestrator.test.mjs`, and this S4 handoff |
-| Full suite, build, Sites checks, repaired patch apply, exact cleanliness, browser QA, fresh downstream gates | NOT RUN | Harness/operator-owned after exact repair assembly; no generated state retained |
+The paths and hashes above are retained revision 6 audit evidence. Exact browser
+proof for the current candidate must be recorded outside this tracked file in
+persisted task decisions or authoritative run summaries.
 
 ## Required repaired-candidate completion
 
-After the harness integrates this repair and persists its new exact candidate
-identity:
+After the harness integrates this documentation repair, it must create and
+persist a new exact candidate revision. The operator must keep that revision
+unchanged while completing all of the following:
 
 1. Reject every committed file outside S1-S4 ownership.
 2. Run `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`,
@@ -100,10 +112,13 @@ identity:
    against `1591dca9869f50e9fbad20253f8100348463f9eb`.
 4. Verify exact candidate cleanliness and base ancestry.
 5. Retain and inspect repaired-candidate screenshots at 1440px, 1024px, and
-   768px.
+   768px, and persist their exact paths, dimensions, and hashes in task
+   decisions or authoritative run summaries.
 6. Produce fresh candidate-bound Dev Review, Test, and Final Review summaries
    for the exact persisted candidate ID, revision, and SHA.
 
-Do not call the repaired candidate READY until every item passes. Preserve all
-stale evidence, exact reason code/copy, and repair lineage. Stop at Human
+Revision 21 qualification, browser evidence, and gate results do not satisfy
+these checks for the newly assembled repair. Do not call the repaired candidate
+READY until every item passes against the exact unchanged revision. Preserve
+all stale evidence, exact reason code/copy, and repair lineage. Stop at Human
 Approval; do not approve, merge, close, or delete anything.
