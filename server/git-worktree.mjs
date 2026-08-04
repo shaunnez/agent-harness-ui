@@ -1,9 +1,17 @@
 import { spawn } from "node:child_process";
-import { mkdir, realpath, stat } from "node:fs/promises";
+import { lstat, mkdir, readFile, readdir, realpath, rm, stat, symlink, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { isOwnedFile } from "./structured-output.mjs";
 
 const OUTPUT_LIMIT = 512 * 1024;
+
+// Harness worktrees come from `git worktree add`, which copies no installed dependencies.
+// Each new worktree is provisioned by linking the source checkout's own dependency
+// directories, so the Test stage can run commands that need them without any package
+// manager running and without any lockfile changing.
+const DEPENDENCY_DIRECTORY_NAMES = ["node_modules", ".venv", "venv", ".tox", "vendor"];
+const DEPENDENCY_SCAN_DEPTH = 4;
+const PROVISION_MANIFEST = "agent-harness-provisioned-dependencies.json";
 
 export class GitWorktreeManager {
   #root;
@@ -58,6 +66,7 @@ export class GitWorktreeManager {
     }
     await mkdir(path.dirname(worktreePath), { recursive: true });
     await git(repositoryRoot, ["worktree", "add", "-b", branch, worktreePath, baseRevision]);
+    const provisionedDependencyPaths = await provisionDependencies(repositoryRoot, worktreePath);
     for (const dependencyRevision of options.dependencyRevisions ?? []) {
       try {
         await git(worktreePath, ["cherry-pick", dependencyRevision]);
@@ -77,6 +86,7 @@ export class GitWorktreeManager {
       repositoryRoot,
       worktreePath,
       status: "implementing",
+      provisionedDependencyPaths,
       dependencyRevisions: options.dependencyRevisions ?? [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -85,8 +95,9 @@ export class GitWorktreeManager {
   }
 
   async commit(candidate, message, options = {}) {
+    const provisioned = await provisionedDependencies(candidate.worktreePath);
     const status = (await git(candidate.worktreePath, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout;
-    const entries = statusEntries(status);
+    const entries = statusEntries(status).filter((entry) => !isProvisionedPath(entry.file, provisioned));
     const files = entries.map((entry) => entry.file);
     if (!files.length) throw new Error("The implementation agent completed without changing any files.");
     const suspicious = files.find(isSensitivePath);
@@ -109,7 +120,7 @@ export class GitWorktreeManager {
     }
 
     const parentRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
-    await git(candidate.worktreePath, ["add", "-A"]);
+    await git(candidate.worktreePath, ["add", "-A", "--", ".", ...excludePathspecs(provisioned)]);
     await git(candidate.worktreePath, ["commit", "-m", message]);
     const headRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
     const summary = (await git(candidate.worktreePath, ["diff", "--stat", candidate.baseRevision, headRevision])).stdout.trim();
@@ -207,18 +218,42 @@ export class GitWorktreeManager {
     const worktreeRoot = await this.repositoryRoot(worktreePath);
     if (worktreeRoot !== worktreePath) throw new Error("Candidate recovery could not verify the recorded worktree root.");
     if (!candidate.headRevision) throw new Error("Candidate recovery requires a recorded revision.");
+    const provisioned = await provisionedDependencies(worktreeRoot);
     const currentHead = (await git(worktreeRoot, ["rev-parse", "HEAD"])).stdout.trim();
-    const status = (await git(worktreeRoot, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout.trim();
-    if (currentHead === candidate.headRevision && !status) return false;
+    const status = statusEntries((await git(worktreeRoot, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout).filter(
+      (entry) => !isProvisionedPath(entry.file, provisioned),
+    );
+    if (currentHead === candidate.headRevision && !status.length) return false;
     if (currentHead !== candidate.headRevision) {
       await git(worktreeRoot, ["reset", "--mixed", candidate.headRevision]);
     }
     await git(worktreeRoot, ["restore", "--source", candidate.headRevision, "--staged", "--worktree", "--", "."]);
-    await git(worktreeRoot, ["clean", "-fdx"]);
+    // `-x` would otherwise remove the provisioned links, leaving a recovered worktree
+    // unable to run the Test stage.
+    await git(worktreeRoot, ["clean", "-fdx", ...provisioned.flatMap((entry) => ["-e", entry])]);
     await assertClean(worktreeRoot);
     const recoveredHead = (await git(worktreeRoot, ["rev-parse", "HEAD"])).stdout.trim();
     if (recoveredHead !== candidate.headRevision) throw new Error("Candidate recovery did not restore the recorded revision.");
     return true;
+  }
+
+  async assertWorktreeClean(worktreePath) {
+    await assertClean(await this.repositoryRoot(worktreePath));
+    return true;
+  }
+
+  async removeWorktree(candidate) {
+    const worktreePath = await realpath(path.resolve(candidate.worktreePath));
+    const worktreeRootBoundary = await realpath(this.#root).catch(() => this.#root);
+    if (!worktreePath.startsWith(`${worktreeRootBoundary}${path.sep}`)) {
+      throw new Error("Candidate removal refused a worktree outside harness storage.");
+    }
+    const worktreeRoot = await this.repositoryRoot(worktreePath);
+    if (worktreeRoot !== worktreePath) throw new Error("Candidate removal could not verify the recorded worktree root.");
+    const repositoryRoot = await this.repositoryRoot(candidate.repositoryRoot);
+    const removed = await deprovisionDependencies(worktreePath);
+    await git(repositoryRoot, ["worktree", "remove", "--force", worktreePath]);
+    return removed;
   }
 
   async inventory(entries = []) {
@@ -241,8 +276,9 @@ export class GitWorktreeManager {
       try {
         repositoryRoot = await this.repositoryRoot(worktreePath);
         headRevision = (await git(repositoryRoot, ["rev-parse", "HEAD"])).stdout.trim();
-        const status = (await git(repositoryRoot, ["status", "--porcelain=v1", "--untracked-files=normal"])).stdout.trim();
-        clean = !status;
+        const provisioned = await provisionedDependencies(repositoryRoot);
+        const status = statusEntries((await git(repositoryRoot, ["status", "--porcelain=v1", "--untracked-files=normal"])).stdout);
+        clean = !status.some((entry) => !isProvisionedPath(entry.file, provisioned));
       } catch {
         clean = false;
       }
@@ -288,8 +324,135 @@ function normalizeLifecycleState(value) {
 }
 
 async function assertClean(repositoryRoot) {
-  const status = (await git(repositoryRoot, ["status", "--porcelain=v1", "--untracked-files=normal"])).stdout.trim();
-  if (status) throw new Error("The selected repository has uncommitted changes. Commit or stash them before creating or merging a candidate.");
+  const provisioned = await provisionedDependencies(repositoryRoot);
+  const status = (await git(repositoryRoot, ["status", "--porcelain=v1", "--untracked-files=normal"])).stdout;
+  const entries = statusEntries(status).filter((entry) => !isProvisionedPath(entry.file, provisioned));
+  if (entries.length) {
+    throw new Error("The selected repository has uncommitted changes. Commit or stash them before creating or merging a candidate.");
+  }
+}
+
+// Dependency directories are discovered rather than assumed, so nested (`frontend/node_modules`)
+// and non-Node (`.venv`) installs are provisioned alongside a root `node_modules`.
+export async function discoverDependencyDirectories(repositoryRoot) {
+  const found = [];
+  let level = [""];
+  for (let depth = 0; depth < DEPENDENCY_SCAN_DEPTH && level.length; depth += 1) {
+    const children = [];
+    for (const relative of level) {
+      const dirents = await readdir(path.join(repositoryRoot, relative), { withFileTypes: true }).catch(() => []);
+      for (const dirent of dirents) {
+        if (dirent.name === ".git") continue;
+        const child = relative ? `${relative}/${dirent.name}` : dirent.name;
+        const named = DEPENDENCY_DIRECTORY_NAMES.includes(dirent.name);
+        if (dirent.isDirectory()) children.push(child);
+        else if (named && dirent.isSymbolicLink() && (await isDirectory(path.join(repositoryRoot, child)))) children.push(child);
+      }
+    }
+    if (!children.length) break;
+    const ignored = await ignoredPaths(repositoryRoot, children);
+    const next = [];
+    for (const child of children) {
+      // Only ever link what the source checkout already ignores, so no tracked content is
+      // ever reachable through a provisioned path.
+      if (!ignored.has(child)) {
+        next.push(child);
+        continue;
+      }
+      if (DEPENDENCY_DIRECTORY_NAMES.includes(child.split("/").at(-1))) found.push(child);
+      // Ignored directories that are not dependencies (build output, caches, harness
+      // storage) are pruned rather than descended into.
+    }
+    level = next;
+  }
+  return found.sort();
+}
+
+async function ignoredPaths(repositoryRoot, candidates) {
+  const result = await git(repositoryRoot, ["check-ignore", "--stdin"], {
+    allowFailure: true,
+    input: `${candidates.join("\n")}\n`,
+  });
+  if (result.code !== 0 && result.code !== 1) return new Set();
+  return new Set(result.stdout.split(/\r?\n/).filter(Boolean));
+}
+
+async function provisionDependencies(repositoryRoot, worktreePath) {
+  const provisioned = [];
+  for (const relative of await discoverDependencyDirectories(repositoryRoot)) {
+    const linkPath = path.join(worktreePath, relative);
+    if (await lstat(linkPath).then(() => true).catch(() => false)) continue;
+    await mkdir(path.dirname(linkPath), { recursive: true });
+    const target = path.join(repositoryRoot, relative);
+    await symlink(target, linkPath, process.platform === "win32" ? "junction" : "dir");
+    provisioned.push(relative);
+  }
+  await writeProvisionManifest(worktreePath, provisioned);
+  return provisioned;
+}
+
+// The manifest lives in the worktree's private Git directory, never in its working tree,
+// so it cannot be committed and cannot collide with the shared `info/exclude`.
+async function manifestPath(repositoryRoot) {
+  const result = await git(repositoryRoot, ["rev-parse", "--absolute-git-dir"], { allowFailure: true });
+  if (result.code !== 0) return null;
+  return path.join(result.stdout.trim(), PROVISION_MANIFEST);
+}
+
+async function writeProvisionManifest(worktreePath, paths) {
+  const file = await manifestPath(worktreePath);
+  if (!file) throw new Error("Could not resolve the worktree Git directory to record provisioned dependencies.");
+  await writeFile(file, `${JSON.stringify({ paths }, null, 2)}\n`, "utf8");
+}
+
+async function provisionedDependencies(repositoryRoot) {
+  const file = await manifestPath(repositoryRoot);
+  if (!file) return [];
+  const raw = await readFile(file, "utf8").catch(() => null);
+  if (!raw) return [];
+  try {
+    const paths = JSON.parse(raw).paths;
+    return Array.isArray(paths) ? paths.filter((value) => typeof value === "string" && value) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function deprovisionDependencies(worktreePath) {
+  const provisioned = await provisionedDependencies(worktreePath);
+  for (const relative of provisioned) {
+    const linkPath = path.join(worktreePath, relative);
+    const stats = await lstat(linkPath).catch(() => null);
+    if (!stats) continue;
+    // Unlink the link itself. Never recurse, so removal can never reach through into the
+    // source checkout's dependency directories.
+    if (stats.isSymbolicLink()) await unlink(linkPath);
+    else await rm(linkPath, { recursive: true, force: true });
+  }
+  const file = await manifestPath(worktreePath);
+  if (file) await rm(file, { force: true });
+  return provisioned;
+}
+
+// A `.gitignore` entry of `node_modules/` matches directories only, so a symlink named
+// `node_modules` is a file to Git and stays untracked: linking alone cannot keep a worktree
+// clean. Every harness scan therefore excludes the recorded provisioned paths explicitly,
+// and `git add` receives matching pathspec exclusions. The exclusion is exactly this list —
+// sensitive-path and generated-path scanning is otherwise unchanged.
+function isProvisionedPath(file, provisioned) {
+  if (!provisioned.length) return false;
+  const normalized = file.replaceAll("\\", "/").replace(/\/+$/, "");
+  return provisioned.some((entry) => normalized === entry || normalized.startsWith(`${entry}/`));
+}
+
+function excludePathspecs(provisioned) {
+  return provisioned.map((entry) => `:(exclude)${entry}`);
+}
+
+async function isDirectory(target) {
+  return stat(target)
+    .then((result) => result.isDirectory())
+    .catch(() => false);
 }
 
 function changedFiles(status) {
@@ -342,7 +505,15 @@ function safeSegment(value) {
 
 function git(cwd, args, options = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn("git", args, { cwd, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn("git", args, {
+      cwd,
+      windowsHide: true,
+      stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
+    });
+    if (options.input !== undefined) {
+      child.stdin.on("error", () => undefined);
+      child.stdin.end(options.input);
+    }
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk) => {

@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
-import { GitWorktreeManager } from "../server/git-worktree.mjs";
+import { GitWorktreeManager, discoverDependencyDirectories } from "../server/git-worktree.mjs";
 
 const exec = promisify(execFile);
 
@@ -126,6 +126,181 @@ test("refuses to merge a candidate into a sibling branch at the same base revisi
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 });
+
+test("a symlinked dependency directory is not ignored by git status", async () => {
+  // The exclusion in the harness scans exists because of this: `.gitignore` entries such as
+  // `node_modules/` match directories, and a symlink named `node_modules` is a file to Git.
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-symlink-ignore-"));
+  const repository = path.join(directory, "repository");
+  try {
+    await git(directory, ["init", "repository"]);
+    await writeFile(path.join(repository, ".gitignore"), "node_modules/\n", "utf8");
+    await mkdir(path.join(repository, "node_modules", "left-pad"), { recursive: true });
+    await writeFile(path.join(repository, "node_modules", "left-pad", "index.js"), "module.exports = 1;\n", "utf8");
+    const realStatus = (await git(repository, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout;
+    assert.doesNotMatch(realStatus, /node_modules/, "a real node_modules directory is ignored");
+
+    await rm(path.join(repository, "node_modules"), { recursive: true, force: true });
+    await mkdir(path.join(repository, "installed"), { recursive: true });
+    await symlinkDirectory(path.join(repository, "installed"), path.join(repository, "node_modules"));
+    const linkStatus = (await git(repository, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout;
+    assert.match(linkStatus, /^\?\? node_modules$/m, "a symlinked node_modules is NOT ignored, so linking alone is insufficient");
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("provisions nested and non-Node dependencies into slice and candidate worktrees", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-provision-"));
+  const repository = path.join(directory, "repository");
+  try {
+    await seedRepository(directory, repository);
+    await seedDependencies(repository);
+
+    assert.deepEqual(await discoverDependencyDirectories(await realRepository(repository)), [
+      ".venv",
+      "frontend/node_modules",
+      "node_modules",
+    ]);
+
+    const manager = new GitWorktreeManager(path.join(directory, "worktrees"));
+    const task = { id: "AH-DEPS", repositoryPath: repository };
+    const base = await manager.base(task);
+
+    const slice = await manager.prepare(task, "S1-A1", { baseRevision: base.baseRevision });
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+
+    for (const worktree of [slice, candidate]) {
+      assert.deepEqual(worktree.provisionedDependencyPaths, [".venv", "frontend/node_modules", "node_modules"]);
+      // Every provisioned path resolves to the source checkout's installed dependencies.
+      assert.equal(
+        (await readFile(path.join(worktree.worktreePath, "node_modules", "left-pad", "index.js"), "utf8")).trim(),
+        "module.exports = 1;",
+      );
+      assert.equal(
+        (await readFile(path.join(worktree.worktreePath, "frontend", "node_modules", "vite", "index.js"), "utf8")).trim(),
+        "module.exports = 2;",
+      );
+      assert.equal((await readFile(path.join(worktree.worktreePath, ".venv", "pyvenv.cfg"), "utf8")).trim(), "home = /usr");
+      assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules"))).isSymbolicLink(), true);
+      // Provisioning never writes a lockfile.
+      assert.equal((await readFile(path.join(worktree.worktreePath, "package-lock.json"), "utf8")).trim(), '{"lockfileVersion":3}');
+      // A clean worktree despite the provisioned dependencies being present.
+      assert.equal(await manager.assertWorktreeClean(worktree.worktreePath), true);
+    }
+
+    // A simulated Test run: it resolves dependencies through the worktree and writes a
+    // report, which is cleaned up afterwards. The worktree is clean on both sides of the run.
+    assert.deepEqual(await readdir(path.join(slice.worktreePath, "node_modules")), ["left-pad"]);
+    await mkdir(path.join(slice.worktreePath, "test-results"), { recursive: true });
+    await writeFile(path.join(slice.worktreePath, "test-results", "report.json"), "{}\n", "utf8");
+    await assert.rejects(() => manager.assertWorktreeClean(slice.worktreePath), /uncommitted changes/, "report output is still seen");
+    await rm(path.join(slice.worktreePath, "test-results"), { recursive: true, force: true });
+    assert.equal(await manager.assertWorktreeClean(slice.worktreePath), true, "clean again after a Test run");
+
+    await writeFile(path.join(slice.worktreePath, "feature.txt"), "implemented\n", "utf8");
+    const committed = await manager.commit(slice, "slice with provisioned dependencies");
+    assert.equal(await manager.assertWorktreeClean(slice.worktreePath), true, "clean after the commit");
+    assert.deepEqual(committed.files, ["feature.txt"], "no provisioned path reaches the commit");
+    const tracked = (await git(slice.worktreePath, ["ls-files"])).stdout.split(/\r?\n/).filter(Boolean);
+    assert.equal(
+      tracked.some((file) => file.startsWith("node_modules") || file.startsWith(".venv") || file.includes("/node_modules")),
+      false,
+      "no provisioned path is tracked",
+    );
+    slice.headRevision = committed.headRevision;
+    assert.equal(await manager.verifyCandidate(slice), committed.headRevision);
+
+    // Provisioned paths are excluded narrowly: sensitive and generated scanning is unchanged.
+    await writeFile(path.join(candidate.worktreePath, "deploy.pem"), "key\n", "utf8");
+    await assert.rejects(() => manager.commit(candidate, "unsafe"), /potentially sensitive file/);
+    await rm(path.join(candidate.worktreePath, "deploy.pem"));
+    await mkdir(path.join(candidate.worktreePath, "test-results"), { recursive: true });
+    await writeFile(path.join(candidate.worktreePath, "test-results", "report.json"), "{}\n", "utf8");
+    await assert.rejects(() => manager.commit(candidate, "generated"), /generated tool state/);
+    await rm(path.join(candidate.worktreePath, "test-results"), { recursive: true, force: true });
+
+    const assembled = await manager.assemble(candidate, [{ packageId: "S1", headRevision: committed.headRevision }]);
+    candidate.headRevision = assembled.headRevision;
+    assert.equal(await manager.verifyCandidate(candidate), assembled.headRevision);
+
+    // Recovery keeps the worktree usable for a rerun instead of stripping its dependencies.
+    await writeFile(path.join(candidate.worktreePath, "feature.txt"), "dirty\n", "utf8");
+    assert.equal(await manager.recoverCandidate(candidate), true);
+    assert.equal((await readFile(path.join(candidate.worktreePath, "node_modules", "left-pad", "index.js"), "utf8")).trim(), "module.exports = 1;");
+    assert.equal(await manager.recoverCandidate(candidate), false, "a provisioned worktree reads as already recovered");
+
+    // Removal unlinks the provisioned paths and leaves the source dependencies intact.
+    const removed = await manager.removeWorktree(candidate);
+    assert.deepEqual(removed, [".venv", "frontend/node_modules", "node_modules"]);
+    assert.equal(await exists(candidate.worktreePath), false);
+    assert.deepEqual(await readdir(path.join(repository, "node_modules")), ["left-pad"]);
+    assert.equal((await readFile(path.join(repository, "node_modules", "left-pad", "index.js"), "utf8")).trim(), "module.exports = 1;");
+    assert.equal((await readFile(path.join(repository, "frontend", "node_modules", "vite", "index.js"), "utf8")).trim(), "module.exports = 2;");
+    assert.equal((await readFile(path.join(repository, ".venv", "pyvenv.cfg"), "utf8")).trim(), "home = /usr");
+    await manager.base(task);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("does not provision tracked directories that share a dependency name", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-provision-tracked-"));
+  const repository = path.join(directory, "repository");
+  try {
+    await seedRepository(directory, repository);
+    // A committed `vendor/` is source, not an installed dependency, so it must not be linked.
+    await mkdir(path.join(repository, "vendor", "upstream"), { recursive: true });
+    await writeFile(path.join(repository, "vendor", "upstream", "patch.js"), "module.exports = 3;\n", "utf8");
+    await git(repository, ["add", "vendor"]);
+    await git(repository, ["commit", "-m", "vendored source"]);
+    await mkdir(path.join(repository, "node_modules", "left-pad"), { recursive: true });
+    await writeFile(path.join(repository, "node_modules", "left-pad", "index.js"), "module.exports = 1;\n", "utf8");
+
+    assert.deepEqual(await discoverDependencyDirectories(await realRepository(repository)), ["node_modules"]);
+    const manager = new GitWorktreeManager(path.join(directory, "worktrees"));
+    const slice = await manager.prepare({ id: "AH-VENDOR", repositoryPath: repository }, "S1-A1");
+    assert.deepEqual(slice.provisionedDependencyPaths, ["node_modules"]);
+    assert.equal((await lstat(path.join(slice.worktreePath, "vendor"))).isDirectory(), true);
+    assert.equal((await lstat(path.join(slice.worktreePath, "vendor"))).isSymbolicLink(), false);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+async function seedRepository(directory, repository) {
+  await git(directory, ["init", "repository"]);
+  await git(repository, ["config", "user.name", "Agent Harness Test"]);
+  await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+  await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+  await writeFile(path.join(repository, "package-lock.json"), '{"lockfileVersion":3}\n', "utf8");
+  await writeFile(path.join(repository, ".gitignore"), "node_modules/\n.venv/\n.data/\n", "utf8");
+  await mkdir(path.join(repository, "frontend"), { recursive: true });
+  await writeFile(path.join(repository, "frontend", "package.json"), "{}\n", "utf8");
+  await git(repository, ["add", "-A"]);
+  await git(repository, ["commit", "-m", "base"]);
+}
+
+async function seedDependencies(repository) {
+  await mkdir(path.join(repository, "node_modules", "left-pad"), { recursive: true });
+  await writeFile(path.join(repository, "node_modules", "left-pad", "index.js"), "module.exports = 1;\n", "utf8");
+  await mkdir(path.join(repository, "frontend", "node_modules", "vite"), { recursive: true });
+  await writeFile(path.join(repository, "frontend", "node_modules", "vite", "index.js"), "module.exports = 2;\n", "utf8");
+  await mkdir(path.join(repository, ".venv"), { recursive: true });
+  await writeFile(path.join(repository, ".venv", "pyvenv.cfg"), "home = /usr\n", "utf8");
+}
+
+async function realRepository(repository) {
+  return (await git(repository, ["rev-parse", "--show-toplevel"])).stdout.trim();
+}
+
+async function symlinkDirectory(target, linkPath) {
+  await symlink(target, linkPath, process.platform === "win32" ? "junction" : "dir");
+}
+
+async function exists(target) {
+  return lstat(target).then(() => true).catch(() => false);
+}
 
 async function git(cwd, args) {
   return exec("git", args, { cwd, windowsHide: true });
