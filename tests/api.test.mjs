@@ -1281,6 +1281,37 @@ test("starts repair when the failed gate is exhausted but implement has capacity
   }
 });
 
+test("starts repair after final review requests candidate repair", async () => {
+  const { directory, origin, server, store, startedIdRef } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Final review repair",
+      description: "Repair a candidate rejected by the final holdout.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "final-review";
+      draft.attemptsByStage["final-review"] = 1;
+      draft.candidates.push({
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "repair_required",
+      });
+    });
+
+    const repairResponse = await fetch(`${origin}/api/tasks/${task.id}/repair`, { method: "POST" });
+    assert.equal(repairResponse.status, 202);
+    assert.deepEqual(await repairResponse.json(), { started: true });
+    assert.equal(startedIdRef(), task.id);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("grants only implement and admits one repair when its budget is exhausted", async () => {
   const { directory, origin, server, store } = await createServer();
   try {

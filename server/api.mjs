@@ -505,7 +505,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
           repair: {
             kind: "repair",
             statuses: ["repair-required", "failed", "cancelled"],
-            stages: ["implement", "dev-review", "test"],
+            stages: ["implement", "dev-review", "test", "final-review"],
           },
           review: { kind: "review", statuses: ["ready-for-review", "failed", "cancelled"], stages: ["dev-review"] },
           test: { kind: "test", statuses: ["ready-for-test", "failed", "cancelled"], stages: ["test"] },
