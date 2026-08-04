@@ -12,6 +12,19 @@ const STDOUT_BUDGET = 2.5 * 1024 * 1024;
 export const DEFAULT_MODEL = normalizeModelId(process.env.AGENT_HARNESS_MODEL ?? "gpt-5.4-mini");
 export const DEFAULT_REASONING = process.env.AGENT_HARNESS_REASONING ?? "low";
 
+export class ProcessTimeoutError extends Error {
+  constructor(timeoutMs) {
+    super(`Codex run exceeded ${Math.round(timeoutMs / 1_000)} seconds.`);
+    this.name = "ProcessTimeoutError";
+    this.code = "PROCESS_TIMEOUT";
+    this.timeoutMs = timeoutMs;
+  }
+}
+
+export function isProcessTimeoutError(error) {
+  return error instanceof ProcessTimeoutError;
+}
+
 export async function locateCodex() {
   if (process.env.CODEX_BIN) return process.env.CODEX_BIN;
   const command = process.platform === "win32" ? "where.exe" : "which";
@@ -375,14 +388,12 @@ export function runProcess(command, args, options = {}) {
       } else {
         await terminateProcessTree(child, true);
       }
-      finish(
-        reject,
-        closed ? error : new Error(`${error.message} The process tree did not close after forced termination.`),
-      );
+      if (!closed) error.message = `${error.message} The process tree did not close after forced termination.`;
+      finish(reject, error);
     };
     const abort = () => void terminate(new Error("Codex run cancelled."));
     const timer = setTimeout(() => {
-      void terminate(new Error(`Codex run exceeded ${Math.round((options.timeoutMs ?? 0) / 1000)} seconds.`));
+      void terminate(new ProcessTimeoutError(options.timeoutMs ?? 240_000));
     }, options.timeoutMs ?? 240_000);
 
     options.signal?.addEventListener("abort", abort, { once: true });

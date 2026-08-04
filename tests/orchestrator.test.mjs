@@ -3,6 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { ProcessTimeoutError } from "../server/codex-runtime.mjs";
 import { evaluationVerdict, structuredEvidenceError, TaskOrchestrator } from "../server/orchestrator.mjs";
 import { buildExecutionPrompt } from "../server/prompts.mjs";
 import { selectScoutDispatch } from "../server/scouts.mjs";
@@ -394,14 +395,14 @@ test("resolves candidate-bound gate failures closed with exact stale reasons", (
       code: "timeout",
     },
     {
-      name: "production Codex timeout error",
+      name: "misleading timeout prose",
       run: makeRuntimeRun({
         status: "failed",
         error: "Codex run exceeded 900 seconds.",
         gateResult: makeGateResult(),
       }),
       artifacts: [],
-      code: "timeout",
+      code: "failed_execution",
     },
     {
       name: "repair result",
@@ -2489,6 +2490,34 @@ test("reserves a run exactly once across concurrent start requests", async () =>
     assert.equal(await orchestrator.cancel(task.id), true);
     release();
     await waitForStatus(store, task.id, "cancelled");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("persists typed process timeouts as a terminal timed-out run", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-typed-timeout-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Persist typed timeout",
+      description: "Record a structured terminal outcome when Codex exceeds its deadline.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "medium",
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      runCodex: async () => {
+        throw new ProcessTimeoutError(180_000);
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id), true);
+    const failed = await waitForStatus(store, task.id, "failed");
+    assert.equal(failed.runs.length, 1);
+    assert.equal(failed.runs[0].status, "timed-out");
+    assert.equal(failed.runs[0].error, "Codex run exceeded 180 seconds.");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

@@ -9,7 +9,7 @@ import {
   getStageMetadata,
   INVESTIGATION_PIPELINE,
 } from "./prompts.mjs";
-import { getCodexStatus, runCodex } from "./codex-runtime.mjs";
+import { getCodexStatus, isProcessTimeoutError, runCodex } from "./codex-runtime.mjs";
 import { GitWorktreeManager } from "./git-worktree.mjs";
 import {
   CREDIT_SOURCE_URL,
@@ -1096,7 +1096,7 @@ export class TaskOrchestrator {
         runtimeEvents,
         usage: null,
         error: error instanceof Error ? error.message : String(error),
-      }, signal.aborted ? "cancelled" : "failed");
+      }, signal.aborted ? "cancelled" : isProcessTimeoutError(error) ? "timed-out" : "failed");
       throw error;
     } finally {
       await rm(runtimeTemp, { recursive: true, force: true });

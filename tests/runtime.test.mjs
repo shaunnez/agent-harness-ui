@@ -6,7 +6,13 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createServer as createViteServer } from "vite";
-import { buildCodexEnvironment, parseCodexEvent, runProcess, selectCodexCandidate } from "../server/codex-runtime.mjs";
+import {
+  buildCodexEnvironment,
+  parseCodexEvent,
+  ProcessTimeoutError,
+  runProcess,
+  selectCodexCandidate,
+} from "../server/codex-runtime.mjs";
 import { normalizeModelId, priceUsage, readCodexModelCatalog, withConfiguredModels } from "../server/model-catalog.mjs";
 import { buildExecutionRequest, buildStageRequest, buildWorkPackageRequest } from "../server/prompts.mjs";
 import { buildScoutRequest } from "../server/scouts.mjs";
@@ -84,7 +90,7 @@ test("timeout terminates descendants before allowing a retry", async () => {
   try {
     await assert.rejects(
       () => runProcess(process.execPath, ["-e", parentScript], { timeoutMs: 120 }),
-      /exceeded/i,
+      (error) => error instanceof ProcessTimeoutError && error.code === "PROCESS_TIMEOUT" && error.timeoutMs === 120,
     );
     const sizeAfterClose = (await readFile(marker, "utf8").catch(() => "")).length;
     await new Promise((resolve) => setTimeout(resolve, 120));
