@@ -43,12 +43,20 @@ export function migrateRunActivityState(state) {
       gateFreshness: task.gateFreshness,
       runs: task.runs.map((run) => run.freshness ?? null),
       artifacts: (task.artifacts ?? []).map((artifact) => artifact.freshness ?? null),
+      events: (task.events ?? []).map((event) => ({
+        runId: event.runId ?? null,
+        freshness: event.freshness ?? null,
+      })),
     });
     refreshGateFreshness(task);
     changed = before !== JSON.stringify({
       gateFreshness: task.gateFreshness,
       runs: task.runs.map((run) => run.freshness ?? null),
       artifacts: (task.artifacts ?? []).map((artifact) => artifact.freshness ?? null),
+      events: (task.events ?? []).map((event) => ({
+        runId: event.runId ?? null,
+        freshness: event.freshness ?? null,
+      })),
     }) || changed;
   }
   state.schemaVersion = TASK_STORE_SCHEMA_VERSION;
@@ -272,11 +280,31 @@ export function refreshGateFreshness(task) {
   }
   for (const event of task.events ?? []) {
     const run = event.runId ? runsById.get(event.runId) : null;
-    if (run?.freshness && CANDIDATE_GATE_STAGES.includes(run.stage)) {
+    if (run?.freshness && CANDIDATE_GATE_STAGES.includes(run.stage) && run.stage === event.stage) {
       event.freshness = structuredClone(run.freshness);
+      continue;
     }
+    if (!isLegacyCandidateGateEvent(event)) continue;
+    const authoritativeFreshness = projection[event.stage];
+    if (!authoritativeFreshness) continue;
+    const authoritativeRun = authoritativeFreshness.sourceRunId
+      ? runsById.get(authoritativeFreshness.sourceRunId)
+      : null;
+    if (authoritativeRun?.stage === event.stage) event.runId = authoritativeRun.id;
+    event.freshness = structuredClone(authoritativeFreshness);
   }
   return projection;
+}
+
+function isLegacyCandidateGateEvent(event) {
+  if (!event || event.category !== "decision" || !CANDIDATE_GATE_STAGES.includes(event.stage)) return false;
+  const title = String(event.title ?? "").trim().toLowerCase();
+  if (title === "candidate requires repair") return true;
+  return {
+    "dev-review": "development review passed",
+    test: "focused test passed",
+    "final-review": "final review passed",
+  }[event.stage] === title;
 }
 
 function evaluateRunFreshness(run, artifact, target, stage) {

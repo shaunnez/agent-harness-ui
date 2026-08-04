@@ -1511,7 +1511,20 @@ test("renders stale evidence in the mounted Run Activity views with exact persis
       detail: "Historical status: completed",
       freshness: testRun.freshness,
     };
-    const task = createTask({ runs: [reviewRun, testRun], events: [linkedStagePass, persistedStaleEvent] });
+    const legacyUnlinkedStagePass = {
+      id: "EVENT-LEGACY-UNLINKED-PASS",
+      at: "2026-08-01T12:03:00.000Z",
+      category: "decision",
+      tone: "success",
+      stage: "dev-review",
+      title: "Development Review passed",
+      detail: "Historical C1 revision 1 gate result.",
+      freshness: reviewRun.freshness,
+    };
+    const task = createTask({
+      runs: [reviewRun, testRun],
+      events: [linkedStagePass, persistedStaleEvent, legacyUnlinkedStagePass],
+    });
 
     const activityItems = filterRunActivity(task, "activity");
     const linkedItem = activityItems.find((item) => item.event.id === linkedStagePass.id);
@@ -1521,6 +1534,10 @@ test("renders stale evidence in the mounted Run Activity views with exact persis
     const persistedItem = activityItems.find((item) => item.event.id === persistedStaleEvent.id);
     assert.equal(persistedItem.tone, "warning");
     assert.match(persistedItem.detail, new RegExp(failureReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    const legacyItem = activityItems.find((item) => item.event.id === legacyUnlinkedStagePass.id);
+    assert.equal(legacyItem.tone, "warning");
+    assert.match(legacyItem.title, /Rerun required/);
+    assert.match(legacyItem.detail, new RegExp(revisionReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 
     const agentItem = filterRunActivity(task, "agent")[0];
     assert.equal(agentItem.tone, "warning");
@@ -1536,6 +1553,7 @@ test("renders stale evidence in the mounted Run Activity views with exact persis
       ["agent", `run:${reviewRun.id}`, revisionReason],
       ["test", `run:${testRun.id}`, failureReason],
       ["decision", `event:${linkedStagePass.id}`, revisionReason],
+      ["decision", `event:${legacyUnlinkedStagePass.id}`, revisionReason],
     ]) {
       const markup = renderToStaticMarkup(React.createElement(RunActivity, { task, initialFilter, initialSelectedId: selectedId }));
       assert.match(markup, /runtime-activity-row--warning/);
