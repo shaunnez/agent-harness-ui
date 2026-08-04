@@ -1206,6 +1206,7 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
       workflow: "implement",
     });
     const { task } = await response.json();
+    let reservation;
     await store.update(task.id, (draft) => {
       draft.status = "blocked";
       draft.currentStage = "implement";
@@ -1216,7 +1217,7 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
         stage: "implement",
         status: "failed",
       })));
-      bindLatestWorkflowAttempt(draft, "implement", "repair");
+      reservation = bindLatestWorkflowAttempt(draft, "implement", "repair");
     });
 
     const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
@@ -1231,14 +1232,79 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
     assert.equal(updated.decisions.at(-1).previousLimit, 3);
     assert.equal(updated.decisions.at(-1).newLimit, 4);
     assert.equal(updated.decisions.at(-1).sourceRunId, "run-failed-repair-3");
+    assert.equal(updated.decisions.at(-1).candidateId, "C1");
+    assert.equal(updated.decisions.at(-1).candidateRevision, 1);
+    assert.equal(updated.decisions.at(-1).candidateHeadRevision, "candidate-c1-r1");
+    assert.equal(updated.decisions.at(-1).workflowAttempt, 3);
+    assert.equal(updated.decisions.at(-1).workflowReservationId, reservation.id);
     assert.equal(updated.attemptsByStage.implement, 3);
     assert.equal(updated.candidates.at(-1).status, "repair_required");
     assert.equal(updated.events.at(-1).title, "One repair attempt granted");
     assert.equal(updated.events.at(-1).sourceRunId, "run-failed-repair-3");
+    assert.equal(updated.events.at(-1).candidateId, "C1");
+    assert.equal(updated.events.at(-1).candidateRevision, 1);
+    assert.equal(updated.events.at(-1).candidateHeadRevision, "candidate-c1-r1");
+    assert.equal(updated.events.at(-1).workflowAttempt, 3);
+    assert.equal(updated.events.at(-1).workflowReservationId, reservation.id);
 
     const repeatedResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
     assert.equal(repeatedResponse.status, 409);
     assert.equal((await store.get(task.id)).stageRunLimits.implement, 4);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("grants repair after a candidate is assembled on the final implementation allowance", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Final implementation allowance",
+      description: "Retain the candidate-producing reservation when assembly consumes the final allowance.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    let reservation;
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage.implement = draft.stageRunLimits.implement;
+      draft.runs.push(...[1, 2, 3].map((attempt) => ({
+        id: `run-implementation-${attempt}`,
+        stage: "implement",
+        status: "completed",
+      })));
+      reservation = bindLatestWorkflowAttempt(draft, "implement", "implementation");
+      draft.candidates.push({
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "repair_required",
+        sourceWorkflowAttempt: reservation.workflowAttempt,
+        sourceWorkflowReservationId: reservation.id,
+        revisions: [{
+          number: 1,
+          headRevision: "candidate-c1-r1",
+          reason: "assembly",
+          sourceWorkflowAttempt: reservation.workflowAttempt,
+          sourceWorkflowReservationId: reservation.id,
+        }],
+      });
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200);
+    assert.deepEqual(await grantResponse.json(), { granted: true });
+
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits.implement, 4);
+    assert.equal(updated.decisions.at(-1).candidateId, "C1");
+    assert.equal(updated.decisions.at(-1).candidateRevision, 1);
+    assert.equal(updated.decisions.at(-1).candidateHeadRevision, "candidate-c1-r1");
+    assert.equal(updated.decisions.at(-1).workflowAttempt, 3);
+    assert.equal(updated.decisions.at(-1).workflowReservationId, reservation.id);
+    assert.equal(updated.decisions.at(-1).sourceRunId, "run-implementation-3");
   } finally {
     await cleanup(server, directory);
   }

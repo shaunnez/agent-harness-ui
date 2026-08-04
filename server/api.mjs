@@ -452,7 +452,17 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
             reservedGrant = currentGrant;
             return true;
           }, (draft) => {
-            const { candidate, grantedStage, currentLimit, retrySource } = reservedGrant;
+            const {
+              candidate,
+              candidateHeadRevision,
+              candidateId,
+              candidateRevision,
+              grantedStage,
+              currentLimit,
+              retrySource,
+              workflowAttempt,
+              workflowReservationId,
+            } = reservedGrant;
             const nextStageLimit = currentLimit + 1;
             draft.stageRunLimits ??= {};
             draft.stageRunLimits[grantedStage] = nextStageLimit;
@@ -466,6 +476,11 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               previousLimit: currentLimit,
               newLimit: nextStageLimit,
               sourceRunId: retrySource?.id ?? null,
+              candidateId,
+              candidateRevision,
+              candidateHeadRevision,
+              workflowAttempt,
+              workflowReservationId,
               createdAt: new Date().toISOString(),
             };
             draft.decisions ??= [];
@@ -483,6 +498,11 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               previousLimit: currentLimit,
               newLimit: nextStageLimit,
               sourceRunId: retrySource?.id ?? null,
+              candidateId,
+              candidateRevision,
+              candidateHeadRevision,
+              workflowAttempt,
+              workflowReservationId,
               retryOfRunId: retrySource?.id ?? null,
             });
           });
@@ -597,7 +617,7 @@ function retryGrantContext(task) {
     !Number.isInteger(reservation.workflowAttempt) ||
     reservation.workflowAttempt < 1 ||
     reservation.workflowAttempt !== currentAttempts ||
-    !validRetryReservationCandidateBinding(reservation, candidateBoundGrant) ||
+    !validRetryReservationCandidateBinding(reservation, candidateBoundGrant, candidate, grantedStage) ||
     !validRetryReservationKind(grantedStage, reservation.kind)
   )) {
     return { error: "The exhausted stage has an inconsistent workflow reservation; resolve it before granting a retry." };
@@ -605,11 +625,6 @@ function retryGrantContext(task) {
   if (!validRetryWorkflowIdentities(stageRuns, reservation, currentAttempts)) {
     return { error: "The exhausted stage has partial or orphaned workflow identity; resolve it before granting a retry." };
   }
-  const candidateBinding = {
-    candidateId: candidate?.id ?? null,
-    candidateRevision: candidate?.revisionNumber ?? null,
-    candidateHeadRevision: candidate?.headRevision ?? null,
-  };
   const exactReservation = reservation?.workflowAttempt === currentAttempts ? reservation : null;
   const reservationRuns = exactReservation
     ? stageRuns.filter((run) => run.workflowReservationId === exactReservation.id)
@@ -628,11 +643,9 @@ function retryGrantContext(task) {
   ))) {
     return { error: "The exhausted workflow attempt contains conflicting run reservations; resolve it before granting a retry." };
   }
-  const reservationMatchesCandidate = exactReservation &&
-    exactReservation.candidateId === candidateBinding.candidateId &&
-    exactReservation.candidateRevision === candidateBinding.candidateRevision &&
-    exactReservation.candidateHeadRevision === candidateBinding.candidateHeadRevision;
-  const retrySource = reservationMatchesCandidate && reservationRuns.length === 1
+  const reservationAuthorizesCandidate = exactReservation &&
+    validRetrySourceCandidateBinding(exactReservation, candidateBoundGrant, candidate, grantedStage);
+  const retrySource = reservationAuthorizesCandidate && reservationRuns.length === 1
     ? reservationRuns[0]
     : null;
   const historySnapshot = JSON.stringify({
@@ -658,6 +671,8 @@ function retryGrantContext(task) {
     retrySource,
     sourceRunId: retrySource?.id ?? null,
     sourceRunStatus: retrySource?.status ?? null,
+    workflowAttempt: exactReservation?.workflowAttempt ?? currentAttempts,
+    workflowReservationId: exactReservation?.id ?? null,
     error: null,
   };
 }
@@ -668,14 +683,51 @@ function validRetryCandidate(candidate) {
     typeof candidate.headRevision === "string" && candidate.headRevision.trim().length > 0;
 }
 
-function validRetryReservationCandidateBinding(reservation, candidateRequired) {
+function validRetryReservationCandidateBinding(reservation, candidateRequired, candidate, grantedStage) {
   const allNull = reservation.candidateId == null &&
     reservation.candidateRevision == null &&
     reservation.candidateHeadRevision == null;
-  if (allNull) return !candidateRequired;
-  return typeof reservation.candidateId === "string" && reservation.candidateId.trim().length > 0 &&
+  if (!candidateRequired) return allNull;
+  const sourceReservation = reservation.id === candidate?.sourceWorkflowReservationId &&
+    reservation.workflowAttempt === candidate?.sourceWorkflowAttempt;
+  if (allNull) {
+    return grantedStage === "implement" && sourceReservation && reservation.kind === "implementation";
+  }
+  const completeBinding = typeof reservation.candidateId === "string" && reservation.candidateId.trim().length > 0 &&
     Number.isInteger(reservation.candidateRevision) && reservation.candidateRevision > 0 &&
     typeof reservation.candidateHeadRevision === "string" && reservation.candidateHeadRevision.trim().length > 0;
+  if (!completeBinding) return false;
+  const exactCurrentCandidate = reservation.candidateId === candidate?.id &&
+    reservation.candidateRevision === candidate?.revisionNumber &&
+    reservation.candidateHeadRevision === candidate?.headRevision;
+  if (exactCurrentCandidate) return true;
+  if (grantedStage !== "implement") {
+    if (reservation.candidateId !== candidate?.id || reservation.candidateRevision >= candidate?.revisionNumber) {
+      return false;
+    }
+    if (!candidate?.revisions?.length) return true;
+    const priorRevision = candidate.revisions.find((revision) => revision.number === reservation.candidateRevision);
+    return priorRevision?.headRevision === reservation.candidateHeadRevision;
+  }
+  if (!sourceReservation || reservation.kind !== "repair" || reservation.candidateId !== candidate?.id) return false;
+  const previousRevision = candidate?.revisions?.find((revision) => revision.number === reservation.candidateRevision);
+  return reservation.candidateRevision + 1 === candidate?.revisionNumber &&
+    previousRevision?.headRevision === reservation.candidateHeadRevision;
+}
+
+function validRetrySourceCandidateBinding(reservation, candidateRequired, candidate, grantedStage) {
+  if (!candidateRequired) {
+    return reservation.candidateId == null &&
+      reservation.candidateRevision == null &&
+      reservation.candidateHeadRevision == null;
+  }
+  const exactCurrentCandidate = reservation.candidateId === candidate?.id &&
+    reservation.candidateRevision === candidate?.revisionNumber &&
+    reservation.candidateHeadRevision === candidate?.headRevision;
+  if (exactCurrentCandidate) return true;
+  if (grantedStage !== "implement") return false;
+  return reservation.id === candidate?.sourceWorkflowReservationId &&
+    reservation.workflowAttempt === candidate?.sourceWorkflowAttempt;
 }
 
 function validRetryWorkflowIdentities(stageRuns, reservation, currentAttempts) {
@@ -765,6 +817,8 @@ function sameRetryGrantContext(expected, current) {
     "historySnapshot",
     "sourceRunId",
     "sourceRunStatus",
+    "workflowAttempt",
+    "workflowReservationId",
   ].every((field) => expected[field] === current[field]);
 }
 

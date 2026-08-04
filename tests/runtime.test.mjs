@@ -20,6 +20,7 @@ import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import { parseGateEvidence } from "../server/structured-output.mjs";
 import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
+import { runtimeTaskToRecentTask } from "../src/domain.ts";
 
 test("parses Codex final messages and usage", () => {
   assert.deepEqual(
@@ -2419,6 +2420,69 @@ test("uses the authoritative current-stage allowance for workspace attempts and 
   });
 });
 
+test("uses the Implement repair allowance when the failing gate remains the viewed stage", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const candidate = {
+      id: "C1",
+      revisionNumber: 1,
+      status: "repair_required",
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/ah-999-c1",
+      repositoryRoot: "C:/repo/task",
+      worktreePath: "C:/worktrees/ah-999-c1",
+      createdAt: "2026-08-01T12:00:00.000Z",
+      updatedAt: "2026-08-01T12:00:00.000Z",
+      revisions: [],
+    };
+    const repairReady = createTask({
+      status: "repair-required",
+      currentStage: "final-review",
+      stageRunLimit: 3,
+      stageRunLimits: { implement: 3, "final-review": 3 },
+      attemptsByStage: { implement: 1, "final-review": 3 },
+      candidates: [candidate],
+    });
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task: repairReady,
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+    }));
+    assert.match(markup, /1 \/ 3/);
+    assert.match(markup, /1 of 3/);
+    assert.match(markup, /Repair candidate/);
+    assert.doesNotMatch(markup, /Grant one repair attempt/);
+    assert.deepEqual(
+      {
+        stageRun: runtimeTaskToRecentTask(repairReady).stageRun,
+        stageRunLimit: runtimeTaskToRecentTask(repairReady).stageRunLimit,
+      },
+      { stageRun: 1, stageRunLimit: 3 },
+    );
+
+    const afterGrant = {
+      ...repairReady,
+      stageRunLimits: { ...repairReady.stageRunLimits, implement: 4 },
+      attemptsByStage: { ...repairReady.attemptsByStage, implement: 3 },
+    };
+    const afterGrantMarkup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task: afterGrant,
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+    }));
+    assert.match(afterGrantMarkup, /3 \/ 4/);
+    assert.match(afterGrantMarkup, /Repair candidate/);
+    assert.doesNotMatch(afterGrantMarkup, /Grant one repair attempt/);
+  });
+});
+
 test("renders retry grant provenance in activity and decision surfaces without fabricating legacy audit", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace, RuntimeActivity, RunActivity }) => {
     const auditEvent = {
@@ -2433,6 +2497,11 @@ test("renders retry grant provenance in activity and decision surfaces without f
       previousLimit: 3,
       newLimit: 4,
       sourceRunId: "run-source",
+      candidateId: "C1",
+      candidateRevision: 2,
+      candidateHeadRevision: "candidate-c1-r2",
+      workflowAttempt: 3,
+      workflowReservationId: "reservation-implement-3",
     };
     const task = createTask({
       decisions: [{
@@ -2444,6 +2513,11 @@ test("renders retry grant provenance in activity and decision surfaces without f
         previousLimit: 3,
         newLimit: 4,
         sourceRunId: "run-source",
+        candidateId: "C1",
+        candidateRevision: 2,
+        candidateHeadRevision: "candidate-c1-r2",
+        workflowAttempt: 3,
+        workflowReservationId: "reservation-implement-3",
       }],
       events: [auditEvent],
     });
@@ -2461,9 +2535,24 @@ test("renders retry grant provenance in activity and decision surfaces without f
     assert.match(workspaceMarkup, /Implement \(implement\)/);
     assert.match(workspaceMarkup, /3 → 4/);
     assert.match(workspaceMarkup, /run-source/);
+    assert.match(workspaceMarkup, /C1 revision 2/);
+    assert.match(workspaceMarkup, /candidate-c1-r2/);
+    assert.match(workspaceMarkup, /Workflow attempt/);
+    assert.match(workspaceMarkup, /reservation-implement-3/);
 
     const legacyMarkup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
-      task: createTask({ events: [{ ...auditEvent, grantedStage: undefined, previousLimit: undefined, newLimit: undefined, sourceRunId: undefined }] }),
+      task: createTask({ events: [{
+        ...auditEvent,
+        grantedStage: undefined,
+        previousLimit: undefined,
+        newLimit: undefined,
+        sourceRunId: undefined,
+        candidateId: undefined,
+        candidateRevision: undefined,
+        candidateHeadRevision: undefined,
+        workflowAttempt: undefined,
+        workflowReservationId: undefined,
+      }] }),
       onBack: async () => {},
       onRun: async () => {},
       onCancel: async () => {},

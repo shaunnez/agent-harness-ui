@@ -8,7 +8,10 @@ import {
 import { useState } from "react";
 import { type RuntimeTask, type StageId, workflowStages } from "../../domain";
 import { Button } from "../Primitives";
-import { getCurrentStageRunLimit } from "../../runtime-stage-limits";
+import {
+  getEffectiveStageRunAttempts,
+  getEffectiveStageRunLimit,
+} from "../../runtime-stage-limits";
 import { candidateGateStages, getRuntimeGateFreshness, isStageComplete } from "./workflow";
 
 export function RuntimeCommandBar({
@@ -42,8 +45,8 @@ export function RuntimeCommandBar({
   const running = task.status === "running" || task.status === "cancelling";
   const cancelling = task.status === "cancelling";
   const repairRunning = running && task.activeRunKind === "repair";
-  const currentAttempts = task.attemptsByStage?.[task.currentStage] ?? 0;
-  const currentStageRunLimit = getCurrentStageRunLimit(task);
+  const currentAttempts = getEffectiveStageRunAttempts(task);
+  const currentStageRunLimit = getEffectiveStageRunLimit(task);
   const repairRequired = task.status === "repair-required";
   const exhaustedReadyGate =
     currentAttempts >= currentStageRunLimit &&
@@ -193,8 +196,8 @@ export function RuntimeCommandBar({
 }
 
 function nextAction(task: RuntimeTask) {
-  const currentAttempts = task.attemptsByStage?.[task.currentStage] ?? 0;
-  const retryAllowanceExhausted = currentAttempts >= getCurrentStageRunLimit(task);
+  const currentAttempts = getEffectiveStageRunAttempts(task);
+  const retryAllowanceExhausted = currentAttempts >= getEffectiveStageRunLimit(task);
   if (
     (task.status === "blocked" ||
       (["repair-required", "failed"].includes(task.status) && retryAllowanceExhausted)) &&

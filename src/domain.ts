@@ -81,6 +81,10 @@ export interface NewTaskDraft {
 
 
 import type { RuntimeTask, RuntimeUsage } from "./domain/runtime.ts";
+import {
+  getEffectiveStageRunAttempts,
+  getEffectiveStageRunLimit,
+} from "./runtime-stage-limits.ts";
 
 export * from "./domain/runtime.ts";
 
@@ -118,8 +122,8 @@ export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
       task.startedAt,
       task.status === "running" ? null : (task.completedAt ?? task.updatedAt),
     ),
-    stageRun: task.attemptsByStage?.[task.currentStage] ?? 0,
-    stageRunLimit: task.stageRunLimit,
+    stageRun: getEffectiveStageRunAttempts(task),
+    stageRunLimit: getEffectiveStageRunLimit(task),
     tokens: formatTokenCount(task.usage.totalTokens),
     cost: formatApproximateCost(task.usage.cost),
     inputTokens: formatTokenCount(task.usage.inputTokens),

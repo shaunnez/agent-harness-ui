@@ -132,6 +132,11 @@ export interface RuntimeEvent {
   previousLimit?: number;
   newLimit?: number;
   sourceRunId?: string | null;
+  candidateId?: string | null;
+  candidateRevision?: number | null;
+  candidateHeadRevision?: string | null;
+  workflowAttempt?: number | null;
+  workflowReservationId?: string | null;
   retryOfRunId?: string | null;
   repairOfRunId?: string | null;
   toolCall?: RuntimeToolCall | null;

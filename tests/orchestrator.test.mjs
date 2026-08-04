@@ -2384,6 +2384,16 @@ test("runs the investigation frontier and retains each stage handoff", async () 
     assert.deepEqual(finished.completedStages, ["triage", "scouts", "grill", "specification"]);
     assert.equal(finished.artifacts.length, 6);
     assert.equal(finished.usage.totalTokens, 75);
+    for (const stage of ["triage", "scouts", "grill", "specification"]) {
+      assert.equal(finished.attemptsByStage[stage], 1, `${stage} consumes exactly one workflow attempt`);
+      const reservation = finished.stageRunReservations[stage];
+      assert.equal(reservation.stage, stage);
+      assert.equal(reservation.workflowAttempt, 1);
+      for (const run of finished.runs.filter((entry) => entry.stage === stage)) {
+        assert.equal(run.workflowAttempt, 1, `${stage} run retains its workflow attempt`);
+        assert.equal(run.workflowReservationId, reservation.id, `${stage} run retains its own reservation`);
+      }
+    }
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -2440,6 +2450,61 @@ test("auto-advances a zero-question Grill session into specification", async () 
     assert.equal(finished.grillSession.questions.length, 0);
     assert.deepEqual(finished.completedStages, ["triage", "scouts", "grill", "specification"]);
     assert.equal(finished.events.some((event) => event.title === "Grill Me completed automatically"), true);
+    for (const stage of ["triage", "scouts", "grill", "specification"]) {
+      assert.equal(finished.attemptsByStage[stage], 1, `${stage} consumes exactly one workflow attempt`);
+      const reservation = finished.stageRunReservations[stage];
+      assert.equal(reservation.stage, stage);
+      assert.equal(reservation.kind, "investigation");
+      assert.equal(reservation.workflowAttempt, 1);
+      for (const run of finished.runs.filter((entry) => entry.stage === stage)) {
+        assert.equal(run.workflowAttempt, 1);
+        assert.equal(run.workflowReservationId, reservation.id);
+      }
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("counts each failed investigation stage against its own retry allowance", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-investigation-budget-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Count scout failures",
+      description: "A failing scout stage must not reuse the successful triage reservation.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "low",
+    });
+    await store.update(task.id, (draft) => {
+      draft.stageRunLimits.scouts = 2;
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      runCodex: async ({ prompt }) => {
+        if (/<scout-report>/.test(prompt)) throw new Error("Scout failed deterministically.");
+        return {
+          finalText: `<scout-dispatch>{"scouts":[{"name":"scout-code-path","focus":"Trace the selected failure path.","reason":"The task requires one code-path fact."}],"rationale":"One code-path scout is required."}</scout-dispatch>`,
+          usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+        };
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id), true);
+    let failed = await waitForStatus(store, task.id, "failed");
+    assert.equal(failed.currentStage, "scouts");
+    assert.equal(failed.attemptsByStage.triage, 1);
+    assert.equal(failed.attemptsByStage.scouts, 1);
+    assert.notEqual(failed.stageRunReservations.triage.id, failed.stageRunReservations.scouts.id);
+
+    assert.equal(await orchestrator.start(task.id), true);
+    failed = await waitForStatus(store, task.id, "blocked");
+    assert.equal(failed.currentStage, "scouts");
+    assert.equal(failed.attemptsByStage.triage, 1);
+    assert.equal(failed.attemptsByStage.scouts, 2);
+    assert.equal(await orchestrator.start(task.id), false);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }

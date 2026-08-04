@@ -148,6 +148,11 @@ export interface RuntimeDecision {
   previousLimit?: number;
   newLimit?: number;
   sourceRunId?: string | null;
+  candidateId?: string | null;
+  candidateRevision?: number | null;
+  candidateHeadRevision?: string | null;
+  workflowAttempt?: number | null;
+  workflowReservationId?: string | null;
 }
 
 export interface RuntimeScoutDispatch {
@@ -239,7 +244,16 @@ export interface RuntimeCandidate {
   status: string;
   createdAt: string;
   updatedAt: string;
-  revisions: Array<{ number: number; headRevision: string; reason: string; createdAt: string }>;
+  sourceWorkflowAttempt?: number | null;
+  sourceWorkflowReservationId?: string | null;
+  revisions: Array<{
+    number: number;
+    headRevision: string;
+    reason: string;
+    createdAt: string;
+    sourceWorkflowAttempt?: number | null;
+    sourceWorkflowReservationId?: string | null;
+  }>;
   members?: Array<{ packageId: string; headRevision: string; order: number }>;
 }
 

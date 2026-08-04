@@ -6,6 +6,11 @@ export interface RetryGrantAuditFields {
   previousLimit?: number;
   newLimit?: number;
   sourceRunId?: string | null;
+  candidateId?: string | null;
+  candidateRevision?: number | null;
+  candidateHeadRevision?: string | null;
+  workflowAttempt?: number | null;
+  workflowReservationId?: string | null;
 }
 
 export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
@@ -13,7 +18,12 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
     audit.grantedStage !== undefined ||
     audit.previousLimit !== undefined ||
     audit.newLimit !== undefined ||
-    audit.sourceRunId !== undefined;
+    audit.sourceRunId !== undefined ||
+    audit.candidateId !== undefined ||
+    audit.candidateRevision !== undefined ||
+    audit.candidateHeadRevision !== undefined ||
+    audit.workflowAttempt !== undefined ||
+    audit.workflowReservationId !== undefined;
   if (!hasAudit) return null;
 
   const stage = audit.grantedStage ? workflowStages.find((item) => item.id === audit.grantedStage) : null;
@@ -41,6 +51,35 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
           label="Source run ID"
           value={audit.sourceRunId === null ? "No persisted source run" : audit.sourceRunId}
           mono={audit.sourceRunId !== null}
+        />
+      ) : null}
+      {audit.candidateId !== undefined || audit.candidateRevision !== undefined ? (
+        <RuntimeRow
+          label="Candidate"
+          value={audit.candidateId === null
+            ? "No candidate binding"
+            : `${audit.candidateId ?? "Unknown"} revision ${audit.candidateRevision ?? "?"}`}
+          mono={audit.candidateId !== null}
+        />
+      ) : null}
+      {audit.candidateHeadRevision !== undefined ? (
+        <RuntimeRow
+          label="Candidate head"
+          value={audit.candidateHeadRevision ?? "No candidate head"}
+          mono={audit.candidateHeadRevision !== null}
+        />
+      ) : null}
+      {audit.workflowAttempt !== undefined ? (
+        <RuntimeRow
+          label="Workflow attempt"
+          value={audit.workflowAttempt === null ? "No workflow attempt" : String(audit.workflowAttempt)}
+        />
+      ) : null}
+      {audit.workflowReservationId !== undefined ? (
+        <RuntimeRow
+          label="Workflow reservation"
+          value={audit.workflowReservationId ?? "No workflow reservation"}
+          mono={audit.workflowReservationId !== null}
         />
       ) : null}
     </span>

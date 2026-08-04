@@ -482,6 +482,7 @@ export class TaskOrchestrator {
     const stages = INVESTIGATION_PIPELINE.filter((stage) => !task.completedStages.includes(stage));
     for (const stageId of stages) {
       if (signal.aborted) throw new Error("Codex run cancelled.");
+      await this.#reserveInvestigationStage(id, stageId);
       task = await this.#store.get(id);
       if (stageId === "scouts") {
         await this.#runScouts(id, task, signal);
@@ -509,8 +510,6 @@ export class TaskOrchestrator {
     task = await this.#store.get(id);
     if (task.grillSession?.status === "completed" && task.grillSession.questions.length === 0) {
       await this.#store.update(id, (draft) => {
-        draft.status = "running";
-        draft.currentStage = "specification";
         draft.events.push(activity(
           "grill",
           "Grill Me completed automatically",
@@ -519,6 +518,7 @@ export class TaskOrchestrator {
           "decision",
         ));
       });
+      await this.#reserveInvestigationStage(id, "specification");
       await this.#runSpecification(id, signal);
       return;
     }
@@ -530,6 +530,57 @@ export class TaskOrchestrator {
       const count = draft.grillSession?.questions.length ?? 0;
       draft.events.push(activity("grill", "Grill Me ready", `${count} material question${count === 1 ? "" : "s"} need a decision.`, "success", "decision"));
     });
+  }
+
+  async #reserveInvestigationStage(id, stageId) {
+    const task = await this.#store.get(id);
+    const activeReservation = Object.values(task.stageRunReservations ?? {}).find(
+      (entry) => entry?.id === task.activeRunReservationId,
+    );
+    if (activeReservation?.stage === stageId) {
+      requireActiveRunReservation(task, "investigation", stageId);
+      return;
+    }
+    if (
+      task.status !== "running" ||
+      task.activeRunKind !== "investigation" ||
+      !activeReservation ||
+      activeReservation.kind !== "investigation" ||
+      (task.activeRunIds?.length ?? 0) > 0
+    ) {
+      throw new Error(`The ${stageId} investigation stage cannot reserve over inconsistent active state.`);
+    }
+    const priorReservationId = activeReservation.id;
+    try {
+      await this.#store.transition(id, (draft) => {
+        const currentReservation = Object.values(draft.stageRunReservations ?? {}).find(
+          (entry) => entry?.id === draft.activeRunReservationId,
+        );
+        const attempts = draft.attemptsByStage?.[stageId] ?? 0;
+        return draft.status === "running" &&
+          draft.activeRunKind === "investigation" &&
+          currentReservation?.id === priorReservationId &&
+          currentReservation.kind === "investigation" &&
+          (draft.activeRunIds?.length ?? 0) === 0 &&
+          attempts < stageRunLimitFor(draft, stageId);
+      }, (draft) => {
+        const reservation = createStageRunReservation(draft, "investigation", stageId);
+        applyStageRunReservation(draft, reservation);
+        draft.currentStage = stageId;
+        draft.events.push(activity(
+          stageId,
+          `${getStageMetadata(stageId)?.label ?? stageId} attempt reserved`,
+          `Workflow attempt ${reservation.workflowAttempt} is bound to ${reservation.id}.`,
+          "info",
+          "agent",
+        ));
+      });
+    } catch (error) {
+      if (error.code === "TASK_TRANSITION_CONFLICT") {
+        throw new Error(`The ${stageId} investigation stage has exhausted its retry allowance or changed before reservation.`);
+      }
+      throw error;
+    }
   }
 
   async #runScouts(id, task, signal) {
@@ -619,7 +670,12 @@ export class TaskOrchestrator {
           })),
         },
       },
-      { replace: false, name: "repository-scout.md", artifactTitle: "Scout evidence aggregated" },
+      {
+        complete: successful >= required,
+        replace: false,
+        name: "repository-scout.md",
+        artifactTitle: "Scout evidence aggregated",
+      },
     );
     await this.#store.update(id, (draft) => {
       if (draft.scoutDispatch) draft.scoutDispatch.completedAt = now();
@@ -709,8 +765,11 @@ export class TaskOrchestrator {
       throw new Error("Candidate assembly cannot start until every work package is ready for integration.");
     }
     const candidateId = `C${(task.candidates?.length ?? 0) + 1}`;
+    const implementationReservation = requireActiveRunReservation(task, "implementation", "implement");
     const candidate = await this.#worktrees.prepare(task, candidateId, { baseRevision: base.baseRevision });
     candidate.status = "assembling";
+    candidate.sourceWorkflowAttempt = implementationReservation.workflowAttempt;
+    candidate.sourceWorkflowReservationId = implementationReservation.id;
     candidate.members = orderedPackages.map((item, index) => ({
       packageId: item.id,
       headRevision: item.headRevision,
@@ -742,7 +801,14 @@ export class TaskOrchestrator {
       activeCandidate.headRevision = assembled.headRevision;
       activeCandidate.status = "ready_for_review";
       activeCandidate.updatedAt = now();
-      activeCandidate.revisions.push({ number: 1, headRevision: assembled.headRevision, reason: "assembly", createdAt: now() });
+      activeCandidate.revisions.push({
+        number: 1,
+        headRevision: assembled.headRevision,
+        reason: "assembly",
+        sourceWorkflowAttempt: implementationReservation.workflowAttempt,
+        sourceWorkflowReservationId: implementationReservation.id,
+        createdAt: now(),
+      });
       for (const workPackage of draft.workPackages) workPackage.status = "integrated";
       draft.status = "ready-for-review";
       draft.currentStage = "dev-review";
@@ -999,15 +1065,20 @@ export class TaskOrchestrator {
     });
     await this.#store.update(id, (draft) => {
       const activeCandidate = currentCandidate(draft);
+      const repairReservation = requireActiveRunReservation(draft, "repair", "implement");
       activeCandidate.revisionNumber = nextRevision;
       activeCandidate.headRevision = committed.headRevision;
       activeCandidate.status = "ready_for_review";
       activeCandidate.updatedAt = now();
+      activeCandidate.sourceWorkflowAttempt = repairReservation.workflowAttempt;
+      activeCandidate.sourceWorkflowReservationId = repairReservation.id;
       activeCandidate.revisions.push({
         number: nextRevision,
         headRevision: committed.headRevision,
         reason: "repair",
         requestedFindings: structuredClone(requestedFindings),
+        sourceWorkflowAttempt: repairReservation.workflowAttempt,
+        sourceWorkflowReservationId: repairReservation.id,
         createdAt: now(),
       });
       draft.completedStages = draft.completedStages.filter(
@@ -1049,7 +1120,7 @@ export class TaskOrchestrator {
       const reservation = Object.values(draft.stageRunReservations ?? {}).find(
         (entry) => entry?.id === draft.activeRunReservationId,
       );
-      if (!reservation || reservation.kind !== draft.activeRunKind) {
+      if (!reservation || reservation.kind !== draft.activeRunKind || reservation.stage !== stageId) {
         throw new Error("The active workflow attempt is missing its persisted run reservation.");
       }
       draft.currentStage = stageId;
@@ -1319,28 +1390,13 @@ function canStartRun(task, kind) {
 function reserveRun(task, kind) {
   const stage = stageForRun(kind, task.currentStage);
   const candidate = task.candidates?.at(-1) ?? null;
-  const workflowAttempt = (task.attemptsByStage?.[stage] ?? 0) + 1;
-  const reservation = {
-    id: crypto.randomUUID(),
-    stage,
-    kind,
-    workflowAttempt,
-    candidateId: candidate?.id ?? null,
-    candidateRevision: candidate?.revisionNumber ?? null,
-    candidateHeadRevision: candidate?.headRevision ?? null,
-    reservedAt: now(),
-  };
+  const reservation = createStageRunReservation(task, kind, stage);
   task.status = "running";
   task.error = null;
   task.startedAt ??= now();
   task.completedAt = null;
-  task.stageRun += 1;
-  task.attemptsByStage ??= {};
-  task.attemptsByStage[stage] = workflowAttempt;
-  task.stageRunReservations ??= {};
-  task.stageRunReservations[stage] = reservation;
+  applyStageRunReservation(task, reservation);
   task.activeRunKind = kind;
-  task.activeRunReservationId = reservation.id;
   if (candidate) {
     const candidateStatus = {
       repair: "repairing",
@@ -1351,6 +1407,43 @@ function reserveRun(task, kind) {
     if (candidateStatus) candidate.status = candidateStatus;
   }
   task.events.push(activity(stage, `${labelForRun(kind)} started`, runDetail(kind), "info", "agent"));
+}
+
+function createStageRunReservation(task, kind, stage) {
+  const candidate = task.candidates?.at(-1) ?? null;
+  return {
+    id: crypto.randomUUID(),
+    stage,
+    kind,
+    workflowAttempt: (task.attemptsByStage?.[stage] ?? 0) + 1,
+    candidateId: candidate?.id ?? null,
+    candidateRevision: candidate?.revisionNumber ?? null,
+    candidateHeadRevision: candidate?.headRevision ?? null,
+    reservedAt: now(),
+  };
+}
+
+function applyStageRunReservation(task, reservation) {
+  task.stageRun += 1;
+  task.attemptsByStage ??= {};
+  task.attemptsByStage[reservation.stage] = reservation.workflowAttempt;
+  task.stageRunReservations ??= {};
+  task.stageRunReservations[reservation.stage] = reservation;
+  task.activeRunReservationId = reservation.id;
+}
+
+function requireActiveRunReservation(task, kind, stage) {
+  const reservation = task.stageRunReservations?.[stage] ?? null;
+  if (
+    !reservation ||
+    reservation.id !== task.activeRunReservationId ||
+    reservation.kind !== kind ||
+    reservation.stage !== stage ||
+    reservation.workflowAttempt !== task.attemptsByStage?.[stage]
+  ) {
+    throw new Error(`The active ${stage} workflow reservation is inconsistent.`);
+  }
+  return reservation;
 }
 
 function recordApproval(task, stage, note) {
