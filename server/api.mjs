@@ -461,6 +461,9 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               currentLimit,
               retrySource,
               workflowAttempt,
+              workflowCandidateHeadRevision,
+              workflowCandidateId,
+              workflowCandidateRevision,
               workflowReservationId,
             } = reservedGrant;
             const nextStageLimit = currentLimit + 1;
@@ -480,6 +483,9 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               candidateRevision,
               candidateHeadRevision,
               workflowAttempt,
+              workflowCandidateId,
+              workflowCandidateRevision,
+              workflowCandidateHeadRevision,
               workflowReservationId,
               createdAt: new Date().toISOString(),
             };
@@ -502,6 +508,9 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               candidateRevision,
               candidateHeadRevision,
               workflowAttempt,
+              workflowCandidateId,
+              workflowCandidateRevision,
+              workflowCandidateHeadRevision,
               workflowReservationId,
               retryOfRunId: retrySource?.id ?? null,
             });
@@ -657,21 +666,25 @@ function retryGrantContext(task) {
     reservation,
     stageRuns,
   });
+  const grantCandidate = candidateBoundGrant ? candidate : null;
   return {
     candidate,
     grantedStage,
     currentAttempts,
     currentLimit,
     taskStatus: task.status,
-    candidateId: candidate?.id ?? null,
-    candidateRevision: candidate?.revisionNumber ?? null,
-    candidateHeadRevision: candidate?.headRevision ?? null,
+    candidateId: grantCandidate?.id ?? null,
+    candidateRevision: grantCandidate?.revisionNumber ?? null,
+    candidateHeadRevision: grantCandidate?.headRevision ?? null,
     candidateStatus: candidate?.status ?? null,
     historySnapshot,
     retrySource,
     sourceRunId: retrySource?.id ?? null,
     sourceRunStatus: retrySource?.status ?? null,
     workflowAttempt: exactReservation?.workflowAttempt ?? currentAttempts,
+    workflowCandidateId: exactReservation?.candidateId ?? null,
+    workflowCandidateRevision: exactReservation?.candidateRevision ?? null,
+    workflowCandidateHeadRevision: exactReservation?.candidateHeadRevision ?? null,
     workflowReservationId: exactReservation?.id ?? null,
     error: null,
   };
@@ -702,12 +715,17 @@ function validRetryReservationCandidateBinding(reservation, candidateRequired, c
     reservation.candidateHeadRevision === candidate?.headRevision;
   if (exactCurrentCandidate) return true;
   if (grantedStage !== "implement") {
-    if (reservation.candidateId !== candidate?.id || reservation.candidateRevision >= candidate?.revisionNumber) {
+    if (
+      reservation.candidateId !== candidate?.id ||
+      reservation.candidateRevision + 1 !== candidate?.revisionNumber
+    ) {
       return false;
     }
-    if (!candidate?.revisions?.length) return true;
+    if (!candidate?.revisions?.length) return false;
     const priorRevision = candidate.revisions.find((revision) => revision.number === reservation.candidateRevision);
-    return priorRevision?.headRevision === reservation.candidateHeadRevision;
+    const currentRevision = candidate.revisions.find((revision) => revision.number === candidate.revisionNumber);
+    return priorRevision?.headRevision === reservation.candidateHeadRevision &&
+      currentRevision?.headRevision === candidate.headRevision;
   }
   if (!sourceReservation || reservation.kind !== "repair" || reservation.candidateId !== candidate?.id) return false;
   const previousRevision = candidate?.revisions?.find((revision) => revision.number === reservation.candidateRevision);
@@ -818,6 +836,9 @@ function sameRetryGrantContext(expected, current) {
     "sourceRunId",
     "sourceRunStatus",
     "workflowAttempt",
+    "workflowCandidateId",
+    "workflowCandidateRevision",
+    "workflowCandidateHeadRevision",
     "workflowReservationId",
   ].every((field) => expected[field] === current[field]);
 }

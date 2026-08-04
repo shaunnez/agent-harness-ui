@@ -2510,6 +2510,88 @@ test("counts each failed investigation stage against its own retry allowance", a
   }
 });
 
+test("keeps implementation reservations candidate-unbound across assembly retries", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-assembly-retry-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Retry candidate assembly",
+      description: "A failed candidate must not bind the next implementation attempt.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "low",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-implementation";
+      draft.currentStage = "implement";
+      draft.stageRunLimits.implement = 2;
+      draft.workPackages = [{
+        id: "S1",
+        title: "Single package",
+        description: "Already qualified for candidate assembly.",
+        dependencies: [],
+        batch: 1,
+        ownedPaths: ["server/example.mjs"],
+        verification: ["npm test"],
+        status: "ready_for_integration",
+        attempts: 1,
+        branch: "agent-harness/test-s1",
+        worktreePath: directory,
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        files: ["server/example.mjs"],
+        error: null,
+      }];
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      worktreeManager: {
+        base: async () => ({ repositoryRoot: directory, baseRevision: "a".repeat(40), baseBranch: "main" }),
+        prepare: async (_task, candidateId) => ({
+          id: candidateId,
+          revisionNumber: 1,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: null,
+          branch: `agent-harness/${candidateId.toLowerCase()}`,
+          repositoryRoot: directory,
+          worktreePath: directory,
+          status: "assembling",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          revisions: [],
+        }),
+        assemble: async () => {
+          throw new Error("candidate assembly conflict");
+        },
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id, "implementation"), true);
+    let failed = await waitForStatus(store, task.id, "failed");
+    const firstReservation = failed.stageRunReservations.implement;
+    assert.equal(firstReservation.workflowAttempt, 1);
+    assert.equal(firstReservation.candidateId, null);
+    assert.equal(failed.candidates[0].sourceWorkflowReservationId, firstReservation.id);
+    assert.equal(failed.candidates[0].status, "failed");
+
+    assert.equal(await orchestrator.start(task.id, "implementation"), true);
+    failed = await waitForStatus(store, task.id, "blocked");
+    const secondReservation = failed.stageRunReservations.implement;
+    assert.equal(secondReservation.workflowAttempt, 2);
+    assert.equal(secondReservation.candidateId, null);
+    assert.equal(secondReservation.candidateRevision, null);
+    assert.equal(secondReservation.candidateHeadRevision, null);
+    assert.notEqual(secondReservation.id, firstReservation.id);
+    assert.equal(failed.candidates[1].sourceWorkflowReservationId, secondReservation.id);
+    assert.equal(failed.candidates[1].status, "failed");
+    assert.equal(await orchestrator.start(task.id, "implementation"), false);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("advances an approved implementation task through a revision-bound candidate", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-candidate-"));
   try {

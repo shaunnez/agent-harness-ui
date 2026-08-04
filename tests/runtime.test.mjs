@@ -2454,14 +2454,20 @@ test("uses the Implement repair allowance when the failing gate remains the view
     }));
     assert.match(markup, /1 \/ 3/);
     assert.match(markup, /1 of 3/);
+    assert.match(markup, /Implement repair attempts/);
+    assert.match(markup, /Implement repair run/);
+    assert.match(markup, /Implement repair is confined to the isolated candidate worktree/);
+    assert.match(markup, /failed Final review gate remains the workflow position/);
     assert.match(markup, /Repair candidate/);
     assert.doesNotMatch(markup, /Grant one repair attempt/);
     assert.deepEqual(
       {
         stageRun: runtimeTaskToRecentTask(repairReady).stageRun,
         stageRunLimit: runtimeTaskToRecentTask(repairReady).stageRunLimit,
+        stage: runtimeTaskToRecentTask(repairReady).stage,
+        stageRunLabel: runtimeTaskToRecentTask(repairReady).stageRunLabel,
       },
-      { stageRun: 1, stageRunLimit: 3 },
+      { stageRun: 1, stageRunLimit: 3, stage: "Final review", stageRunLabel: "Implement repair budget run" },
     );
 
     const afterGrant = {
@@ -2478,6 +2484,7 @@ test("uses the Implement repair allowance when the failing gate remains the view
       onDecision: async () => {},
     }));
     assert.match(afterGrantMarkup, /3 \/ 4/);
+    assert.match(afterGrantMarkup, /Implement repair attempts/);
     assert.match(afterGrantMarkup, /Repair candidate/);
     assert.doesNotMatch(afterGrantMarkup, /Grant one repair attempt/);
   });
@@ -2501,6 +2508,9 @@ test("renders retry grant provenance in activity and decision surfaces without f
       candidateRevision: 2,
       candidateHeadRevision: "candidate-c1-r2",
       workflowAttempt: 3,
+      workflowCandidateId: "C1",
+      workflowCandidateRevision: 1,
+      workflowCandidateHeadRevision: "candidate-c1-r1",
       workflowReservationId: "reservation-implement-3",
     };
     const task = createTask({
@@ -2517,6 +2527,9 @@ test("renders retry grant provenance in activity and decision surfaces without f
         candidateRevision: 2,
         candidateHeadRevision: "candidate-c1-r2",
         workflowAttempt: 3,
+        workflowCandidateId: "C1",
+        workflowCandidateRevision: 1,
+        workflowCandidateHeadRevision: "candidate-c1-r1",
         workflowReservationId: "reservation-implement-3",
       }],
       events: [auditEvent],
@@ -2538,6 +2551,9 @@ test("renders retry grant provenance in activity and decision surfaces without f
     assert.match(workspaceMarkup, /C1 revision 2/);
     assert.match(workspaceMarkup, /candidate-c1-r2/);
     assert.match(workspaceMarkup, /Workflow attempt/);
+    assert.match(workspaceMarkup, /Workflow candidate binding/);
+    assert.match(workspaceMarkup, /C1 revision 1/);
+    assert.match(workspaceMarkup, /candidate-c1-r1/);
     assert.match(workspaceMarkup, /reservation-implement-3/);
 
     const legacyMarkup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
@@ -2551,6 +2567,9 @@ test("renders retry grant provenance in activity and decision surfaces without f
         candidateRevision: undefined,
         candidateHeadRevision: undefined,
         workflowAttempt: undefined,
+        workflowCandidateId: undefined,
+        workflowCandidateRevision: undefined,
+        workflowCandidateHeadRevision: undefined,
         workflowReservationId: undefined,
       }] }),
       onBack: async () => {},

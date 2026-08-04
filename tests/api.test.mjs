@@ -1236,6 +1236,9 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
     assert.equal(updated.decisions.at(-1).candidateRevision, 1);
     assert.equal(updated.decisions.at(-1).candidateHeadRevision, "candidate-c1-r1");
     assert.equal(updated.decisions.at(-1).workflowAttempt, 3);
+    assert.equal(updated.decisions.at(-1).workflowCandidateId, "C1");
+    assert.equal(updated.decisions.at(-1).workflowCandidateRevision, 1);
+    assert.equal(updated.decisions.at(-1).workflowCandidateHeadRevision, "candidate-c1-r1");
     assert.equal(updated.decisions.at(-1).workflowReservationId, reservation.id);
     assert.equal(updated.attemptsByStage.implement, 3);
     assert.equal(updated.candidates.at(-1).status, "repair_required");
@@ -1245,6 +1248,9 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
     assert.equal(updated.events.at(-1).candidateRevision, 1);
     assert.equal(updated.events.at(-1).candidateHeadRevision, "candidate-c1-r1");
     assert.equal(updated.events.at(-1).workflowAttempt, 3);
+    assert.equal(updated.events.at(-1).workflowCandidateId, "C1");
+    assert.equal(updated.events.at(-1).workflowCandidateRevision, 1);
+    assert.equal(updated.events.at(-1).workflowCandidateHeadRevision, "candidate-c1-r1");
     assert.equal(updated.events.at(-1).workflowReservationId, reservation.id);
 
     const repeatedResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
@@ -1303,8 +1309,63 @@ test("grants repair after a candidate is assembled on the final implementation a
     assert.equal(updated.decisions.at(-1).candidateRevision, 1);
     assert.equal(updated.decisions.at(-1).candidateHeadRevision, "candidate-c1-r1");
     assert.equal(updated.decisions.at(-1).workflowAttempt, 3);
+    assert.equal(updated.decisions.at(-1).workflowCandidateId, null);
+    assert.equal(updated.decisions.at(-1).workflowCandidateRevision, null);
+    assert.equal(updated.decisions.at(-1).workflowCandidateHeadRevision, null);
     assert.equal(updated.decisions.at(-1).workflowReservationId, reservation.id);
     assert.equal(updated.decisions.at(-1).sourceRunId, "run-implementation-3");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("grants one implementation retry after a failed candidate assembly", async () => {
+  const { directory, origin, server, store, startedIdRef } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Retry failed assembly",
+      description: "A failed candidate must not bind the next implementation reservation.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    let reservation;
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "implement";
+      draft.attemptsByStage.implement = draft.stageRunLimits.implement;
+      draft.runs.push(...[1, 2, 3].map((attempt) => ({
+        id: `run-failed-assembly-${attempt}`,
+        stage: "implement",
+        status: "failed",
+      })));
+      reservation = bindLatestWorkflowAttempt(draft, "implement", "implementation");
+      draft.candidates.push({
+        id: "C3",
+        revisionNumber: 1,
+        headRevision: "failed-candidate-c3",
+        status: "failed",
+        sourceWorkflowAttempt: reservation.workflowAttempt,
+        sourceWorkflowReservationId: reservation.id,
+        revisions: [],
+      });
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200);
+    assert.deepEqual(await grantResponse.json(), { granted: true });
+    const granted = await store.get(task.id);
+    assert.equal(granted.stageRunLimits.implement, 4);
+    assert.equal(granted.decisions.at(-1).candidateId, null);
+    assert.equal(granted.decisions.at(-1).candidateRevision, null);
+    assert.equal(granted.decisions.at(-1).candidateHeadRevision, null);
+    assert.equal(granted.decisions.at(-1).workflowCandidateId, null);
+    assert.equal(granted.decisions.at(-1).workflowReservationId, reservation.id);
+
+    const retryResponse = await fetch(`${origin}/api/tasks/${task.id}/implement`, { method: "POST" });
+    assert.equal(retryResponse.status, 202);
+    assert.deepEqual(await retryResponse.json(), { started: true });
+    assert.equal(startedIdRef(), task.id);
   } finally {
     await cleanup(server, directory);
   }
@@ -1479,6 +1540,10 @@ test("does not attribute a repaired candidate grant to the prior candidate revis
         revisionNumber: 2,
         headRevision: "candidate-c1-r2",
         status: "ready_for_review",
+        revisions: [
+          { number: 1, headRevision: "candidate-c1-r1", reason: "assembly" },
+          { number: 2, headRevision: "candidate-c1-r2", reason: "repair" },
+        ],
       });
       draft.stageRunReservations["dev-review"] = {
         id: "reservation-c1-r1-review-3",
@@ -1510,8 +1575,57 @@ test("does not attribute a repaired candidate grant to the prior candidate revis
     assert.equal(grantResponse.status, 200);
     const updated = await store.get(task.id);
     assert.equal(updated.decisions.at(-1).sourceRunId, null);
+    assert.equal(updated.decisions.at(-1).candidateId, "C1");
+    assert.equal(updated.decisions.at(-1).candidateRevision, 2);
+    assert.equal(updated.decisions.at(-1).candidateHeadRevision, "candidate-c1-r2");
+    assert.equal(updated.decisions.at(-1).workflowCandidateId, "C1");
+    assert.equal(updated.decisions.at(-1).workflowCandidateRevision, 1);
+    assert.equal(updated.decisions.at(-1).workflowCandidateHeadRevision, "candidate-c1-r1");
+    assert.equal(updated.decisions.at(-1).workflowReservationId, "reservation-c1-r1-review-3");
     assert.equal(updated.events.at(-1).sourceRunId, null);
     assert.equal(updated.stageRunLimits["dev-review"], 4);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects a prior-candidate gate grant without exact adjacent revision lineage", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Missing repair lineage",
+      description: "A prior gate reservation cannot authorize an unrelated current candidate.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+      draft.candidates.push({
+        id: "C1",
+        revisionNumber: 2,
+        headRevision: "candidate-c1-r2",
+        status: "ready_for_review",
+        revisions: [],
+      });
+      draft.stageRunReservations["dev-review"] = {
+        id: "reservation-unproven-c1-r1-review-3",
+        stage: "dev-review",
+        kind: "review",
+        workflowAttempt: 3,
+        candidateId: "C1",
+        candidateRevision: 1,
+        candidateHeadRevision: "candidate-c1-r1",
+        reservedAt: "2026-08-04T00:00:00.000Z",
+      };
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 409);
+    assert.match((await grantResponse.json()).error, /inconsistent workflow reservation/i);
+    assert.equal((await store.get(task.id)).stageRunLimits["dev-review"], 3);
   } finally {
     await cleanup(server, directory);
   }

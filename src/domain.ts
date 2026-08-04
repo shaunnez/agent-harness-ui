@@ -47,6 +47,7 @@ export interface RecentTask {
   duration: string;
   stageRun: number;
   stageRunLimit: number;
+  stageRunLabel?: string;
   tokens: string;
   cost: string;
   inputTokens?: string;
@@ -82,6 +83,7 @@ export interface NewTaskDraft {
 
 import type { RuntimeTask, RuntimeUsage } from "./domain/runtime.ts";
 import {
+  getEffectiveRunStage,
   getEffectiveStageRunAttempts,
   getEffectiveStageRunLimit,
 } from "./runtime-stage-limits.ts";
@@ -112,6 +114,8 @@ export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
             task.status === "repair-required"
           ? "Blocked"
           : "Running";
+  const effectiveStage = getEffectiveRunStage(task);
+  const effectiveStageLabel = workflowStages.find((stage) => stage.id === effectiveStage)?.shortLabel ?? effectiveStage;
   return {
     id: task.id,
     title: task.title,
@@ -124,6 +128,7 @@ export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
     ),
     stageRun: getEffectiveStageRunAttempts(task),
     stageRunLimit: getEffectiveStageRunLimit(task),
+    stageRunLabel: effectiveStage === task.currentStage ? `${effectiveStageLabel} run` : `${effectiveStageLabel} repair budget run`,
     tokens: formatTokenCount(task.usage.totalTokens),
     cost: formatApproximateCost(task.usage.cost),
     inputTokens: formatTokenCount(task.usage.inputTokens),

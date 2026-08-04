@@ -10,6 +10,9 @@ export interface RetryGrantAuditFields {
   candidateRevision?: number | null;
   candidateHeadRevision?: string | null;
   workflowAttempt?: number | null;
+  workflowCandidateId?: string | null;
+  workflowCandidateRevision?: number | null;
+  workflowCandidateHeadRevision?: string | null;
   workflowReservationId?: string | null;
 }
 
@@ -23,6 +26,9 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
     audit.candidateRevision !== undefined ||
     audit.candidateHeadRevision !== undefined ||
     audit.workflowAttempt !== undefined ||
+    audit.workflowCandidateId !== undefined ||
+    audit.workflowCandidateRevision !== undefined ||
+    audit.workflowCandidateHeadRevision !== undefined ||
     audit.workflowReservationId !== undefined;
   if (!hasAudit) return null;
 
@@ -73,6 +79,22 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
         <RuntimeRow
           label="Workflow attempt"
           value={audit.workflowAttempt === null ? "No workflow attempt" : String(audit.workflowAttempt)}
+        />
+      ) : null}
+      {audit.workflowCandidateId !== undefined || audit.workflowCandidateRevision !== undefined ? (
+        <RuntimeRow
+          label="Workflow candidate binding"
+          value={audit.workflowCandidateId === null
+            ? "No candidate binding"
+            : `${audit.workflowCandidateId ?? "Unknown"} revision ${audit.workflowCandidateRevision ?? "?"}`}
+          mono={audit.workflowCandidateId !== null}
+        />
+      ) : null}
+      {audit.workflowCandidateHeadRevision !== undefined ? (
+        <RuntimeRow
+          label="Workflow candidate head"
+          value={audit.workflowCandidateHeadRevision ?? "No candidate head binding"}
+          mono={audit.workflowCandidateHeadRevision !== null}
         />
       ) : null}
       {audit.workflowReservationId !== undefined ? (

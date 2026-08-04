@@ -350,10 +350,13 @@ export function getAccessBoundaryCopy(task: RuntimeTask) {
     };
   }
   if (task.currentStage === "implement" || task.status === "repair-required") {
+    const repairRequired = task.status === "repair-required";
     return {
       kicker: "Worktree write scope",
-      title: `${stageLabel} is confined to the isolated candidate worktree`,
-      detail: "Codex may write only inside the isolated candidate worktree for this stage.",
+      title: `${repairRequired ? "Implement repair" : stageLabel} is confined to the isolated candidate worktree`,
+      detail: repairRequired
+        ? `The failed ${stageLabel} gate remains the workflow position; only the Implement repair agent may write inside the isolated candidate worktree.`
+        : "Codex may write only inside the isolated candidate worktree for this stage.",
       sandbox: "Isolated candidate worktree",
     };
   }

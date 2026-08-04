@@ -37,6 +37,7 @@ import { InspectorSection, RuntimeRow } from "./runtime/RuntimeInspectorPrimitiv
 import { RuntimeStagePresentation } from "./runtime/RuntimeStagePresentation";
 import { RuntimeWorkspaceFooter } from "./runtime/RuntimeWorkspaceFooter";
 import {
+  getEffectiveRunStage,
   getEffectiveStageRunAttempts,
   getEffectiveStageRunLimit,
 } from "../runtime-stage-limits";
@@ -83,6 +84,8 @@ export function RuntimeTaskWorkspace({
   );
   const currentStageRunLimit = getEffectiveStageRunLimit(task);
   const currentStageRunAttempts = getEffectiveStageRunAttempts(task);
+  const effectiveRunStage = getEffectiveRunStage(task);
+  const stageRunLabel = effectiveRunStage === task.currentStage ? "Stage" : "Implement repair";
   const [viewedStageId, setViewedStageId] = useState<StageId>(initialViewedStageId ?? task.currentStage);
   const [selectedWorktreeId, setSelectedWorktreeId] = useState<string | null>(initialSelectedWorktreeId ?? null);
   const [openArtifact, setOpenArtifact] = useState<RuntimeArtifact | null>(null);
@@ -290,7 +293,7 @@ export function RuntimeTaskWorkspace({
             <strong>{currentIndex + 1} / 10</strong>
           </span>
           <span>
-            <small>Stage attempts</small>
+            <small>{stageRunLabel} attempts</small>
             <strong>
               {currentStageRunAttempts} / {currentStageRunLimit}
             </strong>
@@ -474,7 +477,7 @@ export function RuntimeTaskWorkspace({
                 />
               ) : null}
               <RuntimeRow label="Model / reasoning" value={`${activePolicy.model} \u00b7 ${activePolicy.reasoning}`} />
-              <RuntimeRow label="Stage run" value={`${currentStageRunAttempts} of ${currentStageRunLimit}`} />
+              <RuntimeRow label={`${stageRunLabel} run`} value={`${currentStageRunAttempts} of ${currentStageRunLimit}`} />
               <RuntimeRow label="Run" value={task.activeRunKind ?? "No active agent run"} />
               <RuntimeRow label="Repository" value={repoName} mono />
             </InspectorSection>

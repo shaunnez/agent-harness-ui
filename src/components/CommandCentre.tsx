@@ -139,7 +139,7 @@ export function CommandCentre({
                 <Clock size={15} /> {activeTask.duration}
               </span>
               <span>
-                <GitBranch size={15} /> {activeTask.stage} run {activeTask.stageRun} of {activeTask.stageRunLimit}
+                <GitBranch size={15} /> {activeTask.stageRunLabel ?? `${activeTask.stage} run`} {activeTask.stageRun} of {activeTask.stageRunLimit}
               </span>
             </div>
           ) : null}

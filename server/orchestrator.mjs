@@ -1410,7 +1410,7 @@ function reserveRun(task, kind) {
 }
 
 function createStageRunReservation(task, kind, stage) {
-  const candidate = task.candidates?.at(-1) ?? null;
+  const candidate = kind === "implementation" ? null : (task.candidates?.at(-1) ?? null);
   return {
     id: crypto.randomUUID(),
     stage,

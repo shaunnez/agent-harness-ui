@@ -136,6 +136,9 @@ export interface RuntimeEvent {
   candidateRevision?: number | null;
   candidateHeadRevision?: string | null;
   workflowAttempt?: number | null;
+  workflowCandidateId?: string | null;
+  workflowCandidateRevision?: number | null;
+  workflowCandidateHeadRevision?: string | null;
   workflowReservationId?: string | null;
   retryOfRunId?: string | null;
   repairOfRunId?: string | null;
