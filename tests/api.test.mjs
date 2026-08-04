@@ -1145,6 +1145,7 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
       draft.currentStage = "implement";
       draft.attemptsByStage.implement = draft.stageRunLimits.implement;
       draft.candidates.push({ id: "C1", status: "repair_required" });
+      draft.runs.push({ id: "run-failed-repair", stage: "implement", status: "failed" });
     });
 
     const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
@@ -1156,9 +1157,17 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
     assert.equal(updated.stageRunLimits.implement, 4);
     assert.equal(updated.stageRunLimits["dev-review"], 3);
     assert.equal(updated.decisions.at(-1).grantedStage, "implement");
+    assert.equal(updated.decisions.at(-1).previousLimit, 3);
+    assert.equal(updated.decisions.at(-1).newLimit, 4);
+    assert.equal(updated.decisions.at(-1).sourceRunId, "run-failed-repair");
     assert.equal(updated.attemptsByStage.implement, 3);
     assert.equal(updated.candidates.at(-1).status, "repair_required");
     assert.equal(updated.events.at(-1).title, "One repair attempt granted");
+    assert.equal(updated.events.at(-1).sourceRunId, "run-failed-repair");
+
+    const repeatedResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(repeatedResponse.status, 409);
+    assert.equal((await store.get(task.id)).stageRunLimits.implement, 4);
   } finally {
     await cleanup(server, directory);
   }
@@ -1189,7 +1198,7 @@ test("starts repair when the failed gate is exhausted but implement has capacity
     assert.equal(updated.stageRunLimits.implement, 3);
     assert.equal(updated.stageRunLimits["dev-review"], 3);
     assert.equal(updated.attemptsByStage["dev-review"], 3);
-    assert.equal(updated.attemptsByStage.implement, 0);
+    assert.equal(updated.attemptsByStage.implement ?? 0, 0);
     assert.equal(updated.decisions.length, 0);
   } finally {
     await cleanup(server, directory);
@@ -1263,6 +1272,79 @@ test("grants one bounded stage attempt to a repaired candidate at an exhausted r
     assert.equal(updated.stageRunLimits.implement, 3);
     assert.equal(updated.candidates.at(-1).status, "ready_for_review");
     assert.equal(updated.events.at(-1).title, "One stage attempt granted");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("grants exactly one retry to each exhausted blocked canonical stage", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const cases = [
+      { stage: "triage", candidateStatus: null },
+      { stage: "plan", candidateStatus: null },
+      { stage: "dev-review", candidateStatus: "ready_for_review" },
+      { stage: "test", candidateStatus: "ready_for_test" },
+      { stage: "final-review", candidateStatus: "ready_for_final_review" },
+    ];
+    for (const { stage, candidateStatus } of cases) {
+      const response = await createTask(origin, {
+        title: `Blocked ${stage}`,
+        description: `Grant only the exhausted ${stage} stage.`,
+        repositoryPath: directory,
+        workflow: "implement",
+      });
+      const { task } = await response.json();
+      const sourceRunId = `run-${stage}`;
+      await store.update(task.id, (draft) => {
+        draft.status = "blocked";
+        draft.currentStage = stage;
+        draft.attemptsByStage[stage] = draft.stageRunLimits[stage];
+        draft.runs.push({ id: sourceRunId, stage, status: "failed" });
+        if (candidateStatus) draft.candidates.push({ id: "C1", status: candidateStatus });
+      });
+      const before = await store.get(task.id);
+
+      const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+      assert.equal(grantResponse.status, 200, stage);
+      assert.deepEqual(await grantResponse.json(), { granted: true });
+
+      const updated = await store.get(task.id);
+      assert.equal(updated.status, "failed", stage);
+      assert.deepEqual(updated.attemptsByStage, before.attemptsByStage, `${stage} attempts remain unchanged`);
+      for (const canonicalStage of CANONICAL_RUN_STAGES) {
+        assert.equal(
+          updated.stageRunLimits[canonicalStage],
+          before.stageRunLimits[canonicalStage] + (canonicalStage === stage ? 1 : 0),
+          `${stage} grant must not change ${canonicalStage}`,
+        );
+      }
+      assert.deepEqual(
+        {
+          grantedStage: updated.decisions.at(-1).grantedStage,
+          previousLimit: updated.decisions.at(-1).previousLimit,
+          newLimit: updated.decisions.at(-1).newLimit,
+          sourceRunId: updated.decisions.at(-1).sourceRunId,
+        },
+        { grantedStage: stage, previousLimit: 3, newLimit: 4, sourceRunId },
+      );
+      assert.deepEqual(
+        {
+          grantedStage: updated.events.at(-1).grantedStage,
+          previousLimit: updated.events.at(-1).previousLimit,
+          newLimit: updated.events.at(-1).newLimit,
+          sourceRunId: updated.events.at(-1).sourceRunId,
+          retryOfRunId: updated.events.at(-1).retryOfRunId,
+        },
+        { grantedStage: stage, previousLimit: 3, newLimit: 4, sourceRunId, retryOfRunId: sourceRunId },
+      );
+
+      const repeatedResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+      assert.equal(repeatedResponse.status, 409, `${stage} cannot receive a second grant before retrying`);
+      const repeated = await store.get(task.id);
+      assert.deepEqual(repeated.stageRunLimits, updated.stageRunLimits);
+      assert.equal(repeated.decisions.length, updated.decisions.length);
+    }
   } finally {
     await cleanup(server, directory);
   }

@@ -440,39 +440,18 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
           return;
         }
         if (action === "grant-retry") {
-          const candidate = task.candidates?.at(-1);
-          const grantedStage = candidate?.status === "repair_required" ? "implement" : task.currentStage;
-          if (!CANONICAL_RUN_STAGES.includes(grantedStage)) {
-            send(response, 409, { error: "The current stage cannot receive a retry grant." });
-            return;
-          }
-          const recoverableImplementation = grantedStage === "implement";
-          const currentAttempts = task.attemptsByStage?.[grantedStage] ?? 0;
-          const currentLimit = stageRunLimitFor(task, grantedStage);
-          if (currentAttempts > currentLimit) {
-            send(response, 409, { error: "The recorded attempts exceed this stage's allowance; resolve the inconsistent task state before granting a retry." });
-            return;
-          }
-          const exhaustedRepair =
-            ["repair-required", "failed"].includes(task.status) &&
-            candidate?.status === "repair_required" &&
-            currentAttempts >= currentLimit;
-          const exhaustedReadyGate =
-            ["ready-for-review", "ready-for-test", "ready-for-final-review"].includes(task.status) &&
-            currentAttempts >= currentLimit;
-          const blockedRetry =
-            task.status === "blocked" && (candidate?.status === "repair_required" || recoverableImplementation);
-          if (!exhaustedRepair && !exhaustedReadyGate && !blockedRetry) {
-            send(response, 409, { error: "A retry can only be granted to a blocked repair or implementation attempt." });
+          const grant = retryGrantContext(task);
+          if (grant.error) {
+            send(response, 409, { error: grant.error });
             return;
           }
           await store.update(id, (draft) => {
-            const attempts = draft.attemptsByStage?.[grantedStage] ?? 0;
-            const currentStageLimit = stageRunLimitFor(draft, grantedStage);
-            if (attempts > currentStageLimit) {
-              throw new Error("The recorded attempts exceed this stage's allowance; resolve the inconsistent task state before granting a retry.");
+            const currentGrant = retryGrantContext(draft);
+            if (currentGrant.error || currentGrant.grantedStage !== grant.grantedStage) {
+              throw new Error(currentGrant.error ?? "Task state changed before the retry grant could be recorded.");
             }
-            const nextStageLimit = currentStageLimit + 1;
+            const { candidate, grantedStage, currentLimit } = currentGrant;
+            const nextStageLimit = currentLimit + 1;
             draft.stageRunLimits ??= {};
             draft.stageRunLimits[grantedStage] = nextStageLimit;
             draft.status = "failed";
@@ -483,6 +462,9 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               question: candidate?.status === "repair_required" ? "Grant another repair attempt?" : "Grant another stage attempt?",
               answer: `Human override increased the ${grantedStage} allowance to ${nextStageLimit}.`,
               grantedStage,
+              previousLimit: currentLimit,
+              newLimit: nextStageLimit,
+              sourceRunId: retrySource?.id ?? null,
               createdAt: new Date().toISOString(),
             };
             draft.decisions ??= [];
@@ -497,6 +479,9 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               detail: decision.answer,
               decisionId: decision.id,
               grantedStage,
+              previousLimit: currentLimit,
+              newLimit: nextStageLimit,
+              sourceRunId: retrySource?.id ?? null,
               retryOfRunId: retrySource?.id ?? null,
             });
           });
@@ -558,6 +543,33 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
       send(response, error.statusCode ?? 400, { error: error.message });
     }
   });
+}
+
+function retryGrantContext(task) {
+  const candidate = task.candidates?.at(-1);
+  const grantedStage = candidate?.status === "repair_required" ? "implement" : task.currentStage;
+  if (!CANONICAL_RUN_STAGES.includes(grantedStage)) {
+    return { error: "The current stage cannot receive a retry grant." };
+  }
+  const currentAttempts = task.attemptsByStage?.[grantedStage] ?? 0;
+  const currentLimit = stageRunLimitFor(task, grantedStage);
+  if (currentAttempts > currentLimit) {
+    return {
+      error: "The recorded attempts exceed this stage's allowance; resolve the inconsistent task state before granting a retry.",
+    };
+  }
+  const exhaustedRepair =
+    ["repair-required", "failed"].includes(task.status) &&
+    candidate?.status === "repair_required" &&
+    currentAttempts >= currentLimit;
+  const exhaustedReadyGate =
+    ["ready-for-review", "ready-for-test", "ready-for-final-review"].includes(task.status) &&
+    currentAttempts >= currentLimit;
+  const exhaustedBlockedStage = task.status === "blocked" && currentAttempts >= currentLimit;
+  if (!exhaustedRepair && !exhaustedReadyGate && !exhaustedBlockedStage) {
+    return { error: "A retry can only be granted to an exhausted blocked stage or repair attempt." };
+  }
+  return { candidate, grantedStage, currentAttempts, currentLimit, error: null };
 }
 
 async function listChangelog(repositoryPath, limit) {
