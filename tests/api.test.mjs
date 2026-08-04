@@ -144,7 +144,8 @@ function bindLatestWorkflowAttempt(draft, stage, kind) {
     candidateId: candidate?.id ?? null,
     candidateRevision: candidate?.revisionNumber ?? null,
     candidateHeadRevision: candidate?.headRevision ?? null,
-    reservedAt: "2026-08-04T00:00:00.000Z",
+    authorizedRunScopes: kind === "implementation" ? ["S1"] : [],
+    reservedAt: "2026-08-04T00:02:00.000Z",
   };
   draft.stageRunReservations[stage] = reservation;
   const stageRuns = draft.runs.filter((run) => run.stage === stage);
@@ -165,6 +166,38 @@ function bindLatestWorkflowAttempt(draft, stage, kind) {
     });
   }
   return reservation;
+}
+
+function attachAssemblyLineage(draft, candidate, {
+  workflowAttempt = 1,
+  reservationId = `reservation-${draft.id}-assembly-${workflowAttempt}`,
+  reservedAt = "2026-08-04T00:00:00.000Z",
+  createdAt = "2026-08-04T00:01:00.000Z",
+} = {}) {
+  Object.assign(candidate, {
+    sourceWorkflowAttempt: workflowAttempt,
+    sourceWorkflowReservationId: reservationId,
+    revisions: [{
+      number: 1,
+      headRevision: candidate.headRevision,
+      reason: "assembly",
+      sourceWorkflowAttempt: workflowAttempt,
+      sourceWorkflowReservationId: reservationId,
+      createdAt,
+    }],
+  });
+  draft.stageRunReservations.implement = {
+    id: reservationId,
+    stage: "implement",
+    kind: "implementation",
+    workflowAttempt,
+    candidateId: null,
+    candidateRevision: null,
+    candidateHeadRevision: null,
+    authorizedRunScopes: ["S1"],
+    reservedAt,
+  };
+  return candidate;
 }
 
 test("creates, lists, and starts a local task", async () => {
@@ -1373,7 +1406,13 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
       draft.status = "blocked";
       draft.currentStage = "implement";
       draft.attemptsByStage.implement = draft.stageRunLimits.implement;
-      draft.candidates.push({ id: "C1", revisionNumber: 1, headRevision: "candidate-c1-r1", status: "repair_required" });
+      const candidate = attachAssemblyLineage(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "repair_required",
+      });
+      draft.candidates.push(candidate);
       draft.runs.push(...[1, 2, 3].map((attempt) => ({
         id: `run-failed-repair-${attempt}`,
         stage: "implement",
@@ -1459,6 +1498,7 @@ test("grants repair after a candidate is assembled on the final implementation a
           reason: "assembly",
           sourceWorkflowAttempt: reservation.workflowAttempt,
           sourceWorkflowReservationId: reservation.id,
+          createdAt: "2026-08-04T00:03:00.000Z",
         }],
       });
     });
@@ -1618,12 +1658,13 @@ test("grants only implement and admits one repair when its budget is exhausted",
       draft.currentStage = "dev-review";
       draft.attemptsByStage.implement = draft.stageRunLimits.implement;
       draft.attemptsByStage["dev-review"] = 1;
-      draft.candidates.push({
+      const candidate = attachAssemblyLineage(draft, {
         id: "C1",
         revisionNumber: 1,
         headRevision: "candidate-c1-r1",
         status: "repair_required",
       });
+      draft.candidates.push(candidate);
       draft.runs.push(...[1, 2, 3].map((attempt) => ({
         id: `run-exhausted-repair-${attempt}`,
         stage: "implement",
@@ -1668,12 +1709,13 @@ test("grants one bounded stage attempt to a reservation-bound candidate at an ex
       draft.status = "ready-for-review";
       draft.currentStage = "dev-review";
       draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
-      draft.candidates.push({
+      const candidate = attachAssemblyLineage(draft, {
         id: "C1",
         revisionNumber: 1,
         headRevision: "candidate-c1-r1",
         status: "ready_for_review",
       });
+      draft.candidates.push(candidate);
       draft.runs.push(...[1, 2, 3].map((attempt) => ({
         id: `run-ready-review-${attempt}`,
         stage: "dev-review",
@@ -1969,6 +2011,12 @@ test("rejects impossible older repair lineage before authorizing an adjacent gat
           candidate.revisions[1].createdAt = "2026-08-04T00:03:00.000Z";
         },
       },
+      {
+        name: "repair reservation before retained review",
+        mutate(_candidate, draft) {
+          draft.stageRunReservations.implement.reservedAt = "2026-08-04T00:01:00.000Z";
+        },
+      },
     ]) {
       const response = await createTask(origin, {
         title: `Reject ${item.name}`,
@@ -2015,7 +2063,6 @@ test("rejects impossible older repair lineage before authorizing an adjacent gat
             },
           ],
         };
-        item.mutate(candidate);
         draft.candidates.push(candidate);
         draft.stageRunReservations.implement = {
           id: "reservation-c1-r2-repair-3",
@@ -2037,12 +2084,125 @@ test("rejects impossible older repair lineage before authorizing an adjacent gat
           candidateHeadRevision: "candidate-c1-r2",
           reservedAt: "2026-08-04T00:01:15.000Z",
         };
+        item.mutate(candidate, draft);
       });
 
       const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
       assert.equal(grantResponse.status, 409, item.name);
       assert.match((await grantResponse.json()).error, /inconsistent workflow reservation/i, item.name);
       assert.equal((await store.get(task.id)).stageRunLimits["dev-review"], 3, item.name);
+    }
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects exact-current gate grants when the retained candidate history or producer is impossible", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    for (const item of [
+      {
+        name: "invalid intermediate revision reason",
+        mutate(candidate) {
+          candidate.revisions[1].reason = "assembly";
+        },
+      },
+      {
+        name: "current review predates candidate revision",
+        mutate(_candidate, draft) {
+          draft.stageRunReservations["dev-review"].reservedAt = "2026-08-04T00:01:45.000Z";
+        },
+      },
+      {
+        name: "missing current producer reservation",
+        mutate(_candidate, draft) {
+          delete draft.stageRunReservations.implement;
+        },
+      },
+      {
+        name: "top-level producer mismatch",
+        mutate(candidate) {
+          candidate.sourceWorkflowReservationId = "different-current-producer";
+        },
+      },
+    ]) {
+      const response = await createTask(origin, {
+        title: `Reject exact-current ${item.name}`,
+        description: "An exact current binding cannot bypass complete candidate history and producer validation.",
+        repositoryPath: directory,
+        workflow: "implement",
+      });
+      const { task } = await response.json();
+      await store.update(task.id, (draft) => {
+        draft.status = "ready-for-review";
+        draft.currentStage = "dev-review";
+        draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+        const candidate = {
+          id: "C1",
+          revisionNumber: 3,
+          headRevision: "candidate-c1-r3",
+          status: "ready_for_review",
+          sourceWorkflowAttempt: 3,
+          sourceWorkflowReservationId: "reservation-c1-r2-repair-3",
+          revisions: [
+            {
+              number: 1,
+              headRevision: "candidate-c1-r1",
+              reason: "assembly",
+              sourceWorkflowAttempt: 1,
+              sourceWorkflowReservationId: "reservation-c1-assembly-1",
+              createdAt: "2026-08-04T00:00:00.000Z",
+            },
+            {
+              number: 2,
+              headRevision: "candidate-c1-r2",
+              reason: "repair",
+              sourceWorkflowAttempt: 2,
+              sourceWorkflowReservationId: "reservation-c1-r1-repair-2",
+              createdAt: "2026-08-04T00:01:00.000Z",
+            },
+            {
+              number: 3,
+              headRevision: "candidate-c1-r3",
+              reason: "repair",
+              sourceWorkflowAttempt: 3,
+              sourceWorkflowReservationId: "reservation-c1-r2-repair-3",
+              createdAt: "2026-08-04T00:02:00.000Z",
+            },
+          ],
+        };
+        draft.candidates.push(candidate);
+        draft.stageRunReservations.implement = {
+          id: "reservation-c1-r2-repair-3",
+          stage: "implement",
+          kind: "repair",
+          workflowAttempt: 3,
+          candidateId: "C1",
+          candidateRevision: 2,
+          candidateHeadRevision: "candidate-c1-r2",
+          authorizedRunScopes: [],
+          reservedAt: "2026-08-04T00:01:30.000Z",
+        };
+        draft.stageRunReservations["dev-review"] = {
+          id: "reservation-c1-r3-review-3",
+          stage: "dev-review",
+          kind: "review",
+          workflowAttempt: 3,
+          candidateId: "C1",
+          candidateRevision: 3,
+          candidateHeadRevision: "candidate-c1-r3",
+          authorizedRunScopes: [],
+          reservedAt: "2026-08-04T00:03:00.000Z",
+        };
+        item.mutate(candidate, draft);
+      });
+
+      const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+      assert.equal(grantResponse.status, 409, item.name);
+      assert.match((await grantResponse.json()).error, /inconsistent workflow reservation/i, item.name);
+      const unchanged = await store.get(task.id);
+      assert.equal(unchanged.stageRunLimits["dev-review"], 3, item.name);
+      assert.equal(unchanged.decisions.length, 0, item.name);
     }
   } finally {
     await cleanup(server, directory);
@@ -2253,6 +2413,100 @@ test("rejects duplicate or unauthorized scopes inside a multi-run reservation", 
   }
 });
 
+test("rejects empty multi-run scope snapshots with exact, legacy, or absent run provenance", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    for (const item of [
+      {
+        name: "one exact Implementation run",
+        stage: "implement",
+        kind: "implementation",
+        scoutDispatch: null,
+        runs: [{
+          id: "run-implement-S1-exact",
+          kind: "implementation",
+          role: "implement",
+          workPackageId: "S1",
+          attempt: 1,
+          exact: true,
+        }],
+        error: /missing an authorized work-package scope/i,
+      },
+      {
+        name: "two legacy Implementation runs",
+        stage: "implement",
+        kind: "implementation",
+        scoutDispatch: null,
+        runs: ["S1", "S2"].map((workPackageId) => ({
+          id: `run-implement-${workPackageId}-legacy`,
+          kind: "implementation",
+          role: "implement",
+          workPackageId,
+          attempt: 1,
+          exact: false,
+        })),
+        error: /missing an authorized work-package scope/i,
+      },
+      {
+        name: "selected Scout with no run",
+        stage: "scouts",
+        kind: "investigation",
+        scoutDispatch: {
+          selected: [{ name: "scout-code-path", focus: "Trace the API.", reason: "Needed.", status: "complete" }],
+          skipped: [],
+          rationale: "One scout selected.",
+          createdAt: "2026-08-04T00:00:00.000Z",
+          completedAt: "2026-08-04T00:01:00.000Z",
+        },
+        runs: [],
+        error: /does not match its persisted dispatch/i,
+      },
+    ]) {
+      const response = await createTask(origin, {
+        title: `Reject ${item.name}`,
+        description: "A multi-run reservation must snapshot its authorized scopes independently of emitted runs.",
+        repositoryPath: directory,
+        workflow: "implement",
+      });
+      const { task } = await response.json();
+      await store.update(task.id, (draft) => {
+        draft.status = "blocked";
+        draft.currentStage = item.stage;
+        draft.attemptsByStage[item.stage] = draft.stageRunLimits[item.stage];
+        draft.scoutDispatch = item.scoutDispatch;
+        const reservationId = `reservation-${item.stage}-empty-scopes-3`;
+        draft.stageRunReservations[item.stage] = {
+          id: reservationId,
+          stage: item.stage,
+          kind: item.kind,
+          workflowAttempt: 3,
+          candidateId: null,
+          candidateRevision: null,
+          candidateHeadRevision: null,
+          authorizedRunScopes: [],
+          reservedAt: "2026-08-04T00:00:00.000Z",
+        };
+        draft.runs.push(...item.runs.map(({ exact, ...run }) => ({
+          ...run,
+          stage: item.stage,
+          status: "failed",
+          candidateId: null,
+          candidateRevision: null,
+          candidateHeadRevision: null,
+          ...(exact ? { workflowAttempt: 3, workflowReservationId: reservationId } : {}),
+        })));
+      });
+
+      const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+      assert.equal(grantResponse.status, 409, item.name);
+      assert.match((await grantResponse.json()).error, item.error, item.name);
+      assert.equal((await store.get(task.id)).stageRunLimits[item.stage], 3, item.name);
+    }
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("persists every uniquely dispatched Scout source run", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
@@ -2384,12 +2638,13 @@ test("grants exactly one retry to each exhausted blocked canonical stage", async
           status: "failed",
         })));
         if (candidateStatus) {
-          draft.candidates.push({
+          const candidate = attachAssemblyLineage(draft, {
             id: "C1",
             revisionNumber: 1,
             headRevision: "candidate-c1-r1",
             status: candidateStatus,
           });
+          draft.candidates.push(candidate);
         }
         bindLatestWorkflowAttempt(draft, stage, {
           triage: "investigation",
@@ -2515,12 +2770,13 @@ test("rejects a retry grant when reserved run metadata drifts before the atomic 
       draft.status = "blocked";
       draft.currentStage = "dev-review";
       draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
-      draft.candidates.push({
+      const candidate = attachAssemblyLineage(draft, {
         id: "C1",
         revisionNumber: 1,
         headRevision: "candidate-c1-r1",
         status: "ready_for_review",
       });
+      draft.candidates.push(candidate);
       draft.runs.push(...[1, 2, 3].map((attempt) => ({
         id: `run-review-${attempt}`,
         stage: "dev-review",
@@ -2561,12 +2817,13 @@ test("rejects a retry grant when the persisted source run tuple is already impos
       draft.status = "blocked";
       draft.currentStage = "dev-review";
       draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
-      draft.candidates.push({
+      const candidate = attachAssemblyLineage(draft, {
         id: "C1",
         revisionNumber: 1,
         headRevision: "candidate-c1-r1",
         status: "ready_for_review",
       });
+      draft.candidates.push(candidate);
       draft.runs.push(...[1, 2, 3].map((attempt) => ({
         id: `run-malformed-review-${attempt}`,
         stage: "dev-review",
@@ -2610,12 +2867,13 @@ test("rejects partial and orphaned explicit workflow identities instead of treat
         draft.status = "blocked";
         draft.currentStage = "dev-review";
         draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
-        draft.candidates.push({
+        const candidate = attachAssemblyLineage(draft, {
           id: "C1",
           revisionNumber: 1,
           headRevision: "candidate-c1-r1",
           status: "ready_for_review",
         });
+        draft.candidates.push(candidate);
         draft.stageRunReservations["dev-review"] = {
           id: "reservation-current-review-3",
           stage: "dev-review",
@@ -2624,7 +2882,7 @@ test("rejects partial and orphaned explicit workflow identities instead of treat
           candidateId: "C1",
           candidateRevision: 1,
           candidateHeadRevision: "candidate-c1-r1",
-          reservedAt: "2026-08-04T00:00:00.000Z",
+          reservedAt: "2026-08-04T00:02:00.000Z",
         };
         draft.runs.push({
           id: `run-${name}-review-3`,

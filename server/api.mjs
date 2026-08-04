@@ -730,10 +730,15 @@ function validRetryReservationCandidateBinding(reservation, candidateRequired, c
     reservation.candidateRevision == null &&
     reservation.candidateHeadRevision == null;
   if (!candidateRequired) return allNull;
+  const lineage = candidateRevisionLineage(candidate);
+  if (!lineage) return false;
   const sourceReservation = reservation.id === candidate?.sourceWorkflowReservationId &&
     reservation.workflowAttempt === candidate?.sourceWorkflowAttempt;
   if (allNull) {
-    return grantedStage === "implement" && sourceReservation && reservation.kind === "implementation";
+    return grantedStage === "implement" &&
+      sourceReservation &&
+      reservation.kind === "implementation" &&
+      validCandidateProducerReservation(candidate, reservation, lineage);
   }
   const completeBinding = typeof reservation.candidateId === "string" && reservation.candidateId.trim().length > 0 &&
     Number.isInteger(reservation.candidateRevision) && reservation.candidateRevision > 0 &&
@@ -742,7 +747,16 @@ function validRetryReservationCandidateBinding(reservation, candidateRequired, c
   const exactCurrentCandidate = reservation.candidateId === candidate?.id &&
     reservation.candidateRevision === candidate?.revisionNumber &&
     reservation.candidateHeadRevision === candidate?.headRevision;
-  if (exactCurrentCandidate) return true;
+  if (exactCurrentCandidate) {
+    if (
+      !validPersistedTimestamp(reservation.reservedAt) ||
+      Date.parse(reservation.reservedAt) < Date.parse(lineage.currentRevision.createdAt)
+    ) {
+      return false;
+    }
+    if (grantedStage === "implement" && reservation.kind === "repair") return true;
+    return validCandidateProducerReservation(candidate, reservations?.implement, lineage);
+  }
   if (grantedStage !== "implement") {
     if (
       reservation.candidateId !== candidate?.id ||
@@ -750,15 +764,16 @@ function validRetryReservationCandidateBinding(reservation, candidateRequired, c
     ) {
       return false;
     }
-    return validAdjacentRepairLineage(candidate, reservation, reservations?.implement);
+    return validAdjacentRepairLineage(candidate, reservation, reservations?.implement, lineage);
   }
-  if (!sourceReservation || reservation.kind !== "repair" || reservation.candidateId !== candidate?.id) return false;
-  return validAdjacentRepairLineage(candidate, reservation, reservation);
+  return sourceReservation &&
+    ["implementation", "repair"].includes(reservation.kind) &&
+    validCandidateProducerReservation(candidate, reservation, lineage);
 }
 
-function validAdjacentRepairLineage(candidate, priorReservation, repairReservation) {
+function candidateRevisionLineage(candidate) {
   const revisions = candidate?.revisions;
-  if (!Array.isArray(revisions) || revisions.length !== candidate.revisionNumber) return false;
+  if (!Array.isArray(revisions) || revisions.length !== candidate.revisionNumber) return null;
   const byNumber = new Map();
   const heads = new Set();
   const sourceReservations = new Set();
@@ -779,7 +794,7 @@ function validAdjacentRepairLineage(candidate, priorReservation, repairReservati
       sourceReservations.has(revision.sourceWorkflowReservationId) ||
       !validPersistedTimestamp(revision.createdAt)
     ) {
-      return false;
+      return null;
     }
     byNumber.set(revision.number, revision);
     heads.add(revision.headRevision);
@@ -789,43 +804,67 @@ function validAdjacentRepairLineage(candidate, priorReservation, repairReservati
   let previousCreatedAt = -Infinity;
   for (let number = 1; number <= candidate.revisionNumber; number += 1) {
     const revision = byNumber.get(number);
-    if (!revision) return false;
+    if (!revision) return null;
     const createdAt = Date.parse(revision.createdAt);
-    if (revision.sourceWorkflowAttempt <= previousAttempt || createdAt <= previousCreatedAt) return false;
+    if (revision.sourceWorkflowAttempt <= previousAttempt || createdAt <= previousCreatedAt) return null;
     previousAttempt = revision.sourceWorkflowAttempt;
     previousCreatedAt = createdAt;
   }
-  const priorRevision = byNumber.get(priorReservation.candidateRevision);
   const currentRevision = byNumber.get(candidate.revisionNumber);
-  const sourceReservationId = currentRevision?.sourceWorkflowReservationId;
-  const sourceAttempt = currentRevision?.sourceWorkflowAttempt;
+  if (
+    currentRevision.headRevision !== candidate.headRevision ||
+    currentRevision.sourceWorkflowReservationId !== candidate.sourceWorkflowReservationId ||
+    currentRevision.sourceWorkflowAttempt !== candidate.sourceWorkflowAttempt
+  ) {
+    return null;
+  }
+  return { byNumber, currentRevision };
+}
+
+function validCandidateProducerReservation(candidate, producerReservation, lineage) {
+  if (!producerReservation || !validPersistedTimestamp(producerReservation.reservedAt)) return false;
+  const currentRevision = lineage.currentRevision;
+  if (
+    producerReservation.id !== currentRevision.sourceWorkflowReservationId ||
+    producerReservation.workflowAttempt !== currentRevision.sourceWorkflowAttempt ||
+    producerReservation.stage !== "implement"
+  ) {
+    return false;
+  }
+  const producerReservedAt = Date.parse(producerReservation.reservedAt);
+  const currentCreatedAt = Date.parse(currentRevision.createdAt);
+  if (currentRevision.number === 1) {
+    return producerReservation.kind === "implementation" &&
+      producerReservation.candidateId == null &&
+      producerReservation.candidateRevision == null &&
+      producerReservation.candidateHeadRevision == null &&
+      producerReservedAt <= currentCreatedAt;
+  }
+  const priorRevision = lineage.byNumber.get(currentRevision.number - 1);
+  return producerReservation.kind === "repair" &&
+    producerReservation.candidateId === candidate.id &&
+    producerReservation.candidateRevision === priorRevision.number &&
+    producerReservation.candidateHeadRevision === priorRevision.headRevision &&
+    producerReservedAt > Date.parse(priorRevision.createdAt) &&
+    producerReservedAt <= currentCreatedAt;
+}
+
+function validAdjacentRepairLineage(candidate, priorReservation, repairReservation, lineage) {
+  if (!validCandidateProducerReservation(candidate, repairReservation, lineage)) return false;
+  const currentRevision = lineage.currentRevision;
+  const priorRevision = lineage.byNumber.get(currentRevision.number - 1);
   const priorCreatedAt = Date.parse(priorRevision?.createdAt);
   const currentCreatedAt = Date.parse(currentRevision?.createdAt);
   const priorReservedAt = Date.parse(priorReservation?.reservedAt);
   const repairReservedAt = Date.parse(repairReservation?.reservedAt);
   return priorReservation.candidateRevision + 1 === candidate.revisionNumber &&
+    priorReservation.candidateId === candidate.id &&
     priorRevision?.headRevision === priorReservation.candidateHeadRevision &&
-    currentRevision?.headRevision === candidate.headRevision &&
-    currentRevision?.reason === "repair" &&
-    typeof sourceReservationId === "string" &&
-    sourceReservationId.trim().length > 0 &&
-    Number.isInteger(sourceAttempt) &&
-    sourceAttempt > 0 &&
-    candidate.sourceWorkflowReservationId === sourceReservationId &&
-    candidate.sourceWorkflowAttempt === sourceAttempt &&
-    repairReservation?.id === sourceReservationId &&
-    repairReservation.workflowAttempt === sourceAttempt &&
-    repairReservation.stage === "implement" &&
-    repairReservation.kind === "repair" &&
-    repairReservation.candidateId === candidate.id &&
-    repairReservation.candidateRevision === priorRevision.number &&
-    repairReservation.candidateHeadRevision === priorRevision.headRevision &&
-    validPersistedTimestamp(repairReservation.reservedAt) &&
+    priorReservation.id !== repairReservation.id &&
     priorReservedAt >= priorCreatedAt &&
     priorReservedAt < currentCreatedAt &&
-    repairReservedAt > priorCreatedAt &&
-    repairReservedAt <= currentCreatedAt &&
-    (priorReservation.stage === "implement" || repairReservation.id !== priorReservation.id);
+    repairReservedAt > priorReservedAt &&
+    repairReservedAt <= currentCreatedAt;
 }
 
 function validPersistedTimestamp(value) {
@@ -919,14 +958,15 @@ function validateRetryRunScopes(task, reservation, reservationRuns) {
     return "The exhausted workflow reservation has multiple source runs for a singleton stage; resolve the inconsistent history before granting a retry.";
   }
   const authorized = reservation.authorizedRunScopes;
-  if (reservationRuns.length <= 1 && (!Array.isArray(authorized) || !authorized.length)) return null;
   if (
     !Array.isArray(authorized) ||
-    !authorized.length ||
     authorized.some((scope) => typeof scope !== "string" || !scope.trim()) ||
     new Set(authorized).size !== authorized.length
   ) {
     return "The exhausted multi-run reservation is missing unique authorized run scopes; resolve the inconsistent history before granting a retry.";
+  }
+  if (reservation.kind === "implementation" && !authorized.length) {
+    return "The exhausted Implementation reservation is missing an authorized work-package scope; resolve the inconsistent history before granting a retry.";
   }
   if (reservation.stage === "scouts") {
     const selected = (task.scoutDispatch?.selected ?? []).map((scout) => scout?.name);
