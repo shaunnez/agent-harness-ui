@@ -227,7 +227,7 @@ export function resolveGateFreshness(task, stage) {
       stage,
       target,
       selected.run?.id ?? null,
-      selected.entry?.artifact?.id ?? null,
+      selected.entry?.artifact?.id ?? selected.run?.artifactId ?? null,
       selected.reasonCode,
       null,
     );
@@ -242,13 +242,17 @@ export function resolveGateFreshness(task, stage) {
     }
     return evaluateRunFreshness(
       diagnostic.run,
-      diagnostic.entry?.artifact ?? findRunArtifact(task, diagnostic.run),
+      diagnostic.entry?.artifacts ?? findRunArtifacts(task, diagnostic.run),
       target,
       stage,
     );
   }
-  const artifact = selected.entry?.artifact ?? findRunArtifact(task, selected.run);
-  return evaluateRunFreshness(selected.run, artifact, target, stage);
+  return evaluateRunFreshness(
+    selected.run,
+    selected.entry?.artifacts ?? findRunArtifacts(task, selected.run),
+    target,
+    stage,
+  );
 }
 
 /** Recompute the authoritative task projection and every gate run's audit state. */
@@ -263,8 +267,8 @@ export function refreshGateFreshness(task) {
     projection[stage] = resolveGateFreshness(task, stage);
     for (const run of task.runs ?? []) {
       if (run.stage !== stage) continue;
-      const artifact = findRunArtifact(task, run);
-      const evaluatedFreshness = evaluateRunFreshness(run, artifact, target, stage);
+      const artifacts = findRunArtifacts(task, run);
+      const evaluatedFreshness = evaluateRunFreshness(run, artifacts, target, stage);
       const relevantEntry = selected.entries.find((entry) => entry.run?.id === run.id);
       const retainedReason = relevantEntry?.identityResolution?.reasonCode
         ?? relevantEntry?.attemptReason
@@ -274,7 +278,7 @@ export function refreshGateFreshness(task) {
           stage,
           target,
           run.id,
-          run.artifactId ?? artifact?.id ?? null,
+          run.artifactId ?? stableArtifact(artifacts)?.id ?? null,
           retainedReason,
           evaluatedFreshness.focusedTest,
         );
@@ -289,17 +293,13 @@ export function refreshGateFreshness(task) {
   }
   task.gateFreshness = projection;
   const runsById = new Map((task.runs ?? []).map((run) => [run.id, run]));
-  const runsByArtifactId = new Map(
-    (task.runs ?? [])
-      .filter((run) => run.artifactId)
-      .map((run) => [run.artifactId, run]),
-  );
   const artifactsById = new Map((task.artifacts ?? []).map((artifact) => [artifact.id, artifact]));
   const artifactTargetResult = activeCandidateBinding(task);
   const artifactTarget = artifactTargetResult.valid ? artifactTargetResult : null;
   for (const artifact of task.artifacts ?? []) {
     if (!CANDIDATE_GATE_STAGES.includes(artifact.stage)) continue;
-    const run = (artifact.runId ? runsById.get(artifact.runId) : null) ?? runsByArtifactId.get(artifact.id);
+    const linkedRuns = findArtifactRuns(task, artifact);
+    const run = linkedRuns.length === 1 ? linkedRuns[0] : null;
     artifact.freshness = run?.freshness
       ? structuredClone(run.freshness)
       : createFreshness(
@@ -307,20 +307,23 @@ export function refreshGateFreshness(task) {
           artifactTarget,
           null,
           artifact.id ?? null,
-          "missing_authoritative_summary",
+          linkedRuns.length > 1 ? "contradictory_evidence" : "missing_authoritative_summary",
           null,
         );
   }
   for (const event of task.events ?? []) {
     const directRun = event.runId ? runsById.get(event.runId) : null;
     const linkedArtifact = event.artifactId ? artifactsById.get(event.artifactId) : null;
-    const artifactRun = linkedArtifact
-      ? (linkedArtifact.runId ? runsById.get(linkedArtifact.runId) : null)
-        ?? runsByArtifactId.get(linkedArtifact.id)
-      : null;
-    const run = directRun ?? artifactRun;
-    if (run?.freshness && CANDIDATE_GATE_STAGES.includes(run.stage) && run.stage === event.stage) {
-      event.freshness = structuredClone(run.freshness);
+    if (
+      directRun?.freshness &&
+      CANDIDATE_GATE_STAGES.includes(directRun.stage) &&
+      directRun.stage === event.stage
+    ) {
+      event.freshness = structuredClone(directRun.freshness);
+      continue;
+    }
+    if (linkedArtifact?.freshness && linkedArtifact.stage === event.stage) {
+      event.freshness = structuredClone(linkedArtifact.freshness);
       continue;
     }
     if (!isLegacyCandidateGateEvent(event)) continue;
@@ -347,9 +350,11 @@ function isLegacyCandidateGateEvent(event) {
   }[event.stage] === title;
 }
 
-function evaluateRunFreshness(run, artifact, target, stage) {
+function evaluateRunFreshness(run, artifactsInput, target, stage) {
+  const artifacts = normalizeArtifacts(artifactsInput);
+  const artifact = artifacts.length === 1 ? artifacts[0] : null;
   const sourceRunId = run?.id ?? null;
-  const sourceArtifactId = run?.artifactId ?? artifact?.id ?? null;
+  const sourceArtifactId = run?.artifactId ?? stableArtifact(artifacts)?.id ?? null;
   if (!target) {
     return createFreshness(stage, null, sourceRunId, sourceArtifactId, "missing_binding", null);
   }
@@ -357,13 +362,13 @@ function evaluateRunFreshness(run, artifact, target, stage) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "missing_authoritative_summary", null);
   }
 
-  const identityResolution = persistedEvidenceIdentityResolution(run, artifact, stage);
+  const identityResolution = persistedEvidenceIdentityResolution(run, artifacts, stage);
   if (identityResolution.reasonCode) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, identityResolution.reasonCode, null);
   }
   const identityReason = compareCandidateBinding(identityResolution.binding, target);
   if (identityReason) return createFreshness(stage, target, sourceRunId, sourceArtifactId, identityReason, null);
-  if (artifact && artifact.stage !== stage) {
+  if (artifacts.some((item) => item.stage !== stage)) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
 
@@ -618,7 +623,10 @@ function activeCandidateBinding(task) {
 
 function terminalStageRuns(task, stage) {
   return (task.runs ?? [])
-    .map((run) => ({ run, artifact: findRunArtifact(task, run) }))
+    .map((run) => {
+      const artifacts = findRunArtifacts(task, run);
+      return { run, artifacts, artifact: artifacts.length === 1 ? artifacts[0] : null };
+    })
     .filter(({ run }) => run?.stage === stage && isTerminalRun(run));
 }
 
@@ -628,7 +636,7 @@ function candidateRelevantRuns(entries, target) {
       ...entry,
       identityResolution: entry.identityResolution ?? persistedEvidenceIdentityResolution(
         entry.run,
-        entry.artifact,
+        entry.artifacts ?? entry.artifact,
         entry.run?.stage,
       ),
     }))
@@ -653,30 +661,31 @@ function latestPersistedRun(entries) {
     attemptEntries.push(entry);
     validAttempts.set(entry.run.attempt, attemptEntries);
   }
-  const identityFailureForInvalidAttempt = resolvedEntries.find((entry) =>
-    entry.attemptReason && entry.identityResolution?.reasonCode,
-  )?.identityResolution?.reasonCode;
-  if ([...validAttempts.values()].some((attemptEntries) => attemptEntries.length > 1)) {
-    const identityEntry = resolvedEntries.find((entry) => entry.identityResolution?.reasonCode);
+  const duplicateEntries = [...validAttempts.values()]
+    .filter((attemptEntries) => attemptEntries.length > 1)
+    .flat();
+  if (duplicateEntries.length) {
+    const identityFailure = deterministicIdentityFailure(duplicateEntries);
     return failedRunSelection(
-      identityEntry?.identityResolution?.reasonCode ?? "ambiguous_attempt",
-      identityEntry ?? stableRunEntry(resolvedEntries),
+      identityFailure?.identityResolution.reasonCode ?? "ambiguous_attempt",
+      identityFailure ?? stableRunEntry(duplicateEntries),
       resolvedEntries,
     );
   }
-  const malformed = resolvedEntries.find(({ attemptReason }) => attemptReason === "malformed_attempt");
-  if (malformed) {
-    const entry = identityFailureForInvalidAttempt
-      ? resolvedEntries.find(({ identityResolution }) => identityResolution?.reasonCode)
-      : malformed;
-    return failedRunSelection(identityFailureForInvalidAttempt ?? malformed.attemptReason, entry, resolvedEntries);
-  }
-  const missing = resolvedEntries.find(({ attemptReason }) => attemptReason === "missing_attempt");
-  if (missing) {
-    const entry = identityFailureForInvalidAttempt
-      ? resolvedEntries.find(({ identityResolution }) => identityResolution?.reasonCode)
-      : missing;
-    return failedRunSelection(identityFailureForInvalidAttempt ?? missing.attemptReason, entry, resolvedEntries);
+  const invalidAttemptEntries = resolvedEntries.filter((entry) => entry.attemptReason);
+  if (invalidAttemptEntries.length) {
+    const identityFailure = deterministicIdentityFailure(invalidAttemptEntries);
+    if (identityFailure) {
+      return failedRunSelection(identityFailure.identityResolution.reasonCode, identityFailure, resolvedEntries);
+    }
+    const attemptReason = invalidAttemptEntries.some((entry) => entry.attemptReason === "malformed_attempt")
+      ? "malformed_attempt"
+      : "missing_attempt";
+    return failedRunSelection(
+      attemptReason,
+      stableRunEntry(invalidAttemptEntries.filter((entry) => entry.attemptReason === attemptReason)),
+      resolvedEntries,
+    );
   }
 
   const entry = resolvedEntries.reduce((current, candidate) => (
@@ -692,6 +701,21 @@ function failedRunSelection(reasonCode, entry, entries) {
 function stableRunEntry(entries) {
   return [...entries]
     .sort((left, right) => String(left.run?.id ?? "").localeCompare(String(right.run?.id ?? "")))[0] ?? null;
+}
+
+function deterministicIdentityFailure(entries) {
+  const reasonPrecedence = [
+    "mixed_evidence",
+    "contradictory_evidence",
+    "malformed_binding",
+    "missing_binding",
+  ];
+  for (const reasonCode of reasonPrecedence) {
+    const matching = entries.filter((entry) => entry.identityResolution?.reasonCode === reasonCode);
+    if (matching.length) return stableRunEntry(matching);
+  }
+  const otherFailures = entries.filter((entry) => entry.identityResolution?.reasonCode);
+  return stableRunEntry(otherFailures);
 }
 
 function emptyRunSelection() {
@@ -724,11 +748,28 @@ function isTerminalRun(run) {
   return run && run.status !== "running" && (TERMINAL_STATUSES.has(run.status) || run.completedAt != null || run.status == null);
 }
 
-function findRunArtifact(task, run) {
-  if (!run) return null;
-  return (task.artifacts ?? []).find((artifact) =>
-    (run.artifactId && artifact.id === run.artifactId) || artifact.runId === run.id,
-  ) ?? null;
+function findRunArtifacts(task, run) {
+  if (!run) return [];
+  return (task.artifacts ?? []).filter((artifact) => artifact && typeof artifact === "object" && (
+    (run.artifactId && artifact.id === run.artifactId) || artifact.runId === run.id
+  ));
+}
+
+function findArtifactRuns(task, artifact) {
+  if (!artifact) return [];
+  return (task.runs ?? []).filter((run) =>
+    (artifact.runId && run.id === artifact.runId) || (run.artifactId && run.artifactId === artifact.id),
+  );
+}
+
+function normalizeArtifacts(value) {
+  if (Array.isArray(value)) return value;
+  return value && typeof value === "object" ? [value] : [];
+}
+
+function stableArtifact(artifacts) {
+  return [...artifacts]
+    .sort((left, right) => String(left?.id ?? "").localeCompare(String(right?.id ?? "")))[0] ?? null;
 }
 
 function attachmentEvidenceError(run, artifact) {
@@ -737,37 +778,54 @@ function attachmentEvidenceError(run, artifact) {
   return identityResolution.reasonCode ? reasonRecord(identityResolution.reasonCode) : null;
 }
 
-function persistedEvidenceIdentityResolution(run, artifact, stage) {
+function persistedEvidenceIdentityResolution(run, artifactsInput, stage) {
+  const artifacts = normalizeArtifacts(artifactsInput);
   const evidence = [];
+  let invalidReason = artifactLinkReason(run, artifacts);
   const addEvidence = (value, validateMarker = false) => {
     if (value && typeof value === "object" && !Array.isArray(value)) {
       evidence.push({ value, validateMarker });
+    } else {
+      invalidReason ??= "contradictory_evidence";
     }
   };
   const addGateSummary = (summary) => {
+    if (summary == null) return;
     addEvidence(summary);
-    if (Array.isArray(summary?.findings)) {
-      for (const finding of summary.findings) addEvidence(finding, true);
+    if (
+      summary &&
+      typeof summary === "object" &&
+      !Array.isArray(summary) &&
+      Object.prototype.hasOwnProperty.call(summary, "findings")
+    ) {
+      if (!Array.isArray(summary.findings)) invalidReason ??= "contradictory_evidence";
+      else for (const finding of summary.findings) addEvidence(finding, true);
     }
   };
   const addTestSummary = (summary) => {
+    if (summary == null) return;
     addEvidence(summary, true);
-    if (Array.isArray(summary?.rows)) {
-      for (const row of summary.rows) addEvidence(row, true);
+    if (
+      summary &&
+      typeof summary === "object" &&
+      !Array.isArray(summary) &&
+      Object.prototype.hasOwnProperty.call(summary, "rows")
+    ) {
+      if (!Array.isArray(summary.rows)) invalidReason ??= "contradictory_evidence";
+      else for (const row of summary.rows) addEvidence(row, true);
     }
   };
 
   addEvidence(run);
-  addEvidence(artifact);
+  for (const artifact of artifacts) addEvidence(artifact);
   addGateSummary(run?.gateResult);
-  addGateSummary(artifact?.gateResult);
+  for (const artifact of artifacts) addGateSummary(artifact?.gateResult);
   if (stage === "test") {
     addTestSummary(run?.test);
-    addTestSummary(artifact?.focusedTest);
+    for (const artifact of artifacts) addTestSummary(artifact?.focusedTest);
   }
 
   const identities = new Map();
-  let invalidReason = null;
   for (const { value, validateMarker } of evidence) {
     const markerReason = validateMarker ? persistedBindingMarkerReason(value) : null;
     if (markerReason) invalidReason ??= markerReason;
@@ -782,6 +840,15 @@ function persistedEvidenceIdentityResolution(run, artifact, stage) {
   if (identities.size > 1) return { binding: null, reasonCode: "mixed_evidence" };
   if (invalidReason) return { binding: null, reasonCode: invalidReason };
   return { binding: identities.values().next().value ?? null, reasonCode: null };
+}
+
+function artifactLinkReason(run, artifacts) {
+  if (!artifacts.length) return null;
+  if (artifacts.length > 1) return "contradictory_evidence";
+  const [artifact] = artifacts;
+  if (run?.artifactId && artifact.id !== run.artifactId) return "contradictory_evidence";
+  if (artifact.runId && artifact.runId !== run?.id) return "contradictory_evidence";
+  return null;
 }
 
 function reasonRecord(code) {

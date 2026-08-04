@@ -1867,6 +1867,175 @@ test("retains uncertain non-target evidence after resolving nested identities", 
   }
 });
 
+test("retains malformed nested non-target evidence before candidate filtering", () => {
+  const cases = [
+    {
+      name: "non-object finding",
+      stage: "dev-review",
+      gateResult: makeGateResult({ candidateId: "C2", candidateRevision: 8, findings: [null] }),
+      test: null,
+    },
+    {
+      name: "malformed findings container",
+      stage: "dev-review",
+      gateResult: { ...makeGateResult({ candidateId: "C2", candidateRevision: 8 }), findings: {} },
+      test: null,
+    },
+    {
+      name: "non-object test row",
+      stage: "test",
+      gateResult: makeGateResult({ stage: "test", candidateId: "C2", candidateRevision: 8 }),
+      test: { ...makeFocusedTestSummary({ candidateId: "C2", candidateRevision: 8 }), rows: [null] },
+    },
+    {
+      name: "malformed rows container",
+      stage: "test",
+      gateResult: makeGateResult({ stage: "test", candidateId: "C2", candidateRevision: 8 }),
+      test: { ...makeFocusedTestSummary({ candidateId: "C2", candidateRevision: 8 }), rows: {} },
+    },
+  ];
+
+  for (const item of cases) {
+    const oldTest = item.stage === "test" ? makeFocusedTestSummary() : null;
+    const oldRun = makeRuntimeRun({
+      id: `RUN-OLD-${item.name}`,
+      stage: item.stage,
+      kind: item.stage === "test" ? "test" : "review",
+      attempt: 1,
+      gateResult: makeGateResult({ stage: item.stage }),
+      test: oldTest,
+    });
+    const malformedRun = makeRuntimeRun({
+      id: `RUN-MALFORMED-${item.name}`,
+      stage: item.stage,
+      kind: item.stage === "test" ? "test" : "review",
+      candidateId: "C2",
+      candidateRevision: 8,
+      attempt: 2,
+      artifactId: `ART-MALFORMED-${item.name}`,
+      gateResult: item.gateResult,
+      test: item.test,
+    });
+    const artifact = makeArtifact({
+      id: malformedRun.artifactId,
+      stage: item.stage,
+      candidateId: "C2",
+      candidateRevision: 8,
+      gateResult: item.gateResult,
+      focusedTest: item.test,
+    });
+    artifact.runId = malformedRun.id;
+    const event = { id: `EVENT-${item.name}`, runId: malformedRun.id, stage: item.stage };
+    const task = makeRuntimeTask({ runs: [oldRun, malformedRun], artifacts: [artifact], events: [event] });
+
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness[item.stage].sourceRunId, malformedRun.id, item.name);
+    assert.equal(task.gateFreshness[item.stage].reasonCode, "contradictory_evidence", item.name);
+    assert.equal(oldRun.freshness.reasonCode, "superseded_attempt", item.name);
+    assert.equal(malformedRun.freshness.reasonCode, "contradictory_evidence", item.name);
+    assert.equal(artifact.freshness.reasonCode, "contradictory_evidence", item.name);
+    assert.equal(event.freshness.reasonCode, "contradictory_evidence", item.name);
+    assert.equal(event.freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.contradictory_evidence, item.name);
+  }
+});
+
+test("selects compound duplicate-attempt identity failures deterministically", () => {
+  for (const order of ["missing-first", "mixed-first"]) {
+    const missing = makeRuntimeRun({
+      id: "RUN-MISSING",
+      candidateId: null,
+      candidateRevision: null,
+      attempt: 2,
+      artifactId: "ART-MISSING",
+      gateResult: makeGateResult({ candidateId: null, candidateRevision: null }),
+    });
+    const mixed = makeRuntimeRun({
+      id: "RUN-MIXED",
+      attempt: 2,
+      artifactId: "ART-MIXED",
+      gateResult: makeGateResult({ findings: [makePersistedFinding({ candidateId: "C2" })] }),
+    });
+    const missingArtifact = makeArtifact({
+      id: missing.artifactId,
+      candidateId: null,
+      candidateRevision: null,
+      gateResult: missing.gateResult,
+    });
+    const mixedArtifact = makeArtifact({ id: mixed.artifactId, gateResult: mixed.gateResult });
+    missingArtifact.runId = missing.id;
+    mixedArtifact.runId = mixed.id;
+    const events = [
+      { id: "EVENT-MISSING", runId: missing.id, stage: "dev-review" },
+      { id: "EVENT-MIXED", runId: mixed.id, stage: "dev-review" },
+    ];
+    const task = makeRuntimeTask({
+      runs: order === "missing-first" ? [missing, mixed] : [mixed, missing],
+      artifacts: [missingArtifact, mixedArtifact],
+      events,
+    });
+
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness["dev-review"].sourceRunId, mixed.id, order);
+    assert.equal(task.gateFreshness["dev-review"].reasonCode, "mixed_evidence", order);
+    assert.equal(missing.freshness.reasonCode, "missing_binding", order);
+    assert.equal(mixed.freshness.reasonCode, "mixed_evidence", order);
+    assert.equal(missingArtifact.freshness.reasonCode, "missing_binding", order);
+    assert.equal(mixedArtifact.freshness.reasonCode, "mixed_evidence", order);
+    assert.equal(events[0].freshness.reasonCode, "missing_binding", order);
+    assert.equal(events[1].freshness.reasonCode, "mixed_evidence", order);
+  }
+});
+
+test("resolves every linked artifact independently of persisted order", () => {
+  for (const order of ["reverse-first", "explicit-first"]) {
+    const run = makeRuntimeRun({
+      id: "RUN-MULTI-ARTIFACT",
+      artifactId: "ART-EXPLICIT-CONFLICT",
+      attempt: 2,
+    });
+    const reverseExact = makeArtifact({ id: "ART-REVERSE-EXACT" });
+    reverseExact.runId = run.id;
+    const explicitConflict = makeArtifact({
+      id: run.artifactId,
+      candidateId: "C2",
+      candidateRevision: 8,
+      gateResult: makeGateResult({ candidateId: "C2", candidateRevision: 8 }),
+    });
+    const artifacts = order === "reverse-first"
+      ? [reverseExact, explicitConflict]
+      : [explicitConflict, reverseExact];
+    const events = artifacts.map((artifact) => ({
+      id: `EVENT-${artifact.id}`,
+      artifactId: artifact.id,
+      stage: "dev-review",
+    }));
+    const task = makeRuntimeTask({ runs: [run], artifacts, events });
+
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness["dev-review"].sourceRunId, run.id, order);
+    assert.equal(task.gateFreshness["dev-review"].reasonCode, "mixed_evidence", order);
+    assert.equal(run.freshness.reasonCode, "mixed_evidence", order);
+    assert.equal(artifacts.every((artifact) => artifact.freshness.reasonCode === "mixed_evidence"), true, order);
+    assert.equal(events.every((event) => event.freshness.reasonCode === "mixed_evidence"), true, order);
+  }
+
+  const run = makeRuntimeRun({ id: "RUN-DUPLICATE-ARTIFACT", artifactId: "ART-EXPLICIT-EXACT" });
+  const explicit = makeArtifact({ id: run.artifactId });
+  const reverse = makeArtifact({ id: "ART-REVERSE-DUPLICATE" });
+  reverse.runId = run.id;
+  const task = makeRuntimeTask({ runs: [run], artifacts: [explicit, reverse] });
+
+  refreshGateFreshness(task);
+
+  assert.equal(task.gateFreshness["dev-review"].reasonCode, "contradictory_evidence");
+  assert.equal(run.freshness.reasonCode, "contradictory_evidence");
+  assert.equal(explicit.freshness.reasonCode, "contradictory_evidence");
+  assert.equal(reverse.freshness.reasonCode, "contradictory_evidence");
+});
+
 test("preserves distinct identity and attempt reasons when selection fails", () => {
   const mixedRun = makeRuntimeRun({
     id: "RUN-MIXED-WITH-ATTEMPT-FAILURE",
