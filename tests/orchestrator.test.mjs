@@ -1243,6 +1243,11 @@ test("advances an approved implementation task through a revision-bound candidat
     assert.equal(approvalTask.artifacts.find((artifact) => artifact.stage === "test").runId, testRun.id);
     assert.equal(approvalTask.runs.every((run) => run.status === "completed"), true);
     assert.deepEqual(approvalTask.activeRunIds, []);
+    for (const stage of ["dev-review", "test", "final-review"]) {
+      const passEvent = approvalTask.events.find((event) => event.stage === stage && event.title.endsWith(" passed"));
+      assert.equal(passEvent.runId, approvalTask.gateFreshness[stage].sourceRunId, `${stage} pass event links its authoritative run`);
+      assert.equal(passEvent.freshness.fresh, true, `${stage} pass event carries authoritative freshness`);
+    }
     await orchestrator.approveMerge(task.id);
     const complete = await store.get(task.id);
     assert.equal(complete.status, "completed");

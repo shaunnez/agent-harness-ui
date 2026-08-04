@@ -878,6 +878,10 @@ export class TaskOrchestrator {
     await this.#store.update(id, (draft) => {
       const activeCandidate = currentCandidate(draft);
       const gateFailure = candidateGateFailure(draft, activeCandidate, [stageId]);
+      const stageFreshness = gateFailure?.freshness ?? draft.gateFreshness?.[stageId] ?? null;
+      const authoritativeRun = stageFreshness?.sourceRunId
+        ? draft.runs?.find((run) => run.id === stageFreshness.sourceRunId)
+        : null;
       activeCandidate.updatedAt = now();
       draft.activeRunKind = null;
       if (gateFailure) {
@@ -890,6 +894,7 @@ export class TaskOrchestrator {
           `${activeCandidate.id} revision ${activeCandidate.revisionNumber} did not pass ${getStageMetadata(stageId).label}. ${gateFailure.freshness.reasonCopy}`,
           "warning",
           "decision",
+          runEventMetadata(authoritativeRun),
         ));
         return;
       }
@@ -906,7 +911,14 @@ export class TaskOrchestrator {
         draft.status = "awaiting-human-approval";
         draft.currentStage = "approval";
       }
-      draft.events.push(activity(stageId, `${getStageMetadata(stageId).label} passed`, `${activeCandidate.id} revision ${activeCandidate.revisionNumber} advanced to the next gate.`, "success", "decision"));
+      draft.events.push(activity(
+        stageId,
+        `${getStageMetadata(stageId).label} passed`,
+        `${activeCandidate.id} revision ${activeCandidate.revisionNumber} advanced to the next gate.`,
+        "success",
+        "decision",
+        runEventMetadata(authoritativeRun),
+      ));
     });
   }
 

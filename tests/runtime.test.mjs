@@ -1441,41 +1441,107 @@ test("filters structured activity and renders test run and artifact drilldown", 
   });
 });
 
-test("renders stale Run Activity evidence as rerun-required with the exact persisted reason", () => {
-  return withWorkspace(async ({ RuntimeActivity, runtimeEventPresentation }) => {
-    const staleReason = {
-      code: "revision_change",
-      copy: "Candidate evidence belongs to a previous candidate revision.",
-    };
-    const event = {
-      id: "EVENT-STALE",
+test("renders stale evidence in the mounted Run Activity views with exact persisted reasons", () => {
+  return withWorkspace(async ({ RunActivity, filterRunActivity }) => {
+    const revisionReason = "Candidate evidence belongs to a previous candidate revision.";
+    const failureReason = "The terminal run failed, so its evidence is not fresh.";
+    const run = (overrides) => ({
+      id: "RUN-REVIEW-STALE",
+      kind: "review",
+      status: "completed",
+      stage: "dev-review",
+      role: "dev-review",
+      model: "gpt-5.6-sol",
+      reasoning: "high",
+      startedAt: "2026-08-01T12:00:00.000Z",
+      completedAt: "2026-08-01T12:00:03.000Z",
+      durationMs: 3_000,
+      artifactId: null,
+      usage: null,
+      credits: null,
+      apiEstimate: null,
+      candidateId: "C1",
+      candidateRevision: 1,
+      workPackageId: null,
+      attempt: 1,
+      retryOfRunId: null,
+      repairOfRunId: null,
+      toolCalls: [],
+      test: null,
+      gateResult: null,
+      evidenceError: null,
+      error: null,
+      source: "codex-jsonl",
+      freshness: makeGateFreshness("dev-review", {
+        sourceRunId: "RUN-REVIEW-STALE",
+        reasonCode: "revision_change",
+        reasonCopy: revisionReason,
+      }),
+      ...overrides,
+    });
+    const reviewRun = run({});
+    const testRun = run({
+      id: "RUN-TEST-STALE",
+      kind: "test",
+      stage: "test",
+      role: "test",
+      freshness: makeGateFreshness("test", {
+        sourceRunId: "RUN-TEST-STALE",
+        reasonCode: "failed_execution",
+        reasonCopy: failureReason,
+      }),
+    });
+    const linkedStagePass = {
+      id: "EVENT-STAGE-PASS",
       at: "2026-08-01T12:01:00.000Z",
-      category: "agent",
+      category: "decision",
       tone: "success",
       stage: "dev-review",
-      title: "Development Review completed",
-      detail: "Historical status: completed",
-      freshness: makeGateFreshness("dev-review", {
-        sourceRunId: "RUN-STALE",
-        sourceArtifactId: "ART-STALE",
-        reasonCode: staleReason.code,
-        reasonCopy: staleReason.copy,
-      }),
+      title: "Development Review passed",
+      detail: "C1 revision 1 advanced to the next gate.",
+      runId: reviewRun.id,
     };
+    const persistedStaleEvent = {
+      id: "EVENT-PERSISTED-STALE",
+      at: "2026-08-01T12:02:00.000Z",
+      category: "agent",
+      tone: "success",
+      stage: "test",
+      title: "Focused Test completed",
+      detail: "Historical status: completed",
+      freshness: testRun.freshness,
+    };
+    const task = createTask({ runs: [reviewRun, testRun], events: [linkedStagePass, persistedStaleEvent] });
 
-    const presentation = runtimeEventPresentation(event);
-    assert.equal(presentation.tone, "warning");
-    assert.equal(presentation.stale, true);
-    assert.match(presentation.title, /Rerun required/);
-    assert.match(presentation.detail, /Historical status: completed/);
-    assert.match(presentation.detail, new RegExp(staleReason.copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    const activityItems = filterRunActivity(task, "activity");
+    const linkedItem = activityItems.find((item) => item.event.id === linkedStagePass.id);
+    assert.equal(linkedItem.tone, "warning");
+    assert.match(linkedItem.title, /Rerun required/);
+    assert.match(linkedItem.detail, new RegExp(revisionReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    const persistedItem = activityItems.find((item) => item.event.id === persistedStaleEvent.id);
+    assert.equal(persistedItem.tone, "warning");
+    assert.match(persistedItem.detail, new RegExp(failureReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 
-    const markup = renderToStaticMarkup(React.createElement(RuntimeActivity, { events: [event] }));
-    assert.match(markup, /runtime-activity-row--warning/);
-    assert.doesNotMatch(markup, /runtime-activity-row--success/);
-    assert.match(markup, /Rerun required/);
-    assert.match(markup, new RegExp(staleReason.copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-    assert.match(markup, /Historical status: completed/);
+    const agentItem = filterRunActivity(task, "agent")[0];
+    assert.equal(agentItem.tone, "warning");
+    assert.match(agentItem.title, /Rerun required/);
+    assert.match(agentItem.detail, /completed/);
+    assert.match(agentItem.detail, new RegExp(revisionReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    const testItem = filterRunActivity(task, "test")[0];
+    assert.equal(testItem.tone, "warning");
+    assert.match(testItem.detail, new RegExp(failureReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+
+    for (const [initialFilter, selectedId, reason] of [
+      ["activity", `event:${linkedStagePass.id}`, revisionReason],
+      ["agent", `run:${reviewRun.id}`, revisionReason],
+      ["test", `run:${testRun.id}`, failureReason],
+      ["decision", `event:${linkedStagePass.id}`, revisionReason],
+    ]) {
+      const markup = renderToStaticMarkup(React.createElement(RunActivity, { task, initialFilter, initialSelectedId: selectedId }));
+      assert.match(markup, /runtime-activity-row--warning/);
+      assert.match(markup, /Rerun required/);
+      assert.match(markup, new RegExp(reason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    }
   });
 });
 
