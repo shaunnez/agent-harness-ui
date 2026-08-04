@@ -689,6 +689,7 @@ test("serializes the authoritative freshness projection, stale reason, run statu
         candidateId: "C1",
         candidateRevision: 2,
         gateResult: {
+          schemaVersion: 1,
           stage: "dev-review",
           verdict: "PASS",
           reportedVerdict: "PASS",
