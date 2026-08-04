@@ -325,17 +325,14 @@ function evaluateRunFreshness(run, artifact, target, stage) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "missing_authoritative_summary", null);
   }
 
-  const runBinding = readExplicitCandidateBinding(run);
-  if (!runBinding.valid) return createFreshness(stage, target, sourceRunId, sourceArtifactId, runBinding.code, null);
-  const runIdentityReason = compareCandidateBinding(runBinding, target);
-  if (runIdentityReason) return createFreshness(stage, target, sourceRunId, sourceArtifactId, runIdentityReason, null);
-
-  if (artifact) {
-    const artifactBinding = readExplicitCandidateBinding(artifact);
-    if (!artifactBinding.valid) return createFreshness(stage, target, sourceRunId, sourceArtifactId, artifactBinding.code, null);
-    const artifactReason = compareCandidateBinding(artifactBinding, target);
-    if (artifactReason) return createFreshness(stage, target, sourceRunId, sourceArtifactId, artifactReason, null);
-    if (artifact.stage !== stage) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  const identityResolution = persistedEvidenceIdentityResolution(run, artifact, stage);
+  if (identityResolution.reasonCode) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, identityResolution.reasonCode, null);
+  }
+  const identityReason = compareCandidateBinding(identityResolution.binding, target);
+  if (identityReason) return createFreshness(stage, target, sourceRunId, sourceArtifactId, identityReason, null);
+  if (artifact && artifact.stage !== stage) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
 
   const evidenceErrorReason = persistedEvidenceErrorReason(run.evidenceError);
@@ -620,28 +617,55 @@ function findRunArtifact(task, run) {
 
 function attachmentEvidenceError(run, artifact) {
   if (!CANDIDATE_GATE_STAGES.includes(run.stage)) return null;
-  const runBinding = readExplicitCandidateBinding(run);
-  if (!runBinding.valid) return reasonRecord(runBinding.code);
-  const artifactBinding = readExplicitCandidateBinding(artifact);
-  if (!artifactBinding.valid) return reasonRecord(artifactBinding.code);
-  const artifactReason = compareCandidateBinding(artifactBinding, runBinding);
-  if (artifactReason) return reasonRecord(artifactReason);
-  if (run.stage === "test" && artifact.focusedTest) {
-    const summaryBindingMarkerReason = persistedBindingMarkerReason(artifact.focusedTest);
-    if (summaryBindingMarkerReason) return reasonRecord(summaryBindingMarkerReason);
-    const summaryBinding = readExplicitCandidateBinding(artifact.focusedTest);
-    if (!summaryBinding.valid) return reasonRecord(summaryBinding.code);
-    const identities = new Set();
-    for (const row of artifact.focusedTest.rows ?? []) {
-      const rowBindingMarkerReason = persistedBindingMarkerReason(row);
-      if (rowBindingMarkerReason) return reasonRecord(rowBindingMarkerReason);
-      const rowBinding = readExplicitCandidateBinding(row);
-      if (!rowBinding.valid) return reasonRecord(rowBinding.code);
-      identities.add(`${rowBinding.candidateId}:${rowBinding.candidateRevision}`);
+  const identityResolution = persistedEvidenceIdentityResolution(run, artifact, run.stage);
+  return identityResolution.reasonCode ? reasonRecord(identityResolution.reasonCode) : null;
+}
+
+function persistedEvidenceIdentityResolution(run, artifact, stage) {
+  const evidence = [];
+  const addEvidence = (value, validateMarker = false) => {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      evidence.push({ value, validateMarker });
     }
-    if (identities.size > 1) return reasonRecord("mixed_evidence");
+  };
+  const addGateSummary = (summary) => {
+    addEvidence(summary);
+    if (Array.isArray(summary?.findings)) {
+      for (const finding of summary.findings) addEvidence(finding, true);
+    }
+  };
+  const addTestSummary = (summary) => {
+    addEvidence(summary, true);
+    if (Array.isArray(summary?.rows)) {
+      for (const row of summary.rows) addEvidence(row, true);
+    }
+  };
+
+  addEvidence(run);
+  addEvidence(artifact);
+  addGateSummary(run?.gateResult);
+  addGateSummary(artifact?.gateResult);
+  if (stage === "test") {
+    addTestSummary(run?.test);
+    addTestSummary(artifact?.focusedTest);
   }
-  return null;
+
+  const identities = new Map();
+  let invalidReason = null;
+  for (const { value, validateMarker } of evidence) {
+    const markerReason = validateMarker ? persistedBindingMarkerReason(value) : null;
+    if (markerReason) invalidReason ??= markerReason;
+    const binding = readExplicitCandidateBinding(value);
+    if (!binding.valid) {
+      invalidReason ??= binding.code;
+      continue;
+    }
+    identities.set(`${binding.candidateId}:${binding.candidateRevision}`, binding);
+  }
+
+  if (identities.size > 1) return { binding: null, reasonCode: "mixed_evidence" };
+  if (invalidReason) return { binding: null, reasonCode: invalidReason };
+  return { binding: identities.values().next().value ?? null, reasonCode: null };
 }
 
 function reasonRecord(code) {
