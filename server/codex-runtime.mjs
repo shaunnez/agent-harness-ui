@@ -4,13 +4,18 @@ import { mkdir, readdir } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
-import { normalizeModelId, readCodexModelCatalog } from "./model-catalog.mjs";
+import {
+  DEFAULT_RUNTIME_MODEL,
+  DEFAULT_RUNTIME_REASONING,
+  normalizeModelId,
+  readCodexModelCatalog,
+} from "./model-catalog.mjs";
 
 const STDOUT_LIMIT = 2 * 1024 * 1024;
 const STDERR_LIMIT = 256 * 1024;
 const STDOUT_BUDGET = 2.5 * 1024 * 1024;
-export const DEFAULT_MODEL = normalizeModelId(process.env.AGENT_HARNESS_MODEL ?? "gpt-5.4-mini");
-export const DEFAULT_REASONING = process.env.AGENT_HARNESS_REASONING ?? "low";
+export const DEFAULT_MODEL = normalizeModelId(process.env.AGENT_HARNESS_MODEL ?? DEFAULT_RUNTIME_MODEL);
+export const DEFAULT_REASONING = process.env.AGENT_HARNESS_REASONING ?? DEFAULT_RUNTIME_REASONING;
 
 export class ProcessTimeoutError extends Error {
   constructor(timeoutMs) {

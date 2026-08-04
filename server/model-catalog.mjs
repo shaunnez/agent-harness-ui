@@ -65,9 +65,17 @@ const FALLBACK_MODELS = [
   model("gpt-5.4-mini", "GPT-5.4 Mini", "Small, fast, and cost-efficient model for simpler coding tasks.", "medium", ["low", "medium", "high", "xhigh"]),
 ];
 
+/**
+ * Single source for the runtime default policy. The settings store and the Codex
+ * runtime both resolve their defaults from here so runtime status, allowed models,
+ * and spawned agents cannot advertise different models.
+ */
+export const DEFAULT_RUNTIME_MODEL = "gpt-5.6-luna";
+export const DEFAULT_RUNTIME_REASONING = "xhigh";
+
 export function defaultRuntimeSettings() {
-  const defaultModel = normalizeModelId(process.env.AGENT_HARNESS_MODEL ?? "gpt-5.6-luna");
-  const defaultReasoning = process.env.AGENT_HARNESS_REASONING ?? "xhigh";
+  const defaultModel = normalizeModelId(process.env.AGENT_HARNESS_MODEL ?? DEFAULT_RUNTIME_MODEL);
+  const defaultReasoning = process.env.AGENT_HARNESS_REASONING ?? DEFAULT_RUNTIME_REASONING;
   return {
     allowedModels: [...new Set([defaultModel, "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"])],
     defaultModel,
@@ -159,7 +167,7 @@ export function normalizeModelId(value) {
     .toLowerCase()
     .replaceAll("_", "-")
     .replace(/\s+/g, "-");
-  return normalized || "gpt-5.4-mini";
+  return normalized || DEFAULT_RUNTIME_MODEL;
 }
 
 export function priceUsage(modelId, usage, pricing = MODEL_PRICING) {

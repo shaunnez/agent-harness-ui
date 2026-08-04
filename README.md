@@ -31,6 +31,8 @@ Optional environment settings:
 ```powershell
 $env:AGENT_HARNESS_REPOSITORY = "C:\path\to\default-repository"
 $env:AGENT_HARNESS_DATA = "C:\path\to\tasks.json"
+$env:AGENT_HARNESS_MODEL = "gpt-5.6-luna"
+$env:AGENT_HARNESS_REASONING = "xhigh"
 npm run dev
 ```
 
