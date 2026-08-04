@@ -14,7 +14,7 @@ import {
   selectCodexCandidate,
 } from "../server/codex-runtime.mjs";
 import { normalizeModelId, priceUsage, readCodexModelCatalog, withConfiguredModels } from "../server/model-catalog.mjs";
-import { buildExecutionRequest, buildStageRequest, buildWorkPackageRequest } from "../server/prompts.mjs";
+import { buildExecutionRequest, buildRepairRequest, buildStageRequest, buildWorkPackageRequest } from "../server/prompts.mjs";
 import { buildScoutRequest } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
@@ -374,6 +374,283 @@ test("artifact manifests account for transformations, prefixes, separators, and 
   assert.equal(testEvidence.truncated, true, "the aggregate context cap is reported for the final artifact");
   assert.match(request.prompt, /Exact patch omitted from agent context/);
   assert.doesNotMatch(request.prompt, /<details><summary>Candidate patch/);
+});
+
+test("repair requests carry complete typed gate findings and current-candidate repair lineage", () => {
+  const completeDetail = "Complete persisted finding detail.\n" + "D".repeat(8_000);
+  const newestFindings = [
+    {
+      severity: "P1",
+      title: "Newest gate finding",
+      detail: completeDetail,
+      file: "server/orchestrator.mjs",
+      line: 453,
+      candidateId: "C1",
+      candidateRevision: 3,
+      bindingExplicit: true,
+    },
+    {
+      severity: "P2",
+      title: "Second newest finding",
+      detail: "Retain every finding, not only the first one.",
+      file: null,
+      line: null,
+      candidateId: "C1",
+      candidateRevision: 3,
+      bindingExplicit: true,
+    },
+  ];
+  const task = createTask({
+    artifacts: [
+      { id: "spec", stage: "specification", name: "task-specification.md", content: "Approved specification." },
+      { id: "plan", stage: "plan", name: "implementation-plan.md", content: "Approved plan." },
+      { id: "implementation", stage: "implement", name: "implementation-candidate.md", content: "Candidate summary." },
+      { id: "review", stage: "dev-review", name: "dev-review.md", content: "MISLEADING OLD REVIEW PROSE" },
+      { id: "test", stage: "test", name: "test-evidence.md", content: "M".repeat(7_000) },
+    ],
+    runs: [
+      {
+        id: "run-old-review",
+        stage: "dev-review",
+        status: "completed",
+        candidateId: "C1",
+        candidateRevision: 3,
+        gateResult: {
+          stage: "dev-review",
+          candidateId: "C1",
+          candidateRevision: 3,
+          verdict: "REPAIR",
+          findings: [{ severity: "P1", title: "Older finding", detail: "Do not select this gate.", file: "old.js", line: 1 }],
+        },
+      },
+      {
+        id: "run-new-test",
+        stage: "test",
+        status: "completed",
+        candidateId: "C1",
+        candidateRevision: 3,
+        gateResult: {
+          stage: "test",
+          candidateId: "C1",
+          candidateRevision: 3,
+          verdict: "REPAIR",
+          findings: newestFindings,
+          blockingReasons: ["Typed failure"],
+        },
+      },
+    ],
+  });
+  const candidate = {
+    id: "C1",
+    revisionNumber: 3,
+    baseRevision: "a".repeat(40),
+    headRevision: "c".repeat(40),
+    revisions: [
+      { number: 1, headRevision: "a".repeat(40), reason: "assembly" },
+      {
+        number: 2,
+        headRevision: "b".repeat(40),
+        reason: "repair",
+        requestedFindings: [{ severity: "P1", title: "Prior repair", detail: "Already attempted.", file: "old.js", line: 7 }],
+      },
+      {
+        number: 3,
+        headRevision: "c".repeat(40),
+        reason: "repair",
+        requestedFindings: [{ severity: "P2", title: "Second prior repair", detail: "Keep this lineage.", file: null, line: null }],
+      },
+    ],
+  };
+
+  const request = buildRepairRequest(task, candidate);
+  const evidenceMatch = request.prompt.match(/<repair-evidence>\s*([\s\S]*?)\s*<\/repair-evidence>/);
+  assert.ok(evidenceMatch, "repair prompt includes a structured evidence envelope");
+  const evidence = JSON.parse(evidenceMatch[1]);
+  assert.deepEqual(evidence.activeCandidate, { id: "C1", revisionNumber: 3, headRevision: "c".repeat(40) });
+  assert.equal(evidence.newestFailingGate.runId, "run-new-test");
+  assert.equal(evidence.newestFailingGate.stage, "test");
+  assert.deepEqual(evidence.newestFailingGate.gateResult.findings, newestFindings);
+  assert.equal(evidence.newestFailingGate.gateResult.findings[0].detail, completeDetail);
+  assert.deepEqual(evidence.repairLineage, [
+    { number: 1, headRevision: "a".repeat(40), reason: "assembly" },
+    {
+      number: 2,
+      headRevision: "b".repeat(40),
+      reason: "repair",
+      requestedFindings: [{ severity: "P1", title: "Prior repair", detail: "Already attempted.", file: "old.js", line: 7 }],
+    },
+    {
+      number: 3,
+      headRevision: "c".repeat(40),
+      reason: "repair",
+      requestedFindings: [{ severity: "P2", title: "Second prior repair", detail: "Keep this lineage.", file: null, line: null }],
+    },
+  ]);
+  assert.equal(request.contextManifest.promptCharacters, request.prompt.length);
+  assert.equal(request.contextManifest.sources.find((source) => source.kind === "structured-evidence").truncated, false);
+  assert.equal(request.contextManifest.sources.find((source) => source.id === "test").truncated, true);
+
+  const changedMarkdown = buildRepairRequest(
+    { ...task, artifacts: task.artifacts.map((artifact) => ({ ...artifact, content: "A DIFFERENT MISLEADING ARTIFACT" })) },
+    candidate,
+  );
+  assert.deepEqual(changedMarkdown.repairEvidence, request.repairEvidence, "typed repair evidence is independent of Markdown prose");
+});
+
+test("persists typed findings requested by the gate on each repair revision", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-repair-findings-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Persist repair findings",
+      description: "Retain the typed evidence that authorized a repair.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const findings = [{
+      severity: "P1",
+      title: "Persist this finding",
+      detail: "The repair must retain this exact detail.",
+      file: "server/prompts.mjs",
+      line: 241,
+      candidateId: "C1",
+      candidateRevision: 1,
+      bindingExplicit: true,
+    }];
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "dev-review";
+      draft.stageRunLimits = { implement: 2, "dev-review": 3, test: 3, "final-review": 3 };
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 1,
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/repair-findings-c1",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "repair_required",
+        revisions: [{ number: 1, headRevision: "b".repeat(40), reason: "assembly" }],
+      }];
+      draft.runs = [{
+        id: "run-failing-review",
+        kind: "review",
+        stage: "dev-review",
+        status: "completed",
+        candidateId: "C1",
+        candidateRevision: 1,
+        completedAt: "2026-08-01T12:00:01.000Z",
+        gateResult: {
+          stage: "dev-review",
+          candidateId: "C1",
+          candidateRevision: 1,
+          verdict: "REPAIR",
+          findings,
+        },
+      }];
+    });
+    let repairPrompt = "";
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      runCodex: async ({ prompt }) => {
+        repairPrompt = prompt;
+        return { finalText: "## Outcome\n\nRepaired", usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } };
+      },
+      worktreeManager: {
+        verifyCandidate: async () => {},
+        commit: async () => ({ headRevision: "c".repeat(40), files: ["server/prompts.mjs"], summary: "1 file changed" }),
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id, "repair"), true);
+    await waitUntil(() => !orchestrator.isRunning(task.id));
+    const repaired = await store.get(task.id);
+    assert.deepEqual(repaired.candidates[0].revisions[1].requestedFindings, [{
+      severity: "P1",
+      title: "Persist this finding",
+      detail: "The repair must retain this exact detail.",
+      file: "server/prompts.mjs",
+      line: 241,
+    }]);
+    assert.match(repairPrompt, /<repair-evidence>/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("uses per-stage limits for admission and failure blocking while sharing repair with implement", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-stage-budgets-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Stage budget enforcement",
+      description: "Use the canonical stage limit for each run kind.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const candidate = {
+      id: "C1",
+      revisionNumber: 1,
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/budget-c1",
+      repositoryRoot: directory,
+      worktreePath: directory,
+      status: "ready_for_test",
+      revisions: [],
+    };
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-test";
+      draft.currentStage = "dev-review";
+      draft.candidates = [candidate];
+      draft.stageRunLimits = { implement: 1, "dev-review": 3, test: 1, "final-review": 3 };
+      draft.attemptsByStage = { implement: 1, "dev-review": 0, test: 0 };
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      runCodex: async () => ({ finalText: "No structured evidence.", usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } }),
+      worktreeManager: { verifyCandidate: async () => {} },
+    });
+
+    assert.equal(await orchestrator.start(task.id, "implementation"), false, "an exhausted implement budget blocks implementation");
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "dev-review";
+      draft.candidates[0].status = "repair_required";
+    });
+    assert.equal(await orchestrator.start(task.id, "repair"), false, "repair consumes the exhausted implement budget");
+
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-test";
+      draft.currentStage = "test";
+      draft.candidates[0].status = "ready_for_test";
+      draft.attemptsByStage = { implement: 1, "dev-review": 0, test: 0 };
+    });
+    assert.equal(await orchestrator.start(task.id, "test"), true, "test uses its own allowance despite implement being exhausted");
+    await waitUntil(() => !orchestrator.isRunning(task.id));
+    assert.equal((await store.get(task.id)).attemptsByStage.test, 1);
+
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-test";
+      draft.currentStage = "dev-review";
+      draft.candidates[0].status = "ready_for_test";
+      draft.attemptsByStage = { implement: 1, "dev-review": 0, test: 0 };
+    });
+    const failingOrchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      worktreeManager: { verifyCandidate: async () => { throw new Error("candidate verification failed"); } },
+    });
+    assert.equal(await failingOrchestrator.start(task.id, "test"), true);
+    await waitUntil(async () => (await store.get(task.id)).status === "blocked");
+    assert.equal((await store.get(task.id)).attemptsByStage.test, 1, "failure blocking uses the test stage, not currentStage");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test("scout manifests preserve priority, exclude workflow, and cap triage at 4,000 characters", () => {

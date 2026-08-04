@@ -8,6 +8,7 @@ import {
   buildWorkPackageRequest,
   getStageMetadata,
   INVESTIGATION_PIPELINE,
+  projectRepairFindings,
 } from "./prompts.mjs";
 import { getCodexStatus, isProcessTimeoutError, runCodex } from "./codex-runtime.mjs";
 import { GitWorktreeManager } from "./git-worktree.mjs";
@@ -36,6 +37,7 @@ import {
   refreshGateFreshness,
   runEventMetadata,
   runKindFor,
+  stageRunLimitFor,
 } from "./run-activity.mjs";
 import {
   isCandidateEvidenceError,
@@ -451,8 +453,9 @@ export class TaskOrchestrator {
       if (kind === "final-review") await this.#runEvaluation(id, "final-review", signal);
     } catch (error) {
       await this.#store.update(id, (draft) => {
-        const attempts = draft.attemptsByStage?.[draft.currentStage] ?? 1;
-        draft.status = signal.aborted ? "cancelled" : attempts >= draft.stageRunLimit ? "blocked" : "failed";
+        const stage = stageForRun(kind, draft.currentStage);
+        const attempts = draft.attemptsByStage?.[stage] ?? 1;
+        draft.status = signal.aborted ? "cancelled" : attempts >= stageRunLimitFor(draft, stage) ? "blocked" : "failed";
         draft.error = error.message;
         draft.activeRunKind = null;
         const candidate = draft.candidates?.at(-1);
@@ -954,6 +957,8 @@ export class TaskOrchestrator {
     }
     await this.#worktrees.verifyCandidate(candidate);
     const nextRevision = candidate.revisionNumber + 1;
+    const repairRequest = buildRepairRequest(task, candidate);
+    const requestedFindings = projectRepairFindings(repairRequest.repairEvidence.newestFailingGate.gateResult.findings);
     let result;
     let committed;
     try {
@@ -964,7 +969,7 @@ export class TaskOrchestrator {
         candidate.worktreePath,
         "workspace-write",
         candidate,
-        buildRepairRequest(task, candidate),
+        repairRequest,
         "Candidate repair",
         "repair",
       );
@@ -991,7 +996,13 @@ export class TaskOrchestrator {
       activeCandidate.headRevision = committed.headRevision;
       activeCandidate.status = "ready_for_review";
       activeCandidate.updatedAt = now();
-      activeCandidate.revisions.push({ number: nextRevision, headRevision: committed.headRevision, reason: "repair", createdAt: now() });
+      activeCandidate.revisions.push({
+        number: nextRevision,
+        headRevision: committed.headRevision,
+        reason: "repair",
+        requestedFindings: structuredClone(requestedFindings),
+        createdAt: now(),
+      });
       draft.completedStages = draft.completedStages.filter(
         (stage) => !["dev-review", "test", "final-review", "approval"].includes(stage),
       );
@@ -1271,7 +1282,7 @@ function evaluationRerunState(stageId) {
 function canStartRun(task, kind) {
   const stage = stageForRun(kind, task.currentStage);
   const attempts = task.attemptsByStage?.[stage] ?? 0;
-  if (task.status === "blocked" || attempts >= task.stageRunLimit) return false;
+  if (task.status === "blocked" || attempts >= stageRunLimitFor(task, stage)) return false;
   const allowed = {
     investigation: ["queued", "failed", "cancelled"],
     specification: ["awaiting-grill"],

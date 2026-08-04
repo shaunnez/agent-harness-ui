@@ -1,6 +1,8 @@
 export const TASK_TITLE_LIMIT = 300;
 export const TASK_DESCRIPTION_LIMIT = 6_000;
 
+const REPAIR_GATE_STAGES = new Set(["dev-review", "test", "final-review"]);
+
 const STAGE_PROMPTS = {
   triage: {
     label: "Triage",
@@ -227,16 +229,81 @@ Return concise Markdown with these exact H2 headings in order: Outcome, Changes,
 
 export function buildRepairRequest(task, candidate) {
   const request = buildExecutionRequest(task, "implement", candidate);
+  const repairEvidence = buildRepairEvidence(task, candidate);
+  const serializedRepairEvidence = JSON.stringify(repairEvidence, null, 2);
   request.prompt = request.prompt
     .replace("You are the Implementation agent", "You are the candidate Repair agent")
     .replace(
       "Your stage assignment:\n",
-      "Your stage assignment:\nRepair only findings in the newest failed Dev Review or Test artifact. Remove generated or out-of-scope files already present in the candidate, but do not install dependencies or create new generated state. Preserve unrelated approved implementation.\n\n",
+      `Authoritative structured repair evidence (typed JSON; do not infer repair scope from Markdown artifacts):\n<repair-evidence>\n${serializedRepairEvidence}\n</repair-evidence>\n\nYour stage assignment:\nRepair only the findings in the newest failing gate represented above. Remove generated or out-of-scope files already present in the candidate, but do not install dependencies or create new generated state. Preserve unrelated approved implementation.\n\n`,
     );
-  request.contextManifest.policy = `Repair may edit only ${candidate.id}; supplied context is limited to the approved spec/plan, current candidate summary, and newest failing gate.`;
+  request.repairEvidence = repairEvidence;
+  request.contextManifest.sources.push({
+    kind: "structured-evidence",
+    id: `${candidate.id}:repair-evidence:r${candidate.revisionNumber}`,
+    label: "Typed newest failing gate and candidate repair lineage",
+    includedCharacters: serializedRepairEvidence.length,
+    originalCharacters: serializedRepairEvidence.length,
+    truncated: false,
+  });
+  request.contextManifest.policy = `Repair may edit only ${candidate.id}; supplied context is limited to the approved spec/plan, current candidate summary, and newest typed failing gate with repair lineage.`;
   request.contextManifest.promptCharacters = request.prompt.length;
   request.contextManifest.estimatedPromptTokens = Math.ceil(request.prompt.length / 4);
   return request;
+}
+
+export function buildRepairEvidence(task, candidate) {
+  const failingGate = newestFailingGate(task, candidate);
+  if (!failingGate) {
+    throw new Error(`No persisted terminal failing gate is available for ${candidate.id} revision ${candidate.revisionNumber}.`);
+  }
+  return {
+    activeCandidate: {
+      id: candidate.id,
+      revisionNumber: candidate.revisionNumber,
+      headRevision: candidate.headRevision ?? null,
+    },
+    newestFailingGate: {
+      runId: failingGate.id,
+      stage: failingGate.stage,
+      status: failingGate.status,
+      gateResult: structuredClone(failingGate.gateResult),
+    },
+    repairLineage: (candidate.revisions ?? []).map((revision) => ({
+      number: revision.number,
+      headRevision: revision.headRevision,
+      reason: revision.reason,
+      ...(revision.reason === "repair"
+        ? { requestedFindings: projectRepairFindings(revision.requestedFindings) }
+        : {}),
+    })),
+  };
+}
+
+export function projectRepairFindings(findings) {
+  if (!Array.isArray(findings)) return [];
+  return findings.map((finding) => ({
+    severity: finding?.severity ?? null,
+    title: finding?.title ?? null,
+    detail: finding?.detail ?? null,
+    file: finding?.file ?? null,
+    line: finding?.line ?? null,
+  }));
+}
+
+function newestFailingGate(task, candidate) {
+  return [...(task.runs ?? [])].reverse().find((run) => {
+    const gateResult = run?.gateResult;
+    return REPAIR_GATE_STAGES.has(run?.stage) &&
+      run?.status === "completed" &&
+      run.candidateId === candidate.id &&
+      run.candidateRevision === candidate.revisionNumber &&
+      gateResult?.stage === run.stage &&
+      gateResult?.candidateId === candidate.id &&
+      gateResult?.candidateRevision === candidate.revisionNumber &&
+      gateResult?.verdict === "REPAIR" &&
+      Array.isArray(gateResult.findings);
+  });
 }
 
 function selectArtifactContext(entries, characterLimit, direction) {
