@@ -416,6 +416,14 @@ function evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId) {
   if (!Array.isArray(summary.rows) || !summary.rows.length || summary.rowCount !== summary.rows.length) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "missing_authoritative_summary", null);
   }
+  if (
+    typeof summary.command !== "string" ||
+    !summary.command.trim() ||
+    !["passed", "failed"].includes(summary.status) ||
+    (summary.durationMs != null && (!Number.isFinite(summary.durationMs) || summary.durationMs < 0))
+  ) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  }
   const identities = new Set([
     `${summaryBinding.candidateId}:${summaryBinding.candidateRevision}`,
   ]);
@@ -429,21 +437,26 @@ function evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId) {
     if (!["passed", "failed"].includes(row.status)) {
       return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
     }
+    if (!isValidPersistedTestRow(row)) {
+      return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+    }
   }
   if (identities.size > 1) return createFreshness("test", target, sourceRunId, sourceArtifactId, "mixed_evidence", null);
   const rowReason = compareCandidateBinding(rowBindings[0], target);
   if (rowReason) return createFreshness("test", target, sourceRunId, sourceArtifactId, rowReason, null);
+  const focusedTest = focusedTestFromRunSummary(summary, artifact?.focusedTest ?? null);
   const failedRows = summary.rows.filter((row) => row.status === "failed");
   const recordedFailedRows = Array.isArray(summary.failedRowIds) ? summary.failedRowIds : [];
   if (summary.status === "passed" && (failedRows.length || recordedFailedRows.length)) {
-    return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", focusedTest);
   }
   if (summary.status !== "passed" || failedRows.length || recordedFailedRows.length) {
-    return createFreshness("test", target, sourceRunId, sourceArtifactId, "failed_execution", null);
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "failed_execution", focusedTest);
   }
   const gateFailure = evaluateTestGateResult(run.gateResult, target, sourceRunId, sourceArtifactId);
-  if (gateFailure) return gateFailure;
-  const focusedTest = focusedTestFromRunSummary(summary, artifact?.focusedTest ?? null);
+  if (gateFailure) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, gateFailure.reasonCode, focusedTest);
+  }
   return createFreshness("test", target, sourceRunId, sourceArtifactId, "fresh", focusedTest);
 }
 
@@ -585,8 +598,6 @@ function isLaterRun(left, right) {
   const leftAttempt = validAttempt(left.run.attempt);
   const rightAttempt = validAttempt(right.run.attempt);
   if (leftAttempt != null && rightAttempt != null && leftAttempt !== rightAttempt) return leftAttempt > rightAttempt;
-  if (leftAttempt != null && rightAttempt == null) return true;
-  if (leftAttempt == null && rightAttempt != null) return false;
   return left.index > right.index;
 }
 
@@ -658,6 +669,33 @@ function isValidPersistedGateFinding(finding) {
   if (finding.file != null && typeof finding.file !== "string") return false;
   if (finding.line != null && (!Number.isInteger(finding.line) || finding.line < 1)) return false;
   if (finding.bindingExplicit != null && typeof finding.bindingExplicit !== "boolean") return false;
+  return true;
+}
+
+function isValidPersistedTestRow(row) {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return false;
+  if (typeof row.id !== "string" || !row.id.trim()) return false;
+  if (typeof row.command !== "string" || !row.command.trim()) return false;
+  if (!["passed", "failed"].includes(row.status)) return false;
+  if (row.durationMs != null && (!Number.isFinite(row.durationMs) || row.durationMs < 0)) return false;
+  if (typeof row.title !== "string" || !row.title.trim()) return false;
+  if (!Array.isArray(row.artifactReferences) || !row.artifactReferences.every((reference) => (
+    reference &&
+    typeof reference === "object" &&
+    !Array.isArray(reference) &&
+    typeof reference.name === "string" &&
+    typeof reference.kind === "string" &&
+    (reference.path == null || typeof reference.path === "string")
+  ))) return false;
+  if (!Array.isArray(row.assertions) || !row.assertions.every((assertion) => (
+    assertion &&
+    typeof assertion === "object" &&
+    !Array.isArray(assertion) &&
+    typeof assertion.label === "string" &&
+    typeof assertion.actual === "string" &&
+    (assertion.expected == null || typeof assertion.expected === "string")
+  ))) return false;
+  if (row.failureDetails != null && typeof row.failureDetails !== "string") return false;
   return true;
 }
 

@@ -139,12 +139,27 @@ export function parseGateEvidence(text, candidate, stageId) {
   }
   if (!Array.isArray(value.findings)) throw new Error("Gate evidence must include a findings array.");
   const findings = value.findings.map((finding, index) => {
-    const severity = String(finding?.severity ?? "").toUpperCase();
+    if (!finding || typeof finding !== "object" || Array.isArray(finding)) {
+      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} must be an object.`);
+    }
+    if (typeof finding.severity !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} severity must be a string.`);
+    }
+    const severity = finding.severity.toUpperCase();
     if (!["P0", "P1", "P2", "P3"].includes(severity)) {
       throw new Error(`Gate finding ${index + 1} must have severity P0, P1, P2, or P3.`);
     }
-    const title = String(finding?.title ?? "").trim().slice(0, 500);
-    const detail = String(finding?.detail ?? "").trim().slice(0, 4_000);
+    if (typeof finding.title !== "string" || typeof finding.detail !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} title and detail must be strings.`);
+    }
+    if (finding.file != null && typeof finding.file !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} file must be a string or null.`);
+    }
+    if (finding.line != null && (!Number.isInteger(finding.line) || finding.line < 1)) {
+      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} line must be a positive integer or null.`);
+    }
+    const title = finding.title.trim().slice(0, 500);
+    const detail = finding.detail.trim().slice(0, 4_000);
     if (!title || !detail) throw new Error(`Gate finding ${index + 1} is missing its title or detail.`);
     const hasFindingCandidateId = Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateId");
     const hasFindingCandidateRevision = Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateRevision");
@@ -156,8 +171,8 @@ export function parseGateEvidence(text, candidate, stageId) {
       severity,
       title,
       detail,
-      file: finding?.file == null ? null : String(finding.file).trim().slice(0, 1_000),
-      line: Number.isInteger(finding?.line) && finding.line > 0 ? finding.line : null,
+      file: finding.file == null ? null : finding.file.trim().slice(0, 1_000),
+      line: finding.line ?? null,
       candidateId: findingBinding.candidateId,
       candidateRevision: findingBinding.candidateRevision,
       bindingExplicit: findingExplicitBinding,

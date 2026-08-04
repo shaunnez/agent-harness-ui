@@ -123,7 +123,7 @@ export function getRuntimeArtifactFreshness(task: RuntimeTask, artifact: Runtime
 export function getRuntimeFocusedTest(task: RuntimeTask) {
   const freshness = getRuntimeGateFreshness(task, "test");
   const candidate = task.candidates?.at(-1);
-  const evidence = freshness?.fresh ? freshness.focusedTest : null;
+  const evidence = freshness?.focusedTest ?? null;
   if (!freshness || !evidence || !candidate) return null;
   if (evidence.candidateId !== candidate.id || evidence.candidateRevision !== candidate.revisionNumber) return null;
   if (freshness.focusedTestRows.some((row) => row.candidateId !== candidate.id || row.candidateRevision !== candidate.revisionNumber)) return null;

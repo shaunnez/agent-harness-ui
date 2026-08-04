@@ -180,6 +180,28 @@ test("derives candidate-bound review gates from structured evidence", () => {
   );
 });
 
+test("rejects unsupported gate finding field types before normalization", () => {
+  const candidate = { id: "C1", revisionNumber: 2 };
+  const malformedFindings = [
+    { severity: 2, title: "Numeric severity", detail: "Must not be coerced." },
+    { severity: "P2", title: 42, detail: "Must not be coerced." },
+    { severity: "P2", title: "Object detail", detail: { text: "Must not be coerced." } },
+    { severity: "P2", title: "Numeric file", detail: "Must not be coerced.", file: 42 },
+    { severity: "P2", title: "String line", detail: "Must not be coerced.", line: "142" },
+  ];
+
+  for (const finding of malformedFindings) {
+    assert.throws(
+      () => parseGateEvidence(gateOutput(2, "PASS", [{
+        ...finding,
+        candidateId: "C1",
+        candidateRevision: 2,
+      }]), candidate, "dev-review"),
+      (error) => error.code === "contradictory_evidence",
+    );
+  }
+});
+
 test("rejects generic candidate identity fields at every structured evidence boundary", () => {
   assert.deepEqual(readExplicitCandidateBinding({ id: "C1", revisionNumber: 2 }), {
     valid: false,
@@ -506,6 +528,18 @@ test("persists exact structured-evidence reason codes through a failed review ru
       ]),
       code: "mixed_evidence",
     },
+    {
+      name: "unsupported finding field type",
+      output: gateOutput(2, "PASS", [{
+        severity: "P2",
+        title: 42,
+        detail: "A numeric title must not be normalized into persisted evidence.",
+        candidateId: "C1",
+        candidateRevision: 2,
+      }]),
+      code: "contradictory_evidence",
+      verifyApprovalBlocked: true,
+    },
   ];
 
   for (const item of cases) {
@@ -554,6 +588,17 @@ test("persists exact structured-evidence reason codes through a failed review ru
       assert.equal(run.evidenceError.copy, RUNTIME_FRESHNESS_REASONS[item.code], item.name);
       assert.equal(run.freshness.reasonCode, item.code, item.name);
       assert.equal(finished.gateFreshness["dev-review"].reasonCode, item.code, item.name);
+      if (item.verifyApprovalBlocked) {
+        await store.update(task.id, (draft) => {
+          draft.status = "awaiting-human-approval";
+          draft.currentStage = "approval";
+          draft.candidates.at(-1).status = "awaiting_human_approval";
+        });
+        await assert.rejects(
+          () => orchestrator.approveMerge(task.id),
+          /cannot be approved.*Development Review is not fresh.*contradictory/i,
+        );
+      }
     } finally {
       await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
     }
@@ -622,6 +667,38 @@ test("filters focused Test rows to the exact candidate and retains invalid rows 
   attachRunArtifact(parentMixedTask, parentMixedRun.id, parentMixedArtifact);
   assert.equal(parentMixedTask.gateFreshness.test.reasonCode, "mixed_evidence");
   assert.deepEqual(parentMixedTask.gateFreshness.test.focusedTestRows, []);
+
+  const failedTestRun = makeRuntimeRun({
+    id: "RUN-TEST-FAILED",
+    stage: "test",
+    kind: "test",
+    artifactId: "ART-TEST-FAILED",
+  });
+  const failedFocusedTest = {
+    candidateId: "C1",
+    candidateRevision: 2,
+    bindingExplicit: true,
+    command: "npm test",
+    status: "failed",
+    rows: [makeTestRow({ id: "row-failed", status: "failed" })],
+  };
+  const failedTestArtifact = makeArtifact({
+    id: "ART-TEST-FAILED",
+    stage: "test",
+    gateResult: makeGateResult({
+      stage: "test",
+      verdict: "REPAIR",
+      reportedVerdict: "REPAIR",
+      blockingReasons: ["A verification command failed."],
+    }),
+    focusedTest: failedFocusedTest,
+  });
+  const failedTestTask = makeRuntimeTask({ runs: [failedTestRun], artifacts: [failedTestArtifact] });
+  attachRunArtifact(failedTestTask, failedTestRun.id, failedTestArtifact);
+  assert.equal(failedTestTask.gateFreshness.test.fresh, false);
+  assert.equal(failedTestTask.gateFreshness.test.reasonCode, "failed_execution");
+  assert.equal(failedTestTask.gateFreshness.test.focusedTest.status, "failed");
+  assert.deepEqual(failedTestTask.gateFreshness.test.focusedTestRows.map((row) => row.id), ["row-failed"]);
 });
 
 test("latest terminal exact-candidate attempt wins and older passes become superseded", () => {
@@ -694,6 +771,57 @@ test("latest terminal exact-candidate attempt wins and older passes become super
     candidateRevision: 2,
   });
   assert.equal(nextRevisionRun.attempt, 1, "attempt numbering is scoped to the exact candidate revision");
+});
+
+test("later persisted terminal evidence without valid attempt metadata supersedes and blocks approval", async () => {
+  for (const legacyAttempt of [null, "2"]) {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-legacy-attempt-"));
+    try {
+      const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+      await store.init();
+      const task = await store.create({
+        title: "Reject superseded pass",
+        description: "Persisted terminal order controls when attempt metadata is unavailable.",
+        repositoryPath: directory,
+        workflow: "implement",
+        priority: "medium",
+      });
+      await store.update(task.id, (draft) => {
+        draft.status = "awaiting-human-approval";
+        draft.currentStage = "approval";
+        draft.candidates = [{
+          id: "C1",
+          revisionNumber: 2,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: "b".repeat(40),
+          status: "awaiting_human_approval",
+        }];
+        draft.runs = [
+          makeRuntimeRun({ id: "RUN-EARLIER-PASS", attempt: 1, gateResult: makeGateResult() }),
+          makeRuntimeRun({ id: "RUN-LATER-LEGACY", attempt: legacyAttempt, gateResult: null }),
+        ];
+        refreshGateFreshness(draft);
+      });
+
+      const persisted = await store.get(task.id);
+      assert.equal(persisted.gateFreshness["dev-review"].sourceRunId, "RUN-LATER-LEGACY");
+      assert.equal(persisted.gateFreshness["dev-review"].reasonCode, "missing_authoritative_summary");
+      assert.equal(persisted.runs[0].freshness.reasonCode, "superseded_attempt");
+
+      let merged = false;
+      const orchestrator = new TaskOrchestrator(store, {
+        worktreeManager: { async merge() { merged = true; } },
+      });
+      await assert.rejects(
+        () => orchestrator.approveMerge(task.id),
+        /cannot be approved.*Development Review is not fresh/i,
+      );
+      assert.equal(merged, false);
+    } finally {
+      await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    }
+  }
 });
 
 test("merge approval fails closed when persisted Test verdicts contradict", async () => {

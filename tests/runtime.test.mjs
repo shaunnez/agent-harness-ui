@@ -943,6 +943,73 @@ test("keeps focused test evidence attached to the persisted Markdown artifact in
   });
 });
 
+test("renders exact-candidate failed Test rows while the gate remains rerun-required", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace, getRuntimeFocusedTest }) => {
+    const failedFocusedTest = {
+      candidateId: "C1",
+      candidateRevision: 2,
+      bindingExplicit: true,
+      command: "npm test",
+      status: "failed",
+      durationMs: 740,
+      rows: [
+        {
+          id: "row-failed",
+          candidateId: "C1",
+          candidateRevision: 2,
+          bindingExplicit: true,
+          command: "npm test",
+          status: "failed",
+          durationMs: 740,
+          title: "candidate-bound regression",
+          artifactReferences: [],
+          assertions: [{ label: "authoritative candidate", actual: "failed", expected: "passed" }],
+          failureDetails: "The exact-candidate assertion failed.",
+        },
+      ],
+    };
+    const task = createTask({
+      status: "repair-required",
+      currentStage: "test",
+      completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review"],
+      candidates: [{
+        id: "C1",
+        revisionNumber: 2,
+        status: "repair_required",
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        baseBranch: "main",
+        branch: "agent-harness/ah-999-c1",
+        revisions: [],
+      }],
+      gateFreshness: {
+        test: makeGateFreshness("test", {
+          sourceRunId: "run-test-failed",
+          reasonCode: "failed_execution",
+          reasonCopy: "The authoritative run did not complete successfully.",
+          focusedTest: failedFocusedTest,
+        }),
+      },
+    });
+
+    assert.equal(getRuntimeFocusedTest(task)?.rows[0].id, "row-failed");
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task,
+      initialViewedStageId: "test",
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onGrillAnswer: async () => {},
+      onFinishGrill: async () => {},
+    }));
+    assert.match(markup, /0 passed.*1 failed.*C1 r2/);
+    assert.match(markup, /candidate-bound regression/);
+    assert.match(markup, /failed/);
+  });
+});
+
 test("treats missing and mismatched candidate bindings as stale in navigation and approval counts", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const candidate = {
