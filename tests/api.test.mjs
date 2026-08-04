@@ -42,6 +42,7 @@ async function createServer(options = {}) {
   let grillAnswer = null;
   let grillFinish = null;
   let approvedSpecification = null;
+  let completedMergedTask = null;
   const orchestrator = {
     status: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
     start(id, kind) {
@@ -66,6 +67,9 @@ async function createServer(options = {}) {
     },
     async approvePlan() {},
     async approveMerge() {},
+    async completeMergedTask(id, note) {
+      completedMergedTask = { id, note };
+    },
   };
   let transitionIntercepted = false;
   const apiStore = options.beforeTransition
@@ -99,6 +103,7 @@ async function createServer(options = {}) {
     grillAnswerRef: () => grillAnswer,
     grillFinishRef: () => grillFinish,
     approvedSpecificationRef: () => approvedSpecification,
+    completedMergedTaskRef: () => completedMergedTask,
   };
 }
 
@@ -572,6 +577,41 @@ test("creates, lists, and starts a local task", async () => {
   }
 });
 
+test("dispatches the complete-merged action to the orchestrator and reports 404 for an unknown task", async () => {
+  const { directory, origin, server, completedMergedTaskRef } = await createServer();
+  try {
+    const createResponse = await createTask(origin, {
+      title: "Promote a merged candidate",
+      description: "Move a merged-to-target task onward to completed.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await createResponse.json();
+
+    const missing = await fetch(`${origin}/api/tasks/AH-404/complete-merged`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ note: "" }),
+    });
+    assert.equal(missing.status, 404);
+    assert.equal(completedMergedTaskRef(), null);
+
+    const response = await fetch(`${origin}/api/tasks/${task.id}/complete-merged`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ note: "Promoted onward to the shared integration branch." }),
+    });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { completed: true });
+    assert.deepEqual(completedMergedTaskRef(), {
+      id: task.id,
+      note: "Promoted onward to the shared integration branch.",
+    });
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("rejects invalid closure reasons without mutating task state", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
@@ -976,6 +1016,7 @@ test("enforces one Host, Origin, content-type, CSRF, and missing-Origin policy a
       ["POST", "/api/tasks/AH-999/specification"],
       ["POST", "/api/tasks/AH-999/cancel"],
       ["POST", "/api/tasks/AH-999/approve-merge"],
+      ["POST", "/api/tasks/AH-999/complete-merged"],
     ];
     for (const [method, target] of mutationTargets) {
       const hostile = await nativeFetch(`${origin}${target}`, {

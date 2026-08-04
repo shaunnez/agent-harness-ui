@@ -171,6 +171,7 @@ export async function runTaskAction(
     | "test"
     | "final-review"
     | "approve-merge"
+    | "complete-merged"
     | "grant-retry",
   note = "",
 ) {

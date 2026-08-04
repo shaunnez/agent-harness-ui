@@ -304,6 +304,14 @@ export class JsonTaskStore {
           task.status = "awaiting-spec-approval";
           changed = true;
         }
+        if (task.status === "completed") {
+          const activeCandidate = task.candidates?.at(-1);
+          const explicitlyPromoted = (task.approvals ?? []).some((approval) => approval.stage === "promotion");
+          if (activeCandidate?.status === "merged" && !explicitlyPromoted) {
+            task.status = "merged-to-target";
+            changed = true;
+          }
+        }
         if (!Object.keys(task.attemptsByStage).length && task.stageRun > 0) {
           task.attemptsByStage[task.currentStage] = task.stageRun;
           changed = true;

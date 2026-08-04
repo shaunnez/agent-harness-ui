@@ -129,7 +129,7 @@ export function RuntimeTaskWorkspace({
   const mergeReconciliationPending = task.status === "merging" || task.mergeIntent?.status === "pending";
   const completedApprovalWithoutArtifact =
     viewedStageId === "approval" &&
-    task.status === "completed" &&
+    (task.status === "completed" || task.status === "merged-to-target") &&
     !stageArtifact &&
     candidate?.status === "merged";
   const stageSummary = getRuntimeStageSummary(task, viewedStageId, stageArtifact);

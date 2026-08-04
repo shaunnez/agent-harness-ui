@@ -10,6 +10,7 @@ import {
   WarningCircle,
   Wrench,
 } from "@phosphor-icons/react";
+import { useEffect, useState } from "react";
 import {
   formatApproximateCost,
   formatCacheRate,
@@ -28,6 +29,7 @@ import {
 } from "./RuntimeEvidencePanels";
 import {
   candidateGateStages,
+  getMergePromotionDetails,
   getRuntimeArtifactFreshness,
   getRuntimeFocusedTest,
   getRuntimeGateFreshness,
@@ -228,7 +230,8 @@ export function RuntimeStagePresentation({
           {artifactCard ?? empty}
         </div>
       );
-    case "approval":
+    case "approval": {
+      const promotion = getMergePromotionDetails(task, candidate);
       return (
         <div className="runtime-stage-stack">
           {candidate ? (
@@ -240,6 +243,7 @@ export function RuntimeStagePresentation({
               approval
             />
           ) : null}
+          {promotion ? <RuntimeMergePromotionPanel promotion={promotion} /> : null}
           {artifactCard}
           {completedApprovalWithoutArtifact ? (
             <div className="runtime-stage-empty runtime-stage-empty--success">
@@ -251,7 +255,63 @@ export function RuntimeStagePresentation({
           {!artifact && !completedApprovalWithoutArtifact ? empty : null}
         </div>
       );
+    }
   }
+}
+
+async function copyToClipboard(content: string) {
+  const clipboard = globalThis.navigator?.clipboard;
+  if (!clipboard?.writeText) return false;
+  try {
+    await clipboard.writeText(content);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function RuntimeMergePromotionPanel({
+  promotion,
+}: {
+  promotion: NonNullable<ReturnType<typeof getMergePromotionDetails>>;
+}) {
+  const [copyStatus, setCopyStatus] = useState<"copied" | "error" | null>(null);
+  useEffect(() => {
+    if (copyStatus !== "copied") return;
+    const timer = window.setTimeout(() => setCopyStatus(null), 1_800);
+    return () => window.clearTimeout(timer);
+  }, [copyStatus]);
+  return (
+    <section className="runtime-merge-promotion" aria-label="Merge promotion">
+      <header>
+        <ShieldCheck size={18} weight="fill" />
+        <span>
+          <strong>Merged to target &middot; promotion is a manual step</strong>
+          <small>The harness fast-forwarded this candidate into the recorded target branch. It does not push, promote, or merge any further.</small>
+        </span>
+      </header>
+      <RuntimeFactGrid
+        facts={[
+          ["Candidate", `${promotion.candidateId} r${promotion.candidateRevision}`],
+          ["Merged head SHA", promotion.headRevision],
+          ["Target ref", promotion.targetRef],
+        ]}
+      />
+      <div className="runtime-merge-promotion__command">
+        <small>Promote onward &middot; copy only, not executed by the harness</small>
+        <code className="mono">{promotion.promoteCommand}</code>
+        <Button
+          tone="ghost"
+          compact
+          onClick={() => {
+            void copyToClipboard(promotion.promoteCommand).then((ok) => setCopyStatus(ok ? "copied" : "error"));
+          }}
+        >
+          {copyStatus === "copied" ? "Copied" : copyStatus === "error" ? "Copy failed" : "Copy command"}
+        </Button>
+      </div>
+    </section>
+  );
 }
 
 function RuntimeFactGrid({ facts }: { facts: Array<[string, string]> }) {

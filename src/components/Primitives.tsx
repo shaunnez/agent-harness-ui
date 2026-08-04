@@ -69,6 +69,7 @@ const runStateCopy: Record<TaskRunState, string> = {
   repairing: "Repairing",
   blocked: "Blocked",
   "awaiting-approval": "Awaiting approval",
+  "merged-to-target": "Merged to target",
   completed: "Completed",
   closed: "Closed",
 };
@@ -81,7 +82,7 @@ export function StateBadge({ state }: { state: TaskRunState }) {
         ? CheckCircle
         : state === "closed"
           ? Circle
-        : state === "needs-input" || state === "awaiting-approval"
+        : state === "needs-input" || state === "awaiting-approval" || state === "merged-to-target"
           ? WarningCircle
           : Info;
   return (

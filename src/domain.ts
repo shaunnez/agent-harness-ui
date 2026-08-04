@@ -26,6 +26,7 @@ export type TaskRunState =
   | "repairing"
   | "blocked"
   | "awaiting-approval"
+  | "merged-to-target"
   | "completed"
   | "closed";
 export type AppScreen = "command" | "tasks" | "skills" | "agents" | "settings";
@@ -104,6 +105,8 @@ export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
       ? "Closed"
       : task.status === "completed"
       ? "Completed"
+      : task.status === "merged-to-target"
+      ? "Needs input"
       : task.status === "queued" ||
           task.status.startsWith("awaiting-") ||
           task.status.startsWith("ready-for-")

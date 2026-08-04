@@ -443,7 +443,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
       }
 
       const actionMatch = url.pathname.match(
-        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|specification|plan|implement|repair|review|test|final-review|approve-merge|grant-retry)$/,
+        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|specification|plan|implement|repair|review|test|final-review|approve-merge|complete-merged|grant-retry)$/,
       );
       if (request.method === "POST" && actionMatch) {
         const id = decodeURIComponent(actionMatch[1]);
@@ -459,7 +459,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
           return;
         }
 
-        const notes = ["approve-spec", "approve-plan", "approve-merge"].includes(action)
+        const notes = ["approve-spec", "approve-plan", "approve-merge", "complete-merged"].includes(action)
           ? await readJson(request)
           : {};
         if (action === "approve-spec") {
@@ -475,6 +475,11 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         if (action === "approve-merge") {
           await orchestrator.approveMerge(id, notes.note ?? "");
           send(response, 200, { merged: true });
+          return;
+        }
+        if (action === "complete-merged") {
+          await orchestrator.completeMergedTask(id, notes.note ?? "");
+          send(response, 200, { completed: true });
           return;
         }
         if (action === "grant-retry") {

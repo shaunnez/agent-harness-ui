@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "build": "vite build && node scripts/prepare-sites-build.mjs",
     "preview": "vite preview",
-    "test": "node --test tests/api.test.mjs tests/campaign-export.test.mjs tests/git-worktree.test.mjs tests/orchestrator.test.mjs tests/routes.test.mjs tests/runtime.test.mjs",
+    "test": "node --test tests/api.test.mjs tests/campaign-export.test.mjs tests/evaluation.test.mjs tests/git-worktree.test.mjs tests/orchestrator.test.mjs tests/routes.test.mjs tests/runtime.test.mjs tests/store.test.mjs",
     "test:api": "node --test tests/api.test.mjs",
     "test:orchestrator": "node --test tests/orchestrator.test.mjs",
     "test:runtime": "node --test tests/runtime.test.mjs tests/api.test.mjs",

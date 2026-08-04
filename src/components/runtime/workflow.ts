@@ -75,7 +75,7 @@ export function isStageComplete(task: RuntimeTask, stageId: StageId): boolean {
   if (!candidate) return false;
   if (stageId === "approval") {
     return (
-      task.status === "completed" &&
+      (task.status === "merged-to-target" || task.status === "completed") &&
       candidate.status === "merged" &&
       candidateGateStages.every((gateStage) => isStageComplete(task, gateStage))
     );
@@ -282,6 +282,40 @@ export function toTaskRunState(status: RuntimeTask["status"]): TaskRunState {
   if (status === "queued") return "paused";
   if (status === "cancelled" || status === "blocked") return "blocked";
   if (status === "running" || status === "cancelling") return "running";
+  if (status === "merged-to-target") return "merged-to-target";
   if (status === "failed" || status === "completed") return status;
   return "needs-input";
+}
+
+export interface MergePromotionDetails {
+  candidateId: string;
+  candidateRevision: number;
+  headRevision: string;
+  targetRef: string;
+  targetBranch: string;
+  promoteCommand: string;
+}
+
+/**
+ * Read-only projection of the merge that landed on the recorded target ref.
+ * The returned command is for the operator to copy elsewhere; nothing here
+ * executes it or offers a second merge path.
+ */
+export function getMergePromotionDetails(
+  task: RuntimeTask,
+  candidate: RuntimeTask["candidates"][number] | undefined,
+): MergePromotionDetails | null {
+  if (task.status !== "merged-to-target") return null;
+  if (candidate?.status !== "merged" || !candidate.headRevision) return null;
+  const targetRef = task.mergeIntent?.targetRef ?? (candidate.baseBranch ? `refs/heads/${candidate.baseBranch}` : null);
+  if (!targetRef) return null;
+  const targetBranch = targetRef.replace(/^refs\/heads\//, "");
+  return {
+    candidateId: candidate.id,
+    candidateRevision: candidate.revisionNumber,
+    headRevision: candidate.headRevision,
+    targetRef,
+    targetBranch,
+    promoteCommand: `git push origin ${candidate.headRevision}:${targetBranch}`,
+  };
 }

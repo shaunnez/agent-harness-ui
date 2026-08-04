@@ -11,6 +11,7 @@ const STAGE_LABELS = {
   test: "Test",
   "final-review": "Final review",
   approval: "Human approval",
+  promotion: "Promotion to completed",
 };
 
 export function getApprovalHistory(approvals) {

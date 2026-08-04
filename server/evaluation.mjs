@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 const GATE_STAGES = ["dev-review", "test", "final-review"];
-const TERMINAL_STATUSES = new Set(["awaiting-human-approval", "completed", "closed", "blocked", "failed", "cancelled"]);
+const TERMINAL_STATUSES = new Set(["awaiting-human-approval", "merged-to-target", "completed", "closed", "blocked", "failed", "cancelled"]);
 
 function round(value, places = 6) {
   const factor = 10 ** places;

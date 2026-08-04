@@ -2129,6 +2129,65 @@ test("renders an exact-candidate approval artifact as current after a successful
   });
 });
 
+test("surfaces the merged candidate, target ref, and a copy-only promotion command for a merged-to-target task", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace, isStageComplete, toTaskRunState }) => {
+    const task = createTask({
+      status: "merged-to-target",
+      currentStage: "approval",
+      completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review", "approval"],
+      candidates: [{
+        id: "C1",
+        revisionNumber: 3,
+        status: "merged",
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        baseBranch: "codex/vertical-slice",
+        branch: "agent-harness/ah-999-c1",
+        revisions: [],
+      }],
+      mergeIntent: {
+        candidateId: "C1",
+        candidateRevision: 3,
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        targetRef: "refs/heads/codex/vertical-slice",
+        note: "",
+        status: "completed",
+        startedAt: "2026-08-01T12:04:00.000Z",
+        completedAt: "2026-08-01T12:05:00.000Z",
+        error: null,
+      },
+      gateFreshness: {
+        "dev-review": makeGateFreshness("dev-review", { fresh: true, candidateRevision: 3 }),
+        test: makeGateFreshness("test", { fresh: true, candidateRevision: 3 }),
+        "final-review": makeGateFreshness("final-review", { fresh: true, candidateRevision: 3 }),
+      },
+    });
+
+    assert.equal(isStageComplete(task, "approval"), true, "the fast-forward merge completes the approval stage before promotion");
+    assert.equal(toTaskRunState(task.status), "merged-to-target");
+
+    const markup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task,
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+      }),
+    );
+
+    assert.match(markup, /Merged to target/);
+    assert.match(markup, /C1 r3/);
+    assert.match(markup, new RegExp(`Merged head SHA[\\s\\S]*${"b".repeat(40)}`));
+    assert.match(markup, /refs\/heads\/codex\/vertical-slice/);
+    assert.match(markup, new RegExp(`git push origin ${"b".repeat(40)}:codex/vertical-slice`));
+    assert.match(markup, /Copy command/);
+    assert.match(markup, /Mark completed/);
+  });
+});
+
 test("filters structured activity and renders test run and artifact drilldown", () => {
   return withWorkspace(async ({ RunActivity, filterRunActivity }) => {
     const runBase = {

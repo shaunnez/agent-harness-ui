@@ -415,9 +415,8 @@ export class TaskOrchestrator {
       draft.approvals.push(approval);
       activeCandidate.status = "merged";
       activeCandidate.updatedAt = approvedAt;
-      draft.status = "completed";
+      draft.status = "merged-to-target";
       draft.currentStage = "approval";
-      draft.completedAt = approvedAt;
       if (!draft.completedStages.includes("approval")) draft.completedStages.push("approval");
       draft.mergeIntent.status = "completed";
       draft.mergeIntent.completedAt = approvedAt;
@@ -439,6 +438,28 @@ export class TaskOrchestrator {
       draft.events.push(activity("approval", "Human approval recorded", approvalNote || "Approved without an additional note.", "success", "decision", { approvalId: approval.id }));
       draft.events.push(activity("approval", "Approval artifact ready", approvalArtifact.name, "success", "artifact", { artifactId: approvalArtifact.id, approvalId: approval.id }));
       draft.events.push(activity("approval", "Candidate merged", `${activeCandidate.id} fast-forwarded ${activeCandidate.baseBranch} to ${activeCandidate.headRevision.slice(0, 8)}.`, "success", "decision", { approvalId: approval.id }));
+    });
+  }
+
+  async completeMergedTask(id, note = "") {
+    const task = await this.#store.get(id);
+    if (!task) throw new Error("Task not found.");
+    if (task.status !== "merged-to-target") throw new Error("The task is not merged to its target branch.");
+    const candidate = currentCandidate(task);
+    if (!candidate || candidate.status !== "merged") throw new Error("The task does not have a merged candidate to promote.");
+    return this.#store.transition(id, (draft) => draft.status === "merged-to-target", (draft) => {
+      const approvedAt = now();
+      const activeCandidate = currentCandidate(draft);
+      recordApproval(draft, "promotion", note);
+      draft.status = "completed";
+      draft.completedAt = approvedAt;
+      draft.events.push(activity(
+        "approval",
+        "Task marked completed",
+        `${activeCandidate.id} revision ${activeCandidate.revisionNumber} was promoted onward from ${activeCandidate.baseBranch}.`,
+        "success",
+        "decision",
+      ));
     });
   }
 

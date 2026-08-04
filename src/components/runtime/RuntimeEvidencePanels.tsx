@@ -328,7 +328,7 @@ export function DecisionFrontier({
         </small>
       )}
       {canRecord && !task.status.startsWith("running") &&
-      !["completed", "awaiting-human-approval"].includes(task.status) ? (
+      !["completed", "merged-to-target", "awaiting-human-approval"].includes(task.status) ? (
         <form
           onSubmit={async (event) => {
             event.preventDefault();

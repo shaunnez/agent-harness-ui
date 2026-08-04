@@ -18,6 +18,7 @@ export type RuntimeTaskStatus =
   | "repair-required"
   | "awaiting-human-approval"
   | "merging"
+  | "merged-to-target"
   | "completed"
   | "closed";
 

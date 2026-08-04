@@ -273,7 +273,7 @@ export function App() {
               try {
                 await runTaskAction(activeRuntimeTask.id, action, note);
                 await refreshActiveTask(activeRuntimeTask.id);
-                showToast("success", action === "grant-retry" ? "One repair attempt was granted. The stage limit is updated." : action === "repair" ? "Repair started. Downstream gates now require fresh evidence." : "Task action completed.");
+                showToast("success", action === "grant-retry" ? "One repair attempt was granted. The stage limit is updated." : action === "repair" ? "Repair started. Downstream gates now require fresh evidence." : action === "complete-merged" ? "Task marked completed." : "Task action completed.");
                 if (["repair", "implement", "review", "test", "final-review"].includes(action)) {
                   window.setTimeout(() => {
                     void getTask(activeRuntimeTask.id).then((latest) => {

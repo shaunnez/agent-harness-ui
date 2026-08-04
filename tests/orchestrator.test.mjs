@@ -3000,19 +3000,35 @@ test("advances an approved implementation task through a revision-bound candidat
       assert.equal(passEvent.freshness.fresh, true, `${stage} pass event carries authoritative freshness`);
     }
     await orchestrator.approveMerge(task.id);
-    const complete = await store.get(task.id);
-    assert.equal(complete.status, "completed");
-    assert.equal(complete.candidates[0].status, "merged");
-    assert.equal(complete.artifacts.length, 17);
-    assert.equal(complete.artifacts.at(-1).stage, "approval");
-    assert.equal(complete.artifacts.at(-1).candidateId, "C1");
-    assert.equal(complete.artifacts.at(-1).candidateRevision, 2);
-    assert.match(complete.artifacts.at(-1).content, /Merge method: fast-forward only/);
-    assert.match(complete.artifacts.at(-1).content, new RegExp(`Merged revision: ${"c".repeat(40)}`));
-    assert.equal(complete.mergeIntent.status, "completed");
-    assert.equal(complete.approvals.filter((approval) => approval.stage === "approval").length, 1);
+    const merged1 = await store.get(task.id);
+    assert.equal(merged1.status, "merged-to-target");
+    assert.equal(merged1.completedAt, null, "merging onto the target branch does not itself complete the task");
+    assert.equal(merged1.candidates[0].status, "merged");
+    assert.equal(merged1.artifacts.length, 17);
+    assert.equal(merged1.artifacts.at(-1).stage, "approval");
+    assert.equal(merged1.artifacts.at(-1).candidateId, "C1");
+    assert.equal(merged1.artifacts.at(-1).candidateRevision, 2);
+    assert.match(merged1.artifacts.at(-1).content, /Merge method: fast-forward only/);
+    assert.match(merged1.artifacts.at(-1).content, new RegExp(`Merged revision: ${"c".repeat(40)}`));
+    assert.equal(merged1.mergeIntent.status, "completed");
+    assert.equal(merged1.approvals.filter((approval) => approval.stage === "approval").length, 1);
     await assert.rejects(() => orchestrator.approveMerge(task.id), /not awaiting merge approval/i);
     assert.equal(merged, true);
+
+    for (const kind of ["review", "test", "final-review", "implementation"]) {
+      assert.equal(await orchestrator.start(task.id, kind), false, `${kind} must not start once the task is merged-to-target`);
+    }
+    await assert.rejects(() => orchestrator.completeMergedTask("AH-missing"), /Task not found/i);
+
+    await orchestrator.completeMergedTask(task.id, "Promoted to the shared integration branch.");
+    const complete = await store.get(task.id);
+    assert.equal(complete.status, "completed");
+    assert.ok(complete.completedAt);
+    assert.equal(complete.candidates[0].status, "merged");
+    const promotion = complete.approvals.find((approval) => approval.stage === "promotion");
+    assert.ok(promotion, "promoting to completed records a persisted decision");
+    assert.equal(promotion.note, "Promoted to the shared integration branch.");
+    await assert.rejects(() => orchestrator.completeMergedTask(task.id), /not merged to its target branch/i);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -3283,7 +3299,7 @@ test("reconciles a recorded merge intent without duplicating approval", async ()
     await orchestrator.recoverMergeIntents();
     await orchestrator.recoverMergeIntents();
     const recovered = await store.get(task.id);
-    assert.equal(recovered.status, "completed");
+    assert.equal(recovered.status, "merged-to-target");
     assert.equal(recovered.mergeIntent.status, "completed");
     assert.equal(recovered.approvals.filter((approval) => approval.stage === "approval").length, 1);
     assert.equal(mergeCalls, 0);

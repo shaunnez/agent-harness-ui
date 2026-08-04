@@ -49,6 +49,7 @@ export function RuntimeCommandBar({
   const ready =
     task.status.startsWith("awaiting-") ||
     task.status.startsWith("ready-for-") ||
+    task.status === "merged-to-target" ||
     task.status === "completed";
   const accessBoundary = getAccessBoundaryCopy(task);
   const next = nextAction(task);
@@ -315,6 +316,13 @@ export function nextAction(task: RuntimeTask) {
         : "The harness will merge only if the source branch is clean, unchanged, and can fast-forward to the reviewed commit.",
     };
   }
+  if (task.status === "merged-to-target")
+    return {
+      action: "complete-merged" as const,
+      label: "Mark completed",
+      title: "Candidate merged · promotion is a manual step",
+      detail: "The candidate fast-forwarded its recorded target branch. The harness does not promote it further; copy the git command below to push it onward, then mark this task completed to record that decision.",
+    };
   if (task.status === "completed")
     return {
       action: null,
