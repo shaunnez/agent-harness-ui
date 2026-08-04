@@ -204,7 +204,11 @@ test("derives candidate-bound review gates from structured evidence", () => {
   assert.equal(contradictory.reportedVerdict, "PASS");
   assert.equal(contradictory.verdict, "REPAIR");
   assert.match(contradictory.blockingReasons[0], /P1/);
-  assert.throws(() => parseGateEvidence("PASS", candidate, "dev-review"), /exactly one gate-evidence/i);
+  assert.throws(
+    () => parseGateEvidence("PASS", candidate, "dev-review"),
+    (error) => error.code === "missing_authoritative_summary" &&
+      error.copy === RUNTIME_FRESHNESS_REASONS.missing_authoritative_summary,
+  );
   assert.throws(
     () => parseGateEvidence(gateOutput(1), candidate, "dev-review"),
     (error) => error.code === "revision_change",
@@ -1015,6 +1019,36 @@ test("persists exact structured-evidence reason codes through a failed review ru
       code: "contradictory_evidence",
       verifyApprovalBlocked: true,
     },
+    {
+      name: "unsupported finding severity",
+      output: gateOutput(2, "PASS", [{
+        severity: "critical",
+        title: "Unsupported severity",
+        detail: "The severity is outside the persisted gate schema.",
+        candidateId: "C1",
+        candidateRevision: 2,
+      }]),
+      code: "contradictory_evidence",
+      verifyApprovalBlocked: true,
+    },
+    {
+      name: "empty finding title",
+      output: gateOutput(2, "PASS", [{
+        severity: "P2",
+        title: "   ",
+        detail: "The title is required by the persisted gate schema.",
+        candidateId: "C1",
+        candidateRevision: 2,
+      }]),
+      code: "contradictory_evidence",
+      verifyApprovalBlocked: true,
+    },
+    {
+      name: "invalid verdict",
+      output: gateOutput(2).replace('"verdict":"PASS"', '"verdict":"UNKNOWN"'),
+      code: "contradictory_evidence",
+      verifyApprovalBlocked: true,
+    },
   ];
 
   for (const item of cases) {
@@ -1063,6 +1097,8 @@ test("persists exact structured-evidence reason codes through a failed review ru
       assert.equal(run.evidenceError.copy, RUNTIME_FRESHNESS_REASONS[item.code], item.name);
       assert.equal(run.freshness.reasonCode, item.code, item.name);
       assert.equal(finished.gateFreshness["dev-review"].reasonCode, item.code, item.name);
+      assert.match(finished.events.at(-1).title, /rerun required/i, item.name);
+      assert.match(finished.events.at(-1).detail, new RegExp(RUNTIME_FRESHNESS_REASONS[item.code]), item.name);
       assert.equal(finished.candidates.at(-1).revisionNumber, 2, item.name);
       assert.equal(finished.candidates.at(-1).status, "ready_for_review", item.name);
       if (item.verifyApprovalBlocked) {
@@ -1082,7 +1118,7 @@ test("persists exact structured-evidence reason codes through a failed review ru
   }
 });
 
-test("malformed gate output retains the candidate and permits only the same gate rerun", async () => {
+test("missing authoritative output retains the candidate and permits only the same gate rerun", async () => {
   const cases = [
     {
       stage: "dev-review",
@@ -1151,11 +1187,12 @@ test("malformed gate output retains the candidate and permits only the same gate
       assert.equal(finished.candidates.at(-1).revisionNumber, 2, item.stage);
       assert.equal(finished.candidates.at(-1).status, item.candidateStatus, item.stage);
       assert.equal(finished.attemptsByStage[item.stage], 1, item.stage);
-      assert.equal(finished.runs.at(-1).evidenceError.code, "malformed_binding", item.stage);
+      assert.equal(finished.runs.at(-1).evidenceError.code, "missing_authoritative_summary", item.stage);
+      assert.equal(finished.runs.at(-1).freshness.reasonCode, "missing_authoritative_summary", item.stage);
       assert.equal(finished.events.at(-1).title, `${item.label} rerun required`, item.stage);
       assert.equal(
         finished.events.at(-1).detail,
-        `C1 revision 2 could not accept the persisted gate evidence. ${RUNTIME_FRESHNESS_REASONS.malformed_binding}`,
+        `C1 revision 2 could not accept the persisted gate evidence. ${RUNTIME_FRESHNESS_REASONS.missing_authoritative_summary}`,
         item.stage,
       );
 

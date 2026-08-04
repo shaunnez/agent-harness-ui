@@ -29,6 +29,26 @@ function parseLabelledJson(text, label) {
   }
 }
 
+function parseCandidateEvidenceJson(text, label) {
+  const expression = new RegExp(`<${label}>\\s*([\\s\\S]*?)\\s*</${label}>`, "gi");
+  const matches = [...String(text ?? "").matchAll(expression)];
+  if (matches.length === 0) throw candidateEvidenceError("missing_authoritative_summary");
+  if (matches.length > 1) {
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      `The agent returned more than one ${label} JSON block.`,
+    );
+  }
+  try {
+    return JSON.parse(matches[0][1].trim());
+  } catch (error) {
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      `The ${label} JSON block was invalid: ${error.message}`,
+    );
+  }
+}
+
 export function parseGrillQuestions(text) {
   const value = parseLabelledJson(text, "grill-questions");
   if (!Array.isArray(value.questions) || value.questions.length > 12) {
@@ -64,7 +84,7 @@ export function parseGrillQuestions(text) {
 }
 
 export function parseFocusedTestEvidence(text) {
-  const value = parseLabelledJson(text, "focused-test-evidence");
+  const value = parseCandidateEvidenceJson(text, "focused-test-evidence");
   const binding = readExplicitCandidateBinding(value);
   if (!binding.valid) throw candidateEvidenceError(binding.code);
   if (typeof value.command !== "string" || !value.command.trim()) {
@@ -74,8 +94,12 @@ export function parseFocusedTestEvidence(text) {
     throw candidateEvidenceError("contradictory_evidence", "Focused test evidence durationMs must be a non-negative number or null.");
   }
   const rows = Array.isArray(value.rows) ? value.rows : [];
-  if (!rows.length) throw new Error("Focused test evidence must include at least one row.");
-  if (!["passed", "failed"].includes(value.status)) throw new Error("Focused test evidence status must be passed or failed.");
+  if (!rows.length) {
+    throw candidateEvidenceError("contradictory_evidence", "Focused test evidence must include at least one row.");
+  }
+  if (!["passed", "failed"].includes(value.status)) {
+    throw candidateEvidenceError("contradictory_evidence", "Focused test evidence status must be passed or failed.");
+  }
   const normalized = {
     candidateId: binding.candidateId,
     candidateRevision: binding.candidateRevision,
@@ -122,16 +146,7 @@ export function parseGateEvidence(text, candidate, stageId) {
   if (!["dev-review", "final-review"].includes(stageId)) {
     throw new Error(`Structured gate evidence is not supported for ${stageId}.`);
   }
-  const matches = [...String(text ?? "").matchAll(/<gate-evidence>\s*([\s\S]*?)\s*<\/gate-evidence>/gi)];
-  if (matches.length !== 1) {
-    throw new Error(`The ${stageId} agent must return exactly one gate-evidence JSON block.`);
-  }
-  let value;
-  try {
-    value = JSON.parse(matches[0][1].trim());
-  } catch (error) {
-    throw new Error(`The gate-evidence JSON block was invalid: ${error.message}`);
-  }
+  const value = parseCandidateEvidenceJson(text, "gate-evidence");
   if (!candidate?.id || !Number.isInteger(candidate.revisionNumber)) {
     throw new Error("Gate evidence requires an active candidate identity.");
   }
@@ -140,9 +155,11 @@ export function parseGateEvidence(text, candidate, stageId) {
   const candidateId = binding.candidateId;
   const candidateRevision = binding.candidateRevision;
   if (!["PASS", "REPAIR"].includes(value?.verdict)) {
-    throw new Error("Gate evidence verdict must be PASS or REPAIR.");
+    throw candidateEvidenceError("contradictory_evidence", "Gate evidence verdict must be PASS or REPAIR.");
   }
-  if (!Array.isArray(value.findings)) throw new Error("Gate evidence must include a findings array.");
+  if (!Array.isArray(value.findings)) {
+    throw candidateEvidenceError("contradictory_evidence", "Gate evidence must include a findings array.");
+  }
   const findings = value.findings.map((finding, index) => {
     if (!finding || typeof finding !== "object" || Array.isArray(finding)) {
       throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} must be an object.`);
@@ -152,7 +169,10 @@ export function parseGateEvidence(text, candidate, stageId) {
     }
     const severity = finding.severity.toUpperCase();
     if (!["P0", "P1", "P2", "P3"].includes(severity)) {
-      throw new Error(`Gate finding ${index + 1} must have severity P0, P1, P2, or P3.`);
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `Gate finding ${index + 1} must have severity P0, P1, P2, or P3.`,
+      );
     }
     if (typeof finding.title !== "string" || typeof finding.detail !== "string") {
       throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} title and detail must be strings.`);
@@ -165,7 +185,12 @@ export function parseGateEvidence(text, candidate, stageId) {
     }
     const title = finding.title.trim().slice(0, 500);
     const detail = finding.detail.trim().slice(0, 4_000);
-    if (!title || !detail) throw new Error(`Gate finding ${index + 1} is missing its title or detail.`);
+    if (!title || !detail) {
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `Gate finding ${index + 1} is missing its title or detail.`,
+      );
+    }
     const hasFindingCandidateId = Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateId");
     const hasFindingCandidateRevision = Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateRevision");
     const findingExplicitBinding = hasFindingCandidateId && hasFindingCandidateRevision;
@@ -358,7 +383,10 @@ function normalizeFocusedTestRow(row, rowIndex, parent) {
   const binding = explicitBinding ? readExplicitCandidateBinding(row) : readExplicitCandidateBinding(parent);
   if (!binding.valid) throw candidateEvidenceError(binding.code);
   if (!["passed", "failed"].includes(row?.status)) {
-    throw new Error(`Focused test row ${rowIndex + 1} status must be passed or failed.`);
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      `Focused test row ${rowIndex + 1} status must be passed or failed.`,
+    );
   }
   const status = row.status;
   const assertions = Array.isArray(row?.assertions)

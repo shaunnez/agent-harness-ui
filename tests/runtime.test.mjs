@@ -1335,6 +1335,9 @@ test("renders the exact persisted reason for a stale viewed-stage artifact", () 
     assert.match(markup, /Rerun required/);
     assert.match(markup, new RegExp(staleReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     assert.doesNotMatch(markup, /Stale after repair/);
+    assert.match(markup, /Typed P0.P3 findings are persisted for gate evaluation/);
+    assert.match(markup, /retained artifact remains the full prose review record/);
+    assert.doesNotMatch(markup, /does not persist typed P0.P3 finding records/);
   });
 });
 

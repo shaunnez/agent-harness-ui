@@ -189,7 +189,10 @@ export function RuntimeStagePresentation({
             <ShieldCheck size={18} />
             <span>
               <strong>Fresh-context review boundary</strong>
-              <p>Review findings remain authoritative inside the retained artifact because the runtime does not persist typed P0&ndash;P3 finding records.</p>
+              <p>
+                Typed P0&ndash;P3 findings are persisted for gate evaluation; the retained artifact remains
+                the full prose review record.
+              </p>
             </span>
           </section>
           {artifactCard ?? empty}

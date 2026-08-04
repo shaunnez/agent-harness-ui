@@ -1259,13 +1259,13 @@ function structuredEvidenceError(error) {
     : null;
   const code = typedCode ?? (message.includes("missing_binding") || /missing explicit candidate identity|must include a candidateId|must include a positive candidateRevision/i.test(message)
     ? "missing_binding"
-    : message.includes("malformed_binding") || /invalid|malformed|explicit candidate identity fields/i.test(message)
+    : message.includes("malformed_binding") || /malformed explicit candidate identity fields|candidate (?:evidence )?binding.*malformed/i.test(message)
       ? "malformed_binding"
       : /different candidate|does not match the active candidate/i.test(message)
         ? "candidate_mismatch"
         : /contradict/i.test(message)
           ? "contradictory_evidence"
-          : "malformed_binding");
+          : "contradictory_evidence");
   return { code, copy: RUNTIME_FRESHNESS_REASONS[code] };
 }
 
