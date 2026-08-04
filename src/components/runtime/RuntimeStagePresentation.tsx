@@ -278,7 +278,7 @@ function RuntimeArtifactCard({
   onOpen: () => void;
 }) {
   const fresh = isCandidateBoundStage(artifact.stage)
-    ? Boolean(freshness?.fresh && isArtifactFresh(artifact, candidate, freshness))
+    ? isArtifactFresh(artifact, candidate, freshness)
     : true;
   const focusedContent = hideStructuredTestPayload ? stripFocusedTestPayload(artifact.content) : artifact.content;
   const content = stripEmbeddedCandidatePatch(focusedContent);

@@ -885,6 +885,21 @@ export class TaskOrchestrator {
       activeCandidate.updatedAt = now();
       draft.activeRunKind = null;
       if (gateFailure) {
+        if (evidenceError) {
+          const rerunState = evaluationRerunState(stageId);
+          activeCandidate.status = rerunState.candidateStatus;
+          draft.status = rerunState.taskStatus;
+          draft.currentStage = stageId;
+          draft.events.push(activity(
+            stageId,
+            `${getStageMetadata(stageId).label} rerun required`,
+            `${activeCandidate.id} revision ${activeCandidate.revisionNumber} could not accept the persisted gate evidence. ${gateFailure.freshness.reasonCopy}`,
+            "warning",
+            "decision",
+            runEventMetadata(authoritativeRun),
+          ));
+          return;
+        }
         activeCandidate.status = "repair_required";
         draft.status = "repair-required";
         draft.currentStage = stageId;
@@ -1252,6 +1267,14 @@ function structuredEvidenceError(error) {
           ? "contradictory_evidence"
           : "malformed_binding");
   return { code, copy: RUNTIME_FRESHNESS_REASONS[code] };
+}
+
+function evaluationRerunState(stageId) {
+  return {
+    "dev-review": { taskStatus: "ready-for-review", candidateStatus: "ready_for_review" },
+    test: { taskStatus: "ready-for-test", candidateStatus: "ready_for_test" },
+    "final-review": { taskStatus: "ready-for-final-review", candidateStatus: "ready_for_final_review" },
+  }[stageId];
 }
 
 function canStartRun(task, kind) {

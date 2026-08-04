@@ -800,12 +800,14 @@ test("persists exact structured-evidence reason codes through a failed review ru
       });
 
       assert.equal(await orchestrator.start(task.id, "review"), true);
-      const finished = await waitForStatus(store, task.id, "repair-required");
+      const finished = await waitForStatus(store, task.id, "ready-for-review");
       const run = finished.runs.find((entry) => entry.stage === "dev-review");
       assert.equal(run.evidenceError.code, item.code, item.name);
       assert.equal(run.evidenceError.copy, RUNTIME_FRESHNESS_REASONS[item.code], item.name);
       assert.equal(run.freshness.reasonCode, item.code, item.name);
       assert.equal(finished.gateFreshness["dev-review"].reasonCode, item.code, item.name);
+      assert.equal(finished.candidates.at(-1).revisionNumber, 2, item.name);
+      assert.equal(finished.candidates.at(-1).status, "ready_for_review", item.name);
       if (item.verifyApprovalBlocked) {
         await store.update(task.id, (draft) => {
           draft.status = "awaiting-human-approval";
@@ -817,6 +819,97 @@ test("persists exact structured-evidence reason codes through a failed review ru
           /cannot be approved.*Development Review is not fresh.*contradictory/i,
         );
       }
+    } finally {
+      await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    }
+  }
+});
+
+test("malformed gate output retains the candidate and permits only the same gate rerun", async () => {
+  const cases = [
+    {
+      stage: "dev-review",
+      kind: "review",
+      taskStatus: "ready-for-review",
+      candidateStatus: "ready_for_review",
+      label: "Development review",
+    },
+    {
+      stage: "test",
+      kind: "test",
+      taskStatus: "ready-for-test",
+      candidateStatus: "ready_for_test",
+      label: "Focused test",
+    },
+    {
+      stage: "final-review",
+      kind: "final-review",
+      taskStatus: "ready-for-final-review",
+      candidateStatus: "ready_for_final_review",
+      label: "Final review",
+    },
+  ];
+
+  for (const item of cases) {
+    const directory = await mkdtemp(path.join(os.tmpdir(), `agent-harness-${item.stage}-rerun-`));
+    try {
+      const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+      await store.init();
+      const task = await store.create({
+        title: `Rerun malformed ${item.stage}`,
+        description: "Malformed gate evidence must not create a candidate repair.",
+        repositoryPath: directory,
+        workflow: "implement",
+        priority: "medium",
+      });
+      await store.update(task.id, (draft) => {
+        draft.status = item.taskStatus;
+        draft.currentStage = item.stage;
+        draft.candidates = [{
+          id: "C1",
+          revisionNumber: 2,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: "b".repeat(40),
+          branch: "agent-harness/ah-005-c1",
+          repositoryRoot: directory,
+          worktreePath: directory,
+          status: item.candidateStatus,
+          createdAt: "2026-08-01T12:00:00.000Z",
+          updatedAt: "2026-08-01T12:00:00.000Z",
+          revisions: [],
+        }];
+      });
+      const orchestrator = new TaskOrchestrator(store, {
+        getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+        worktreeManager: { verifyCandidate: async () => {} },
+        runCodex: async () => ({
+          finalText: "## Verdict\n\nPASS without the required structured evidence block.",
+          usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+        }),
+      });
+
+      assert.equal(await orchestrator.start(task.id, item.kind), true);
+      let finished = await waitForStatus(store, task.id, item.taskStatus);
+      assert.equal(finished.candidates.at(-1).revisionNumber, 2, item.stage);
+      assert.equal(finished.candidates.at(-1).status, item.candidateStatus, item.stage);
+      assert.equal(finished.attemptsByStage[item.stage], 1, item.stage);
+      assert.equal(finished.runs.at(-1).evidenceError.code, "malformed_binding", item.stage);
+      assert.equal(finished.events.at(-1).title, `${item.label} rerun required`, item.stage);
+      assert.equal(
+        finished.events.at(-1).detail,
+        `C1 revision 2 could not accept the persisted gate evidence. ${RUNTIME_FRESHNESS_REASONS.malformed_binding}`,
+        item.stage,
+      );
+
+      for (const otherKind of ["review", "test", "final-review", "repair"].filter((kind) => kind !== item.kind)) {
+        assert.equal(await orchestrator.start(task.id, otherKind), false, `${item.stage}: ${otherKind}`);
+      }
+      assert.equal(await orchestrator.start(task.id, item.kind), true, `${item.stage}: same gate rerun`);
+      finished = await waitForStatus(store, task.id, item.taskStatus);
+      assert.equal(finished.candidates.at(-1).revisionNumber, 2, `${item.stage}: rerun revision`);
+      assert.equal(finished.attemptsByStage[item.stage], 2, `${item.stage}: retained attempts`);
+      assert.equal(finished.runs.filter((run) => run.stage === item.stage).length, 2, `${item.stage}: retained runs`);
     } finally {
       await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
     }

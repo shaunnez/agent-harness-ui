@@ -1435,6 +1435,58 @@ test("renders a truthful completion summary for historical merges without an app
   });
 });
 
+test("renders an exact-candidate approval artifact as current after a successful merge", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const approvalArtifact = {
+      id: "approval-c1-r3",
+      stage: "approval",
+      kind: "markdown",
+      name: "approval-c1-r3.md",
+      content: "# Human approval and merge\n\n- Candidate: C1 revision 3",
+      createdAt: "2026-08-01T12:05:00.000Z",
+      model: "Human approval",
+      usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0 },
+      candidateId: "C1",
+      candidateRevision: 3,
+    };
+    const markup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task: createTask({
+          status: "completed",
+          currentStage: "approval",
+          completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review", "approval"],
+          candidates: [{
+            id: "C1",
+            revisionNumber: 3,
+            status: "merged",
+            baseRevision: "a".repeat(40),
+            headRevision: "b".repeat(40),
+            baseBranch: "codex/vertical-slice",
+            branch: "agent-harness/ah-999-c1",
+            revisions: [],
+          }],
+          artifacts: [approvalArtifact],
+          gateFreshness: {
+            "dev-review": makeGateFreshness("dev-review", { fresh: true, candidateRevision: 3 }),
+            test: makeGateFreshness("test", { fresh: true, candidateRevision: 3 }),
+            "final-review": makeGateFreshness("final-review", { fresh: true, candidateRevision: 3 }),
+          },
+        }),
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+      }),
+    );
+
+    assert.match(markup, /Candidate merged successfully/);
+    assert.match(markup, /approval-c1-r3\.md/);
+    assert.match(markup, /Current evidence/);
+    assert.doesNotMatch(markup, /Rerun required|Superseded evidence/);
+  });
+});
+
 test("filters structured activity and renders test run and artifact drilldown", () => {
   return withWorkspace(async ({ RunActivity, filterRunActivity }) => {
     const runBase = {
@@ -1749,6 +1801,8 @@ function makeGateFreshness(stage, {
   fresh = false,
   sourceRunId = null,
   sourceArtifactId = null,
+  candidateId = "C1",
+  candidateRevision = 2,
   reasonCode = fresh ? "fresh" : "missing_authoritative_summary",
   reasonCopy = fresh
     ? "The latest terminal run is authoritative for the active candidate."
@@ -1758,9 +1812,9 @@ function makeGateFreshness(stage, {
   const reason = { code: reasonCode, copy: reasonCopy };
   return {
     stage,
-    candidateId: "C1",
-    candidateRevision: 2,
-    target: { candidateId: "C1", candidateRevision: 2 },
+    candidateId,
+    candidateRevision,
+    target: { candidateId, candidateRevision },
     state: fresh ? "fresh" : "stale",
     fresh,
     sourceRunId,
