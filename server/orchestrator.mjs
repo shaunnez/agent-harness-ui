@@ -455,6 +455,7 @@ export class TaskOrchestrator {
       await this.#store.update(id, (draft) => {
         const stage = stageForRun(kind, draft.currentStage);
         const attempts = draft.attemptsByStage?.[stage] ?? 1;
+        draft.currentStage = stage;
         draft.status = signal.aborted ? "cancelled" : attempts >= stageRunLimitFor(draft, stage) ? "blocked" : "failed";
         draft.error = error.message;
         draft.activeRunKind = null;
@@ -470,7 +471,7 @@ export class TaskOrchestrator {
           if (candidateStatus) candidate.status = candidateStatus;
         }
         refreshGateFreshness(draft);
-        draft.events.push(activity(draft.currentStage, signal.aborted ? "Run cancelled" : "Stage failed", error.message, "danger"));
+        draft.events.push(activity(stage, signal.aborted ? "Run cancelled" : "Stage failed", error.message, "danger"));
       });
     }
   }

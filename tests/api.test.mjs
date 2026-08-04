@@ -1233,12 +1233,12 @@ test("grants one bounded stage attempt to a repaired candidate at an exhausted r
   }
 });
 
-test("grants a usable slot when a failed repair already exceeded the allowance", async () => {
+test("rejects a retry grant when recorded attempts already exceed the allowance", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
     const response = await createTask(origin, {
       title: "Exceeded repair allowance",
-      description: "Guarantee one usable slot after a failed repair crosses the prior limit.",
+      description: "Reject inconsistent retry state instead of increasing the allowance by more than one.",
       repositoryPath: directory,
       workflow: "implement",
     });
@@ -1251,11 +1251,15 @@ test("grants a usable slot when a failed repair already exceeded the allowance",
     });
 
     const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
-    assert.equal(grantResponse.status, 200);
+    assert.equal(grantResponse.status, 409);
+    assert.deepEqual(await grantResponse.json(), {
+      error: "The recorded attempts exceed this stage's allowance; resolve the inconsistent task state before granting a retry.",
+    });
     const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
-    assert.equal(updated.stageRunLimits.implement, updated.attemptsByStage.implement + 1);
+    assert.equal(updated.stageRunLimits.implement, 3);
+    assert.equal(updated.attemptsByStage.implement, 4);
     assert.equal(updated.status, "failed");
-    assert.equal(updated.events.at(-1).title, "One repair attempt granted");
+    assert.equal(updated.decisions.length, 0);
   } finally {
     await cleanup(server, directory);
   }

@@ -18,6 +18,7 @@ import { buildExecutionRequest, buildRepairRequest, buildStageRequest, buildWork
 import { buildScoutRequest } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
+import { parseGateEvidence } from "../server/structured-output.mjs";
 import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
 
 test("parses Codex final messages and usage", () => {
@@ -580,6 +581,87 @@ test("persists typed findings requested by the gate on each repair revision", as
   }
 });
 
+test("preserves complete parsed gate findings through persistence and the repair request", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-complete-repair-findings-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Complete repair findings",
+      description: "Retain oversized typed findings without using Markdown artifacts as evidence.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const candidate = {
+      id: "C1",
+      revisionNumber: 1,
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      branch: "agent-harness/complete-findings-c1",
+      repositoryRoot: directory,
+      worktreePath: directory,
+      status: "repair_required",
+      revisions: [{ number: 1, headRevision: "b".repeat(40), reason: "assembly" }],
+    };
+    const title = `Oversized title ${"t".repeat(600)}`;
+    const detail = `Complete detail ${"d".repeat(8_000)}`;
+    const file = `nested/${"f".repeat(1_100)}.mjs`;
+    const gateResult = parseGateEvidence(
+      `<gate-evidence>${JSON.stringify({
+        candidateId: "C1",
+        candidateRevision: 1,
+        verdict: "REPAIR",
+        summary: "Typed gate result",
+        findings: [{
+          severity: "P1",
+          title,
+          detail,
+          file,
+          line: 209,
+          candidateId: "C1",
+          candidateRevision: 1,
+        }],
+      })}</gate-evidence>`,
+      candidate,
+      "dev-review",
+    );
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "dev-review";
+      draft.candidates = [candidate];
+      draft.artifacts = [{
+        id: "misleading-review",
+        stage: "dev-review",
+        name: "dev-review.md",
+        kind: "markdown",
+        content: "DIFFERENT TRUNCATED MARKDOWN CONTENT",
+      }];
+      draft.runs = [{
+        id: "run-complete-findings",
+        kind: "review",
+        stage: "dev-review",
+        status: "completed",
+        candidateId: "C1",
+        candidateRevision: 1,
+        gateResult,
+      }];
+    });
+
+    const persisted = await store.get(task.id);
+    const request = buildRepairRequest(persisted, persisted.candidates[0]);
+    const finding = request.repairEvidence.newestFailingGate.gateResult.findings[0];
+    assert.equal(finding.title, title);
+    assert.equal(finding.detail, detail);
+    assert.equal(finding.file, file);
+    assert.equal(finding.line, 209);
+    assert.equal(request.prompt.includes(detail), true);
+    assert.equal(request.contextManifest.sources.find((source) => source.kind === "structured-evidence").truncated, false);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("uses per-stage limits for admission and failure blocking while sharing repair with implement", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-stage-budgets-"));
   try {
@@ -624,6 +706,24 @@ test("uses per-stage limits for admission and failure blocking while sharing rep
       draft.candidates[0].status = "repair_required";
     });
     assert.equal(await orchestrator.start(task.id, "repair"), false, "repair consumes the exhausted implement budget");
+
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "dev-review";
+      draft.candidates[0].status = "repair_required";
+      draft.stageRunLimits.implement = 1;
+      draft.attemptsByStage.implement = 0;
+    });
+    const failingRepairOrchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      worktreeManager: { verifyCandidate: async () => { throw new Error("repair candidate verification failed"); } },
+    });
+    assert.equal(await failingRepairOrchestrator.start(task.id, "repair"), true);
+    await waitUntil(async () => (await store.get(task.id)).status === "blocked");
+    const blockedRepair = await store.get(task.id);
+    assert.equal(blockedRepair.currentStage, "implement", "repair preflight failures retain their canonical budget stage");
+    assert.equal(blockedRepair.attemptsByStage.implement, 1);
+    assert.equal(blockedRepair.stageRunLimits["dev-review"], 3);
 
     await store.update(task.id, (draft) => {
       draft.status = "ready-for-test";

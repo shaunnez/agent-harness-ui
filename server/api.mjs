@@ -449,6 +449,10 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
           const recoverableImplementation = task.currentStage === "implement";
           const currentAttempts = task.attemptsByStage?.[grantedStage] ?? 0;
           const currentLimit = stageRunLimitFor(task, grantedStage);
+          if (currentAttempts > currentLimit) {
+            send(response, 409, { error: "The recorded attempts exceed this stage's allowance; resolve the inconsistent task state before granting a retry." });
+            return;
+          }
           const exhaustedRepair =
             ["repair-required", "failed"].includes(task.status) &&
             candidate?.status === "repair_required" &&
@@ -465,7 +469,10 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
           await store.update(id, (draft) => {
             const attempts = draft.attemptsByStage?.[grantedStage] ?? 0;
             const currentStageLimit = stageRunLimitFor(draft, grantedStage);
-            const nextStageLimit = Math.max(currentStageLimit + 1, attempts + 1);
+            if (attempts > currentStageLimit) {
+              throw new Error("The recorded attempts exceed this stage's allowance; resolve the inconsistent task state before granting a retry.");
+            }
+            const nextStageLimit = currentStageLimit + 1;
             draft.stageRunLimits ??= {};
             draft.stageRunLimits[grantedStage] = nextStageLimit;
             draft.status = "failed";

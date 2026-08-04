@@ -206,8 +206,8 @@ export function parseGateEvidence(text, candidate, stageId) {
     if (finding.line != null && (!Number.isInteger(finding.line) || finding.line < 1)) {
       throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} line must be a positive integer or null.`);
     }
-    const title = finding.title.trim().slice(0, 500);
-    const detail = finding.detail.trim().slice(0, 4_000);
+    const title = finding.title.trim();
+    const detail = finding.detail.trim();
     if (!title || !detail) {
       throw candidateEvidenceError(
         "contradictory_evidence",
@@ -224,7 +224,7 @@ export function parseGateEvidence(text, candidate, stageId) {
       severity,
       title,
       detail,
-      file: finding.file == null ? null : finding.file.trim().slice(0, 1_000),
+      file: finding.file == null ? null : finding.file.trim(),
       line: finding.line ?? null,
       candidateId: findingBinding.candidateId,
       candidateRevision: findingBinding.candidateRevision,
