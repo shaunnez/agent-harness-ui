@@ -24,8 +24,11 @@ The runtime models slices separately from the integration candidate. Downstream 
 
 - Binary discovery uses `CODEX_BIN` when set, otherwise `where.exe codex` on Windows or `which codex` elsewhere.
 - Readiness uses `codex login status` and reports availability, authentication method, configured model, and binary path.
-- Every agent child removes `OPENAI_API_KEY` and `CODEX_API_KEY`; it relies on the user's existing Codex ChatGPT session.
-- The default is `gpt-5.4-mini` at low reasoning. Override with `AGENT_HARNESS_MODEL` and `AGENT_HARNESS_REASONING`.
+- The canonical orchestrated workflow stage policy is:
+  - Luna XHigh (`gpt-5.6-luna`, `xhigh`): triage, selected scouts, Grill Me, specification, implementation, and test.
+  - Sol High (`gpt-5.6-sol`, `high`): implementation planning, repair, Development Review, and Final Review.
+- The operator uses the ChatGPT-authenticated local Codex CLI. API keys are neither required nor forwarded to agent children; each child removes `OPENAI_API_KEY` and `CODEX_API_KEY` from its environment.
+- Each Codex run records real input, cached-input, and output token counts, with cache rate shown where available. ChatGPT-plan sessions do not expose an attributable per-task dollar charge; calculated values are labelled **Approx. cost** and **API-rate estimate**.
 - Prompts are streamed over stdin so accumulated artifacts do not hit the Windows command-line length limit.
 - Investigation, planning, review, and final review use the `read-only` Codex sandbox. Implement and repair use `workspace-write` inside the isolated worktree. Focused Test uses `workspace-write` with its temp directory redirected below the candidate's ignored `.data/runtime-temp`; the orchestrator verifies the candidate SHA and a clean Git status both before and after the agent exits.
 - Read-only runs have a four-minute timeout. Write runs have a ten-minute timeout. All runs retain bounded stdout/stderr and enforce a 2.5 MB evidence-output budget.
@@ -107,7 +110,7 @@ Writes use a temporary file plus rename and are serialized in-process. Atomic re
 - Candidate artifacts, failed gate evidence, and repaired revisions remain drillable.
 - Approval history is visible in the universal inspector with stage, note fallback, and timestamp; switching tasks resets the viewed-stage context to the new task.
 - Access-boundary copy and the inspector's agent/sandbox metadata are derived from the active stage, while viewed-stage artifacts remain independently selectable.
-- The footer reports real tokens/cached tokens and `Plan included`; ChatGPT plan usage does not expose a reliable per-task dollar charge.
+- The footer reports real input, cached-input, and output tokens plus cache rate, and labels calculated values **Approx. cost** and **API-rate estimate**; ChatGPT-plan usage does not expose an attributable per-task dollar charge.
 - Queued and gated tasks appear as needing input rather than pretending they are actively running.
 
 ## Known limitations and next work
@@ -122,7 +125,7 @@ Writes use a temporary file plus rename and are serialized in-process. Atomic re
 8. Worktree cleanup readiness is visible but deliberately read-only. No cleanup mutation, rebase, conflict-resolution, repository picker, streamed activity, or PR publishing exists in the product UI.
 9. The JSON store is appropriate for one local user, not concurrent or remote workers.
 10. The hosted Sites artifact is UI-only: a Cloudflare worker cannot access the user's local Codex login, Git checkouts, or filesystem.
-11. The real runtime uses one OpenAI/Codex model today. Agent profiles and additional providers remain represented in the complete prototype but are not wired into task execution.
+11. The real runtime is limited to the canonical orchestrated stage policy above; prototype-only concepts are not wired into this workflow.
 
 ## Fast verification record
 
@@ -131,12 +134,8 @@ Writes use a temporary file plus rename and are serialized in-process. Atomic re
 - `npm test` (48 tests at this handoff)
 - `npm run build`
 - `npm run test:sites`
-- Real OAuth subprocess smoke through stdin: GPT-5.4-mini returned the requested Markdown and usage without API keys.
+- Real ChatGPT-authenticated Codex CLI subprocess smoke through stdin returned the requested Markdown and usage without API keys.
 - Real temporary-Git test: create two isolated slice commits, assemble them into one candidate, validate its SHA, and fast-forward merge.
 - The latest campaign completed three legacy and three parallel-scheduler dogfood tasks; all six reached human-approved fast-forward merge. See `docs/dogfood-report.md` for candidate revisions, failure-budget accounting, and remediations.
 - Browser smoke: completed-task merge summary, approval history, active/viewed-stage separation, historical Test evidence, task switching, and task-list aggregates rendered without console errors.
 - Browser smoke after the scheduler cut: existing completed tasks render without console errors; focused server-render coverage exercises open/completed Grill and mixed package batches.
-
-### Live-run calibration note
-
-The first Goose Hub investigation used GPT-5.4 with inherited high-context settings. It produced strong `triage.md` and `repository-scout.md` artifacts, but reported 974.8k total tokens (843.3k cached) before Grill was manually cancelled. Defaults were changed to GPT-5.4-mini at low reasoning, prompts cap repository commands, and subprocess output is bounded. That retained local task is useful for testing historical artifacts, a blocked frontier, and honest usage display; it is not committed to Git.

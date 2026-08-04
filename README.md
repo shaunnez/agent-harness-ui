@@ -5,11 +5,11 @@ A local-first AI development workflow that turns a task into inspectable, persis
 ## What works now
 
 - Real task creation with title, description, priority, workflow, and an absolute local repository path.
-- GPT-5.4-mini agents launched through the local Codex CLI using the existing ChatGPT login. No API key is requested, stored, or passed to child processes.
+- Agents launched through the ChatGPT-authenticated local Codex CLI with no API key required or forwarded to child processes.
 - A grounded investigation pipeline that pauses at Grill Me with real agent-generated questions, persisted answers, explicit completion semantics, and retained Markdown artifacts.
 - Persisted human decisions plus explicit specification and dependency-aware implementation-plan approvals.
 - Dependency-batched work packages that execute concurrently in isolated Git worktrees, followed by ordered candidate assembly, candidate-bound review/test gates, repair revisions, and a revalidated fast-forward-only human merge action.
-- A live task workspace with viewed-versus-active stages, top-of-stage actions, task/stage/candidate context, living artifact drill-down, scoped run activity, token counts, and honest plan-cost treatment.
+- A live task workspace with viewed-versus-active stages, top-of-stage actions, task/stage/candidate context, living artifact drill-down, scoped run activity, and real token/cache telemetry with clearly labelled API-rate estimates.
 - The original full prototype for multiple-provider workflow concepts that remain ahead of the real OpenAI/Codex-only runtime.
 
 ## Run locally
@@ -30,17 +30,20 @@ Optional environment settings:
 
 ```powershell
 $env:AGENT_HARNESS_REPOSITORY = "C:\path\to\default-repository"
-$env:AGENT_HARNESS_MODEL = "gpt-5.4-mini"
-$env:AGENT_HARNESS_REASONING = "low"
 $env:AGENT_HARNESS_DATA = "C:\path\to\tasks.json"
 npm run dev
 ```
 
-## Authentication and billing
+## Authentication, model policy, and billing
 
-Agent Harness calls `codex login status` and then spawns `codex exec --json` with GPT-5.4-mini. The child inherits the local Codex/ChatGPT session and explicitly removes `OPENAI_API_KEY` and `CODEX_API_KEY` from its environment. Credentials are never read by the app.
+The canonical orchestrated workflow stage policy is:
 
-Codex reports input, cached-input, and output token counts. A ChatGPT plan does not expose a reliable per-task dollar charge, so the UI shows `Plan included` instead of inventing an approximate cost.
+- Luna XHigh (`gpt-5.6-luna`, `xhigh`): triage, selected scouts, Grill Me, specification, implementation, and test.
+- Sol High (`gpt-5.6-sol`, `high`): implementation planning, repair, Development Review, and Final Review.
+
+Agent Harness checks `codex login status` and then spawns `codex exec --json` through the ChatGPT-authenticated local Codex CLI. No API key is required, requested, stored, or forwarded to child processes; credentials are not read by the app.
+
+Codex reports real input, cached-input, and output token counts, with cache rate shown where available. ChatGPT-plan sessions do not expose an attributable per-task dollar charge. Calculated dollar values are labelled **Approx. cost** and **API-rate estimate** and are not ChatGPT-plan billing.
 
 ## Local architecture
 
