@@ -782,12 +782,13 @@ test("repair revision invalidates all candidate-bound gates while retaining evid
   }
   assert.equal(task.runs.every((run) => run.freshness.reasonCode === "revision_change"), true);
   assert.equal(task.artifacts.every((artifact) => artifact.freshness.reasonCode === "revision_change"), true);
-  assert.equal(task.events.every((event) => event.freshness.reasonCode === "revision_change"), true);
+  assert.equal(task.events.filter((event) => event.runId).every((event) => event.freshness.reasonCode === "revision_change"), true);
   const legacyPassEvent = task.events.find((event) => event.id === "EVENT-LEGACY-DEV-REVIEW-PASS");
-  assert.equal(legacyPassEvent.runId, "RUN-dev-review");
-  assert.equal(legacyPassEvent.freshness.sourceRunId, "RUN-dev-review");
+  assert.equal(legacyPassEvent.runId, undefined);
+  assert.equal(legacyPassEvent.freshness.sourceRunId, null);
   assert.deepEqual(legacyPassEvent.freshness.target, { candidateId: "C1", candidateRevision: 2 });
-  assert.equal(legacyPassEvent.freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.revision_change);
+  assert.equal(legacyPassEvent.freshness.reasonCode, "missing_binding");
+  assert.equal(legacyPassEvent.freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.missing_binding);
   assert.equal(legacyPassEvent.title, "Development review passed", "historical event copy remains intact for audit");
   assert.equal(legacyPassEvent.tone, "success", "historical execution tone remains intact in persisted evidence");
   assert.equal(task.artifacts.length, 3);
@@ -796,7 +797,7 @@ test("repair revision invalidates all candidate-bound gates while retaining evid
   assert.equal(testRun.test.rows.length, 1);
 });
 
-test("migration persists event-only repairs for legacy unlinked gate outcomes", () => {
+test("migration keeps unlinked historical gate outcomes stale when the current gate is fresh", () => {
   const task = makeRuntimeTask({
     runs: [makeRuntimeRun()],
     events: [],
@@ -815,10 +816,38 @@ test("migration persists event-only repairs for legacy unlinked gate outcomes", 
   const state = { schemaVersion: 3, tasks: [task] };
 
   assert.equal(migrateRunActivityState(state), true);
-  assert.equal(task.events[0].runId, "RUN-1");
-  assert.equal(task.events[0].freshness.sourceRunId, "RUN-1");
-  assert.equal(task.events[0].freshness.fresh, true);
-  assert.equal(migrateRunActivityState(state), false, "the event repair is idempotent once persisted");
+  assert.equal(task.gateFreshness["dev-review"].fresh, true, "the current gate remains fresh");
+  assert.equal(task.events[0].runId, "RUN-WRONG-OR-MISSING", "the historical audit linkage is not rewritten");
+  assert.equal(task.events[0].freshness.sourceRunId, null);
+  assert.equal(task.events[0].freshness.fresh, false);
+  assert.equal(task.events[0].freshness.reasonCode, "missing_binding");
+  assert.equal(task.events[0].freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.missing_binding);
+  assert.equal(migrateRunActivityState(state), false, "the fail-closed event repair is idempotent once persisted");
+});
+
+test("legacy gate outcomes inherit freshness only through persisted artifact linkage", () => {
+  const run = makeRuntimeRun({ artifactId: "ART-REVIEW" });
+  const artifact = makeArtifact({ id: "ART-REVIEW" });
+  artifact.runId = run.id;
+  const event = {
+    id: "EVENT-LEGACY-ARTIFACT-PASS",
+    at: "2026-08-01T12:02:00.000Z",
+    category: "decision",
+    tone: "success",
+    stage: "dev-review",
+    title: "Development review passed",
+    detail: "Historical gate outcome with a retained artifact link.",
+    artifactId: artifact.id,
+  };
+  const task = makeRuntimeTask({ runs: [run], artifacts: [artifact], events: [event] });
+
+  refreshGateFreshness(task);
+
+  assert.equal(task.gateFreshness["dev-review"].fresh, true);
+  assert.equal(event.runId, undefined, "artifact resolution does not rewrite historical linkage");
+  assert.equal(event.freshness.fresh, true);
+  assert.equal(event.freshness.sourceRunId, run.id);
+  assert.equal(event.freshness.sourceArtifactId, artifact.id);
 });
 
 test("legacy artifact migration is idempotent and assigns a deterministic stale reason", () => {

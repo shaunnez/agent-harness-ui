@@ -1445,6 +1445,7 @@ test("renders stale evidence in the mounted Run Activity views with exact persis
   return withWorkspace(async ({ RunActivity, filterRunActivity }) => {
     const revisionReason = "Candidate evidence belongs to a previous candidate revision.";
     const failureReason = "The terminal run failed, so its evidence is not fresh.";
+    const missingBindingReason = "Candidate evidence is missing explicit candidateId and candidateRevision fields.";
     const run = (overrides) => ({
       id: "RUN-REVIEW-STALE",
       kind: "review",
@@ -1519,7 +1520,11 @@ test("renders stale evidence in the mounted Run Activity views with exact persis
       stage: "dev-review",
       title: "Development Review passed",
       detail: "Historical C1 revision 1 gate result.",
-      freshness: reviewRun.freshness,
+      freshness: makeGateFreshness("dev-review", {
+        sourceRunId: null,
+        reasonCode: "missing_binding",
+        reasonCopy: missingBindingReason,
+      }),
     };
     const task = createTask({
       runs: [reviewRun, testRun],
@@ -1537,7 +1542,7 @@ test("renders stale evidence in the mounted Run Activity views with exact persis
     const legacyItem = activityItems.find((item) => item.event.id === legacyUnlinkedStagePass.id);
     assert.equal(legacyItem.tone, "warning");
     assert.match(legacyItem.title, /Rerun required/);
-    assert.match(legacyItem.detail, new RegExp(revisionReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(legacyItem.detail, new RegExp(missingBindingReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 
     const agentItem = filterRunActivity(task, "agent")[0];
     assert.equal(agentItem.tone, "warning");
@@ -1553,7 +1558,7 @@ test("renders stale evidence in the mounted Run Activity views with exact persis
       ["agent", `run:${reviewRun.id}`, revisionReason],
       ["test", `run:${testRun.id}`, failureReason],
       ["decision", `event:${linkedStagePass.id}`, revisionReason],
-      ["decision", `event:${legacyUnlinkedStagePass.id}`, revisionReason],
+      ["decision", `event:${legacyUnlinkedStagePass.id}`, missingBindingReason],
     ]) {
       const markup = renderToStaticMarkup(React.createElement(RunActivity, { task, initialFilter, initialSelectedId: selectedId }));
       assert.match(markup, /runtime-activity-row--warning/);

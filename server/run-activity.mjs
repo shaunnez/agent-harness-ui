@@ -262,6 +262,7 @@ export function refreshGateFreshness(task) {
       .filter((run) => run.artifactId)
       .map((run) => [run.artifactId, run]),
   );
+  const artifactsById = new Map((task.artifacts ?? []).map((artifact) => [artifact.id, artifact]));
   const artifactTargetResult = activeCandidateBinding(task);
   const artifactTarget = artifactTargetResult.valid ? artifactTargetResult : null;
   for (const artifact of task.artifacts ?? []) {
@@ -279,19 +280,26 @@ export function refreshGateFreshness(task) {
         );
   }
   for (const event of task.events ?? []) {
-    const run = event.runId ? runsById.get(event.runId) : null;
+    const directRun = event.runId ? runsById.get(event.runId) : null;
+    const linkedArtifact = event.artifactId ? artifactsById.get(event.artifactId) : null;
+    const artifactRun = linkedArtifact
+      ? (linkedArtifact.runId ? runsById.get(linkedArtifact.runId) : null)
+        ?? runsByArtifactId.get(linkedArtifact.id)
+      : null;
+    const run = directRun ?? artifactRun;
     if (run?.freshness && CANDIDATE_GATE_STAGES.includes(run.stage) && run.stage === event.stage) {
       event.freshness = structuredClone(run.freshness);
       continue;
     }
     if (!isLegacyCandidateGateEvent(event)) continue;
-    const authoritativeFreshness = projection[event.stage];
-    if (!authoritativeFreshness) continue;
-    const authoritativeRun = authoritativeFreshness.sourceRunId
-      ? runsById.get(authoritativeFreshness.sourceRunId)
-      : null;
-    if (authoritativeRun?.stage === event.stage) event.runId = authoritativeRun.id;
-    event.freshness = structuredClone(authoritativeFreshness);
+    event.freshness = createFreshness(
+      event.stage,
+      artifactTarget,
+      null,
+      null,
+      "missing_binding",
+      null,
+    );
   }
   return projection;
 }
