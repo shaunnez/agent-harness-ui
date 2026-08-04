@@ -818,6 +818,7 @@ function validateGlobalRetryIdentities(task) {
   const runIds = runs.map((run) => run?.id);
   const artifactIds = artifacts.map((artifact) => artifact?.id);
   const linkedRunIds = artifacts.map((artifact) => artifact?.runId).filter((runId) => runId != null);
+  const claimedArtifactIds = runs.map((run) => run?.artifactId).filter((artifactId) => artifactId != null);
   const reservationIds = reservationEntries.map(([, reservation]) => reservation?.id);
   if (
     runIds.some((id) => typeof id !== "string" || !id.trim()) ||
@@ -826,9 +827,17 @@ function validateGlobalRetryIdentities(task) {
     new Set(artifactIds).size !== artifactIds.length ||
     linkedRunIds.some((id) => typeof id !== "string" || !id.trim()) ||
     new Set(linkedRunIds).size !== linkedRunIds.length ||
+    claimedArtifactIds.some((id) => typeof id !== "string" || !id.trim()) ||
+    new Set(claimedArtifactIds).size !== claimedArtifactIds.length ||
     reservationIds.some((id) => typeof id !== "string" || !id.trim()) ||
     new Set(reservationIds).size !== reservationIds.length ||
-    reservationEntries.some(([stage, reservation]) => reservation?.stage !== stage)
+    reservationEntries.some(([stage, reservation]) => reservation?.stage !== stage) ||
+    artifacts.some((artifact) => artifact?.runId != null && !runs.some((run) => (
+      run.id === artifact.runId && run.artifactId === artifact.id
+    ))) ||
+    runs.some((run) => run?.artifactId != null && !artifacts.some((artifact) => (
+      artifact.id === run.artifactId && artifact.runId === run.id
+    )))
   ) {
     return "The exhausted workflow has duplicate or inconsistent persisted identities; resolve it before granting a retry.";
   }
@@ -971,7 +980,8 @@ function failedRepairAuthorizingGate(
     !sourceRun ||
     reservationRuns.length !== 1 ||
     reservationRuns[0].id !== sourceRun.id ||
-    !["repair_required", "failed_execution"].includes(freshness.reasonCode) ||
+    freshness.reasonCode !== "repair_required" ||
+    sourceRun.status !== "completed" ||
     sourceRun.workflowReservationId !== authorizingGate.id ||
     sourceRun.workflowAttempt !== authorizingGate.workflowAttempt ||
     sourceRun.gateResult?.verdict !== "REPAIR" ||
@@ -980,9 +990,20 @@ function failedRepairAuthorizingGate(
     sourceArtifact.runId !== sourceRun.id ||
     sourceArtifact.stage !== authorizingGate.stage ||
     sourceArtifact.kind !== "markdown" ||
+    typeof sourceArtifact.name !== "string" ||
+    !sourceArtifact.name.trim() ||
+    typeof sourceArtifact.content !== "string" ||
+    !sourceArtifact.content.trim() ||
     sourceArtifact.candidateId !== candidate.id ||
     sourceArtifact.candidateRevision !== candidate.revisionNumber ||
-    JSON.stringify(sourceArtifact.gateResult) !== JSON.stringify(sourceRun.gateResult)
+    JSON.stringify(sourceArtifact.gateResult) !== JSON.stringify(sourceRun.gateResult) ||
+    !validDurableRunArtifactEnvelope(sourceRun, sourceArtifact, {
+      earliestStartedAt: authorizingGate.reservedAt,
+      latestCompletedAt: sourceRun.gateResult?.evaluatedAt,
+      latestArtifactAt: null,
+    }) ||
+    !validPersistedTimestamp(sourceRun.gateResult?.evaluatedAt) ||
+    Date.parse(sourceRun.gateResult.evaluatedAt) > Date.parse(sourceArtifact.createdAt)
   ) {
     return null;
   }
@@ -1063,6 +1084,16 @@ function candidateRevisionProducerEvidence(task, candidate, lineage) {
     ));
     if (number === 1) {
       const runScopes = revisionRuns.map((run) => run.workPackageId);
+      const syntheticReservation = {
+        id: revision.sourceWorkflowReservationId,
+        stage: "implement",
+        kind: "implementation",
+        workflowAttempt: revision.sourceWorkflowAttempt,
+        candidateId: null,
+        candidateRevision: null,
+        candidateHeadRevision: null,
+        authorizedRunScopes: runScopes,
+      };
       if (
         new Set(runScopes).size !== runScopes.length ||
         revisionRuns.some((run) => (
@@ -1075,8 +1106,7 @@ function candidateRevisionProducerEvidence(task, candidate, lineage) {
           run.candidateId != null ||
           run.candidateRevision != null ||
           run.candidateHeadRevision != null ||
-          !Number.isInteger(run.attempt) ||
-          run.attempt < 1
+          !validRetryRunTuple(run, syntheticReservation, allRuns.filter((item) => item.stage === "implement"))
         ))
       ) {
         return null;
@@ -1135,9 +1165,42 @@ function linkedProducerArtifact(task, candidate, revision, run) {
     artifact.content.trim().length > 0 &&
     artifact.candidateId === (initialRevision ? null : candidate.id) &&
     artifact.candidateRevision === (initialRevision ? null : revision.number) &&
-    artifact.workPackageId === (initialRevision ? run.workPackageId : null)
+    artifact.workPackageId === (initialRevision ? run.workPackageId : null) &&
+    validDurableRunArtifactEnvelope(run, artifact, {
+      earliestStartedAt: null,
+      latestCompletedAt: null,
+      latestArtifactAt: revision.createdAt,
+    })
     ? artifact
     : null;
+}
+
+function validDurableRunArtifactEnvelope(run, artifact, {
+  earliestStartedAt,
+  latestCompletedAt,
+  latestArtifactAt,
+}) {
+  if (
+    !validPersistedTimestamp(run?.startedAt) ||
+    !validPersistedTimestamp(run?.completedAt) ||
+    !validPersistedTimestamp(artifact?.createdAt)
+  ) {
+    return false;
+  }
+  const startedAt = Date.parse(run.startedAt);
+  const completedAt = Date.parse(run.completedAt);
+  const artifactAt = Date.parse(artifact.createdAt);
+  return startedAt <= completedAt &&
+    completedAt <= artifactAt &&
+    (earliestStartedAt == null || (
+      validPersistedTimestamp(earliestStartedAt) && Date.parse(earliestStartedAt) <= startedAt
+    )) &&
+    (latestCompletedAt == null || (
+      validPersistedTimestamp(latestCompletedAt) && completedAt <= Date.parse(latestCompletedAt)
+    )) &&
+    (latestArtifactAt == null || (
+      validPersistedTimestamp(latestArtifactAt) && artifactAt <= Date.parse(latestArtifactAt)
+    ));
 }
 
 function validCandidateProducerReservation(task, candidate, producerReservation, lineage, implementationAttempt) {

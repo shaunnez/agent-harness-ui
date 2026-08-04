@@ -588,7 +588,7 @@ export class TaskOrchestrator {
     const selection = selectScoutDispatch(task, triageArtifact?.content ?? "");
     const dispatch = selection.selected;
     await this.#store.update(id, (draft) => {
-      draft.artifacts = draft.artifacts.filter((artifact) => artifact.stage !== "scouts");
+      removeStageArtifacts(draft, "scouts");
       const reservation = requireActiveRunReservation(draft, "investigation", "scouts");
       reservation.authorizedRunScopes = dispatch.map((spec) => spec.name);
       draft.scoutDispatch = {
@@ -1255,7 +1255,7 @@ export class TaskOrchestrator {
       settings.pricing?.version,
     );
     await this.#store.update(id, (draft) => {
-      if (options.replace) draft.artifacts = draft.artifacts.filter((artifact) => artifact.stage !== stageId);
+      if (options.replace) removeStageArtifacts(draft, stageId);
       const artifact = {
         id: crypto.randomUUID(),
         runId: result.runId ?? null,
@@ -1302,6 +1302,19 @@ export class TaskOrchestrator {
         ),
       );
     });
+  }
+}
+
+function removeStageArtifacts(task, stageId) {
+  const removedIds = new Set(
+    (task.artifacts ?? [])
+      .filter((artifact) => artifact.stage === stageId)
+      .map((artifact) => artifact.id),
+  );
+  task.artifacts = (task.artifacts ?? []).filter((artifact) => artifact.stage !== stageId);
+  if (!removedIds.size) return;
+  for (const run of task.runs ?? []) {
+    if (removedIds.has(run.artifactId)) run.artifactId = null;
   }
 }
 

@@ -172,6 +172,7 @@ function bindLatestWorkflowAttempt(draft, stage, kind) {
 function attachLinkedArtifact(draft, run, {
   candidateId = null,
   candidateRevision = null,
+  createdAt = "2026-08-04T00:06:00.000Z",
   workPackageId = null,
   gateResult = null,
 } = {}) {
@@ -184,7 +185,7 @@ function attachLinkedArtifact(draft, run, {
     kind: "markdown",
     name: `${run.id}.md`,
     content: `# ${run.id}\n\nPersisted test evidence.`,
-    createdAt: "2026-08-04T00:06:00.000Z",
+    createdAt,
     candidateId,
     candidateRevision,
     workPackageId,
@@ -233,9 +234,13 @@ function attachCandidateProducerEvidence(draft, candidate) {
           workflowAttempt: revision.sourceWorkflowAttempt,
           workflowReservationId: revision.sourceWorkflowReservationId,
         };
+    const revisionAt = Date.parse(revision.createdAt);
+    run.startedAt = new Date(revisionAt - 3_000).toISOString();
+    run.completedAt = new Date(revisionAt - 2_000).toISOString();
     attachLinkedArtifact(draft, run, {
       candidateId: revision.number === 1 ? null : candidate.id,
       candidateRevision: revision.number === 1 ? null : revision.number,
+      createdAt: new Date(revisionAt - 1_000).toISOString(),
       workPackageId: revision.number === 1 ? run.workPackageId : null,
     });
     draft.runs.push(run);
@@ -303,6 +308,11 @@ function attachExactCandidateGate(draft, candidate, {
     reservedAt,
   };
   const runId = `run-${reservationId}`;
+  const reservedAtMs = Date.parse(reservedAt);
+  const startedAt = new Date(reservedAtMs + 1_000).toISOString();
+  const completedAt = new Date(reservedAtMs + 2_000).toISOString();
+  const evaluatedAt = new Date(reservedAtMs + 3_000).toISOString();
+  const artifactCreatedAt = new Date(reservedAtMs + 4_000).toISOString();
   const gateResult = {
     schemaVersion: 1,
     stage,
@@ -310,7 +320,7 @@ function attachExactCandidateGate(draft, candidate, {
     reportedVerdict: "REPAIR",
     candidateId: candidate.id,
     candidateRevision: candidate.revisionNumber,
-    evaluatedAt: "2026-08-04T00:05:00.000Z",
+    evaluatedAt,
     blockingReasons: ["P1: exact candidate repair is required."],
     findings: [{
       severity: "P1",
@@ -329,6 +339,8 @@ function attachExactCandidateGate(draft, candidate, {
     kind: stage === "dev-review" ? "review" : stage,
     role: stage,
     status: "completed",
+    startedAt,
+    completedAt,
     candidateId: candidate.id,
     candidateRevision: candidate.revisionNumber,
     candidateHeadRevision: candidate.headRevision,
@@ -341,6 +353,7 @@ function attachExactCandidateGate(draft, candidate, {
   attachLinkedArtifact(draft, run, {
     candidateId: candidate.id,
     candidateRevision: candidate.revisionNumber,
+    createdAt: artifactCreatedAt,
     gateResult,
   });
   draft.runs.push(run);
@@ -2659,6 +2672,91 @@ test("grants an exact-current repaired candidate only with distinct gate and cur
   }
 });
 
+test("accepts the canonical initial producer ordinal after an earlier same-scope implementation failure", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Retried initial producer ordinal",
+      description: "An implementation retry must retain the scope-local producer attempt ordinal.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage.implement = 2;
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+      const candidate = {
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "ready_for_review",
+        sourceWorkflowAttempt: 2,
+        sourceWorkflowReservationId: "reservation-c1-assembly-2",
+        revisions: [{
+          number: 1,
+          headRevision: "candidate-c1-r1",
+          reason: "assembly",
+          sourceWorkflowAttempt: 2,
+          sourceWorkflowReservationId: "reservation-c1-assembly-2",
+          createdAt: "2026-08-04T00:01:00.000Z",
+        }],
+      };
+      draft.candidates.push(candidate);
+      attachCandidateProducerEvidence(draft, candidate);
+      const producerIndex = draft.runs.findIndex((run) => (
+        run.workflowReservationId === candidate.sourceWorkflowReservationId
+      ));
+      draft.runs[producerIndex].attempt = 2;
+      draft.runs.splice(producerIndex, 0, {
+        id: "run-earlier-s1-failure",
+        stage: "implement",
+        kind: "implementation",
+        role: "implement",
+        status: "failed",
+        workPackageId: "S1",
+        candidateId: null,
+        candidateRevision: null,
+        candidateHeadRevision: null,
+        attempt: 1,
+        workflowAttempt: 1,
+        workflowReservationId: "reservation-earlier-s1-failure",
+      });
+      draft.stageRunReservations.implement = {
+        id: candidate.sourceWorkflowReservationId,
+        stage: "implement",
+        kind: "implementation",
+        workflowAttempt: 2,
+        candidateId: null,
+        candidateRevision: null,
+        candidateHeadRevision: null,
+        authorizedRunScopes: ["S1"],
+        reservedAt: "2026-08-04T00:00:30.000Z",
+      };
+      draft.stageRunReservations["dev-review"] = {
+        id: "reservation-c1-r1-review-3",
+        stage: "dev-review",
+        kind: "review",
+        workflowAttempt: 3,
+        candidateId: "C1",
+        candidateRevision: 1,
+        candidateHeadRevision: "candidate-c1-r1",
+        authorizedRunScopes: [],
+        reservedAt: "2026-08-04T00:02:00.000Z",
+      };
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits["dev-review"], 4);
+    assert.equal(updated.decisions.at(-1).candidateProducerRunIds.length, 1);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("rejects exact-current and adjacent repaired candidates without durable repair producer evidence", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
@@ -2719,7 +2817,7 @@ test("rejects exact-current and adjacent repaired candidates without durable rep
       assert.equal(grantResponse.status, 409, item.name);
       assert.match(
         (await grantResponse.json()).error,
-        /producer evidence|inconsistent workflow reservation/i,
+        /producer evidence|inconsistent workflow reservation|duplicate or inconsistent persisted identities/i,
         item.name,
       );
       const unchanged = await store.get(task.id);
@@ -2776,6 +2874,141 @@ test("rejects repair retry authority without one unique durable authorizer artif
       );
       const unchanged = await store.get(task.id);
       assert.equal(unchanged.stageRunLimits.implement, 3, mutation);
+      assert.equal(unchanged.decisions.length, 0, mutation);
+    }
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects noncompleted, non-durable, or multiply claimed repair authorizers", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    for (const mutation of [
+      "failed authorizer run",
+      "shared authorizer artifact",
+      "blank authorizer artifact",
+      "missing authorizer artifact timestamp",
+    ]) {
+      const response = await createTask(origin, {
+        title: `Reject ${mutation}`,
+        description: "Repair authority must come from one completed durable gate run and artifact.",
+        repositoryPath: directory,
+        workflow: "implement",
+      });
+      const { task } = await response.json();
+      await store.update(task.id, (draft) => {
+        draft.status = "repair-required";
+        draft.currentStage = "dev-review";
+        draft.attemptsByStage.implement = draft.stageRunLimits.implement;
+        const candidate = attachAssemblyLineage(draft, {
+          id: "C1",
+          revisionNumber: 1,
+          headRevision: "candidate-c1-r1",
+          status: "repair_required",
+        });
+        draft.candidates.push(candidate);
+        const authorizer = attachExactCandidateGate(draft, candidate);
+        draft.runs.push(...[1, 2, 3].map((attempt) => ({
+          id: `run-failed-repair-envelope-${attempt}`,
+          stage: "implement",
+          status: "failed",
+        })));
+        bindLatestWorkflowAttempt(draft, "implement", "repair");
+        const authorizerRun = draft.runs.find((run) => run.id === authorizer.sourceRunId);
+        const authorizerArtifact = draft.artifacts.find((artifact) => artifact.id === authorizer.sourceArtifactId);
+        if (mutation === "failed authorizer run") authorizerRun.status = "failed";
+        if (mutation === "shared authorizer artifact") draft.runs.at(-1).artifactId = authorizer.sourceArtifactId;
+        if (mutation === "blank authorizer artifact") {
+          authorizerArtifact.name = "";
+          authorizerArtifact.content = "";
+        }
+        if (mutation === "missing authorizer artifact timestamp") delete authorizerArtifact.createdAt;
+      });
+
+      const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+      assert.equal(grantResponse.status, 409, mutation);
+      assert.match(
+        (await grantResponse.json()).error,
+        /authorizing gate|inconsistent workflow reservation|duplicate or inconsistent persisted identities/i,
+        mutation,
+      );
+      const unchanged = await store.get(task.id);
+      assert.equal(unchanged.stageRunLimits.implement, 3, mutation);
+      assert.equal(unchanged.decisions.length, 0, mutation);
+    }
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects forged producer attempt ordinals and incomplete durable producer envelopes", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    for (const mutation of [
+      "forged initial attempt",
+      "missing repair run timestamps",
+      "missing repair artifact timestamp",
+      "repair artifact after revision",
+    ]) {
+      const response = await createTask(origin, {
+        title: `Reject ${mutation}`,
+        description: "Candidate producer evidence must be canonical, durable, and causally ordered.",
+        repositoryPath: directory,
+        workflow: "implement",
+      });
+      const { task } = await response.json();
+      await store.update(task.id, (draft) => {
+        draft.status = "ready-for-review";
+        draft.currentStage = "dev-review";
+        draft.attemptsByStage.implement = 2;
+        draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+        const candidate = twoRevisionCandidate();
+        draft.candidates.push(candidate);
+        attachCandidateProducerEvidence(draft, candidate);
+        draft.stageRunReservations.implement = {
+          id: candidate.sourceWorkflowReservationId,
+          stage: "implement",
+          kind: "repair",
+          workflowAttempt: 2,
+          candidateId: "C1",
+          candidateRevision: 1,
+          candidateHeadRevision: "candidate-c1-r1",
+          authorizedRunScopes: [],
+          reservedAt: "2026-08-04T00:00:30.000Z",
+        };
+        draft.stageRunReservations["dev-review"] = {
+          id: "reservation-c1-r2-review-3",
+          stage: "dev-review",
+          kind: "review",
+          workflowAttempt: 3,
+          candidateId: "C1",
+          candidateRevision: 2,
+          candidateHeadRevision: "candidate-c1-r2",
+          authorizedRunScopes: [],
+          reservedAt: "2026-08-04T00:02:00.000Z",
+        };
+        const initialRun = draft.runs.find((run) => (
+          run.workflowReservationId === candidate.revisions[0].sourceWorkflowReservationId
+        ));
+        const repairRun = draft.runs.find((run) => (
+          run.workflowReservationId === candidate.sourceWorkflowReservationId
+        ));
+        const repairArtifact = draft.artifacts.find((artifact) => artifact.id === repairRun.artifactId);
+        if (mutation === "forged initial attempt") initialRun.attempt = 999;
+        if (mutation === "missing repair run timestamps") {
+          delete repairRun.startedAt;
+          delete repairRun.completedAt;
+        }
+        if (mutation === "missing repair artifact timestamp") delete repairArtifact.createdAt;
+        if (mutation === "repair artifact after revision") repairArtifact.createdAt = "2026-08-04T00:01:01.000Z";
+      });
+
+      const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+      assert.equal(grantResponse.status, 409, mutation);
+      assert.match((await grantResponse.json()).error, /producer evidence|inconsistent workflow reservation/i, mutation);
+      const unchanged = await store.get(task.id);
+      assert.equal(unchanged.stageRunLimits["dev-review"], 3, mutation);
       assert.equal(unchanged.decisions.length, 0, mutation);
     }
   } finally {
