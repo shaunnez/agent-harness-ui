@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { evaluationVerdict, TaskOrchestrator } from "../server/orchestrator.mjs";
+import { evaluationVerdict, structuredEvidenceError, TaskOrchestrator } from "../server/orchestrator.mjs";
 import { buildExecutionPrompt } from "../server/prompts.mjs";
 import { selectScoutDispatch } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
@@ -12,6 +12,7 @@ import {
   parseGateEvidence,
   parseGrillQuestions,
   parseWorkPackages,
+  tryParseFocusedTestEvidence,
   validateFocusedTestEvidence,
 } from "../server/structured-output.mjs";
 import {
@@ -150,6 +151,53 @@ test("parses focused test evidence with candidate-bound rows", () => {
   assert.throws(
     () => parseFocusedTestEvidence(`<focused-test-evidence>{"candidateId":"C1","candidateRevision":2,"command":"npm test","status":"unknown","rows":[{"id":"row","status":"passed"}]}</focused-test-evidence>`),
     /status must be passed or failed/i,
+  );
+});
+
+test("classifies candidate evidence only from typed parser errors", () => {
+  for (const message of [
+    "missing_binding: must include a candidateId",
+    "The candidate binding is malformed.",
+    "The evidence belongs to a different candidate.",
+    "A test command failed.",
+  ]) {
+    assert.deepEqual(
+      structuredEvidenceError(new Error(message)),
+      {
+        code: "contradictory_evidence",
+        copy: RUNTIME_FRESHNESS_REASONS.contradictory_evidence,
+      },
+      message,
+    );
+  }
+
+  let typedError;
+  try {
+    parseFocusedTestEvidence(
+      `<focused-test-evidence>{"candidateId":"C1","candidateRevision":"2"}</focused-test-evidence>`,
+    );
+  } catch (error) {
+    typedError = error;
+  }
+  assert.ok(typedError);
+  typedError.message = "Arbitrary human-readable copy mentioning a failed test.";
+  assert.deepEqual(structuredEvidenceError(typedError), {
+    code: "malformed_binding",
+    copy: RUNTIME_FRESHNESS_REASONS.malformed_binding,
+  });
+});
+
+test("optional focused Test parsing distinguishes absent from invalid evidence by typed code", () => {
+  assert.equal(tryParseFocusedTestEvidence("No focused Test envelope was returned."), null);
+  assert.throws(
+    () => tryParseFocusedTestEvidence(
+      `<focused-test-evidence>{"candidateId":"C1","candidateRevision":"2"}</focused-test-evidence>`,
+    ),
+    (error) => error.code === "malformed_binding",
+  );
+  assert.throws(
+    () => tryParseFocusedTestEvidence(`<focused-test-evidence>{not-json}</focused-test-evidence>`),
+    (error) => error.code === "contradictory_evidence",
   );
 });
 
@@ -889,6 +937,19 @@ test("merge approval fails closed for malformed persisted errors and failed-row 
         runs[2].gateResult.evaluatedAt = { timestamp: "2026-08-01T12:01:00.000Z" };
       },
     },
+    {
+      name: "Test repair with misleading failure prose",
+      expectedStage: "Test",
+      expectedReason: "repair_required",
+      mutate(runs) {
+        runs[1].gateResult = makeGateResult({
+          stage: "test",
+          verdict: "REPAIR",
+          reportedVerdict: "REPAIR",
+          blockingReasons: ["A test command failed, according to this human-readable copy."],
+        });
+      },
+    },
   ];
 
   for (const item of cases) {
@@ -938,7 +999,11 @@ test("merge approval fails closed for malformed persisted errors and failed-row 
             Test: "test",
             "Final Review": "final-review",
           }[item.expectedStage];
-          assert.equal(draft.gateFreshness[stage].reasonCode, "contradictory_evidence", item.name);
+          assert.equal(
+            draft.gateFreshness[stage].reasonCode,
+            item.expectedReason ?? "contradictory_evidence",
+            item.name,
+          );
         }
       });
 
@@ -1433,6 +1498,27 @@ test("filters focused Test rows to the exact candidate and retains invalid rows 
   assert.equal(failedTestTask.gateFreshness.test.reasonCode, "failed_execution");
   assert.equal(failedTestTask.gateFreshness.test.focusedTest.status, "failed");
   assert.deepEqual(failedTestTask.gateFreshness.test.focusedTestRows.map((row) => row.id), ["row-failed"]);
+
+  for (const blockingReason of [
+    "A test command failed.",
+    "Editorial guidance only; no execution failure is represented by this field.",
+  ]) {
+    const repairRun = makeRuntimeRun({
+      id: `RUN-TEST-REPAIR-${blockingReason.slice(0, 8)}`,
+      stage: "test",
+      kind: "test",
+      gateResult: makeGateResult({
+        stage: "test",
+        verdict: "REPAIR",
+        reportedVerdict: "REPAIR",
+        blockingReasons: [blockingReason],
+      }),
+      test: makeFocusedTestSummary(),
+    });
+    const repairTask = makeRuntimeTask({ runs: [repairRun] });
+    refreshGateFreshness(repairTask);
+    assert.equal(repairTask.gateFreshness.test.reasonCode, "repair_required", blockingReason);
+  }
 });
 
 test("latest terminal exact-candidate attempt wins and older passes become superseded", () => {

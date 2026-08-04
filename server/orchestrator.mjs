@@ -38,6 +38,7 @@ import {
   runKindFor,
 } from "./run-activity.mjs";
 import {
+  isCandidateEvidenceError,
   parseFocusedTestEvidence,
   parseGateEvidence,
   parseGrillQuestions,
@@ -1252,20 +1253,10 @@ export function evaluationVerdict(stageId, result, focusedTestEvidence = null, s
   return "REPAIR";
 }
 
-function structuredEvidenceError(error) {
-  const message = String(error?.message ?? "Structured candidate evidence was invalid.");
-  const typedCode = typeof error?.code === "string" && RUNTIME_FRESHNESS_REASONS[error.code]
+export function structuredEvidenceError(error) {
+  const code = isCandidateEvidenceError(error)
     ? error.code
-    : null;
-  const code = typedCode ?? (message.includes("missing_binding") || /missing explicit candidate identity|must include a candidateId|must include a positive candidateRevision/i.test(message)
-    ? "missing_binding"
-    : message.includes("malformed_binding") || /malformed explicit candidate identity fields|candidate (?:evidence )?binding.*malformed/i.test(message)
-      ? "malformed_binding"
-      : /different candidate|does not match the active candidate/i.test(message)
-        ? "candidate_mismatch"
-        : /contradict/i.test(message)
-          ? "contradictory_evidence"
-          : "contradictory_evidence");
+    : "contradictory_evidence";
   return { code, copy: RUNTIME_FRESHNESS_REASONS[code] };
 }
 

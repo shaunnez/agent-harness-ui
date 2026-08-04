@@ -527,10 +527,7 @@ function evaluateTestGateResult(summary, target, sourceRunId, sourceArtifactId) 
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
   if (summary.verdict !== "PASS" || hasBlockingReasons || blockingFindings) {
-    const code = summary.blockingReasons.some((reason) => /command failed|test/i.test(reason))
-      ? "failed_execution"
-      : "repair_required";
-    return createFreshness("test", target, sourceRunId, sourceArtifactId, code, null);
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "repair_required", null);
   }
   return null;
 }

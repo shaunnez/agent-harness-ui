@@ -5,15 +5,26 @@ import {
   RUNTIME_FRESHNESS_REASONS,
 } from "./run-activity.mjs";
 
+class CandidateEvidenceError extends Error {
+  constructor(code, detail = null) {
+    const reasonCode = Object.prototype.hasOwnProperty.call(RUNTIME_FRESHNESS_REASONS, code)
+      ? code
+      : "contradictory_evidence";
+    super(detail ?? RUNTIME_FRESHNESS_REASONS[reasonCode]);
+    this.name = "CandidateEvidenceError";
+    this.code = reasonCode;
+    this.copy = RUNTIME_FRESHNESS_REASONS[reasonCode];
+  }
+}
+
 function candidateEvidenceError(code, detail = null) {
-  const reasonCode = Object.prototype.hasOwnProperty.call(RUNTIME_FRESHNESS_REASONS, code)
-    ? code
-    : "malformed_binding";
-  const error = new Error(detail ?? RUNTIME_FRESHNESS_REASONS[reasonCode]);
-  error.name = "CandidateEvidenceError";
-  error.code = reasonCode;
-  error.copy = RUNTIME_FRESHNESS_REASONS[reasonCode];
-  return error;
+  return new CandidateEvidenceError(code, detail);
+}
+
+export function isCandidateEvidenceError(error) {
+  return error instanceof CandidateEvidenceError &&
+    typeof error.code === "string" &&
+    Object.prototype.hasOwnProperty.call(RUNTIME_FRESHNESS_REASONS, error.code);
 }
 
 function compareEvidenceBinding(binding, candidate) {
@@ -253,9 +264,9 @@ export function tryParseFocusedTestEvidence(text) {
   try {
     return parseFocusedTestEvidence(text);
   } catch (error) {
-    if (String(error?.message ?? "").includes("focused-test-evidence")) return null;
-    if (String(error?.message ?? "").includes("Focused test evidence must include")) throw error;
-    return null;
+    if (isCandidateEvidenceError(error) && error.code === "missing_authoritative_summary") return null;
+    if (isCandidateEvidenceError(error)) throw error;
+    throw candidateEvidenceError("contradictory_evidence");
   }
 }
 
