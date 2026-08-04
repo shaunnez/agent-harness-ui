@@ -201,6 +201,18 @@ function attachCandidateProducerEvidence(draft, candidate) {
   }
   candidate.members ??= [{ packageId: "S1", headRevision: draft.workPackages[0].headRevision, order: 1 }];
   for (const revision of candidate.revisions) {
+    const revisionAt = Date.parse(revision.createdAt);
+    revision.sourceWorkflowReservedAt ??= new Date(
+      revisionAt - (revision.number === 1 ? 10_000 : 30_000),
+    ).toISOString();
+    if (revision.number > 1) {
+      attachHistoricalRepairAuthorizer(
+        draft,
+        candidate,
+        revision,
+        candidate.revisions.find((item) => item.number === revision.number - 1),
+      );
+    }
     if (draft.runs.some((run) => run.workflowReservationId === revision.sourceWorkflowReservationId)) continue;
     const priorRevision = revision.number > 1
       ? candidate.revisions.find((item) => item.number === revision.number - 1)
@@ -234,17 +246,91 @@ function attachCandidateProducerEvidence(draft, candidate) {
           workflowAttempt: revision.sourceWorkflowAttempt,
           workflowReservationId: revision.sourceWorkflowReservationId,
         };
-    const revisionAt = Date.parse(revision.createdAt);
-    run.startedAt = new Date(revisionAt - 3_000).toISOString();
-    run.completedAt = new Date(revisionAt - 2_000).toISOString();
+    const sourceReservedAt = Date.parse(revision.sourceWorkflowReservedAt);
+    run.startedAt = new Date(sourceReservedAt + 1_000).toISOString();
+    run.completedAt = new Date(sourceReservedAt + 2_000).toISOString();
     attachLinkedArtifact(draft, run, {
       candidateId: revision.number === 1 ? null : candidate.id,
       candidateRevision: revision.number === 1 ? null : revision.number,
-      createdAt: new Date(revisionAt - 1_000).toISOString(),
+      createdAt: new Date(sourceReservedAt + 3_000).toISOString(),
       workPackageId: revision.number === 1 ? run.workPackageId : null,
     });
     draft.runs.push(run);
   }
+}
+
+function attachHistoricalRepairAuthorizer(draft, candidate, revision, priorRevision) {
+  const authorizerFields = [
+    "authorizingGateStage",
+    "authorizingGateWorkflowAttempt",
+    "authorizingGateReservationId",
+    "authorizingGateReservedAt",
+    "authorizingGateRunId",
+    "authorizingGateArtifactId",
+  ];
+  if (authorizerFields.some((field) => revision[field] != null)) return;
+  const sourceReservedAt = Date.parse(revision.sourceWorkflowReservedAt);
+  const stage = "dev-review";
+  const workflowAttempt = revision.number - 1;
+  const reservationId = `reservation-${candidate.id.toLowerCase()}-r${priorRevision.number}-authorizer-${workflowAttempt}`;
+  const runId = `run-${reservationId}`;
+  const reservedAt = new Date(sourceReservedAt - 20_000).toISOString();
+  const startedAt = new Date(sourceReservedAt - 19_000).toISOString();
+  const completedAt = new Date(sourceReservedAt - 18_000).toISOString();
+  const evaluatedAt = new Date(sourceReservedAt - 17_000).toISOString();
+  const artifactCreatedAt = new Date(sourceReservedAt - 16_000).toISOString();
+  const gateResult = {
+    schemaVersion: 1,
+    stage,
+    verdict: "REPAIR",
+    reportedVerdict: "REPAIR",
+    candidateId: candidate.id,
+    candidateRevision: priorRevision.number,
+    evaluatedAt,
+    blockingReasons: ["P1: exact historical repair is required."],
+    findings: [{
+      severity: "P1",
+      title: "Historical candidate repair",
+      detail: "This exact prior candidate required the persisted repair revision.",
+      file: "server/api.mjs",
+      line: 1,
+      candidateId: candidate.id,
+      candidateRevision: priorRevision.number,
+      bindingExplicit: true,
+    }],
+  };
+  const run = {
+    id: runId,
+    stage,
+    kind: "review",
+    role: "dev-review",
+    status: "completed",
+    startedAt,
+    completedAt,
+    candidateId: candidate.id,
+    candidateRevision: priorRevision.number,
+    candidateHeadRevision: priorRevision.headRevision,
+    workPackageId: null,
+    attempt: 1,
+    workflowAttempt,
+    workflowReservationId: reservationId,
+    gateResult,
+  };
+  const artifactId = attachLinkedArtifact(draft, run, {
+    candidateId: candidate.id,
+    candidateRevision: priorRevision.number,
+    createdAt: artifactCreatedAt,
+    gateResult,
+  });
+  draft.runs.push(run);
+  Object.assign(revision, {
+    authorizingGateStage: stage,
+    authorizingGateWorkflowAttempt: workflowAttempt,
+    authorizingGateReservationId: reservationId,
+    authorizingGateReservedAt: reservedAt,
+    authorizingGateRunId: runId,
+    authorizingGateArtifactId: artifactId,
+  });
 }
 
 function attachAssemblyLineage(draft, candidate, {
@@ -271,6 +357,7 @@ function attachAssemblyLineage(draft, candidate, {
       reason: "assembly",
       sourceWorkflowAttempt: workflowAttempt,
       sourceWorkflowReservationId: reservationId,
+      sourceWorkflowReservedAt: reservedAt,
       createdAt,
     }],
   });
@@ -1775,6 +1862,7 @@ test("grants repair after a candidate is assembled on the final implementation a
           reason: "assembly",
           sourceWorkflowAttempt: reservation.workflowAttempt,
           sourceWorkflowReservationId: reservation.id,
+          sourceWorkflowReservedAt: reservation.reservedAt,
           createdAt: "2026-08-04T00:03:00.000Z",
         }],
       };
@@ -2247,6 +2335,24 @@ test("retains exact run provenance for an authorized adjacent prior-candidate gr
         ],
       };
       draft.candidates.push(candidate);
+      candidate.revisions[1].sourceWorkflowReservedAt = "2026-08-04T00:00:30.000Z";
+      const authorizer = attachExactCandidateGate(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+      }, {
+        workflowAttempt: 3,
+        reservationId: "reservation-c1-r1-review-3",
+        reservedAt: "2026-08-04T00:00:10.000Z",
+      });
+      Object.assign(candidate.revisions[1], {
+        authorizingGateStage: authorizer.stage,
+        authorizingGateWorkflowAttempt: authorizer.workflowAttempt,
+        authorizingGateReservationId: authorizer.id,
+        authorizingGateReservedAt: authorizer.reservedAt,
+        authorizingGateRunId: authorizer.sourceRunId,
+        authorizingGateArtifactId: authorizer.sourceArtifactId,
+      });
       attachCandidateProducerEvidence(draft, candidate);
       draft.stageRunReservations.implement = {
         id: "reservation-c1-r1-repair-1",
@@ -2258,15 +2364,6 @@ test("retains exact run provenance for an authorized adjacent prior-candidate gr
         candidateHeadRevision: "candidate-c1-r1",
         reservedAt: "2026-08-04T00:00:30.000Z",
       };
-      attachExactCandidateGate(draft, {
-        id: "C1",
-        revisionNumber: 1,
-        headRevision: "candidate-c1-r1",
-      }, {
-        workflowAttempt: 3,
-        reservationId: "reservation-c1-r1-review-3",
-        reservedAt: "2026-08-04T00:00:10.000Z",
-      });
     });
 
     const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
@@ -2287,6 +2384,10 @@ test("retains exact run provenance for an authorized adjacent prior-candidate gr
     assert.equal(updated.events.at(-1).sourceRunId, "run-reservation-c1-r1-review-3");
     assert.deepEqual(updated.events.at(-1).sourceRunIds, ["run-reservation-c1-r1-review-3"]);
     assert.equal(updated.events.at(-1).authorizingGateRunId, "run-reservation-c1-r1-review-3");
+    assert.equal(updated.decisions.at(-1).candidateAuthorizerReservationIds.length, 1);
+    assert.equal(updated.decisions.at(-1).candidateAuthorizerReservationIds[0], "reservation-c1-r1-review-3");
+    assert.equal(updated.decisions.at(-1).candidateAuthorizerRunIds.length, 1);
+    assert.equal(updated.decisions.at(-1).candidateAuthorizerArtifactIds.length, 1);
     assert.equal(updated.stageRunLimits["dev-review"], 4);
   } finally {
     await cleanup(server, directory);
@@ -2341,6 +2442,108 @@ test("rejects an adjacent repaired-candidate gate grant without its prior repair
     const unchanged = await store.get(task.id);
     assert.equal(unchanged.stageRunLimits["dev-review"], 3);
     assert.equal(unchanged.decisions.length, 0);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects repaired candidate histories without a complete causal authorizer chain", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    for (const item of [
+      {
+        name: "producer before repair reservation",
+        candidate: () => twoRevisionCandidate(),
+        mutate(draft, candidate) {
+          const revision = candidate.revisions[1];
+          const run = draft.runs.find((entry) => entry.workflowReservationId === revision.sourceWorkflowReservationId);
+          const artifact = draft.artifacts.find((entry) => entry.id === run.artifactId);
+          run.startedAt = "2026-08-04T00:00:20.000Z";
+          run.completedAt = "2026-08-04T00:00:21.000Z";
+          artifact.createdAt = "2026-08-04T00:00:22.000Z";
+        },
+      },
+      {
+        name: "missing historical authorizer identity",
+        candidate: () => twoRevisionCandidate(),
+        mutate(_draft, candidate) {
+          delete candidate.revisions[1].authorizingGateArtifactId;
+        },
+      },
+      {
+        name: "authorizer artifact after repair reservation",
+        candidate: () => twoRevisionCandidate(),
+        mutate(draft, candidate) {
+          const revision = candidate.revisions[1];
+          const artifact = draft.artifacts.find((entry) => entry.id === revision.authorizingGateArtifactId);
+          artifact.createdAt = revision.sourceWorkflowReservedAt;
+        },
+      },
+      {
+        name: "shared historical authorizer identity",
+        candidate: () => threeRevisionCandidate(),
+        mutate(_draft, candidate) {
+          const firstRepair = candidate.revisions[1];
+          const secondRepair = candidate.revisions[2];
+          secondRepair.authorizingGateReservationId = firstRepair.authorizingGateReservationId;
+          secondRepair.authorizingGateRunId = firstRepair.authorizingGateRunId;
+          secondRepair.authorizingGateArtifactId = firstRepair.authorizingGateArtifactId;
+        },
+      },
+    ]) {
+      const response = await createTask(origin, {
+        title: `Reject ${item.name}`,
+        description: "Every retained Repair revision must preserve its causal gate, reservation, run, and artifact chain.",
+        repositoryPath: directory,
+        workflow: "implement",
+      });
+      const { task } = await response.json();
+      await store.update(task.id, (draft) => {
+        draft.status = "ready-for-review";
+        draft.currentStage = "dev-review";
+        const candidate = item.candidate();
+        draft.attemptsByStage.implement = candidate.sourceWorkflowAttempt;
+        draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+        draft.candidates.push(candidate);
+        attachCandidateProducerEvidence(draft, candidate);
+        const currentRevision = candidate.revisions.at(-1);
+        const priorRevision = candidate.revisions.at(-2);
+        draft.stageRunReservations.implement = {
+          id: currentRevision.sourceWorkflowReservationId,
+          stage: "implement",
+          kind: "repair",
+          workflowAttempt: currentRevision.sourceWorkflowAttempt,
+          candidateId: candidate.id,
+          candidateRevision: priorRevision.number,
+          candidateHeadRevision: priorRevision.headRevision,
+          authorizedRunScopes: [],
+          reservedAt: currentRevision.sourceWorkflowReservedAt,
+        };
+        draft.stageRunReservations["dev-review"] = {
+          id: `reservation-${task.id}-current-review-3`,
+          stage: "dev-review",
+          kind: "review",
+          workflowAttempt: 3,
+          candidateId: candidate.id,
+          candidateRevision: candidate.revisionNumber,
+          candidateHeadRevision: candidate.headRevision,
+          authorizedRunScopes: [],
+          reservedAt: new Date(Date.parse(currentRevision.createdAt) + 60_000).toISOString(),
+        };
+        item.mutate(draft, candidate);
+      });
+
+      const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+      assert.equal(grantResponse.status, 409, item.name);
+      assert.match(
+        (await grantResponse.json()).error,
+        /inconsistent workflow reservation|producer evidence|persisted identities/i,
+        item.name,
+      );
+      const unchanged = await store.get(task.id);
+      assert.equal(unchanged.stageRunLimits["dev-review"], 3, item.name);
+      assert.equal(unchanged.decisions.length, 0, item.name);
+    }
   } finally {
     await cleanup(server, directory);
   }
@@ -2793,6 +2996,9 @@ test("grants an exact-current repaired candidate only with distinct gate and cur
     const updated = await store.get(task.id);
     assert.equal(updated.stageRunLimits["dev-review"], 4);
     assert.equal(updated.decisions.at(-1).workflowReservationId, "reservation-c1-r3-review-3");
+    assert.equal(updated.decisions.at(-1).candidateAuthorizerReservationIds.length, 2);
+    assert.equal(updated.decisions.at(-1).candidateAuthorizerRunIds.length, 2);
+    assert.equal(updated.decisions.at(-1).candidateAuthorizerArtifactIds.length, 2);
   } finally {
     await cleanup(server, directory);
   }
@@ -2826,6 +3032,7 @@ test("accepts the canonical initial producer ordinal after an earlier same-scope
           reason: "assembly",
           sourceWorkflowAttempt: 2,
           sourceWorkflowReservationId: "reservation-c1-assembly-2",
+          sourceWorkflowReservedAt: "2026-08-04T00:00:30.000Z",
           createdAt: "2026-08-04T00:01:00.000Z",
         }],
       };

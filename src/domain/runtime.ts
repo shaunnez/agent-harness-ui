@@ -162,6 +162,9 @@ export interface RuntimeDecision {
   authorizingGateRunId?: string | null;
   authorizingGateStage?: StageId | null;
   authorizingGateWorkflowAttempt?: number | null;
+  candidateAuthorizerArtifactIds?: string[];
+  candidateAuthorizerReservationIds?: string[];
+  candidateAuthorizerRunIds?: string[];
   candidateProducerArtifactIds?: string[];
   candidateProducerRunIds?: string[];
   workflowAttempt?: number | null;
@@ -269,6 +272,13 @@ export interface RuntimeCandidate {
     createdAt: string;
     sourceWorkflowAttempt?: number | null;
     sourceWorkflowReservationId?: string | null;
+    sourceWorkflowReservedAt?: string | null;
+    authorizingGateStage?: StageId | null;
+    authorizingGateWorkflowAttempt?: number | null;
+    authorizingGateReservationId?: string | null;
+    authorizingGateReservedAt?: string | null;
+    authorizingGateRunId?: string | null;
+    authorizingGateArtifactId?: string | null;
   }>;
   members?: Array<{ packageId: string; headRevision: string; order: number }>;
 }

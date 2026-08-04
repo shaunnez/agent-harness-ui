@@ -146,6 +146,9 @@ export interface RuntimeEvent {
   authorizingGateRunId?: string | null;
   authorizingGateStage?: StageId | null;
   authorizingGateWorkflowAttempt?: number | null;
+  candidateAuthorizerArtifactIds?: string[];
+  candidateAuthorizerReservationIds?: string[];
+  candidateAuthorizerRunIds?: string[];
   candidateProducerArtifactIds?: string[];
   candidateProducerRunIds?: string[];
   workflowAttempt?: number | null;

@@ -20,6 +20,9 @@ export interface RetryGrantAuditFields {
   authorizingGateRunId?: string | null;
   authorizingGateStage?: StageId | null;
   authorizingGateWorkflowAttempt?: number | null;
+  candidateAuthorizerArtifactIds?: string[];
+  candidateAuthorizerReservationIds?: string[];
+  candidateAuthorizerRunIds?: string[];
   candidateProducerArtifactIds?: string[];
   candidateProducerRunIds?: string[];
   workflowAttempt?: number | null;
@@ -40,6 +43,9 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
     audit.candidateRevision !== undefined ||
     audit.candidateHeadRevision !== undefined ||
     audit.authorizingGateReservationId !== undefined ||
+    audit.candidateAuthorizerArtifactIds !== undefined ||
+    audit.candidateAuthorizerReservationIds !== undefined ||
+    audit.candidateAuthorizerRunIds !== undefined ||
     audit.candidateProducerArtifactIds !== undefined ||
     audit.candidateProducerRunIds !== undefined ||
     audit.workflowAttempt !== undefined ||
@@ -134,6 +140,33 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
             mono={audit.authorizingGateReservedAt !== null}
           />
         </>
+      ) : null}
+      {audit.candidateAuthorizerReservationIds !== undefined ? (
+        <RuntimeRow
+          label="Candidate repair authorizers"
+          value={audit.candidateAuthorizerReservationIds.length
+            ? audit.candidateAuthorizerReservationIds.join(", ")
+            : "No repair revisions"}
+          mono={audit.candidateAuthorizerReservationIds.length > 0}
+        />
+      ) : null}
+      {audit.candidateAuthorizerRunIds !== undefined ? (
+        <RuntimeRow
+          label="Candidate authorizer runs"
+          value={audit.candidateAuthorizerRunIds.length
+            ? audit.candidateAuthorizerRunIds.join(", ")
+            : "No repair authorizer runs"}
+          mono={audit.candidateAuthorizerRunIds.length > 0}
+        />
+      ) : null}
+      {audit.candidateAuthorizerArtifactIds !== undefined ? (
+        <RuntimeRow
+          label="Candidate authorizer artifacts"
+          value={audit.candidateAuthorizerArtifactIds.length
+            ? audit.candidateAuthorizerArtifactIds.join(", ")
+            : "No repair authorizer artifacts"}
+          mono={audit.candidateAuthorizerArtifactIds.length > 0}
+        />
       ) : null}
       {audit.candidateProducerRunIds !== undefined ? (
         <RuntimeRow

@@ -13,6 +13,7 @@ import { assertHttpBoundary, corsHeaders } from "./http-security.mjs";
 import { normalizeModelId, POLICY_IDS, readCodexModelCatalog } from "./model-catalog.mjs";
 import {
   CANONICAL_RUN_STAGES,
+  CANDIDATE_GATE_STAGES,
   resolveGateFreshness,
   resolvePersistedRunFreshness,
   stageRunLimitFor,
@@ -490,6 +491,9 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               authorizingGateRunId,
               authorizingGateStage,
               authorizingGateWorkflowAttempt,
+              candidateAuthorizerArtifactIds,
+              candidateAuthorizerReservationIds,
+              candidateAuthorizerRunIds,
               candidateProducerArtifactIds,
               candidateProducerRunIds,
               grantedStage,
@@ -529,6 +533,9 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               authorizingGateRunId,
               authorizingGateStage,
               authorizingGateWorkflowAttempt,
+              candidateAuthorizerArtifactIds,
+              candidateAuthorizerReservationIds,
+              candidateAuthorizerRunIds,
               candidateProducerArtifactIds,
               candidateProducerRunIds,
               workflowAttempt,
@@ -567,6 +574,9 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               authorizingGateRunId,
               authorizingGateStage,
               authorizingGateWorkflowAttempt,
+              candidateAuthorizerArtifactIds,
+              candidateAuthorizerReservationIds,
+              candidateAuthorizerRunIds,
               candidateProducerArtifactIds,
               candidateProducerRunIds,
               workflowAttempt,
@@ -767,6 +777,9 @@ function retryGrantContext(task) {
   }
   const candidateProducerRunIds = producerEvidence?.runs.map((run) => run.id) ?? [];
   const candidateProducerArtifactIds = producerEvidence?.artifacts.map((artifact) => artifact.id) ?? [];
+  const candidateAuthorizerRunIds = producerEvidence?.authorizerRuns.map((run) => run.id) ?? [];
+  const candidateAuthorizerArtifactIds = producerEvidence?.authorizerArtifacts.map((artifact) => artifact.id) ?? [];
+  const candidateAuthorizerReservationIds = producerEvidence?.authorizerReservations.map((entry) => entry.id) ?? [];
   const historySnapshot = JSON.stringify({
     currentStage: task.currentStage,
     activeRunKind: task.activeRunKind ?? null,
@@ -778,6 +791,9 @@ function retryGrantContext(task) {
     attemptsByStage: task.attemptsByStage ?? {},
     candidateProducerArtifacts: producerEvidence?.artifacts ?? [],
     candidateProducerRuns: producerEvidence?.runs ?? [],
+    candidateAuthorizerArtifacts: producerEvidence?.authorizerArtifacts ?? [],
+    candidateAuthorizerReservations: producerEvidence?.authorizerReservations ?? [],
+    candidateAuthorizerRuns: producerEvidence?.authorizerRuns ?? [],
     reservation,
     stageRunReservations: task.stageRunReservations ?? {},
     stageRunLimits: task.stageRunLimits ?? {},
@@ -806,6 +822,9 @@ function retryGrantContext(task) {
     authorizingGateRunId: authorizingGate?.sourceRunId ?? null,
     authorizingGateStage: authorizingGate?.stage ?? null,
     authorizingGateWorkflowAttempt: authorizingGate?.workflowAttempt ?? null,
+    candidateAuthorizerArtifactIds,
+    candidateAuthorizerReservationIds,
+    candidateAuthorizerRunIds,
     candidateProducerArtifactIds,
     candidateProducerRunIds,
     historySnapshot,
@@ -1062,7 +1081,30 @@ function candidateRevisionLineage(candidate) {
   const byNumber = new Map();
   const heads = new Set();
   const sourceReservations = new Set();
+  const authorizingReservations = new Set();
+  const authorizingRuns = new Set();
+  const authorizingArtifacts = new Set();
   for (const revision of revisions) {
+    const repairRevision = revision?.number > 1;
+    const hasValidRepairAuthorizer = repairRevision &&
+      CANDIDATE_GATE_STAGES.includes(revision.authorizingGateStage) &&
+      Number.isInteger(revision.authorizingGateWorkflowAttempt) &&
+      revision.authorizingGateWorkflowAttempt > 0 &&
+      typeof revision.authorizingGateReservationId === "string" &&
+      revision.authorizingGateReservationId.trim().length > 0 &&
+      typeof revision.authorizingGateRunId === "string" &&
+      revision.authorizingGateRunId.trim().length > 0 &&
+      typeof revision.authorizingGateArtifactId === "string" &&
+      revision.authorizingGateArtifactId.trim().length > 0 &&
+      validPersistedTimestamp(revision.authorizingGateReservedAt);
+    const initialHasNoRepairAuthorizer = !repairRevision && [
+      revision?.authorizingGateStage,
+      revision?.authorizingGateWorkflowAttempt,
+      revision?.authorizingGateReservationId,
+      revision?.authorizingGateReservedAt,
+      revision?.authorizingGateRunId,
+      revision?.authorizingGateArtifactId,
+    ].every((value) => value == null);
     if (
       !Number.isInteger(revision?.number) ||
       revision.number < 1 ||
@@ -1077,6 +1119,15 @@ function candidateRevisionLineage(candidate) {
       typeof revision.sourceWorkflowReservationId !== "string" ||
       !revision.sourceWorkflowReservationId.trim() ||
       sourceReservations.has(revision.sourceWorkflowReservationId) ||
+      !validPersistedTimestamp(revision.sourceWorkflowReservedAt) ||
+      (!repairRevision && !initialHasNoRepairAuthorizer) ||
+      (repairRevision && !hasValidRepairAuthorizer) ||
+      (repairRevision && (
+        authorizingReservations.has(revision.authorizingGateReservationId) ||
+        authorizingRuns.has(revision.authorizingGateRunId) ||
+        authorizingArtifacts.has(revision.authorizingGateArtifactId) ||
+        revision.authorizingGateReservationId === revision.sourceWorkflowReservationId
+      )) ||
       !validPersistedTimestamp(revision.createdAt)
     ) {
       return null;
@@ -1084,14 +1135,28 @@ function candidateRevisionLineage(candidate) {
     byNumber.set(revision.number, revision);
     heads.add(revision.headRevision);
     sourceReservations.add(revision.sourceWorkflowReservationId);
+    if (repairRevision) {
+      authorizingReservations.add(revision.authorizingGateReservationId);
+      authorizingRuns.add(revision.authorizingGateRunId);
+      authorizingArtifacts.add(revision.authorizingGateArtifactId);
+    }
   }
+  if ([...authorizingReservations].some((id) => sourceReservations.has(id))) return null;
   let previousAttempt = 0;
   let previousCreatedAt = -Infinity;
   for (let number = 1; number <= candidate.revisionNumber; number += 1) {
     const revision = byNumber.get(number);
     if (!revision) return null;
     const createdAt = Date.parse(revision.createdAt);
-    if (revision.sourceWorkflowAttempt <= previousAttempt || createdAt <= previousCreatedAt) return null;
+    const sourceReservedAt = Date.parse(revision.sourceWorkflowReservedAt);
+    if (
+      revision.sourceWorkflowAttempt <= previousAttempt ||
+      createdAt <= previousCreatedAt ||
+      sourceReservedAt > createdAt ||
+      (number > 1 && sourceReservedAt <= previousCreatedAt)
+    ) {
+      return null;
+    }
     previousAttempt = revision.sourceWorkflowAttempt;
     previousCreatedAt = createdAt;
   }
@@ -1103,7 +1168,14 @@ function candidateRevisionLineage(candidate) {
   ) {
     return null;
   }
-  return { byNumber, currentRevision, sourceReservations };
+  return {
+    authorizingArtifacts,
+    authorizingReservations,
+    authorizingRuns,
+    byNumber,
+    currentRevision,
+    sourceReservations,
+  };
 }
 
 function candidateRevisionProducerEvidence(task, candidate, lineage) {
@@ -1111,6 +1183,9 @@ function candidateRevisionProducerEvidence(task, candidate, lineage) {
   const allRuns = task.runs ?? [];
   const runs = [];
   const artifacts = [];
+  const authorizerArtifacts = [];
+  const authorizerReservations = [];
+  const authorizerRuns = [];
   const packageIds = new Set(task.workPackages.map((workPackage) => workPackage.id));
   for (let number = 1; number <= candidate.revisionNumber; number += 1) {
     const revision = lineage.byNumber.get(number);
@@ -1150,6 +1225,11 @@ function candidateRevisionProducerEvidence(task, candidate, lineage) {
       revisionRuns.sort((left, right) => left.workPackageId.localeCompare(right.workPackageId));
     } else {
       const priorRevision = lineage.byNumber.get(number - 1);
+      const authorizer = candidateRevisionAuthorizerEvidence(task, candidate, revision, priorRevision);
+      if (!authorizer) return null;
+      authorizerReservations.push(authorizer.reservation);
+      authorizerRuns.push(authorizer.run);
+      authorizerArtifacts.push(authorizer.artifact);
       if (revisionRuns.length !== 1) return null;
       const run = revisionRuns[0];
       const syntheticReservation = {
@@ -1183,7 +1263,51 @@ function candidateRevisionProducerEvidence(task, candidate, lineage) {
       artifacts.push(artifact);
     }
   }
-  return { runs, artifacts };
+  return {
+    artifacts,
+    authorizerArtifacts,
+    authorizerReservations,
+    authorizerRuns,
+    runs,
+  };
+}
+
+function candidateRevisionAuthorizerEvidence(task, candidate, revision, priorRevision) {
+  const reservation = {
+    id: revision.authorizingGateReservationId,
+    stage: revision.authorizingGateStage,
+    kind: revision.authorizingGateStage === "dev-review" ? "review" : revision.authorizingGateStage,
+    workflowAttempt: revision.authorizingGateWorkflowAttempt,
+    candidateId: candidate.id,
+    candidateRevision: priorRevision.number,
+    candidateHeadRevision: priorRevision.headRevision,
+    authorizedRunScopes: [],
+    reservedAt: revision.authorizingGateReservedAt,
+  };
+  if (
+    Date.parse(reservation.reservedAt) < Date.parse(priorRevision.createdAt) ||
+    Date.parse(reservation.reservedAt) >= Date.parse(revision.sourceWorkflowReservedAt)
+  ) {
+    return null;
+  }
+  const authoritativeGate = candidateGateAuthorizerEvidence(
+    task,
+    reservation,
+    { candidateId: candidate.id, candidateRevision: priorRevision.number },
+    { latestArtifactAt: revision.sourceWorkflowReservedAt },
+  );
+  if (
+    !authoritativeGate ||
+    authoritativeGate.sourceRunId !== revision.authorizingGateRunId ||
+    authoritativeGate.sourceArtifactId !== revision.authorizingGateArtifactId
+  ) {
+    return null;
+  }
+  const run = (task.runs ?? []).find((item) => item.id === authoritativeGate.sourceRunId);
+  const artifact = (task.artifacts ?? []).find((item) => item.id === authoritativeGate.sourceArtifactId);
+  return Date.parse(artifact.createdAt) < Date.parse(revision.sourceWorkflowReservedAt)
+    ? { artifact, reservation, run }
+    : null;
 }
 
 function linkedProducerArtifact(task, candidate, revision, run) {
@@ -1203,7 +1327,7 @@ function linkedProducerArtifact(task, candidate, revision, run) {
     artifact.candidateRevision === (initialRevision ? null : revision.number) &&
     artifact.workPackageId === (initialRevision ? run.workPackageId : null) &&
     validDurableRunArtifactEnvelope(run, artifact, {
-      earliestStartedAt: null,
+      earliestStartedAt: revision.sourceWorkflowReservedAt,
       latestCompletedAt: null,
       latestArtifactAt: revision.createdAt,
     })
@@ -1245,6 +1369,7 @@ function validCandidateProducerReservation(task, candidate, producerReservation,
   if (
     producerReservation.id !== currentRevision.sourceWorkflowReservationId ||
     producerReservation.workflowAttempt !== currentRevision.sourceWorkflowAttempt ||
+    producerReservation.reservedAt !== currentRevision.sourceWorkflowReservedAt ||
     producerReservation.workflowAttempt !== implementationAttempt ||
     producerReservation.stage !== "implement"
   ) {
@@ -1518,6 +1643,7 @@ function validAssemblyOnlyCandidateProducer(task, reservation, reservationRuns) 
     currentRevision?.reason === "assembly" &&
     currentRevision.sourceWorkflowAttempt === reservation.workflowAttempt &&
     currentRevision.sourceWorkflowReservationId === reservation.id &&
+    currentRevision.sourceWorkflowReservedAt === reservation.reservedAt &&
     reservation.candidateId == null &&
     reservation.candidateRevision == null &&
     reservation.candidateHeadRevision == null &&
@@ -1565,6 +1691,9 @@ function sameRetryGrantContext(expected, current) {
     "workflowReservationId",
   ].every((field) => expected[field] === current[field]) &&
     JSON.stringify(expected.sourceRunIds) === JSON.stringify(current.sourceRunIds) &&
+    JSON.stringify(expected.candidateAuthorizerArtifactIds) === JSON.stringify(current.candidateAuthorizerArtifactIds) &&
+    JSON.stringify(expected.candidateAuthorizerReservationIds) === JSON.stringify(current.candidateAuthorizerReservationIds) &&
+    JSON.stringify(expected.candidateAuthorizerRunIds) === JSON.stringify(current.candidateAuthorizerRunIds) &&
     JSON.stringify(expected.candidateProducerArtifactIds) === JSON.stringify(current.candidateProducerArtifactIds) &&
     JSON.stringify(expected.candidateProducerRunIds) === JSON.stringify(current.candidateProducerRunIds);
 }

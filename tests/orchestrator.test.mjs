@@ -2819,7 +2819,13 @@ test("advances an approved implementation task through a revision-bound candidat
         if (/Development review/.test(prompt)) {
           reviewCount += 1;
           finalText = reviewCount === 1
-            ? gateOutput(1, "REPAIR", [{ severity: "P1", title: "Repair required", detail: "Fix the candidate." }])
+            ? gateOutput(1, "REPAIR", [{
+                severity: "P1",
+                title: "Repair required",
+                detail: "Fix the candidate.",
+                candidateId: "C1",
+                candidateRevision: 1,
+              }])
             : gateOutput(2);
         } else if (/Focused test/.test(prompt)) {
           finalText = TEST_OUTPUT;
@@ -2846,7 +2852,10 @@ test("advances an approved implementation task through a revision-bound candidat
     await orchestrator.start(task.id, "implementation");
     await waitForStatus(store, task.id, "ready-for-review");
     await orchestrator.start(task.id, "review");
-    await waitForStatus(store, task.id, "repair-required");
+    const repairReady = await waitForStatus(store, task.id, "repair-required");
+    assert.equal(repairReady.gateFreshness["dev-review"].reasonCode, "repair_required");
+    assert.ok(repairReady.gateFreshness["dev-review"].sourceRunId);
+    assert.ok(repairReady.gateFreshness["dev-review"].sourceArtifactId);
     await orchestrator.start(task.id, "repair");
     await waitForStatus(store, task.id, "ready-for-review");
     await orchestrator.start(task.id, "review");
@@ -2888,8 +2897,20 @@ test("advances an approved implementation task through a revision-bound candidat
     );
     const reviewRuns = approvalTask.runs.filter((run) => run.stage === "dev-review");
     const repairRun = approvalTask.runs.find((run) => run.kind === "repair");
+    const repairArtifact = approvalTask.artifacts.find((artifact) => artifact.runId === repairRun.id);
+    const repairRevision = approvalTask.candidates[0].revisions[1];
+    const repairAuthorizerArtifact = approvalTask.artifacts.find((artifact) => artifact.runId === reviewRuns[0].id);
     const testRun = approvalTask.runs.find((run) => run.stage === "test");
     assert.equal(reviewRuns.length, 2);
+    assert.equal(repairRevision.sourceWorkflowReservedAt, approvalTask.stageRunReservations.implement.reservedAt);
+    assert.equal(repairRevision.authorizingGateStage, "dev-review");
+    assert.equal(repairRevision.authorizingGateReservationId, reviewRuns[0].workflowReservationId);
+    assert.equal(repairRevision.authorizingGateRunId, reviewRuns[0].id);
+    assert.equal(repairRevision.authorizingGateArtifactId, repairAuthorizerArtifact.id);
+    assert.ok(Date.parse(repairAuthorizerArtifact.createdAt) < Date.parse(repairRevision.sourceWorkflowReservedAt));
+    assert.ok(Date.parse(repairRevision.sourceWorkflowReservedAt) <= Date.parse(repairRun.startedAt));
+    assert.ok(Date.parse(repairRun.completedAt) <= Date.parse(repairArtifact.createdAt));
+    assert.ok(Date.parse(repairArtifact.createdAt) <= Date.parse(repairRevision.createdAt));
     assert.deepEqual(reviewRuns[1].gateResult.blockingReasons, []);
     assert.equal(reviewRuns[1].retryOfRunId, reviewRuns[0].id);
     assert.equal(repairRun.repairOfRunId, reviewRuns[0].id);

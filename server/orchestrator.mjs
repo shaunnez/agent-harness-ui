@@ -811,6 +811,7 @@ export class TaskOrchestrator {
         reason: "assembly",
         sourceWorkflowAttempt: implementationReservation.workflowAttempt,
         sourceWorkflowReservationId: implementationReservation.id,
+        sourceWorkflowReservedAt: implementationReservation.reservedAt,
         createdAt: now(),
       });
       for (const workPackage of draft.workPackages) workPackage.status = "integrated";
@@ -1034,7 +1035,11 @@ export class TaskOrchestrator {
     }
     await this.#worktrees.verifyCandidate(candidate);
     const nextRevision = candidate.revisionNumber + 1;
+    const initialRepairReservation = requireActiveRunReservation(task, "repair", "implement");
     const repairRequest = buildRepairRequest(task, candidate);
+    if (repairRequest.repairEvidence.newestFailingGate.runId !== initialRepairReservation.authorizingGateRunId) {
+      throw new Error("The repair request drifted from its reserved authorizing gate.");
+    }
     const requestedFindings = projectRepairFindings(repairRequest.repairEvidence.newestFailingGate.gateResult.findings);
     let result;
     let committed;
@@ -1070,6 +1075,9 @@ export class TaskOrchestrator {
     await this.#store.update(id, (draft) => {
       const activeCandidate = currentCandidate(draft);
       const repairReservation = requireActiveRunReservation(draft, "repair", "implement");
+      if (!sameRepairReservationAuthority(initialRepairReservation, repairReservation)) {
+        throw new Error("The repair authorizing gate changed before revision persistence.");
+      }
       activeCandidate.revisionNumber = nextRevision;
       activeCandidate.headRevision = committed.headRevision;
       activeCandidate.status = "ready_for_review";
@@ -1083,6 +1091,13 @@ export class TaskOrchestrator {
         requestedFindings: structuredClone(requestedFindings),
         sourceWorkflowAttempt: repairReservation.workflowAttempt,
         sourceWorkflowReservationId: repairReservation.id,
+        sourceWorkflowReservedAt: repairReservation.reservedAt,
+        authorizingGateStage: repairReservation.authorizingGateStage,
+        authorizingGateWorkflowAttempt: repairReservation.authorizingGateWorkflowAttempt,
+        authorizingGateReservationId: repairReservation.authorizingGateReservationId,
+        authorizingGateReservedAt: repairReservation.authorizingGateReservedAt,
+        authorizingGateRunId: repairReservation.authorizingGateRunId,
+        authorizingGateArtifactId: repairReservation.authorizingGateArtifactId,
         createdAt: now(),
       });
       draft.completedStages = draft.completedStages.filter(
@@ -1433,6 +1448,7 @@ function reserveRun(task, kind) {
 
 function createStageRunReservation(task, kind, stage) {
   const candidate = kind === "implementation" ? null : (task.candidates?.at(-1) ?? null);
+  const repairAuthorizer = kind === "repair" ? repairAuthorizerSnapshot(task, candidate) : null;
   const authorizedRunScopes = kind === "implementation"
     ? (task.workPackages ?? [])
         .filter((workPackage) => !["ready_for_integration", "integrated"].includes(workPackage.status))
@@ -1448,7 +1464,64 @@ function createStageRunReservation(task, kind, stage) {
     candidateHeadRevision: candidate?.headRevision ?? null,
     authorizedRunScopes,
     reservedAt: now(),
+    ...(repairAuthorizer ?? {}),
   };
+}
+
+function repairAuthorizerSnapshot(task, candidate) {
+  const stage = task.currentStage;
+  const freshness = refreshGateFreshness(task)?.[stage] ?? null;
+  const sourceRun = freshness?.sourceRunId
+    ? (task.runs ?? []).find((run) => run.id === freshness.sourceRunId)
+    : null;
+  const sourceArtifact = freshness?.sourceArtifactId
+    ? (task.artifacts ?? []).find((artifact) => artifact.id === freshness.sourceArtifactId)
+    : null;
+  const gateReservation = sourceRun?.workflowReservationId
+    ? task.stageRunReservations?.[stage]
+    : null;
+  if (
+    !candidate ||
+    freshness?.reasonCode !== "repair_required" ||
+    freshness.candidateId !== candidate.id ||
+    freshness.candidateRevision !== candidate.revisionNumber ||
+    !sourceRun ||
+    !sourceArtifact ||
+    !gateReservation ||
+    gateReservation.id !== sourceRun.workflowReservationId ||
+    gateReservation.workflowAttempt !== sourceRun.workflowAttempt ||
+    gateReservation.candidateId !== candidate.id ||
+    gateReservation.candidateRevision !== candidate.revisionNumber ||
+    gateReservation.candidateHeadRevision !== candidate.headRevision ||
+    sourceArtifact.runId !== sourceRun.id
+  ) {
+    throw new Error("The candidate repair is missing one exact durable authorizing gate.");
+  }
+  return {
+    authorizingGateStage: stage,
+    authorizingGateWorkflowAttempt: gateReservation.workflowAttempt,
+    authorizingGateReservationId: gateReservation.id,
+    authorizingGateReservedAt: gateReservation.reservedAt,
+    authorizingGateRunId: sourceRun.id,
+    authorizingGateArtifactId: sourceArtifact.id,
+  };
+}
+
+function sameRepairReservationAuthority(expected, current) {
+  return [
+    "id",
+    "workflowAttempt",
+    "reservedAt",
+    "candidateId",
+    "candidateRevision",
+    "candidateHeadRevision",
+    "authorizingGateStage",
+    "authorizingGateWorkflowAttempt",
+    "authorizingGateReservationId",
+    "authorizingGateReservedAt",
+    "authorizingGateRunId",
+    "authorizingGateArtifactId",
+  ].every((field) => expected?.[field] === current?.[field]);
 }
 
 function applyStageRunReservation(task, reservation) {

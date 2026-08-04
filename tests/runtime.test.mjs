@@ -536,22 +536,7 @@ test("persists typed findings requested by the gate on each repair revision", as
         status: "repair_required",
         revisions: [{ number: 1, headRevision: "b".repeat(40), reason: "assembly" }],
       }];
-      draft.runs = [{
-        id: "run-failing-review",
-        kind: "review",
-        stage: "dev-review",
-        status: "completed",
-        candidateId: "C1",
-        candidateRevision: 1,
-        completedAt: "2026-08-01T12:00:01.000Z",
-        gateResult: {
-          stage: "dev-review",
-          candidateId: "C1",
-          candidateRevision: 1,
-          verdict: "REPAIR",
-          findings,
-        },
-      }];
+      attachRepairAuthorizerFixture(draft, draft.candidates[0], findings);
     });
     let repairPrompt = "";
     const orchestrator = new TaskOrchestrator(store, {
@@ -714,6 +699,7 @@ test("uses per-stage limits for admission and failure blocking while sharing rep
       draft.candidates[0].status = "repair_required";
       draft.stageRunLimits.implement = 1;
       draft.attemptsByStage.implement = 0;
+      attachRepairAuthorizerFixture(draft, draft.candidates[0]);
     });
     const failingRepairOrchestrator = new TaskOrchestrator(store, {
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
@@ -2587,6 +2573,9 @@ test("renders retry grant provenance in activity and decision surfaces without f
       authorizingGateRunId: "run-review-3",
       authorizingGateStage: "dev-review",
       authorizingGateWorkflowAttempt: 3,
+      candidateAuthorizerArtifactIds: ["artifact-authorizer-r1"],
+      candidateAuthorizerReservationIds: ["reservation-authorizer-r1"],
+      candidateAuthorizerRunIds: ["run-authorizer-r1"],
       candidateProducerArtifactIds: ["artifact-assembly-S1", "artifact-repair-2"],
       candidateProducerRunIds: ["run-assembly-S1", "run-repair-2"],
       workflowAttempt: 3,
@@ -2619,6 +2608,9 @@ test("renders retry grant provenance in activity and decision surfaces without f
         authorizingGateRunId: "run-review-3",
         authorizingGateStage: "dev-review",
         authorizingGateWorkflowAttempt: 3,
+        candidateAuthorizerArtifactIds: ["artifact-authorizer-r1"],
+        candidateAuthorizerReservationIds: ["reservation-authorizer-r1"],
+        candidateAuthorizerRunIds: ["run-authorizer-r1"],
         candidateProducerArtifactIds: ["artifact-assembly-S1", "artifact-repair-2"],
         candidateProducerRunIds: ["run-assembly-S1", "run-repair-2"],
         workflowAttempt: 3,
@@ -2652,6 +2644,12 @@ test("renders retry grant provenance in activity and decision surfaces without f
     assert.match(workspaceMarkup, /run-review-3/);
     assert.match(workspaceMarkup, /artifact-review-3/);
     assert.match(workspaceMarkup, /2026-08-01T11:59:00.000Z/);
+    assert.match(workspaceMarkup, /Candidate repair authorizers/);
+    assert.match(workspaceMarkup, /reservation-authorizer-r1/);
+    assert.match(workspaceMarkup, /Candidate authorizer runs/);
+    assert.match(workspaceMarkup, /run-authorizer-r1/);
+    assert.match(workspaceMarkup, /Candidate authorizer artifacts/);
+    assert.match(workspaceMarkup, /artifact-authorizer-r1/);
     assert.match(workspaceMarkup, /Candidate producer runs/);
     assert.match(workspaceMarkup, /run-assembly-S1, run-repair-2/);
     assert.match(workspaceMarkup, /Candidate producer artifacts/);
@@ -2683,6 +2681,9 @@ test("renders retry grant provenance in activity and decision surfaces without f
         authorizingGateRunId: undefined,
         authorizingGateStage: undefined,
         authorizingGateWorkflowAttempt: undefined,
+        candidateAuthorizerArtifactIds: undefined,
+        candidateAuthorizerReservationIds: undefined,
+        candidateAuthorizerRunIds: undefined,
         candidateProducerArtifactIds: undefined,
         candidateProducerRunIds: undefined,
         workflowAttempt: undefined,
@@ -2740,6 +2741,80 @@ test("disables task closure while merge reconciliation is pending", () => {
     assert.match(markup, /disabled=""[^>]*title="Wait for the pending merge reconciliation before closing this task\."[^>]*>.*Close task/s);
   });
 });
+
+function attachRepairAuthorizerFixture(draft, candidate, findings = null) {
+  const reservationId = `reservation-${candidate.id.toLowerCase()}-repair-authorizer-1`;
+  const runId = `run-${reservationId}`;
+  const artifactId = `artifact-${reservationId}`;
+  const gateFindings = findings ?? [{
+    severity: "P1",
+    title: "Repair required",
+    detail: "The exact candidate requires a repair.",
+    file: "server/orchestrator.mjs",
+    line: 1,
+    candidateId: candidate.id,
+    candidateRevision: candidate.revisionNumber,
+    bindingExplicit: true,
+  }];
+  const gateResult = {
+    schemaVersion: 1,
+    stage: "dev-review",
+    verdict: "REPAIR",
+    reportedVerdict: "REPAIR",
+    candidateId: candidate.id,
+    candidateRevision: candidate.revisionNumber,
+    evaluatedAt: "2026-08-01T12:00:03.000Z",
+    blockingReasons: ["P1: exact candidate repair is required."],
+    findings: gateFindings,
+  };
+  draft.attemptsByStage ??= {};
+  draft.attemptsByStage["dev-review"] = 1;
+  draft.stageRunReservations ??= {};
+  draft.stageRunReservations["dev-review"] = {
+    id: reservationId,
+    stage: "dev-review",
+    kind: "review",
+    workflowAttempt: 1,
+    candidateId: candidate.id,
+    candidateRevision: candidate.revisionNumber,
+    candidateHeadRevision: candidate.headRevision,
+    authorizedRunScopes: [],
+    reservedAt: "2026-08-01T12:00:00.000Z",
+  };
+  draft.runs = (draft.runs ?? []).filter((run) => run.id !== runId);
+  draft.runs.push({
+    id: runId,
+    artifactId,
+    kind: "review",
+    stage: "dev-review",
+    role: "dev-review",
+    status: "completed",
+    startedAt: "2026-08-01T12:00:01.000Z",
+    completedAt: "2026-08-01T12:00:02.000Z",
+    candidateId: candidate.id,
+    candidateRevision: candidate.revisionNumber,
+    candidateHeadRevision: candidate.headRevision,
+    workPackageId: null,
+    attempt: 1,
+    workflowAttempt: 1,
+    workflowReservationId: reservationId,
+    gateResult,
+  });
+  draft.artifacts = (draft.artifacts ?? []).filter((artifact) => artifact.id !== artifactId);
+  draft.artifacts.push({
+    id: artifactId,
+    runId,
+    stage: "dev-review",
+    name: "dev-review.md",
+    kind: "markdown",
+    content: "# Development review\n\nTyped repair evidence.",
+    createdAt: "2026-08-01T12:00:04.000Z",
+    candidateId: candidate.id,
+    candidateRevision: candidate.revisionNumber,
+    workPackageId: null,
+    gateResult,
+  });
+}
 
 async function waitUntil(predicate) {
   for (let attempt = 0; attempt < 100; attempt += 1) {
