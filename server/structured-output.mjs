@@ -93,6 +93,11 @@ export function parseFocusedTestEvidence(text) {
   if (value.durationMs != null && (!Number.isFinite(value.durationMs) || value.durationMs < 0)) {
     throw candidateEvidenceError("contradictory_evidence", "Focused test evidence durationMs must be a non-negative number or null.");
   }
+  for (const field of ["startedAt", "completedAt"]) {
+    if (value[field] != null && typeof value[field] !== "string") {
+      throw candidateEvidenceError("contradictory_evidence", `Focused test evidence ${field} must be a string or null.`);
+    }
+  }
   const rows = Array.isArray(value.rows) ? value.rows : [];
   if (!rows.length) {
     throw candidateEvidenceError("contradictory_evidence", "Focused test evidence must include at least one row.");

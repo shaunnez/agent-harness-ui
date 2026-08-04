@@ -428,6 +428,8 @@ function evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId) {
     typeof summary.command !== "string" ||
     !summary.command.trim() ||
     !["passed", "failed"].includes(summary.status) ||
+    (summary.startedAt != null && typeof summary.startedAt !== "string") ||
+    (summary.completedAt != null && typeof summary.completedAt !== "string") ||
     (summary.durationMs != null && (!Number.isFinite(summary.durationMs) || summary.durationMs < 0))
   ) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);

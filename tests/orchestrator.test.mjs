@@ -192,6 +192,37 @@ test("rejects malformed focused Test row fields before normalization", () => {
   }
 });
 
+test("rejects malformed focused Test timestamps before normalization", () => {
+  for (const [field, value] of [
+    ["startedAt", { timestamp: "2026-08-01T12:00:00.000Z" }],
+    ["completedAt", ["2026-08-01T12:01:00.000Z"]],
+  ]) {
+    const output = `<focused-test-evidence>${JSON.stringify({
+      candidateId: "C1",
+      candidateRevision: 2,
+      command: "npm test",
+      status: "passed",
+      [field]: value,
+      rows: [{
+        id: "row-1",
+        candidateId: "C1",
+        candidateRevision: 2,
+        command: "npm test",
+        status: "passed",
+        title: "focused test",
+        artifactReferences: [],
+        assertions: [],
+        failureDetails: null,
+      }],
+    })}</focused-test-evidence>`;
+    assert.throws(
+      () => parseFocusedTestEvidence(output),
+      (error) => error.code === "contradictory_evidence" && error.message.includes(field),
+      field,
+    );
+  }
+});
+
 test("derives candidate-bound review gates from structured evidence", () => {
   const candidate = { id: "C1", revisionNumber: 2 };
   const pass = parseGateEvidence(gateOutput(2), candidate, "dev-review");
@@ -647,6 +678,29 @@ test("requires persisted Test failedRowIds to match the exact failed-row set", (
   assert.deepEqual(validFailedTask.gateFreshness.test.focusedTestRows.map((row) => row.id), ["row-failed"]);
 });
 
+test("rejects malformed persisted focused Test timestamps while retaining them for audit", () => {
+  for (const [field, value] of [
+    ["startedAt", { timestamp: "2026-08-01T12:00:00.000Z" }],
+    ["completedAt", ["2026-08-01T12:01:00.000Z"]],
+  ]) {
+    const summary = { ...makeFocusedTestSummary(), [field]: value };
+    const run = makeRuntimeRun({
+      id: `RUN-MALFORMED-TEST-${field}`,
+      stage: "test",
+      kind: "test",
+      gateResult: makeGateResult({ stage: "test" }),
+      test: summary,
+    });
+    const task = makeRuntimeTask({ runs: [run] });
+
+    refreshGateFreshness(task);
+
+    assert.equal(task.gateFreshness.test.fresh, false, field);
+    assert.equal(task.gateFreshness.test.reasonCode, "contradictory_evidence", field);
+    assert.deepEqual(run.test[field], value, `${field}: malformed evidence remains retained`);
+  }
+});
+
 test("rejects malformed persisted Test binding markers and preserves explicit false as missing", () => {
   const cases = [
     {
@@ -763,6 +817,20 @@ test("merge approval fails closed for malformed persisted errors and failed-row 
       expectedStage: "Test",
       mutate(runs) {
         runs[1].test.rows[0].bindingExplicit = "not-a-boolean";
+      },
+    },
+    {
+      name: "malformed Test start timestamp",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.startedAt = { timestamp: "2026-08-01T12:00:00.000Z" };
+      },
+    },
+    {
+      name: "malformed Test completion timestamp",
+      expectedStage: "Test",
+      mutate(runs) {
+        runs[1].test.completedAt = ["2026-08-01T12:01:00.000Z"];
       },
     },
     {
@@ -897,14 +965,14 @@ test("structured ingestion preserves mixed, revision-change, and candidate-misma
   );
 });
 
-test("malformed focused Test row ingestion persists the exact reason and blocks approval", async () => {
-  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-malformed-test-row-"));
+test("malformed focused Test ingestion persists the exact reason and blocks approval", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-malformed-test-evidence-"));
   try {
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
     await store.init();
     const task = await store.create({
-      title: "Reject malformed focused Test row",
-      description: "Object-valued row fields must fail closed from ingestion through approval.",
+      title: "Reject malformed focused Test evidence",
+      description: "Malformed row and timestamp fields must fail closed from ingestion through approval.",
       repositoryPath: directory,
       workflow: "implement",
       priority: "medium",
@@ -929,7 +997,7 @@ test("malformed focused Test row ingestion persists the exact reason and blocks 
     });
 
     let merged = false;
-    const malformedOutput = `<focused-test-evidence>${JSON.stringify({
+    const malformedRowOutput = `<focused-test-evidence>${JSON.stringify({
       candidateId: "C1",
       candidateRevision: 2,
       command: "npm test",
@@ -946,6 +1014,26 @@ test("malformed focused Test row ingestion persists the exact reason and blocks 
         failureDetails: null,
       }],
     })}</focused-test-evidence>`;
+    const malformedTimestampOutput = `<focused-test-evidence>${JSON.stringify({
+      candidateId: "C1",
+      candidateRevision: 2,
+      command: "npm test",
+      status: "passed",
+      startedAt: { timestamp: "2026-08-01T12:00:00.000Z" },
+      completedAt: "2026-08-01T12:01:00.000Z",
+      rows: [{
+        id: "row-1",
+        candidateId: "C1",
+        candidateRevision: 2,
+        command: "npm test",
+        status: "passed",
+        title: "focused test",
+        artifactReferences: [],
+        assertions: [],
+        failureDetails: null,
+      }],
+    })}</focused-test-evidence>`;
+    const malformedOutputs = [malformedRowOutput, malformedTimestampOutput];
     const orchestrator = new TaskOrchestrator(store, {
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       worktreeManager: {
@@ -954,16 +1042,22 @@ test("malformed focused Test row ingestion persists the exact reason and blocks 
         async merge() { merged = true; },
       },
       runCodex: async () => ({
-        finalText: malformedOutput,
+        finalText: malformedOutputs.shift(),
         usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
       }),
     });
 
     assert.equal(await orchestrator.start(task.id, "test"), true);
+    const afterMalformedRow = await waitForStatus(store, task.id, "ready-for-test");
+    assert.equal(afterMalformedRow.runs.find((run) => run.stage === "test").evidenceError.code, "contradictory_evidence");
+
+    assert.equal(await orchestrator.start(task.id, "test"), true);
     const finished = await waitForStatus(store, task.id, "ready-for-test");
-    const testRun = finished.runs.find((run) => run.stage === "test");
-    assert.equal(testRun.evidenceError.code, "contradictory_evidence");
-    assert.equal(testRun.evidenceError.copy, RUNTIME_FRESHNESS_REASONS.contradictory_evidence);
+    const testRuns = finished.runs.filter((run) => run.stage === "test");
+    assert.equal(testRuns.length, 2);
+    assert.equal(testRuns.at(-1).evidenceError.code, "contradictory_evidence");
+    assert.equal(testRuns.at(-1).evidenceError.copy, RUNTIME_FRESHNESS_REASONS.contradictory_evidence);
+    assert.equal(finished.gateFreshness.test.sourceRunId, testRuns.at(-1).id);
     assert.equal(finished.gateFreshness.test.reasonCode, "contradictory_evidence");
 
     await store.update(task.id, (draft) => {
