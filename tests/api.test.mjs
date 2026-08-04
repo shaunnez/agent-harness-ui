@@ -1164,7 +1164,7 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
   }
 });
 
-test("grants one bounded repair attempt when review exhausts the allowance", async () => {
+test("starts repair when the failed gate is exhausted but implement has capacity", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
     const response = await createTask(origin, {
@@ -1181,21 +1181,56 @@ test("grants one bounded repair attempt when review exhausts the allowance", asy
       draft.candidates.push({ id: "C1", status: "repair_required" });
     });
 
+    const repairResponse = await fetch(`${origin}/api/tasks/${task.id}/repair`, { method: "POST" });
+    assert.equal(repairResponse.status, 202);
+    assert.deepEqual(await repairResponse.json(), { started: true });
+
+    const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
+    assert.equal(updated.stageRunLimits.implement, 3);
+    assert.equal(updated.stageRunLimits["dev-review"], 3);
+    assert.equal(updated.attemptsByStage["dev-review"], 3);
+    assert.equal(updated.attemptsByStage.implement, 0);
+    assert.equal(updated.decisions.length, 0);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("grants only implement and admits one repair when its budget is exhausted", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Exhausted implementation repair",
+      description: "Grant the canonical mutation stage without changing the failed gate allowance.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage.implement = draft.stageRunLimits.implement;
+      draft.attemptsByStage["dev-review"] = 1;
+      draft.candidates.push({ id: "C1", status: "repair_required" });
+    });
+
+    const blockedRepair = await fetch(`${origin}/api/tasks/${task.id}/repair`, { method: "POST" });
+    assert.equal(blockedRepair.status, 409);
+    assert.deepEqual(await blockedRepair.json(), { error: "The current stage has exhausted its retry allowance." });
+
     const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
     assert.equal(grantResponse.status, 200);
     assert.deepEqual(await grantResponse.json(), { granted: true });
 
-    const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
-    assert.equal(updated.status, "failed");
-    assert.deepEqual(
-      updated.stageRunLimits,
-      Object.fromEntries(CANONICAL_RUN_STAGES.map((stage) => [stage, stage === "dev-review" ? 4 : 3])),
-    );
-    assert.equal(updated.decisions.at(-1).grantedStage, "dev-review");
-    assert.equal(updated.events.at(-1).grantedStage, "dev-review");
-    assert.equal(updated.attemptsByStage["dev-review"], 3);
-    assert.equal(updated.candidates.at(-1).status, "repair_required");
-    assert.equal(updated.events.at(-1).title, "One repair attempt granted");
+    const granted = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
+    assert.equal(granted.stageRunLimits.implement, 4);
+    assert.equal(granted.stageRunLimits["dev-review"], 3);
+    assert.equal(granted.decisions.at(-1).grantedStage, "implement");
+    assert.equal(granted.events.at(-1).grantedStage, "implement");
+
+    const repairResponse = await fetch(`${origin}/api/tasks/${task.id}/repair`, { method: "POST" });
+    assert.equal(repairResponse.status, 202);
+    assert.deepEqual(await repairResponse.json(), { started: true });
   } finally {
     await cleanup(server, directory);
   }

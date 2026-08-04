@@ -441,12 +441,12 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         }
         if (action === "grant-retry") {
           const candidate = task.candidates?.at(-1);
-          const grantedStage = task.currentStage;
+          const grantedStage = candidate?.status === "repair_required" ? "implement" : task.currentStage;
           if (!CANONICAL_RUN_STAGES.includes(grantedStage)) {
             send(response, 409, { error: "The current stage cannot receive a retry grant." });
             return;
           }
-          const recoverableImplementation = task.currentStage === "implement";
+          const recoverableImplementation = grantedStage === "implement";
           const currentAttempts = task.attemptsByStage?.[grantedStage] ?? 0;
           const currentLimit = stageRunLimitFor(task, grantedStage);
           if (currentAttempts > currentLimit) {
@@ -542,8 +542,9 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
           send(response, 409, { error: "The current candidate is not awaiting repair." });
           return;
         }
-        const stageAttempts = task.attemptsByStage?.[task.currentStage] ?? 0;
-        if (task.status === "blocked" || stageAttempts >= stageRunLimitFor(task, task.currentStage)) {
+        const runStage = runConfiguration.kind === "repair" ? "implement" : task.currentStage;
+        const stageAttempts = task.attemptsByStage?.[runStage] ?? 0;
+        if (task.status === "blocked" || stageAttempts >= stageRunLimitFor(task, runStage)) {
           send(response, 409, { error: "The current stage has exhausted its retry allowance." });
           return;
         }
