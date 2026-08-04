@@ -389,6 +389,9 @@ function evaluateGateRun(run, target, stage, sourceRunId, sourceArtifactId) {
   if (findingBindings.some(({ binding }) => compareCandidateBinding(binding, target))) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "candidate_mismatch", null);
   }
+  if (summary.findings.some((finding) => !isValidPersistedGateFinding(finding))) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
+  }
   const hasBlockingReasons = summary.blockingReasons.length > 0;
   const blockingFindings = summary.findings.some((finding) => ["P0", "P1"].includes(finding?.severity));
   if (summary.verdict === "PASS" && (hasBlockingReasons || blockingFindings)) {
@@ -480,6 +483,9 @@ function evaluateTestGateResult(summary, target, sourceRunId, sourceArtifactId) 
   const invalidFinding = findingBindings.find(({ binding }) => !binding.valid);
   if (invalidFinding) {
     return createFreshness("test", target, sourceRunId, sourceArtifactId, invalidFinding.binding.code, null);
+  }
+  if (summary.findings.some((finding) => !isValidPersistedGateFinding(finding))) {
+    return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
 
   const blockingFindings = summary.findings.some((finding) => ["P0", "P1"].includes(finding?.severity));
@@ -642,6 +648,17 @@ function hasExplicitCandidateFields(value) {
       Object.prototype.hasOwnProperty.call(value, "candidateId") &&
       Object.prototype.hasOwnProperty.call(value, "candidateRevision"),
   );
+}
+
+function isValidPersistedGateFinding(finding) {
+  if (!finding || typeof finding !== "object" || Array.isArray(finding)) return false;
+  if (!["P0", "P1", "P2", "P3"].includes(finding.severity)) return false;
+  if (typeof finding.title !== "string" || !finding.title.trim()) return false;
+  if (typeof finding.detail !== "string" || !finding.detail.trim()) return false;
+  if (finding.file != null && typeof finding.file !== "string") return false;
+  if (finding.line != null && (!Number.isInteger(finding.line) || finding.line < 1)) return false;
+  if (finding.bindingExplicit != null && typeof finding.bindingExplicit !== "boolean") return false;
+  return true;
 }
 
 function migrateArtifactRuns(task) {

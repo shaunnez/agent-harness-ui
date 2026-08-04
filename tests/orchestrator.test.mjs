@@ -327,6 +327,53 @@ test("rejects incomplete or contradictory Dev and Final Review summaries", () =>
   }
 });
 
+test("rejects malformed persisted finding shapes for every candidate-bound gate", () => {
+  const cases = [
+    { name: "unsupported severity", finding: makePersistedFinding({ severity: "p0" }), code: "contradictory_evidence" },
+    { name: "empty title", finding: makePersistedFinding({ title: "   " }), code: "contradictory_evidence" },
+    { name: "non-string detail", finding: makePersistedFinding({ detail: 42 }), code: "contradictory_evidence" },
+    { name: "unsupported file type", finding: makePersistedFinding({ file: { path: "server/run-activity.mjs" } }), code: "contradictory_evidence" },
+    { name: "unsupported line type", finding: makePersistedFinding({ line: "371" }), code: "contradictory_evidence" },
+    { name: "unsupported binding marker type", finding: makePersistedFinding({ bindingExplicit: "true" }), code: "contradictory_evidence" },
+    {
+      name: "missing explicit finding binding",
+      finding: makePersistedFinding({ candidateId: undefined, candidateRevision: undefined }),
+      code: "missing_binding",
+    },
+  ];
+  const focusedTest = {
+    candidateId: "C1",
+    candidateRevision: 2,
+    bindingExplicit: true,
+    command: "npm test",
+    status: "passed",
+    rows: [makeTestRow()],
+  };
+
+  for (const stage of ["dev-review", "test", "final-review"]) {
+    for (const item of cases) {
+      const gateResult = makeGateResult({ stage, findings: [item.finding] });
+      const run = makeRuntimeRun({
+        id: `RUN-${stage}-${item.name}`,
+        stage,
+        kind: stage === "test" ? "test" : "review",
+        artifactId: stage === "test" ? `ART-${stage}-${item.name}` : null,
+        gateResult,
+      });
+      const artifact = stage === "test"
+        ? makeArtifact({ id: run.artifactId, stage, gateResult, focusedTest })
+        : null;
+      const task = makeRuntimeTask({ runs: [run], artifacts: artifact ? [artifact] : [] });
+      if (artifact) attachRunArtifact(task, run.id, artifact);
+      else refreshGateFreshness(task);
+
+      assert.equal(task.gateFreshness[stage].fresh, false, `${stage}: ${item.name}`);
+      assert.equal(task.gateFreshness[stage].reasonCode, item.code, `${stage}: ${item.name}`);
+      assert.deepEqual(run.gateResult.findings, [item.finding], `${stage}: ${item.name}: retained for audit`);
+    }
+  }
+});
+
 test("rejects mismatched and contradictory persisted Test gate summaries", () => {
   const focusedTest = {
     candidateId: "C1",
@@ -723,6 +770,86 @@ test("merge approval fails closed when persisted Test verdicts contradict", asyn
     await assert.rejects(() => orchestrator.approveMerge(task.id), /cannot be approved.*not fresh/i);
     const rejected = await store.get(task.id);
     assert.equal(rejected.status, "awaiting-human-approval");
+    assert.equal(rejected.mergeIntent, null);
+    assert.equal(merged, false);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("merge approval fails closed when persisted gate findings are malformed", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-malformed-finding-approval-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Reject malformed gate findings",
+      description: "Persisted finding shapes must not authorize a merge.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-human-approval";
+      draft.currentStage = "approval";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 2,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        status: "awaiting_human_approval",
+      }];
+      const malformedFinding = makePersistedFinding({ severity: "p0" });
+      const devReview = makeRuntimeRun({
+        id: "RUN-DEV-MALFORMED",
+        stage: "dev-review",
+        gateResult: makeGateResult({ stage: "dev-review", findings: [malformedFinding] }),
+      });
+      const testRun = makeRuntimeRun({
+        id: "RUN-TEST-MALFORMED",
+        stage: "test",
+        kind: "test",
+        artifactId: "ART-TEST-MALFORMED",
+        gateResult: makeGateResult({ stage: "test", findings: [malformedFinding] }),
+      });
+      const finalReview = makeRuntimeRun({
+        id: "RUN-FINAL-MALFORMED",
+        stage: "final-review",
+        gateResult: makeGateResult({ stage: "final-review", findings: [malformedFinding] }),
+      });
+      const focusedTest = {
+        candidateId: "C1",
+        candidateRevision: 2,
+        bindingExplicit: true,
+        command: "npm test",
+        status: "passed",
+        rows: [makeTestRow()],
+      };
+      const testArtifact = makeArtifact({
+        id: "ART-TEST-MALFORMED",
+        stage: "test",
+        gateResult: testRun.gateResult,
+        focusedTest,
+      });
+      draft.runs = [devReview, testRun, finalReview];
+      draft.artifacts = [testArtifact];
+      attachRunArtifact(draft, testRun.id, testArtifact);
+      refreshGateFreshness(draft);
+    });
+
+    const beforeApproval = await store.get(task.id);
+    for (const stage of ["dev-review", "test", "final-review"]) {
+      assert.equal(beforeApproval.gateFreshness[stage].fresh, false, stage);
+      assert.equal(beforeApproval.gateFreshness[stage].reasonCode, "contradictory_evidence", stage);
+    }
+
+    let merged = false;
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: { async merge() { merged = true; } },
+    });
+    await assert.rejects(() => orchestrator.approveMerge(task.id), /cannot be approved.*not fresh/i);
+    const rejected = await store.get(task.id);
     assert.equal(rejected.mergeIntent, null);
     assert.equal(merged, false);
   } finally {
@@ -1650,6 +1777,20 @@ function makeGateResult({
     evaluatedAt: "2026-08-01T12:01:00.000Z",
     blockingReasons,
     findings,
+  };
+}
+
+function makePersistedFinding(overrides = {}) {
+  return {
+    severity: "P2",
+    title: "Persisted finding",
+    detail: "Persisted finding detail.",
+    file: "server/run-activity.mjs",
+    line: 371,
+    candidateId: "C1",
+    candidateRevision: 2,
+    bindingExplicit: true,
+    ...overrides,
   };
 }
 
