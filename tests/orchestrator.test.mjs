@@ -2742,8 +2742,12 @@ test("advances an approved implementation task through a revision-bound candidat
     });
     let merged = false;
     let commitCount = 0;
+    let candidateNeedsRecovery = false;
+    let recoveryCount = 0;
+    let repairCount = 0;
     let reviewCount = 0;
     let verifyCount = 0;
+    let originalAuthorizerContent = null;
     const runtimeCalls = [];
     const worktreeManager = {
       async base() {
@@ -2767,6 +2771,15 @@ test("advances an approved implementation task through a revision-bound candidat
       },
       async commit(candidate) {
         commitCount += 1;
+        if (candidate.id === "C1" && repairCount === 1) {
+          await store.update(task.id, (draft) => {
+            const authorizerId = draft.stageRunReservations.implement.authorizingGateArtifactId;
+            const authorizer = draft.artifacts.find((artifact) => artifact.id === authorizerId);
+            originalAuthorizerContent = authorizer.content;
+            authorizer.content = "";
+          });
+          candidateNeedsRecovery = true;
+        }
         return {
           headRevision: (candidate.id === "S1-A1" ? "s" : candidate.id === "S2-A1" ? "t" : "c").repeat(40),
           files: ["src/change.ts"],
@@ -2791,6 +2804,12 @@ test("advances an approved implementation task through a revision-bound candidat
         verifyCount += 1;
         return true;
       },
+      async recoverCandidate() {
+        if (!candidateNeedsRecovery) return false;
+        candidateNeedsRecovery = false;
+        recoveryCount += 1;
+        return true;
+      },
     };
     const orchestrator = new TaskOrchestrator(store, {
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
@@ -2812,6 +2831,9 @@ test("advances an approved implementation task through a revision-bound candidat
             result: "Exit code 0",
           },
         });
+        if (/You are the candidate Repair agent/.test(prompt)) {
+          repairCount += 1;
+        }
         let finalText = "## Outcome\n\nReady";
         if (/<scout-report>/.test(prompt)) finalText = SCOUT_OUTPUT;
         if (/<grill-questions>/.test(prompt)) finalText = GRILL_OUTPUT;
@@ -2857,6 +2879,19 @@ test("advances an approved implementation task through a revision-bound candidat
     assert.ok(repairReady.gateFreshness["dev-review"].sourceRunId);
     assert.ok(repairReady.gateFreshness["dev-review"].sourceArtifactId);
     await orchestrator.start(task.id, "repair");
+    const driftedRepair = await waitForStatus(store, task.id, "failed");
+    assert.equal(driftedRepair.currentStage, "implement");
+    assert.equal(driftedRepair.candidates[0].revisionNumber, 1);
+    assert.equal(commitCount, 3, "the probe mutates authority only after the first Repair commit");
+    assert.equal(recoveryCount, 1, "a rejected post-commit Repair must recover the recorded candidate head");
+    assert.match(driftedRepair.error, /authorizing gate/i);
+    assert.match(driftedRepair.stageRunReservations.implement.authorizingGateSnapshotDigest, /^[0-9a-f]{64}$/);
+    await store.update(task.id, (draft) => {
+      const authorizerId = draft.stageRunReservations.implement.authorizingGateArtifactId;
+      draft.artifacts.find((artifact) => artifact.id === authorizerId).content = originalAuthorizerContent;
+      refreshGateFreshness(draft);
+    });
+    assert.equal(await orchestrator.start(task.id, "repair"), true);
     await waitForStatus(store, task.id, "ready-for-review");
     await orchestrator.start(task.id, "review");
     await waitForStatus(store, task.id, "ready-for-test");
@@ -2874,7 +2909,12 @@ test("advances an approved implementation task through a revision-bound candidat
     assert.equal(approvalTask.decisions.length, 1);
     assert.deepEqual(approvalTask.workPackages.map((item) => item.status), ["integrated", "integrated"]);
     assert.deepEqual(approvalTask.candidates[0].members.map((member) => member.packageId), ["S1", "S2"]);
-    assert.equal(approvalTask.artifacts.length, 15);
+    assert.equal(approvalTask.artifacts.length, 16);
+    assert.equal(
+      approvalTask.artifacts.filter((artifact) => artifact.stage === "implement" && artifact.candidateRevision === 2).length,
+      2,
+      "the rejected post-commit Repair remains retained audit evidence beside the successful retry",
+    );
     const testCall = runtimeCalls.find((call) => /Focused test/.test(call.prompt));
     assert.equal(testCall.sandbox, "workspace-write");
     assert.equal(testCall.networkAccess, true, "Test agents need loopback access for repository HTTP tests");
@@ -2882,7 +2922,7 @@ test("advances an approved implementation task through a revision-bound candidat
     assert.equal(testCall.timeoutMs, 600_000);
     assert.match(testCall.tempDirectory, new RegExp(`^${escapeRegex(path.join(os.tmpdir(), "agent-harness", task.id))}`));
     assert.equal(testCall.tempDirectory.startsWith(path.join(directory, "C1")), false);
-    assert.equal(verifyCount, 6, "test must verify the candidate both before and after execution");
+    assert.equal(verifyCount, 7, "test and both Repair attempts must verify the candidate at their boundaries");
     assert.equal(
       approvalTask.artifacts.find((artifact) => artifact.stage === "test")?.focusedTest?.rows?.length,
       2,
@@ -2896,9 +2936,11 @@ test("advances an approved implementation task through a revision-bound candidat
       2,
     );
     const reviewRuns = approvalTask.runs.filter((run) => run.stage === "dev-review");
-    const repairRun = approvalTask.runs.find((run) => run.kind === "repair");
-    const repairArtifact = approvalTask.artifacts.find((artifact) => artifact.runId === repairRun.id);
     const repairRevision = approvalTask.candidates[0].revisions[1];
+    const repairRun = approvalTask.runs.find((run) => (
+      run.kind === "repair" && run.workflowReservationId === repairRevision.sourceWorkflowReservationId
+    ));
+    const repairArtifact = approvalTask.artifacts.find((artifact) => artifact.runId === repairRun.id);
     const repairAuthorizerArtifact = approvalTask.artifacts.find((artifact) => artifact.runId === reviewRuns[0].id);
     const testRun = approvalTask.runs.find((run) => run.stage === "test");
     assert.equal(reviewRuns.length, 2);
@@ -2907,6 +2949,7 @@ test("advances an approved implementation task through a revision-bound candidat
     assert.equal(repairRevision.authorizingGateReservationId, reviewRuns[0].workflowReservationId);
     assert.equal(repairRevision.authorizingGateRunId, reviewRuns[0].id);
     assert.equal(repairRevision.authorizingGateArtifactId, repairAuthorizerArtifact.id);
+    assert.match(approvalTask.stageRunReservations.implement.authorizingGateSnapshotDigest, /^[0-9a-f]{64}$/);
     assert.ok(Date.parse(repairAuthorizerArtifact.createdAt) < Date.parse(repairRevision.sourceWorkflowReservedAt));
     assert.ok(Date.parse(repairRevision.sourceWorkflowReservedAt) <= Date.parse(repairRun.startedAt));
     assert.ok(Date.parse(repairRun.completedAt) <= Date.parse(repairArtifact.createdAt));
@@ -2929,7 +2972,7 @@ test("advances an approved implementation task through a revision-bound candidat
     const complete = await store.get(task.id);
     assert.equal(complete.status, "completed");
     assert.equal(complete.candidates[0].status, "merged");
-    assert.equal(complete.artifacts.length, 16);
+    assert.equal(complete.artifacts.length, 17);
     assert.equal(complete.artifacts.at(-1).stage, "approval");
     assert.equal(complete.artifacts.at(-1).candidateId, "C1");
     assert.equal(complete.artifacts.at(-1).candidateRevision, 2);

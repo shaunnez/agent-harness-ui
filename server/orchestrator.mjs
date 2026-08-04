@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import path from "node:path";
 import os from "node:os";
 import { rm } from "node:fs/promises";
@@ -1036,6 +1037,7 @@ export class TaskOrchestrator {
     await this.#worktrees.verifyCandidate(candidate);
     const nextRevision = candidate.revisionNumber + 1;
     const initialRepairReservation = requireActiveRunReservation(task, "repair", "implement");
+    assertRepairAuthorizerUnchanged(task, candidate, initialRepairReservation);
     const repairRequest = buildRepairRequest(task, candidate);
     if (repairRequest.repairEvidence.newestFailingGate.runId !== initialRepairReservation.authorizingGateRunId) {
       throw new Error("The repair request drifted from its reserved authorizing gate.");
@@ -1056,6 +1058,13 @@ export class TaskOrchestrator {
         "repair",
       );
       throwIfAborted(signal);
+      const beforeCommit = await this.#store.get(id);
+      const beforeCommitCandidate = currentCandidate(beforeCommit);
+      const beforeCommitReservation = requireActiveRunReservation(beforeCommit, "repair", "implement");
+      if (!sameRepairReservationAuthority(initialRepairReservation, beforeCommitReservation)) {
+        throw new Error("The repair authorizing gate changed before candidate commit.");
+      }
+      assertRepairAuthorizerUnchanged(beforeCommit, beforeCommitCandidate, beforeCommitReservation);
       committed = await this.#worktrees.commit(
         candidate,
         `agent-harness(${task.id}): repair ${candidate.id} revision ${nextRevision}`,
@@ -1066,50 +1075,56 @@ export class TaskOrchestrator {
       throw error;
     }
     const content = `${result.finalText}\n\n## Harness repair evidence\n\n- Candidate: ${candidate.id} revision ${nextRevision}\n- Previous: ${candidate.headRevision}\n- Head: ${committed.headRevision}\n- Changed files in repair: ${committed.files.length}\n\n\`\`\`text\n${committed.summary || "No diff stat returned."}\n\`\`\`\n\nThe exact repaired candidate patch is loaded on demand from the recorded revision.`;
-    await this.#retainAgentResult(id, "implement", { ...result, finalText: content }, {
-      replace: false,
-      name: `candidate-${candidate.id.toLowerCase()}-r${nextRevision}-repair.md`,
-      candidateId: candidate.id,
-      candidateRevision: nextRevision,
-    });
-    await this.#store.update(id, (draft) => {
-      const activeCandidate = currentCandidate(draft);
-      const repairReservation = requireActiveRunReservation(draft, "repair", "implement");
-      if (!sameRepairReservationAuthority(initialRepairReservation, repairReservation)) {
-        throw new Error("The repair authorizing gate changed before revision persistence.");
-      }
-      activeCandidate.revisionNumber = nextRevision;
-      activeCandidate.headRevision = committed.headRevision;
-      activeCandidate.status = "ready_for_review";
-      activeCandidate.updatedAt = now();
-      activeCandidate.sourceWorkflowAttempt = repairReservation.workflowAttempt;
-      activeCandidate.sourceWorkflowReservationId = repairReservation.id;
-      activeCandidate.revisions.push({
-        number: nextRevision,
-        headRevision: committed.headRevision,
-        reason: "repair",
-        requestedFindings: structuredClone(requestedFindings),
-        sourceWorkflowAttempt: repairReservation.workflowAttempt,
-        sourceWorkflowReservationId: repairReservation.id,
-        sourceWorkflowReservedAt: repairReservation.reservedAt,
-        authorizingGateStage: repairReservation.authorizingGateStage,
-        authorizingGateWorkflowAttempt: repairReservation.authorizingGateWorkflowAttempt,
-        authorizingGateReservationId: repairReservation.authorizingGateReservationId,
-        authorizingGateReservedAt: repairReservation.authorizingGateReservedAt,
-        authorizingGateRunId: repairReservation.authorizingGateRunId,
-        authorizingGateArtifactId: repairReservation.authorizingGateArtifactId,
-        createdAt: now(),
+    try {
+      await this.#retainAgentResult(id, "implement", { ...result, finalText: content }, {
+        replace: false,
+        name: `candidate-${candidate.id.toLowerCase()}-r${nextRevision}-repair.md`,
+        candidateId: candidate.id,
+        candidateRevision: nextRevision,
       });
-      draft.completedStages = draft.completedStages.filter(
-        (stage) => !["dev-review", "test", "final-review", "approval"].includes(stage),
-      );
-      draft.status = "ready-for-review";
-      draft.currentStage = "dev-review";
-      draft.activeRunKind = null;
-      draft.activeRunReservationId = null;
-      refreshGateFreshness(draft);
-      draft.events.push(activity("implement", "Repaired candidate ready", `${candidate.id} revision ${nextRevision} @ ${committed.headRevision.slice(0, 8)} must pass review again.`, "success", "artifact"));
-    });
+      await this.#store.update(id, (draft) => {
+        const activeCandidate = currentCandidate(draft);
+        const repairReservation = requireActiveRunReservation(draft, "repair", "implement");
+        if (!sameRepairReservationAuthority(initialRepairReservation, repairReservation)) {
+          throw new Error("The repair authorizing gate changed before revision persistence.");
+        }
+        assertRepairAuthorizerUnchanged(draft, activeCandidate, repairReservation);
+        activeCandidate.revisionNumber = nextRevision;
+        activeCandidate.headRevision = committed.headRevision;
+        activeCandidate.status = "ready_for_review";
+        activeCandidate.updatedAt = now();
+        activeCandidate.sourceWorkflowAttempt = repairReservation.workflowAttempt;
+        activeCandidate.sourceWorkflowReservationId = repairReservation.id;
+        activeCandidate.revisions.push({
+          number: nextRevision,
+          headRevision: committed.headRevision,
+          reason: "repair",
+          requestedFindings: structuredClone(requestedFindings),
+          sourceWorkflowAttempt: repairReservation.workflowAttempt,
+          sourceWorkflowReservationId: repairReservation.id,
+          sourceWorkflowReservedAt: repairReservation.reservedAt,
+          authorizingGateStage: repairReservation.authorizingGateStage,
+          authorizingGateWorkflowAttempt: repairReservation.authorizingGateWorkflowAttempt,
+          authorizingGateReservationId: repairReservation.authorizingGateReservationId,
+          authorizingGateReservedAt: repairReservation.authorizingGateReservedAt,
+          authorizingGateRunId: repairReservation.authorizingGateRunId,
+          authorizingGateArtifactId: repairReservation.authorizingGateArtifactId,
+          createdAt: now(),
+        });
+        draft.completedStages = draft.completedStages.filter(
+          (stage) => !["dev-review", "test", "final-review", "approval"].includes(stage),
+        );
+        draft.status = "ready-for-review";
+        draft.currentStage = "dev-review";
+        draft.activeRunKind = null;
+        draft.activeRunReservationId = null;
+        refreshGateFreshness(draft);
+        draft.events.push(activity("implement", "Repaired candidate ready", `${candidate.id} revision ${nextRevision} @ ${committed.headRevision.slice(0, 8)} must pass review again.`, "success", "artifact"));
+      });
+    } catch (error) {
+      if (typeof this.#worktrees.recoverCandidate === "function") await this.#worktrees.recoverCandidate(candidate);
+      throw error;
+    }
   }
 
   async #executeAgent(
@@ -1449,6 +1464,9 @@ function reserveRun(task, kind) {
 function createStageRunReservation(task, kind, stage) {
   const candidate = kind === "implementation" ? null : (task.candidates?.at(-1) ?? null);
   const repairAuthorizer = kind === "repair" ? repairAuthorizerSnapshot(task, candidate) : null;
+  const reservedAt = repairAuthorizer
+    ? timestampAfter(repairAuthorizer.authorizingGateArtifactCreatedAt)
+    : now();
   const authorizedRunScopes = kind === "implementation"
     ? (task.workPackages ?? [])
         .filter((workPackage) => !["ready_for_integration", "integrated"].includes(workPackage.status))
@@ -1463,13 +1481,17 @@ function createStageRunReservation(task, kind, stage) {
     candidateRevision: candidate?.revisionNumber ?? null,
     candidateHeadRevision: candidate?.headRevision ?? null,
     authorizedRunScopes,
-    reservedAt: now(),
+    reservedAt,
     ...(repairAuthorizer ?? {}),
   };
 }
 
-function repairAuthorizerSnapshot(task, candidate) {
-  const stage = task.currentStage;
+function repairAuthorizerSnapshot(task, candidate, requestedStage = null) {
+  const stage = requestedStage ?? (
+    CANDIDATE_GATE_STAGES.includes(task.currentStage)
+      ? task.currentStage
+      : task.stageRunReservations?.implement?.authorizingGateStage
+  );
   const freshness = refreshGateFreshness(task)?.[stage] ?? null;
   const sourceRun = freshness?.sourceRunId
     ? (task.runs ?? []).find((run) => run.id === freshness.sourceRunId)
@@ -1480,7 +1502,23 @@ function repairAuthorizerSnapshot(task, candidate) {
   const gateReservation = sourceRun?.workflowReservationId
     ? task.stageRunReservations?.[stage]
     : null;
+  const sourceArtifacts = sourceRun?.artifactId
+    ? (task.artifacts ?? []).filter((artifact) => artifact.id === sourceRun.artifactId)
+    : [];
+  const reservationRuns = gateReservation?.id
+    ? (task.runs ?? []).filter((run) => run.workflowReservationId === gateReservation.id)
+    : [];
+  const timestamps = [
+    gateReservation?.reservedAt,
+    sourceRun?.startedAt,
+    sourceRun?.completedAt,
+    sourceRun?.gateResult?.evaluatedAt,
+    sourceArtifact?.createdAt,
+  ];
+  const ordered = timestamps.every(isCanonicalTimestamp) &&
+    timestamps.every((value, index) => index === 0 || Date.parse(timestamps[index - 1]) <= Date.parse(value));
   if (
+    !CANDIDATE_GATE_STAGES.includes(stage) ||
     !candidate ||
     freshness?.reasonCode !== "repair_required" ||
     freshness.candidateId !== candidate.id ||
@@ -1488,15 +1526,87 @@ function repairAuthorizerSnapshot(task, candidate) {
     !sourceRun ||
     !sourceArtifact ||
     !gateReservation ||
+    reservationRuns.length !== 1 ||
+    reservationRuns[0].id !== sourceRun.id ||
+    sourceArtifacts.length !== 1 ||
+    sourceArtifacts[0].id !== sourceArtifact.id ||
+    (task.runs ?? []).filter((run) => run.artifactId === sourceArtifact.id).length !== 1 ||
+    gateReservation.stage !== stage ||
+    gateReservation.kind !== runKindFor(stage, stage) ||
+    gateReservation.workflowAttempt !== task.attemptsByStage?.[stage] ||
     gateReservation.id !== sourceRun.workflowReservationId ||
     gateReservation.workflowAttempt !== sourceRun.workflowAttempt ||
     gateReservation.candidateId !== candidate.id ||
     gateReservation.candidateRevision !== candidate.revisionNumber ||
     gateReservation.candidateHeadRevision !== candidate.headRevision ||
-    sourceArtifact.runId !== sourceRun.id
+    sourceRun.stage !== stage ||
+    sourceRun.role !== stage ||
+    sourceRun.kind !== runKindFor(stage, stage) ||
+    sourceRun.status !== "completed" ||
+    sourceRun.workPackageId != null ||
+    sourceRun.candidateId !== candidate.id ||
+    sourceRun.candidateRevision !== candidate.revisionNumber ||
+    sourceRun.candidateHeadRevision !== candidate.headRevision ||
+    sourceRun.artifactId !== sourceArtifact.id ||
+    sourceRun.gateResult?.verdict !== "REPAIR" ||
+    sourceArtifact.runId !== sourceRun.id ||
+    sourceArtifact.stage !== stage ||
+    sourceArtifact.kind !== "markdown" ||
+    typeof sourceArtifact.name !== "string" ||
+    !sourceArtifact.name.trim() ||
+    typeof sourceArtifact.content !== "string" ||
+    !sourceArtifact.content.trim() ||
+    sourceArtifact.candidateId !== candidate.id ||
+    sourceArtifact.candidateRevision !== candidate.revisionNumber ||
+    JSON.stringify(sourceArtifact.gateResult) !== JSON.stringify(sourceRun.gateResult) ||
+    !ordered
   ) {
     throw new Error("The candidate repair is missing one exact durable authorizing gate.");
   }
+  const snapshot = {
+    reservation: {
+      id: gateReservation.id,
+      stage: gateReservation.stage,
+      kind: gateReservation.kind,
+      workflowAttempt: gateReservation.workflowAttempt,
+      candidateId: gateReservation.candidateId,
+      candidateRevision: gateReservation.candidateRevision,
+      candidateHeadRevision: gateReservation.candidateHeadRevision,
+      authorizedRunScopes: gateReservation.authorizedRunScopes,
+      reservedAt: gateReservation.reservedAt,
+    },
+    run: {
+      id: sourceRun.id,
+      kind: sourceRun.kind,
+      stage: sourceRun.stage,
+      role: sourceRun.role,
+      status: sourceRun.status,
+      attempt: sourceRun.attempt,
+      candidateId: sourceRun.candidateId,
+      candidateRevision: sourceRun.candidateRevision,
+      candidateHeadRevision: sourceRun.candidateHeadRevision,
+      workPackageId: sourceRun.workPackageId,
+      workflowAttempt: sourceRun.workflowAttempt,
+      workflowReservationId: sourceRun.workflowReservationId,
+      startedAt: sourceRun.startedAt,
+      completedAt: sourceRun.completedAt,
+      artifactId: sourceRun.artifactId,
+      gateResult: sourceRun.gateResult,
+    },
+    artifact: {
+      id: sourceArtifact.id,
+      stage: sourceArtifact.stage,
+      name: sourceArtifact.name,
+      kind: sourceArtifact.kind,
+      content: sourceArtifact.content,
+      createdAt: sourceArtifact.createdAt,
+      runId: sourceArtifact.runId,
+      candidateId: sourceArtifact.candidateId,
+      candidateRevision: sourceArtifact.candidateRevision,
+      workPackageId: sourceArtifact.workPackageId,
+      gateResult: sourceArtifact.gateResult,
+    },
+  };
   return {
     authorizingGateStage: stage,
     authorizingGateWorkflowAttempt: gateReservation.workflowAttempt,
@@ -1504,7 +1614,44 @@ function repairAuthorizerSnapshot(task, candidate) {
     authorizingGateReservedAt: gateReservation.reservedAt,
     authorizingGateRunId: sourceRun.id,
     authorizingGateArtifactId: sourceArtifact.id,
+    authorizingGateArtifactCreatedAt: sourceArtifact.createdAt,
+    authorizingGateSnapshotDigest: createHash("sha256").update(JSON.stringify(snapshot)).digest("hex"),
   };
+}
+
+function assertRepairAuthorizerUnchanged(task, candidate, repairReservation) {
+  const current = repairAuthorizerSnapshot(task, candidate, repairReservation.authorizingGateStage);
+  if (
+    !sameRepairAuthorizerSnapshot(repairReservation, current) ||
+    Date.parse(current.authorizingGateArtifactCreatedAt) >= Date.parse(repairReservation.reservedAt)
+  ) {
+    throw new Error("The repair authorizing gate changed after its workflow reservation.");
+  }
+}
+
+function sameRepairAuthorizerSnapshot(expected, current) {
+  return [
+    "authorizingGateStage",
+    "authorizingGateWorkflowAttempt",
+    "authorizingGateReservationId",
+    "authorizingGateReservedAt",
+    "authorizingGateRunId",
+    "authorizingGateArtifactId",
+    "authorizingGateArtifactCreatedAt",
+    "authorizingGateSnapshotDigest",
+  ].every((field) => expected?.[field] === current?.[field]);
+}
+
+function isCanonicalTimestamp(value) {
+  if (typeof value !== "string" || !value.trim()) return false;
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString() === value;
+}
+
+function timestampAfter(value) {
+  const current = now();
+  if (!isCanonicalTimestamp(value) || Date.parse(current) > Date.parse(value)) return current;
+  return new Date(Date.parse(value) + 1).toISOString();
 }
 
 function sameRepairReservationAuthority(expected, current) {
@@ -1521,6 +1668,8 @@ function sameRepairReservationAuthority(expected, current) {
     "authorizingGateReservedAt",
     "authorizingGateRunId",
     "authorizingGateArtifactId",
+    "authorizingGateArtifactCreatedAt",
+    "authorizingGateSnapshotDigest",
   ].every((field) => expected?.[field] === current?.[field]);
 }
 
