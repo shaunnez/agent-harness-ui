@@ -2577,6 +2577,15 @@ test("renders retry grant provenance in activity and decision surfaces without f
       candidateId: "C1",
       candidateRevision: 2,
       candidateHeadRevision: "candidate-c1-r2",
+      authorizingGateCandidateId: "C1",
+      authorizingGateCandidateRevision: 2,
+      authorizingGateCandidateHeadRevision: "candidate-c1-r2",
+      authorizingGateKind: "review",
+      authorizingGateReservedAt: "2026-08-01T11:59:00.000Z",
+      authorizingGateReservationId: "reservation-review-3",
+      authorizingGateRunId: "run-review-3",
+      authorizingGateStage: "dev-review",
+      authorizingGateWorkflowAttempt: 3,
       workflowAttempt: 3,
       workflowCandidateId: "C1",
       workflowCandidateRevision: 1,
@@ -2597,6 +2606,15 @@ test("renders retry grant provenance in activity and decision surfaces without f
         candidateId: "C1",
         candidateRevision: 2,
         candidateHeadRevision: "candidate-c1-r2",
+        authorizingGateCandidateId: "C1",
+        authorizingGateCandidateRevision: 2,
+        authorizingGateCandidateHeadRevision: "candidate-c1-r2",
+        authorizingGateKind: "review",
+        authorizingGateReservedAt: "2026-08-01T11:59:00.000Z",
+        authorizingGateReservationId: "reservation-review-3",
+        authorizingGateRunId: "run-review-3",
+        authorizingGateStage: "dev-review",
+        authorizingGateWorkflowAttempt: 3,
         workflowAttempt: 3,
         workflowCandidateId: "C1",
         workflowCandidateRevision: 1,
@@ -2622,6 +2640,11 @@ test("renders retry grant provenance in activity and decision surfaces without f
     assert.match(workspaceMarkup, /run-source-S1, run-source-S2/);
     assert.match(workspaceMarkup, /C1 revision 2/);
     assert.match(workspaceMarkup, /candidate-c1-r2/);
+    assert.match(workspaceMarkup, /Authorizing gate/);
+    assert.match(workspaceMarkup, /Dev review · review · attempt 3/);
+    assert.match(workspaceMarkup, /reservation-review-3/);
+    assert.match(workspaceMarkup, /run-review-3/);
+    assert.match(workspaceMarkup, /2026-08-01T11:59:00.000Z/);
     assert.match(workspaceMarkup, /Workflow attempt/);
     assert.match(workspaceMarkup, /Workflow candidate binding/);
     assert.match(workspaceMarkup, /C1 revision 1/);
@@ -2639,6 +2662,15 @@ test("renders retry grant provenance in activity and decision surfaces without f
         candidateId: undefined,
         candidateRevision: undefined,
         candidateHeadRevision: undefined,
+        authorizingGateCandidateId: undefined,
+        authorizingGateCandidateRevision: undefined,
+        authorizingGateCandidateHeadRevision: undefined,
+        authorizingGateKind: undefined,
+        authorizingGateReservedAt: undefined,
+        authorizingGateReservationId: undefined,
+        authorizingGateRunId: undefined,
+        authorizingGateStage: undefined,
+        authorizingGateWorkflowAttempt: undefined,
         workflowAttempt: undefined,
         workflowCandidateId: undefined,
         workflowCandidateRevision: undefined,

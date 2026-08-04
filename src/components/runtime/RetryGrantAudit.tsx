@@ -10,6 +10,15 @@ export interface RetryGrantAuditFields {
   candidateId?: string | null;
   candidateRevision?: number | null;
   candidateHeadRevision?: string | null;
+  authorizingGateCandidateId?: string | null;
+  authorizingGateCandidateRevision?: number | null;
+  authorizingGateCandidateHeadRevision?: string | null;
+  authorizingGateKind?: string | null;
+  authorizingGateReservedAt?: string | null;
+  authorizingGateReservationId?: string | null;
+  authorizingGateRunId?: string | null;
+  authorizingGateStage?: StageId | null;
+  authorizingGateWorkflowAttempt?: number | null;
   workflowAttempt?: number | null;
   workflowCandidateId?: string | null;
   workflowCandidateRevision?: number | null;
@@ -27,6 +36,7 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
     audit.candidateId !== undefined ||
     audit.candidateRevision !== undefined ||
     audit.candidateHeadRevision !== undefined ||
+    audit.authorizingGateReservationId !== undefined ||
     audit.workflowAttempt !== undefined ||
     audit.workflowCandidateId !== undefined ||
     audit.workflowCandidateRevision !== undefined ||
@@ -35,6 +45,9 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
   if (!hasAudit) return null;
 
   const stage = audit.grantedStage ? workflowStages.find((item) => item.id === audit.grantedStage) : null;
+  const authorizingGateStage = audit.authorizingGateStage
+    ? workflowStages.find((item) => item.id === audit.authorizingGateStage)
+    : null;
 
   return (
     <span className="runtime-retry-grant-audit">
@@ -82,6 +95,35 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
           value={audit.candidateHeadRevision ?? "No candidate head"}
           mono={audit.candidateHeadRevision !== null}
         />
+      ) : null}
+      {audit.authorizingGateReservationId ? (
+        <>
+          <RuntimeRow
+            label="Authorizing gate"
+            value={`${authorizingGateStage?.label ?? audit.authorizingGateStage ?? "Unknown stage"} · ${audit.authorizingGateKind ?? "unknown kind"} · attempt ${audit.authorizingGateWorkflowAttempt ?? "?"}`}
+          />
+          <RuntimeRow
+            label="Authorizing gate candidate"
+            value={`${audit.authorizingGateCandidateId ?? "Unknown"} revision ${audit.authorizingGateCandidateRevision ?? "?"}`}
+            mono
+          />
+          <RuntimeRow
+            label="Authorizing gate head"
+            value={audit.authorizingGateCandidateHeadRevision ?? "No candidate head"}
+            mono={audit.authorizingGateCandidateHeadRevision !== null}
+          />
+          <RuntimeRow label="Authorizing gate reservation" value={audit.authorizingGateReservationId} mono />
+          <RuntimeRow
+            label="Authorizing gate run"
+            value={audit.authorizingGateRunId ?? "No authoritative gate run"}
+            mono={audit.authorizingGateRunId !== null}
+          />
+          <RuntimeRow
+            label="Authorizing gate reserved"
+            value={audit.authorizingGateReservedAt ?? "Unknown reservation time"}
+            mono={audit.authorizingGateReservedAt !== null}
+          />
+        </>
       ) : null}
       {audit.workflowAttempt !== undefined ? (
         <RuntimeRow

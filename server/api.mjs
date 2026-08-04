@@ -11,7 +11,8 @@ import {
 import { GitWorktreeManager } from "./git-worktree.mjs";
 import { assertHttpBoundary, corsHeaders } from "./http-security.mjs";
 import { normalizeModelId, POLICY_IDS, readCodexModelCatalog } from "./model-catalog.mjs";
-import { CANONICAL_RUN_STAGES, stageRunLimitFor } from "./run-activity.mjs";
+import { CANONICAL_RUN_STAGES, resolveGateFreshness, stageRunLimitFor } from "./run-activity.mjs";
+import { SCOUT_NAMES } from "./scouts.mjs";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
@@ -474,6 +475,15 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               candidateHeadRevision,
               candidateId,
               candidateRevision,
+              authorizingGateCandidateHeadRevision,
+              authorizingGateCandidateId,
+              authorizingGateCandidateRevision,
+              authorizingGateKind,
+              authorizingGateReservedAt,
+              authorizingGateReservationId,
+              authorizingGateRunId,
+              authorizingGateStage,
+              authorizingGateWorkflowAttempt,
               grantedStage,
               currentLimit,
               retrySource,
@@ -501,6 +511,15 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               candidateId,
               candidateRevision,
               candidateHeadRevision,
+              authorizingGateCandidateId,
+              authorizingGateCandidateRevision,
+              authorizingGateCandidateHeadRevision,
+              authorizingGateKind,
+              authorizingGateReservedAt,
+              authorizingGateReservationId,
+              authorizingGateRunId,
+              authorizingGateStage,
+              authorizingGateWorkflowAttempt,
               workflowAttempt,
               workflowCandidateId,
               workflowCandidateRevision,
@@ -527,6 +546,15 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               candidateId,
               candidateRevision,
               candidateHeadRevision,
+              authorizingGateCandidateId,
+              authorizingGateCandidateRevision,
+              authorizingGateCandidateHeadRevision,
+              authorizingGateKind,
+              authorizingGateReservedAt,
+              authorizingGateReservationId,
+              authorizingGateRunId,
+              authorizingGateStage,
+              authorizingGateWorkflowAttempt,
               workflowAttempt,
               workflowCandidateId,
               workflowCandidateRevision,
@@ -653,8 +681,7 @@ function retryGrantContext(task) {
       candidateBoundGrant,
       candidate,
       grantedStage,
-      task.stageRunReservations,
-      task.attemptsByStage?.implement ?? 0,
+      task,
     ) ||
     !validRetryReservationKind(grantedStage, reservation.kind)
   )) {
@@ -686,13 +713,28 @@ function retryGrantContext(task) {
   const sourceRuns = orderRetrySourceRuns(exactReservation, reservationRuns);
   const retrySource = sourceRuns.at(-1) ?? null;
   const sourceRunIds = sourceRuns.map((run) => run.id);
+  const authorizingGate = candidate?.status === "repair_required"
+    ? failedRepairAuthorizingGate(task, candidate, candidateRevisionLineage(candidate))
+    : null;
+  if (candidate?.status === "repair_required" && !authorizingGate) {
+    return { error: "The exhausted candidate repair is missing an exact authorizing gate; resolve the inconsistent history before granting a retry." };
+  }
+  const authorizingGateRun = authorizingGate?.sourceRunId
+    ? (task.runs ?? []).find((run) => run.id === authorizingGate.sourceRunId) ?? null
+    : null;
+  const authorizingGateArtifact = authorizingGateRun?.artifactId
+    ? (task.artifacts ?? []).find((artifact) => artifact.id === authorizingGateRun.artifactId) ?? null
+    : null;
   const historySnapshot = JSON.stringify({
     currentStage: task.currentStage,
     activeRunKind: task.activeRunKind ?? null,
     activeRunReservationId: task.activeRunReservationId ?? null,
     activeRunIds: task.activeRunIds ?? [],
     candidate: candidate ?? null,
+    authorizingGateArtifact,
+    authorizingGateRun,
     reservation,
+    stageRunReservations: task.stageRunReservations ?? {},
     stageRuns,
   });
   const grantCandidate = candidateBoundGrant ? candidate : null;
@@ -706,6 +748,15 @@ function retryGrantContext(task) {
     candidateRevision: grantCandidate?.revisionNumber ?? null,
     candidateHeadRevision: grantCandidate?.headRevision ?? null,
     candidateStatus: candidate?.status ?? null,
+    authorizingGateCandidateId: authorizingGate?.candidateId ?? null,
+    authorizingGateCandidateRevision: authorizingGate?.candidateRevision ?? null,
+    authorizingGateCandidateHeadRevision: authorizingGate?.candidateHeadRevision ?? null,
+    authorizingGateKind: authorizingGate?.kind ?? null,
+    authorizingGateReservedAt: authorizingGate?.reservedAt ?? null,
+    authorizingGateReservationId: authorizingGate?.id ?? null,
+    authorizingGateRunId: authorizingGate?.sourceRunId ?? null,
+    authorizingGateStage: authorizingGate?.stage ?? null,
+    authorizingGateWorkflowAttempt: authorizingGate?.workflowAttempt ?? null,
     historySnapshot,
     retrySource,
     sourceRunId: retrySource?.id ?? null,
@@ -731,9 +782,10 @@ function validRetryReservationCandidateBinding(
   candidateRequired,
   candidate,
   grantedStage,
-  reservations,
-  implementationAttempt,
+  task,
 ) {
+  const reservations = task.stageRunReservations;
+  const implementationAttempt = task.attemptsByStage?.implement ?? 0;
   const allNull = reservation.candidateId == null &&
     reservation.candidateRevision == null &&
     reservation.candidateHeadRevision == null;
@@ -747,7 +799,7 @@ function validRetryReservationCandidateBinding(
     return grantedStage === "implement" &&
       sourceReservation &&
       reservation.kind === "implementation" &&
-      validCandidateProducerReservation(candidate, reservation, lineage, implementationAttempt);
+      validCandidateProducerReservation(task, candidate, reservation, lineage, implementationAttempt);
   }
   const completeBinding = typeof reservation.candidateId === "string" && reservation.candidateId.trim().length > 0 &&
     Number.isInteger(reservation.candidateRevision) && reservation.candidateRevision > 0 &&
@@ -764,9 +816,14 @@ function validRetryReservationCandidateBinding(
       return false;
     }
     if (grantedStage === "implement" && reservation.kind === "repair") {
-      return validFailedRepairReservation(candidate, reservation, lineage, reservations);
+      return Boolean(failedRepairAuthorizingGate(
+        task,
+        candidate,
+        lineage,
+        reservation,
+      ));
     }
-    return validCandidateProducerReservation(candidate, reservations?.implement, lineage, implementationAttempt);
+    return validCandidateProducerReservation(task, candidate, reservations?.implement, lineage, implementationAttempt);
   }
   if (grantedStage !== "implement") {
     if (
@@ -785,21 +842,38 @@ function validRetryReservationCandidateBinding(
   }
   return sourceReservation &&
     ["implementation", "repair"].includes(reservation.kind) &&
-    validCandidateProducerReservation(candidate, reservation, lineage, implementationAttempt);
+    validCandidateProducerReservation(task, candidate, reservation, lineage, implementationAttempt);
 }
 
-function validFailedRepairReservation(candidate, repairReservation, lineage, reservations) {
+function failedRepairAuthorizingGate(
+  task,
+  candidate,
+  lineage,
+  repairReservation = null,
+) {
+  if (!lineage) return null;
+  const reservations = task.stageRunReservations;
+  const attemptsByStage = task.attemptsByStage;
   const gateStages = new Set(["dev-review", "test", "final-review"]);
   const retainedGates = Object.values(reservations ?? {}).filter((reservation) => gateStages.has(reservation?.stage));
-  if (retainedGates.some((reservation) => reservation?.id === repairReservation.id)) return false;
+  if (repairReservation && retainedGates.some((reservation) => reservation?.id === repairReservation.id)) return null;
+  const retainedGateIds = retainedGates.map((reservation) => reservation?.id);
+  if (
+    retainedGateIds.some((id) => typeof id !== "string" || !id.trim()) ||
+    new Set(retainedGateIds).size !== retainedGateIds.length ||
+    retainedGateIds.some((id) => lineage.sourceReservations.has(id))
+  ) {
+    return null;
+  }
   const exactCandidateGates = retainedGates.filter((reservation) => (
     reservation?.candidateId === candidate.id &&
     reservation?.candidateRevision === candidate.revisionNumber &&
     reservation?.candidateHeadRevision === candidate.headRevision
   ));
-  if (!exactCandidateGates.length) return false;
+  if (!exactCandidateGates.length) return null;
   const candidateCreatedAt = Date.parse(lineage.currentRevision.createdAt);
   let latestGateReservedAt = -Infinity;
+  let authorizingGate = null;
   for (const gateReservation of exactCandidateGates) {
     if (
       typeof gateReservation.id !== "string" ||
@@ -807,17 +881,47 @@ function validFailedRepairReservation(candidate, repairReservation, lineage, res
       !validPersistedTimestamp(gateReservation.reservedAt) ||
       !validRetryReservationKind(gateReservation.stage, gateReservation.kind) ||
       !Number.isInteger(gateReservation.workflowAttempt) ||
-      gateReservation.workflowAttempt < 1
+      gateReservation.workflowAttempt < 1 ||
+      gateReservation.workflowAttempt !== attemptsByStage?.[gateReservation.stage] ||
+      reservations?.[gateReservation.stage] !== gateReservation
     ) {
-      return false;
+      return null;
     }
     const gateReservedAt = Date.parse(gateReservation.reservedAt);
-    if (gateReservedAt < candidateCreatedAt) return false;
-    latestGateReservedAt = Math.max(latestGateReservedAt, gateReservedAt);
+    if (gateReservedAt < candidateCreatedAt) return null;
+    if (gateReservedAt > latestGateReservedAt) {
+      latestGateReservedAt = gateReservedAt;
+      authorizingGate = gateReservation;
+    } else if (gateReservedAt === latestGateReservedAt) {
+      return null;
+    }
   }
+  if (authorizingGate?.stage !== task.currentStage) return null;
+  const freshness = resolveGateFreshness(task, authorizingGate.stage);
+  const gateStageRuns = (task.runs ?? []).filter((run) => run.stage === authorizingGate.stage);
+  const reservationRuns = gateStageRuns.filter((run) => run.workflowReservationId === authorizingGate.id);
+  const sourceRun = freshness?.sourceRunId
+    ? (task.runs ?? []).find((run) => run.id === freshness.sourceRunId)
+    : null;
+  if (
+    !sourceRun ||
+    reservationRuns.length !== 1 ||
+    reservationRuns[0].id !== sourceRun.id ||
+    !["repair_required", "failed_execution"].includes(freshness.reasonCode) ||
+    sourceRun.workflowReservationId !== authorizingGate.id ||
+    sourceRun.workflowAttempt !== authorizingGate.workflowAttempt ||
+    sourceRun.gateResult?.verdict !== "REPAIR" ||
+    !validRetryRunTuple(sourceRun, authorizingGate, gateStageRuns)
+  ) {
+    return null;
+  }
+  const authoritativeGate = { ...authorizingGate, sourceRunId: sourceRun.id };
+  if (!repairReservation) return authoritativeGate;
   return repairReservation.workflowAttempt > candidate.sourceWorkflowAttempt &&
     !lineage.sourceReservations.has(repairReservation.id) &&
-    Date.parse(repairReservation.reservedAt) > latestGateReservedAt;
+    Date.parse(repairReservation.reservedAt) > latestGateReservedAt
+    ? authoritativeGate
+    : null;
 }
 
 function candidateRevisionLineage(candidate) {
@@ -870,7 +974,7 @@ function candidateRevisionLineage(candidate) {
   return { byNumber, currentRevision, sourceReservations };
 }
 
-function validCandidateProducerReservation(candidate, producerReservation, lineage, implementationAttempt) {
+function validCandidateProducerReservation(task, candidate, producerReservation, lineage, implementationAttempt) {
   if (!producerReservation || !validPersistedTimestamp(producerReservation.reservedAt)) return false;
   const currentRevision = lineage.currentRevision;
   if (
@@ -888,7 +992,8 @@ function validCandidateProducerReservation(candidate, producerReservation, linea
       producerReservation.candidateId == null &&
       producerReservation.candidateRevision == null &&
       producerReservation.candidateHeadRevision == null &&
-      producerReservedAt <= currentCreatedAt;
+      producerReservedAt <= currentCreatedAt &&
+      validInitialCandidateProducer(task, candidate, producerReservation);
   }
   const priorRevision = lineage.byNumber.get(currentRevision.number - 1);
   return producerReservation.kind === "repair" &&
@@ -900,7 +1005,7 @@ function validCandidateProducerReservation(candidate, producerReservation, linea
 }
 
 function validAdjacentRepairLineage(candidate, priorReservation, repairReservation, lineage, implementationAttempt) {
-  if (!validCandidateProducerReservation(candidate, repairReservation, lineage, implementationAttempt)) return false;
+  if (!validCandidateProducerReservation(null, candidate, repairReservation, lineage, implementationAttempt)) return false;
   const currentRevision = lineage.currentRevision;
   const priorRevision = lineage.byNumber.get(currentRevision.number - 1);
   const priorCreatedAt = Date.parse(priorRevision?.createdAt);
@@ -1034,6 +1139,7 @@ function validateRetryRunScopes(task, reservation, reservationRuns) {
     if (
       selected.length !== authorized.length ||
       new Set(selected).size !== selected.length ||
+      selected.some((scope) => !SCOUT_NAMES.includes(scope)) ||
       selected.some((scope) => !authorized.includes(scope))
     ) {
       return "The exhausted Scout reservation does not match its persisted dispatch; resolve the inconsistent history before granting a retry.";
@@ -1061,10 +1167,41 @@ function validImplementationScopeSnapshot(task, authorizedScopes) {
     unresolvedPackageIds.every((packageId) => authorizedScopes.includes(packageId));
 }
 
-function validAssemblyOnlyCandidateProducer(task, reservation, reservationRuns) {
-  if (reservationRuns.length > 0) return false;
-  const candidate = task.candidates?.at(-1);
-  const currentRevision = candidate?.revisions?.find((revision) => revision.number === candidate?.revisionNumber);
+function validInitialCandidateProducer(task, candidate, reservation) {
+  if (!task || !validCandidateAssemblyMembership(task, candidate)) return false;
+  const authorized = reservation.authorizedRunScopes;
+  const packageIds = task.workPackages.map((workPackage) => workPackage.id);
+  if (
+    !Array.isArray(authorized) ||
+    authorized.some((scope) => typeof scope !== "string" || !scope.trim() || !packageIds.includes(scope)) ||
+    new Set(authorized).size !== authorized.length
+  ) {
+    return false;
+  }
+  const producerRuns = (task.runs ?? []).filter((run) => run.workflowReservationId === reservation.id);
+  if (!authorized.length) return producerRuns.length === 0;
+  const runScopes = producerRuns.map((run) => run.workPackageId);
+  return producerRuns.length === authorized.length &&
+    new Set(producerRuns.map((run) => run.id)).size === producerRuns.length &&
+    new Set(runScopes).size === runScopes.length &&
+    authorized.every((scope) => runScopes.includes(scope)) &&
+    producerRuns.every((run) => (
+      typeof run.id === "string" &&
+      run.id.trim().length > 0 &&
+      run.stage === "implement" &&
+      run.kind === "implementation" &&
+      run.role === "implement" &&
+      run.status === "completed" &&
+      Number.isInteger(run.attempt) &&
+      run.attempt > 0 &&
+      run.workflowAttempt === reservation.workflowAttempt &&
+      run.candidateId == null &&
+      run.candidateRevision == null &&
+      run.candidateHeadRevision == null
+    ));
+}
+
+function validCandidateAssemblyMembership(task, candidate) {
   const workPackages = task.workPackages ?? [];
   const members = candidate?.members ?? [];
   if (
@@ -1078,11 +1215,24 @@ function validAssemblyOnlyCandidateProducer(task, reservation, reservationRuns) 
       Number.isInteger(workPackage.batch) &&
       workPackage.batch > 0
     )) ||
-    new Set(workPackages.map((workPackage) => workPackage.id)).size !== workPackages.length
+    new Set(workPackages.map((workPackage) => workPackage.id)).size !== workPackages.length ||
+    new Set(workPackages.map((workPackage) => workPackage.headRevision)).size !== workPackages.length
   ) {
     return false;
   }
   const orderedPackages = [...workPackages].sort((left, right) => left.batch - right.batch || left.id.localeCompare(right.id));
+  return members.length === orderedPackages.length &&
+    members.every((member, index) => (
+      member?.packageId === orderedPackages[index].id &&
+      member?.headRevision === orderedPackages[index].headRevision &&
+      member?.order === index + 1
+    ));
+}
+
+function validAssemblyOnlyCandidateProducer(task, reservation, reservationRuns) {
+  if (reservationRuns.length > 0) return false;
+  const candidate = task.candidates?.at(-1);
+  const currentRevision = candidate?.revisions?.find((revision) => revision.number === candidate?.revisionNumber);
   return candidate?.status === "repair_required" &&
     candidate.revisionNumber === 1 &&
     candidate.sourceWorkflowAttempt === reservation.workflowAttempt &&
@@ -1093,12 +1243,7 @@ function validAssemblyOnlyCandidateProducer(task, reservation, reservationRuns) 
     reservation.candidateId == null &&
     reservation.candidateRevision == null &&
     reservation.candidateHeadRevision == null &&
-    members.length === orderedPackages.length &&
-    members.every((member, index) => (
-      member?.packageId === orderedPackages[index].id &&
-      member?.headRevision === orderedPackages[index].headRevision &&
-      member?.order === index + 1
-    ));
+    validCandidateAssemblyMembership(task, candidate);
 }
 
 function orderRetrySourceRuns(reservation, runs) {
@@ -1122,6 +1267,15 @@ function sameRetryGrantContext(expected, current) {
     "candidateRevision",
     "candidateHeadRevision",
     "candidateStatus",
+    "authorizingGateCandidateId",
+    "authorizingGateCandidateRevision",
+    "authorizingGateCandidateHeadRevision",
+    "authorizingGateKind",
+    "authorizingGateReservedAt",
+    "authorizingGateReservationId",
+    "authorizingGateRunId",
+    "authorizingGateStage",
+    "authorizingGateWorkflowAttempt",
     "historySnapshot",
     "sourceRunId",
     "sourceRunStatus",
