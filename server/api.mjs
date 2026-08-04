@@ -585,17 +585,25 @@ function retryGrantContext(task) {
     return { error: "The exhausted stage has duplicate run identities; resolve the inconsistent task state before granting a retry." };
   }
   const reservation = task.stageRunReservations?.[grantedStage] ?? null;
+  const candidateBoundGrant = ["dev-review", "test", "final-review"].includes(grantedStage) ||
+    candidate?.status === "repair_required";
+  if (candidateBoundGrant && !validRetryCandidate(candidate)) {
+    return { error: "The exhausted candidate-bound stage is missing an exact candidate identity; resolve it before granting a retry." };
+  }
   if (reservation && (
     typeof reservation.id !== "string" ||
-    !reservation.id ||
+    !reservation.id.trim() ||
     reservation.stage !== grantedStage ||
     !Number.isInteger(reservation.workflowAttempt) ||
     reservation.workflowAttempt < 1 ||
     reservation.workflowAttempt !== currentAttempts ||
-    !validRetryReservationCandidateBinding(reservation) ||
+    !validRetryReservationCandidateBinding(reservation, candidateBoundGrant) ||
     !validRetryReservationKind(grantedStage, reservation.kind)
   )) {
     return { error: "The exhausted stage has an inconsistent workflow reservation; resolve it before granting a retry." };
+  }
+  if (!validRetryWorkflowIdentities(stageRuns, reservation, currentAttempts)) {
+    return { error: "The exhausted stage has partial or orphaned workflow identity; resolve it before granting a retry." };
   }
   const candidateBinding = {
     candidateId: candidate?.id ?? null,
@@ -654,14 +662,42 @@ function retryGrantContext(task) {
   };
 }
 
-function validRetryReservationCandidateBinding(reservation) {
+function validRetryCandidate(candidate) {
+  return typeof candidate?.id === "string" && candidate.id.trim().length > 0 &&
+    Number.isInteger(candidate.revisionNumber) && candidate.revisionNumber > 0 &&
+    typeof candidate.headRevision === "string" && candidate.headRevision.trim().length > 0;
+}
+
+function validRetryReservationCandidateBinding(reservation, candidateRequired) {
   const allNull = reservation.candidateId == null &&
     reservation.candidateRevision == null &&
     reservation.candidateHeadRevision == null;
-  if (allNull) return true;
-  return typeof reservation.candidateId === "string" && reservation.candidateId.length > 0 &&
+  if (allNull) return !candidateRequired;
+  return typeof reservation.candidateId === "string" && reservation.candidateId.trim().length > 0 &&
     Number.isInteger(reservation.candidateRevision) && reservation.candidateRevision > 0 &&
-    typeof reservation.candidateHeadRevision === "string" && reservation.candidateHeadRevision.length > 0;
+    typeof reservation.candidateHeadRevision === "string" && reservation.candidateHeadRevision.trim().length > 0;
+}
+
+function validRetryWorkflowIdentities(stageRuns, reservation, currentAttempts) {
+  for (const run of stageRuns) {
+    const hasWorkflowAttempt = run.workflowAttempt != null;
+    const hasReservationId = run.workflowReservationId != null;
+    if (hasWorkflowAttempt !== hasReservationId) return false;
+    if (!hasWorkflowAttempt) continue;
+    if (
+      !Number.isInteger(run.workflowAttempt) ||
+      run.workflowAttempt < 1 ||
+      run.workflowAttempt > currentAttempts ||
+      typeof run.workflowReservationId !== "string" ||
+      !run.workflowReservationId.trim()
+    ) {
+      return false;
+    }
+    if (!reservation) return false;
+    if (run.workflowAttempt === currentAttempts && run.workflowReservationId !== reservation.id) return false;
+    if (run.workflowReservationId === reservation.id && run.workflowAttempt !== reservation.workflowAttempt) return false;
+  }
+  return true;
 }
 
 function validRetryReservationKind(stage, kind) {
@@ -694,9 +730,10 @@ function validRetryRunTuple(run, reservation, stageRuns) {
           test: { kind: "test", role: "test", workPackage: "none" },
           "final-review": { kind: "final-review", role: "final-review", workPackage: "none" },
         }[reservation.stage];
+  if (typeof run.id !== "string" || !run.id.trim()) return false;
   if (!expected || run.kind !== expected.kind || run.role !== expected.role) return false;
   if (expected.workPackage === "none" && run.workPackageId != null) return false;
-  if (expected.workPackage === "required" && (typeof run.workPackageId !== "string" || !run.workPackageId)) return false;
+  if (expected.workPackage === "required" && (typeof run.workPackageId !== "string" || !run.workPackageId.trim())) return false;
   if (!Number.isInteger(run.attempt) || run.attempt < 1) return false;
   let scopeAttempt = 0;
   for (const scopedRun of stageRuns) {

@@ -1258,7 +1258,12 @@ test("starts repair when the failed gate is exhausted but implement has capacity
       draft.status = "repair-required";
       draft.currentStage = "dev-review";
       draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
-      draft.candidates.push({ id: "C1", status: "repair_required" });
+      draft.candidates.push({
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "repair_required",
+      });
     });
 
     const repairResponse = await fetch(`${origin}/api/tasks/${task.id}/repair`, { method: "POST" });
@@ -1291,7 +1296,12 @@ test("grants only implement and admits one repair when its budget is exhausted",
       draft.currentStage = "dev-review";
       draft.attemptsByStage.implement = draft.stageRunLimits.implement;
       draft.attemptsByStage["dev-review"] = 1;
-      draft.candidates.push({ id: "C1", status: "repair_required" });
+      draft.candidates.push({
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "repair_required",
+      });
     });
 
     const blockedRepair = await fetch(`${origin}/api/tasks/${task.id}/repair`, { method: "POST" });
@@ -1330,7 +1340,12 @@ test("grants one bounded stage attempt to a repaired candidate at an exhausted r
       draft.status = "ready-for-review";
       draft.currentStage = "dev-review";
       draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
-      draft.candidates.push({ id: "C1", status: "ready_for_review" });
+      draft.candidates.push({
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "ready_for_review",
+      });
     });
 
     const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
@@ -1636,6 +1651,105 @@ test("rejects a retry grant when the persisted source run tuple is already impos
     const updated = await store.get(task.id);
     assert.equal(updated.stageRunLimits["dev-review"], 3);
     assert.equal(updated.decisions.length, 0);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects partial and orphaned explicit workflow identities instead of treating them as legacy", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    for (const [name, workflowIdentity] of [
+      ["orphan", { workflowAttempt: 3, workflowReservationId: "missing-reservation" }],
+      ["partial", { workflowAttempt: 3 }],
+    ]) {
+      const response = await createTask(origin, {
+        title: `${name} workflow identity`,
+        description: "Explicit workflow identity must be complete and backed by the current reservation.",
+        repositoryPath: directory,
+        workflow: "implement",
+      });
+      const { task } = await response.json();
+      await store.update(task.id, (draft) => {
+        draft.status = "blocked";
+        draft.currentStage = "dev-review";
+        draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+        draft.candidates.push({
+          id: "C1",
+          revisionNumber: 1,
+          headRevision: "candidate-c1-r1",
+          status: "ready_for_review",
+        });
+        draft.runs.push({
+          id: `run-${name}-review-3`,
+          stage: "dev-review",
+          kind: "review",
+          role: "dev-review",
+          status: "failed",
+          candidateId: "C1",
+          candidateRevision: 1,
+          candidateHeadRevision: "candidate-c1-r1",
+          workPackageId: null,
+          attempt: 1,
+          ...workflowIdentity,
+        });
+      });
+
+      const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+      assert.equal(grantResponse.status, 409, name);
+      assert.match((await grantResponse.json()).error, /partial or orphaned workflow identity/i, name);
+      const updated = await store.get(task.id);
+      assert.equal(updated.stageRunLimits["dev-review"], 3, name);
+      assert.equal(updated.decisions.length, 0, name);
+    }
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects all-null reservations for candidate-bound review and repair grants", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    for (const item of [
+      { stage: "dev-review", kind: "review", status: "ready_for_review" },
+      { stage: "implement", kind: "repair", status: "repair_required" },
+    ]) {
+      const response = await createTask(origin, {
+        title: `Null ${item.stage} reservation`,
+        description: "Candidate-bound workflow attempts require exact candidate identity.",
+        repositoryPath: directory,
+        workflow: "implement",
+      });
+      const { task } = await response.json();
+      await store.update(task.id, (draft) => {
+        draft.status = "blocked";
+        draft.currentStage = item.stage;
+        draft.attemptsByStage[item.stage] = draft.stageRunLimits[item.stage];
+        draft.candidates.push({
+          id: "C1",
+          revisionNumber: 1,
+          headRevision: "candidate-c1-r1",
+          status: item.status,
+        });
+        draft.stageRunReservations[item.stage] = {
+          id: `reservation-null-${item.stage}-3`,
+          stage: item.stage,
+          kind: item.kind,
+          workflowAttempt: 3,
+          candidateId: null,
+          candidateRevision: null,
+          candidateHeadRevision: null,
+          reservedAt: "2026-08-04T00:00:00.000Z",
+        };
+      });
+
+      const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+      assert.equal(grantResponse.status, 409, item.stage);
+      assert.match((await grantResponse.json()).error, /inconsistent workflow reservation/i, item.stage);
+      const updated = await store.get(task.id);
+      assert.equal(updated.stageRunLimits[item.stage], 3, item.stage);
+      assert.equal(updated.decisions.length, 0, item.stage);
+    }
   } finally {
     await cleanup(server, directory);
   }
