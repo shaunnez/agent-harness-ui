@@ -764,8 +764,7 @@ function validRetryReservationCandidateBinding(
       return false;
     }
     if (grantedStage === "implement" && reservation.kind === "repair") {
-      return reservation.workflowAttempt > candidate.sourceWorkflowAttempt &&
-        !lineage.sourceReservations.has(reservation.id);
+      return validFailedRepairReservation(candidate, reservation, lineage, reservations);
     }
     return validCandidateProducerReservation(candidate, reservations?.implement, lineage, implementationAttempt);
   }
@@ -787,6 +786,38 @@ function validRetryReservationCandidateBinding(
   return sourceReservation &&
     ["implementation", "repair"].includes(reservation.kind) &&
     validCandidateProducerReservation(candidate, reservation, lineage, implementationAttempt);
+}
+
+function validFailedRepairReservation(candidate, repairReservation, lineage, reservations) {
+  const gateStages = new Set(["dev-review", "test", "final-review"]);
+  const retainedGates = Object.values(reservations ?? {}).filter((reservation) => gateStages.has(reservation?.stage));
+  if (retainedGates.some((reservation) => reservation?.id === repairReservation.id)) return false;
+  const exactCandidateGates = retainedGates.filter((reservation) => (
+    reservation?.candidateId === candidate.id &&
+    reservation?.candidateRevision === candidate.revisionNumber &&
+    reservation?.candidateHeadRevision === candidate.headRevision
+  ));
+  if (!exactCandidateGates.length) return false;
+  const candidateCreatedAt = Date.parse(lineage.currentRevision.createdAt);
+  let latestGateReservedAt = -Infinity;
+  for (const gateReservation of exactCandidateGates) {
+    if (
+      typeof gateReservation.id !== "string" ||
+      !gateReservation.id.trim() ||
+      !validPersistedTimestamp(gateReservation.reservedAt) ||
+      !validRetryReservationKind(gateReservation.stage, gateReservation.kind) ||
+      !Number.isInteger(gateReservation.workflowAttempt) ||
+      gateReservation.workflowAttempt < 1
+    ) {
+      return false;
+    }
+    const gateReservedAt = Date.parse(gateReservation.reservedAt);
+    if (gateReservedAt < candidateCreatedAt) return false;
+    latestGateReservedAt = Math.max(latestGateReservedAt, gateReservedAt);
+  }
+  return repairReservation.workflowAttempt > candidate.sourceWorkflowAttempt &&
+    !lineage.sourceReservations.has(repairReservation.id) &&
+    Date.parse(repairReservation.reservedAt) > latestGateReservedAt;
 }
 
 function candidateRevisionLineage(candidate) {
@@ -991,6 +1022,13 @@ function validateRetryRunScopes(task, reservation, reservationRuns) {
   ) {
     return "The exhausted Implementation reservation is missing an authorized work-package scope; resolve the inconsistent history before granting a retry.";
   }
+  if (
+    reservation.kind === "implementation" &&
+    authorized.length &&
+    !validImplementationScopeSnapshot(task, authorized)
+  ) {
+    return "The exhausted Implementation reservation does not match the persisted work-package plan; resolve the inconsistent history before granting a retry.";
+  }
   if (reservation.stage === "scouts") {
     const selected = (task.scoutDispatch?.selected ?? []).map((scout) => scout?.name);
     if (
@@ -1010,14 +1048,41 @@ function validateRetryRunScopes(task, reservation, reservationRuns) {
   return null;
 }
 
+function validImplementationScopeSnapshot(task, authorizedScopes) {
+  const workPackages = task.workPackages ?? [];
+  const packageIds = workPackages.map((workPackage) => workPackage?.id);
+  const unresolvedPackageIds = workPackages
+    .filter((workPackage) => !["ready_for_integration", "integrated"].includes(workPackage?.status))
+    .map((workPackage) => workPackage.id);
+  return packageIds.length > 0 &&
+    packageIds.every((packageId) => typeof packageId === "string" && packageId.trim().length > 0) &&
+    packageIds.length === new Set(packageIds).size &&
+    authorizedScopes.every((scope) => packageIds.includes(scope)) &&
+    unresolvedPackageIds.every((packageId) => authorizedScopes.includes(packageId));
+}
+
 function validAssemblyOnlyCandidateProducer(task, reservation, reservationRuns) {
   if (reservationRuns.length > 0) return false;
   const candidate = task.candidates?.at(-1);
   const currentRevision = candidate?.revisions?.find((revision) => revision.number === candidate?.revisionNumber);
   const workPackages = task.workPackages ?? [];
   const members = candidate?.members ?? [];
-  const packageIds = workPackages.map((workPackage) => workPackage?.id);
-  const memberPackageIds = members.map((member) => member?.packageId);
+  if (
+    !workPackages.length ||
+    !workPackages.every((workPackage) => (
+      workPackage.status === "integrated" &&
+      typeof workPackage.id === "string" &&
+      workPackage.id.trim().length > 0 &&
+      typeof workPackage.headRevision === "string" &&
+      workPackage.headRevision.trim().length > 0 &&
+      Number.isInteger(workPackage.batch) &&
+      workPackage.batch > 0
+    )) ||
+    new Set(workPackages.map((workPackage) => workPackage.id)).size !== workPackages.length
+  ) {
+    return false;
+  }
+  const orderedPackages = [...workPackages].sort((left, right) => left.batch - right.batch || left.id.localeCompare(right.id));
   return candidate?.status === "repair_required" &&
     candidate.revisionNumber === 1 &&
     candidate.sourceWorkflowAttempt === reservation.workflowAttempt &&
@@ -1028,14 +1093,12 @@ function validAssemblyOnlyCandidateProducer(task, reservation, reservationRuns) 
     reservation.candidateId == null &&
     reservation.candidateRevision == null &&
     reservation.candidateHeadRevision == null &&
-    workPackages.length > 0 &&
-    workPackages.every((workPackage) => workPackage.status === "integrated") &&
-    packageIds.every((packageId) => typeof packageId === "string" && packageId.trim().length > 0) &&
-    packageIds.length === new Set(packageIds).size &&
-    memberPackageIds.every((packageId) => typeof packageId === "string" && packageId.trim().length > 0) &&
-    memberPackageIds.length === packageIds.length &&
-    memberPackageIds.length === new Set(memberPackageIds).size &&
-    packageIds.every((packageId) => memberPackageIds.includes(packageId));
+    members.length === orderedPackages.length &&
+    members.every((member, index) => (
+      member?.packageId === orderedPackages[index].id &&
+      member?.headRevision === orderedPackages[index].headRevision &&
+      member?.order === index + 1
+    ));
 }
 
 function orderRetrySourceRuns(reservation, runs) {

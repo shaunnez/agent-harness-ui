@@ -201,6 +201,25 @@ function attachAssemblyLineage(draft, candidate, {
   return candidate;
 }
 
+function attachExactCandidateGate(draft, candidate, {
+  stage = "dev-review",
+  workflowAttempt = 1,
+  reservationId = `reservation-${draft.id}-${stage}-${workflowAttempt}`,
+  reservedAt = "2026-08-04T00:01:30.000Z",
+} = {}) {
+  draft.stageRunReservations[stage] = {
+    id: reservationId,
+    stage,
+    kind: stage === "dev-review" ? "review" : stage,
+    workflowAttempt,
+    candidateId: candidate.id,
+    candidateRevision: candidate.revisionNumber,
+    candidateHeadRevision: candidate.headRevision,
+    authorizedRunScopes: [],
+    reservedAt,
+  };
+}
+
 function threeRevisionCandidate(status = "ready_for_review") {
   return {
     id: "C1",
@@ -1451,6 +1470,7 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
         status: "repair_required",
       });
       draft.candidates.push(candidate);
+      attachExactCandidateGate(draft, candidate);
       draft.runs.push(...[1, 2, 3].map((attempt) => ({
         id: `run-failed-repair-${attempt}`,
         stage: "implement",
@@ -1517,7 +1537,12 @@ test("grants repair after a candidate is assembled on the final implementation a
       draft.status = "repair-required";
       draft.currentStage = "dev-review";
       draft.attemptsByStage.implement = draft.stageRunLimits.implement;
-      draft.workPackages = ["S1", "S2"].map((id) => ({ id, status: "integrated" }));
+      draft.workPackages = ["S1", "S2"].map((id) => ({
+        id,
+        status: "integrated",
+        batch: 1,
+        headRevision: `head-${id.toLowerCase()}`,
+      }));
       reservation = {
         id: "reservation-assembly-only-3",
         stage: "implement",
@@ -1535,7 +1560,11 @@ test("grants repair after a candidate is assembled on the final implementation a
         revisionNumber: 1,
         headRevision: "candidate-c1-r1",
         status: "repair_required",
-        members: ["S1", "S2"].map((packageId, index) => ({ packageId, order: index + 1 })),
+        members: ["S1", "S2"].map((packageId, index) => ({
+          packageId,
+          headRevision: `head-${packageId.toLowerCase()}`,
+          order: index + 1,
+        })),
         sourceWorkflowAttempt: reservation.workflowAttempt,
         sourceWorkflowReservationId: reservation.id,
         revisions: [{
@@ -1570,6 +1599,98 @@ test("grants repair after a candidate is assembled on the final implementation a
   }
 });
 
+test("rejects assembly-only scope exceptions without exact ordered package commit membership", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    for (const item of [
+      {
+        name: "fabricated member head",
+        mutate(candidate) {
+          candidate.members[0].headRevision = "fabricated-head";
+        },
+      },
+      {
+        name: "missing member head",
+        mutate(candidate) {
+          candidate.members[1].headRevision = null;
+        },
+      },
+      {
+        name: "duplicate member order",
+        mutate(candidate) {
+          candidate.members[0].order = 2;
+        },
+      },
+      {
+        name: "noncanonical member order",
+        mutate(candidate) {
+          candidate.members.reverse();
+        },
+      },
+    ]) {
+      const response = await createTask(origin, {
+        title: `Reject assembly-only ${item.name}`,
+        description: "The empty-scope exception must prove the exact canonical assembly membership.",
+        repositoryPath: directory,
+        workflow: "implement",
+      });
+      const { task } = await response.json();
+      await store.update(task.id, (draft) => {
+        draft.status = "repair-required";
+        draft.currentStage = "dev-review";
+        draft.attemptsByStage.implement = draft.stageRunLimits.implement;
+        draft.workPackages = [
+          { id: "S2", status: "integrated", batch: 2, headRevision: "head-s2" },
+          { id: "S1", status: "integrated", batch: 1, headRevision: "head-s1" },
+        ];
+        const reservation = {
+          id: "reservation-assembly-only-3",
+          stage: "implement",
+          kind: "implementation",
+          workflowAttempt: 3,
+          candidateId: null,
+          candidateRevision: null,
+          candidateHeadRevision: null,
+          authorizedRunScopes: [],
+          reservedAt: "2026-08-04T00:02:00.000Z",
+        };
+        draft.stageRunReservations.implement = reservation;
+        const candidate = {
+          id: "C1",
+          revisionNumber: 1,
+          headRevision: "candidate-c1-r1",
+          status: "repair_required",
+          members: [
+            { packageId: "S1", headRevision: "head-s1", order: 1 },
+            { packageId: "S2", headRevision: "head-s2", order: 2 },
+          ],
+          sourceWorkflowAttempt: 3,
+          sourceWorkflowReservationId: reservation.id,
+          revisions: [{
+            number: 1,
+            headRevision: "candidate-c1-r1",
+            reason: "assembly",
+            sourceWorkflowAttempt: 3,
+            sourceWorkflowReservationId: reservation.id,
+            createdAt: "2026-08-04T00:03:00.000Z",
+          }],
+        };
+        item.mutate(candidate);
+        draft.candidates.push(candidate);
+      });
+
+      const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+      assert.equal(grantResponse.status, 409, item.name);
+      assert.match((await grantResponse.json()).error, /missing an authorized work-package scope/i, item.name);
+      const unchanged = await store.get(task.id);
+      assert.equal(unchanged.stageRunLimits.implement, 3, item.name);
+      assert.equal(unchanged.decisions.length, 0, item.name);
+    }
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("grants one implementation retry after a failed candidate assembly", async () => {
   const { directory, origin, server, store, startedIdRef } = await createServer();
   try {
@@ -1585,6 +1706,7 @@ test("grants one implementation retry after a failed candidate assembly", async 
       draft.status = "blocked";
       draft.currentStage = "implement";
       draft.attemptsByStage.implement = draft.stageRunLimits.implement;
+      draft.workPackages = [{ id: "S1", status: "failed" }];
       draft.runs.push(...[1, 2, 3].map((attempt) => ({
         id: `run-failed-assembly-${attempt}`,
         stage: "implement",
@@ -1712,6 +1834,7 @@ test("grants only implement and admits one repair when its budget is exhausted",
         status: "repair_required",
       });
       draft.candidates.push(candidate);
+      attachExactCandidateGate(draft, candidate);
       draft.runs.push(...[1, 2, 3].map((attempt) => ({
         id: `run-exhausted-repair-${attempt}`,
         stage: "implement",
@@ -2326,12 +2449,30 @@ test("grants an exact-current repaired candidate only with distinct gate and cur
 test("rejects failed repair reservations that reuse or fail to advance the current producer identity", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
-    for (const [name, reservationId] of [
-      ["reused producer reservation", "reservation-c1-r2-repair-3"],
-      ["fresh ID with non-increasing attempt", "reservation-failed-repair-3"],
+    for (const item of [
+      {
+        name: "reused producer reservation",
+        reservationId: "reservation-c1-r2-repair-3",
+        workflowAttempt: 3,
+        repairReservedAt: "2026-08-04T00:03:00.000Z",
+      },
+      {
+        name: "fresh ID with non-increasing attempt",
+        reservationId: "reservation-failed-repair-3",
+        workflowAttempt: 3,
+        repairReservedAt: "2026-08-04T00:03:00.000Z",
+      },
+      {
+        name: "repair predates and reuses retained gate reservation",
+        reservationId: "reservation-c1-r3-review-1",
+        workflowAttempt: 4,
+        repairReservedAt: "2026-08-04T00:02:30.000Z",
+        gateReservationId: "reservation-c1-r3-review-1",
+        gateReservedAt: "2026-08-04T00:03:00.000Z",
+      },
     ]) {
       const response = await createTask(origin, {
-        title: `Reject ${name}`,
+        title: `Reject ${item.name}`,
         description: "A failed repair attempt must be newer than and distinct from every candidate producer.",
         repositoryPath: directory,
         workflow: "implement",
@@ -2340,27 +2481,33 @@ test("rejects failed repair reservations that reuse or fail to advance the curre
       await store.update(task.id, (draft) => {
         draft.status = "repair-required";
         draft.currentStage = "dev-review";
-        draft.attemptsByStage.implement = draft.stageRunLimits.implement;
-        draft.candidates.push(threeRevisionCandidate("repair_required"));
+        draft.stageRunLimits.implement = item.workflowAttempt;
+        draft.attemptsByStage.implement = item.workflowAttempt;
+        const candidate = threeRevisionCandidate("repair_required");
+        draft.candidates.push(candidate);
+        attachExactCandidateGate(draft, candidate, {
+          reservationId: item.gateReservationId ?? "reservation-c1-r3-review-1",
+          reservedAt: item.gateReservedAt ?? "2026-08-04T00:02:30.000Z",
+        });
         draft.stageRunReservations.implement = {
-          id: reservationId,
+          id: item.reservationId,
           stage: "implement",
           kind: "repair",
-          workflowAttempt: 3,
+          workflowAttempt: item.workflowAttempt,
           candidateId: "C1",
           candidateRevision: 3,
           candidateHeadRevision: "candidate-c1-r3",
           authorizedRunScopes: [],
-          reservedAt: "2026-08-04T00:03:00.000Z",
+          reservedAt: item.repairReservedAt,
         };
       });
 
       const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
-      assert.equal(grantResponse.status, 409, name);
-      assert.match((await grantResponse.json()).error, /inconsistent workflow reservation/i, name);
+      assert.equal(grantResponse.status, 409, item.name);
+      assert.match((await grantResponse.json()).error, /inconsistent workflow reservation/i, item.name);
       const unchanged = await store.get(task.id);
-      assert.equal(unchanged.stageRunLimits.implement, 3, name);
-      assert.equal(unchanged.decisions.length, 0, name);
+      assert.equal(unchanged.stageRunLimits.implement, item.workflowAttempt, item.name);
+      assert.equal(unchanged.decisions.length, 0, item.name);
     }
   } finally {
     await cleanup(server, directory);
@@ -2432,6 +2579,7 @@ test("persists every source run for a multi-package implementation reservation",
       draft.status = "blocked";
       draft.currentStage = "implement";
       draft.attemptsByStage.implement = draft.stageRunLimits.implement;
+      draft.workPackages = ["S1", "S2"].map((id) => ({ id, status: "failed" }));
       draft.stageRunReservations.implement = {
         id: "reservation-implement-3",
         stage: "implement",
@@ -2481,6 +2629,7 @@ test("rejects duplicate or unauthorized scopes inside a multi-run reservation", 
         stage: "implement",
         kind: "implementation",
         authorizedRunScopes: ["S1"],
+        workPackageIds: ["S1"],
         scoutDispatch: null,
         runs: [{
           id: "run-implement-S9-1",
@@ -2489,12 +2638,14 @@ test("rejects duplicate or unauthorized scopes inside a multi-run reservation", 
           workPackageId: "S9",
           attempt: 1,
         }],
+        error: /duplicate or unauthorized run scopes/i,
       },
       {
         name: "duplicate implementation package",
         stage: "implement",
         kind: "implementation",
         authorizedRunScopes: ["S1", "S2"],
+        workPackageIds: ["S1", "S2"],
         scoutDispatch: null,
         runs: [1, 2].map((attempt) => ({
           id: `run-implement-S1-${attempt}`,
@@ -2503,12 +2654,46 @@ test("rejects duplicate or unauthorized scopes inside a multi-run reservation", 
           workPackageId: "S1",
           attempt,
         })),
+        error: /duplicate or unauthorized run scopes/i,
+      },
+      {
+        name: "implementation scope absent from plan",
+        stage: "implement",
+        kind: "implementation",
+        authorizedRunScopes: ["S9"],
+        workPackageIds: ["S1"],
+        scoutDispatch: null,
+        runs: [{
+          id: "run-implement-S9-planned",
+          kind: "implementation",
+          role: "implement",
+          workPackageId: "S9",
+          attempt: 1,
+        }],
+        error: /does not match the persisted work-package plan/i,
+      },
+      {
+        name: "unresolved planned package absent from scope snapshot",
+        stage: "implement",
+        kind: "implementation",
+        authorizedRunScopes: ["S1"],
+        workPackageIds: ["S1", "S2"],
+        scoutDispatch: null,
+        runs: [{
+          id: "run-implement-S1-incomplete-snapshot",
+          kind: "implementation",
+          role: "implement",
+          workPackageId: "S1",
+          attempt: 1,
+        }],
+        error: /does not match the persisted work-package plan/i,
       },
       {
         name: "duplicate selected scout",
         stage: "scouts",
         kind: "investigation",
         authorizedRunScopes: ["scout-code-path"],
+        workPackageIds: [],
         scoutDispatch: {
           selected: [{ name: "scout-code-path", focus: "Trace the API.", reason: "Needed.", status: "complete" }],
           skipped: [],
@@ -2523,6 +2708,7 @@ test("rejects duplicate or unauthorized scopes inside a multi-run reservation", 
           workPackageId: null,
           attempt,
         })),
+        error: /duplicate or unauthorized run scopes/i,
       },
     ]) {
       const response = await createTask(origin, {
@@ -2537,6 +2723,7 @@ test("rejects duplicate or unauthorized scopes inside a multi-run reservation", 
         draft.currentStage = item.stage;
         draft.attemptsByStage[item.stage] = draft.stageRunLimits[item.stage];
         draft.scoutDispatch = item.scoutDispatch;
+        draft.workPackages = item.workPackageIds.map((id) => ({ id, status: "failed" }));
         const reservationId = `reservation-${item.stage}-3`;
         draft.stageRunReservations[item.stage] = {
           id: reservationId,
@@ -2563,7 +2750,7 @@ test("rejects duplicate or unauthorized scopes inside a multi-run reservation", 
 
       const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
       assert.equal(grantResponse.status, 409, item.name);
-      assert.match((await grantResponse.json()).error, /duplicate or unauthorized run scopes/i, item.name);
+      assert.match((await grantResponse.json()).error, item.error, item.name);
       assert.equal((await store.get(task.id)).stageRunLimits[item.stage], 3, item.name);
     }
   } finally {
