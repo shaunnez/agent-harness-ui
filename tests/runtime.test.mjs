@@ -2580,12 +2580,15 @@ test("renders retry grant provenance in activity and decision surfaces without f
       authorizingGateCandidateId: "C1",
       authorizingGateCandidateRevision: 2,
       authorizingGateCandidateHeadRevision: "candidate-c1-r2",
+      authorizingGateArtifactId: "artifact-review-3",
       authorizingGateKind: "review",
       authorizingGateReservedAt: "2026-08-01T11:59:00.000Z",
       authorizingGateReservationId: "reservation-review-3",
       authorizingGateRunId: "run-review-3",
       authorizingGateStage: "dev-review",
       authorizingGateWorkflowAttempt: 3,
+      candidateProducerArtifactIds: ["artifact-assembly-S1", "artifact-repair-2"],
+      candidateProducerRunIds: ["run-assembly-S1", "run-repair-2"],
       workflowAttempt: 3,
       workflowCandidateId: "C1",
       workflowCandidateRevision: 1,
@@ -2609,12 +2612,15 @@ test("renders retry grant provenance in activity and decision surfaces without f
         authorizingGateCandidateId: "C1",
         authorizingGateCandidateRevision: 2,
         authorizingGateCandidateHeadRevision: "candidate-c1-r2",
+        authorizingGateArtifactId: "artifact-review-3",
         authorizingGateKind: "review",
         authorizingGateReservedAt: "2026-08-01T11:59:00.000Z",
         authorizingGateReservationId: "reservation-review-3",
         authorizingGateRunId: "run-review-3",
         authorizingGateStage: "dev-review",
         authorizingGateWorkflowAttempt: 3,
+        candidateProducerArtifactIds: ["artifact-assembly-S1", "artifact-repair-2"],
+        candidateProducerRunIds: ["run-assembly-S1", "run-repair-2"],
         workflowAttempt: 3,
         workflowCandidateId: "C1",
         workflowCandidateRevision: 1,
@@ -2644,7 +2650,12 @@ test("renders retry grant provenance in activity and decision surfaces without f
     assert.match(workspaceMarkup, /Dev review · review · attempt 3/);
     assert.match(workspaceMarkup, /reservation-review-3/);
     assert.match(workspaceMarkup, /run-review-3/);
+    assert.match(workspaceMarkup, /artifact-review-3/);
     assert.match(workspaceMarkup, /2026-08-01T11:59:00.000Z/);
+    assert.match(workspaceMarkup, /Candidate producer runs/);
+    assert.match(workspaceMarkup, /run-assembly-S1, run-repair-2/);
+    assert.match(workspaceMarkup, /Candidate producer artifacts/);
+    assert.match(workspaceMarkup, /artifact-assembly-S1, artifact-repair-2/);
     assert.match(workspaceMarkup, /Workflow attempt/);
     assert.match(workspaceMarkup, /Workflow candidate binding/);
     assert.match(workspaceMarkup, /C1 revision 1/);
@@ -2665,12 +2676,15 @@ test("renders retry grant provenance in activity and decision surfaces without f
         authorizingGateCandidateId: undefined,
         authorizingGateCandidateRevision: undefined,
         authorizingGateCandidateHeadRevision: undefined,
+        authorizingGateArtifactId: undefined,
         authorizingGateKind: undefined,
         authorizingGateReservedAt: undefined,
         authorizingGateReservationId: undefined,
         authorizingGateRunId: undefined,
         authorizingGateStage: undefined,
         authorizingGateWorkflowAttempt: undefined,
+        candidateProducerArtifactIds: undefined,
+        candidateProducerRunIds: undefined,
         workflowAttempt: undefined,
         workflowCandidateId: undefined,
         workflowCandidateRevision: undefined,

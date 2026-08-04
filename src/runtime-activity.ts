@@ -136,6 +136,7 @@ export interface RuntimeEvent {
   candidateId?: string | null;
   candidateRevision?: number | null;
   candidateHeadRevision?: string | null;
+  authorizingGateArtifactId?: string | null;
   authorizingGateCandidateId?: string | null;
   authorizingGateCandidateRevision?: number | null;
   authorizingGateCandidateHeadRevision?: string | null;
@@ -145,6 +146,8 @@ export interface RuntimeEvent {
   authorizingGateRunId?: string | null;
   authorizingGateStage?: StageId | null;
   authorizingGateWorkflowAttempt?: number | null;
+  candidateProducerArtifactIds?: string[];
+  candidateProducerRunIds?: string[];
   workflowAttempt?: number | null;
   workflowCandidateId?: string | null;
   workflowCandidateRevision?: number | null;

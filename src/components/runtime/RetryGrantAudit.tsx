@@ -10,6 +10,7 @@ export interface RetryGrantAuditFields {
   candidateId?: string | null;
   candidateRevision?: number | null;
   candidateHeadRevision?: string | null;
+  authorizingGateArtifactId?: string | null;
   authorizingGateCandidateId?: string | null;
   authorizingGateCandidateRevision?: number | null;
   authorizingGateCandidateHeadRevision?: string | null;
@@ -19,6 +20,8 @@ export interface RetryGrantAuditFields {
   authorizingGateRunId?: string | null;
   authorizingGateStage?: StageId | null;
   authorizingGateWorkflowAttempt?: number | null;
+  candidateProducerArtifactIds?: string[];
+  candidateProducerRunIds?: string[];
   workflowAttempt?: number | null;
   workflowCandidateId?: string | null;
   workflowCandidateRevision?: number | null;
@@ -37,6 +40,8 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
     audit.candidateRevision !== undefined ||
     audit.candidateHeadRevision !== undefined ||
     audit.authorizingGateReservationId !== undefined ||
+    audit.candidateProducerArtifactIds !== undefined ||
+    audit.candidateProducerRunIds !== undefined ||
     audit.workflowAttempt !== undefined ||
     audit.workflowCandidateId !== undefined ||
     audit.workflowCandidateRevision !== undefined ||
@@ -119,11 +124,34 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
             mono={audit.authorizingGateRunId !== null}
           />
           <RuntimeRow
+            label="Authorizing gate artifact"
+            value={audit.authorizingGateArtifactId ?? "No authoritative gate artifact"}
+            mono={audit.authorizingGateArtifactId !== null}
+          />
+          <RuntimeRow
             label="Authorizing gate reserved"
             value={audit.authorizingGateReservedAt ?? "Unknown reservation time"}
             mono={audit.authorizingGateReservedAt !== null}
           />
         </>
+      ) : null}
+      {audit.candidateProducerRunIds !== undefined ? (
+        <RuntimeRow
+          label="Candidate producer runs"
+          value={audit.candidateProducerRunIds.length
+            ? audit.candidateProducerRunIds.join(", ")
+            : "Assembly-only producer; no agent run"}
+          mono={audit.candidateProducerRunIds.length > 0}
+        />
+      ) : null}
+      {audit.candidateProducerArtifactIds !== undefined ? (
+        <RuntimeRow
+          label="Candidate producer artifacts"
+          value={audit.candidateProducerArtifactIds.length
+            ? audit.candidateProducerArtifactIds.join(", ")
+            : "No producer artifacts"}
+          mono={audit.candidateProducerArtifactIds.length > 0}
+        />
       ) : null}
       {audit.workflowAttempt !== undefined ? (
         <RuntimeRow

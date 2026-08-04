@@ -478,12 +478,15 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               authorizingGateCandidateHeadRevision,
               authorizingGateCandidateId,
               authorizingGateCandidateRevision,
+              authorizingGateArtifactId,
               authorizingGateKind,
               authorizingGateReservedAt,
               authorizingGateReservationId,
               authorizingGateRunId,
               authorizingGateStage,
               authorizingGateWorkflowAttempt,
+              candidateProducerArtifactIds,
+              candidateProducerRunIds,
               grantedStage,
               currentLimit,
               retrySource,
@@ -513,6 +516,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               candidateHeadRevision,
               authorizingGateCandidateId,
               authorizingGateCandidateRevision,
+              authorizingGateArtifactId,
               authorizingGateCandidateHeadRevision,
               authorizingGateKind,
               authorizingGateReservedAt,
@@ -520,6 +524,8 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               authorizingGateRunId,
               authorizingGateStage,
               authorizingGateWorkflowAttempt,
+              candidateProducerArtifactIds,
+              candidateProducerRunIds,
               workflowAttempt,
               workflowCandidateId,
               workflowCandidateRevision,
@@ -548,6 +554,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               candidateHeadRevision,
               authorizingGateCandidateId,
               authorizingGateCandidateRevision,
+              authorizingGateArtifactId,
               authorizingGateCandidateHeadRevision,
               authorizingGateKind,
               authorizingGateReservedAt,
@@ -555,6 +562,8 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
               authorizingGateRunId,
               authorizingGateStage,
               authorizingGateWorkflowAttempt,
+              candidateProducerArtifactIds,
+              candidateProducerRunIds,
               workflowAttempt,
               workflowCandidateId,
               workflowCandidateRevision,
@@ -641,8 +650,14 @@ function retryGrantContext(task) {
     ["repair-required", "failed"].includes(task.status) &&
     candidate?.status === "repair_required" &&
     currentAttempts >= currentLimit;
-  const exhaustedReadyGate =
-    ["ready-for-review", "ready-for-test", "ready-for-final-review"].includes(task.status) &&
+  const readyGateTuple = {
+    "ready-for-review": { stage: "dev-review", candidateStatus: "ready_for_review" },
+    "ready-for-test": { stage: "test", candidateStatus: "ready_for_test" },
+    "ready-for-final-review": { stage: "final-review", candidateStatus: "ready_for_final_review" },
+  }[task.status] ?? null;
+  const exhaustedReadyGate = readyGateTuple != null &&
+    task.currentStage === readyGateTuple.stage &&
+    candidate?.status === readyGateTuple.candidateStatus &&
     currentAttempts >= currentLimit;
   const exhaustedBlockedStage = task.status === "blocked" && currentAttempts >= currentLimit;
   if (!exhaustedRepair && !exhaustedReadyGate && !exhaustedBlockedStage) {
@@ -654,6 +669,8 @@ function retryGrantContext(task) {
   if ((task.runs ?? []).some((run) => run?.status === "running")) {
     return { error: "An active or inconsistent run history must be resolved before granting a retry." };
   }
+  const globalIdentityError = validateGlobalRetryIdentities(task);
+  if (globalIdentityError) return { error: globalIdentityError };
   const stageRuns = (task.runs ?? []).filter((run) => run.stage === grantedStage);
   const terminalStatuses = new Set(["completed", "failed", "cancelled", "interrupted", "timed-out", "timed_out", "timeout"]);
   if (stageRuns.some((run) => !terminalStatuses.has(run.status))) {
@@ -725,6 +742,13 @@ function retryGrantContext(task) {
   const authorizingGateArtifact = authorizingGateRun?.artifactId
     ? (task.artifacts ?? []).find((artifact) => artifact.id === authorizingGateRun.artifactId) ?? null
     : null;
+  const lineage = candidateBoundGrant ? candidateRevisionLineage(candidate) : null;
+  const producerEvidence = lineage ? candidateRevisionProducerEvidence(task, candidate, lineage) : null;
+  if (candidateBoundGrant && !producerEvidence) {
+    return { error: "The exhausted candidate is missing exact producer evidence; resolve the inconsistent history before granting a retry." };
+  }
+  const candidateProducerRunIds = producerEvidence?.runs.map((run) => run.id) ?? [];
+  const candidateProducerArtifactIds = producerEvidence?.artifacts.map((artifact) => artifact.id) ?? [];
   const historySnapshot = JSON.stringify({
     currentStage: task.currentStage,
     activeRunKind: task.activeRunKind ?? null,
@@ -733,9 +757,15 @@ function retryGrantContext(task) {
     candidate: candidate ?? null,
     authorizingGateArtifact,
     authorizingGateRun,
+    attemptsByStage: task.attemptsByStage ?? {},
+    candidateProducerArtifacts: producerEvidence?.artifacts ?? [],
+    candidateProducerRuns: producerEvidence?.runs ?? [],
     reservation,
     stageRunReservations: task.stageRunReservations ?? {},
+    stageRunLimits: task.stageRunLimits ?? {},
     stageRuns,
+    workPackages: task.workPackages ?? [],
+    scoutDispatch: task.scoutDispatch ?? null,
   });
   const grantCandidate = candidateBoundGrant ? candidate : null;
   return {
@@ -748,6 +778,7 @@ function retryGrantContext(task) {
     candidateRevision: grantCandidate?.revisionNumber ?? null,
     candidateHeadRevision: grantCandidate?.headRevision ?? null,
     candidateStatus: candidate?.status ?? null,
+    authorizingGateArtifactId: authorizingGate?.sourceArtifactId ?? null,
     authorizingGateCandidateId: authorizingGate?.candidateId ?? null,
     authorizingGateCandidateRevision: authorizingGate?.candidateRevision ?? null,
     authorizingGateCandidateHeadRevision: authorizingGate?.candidateHeadRevision ?? null,
@@ -757,6 +788,8 @@ function retryGrantContext(task) {
     authorizingGateRunId: authorizingGate?.sourceRunId ?? null,
     authorizingGateStage: authorizingGate?.stage ?? null,
     authorizingGateWorkflowAttempt: authorizingGate?.workflowAttempt ?? null,
+    candidateProducerArtifactIds,
+    candidateProducerRunIds,
     historySnapshot,
     retrySource,
     sourceRunId: retrySource?.id ?? null,
@@ -777,6 +810,31 @@ function validRetryCandidate(candidate) {
     typeof candidate.headRevision === "string" && candidate.headRevision.trim().length > 0;
 }
 
+function validateGlobalRetryIdentities(task) {
+  const runs = task.runs ?? [];
+  const artifacts = task.artifacts ?? [];
+  const reservationEntries = Object.entries(task.stageRunReservations ?? {})
+    .filter(([, reservation]) => reservation != null);
+  const runIds = runs.map((run) => run?.id);
+  const artifactIds = artifacts.map((artifact) => artifact?.id);
+  const linkedRunIds = artifacts.map((artifact) => artifact?.runId).filter((runId) => runId != null);
+  const reservationIds = reservationEntries.map(([, reservation]) => reservation?.id);
+  if (
+    runIds.some((id) => typeof id !== "string" || !id.trim()) ||
+    new Set(runIds).size !== runIds.length ||
+    artifactIds.some((id) => typeof id !== "string" || !id.trim()) ||
+    new Set(artifactIds).size !== artifactIds.length ||
+    linkedRunIds.some((id) => typeof id !== "string" || !id.trim()) ||
+    new Set(linkedRunIds).size !== linkedRunIds.length ||
+    reservationIds.some((id) => typeof id !== "string" || !id.trim()) ||
+    new Set(reservationIds).size !== reservationIds.length ||
+    reservationEntries.some(([stage, reservation]) => reservation?.stage !== stage)
+  ) {
+    return "The exhausted workflow has duplicate or inconsistent persisted identities; resolve it before granting a retry.";
+  }
+  return null;
+}
+
 function validRetryReservationCandidateBinding(
   reservation,
   candidateRequired,
@@ -792,6 +850,7 @@ function validRetryReservationCandidateBinding(
   if (!candidateRequired) return allNull;
   const lineage = candidateRevisionLineage(candidate);
   if (!lineage) return false;
+  if (!candidateRevisionProducerEvidence(task, candidate, lineage)) return false;
   if (grantedStage !== "implement" && lineage.sourceReservations.has(reservation.id)) return false;
   const sourceReservation = reservation.id === candidate?.sourceWorkflowReservationId &&
     reservation.workflowAttempt === candidate?.sourceWorkflowAttempt;
@@ -833,6 +892,7 @@ function validRetryReservationCandidateBinding(
       return false;
     }
     return validAdjacentRepairLineage(
+      task,
       candidate,
       reservation,
       reservations?.implement,
@@ -903,6 +963,10 @@ function failedRepairAuthorizingGate(
   const sourceRun = freshness?.sourceRunId
     ? (task.runs ?? []).find((run) => run.id === freshness.sourceRunId)
     : null;
+  const sourceArtifacts = sourceRun?.artifactId
+    ? (task.artifacts ?? []).filter((artifact) => artifact.id === sourceRun.artifactId)
+    : [];
+  const sourceArtifact = sourceArtifacts[0] ?? null;
   if (
     !sourceRun ||
     reservationRuns.length !== 1 ||
@@ -911,11 +975,22 @@ function failedRepairAuthorizingGate(
     sourceRun.workflowReservationId !== authorizingGate.id ||
     sourceRun.workflowAttempt !== authorizingGate.workflowAttempt ||
     sourceRun.gateResult?.verdict !== "REPAIR" ||
-    !validRetryRunTuple(sourceRun, authorizingGate, gateStageRuns)
+    !validRetryRunTuple(sourceRun, authorizingGate, gateStageRuns) ||
+    sourceArtifacts.length !== 1 ||
+    sourceArtifact.runId !== sourceRun.id ||
+    sourceArtifact.stage !== authorizingGate.stage ||
+    sourceArtifact.kind !== "markdown" ||
+    sourceArtifact.candidateId !== candidate.id ||
+    sourceArtifact.candidateRevision !== candidate.revisionNumber ||
+    JSON.stringify(sourceArtifact.gateResult) !== JSON.stringify(sourceRun.gateResult)
   ) {
     return null;
   }
-  const authoritativeGate = { ...authorizingGate, sourceRunId: sourceRun.id };
+  const authoritativeGate = {
+    ...authorizingGate,
+    sourceArtifactId: sourceArtifact.id,
+    sourceRunId: sourceRun.id,
+  };
   if (!repairReservation) return authoritativeGate;
   return repairReservation.workflowAttempt > candidate.sourceWorkflowAttempt &&
     !lineage.sourceReservations.has(repairReservation.id) &&
@@ -974,6 +1049,97 @@ function candidateRevisionLineage(candidate) {
   return { byNumber, currentRevision, sourceReservations };
 }
 
+function candidateRevisionProducerEvidence(task, candidate, lineage) {
+  if (!validCandidateAssemblyMembership(task, candidate)) return null;
+  const allRuns = task.runs ?? [];
+  const runs = [];
+  const artifacts = [];
+  const packageIds = new Set(task.workPackages.map((workPackage) => workPackage.id));
+  for (let number = 1; number <= candidate.revisionNumber; number += 1) {
+    const revision = lineage.byNumber.get(number);
+    const revisionRuns = allRuns.filter((run) => (
+      run.workflowReservationId === revision.sourceWorkflowReservationId &&
+      run.workflowAttempt === revision.sourceWorkflowAttempt
+    ));
+    if (number === 1) {
+      const runScopes = revisionRuns.map((run) => run.workPackageId);
+      if (
+        new Set(runScopes).size !== runScopes.length ||
+        revisionRuns.some((run) => (
+          run.stage !== "implement" ||
+          run.kind !== "implementation" ||
+          run.role !== "implement" ||
+          run.status !== "completed" ||
+          typeof run.workPackageId !== "string" ||
+          !packageIds.has(run.workPackageId) ||
+          run.candidateId != null ||
+          run.candidateRevision != null ||
+          run.candidateHeadRevision != null ||
+          !Number.isInteger(run.attempt) ||
+          run.attempt < 1
+        ))
+      ) {
+        return null;
+      }
+      revisionRuns.sort((left, right) => left.workPackageId.localeCompare(right.workPackageId));
+    } else {
+      const priorRevision = lineage.byNumber.get(number - 1);
+      if (revisionRuns.length !== 1) return null;
+      const run = revisionRuns[0];
+      const syntheticReservation = {
+        id: revision.sourceWorkflowReservationId,
+        stage: "implement",
+        kind: "repair",
+        workflowAttempt: revision.sourceWorkflowAttempt,
+        candidateId: candidate.id,
+        candidateRevision: priorRevision.number,
+        candidateHeadRevision: priorRevision.headRevision,
+        authorizedRunScopes: [],
+      };
+      if (
+        run.stage !== "implement" ||
+        run.kind !== "repair" ||
+        run.role !== "repair" ||
+        run.status !== "completed" ||
+        run.workPackageId != null ||
+        run.candidateId !== candidate.id ||
+        run.candidateRevision !== priorRevision.number ||
+        run.candidateHeadRevision !== priorRevision.headRevision ||
+        !validRetryRunTuple(run, syntheticReservation, allRuns.filter((item) => item.stage === "implement"))
+      ) {
+        return null;
+      }
+    }
+    for (const run of revisionRuns) {
+      const artifact = linkedProducerArtifact(task, candidate, revision, run);
+      if (!artifact) return null;
+      runs.push(run);
+      artifacts.push(artifact);
+    }
+  }
+  return { runs, artifacts };
+}
+
+function linkedProducerArtifact(task, candidate, revision, run) {
+  if (typeof run.artifactId !== "string" || !run.artifactId.trim()) return null;
+  const matching = (task.artifacts ?? []).filter((artifact) => artifact.id === run.artifactId);
+  if (matching.length !== 1) return null;
+  const artifact = matching[0];
+  const initialRevision = revision.number === 1;
+  return artifact.runId === run.id &&
+    artifact.stage === "implement" &&
+    artifact.kind === "markdown" &&
+    typeof artifact.name === "string" &&
+    artifact.name.trim().length > 0 &&
+    typeof artifact.content === "string" &&
+    artifact.content.trim().length > 0 &&
+    artifact.candidateId === (initialRevision ? null : candidate.id) &&
+    artifact.candidateRevision === (initialRevision ? null : revision.number) &&
+    artifact.workPackageId === (initialRevision ? run.workPackageId : null)
+    ? artifact
+    : null;
+}
+
 function validCandidateProducerReservation(task, candidate, producerReservation, lineage, implementationAttempt) {
   if (!producerReservation || !validPersistedTimestamp(producerReservation.reservedAt)) return false;
   const currentRevision = lineage.currentRevision;
@@ -1004,8 +1170,8 @@ function validCandidateProducerReservation(task, candidate, producerReservation,
     producerReservedAt <= currentCreatedAt;
 }
 
-function validAdjacentRepairLineage(candidate, priorReservation, repairReservation, lineage, implementationAttempt) {
-  if (!validCandidateProducerReservation(null, candidate, repairReservation, lineage, implementationAttempt)) return false;
+function validAdjacentRepairLineage(task, candidate, priorReservation, repairReservation, lineage, implementationAttempt) {
+  if (!validCandidateProducerReservation(task, candidate, repairReservation, lineage, implementationAttempt)) return false;
   const currentRevision = lineage.currentRevision;
   const priorRevision = lineage.byNumber.get(currentRevision.number - 1);
   const priorCreatedAt = Date.parse(priorRevision?.createdAt);
@@ -1267,6 +1433,7 @@ function sameRetryGrantContext(expected, current) {
     "candidateRevision",
     "candidateHeadRevision",
     "candidateStatus",
+    "authorizingGateArtifactId",
     "authorizingGateCandidateId",
     "authorizingGateCandidateRevision",
     "authorizingGateCandidateHeadRevision",
@@ -1285,7 +1452,9 @@ function sameRetryGrantContext(expected, current) {
     "workflowCandidateHeadRevision",
     "workflowReservationId",
   ].every((field) => expected[field] === current[field]) &&
-    JSON.stringify(expected.sourceRunIds) === JSON.stringify(current.sourceRunIds);
+    JSON.stringify(expected.sourceRunIds) === JSON.stringify(current.sourceRunIds) &&
+    JSON.stringify(expected.candidateProducerArtifactIds) === JSON.stringify(current.candidateProducerArtifactIds) &&
+    JSON.stringify(expected.candidateProducerRunIds) === JSON.stringify(current.candidateProducerRunIds);
 }
 
 async function listChangelog(repositoryPath, limit) {
