@@ -217,7 +217,7 @@ export function resolveGateFreshness(task, stage) {
     return createFreshness(stage, null, null, null, targetResult.code, null);
   }
   const stageRuns = terminalStageRuns(task, stage);
-  const selected = latestRun(candidateRelevantRuns(stageRuns, target));
+  const selected = latestPersistedRun(candidateRelevantRuns(stageRuns, target));
   if (!selected) {
     const diagnosticRun = latestPersistedRun(stageRuns);
     if (!diagnosticRun) {
@@ -241,7 +241,7 @@ export function refreshGateFreshness(task) {
     const targetResult = activeCandidateBinding(task);
     const target = targetResult.valid ? targetResult : null;
     const selected = target
-      ? latestRun(candidateRelevantRuns(terminalStageRuns(task, stage), target))
+      ? latestPersistedRun(candidateRelevantRuns(terminalStageRuns(task, stage), target))
       : null;
     projection[stage] = resolveGateFreshness(task, stage);
     for (const run of task.runs ?? []) {
@@ -591,30 +591,11 @@ function candidateRelevantRuns(entries, target) {
   });
 }
 
-function latestRun(entries) {
-  const latest = entries.reduce((current, entry) => {
-    if (!current || isLaterRun(entry, current)) return entry;
-    return current;
-  }, null);
-  return latest?.run ?? null;
-}
-
 function latestPersistedRun(entries) {
   return entries.reduce((current, entry) => {
     if (!current || entry.index > current.index) return entry;
     return current;
   }, null)?.run ?? null;
-}
-
-function isLaterRun(left, right) {
-  const leftAttempt = validAttempt(left.run.attempt);
-  const rightAttempt = validAttempt(right.run.attempt);
-  if (leftAttempt != null && rightAttempt != null && leftAttempt !== rightAttempt) return leftAttempt > rightAttempt;
-  return left.index > right.index;
-}
-
-function validAttempt(value) {
-  return Number.isInteger(value) && value > 0 ? value : null;
 }
 
 function isTerminalRun(run) {
