@@ -64,21 +64,23 @@ export const MEASURED_FLOOR_CWD_CHARS = 64;
 export const MEASURED_BYTES_PER_WORKTREE = 14_414;
 
 /**
- * A high per-cwd-character cost, and — corrected — **not** the worst one observed. The
- * sweep measured ≈301 B/char at 3 worktrees and ≈2,670 B/char at 11 with a deeper path,
- * because a deeper cwd both lengthens every rule and adds deny paths.
+ * The high end of the measured per-cwd-character cost: ≈301 B/char at 3 worktrees, but
+ * ≈2,670 B/char at 11 with a deeper path, because a deeper cwd both lengthens every rule
+ * and adds deny paths.
  *
- * Then this repository measured worse: 358,696 bytes at its 38-char root against 604,342
- * at an 81-char linked worktree, both at 5 registered worktrees — 245,646 bytes over 43
- * characters, ≈5,712 B/char. Confounded, and deliberately not "corrected" into a new
- * constant: the two cwds differ in kind as well as length (a repo root versus a linked
- * worktree whose `.git` is a file), so attributing all of it to length would be the same
- * conflation this whole file exists to avoid.
+ * Independently confirmed on this repository at ≈2,738 B/char — two *registered
+ * worktrees* of the same repo at the same worktree count, 420,514 bytes at a 9-char path
+ * against 617,644 at an 81-char one, 197,130 over 72 characters. A round of this
+ * measurement that compared the repo root against a linked worktree appeared to show
+ * ≈5,712 B/char; that figure is **retracted** — it mixed cwd *kind* with cwd length, and
+ * the clean same-kind comparison lands on the constant already here.
  *
- * The honest reading is that this constant understates deep paths, which is one more
- * reason the extrapolation reports and never gates. Path depth is also the cheapest lever
- * the harness has on its own spend — a candidate worktree at a short path costs far less
- * than one nested inside a deep repository.
+ * The residual from that mixed pair is worth knowing and is *not* explained by length: at
+ * the same repository and worktree count, a linked-worktree cwd cost ~128 KB more than the
+ * repo root beyond what 2,738 B/char accounts for. It has not been isolated — it could be
+ * a cwd-kind term or non-linearity in depth — so nothing here prices it. It is one more
+ * reason the extrapolation reports and never gates, and it means a cwd that *is* a
+ * repository root is cheaper than a linked worktree of the same repository.
  */
 export const BOUND_BYTES_PER_CWD_CHAR = 2_670;
 

@@ -844,12 +844,33 @@ worktree each, ~8 at three, and **~5 at the five worktrees AH-003 actually used*
 plus C1). #41's "roughly five concurrent tasks" conclusion therefore survives — but by
 coincidence, since the arithmetic it came from used the retracted floor.
 
-The two rows differ by 245,646 bytes over 43 characters, ≈5,712 B/char, which is worse than
-the sweep's worst rate of 2,670. It is confounded — the rows differ in kind as well as
-length, a repo root versus a linked worktree whose `.git` is a file — so it is recorded and
-not turned into a constant. What it does establish is that **cwd depth is the cheapest lever
-the harness has on its own spend**, and it is untested: a clean comparison needs two
-registered worktrees of the same repository at different depths.
+Those two rows differ by 245,646 bytes over 43 characters, ≈5,712 B/char, but they differ in
+*kind* as well as length — a repo root against a linked worktree whose `.git` is a file — so
+that rate was confounded. The clean comparison, two **registered worktrees** of this
+repository at the same worktree count:
+
+| cwd | chars | measured argv bytes | worktrees of headroom |
+|---|---|---|---|
+| `/tmp/ahw1` | 9 | 420,514 | 39 |
+| `…/.claude/worktrees/wonderful-lamport-038472` | 81 | 617,644 | 25 |
+
+197,130 bytes over 72 characters, **≈2,738 B/char** — the sweep's 2,670 rate, confirmed
+independently. The 5,712 figure is retracted.
+
+Two things follow.
+
+1. **Candidate path depth is a cheap lever on the harness's own spend.** `git worktree add`
+   takes any path, so candidates need not live at `<repo>/.data/worktrees/<task>/<candidate>`.
+   Relocating them to a short path recovers ~197 KB here, taking headroom from 25 to 39
+   registered worktrees — roughly five to seven concurrent tasks at the five-worktree fan-out
+   AH-003 used. Real, and bounded: it raises the ceiling, it does not remove it.
+2. **There is an unexplained ~128 KB term, and it is not path length.** At the same
+   repository and worktree count, the linked-worktree cwd cost ~128 KB more than the repo
+   root beyond what 2,738 B/char accounts for. Not isolated — it could be a cwd-kind term
+   (`.git` as a file versus a directory) or non-linearity in depth — so nothing prices it.
+   Its practical shape: a cwd that *is* a repository root appears cheaper than a linked
+   worktree of the same repository, which is a point in favour of clone-per-candidate on
+   bytes as well as on coupling.
 
 The operational consequence is the opposite of a relaxation. The deny paths are generated
 from the repository containing the cwd, so **a clone carries none of the source
