@@ -743,6 +743,65 @@ records the provider that will execute it, a run cannot execute on a provider it
 reservation did not reserve, and a gate whose run and reservation disagree is
 `provider_mismatch` rather than a cross-provider fallback.
 
+### What actually causes the write-stage E2BIG — measured
+
+Three prior explanations were guesses, two of them written into this document, and each
+would have produced a different fix. This is the measurement, so the next person does not
+guess a fourth time. Method: a scratch git repo per data point under a short root, one
+factor varied at a time, and the argv the CLI hands the outer shell captured exactly by
+standing a measuring shim in front of it via `CLAUDE_CODE_SHELL` — which yields a number
+on a *passing* configuration, not just "it worked". CLI 2.1.222, macOS, `ARG_MAX` =
+1,048,576.
+
+**The mechanism.** On macOS the Bash tool does not spawn `sandbox-exec` directly. It
+builds one command *string* — `env … /usr/bin/sandbox-exec -p <PROFILE> <shell> -c <cmd>`
+— and passes it to the outer shell as `zsh -c <string>`. The seatbelt profile is
+therefore **inlined on the command line**, and `E2BIG` is that string exceeding `ARG_MAX`.
+Hence "command line 1.1MB across 3 args": three args, one of which is the whole profile.
+The environment is accounted in the same limit but is negligible here (1.5 KB, 24 vars).
+Inside the profile each deny path expands into a rule per ancestor component, so a
+measured 959 KB profile was 11,538 lines: 3,750 `deny` rules over 256 deny paths.
+
+| registered worktrees | cwd chars | argv bytes | Bash |
+|---|---|---|---|
+| 3 | 64 | 702,185 | ok |
+| 3 | 120 | 719,041 | ok |
+| 3 | 175 | 735,596 | ok |
+| 3 | 240 | 755,161 | ok |
+| 11 | 64 | 817,433 | ok |
+| 21 | 64 | 961,628 | ok |
+| 28 | 64 | ~1.0 MB (CLI-reported) | **E2BIG** |
+| 31 | 64 | ~1.1 MB (CLI-reported) | **E2BIG** |
+| 11 | 700 | ~2.5 MB (CLI-reported) | **E2BIG** |
+
+Four things follow, and the third is why the obvious fix is the wrong one.
+
+1. **The quantity that fails is total exec bytes, not either variable.** Both factors move
+   it because both feed the same profile.
+2. **Registered worktree count dominates.** Each adds three deny paths — `config.worktree`,
+   `config.worktree.lock`, `commondir`, exactly as the CLI's own message names — and
+   ≈ 14.4 KB of argv at a short cwd: 1 worktree ≈ 48 cwd characters. At a 64-char cwd, 28
+   registered worktrees fail on their own. The originally reported failure (43 worktrees,
+   92-char cwd) reproduces here at 31 worktrees and a 64-char cwd, same "1.1MB across 3
+   args" — so that failure was in the worktree-count regime, and the 43 → 5 cleanup that
+   flipped the canary green was acting on the dominant term.
+3. **cwd length is a real but secondary term, and it is not independent.** ≈ 301 bytes per
+   character at 3 worktrees, but ≈ 2,670 bytes per character at 11 worktrees with a deeper
+   path — a deeper cwd both lengthens every rule and *adds* deny paths (226 → 300 at 11
+   worktrees when the cwd went 64 → 700 chars). The factors interact multiplicatively
+   through ancestor expansion, so **"length alone" is false** and a length-matched canary
+   or a length-keyed canary cache would certify the wrong axis. Issue #39's proposed fix
+   does not follow from the measurement; #36's cleanup precondition does.
+4. **The floor is high.** A minimal scratch repo at a 64-char cwd already spends ~700 KB
+   of the 1 MB budget, so ~33% headroom is all any host starts with. On this repo's layout
+   (~64-char candidate paths) that is roughly two dozen registered worktrees, and every
+   concurrent task's candidate worktree is one of them.
+
+The shape a fix should take follows from (1): the budget is computable before spawning —
+deny-path count, each path's length, and its depth are all known to the harness — so the
+honest check is a byte-budget preflight, not a CLI run at an unrelated path. That is not
+implemented here; measuring first was the point.
+
 ### Operational requirements the spike did not surface
 
 Three things the harness must satisfy for a Claude stage to run at all, each found by a
