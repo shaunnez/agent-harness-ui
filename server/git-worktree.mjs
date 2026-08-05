@@ -6,7 +6,7 @@ import { isOwnedFile } from "./structured-output.mjs";
 const OUTPUT_LIMIT = 512 * 1024;
 
 // Harness worktrees come from `git worktree add`, which copies no installed dependencies.
-// Each new worktree is provisioned by linking the source checkout's own dependency
+// Each new worktree is provisioned from the source checkout's own dependency
 // directories, so the Test stage can run commands that need them without any package
 // manager running and without any lockfile changing.
 const DEPENDENCY_DIRECTORY_NAMES = ["node_modules", ".venv", "venv", ".tox", "vendor"];
@@ -435,43 +435,94 @@ function isInheritableDependencyEntry(name) {
 }
 
 /**
- * Provision a dependency directory as a real directory of per-entry links rather
- * than one link for the whole directory.
+ * Provision a dependency directory as a real, independent clone when the platform
+ * and filesystem support it, falling back to a directory of per-entry links when
+ * they don't.
  *
- * Both sandboxes resolve symlinks before matching, so a wholesale link makes every
- * path under it resolve into the shared source checkout and every write there is
- * refused — including the ones tools make legitimately. Vite writes
- * `node_modules/.vite-temp` while merely *loading* its config, so `npm run build`
- * fails outright in a provisioned worktree. Verified against both providers.
+ * Both sandboxes resolve symlinks before matching, so any link into the source
+ * checkout's dependency directory makes writes through it resolve into shared
+ * mutable state and get refused — including ones tools make legitimately (Vite
+ * writes `node_modules/.vite-temp` while merely *loading* its config; Playwright
+ * writes browser downloads inside `node_modules/playwright-core`; Python writes
+ * `__pycache__` throughout `.venv/lib/.../site-packages`). A per-entry link at the
+ * top level only ever fixed the first case: writes into an *already-installed*
+ * package still traverse a link into the source checkout.
  *
  * Widening the sandbox to admit those paths is the wrong fix: it reopens the escape
  * the symlink resolution closes, and a dependency directory is shared mutable state
  * that every concurrent candidate worktree and the operator's own environment
- * resolve to. Instead the directory itself is worktree-local and writable, while
- * each installed package remains a link and therefore still immutable. Tool caches
- * are deliberately not inherited, so a tool recreates its own inside the worktree.
+ * resolve to. Cloning gives each worktree a genuinely independent, fully writable
+ * tree instead: `cp -c` (APFS `clonefile`) or `cp --reflink=auto` (Linux) copy
+ * near-instantly and use no extra disk until a page is written. Both require the
+ * source and destination to be on the same volume, so that is checked first rather
+ * than assumed; anywhere it doesn't hold (a different platform, a different
+ * volume, a filesystem without clone/reflink support), provisioning falls back to
+ * the original per-entry-link strategy, which the sandbox still confines correctly
+ * — it is only writes *inside* an installed package that a link can't satisfy.
  */
 async function provisionDependencies(repositoryRoot, worktreePath) {
-  const provisioned = [];
+  const entries = [];
   for (const relative of await discoverDependencyDirectories(repositoryRoot)) {
-    const linkPath = path.join(worktreePath, relative);
-    if (await lstat(linkPath).then(() => true).catch(() => false)) continue;
-    const target = path.join(repositoryRoot, relative);
-    await mkdir(linkPath, { recursive: true });
-    for (const entry of await readdir(target, { withFileTypes: true }).catch(() => [])) {
-      if (!isInheritableDependencyEntry(entry.name)) continue;
-      const entryTarget = path.join(target, entry.name);
-      const directory = entry.isDirectory() || (entry.isSymbolicLink() && await isDirectory(entryTarget));
-      await symlink(
-        entryTarget,
-        path.join(linkPath, entry.name),
-        process.platform === "win32" ? (directory ? "junction" : "file") : undefined,
-      ).catch(() => {});
-    }
-    provisioned.push(relative);
+    const destination = path.join(worktreePath, relative);
+    if (await lstat(destination).then(() => true).catch(() => false)) continue;
+    const source = path.join(repositoryRoot, relative);
+    await mkdir(path.dirname(destination), { recursive: true });
+    const cloned = await cloneDependencyDirectory(source, destination);
+    if (!cloned) await symlinkDependencyEntries(source, destination);
+    entries.push({ path: relative, mode: cloned ? "clone" : "symlink" });
   }
-  await writeProvisionManifest(worktreePath, provisioned);
-  return provisioned;
+  await writeProvisionManifest(worktreePath, entries);
+  return entries.map((entry) => entry.path);
+}
+
+// Symlink each entry inside a real, worktree-local directory rather than linking the
+// whole directory, so the directory itself stays writable for new top-level tool state
+// (caches, `.bin` shims regenerated by a package manager) even though this cannot make
+// writes *inside* an already-installed package land anywhere but the source checkout.
+async function symlinkDependencyEntries(source, destination) {
+  await mkdir(destination, { recursive: true });
+  for (const entry of await readdir(source, { withFileTypes: true }).catch(() => [])) {
+    if (!isInheritableDependencyEntry(entry.name)) continue;
+    const entryTarget = path.join(source, entry.name);
+    const directory = entry.isDirectory() || (entry.isSymbolicLink() && (await isDirectory(entryTarget)));
+    await symlink(
+      entryTarget,
+      path.join(destination, entry.name),
+      process.platform === "win32" ? (directory ? "junction" : "file") : undefined,
+    ).catch(() => {});
+  }
+}
+
+// Attempts a same-volume clone of `source` to `destination` and reports whether it
+// produced a real directory. Detected rather than assumed: `clonefile`/reflink support
+// is platform- and filesystem-specific, and the harness's worktree storage root can be
+// configured onto a different volume than the source checkout it clones from.
+async function cloneDependencyDirectory(source, destination) {
+  if (process.platform !== "darwin" && process.platform !== "linux") return false;
+  const [sourceDevice, destinationParentDevice] = await Promise.all([
+    stat(source).then((info) => info.dev).catch(() => null),
+    stat(path.dirname(destination)).then((info) => info.dev).catch(() => null),
+  ]);
+  if (sourceDevice === null || destinationParentDevice === null || sourceDevice !== destinationParentDevice) return false;
+  const args =
+    process.platform === "darwin"
+      ? ["-c", "-R", "--", source, destination]
+      : ["--reflink=auto", "-R", "--", source, destination];
+  const succeeded = await runToCompletion("cp", args);
+  const created = succeeded && (await lstat(destination).then((info) => info.isDirectory()).catch(() => false));
+  if (!created) {
+    await rm(destination, { recursive: true, force: true }).catch(() => {});
+    return false;
+  }
+  return true;
+}
+
+function runToCompletion(command, args) {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, { stdio: "ignore" });
+    child.on("error", () => resolve(false));
+    child.on("close", (code) => resolve(code === 0));
+  });
 }
 
 // The manifest lives in the worktree's private Git directory, never in its working tree,
@@ -482,39 +533,71 @@ async function manifestPath(repositoryRoot) {
   return path.join(result.stdout.trim(), PROVISION_MANIFEST);
 }
 
-async function writeProvisionManifest(worktreePath, paths) {
+async function writeProvisionManifest(worktreePath, entries) {
   const file = await manifestPath(worktreePath);
   if (!file) throw new Error("Could not resolve the worktree Git directory to record provisioned dependencies.");
-  await writeFile(file, `${JSON.stringify({ paths }, null, 2)}\n`, "utf8");
+  const paths = entries.map((entry) => entry.path);
+  await writeFile(file, `${JSON.stringify({ paths, entries }, null, 2)}\n`, "utf8");
 }
 
+// Every caller that only needs to filter or exclude provisioned paths (status scanning,
+// pathspec exclusion, cleanup) reads this flat list; only deprovisioning needs the mode.
 async function provisionedDependencies(repositoryRoot) {
+  return (await provisionedDependencyEntries(repositoryRoot)).map((entry) => entry.path);
+}
+
+export async function provisionedDependencyEntries(repositoryRoot) {
   const file = await manifestPath(repositoryRoot);
   if (!file) return [];
   const raw = await readFile(file, "utf8").catch(() => null);
   if (!raw) return [];
   try {
-    const paths = JSON.parse(raw).paths;
-    return Array.isArray(paths) ? paths.filter((value) => typeof value === "string" && value) : [];
+    const data = JSON.parse(raw);
+    if (Array.isArray(data.entries)) {
+      return data.entries.filter(
+        (entry) => entry && typeof entry.path === "string" && entry.path && (entry.mode === "clone" || entry.mode === "symlink"),
+      );
+    }
+    // A manifest written before clone support recorded only paths; every provisioned
+    // path from that era was a symlink structure, so it is read back as one.
+    if (Array.isArray(data.paths)) {
+      return data.paths.filter((value) => typeof value === "string" && value).map((value) => ({ path: value, mode: "symlink" }));
+    }
+    return [];
   } catch {
     return [];
   }
 }
 
 async function deprovisionDependencies(worktreePath) {
-  const provisioned = await provisionedDependencies(worktreePath);
-  for (const relative of provisioned) {
-    const linkPath = path.join(worktreePath, relative);
-    const stats = await lstat(linkPath).catch(() => null);
+  const entries = await provisionedDependencyEntries(worktreePath);
+  const worktreeRoot = await realpath(worktreePath).catch(() => path.resolve(worktreePath));
+  for (const { path: relative, mode } of entries) {
+    const targetPath = path.join(worktreePath, relative);
+    const stats = await lstat(targetPath).catch(() => null);
     if (!stats) continue;
+    if (mode === "clone" && !stats.isSymbolicLink()) {
+      // A clone is real content, not a pointer: removing it recursively is only safe
+      // once its resolved path is confirmed inside the worktree, mirroring the boundary
+      // refusals in `removeWorktree`/`recoverCandidate`. A manifest entry can only name
+      // paths `discoverDependencyDirectories` found by descending real subdirectories,
+      // so this should always hold; the check exists anyway because deleting up to a
+      // gigabyte of the operator's real dependencies is not a mistake to risk on "should".
+      const resolved = await realpath(targetPath).catch(() => null);
+      if (!resolved || !(resolved === worktreeRoot || resolved.startsWith(`${worktreeRoot}${path.sep}`))) {
+        throw new Error(`Dependency removal refused a clone whose real path escaped the worktree: ${relative}`);
+      }
+      await rm(targetPath, { recursive: true, force: true });
+      continue;
+    }
     // Unlink the link itself. Never recurse, so removal can never reach through into the
     // source checkout's dependency directories.
-    if (stats.isSymbolicLink()) await unlink(linkPath);
-    else await rm(linkPath, { recursive: true, force: true });
+    if (stats.isSymbolicLink()) await unlink(targetPath);
+    else await rm(targetPath, { recursive: true, force: true });
   }
   const file = await manifestPath(worktreePath);
   if (file) await rm(file, { force: true });
-  return provisioned;
+  return entries.map((entry) => entry.path);
 }
 
 // A `.gitignore` entry of `node_modules/` matches directories only, so a symlink named

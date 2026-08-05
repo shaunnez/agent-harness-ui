@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
-import { GitWorktreeManager, discoverDependencyDirectories } from "../server/git-worktree.mjs";
+import { GitWorktreeManager, discoverDependencyDirectories, provisionedDependencyEntries } from "../server/git-worktree.mjs";
 
 const exec = promisify(execFile);
 
@@ -182,20 +182,35 @@ test("provisions nested and non-Node dependencies into slice and candidate workt
         "module.exports = 2;",
       );
       assert.equal((await readFile(path.join(worktree.worktreePath, ".venv", "pyvenv.cfg"), "utf8")).trim(), "home = /usr");
-      // The directory itself is worktree-local and writable; each installed package
-      // inside it is a link and therefore still immutable. A wholesale directory link
-      // makes every path under it resolve into the shared source checkout, and both
-      // sandboxes resolve symlinks before matching — so tool caches written under
-      // node_modules (vite's `.vite-temp`, written while merely loading its config)
-      // are refused and the stage fails.
       assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules"))).isSymbolicLink(), false);
       assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules"))).isDirectory(), true);
-      assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules", "left-pad"))).isSymbolicLink(), true);
-      assert.equal(
-        await realpath(path.join(worktree.worktreePath, "node_modules", "left-pad")),
-        await realpath(path.join(repository, "node_modules", "left-pad")),
-        "an installed package still resolves to the source checkout",
-      );
+
+      const modeByPath = new Map((await provisionedDependencyEntries(worktree.worktreePath)).map((entry) => [entry.path, entry.mode]));
+      assert.deepEqual([...modeByPath.keys()].sort(), [".venv", "frontend/node_modules", "node_modules"]);
+      const nodeModulesMode = modeByPath.get("node_modules");
+      if (nodeModulesMode === "clone") {
+        // A clone is real, independent content: an installed package is its own copy,
+        // not a pointer back into the source checkout.
+        assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules", "left-pad"))).isSymbolicLink(), false);
+        assert.notEqual(
+          await realpath(path.join(worktree.worktreePath, "node_modules", "left-pad")),
+          await realpath(path.join(repository, "node_modules", "left-pad")),
+          "a cloned package does not resolve back to the source checkout",
+        );
+      } else {
+        // Without clone/reflink support the directory itself is worktree-local and
+        // writable, while each installed package inside it is a link and therefore
+        // still immutable. A wholesale directory link makes every path under it resolve
+        // into the shared source checkout, and both sandboxes resolve symlinks before
+        // matching — so tool caches written under node_modules (vite's `.vite-temp`,
+        // written while merely loading its config) are refused and the stage fails.
+        assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules", "left-pad"))).isSymbolicLink(), true);
+        assert.equal(
+          await realpath(path.join(worktree.worktreePath, "node_modules", "left-pad")),
+          await realpath(path.join(repository, "node_modules", "left-pad")),
+          "a linked package still resolves to the source checkout",
+        );
+      }
 
       // A tool cache created during a stage stays inside the worktree instead of
       // contaminating the source checkout that every other worktree shares.
@@ -262,6 +277,62 @@ test("provisions nested and non-Node dependencies into slice and candidate workt
     assert.equal((await readFile(path.join(repository, "frontend", "node_modules", "vite", "index.js"), "utf8")).trim(), "module.exports = 2;");
     assert.equal((await readFile(path.join(repository, ".venv", "pyvenv.cfg"), "utf8")).trim(), "home = /usr");
     await manager.base(task);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("a write inside a cloned dependency directory succeeds, which a symlinked one could not", async (t) => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-clone-write-"));
+  const repository = path.join(directory, "repository");
+  try {
+    await seedRepository(directory, repository);
+    await seedDependencies(repository);
+
+    const manager = new GitWorktreeManager(path.join(directory, "worktrees"));
+    const task = { id: "AH-CLONE", repositoryPath: repository };
+    const base = await manager.base(task);
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+
+    const modeByPath = new Map((await provisionedDependencyEntries(candidate.worktreePath)).map((entry) => [entry.path, entry.mode]));
+    if (modeByPath.get("node_modules") !== "clone") {
+      t.skip("this host has no same-volume clonefile/reflink support; the symlink fallback is covered above");
+      return;
+    }
+
+    // A per-entry symlink made `node_modules` itself writable but left every installed
+    // package resolving through a link into the source checkout, so a write anywhere
+    // *inside* an already-installed package (a build artifact, a downloaded browser, a
+    // rewritten file) still landed in shared state and would be refused by a resolved-path
+    // sandbox. A clone is real, independent content throughout, so the same write succeeds
+    // and never reaches the source checkout at all.
+    const worktreeReal = await realpath(candidate.worktreePath);
+    const newFile = path.join(candidate.worktreePath, "node_modules", "left-pad", "generated-cache.json");
+    await writeFile(newFile, "{}\n", "utf8");
+    assert.ok(
+      (await realpath(newFile)).startsWith(`${worktreeReal}${path.sep}`),
+      "the write's resolved path stays inside the worktree",
+    );
+    assert.equal(
+      await stat(path.join(repository, "node_modules", "left-pad", "generated-cache.json")).then(() => true).catch(() => false),
+      false,
+      "the write never reaches the source checkout",
+    );
+
+    // Rewriting a file that was already part of the installed package, not just adding a
+    // new one, is the case a wholesale directory link could never satisfy either.
+    await writeFile(path.join(candidate.worktreePath, "node_modules", "left-pad", "index.js"), "module.exports = 99;\n", "utf8");
+    assert.equal(
+      (await readFile(path.join(repository, "node_modules", "left-pad", "index.js"), "utf8")).trim(),
+      "module.exports = 1;",
+      "the source checkout's installed package is unaffected by a worktree-local edit",
+    );
+
+    // Removal still recursively deletes the clone and leaves the source dependencies intact.
+    const removed = await manager.removeWorktree(candidate);
+    assert.deepEqual(removed, [".venv", "frontend/node_modules", "node_modules"]);
+    assert.equal(await exists(candidate.worktreePath), false);
+    assert.equal((await readFile(path.join(repository, "node_modules", "left-pad", "index.js"), "utf8")).trim(), "module.exports = 1;");
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
