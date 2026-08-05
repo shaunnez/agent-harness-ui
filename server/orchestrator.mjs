@@ -11,12 +11,16 @@ import {
   INVESTIGATION_PIPELINE,
   projectRepairFindings,
 } from "./prompts.mjs";
-import { getCodexStatus, isProcessTimeoutError, runCodex } from "./codex-runtime.mjs";
+import { getCodexStatus } from "./codex-runtime.mjs";
+import { resolveExecutionProvider } from "./execution-providers.mjs";
+import { isProcessTimeoutError } from "./process-runtime.mjs";
 import { GitWorktreeManager } from "./git-worktree.mjs";
 import {
   CREDIT_SOURCE_URL,
   enrichUsage,
   PRICING_SOURCE_URL,
+  policyIdForRun,
+  readExecutionProviderCatalog,
   resolveAgentPolicy,
   validatePricingRates,
   withConfiguredModels,
@@ -34,6 +38,8 @@ import {
   beginAgentRun,
   CANDIDATE_GATE_STAGES,
   completeAgentRun,
+  DEFAULT_EXECUTION_PROVIDER,
+  readExecutionProvider,
   RUNTIME_FRESHNESS_REASONS,
   refreshGateFreshness,
   runEventMetadata,
@@ -78,16 +84,93 @@ export class TaskOrchestrator {
 
   constructor(store, options = {}) {
     this.#store = store;
-    this.#runCodex = options.runCodex ?? runCodex;
+    this.#runCodex = options.runCodex ?? null;
     this.#getStatus = options.getStatus ?? getCodexStatus;
     this.#worktrees = options.worktreeManager ?? new GitWorktreeManager(path.resolve(".data", "worktrees"));
   }
 
+  /**
+   * Dispatch one agent run to the named execution provider.
+   *
+   * `options.runCodex` remains an honoured injection point and overrides the
+   * resolved provider entirely, which is what keeps the existing runtime tests
+   * driving the orchestrator without knowing the seam exists.
+   */
+  #runAgent(providerId, request) {
+    if (this.#runCodex) return this.#runCodex(request);
+    return resolveExecutionProvider(providerId).run(request);
+  }
+
+  /**
+   * The seam's teeth. A provider that reports anything weaker than an OS-enforced
+   * sandbox for this posture gets the harness's own verification *required*, and the
+   * stage refuses to run when that verification is not wired. A provider whose
+   * confinement is one OS-level guarantee is verified anyway where the hook exists —
+   * both additions strengthen existing checks — but is not blocked by its absence,
+   * which is what lets an injected partial worktree manager keep working.
+   */
+  #requiresHarnessConfinement(providerId, sandbox) {
+    if (this.#runCodex) return false;
+    const provider = resolveExecutionProvider(providerId);
+    return provider.capabilities().sandboxes?.[sandbox] !== "os-enforced";
+  }
+
+  /**
+   * Refuse a stage the provider cannot confine, before anything is spawned.
+   *
+   * A posture the provider does not list is unavailable, not weakly available —
+   * this is what keeps `workspace-write` on Codex. And a provider whose confinement
+   * is verified by the harness rather than by the OS must demonstrate it on *this*
+   * host: the layered posture depends on mechanisms a CLI release can change without
+   * a changelog entry the harness reads, so configuration is not evidence.
+   */
+  async #assertProviderConfinement(providerId, sandbox, networkAccess = false) {
+    if (this.#runCodex) return;
+    const provider = resolveExecutionProvider(providerId);
+    const capabilities = provider.capabilities();
+    const posture = capabilities.sandboxes?.[sandbox];
+    if (!posture) {
+      throw new Error(`${provider.label} does not support the ${sandbox} sandbox, so this stage cannot run on it.`);
+    }
+    if (networkAccess && !capabilities.grantsNetworkAccess) {
+      throw new Error(`${provider.label} cannot grant the network access this stage requires, so it cannot run on it.`);
+    }
+    if (capabilities.confinementVerifiedBy !== "harness") return;
+    if (typeof provider.canary !== "function") {
+      throw new Error(`${provider.label} reports ${posture} confinement but provides no way to verify it on this host.`);
+    }
+    const canary = await provider.canary({ sandbox });
+    if (!canary?.passed) {
+      throw new Error(
+        `${provider.label} ${sandbox} confinement is not established on this host: ${canary?.detail ?? "the sandbox canary did not pass."}`,
+      );
+    }
+  }
+
+  async #snapshotSource(providerId, cwd, sandbox) {
+    const available = typeof this.#worktrees.snapshotRepository === "function"
+      && typeof this.#worktrees.assertRepositoryUnchanged === "function";
+    const snapshot = available ? await this.#worktrees.snapshotRepository(cwd) : null;
+    if (snapshot) return snapshot;
+    // Unverifiable. A provider whose confinement is one OS-level guarantee proceeds
+    // exactly as it does today; a provider relying on the harness as its enforcement
+    // of record refuses rather than running unverified.
+    if (this.#requiresHarnessConfinement(providerId, sandbox)) {
+      throw new Error(
+        `A ${sandbox} stage on this provider requires source-repository verification, and ${cwd} cannot be verified.`,
+      );
+    }
+    return null;
+  }
+
   async status() {
     const [runtime, settings] = await Promise.all([this.#getStatus(), this.#store.settings()]);
+    // Every provider's models, so the picker can offer a Claude model for one stage and
+    // a Codex model for another with each model's own reasoning levels.
+    const catalog = runtime.catalog ? await readExecutionProviderCatalog() : runtime.catalog;
     return {
       ...runtime,
-      catalog: withConfiguredModels(runtime.catalog, settings),
+      catalog: withConfiguredModels(catalog, settings),
       model: settings.defaultModel,
       reasoning: settings.defaultReasoning,
       settings,
@@ -97,7 +180,10 @@ export class TaskOrchestrator {
 
   async verifyPricing() {
     const settings = await this.#store.settings();
-    const result = await this.#runCodex({
+    // Pricing verification prompts for OpenAI rates and `validatePricingRates`
+    // hard-requires the GPT-5.6 ids, so it stays pinned to Codex until it is
+    // provider-scoped with its own required-id set.
+    const result = await this.#runAgent(DEFAULT_EXECUTION_PROVIDER, {
       cwd: process.cwd(),
       prompt: `You are verifying a local GPT-5.6 pricing registry. Use current official OpenAI documentation only: API prices from ${PRICING_SOURCE_URL} and ChatGPT/Codex credit rates from ${CREDIT_SOURCE_URL}. Do not modify files. Return exactly one JSON object between <pricing-rates> and </pricing-rates>. Include gpt-5.6-sol, gpt-5.6-terra, and gpt-5.6-luna. Each value must have short and, when documented, long objects with numeric input, cachedInput, cacheWrite (or null), and output USD prices per 1M tokens. Do not include prose inside the tags.`,
       sandbox: "read-only",
@@ -923,14 +1009,30 @@ export class TaskOrchestrator {
     const candidate = currentCandidate(task);
     await this.#worktrees.verifyCandidate(candidate);
     let result;
+    // A reviewer that dirties its worktree without committing leaves every exact-SHA
+    // check reporting agreement, because the SHA genuinely did not change — while the
+    // gate's evidence now attests to file contents that were never in the reviewed
+    // commit. That is a silent invalidation, and until now a final-review mutation
+    // was caught nowhere: it is the last gate before merge.
+    let reviewerMutation = null;
     try {
       result = await this.#executeAgent(task, stageId, signal, candidate.worktreePath, "read-only", candidate);
     } finally {
       if (stageId === "test") {
+        // The test stage is *expected* to dirty its worktree, so it recovers.
         if (typeof this.#worktrees.recoverCandidate === "function") {
           await this.#worktrees.recoverCandidate(candidate);
         }
         await this.#worktrees.verifyCandidate(candidate);
+      } else if (result) {
+        // A reviewer is not expected to dirty anything, so it is never recovered:
+        // silently restoring the worktree would erase the only evidence that the
+        // reviewer mutated the candidate it was reviewing.
+        try {
+          await this.#worktrees.verifyCandidate(candidate);
+        } catch (error) {
+          reviewerMutation = error;
+        }
       }
     }
     throwIfAborted(signal);
@@ -938,6 +1040,7 @@ export class TaskOrchestrator {
     let structuredGateEvidence = null;
     let evidenceError = null;
     try {
+      if (reviewerMutation) throw reviewerMutation;
       focusedTestEvidence = stageId === "test"
         ? validateFocusedTestEvidence(parseFocusedTestEvidence(result.finalText), candidate)
         : null;
@@ -961,6 +1064,7 @@ export class TaskOrchestrator {
       findings: structuredGateEvidence?.findings ?? [],
       blockingReasons: [
         ...(evidenceError ? [evidenceError.copy] : []),
+        ...(reviewerMutation ? [`The ${stageId} agent mutated the candidate it was reviewing. ${reviewerMutation.message}`] : []),
         ...(stageId === "test" && candidateVerificationCommandFailed(result.runtimeEvents)
           ? ["A verification command failed."]
           : []),
@@ -978,6 +1082,17 @@ export class TaskOrchestrator {
       gateResult,
       evidenceError,
     });
+    if (reviewerMutation) {
+      await this.#store.update(id, (draft) => {
+        draft.events.push(activity(
+          stageId,
+          "Reviewer mutated the candidate",
+          `${reviewerMutation.message} The verdict was not accepted; this gate requires a rerun.`,
+          "danger",
+          "decision",
+        ));
+      });
+    }
     await this.#store.update(id, (draft) => {
       const activeCandidate = currentCandidate(draft);
       const gateFailure = candidateGateFailure(draft, activeCandidate, [stageId]);
@@ -1125,6 +1240,7 @@ export class TaskOrchestrator {
           sourceWorkflowReservationId: repairReservation.id,
           sourceWorkflowReservedAt: repairReservation.reservedAt,
           authorizingGateStage: repairReservation.authorizingGateStage,
+          authorizingGateProvider: readExecutionProvider({ provider: repairReservation.authorizingGateProvider }),
           authorizingGateWorkflowAttempt: repairReservation.authorizingGateWorkflowAttempt,
           authorizingGateReservationId: repairReservation.authorizingGateReservationId,
           authorizingGateReservedAt: repairReservation.authorizingGateReservedAt,
@@ -1173,6 +1289,11 @@ export class TaskOrchestrator {
     const runRole = runScopeId ?? policyId;
     const runKind = runKindFor(stageId, runRole, workPackageId);
     const runtimeTemp = path.join(os.tmpdir(), "agent-harness", task.id, runId);
+    // Stages against `task.repositoryPath` run in the operator's real working tree,
+    // where there is no candidate and no existing check. Snapshot HEAD plus the full
+    // porcelain status and require both to be identical afterwards.
+    const sourceSnapshot = candidate ? null : await this.#snapshotSource(policy.provider, cwd, effectiveSandbox);
+    let runProvider = DEFAULT_EXECUTION_PROVIDER;
     await this.#store.update(task.id, (draft) => {
       const reservation = Object.values(draft.stageRunReservations ?? {}).find(
         (entry) => entry?.id === draft.activeRunReservationId,
@@ -1180,6 +1301,16 @@ export class TaskOrchestrator {
       if (!reservation || reservation.kind !== draft.activeRunKind || reservation.stage !== stageId) {
         throw new Error("The active workflow attempt is missing its persisted run reservation.");
       }
+      // The reservation owns provider identity for the attempt. A run may never
+      // execute on a provider other than the one its reservation reserved, so a
+      // resolved policy that disagrees refuses to spawn instead of falling back.
+      const reservationProvider = readExecutionProvider(reservation);
+      if (policy.provider !== reservationProvider) {
+        throw new Error(
+          `Stage ${stageId} resolved provider ${policy.provider} but its workflow reservation is bound to ${reservationProvider}.`,
+        );
+      }
+      runProvider = reservationProvider;
       draft.currentStage = stageId;
       const detail = testRuntime
         ? `Verifying ${cwd}; source changes are checked before and after the run`
@@ -1187,6 +1318,7 @@ export class TaskOrchestrator {
       const run = beginAgentRun(draft, {
         id: runId,
         kind: runKind,
+        provider: reservationProvider,
         stage: stageId,
         role: runRole,
         model: policy.model,
@@ -1210,7 +1342,8 @@ export class TaskOrchestrator {
     });
     const runtimeEvents = [];
     try {
-      const result = await this.#runCodex({
+      await this.#assertProviderConfinement(runProvider, effectiveSandbox, testRuntime);
+      const result = await this.#runAgent(runProvider, {
         cwd,
         prompt: agentRequest.prompt,
         signal,
@@ -1224,6 +1357,10 @@ export class TaskOrchestrator {
           if (event.type === "activity") runtimeEvents.push(event);
         },
       });
+      // Before the run is recorded as completed: a stage that mutated the operator's
+      // working tree produced evidence about files that were never in the tree it
+      // claims to have read.
+      if (sourceSnapshot) await this.#worktrees.assertRepositoryUnchanged(cwd, sourceSnapshot);
       const completedAt = now();
       result.runId = runId;
       result.model = policy.model;
@@ -1488,7 +1625,7 @@ function reserveRun(task, kind) {
   task.events.push(activity(stage, `${labelForRun(kind)} started`, runDetail(kind), "info", "agent"));
 }
 
-function createStageRunReservation(task, kind, stage) {
+function createStageRunReservation(task, kind, stage, provider = reservationProviderFor(task, kind, stage)) {
   const candidate = kind === "implementation" ? null : (task.candidates?.at(-1) ?? null);
   const repairAuthorizer = kind === "repair" ? repairAuthorizerSnapshot(task, candidate) : null;
   const reservedAt = repairAuthorizer
@@ -1503,6 +1640,7 @@ function createStageRunReservation(task, kind, stage) {
     id: crypto.randomUUID(),
     stage,
     kind,
+    provider,
     workflowAttempt: (task.attemptsByStage?.[stage] ?? 0) + 1,
     candidateId: candidate?.id ?? null,
     candidateRevision: candidate?.revisionNumber ?? null,
@@ -1511,6 +1649,16 @@ function createStageRunReservation(task, kind, stage) {
     reservedAt,
     ...(repairAuthorizer ?? {}),
   };
+}
+
+/**
+ * The provider that will execute this attempt, resolved from the stage policy that
+ * owns it rather than from the task. This is what lets a task review on one runtime
+ * and implement on another while a run still cannot execute on a provider its
+ * reservation did not reserve.
+ */
+function reservationProviderFor(task, kind, stage) {
+  return resolveAgentPolicy(task, policyIdForRun(kind, stage)).provider;
 }
 
 function repairAuthorizerSnapshot(task, candidate, requestedStage = null) {
@@ -1566,6 +1714,7 @@ function repairAuthorizerSnapshot(task, candidate, requestedStage = null) {
     gateReservation.candidateId !== candidate.id ||
     gateReservation.candidateRevision !== candidate.revisionNumber ||
     gateReservation.candidateHeadRevision !== candidate.headRevision ||
+    readExecutionProvider(sourceRun) !== readExecutionProvider(gateReservation) ||
     sourceRun.stage !== stage ||
     sourceRun.role !== stage ||
     sourceRun.kind !== runKindFor(stage, stage) ||
@@ -1595,6 +1744,7 @@ function repairAuthorizerSnapshot(task, candidate, requestedStage = null) {
       id: gateReservation.id,
       stage: gateReservation.stage,
       kind: gateReservation.kind,
+      provider: readExecutionProvider(gateReservation),
       workflowAttempt: gateReservation.workflowAttempt,
       candidateId: gateReservation.candidateId,
       candidateRevision: gateReservation.candidateRevision,
@@ -1605,6 +1755,7 @@ function repairAuthorizerSnapshot(task, candidate, requestedStage = null) {
     run: {
       id: sourceRun.id,
       kind: sourceRun.kind,
+      provider: readExecutionProvider(sourceRun),
       stage: sourceRun.stage,
       role: sourceRun.role,
       status: sourceRun.status,
@@ -1636,6 +1787,11 @@ function repairAuthorizerSnapshot(task, candidate, requestedStage = null) {
   };
   return {
     authorizingGateStage: stage,
+    // Persisted for the same reason the other authorizing-gate fields are: the
+    // retry-grant path reconstructs this reservation from candidate-revision lineage
+    // long after the reservation itself has been replaced, and without a recorded
+    // provider that reconstruction has to guess one.
+    authorizingGateProvider: readExecutionProvider(gateReservation),
     authorizingGateWorkflowAttempt: gateReservation.workflowAttempt,
     authorizingGateReservationId: gateReservation.id,
     authorizingGateReservedAt: gateReservation.reservedAt,
@@ -1659,6 +1815,7 @@ function assertRepairAuthorizerUnchanged(task, candidate, repairReservation) {
 function sameRepairAuthorizerSnapshot(expected, current) {
   return [
     "authorizingGateStage",
+    "authorizingGateProvider",
     "authorizingGateWorkflowAttempt",
     "authorizingGateReservationId",
     "authorizingGateReservedAt",
@@ -1689,7 +1846,9 @@ function sameRepairReservationAuthority(expected, current) {
     "candidateId",
     "candidateRevision",
     "candidateHeadRevision",
+    "provider",
     "authorizingGateStage",
+    "authorizingGateProvider",
     "authorizingGateWorkflowAttempt",
     "authorizingGateReservationId",
     "authorizingGateReservedAt",

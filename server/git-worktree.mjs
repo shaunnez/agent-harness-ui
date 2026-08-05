@@ -120,7 +120,13 @@ export class GitWorktreeManager {
     }
 
     const parentRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
-    await git(candidate.worktreePath, ["add", "-A", "--", ".", ...excludePathspecs(provisioned)]);
+    await git(candidate.worktreePath, [
+      "add",
+      "-A",
+      "--",
+      ".",
+      ...(await excludePathspecs(candidate.worktreePath, provisioned)),
+    ]);
     await git(candidate.worktreePath, ["commit", "-m", message]);
     const headRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
     const summary = (await git(candidate.worktreePath, ["diff", "--stat", candidate.baseRevision, headRevision])).stdout.trim();
@@ -315,6 +321,49 @@ export class GitWorktreeManager {
     const result = await git(repositoryPath, ["rev-parse", "--show-toplevel"]);
     return realpath(path.resolve(result.stdout.trim()));
   }
+
+  /**
+   * Exact HEAD plus full working-tree status for a repository the harness does not
+   * own. Read-only stages against `task.repositoryPath` run in the operator's real
+   * working tree, where there is no candidate to bind to and no existing check at
+   * all — and mutating a real working tree is strictly worse than mutating a
+   * disposable worktree.
+   *
+   * Unlike `assertClean` this does not require the tree to *be* clean: an operator's
+   * working tree legitimately has uncommitted work in it. It records what was there
+   * and requires it to be identical afterwards. Provisioned dependency paths are
+   * excluded for the same reason `assertClean` excludes them.
+   */
+  async snapshotRepository(repositoryPath) {
+    // A path that is not a git repository has no HEAD and no status to compare, so
+    // it cannot be verified this way. Returning null says so, rather than
+    // manufacturing a snapshot that would always agree with itself; the caller
+    // decides whether an unverifiable stage may run.
+    const repositoryRoot = await this.repositoryRoot(repositoryPath).catch(() => null);
+    if (!repositoryRoot) return null;
+    const provisioned = await provisionedDependencies(repositoryRoot);
+    const headRevision = (await git(repositoryRoot, ["rev-parse", "HEAD"])).stdout.trim();
+    const status = statusEntries(
+      (await git(repositoryRoot, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout,
+    )
+      .filter((entry) => !isProvisionedPath(entry.file, provisioned))
+      .map((entry) => `${entry.code ?? ""} ${entry.file}`)
+      .sort();
+    return { repositoryRoot, headRevision, status };
+  }
+
+  async assertRepositoryUnchanged(repositoryPath, before) {
+    if (!before) return null;
+    const after = await this.snapshotRepository(repositoryPath);
+    if (!after) throw new Error("The stage's source repository is no longer a git repository.");
+    if (after.headRevision !== before.headRevision) {
+      throw new Error("The stage changed the source repository HEAD revision.");
+    }
+    if (JSON.stringify(after.status) !== JSON.stringify(before.status)) {
+      throw new Error("The stage changed files in the source repository working tree.");
+    }
+    return after;
+  }
 }
 
 function normalizeLifecycleState(value) {
@@ -377,14 +426,48 @@ async function ignoredPaths(repositoryRoot, candidates) {
   return new Set(result.stdout.split(/\r?\n/).filter(Boolean));
 }
 
+// Infrastructure entries a dependency directory needs to function. Every other
+// dot-entry is treated as tool state rather than an installed package.
+const DEPENDENCY_INFRASTRUCTURE_ENTRIES = [".bin", ".pnpm", ".package-lock.json", ".modules.yaml", ".yarn-state.yml"];
+
+function isInheritableDependencyEntry(name) {
+  return !name.startsWith(".") || DEPENDENCY_INFRASTRUCTURE_ENTRIES.includes(name);
+}
+
+/**
+ * Provision a dependency directory as a real directory of per-entry links rather
+ * than one link for the whole directory.
+ *
+ * Both sandboxes resolve symlinks before matching, so a wholesale link makes every
+ * path under it resolve into the shared source checkout and every write there is
+ * refused — including the ones tools make legitimately. Vite writes
+ * `node_modules/.vite-temp` while merely *loading* its config, so `npm run build`
+ * fails outright in a provisioned worktree. Verified against both providers.
+ *
+ * Widening the sandbox to admit those paths is the wrong fix: it reopens the escape
+ * the symlink resolution closes, and a dependency directory is shared mutable state
+ * that every concurrent candidate worktree and the operator's own environment
+ * resolve to. Instead the directory itself is worktree-local and writable, while
+ * each installed package remains a link and therefore still immutable. Tool caches
+ * are deliberately not inherited, so a tool recreates its own inside the worktree.
+ */
 async function provisionDependencies(repositoryRoot, worktreePath) {
   const provisioned = [];
   for (const relative of await discoverDependencyDirectories(repositoryRoot)) {
     const linkPath = path.join(worktreePath, relative);
     if (await lstat(linkPath).then(() => true).catch(() => false)) continue;
-    await mkdir(path.dirname(linkPath), { recursive: true });
     const target = path.join(repositoryRoot, relative);
-    await symlink(target, linkPath, process.platform === "win32" ? "junction" : "dir");
+    await mkdir(linkPath, { recursive: true });
+    for (const entry of await readdir(target, { withFileTypes: true }).catch(() => [])) {
+      if (!isInheritableDependencyEntry(entry.name)) continue;
+      const entryTarget = path.join(target, entry.name);
+      const directory = entry.isDirectory() || (entry.isSymbolicLink() && await isDirectory(entryTarget));
+      await symlink(
+        entryTarget,
+        path.join(linkPath, entry.name),
+        process.platform === "win32" ? (directory ? "junction" : "file") : undefined,
+      ).catch(() => {});
+    }
     provisioned.push(relative);
   }
   await writeProvisionManifest(worktreePath, provisioned);
@@ -445,8 +528,20 @@ function isProvisionedPath(file, provisioned) {
   return provisioned.some((entry) => normalized === entry || normalized.startsWith(`${entry}/`));
 }
 
-function excludePathspecs(provisioned) {
-  return provisioned.map((entry) => `:(exclude)${entry}`);
+/**
+ * Exclude only the provisioned paths git does not already ignore.
+ *
+ * Naming an ignored path in a pathspec makes `git add` fail outright ("use -f if you
+ * really want to add them"), and an ignored path needs no exclusion in the first
+ * place. This became load-bearing when provisioned directories stopped being
+ * symlinks: `node_modules/` in a .gitignore matches a real directory but not a
+ * symlink, so the exclusions used to be both necessary and harmless and are now
+ * necessary only for the paths the product does not ignore itself.
+ */
+async function excludePathspecs(repositoryRoot, provisioned) {
+  if (!provisioned.length) return [];
+  const ignored = await ignoredPaths(repositoryRoot, provisioned);
+  return provisioned.filter((entry) => !ignored.has(entry)).map((entry) => `:(exclude)${entry}`);
 }
 
 async function isDirectory(target) {
