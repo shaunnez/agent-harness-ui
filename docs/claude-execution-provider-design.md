@@ -74,6 +74,15 @@ default is `false`, and the documented `false` behaviour is: *"a warning is show
 commands run unsandboxed."* A harness that omits it gets silent unconfined execution on
 any host where the sandbox runtime is missing.
 
+**It does not abort the run, though — it fails closed per command.** Verified against a
+genuinely unavailable sandbox: individual Bash calls fail with the sandbox error and
+nothing executes or escapes, but the run itself continues and the model simply reports the
+failure. This matters for verification design rather than for safety: a canary built on
+*"the write was refused and the guarded file is unchanged"* observes exactly the same two
+things whether the sandbox is enforcing or dead, so it can pass while the mechanism it
+exists to check is absent. A canary must therefore assert that the sandbox **started**
+before interpreting any refusal, and treat inconclusive as failure.
+
 **L3 — Closing the model-reachable escape hatch.** This is the difference in kind from
 Codex. The Bash tool takes a `dangerouslyDisableSandbox: true` parameter, and the CLI's
 own tool description instructs the model to *"Immediately retry with
