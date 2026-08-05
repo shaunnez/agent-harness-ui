@@ -6,7 +6,7 @@ import test from "node:test";
 import { ProcessTimeoutError } from "../server/codex-runtime.mjs";
 import { evaluationVerdict, structuredEvidenceError, TaskOrchestrator } from "../server/orchestrator.mjs";
 import { defaultStagePolicies } from "../server/model-catalog.mjs";
-import { buildExecutionPrompt } from "../server/prompts.mjs";
+import { buildExecutionPrompt, buildTestInterpretationRequest } from "../server/prompts.mjs";
 import { selectScoutDispatch } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import {
@@ -35,6 +35,48 @@ import {
 
 const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"questions":[{"question":"Compatibility?","whyItMatters":"Changes the public contract.","options":[{"label":"Preserve it","description":"Keep existing clients working.","recommended":true},{"label":"Break it","description":"Allow a clean break.","recommended":false}],"allowCustom":true}]}\n</grill-questions>`;
 const PLAN_OUTPUT = `## Plan summary\n\nTwo independent slices.\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verification":["npm test"]},{"id":"S2","title":"UI","description":"Implement the task UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verification":["npm run typecheck"]}]}\n</work-packages>`;
+/**
+ * Harness verification, injected through the same seam `runCodex` and `worktreeManager`
+ * already use.
+ *
+ * The test stage no longer asks a model what ran: the harness executes the repository's
+ * declared commands and builds the evidence itself (#47). These tests are about gate
+ * ingestion, freshness and retry accounting, not about spawning processes, so they supply the
+ * observation rather than stand up a repository to obtain one. Real execution — argv spawning,
+ * declared-report parsing, exact-SHA binding, refusal when a repository declares nothing — is
+ * covered directly in `tests/verification.test.mjs`.
+ */
+function harnessEvidence(candidate, overrides = {}) {
+  return {
+    candidateId: candidate.id,
+    candidateRevision: candidate.revisionNumber,
+    bindingExplicit: true,
+    headRevision: candidate.headRevision,
+    command: ".agent-harness/verification.json: test",
+    status: "passed",
+    startedAt: "2026-08-01T12:00:00.000Z",
+    completedAt: "2026-08-01T12:00:01.240Z",
+    durationMs: 1240,
+    executedCommandIds: ["test"],
+    declaredCommandIds: ["test"],
+    rows: [{
+      id: "test",
+      candidateId: candidate.id,
+      candidateRevision: candidate.revisionNumber,
+      bindingExplicit: true,
+      title: "Node test suite",
+      command: "npm test",
+      status: "passed",
+      durationMs: 1240,
+      assertions: [{ label: "exit code", actual: "0", expected: "0" }],
+      failureDetails: null,
+    }],
+    ...overrides,
+  };
+}
+
+const passingVerification = async ({ candidate }) => harnessEvidence(candidate);
+
 const TEST_OUTPUT = `PASS\n\n## Verdict\n\nPASS\n\n<focused-test-evidence>\n{"candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","startedAt":"2026-08-01T12:00:00.000Z","completedAt":"2026-08-01T12:00:01.240Z","durationMs":1240,"rows":[{"id":"row-1","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":1240,"title":"orchestrator.test.mjs","artifactReferences":[{"name":"Markdown test artifact","kind":"markdown","path":"artifacts/test.md"}],"assertions":[{"label":"all packages qualified","actual":"pass","expected":"pass"}],"failureDetails":null},{"id":"row-2","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":350,"title":"api.test.mjs","artifactReferences":[{"name":"JUnit report","kind":"junit","path":"artifacts/junit.xml"}],"assertions":[{"label":"API contract","actual":"pass","expected":"pass"}],"failureDetails":null}]}\n</focused-test-evidence>`;
 
 function gateOutput(revision, verdict = "PASS", findings = []) {
@@ -1433,7 +1475,21 @@ test("malformed focused Test ingestion persists the exact reason and blocks appr
         failureDetails: null,
       }],
     })}</focused-test-evidence>`;
-    const malformedOutputs = [malformedRowOutput, malformedTimestampOutput];
+    // Now asserts the harness fails closed on evidence *it* produced rather than on a model's.
+    // The model is no longer the source, but `validateFocusedTestEvidence` still stands between
+    // the harness and a gate, so a verification bug cannot become a silent pass.
+    //
+    // The reason codes moved with the source, and that is not an assertion being loosened.
+    // `contradictory_evidence` was reachable here only by *parsing model text*, which this path
+    // no longer does; what remains checkable about harness-built evidence is its candidate
+    // binding, so these are the two failures that are still possible: a row bound to a
+    // different revision, and evidence that never claimed a binding at all.
+    const malformedEvidence = [
+      (candidate) => harnessEvidence(candidate, {
+        rows: [{ ...harnessEvidence(candidate).rows[0], candidateRevision: candidate.revisionNumber + 1 }],
+      }),
+      (candidate) => harnessEvidence(candidate, { bindingExplicit: false }),
+    ];
     const orchestrator = new TaskOrchestrator(store, {
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       worktreeManager: {
@@ -1441,24 +1497,25 @@ test("malformed focused Test ingestion persists the exact reason and blocks appr
         async recoverCandidate() {},
         async merge() { merged = true; },
       },
+      runVerification: async ({ candidate }) => malformedEvidence.shift()(candidate),
       runCodex: async () => ({
-        finalText: malformedOutputs.shift(),
+        finalText: "## Verdict\n\nPASS\n\n## Checks\n\nThe harness reported one passing command.",
         usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
       }),
     });
 
     assert.equal(await orchestrator.start(task.id, "test"), true);
     const afterMalformedRow = await waitForStatus(store, task.id, "ready-for-test");
-    assert.equal(afterMalformedRow.runs.find((run) => run.stage === "test").evidenceError.code, "contradictory_evidence");
+    assert.equal(afterMalformedRow.runs.find((run) => run.stage === "test").evidenceError.code, "mixed_evidence");
 
     assert.equal(await orchestrator.start(task.id, "test"), true);
     const finished = await waitForStatus(store, task.id, "ready-for-test");
     const testRuns = finished.runs.filter((run) => run.stage === "test");
     assert.equal(testRuns.length, 2);
-    assert.equal(testRuns.at(-1).evidenceError.code, "contradictory_evidence");
-    assert.equal(testRuns.at(-1).evidenceError.copy, RUNTIME_FRESHNESS_REASONS.contradictory_evidence);
+    assert.equal(testRuns.at(-1).evidenceError.code, "missing_binding");
+    assert.equal(testRuns.at(-1).evidenceError.copy, RUNTIME_FRESHNESS_REASONS.missing_binding);
     assert.equal(finished.gateFreshness.test.sourceRunId, testRuns.at(-1).id);
-    assert.equal(finished.gateFreshness.test.reasonCode, "contradictory_evidence");
+    assert.equal(finished.gateFreshness.test.reasonCode, "missing_binding");
 
     await store.update(task.id, (draft) => {
       draft.status = "awaiting-human-approval";
@@ -1477,7 +1534,9 @@ test("malformed focused Test ingestion persists the exact reason and blocks appr
 
     await assert.rejects(
       () => orchestrator.approveMerge(task.id),
-      /cannot be approved.*Test is not fresh.*contradictory/i,
+      // Same assertion, matching the reason copy for the failure harness-built evidence can
+      // actually have — a missing candidate binding rather than contradictory parsed fields.
+      /cannot be approved.*Test is not fresh.*explicit candidateId/i,
     );
     assert.equal(merged, false);
   } finally {
@@ -1621,13 +1680,12 @@ test("missing authoritative output retains the candidate and permits only the sa
       candidateStatus: "ready_for_review",
       label: "Development review",
     },
-    {
-      stage: "test",
-      kind: "test",
-      taskStatus: "ready-for-test",
-      candidateStatus: "ready_for_test",
-      label: "Focused test",
-    },
+    // The test stage is deliberately absent. This case is "a model returned no authoritative
+    // structured evidence", and for `test` that is no longer a possible failure: the harness
+    // builds that evidence from commands it executed itself (#47), so there is no model answer
+    // to be missing. The failure modes that remain for harness-built test evidence are covered
+    // by "malformed focused Test ingestion" above and by tests/verification.test.mjs — which
+    // also covers the new one, a repository that declares no verification commands at all.
     {
       stage: "final-review",
       kind: "final-review",
@@ -2289,8 +2347,14 @@ test("legacy artifact migration is idempotent and assigns a deterministic stale 
   assert.equal(state.tasks[0].runs.length, 1);
 });
 
-test("builds the focused test execution prompt with the structured evidence contract and Windows command rule", () => {
-  const prompt = buildExecutionPrompt(
+test("builds the focused test prompt from harness observations, not from a request for evidence", () => {
+  // Replaced rather than adjusted. This test used to assert the prompt asked a model for a
+  // <focused-test-evidence> block and told it how to run npm on Windows PowerShell. Both are
+  // gone by design: the harness runs the repository's declared commands itself and builds that
+  // block from what it observed (#47), so a prompt asking for it would reintroduce exactly the
+  // unverifiable claim the change removes.
+  const candidate = { id: "C1", revisionNumber: 2, baseRevision: "a".repeat(40), headRevision: "b".repeat(40) };
+  const request = buildTestInterpretationRequest(
     {
       id: "AH-014",
       title: "Structure focused-test evidence",
@@ -2298,20 +2362,40 @@ test("builds the focused test execution prompt with the structured evidence cont
       decisions: [],
       artifacts: [],
     },
-    "test",
+    candidate,
     {
-      id: "C1",
-      revisionNumber: 2,
-      baseRevision: "a".repeat(40),
+      command: ".agent-harness/verification.json: lint, test",
+      status: "failed",
+      durationMs: 4200,
       headRevision: "b".repeat(40),
+      declaredCommandIds: ["lint", "test", "build"],
+      executedCommandIds: ["lint", "test"],
+      rows: [
+        { id: "lint", title: "Biome lint", command: "npm run lint", status: "passed", assertions: [{ label: "exit code", actual: "0", expected: "0" }] },
+        { id: "test", title: "Node test suite", command: "npm test", status: "failed", failureDetails: "npm test exited 1.", assertions: [{ label: "exit code", actual: "1", expected: "0" }] },
+      ],
     },
   );
-  assert.match(prompt, /<focused-test-evidence>/);
-  assert.match(prompt, /Begin candidate verification with a standalone `git rev-parse HEAD`/);
-  assert.match(prompt, /Every command executed against the candidate is authoritative gate telemetry/);
-  assert.match(prompt, /expected-negative searches as explicit assertions that exit zero/);
-  assert.match(prompt, /On Windows PowerShell, run every verification command separately with npm\.cmd/);
-  assert.match(prompt, /never chain them with Bash-style &&, invoke npm\.ps1, or use npm test -- <file>/);
+
+  // The observations are stated as facts, with the exact commands and exit codes.
+  assert.match(request.prompt, /observed these results directly\. They are facts, not claims/);
+  assert.match(request.prompt, /Overall: FAILED in 4200ms/);
+  assert.match(request.prompt, /command: npm run lint/);
+  assert.match(request.prompt, /exit code: 1 \(expected 0\)/);
+  assert.match(request.prompt, /detail: npm test exited 1\./);
+  // Bound to the revision verification actually ran against.
+  assert.match(request.prompt, new RegExp(`Verification ran against: ${"b".repeat(40)}`));
+  // A command that never ran is named as such rather than silently absent.
+  assert.match(request.prompt, /Not executed, because an earlier command failed: build\./);
+  // Interpretation only, and explicitly not a second execution.
+  assert.match(request.prompt, /Do not run these commands again/);
+  assert.match(request.prompt, /Work read-only\. Do not modify files\./);
+
+  // The removed contract must not come back through the prompt by another route.
+  assert.doesNotMatch(request.prompt, /<focused-test-evidence>/);
+  assert.doesNotMatch(request.prompt, /npm\.cmd/);
+  assert.equal(request.contextManifest.repositoryAccess, "read-only");
+  assert.match(request.contextManifest.policy, /Verification was executed by the harness/);
 });
 
 test("persists structured focused test evidence beside the Markdown artifact", async () => {
@@ -2946,6 +3030,12 @@ test("advances an approved implementation task through a revision-bound candidat
       },
     };
     const orchestrator = new TaskOrchestrator(store, {
+      // The harness executes verification now, so this flow supplies the observation through the
+      // same seam as runCodex (#47). Bound to a *fixed* C1 revision 2 rather than to whatever
+      // the candidate currently is, exactly as the model-authored TEST_OUTPUT it replaces was:
+      // the point of this flow is that evidence for an older revision must not clear a newer
+      // candidate, and binding to the live candidate would erase the scenario.
+      runVerification: async () => harnessEvidence({ id: "C1", revisionNumber: 2, headRevision: "b".repeat(40) }),
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       worktreeManager,
       runCodex: async (options) => {
@@ -3264,6 +3354,9 @@ test("cleans a failed Test run before allowing its retry", async () => {
     let attempts = 0;
     let recoveries = 0;
     const orchestrator = new TaskOrchestrator(store, {
+      // The harness executes verification now; this flow is about candidate lineage and retry
+      // accounting, so it supplies the observation through the same seam as runCodex (#47).
+      runVerification: passingVerification,
       worktreeManager: {
         async verifyCandidate() {
           if (dirty) throw new Error("candidate is dirty");
