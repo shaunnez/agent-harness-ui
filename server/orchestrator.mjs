@@ -6,6 +6,7 @@ import {
   buildExecutionRequest,
   buildRepairRequest,
   buildStageRequest,
+  buildTestInterpretationRequest,
   buildWorkPackageRequest,
   getStageMetadata,
   INVESTIGATION_PIPELINE,
@@ -48,12 +49,12 @@ import {
 } from "./run-activity.mjs";
 import {
   isCandidateEvidenceError,
-  parseFocusedTestEvidence,
   parseGateEvidence,
   parseGrillQuestions,
   parseWorkPackages,
   validateFocusedTestEvidence,
 } from "./structured-output.mjs";
+import { runRepositoryVerification } from "./verification.mjs";
 
 const RUN_KINDS = new Set([
   "investigation",
@@ -81,12 +82,19 @@ export class TaskOrchestrator {
   #runCodex;
   #getStatus;
   #worktrees;
+  #runVerification;
 
   constructor(store, options = {}) {
     this.#store = store;
     this.#runCodex = options.runCodex ?? null;
     this.#getStatus = options.getStatus ?? getCodexStatus;
     this.#worktrees = options.worktreeManager ?? new GitWorktreeManager(defaultWorktreeRoot());
+    // The same injection seam `runCodex` and `worktreeManager` already use, for the same
+    // reason: harness verification spawns real processes in a real worktree, so a test about
+    // gate ingestion, freshness or retry accounting should be able to supply the observation
+    // rather than stand up a repository to obtain it. The real path is exercised directly in
+    // `tests/verification.test.mjs`, including against a real git worktree.
+    this.#runVerification = options.runVerification ?? runRepositoryVerification;
   }
 
   /**
@@ -1019,6 +1027,23 @@ export class TaskOrchestrator {
     const task = await this.#store.get(id);
     const candidate = currentCandidate(task);
     await this.#worktrees.verifyCandidate(candidate);
+    // The harness executes the repository's declared verification commands *before* any model
+    // runs, and the result of that execution is the evidence. A model is asked afterwards to
+    // interpret it, never to produce it.
+    //
+    // Deliberately not inside the try below: a repository that declares no verification
+    // commands is a configuration gap, not a candidate defect, so it fails the run with an
+    // actionable message rather than becoming a REPAIR verdict a repair could only "fix" by
+    // having a model invent the commands — the exact thing this change exists to prevent.
+    let harnessVerification = null;
+    if (stageId === "test") {
+      harnessVerification = await this.#runVerification({
+        worktreePath: candidate.worktreePath,
+        candidate,
+        signal,
+      });
+      throwIfAborted(signal);
+    }
     let result;
     // A reviewer that dirties its worktree without committing leaves every exact-SHA
     // check reporting agreement, because the SHA genuinely did not change — while the
@@ -1027,7 +1052,15 @@ export class TaskOrchestrator {
     // was caught nowhere: it is the last gate before merge.
     let reviewerMutation = null;
     try {
-      result = await this.#executeAgent(task, stageId, signal, candidate.worktreePath, "read-only", candidate);
+      result = await this.#executeAgent(
+        task,
+        stageId,
+        signal,
+        candidate.worktreePath,
+        "read-only",
+        candidate,
+        harnessVerification ? buildTestInterpretationRequest(task, candidate, harnessVerification) : null,
+      );
     } finally {
       if (stageId === "test") {
         // The test stage is *expected* to dirty its worktree, so it recovers.
@@ -1052,8 +1085,11 @@ export class TaskOrchestrator {
     let evidenceError = null;
     try {
       if (reviewerMutation) throw reviewerMutation;
+      // Same contract, same validator, different source: the evidence is what the harness
+      // observed, so `parseFocusedTestEvidence` is no longer in this path at all. Nothing the
+      // model returned can change a status, a row or an exit code.
       focusedTestEvidence = stageId === "test"
-        ? validateFocusedTestEvidence(parseFocusedTestEvidence(result.finalText), candidate)
+        ? validateFocusedTestEvidence(harnessVerification, candidate)
         : null;
       structuredGateEvidence = ["dev-review", "final-review"].includes(stageId)
         ? parseGateEvidence(result.finalText, candidate, stageId)
@@ -1289,8 +1325,13 @@ export class TaskOrchestrator {
     runScopeId = null,
   ) {
     const metadata = getStageMetadata(stageId);
-    const testRuntime = stageId === "test";
-    const effectiveSandbox = testRuntime ? "workspace-write" : sandbox;
+    // The test stage used to be the one exception here: workspace-write plus
+    // `networkAccess: true`, because a model ran the verification commands itself. The
+    // harness runs them now (`server/verification.mjs`), so this stage's model only reads the
+    // worktree in order to interpret results the harness already observed. Read-only, no
+    // network, nothing provider-specific — which is precisely what made the stage impossible
+    // on Claude (#40) and dependent on Codex credits.
+    const effectiveSandbox = sandbox;
     const agentRequest =
       promptOverride ?? (candidate ? buildExecutionRequest(task, stageId, candidate) : buildStageRequest(task, stageId));
     const settings = await this.#store.settings();
@@ -1323,8 +1364,8 @@ export class TaskOrchestrator {
       }
       runProvider = reservationProvider;
       draft.currentStage = stageId;
-      const detail = testRuntime
-        ? `Verifying ${cwd}; source changes are checked before and after the run`
+      const detail = stageId === "test"
+        ? `Interpreting harness verification of ${cwd}; source changes are checked before and after the run`
         : `${sandbox === "read-only" ? "Reading" : "Working in"} ${cwd}`;
       const run = beginAgentRun(draft, {
         id: runId,
@@ -1353,13 +1394,15 @@ export class TaskOrchestrator {
     });
     const runtimeEvents = [];
     try {
-      await this.#assertProviderConfinement(runProvider, effectiveSandbox, testRuntime, cwd);
+      await this.#assertProviderConfinement(runProvider, effectiveSandbox, false, cwd);
       const result = await this.#runAgent(runProvider, {
         cwd,
         prompt: agentRequest.prompt,
         signal,
         sandbox: effectiveSandbox,
-        networkAccess: testRuntime,
+        // No stage grants network access any more. The only stage that ever needed it needed
+        // it to run commands, and it no longer runs them.
+        networkAccess: false,
         model: policy.model,
         reasoning: policy.reasoning,
         tempDirectory: runtimeTemp,
