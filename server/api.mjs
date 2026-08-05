@@ -190,6 +190,22 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         send(response, 200, await orchestrator.verifyPricing());
         return;
       }
+      // Two separate calls on purpose. Proposing is read-only and cheap to repeat; approving
+      // writes to the operator's repository and runs its commands unsandboxed. Collapsing them
+      // into one endpoint would make approval implicit, and #47's guarantee depends on a human
+      // ratifying the commands before they become the harness's source of truth.
+      if (request.method === "POST" && url.pathname === "/api/runtime/onboarding/propose") {
+        if (typeof orchestrator.proposeOnboarding !== "function") throw new Error("Repository onboarding is unavailable in this runtime.");
+        const body = await readJson(request);
+        send(response, 200, await orchestrator.proposeOnboarding(body?.repositoryPath));
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/api/runtime/onboarding/approve") {
+        if (typeof orchestrator.approveOnboarding !== "function") throw new Error("Repository onboarding is unavailable in this runtime.");
+        const body = await readJson(request);
+        send(response, 200, await orchestrator.approveOnboarding(body?.repositoryPath, body?.proposal));
+        return;
+      }
       if (request.method === "GET" && url.pathname === "/api/runtime/worktrees") {
         const tasks = await store.list();
         const entries = tasks.flatMap(worktreeEntriesForTask);

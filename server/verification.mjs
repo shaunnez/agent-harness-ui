@@ -308,7 +308,7 @@ export async function assertCandidateHead(worktreePath, candidate, readHeadRevis
   return observed;
 }
 
-async function gitHeadRevision(worktreePath) {
+export async function gitHeadRevision(worktreePath) {
   const result = await runProcess("git", ["rev-parse", "HEAD"], {
     cwd: worktreePath,
     timeoutMs: 30_000,
