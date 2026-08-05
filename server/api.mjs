@@ -10,7 +10,7 @@ import {
 } from "./evaluation.mjs";
 import { GitWorktreeManager } from "./git-worktree.mjs";
 import { assertHttpBoundary, corsHeaders } from "./http-security.mjs";
-import { normalizeModelId, POLICY_IDS, readCodexModelCatalog } from "./model-catalog.mjs";
+import { normalizeModelId, POLICY_IDS, readExecutionProviderCatalog } from "./model-catalog.mjs";
 import {
   CANONICAL_RUN_STAGES,
   CANDIDATE_GATE_STAGES,
@@ -161,7 +161,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
       }
       if (request.method === "PUT" && url.pathname === "/api/settings") {
         const input = await readJson(request);
-        const catalog = await readCodexModelCatalog();
+        const catalog = await readExecutionProviderCatalog();
         const known = new Map(catalog.models.filter((model) => model.editable).map((model) => [model.id, model]));
         const allowedModels = [...new Set((Array.isArray(input.allowedModels) ? input.allowedModels : []).map(normalizeModelId))]
           .filter((modelId) => known.has(modelId));
@@ -273,7 +273,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         if (!VALID_WORKFLOWS.has(input.workflow)) throw new Error("invalid workflow");
         const attachments = validateAttachments(input.attachments);
         const settings = await store.settings();
-        const catalog = await readCodexModelCatalog();
+        const catalog = await readExecutionProviderCatalog();
         const requestedModel = normalizeModelId(input.model ?? settings.defaultModel);
         const selectedModel = catalog.models.find((model) => model.id === requestedModel && model.editable);
         if (!settings.allowedModels.includes(requestedModel) || !selectedModel) throw new Error("Choose a model from the allowed runtime list in Settings.");

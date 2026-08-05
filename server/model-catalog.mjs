@@ -145,6 +145,25 @@ export async function readClaudeModelCatalog() {
 }
 
 /**
+ * Every execution provider's models in one catalogue.
+ *
+ * Settings validation and task creation validate a policy's reasoning against its
+ * model's own `reasoningLevels`, and those differ per model: `gpt-5.6-sol` has
+ * `ultra`, Claude does not, and `claude-haiku-4-5` takes only `none`. Reading a
+ * single provider's catalogue would leave the other's models with no levels at all,
+ * so every reasoning value for them would be rejected.
+ */
+export async function readExecutionProviderCatalog() {
+  const [codex, claude] = await Promise.all([readCodexModelCatalog(), readClaudeModelCatalog()]);
+  const known = new Set(codex.models.map((model) => model.id));
+  return {
+    models: [...codex.models, ...claude.models.filter((model) => !known.has(model.id))],
+    fetchedAt: codex.fetchedAt,
+    source: `${codex.source} · ${claude.source}`,
+  };
+}
+
+/**
  * Attribute a model id to an execution provider. An id no provider claims returns
  * `null` rather than being attributed to whichever provider happens to be default,
  * so a typo in persisted settings surfaces as unsupported instead of being routed
@@ -166,25 +185,17 @@ export function providerForModelId(value) {
  * silently sending one runtime's model to the other's CLI.
  */
 export function resolveTaskProvider(stagePolicies, fallbackModel, explicit = null) {
+  if (explicit) return explicit;
+  // Only a default, for policies whose model no provider claims. Stage policies may
+  // freely mix providers — each stage runs on the runtime its own model belongs to —
+  // so a mixed selection is the feature, not an inconsistency to reject.
   const providers = new Set(
     [...Object.values(stagePolicies ?? {}).map((policy) => policy?.model), fallbackModel]
       .filter(Boolean)
       .map(providerForModelId)
       .filter(Boolean),
   );
-  if (providers.size > 1) {
-    throw new Error(
-      `A task's stage policies must all use models from one execution provider; found ${[...providers].sort().join(" and ")}.`,
-    );
-  }
-  const implied = [...providers][0] ?? null;
-  if (explicit) {
-    if (implied && implied !== explicit) {
-      throw new Error(`Provider ${explicit} cannot run ${implied} models.`);
-    }
-    return explicit;
-  }
-  return implied ?? DEFAULT_EXECUTION_PROVIDER;
+  return providers.size === 1 ? [...providers][0] : DEFAULT_EXECUTION_PROVIDER;
 }
 
 /**
@@ -255,17 +266,30 @@ export function defaultRuntimeSettings() {
 
 export function resolveAgentPolicy(task, policyId, fallbackSettings = defaultRuntimeSettings()) {
   const policy = task?.agentConfig?.stagePolicies?.[policyId] ?? fallbackSettings.stagePolicies?.[policyId];
+  const model = normalizeModelId(policy?.model ?? task?.agentConfig?.model ?? fallbackSettings.defaultModel);
   return {
-    // One provider per task, not per policy. A task's gates, its repair and the
-    // candidate they authorize must all be the same runtime: candidate revisions do
-    // not persist a provider, so a per-stage split would leave the repair-authorizer
-    // reconstruction unable to tell which runtime produced the authorizing gate.
-    // Absent means the default provider, so every task persisted before this stays
-    // on Codex regardless of what the setting later becomes.
-    provider: task?.agentConfig?.provider ?? (task ? DEFAULT_EXECUTION_PROVIDER : (fallbackSettings.defaultProvider ?? DEFAULT_EXECUTION_PROVIDER)),
-    model: normalizeModelId(policy?.model ?? task?.agentConfig?.model ?? fallbackSettings.defaultModel),
+    // The provider follows this policy's own model, so each stage can run on whichever
+    // runtime its model belongs to. A model no provider claims falls back to the task's
+    // recorded provider, then the configured default — so a task persisted before
+    // provider identity existed stays on Codex whatever the setting later becomes.
+    provider: providerForModelId(model)
+      ?? task?.agentConfig?.provider
+      ?? fallbackSettings.defaultProvider
+      ?? DEFAULT_EXECUTION_PROVIDER,
+    model,
     reasoning: String(policy?.reasoning ?? task?.agentConfig?.reasoning ?? fallbackSettings.defaultReasoning),
   };
+}
+
+/**
+ * Which stage policy governs a run of this kind. A reservation is per stage, but
+ * `implement` is reached by two different policies — `implement` and `repair` — so the
+ * kind decides which one owns the provider for that attempt.
+ */
+export function policyIdForRun(kind, stage) {
+  if (kind === "repair") return "repair";
+  if (kind === "implementation") return "implement";
+  return stage;
 }
 
 export async function readCodexModelCatalog() {

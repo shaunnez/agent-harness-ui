@@ -30,8 +30,10 @@ import {
   NO_REASONING_EFFORT,
   priceModelUsage,
   priceUsage,
+  policyIdForRun,
   providerForModelId,
   providerRuntimeDefaults,
+  readExecutionProviderCatalog,
   readClaudeModelCatalog,
   resolveAgentPolicy,
 } from "../server/model-catalog.mjs";
@@ -841,14 +843,6 @@ test("reports read-only confinement as layered and offers no workspace-write", (
   assert.deepEqual(claude.defaults(), { model: "claude-sonnet-5", reasoning: "xhigh" });
 });
 
-test("keeps every task on one provider and defaults to Codex", () => {
-  // Absent means the default provider, so every task persisted before provider
-  // identity existed stays on Codex regardless of what the setting later becomes.
-  assert.equal(resolveAgentPolicy({ agentConfig: {} }, "plan").provider, "codex");
-  assert.equal(resolveAgentPolicy({ agentConfig: { provider: "claude" } }, "plan").provider, "claude");
-  assert.equal(defaultRuntimeSettings().defaultProvider, "codex");
-  assert.equal(resolveAgentPolicy(null, "plan").provider, "codex");
-});
 
 test("fails the sandbox canary closed for anything short of a demonstrated refusal", () => {
   const refused = classifyClaudeSandboxCanary({ mutated: false, attempted: true, refused: true, refusedCommands: 2, escalationAttempts: 1 });
@@ -934,61 +928,90 @@ test("refuses to run another provider's model", async () => {
   );
 });
 
-test("derives the execution provider from the models a task selects", async () => {
+test("lets every stage pick its own provider, model and reasoning", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-provider-choice-"));
   try {
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
     await store.init();
-    const policies = (model, reasoning) => Object.fromEntries(
-      ["triage", "scouts", "grill", "specification", "plan", "implement", "repair", "dev-review", "test", "final-review"]
-        .map((policyId) => [policyId, { model, reasoning }]),
-    );
-    const create = (title, input) => store.create({
-      title,
-      description: "Provider follows from the chosen models.",
+
+    // Codex at the gates, Claude implementing — the mix is the point, so it must not be
+    // rejected or collapsed onto one runtime.
+    const stagePolicies = {
+      triage: { model: "claude-sonnet-5", reasoning: "high" },
+      scouts: { model: "claude-haiku-4-5", reasoning: NO_REASONING_EFFORT },
+      grill: { model: "claude-sonnet-5", reasoning: "high" },
+      specification: { model: "claude-sonnet-5", reasoning: "high" },
+      plan: { model: "gpt-5.6-sol", reasoning: "ultra" },
+      implement: { model: "claude-opus-5", reasoning: "xhigh" },
+      repair: { model: "claude-opus-5", reasoning: "max" },
+      "dev-review": { model: "gpt-5.6-sol", reasoning: "high" },
+      test: { model: "gpt-5.6-luna", reasoning: "xhigh" },
+      "final-review": { model: "gpt-5.6-sol", reasoning: "ultra" },
+    };
+    const task = await store.create({
+      title: "Mixed providers",
+      description: "Each stage runs on the runtime its own model belongs to.",
       repositoryPath: directory,
-      workflow: "investigate",
+      workflow: "implement",
       priority: "medium",
-      ...input,
+      stagePolicies,
     });
 
-    // Picking a model is enough; nobody has to name the provider separately.
-    const claude = await create("Claude task", { model: "claude-opus-5", stagePolicies: policies("claude-opus-5", "xhigh") });
-    assert.equal(claude.agentConfig.provider, "claude");
-    assert.equal(claude.agentConfig.stagePolicies.plan.reasoning, "xhigh");
+    const expected = {
+      triage: "claude", scouts: "claude", grill: "claude", specification: "claude",
+      plan: "codex", implement: "claude", repair: "claude",
+      "dev-review": "codex", test: "codex", "final-review": "codex",
+    };
+    for (const [policyId, provider] of Object.entries(expected)) {
+      const resolved = resolveAgentPolicy(task, policyId);
+      assert.equal(resolved.provider, provider, policyId);
+      assert.equal(resolved.model, stagePolicies[policyId].model, policyId);
+      assert.equal(resolved.reasoning, stagePolicies[policyId].reasoning, policyId);
+    }
 
-    const codex = await create("Codex task", { model: "gpt-5.6-sol", stagePolicies: policies("gpt-5.6-sol", "high") });
-    assert.equal(codex.agentConfig.provider, "codex");
-    assert.equal(codex.agentConfig.stagePolicies.plan.reasoning, "high");
+    // `ultra` exists on Codex and not on Claude; `none` only on Haiku. Each model's
+    // levels are validated against its own catalogue entry.
+    assert.equal(resolveAgentPolicy(task, "plan").reasoning, "ultra");
+    assert.equal(resolveAgentPolicy(task, "scouts").reasoning, NO_REASONING_EFFORT);
+    assert.equal(assertSupportedReasoning("claude-haiku-4-5", NO_REASONING_EFFORT), null);
+    assert.throws(() => assertSupportedReasoning("claude-opus-5", "ultra"), /does not support ultra/);
 
-    // Per-task effort is per-stage: the deep stages can differ from the fast ones.
-    const mixedEffort = await create("Mixed effort", {
-      model: "claude-sonnet-5",
-      stagePolicies: { ...policies("claude-sonnet-5", "high"), plan: { model: "claude-opus-5", reasoning: "max" } },
-    });
-    assert.equal(mixedEffort.agentConfig.provider, "claude");
-    assert.equal(mixedEffort.agentConfig.stagePolicies.plan.model, "claude-opus-5");
-    assert.equal(mixedEffort.agentConfig.stagePolicies.plan.reasoning, "max");
-    assert.equal(mixedEffort.agentConfig.stagePolicies.triage.model, "claude-sonnet-5");
+    // `implement` is reached by two policies, so the kind decides which one owns the
+    // provider for the attempt.
+    assert.equal(policyIdForRun("implementation", "implement"), "implement");
+    assert.equal(policyIdForRun("repair", "implement"), "repair");
+    assert.equal(policyIdForRun("review", "dev-review"), "dev-review");
 
-    // Mixing providers inside one task is refused, not silently resolved to one.
-    await assert.rejects(
-      () => create("Mixed providers", {
-        model: "claude-opus-5",
-        stagePolicies: { ...policies("claude-opus-5", "xhigh"), plan: { model: "gpt-5.6-sol", reasoning: "high" } },
-      }),
-      /must all use models from one execution provider; found claude and codex/,
+    // A model no provider claims falls back rather than being routed to a guess.
+    assert.equal(providerForModelId("mistral-large"), null);
+    assert.equal(
+      resolveAgentPolicy({ agentConfig: { provider: "claude", stagePolicies: { plan: { model: "mistral-large", reasoning: "high" } } } }, "plan").provider,
+      "claude",
     );
-
-    // An explicit provider that contradicts the models is refused rather than
-    // sending one runtime's model to the other's CLI.
-    await assert.rejects(
-      () => create("Contradiction", { provider: "codex", model: "claude-opus-5", stagePolicies: policies("claude-opus-5", "xhigh") }),
-      /Provider codex cannot run claude models/,
-    );
+    assert.equal(resolveAgentPolicy({ agentConfig: {} }, "plan").provider, "codex");
+    assert.equal(defaultRuntimeSettings().defaultProvider, "codex");
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
+});
+
+test("offers both providers' models with their own reasoning levels", async () => {
+  const catalog = await readExecutionProviderCatalog();
+  const byId = new Map(catalog.models.map((model) => [model.id, model]));
+
+  // Settings validation and task creation validate reasoning against the model's own
+  // levels, so a single-provider catalogue would leave the other's models with none and
+  // reject every value for them.
+  assert.equal(byId.get("gpt-5.6-sol").provider, "codex");
+  assert.equal(byId.get("claude-opus-5").provider, "claude");
+  assert.ok(byId.get("gpt-5.6-sol").reasoningLevels.includes("ultra"));
+  assert.equal(byId.get("claude-opus-5").reasoningLevels.includes("ultra"), false);
+  assert.deepEqual(byId.get("claude-haiku-4-5").reasoningLevels, [NO_REASONING_EFFORT]);
+  // Editable, so settings validation accepts them as selectable.
+  for (const id of ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"]) {
+    assert.equal(byId.get(id).editable, true, id);
+  }
+  assert.equal(new Set(catalog.models.map((model) => model.id)).size, catalog.models.length, "no duplicate ids");
 });
 
 test("records the authorizing gate's provider on the candidate revision", () => {

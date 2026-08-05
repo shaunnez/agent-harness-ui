@@ -3719,3 +3719,74 @@ test("sends byte-identical stage content whichever provider runs it", async () =
   assert.ok(prompts.get("codex").length > 0);
   assert.deepEqual(prompts.get("claude"), prompts.get("codex"));
 });
+
+test("binds each stage's runs to that stage's own provider across a mixed task", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-mixed-providers-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    // Claude gathering, Codex at the gate — the combination the operator asked for.
+    const task = await store.create({
+      title: "Mixed provider workflow",
+      description: "Each stage reserves and runs on the provider its own model belongs to.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+      stagePolicies: {
+        ...defaultStagePolicies("claude"),
+        "dev-review": { model: "gpt-5.6-sol", reasoning: "high" },
+      },
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 2,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/ah-001-c1",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "under_review",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        updatedAt: "2026-08-01T12:00:00.000Z",
+        revisions: [],
+      }];
+    });
+
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      worktreeManager: { verifyCandidate: async () => {} },
+      runCodex: async () => ({
+        finalText: gateOutput(2, "PASS"),
+        usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    assert.equal(await orchestrator.start(task.id, "review"), true);
+    const finished = await waitForStatus(store, task.id, "ready-for-test");
+    const reservation = finished.stageRunReservations["dev-review"];
+    const run = finished.runs.find((entry) => entry.stage === "dev-review");
+
+    // The gate reserved and ran on Codex even though the task's other stages are Claude,
+    // and the run's provider matches its reservation — a run can never execute on a
+    // provider its reservation did not reserve.
+    assert.equal(reservation.provider, "codex");
+    assert.equal(run.provider, "codex");
+    assert.equal(run.model, "gpt-5.6-sol");
+    assert.equal(finished.agentConfig.stagePolicies.triage.model, "claude-sonnet-5");
+
+    // Provider identity binds like candidate identity, so the gate is fresh only while
+    // the run and its reservation agree.
+    assert.equal(finished.gateFreshness["dev-review"].fresh, true);
+    const tampered = await store.get(task.id);
+    tampered.runs.find((entry) => entry.stage === "dev-review").provider = "claude";
+    const recomputed = refreshGateFreshness(tampered);
+    assert.equal(recomputed["dev-review"].fresh, false);
+    assert.equal(recomputed["dev-review"].reasonCode, "provider_mismatch");
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});

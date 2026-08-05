@@ -19,6 +19,8 @@ import {
   CREDIT_SOURCE_URL,
   enrichUsage,
   PRICING_SOURCE_URL,
+  policyIdForRun,
+  readExecutionProviderCatalog,
   resolveAgentPolicy,
   validatePricingRates,
   withConfiguredModels,
@@ -163,9 +165,12 @@ export class TaskOrchestrator {
 
   async status() {
     const [runtime, settings] = await Promise.all([this.#getStatus(), this.#store.settings()]);
+    // Every provider's models, so the picker can offer a Claude model for one stage and
+    // a Codex model for another with each model's own reasoning levels.
+    const catalog = runtime.catalog ? await readExecutionProviderCatalog() : runtime.catalog;
     return {
       ...runtime,
-      catalog: withConfiguredModels(runtime.catalog, settings),
+      catalog: withConfiguredModels(catalog, settings),
       model: settings.defaultModel,
       reasoning: settings.defaultReasoning,
       settings,
@@ -1620,7 +1625,7 @@ function reserveRun(task, kind) {
   task.events.push(activity(stage, `${labelForRun(kind)} started`, runDetail(kind), "info", "agent"));
 }
 
-function createStageRunReservation(task, kind, stage, provider = readExecutionProvider(task?.agentConfig)) {
+function createStageRunReservation(task, kind, stage, provider = reservationProviderFor(task, kind, stage)) {
   const candidate = kind === "implementation" ? null : (task.candidates?.at(-1) ?? null);
   const repairAuthorizer = kind === "repair" ? repairAuthorizerSnapshot(task, candidate) : null;
   const reservedAt = repairAuthorizer
@@ -1644,6 +1649,16 @@ function createStageRunReservation(task, kind, stage, provider = readExecutionPr
     reservedAt,
     ...(repairAuthorizer ?? {}),
   };
+}
+
+/**
+ * The provider that will execute this attempt, resolved from the stage policy that
+ * owns it rather than from the task. This is what lets a task review on one runtime
+ * and implement on another while a run still cannot execute on a provider its
+ * reservation did not reserve.
+ */
+function reservationProviderFor(task, kind, stage) {
+  return resolveAgentPolicy(task, policyIdForRun(kind, stage)).provider;
 }
 
 function repairAuthorizerSnapshot(task, candidate, requestedStage = null) {
