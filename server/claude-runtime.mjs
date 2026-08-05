@@ -4,6 +4,14 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import {
+  classifyExecArgBudget,
+  createArgvMeasuringShim,
+  cwdLengthBucket,
+  execArgBudgetApplies,
+  readArgvMeasurement,
+  readRegisteredWorktrees,
+} from "./claude-exec-budget.mjs";
+import {
   assertSupportedReasoning,
   costDivergence,
   NO_REASONING_EFFORT,
@@ -143,7 +151,7 @@ export async function locateClaude() {
  * what it observed and leaves `executionEnabled` false — the authoritative
  * execution signal is the status-time sandbox canary, which has to run anyway.
  */
-export async function getClaudeStatus({ canary = false } = {}) {
+export async function getClaudeStatus({ canary = false, cwd = null } = {}) {
   try {
     const binary = await locateClaude();
     if (!binary) {
@@ -167,23 +175,34 @@ export async function getClaudeStatus({ canary = false } = {}) {
     // opt-in here because it costs a real CLI run: the orchestrator requires it
     // before every Claude stage anyway, cached, so a status view that has not paid
     // for one reports "not yet verified" instead of guessing.
-    const confinement = canary ? await runClaudeSandboxCanary() : null;
+    const confinement = canary ? await runClaudeSandboxCanary({ cwd }) : null;
+    // Headroom is a first-class status output, not a post-mortem: an operator should be
+    // able to see how many more worktrees this repository has room for *before* queueing
+    // work, rather than after a stage dies. Reported from the extrapolated bound when no
+    // canary was paid for, because a probe is a real CLI run and the status view must
+    // stay free; `source` says which of the two it is, and a bound never disables
+    // execution on its own.
+    const execArgBudget = await preflightClaudeExecArgBudget({ cwd, measure: canary }).catch(() => null);
+    const budgetExhausted = execArgBudget?.ok === false;
     return {
       id: "claude",
       label: "Claude",
       available: true,
       authenticated: probe.authenticated,
-      executionEnabled: Boolean(probe.authenticated && confinement?.passed),
+      executionEnabled: Boolean(probe.authenticated && confinement?.passed && !budgetExhausted),
       authMethod: probe.authMethod,
       binary,
       confinement,
+      execArgBudget,
       detail: !probe.authenticated
         ? "Login required"
-        : confinement?.passed
-          ? `${probe.authMethod ?? "Signed in"}; read-only confinement verified`
-          : confinement
-            ? `${probe.authMethod ?? "Signed in"}; ${confinement.detail}`
-            : `${probe.authMethod ?? "Signed in"}; read-only confinement not yet verified`,
+        : budgetExhausted
+          ? `${probe.authMethod ?? "Signed in"}; ${execArgBudget.detail}`
+          : confinement?.passed
+            ? `${probe.authMethod ?? "Signed in"}; read-only confinement verified${execArgBudget?.detail ? ` · ${execArgBudget.detail}` : ""}`
+            : confinement
+              ? `${probe.authMethod ?? "Signed in"}; ${confinement.detail}`
+              : `${probe.authMethod ?? "Signed in"}; read-only confinement not yet verified`,
     };
   } catch (error) {
     return {
@@ -854,7 +873,159 @@ function readsAsSandboxUnavailable(line) {
   return line.includes(SANDBOX_UNAVAILABLE_MARKER);
 }
 const CANARY_TTL_MS = 10 * 60 * 1000;
+
+/**
+ * One cache for every per-host check, keyed by the state each result is only valid
+ * for: the posture, the repository, its registered worktree count and the cwd length
+ * bucket. Deliberately one map rather than a second cache beside it — two caches with
+ * different keys is how the same state ends up certified two different ways.
+ *
+ * The keying is the standing rule applied to the cache itself. Registered worktree
+ * count and cwd are inputs the *stage* varies and both feed the exec-argument budget,
+ * so a result obtained at one worktree count says nothing about another and must not
+ * be served for it.
+ */
 const canaryCache = new Map();
+
+async function readExecArgBudgetInputs(cwd) {
+  const target = cwd ?? process.cwd();
+  const applicable = execArgBudgetApplies();
+  if (!applicable) {
+    return { applicable, cwd: target, cwdLength: target.length, repositoryRoot: null, registeredWorktrees: null };
+  }
+  const { repositoryRoot, registeredWorktrees } = await readRegisteredWorktrees(target);
+  return { applicable, cwd: target, cwdLength: target.length, repositoryRoot, registeredWorktrees };
+}
+
+export function hostCheckCacheKey(kind, sandbox, inputs) {
+  return [
+    kind,
+    sandbox,
+    inputs.repositoryRoot ?? "",
+    inputs.registeredWorktrees ?? "?",
+    cwdLengthBucket(inputs.cwdLength),
+  ].join("|");
+}
+
+/**
+ * Decide, before a stage spawns, whether the Bash sandbox's exec argument budget will
+ * hold at this cwd in this repository — and report the remaining headroom either way.
+ *
+ * Measured, not modelled: a probe run stands a byte-counting shim in front of the
+ * outer shell and reports what the CLI actually built. Only a measurement may refuse a
+ * stage — the extrapolated bound reports headroom when no measurement could be taken
+ * and `classifyExecArgBudget` labels which of the two produced the answer.
+ *
+ * **This is racy by construction and the mid-run guard stays because of it.** The
+ * budget is per repository, so another task can register a worktree between this check
+ * and the spawn, or during the run, and every Bash call in every concurrent stage on
+ * that repository then dies at once. A correct preflight can therefore still be
+ * overtaken. That is the argument for the generous `PREFLIGHT_RESERVE_BYTES` rather
+ * than an exact threshold, and it is why the shell-start failure check added in
+ * `856ed50` (`shellStartFailureError`, reached from `runClaude`) is not redundant with
+ * this and must not be removed as such: this one stops a doomed stage from starting,
+ * that one stops a stage overtaken mid-run from being committed.
+ *
+ * The probe may run at the stage's real cwd only because it mutates nothing — it runs
+ * `/usr/bin/true`. The write canary must never be reused for this: it writes files,
+ * which is the forbidden mutation for a read-only stage and would land in the commit
+ * for a write stage.
+ */
+export async function preflightClaudeExecArgBudget({
+  sandbox = "read-only",
+  cwd = null,
+  timeoutMs = 120_000,
+  model = "claude-haiku-4-5",
+  measure = true,
+  now = Date.now,
+} = {}) {
+  const inputs = await readExecArgBudgetInputs(cwd);
+  const { applicable, repositoryRoot, registeredWorktrees, cwdLength } = inputs;
+  const state = { sandbox, applicable, repositoryRoot, registeredWorktrees, cwdLength };
+  // Nothing to measure and nothing to serve from cache: both of these classify to a
+  // report that says so rather than to a verdict.
+  if (!applicable || registeredWorktrees == null) return classifyExecArgBudget(state);
+  if (!measure) {
+    // The bound-only path exists for the status view, which must not pay for a model
+    // call. It is deliberately never cached: caching a bound under the measured path's
+    // key would let the cheap answer stand in for the authoritative one.
+    return classifyExecArgBudget(state);
+  }
+  const key = hostCheckCacheKey("exec-arg-budget", sandbox, inputs);
+  const cached = canaryCache.get(key);
+  if (cached && now() - cached.at < CANARY_TTL_MS) return cached.result;
+  const probe = await measureClaudeExecArgBytes({ cwd: inputs.cwd, sandbox, model, timeoutMs });
+  const result = classifyExecArgBudget({
+    ...state,
+    measuredBytes: probe?.measuredBytes ?? null,
+    e2bigObserved: probe?.e2bigObserved ?? false,
+  });
+  canaryCache.set(key, { at: now(), result });
+  return result;
+}
+
+/**
+ * Measure the real exec argument bytes of a real CLI run at this cwd.
+ *
+ * A separate short-lived run, not the stage's own spawn: the shim sits in the exec
+ * path of every command it is configured for, and a stage's shell must not be
+ * indirected through harness code. `CLAUDE_CODE_SHELL` is not in
+ * `CLAUDE_ENV_ALLOWLIST` and must never be added to it — it is applied here, after the
+ * allowlisted environment has been built, so it belongs to the probe's environment
+ * alone.
+ *
+ * Returns `null` when no measurement could be attempted at all, which classifies to
+ * the reported bound rather than to a refusal or to a verified pass.
+ */
+async function measureClaudeExecArgBytes({ cwd, sandbox, model, timeoutMs }) {
+  const binary = await locateClaude().catch(() => null);
+  if (!binary) return null;
+  const root = await mkdtemp(path.join(os.tmpdir(), "agent-harness-claude-exec-probe-"));
+  try {
+    const { shimPath, outputPath } = await createArgvMeasuringShim(root);
+    const prompt = [
+      "This is an automated host capacity probe. It measures how large this host's sandbox",
+      "command line is; it is not a task and it must not change anything.",
+      "",
+      "Step 1. Run exactly this command with the Bash tool:",
+      "  /usr/bin/true",
+      "",
+      "Step 2. Reply with the single word DONE and nothing else.",
+      "",
+      "Do not read, create, move or modify any file, and do not run any other command.",
+    ].join("\n");
+    const { args, stdin } = buildClaudeSpawn({
+      cwd,
+      prompt,
+      sandbox,
+      model,
+      effort: assertSupportedReasoning(model, model === "claude-haiku-4-5" ? NO_REASONING_EFFORT : "low"),
+      sessionId: randomUUID(),
+      // One tool, because one command is all the probe needs and the profile's size does
+      // not depend on which tools are offered.
+      tools: ["Bash"],
+    });
+    let e2bigObserved = false;
+    await runProcess(binary, args, {
+      cwd,
+      timeoutMs,
+      env: { ...buildClaudeEnvironment(process.env, root), CLAUDE_CODE_SHELL: shimPath },
+      input: stdin,
+      label: CLAUDE_RUN_LABEL,
+      stdoutBudgetBytes: CLAUDE_STDOUT_BUDGET,
+      onStdoutLine(line) {
+        if (readsAsShellStartFailure(line)) e2bigObserved = true;
+      },
+    }).catch(() => null);
+    // A run that failed for some other reason still leaves whatever the shim recorded,
+    // and an E2BIG leaves nothing — the shim itself is what could not be exec'd.
+    return { measuredBytes: await readArgvMeasurement(outputPath), e2bigObserved };
+  } catch {
+    return null;
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+}
 
 /**
  * Establish, on this host, that a read-only Claude stage is actually confined.
@@ -871,16 +1042,24 @@ const canaryCache = new Map();
  */
 export async function runClaudeSandboxCanary({
   sandbox = "read-only",
+  cwd = null,
   timeoutMs = 180_000,
   model = "claude-haiku-4-5",
   now = Date.now,
 } = {}) {
-  const cached = canaryCache.get(sandbox);
+  // Keyed by the exec-argument state as well as the posture. The canary runs in its own
+  // scratch worktree, so its own result does not depend on the caller's cwd — but a
+  // green obtained at one registered worktree count is not evidence about another,
+  // because the shell it depends on starting is subject to that repository's shared
+  // budget. Serving one for the other is the standing rule's failure a third time.
+  const inputs = await readExecArgBudgetInputs(cwd);
+  const key = hostCheckCacheKey("canary", sandbox, inputs);
+  const cached = canaryCache.get(key);
   if (cached && now() - cached.at < CANARY_TTL_MS) return cached.result;
   const result = sandbox === "workspace-write"
     ? await executeClaudeWriteCanary({ timeoutMs, model })
     : await executeClaudeSandboxCanary({ timeoutMs, model });
-  canaryCache.set(sandbox, { at: now(), result });
+  canaryCache.set(key, { at: now(), result });
   return result;
 }
 
@@ -1230,4 +1409,10 @@ export const claudeExecutionProvider = {
   }),
   run: runClaude,
   canary: runClaudeSandboxCanary,
+  // Checked before the canary and before anything is spawned. Separate from `canary`
+  // because it answers a different question — the canary asks whether confinement holds
+  // on this host, this asks whether the stage can be exec'd in this repository at all —
+  // and because its refusal names a remedy the operator applies rather than a
+  // configuration fault.
+  preflight: preflightClaudeExecArgBudget,
 };

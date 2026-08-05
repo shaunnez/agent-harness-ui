@@ -123,8 +123,15 @@ export class TaskOrchestrator {
    * is verified by the harness rather than by the OS must demonstrate it on *this*
    * host: the layered posture depends on mechanisms a CLI release can change without
    * a changelog entry the harness reads, so configuration is not evidence.
+   *
+   * A provider may also refuse on host capacity rather than on confinement. That
+   * refusal runs first and is not overridable: it names what the operator must do, and
+   * a stage that cannot exec a shell would produce unverifiable evidence at best. Its
+   * check is racy by construction — the exec-argument budget is per repository, so a
+   * concurrent task can consume the headroom after this returns — which is why the
+   * mid-run shell-start guard stays as well.
    */
-  async #assertProviderConfinement(providerId, sandbox, networkAccess = false) {
+  async #assertProviderConfinement(providerId, sandbox, networkAccess = false, cwd = null) {
     if (this.#runCodex) return;
     const provider = resolveExecutionProvider(providerId);
     const capabilities = provider.capabilities();
@@ -135,11 +142,15 @@ export class TaskOrchestrator {
     if (networkAccess && !capabilities.grantsNetworkAccess) {
       throw new Error(`${provider.label} cannot grant the network access this stage requires, so it cannot run on it.`);
     }
+    if (typeof provider.preflight === "function") {
+      const budget = await provider.preflight({ sandbox, cwd });
+      if (budget && budget.ok === false) throw new Error(budget.refusal ?? budget.detail);
+    }
     if (capabilities.confinementVerifiedBy !== "harness") return;
     if (typeof provider.canary !== "function") {
       throw new Error(`${provider.label} reports ${posture} confinement but provides no way to verify it on this host.`);
     }
-    const canary = await provider.canary({ sandbox });
+    const canary = await provider.canary({ sandbox, cwd });
     if (!canary?.passed) {
       throw new Error(
         `${provider.label} ${sandbox} confinement is not established on this host: ${canary?.detail ?? "the sandbox canary did not pass."}`,
@@ -1342,7 +1353,7 @@ export class TaskOrchestrator {
     });
     const runtimeEvents = [];
     try {
-      await this.#assertProviderConfinement(runProvider, effectiveSandbox, testRuntime);
+      await this.#assertProviderConfinement(runProvider, effectiveSandbox, testRuntime, cwd);
       const result = await this.#runAgent(runProvider, {
         cwd,
         prompt: agentRequest.prompt,
