@@ -889,6 +889,29 @@ export function resetClaudeSandboxCanaryCache() {
 }
 
 /**
+ * THE STANDING RULE FOR BOTH CANARIES: every input the stage varies, the check must
+ * vary. A check that holds an input fixed certifies only that value of it.
+ *
+ * This mechanism has broken that rule twice, and both times it reported agreement
+ * because it was not looking at the thing that changed:
+ *
+ * 1. It passed while the OS sandbox was dead. A dead sandbox still yields refusals —
+ *    from the permission layer — and an untouched guarded file, which are exactly the
+ *    two observations a pass was built from. Fixed by `sandboxUnavailable` outranking
+ *    every other signal in both classifiers.
+ * 2. It certified a path length the stages do not use. The canary runs in `os.tmpdir()`
+ *    while stages run at `<repo>/.data/worktrees/<task>/<candidate>`, and the E2BIG
+ *    shell-start failure is a function of the cwd, not only of the settings. Issue #39.
+ *
+ * The measured cause of (2) is *not* cwd length alone, so do not "fix" it by padding the
+ * scratch path to match. The quantity that fails is total exec bytes against
+ * `ARG_MAX`, and the number of registered worktrees dominates it — see the sweep
+ * recorded in `docs/claude-execution-provider-design.md`. A check that varies cwd length
+ * while holding worktree count at whatever the scratch repo happens to have would be the
+ * same mistake a third time.
+ */
+
+/**
  * Decide what an observed workspace-write canary proves.
  *
  * Inverted from read-only: a write inside the worktree must *succeed*, so a run where
@@ -1093,6 +1116,10 @@ async function executeClaudeSandboxCanary({ timeoutMs, model }) {
  * Decide what an observed canary run proves. Pure, so the safety-critical property —
  * that anything short of a demonstrated refusal fails closed — is testable without
  * spawning a CLI.
+ *
+ * The standing rule above `classifyClaudeWriteCanary` governs this classifier too:
+ * every input the stage varies, the check must vary. Anything this function is not shown
+ * is something it is silently holding constant on the stage's behalf.
  */
 export function classifyClaudeSandboxCanary({
   sandboxUnavailable = false,
