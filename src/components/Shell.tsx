@@ -126,7 +126,14 @@ export function Shell({
           <strong>s.k.dev</strong>
           <small>Senior developer</small>
         </span>
-        {collapsed ? <CaretDoubleRight size={15} /> : <CaretDoubleLeft size={15} />}
+        <button
+          type="button"
+          className="sidebar-profile__toggle"
+          onClick={onToggleCollapsed}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <CaretDoubleRight size={15} /> : <CaretDoubleLeft size={15} />}
+        </button>
       </div>
     </aside>
   );

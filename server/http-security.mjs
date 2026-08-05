@@ -1,7 +1,13 @@
 const MUTATION_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+// 4173 is `vite preview`, 5173 is `vite dev`. Both are loopback and both are the same
+// operator at the same machine; omitting the dev port made every mutation from `npm run dev`
+// fail with a 403 that reads like an auth problem. Reads were unaffected, because browsers
+// omit `Origin` on same-origin GETs — which is why this only showed up on save.
 const ALLOWED_BROWSER_ORIGINS = new Set([
   "http://127.0.0.1:4173",
   "http://localhost:4173",
+  "http://127.0.0.1:5173",
+  "http://localhost:5173",
 ]);
 
 export const MISSING_ORIGIN_POLICY =
