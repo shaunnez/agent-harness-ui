@@ -1,5 +1,10 @@
 # Agent Harness dogfood report
 
+> **Triage note (2026-08-05, #26):** Historical campaign narrative, not open findings.
+> The defects listed under "Harness and product defects fixed" and "Harness defects found
+> and fixed" were already fixed at time of writing and remain fixed on current `main`
+> (spot-verified during triage). No action taken.
+
 Updated: 2026-08-02
 
 ## Regression and parallel-scheduler campaign

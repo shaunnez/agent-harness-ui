@@ -1,5 +1,14 @@
 # Overnight release-candidate report — 2026-08-04
 
+> **Triage note (2026-08-05, #26):** The "Audit disposition" table below was
+> independently re-verified against current code (not merely trusted) — confirmed
+> accurate, with one refinement: P2-9's documented bug is fixed; a narrower theoretical
+> residual remains (see `docs/code-quality-audit-2026-08-03.md`'s note). AH-003's two P1
+> Dev Review blockers are that same P2-9 finding, not a separate live defect. All branches
+> named here (`codex/overnight-*`, `agent-harness/ah-003-c1`/`ah-004-c1`) are stale — their
+> content landed on `main` via direct commits despite PRs #18-#20 being closed unmerged
+> (push access was identity-scoped, see #25) — safe to delete. Historical record.
+
 ## Executive conclusion
 
 **Safe to review: partially.** The runtime-hardening and approved-backlog layers are clean, independently green, and have apply-checkable exported patches. The simple dogfood candidate reached Human Approval with fresh candidate-bound gates. The multi-package dogfood candidate did not reach Human Approval and exhausted its three Dev Review attempts with two remaining P1 findings.

@@ -1,5 +1,9 @@
 # Design QA
 
+> **Triage note (2026-08-05, #26):** Entirely historical. Every pass recorded in this
+> file ends "final result: passed" with zero open P0-P2 findings at the time it was
+> written. No action taken during triage.
+
 ## Review setup
 
 - Local implementation: `http://127.0.0.1:4173/`

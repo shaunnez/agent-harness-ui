@@ -1,5 +1,14 @@
 # Runtime UI capability gaps
 
+> **Triage note (2026-08-05, #26):** Re-verified against current `main`. 5 of 16 rows are
+> now closed (Run activity, Dev Review, Skill/agent/model metadata, Cost, Empty/
+> disconnected), largely by PR #22's `server/run-activity.mjs` and
+> `parseGateEvidence`. 4 rows are partially closed (Implementation Plan, Final Review,
+> Human Approval). The remaining open rows are consolidated as a backlog checklist in
+> [#32](https://github.com/shaunnez/agent-harness-ui/issues/32) — none were filed as
+> individual bugs because none describe untruthful behavior; this remains an honest
+> capability ledger, not a defect list.
+
 This ledger records Evidence Gate behaviors that the current local runtime cannot represent authoritatively. The UI caps these states instead of inferring them from prose or manufacturing controls.
 
 | Stage/screen | Intended behavior | Current limitation | Missing capability type | UI representation | Evidence | Priority | Recommendation | Follow-up issue title |
