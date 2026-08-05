@@ -1,9 +1,25 @@
 import assert from "node:assert/strict";
-import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import {
+  argvMeasuringShimScript,
+  BOUND_BYTES_PER_CWD_CHAR,
+  classifyExecArgBudget,
+  extrapolatedExecArgBoundBytes,
+  createArgvMeasuringShim,
+  CWD_LENGTH_BUCKET_CHARS,
+  cwdLengthBucket,
+  EXEC_ARG_LIMIT_BYTES,
+  execArgBudgetApplies,
+  MEASURED_BYTES_PER_WORKTREE,
+  MEASURED_FLOOR_BYTES,
+  PREFLIGHT_RESERVE_BYTES,
+  readArgvMeasurement,
+  readRegisteredWorktrees,
+} from "../server/claude-exec-budget.mjs";
 import {
   buildClaudeEnvironment,
   buildClaudeSpawn,
@@ -15,10 +31,12 @@ import {
   claudeUsageFromResult,
   createClaudeStreamParser,
   extractClaudeFailure,
+  hostCheckCacheKey,
   runClaude,
   readClaudeAuthProbe,
 } from "../server/claude-runtime.mjs";
 import { buildCodexEnvironment } from "../server/codex-runtime.mjs";
+import { runProcess } from "../server/process-runtime.mjs";
 import {
   assertSupportedReasoning,
   COST_DIVERGENCE_TOLERANCE,
@@ -1174,4 +1192,283 @@ test("refuses to pass either canary when the OS sandbox never started", () => {
     classifyClaudeWriteCanary({ insideWritten: true, editToolWorked: true, escaped: ["sourceRoot"], sandboxUnavailable: true }).sandboxUnavailable,
     true,
   );
+});
+
+test("reports exec-argument headroom as numbers an operator can act on, not a boolean", () => {
+  // Three registered worktrees and a 64-char cwd is the measured floor, so this is the
+  // best case any host has: ~700 KB of the 1 MB ceiling already spent.
+  const floor = classifyExecArgBudget({ registeredWorktrees: 3, cwdLength: 64, repositoryRoot: "/repo" });
+  assert.equal(floor.ok, true);
+  assert.equal(floor.usedBytes, MEASURED_FLOOR_BYTES);
+  assert.equal(floor.bytesPerWorktree, MEASURED_BYTES_PER_WORKTREE);
+  // Bytes used, bytes available, cost per additional worktree, and N — all four, so the
+  // answer is "room for N more worktrees" rather than only "this spawn will fail".
+  assert.equal(floor.availableBytes, EXEC_ARG_LIMIT_BYTES - PREFLIGHT_RESERVE_BYTES - floor.usedBytes);
+  assert.equal(floor.worktreesRemaining, Math.floor(floor.availableBytes / MEASURED_BYTES_PER_WORKTREE));
+  assert.match(floor.detail, /more worktrees fit/);
+  // Consistent with the measured boundary (21 ok / 28 E2BIG) and below it, because the
+  // reserve is held back.
+  assert.ok(floor.worktreesRemaining + 3 < 28, `${floor.worktreesRemaining + 3} total must stay under the measured failure point`);
+
+  // Every additional worktree costs the measured amount, so headroom falls by one.
+  const oneMore = classifyExecArgBudget({ registeredWorktrees: 4, cwdLength: 64, repositoryRoot: "/repo" });
+  assert.equal(oneMore.worktreesRemaining, floor.worktreesRemaining - 1);
+  assert.equal(oneMore.refusal, null);
+});
+
+test("refuses an exhausted exec-argument budget, names the remedy, and never prunes", () => {
+  // Measured, because only a measurement may refuse: the extrapolation has been observed
+  // landing on the wrong side of the real number, so it reports and never gates.
+  const exhausted = classifyExecArgBudget({
+    sandbox: "workspace-write",
+    registeredWorktrees: 40,
+    cwdLength: 92,
+    measuredBytes: 1_040_000,
+    repositoryRoot: "/Users/dev/agent-harness-ui",
+  });
+  assert.equal(exhausted.ok, false);
+  assert.equal(exhausted.availableBytes, 0);
+  assert.equal(exhausted.worktreesRemaining, 0);
+
+  // The refusal is the whole product decision: it must name the count, the ceiling and
+  // the exact commands, because the operator — not the harness — decides which worktree
+  // is safe to remove.
+  assert.match(exhausted.refusal, /40 registered worktrees/);
+  assert.match(exhausted.refusal, /1,048,576-byte OS exec argument ceiling/);
+  assert.match(exhausted.refusal, /git worktree list/);
+  assert.match(exhausted.refusal, /git worktree remove <path>/);
+  assert.match(exhausted.refusal, /git worktree prune/);
+  assert.match(exhausted.refusal, /\/Users\/dev\/agent-harness-ui/);
+  // Never prune automatically: a worktree may hold uncommitted work, and deleting it to
+  // make room trades a loud recoverable failure for a quiet unrecoverable one.
+  assert.match(exhausted.refusal, /Nothing is removed automatically/);
+  // And no escape hatch is advertised, because there is none.
+  assert.doesNotMatch(exhausted.refusal, /--force|override|skip this check|disable/i);
+  // The budget is shared, so the message says so — otherwise the operator reads it as a
+  // property of their own stage.
+  assert.match(exhausted.refusal, /per repository/);
+});
+
+test("an observed E2BIG outranks any computed exec-argument number", () => {
+  // A probe whose own shell could not start is the failure itself, not a prediction of
+  // it, so it refuses even at a worktree count the bound would happily pass.
+  const observed = classifyExecArgBudget({ registeredWorktrees: 3, cwdLength: 64, e2bigObserved: true, repositoryRoot: "/repo" });
+  assert.equal(observed.ok, false);
+  assert.equal(observed.source, "measured");
+  assert.match(observed.detail, /already exceeds the OS ceiling/);
+  assert.match(observed.refusal, /could not start a shell/);
+  // Even a measured byte count that looks fine does not rescue it.
+  assert.equal(
+    classifyExecArgBudget({ registeredWorktrees: 3, cwdLength: 64, measuredBytes: 10_000, e2bigObserved: true }).ok,
+    false,
+  );
+});
+
+test("labels the fallback a bound and lets a real measurement outrank it", () => {
+  const bound = classifyExecArgBudget({ registeredWorktrees: 5, cwdLength: 70, repositoryRoot: "/repo" });
+  assert.equal(bound.source, "bound");
+  assert.equal(bound.ok, true);
+  assert.equal(bound.measurementUnavailable, true);
+  assert.match(bound.detail, /bounded/);
+  assert.match(bound.detail, /extrapolation rather than a measurement/);
+  // Still reports the number an operator wants — headroom is the point of the output.
+  assert.ok(bound.worktreesRemaining > 0);
+
+  // And it never refuses, even when the extrapolation is already past the ceiling. A
+  // probe at 3 worktrees under a deep root measured 765,023 bytes where this
+  // extrapolation gives 731,555, so it is capable of being wrong in either direction and
+  // must not be what decides. It says so instead, and names the guard that does cover it.
+  const overBound = classifyExecArgBudget({ registeredWorktrees: 40, cwdLength: 300, repositoryRoot: "/repo" });
+  assert.ok(overBound.usedBytes > EXEC_ARG_LIMIT_BYTES);
+  assert.equal(overBound.ok, true);
+  assert.equal(overBound.refusal, null);
+  assert.match(overBound.detail, /bound is not evidence and does not refuse/);
+  assert.match(overBound.detail, /mid-run shell-start guard/);
+
+  // The measurement is the authority when there is one, and it is labelled as such so
+  // nobody reads a bound as an observation.
+  const measured = classifyExecArgBudget({ registeredWorktrees: 5, cwdLength: 70, measuredBytes: 760_000 });
+  assert.equal(measured.source, "measured");
+  assert.equal(measured.usedBytes, 760_000);
+  assert.match(measured.detail, /measured/);
+
+  // The extrapolation still leans pessimistic where it can: it charges the measured floor
+  // even below the baseline, the measured per-worktree cost above it, and the *worst*
+  // measured per-character cost rather than the typical one, because a deeper cwd also
+  // adds deny paths and the two factors interact multiplicatively.
+  assert.equal(extrapolatedExecArgBoundBytes({ registeredWorktrees: 0, cwdLength: 0 }), MEASURED_FLOOR_BYTES);
+  assert.equal(extrapolatedExecArgBoundBytes({ registeredWorktrees: 3, cwdLength: 64 }), MEASURED_FLOOR_BYTES);
+  assert.equal(
+    extrapolatedExecArgBoundBytes({ registeredWorktrees: 4, cwdLength: 64 }) - MEASURED_FLOOR_BYTES,
+    MEASURED_BYTES_PER_WORKTREE,
+  );
+  assert.equal(
+    extrapolatedExecArgBoundBytes({ registeredWorktrees: 3, cwdLength: 65 }) - MEASURED_FLOOR_BYTES,
+    BOUND_BYTES_PER_CWD_CHAR,
+  );
+  assert.ok(BOUND_BYTES_PER_CWD_CHAR > 301, "the bound must not use the shallow-path 301 B/char rate");
+  // Monotone in both axes, so neither can be traded for the other.
+  assert.ok(
+    extrapolatedExecArgBoundBytes({ registeredWorktrees: 12, cwdLength: 700 })
+      > extrapolatedExecArgBoundBytes({ registeredWorktrees: 11, cwdLength: 700 }),
+  );
+});
+
+test("says so rather than guessing when there is no exec-argument budget to check", () => {
+  // The inlined-profile limit is macOS seatbelt behaviour. Elsewhere there is no such
+  // command string, so inventing a verdict for an absent mechanism is the false-green
+  // shape the standing rule exists for.
+  assert.equal(execArgBudgetApplies("darwin"), true);
+  assert.equal(execArgBudgetApplies("linux"), false);
+  const inapplicable = classifyExecArgBudget({ applicable: false, registeredWorktrees: 40, cwdLength: 900 });
+  assert.equal(inapplicable.ok, true);
+  assert.equal(inapplicable.source, "not-applicable");
+  assert.equal(inapplicable.usedBytes, null);
+  assert.match(inapplicable.detail, /macOS-specific/);
+
+  // An uncountable repository is reported as unestablished, not as verified, and leans
+  // explicitly on the mid-run guard rather than pretending to a number.
+  const unknown = classifyExecArgBudget({ registeredWorktrees: null, cwdLength: 64 });
+  assert.equal(unknown.source, "unavailable");
+  assert.equal(unknown.worktreesRemaining, null);
+  assert.match(unknown.detail, /could not be read/);
+  assert.match(unknown.detail, /mid-run shell-start guard/);
+});
+
+test("keys every per-host check by the state it is only valid for", () => {
+  const base = { repositoryRoot: "/repo", registeredWorktrees: 5, cwdLength: 64 };
+  const key = (overrides) => hostCheckCacheKey("canary", "read-only", { ...base, ...overrides });
+
+  // Worktree count dominates the exec budget, so a result obtained at one count is not
+  // evidence about another — this is the #39 mistake moved into the cache.
+  assert.notEqual(key({}), key({ registeredWorktrees: 6 }));
+  // The budget is per repository.
+  assert.notEqual(key({}), key({ repositoryRoot: "/other" }));
+  // cwd length is secondary but real, so it is bucketed rather than ignored.
+  assert.notEqual(key({}), key({ cwdLength: 64 + CWD_LENGTH_BUCKET_CHARS }));
+  // ...and bucketed, so a different task id at a comparable depth reuses the answer
+  // instead of paying for a probe per stage.
+  assert.equal(key({}), key({ cwdLength: 70 }));
+  assert.equal(cwdLengthBucket(0), 0);
+  // Posture and kind never share an entry, and one map holds both kinds.
+  assert.notEqual(key({}), hostCheckCacheKey("canary", "workspace-write", base));
+  assert.notEqual(key({}), hostCheckCacheKey("exec-arg-budget", "read-only", base));
+});
+
+test("measures real exec argument bytes with a shim that cannot break the command it fronts", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-shim-test-"));
+  try {
+    const { shimPath, outputPath } = await createArgvMeasuringShim(directory, { realShell: "/bin/sh" });
+    // Nothing recorded yet is `null`, not zero: no measurement is not a small measurement.
+    assert.equal(await readArgvMeasurement(outputPath), null);
+
+    const payload = "x".repeat(50_000);
+    // Shaped like the real thing: `<shell> -c <string>` where the string is what carries
+    // the bulk. `$0` inside `sh -c` is the argument after the command, so writing it out
+    // proves the arguments reached the real shell byte for byte.
+    const run = await runProcess(shimPath, ["-c", `printf '%s' "$0" > ${JSON.stringify(path.join(directory, "ran"))}`, payload], {
+      cwd: directory,
+      timeoutMs: 20_000,
+      env: { PATH: process.env.PATH ?? "/usr/bin:/bin", HOME: directory },
+    });
+    // The shim execs the real shell unchanged: the command still ran, with its arguments.
+    assert.equal(run.code, 0);
+    assert.equal(await readFile(path.join(directory, "ran"), "utf8"), payload);
+
+    const measured = await readArgvMeasurement(outputPath);
+    // Bytes, not characters, and the argument list plus the environment — which is what
+    // the OS charges against the same limit.
+    assert.ok(measured > payload.length, `${measured} must exceed the 50,000-byte argument`);
+    assert.ok(measured < payload.length + 5_000, `${measured} must not be inflated far beyond it`);
+
+    // The largest invocation is the one that has to fit, so repeated calls report the max.
+    await runProcess(shimPath, ["-c", "exit 0"], { cwd: directory, timeoutMs: 20_000, env: { PATH: process.env.PATH ?? "/usr/bin:/bin" } });
+    assert.equal(await readArgvMeasurement(outputPath), measured);
+
+    const script = argvMeasuringShimScript({ outputPath: "/tmp/out", realShell: "/bin/zsh" });
+    // Both the output path and the real shell are baked in at generation time: the shim
+    // reads no environment variable and takes nothing from its arguments as input.
+    assert.match(script, /^#!\/bin\/sh/);
+    assert.match(script, /exec "\/bin\/zsh" "\$@"/);
+    assert.doesNotMatch(script, /\$CLAUDE|\$\{?OUT/);
+    // Measuring must never be able to fail the command the shim fronts.
+    assert.match(script, /\|\| true/);
+    assert.match(script, /exec /);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("counts the registered worktrees the CLI's deny paths are generated from", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "agent-harness-worktree-count-"));
+  const repository = path.join(root, "repo");
+  const git = async (args, cwd = repository) => {
+    const result = await runProcess("git", args, { cwd, timeoutMs: 20_000 });
+    assert.equal(result.code, 0, `git ${args.join(" ")}: ${result.stderr}`);
+  };
+  try {
+    await mkdir(repository, { recursive: true });
+    await git(["init", "--initial-branch=main"], repository);
+    await git(["config", "user.email", "harness@example.test"]);
+    await git(["config", "user.name", "Harness"]);
+    await writeFile(path.join(repository, "file.txt"), "one", "utf8");
+    await git(["add", "."]);
+    await git(["commit", "-m", "one"]);
+
+    // A repository nobody has branched from spends the floor and nothing more.
+    const empty = await readRegisteredWorktrees(repository);
+    assert.equal(empty.registeredWorktrees, 0);
+    assert.equal(await realpath(empty.repositoryRoot), await realpath(repository));
+
+    await git(["worktree", "add", path.join(root, "wt-a"), "-b", "a"]);
+    await git(["worktree", "add", path.join(root, "wt-b"), "-b", "b"]);
+    const two = await readRegisteredWorktrees(repository);
+    assert.equal(two.registeredWorktrees, 2);
+
+    // Counted from *inside* a linked worktree too, and against the main repository's
+    // `.git/worktrees/`, because that is where the deny paths point and the budget is
+    // shared by every stage on the repository rather than owned by one worktree.
+    const fromLinked = await readRegisteredWorktrees(path.join(root, "wt-a"));
+    assert.equal(fromLinked.registeredWorktrees, 2);
+    assert.equal(await realpath(fromLinked.repositoryRoot), await realpath(repository));
+
+    // Removing one returns its share of the budget, which is what the refusal asks for.
+    await git(["worktree", "remove", path.join(root, "wt-b")]);
+    assert.equal((await readRegisteredWorktrees(repository)).registeredWorktrees, 1);
+
+    // Outside a repository the count is unknown rather than zero: zero would understate
+    // the budget in the optimistic direction.
+    assert.deepEqual(await readRegisteredWorktrees(root), { repositoryRoot: null, registeredWorktrees: null });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("preflights the exec-argument budget before the canary and offers no way past it", async () => {
+  const claude = resolveExecutionProvider("claude");
+  // The refusal has to route through the provider seam the orchestrator already calls
+  // before anything is spawned, so it cannot be reached after a stage has started.
+  assert.equal(typeof claude.preflight, "function");
+  assert.equal(typeof claude.canary, "function");
+
+  const root = await mkdtemp(path.join(os.tmpdir(), "agent-harness-preflight-"));
+  try {
+    await runProcess("git", ["init", "--initial-branch=main"], { cwd: root, timeoutMs: 20_000 });
+    // `measure: false` is the status view's free path: a probe is a real CLI run, so a
+    // status that has not paid for one reports the bound and says which it is.
+    const report = await claude.preflight({ sandbox: "read-only", cwd: root, measure: false });
+    assert.equal(report.sandbox, "read-only");
+    if (process.platform === "darwin") {
+      assert.equal(report.source, "bound");
+      assert.equal(report.registeredWorktrees, 0);
+      assert.equal(report.ok, true);
+      assert.ok(report.worktreesRemaining > 0);
+      assert.equal(report.limitBytes, EXEC_ARG_LIMIT_BYTES);
+    } else {
+      assert.equal(report.source, "not-applicable");
+      assert.equal(report.ok, true);
+    }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

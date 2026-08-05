@@ -797,10 +797,66 @@ Four things follow, and the third is why the obvious fix is the wrong one.
    (~64-char candidate paths) that is roughly two dozen registered worktrees, and every
    concurrent task's candidate worktree is one of them.
 
-The shape a fix should take follows from (1): the budget is computable before spawning —
-deny-path count, each path's length, and its depth are all known to the harness — so the
-honest check is a byte-budget preflight, not a CLI run at an unrelated path. That is not
-implemented here; measuring first was the point.
+The shape a fix should take follows from (1): the check has to be against total exec
+bytes, not against either variable and not a CLI run at an unrelated path. Implemented as
+the byte-budget preflight below (#42).
+
+### The exec-argument preflight — measured, not modelled
+
+`server/claude-exec-budget.mjs` decides before a Claude stage spawns whether the budget
+will hold at that cwd in that repository, and reports the remaining headroom either way.
+`claudeExecutionProvider.preflight` exposes it; `#assertProviderConfinement` calls it
+ahead of the canary, so an exhausted budget refuses before anything is spawned.
+
+The number comes from measurement rather than from a reimplementation of the CLI's rule
+expansion. A model of that expansion would look exact and go stale silently, in the
+optimistic direction, the first time the CLI changes profile generation — the false-green
+class the standing rule exists for. So a short-lived probe run stands the same
+byte-counting shim used for the sweep in front of the outer shell via
+`CLAUDE_CODE_SHELL`, runs `/usr/bin/true` at the stage's real cwd and posture, and reports
+what the CLI actually built. The probe is a separate run, never the stage's own spawn —
+the shim sits in the exec path of every command it fronts — and `CLAUDE_CODE_SHELL` stays
+out of `CLAUDE_ENV_ALLOWLIST`, applied to the probe's environment only. One probe per
+(repository, worktree count, cwd-length bucket) state, cached in the same map as the
+canary rather than in a second cache beside it, which also means a canary green obtained
+at one worktree count is no longer served for another.
+
+Two things measured while building it, both of which changed the design:
+
+1. **`CLAUDE_CODE_SHELL` is validated by path, not by behaviour.** A path that does not
+   read as a bash/zsh path is rejected — "is not a valid bash/zsh path, falling back to
+   detection" — and the override is then ignored *silently*. Measured on 2.1.222 with one
+   shim under three names: `zsh` and `measure-zsh` both took effect, `measure-shell.sh`
+   recorded nothing at all. Hence the shim is named after the shell it hands off to. A
+   rejected override degrades to no measurement, which is safe but invisible, so anyone
+   renaming the shim should expect the feature to stop working without an error.
+2. **The extrapolated bound is not reliably conservative, so it may not gate.** A probe in
+   a scratch repo at 3 registered worktrees under a deep `/private/var/folders` root
+   measured **765,023** bytes where extrapolating from the floor gives **731,555** — an
+   under-estimate of ~33 KB, because the repository root prefix repeats in every rule and
+   the deny-path *set* varies by layout, neither of which is an input to the
+   extrapolation. Making it pessimistic enough to be safe (charging every cwd character
+   at the worst measured 2,670 B rate) produced refusals at worktree counts that in fact
+   run. So **only a measurement, or an observed E2BIG, refuses a stage.** The bound
+   reports headroom, is labelled a bound wherever it appears, and when it lands past the
+   ceiling it says so and names the mid-run guard instead of refusing.
+
+Three deliberate consequences:
+
+- **Refuse, never prune.** The refusal names the count, the ceiling, the fact that the
+  budget is shared per repository, and `git worktree list` / `git worktree remove <path>`
+  / `git worktree prune`. Nothing is removed automatically — a worktree may hold
+  uncommitted work, so pruning to make room for a stage would trade a loud recoverable
+  failure for a quiet unrecoverable one — and there is no flag that skips the check.
+- **Headroom is a first-class output.** `provider.status()` carries `execArgBudget` with
+  bytes used, bytes available, cost per additional worktree and how many more fit, so the
+  ceiling is visible before an operator queues work rather than after a stage dies. The
+  status path uses the free bound, because a probe costs a model call.
+- **`856ed50` stays.** The budget is per repository, so a task can register a worktree
+  between the preflight and the spawn, or during the run. A correct preflight can still be
+  overtaken, which is the argument for a generous reserve rather than an exact threshold,
+  and it is why the mid-run shell-start failure check is not redundant: the preflight stops
+  a doomed stage from starting, the guard stops an overtaken stage from being committed.
 
 ### Operational requirements the spike did not surface
 
