@@ -14,6 +14,19 @@ import { Button, SectionHeader } from "./Primitives";
 
 type RuntimePolicyInput = Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies">;
 
+/**
+ * The label used to say "Signed in · not executable" whenever Claude was authenticated, which
+ * was left over from before Claude execution was wired and contradicted the status the runtime
+ * actually reports. `executionEnabled` stays false until a sandbox canary has verified
+ * confinement on this host, and status does not pay for one — so "not yet verified" is the
+ * honest reading, not "not executable".
+ */
+function claudeConnectionState(claude?: { available?: boolean; authenticated?: boolean; executionEnabled?: boolean }) {
+  if (!claude?.available) return "Not found";
+  if (!claude.authenticated) return "Login required";
+  return claude.executionEnabled ? "Signed in · execution enabled" : "Signed in · confinement not yet verified";
+}
+
 export function SettingsScreen({
   runtimeStatus,
   evaluationSummary,
@@ -141,7 +154,7 @@ export function SettingsScreen({
       <section className="settings-section">
         <h3>Runtime connection</h3>
         <SettingRow title="Authentication" copy="No API key is read or stored" control={<strong>{runtimeStatus?.authenticated ? `${runtimeStatus.authMethod} signed in` : "Not connected"}</strong>} />
-        <SettingRow title="Claude" copy={claude?.detail ?? "Discovery runs when the local companion status is refreshed"} control={<span className="capability-gap">{claude?.authenticated ? "Signed in · not executable" : claude?.available ? "Login required" : "Not found"}</span>} />
+        <SettingRow title="Claude" copy={claude?.detail ?? "Discovery runs when the local companion status is refreshed"} control={<span className="capability-gap">{claudeConnectionState(claude)}</span>} />
       </section>
       <section className="settings-section">
         <div className="settings-section__head"><span><h3>Approximate cost rate card</h3><p>Standard short-context API prices per 1M tokens. Calculated task costs are comparison estimates; ChatGPT-plan charges are not exposed.</p></span><Button tone="secondary" disabled={verifyingPricing || !runtimeStatus?.authenticated} onClick={async () => { setError(null); setVerifyingPricing(true); try { await onVerifyPricing(); } catch (reason) { setError(reason instanceof Error ? reason.message : "Pricing could not be verified."); } finally { setVerifyingPricing(false); } }}>{verifyingPricing ? "Agent checking…" : "Verify with agent"}</Button></div>

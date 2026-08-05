@@ -203,16 +203,20 @@ export function resolveTaskProvider(stagePolicies, fallbackModel, explicit = nul
  * runtime both resolve their defaults from here so runtime status, allowed models,
  * and spawned agents cannot advertise different models.
  */
-export const DEFAULT_RUNTIME_MODEL = "gpt-5.6-luna";
+export const DEFAULT_RUNTIME_MODEL = "claude-sonnet-5";
 export const DEFAULT_RUNTIME_REASONING = "xhigh";
+
+/** Codex's own default, which is not the global one and must not follow it. */
+export const DEFAULT_CODEX_MODEL = "gpt-5.6-luna";
 
 /**
  * Per-provider fallback defaults behind one selected provider. This keeps the
- * single-source-of-truth property: only the *fallback* becomes provider-aware, and
- * `DEFAULT_RUNTIME_MODEL` remains the one global default for Codex.
+ * single-source-of-truth property: only the *fallback* becomes provider-aware. Each provider's
+ * entry names its own model — a Codex stage must not inherit a Claude id just because the global
+ * default moved.
  */
 export const PROVIDER_RUNTIME_DEFAULTS = Object.freeze({
-  codex: Object.freeze({ model: DEFAULT_RUNTIME_MODEL, reasoning: DEFAULT_RUNTIME_REASONING }),
+  codex: Object.freeze({ model: DEFAULT_CODEX_MODEL, reasoning: DEFAULT_RUNTIME_REASONING }),
   claude: Object.freeze({ model: "claude-sonnet-5", reasoning: "xhigh" }),
 });
 
@@ -250,8 +254,11 @@ export function defaultRuntimeSettings() {
     defaultModel,
     defaultReasoning,
     // Nothing moves to another provider until an operator changes this.
-    defaultProvider: DEFAULT_EXECUTION_PROVIDER,
-    stagePolicies: defaultStagePolicies(),
+    defaultProvider: providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER,
+    // Claude by default now that no stage needs network access (#47): the test stage was the
+    // only one pinned to Codex, and it no longer runs commands itself. Sonnet for gathering and
+    // execution, Opus wherever the Codex set used Sol — planning and every gate.
+    stagePolicies: defaultStagePolicies(providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER),
     pricing: {
       version: PRICING_VERSION,
       sourceUrl: PRICING_SOURCE_URL,

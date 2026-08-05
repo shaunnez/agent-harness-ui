@@ -503,7 +503,9 @@ test("attributes model ids to providers and leaves unknown ids unattributed", ()
   assert.equal(providerForModelId("claude-sonnet-5-20260101"), "claude");
   assert.equal(providerForModelId("gpt-5.6-luna"), "codex");
   assert.equal(providerForModelId("mistral-large"), null);
-  assert.equal(providerForModelId(""), "codex", "the empty id normalizes to the Codex default");
+  // The global default model is a Claude model now that no stage needs network access (#47), so
+  // an empty id normalizes there. Codex remains selectable per stage and per task.
+  assert.equal(providerForModelId(""), "claude", "the empty id normalizes to the default model's provider");
   assert.deepEqual(providerRuntimeDefaults("claude"), { model: "claude-sonnet-5", reasoning: "xhigh" });
   assert.deepEqual(providerRuntimeDefaults("codex"), { model: "gpt-5.6-luna", reasoning: "xhigh" });
   assert.deepEqual(providerRuntimeDefaults(), { model: "gpt-5.6-luna", reasoning: "xhigh" });
@@ -1131,8 +1133,12 @@ test("lets every stage pick its own provider, model and reasoning", async () => 
       resolveAgentPolicy({ agentConfig: { provider: "claude", stagePolicies: { plan: { model: "mistral-large", reasoning: "high" } } } }, "plan").provider,
       "claude",
     );
-    assert.equal(resolveAgentPolicy({ agentConfig: {} }, "plan").provider, "codex");
-    assert.equal(defaultRuntimeSettings().defaultProvider, "codex");
+    // Follows the default model, which is now Claude. `DEFAULT_EXECUTION_PROVIDER` is still the
+    // fallback for a task persisted before provider identity existed.
+    assert.equal(resolveAgentPolicy({ agentConfig: {} }, "plan").provider, "claude");
+    assert.equal(defaultRuntimeSettings().defaultProvider, "claude");
+    assert.equal(defaultRuntimeSettings().stagePolicies.plan.model, "claude-opus-5");
+    assert.equal(defaultRuntimeSettings().stagePolicies.implement.model, "claude-sonnet-5");
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
