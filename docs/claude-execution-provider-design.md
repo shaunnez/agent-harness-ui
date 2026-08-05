@@ -792,14 +792,50 @@ Four things follow, and the third is why the obvious fix is the wrong one.
    through ancestor expansion, so **"length alone" is false** and a length-matched canary
    or a length-keyed canary cache would certify the wrong axis. Issue #39's proposed fix
    does not follow from the measurement; #36's cleanup precondition does.
-4. **The floor is high.** A minimal scratch repo at a 64-char cwd already spends ~700 KB
-   of the 1 MB budget, so ~33% headroom is all any host starts with. On this repo's layout
-   (~64-char candidate paths) that is roughly two dozen registered worktrees, and every
-   concurrent task's candidate worktree is one of them.
+4. ~~**The floor is high.**~~ **Corrected — see below. There is no host floor**; the
+   702,185 figure is a property of the layout it was measured in, not a constant, and the
+   "roughly two dozen registered worktrees" ceiling derived from it is layout-specific too.
 
 The shape a fix should take follows from (1): the check has to be against total exec
 bytes, not against either variable and not a CLI run at an unrelated path. Implemented as
 the byte-budget preflight below (#42).
+
+### Correction: the "floor" and the worktree ceiling are layout-specific, not host constants
+
+Point 4 above claimed a ~700 KB floor and, from it, a ceiling of roughly two dozen
+registered worktrees. Both were wrong in the same way the three earlier explanations were
+wrong — a number measured in one layout, read as a property of the host. Two measurements
+taken while building the preflight, both `workspace-write`, both on this host:
+
+| repository | registered worktrees | cwd chars | measured argv bytes | Bash |
+|---|---|---|---|---|
+| scratch repo at a short root | 30 | 12 | **726,741** | **ok** |
+| `--reference` clone of that same repo | 0 | 11 | **346,302** | ok |
+| scratch repo under `/private/var/folders/…` | 3 | 75 | 765,023 | ok |
+
+Three corrections follow.
+
+1. **A minimal repository does not spend ~700 KB.** At a 12-char path it spent 346,302
+   bytes — under a third of the budget, less than half the claimed floor. The 702,185
+   figure carried its scratch repo's own root prefix through every rule in the profile.
+2. **28 registered worktrees do not fail on their own.** Thirty of them at a 12-char path
+   measured 726,741 bytes and ran fine. The sweep's failure at 28 was 28 worktrees *plus*
+   that layout's path prefix. Point 2's "1 worktree ≈ 48 cwd characters" exchange rate is
+   sound; the absolute boundary it was combined with is not.
+3. **The per-worktree cost reproduces independently, and it is the one number here that
+   travels.** The two rows of the same repo differ only in worktree registrations:
+   (726,741 − 346,302) / 30 = **12,681 bytes per worktree**, against the sweep's ≈ 14.4 KB
+   measured a different way. That agreement is why the preflight prices a worktree at the
+   higher of the two.
+
+The operational consequence is the opposite of a relaxation. The deny paths are generated
+from the repository containing the cwd, so **a clone carries none of the source
+repository's worktree registrations** — 0 against 30, for the same content. That makes
+worktree-based candidate isolation, not Claude Code, the source of the growth term, and it
+means the ceiling is a harness design consequence rather than a host limit. It also means
+any figure of the form "this host tops out at N worktrees" is unanswerable without naming
+the layout, which is why `provider.status()` reports measured bytes for a specific cwd
+instead of a global N. Tracked on #41.
 
 ### The exec-argument preflight — measured, not modelled
 

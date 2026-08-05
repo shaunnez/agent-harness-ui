@@ -45,14 +45,22 @@ import { runProcess } from "./process-runtime.mjs";
 export const EXEC_ARG_LIMIT_BYTES = 1_048_576;
 
 /**
- * The measured floor: a minimal scratch repo at 3 registered worktrees and a 64-char
- * cwd already spends this much, so ~33% headroom is all any host starts with.
+ * One sweep data point, and **not a floor** despite the sweep having called it one: a
+ * scratch repo at 3 registered worktrees and a 64-char cwd measured this much. A minimal
+ * repo at a 12-char path later measured 346,302 — less than half — because the sweep's
+ * repo carried its own root prefix through every rule in the profile. So this is the
+ * anchor the extrapolation starts from, nothing more; there is no host floor to know.
  */
 export const MEASURED_FLOOR_BYTES = 702_185;
 export const MEASURED_FLOOR_WORKTREES = 3;
 export const MEASURED_FLOOR_CWD_CHARS = 64;
 
-/** Measured: each registered worktree adds three deny paths and ≈14.4 KB of argv. */
+/**
+ * Measured two independent ways: ≈14.4 KB per worktree in the sweep, and 12,681 B per
+ * worktree from a same-repo pair that differed only in registrations ((726,741 − 346,302)
+ * / 30). The higher figure is used so the arithmetic charges more per worktree rather than
+ * less. This is the one quantity here that travelled between layouts.
+ */
 export const MEASURED_BYTES_PER_WORKTREE = 14_414;
 
 /**
@@ -123,15 +131,20 @@ export async function readRegisteredWorktrees(cwd) {
  * sweep using the measured per-worktree cost and the *worst* measured per-character
  * cost, never subtracting below the measured floor.
  *
- * It is not allowed to refuse a stage, and this is measured rather than cautious.
- * Probing a scratch repo at 3 registered worktrees under a deep `/private/var/folders`
- * root measured **765,023** bytes where this extrapolation gives **731,555** — it
- * under-estimated by ~33 KB, because the repository root prefix repeats in every one of
- * the profile's rules and the deny-path *set* differs by layout, neither of which is an
- * input here. An extrapolation that can be wrong in the optimistic direction must not
- * be the thing that decides, and one that can be wrong in the pessimistic direction
- * must not refuse work that would in fact run. So it reports headroom and says it is a
- * bound; `classifyExecArgBudget` refuses only on a measurement.
+ * It is not allowed to refuse a stage, and this is measured rather than cautious. It has
+ * been observed wrong in **both** directions, which is the whole argument:
+ *
+ * - 3 worktrees under a deep `/private/var/folders` root measured **765,023** where this
+ *   gives **731,555** — ~33 KB *optimistic*, the direction that would wave through a
+ *   stage about to die.
+ * - 30 worktrees at a 12-char path measured **726,741** where this gives **1,091,363** —
+ *   365 KB *pessimistic*, and past the ceiling: it would have refused 30 worktrees that in
+ *   fact ran fine.
+ *
+ * Both follow from the same missing input: the repository root prefix repeats in every one
+ * of the profile's thousands of rules, and the deny-path *set* varies by layout. So it
+ * reports headroom and says it is a bound; `classifyExecArgBudget` refuses only on a
+ * measurement.
  *
  * Do not "fix" this by adding a root-depth term. That is the road back to modelling the
  * CLI's rule expansion, which goes stale silently the moment the CLI changes profile
