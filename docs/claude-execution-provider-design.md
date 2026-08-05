@@ -708,22 +708,66 @@ which itself defaults to `"codex"` — so nothing changes until an operator opts
 `#executeAgent` resolves the provider from a registry and calls its `run`. A model/provider
 mismatch is rejected at settings validation and again at spawn.
 
-**Superseded in implementation: one provider per task, not per stage.** The implementation
-scopes the provider to `task.agentConfig.provider` rather than to each stage policy. The
-reason is sound and worth recording: candidate revisions do not persist a provider, so the
-repair-authorizer reconstruction cannot tell which runtime produced an authorizing gate.
-Per-stage mixing would reopen exactly the hole the provider binding exists to close — one
-provider per task makes cross-provider gate fallback *structurally impossible* rather than
-merely *detected*.
+**Implemented per stage policy, and the blocker is gone.** An earlier revision of this
+section recorded the implementation as scoping the provider to `task.agentConfig.provider`,
+on the grounds that candidate revisions do not persist a provider and so the
+repair-authorizer reconstruction could not tell which runtime produced an authorizing gate.
+That reasoning was right about the hole and wrong about the remedy: scoping per task did not
+close it either. A pure-Claude task that repaired and then needed a retry grant hit the same
+`provider_mismatch`, because the synthetic reservation rebuilt from lineage defaulted to the
+default provider regardless of what the task was configured to use.
 
-The cost is real and should not be glossed: **you cannot run Claude for implement and Codex
-for review.** That combination — a second opinion from a different model family at the
-gates — is a legitimate thing to want, and this design forecloses it.
+The actual fix was to persist it. Candidate revisions now record `authorizingGateProvider`
+alongside the other `authorizingGate*` fields, so the reconstruction reads the provider
+rather than assuming one. With that in place per-stage selection is safe, and it is what
+ships:
 
-Getting it back is not hard, but it is deliberate work rather than a config change: persist
-`provider` on candidate revisions alongside `headRevision`, so the repair authorizer can
-reconstruct which runtime produced each authorizing gate. Until that exists, per-stage
-provider selection must stay closed.
+- Each of the ten stage policies selects its own model, and the provider **follows from
+  that model** — there is no separate provider field to keep in sync with it, and therefore
+  no way for the two to disagree.
+- Reasoning is validated against the chosen model's own `reasoningLevels`. These differ by
+  model, not merely by provider: `ultra` exists on Codex and not on Claude, and
+  `claude-haiku-4-5` supports no effort at all and carries the explicit level `none`, which
+  resolves to omitting `--effort`.
+- `task.agentConfig.provider` survives only as a fallback for a model no provider claims.
+  Absent still means the default provider, so tasks persisted before provider identity
+  existed stay on Codex.
+- `implement` is reached by two policies, so the run *kind* decides which owns the provider
+  for an attempt: a repair reserves on `repair`, an implementation on `implement`.
+- Settings and task creation read a **merged** catalogue across providers. Reading one
+  provider's catalogue left the other's models with no reasoning levels, so every reasoning
+  value for them was rejected — the models were selectable in name only.
+
+So "Claude implements, Codex reviews" works. None of it weakens the binding: a reservation
+records the provider that will execute it, a run cannot execute on a provider its
+reservation did not reserve, and a gate whose run and reservation disagree is
+`provider_mismatch` rather than a cross-provider fallback.
+
+### Operational requirements the spike did not surface
+
+Three things the harness must satisfy for a Claude stage to run at all, each found by a
+canary failing rather than by reading documentation:
+
+1. **The sandbox needs an existing, writable `TMPDIR`.** It creates a unix mux socket there
+   (`srt-mux-<pid>-N.sock`); a non-existent temp directory yields `Sandbox is required but
+   failed to initialize: ENOENT`. This is a *second*, independent cause of
+   sandbox-unavailable beside the deny-path `E2BIG` limit, and it fails the same way, so
+   diagnosing one as the other will send you to the wrong place.
+2. **Network access cannot be granted.** The test stage needs loopback binding, which needs
+   `sandbox.network.allowLocalBinding`. Enabling it makes the CLI stop treating the sandbox
+   as fully sandboxed, so `autoAllowBashIfSandboxed` no longer auto-approves and every
+   command strands on a permission gate with nobody to answer it. The provider therefore
+   advertises `grantsNetworkAccess: false` and the **test stage stays on Codex** — refused
+   before spawning rather than failing mid-run.
+3. **Provisioned dependency directories must be per-entry links, not one directory link.**
+   Because both sandboxes match resolved paths (§a), a wholesale `node_modules` symlink
+   makes every path under it resolve into the shared source checkout, so *legitimate* writes
+   are refused too — Vite writes `node_modules/.vite-temp` while merely loading its config,
+   which broke `npm run build` in any provisioned worktree, on **both** providers. The fix
+   is a real directory of per-entry links: packages stay immutable, the directory is
+   worktree-local and writable, and tool caches are not inherited so each worktree makes its
+   own. Widening `allowWrite` to the resolved dependency paths would have reopened the
+   escape and let one test stage corrupt every concurrent worktree.
 
 Behaviour preservation: `TaskOrchestrator` currently takes `options.runCodex` and
 `options.getStatus`. Both injection points are **kept and honoured** — `options.runCodex`
