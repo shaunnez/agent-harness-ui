@@ -891,6 +891,14 @@ const CANARY_TTL_MS = 10 * 60 * 1000;
  * count and cwd are inputs the *stage* varies and both feed the exec-argument budget,
  * so a result obtained at one worktree count says nothing about another and must not
  * be served for it.
+ *
+ * **If you are using `preflightClaudeExecArgBudget` as a measuring instrument, clear this
+ * first between measurements — `resetClaudeSandboxCanaryCache()`.** Two cwds that differ in
+ * something the key does not capture (worktree contents, or a length difference inside one
+ * 50-char bucket) are the *same* state here, so the second call returns the first call's
+ * probe. That is correct caching and a trap for an experimenter: it renders any two such
+ * cwds byte-identical, which reads exactly like "the difference does not matter". Cost one
+ * measurement of a dependency-provisioning comparison before it was noticed.
  */
 const canaryCache = new Map();
 
