@@ -8,7 +8,7 @@ import {
   normalizeEvaluationInput,
   normalizeExperimentInput,
 } from "./evaluation.mjs";
-import { GitWorktreeManager } from "./git-worktree.mjs";
+import { defaultWorktreeRoot, GitWorktreeManager } from "./git-worktree.mjs";
 import { assertHttpBoundary, corsHeaders } from "./http-security.mjs";
 import { normalizeModelId, POLICY_IDS, readExecutionProviderCatalog } from "./model-catalog.mjs";
 import {
@@ -130,7 +130,10 @@ function worktreeEntriesForTask(task) {
 }
 
 export function createApiServer({ store, orchestrator, suggestedRepository, csrfToken = crypto.randomUUID() }) {
-  const worktrees = new GitWorktreeManager(process.cwd());
+  // Reads resolve each entry's recorded absolute path, so this root only matters for
+  // `prepare`, which the API never calls. It still uses the shared default rather than a
+  // second literal: two places computing a worktree root independently is how they drift.
+  const worktrees = new GitWorktreeManager(defaultWorktreeRoot());
   return createServer(async (request, response) => {
     const url = new URL(request.url, "http://127.0.0.1");
     if (request.method === "OPTIONS") {

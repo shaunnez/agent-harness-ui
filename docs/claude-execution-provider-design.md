@@ -147,9 +147,11 @@ guarded worktree was refused at the syscall boundary and the file was untouched:
 Note the shape of that content — it carries an `Exit code 1` prefix. That has a direct
 consequence for `commandFailed`; see §c.
 
-**Write mode: the obvious config is a trap.** The natural shape — `denyWrite` on the source
-repo, `allowWrite` on the worktree — does not work, because the harness always nests the
-worktree *inside* the repo (`.data/worktrees/<task>/<candidate>`). The repo-root `denyWrite`
+**Write mode: the obvious config was a trap.** (Superseded in part — candidates now live
+outside the checkout; see "Candidate worktrees moved out of the repository" below. The
+conclusion still holds: no `denyWrite` is added in write mode.) The natural shape —
+`denyWrite` on the source repo, `allowWrite` on the worktree — did not work, because the
+harness nested the worktree *inside* the repo (`.data/worktrees/<task>/<candidate>`). The repo-root `denyWrite`
 is therefore an ancestor of the `allowWrite`, and an ancestor deny unconditionally defeats a
 nested allow: it blocks every write, including the legitimate ones the stage exists to make.
 The failure presents as "Claude cannot write to its own worktree", which reads as a
@@ -863,7 +865,8 @@ Two things follow.
    takes any path, so candidates need not live at `<repo>/.data/worktrees/<task>/<candidate>`.
    Relocating them to a short path recovers ~197 KB here, taking headroom from 25 to 39
    registered worktrees — roughly five to seven concurrent tasks at the five-worktree fan-out
-   AH-003 used. Real, and bounded: it raises the ceiling, it does not remove it.
+   AH-003 used. Real, and bounded: it raises the ceiling, it does not remove it. Done — see
+   below.
 2. **There is an unexplained ~128 KB term, and it is not path length.** At the same
    repository and worktree count, the linked-worktree cwd cost ~128 KB more than the repo
    root beyond what 2,738 B/char accounts for. Not isolated — it could be a cwd-kind term
@@ -871,6 +874,30 @@ Two things follow.
    Its practical shape: a cwd that *is* a repository root appears cheaper than a linked
    worktree of the same repository, which is a point in favour of clone-per-candidate on
    bytes as well as on coupling.
+
+### Candidate worktrees moved out of the repository
+
+`defaultWorktreeRoot()` in `server/git-worktree.mjs` now resolves to `~/.ah/w`, overridable
+with `AGENT_HARNESS_WORKTREE_ROOT`, replacing `<repo>/.data/worktrees`. Candidates are
+`<root>/<task>/<candidate>`; the escape guard is unchanged, only the root moved.
+
+Three consequences worth recording, because two of them are couplings that were easy to miss.
+
+1. **The write canary's scratch layout moved with it.** It deliberately nested its scratch
+   worktree inside a scratch "source repository", because that nesting was what made an
+   ancestor `denyWrite` defeat a nested `allowWrite`. Candidates are no longer nested, so the
+   canary now builds the worktree as a *sibling* of the source repository. A canary left
+   testing the old shape would certify a layout no stage uses — the standing rule's failure
+   in its purest form. The escape it now proves matters more, not less: the source checkout
+   is a separate tree reachable only by absolute path, and it is the operator's real code.
+2. **A repo-root `denyWrite` stopped being a footgun, and is still not added.** With
+   candidates outside the checkout, such a rule would no longer be an ancestor of the
+   `allowWrite` and would be genuine defence in depth. Adding it is a change to a
+   safety-relevant profile and needs its own canary run to establish, so it is recorded as
+   available rather than taken.
+3. **Nothing now depends on `.gitignore` covering `.data/`** for the source checkout to read
+   clean during a candidate run, since the harness no longer writes working directories into
+   the repository at all.
 
 The operational consequence is the opposite of a relaxation. The deny paths are generated
 from the repository containing the cwd, so **a clone carries none of the source

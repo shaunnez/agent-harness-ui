@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
-import { GitWorktreeManager, discoverDependencyDirectories, provisionedDependencyEntries } from "../server/git-worktree.mjs";
+import { defaultWorktreeRoot, GitWorktreeManager, discoverDependencyDirectories, provisionedDependencyEntries } from "../server/git-worktree.mjs";
 
 const exec = promisify(execFile);
 
@@ -399,3 +399,23 @@ async function exists(target) {
 async function git(cwd, args) {
   return exec("git", args, { cwd, windowsHide: true });
 }
+
+test("places candidate worktrees outside the repository, at a short path", () => {
+  // Every character of a candidate's cwd is carried by thousands of seatbelt rules in the
+  // exec arguments of every sandboxed Bash command. Measured on this repository at a fixed
+  // worktree count: 420,514 bytes at a 9-char path against 617,644 at 81 chars, ≈2,738
+  // B/char, which is 13 worktrees of headroom against a 1 MB ceiling. So the default is
+  // short and outside the checkout, and the old `<repo>/.data/worktrees` default is gone.
+  const root = defaultWorktreeRoot({});
+  assert.ok(path.isAbsolute(root), "an absolute root is what keeps the escape guard meaningful");
+  assert.equal(root, path.join(os.homedir(), ".ah", "w"));
+  assert.ok(!root.includes(".data"), "candidates no longer live inside the repository");
+  // Comfortably shorter than the path it replaced, which is the entire point.
+  assert.ok(root.length < path.join(process.cwd(), ".data", "worktrees").length);
+
+  // Overridable, because a host with a long home directory should be able to do better, and
+  // because the preflight measures the consequence rather than assuming it.
+  assert.equal(defaultWorktreeRoot({ AGENT_HARNESS_WORKTREE_ROOT: "/tmp/ahw" }), "/tmp/ahw");
+  // Resolved, never used as given: a relative override would move with the process cwd.
+  assert.ok(path.isAbsolute(defaultWorktreeRoot({ AGENT_HARNESS_WORKTREE_ROOT: "relative/root" })));
+});

@@ -14,7 +14,7 @@ import {
 import { getCodexStatus } from "./codex-runtime.mjs";
 import { resolveExecutionProvider } from "./execution-providers.mjs";
 import { isProcessTimeoutError } from "./process-runtime.mjs";
-import { GitWorktreeManager } from "./git-worktree.mjs";
+import { defaultWorktreeRoot, GitWorktreeManager } from "./git-worktree.mjs";
 import {
   CREDIT_SOURCE_URL,
   enrichUsage,
@@ -86,7 +86,7 @@ export class TaskOrchestrator {
     this.#store = store;
     this.#runCodex = options.runCodex ?? null;
     this.#getStatus = options.getStatus ?? getCodexStatus;
-    this.#worktrees = options.worktreeManager ?? new GitWorktreeManager(path.resolve(".data", "worktrees"));
+    this.#worktrees = options.worktreeManager ?? new GitWorktreeManager(defaultWorktreeRoot());
   }
 
   /**

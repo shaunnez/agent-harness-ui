@@ -40,7 +40,12 @@ Implementation will not start unless:
 - the selected directory is inside a Git repository;
 - the source checkout has no tracked or untracked changes;
 - the harness candidate branch does not already exist; and
-- the resolved worktree destination remains below `.data/worktrees/<task>/<candidate>`.
+- the resolved worktree destination remains below the harness worktree root, at
+  `<root>/<task>/<candidate>`. The guard is unchanged — a resolved path that escapes the
+  root is refused — but the root is now `defaultWorktreeRoot()` (`~/.ah/w`, overridable with
+  `AGENT_HARNESS_WORKTREE_ROOT`) rather than `<repo>/.data/worktrees`, because every
+  character of a candidate's path is carried by thousands of seatbelt rules in every
+  sandboxed command's exec arguments.
 
 The Codex implementation prompt prohibits commits, pushes, merges, dependency installation, credential access, and external contact. The harness inspects the resulting status, rejects likely secret files such as `.env`, private keys, and certificate bundles, and then creates the commit itself. A candidate artifact records base/head SHA, branch, file count, diff stat, and a capped patch.
 
