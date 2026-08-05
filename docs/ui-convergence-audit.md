@@ -1,5 +1,11 @@
 # Evidence Gate UI convergence audit
 
+> **Triage note (2026-08-05, #26):** Fully historical. Every row in this audit's own
+> matrix was already "fixed"/"pass" at time of writing (2026-08-02) — it documents
+> completed convergence work, not open findings. Superseded in scope by
+> `docs/code-quality-audit-2026-08-03.md` (a day later, against production code). No
+> action taken during triage.
+
 Audit date: 2026-08-02
 
 Starting revision: `5c7dcfb35626d74d5382bc154cc0f1d22d2517a9` (`codex/vertical-slice`)

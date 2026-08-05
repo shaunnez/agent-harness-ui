@@ -1,5 +1,18 @@
 # Code-quality audit — 2026-08-03
 
+> **Triage note (2026-08-05, #26):** Independently re-verified against current `main`
+> (5c385ba) — every finding was re-checked against the actual code, not inferred from
+> later reports. **P0:** none (unchanged). **P1-1 through P1-6:** all fixed. **P2-1
+> through P2-8:** all fixed. **P2-9:** the documented bug (missing binding rendered as
+> "fresh") is fixed; a narrower, unconfirmed theoretical residual around binding
+> *provenance* remains and is distinct from #24's dirty-worktree gap. **P3-1:** fixed
+> (prototype deleted, diff viewers extracted). **P3-2/P3-3:** fixed on the frontend, but
+> `server/orchestrator.mjs` and `server/api.mjs` grew (~2-3x) instead of being split, and
+> lint/typecheck still exclude `server/`/`tests/` with no browser test suite — tracked in
+> [#31](https://github.com/shaunnez/agent-harness-ui/issues/31). **P3-4:** docs/defaults
+> now match; `repriceTaskUsage` dead code folded into #31. This audit is now historical —
+> no unresolved P0/P1/P2 remains on `main`.
+
 ## Audit basis
 
 - Audited revision: `4c9d56813ae1787f9099d24efd5a8f67ed90234f` (`origin/codex/evidence-gate-ui-convergence`).
