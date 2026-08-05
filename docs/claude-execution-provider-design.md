@@ -114,6 +114,14 @@ load-bearing layer. And the first denial came from a **second, independent write
 a permission-layer allowed-working-directories check, distinct from seatbelt — so two
 unrelated mechanisms refused the same write.
 
+**Since resolved, in the stronger direction.** The question above — whether
+`allowUnsandboxedCommands: false` is honoured from `--settings` or only from managed
+settings — is answered: **it is honoured from `--settings`.** The status-time canary made a
+real `dangerouslyDisableSandbox: true` attempt and it was refused at the sandbox/policy
+layer without ever reaching the permission gate. So the escape is closed one layer earlier
+than this section assumed, and the permission gate is a backstop rather than the only thing
+standing in the way.
+
 **L4 — Harness verification.** Pre- and post-run exact-HEAD-SHA plus clean-status
 checks. This is the only layer the harness controls end to end, and it is therefore the
 enforcement of record. L1–L3 are defence in depth.
@@ -129,6 +137,37 @@ guarded worktree was refused at the syscall boundary and the file was untouched:
 
 Note the shape of that content — it carries an `Exit code 1` prefix. That has a direct
 consequence for `commandFailed`; see §c.
+
+**Write mode: the obvious config is a trap.** The natural shape — `denyWrite` on the source
+repo, `allowWrite` on the worktree — does not work, because the harness always nests the
+worktree *inside* the repo (`.data/worktrees/<task>/<candidate>`). The repo-root `denyWrite`
+is therefore an ancestor of the `allowWrite`, and an ancestor deny unconditionally defeats a
+nested allow: it blocks every write, including the legitimate ones the stage exists to make.
+The failure presents as "Claude cannot write to its own worktree", which reads as a
+capability limit rather than a misconfiguration.
+
+The sandbox is **default-deny**, so `allowWrite: [worktreePath]` alone is both necessary and
+sufficient. Do not add a repo-root `denyWrite` in write mode. Read-only mode is unaffected —
+its `denyWrite` has no nested `allowWrite` to defeat, and is belt-and-braces on top of
+default-deny.
+
+Two further write-mode findings:
+
+- The **Write tool** additionally needs `permissions.allow` plus
+  `--permission-mode acceptEdits`. Bash writes need neither, and escalation is still denied
+  under `acceptEdits`.
+- **The sandbox matches resolved paths, not literal prefixes.** A write through the
+  provisioned `node_modules` symlink — literal path inside the worktree, real target inside
+  the source repo — was blocked. This closes the `provisionDependencies` escape route that
+  this section previously flagged as the central open risk for write stages.
+
+Evidence: `docs/claude-write-confinement-spike.md`, six tests captured from real runs.
+
+**Operational limit worth monitoring.** On a long cwd the Bash sandbox profile hit `E2BIG`
+at 212 filesystem deny paths; it did not reproduce on a short path. Write stages always run
+with cwd inside a worktree, so hosts that accumulate worktrees may approach this. Whether
+the deny list scales with worktree count or is fixed is not yet established — that
+determines whether this is a monitoring note or a hard precondition.
 
 **A fifth consideration the earlier revision missed: operator hooks run inside stages, and
 they rewrite commands after the fact.** In the escape-hatch run, the recorded `tool_use`
@@ -660,6 +699,23 @@ which itself defaults to `"codex"` — so nothing changes until an operator opts
 `#executeAgent` resolves the provider from a registry and calls its `run`. A model/provider
 mismatch is rejected at settings validation and again at spawn.
 
+**Superseded in implementation: one provider per task, not per stage.** The implementation
+scopes the provider to `task.agentConfig.provider` rather than to each stage policy. The
+reason is sound and worth recording: candidate revisions do not persist a provider, so the
+repair-authorizer reconstruction cannot tell which runtime produced an authorizing gate.
+Per-stage mixing would reopen exactly the hole the provider binding exists to close — one
+provider per task makes cross-provider gate fallback *structurally impossible* rather than
+merely *detected*.
+
+The cost is real and should not be glossed: **you cannot run Claude for implement and Codex
+for review.** That combination — a second opinion from a different model family at the
+gates — is a legitimate thing to want, and this design forecloses it.
+
+Getting it back is not hard, but it is deliberate work rather than a config change: persist
+`provider` on candidate revisions alongside `headRevision`, so the repair authorizer can
+reconstruct which runtime produced each authorizing gate. Until that exists, per-stage
+provider selection must stay closed.
+
 Behaviour preservation: `TaskOrchestrator` currently takes `options.runCodex` and
 `options.getStatus`. Both injection points are **kept and honoured** — `options.runCodex`
 continues to override the resolved provider's `run`. That is what lets all 193+ existing
@@ -691,7 +747,12 @@ hook is not wired. Concretely:
    `costBasis` widening in §d.
 4. **Read-only stages end to end** — gated on the pre/post verification from §a and on the
    sandbox canary (§6) passing on the host.
-5. **Write stages last, and only if §a's confinement is established.**
+5. **Write stages last, and only if §a's confinement is established.** *Established* — see
+   the write-mode findings in §a and `docs/claude-write-confinement-spike.md`. Confinement
+   holds: writes land inside the worktree, writes outside are refused by default-deny,
+   escalation is denied, symlink traversal into the source repo is blocked because the
+   sandbox resolves paths, git commit works while push and remote changes do not, and
+   network can be re-enabled selectively without reopening the filesystem.
 
 Verification after each step, reported individually: `npm run lint`, `npm run typecheck`,
 `npm test`, `npm run build`, `npm run test:sites`, `git diff --check`. No push, no PR.
@@ -706,7 +767,7 @@ order.
 | # | Question | Result |
 |---|---|---|
 | 1 | Fixture capture | **Done.** 12-event `fixture.jsonl` with Read, parallel Bash, a failing Bash, final text, cumulative usage. Commit as-is in step 2. |
-| 2 | Is `allowUnsandboxedCommands: false` honoured from `--settings`? | **Moot in the safe direction.** With it left permissive, the permission gate denied both escape attempts anyway and logged them to `permission_denials`. Set it; don't depend on it. |
+| 2 | Is `allowUnsandboxedCommands: false` honoured from `--settings`? | **Yes** — resolved by the status-time canary. A real escalation attempt was refused at the sandbox/policy layer without reaching the permission gate. Stronger than this table's earlier "moot in the safe direction". |
 | 3 | Does `--safe-mode` suppress the `--settings` sandbox? | **No.** Guarded write still refused, and hooks stopped rewriting commands. Use `--safe-mode`. |
 | 4 | Does `-p` read the prompt from stdin? | **Yes, and stdin is mandatory** — variadic `--tools` swallows a positional prompt. |
 | 5 | Negative sandbox canary | **Validated as a technique.** Seatbelt refused the write (`operation not permitted`); the unsandboxed retry was denied. Ship it as a status-time check. |
