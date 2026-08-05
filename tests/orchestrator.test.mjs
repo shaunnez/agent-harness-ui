@@ -68,6 +68,7 @@ function harnessEvidence(candidate, overrides = {}) {
       command: "npm test",
       status: "passed",
       durationMs: 1240,
+      artifactReferences: [],
       assertions: [{ label: "exit code", actual: "0", expected: "0" }],
       failureDetails: null,
     }],
@@ -3035,7 +3036,17 @@ test("advances an approved implementation task through a revision-bound candidat
       // the candidate currently is, exactly as the model-authored TEST_OUTPUT it replaces was:
       // the point of this flow is that evidence for an older revision must not clear a newer
       // candidate, and binding to the live candidate would erase the scenario.
-      runVerification: async () => harnessEvidence({ id: "C1", revisionNumber: 2, headRevision: "b".repeat(40) }),
+      runVerification: async () => {
+        // Two rows, because this flow asserts what the persisted artifact carries and the
+        // model-authored TEST_OUTPUT it replaces described two commands.
+        const base = harnessEvidence({ id: "C1", revisionNumber: 2, headRevision: "b".repeat(40) });
+        return {
+          ...base,
+          rows: [base.rows[0], { ...base.rows[0], id: "test-api", title: "api.test.mjs", command: "npm run test:api", durationMs: 350 }],
+          executedCommandIds: ["test", "test-api"],
+          declaredCommandIds: ["test", "test-api"],
+        };
+      },
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       worktreeManager,
       runCodex: async (options) => {
@@ -3140,10 +3151,16 @@ test("advances an approved implementation task through a revision-bound candidat
       "the rejected post-commit Repair remains retained audit evidence beside the successful retry",
     );
     const testCall = runtimeCalls.find((call) => /Focused test/.test(call.prompt));
-    assert.equal(testCall.sandbox, "workspace-write");
-    assert.equal(testCall.networkAccess, true, "Test agents need loopback access for repository HTTP tests");
+    // Inverted deliberately, and this assertion is the change in #47 rather than a casualty of
+    // it. The test agent used to need workspace-write and loopback access because it ran the
+    // verification commands itself; the harness runs them now, so the agent only reads the
+    // worktree to interpret results. No stage grants network access any more, which is exactly
+    // what made this stage impossible on Claude (#40) and dependent on Codex credits.
+    assert.equal(testCall.sandbox, "read-only");
+    assert.equal(testCall.networkAccess, false, "the test agent no longer runs commands, so it needs no loopback access");
     assert.equal(runtimeCalls.find((call) => /Development review/.test(call.prompt)).networkAccess, false);
-    assert.equal(testCall.timeoutMs, 600_000);
+    // Read-only stages get the shorter budget; the long one existed for running suites.
+    assert.equal(testCall.timeoutMs, 360_000);
     assert.match(testCall.tempDirectory, new RegExp(`^${escapeRegex(path.join(os.tmpdir(), "agent-harness", task.id))}`));
     assert.equal(testCall.tempDirectory.startsWith(path.join(directory, "C1")), false);
     assert.equal(

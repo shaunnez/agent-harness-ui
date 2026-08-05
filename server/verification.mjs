@@ -390,7 +390,14 @@ async function runVerificationCommand({ command, worktreePath, candidate, signal
     ...row,
     status: passed ? "passed" : "failed",
     durationMs,
-    ...(command.report ? { artifactReferences: [{ name: `${command.id} report`, kind: command.report.format, path: command.report.outputFile }] } : {}),
+    // Always an array, never omitted. `isValidPersistedTestRow` in `run-activity.mjs` requires
+    // `artifactReferences` and `assertions` to be arrays on every persisted row, and gate
+    // freshness re-derives the verdict from the *persisted* summary rather than from the
+    // in-memory evidence. An omitted field there reads as contradictory evidence and turns a
+    // passing candidate into a repair — which is what it did until this was measured.
+    artifactReferences: command.report
+      ? [{ name: `${command.id} report`, kind: command.report.format, path: command.report.outputFile }]
+      : [],
     assertions,
     failureDetails: passed
       ? null
