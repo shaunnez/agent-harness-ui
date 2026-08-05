@@ -255,6 +255,9 @@ export function createClaudeStreamParser() {
     // A result whose tool_use never got a tool_result. Diagnostic only: a truncated
     // stream must not be reported as a failed verification command.
     unmatchedToolResults: 0,
+    // Bash results whose body is the CLI's own "could not start a shell" text. Counted,
+    // never retained: the body stays discarded like every other tool result.
+    shellStartFailures: 0,
   };
 
   function parse(line) {
@@ -384,6 +387,29 @@ export function createClaudeStreamParser() {
     const succeeded = block.is_error !== true;
 
     if (entry.kind === "bash") {
+      // An E2BIG shell start is the host refusing to exec, not a command that ran and
+      // failed. It is deliberately *not* `commandFailed`: that flag means "a
+      // verification command reported a problem", which in the test stage is a REPAIR
+      // verdict. Laundering an environment fault into a verdict is exactly what the
+      // rules above warn against, so this is counted as parser state and `runClaude`
+      // fails the whole run on it instead.
+      if (readsAsShellStartFailure(toolResultText(block.content))) {
+        state.shellStartFailures += 1;
+        return {
+          type: "activity",
+          tone: "danger",
+          title: "Repository command could not start",
+          detail: entry.detail,
+          runtimeScope: "candidate",
+          toolCall: {
+            id,
+            name: "command_execution",
+            category: "repository-command",
+            phase: "completed",
+            result: SHELL_START_FAILURE_RESULT,
+          },
+        };
+      }
       return {
         type: "activity",
         tone: succeeded ? "success" : "warning",
@@ -466,6 +492,7 @@ export function createClaudeStreamParser() {
         sawResult: state.sawResult,
         pendingToolCalls: pending.size,
         unmatchedToolResults: state.unmatchedToolResults,
+        shellStartFailures: state.shellStartFailures,
       };
     },
   };
@@ -482,6 +509,41 @@ export function extractClaudeFailure(parsed) {
     return parsed.finalText || `Claude ended with ${parsed.resultSubtype ?? "an error"}.`;
   }
   return null;
+}
+
+/**
+ * The CLI's own text when it could not exec a shell for the Bash tool at all:
+ *
+ *   Could not start /bin/zsh: the command line plus environment exceed the OS exec
+ *   argument limit (E2BIG). At spawn: command line 1.1MB across 3 args
+ *
+ * Measured only in `workspace-write`, where the sandbox profile carries a far larger
+ * deny-path list than read-only. `Write` and `Edit` keep working when this happens —
+ * they are gated by the permission layer, a different enforcement path — so a write
+ * stage can edit files while every command that would verify those edits dies. That is
+ * the window this marker closes.
+ *
+ * Matched on both halves so an unrelated "Could not start" (a missing interpreter, say)
+ * is still an ordinary command failure and stays a REPAIR-eligible signal.
+ */
+const SHELL_START_FAILURE_MARKERS = Object.freeze(["Could not start", "E2BIG"]);
+
+/** Recorded in place of the body, since tool-result bodies are never retained. */
+const SHELL_START_FAILURE_RESULT = "Shell could not start (E2BIG)";
+
+export function readsAsShellStartFailure(text) {
+  if (typeof text !== "string" || !text) return false;
+  return SHELL_START_FAILURE_MARKERS.every((marker) => text.includes(marker));
+}
+
+/**
+ * Text of a tool result for marker matching only. Nothing here reaches an event; the
+ * retained `result` field stays the same fixed-shape summary it has always been.
+ */
+function toolResultText(content) {
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return "";
+  return content.map((block) => (typeof block?.text === "string" ? block.text : "")).join("\n");
 }
 
 /** Byte-identical to Codex's `commandResult` when an exit code is recoverable. */
@@ -684,21 +746,46 @@ export async function runClaude({
   const sessionId = randomUUID();
   const { args, stdin } = buildClaudeSpawn({ cwd, prompt, sandbox, networkAccess, model, effort, sessionId });
   const parser = createClaudeStreamParser();
-  const result = await runProcess(binary, args, {
-    // There is no `--cd`: Claude inherits the spawn cwd where Codex takes a flag.
-    cwd,
-    timeoutMs,
-    signal,
-    env: buildClaudeEnvironment(process.env, runtimeTemp),
-    input: stdin,
-    label: CLAUDE_RUN_LABEL,
-    stdoutBudgetBytes: CLAUDE_STDOUT_BUDGET,
-    onStdoutLine(line) {
-      for (const event of parser.parse(line)) onEvent(event);
-    },
-  });
+  // Abort the child the moment the host stops being able to exec a shell. Waiting adds
+  // nothing — every remaining command dies the same way — and in a write stage the
+  // edits already on disk must not reach `GitWorktreeManager.commit`, which the harness
+  // calls once this function returns normally. Post-run detection would also be
+  // sufficient for that; this just stops burning tokens on a doomed run.
+  const runSignal = new AbortController();
+  const forwardAbort = () => runSignal.abort();
+  if (signal?.aborted) runSignal.abort();
+  else signal?.addEventListener("abort", forwardAbort, { once: true });
+
+  let result;
+  try {
+    result = await runProcess(binary, args, {
+      // There is no `--cd`: Claude inherits the spawn cwd where Codex takes a flag.
+      cwd,
+      timeoutMs,
+      signal: runSignal.signal,
+      env: buildClaudeEnvironment(process.env, runtimeTemp),
+      input: stdin,
+      label: CLAUDE_RUN_LABEL,
+      stdoutBudgetBytes: CLAUDE_STDOUT_BUDGET,
+      onStdoutLine(line) {
+        for (const event of parser.parse(line)) onEvent(event);
+        if (parser.result().shellStartFailures) runSignal.abort();
+      },
+    });
+  } catch (error) {
+    // The cancellation we caused reads as an ordinary cancellation from here, so the
+    // real cause has to win over it.
+    if (parser.result().shellStartFailures) throw shellStartFailureError(sandbox, cwd);
+    throw error;
+  } finally {
+    signal?.removeEventListener("abort", forwardAbort);
+  }
 
   const parsed = parser.result();
+  // Before every other verdict-shaped check: this is an environment fault, and the
+  // stage's own output cannot be trusted once the commands that would have verified it
+  // could not run.
+  if (parsed.shellStartFailures) throw shellStartFailureError(sandbox, cwd);
   const failure = extractClaudeFailure(parsed);
   if (failure) throw new Error(failure);
   if (result.code !== 0) throw new Error(`Claude exited with code ${result.code}.`);
@@ -736,6 +823,20 @@ export async function runClaude({
     onEvent({ type: "activity", tone: "warning", title: "Reported cost diverges from the rate card", detail });
   }
   return { finalText: parsed.finalText, usage, sessionId: parsed.sessionId, rateLimitInfo: parsed.rateLimitInfo };
+}
+
+/**
+ * A failed run, deliberately, rather than a failed verification.
+ *
+ * `Write` and `Edit` survive an E2BIG shell start, so without this a write stage
+ * half-runs: files are edited, every command that would have checked them dies, and the
+ * harness commits the result. Throwing here is what stops the commit.
+ */
+function shellStartFailureError(sandbox, cwd) {
+  return new Error(
+    `The Bash tool could not start a shell during a ${sandbox} stage at ${cwd}: the sandbox profile's exec argument list exceeds the OS limit (E2BIG). `
+      + "This is a host environment fault, not a verification result, so the run is failed rather than reported as needing repair.",
+  );
 }
 
 const CANARY_SENTINEL = "HARNESS-CANARY-INTACT";
@@ -889,7 +990,7 @@ async function executeClaudeWriteCanary({ timeoutMs, model }) {
       label: CLAUDE_RUN_LABEL,
       stdoutBudgetBytes: CLAUDE_STDOUT_BUDGET,
       onStdoutLine(line) {
-        if (line.includes("Could not start") && line.includes("E2BIG")) shellFailed = true;
+        if (readsAsShellStartFailure(line)) shellFailed = true;
         if (readsAsSandboxUnavailable(line)) sandboxUnavailable = true;
       },
     });

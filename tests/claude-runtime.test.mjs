@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -38,6 +38,7 @@ import {
   resolveAgentPolicy,
 } from "../server/model-catalog.mjs";
 import { resolveExecutionProvider } from "../server/execution-providers.mjs";
+import { evaluationVerdict } from "../server/orchestrator.mjs";
 import { readExecutionProvider } from "../server/run-activity.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 
@@ -913,6 +914,130 @@ test("cross-checks a reported cost against the per-model breakdown", async () =>
   });
   assert.equal(enriched.estimatedCost, perModel);
   assert.notEqual(enriched.estimatedCost, aggregate);
+});
+
+const E2BIG_BODY = "Could not start /bin/zsh: the command line plus environment exceed the OS exec"
+  + " argument limit (E2BIG). At spawn: command line 1.1MB across 3 args";
+
+function e2bigStreamLines() {
+  return [
+    JSON.stringify({ type: "system", subtype: "init", session_id: "sess-e2big" }),
+    JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "tool_use", id: "toolu_e2big", name: "Bash", input: { command: "npm test" } }] },
+    }),
+    JSON.stringify({
+      type: "user",
+      message: { content: [{ type: "tool_result", tool_use_id: "toolu_e2big", content: E2BIG_BODY, is_error: true }] },
+    }),
+  ];
+}
+
+/**
+ * Writes a stand-in for the CLI that replays fixed stream-json lines, so the failure
+ * path can be exercised end to end without a live CLI or a live sandbox.
+ */
+async function writeFakeClaudeCli(directory, lines, { thenSleepSeconds = 0 } = {}) {
+  const script = path.join(directory, "fake-claude.sh");
+  const body = [
+    "#!/bin/sh",
+    // The prompt arrives on stdin; draining it keeps the parent's write from EPIPEing.
+    "cat >/dev/null",
+    ...lines.map((line) => `printf '%s\\n' ${JSON.stringify(line)}`),
+    ...(thenSleepSeconds ? [`sleep ${thenSleepSeconds}`] : []),
+    "exit 0",
+    "",
+  ].join("\n");
+  await writeFile(script, body, "utf8");
+  await chmod(script, 0o755);
+  return script;
+}
+
+test("counts an E2BIG shell start as parser state rather than a failed command", () => {
+  const parser = createClaudeStreamParser();
+  const lines = e2bigStreamLines();
+  for (const line of lines.slice(0, 2)) parser.parse(line);
+  const [completed] = parser.parse(lines[2]);
+
+  assert.equal(parser.result().shellStartFailures, 1);
+  assert.equal(completed.title, "Repository command could not start");
+  assert.equal(completed.tone, "danger");
+  assert.equal(completed.toolCall.result, "Shell could not start (E2BIG)");
+
+  // The mechanism must not be `commandFailed`. In the test stage that flag *is* the
+  // REPAIR verdict, so surfacing a host exec fault through it would launder an
+  // environment fault into a verdict about the candidate's code.
+  assert.equal(completed.commandFailed, undefined);
+  assert.equal(
+    evaluationVerdict("test", { runtimeEvents: [completed] }, { status: "passed" }),
+    "PASS",
+  );
+
+  // An ordinary "could not start" is still an ordinary command failure: narrow
+  // detection must not swallow a missing interpreter into the environment-fault path.
+  const ordinary = createClaudeStreamParser();
+  ordinary.parse(JSON.stringify({
+    type: "assistant",
+    message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "./x" } }] },
+  }));
+  const [failed] = ordinary.parse(JSON.stringify({
+    type: "user",
+    message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "Could not start ./x: not found", is_error: true }] },
+  }));
+  assert.equal(ordinary.result().shellStartFailures, 0);
+  assert.equal(failed.commandFailed, true);
+});
+
+test("fails the whole run when the Bash tool could not start a shell", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-e2big-"));
+  const previousBin = process.env.CLAUDE_BIN;
+  try {
+    // A run that goes on to report success: Write and Edit survive an E2BIG, so without
+    // the guard this returns an artifact and the harness commits edits that nothing was
+    // able to verify.
+    process.env.CLAUDE_BIN = await writeFakeClaudeCli(directory, [
+      ...e2bigStreamLines(),
+      JSON.stringify({
+        type: "result",
+        subtype: "success",
+        is_error: false,
+        result: "Edited the files.",
+        usage: { input_tokens: 10, output_tokens: 2 },
+      }),
+    ]);
+    await assert.rejects(
+      () => runClaude({
+        cwd: directory,
+        prompt: "do the work",
+        sandbox: "workspace-write",
+        model: "claude-haiku-4-5",
+        reasoning: NO_REASONING_EFFORT,
+        tempDirectory: directory,
+        timeoutMs: 30_000,
+      }),
+      /could not start a shell during a workspace-write stage.*E2BIG/s,
+    );
+
+    // And it aborts rather than waiting the run out. The cancellation this causes must
+    // not be reported as a cancellation — the real cause has to win.
+    process.env.CLAUDE_BIN = await writeFakeClaudeCli(directory, e2bigStreamLines(), { thenSleepSeconds: 120 });
+    await assert.rejects(
+      () => runClaude({
+        cwd: directory,
+        prompt: "do the work",
+        sandbox: "workspace-write",
+        model: "claude-haiku-4-5",
+        reasoning: NO_REASONING_EFFORT,
+        tempDirectory: directory,
+        timeoutMs: 30_000,
+      }),
+      /could not start a shell.*E2BIG/s,
+    );
+  } finally {
+    if (previousBin === undefined) delete process.env.CLAUDE_BIN;
+    else process.env.CLAUDE_BIN = previousBin;
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test("refuses to run another provider's model", async () => {
