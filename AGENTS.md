@@ -46,6 +46,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Current implementation boundary
 
+- Keep the local runtime truthful and runnable at every boundary; do not introduce an immutable ledger unless a concrete concurrency requirement demands it.
 - The real runtime uses role-specific GPT-5.6 policies through the user's existing ChatGPT-authenticated Codex CLI, with Luna XHigh as the general worker and Sol High at the high-leverage planning and review gates. Never request, read, store, or pass an OpenAI API key for this path.
 - Keep the local companion bound to loopback. Investigation, planning, review, and final review are read-only; Implement and Repair may write only inside the isolated candidate worktree; Test may create temporary files inside the candidate but must leave the exact candidate revision clean.
 - Persist local task state simply in `.data/tasks.json`; do not introduce an immutable event ledger without a concrete concurrency or audit requirement.
