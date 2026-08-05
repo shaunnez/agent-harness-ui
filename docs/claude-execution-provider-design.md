@@ -875,6 +875,26 @@ Two things follow.
    worktree of the same repository, which is a point in favour of clone-per-candidate on
    bytes as well as on coupling.
 
+### Dependency provisioning costs nothing in the exec budget — measured
+
+Copying dependency directories into a candidate worktree (#46, replacing the per-entry
+symlinks) does not move the exec-argument budget. Two worktrees of this repository at the
+same worktree count and the **same path length** — one provisioned with a real 139-entry
+`node_modules`, one bare — both measured **592,049 bytes**, a delta of zero.
+
+Mechanistically that is the expected answer: the profile is generated from repository
+metadata and configured paths, not by scanning what is inside the worktree. It is recorded
+here because it was an assumption first, and assumptions about this budget have a bad record
+in this document — three of them have been retracted.
+
+**A trap for anyone repeating this.** The first attempt produced the same zero delta without
+measuring anything. Both cwds were the *same* cache state — same repository, same worktree
+count, same 50-char cwd bucket — so the second call returned the first call's probe. Two
+cwds that differ only in something the cache key does not capture will always read as
+byte-identical, which looks exactly like "the difference does not matter". Call
+`resetClaudeSandboxCanaryCache()` between measurements when using the preflight as an
+instrument rather than as a gate.
+
 ### Candidate worktrees moved out of the repository
 
 `defaultWorktreeRoot()` in `server/git-worktree.mjs` now resolves to `~/.ah/w`, overridable
