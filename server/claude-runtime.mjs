@@ -668,10 +668,17 @@ export function buildClaudeSandboxSettings(cwd, sandbox, networkAccess = false) 
       filesystem: {
         allowRead: [cwd],
         ...(writable
-          // Deliberately no denyWrite. The sandbox is default-deny, so the allow entry
-          // is necessary and sufficient — and because harness worktrees are nested
-          // *inside* the repository, a repo-root denyWrite would be an ancestor of this
-          // allow and would defeat it entirely, blocking legitimate writes too.
+          // Deliberately no denyWrite: the sandbox is default-deny, so the allow entry is
+          // necessary and sufficient.
+          //
+          // It used also to be *unsafe* to add one, because candidates lived inside the
+          // repository (`<repo>/.data/worktrees/…`) and a repo-root denyWrite would have
+          // been an ancestor of this allow, defeating it entirely and blocking the writes
+          // the stage exists to make. `defaultWorktreeRoot` now places candidates outside
+          // the checkout, so that particular trap is gone and a repo-root denyWrite would
+          // be defence in depth rather than a footgun. It is still not added here: it would
+          // be a change to a safety-relevant profile and needs its own write-canary run to
+          // establish, not a comment claiming it is fine.
           ? { allowWrite: [cwd] }
           // Read-only has no nested allowWrite for a denyWrite to defeat, so the
           // explicit deny stays as belt-and-braces on top of default-deny.
@@ -1079,8 +1086,9 @@ export function resetClaudeSandboxCanaryCache() {
  *    two observations a pass was built from. Fixed by `sandboxUnavailable` outranking
  *    every other signal in both classifiers.
  * 2. It certified a path length the stages do not use. The canary runs in `os.tmpdir()`
- *    while stages run at `<repo>/.data/worktrees/<task>/<candidate>`, and the E2BIG
- *    shell-start failure is a function of the cwd, not only of the settings. Issue #39.
+ *    while stages run at whatever `defaultWorktreeRoot` resolves to — at the time, the
+ *    much deeper `<repo>/.data/worktrees/<task>/<candidate>` — and the E2BIG shell-start
+ *    failure is a function of the cwd, not only of the settings. Issue #39.
  *
  * The measured cause of (2) is *not* cwd length alone, so do not "fix" it by padding the
  * scratch path to match. The quantity that fails is total exec bytes against
@@ -1148,12 +1156,24 @@ async function executeClaudeWriteCanary({ timeoutMs, model }) {
   const binary = await locateClaude().catch(() => null);
   if (!binary) return canaryResult(false, "Claude CLI was not found.", { inconclusive: true });
   const root = await mkdtemp(path.join(os.tmpdir(), "agent-harness-claude-write-canary-"));
-  // The worktree is nested inside a "source repository", exactly as harness worktrees
-  // are, because that nesting is what makes an ancestor denyWrite defeat the allow.
+  // The worktree is a *sibling* of the "source repository", not nested inside it, because
+  // that is where `defaultWorktreeRoot` now puts candidates — outside the checkout, at a
+  // short path, since every character of a candidate's cwd is carried by thousands of
+  // seatbelt rules. This shape has to track that decision: a canary that keeps testing the
+  // old nesting certifies a layout no stage uses, which is the standing rule's failure in
+  // its purest form.
+  //
+  // What the change costs the canary: nesting used to make the source repository an
+  // *ancestor* of the worktree, so a write into it was an escape upward through the allow.
+  // Now the source repository is a separate tree, which is the more important escape to
+  // refuse anyway — it is the operator's actual code, reachable only by absolute path.
   const source = path.join(root, "src");
-  const worktree = path.join(source, ".data", "worktrees", "task", "candidate");
+  const worktree = path.join(root, "w", "task", "candidate");
   try {
     await mkdir(worktree, { recursive: true });
+    // Explicit now that it is not an ancestor of the worktree: creating the worktree no
+    // longer creates it as a side effect.
+    await mkdir(source, { recursive: true });
     const escapeTargets = {
       sourceRoot: path.join(source, "guarded.txt"),
       sibling: path.join(root, "guarded.txt"),

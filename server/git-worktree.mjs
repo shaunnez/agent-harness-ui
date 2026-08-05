@@ -1,9 +1,39 @@
 import { spawn } from "node:child_process";
 import { lstat, mkdir, readFile, readdir, realpath, rm, stat, symlink, unlink, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
+import process from "node:process";
 import { isOwnedFile } from "./structured-output.mjs";
 
 const OUTPUT_LIMIT = 512 * 1024;
+
+/**
+ * Where candidate worktrees live, and why it is deliberately short and outside the
+ * repository.
+ *
+ * Every character of a candidate's path is paid for repeatedly: on macOS the Bash tool
+ * inlines the whole seatbelt profile on the command line, and each deny path expands into
+ * a rule per ancestor component, so the cwd's prefix is carried by thousands of rules.
+ * Measured on this repository at a fixed worktree count — two registered worktrees, one at
+ * a 9-char path and one at 81 chars — the difference was 197,130 exec argument bytes,
+ * ≈2,738 B/char, which is 13 worktrees of headroom against a 1 MB ceiling. The old default
+ * (`<repo>/.data/worktrees/<task>/<candidate>`) spent that for no benefit: nothing requires
+ * a candidate to live inside the checkout it came from. Sweep and numbers in
+ * `docs/claude-execution-provider-design.md`.
+ *
+ * Being outside the repository is a second, smaller win — the operator's checkout no longer
+ * contains the harness's working directories at all, so nothing depends on `.data/` staying
+ * ignored for status to read clean.
+ *
+ * `AGENT_HARNESS_WORKTREE_ROOT` overrides it. Shorter is cheaper; a long override is
+ * allowed because the preflight in `claude-exec-budget.mjs` measures the consequence rather
+ * than assuming it, and it will refuse a stage before the ceiling is crossed.
+ */
+export function defaultWorktreeRoot(environment = process.env) {
+  const configured = environment.AGENT_HARNESS_WORKTREE_ROOT;
+  if (configured) return path.resolve(configured);
+  return path.join(os.homedir(), ".ah", "w");
+}
 
 // Harness worktrees come from `git worktree add`, which copies no installed dependencies.
 // Each new worktree is provisioned from the source checkout's own dependency
