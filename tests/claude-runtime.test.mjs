@@ -1274,10 +1274,18 @@ test("labels the fallback a bound and lets a real measurement outrank it", () =>
   // Still reports the number an operator wants — headroom is the point of the output.
   assert.ok(bound.worktreesRemaining > 0);
 
-  // And it never refuses, even when the extrapolation is already past the ceiling. A
-  // probe at 3 worktrees under a deep root measured 765,023 bytes where this
-  // extrapolation gives 731,555, so it is capable of being wrong in either direction and
-  // must not be what decides. It says so instead, and names the guard that does cover it.
+  // And it never refuses, even when the extrapolation is already past the ceiling, because
+  // it has been observed wrong in both directions: 33 KB optimistic at 3 worktrees under a
+  // deep root (765,023 measured vs 731,555), and 365 KB pessimistic at the state below.
+  //
+  // That second one is the real counter-example, not a hypothetical. 30 worktrees at a
+  // 12-char path measured 726,741 bytes and Bash ran fine, where the extrapolation lands
+  // past the ceiling — gating on it would have refused a working configuration.
+  const measuredFine = classifyExecArgBudget({ registeredWorktrees: 30, cwdLength: 12, repositoryRoot: "/tmp/ahp/src" });
+  assert.ok(measuredFine.usedBytes > EXEC_ARG_LIMIT_BYTES, "the extrapolation is past the ceiling at this state");
+  assert.equal(measuredFine.ok, true, "yet 726,741 bytes was measured here and Bash ran");
+  assert.equal(classifyExecArgBudget({ registeredWorktrees: 30, cwdLength: 12, measuredBytes: 726_741 }).ok, true);
+
   const overBound = classifyExecArgBudget({ registeredWorktrees: 40, cwdLength: 300, repositoryRoot: "/repo" });
   assert.ok(overBound.usedBytes > EXEC_ARG_LIMIT_BYTES);
   assert.equal(overBound.ok, true);
