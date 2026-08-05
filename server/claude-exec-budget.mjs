@@ -64,10 +64,23 @@ export const MEASURED_FLOOR_CWD_CHARS = 64;
 export const MEASURED_BYTES_PER_WORKTREE = 14_414;
 
 /**
- * The **worst** measured per-cwd-character cost, not the typical one: ≈301 B/char at 3
- * worktrees but ≈2,670 B/char at 11 with a deeper path, because a deeper cwd both
- * lengthens every rule and adds deny paths, so the factors interact multiplicatively.
- * The bound uses the worst of the two on purpose — see rule 1 above.
+ * The high end of the measured per-cwd-character cost: ≈301 B/char at 3 worktrees, but
+ * ≈2,670 B/char at 11 with a deeper path, because a deeper cwd both lengthens every rule
+ * and adds deny paths.
+ *
+ * Independently confirmed on this repository at ≈2,738 B/char — two *registered
+ * worktrees* of the same repo at the same worktree count, 420,514 bytes at a 9-char path
+ * against 617,644 at an 81-char one, 197,130 over 72 characters. A round of this
+ * measurement that compared the repo root against a linked worktree appeared to show
+ * ≈5,712 B/char; that figure is **retracted** — it mixed cwd *kind* with cwd length, and
+ * the clean same-kind comparison lands on the constant already here.
+ *
+ * The residual from that mixed pair is worth knowing and is *not* explained by length: at
+ * the same repository and worktree count, a linked-worktree cwd cost ~128 KB more than the
+ * repo root beyond what 2,738 B/char accounts for. It has not been isolated — it could be
+ * a cwd-kind term or non-linearity in depth — so nothing here prices it. It is one more
+ * reason the extrapolation reports and never gates, and it means a cwd that *is* a
+ * repository root is cheaper than a linked worktree of the same repository.
  */
 export const BOUND_BYTES_PER_CWD_CHAR = 2_670;
 
