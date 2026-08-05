@@ -64,10 +64,21 @@ export const MEASURED_FLOOR_CWD_CHARS = 64;
 export const MEASURED_BYTES_PER_WORKTREE = 14_414;
 
 /**
- * The **worst** measured per-cwd-character cost, not the typical one: ≈301 B/char at 3
- * worktrees but ≈2,670 B/char at 11 with a deeper path, because a deeper cwd both
- * lengthens every rule and adds deny paths, so the factors interact multiplicatively.
- * The bound uses the worst of the two on purpose — see rule 1 above.
+ * A high per-cwd-character cost, and — corrected — **not** the worst one observed. The
+ * sweep measured ≈301 B/char at 3 worktrees and ≈2,670 B/char at 11 with a deeper path,
+ * because a deeper cwd both lengthens every rule and adds deny paths.
+ *
+ * Then this repository measured worse: 358,696 bytes at its 38-char root against 604,342
+ * at an 81-char linked worktree, both at 5 registered worktrees — 245,646 bytes over 43
+ * characters, ≈5,712 B/char. Confounded, and deliberately not "corrected" into a new
+ * constant: the two cwds differ in kind as well as length (a repo root versus a linked
+ * worktree whose `.git` is a file), so attributing all of it to length would be the same
+ * conflation this whole file exists to avoid.
+ *
+ * The honest reading is that this constant understates deep paths, which is one more
+ * reason the extrapolation reports and never gates. Path depth is also the cheapest lever
+ * the harness has on its own spend — a candidate worktree at a short path costs far less
+ * than one nested inside a deep repository.
  */
 export const BOUND_BYTES_PER_CWD_CHAR = 2_670;
 

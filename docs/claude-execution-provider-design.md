@@ -828,6 +828,29 @@ Three corrections follow.
    measured a different way. That agreement is why the preflight prices a worktree at the
    higher of the two.
 
+### This repository's actual numbers
+
+Measured on this repository rather than a scratch one, `workspace-write`, at 5 registered
+worktrees, both cwds pre-existing so the probe created nothing:
+
+| cwd | chars | measured argv bytes | worktrees of headroom |
+|---|---|---|---|
+| repo root | 38 | 358,696 | 43 |
+| linked worktree at candidate depth | 81 | 604,342 | 26 |
+
+Headroom is after the four-worktree concurrency reserve, priced at 14,414 B each. What it
+means for fan-out at candidate depth: 26 more worktrees fit, so ~26 concurrent tasks at one
+worktree each, ~8 at three, and **~5 at the five worktrees AH-003 actually used** (S1–S4
+plus C1). #41's "roughly five concurrent tasks" conclusion therefore survives — but by
+coincidence, since the arithmetic it came from used the retracted floor.
+
+The two rows differ by 245,646 bytes over 43 characters, ≈5,712 B/char, which is worse than
+the sweep's worst rate of 2,670. It is confounded — the rows differ in kind as well as
+length, a repo root versus a linked worktree whose `.git` is a file — so it is recorded and
+not turned into a constant. What it does establish is that **cwd depth is the cheapest lever
+the harness has on its own spend**, and it is untested: a clean comparison needs two
+registered worktrees of the same repository at different depths.
+
 The operational consequence is the opposite of a relaxation. The deny paths are generated
 from the repository containing the cwd, so **a clone carries none of the source
 repository's worktree registrations** — 0 against 30, for the same content. That makes
