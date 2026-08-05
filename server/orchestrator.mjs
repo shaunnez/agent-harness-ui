@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
 import path from "node:path";
 import os from "node:os";
-import { rm } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import {
   buildExecutionRequest,
   buildRepairRequest,
+  buildOnboardingRequest,
   buildStageRequest,
   buildTestInterpretationRequest,
   buildWorkPackageRequest,
@@ -54,7 +55,14 @@ import {
   parseWorkPackages,
   validateFocusedTestEvidence,
 } from "./structured-output.mjs";
-import { runRepositoryVerification } from "./verification.mjs";
+import {
+  discoverVerificationEvidence,
+  OnboardingError,
+  parseOnboardingProposal,
+  renderManifestFile,
+  VERIFICATION_MANIFEST_PATH,
+} from "./onboarding.mjs";
+import { gitHeadRevision, runRepositoryVerification } from "./verification.mjs";
 
 const RUN_KINDS = new Set([
   "investigation",
@@ -195,6 +203,78 @@ export class TaskOrchestrator {
       settings,
       scouts: scoutCatalog(),
     };
+  }
+
+  /**
+   * Propose a verification manifest for a repository that has none.
+   *
+   * Read-only and operator-initiated. Nothing here is reachable from a stage: if a failing test
+   * stage could ask for a new manifest, a failing candidate could clear itself by having a model
+   * rewrite its own verification commands, which is exactly what #47 removed. The proposal is
+   * returned for approval; it is not written.
+   */
+  async proposeOnboarding(repositoryPath) {
+    const repositoryRoot = await this.#worktrees.repositoryRoot(repositoryPath);
+    const existing = await readFile(path.join(repositoryRoot, VERIFICATION_MANIFEST_PATH), "utf8").catch(() => null);
+    const evidence = await discoverVerificationEvidence(repositoryRoot);
+    const settings = await this.#store.settings();
+    const result = await this.#runAgent(DEFAULT_EXECUTION_PROVIDER, {
+      cwd: repositoryRoot,
+      prompt: buildOnboardingRequest(repositoryRoot, evidence).prompt,
+      sandbox: "read-only",
+      model: settings.defaultModel,
+      reasoning: settings.defaultReasoning,
+      timeoutMs: 300_000,
+    });
+    const proposal = parseOnboardingProposal(result.finalText, evidence);
+    return {
+      repositoryRoot,
+      evidence,
+      proposal,
+      alreadyOnboarded: existing != null,
+      manifestPath: VERIFICATION_MANIFEST_PATH,
+      manifestPreview: proposal.determined
+        ? renderManifestFile(proposal, { model: settings.defaultModel, at: now() })
+        : null,
+      usage: enrichUsage(settings.defaultModel, result.usage, settings.pricing?.rates, settings.pricing?.version),
+    };
+  }
+
+  /**
+   * Write an approved manifest, confirm its commands actually run, then commit.
+   *
+   * The confirmation is not ceremony: a manifest that does not execute converts a configuration
+   * error into a per-task failure, so the harness must not commit one it has never seen work. A
+   * failed confirmation removes the file and reports, leaving the repository as it was.
+   *
+   * This runs repository commands unsandboxed with the harness's privileges — the same trade #47
+   * documents — and only ever after an explicit approval from the operator.
+   */
+  async approveOnboarding(repositoryPath, proposal, options = {}) {
+    if (!proposal?.determined) throw new OnboardingError("An undetermined proposal cannot be approved.");
+    const repositoryRoot = await this.#worktrees.repositoryRoot(repositoryPath);
+    const settings = await this.#store.settings();
+    const target = path.join(repositoryRoot, VERIFICATION_MANIFEST_PATH);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, renderManifestFile(proposal, { model: options.model ?? settings.defaultModel, at: now() }), "utf8");
+    try {
+      const confirmation = await this.#runVerification({
+        worktreePath: repositoryRoot,
+        candidate: { id: "onboarding", revisionNumber: 1, headRevision: await gitHeadRevision(repositoryRoot) },
+      });
+      if (confirmation.status !== "passed") {
+        throw new OnboardingError(
+          `The approved commands did not pass in this repository, so the manifest was not committed: `
+            + `${confirmation.rows.filter((row) => row.status !== "passed").map((row) => row.command).join(", ")}.`,
+        );
+      }
+      return { repositoryRoot, manifestPath: VERIFICATION_MANIFEST_PATH, confirmation };
+    } catch (error) {
+      // The repository is left exactly as it was. A half-onboarded repository whose manifest has
+      // never run is worse than one that still refuses, because the refusal is honest.
+      await rm(target, { force: true });
+      throw error;
+    }
   }
 
   async verifyPricing() {
