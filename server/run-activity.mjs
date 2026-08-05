@@ -1,4 +1,35 @@
-export const TASK_STORE_SCHEMA_VERSION = 5;
+export const TASK_STORE_SCHEMA_VERSION = 6;
+
+/**
+ * Execution provider identity for persisted runs and stage-run reservations.
+ *
+ * `provider` was introduced in schema 6. Absent means the default provider, and
+ * that is enforced twice on purpose: the schema-6 migration backfills it onto
+ * every persisted run and reservation, and every read goes through
+ * {@link readExecutionProvider}. Without the read-time coalesce a record the
+ * migration has not touched yet would compare `undefined` against `"codex"` and
+ * strand an otherwise fresh gate.
+ */
+export const DEFAULT_EXECUTION_PROVIDER = "codex";
+
+export const EXECUTION_PROVIDER_IDS = Object.freeze(["codex", "claude"]);
+
+/** Read a record's execution provider, coalescing absent to the default. */
+export function readExecutionProvider(record) {
+  const provider = record?.provider;
+  return provider == null ? DEFAULT_EXECUTION_PROVIDER : provider;
+}
+
+/**
+ * The provider a stage's evidence must have been produced by, or `null` when the
+ * stage has no reservation to bind against. Gate evidence from another provider
+ * is never accepted as a fallback: cross-provider reuse is a mismatch, not a
+ * degraded pass.
+ */
+export function expectedStageProvider(task, stage) {
+  const reservation = task?.stageRunReservations?.[stage];
+  return reservation ? readExecutionProvider(reservation) : null;
+}
 
 export const CANONICAL_RUN_STAGES = Object.freeze([
   "triage",
@@ -27,6 +58,7 @@ export const RUNTIME_FRESHNESS_REASONS = Object.freeze({
   mixed_evidence: "Candidate evidence contains more than one candidate identity.",
   candidate_mismatch: "Candidate evidence does not match the active candidate.",
   revision_change: "Candidate evidence belongs to a previous candidate revision.",
+  provider_mismatch: "Candidate evidence was produced by a different execution provider than the stage reservation.",
   missing_authoritative_summary: "No authoritative persisted terminal run summary is available for this gate.",
   contradictory_evidence: "Candidate evidence contains contradictory result fields.",
   repair_required: "The terminal run requires candidate repair before this gate can be fresh.",
@@ -71,6 +103,7 @@ export function migrateRunActivityState(state) {
     }
     if (incomingVersion < 2) changed = migrateArtifactRuns(task) || changed;
     changed = backfillRunAttempts(task) || changed;
+    changed = backfillExecutionProviders(task) || changed;
     const before = JSON.stringify({
       gateFreshness: task.gateFreshness,
       runs: task.runs.map((run) => run.freshness ?? null),
@@ -141,6 +174,29 @@ function migrateStageRunLimits(task) {
   return changed;
 }
 
+/**
+ * Schema 6: stamp the default execution provider onto every persisted run and
+ * stage-run reservation that predates provider identity. Unconditional and
+ * idempotent, so it also repairs a record written by an older runtime after the
+ * store was already migrated.
+ */
+function backfillExecutionProviders(task) {
+  let changed = false;
+  for (const run of task.runs ?? []) {
+    if (run && run.provider == null) {
+      run.provider = DEFAULT_EXECUTION_PROVIDER;
+      changed = true;
+    }
+  }
+  for (const reservation of Object.values(task.stageRunReservations ?? {})) {
+    if (reservation && reservation.provider == null) {
+      reservation.provider = DEFAULT_EXECUTION_PROVIDER;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 function isValidStageRunLimit(value) {
   return Number.isInteger(value) && value >= 0;
 }
@@ -177,6 +233,7 @@ export function beginAgentRun(task, input) {
   const run = {
     id: input.id ?? crypto.randomUUID(),
     kind: input.kind,
+    provider: readExecutionProvider(input),
     status: "running",
     stage: input.stage,
     role: input.role ?? null,
@@ -302,6 +359,7 @@ export function resolveGateFreshness(task, stage) {
     return createFreshness(stage, null, null, null, targetResult.code, null);
   }
   const stageRuns = terminalStageRuns(task, stage);
+  const expectedProvider = expectedStageProvider(task, stage);
   const selection = selectAuthoritativeRun(candidateRelevantRuns(task, stageRuns, target, stage));
   if (selection.reasonCode) {
     return createFreshness(stage, target, null, null, selection.reasonCode, null);
@@ -320,15 +378,16 @@ export function resolveGateFreshness(task, stage) {
       findRunArtifact(task, diagnostic.run),
       target,
       stage,
+      expectedProvider,
     );
   }
   const artifact = findRunArtifact(task, selected);
-  return evaluateRunFreshness(selected, artifact, target, stage);
+  return evaluateRunFreshness(selected, artifact, target, stage, expectedProvider);
 }
 
-export function resolvePersistedRunFreshness(run, artifact, target, stage) {
+export function resolvePersistedRunFreshness(run, artifact, target, stage, expectedProvider = null) {
   if (!CANDIDATE_GATE_STAGES.includes(stage)) return null;
-  return evaluateRunFreshness(run, artifact, target, stage);
+  return evaluateRunFreshness(run, artifact, target, stage, expectedProvider);
 }
 
 /** Recompute the authoritative task projection and every gate run's audit state. */
@@ -340,11 +399,12 @@ export function refreshGateFreshness(task) {
     const selected = target
       ? selectAuthoritativeRun(candidateRelevantRuns(task, terminalStageRuns(task, stage), target, stage)).run
       : null;
+    const expectedProvider = expectedStageProvider(task, stage);
     projection[stage] = resolveGateFreshness(task, stage);
     for (const run of task.runs ?? []) {
       if (run.stage !== stage) continue;
       const artifact = findRunArtifact(task, run);
-      const runFreshness = evaluateRunFreshness(run, artifact, target, stage);
+      const runFreshness = evaluateRunFreshness(run, artifact, target, stage, expectedProvider);
       run.freshness = runFreshness;
       if (selected?.id === run.id && runFreshness.fresh) continue;
       if (selected?.id !== run.id && runFreshness.fresh) {
@@ -412,7 +472,7 @@ function isLegacyCandidateGateEvent(event) {
   }[event.stage] === title;
 }
 
-function evaluateRunFreshness(run, artifact, target, stage) {
+function evaluateRunFreshness(run, artifact, target, stage, expectedProvider = null) {
   const sourceRunId = run?.id ?? null;
   const sourceArtifactId = run?.artifactId ?? artifact?.id ?? null;
   if (!target) {
@@ -428,6 +488,11 @@ function evaluateRunFreshness(run, artifact, target, stage) {
   }
   const identityReason = compareCandidateBinding(identityResolution.binding, target);
   if (identityReason) return createFreshness(stage, target, sourceRunId, sourceArtifactId, identityReason, null);
+  // Provider identity binds exactly like candidate identity: evidence produced by
+  // a provider other than the one the stage reserved is stale, never a fallback.
+  if (expectedProvider != null && readExecutionProvider(run) !== expectedProvider) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "provider_mismatch", null);
+  }
   if (artifact && artifact.stage !== stage) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }

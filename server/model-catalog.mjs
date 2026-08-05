@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+import { DEFAULT_EXECUTION_PROVIDER } from "./run-activity.mjs";
 
 export const PRICING_SOURCE_URL = "https://platform.openai.com/docs/pricing";
 export const CREDIT_SOURCE_URL = "https://learn.chatgpt.com/docs/pricing";
@@ -18,7 +19,28 @@ export const MODEL_PRICING = {
   "gpt-5.4-mini": rate(0.75, 0.075, null, 4.5),
   "gpt-5.4-nano": rate(0.2, 0.02, null, 1.25),
   "gpt-5.3-codex": rate(1.75, 0.175, null, 14),
+  // Anthropic first-party rates. Cache write is 2x input — the 1-hour TTL
+  // multiplier, not the 5-minute 1.25x — because recorded Claude Code sessions
+  // report all cache creation as `ephemeral_1h_input_tokens`. These match what the
+  // CLI itself bills to the cent, including Sonnet 5 at the standard $3/$15 rather
+  // than the live introductory $2/$10: a harness whose cost figures disagree with
+  // the tool doing the spending is worse than one that is uniformly slightly high.
+  // `long` is null for every entry — these are 1M-context models at standard
+  // rates, so the >272k long-context branch must never fire for them.
+  "claude-fable-5": rate(10, 1, 20, 50),
+  "claude-opus-5": rate(5, 0.5, 10, 25),
+  "claude-sonnet-5": rate(3, 0.3, 6, 15),
+  "claude-haiku-4-5": rate(1, 0.1, 2, 5),
 };
+
+export const CLAUDE_MODEL_IDS = Object.freeze([
+  "claude-opus-5",
+  "claude-sonnet-5",
+  "claude-fable-5",
+  "claude-haiku-4-5",
+]);
+
+const CLAUDE_MODEL_ID_SET = new Set(CLAUDE_MODEL_IDS);
 
 // Current ChatGPT Work / Codex credit rates per 1M tokens. Credits are a
 // usage-comparison unit, not an attributable dollar charge for plan sessions.
@@ -41,7 +63,25 @@ export const POLICY_IDS = [
   "final-review",
 ];
 
-export function defaultStagePolicies() {
+export function defaultStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
+  if (provider === "claude") {
+    // Mirrors the sol/luna split: the deeper model for planning and every gate,
+    // the faster one for gathering and execution.
+    const opus = { model: "claude-opus-5", reasoning: "xhigh" };
+    const sonnet = { model: "claude-sonnet-5", reasoning: "high" };
+    return {
+      triage: { ...sonnet },
+      scouts: { ...sonnet },
+      grill: { ...sonnet },
+      specification: { ...sonnet },
+      plan: { ...opus },
+      implement: { ...sonnet },
+      repair: { ...opus },
+      "dev-review": { ...opus },
+      test: { ...sonnet },
+      "final-review": { ...opus },
+    };
+  }
   const luna = { model: "gpt-5.6-luna", reasoning: "xhigh" };
   const sol = { model: "gpt-5.6-sol", reasoning: "high" };
   return {
@@ -66,6 +106,88 @@ const FALLBACK_MODELS = [
 ];
 
 /**
+ * There is no Claude analogue of `models_cache.json` and `--help` lists only
+ * aliases, so the Claude catalogue is bundled: the harness must not depend on
+ * network access, and the model set changes slowly. `modelUsage` on a completed
+ * run carries better metadata than this (canonicalModel, contextWindow,
+ * maxOutputTokens) and is persisted for exactly that reason.
+ *
+ * `claude-haiku-4-5` supports no effort levels, so it is deliberately visible and
+ * priced but not selectable as a stage policy: a policy requires a reasoning
+ * value, and the provider must omit `--effort` entirely for this model.
+ */
+const CLAUDE_EFFORT_LEVELS = ["low", "medium", "high", "xhigh", "max"];
+
+/**
+ * Explicit "this model takes no reasoning effort" policy value.
+ *
+ * A stage policy is `{model, reasoning}` and every code path expects a reasoning
+ * value, so a model with no effort control needs a nameable level rather than an
+ * empty one. `"none"` is that level: it validates like any other, and the Claude
+ * provider omits `--effort` entirely when it is selected. No Codex model lists it,
+ * so a Codex spawn can never receive it.
+ */
+export const NO_REASONING_EFFORT = "none";
+
+const CLAUDE_MODELS = [
+  claudeModel("claude-opus-5", "Claude Opus 5", "Deepest Claude coding model for planning and gates.", "xhigh", CLAUDE_EFFORT_LEVELS),
+  claudeModel("claude-sonnet-5", "Claude Sonnet 5", "Balanced Claude coding model for everyday work.", "xhigh", CLAUDE_EFFORT_LEVELS),
+  claudeModel("claude-fable-5", "Claude Fable 5", "Highest-capability Claude model at a premium rate.", "xhigh", CLAUDE_EFFORT_LEVELS),
+  claudeModel("claude-haiku-4-5", "Claude Haiku 4.5", "Fast Claude model with no reasoning-effort control.", NO_REASONING_EFFORT, [NO_REASONING_EFFORT]),
+];
+
+export async function readClaudeModelCatalog() {
+  return {
+    models: structuredClone(CLAUDE_MODELS),
+    fetchedAt: null,
+    source: "Bundled Claude model catalog",
+  };
+}
+
+/**
+ * Attribute a model id to an execution provider. An id no provider claims returns
+ * `null` rather than being attributed to whichever provider happens to be default,
+ * so a typo in persisted settings surfaces as unsupported instead of being routed
+ * to the wrong CLI.
+ */
+export function providerForModelId(value) {
+  const id = normalizeModelId(value);
+  if (CLAUDE_MODEL_ID_SET.has(id) || id.startsWith("claude-")) return "claude";
+  if (id.startsWith("gpt-")) return "codex";
+  return null;
+}
+
+/**
+ * Derive which execution provider a task's model selection implies.
+ *
+ * The provider follows from the models chosen, so picking `claude-opus-5` routes to
+ * the Claude CLI without anyone having to name the provider separately — and an
+ * explicit provider that contradicts the chosen models is rejected rather than
+ * silently sending one runtime's model to the other's CLI.
+ */
+export function resolveTaskProvider(stagePolicies, fallbackModel, explicit = null) {
+  const providers = new Set(
+    [...Object.values(stagePolicies ?? {}).map((policy) => policy?.model), fallbackModel]
+      .filter(Boolean)
+      .map(providerForModelId)
+      .filter(Boolean),
+  );
+  if (providers.size > 1) {
+    throw new Error(
+      `A task's stage policies must all use models from one execution provider; found ${[...providers].sort().join(" and ")}.`,
+    );
+  }
+  const implied = [...providers][0] ?? null;
+  if (explicit) {
+    if (implied && implied !== explicit) {
+      throw new Error(`Provider ${explicit} cannot run ${implied} models.`);
+    }
+    return explicit;
+  }
+  return implied ?? DEFAULT_EXECUTION_PROVIDER;
+}
+
+/**
  * Single source for the runtime default policy. The settings store and the Codex
  * runtime both resolve their defaults from here so runtime status, allowed models,
  * and spawned agents cannot advertise different models.
@@ -73,13 +195,51 @@ const FALLBACK_MODELS = [
 export const DEFAULT_RUNTIME_MODEL = "gpt-5.6-luna";
 export const DEFAULT_RUNTIME_REASONING = "xhigh";
 
+/**
+ * Per-provider fallback defaults behind one selected provider. This keeps the
+ * single-source-of-truth property: only the *fallback* becomes provider-aware, and
+ * `DEFAULT_RUNTIME_MODEL` remains the one global default for Codex.
+ */
+export const PROVIDER_RUNTIME_DEFAULTS = Object.freeze({
+  codex: Object.freeze({ model: DEFAULT_RUNTIME_MODEL, reasoning: DEFAULT_RUNTIME_REASONING }),
+  claude: Object.freeze({ model: "claude-sonnet-5", reasoning: "xhigh" }),
+});
+
+export function providerRuntimeDefaults(providerId = DEFAULT_EXECUTION_PROVIDER) {
+  const defaults = PROVIDER_RUNTIME_DEFAULTS[providerId ?? DEFAULT_EXECUTION_PROVIDER];
+  if (!defaults) throw new Error(`No runtime defaults for execution provider: ${providerId}`);
+  return { ...defaults };
+}
+
+/**
+ * Validate a reasoning level against a model's catalogue entry and return the
+ * effort to spawn with, or `null` when the model takes none. An unsupported level
+ * refuses rather than silently downgrading, mirroring the existing
+ * `Unsupported Codex sandbox` throw.
+ */
+export function assertSupportedReasoning(modelId, reasoning, models = CLAUDE_MODELS) {
+  const id = normalizeModelId(modelId);
+  const entry = models.find((model) => model.id === id);
+  if (!entry) throw new Error(`Unknown model for reasoning validation: ${id}`);
+  const level = String(reasoning ?? "");
+  if (!entry.reasoningLevels.includes(level)) {
+    throw new Error(`${entry.label} does not support ${level || "that"} reasoning effort.`);
+  }
+  return level === NO_REASONING_EFFORT ? null : level;
+}
+
 export function defaultRuntimeSettings() {
   const defaultModel = normalizeModelId(process.env.AGENT_HARNESS_MODEL ?? DEFAULT_RUNTIME_MODEL);
   const defaultReasoning = process.env.AGENT_HARNESS_REASONING ?? DEFAULT_RUNTIME_REASONING;
   return {
-    allowedModels: [...new Set([defaultModel, "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"])],
+    // Both providers' models are selectable, because a stage policy is validated
+    // against this list and a Claude task's policies must name Claude models. The
+    // selected provider, not this list, decides which runtime executes.
+    allowedModels: [...new Set([defaultModel, "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", ...CLAUDE_MODEL_IDS])],
     defaultModel,
     defaultReasoning,
+    // Nothing moves to another provider until an operator changes this.
+    defaultProvider: DEFAULT_EXECUTION_PROVIDER,
     stagePolicies: defaultStagePolicies(),
     pricing: {
       version: PRICING_VERSION,
@@ -96,6 +256,13 @@ export function defaultRuntimeSettings() {
 export function resolveAgentPolicy(task, policyId, fallbackSettings = defaultRuntimeSettings()) {
   const policy = task?.agentConfig?.stagePolicies?.[policyId] ?? fallbackSettings.stagePolicies?.[policyId];
   return {
+    // One provider per task, not per policy. A task's gates, its repair and the
+    // candidate they authorize must all be the same runtime: candidate revisions do
+    // not persist a provider, so a per-stage split would leave the repair-authorizer
+    // reconstruction unable to tell which runtime produced the authorizing gate.
+    // Absent means the default provider, so every task persisted before this stays
+    // on Codex regardless of what the setting later becomes.
+    provider: task?.agentConfig?.provider ?? (task ? DEFAULT_EXECUTION_PROVIDER : (fallbackSettings.defaultProvider ?? DEFAULT_EXECUTION_PROVIDER)),
     model: normalizeModelId(policy?.model ?? task?.agentConfig?.model ?? fallbackSettings.defaultModel),
     reasoning: String(policy?.reasoning ?? task?.agentConfig?.reasoning ?? fallbackSettings.defaultReasoning),
   };
@@ -112,6 +279,7 @@ export async function readCodexModelCatalog() {
         id: String(entry.slug),
         label: String(entry.display_name ?? entry.slug).replace(/^GPT-([0-9.]+)-/i, "GPT-$1 "),
         description: String(entry.description ?? "Available through the installed Codex runtime."),
+        provider: "codex",
         defaultReasoning: String(entry.default_reasoning_level ?? "medium"),
         reasoningLevels: (entry.supported_reasoning_levels ?? []).map((level) => String(level.effort)).filter(Boolean),
         pricing: MODEL_PRICING[entry.slug] ?? null,
@@ -147,6 +315,9 @@ export function withConfiguredModels(catalog, settings) {
       id,
       label: id,
       description: "Configured in persisted settings but not reported by the local Codex model catalog.",
+      // A configured id no provider claims stays unattributed rather than being
+      // credited to whichever provider is currently selected.
+      provider: providerForModelId(id),
       defaultReasoning: settings?.defaultReasoning ?? "medium",
       reasoningLevels: [],
       pricing: MODEL_PRICING[id] ?? null,
@@ -189,17 +360,86 @@ export function priceUsage(modelId, usage, pricing = MODEL_PRICING) {
   );
 }
 
-export function enrichUsage(modelId, usage, pricing, pricingVersion = PRICING_VERSION) {
+/**
+ * Price a provider's per-model breakdown with the rate card.
+ *
+ * This is the correct cross-check against a reported total, and pricing the
+ * aggregate as if it were all one model is not: a run reports usage for every model
+ * it actually used, including ones the harness never asked for, so the single-model
+ * estimate is systematically low and would flag a divergence on almost every run.
+ * Returns null unless every entry could be priced, so a partial sum is never
+ * compared against a complete total.
+ */
+export function priceModelUsage(modelUsage, pricing = MODEL_PRICING) {
+  if (!modelUsage || typeof modelUsage !== "object" || Array.isArray(modelUsage)) return null;
+  const entries = Object.entries(modelUsage);
+  if (!entries.length) return null;
+  let total = 0;
+  for (const [id, entry] of entries) {
+    const cachedInputTokens = finite(entry?.cacheReadInputTokens);
+    const cacheWriteTokens = finite(entry?.cacheCreationInputTokens);
+    const cost = priceUsage(entry?.canonicalModel ?? id, {
+      inputTokens: finite(entry?.inputTokens) + cachedInputTokens + cacheWriteTokens,
+      cachedInputTokens,
+      cacheWriteTokens,
+      outputTokens: finite(entry?.outputTokens),
+    }, pricing);
+    if (cost == null) return null;
+    total += cost;
+  }
+  return roundCurrency(total);
+}
+
+/** Relative divergence beyond which a reported cost and the rate card disagree materially. */
+export const COST_DIVERGENCE_TOLERANCE = 0.05;
+
+/**
+ * Compare a provider-reported cost against the bundled rate card. This is how the
+ * harness notices the provider changing its prices: the card stays necessary for
+ * pre-run estimation and the model picker, but it stops being the source of truth
+ * once a run has reported its own accounting.
+ */
+export function costDivergence(reportedCost, estimatedCost) {
+  if (!Number.isFinite(reportedCost) || !Number.isFinite(estimatedCost)) return null;
+  const scale = Math.max(Math.abs(reportedCost), Math.abs(estimatedCost));
+  if (scale === 0) return { reportedCost, estimatedCost, ratio: 0, material: false };
+  const ratio = Math.abs(reportedCost - estimatedCost) / scale;
+  return { reportedCost, estimatedCost, ratio, material: ratio > COST_DIVERGENCE_TOLERANCE };
+}
+
+/**
+ * `options.reportedCost` is the provider's own accounting and takes precedence over
+ * the rate card; `options.modelUsage` is its per-model breakdown. Both are also read
+ * back off the persisted usage record, so re-enriching on boot cannot silently
+ * replace a reported cost with an estimate.
+ *
+ * The extra fields are only present when a cost was actually reported, so a Codex
+ * usage record keeps exactly the shape it has today.
+ */
+export function enrichUsage(modelId, usage, pricing, pricingVersion = PRICING_VERSION, options = {}) {
   const credits = priceCredits(modelId, usage);
+  const reportedCost = firstFinite(options.reportedCost, usage?.reportedCost);
+  const modelUsage = options.modelUsage ?? usage?.modelUsage ?? null;
+  const estimatedCost = priceModelUsage(modelUsage, pricing) ?? priceUsage(modelId, usage, pricing);
   return {
     inputTokens: finite(usage?.inputTokens),
     cachedInputTokens: finite(usage?.cachedInputTokens),
     cacheWriteTokens: finite(usage?.cacheWriteTokens),
     outputTokens: finite(usage?.outputTokens),
     totalTokens: finite(usage?.totalTokens) || finite(usage?.inputTokens) + finite(usage?.outputTokens),
-    cost: priceUsage(modelId, usage, pricing),
+    cost: reportedCost ?? estimatedCost,
     credits,
     pricingVersion,
+    ...(reportedCost == null
+      ? {}
+      : {
+          reportedCost,
+          estimatedCost,
+          // Still the provider's API-equivalent computation, not money leaving an
+          // account: the harness runs on a subscription.
+          costBasis: "api-equivalent",
+        }),
+    ...(modelUsage ? { modelUsage: structuredClone(modelUsage) } : {}),
   };
 }
 
@@ -251,12 +491,28 @@ function model(id, label, description, defaultReasoning, reasoningLevels) {
     id,
     label,
     description,
+    provider: "codex",
     defaultReasoning,
     reasoningLevels,
     pricing: MODEL_PRICING[id] ?? null,
     provenance: "bundled-fallback",
     availability: "unsupported",
     editable: false,
+  };
+}
+
+function claudeModel(id, label, description, defaultReasoning, reasoningLevels) {
+  return {
+    id,
+    label,
+    description,
+    provider: "claude",
+    defaultReasoning,
+    reasoningLevels: [...reasoningLevels],
+    pricing: MODEL_PRICING[id] ?? null,
+    provenance: "bundled",
+    availability: "discovered",
+    editable: true,
   };
 }
 
@@ -279,6 +535,15 @@ function validateRate(entry) {
 function finite(value) {
   const number = Number(value ?? 0);
   return Number.isFinite(number) && number > 0 ? number : 0;
+}
+
+function firstFinite(...values) {
+  for (const value of values) {
+    if (value == null) continue;
+    const number = Number(value);
+    if (Number.isFinite(number) && number >= 0) return number;
+  }
+  return null;
 }
 
 function roundCurrency(value) {

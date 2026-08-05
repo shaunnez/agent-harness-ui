@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import { ProcessTimeoutError } from "../server/codex-runtime.mjs";
 import { evaluationVerdict, structuredEvidenceError, TaskOrchestrator } from "../server/orchestrator.mjs";
+import { defaultStagePolicies } from "../server/model-catalog.mjs";
 import { buildExecutionPrompt } from "../server/prompts.mjs";
 import { selectScoutDispatch } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
@@ -20,6 +21,7 @@ import {
   attachRunArtifact,
   beginAgentRun,
   CANONICAL_RUN_STAGES,
+  DEFAULT_EXECUTION_PROVIDER,
   DEFAULT_STAGE_RUN_LIMIT,
   migrateRunActivityState,
   readExplicitCandidateBinding,
@@ -28,6 +30,7 @@ import {
   RUNTIME_FRESHNESS_REASONS,
   RUN_ACTIVITY_EVENT_LIMIT,
   stageRunLimitFor,
+  TASK_STORE_SCHEMA_VERSION,
 } from "../server/run-activity.mjs";
 
 const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"questions":[{"question":"Compatibility?","whyItMatters":"Changes the public contract.","options":[{"label":"Preserve it","description":"Keep existing clients working.","recommended":true},{"label":"Break it","description":"Allow a clean break.","recommended":false}],"allowCustom":true}]}\n</grill-questions>`;
@@ -432,6 +435,106 @@ test("resolves candidate-bound gate failures closed with exact stale reasons", (
     assert.equal(freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS[item.code], item.name);
     assert.deepEqual(freshness.staleReason, { code: item.code, copy: RUNTIME_FRESHNESS_REASONS[item.code] }, item.name);
   }
+});
+
+test("binds gate evidence to the reserving execution provider", () => {
+  const reservationFor = (provider) => ({
+    "dev-review": {
+      id: "RES-DEV",
+      stage: "dev-review",
+      kind: "review",
+      ...(provider === undefined ? {} : { provider }),
+      workflowAttempt: 1,
+      candidateId: "C1",
+      candidateRevision: 2,
+      candidateHeadRevision: "abc123",
+      authorizedRunScopes: [],
+      reservedAt: "2026-08-01T11:59:00.000Z",
+    },
+  });
+
+  const cases = [
+    { name: "matching provider", runProvider: "codex", reservationProvider: "codex", fresh: true },
+    { name: "absent run provider coalesces to the default", runProvider: undefined, reservationProvider: "codex", fresh: true },
+    {
+      name: "absent reservation provider coalesces to the default",
+      runProvider: undefined,
+      reservationProvider: undefined,
+      fresh: true,
+    },
+    { name: "matching non-default provider", runProvider: "claude", reservationProvider: "claude", fresh: true },
+    { name: "cross-provider gate evidence", runProvider: "claude", reservationProvider: "codex", fresh: false },
+    { name: "cross-provider reservation", runProvider: "codex", reservationProvider: "claude", fresh: false },
+  ];
+
+  for (const item of cases) {
+    const run = makeRuntimeRun({ gateResult: makeGateResult() });
+    if (item.runProvider === undefined) delete run.provider;
+    else run.provider = item.runProvider;
+    const task = makeRuntimeTask({ runs: [run] });
+    task.stageRunReservations = reservationFor(item.reservationProvider);
+    refreshGateFreshness(task);
+    const freshness = task.gateFreshness["dev-review"];
+    assert.equal(freshness.fresh, item.fresh, item.name);
+    if (item.fresh) continue;
+    assert.equal(freshness.reasonCode, "provider_mismatch", item.name);
+    assert.equal(freshness.reasonCopy, RUNTIME_FRESHNESS_REASONS.provider_mismatch, item.name);
+    assert.deepEqual(freshness.staleReason, {
+      code: "provider_mismatch",
+      copy: RUNTIME_FRESHNESS_REASONS.provider_mismatch,
+    }, item.name);
+    assert.equal(run.freshness.reasonCode, "provider_mismatch", `${item.name}: run audit state`);
+  }
+});
+
+test("backfills the default execution provider when migrating to schema 6", () => {
+  const run = makeRuntimeRun({ gateResult: makeGateResult() });
+  delete run.provider;
+  const task = makeRuntimeTask({ runs: [run] });
+  task.stageRunReservations = {
+    "dev-review": {
+      id: "RES-DEV",
+      stage: "dev-review",
+      kind: "review",
+      workflowAttempt: 1,
+      candidateId: "C1",
+      candidateRevision: 2,
+      candidateHeadRevision: "abc123",
+      authorizedRunScopes: [],
+      reservedAt: "2026-08-01T11:59:00.000Z",
+    },
+  };
+  const state = { schemaVersion: 5, tasks: [task] };
+
+  assert.equal(migrateRunActivityState(state), true);
+  assert.equal(state.schemaVersion, TASK_STORE_SCHEMA_VERSION);
+  assert.equal(TASK_STORE_SCHEMA_VERSION, 6);
+  assert.equal(task.runs[0].provider, DEFAULT_EXECUTION_PROVIDER);
+  assert.equal(task.stageRunReservations["dev-review"].provider, DEFAULT_EXECUTION_PROVIDER);
+  assert.equal(task.gateFreshness["dev-review"].fresh, true);
+
+  // Idempotent, and a run persisted by an older runtime after migration is repaired.
+  assert.equal(migrateRunActivityState(state), false);
+  task.runs.push(claudeRunWithoutProvider());
+  assert.equal(migrateRunActivityState(state), true);
+  assert.equal(task.runs[1].provider, DEFAULT_EXECUTION_PROVIDER);
+});
+
+function claudeRunWithoutProvider() {
+  const run = makeRuntimeRun({ id: "RUN-2", attempt: 2, gateResult: makeGateResult() });
+  delete run.provider;
+  return run;
+}
+
+test("stamps the reserving provider onto every run it begins", () => {
+  const task = makeRuntimeTask();
+  task.stageRunReservations = {};
+  const codexRun = beginAgentRun(task, { kind: "review", stage: "dev-review", provider: "codex" });
+  const claudeRun = beginAgentRun(task, { kind: "review", stage: "dev-review", provider: "claude" });
+  const defaultedRun = beginAgentRun(task, { kind: "review", stage: "dev-review" });
+  assert.equal(codexRun.provider, "codex");
+  assert.equal(claudeRun.provider, "claude");
+  assert.equal(defaultedRun.provider, DEFAULT_EXECUTION_PROVIDER);
 });
 
 test("rejects mixed candidate summaries with the exact stale reason", () => {
@@ -2953,7 +3056,11 @@ test("advances an approved implementation task through a revision-bound candidat
     assert.equal(testCall.timeoutMs, 600_000);
     assert.match(testCall.tempDirectory, new RegExp(`^${escapeRegex(path.join(os.tmpdir(), "agent-harness", task.id))}`));
     assert.equal(testCall.tempDirectory.startsWith(path.join(directory, "C1")), false);
-    assert.equal(verifyCount, 7, "test and both Repair attempts must verify the candidate at their boundaries");
+    assert.equal(
+      verifyCount,
+      10,
+      "test and both Repair attempts verify at their boundaries (7), plus a post-run check for each read-only review stage: two dev-reviews and one final-review",
+    );
     assert.equal(
       approvalTask.artifacts.find((artifact) => artifact.stage === "test")?.focusedTest?.rows?.length,
       2,
@@ -3109,7 +3216,7 @@ test("persists typed process timeouts as a terminal timed-out run", async () => 
     });
     const orchestrator = new TaskOrchestrator(store, {
       runCodex: async () => {
-        throw new ProcessTimeoutError(180_000);
+        throw new ProcessTimeoutError(180_000, "Codex");
       },
     });
 
@@ -3334,6 +3441,7 @@ function makeRuntimeRun({
   return {
     id,
     kind,
+    provider: "codex",
     status,
     stage,
     role: stage,
@@ -3473,3 +3581,141 @@ async function waitForStatus(store, id, expected) {
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+test("refuses a review verdict when the reviewer mutated the candidate", async () => {
+  for (const stageId of ["dev-review", "final-review"]) {
+    const directory = await mkdtemp(path.join(os.tmpdir(), `agent-harness-reviewer-mutation-${stageId}-`));
+    try {
+      const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+      await store.init();
+      const task = await store.create({
+        title: `Reject a mutating ${stageId}`,
+        description: "A reviewer that dirties its worktree produced evidence about files that were never reviewed.",
+        repositoryPath: directory,
+        workflow: "implement",
+        priority: "medium",
+      });
+      await store.update(task.id, (draft) => {
+        draft.status = stageId === "final-review" ? "ready-for-final-review" : "ready-for-review";
+        draft.currentStage = stageId;
+        draft.completedStages = stageId === "final-review" ? ["dev-review", "test"] : [];
+        draft.candidates = [{
+          id: "C1",
+          revisionNumber: 2,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: "b".repeat(40),
+          branch: "agent-harness/ah-001-c1",
+          repositoryRoot: directory,
+          worktreePath: directory,
+          status: "under_review",
+          createdAt: "2026-08-01T12:00:00.000Z",
+          updatedAt: "2026-08-01T12:00:00.000Z",
+          revisions: [],
+        }];
+      });
+
+      // Clean before the agent, dirty after: HEAD never moved, so every exact-SHA
+      // check still reports agreement. Only a post-run check catches this.
+      let verifyCalls = 0;
+      let recoverCalls = 0;
+      const orchestrator = new TaskOrchestrator(store, {
+        getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+        worktreeManager: {
+          verifyCandidate: async () => {
+            verifyCalls += 1;
+            if (verifyCalls > 1) throw new Error("The candidate worktree has uncommitted changes.");
+          },
+          recoverCandidate: async () => {
+            recoverCalls += 1;
+            return true;
+          },
+        },
+        // A verdict the harness must not accept.
+        runCodex: async () => ({
+          finalText: gateOutput(2, "PASS"),
+          usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+        }),
+      });
+
+      assert.equal(await orchestrator.start(task.id, stageId === "dev-review" ? "review" : "final-review"), true);
+      const finished = await waitForStatus(
+        store,
+        task.id,
+        stageId === "final-review" ? "ready-for-final-review" : "ready-for-review",
+      );
+      const run = finished.runs.find((entry) => entry.stage === stageId);
+
+      assert.equal(verifyCalls, 2, `${stageId}: verified before and after the agent`);
+      assert.equal(recoverCalls, 0, `${stageId}: a reviewer is never recovered, or the evidence of mutation is erased`);
+      // Invalid evidence, not a failed review: the gate is not fresh, so it can
+      // authorize neither a promotion nor a repair.
+      assert.ok(run.evidenceError, `${stageId}: the run carries an evidence error`);
+      assert.equal(run.freshness.fresh, false, stageId);
+      assert.equal(finished.gateFreshness[stageId].fresh, false, stageId);
+      assert.equal(run.gateResult.verdict, "REPAIR", stageId);
+      assert.ok(
+        run.gateResult.blockingReasons.some((reason) => /mutated the candidate it was reviewing/.test(reason)),
+        `${stageId}: the mutation is recorded explicitly, not just as generic bad evidence`,
+      );
+      assert.ok(
+        finished.events.some((event) => event.title === "Reviewer mutated the candidate"),
+        stageId,
+      );
+      assert.equal(finished.completedStages.includes(stageId), false, `${stageId}: never completes on mutated evidence`);
+    } finally {
+      await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    }
+  }
+});
+
+test("sends byte-identical stage content whichever provider runs it", async () => {
+  const prompts = new Map();
+  for (const provider of ["codex", "claude"]) {
+    const directory = await mkdtemp(path.join(os.tmpdir(), `agent-harness-prompt-parity-${provider}-`));
+    try {
+      const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+      await store.init();
+      const task = await store.create({
+        title: "Compare stage content across providers",
+        description: "The stage prompt must not vary with the runtime that executes it.",
+        repositoryPath: directory,
+        workflow: "investigate",
+        priority: "medium",
+        model: provider === "claude" ? "claude-sonnet-5" : "gpt-5.6-luna",
+        stagePolicies: defaultStagePolicies(provider),
+      });
+      const captured = [];
+      const orchestrator = new TaskOrchestrator(store, {
+        getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+        worktreeManager: { verifyCandidate: async () => {} },
+        runCodex: async (options) => {
+          captured.push(options.prompt);
+          return {
+            finalText: /Grill/i.test(options.prompt)
+              ? `## Grill\n\nNothing to settle.\n\n<grill-questions>{"questions":[]}</grill-questions>`
+              : `## Triage\n\nGrounded.\n\n<scout-dispatch>{"scouts":[],"rationale":"Triage already identifies the complete code path."}</scout-dispatch>`,
+            usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+          };
+        },
+      });
+      assert.equal(await orchestrator.start(task.id), true);
+      await waitForStatus(store, task.id, "awaiting-spec-approval");
+      const stored = await store.get(task.id);
+      assert.equal(stored.agentConfig.provider, provider);
+      // Every run and reservation is bound to the task's provider.
+      for (const run of stored.runs) assert.equal(run.provider, provider);
+      for (const reservation of Object.values(stored.stageRunReservations)) {
+        assert.equal(reservation.provider, provider);
+      }
+      prompts.set(provider, captured);
+    } finally {
+      await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    }
+  }
+
+  // Stage instructions live in prompts.mjs alone. Splitting any of it into a
+  // provider-specific channel would make the two providers' evidence incomparable.
+  assert.ok(prompts.get("codex").length > 0);
+  assert.deepEqual(prompts.get("claude"), prompts.get("codex"));
+});

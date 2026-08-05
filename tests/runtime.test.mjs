@@ -8,11 +8,25 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { createServer as createViteServer } from "vite";
 import {
   buildCodexEnvironment,
+  DEFAULT_MODEL,
+  DEFAULT_REASONING,
   parseCodexEvent,
   ProcessTimeoutError,
   runProcess,
   selectCodexCandidate,
 } from "../server/codex-runtime.mjs";
+import {
+  hasExecutionProvider,
+  listExecutionProviders,
+  resolveExecutionProvider,
+} from "../server/execution-providers.mjs";
+import {
+  DEFAULT_RUN_LABEL,
+  DEFAULT_STDOUT_BUDGET,
+  isProcessTimeoutError,
+  ProcessTimeoutError as SharedProcessTimeoutError,
+  runProcess as sharedRunProcess,
+} from "../server/process-runtime.mjs";
 import { normalizeModelId, priceUsage, readCodexModelCatalog, withConfiguredModels } from "../server/model-catalog.mjs";
 import { buildExecutionRequest, buildRepairRequest, buildStageRequest, buildWorkPackageRequest } from "../server/prompts.mjs";
 import { buildScoutRequest } from "../server/scouts.mjs";
@@ -222,6 +236,64 @@ test("builds a minimal Codex environment without inherited credentials", () => {
   assert.equal(environment.DATABASE_URL, undefined);
   assert.equal(environment.OPENAI_API_KEY, undefined);
   assert.equal(environment.ARBITRARY_SECRET, undefined);
+});
+
+test("resolves the Codex provider through the execution-provider seam", () => {
+  const codex = resolveExecutionProvider("codex");
+  assert.equal(codex.id, "codex");
+  assert.equal(codex.label, "Codex");
+  assert.equal(codex.parseEvent, parseCodexEvent);
+  assert.deepEqual(codex.defaults(), { model: DEFAULT_MODEL, reasoning: DEFAULT_REASONING });
+
+  // Codex's sandbox is one OS-level guarantee with no model-reachable waiver, so
+  // it is the only posture that needs no harness-side confinement check.
+  const capabilities = codex.capabilities();
+  assert.equal(capabilities.sandboxes["read-only"], "os-enforced");
+  assert.equal(capabilities.sandboxes["workspace-write"], "os-enforced");
+  assert.equal(capabilities.confinementVerifiedBy, "provider");
+  assert.equal(capabilities.networkIsolation, true);
+  assert.equal(capabilities.supportsReasoningLevels, true);
+  assert.equal(capabilities.stdoutBudgetBytes, DEFAULT_STDOUT_BUDGET);
+
+  assert.equal(resolveExecutionProvider(undefined).id, "codex");
+  assert.equal(hasExecutionProvider("codex"), true);
+  assert.equal(hasExecutionProvider("nope"), false);
+  assert.throws(() => resolveExecutionProvider("nope"), /Unknown execution provider: nope/);
+  assert.deepEqual(listExecutionProviders().map((provider) => provider.id), ["codex", "claude"]);
+});
+
+test("shares one process-runtime timeout identity across the seam", () => {
+  // The extraction must not fork the error class: `isProcessTimeoutError` is what
+  // the orchestrator uses to distinguish a timeout from a failed run, and a second
+  // class identity would silently reclassify every Codex timeout.
+  assert.equal(ProcessTimeoutError, SharedProcessTimeoutError);
+  assert.equal(runProcess, sharedRunProcess);
+  assert.equal(isProcessTimeoutError(new ProcessTimeoutError(900_000, "Codex")), true);
+  assert.equal(isProcessTimeoutError(new Error("Codex run exceeded 900 seconds.")), false);
+});
+
+test("names the timed-out provider instead of always blaming Codex", () => {
+  // Both providers pass an explicit label, so a real timeout names the runtime that
+  // actually exceeded its deadline. The neutral default only surfaces for an error
+  // constructed with no provider context, where "Codex" would be a lie.
+  assert.equal(new ProcessTimeoutError(180_000, "Codex").message, "Codex run exceeded 180 seconds.");
+  assert.equal(new ProcessTimeoutError(180_000, "Claude").message, "Claude run exceeded 180 seconds.");
+  assert.equal(new ProcessTimeoutError(180_000).message, "Agent run exceeded 180 seconds.");
+  assert.equal(DEFAULT_RUN_LABEL, "Agent");
+  assert.equal(new ProcessTimeoutError(180_000, "Claude").label, "Claude");
+});
+
+test("labels a pre-launch cancellation with the requesting provider", async () => {
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(
+    runProcess("node", ["-e", "0"], { signal: controller.signal, label: "Claude" }),
+    /^Error: Claude run cancelled before launch\.$/,
+  );
+  await assert.rejects(
+    runProcess("node", ["-e", "0"], { signal: controller.signal, label: "Codex" }),
+    /^Error: Codex run cancelled before launch\.$/,
+  );
 });
 
 test("calculates an API-rate estimate after cached-input discounts", () => {

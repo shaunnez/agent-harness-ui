@@ -15,6 +15,7 @@ import {
   CANONICAL_RUN_STAGES,
   CANDIDATE_GATE_STAGES,
   resolveGateFreshness,
+  readExecutionProvider,
   resolvePersistedRunFreshness,
   stageRunLimitFor,
 } from "./run-activity.mjs";
@@ -750,6 +751,7 @@ function retryGrantContext(task) {
     run.candidateId !== exactReservation.candidateId ||
     run.candidateRevision !== exactReservation.candidateRevision ||
     run.candidateHeadRevision !== exactReservation.candidateHeadRevision ||
+    readExecutionProvider(run) !== readExecutionProvider(exactReservation) ||
     !validRetryRunTuple(run, exactReservation, stageRuns)
   ))) {
     return { error: "The exhausted stage run does not match its workflow reservation; resolve the inconsistent history before granting a retry." };
@@ -1056,7 +1058,13 @@ function candidateGateAuthorizerEvidence(task, gateReservation, target, { latest
     : [];
   const sourceArtifact = sourceArtifacts[0] ?? null;
   const freshness = sourceRun
-    ? resolvePersistedRunFreshness(sourceRun, sourceArtifact, target, gateReservation.stage)
+    ? resolvePersistedRunFreshness(
+        sourceRun,
+        sourceArtifact,
+        target,
+        gateReservation.stage,
+        readExecutionProvider(gateReservation),
+      )
     : null;
   if (
     reservationRuns.length !== 1 ||
@@ -1296,6 +1304,10 @@ function candidateRevisionAuthorizerEvidence(task, candidate, revision, priorRev
     id: revision.authorizingGateReservationId,
     stage: revision.authorizingGateStage,
     kind: revision.authorizingGateStage === "dev-review" ? "review" : revision.authorizingGateStage,
+    // Recorded on the revision, not assumed. Defaulting this to the default provider
+    // would fail every Claude gate that authorized a repair, on a task that never
+    // involved Codex at all.
+    provider: readExecutionProvider({ provider: revision.authorizingGateProvider }),
     workflowAttempt: revision.authorizingGateWorkflowAttempt,
     candidateId: candidate.id,
     candidateRevision: priorRevision.number,

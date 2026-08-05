@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, readdir, realpath, rm, stat, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -182,7 +182,30 @@ test("provisions nested and non-Node dependencies into slice and candidate workt
         "module.exports = 2;",
       );
       assert.equal((await readFile(path.join(worktree.worktreePath, ".venv", "pyvenv.cfg"), "utf8")).trim(), "home = /usr");
-      assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules"))).isSymbolicLink(), true);
+      // The directory itself is worktree-local and writable; each installed package
+      // inside it is a link and therefore still immutable. A wholesale directory link
+      // makes every path under it resolve into the shared source checkout, and both
+      // sandboxes resolve symlinks before matching — so tool caches written under
+      // node_modules (vite's `.vite-temp`, written while merely loading its config)
+      // are refused and the stage fails.
+      assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules"))).isSymbolicLink(), false);
+      assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules"))).isDirectory(), true);
+      assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules", "left-pad"))).isSymbolicLink(), true);
+      assert.equal(
+        await realpath(path.join(worktree.worktreePath, "node_modules", "left-pad")),
+        await realpath(path.join(repository, "node_modules", "left-pad")),
+        "an installed package still resolves to the source checkout",
+      );
+
+      // A tool cache created during a stage stays inside the worktree instead of
+      // contaminating the source checkout that every other worktree shares.
+      await writeFile(path.join(worktree.worktreePath, "node_modules", ".tool-cache"), "local\n", "utf8");
+      assert.equal(
+        await stat(path.join(repository, "node_modules", ".tool-cache")).then(() => true).catch(() => false),
+        false,
+        "the source checkout is untouched by a worktree-local cache write",
+      );
+      await rm(path.join(worktree.worktreePath, "node_modules", ".tool-cache"), { force: true });
       // Provisioning never writes a lockfile.
       assert.equal((await readFile(path.join(worktree.worktreePath, "package-lock.json"), "utf8")).trim(), '{"lockfileVersion":3}');
       // A clean worktree despite the provisioned dependencies being present.

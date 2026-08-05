@@ -421,7 +421,9 @@ export interface RuntimeModelOption {
   defaultReasoning: string;
   reasoningLevels: string[];
   pricing: RuntimeModelPricing | null;
-  provenance: "discovered" | "configured" | "bundled-fallback";
+  /** `null` when no execution provider claims the id, e.g. a stale configured model. */
+  provider?: "codex" | "claude" | null;
+  provenance: "discovered" | "configured" | "bundled-fallback" | "bundled";
   availability: "discovered" | "configured" | "unsupported";
   editable: boolean;
 }

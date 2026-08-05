@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 import path from "node:path";
-import { defaultRuntimeSettings, enrichUsage, normalizeModelId } from "./model-catalog.mjs";
+import { defaultRuntimeSettings, enrichUsage, normalizeModelId, resolveTaskProvider } from "./model-catalog.mjs";
 import {
   CANONICAL_RUN_STAGES,
   DEFAULT_STAGE_RUN_LIMIT,
@@ -97,6 +97,9 @@ export class JsonTaskStore {
   async create(input) {
     return this.#mutate((state) => {
       const now = new Date().toISOString();
+      const stagePolicies = clone(input.stagePolicies ?? this.#state.settings.stagePolicies);
+      const model = normalizeModelId(input.model ?? this.#state.settings.defaultModel);
+      const provider = resolveTaskProvider(stagePolicies, model, input.provider ?? null);
       const task = {
         id: `AH-${String(state.nextId).padStart(3, "0")}`,
         title: input.title,
@@ -105,9 +108,10 @@ export class JsonTaskStore {
         workflow: input.workflow,
         priority: input.priority,
         agentConfig: {
-          model: normalizeModelId(input.model ?? this.#state.settings.defaultModel),
+          provider,
+          model,
           reasoning: input.reasoning ?? this.#state.settings.defaultReasoning,
-          stagePolicies: clone(input.stagePolicies ?? this.#state.settings.stagePolicies),
+          stagePolicies,
           policySnapshotVersion: 1,
         },
         attachments: [],

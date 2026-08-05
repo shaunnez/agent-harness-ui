@@ -1,39 +1,36 @@
-import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, readdir } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+import { getClaudeStatus } from "./claude-runtime.mjs";
 import {
   DEFAULT_RUNTIME_MODEL,
   DEFAULT_RUNTIME_REASONING,
   normalizeModelId,
   readCodexModelCatalog,
 } from "./model-catalog.mjs";
+import {
+  conciseToolResult,
+  DEFAULT_STDOUT_BUDGET,
+  formatCommand,
+  isProcessTimeoutError,
+  ProcessTimeoutError,
+  runProcess,
+} from "./process-runtime.mjs";
 
-const STDOUT_LIMIT = 2 * 1024 * 1024;
-const STDERR_LIMIT = 256 * 1024;
-const STDOUT_BUDGET = 2.5 * 1024 * 1024;
+// Re-exported so existing importers keep a single Codex-runtime entry point while
+// the implementations live in the shared, provider-agnostic module.
+export { isProcessTimeoutError, ProcessTimeoutError, runProcess };
+
+const STDOUT_BUDGET = DEFAULT_STDOUT_BUDGET;
 export const DEFAULT_MODEL = normalizeModelId(process.env.AGENT_HARNESS_MODEL ?? DEFAULT_RUNTIME_MODEL);
 export const DEFAULT_REASONING = process.env.AGENT_HARNESS_REASONING ?? DEFAULT_RUNTIME_REASONING;
-
-export class ProcessTimeoutError extends Error {
-  constructor(timeoutMs) {
-    super(`Codex run exceeded ${Math.round(timeoutMs / 1_000)} seconds.`);
-    this.name = "ProcessTimeoutError";
-    this.code = "PROCESS_TIMEOUT";
-    this.timeoutMs = timeoutMs;
-  }
-}
-
-export function isProcessTimeoutError(error) {
-  return error instanceof ProcessTimeoutError;
-}
 
 export async function locateCodex() {
   if (process.env.CODEX_BIN) return process.env.CODEX_BIN;
   const command = process.platform === "win32" ? "where.exe" : "which";
-  const result = await runProcess(command, ["codex"], { timeoutMs: 5_000 });
+  const result = await runProcess(command, ["codex"], { timeoutMs: 5_000, label: "Codex" });
   const pathCandidates = result.stdout
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -72,7 +69,7 @@ export async function getCodexStatus() {
     if (!binary) {
       return { available: false, authenticated: false, authMethod: null, model: DEFAULT_MODEL, reasoning: DEFAULT_REASONING, binary: null, message: "Codex CLI was not found.", catalog };
     }
-    const result = await runProcess(binary, ["login", "status"], { timeoutMs: 10_000 });
+    const result = await runProcess(binary, ["login", "status"], { timeoutMs: 10_000, label: "Codex" });
     const message = `${result.stdout}\n${result.stderr}`.trim();
     const claude = await getClaudeStatus();
     return {
@@ -91,24 +88,6 @@ export async function getCodexStatus() {
     };
   } catch (error) {
     return { available: false, authenticated: false, authMethod: null, model: DEFAULT_MODEL, reasoning: DEFAULT_REASONING, binary: null, message: error.message, catalog: await readCodexModelCatalog() };
-  }
-}
-
-async function getClaudeStatus() {
-  try {
-    const locator = await runProcess(process.platform === "win32" ? "where.exe" : "which", ["claude"], { timeoutMs: 5_000 });
-    const binary = locator.stdout.split(/\r?\n/).map((line) => line.trim()).find(Boolean);
-    if (!binary) return { id: "claude", label: "Claude", available: false, authenticated: false, executionEnabled: false, detail: "Not found" };
-    const status = await runProcess(binary, ["auth", "status"], { timeoutMs: 10_000 });
-    let authenticated = status.code === 0;
-    try {
-      authenticated = Boolean(JSON.parse(status.stdout).loggedIn);
-    } catch {
-      authenticated = status.code === 0 && /logged.?in|authenticated/i.test(`${status.stdout}\n${status.stderr}`);
-    }
-    return { id: "claude", label: "Claude", available: true, authenticated, executionEnabled: false, detail: authenticated ? "Signed in; execution not wired" : "Login required" };
-  } catch {
-    return { id: "claude", label: "Claude", available: false, authenticated: false, executionEnabled: false, detail: "Not found" };
   }
 }
 
@@ -330,6 +309,8 @@ export async function runCodex({
     signal,
     env: childEnv,
     input: prompt,
+    stdoutBudgetBytes: STDOUT_BUDGET,
+    label: "Codex",
     onStdoutLine(line) {
       const parsed = parseCodexEvent(line);
       if (parsed) onEvent(parsed);
@@ -411,137 +392,34 @@ function cleanStderr(stderr) {
   return meaningful.at(-1) ?? null;
 }
 
-function formatCommand(command) {
-  if (Array.isArray(command)) return command.join(" ").slice(0, 220);
-  return String(command ?? "Repository inspection").replace(/\s+/g, " ").slice(0, 220);
-}
-
 function commandResult(item) {
   if (Number.isInteger(item.exit_code)) return `Exit code ${item.exit_code}`;
   const exposed = item.aggregated_output ?? item.output ?? item.stderr ?? item.stdout;
   return exposed == null ? null : "Command completed with output (content not retained)";
 }
 
-function conciseToolResult(value) {
-  if (value == null) return null;
-  if (typeof value === "string") return `Text result · ${value.length} characters (content not retained)`;
-  if (Array.isArray(value)) return `Array result · ${value.length} items (content not retained)`;
-  if (typeof value === "object") return "Structured result (content not retained)";
-  return `${typeof value} result (content not retained)`;
-}
-
-export function runProcess(command, args, options = {}) {
-  if (options.signal?.aborted) return Promise.reject(new Error("Codex run cancelled before launch."));
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd: options.cwd,
-      env: options.env ?? process.env,
-      windowsHide: true,
-      detached: process.platform !== "win32",
-      stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
-    });
-    let stdout = "";
-    let stdoutBytes = 0;
-    let stderr = "";
-    let pending = "";
-    let settled = false;
-    let terminating = false;
-    let closeResult = null;
-    let resolveClose;
-    const closePromise = new Promise((resolveClosePromise) => {
-      resolveClose = resolveClosePromise;
-    });
-
-    if (options.input !== undefined) child.stdin.end(options.input);
-
-    const finish = (callback, value) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      options.signal?.removeEventListener("abort", abort);
-      callback(value);
-    };
-    const terminate = async (error) => {
-      if (settled || terminating) return;
-      terminating = true;
-      clearTimeout(timer);
-      await terminateProcessTree(child, false);
-      let closed = await waitForClose(closePromise, 2_000);
-      if (!closed) {
-        await terminateProcessTree(child, true);
-        closed = await waitForClose(closePromise, 3_000);
-      } else {
-        await terminateProcessTree(child, true);
-      }
-      if (!closed) error.message = `${error.message} The process tree did not close after forced termination.`;
-      finish(reject, error);
-    };
-    const abort = () => void terminate(new Error("Codex run cancelled."));
-    const timer = setTimeout(() => {
-      void terminate(new ProcessTimeoutError(options.timeoutMs ?? 240_000));
-    }, options.timeoutMs ?? 240_000);
-
-    options.signal?.addEventListener("abort", abort, { once: true });
-    if (options.signal?.aborted) abort();
-    child.stdout.on("data", (chunk) => {
-      const text = chunk.toString();
-      stdoutBytes += Buffer.byteLength(chunk);
-      if (stdoutBytes > STDOUT_BUDGET) {
-        void terminate(new Error("Codex exceeded the stage evidence-output budget. Narrow the task and retry."));
-        return;
-      }
-      stdout = `${stdout}${text}`.slice(-STDOUT_LIMIT);
-      pending += text;
-      const lines = pending.split(/\r?\n/);
-      pending = lines.pop() ?? "";
-      for (const line of lines) if (line.trim()) options.onStdoutLine?.(line);
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr = `${stderr}${chunk.toString()}`.slice(-STDERR_LIMIT);
-    });
-    child.on("error", (error) => {
-      resolveClose?.(null);
-      if (!terminating) finish(reject, error);
-    });
-    child.on("close", (code, signalName) => {
-      if (pending.trim()) options.onStdoutLine?.(pending);
-      closeResult = { code: code ?? (signalName ? 1 : 0), signal: signalName, stdout, stderr };
-      resolveClose?.(closeResult);
-      if (!terminating) finish(resolve, closeResult);
-    });
-  });
-}
-
-async function terminateProcessTree(child, force) {
-  if (!child.pid) return;
-  if (process.platform === "win32") {
-    await runTreeKill(["/pid", String(child.pid), "/T", ...(force ? ["/F"] : [])]);
-    return;
-  }
-  try {
-    process.kill(-child.pid, force ? "SIGKILL" : "SIGTERM");
-  } catch (error) {
-    if (error?.code !== "ESRCH") {
-      try {
-        child.kill(force ? "SIGKILL" : "SIGTERM");
-      } catch {
-        // The close wait below remains the authoritative termination check.
-      }
-    }
-  }
-}
-
-function runTreeKill(args) {
-  return new Promise((resolve) => {
-    const killer = spawn("taskkill.exe", args, { windowsHide: true, stdio: "ignore" });
-    killer.on("error", () => resolve());
-    killer.on("close", () => resolve());
-  });
-}
-
-async function waitForClose(closePromise, timeoutMs) {
-  return Promise.race([
-    closePromise.then(() => true),
-    new Promise((resolve) => setTimeout(() => resolve(false), timeoutMs)),
-  ]);
-}
+/**
+ * The Codex execution provider. Binary discovery, auth probe, spawn argv, the env
+ * allowlist, event schema, usage extraction and sandbox mapping stay here; the
+ * process machinery is shared through `process-runtime.mjs`.
+ */
+export const codexExecutionProvider = {
+  id: "codex",
+  label: "Codex",
+  locate: locateCodex,
+  status: getCodexStatus,
+  catalog: () => readCodexModelCatalog(),
+  defaults: () => ({ model: DEFAULT_MODEL, reasoning: DEFAULT_REASONING }),
+  capabilities: () => ({
+    // `codex exec --sandbox` is a single OS-level guarantee covering the agent's
+    // own edits and anything it spawns, with no model-reachable waiver.
+    sandboxes: { "read-only": "os-enforced", "workspace-write": "os-enforced" },
+    confinementVerifiedBy: "provider",
+    networkIsolation: true,
+    grantsNetworkAccess: true,
+    supportsReasoningLevels: true,
+    stdoutBudgetBytes: STDOUT_BUDGET,
+  }),
+  run: runCodex,
+  parseEvent: parseCodexEvent,
+};
