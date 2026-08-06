@@ -10,10 +10,10 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Approved product-design direction
 
-- Use the selected “Evidence Gate” direction as the shared visual system for every screen and workflow state: warm ink surfaces, compact full sidebar, horizontal stage navigator, structured evidence, restrained semantic colour, and a low-height event ledger.
+- Use the selected “Evidence Gate” direction as the shared visual system for every screen and workflow state: warm ink surfaces, compact full sidebar, horizontal stage navigator, structured evidence, restrained semantic colour, and an event ledger that stays out of the way until opened.
 - Use the selected “Stage Desk” direction only for the Grill Me interaction: one question at a time, repository evidence before answer choices, a recommended answer with concise rationale, accumulated decisions, and specification readiness.
 - Render the command centre, all ten task stages, failure/repair, blocked, completed, and human-approval states coherently inside the same shell.
-- Keep one universal task inspector across every stage: task brief, viewed versus active stage, skill/agent/model, execution metadata, collapsed run safeguards, then stage-specific decisions and living artifacts.
+- Keep one universal task inspector across every stage: task brief, viewed versus active stage, skill/agent/model, execution metadata, run safeguards, then stage-specific decisions and living artifacts. Nothing in the right sidebar is an accordion — every panel renders open and static, including run safeguards, context supplied, and recorded decisions. An operator scanning the inspector must not have to open anything to see what state the task is in.
 - Treat artifacts as durable handoffs between stages. They must be inspectable in a wide read-only viewer; do not use speculative acceptance-criteria previews before the specification exists.
 - Show implementation plans as explicit dependency batches (`S1 → S2 + S3 in parallel → S4`) with drillable work-package detail, ownership, interfaces, verification commands, usage, and cost.
 - Treat Implement as a work-package overview with package drill-down and a main-canvas inline diff. Keep the eight-part quality rubric as an implementation self-score, not a Dev Review verdict.
@@ -34,6 +34,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Persist a context manifest with every new model-owned artifact. Distinguish context supplied in the prompt from repository access permission, show truncation/size, and never claim that supplied context proves what the model semantically used.
 - Describe retained worktrees as temporary isolated Git copies, scope the inspector list to the active task, and use compact inline rows rather than card-like white boxes.
 - The full terminology, state machines, UI behavior, entity model, event contract, repair policy, cost model, and prototype-to-backend handoff are recorded in `docs/workflow-product-contract.md`.
+- Future stages are not inspectable until they have started. Past, current and future are three distinct states, derived from the evidence a task already carries; a stage with no run and no artifact must be inert in the stage navigator and must never present as recorded history or retained evidence it does not have.
 - When a repair starts or is required, make that state explicit in Implement and visually invalidate every downstream candidate-bound gate. Prior Dev Review and Test evidence remains inspectable for audit, but must read as stale / rerun required rather than completed.
 - Use one shared task-table component on Command Centre and Tasks. Recent tasks are the five most recently updated rows, include dates, and end with a full-width **See all tasks** link; search and filters must change the visible rows.
 - Body and control text should normally be 14–16px, with metadata and other small text no smaller than 12px. Clickable disclosure rows need a visible hover treatment and caret.
