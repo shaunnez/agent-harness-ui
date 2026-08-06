@@ -165,6 +165,33 @@ export function validateFocusedTestEvidence(evidence, candidate) {
   return evidence;
 }
 
+/**
+ * Recorded live (AH-001 dev-review): a reviewer described a finding spanning two
+ * lines as `"line": "38-39"` — a natural way to cite a multi-line finding, not a
+ * malformed one — and the strict "integer or null" check discarded an otherwise
+ * clean PASS verdict as "contradictory evidence", forcing a pointless rerun. The
+ * frontend's `line` field is typed `number | null` for file:line navigation, so a
+ * range still resolves to a single number: its start.
+ *
+ * The range separator is required (not `\d+` alone): a lone numeric string like
+ * `"142"` stays rejected rather than silently coerced, which is what "rejects
+ * unsupported gate finding field types before normalization" pins down deliberately
+ * — only an *actual* range is a legitimate reason `line` would ever be a string.
+ */
+function normalizeGateFindingLine(value, index) {
+  if (value == null) return null;
+  if (Number.isInteger(value) && value >= 1) return value;
+  if (typeof value === "string") {
+    const match = value.trim().match(/^(\d+)\s*[-–—]\s*\d+$/);
+    const line = match ? Number.parseInt(match[1], 10) : NaN;
+    if (Number.isInteger(line) && line >= 1) return line;
+  }
+  throw candidateEvidenceError(
+    "contradictory_evidence",
+    `Gate finding ${index + 1} line must be a positive integer, a "start-end" line range, or null.`,
+  );
+}
+
 export function parseGateEvidence(text, candidate, stageId) {
   if (!["dev-review", "final-review"].includes(stageId)) {
     throw new Error(`Structured gate evidence is not supported for ${stageId}.`);
@@ -203,9 +230,7 @@ export function parseGateEvidence(text, candidate, stageId) {
     if (finding.file != null && typeof finding.file !== "string") {
       throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} file must be a string or null.`);
     }
-    if (finding.line != null && (!Number.isInteger(finding.line) || finding.line < 1)) {
-      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} line must be a positive integer or null.`);
-    }
+    const line = normalizeGateFindingLine(finding.line, index);
     const title = finding.title.trim();
     const detail = finding.detail.trim();
     if (!title || !detail) {
@@ -225,7 +250,7 @@ export function parseGateEvidence(text, candidate, stageId) {
       title,
       detail,
       file: finding.file == null ? null : finding.file.trim(),
-      line: finding.line ?? null,
+      line,
       candidateId: findingBinding.candidateId,
       candidateRevision: findingBinding.candidateRevision,
       bindingExplicit: findingExplicitBinding,

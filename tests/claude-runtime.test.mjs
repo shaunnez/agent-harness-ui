@@ -243,7 +243,103 @@ test("does not treat a denial as fatal when it exactly repeats a call that alrea
   assert.match(denied.title, /ignored/);
 });
 
-test("still treats a denial as fatal when it does not match any earlier success", () => {
+test("does not treat a denial as fatal when it exactly repeats a call that already failed", () => {
+  // Recorded live behaviour (AH-001 dev-review): a Bash diagnostic returned a nonzero
+  // exit, the model repeated it verbatim, and the repeat was denied. The harness
+  // already has that exact command's real (failing) output — a failed answer is still
+  // an answer, and the denial adds nothing a successful-repeat guard alone would miss.
+  const parser = createClaudeStreamParser();
+  parser.parse(JSON.stringify({
+    type: "assistant",
+    message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "git check-ignore -v missing.txt" } }] },
+  }));
+  parser.parse(JSON.stringify({
+    type: "user",
+    message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "Exit code 1", is_error: true }] },
+  }));
+
+  const [denied] = parser.parse(JSON.stringify({
+    type: "result",
+    subtype: "success",
+    is_error: false,
+    result: "done",
+    permission_denials: [{ tool_name: "Bash", tool_use_id: "t2", tool_input: { command: "git check-ignore -v missing.txt" } }],
+  }));
+
+  assert.equal(parser.result().fatalPermissionDenials.length, 0);
+  assert.equal(denied.tone, "warning");
+  assert.match(denied.title, /ignored/);
+});
+
+test("ignores Bash's own reworded description when matching a denial to an earlier answer", () => {
+  // Recorded live behaviour (AH-001 dev-review, second occurrence): identical `command`,
+  // denied again, but a strict full-input signature missed it because Claude wrote a
+  // differently-worded `description` on the retry. `description` is not part of what
+  // runs, so it must not be part of the identity a denial is matched against.
+  const parser = createClaudeStreamParser();
+  parser.parse(JSON.stringify({
+    type: "assistant",
+    message: {
+      content: [{
+        type: "tool_use",
+        id: "t1",
+        name: "Bash",
+        input: { command: "git check-ignore -v e2e/playwright-report/index.html", description: "Check the gitignore rule" },
+      }],
+    },
+  }));
+  parser.parse(JSON.stringify({
+    type: "user",
+    message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "Exit code 1", is_error: true }] },
+  }));
+
+  const [denied] = parser.parse(JSON.stringify({
+    type: "result",
+    subtype: "success",
+    is_error: false,
+    result: "done",
+    permission_denials: [{
+      tool_name: "Bash",
+      tool_use_id: "t2",
+      tool_input: { command: "git check-ignore -v e2e/playwright-report/index.html", description: "Re-check after the edit" },
+    }],
+  }));
+
+  assert.equal(parser.result().fatalPermissionDenials.length, 0);
+  assert.equal(denied.tone, "warning");
+});
+
+test("still treats a Bash escalation as fatal even when its command matches an earlier answer", () => {
+  // The identical `command` retried with `dangerouslyDisableSandbox: true` is not the
+  // same request the first attempt made — dropping only `description` (never
+  // `dangerouslyDisableSandbox`) is what keeps this fatal.
+  const parser = createClaudeStreamParser();
+  parser.parse(JSON.stringify({
+    type: "assistant",
+    message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "printf 'MUTATED' > guarded.txt" } }] },
+  }));
+  parser.parse(JSON.stringify({
+    type: "user",
+    message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "Exit code 1", is_error: true }] },
+  }));
+
+  const [denied] = parser.parse(JSON.stringify({
+    type: "result",
+    subtype: "success",
+    is_error: false,
+    result: "done",
+    permission_denials: [{
+      tool_name: "Bash",
+      tool_use_id: "t2",
+      tool_input: { command: "printf 'MUTATED' > guarded.txt", dangerouslyDisableSandbox: true },
+    }],
+  }));
+
+  assert.equal(parser.result().fatalPermissionDenials.length, 1);
+  assert.equal(denied.tone, "danger");
+});
+
+test("still treats a denial as fatal when it does not match any earlier answer", () => {
   const parser = createClaudeStreamParser();
   const [denied] = parser.parse(JSON.stringify({
     type: "result",
@@ -251,6 +347,36 @@ test("still treats a denial as fatal when it does not match any earlier success"
     is_error: false,
     result: "done",
     permission_denials: [{ tool_name: "Write", tool_use_id: "t1", tool_input: { file_path: "/etc/passwd" } }],
+  }));
+
+  assert.equal(parser.result().fatalPermissionDenials.length, 1);
+  assert.equal(denied.tone, "danger");
+  assert.equal(denied.title, "Permission denied");
+});
+
+test("does not mistake a denial's own tool_result for an independent prior answer", () => {
+  // `sandbox-escape-denied.jsonl` records a denied call getting a `tool_result` too,
+  // marked `tool_result_meta: [{ non_execution_kind: "user-rejected" }]` on the *user*
+  // event, a sibling of `message` — that result is the denial notice itself, not
+  // evidence the call ever ran. Treating it as an answered call would make the entry in
+  // `permission_denials` look like a denied repeat of a call that already went through.
+  const parser = createClaudeStreamParser();
+  parser.parse(JSON.stringify({
+    type: "assistant",
+    message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "rm guarded.txt" } }] },
+  }));
+  parser.parse(JSON.stringify({
+    type: "user",
+    message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "Run outside of the sandbox", is_error: true }] },
+    tool_result_meta: [{ id: "t1", non_execution_kind: "user-rejected" }],
+  }));
+
+  const [denied] = parser.parse(JSON.stringify({
+    type: "result",
+    subtype: "success",
+    is_error: false,
+    result: "done",
+    permission_denials: [{ tool_name: "Bash", tool_use_id: "t1", tool_input: { command: "rm guarded.txt" } }],
   }));
 
   assert.equal(parser.result().fatalPermissionDenials.length, 1);
@@ -812,14 +938,95 @@ test("supplies a mandatory sandbox block through inline settings", () => {
     cwd: "/tmp/x", prompt: "x", sandbox: "danger-full-access", model: "claude-sonnet-5", sessionId: "s",
   }), /Unsupported Claude sandbox: danger-full-access/);
 
-  // Read-only never gets a permission rule or acceptEdits, so the editing tools stay
+  // Read-only gets blanket Bash/Read/Grep/Glob allow rules (so a compound `cmd1; cmd2`
+  // diagnostic or a Grep over a directory does not fall back to a prompt nobody is
+  // present to answer) but no Write/Edit rule or acceptEdits, so the editing tools stay
   // unusable even if the tool allowlist were widened by mistake.
-  assert.equal(JSON.parse(args[args.indexOf("--settings") + 1]).permissions, undefined);
+  assert.deepEqual(JSON.parse(args[args.indexOf("--settings") + 1]).permissions, {
+    allow: ["Bash(*)", "Read(/tmp/worktree/**)", "Grep(/tmp/worktree/**)", "Glob(/tmp/worktree/**)"],
+  });
   assert.equal(args.includes("--permission-mode"), false);
   assert.throws(
     () => buildClaudeSpawn({ cwd: "/tmp/x", prompt: "x", networkAccess: true, model: "claude-sonnet-5", sessionId: "s" }),
     /cannot be granted network access/,
   );
+});
+
+test("permits a denial of a compound Bash command with no matching earlier answer to still be non-fatal once the Bash allow rule is present", () => {
+  // Recorded live behaviour (AH-001 and AH-002 dev-review): a *first-time* diagnostic
+  // like `git check-ignore -v foo; echo "exit=$?"` — never issued before in the run, so
+  // it is not a repeat of any answered call — got denied outright with
+  // "This Bash command contains multiple operations. The following parts require
+  // approval: ...". `autoAllowBashIfSandboxed` only auto-approves a single Bash
+  // statement; the CLI checks each `;`/`&&`-separated part against the permission
+  // rules independently of the sandbox, and with no rule configured for read-only,
+  // every multi-statement diagnostic was denied with nobody present to approve it.
+  // This is not the duplicate-call guard from the other tests in this file — it is a
+  // missing permission rule, fixed by `Bash(*)` in `buildClaudeSandboxSettings`.
+  const { args } = buildClaudeSpawn({ cwd: "/tmp/worktree", prompt: "x", model: "claude-sonnet-5", sessionId: "s" });
+  const settings = JSON.parse(args[args.indexOf("--settings") + 1]);
+  assert.ok(settings.permissions.allow.includes("Bash(*)"), "read-only settings must pre-approve Bash regardless of compound structure");
+
+  const parser = createClaudeStreamParser();
+  parser.parse(JSON.stringify({
+    type: "assistant",
+    message: {
+      content: [{
+        type: "tool_use",
+        id: "t1",
+        name: "Bash",
+        input: { command: 'git check-ignore -v foo; echo "exit=$?"', description: "Check gitignore" },
+      }],
+    },
+  }));
+  parser.parse(JSON.stringify({
+    type: "user",
+    message: {
+      content: [{
+        type: "tool_result",
+        tool_use_id: "t1",
+        is_error: true,
+        content: 'This Bash command contains multiple operations. The following parts require approval: git check-ignore -v foo, echo "exit=$?"',
+      }],
+    },
+    tool_result_meta: [{ id: "t1", non_execution_kind: "user-rejected" }],
+  }));
+  const [denied] = parser.parse(JSON.stringify({
+    type: "result",
+    subtype: "success",
+    is_error: false,
+    result: "done",
+    permission_denials: [{ tool_name: "Bash", tool_use_id: "t1", tool_input: { command: 'git check-ignore -v foo; echo "exit=$?"', description: "Check gitignore" } }],
+  }));
+
+  // With no earlier answered call to match, this denial is correctly fatal at the
+  // parser level — the fix is the settings rule that stops the CLI from ever denying it
+  // in the first place, not a change to how a genuine first-time denial is classified.
+  assert.equal(parser.result().fatalPermissionDenials.length, 1);
+  assert.equal(denied.tone, "danger");
+});
+
+test("read-only settings pre-approve Grep over a directory, not just individual files", () => {
+  // Recorded live behaviour (AH-002 dev-review): a Grep call whose `path` was a
+  // directory (`.../e2e/node_modules/playwright/lib`, not a single file) was denied
+  // with "Permission to read <dir> has been denied" and
+  // `tool_result_meta: [{ non_execution_kind: "permission-rule" }]` — a permission-layer
+  // denial, not a sandbox one, even though that directory sits inside `allowRead`. Other
+  // Grep/Read calls to individual files in the same run succeeded with no rule at all,
+  // so file reads and directory reads apparently go through different checks. Read and
+  // Glob get the identical `${cwd}/**` rule for the same reason, even though only the
+  // Grep case has been observed live: they are the other two read-only tools in
+  // `CLAUDE_READ_ONLY_TOOLS`, and there is no reason to expect they are exempt from
+  // whatever check singled out a directory-scoped Grep.
+  const cwd = "/repo/.data/worktrees/AH-1/C1";
+  const { args } = buildClaudeSpawn({ cwd, prompt: "x", model: "claude-sonnet-5", sessionId: "s" });
+  const settings = JSON.parse(args[args.indexOf("--settings") + 1]);
+  assert.deepEqual(settings.permissions.allow, [
+    "Bash(*)",
+    `Read(${cwd}/**)`,
+    `Grep(${cwd}/**)`,
+    `Glob(${cwd}/**)`,
+  ]);
 });
 
 test("grants workspace-write through two gates and no ancestor denyWrite", () => {
@@ -841,7 +1048,14 @@ test("grants workspace-write through two gates and no ancestor denyWrite", () =>
   // Bash is confined by the OS sandbox; Write and Edit are gated by the permission
   // layer, and need BOTH the allow rule and acceptEdits. With the rule alone the tool
   // is still refused, because in -p there is nobody to approve it.
-  assert.deepEqual(settings.permissions.allow, [`Write(${cwd}/**)`, `Edit(${cwd}/**)`]);
+  assert.deepEqual(settings.permissions.allow, [
+    "Bash(*)",
+    `Read(${cwd}/**)`,
+    `Grep(${cwd}/**)`,
+    `Glob(${cwd}/**)`,
+    `Write(${cwd}/**)`,
+    `Edit(${cwd}/**)`,
+  ]);
   assert.equal(args[args.indexOf("--permission-mode") + 1], "acceptEdits");
   assert.equal(args[args.indexOf("--tools") + 1], "Read,Grep,Glob,Bash,Write,Edit");
   for (const forbidden of ["NotebookEdit", "WebFetch", "WebSearch", "Task"]) {
@@ -1142,6 +1356,51 @@ test("does not fail runClaude when the only denial repeats an already-succeeded 
       timeoutMs: 30_000,
     });
     assert.equal(outcome.finalText, "Edited the files.");
+  } finally {
+    if (previousBin === undefined) delete process.env.CLAUDE_BIN;
+    else process.env.CLAUDE_BIN = previousBin;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("does not fail a read-only runClaude when the only denial repeats an already-failed Bash call", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-dup-denial-failed-"));
+  const previousBin = process.env.CLAUDE_BIN;
+  try {
+    // Recorded live behaviour (AH-001 dev-review): a diagnostic command returned a
+    // nonzero exit, the model repeated it verbatim, and the repeat was denied. A read-
+    // only stage is exactly where this showed up — the review agent never wrote
+    // anything, so there is no denied Write/Edit to justify failing the stage.
+    process.env.CLAUDE_BIN = await writeFakeClaudeCli(directory, [
+      JSON.stringify({ type: "system", subtype: "init", session_id: "sess-dup-failed" }),
+      JSON.stringify({
+        type: "assistant",
+        message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "git check-ignore -v missing.txt" } }] },
+      }),
+      JSON.stringify({
+        type: "user",
+        message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "Exit code 1", is_error: true }] },
+      }),
+      JSON.stringify({
+        type: "result",
+        subtype: "success",
+        is_error: false,
+        result: "Reviewed the candidate.",
+        usage: { input_tokens: 10, output_tokens: 2 },
+        permission_denials: [{ tool_name: "Bash", tool_use_id: "t2", tool_input: { command: "git check-ignore -v missing.txt" } }],
+      }),
+    ]);
+
+    const outcome = await runClaude({
+      cwd: directory,
+      prompt: "review the work",
+      sandbox: "read-only",
+      model: "claude-haiku-4-5",
+      reasoning: NO_REASONING_EFFORT,
+      tempDirectory: directory,
+      timeoutMs: 30_000,
+    });
+    assert.equal(outcome.finalText, "Reviewed the candidate.");
   } finally {
     if (previousBin === undefined) delete process.env.CLAUDE_BIN;
     else process.env.CLAUDE_BIN = previousBin;

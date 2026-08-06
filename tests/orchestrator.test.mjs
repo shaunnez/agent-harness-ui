@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { promisify } from "node:util";
 import { ProcessTimeoutError } from "../server/codex-runtime.mjs";
+import { defaultWorktreeRoot } from "../server/git-worktree.mjs";
 import { evaluationVerdict, structuredEvidenceError, TaskOrchestrator } from "../server/orchestrator.mjs";
 import { defaultStagePolicies } from "../server/model-catalog.mjs";
 import { buildExecutionPrompt, buildTestInterpretationRequest } from "../server/prompts.mjs";
@@ -378,6 +381,38 @@ test("rejects unsupported gate finding field types before normalization", () => 
       (error) => error.code === "contradictory_evidence",
     );
   }
+});
+
+test("normalizes a gate finding's line range to its start instead of rejecting the evidence", () => {
+  // Recorded live behaviour (AH-001 dev-review): the reviewer's finding cited a
+  // two-line change as `"line": "38-39"`. That is not the "String line" case above
+  // (a lone numeric string like "142", deliberately rejected to avoid coercion) — it
+  // is a legitimate range with no single-integer representation, and rejecting the
+  // whole PASS verdict over it turned a clean review into a pointless rerun.
+  const candidate = { id: "C1", revisionNumber: 2 };
+  const parsed = parseGateEvidence(gateOutput(2, "PASS", [{
+    severity: "P3",
+    title: "Reporter ordering is load-bearing",
+    detail: "Informational only.",
+    line: "38-39",
+    candidateId: "C1",
+    candidateRevision: 2,
+  }]), candidate, "dev-review");
+  assert.equal(parsed.verdict, "PASS");
+  assert.equal(parsed.findings[0].line, 38);
+
+  // A lone numeric string is still not a range and stays rejected.
+  assert.throws(
+    () => parseGateEvidence(gateOutput(2, "PASS", [{
+      severity: "P3",
+      title: "Lone numeric string",
+      detail: "Must not be coerced.",
+      line: "38",
+      candidateId: "C1",
+      candidateRevision: 2,
+    }]), candidate, "dev-review"),
+    (error) => error.code === "contradictory_evidence",
+  );
 });
 
 test("rejects generic candidate identity fields at every structured evidence boundary", () => {
@@ -2604,6 +2639,137 @@ test("accepts a work package's declared no-op instead of failing on an empty dif
   }
 });
 
+test("cleans up a superseded work-package worktree before retrying and after a successful commit", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-worktree-cleanup-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Fails once, then succeeds",
+      description: "Exercises worktree cleanup across a retry and a successful commit.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-implementation";
+      draft.currentStage = "implement";
+      draft.workPackages = parseWorkPackages(
+        `<work-packages>{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verification":["npm test"]}]}</work-packages>`,
+      );
+    });
+    let commitCalls = 0;
+    const removedPaths = [];
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        base: async () => ({ repositoryRoot: directory, baseRevision: "a".repeat(40), baseBranch: "main" }),
+        prepare: async (_task, id) => ({
+          id,
+          revisionNumber: 1,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: null,
+          branch: `agent-harness/${id.toLowerCase()}`,
+          repositoryRoot: directory,
+          worktreePath: path.join(directory, id),
+          status: "implementing",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          revisions: [],
+        }),
+        commit: async () => {
+          commitCalls += 1;
+          if (commitCalls === 1) throw new Error("boom");
+          return {
+            headRevision: "b".repeat(40),
+            files: ["server/runtime.mjs"],
+            summary: "1 file changed",
+            diff: "+change",
+            ownSummary: "1 file changed",
+            ownDiff: "+change",
+          };
+        },
+        removeWorktree: async ({ worktreePath }) => {
+          removedPaths.push(worktreePath);
+        },
+        assemble: async () => ({ headRevision: "c".repeat(40), files: ["server/runtime.mjs"], summary: "1 file changed", diff: "+change" }),
+      },
+      runCodex: async () => ({
+        finalText: "## Outcome\n\nDone",
+        usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+      }),
+    });
+
+    assert.equal(await orchestrator.start(task.id, "implementation"), true);
+    await waitForStatus(store, task.id, "failed");
+    // The failed attempt's worktree survives its own failure, for inspection — it is
+    // only reaped once superseded by the next retry.
+    assert.deepEqual(removedPaths, []);
+
+    assert.equal(await orchestrator.start(task.id, "implementation"), true);
+    const finished = await waitForStatus(store, task.id, "ready-for-review");
+    assert.deepEqual(removedPaths, [path.join(directory, "S1-A1"), path.join(directory, "S1-A2")]);
+    assert.equal(finished.workPackages[0].status, "integrated");
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("does not flag a work package's own successful edit as a change to the source repository", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-source-snapshot-"));
+  const repository = path.join(directory, "repository");
+  const worktreeRootDirectory = path.join(directory, "worktrees");
+  const previousRoot = process.env.AGENT_HARNESS_WORKTREE_ROOT;
+  process.env.AGENT_HARNESS_WORKTREE_ROOT = worktreeRootDirectory;
+  try {
+    await git(directory, ["init", "repository"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Edit a file inside its own isolated slice",
+      description: "The slice worktree is supposed to end up dirty; that is the run succeeding.",
+      repositoryPath: repository,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-implementation";
+      draft.currentStage = "implement";
+      draft.workPackages = parseWorkPackages(
+        `<work-packages>{"packages":[{"id":"S1","title":"Add a file","description":"Add feature.txt.","dependencies":[],"ownedPaths":["feature.txt"],"verification":[]}]}</work-packages>`,
+      );
+    });
+    // No `worktreeManager` override: this exercises the real `GitWorktreeManager`, whose
+    // `snapshotRepository`/`assertRepositoryUnchanged` are what the bug lived in. A fake
+    // worktree manager (used by the other work-package tests here) never implements
+    // those two methods, which is exactly why this interaction had no coverage before.
+    const orchestrator = new TaskOrchestrator(store, {
+      runCodex: async ({ cwd }) => {
+        await writeFile(path.join(cwd, "feature.txt"), "added by the agent\n", "utf8");
+        return {
+          finalText: "## Outcome\n\nAdded feature.txt.\n\n## Changes\n\nfeature.txt\n\n## Verification\n\nNone.\n\n## Ownership exceptions\n\nNone.\n\n## Remaining risks\n\nNone.",
+          usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+        };
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id, "implementation"), true);
+    const finished = await waitForStatus(store, task.id, "ready-for-review");
+    assert.equal(finished.workPackages[0].status, "integrated");
+    assert.deepEqual(finished.workPackages[0].files, ["feature.txt"]);
+  } finally {
+    if (previousRoot === undefined) delete process.env.AGENT_HARNESS_WORKTREE_ROOT;
+    else process.env.AGENT_HARNESS_WORKTREE_ROOT = previousRoot;
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("excludes only runtime-scoped context preflight from candidate test telemetry", () => {
   assert.equal(
     evaluationVerdict("test", {
@@ -3315,6 +3481,139 @@ test("advances an approved implementation task through a revision-bound candidat
   }
 });
 
+test("accepts a repair's declared no-op instead of failing on an empty diff", async () => {
+  // Recorded live (AH-002 dev-review): the newest failing gate's only finding was
+  // non-blocking (P3) and explicitly said no code change was warranted. The repair
+  // agent correctly made none — mirroring the slice-level "accepts a work package's
+  // declared no-op" test above, but for a *candidate* repair, where `commit`'s real
+  // no-op shape (`headRevision: null`) would corrupt `candidate.headRevision` if used
+  // directly instead of falling back to the candidate's unchanged existing head.
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-noop-repair-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Ship a small change",
+      description: "Implement and verify the approved change.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    let reviewCount = 0;
+    let sawAllowNoChanges = false;
+    const worktreeManager = {
+      async base() {
+        return { repositoryRoot: directory, baseRevision: "a".repeat(40), baseBranch: "main" };
+      },
+      async prepare(_task, candidateId) {
+        return {
+          id: candidateId,
+          revisionNumber: 1,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: null,
+          branch: "agent-harness/test-c1",
+          repositoryRoot: directory,
+          worktreePath: path.join(directory, candidateId),
+          status: "implementing",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          revisions: [],
+        };
+      },
+      async commit(candidate, _message, options) {
+        if (candidate.id !== "C1") {
+          // A work-package slice commit: unrelated to this test's scenario.
+          return { headRevision: "s".repeat(40), files: ["src/change.ts"], summary: "1 file changed", diff: "+change", ownSummary: "1 file changed", ownDiff: "+change" };
+        }
+        // The repair's own commit call. Mirrors `GitWorktreeManager.commit`'s real
+        // `allowNoChanges` contract: only returns the no-op shape when the orchestrator
+        // explicitly asked for it, which it must only do after reading the agent's
+        // `<no-changes-needed>` marker.
+        sawAllowNoChanges = options?.allowNoChanges === true;
+        if (!options?.allowNoChanges) throw new Error("The implementation agent completed without changing any files.");
+        return { headRevision: null, parentRevision: null, files: [], summary: "", diff: "", ownSummary: "", ownDiff: "", noChangesNeeded: true };
+      },
+      async assemble() {
+        return { headRevision: "b".repeat(40), files: ["src/change.ts"], summary: "1 file changed", diff: "+change" };
+      },
+      async verifyCandidate() {
+        return true;
+      },
+      async recoverCandidate() {
+        return false;
+      },
+    };
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager,
+      runCodex: async ({ prompt }) => {
+        // Later, more specific stage markers must win over earlier ones a prompt's
+        // retained-artifact context can still carry (e.g. the plan prompt embeds the
+        // scout report) — matching the independent, overwrite-not-return checks the
+        // full end-to-end test above uses for exactly this reason.
+        let finalText = "## Outcome\n\nReady";
+        if (/<scout-report>/.test(prompt)) finalText = SCOUT_OUTPUT;
+        if (/<grill-questions>/.test(prompt)) finalText = GRILL_OUTPUT;
+        if (/<work-packages>/.test(prompt)) finalText = PLAN_OUTPUT;
+        if (/You are the candidate Repair agent/.test(prompt)) {
+          finalText = '## Outcome\n\nThe one finding is informational only.\n\n<no-changes-needed>{"reason":"The P3 finding explicitly requires no code change"}</no-changes-needed>';
+        } else if (/Development review/.test(prompt)) {
+          reviewCount += 1;
+          // Both reviews evaluate revision 1: a no-op repair does not bump the
+          // candidate's revision, so the second review is of the exact same revision
+          // as the first, not a new one.
+          finalText = reviewCount === 1
+            ? gateOutput(1, "PASS", [{
+                severity: "P3",
+                title: "Informational only",
+                detail: "No repair required for this finding on its own.",
+              }])
+            : gateOutput(1);
+        }
+        return { finalText, usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 } };
+      },
+    });
+
+    await orchestrator.start(task.id);
+    await waitForStatus(store, task.id, "awaiting-grill");
+    await orchestrator.answerGrillQuestion(task.id, { questionId: "Q1", answer: "Keep it backwards compatible." });
+    await orchestrator.finishGrill(task.id);
+    await waitForStatus(store, task.id, "awaiting-spec-approval");
+    await orchestrator.approveSpecification(task.id);
+    await waitForStatus(store, task.id, "awaiting-plan-approval");
+    await orchestrator.approvePlan(task.id);
+    await orchestrator.start(task.id, "implementation");
+    await waitForStatus(store, task.id, "ready-for-review");
+    await orchestrator.start(task.id, "review");
+
+    const repairReady = await waitForStatus(store, task.id, "repair-required");
+    // The exact mismatch this whole fix chain exists for: the freshness layer's
+    // marker check classifies a non-blocking, non-explicitly-bound finding
+    // `missing_binding`, not `repair_required`, even though the candidate genuinely
+    // is repair-required.
+    assert.equal(repairReady.gateFreshness["dev-review"].reasonCode, "missing_binding");
+    const candidateBeforeRepair = repairReady.candidates[0];
+
+    await orchestrator.start(task.id, "repair");
+    const afterRepair = await waitForStatus(store, task.id, "ready-for-review");
+    assert.equal(sawAllowNoChanges, true);
+    // No new revision: `candidateRevisionLineage` requires every revision to have a
+    // distinct `headRevision`, and a no-op repair's head is unchanged by definition —
+    // so this candidate goes back to `ready_for_review` at its *existing* revision
+    // rather than gaining a "new" revision identical to the one before it.
+    assert.equal(afterRepair.candidates[0].revisionNumber, candidateBeforeRepair.revisionNumber);
+    assert.equal(afterRepair.candidates[0].headRevision, candidateBeforeRepair.headRevision, "an unchanged repair keeps the candidate's existing head, not `null`");
+    assert.equal(afterRepair.candidates[0].revisions.length, candidateBeforeRepair.revisions.length);
+    assert.ok(afterRepair.events.some((event) => /made no changes/.test(event.detail ?? "")));
+
+    await orchestrator.start(task.id, "review");
+    const passed = await waitForStatus(store, task.id, "ready-for-test");
+    assert.equal(passed.candidates[0].status, "ready_for_test");
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("reserves a run exactly once across concurrent start requests", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-start-race-"));
   try {
@@ -3744,7 +4043,10 @@ function makeArtifact({
 }
 
 async function waitForStatus(store, id, expected) {
-  for (let attempt = 0; attempt < 100; attempt += 1) {
+  // 400 * 5ms = 2s: comfortable for the fake-backed tests here, which settle almost
+  // immediately, and for the handful that exercise a real `GitWorktreeManager` against
+  // a real git repository, whose worktree/commit/assemble calls are not instant.
+  for (let attempt = 0; attempt < 400; attempt += 1) {
     const task = await store.get(id);
     if (task.status === expected) return task;
     if (attempt > 5 && ["failed", "blocked", "cancelled", "repair-required"].includes(task.status)) {
@@ -3757,6 +4059,12 @@ async function waitForStatus(store, id, expected) {
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const execFileAsync = promisify(execFile);
+
+async function git(cwd, args) {
+  return execFileAsync("git", args, { cwd, windowsHide: true });
 }
 
 test("refuses a review verdict when the reviewer mutated the candidate", async () => {

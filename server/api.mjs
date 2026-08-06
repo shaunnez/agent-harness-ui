@@ -1042,7 +1042,20 @@ function failedRepairAuthorizingGate(
       return null;
     }
   }
-  if (authorizingGate?.stage !== task.currentStage) return null;
+  // `task.currentStage` is not a stable stand-in for "the gate stage this repair
+  // answers": a failed repair attempt moves it to "implement" (repair is an implement
+  // run), even though the candidate is still repair-required against whichever gate
+  // stage actually failed. `repairAuthorizerSnapshot` already resolves this correctly
+  // — falling back to the implement reservation's own recorded `authorizingGateStage`
+  // whenever `currentStage` is not itself a candidate-gate stage — and this check must
+  // agree with it, or every repair attempt after the first exhausts the stage with no
+  // way to grant another: recorded live on AH-002, whose second repair attempt failed
+  // (an unrelated, real empty-diff bug now fixed separately) and left `currentStage`
+  // at "implement" while the authorizing dev-review reservation never moved.
+  const requestedGateStage = CANDIDATE_GATE_STAGES.includes(task.currentStage)
+    ? task.currentStage
+    : task.stageRunReservations?.implement?.authorizingGateStage;
+  if (authorizingGate?.stage !== requestedGateStage) return null;
   const authoritativeGate = candidateGateAuthorizerEvidence(
     task,
     authorizingGate,
@@ -1050,9 +1063,13 @@ function failedRepairAuthorizingGate(
     { latestArtifactAt: repairReservation?.reservedAt ?? null },
   );
   const currentFreshness = resolveGateFreshness(task, authorizingGate.stage);
+  // Same reasoning as `candidateGateAuthorizerEvidence`'s own reasonCode check just
+  // above: a REPAIR verdict whose only complaint is a non-blocking finding's inherited
+  // (non-explicit) binding is classified `missing_binding` by the freshness marker
+  // check, not `repair_required`, even though it is the same authoritative gate.
   if (
     !authoritativeGate ||
-    currentFreshness?.reasonCode !== "repair_required" ||
+    !["repair_required", "missing_binding"].includes(currentFreshness?.reasonCode) ||
     currentFreshness.sourceRunId !== authoritativeGate.sourceRunId ||
     currentFreshness.sourceArtifactId !== authoritativeGate.sourceArtifactId
   ) {
@@ -1085,9 +1102,19 @@ function candidateGateAuthorizerEvidence(task, gateReservation, target, { latest
         readExecutionProvider(gateReservation),
       )
     : null;
+  // Recorded live (AH-002 dev-review): a completed run whose gate finding was
+  // non-blocking (P2/P3) and lacked its own explicit `candidateId`/`candidateRevision`
+  // — falling back to the top-level binding, exactly as `parseGateEvidence` allows for
+  // a REPAIR verdict — gets classified `missing_binding` by the freshness layer's
+  // marker check (`persistedBindingMarkerReason`), not `repair_required`, even though
+  // `sourceRun.gateResult?.verdict === "REPAIR"` is independently verified below. Ruling
+  // that candidate's own genuine repair need un-authorizable left it permanently stuck
+  // once its repair-attempt budget ran out, with no path to grant another. Both codes
+  // describe the same completed, content-driven REPAIR verdict; only the diagnosis
+  // differs, so both authorize the grant.
   if (
     reservationRuns.length !== 1 ||
-    freshness?.reasonCode !== "repair_required" ||
+    !["repair_required", "missing_binding"].includes(freshness?.reasonCode) ||
     sourceRun.status !== "completed" ||
     sourceRun.workflowReservationId !== gateReservation.id ||
     sourceRun.workflowAttempt !== gateReservation.workflowAttempt ||
@@ -1416,17 +1443,34 @@ function validDurableRunArtifactEnvelope(run, artifact, {
 function validCandidateProducerReservation(task, candidate, producerReservation, lineage, implementationAttempt) {
   if (!producerReservation || !validPersistedTimestamp(producerReservation.reservedAt)) return false;
   const currentRevision = lineage.currentRevision;
-  if (
-    producerReservation.id !== currentRevision.sourceWorkflowReservationId ||
-    producerReservation.workflowAttempt !== currentRevision.sourceWorkflowAttempt ||
-    producerReservation.reservedAt !== currentRevision.sourceWorkflowReservedAt ||
-    producerReservation.workflowAttempt !== implementationAttempt ||
-    producerReservation.stage !== "implement"
-  ) {
+  if (producerReservation.workflowAttempt !== implementationAttempt || producerReservation.stage !== "implement") {
     return false;
   }
   const producerReservedAt = Date.parse(producerReservation.reservedAt);
   const currentCreatedAt = Date.parse(currentRevision.createdAt);
+  // A no-op repair (its own `<no-changes-needed>` marker, verified by `commit` — see
+  // `#runRepair`) leaves the candidate at its *existing* revision by design: nothing
+  // about the revision's true provenance changed, so the most recent implement
+  // reservation can legitimately be a repair *of* the current revision without being
+  // (or needing to equal) the reservation that originally produced it. Requiring an
+  // exact identity match here would treat every such no-op repair as if it had
+  // corrupted the candidate's lineage, when the lineage never moved at all.
+  if (
+    producerReservation.kind === "repair" &&
+    producerReservation.candidateId === candidate.id &&
+    producerReservation.candidateRevision === currentRevision.number &&
+    producerReservation.candidateHeadRevision === currentRevision.headRevision &&
+    producerReservedAt > currentCreatedAt
+  ) {
+    return true;
+  }
+  if (
+    producerReservation.id !== currentRevision.sourceWorkflowReservationId ||
+    producerReservation.workflowAttempt !== currentRevision.sourceWorkflowAttempt ||
+    producerReservation.reservedAt !== currentRevision.sourceWorkflowReservedAt
+  ) {
+    return false;
+  }
   if (currentRevision.number === 1) {
     return producerReservation.kind === "implementation" &&
       producerReservation.candidateId == null &&

@@ -302,7 +302,7 @@ export function buildRepairRequest(task, candidate) {
     .replace("You are the Implementation agent", "You are the candidate Repair agent")
     .replace(
       "Your stage assignment:\n",
-      `Authoritative structured repair evidence (typed JSON; do not infer repair scope from Markdown artifacts):\n<repair-evidence>\n${serializedRepairEvidence}\n</repair-evidence>\n\nYour stage assignment:\nRepair only the findings in the newest failing gate represented above. Remove generated or out-of-scope files already present in the candidate, but do not install dependencies or create new generated state. Preserve unrelated approved implementation.\n\n`,
+      `Authoritative structured repair evidence (typed JSON; do not infer repair scope from Markdown artifacts):\n<repair-evidence>\n${serializedRepairEvidence}\n</repair-evidence>\n\nYour stage assignment:\nRepair only the findings in the newest failing gate represented above. Remove generated or out-of-scope files already present in the candidate, but do not install dependencies or create new generated state. Preserve unrelated approved implementation.\n\nIf every finding above is explicitly non-blocking (no P0 or P1) and none describes an actual code change to make, make no changes and end your response with exactly one line: <no-changes-needed>{"reason":"one sentence citing which finding(s) require no code change"}</no-changes-needed>. Only do this when the evidence leaves no doubt; if any finding could be addressed by an edit, make it instead.\n\n`,
     );
   request.repairEvidence = repairEvidence;
   request.contextManifest.sources.push({

@@ -1056,6 +1056,14 @@ export class TaskOrchestrator {
       .filter(Boolean);
     const sliceId = `${workPackage.id}-A${attempt}`;
     try {
+      // The previous attempt's worktree, if any, is permanently superseded the moment a
+      // retry starts — nothing reads it again — and every worktree left behind spends
+      // this repository's shared exec-argument budget (see claude-exec-budget.mjs).
+      // Kept around for exactly one generation past its own failure, for inspection,
+      // and reaped here rather than immediately on failure.
+      if (workPackage.worktreePath) {
+        await this.#cleanupSliceWorktree(id, task, workPackage.worktreePath);
+      }
       const slice = await this.#worktrees.prepare(task, sliceId, {
         baseRevision,
         dependencyRevisions,
@@ -1097,6 +1105,9 @@ export class TaskOrchestrator {
         `agent-harness(${task.id}): ${workPackageId} ${currentPackage.title}`,
         { ownedPaths: currentPackage.ownedPaths, allowNoChanges: Boolean(noChangesNeeded) },
       );
+      // The branch (or, for a no-op, the unchanged base) is all downstream assembly
+      // needs; the worktree itself is done being useful the moment it lands.
+      await this.#cleanupSliceWorktree(id, task, slice.worktreePath);
       const evidence = committed.noChangesNeeded
         ? `## Harness slice evidence\n\n- Work package: ${workPackageId}\n- Attempt: ${attempt}\n- Dependencies: ${currentPackage.dependencies.join(", ") || "None"}\n- Base: ${slice.baseRevision}\n- Outcome: no changes needed — ${noChangesNeeded.reason}\n- Branch: ${slice.branch}\n\nNothing was committed: the base revision already satisfies this work package.`
         : `## Harness slice evidence\n\n- Work package: ${workPackageId}\n- Attempt: ${attempt}\n- Dependencies: ${currentPackage.dependencies.join(", ") || "None"}\n- Base: ${slice.baseRevision}\n- Package commit: ${committed.headRevision}\n- Branch: ${slice.branch}\n- Changed files: ${committed.files.length}\n\n\`\`\`text\n${committed.ownSummary || "No diff stat returned."}\n\`\`\`\n\nThe exact package commit remains available through Git; its full patch is not copied into downstream prompts.`;
@@ -1131,6 +1142,21 @@ export class TaskOrchestrator {
         draft.events.push(activity("implement", `${workPackageId} failed`, error.message, "danger", "decision"));
       });
       throw error;
+    }
+  }
+
+  /**
+   * Best-effort: a worktree that fails to remove is a warning, not a reason to fail
+   * the retry or the stage that just succeeded — the caller's own outcome does not
+   * depend on this cleanup landing, only on it eventually landing.
+   */
+  async #cleanupSliceWorktree(id, task, worktreePath) {
+    try {
+      await this.#worktrees.removeWorktree({ worktreePath, repositoryRoot: task.repositoryPath });
+    } catch (error) {
+      await this.#store.update(id, (draft) => {
+        draft.events.push(activity("implement", "Worktree cleanup skipped", `${worktreePath}: ${error.message}`, "warning", "activity"));
+      });
     }
   }
 
@@ -1339,6 +1365,7 @@ export class TaskOrchestrator {
     const requestedFindings = projectRepairFindings(repairRequest.repairEvidence.newestFailingGate.gateResult.findings);
     let result;
     let committed;
+    let noChangesNeeded;
     try {
       result = await this.#executeAgent(
         task,
@@ -1359,22 +1386,39 @@ export class TaskOrchestrator {
         throw new Error("The repair authorizing gate changed before candidate commit.");
       }
       assertRepairAuthorizerUnchanged(beforeCommit, beforeCommitCandidate, beforeCommitReservation);
+      // Recorded live (AH-002): the newest failing gate's only finding was non-blocking
+      // and explicitly said no code change was warranted — the repair agent correctly
+      // made none, and without this marker `commit` always treats an empty diff as a
+      // stuck run. Same trusted-only-with-`commit`'s-own-check caveat as the slice flow.
+      noChangesNeeded = parseNoChangesNeeded(result.finalText);
       committed = await this.#worktrees.commit(
         candidate,
         `agent-harness(${task.id}): repair ${candidate.id} revision ${nextRevision}`,
-        { allowGeneratedDeletions: true },
+        { allowGeneratedDeletions: true, allowNoChanges: Boolean(noChangesNeeded) },
       );
     } catch (error) {
       if (typeof this.#worktrees.recoverCandidate === "function") await this.#worktrees.recoverCandidate(candidate);
       throw error;
     }
-    const content = `${result.finalText}\n\n## Harness repair evidence\n\n- Candidate: ${candidate.id} revision ${nextRevision}\n- Previous: ${candidate.headRevision}\n- Head: ${committed.headRevision}\n- Changed files in repair: ${committed.files.length}\n\n\`\`\`text\n${committed.summary || "No diff stat returned."}\n\`\`\`\n\nThe exact repaired candidate patch is loaded on demand from the recorded revision.`;
+    // A no-op repair must not become a new revision: `candidateRevisionLineage` (and
+    // everything built on it — producer evidence, retry-grant authorization) requires
+    // every revision to have a *distinct* `headRevision`, and this candidate's head is,
+    // by definition, unchanged. Sending it back to `ready_for_review` at its existing
+    // revision — the same shape a plain re-review of stale evidence already uses —
+    // asks dev-review to look again rather than fabricating an identical "new" one.
+    // `commit` reports `headRevision: null` for a no-op, which is right for a work
+    // package starting unattempted but wrong here regardless: the candidate's real,
+    // existing head is what stays authoritative.
+    const revisionLabel = committed.noChangesNeeded ? candidate.revisionNumber : nextRevision;
+    const content = committed.noChangesNeeded
+      ? `${result.finalText}\n\n## Harness repair evidence\n\n- Candidate: ${candidate.id} revision ${revisionLabel}\n- Head: ${candidate.headRevision} (unchanged)\n- Outcome: no changes needed — ${noChangesNeeded.reason}\n\nNothing was committed: the newest failing gate's findings required no code change.`
+      : `${result.finalText}\n\n## Harness repair evidence\n\n- Candidate: ${candidate.id} revision ${revisionLabel}\n- Previous: ${candidate.headRevision}\n- Head: ${committed.headRevision}\n- Changed files in repair: ${committed.files.length}\n\n\`\`\`text\n${committed.summary || "No diff stat returned."}\n\`\`\`\n\nThe exact repaired candidate patch is loaded on demand from the recorded revision.`;
     try {
       await this.#retainAgentResult(id, "implement", { ...result, finalText: content }, {
         replace: false,
-        name: `candidate-${candidate.id.toLowerCase()}-r${nextRevision}-repair.md`,
+        name: `candidate-${candidate.id.toLowerCase()}-r${revisionLabel}-repair.md`,
         candidateId: candidate.id,
-        candidateRevision: nextRevision,
+        candidateRevision: revisionLabel,
       });
       await this.#store.update(id, (draft) => {
         const activeCandidate = currentCandidate(draft);
@@ -1383,29 +1427,31 @@ export class TaskOrchestrator {
           throw new Error("The repair authorizing gate changed before revision persistence.");
         }
         assertRepairAuthorizerUnchanged(draft, activeCandidate, repairReservation);
-        activeCandidate.revisionNumber = nextRevision;
-        activeCandidate.headRevision = committed.headRevision;
+        if (!committed.noChangesNeeded) {
+          activeCandidate.revisionNumber = nextRevision;
+          activeCandidate.headRevision = committed.headRevision;
+          activeCandidate.sourceWorkflowAttempt = repairReservation.workflowAttempt;
+          activeCandidate.sourceWorkflowReservationId = repairReservation.id;
+          activeCandidate.revisions.push({
+            number: nextRevision,
+            headRevision: committed.headRevision,
+            reason: "repair",
+            requestedFindings: structuredClone(requestedFindings),
+            sourceWorkflowAttempt: repairReservation.workflowAttempt,
+            sourceWorkflowReservationId: repairReservation.id,
+            sourceWorkflowReservedAt: repairReservation.reservedAt,
+            authorizingGateStage: repairReservation.authorizingGateStage,
+            authorizingGateProvider: readExecutionProvider({ provider: repairReservation.authorizingGateProvider }),
+            authorizingGateWorkflowAttempt: repairReservation.authorizingGateWorkflowAttempt,
+            authorizingGateReservationId: repairReservation.authorizingGateReservationId,
+            authorizingGateReservedAt: repairReservation.authorizingGateReservedAt,
+            authorizingGateRunId: repairReservation.authorizingGateRunId,
+            authorizingGateArtifactId: repairReservation.authorizingGateArtifactId,
+            createdAt: now(),
+          });
+        }
         activeCandidate.status = "ready_for_review";
         activeCandidate.updatedAt = now();
-        activeCandidate.sourceWorkflowAttempt = repairReservation.workflowAttempt;
-        activeCandidate.sourceWorkflowReservationId = repairReservation.id;
-        activeCandidate.revisions.push({
-          number: nextRevision,
-          headRevision: committed.headRevision,
-          reason: "repair",
-          requestedFindings: structuredClone(requestedFindings),
-          sourceWorkflowAttempt: repairReservation.workflowAttempt,
-          sourceWorkflowReservationId: repairReservation.id,
-          sourceWorkflowReservedAt: repairReservation.reservedAt,
-          authorizingGateStage: repairReservation.authorizingGateStage,
-          authorizingGateProvider: readExecutionProvider({ provider: repairReservation.authorizingGateProvider }),
-          authorizingGateWorkflowAttempt: repairReservation.authorizingGateWorkflowAttempt,
-          authorizingGateReservationId: repairReservation.authorizingGateReservationId,
-          authorizingGateReservedAt: repairReservation.authorizingGateReservedAt,
-          authorizingGateRunId: repairReservation.authorizingGateRunId,
-          authorizingGateArtifactId: repairReservation.authorizingGateArtifactId,
-          createdAt: now(),
-        });
         draft.completedStages = draft.completedStages.filter(
           (stage) => !["dev-review", "test", "final-review", "approval"].includes(stage),
         );
@@ -1414,7 +1460,15 @@ export class TaskOrchestrator {
         draft.activeRunKind = null;
         draft.activeRunReservationId = null;
         refreshGateFreshness(draft);
-        draft.events.push(activity("implement", "Repaired candidate ready", `${candidate.id} revision ${nextRevision} @ ${committed.headRevision.slice(0, 8)} must pass review again.`, "success", "artifact"));
+        draft.events.push(activity(
+          "implement",
+          "Repaired candidate ready",
+          committed.noChangesNeeded
+            ? `${candidate.id} revision ${revisionLabel} made no changes — ${noChangesNeeded.reason} — and must pass review again.`
+            : `${candidate.id} revision ${revisionLabel} @ ${committed.headRevision.slice(0, 8)} must pass review again.`,
+          "success",
+          "artifact",
+        ));
       });
     } catch (error) {
       if (typeof this.#worktrees.recoverCandidate === "function") await this.#worktrees.recoverCandidate(candidate);
@@ -1453,9 +1507,13 @@ export class TaskOrchestrator {
     const runKind = runKindFor(stageId, runRole, workPackageId);
     const runtimeTemp = path.join(os.tmpdir(), "agent-harness", task.id, runId);
     // Stages against `task.repositoryPath` run in the operator's real working tree,
-    // where there is no candidate and no existing check. Snapshot HEAD plus the full
-    // porcelain status and require both to be identical afterwards.
-    const sourceSnapshot = candidate ? null : await this.#snapshotSource(policy.provider, cwd, effectiveSandbox);
+    // where there is no existing check, so it is snapshotted and required to come back
+    // identical. `candidate` was the wrong proxy for that: a work package (`candidate`
+    // left null, `cwd` its own isolated slice worktree) is *supposed* to leave the slice
+    // dirty — that is the run succeeding — and comparing it against its pre-run status
+    // would fail every successful implementation. The real distinguishing fact is
+    // whether `cwd` is the operator's real checkout at all.
+    const sourceSnapshot = cwd === task.repositoryPath ? await this.#snapshotSource(policy.provider, cwd, effectiveSandbox) : null;
     let runProvider = DEFAULT_EXECUTION_PROVIDER;
     await this.#store.update(task.id, (draft) => {
       const reservation = Object.values(draft.stageRunReservations ?? {}).find(
@@ -1860,7 +1918,11 @@ function repairAuthorizerSnapshot(task, candidate, requestedStage = null) {
   if (
     !CANDIDATE_GATE_STAGES.includes(stage) ||
     !candidate ||
-    freshness?.reasonCode !== "repair_required" ||
+    // A REPAIR verdict whose only complaint is a non-blocking finding's inherited
+    // (non-explicit) binding is classified `missing_binding` by the freshness marker
+    // check, not `repair_required`, even though it is the same authoritative,
+    // content-driven repair need. See the matching fix in server/api.mjs.
+    !["repair_required", "missing_binding"].includes(freshness?.reasonCode) ||
     freshness.candidateId !== candidate.id ||
     freshness.candidateRevision !== candidate.revisionNumber ||
     !sourceRun ||

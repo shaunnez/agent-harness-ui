@@ -786,6 +786,24 @@ function terminalStageRuns(task, stage) {
  */
 function candidateRelevantRuns(task, entries, target, stage) {
   return entries.filter(({ run }) => {
+    // A run's own `candidateId`/`candidateRevision` are set once, from the workflow
+    // reservation, at the moment the run started — reliable, when well-formed,
+    // regardless of whether its *embedded* gate evidence later turns out ambiguous or
+    // malformed. Checking this first (but only when it validates cleanly — a malformed
+    // top-level field must still fall through to the embedded-evidence path below, so
+    // a genuinely malformed run keeps surfacing as authoritative-but-`malformed_binding`
+    // rather than being silently dropped) means a run genuinely superseded by a later
+    // candidate revision (e.g. the dev-review run from before a repair bumped the
+    // revision) is excluded outright, rather than getting fail-open "kept in" treatment
+    // merely because that same superseded evidence also trips the marker check.
+    // Recorded live: a repair whose newest failing gate was only a non-blocking,
+    // implicitly-bound finding left its pre-repair dev-review run permanently
+    // "relevant" by that fail-open path, colliding on attempt number with the
+    // post-repair run and misclassifying every subsequent review as `ambiguous_attempt`.
+    const runBinding = readExplicitCandidateBinding(run);
+    if (runBinding.valid) {
+      return compareCandidateBinding(runBinding, target) == null;
+    }
     const resolution = persistedEvidenceIdentityResolution(run, findRunArtifact(task, run), stage);
     if (resolution.reasonCode || !resolution.binding) return true;
     return compareCandidateBinding(resolution.binding, target) == null;

@@ -267,8 +267,26 @@ function stableStringify(value) {
   return JSON.stringify(value);
 }
 
+/**
+ * Bash's `description` is a short human-readable annotation Claude writes fresh for
+ * each call and does not affect execution — recorded live, the exact same `command`
+ * got denied on a repeat whose `description` had been reworded, so a full-input
+ * signature missed the repeat and failed the stage anyway.
+ *
+ * Everything else in the input stays significant, `dangerouslyDisableSandbox`
+ * especially: the sandbox-escape fixture retries the identical `command` a second time
+ * with that flag added, and that escalation is exactly the case that must stay fatal —
+ * reducing to `command` alone (rather than dropping only `description`) would have
+ * waved it through as "just a repeat."
+ */
+function signatureInputFor(name, input) {
+  if (name !== "Bash" || !input || typeof input !== "object") return input;
+  const { description, ...rest } = input;
+  return rest;
+}
+
 function toolCallSignature(name, input) {
-  return `${name ?? ""}::${stableStringify(input ?? {})}`;
+  return `${name ?? ""}::${stableStringify(signatureInputFor(name, input) ?? {})}`;
 }
 
 /**
@@ -289,10 +307,13 @@ export function createClaudeStreamParser() {
     rateLimitInfo: null,
     permissionDenials: [],
     fatalPermissionDenials: [],
-    // Signature of every tool call that actually completed, so a denial that is byte-
-    // identical to a call already answered can be told apart from a real refusal. See
-    // `toolCallSignature`.
-    successfulCallSignatures: new Set(),
+    // Signature of every tool call that received a real result — succeeded *or*
+    // failed — so a denial that is byte-identical to a call already answered can be
+    // told apart from a real refusal. A failed Bash call (nonzero exit) is answered
+    // just as much as a succeeded one: the harness already has that exact command's
+    // output either way, so a denied repeat of it is still the CLI's own duplicate-call
+    // guard, not new information. See `toolCallSignature`.
+    answeredCallSignatures: new Set(),
     resultSubtype: null,
     resultIsError: false,
     sawResult: false,
@@ -416,16 +437,25 @@ export function createClaudeStreamParser() {
 
   function parseUser(event) {
     const blocks = Array.isArray(event.message?.content) ? event.message.content : [];
+    // `tool_result_meta` is a sibling of `message`, not inside it: a rejected call's
+    // `tool_result` is the CLI's own denial notice wearing a normal result's shape, not
+    // a real execution outcome, and `non_execution_kind` is the only marker that says
+    // so. It must not count as this call having been "answered" — see `completeToolCall`.
+    const nonExecutedIds = new Set(
+      (Array.isArray(event.tool_result_meta) ? event.tool_result_meta : [])
+        .filter((entry) => entry && typeof entry.id === "string" && entry.non_execution_kind)
+        .map((entry) => entry.id),
+    );
     const events = [];
     for (const block of blocks) {
       if (block?.type !== "tool_result") continue;
-      const completed = completeToolCall(block);
+      const completed = completeToolCall(block, nonExecutedIds.has(block.tool_use_id));
       if (completed) events.push(completed);
     }
     return events;
   }
 
-  function completeToolCall(block) {
+  function completeToolCall(block, nonExecuted = false) {
     const id = block.tool_use_id ?? null;
     const entry = id ? pending.get(id) : null;
     if (!entry) {
@@ -436,7 +466,11 @@ export function createClaudeStreamParser() {
     }
     pending.delete(id);
     const succeeded = block.is_error !== true;
-    if (succeeded && entry.signature) state.successfulCallSignatures.add(entry.signature);
+    // A non-executed result is the same denial surfacing twice (here, and in
+    // `permission_denials`), not independent evidence the call was ever actually run.
+    // Recording its signature as "answered" would make a genuine first-time refusal
+    // look like a denied repeat of itself.
+    if (entry.signature && !nonExecuted) state.answeredCallSignatures.add(entry.signature);
 
     if (entry.kind === "bash") {
       // An E2BIG shell start is the host refusing to exec, not a command that ran and
@@ -510,20 +544,21 @@ export function createClaudeStreamParser() {
 
     // A denial that is byte-identical to a call already answered earlier in this run
     // (same tool, same input) is the CLI's own duplicate-call guard firing, not a
-    // sandbox-escape attempt: the harness already has that call's real result, so the
-    // denial adds no new information. Only a denial with no matching prior success is
-    // treated as fatal evidence that the agent tried something it was not allowed to.
+    // sandbox-escape attempt: the harness already has that call's real result — success
+    // or failure — so the denial adds no new information. Only a denial with no
+    // matching prior answer is treated as fatal evidence that the agent tried something
+    // it was not allowed to.
     const events = [];
     const fatalDenials = [];
     for (const denial of state.permissionDenials) {
-      const isRepeatOfSuccess = state.successfulCallSignatures.has(
+      const isRepeatOfAnswered = state.answeredCallSignatures.has(
         toolCallSignature(denial?.tool_name, denial?.tool_input),
       );
-      if (!isRepeatOfSuccess) fatalDenials.push(denial);
+      if (!isRepeatOfAnswered) fatalDenials.push(denial);
       events.push({
         type: "activity",
-        tone: isRepeatOfSuccess ? "warning" : "danger",
-        title: isRepeatOfSuccess ? "Permission denied (ignored — repeat of a call that already succeeded)" : "Permission denied",
+        tone: isRepeatOfAnswered ? "warning" : "danger",
+        title: isRepeatOfAnswered ? "Permission denied (ignored — repeat of a call already answered)" : "Permission denied",
         detail: [denial?.tool_name, formatCommand(denial?.tool_input?.command)].filter(Boolean).join(" · "),
       });
     }
@@ -702,9 +737,31 @@ export function buildClaudeSandboxSettings(cwd, sandbox, networkAccess = false) 
     // permission layer — a different mechanism with a different failure mode. Both
     // this rule and `--permission-mode acceptEdits` are required; with the rule alone
     // the Write tool is still refused, because in -p there is nobody to approve it.
-    ...(writable
-      ? { permissions: { allow: [`Write(${cwd}/**)`, `Edit(${cwd}/**)`] } }
-      : {}),
+    //
+    // `autoAllowBashIfSandboxed` only covers a *single* Bash statement: the CLI checks
+    // every `&&`/`;`/`|`-separated part of a compound command against the permission
+    // rules independently of the sandbox, and with none configured it falls back to
+    // "the following parts require approval" — a prompt nobody is present to answer in
+    // `-p` mode, denying diagnostic one-liners like `cmd1; echo done` outright. The OS
+    // sandbox (`allowRead`/`denyWrite` below) is what actually confines Bash either way,
+    // so a blanket rule here is the permission layer getting out of the sandbox's way,
+    // not a new capability grant.
+    //
+    // Read/Grep/Glob hit the same gap on some calls — recorded live, a Grep whose `path`
+    // was a directory (rather than a single file) was denied with "Permission to read
+    // <dir> has been denied" despite that directory sitting inside `allowRead` below.
+    // Scoped to `cwd`, matching the Write/Edit rules' own pattern, rather than a bare
+    // tool name: this stays "the permission layer agreeing with what the sandbox already
+    // allows", not a grant reaching outside the worktree.
+    permissions: {
+      allow: [
+        "Bash(*)",
+        `Read(${cwd}/**)`,
+        `Grep(${cwd}/**)`,
+        `Glob(${cwd}/**)`,
+        ...(writable ? [`Write(${cwd}/**)`, `Edit(${cwd}/**)`] : []),
+      ],
+    },
     sandbox: {
       enabled: true,
       failIfUnavailable: true,

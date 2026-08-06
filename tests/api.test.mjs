@@ -386,6 +386,8 @@ function attachExactCandidateGate(draft, candidate, {
   workflowAttempt = Math.max(1, draft.attemptsByStage?.[stage] ?? 0),
   reservationId = `reservation-${draft.id}-${stage}-${workflowAttempt}`,
   reservedAt = "2026-08-04T00:01:30.000Z",
+  findings = null,
+  blockingReasons = null,
 } = {}) {
   draft.attemptsByStage[stage] = workflowAttempt;
   draft.stageRunReservations[stage] = {
@@ -413,8 +415,8 @@ function attachExactCandidateGate(draft, candidate, {
     candidateId: candidate.id,
     candidateRevision: candidate.revisionNumber,
     evaluatedAt,
-    blockingReasons: ["P1: exact candidate repair is required."],
-    findings: [{
+    blockingReasons: blockingReasons ?? ["P1: exact candidate repair is required."],
+    findings: findings ?? [{
       severity: "P1",
       title: "Exact candidate repair",
       detail: "The exact candidate requires a repair before its gates can pass.",
@@ -1998,6 +2000,208 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
     const repeatedResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
     assert.equal(repeatedResponse.status, 409);
     assert.equal((await store.get(task.id)).stageRunLimits.implement, 4);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("grants a repair attempt when the authorizing gate's only non-blocking finding lacks explicit binding", async () => {
+  // Recorded live (AH-002 dev-review): the reviewer's one finding was P3 (informational,
+  // non-blocking) and — like every non-blocking finding `parseGateEvidence` allows to
+  // fall back to the top-level candidate binding — carried `bindingExplicit: false`.
+  // That is enough for the freshness layer's marker check to classify the gate
+  // `missing_binding` instead of `repair_required`, even though the run's own
+  // `gateResult.verdict` is genuinely "REPAIR" and the candidate is genuinely
+  // `repair_required`. Before the fix, this made the exhausted repair permanently
+  // ungrantable: `failedRepairAuthorizingGate`/`candidateGateAuthorizerEvidence`
+  // required the literal reasonCode "repair_required" and found no authorizing gate.
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Repair candidate with an unbound informational finding",
+      description: "A non-blocking finding lacking explicit binding must not block a repair grant.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    let authorizingGate;
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "dev-review";
+      const candidate = attachAssemblyLineage(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "repair_required",
+      });
+      draft.candidates.push(candidate);
+      authorizingGate = attachExactCandidateGate(draft, candidate, {
+        findings: [{
+          severity: "P3",
+          title: "Reporter ordering is load-bearing and undocumented",
+          detail: "Informational only; no repair required for this finding on its own.",
+          file: "e2e/playwright.config.ts",
+          line: 38,
+          candidateId: candidate.id,
+          candidateRevision: candidate.revisionNumber,
+          bindingExplicit: false,
+        }],
+        blockingReasons: ["Finding Reporter ordering is load-bearing and undocumented is missing explicit candidate identity fields."],
+      });
+      draft.runs.push(...[1, 2, 3].map((attempt) => ({
+        id: `run-failed-repair-${attempt}`,
+        stage: "implement",
+        status: "failed",
+      })));
+      draft.attemptsByStage.implement = draft.stageRunLimits.implement;
+      bindLatestWorkflowAttempt(draft, "implement", "repair");
+      refreshGateFreshness(draft);
+    });
+
+    const before = (await store.get(task.id));
+    assert.equal(before.gateFreshness["dev-review"].reasonCode, "missing_binding");
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
+    assert.deepEqual(await grantResponse.json(), { granted: true });
+
+    const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
+    assert.equal(updated.stageRunLimits.implement, 4);
+    assert.equal(updated.decisions.at(-1).authorizingGateStage, "dev-review");
+    assert.equal(updated.decisions.at(-1).authorizingGateArtifactId, authorizingGate.sourceArtifactId);
+    assert.equal(updated.decisions.at(-1).authorizingGateRunId, authorizingGate.sourceRunId);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("grants a second repair attempt after the first failed and moved currentStage off the authorizing gate", async () => {
+  // Recorded live (AH-002): a repair attempt's own failure handler sets
+  // `task.currentStage = "implement"` (a repair is an implement run) even though the
+  // candidate is still repair-required against whichever gate stage actually failed —
+  // here, dev-review. `failedRepairAuthorizingGate` compared the authorizing gate's
+  // stage directly against `task.currentStage` and found "dev-review" !== "implement",
+  // so the *second* repair attempt (after the first failed) could never be granted —
+  // every task exhausts its repair allowance the moment one attempt fails, forever.
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Second repair attempt after a failed first",
+      description: "A failed repair must not move currentStage off the authorizing gate.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    let authorizingGate;
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      // The failed first repair attempt already moved currentStage here.
+      draft.currentStage = "implement";
+      const candidate = attachAssemblyLineage(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "repair_required",
+      });
+      draft.candidates.push(candidate);
+      authorizingGate = attachExactCandidateGate(draft, candidate);
+      // The failed attempt itself, plus the exhausted allowance it left behind.
+      draft.runs.push(...[1, 2, 3].map((attempt) => ({
+        id: `run-failed-repair-${attempt}`,
+        stage: "implement",
+        status: "failed",
+      })));
+      draft.attemptsByStage.implement = draft.stageRunLimits.implement;
+      const reservation = bindLatestWorkflowAttempt(draft, "implement", "repair");
+      reservation.authorizingGateStage = "dev-review";
+      reservation.authorizingGateReservationId = authorizingGate.id;
+      reservation.authorizingGateRunId = authorizingGate.sourceRunId;
+      reservation.authorizingGateArtifactId = authorizingGate.sourceArtifactId;
+      reservation.authorizingGateReservedAt = authorizingGate.reservedAt;
+      reservation.authorizingGateWorkflowAttempt = 1;
+      reservation.authorizingGateProvider = "claude";
+      reservation.authorizingGateArtifactCreatedAt = draft.artifacts.find((artifact) => artifact.id === authorizingGate.sourceArtifactId)?.createdAt ?? null;
+      reservation.authorizingGateSnapshotDigest = "f".repeat(64);
+      refreshGateFreshness(draft);
+    });
+
+    const before = await store.get(task.id);
+    assert.equal(before.currentStage, "implement");
+    assert.equal(before.gateFreshness["dev-review"].reasonCode, "repair_required");
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
+    assert.deepEqual(await grantResponse.json(), { granted: true });
+
+    const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
+    assert.equal(updated.stageRunLimits.implement, 4);
+    assert.equal(updated.decisions.at(-1).authorizingGateStage, "dev-review");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("grants an exhausted dev-review retry after a no-op repair left the implement reservation unrelated to the current revision", async () => {
+  // Recorded live (AH-002): a repair whose newest failing gate needed no code change
+  // (its own `<no-changes-needed>` marker, see `#runRepair`) correctly leaves the
+  // candidate at its *existing* revision — but `stageRunReservations.implement` still
+  // gets overwritten with that repair's own reservation, whose `candidateRevision`
+  // targets the current (unchanged) revision rather than being the reservation that
+  // originally produced it. `validCandidateProducerReservation` required an exact
+  // identity match against the revision's *original* producer, so this legitimate,
+  // well-formed no-op repair reservation made every later dev-review retry look like
+  // "the candidate's lineage is corrupted" and permanently blocked granting one.
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "No-op repair leaves dev-review retry grantable",
+      description: "A repair that changed nothing must not corrupt the producer lineage.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    let previousLimit;
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      const candidate = attachAssemblyLineage(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "ready_for_review",
+      });
+      draft.candidates.push(candidate);
+      previousLimit = draft.stageRunLimits["dev-review"];
+      attachExactCandidateGate(draft, candidate, {
+        workflowAttempt: previousLimit,
+      });
+      draft.attemptsByStage["dev-review"] = previousLimit;
+      // The no-op repair reservation: bound to the candidate's *current* (unchanged)
+      // revision, reserved well after that revision was created — exactly what
+      // `#runRepair` produces for a `<no-changes-needed>` outcome.
+      const noOpRepairWorkflowAttempt = draft.attemptsByStage.implement + 1;
+      draft.attemptsByStage.implement = noOpRepairWorkflowAttempt;
+      draft.stageRunReservations.implement = {
+        id: `reservation-${draft.id}-noop-repair`,
+        stage: "implement",
+        kind: "repair",
+        workflowAttempt: noOpRepairWorkflowAttempt,
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        candidateHeadRevision: candidate.headRevision,
+        authorizedRunScopes: [],
+        reservedAt: "2026-08-04T00:05:00.000Z",
+      };
+      refreshGateFreshness(draft);
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
+    assert.deepEqual(await grantResponse.json(), { granted: true });
+
+    const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
+    assert.equal(updated.stageRunLimits["dev-review"], previousLimit + 1);
+    assert.equal(updated.decisions.at(-1).grantedStage, "dev-review");
   } finally {
     await cleanup(server, directory);
   }
