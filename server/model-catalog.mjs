@@ -335,7 +335,7 @@ export function withConfiguredModels(catalog, settings) {
     ...Object.values(settings?.stagePolicies ?? {}).map((policy) => policy?.model),
   ].filter(Boolean).map(normalizeModelId));
   // Keyed on availability, not provenance. "configured" means the runtime could not confirm the
-  // model exists, and the downgrade to `editable: false` exists to stop an operator selecting one.
+  // model exists, and the downgrade to editable:false exists to stop an operator selecting one.
   // Claude entries are `provenance: "bundled"` with `availability: "discovered"` — bundled is how
   // the harness knows them, discovered is the claim that matters — so testing provenance
   // downgraded every Claude model the settings referenced, leaving them tickable in the allowlist
@@ -345,24 +345,6 @@ export function withConfiguredModels(catalog, settings) {
       ? { ...entry, provenance: "configured", availability: "configured", editable: false }
       : entry,
   );
-  const known = new Set(models.map((entry) => entry.id));
-  for (const id of configuredIds) {
-    if (known.has(id)) continue;
-    models.push({
-      id,
-      label: id,
-      description: "Configured in persisted settings but not reported by the local Codex model catalog.",
-      // A configured id no provider claims stays unattributed rather than being
-      // credited to whichever provider is currently selected.
-      provider: providerForModelId(id),
-      defaultReasoning: settings?.defaultReasoning ?? "medium",
-      reasoningLevels: [],
-      pricing: MODEL_PRICING[id] ?? null,
-      provenance: "configured",
-      availability: "unsupported",
-      editable: false,
-    });
-  }
   return { ...(catalog ?? { fetchedAt: null, source: "Unavailable model catalog" }), models };
 }
 

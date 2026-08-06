@@ -1,15 +1,15 @@
 import {
-  Bird,
-  CaretDoubleLeft,
-  CaretDoubleRight,
-  CirclesFour,
-  ClockCounterClockwise,
-  Code,
-  GearSix,
-  ListChecks,
-  Plus,
-  Robot,
-  SidebarSimple,
+  BirdIcon,
+  CaretDoubleLeftIcon,
+  CaretDoubleRightIcon,
+  CirclesFourIcon,
+  ClockCounterClockwiseIcon,
+  CodeIcon,
+  GearSixIcon,
+  ListChecksIcon,
+  PlusIcon,
+  RobotIcon,
+  SidebarSimpleIcon,
 } from "@phosphor-icons/react";
 import type { AppScreen, RuntimeStatus } from "../domain";
 import { Button } from "./Primitives";
@@ -25,11 +25,11 @@ interface ShellProps {
 }
 
 const navItems = [
-  { id: "command" as const, label: "Command Centre", icon: CirclesFour },
-  { id: "tasks" as const, label: "Tasks", icon: ListChecks },
-  { id: "skills" as const, label: "Skills", icon: Code },
-  { id: "agents" as const, label: "Agents", icon: Robot },
-  { id: "settings" as const, label: "Settings", icon: GearSix },
+  { id: "command" as const, label: "Command Centre", icon: CirclesFourIcon },
+  { id: "tasks" as const, label: "Tasks", icon: ListChecksIcon },
+  { id: "skills" as const, label: "Skills", icon: CodeIcon },
+  { id: "agents" as const, label: "Agents", icon: RobotIcon },
+  { id: "settings" as const, label: "Settings", icon: GearSixIcon },
 ];
 
 export function Shell({
@@ -47,7 +47,7 @@ export function Shell({
     <aside className={`sidebar ${collapsed ? "sidebar--collapsed" : ""}`} aria-label="Primary navigation">
       <div className="brand-row">
         <span className="brand-mark" aria-hidden>
-          <Bird size={25} weight="duotone" />
+          <BirdIcon size={25} weight="duotone" />
         </span>
         <span className="brand-name">Agent Harness</span>
         <button
@@ -56,7 +56,7 @@ export function Shell({
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={onToggleCollapsed}
         >
-          <SidebarSimple size={18} />
+          <SidebarSimpleIcon size={18} />
         </button>
       </div>
 
@@ -89,7 +89,7 @@ export function Shell({
 
       <Button
         tone="secondary"
-        icon={Plus}
+        icon={PlusIcon}
         className="sidebar__new-task"
         onClick={onNewTask}
         aria-label="New task"
@@ -99,7 +99,7 @@ export function Shell({
       </Button>
       <Button
         tone="ghost"
-        icon={ClockCounterClockwise}
+        icon={ClockCounterClockwiseIcon}
         className="sidebar__changelog"
         onClick={onOpenChangelog}
         aria-label="View changelog"
@@ -132,7 +132,7 @@ export function Shell({
           onClick={onToggleCollapsed}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? <CaretDoubleRight size={15} /> : <CaretDoubleLeft size={15} />}
+          {collapsed ? <CaretDoubleRightIcon size={15} /> : <CaretDoubleLeftIcon size={15} />}
         </button>
       </div>
     </aside>
