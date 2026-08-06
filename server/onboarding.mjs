@@ -38,6 +38,13 @@ export class OnboardingError extends Error {
 }
 
 const CI_DIRECTORY = path.join(".github", "workflows");
+
+/**
+ * Command runners, excluded when comparing a proposal against the repository's own evidence. The
+ * runner is an environment detail — which python, which package manager — while the script path or
+ * target is the thing being cited.
+ */
+const RUNNERS = new Set(["npm", "pnpm", "yarn", "bun", "npx", "node", "python", "python3", "make", "sh", "bash", "zsh", "uv", "poetry"]);
 const MAX_EVIDENCE_LINES = 400;
 
 /**
@@ -117,8 +124,35 @@ export function evidenceForCommand(argv, evidence) {
     const target = argv[1];
     if (target && evidence.makeTargets.includes(target)) return { kind: "make-target", detail: `Makefile target ${target}` };
   }
-  const ci = evidence.ciCommands.find((entry) => entry.command.includes(joined) || joined.includes(entry.command));
-  if (ci) return { kind: "ci-step", detail: `${CI_DIRECTORY}/${ci.workflow}: ${ci.command}` };
+  // Fallback: match on the *arguments*, not the runner. A CI step's
+  // `python scripts/check_retired_references.py` and a proposal's `python3 scripts/…` cite the
+  // same thing — and on macOS `python` is frequently only a shell alias, so a harness that spawns
+  // argv directly *must* differ from CI here. Comparing whole strings rejected a correct
+  // substitution for the digit in `python3`.
+  //
+  // Requiring a shared distinctive token still refuses invention: `npm run verify-everything`
+  // shares no token with any script or CI step, and `curl https://example.test` shares none either.
+  const tokens = argv.filter((argument, index) =>
+    index > 0
+    && !argument.startsWith("-")
+    && argument !== "run"
+    && argument.length > 3
+    && !RUNNERS.has(path.basename(argument)));
+  const sources = [
+    ...evidence.ciCommands.map((entry) => ({
+      kind: "ci-step",
+      text: entry.command,
+      detail: `${CI_DIRECTORY}/${entry.workflow}: ${entry.command}`,
+    })),
+    ...evidence.scripts.map((script) => ({
+      kind: "package-script",
+      text: `${script.name} ${script.command}`,
+      detail: `package.json scripts.${script.name}`,
+    })),
+    ...evidence.makeTargets.map((target) => ({ kind: "make-target", text: target, detail: `Makefile target ${target}` })),
+  ];
+  const cited = sources.find((source) => tokens.some((token) => source.text.includes(token)));
+  if (cited) return { kind: cited.kind, detail: cited.detail };
   return null;
 }
 

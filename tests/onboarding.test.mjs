@@ -74,6 +74,29 @@ test("traces a proposed command to the repository, or refuses it", () => {
   assert.equal(evidenceForCommand(["curl", "https://example.test"], evidence), null);
 });
 
+test("cites a CI step through a different interpreter than CI used", () => {
+  // The real refusal this fixes: CI runs `python scripts/check_retired_references.py`, the proposal
+  // used `python3`, and comparing whole strings rejected it over the digit. On macOS `python` is
+  // often only a shell alias, so a harness that spawns argv directly *has* to differ from CI —
+  // which made a correct substitution look like an invented command.
+  const withCi = {
+    ...evidence,
+    ciCommands: [{ workflow: "ci.yml", command: "python scripts/check_retired_references.py" }],
+  };
+  const cited = evidenceForCommand(["python3", "scripts/check_retired_references.py"], withCi);
+  assert.equal(cited?.kind, "ci-step");
+  assert.match(cited.detail, /check_retired_references\.py/);
+
+  // The script path is the citation, so the runner may differ freely.
+  assert.equal(evidenceForCommand(["uv", "run", "scripts/check_retired_references.py"], withCi)?.kind, "ci-step");
+
+  // Still refused: a different script, and a bare runner with nothing distinctive to cite.
+  assert.equal(evidenceForCommand(["python3", "scripts/deploy_everything.py"], withCi), null);
+  assert.equal(evidenceForCommand(["python3"], withCi), null);
+  // A short token must not match by accident — `-m` and `up` are not citations.
+  assert.equal(evidenceForCommand(["python3", "-m", "up"], withCi), null);
+});
+
 test("refuses a proposal whose command traces to nothing", () => {
   assert.throws(
     () => parseOnboardingProposal(proposal([{ id: "all", command: ["npm", "run", "verify-everything"] }]), evidence),
