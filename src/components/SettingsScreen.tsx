@@ -11,21 +11,9 @@ import { agentRoles } from "./AgentRoles";
 import { EvaluationScorecard } from "./EvaluationScorecard";
 import { SettingRow } from "./LibraryShared";
 import { Button, SectionHeader } from "./Primitives";
+import { connectionStateLabel, providerConnectionState } from "./Shell";
 
 type RuntimePolicyInput = Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies">;
-
-/**
- * The label used to say "Signed in · not executable" whenever Claude was authenticated, which
- * was left over from before Claude execution was wired and contradicted the status the runtime
- * actually reports. `executionEnabled` stays false until a sandbox canary has verified
- * confinement on this host, and status does not pay for one — so "not yet verified" is the
- * honest reading, not "not executable".
- */
-function claudeConnectionState(claude?: { available?: boolean; authenticated?: boolean; executionEnabled?: boolean }) {
-  if (!claude?.available) return "Not found";
-  if (!claude.authenticated) return "Login required";
-  return claude.executionEnabled ? "Signed in · execution enabled" : "Signed in · confinement not yet verified";
-}
 
 export function SettingsScreen({
   runtimeStatus,
@@ -43,6 +31,18 @@ export function SettingsScreen({
   refreshing: boolean;
 }) {
   const claude = runtimeStatus?.providers?.find((provider) => provider.id === "claude");
+  // Mirrors the fallback Shell.tsx builds when the server has not reported a `providers`
+  // array (an older status shape) — without it this row would silently disappear instead
+  // of degrading to the same generic reading the sidebar falls back to.
+  const codex = runtimeStatus?.providers?.find((provider) => provider.id === "codex") ??
+    (runtimeStatus
+      ? {
+          available: Boolean(runtimeStatus.available),
+          authenticated: Boolean(runtimeStatus.authenticated),
+          executionEnabled: true,
+          detail: runtimeStatus.message,
+        }
+      : undefined);
   const [allowedModels, setAllowedModels] = useState<string[]>([]);
   const [defaultModel, setDefaultModel] = useState("");
   const [defaultReasoning, setDefaultReasoning] = useState("");
@@ -153,8 +153,24 @@ export function SettingsScreen({
       </section>
       <section className="settings-section">
         <h3>Runtime connection</h3>
-        <SettingRow title="Authentication" copy="No API key is read or stored" control={<strong>{runtimeStatus?.authenticated ? `${runtimeStatus.authMethod} signed in` : "Not connected"}</strong>} />
-        <SettingRow title="Claude" copy={claude?.detail ?? "Discovery runs when the local companion status is refreshed"} control={<span className="capability-gap">{claudeConnectionState(claude)}</span>} />
+        <SettingRow
+          title="Codex"
+          copy="No API key is read or stored"
+          control={
+            <span className={`connection-state connection-state--${providerConnectionState(codex)}`}>
+              {connectionStateLabel(providerConnectionState(codex))}
+            </span>
+          }
+        />
+        <SettingRow
+          title="Claude"
+          copy={claude?.detail ?? "Discovery runs when the local companion status is refreshed"}
+          control={
+            <span className={`connection-state connection-state--${providerConnectionState(claude)}`}>
+              {connectionStateLabel(providerConnectionState(claude))}
+            </span>
+          }
+        />
       </section>
       <section className="settings-section">
         <div className="settings-section__head"><span><h3>Approximate cost rate card</h3><p>Standard short-context API prices per 1M tokens. Calculated task costs are comparison estimates; ChatGPT-plan charges are not exposed.</p></span><Button tone="secondary" disabled={verifyingPricing || !runtimeStatus?.authenticated} onClick={async () => { setError(null); setVerifyingPricing(true); try { await onVerifyPricing(); } catch (reason) { setError(reason instanceof Error ? reason.message : "Pricing could not be verified."); } finally { setVerifyingPricing(false); } }}>{verifyingPricing ? "Agent checking…" : "Verify with agent"}</Button></div>

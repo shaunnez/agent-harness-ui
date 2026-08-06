@@ -1,9 +1,4 @@
 /* Local runtime vertical slice */
-.health-summary--warning {
-  color: var(--amber);
-  border-color: #6a4c19;
-  background: #211c13;
-}
 .attention-empty {
   display: flex;
   align-items: center;

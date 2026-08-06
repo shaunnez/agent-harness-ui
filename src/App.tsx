@@ -343,7 +343,7 @@ export function App() {
             }}
           />
         ) : workspaceOpen && activeTaskLoading ? <TaskWorkspaceSkeleton /> : null}
-        {!workspaceOpen && screen === "command" ? <CommandCentre runtimeTasks={runtimeTasks} runtimeStatus={runtimeStatus} runtimeLoading={runtimeLoading} runtimeError={runtimeError} onNewTask={() => setNewTaskOpen(true)} onOpenTask={(taskId) => openWorkspace("command", taskId)} onSeeAllTasks={() => navigate("tasks")} onRefreshRuntime={() => void refreshRuntime()} runtimeRefreshing={runtimeRefreshing} /> : null}
+        {!workspaceOpen && screen === "command" ? <CommandCentre runtimeTasks={runtimeTasks} runtimeStatus={runtimeStatus} runtimeLoading={runtimeLoading} runtimeError={runtimeError} onNewTask={() => setNewTaskOpen(true)} onOpenTask={(taskId) => openWorkspace("command", taskId)} onSeeAllTasks={() => navigate("tasks")} /> : null}
         {!workspaceOpen && screen === "tasks" ? <TasksScreen runtimeTasks={runtimeTasks} onOpenTask={(taskId) => openWorkspace("tasks", taskId)} /> : null}
         {!workspaceOpen && screen === "skills" ? <SkillsScreen runtimeTasks={runtimeTasks} selectedId={selectedSkillId} onSelect={(skillId) => navigateToRoute(skillId ? { kind: "skill", skillId } : { kind: "screen", screen: "skills" })} /> : null}
         {!workspaceOpen && screen === "agents" ? (

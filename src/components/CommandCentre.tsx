@@ -1,6 +1,5 @@
 import {
   ArrowRight,
-  ArrowClockwise,
   CheckCircle,
   Clock,
   Cpu,
@@ -35,14 +34,10 @@ export function CommandCentre({
   runtimeError,
   onNewTask,
   onSeeAllTasks,
-  onRefreshRuntime,
-  runtimeRefreshing,
 }: {
   onOpenTask: (taskId?: string) => void;
   onNewTask: () => void;
   onSeeAllTasks: () => void;
-  onRefreshRuntime: () => void;
-  runtimeRefreshing: boolean;
   runtimeTasks: RuntimeTask[];
   runtimeStatus: RuntimeStatus | null;
   runtimeLoading: boolean;
@@ -86,34 +81,6 @@ export function CommandCentre({
           <h1>Command Centre</h1>
           <p>One deterministic view of active work, evidence, and human decisions.</p>
         </div>
-        <button
-          type="button"
-          className={`health-summary ${runtimeError || (runtimeStatus && !runtimeStatus.authenticated) ? "health-summary--warning" : ""}`}
-          aria-label="Local runtime health"
-          onClick={onRefreshRuntime}
-          title="Refresh local runtime and provider status"
-        >
-          <ShieldCheck size={18} weight="fill" />
-          <span>
-            <strong>
-              {runtimeError
-                ? "Runtime disconnected"
-                : runtimeStatus?.authenticated
-                ? "Codex connected"
-                : runtimeStatus
-                  ? "Login required"
-                  : runtimeLoading
-                    ? "Checking runtime"
-                    : "Runtime unavailable"}
-            </strong>
-            {runtimeError
-              ? " · last persisted view unavailable"
-              : runtimeStatus?.authenticated
-              ? ` · ${runtimeStatus.authMethod} plan session`
-              : " · local runtime"}
-          </span>
-          <ArrowClockwise className={runtimeRefreshing ? "spin" : ""} size={16} />
-        </button>
       </header>
 
       <section className="current-run" aria-labelledby="current-run-title">

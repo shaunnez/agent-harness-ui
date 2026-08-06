@@ -212,15 +212,35 @@ small,
   white-space: pre-wrap;
 }
 
-.capability-gap {
+/* Settings' runtime-connection rows use the same four-state vocabulary and colours as
+   the sidebar's Connections panel (.provider-connection__state in shell.css) — the
+   Claude row used to render as a permanently-amber pill regardless of actual state,
+   disagreeing with the sidebar even when both described the same provider. */
+.connection-state {
   display: inline-flex;
   padding: 5px 8px;
-  border: 1px solid #6a4c19;
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
-  color: var(--amber);
-  background: var(--amber-soft);
   font-size: 12px;
   font-weight: 650;
+}
+.connection-state--connected {
+  color: var(--green);
+  background: var(--green-soft);
+  border-color: #29543d;
+}
+.connection-state--unverified {
+  color: var(--amber);
+  background: var(--amber-soft);
+  border-color: #6a4c19;
+}
+.connection-state--not-signed-in {
+  color: var(--muted);
+  background: #242724;
+}
+.connection-state--unavailable {
+  color: var(--faint);
+  background: #242724;
 }
 
 .stage-step--stale .stage-step__node {

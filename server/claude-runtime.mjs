@@ -202,7 +202,13 @@ export async function getClaudeStatus({ canary = false, cwd = null } = {}) {
             ? `${probe.authMethod ?? "Signed in"}; read-only confinement verified${execArgBudget?.detail ? ` · ${execArgBudget.detail}` : ""}`
             : confinement
               ? `${probe.authMethod ?? "Signed in"}; ${confinement.detail}`
-              : `${probe.authMethod ?? "Signed in"}; read-only confinement not yet verified`,
+              // No canary ran, because status never asks for one — `canary` defaults to false
+              // and the only caller leaves it that way, so this branch is what the Settings
+              // and sidebar rows always show. Read bare, "not yet verified" suggests something
+              // is outstanding; nothing is. Confinement is asserted fresh immediately before
+              // every Claude stage dispatch instead, so say where it is checked rather than
+              // reporting the absence of a check this call deliberately did not pay for.
+              : `${probe.authMethod ?? "Signed in"}; read-only confinement is checked before each stage runs, not by this status view`,
     };
   } catch (error) {
     return {

@@ -156,8 +156,23 @@
   background: #bbbdbb;
 }
 .provider-connection__state {
-  color: var(--green);
   font-size: 12px;
+}
+/* One colour per connection state, shared with the Settings runtime-connection rows
+   (.connection-state in readability-foundations.css) — the state text used to be
+   green regardless of state, which disagreed with a grey "inactive"-looking dot for
+   a provider that was in fact signed in. */
+.provider-connection__state--connected {
+  color: var(--green);
+}
+.provider-connection__state--unverified {
+  color: var(--amber);
+}
+.provider-connection__state--not-signed-in {
+  color: var(--muted);
+}
+.provider-connection__state--unavailable {
+  color: var(--faint);
 }
 .sidebar-profile {
   display: flex;

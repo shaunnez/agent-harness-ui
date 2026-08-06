@@ -14,6 +14,38 @@ import {
 import type { AppScreen, RuntimeStatus } from "../domain";
 import { Button } from "./Primitives";
 
+/**
+ * One vocabulary for both providers' connection state, shared by the sidebar
+ * (this file) and the Settings runtime-connection rows (SettingsScreen.tsx) — the
+ * two used to describe the same underlying fields with different words ("Connected"
+ * vs "Signed in", a grey dot vs a coloured one), which read as disagreement even
+ * when both providers were in fact working.
+ */
+export type ConnectionState = "connected" | "unverified" | "not-signed-in" | "unavailable";
+
+export function providerConnectionState(provider?: {
+  available?: boolean;
+  authenticated?: boolean;
+  executionEnabled?: boolean;
+}): ConnectionState {
+  if (!provider?.available) return "unavailable";
+  if (!provider.authenticated) return "not-signed-in";
+  return provider.executionEnabled ? "connected" : "unverified";
+}
+
+export function connectionStateLabel(state: ConnectionState): string {
+  switch (state) {
+    case "connected":
+      return "Connected";
+    case "unverified":
+      return "Signed in · unverified";
+    case "not-signed-in":
+      return "Not signed in";
+    case "unavailable":
+      return "Unavailable";
+  }
+}
+
 interface ShellProps {
   screen: AppScreen;
   collapsed: boolean;
@@ -111,13 +143,23 @@ export function Shell({
 
       <section className="provider-connections" aria-label="Model connections">
         <span className="sidebar-label">Connections</span>
-        {(runtimeStatus?.providers ?? [{ id: "codex", label: "Codex", available: Boolean(runtimeStatus?.available), authenticated: Boolean(runtimeStatus?.authenticated), executionEnabled: true, detail: runtimeStatus?.message ?? "Runtime unavailable" }]).filter((provider) => provider.available).map((provider) => (
-          <div className={`provider-connection provider-connection--${provider.id === "codex" ? "codex" : "harness"}`} key={provider.id} title={provider.detail}>
-            <span className="provider-orb" aria-hidden />
-            <span>{provider.label}</span>
-            <span className="provider-connection__state">{provider.executionEnabled ? (provider.authenticated ? "Connected" : "Offline") : provider.authenticated ? "Signed in" : "Unavailable"}</span>
-          </div>
-        ))}
+        {(runtimeStatus?.providers ?? [{ id: "codex", label: "Codex", available: Boolean(runtimeStatus?.available), authenticated: Boolean(runtimeStatus?.authenticated), executionEnabled: true, detail: runtimeStatus?.message ?? "Runtime unavailable" }]).filter((provider) => provider.available).map((provider) => {
+          // The orb variant is the provider's own brand colour (Codex blue, Claude
+          // violet), independent of connection state — it used to fall through to the
+          // generic "harness" grey for anything that wasn't Codex, which is why Claude's
+          // dot stayed grey while signed in and reads as "inactive" even when connected.
+          const variant = provider.id === "codex" || provider.id === "claude" ? provider.id : "harness";
+          const state = providerConnectionState(provider);
+          return (
+            <div className={`provider-connection provider-connection--${variant}`} key={provider.id} title={provider.detail}>
+              <span className="provider-orb" aria-hidden />
+              <span>{provider.label}</span>
+              <span className={`provider-connection__state provider-connection__state--${state}`}>
+                {connectionStateLabel(state)}
+              </span>
+            </div>
+          );
+        })}
       </section>
 
       <div className="sidebar-profile">

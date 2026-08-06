@@ -20,28 +20,6 @@
   color: var(--muted);
   font-size: 13px;
 }
-.health-summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 11px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--green);
-  background: transparent;
-  font-size: 12px;
-  cursor: pointer;
-}
-.health-summary:hover {
-  border-color: var(--border-strong);
-  background: var(--surface);
-}
-.health-summary span {
-  color: var(--muted);
-}
-.health-summary strong {
-  color: var(--text);
-}
 .current-run {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
