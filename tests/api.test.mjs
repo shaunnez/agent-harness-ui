@@ -89,7 +89,12 @@ async function createServer(options = {}) {
         },
       })
     : store;
-  const server = createApiServer({ store: apiStore, orchestrator, suggestedRepository: directory, csrfToken: TEST_CSRF_TOKEN });
+  const server = createApiServer({
+    store: apiStore,
+    orchestrator,
+    suggestedRepository: directory,
+    csrfToken: options.csrfToken ?? TEST_CSRF_TOKEN,
+  });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
   return {
@@ -1043,6 +1048,46 @@ test("enforces one Host, Origin, content-type, CSRF, and missing-Origin policy a
     assert.equal((await store.list()).length, 0);
   } finally {
     await cleanup(server, directory);
+  }
+});
+
+test("a rotated CSRF token rejects the old value, and runtime status hands out the new one", async () => {
+  // The server mints a fresh csrfToken per process (see createApiServer's default of
+  // crypto.randomUUID()), so a restart is indistinguishable, from the client's side, from
+  // a second server instance minted with a different token. This exercises that boundary
+  // directly: src/api.ts's request() helper recovers from exactly this by re-fetching
+  // /api/runtime/status and replaying the mutation once, which is verified manually since
+  // src/api.ts is TypeScript and not importable from this plain-JS test runner.
+  const rotated = await createServer({ csrfToken: "fresh-token-after-restart" });
+  try {
+    const payload = JSON.stringify({
+      title: "Rotated token probe",
+      description: "Confirms a token minted before a restart is rejected after one.",
+      repositoryPath: rotated.directory,
+      workflow: "investigate",
+    });
+    const rejectedByOldToken = await nativeFetch(`${rotated.origin}/api/tasks`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-agent-harness-csrf": "stale-token-from-before-restart" },
+      body: payload,
+    });
+    assert.equal(rejectedByOldToken.status, 403);
+    const rejectedBody = await rejectedByOldToken.json();
+    assert.match(rejectedBody.error, /csrf token/i);
+
+    const status = await nativeFetch(`${rotated.origin}/api/runtime/status`);
+    assert.equal(status.status, 200);
+    const statusBody = await status.json();
+    assert.equal(statusBody.csrfToken, "fresh-token-after-restart");
+
+    const acceptedByFreshToken = await nativeFetch(`${rotated.origin}/api/tasks`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-agent-harness-csrf": statusBody.csrfToken },
+      body: payload,
+    });
+    assert.equal(acceptedByFreshToken.status, 201);
+  } finally {
+    await cleanup(rotated.server, rotated.directory);
   }
 });
 

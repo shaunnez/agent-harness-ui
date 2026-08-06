@@ -20,7 +20,7 @@ export interface CandidateDiffResponse {
   truncated: boolean;
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(path: string, init?: RequestInit, retried = false): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, {
@@ -35,7 +35,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error("The local Agent Harness runtime is offline. Start the app with npm run dev.");
   }
   const value = (await response.json().catch(() => ({}))) as T & { error?: string };
-  if (!response.ok) throw new Error(value.error ?? `Local runtime request failed (${response.status}).`);
+  if (!response.ok) {
+    const message = value.error ?? `Local runtime request failed (${response.status}).`;
+    // The server mints a fresh CSRF token on every restart (see getRuntimeStatus below), so a
+    // page left open across a restart holds a dead token and every mutation 403s forever until
+    // reloaded. GETs carry no token and can't hit this, and we only retry once: a second 403
+    // naming the token means it is genuinely invalid, not just stale, and should surface as-is.
+    const isMutation = Boolean(init?.method && init.method !== "GET");
+    if (response.status === 403 && isMutation && !retried && /csrf token/i.test(message)) {
+      await getRuntimeStatus();
+      return request<T>(path, init, true);
+    }
+    throw new Error(message);
+  }
   return value;
 }
 
