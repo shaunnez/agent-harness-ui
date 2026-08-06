@@ -5,6 +5,18 @@
   border-top: 1px solid var(--border);
   background: #141412;
 }
+/*
+ * Scoped to [open] so a collapsed pane stays summary-height rather than reserving
+ * 60vh for nothing. `resize` needs an explicit `height` to have a size to drag from,
+ * and the bounds stop a drag collapsing the pane past its own header or growing it
+ * taller than the viewport.
+ */
+.runtime-activity[open] {
+  height: 60vh;
+  min-height: 320px;
+  max-height: 80vh;
+  resize: vertical;
+}
 .runtime-activity > summary {
   display: flex;
   align-items: center;

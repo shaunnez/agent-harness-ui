@@ -251,7 +251,6 @@ export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: Runtime
         </details>
         <footer>
           <small>{new Date(artifact.createdAt).toLocaleString()}</small>
-          <span className="mono">API-rate estimate &middot; ChatGPT plan session</span>
         </footer>
       </section>
     </div>

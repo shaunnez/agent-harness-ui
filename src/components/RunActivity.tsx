@@ -155,7 +155,6 @@ export function RunActivity({
             {label}
           </button>
         ))}
-        <small>Fields are shown only when persisted state or Codex JSONL exposes them. API-rate estimates are not attributable ChatGPT-plan charges.</small>
       </div>
       <div className="runtime-activity-layout">
         <div className="runtime-activity-list" aria-live="polite">

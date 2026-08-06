@@ -3,6 +3,14 @@
   .changelog-modal { width: 100%; height: 94vh; }
   .changelog-layout { grid-template-columns: 1fr; }
   .changelog-list { max-height: 42vh; border-right: 0; border-bottom: 1px solid var(--border); }
+
+  /* 60vh of a short mobile viewport leaves too little room below Run activity
+     to reach anything else on the page, so shrink the opened/resized bounds. */
+  .runtime-activity[open] {
+    height: 50vh;
+    min-height: 220px;
+    max-height: 70vh;
+  }
 }
 
 .runtime-worktree-explainer {
