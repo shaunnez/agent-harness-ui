@@ -1443,6 +1443,50 @@ test("still fails runClaude when a denial is not a repeat of a successful call",
   }
 });
 
+test("names the denied call so an allowlist hole is not misread as agent misbehaviour", async () => {
+  // The bare count reads as a sandbox-escape attempt. An ordinary read-only command in
+  // this message means the permission allowlist is wrong, which is what actually
+  // happened when a server was still running a build from before `Bash(*)` was added.
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-denial-detail-"));
+  const previousBin = process.env.CLAUDE_BIN;
+  try {
+    process.env.CLAUDE_BIN = await writeFakeClaudeCli(directory, [
+      JSON.stringify({ type: "system", subtype: "init", session_id: "sess-detail" }),
+      JSON.stringify({
+        type: "result",
+        subtype: "success",
+        is_error: false,
+        result: "Looked at the candidate.",
+        usage: { input_tokens: 10, output_tokens: 2 },
+        permission_denials: [
+          { tool_name: "Bash", tool_use_id: "t1", tool_input: { command: "awk 'NR>=1 && NR<=5' notes.txt" } },
+        ],
+      }),
+    ]);
+
+    await assert.rejects(
+      () => runClaude({
+        cwd: directory,
+        prompt: "review the work",
+        sandbox: "read-only",
+        model: "claude-haiku-4-5",
+        reasoning: NO_REASONING_EFFORT,
+        tempDirectory: directory,
+        timeoutMs: 30_000,
+      }),
+      (error) => {
+        assert.match(error.message, /Claude attempted 1 denied tool call during a read-only stage\./);
+        assert.match(error.message, /First denied: Bash awk/);
+        return true;
+      },
+    );
+  } finally {
+    if (previousBin === undefined) delete process.env.CLAUDE_BIN;
+    else process.env.CLAUDE_BIN = previousBin;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("refuses to run another provider's model", async () => {
   // A Claude task whose stage policy still names a GPT model must fail with a message
   // that says why, not with an opaque catalogue lookup error.

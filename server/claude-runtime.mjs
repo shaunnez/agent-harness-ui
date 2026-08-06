@@ -727,8 +727,15 @@ export function buildClaudeSandboxSettings(cwd, sandbox, networkAccess = false) 
     // Enabling loopback binding (`network.allowLocalBinding`) makes the CLI stop
     // treating the sandbox as fully sandboxed, so `autoAllowBashIfSandboxed` no longer
     // auto-approves commands and every Bash call stalls on a permission gate with
-    // nobody to answer it. Verified on 2.1.222. Until a working Bash allow-rule form
-    // is found, a network-granting stage cannot run on Claude at all.
+    // nobody to answer it. Verified on 2.1.222.
+    //
+    // The blocking premise — that no working Bash allow-rule form was known — no longer
+    // holds: `Bash(*)` below carries a command through on its own, and re-probed on
+    // 2.1.223 with `allowLocalBinding: true` it still does, so loopback no longer
+    // implies a stalled stage. The throw stays anyway. Granting a Claude stage network
+    // access is a change to a safety-relevant profile, and it needs its own deliberate
+    // decision and canary run rather than being switched on by a comment noting the
+    // obstacle is gone.
     throw new Error("Claude stages cannot be granted network access; the test stage must run on Codex.");
   }
   const writable = sandbox === "workspace-write";
@@ -738,14 +745,19 @@ export function buildClaudeSandboxSettings(cwd, sandbox, networkAccess = false) 
     // this rule and `--permission-mode acceptEdits` are required; with the rule alone
     // the Write tool is still refused, because in -p there is nobody to approve it.
     //
-    // `autoAllowBashIfSandboxed` only covers a *single* Bash statement: the CLI checks
-    // every `&&`/`;`/`|`-separated part of a compound command against the permission
-    // rules independently of the sandbox, and with none configured it falls back to
-    // "the following parts require approval" — a prompt nobody is present to answer in
-    // `-p` mode, denying diagnostic one-liners like `cmd1; echo done` outright. The OS
-    // sandbox (`allowRead`/`denyWrite` below) is what actually confines Bash either way,
-    // so a blanket rule here is the permission layer getting out of the sandbox's way,
-    // not a new capability grant.
+    // `autoAllowBashIfSandboxed` does not cover every command. Re-probed against 2.1.223
+    // by spawning the CLI with these exact settings and varying only this entry: with no
+    // Bash rule, the single command `awk 'NR>=3288 && NR<=3312' <file-inside-cwd>` was
+    // refused with "This command requires approval" and reported in `permission_denials`;
+    // with `Bash(*)` the identical command ran. So the gap is not about compound
+    // structure — `ls; echo` passes unruled because those commands are ones the CLI will
+    // approve by itself, and anything outside that set is refused with nobody present in
+    // `-p` mode to answer the prompt. The OS sandbox (`allowRead`/`denyWrite` below) is
+    // what actually confines Bash either way, so a blanket rule here is the permission
+    // layer getting out of the sandbox's way, not a new capability grant.
+    //
+    // This form works. When a read-only stage still fails on denials, suspect a server
+    // running a build from before this entry existed rather than a wrong rule form.
     //
     // Read/Grep/Glob hit the same gap on some calls — recorded live, a Grep whose `path`
     // was a directory (rather than a single file) was denied with "Permission to read
@@ -926,8 +938,16 @@ export async function runClaude({
   // never reaches here. `parsed.permissionDenials` (the unfiltered count) still surfaces
   // through the per-denial activity events for visibility.
   if (parsed.fatalPermissionDenials.length) {
+    // Name what was denied. Read on its own, "attempted N denied tool calls" reads as
+    // the agent trying to escape its sandbox, and a real read-only-stage failure was
+    // misread that way for two attempts when the actual cause was a hole in the
+    // permission allowlist. The tool and command distinguish the two: an ordinary
+    // read-only command here means the allowlist is wrong, not the agent.
+    const denied = parsed.fatalPermissionDenials
+      .map((denial) => [denial?.tool_name, formatCommand(denial?.tool_input?.command)].filter(Boolean).join(" "))
+      .filter(Boolean);
     throw new Error(
-      `Claude attempted ${parsed.fatalPermissionDenials.length} denied tool call${parsed.fatalPermissionDenials.length === 1 ? "" : "s"} during a ${sandbox} stage.`,
+      `Claude attempted ${parsed.fatalPermissionDenials.length} denied tool call${parsed.fatalPermissionDenials.length === 1 ? "" : "s"} during a ${sandbox} stage.${denied.length ? ` First denied: ${denied[0]}.` : ""}`,
     );
   }
   // `allowed_warning` means allowed while approaching a limit, so refusing on
