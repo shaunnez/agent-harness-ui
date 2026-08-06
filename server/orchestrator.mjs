@@ -232,7 +232,11 @@ export class TaskOrchestrator {
       sandbox: "read-only",
       model: settings.defaultModel,
       reasoning: settings.defaultReasoning,
-      timeoutMs: 300_000,
+      // 300s was not enough for a real repository at the operator's default reasoning effort: the
+      // run is a read-only exploration of a whole codebase, and it timed out with nothing to show
+      // for the call. A timeout here wastes an operator-initiated, paid call and teaches nothing,
+      // whereas the run itself is bounded by having a single artifact to produce.
+      timeoutMs: 900_000,
     });
     const proposal = parseOnboardingProposal(result.finalText, evidence);
     return {
