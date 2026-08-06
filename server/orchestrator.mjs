@@ -1002,7 +1002,7 @@ export class TaskOrchestrator {
     });
     const assembled = await this.#worktrees.assemble(candidate, candidate.members);
     const manifest = candidate.members
-      .map((member) => `- ${member.order}. ${member.packageId}: ${member.headRevision}`)
+      .map((member) => `- ${member.order}. ${member.packageId}: ${member.headRevision ?? "no changes needed"}`)
       .join("\n");
     const content = `## Outcome\n\nAll ${candidate.members.length} work packages were assembled into ${candidate.id}.\n\n## Candidate membership\n\n${manifest}\n\n## Harness candidate evidence\n\n- Candidate: ${candidate.id} revision 1\n- Base: ${candidate.baseRevision}\n- Head: ${assembled.headRevision}\n- Branch: ${candidate.branch}\n- Changed files: ${assembled.files.length}\n\n\`\`\`text\n${assembled.summary || "No diff stat returned."}\n\`\`\`\n\nThe exact candidate patch is loaded on demand from the recorded revision.`;
     await this.#retainAgentResult(
@@ -1047,7 +1047,9 @@ export class TaskOrchestrator {
     const dependencyRevisions = task.workPackages
       .filter((item) => dependencyIds.includes(item.id))
       .sort((a, b) => a.batch - b.batch || a.id.localeCompare(b.id))
-      .map((item) => item.headRevision);
+      .map((item) => item.headRevision)
+      // A dependency that legitimately made no changes has no commit to bring in.
+      .filter(Boolean);
     const sliceId = `${workPackage.id}-A${attempt}`;
     try {
       const slice = await this.#worktrees.prepare(task, sliceId, {
@@ -1080,12 +1082,21 @@ export class TaskOrchestrator {
         workPackageId,
       );
       throwIfAborted(signal);
+      // Trusted only in combination with `commit`'s own status check: the marker is
+      // read here, but it is `allowNoChanges` inside `commit` that actually verifies
+      // the worktree is clean before treating this as a no-op. An agent that emits the
+      // marker while having actually changed something still goes through the ordinary
+      // commit path below.
+      const noChangesNeeded = parseNoChangesNeeded(result.finalText);
       const committed = await this.#worktrees.commit(
         slice,
         `agent-harness(${task.id}): ${workPackageId} ${currentPackage.title}`,
-        { ownedPaths: currentPackage.ownedPaths },
+        { ownedPaths: currentPackage.ownedPaths, allowNoChanges: Boolean(noChangesNeeded) },
       );
-      const content = `${result.finalText}\n\n## Harness slice evidence\n\n- Work package: ${workPackageId}\n- Attempt: ${attempt}\n- Dependencies: ${currentPackage.dependencies.join(", ") || "None"}\n- Base: ${slice.baseRevision}\n- Package commit: ${committed.headRevision}\n- Branch: ${slice.branch}\n- Changed files: ${committed.files.length}\n\n\`\`\`text\n${committed.ownSummary || "No diff stat returned."}\n\`\`\`\n\nThe exact package commit remains available through Git; its full patch is not copied into downstream prompts.`;
+      const evidence = committed.noChangesNeeded
+        ? `## Harness slice evidence\n\n- Work package: ${workPackageId}\n- Attempt: ${attempt}\n- Dependencies: ${currentPackage.dependencies.join(", ") || "None"}\n- Base: ${slice.baseRevision}\n- Outcome: no changes needed — ${noChangesNeeded.reason}\n- Branch: ${slice.branch}\n\nNothing was committed: the base revision already satisfies this work package.`
+        : `## Harness slice evidence\n\n- Work package: ${workPackageId}\n- Attempt: ${attempt}\n- Dependencies: ${currentPackage.dependencies.join(", ") || "None"}\n- Base: ${slice.baseRevision}\n- Package commit: ${committed.headRevision}\n- Branch: ${slice.branch}\n- Changed files: ${committed.files.length}\n\n\`\`\`text\n${committed.ownSummary || "No diff stat returned."}\n\`\`\`\n\nThe exact package commit remains available through Git; its full patch is not copied into downstream prompts.`;
+      const content = `${result.finalText}\n\n${evidence}`;
       await this.#retainAgentResult(id, "implement", { ...result, finalText: content }, {
         complete: false,
         replace: false,
@@ -1098,7 +1109,15 @@ export class TaskOrchestrator {
         target.headRevision = committed.headRevision;
         target.files = committed.files;
         target.error = null;
-        draft.events.push(activity("implement", `${workPackageId} ready for integration`, `${committed.headRevision.slice(0, 8)} changed ${committed.files.length} file${committed.files.length === 1 ? "" : "s"}.`, "success", "artifact"));
+        draft.events.push(activity(
+          "implement",
+          `${workPackageId} ready for integration`,
+          committed.noChangesNeeded
+            ? `No changes needed — ${noChangesNeeded.reason}`
+            : `${committed.headRevision.slice(0, 8)} changed ${committed.files.length} file${committed.files.length === 1 ? "" : "s"}.`,
+          "success",
+          "artifact",
+        ));
       });
     } catch (error) {
       await this.#store.update(id, (draft) => {
@@ -2068,6 +2087,25 @@ function labelForRun(kind) {
 function runDetail(kind) {
   if (kind === "implementation" || kind === "repair") return "Using the local ChatGPT-authenticated Codex CLI inside an isolated Git worktree.";
   return "Using the local ChatGPT-authenticated Codex CLI with retained workflow context.";
+}
+
+/**
+ * The implementation prompt's escape hatch for a work package whose goal is already
+ * met: the agent makes no edits and reports why instead of the harness treating an
+ * empty diff as a stuck or broken run. Only trusted when the worktree is actually
+ * clean — see the call site in `#runWorkPackage` — so a model that emits the marker
+ * without believing it (or while having actually changed something) still goes
+ * through the ordinary commit path instead of skipping evidence.
+ */
+function parseNoChangesNeeded(text) {
+  const match = String(text ?? "").match(/<no-changes-needed>\s*([\s\S]*?)\s*<\/no-changes-needed>/i);
+  if (!match) return null;
+  try {
+    const parsed = JSON.parse(match[1]);
+    return typeof parsed?.reason === "string" && parsed.reason.trim() ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 function dependencyClosure(workPackage, packages, seen = new Set()) {

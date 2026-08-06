@@ -1657,19 +1657,26 @@ function validInitialCandidateProducer(task, candidate, reservation) {
 function validCandidateAssemblyMembership(task, candidate) {
   const workPackages = task.workPackages ?? [];
   const members = candidate?.members ?? [];
+  // `headRevision === null` is a legitimate outcome: a work package whose verification
+  // already confirmed its goal was met commits nothing (see `allowNoChanges` in
+  // git-worktree.mjs). Only a non-null revision must be a real, non-empty commit hash;
+  // multiple work packages are allowed to independently be no-ops.
+  const validHeadRevision = (value) => value === null || (typeof value === "string" && value.trim().length > 0);
+  const committedHeadRevisions = workPackages.map((workPackage) => workPackage.headRevision).filter((value) => value !== null);
   if (
     !workPackages.length ||
     !workPackages.every((workPackage) => (
       workPackage.status === "integrated" &&
       typeof workPackage.id === "string" &&
       workPackage.id.trim().length > 0 &&
-      typeof workPackage.headRevision === "string" &&
-      workPackage.headRevision.trim().length > 0 &&
+      validHeadRevision(workPackage.headRevision) &&
       Number.isInteger(workPackage.batch) &&
       workPackage.batch > 0
     )) ||
     new Set(workPackages.map((workPackage) => workPackage.id)).size !== workPackages.length ||
-    new Set(workPackages.map((workPackage) => workPackage.headRevision)).size !== workPackages.length
+    // Two *committed* packages must never share a revision; any number of no-ops may
+    // all be null at once.
+    new Set(committedHeadRevisions).size !== committedHeadRevisions.length
   ) {
     return false;
   }

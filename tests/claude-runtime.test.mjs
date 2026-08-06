@@ -214,6 +214,50 @@ test("surfaces every recorded permission denial as a danger activity", async () 
   assert.notEqual(started.detail, parsed.permissionDenials[1].tool_input.command);
 });
 
+test("does not treat a denial as fatal when it exactly repeats a call that already succeeded", () => {
+  const parser = createClaudeStreamParser();
+  parser.parse(JSON.stringify({
+    type: "assistant",
+    message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "git status --porcelain" } }] },
+  }));
+  parser.parse(JSON.stringify({
+    type: "user",
+    message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "", is_error: false }] },
+  }));
+
+  const [denied] = parser.parse(JSON.stringify({
+    type: "result",
+    subtype: "success",
+    is_error: false,
+    result: "done",
+    permission_denials: [{ tool_name: "Bash", tool_use_id: "t2", tool_input: { command: "git status --porcelain" } }],
+  }));
+
+  // The raw count still reflects everything the CLI reported...
+  assert.equal(parser.result().permissionDenials.length, 1);
+  // ...but a repeat of a call the harness already has a real result for is the CLI's own
+  // duplicate-call guard firing, not new evidence of a refusal, so it drops out of the set
+  // `runClaude` treats as fatal.
+  assert.equal(parser.result().fatalPermissionDenials.length, 0);
+  assert.equal(denied.tone, "warning");
+  assert.match(denied.title, /ignored/);
+});
+
+test("still treats a denial as fatal when it does not match any earlier success", () => {
+  const parser = createClaudeStreamParser();
+  const [denied] = parser.parse(JSON.stringify({
+    type: "result",
+    subtype: "success",
+    is_error: false,
+    result: "done",
+    permission_denials: [{ tool_name: "Write", tool_use_id: "t1", tool_input: { file_path: "/etc/passwd" } }],
+  }));
+
+  assert.equal(parser.result().fatalPermissionDenials.length, 1);
+  assert.equal(denied.tone, "danger");
+  assert.equal(denied.title, "Permission denied");
+});
+
 test("keeps the sandbox refusal under --safe-mode", async () => {
   const { events } = await replayFixture("safe-mode-sandbox.jsonl");
   const completions = activities(events).filter((event) => event.toolCall?.phase === "completed");
@@ -1053,6 +1097,85 @@ test("fails the whole run when the Bash tool could not start a shell", async () 
         timeoutMs: 30_000,
       }),
       /could not start a shell.*E2BIG/s,
+    );
+  } finally {
+    if (previousBin === undefined) delete process.env.CLAUDE_BIN;
+    else process.env.CLAUDE_BIN = previousBin;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("does not fail runClaude when the only denial repeats an already-succeeded Bash call", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-dup-denial-"));
+  const previousBin = process.env.CLAUDE_BIN;
+  try {
+    // Recorded live behaviour (AH-002): the agent's edit already landed, then a
+    // diagnostic Bash command it had already run got denied on an identical repeat.
+    // The stage must not discard the completed edit over that.
+    process.env.CLAUDE_BIN = await writeFakeClaudeCli(directory, [
+      JSON.stringify({ type: "system", subtype: "init", session_id: "sess-dup" }),
+      JSON.stringify({
+        type: "assistant",
+        message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "git status --porcelain" } }] },
+      }),
+      JSON.stringify({
+        type: "user",
+        message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "", is_error: false }] },
+      }),
+      JSON.stringify({
+        type: "result",
+        subtype: "success",
+        is_error: false,
+        result: "Edited the files.",
+        usage: { input_tokens: 10, output_tokens: 2 },
+        permission_denials: [{ tool_name: "Bash", tool_use_id: "t2", tool_input: { command: "git status --porcelain" } }],
+      }),
+    ]);
+
+    const outcome = await runClaude({
+      cwd: directory,
+      prompt: "do the work",
+      sandbox: "workspace-write",
+      model: "claude-haiku-4-5",
+      reasoning: NO_REASONING_EFFORT,
+      tempDirectory: directory,
+      timeoutMs: 30_000,
+    });
+    assert.equal(outcome.finalText, "Edited the files.");
+  } finally {
+    if (previousBin === undefined) delete process.env.CLAUDE_BIN;
+    else process.env.CLAUDE_BIN = previousBin;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("still fails runClaude when a denial is not a repeat of a successful call", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-real-denial-"));
+  const previousBin = process.env.CLAUDE_BIN;
+  try {
+    process.env.CLAUDE_BIN = await writeFakeClaudeCli(directory, [
+      JSON.stringify({ type: "system", subtype: "init", session_id: "sess-real" }),
+      JSON.stringify({
+        type: "result",
+        subtype: "success",
+        is_error: false,
+        result: "Edited the files.",
+        usage: { input_tokens: 10, output_tokens: 2 },
+        permission_denials: [{ tool_name: "Write", tool_use_id: "t1", tool_input: { file_path: "/etc/passwd" } }],
+      }),
+    ]);
+
+    await assert.rejects(
+      () => runClaude({
+        cwd: directory,
+        prompt: "do the work",
+        sandbox: "workspace-write",
+        model: "claude-haiku-4-5",
+        reasoning: NO_REASONING_EFFORT,
+        tempDirectory: directory,
+        timeoutMs: 30_000,
+      }),
+      /Claude attempted 1 denied tool call during a workspace-write stage\./,
     );
   } finally {
     if (previousBin === undefined) delete process.env.CLAUDE_BIN;

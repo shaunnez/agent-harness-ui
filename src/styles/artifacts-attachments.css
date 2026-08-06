@@ -6,9 +6,7 @@
 
 .markdown-content {
   min-height: 0;
-  max-height: 620px;
   padding: 18px 22px;
-  overflow: auto;
   color: #d8d6ce;
   font-size: 14px;
   line-height: 1.7;

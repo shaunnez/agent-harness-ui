@@ -276,14 +276,6 @@ export function NewTaskDialog({
           </p>
         ) : null}
         <footer className="dialog-footer">
-          <span>
-            <span
-              className={`connection-dot ${runtimeStatus?.authenticated ? "" : "connection-dot--danger"}`}
-            />
-            {runtimeStatus?.authenticated
-              ? `Codex connected with ${runtimeStatus.authMethod}`
-              : "Local Codex login is required"}
-          </span>
           <div>
             <Button tone="ghost" type="button" onClick={onClose}>
               Cancel

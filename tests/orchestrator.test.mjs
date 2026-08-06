@@ -2537,6 +2537,73 @@ test("runs independent work packages concurrently before candidate assembly", as
   }
 });
 
+test("accepts a work package's declared no-op instead of failing on an empty diff", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-noop-package-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Single no-op package",
+      description: "Verification already passes; nothing should need to change.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-implementation";
+      draft.currentStage = "implement";
+      draft.workPackages = parseWorkPackages(
+        `<work-packages>{"packages":[{"id":"S1","title":"Keep ignored","description":"Verify only.","dependencies":[],"ownedPaths":["e2e/.gitignore"],"verification":["git check-ignore -v e2e/playwright-report/results.json"]}]}</work-packages>`,
+      );
+    });
+    let sawAllowNoChanges = false;
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        base: async () => ({ repositoryRoot: directory, baseRevision: "a".repeat(40), baseBranch: "main" }),
+        prepare: async (_task, id) => ({
+          id,
+          revisionNumber: 1,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: null,
+          branch: `agent-harness/${id.toLowerCase()}`,
+          repositoryRoot: directory,
+          worktreePath: path.join(directory, id),
+          status: "implementing",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          revisions: [],
+        }),
+        // Mirrors `GitWorktreeManager.commit`'s real `allowNoChanges` contract: only
+        // returns the no-op shape when the orchestrator explicitly asked for it, which
+        // it must only do after reading the agent's `<no-changes-needed>` marker.
+        commit: async (_slice, _message, options) => {
+          sawAllowNoChanges = options?.allowNoChanges === true;
+          if (!options?.allowNoChanges) throw new Error("The implementation agent completed without changing any files.");
+          return { headRevision: null, parentRevision: null, files: [], summary: "", diff: "", ownSummary: "", ownDiff: "", noChangesNeeded: true };
+        },
+        assemble: async () => ({ headRevision: "a".repeat(40), files: [], summary: "", diff: "" }),
+      },
+      runCodex: async () => ({
+        finalText: '## Outcome\n\nAlready ignored; nothing to change.\n\n<no-changes-needed>{"reason":"git check-ignore -v already exits 0 for playwright-report/results.json"}</no-changes-needed>',
+        usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+      }),
+    });
+
+    assert.equal(await orchestrator.start(task.id, "implementation"), true);
+    const finished = await waitForStatus(store, task.id, "ready-for-review");
+    assert.equal(sawAllowNoChanges, true);
+    // "integrated": assembly already folded it in by the time the task reaches
+    // ready-for-review, same terminal status a real committed package ends at.
+    assert.equal(finished.workPackages[0].status, "integrated");
+    assert.equal(finished.workPackages[0].headRevision, null);
+    assert.deepEqual(finished.workPackages[0].files, []);
+    assert.ok(finished.events.some((event) => /No changes needed/.test(event.detail ?? "")));
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("excludes only runtime-scoped context preflight from candidate test telemetry", () => {
   assert.equal(
     evaluationVerdict("test", {

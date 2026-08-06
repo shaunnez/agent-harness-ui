@@ -252,6 +252,26 @@ export function claudeUsageFromResult(usage) {
 }
 
 /**
+ * Order-independent identity for a tool call: same tool, same input. Used to tell a
+ * denial that is an exact repeat of a call already answered earlier in the run apart
+ * from a first-time refusal — see the denial handling in `parseResult`.
+ */
+function stableStringify(value) {
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function toolCallSignature(name, input) {
+  return `${name ?? ""}::${stableStringify(input ?? {})}`;
+}
+
+/**
  * A stateful line parser. Correlating a `tool_result` back to its `tool_use`
  * requires the pending map, so this cannot be a pure per-line function the way
  * `parseCodexEvent` is. `parse` returns zero or more internal events, because one
@@ -268,6 +288,11 @@ export function createClaudeStreamParser() {
     totalCostUsd: null,
     rateLimitInfo: null,
     permissionDenials: [],
+    fatalPermissionDenials: [],
+    // Signature of every tool call that actually completed, so a denial that is byte-
+    // identical to a call already answered can be told apart from a real refusal. See
+    // `toolCallSignature`.
+    successfulCallSignatures: new Set(),
     resultSubtype: null,
     resultIsError: false,
     sawResult: false,
@@ -355,7 +380,14 @@ export function createClaudeStreamParser() {
 
     if (name === "Bash") {
       const detail = formatCommand(input.command);
-      const entry = { kind: "bash", name: "command_execution", category: "repository-command", server: null, detail };
+      const entry = {
+        kind: "bash",
+        name: "command_execution",
+        category: "repository-command",
+        server: null,
+        detail,
+        signature: toolCallSignature(name, input),
+      };
       if (id) pending.set(id, entry);
       return {
         type: "activity",
@@ -371,7 +403,7 @@ export function createClaudeStreamParser() {
     const category = mcp ? "mcp" : "builtin-tool";
     const server = mcp ? mcp.server : null;
     const detail = [server, toolName, describeToolInput(input)].filter(Boolean).join(" · ");
-    const entry = { kind: "tool", name: toolName, category, server, detail };
+    const entry = { kind: "tool", name: toolName, category, server, detail, signature: toolCallSignature(name, input) };
     if (id) pending.set(id, entry);
     return {
       type: "activity",
@@ -404,6 +436,7 @@ export function createClaudeStreamParser() {
     }
     pending.delete(id);
     const succeeded = block.is_error !== true;
+    if (succeeded && entry.signature) state.successfulCallSignatures.add(entry.signature);
 
     if (entry.kind === "bash") {
       // An E2BIG shell start is the host refusing to exec, not a command that ran and
@@ -475,15 +508,26 @@ export function createClaudeStreamParser() {
     const resultText = typeof event.result === "string" ? event.result.trim() : "";
     state.finalText = resultText || state.lastAssistantText;
 
+    // A denial that is byte-identical to a call already answered earlier in this run
+    // (same tool, same input) is the CLI's own duplicate-call guard firing, not a
+    // sandbox-escape attempt: the harness already has that call's real result, so the
+    // denial adds no new information. Only a denial with no matching prior success is
+    // treated as fatal evidence that the agent tried something it was not allowed to.
     const events = [];
+    const fatalDenials = [];
     for (const denial of state.permissionDenials) {
+      const isRepeatOfSuccess = state.successfulCallSignatures.has(
+        toolCallSignature(denial?.tool_name, denial?.tool_input),
+      );
+      if (!isRepeatOfSuccess) fatalDenials.push(denial);
       events.push({
         type: "activity",
-        tone: "danger",
-        title: "Permission denied",
+        tone: isRepeatOfSuccess ? "warning" : "danger",
+        title: isRepeatOfSuccess ? "Permission denied (ignored — repeat of a call that already succeeded)" : "Permission denied",
         detail: [denial?.tool_name, formatCommand(denial?.tool_input?.command)].filter(Boolean).join(" · "),
       });
     }
+    state.fatalPermissionDenials = fatalDenials;
     if (state.finalText) events.push({ type: "message", text: state.finalText });
     // One usage event per run: top-level result.usage is cumulative and equals
     // modelUsage[primary]. Nothing accumulates, and iterations are never summed.
@@ -506,6 +550,7 @@ export function createClaudeStreamParser() {
         totalCostUsd: state.totalCostUsd,
         rateLimitInfo: state.rateLimitInfo,
         permissionDenials: state.permissionDenials,
+        fatalPermissionDenials: state.fatalPermissionDenials,
         resultSubtype: state.resultSubtype,
         resultIsError: state.resultIsError,
         sawResult: state.sawResult,
@@ -817,14 +862,30 @@ export async function runClaude({
   if (result.code !== 0) throw new Error(`Claude exited with code ${result.code}.`);
   // A denial is never a verdict. In a read-only stage it means the agent attempted a
   // mutation; either way the run is untrustworthy evidence, so it routes through the
-  // failed-run path instead of producing a REPAIR or a PASS.
-  if (parsed.permissionDenials.length) {
+  // failed-run path instead of producing a REPAIR or a PASS. Exception: a denial that
+  // is an exact repeat of a call that already succeeded earlier in the same run is the
+  // CLI's own duplicate-call guard, not a new refusal — the harness already has that
+  // call's real result, so it is dropped from `fatalPermissionDenials` upstream and
+  // never reaches here. `parsed.permissionDenials` (the unfiltered count) still surfaces
+  // through the per-denial activity events for visibility.
+  if (parsed.fatalPermissionDenials.length) {
     throw new Error(
-      `Claude attempted ${parsed.permissionDenials.length} denied tool call${parsed.permissionDenials.length === 1 ? "" : "s"} during a ${sandbox} stage.`,
+      `Claude attempted ${parsed.fatalPermissionDenials.length} denied tool call${parsed.fatalPermissionDenials.length === 1 ? "" : "s"} during a ${sandbox} stage.`,
     );
   }
-  if (parsed.rateLimitInfo && parsed.rateLimitInfo.status !== "allowed") {
+  // `allowed_warning` means allowed while approaching a limit, so refusing on
+  // `!== "allowed"` discarded good stage output over a heads-up. Only a status that is not a
+  // form of "allowed" means the plan declined the work; anything else is reported and kept.
+  if (parsed.rateLimitInfo && !String(parsed.rateLimitInfo.status ?? "").startsWith("allowed")) {
     throw new Error(`Claude plan allocation is ${parsed.rateLimitInfo.status}; the stage was not accepted.`);
+  }
+  if (parsed.rateLimitInfo && parsed.rateLimitInfo.status !== "allowed") {
+    onEvent({
+      type: "activity",
+      tone: "warning",
+      title: "Claude plan allocation is approaching its limit",
+      detail: `Reported status ${parsed.rateLimitInfo.status}.`,
+    });
   }
   if (!parsed.finalText) throw new Error("Claude completed without returning an artifact.");
 

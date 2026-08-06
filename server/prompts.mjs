@@ -43,7 +43,7 @@ const STAGE_PROMPTS = {
     label: "Implementation",
     artifactName: "implementation-candidate.md",
     instruction:
-      "Implement the approved specification and plan in this isolated Git worktree. Make only the scoped changes, follow repository conventions, and run focused checks when practical. Dependencies are already available: do not run npm install, pnpm, yarn, bun, npx, package-manager bootstrap commands, or any command that creates a lockfile/workspace manifest. Do not commit, push, merge, run browser/end-to-end UI QA, or contact external services; the harness owns Git integration and the operator owns browser QA. Never create or retain tool caches, browser state, test reports, or generated files in the candidate.",
+      "Implement the approved specification and plan in this isolated Git worktree. Make only the scoped changes, follow repository conventions, and run focused checks when practical. Dependencies are already available: do not run npm install, pnpm, yarn, bun, npx, package-manager bootstrap commands, or any command that creates a lockfile/workspace manifest. Do not commit, push, merge, run browser/end-to-end UI QA, or contact external services; the harness owns Git integration and the operator owns browser QA. Never create or retain tool caches, browser state, test reports, or generated files in the candidate. Never re-run a command byte-for-byte identical to one you already ran in this session; you already have its output. If a check came back unfavorable, diagnose with a different command or by reading the file, rather than repeating the same one hoping for a different result.",
     headings: ["Outcome", "Changes", "Verification", "Remaining risks"],
   },
   "dev-review": {
@@ -272,7 +272,9 @@ Slice base revision: ${slice.baseRevision}
 ${formatAttachments(task)}${formatDecisions(task)}Approved specification and plan:
 ${artifactContext.text}
 
-Implement only this package. Do not redo dependency work. You may make a necessary adjacent edit outside declared ownership only when compilation or the approved interface requires it; call that out explicitly. Run focused, non-interactive checks when practical.
+Implement only this package. Do not redo dependency work. You may make a necessary adjacent edit outside declared ownership only when compilation or the approved interface requires it; call that out explicitly. Run focused, non-interactive checks when practical. Never re-run a command byte-for-byte identical to one you already ran in this session; you already have its output.
+
+If the Focused verification commands above already confirm this package's goal is met, make no changes and end your response with exactly one line: <no-changes-needed>{"reason":"one sentence citing the verification evidence"}</no-changes-needed>. Only do this when the evidence leaves no doubt; if there is any, make the minimal edit instead.
 
 Return concise Markdown with these exact H2 headings in order: Outcome, Changes, Verification, Ownership exceptions, Remaining risks.`;
   return {

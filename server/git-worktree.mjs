@@ -98,6 +98,9 @@ export class GitWorktreeManager {
     await git(repositoryRoot, ["worktree", "add", "-b", branch, worktreePath, baseRevision]);
     const provisionedDependencyPaths = await provisionDependencies(repositoryRoot, worktreePath);
     for (const dependencyRevision of options.dependencyRevisions ?? []) {
+      // A dependency work package that legitimately made no changes has no commit to
+      // bring in; the base revision already reflects that outcome.
+      if (!dependencyRevision) continue;
       try {
         await git(worktreePath, ["cherry-pick", dependencyRevision]);
       } catch (error) {
@@ -129,7 +132,30 @@ export class GitWorktreeManager {
     const status = (await git(candidate.worktreePath, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout;
     const entries = statusEntries(status).filter((entry) => !isProvisionedPath(entry.file, provisioned));
     const files = entries.map((entry) => entry.file);
-    if (!files.length) throw new Error("The implementation agent completed without changing any files.");
+    if (!files.length) {
+      // A caller that has independently confirmed the agent declared this a legitimate
+      // no-op (see `parseNoChangesNeeded` in orchestrator.mjs) accepts an empty diff as
+      // success rather than the harness assuming every implementation run must produce
+      // one. Every other caller keeps the original guard: a silent empty diff still
+      // means a stuck or broken run.
+      if (options.allowNoChanges) {
+        // No commit exists to hand back: `headRevision: null` mirrors the unattempted
+        // state a work package starts in, so assembly and dependent slices treat this
+        // exactly like "nothing to bring in" rather than cherry-picking a revision that
+        // is merely an ancestor already in their history.
+        return {
+          headRevision: null,
+          parentRevision: null,
+          files: [],
+          summary: "",
+          diff: "",
+          ownSummary: "",
+          ownDiff: "",
+          noChangesNeeded: true,
+        };
+      }
+      throw new Error("The implementation agent completed without changing any files.");
+    }
     const suspicious = files.find(isSensitivePath);
     if (suspicious) throw new Error(`Candidate contains a potentially sensitive file (${suspicious}); it was preserved but not committed.`);
     const generated = entries.find(
@@ -177,6 +203,10 @@ export class GitWorktreeManager {
   async assemble(candidate, members) {
     if (!members.length) throw new Error("An integration candidate needs at least one work-package commit.");
     for (const member of members) {
+      // A work package that legitimately made no changes (`commit`'s `allowNoChanges`
+      // path) has no commit to bring in: the base revision every member branched from
+      // already reflects that outcome.
+      if (!member.headRevision) continue;
       try {
         await git(candidate.worktreePath, ["cherry-pick", member.headRevision]);
       } catch (error) {

@@ -1,7 +1,7 @@
 .task-table--shared .task-table__header,
 .task-table--shared .task-table__row {
-  grid-template-columns: minmax(220px, 1.6fr) 86px 112px 86px 100px 68px 62px 80px 96px 102px;
-  column-gap: 10px;
+  grid-template-columns: minmax(220px, 1.6fr) 86px 156px 86px 100px 68px 62px 80px 96px 102px;
+  column-gap: 16px;
   min-width: 1102px;
 }
 

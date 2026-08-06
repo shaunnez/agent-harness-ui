@@ -34,9 +34,18 @@ export function isProcessTimeoutError(error) {
   return error instanceof ProcessTimeoutError;
 }
 
+const FORMAT_COMMAND_LIMIT = 220;
+
+/**
+ * Truncates silently rather than lying about what ran: a cut string with no
+ * marker reads as the whole command, which made a denied multi-line script
+ * look like it was missing its `&&`/`;` separators instead of just being cut
+ * off mid-line.
+ */
 export function formatCommand(command) {
-  if (Array.isArray(command)) return command.join(" ").slice(0, 220);
-  return String(command ?? "Repository inspection").replace(/\s+/g, " ").slice(0, 220);
+  const joined = Array.isArray(command) ? command.join(" ") : String(command ?? "Repository inspection").replace(/\s+/g, " ");
+  if (joined.length <= FORMAT_COMMAND_LIMIT) return joined;
+  return `${joined.slice(0, FORMAT_COMMAND_LIMIT)}…`;
 }
 
 export function conciseToolResult(value) {

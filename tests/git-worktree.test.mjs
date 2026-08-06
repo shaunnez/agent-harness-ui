@@ -97,6 +97,62 @@ test("creates, commits, and fast-forward merges an isolated candidate", async ()
   }
 });
 
+test("only accepts an empty diff as success when the caller explicitly allows a no-op", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-noop-"));
+  const repository = path.join(directory, "repository");
+  try {
+    await git(directory, ["init", "repository"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+    const manager = new GitWorktreeManager(path.join(directory, "worktrees"));
+    const task = { id: "AH-NOOP", repositoryPath: repository };
+    const base = await manager.base(task);
+
+    // A stuck or broken agent that produced nothing without justification still fails
+    // the way it always has: the caller must ask for the no-op path explicitly.
+    const unjustified = await manager.prepare(task, "S1-A1", { baseRevision: base.baseRevision });
+    await assert.rejects(() => manager.commit(unjustified, "S1"), /completed without changing any files/);
+
+    // A work package whose own verification already confirmed nothing needed to change.
+    const noopSlice = await manager.prepare(task, "S2-A1", { baseRevision: base.baseRevision });
+    const noop = await manager.commit(noopSlice, "S2", { allowNoChanges: true });
+    assert.equal(noop.noChangesNeeded, true);
+    assert.equal(noop.headRevision, null);
+    assert.deepEqual(noop.files, []);
+
+    // A real change is committed normally regardless of `allowNoChanges`.
+    const realSlice = await manager.prepare(task, "S3-A1", { baseRevision: base.baseRevision });
+    await writeFile(path.join(realSlice.worktreePath, "feature.txt"), "candidate\n", "utf8");
+    const real = await manager.commit(realSlice, "S3", { allowNoChanges: true });
+    assert.equal(real.noChangesNeeded, undefined);
+    assert.ok(real.headRevision);
+
+    // Assembly skips a no-op member entirely rather than cherry-picking a null revision.
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+    const assembled = await manager.assemble(candidate, [
+      { packageId: "S2", headRevision: noop.headRevision },
+      { packageId: "S3", headRevision: real.headRevision },
+    ]);
+    assert.deepEqual(assembled.files, ["feature.txt"]);
+
+    // A dependent slice tolerates a no-op dependency's null revision the same way.
+    const dependentSlice = await manager.prepare(task, "S4-A1", {
+      baseRevision: base.baseRevision,
+      dependencyRevisions: [noop.headRevision, real.headRevision],
+      branchId: "S4-A1",
+    });
+    assert.equal(
+      (await readFile(path.join(dependentSlice.worktreePath, "feature.txt"), "utf8")).replaceAll("\r\n", "\n"),
+      "candidate\n",
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("refuses to merge a candidate into a sibling branch at the same base revision", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-target-ref-"));
   const repository = path.join(directory, "repository");
