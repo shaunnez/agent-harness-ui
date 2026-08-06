@@ -45,7 +45,18 @@ const CI_DIRECTORY = path.join(".github", "workflows");
  * target is the thing being cited.
  */
 const RUNNERS = new Set(["npm", "pnpm", "yarn", "bun", "npx", "node", "python", "python3", "make", "sh", "bash", "zsh", "uv", "poetry"]);
-const MAX_EVIDENCE_LINES = 400;
+
+/**
+ * How much of a workflow file is scanned for `run:` steps.
+ *
+ * Raised from 400 because a `run: |` block's *body* is the evidence, so the interesting lines are
+ * several times more numerous than the `run:` keys and they cluster late — a real CI file's build,
+ * test and e2e steps all sit past line 400. The cap survives only as a runaway guard against a
+ * generated multi-megabyte YAML, and when it bites it is reported (`truncatedWorkflows`) rather
+ * than dropping the tail of a file in silence, because "nothing there" and "I stopped looking" are
+ * different findings.
+ */
+const MAX_EVIDENCE_LINES = 4000;
 
 /**
  * Read-only discovery of what the repository already says about verifying itself.
@@ -63,6 +74,11 @@ export async function discoverVerificationEvidence(repositoryRoot) {
     scripts: Object.entries(scripts).map(([name, command]) => ({ name, command: String(command) })),
     makeTargets: makefileTargets(makefile),
     ciCommands: workflows.flatMap((workflow) => workflow.commands.map((command) => ({ workflow: workflow.name, command }))),
+    // Empty in the ordinary case. Non-empty means the harness stopped reading a workflow before
+    // its end, which is a different statement from "that workflow declares nothing".
+    truncatedWorkflows: workflows
+      .filter((workflow) => workflow.truncated)
+      .map((workflow) => ({ workflow: workflow.name, scannedLines: MAX_EVIDENCE_LINES, totalLines: workflow.totalLines })),
   };
 }
 
@@ -89,26 +105,98 @@ async function readWorkflows(directory) {
     if (!entry.isFile() || !/\.ya?ml$/.test(entry.name)) continue;
     const text = await readText(path.join(directory, entry.name));
     if (!text) continue;
-    // Deliberately a line scrape rather than a YAML parse: the harness only needs the `run:`
-    // strings as *evidence that the project runs them*, and adding a YAML dependency to read
-    // them would be a larger commitment than the evidence is worth.
-    const commands = text
-      .split("\n")
-      .slice(0, MAX_EVIDENCE_LINES)
-      .map((line) => /^\s*(?:-\s*)?run:\s*(.+)$/.exec(line)?.[1]?.trim())
-      .filter(Boolean)
-      .map((command) => command.replace(/^["']|["']$/g, ""));
-    workflows.push({ name: entry.name, commands });
+    workflows.push({ name: entry.name, ...scrapeRunSteps(text) });
   }
   return workflows;
 }
 
 /**
+ * Pull the `run:` steps out of a workflow file.
+ *
+ * Deliberately a line scrape rather than a YAML parse: the harness only needs the `run:` strings
+ * as *evidence that the project runs them*, and adding a YAML dependency to read them would be a
+ * larger commitment than the evidence is worth. Having now read a real repository's workflows, I
+ * still think that is right — nothing here needs anchors, merge keys or type resolution — but the
+ * scrape has to understand one piece of YAML syntax it previously did not.
+ *
+ * Block scalars. `run: |` and `run: >` put the commands on the *following* indented lines, so
+ * taking everything after `run:` yielded the literal string "|" and lost the step. That is not a
+ * cosmetic loss: a repository's compile, test and e2e steps are almost all written as blocks, so
+ * they were invisible to both the prompt and the citation check, and a proposal could in principle
+ * have been "traced" to a pipe character.
+ *
+ * Each non-empty body line becomes its own evidence command, with `\` continuations rejoined so a
+ * wrapped invocation stays one command, and comment-only lines dropped.
+ */
+function scrapeRunSteps(text) {
+  const allLines = text.split("\n");
+  const truncated = allLines.length > MAX_EVIDENCE_LINES;
+  const lines = truncated ? allLines.slice(0, MAX_EVIDENCE_LINES) : allLines;
+  const commands = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const match = /^(\s*)(?:-\s*)?run:\s*(.*)$/.exec(lines[index]);
+    if (!match) continue;
+    const [, indent, rest] = match;
+    const value = rest.trim();
+    // `|`, `>`, and their chomping/indentation indicators: `|-`, `>+`, `|2`.
+    if (/^[|>][+-]?\d*$/.test(value)) {
+      const body = [];
+      let cursor = index + 1;
+      for (; cursor < lines.length; cursor += 1) {
+        if (!lines[cursor].trim()) {
+          body.push("");
+          continue;
+        }
+        if (leadingSpaces(lines[cursor]) <= indent.length) break;
+        body.push(lines[cursor]);
+      }
+      index = cursor - 1;
+      commands.push(...blockScalarCommands(body));
+      continue;
+    }
+    if (!value) continue;
+    commands.push(value.replace(/^["']|["']$/g, ""));
+  }
+  return { commands, truncated, totalLines: allLines.length };
+}
+
+function leadingSpaces(line) {
+  return /^\s*/.exec(line)[0].length;
+}
+
+function blockScalarCommands(body) {
+  const commands = [];
+  let continued = null;
+  for (const raw of body) {
+    const line = raw.trim();
+    if (continued != null) {
+      const continues = line.endsWith("\\");
+      continued = `${continued} ${continues ? line.slice(0, -1).trim() : line}`.trim();
+      if (!continues) {
+        commands.push(continued);
+        continued = null;
+      }
+      continue;
+    }
+    if (!line || line.startsWith("#")) continue;
+    if (line.endsWith("\\")) {
+      continued = line.slice(0, -1).trim();
+      continue;
+    }
+    commands.push(line);
+  }
+  if (continued) commands.push(continued);
+  return commands;
+}
+
+/**
  * Does this proposed argv trace to something in the repository?
  *
- * Matched on the command's *tail* — the script name or make target — rather than on an exact
- * string, because `npm run lint`, `pnpm lint` and a CI step's `npm run lint --if-present` are
- * the same evidence. What it will not do is accept a command whose action appears nowhere.
+ * Matched on the command's *tail* — the script name, make target or script path — rather than on an
+ * exact string, because `npm run lint`, `pnpm lint` and a CI step's `npm run lint --if-present` are
+ * the same evidence. What it will not do is accept a command whose action appears nowhere, and — the
+ * tighter rule — it will not accept a citation that is not distinctive: a bare word appearing
+ * somewhere inside an unrelated step is not a source.
  */
 export function evidenceForCommand(argv, evidence) {
   const joined = argv.join(" ");
@@ -124,36 +212,102 @@ export function evidenceForCommand(argv, evidence) {
     const target = argv[1];
     if (target && evidence.makeTargets.includes(target)) return { kind: "make-target", detail: `Makefile target ${target}` };
   }
-  // Fallback: match on the *arguments*, not the runner. A CI step's
+  const sources = evidenceSources(evidence);
+
+  // Fallback 1 — the command *minus its runner*, matched whole. A CI step's
   // `python scripts/check_retired_references.py` and a proposal's `python3 scripts/…` cite the
-  // same thing — and on macOS `python` is frequently only a shell alias, so a harness that spawns
+  // same thing, and on macOS `python` is frequently only a shell alias, so a harness that spawns
   // argv directly *must* differ from CI here. Comparing whole strings rejected a correct
-  // substitution for the digit in `python3`.
-  //
-  // Requiring a shared distinctive token still refuses invention: `npm run verify-everything`
-  // shares no token with any script or CI step, and `curl https://example.test` shares none either.
-  const tokens = argv.filter((argument, index) =>
-    index > 0
-    && !argument.startsWith("-")
+  // substitution for the digit in `python3`; dropping the interpreter and comparing the rest
+  // exactly keeps that insensitivity without loosening anything else.
+  const tail = commandTail(argv.map(String));
+  if (tail) {
+    const exact = sources.find((source) => source.tails.includes(tail));
+    if (exact) return { kind: exact.kind, detail: exact.detail };
+  }
+
+  // Fallback 2 — a shared token, but only a *distinctive* one: something that looks like a path or
+  // a file, matched at token boundaries. A bare word is not a citation. The defect this replaces
+  // let `python -m compileall -q backend` be "traced" to
+  // `python -m pip install -r backend/requirements-dev.txt` on the word `backend` — the harness
+  // found a worse source than the agent had claimed and recorded it as fact. Script and Makefile
+  // names are still citeable, but only through fallback 1, where they must match exactly.
+  const distinctive = argv.slice(1).filter((argument) =>
+    !argument.startsWith("-")
     && argument !== "run"
-    && argument.length > 3
-    && !RUNNERS.has(path.basename(argument)));
-  const sources = [
-    ...evidence.ciCommands.map((entry) => ({
-      kind: "ci-step",
-      text: entry.command,
-      detail: `${CI_DIRECTORY}/${entry.workflow}: ${entry.command}`,
-    })),
-    ...evidence.scripts.map((script) => ({
-      kind: "package-script",
-      text: `${script.name} ${script.command}`,
-      detail: `package.json scripts.${script.name}`,
-    })),
-    ...evidence.makeTargets.map((target) => ({ kind: "make-target", text: target, detail: `Makefile target ${target}` })),
-  ];
-  const cited = sources.find((source) => tokens.some((token) => source.text.includes(token)));
+    && !isRunner(argument)
+    && isDistinctiveToken(argument));
+  const cited = sources.find((source) => distinctive.some((token) => containsToken(source.text, token)));
   if (cited) return { kind: cited.kind, detail: cited.detail };
   return null;
+}
+
+/**
+ * Every citable string in the repository, each with the tails a proposal could match exactly.
+ *
+ * `&&`- and `;`-joined CI steps are split, so a proposal citing one half of
+ * `npm run api:types && git diff --exit-code …` traces to the step that runs it.
+ */
+function evidenceSources(evidence) {
+  const sources = [];
+  for (const entry of evidence.ciCommands ?? []) {
+    const text = String(entry.command);
+    sources.push({
+      kind: "ci-step",
+      text,
+      detail: `${CI_DIRECTORY}/${entry.workflow}: ${text}`,
+      tails: shellSegments(text).map((segment) => commandTail(segment.split(/\s+/))).filter(Boolean),
+    });
+  }
+  for (const script of evidence.scripts ?? []) {
+    const text = String(script.command);
+    sources.push({
+      kind: "package-script",
+      text: `${script.name} ${text}`,
+      detail: `package.json scripts.${script.name}`,
+      tails: [script.name, ...shellSegments(text).map((segment) => commandTail(segment.split(/\s+/)))].filter(Boolean),
+    });
+  }
+  for (const target of evidence.makeTargets ?? []) {
+    sources.push({ kind: "make-target", text: target, detail: `Makefile target ${target}`, tails: [target] });
+  }
+  return sources;
+}
+
+function shellSegments(text) {
+  return text.split(/\s*(?:&&|\|\||;)\s*/).map((segment) => segment.trim()).filter(Boolean);
+}
+
+/**
+ * The command with its runner removed: what is actually being cited, rather than which interpreter
+ * or package manager happens to reach it.
+ */
+function commandTail(parts) {
+  let index = 0;
+  while (index < parts.length && isRunner(parts[index])) index += 1;
+  if (index < parts.length && parts[index] === "run") index += 1;
+  return parts.slice(index).join(" ").trim();
+}
+
+function isRunner(token) {
+  const base = path.basename(String(token));
+  // `python3.11` and `python3` are the same runner as `python`.
+  return RUNNERS.has(base) || RUNNERS.has(base.replace(/[\d.]+$/, ""));
+}
+
+/**
+ * Distinctive enough to be a citation on its own: a path, or something with a file extension.
+ * `backend` is not; `backend/requirements-dev.txt` and `scripts/run-e2e-native.sh` are.
+ */
+function isDistinctiveToken(token) {
+  if (token.length <= 3) return false;
+  if (token.includes("/")) return true;
+  return /\.[A-Za-z][A-Za-z0-9]{0,7}$/.test(path.basename(token));
+}
+
+function containsToken(text, token) {
+  const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<![\\w./-])${escaped}(?![\\w./-])`).test(text);
 }
 
 const PROPOSAL_OPEN = "<verification-proposal>";
@@ -201,15 +355,51 @@ export function parseOnboardingProposal(text, evidence) {
           + "Every verification command must come from a package script, a Makefile target or a CI step.",
       );
     }
+    const claimedEvidence = typeof claimed === "string" ? claimed.trim() : null;
     return {
       ...command,
       evidence: found,
       // Kept for the approval diff: what the agent said its source was, beside what the harness
       // could actually find. They should agree; when they do not, the operator sees both.
-      claimedEvidence: typeof claimed === "string" ? claimed.trim() : null,
+      claimedEvidence,
+      evidenceDisagrees: claimedEvidence ? !citationsAgree(claimedEvidence, found.detail) : false,
     };
   });
-  return { determined: true, reason: null, commands, notes: normalizeNotes(value.notes) };
+  return {
+    determined: true,
+    reason: null,
+    commands,
+    notes: normalizeNotes(value.notes),
+    // Surfaced, not refused.
+    //
+    // The temptation is to reject a proposal whose claimed citation disagrees with the one the
+    // harness found — it was the only reason the `backend` mis-citation was visible at all. But
+    // the claim is free-text prose from a model ("the compile step", "ci.yml build") and the found
+    // citation is a fact the harness checked itself. Refusing on disagreement would give a model's
+    // phrasing a veto over a harness-verified fact, which is #47's rule inverted: the guard is
+    // that the command traces to the repository, and that guard runs regardless of what the model
+    // said. What the mis-citation actually revealed was a broken matcher, now fixed.
+    //
+    // So the disagreement is raised where the operator is already looking — the approval diff —
+    // rather than converted into a failure whose usual cause is wording.
+    disagreements: commands
+      .filter((command) => command.evidenceDisagrees)
+      .map((command) => ({ id: command.id, claimed: command.claimedEvidence, found: command.evidence.detail })),
+  };
+}
+
+/**
+ * Lenient on phrasing, strict on substance: two citations agree if they name anything in common.
+ * "package.json scripts.lint" agrees with "the lint script"; "invented citation" agrees with
+ * nothing.
+ */
+function citationsAgree(claimed, found) {
+  const words = (text) => new Set(
+    text.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length >= 4),
+  );
+  const claimedWords = words(claimed);
+  if (!claimedWords.size) return false;
+  return [...words(found)].some((word) => claimedWords.has(word));
 }
 
 function normalizeNotes(notes) {

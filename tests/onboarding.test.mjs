@@ -22,6 +22,7 @@ const evidence = {
   scripts: [{ name: "lint", command: "biome lint src" }, { name: "test", command: "node --test" }],
   makeTargets: ["e2e-native"],
   ciCommands: [{ workflow: "ci.yml", command: "npm run typecheck" }],
+  truncatedWorkflows: [],
 };
 
 const proposal = (commands, extra = {}) =>
@@ -54,7 +55,85 @@ test("discovers what the repository already says about verifying itself", async 
     // A repository with none of these yields empty evidence rather than an error: "nothing to
     // trace to" is a finding the proposal step reports, not a crash here.
     const empty = await discoverVerificationEvidence(path.join(directory, "missing"));
-    assert.deepEqual(empty, { packageManager: null, scripts: [], makeTargets: [], ciCommands: [] });
+    assert.deepEqual(empty, {
+      packageManager: null,
+      scripts: [],
+      makeTargets: [],
+      ciCommands: [],
+      truncatedWorkflows: [],
+    });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("reads the body of a `run:` block scalar, not the pipe character", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-onboard-block-"));
+  try {
+    await mkdir(path.join(directory, ".github", "workflows"), { recursive: true });
+    // The defect: `readWorkflows` took everything after `run:`, so a block scalar produced the
+    // literal string "|" and the step's real commands vanished. A whole repository's compile, test
+    // and e2e steps are written this way, so they were invisible — and "|" was, in principle, a
+    // citeable evidence string.
+    await writeFile(
+      path.join(directory, ".github", "workflows", "ci.yml"),
+      [
+        "jobs:",
+        "  validate:",
+        "    steps:",
+        "      - name: Lint frontend",
+        "        run: npm run lint",
+        "      - name: Compile and import backend",
+        "        run: |",
+        "          # a comment is not a command",
+        "          python -m compileall -q backend",
+        '          python -c "import backend.main"',
+        "",
+        "      - name: Test policy suites",
+        "        run: >-",
+        "          python -m pytest -q --junitxml=/tmp/results.xml \\",
+        "            tests/policy/test_ask_postgres_policy.py",
+        "        env:",
+        "          MODE: '1'",
+        "      - name: Run e2e",
+        "        run: scripts/run-e2e-native.sh",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const found = await discoverVerificationEvidence(directory);
+    const commands = found.ciCommands.map((entry) => entry.command);
+    assert.ok(!commands.includes("|"), `no bare block-scalar marker survives: ${JSON.stringify(commands)}`);
+    assert.ok(!commands.includes(">-"));
+    assert.deepEqual(commands, [
+      "npm run lint",
+      "python -m compileall -q backend",
+      'python -c "import backend.main"',
+      // A `\` continuation stays one command rather than becoming two fragments.
+      "python -m pytest -q --junitxml=/tmp/results.xml tests/policy/test_ask_postgres_policy.py",
+      "scripts/run-e2e-native.sh",
+    ]);
+    assert.deepEqual(found.truncatedWorkflows, []);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("says so when a workflow is longer than it reads", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-onboard-truncate-"));
+  try {
+    await mkdir(path.join(directory, ".github", "workflows"), { recursive: true });
+    // A silent cap reads as "nothing there". The cap is now 4000 lines and reports when it bites,
+    // so an incomplete scan cannot be mistaken for an empty repository.
+    await writeFile(
+      path.join(directory, ".github", "workflows", "long.yml"),
+      `${Array.from({ length: 4100 }, (_unused, index) => `      # filler ${index}`).join("\n")}\n      - run: npm run lint\n`,
+      "utf8",
+    );
+    const found = await discoverVerificationEvidence(directory);
+    assert.deepEqual(found.ciCommands, []);
+    assert.deepEqual(found.truncatedWorkflows, [{ workflow: "long.yml", scannedLines: 4000, totalLines: 4102 }]);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -97,6 +176,46 @@ test("cites a CI step through a different interpreter than CI used", () => {
   assert.equal(evidenceForCommand(["python3", "-m", "up"], withCi), null);
 });
 
+test("a citation has to be distinctive, not a word that appears somewhere", () => {
+  // The real mis-citation: `python -m compileall -q backend` was "cited" by
+  // `python -m pip install -r backend/requirements-dev.txt`, matched on the bare word `backend`.
+  // The proposal's own claim named the correct step; the harness found a worse one and recorded it
+  // as fact. A bare word is now never a citation.
+  const installOnly = {
+    ...evidence,
+    ciCommands: [{ workflow: "ci.yml", command: "python -m pip install -r backend/requirements-dev.txt" }],
+  };
+  assert.equal(evidenceForCommand(["python", "-m", "compileall", "-q", "backend"], installOnly), null);
+
+  // With the step that actually runs it present — which only the block-scalar fix makes visible —
+  // it cites that step, and through a different interpreter.
+  const withCompile = {
+    ...evidence,
+    ciCommands: [
+      { workflow: "ci.yml", command: "python -m pip install -r backend/requirements-dev.txt" },
+      { workflow: "ci.yml", command: "python -m compileall -q backend" },
+    ],
+  };
+  const cited = evidenceForCommand(["python3", "-m", "compileall", "-q", "backend"], withCompile);
+  assert.equal(cited?.kind, "ci-step");
+  assert.match(cited.detail, /compileall/);
+
+  // A path or a filename is distinctive enough to cite on its own, wherever in the step it appears.
+  assert.equal(
+    evidenceForCommand(["python3", "-m", "pip", "install", "-r", "backend/requirements-dev.txt"], installOnly)?.kind,
+    "ci-step",
+  );
+  // But a path that only shares a *prefix* with one in the repository is not that path.
+  assert.equal(evidenceForCommand(["python3", "-m", "compileall", "backend/main"], installOnly), null);
+  assert.equal(evidenceForCommand(["cat", "backend/requirements-dev.txt.bak"], installOnly), null);
+
+  // Half of an `&&`-joined step is still that step.
+  const joined = { ...evidence, ciCommands: [{ workflow: "ci.yml", command: "npm run api:types && git diff --exit-code" }] };
+  assert.equal(evidenceForCommand(["npm", "run", "api:types"], joined)?.kind, "ci-step");
+  // And a neighbouring word from the same step is not.
+  assert.equal(evidenceForCommand(["npm", "run", "types"], joined), null);
+});
+
 test("refuses a proposal whose command traces to nothing", () => {
   assert.throws(
     () => parseOnboardingProposal(proposal([{ id: "all", command: ["npm", "run", "verify-everything"] }]), evidence),
@@ -135,6 +254,23 @@ test("accepts a traceable proposal and records both claimed and found evidence",
   assert.equal(parsed.commands[1].claimedEvidence, "invented citation");
   assert.match(parsed.commands[1].evidence.detail, /ci\.yml/);
   assert.deepEqual(parsed.notes, ["The suite needs no external services."]);
+
+  // A disagreement is raised rather than refused. The claim is a model's prose; the found citation
+  // is a fact the harness checked. Refusing here would let phrasing veto a verified fact, so the
+  // disagreement goes where the operator is already looking instead.
+  assert.equal(parsed.commands[0].evidenceDisagrees, false);
+  assert.equal(parsed.commands[1].evidenceDisagrees, true);
+  assert.deepEqual(parsed.disagreements, [
+    { id: "typecheck", claimed: "invented citation", found: ".github/workflows/ci.yml: npm run typecheck" },
+  ]);
+
+  // Wording that differs but names the same thing is agreement, not a disagreement to chase.
+  const paraphrased = parseOnboardingProposal(
+    proposal([{ id: "lint", command: ["npm", "run", "lint"], evidence: "the lint script in package.json" }]),
+    evidence,
+  );
+  assert.equal(paraphrased.commands[0].evidenceDisagrees, false);
+  assert.deepEqual(paraphrased.disagreements, []);
 });
 
 test("treats an undetermined repository as a first-class answer, with a reason", () => {
