@@ -174,7 +174,7 @@ export function CommandCentre({
                       <Warning size={17} weight="fill" />
                     )}
                   </span>
-                  <span>
+                  <span className="attention-row__label">
                     <strong>
                       {task.id} · {isGateStatus(task.status) ? "Workflow gate ready" : "Run needs repair"}
                     </strong>

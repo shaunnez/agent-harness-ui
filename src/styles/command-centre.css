@@ -218,7 +218,13 @@
   color: var(--amber);
   background: var(--amber-soft);
 }
-.attention-row span {
+/*
+ * Class rather than a bare `span`: as `.attention-row span` this outranked
+ * `.attention-row__icon` on specificity and replaced its centring grid with a
+ * top-aligned column flex, which is why the status icon sat against the first
+ * line of a two-line label instead of centred on the row.
+ */
+.attention-row__label {
   display: flex;
   flex-direction: column;
   gap: 4px;
