@@ -71,6 +71,18 @@
   border-block: 1px solid var(--border);
 }
 
+.runtime-worktree-inventory__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.runtime-worktree-inventory__hint {
+  color: var(--faint);
+}
+
 .runtime-worktree-inventory__return {
   color: var(--faint);
 }

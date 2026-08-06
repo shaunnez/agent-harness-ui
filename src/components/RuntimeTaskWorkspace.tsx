@@ -72,6 +72,7 @@ export function RuntimeTaskWorkspace({
   onDecision,
   onGrillAnswer,
   onFinishGrill,
+  onRemoveWorktree,
   initialViewedStageId,
   initialSelectedWorktreeId,
   onViewedStageChange,
@@ -559,6 +560,7 @@ export function RuntimeTaskWorkspace({
                   inventory={worktreeInventory}
                   selectedId={selectedWorktreeId}
                   onSelect={setSelectedWorktreeId}
+                  onRemove={onRemoveWorktree}
                 />
               </InspectorSection>
             ) : null}

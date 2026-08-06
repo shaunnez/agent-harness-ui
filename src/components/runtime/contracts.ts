@@ -26,6 +26,7 @@ export interface RuntimeTaskWorkspaceProps {
   onDecision: (question: string, answer: string) => Promise<void>;
   onGrillAnswer: (questionId: string, answer: string) => Promise<void>;
   onFinishGrill: (acceptRemaining: boolean) => Promise<void>;
+  onRemoveWorktree: (rowId: string) => Promise<void>;
   initialViewedStageId?: StageId;
   initialSelectedWorktreeId?: string | null;
   onViewedStageChange?: (stageId: StageId) => void;

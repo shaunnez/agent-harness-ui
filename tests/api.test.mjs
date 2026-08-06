@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { request as httpRequest } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { createApiServer } from "../server/api.mjs";
-import { GitWorktreeManager } from "../server/git-worktree.mjs";
+import { defaultWorktreeRoot, GitWorktreeManager } from "../server/git-worktree.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { parseFocusedTestEvidence } from "../server/structured-output.mjs";
 import {
@@ -1759,6 +1759,87 @@ test("returns a read-only worktree inventory with slice and candidate rows", asy
     await cleanup(server, directory);
     await rm(sliceRepository, { recursive: true, force: true });
     await rm(candidateRepository, { recursive: true, force: true });
+  }
+});
+
+test("removes a cleanup-ready worktree through the API and refuses an active one", async () => {
+  const previousRoot = process.env.AGENT_HARNESS_WORKTREE_ROOT;
+  const worktreeRootDirectory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-worktree-root-"));
+  // The route removes through the server's own `GitWorktreeManager`, which is rooted at
+  // `defaultWorktreeRoot()` — the test worktree has to live under the same root or the
+  // manager's own path-escape guard refuses it.
+  process.env.AGENT_HARNESS_WORKTREE_ROOT = worktreeRootDirectory;
+  const { directory, origin, server, store } = await createServer();
+  const repository = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-remove-repo-"));
+  try {
+    await git(repository, ["init"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+
+    const task = await store.create({
+      title: "Remove a slice worktree",
+      description: "Exercise DELETE /api/tasks/:id/worktrees/:rowId.",
+      repositoryPath: repository,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const manager = new GitWorktreeManager(defaultWorktreeRoot());
+    const base = await manager.base(task);
+    const slice = await manager.prepare(task, "S1", { baseRevision: base.baseRevision, branchId: "slice-1" });
+    await writeFile(path.join(slice.worktreePath, "feature.txt"), "done\n", "utf8");
+    const committed = await manager.commit(slice, "slice worktree");
+    await store.update(task.id, (draft) => {
+      draft.workPackages.push({
+        id: "S1",
+        batch: 1,
+        title: "Cleanup candidate",
+        description: "Already committed and idle.",
+        status: "ready_for_integration",
+        attempts: 1,
+        dependencies: [],
+        ownedPaths: [],
+        verification: [],
+        branch: slice.branch,
+        worktreePath: slice.worktreePath,
+        baseRevision: slice.baseRevision,
+        headRevision: committed.headRevision,
+        files: committed.files,
+        error: null,
+      });
+    });
+    const rowUrl = `${origin}/api/tasks/${task.id}/worktrees/${encodeURIComponent(`slice:${task.id}:S1`)}`;
+
+    // A worktree still in use must never be pulled out from under its running agent,
+    // even though the tree itself is clean.
+    await store.update(task.id, (draft) => {
+      draft.workPackages[0].status = "running";
+    });
+    const refused = await fetch(rowUrl, { method: "DELETE" });
+    assert.equal(refused.status, 400);
+    assert.match((await refused.json()).error, /not ready for cleanup/);
+    assert.equal(await stat(slice.worktreePath).then(() => true).catch(() => false), true);
+
+    await store.update(task.id, (draft) => {
+      draft.workPackages[0].status = "ready_for_integration";
+    });
+    const removed = await fetch(rowUrl, { method: "DELETE" });
+    assert.equal(removed.status, 200);
+    const payload = await removed.json();
+    assert.equal(payload.rows.length, 1);
+    assert.equal(payload.rows[0].gitExists, false);
+    assert.equal(await stat(slice.worktreePath).then(() => true).catch(() => false), false);
+
+    const missing = await fetch(`${origin}/api/tasks/${task.id}/worktrees/${encodeURIComponent("slice:missing:X")}`, { method: "DELETE" });
+    assert.equal(missing.status, 404);
+  } finally {
+    await cleanup(server, directory);
+    await rm(repository, { recursive: true, force: true });
+    await rm(worktreeRootDirectory, { recursive: true, force: true });
+    if (previousRoot === undefined) delete process.env.AGENT_HARNESS_WORKTREE_ROOT;
+    else process.env.AGENT_HARNESS_WORKTREE_ROOT = previousRoot;
   }
 });
 

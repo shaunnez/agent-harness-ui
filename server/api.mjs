@@ -245,6 +245,31 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         send(response, 200, { rows: await worktrees.inventory(worktreeEntriesForTask(task)) });
         return;
       }
+      const removeWorktreeMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/worktrees\/([^/]+)$/);
+      if (request.method === "DELETE" && removeWorktreeMatch) {
+        const task = await store.get(decodeURIComponent(removeWorktreeMatch[1]));
+        if (!task) {
+          send(response, 404, { error: "Task not found." });
+          return;
+        }
+        const rowId = decodeURIComponent(removeWorktreeMatch[2]);
+        const entry = worktreeEntriesForTask(task).find((candidate) => candidate.id === rowId);
+        if (!entry) {
+          send(response, 404, { error: "Worktree entry not found for this task." });
+          return;
+        }
+        // Re-derive cleanup readiness now, from the filesystem, rather than trusting a
+        // client-held row: the state behind it can change between the list request and
+        // this one, and a currently active worktree must never be pulled out from under
+        // a running agent.
+        const [row] = await worktrees.inventory([entry]);
+        if (!row.cleanupReady) {
+          throw new Error(`This worktree is not ready for cleanup (${row.currentState}); wait for the current run to finish.`);
+        }
+        await worktrees.removeWorktree({ worktreePath: entry.worktreePath, repositoryRoot: task.repositoryPath });
+        send(response, 200, { rows: await worktrees.inventory(worktreeEntriesForTask(task)) });
+        return;
+      }
       const candidateDiffMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/candidates\/([^/]+)\/diff$/);
       if (request.method === "GET" && candidateDiffMatch) {
         const taskId = decodeURIComponent(candidateDiffMatch[1]);

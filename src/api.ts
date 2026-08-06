@@ -68,6 +68,13 @@ export async function getRuntimeWorktreeInventory(taskId?: string) {
   );
 }
 
+export async function removeRuntimeWorktree(taskId: string, rowId: string) {
+  return request<{ rows: RuntimeWorktreeInventoryRow[] }>(
+    `/api/tasks/${encodeURIComponent(taskId)}/worktrees/${encodeURIComponent(rowId)}`,
+    { method: "DELETE" },
+  );
+}
+
 export async function getEvaluationSummary() {
   return request<RuntimeEvaluationSummary>("/api/evaluations/summary");
 }

@@ -5,6 +5,7 @@ import {
   CheckCircle,
   CircleNotch,
   FileCode,
+  Trash,
   WarningCircle,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
@@ -107,13 +108,18 @@ export function RuntimeWorktreeInventory({
   inventory,
   selectedId,
   onSelect,
+  onRemove,
 }: {
   inventory: RuntimeWorktreeInventoryRow[];
   selectedId: string | null;
   onSelect: (rowId: string | null) => void;
+  onRemove: (rowId: string) => Promise<void>;
 }) {
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
   const selectedRow = inventory.find((row) => row.id === selectedId) ?? null;
   if (selectedRow) {
+    const removing = removingId === selectedRow.id;
     return (
       <div className="runtime-worktree-inventory runtime-worktree-inventory--detail">
         <button type="button" className="icon-button" onClick={() => onSelect(null)} aria-label="Return to inventory list">
@@ -143,6 +149,32 @@ export function RuntimeWorktreeInventory({
             <RuntimeRow label="Cleanup" value={selectedRow.cleanupReady ? "ready" : "not ready"} />
           </div>
         </details>
+        <div className="runtime-worktree-inventory__actions">
+          <Button
+            tone="danger"
+            compact
+            icon={Trash}
+            disabled={!selectedRow.cleanupReady || removing}
+            onClick={async () => {
+              setRemoveError(null);
+              setRemovingId(selectedRow.id);
+              try {
+                await onRemove(selectedRow.id);
+                onSelect(null);
+              } catch (error) {
+                setRemoveError(error instanceof Error ? error.message : "The worktree could not be removed.");
+              } finally {
+                setRemovingId(null);
+              }
+            }}
+          >
+            {removing ? "Removing…" : "Remove worktree"}
+          </Button>
+          {!selectedRow.cleanupReady ? (
+            <small className="runtime-worktree-inventory__hint">Only a clean, inactive worktree can be removed.</small>
+          ) : null}
+          {removeError ? <small className="text-red">{removeError}</small> : null}
+        </div>
         <p className="runtime-worktree-inventory__return">Return to the inventory list to inspect another retained worktree.</p>
       </div>
     );

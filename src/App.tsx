@@ -12,6 +12,7 @@ import {
   getTask,
   listTasks,
   recordTaskDecision,
+  removeRuntimeWorktree,
   runTask,
   runTaskAction,
   updateRuntimeSettings,
@@ -293,6 +294,16 @@ export function App() {
             onDecision={async (question, answer) => { await recordTaskDecision(activeRuntimeTask.id, question, answer); await refreshActiveTask(activeRuntimeTask.id); showToast("success", "Decision recorded."); }}
             onGrillAnswer={async (questionId, answer) => { await answerGrillQuestion(activeRuntimeTask.id, questionId, answer); await refreshActiveTask(activeRuntimeTask.id); showToast("success", "Grill answer recorded."); }}
             onFinishGrill={async (acceptRemaining) => { await finishGrill(activeRuntimeTask.id, acceptRemaining); await refreshActiveTask(activeRuntimeTask.id); showToast("success", "Grill completed; specification run started."); }}
+            onRemoveWorktree={async (rowId) => {
+              try {
+                await removeRuntimeWorktree(activeRuntimeTask.id, rowId);
+                await refreshActiveTask(activeRuntimeTask.id);
+                showToast("success", "Worktree removed.");
+              } catch (error) {
+                showToast("error", error instanceof Error ? error.message : "The worktree could not be removed.");
+                throw error;
+              }
+            }}
           />
         ) : workspaceOpen && activeTaskLoading ? <TaskWorkspaceSkeleton /> : null}
         {!workspaceOpen && screen === "command" ? <CommandCentre runtimeTasks={runtimeTasks} runtimeStatus={runtimeStatus} runtimeLoading={runtimeLoading} runtimeError={runtimeError} onNewTask={() => setNewTaskOpen(true)} onOpenTask={(taskId) => openWorkspace("command", taskId)} onSeeAllTasks={() => navigate("tasks")} onRefreshRuntime={() => void refreshRuntime()} runtimeRefreshing={runtimeRefreshing} /> : null}
