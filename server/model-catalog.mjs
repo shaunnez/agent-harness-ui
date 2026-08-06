@@ -345,6 +345,15 @@ export function withConfiguredModels(catalog, settings) {
       ? { ...entry, provenance: "configured", availability: "configured", editable: false }
       : entry,
   );
+  // An id the settings reference but the catalog never reported at all has to be surfaced, not
+  // dropped: silently omitting it leaves a stage policy pointing at a model that is absent from
+  // every dropdown, so the operator sees a policy they cannot explain and cannot correct. Carry
+  // it as unsupported and non-editable — visible as broken, impossible to newly select.
+  const reported = new Set(models.map((entry) => entry.id));
+  for (const id of configuredIds) {
+    if (reported.has(id)) continue;
+    models.push(unreportedModel(id));
+  }
   return { ...(catalog ?? { fetchedAt: null, source: "Unavailable model catalog" }), models };
 }
 
@@ -532,6 +541,27 @@ function claudeModel(id, label, description, defaultReasoning, reasoningLevels) 
     provenance: "bundled",
     availability: "discovered",
     editable: true,
+  };
+}
+
+// A model id that only the operator's settings mention. Nothing is known about it beyond the id,
+// so it claims no reasoning *levels*: `editable: false` already keeps it out of every policy
+// dropdown (`AgentPolicyEditor` filters on `editable`, so it is never the selected model whose
+// levels get rendered), and inventing levels would imply the harness confirmed something it never
+// saw. `defaultReasoning` is still a plain string because `RuntimeModelOption` types it as one;
+// it is only ever read as a seed when an allowlist edit picks a new default.
+function unreportedModel(id) {
+  return {
+    id,
+    label: id,
+    description: "Referenced by the runtime settings but not reported by any installed runtime.",
+    provider: id.startsWith("claude") ? "claude" : "codex",
+    defaultReasoning: "medium",
+    reasoningLevels: [],
+    pricing: MODEL_PRICING[id] ?? null,
+    provenance: "configured",
+    availability: "unsupported",
+    editable: false,
   };
 }
 
