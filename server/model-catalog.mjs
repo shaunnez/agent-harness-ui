@@ -334,8 +334,14 @@ export function withConfiguredModels(catalog, settings) {
     ...(settings?.allowedModels ?? []),
     ...Object.values(settings?.stagePolicies ?? {}).map((policy) => policy?.model),
   ].filter(Boolean).map(normalizeModelId));
+  // Keyed on availability, not provenance. "configured" means the runtime could not confirm the
+  // model exists, and the downgrade to `editable: false` exists to stop an operator selecting one.
+  // Claude entries are `provenance: "bundled"` with `availability: "discovered"` — bundled is how
+  // the harness knows them, discovered is the claim that matters — so testing provenance
+  // downgraded every Claude model the settings referenced, leaving them tickable in the allowlist
+  // but absent from every policy dropdown.
   const models = (catalog?.models ?? []).map((entry) =>
-    configuredIds.has(entry.id) && entry.provenance !== "discovered"
+    configuredIds.has(entry.id) && entry.availability !== "discovered"
       ? { ...entry, provenance: "configured", availability: "configured", editable: false }
       : entry,
   );

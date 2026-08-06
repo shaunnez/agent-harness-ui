@@ -53,6 +53,7 @@ import {
   providerRuntimeDefaults,
   readExecutionProviderCatalog,
   readClaudeModelCatalog,
+  withConfiguredModels,
   resolveAgentPolicy,
 } from "../server/model-catalog.mjs";
 import { resolveExecutionProvider } from "../server/execution-providers.mjs";
@@ -1485,4 +1486,35 @@ test("preflights the exec-argument budget before the canary and offers no way pa
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test("referencing a discovered model in settings does not make it unselectable", () => {
+  // The policy dropdowns filter on `editable`, and `withConfiguredModels` downgrades anything it
+  // considers merely "configured". It tested `provenance`, so every Claude model — bundled
+  // provenance, discovered availability — was downgraded the moment settings referenced it:
+  // tickable in the allowlist, absent from every dropdown, with no error anywhere.
+  const catalog = {
+    models: [
+      { id: "claude-sonnet-5", provider: "claude", provenance: "bundled", availability: "discovered", editable: true },
+      { id: "gpt-5.6-luna", provider: "codex", provenance: "discovered", availability: "discovered", editable: true },
+      { id: "gpt-5.3-codex-spark", provider: "codex", provenance: "bundled-fallback", availability: "unsupported", editable: false },
+    ],
+    fetchedAt: null,
+    source: "test",
+  };
+  const models = withConfiguredModels(catalog, {
+    defaultModel: "claude-sonnet-5",
+    allowedModels: ["claude-sonnet-5", "gpt-5.6-luna", "gpt-5.3-codex-spark"],
+    stagePolicies: { plan: { model: "claude-opus-5", reasoning: "xhigh" } },
+  }).models;
+  const byId = (id) => models.find((model) => model.id === id);
+
+  assert.equal(byId("claude-sonnet-5").editable, true, "a discovered model stays selectable when referenced");
+  assert.equal(byId("gpt-5.6-luna").editable, true);
+  // A model the runtime could not confirm is still downgraded, which is what the branch is for.
+  assert.equal(byId("gpt-5.3-codex-spark").editable, false);
+  assert.equal(byId("gpt-5.3-codex-spark").availability, "configured");
+  // An id in settings that the catalog never reported is still surfaced as unsupported.
+  assert.equal(byId("claude-opus-5").editable, false);
+  assert.equal(byId("claude-opus-5").availability, "unsupported");
 });
