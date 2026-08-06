@@ -92,6 +92,12 @@ function validateStagePolicies(input, known, allowedModels, fallback) {
   return policies;
 }
 
+// A closed or archived task's worktrees are no longer part of live work, so they report as
+// `stale` regardless of the recorded per-entry status. Archiving additionally *removes* the
+// ones it safely can, so for an archived task this mostly describes whatever archiving had to
+// leave behind — an entry it could not discard without destroying uncommitted work.
+const RETIRED_TASK_STATUSES = new Set(["closed", "archived"]);
+
 function worktreeEntriesForTask(task) {
   const entries = [];
   for (const workPackage of task.workPackages ?? []) {
@@ -107,7 +113,7 @@ function worktreeEntriesForTask(task) {
       baseRevision: workPackage.baseRevision ?? null,
       headRevision: workPackage.headRevision ?? null,
       recordedHeadRevision: workPackage.headRevision ?? null,
-      lifecycleState: task.status === "closed" ? "stale" : workPackage.status ?? "retained",
+      lifecycleState: RETIRED_TASK_STATUSES.has(task.status) ? "stale" : workPackage.status ?? "retained",
     });
   }
   for (const candidate of task.candidates ?? []) {
@@ -123,7 +129,7 @@ function worktreeEntriesForTask(task) {
       baseRevision: candidate.baseRevision ?? null,
       headRevision: candidate.headRevision ?? null,
       recordedHeadRevision: candidate.headRevision ?? null,
-      lifecycleState: task.status === "closed" ? "stale" : candidate.status ?? "retained",
+      lifecycleState: RETIRED_TASK_STATUSES.has(task.status) ? "stale" : candidate.status ?? "retained",
     });
   }
   return entries;
@@ -432,6 +438,111 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
           return;
         }
         send(response, 200, { task: closed });
+        return;
+      }
+
+      const archiveMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/archive$/);
+      if (request.method === "POST" && archiveMatch) {
+        const id = decodeURIComponent(archiveMatch[1]);
+        const task = await store.get(id);
+        if (!task) {
+          send(response, 404, { error: "Task not found." });
+          return;
+        }
+        if (task.status === "archived") {
+          send(response, 409, { error: "This task is already archived." });
+          return;
+        }
+        if (["running", "cancelling"].includes(task.status) || task.activeRunKind) {
+          send(response, 409, { error: "Cancel the active run before archiving this task." });
+          return;
+        }
+        if (task.status === "merging" || task.mergeIntent?.status === "pending") {
+          send(response, 409, { error: "Wait for the pending merge reconciliation before archiving this task." });
+          return;
+        }
+        const note = String((await readJson(request))?.note ?? "").trim().slice(0, 2_000);
+        // Reclaim the worktrees, but never at the cost of work nobody has a copy of. A row is
+        // discardable only when it is `cleanupReady` (present, clean, not active) or already gone
+        // from disk. An entry carrying uncommitted changes is left exactly where it is and named
+        // in the response, so archiving is always safe to run and never silently destructive.
+        const entries = worktreeEntriesForTask(task);
+        const archivedAt = new Date().toISOString();
+        // The status moves *before* any worktree is touched. If the transition loses a race the
+        // worktrees are still there, still listed, still removable from the inventory; the
+        // opposite order would delete them and then fail, leaving nothing to point at.
+        let archived;
+        try {
+          archived = await store.transition(id, (draft) => (
+            draft.status !== "archived" &&
+            draft.status !== "running" &&
+            draft.status !== "cancelling" &&
+            !draft.activeRunKind &&
+            draft.status !== "merging" &&
+            draft.mergeIntent?.status !== "pending"
+          ), (draft) => {
+            // `previousStatus` is recorded because archiving is a *visibility* decision, not a
+            // verdict on the work: the status it interrupted is the only remaining evidence of
+            // where the task actually stopped, and nothing else in the record preserves it.
+            draft.archive = { archivedAt, previousStatus: draft.status, note, removedWorktrees: [], retainedWorktrees: [] };
+            draft.status = "archived";
+            draft.activeRunKind = null;
+            draft.error = null;
+            draft.events.push({
+              id: crypto.randomUUID(),
+              at: archivedAt,
+              category: "decision",
+              tone: "info",
+              stage: draft.currentStage,
+              title: "Task archived",
+              detail: [`Archived from ${draft.archive.previousStatus}.`, note || null].filter(Boolean).join(" "),
+            });
+          });
+        } catch (error) {
+          if (error.code !== "TASK_TRANSITION_CONFLICT") throw error;
+          send(response, 409, { error: "Task state changed before it could be archived." });
+          return;
+        }
+        const rows = await worktrees.inventory(entries);
+        const removed = [];
+        const retained = [];
+        for (const [index, row] of rows.entries()) {
+          if (!row.gitExists) continue;
+          if (!row.cleanupReady) {
+            retained.push({
+              id: row.id,
+              worktreePath: row.worktreePath,
+              reason: row.gitClean === false ? "uncommitted changes" : row.currentState,
+            });
+            continue;
+          }
+          await worktrees.removeWorktree({
+            worktreePath: entries[index].worktreePath,
+            repositoryRoot: task.repositoryPath,
+          });
+          removed.push({ id: row.id, worktreePath: row.worktreePath });
+        }
+        const recorded = await store.update(id, (draft) => {
+          draft.archive.removedWorktrees = removed.map((entry) => entry.worktreePath);
+          draft.archive.retainedWorktrees = retained.map((entry) => entry.worktreePath);
+          if (removed.length || retained.length) {
+            draft.events.push({
+              id: crypto.randomUUID(),
+              at: new Date().toISOString(),
+              category: "decision",
+              tone: retained.length ? "warning" : "info",
+              stage: draft.currentStage,
+              title: "Archived worktrees reclaimed",
+              detail: [
+                removed.length ? `${removed.length} worktree${removed.length === 1 ? "" : "s"} removed.` : null,
+                retained.length
+                  ? `${retained.length} left in place (${retained.map((entry) => entry.reason).join(", ")}).`
+                  : null,
+              ].filter(Boolean).join(" "),
+            });
+          }
+        });
+        send(response, 200, { task: recorded ?? archived, removedWorktrees: removed, retainedWorktrees: retained });
         return;
       }
 

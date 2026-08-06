@@ -21,6 +21,7 @@ export interface RuntimeTaskWorkspaceProps {
   onRun: () => Promise<void>;
   onCancel: () => Promise<void>;
   onCloseTask: (reason: "not-needed" | "superseded", note: string, supersededBy?: string) => Promise<void>;
+  onArchiveTask: () => Promise<void>;
   onEvaluate: (score: number, outcome: "accepted" | "rejected" | "mixed", notes: string) => Promise<void>;
   onAction: (action: RuntimeWorkflowAction, note?: string) => Promise<void>;
   onDecision: (question: string, answer: string) => Promise<void>;

@@ -1843,6 +1843,103 @@ test("removes a cleanup-ready worktree through the API and refuses an active one
   }
 });
 
+test("archiving hides a task, reclaims its clean worktrees, and keeps the dirty ones", async () => {
+  const previousRoot = process.env.AGENT_HARNESS_WORKTREE_ROOT;
+  const worktreeRootDirectory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-archive-root-"));
+  process.env.AGENT_HARNESS_WORKTREE_ROOT = worktreeRootDirectory;
+  const { directory, origin, server, store } = await createServer();
+  const repository = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-archive-repo-"));
+  try {
+    await git(repository, ["init"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+
+    const task = await store.create({
+      title: "Archive a stranded task",
+      description: "Exercise POST /api/tasks/:id/archive.",
+      repositoryPath: repository,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const manager = new GitWorktreeManager(defaultWorktreeRoot());
+    const base = await manager.base(task);
+    const clean = await manager.prepare(task, "S1", { baseRevision: base.baseRevision, branchId: "slice-1" });
+    await writeFile(path.join(clean.worktreePath, "feature.txt"), "done\n", "utf8");
+    const cleanCommitted = await manager.commit(clean, "clean slice");
+    const dirty = await manager.prepare(task, "S2", { baseRevision: base.baseRevision, branchId: "slice-2" });
+    await writeFile(path.join(dirty.worktreePath, "wip.txt"), "uncommitted\n", "utf8");
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      for (const [id, slice, headRevision] of [
+        ["S1", clean, cleanCommitted.headRevision],
+        ["S2", dirty, null],
+      ]) {
+        draft.workPackages.push({
+          id,
+          batch: 1,
+          title: `Slice ${id}`,
+          description: "Fixture slice.",
+          status: "ready_for_integration",
+          attempts: 1,
+          dependencies: [],
+          ownedPaths: [],
+          verification: [],
+          branch: slice.branch,
+          worktreePath: slice.worktreePath,
+          baseRevision: slice.baseRevision,
+          headRevision,
+          files: [],
+          error: null,
+        });
+      }
+    });
+    const archiveUrl = `${origin}/api/tasks/${task.id}/archive`;
+
+    // An active run owns its worktree; archiving must not pull it out from under the agent.
+    await store.update(task.id, (draft) => { draft.status = "running"; });
+    const refused = await fetch(archiveUrl, { method: "POST", body: JSON.stringify({}) });
+    assert.equal(refused.status, 409);
+    assert.match((await refused.json()).error, /Cancel the active run/);
+    assert.equal(await stat(clean.worktreePath).then(() => true).catch(() => false), true);
+
+    await store.update(task.id, (draft) => { draft.status = "repair-required"; });
+    const archived = await fetch(archiveUrl, { method: "POST", body: JSON.stringify({ note: "Superseded by AH-003." }) });
+    assert.equal(archived.status, 200);
+    const payload = await archived.json();
+    assert.equal(payload.task.status, "archived");
+    // Archiving is a visibility decision, so where the task actually stopped has to survive it.
+    assert.equal(payload.task.archive.previousStatus, "repair-required");
+    assert.equal(payload.task.archive.note, "Superseded by AH-003.");
+    assert.deepEqual(payload.removedWorktrees.map((entry) => entry.worktreePath), [clean.worktreePath]);
+    assert.equal(payload.retainedWorktrees.length, 1);
+    assert.equal(payload.retainedWorktrees[0].worktreePath, dirty.worktreePath);
+    assert.equal(payload.retainedWorktrees[0].reason, "uncommitted changes");
+    assert.deepEqual(payload.task.archive.removedWorktrees, [clean.worktreePath]);
+    assert.deepEqual(payload.task.archive.retainedWorktrees, [dirty.worktreePath]);
+
+    // The clean tree is gone; the one holding work nobody else has is untouched.
+    assert.equal(await stat(clean.worktreePath).then(() => true).catch(() => false), false);
+    assert.equal(await readFile(path.join(dirty.worktreePath, "wip.txt"), "utf8"), "uncommitted\n");
+
+    const again = await fetch(archiveUrl, { method: "POST", body: JSON.stringify({}) });
+    assert.equal(again.status, 409);
+    assert.match((await again.json()).error, /already archived/);
+
+    // An archived task is terminal: no stage run may be started from it.
+    const started = await fetch(`${origin}/api/tasks/${task.id}/repair`, { method: "POST", body: JSON.stringify({}) });
+    assert.equal(started.status, 409);
+  } finally {
+    await cleanup(server, directory);
+    await rm(repository, { recursive: true, force: true });
+    await rm(worktreeRootDirectory, { recursive: true, force: true });
+    if (previousRoot === undefined) delete process.env.AGENT_HARNESS_WORKTREE_ROOT;
+    else process.env.AGENT_HARNESS_WORKTREE_ROOT = previousRoot;
+  }
+});
+
 test("marks missing or dirty inventory rows as stale without mutating them", async () => {
   const { directory, origin, server, store } = await createServer();
   const repository = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-stale-inventory-"));

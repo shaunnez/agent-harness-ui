@@ -48,7 +48,11 @@ export function CommandCentre({
   runtimeLoading: boolean;
   runtimeError: string | null;
 }) {
-  const openTasks = runtimeTasks.filter((task) => task.status !== "closed");
+  // Archived tasks leave every list on this screen, including the attention list — archiving is
+  // how an operator says "stop showing me this". The spend totals below deliberately still count
+  // them: that money was really spent, and quietly dropping it would misreport the run cost.
+  const visibleTasks = runtimeTasks.filter((task) => task.status !== "archived");
+  const openTasks = visibleTasks.filter((task) => task.status !== "closed");
   const recentTasks = [...openTasks]
     .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
     .slice(0, 5);
@@ -68,7 +72,7 @@ export function CommandCentre({
     { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, cost: 0 },
   );
   const hasCost = runtimeTasks.some((task) => task.usage.cost != null);
-  const attentionTasks = runtimeTasks.filter(
+  const attentionTasks = visibleTasks.filter(
     (task) =>
       ["failed", "blocked", "cancelled", "repair-required"].includes(task.status) ||
       isGateStatus(task.status),

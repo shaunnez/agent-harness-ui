@@ -52,7 +52,9 @@ export function TaskTable({
                     ? "completed"
                     : task.status === "Closed"
                       ? "closed"
-                      : "needs-input"
+                      : task.status === "Archived"
+                        ? "archived"
+                        : "needs-input"
             }
           />
           <span className="task-table__stage"><strong>{task.stage}</strong><StageProgress task={runtimeTask} /></span>

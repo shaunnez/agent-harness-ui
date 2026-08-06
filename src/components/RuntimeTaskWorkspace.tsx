@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   Archive,
   Check,
+  Prohibit,
   FileCode,
   GitDiff,
   Pause,
@@ -67,6 +68,7 @@ export function RuntimeTaskWorkspace({
   onRun,
   onCancel,
   onCloseTask,
+  onArchiveTask,
   onEvaluate,
   onAction,
   onDecision,
@@ -257,6 +259,13 @@ export function RuntimeTaskWorkspace({
     }
   };
 
+  const archiveTask = async () => {
+    // Archiving destroys worktrees, so it asks first — and says so in the prompt, because the
+    // consequence is not recoverable from the UI afterwards.
+    if (!window.confirm(`Archive ${task.id}? It leaves the command centre and task list, and its clean worktrees are removed. Anything with uncommitted work is left in place.`)) return;
+    await onArchiveTask();
+  };
+
   const closeTask = async () => {
     const supersededBy = window.prompt("Optional superseding task ID. Leave blank to close this task as not needed.", "");
     if (supersededBy === null) return;
@@ -306,7 +315,7 @@ export function RuntimeTaskWorkspace({
           <Button
             tone="secondary"
             compact
-            icon={Archive}
+            icon={Prohibit}
             disabled={["running", "cancelling"].includes(task.status) || task.status === "closed" || mergeReconciliationPending}
             title={mergeReconciliationPending
               ? "Wait for the pending merge reconciliation before closing this task."
@@ -318,6 +327,22 @@ export function RuntimeTaskWorkspace({
             onClick={() => void closeTask()}
           >
             Close task
+          </Button>
+          <Button
+            tone="secondary"
+            compact
+            icon={Archive}
+            disabled={["running", "cancelling"].includes(task.status) || task.status === "archived" || mergeReconciliationPending}
+            title={mergeReconciliationPending
+              ? "Wait for the pending merge reconciliation before archiving this task."
+              : ["running", "cancelling"].includes(task.status)
+                ? "Wait for the active process tree to terminate before archiving this task."
+                : task.status === "archived"
+                  ? "This task is already archived."
+                  : "Hide this task from the command centre and task list, and reclaim its worktrees."}
+            onClick={() => void archiveTask()}
+          >
+            Archive
           </Button>
           <Button
             tone="secondary"

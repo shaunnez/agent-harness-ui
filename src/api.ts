@@ -99,6 +99,17 @@ export async function closeTask(id: string, reason: "not-needed" | "superseded" 
   });
 }
 
+export async function archiveTask(id: string, note = "") {
+  return request<{
+    task: RuntimeTask;
+    removedWorktrees: Array<{ id: string; worktreePath: string }>;
+    retainedWorktrees: Array<{ id: string; worktreePath: string; reason: string }>;
+  }>(`/api/tasks/${encodeURIComponent(id)}/archive`, {
+    method: "POST",
+    body: JSON.stringify({ note }),
+  });
+}
+
 export async function evaluateTask(
   id: string,
   score: number,

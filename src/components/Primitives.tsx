@@ -72,6 +72,7 @@ const runStateCopy: Record<TaskRunState, string> = {
   "merged-to-target": "Merged to target",
   completed: "Completed",
   closed: "Closed",
+  archived: "Archived",
 };
 
 export function StateBadge({ state }: { state: TaskRunState }) {
@@ -80,7 +81,7 @@ export function StateBadge({ state }: { state: TaskRunState }) {
       ? XCircle
       : state === "completed"
         ? CheckCircle
-        : state === "closed"
+        : state === "closed" || state === "archived"
           ? Circle
         : state === "needs-input" || state === "awaiting-approval" || state === "merged-to-target"
           ? WarningCircle

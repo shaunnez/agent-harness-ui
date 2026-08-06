@@ -28,7 +28,8 @@ export type TaskRunState =
   | "awaiting-approval"
   | "merged-to-target"
   | "completed"
-  | "closed";
+  | "closed"
+  | "archived";
 export type AppScreen = "command" | "tasks" | "skills" | "agents" | "settings";
 
 export interface WorkflowStage {
@@ -42,7 +43,7 @@ export interface WorkflowStage {
 export interface RecentTask {
   id: string;
   title: string;
-  status: "Running" | "Blocked" | "Completed" | "Needs input" | "Closed";
+  status: "Running" | "Blocked" | "Completed" | "Needs input" | "Closed" | "Archived";
   stage: string;
   stageIndex: number;
   duration: string;
@@ -101,7 +102,9 @@ export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
     workflowStages.findIndex((stage) => stage.id === task.currentStage),
   );
   const status: RecentTask["status"] =
-    task.status === "closed"
+    task.status === "archived"
+      ? "Archived"
+      : task.status === "closed"
       ? "Closed"
       : task.status === "completed"
       ? "Completed"
@@ -147,7 +150,7 @@ export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
     models: (task.models?.length ? task.models : [{ provider: "openai" as const, model: task.agentConfig?.model ?? "gpt-5.6-luna" }]).map((item) => ({ provider: "codex" as const, model: item.model })),
     priority: `${task.priority[0]?.toUpperCase()}${task.priority.slice(1)}` as RecentTask["priority"],
     startedAt: formatTaskDate(task.startedAt),
-    endedAt: formatTaskDate(task.closure?.closedAt ?? task.completedAt ?? (task.status === "running" ? null : task.updatedAt)),
+    endedAt: formatTaskDate(task.archive?.archivedAt ?? task.closure?.closedAt ?? task.completedAt ?? (task.status === "running" ? null : task.updatedAt)),
     updatedAt: formatTaskDate(task.updatedAt),
   };
 }

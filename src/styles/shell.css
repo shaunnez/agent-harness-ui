@@ -397,7 +397,8 @@
 .state-badge--completed {
   color: var(--green);
 }
-.state-badge--closed {
+.state-badge--closed,
+.state-badge--archived {
   color: var(--faint);
 }
 .section-header {

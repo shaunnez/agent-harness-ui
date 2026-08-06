@@ -34,6 +34,12 @@ export function TasksScreen({
           ]
             .join(" ")
             .toLowerCase();
+          // Archived is opt-in, and excluded even from "All statuses": the point of archiving is
+          // that the task stops appearing unless it is asked for by name. Only the explicit
+          // Archived filter shows them, and it shows nothing else.
+          if (task.status === "archived" || status === "archived") {
+            if (task.status !== "archived" || status !== "archived") return false;
+          }
           const statusMatches =
             status === "all" ||
             (status === "open" && task.status !== "closed") ||
@@ -76,7 +82,7 @@ export function TasksScreen({
       </div>
       {filtersOpen ? (
         <div className="task-filters">
-          <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="open">Open tasks</option><option value="all">All statuses</option><option value="attention">Needs attention</option><option value="waiting">Waiting for action</option><option value="running">Running</option><option value="completed">Completed</option><option value="closed">Closed</option></select></label>
+          <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="open">Open tasks</option><option value="all">All statuses</option><option value="attention">Needs attention</option><option value="waiting">Waiting for action</option><option value="running">Running</option><option value="completed">Completed</option><option value="closed">Closed</option><option value="archived">Archived</option></select></label>
           <label>Stage<select value={stage} onChange={(event) => setStage(event.target.value)}><option value="all">All stages</option>{workflowStages.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
           <label>Priority<select value={priority} onChange={(event) => setPriority(event.target.value)}><option value="all">All priorities</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
           <Button tone="ghost" onClick={() => { setQuery(""); setStatus("open"); setStage("all"); setPriority("all"); }} disabled={!hasFilters}>Clear filters</Button>

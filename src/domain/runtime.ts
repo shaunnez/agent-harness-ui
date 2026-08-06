@@ -20,7 +20,8 @@ export type RuntimeTaskStatus =
   | "merging"
   | "merged-to-target"
   | "completed"
-  | "closed";
+  | "closed"
+  | "archived";
 
 export interface RuntimeUsage {
   inputTokens: number;
@@ -300,6 +301,14 @@ export interface RuntimeTask {
   attachments?: Array<{ id: string; name: string; type: string; size: number; path: string }>;
   status: RuntimeTaskStatus;
   closure?: { reason: "not-needed" | "superseded" | "duplicate"; supersededBy: string | null; note: string; closedAt: string } | null;
+  /** `previousStatus` is where the task actually stopped; archiving is a visibility decision, not a verdict. */
+  archive?: {
+    archivedAt: string;
+    previousStatus: RuntimeTaskStatus;
+    note: string;
+    removedWorktrees: string[];
+    retainedWorktrees: string[];
+  } | null;
   evaluation?: RuntimeTaskEvaluation | null;
   experiment?: RuntimeExperimentSnapshot | null;
   mergeIntent?: {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   answerGrillQuestion,
   cancelTask,
+  archiveTask,
   closeTask,
   createTask,
   evaluateTask,
@@ -263,6 +264,19 @@ export function App() {
               setActiveRuntimeTask(result.task);
               await refreshTasks();
               showToast("success", reason === "superseded" ? `Task marked superseded${supersededBy ? ` by ${supersededBy}` : ""}.` : "Task closed as not needed.");
+            }}
+            onArchiveTask={async () => {
+              const result = await archiveTask(activeRuntimeTask.id);
+              setActiveRuntimeTask(result.task);
+              await refreshTasks();
+              // The retained count is the part the operator has to act on, so it leads and it
+              // is a warning: those worktrees still hold uncommitted work and still take disk.
+              showToast(
+                result.retainedWorktrees.length ? "error" : "success",
+                result.retainedWorktrees.length
+                  ? `Task archived. ${result.retainedWorktrees.length} worktree${result.retainedWorktrees.length === 1 ? "" : "s"} kept — uncommitted work.`
+                  : `Task archived.${result.removedWorktrees.length ? ` ${result.removedWorktrees.length} worktree${result.removedWorktrees.length === 1 ? "" : "s"} removed.` : ""}`,
+              );
             }}
             onEvaluate={async (score, outcome, notes) => {
               const result = await evaluateTask(activeRuntimeTask.id, score, outcome, notes);

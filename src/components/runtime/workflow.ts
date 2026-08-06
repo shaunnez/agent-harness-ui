@@ -279,6 +279,7 @@ function approvalFreshnessDetail(task: RuntimeTask) {
 
 export function toTaskRunState(status: RuntimeTask["status"]): TaskRunState {
   if (status === "closed") return "closed";
+  if (status === "archived") return "archived";
   if (status === "queued") return "paused";
   if (status === "cancelled" || status === "blocked") return "blocked";
   if (status === "running" || status === "cancelling") return "running";
