@@ -173,6 +173,29 @@ export function App() {
     return () => window.clearInterval(interval);
   }, [activeRuntimeTask?.id, activeRuntimeTask?.status, refreshActiveTask]);
 
+  // The Command Centre and Tasks screen both read runtimeTasks, which the active-task
+  // effect above never touches (it only ever writes activeRuntimeTask). Without this,
+  // that list is fetched at boot and after mutations only, so a task advancing on its own
+  // never shows up until something else forces a refresh. Poll slower than the open-task
+  // effect since this covers every task, not just the one being watched closely.
+  const anyTaskRunning = runtimeTasks.some((task) => task.status === "running");
+  useEffect(() => {
+    // A hidden tab can't show the update anyway, so skip the network call; catch up with
+    // one immediate refresh when the tab becomes visible again instead of waiting out the
+    // rest of the interval.
+    const poll = () => {
+      if (document.visibilityState === "hidden") return;
+      void refreshTasks().catch(() => undefined);
+    };
+    const interval = window.setInterval(poll, anyTaskRunning ? 5_000 : 15_000);
+    const handleVisibility = () => { if (document.visibilityState === "visible") poll(); };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [anyTaskRunning, refreshTasks]);
+
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() === "n" && !event.metaKey && !event.ctrlKey && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) {
