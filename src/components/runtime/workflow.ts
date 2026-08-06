@@ -33,6 +33,48 @@ export function isStageInvalidatedByRepair(task: RuntimeTask, stageId: StageId) 
   return Boolean(hasPriorEvidence && !isStageComplete(task, stageId));
 }
 
+/**
+ * The stage a live run is actually producing evidence for right now, if any. `task.runs`
+ * (not just `task.currentStage`) is the source of truth: a repair's own run.stage is
+ * "implement" even though the invalidated gate it is repairing for is further along the
+ * workflow, and once that gate's rerun starts, `task.currentStage` moves back to it while
+ * the run's stage matches. Consulting the run directly is what lets callers tell "this
+ * stage is running right now" apart from "this stage is stale because something else
+ * invalidated it" — the two states render identically if only `task.status` is consulted.
+ */
+export function getActiveRunStage(task: RuntimeTask): StageId | null {
+  if (task.status !== "running") return null;
+  const runningRun = [...(task.runs ?? [])].reverse().find((run) => run.status === "running");
+  if (runningRun) return runningRun.stage;
+  return task.activeRunKind ? task.currentStage : null;
+}
+
+export function isStageRunning(task: RuntimeTask, stageId: StageId): boolean {
+  return getActiveRunStage(task) === stageId;
+}
+
+export type StageTemporalState = "past" | "current" | "future";
+
+/**
+ * Past, current, and future are not the same thing as "not the active stage" — a stage the
+ * task has not reached yet has no run, no artifact, and no completedStages entry, so it must
+ * not be presented as retained history the way an already-executed stage is. This reads only
+ * the durable evidence the task already carries (completedStages, runs, artifacts,
+ * attemptsByStage) rather than inventing new state to answer the question.
+ */
+export function getStageTemporalState(task: RuntimeTask, stageId: StageId): StageTemporalState {
+  if (stageId === task.currentStage) return "current";
+  const hasEvidence =
+    task.completedStages.includes(stageId) ||
+    task.artifacts.some((artifact) => artifact.stage === stageId) ||
+    task.runs?.some((run) => run.stage === stageId) === true ||
+    (task.attemptsByStage?.[stageId] ?? 0) > 0;
+  if (hasEvidence) return "past";
+  const currentIndex = workflowStages.findIndex((stage) => stage.id === task.currentStage);
+  const stageIndex = workflowStages.findIndex((stage) => stage.id === stageId);
+  return stageIndex < currentIndex ? "past" : "future";
+}
+
 export const runtimeStageAgents: Record<StageId, string> = {
   triage: "Triage agent",
   scouts: "Repository scout agent",
@@ -141,7 +183,7 @@ export function getRuntimeFreshnessReason(task: RuntimeTask, stageId: RuntimeGat
     "No authoritative persisted terminal run summary is available for this candidate.";
 }
 
-export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, artifact?: RuntimeArtifact) {
+export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, artifact?: RuntimeArtifact, isRunning = false) {
   const candidate = task.candidates?.at(-1);
   const packages = task.workPackages ?? [];
   const focused = getRuntimeFocusedTest(task);
@@ -209,27 +251,31 @@ export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, arti
     case "dev-review":
       return {
         kicker: "Dev review \u00b7 fresh-context advisor",
-        title: gateStageTitle("Dev Review", task, "dev-review", candidate, artifact, fallback.title),
-        detail: gateStageDetail(task, "dev-review", artifact, "The authoritative review remains in the persisted candidate-bound run summary; prose findings remain inside the retained artifact."),
+        title: gateStageTitle("Dev Review", task, "dev-review", candidate, artifact, fallback.title, isRunning),
+        detail: gateStageDetail(task, "dev-review", artifact, "The authoritative review remains in the persisted candidate-bound run summary; prose findings remain inside the retained artifact.", isRunning),
       };
     case "test": {
       const passed = focused?.rows.filter((row) => row.status === "passed").length ?? 0;
       const failed = focused?.rows.filter((row) => row.status === "failed").length ?? 0;
       return {
         kicker: "Test \u00b7 candidate-bound gate",
-        title: getRuntimeGateFreshness(task, "test")?.fresh
-          ? `${passed} checks passed \u00b7 ${failed} failed`
-          : gateStageTitle("Test", task, "test", candidate, artifact, fallback.title),
-        detail: getRuntimeGateFreshness(task, "test")?.fresh && focused
-          ? "Open any persisted result for its command, assertions, evidence, and failure detail. Gate actions remain in the command bar."
-          : gateStageDetail(task, "test", artifact, fallback.detail),
+        title: isRunning
+          ? "Test is running"
+          : getRuntimeGateFreshness(task, "test")?.fresh
+            ? `${passed} checks passed \u00b7 ${failed} failed`
+            : gateStageTitle("Test", task, "test", candidate, artifact, fallback.title, isRunning),
+        detail: isRunning
+          ? "A rerun for this stage is in progress; earlier evidence remains inspectable below."
+          : getRuntimeGateFreshness(task, "test")?.fresh && focused
+            ? "Open any persisted result for its command, assertions, evidence, and failure detail. Gate actions remain in the command bar."
+            : gateStageDetail(task, "test", artifact, fallback.detail, isRunning),
       };
     }
     case "final-review":
       return {
         kicker: "Final review \u00b7 holdout",
-        title: gateStageTitle("Final Review", task, "final-review", candidate, artifact, fallback.title),
-        detail: gateStageDetail(task, "final-review", artifact, "Every prior stage is summarized from persisted state, real token usage, and its durable artifact reference."),
+        title: gateStageTitle("Final Review", task, "final-review", candidate, artifact, fallback.title, isRunning),
+        detail: gateStageDetail(task, "final-review", artifact, "Every prior stage is summarized from persisted state, real token usage, and its durable artifact reference.", isRunning),
       };
     case "approval":
       return {
@@ -254,14 +300,19 @@ function gateStageTitle(
   candidate: RuntimeTask["candidates"][number] | undefined,
   artifact: RuntimeArtifact | undefined,
   fallback: string,
+  isRunning = false,
 ) {
+  // A rerun in flight always wins over the stale/fresh copy below: the gate is neither
+  // "fresh" nor genuinely "requires rerun" while its own rerun is already underway.
+  if (isRunning) return `${label} is running`;
   const freshness = getRuntimeGateFreshness(task, stageId);
   if (freshness?.fresh) return `${label} retained for ${candidate?.id ?? "candidate"} r${candidate?.revisionNumber ?? "\u2014"}`;
   if (freshness) return `${label} requires rerun`;
   return artifact ? `${label} evidence retained` : fallback;
 }
 
-function gateStageDetail(task: RuntimeTask, stageId: RuntimeGateStage, artifact: RuntimeArtifact | undefined, freshCopy: string) {
+function gateStageDetail(task: RuntimeTask, stageId: RuntimeGateStage, artifact: RuntimeArtifact | undefined, freshCopy: string, isRunning = false) {
+  if (isRunning) return "A rerun for this stage is in progress; earlier evidence remains inspectable below.";
   const freshness = getRuntimeGateFreshness(task, stageId);
   if (!freshness) return artifact ? `${freshCopy} Freshness is unavailable until an authoritative persisted run summary is present.` : freshCopy;
   if (!freshness.fresh) return `Rerun required: ${freshness.reasonCopy}`;

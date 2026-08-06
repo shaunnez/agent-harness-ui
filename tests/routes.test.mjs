@@ -151,3 +151,30 @@ test("rejects malformed or unsupported routes without retaining an invalid ident
     });
   }
 });
+
+// P0-5 regression: a caller that builds a candidate-diff detail from an event handler with a
+// mis-bound `onClick` (passing the click event through where a candidate was expected) ends up
+// serializing `candidateId`/`revision` as `undefined`. That must not silently round-trip as a
+// distinct, "valid-looking" route — it has to fail parsing the same way any other malformed
+// detail does, so the caller lands back on a real fallback rather than a route that looks like
+// it opened the diff viewer.
+test("rejects a candidate-diff detail built from undefined candidate identity", () => {
+  const brokenHash = "#/tasks/AH-42/dev-review/candidates/undefined/rundefined/diff";
+  assert.deepEqual(parseHashRoute(brokenHash), {
+    route: { kind: "screen", screen: "command" },
+    valid: false,
+  });
+});
+
+test("round-trips candidate-diff routes across representative candidate identities and revisions", () => {
+  for (const [candidateId, revision] of [["C1", 1], ["C2", 3], ["candidate-with-dashes", 12], ["C1", 0]]) {
+    const route = {
+      kind: "task",
+      taskId: "AH-42",
+      stageId: "dev-review",
+      detail: { kind: "candidate-diff", candidateId, revision },
+    };
+    const hash = serializeHashRoute(route);
+    assert.deepEqual(parseHashRoute(hash), { route, valid: true });
+  }
+});

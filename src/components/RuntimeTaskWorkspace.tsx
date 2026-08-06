@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   Archive,
   Check,
+  CircleNotch,
   Prohibit,
   FileCode,
   GitDiff,
@@ -46,10 +47,12 @@ import {
   getRuntimeArtifactFreshness,
   getRuntimeGateFreshness,
   getRuntimeStageSummary,
+  getStageTemporalState,
   isArtifactFresh,
   isCandidateGateStage,
   isStageComplete,
   isStageInvalidatedByRepair,
+  isStageRunning,
   runtimeStageAgents,
   runtimeStageSkills,
   toTaskRunState,
@@ -135,8 +138,14 @@ export function RuntimeTaskWorkspace({
     (task.status === "completed" || task.status === "merged-to-target") &&
     !stageArtifact &&
     candidate?.status === "merged";
-  const stageSummary = getRuntimeStageSummary(task, viewedStageId, stageArtifact);
-  const historical = viewedStageId !== task.currentStage;
+  const viewedStageIsRunning = isStageRunning(task, viewedStageId);
+  const stageSummary = getRuntimeStageSummary(task, viewedStageId, stageArtifact, viewedStageIsRunning);
+  // Distinct from "not the current stage": a future stage (never started) must not present
+  // as recorded history either, so this is a genuine three-way split, not a boolean negation
+  // of `current`.
+  const viewedTemporalState = getStageTemporalState(task, viewedStageId);
+  const historical = viewedTemporalState === "past";
+  const futureStage = viewedTemporalState === "future";
   const activeAgentRole = task.activeRunKind === "repair" ? "repair" : task.currentStage;
   const activePolicy = task.agentConfig?.stagePolicies?.[activeAgentRole] ?? {
     model: task.agentConfig?.model ?? task.models[0]?.model ?? "gpt-5.6-luna",
@@ -373,16 +382,25 @@ export function RuntimeTaskWorkspace({
           const active = stage.id === task.currentStage;
           const selected = stage.id === viewedStageId;
           const failed = active && (task.status === "failed" || task.status === "blocked");
+          const running = isStageRunning(task, stage.id);
+          // A stage that has never started is not "future" in a stylistic sense only \u2014 it
+          // must be genuinely unclickable, because selecting it would otherwise present an
+          // empty/never-run stage as if it were inspectable recorded history (P0-4).
+          const future = getStageTemporalState(task, stage.id) === "future";
           return (
             <button
               type="button"
               key={stage.id}
-              className={`stage-step ${complete ? "stage-step--complete" : ""} ${active ? "stage-step--active" : ""} ${selected ? "stage-step--selected" : ""} ${failed ? "stage-step--failed" : ""} ${invalidated ? "stage-step--stale" : ""}`}
-              onClick={() => selectViewedStage(stage.id)}
+              className={`stage-step ${complete ? "stage-step--complete" : ""} ${active ? "stage-step--active" : ""} ${selected ? "stage-step--selected" : ""} ${failed ? "stage-step--failed" : ""} ${invalidated && !running ? "stage-step--stale" : ""} ${running ? "stage-step--running" : ""} ${future ? "stage-step--disabled" : ""}`}
+              onClick={() => { if (!future) selectViewedStage(stage.id); }}
+              disabled={future}
+              title={future ? "This stage has not started yet." : undefined}
               aria-current={selected ? "step" : undefined}
             >
               <span className="stage-step__node">
-                {complete ? (
+                {running ? (
+                  <CircleNotch size={14} className="is-running spin" />
+                ) : complete ? (
                   <Check size={14} weight="bold" />
                 ) : failed ? (
                   <X size={14} weight="bold" />
@@ -393,7 +411,9 @@ export function RuntimeTaskWorkspace({
               <span>
                 <strong>{stage.shortLabel}</strong>
                 <small>
-                  {invalidated
+                  {running
+                    ? "running"
+                    : invalidated
                     ? "rerun required"
                     : active
                     ? task.status === "running"
@@ -401,7 +421,9 @@ export function RuntimeTaskWorkspace({
                       : task.status.replace("-", " ")
                     : complete
                       ? "done"
-                      : "\u2014"}
+                      : future
+                        ? "not started"
+                        : "\u2014"}
                 </small>
               </span>
             </button>
@@ -421,8 +443,15 @@ export function RuntimeTaskWorkspace({
               <p className="eyebrow">{stageSummary.kicker}</p>
               <div className="runtime-stage-heading__title">
                 <h2>{stageSummary.title}</h2>
+                {viewedStageIsRunning ? (
+                  <span className="badge badge--blue runtime-stage-heading__running">
+                    <CircleNotch size={13} className="is-running spin" /> Running
+                  </span>
+                ) : null}
                 {historical ? <span className="badge badge--blue">Recorded history</span> : null}
-                {stageArtifactStaleReason ? (
+                {/* A rerun already in flight supersedes the stale-artifact badge below: the
+                    gate is neither fresh nor waiting for someone to request a rerun. */}
+                {!viewedStageIsRunning && stageArtifactStaleReason ? (
                   <>
                     <span className="badge badge--yellow">Rerun required</span>
                     <span>{stageArtifactStaleReason}</span>
@@ -480,7 +509,10 @@ export function RuntimeTaskWorkspace({
               </InspectorSection>
             ) : null}
             <InspectorSection title="Stage context">
-              <RuntimeRow label="Viewing" value={`${viewedStage.label}${historical ? " \u00b7 recorded history" : " \u00b7 current execution"}`} />
+              <RuntimeRow
+                label="Viewing"
+                value={`${viewedStage.label} \u00b7 ${historical ? "recorded history" : futureStage ? "not yet started" : "current execution"}`}
+              />
               <RuntimeRow label="Active" value={workflowStages[currentIndex]?.label ?? "Triage"} />
               <RuntimeRow label="State" value={task.status.replace("-", " ")} />
             </InspectorSection>
@@ -567,7 +599,7 @@ export function RuntimeTaskWorkspace({
               </InspectorSection>
             ) : null}
             <InspectorSection title="Decision frontier" meta={`${task.decisions?.length ?? 0} recorded`}>
-              <DecisionFrontier task={task} canRecord={!historical} onDecision={onDecision} />
+              <DecisionFrontier task={task} canRecord={viewedTemporalState === "current"} onDecision={onDecision} />
             </InspectorSection>
             <InspectorSection
               title="Approvals"

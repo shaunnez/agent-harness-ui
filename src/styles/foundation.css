@@ -130,6 +130,9 @@ small {
 .text-amber {
   color: var(--amber) !important;
 }
+.text-blue {
+  color: var(--blue) !important;
+}
 .tone-success {
   color: var(--green);
 }

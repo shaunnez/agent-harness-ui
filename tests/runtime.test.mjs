@@ -2201,6 +2201,72 @@ test("renders an exact-candidate approval artifact as current after a successful
   });
 });
 
+test("classifies workflow stages as past, current, or future from durable evidence alone (P0-4)", () => {
+  return withWorkspace(async ({ getStageTemporalState }) => {
+    const task = createTask({
+      status: "ready-for-review",
+      currentStage: "dev-review",
+      completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement"],
+      attemptsByStage: { "dev-review": 1 },
+    });
+
+    // Past: already executed, whether or not it left a completedStages entry — a run or
+    // artifact is equally durable evidence that the stage happened.
+    assert.equal(getStageTemporalState(task, "triage"), "past");
+    assert.equal(getStageTemporalState(task, "implement"), "past");
+
+    // Current: the stage the task is actually on right now.
+    assert.equal(getStageTemporalState(task, "dev-review"), "current");
+
+    // Future: never reached, no run, no artifact, no attempt — must not read as history.
+    assert.equal(getStageTemporalState(task, "test"), "future");
+    assert.equal(getStageTemporalState(task, "final-review"), "future");
+    assert.equal(getStageTemporalState(task, "approval"), "future");
+  });
+});
+
+test("treats a stage with an artifact or run but no completedStages entry as past, not future (P0-4)", () => {
+  return withWorkspace(async ({ getStageTemporalState }) => {
+    const taskWithRun = createTask({
+      status: "repair-required",
+      currentStage: "implement",
+      completedStages: ["triage", "scouts", "grill", "specification", "plan"],
+      runs: [{ id: "run-1", kind: "gate", status: "completed", stage: "dev-review", role: null, model: null, reasoning: null, startedAt: null, completedAt: null, durationMs: null, artifactId: null, usage: null, credits: null, apiEstimate: null, candidateId: "C1", candidateRevision: 1, workPackageId: null, attempt: 1, retryOfRunId: null, repairOfRunId: null }],
+    });
+    assert.equal(getStageTemporalState(taskWithRun, "dev-review"), "past");
+  });
+});
+
+test("a run in flight for a stage overrides its freshness state (P0-3)", () => {
+  return withWorkspace(async ({ getActiveRunStage, isStageRunning }) => {
+    const runningDevReview = createTask({
+      status: "running",
+      currentStage: "dev-review",
+      completedStages: ["triage", "scouts", "grill", "specification", "plan", "implement"],
+      runs: [{ id: "run-2", kind: "gate", status: "running", stage: "dev-review", role: null, model: null, reasoning: null, startedAt: null, completedAt: null, durationMs: null, artifactId: null, usage: null, credits: null, apiEstimate: null, candidateId: "C1", candidateRevision: 1, workPackageId: null, attempt: 1, retryOfRunId: null, repairOfRunId: null }],
+    });
+    assert.equal(getActiveRunStage(runningDevReview), "dev-review");
+    assert.equal(isStageRunning(runningDevReview, "dev-review"), true);
+    assert.equal(isStageRunning(runningDevReview, "test"), false);
+
+    // A repair's own run.stage is "implement" even while the invalidated gate it will
+    // eventually rerun is further along the workflow — task.currentStage has not moved
+    // back to that gate yet, so nothing should claim that gate is running.
+    const repairInFlight = createTask({
+      status: "running",
+      currentStage: "implement",
+      completedStages: ["triage", "scouts", "grill", "specification", "plan"],
+      runs: [{ id: "run-3", kind: "repair", status: "running", stage: "implement", role: "repair", model: null, reasoning: null, startedAt: null, completedAt: null, durationMs: null, artifactId: null, usage: null, credits: null, apiEstimate: null, candidateId: "C1", candidateRevision: 1, workPackageId: null, attempt: 1, retryOfRunId: null, repairOfRunId: null }],
+    });
+    assert.equal(getActiveRunStage(repairInFlight), "implement");
+    assert.equal(isStageRunning(repairInFlight, "dev-review"), false);
+
+    const notRunning = createTask({ status: "ready-for-review", currentStage: "dev-review" });
+    assert.equal(getActiveRunStage(notRunning), null);
+    assert.equal(isStageRunning(notRunning, "dev-review"), false);
+  });
+});
+
 test("surfaces the merged candidate, target ref, and a copy-only promotion command for a merged-to-target task", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace, isStageComplete, toTaskRunState }) => {
     const task = createTask({

@@ -36,6 +36,7 @@ import {
   isCandidateBoundStage,
   isArtifactFresh,
   isStageComplete,
+  isStageRunning,
 } from "./workflow";
 
 export function RuntimeStagePresentation({
@@ -427,10 +428,17 @@ function RuntimeCandidateDesk({
   const freshGates = candidateGateStages.filter((stage) => getRuntimeGateFreshness(task, stage)?.fresh);
   const gateSummaries = candidateGateStages.map((stage) => {
     const freshness = getRuntimeGateFreshness(task, stage);
+    // A gate whose rerun is already in flight is neither "Fresh" nor genuinely "Rerun
+    // required" — the freshness projection is stale-by-definition until that run finishes,
+    // so surfacing "Rerun required" here would ask the operator to do something already
+    // happening.
+    const running = isStageRunning(task, stage);
     return {
       label: workflowStages.find((item) => item.id === stage)?.shortLabel ?? stage,
-      state: freshness?.fresh ? "Fresh" : "Rerun required",
-      reason: freshness?.fresh ? "Latest terminal run is authoritative for this candidate." : freshness?.reasonCopy ?? "No authoritative persisted terminal run summary is available for this candidate.",
+      state: running ? "Running" : freshness?.fresh ? "Fresh" : "Rerun required",
+      reason: running
+        ? "A rerun for this stage is in progress."
+        : freshness?.fresh ? "Latest terminal run is authoritative for this candidate." : freshness?.reasonCopy ?? "No authoritative persisted terminal run summary is available for this candidate.",
     };
   });
   const facts: Array<[string, string]> = approval
@@ -489,12 +497,16 @@ function RuntimeCandidateDesk({
               <strong>{gate.label}</strong>
               <small>{gate.reason}</small>
             </span>
-            <em className={gate.state === "Fresh" ? "text-green" : "text-amber"}>{gate.state}</em>
+            <em className={gate.state === "Fresh" ? "text-green" : gate.state === "Running" ? "text-blue" : "text-amber"}>{gate.state}</em>
           </div>
         ))}
       </section>
       <div className="runtime-candidate-desk__actions">
-        <Button tone={approval ? "secondary" : "primary"} compact icon={GitDiff} disabled={!candidate.headRevision || diffLoading} onClick={onOpenDiff}>
+        {/* onOpenDiff takes no arguments; wiring it directly to onClick would pass the click
+            SyntheticEvent through as its (defaulted) target parameter, which serialized as
+            "candidates/undefined/rundefined/diff" \u2014 a shape the hash parser rejects, dropping
+            the operator onto the default Command Centre route instead of the diff viewer. */}
+        <Button tone={approval ? "secondary" : "primary"} compact icon={GitDiff} disabled={!candidate.headRevision || diffLoading} onClick={() => onOpenDiff()}>
           {diffLoading ? "Loading exact diff\u2026" : "Inspect exact candidate diff"}
         </Button>
         {approval ? <small>Primary merge action remains in the command bar above.</small> : null}

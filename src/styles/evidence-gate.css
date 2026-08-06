@@ -8,6 +8,9 @@
 .runtime-stage-heading__title h2 {
   margin-right: auto;
 }
+.runtime-stage-heading__running {
+  gap: 5px;
+}
 .stage-command-bar--history {
   border-left-color: var(--blue);
   background: #151b20;

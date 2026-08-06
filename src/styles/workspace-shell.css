@@ -233,6 +233,24 @@
   color: #fff;
   background: #a63f3f;
 }
+.stage-step--running {
+  color: var(--blue);
+  background: #171d21;
+}
+.stage-step--running .stage-step__node {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+/* A stage that has not started yet is inert, not just visually muted — the disabled
+   attribute already blocks the click, this only has to make that state legible. */
+.stage-step--disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.stage-step--disabled:hover {
+  color: #77766f;
+  background: transparent;
+}
 .workspace-scroll {
   min-height: 0;
   display: grid;
