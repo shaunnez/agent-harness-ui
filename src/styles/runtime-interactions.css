@@ -109,19 +109,20 @@
   font-size: 12px;
   line-height: 1.45;
 }
-.runtime-decisions details {
+.runtime-decision {
   border: 1px solid var(--border);
   border-radius: 5px;
   background: var(--surface);
 }
-.runtime-decisions summary {
+.runtime-decision > strong {
+  display: block;
   padding: 7px 8px;
   color: var(--text);
   font-size: 12px;
+  font-weight: 600;
   line-height: 1.4;
-  cursor: pointer;
 }
-.runtime-decisions details p {
+.runtime-decision > p {
   padding: 0 8px 8px;
   color: var(--muted);
   font-size: 12px;
@@ -318,7 +319,7 @@
   background: #11110f;
   color: var(--text);
   font:
-    8px Inter,
+    13px Inter,
     sans-serif;
   line-height: 1.45;
   resize: vertical;

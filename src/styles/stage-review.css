@@ -397,3 +397,42 @@
     Consolas,
     monospace;
 }
+/* Candidate-bound gate-freshness rows (RuntimeStagePresentation.tsx, below the repair
+   lineage disclosure) had no rules at all, so the label and reason ran together as one
+   unbroken sentence at default browser sizing (e.g. "Dev reviewNo authoritative
+   persisted..."). This is the row the operator's "repair lineage" report actually
+   describes — the lineage revisions above it already had grid columns and a caret. */
+.runtime-gate-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+}
+.runtime-gate-summary > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.runtime-gate-summary > div > span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.runtime-gate-summary > div > span > strong {
+  font-size: 13px;
+}
+.runtime-gate-summary > div > span > small {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.runtime-gate-summary > div > em {
+  flex: 0 0 auto;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 12px;
+}

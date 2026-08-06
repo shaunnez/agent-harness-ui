@@ -19,7 +19,10 @@ export function RuntimeGrillPanel({
     <section className="runtime-grill" aria-label="Grill Me decision session">
       <header>
         <span>
-          <small>Decision frontier</small>
+          {/* Named "Grill session", not "Decision frontier" — the sidebar's Decision
+              frontier (RuntimeEvidencePanels.tsx) is a durable, any-stage decision log
+              distinct from this stage-scoped Q&A, and sharing the name confused the two. */}
+          <small>Grill session</small>
           <strong>
             {settled} of {session.questions.length} material questions settled
           </strong>

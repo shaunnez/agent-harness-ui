@@ -15,13 +15,34 @@ import { RuntimeContextDisclosure } from "./RuntimeEvidencePanels";
 import { RetryGrantAudit } from "./RetryGrantAudit";
 import { stripEmbeddedCandidatePatch } from "./RuntimeStagePresentation";
 
+// The server accepts an evaluation at any task status (server/api.mjs, POST
+// .../evaluation has no status guard), so nothing stops a rating from landing mid-run
+// except this client-side gate. Mirrors the finished set the server uses to compute a
+// task's end time (server/evaluation.mjs TERMINAL_STATUSES) \u2014 "finished" here means the
+// task has stopped being worked, not any particular verdict.
+const EVALUATION_FINISHED_STATUSES = new Set<RuntimeTask["status"]>([
+  "awaiting-human-approval",
+  "merged-to-target",
+  "completed",
+  "closed",
+  "archived",
+  "blocked",
+  "failed",
+  "cancelled",
+]);
+
 export function TaskEvaluation({
   evaluation,
   disabled,
+  status,
   onEvaluate,
 }: {
   evaluation: RuntimeTask["evaluation"];
   disabled: boolean;
+  // Optional so existing callers keep today's behaviour (gated only by `disabled`)
+  // until they start passing the task's status; once passed it becomes the
+  // authoritative gate described above.
+  status?: RuntimeTask["status"];
   onEvaluate: (score: number, outcome: "accepted" | "rejected" | "mixed", notes: string) => Promise<void>;
 }) {
   const [score, setScore] = useState(evaluation?.score ?? 0);
@@ -29,15 +50,18 @@ export function TaskEvaluation({
   const [notes, setNotes] = useState(evaluation?.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const notYetFinished = status != null && !EVALUATION_FINISHED_STATUSES.has(status);
+  const gated = disabled || notYetFinished;
   return (
     <div className="task-evaluation">
-      <fieldset className="task-evaluation__scores">
+      <fieldset className="task-evaluation__scores" disabled={gated}>
         <legend className="sr-only">Outcome quality score</legend>
-        {[1, 2, 3, 4, 5].map((value) => <button type="button" key={value} className={score === value ? "is-selected" : ""} onClick={() => setScore(value)} aria-label={`${value} out of 5`}>{value}</button>)}
+        {[1, 2, 3, 4, 5].map((value) => <button type="button" key={value} className={score === value ? "is-selected" : ""} disabled={gated} onClick={() => setScore(value)} aria-label={`${value} out of 5`}>{value}</button>)}
       </fieldset>
-      <label>Outcome<select value={outcome} onChange={(event) => setOutcome(event.target.value as typeof outcome)}><option value="accepted">Accepted</option><option value="mixed">Mixed</option><option value="rejected">Rejected</option></select></label>
-      <label>Evaluator notes<textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="What made the output good or poor?" /></label>
-      <Button tone="secondary" compact disabled={disabled || !score || saving} onClick={async () => { setSaving(true); setError(null); try { await onEvaluate(score, outcome, notes); } catch (reason) { setError(reason instanceof Error ? reason.message : "The evaluation could not be saved."); } finally { setSaving(false); } }}>{saving ? "Saving\u2026" : evaluation ? "Update evaluation" : "Add to scorecard"}</Button>
+      <label>Outcome<select value={outcome} disabled={gated} onChange={(event) => setOutcome(event.target.value as typeof outcome)}><option value="accepted">Accepted</option><option value="mixed">Mixed</option><option value="rejected">Rejected</option></select></label>
+      <label>Evaluator notes<textarea rows={3} value={notes} disabled={gated} onChange={(event) => setNotes(event.target.value)} placeholder="What made the output good or poor?" /></label>
+      <Button tone="secondary" compact disabled={gated || !score || saving} onClick={async () => { setSaving(true); setError(null); try { await onEvaluate(score, outcome, notes); } catch (reason) { setError(reason instanceof Error ? reason.message : "The evaluation could not be saved."); } finally { setSaving(false); } }}>{saving ? "Saving\u2026" : evaluation ? "Update evaluation" : "Add to scorecard"}</Button>
+      {notYetFinished ? <small className="task-evaluation__hint">Evaluation opens once this task finishes \u2014 reaches approval, merge, completion, closure, archive, or stops on a block, failure, or cancellation.</small> : null}
       {error ? <small className="text-red">{error}</small> : null}
     </div>
   );
@@ -171,7 +195,11 @@ export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: Runtime
     return () => window.clearTimeout(timer);
   }, [copyStatus]);
   useEffect(() => {
-    closeButtonRef.current?.focus();
+    // `preventScroll` because moving focus into this overlay otherwise asks the browser to
+    // scroll the button into view, and it scrolls the ancestors behind the overlay to do it —
+    // so opening an artifact from the sidebar list jumped the main body underneath. The
+    // overlay is fixed and already on screen, so there is nothing to scroll to anyway.
+    closeButtonRef.current?.focus({ preventScroll: true });
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };

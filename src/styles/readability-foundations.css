@@ -18,8 +18,8 @@ small,
 .runtime-activity-row em,
 .runtime-activity-row small,
 .runtime-decisions > small,
-.runtime-decisions summary,
-.runtime-decisions details p,
+.runtime-decision > strong,
+.runtime-decision > p,
 .runtime-command-error,
 .field > small {
   font-size: 12px;
@@ -325,18 +325,14 @@ small,
 .runtime-grill-question > summary,
 .runtime-package > summary,
 .runtime-repair-lineage > summary,
-.runtime-grill-history > summary,
-.runtime-safeguards > summary,
-.runtime-decisions summary {
+.runtime-grill-history > summary {
   transition: background 120ms ease, border-color 120ms ease;
 }
 
 .runtime-grill-question > summary:hover,
 .runtime-package > summary:hover,
 .runtime-repair-lineage > summary:hover,
-.runtime-grill-history > summary:hover,
-.runtime-safeguards > summary:hover,
-.runtime-decisions summary:hover {
+.runtime-grill-history > summary:hover {
   background: var(--surface-3);
 }
 

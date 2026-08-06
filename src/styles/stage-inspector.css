@@ -199,3 +199,31 @@
     transform: rotate(360deg);
   }
 }
+/* Context supplied moved from <details>/<summary> to a plain <section>/<header> (see
+   RuntimeEvidencePanels.tsx) so it renders open and static like the rest of the right
+   sidebar; the old accordion's `> summary` rules no longer apply to it, so its layout
+   is restated here against the new markup. */
+.runtime-context-disclosure > header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 0;
+}
+.runtime-context-disclosure > header > span {
+  display: grid;
+  gap: 3px;
+}
+/* Decision frontier text sat at the app-wide 12px small-text baseline, which read too
+   small for a free-text decision log; higher specificity than the shared `small` rule
+   in readability-foundations.css so this wins regardless of stylesheet order. */
+.stage-inspector .runtime-decision > strong,
+.stage-inspector .runtime-decision > p,
+.stage-inspector .runtime-decisions > small {
+  font-size: 13px;
+}
+.runtime-decisions__explainer {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}

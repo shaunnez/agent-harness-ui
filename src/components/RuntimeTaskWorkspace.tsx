@@ -7,7 +7,6 @@ import {
   FileCode,
   GitDiff,
   Pause,
-  ShieldCheck,
   X,
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -173,7 +172,9 @@ export function RuntimeTaskWorkspace({
   const closeRuntimeArtifact = () => {
     setOpenArtifact(null);
     onRouteDetailChange?.(null);
-    window.requestAnimationFrame(() => artifactReturnFocusRef.current?.focus());
+    // Same reason the viewer focuses with `preventScroll`: restoring focus to the row that
+    // opened it must not drag the list back into view under its own steam.
+    window.requestAnimationFrame(() => artifactReturnFocusRef.current?.focus({ preventScroll: true }));
   };
 
   const closeCandidateDiff = () => {
@@ -182,7 +183,7 @@ export function RuntimeTaskWorkspace({
     setCandidateDiffError(null);
     setCandidateDiffTarget(null);
     onRouteDetailChange?.(null);
-    window.requestAnimationFrame(() => candidateDiffReturnFocusRef.current?.focus());
+    window.requestAnimationFrame(() => candidateDiffReturnFocusRef.current?.focus({ preventScroll: true }));
   };
 
   const openCandidateDiff = useCallback(async (target = candidate) => {
@@ -558,19 +559,14 @@ export function RuntimeTaskWorkspace({
                 <RuntimeContextDisclosure artifact={stageArtifact} />
               </InspectorSection>
             ) : null}
-            <details className="runtime-safeguards">
-              <summary>
-                <ShieldCheck size={15} />
-                <strong>Run safeguards</strong>
-                <small>{accessBoundary.kicker}</small>
-              </summary>
-              <div>
-                <RuntimeRow label="Access" value="Local OAuth session" />
-                <RuntimeRow label="Sandbox" value={accessBoundary.sandbox} />
-                <RuntimeRow label="Write boundary" value={accessBoundary.detail} />
-                <RuntimeRow label="Billing" value="ChatGPT plan \u00b7 API-rate estimate shown separately" />
-              </div>
-            </details>
+            {/* Rendered open and static, not a details/summary accordion \u2014 nothing in
+                the right sidebar collapses (see AGENTS.md). */}
+            <InspectorSection title="Run safeguards" meta={accessBoundary.kicker}>
+              <RuntimeRow label="Access" value="Local OAuth session" />
+              <RuntimeRow label="Sandbox" value={accessBoundary.sandbox} />
+              <RuntimeRow label="Write boundary" value={accessBoundary.detail} />
+              <RuntimeRow label="Billing" value="ChatGPT plan \u00b7 API-rate estimate shown separately" />
+            </InspectorSection>
             {candidate ? (
               <InspectorSection
                 title="Integration candidate"
@@ -608,11 +604,20 @@ export function RuntimeTaskWorkspace({
               <ApprovalHistorySection approvals={task.approvals ?? []} />
             </InspectorSection>
             <InspectorSection title="Outcome evaluation" meta={task.evaluation?.scores?.blind?.score ? `Blind ${task.evaluation.scores.blind.score} / 5` : task.evaluation?.score ? `${task.evaluation.score} / 5` : "Not rated"}>
-              <TaskEvaluation evaluation={task.evaluation} disabled={task.status === "running"} onEvaluate={onEvaluate} />
+              <TaskEvaluation evaluation={task.evaluation} disabled={task.status === "running"} status={task.status} onEvaluate={onEvaluate} />
             </InspectorSection>
             {worktreeInventory.length ? (
               <InspectorSection title="Isolated worktrees" meta={`${worktreeInventory.length} for this task`}>
-                <p className="runtime-worktree-explainer">Temporary Git copies that keep Implement and Repair changes away from your main checkout until approval.</p>
+                <p className="runtime-worktree-explainer">
+                  Temporary Git copies that keep Implement and Repair changes away from your main
+                  checkout until approval. A <strong>slice</strong> backs one work package; a
+                  candidate worktree backs the assembled patch. <strong>Retained</strong> means the
+                  copy still exists on disk so its evidence stays inspectable, and{" "}
+                  <strong>keep retained</strong> means it cannot be removed yet — it is either still
+                  in use or has uncommitted changes. Removal is re-checked against the filesystem
+                  when you ask for it, not taken from this list, so a worktree an agent is currently
+                  running in is refused rather than pulled out from under it.
+                </p>
                 <RuntimeWorktreeInventory
                   inventory={worktreeInventory}
                   selectedId={selectedWorktreeId}
@@ -624,7 +629,9 @@ export function RuntimeTaskWorkspace({
             <InspectorSection title="Living artifacts" meta={`${task.artifacts.length} retained`}>
               <div className="runtime-artifact-list">
                 {task.artifacts.length ? (
-                  [...task.artifacts].reverse().map((artifact) => {
+                  // Artifacts are appended in the order stages complete, so this is
+                  // already triage-first; do not reverse it into latest-first.
+                  task.artifacts.map((artifact) => {
                     const freshness = getRuntimeArtifactFreshness(task, artifact);
                     const staleReason = freshness && !isArtifactFresh(artifact, candidate, freshness)
                       ? freshness.reasonCopy
@@ -643,6 +650,8 @@ export function RuntimeTaskWorkspace({
                           <strong>{artifact.name}</strong>
                           <small>
                             {workflowStages.find((stage) => stage.id === artifact.stage)?.label}
+                            {" · "}
+                            {new Date(artifact.createdAt).toLocaleString()}
                             {staleReason ? ` · Rerun required · ${staleReason}` : ""}
                           </small>
                         </span>

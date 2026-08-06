@@ -171,7 +171,7 @@ export function RuntimeWorktreeInventory({
             {removing ? "Removing…" : "Remove worktree"}
           </Button>
           {!selectedRow.cleanupReady ? (
-            <small className="runtime-worktree-inventory__hint">Only a clean, inactive worktree can be removed.</small>
+            <small className="runtime-worktree-inventory__hint">Only a clean, inactive worktree can be removed — the server re-derives that from disk at removal time and refuses one that is still active.</small>
           ) : null}
           {removeError ? <small className="text-red">{removeError}</small> : null}
         </div>
@@ -198,7 +198,12 @@ export function RuntimeWorktreeInventory({
           <span className="runtime-worktree-row__badges">
             <span className={`badge badge--${row.kind === "candidate" ? "red" : "green"}`}>{row.kind}</span>
             <span className={`badge badge--${row.lifecycleState === "active" ? "green" : row.lifecycleState === "retained" ? "yellow" : "red"}`}>{row.lifecycleState}</span>
-            <span className={`badge badge--${row.cleanupReady ? "green" : "yellow"}`}>{row.cleanupReady ? "cleanup ready" : "keep retained"}</span>
+            <span
+              className={`badge badge--${row.cleanupReady ? "green" : "yellow"}`}
+              title={row.cleanupReady
+                ? "Present, clean, and not in use — safe to remove."
+                : "Still in use or holding uncommitted changes, so removal is refused."}
+            >{row.cleanupReady ? "cleanup ready" : "keep retained"}</span>
           </span>
           <span className="runtime-worktree-row__path mono">{row.worktreePath}</span>
         </button>
@@ -209,12 +214,14 @@ export function RuntimeWorktreeInventory({
 
 export function RuntimeContextDisclosure({ artifact }: { artifact: RuntimeArtifact }) {
   const manifest = artifact.contextManifest;
+  // Rendered open and static, not a details/summary accordion \u2014 nothing in the right
+  // sidebar collapses (see AGENTS.md). This also drives the artifact viewer modal,
+  // which inherits the same always-open treatment.
   return (
-    <details className="runtime-context-disclosure">
-      <summary>
+    <section className="runtime-context-disclosure">
+      <header>
         <span><strong>Context supplied</strong><small>{manifest ? `${manifest.sources.length} sources \u00b7 ~${formatTokenCount(manifest.estimatedPromptTokens)} rendered prompt tokens` : "Not recorded for this historical run"}</small></span>
-        <CaretDown className="disclosure-caret" size={15} />
-      </summary>
+      </header>
       {manifest ? (
         <div>
           <p>{manifest.policy}</p>
@@ -229,7 +236,7 @@ export function RuntimeContextDisclosure({ artifact }: { artifact: RuntimeArtifa
           <small>Supplied context records what was included or accessible. It cannot prove which text the model relied on.</small>
         </div>
       ) : <p>Context manifests are recorded for new agent runs. Older artifacts retain usage but cannot reconstruct the exact prompt boundary.</p>}
-    </details>
+    </section>
   );
 }
 
@@ -346,13 +353,22 @@ export function DecisionFrontier({
   const [error, setError] = useState<string | null>(null);
   return (
     <div className="runtime-decisions">
+      {/* This is a durable, task-scoped decision log, not the Grill Me session (that
+          Q&A lives in RuntimeGrillPanel, labelled "Grill session" to avoid the name
+          collision with this section). It records any human decision or constraint
+          against the task, and stays open at every stage until the task stops being
+          worked — the same window `canRecord` below tests for. */}
+      <p className="runtime-decisions__explainer">
+        A durable decision or constraint recorded against the task — not limited to Grill Me.
+        Usable at any stage while the task is not running and has not reached approval, merge, or completion.
+      </p>
       {task.decisions?.length ? (
         task.decisions.map((decision) => (
-          <details key={decision.id}>
-            <summary>{decision.question}</summary>
+          <article className="runtime-decision" key={decision.id}>
+            <strong>{decision.question}</strong>
             <p>{decision.answer}</p>
             <RetryGrantAudit audit={decision} />
-          </details>
+          </article>
         ))
       ) : (
         <small>

@@ -112,6 +112,15 @@
   color: var(--text);
 }
 
+.task-evaluation__scores button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.task-evaluation__hint {
+  color: var(--muted);
+}
+
 .task-evaluation label {
   display: grid;
   gap: 5px;
@@ -210,38 +219,6 @@
   color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
-}
-.runtime-safeguards {
-  padding-bottom: 15px;
-  border-bottom: 1px solid var(--border);
-}
-.runtime-safeguards > summary {
-  display: grid;
-  grid-template-columns: 18px 1fr auto;
-  align-items: center;
-  gap: 6px;
-  color: var(--text);
-  font-size: 12px;
-  cursor: pointer;
-  list-style: none;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.runtime-safeguards > summary::-webkit-details-marker {
-  display: none;
-}
-.runtime-safeguards > summary svg {
-  color: var(--green);
-}
-.runtime-safeguards > summary small {
-  font-size: 12px;
-  text-transform: none;
-  letter-spacing: 0;
-}
-.runtime-safeguards > div {
-  display: grid;
-  gap: 8px;
-  padding-top: 10px;
 }
 .runtime-candidate-desk,
 .runtime-final-review {
