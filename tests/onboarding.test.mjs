@@ -13,6 +13,7 @@ import {
   VERIFICATION_MANIFEST_PATH,
 } from "../server/onboarding.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
+import { providerForModelId } from "../server/model-catalog.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { parseVerificationManifest } from "../server/verification.mjs";
 
@@ -193,6 +194,42 @@ test("commits an approved manifest only after its commands are seen to run", asy
       () => orchestrator("passed").approveOnboarding(directory, { determined: false, reason: "x" }),
       /undetermined proposal cannot be approved/,
     );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("dispatches the onboarding agent to the provider that owns the default model", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-onboard-provider-"));
+  try {
+    await writeFile(path.join(directory, "package.json"), JSON.stringify({ scripts: { test: "node --test" } }), "utf8");
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+
+    // The bug this pins: the call hardcoded the Codex provider while passing the operator's
+    // default model. Once that default became a Claude id, Codex refused it outright with
+    // "not supported when using Codex with a ChatGPT account" — an error about the model, from
+    // the wrong runtime, for a stage that had no business choosing a runtime at all.
+    const dispatched = [];
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true }),
+      worktreeManager: { repositoryRoot: async (given) => given },
+      runCodex: async (request) => {
+        dispatched.push(request.model);
+        return {
+          finalText: `<verification-proposal>${JSON.stringify({ commands: [{ id: "test", command: ["npm", "test"] }] })}</verification-proposal>`,
+          usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+        };
+      },
+    });
+
+    // `runCodex` overrides the resolved provider's run, so this asserts the model that was sent
+    // rather than the transport; the provider it resolved is asserted through the model's owner.
+    const proposed = await orchestrator.proposeOnboarding(directory);
+    assert.equal(proposed.proposal.determined, true);
+    const settings = await store.settings();
+    assert.equal(dispatched.at(-1), settings.defaultModel);
+    assert.equal(providerForModelId(settings.defaultModel), "claude", "the default model is a Claude id, so a Codex-pinned dispatch would fail");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

@@ -22,6 +22,7 @@ import {
   enrichUsage,
   PRICING_SOURCE_URL,
   policyIdForRun,
+  providerForModelId,
   readExecutionProviderCatalog,
   resolveAgentPolicy,
   validatePricingRates,
@@ -218,7 +219,14 @@ export class TaskOrchestrator {
     const existing = await readFile(path.join(repositoryRoot, VERIFICATION_MANIFEST_PATH), "utf8").catch(() => null);
     const evidence = await discoverVerificationEvidence(repositoryRoot);
     const settings = await this.#store.settings();
-    const result = await this.#runAgent(DEFAULT_EXECUTION_PROVIDER, {
+    // The provider follows the model, never a constant. `verifyPricing` is pinned to Codex on
+    // purpose (#27, it hard-requires GPT-5.6 ids); copying that shape here was wrong, because
+    // this call uses the operator's *default* model, and Codex rejects a model it does not own
+    // with "not supported when using Codex with a ChatGPT account".
+    const provider = providerForModelId(settings.defaultModel)
+      ?? settings.defaultProvider
+      ?? DEFAULT_EXECUTION_PROVIDER;
+    const result = await this.#runAgent(provider, {
       cwd: repositoryRoot,
       prompt: buildOnboardingRequest(repositoryRoot, evidence).prompt,
       sandbox: "read-only",
