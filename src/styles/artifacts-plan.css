@@ -101,16 +101,21 @@
 }
 .artifact-viewer {
   position: relative;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  /* display: grid; */
+  overflow: auto;
+  /* grid-template-rows: auto auto minmax(0, 1fr) auto; */
   width: min(760px, calc(100vw - 72px));
   min-width: 0;
-  overflow: hidden;
   border: 1px solid var(--border-strong);
   border-radius: 9px;
   background: #181816;
   box-shadow: var(--shadow-popover);
 }
+.artifact-viewer .runtime-context-disclosure {
+
+    padding: 18px 22px;
+}
+
 .artifact-viewer > header {
   display: flex;
   align-items: center;

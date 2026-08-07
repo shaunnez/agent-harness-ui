@@ -16,7 +16,7 @@ import {
 import { getCodexStatus } from "./codex-runtime.mjs";
 import { resolveExecutionProvider } from "./execution-providers.mjs";
 import { isProcessTimeoutError } from "./process-runtime.mjs";
-import { defaultWorktreeRoot, GitWorktreeManager } from "./git-worktree.mjs";
+import { defaultWorktreeRoot, GitWorktreeManager, symlinkedDependencySourceRoots } from "./git-worktree.mjs";
 import {
   CREDIT_SOURCE_URL,
   enrichUsage,
@@ -1017,7 +1017,7 @@ export class TaskOrchestrator {
         usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0 },
         runtimeEvents: [],
       },
-      { replace: false, name: `candidate-${candidate.id.toLowerCase()}-r1.md`, candidateId, candidateRevision: 1 },
+      { replace: false, name: `candidate-${candidate.id.toLowerCase()}-r1.md`, candidateId, candidateRevision: 1, synthetic: true },
     );
     await this.#store.update(id, (draft) => {
       const activeCandidate = currentCandidate(draft);
@@ -1562,6 +1562,18 @@ export class TaskOrchestrator {
       ));
     });
     const runtimeEvents = [];
+    // `cwd` is the operator's real checkout for stages that run there, which is already
+    // fully within its own allow-read scope. Only an isolated worktree (a candidate or a
+    // work-package slice) can carry the symlink-into-source-checkout gap described on
+    // `symlinkedDependencySourceRoots`.
+    const extraReadRoots = cwd === task.repositoryPath
+      ? []
+      : await symlinkedDependencySourceRoots(
+          cwd,
+          typeof this.#worktrees.repositoryRoot === "function"
+            ? await this.#worktrees.repositoryRoot(task.repositoryPath)
+            : task.repositoryPath,
+        ).catch(() => []);
     try {
       await this.#assertProviderConfinement(runProvider, effectiveSandbox, false, cwd);
       const result = await this.#runAgent(runProvider, {
@@ -1572,6 +1584,7 @@ export class TaskOrchestrator {
         // No stage grants network access any more. The only stage that ever needed it needed
         // it to run commands, and it no longer runs them.
         networkAccess: false,
+        extraReadRoots,
         model: policy.model,
         reasoning: policy.reasoning,
         tempDirectory: runtimeTemp,
@@ -1658,7 +1671,11 @@ export class TaskOrchestrator {
     const task = await this.#store.get(id);
     const settings = await this.#store.settings();
     const fallbackPolicy = resolveAgentPolicy(task, stageId, settings);
-    const resultModel = result.model ?? fallbackPolicy.model ?? task.models[0]?.model ?? "gpt-5.6-luna";
+    // A harness-generated artifact (candidate assembly, say) never called a model at all.
+    // Attributing it to the stage's configured policy anyway would fabricate a Model /
+    // Reasoning pairing next to honestly-zero usage, which reads as a broken agent run
+    // rather than as the mechanical step it actually was.
+    const resultModel = options.synthetic ? null : result.model ?? fallbackPolicy.model ?? task.models[0]?.model ?? "gpt-5.6-luna";
     const resultUsage = enrichUsage(
       resultModel,
       result.usage,
@@ -1679,7 +1696,7 @@ export class TaskOrchestrator {
         completedAt: result.completedAt ?? null,
         durationMs: result.durationMs ?? null,
         model: resultModel,
-        reasoning: result.reasoning !== undefined ? result.reasoning : fallbackPolicy.reasoning,
+        reasoning: options.synthetic ? null : result.reasoning !== undefined ? result.reasoning : fallbackPolicy.reasoning,
         agentRole: options.agentRole ?? result.agentRole ?? stageId,
         usage: resultUsage,
         candidateId: options.candidateId ?? null,

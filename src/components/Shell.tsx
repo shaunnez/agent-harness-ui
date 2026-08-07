@@ -27,10 +27,12 @@ export function providerConnectionState(provider?: {
   available?: boolean;
   authenticated?: boolean;
   executionEnabled?: boolean;
+  confinement?: { passed: boolean } | null;
 }): ConnectionState {
   if (!provider?.available) return "unavailable";
   if (!provider.authenticated) return "not-signed-in";
-  return provider.executionEnabled ? "connected" : "unverified";
+  if (provider.confinement && !provider.confinement.passed) return "unverified";
+  return "connected";
 }
 
 export function connectionStateLabel(state: ConnectionState): string {
@@ -126,7 +128,7 @@ export function Shell({
         onClick={onNewTask}
         aria-label="New task"
       >
-        New task
+        <span>New task</span>
         <kbd>N</kbd>
       </Button>
       <Button
@@ -136,7 +138,7 @@ export function Shell({
         onClick={onOpenChangelog}
         aria-label="View changelog"
       >
-        View changelog
+        <span>View changelog</span>
       </Button>
 
       <div className="sidebar__spacer" />
@@ -174,7 +176,7 @@ export function Shell({
           onClick={onToggleCollapsed}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? <CaretDoubleRightIcon size={15} /> : <CaretDoubleLeftIcon size={15} />}
+          {collapsed ? <CaretDoubleRightIcon size={15}  /> : <CaretDoubleLeftIcon size={15} />}
         </button>
       </div>
     </aside>

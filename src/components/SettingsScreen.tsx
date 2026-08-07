@@ -126,9 +126,13 @@ export function SettingsScreen({
           />
           <Button type="button" tone="primary" disabled={saving || !allowedModels.length || !defaultModel || !defaultReasoning} onClick={() => void save()}>{saving ? "Saving…" : "Save model policy"}</Button>
         </div>
-        <fieldset className="role-policy-grid">
+
+        <fieldset className="role-policy-header">
           <legend>Role policy overrides</legend>
           <p>All role editors share the same controls as each Agent detail. Scout detail pages intentionally edit this single Repository scouts policy.</p>
+        </fieldset>
+        <fieldset className="role-policy-grid">
+     
           {agentRoles.filter((role) => role.provider === "codex" && !role.id.startsWith("scout-")).map((role) => {
             const policy = stagePolicies[role.id] ?? globalDefault;
             return (

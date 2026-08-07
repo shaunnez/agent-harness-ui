@@ -28,6 +28,7 @@
   grid-template-columns: minmax(170px, 1fr) minmax(145px, 0.72fr) auto;
   align-items: end;
   gap: 12px;
+  margin-top: 14px;
 }
 
 .agent-policy-editor > label {

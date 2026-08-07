@@ -725,7 +725,7 @@ export const CLAUDE_STDOUT_BUDGET = 32 * 1024 * 1024;
  * commands run unsandboxed. Omitting it means silent unconfined execution on any
  * host missing the sandbox runtime.
  */
-export function buildClaudeSandboxSettings(cwd, sandbox, networkAccess = false) {
+export function buildClaudeSandboxSettings(cwd, sandbox, networkAccess = false, extraReadRoots = []) {
   if (!["read-only", "workspace-write"].includes(sandbox)) {
     throw new Error(`Unsupported Claude sandbox: ${sandbox}`);
   }
@@ -777,6 +777,13 @@ export function buildClaudeSandboxSettings(cwd, sandbox, networkAccess = false) 
         `Read(${cwd}/**)`,
         `Grep(${cwd}/**)`,
         `Glob(${cwd}/**)`,
+        // A dependency directory provisioned as a per-entry symlink (see
+        // `symlinkedDependencySourceRoots`) resolves, for anything actually opened
+        // through it, to the source checkout rather than `cwd`. Without a matching
+        // permission rule here, the same gap documented above for `cwd` denies a Read/
+        // Grep/Glob whose resolved path is one of these roots even though the sandbox
+        // below now allows it.
+        ...extraReadRoots.flatMap((root) => [`Read(${root}/**)`, `Grep(${root}/**)`, `Glob(${root}/**)`]),
         ...(writable ? [`Write(${cwd}/**)`, `Edit(${cwd}/**)`] : []),
       ],
     },
@@ -786,7 +793,7 @@ export function buildClaudeSandboxSettings(cwd, sandbox, networkAccess = false) 
       allowUnsandboxedCommands: false,
       autoAllowBashIfSandboxed: true,
       filesystem: {
-        allowRead: [cwd],
+        allowRead: [cwd, ...extraReadRoots],
         ...(writable
           // Deliberately no denyWrite: the sandbox is default-deny, so the allow entry is
           // necessary and sufficient.
@@ -825,6 +832,7 @@ export function buildClaudeSpawn({
   prompt,
   sandbox = "read-only",
   networkAccess = false,
+  extraReadRoots = [],
   model,
   effort = null,
   sessionId,
@@ -847,7 +855,7 @@ export function buildClaudeSpawn({
     "--session-id",
     sessionId,
     "--settings",
-    JSON.stringify(buildClaudeSandboxSettings(cwd, sandbox, networkAccess)),
+    JSON.stringify(buildClaudeSandboxSettings(cwd, sandbox, networkAccess, extraReadRoots)),
     "--system-prompt",
     CLAUDE_SYSTEM_PROMPT,
     // Auto-approves the permission rules above and nothing else: a Write outside the
@@ -867,6 +875,7 @@ export async function runClaude({
   timeoutMs = 240_000,
   sandbox = "read-only",
   networkAccess = false,
+  extraReadRoots = [],
   tempDirectory = null,
   model,
   reasoning,
@@ -890,7 +899,7 @@ export async function runClaude({
   await mkdir(runtimeTemp, { recursive: true });
 
   const sessionId = randomUUID();
-  const { args, stdin } = buildClaudeSpawn({ cwd, prompt, sandbox, networkAccess, model, effort, sessionId });
+  const { args, stdin } = buildClaudeSpawn({ cwd, prompt, sandbox, networkAccess, extraReadRoots, model, effort, sessionId });
   const parser = createClaudeStreamParser();
   // Abort the child the moment the host stops being able to exec a shell. Waiting adds
   // nothing — every remaining command dies the same way — and in a write stage the

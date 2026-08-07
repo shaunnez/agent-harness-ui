@@ -100,7 +100,7 @@ function AgentDetail({
           <header><span><h3>Recorded agent runs</h3><p>These are persisted stage artifacts, not a simulated success rate.</p></span></header>
           {usage.artifacts.length ? [...usage.artifacts].reverse().map((artifact) => (
             <article key={artifact.id} className="agent-run-row">
-              <div><strong>{artifact.name}</strong><small>{new Date(artifact.createdAt).toLocaleString()} · {artifact.model} · {artifact.reasoning ?? "reasoning not recorded"}</small></div>
+              <div><strong>{artifact.name}</strong><small>{new Date(artifact.createdAt).toLocaleString()} · {artifact.model ? `${artifact.model} · ${artifact.reasoning ?? "reasoning not recorded"}` : "harness-generated, no model call"}</small></div>
               <dl>
                 <div><dt>Input</dt><dd>{formatTokenCount(artifact.usage.inputTokens)}</dd></div>
                 <div><dt>Output</dt><dd>{formatTokenCount(artifact.usage.outputTokens)}</dd></div>

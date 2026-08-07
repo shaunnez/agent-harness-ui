@@ -549,14 +549,20 @@ export function RuntimeTaskWorkspace({
             </InspectorSection>
             {stageArtifact ? (
               <InspectorSection title="Viewed agent run" meta={stageArtifact.name}>
-                <RuntimeRow label="Model" value={stageArtifact.model} mono />
-                <RuntimeRow label="Reasoning" value={stageArtifact.reasoning ?? "Not recorded"} />
-                <RuntimeRow label="Input" value={`${formatTokenCount(stageArtifact.usage.inputTokens)} total \u00b7 ${formatTokenCount(Math.max(0, stageArtifact.usage.inputTokens - stageArtifact.usage.cachedInputTokens - (stageArtifact.usage.cacheWriteTokens ?? 0)))} uncached`} />
-                <RuntimeRow label="Output" value={formatTokenCount(stageArtifact.usage.outputTokens)} />
-                <RuntimeRow label="Cached input" value={`${formatCacheRate(stageArtifact.usage)} \u00b7 ${formatTokenCount(stageArtifact.usage.cachedInputTokens)}`} />
-                <RuntimeRow label="Work credits" value={stageArtifact.usage.credits == null ? "Not reported for this model" : stageArtifact.usage.credits.toFixed(3)} />
-                <RuntimeRow label="Approx. cost" value={`${formatApproximateCost(stageArtifact.usage.cost)} \u00b7 API-rate estimate`} />
-                <RuntimeContextDisclosure artifact={stageArtifact} />
+                {stageArtifact.model ? (
+                  <>
+                    <RuntimeRow label="Model" value={stageArtifact.model} mono />
+                    <RuntimeRow label="Reasoning" value={stageArtifact.reasoning ?? "Not recorded"} />
+                    <RuntimeRow label="Input" value={`${formatTokenCount(stageArtifact.usage.inputTokens)} total \u00b7 ${formatTokenCount(Math.max(0, stageArtifact.usage.inputTokens - stageArtifact.usage.cachedInputTokens - (stageArtifact.usage.cacheWriteTokens ?? 0)))} uncached`} />
+                    <RuntimeRow label="Output" value={formatTokenCount(stageArtifact.usage.outputTokens)} />
+                    <RuntimeRow label="Cached input" value={`${formatCacheRate(stageArtifact.usage)} \u00b7 ${formatTokenCount(stageArtifact.usage.cachedInputTokens)}`} />
+                    <RuntimeRow label="Work credits" value={stageArtifact.usage.credits == null ? "Not reported for this model" : stageArtifact.usage.credits.toFixed(3)} />
+                    <RuntimeRow label="Approx. cost" value={`${formatApproximateCost(stageArtifact.usage.cost)} \u00b7 API-rate estimate`} />
+                    <RuntimeContextDisclosure artifact={stageArtifact} />
+                  </>
+                ) : (
+                  <RuntimeRow label="Origin" value="Harness-generated \u2014 no model call, so there is no token usage to report" />
+                )}
               </InspectorSection>
             ) : null}
             {/* Rendered open and static, not a details/summary accordion \u2014 nothing in
@@ -565,7 +571,6 @@ export function RuntimeTaskWorkspace({
               <RuntimeRow label="Access" value="Local OAuth session" />
               <RuntimeRow label="Sandbox" value={accessBoundary.sandbox} />
               <RuntimeRow label="Write boundary" value={accessBoundary.detail} />
-              <RuntimeRow label="Billing" value="ChatGPT plan \u00b7 API-rate estimate shown separately" />
             </InspectorSection>
             {candidate ? (
               <InspectorSection

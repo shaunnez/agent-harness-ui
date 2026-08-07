@@ -51,6 +51,7 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   background: #0d0e0d;
+  white-space: pre-wrap;
 }
 
 .markdown-content pre code {
@@ -95,7 +96,7 @@
   max-height: 260px;
   padding: 18px;
   margin: 0;
-  overflow: auto;
+  /* overflow: auto; */
   font-size: 12px;
   white-space: pre-wrap;
 }

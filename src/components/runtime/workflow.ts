@@ -172,10 +172,21 @@ export function getRuntimeFocusedTest(task: RuntimeTask) {
   return { ...evidence, rows: freshness.focusedTestRows };
 }
 
+/**
+ * "No authoritative persisted terminal run summary" covers a candidate-bound gate that
+ * has simply never run yet, not one whose evidence went stale. Callers that render
+ * "Rerun required" from a freshness object must exclude this code, or a gate the
+ * workflow hasn't reached presents as one that needs re-doing.
+ */
+export function isGateUnattempted(freshness: RuntimeGateFreshness | RuntimeRunFreshness | null | undefined) {
+  return freshness?.reasonCode === "missing_authoritative_summary";
+}
+
 export function getRuntimeFreshnessLabel(task: RuntimeTask, stageId: RuntimeGateStage) {
   const freshness = getRuntimeGateFreshness(task, stageId);
   if (freshness?.fresh) return "Fresh";
-  return freshness ? "Rerun required" : "Freshness unavailable";
+  if (!freshness || isGateUnattempted(freshness)) return "Not started";
+  return "Rerun required";
 }
 
 export function getRuntimeFreshnessReason(task: RuntimeTask, stageId: RuntimeGateStage) {
@@ -307,14 +318,14 @@ function gateStageTitle(
   if (isRunning) return `${label} is running`;
   const freshness = getRuntimeGateFreshness(task, stageId);
   if (freshness?.fresh) return `${label} retained for ${candidate?.id ?? "candidate"} r${candidate?.revisionNumber ?? "\u2014"}`;
-  if (freshness) return `${label} requires rerun`;
+  if (freshness && !isGateUnattempted(freshness)) return `${label} requires rerun`;
   return artifact ? `${label} evidence retained` : fallback;
 }
 
 function gateStageDetail(task: RuntimeTask, stageId: RuntimeGateStage, artifact: RuntimeArtifact | undefined, freshCopy: string, isRunning = false) {
   if (isRunning) return "A rerun for this stage is in progress; earlier evidence remains inspectable below.";
   const freshness = getRuntimeGateFreshness(task, stageId);
-  if (!freshness) return artifact ? `${freshCopy} Freshness is unavailable until an authoritative persisted run summary is present.` : freshCopy;
+  if (!freshness || isGateUnattempted(freshness)) return artifact ? `${freshCopy} Freshness is unavailable until an authoritative persisted run summary is present.` : freshCopy;
   if (!freshness.fresh) return `Rerun required: ${freshness.reasonCopy}`;
   return freshCopy;
 }

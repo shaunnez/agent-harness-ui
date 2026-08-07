@@ -260,8 +260,12 @@ export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: Runtime
           </div>
         </header>
         <div className="artifact-viewer__summary">
-          <span>Real agent output &middot; read-only</span>
-          <p>Produced by {artifact.model}{artifact.reasoning ? ` at ${artifact.reasoning} reasoning` : ""}; retained as the handoff to downstream stages.</p>
+          <span>{artifact.model ? "Real agent output · read-only" : "Harness-generated · no model call"}</span>
+          <p>
+            {artifact.model
+              ? `Produced by ${artifact.model}${artifact.reasoning ? ` at ${artifact.reasoning} reasoning` : ""}; retained as the handoff to downstream stages.`
+              : "Produced mechanically by the harness, not by an agent; retained as the handoff to downstream stages."}
+          </p>
           {copyStatus === "copied" ? <small className="text-green">Copied</small> : null}
           {copyError ? <small className="text-red">{copyError}</small> : null}
         </div>

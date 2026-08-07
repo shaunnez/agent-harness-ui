@@ -153,10 +153,11 @@
 .stage-step::after {
   content: "";
   position: absolute;
-  top: 24px;
+  top: 50%;
   left: calc(50% + 34px);
   right: calc(-50% + 20px);
   height: 1px;
+  transform: translateY(-50%);
   background: var(--border-strong);
 }
 .stage-step:last-child::after {

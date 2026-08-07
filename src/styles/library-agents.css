@@ -159,6 +159,9 @@
   font-size: 12px;
 }
 
+.settings-section__intro {
+  margin-top: 10px;
+}
 .settings-section__intro,
 .settings-section__head p,
 .settings-pricing-source {
@@ -188,7 +191,7 @@
 
 .model-allowlist {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin: 14px 0;
 }

@@ -69,7 +69,8 @@ export interface RuntimeArtifact {
   startedAt?: string | null;
   completedAt?: string | null;
   durationMs?: number | null;
-  model: string;
+  // null for a harness-generated artifact (e.g. candidate assembly) that never called a model.
+  model: string | null;
   reasoning?: string | null;
   agentRole?: string | null;
   usage: RuntimeUsage;
@@ -369,6 +370,10 @@ export interface RuntimeStatus {
     available: boolean;
     authenticated: boolean;
     executionEnabled: boolean;
+    // Present only when a sandbox canary actually ran. Status deliberately does not pay
+    // for one, so for Claude this is null here and `executionEnabled` is false with it —
+    // absence of a verdict, not a failed verdict.
+    confinement?: { passed: boolean; detail?: string } | null;
     detail: string;
   }>;
   scouts?: Array<{ id: string; label: string; instruction: string; limits: string }>;

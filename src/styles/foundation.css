@@ -133,6 +133,9 @@ small {
 .text-blue {
   color: var(--blue) !important;
 }
+.text-muted {
+  color: var(--muted) !important;
+}
 .tone-success {
   color: var(--green);
 }

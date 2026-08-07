@@ -35,6 +35,7 @@ import {
   getRuntimeGateFreshness,
   isCandidateBoundStage,
   isArtifactFresh,
+  isGateUnattempted,
   isStageComplete,
   isStageRunning,
 } from "./workflow";
@@ -369,7 +370,7 @@ function RuntimeArtifactCard({
       <MarkdownContent content={content.trim() || "The structured result list above is the authoritative test evidence."} />
       <footer>
         <span>{new Date(artifact.createdAt).toLocaleString()}</span>
-        <span>{artifact.model} &middot; {formatTokenCount(artifact.usage.inputTokens)} in / {formatTokenCount(artifact.usage.outputTokens)} out &middot; {formatCacheRate(artifact.usage)} cached &middot; {formatApproximateCost(artifact.usage.cost)}</span>
+        <span>{artifact.model ? `${artifact.model} · ${formatTokenCount(artifact.usage.inputTokens)} in / ${formatTokenCount(artifact.usage.outputTokens)} out · ${formatCacheRate(artifact.usage)} cached · ${formatApproximateCost(artifact.usage.cost)}` : "Harness-generated · no model call"}</span>
       </footer>
     </article>
   );
@@ -433,12 +434,17 @@ function RuntimeCandidateDesk({
     // so surfacing "Rerun required" here would ask the operator to do something already
     // happening.
     const running = isStageRunning(task, stage);
+    const unattempted = isGateUnattempted(freshness);
     return {
       label: workflowStages.find((item) => item.id === stage)?.shortLabel ?? stage,
-      state: running ? "Running" : freshness?.fresh ? "Fresh" : "Rerun required",
+      state: running ? "Running" : freshness?.fresh ? "Fresh" : unattempted ? "Pending" : "Rerun required",
       reason: running
         ? "A rerun for this stage is in progress."
-        : freshness?.fresh ? "Latest terminal run is authoritative for this candidate." : freshness?.reasonCopy ?? "No authoritative persisted terminal run summary is available for this candidate.",
+        : freshness?.fresh
+          ? "Latest terminal run is authoritative for this candidate."
+          : unattempted
+            ? "This gate has not run yet for the active candidate."
+            : freshness?.reasonCopy ?? "No authoritative persisted terminal run summary is available for this candidate.",
     };
   });
   const facts: Array<[string, string]> = approval
@@ -497,7 +503,7 @@ function RuntimeCandidateDesk({
               <strong>{gate.label}</strong>
               <small>{gate.reason}</small>
             </span>
-            <em className={gate.state === "Fresh" ? "text-green" : gate.state === "Running" ? "text-blue" : "text-amber"}>{gate.state}</em>
+            <em className={gate.state === "Fresh" ? "text-green" : gate.state === "Running" ? "text-blue" : gate.state === "Pending" ? "text-muted" : "text-amber"}>{gate.state}</em>
           </div>
         ))}
       </section>
@@ -545,8 +551,9 @@ function RuntimeFinalReviewSummary({
           const freshness = stage.id === "dev-review" || stage.id === "test" || stage.id === "final-review"
             ? getRuntimeGateFreshness(task, stage.id)
             : null;
-          const stale = freshness ? !freshness.fresh : false;
-          const state = freshness
+          const unattempted = isGateUnattempted(freshness);
+          const stale = freshness ? !freshness.fresh && !unattempted : false;
+          const state = freshness && !unattempted
             ? freshness.fresh ? "Fresh" : "Rerun required"
             : isStageComplete(task, stage.id) ? "Passed" : "Pending";
           return (

@@ -606,6 +606,25 @@ async function provisionedDependencies(repositoryRoot) {
   return (await provisionedDependencyEntries(repositoryRoot)).map((entry) => entry.path);
 }
 
+/**
+ * Real, outside-the-worktree roots a read-only sandbox must additionally admit into
+ * its allow-read list for `worktreePath` to be usable at all. A dependency directory
+ * provisioned as a real clone (see `provisionDependencies`) lives entirely inside the
+ * worktree and needs nothing extra. One provisioned as a per-entry symlink — the
+ * fallback used when clone/reflink is unavailable, e.g. the worktree store and the
+ * source checkout are on different volumes — resolves, for anything the sandbox
+ * actually opens, through to the source checkout's own copy. Both Claude's and
+ * Codex's sandboxes resolve symlinks before matching, so a sandbox confined to
+ * `[worktreePath]` alone denies an ordinary read through such a link even though the
+ * calling stage is read-only and the target is vendored, non-secret code.
+ */
+export async function symlinkedDependencySourceRoots(worktreePath, repositoryRoot) {
+  const entries = await provisionedDependencyEntries(worktreePath);
+  return entries
+    .filter((entry) => entry.mode === "symlink")
+    .map((entry) => path.join(repositoryRoot, entry.path));
+}
+
 export async function provisionedDependencyEntries(repositoryRoot) {
   const file = await manifestPath(repositoryRoot);
   if (!file) return [];
