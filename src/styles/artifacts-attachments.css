@@ -76,10 +76,16 @@
 }
 
 .runtime-task-brief-markdown {
-  max-height: 260px;
   padding: 0;
   color: var(--muted);
   font-size: 13px;
+}
+
+.runtime-retry-grant-audit {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .artifact-viewer__raw {

@@ -288,7 +288,8 @@ small,
 
 .runtime-approval-history,
 .runtime-approval-row {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
