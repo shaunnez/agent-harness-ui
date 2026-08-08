@@ -939,6 +939,9 @@ function retryGrantContext(task) {
     candidate?.status !== "repair_required" &&
     reservation.candidateId === candidate?.id &&
     reservation.candidateRevision + 1 === candidate?.revisionNumber;
+  if (adjacentPriorRevision && reservationRuns.length !== 1) {
+    return { error: "The exhausted stage has an inconsistent workflow reservation; resolve it before granting a retry." };
+  }
   const authorizingGate = candidate?.status === "repair_required"
     ? failedRepairAuthorizingGate(task, candidate, lineage)
     : adjacentPriorRevision
@@ -1665,18 +1668,25 @@ function adjacentRepairAuthorizingGate(task, candidate, priorReservation, repair
     repairReservedAt > priorReservedAt &&
     repairReservedAt <= currentCreatedAt;
   if (!validLineage) return null;
-  const authorizingGate = candidateGateAuthorizerEvidence(
+  // The exhausted gate does not have to be the gate that authorized this repair.
+  // A later Test or Final Review can request a new revision after Development Review
+  // has already consumed its allowance; every earlier candidate-bound gate is then
+  // stale and must rerun. The prior reservation above remains the exact retry source,
+  // while the current revision's own recorded authorizer proves why the adjacent
+  // revision exists. Keeping those identities distinct avoids both stranding the task
+  // and pretending the prior gate authorized a repair that it did not request.
+  const revisionAuthorizer = candidateRevisionAuthorizerEvidence(
     task,
-    priorReservation,
-    {
-      candidateId: priorReservation.candidateId,
-      candidateRevision: priorReservation.candidateRevision,
-    },
-    { latestArtifactAt: repairReservation.reservedAt },
+    candidate,
+    currentRevision,
+    priorRevision,
   );
-  if (!authorizingGate) return null;
-  const sourceArtifact = (task.artifacts ?? []).find((artifact) => artifact.id === authorizingGate.sourceArtifactId);
-  return Date.parse(sourceArtifact.createdAt) < repairReservedAt ? authorizingGate : null;
+  if (!revisionAuthorizer || Date.parse(revisionAuthorizer.artifact.createdAt) >= repairReservedAt) return null;
+  return {
+    ...revisionAuthorizer.reservation,
+    sourceArtifactId: revisionAuthorizer.artifact.id,
+    sourceRunId: revisionAuthorizer.run.id,
+  };
 }
 
 function validPersistedTimestamp(value) {

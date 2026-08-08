@@ -3069,12 +3069,143 @@ test("retains exact run provenance for an authorized adjacent prior-candidate gr
   }
 });
 
-test("rejects an adjacent repaired-candidate gate grant without its prior repair authorizer", async () => {
+test("grants an exhausted prior gate after a later gate authorized the adjacent repair", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Cross-gate repaired candidate retry",
+      description: "A Test-authorized repair must still permit an exhausted earlier Development Review to rerun.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage.implement = 3;
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+      const candidate = threeRevisionCandidate();
+      const repairedRevision = candidate.revisions[2];
+      repairedRevision.sourceWorkflowReservedAt = "2026-08-04T00:01:40.000Z";
+      draft.candidates.push(candidate);
+
+      const testAuthorizer = attachExactCandidateGate(draft, {
+        id: candidate.id,
+        revisionNumber: 2,
+        headRevision: "candidate-c1-r2",
+      }, {
+        stage: "test",
+        workflowAttempt: 1,
+        reservationId: "reservation-c1-r2-test-1",
+        reservedAt: "2026-08-04T00:01:20.000Z",
+      });
+      const testRun = draft.runs.find((run) => run.id === testAuthorizer.sourceRunId);
+      const testArtifact = draft.artifacts.find((artifact) => artifact.id === testAuthorizer.sourceArtifactId);
+      const failedRow = {
+        id: "cross-gate-test-failure",
+        candidateId: candidate.id,
+        candidateRevision: 2,
+        bindingExplicit: true,
+        command: "npm run test:frontend",
+        status: "failed",
+        durationMs: 5,
+        title: "Frontend unit tests",
+        artifactReferences: [],
+        assertions: [{ label: "exit code", expected: "0", actual: "1" }],
+        failureDetails: "One exact candidate assertion failed.",
+      };
+      const focusedTest = {
+        candidateId: candidate.id,
+        candidateRevision: 2,
+        bindingExplicit: true,
+        command: failedRow.command,
+        status: "failed",
+        startedAt: testRun.startedAt,
+        completedAt: testRun.completedAt,
+        durationMs: 1_000,
+        rowCount: 1,
+        failedRowIds: [failedRow.id],
+        rows: [failedRow],
+      };
+      testRun.test = { ...focusedTest };
+      testArtifact.focusedTest = focusedTest;
+      Object.assign(repairedRevision, {
+        authorizingGateStage: testAuthorizer.stage,
+        authorizingGateProvider: "codex",
+        authorizingGateWorkflowAttempt: testAuthorizer.workflowAttempt,
+        authorizingGateReservationId: testAuthorizer.id,
+        authorizingGateReservedAt: testAuthorizer.reservedAt,
+        authorizingGateRunId: testAuthorizer.sourceRunId,
+        authorizingGateArtifactId: testAuthorizer.sourceArtifactId,
+      });
+      attachCandidateProducerEvidence(draft, candidate);
+
+      draft.stageRunReservations.implement = {
+        id: repairedRevision.sourceWorkflowReservationId,
+        stage: "implement",
+        kind: "repair",
+        workflowAttempt: repairedRevision.sourceWorkflowAttempt,
+        candidateId: candidate.id,
+        candidateRevision: 2,
+        candidateHeadRevision: "candidate-c1-r2",
+        authorizedRunScopes: [],
+        reservedAt: repairedRevision.sourceWorkflowReservedAt,
+      };
+      const priorReviewReservation = {
+        id: "reservation-c1-r2-review-3",
+        stage: "dev-review",
+        kind: "review",
+        workflowAttempt: 3,
+        candidateId: candidate.id,
+        candidateRevision: 2,
+        candidateHeadRevision: "candidate-c1-r2",
+        authorizedRunScopes: [],
+        reservedAt: "2026-08-04T00:01:10.000Z",
+      };
+      draft.stageRunReservations["dev-review"] = priorReviewReservation;
+      draft.runs.push({
+        id: "run-reservation-c1-r2-review-3",
+        stage: "dev-review",
+        kind: "review",
+        role: "dev-review",
+        status: "completed",
+        startedAt: "2026-08-04T00:01:11.000Z",
+        completedAt: "2026-08-04T00:01:12.000Z",
+        candidateId: candidate.id,
+        candidateRevision: 2,
+        candidateHeadRevision: "candidate-c1-r2",
+        workPackageId: null,
+        attempt: 1,
+        workflowAttempt: 3,
+        workflowReservationId: priorReviewReservation.id,
+      });
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
+    assert.deepEqual(await grantResponse.json(), { granted: true });
+    const updated = await store.get(task.id);
+    const decision = updated.decisions.at(-1);
+    assert.equal(updated.stageRunLimits["dev-review"], 4);
+    assert.equal(decision.candidateRevision, 3);
+    assert.equal(decision.workflowReservationId, "reservation-c1-r2-review-3");
+    assert.equal(decision.workflowCandidateRevision, 2);
+    assert.equal(decision.sourceRunId, "run-reservation-c1-r2-review-3");
+    assert.equal(decision.authorizingGateStage, "test");
+    assert.equal(decision.authorizingGateReservationId, "reservation-c1-r2-test-1");
+    assert.equal(decision.authorizingGateRunId, "run-reservation-c1-r2-test-1");
+    assert.equal(decision.candidateAuthorizerReservationIds.includes("reservation-c1-r2-test-1"), true);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("rejects an adjacent repaired-candidate gate grant without an exact prior gate run", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
     const response = await createTask(origin, {
       title: "Missing adjacent repair authorizer",
-      description: "A prior-revision gate cannot authorize a retry without the exact evidence that requested Repair.",
+      description: "A prior-revision gate cannot receive a retry without its exact exhausted-stage run.",
       repositoryPath: directory,
       workflow: "implement",
     });
