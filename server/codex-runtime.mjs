@@ -195,7 +195,7 @@ function isRuntimeContextPreflightCommand(command) {
   for (let index = 1; index < tokens.length; index += 1) {
     const token = tokens[index];
     if (["-n", "--line-number", "-F", "--fixed-strings"].includes(token)) continue;
-    if (["-C", "--context"].includes(token)) {
+    if (["-C", "--context", "-m", "--max-count"].includes(token)) {
       index += 1;
       if (!/^\d+$/.test(tokens[index] ?? "")) return false;
       continue;

@@ -58,6 +58,16 @@ test("parses Codex final messages and usage", () => {
   }));
   assert.equal(memoryPreflight.commandFailed, true);
   assert.equal(memoryPreflight.runtimeScope, "context-preflight");
+  const boundedMemoryPreflight = parseCodexEvent(JSON.stringify({
+    type: "item.completed",
+    item: {
+      type: "command_execution",
+      command: `/bin/zsh -lc "rg -n -m 20 'AH-010|Mailbox Queue modal|keyboard-safe|modalOwnedKeyboardEvents' ${memoryFile}"`,
+      exit_code: 1,
+    },
+  }));
+  assert.equal(boundedMemoryPreflight.commandFailed, true);
+  assert.equal(boundedMemoryPreflight.runtimeScope, "context-preflight");
   assert.equal(
     parseCodexEvent(JSON.stringify({
       type: "item.completed",
@@ -81,6 +91,7 @@ test("parses Codex final messages and usage", () => {
     `/bin/zsh -lc 'rg needle | npm test ${memoryFile}'`,
     `/bin/zsh -lc 'rg needle & npm test ${memoryFile}'`,
     `/bin/zsh -lc 'rg --pre npm-test-wrapper needle ${memoryFile}'`,
+    `/bin/zsh -lc 'rg -m unbounded needle ${memoryFile}'`,
     `/bin/zsh -lc 'rg needle ./src > ${memoryFile}'`,
     `/bin/zsh -lc 'rg needle\n${memoryFile}'`,
     `/bin/zsh -lc 'rg needle\r\n${memoryFile}'`,
