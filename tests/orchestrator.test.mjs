@@ -1928,6 +1928,100 @@ test("candidate command failure overrides a Development Review PASS and remains 
   }
 });
 
+test("candidate command failure retains an exact Development Review REPAIR authorizer", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-review-command-repair-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Repair a candidate despite failed review telemetry",
+      description: "A command failure blocks promotion without erasing an exact REPAIR finding.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 1,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/review-command-repair",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "ready_for_review",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        updatedAt: "2026-08-01T12:00:00.000Z",
+        revisions: [],
+      }];
+    });
+
+    let repairPhase = false;
+    let releaseRepairVerification;
+    const repairVerification = new Promise((resolve) => {
+      releaseRepairVerification = resolve;
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      worktreeManager: {
+        verifyCandidate: async () => {
+          if (repairPhase) await repairVerification;
+        },
+      },
+      runCodex: async ({ onEvent }) => {
+        onEvent?.({
+          type: "activity",
+          tone: "warning",
+          title: "Repository command returned a warning",
+          detail: "npm test",
+          commandFailed: true,
+          runtimeScope: "candidate",
+          toolCall: {
+            id: "cmd-failed",
+            name: "command_execution",
+            category: "repository-command",
+            phase: "completed",
+            result: "Exit code 1",
+          },
+        });
+        return {
+          finalText: gateOutput(1, "REPAIR", [{
+            severity: "P1",
+            title: "Candidate defect",
+            detail: "Repair the exact candidate before promotion.",
+            candidateId: "C1",
+            candidateRevision: 1,
+          }]),
+          usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+        };
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id, "review"), true);
+    const repairReady = await waitForStatus(store, task.id, "repair-required");
+    assert.equal(repairReady.gateFreshness["dev-review"].reasonCode, "command_failure");
+    assert.equal(repairReady.runs.at(-1).gateResult.verdict, "REPAIR");
+    assert.equal(repairReady.runs.at(-1).toolCalls[0].commandFailed, true);
+
+    repairPhase = true;
+    assert.equal(await orchestrator.start(task.id, "repair"), true);
+    const reserved = await store.get(task.id);
+    assert.equal(reserved.activeRunKind, "repair");
+    assert.equal(reserved.stageRunReservations.implement.authorizingGateStage, "dev-review");
+    assert.equal(reserved.stageRunReservations.implement.authorizingGateRunId, repairReady.runs.at(-1).id);
+    assert.equal(reserved.stageRunReservations.implement.authorizingGateArtifactId, repairReady.runs.at(-1).artifactId);
+
+    assert.equal(await orchestrator.cancel(task.id), true);
+    releaseRepairVerification();
+    await waitForStatus(store, task.id, "cancelled");
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("missing authoritative output retains the candidate and permits only the same gate rerun", async () => {
   const cases = [
     {

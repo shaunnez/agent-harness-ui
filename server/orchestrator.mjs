@@ -2015,11 +2015,15 @@ function repairAuthorizerSnapshot(task, candidate, requestedStage = null) {
   if (
     !CANDIDATE_GATE_STAGES.includes(stage) ||
     !candidate ||
-    // A REPAIR verdict whose only complaint is a non-blocking finding's inherited
-    // (non-explicit) binding is classified `missing_binding` by the freshness marker
-    // check, not `repair_required`, even though it is the same authoritative,
-    // content-driven repair need. See the matching fix in server/api.mjs.
-    !["repair_required", "missing_binding"].includes(freshness?.reasonCode) ||
+    // A completed, exact REPAIR gate may be stale for reasons that still preserve its
+    // repair authority. `missing_binding` can describe a non-blocking finding whose
+    // identity safely fell back to the exact top-level gate binding. `command_failure`
+    // correctly prevents promotion, but must not erase a separate blocking finding and
+    // strand a candidate after the evaluation has already moved it to repair-required.
+    // Every admitted reason remains guarded below by the exact reservation/run/artifact
+    // tuple and by `sourceRun.gateResult.verdict === "REPAIR"`. This authorizes more
+    // candidate work only; it never makes the failed gate fresh or promotable.
+    !["repair_required", "missing_binding", "command_failure"].includes(freshness?.reasonCode) ||
     freshness.candidateId !== candidate.id ||
     freshness.candidateRevision !== candidate.revisionNumber ||
     !sourceRun ||
