@@ -21,6 +21,7 @@ import {
   type StageId,
   workflowStages,
 } from "../domain";
+import { hostedAtlasMapRequested } from "../hostedAtlasPreview";
 import { type AtlasView, AtlasViewSwitch } from "./atlas/AtlasViewSwitch";
 import { WorkflowAtlas } from "./atlas/WorkflowAtlas";
 import { Button, ModelStack, PriorityBadge, SectionHeader } from "./Primitives";
@@ -32,6 +33,7 @@ function isGateStatus(status: RuntimeTask["status"]) {
 }
 
 export function CommandCentre({
+  previewMode = false,
   onOpenTask,
   runtimeTasks,
   runtimeStatus,
@@ -40,6 +42,7 @@ export function CommandCentre({
   onNewTask,
   onSeeAllTasks,
 }: {
+  previewMode?: boolean;
   onOpenTask: (taskId: string, stageId?: StageId) => void;
   onNewTask: () => void;
   onSeeAllTasks: () => void;
@@ -48,7 +51,9 @@ export function CommandCentre({
   runtimeLoading: boolean;
   runtimeError: string | null;
 }) {
-  const [view, setView] = useState<AtlasView>("table");
+  const [view, setView] = useState<AtlasView>(() =>
+    previewMode && hostedAtlasMapRequested() ? "map" : "table",
+  );
   // Archived tasks leave every list on this screen, including the attention list — archiving is
   // how an operator says "stop showing me this". The spend totals below deliberately still count
   // them: that money was really spent, and quietly dropping it would misreport the run cost.
@@ -88,10 +93,14 @@ export function CommandCentre({
         {view === "map" ? (
           <div className="atlas-page__title">
             <h1>Workflow atlas</h1>
-            <span className="atlas-live">
-              <i aria-hidden /> Live
+            <span className={`atlas-live ${previewMode ? "atlas-live--preview" : ""}`}>
+              <i aria-hidden /> {previewMode ? "Hosted preview" : "Live"}
             </span>
-            <span className="atlas-updated">Updated {formatTaskDate(atlasUpdatedAt ?? null)}</span>
+            <span className="atlas-updated">
+              {previewMode
+                ? "Illustrative task snapshot"
+                : `Updated ${formatTaskDate(atlasUpdatedAt ?? null)}`}
+            </span>
           </div>
         ) : (
           <div>
@@ -108,7 +117,8 @@ export function CommandCentre({
           loading={runtimeLoading}
           error={runtimeError}
           onOpenTask={onOpenTask}
-          onViewAllTasks={onSeeAllTasks}
+          onViewAllTasks={previewMode ? undefined : onSeeAllTasks}
+          readOnly={previewMode}
         />
       ) : (
         <>
@@ -116,11 +126,13 @@ export function CommandCentre({
             <div className="current-run__main">
               <div className="current-run__status">
                 <span className="live-pulse" aria-hidden />
-                {activeRuntimeTask
-                  ? "Local workflow"
-                  : runtimeLoading
-                    ? "Loading local workflow"
-                    : "Local workflow"}
+                {previewMode
+                  ? "Hosted UI preview"
+                  : activeRuntimeTask
+                    ? "Local workflow"
+                    : runtimeLoading
+                      ? "Loading local workflow"
+                      : "Local workflow"}
               </div>
               <h2 id="current-run-title">
                 {activeTask?.title ??
@@ -131,15 +143,17 @@ export function CommandCentre({
                       : "No persisted tasks yet")}
               </h2>
               <p>
-                {activeRuntimeTask
-                  ? activeRuntimeTask.status === "running"
-                    ? `The ${activeTask?.stage} agent is inspecting ${activeRuntimeTask.repositoryPath}.`
-                    : "The latest real local task is ready to inspect."
-                  : runtimeError
-                    ? runtimeError
-                    : runtimeLoading
-                      ? "Checking the loopback companion and persisted task store."
-                      : "Create a task to start a real ten-stage Evidence Gate workflow."}
+                {previewMode
+                  ? "Illustrative task state for reviewing the Courier Rooms interface. Local execution and repository access are unavailable here."
+                  : activeRuntimeTask
+                    ? activeRuntimeTask.status === "running"
+                      ? `The ${activeTask?.stage} agent is inspecting ${activeRuntimeTask.repositoryPath}.`
+                      : "The latest real local task is ready to inspect."
+                    : runtimeError
+                      ? runtimeError
+                      : runtimeLoading
+                        ? "Checking the loopback companion and persisted task store."
+                        : "Create a task to start a real ten-stage Evidence Gate workflow."}
               </p>
               {activeTask ? (
                 <div className="current-run__meta">
@@ -173,9 +187,9 @@ export function CommandCentre({
               tone="primary"
               icon={ArrowRight}
               onClick={activeRuntimeTask ? () => onOpenTask(activeRuntimeTask.id) : onNewTask}
-              disabled={runtimeLoading || Boolean(runtimeError)}
+              disabled={previewMode || runtimeLoading || Boolean(runtimeError)}
             >
-              {activeRuntimeTask ? "Open workspace" : "Create task"}
+              {previewMode ? "Preview only" : activeRuntimeTask ? "Open workspace" : "Create task"}
             </Button>
           </section>
 

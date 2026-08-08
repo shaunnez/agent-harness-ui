@@ -11,12 +11,14 @@ export function WorkflowAtlas({
   tasks,
   loading = false,
   error = null,
+  readOnly = false,
   onOpenTask,
   onViewAllTasks,
 }: {
   tasks: RuntimeTask[];
   loading?: boolean;
   error?: string | null;
+  readOnly?: boolean;
   onOpenTask: (taskId: string, stageId?: StageId) => void;
   onViewAllTasks?: () => void;
 }) {
@@ -134,7 +136,12 @@ export function WorkflowAtlas({
         <div className={`atlas-support-grid ${inspectorOpen ? "" : "atlas-support-grid--summary-closed"}`}>
           <div className="atlas-support-grid__left">
             <AtlasLegend tasks={visibleTasks} selectedTaskId={selectedTask?.id ?? null} />
-            <RecentHandoffs tasks={visibleTasks} onOpenTask={onOpenTask} onViewAll={onViewAllTasks} />
+            <RecentHandoffs
+              tasks={visibleTasks}
+              onOpenTask={onOpenTask}
+              onViewAll={onViewAllTasks}
+              readOnly={readOnly}
+            />
           </div>
           {selectedTask ? (
             inspectorOpen ? (
@@ -143,6 +150,7 @@ export function WorkflowAtlas({
                 onOpenTask={onOpenTask}
                 onOpenWorkbench={() => setWorkbenchOpen(true)}
                 onClose={() => setInspectorOpen(false)}
+                readOnly={readOnly}
               />
             ) : (
               <InspectorReopen task={selectedTask} onOpen={() => setInspectorOpen(true)} />

@@ -39,6 +39,7 @@ import {
   type StageId,
   workflowStages,
 } from "./domain";
+import { hostedAtlasPreviewRequested, hostedAtlasPreviewTasks } from "./hostedAtlasPreview";
 import { isCurrentRequest } from "./requestIdentity";
 import {
   appScreenForRoute,
@@ -52,13 +53,16 @@ import {
 } from "./routes";
 
 export function App() {
+  const hostedPreviewMode = hostedAtlasPreviewRequested();
   const [screen, setScreen] = useState<AppScreen>("command");
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus | null>(null);
-  const [runtimeTasks, setRuntimeTasks] = useState<RuntimeTask[]>([]);
-  const [runtimeLoading, setRuntimeLoading] = useState(true);
+  const [runtimeTasks, setRuntimeTasks] = useState<RuntimeTask[]>(() =>
+    hostedPreviewMode ? hostedAtlasPreviewTasks : [],
+  );
+  const [runtimeLoading, setRuntimeLoading] = useState(!hostedPreviewMode);
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
   const [activeRuntimeTask, setActiveRuntimeTask] = useState<RuntimeTask | null>(null);
   const [activeTaskLoading, setActiveTaskLoading] = useState(false);
@@ -81,10 +85,14 @@ export function App() {
   }, []);
 
   const refreshTasks = useCallback(async () => {
+    if (hostedPreviewMode) {
+      setRuntimeTasks(hostedAtlasPreviewTasks);
+      return hostedAtlasPreviewTasks;
+    }
     const tasks = await listTasks();
     setRuntimeTasks(tasks);
     return tasks;
-  }, []);
+  }, [hostedPreviewMode]);
 
   const refreshActiveTask = useCallback(async (id: string) => {
     const requestId = activeTaskRequestRef.current + 1;
@@ -124,6 +132,13 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    if (hostedPreviewMode) {
+      setRuntimeStatus(null);
+      setRuntimeTasks(hostedAtlasPreviewTasks);
+      setRuntimeError(null);
+      setRuntimeLoading(false);
+      return;
+    }
     let current = true;
     void Promise.allSettled([getRuntimeStatus(), listTasks(), getEvaluationSummary()]).then(
       ([statusResult, tasksResult, evaluationResult]) => {
@@ -150,7 +165,7 @@ export function App() {
     return () => {
       current = false;
     };
-  }, []);
+  }, [hostedPreviewMode]);
 
   useEffect(() => {
     if (!window.location.hash)
@@ -215,6 +230,7 @@ export function App() {
   // effect since this covers every task, not just the one being watched closely.
   const anyTaskRunning = runtimeTasks.some((task) => task.status === "running");
   useEffect(() => {
+    if (hostedPreviewMode) return;
     // A hidden tab can't show the update anyway, so skip the network call; catch up with
     // one immediate refresh when the tab becomes visible again instead of waiting out the
     // rest of the interval.
@@ -231,10 +247,11 @@ export function App() {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [anyTaskRunning, refreshTasks]);
+  }, [anyTaskRunning, hostedPreviewMode, refreshTasks]);
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
+      if (hostedPreviewMode) return;
       if (
         event.key.toLowerCase() === "n" &&
         !event.metaKey &&
@@ -248,11 +265,15 @@ export function App() {
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, []);
+  }, [hostedPreviewMode]);
 
   const navigate = (nextScreen: AppScreen) => navigateToRoute({ kind: "screen", screen: nextScreen });
 
   const openWorkspace = (from: "command" | "tasks", taskId?: string, stageId?: StageId) => {
+    if (hostedPreviewMode) {
+      showToast("error", "The hosted atlas is a read-only UI preview. Task execution remains local.");
+      return;
+    }
     if (taskId)
       navigateToRoute({
         kind: "task",
@@ -306,7 +327,11 @@ export function App() {
         collapsed={sidebarCollapsed}
         onToggleCollapsed={() => setSidebarCollapsed((value) => !value)}
         onNavigate={navigate}
-        onNewTask={() => setNewTaskOpen(true)}
+        onNewTask={() => {
+          if (hostedPreviewMode)
+            showToast("error", "The hosted atlas is a read-only UI preview. Task execution remains local.");
+          else setNewTaskOpen(true);
+        }}
         onOpenChangelog={() => navigateToRoute(createChangelogRoute(primaryRoute))}
         runtimeStatus={runtimeStatus}
       />
@@ -443,11 +468,19 @@ export function App() {
         ) : null}
         {!workspaceOpen && screen === "command" ? (
           <CommandCentre
+            previewMode={hostedPreviewMode}
             runtimeTasks={runtimeTasks}
             runtimeStatus={runtimeStatus}
             runtimeLoading={runtimeLoading}
             runtimeError={runtimeError}
-            onNewTask={() => setNewTaskOpen(true)}
+            onNewTask={() => {
+              if (hostedPreviewMode)
+                showToast(
+                  "error",
+                  "The hosted atlas is a read-only UI preview. Task execution remains local.",
+                );
+              else setNewTaskOpen(true);
+            }}
             onOpenTask={(taskId, stageId) => openWorkspace("command", taskId, stageId)}
             onSeeAllTasks={() => navigate("tasks")}
           />

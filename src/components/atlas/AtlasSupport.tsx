@@ -113,10 +113,12 @@ export function RecentHandoffs({
   tasks,
   onOpenTask,
   onViewAll,
+  readOnly = false,
 }: {
   tasks: RuntimeTask[];
   onOpenTask: (taskId: string, stageId?: StageId) => void;
   onViewAll?: () => void;
+  readOnly?: boolean;
 }) {
   const handoffs = buildRecentHandoffs(tasks).slice(0, 5);
   return (
@@ -135,7 +137,13 @@ export function RecentHandoffs({
       {handoffs.length ? (
         <div className="atlas-handoffs__list">
           {handoffs.map((handoff) => (
-            <button type="button" key={handoff.key} onClick={() => onOpenTask(handoff.taskId, handoff.to)}>
+            <button
+              type="button"
+              key={handoff.key}
+              onClick={() => onOpenTask(handoff.taskId, handoff.to)}
+              disabled={readOnly}
+              title={readOnly ? "Task workspaces are unavailable in the hosted UI preview" : undefined}
+            >
               <time>{formatAtlasTime(handoff.at)}</time>
               <span>
                 <img className="atlas-handoff__crate" src={cargoCrate} alt="" />
@@ -160,11 +168,13 @@ export function TaskAtlasInspector({
   onOpenTask,
   onOpenWorkbench,
   onClose,
+  readOnly = false,
 }: {
   task: RuntimeTask;
   onOpenTask: (taskId: string, stageId?: StageId) => void;
   onOpenWorkbench: () => void;
   onClose: () => void;
+  readOnly?: boolean;
 }) {
   const room = getStageRoom(task.currentStage);
   const tone = getAtlasTaskTone(task);
@@ -285,7 +295,7 @@ export function TaskAtlasInspector({
             const invalidated = isStageInvalidatedByRepair(task, stage.id);
             const complete = isStageComplete(task, stage.id);
             const Icon = stageIcons[stage.id];
-            const disabled = temporal === "future";
+            const disabled = temporal === "future" || readOnly;
             const detail = running
               ? "Running"
               : invalidated
@@ -314,8 +324,13 @@ export function TaskAtlasInspector({
         </ol>
       </section>
       <div className="atlas-inspector__actions">
-        <Button tone="primary" icon={ArrowSquareOut} onClick={() => onOpenTask(task.id, task.currentStage)}>
-          Enter task
+        <Button
+          tone="primary"
+          icon={ArrowSquareOut}
+          onClick={() => onOpenTask(task.id, task.currentStage)}
+          disabled={readOnly}
+        >
+          {readOnly ? "Hosted preview" : "Enter task"}
         </Button>
         <span
           className="atlas-inspector__freshness"

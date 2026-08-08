@@ -57,6 +57,17 @@
   box-shadow: 0 0 0 4px rgb(101 196 141 / 9%);
 }
 
+.atlas-live--preview {
+  border-color: #69572e;
+  color: #f0bd50;
+  background: #211d13;
+}
+
+.atlas-live--preview i {
+  background: #efab24;
+  box-shadow: 0 0 0 4px rgb(239 171 36 / 10%);
+}
+
 .atlas-view-switch {
   display: inline-flex;
   flex: 0 0 auto;
