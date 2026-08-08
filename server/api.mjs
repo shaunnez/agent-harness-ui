@@ -859,9 +859,12 @@ function retryGrantContext(task) {
     task.currentStage === readyGateTuple.stage &&
     candidate?.status === readyGateTuple.candidateStatus &&
     currentAttempts >= currentLimit;
+  const exhaustedPlanApproval = task.status === "awaiting-plan-approval" &&
+    task.currentStage === "plan" &&
+    currentAttempts >= currentLimit;
   const exhaustedBlockedStage = task.status === "blocked" && currentAttempts >= currentLimit;
-  if (!exhaustedRepair && !exhaustedReadyGate && !exhaustedBlockedStage) {
-    return { error: "A retry can only be granted to an exhausted blocked stage or repair attempt." };
+  if (!exhaustedRepair && !exhaustedReadyGate && !exhaustedPlanApproval && !exhaustedBlockedStage) {
+    return { error: "A retry can only be granted to an exhausted blocked, approval, or repair stage." };
   }
   if (task.activeRunKind || task.activeRunReservationId || (task.activeRunIds?.length ?? 0) > 0) {
     return { error: "An active or inconsistent run reservation must be resolved before granting a retry." };

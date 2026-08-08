@@ -4064,7 +4064,7 @@ test("rejects incoherent ready-gate status, stage, and candidate tuples", async 
 
       const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
       assert.equal(grantResponse.status, 409, item.name);
-      assert.match((await grantResponse.json()).error, /exhausted blocked stage or repair attempt/i, item.name);
+      assert.match((await grantResponse.json()).error, /exhausted blocked, approval, or repair stage/i, item.name);
       assert.equal((await store.get(task.id)).decisions.length, 0, item.name);
     }
   } finally {
@@ -4673,15 +4673,16 @@ test("grants exactly one retry to each exhausted blocked canonical stage", async
   const { directory, origin, server, store } = await createServer();
   try {
     const cases = [
-      { stage: "triage", candidateStatus: null },
-      { stage: "plan", candidateStatus: null },
-      { stage: "dev-review", candidateStatus: "ready_for_review" },
-      { stage: "test", candidateStatus: "ready_for_test" },
-      { stage: "final-review", candidateStatus: "ready_for_final_review" },
+      { stage: "triage", candidateStatus: null, status: "blocked" },
+      { stage: "plan", candidateStatus: null, status: "blocked" },
+      { stage: "plan", candidateStatus: null, status: "awaiting-plan-approval" },
+      { stage: "dev-review", candidateStatus: "ready_for_review", status: "blocked" },
+      { stage: "test", candidateStatus: "ready_for_test", status: "blocked" },
+      { stage: "final-review", candidateStatus: "ready_for_final_review", status: "blocked" },
     ];
-    for (const { stage, candidateStatus } of cases) {
+    for (const { stage, candidateStatus, status } of cases) {
       const response = await createTask(origin, {
-        title: `Blocked ${stage}`,
+        title: `${status} ${stage}`,
         description: `Grant only the exhausted ${stage} stage.`,
         repositoryPath: directory,
         workflow: "implement",
@@ -4689,7 +4690,7 @@ test("grants exactly one retry to each exhausted blocked canonical stage", async
       const { task } = await response.json();
       const sourceRunId = `run-${stage}-3`;
       await store.update(task.id, (draft) => {
-        draft.status = "blocked";
+        draft.status = status;
         draft.currentStage = stage;
         draft.attemptsByStage[stage] = draft.stageRunLimits[stage];
         draft.runs.push(...[1, 2, 3].map((attempt) => ({
@@ -4713,6 +4714,7 @@ test("grants exactly one retry to each exhausted blocked canonical stage", async
           test: "test",
           "final-review": "final-review",
         }[stage]);
+        if (status === "awaiting-plan-approval") draft.runs.at(-1).status = "completed";
       });
       const before = await store.get(task.id);
 

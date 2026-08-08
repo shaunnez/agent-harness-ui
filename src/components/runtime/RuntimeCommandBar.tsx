@@ -36,6 +36,7 @@ export function RuntimeCommandBar({
   const repairRunning = running && task.activeRunKind === "repair";
   const currentAttempts = getEffectiveStageRunAttempts(task);
   const currentStageRunLimit = getEffectiveStageRunLimit(task);
+  const retryAllowanceExhausted = currentAttempts >= currentStageRunLimit;
   const repairRequired = task.status === "repair-required";
   const exhaustedReadyGate =
     currentAttempts >= currentStageRunLimit &&
@@ -150,7 +151,7 @@ export function RuntimeCommandBar({
             {failed ? "Retry stage" : "Run investigation"}
           </Button>
         )}
-        {task.status === "awaiting-plan-approval" ? (
+        {task.status === "awaiting-plan-approval" && !retryAllowanceExhausted ? (
           <Button
             tone="secondary"
             compact
@@ -254,6 +255,13 @@ export function nextAction(task: RuntimeTask) {
       label: "Grant one stage attempt",
       title: "Stage retry allowance exhausted",
       detail: "A human may grant one additional attempt before this retained candidate enters the next gate.",
+    };
+  if (retryAllowanceExhausted && task.status === "awaiting-plan-approval")
+    return {
+      action: "grant-retry" as const,
+      label: "Grant one Plan attempt",
+      title: "Plan revision allowance exhausted",
+      detail: "After inspecting the retained plans, a human may grant exactly one additional correction attempt.",
     };
   if (task.status === "blocked")
     return {

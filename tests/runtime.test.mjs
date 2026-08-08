@@ -2760,6 +2760,24 @@ test("keeps plan approval primary while exposing evidence-backed revision", () =
     assert.match(markup, />Revise plan</);
     assert.match(markup, />Approve plan</);
     assert.match(markup, /Record the required correction as a task decision before revising/);
+
+    const exhausted = createTask({
+      status: "awaiting-plan-approval",
+      currentStage: "plan",
+      attemptsByStage: { plan: 3 },
+      stageRunLimits: { plan: 3 },
+    });
+    assert.equal(nextAction(exhausted).action, "grant-retry");
+    const exhaustedMarkup = renderToStaticMarkup(React.createElement(RuntimeCommandBar, {
+      task: exhausted,
+      viewedStageId: "plan",
+      onRun: async () => {},
+      onAction: async () => {},
+      onFinishGrill: async () => {},
+    }));
+    assert.match(exhaustedMarkup, />Grant one Plan attempt</);
+    assert.doesNotMatch(exhaustedMarkup, />Revise plan</);
+    assert.doesNotMatch(exhaustedMarkup, />Approve plan</);
   });
 });
 
