@@ -523,7 +523,7 @@ function structuredOutputInstruction(stageId, candidate = null) {
     return "";
   }
   if (["dev-review", "final-review"].includes(stageId)) {
-    return `\n\nAt the end of the artifact, include exactly one JSON block between <gate-evidence> and </gate-evidence> tags. Bind the envelope and every finding to the exact current candidate. P0 or P1 findings require REPAIR. Use an empty findings array for a clean PASS.\n\n<gate-evidence>\n{"candidateId":"${candidate?.id}","candidateRevision":${candidate?.revisionNumber},"verdict":"PASS","summary":"Concise candidate-bound conclusion","findings":[]}\n</gate-evidence>`;
+    return `\n\nAt the end of the artifact, include exactly one JSON block between <gate-evidence> and </gate-evidence> tags. Bind the envelope and every finding to the exact current candidate. P0 or P1 findings require REPAIR. Use an empty findings array for a clean PASS. Every finding must use exactly candidateId, candidateRevision, severity, title, detail, file, and line; do not substitute path or summary fields.\n\n<gate-evidence>\n{"candidateId":"${candidate?.id}","candidateRevision":${candidate?.revisionNumber},"verdict":"REPAIR","summary":"Concise candidate-bound conclusion","findings":[{"candidateId":"${candidate?.id}","candidateRevision":${candidate?.revisionNumber},"severity":"P1","title":"Concise finding title","detail":"Concrete failure scenario and smallest correction","file":"src/example.ts","line":123}]}\n</gate-evidence>\n\nFor a clean result, return verdict PASS with findings [].`;
   }
   return "";
 }

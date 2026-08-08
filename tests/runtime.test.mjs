@@ -441,6 +441,30 @@ test("context manifests report description truncation independently across every
   }
 });
 
+test("candidate review prompts name the exact structured finding fields", () => {
+  const task = createTask({
+    id: "AH-GATE-PROMPT",
+    title: "Review prompt",
+    description: "Return candidate-bound findings.",
+    workflow: "implement",
+    artifacts: [],
+    decisions: [],
+    attachments: [],
+  });
+  const request = buildExecutionRequest(task, "dev-review", {
+    id: "C1",
+    revisionNumber: 2,
+    baseRevision: "a".repeat(40),
+    headRevision: "b".repeat(40),
+  });
+
+  assert.match(request.prompt, /Every finding must use exactly candidateId, candidateRevision, severity, title, detail, file, and line/);
+  assert.match(request.prompt, /"title":"Concise finding title"/);
+  assert.match(request.prompt, /"detail":"Concrete failure scenario and smallest correction"/);
+  assert.match(request.prompt, /"file":"src\/example\.ts"/);
+  assert.doesNotMatch(request.prompt, /"path":/);
+});
+
 test("context manifests report title truncation at 299, 300, and 301 characters", () => {
   for (const length of [299, 300, 301]) {
     const marker = "__TASK_TITLE_SENTINEL__";
