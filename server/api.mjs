@@ -1263,7 +1263,7 @@ function candidateGateAuthorizerEvidence(task, gateReservation, target, { latest
   // differs, so both authorize the grant.
   if (
     reservationRuns.length !== 1 ||
-    !["repair_required", "missing_binding"].includes(freshness?.reasonCode) ||
+    !isHistoricalRepairLineageReason(freshness?.reasonCode) ||
     sourceRun.status !== "completed" ||
     sourceRun.workflowReservationId !== gateReservation.id ||
     sourceRun.workflowAttempt !== gateReservation.workflowAttempt ||
@@ -1295,6 +1295,17 @@ function candidateGateAuthorizerEvidence(task, gateReservation, target, { latest
     sourceArtifactId: sourceArtifact.id,
     sourceRunId: sourceRun.id,
   };
+}
+
+function isHistoricalRepairLineageReason(reasonCode) {
+  // A failed candidate command still prevents this gate from becoming fresh and the
+  // live repair-grant path above continues to reject it. Once a later revision already
+  // exists, however, its exact bound REPAIR finding remains the immutable causal
+  // authorizer for that historical repair. Losing that lineage would strand the
+  // repaired candidate and make an honest rerun impossible. This caller also requires
+  // a completed REPAIR verdict, exact binding, linked artifact, and durable timestamps,
+  // so command failure is admitted only as retained provenance, never as green proof.
+  return ["repair_required", "missing_binding", "command_failure"].includes(reasonCode);
 }
 
 function candidateRevisionLineage(candidate) {

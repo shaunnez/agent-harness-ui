@@ -3679,6 +3679,72 @@ test("grants an exact-current repaired candidate only with distinct gate and cur
   }
 });
 
+test("retains failed-command REPAIR evidence as historical repair lineage only", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Historical repair authorizer with failed command telemetry",
+      description: "A stale REPAIR gate must remain causal lineage without becoming fresh gate evidence.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage.implement = 2;
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+      const candidate = twoRevisionCandidate();
+      draft.candidates.push(candidate);
+      attachCandidateProducerEvidence(draft, candidate);
+
+      const historicalAuthorizer = draft.runs.find((run) => (
+        run.id === candidate.revisions[1].authorizingGateRunId
+      ));
+      historicalAuthorizer.toolCalls = [{
+        id: "historical-command-failure",
+        name: "command_execution",
+        category: "repository-command",
+        phase: "completed",
+        result: "Exit code 127",
+      }];
+
+      draft.stageRunReservations.implement = {
+        id: candidate.sourceWorkflowReservationId,
+        stage: "implement",
+        kind: "repair",
+        workflowAttempt: 2,
+        candidateId: "C1",
+        candidateRevision: 1,
+        candidateHeadRevision: "candidate-c1-r1",
+        authorizedRunScopes: [],
+        reservedAt: candidate.revisions[1].sourceWorkflowReservedAt,
+      };
+      draft.stageRunReservations["dev-review"] = {
+        id: "reservation-c1-r2-review-3",
+        stage: "dev-review",
+        kind: "review",
+        workflowAttempt: 3,
+        candidateId: "C1",
+        candidateRevision: 2,
+        candidateHeadRevision: "candidate-c1-r2",
+        authorizedRunScopes: [],
+        reservedAt: "2026-08-04T00:02:00.000Z",
+      };
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
+    assert.deepEqual(await grantResponse.json(), { granted: true });
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits["dev-review"], 4);
+    assert.equal(updated.decisions.at(-1).candidateRevision, 2);
+    assert.equal(updated.decisions.at(-1).candidateAuthorizerRunIds.length, 1);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("accepts the canonical initial producer ordinal after an earlier same-scope implementation failure", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
