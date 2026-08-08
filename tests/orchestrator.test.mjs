@@ -1853,6 +1853,81 @@ test("persists exact structured-evidence reason codes through a failed review ru
   }
 });
 
+test("candidate command failure overrides a Development Review PASS and remains rerunnable", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-review-command-failure-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Reject unsupported review pass",
+      description: "Candidate command telemetry must override narrative PASS.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 1,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/review-command-failure",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "ready_for_review",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        updatedAt: "2026-08-01T12:00:00.000Z",
+        revisions: [],
+      }];
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      worktreeManager: { verifyCandidate: async () => {} },
+      runCodex: async ({ onEvent }) => {
+        onEvent?.({
+          type: "activity",
+          tone: "warning",
+          title: "Repository command returned a warning",
+          detail: "backend/.venv/bin/python -m pytest tests/unit",
+          commandFailed: true,
+          runtimeScope: "candidate",
+          toolCall: {
+            id: "cmd-failed",
+            name: "command_execution",
+            category: "repository-command",
+            phase: "completed",
+            result: "Exit code 1",
+          },
+        });
+        return {
+          finalText: gateOutput(1),
+          usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+        };
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id, "review"), true);
+    const finished = await waitForStatus(store, task.id, "ready-for-review");
+    const run = finished.runs.find((entry) => entry.stage === "dev-review");
+    const artifact = finished.artifacts.find((entry) => entry.id === run.artifactId);
+    assert.equal(run.gateResult.reportedVerdict, "PASS");
+    assert.equal(run.gateResult.verdict, "REPAIR");
+    assert.equal(run.evidenceError.code, "command_failure");
+    assert.equal(run.freshness.reasonCode, "command_failure");
+    assert.equal(run.toolCalls[0].commandFailed, true);
+    assert.equal(run.toolCalls[0].runtimeScope, "candidate");
+    assert.equal(run.toolCalls[0].result, "Exit code 1");
+    assert.equal(artifact.gateResult.verdict, "REPAIR");
+    assert.equal(finished.candidates[0].status, "ready_for_review");
+    assert.match(finished.events.at(-1).title, /rerun required/i);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("missing authoritative output retains the candidate and permits only the same gate rerun", async () => {
   const cases = [
     {
@@ -3041,7 +3116,50 @@ test("excludes only runtime-scoped context preflight from candidate test telemet
     "REPAIR",
   );
   assert.equal(evaluationVerdict("dev-review", { finalText: "PASS", runtimeEvents: [] }, null, { verdict: "PASS" }), "PASS");
+  assert.equal(
+    evaluationVerdict("dev-review", {
+      finalText: "PASS",
+      runtimeEvents: [{ commandFailed: true, runtimeScope: "candidate", detail: "python -m pytest" }],
+    }, null, { verdict: "PASS" }),
+    "REPAIR",
+  );
+  assert.equal(
+    evaluationVerdict("final-review", {
+      finalText: "PASS",
+      runtimeEvents: [{ commandFailed: true, runtimeScope: "candidate", detail: "git diff --check" }],
+    }, null, { verdict: "PASS" }),
+    "REPAIR",
+  );
   assert.equal(evaluationVerdict("dev-review", { finalText: "PASS", runtimeEvents: [] }), "REPAIR");
+});
+
+test("migration regresses an advanced gate when retained candidate command telemetry failed", () => {
+  const run = makeRuntimeRun();
+  run.toolCalls = [{
+    id: "cmd-failed",
+    name: "command_execution",
+    category: "repository-command",
+    phase: "completed",
+    result: "Exit code 1",
+  }];
+  const task = makeRuntimeTask({ runs: [run] });
+  task.status = "ready-for-test";
+  task.currentStage = "test";
+  task.activeRunKind = null;
+  task.activeRunReservationId = null;
+  task.activeRunIds = [];
+  task.candidates[0].status = "ready_for_test";
+  const state = { schemaVersion: TASK_STORE_SCHEMA_VERSION, tasks: [task] };
+
+  assert.equal(migrateRunActivityState(state), true);
+  assert.equal(task.gateFreshness["dev-review"].reasonCode, "command_failure");
+  assert.equal(task.status, "ready-for-review");
+  assert.equal(task.currentStage, "dev-review");
+  assert.equal(task.candidates[0].status, "ready_for_review");
+  assert.equal(task.events.at(-1).title, "Persisted gate evidence invalidated");
+  assert.equal(task.runs[0].gateResult.verdict, "PASS", "historical narrative evidence remains retained");
+  assert.equal(task.runs[0].toolCalls[0].result, "Exit code 1", "failed telemetry remains retained");
+  assert.equal(migrateRunActivityState(state), false, "reconciliation is idempotent once persisted");
 });
 
 test("runs the investigation frontier and retains each stage handoff", async () => {
@@ -3531,7 +3649,7 @@ test("advances an approved implementation task through a revision-bound candidat
           tone: "success",
           title: "Repository command completed",
           detail: "npm.cmd test",
-          commandFailed: /Development review/.test(prompt),
+          commandFailed: false,
           toolCall: {
             id: `cmd-${runtimeCalls.length}`,
             name: "command_execution",

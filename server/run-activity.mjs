@@ -62,6 +62,7 @@ export const RUNTIME_FRESHNESS_REASONS = Object.freeze({
   missing_authoritative_summary: "No authoritative persisted terminal run summary is available for this gate.",
   contradictory_evidence: "Candidate evidence contains contradictory result fields.",
   repair_required: "The terminal run requires candidate repair before this gate can be fresh.",
+  command_failure: "A candidate-scope command failed, so the gate requires rerun.",
   failed_execution: "The terminal run failed, so its evidence is not fresh.",
   timeout: "The terminal run timed out, so its evidence requires rerun.",
   run_in_progress: "The run is still in progress; authoritative evidence is not available yet.",
@@ -114,6 +115,7 @@ export function migrateRunActivityState(state) {
       })),
     });
     refreshGateFreshness(task);
+    changed = reconcileAdvancedCandidateGateState(task) || changed;
     changed = before !== JSON.stringify({
       gateFreshness: task.gateFreshness,
       runs: task.runs.map((run) => run.freshness ?? null),
@@ -504,6 +506,9 @@ function evaluateRunFreshness(run, artifact, target, stage, expectedProvider = n
   if (run.status === "running") return createFreshness(stage, target, sourceRunId, sourceArtifactId, "run_in_progress", null);
   if (isTimeoutRun(run)) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "timeout", null);
   if (run.status !== "completed") return createFreshness(stage, target, sourceRunId, sourceArtifactId, "failed_execution", null);
+  if (persistedCandidateVerificationCommandFailed(run.toolCalls)) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "command_failure", null);
+  }
 
   if (stage === "test") return evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId);
   return evaluateGateRun(run, target, stage, sourceRunId, sourceArtifactId);
@@ -1136,11 +1141,67 @@ function mergeToolCalls(existing, runtimeEvents) {
   for (const event of runtimeEvents ?? []) {
     if (!event.toolCall) continue;
     const next = structuredClone(event.toolCall);
+    if (event.commandFailed != null) next.commandFailed = event.commandFailed === true;
+    if (event.runtimeScope != null) next.runtimeScope = event.runtimeScope;
     const index = next.id ? calls.findIndex((call) => call.id === next.id) : -1;
     if (index < 0) calls.push(next);
     else calls[index] = { ...calls[index], ...next, result: next.result ?? calls[index].result ?? null };
   }
   return calls;
+}
+
+function persistedCandidateVerificationCommandFailed(toolCalls = []) {
+  return toolCalls.some((call) => {
+    if (call?.phase !== "completed" || call?.category !== "repository-command") return false;
+    if (call.runtimeScope === "context-preflight") return false;
+    if (call.commandFailed === true) return true;
+    const exitCode = /^Exit code\s+(-?\d+)\b/.exec(String(call.result ?? ""));
+    return exitCode ? Number(exitCode[1]) !== 0 : /^(Shell could not start|Command timed out)\b/i.test(String(call.result ?? ""));
+  });
+}
+
+function reconcileAdvancedCandidateGateState(task) {
+  if (task.activeRunKind || task.activeRunReservationId || (task.activeRunIds?.length ?? 0) > 0) return false;
+  const candidate = task.candidates?.at(-1);
+  if (!candidate) return false;
+  const requiredCompletedGates = {
+    "ready-for-test": ["dev-review"],
+    "ready-for-final-review": ["dev-review", "test"],
+    "awaiting-human-approval": ["dev-review", "test", "final-review"],
+  }[task.status];
+  if (!requiredCompletedGates) return false;
+  const stage = requiredCompletedGates.find((gate) => task.gateFreshness?.[gate]?.fresh !== true);
+  if (!stage) return false;
+  const freshness = task.gateFreshness?.[stage] ?? null;
+  const repairRequired = freshness?.reasonCode === "repair_required";
+  const recovery = repairRequired
+    ? { taskStatus: "repair-required", candidateStatus: "repair_required" }
+    : {
+        "dev-review": { taskStatus: "ready-for-review", candidateStatus: "ready_for_review" },
+        test: { taskStatus: "ready-for-test", candidateStatus: "ready_for_test" },
+        "final-review": { taskStatus: "ready-for-final-review", candidateStatus: "ready_for_final_review" },
+      }[stage];
+  task.status = recovery.taskStatus;
+  task.currentStage = stage;
+  candidate.status = recovery.candidateStatus;
+  task.error = freshness?.reasonCopy ?? RUNTIME_FRESHNESS_REASONS.missing_authoritative_summary;
+  task.events ??= [];
+  const sourceRunId = freshness?.sourceRunId ?? null;
+  if (!task.events.some((event) => event.title === "Persisted gate evidence invalidated" && event.runId === sourceRunId)) {
+    task.events.push({
+      id: crypto.randomUUID(),
+      at: new Date().toISOString(),
+      category: "decision",
+      tone: "warning",
+      stage,
+      title: "Persisted gate evidence invalidated",
+      detail: `${stage} cannot remain advanced. ${task.error}`,
+      runId: sourceRunId,
+      artifactId: freshness?.sourceArtifactId ?? null,
+      freshness: freshness ? structuredClone(freshness) : null,
+    });
+  }
+  return true;
 }
 
 function uniqueLegacyRunId(known, artifactId) {

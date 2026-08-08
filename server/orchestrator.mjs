@@ -1293,6 +1293,7 @@ export class TaskOrchestrator {
     let focusedTestEvidence = null;
     let structuredGateEvidence = null;
     let evidenceError = null;
+    const commandFailure = candidateVerificationCommandFailed(result.runtimeEvents);
     try {
       if (reviewerMutation) throw reviewerMutation;
       // Same contract, same validator, different source: the evidence is what the harness
@@ -1306,6 +1307,12 @@ export class TaskOrchestrator {
         : null;
     } catch (error) {
       evidenceError = structuredEvidenceError(error);
+    }
+    if (!evidenceError && commandFailure && structuredGateEvidence?.verdict !== "REPAIR") {
+      evidenceError = {
+        code: "command_failure",
+        copy: RUNTIME_FRESHNESS_REASONS.command_failure,
+      };
     }
     const verdict = evidenceError
       ? "REPAIR"
@@ -1322,8 +1329,8 @@ export class TaskOrchestrator {
       blockingReasons: [
         ...(evidenceError ? [evidenceError.copy] : []),
         ...(reviewerMutation ? [`The ${stageId} agent mutated the candidate it was reviewing. ${reviewerMutation.message}`] : []),
-        ...(stageId === "test" && candidateVerificationCommandFailed(result.runtimeEvents)
-          ? ["A verification command failed."]
+        ...(commandFailure
+          ? ["A candidate-scope command failed."]
           : []),
         ...(focusedTestEvidence?.status === "failed" ? ["Structured test evidence contains a failed result."] : []),
         ...(structuredGateEvidence?.blockingReasons ?? []),
@@ -1865,7 +1872,7 @@ function stageTimeoutMs(stageId, sandbox) {
 }
 
 export function evaluationVerdict(stageId, result, focusedTestEvidence = null, structuredGateEvidence = null) {
-  if (stageId === "test" && candidateVerificationCommandFailed(result.runtimeEvents)) return "REPAIR";
+  if (CANDIDATE_GATE_STAGES.includes(stageId) && candidateVerificationCommandFailed(result.runtimeEvents)) return "REPAIR";
   if (stageId === "test" && focusedTestEvidence?.status !== "passed") return "REPAIR";
   if (stageId === "test") return "PASS";
   if (["dev-review", "final-review"].includes(stageId)) return structuredGateEvidence?.verdict ?? "REPAIR";

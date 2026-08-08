@@ -14,6 +14,7 @@ export type RuntimeFreshnessReasonCode =
   | "missing_authoritative_summary"
   | "contradictory_evidence"
   | "repair_required"
+  | "command_failure"
   | "failed_execution"
   | "timeout"
   | "run_in_progress"
@@ -55,6 +56,8 @@ export interface RuntimeToolCall {
   server?: string | null;
   phase: "started" | "completed";
   result: string | null;
+  commandFailed?: boolean;
+  runtimeScope?: "candidate" | "context-preflight";
 }
 
 export interface RuntimeRunTestSummary {
