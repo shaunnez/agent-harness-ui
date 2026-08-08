@@ -1,19 +1,11 @@
-import type { Icon } from "@phosphor-icons/react";
 import {
   ArrowRight,
   ArrowSquareOut,
   CheckCircle,
-  ClipboardText,
-  Cube,
-  FileText,
-  Flask,
   GitBranch,
+  HourglassMedium,
   Hammer,
-  MagnifyingGlass,
-  Question,
   Robot,
-  ShieldCheck,
-  UserCircleCheck,
   WarningCircle,
   X,
 } from "@phosphor-icons/react";
@@ -27,9 +19,7 @@ import { Button, PriorityBadge } from "../Primitives";
 import {
   candidateGateStages,
   getRuntimeFreshnessLabel,
-  getStageTemporalState,
   isStageComplete,
-  isStageInvalidatedByRepair,
   isStageRunning,
 } from "../runtime/workflow";
 import {
@@ -40,19 +30,6 @@ import {
   getStageRoom,
   getTaskColor,
 } from "./atlasModel";
-
-const stageIcons: Record<StageId, Icon> = {
-  triage: Cube,
-  scouts: MagnifyingGlass,
-  grill: Question,
-  specification: FileText,
-  plan: GitBranch,
-  implement: Hammer,
-  "dev-review": ShieldCheck,
-  test: Flask,
-  "final-review": ClipboardText,
-  approval: UserCircleCheck,
-};
 
 export function AtlasLegend({
   tasks,
@@ -100,10 +77,34 @@ export function AtlasLegend({
         </span>
       </div>
       <div className="atlas-legend__states">
-        <span className="atlas-legend__state atlas-legend__state--running">Running</span>
-        <span className="atlas-legend__state atlas-legend__state--attention">Needs input</span>
-        <span className="atlas-legend__state atlas-legend__state--complete">Completed</span>
-        <span className="atlas-legend__state atlas-legend__state--blocked">Blocked / repair</span>
+        <span className="atlas-legend__state atlas-legend__state--running">
+          <Robot size={17} weight="fill" />
+          <span>
+            <strong>Running</strong>
+            <small>Agent working</small>
+          </span>
+        </span>
+        <span className="atlas-legend__state atlas-legend__state--attention">
+          <HourglassMedium size={17} weight="fill" />
+          <span>
+            <strong>Needs input</strong>
+            <small>Waiting for human</small>
+          </span>
+        </span>
+        <span className="atlas-legend__state atlas-legend__state--complete">
+          <CheckCircle size={17} weight="fill" />
+          <span>
+            <strong>Completed</strong>
+            <small>Evidence retained</small>
+          </span>
+        </span>
+        <span className="atlas-legend__state atlas-legend__state--blocked">
+          <WarningCircle size={17} weight="fill" />
+          <span>
+            <strong>Blocked / repair</strong>
+            <small>Action required</small>
+          </span>
+        </span>
       </div>
     </fieldset>
   );
@@ -169,12 +170,14 @@ export function TaskAtlasInspector({
   onOpenWorkbench,
   onClose,
   readOnly = false,
+  previewing = false,
 }: {
   task: RuntimeTask;
   onOpenTask: (taskId: string, stageId?: StageId) => void;
   onOpenWorkbench: () => void;
   onClose: () => void;
   readOnly?: boolean;
+  previewing?: boolean;
 }) {
   const room = getStageRoom(task.currentStage);
   const tone = getAtlasTaskTone(task);
@@ -186,6 +189,7 @@ export function TaskAtlasInspector({
   const latestArtifact = task.artifacts.at(-1);
   const freshGates = candidateGateStages.filter((stageId) => isStageComplete(task, stageId)).length;
   const blockedPackage = task.workPackages.find((item) => item.status === "failed");
+  const inspectorAction = getInspectorAction(task, tone);
 
   return (
     <aside className="atlas-inspector" aria-label={`Selected task ${task.id}`}>
@@ -205,6 +209,11 @@ export function TaskAtlasInspector({
         </button>
       </header>
       <h2>{task.title}</h2>
+      {previewing ? (
+        <div className="atlas-inspector__preview" role="status">
+          Visual state preview · persisted task data is unchanged
+        </div>
+      ) : null}
       <div className={`atlas-inspector__status atlas-inspector__status--${tone}`}>
         {tone === "blocked" ? (
           <WarningCircle weight="fill" />
@@ -283,54 +292,14 @@ export function TaskAtlasInspector({
           </Button>
         </section>
       ) : null}
-      <section className="atlas-stage-history">
-        <header>
-          <span>Stage history</span>
-          <small>Recorded evidence only</small>
-        </header>
-        <ol>
-          {workflowStages.map((stage, index) => {
-            const temporal = getStageTemporalState(task, stage.id);
-            const running = isStageRunning(task, stage.id);
-            const invalidated = isStageInvalidatedByRepair(task, stage.id);
-            const complete = isStageComplete(task, stage.id);
-            const Icon = stageIcons[stage.id];
-            const disabled = temporal === "future" || readOnly;
-            const detail = running
-              ? "Running"
-              : invalidated
-                ? "Stale"
-                : complete
-                  ? "Recorded"
-                  : stage.id === task.currentStage
-                    ? getAtlasStatusLabel(task)
-                    : temporal === "past"
-                      ? "Attempted"
-                      : "Future";
-            return (
-              <li key={stage.id}>
-                <button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => onOpenTask(task.id, stage.id)}
-                  title={`${stage.shortLabel}: ${detail}`}
-                >
-                  <Icon size={14} weight={running || complete ? "fill" : "regular"} />
-                  <span>{index + 1}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
       <div className="atlas-inspector__actions">
         <Button
           tone="primary"
           icon={ArrowSquareOut}
-          onClick={() => onOpenTask(task.id, task.currentStage)}
-          disabled={readOnly}
+          onClick={() => onOpenTask(task.id, inspectorAction.stageId)}
+          disabled={readOnly || previewing}
         >
-          {readOnly ? "Hosted preview" : "Enter task"}
+          {previewing ? "Preview only" : readOnly ? "Hosted preview" : inspectorAction.label}
         </Button>
         <span
           className="atlas-inspector__freshness"
@@ -348,6 +317,18 @@ export function TaskAtlasInspector({
       </div>
     </aside>
   );
+}
+
+function getInspectorAction(task: RuntimeTask, tone: ReturnType<typeof getAtlasTaskTone>) {
+  if (task.status === "repair-required")
+    return { label: "Open repair workspace", stageId: "implement" as StageId };
+  if (tone === "blocked") return { label: "Resolve blocker", stageId: task.currentStage };
+  if (task.status === "awaiting-human-approval")
+    return { label: "Review & continue", stageId: "approval" as StageId };
+  if (task.status.startsWith("awaiting-")) return { label: "Provide input", stageId: task.currentStage };
+  if (tone === "running") return { label: "Open live task", stageId: task.currentStage };
+  if (tone === "complete") return { label: "View task", stageId: task.currentStage };
+  return { label: "Enter task", stageId: task.currentStage };
 }
 
 export function InspectorReopen({ task, onOpen }: { task: RuntimeTask; onOpen: () => void }) {

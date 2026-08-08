@@ -1,4 +1,4 @@
-import { Robot, WarningCircle } from "@phosphor-icons/react";
+import { ArrowRight, CheckCircle, Hand, Play, Robot, WarningCircle } from "@phosphor-icons/react";
 import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { type RuntimeTask, type StageId, workflowStages } from "../../domain";
 import { PriorityBadge } from "../Primitives";
@@ -7,11 +7,24 @@ import { formatAtlasTime, getAtlasStatusLabel, getAtlasTaskTone, getTaskColor } 
 import { PackageWorkbench } from "./PackageWorkbench";
 import { WorkflowAtlasCanvas } from "./WorkflowAtlasCanvas";
 
+export type AtlasPreviewState = "live" | "running" | "attention" | "blocked" | "handoff" | "complete";
+
+const atlasPreviewOptions = [
+  { id: "live", label: "Live", Icon: Robot },
+  { id: "running", label: "Running", Icon: Play },
+  { id: "attention", label: "Needs input", Icon: Hand },
+  { id: "blocked", label: "Blocked", Icon: WarningCircle },
+  { id: "handoff", label: "Handoff", Icon: ArrowRight },
+  { id: "complete", label: "Completed", Icon: CheckCircle },
+] as const;
+
 export function WorkflowAtlas({
   tasks,
   loading = false,
   error = null,
   readOnly = false,
+  previewState = "live",
+  previewTransitionKey = 0,
   onOpenTask,
   onViewAllTasks,
 }: {
@@ -19,6 +32,8 @@ export function WorkflowAtlas({
   loading?: boolean;
   error?: string | null;
   readOnly?: boolean;
+  previewState?: AtlasPreviewState;
+  previewTransitionKey?: number;
   onOpenTask: (taskId: string, stageId?: StageId) => void;
   onViewAllTasks?: () => void;
 }) {
@@ -32,7 +47,14 @@ export function WorkflowAtlas({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(visibleTasks[0]?.id ?? null);
   const [workbenchOpen, setWorkbenchOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(true);
-  const selectedTask = visibleTasks.find((task) => task.id === selectedTaskId) ?? visibleTasks[0] ?? null;
+  const displayedTasks = useMemo(
+    () =>
+      visibleTasks.map((task) =>
+        task.id === (selectedTaskId ?? visibleTasks[0]?.id) ? taskForAtlasPreview(task, previewState) : task,
+      ),
+    [previewState, selectedTaskId, visibleTasks],
+  );
+  const selectedTask = displayedTasks.find((task) => task.id === selectedTaskId) ?? displayedTasks[0] ?? null;
 
   useEffect(() => {
     if (!visibleTasks.length) setSelectedTaskId(null);
@@ -66,14 +88,11 @@ export function WorkflowAtlas({
     <section className="workflow-atlas" aria-label="Workflow atlas">
       <aside className="atlas-roster" aria-label="Tasks on the workflow atlas">
         <header>
-          <div>
-            <p className="eyebrow">Courier roster</p>
-            <h2>Active tasks</h2>
-          </div>
+          <h2>Active tasks</h2>
           <span>{visibleTasks.length}</span>
         </header>
         <div className="atlas-roster__list">
-          {visibleTasks.map((task) => {
+          {displayedTasks.map((task) => {
             const tone = getAtlasTaskTone(task);
             const stage = workflowStages.find((item) => item.id === task.currentStage);
             return (
@@ -111,6 +130,14 @@ export function WorkflowAtlas({
             );
           })}
         </div>
+        <button
+          type="button"
+          className="atlas-roster__view-all"
+          onClick={onViewAllTasks}
+          disabled={!onViewAllTasks}
+        >
+          View all tasks <ArrowRight size={16} weight="bold" />
+        </button>
       </aside>
 
       <div className="atlas-main">
@@ -125,8 +152,10 @@ export function WorkflowAtlas({
           </span>
         </header>
         <WorkflowAtlasCanvas
-          tasks={visibleTasks}
+          tasks={displayedTasks}
           selectedTaskId={selectedTask?.id ?? null}
+          previewTransitionKey={previewTransitionKey}
+          trackPersistedTransitions={previewState === "live"}
           onSelectTask={selectTask}
           onOpenWorkbench={(taskId) => {
             selectTask(taskId);
@@ -135,7 +164,7 @@ export function WorkflowAtlas({
         />
         <div className={`atlas-support-grid ${inspectorOpen ? "" : "atlas-support-grid--summary-closed"}`}>
           <div className="atlas-support-grid__left">
-            <AtlasLegend tasks={visibleTasks} selectedTaskId={selectedTask?.id ?? null} />
+            <AtlasLegend tasks={displayedTasks} selectedTaskId={selectedTask?.id ?? null} />
             <RecentHandoffs
               tasks={visibleTasks}
               onOpenTask={onOpenTask}
@@ -151,6 +180,7 @@ export function WorkflowAtlas({
                 onOpenWorkbench={() => setWorkbenchOpen(true)}
                 onClose={() => setInspectorOpen(false)}
                 readOnly={readOnly}
+                previewing={previewState !== "live"}
               />
             ) : (
               <InspectorReopen task={selectedTask} onOpen={() => setInspectorOpen(true)} />
@@ -163,6 +193,85 @@ export function WorkflowAtlas({
       ) : null}
     </section>
   );
+}
+
+export function AtlasStatePreview({
+  value,
+  onChange,
+}: {
+  value: AtlasPreviewState;
+  onChange: (state: AtlasPreviewState) => void;
+}) {
+  return (
+    <div className="atlas-state-preview-wrap">
+      <fieldset className="atlas-state-preview">
+        <legend>Preview state</legend>
+        {atlasPreviewOptions.map(({ id, label, Icon }) => (
+          <button
+            type="button"
+            key={id}
+            className={value === id ? "is-selected" : ""}
+            onClick={() => onChange(id)}
+            aria-pressed={value === id}
+            title={id === "live" ? "Show persisted task state" : `Preview ${label.toLowerCase()} state`}
+          >
+            <Icon size={13} weight={value === id ? "fill" : "regular"} />
+            {label}
+          </button>
+        ))}
+      </fieldset>
+      {value === "live" ? null : (
+        <span
+          className="atlas-state-preview__notice"
+          title="Visual preview only; persisted task data is unchanged"
+        >
+          Preview only
+        </span>
+      )}
+    </div>
+  );
+}
+
+function taskForAtlasPreview(task: RuntimeTask, state: AtlasPreviewState): RuntimeTask {
+  if (state === "live") return task;
+  if (state === "running" || state === "handoff") {
+    return {
+      ...task,
+      currentStage: "implement",
+      status: "running",
+      error: null,
+      completedStages: ["triage", "scouts", "grill", "specification", "plan"],
+      workPackages: task.workPackages.map((item, index) => ({
+        ...item,
+        status: index === 0 ? "running" : item.status,
+      })),
+    };
+  }
+  if (state === "attention") {
+    return {
+      ...task,
+      currentStage: "approval",
+      status: "awaiting-human-approval",
+      error: null,
+      completedStages: workflowStages.slice(0, -1).map((stage) => stage.id),
+    };
+  }
+  if (state === "blocked") {
+    return {
+      ...task,
+      currentStage: "dev-review",
+      status: "blocked",
+      error: task.error ?? "Preview only: persisted blocking evidence and the repair action appear here.",
+      completedStages: workflowStages.slice(0, 6).map((stage) => stage.id),
+    };
+  }
+  return {
+    ...task,
+    currentStage: "approval",
+    status: "completed",
+    error: null,
+    completedStages: workflowStages.map((stage) => stage.id),
+  };
 }
 
 function AtlasEmpty({

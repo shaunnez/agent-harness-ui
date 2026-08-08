@@ -23,7 +23,7 @@ import {
 } from "../domain";
 import { hostedAtlasMapRequested } from "../hostedAtlasPreview";
 import { type AtlasView, AtlasViewSwitch } from "./atlas/AtlasViewSwitch";
-import { WorkflowAtlas } from "./atlas/WorkflowAtlas";
+import { type AtlasPreviewState, AtlasStatePreview, WorkflowAtlas } from "./atlas/WorkflowAtlas";
 import { Button, ModelStack, PriorityBadge, SectionHeader } from "./Primitives";
 import { TaskTable } from "./TaskTable";
 import { WorkflowProgressRing } from "./WorkflowProgressRing";
@@ -54,6 +54,8 @@ export function CommandCentre({
   const [view, setView] = useState<AtlasView>(() =>
     previewMode && hostedAtlasMapRequested() ? "map" : "table",
   );
+  const [atlasPreviewState, setAtlasPreviewState] = useState<AtlasPreviewState>("live");
+  const [atlasPreviewTransitionKey, setAtlasPreviewTransitionKey] = useState(0);
   // Archived tasks leave every list on this screen, including the attention list — archiving is
   // how an operator says "stop showing me this". The spend totals below deliberately still count
   // them: that money was really spent, and quietly dropping it would misreport the run cost.
@@ -87,6 +89,11 @@ export function CommandCentre({
     (left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime(),
   )[0]?.updatedAt;
 
+  const changeAtlasPreviewState = (state: AtlasPreviewState) => {
+    setAtlasPreviewState(state);
+    if (state === "handoff") setAtlasPreviewTransitionKey((value) => value + 1);
+  };
+
   return (
     <div className={`page command-centre-page ${view === "map" ? "atlas-page" : ""}`}>
       <header className={view === "map" ? "atlas-page__header" : "page-heading"}>
@@ -109,6 +116,9 @@ export function CommandCentre({
             <p>One deterministic view of active work, evidence, and human decisions.</p>
           </div>
         )}
+        {view === "map" ? (
+          <AtlasStatePreview value={atlasPreviewState} onChange={changeAtlasPreviewState} />
+        ) : null}
         <AtlasViewSwitch view={view} onChange={setView} />
       </header>
       {view === "map" ? (
@@ -117,8 +127,10 @@ export function CommandCentre({
           loading={runtimeLoading}
           error={runtimeError}
           onOpenTask={onOpenTask}
-          onViewAllTasks={previewMode ? undefined : onSeeAllTasks}
+          onViewAllTasks={onSeeAllTasks}
           readOnly={previewMode}
+          previewState={atlasPreviewState}
+          previewTransitionKey={atlasPreviewTransitionKey}
         />
       ) : (
         <>

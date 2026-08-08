@@ -23,17 +23,22 @@ interface Transition {
 export function WorkflowAtlasCanvas({
   tasks,
   selectedTaskId,
+  previewTransitionKey = 0,
+  trackPersistedTransitions = true,
   onSelectTask,
   onOpenWorkbench,
 }: {
   tasks: RuntimeTask[];
   selectedTaskId: string | null;
+  previewTransitionKey?: number;
+  trackPersistedTransitions?: boolean;
   onSelectTask: (taskId: string) => void;
   onOpenWorkbench: (taskId: string) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const previousStagesRef = useRef<Map<string, StageId> | null>(null);
   const transitionsRef = useRef<Map<string, Transition>>(new Map());
+  const consumedPreviewTransitionKeyRef = useRef(0);
   const cargoImageRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
@@ -49,7 +54,8 @@ export function WorkflowAtlasCanvas({
 
   useEffect(() => {
     const now = performance.now();
-    if (previousStagesRef.current) {
+    if (!trackPersistedTransitions) transitionsRef.current.clear();
+    if (trackPersistedTransitions && previousStagesRef.current) {
       for (const task of tasks) {
         const previous = previousStagesRef.current.get(task.id);
         if (previous && previous !== task.currentStage) {
@@ -63,13 +69,26 @@ export function WorkflowAtlasCanvas({
       }
     }
     previousStagesRef.current = new Map(tasks.map((task) => [task.id, task.currentStage]));
-  }, [tasks]);
+  }, [tasks, trackPersistedTransitions]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext("2d");
     if (!context) return;
+    if (
+      previewTransitionKey > 0 &&
+      previewTransitionKey !== consumedPreviewTransitionKeyRef.current &&
+      selectedTaskId
+    ) {
+      consumedPreviewTransitionKeyRef.current = previewTransitionKey;
+      transitionsRef.current.set(selectedTaskId, {
+        taskId: selectedTaskId,
+        from: "plan",
+        to: "implement",
+        startedAt: performance.now(),
+      });
+    }
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let frame = 0;
 
@@ -110,7 +129,7 @@ export function WorkflowAtlasCanvas({
       observer.disconnect();
       window.cancelAnimationFrame(frame);
     };
-  }, [selectedTaskId, tasks]);
+  }, [previewTransitionKey, selectedTaskId, tasks]);
 
   return (
     <div className="atlas-map-scroller">
@@ -188,39 +207,43 @@ function drawGrid(context: CanvasRenderingContext2D) {
 function drawRoad(context: CanvasRenderingContext2D, points: AtlasPoint[]) {
   context.save();
   context.shadowColor = "rgba(0, 0, 0, 0.72)";
-  context.shadowBlur = 14;
-  context.shadowOffsetY = 8;
-  drawPolyline(context, points, "#171d1e", 38);
+  context.shadowBlur = 16;
+  context.shadowOffsetY = 9;
+  drawPolyline(context, points, "#111718", 48);
   context.shadowColor = "transparent";
-  drawPolyline(context, points, "#4b5352", 30);
-  drawPolyline(context, points, "#272e2e", 22);
-  drawPolyline(context, points, "rgba(220, 224, 219, 0.3)", 1.5);
-  context.setLineDash([12, 8]);
-  drawPolyline(context, points, "rgba(214, 219, 214, 0.13)", 1.2);
+  drawPolyline(context, points, "#596462", 38);
+  drawPolyline(context, points, "#273031", 29);
+  drawPolyline(context, points, "rgba(225, 232, 227, 0.48)", 2);
+  context.setLineDash([13, 8]);
+  drawPolyline(context, points, "rgba(215, 224, 217, 0.22)", 1.6);
   context.setLineDash([]);
   context.restore();
 }
 
 function drawRepairRoads(context: CanvasRenderingContext2D) {
   context.save();
+  context.shadowColor = "rgba(237, 100, 100, 0.42)";
+  context.shadowBlur = 11;
   for (const route of atlasRepairRoads) {
-    drawPolyline(context, route.points, "rgba(31, 25, 25, 0.92)", 11);
-    context.setLineDash([8, 8]);
-    drawPolyline(context, route.points, "#d6554f", 2.5);
+    drawPolyline(context, route.points, "rgba(38, 20, 21, 0.98)", 26);
+    drawPolyline(context, route.points, "#a93e3e", 15);
+    context.setLineDash([10, 8]);
+    drawPolyline(context, route.points, "#ff7a73", 3.5);
     context.setLineDash([]);
     drawArrow(context, route.points, "#ed6464");
   }
+  context.shadowColor = "transparent";
   context.font = "700 10px Inter, sans-serif";
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.fillStyle = "rgba(28, 15, 15, 0.96)";
-  roundedRect(context, 834, 642, 154, 25, 5);
+  roundedRect(context, 824, 596, 164, 27, 5);
   context.fill();
   context.strokeStyle = "#9e3734";
   context.lineWidth = 1;
   context.stroke();
   context.fillStyle = "#ff8078";
-  context.fillText("RETURN TO IMPLEMENT", 911, 654.5);
+  context.fillText("RETURN TO IMPLEMENT", 906, 609.5);
   context.restore();
 }
 

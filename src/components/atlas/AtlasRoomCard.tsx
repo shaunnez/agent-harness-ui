@@ -66,6 +66,16 @@ export function AtlasRoomCard({
     .filter((task) => task.currentStage === room.stageId)
     .sort((left, right) => Number(right.id === selectedTaskId) - Number(left.id === selectedTaskId));
   const active = roomTasks.some((task) => task.id === selectedTaskId);
+  const roomTones = roomTasks.map(getAtlasTaskTone);
+  const activityClass = roomTones.includes("running")
+    ? "atlas-room--working"
+    : roomTones.includes("attention")
+      ? "atlas-room--attention"
+      : roomTones.includes("blocked")
+        ? "atlas-room--blocked"
+        : roomTones.includes("complete")
+          ? "atlas-room--complete"
+          : "";
   const Icon = stageIcons[room.stageId];
   const roomShell =
     room.stageId === "implement"
@@ -83,8 +93,9 @@ export function AtlasRoomCard({
 
   return (
     <section
-      className={`atlas-room atlas-room--${room.stageId} ${active ? "atlas-room--active" : ""}`}
+      className={`atlas-room atlas-room--${room.stageId} ${roomTasks.length ? "atlas-room--occupied" : ""} ${activityClass} ${active ? "atlas-room--active" : ""}`}
       style={style}
+      data-atlas-room={room.stageId}
       aria-label={`${room.number}. ${room.stageId}, ${room.roomName}; ${roomTasks.length} task${roomTasks.length === 1 ? "" : "s"}`}
     >
       <img className="atlas-room__shell" src={roomShell} alt="" aria-hidden />
@@ -92,10 +103,8 @@ export function AtlasRoomCard({
       <div className="atlas-room__inner">
         <header className="atlas-room__header">
           <span className="atlas-room__number">{room.number}</span>
-          <span>
-            <strong>{stageLabel(room.stageId)}</strong>
-            <small>{room.roomName}</small>
-          </span>
+          <strong>{stageLabel(room.stageId)}</strong>
+          <small>{room.roomName}</small>
         </header>
         <div className="atlas-room__body">
           {room.stageId === "implement" ? (
@@ -421,7 +430,9 @@ function TaskCore({ task }: { task: RuntimeTask }) {
       style={{ "--task-color": getTaskColor(task.id) } as CSSProperties}
       aria-hidden
     >
-      <img src={courierPod} alt="" />
+      <img className="atlas-task-core__courier" src={courierPod} alt="" />
+      {tone === "running" ? <img className="atlas-task-core__agent" src={workerDrone} alt="" /> : null}
+      <i aria-hidden />
     </span>
   );
 }

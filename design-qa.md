@@ -220,3 +220,68 @@ The reference and runtime screenshots were joined into the same comparison input
 Runtime capability caps are tracked separately in `docs/ui-capability-gaps.md`; they are not presented as completed interactions or invented data.
 
 final result: passed
+
+## Courier Rooms one-screen refinement — 2026-08-09
+
+### Scope and evidence
+
+- Source design: `/Users/shaun/.codex/generated_images/019fe023-68c5-7ab0-8069-2d72656a8908/exec-a18b3f7f-b1ce-4416-804f-ff6e1a2e75ad.png`
+- Source pixels: 1486 x 1059, normalized to 1488 x 1058 for direct comparison.
+- Implementation route: `http://127.0.0.1:4174/?preview=atlas&view=map#/command`
+- Temporary public review route: `https://provincial-motel-symposium-gym.trycloudflare.com/?preview=atlas&view=map#/command`
+- Implementation capture: `/Users/shaun/.codex/visualizations/2026/08/08/019fe023-68c5-7ab0-8069-2d72656a8908/atlas-v2-final.png`
+- Public phone capture: `/Users/shaun/.codex/visualizations/2026/08/08/019fe023-68c5-7ab0-8069-2d72656a8908/atlas-v2-public-mobile.png`
+- Browser viewport: 1488 x 1058 at device scale 1.
+- Compared state: hosted illustrative Live map, AH-008 selected, inspector open.
+- Full comparison: `/Users/shaun/.codex/visualizations/2026/08/08/019fe023-68c5-7ab0-8069-2d72656a8908/atlas-v2-comparison-final.png`
+- Focused map comparison: `/Users/shaun/.codex/visualizations/2026/08/08/019fe023-68c5-7ab0-8069-2d72656a8908/atlas-v2-comparison-map.png`
+- Focused support comparison: `/Users/shaun/.codex/visualizations/2026/08/08/019fe023-68c5-7ab0-8069-2d72656a8908/atlas-v2-comparison-support.png`
+
+### Comparison history
+
+1. The starting implementation was taller than the reference, clipped the evidence area, used small room art and typography, detached labels from room footprints, drew weak roads, had no visual-state controls, and allowed the inspector to overlap map content.
+2. The first refinement introduced the 650-unit world, dominant Implement hangar, nested implementation and review bays, larger room art, physical roads, red repair roads, persistent occupancy counters, a boxed legend, Recent handoffs, and a bottom-aligned inspector.
+3. Browser comparison found two remaining P1 issues: short desktop viewports compressed the support strip, and the canvas intercepted the inspector close control despite sitting visually behind it. The short-height layout now scrolls locally and the support grid owns the interaction layer.
+4. The final pass increased stage, legend, and handoff typography; moved the preview switcher into the compact header; added truthful room, agent, and cargo motion; added a map-first phone layout; and suppressed synthetic transition animation unless the explicit Handoff preview is selected.
+
+### Final visual checks
+
+| Check | Evidence | Result |
+| --- | --- | --- |
+| One-screen desktop composition | Atlas top 56, bottom 1058; map top 108, bottom 693; support top 693, bottom 1057; document 1488 x 1058 with no overflow | Pass |
+| Room hierarchy and labels | Every room stacks number, stage name, and functional name above its roof; Implement and Dev Review retain clear headers over their larger footprints | Pass |
+| Room identity and scale | Function-specific apparatus is large; Implement is dominant; Implement packages and Dev Review tasks render as nested bays | Pass |
+| Roads and repair route | Physical roads are continuous and high-contrast; Dev Review and Test return roads are thick red routes labelled `RETURN TO IMPLEMENT` | Pass |
+| Active, blocked, and human states | Selected room uses one blue perimeter; blocked couriers have a red seal and persisted reason; attention tasks remain amber and individually actionable | Pass |
+| Motion | Occupied shells breathe gently; a running courier and worker core use stronger hover motion; explicit Handoff draws a 1.25 second cargo transition; reduced-motion disables decorative animation | Pass |
+| Task rail | Header is `Active tasks`, all cards remain visible in the rail, and `View all tasks` is persistent at the bottom | Pass |
+| Legend and handoffs | Object art is 72 px; state rows use icons and labels; legend and handoff metadata use a 12 px or larger scale | Pass |
+| Inspector placement | Recent handoffs and the inspector both end at y=1045; the inspector never covers a workflow room and its close control is the top hit target | Pass |
+| Prototype states | Live, Running, Needs input, Blocked, Handoff, and Completed controls render representative visual states without mutating persisted data | Pass |
+
+### Interaction and responsive checks
+
+- Exercised every preview-state button. Running produced `atlas-room-breathe-active` on the active shell and `atlas-courier-hover` on the courier; the Handoff state rendered a cargo crate on the plan-to-Implement route.
+- Closed and reopened the AH-003 selected-task inspector after correcting the canvas stacking issue.
+- Selected real persisted blocked task AH-003 and verified the enabled `Resolve blocker` action plus its persisted `Route sealed` reason.
+- Activated `View all tasks` from the map rail and verified navigation to `#/tasks`.
+- Verified the real Command Centre still opens on Table and Map remains secondary.
+- At 1280 x 800, the support area retains its full 364 px height and the app main region becomes locally scrollable instead of clipping it.
+- At 390 x 844, preview controls wrap without horizontal document overflow, the map renders before the task rail, the page scrolls vertically, and the 1080 px world remains horizontally scrollable inside the map.
+- The public Cloudflare preview returned HTTP 200, rendered the atlas at 390 x 844, and produced no public-origin console warnings or errors.
+- A clean browser reload produced no console warnings or errors. A transient React dependency warning seen during hot-module replacement did not recur on reload.
+
+### Code verification
+
+- `npm run typecheck`
+- `npm run lint`
+- Focused Biome format check for all seven changed source files
+- `node --test tests/atlas-model.test.mjs` (3 passed)
+- `npm test` (333 passed)
+- `npm run build`
+- `npm run test:sites` (4 passed)
+- Required Sites artifacts present: `dist/client/index.html`, `dist/server/index.js`, and `dist/.openai/hosting.json`
+
+No actionable P0, P1, or P2 visual or interaction issues remain in the reviewed state.
+
+final result: passed
