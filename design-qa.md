@@ -104,6 +104,57 @@ Responsive checks used the user's in-app browser at full width, an approximately
 
 final result: passed
 
+## Courier Rooms workflow atlas fidelity rebuild — 2026-08-09
+
+### Review setup and source truth
+
+- Selected source: `/Users/shaun/.codex/generated_images/019fe023-68c5-7ab0-8069-2d72656a8908/exec-a18b3f7f-b1ce-4416-804f-ff6e1a2e75ad.png`
+- Runnable local preview: `http://127.0.0.1:4174/#/command`
+- Final map capture: `/Users/shaun/.codex/visualizations/2026/08/09/019fe023-68c5-7ab0-8069-2d72656a8908/atlas-fidelity-pass-4.png`
+- Single-package workbench capture: `/Users/shaun/.codex/visualizations/2026/08/09/019fe023-68c5-7ab0-8069-2d72656a8908/atlas-workbench-single-final.png`
+- The 1486 × 1059 source and implementation capture were opened together at original resolution in one comparison input after every material visual pass. The final comparison therefore uses the source viewport rather than a stretched or differently cropped frame.
+- Browser state: Command Centre Map, with persisted blocked task `AH-004` selected in Dev Review. The reference selected `AH-006`; task identity, timestamps, statuses, packages, and handoff history remain truthful to the live local data.
+
+### Required fidelity surfaces
+
+- Typography: compact Inter UI type with monospaced task and candidate identifiers preserves the source hierarchy.
+- Layout and spacing: compact Live/Updated header, 176px courier roster, investigation/delivery bands, dominant Implement hangar, two-bay Dev Review tower, and a non-overlapping support row match the selected composition.
+- Colour: warm ink surfaces, one blue active-room perimeter, amber human-attention states, green retained evidence, and red blocked/repair semantics are restrained and unambiguous.
+- Assets: transparent generated raster assets provide the source-matched graphite room shells, olive Implement hangar, two-bay review tower, courier pod, worker drone, cargo crate, and function-specific room machinery. Canvas renders only the meaningful road and live route layers; the source screenshot itself is never embedded.
+- Content: room labels, counters, queued status, package states, block reasons, handoffs, and inspector facts come from the local task model rather than presentation-only fixtures.
+- Interactions: Table is the Command Centre default, Map is the second Command Centre tab, Tasks stays table-only, the inspector closes and reopens, roster and room couriers select a task, the in-room Workbench action selects its task before opening, and the workbench supports a centered one-package state plus larger dependency graphs.
+
+### Comparison history and fixes
+
+1. P1 — The prior code-native rooms remained visibly unlike the selected mock. Replaced them with source-matched transparent 3D shells and apparatus assets while retaining semantic DOM content and real interaction targets.
+2. P1 — Implement was undersized and assumed a fixed four-slot layout. Made it the dominant hangar and added auto-layout 1–N package bays that preserve active, ready-for-integration, integrated, queued, and blocked distinctions; a one-package task now occupies a coherent centered bay.
+3. P1 — Dev Review could not represent multiple task occupants. Added two predictable review bays, consistent counters, overflow treatment, and per-task blocked seals with a concise persisted-reason projection.
+4. P1 — Return-to-Implement behaviour was absent. Added explicit dashed repair roads from Dev Review and Test to Implement without decorating ordinary bridges with completion ticks.
+5. P1 — The summary obscured rooms and Recent handoffs was missing. Moved the closeable inspector into the support row beside a real artifact-derived handoff list and a source-aligned boxed legend.
+6. P2 — Map scope, default view, heading density, queued copy, and counter treatment did not match the requested behaviour. Table now opens first, Map appears second only on Command Centre, the header includes Live/Updated, and room counters use one consistent treatment.
+7. P2 — The workbench summary columns misaligned and a single package looked stranded in a large graph. Aligned the five status totals, center-fit the package node, and reduced the one-package modal height while retaining pan, zoom, dependency batches, and package drill-down for larger plans.
+8. P2 — Courier, agent, and cargo semantics were not visually legible at map and legend scale. Added dedicated assets, enlarged the operative silhouettes, and kept cargo exclusive to persisted handoffs or live persisted-state transitions.
+
+### Remaining differences
+
+- P0 findings: none.
+- P1 findings: none after fixes.
+- P2 findings: none after fixes.
+- P3 — The live dataset contains seven tasks rather than the reference's four, so roster length, individual task titles, stage occupancy, and route colours intentionally differ.
+
+### Verification
+
+- `npm run typecheck` — passed.
+- `npm test` — 320 passed, including the atlas road, repair-route, queued-state, and package-layout coverage.
+- `npm run build` — passed; Sites artifacts were prepared.
+- `npm run test:sites` — 4 passed.
+- Targeted Biome format and lint for the atlas and touched integration files — passed after formatting.
+- `git diff --check` — passed.
+- Full `npm run lint` — blocked only by the unchanged duplicate `gap` declaration already present in `HEAD` at `src/styles/settings-changelog.css:28`; the atlas files produce no lint diagnostics.
+- Browser interactions exercised in the selected in-app browser: Table/Map switching, Tasks route scope, room task selection, inspector close/reopen, in-room Workbench launch, single-package modal, and roster scrolling.
+
+final result: passed
+
 ## Real runtime Evidence Gate convergence — 2026-08-02
 
 ### Review setup and source truth

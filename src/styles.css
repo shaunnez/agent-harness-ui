@@ -2,6 +2,8 @@
 @import "./styles/shell.css";
 @import "./styles/command-centre.css";
 @import "./styles/library-screen.css";
+@import "./styles/workflow-atlas.css";
+@import "./styles/courier-rooms-fidelity.css";
 @import "./styles/workspace-shell.css";
 @import "./styles/stage-spec-grill.css";
 @import "./styles/stage-inspector.css";

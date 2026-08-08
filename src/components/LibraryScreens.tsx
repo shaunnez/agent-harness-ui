@@ -1,6 +1,6 @@
 import { MagnifyingGlass, SlidersHorizontal } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
-import { type RuntimeTask, workflowStages } from "../domain";
+import { type RuntimeTask, type StageId, workflowStages } from "../domain";
 import { Button, SectionHeader } from "./Primitives";
 import { TaskTable } from "./TaskTable";
 
@@ -8,7 +8,7 @@ export function TasksScreen({
   onOpenTask,
   runtimeTasks,
 }: {
-  onOpenTask: (taskId: string) => void;
+  onOpenTask: (taskId: string, stageId?: StageId) => void;
   runtimeTasks: RuntimeTask[];
 }) {
   const [query, setQuery] = useState("");
@@ -57,7 +57,8 @@ export function TasksScreen({
         }),
     [priority, query, runtimeTasks, stage, status],
   );
-  const hasFilters = Boolean(query.trim()) || !["all", "open"].includes(status) || stage !== "all" || priority !== "all";
+  const hasFilters =
+    Boolean(query.trim()) || !["all", "open"].includes(status) || stage !== "all" || priority !== "all";
   return (
     <div className="page library-page">
       <SectionHeader
@@ -65,7 +66,11 @@ export function TasksScreen({
         title="Tasks"
         description="Every persisted task, its current gate, dates, real token usage, cache rate, and approximate API-rate cost."
         action={
-          <Button tone={filtersOpen || hasFilters ? "primary" : "secondary"} icon={SlidersHorizontal} onClick={() => setFiltersOpen((value) => !value)}>
+          <Button
+            tone={filtersOpen || hasFilters ? "primary" : "secondary"}
+            icon={SlidersHorizontal}
+            onClick={() => setFiltersOpen((value) => !value)}
+          >
             Filters{hasFilters ? " active" : ""}
           </Button>
         }
@@ -78,21 +83,68 @@ export function TasksScreen({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
-        <span>{tasks.length} of {runtimeTasks.length} tasks</span>
+        <span>
+          {tasks.length} of {runtimeTasks.length} tasks
+        </span>
       </div>
       {filtersOpen ? (
         <div className="task-filters">
-          <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="open">Open tasks</option><option value="all">All statuses</option><option value="attention">Needs attention</option><option value="waiting">Waiting for action</option><option value="running">Running</option><option value="completed">Completed</option><option value="closed">Closed</option><option value="archived">Archived</option></select></label>
-          <label>Stage<select value={stage} onChange={(event) => setStage(event.target.value)}><option value="all">All stages</option>{workflowStages.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-          <label>Priority<select value={priority} onChange={(event) => setPriority(event.target.value)}><option value="all">All priorities</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
-          <Button tone="ghost" onClick={() => { setQuery(""); setStatus("open"); setStage("all"); setPriority("all"); }} disabled={!hasFilters}>Clear filters</Button>
+          <label>
+            Status
+            <select value={status} onChange={(event) => setStatus(event.target.value)}>
+              <option value="open">Open tasks</option>
+              <option value="all">All statuses</option>
+              <option value="attention">Needs attention</option>
+              <option value="waiting">Waiting for action</option>
+              <option value="running">Running</option>
+              <option value="completed">Completed</option>
+              <option value="closed">Closed</option>
+              <option value="archived">Archived</option>
+            </select>
+          </label>
+          <label>
+            Stage
+            <select value={stage} onChange={(event) => setStage(event.target.value)}>
+              <option value="all">All stages</option>
+              {workflowStages.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Priority
+            <select value={priority} onChange={(event) => setPriority(event.target.value)}>
+              <option value="all">All priorities</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </label>
+          <Button
+            tone="ghost"
+            onClick={() => {
+              setQuery("");
+              setStatus("open");
+              setStage("all");
+              setPriority("all");
+            }}
+            disabled={!hasFilters}
+          >
+            Clear filters
+          </Button>
         </div>
       ) : null}
       <TaskTable
         tasks={tasks}
         onOpenTask={onOpenTask}
         emptyTitle={hasFilters ? "No tasks match these filters" : "No local tasks yet"}
-        emptyCopy={hasFilters ? "Clear one or more filters to broaden the result." : "Create a task to begin a real Evidence Gate workflow."}
+        emptyCopy={
+          hasFilters
+            ? "Clear one or more filters to broaden the result."
+            : "Create a task to begin a real Evidence Gate workflow."
+        }
       />
     </div>
   );

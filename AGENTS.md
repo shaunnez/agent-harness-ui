@@ -20,6 +20,14 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Dev Review is a fresh-context code advisor with P0–P3 findings, file and line suggestions, one revision allowance, and visible repair lineage when a prior test failure caused a repair.
 - Tests use a mixed result list with drillable success and failure detail, an explicit way back to the list, and global repair/retry actions outside individual result accordions.
 - Final Review summarizes every prior stage with state, tokens, approximate cost, and the key outcome so a human can clearly see what was done.
+- Use the shared “Courier Rooms” workflow atlas only as the secondary Map view on Command Centre; Command Centre opens on Table and Tasks remains a dedicated table page. The courier pod represents a task, its signal core represents the active worker agent, and a cargo crate appears only for a real persisted handoff.
+- Give all ten workflow rooms a function-specific identity. The selected task's current room always has one unambiguous blue active perimeter; blocked tasks are individually sealed with a red crossbar, a `BLOCKED` label, and the persisted reason rather than turning a shared room red.
+- Keep atlas bridges plain and meaningful. Do not add completion ticks or decorative handoff markers between rooms; animate a route transition only when persisted task state actually advances.
+- Implement is a summary hangar for a dynamic 1–N package set, never a fixed four-slot room. Its workbench must auto-layout dependency batches, remain usable beyond four packages, and preserve the distinction between ready-for-integration and integrated slices.
+- Keep room names, stage numbers, task bays, and occupancy counters inside the room chrome so the map does not waste a header band above each room. When several tasks share a stage, arrange their courier bays predictably and use the same occupancy counter treatment on every room.
+- Give Implement the dominant footprint and render its persisted packages as nested bays. Dev Review uses nested task inspection bays. Both Dev Review and Test show an explicit return-to-Implement repair road without implying that a repair has already occurred.
+- Keep the atlas header compact with truthful Live and Updated metadata. Place the boxed legend and Recent handoffs below the map, with the selected-task inspector alongside them; the inspector must be closeable and must never cover a workflow room.
+- Keep the package workbench status totals column-aligned. Treat a single dependency batch as the primary layout, centered and spacious, while retaining pan, zoom, dependency layout, and overflow support for larger package sets.
 
 ## Durable workflow decisions
 

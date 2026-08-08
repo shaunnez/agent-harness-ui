@@ -182,6 +182,9 @@
   .sidebar {
     display: none;
   }
+  .app-main {
+    grid-column: 1 / -1;
+  }
   .page {
     padding: 22px 17px 40px;
   }
