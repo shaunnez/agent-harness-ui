@@ -37,8 +37,12 @@ function parseLabelledJson(text, label) {
   const expression = new RegExp(`<${label}>\\s*([\\s\\S]*?)\\s*</${label}>`, "i");
   const match = String(text ?? "").match(expression);
   if (!match) throw new Error(`The agent did not return the required ${label} JSON block.`);
+  const payload = match[1].trim();
+  // Accept one optional Markdown fence only when it wraps the whole labelled payload.
+  // Mixed prose, multiple blocks, and malformed JSON remain fail-closed.
+  const fenced = payload.match(/^```(?:json)?[ \t]*\r?\n([\s\S]*?)\r?\n```$/i);
   try {
-    return JSON.parse(match[1].trim());
+    return JSON.parse((fenced?.[1] ?? payload).trim());
   } catch (error) {
     throw new Error(`The ${label} JSON block was invalid: ${error.message}`);
   }

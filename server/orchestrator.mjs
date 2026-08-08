@@ -954,11 +954,26 @@ export class TaskOrchestrator {
     const planAttempt = task.attemptsByStage?.plan ?? 1;
     const result = await this.#executeAgent(task, "plan", signal, task.repositoryPath, "read-only");
     throwIfAborted(signal);
-    const workPackages = parseWorkPackages(result.finalText, task.repositoryPath);
-    await this.#retainAgentResult(id, "plan", result, {
+    const artifactOptions = {
       replace: planAttempt === 1,
       name: planAttempt === 1 ? undefined : `implementation-plan-r${planAttempt}.md`,
-    });
+    };
+    let workPackages;
+    try {
+      workPackages = parseWorkPackages(result.finalText, task.repositoryPath);
+    } catch (error) {
+      await this.#retainAgentResult(id, "plan", result, {
+        ...artifactOptions,
+        complete: false,
+        name: planAttempt === 1
+          ? "implementation-plan-invalid.md"
+          : `implementation-plan-r${planAttempt}-invalid.md`,
+        artifactTitle: "Unparseable implementation plan retained",
+        artifactTone: "warning",
+      });
+      throw error;
+    }
+    await this.#retainAgentResult(id, "plan", result, artifactOptions);
     await this.#store.update(id, (draft) => {
       draft.workPackages = workPackages;
       draft.status = "awaiting-plan-approval";

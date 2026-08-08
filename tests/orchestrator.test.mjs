@@ -155,6 +155,14 @@ test("parses grounded Grill questions and dependency batches", () => {
   const packages = parseWorkPackages(`<work-packages>{"packages":[{"id":"S1","title":"API","description":"Add API.","dependencies":[],"ownedPaths":["server/api.mjs"],"verification":[]},{"id":"S2","title":"UI","description":"Add UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verification":[]},{"id":"S3","title":"Contract","description":"Join both.","dependencies":["S1","S2"],"ownedPaths":["tests/contract.test.mjs"],"verification":[]}]}</work-packages>`);
   assert.deepEqual(packages.map((item) => item.batch), [1, 1, 2]);
   assert.deepEqual(packages.find((item) => item.id === "S3")?.dependencies, ["S1", "S2"]);
+  const fencedPackages = parseWorkPackages(
+    '<work-packages>\n```json\n{"packages":[{"id":"S1","title":"API","description":"Add API.","dependencies":[],"ownedPaths":["server/api.mjs"],"verification":[]}]}\n```\n</work-packages>',
+  );
+  assert.deepEqual(fencedPackages.map((item) => item.ownedPaths), [["server/api.mjs"]]);
+  assert.throws(
+    () => parseWorkPackages('<work-packages>Before\n```json\n{"packages":[]}\n```\n</work-packages>'),
+    /JSON block was invalid/i,
+  );
   const absolute = parseWorkPackages(
     `<work-packages>{"packages":[{"id":"S1","title":"API","description":"Add API.","dependencies":[],"ownedPaths":["C:/repo/server/api.mjs"],"verification":[]}]}</work-packages>`,
     "C:/repo",
@@ -245,6 +253,70 @@ test("a revised plan retains the rejected plan artifact and replaces package sco
       ["implementation-plan.md", "implementation-plan-r2.md"],
     );
     assert.equal(revised.artifacts.find((artifact) => artifact.id === "plan-r1").content, "Rejected plan");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("a plan parse failure retains the exact failed attempt without replacing prior scope", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-invalid-plan-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Retain failed plan",
+      description: "Keep the model output when structured plan parsing fails.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "failed";
+      draft.currentStage = "plan";
+      draft.attemptsByStage.plan = 1;
+      draft.workPackages = [{
+        id: "S1",
+        title: "Prior scope",
+        description: "Retained plan.",
+        dependencies: [],
+        batch: 1,
+        ownedPaths: ["src/prior.ts"],
+        verification: [],
+        status: "planned",
+        attempts: 0,
+      }];
+      draft.artifacts.push({
+        id: "plan-r1",
+        stage: "plan",
+        name: "implementation-plan.md",
+        kind: "markdown",
+        content: "Prior plan",
+        createdAt: "2026-08-08T00:00:00.000Z",
+      });
+    });
+    const invalidOutput = "<work-packages>not-json</work-packages>";
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      runCodex: async () => ({
+        finalText: invalidOutput,
+        model: "gpt-5.6-sol",
+        reasoning: "high",
+        usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    assert.equal(await orchestrator.start(task.id, "planning"), true);
+    const failed = await waitForStatus(store, task.id, "failed");
+    assert.equal(failed.attemptsByStage.plan, 2);
+    assert.deepEqual(failed.workPackages.map((item) => item.ownedPaths), [["src/prior.ts"]]);
+    const planArtifacts = failed.artifacts.filter((artifact) => artifact.stage === "plan");
+    assert.deepEqual(planArtifacts.map((artifact) => artifact.name), [
+      "implementation-plan.md",
+      "implementation-plan-r2-invalid.md",
+    ]);
+    assert.equal(planArtifacts.at(-1).content, invalidOutput);
+    assert.equal(failed.runs.at(-1).artifactId, planArtifacts.at(-1).id);
+    assert.match(failed.error, /work-packages JSON block was invalid/i);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
