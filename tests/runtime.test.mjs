@@ -2742,6 +2742,27 @@ test("renders and dispatches the bounded specification retry action", () => {
   });
 });
 
+test("keeps plan approval primary while exposing evidence-backed revision", () => {
+  return withWorkspace(async ({ RuntimeCommandBar, nextAction }) => {
+    const task = createTask({
+      status: "awaiting-plan-approval",
+      currentStage: "plan",
+      attemptsByStage: { plan: 1 },
+    });
+    assert.equal(nextAction(task).action, "approve-plan");
+    const markup = renderToStaticMarkup(React.createElement(RuntimeCommandBar, {
+      task,
+      viewedStageId: "plan",
+      onRun: async () => {},
+      onAction: async () => {},
+      onFinishGrill: async () => {},
+    }));
+    assert.match(markup, />Revise plan</);
+    assert.match(markup, />Approve plan</);
+    assert.match(markup, /Record the required correction as a task decision before revising/);
+  });
+});
+
 test("uses the authoritative current-stage allowance for workspace attempts and retry actions", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const task = createTask({

@@ -773,7 +773,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
             stages: ["triage", "scouts", "grill"],
           },
           specification: { kind: "specification", statuses: ["failed", "cancelled"], stages: ["specification"] },
-          plan: { kind: "planning", statuses: ["failed", "cancelled"], stages: ["plan"] },
+          plan: { kind: "planning", statuses: ["awaiting-plan-approval", "failed", "cancelled"], stages: ["plan"] },
           implement: {
             kind: "implementation",
             statuses: ["ready-for-implementation", "failed", "cancelled"],
@@ -795,6 +795,16 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         if (!runConfiguration?.statuses.includes(task.status) || !runConfiguration.stages.includes(task.currentStage)) {
           send(response, 409, { error: `Task cannot run ${action} while it is ${task.status}.` });
           return;
+        }
+        if (action === "plan" && task.status === "awaiting-plan-approval") {
+          const latestPlanArtifact = task.artifacts?.filter((artifact) => artifact.stage === "plan").at(-1);
+          const latestDecision = task.decisions?.at(-1);
+          if (!latestPlanArtifact || !latestDecision || latestDecision.createdAt <= latestPlanArtifact.createdAt) {
+            send(response, 409, {
+              error: "Record the required plan correction as a task decision before revising the plan.",
+            });
+            return;
+          }
         }
         const candidate = task.candidates?.at(-1);
         if (action === "implement" && candidate?.status === "repair_required") {

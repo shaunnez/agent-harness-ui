@@ -182,6 +182,74 @@ test("parses grounded Grill questions and dependency batches", () => {
   );
 });
 
+test("a revised plan retains the rejected plan artifact and replaces package scope", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-revise-plan-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Revise plan",
+      description: "Recover an unacceptable plan without erasing it.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-plan-approval";
+      draft.currentStage = "plan";
+      draft.attemptsByStage.plan = 1;
+      draft.completedStages = ["triage", "scouts", "grill", "specification", "plan"];
+      draft.workPackages = [{
+        id: "S1",
+        title: "Rejected scope",
+        description: "Wrong plan.",
+        dependencies: [],
+        batch: 1,
+        ownedPaths: ["wrong/path.ts"],
+        verification: [],
+        status: "planned",
+        attempts: 0,
+      }];
+      draft.artifacts.push({
+        id: "plan-r1",
+        stage: "plan",
+        name: "implementation-plan.md",
+        kind: "markdown",
+        content: "Rejected plan",
+        createdAt: "2026-08-08T00:00:00.000Z",
+      });
+      draft.decisions.push({
+        id: "decision-r2",
+        question: "How must the plan change?",
+        answer: "Use one package under src/correct.ts.",
+        createdAt: "2026-08-08T00:01:00.000Z",
+      });
+    });
+    const revisedOutput = `<work-packages>{"packages":[{"id":"S1","title":"Correct scope","description":"One coherent package.","dependencies":[],"ownedPaths":["src/correct.ts"],"verification":["npm test"]}]}</work-packages>`;
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      runCodex: async () => ({
+        finalText: revisedOutput,
+        model: "gpt-5.6-sol",
+        reasoning: "high",
+        usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    assert.equal(await orchestrator.start(task.id, "planning"), true);
+    const revised = await waitForStatus(store, task.id, "awaiting-plan-approval");
+    assert.equal(revised.attemptsByStage.plan, 2);
+    assert.deepEqual(revised.workPackages.map((item) => item.ownedPaths), [["src/correct.ts"]]);
+    assert.deepEqual(
+      revised.artifacts.filter((artifact) => artifact.stage === "plan").map((artifact) => artifact.name),
+      ["implementation-plan.md", "implementation-plan-r2.md"],
+    );
+    assert.equal(revised.artifacts.find((artifact) => artifact.id === "plan-r1").content, "Rejected plan");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("parses focused test evidence with candidate-bound rows", () => {
   const evidence = parseFocusedTestEvidence(TEST_OUTPUT);
   assert.equal(evidence.candidateId, "C1");

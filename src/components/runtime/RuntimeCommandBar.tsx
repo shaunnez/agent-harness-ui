@@ -150,6 +150,18 @@ export function RuntimeCommandBar({
             {failed ? "Retry stage" : "Run investigation"}
           </Button>
         )}
+        {task.status === "awaiting-plan-approval" ? (
+          <Button
+            tone="secondary"
+            compact
+            icon={Play}
+            disabled={pending}
+            title="Record the required correction as a task decision before revising."
+            onClick={() => void invoke("plan")}
+          >
+            {pending ? "Starting..." : "Revise plan"}
+          </Button>
+        ) : null}
         {actionable && next?.action ? (
           <RuntimeWorkflowActionButton
             action={next.action}
@@ -271,7 +283,7 @@ export function nextAction(task: RuntimeTask) {
       action: "approve-plan" as const,
       label: "Approve plan",
       title: "Approve the dependency-ordered plan",
-      detail: "No repository changes happen until the approved plan is explicitly started.",
+      detail: "Approve it, or record a concrete correction and revise it. No repository changes happen until approval.",
     };
   if (task.status === "ready-for-implementation")
     return {

@@ -160,6 +160,8 @@ Every stage has a consistent action area at the top of the stage canvas. It comm
 
 Primary actions should not be hidden below long evidence. Examples include `Start scouts`, `Confirm answer`, `Approve plan & start worktrees`, `Assemble candidate`, `Send C1 to tests`, `Send to repair`, `Send C2 to human approval`, and `Approve & merge C2`.
 
+Plan approval is not a forced choice. Before implementation authorization, an operator may record a concrete correction as a task decision and choose `Revise plan`. The bounded read-only planning attempt replaces the executable package graph while retaining the rejected plan artifact and run for audit. No repository write is authorized until a plan is explicitly approved.
+
 ### Implement
 
 Implement is a work-package overview plus a distinct integration object.

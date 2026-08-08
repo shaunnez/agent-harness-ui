@@ -951,10 +951,14 @@ export class TaskOrchestrator {
 
   async #runPlanning(id, signal) {
     const task = await this.#store.get(id);
+    const planAttempt = task.attemptsByStage?.plan ?? 1;
     const result = await this.#executeAgent(task, "plan", signal, task.repositoryPath, "read-only");
     throwIfAborted(signal);
     const workPackages = parseWorkPackages(result.finalText, task.repositoryPath);
-    await this.#retainAgentResult(id, "plan", result, { replace: true });
+    await this.#retainAgentResult(id, "plan", result, {
+      replace: planAttempt === 1,
+      name: planAttempt === 1 ? undefined : `implementation-plan-r${planAttempt}.md`,
+    });
     await this.#store.update(id, (draft) => {
       draft.workPackages = workPackages;
       draft.status = "awaiting-plan-approval";
@@ -1884,7 +1888,7 @@ function canStartRun(task, kind) {
   const allowed = {
     investigation: ["queued", "failed", "cancelled"],
     specification: ["awaiting-grill", "failed", "cancelled"],
-    planning: ["failed", "cancelled"],
+    planning: ["awaiting-plan-approval", "failed", "cancelled"],
     implementation: ["ready-for-implementation", "failed", "cancelled"],
     repair: ["repair-required", "failed", "cancelled"],
     review: ["ready-for-review", "failed", "cancelled"],

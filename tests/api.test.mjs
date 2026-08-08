@@ -1672,6 +1672,62 @@ test("rejects specification retry outside a failed or cancelled specification st
   }
 });
 
+test("revises an awaiting plan only after a retained corrective decision", async () => {
+  const { directory, origin, server, store, startedIdRef, startedKindRef } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Revise unsafe plan",
+      description: "Keep plan approval explicit while allowing evidence-backed recovery.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-plan-approval";
+      draft.currentStage = "plan";
+      draft.attemptsByStage.plan = 1;
+      draft.workPackages = [{ id: "S1", title: "Wrong scope" }];
+      draft.artifacts.push({
+        id: "plan-r1",
+        stage: "plan",
+        name: "implementation-plan.md",
+        kind: "markdown",
+        content: "Wrong plan",
+        createdAt: "2026-08-08T00:00:00.000Z",
+      });
+    });
+
+    const blindRevision = await fetch(`${origin}/api/tasks/${task.id}/plan`, { method: "POST" });
+    assert.equal(blindRevision.status, 409);
+    assert.match((await blindRevision.json()).error, /record the required plan correction/i);
+
+    const decision = await fetch(`${origin}/api/tasks/${task.id}/decisions`, {
+      method: "POST",
+      body: JSON.stringify({
+        question: "How must the plan change?",
+        answer: "Use one package and existing repository-relative test paths.",
+      }),
+    });
+    assert.equal(decision.status, 201);
+    await store.update(task.id, (draft) => {
+      draft.decisions.push({
+        id: "plan-correction",
+        question: "How must the plan change?",
+        answer: "Use one package and existing repository-relative test paths.",
+        createdAt: "2026-08-08T00:01:00.000Z",
+      });
+    });
+
+    const revision = await fetch(`${origin}/api/tasks/${task.id}/plan`, { method: "POST" });
+    assert.equal(revision.status, 202);
+    assert.deepEqual(await revision.json(), { started: true });
+    assert.equal(startedIdRef(), task.id);
+    assert.equal(startedKindRef(), "planning");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("returns the current candidate diff only after verifying the recorded worktree and head revision", async () => {
   const { directory, origin, server, store } = await createServer();
   const repository = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-repo-"));
