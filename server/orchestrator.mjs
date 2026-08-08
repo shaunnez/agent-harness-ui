@@ -1368,7 +1368,10 @@ export class TaskOrchestrator {
       draft.activeRunKind = null;
       draft.activeRunReservationId = null;
       if (gateFailure) {
-        if (evidenceError) {
+        const authoritativeFailedTest = stageId === "test" &&
+          focusedTestEvidence?.status === "failed" &&
+          gateFailure.freshness.reasonCode === "repair_required";
+        if (evidenceError && !authoritativeFailedTest) {
           const rerunState = evaluationRerunState(stageId);
           activeCandidate.status = rerunState.candidateStatus;
           draft.status = rerunState.taskStatus;

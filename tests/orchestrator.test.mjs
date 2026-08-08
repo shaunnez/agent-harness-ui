@@ -2022,6 +2022,88 @@ test("candidate command failure retains an exact Development Review REPAIR autho
   }
 });
 
+test("an exact failed Focused Test requires repair despite interpreter command failure", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-failed-test-command-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Repair an exact failed Focused Test",
+      description: "Harness-observed failed Test evidence must not become a same-revision rerun.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-test";
+      draft.currentStage = "test";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 2,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/failed-focused-test",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "ready_for_test",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        updatedAt: "2026-08-01T12:00:00.000Z",
+        revisions: [],
+      }];
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      worktreeManager: {
+        verifyCandidate: async () => {},
+        recoverCandidate: async () => false,
+      },
+      runVerification: async ({ candidate }) => {
+        const failedRow = {
+          ...harnessEvidence(candidate).rows[0],
+          status: "failed",
+          assertions: [{ label: "exit code", actual: "1", expected: "0" }],
+          failureDetails: "npm test exited 1.",
+        };
+        return harnessEvidence(candidate, { status: "failed", rows: [failedRow] });
+      },
+      runCodex: async ({ onEvent }) => {
+        onEvent?.({
+          type: "activity",
+          tone: "warning",
+          title: "Repository command returned a warning",
+          detail: "rg optional-pattern",
+          commandFailed: true,
+          runtimeScope: "candidate",
+          toolCall: {
+            id: "cmd-interpreter-failed",
+            name: "command_execution",
+            category: "repository-command",
+            phase: "completed",
+            result: "Exit code 1",
+          },
+        });
+        return {
+          finalText: "## Interpretation\n\nThe harness-observed Test failed.",
+          usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+        };
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id, "test"), true);
+    const repairReady = await waitForStatus(store, task.id, "repair-required");
+    const testRun = repairReady.runs.find((run) => run.stage === "test");
+    assert.equal(testRun.test.status, "failed");
+    assert.equal(testRun.evidenceError.code, "command_failure", "failed interpreter telemetry remains retained");
+    assert.equal(testRun.toolCalls[0].commandFailed, true);
+    assert.equal(repairReady.gateFreshness.test.reasonCode, "repair_required");
+    assert.equal(repairReady.gateFreshness.test.focusedTest.status, "failed");
+    assert.equal(repairReady.candidates.at(-1).status, "repair_required");
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("missing authoritative output retains the candidate and permits only the same gate rerun", async () => {
   const cases = [
     {
@@ -2207,6 +2289,45 @@ test("filters focused Test rows to the exact candidate and retains invalid rows 
   assert.equal(failedTestTask.gateFreshness.test.reasonCode, "repair_required");
   assert.equal(failedTestTask.gateFreshness.test.focusedTest.status, "failed");
   assert.deepEqual(failedTestTask.gateFreshness.test.focusedTestRows.map((row) => row.id), ["row-failed"]);
+
+  const failedWithInterpreterCommandRun = makeRuntimeRun({
+    id: "RUN-TEST-FAILED-INTERPRETER-COMMAND",
+    stage: "test",
+    kind: "test",
+    artifactId: "ART-TEST-FAILED-INTERPRETER-COMMAND",
+    gateResult: failedTestArtifact.gateResult,
+    evidenceError: { code: "command_failure", copy: RUNTIME_FRESHNESS_REASONS.command_failure },
+  });
+  failedWithInterpreterCommandRun.toolCalls = [{
+    id: "cmd-interpreter-failed",
+    name: "command_execution",
+    category: "repository-command",
+    phase: "completed",
+    result: "Exit code 1",
+    commandFailed: true,
+    runtimeScope: "candidate",
+  }];
+  const failedWithInterpreterCommandArtifact = makeArtifact({
+    id: "ART-TEST-FAILED-INTERPRETER-COMMAND",
+    stage: "test",
+    gateResult: failedTestArtifact.gateResult,
+    focusedTest: failedFocusedTest,
+  });
+  failedWithInterpreterCommandArtifact.evidenceError = {
+    code: "command_failure",
+    copy: RUNTIME_FRESHNESS_REASONS.command_failure,
+  };
+  const failedWithInterpreterCommandTask = makeRuntimeTask({
+    runs: [failedWithInterpreterCommandRun],
+    artifacts: [failedWithInterpreterCommandArtifact],
+  });
+  attachRunArtifact(
+    failedWithInterpreterCommandTask,
+    failedWithInterpreterCommandRun.id,
+    failedWithInterpreterCommandArtifact,
+  );
+  assert.equal(failedWithInterpreterCommandTask.gateFreshness.test.reasonCode, "repair_required");
+  assert.equal(failedWithInterpreterCommandTask.gateFreshness.test.focusedTest.status, "failed");
 
   for (const blockingReason of [
     "A test command failed.",
@@ -3254,6 +3375,68 @@ test("migration regresses an advanced gate when retained candidate command telem
   assert.equal(task.runs[0].gateResult.verdict, "PASS", "historical narrative evidence remains retained");
   assert.equal(task.runs[0].toolCalls[0].result, "Exit code 1", "failed telemetry remains retained");
   assert.equal(migrateRunActivityState(state), false, "reconciliation is idempotent once persisted");
+});
+
+test("migration recovers a failed Focused Test stranded at ready-for-test", () => {
+  const devRun = makeRuntimeRun({ id: "RUN-DEV-FAILED-TEST-RECOVERY", artifactId: "ART-DEV-FAILED-TEST-RECOVERY" });
+  const devArtifact = makeArtifact({ id: "ART-DEV-FAILED-TEST-RECOVERY", gateResult: devRun.gateResult });
+  const failedFocusedTest = makeFocusedTestSummary({
+    status: "failed",
+    rows: [makeTestRow({ id: "frontend-test", status: "failed" })],
+  });
+  const testGateResult = makeGateResult({
+    stage: "test",
+    verdict: "REPAIR",
+    reportedVerdict: null,
+    blockingReasons: ["A candidate-scope command failed.", "Structured test evidence contains a failed result."],
+  });
+  const testRun = makeRuntimeRun({
+    id: "RUN-FAILED-TEST-RECOVERY",
+    stage: "test",
+    kind: "test",
+    artifactId: "ART-FAILED-TEST-RECOVERY",
+    gateResult: testGateResult,
+    evidenceError: { code: "command_failure", copy: RUNTIME_FRESHNESS_REASONS.command_failure },
+  });
+  testRun.toolCalls = [{
+    id: "cmd-interpreter-failed",
+    name: "command_execution",
+    category: "repository-command",
+    phase: "completed",
+    result: "Exit code 1",
+    commandFailed: true,
+    runtimeScope: "candidate",
+  }];
+  const testArtifact = makeArtifact({
+    id: "ART-FAILED-TEST-RECOVERY",
+    stage: "test",
+    gateResult: testGateResult,
+    focusedTest: failedFocusedTest,
+  });
+  testArtifact.evidenceError = { code: "command_failure", copy: RUNTIME_FRESHNESS_REASONS.command_failure };
+  const task = makeRuntimeTask({
+    runs: [devRun, testRun],
+    artifacts: [devArtifact, testArtifact],
+  });
+  attachRunArtifact(task, devRun.id, devArtifact);
+  attachRunArtifact(task, testRun.id, testArtifact);
+  task.status = "ready-for-test";
+  task.currentStage = "test";
+  task.activeRunKind = null;
+  task.activeRunReservationId = null;
+  task.activeRunIds = [];
+  task.candidates[0].status = "ready_for_test";
+  const state = { schemaVersion: TASK_STORE_SCHEMA_VERSION, tasks: [task] };
+
+  assert.equal(migrateRunActivityState(state), true);
+  assert.equal(task.gateFreshness["dev-review"].fresh, true);
+  assert.equal(task.gateFreshness.test.reasonCode, "repair_required");
+  assert.equal(task.gateFreshness.test.focusedTest.status, "failed");
+  assert.equal(task.status, "repair-required");
+  assert.equal(task.currentStage, "test");
+  assert.equal(task.candidates[0].status, "repair_required");
+  assert.equal(task.events.at(-1).title, "Persisted gate evidence invalidated");
+  assert.equal(migrateRunActivityState(state), false, "recovery is idempotent once repair-required");
 });
 
 test("runs the investigation frontier and retains each stage handoff", async () => {

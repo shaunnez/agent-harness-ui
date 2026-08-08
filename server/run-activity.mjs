@@ -499,6 +499,16 @@ function evaluateRunFreshness(run, artifact, target, stage, expectedProvider = n
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
 
+  // Focused Test is different from model-authored review: the harness executed and
+  // validated the manifest before the interpretation agent ran. An exact failed Test
+  // result is therefore authoritative candidate-repair evidence even when that later
+  // read-only interpreter also emitted failed command telemetry. Preserve the telemetry,
+  // but do not let it downgrade a concrete failed Test into a same-revision rerun loop.
+  if (stage === "test" && run.status === "completed") {
+    const testFailure = evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId);
+    if (testFailure.reasonCode === "repair_required") return testFailure;
+  }
+
   const evidenceErrorReason = persistedEvidenceErrorReason(run.evidenceError);
   if (evidenceErrorReason) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, evidenceErrorReason, null);
@@ -1170,7 +1180,19 @@ function reconcileAdvancedCandidateGateState(task) {
     "awaiting-human-approval": ["dev-review", "test", "final-review"],
   }[task.status];
   if (!requiredCompletedGates) return false;
-  const stage = requiredCompletedGates.find((gate) => task.gateFreshness?.[gate]?.fresh !== true);
+  let stage = requiredCompletedGates.find((gate) => task.gateFreshness?.[gate]?.fresh !== true);
+  // A failed Test used to be projected back to ready-for-test whenever the interpretation
+  // agent also had command failure telemetry. After freshness correctly recognizes the
+  // harness-observed failed Test as repair-required, recover that persisted stalled shape
+  // on restart instead of requiring an operator to rewrite task state.
+  if (
+    !stage &&
+    task.status === "ready-for-test" &&
+    task.currentStage === "test" &&
+    task.gateFreshness?.test?.reasonCode === "repair_required"
+  ) {
+    stage = "test";
+  }
   if (!stage) return false;
   const freshness = task.gateFreshness?.[stage] ?? null;
   const repairRequired = freshness?.reasonCode === "repair_required";
