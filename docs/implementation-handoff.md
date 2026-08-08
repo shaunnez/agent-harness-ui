@@ -121,9 +121,9 @@ Writes use a temporary file plus rename and are serialized in-process. Atomic re
 ## Known limitations and next work
 
 1. Work-package concurrency is one agent per package in the active dependency batch with no configurable global concurrency limit. Git worktree preparation is serialized to avoid repository lock contention; agent executions are concurrent.
-2. Slice qualification is still agent-reported focused verification. Candidate-level Focused Test is normalized into structured records, but per-slice qualification is not yet captured in the same contract.
+2. Slice qualification is harness-executed and fail-closed against the repository-owned `.agent-harness/verification.json` manifest before a package commit can become ready for integration. The bounded command evidence is retained on the slice artifact. Candidate-level Focused Test reruns the same authoritative manifest against the assembled candidate revision.
 3. Assembly conflicts stop safely with all slice commits retained, but there is no dedicated conflict-resolution UI or integration-repair agent yet.
-4. Focused Test is agent-assisted and its result list is normalized, but the harness still relies on the agent to choose appropriate repository-defined commands and summarize individual framework test cases.
+4. Focused Test command selection and result facts come from the repository-owned verification manifest; the review model only interprets that retained evidence. Exit-code-only commands do not yet provide normalized individual framework test cases unless the manifest declares a supported machine-readable report.
 5. Gate verdict parsing is conservative but simple: a top-line `PASS` advances; any other response requires repair. Structured output schemas and a code-specific rubric model should replace this.
 6. Repairs update the current candidate branch and retain revision history/artifacts, but the data model does not yet represent a separate immutable candidate object for every revision.
 7. API mutations do not yet use idempotency keys or optimistic revision tokens. Process-local locks prevent duplicate active agents only within one companion process.

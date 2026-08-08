@@ -80,6 +80,17 @@ function now() {
   return new Date().toISOString();
 }
 
+function workPackageVerificationMarkdown(verification) {
+  const rows = (verification.rows ?? []).map((row) => {
+    const detail = row.failureDetails ? `\n\n${row.failureDetails}` : "";
+    return `### ${row.id}: ${String(row.status).toUpperCase()}\n\n- Command: \`${row.command}\`\n- Duration: ${row.durationMs}ms${detail}`;
+  });
+  const skipped = (verification.declaredCommandIds ?? []).filter(
+    (id) => !(verification.executedCommandIds ?? []).includes(id),
+  );
+  return `## Harness slice qualification\n\n- Result: ${String(verification.status).toUpperCase()}\n- Revision: ${verification.headRevision}\n- Source: ${verification.command}\n${skipped.length ? `- Skipped after failure: ${skipped.join(", ")}\n` : ""}\n${rows.join("\n\n")}`;
+}
+
 function activity(stage, title, detail, tone = "info", category = "activity", metadata = {}) {
   return { id: crypto.randomUUID(), at: now(), category, tone, stage, title, detail, ...metadata };
 }
@@ -92,6 +103,7 @@ export class TaskOrchestrator {
   #getStatus;
   #worktrees;
   #runVerification;
+  #runPackageVerification;
 
   constructor(store, options = {}) {
     this.#store = store;
@@ -104,6 +116,21 @@ export class TaskOrchestrator {
     // rather than stand up a repository to obtain it. The real path is exercised directly in
     // `tests/verification.test.mjs`, including against a real git worktree.
     this.#runVerification = options.runVerification ?? runRepositoryVerification;
+    // Production slices qualify with the same repository-owned, argv-only manifest as
+    // Focused Test. Unit tests that inject a model runner keep their existing lightweight
+    // seam unless they explicitly inject package verification; real runtime execution never
+    // gets that exemption.
+    this.#runPackageVerification = options.runPackageVerification
+      ?? (this.#runCodex
+        ? null
+        : async ({ worktreePath, workPackageId, attempt, signal }) => {
+            const headRevision = await gitHeadRevision(worktreePath);
+            return this.#runVerification({
+              worktreePath,
+              candidate: { id: workPackageId, revisionNumber: attempt, headRevision },
+              signal,
+            });
+          });
   }
 
   /**
@@ -1100,6 +1127,32 @@ export class TaskOrchestrator {
       // marker while having actually changed something still goes through the ordinary
       // commit path below.
       const noChangesNeeded = parseNoChangesNeeded(result.finalText);
+      let qualification = null;
+      if (this.#runPackageVerification) {
+        qualification = await this.#runPackageVerification({
+          worktreePath: slice.worktreePath,
+          workPackageId,
+          attempt,
+          signal,
+        });
+        throwIfAborted(signal);
+        if (qualification.status !== "passed") {
+          const content = `${result.finalText}\n\n${workPackageVerificationMarkdown(qualification)}`;
+          await this.#retainAgentResult(id, "implement", { ...result, finalText: content }, {
+            complete: false,
+            replace: false,
+            name: `slice-${workPackageId.toLowerCase()}-a${attempt}.md`,
+            workPackageId,
+            focusedTestEvidence: qualification,
+            artifactTitle: `${workPackageId} qualification failed`,
+            artifactTone: "danger",
+          });
+          const failed = qualification.rows?.find((row) => row.status !== "passed");
+          throw new Error(
+            `${workPackageId} did not qualify: ${failed?.id ?? "repository verification"} failed${failed?.failureDetails ? ` — ${failed.failureDetails}` : "."}`,
+          );
+        }
+      }
       const committed = await this.#worktrees.commit(
         slice,
         `agent-harness(${task.id}): ${workPackageId} ${currentPackage.title}`,
@@ -1111,12 +1164,13 @@ export class TaskOrchestrator {
       const evidence = committed.noChangesNeeded
         ? `## Harness slice evidence\n\n- Work package: ${workPackageId}\n- Attempt: ${attempt}\n- Dependencies: ${currentPackage.dependencies.join(", ") || "None"}\n- Base: ${slice.baseRevision}\n- Outcome: no changes needed — ${noChangesNeeded.reason}\n- Branch: ${slice.branch}\n\nNothing was committed: the base revision already satisfies this work package.`
         : `## Harness slice evidence\n\n- Work package: ${workPackageId}\n- Attempt: ${attempt}\n- Dependencies: ${currentPackage.dependencies.join(", ") || "None"}\n- Base: ${slice.baseRevision}\n- Package commit: ${committed.headRevision}\n- Branch: ${slice.branch}\n- Changed files: ${committed.files.length}\n\n\`\`\`text\n${committed.ownSummary || "No diff stat returned."}\n\`\`\`\n\nThe exact package commit remains available through Git; its full patch is not copied into downstream prompts.`;
-      const content = `${result.finalText}\n\n${evidence}`;
+      const content = `${result.finalText}${qualification ? `\n\n${workPackageVerificationMarkdown(qualification)}` : ""}\n\n${evidence}`;
       await this.#retainAgentResult(id, "implement", { ...result, finalText: content }, {
         complete: false,
         replace: false,
         name: `slice-${workPackageId.toLowerCase()}-a${attempt}.md`,
         workPackageId,
+        focusedTestEvidence: qualification,
       });
       await this.#store.update(id, (draft) => {
         const target = draft.workPackages.find((item) => item.id === workPackageId);

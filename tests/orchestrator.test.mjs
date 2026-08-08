@@ -2492,6 +2492,101 @@ test("persists structured focused test evidence beside the Markdown artifact", a
   }
 });
 
+test("fails a slice closed when harness-executed package verification fails", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-package-verification-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Fail slice qualification",
+      description: "A package must not integrate after a failed repository command.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-implementation";
+      draft.currentStage = "implement";
+      draft.workPackages = parseWorkPackages(
+        `<work-packages>{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verification":["npm test"]}]}</work-packages>`,
+      );
+    });
+    let commitCalls = 0;
+    let assembleCalls = 0;
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        base: async () => ({ repositoryRoot: directory, baseRevision: "a".repeat(40), baseBranch: "main" }),
+        prepare: async (_task, id) => ({
+          id,
+          revisionNumber: 1,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: null,
+          branch: `agent-harness/${id.toLowerCase()}`,
+          repositoryRoot: directory,
+          worktreePath: path.join(directory, id),
+          status: "implementing",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          revisions: [],
+        }),
+        commit: async () => {
+          commitCalls += 1;
+          throw new Error("commit must not run");
+        },
+        assemble: async () => {
+          assembleCalls += 1;
+          throw new Error("assembly must not run");
+        },
+      },
+      runCodex: async () => ({
+        finalText: "## Outcome\n\nImplemented.\n\n## Changes\n\nChanged runtime.\n\n## Verification\n\nPASS\n\n## Ownership exceptions\n\nNone.\n\n## Remaining risks\n\nNone.",
+        usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+      }),
+      runPackageVerification: async ({ workPackageId, attempt }) => ({
+        headRevision: "a".repeat(40),
+        candidateId: workPackageId,
+        candidateRevision: attempt,
+        bindingExplicit: true,
+        command: ".agent-harness/verification.json: test",
+        status: "failed",
+        startedAt: "2026-08-08T00:00:00.000Z",
+        completedAt: "2026-08-08T00:00:01.000Z",
+        durationMs: 1_000,
+        rows: [{
+          id: "test",
+          candidateId: workPackageId,
+          candidateRevision: attempt,
+          bindingExplicit: true,
+          title: "Tests",
+          command: "npm test",
+          status: "failed",
+          durationMs: 1_000,
+          artifactReferences: [],
+          assertions: [{ label: "exit code", actual: "1", expected: "0" }],
+          failureDetails: "npm test exited 1.",
+        }],
+        executedCommandIds: ["test"],
+        declaredCommandIds: ["test"],
+      }),
+    });
+
+    assert.equal(await orchestrator.start(task.id, "implementation"), true);
+    const finished = await waitForStatus(store, task.id, "failed");
+    assert.equal(commitCalls, 0);
+    assert.equal(assembleCalls, 0);
+    assert.equal(finished.workPackages[0].status, "failed");
+    assert.match(finished.workPackages[0].error, /S1 did not qualify: test failed/);
+    assert.deepEqual(finished.candidates, []);
+    const artifact = finished.artifacts.find((item) => item.workPackageId === "S1");
+    assert.equal(artifact.focusedTest.status, "failed");
+    assert.match(artifact.content, /Harness slice qualification/);
+    assert.match(artifact.content, /npm test exited 1/);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("runs independent work packages concurrently before candidate assembly", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-parallel-"));
   try {
