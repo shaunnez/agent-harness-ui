@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   answerGrillQuestion,
-  cancelTask,
   archiveTask,
+  cancelTask,
   closeTask,
   createTask,
   evaluateTask,
@@ -19,18 +19,18 @@ import {
   updateRuntimeSettings,
   verifyRuntimePricing,
 } from "./api";
-import { CommandCentre } from "./components/CommandCentre";
-import { ChangelogModal } from "./components/ChangelogModal";
 import { AgentsScreen } from "./components/AgentsScreen";
+import { ChangelogModal } from "./components/ChangelogModal";
+import { CommandCentre } from "./components/CommandCentre";
 import { TasksScreen } from "./components/LibraryScreens";
-import { SettingsScreen } from "./components/SettingsScreen";
-import { SkillsScreen } from "./components/SkillsScreen";
 import { NewTaskDialog } from "./components/NewTaskDialog";
 import { RuntimeTaskWorkspace } from "./components/RuntimeTaskWorkspace";
+import { SettingsScreen } from "./components/SettingsScreen";
 import { Shell } from "./components/Shell";
+import { SkillsScreen } from "./components/SkillsScreen";
 import {
-  type AppScreen,
   type AgentRoleId,
+  type AppScreen,
   type NewTaskDraft,
   type RuntimeEvaluationSummary,
   type RuntimeSettings,
@@ -39,17 +39,17 @@ import {
   type StageId,
   workflowStages,
 } from "./domain";
+import { isCurrentRequest } from "./requestIdentity";
 import {
   appScreenForRoute,
   changelogRoute as createChangelogRoute,
-  parseHashRoute,
-  parentTaskRoute,
-  serializeHashRoute,
   type HashRoute,
   type PrimaryRoute,
+  parentTaskRoute,
+  parseHashRoute,
+  serializeHashRoute,
   type TaskRoute,
 } from "./routes";
-import { isCurrentRequest } from "./requestIdentity";
 
 export function App() {
   const [screen, setScreen] = useState<AppScreen>("command");
@@ -67,7 +67,9 @@ export function App() {
   const [selectedAgentId, setSelectedAgentId] = useState<AgentRoleId | null>(null);
   const [selectedSkillId, setSelectedSkillId] = useState<StageId | null>(null);
   const [taskRouteDetail, setTaskRouteDetail] = useState<TaskRoute["detail"]>();
-  const [currentRoute, setCurrentRoute] = useState<HashRoute>(() => parseHashRoute(window.location.hash).route);
+  const [currentRoute, setCurrentRoute] = useState<HashRoute>(
+    () => parseHashRoute(window.location.hash).route,
+  );
   const [runtimeRefreshing, setRuntimeRefreshing] = useState(false);
   const [toast, setToast] = useState<{ tone: "success" | "error"; message: string } | null>(null);
   const activeTaskIdentityRef = useRef<string | null>(null);
@@ -89,13 +91,28 @@ export function App() {
     activeTaskRequestRef.current = requestId;
     const requested = { identity: id, generation: requestId };
     const task = await getTask(id);
-    if (!isCurrentRequest(requested, { identity: activeTaskIdentityRef.current, generation: activeTaskRequestRef.current })) return null;
-    setActiveRuntimeTask((current) => ({ ...task, worktreeInventory: current?.id === id ? current.worktreeInventory : [] }));
+    if (
+      !isCurrentRequest(requested, {
+        identity: activeTaskIdentityRef.current,
+        generation: activeTaskRequestRef.current,
+      })
+    )
+      return null;
+    setActiveRuntimeTask((current) => ({
+      ...task,
+      worktreeInventory: current?.id === id ? current.worktreeInventory : [],
+    }));
     setRuntimeTasks((tasks) => [task, ...tasks.filter((item) => item.id !== task.id)]);
     const inventory = await getRuntimeWorktreeInventory(id);
-    if (!isCurrentRequest(requested, { identity: activeTaskIdentityRef.current, generation: activeTaskRequestRef.current })) return null;
+    if (
+      !isCurrentRequest(requested, {
+        identity: activeTaskIdentityRef.current,
+        generation: activeTaskRequestRef.current,
+      })
+    )
+      return null;
     const enriched = { ...task, worktreeInventory: inventory.rows };
-    setActiveRuntimeTask((current) => current?.id === id ? enriched : current);
+    setActiveRuntimeTask((current) => (current?.id === id ? enriched : current));
     return enriched;
   }, []);
 
@@ -108,20 +125,36 @@ export function App() {
 
   useEffect(() => {
     let current = true;
-    void Promise.allSettled([getRuntimeStatus(), listTasks(), getEvaluationSummary()]).then(([statusResult, tasksResult, evaluationResult]) => {
-      if (!current) return;
-      if (statusResult.status === "fulfilled") setRuntimeStatus(statusResult.value);
-      if (tasksResult.status === "fulfilled") setRuntimeTasks(tasksResult.value);
-      if (evaluationResult.status === "fulfilled") setEvaluationSummary(evaluationResult.value);
-      const failure = statusResult.status === "rejected" ? statusResult.reason : tasksResult.status === "rejected" ? tasksResult.reason : null;
-      setRuntimeError(failure instanceof Error ? failure.message : failure ? "The local Agent Harness runtime is unavailable." : null);
-      setRuntimeLoading(false);
-    });
-    return () => { current = false; };
+    void Promise.allSettled([getRuntimeStatus(), listTasks(), getEvaluationSummary()]).then(
+      ([statusResult, tasksResult, evaluationResult]) => {
+        if (!current) return;
+        if (statusResult.status === "fulfilled") setRuntimeStatus(statusResult.value);
+        if (tasksResult.status === "fulfilled") setRuntimeTasks(tasksResult.value);
+        if (evaluationResult.status === "fulfilled") setEvaluationSummary(evaluationResult.value);
+        const failure =
+          statusResult.status === "rejected"
+            ? statusResult.reason
+            : tasksResult.status === "rejected"
+              ? tasksResult.reason
+              : null;
+        setRuntimeError(
+          failure instanceof Error
+            ? failure.message
+            : failure
+              ? "The local Agent Harness runtime is unavailable."
+              : null,
+        );
+        setRuntimeLoading(false);
+      },
+    );
+    return () => {
+      current = false;
+    };
   }, []);
 
   useEffect(() => {
-    if (!window.location.hash) window.history.replaceState(null, "", serializeHashRoute({ kind: "screen", screen: "command" }));
+    if (!window.location.hash)
+      window.history.replaceState(null, "", serializeHashRoute({ kind: "screen", screen: "command" }));
     const applyRoute = () => {
       const parsed = parseHashRoute(window.location.hash);
       if (!parsed.valid) window.history.replaceState(null, "", serializeHashRoute(parsed.route));
@@ -147,12 +180,14 @@ export function App() {
       setTaskRouteDetail(detail);
       setWorkspaceOpen(true);
       setActiveTaskLoading(true);
-      setActiveRuntimeTask((current) => current?.id === taskId ? current : null);
-      void refreshActiveTask(taskId).catch((error) => {
-        if (activeTaskIdentityRef.current !== taskId) return;
-        showToast("error", error instanceof Error ? error.message : "The task could not be loaded.");
-        navigateToRoute({ kind: "screen", screen: "tasks" });
-      }).finally(() => setActiveTaskLoading(false));
+      setActiveRuntimeTask((current) => (current?.id === taskId ? current : null));
+      void refreshActiveTask(taskId)
+        .catch((error) => {
+          if (activeTaskIdentityRef.current !== taskId) return;
+          showToast("error", error instanceof Error ? error.message : "The task could not be loaded.");
+          navigateToRoute({ kind: "screen", screen: "tasks" });
+        })
+        .finally(() => setActiveTaskLoading(false));
     };
     applyRoute();
     window.addEventListener("hashchange", applyRoute);
@@ -188,7 +223,9 @@ export function App() {
       void refreshTasks().catch(() => undefined);
     };
     const interval = window.setInterval(poll, anyTaskRunning ? 5_000 : 15_000);
-    const handleVisibility = () => { if (document.visibilityState === "visible") poll(); };
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") poll();
+    };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => {
       window.clearInterval(interval);
@@ -198,7 +235,13 @@ export function App() {
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === "n" && !event.metaKey && !event.ctrlKey && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) {
+      if (
+        event.key.toLowerCase() === "n" &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !(event.target instanceof HTMLInputElement) &&
+        !(event.target instanceof HTMLTextAreaElement)
+      ) {
         event.preventDefault();
         setNewTaskOpen(true);
       }
@@ -209,8 +252,14 @@ export function App() {
 
   const navigate = (nextScreen: AppScreen) => navigateToRoute({ kind: "screen", screen: nextScreen });
 
-  const openWorkspace = (from: "command" | "tasks", taskId?: string) => {
-    if (taskId) navigateToRoute({ kind: "task", taskId, returnTo: from === "command" ? "command" : undefined });
+  const openWorkspace = (from: "command" | "tasks", taskId?: string, stageId?: StageId) => {
+    if (taskId)
+      navigateToRoute({
+        kind: "task",
+        taskId,
+        stageId,
+        returnTo: from === "command" ? "command" : undefined,
+      });
   };
 
   const startTask = async (draft: NewTaskDraft) => {
@@ -252,7 +301,15 @@ export function App() {
 
   return (
     <div className={`app-shell ${sidebarCollapsed ? "app-shell--collapsed" : ""}`}>
-      <Shell screen={screen} collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed((value) => !value)} onNavigate={navigate} onNewTask={() => setNewTaskOpen(true)} onOpenChangelog={() => navigateToRoute(createChangelogRoute(primaryRoute))} runtimeStatus={runtimeStatus} />
+      <Shell
+        screen={screen}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={() => setSidebarCollapsed((value) => !value)}
+        onNavigate={navigate}
+        onNewTask={() => setNewTaskOpen(true)}
+        onOpenChangelog={() => navigateToRoute(createChangelogRoute(primaryRoute))}
+        runtimeStatus={runtimeStatus}
+      />
       <main className="app-main">
         {workspaceOpen && activeRuntimeTask ? (
           <RuntimeTaskWorkspace
@@ -280,13 +337,26 @@ export function App() {
               navigateToRoute({ kind: "screen", screen: taskRoute?.returnTo ?? "tasks" });
               void refreshTasks();
             }}
-            onRun={async () => { await runTask(activeRuntimeTask.id); await refreshActiveTask(activeRuntimeTask.id); showToast("success", "Task run started."); }}
-            onCancel={async () => { await cancelTask(activeRuntimeTask.id); await refreshActiveTask(activeRuntimeTask.id); showToast("success", "Active run cancelled."); }}
+            onRun={async () => {
+              await runTask(activeRuntimeTask.id);
+              await refreshActiveTask(activeRuntimeTask.id);
+              showToast("success", "Task run started.");
+            }}
+            onCancel={async () => {
+              await cancelTask(activeRuntimeTask.id);
+              await refreshActiveTask(activeRuntimeTask.id);
+              showToast("success", "Active run cancelled.");
+            }}
             onCloseTask={async (reason, note, supersededBy) => {
               const result = await closeTask(activeRuntimeTask.id, reason, note, supersededBy);
               setActiveRuntimeTask(result.task);
               await refreshTasks();
-              showToast("success", reason === "superseded" ? `Task marked superseded${supersededBy ? ` by ${supersededBy}` : ""}.` : "Task closed as not needed.");
+              showToast(
+                "success",
+                reason === "superseded"
+                  ? `Task marked superseded${supersededBy ? ` by ${supersededBy}` : ""}.`
+                  : "Task closed as not needed.",
+              );
             }}
             onArchiveTask={async () => {
               const result = await archiveTask(activeRuntimeTask.id);
@@ -311,15 +381,26 @@ export function App() {
               try {
                 await runTaskAction(activeRuntimeTask.id, action, note);
                 await refreshActiveTask(activeRuntimeTask.id);
-                showToast("success", action === "grant-retry" ? "One repair attempt was granted. The stage limit is updated." : action === "repair" ? "Repair started. Downstream gates now require fresh evidence." : action === "complete-merged" ? "Task marked completed." : "Task action completed.");
+                showToast(
+                  "success",
+                  action === "grant-retry"
+                    ? "One repair attempt was granted. The stage limit is updated."
+                    : action === "repair"
+                      ? "Repair started. Downstream gates now require fresh evidence."
+                      : action === "complete-merged"
+                        ? "Task marked completed."
+                        : "Task action completed.",
+                );
                 if (["repair", "implement", "review", "test", "final-review"].includes(action)) {
                   window.setTimeout(() => {
-                    void getTask(activeRuntimeTask.id).then((latest) => {
-                      if (["failed", "blocked"].includes(latest.status) && latest.error) {
-                        showToast("error", `${latest.currentStage} stopped: ${latest.error}`);
-                        void refreshActiveTask(latest.id);
-                      }
-                    }).catch(() => undefined);
+                    void getTask(activeRuntimeTask.id)
+                      .then((latest) => {
+                        if (["failed", "blocked"].includes(latest.status) && latest.error) {
+                          showToast("error", `${latest.currentStage} stopped: ${latest.error}`);
+                          void refreshActiveTask(latest.id);
+                        }
+                      })
+                      .catch(() => undefined);
                   }, 1_000);
                 }
               } catch (error) {
@@ -328,30 +409,72 @@ export function App() {
                 throw error;
               }
             }}
-            onDecision={async (question, answer) => { await recordTaskDecision(activeRuntimeTask.id, question, answer); await refreshActiveTask(activeRuntimeTask.id); showToast("success", "Decision recorded."); }}
-            onGrillAnswer={async (questionId, answer) => { await answerGrillQuestion(activeRuntimeTask.id, questionId, answer); await refreshActiveTask(activeRuntimeTask.id); showToast("success", "Grill answer recorded."); }}
-            onFinishGrill={async (acceptRemaining) => { await finishGrill(activeRuntimeTask.id, acceptRemaining); await refreshActiveTask(activeRuntimeTask.id); showToast("success", "Grill completed; specification run started."); }}
+            onDecision={async (question, answer) => {
+              await recordTaskDecision(activeRuntimeTask.id, question, answer);
+              await refreshActiveTask(activeRuntimeTask.id);
+              showToast("success", "Decision recorded.");
+            }}
+            onGrillAnswer={async (questionId, answer) => {
+              await answerGrillQuestion(activeRuntimeTask.id, questionId, answer);
+              await refreshActiveTask(activeRuntimeTask.id);
+              showToast("success", "Grill answer recorded.");
+            }}
+            onFinishGrill={async (acceptRemaining) => {
+              await finishGrill(activeRuntimeTask.id, acceptRemaining);
+              await refreshActiveTask(activeRuntimeTask.id);
+              showToast("success", "Grill completed; specification run started.");
+            }}
             onRemoveWorktree={async (rowId) => {
               try {
                 await removeRuntimeWorktree(activeRuntimeTask.id, rowId);
                 await refreshActiveTask(activeRuntimeTask.id);
                 showToast("success", "Worktree removed.");
               } catch (error) {
-                showToast("error", error instanceof Error ? error.message : "The worktree could not be removed.");
+                showToast(
+                  "error",
+                  error instanceof Error ? error.message : "The worktree could not be removed.",
+                );
                 throw error;
               }
             }}
           />
-        ) : workspaceOpen && activeTaskLoading ? <TaskWorkspaceSkeleton /> : null}
-        {!workspaceOpen && screen === "command" ? <CommandCentre runtimeTasks={runtimeTasks} runtimeStatus={runtimeStatus} runtimeLoading={runtimeLoading} runtimeError={runtimeError} onNewTask={() => setNewTaskOpen(true)} onOpenTask={(taskId) => openWorkspace("command", taskId)} onSeeAllTasks={() => navigate("tasks")} /> : null}
-        {!workspaceOpen && screen === "tasks" ? <TasksScreen runtimeTasks={runtimeTasks} onOpenTask={(taskId) => openWorkspace("tasks", taskId)} /> : null}
-        {!workspaceOpen && screen === "skills" ? <SkillsScreen runtimeTasks={runtimeTasks} selectedId={selectedSkillId} onSelect={(skillId) => navigateToRoute(skillId ? { kind: "skill", skillId } : { kind: "screen", screen: "skills" })} /> : null}
+        ) : workspaceOpen && activeTaskLoading ? (
+          <TaskWorkspaceSkeleton />
+        ) : null}
+        {!workspaceOpen && screen === "command" ? (
+          <CommandCentre
+            runtimeTasks={runtimeTasks}
+            runtimeStatus={runtimeStatus}
+            runtimeLoading={runtimeLoading}
+            runtimeError={runtimeError}
+            onNewTask={() => setNewTaskOpen(true)}
+            onOpenTask={(taskId, stageId) => openWorkspace("command", taskId, stageId)}
+            onSeeAllTasks={() => navigate("tasks")}
+          />
+        ) : null}
+        {!workspaceOpen && screen === "tasks" ? (
+          <TasksScreen
+            runtimeTasks={runtimeTasks}
+            onOpenTask={(taskId, stageId) => openWorkspace("tasks", taskId, stageId)}
+          />
+        ) : null}
+        {!workspaceOpen && screen === "skills" ? (
+          <SkillsScreen
+            runtimeTasks={runtimeTasks}
+            selectedId={selectedSkillId}
+            onSelect={(skillId) =>
+              navigateToRoute(skillId ? { kind: "skill", skillId } : { kind: "screen", screen: "skills" })
+            }
+          />
+        ) : null}
         {!workspaceOpen && screen === "agents" ? (
           <AgentsScreen
             runtimeTasks={runtimeTasks}
             runtimeStatus={runtimeStatus}
             selectedId={selectedAgentId}
-            onSelect={(agentId) => navigateToRoute(agentId ? { kind: "agent", agentId } : { kind: "screen", screen: "agents" })}
+            onSelect={(agentId) =>
+              navigateToRoute(agentId ? { kind: "agent", agentId } : { kind: "screen", screen: "agents" })
+            }
             onSave={saveRuntimeSettings}
           />
         ) : null}
@@ -373,17 +496,31 @@ export function App() {
           />
         ) : null}
       </main>
-      <NewTaskDialog open={newTaskOpen} defaultRepository={runtimeStatus?.suggestedRepository ?? ""} runtimeStatus={runtimeStatus} onClose={() => setNewTaskOpen(false)} onStart={startTask} />
+      <NewTaskDialog
+        open={newTaskOpen}
+        defaultRepository={runtimeStatus?.suggestedRepository ?? ""}
+        runtimeStatus={runtimeStatus}
+        onClose={() => setNewTaskOpen(false)}
+        onStart={startTask}
+      />
       {currentRoute.kind === "changelog" ? (
         <ChangelogModal
           commitSha={currentRoute.commitSha}
           filePath={currentRoute.filePath}
           onClose={() => navigateToRoute(currentRoute.returnTo)}
-          onSelectCommit={(commitSha) => navigateToRoute(createChangelogRoute(currentRoute.returnTo, commitSha))}
-          onSelectFile={(filePath) => navigateToRoute(createChangelogRoute(currentRoute.returnTo, currentRoute.commitSha, filePath))}
+          onSelectCommit={(commitSha) =>
+            navigateToRoute(createChangelogRoute(currentRoute.returnTo, commitSha))
+          }
+          onSelectFile={(filePath) =>
+            navigateToRoute(createChangelogRoute(currentRoute.returnTo, currentRoute.commitSha, filePath))
+          }
         />
       ) : null}
-      {toast ? <div className={`app-toast app-toast--${toast.tone}`} role="status">{toast.message}</div> : null}
+      {toast ? (
+        <div className={`app-toast app-toast--${toast.tone}`} role="status">
+          {toast.message}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -391,11 +528,30 @@ export function App() {
 function TaskWorkspaceSkeleton() {
   return (
     <div className="task-workspace-skeleton" role="status" aria-label="Loading task details" aria-busy="true">
-      <header><span /><div><i /><i /></div><span /></header>
-      <nav>{workflowStages.map((stage) => <span key={stage.id} />)}</nav>
+      <header>
+        <span />
+        <div>
+          <i />
+          <i />
+        </div>
+        <span />
+      </header>
+      <nav>
+        {workflowStages.map((stage) => (
+          <span key={stage.id} />
+        ))}
+      </nav>
       <div className="task-workspace-skeleton__grid">
-        <main><i /><section /><section /></main>
-        <aside><section /><section /><section /></aside>
+        <main>
+          <i />
+          <section />
+          <section />
+        </main>
+        <aside>
+          <section />
+          <section />
+          <section />
+        </aside>
       </div>
     </div>
   );
