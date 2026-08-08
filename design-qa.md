@@ -169,3 +169,115 @@ The reference and runtime screenshots were joined into the same comparison input
 Runtime capability caps are tracked separately in `docs/ui-capability-gaps.md`; they are not presented as completed interactions or invented data.
 
 final result: passed
+
+## Mission Map and Signal Loom — 2026-08-08
+
+## Result
+
+Passed. Both selected concepts are implemented as switchable, interactive views over the same persisted task evidence. No P0, P1, or unresolved P2 findings remain.
+
+## Evidence
+
+- Mission Map source: `/Users/shaun/.codex/generated_images/019fde22-5f29-75b2-bd32-85053490cfe2/exec-b9ec1610-46fa-4814-967f-8019cbeb3af3.png` (1487 × 1058)
+- Mission Map implementation: `/Users/shaun/.codex/visualizations/2026/08/07/019fde22-5f29-75b2-bd32-85053490cfe2/mission-map-final-1440x1024.png` (1440 × 1024)
+- Mission Map side-by-side: `/Users/shaun/.codex/visualizations/2026/08/07/019fde22-5f29-75b2-bd32-85053490cfe2/mission-map-source-vs-implementation.png`
+- Signal Loom source: `/Users/shaun/.codex/generated_images/019fde22-5f29-75b2-bd32-85053490cfe2/exec-1bd86eb0-26a0-4f02-ae40-68a56e847847.png` (1487 × 1058)
+- Signal Loom implementation: `/Users/shaun/.codex/visualizations/2026/08/07/019fde22-5f29-75b2-bd32-85053490cfe2/signal-loom-final-1440x1024.png` (1440 × 1024)
+- Signal Loom side-by-side: `/Users/shaun/.codex/visualizations/2026/08/07/019fde22-5f29-75b2-bd32-85053490cfe2/signal-loom-source-vs-implementation.png`
+- Responsive captures: 1024 × 768 and 768 × 900 for both views in the same visualization folder.
+- Density: desktop browser at 1× CSS pixels, screenshots normalized to PNG.
+- State: persisted AH-003 evidence; Implement blocked, one qualified package, C1 revision 1, Dev Review fresh, Test stale, future gates waiting.
+
+## Full-view comparison
+
+The implementation retains the selected concepts' warm-ink shell, restrained green/blue/amber/red status language, compact horizontal controls, fixed evidence inspector, chronological footer, and dark high-density canvas. Mission Map uses an actual orbitable Three.js scene; Signal Loom uses a Canvas 2D animated rail-and-handoff projection. Both preserve the current Agent Harness navigation and typography rather than introducing a separate visual product.
+
+The source concepts show a deliberately richer multi-package example. The implementation instead renders the real task's single S1 package and exact C1 r1 gate state. That content difference is intentional and prevents the visualization from inventing agents, packages, health, or success evidence.
+
+## Focused regions
+
+- Header and controls: the mode switch, follow, camera/replay, pause, reduced-motion, and workspace controls remain visible and keyboard-addressable. At narrower widths they wrap into a second row without horizontal document overflow.
+- Main visualization: the entire ten-stage progression remains legible. Package, candidate, stale gate, and waiting gate states use the same semantic palette in both projections.
+- Inspector: selecting a stage, package, or candidate updates one shared inspector. Package evidence opens the existing durable artifact viewer rather than a duplicate preview.
+- Timeline: replay is driven by persisted workflow events. Pause/resume and replay state were exercised in the browser.
+- Responsive layout: 1440 × 1024, 1024 × 768, and 768 × 900 all remained within the viewport width. Below 1040px, the inspector moves below the visualization in the observatory's own scroll region.
+
+## Iteration history
+
+1. P2 layout — the first desktop pass allowed the header controls and inspector to push past the available app content width. Fixed with a container-aware header wrap and verified at 1440px.
+2. P2 Mission Map framing — the outer candidate-bound gate rings were clipped and the task core lacked a persistent label. Fixed by raising the top camera and adding the core label.
+3. P2 Signal Loom composition — the first weave sat too high and underused the vertical canvas. Fixed by lowering the signal baseline, extending rails, and centering candidate assembly.
+4. P2 responsive cascade — Signal Loom's compact overrides could be superseded by later base styles. Fixed by ordering the shared canvas, Loom, and responsive observatory styles deliberately.
+5. P2 loading performance — Three.js initially joined the main application chunk. Fixed by lazy-loading the observatory as a separate route-level experience.
+
+## Accessibility and interaction checks
+
+- Semantic buttons, tabs, navigation, complementary inspector, regions, labels, and a labelled replay slider are present.
+- Selected nodes expose pressed state; active view exposes selected tab state.
+- Reduced motion can be toggled and the OS-level reduced-motion preference disables transitions.
+- Motion can be paused independently of replay.
+- No current browser console errors or post-reload Three.js warnings were observed.
+- Visible text and status colors remain readable against the dark surfaces; focus and hover treatments reuse the app's established controls.
+
+## High-definition observatory refinement — 2026-08-08
+
+### Review setup
+
+- Local implementation: `http://127.0.0.1:4173/`
+- Mission source: `/Users/shaun/.codex/generated_images/019fde22-5f29-75b2-bd32-85053490cfe2/exec-b9ec1610-46fa-4814-967f-8019cbeb3af3.png`
+- Loom source: `/Users/shaun/.codex/generated_images/019fde22-5f29-75b2-bd32-85053490cfe2/exec-1bd86eb0-26a0-4f02-ae40-68a56e847847.png`
+- Fixed comparison viewport: 1440 × 1024 CSS pixels
+- Responsive viewports: 1024 × 768 and 768 × 1024 CSS pixels
+- Browser: the user's selected in-app browser
+- Persisted state: AH-003 with one qualified S1 package, blocked C1 r1, fresh Dev Review, stale Test, and future Final Review / Human Approval gates
+
+### Three complete comparison passes
+
+1. Iteration 1 — rebuilt the visual composition rather than polishing the original flat diagram. Mission Map gained a deterministic high-DPI star field, bloom, physical materials, nested orbit rings, curved investigation/package/candidate paths, volumetric satellites, candidate polyhedron, gate rings, and moving artifact cubes. Signal Loom gained seven-strand rails, braided package paths, animated shuttles, a candidate seal, metallic gate rails, and a persistent handoff strip. Evidence: `iterations/iteration-1-mission-comparison.png` and `iterations/iteration-1-loom-comparison.png`.
+2. Iteration 2 — corrected the visible mismatch from the first combined comparisons. The over-bright Mission field was darkened, high-leverage objects were enlarged, selection stopped rebuilding the Three.js scene, and the source-style inspector gained compact rows, token/cache meters, close affordance, and real input/output/workspace actions. Evidence: `iterations/iteration-2-mission-comparison.png` and `iterations/iteration-2-loom-comparison.png`.
+3. Iteration 3 — refined hierarchy and interaction. The mode switch moved into the persistent footer to restore title space; the inspector became dismissible and recoverable; persisted event markers became clickable timeline pips; focus states, metadata, branch/date, artifact legend, responsive stacking, and compact inspector wrapping were completed. Evidence: `iterations/iteration-3-mission-comparison.png` and `iterations/iteration-3-loom-comparison.png`.
+
+Every comparison joined the appropriate source and implementation into one input before judging the full frame, header/control hierarchy, primary visualization, candidate/gate prominence, inspector, legend, and timeline.
+
+### Findings fixed during the refinement
+
+1. P2, color/material fidelity — the first Mission scene's bright green ambient field flattened contrast and competed with the warm task core. Reduced exposure, bloom spread, hemisphere intensity, point-light intensity, and fog brightness while retaining emissive node edges.
+2. P2, interaction/maintainability — changing selection recreated the full Three.js renderer and scene. Selection now flows through a ref and interpolated object scale, so node inspection is immediate and motion remains continuous.
+3. P2, hierarchy — the header-level mode switch compressed the task title and diverged from both selected sources. It now lives in the persistent timeline footer while the header retains follow, camera/replay, pause, and workspace actions.
+4. P2, behavior — closing the inspector initially returned to the same default package and appeared to do nothing. The inspector now collapses completely and exposes an `Open selected evidence` recovery control.
+5. P2, responsiveness — at 1024px the fixed-height grid allowed the footer to overlap the stacked inspector. Compact layouts now use natural-height grid rows; the footer follows the inspector and document width remains equal to viewport width.
+6. P2, animation stability — final console QA caught a non-finite Catmull-Rom progress edge during rapid view switching. Artifact travel now validates and clamps progress before sampling the curve. A fresh reload, two mode switches, selection, pause/resume, and a further animation dwell produced no errors or warnings.
+
+### Interaction and accessibility coverage
+
+- Selected stage, package, and candidate nodes in Mission Map and Signal Loom; the shared inspector updated with the exact persisted evidence and semantic state each time.
+- Opened package output in the existing durable artifact viewer, opened the candidate's next stale gate, and returned to the package/candidate workspace.
+- Exercised inspector close/reopen, Follow active, Top/Orbit camera, pause/resume, reduced-motion control, view switching, Live timeline reset, and a persisted event marker.
+- Verified semantic tabs, pressed states, labelled regions, labelled timeline slider, event fieldset, keyboard-visible focus styles, and OS/user reduced-motion support.
+- At 1440, 1024, and 768 widths, document `scrollWidth` equalled `innerWidth`. Compact layouts wrap actions, keep the visual canvas intact, and stack handoff/inspector content below it.
+
+### Final evidence
+
+- Mission final: `/Users/shaun/.codex/visualizations/2026/08/07/019fde22-5f29-75b2-bd32-85053490cfe2/mission-map-final-1440x1024.png`
+- Loom final: `/Users/shaun/.codex/visualizations/2026/08/07/019fde22-5f29-75b2-bd32-85053490cfe2/signal-loom-final-1440x1024.png`
+- Responsive Mission: `iterations/iteration-3-mission-1024x768.png`, `iterations/iteration-3-mission-768x1024.png`
+- Responsive Loom: `iterations/iteration-3-loom-1024x768.png`, `iterations/iteration-3-loom-768x1024.png`
+
+### Automated verification
+
+- `npm run typecheck` — passed
+- Scoped Biome lint and format checks for the observatory implementation — passed
+- `npm test` — 317 passed
+- `npm run build` — passed and emitted the lazy observatory chunk plus the required Sites artifacts; the existing chunk-size advisory remains non-blocking
+- `npm run test:sites` — 4 passed
+- `git diff --check` — passed
+- Full `npm run lint` still reports the pre-existing duplicate `gap` in `src/styles/settings-changelog.css`; the file is outside this change and was not altered
+
+### Remaining findings
+
+- P0: none.
+- P1: none.
+- P2: none after fixes.
+- P3: the lazy Three.js observatory chunk is 622.72 kB minified. It does not affect initial application load, but a future performance-only slice could split post-processing from the core scene if runtime measurements justify it.
+
+final result: passed

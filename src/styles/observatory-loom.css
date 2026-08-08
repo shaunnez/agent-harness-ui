@@ -1,0 +1,260 @@
+.signal-loom {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 142px;
+}
+
+.signal-loom__canvas {
+  position: relative;
+  min-height: 0;
+}
+
+.loom-stage,
+.loom-package,
+.loom-candidate,
+.loom-gate {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.loom-stage {
+  position: absolute;
+  top: 4.5%;
+  display: grid;
+  width: 78px;
+  gap: 3px;
+  padding: 0;
+  transform: translateX(-50%);
+  border: 0;
+  color: var(--muted);
+  text-align: center;
+  background: transparent;
+}
+
+.loom-stage > span,
+.loom-gate > span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin: 0 auto 3px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 10px;
+}
+
+.loom-stage strong,
+.loom-gate strong {
+  color: var(--text);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.loom-stage small {
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.loom-stage time {
+  color: #777a73;
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+.loom-stage:hover strong,
+.loom-stage.is-selected strong {
+  color: currentColor;
+}
+
+.signal-loom__weave-label {
+  position: absolute;
+  top: 18.5%;
+  left: 45.2%;
+}
+
+.signal-loom__packages {
+  position: absolute;
+  top: 23.5%;
+  left: 43.8%;
+  display: grid;
+  width: 28.8%;
+  gap: 9px;
+}
+
+.loom-package {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  min-height: 43px;
+  padding: 7px 9px 7px 12px;
+  border: 1px solid #343a34;
+  border-left: 2px solid currentColor;
+  border-radius: 6px;
+  color: var(--muted);
+  text-align: left;
+  background: linear-gradient(90deg, rgb(22 29 24 / 96%), rgb(14 17 15 / 88%));
+  box-shadow: 0 10px 30px rgb(0 0 0 / 20%);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.loom-package > i {
+  width: 8px;
+  height: 26px;
+  flex: 0 0 auto;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  background: currentColor;
+  box-shadow: 0 0 14px currentColor;
+  opacity: 0.72;
+}
+
+.loom-package > span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.loom-package strong {
+  color: currentColor;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.loom-package small {
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.loom-package em {
+  padding: 3px 6px;
+  border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  border-radius: 4px;
+  font-size: 10px;
+  font-style: normal;
+}
+.loom-package:hover,
+.loom-package.is-selected {
+  border-color: currentColor;
+  background: #20231f;
+  transform: translateX(3px);
+}
+.loom-empty {
+  padding: 18px;
+  color: var(--muted);
+}
+
+.loom-candidate {
+  position: absolute;
+  top: 52%;
+  left: 76%;
+  display: grid;
+  min-width: 70px;
+  gap: 2px;
+  padding: 10px 12px;
+  transform: translate(-50%, -50%);
+  border: 2px solid currentColor;
+  border-radius: 9px;
+  color: var(--amber);
+  background: linear-gradient(145deg, #232016, #121411);
+  box-shadow:
+    0 0 30px rgb(239 171 36 / 16%),
+    inset 0 0 18px rgb(239 171 36 / 5%);
+}
+
+.loom-candidate small {
+  font-size: 10px;
+}
+.loom-candidate:hover,
+.loom-candidate.is-selected {
+  background: #242017;
+  transform: translate(-50%, -50%) scale(1.04);
+}
+
+.signal-loom__gates {
+  position: absolute;
+  top: 5.5%;
+  right: 0.8%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: 20.2%;
+  gap: 1px;
+}
+
+.loom-gate {
+  display: grid;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+}
+
+.loom-gate strong {
+  font-size: 9px;
+  line-height: 1.25;
+}
+.loom-gate small {
+  color: #777a73;
+  font-size: 9px;
+}
+.loom-gate:hover strong,
+.loom-gate.is-selected strong {
+  color: currentColor;
+}
+
+.loom-stage:focus-visible,
+.loom-package:focus-visible,
+.loom-candidate:focus-visible,
+.loom-gate:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.loom-handoff {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.8fr) minmax(140px, 1fr) auto minmax(140px, 1fr) auto minmax(
+      140px,
+      1fr
+    );
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-top: 1px solid #2f322e;
+  background: linear-gradient(90deg, rgb(227 171 67 / 3%), transparent 35%), #121411;
+}
+
+.loom-handoff header,
+.loom-handoff > span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.loom-handoff header strong,
+.loom-handoff > span strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.loom-handoff header em {
+  font-size: 10px;
+  font-style: normal;
+}
+.loom-handoff small {
+  color: #777a73;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.loom-handoff > span > svg {
+  color: var(--blue);
+}
+.loom-handoff--empty {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}

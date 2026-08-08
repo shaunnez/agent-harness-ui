@@ -1,17 +1,17 @@
 import {
-  ArrowLeft,
   Archive,
+  ArrowLeft,
   Check,
   CircleNotch,
-  Prohibit,
+  Eye,
   FileCode,
   GitDiff,
   Pause,
+  Prohibit,
   X,
 } from "@phosphor-icons/react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { getCandidateDiff, type CandidateDiffResponse } from "../api";
-import { matchesCandidateDiffResponse } from "../requestIdentity";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { type CandidateDiffResponse, getCandidateDiff } from "../api";
 import {
   formatApproximateCost,
   formatCacheRate,
@@ -20,14 +20,20 @@ import {
   type StageId,
   workflowStages,
 } from "../domain";
-import { MarkdownContent } from "./MarkdownContent";
-import { RunActivity } from "./RunActivity";
+import { matchesCandidateDiffResponse } from "../requestIdentity";
 import type { TaskRouteDetail } from "../routes";
+import {
+  getEffectiveRunStage,
+  getEffectiveStageRunAttempts,
+  getEffectiveStageRunLimit,
+} from "../runtime-stage-limits";
 import { CandidateDiffErrorViewer, CandidateDiffViewer } from "./CandidateDiffViewer";
+import { MarkdownContent } from "./MarkdownContent";
+import type { ObservatoryMode } from "./observatory/RunObservatory";
 import { Button, PriorityBadge, StateBadge } from "./Primitives";
-import { ApprovalHistorySection, getApprovalHistory } from "./runtimeApprovalHistory.js";
-import { getAccessBoundaryCopy, RuntimeCommandBar } from "./runtime/RuntimeCommandBar";
+import { RunActivity } from "./RunActivity";
 import type { RuntimeTaskWorkspaceProps } from "./runtime/contracts";
+import { getAccessBoundaryCopy, RuntimeCommandBar } from "./runtime/RuntimeCommandBar";
 import {
   DecisionFrontier,
   RuntimeContextDisclosure,
@@ -37,11 +43,6 @@ import { RuntimeArtifactViewer, TaskEvaluation } from "./runtime/RuntimeInspecto
 import { InspectorSection, RuntimeRow } from "./runtime/RuntimeInspectorPrimitives";
 import { RuntimeStagePresentation } from "./runtime/RuntimeStagePresentation";
 import { RuntimeWorkspaceFooter } from "./runtime/RuntimeWorkspaceFooter";
-import {
-  getEffectiveRunStage,
-  getEffectiveStageRunAttempts,
-  getEffectiveStageRunLimit,
-} from "../runtime-stage-limits";
 import {
   getRuntimeArtifactFreshness,
   getRuntimeGateFreshness,
@@ -56,6 +57,7 @@ import {
   runtimeStageSkills,
   toTaskRunState,
 } from "./runtime/workflow";
+import { ApprovalHistorySection, getApprovalHistory } from "./runtimeApprovalHistory.js";
 
 export { getAccessBoundaryCopy } from "./runtime/RuntimeCommandBar";
 export {
@@ -63,6 +65,11 @@ export {
   RuntimeArtifactViewer,
   shouldApplyArtifactCopyFeedback,
 } from "./runtime/RuntimeInspectorPanels";
+
+const RunObservatory = lazy(async () => {
+  const module = await import("./observatory/RunObservatory");
+  return { default: module.RunObservatory };
+});
 
 export function RuntimeTaskWorkspace({
   task,
@@ -92,6 +99,7 @@ export function RuntimeTaskWorkspace({
   const effectiveRunStage = getEffectiveRunStage(task);
   const stageRunLabel = effectiveRunStage === task.currentStage ? "Stage" : "Implement repair";
   const [viewedStageId, setViewedStageId] = useState<StageId>(initialViewedStageId ?? task.currentStage);
+  const [observatoryMode, setObservatoryMode] = useState<ObservatoryMode | null>(null);
   const [selectedWorktreeId, setSelectedWorktreeId] = useState<string | null>(initialSelectedWorktreeId ?? null);
   const [openArtifact, setOpenArtifact] = useState<RuntimeArtifact | null>(null);
   const [candidateDiff, setCandidateDiff] = useState<CandidateDiffResponse | null>(null);
@@ -287,6 +295,29 @@ export function RuntimeTaskWorkspace({
     );
   };
 
+  if (observatoryMode) {
+    return (
+      <div className="task-workspace runtime-workspace runtime-workspace--observatory">
+        <Suspense fallback={<div className="observatory-loading">Preparing live workflow…</div>}>
+          <RunObservatory
+            task={task}
+            mode={observatoryMode}
+            onModeChange={setObservatoryMode}
+            onOpenWorkspace={(stageId) => {
+              if (stageId) selectViewedStage(stageId);
+              setObservatoryMode(null);
+            }}
+            onOpenArtifact={(artifact) => {
+              selectViewedStage(artifact.stage);
+              setObservatoryMode(null);
+              openRuntimeArtifact(artifact);
+            }}
+          />
+        </Suspense>
+      </div>
+    );
+  }
+
   return (
     <div className="task-workspace runtime-workspace">
       <header className="task-header">
@@ -322,6 +353,14 @@ export function RuntimeTaskWorkspace({
         </div>
         <fieldset className="task-header__actions">
           <legend className="sr-only">Global task controls</legend>
+          <Button
+            tone="secondary"
+            compact
+            icon={Eye}
+            onClick={() => setObservatoryMode("mission")}
+          >
+            Watch run
+          </Button>
           <Button
             tone="secondary"
             compact

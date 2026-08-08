@@ -1,0 +1,225 @@
+.observatory-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 296px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.observatory-body.is-inspector-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.observatory-inspector-launcher {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1px solid #3b3f39;
+  border-radius: 6px;
+  color: #c9cbc6;
+  background: rgb(18 21 18 / 92%);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 38%);
+  cursor: pointer;
+}
+
+.observatory-inspector-launcher:hover {
+  border-color: var(--blue);
+  color: #fff;
+  background: #1c211d;
+}
+
+.observatory-canvas {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid #2d302c;
+  background: #070a09;
+}
+
+.mission-map,
+.signal-loom {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.mission-map > canvas,
+.signal-loom__canvas > canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.mission-map__labels,
+.signal-loom__labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.mission-node {
+  position: absolute;
+  display: flex;
+  min-width: 98px;
+  align-items: center;
+  gap: 8px;
+  padding: 5px;
+  transform: translate(-50%, -50%);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text);
+  text-align: left;
+  background: rgb(7 10 9 / 18%);
+  pointer-events: auto;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.mission-node > i {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: #101512;
+  box-shadow: 0 0 12px currentColor;
+}
+
+.mission-node > span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.mission-node strong {
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.mission-node small {
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.mission-node:hover,
+.mission-node.is-selected {
+  border-color: currentColor;
+  background: rgb(22 27 23 / 92%);
+  box-shadow:
+    0 12px 34px rgb(0 0 0 / 36%),
+    0 0 18px rgb(90 162 255 / 8%);
+  transform: translate(-50%, -50%) scale(1.045);
+}
+
+.mission-node:focus-visible,
+.observatory-inspector-launcher:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.mission-map__package-cluster {
+  position: absolute;
+  top: 19%;
+  left: 61%;
+  display: grid;
+  width: min(270px, 27%);
+  gap: 7px;
+  pointer-events: auto;
+}
+
+.mission-map__core-label {
+  position: absolute;
+  top: 49%;
+  left: 50%;
+  display: grid;
+  gap: 1px;
+  transform: translate(-50%, -50%);
+  color: var(--amber);
+  text-align: center;
+  text-shadow: 0 2px 12px #000;
+}
+
+.mission-map__core-label strong {
+  font-size: 15px;
+  text-shadow: 0 0 16px rgb(233 167 47 / 70%);
+}
+
+.mission-map__core-label small {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mission-map__core-label em {
+  color: #a58d5c;
+  font-size: 9px;
+  font-style: normal;
+}
+
+.mission-map__package-cluster > span,
+.signal-loom__weave-label {
+  color: #9f9c93;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mission-map__package-cluster .mission-node {
+  position: static;
+  min-width: 0;
+  padding: 8px 10px;
+  transform: none;
+  border-color: #343a34;
+  background: rgb(14 19 16 / 88%);
+}
+
+.mission-map__package-cluster .mission-node:hover,
+.mission-map__package-cluster .mission-node.is-selected {
+  transform: translateX(3px);
+}
+
+.mission-node.is-featured {
+  min-width: 132px;
+  border-color: currentColor;
+  background: rgb(13 20 25 / 90%);
+}
+
+.mission-node.is-featured > i {
+  width: 21px;
+  height: 21px;
+}
+
+.mission-map__instructions {
+  position: absolute;
+  bottom: 14px;
+  left: 16px;
+  display: flex;
+  gap: 18px;
+  color: #8c8d86;
+  font-size: 11px;
+}
+
+.mission-map__instructions span::before {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin: 0 7px 2px 0;
+  border-radius: 50%;
+  background: var(--amber);
+  content: "";
+}

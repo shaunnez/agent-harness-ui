@@ -20,3 +20,7 @@
 @import "./styles/library-agents.css";
 @import "./styles/settings-changelog.css";
 @import "./styles/polish-responsive.css";
+@import "./styles/observatory-canvas.css";
+@import "./styles/observatory-loom.css";
+@import "./styles/observatory-inspector.css";
+@import "./styles/observatory.css";
