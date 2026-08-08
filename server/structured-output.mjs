@@ -54,8 +54,14 @@ function parseCandidateEvidenceJson(text, label) {
       `The agent returned more than one ${label} JSON block.`,
     );
   }
+  const payload = matches[0][1].trim();
+  // Review models occasionally preserve the requested single JSON payload but wrap it in
+  // the Markdown fence they use everywhere else. Unwrap only when the fence is the whole
+  // labelled payload; mixed prose, multiple blocks, malformed JSON, verdicts, findings and
+  // candidate bindings still pass through the same fail-closed validators below.
+  const fenced = payload.match(/^```(?:json)?[ \t]*\r?\n([\s\S]*?)\r?\n```$/i);
   try {
-    return JSON.parse(matches[0][1].trim());
+    return JSON.parse((fenced?.[1] ?? payload).trim());
   } catch (error) {
     throw candidateEvidenceError(
       "contradictory_evidence",

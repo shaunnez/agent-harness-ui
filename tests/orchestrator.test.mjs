@@ -334,6 +334,12 @@ test("derives candidate-bound review gates from structured evidence", () => {
   const candidate = { id: "C1", revisionNumber: 2 };
   const pass = parseGateEvidence(gateOutput(2), candidate, "dev-review");
   assert.equal(pass.verdict, "PASS");
+  const fencedOutput = gateOutput(2)
+    .replace("<gate-evidence>\n", "<gate-evidence>\n```json\n")
+    .replace("\n</gate-evidence>", "\n```\n</gate-evidence>");
+  const fencedPass = parseGateEvidence(fencedOutput, candidate, "dev-review");
+  assert.equal(fencedPass.verdict, "PASS");
+  assert.equal(fencedPass.candidateRevision, 2);
   const contradictory = parseGateEvidence(
     gateOutput(2, "PASS", [{ severity: "P1", title: "Blocking defect", detail: "The candidate can advance incorrectly." }]),
     candidate,
