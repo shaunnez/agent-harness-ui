@@ -21,7 +21,11 @@ import {
   type WorkflowProfileId,
   workflowStages,
 } from "../domain";
-import { isModelRunArtifact, sumArtifactUsage } from "../artifactPresentation";
+import {
+  SCOUT_USAGE_NOT_RETAINED,
+  isModelRunArtifact,
+  resolveScoutUsage,
+} from "../artifactPresentation";
 import { MarkdownContent } from "./MarkdownContent";
 import { RunActivity } from "./RunActivity";
 import type { TaskRouteDetail } from "../routes";
@@ -154,14 +158,24 @@ export function RuntimeTaskWorkspace({
     reasoning: task.agentConfig?.reasoning ?? "xhigh",
   };
   const viewedRuns = (task.runs ?? []).filter((run) => run.stage === viewedStageId);
-  const viewedUsage = viewedRuns.reduce((usage, run) => ({
-    input: usage.input + (run.usage?.inputTokens ?? 0),
-    cached: usage.cached + (run.usage?.cachedInputTokens ?? 0),
-    output: usage.output + (run.usage?.outputTokens ?? 0),
-    credits: usage.credits + (run.credits ?? run.usage?.credits ?? 0),
-    estimate: usage.estimate + (run.apiEstimate ?? run.usage?.cost ?? 0),
-    duration: usage.duration + (run.durationMs ?? 0),
-  }), { input: 0, cached: 0, output: 0, credits: 0, estimate: 0, duration: 0 });
+  const scoutUsage = resolveScoutUsage(task);
+  const viewedUsage = viewedStageId === "scouts"
+    ? {
+        input: scoutUsage.aggregate.inputTokens,
+        cached: scoutUsage.aggregate.cachedInputTokens,
+        output: scoutUsage.aggregate.outputTokens,
+        credits: scoutUsage.aggregate.credits ?? 0,
+        estimate: scoutUsage.aggregate.cost ?? 0,
+        duration: viewedRuns.reduce((total, run) => total + (run.durationMs ?? 0), 0),
+      }
+    : viewedRuns.reduce((usage, run) => ({
+        input: usage.input + (run.usage?.inputTokens ?? 0),
+        cached: usage.cached + (run.usage?.cachedInputTokens ?? 0),
+        output: usage.output + (run.usage?.outputTokens ?? 0),
+        credits: usage.credits + (run.credits ?? run.usage?.credits ?? 0),
+        estimate: usage.estimate + (run.apiEstimate ?? run.usage?.cost ?? 0),
+        duration: usage.duration + (run.durationMs ?? 0),
+      }), { input: 0, cached: 0, output: 0, credits: 0, estimate: 0, duration: 0 });
   const recordedVerification = uniqueVerificationExecutions(
     task.artifacts.map((artifact) => artifact.focusedTest).filter((item) => item != null),
   );
@@ -636,8 +650,10 @@ export function RuntimeTaskWorkspace({
               <RuntimeRow label="Repository" value={repoName} mono />
             </InspectorSection>
             {stageArtifact ? (
-              <InspectorSection title="Viewed agent run" meta={stageArtifact.name}>
-                {isModelRunArtifact(stageArtifact) ? (
+              <InspectorSection title={isDeterministicScoutHandoff(stageArtifact) ? "Viewed scout handoff" : "Viewed agent run"} meta={stageArtifact.name}>
+                {isDeterministicScoutHandoff(stageArtifact) ? (
+                  <ScoutAggregationUsage artifact={stageArtifact} resolution={scoutUsage} />
+                ) : isModelRunArtifact(stageArtifact) ? (
                   <>
                     <RuntimeRow label="Model" value={stageArtifact.model ?? "Unknown model"} mono />
                     <RuntimeRow label="Reasoning" value={stageArtifact.reasoning ?? "Not recorded"} />
@@ -649,7 +665,7 @@ export function RuntimeTaskWorkspace({
                     <RuntimeContextDisclosure artifact={stageArtifact} />
                   </>
                 ) : stageArtifact.stage === "scouts" ? (
-                  <ScoutAggregationUsage task={task} artifact={stageArtifact} />
+                  <ScoutAggregationUsage artifact={stageArtifact} resolution={scoutUsage} />
                 ) : (
                   <RuntimeRow label="Origin" value="Harness-generated \u2014 no model call, so there is no token usage to report" />
                 )}
@@ -796,24 +812,22 @@ export function RuntimeTaskWorkspace({
 }
 
 function ScoutAggregationUsage({
-  task,
   artifact,
+  resolution,
 }: {
-  task: RuntimeTaskWorkspaceProps["task"];
   artifact: RuntimeArtifact;
+  resolution: ReturnType<typeof resolveScoutUsage>;
 }) {
-  const childScoutArtifacts = task.artifacts.filter(
-    (item) => item.agentRole?.startsWith("scout-") && isModelRunArtifact(item),
-  );
-  const usage = sumArtifactUsage(childScoutArtifacts);
+  const usage = resolution.aggregate;
 
   return (
     <>
       <RuntimeRow
         label="Origin"
-        value="Harness-generated deterministic aggregation of the selected scout reports; no extra model call"
+        value="Harness-generated deterministic handoff from child scout reports; no extra model call"
       />
-      <RuntimeRow label="Child scout runs" value={`${usage.runs} recorded`} />
+      <RuntimeRow label="Inputs" value="Child scout reports" />
+      <RuntimeRow label="Retained child runs" value={`${usage.runs} recorded`} />
       <RuntimeRow
         label="Input"
         value={`${formatTokenCount(usage.inputTokens)} total \u00b7 ${formatTokenCount(usage.uncachedInputTokens)} uncached`}
@@ -831,8 +845,22 @@ function ScoutAggregationUsage({
         label="Approx. cost"
         value={`${formatApproximateCost(usage.cost)} \u00b7 child-run API-rate estimate`}
       />
+      {resolution.perScout.map((match) => (
+        <RuntimeRow
+          key={match.scout.name}
+          label={match.scout.name}
+          value={match.usage ? `${formatTokenCount(match.usage.inputTokens)} in · ${formatTokenCount(match.usage.outputTokens)} out` : SCOUT_USAGE_NOT_RETAINED}
+        />
+      ))}
       <RuntimeContextDisclosure artifact={artifact} />
     </>
+  );
+}
+
+function isDeterministicScoutHandoff(artifact: RuntimeArtifact) {
+  const basename = artifact.name.replaceAll("\\", "/").split("/").at(-1)?.toLowerCase();
+  return artifact.stage === "scouts" && (
+    basename === "repository-scout.md" || artifact.model === "deterministic-aggregation"
   );
 }
 
