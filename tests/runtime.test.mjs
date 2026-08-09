@@ -1696,6 +1696,14 @@ test("aggregates Repository scouts from child model runs and excludes the determ
       usage: { inputTokens, cachedInputTokens: inputTokens / 2, outputTokens: 10, totalTokens: inputTokens + 10, cost, credits: cost * 2 },
     });
     const task = createTask({
+      scoutDispatch: {
+        selected: [
+          { name: "scout-code-path", focus: "Trace the code path.", reason: "Task-relevant evidence." },
+          { name: "scout-pattern", focus: "Find the existing pattern.", reason: "Task-relevant evidence." },
+        ],
+        skipped: [],
+        rationale: "Two focused scout reports were retained.",
+      },
       artifacts: [
         child("code", "scout-code-path", 100, 0.1),
         child("pattern", "scout-pattern", 200, 0.2),
