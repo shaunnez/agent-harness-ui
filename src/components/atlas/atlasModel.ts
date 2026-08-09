@@ -86,18 +86,18 @@ const roomDetails: Record<StageId, Omit<AtlasRoom, "stageId" | "number">> = {
   },
   implement: {
     roomName: "Build Hangar",
-    x: 124,
+    x: 136,
     y: 290,
-    width: 500,
+    width: 478,
     height: 300,
     accent: "#65c48d",
     motif: "build",
   },
   "dev-review": {
     roomName: "Inspection Booth",
-    x: 650,
+    x: 662,
     y: 282,
-    width: 205,
+    width: 190,
     height: 308,
     accent: "#5a9df5",
     motif: "inspect",
@@ -180,16 +180,16 @@ export const atlasRoads: AtlasRoad[] = [
     from: "implement",
     to: "dev-review",
     points: [
-      { x: 624, y: 442 },
-      { x: 650, y: 442 },
+      { x: 614, y: 442 },
+      { x: 662, y: 442 },
     ],
   },
   {
     from: "dev-review",
     to: "test",
     points: [
-      { x: 752, y: 282 },
-      { x: 752, y: 256 },
+      { x: 757, y: 282 },
+      { x: 757, y: 256 },
       { x: 891, y: 256 },
       { x: 891, y: 238 },
     ],
@@ -218,7 +218,7 @@ export const atlasRepairRoads: Array<{ from: "dev-review" | "test"; points: Atla
   {
     from: "dev-review",
     points: [
-      { x: 684, y: 574 },
+      { x: 696, y: 574 },
       { x: 642, y: 574 },
       { x: 642, y: 620 },
       { x: 525, y: 620 },
@@ -301,6 +301,15 @@ export function getPackageOverview(packages: RuntimeWorkPackage[]): PackageOverv
 
 export function getStageRoom(stageId: StageId) {
   return atlasRooms.find((room) => room.stageId === stageId) ?? atlasRooms[0];
+}
+
+export function getAtlasTransitionPath(from: StageId, to: StageId): AtlasPoint[] {
+  const forward = atlasRoads.find((road) => road.from === from && road.to === to);
+  if (forward) return forward.points;
+  if (to === "implement" && (from === "dev-review" || from === "test")) {
+    return atlasRepairRoads.find((road) => road.from === from)?.points ?? [];
+  }
+  return [];
 }
 
 export function formatAtlasTime(value: string | null | undefined) {

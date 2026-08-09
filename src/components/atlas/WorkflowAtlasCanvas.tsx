@@ -9,7 +9,7 @@ import {
   atlasRepairRoads,
   atlasRoads,
   atlasRooms,
-  getStageRoom,
+  getAtlasTransitionPath,
   getTaskColor,
 } from "./atlasModel";
 
@@ -40,6 +40,7 @@ export function WorkflowAtlasCanvas({
   const transitionsRef = useRef<Map<string, Transition>>(new Map());
   const consumedPreviewTransitionKeyRef = useRef(0);
   const cargoImageRef = useRef<HTMLImageElement | null>(null);
+  const trackingPersistedTransitionsRef = useRef(trackPersistedTransitions);
 
   useEffect(() => {
     const image = new Image();
@@ -54,11 +55,21 @@ export function WorkflowAtlasCanvas({
 
   useEffect(() => {
     const now = performance.now();
-    if (!trackPersistedTransitions) transitionsRef.current.clear();
-    if (trackPersistedTransitions && previousStagesRef.current) {
+    const previousTracking = trackingPersistedTransitionsRef.current;
+    trackingPersistedTransitionsRef.current = trackPersistedTransitions;
+    if (!trackPersistedTransitions || !previousTracking) {
+      transitionsRef.current.clear();
+      previousStagesRef.current = new Map(tasks.map((task) => [task.id, task.currentStage]));
+      return;
+    }
+    if (previousStagesRef.current) {
       for (const task of tasks) {
         const previous = previousStagesRef.current.get(task.id);
-        if (previous && previous !== task.currentStage) {
+        if (
+          previous &&
+          previous !== task.currentStage &&
+          getAtlasTransitionPath(previous, task.currentStage).length > 1
+        ) {
           transitionsRef.current.set(task.id, {
             taskId: task.id,
             from: previous,
@@ -111,7 +122,7 @@ export function WorkflowAtlasCanvas({
         0,
         0,
       );
-      drawAtlas(context, tasks, selectedTaskId);
+      drawAtlas(context, tasks, selectedTaskId, time, reduceMotion);
       const activeTransitions = drawTransitions(
         context,
         transitionsRef.current,
@@ -119,7 +130,10 @@ export function WorkflowAtlasCanvas({
         reduceMotion,
         cargoImageRef.current,
       );
-      if (activeTransitions) frame = window.requestAnimationFrame(draw);
+      if (activeTransitions || (selectedTaskId && !reduceMotion)) {
+        window.cancelAnimationFrame(frame);
+        frame = window.requestAnimationFrame(draw);
+      }
     };
 
     const observer = new ResizeObserver(() => draw());
@@ -152,10 +166,16 @@ export function WorkflowAtlasCanvas({
   );
 }
 
-function drawAtlas(context: CanvasRenderingContext2D, tasks: RuntimeTask[], selectedTaskId: string | null) {
+function drawAtlas(
+  context: CanvasRenderingContext2D,
+  tasks: RuntimeTask[],
+  selectedTaskId: string | null,
+  time: number,
+  reduceMotion: boolean,
+) {
   drawGrid(context);
   for (const road of atlasRoads) drawRoad(context, road.points);
-  drawTaskRoutes(context, tasks, selectedTaskId);
+  drawTaskRoutes(context, tasks, selectedTaskId, time, reduceMotion);
   drawRepairRoads(context);
 }
 
@@ -163,6 +183,8 @@ function drawTaskRoutes(
   context: CanvasRenderingContext2D,
   tasks: RuntimeTask[],
   selectedTaskId: string | null,
+  time: number,
+  reduceMotion: boolean,
 ) {
   const selected = tasks.find((task) => task.id === selectedTaskId) ?? null;
   const routeTasks = [
@@ -176,8 +198,20 @@ function drawTaskRoutes(
     context.save();
     context.translate(0, offset);
     for (const road of atlasRoads.slice(0, currentIndex)) {
-      drawPolyline(context, road.points, "rgba(5, 7, 7, 0.78)", task.id === selectedTaskId ? 7 : 5);
-      drawPolyline(context, road.points, getTaskColor(task.id), task.id === selectedTaskId ? 3.6 : 2.5);
+      const isSelected = task.id === selectedTaskId;
+      drawPolyline(context, road.points, "rgba(5, 7, 7, 0.78)", isSelected ? 8 : 5);
+      if (isSelected) {
+        drawPolyline(context, road.points, getTaskColor(task.id), 2.2);
+        if (!reduceMotion) {
+          context.setLineDash([12, 8]);
+          context.lineDashOffset = -((time / 38) % 20);
+        }
+        drawPolyline(context, road.points, getTaskColor(task.id), 4);
+        context.setLineDash([]);
+        context.lineDashOffset = 0;
+      } else {
+        drawPolyline(context, road.points, getTaskColor(task.id), 2.5);
+      }
     }
     context.restore();
   });
@@ -237,13 +271,14 @@ function drawRepairRoads(context: CanvasRenderingContext2D) {
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.fillStyle = "rgba(28, 15, 15, 0.96)";
-  roundedRect(context, 824, 596, 164, 27, 5);
+  roundedRect(context, 862, 536, 146, 39, 5);
   context.fill();
   context.strokeStyle = "#9e3734";
   context.lineWidth = 1;
   context.stroke();
   context.fillStyle = "#ff8078";
-  context.fillText("RETURN TO IMPLEMENT", 906, 609.5);
+  context.fillText("RETURN TO", 935, 549);
+  context.fillText("IMPLEMENT", 935, 563);
   context.restore();
 }
 
@@ -266,26 +301,16 @@ function drawTransitions(
       continue;
     }
     active = true;
-    const point = pointOnPath(transitionPath(transition.from, transition.to), easeInOut(progress));
+    const path = getAtlasTransitionPath(transition.from, transition.to);
+    if (path.length < 2) {
+      transitions.delete(transition.taskId);
+      continue;
+    }
+    const point = pointOnPath(path, easeInOut(progress));
     drawCargo(context, point, getTaskColor(transition.taskId), cargoImage);
   }
   if (active) drawTransitLabel(context);
   return active;
-}
-
-function transitionPath(from: StageId, to: StageId) {
-  const forward = atlasRoads.find((road) => road.from === from && road.to === to);
-  if (forward) return forward.points;
-  if (to === "implement" && (from === "dev-review" || from === "test")) {
-    return atlasRepairRoads.find((road) => road.from === from)?.points ?? [];
-  }
-  const source = getStageRoom(from);
-  const target = getStageRoom(to);
-  if (!source || !target) return [];
-  return [
-    { x: source.x + source.width / 2, y: source.y + source.height / 2 },
-    { x: target.x + target.width / 2, y: target.y + target.height / 2 },
-  ];
 }
 
 function pointOnPath(points: AtlasPoint[], progress: number): AtlasPoint {
@@ -328,7 +353,7 @@ function drawCargo(
 function drawTransitLabel(context: CanvasRenderingContext2D) {
   context.save();
   context.fillStyle = "rgba(36, 24, 6, 0.96)";
-  roundedRect(context, 724, 268, 132, 25, 5);
+  roundedRect(context, 493, 264, 142, 25, 5);
   context.fill();
   context.strokeStyle = "#efab24";
   context.stroke();
@@ -336,7 +361,7 @@ function drawTransitLabel(context: CanvasRenderingContext2D) {
   context.font = "700 10px Inter, sans-serif";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText("HANDOFF IN TRANSIT", 790, 280.5);
+  context.fillText("HANDOFF IN TRANSIT", 564, 276.5);
   context.restore();
 }
 

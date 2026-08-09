@@ -35,6 +35,9 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Keep map typography at the shared 12px metadata and 14–16px body/control floor. The legend must use large object art, labelled route samples, and icon-backed Running, Needs input, Completed, and Blocked / repair states. Recent handoffs use the same readable type scale.
 - Align the selected-task action panel to the bottom edge of Recent handoffs. It owns the task's next safe action: blocked and human-input states must expose an actionable continue/open-task control plus the persisted reason; repair-required states may offer Return to Implement only when the runtime supports that action.
 - Provide an explicitly labelled prototype state switcher for visual QA of representative Running, Needs input, Blocked, Handoff, and Completed atlas states. Preview controls must never masquerade as persisted runtime state or mutate real tasks.
+- On desktop, keep the Active tasks rail wide enough for task identity and two-line titles, and keep atlas support content in a collapsed bottom drawer that slides over the map only when opened.
+- Give every empty room a subtle function-specific machinery loop. When a real worker agent is present, switch to a clearly stronger orange activity treatment while preserving the selected task's blue room perimeter.
+- Make the selected task route lightly animated or dashed, keep handoff labels above room copy, and place the two-line Return to Implement label above its red road.
 
 ## Durable workflow decisions
 
