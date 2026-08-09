@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import cargoCrate from "../../assets/atlas/cargo-crate.png";
-import { type RuntimeTask, type StageId, workflowStages } from "../../domain";
+import { type RuntimeTaskSummary, type StageId, workflowStages } from "../../domain";
 import { AtlasRoomCard } from "./AtlasRoomCard";
 import {
   ATLAS_WORLD_HEIGHT,
@@ -28,7 +28,7 @@ export function WorkflowAtlasCanvas({
   onSelectTask,
   onOpenWorkbench,
 }: {
-  tasks: RuntimeTask[];
+  tasks: RuntimeTaskSummary[];
   selectedTaskId: string | null;
   previewTransitionKey?: number;
   trackPersistedTransitions?: boolean;
@@ -168,7 +168,7 @@ export function WorkflowAtlasCanvas({
 
 function drawAtlas(
   context: CanvasRenderingContext2D,
-  tasks: RuntimeTask[],
+  tasks: RuntimeTaskSummary[],
   selectedTaskId: string | null,
   time: number,
   reduceMotion: boolean,
@@ -181,7 +181,7 @@ function drawAtlas(
 
 function drawTaskRoutes(
   context: CanvasRenderingContext2D,
-  tasks: RuntimeTask[],
+  tasks: RuntimeTaskSummary[],
   selectedTaskId: string | null,
   time: number,
   reduceMotion: boolean,

@@ -1,6 +1,6 @@
 import { MagnifyingGlass, SlidersHorizontal } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
-import { type RuntimeTask, type StageId, workflowStages } from "../domain";
+import { type RuntimeTaskSummary, type StageId, workflowStages } from "../domain";
 import { Button, SectionHeader } from "./Primitives";
 import { TaskTable } from "./TaskTable";
 
@@ -9,7 +9,7 @@ export function TasksScreen({
   runtimeTasks,
 }: {
   onOpenTask: (taskId: string, stageId?: StageId) => void;
-  runtimeTasks: RuntimeTask[];
+  runtimeTasks: RuntimeTaskSummary[];
 }) {
   const [query, setQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);

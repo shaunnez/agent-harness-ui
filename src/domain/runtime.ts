@@ -108,6 +108,11 @@ export interface RuntimeArtifact {
   } | null;
 }
 
+export type RuntimeArtifactMetadata = Omit<
+  RuntimeArtifact,
+  "content" | "contextManifest" | "focusedTest" | "gateResult" | "freshness"
+>;
+
 export interface RuntimeFocusedTestArtifactReference {
   name: string;
   path?: string | null;
@@ -399,6 +404,23 @@ export interface RuntimeTask {
   gateFreshness?: Record<RuntimeGateStage, RuntimeGateFreshness> | null;
   worktreeInventory?: RuntimeWorktreeInventoryRow[];
   events: RuntimeEvent[];
+  artifactCount?: number;
+  eventCount?: number;
+  runCount?: number;
+}
+
+export type RuntimeTaskSummary = Omit<RuntimeTask, "artifacts" | "events" | "runs" | "worktreeInventory"> & {
+  artifacts: RuntimeArtifactMetadata[];
+  events?: RuntimeEvent[];
+  runs?: RuntimeRun[];
+};
+
+export type RuntimeTaskCore = RuntimeTaskSummary;
+
+export interface RuntimePage<T> {
+  items: T[];
+  total: number;
+  nextCursor: string | null;
 }
 
 export interface RuntimeStatus {

@@ -66,10 +66,10 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Current implementation boundary
 
-- Keep the local runtime truthful and runnable at every boundary; do not introduce an immutable ledger unless a concrete concurrency requirement demands it.
+- Keep the local runtime truthful and runnable at every boundary; SQLite is a transactional current-state store, not an immutable ledger.
 - The real runtime uses role-specific GPT-5.6 policies through the user's existing ChatGPT-authenticated Codex CLI, with Luna XHigh as the general worker and Sol High at the high-leverage planning and review gates. Never request, read, store, or pass an OpenAI API key for this path.
 - Keep the local companion bound to loopback. Investigation, planning, review, and final review are read-only; Implement and Repair may write only inside the isolated candidate worktree; Test may create temporary files inside the candidate but must leave the exact candidate revision clean.
-- Persist local task state simply in `.data/tasks.json`; do not introduce an immutable event ledger without a concrete concurrency or audit requirement.
+- Persist live local task state in normalized `.data/tasks.sqlite3`. Import legacy `.data/tasks.json` once with exact parity verification, preserve it unchanged for recovery, fail closed on authority drift, and provide an explicit JSON export for rollback. Do not turn the SQLite store into an immutable event ledger without a separate concrete requirement.
 - Treat the attributable ChatGPT-plan dollar charge as unavailable. Show real token counts and cache rate; when a model has a verified rate card, show a clearly labeled API-rate estimate after cached-input discounts rather than presenting it as the user's actual billed charge.
 - The hosted Sites build is a UI artifact only. Local Codex execution and repository access require the Node companion.
 - Keep real and preview states truthful: the full single-candidate workflow is wired through human fast-forward merge. Multi-package scheduling, candidate assembly, normalized test results, and multiple providers remain prototype-only until their backend contracts exist.

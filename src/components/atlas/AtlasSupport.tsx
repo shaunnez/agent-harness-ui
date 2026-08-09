@@ -13,7 +13,7 @@ import type { CSSProperties } from "react";
 import cargoCrate from "../../assets/atlas/cargo-crate.png";
 import courierPod from "../../assets/atlas/courier-pod.png";
 import workerDrone from "../../assets/atlas/worker-drone.png";
-import { type RuntimeTask, type StageId, workflowStages } from "../../domain";
+import { type RuntimeTaskSummary, type StageId, workflowStages } from "../../domain";
 import { getEffectiveStageRunAttempts, getEffectiveStageRunLimit } from "../../runtime-stage-limits";
 import { Button, PriorityBadge } from "../Primitives";
 import {
@@ -35,7 +35,7 @@ export function AtlasLegend({
   tasks,
   selectedTaskId,
 }: {
-  tasks: RuntimeTask[];
+  tasks: RuntimeTaskSummary[];
   selectedTaskId: string | null;
 }) {
   const routeTasks = [...tasks]
@@ -116,7 +116,7 @@ export function RecentHandoffs({
   onViewAll,
   readOnly = false,
 }: {
-  tasks: RuntimeTask[];
+  tasks: RuntimeTaskSummary[];
   onOpenTask: (taskId: string, stageId?: StageId) => void;
   onViewAll?: () => void;
   readOnly?: boolean;
@@ -172,7 +172,7 @@ export function TaskAtlasInspector({
   readOnly = false,
   previewing = false,
 }: {
-  task: RuntimeTask;
+  task: RuntimeTaskSummary;
   onOpenTask: (taskId: string, stageId?: StageId) => void;
   onOpenWorkbench: () => void;
   onClose: () => void;
@@ -319,7 +319,7 @@ export function TaskAtlasInspector({
   );
 }
 
-function getInspectorAction(task: RuntimeTask, tone: ReturnType<typeof getAtlasTaskTone>) {
+function getInspectorAction(task: RuntimeTaskSummary, tone: ReturnType<typeof getAtlasTaskTone>) {
   if (task.status === "repair-required")
     return { label: "Open repair workspace", stageId: "implement" as StageId };
   if (tone === "blocked") return { label: "Resolve blocker", stageId: task.currentStage };
@@ -331,7 +331,7 @@ function getInspectorAction(task: RuntimeTask, tone: ReturnType<typeof getAtlasT
   return { label: "Enter task", stageId: task.currentStage };
 }
 
-export function InspectorReopen({ task, onOpen }: { task: RuntimeTask; onOpen: () => void }) {
+export function InspectorReopen({ task, onOpen }: { task: RuntimeTaskSummary; onOpen: () => void }) {
   return (
     <button type="button" className="atlas-inspector-reopen" onClick={onOpen}>
       <span style={{ "--task-color": getTaskColor(task.id) } as CSSProperties}>
@@ -346,7 +346,7 @@ export function InspectorReopen({ task, onOpen }: { task: RuntimeTask; onOpen: (
   );
 }
 
-function buildRecentHandoffs(tasks: RuntimeTask[]) {
+function buildRecentHandoffs(tasks: RuntimeTaskSummary[]) {
   return tasks
     .flatMap((task) => {
       const artifacts = [...task.artifacts].sort(

@@ -1,4 +1,9 @@
-import { type RuntimeTask, type RuntimeWorkPackage, type StageId, workflowStages } from "../../domain.ts";
+import {
+  type RuntimeTaskSummary,
+  type RuntimeWorkPackage,
+  type StageId,
+  workflowStages,
+} from "../../domain.ts";
 
 export type AtlasTaskTone = "running" | "blocked" | "attention" | "complete" | "idle";
 
@@ -237,15 +242,20 @@ export const atlasRepairRoads: Array<{ from: "dev-review" | "test"; points: Atla
   },
 ];
 
-const blockedStatuses = new Set<RuntimeTask["status"]>(["failed", "blocked", "cancelled", "repair-required"]);
-const completeStatuses = new Set<RuntimeTask["status"]>([
+const blockedStatuses = new Set<RuntimeTaskSummary["status"]>([
+  "failed",
+  "blocked",
+  "cancelled",
+  "repair-required",
+]);
+const completeStatuses = new Set<RuntimeTaskSummary["status"]>([
   "merged-to-target",
   "completed",
   "closed",
   "archived",
 ]);
 
-export function getAtlasTaskTone(task: RuntimeTask): AtlasTaskTone {
+export function getAtlasTaskTone(task: RuntimeTaskSummary): AtlasTaskTone {
   if (blockedStatuses.has(task.status)) return "blocked";
   if (completeStatuses.has(task.status)) return "complete";
   if (task.status === "running" || task.status === "merging" || task.status === "cancelling")
@@ -254,8 +264,8 @@ export function getAtlasTaskTone(task: RuntimeTask): AtlasTaskTone {
   return "idle";
 }
 
-export function getAtlasStatusLabel(task: RuntimeTask) {
-  const labels: Partial<Record<RuntimeTask["status"], string>> = {
+export function getAtlasStatusLabel(task: RuntimeTaskSummary) {
+  const labels: Partial<Record<RuntimeTaskSummary["status"], string>> = {
     queued: "Queued",
     "awaiting-grill": "Needs input",
     "awaiting-spec-approval": "Spec approval",

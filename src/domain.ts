@@ -84,7 +84,7 @@ export interface NewTaskDraft {
 }
 
 
-import type { RuntimeTask, RuntimeUsage } from "./domain/runtime.ts";
+import type { RuntimeTask, RuntimeTaskSummary, RuntimeUsage } from "./domain/runtime.ts";
 import {
   getEffectiveRunStage,
   getEffectiveStageRunAttempts,
@@ -97,7 +97,7 @@ export const EXAMPLE_TITLE = "Add task priority";
 export const EXAMPLE_DESCRIPTION =
   "Add task priority (`low | medium | high`). Default new tasks to `medium`, expose it through the API, show a coloured badge in the UI, and add tests.";
 
-export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
+export function runtimeTaskToRecentTask(task: RuntimeTask | RuntimeTaskSummary): RecentTask {
   const stageIndex = Math.max(
     0,
     workflowStages.findIndex((stage) => stage.id === task.currentStage),

@@ -9,7 +9,7 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { type CSSProperties, useEffect, useMemo, useState } from "react";
-import { type RuntimeTask, type StageId, workflowStages } from "../../domain";
+import { type RuntimeTaskSummary, type StageId, workflowStages } from "../../domain";
 import { PriorityBadge } from "../Primitives";
 import { AtlasLegend, InspectorReopen, RecentHandoffs, TaskAtlasInspector } from "./AtlasSupport";
 import { formatAtlasTime, getAtlasStatusLabel, getAtlasTaskTone, getTaskColor } from "./atlasModel";
@@ -37,7 +37,7 @@ export function WorkflowAtlas({
   onOpenTask,
   onViewAllTasks,
 }: {
-  tasks: RuntimeTask[];
+  tasks: RuntimeTaskSummary[];
   loading?: boolean;
   error?: string | null;
   readOnly?: boolean;
@@ -271,7 +271,7 @@ export function AtlasStatePreview({
   );
 }
 
-function taskForAtlasPreview(task: RuntimeTask, state: AtlasPreviewState): RuntimeTask {
+function taskForAtlasPreview(task: RuntimeTaskSummary, state: AtlasPreviewState): RuntimeTaskSummary {
   if (state === "live") return task;
   if (state === "running" || state === "handoff") {
     return {

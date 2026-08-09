@@ -158,7 +158,7 @@ export function RuntimeStagePresentation({
                             <small>{scout.focus}</small>
                             <p>{scout.reason}</p>
                             {usage && scoutArtifact ? (
-                              <button type="button" className="scout-dispatch-usage" onClick={() => onOpenArtifact(scoutArtifact)}>
+                              <button type="button" className="scout-dispatch-usage" onClick={() => onOpenArtifact(scoutArtifact as RuntimeArtifact)}>
                                 <span>{formatTokenCount(usage.inputTokens)} in &middot; {formatTokenCount(usage.outputTokens)} out</span>
                                 <span>{formatCacheRate(usage)} cached &middot; {formatApproximateCost(usage.cost)}</span>
                                 <ArrowSquareOut size={14} />

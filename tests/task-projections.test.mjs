@@ -1,0 +1,109 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  paginateTaskArtifacts,
+  paginateTaskEvents,
+  paginateTaskRuns,
+  projectTaskCore,
+  projectTaskSummary,
+} from "../server/task-projections.mjs";
+
+function taskFixture() {
+  return {
+    id: "AH-001",
+    title: "Projection fixture",
+    status: "running",
+    artifacts: [
+      {
+        id: "artifact-1",
+        stage: "triage",
+        name: "triage.md",
+        kind: "markdown",
+        content: "x".repeat(10_000),
+        createdAt: "2026-08-09T00:00:01.000Z",
+        contextManifest: { sources: [{ label: "private prompt detail" }] },
+        focusedTest: { rows: [{ output: "large output" }] },
+        gateResult: { findings: [{ detail: "large finding" }] },
+        freshness: { focusedTestRows: [{ output: "large output" }] },
+        model: "gpt-5.6-luna",
+        usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+      },
+      {
+        id: "artifact-2",
+        stage: "plan",
+        name: "plan.md",
+        kind: "markdown",
+        content: "second",
+        createdAt: "2026-08-09T00:00:02.000Z",
+        model: "gpt-5.6-sol",
+        usage: { inputTokens: 2, cachedInputTokens: 0, outputTokens: 1, totalTokens: 3 },
+      },
+    ],
+    events: [
+      { id: "event-1", at: "2026-08-09T00:00:01.000Z", category: "activity", title: "Created" },
+      { id: "event-2", at: "2026-08-09T00:00:02.000Z", category: "agent", role: "triage", title: "Started" },
+      { id: "event-3", at: "2026-08-09T00:00:03.000Z", category: "agent", role: "test", runKind: "test", title: "Tested" },
+    ],
+    runs: [
+      { id: "run-1", startedAt: "2026-08-09T00:00:01.000Z" },
+      { id: "run-2", startedAt: "2026-08-09T00:00:02.000Z" },
+    ],
+  };
+}
+
+test("task summaries and core detail omit retained heavy evidence", () => {
+  const task = taskFixture();
+  const summary = projectTaskSummary(task);
+  for (const projection of [summary, projectTaskCore(task)]) {
+    assert.equal(projection.artifactCount, 2);
+    assert.equal(projection.eventCount, 3);
+    assert.equal(projection.runCount, 2);
+    assert.equal("events" in projection, false);
+    assert.equal("runs" in projection, false);
+  }
+  assert.equal(projectTaskCore(task).artifacts.length, 0);
+  assert.equal("content" in summary.artifacts[0], false);
+  assert.equal("contextManifest" in summary.artifacts[0], false);
+  assert.equal("focusedTest" in summary.artifacts[0], false);
+  assert.equal("gateResult" in summary.artifacts[0], false);
+  assert.equal("freshness" in summary.artifacts[0], false);
+  assert.ok(
+    Buffer.byteLength(JSON.stringify(summary)) < Buffer.byteLength(JSON.stringify(task)) * 0.1,
+    "the list projection must remain at least 90% smaller than this retained-evidence fixture",
+  );
+});
+
+test("cursor pages are stable, descending, and do not repeat boundary rows", () => {
+  const task = taskFixture();
+  const first = paginateTaskArtifacts(task, new URLSearchParams({ limit: "1" }));
+  assert.deepEqual(first.items.map((item) => item.id), ["artifact-2"]);
+  assert.equal(first.total, 2);
+  assert.ok(first.nextCursor);
+  const second = paginateTaskArtifacts(task, new URLSearchParams({ limit: "1", cursor: first.nextCursor }));
+  assert.deepEqual(second.items.map((item) => item.id), ["artifact-1"]);
+  assert.equal(second.nextCursor, null);
+  assert.equal("content" in second.items[0], false);
+});
+
+test("activity filters and run pagination use retained structured data", () => {
+  const task = taskFixture();
+  const tests = paginateTaskEvents(task, new URLSearchParams({ filter: "test" }));
+  assert.deepEqual(tests.items.map((item) => item.id), ["event-3"]);
+  const agents = paginateTaskEvents(task, new URLSearchParams({ filter: "agent" }));
+  assert.deepEqual(agents.items.map((item) => item.id), ["event-2"]);
+  const runs = paginateTaskRuns(task, new URLSearchParams({ limit: "1" }));
+  assert.deepEqual(runs.items.map((item) => item.id), ["run-2"]);
+  assert.ok(runs.nextCursor);
+});
+
+test("invalid cursors and limits fail closed", () => {
+  const task = taskFixture();
+  assert.throws(
+    () => paginateTaskEvents(task, new URLSearchParams({ cursor: "not-a-cursor" })),
+    /cursor is invalid/i,
+  );
+  assert.throws(
+    () => paginateTaskRuns(task, new URLSearchParams({ limit: "201" })),
+    /limit must be an integer/i,
+  );
+});

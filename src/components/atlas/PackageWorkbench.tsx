@@ -1,6 +1,6 @@
 import { ArrowsOut, Minus, Plus, X } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
-import type { RuntimeTask, RuntimeWorkPackage } from "../../domain";
+import type { RuntimeTaskSummary, RuntimeWorkPackage } from "../../domain";
 import { Button } from "../Primitives";
 import { getPackageOverview } from "./atlasModel";
 
@@ -23,7 +23,7 @@ export function PackageWorkbench({
   open,
   onClose,
 }: {
-  task: RuntimeTask;
+  task: RuntimeTaskSummary;
   open: boolean;
   onClose: () => void;
 }) {

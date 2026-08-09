@@ -10,7 +10,11 @@ import {
   getEvaluationSummary,
   getRuntimeStatus,
   getRuntimeWorktreeInventory,
-  getTask,
+  getTaskActivity,
+  getTaskArtifact,
+  getTaskArtifacts,
+  getTaskCore,
+  getTaskRuns,
   listTasks,
   recordTaskDecision,
   removeRuntimeWorktree,
@@ -34,9 +38,12 @@ import {
   type AppScreen,
   type NewTaskDraft,
   type RuntimeEvaluationSummary,
+  type RuntimeArtifactMetadata,
   type RuntimeSettings,
   type RuntimeStatus,
   type RuntimeTask,
+  type RuntimeTaskCore,
+  type RuntimeTaskSummary,
   type StageId,
   workflowStages,
 } from "./domain";
@@ -53,6 +60,82 @@ import {
   type TaskRoute,
 } from "./routes";
 
+async function refreshTaskEvidence(current: RuntimeTask, core: RuntimeTaskCore): Promise<RuntimeTask> {
+  const coreChanged = current.updatedAt !== core.updatedAt;
+  const { artifacts: _coreArtifacts, ...coreState } = core;
+  if (!coreChanged) return { ...current, ...coreState };
+
+  const [activity, runs, artifactPage] = await Promise.all([
+    getTaskActivity(core.id, { limit: 200 }),
+    getTaskRuns(core.id, { limit: 200 }),
+    getTaskArtifacts(core.id, { limit: 60 }),
+  ]);
+  const existingArtifacts = new Map(current.artifacts.map((artifact) => [artifact.id, artifact]));
+  const newestArtifacts = await Promise.all(artifactPage.items.map(async (metadata) => {
+    const existing = existingArtifacts.get(metadata.id);
+    if (existing) return { ...existing, ...metadata };
+    return getTaskArtifact(core.id, metadata.id);
+  }));
+  const artifacts = mergeNewestPage(current.artifacts, newestArtifacts, (item) => item.id)
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+  return {
+    ...current,
+    ...coreState,
+    artifacts,
+    events: mergeNewestPage(current.events, activity.items, (item) => item.id),
+    runs: mergeNewestPage(current.runs ?? [], runs.items, (item) => item.id),
+  };
+}
+
+async function hydrateTask(id: string): Promise<RuntimeTask> {
+  const [core, activity, runs, artifactPage] = await Promise.all([
+    getTaskCore(id),
+    getTaskActivity(id, { limit: 200 }),
+    getTaskRuns(id, { limit: 200 }),
+    getTaskArtifacts(id, { limit: 60 }),
+  ]);
+  const artifacts = await Promise.all(
+    artifactPage.items.map((artifact) => getTaskArtifact(id, artifact.id)),
+  );
+  return {
+    ...core,
+    artifacts: artifacts.sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
+    events: [...activity.items].sort((left, right) => left.at.localeCompare(right.at)),
+    runs: [...runs.items].sort((left, right) => (
+      left.startedAt ?? left.completedAt ?? ""
+    ).localeCompare(right.startedAt ?? right.completedAt ?? "")),
+  };
+}
+
+function mergeNewestPage<T>(retained: T[], newest: T[], idFor: (item: T) => string) {
+  const byId = new Map(retained.map((item) => [idFor(item), item]));
+  for (const item of newest) byId.set(idFor(item), item);
+  return [...byId.values()];
+}
+
+function taskSummaryFromDetail(task: RuntimeTask): RuntimeTaskSummary {
+  const { events, runs, worktreeInventory: _worktreeInventory, artifacts, ...core } = task;
+  return {
+    ...core,
+    artifacts: artifacts.map(artifactMetadata),
+    artifactCount: artifacts.length,
+    eventCount: events.length,
+    runCount: runs?.length ?? 0,
+  };
+}
+
+function artifactMetadata(artifact: RuntimeTask["artifacts"][number]): RuntimeArtifactMetadata {
+  const {
+    content: _content,
+    contextManifest: _contextManifest,
+    focusedTest: _focusedTest,
+    gateResult: _gateResult,
+    freshness: _freshness,
+    ...metadata
+  } = artifact;
+  return metadata;
+}
+
 export function App() {
   const hostedPreviewMode = hostedAtlasPreviewRequested();
   const [screen, setScreen] = useState<AppScreen>("command");
@@ -60,7 +143,7 @@ export function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus | null>(null);
-  const [runtimeTasks, setRuntimeTasks] = useState<RuntimeTask[]>(() =>
+  const [runtimeTasks, setRuntimeTasks] = useState<RuntimeTaskSummary[]>(() =>
     hostedPreviewMode ? hostedAtlasPreviewTasks : [],
   );
   const [runtimeLoading, setRuntimeLoading] = useState(!hostedPreviewMode);
@@ -79,6 +162,7 @@ export function App() {
   const [toast, setToast] = useState<{ tone: "success" | "error"; message: string } | null>(null);
   const activeTaskIdentityRef = useRef<string | null>(null);
   const activeTaskRequestRef = useRef(0);
+  const activeRuntimeTaskRef = useRef<RuntimeTask | null>(null);
 
   const showToast = useCallback((tone: "success" | "error", message: string) => {
     setToast({ tone, message });
@@ -99,7 +183,10 @@ export function App() {
     const requestId = activeTaskRequestRef.current + 1;
     activeTaskRequestRef.current = requestId;
     const requested = { identity: id, generation: requestId };
-    const task = await getTask(id);
+    const currentTask = activeRuntimeTaskRef.current?.id === id ? activeRuntimeTaskRef.current : null;
+    const task = currentTask
+      ? await refreshTaskEvidence(currentTask, await getTaskCore(id))
+      : await hydrateTask(id);
     if (
       !isCurrentRequest(requested, {
         identity: activeTaskIdentityRef.current,
@@ -107,11 +194,12 @@ export function App() {
       })
     )
       return null;
+    activeRuntimeTaskRef.current = task;
     setActiveRuntimeTask((current) => ({
       ...task,
       worktreeInventory: current?.id === id ? current.worktreeInventory : [],
     }));
-    setRuntimeTasks((tasks) => [task, ...tasks.filter((item) => item.id !== task.id)]);
+    setRuntimeTasks((tasks) => [taskSummaryFromDetail(task), ...tasks.filter((item) => item.id !== task.id)]);
     const inventory = await getRuntimeWorktreeInventory(id);
     if (
       !isCurrentRequest(requested, {
@@ -121,9 +209,14 @@ export function App() {
     )
       return null;
     const enriched = { ...task, worktreeInventory: inventory.rows };
+    activeRuntimeTaskRef.current = enriched;
     setActiveRuntimeTask((current) => (current?.id === id ? enriched : current));
     return enriched;
   }, []);
+
+  useEffect(() => {
+    activeRuntimeTaskRef.current = activeRuntimeTask;
+  }, [activeRuntimeTask]);
 
   const navigateToRoute = useCallback((route: HashRoute, replace = false) => {
     const hash = serializeHashRoute(route);
@@ -288,7 +381,7 @@ export function App() {
     const task = await createTask(draft);
     await runTask(task.id);
     setNewTaskOpen(false);
-    setRuntimeTasks((tasks) => [task, ...tasks.filter((item) => item.id !== task.id)]);
+    setRuntimeTasks((tasks) => [taskSummaryFromDetail(task), ...tasks.filter((item) => item.id !== task.id)]);
     navigateToRoute({ kind: "task", taskId: task.id, stageId: task.currentStage });
   };
 
@@ -419,7 +512,7 @@ export function App() {
                 );
                 if (["repair", "implement", "review", "test", "final-review"].includes(action)) {
                   window.setTimeout(() => {
-                    void getTask(activeRuntimeTask.id)
+                    void getTaskCore(activeRuntimeTask.id)
                       .then((latest) => {
                         if (["failed", "blocked"].includes(latest.status) && latest.error) {
                           showToast("error", `${latest.currentStage} stopped: ${latest.error}`);
@@ -467,7 +560,7 @@ export function App() {
               try {
                 const updated = await updateTaskWorkflowProfile(activeRuntimeTask.id, profile, reason);
                 setActiveRuntimeTask(updated);
-                setRuntimeTasks((tasks) => tasks.map((task) => task.id === updated.id ? updated : task));
+                setRuntimeTasks((tasks) => tasks.map((task) => task.id === updated.id ? taskSummaryFromDetail(updated) : task));
                 showToast("success", `Workflow profile changed to ${profile}.`);
               } catch (error) {
                 const message = error instanceof Error ? error.message : "The workflow profile could not be changed.";

@@ -1,4 +1,6 @@
-import type { RuntimeArtifact, RuntimeTask, RuntimeUsage } from "./domain";
+import type { RuntimeArtifact, RuntimeArtifactMetadata, RuntimeTask, RuntimeTaskSummary, RuntimeUsage } from "./domain";
+
+type UsageArtifact = RuntimeArtifact | RuntimeArtifactMetadata;
 
 type AggregatedUsage = Omit<RuntimeUsage, "cacheWriteTokens"> & {
   cacheWriteTokens: number;
@@ -26,19 +28,21 @@ export function stripStructuredArtifactPayloads(content: string) {
   ).replace(/\n{3,}/g, "\n\n").trim();
 }
 
-export function isModelRunArtifact(artifact: RuntimeArtifact) {
+export function isModelRunArtifact(artifact: Pick<UsageArtifact, "model" | "runId" | "usage">) {
   if (!artifact.model || artifact.model === "deterministic-aggregation") return false;
   return Boolean(artifact.runId || artifact.usage.totalTokens > 0);
 }
 
 export const SCOUT_USAGE_NOT_RETAINED = "Usage was not retained";
 
-type ScoutDispatchEntry = NonNullable<RuntimeTask["scoutDispatch"]>["selected"][number];
+type ScoutTask = RuntimeTask | RuntimeTaskSummary;
+type ScoutArtifact = RuntimeArtifact | RuntimeArtifactMetadata;
+type ScoutDispatchEntry = NonNullable<ScoutTask["scoutDispatch"]>["selected"][number];
 type ScoutUsage = ReturnType<typeof sumArtifactUsage>;
 
 export type ScoutUsageMatch = {
   scout: ScoutDispatchEntry;
-  artifacts: RuntimeArtifact[];
+  artifacts: ScoutArtifact[];
   usage: ScoutUsage | null;
   matchedBy: "agent-role" | "run-id" | "artifact-name" | null;
   state: "matched" | "unmatched";
@@ -48,7 +52,7 @@ export type ScoutUsageMatch = {
 export interface ScoutUsageResolution {
   aggregate: ScoutUsage;
   perScout: ScoutUsageMatch[];
-  matchedArtifacts: RuntimeArtifact[];
+  matchedArtifacts: ScoutArtifact[];
   unmatched: ScoutUsageMatch[];
 }
 
@@ -68,12 +72,12 @@ function scoutNameVariants(value: string) {
   return new Set([normalized, withoutScoutPrefix]);
 }
 
-function isRepositoryScoutHandoff(artifact: RuntimeArtifact) {
+function isRepositoryScoutHandoff(artifact: ScoutArtifact) {
   const basename = artifact.name.replaceAll("\\", "/").split("/").at(-1)?.toLowerCase();
   return basename === "repository-scout.md" || artifact.model === "deterministic-aggregation";
 }
 
-function distinctArtifacts(artifacts: RuntimeArtifact[]) {
+function distinctArtifacts(artifacts: ScoutArtifact[]) {
   const seen = new Set<string>();
   return artifacts.filter((artifact) => {
     if (seen.has(artifact.id)) return false;
@@ -82,13 +86,13 @@ function distinctArtifacts(artifacts: RuntimeArtifact[]) {
   });
 }
 
-function scoutRunIds(task: RuntimeTask, scout: ScoutDispatchEntry) {
+function scoutRunIds(task: ScoutTask, scout: ScoutDispatchEntry) {
   return new Set(
     (task.runs ?? []).filter((run) => run.stage === "scouts" && run.role === scout.name).map((run) => run.id),
   );
 }
 
-function matchesNormalizedScoutName(artifact: RuntimeArtifact, scout: ScoutDispatchEntry) {
+function matchesNormalizedScoutName(artifact: ScoutArtifact, scout: ScoutDispatchEntry) {
   const artifactNames = scoutNameVariants(artifact.name);
   return [...scoutNameVariants(scout.name)].some((name) => artifactNames.has(name));
 }
@@ -100,7 +104,7 @@ function matchesNormalizedScoutName(artifact: RuntimeArtifact, scout: ScoutDispa
  * missing zero-token run: an absent or ambiguous historical match remains
  * explicitly unmatched so callers can render `SCOUT_USAGE_NOT_RETAINED`.
  */
-export function resolveScoutUsage(task: RuntimeTask): ScoutUsageResolution {
+export function resolveScoutUsage(task: ScoutTask): ScoutUsageResolution {
   const eligibleArtifacts = distinctArtifacts(
     task.artifacts.filter(
       (artifact) =>
@@ -161,7 +165,7 @@ export function resolveScoutUsage(task: RuntimeTask): ScoutUsageResolution {
   };
 }
 
-export function sumArtifactUsage(artifacts: RuntimeArtifact[]) {
+export function sumArtifactUsage(artifacts: UsageArtifact[]) {
   const usage = artifacts.reduce(
     (total, artifact) => {
       total.inputTokens += artifact.usage.inputTokens;
