@@ -1794,44 +1794,276 @@ test("renders prior stage attempts and strips machine payloads from visible Mark
   });
 });
 
-test("aggregates Repository scouts from child model runs and excludes the deterministic handoff", () => {
-  return withWorkspace(async ({ stageUsage }) => {
-    const child = (id, agentRole, inputTokens, cost) => ({
+test("resolves selected Repository scouts by fallback identity and shares the aggregate across surfaces", () => {
+  return withWorkspace(async ({
+    AgentsScreen,
+    RuntimeTaskWorkspace,
+    SkillsScreen,
+    resolveScoutUsage,
+    stageUsage,
+  }) => {
+    const scoutArtifact = ({
       id,
-      runId: `run-${id}`,
+      name,
+      agentRole = null,
+      runId = null,
+      inputTokens,
+      cachedInputTokens,
+      cacheWriteTokens = 0,
+      outputTokens,
+      totalTokens,
+      cost,
+      credits,
+    }) => ({
+      id,
+      runId,
       stage: "scouts",
       kind: "markdown",
-      name: `${agentRole}.md`,
-      content: "# Scout",
+      name,
+      content: `# ${name}`,
       createdAt: "2026-08-01T12:00:00.000Z",
       model: "gpt-5.6-luna",
       reasoning: "xhigh",
       agentRole,
-      usage: { inputTokens, cachedInputTokens: inputTokens / 2, outputTokens: 10, totalTokens: inputTokens + 10, cost, credits: cost * 2 },
+      usage: {
+        inputTokens,
+        cachedInputTokens,
+        cacheWriteTokens,
+        outputTokens,
+        totalTokens,
+        cost,
+        credits,
+      },
+    });
+    const selected = [
+      { name: "scout-code-path", focus: "Trace the historical route.", reason: "The route identity is only retained on its run.", status: "complete" },
+      { name: "scout-pattern", focus: "Compare the nearby patterns.", reason: "Check the overlapping historical identity.", status: "complete" },
+      { name: "scout-schema", focus: "Trace the persisted boundary.", reason: "The report name is the only retained identity.", status: "complete" },
+      { name: "scout-user-journey", focus: "Walk the operator journey.", reason: "The current role identifies this report.", status: "complete" },
+      { name: "scout-test-inventory", focus: "Find focused coverage.", reason: "No historical report was retained.", status: "queued" },
+    ];
+    const overlapMatchedByRun = scoutArtifact({
+      id: "historical-code",
+      name: "historical-code-report.md",
+      agentRole: "scout-pattern",
+      runId: "RUN-CODE-HISTORY",
+      inputTokens: 100,
+      cachedInputTokens: 40,
+      cacheWriteTokens: 5,
+      outputTokens: 20,
+      totalTokens: 120,
+      cost: 1.1,
+      credits: 0.4,
+    });
+    const nameMatched = scoutArtifact({
+      id: "historical-schema",
+      name: "scout-schema.md",
+      inputTokens: 200,
+      cachedInputTokens: 50,
+      outputTokens: 30,
+      totalTokens: 230,
+      cost: 2.2,
+      credits: 0.7,
+    });
+    const roleMatched = scoutArtifact({
+      id: "historical-journey",
+      name: "legacy-journey-report.md",
+      agentRole: "scout-user-journey",
+      inputTokens: 300,
+      cachedInputTokens: 100,
+      outputTokens: 40,
+      totalTokens: 340,
+      cost: null,
+      credits: null,
+    });
+    const handoff = scoutArtifact({
+      id: "repository-handoff",
+      name: "artifacts/repository-scout.md",
+      agentRole: "scout-schema",
+      runId: "RUN-HANDOFF-LIKE",
+      inputTokens: 9_000,
+      cachedInputTokens: 8_000,
+      outputTokens: 7_000,
+      totalTokens: 16_000,
+      cost: 99,
+      credits: 50,
     });
     const task = createTask({
-      artifacts: [
-        child("code", "scout-code-path", 100, 0.1),
-        child("pattern", "scout-pattern", 200, 0.2),
-        {
-          id: "aggregate",
-          stage: "scouts",
-          kind: "markdown",
-          name: "repository-scout.md",
-          content: "# Repository evidence",
-          createdAt: "2026-08-01T12:01:00.000Z",
-          model: "deterministic-aggregation",
-          reasoning: null,
-          agentRole: "scouts",
-          usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0, cost: null, credits: null },
-        },
-      ],
+      currentStage: "scouts",
+      status: "awaiting-grill",
+      completedStages: ["triage", "scouts"],
+      scoutDispatch: {
+        selected,
+        skipped: ["scout-dependency"],
+        rationale: "Triage retained the smallest evidence set needed for this task.",
+        createdAt: "2026-08-01T11:59:00.000Z",
+        completedAt: "2026-08-01T12:01:00.000Z",
+      },
+      runs: [{ id: "RUN-CODE-HISTORY", stage: "scouts", role: "scout-code-path", artifactId: null }],
+      // Deliberately scrambled: resolution must follow dispatch order, not artifact order.
+      artifacts: [roleMatched, nameMatched, overlapMatchedByRun, handoff],
     });
-    const usage = stageUsage([task], "scouts");
-    assert.equal(usage.runs, 2);
-    assert.equal(usage.inputTokens, 300);
-    assert.equal(usage.cost, 0.3);
-    assert.deepEqual(usage.artifacts.map((artifact) => artifact.id), ["code", "pattern"]);
+
+    const resolved = resolveScoutUsage(task);
+    assert.deepEqual(resolved.perScout.map((entry) => entry.scout.name), selected.map((scout) => scout.name));
+    assert.deepEqual(resolved.perScout.map((entry) => entry.matchedBy), ["run-id", null, "artifact-name", "agent-role", null]);
+    assert.deepEqual(resolved.perScout.map((entry) => entry.state), ["matched", "unmatched", "matched", "matched", "unmatched"]);
+    assert.deepEqual(resolved.perScout.map((entry) => entry.usage.totalTokens), [120, 0, 230, 340, 0]);
+    assert.deepEqual(resolved.matchedArtifacts.map((artifact) => artifact.id), ["historical-code", "historical-schema", "historical-journey"]);
+    assert.deepEqual(resolved.unmatched.map((entry) => entry.scout.name), ["scout-pattern", "scout-test-inventory"]);
+    assert.equal(resolved.aggregate.runs, 3);
+    assert.equal(resolved.aggregate.inputTokens, 600);
+    assert.equal(resolved.aggregate.cachedInputTokens, 190);
+    assert.equal(resolved.aggregate.cacheWriteTokens, 5);
+    assert.equal(resolved.aggregate.outputTokens, 90);
+    assert.equal(resolved.aggregate.totalTokens, 690);
+    assert.equal(resolved.aggregate.cost, 3.3);
+    assert.equal(resolved.aggregate.credits, 1.1);
+    assert.equal(resolveScoutUsage(task).matchedArtifacts.filter((artifact) => artifact.id === "historical-code").length, 1);
+    assert.equal(resolveScoutUsage(task).matchedArtifacts.some((artifact) => artifact.id === handoff.id), false);
+
+    const parentUsage = stageUsage([task], "scouts");
+    assert.equal(parentUsage.runs, 3);
+    assert.equal(parentUsage.inputTokens, 600);
+    assert.equal(parentUsage.outputTokens, 90);
+    assert.equal(parentUsage.cost, 3.3);
+    assert.deepEqual(parentUsage.artifacts.map((artifact) => artifact.id), ["historical-code", "historical-schema", "historical-journey"]);
+    assert.equal(stageUsage([task], "scout-pattern").runs, 0);
+    assert.equal(stageUsage([task], "scout-code-path").runs, 1);
+
+    const workspaceMarkup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task,
+        initialViewedStageId: "scouts",
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+      }),
+    );
+    assert.match(workspaceMarkup, /5 dispatched · 1 skipped · 600 in \/ 90 out/);
+    assert.match(workspaceMarkup, /scout-code-path/);
+    assert.match(workspaceMarkup, /100 in · 20 out/);
+    assert.match(workspaceMarkup, /scout-pattern/);
+    assert.match(workspaceMarkup, /0 in · 0 out · No recorded child scout run/);
+    assert.match(workspaceMarkup, /scout-schema/);
+    assert.match(workspaceMarkup, /200 in · 30 out/);
+    assert.match(workspaceMarkup, /scout-user-journey/);
+    assert.match(workspaceMarkup, /300 in · 40 out/);
+    assert.equal(workspaceMarkup.match(/0 in · 0 out · No recorded child scout run/g)?.length, 2);
+    const renderedScoutPositions = selected.map((scout) => workspaceMarkup.indexOf(`<strong>${scout.name}</strong>`));
+    assert.equal(renderedScoutPositions.every((position, index) => index === 0 || position > renderedScoutPositions[index - 1]), true);
+    assert.match(workspaceMarkup, /Downstream handoff · deterministic aggregation/);
+    assert.match(workspaceMarkup, /Inputs: child scout reports \(3 retained\); no additional model call/);
+    assert.match(workspaceMarkup, /Stage telemetry/);
+    assert.match(workspaceMarkup, /600 input · 190 cached · 90 output/);
+    assert.match(workspaceMarkup, /Viewed downstream handoff/);
+    assert.match(workspaceMarkup, /Child scout reports/);
+    assert.match(workspaceMarkup, /Child scout runs/);
+    assert.match(workspaceMarkup, /3 recorded/);
+    assert.doesNotMatch(workspaceMarkup, /Viewed agent run/);
+
+    const skillsMarkup = renderToStaticMarkup(
+      React.createElement(SkillsScreen, {
+        runtimeTasks: [task],
+        selectedId: "scouts",
+        onSelect: () => {},
+      }),
+    );
+    assert.match(skillsMarkup, /Recorded model runs<\/span><strong>3<\/strong>/);
+    assert.match(skillsMarkup, /Recorded tokens<\/span><strong>690<\/strong>/);
+    assert.match(skillsMarkup, /Approx\. API-rate cost<\/span><strong>\$3\.30<\/strong>/);
+
+    const runtimeStatus = { model: "gpt-5.6-luna", reasoning: "xhigh", settings: { allowedModels: ["gpt-5.6-luna"], defaultModel: "gpt-5.6-luna", defaultReasoning: "xhigh", stagePolicies: { scouts: { model: "gpt-5.6-luna", reasoning: "xhigh" } } } };
+    const agentsMarkup = renderToStaticMarkup(
+      React.createElement(AgentsScreen, {
+        runtimeTasks: [task],
+        runtimeStatus,
+        selectedId: "scouts",
+        onSelect: () => {},
+        onSave: async () => ({}),
+      }),
+    );
+    assert.match(agentsMarkup, /Recorded runs<\/span><strong>3<\/strong>/);
+    assert.match(agentsMarkup, /Input \/ output<\/span><strong>600 \/ 90<\/strong>/);
+    assert.match(agentsMarkup, /Approx\. cost<\/span><strong>\$3\.30<\/strong>/);
+    assert.doesNotMatch(agentsMarkup, /repository-handoff/);
+
+    const patternAgentMarkup = renderToStaticMarkup(
+      React.createElement(AgentsScreen, {
+        runtimeTasks: [task],
+        runtimeStatus,
+        selectedId: "scout-pattern",
+        onSelect: () => {},
+        onSave: async () => ({}),
+      }),
+    );
+    assert.match(patternAgentMarkup, /Recorded runs<\/span><strong>0<\/strong>/);
+    assert.doesNotMatch(patternAgentMarkup, /historical-code-report/);
+  });
+});
+
+test("renders zero-dispatch scouts as a retained rationale and deterministic handoff", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace, resolveScoutUsage, stageUsage }) => {
+    const handoff = {
+      id: "zero-dispatch-handoff",
+      runId: "RUN-ZERO-HANDOFF-LIKE",
+      stage: "scouts",
+      kind: "markdown",
+      name: "repository-scout.md",
+      content: "# Repository evidence\n\nNo child reports were required.",
+      createdAt: "2026-08-01T12:01:00.000Z",
+      model: "gpt-5.6-luna",
+      reasoning: "xhigh",
+      agentRole: "scouts",
+      usage: { inputTokens: 8_000, cachedInputTokens: 7_000, outputTokens: 6_000, totalTokens: 14_000, cost: 80, credits: 40 },
+    };
+    const task = createTask({
+      currentStage: "scouts",
+      status: "awaiting-grill",
+      completedStages: ["triage", "scouts"],
+      scoutDispatch: {
+        selected: [],
+        skipped: ["scout-code-path", "scout-pattern"],
+        rationale: "Triage found enough repository evidence and explicitly requested no scouts.",
+        createdAt: "2026-08-01T11:59:00.000Z",
+        completedAt: "2026-08-01T12:01:00.000Z",
+      },
+      artifacts: [handoff],
+    });
+
+    const resolved = resolveScoutUsage(task);
+    assert.deepEqual(resolved.perScout, []);
+    assert.deepEqual(resolved.unmatched, []);
+    assert.deepEqual(resolved.matchedArtifacts, []);
+    assert.equal(resolved.aggregate.runs, 0);
+    assert.equal(resolved.aggregate.totalTokens, 0);
+    assert.equal(stageUsage([task], "scouts").runs, 0);
+    assert.equal(stageUsage([task], "scouts").artifacts.includes(handoff), false);
+
+    const markup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task,
+        initialViewedStageId: "scouts",
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+      }),
+    );
+    assert.match(markup, /No scouts dispatched/);
+    assert.match(markup, /Triage found enough repository evidence and explicitly requested no scouts\./);
+    assert.match(markup, /Downstream handoff · deterministic aggregation/);
+    assert.match(markup, /Inputs: none dispatched; no additional model call/);
+    assert.match(markup, /Viewed downstream handoff/);
+    assert.match(markup, /Child scout runs/);
+    assert.match(markup, /0 recorded/);
+    assert.match(markup, /0 input · 0 cached · 0 output/);
+    assert.doesNotMatch(markup, /Viewed agent run/);
+    assert.doesNotMatch(markup, /No recorded child scout run/);
+    assert.doesNotMatch(markup, /zero-token|token usage failure|model run failed/i);
   });
 });
 
@@ -3741,7 +3973,9 @@ async function withWorkspace(run) {
     const requestIdentity = await vite.ssrLoadModule("/src/requestIdentity.ts");
     const artifactPresentation = await vite.ssrLoadModule("/src/artifactPresentation.ts");
     const libraryShared = await vite.ssrLoadModule("/src/components/LibraryShared.tsx");
-    return await run({ ...module, ...candidateDiffViewer, ...runActivity, ...runtimeInspector, ...runtimeWorkflow, ...runtimeCommandBar, ...runtimeStageLimits, ...requestIdentity, ...artifactPresentation, ...libraryShared, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
+    const skillsScreen = await vite.ssrLoadModule("/src/components/SkillsScreen.tsx");
+    const agentsScreen = await vite.ssrLoadModule("/src/components/AgentsScreen.tsx");
+    return await run({ ...module, ...candidateDiffViewer, ...runActivity, ...runtimeInspector, ...runtimeWorkflow, ...runtimeCommandBar, ...runtimeStageLimits, ...requestIdentity, ...artifactPresentation, ...libraryShared, ...skillsScreen, ...agentsScreen, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
   } finally {
     await vite.close();
   }
