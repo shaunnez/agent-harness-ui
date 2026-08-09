@@ -147,11 +147,11 @@ export function resolveScoutUsage(task: ScoutTask): ScoutUsageResolution<ScoutAr
       const nameMatches = available(
         eligibleArtifacts.filter((artifact) => matchesScoutArtifactName(artifact, scout)),
       );
-      if (nameMatches.length === 1) {
+      if (nameMatches.length) {
         candidates = nameMatches;
         matchedBy = "artifact-name";
       } else {
-        unmatchedReason = nameMatches.length > 1 ? "ambiguous" : "missing";
+        unmatchedReason = "missing";
       }
     }
 

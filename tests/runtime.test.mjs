@@ -1865,6 +1865,16 @@ test("resolves selected Repository scouts by fallback identity and shares the ag
       cost: 2.2,
       credits: 0.7,
     });
+    const nameMatchedRetry = scoutArtifact({
+      id: "historical-schema-retry",
+      name: "scout-schema.md",
+      inputTokens: 50,
+      cachedInputTokens: 10,
+      outputTokens: 5,
+      totalTokens: 55,
+      cost: 0.5,
+      credits: 0.2,
+    });
     const roleMatched = scoutArtifact({
       id: "historical-journey",
       name: "legacy-journey-report.md",
@@ -1901,33 +1911,33 @@ test("resolves selected Repository scouts by fallback identity and shares the ag
       },
       runs: [{ id: "RUN-CODE-HISTORY", stage: "scouts", role: "scout-code-path", artifactId: null }],
       // Deliberately scrambled: resolution must follow dispatch order, not artifact order.
-      artifacts: [roleMatched, nameMatched, overlapMatchedByRun, handoff],
+      artifacts: [roleMatched, nameMatched, overlapMatchedByRun, nameMatchedRetry, handoff],
     });
 
     const resolved = resolveScoutUsage(task);
     assert.deepEqual(resolved.perScout.map((entry) => entry.scout.name), selected.map((scout) => scout.name));
     assert.deepEqual(resolved.perScout.map((entry) => entry.matchedBy), ["run-id", null, "artifact-name", "agent-role", null]);
     assert.deepEqual(resolved.perScout.map((entry) => entry.state), ["matched", "unmatched", "matched", "matched", "unmatched"]);
-    assert.deepEqual(resolved.perScout.map((entry) => entry.usage.totalTokens), [120, 0, 230, 340, 0]);
-    assert.deepEqual(resolved.matchedArtifacts.map((artifact) => artifact.id), ["historical-code", "historical-schema", "historical-journey"]);
+    assert.deepEqual(resolved.perScout.map((entry) => entry.usage.totalTokens), [120, 0, 285, 340, 0]);
+    assert.deepEqual(resolved.matchedArtifacts.map((artifact) => artifact.id), ["historical-code", "historical-schema", "historical-schema-retry", "historical-journey"]);
     assert.deepEqual(resolved.unmatched.map((entry) => entry.scout.name), ["scout-pattern", "scout-test-inventory"]);
-    assert.equal(resolved.aggregate.runs, 3);
-    assert.equal(resolved.aggregate.inputTokens, 600);
-    assert.equal(resolved.aggregate.cachedInputTokens, 190);
+    assert.equal(resolved.aggregate.runs, 4);
+    assert.equal(resolved.aggregate.inputTokens, 650);
+    assert.equal(resolved.aggregate.cachedInputTokens, 200);
     assert.equal(resolved.aggregate.cacheWriteTokens, 5);
-    assert.equal(resolved.aggregate.outputTokens, 90);
-    assert.equal(resolved.aggregate.totalTokens, 690);
-    assert.equal(resolved.aggregate.cost, 3.3);
-    assert.equal(resolved.aggregate.credits, 1.1);
+    assert.equal(resolved.aggregate.outputTokens, 95);
+    assert.equal(resolved.aggregate.totalTokens, 745);
+    assert.equal(resolved.aggregate.cost, 3.8);
+    assert.equal(resolved.aggregate.credits, 1.3);
     assert.equal(resolveScoutUsage(task).matchedArtifacts.filter((artifact) => artifact.id === "historical-code").length, 1);
     assert.equal(resolveScoutUsage(task).matchedArtifacts.some((artifact) => artifact.id === handoff.id), false);
 
     const parentUsage = stageUsage([task], "scouts");
-    assert.equal(parentUsage.runs, 3);
-    assert.equal(parentUsage.inputTokens, 600);
-    assert.equal(parentUsage.outputTokens, 90);
-    assert.equal(parentUsage.cost, 3.3);
-    assert.deepEqual(parentUsage.artifacts.map((artifact) => artifact.id), ["historical-code", "historical-schema", "historical-journey"]);
+    assert.equal(parentUsage.runs, 4);
+    assert.equal(parentUsage.inputTokens, 650);
+    assert.equal(parentUsage.outputTokens, 95);
+    assert.equal(parentUsage.cost, 3.8);
+    assert.deepEqual(parentUsage.artifacts.map((artifact) => artifact.id), ["historical-code", "historical-schema", "historical-schema-retry", "historical-journey"]);
     assert.equal(stageUsage([task], "scout-pattern").runs, 0);
     assert.equal(stageUsage([task], "scout-code-path").runs, 1);
 
@@ -1942,26 +1952,26 @@ test("resolves selected Repository scouts by fallback identity and shares the ag
         onDecision: async () => {},
       }),
     );
-    assert.match(workspaceMarkup, /5 dispatched · 1 skipped · 600 in \/ 90 out/);
+    assert.match(workspaceMarkup, /5 dispatched · 1 skipped · 650 in \/ 95 out/);
     assert.match(workspaceMarkup, /scout-code-path/);
     assert.match(workspaceMarkup, /100 in · 20 out/);
     assert.match(workspaceMarkup, /scout-pattern/);
     assert.match(workspaceMarkup, /0 in · 0 out · No recorded child scout run/);
     assert.match(workspaceMarkup, /scout-schema/);
-    assert.match(workspaceMarkup, /200 in · 30 out/);
+    assert.match(workspaceMarkup, /250 in · 35 out/);
     assert.match(workspaceMarkup, /scout-user-journey/);
     assert.match(workspaceMarkup, /300 in · 40 out/);
     assert.equal(workspaceMarkup.match(/0 in · 0 out · No recorded child scout run/g)?.length, 2);
     const renderedScoutPositions = selected.map((scout) => workspaceMarkup.indexOf(`<strong>${scout.name}</strong>`));
     assert.equal(renderedScoutPositions.every((position, index) => index === 0 || position > renderedScoutPositions[index - 1]), true);
     assert.match(workspaceMarkup, /Downstream handoff · deterministic aggregation/);
-    assert.match(workspaceMarkup, /Inputs: child scout reports \(3 retained\); no additional model call/);
+    assert.match(workspaceMarkup, /Inputs: child scout reports \(4 retained\); no additional model call/);
     assert.match(workspaceMarkup, /Stage telemetry/);
-    assert.match(workspaceMarkup, /600 input · 190 cached · 90 output/);
+    assert.match(workspaceMarkup, /650 input · 200 cached · 95 output/);
     assert.match(workspaceMarkup, /Viewed downstream handoff/);
     assert.match(workspaceMarkup, /Child scout reports/);
     assert.match(workspaceMarkup, /Child scout runs/);
-    assert.match(workspaceMarkup, /3 recorded/);
+    assert.match(workspaceMarkup, /4 recorded/);
     assert.doesNotMatch(workspaceMarkup, /Viewed agent run/);
 
     const skillsMarkup = renderToStaticMarkup(
@@ -1971,9 +1981,9 @@ test("resolves selected Repository scouts by fallback identity and shares the ag
         onSelect: () => {},
       }),
     );
-    assert.match(skillsMarkup, /Recorded model runs<\/span><strong>3<\/strong>/);
-    assert.match(skillsMarkup, /Recorded tokens<\/span><strong>690<\/strong>/);
-    assert.match(skillsMarkup, /Approx\. API-rate cost<\/span><strong>\$3\.30<\/strong>/);
+    assert.match(skillsMarkup, /Recorded model runs<\/span><strong>4<\/strong>/);
+    assert.match(skillsMarkup, /Recorded tokens<\/span><strong>745<\/strong>/);
+    assert.match(skillsMarkup, /Approx\. API-rate cost<\/span><strong>\$3\.80<\/strong>/);
 
     const runtimeStatus = { model: "gpt-5.6-luna", reasoning: "xhigh", settings: { allowedModels: ["gpt-5.6-luna"], defaultModel: "gpt-5.6-luna", defaultReasoning: "xhigh", stagePolicies: { scouts: { model: "gpt-5.6-luna", reasoning: "xhigh" } } } };
     const agentsMarkup = renderToStaticMarkup(
@@ -1985,9 +1995,9 @@ test("resolves selected Repository scouts by fallback identity and shares the ag
         onSave: async () => ({}),
       }),
     );
-    assert.match(agentsMarkup, /Recorded runs<\/span><strong>3<\/strong>/);
-    assert.match(agentsMarkup, /Input \/ output<\/span><strong>600 \/ 90<\/strong>/);
-    assert.match(agentsMarkup, /Approx\. cost<\/span><strong>\$3\.30<\/strong>/);
+    assert.match(agentsMarkup, /Recorded runs<\/span><strong>4<\/strong>/);
+    assert.match(agentsMarkup, /Input \/ output<\/span><strong>650 \/ 95<\/strong>/);
+    assert.match(agentsMarkup, /Approx\. cost<\/span><strong>\$3\.80<\/strong>/);
     assert.doesNotMatch(agentsMarkup, /repository-handoff/);
 
     const patternAgentMarkup = renderToStaticMarkup(
