@@ -65,6 +65,7 @@ export type StageTemporalState = "past" | "current" | "future";
 export function getStageTemporalState(task: RuntimeTask, stageId: StageId): StageTemporalState {
   if (stageId === task.currentStage) return "current";
   const hasEvidence =
+    Boolean(task.stageDispositions?.[stageId]) ||
     task.completedStages.includes(stageId) ||
     task.artifacts.some((artifact) => artifact.stage === stageId) ||
     task.runs?.some((run) => run.stage === stageId) === true ||
@@ -201,6 +202,14 @@ export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, arti
   const completedPackages = packages.filter((item) => ["integrated", "ready_for_integration"].includes(item.status)).length;
   const stageLabel = workflowStages.find((stage) => stage.id === stageId)?.label ?? stageId;
   const waiting = !artifact && !isStageComplete(task, stageId);
+  const disposition = task.stageDispositions?.[stageId];
+  if (disposition) {
+    return {
+      kicker: `${stageLabel} · ${disposition.status === "not-required" ? "not required" : "deterministic evidence"}`,
+      title: disposition.status === "not-required" ? `${stageLabel} was not required` : `${stageLabel} completed deterministically`,
+      detail: disposition.reason,
+    };
+  }
   const fallback = {
     kicker: `${stageLabel} \u00b7 ${stageId === task.currentStage ? "current execution" : "living artifact"}`,
     title: waiting ? `${stageLabel} is not ready yet` : (artifact?.name ?? stageLabel),

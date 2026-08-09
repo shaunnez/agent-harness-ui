@@ -1,4 +1,4 @@
-import type { RuntimeTask, StageId } from "../../domain";
+import type { RuntimeTask, StageId, WorkflowProfileId } from "../../domain";
 import type { TaskRouteDetail } from "../../routes";
 
 export type RuntimeWorkflowAction =
@@ -28,6 +28,7 @@ export interface RuntimeTaskWorkspaceProps {
   onGrillAnswer: (questionId: string, answer: string) => Promise<void>;
   onFinishGrill: (acceptRemaining: boolean) => Promise<void>;
   onRemoveWorktree: (rowId: string) => Promise<void>;
+  onProfileChange: (profile: WorkflowProfileId, reason: string) => Promise<void>;
   initialViewedStageId?: StageId;
   initialSelectedWorktreeId?: string | null;
   onViewedStageChange?: (stageId: StageId) => void;

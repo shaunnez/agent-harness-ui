@@ -59,7 +59,7 @@ export async function getRuntimeStatus() {
   return status;
 }
 
-export async function updateRuntimeSettings(input: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies">) {
+export async function updateRuntimeSettings(input: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies">) {
   return (
     await request<{ settings: RuntimeSettings }>("/api/settings", {
       method: "PUT",
@@ -155,6 +155,19 @@ export async function createTask(draft: NewTaskDraft) {
     await request<{ task: RuntimeTask }>("/api/tasks", {
       method: "POST",
       body: JSON.stringify(draft),
+    })
+  ).task;
+}
+
+export async function updateTaskWorkflowProfile(
+  id: string,
+  profile: "fast" | "standard" | "high-risk",
+  reason: string,
+) {
+  return (
+    await request<{ task: RuntimeTask }>(`/api/tasks/${encodeURIComponent(id)}/workflow-profile`, {
+      method: "PUT",
+      body: JSON.stringify({ profile, reason }),
     })
   ).task;
 }

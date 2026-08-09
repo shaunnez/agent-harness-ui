@@ -18,6 +18,7 @@ import {
   formatTokenCount,
   type RuntimeArtifact,
   type StageId,
+  type WorkflowProfileId,
   workflowStages,
 } from "../domain";
 import { MarkdownContent } from "./MarkdownContent";
@@ -77,6 +78,7 @@ export function RuntimeTaskWorkspace({
   onGrillAnswer,
   onFinishGrill,
   onRemoveWorktree,
+  onProfileChange,
   initialViewedStageId,
   initialSelectedWorktreeId,
   onViewedStageChange,
@@ -150,6 +152,30 @@ export function RuntimeTaskWorkspace({
     model: task.agentConfig?.model ?? task.models[0]?.model ?? "gpt-5.6-luna",
     reasoning: task.agentConfig?.reasoning ?? "xhigh",
   };
+  const viewedRuns = (task.runs ?? []).filter((run) => run.stage === viewedStageId);
+  const viewedUsage = viewedRuns.reduce((usage, run) => ({
+    input: usage.input + (run.usage?.inputTokens ?? 0),
+    cached: usage.cached + (run.usage?.cachedInputTokens ?? 0),
+    output: usage.output + (run.usage?.outputTokens ?? 0),
+    credits: usage.credits + (run.credits ?? run.usage?.credits ?? 0),
+    estimate: usage.estimate + (run.apiEstimate ?? run.usage?.cost ?? 0),
+    duration: usage.duration + (run.durationMs ?? 0),
+  }), { input: 0, cached: 0, output: 0, credits: 0, estimate: 0, duration: 0 });
+  const recordedVerification = uniqueVerificationExecutions(
+    task.artifacts.map((artifact) => artifact.focusedTest).filter((item) => item != null),
+  );
+  const focusedExecutions = recordedVerification.filter((item) => item.executionKind === "focused-package");
+  const fullManifestExecutions = recordedVerification.filter((item) => item.executionKind === "full-manifest");
+  const stageChecks = viewedStageId === "implement" ? focusedExecutions : viewedStageId === "test" ? fullManifestExecutions : [];
+  const stageCheckDuration = stageChecks.reduce((total, item) => total + (item.durationMs ?? 0), 0);
+  const stageWallDuration = elapsedWindow([...viewedRuns, ...stageChecks]);
+  const taskWallDuration = task.startedAt
+    ? elapsedWindow([{ startedAt: task.startedAt, completedAt: task.completedAt ?? task.updatedAt }])
+    : elapsedWindow([...(task.runs ?? []), ...recordedVerification]);
+  const focusedDuration = focusedExecutions.reduce((total, item) => total + (item.durationMs ?? 0), 0);
+  const fullManifestDuration = fullManifestExecutions.reduce((total, item) => total + (item.durationMs ?? 0), 0);
+  const canOverrideProfile = !candidate && task.status !== "running" && task.status !== "cancelling" &&
+    ["triage", "scouts", "grill", "specification", "plan"].includes(task.currentStage);
 
   useEffect(() => {
     setViewedStageId(initialViewedStageId ?? task.currentStage);
@@ -416,6 +442,8 @@ export function RuntimeTaskWorkspace({
                     ? "running"
                     : invalidated
                     ? "rerun required"
+                    : task.stageDispositions?.[stage.id]
+                    ? task.stageDispositions[stage.id]?.status.replace("-", " ")
                     : active
                     ? task.status === "running"
                       ? "current"
@@ -509,6 +537,30 @@ export function RuntimeTaskWorkspace({
                 <RuntimeRow label="Verification" value={`${task.experiment.verificationCommands.length} commands`} />
               </InspectorSection>
             ) : null}
+            <InspectorSection title="Workflow profile" meta={task.workflowProfile?.source ?? "migration"}>
+              <label className="field">
+                <span>Selected profile</span>
+                <select
+                  value={task.workflowProfile?.selected ?? "standard"}
+                  disabled={!canOverrideProfile}
+                  onChange={(event) => {
+                    const profile = event.target.value as WorkflowProfileId;
+                    const reason = window.prompt(
+                      `Why is ${profile} the correct workflow profile?`,
+                      `Operator selected ${profile} before implementation.`,
+                    );
+                    if (reason !== null) void onProfileChange(profile, reason.trim());
+                  }}
+                >
+                  <option value="fast">Fast</option>
+                  <option value="standard">Standard</option>
+                  <option value="high-risk">High-risk</option>
+                </select>
+              </label>
+              <p>{task.workflowProfile?.reason ?? "Migrated safely to the standard profile."}</p>
+              <RuntimeRow label="Escalations / overrides" value={`${Math.max(0, (task.workflowProfile?.history.length ?? 1) - 1)} recorded`} />
+              <RuntimeRow label="Override boundary" value={canOverrideProfile ? "Available before implementation" : "Locked after implementation began"} />
+            </InspectorSection>
             <InspectorSection title="Stage context">
               <RuntimeRow
                 label="Viewing"
@@ -516,6 +568,30 @@ export function RuntimeTaskWorkspace({
               />
               <RuntimeRow label="Active" value={workflowStages[currentIndex]?.label ?? "Triage"} />
               <RuntimeRow label="State" value={task.status.replace("-", " ")} />
+            </InspectorSection>
+            <InspectorSection title="Stage telemetry" meta={viewedStage.label}>
+              <RuntimeRow label="Wall time" value={formatDuration(stageWallDuration)} />
+              <RuntimeRow label="Tokens" value={`${formatTokenCount(viewedUsage.input)} input · ${formatTokenCount(viewedUsage.cached)} cached · ${formatTokenCount(viewedUsage.output)} output`} />
+              <RuntimeRow label="Cache rate" value={viewedUsage.input > 0 ? `${Math.round((viewedUsage.cached / viewedUsage.input) * 100)}%` : "—"} />
+              <RuntimeRow label="Work credits" value={viewedUsage.credits > 0 ? viewedUsage.credits.toFixed(3) : "Not reported"} />
+              <RuntimeRow label="API-rate estimate" value={formatApproximateCost(viewedUsage.estimate || null)} />
+              <RuntimeRow label="ChatGPT-plan billing" value="Attributable billing unavailable" />
+              <RuntimeRow label="Focused checks" value={`${viewedStageId === "implement" ? focusedExecutions.length : 0} · ${formatDuration(viewedStageId === "implement" ? stageCheckDuration : 0)}`} />
+              <RuntimeRow label="Full manifests" value={`${viewedStageId === "test" ? fullManifestExecutions.length : 0} · ${formatDuration(viewedStageId === "test" ? stageCheckDuration : 0)}`} />
+              <RuntimeRow label="Review retries" value={`${task.reviewRetries?.length ?? 0}`} />
+              <RuntimeRow label="Candidate repairs" value={`${candidate?.revisions.filter((revision) => /repair/i.test(revision.reason)).length ?? 0}`} />
+            </InspectorSection>
+            <InspectorSection title="Task telemetry" meta="All retained runs">
+              <RuntimeRow label="Wall time" value={formatDuration(taskWallDuration)} />
+              <RuntimeRow label="Tokens" value={`${formatTokenCount(task.usage.inputTokens)} input · ${formatTokenCount(task.usage.cachedInputTokens)} cached · ${formatTokenCount(task.usage.outputTokens)} output`} />
+              <RuntimeRow label="Cache rate" value={formatCacheRate(task.usage)} />
+              <RuntimeRow label="Work credits" value={task.usage.credits == null ? "Not reported" : task.usage.credits.toFixed(3)} />
+              <RuntimeRow label="API-rate estimate" value={formatApproximateCost(task.usage.cost)} />
+              <RuntimeRow label="Focused checks" value={`${focusedExecutions.length} · ${formatDuration(focusedDuration)}`} />
+              <RuntimeRow label="Full manifests" value={`${fullManifestExecutions.length} · ${formatDuration(fullManifestDuration)}`} />
+              <RuntimeRow label="Review retries" value={`${task.reviewRetries?.length ?? 0}`} />
+              <RuntimeRow label="Candidate repairs" value={`${candidate?.revisions.filter((revision) => /repair/i.test(revision.reason)).length ?? 0}`} />
+              <RuntimeRow label="ChatGPT-plan billing" value="Attributable billing unavailable" />
             </InspectorSection>
             <InspectorSection title="Execution metadata">
               <RuntimeRow
@@ -703,4 +779,34 @@ export function RuntimeTaskWorkspace({
       ) : null}
     </div>
   );
+}
+
+function formatDuration(durationMs: number) {
+  if (!durationMs) return "—";
+  if (durationMs < 1_000) return `${Math.round(durationMs)} ms`;
+  if (durationMs < 60_000) return `${(durationMs / 1_000).toFixed(1)} s`;
+  return `${Math.floor(durationMs / 60_000)}m ${Math.round((durationMs % 60_000) / 1_000)}s`;
+}
+
+function elapsedWindow(records: Array<{ startedAt?: string | null; completedAt?: string | null; durationMs?: number | null }>) {
+  const starts = records.map((record) => Date.parse(record.startedAt ?? "")).filter(Number.isFinite);
+  const ends = records.map((record) => Date.parse(record.completedAt ?? "")).filter(Number.isFinite);
+  if (starts.length && ends.length) return Math.max(0, Math.max(...ends) - Math.min(...starts));
+  return records.reduce((total, record) => total + (record.durationMs ?? 0), 0);
+}
+
+function uniqueVerificationExecutions<T extends {
+  executionKind?: string;
+  candidateId: string;
+  candidateRevision: number;
+  headRevision?: string;
+  startedAt?: string | null;
+}>(items: T[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const key = [item.executionKind, item.candidateId, item.candidateRevision, item.headRevision, item.startedAt].join(":");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }

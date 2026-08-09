@@ -46,9 +46,10 @@ export function RuntimeWorkspaceFooter({
           <strong className="mono">{task.usage.credits == null ? "\u2014" : task.usage.credits.toFixed(3)}</strong>
         </span>
         <span>
-          <small>Approx. cost</small>
-          <strong className="mono" title="API-rate estimate; ChatGPT-plan charge is not provider-reported">{formatApproximateCost(task.usage.cost)}</strong>
+          <small>API-rate estimate</small>
+          <strong className="mono" title="Attributable ChatGPT-plan billing is unavailable">{formatApproximateCost(task.usage.cost)}</strong>
         </span>
+        <span><small>ChatGPT-plan billing</small><strong>Unavailable</strong></span>
       </footer>
   );
 }

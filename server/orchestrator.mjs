@@ -51,6 +51,7 @@ import {
 } from "./run-activity.mjs";
 import {
   isCandidateEvidenceError,
+  parseFastChangeContract,
   parseGateEvidence,
   parseGrillQuestions,
   parseWorkPackages,
@@ -64,6 +65,12 @@ import {
   VERIFICATION_MANIFEST_PATH,
 } from "./onboarding.mjs";
 import { gitHeadRevision, runRepositoryVerification } from "./verification.mjs";
+import {
+  canOverrideWorkflowProfile,
+  fastEscalation,
+  isArchitecturalRisk,
+  recordWorkflowProfile,
+} from "./workflow-profiles.mjs";
 
 const RUN_KINDS = new Set([
   "investigation",
@@ -78,6 +85,59 @@ const RUN_KINDS = new Set([
 
 function now() {
   return new Date().toISOString();
+}
+
+class FastProfileReplanError extends Error {
+  constructor(message, workPackageId = null) {
+    super(message);
+    this.name = "FastProfileReplanError";
+    this.code = "FAST_PROFILE_REPLAN_REQUIRED";
+    this.workPackageId = workPackageId;
+  }
+}
+
+function zeroUsage() {
+  return {
+    inputTokens: 0,
+    cachedInputTokens: 0,
+    cacheWriteTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+    cost: 0,
+    credits: 0,
+  };
+}
+
+function deterministicGateResult(stage, candidate, passed, blockingReasons) {
+  return {
+    verdict: passed ? "PASS" : "REPAIR",
+    candidateId: candidate.id,
+    candidateRevision: candidate.revisionNumber,
+    schemaVersion: 1,
+    stage,
+    reportedVerdict: passed ? "PASS" : "REPAIR",
+    evaluatedAt: now(),
+    findings: [],
+    blockingReasons,
+  };
+}
+
+function deterministicTestMarkdown(candidate, verification) {
+  const rows = verification.rows.map((row) =>
+    `- **${row.id}: ${String(row.status).toUpperCase()}** — \`${row.command}\` (${row.durationMs}ms, exit ${row.exitCode ?? "unavailable"})`,
+  ).join("\n");
+  return `# Focused Test\n\n- Candidate: ${candidate.id} revision ${candidate.revisionNumber}\n- Head: ${candidate.headRevision}\n- Full manifest result: ${String(verification.status).toUpperCase()}\n- Duration: ${verification.durationMs}ms\n\n${rows}\n\nThis artifact was generated from harness-observed command evidence; no model interpreted or reran the manifest.`;
+}
+
+function deterministicFinalReviewMarkdown(task, candidate, verification) {
+  const review = [...(task.runs ?? [])].reverse().find((run) =>
+    run.stage === "dev-review" &&
+    run.candidateId === candidate.id &&
+    run.candidateRevision === candidate.revisionNumber &&
+    run.gateResult?.verdict === "PASS",
+  );
+  const followUps = (review?.gateResult?.findings ?? []).filter((finding) => !finding.blocking);
+  return `# Deterministic Final Review\n\n## Verdict\n\nPASS for ${candidate.id} revision ${candidate.revisionNumber} at ${candidate.headRevision}.\n\n## Workflow summary\n\n- Profile: fast\n- Work packages: exactly one\n- Development Review: independent PASS${followUps.length ? ` with ${followUps.length} non-blocking follow-up item${followUps.length === 1 ? "" : "s"}` : " with no findings"}\n- Full repository manifest: ${String(verification.status).toUpperCase()} once for this revision in ${verification.durationMs}ms\n- Candidate repairs: ${(candidate.revisions ?? []).filter((revision) => revision.reason === "repair").length}\n\n## Acceptance criteria\n\nThe bounded fast change contract remains in the retained Triage artifact. No unresolved blocking risk is recorded.\n\n## Evidence\n\nThe exact candidate-bound Dev Review and Focused Test artifacts are the authoritative evidence. Skipped stages retain explicit not-required reasons; they are not represented as completed runs.\n\n## Residual risks\n\n${followUps.length ? followUps.map((finding) => `- ${finding.severity}: ${finding.title}`).join("\n") : "- None recorded."}\n\n## Human approval brief\n\nHuman Approval must still revalidate the exact candidate revision, target, clean worktrees, and all three fresh candidate-bound gates before fast-forward merge.`;
 }
 
 function workPackageVerificationMarkdown(verification) {
@@ -123,11 +183,12 @@ export class TaskOrchestrator {
     this.#runPackageVerification = options.runPackageVerification
       ?? (this.#runCodex
         ? null
-        : async ({ worktreePath, workPackageId, attempt, signal }) => {
-            const headRevision = await gitHeadRevision(worktreePath);
+        : async ({ worktreePath, workPackage, workPackageId, attempt, headRevision, signal }) => {
             return this.#runVerification({
               worktreePath,
               candidate: { id: workPackageId, revisionNumber: attempt, headRevision },
+              commandIds: workPackage.verificationCommandIds,
+              executionKind: "focused-package",
               signal,
             });
           });
@@ -413,6 +474,40 @@ export class TaskOrchestrator {
     });
   }
 
+  async overrideWorkflowProfile(id, profile, reason = "") {
+    const task = await this.#store.get(id);
+    if (!task) throw new Error("Task not found.");
+    if (!canOverrideWorkflowProfile(task)) {
+      throw new Error("Workflow profile can be changed only before implementation starts and while no agent is running.");
+    }
+    const prior = task.workflowProfile?.selected ?? "standard";
+    const note = reason.trim().slice(0, 2_000)
+      || `Operator changed the workflow profile from ${prior} to ${profile} before implementation.`;
+    return this.#store.transition(id, canOverrideWorkflowProfile, (draft) => {
+      const changed = recordWorkflowProfile(draft, profile, note, "operator");
+      if (!changed) return;
+      draft.models = [...new Set(Object.values(draft.agentConfig.stagePolicies ?? {}).map((policy) => policy.model))]
+        .map((model) => ({ provider: "openai", model }));
+      if (prior === "fast" && profile !== "fast" && draft.stageDispositions?.plan?.status === "not-required") {
+        draft.workPackages = [];
+        draft.scoutDispatch = null;
+        draft.grillSession = null;
+        draft.stageDispositions = {};
+        draft.status = "failed";
+        draft.currentStage = "scouts";
+        draft.error = "The operator selected the full workflow. Resume investigation to produce the required scout, decision, specification, and plan evidence.";
+      }
+      draft.events.push(activity(
+        draft.currentStage,
+        "Workflow profile overridden",
+        `${prior} → ${profile}. ${note}`,
+        "warning",
+        "decision",
+        { workflowProfile: profile, priorWorkflowProfile: prior },
+      ));
+    });
+  }
+
   async answerGrillQuestion(id, input) {
     const answer = String(input.answer ?? "").trim().slice(0, 5_000);
     if (!answer) throw new Error("An answer is required.");
@@ -535,6 +630,14 @@ export class TaskOrchestrator {
     const task = await this.#store.get(id);
     if (!task) throw new Error("Task not found.");
     if (task.status !== "awaiting-plan-approval") throw new Error("The task is not awaiting plan approval.");
+    if (task.workflowProfile?.selected === "fast") {
+      if (task.workPackages?.length !== 1 || task.workPackages[0].dependencies.length) {
+        throw new Error("Fast requires exactly one coherent work package with no package dependencies.");
+      }
+      if (!task.workPackages[0].verificationCommandIds?.length) {
+        throw new Error("Fast requires at least one validated focused repository manifest command ID.");
+      }
+    }
     return this.#store.transition(id, (draft) => draft.status === "awaiting-plan-approval", (draft) => {
       recordApproval(draft, "plan", note);
       draft.status = "ready-for-implementation";
@@ -694,15 +797,25 @@ export class TaskOrchestrator {
       if (kind === "planning") await this.#runPlanning(id, signal);
       if (kind === "implementation") await this.#runImplementation(id, signal);
       if (kind === "repair") await this.#runRepair(id, signal);
-      if (kind === "review") await this.#runEvaluation(id, "dev-review", signal);
+      if (kind === "review") await this.#runReviewWithFastRepair(id, signal);
       if (kind === "test") await this.#runEvaluation(id, "test", signal);
       if (kind === "final-review") await this.#runEvaluation(id, "final-review", signal);
     } catch (error) {
       await this.#store.update(id, (draft) => {
-        const stage = stageForRun(kind, draft.currentStage);
+        const failedKind = draft.activeRunKind ?? kind;
+        const stage = stageForRun(failedKind, draft.currentStage);
         const attempts = draft.attemptsByStage?.[stage] ?? 1;
-        draft.currentStage = stage;
+        const fastReplanRequired = error?.code === "FAST_PROFILE_REPLAN_REQUIRED";
+        draft.currentStage = fastReplanRequired ? "scouts" : stage;
         draft.status = signal.aborted ? "cancelled" : attempts >= stageRunLimitFor(draft, stage) ? "blocked" : "failed";
+        if (fastReplanRequired) {
+          draft.stageDispositions = {};
+          const affectedPackage = draft.workPackages?.find((workPackage) => workPackage.id === error.workPackageId);
+          if (affectedPackage) {
+            affectedPackage.status = "failed";
+            affectedPackage.error = error.message;
+          }
+        }
         draft.error = error.message;
         draft.activeRunKind = null;
         draft.activeRunReservationId = null;
@@ -714,18 +827,111 @@ export class TaskOrchestrator {
             review: "ready_for_review",
             test: "ready_for_test",
             "final-review": "ready_for_final_review",
-          }[kind];
+          }[failedKind];
           if (candidateStatus) candidate.status = candidateStatus;
         }
         refreshGateFreshness(draft);
-        draft.events.push(activity(stage, signal.aborted ? "Run cancelled" : "Stage failed", error.message, "danger"));
+        draft.events.push(activity(
+          fastReplanRequired ? "scouts" : stage,
+          signal.aborted ? "Run cancelled" : fastReplanRequired ? "Full workflow evidence required" : "Stage failed",
+          error.message,
+          "danger",
+        ));
       });
     }
   }
 
   async #runInvestigation(id, signal) {
     let task = await this.#store.get(id);
-    const stages = INVESTIGATION_PIPELINE.filter((stage) => !task.completedStages.includes(stage));
+    if (!task.completedStages.includes("triage")) {
+      if (signal.aborted) throw new Error("Codex run cancelled.");
+      await this.#reserveInvestigationStage(id, "triage");
+      task = await this.#store.get(id);
+      const result = await this.#executeAgent(task, "triage", signal, task.repositoryPath, "read-only");
+      throwIfAborted(signal);
+      await this.#retainAgentResult(id, "triage", result, { replace: true });
+    }
+
+    task = await this.#store.get(id);
+    if (task.workflowProfile?.selected === "fast") {
+      const triageArtifact = [...task.artifacts].reverse().find((artifact) => artifact.stage === "triage");
+      let contract = null;
+      try {
+        contract = parseFastChangeContract(triageArtifact?.content, task.repositoryPath);
+      } catch (error) {
+        await this.#escalateProfile(id, {
+          target: "standard",
+          reason: `Fast automatically escalated to standard because triage did not produce a valid bounded change contract: ${error.message}`,
+        }, "triage");
+      }
+      if (contract) {
+        const escalation = fastEscalation({
+          profile: "fast",
+          kind: "triage",
+          text: triageArtifact?.content,
+          riskSignals: contract.riskSignals,
+          unresolvedDecisions: contract.unresolvedDecisions,
+          ownedPaths: contract.ownedPaths,
+        });
+        if (escalation) await this.#escalateProfile(id, escalation, "triage");
+      }
+      task = await this.#store.get(id);
+      if (contract && task.workflowProfile?.selected === "fast") {
+        const dispatch = selectScoutDispatch(task, triageArtifact?.content ?? "").selected;
+        if (dispatch.length) {
+          await this.#reserveInvestigationStage(id, "scouts");
+          await this.#runScouts(id, await this.#store.get(id), signal);
+          const scoutArtifact = [...(await this.#store.get(id)).artifacts].reverse().find((artifact) => artifact.name === "repository-scout.md");
+          const scoutEscalation = fastEscalation({
+            profile: "fast",
+            kind: "triage",
+            text: scoutArtifact?.content,
+            ownedPaths: contract.ownedPaths,
+          });
+          if (scoutEscalation) await this.#escalateProfile(id, scoutEscalation, "scouts");
+        } else {
+          await this.#store.update(id, (draft) => {
+            draft.scoutDispatch = {
+              selected: [],
+              skipped: scoutCatalog().map((scout) => scout.id),
+              rationale: "Fast profile had no unresolved repository fact, so no scout model was invoked.",
+              createdAt: now(),
+              completedAt: now(),
+            };
+            draft.stageDispositions.scouts = {
+              status: "not-required",
+              reason: "No unresolved repository fact remained after bounded triage; zero scouts is the fast-path default.",
+              decidedAt: now(),
+            };
+            draft.events.push(activity("scouts", "Repository scouts not required", draft.stageDispositions.scouts.reason, "info", "decision"));
+          });
+        }
+        task = await this.#store.get(id);
+        if (task.workflowProfile?.selected === "fast") {
+          await this.#store.update(id, (draft) => {
+            draft.workPackages = [contract.workPackage];
+            for (const [stage, reason] of Object.entries({
+              grill: "Authoritative acceptance criteria contained no unresolved product decision, so Grill Me was not invoked.",
+              specification: "The bounded fast change contract carries the acceptance criteria; a separate Specification model call is not required.",
+              plan: "The bounded fast change contract defines exactly one package and its focused manifest command IDs; a separate Plan model call is not required.",
+            })) {
+              draft.stageDispositions[stage] = { status: "not-required", reason, decidedAt: now() };
+              draft.events.push(activity(stage, `${getStageMetadata(stage).label} not required`, reason, "info", "decision"));
+            }
+            draft.status = "awaiting-plan-approval";
+            draft.currentStage = "plan";
+            draft.activeRunKind = null;
+            draft.activeRunReservationId = null;
+            draft.error = null;
+            draft.events.push(activity("plan", "Bounded fast change ready", "Approve the one-package contract or change the workflow profile before implementation.", "success", "decision"));
+          });
+          return;
+        }
+      }
+    }
+
+    task = await this.#store.get(id);
+    const stages = ["scouts", "grill"].filter((stage) => !task.completedStages.includes(stage));
     for (const stageId of stages) {
       if (signal.aborted) throw new Error("Codex run cancelled.");
       await this.#reserveInvestigationStage(id, stageId);
@@ -736,22 +942,20 @@ export class TaskOrchestrator {
       }
       const result = await this.#executeAgent(task, stageId, signal, task.repositoryPath, "read-only");
       throwIfAborted(signal);
-      const grillQuestions = stageId === "grill" ? parseGrillQuestions(result.finalText) : null;
+      const grillQuestions = parseGrillQuestions(result.finalText);
       await this.#retainAgentResult(id, stageId, result, {
         replace: true,
-        complete: stageId !== "grill" || grillQuestions?.length === 0,
+        complete: grillQuestions.length === 0,
       });
-      if (grillQuestions) {
-        await this.#store.update(id, (draft) => {
-          draft.grillSession = {
-            status: grillQuestions.length ? "open" : "completed",
-            questions: grillQuestions,
-            createdAt: now(),
-            completedAt: grillQuestions.length ? null : now(),
-            completionReason: grillQuestions.length ? null : "No material product decisions remained after repository investigation.",
-          };
-        });
-      }
+      await this.#store.update(id, (draft) => {
+        draft.grillSession = {
+          status: grillQuestions.length ? "open" : "completed",
+          questions: grillQuestions,
+          createdAt: now(),
+          completedAt: grillQuestions.length ? null : now(),
+          completionReason: grillQuestions.length ? null : "No material product decisions remained after repository investigation.",
+        };
+      });
     }
     task = await this.#store.get(id);
     if (task.grillSession?.status === "completed" && task.grillSession.questions.length === 0) {
@@ -973,6 +1177,13 @@ export class TaskOrchestrator {
       });
       throw error;
     }
+    const profileEscalation = fastEscalation({
+      profile: task.workflowProfile?.selected,
+      kind: "plan",
+      packageCount: workPackages.length,
+      dependencyCount: workPackages.reduce((total, workPackage) => total + workPackage.dependencies.length, 0),
+    });
+    if (profileEscalation) await this.#escalateProfile(id, profileEscalation, "plan");
     await this.#retainAgentResult(id, "plan", result, artifactOptions);
     await this.#store.update(id, (draft) => {
       draft.workPackages = workPackages;
@@ -1016,6 +1227,8 @@ export class TaskOrchestrator {
         .map((outcome, index) => ({ outcome, workPackage: packages[index] }))
         .filter((entry) => entry.outcome.status === "rejected");
       if (failures.length) {
+        const fastReplan = failures.find((entry) => entry.outcome.reason?.code === "FAST_PROFILE_REPLAN_REQUIRED");
+        if (fastReplan) throw fastReplan.outcome.reason;
         throw new Error(
           failures
             .map((entry) => `${entry.workPackage.id}: ${entry.outcome.reason?.message ?? "implementation failed"}`)
@@ -1037,6 +1250,7 @@ export class TaskOrchestrator {
     const implementationReservation = requireActiveRunReservation(task, "implementation", "implement");
     const candidate = await this.#worktrees.prepare(task, candidateId, { baseRevision: base.baseRevision });
     candidate.status = "assembling";
+    candidate.verificationRuns = [];
     candidate.sourceWorkflowAttempt = implementationReservation.workflowAttempt;
     candidate.sourceWorkflowReservationId = implementationReservation.id;
     candidate.members = orderedPackages.map((item, index) => ({
@@ -1146,17 +1360,55 @@ export class TaskOrchestrator {
       // marker while having actually changed something still goes through the ordinary
       // commit path below.
       const noChangesNeeded = parseNoChangesNeeded(result.finalText);
+      const committed = await this.#worktrees.commit(
+        slice,
+        `agent-harness(${task.id}): ${workPackageId} ${currentPackage.title}`,
+        { ownedPaths: currentPackage.ownedPaths, allowNoChanges: Boolean(noChangesNeeded) },
+      );
+      const packageHeadRevision = committed.headRevision ?? slice.baseRevision;
+      await this.#store.update(id, (draft) => {
+        const target = draft.workPackages.find((item) => item.id === workPackageId);
+        target.headRevision = committed.headRevision;
+        target.files = committed.files;
+      });
+      const pathEscalation = fastEscalation({
+        profile: task.workflowProfile?.selected,
+        kind: "changed-paths",
+        files: committed.files,
+      });
+      if (pathEscalation) {
+        await this.#escalateProfile(id, pathEscalation, "implement");
+        throw new FastProfileReplanError(
+          `${pathEscalation.reason} Resume investigation so standard scout, decision, specification, and plan evidence replaces the abbreviated fast contract before more implementation.`,
+          workPackageId,
+        );
+      }
       let qualification = null;
       if (this.#runPackageVerification) {
         qualification = await this.#runPackageVerification({
           worktreePath: slice.worktreePath,
+          workPackage: currentPackage,
           workPackageId,
           attempt,
+          headRevision: packageHeadRevision,
           signal,
         });
         throwIfAborted(signal);
+        await this.#store.update(id, (draft) => {
+          const target = draft.workPackages.find((item) => item.id === workPackageId);
+          target.verificationRuns ??= [];
+          target.verificationRuns.push(qualification);
+          target.headRevision = committed.headRevision;
+          target.files = committed.files;
+        });
         if (qualification.status !== "passed") {
-          const content = `${result.finalText}\n\n${workPackageVerificationMarkdown(qualification)}`;
+          const verificationEscalation = fastEscalation({
+            profile: (await this.#store.get(id)).workflowProfile?.selected,
+            kind: "verification-failure",
+          });
+          if (verificationEscalation) await this.#escalateProfile(id, verificationEscalation, "implement");
+          const failedEvidence = `## Harness slice evidence\n\n- Work package: ${workPackageId}\n- Attempt: ${attempt}\n- Base: ${slice.baseRevision}\n- Package commit tested: ${packageHeadRevision}\n- Branch: ${slice.branch}\n- Changed files: ${committed.files.length}`;
+          const content = `${result.finalText}\n\n${workPackageVerificationMarkdown(qualification)}\n\n${failedEvidence}`;
           await this.#retainAgentResult(id, "implement", { ...result, finalText: content }, {
             complete: false,
             replace: false,
@@ -1166,17 +1418,18 @@ export class TaskOrchestrator {
             artifactTitle: `${workPackageId} qualification failed`,
             artifactTone: "danger",
           });
+          if (verificationEscalation) {
+            throw new FastProfileReplanError(
+              `${verificationEscalation.reason} Resume investigation so the standard workflow records fresh scout, decision, specification, and plan evidence before implementation retries.`,
+              workPackageId,
+            );
+          }
           const failed = qualification.rows?.find((row) => row.status !== "passed");
           throw new Error(
             `${workPackageId} did not qualify: ${failed?.id ?? "repository verification"} failed${failed?.failureDetails ? ` — ${failed.failureDetails}` : "."}`,
           );
         }
       }
-      const committed = await this.#worktrees.commit(
-        slice,
-        `agent-harness(${task.id}): ${workPackageId} ${currentPackage.title}`,
-        { ownedPaths: currentPackage.ownedPaths, allowNoChanges: Boolean(noChangesNeeded) },
-      );
       // The branch (or, for a no-op, the unchanged base) is all downstream assembly
       // needs; the worktree itself is done being useful the moment it lands.
       await this.#cleanupSliceWorktree(id, task, slice.worktreePath);
@@ -1196,6 +1449,7 @@ export class TaskOrchestrator {
         target.status = "ready_for_integration";
         target.headRevision = committed.headRevision;
         target.files = committed.files;
+        target.verificationRuns ??= qualification ? [qualification] : [];
         target.error = null;
         draft.events.push(activity(
           "implement",
@@ -1233,6 +1487,206 @@ export class TaskOrchestrator {
     }
   }
 
+  async #escalateProfile(id, escalation, stage) {
+    await this.#store.update(id, (draft) => {
+      const prior = draft.workflowProfile?.selected ?? "standard";
+      if (!recordWorkflowProfile(draft, escalation.target, escalation.reason, "automatic-escalation")) return;
+      draft.models = [...new Set(Object.values(draft.agentConfig.stagePolicies ?? {}).map((policy) => policy.model))]
+        .map((model) => ({ provider: "openai", model }));
+      draft.events.push(activity(
+        stage,
+        "Workflow profile escalated",
+        `${prior} → ${escalation.target}. ${escalation.reason}`,
+        "warning",
+        "decision",
+        { workflowProfile: escalation.target, priorWorkflowProfile: prior },
+      ));
+    });
+  }
+
+  async #completeDeterministicFastGates(id, candidate, verification) {
+    await this.#store.update(id, (draft) => {
+      const activeCandidate = currentCandidate(draft);
+      if (
+        activeCandidate.id !== candidate.id ||
+        activeCandidate.revisionNumber !== candidate.revisionNumber ||
+        activeCandidate.headRevision !== candidate.headRevision
+      ) {
+        throw new Error("The candidate changed before deterministic fast-path gates could be persisted.");
+      }
+      const testReservation = requireActiveRunReservation(draft, "test", "test");
+      const testStartedAt = now();
+      const testRun = beginAgentRun(draft, {
+        id: crypto.randomUUID(),
+        kind: "test",
+        provider: readExecutionProvider(testReservation),
+        stage: "test",
+        role: "test",
+        model: null,
+        reasoning: null,
+        startedAt: testStartedAt,
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        candidateHeadRevision: candidate.headRevision,
+        workflowAttempt: testReservation.workflowAttempt,
+        workflowReservationId: testReservation.id,
+      });
+      const testCompletedAt = now();
+      completeAgentRun(draft, testRun.id, {
+        status: "completed",
+        completedAt: testCompletedAt,
+        durationMs: 0,
+        usage: zeroUsage(),
+        runtimeEvents: [],
+      });
+      const testPassed = verification.status === "passed";
+      const testGateResult = deterministicGateResult("test", candidate, testPassed, testPassed
+        ? []
+        : ["The full repository verification manifest contains a failed command."]);
+      const testArtifact = {
+        id: crypto.randomUUID(),
+        runId: testRun.id,
+        stage: "test",
+        name: `test-${candidate.id.toLowerCase()}-r${candidate.revisionNumber}.md`,
+        kind: "markdown",
+        content: deterministicTestMarkdown(candidate, verification),
+        createdAt: testCompletedAt,
+        startedAt: testStartedAt,
+        completedAt: testCompletedAt,
+        durationMs: verification.durationMs,
+        model: null,
+        reasoning: null,
+        agentRole: "harness-verification",
+        usage: zeroUsage(),
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        workPackageId: null,
+        focusedTest: structuredClone(verification),
+        evidenceError: null,
+        gateResult: testGateResult,
+        contextManifest: null,
+      };
+      draft.artifacts.push(testArtifact);
+      const attachedTestRun = attachRunArtifact(draft, testRun.id, testArtifact);
+      draft.activeRunKind = null;
+      draft.activeRunReservationId = null;
+      if (!testPassed) {
+        const escalation = fastEscalation({ profile: "fast", kind: "verification-failure" });
+        if (escalation && recordWorkflowProfile(draft, escalation.target, escalation.reason, "automatic-escalation")) {
+          draft.models = [...new Set(Object.values(draft.agentConfig.stagePolicies ?? {}).map((policy) => policy.model))]
+            .map((model) => ({ provider: "openai", model }));
+        }
+        activeCandidate.status = "repair_required";
+        draft.status = "repair-required";
+        draft.currentStage = "test";
+        draft.events.push(activity("test", "Candidate requires repair", "The exact candidate failed the recorded full repository manifest.", "danger", "decision", runEventMetadata(attachedTestRun, { artifactId: testArtifact.id })));
+        return;
+      }
+      if (!draft.completedStages.includes("test")) draft.completedStages.push("test");
+      draft.events.push(activity("test", "Focused Test passed", "The harness accepted the recorded full-manifest result without a model interpretation call.", "success", "decision", runEventMetadata(attachedTestRun, { artifactId: testArtifact.id })));
+
+      const finalReservation = createStageRunReservation(draft, "final-review", "final-review");
+      applyStageRunReservation(draft, finalReservation);
+      draft.activeRunKind = "final-review";
+      const finalStartedAt = now();
+      const finalRun = beginAgentRun(draft, {
+        id: crypto.randomUUID(),
+        kind: "final-review",
+        provider: readExecutionProvider(finalReservation),
+        stage: "final-review",
+        role: "final-review",
+        model: null,
+        reasoning: null,
+        startedAt: finalStartedAt,
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        candidateHeadRevision: candidate.headRevision,
+        workflowAttempt: finalReservation.workflowAttempt,
+        workflowReservationId: finalReservation.id,
+      });
+      const finalCompletedAt = now();
+      completeAgentRun(draft, finalRun.id, {
+        status: "completed",
+        completedAt: finalCompletedAt,
+        durationMs: 0,
+        usage: zeroUsage(),
+        runtimeEvents: [],
+      });
+      const finalGateResult = deterministicGateResult("final-review", candidate, true, []);
+      const finalArtifact = {
+        id: crypto.randomUUID(),
+        runId: finalRun.id,
+        stage: "final-review",
+        name: `final-review-${candidate.id.toLowerCase()}-r${candidate.revisionNumber}.md`,
+        kind: "markdown",
+        content: deterministicFinalReviewMarkdown(draft, candidate, verification),
+        createdAt: finalCompletedAt,
+        startedAt: finalStartedAt,
+        completedAt: finalCompletedAt,
+        durationMs: 0,
+        model: null,
+        reasoning: null,
+        agentRole: "deterministic-final-review",
+        usage: zeroUsage(),
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        workPackageId: null,
+        focusedTest: null,
+        evidenceError: null,
+        gateResult: finalGateResult,
+        contextManifest: null,
+      };
+      draft.artifacts.push(finalArtifact);
+      const attachedFinalRun = attachRunArtifact(draft, finalRun.id, finalArtifact);
+      if (!draft.completedStages.includes("final-review")) draft.completedStages.push("final-review");
+      draft.stageDispositions["final-review"] = {
+        status: "deterministic",
+        reason: "Generated mechanically from the exact candidate, independent Dev Review, and recorded full-manifest result because no unresolved blocking risk remained.",
+        decidedAt: finalCompletedAt,
+      };
+      activeCandidate.status = "awaiting_human_approval";
+      activeCandidate.updatedAt = finalCompletedAt;
+      draft.status = "awaiting-human-approval";
+      draft.currentStage = "approval";
+      draft.activeRunKind = null;
+      draft.activeRunReservationId = null;
+      draft.events.push(activity("final-review", "Deterministic Final Review passed", `${candidate.id} revision ${candidate.revisionNumber} advanced without another model call.`, "success", "decision", runEventMetadata(attachedFinalRun, { artifactId: finalArtifact.id })));
+    });
+  }
+
+  async #runReviewWithFastRepair(id, signal) {
+    await this.#runEvaluation(id, "dev-review", signal);
+    let task = await this.#store.get(id);
+    const candidate = task.candidates?.at(-1);
+    const repairCount = candidate?.revisions?.filter((revision) => revision.reason === "repair").length ?? 0;
+    if (
+      task.workflowProfile?.selected !== "fast" ||
+      task.status !== "repair-required" ||
+      task.currentStage !== "dev-review" ||
+      candidate?.status !== "repair_required" ||
+      repairCount !== 0
+    ) return;
+
+    await this.#store.transition(id, (draft) => (
+      draft.workflowProfile?.selected === "fast" &&
+      draft.status === "repair-required" &&
+      currentCandidate(draft).status === "repair_required" &&
+      (currentCandidate(draft).revisions ?? []).every((revision) => revision.reason !== "repair")
+    ), (draft) => {
+      draft.automaticRepairCycles = (draft.automaticRepairCycles ?? 0) + 1;
+      reserveRun(draft, "repair");
+      draft.events.push(activity("implement", "Automatic fast repair started", "The first consolidated Development Review defect is receiving the one allowed automatic repair cycle.", "warning", "decision"));
+    });
+    await this.#runRepair(id, signal);
+    task = await this.#store.get(id);
+    if (task.status !== "ready-for-review") return;
+    await this.#store.transition(id, (draft) => draft.status === "ready-for-review", (draft) => {
+      reserveRun(draft, "review");
+      draft.events.push(activity("dev-review", "Automatic fresh review started", "The repaired candidate revision must earn a new independent Development Review verdict.", "info", "decision"));
+    });
+    await this.#runEvaluation(id, "dev-review", signal);
+  }
+
   async #runEvaluation(id, stageId, signal) {
     const task = await this.#store.get(id);
     const candidate = currentCandidate(task);
@@ -1247,12 +1701,47 @@ export class TaskOrchestrator {
     // having a model invent the commands — the exact thing this change exists to prevent.
     let harnessVerification = null;
     if (stageId === "test") {
-      harnessVerification = await this.#runVerification({
-        worktreePath: candidate.worktreePath,
-        candidate,
-        signal,
-      });
+      harnessVerification = (candidate.verificationRuns ?? []).find((verification) =>
+        verification.executionKind === "full-manifest" &&
+        verification.candidateId === candidate.id &&
+        verification.candidateRevision === candidate.revisionNumber &&
+        verification.headRevision === candidate.headRevision
+      ) ?? null;
+      if (harnessVerification) {
+        await this.#store.update(id, (draft) => {
+          draft.events.push(activity(
+            "test",
+            "Full verification manifest reused",
+            `${candidate.id} revision ${candidate.revisionNumber} already has one exact-revision manifest execution; the recorded result is reused without rerunning commands.`,
+            "info",
+            "test",
+          ));
+        });
+      } else {
+        harnessVerification = await this.#runVerification({
+          worktreePath: candidate.worktreePath,
+          candidate,
+          executionKind: "full-manifest",
+          signal,
+        });
+        await this.#store.update(id, (draft) => {
+          const activeCandidate = currentCandidate(draft);
+          activeCandidate.verificationRuns ??= [];
+          activeCandidate.verificationRuns.push(harnessVerification);
+          draft.events.push(activity(
+            "test",
+            "Full verification manifest executed",
+            `${activeCandidate.id} revision ${activeCandidate.revisionNumber} ran ${harnessVerification.rows.length} command${harnessVerification.rows.length === 1 ? "" : "s"} in ${harnessVerification.durationMs}ms.`,
+            harnessVerification.status === "passed" ? "success" : "danger",
+            "test",
+          ));
+        });
+      }
       throwIfAborted(signal);
+      if (task.workflowProfile?.selected === "fast") {
+        await this.#completeDeterministicFastGates(id, candidate, validateFocusedTestEvidence(harnessVerification, candidate));
+        return;
+      }
     }
     let result;
     // A reviewer that dirties its worktree without committing leaves every exact-SHA
@@ -1371,16 +1860,52 @@ export class TaskOrchestrator {
         const authoritativeFailedTest = stageId === "test" &&
           focusedTestEvidence?.status === "failed" &&
           gateFailure.freshness.reasonCode === "repair_required";
-        if (evidenceError && !authoritativeFailedTest) {
+        const blockingFindings = authoritativeRun?.gateResult?.findings?.filter((finding) => finding.blocking === true || ["P0", "P1"].includes(finding.severity)) ?? [];
+        const reviewRetryRequired = ["dev-review", "final-review"].includes(stageId) &&
+          gateFailure.freshness.reasonCode !== "repair_required" &&
+          blockingFindings.length === 0;
+        if ((evidenceError || reviewRetryRequired) && !authoritativeFailedTest) {
           const rerunState = evaluationRerunState(stageId);
           activeCandidate.status = rerunState.candidateStatus;
           draft.status = rerunState.taskStatus;
           draft.currentStage = stageId;
+          if (["dev-review", "final-review"].includes(stageId)) {
+            draft.reviewRetries ??= [];
+            draft.reviewRetries.push({
+              stage: stageId,
+              candidateId: activeCandidate.id,
+              candidateRevision: activeCandidate.revisionNumber,
+              runId: authoritativeRun?.id ?? null,
+              reasonCode: gateFailure.freshness.reasonCode,
+              reason: gateFailure.freshness.reasonCopy,
+              createdAt: now(),
+            });
+          }
           draft.events.push(activity(
             stageId,
             `${getStageMetadata(stageId).label} rerun required`,
             `${activeCandidate.id} revision ${activeCandidate.revisionNumber} could not accept the persisted gate evidence. ${gateFailure.freshness.reasonCopy}`,
             "warning",
+            "decision",
+            runEventMetadata(authoritativeRun),
+          ));
+          return;
+        }
+        if (stageId === "dev-review" && draft.workflowProfile?.selected === "fast" && isArchitecturalRisk(blockingFindings)) {
+          const escalation = fastEscalation({ profile: "fast", kind: "review-risk", architectural: true });
+          if (escalation) recordWorkflowProfile(draft, escalation.target, escalation.reason, "automatic-escalation");
+        }
+        const repairCount = activeCandidate.revisions.filter((revision) => revision.reason === "repair").length;
+        if (stageId === "dev-review" && draft.workflowProfile?.selected === "fast" && repairCount >= 1) {
+          activeCandidate.status = "repair_required";
+          draft.status = "blocked";
+          draft.currentStage = stageId;
+          draft.error = "Fast profile exhausted its one automatic candidate-repair cycle. Human direction or a profile override is required before more code changes.";
+          draft.events.push(activity(
+            stageId,
+            "Fast repair limit reached",
+            draft.error,
+            "danger",
             "decision",
             runEventMetadata(authoritativeRun),
           ));
@@ -1445,7 +1970,7 @@ export class TaskOrchestrator {
     if (repairRequest.repairEvidence.newestFailingGate.runId !== initialRepairReservation.authorizingGateRunId) {
       throw new Error("The repair request drifted from its reserved authorizing gate.");
     }
-    const requestedFindings = projectRepairFindings(repairRequest.repairEvidence.newestFailingGate.gateResult.findings);
+    const requestedFindings = projectRepairFindings(repairRequest.repairEvidence.newestFailingGate.blockingFindings);
     let result;
     let committed;
     let noChangesNeeded;
@@ -1583,7 +2108,7 @@ export class TaskOrchestrator {
     const agentRequest =
       promptOverride ?? (candidate ? buildExecutionRequest(task, stageId, candidate) : buildStageRequest(task, stageId));
     const settings = await this.#store.settings();
-    const policy = resolveAgentPolicy(task, policyId, settings);
+    const policy = resolveRunAgentPolicy(task, policyId, settings);
     const runId = crypto.randomUUID();
     const startedAt = now();
     const runRole = runScopeId ?? policyId;
@@ -1868,6 +2393,22 @@ function currentCandidate(task) {
   return candidate;
 }
 
+function resolveRunAgentPolicy(task, policyId, settings) {
+  if (policyId !== "repair") return resolveAgentPolicy(task, policyId, settings);
+  const candidate = task.candidates?.at(-1);
+  const failingGate = [...(task.runs ?? [])].reverse().find((run) =>
+    CANDIDATE_GATE_STAGES.includes(run.stage) &&
+    run.candidateId === candidate?.id &&
+    run.candidateRevision === candidate?.revisionNumber &&
+    run.gateResult?.verdict === "REPAIR",
+  );
+  const priorRepairFailed = (task.runs ?? []).some((run) => run.kind === "repair" && run.status !== "completed");
+  if (priorRepairFailed || isArchitecturalRisk(failingGate?.gateResult?.findings ?? [])) {
+    return { provider: "codex", model: "gpt-5.6-sol", reasoning: "high" };
+  }
+  return resolveAgentPolicy(task, "implement", settings);
+}
+
 function stageTimeoutMs(stageId, sandbox) {
   if (["implement", "repair"].includes(stageId)) return 900_000;
   if (sandbox === "workspace-write" || ["plan", "dev-review", "final-review"].includes(stageId)) return 600_000;
@@ -1897,7 +2438,7 @@ export function structuredEvidenceError(error) {
 
 function evaluationRerunState(stageId) {
   return {
-    "dev-review": { taskStatus: "ready-for-review", candidateStatus: "ready_for_review" },
+    "dev-review": { taskStatus: "review-retry-required", candidateStatus: "review_retry_required" },
     test: { taskStatus: "ready-for-test", candidateStatus: "ready_for_test" },
     "final-review": { taskStatus: "ready-for-final-review", candidateStatus: "ready_for_final_review" },
   }[stageId];
@@ -1916,7 +2457,7 @@ function canStartRun(task, kind) {
     planning: ["awaiting-plan-approval", "failed", "cancelled"],
     implementation: ["ready-for-implementation", "failed", "cancelled"],
     repair: ["repair-required", "failed", "cancelled"],
-    review: ["ready-for-review", "failed", "cancelled"],
+    review: ["ready-for-review", "review-retry-required", "failed", "cancelled"],
     test: ["ready-for-test", "failed", "cancelled"],
     "final-review": ["ready-for-final-review", "failed", "cancelled"],
   }[kind];
@@ -1981,7 +2522,7 @@ function createStageRunReservation(task, kind, stage, provider = reservationProv
  * reservation did not reserve.
  */
 function reservationProviderFor(task, kind, stage) {
-  return resolveAgentPolicy(task, policyIdForRun(kind, stage)).provider;
+  return resolveRunAgentPolicy(task, policyIdForRun(kind, stage)).provider;
 }
 
 function repairAuthorizerSnapshot(task, candidate, requestedStage = null) {

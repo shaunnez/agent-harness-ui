@@ -42,7 +42,8 @@ export function scoutCatalog() {
 export function selectScoutDispatch(task, triageText = "") {
   const selection = parseTaggedJson(triageText, "scout-dispatch");
   const requested = selection?.scouts;
-  const cap = task.priority === "high" ? 3 : task.priority === "low" ? 1 : 2;
+  const fastProfile = task.workflowProfile?.selected === "fast";
+  const cap = fastProfile ? 1 : task.priority === "high" ? 3 : task.priority === "low" ? 1 : 2;
   const valid = Array.isArray(requested)
     ? requested
         .map((entry) => ({
@@ -63,6 +64,12 @@ export function selectScoutDispatch(task, triageText = "") {
     return {
       selected: unique,
       rationale: String(selection?.rationale ?? "Triage selected the smallest evidence set needed for this task.").trim().slice(0, 1_000),
+    };
+  }
+  if (fastProfile) {
+    return {
+      selected: [],
+      rationale: "Fast profile defaults to zero scouts because triage did not identify one unresolved repository fact.",
     };
   }
   return {

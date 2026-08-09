@@ -5,6 +5,7 @@ import type {
   RuntimeEvaluationSummary,
   RuntimeSettings,
   RuntimeStatus,
+  WorkflowProfileId,
 } from "../domain";
 import { AgentPolicyEditor } from "./AgentPolicyEditor";
 import { agentRoles } from "./AgentRoles";
@@ -13,7 +14,7 @@ import { SettingRow } from "./LibraryShared";
 import { Button, SectionHeader } from "./Primitives";
 import { connectionStateLabel, providerConnectionState } from "./Shell";
 
-type RuntimePolicyInput = Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies">;
+type RuntimePolicyInput = Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies">;
 
 export function SettingsScreen({
   runtimeStatus,
@@ -47,6 +48,8 @@ export function SettingsScreen({
   const [defaultModel, setDefaultModel] = useState("");
   const [defaultReasoning, setDefaultReasoning] = useState("");
   const [stagePolicies, setStagePolicies] = useState<Record<string, RuntimeAgentPolicy>>({});
+  const [profileStagePolicies, setProfileStagePolicies] = useState<NonNullable<RuntimeSettings["profileStagePolicies"]>>({ fast: {}, standard: {}, "high-risk": {} });
+  const [editingProfile, setEditingProfile] = useState<WorkflowProfileId>("standard");
   const [saving, setSaving] = useState(false);
   const [verifyingPricing, setVerifyingPricing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +60,14 @@ export function SettingsScreen({
     setAllowedModels(settings.allowedModels);
     setDefaultModel(settings.defaultModel);
     setDefaultReasoning(settings.defaultReasoning);
-    setStagePolicies(settings.stagePolicies ?? {});
+    const matrices = settings.profileStagePolicies ?? {
+      fast: settings.stagePolicies ?? {},
+      standard: settings.stagePolicies ?? {},
+      "high-risk": settings.stagePolicies ?? {},
+    };
+    setProfileStagePolicies(matrices);
+    setStagePolicies(matrices.standard ?? settings.stagePolicies ?? {});
+    setEditingProfile("standard");
   }, [runtimeStatus?.settings]);
   const catalog = runtimeStatus?.catalog?.models ?? [];
   const globalDefault = { model: defaultModel, reasoning: defaultReasoning };
@@ -66,7 +76,14 @@ export function SettingsScreen({
     setSaveMessage(null);
     setSaving(true);
     try {
-      await onSave({ allowedModels, defaultModel, defaultReasoning, stagePolicies });
+      const matrices = { ...profileStagePolicies, [editingProfile]: stagePolicies };
+      await onSave({
+        allowedModels,
+        defaultModel,
+        defaultReasoning,
+        stagePolicies: matrices.standard,
+        profileStagePolicies: matrices,
+      });
       setSaveMessage("Model policy saved. New tasks will use these defaults; existing task snapshots are unchanged.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Settings could not be saved.");
@@ -88,7 +105,10 @@ export function SettingsScreen({
         <div className="model-allowlist">
           {catalog.map((model) => {
             const allowed = allowedModels.includes(model.id);
-            const inUse = Object.values(stagePolicies).some((policy) => policy.model === model.id);
+            const inUse = [
+              ...Object.values(stagePolicies),
+              ...Object.values(profileStagePolicies).flatMap((matrix) => Object.values(matrix)),
+            ].some((policy) => policy.model === model.id);
             return (
               <label className={allowed ? "model-option model-option--allowed" : "model-option"} key={model.id}>
                 <input
@@ -128,8 +148,25 @@ export function SettingsScreen({
         </div>
 
         <fieldset className="role-policy-header">
-          <legend>Role policy overrides</legend>
-          <p>All role editors share the same controls as each Agent detail. Scout detail pages intentionally edit this single Repository scouts policy.</p>
+          <legend>Profile and role policy overrides</legend>
+          <p>Each workflow profile owns an explicit stage matrix. Existing tasks retain their snapshot.</p>
+          <label className="field">
+            <span>Editing profile</span>
+            <select
+              value={editingProfile}
+              onChange={(event) => {
+                const next = event.target.value as WorkflowProfileId;
+                const matrices = { ...profileStagePolicies, [editingProfile]: stagePolicies };
+                setProfileStagePolicies(matrices);
+                setEditingProfile(next);
+                setStagePolicies(matrices[next] ?? {});
+              }}
+            >
+              <option value="fast">Fast</option>
+              <option value="standard">Standard</option>
+              <option value="high-risk">High-risk</option>
+            </select>
+          </label>
         </fieldset>
         <fieldset className="role-policy-grid">
      

@@ -68,6 +68,7 @@ export function RuntimeStagePresentation({
   onSelectTestResult: (resultId: string | null) => void;
 }) {
   const focusedTest = getRuntimeFocusedTest(task);
+  const disposition = task.stageDispositions?.[viewedStageId];
   const artifactFreshness = artifact ? getRuntimeArtifactFreshness(task, artifact) : null;
   const artifactCard = artifact ? (
     <RuntimeArtifactCard
@@ -81,6 +82,21 @@ export function RuntimeStagePresentation({
   const empty = !artifact && !completedApprovalWithoutArtifact ? (
     <RuntimeStageEmpty task={task} viewedStageStopped={viewedStageStopped} />
   ) : null;
+
+  if (disposition?.status === "not-required") {
+    return (
+      <div className="runtime-stage-stack">
+        {viewedStageId === "plan" && task.workPackages.length ? <RuntimeWorkPackages task={task} /> : null}
+        <section className="runtime-contract-note">
+          <CheckCircle size={18} weight="fill" />
+          <span>
+            <strong>Stage not required for this candidate path</strong>
+            <p>{disposition.reason}</p>
+          </span>
+        </section>
+      </div>
+    );
+  }
 
   switch (viewedStageId) {
     case "triage":

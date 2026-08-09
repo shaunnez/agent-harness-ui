@@ -125,3 +125,40 @@ test("does not relabel a completed investigate-only task without a candidate", a
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("migrates existing task state to the compatibility-safe standard workflow profile", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-store-profile-migration-"));
+  try {
+    const filePath = path.join(directory, "tasks.json");
+    const store = new JsonTaskStore(filePath);
+    await store.init();
+    const task = await store.create({
+      title: "Legacy profile",
+      description: "Created before workflow profiles existed.",
+      repositoryPath: "/repo",
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      delete draft.workflowProfile;
+      delete draft.stageDispositions;
+      delete draft.reviewRetries;
+      delete draft.automaticRepairCycles;
+      delete draft.agentConfig.profileStagePolicies;
+      draft.agentConfig.policySnapshotVersion = 1;
+    });
+
+    const rebooted = new JsonTaskStore(filePath);
+    await rebooted.init();
+    const migrated = await rebooted.get(task.id);
+    assert.equal(migrated.workflowProfile.selected, "standard");
+    assert.equal(migrated.workflowProfile.source, "migration");
+    assert.deepEqual(migrated.stageDispositions, {});
+    assert.deepEqual(migrated.reviewRetries, []);
+    assert.equal(migrated.automaticRepairCycles, 0);
+    assert.deepEqual(migrated.agentConfig.stagePolicies, migrated.agentConfig.profileStagePolicies.standard);
+    assert.equal(migrated.agentConfig.policySnapshotVersion, 2);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

@@ -10,6 +10,7 @@ import {
   retainRunActivityEvents,
   TASK_STORE_SCHEMA_VERSION,
 } from "./run-activity.mjs";
+import { migratedStandardProfile } from "./workflow-profiles.mjs";
 
 const EMPTY_STATE = {
   schemaVersion: TASK_STORE_SCHEMA_VERSION,
@@ -97,7 +98,13 @@ export class JsonTaskStore {
   async create(input) {
     return this.#mutate((state) => {
       const now = new Date().toISOString();
-      const stagePolicies = clone(input.stagePolicies ?? this.#state.settings.stagePolicies);
+      const profileStagePolicies = clone(input.profileStagePolicies ?? this.#state.settings.profileStagePolicies);
+      const workflowProfile = clone(input.workflowProfile ?? migratedStandardProfile());
+      const stagePolicies = clone(
+        input.stagePolicies
+          ?? profileStagePolicies?.[workflowProfile.selected]
+          ?? this.#state.settings.stagePolicies,
+      );
       const model = normalizeModelId(input.model ?? this.#state.settings.defaultModel);
       const provider = resolveTaskProvider(stagePolicies, model, input.provider ?? null);
       const task = {
@@ -112,7 +119,8 @@ export class JsonTaskStore {
           model,
           reasoning: input.reasoning ?? this.#state.settings.defaultReasoning,
           stagePolicies,
-          policySnapshotVersion: 1,
+          profileStagePolicies,
+          policySnapshotVersion: 2,
         },
         attachments: [],
         closure: null,
@@ -121,6 +129,10 @@ export class JsonTaskStore {
         experiment: clone(input.experiment ?? null),
         mergeIntent: null,
         scoutDispatch: null,
+        workflowProfile,
+        stageDispositions: {},
+        reviewRetries: [],
+        automaticRepairCycles: 0,
         status: "queued",
         currentStage: "triage",
         completedStages: [],
@@ -139,7 +151,7 @@ export class JsonTaskStore {
         activeRunIds: [],
         attemptsByStage: {},
         stageRunReservations: {},
-        models: configuredModels(input.stagePolicies ?? this.#state.settings.stagePolicies),
+        models: configuredModels(stagePolicies),
         usage: enrichUsage(normalizeModelId(input.model ?? this.#state.settings.defaultModel), {}),
         artifacts: [],
         decisions: [],
@@ -230,6 +242,9 @@ export class JsonTaskStore {
           ["experiment", null],
           ["mergeIntent", null],
           ["scoutDispatch", null],
+          ["stageDispositions", {}],
+          ["reviewRetries", []],
+          ["automaticRepairCycles", 0],
           ["attemptsByStage", {}],
           ["stageRunReservations", {}],
           ["decisions", []],
@@ -244,6 +259,10 @@ export class JsonTaskStore {
             changed = true;
           }
         }
+        if (!task.workflowProfile) {
+          task.workflowProfile = migratedStandardProfile();
+          changed = true;
+        }
         const taskModel = normalizeModelId(task.agentConfig?.model ?? task.models?.[0]?.model ?? state.settings.defaultModel);
         if (!task.agentConfig) {
           task.agentConfig = {
@@ -253,7 +272,7 @@ export class JsonTaskStore {
           };
           changed = true;
         }
-        if (task.agentConfig.policySnapshotVersion !== 1) {
+        if (![1, 2].includes(task.agentConfig.policySnapshotVersion)) {
           task.agentConfig.stagePolicies = Object.fromEntries(
             Object.keys(state.settings.stagePolicies).map((policyId) => [
               policyId,
@@ -261,6 +280,12 @@ export class JsonTaskStore {
             ]),
           );
           task.agentConfig.policySnapshotVersion = 1;
+          changed = true;
+        }
+        if (!task.agentConfig.profileStagePolicies) {
+          task.agentConfig.profileStagePolicies = clone(state.settings.profileStagePolicies);
+          task.agentConfig.profileStagePolicies.standard = clone(task.agentConfig.stagePolicies);
+          task.agentConfig.policySnapshotVersion = 2;
           changed = true;
         }
         const configured = configuredModels(task.agentConfig.stagePolicies);

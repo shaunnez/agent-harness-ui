@@ -1,9 +1,10 @@
-export const TASK_STORE_SCHEMA_VERSION = 6;
+export const TASK_STORE_SCHEMA_VERSION = 7;
 
 /**
  * Execution provider identity for persisted runs and stage-run reservations.
  *
- * `provider` was introduced in schema 6. Absent means the default provider, and
+ * `provider` was introduced in schema 6. Workflow profiles were added in schema 7.
+ * An absent provider means the default provider, and
  * that is enforced twice on purpose: the schema-6 migration backfills it onto
  * every persisted run and reservation, and every read goes through
  * {@link readExecutionProvider}. Without the read-time coalesce a record the

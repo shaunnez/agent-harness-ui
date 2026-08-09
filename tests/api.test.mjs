@@ -18,6 +18,7 @@ import {
 } from "../server/run-activity.mjs";
 import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
 import { promisify } from "node:util";
+import { recordWorkflowProfile } from "../server/workflow-profiles.mjs";
 
 const exec = promisify(execFile);
 const TEST_CSRF_TOKEN = "test-csrf-token";
@@ -66,6 +67,11 @@ async function createServer(options = {}) {
       return { started: false, completed: true };
     },
     async approvePlan() {},
+    async overrideWorkflowProfile(id, profile, reason) {
+      return store.update(id, (draft) => {
+        recordWorkflowProfile(draft, profile, reason, "operator");
+      });
+    },
     async approveMerge() {},
     async completeMergedTask(id, note) {
       completedMergedTask = { id, note };
@@ -584,6 +590,37 @@ test("creates, lists, and starts a local task", async () => {
   }
 });
 
+test("persists deterministic workflow-profile selection and permits an operator override before implementation", async () => {
+  const { directory, origin, server } = await createServer();
+  try {
+    const createResponse = await createTask(origin, {
+      title: "Fix one copy label",
+      description: "A tiny isolated wording change.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "low",
+      workflowProfile: "auto",
+    });
+    assert.equal(createResponse.status, 201);
+    const created = (await createResponse.json()).task;
+    assert.equal(created.workflowProfile.selected, "fast");
+    assert.equal(created.workflowProfile.source, "automatic");
+
+    const response = await fetch(`${origin}/api/tasks/${created.id}/workflow-profile`, {
+      method: "PUT",
+      body: JSON.stringify({ profile: "standard", reason: "Repository ownership is broader than the initial brief." }),
+    });
+    assert.equal(response.status, 200);
+    const updated = (await response.json()).task;
+    assert.equal(updated.workflowProfile.selected, "standard");
+    assert.equal(updated.workflowProfile.source, "operator");
+    assert.match(updated.workflowProfile.reason, /ownership is broader/);
+    assert.equal(updated.workflowProfile.history.length, 2);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("dispatches the complete-merged action to the orchestrator and reports 404 for an unknown task", async () => {
   const { directory, origin, server, completedMergedTaskRef } = await createServer();
   try {
@@ -883,7 +920,7 @@ test("returns backward-compatible structured run activity through task APIs", as
     const detail = await (await fetch(`${origin}/api/tasks/${task.id}`)).json();
     const list = await (await fetch(`${origin}/api/tasks`)).json();
     const health = await (await fetch(`${origin}/api/health`)).json();
-    assert.equal(health.runtimeSchemaVersion, 5);
+    assert.equal(health.runtimeSchemaVersion, 6);
     assert.equal(detail.task.runs[0].id, "RUN-API");
     assert.equal(detail.task.runs[0].toolCalls[0].result, "Exit code 0");
     assert.equal(detail.task.events.at(-1).runId, "RUN-API");

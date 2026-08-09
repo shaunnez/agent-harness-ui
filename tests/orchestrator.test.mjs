@@ -84,7 +84,12 @@ const passingVerification = async ({ candidate }) => harnessEvidence(candidate);
 const TEST_OUTPUT = `PASS\n\n## Verdict\n\nPASS\n\n<focused-test-evidence>\n{"candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","startedAt":"2026-08-01T12:00:00.000Z","completedAt":"2026-08-01T12:00:01.240Z","durationMs":1240,"rows":[{"id":"row-1","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":1240,"title":"orchestrator.test.mjs","artifactReferences":[{"name":"Markdown test artifact","kind":"markdown","path":"artifacts/test.md"}],"assertions":[{"label":"all packages qualified","actual":"pass","expected":"pass"}],"failureDetails":null},{"id":"row-2","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":350,"title":"api.test.mjs","artifactReferences":[{"name":"JUnit report","kind":"junit","path":"artifacts/junit.xml"}],"assertions":[{"label":"API contract","actual":"pass","expected":"pass"}],"failureDetails":null}]}\n</focused-test-evidence>`;
 
 function gateOutput(revision, verdict = "PASS", findings = []) {
-  return `${verdict}\n\n## Verdict\n\n${verdict}\n\n<gate-evidence>\n${JSON.stringify({ candidateId: "C1", candidateRevision: revision, verdict, summary: "Candidate-bound result", findings })}\n</gate-evidence>`;
+  const reproducibleFindings = findings.map((finding) => (
+    ["P0", "P1"].includes(finding.severity) && !finding.reproductionEvidence
+      ? { ...finding, reproductionEvidence: "Follow the deterministic candidate path described in this finding." }
+      : finding
+  ));
+  return `${verdict}\n\n## Verdict\n\n${verdict}\n\n<gate-evidence>\n${JSON.stringify({ candidateId: "C1", candidateRevision: revision, verdict, summary: "Candidate-bound result", findings: reproducibleFindings })}\n</gate-evidence>`;
 }
 
 const SCOUT_OUTPUT = `<scout-report>
@@ -711,7 +716,7 @@ test("binds gate evidence to the reserving execution provider", () => {
   }
 });
 
-test("backfills the default execution provider when migrating to schema 6", () => {
+test("backfills the default execution provider while migrating through schema 7", () => {
   const run = makeRuntimeRun({ gateResult: makeGateResult() });
   delete run.provider;
   const task = makeRuntimeTask({ runs: [run] });
@@ -732,7 +737,7 @@ test("backfills the default execution provider when migrating to schema 6", () =
 
   assert.equal(migrateRunActivityState(state), true);
   assert.equal(state.schemaVersion, TASK_STORE_SCHEMA_VERSION);
-  assert.equal(TASK_STORE_SCHEMA_VERSION, 6);
+  assert.equal(TASK_STORE_SCHEMA_VERSION, 7);
   assert.equal(task.runs[0].provider, DEFAULT_EXECUTION_PROVIDER);
   assert.equal(task.stageRunReservations["dev-review"].provider, DEFAULT_EXECUTION_PROVIDER);
   assert.equal(task.gateFreshness["dev-review"].fresh, true);
@@ -1826,7 +1831,7 @@ test("persists exact structured-evidence reason codes through a failed review ru
       });
 
       assert.equal(await orchestrator.start(task.id, "review"), true);
-      const finished = await waitForStatus(store, task.id, "ready-for-review");
+      const finished = await waitForStatus(store, task.id, "review-retry-required");
       const run = finished.runs.find((entry) => entry.stage === "dev-review");
       assert.equal(run.evidenceError.code, item.code, item.name);
       assert.equal(run.evidenceError.copy, RUNTIME_FRESHNESS_REASONS[item.code], item.name);
@@ -1835,7 +1840,8 @@ test("persists exact structured-evidence reason codes through a failed review ru
       assert.match(finished.events.at(-1).title, /rerun required/i, item.name);
       assert.match(finished.events.at(-1).detail, new RegExp(RUNTIME_FRESHNESS_REASONS[item.code]), item.name);
       assert.equal(finished.candidates.at(-1).revisionNumber, 2, item.name);
-      assert.equal(finished.candidates.at(-1).status, "ready_for_review", item.name);
+      assert.equal(finished.candidates.at(-1).status, "review_retry_required", item.name);
+      assert.equal(finished.reviewRetries.length, 1, item.name);
       if (item.verifyApprovalBlocked) {
         await store.update(task.id, (draft) => {
           draft.status = "awaiting-human-approval";
@@ -1910,7 +1916,7 @@ test("candidate command failure overrides a Development Review PASS and remains 
     });
 
     assert.equal(await orchestrator.start(task.id, "review"), true);
-    const finished = await waitForStatus(store, task.id, "ready-for-review");
+    const finished = await waitForStatus(store, task.id, "review-retry-required");
     const run = finished.runs.find((entry) => entry.stage === "dev-review");
     const artifact = finished.artifacts.find((entry) => entry.id === run.artifactId);
     assert.equal(run.gateResult.reportedVerdict, "PASS");
@@ -1921,7 +1927,8 @@ test("candidate command failure overrides a Development Review PASS and remains 
     assert.equal(run.toolCalls[0].runtimeScope, "candidate");
     assert.equal(run.toolCalls[0].result, "Exit code 1");
     assert.equal(artifact.gateResult.verdict, "REPAIR");
-    assert.equal(finished.candidates[0].status, "ready_for_review");
+    assert.equal(finished.candidates[0].status, "review_retry_required");
+    assert.equal(finished.reviewRetries.length, 1);
     assert.match(finished.events.at(-1).title, /rerun required/i);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
@@ -2109,8 +2116,8 @@ test("missing authoritative output retains the candidate and permits only the sa
     {
       stage: "dev-review",
       kind: "review",
-      taskStatus: "ready-for-review",
-      candidateStatus: "ready_for_review",
+      taskStatus: "review-retry-required",
+      candidateStatus: "review_retry_required",
       label: "Development review",
     },
     // The test stage is deliberately absent. This case is "a model returned no authoritative
@@ -2968,7 +2975,14 @@ test("fails a slice closed when harness-executed package verification fails", as
         }),
         commit: async () => {
           commitCalls += 1;
-          throw new Error("commit must not run");
+          return {
+            headRevision: "b".repeat(40),
+            files: ["server/runtime.mjs"],
+            summary: "1 file changed",
+            diff: "+change",
+            ownSummary: "1 file changed",
+            ownDiff: "+change",
+          };
         },
         assemble: async () => {
           assembleCalls += 1;
@@ -2980,7 +2994,7 @@ test("fails a slice closed when harness-executed package verification fails", as
         usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
       }),
       runPackageVerification: async ({ workPackageId, attempt }) => ({
-        headRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
         candidateId: workPackageId,
         candidateRevision: attempt,
         bindingExplicit: true,
@@ -3009,7 +3023,7 @@ test("fails a slice closed when harness-executed package verification fails", as
 
     assert.equal(await orchestrator.start(task.id, "implementation"), true);
     const finished = await waitForStatus(store, task.id, "failed");
-    assert.equal(commitCalls, 0);
+    assert.equal(commitCalls, 1, "focused checks bind to the exact committed package revision");
     assert.equal(assembleCalls, 0);
     assert.equal(finished.workPackages[0].status, "failed");
     assert.match(finished.workPackages[0].error, /S1 did not qualify: test failed/);
@@ -4117,13 +4131,7 @@ test("advances an approved implementation task through a revision-bound candidat
   }
 });
 
-test("accepts a repair's declared no-op instead of failing on an empty diff", async () => {
-  // Recorded live (AH-002 dev-review): the newest failing gate's only finding was
-  // non-blocking (P3) and explicitly said no code change was warranted. The repair
-  // agent correctly made none — mirroring the slice-level "accepts a work package's
-  // declared no-op" test above, but for a *candidate* repair, where `commit`'s real
-  // no-op shape (`headRevision: null`) would corrupt `candidate.headRevision` if used
-  // directly instead of falling back to the candidate's unchanged existing head.
+test("retains explicit P3 advice without opening a candidate repair", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-noop-repair-"));
   try {
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
@@ -4203,6 +4211,8 @@ test("accepts a repair's declared no-op instead of failing on an empty diff", as
                 severity: "P3",
                 title: "Informational only",
                 detail: "No repair required for this finding on its own.",
+                candidateId: "C1",
+                candidateRevision: 1,
               }])
             : gateOutput(1);
         }
@@ -4222,29 +4232,11 @@ test("accepts a repair's declared no-op instead of failing on an empty diff", as
     await waitForStatus(store, task.id, "ready-for-review");
     await orchestrator.start(task.id, "review");
 
-    const repairReady = await waitForStatus(store, task.id, "repair-required");
-    // The exact mismatch this whole fix chain exists for: the freshness layer's
-    // marker check classifies a non-blocking, non-explicitly-bound finding
-    // `missing_binding`, not `repair_required`, even though the candidate genuinely
-    // is repair-required.
-    assert.equal(repairReady.gateFreshness["dev-review"].reasonCode, "missing_binding");
-    const candidateBeforeRepair = repairReady.candidates[0];
-
-    await orchestrator.start(task.id, "repair");
-    const afterRepair = await waitForStatus(store, task.id, "ready-for-review");
-    assert.equal(sawAllowNoChanges, true);
-    // No new revision: `candidateRevisionLineage` requires every revision to have a
-    // distinct `headRevision`, and a no-op repair's head is unchanged by definition —
-    // so this candidate goes back to `ready_for_review` at its *existing* revision
-    // rather than gaining a "new" revision identical to the one before it.
-    assert.equal(afterRepair.candidates[0].revisionNumber, candidateBeforeRepair.revisionNumber);
-    assert.equal(afterRepair.candidates[0].headRevision, candidateBeforeRepair.headRevision, "an unchanged repair keeps the candidate's existing head, not `null`");
-    assert.equal(afterRepair.candidates[0].revisions.length, candidateBeforeRepair.revisions.length);
-    assert.ok(afterRepair.events.some((event) => /made no changes/.test(event.detail ?? "")));
-
-    await orchestrator.start(task.id, "review");
     const passed = await waitForStatus(store, task.id, "ready-for-test");
+    assert.equal(passed.candidates[0].revisionNumber, 1);
     assert.equal(passed.candidates[0].status, "ready_for_test");
+    assert.equal(passed.artifacts.find((artifact) => artifact.stage === "dev-review").gateResult.findings[0].blocking, false);
+    assert.equal(sawAllowNoChanges, false, "non-blocking advice never starts Repair");
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -4763,7 +4755,7 @@ test("refuses a review verdict when the reviewer mutated the candidate", async (
       const finished = await waitForStatus(
         store,
         task.id,
-        stageId === "final-review" ? "ready-for-final-review" : "ready-for-review",
+        stageId === "final-review" ? "ready-for-final-review" : "review-retry-required",
       );
       const run = finished.runs.find((entry) => entry.stage === stageId);
 

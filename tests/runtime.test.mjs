@@ -469,7 +469,7 @@ test("candidate review prompts name the exact structured finding fields", () => 
     headRevision: "b".repeat(40),
   });
 
-  assert.match(request.prompt, /Every finding must use exactly candidateId, candidateRevision, severity, title, detail, file, and line/);
+  assert.match(request.prompt, /Every blocking finding needs deterministic reproductionEvidence/);
   assert.match(request.prompt, /"title":"Concise finding title"/);
   assert.match(request.prompt, /"detail":"Concrete failure scenario and smallest correction"/);
   assert.match(request.prompt, /"file":"src\/example\.ts"/);
@@ -592,6 +592,9 @@ test("repair requests carry complete typed gate findings and current-candidate r
       detail: completeDetail,
       file: "server/orchestrator.mjs",
       line: 453,
+      blocking: true,
+      acceptanceCriterion: "The complete repair detail is retained.",
+      reproductionEvidence: "Inspect the persisted current-candidate Test gate result.",
       candidateId: "C1",
       candidateRevision: 3,
       bindingExplicit: true,
@@ -602,6 +605,9 @@ test("repair requests carry complete typed gate findings and current-candidate r
       detail: "Retain every finding, not only the first one.",
       file: null,
       line: null,
+      blocking: false,
+      acceptanceCriterion: null,
+      reproductionEvidence: null,
       candidateId: "C1",
       candidateRevision: 3,
       bindingExplicit: true,
@@ -658,13 +664,13 @@ test("repair requests carry complete typed gate findings and current-candidate r
         number: 2,
         headRevision: "b".repeat(40),
         reason: "repair",
-        requestedFindings: [{ severity: "P1", title: "Prior repair", detail: "Already attempted.", file: "old.js", line: 7 }],
+        requestedFindings: [{ severity: "P1", title: "Prior repair", detail: "Already attempted.", file: "old.js", line: 7, blocking: true, acceptanceCriterion: null, reproductionEvidence: null }],
       },
       {
         number: 3,
         headRevision: "c".repeat(40),
         reason: "repair",
-        requestedFindings: [{ severity: "P2", title: "Second prior repair", detail: "Keep this lineage.", file: null, line: null }],
+        requestedFindings: [{ severity: "P2", title: "Second prior repair", detail: "Keep this lineage.", file: null, line: null, blocking: false, acceptanceCriterion: null, reproductionEvidence: null }],
       },
     ],
   };
@@ -684,13 +690,13 @@ test("repair requests carry complete typed gate findings and current-candidate r
       number: 2,
       headRevision: "b".repeat(40),
       reason: "repair",
-      requestedFindings: [{ severity: "P1", title: "Prior repair", detail: "Already attempted.", file: "old.js", line: 7 }],
+      requestedFindings: [{ severity: "P1", title: "Prior repair", detail: "Already attempted.", file: "old.js", line: 7, blocking: true, acceptanceCriterion: null, reproductionEvidence: null }],
     },
     {
       number: 3,
       headRevision: "c".repeat(40),
       reason: "repair",
-      requestedFindings: [{ severity: "P2", title: "Second prior repair", detail: "Keep this lineage.", file: null, line: null }],
+      requestedFindings: [{ severity: "P2", title: "Second prior repair", detail: "Keep this lineage.", file: null, line: null, blocking: false, acceptanceCriterion: null, reproductionEvidence: null }],
     },
   ]);
   assert.equal(request.contextManifest.promptCharacters, request.prompt.length);
@@ -722,6 +728,9 @@ test("persists typed findings requested by the gate on each repair revision", as
       detail: "The repair must retain this exact detail.",
       file: "server/prompts.mjs",
       line: 241,
+      blocking: true,
+      acceptanceCriterion: "The repair must retain the exact finding.",
+      reproductionEvidence: "Inspect the exact candidate gate result persisted before repair.",
       candidateId: "C1",
       candidateRevision: 1,
       bindingExplicit: true,
@@ -765,6 +774,9 @@ test("persists typed findings requested by the gate on each repair revision", as
       detail: "The repair must retain this exact detail.",
       file: "server/prompts.mjs",
       line: 241,
+      blocking: true,
+      acceptanceCriterion: "The repair must retain the exact finding.",
+      reproductionEvidence: "Inspect the exact candidate gate result persisted before repair.",
     }]);
     assert.match(repairPrompt, /<repair-evidence>/);
   } finally {
@@ -810,6 +822,9 @@ test("preserves complete parsed gate findings through persistence and the repair
           detail,
           file,
           line: 209,
+          blocking: true,
+          acceptanceCriterion: "All blocking finding fields survive persistence.",
+          reproductionEvidence: "Parse, persist, and rebuild the exact candidate repair request.",
           candidateId: "C1",
           candidateRevision: 1,
         }],
