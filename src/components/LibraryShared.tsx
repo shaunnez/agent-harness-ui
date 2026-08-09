@@ -49,7 +49,11 @@ export function usageValueLabel(usage: ReturnType<typeof stageUsage>, value: str
 
 function distinctArtifacts(artifacts: RuntimeArtifactMetadata[]) {
   const seen = new Set<string>();
-  return artifacts.filter((artifact) => !seen.has(artifact.id) && (seen.add(artifact.id), true));
+  return artifacts.filter((artifact) => {
+    if (seen.has(artifact.id)) return false;
+    seen.add(artifact.id);
+    return true;
+  });
 }
 
 export function UsageSummary({ tasks, roleId }: { tasks: RuntimeTaskSummary[]; roleId: AgentRoleId }) {
