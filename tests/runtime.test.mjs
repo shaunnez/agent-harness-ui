@@ -1556,6 +1556,116 @@ test("renders an open Grill session as active decisions and completed Grill as h
   });
 });
 
+test("renders a compact completed Grill state when investigation leaves no material questions", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const markup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task: createTask({
+          status: "awaiting-spec-approval",
+          currentStage: "specification",
+          completedStages: ["triage", "scouts", "grill", "specification"],
+          grillSession: {
+            status: "completed",
+            questions: [],
+            createdAt: "2026-08-01T12:00:00.000Z",
+            completedAt: "2026-08-01T12:00:01.000Z",
+            completionReason: "No material product decisions remained after repository investigation.",
+          },
+        }),
+        initialViewedStageId: "grill",
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+      }),
+    );
+    assert.match(markup, /runtime-grill-empty/);
+    assert.match(markup, /No material questions remained/);
+    assert.doesNotMatch(markup, /runtime-grill__reason/);
+    assert.doesNotMatch(markup, /runtime-stage-empty/);
+  });
+});
+
+test("renders prior stage attempts and strips machine payloads from visible Markdown", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace, stripStructuredArtifactPayloads }) => {
+    const first = {
+      id: "plan-1",
+      runId: "run-1",
+      stage: "plan",
+      kind: "markdown",
+      name: "implementation-plan.md",
+      content: "# Recommended route\n\nReadable route.\n\n<scout-dispatch>{\"scouts\":[]}</scout-dispatch>",
+      createdAt: "2026-08-01T12:00:00.000Z",
+      model: "gpt-5.6-sol",
+      reasoning: "high",
+      usage: { inputTokens: 100, cachedInputTokens: 40, outputTokens: 20, totalTokens: 120, cost: 0.1, credits: 0.2 },
+    };
+    const second = { ...first, id: "plan-2", runId: "run-2", name: "implementation-plan-r2.md", createdAt: "2026-08-01T12:05:00.000Z" };
+    const markup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task: createTask({
+          status: "ready-to-implement",
+          currentStage: "plan",
+          completedStages: ["triage", "scouts", "grill", "specification", "plan"],
+          artifacts: [first, second],
+        }),
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+      }),
+    );
+    assert.match(markup, /Stage history/);
+    assert.match(markup, /Attempt 1/);
+    assert.match(markup, /implementation-plan-r2\.md/);
+    assert.match(markup, /Latest shown/);
+    assert.equal(stripStructuredArtifactPayloads(first.content), "# Recommended route\n\nReadable route.");
+  });
+});
+
+test("aggregates Repository scouts from child model runs and excludes the deterministic handoff", () => {
+  return withWorkspace(async ({ stageUsage }) => {
+    const child = (id, agentRole, inputTokens, cost) => ({
+      id,
+      runId: `run-${id}`,
+      stage: "scouts",
+      kind: "markdown",
+      name: `${agentRole}.md`,
+      content: "# Scout",
+      createdAt: "2026-08-01T12:00:00.000Z",
+      model: "gpt-5.6-luna",
+      reasoning: "xhigh",
+      agentRole,
+      usage: { inputTokens, cachedInputTokens: inputTokens / 2, outputTokens: 10, totalTokens: inputTokens + 10, cost, credits: cost * 2 },
+    });
+    const task = createTask({
+      artifacts: [
+        child("code", "scout-code-path", 100, 0.1),
+        child("pattern", "scout-pattern", 200, 0.2),
+        {
+          id: "aggregate",
+          stage: "scouts",
+          kind: "markdown",
+          name: "repository-scout.md",
+          content: "# Repository evidence",
+          createdAt: "2026-08-01T12:01:00.000Z",
+          model: "deterministic-aggregation",
+          reasoning: null,
+          agentRole: "scouts",
+          usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0, cost: null, credits: null },
+        },
+      ],
+    });
+    const usage = stageUsage([task], "scouts");
+    assert.equal(usage.runs, 2);
+    assert.equal(usage.inputTokens, 300);
+    assert.equal(usage.cost, 0.3);
+    assert.deepEqual(usage.artifacts.map((artifact) => artifact.id), ["code", "pattern"]);
+  });
+});
+
 test("renders artifact copy affordance and normalizes clipboard outcomes", () => {
   return withWorkspace(async ({ RuntimeArtifactViewer, copyArtifactContent, shouldApplyArtifactCopyFeedback }) => {
     const artifact = {
@@ -3278,7 +3388,9 @@ async function withWorkspace(run) {
     const runtimeCommandBar = await vite.ssrLoadModule("/src/components/runtime/RuntimeCommandBar.tsx");
     const runtimeStageLimits = await vite.ssrLoadModule("/src/runtime-stage-limits.ts");
     const requestIdentity = await vite.ssrLoadModule("/src/requestIdentity.ts");
-    return await run({ ...module, ...candidateDiffViewer, ...runActivity, ...runtimeInspector, ...runtimeWorkflow, ...runtimeCommandBar, ...runtimeStageLimits, ...requestIdentity, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
+    const artifactPresentation = await vite.ssrLoadModule("/src/artifactPresentation.ts");
+    const libraryShared = await vite.ssrLoadModule("/src/components/LibraryShared.tsx");
+    return await run({ ...module, ...candidateDiffViewer, ...runActivity, ...runtimeInspector, ...runtimeWorkflow, ...runtimeCommandBar, ...runtimeStageLimits, ...requestIdentity, ...artifactPresentation, ...libraryShared, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
   } finally {
     await vite.close();
   }

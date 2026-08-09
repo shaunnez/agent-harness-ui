@@ -1771,6 +1771,59 @@ test("returns the current candidate diff only after verifying the recorded workt
   }
 });
 
+test("returns an exact retained candidate revision diff when its recorded head is requested", async () => {
+  const { directory, origin, server, store } = await createServer();
+  const repository = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-revision-diff-"));
+  try {
+    await git(repository, ["init"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+
+    const task = await store.create({
+      title: "Inspect retained diff",
+      description: "Open a prior candidate revision without substituting the current head.",
+      repositoryPath: repository,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const manager = new GitWorktreeManager(path.join(repository, ".data", "worktrees"));
+    const base = await manager.base(task);
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+    await writeFile(path.join(candidate.worktreePath, "feature.txt"), "first revision\n", "utf8");
+    const first = await manager.commit(candidate, "candidate r1");
+    await writeFile(path.join(candidate.worktreePath, "feature.txt"), "second revision\n", "utf8");
+    const second = await manager.commit(candidate, "candidate r2");
+    candidate.headRevision = second.headRevision;
+    candidate.revisionNumber = 2;
+    candidate.revisions = [
+      { number: 1, headRevision: first.headRevision, reason: "assembly", createdAt: "2026-08-01T12:00:00.000Z" },
+      { number: 2, headRevision: second.headRevision, reason: "repair", createdAt: "2026-08-01T12:05:00.000Z" },
+    ];
+    await store.update(task.id, (draft) => {
+      draft.candidates.push({ ...candidate, files: second.files, summary: second.summary });
+    });
+
+    const params = new URLSearchParams({ headRevision: first.headRevision });
+    const response = await fetch(`${origin}/api/tasks/${task.id}/candidates/C1/diff?${params}`);
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.revisionNumber, 1);
+    assert.equal(payload.headRevision, first.headRevision);
+    assert.match(payload.diff, /first revision/);
+    assert.doesNotMatch(payload.diff, /second revision/);
+
+    const missing = await fetch(`${origin}/api/tasks/${task.id}/candidates/C1/diff?headRevision=${"f".repeat(40)}`);
+    assert.equal(missing.status, 409);
+    assert.match((await missing.json()).error, /no longer recorded/i);
+  } finally {
+    await cleanup(server, directory);
+    await rm(repository, { recursive: true, force: true });
+  }
+});
+
 test("returns a read-only worktree inventory with slice and candidate rows", async () => {
   const { directory, origin, server, store } = await createServer();
   const sliceRepository = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-inventory-slice-"));

@@ -41,3 +41,41 @@ test("does not report wall time for a task still awaiting a non-terminal stage",
   assert.ok(variant);
   assert.equal(variant.wallTimeMs, null, "a non-terminal status has no authoritative end time to fall back to");
 });
+
+test("historical observations include Claude model runs and exclude synthetic handoffs", () => {
+  const task = makeExperimentTask({
+    experiment: null,
+    status: "completed",
+    artifacts: [
+      {
+        id: "claude-plan",
+        runId: "run-claude-plan",
+        stage: "plan",
+        agentRole: "plan",
+        model: "claude-opus-5",
+        reasoning: "xhigh",
+        usage: { inputTokens: 100, cachedInputTokens: 40, outputTokens: 20, totalTokens: 120, cost: 0.12, credits: null },
+      },
+      {
+        id: "assembly",
+        stage: "implement",
+        agentRole: "implement",
+        model: "gpt-5.6-luna",
+        reasoning: "not-recorded",
+        usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0, cost: null, credits: null },
+      },
+      {
+        id: "scout-aggregate",
+        stage: "scouts",
+        agentRole: "scouts",
+        model: "deterministic-aggregation",
+        reasoning: null,
+        usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0, cost: null, credits: null },
+      },
+    ],
+  });
+  const summary = buildEvaluationSummary([task]);
+  assert.deepEqual(summary.observations.variants.map((variant) => variant.model), ["claude-opus-5"]);
+  assert.equal(summary.observations.variants[0].runs, 1);
+  assert.equal(summary.observations.variants[0].cost, 0.12);
+});

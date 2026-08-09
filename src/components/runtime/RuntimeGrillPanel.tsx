@@ -29,7 +29,7 @@ export function RuntimeGrillPanel({
         </span>
         <StateBadge state={session.status === "completed" ? "completed" : "needs-input"} />
       </header>
-      {session.completionReason ? <p className="runtime-grill__reason">{session.completionReason}</p> : null}
+      {session.completionReason && session.questions.length ? <p className="runtime-grill__reason">{session.completionReason}</p> : null}
       {activeQuestion ? (
         <div className="runtime-grill__questions">
           <RuntimeGrillQuestionCard
@@ -67,11 +67,13 @@ export function RuntimeGrillPanel({
           ))}
         </div>
       ) : (
-        <div className="runtime-stage-empty">
-          <CheckCircle size={22} weight="fill" />
-          <strong>No material questions remain</strong>
+        <div className="runtime-grill-empty">
+          <CheckCircle size={18} weight="fill" />
           <span>
-            Repository evidence and safe reversible defaults are sufficient to build the specification.
+            <strong>No material questions remained</strong>
+            <small>
+              {session.completionReason ?? "Repository evidence and safe reversible defaults were sufficient to build the specification."}
+            </small>
           </span>
         </div>
       )}

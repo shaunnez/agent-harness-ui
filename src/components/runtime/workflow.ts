@@ -197,6 +197,7 @@ export function getRuntimeFreshnessReason(task: RuntimeTask, stageId: RuntimeGat
 export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, artifact?: RuntimeArtifact, isRunning = false) {
   const candidate = task.candidates?.at(-1);
   const packages = task.workPackages ?? [];
+  const packageBatchCount = new Set(packages.map((item) => item.batch)).size;
   const focused = getRuntimeFocusedTest(task);
   const completedPackages = packages.filter((item) => ["integrated", "ready_for_integration"].includes(item.status)).length;
   const stageLabel = workflowStages.find((stage) => stage.id === stageId)?.label ?? stageId;
@@ -246,7 +247,9 @@ export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, arti
     case "plan":
       return {
         kicker: "Implementation plan \u00b7 dependency batches",
-        title: packages.length ? `${packages.length} work packages \u00b7 ${new Set(packages.map((item) => item.batch)).size} batches` : fallback.title,
+        title: packages.length
+          ? `${packages.length} work package${packages.length === 1 ? "" : "s"} \u00b7 ${packageBatchCount} batch${packageBatchCount === 1 ? "" : "es"}`
+          : fallback.title,
         detail: packages.length
           ? "Each package exposes real dependencies, ownership, verification commands, attempts, and integration readiness."
           : fallback.detail,

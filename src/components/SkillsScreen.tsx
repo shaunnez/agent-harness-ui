@@ -96,11 +96,12 @@ export function SkillsScreen({
     return (
       <div className="page library-page detail-page skill-detail-page">
         <button type="button" className="detail-back" onClick={() => onSelect(null)}><ArrowLeft size={16} /> Back to Skills</button>
-        <SectionHeader eyebrow="Runtime capability" title={selected.skill} description={`${selected.label} is a workflow-stage contract executed by ${selected.provider === "harness" ? "the deterministic harness" : "the configured Codex runtime"}.`} />
+        <SectionHeader eyebrow="Runtime capability" title={selected.skill} description={`${selected.label} is a workflow-stage contract executed by ${selected.provider === "harness" ? "the deterministic harness" : "the configured model runtime"}. Supporting scout and repair agent roles are listed separately under Agents.`} />
         <div className="detail-metrics detail-metrics--truthful">
-          <Metric label="Recorded artifacts" value={String(usage.runs)} />
-          <Metric label="Recorded tokens" value={formatTokenCount(usage.tokens)} />
-          <Metric label="Approx. API-rate cost" value={usage.pricedRuns ? formatApproximateCost(usage.cost) : "Unavailable"} />
+          <Metric label="Recorded model runs" value={usage.runs ? String(usage.runs) : "No runs yet"} />
+          <Metric label="Recorded tokens" value={usage.runs ? formatTokenCount(usage.tokens) : "No observed usage"} />
+          <Metric label="Approx. API-rate cost" value={usage.pricedRuns ? formatApproximateCost(usage.cost) : usage.runs ? "Unavailable for provider" : "No observed usage"} />
+          <Metric label="Work credits" value={usage.creditRuns ? usage.credits?.toFixed(3) ?? "Unavailable" : usage.runs ? "Unavailable for provider" : "No observed usage"} />
           <Metric label="Source set" value={selected.id === "scouts" ? "prompts + scouts" : selected.id === "approval" ? "API action" : "prompts"} />
         </div>
         <section className="skill-contract-map">
@@ -124,16 +125,16 @@ export function SkillsScreen({
   }
   return (
     <div className="page library-page">
-      <SectionHeader eyebrow="Runtime contracts" title="Skills" description="These are the ten actual workflow-stage capabilities. Metrics are limited to persisted artifacts and reported tokens." />
+      <SectionHeader eyebrow="Runtime contracts" title="Skills" description="These are the ten workflow-stage contracts, in execution order. Supporting scout roles and Candidate Repair are agents beneath those contracts, so they are listed under Agents rather than duplicated here. Metrics include only persisted model runs." />
       <div className="skill-list">
         {workflowStages.map((stage) => {
           const usage = stageUsage(runtimeTasks, stage.id);
           return (
             <button className="skill-row" type="button" key={stage.id} onClick={() => onSelect(stage.id)}>
               <Code size={20} />
-              <span><strong>{stage.skill}</strong><small>{stage.label} · {stage.provider === "harness" ? "deterministic harness" : "Codex prompt"}</small></span>
-              <span className="skill-metric"><strong>{usage.runs}</strong><small>recorded artifacts</small></span>
-              <span className="skill-metric"><strong>{formatTokenCount(usage.tokens)}</strong><small>recorded tokens</small></span>
+              <span><strong>{stage.skill}</strong><small>{stage.label} · {stage.provider === "harness" ? "deterministic harness" : "configured-model prompt"}</small></span>
+              <span className="skill-metric"><strong>{usage.runs || "No runs"}</strong><small>recorded model runs</small></span>
+              <span className="skill-metric"><strong>{usage.runs ? formatTokenCount(usage.tokens) : "—"}</strong><small>recorded tokens</small></span>
               <ArrowRight size={16} />
             </button>
           );

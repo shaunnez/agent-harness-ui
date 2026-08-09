@@ -147,7 +147,10 @@ export function runtimeTaskToRecentTask(task: RuntimeTask): RecentTask {
     outputTokens: formatTokenCount(task.usage.outputTokens),
     cachedTokens: formatTokenCount(task.usage.cachedInputTokens),
     cacheRate: formatCacheRate(task.usage),
-    models: (task.models?.length ? task.models : [{ provider: "openai" as const, model: task.agentConfig?.model ?? "gpt-5.6-luna" }]).map((item) => ({ provider: "codex" as const, model: item.model })),
+    models: (task.models?.length ? task.models : [{ provider: "openai" as const, model: task.agentConfig?.model ?? "gpt-5.6-luna" }]).map((item) => ({
+      provider: item.provider === "anthropic" || item.model.startsWith("claude-") ? "claude" as const : "codex" as const,
+      model: item.model,
+    })),
     priority: `${task.priority[0]?.toUpperCase()}${task.priority.slice(1)}` as RecentTask["priority"],
     startedAt: formatTaskDate(task.startedAt),
     endedAt: formatTaskDate(task.archive?.archivedAt ?? task.closure?.closedAt ?? task.completedAt ?? (task.status === "running" ? null : task.updatedAt)),

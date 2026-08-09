@@ -124,13 +124,15 @@ function observationalSummary(tasks) {
   const groups = new Map();
   for (const task of tasks) {
     for (const artifact of task.artifacts ?? []) {
-      if (!String(artifact.model ?? "").startsWith("gpt-")) continue;
+      const model = String(artifact.model ?? "");
+      const hasRecordedUsage = Number(artifact.usage?.totalTokens ?? 0) > 0;
+      if (!model || model === "deterministic-aggregation" || (!artifact.runId && !hasRecordedUsage)) continue;
       const role = artifact.agentRole ?? artifact.stage;
       const reasoning = artifact.reasoning ?? "not-recorded";
       const key = `${role}|${artifact.model}|${reasoning}`;
       const group = groups.get(key) ?? {
         role,
-        model: artifact.model,
+        model,
         reasoning,
         runs: 0,
         taskIds: new Set(),

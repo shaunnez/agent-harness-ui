@@ -20,6 +20,7 @@ import {
   type StageId,
   workflowStages,
 } from "../../domain";
+import { isModelRunArtifact, sumArtifactUsage } from "../../artifactPresentation";
 import { MarkdownContent } from "../MarkdownContent";
 import { Button } from "../Primitives";
 import { RuntimeGrillPanel } from "./RuntimeGrillPanel";
@@ -62,12 +63,20 @@ export function RuntimeStagePresentation({
   viewedStageStopped: boolean;
   onAnswer: (questionId: string, answer: string) => Promise<void>;
   onOpenArtifact: (artifact: RuntimeArtifact) => void;
-  onOpenCandidateDiff: () => void;
+  onOpenCandidateDiff: (target?: RuntimeTask["candidates"][number]) => void;
   candidateDiffLoading: boolean;
   selectedTestResultId: string | null;
   onSelectTestResult: (resultId: string | null) => void;
 }) {
   const focusedTest = getRuntimeFocusedTest(task);
+  const stageArtifacts = task.artifacts.filter((item) => item.stage === viewedStageId);
+  const artifactHistory = stageArtifacts.length > 1 && viewedStageId !== "scouts" ? (
+    <RuntimeArtifactHistory
+      artifacts={stageArtifacts}
+      currentArtifact={artifact}
+      onOpenArtifact={onOpenArtifact}
+    />
+  ) : null;
   const artifactFreshness = artifact ? getRuntimeArtifactFreshness(task, artifact) : null;
   const artifactCard = artifact ? (
     <RuntimeArtifactCard
@@ -86,6 +95,7 @@ export function RuntimeStagePresentation({
     case "triage":
       return (
         <div className="runtime-stage-stack">
+          {artifactHistory}
           <RuntimeFactGrid
             facts={[
               ["Classification", `${task.workflow} task`],
@@ -102,15 +112,33 @@ export function RuntimeStagePresentation({
         <div className="runtime-stage-stack">
           {task.scoutDispatch ? (
             <section className="scout-dispatch-panel">
-              <header><span><Robot size={18} /><strong>Selective scout dispatch</strong></span><small>{task.scoutDispatch.selected.length} dispatched &middot; {task.scoutDispatch.skipped.length} skipped</small></header>
+              <header>
+                <span><Robot size={18} /><strong>Selective scout dispatch</strong></span>
+                <small>{scoutDispatchSummary(task)}</small>
+              </header>
               <p>{task.scoutDispatch.rationale ?? "No dispatch rationale was retained for this historical task."}</p>
               <div>
-                {task.scoutDispatch.selected.map((scout) => (
-                  <article key={scout.name}>
-                    <span className={`scout-dispatch-state scout-dispatch-state--${scout.status}`} />
-                    <span><strong>{scout.name}</strong><small>{scout.focus}</small><p>{scout.reason}</p>{scout.error ? <p className="text-red">{scout.error}</p> : null}</span>
-                  </article>
-                ))}
+                {task.scoutDispatch.selected.map((scout) => {
+                  const scoutArtifact = task.artifacts.find((item) => item.agentRole === scout.name && isModelRunArtifact(item));
+                  return (
+                    <article key={scout.name}>
+                      <span className={`scout-dispatch-state scout-dispatch-state--${scout.status}`} />
+                      <span>
+                        <strong>{scout.name}</strong>
+                        <small>{scout.focus}</small>
+                        <p>{scout.reason}</p>
+                        {scoutArtifact ? (
+                          <button type="button" className="scout-dispatch-usage" onClick={() => onOpenArtifact(scoutArtifact)}>
+                            <span>{formatTokenCount(scoutArtifact.usage.inputTokens)} in &middot; {formatTokenCount(scoutArtifact.usage.outputTokens)} out</span>
+                            <span>{formatCacheRate(scoutArtifact.usage)} cached &middot; {formatApproximateCost(scoutArtifact.usage.cost)}</span>
+                            <ArrowSquareOut size={14} />
+                          </button>
+                        ) : <small>{scout.status === "complete" ? "Usage was not retained for this historical scout." : "Usage will appear when this scout completes."}</small>}
+                        {scout.error ? <p className="text-red">{scout.error}</p> : null}
+                      </span>
+                    </article>
+                  );
+                })}
                 {task.scoutDispatch.selected.length === 0 ? <p>No scouts were dispatched; triage explicitly determined that no additional repository evidence was needed.</p> : null}
               </div>
             </section>
@@ -118,9 +146,9 @@ export function RuntimeStagePresentation({
           <section className="runtime-evidence-source">
             <CheckCircle size={18} weight="fill" />
             <span>
-              <small>Repository evidence &middot; real agent handoff</small>
+              <small>Repository evidence &middot; deterministic handoff</small>
               <strong>{artifact?.name ?? "No scout artifact yet"}</strong>
-              <p>{artifact ? `${artifact.model} \u00b7 ${formatTokenCount(artifact.usage.totalTokens)} tokens \u00b7 ${new Date(artifact.createdAt).toLocaleString()}` : "The scout stage has not produced an artifact."}</p>
+              <p>{artifact ? `Mechanically combined from ${task.scoutDispatch?.selected.filter((scout) => scout.status === "complete").length ?? 0} retained scout reports; no extra model call \u00b7 ${new Date(artifact.createdAt).toLocaleString()}` : "The scout stage has not produced an artifact."}</p>
             </span>
           </section>
           {artifactCard ?? empty}
@@ -129,6 +157,7 @@ export function RuntimeStagePresentation({
     case "grill":
       return (
         <div className="runtime-stage-stack">
+          {artifactHistory}
           <section className="runtime-evidence-source">
             <FileCode size={18} />
             <span>
@@ -144,20 +173,23 @@ export function RuntimeStagePresentation({
     case "specification":
       return (
         <div className="runtime-stage-stack">
+          {artifactHistory}
           <RuntimeFactGrid
             facts={[
               ["Artifact", artifact?.name ?? "Pending"],
               ["Approval", task.approvals.some((item) => item.stage === "specification") ? "Approved" : "Awaiting approval"],
-              ["Decisions", `${task.decisions.length} retained`],
+              ["Task decision log", `${task.decisions.length} recorded across the workflow`],
               ["Provenance", artifact?.model ?? "Not recorded"],
             ]}
           />
+          {task.decisions.length ? <RuntimeTaskDecisionSummary task={task} artifact={artifact} /> : null}
           {artifactCard ?? empty}
         </div>
       );
     case "plan":
       return (
         <div className="runtime-stage-stack">
+          {artifactHistory}
           {task.workPackages.length ? <RuntimeWorkPackages task={task} /> : null}
           {artifactCard ?? empty}
         </div>
@@ -165,6 +197,7 @@ export function RuntimeStagePresentation({
     case "implement":
       return (
         <div className="runtime-stage-stack">
+          {artifactHistory}
           {candidate ? (
             <RuntimeCandidateDesk
               task={task}
@@ -180,6 +213,7 @@ export function RuntimeStagePresentation({
     case "dev-review":
       return (
         <div className="runtime-stage-stack">
+          {artifactHistory}
           {candidate ? (
             <RuntimeCandidateDesk
               task={task}
@@ -205,6 +239,7 @@ export function RuntimeStagePresentation({
     case "test":
       return (
         <div className="runtime-stage-stack">
+          {artifactHistory}
           {focusedTest ? (
             <RuntimeFocusedTestEvidencePanel
               evidence={focusedTest}
@@ -219,6 +254,7 @@ export function RuntimeStagePresentation({
     case "final-review":
       return (
         <div className="runtime-stage-stack">
+          {artifactHistory}
           {candidate ? (
             <RuntimeCandidateDesk
               task={task}
@@ -259,6 +295,107 @@ export function RuntimeStagePresentation({
       );
     }
   }
+}
+
+function scoutDispatchSummary(task: RuntimeTask) {
+  const scoutArtifacts = task.artifacts.filter(
+    (artifact) => artifact.stage === "scouts" && artifact.agentRole?.startsWith("scout-") && isModelRunArtifact(artifact),
+  );
+  const usage = sumArtifactUsage(scoutArtifacts);
+  const dispatch = task.scoutDispatch;
+  return [
+    `${dispatch?.selected.length ?? 0} dispatched`,
+    `${dispatch?.skipped.length ?? 0} skipped`,
+    scoutArtifacts.length ? `${formatTokenCount(usage.inputTokens)} in / ${formatTokenCount(usage.outputTokens)} out` : null,
+    usage.pricedRuns ? `${formatApproximateCost(usage.cost)} API-rate estimate` : null,
+  ].filter(Boolean).join(" \u00b7 ");
+}
+
+function RuntimeArtifactHistory({
+  artifacts,
+  currentArtifact,
+  onOpenArtifact,
+}: {
+  artifacts: RuntimeArtifact[];
+  currentArtifact?: RuntimeArtifact;
+  onOpenArtifact: (artifact: RuntimeArtifact) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const orderedArtifacts = [...artifacts].reverse();
+  const visibleArtifacts = expanded ? orderedArtifacts : orderedArtifacts.slice(0, 2);
+  const hiddenCount = orderedArtifacts.length - visibleArtifacts.length;
+  return (
+    <section className="runtime-artifact-history" aria-label="Stage artifact history">
+      <header>
+        <span><strong>Stage history</strong><small>Latest retained handoff stays on the stage; open any prior attempt read-only.</small></span>
+        <small>{artifacts.length} retained</small>
+      </header>
+      <div>
+        {visibleArtifacts.map((item) => {
+          const stageAttempt = artifacts.findIndex((artifact) => artifact.id === item.id) + 1;
+          const packageAttempt = item.workPackageId
+            ? artifacts.filter((artifact) => artifact.workPackageId === item.workPackageId && artifact.createdAt <= item.createdAt).length
+            : null;
+          const label = item.candidateId && item.candidateRevision
+            ? `${item.candidateId} r${item.candidateRevision} \u00b7 attempt ${stageAttempt}`
+            : item.workPackageId
+              ? `${item.workPackageId} \u00b7 slice attempt ${packageAttempt}`
+              : `Attempt ${stageAttempt}`;
+          const shown = item.id === currentArtifact?.id;
+          return (
+            <button type="button" key={item.id} onClick={() => onOpenArtifact(item)}>
+              <span>
+                <small>{label}</small>
+                <strong>{item.name}</strong>
+              </span>
+              <span>
+                {shown ? <em className="badge badge--blue">Latest shown</em> : <em className="badge">Prior</em>}
+                <small>{isModelRunArtifact(item) ? `${formatTokenCount(item.usage.inputTokens)} in / ${formatTokenCount(item.usage.outputTokens)} out` : "Harness-generated"}</small>
+                <time>{new Date(item.createdAt).toLocaleString()}</time>
+              </span>
+              <ArrowSquareOut size={15} />
+            </button>
+          );
+        })}
+        {orderedArtifacts.length > 2 ? (
+          <button
+            type="button"
+            className="runtime-artifact-history__more"
+            onClick={() => setExpanded((current) => !current)}
+          >
+            <span>
+              <strong>{expanded ? "Show latest attempts only" : `Show ${hiddenCount} earlier attempt${hiddenCount === 1 ? "" : "s"}`}</strong>
+              <small>Every retained artifact remains read-only and inspectable.</small>
+            </span>
+            <CaretDown className={expanded ? "is-expanded" : ""} size={15} />
+          </button>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function RuntimeTaskDecisionSummary({ task, artifact }: { task: RuntimeTask; artifact?: RuntimeArtifact }) {
+  const suppliedDecisionSource = artifact?.contextManifest?.sources.find((source) => source.kind === "decisions");
+  return (
+    <section className="runtime-task-decision-summary">
+      <header>
+        <span><strong>Task decisions on record</strong><small>This is the task-wide log, including decisions recorded after the specification.</small></span>
+        <small>{suppliedDecisionSource?.label ?? "No decision block was supplied to this specification run"}</small>
+      </header>
+      <div>
+        {task.decisions.map((decision) => {
+          const recordedLater = artifact ? decision.createdAt > artifact.createdAt : false;
+          return (
+            <article key={decision.id}>
+              <span><strong>{decision.question}</strong><small>{recordedLater ? "Recorded after this specification" : "Available by this specification"} &middot; {new Date(decision.createdAt).toLocaleString()}</small></span>
+              <p>{decision.answer}</p>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
 async function copyToClipboard(content: string) {
@@ -370,7 +507,7 @@ function RuntimeArtifactCard({
       <MarkdownContent content={content.trim() || "The structured result list above is the authoritative test evidence."} />
       <footer>
         <span>{new Date(artifact.createdAt).toLocaleString()}</span>
-        <span>{artifact.model ? `${artifact.model} · ${formatTokenCount(artifact.usage.inputTokens)} in / ${formatTokenCount(artifact.usage.outputTokens)} out · ${formatCacheRate(artifact.usage)} cached · ${formatApproximateCost(artifact.usage.cost)}` : "Harness-generated · no model call"}</span>
+        <span>{isModelRunArtifact(artifact) ? `${artifact.model} · ${formatTokenCount(artifact.usage.inputTokens)} in / ${formatTokenCount(artifact.usage.outputTokens)} out · ${formatCacheRate(artifact.usage)} cached · ${formatApproximateCost(artifact.usage.cost)}` : "Harness-generated · no model call"}</span>
       </footer>
     </article>
   );
@@ -421,7 +558,7 @@ function RuntimeCandidateDesk({
 }: {
   task: RuntimeTask;
   candidate: RuntimeTask["candidates"][number];
-  onOpenDiff: () => void;
+  onOpenDiff: (target?: RuntimeTask["candidates"][number]) => void;
   diffLoading: boolean;
   compact?: boolean;
   approval?: boolean;
@@ -492,6 +629,17 @@ function RuntimeCandidateDesk({
               <strong>r{revision.number} &middot; {revision.headRevision.slice(0, 8)}</strong>
               <span>{revision.reason}</span>
               <small>{new Date(revision.createdAt).toLocaleString()}</small>
+              <button
+                type="button"
+                onClick={() => onOpenDiff({
+                  ...candidate,
+                  revisionNumber: revision.number,
+                  headRevision: revision.headRevision,
+                  status: revision.number === candidate.revisionNumber ? candidate.status : "superseded",
+                })}
+              >
+                Inspect r{revision.number} diff <GitDiff size={13} />
+              </button>
             </div>
           ))}
         </details>

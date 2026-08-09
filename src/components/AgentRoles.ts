@@ -10,21 +10,35 @@ export interface AgentRoleDefinition {
   id: AgentRoleId;
   label: string;
   skill: string;
-  provider: "codex" | "harness";
+  provider: "model" | "harness";
+  parentId?: AgentRoleId;
+}
+
+function workflowRole(id: AgentRoleId): AgentRoleDefinition {
+  const stage = workflowStages.find((item) => item.id === id);
+  if (!stage) throw new Error(`Unknown workflow role: ${id}`);
+  return { id, label: stage.label, skill: stage.skill, provider: id === "approval" ? "harness" : "model" };
 }
 
 export const agentRoles: AgentRoleDefinition[] = [
-  ...workflowStages
-    .filter((stage) => stage.id !== "approval")
-    .map((stage) => ({ id: stage.id, label: stage.label, skill: stage.skill, provider: "codex" as const })),
-  { id: "repair", label: "Candidate repair", skill: "repair-candidate", provider: "codex" },
+  workflowRole("triage"),
+  workflowRole("scouts"),
   ...scoutRoleIds.map((id) => ({
     id,
     label: id.replace(/^scout-/, "").replaceAll("-", " ").replace(/^./, (value) => value.toUpperCase()),
     skill: id,
-    provider: "codex" as const,
+    provider: "model" as const,
+    parentId: "scouts" as const,
   })),
-  { id: "approval", label: "Human approval", skill: "request-approval", provider: "harness" },
+  workflowRole("grill"),
+  workflowRole("specification"),
+  workflowRole("plan"),
+  workflowRole("implement"),
+  { id: "repair", label: "Candidate repair", skill: "repair-candidate", provider: "model" },
+  workflowRole("dev-review"),
+  workflowRole("test"),
+  workflowRole("final-review"),
+  workflowRole("approval"),
 ];
 
 export function policyIdForRole(roleId: AgentRoleId) {

@@ -48,6 +48,22 @@
   cursor: pointer;
 }
 
+.agent-grid--roles .agent-panel--child {
+  position: relative;
+  padding-left: 29px;
+  background: color-mix(in srgb, var(--blue) 3%, transparent);
+}
+
+.agent-grid--roles .agent-panel--child::before {
+  position: absolute;
+  inset: 18px auto 18px 13px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--blue);
+  content: "";
+  opacity: 0.5;
+}
+
 .agent-panel:focus-visible,
 .model-option:has(input:focus-visible) {
   outline: 2px solid var(--blue);

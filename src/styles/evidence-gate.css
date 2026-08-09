@@ -70,6 +70,23 @@
   font-size: 12px;
   line-height: 1.45;
 }
+.scout-dispatch-usage {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.scout-dispatch-usage:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
 .scout-dispatch-state {
   width: 8px;
   height: 8px;
@@ -245,6 +262,102 @@
 .runtime-candidate-desk--compact .runtime-fact-grid > div:nth-child(2) {
   border-right: 0;
 }
+.runtime-artifact-history,
+.runtime-task-decision-summary {
+  display: grid;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.runtime-artifact-history > header,
+.runtime-task-decision-summary > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.runtime-artifact-history > header > span,
+.runtime-task-decision-summary > header > span {
+  display: grid;
+  gap: 3px;
+}
+.runtime-artifact-history header small,
+.runtime-task-decision-summary header small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.runtime-artifact-history > div,
+.runtime-task-decision-summary > div {
+  display: grid;
+}
+.runtime-artifact-history button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 16px;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.runtime-artifact-history button:last-child,
+.runtime-task-decision-summary article:last-child {
+  border-bottom: 0;
+}
+.runtime-artifact-history button:hover {
+  background: var(--surface-2);
+}
+.runtime-artifact-history button > span {
+  display: grid;
+  gap: 3px;
+}
+.runtime-artifact-history button > span:nth-child(2) {
+  justify-items: end;
+}
+.runtime-artifact-history em {
+  font-style: normal;
+}
+.runtime-artifact-history button.runtime-artifact-history__more {
+  grid-template-columns: minmax(0, 1fr) auto;
+  color: var(--blue);
+}
+.runtime-artifact-history__more svg {
+  transition: transform 120ms ease;
+}
+.runtime-artifact-history__more svg.is-expanded {
+  transform: rotate(180deg);
+}
+.runtime-artifact-history button small,
+.runtime-artifact-history button time,
+.runtime-task-decision-summary article small,
+.runtime-task-decision-summary article p {
+  color: var(--muted);
+  font-size: 12px;
+}
+.runtime-artifact-history button time {
+  white-space: nowrap;
+}
+.runtime-task-decision-summary article {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
+  gap: 18px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.runtime-task-decision-summary article > span {
+  display: grid;
+  gap: 4px;
+}
+.runtime-task-decision-summary article p {
+  margin: 0;
+  line-height: 1.5;
+}
 .runtime-repair-lineage {
   border-top: 1px solid var(--border);
 }
@@ -259,11 +372,29 @@
 }
 .runtime-repair-lineage > div {
   display: grid;
-  grid-template-columns: 110px minmax(0, 1fr) auto;
+  grid-template-columns: 110px minmax(0, 1fr) auto auto;
   gap: 10px;
   padding: 8px 0;
   border-top: 1px solid var(--border);
   font-size: 12px;
+}
+.runtime-repair-lineage > div button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  justify-self: end;
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-2);
+  color: var(--blue);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.runtime-repair-lineage > div button:hover {
+  border-color: var(--blue);
+  color: var(--text);
 }
 .runtime-repair-lineage > div span,
 .runtime-repair-lineage > div small {

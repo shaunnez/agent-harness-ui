@@ -20,6 +20,7 @@ import {
   type StageId,
   workflowStages,
 } from "../domain";
+import { isModelRunArtifact, sumArtifactUsage } from "../artifactPresentation";
 import { MarkdownContent } from "./MarkdownContent";
 import { RunActivity } from "./RunActivity";
 import type { TaskRouteDetail } from "../routes";
@@ -236,8 +237,19 @@ export function RuntimeTaskWorkspace({
     }
     setOpenArtifact(null);
     if (routeDetail.kind !== "candidate-diff") return;
-    const target = task.candidates.find(
-      (item) => item.id === routeDetail.candidateId && item.revisionNumber === routeDetail.revision,
+    const recordedCandidate = task.candidates.find((item) => item.id === routeDetail.candidateId);
+    const recordedRevision = recordedCandidate?.revisions.find((item) => item.number === routeDetail.revision);
+    const target = recordedCandidate && (
+      recordedCandidate.revisionNumber === routeDetail.revision
+        ? recordedCandidate
+        : recordedRevision
+          ? {
+              ...recordedCandidate,
+              revisionNumber: recordedRevision.number,
+              headRevision: recordedRevision.headRevision,
+              status: "superseded",
+            }
+          : null
     );
     if (!target) {
       onRouteDetailChange?.(null);
@@ -549,9 +561,9 @@ export function RuntimeTaskWorkspace({
             </InspectorSection>
             {stageArtifact ? (
               <InspectorSection title="Viewed agent run" meta={stageArtifact.name}>
-                {stageArtifact.model ? (
+                {isModelRunArtifact(stageArtifact) ? (
                   <>
-                    <RuntimeRow label="Model" value={stageArtifact.model} mono />
+                    <RuntimeRow label="Model" value={stageArtifact.model ?? "Unknown model"} mono />
                     <RuntimeRow label="Reasoning" value={stageArtifact.reasoning ?? "Not recorded"} />
                     <RuntimeRow label="Input" value={`${formatTokenCount(stageArtifact.usage.inputTokens)} total \u00b7 ${formatTokenCount(Math.max(0, stageArtifact.usage.inputTokens - stageArtifact.usage.cachedInputTokens - (stageArtifact.usage.cacheWriteTokens ?? 0)))} uncached`} />
                     <RuntimeRow label="Output" value={formatTokenCount(stageArtifact.usage.outputTokens)} />
@@ -560,6 +572,8 @@ export function RuntimeTaskWorkspace({
                     <RuntimeRow label="Approx. cost" value={`${formatApproximateCost(stageArtifact.usage.cost)} \u00b7 API-rate estimate`} />
                     <RuntimeContextDisclosure artifact={stageArtifact} />
                   </>
+                ) : stageArtifact.stage === "scouts" ? (
+                  <ScoutAggregationUsage task={task} artifact={stageArtifact} />
                 ) : (
                   <RuntimeRow label="Origin" value="Harness-generated \u2014 no model call, so there is no token usage to report" />
                 )}
@@ -702,5 +716,46 @@ export function RuntimeTaskWorkspace({
         />
       ) : null}
     </div>
+  );
+}
+
+function ScoutAggregationUsage({
+  task,
+  artifact,
+}: {
+  task: RuntimeTaskWorkspaceProps["task"];
+  artifact: RuntimeArtifact;
+}) {
+  const childScoutArtifacts = task.artifacts.filter(
+    (item) => item.agentRole?.startsWith("scout-") && isModelRunArtifact(item),
+  );
+  const usage = sumArtifactUsage(childScoutArtifacts);
+
+  return (
+    <>
+      <RuntimeRow
+        label="Origin"
+        value="Harness-generated deterministic aggregation of the selected scout reports; no extra model call"
+      />
+      <RuntimeRow label="Child scout runs" value={`${usage.runs} recorded`} />
+      <RuntimeRow
+        label="Input"
+        value={`${formatTokenCount(usage.inputTokens)} total \u00b7 ${formatTokenCount(usage.uncachedInputTokens)} uncached`}
+      />
+      <RuntimeRow label="Output" value={formatTokenCount(usage.outputTokens)} />
+      <RuntimeRow
+        label="Cached input"
+        value={`${formatTokenCount(usage.cachedInputTokens)} \u00b7 ${usage.cacheRate.toFixed(1)}%`}
+      />
+      <RuntimeRow
+        label="Work credits"
+        value={usage.credits == null ? "Unavailable for the recorded providers" : usage.credits.toFixed(3)}
+      />
+      <RuntimeRow
+        label="Approx. cost"
+        value={`${formatApproximateCost(usage.cost)} \u00b7 child-run API-rate estimate`}
+      />
+      <RuntimeContextDisclosure artifact={artifact} />
+    </>
   );
 }
