@@ -7,7 +7,7 @@ import {
   type AgentRoleId,
   type RuntimeTaskSummary,
 } from "../domain";
-import { isModelRunArtifact, sumArtifactUsage } from "../artifactPresentation";
+import { isModelRunArtifact, resolveScoutUsage, sumArtifactUsage } from "../artifactPresentation";
 
 export function Metric({ label, value }: { label: string; value: string }) {
   return <div><span><CheckCircle size={16} /> {label}</span><strong>{value}</strong></div>;
@@ -18,13 +18,15 @@ export function SettingRow({ title, copy, control }: { title: string; copy: stri
 }
 
 export function stageUsage(tasks: RuntimeTaskSummary[], stageId: AgentRoleId) {
-  const artifacts = tasks
-    .flatMap((task) => task.artifacts)
-    .filter((artifact) => {
-      if (!isModelRunArtifact(artifact)) return false;
-      if (stageId === "scouts") return artifact.stage === "scouts" && artifact.agentRole?.startsWith("scout-");
-      return (artifact.agentRole ?? artifact.stage) === stageId;
-    });
+  const artifacts = stageId === "scouts" || stageId.startsWith("scout-")
+    ? tasks.flatMap((task) => {
+        const resolved = resolveScoutUsage(task);
+        if (stageId === "scouts") return resolved.matchedArtifacts;
+        return resolved.perScout.find((entry) => entry.scout.name === stageId)?.artifacts ?? [];
+      })
+    : tasks
+        .flatMap((task) => task.artifacts)
+        .filter((artifact) => isModelRunArtifact(artifact) && (artifact.agentRole ?? artifact.stage) === stageId);
   const usage = sumArtifactUsage(artifacts);
   return {
     artifacts,
