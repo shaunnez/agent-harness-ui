@@ -84,11 +84,12 @@ const passingVerification = async ({ candidate }) => harnessEvidence(candidate);
 const TEST_OUTPUT = `PASS\n\n## Verdict\n\nPASS\n\n<focused-test-evidence>\n{"candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","startedAt":"2026-08-01T12:00:00.000Z","completedAt":"2026-08-01T12:00:01.240Z","durationMs":1240,"rows":[{"id":"row-1","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":1240,"title":"orchestrator.test.mjs","artifactReferences":[{"name":"Markdown test artifact","kind":"markdown","path":"artifacts/test.md"}],"assertions":[{"label":"all packages qualified","actual":"pass","expected":"pass"}],"failureDetails":null},{"id":"row-2","candidateId":"C1","candidateRevision":2,"command":"npm.cmd run test:orchestrator","status":"passed","durationMs":350,"title":"api.test.mjs","artifactReferences":[{"name":"JUnit report","kind":"junit","path":"artifacts/junit.xml"}],"assertions":[{"label":"API contract","actual":"pass","expected":"pass"}],"failureDetails":null}]}\n</focused-test-evidence>`;
 
 function gateOutput(revision, verdict = "PASS", findings = []) {
-  const reproducibleFindings = findings.map((finding) => (
-    ["P0", "P1"].includes(finding.severity) && !finding.reproductionEvidence
-      ? { ...finding, reproductionEvidence: "Follow the deterministic candidate path described in this finding." }
-      : finding
-  ));
+  const reproducibleFindings = findings.map((finding) => {
+    const classified = { kind: "candidate-defect", ...finding };
+    return ["P0", "P1"].includes(classified.severity) && !classified.reproductionEvidence
+      ? { ...classified, reproductionEvidence: "Follow the deterministic candidate path described in this finding." }
+      : classified;
+  });
   return `${verdict}\n\n## Verdict\n\n${verdict}\n\n<gate-evidence>\n${JSON.stringify({ candidateId: "C1", candidateRevision: revision, verdict, summary: "Candidate-bound result", findings: reproducibleFindings })}\n</gate-evidence>`;
 }
 
@@ -1921,8 +1922,8 @@ test("candidate command failure overrides a Development Review PASS and remains 
     const artifact = finished.artifacts.find((entry) => entry.id === run.artifactId);
     assert.equal(run.gateResult.reportedVerdict, "PASS");
     assert.equal(run.gateResult.verdict, "REPAIR");
-    assert.equal(run.evidenceError.code, "command_failure");
-    assert.equal(run.freshness.reasonCode, "command_failure");
+    assert.equal(run.evidenceError.code, "review_tooling_failure");
+    assert.equal(run.freshness.reasonCode, "review_tooling_failure");
     assert.equal(run.toolCalls[0].commandFailed, true);
     assert.equal(run.toolCalls[0].runtimeScope, "candidate");
     assert.equal(run.toolCalls[0].result, "Exit code 1");
@@ -1930,12 +1931,98 @@ test("candidate command failure overrides a Development Review PASS and remains 
     assert.equal(finished.candidates[0].status, "review_retry_required");
     assert.equal(finished.reviewRetries.length, 1);
     assert.match(finished.events.at(-1).title, /rerun required/i);
+
+    assert.equal(await orchestrator.start(task.id, "review"), true);
+    let repeated = null;
+    for (let attempt = 0; attempt < 200; attempt += 1) {
+      const current = await store.get(task.id);
+      if (
+        current.status === "review-retry-required" &&
+        current.attemptsByStage["dev-review"] === 2 &&
+        current.activeRunIds.length === 0
+      ) {
+        repeated = current;
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    assert.ok(repeated);
+    assert.equal(repeated.status, "review-retry-required");
+    assert.equal(repeated.reviewRetries.length, 2);
+    assert.equal(repeated.stageRunLimits["dev-review"], 2, "the same failure stops after one bounded retry");
+    assert.match(repeated.error, /human must inspect/i);
+    assert.equal(await orchestrator.start(task.id, "review"), false, "another review requires an explicit human retry grant");
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 });
 
-test("candidate command failure retains an exact Development Review REPAIR authorizer", async () => {
+test("stops Development Review when it exceeds the hard repository-command budget", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-review-command-budget-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Bound review cost",
+      description: "A reviewer must not inventory the repository.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "low",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 1,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/review-command-budget",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "ready_for_review",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        updatedAt: "2026-08-01T12:00:00.000Z",
+        revisions: [],
+      }];
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: { verifyCandidate: async () => {} },
+      runCodex: async ({ onEvent }) => {
+        for (let index = 1; index <= 5; index += 1) {
+          onEvent?.({
+            type: "activity",
+            tone: "info",
+            title: "Inspecting repository",
+            detail: `git show file-${index}`,
+            toolCall: {
+              id: `cmd-${index}`,
+              name: "command_execution",
+              category: "repository-command",
+              phase: "started",
+              result: null,
+            },
+          });
+        }
+        return {
+          finalText: gateOutput(1),
+          usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+        };
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id, "review"), true);
+    const failed = await waitForStatus(store, task.id, "failed");
+    assert.match(failed.error, /hard 4-command review budget/i);
+    assert.equal(failed.runs.at(-1).status, "failed");
+    assert.ok(failed.events.some((event) => event.title === "Review command budget exceeded"));
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("reviewer command failure never authorizes candidate Repair even when the reviewer reports REPAIR", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-review-command-repair-"));
   try {
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
@@ -1966,18 +2053,9 @@ test("candidate command failure retains an exact Development Review REPAIR autho
       }];
     });
 
-    let repairPhase = false;
-    let releaseRepairVerification;
-    const repairVerification = new Promise((resolve) => {
-      releaseRepairVerification = resolve;
-    });
     const orchestrator = new TaskOrchestrator(store, {
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
-      worktreeManager: {
-        verifyCandidate: async () => {
-          if (repairPhase) await repairVerification;
-        },
-      },
+      worktreeManager: { verifyCandidate: async () => {} },
       runCodex: async ({ onEvent }) => {
         onEvent?.({
           type: "activity",
@@ -2008,22 +2086,13 @@ test("candidate command failure retains an exact Development Review REPAIR autho
     });
 
     assert.equal(await orchestrator.start(task.id, "review"), true);
-    const repairReady = await waitForStatus(store, task.id, "repair-required");
-    assert.equal(repairReady.gateFreshness["dev-review"].reasonCode, "command_failure");
-    assert.equal(repairReady.runs.at(-1).gateResult.verdict, "REPAIR");
-    assert.equal(repairReady.runs.at(-1).toolCalls[0].commandFailed, true);
-
-    repairPhase = true;
-    assert.equal(await orchestrator.start(task.id, "repair"), true);
-    const reserved = await store.get(task.id);
-    assert.equal(reserved.activeRunKind, "repair");
-    assert.equal(reserved.stageRunReservations.implement.authorizingGateStage, "dev-review");
-    assert.equal(reserved.stageRunReservations.implement.authorizingGateRunId, repairReady.runs.at(-1).id);
-    assert.equal(reserved.stageRunReservations.implement.authorizingGateArtifactId, repairReady.runs.at(-1).artifactId);
-
-    assert.equal(await orchestrator.cancel(task.id), true);
-    releaseRepairVerification();
-    await waitForStatus(store, task.id, "cancelled");
+    const retryReady = await waitForStatus(store, task.id, "review-retry-required");
+    assert.equal(retryReady.gateFreshness["dev-review"].reasonCode, "review_tooling_failure");
+    assert.equal(retryReady.runs.at(-1).gateResult.verdict, "REPAIR");
+    assert.equal(retryReady.runs.at(-1).gateResult.findings[0].blocking, true);
+    assert.equal(retryReady.runs.at(-1).toolCalls[0].commandFailed, true);
+    assert.equal(retryReady.candidates[0].status, "review_retry_required");
+    assert.equal(await orchestrator.start(task.id, "repair"), false);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -2101,7 +2170,7 @@ test("an exact failed Focused Test requires repair despite interpreter command f
     const repairReady = await waitForStatus(store, task.id, "repair-required");
     const testRun = repairReady.runs.find((run) => run.stage === "test");
     assert.equal(testRun.test.status, "failed");
-    assert.equal(testRun.evidenceError.code, "command_failure", "failed interpreter telemetry remains retained");
+    assert.equal(testRun.evidenceError.code, "review_tooling_failure", "failed interpreter telemetry remains retained");
     assert.equal(testRun.toolCalls[0].commandFailed, true);
     assert.equal(repairReady.gateFreshness.test.reasonCode, "repair_required");
     assert.equal(repairReady.gateFreshness.test.focusedTest.status, "failed");

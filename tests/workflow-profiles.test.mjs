@@ -17,7 +17,7 @@ function gateOutput(revision, verdict = "PASS", findings = []) {
     candidateRevision: revision,
     verdict,
     summary: "Complete candidate diff inspected.",
-    findings,
+    findings: findings.map((finding) => ({ kind: "candidate-defect", ...finding })),
   })}</gate-evidence>`;
 }
 
@@ -147,9 +147,23 @@ test("keeps all blocking review findings and makes P2 advice non-blocking by def
   ]), { id: "C1", revisionNumber: 1 }, "dev-review");
   assert.equal(adviceOnly.verdict, "PASS", "maintainability advice cannot authorize candidate repair");
   assert.equal(adviceOnly.reportedVerdict, "REPAIR", "the inconsistent reviewer report remains auditable");
+  const verificationGap = parseGateEvidence(gateOutput(1, "PASS", [{
+    kind: "verification-gap",
+    severity: "P1",
+    title: "Exact-candidate test has not run yet",
+    detail: "The later Harness Test gate owns this evidence.",
+    blocking: true,
+    acceptanceCriterion: "Repository verification passes.",
+    reproductionEvidence: "No Test artifact exists yet.",
+    candidateId: "C1",
+    candidateRevision: 1,
+  }]), { id: "C1", revisionNumber: 1 }, "dev-review");
+  assert.equal(verificationGap.verdict, "PASS");
+  assert.equal(verificationGap.findings[0].blocking, false, "verification gaps cannot authorize candidate Repair");
   assert.throws(
     () => parseGateEvidence(`<gate-evidence>${JSON.stringify({
       candidateId: "C1", candidateRevision: 1, verdict: "REPAIR", findings: [{
+        kind: "candidate-defect",
         severity: "P1", title: "No reproduction", detail: "A claim without exact reproduction.",
         candidateId: "C1", candidateRevision: 1,
       }],

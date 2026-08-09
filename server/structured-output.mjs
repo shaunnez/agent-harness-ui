@@ -278,6 +278,13 @@ export function parseGateEvidence(text, candidate, stageId) {
         `Gate finding ${index + 1} must have severity P0, P1, P2, or P3.`,
       );
     }
+    if (!["candidate-defect", "verification-gap"].includes(finding.kind)) {
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `Gate finding ${index + 1} kind must be candidate-defect or verification-gap.`,
+      );
+    }
+    const kind = finding.kind;
     if (typeof finding.title !== "string" || typeof finding.detail !== "string") {
       throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} title and detail must be strings.`);
     }
@@ -305,7 +312,12 @@ export function parseGateEvidence(text, candidate, stageId) {
     const reproductionEvidence = typeof finding.reproductionEvidence === "string" && finding.reproductionEvidence.trim()
       ? finding.reproductionEvidence.trim().slice(0, 4_000)
       : null;
-    const blocking = severity === "P0" || severity === "P1" || (finding.blocking === true && acceptanceCriterion != null);
+    // Verification gaps are owned by the later Harness Test gate, not by candidate
+    // Repair. They remain visible findings, but only an actual candidate defect can
+    // become a blocking repair authorizer.
+    const blocking = kind === "candidate-defect" && (
+      severity === "P0" || severity === "P1" || (finding.blocking === true && acceptanceCriterion != null)
+    );
     if (blocking && !reproductionEvidence) {
       throw candidateEvidenceError(
         "contradictory_evidence",
@@ -314,6 +326,7 @@ export function parseGateEvidence(text, candidate, stageId) {
     }
     return {
       severity,
+      kind,
       title,
       detail,
       file: finding.file == null ? null : finding.file.trim(),

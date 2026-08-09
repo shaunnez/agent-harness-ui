@@ -480,11 +480,10 @@ export function createClaudeStreamParser() {
 
     if (entry.kind === "bash") {
       // An E2BIG shell start is the host refusing to exec, not a command that ran and
-      // failed. It is deliberately *not* `commandFailed`: that flag means "a
-      // verification command reported a problem", which in the test stage is a REPAIR
-      // verdict. Laundering an environment fault into a verdict is exactly what the
-      // rules above warn against, so this is counted as parser state and `runClaude`
-      // fails the whole run on it instead.
+      // failed. It is deliberately *not* `commandFailed`: that flag means a model-run
+      // diagnostic command returned a failure. Laundering an environment fault into
+      // candidate evidence is exactly what the rules above warn against, so this is
+      // counted as parser state and `runClaude` fails the whole run on it instead.
       if (readsAsShellStartFailure(toolResultText(block.content))) {
         state.shellStartFailures += 1;
         return {
@@ -492,7 +491,7 @@ export function createClaudeStreamParser() {
           tone: "danger",
           title: "Repository command could not start",
           detail: entry.detail,
-          runtimeScope: "candidate",
+          runtimeScope: "agent-diagnostic",
           toolCall: {
             id,
             name: "command_execution",
@@ -509,7 +508,7 @@ export function createClaudeStreamParser() {
         detail: entry.detail,
         commandFailed: !succeeded,
         // Claude has no context-preflight exemption; that whitelist is Codex-specific.
-        runtimeScope: "candidate",
+        runtimeScope: "agent-diagnostic",
         toolCall: {
           id,
           name: "command_execution",

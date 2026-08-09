@@ -15,6 +15,7 @@ export type RuntimeFreshnessReasonCode =
   | "contradictory_evidence"
   | "repair_required"
   | "command_failure"
+  | "review_tooling_failure"
   | "failed_execution"
   | "timeout"
   | "run_in_progress"

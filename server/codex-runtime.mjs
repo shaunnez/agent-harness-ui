@@ -123,7 +123,7 @@ export function parseCodexEvent(line) {
     const succeeded = event.item.status === "completed" || event.item.exit_code === 0;
     const runtimeScope = !succeeded && isRuntimeContextPreflightCommand(event.item.command)
       ? "context-preflight"
-      : "candidate";
+      : "agent-diagnostic";
     return {
       type: "activity",
       tone: succeeded ? "success" : "warning",
@@ -280,23 +280,7 @@ export async function runCodex({
   if (!binary) throw new Error("Codex CLI was not found. Install Codex and sign in with ChatGPT first.");
   if (!["read-only", "workspace-write"].includes(sandbox)) throw new Error(`Unsupported Codex sandbox: ${sandbox}`);
 
-  const args = [
-    "exec",
-    "--json",
-    "--skip-git-repo-check",
-    "--sandbox",
-    sandbox,
-    ...(networkAccess && sandbox === "workspace-write"
-      ? ["-c", "sandbox_workspace_write.network_access=true"]
-      : []),
-    "--model",
-    model,
-    "-c",
-    `model_reasoning_effort=\"${reasoning}\"`,
-    "--cd",
-    cwd,
-    "-",
-  ];
+  const args = buildCodexSpawnArgs({ cwd, sandbox, networkAccess, model, reasoning });
   const runtimeTemp =
     tempDirectory ??
     process.env.AGENT_HARNESS_TEMP ??
@@ -329,6 +313,34 @@ export async function runCodex({
   }
   if (!finalText) throw new Error("Codex completed without returning an artifact.");
   return { finalText, usage };
+}
+
+export function buildCodexSpawnArgs({ cwd, sandbox, networkAccess = false, model, reasoning }) {
+  if (!["read-only", "workspace-write"].includes(sandbox)) throw new Error(`Unsupported Codex sandbox: ${sandbox}`);
+  return [
+    "exec",
+    "--json",
+    // Stage runs must not inherit optional desktop plugins, global skills or memory
+    // instructions. Authentication still comes from CODEX_HOME, as documented by the
+    // CLI, while the repository's own AGENTS.md remains available from `cwd`.
+    "--ephemeral",
+    "--ignore-user-config",
+    "--disable",
+    "memories",
+    "--skip-git-repo-check",
+    "--sandbox",
+    sandbox,
+    ...(networkAccess && sandbox === "workspace-write"
+      ? ["-c", "sandbox_workspace_write.network_access=true"]
+      : []),
+    "--model",
+    model,
+    "-c",
+    `model_reasoning_effort=\"${reasoning}\"`,
+    "--cd",
+    cwd,
+    "-",
+  ];
 }
 
 export function buildCodexEnvironment(source, runtimeTemp) {

@@ -64,6 +64,7 @@ export const RUNTIME_FRESHNESS_REASONS = Object.freeze({
   contradictory_evidence: "Candidate evidence contains contradictory result fields.",
   repair_required: "The terminal run requires candidate repair before this gate can be fresh.",
   command_failure: "A candidate-scope command failed, so the gate requires rerun.",
+  review_tooling_failure: "A reviewer diagnostic command failed, so the same candidate requires one bounded review retry.",
   failed_execution: "The terminal run failed, so its evidence is not fresh.",
   timeout: "The terminal run timed out, so its evidence requires rerun.",
   run_in_progress: "The run is still in progress; authoritative evidence is not available yet.",
@@ -573,7 +574,7 @@ function evaluateGateRun(run, target, stage, sourceRunId, sourceArtifactId) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
   const hasBlockingReasons = summary.blockingReasons.length > 0;
-  const blockingFindings = summary.findings.some((finding) => ["P0", "P1"].includes(finding?.severity));
+  const blockingFindings = summary.findings.some((finding) => finding?.blocking === true);
   if (summary.verdict === "PASS" && (hasBlockingReasons || blockingFindings)) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
@@ -707,7 +708,7 @@ function evaluateTestGateResult(summary, target, sourceRunId, sourceArtifactId) 
     return createFreshness("test", target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);
   }
 
-  const blockingFindings = summary.findings.some((finding) => ["P0", "P1"].includes(finding?.severity));
+  const blockingFindings = summary.findings.some((finding) => finding?.blocking === true);
   const hasBlockingReasons = summary.blockingReasons.length > 0;
   const verdictsDisagree = summary.reportedVerdict != null && summary.reportedVerdict !== summary.verdict;
   if (verdictsDisagree || (summary.reportedVerdict === "PASS" && (hasBlockingReasons || blockingFindings))) {
@@ -966,6 +967,7 @@ function persistedBindingMarkerReason(value) {
 
 function isValidPersistedGateFinding(finding) {
   if (!finding || typeof finding !== "object" || Array.isArray(finding)) return false;
+  if (finding.kind != null && !["candidate-defect", "verification-gap"].includes(finding.kind)) return false;
   if (!["P0", "P1", "P2", "P3"].includes(finding.severity)) return false;
   if (typeof finding.title !== "string" || !finding.title.trim()) return false;
   if (typeof finding.detail !== "string" || !finding.detail.trim()) return false;

@@ -145,7 +145,9 @@ A failure produces a structured repair packet containing:
 - required reruns and invalidated verdicts;
 - remaining repair allowance.
 
-A reviewer execution/tooling failure is a **review retry**, not a candidate repair. Failed telemetry remains retained and a fresh read-only review is required. Candidate repair is authorized only by a confirmed candidate defect, an explicit acceptance gap, a security/data-integrity problem, or deterministic candidate verification failure. Reviewers inspect the complete candidate diff and return all blocking findings together. P2/P3 maintainability advice is non-blocking unless explicitly tied to an acceptance criterion.
+A reviewer execution/tooling failure is a **review retry**, not a candidate repair. Failed telemetry remains retained and a fresh read-only review is required; the same reason gets one normal retry before a human must grant another attempt. Model-run shell commands are diagnostic telemetry, never authoritative verification. Only Harness-owned manifest rows can establish test success or failure. Review findings classify `candidate-defect` separately from `verification-gap`; a verification gap is routed to the Harness Test gate and cannot authorize source Repair. Candidate repair is authorized only by a confirmed candidate defect, an explicit acceptance gap, a security/data-integrity problem, or deterministic candidate verification failure. Reviewers inspect the complete candidate diff and return all blocking findings together. P2/P3 maintainability advice is non-blocking unless explicitly tied to an acceptance criterion.
+
+Development Review is a bounded static review: at most four targeted repository commands, with test/build/lint/typecheck/package/manifest execution prohibited. Stage subprocesses use only repository-local commands and do not inspect global memory, skill, plugin, cache, configuration, or optional machine-specific paths.
 
 Fast permits one automatic review-driven repair cycle. A further candidate defect stops for human direction. Every repair creates a new candidate revision, makes downstream evidence stale, and reruns every invalidated gate.
 

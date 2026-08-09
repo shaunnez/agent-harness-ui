@@ -11,6 +11,8 @@ A local-first AI development workflow that turns a task into inspectable, persis
 - Dependency-batched work packages that execute concurrently in isolated Git worktrees, followed by ordered candidate assembly, candidate-bound review/test gates, repair revisions, and a revalidated fast-forward-only human merge action.
 - Persisted `fast`, `standard`, and `high-risk` profiles with deterministic selection, a pre-implementation operator override, automatic escalation, and explicit not-required stage reasons rather than fabricated completion evidence.
 - Focused argv-only checks bound to each package commit, followed by one complete repository verification-manifest execution per candidate revision. Review and Final Review consume that retained evidence instead of rerunning it.
+- Repository-local agent isolation: Codex stage subprocesses are ephemeral, ignore optional user plugins/configuration, disable memory injection, and receive an explicit prohibition on global memory/skill paths. Development Review is capped at four repository commands and cannot run test/build/lint/typecheck commands.
+- Review tooling failures remain visible but can only request one bounded same-candidate retry. They never authorize candidate Repair; a repeated identical reason requires an explicit human retry grant.
 - A live task workspace with viewed-versus-active stages, top-of-stage actions, task/stage/candidate context, living artifact drill-down, scoped run activity, and real token/cache telemetry with clearly labelled API-rate estimates.
 - The original full prototype for multiple-provider workflow concepts that remain ahead of the real OpenAI/Codex-only runtime.
 

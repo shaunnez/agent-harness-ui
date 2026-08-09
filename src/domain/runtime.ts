@@ -92,6 +92,7 @@ export interface RuntimeArtifact {
     evaluatedAt: string;
     blockingReasons: string[];
     findings?: Array<{
+      kind: "candidate-defect" | "verification-gap";
       severity: "P0" | "P1" | "P2" | "P3";
       title: string;
       detail: string;

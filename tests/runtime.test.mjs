@@ -7,6 +7,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createServer as createViteServer } from "vite";
 import {
+  buildCodexSpawnArgs,
   buildCodexEnvironment,
   DEFAULT_MODEL,
   DEFAULT_REASONING,
@@ -77,14 +78,14 @@ test("parses Codex final messages and usage", () => {
         exit_code: 0,
       },
     })).runtimeScope,
-    "candidate",
+    "agent-diagnostic",
   );
   assert.equal(
     parseCodexEvent(JSON.stringify({
       type: "item.completed",
       item: { type: "command_execution", command: "rg -n defect tests", exit_code: 1 },
     })).runtimeScope,
-    "candidate",
+    "agent-diagnostic",
   );
   for (const command of [
     `/bin/zsh -lc 'rg needle ./src ${memoryFile}'`,
@@ -109,7 +110,7 @@ test("parses Codex final messages and usage", () => {
         type: "item.completed",
         item: { type: "command_execution", command, exit_code: 1 },
       })).runtimeScope,
-      "candidate",
+      "agent-diagnostic",
       command,
     );
   }
@@ -122,7 +123,7 @@ test("parses Codex final messages and usage", () => {
         type: "item.completed",
         item: { type: "command_execution", command, exit_code: 1 },
       })).runtimeScope,
-      "candidate",
+      "agent-diagnostic",
     );
   }
   assert.equal(
@@ -134,7 +135,7 @@ test("parses Codex final messages and usage", () => {
         exit_code: 1,
       },
     })).runtimeScope,
-    "candidate",
+    "agent-diagnostic",
   );
   const previousCodexHome = process.env.CODEX_HOME;
   const customCodexHome = path.join(os.tmpdir(), "agent-harness-custom-codex-home");
@@ -247,6 +248,21 @@ test("builds a minimal Codex environment without inherited credentials", () => {
   assert.equal(environment.DATABASE_URL, undefined);
   assert.equal(environment.OPENAI_API_KEY, undefined);
   assert.equal(environment.ARBITRARY_SECRET, undefined);
+});
+
+test("runs Harness Codex stages without user plugins, skills, memories, or persisted sessions", () => {
+  const args = buildCodexSpawnArgs({
+    cwd: "/repo/candidate",
+    sandbox: "read-only",
+    networkAccess: false,
+    model: "gpt-5.6-sol",
+    reasoning: "high",
+  });
+  assert.ok(args.includes("--ephemeral"));
+  assert.ok(args.includes("--ignore-user-config"));
+  assert.deepEqual(args.slice(args.indexOf("--disable"), args.indexOf("--disable") + 2), ["--disable", "memories"]);
+  assert.equal(args.includes("--add-dir"), false);
+  assert.deepEqual(args.slice(args.indexOf("--cd"), args.indexOf("--cd") + 2), ["--cd", "/repo/candidate"]);
 });
 
 test("resolves the Codex provider through the execution-provider seam", () => {
@@ -461,18 +477,40 @@ test("candidate review prompts name the exact structured finding fields", () => 
     artifacts: [],
     decisions: [],
     attachments: [],
+    workPackages: [{
+      id: "S1",
+      verificationRuns: [{
+        candidateId: "S1",
+        candidateRevision: 1,
+        headRevision: "b".repeat(40),
+        executionKind: "focused-package",
+        status: "passed",
+        durationMs: 38_034,
+        rows: [
+          { id: "frontend-lint", status: "passed" },
+          { id: "frontend-test", status: "passed" },
+        ],
+      }],
+    }],
   });
   const request = buildExecutionRequest(task, "dev-review", {
     id: "C1",
     revisionNumber: 2,
     baseRevision: "a".repeat(40),
     headRevision: "b".repeat(40),
+    members: [{ packageId: "S1", headRevision: "b".repeat(40), order: 1 }],
   });
 
-  assert.match(request.prompt, /Every blocking finding needs deterministic reproductionEvidence/);
+  assert.match(request.prompt, /Every blocking candidate defect needs deterministic reproductionEvidence/);
+  assert.match(request.prompt, /"kind":"candidate-defect"/);
   assert.match(request.prompt, /"title":"Concise finding title"/);
   assert.match(request.prompt, /"detail":"Concrete failure scenario and smallest correction"/);
   assert.match(request.prompt, /"file":"src\/example\.ts"/);
+  assert.match(request.prompt, /Do not run tests, builds, linters, type checks, package scripts, or verification-manifest commands/);
+  assert.match(request.prompt, /Use at most four targeted repository commands/);
+  assert.match(request.prompt, /S1 @ b{40}: PASSED \(frontend-lint=PASSED, frontend-test=PASSED\) in 38034ms/);
+  assert.match(request.prompt, /Full exact-candidate manifest verification belongs to the later Test gate/);
+  assert.match(request.prompt, /Do not inspect global memory, skill, plugin, cache, configuration/);
   assert.doesNotMatch(request.prompt, /"path":/);
 });
 
@@ -690,13 +728,13 @@ test("repair requests carry complete typed gate findings and current-candidate r
       number: 2,
       headRevision: "b".repeat(40),
       reason: "repair",
-      requestedFindings: [{ severity: "P1", title: "Prior repair", detail: "Already attempted.", file: "old.js", line: 7, blocking: true, acceptanceCriterion: null, reproductionEvidence: null }],
+      requestedFindings: [{ kind: "candidate-defect", severity: "P1", title: "Prior repair", detail: "Already attempted.", file: "old.js", line: 7, blocking: true, acceptanceCriterion: null, reproductionEvidence: null }],
     },
     {
       number: 3,
       headRevision: "c".repeat(40),
       reason: "repair",
-      requestedFindings: [{ severity: "P2", title: "Second prior repair", detail: "Keep this lineage.", file: null, line: null, blocking: false, acceptanceCriterion: null, reproductionEvidence: null }],
+      requestedFindings: [{ kind: "candidate-defect", severity: "P2", title: "Second prior repair", detail: "Keep this lineage.", file: null, line: null, blocking: false, acceptanceCriterion: null, reproductionEvidence: null }],
     },
   ]);
   assert.equal(request.contextManifest.promptCharacters, request.prompt.length);
@@ -769,6 +807,7 @@ test("persists typed findings requested by the gate on each repair revision", as
     await waitUntil(() => !orchestrator.isRunning(task.id));
     const repaired = await store.get(task.id);
     assert.deepEqual(repaired.candidates[0].revisions[1].requestedFindings, [{
+      kind: "candidate-defect",
       severity: "P1",
       title: "Persist this finding",
       detail: "The repair must retain this exact detail.",
@@ -817,6 +856,7 @@ test("preserves complete parsed gate findings through persistence and the repair
         verdict: "REPAIR",
         summary: "Typed gate result",
         findings: [{
+          kind: "candidate-defect",
           severity: "P1",
           title,
           detail,

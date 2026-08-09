@@ -131,7 +131,7 @@ test("maps recorded Claude tool calls onto the internal event shape", async () =
   assert.equal(firstCompletion.commandFailed, true);
   assert.equal(firstCompletion.tone, "warning");
   assert.equal(firstCompletion.title, "Repository command returned a warning");
-  assert.equal(firstCompletion.runtimeScope, "candidate");
+  assert.equal(firstCompletion.runtimeScope, "agent-diagnostic");
   assert.equal(firstCompletion.toolCall.result, "Exit code 1");
 
   assert.equal(secondCompletion.detail, "wc -l a.txt");

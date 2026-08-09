@@ -1782,7 +1782,7 @@ export class TaskOrchestrator {
     let focusedTestEvidence = null;
     let structuredGateEvidence = null;
     let evidenceError = null;
-    const commandFailure = candidateVerificationCommandFailed(result.runtimeEvents);
+    const reviewerToolingFailure = modelCommandFailed(result.runtimeEvents);
     try {
       if (reviewerMutation) throw reviewerMutation;
       // Same contract, same validator, different source: the evidence is what the harness
@@ -1797,10 +1797,14 @@ export class TaskOrchestrator {
     } catch (error) {
       evidenceError = structuredEvidenceError(error);
     }
-    if (!evidenceError && commandFailure && structuredGateEvidence?.verdict !== "REPAIR") {
+    // Model-run shell commands are diagnostics, never candidate verification. A
+    // failure still fails closed, but it can only request a bounded rerun of this
+    // read-only gate; it can never authorize candidate Repair, even when the model's
+    // narrative also says REPAIR.
+    if (!evidenceError && reviewerToolingFailure) {
       evidenceError = {
-        code: "command_failure",
-        copy: RUNTIME_FRESHNESS_REASONS.command_failure,
+        code: "review_tooling_failure",
+        copy: RUNTIME_FRESHNESS_REASONS.review_tooling_failure,
       };
     }
     const verdict = evidenceError
@@ -1818,8 +1822,8 @@ export class TaskOrchestrator {
       blockingReasons: [
         ...(evidenceError ? [evidenceError.copy] : []),
         ...(reviewerMutation ? [`The ${stageId} agent mutated the candidate it was reviewing. ${reviewerMutation.message}`] : []),
-        ...(commandFailure
-          ? ["A candidate-scope command failed."]
+        ...(reviewerToolingFailure
+          ? ["A reviewer diagnostic command failed; no candidate defect was inferred from that telemetry."]
           : []),
         ...(focusedTestEvidence?.status === "failed" ? ["Structured test evidence contains a failed result."] : []),
         ...(structuredGateEvidence?.blockingReasons ?? []),
@@ -1860,7 +1864,7 @@ export class TaskOrchestrator {
         const authoritativeFailedTest = stageId === "test" &&
           focusedTestEvidence?.status === "failed" &&
           gateFailure.freshness.reasonCode === "repair_required";
-        const blockingFindings = authoritativeRun?.gateResult?.findings?.filter((finding) => finding.blocking === true || ["P0", "P1"].includes(finding.severity)) ?? [];
+        const blockingFindings = authoritativeRun?.gateResult?.findings?.filter((finding) => finding.blocking === true) ?? [];
         const reviewRetryRequired = ["dev-review", "final-review"].includes(stageId) &&
           gateFailure.freshness.reasonCode !== "repair_required" &&
           blockingFindings.length === 0;
@@ -1871,6 +1875,12 @@ export class TaskOrchestrator {
           draft.currentStage = stageId;
           if (["dev-review", "final-review"].includes(stageId)) {
             draft.reviewRetries ??= [];
+            const repeatedReason = draft.reviewRetries.some((retry) =>
+              retry.stage === stageId &&
+              retry.candidateId === activeCandidate.id &&
+              retry.candidateRevision === activeCandidate.revisionNumber &&
+              retry.reasonCode === gateFailure.freshness.reasonCode,
+            );
             draft.reviewRetries.push({
               stage: stageId,
               candidateId: activeCandidate.id,
@@ -1880,6 +1890,21 @@ export class TaskOrchestrator {
               reason: gateFailure.freshness.reasonCopy,
               createdAt: now(),
             });
+            if (repeatedReason) {
+              const attempts = draft.attemptsByStage?.[stageId] ?? 0;
+              draft.stageRunLimits ??= {};
+              draft.stageRunLimits[stageId] = Math.min(stageRunLimitFor(draft, stageId), attempts);
+              draft.error = `${getStageMetadata(stageId).label} repeated ${gateFailure.freshness.reasonCode} for the same candidate revision. A human must inspect the retained telemetry before granting another attempt; candidate Repair is not authorized.`;
+              draft.events.push(activity(
+                stageId,
+                "Repeated review failure stopped",
+                draft.error,
+                "danger",
+                "decision",
+                runEventMetadata(authoritativeRun),
+              ));
+              return;
+            }
           }
           draft.events.push(activity(
             stageId,
@@ -2170,6 +2195,15 @@ export class TaskOrchestrator {
       ));
     });
     const runtimeEvents = [];
+    const commandLimit = reviewCommandLimit(stageId);
+    const runController = commandLimit == null ? null : new AbortController();
+    let commandStarts = 0;
+    let commandLimitExceeded = false;
+    const relayAbort = () => runController?.abort();
+    if (runController) {
+      if (signal.aborted) runController.abort();
+      else signal.addEventListener("abort", relayAbort, { once: true });
+    }
     // `cwd` is the operator's real checkout for stages that run there, which is already
     // fully within its own allow-read scope. Only an isolated worktree (a candidate or a
     // work-package slice) can carry the symlink-into-source-checkout gap described on
@@ -2187,7 +2221,7 @@ export class TaskOrchestrator {
       const result = await this.#runAgent(runProvider, {
         cwd,
         prompt: agentRequest.prompt,
-        signal,
+        signal: runController?.signal ?? signal,
         sandbox: effectiveSandbox,
         // No stage grants network access any more. The only stage that ever needed it needed
         // it to run commands, and it no longer runs them.
@@ -2199,8 +2233,30 @@ export class TaskOrchestrator {
         timeoutMs: stageTimeoutMs(stageId, effectiveSandbox),
         onEvent(event) {
           if (event.type === "activity") runtimeEvents.push(event);
+          if (
+            commandLimit != null &&
+            event.toolCall?.category === "repository-command" &&
+            event.toolCall?.phase === "started"
+          ) {
+            commandStarts += 1;
+            if (commandStarts > commandLimit && !commandLimitExceeded) {
+              commandLimitExceeded = true;
+              runtimeEvents.push({
+                type: "activity",
+                tone: "warning",
+                title: "Review command budget exceeded",
+                detail: `${getStageMetadata(stageId).label} attempted more than ${commandLimit} repository commands; the model run was stopped before more review cost accumulated.`,
+                commandFailed: true,
+                runtimeScope: "review-tooling",
+              });
+              runController.abort();
+            }
+          }
         },
       });
+      if (commandLimitExceeded) {
+        throw new Error(`${getStageMetadata(stageId).label} exceeded its hard ${commandLimit}-command review budget.`);
+      }
       // Before the run is recorded as completed: a stage that mutated the operator's
       // working tree produced evidence about files that were never in the tree it
       // claims to have read.
@@ -2224,6 +2280,9 @@ export class TaskOrchestrator {
       await this.#finishAgentRun(task.id, stageId, eventLabel ?? metadata.label, result, "completed");
       return result;
     } catch (error) {
+      const failure = commandLimitExceeded
+        ? new Error(`${getStageMetadata(stageId).label} exceeded its hard ${commandLimit}-command review budget.`)
+        : error;
       const completedAt = now();
       await this.#finishAgentRun(task.id, stageId, eventLabel ?? metadata.label, {
         runId,
@@ -2232,10 +2291,11 @@ export class TaskOrchestrator {
         durationMs: Math.max(0, new Date(completedAt).getTime() - new Date(startedAt).getTime()),
         runtimeEvents,
         usage: null,
-        error: error instanceof Error ? error.message : String(error),
+        error: failure instanceof Error ? failure.message : String(failure),
       }, signal.aborted ? "cancelled" : isProcessTimeoutError(error) ? "timed-out" : "failed");
-      throw error;
+      throw failure;
     } finally {
+      signal.removeEventListener?.("abort", relayAbort);
       await rm(runtimeTemp, { recursive: true, force: true });
     }
   }
@@ -2415,15 +2475,23 @@ function stageTimeoutMs(stageId, sandbox) {
   return 360_000;
 }
 
+function reviewCommandLimit(stageId) {
+  return {
+    "dev-review": 4,
+    test: 2,
+    "final-review": 2,
+  }[stageId] ?? null;
+}
+
 export function evaluationVerdict(stageId, result, focusedTestEvidence = null, structuredGateEvidence = null) {
-  if (CANDIDATE_GATE_STAGES.includes(stageId) && candidateVerificationCommandFailed(result.runtimeEvents)) return "REPAIR";
+  if (CANDIDATE_GATE_STAGES.includes(stageId) && modelCommandFailed(result.runtimeEvents)) return "REPAIR";
   if (stageId === "test" && focusedTestEvidence?.status !== "passed") return "REPAIR";
   if (stageId === "test") return "PASS";
   if (["dev-review", "final-review"].includes(stageId)) return structuredGateEvidence?.verdict ?? "REPAIR";
   return "REPAIR";
 }
 
-function candidateVerificationCommandFailed(runtimeEvents = []) {
+function modelCommandFailed(runtimeEvents = []) {
   return runtimeEvents.some((event) =>
     event?.commandFailed === true && event?.runtimeScope !== "context-preflight",
   );
