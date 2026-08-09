@@ -365,10 +365,8 @@ test("dispatches the onboarding agent to the provider that owns the default mode
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
     await store.init();
 
-    // The bug this pins: the call hardcoded the Codex provider while passing the operator's
-    // default model. Once that default became a Claude id, Codex refused it outright with
-    // "not supported when using Codex with a ChatGPT account" — an error about the model, from
-    // the wrong runtime, for a stage that had no business choosing a runtime at all.
+    // The dispatch follows whichever provider owns the configured default model.
+    // The verified default is Codex; selecting Claude explicitly must still route there.
     const dispatched = [];
     const orchestrator = new TaskOrchestrator(store, {
       getStatus: async () => ({ available: true, authenticated: true }),
@@ -388,7 +386,7 @@ test("dispatches the onboarding agent to the provider that owns the default mode
     assert.equal(proposed.proposal.determined, true);
     const settings = await store.settings();
     assert.equal(dispatched.at(-1), settings.defaultModel);
-    assert.equal(providerForModelId(settings.defaultModel), "claude", "the default model is a Claude id, so a Codex-pinned dispatch would fail");
+    assert.equal(providerForModelId(settings.defaultModel), "codex", "the default model stays on the verified Codex runtime");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

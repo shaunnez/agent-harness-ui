@@ -674,9 +674,9 @@ test("attributes model ids to providers and leaves unknown ids unattributed", ()
   assert.equal(providerForModelId("claude-sonnet-5-20260101"), "claude");
   assert.equal(providerForModelId("gpt-5.6-luna"), "codex");
   assert.equal(providerForModelId("mistral-large"), null);
-  // The global default model is a Claude model now that no stage needs network access (#47), so
-  // an empty id normalizes there. Codex remains selectable per stage and per task.
-  assert.equal(providerForModelId(""), "claude", "the empty id normalizes to the default model's provider");
+  // The global default remains on the locally verified Codex path; Claude stays
+  // selectable per stage and per task but is never selected implicitly.
+  assert.equal(providerForModelId(""), "codex", "the empty id normalizes to the verified default model's provider");
   assert.deepEqual(providerRuntimeDefaults("claude"), { model: "claude-sonnet-5", reasoning: "xhigh" });
   assert.deepEqual(providerRuntimeDefaults("codex"), { model: "gpt-5.6-luna", reasoning: "xhigh" });
   assert.deepEqual(providerRuntimeDefaults(), { model: "gpt-5.6-luna", reasoning: "xhigh" });
@@ -685,13 +685,14 @@ test("attributes model ids to providers and leaves unknown ids unattributed", ()
 
 test("splits Claude stage policies without disturbing the Codex defaults", () => {
   const claude = defaultStagePolicies("claude");
-  const deep = ["plan", "repair", "dev-review", "final-review"];
+  const deep = ["plan", "dev-review"];
   for (const policyId of deep) {
-    assert.deepEqual(claude[policyId], { model: "claude-opus-5", reasoning: "xhigh" }, policyId);
+    assert.deepEqual(claude[policyId], { model: "claude-opus-5", reasoning: "high" }, policyId);
   }
-  for (const policyId of ["triage", "scouts", "grill", "specification", "implement", "test"]) {
-    assert.deepEqual(claude[policyId], { model: "claude-sonnet-5", reasoning: "high" }, policyId);
+  for (const policyId of ["triage", "scouts", "grill", "specification", "implement", "repair", "test"]) {
+    assert.deepEqual(claude[policyId], { model: "claude-sonnet-5", reasoning: "xhigh" }, policyId);
   }
+  assert.deepEqual(claude["final-review"], { model: "claude-sonnet-5", reasoning: "medium" });
   assert.deepEqual(defaultStagePolicies(), defaultStagePolicies("codex"));
   assert.equal(defaultStagePolicies().plan.model, "gpt-5.6-sol");
 });
@@ -1560,12 +1561,12 @@ test("lets every stage pick its own provider, model and reasoning", async () => 
       resolveAgentPolicy({ agentConfig: { provider: "claude", stagePolicies: { plan: { model: "mistral-large", reasoning: "high" } } } }, "plan").provider,
       "claude",
     );
-    // Follows the default model, which is now Claude. `DEFAULT_EXECUTION_PROVIDER` is still the
-    // fallback for a task persisted before provider identity existed.
-    assert.equal(resolveAgentPolicy({ agentConfig: {} }, "plan").provider, "claude");
-    assert.equal(defaultRuntimeSettings().defaultProvider, "claude");
-    assert.equal(defaultRuntimeSettings().stagePolicies.plan.model, "claude-opus-5");
-    assert.equal(defaultRuntimeSettings().stagePolicies.implement.model, "claude-sonnet-5");
+    // A task persisted before provider identity existed follows the locally verified
+    // Codex default rather than opting into another provider implicitly.
+    assert.equal(resolveAgentPolicy({ agentConfig: {} }, "plan").provider, "codex");
+    assert.equal(defaultRuntimeSettings().defaultProvider, "codex");
+    assert.equal(defaultRuntimeSettings().stagePolicies.plan.model, "gpt-5.6-sol");
+    assert.equal(defaultRuntimeSettings().stagePolicies.implement.model, "gpt-5.6-luna");
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }

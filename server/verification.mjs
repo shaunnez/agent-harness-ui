@@ -227,6 +227,19 @@ export function verificationSummaryCommand(manifest) {
   return `${manifest.source}: ${manifest.commands.map((command) => command.id).join(", ")}`;
 }
 
+export function selectVerificationCommands(manifest, commandIds) {
+  if (!Array.isArray(commandIds) || !commandIds.length) {
+    throw new VerificationConfigError("Focused package verification requires at least one repository manifest command id.");
+  }
+  const requested = [...new Set(commandIds.map((id) => String(id).trim()).filter(Boolean))];
+  const commands = requested.map((id) => {
+    const command = manifest.commands.find((entry) => entry.id === id);
+    if (!command) throw new VerificationConfigError(`${manifest.source} does not declare focused command id ${id}.`);
+    return command;
+  });
+  return { ...manifest, commands };
+}
+
 export function formatArgv(argv) {
   return argv.map((argument) => (/[\s"']/.test(argument) ? JSON.stringify(argument) : argument)).join(" ");
 }
@@ -247,11 +260,16 @@ export async function runRepositoryVerification({
   now = () => new Date().toISOString(),
   runCommand = runVerificationCommand,
   readHeadRevision = gitHeadRevision,
+  commandIds = null,
+  executionKind = "full-manifest",
 }) {
   if (!candidate?.id || !Number.isInteger(candidate?.revisionNumber)) {
     throw new Error("Harness verification requires an active candidate identity.");
   }
-  const resolved = manifest ?? (await readVerificationManifest(worktreePath));
+  const completeManifest = manifest ?? (await readVerificationManifest(worktreePath));
+  const resolved = commandIds == null
+    ? completeManifest
+    : selectVerificationCommands(completeManifest, commandIds);
   // The SHA is read here, not taken on trust, and again after the commands finish. Evidence
   // that does not name the tree it was produced from is evidence about nothing, and the test
   // stage is expected to dirty its worktree — so the commit must be what is pinned, and it
@@ -273,6 +291,7 @@ export async function runRepositoryVerification({
     candidateId: candidate.id,
     candidateRevision: candidate.revisionNumber,
     bindingExplicit: true,
+    executionKind,
     command: verificationSummaryCommand(resolved),
     status: rows.every((row) => row.status === "passed") ? "passed" : "failed",
     startedAt,
@@ -328,6 +347,8 @@ async function runVerificationCommand({ command, worktreePath, candidate, signal
     bindingExplicit: true,
     title: command.title,
     command: display,
+    exitCode: null,
+    output: null,
   };
   let result = null;
   let timedOut = false;
@@ -389,6 +410,8 @@ async function runVerificationCommand({ command, worktreePath, candidate, signal
   return {
     ...row,
     status: passed ? "passed" : "failed",
+    exitCode: result.code,
+    output: retainedOutput(result),
     durationMs,
     // Always an array, never omitted. `isValidPersistedTestRow` in `run-activity.mjs` requires
     // `artifactReferences` and `assertions` to be arrays on every persisted row, and gate

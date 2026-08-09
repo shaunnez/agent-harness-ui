@@ -13,6 +13,7 @@ export type RuntimeTaskStatus =
   | "awaiting-plan-approval"
   | "ready-for-implementation"
   | "ready-for-review"
+  | "review-retry-required"
   | "ready-for-test"
   | "ready-for-final-review"
   | "repair-required"
@@ -35,7 +36,7 @@ export interface RuntimeUsage {
 }
 
 export interface RuntimeContextSource {
-  kind: "task" | "decisions" | "attachments" | "artifact" | "repository";
+  kind: "task" | "decisions" | "attachments" | "artifact" | "repository" | "structured-evidence";
   id: string;
   label: string;
   stage?: StageId;
@@ -99,6 +100,9 @@ export interface RuntimeArtifact {
       candidateId: string;
       candidateRevision: number;
       bindingExplicit?: boolean;
+      blocking?: boolean;
+      acceptanceCriterion?: string | null;
+      reproductionEvidence?: string | null;
     }>;
   } | null;
 }
@@ -127,9 +131,12 @@ export interface RuntimeFocusedTestRow {
   artifactReferences: RuntimeFocusedTestArtifactReference[];
   assertions: RuntimeFocusedTestAssertion[];
   failureDetails: string | null;
+  exitCode?: number | null;
+  output?: string | null;
 }
 
 export interface RuntimeFocusedTestEvidence {
+  headRevision?: string;
   candidateId: string;
   candidateRevision: number;
   bindingExplicit?: boolean;
@@ -139,6 +146,9 @@ export interface RuntimeFocusedTestEvidence {
   completedAt?: string | null;
   durationMs: number | null;
   rows: RuntimeFocusedTestRow[];
+  executionKind?: "focused-package" | "full-manifest";
+  executedCommandIds?: string[];
+  declaredCommandIds?: string[];
 }
 
 export interface RuntimeDecision {
@@ -219,6 +229,8 @@ export interface RuntimeWorkPackage {
   batch: number;
   ownedPaths: string[];
   verification: string[];
+  verificationCommandIds?: string[];
+  verificationRuns?: RuntimeFocusedTestEvidence[];
   status: "planned" | "running" | "ready_for_integration" | "failed" | "integrated";
   attempts: number;
   branch: string | null;
@@ -284,6 +296,29 @@ export interface RuntimeCandidate {
     authorizingGateArtifactId?: string | null;
   }>;
   members?: Array<{ packageId: string; headRevision: string; order: number }>;
+  verificationRuns?: RuntimeFocusedTestEvidence[];
+}
+
+export type WorkflowProfileId = "fast" | "standard" | "high-risk";
+
+export interface RuntimeWorkflowProfile {
+  selected: WorkflowProfileId;
+  reason: string;
+  source: "automatic" | "operator" | "migration" | "automatic-escalation";
+  selectedAt: string;
+  history: Array<{
+    from: WorkflowProfileId | null;
+    to: WorkflowProfileId;
+    reason: string;
+    source: string;
+    at: string;
+  }>;
+}
+
+export interface RuntimeStageDisposition {
+  status: "not-required" | "deterministic";
+  reason: string;
+  decidedAt: string;
 }
 
 export interface RuntimeTask {
@@ -293,10 +328,23 @@ export interface RuntimeTask {
   repositoryPath: string;
   workflow: "investigate" | "implement";
   priority: "low" | "medium" | "high";
+  workflowProfile?: RuntimeWorkflowProfile;
+  stageDispositions?: Partial<Record<StageId, RuntimeStageDisposition>>;
+  reviewRetries?: Array<{
+    stage?: "dev-review" | "final-review";
+    candidateId: string;
+    candidateRevision: number;
+    runId: string | null;
+    reasonCode: string;
+    reason: string;
+    createdAt: string;
+  }>;
+  automaticRepairCycles?: number;
   agentConfig?: {
     model: string;
     reasoning: string;
     stagePolicies?: Record<string, RuntimeAgentPolicy>;
+    profileStagePolicies?: Record<WorkflowProfileId, Record<string, RuntimeAgentPolicy>>;
     policySnapshotVersion?: number;
   };
   attachments?: Array<{ id: string; name: string; type: string; size: number; path: string }>;
@@ -453,6 +501,7 @@ export interface RuntimeSettings {
   defaultModel: string;
   defaultReasoning: string;
   stagePolicies: Record<string, RuntimeAgentPolicy>;
+  profileStagePolicies?: Record<WorkflowProfileId, Record<string, RuntimeAgentPolicy>>;
   pricing: {
     version: string;
     sourceUrl: string;

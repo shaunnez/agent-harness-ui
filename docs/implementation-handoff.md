@@ -1,6 +1,6 @@
 # Agent Harness implementation handoff
 
-Updated: 2026-08-02
+Updated: 2026-08-09
 
 ## Delivered cut
 
@@ -20,13 +20,19 @@ The repository now contains both the approved ten-stage interaction prototype an
 
 The runtime models slices separately from the integration candidate. Downstream review, test, repair, and approval gates bind to the assembled candidate because that exact revision is the unit that can safely merge.
 
+Workflow execution is overlaid by a persisted profile:
+
+- `fast` accepts one bounded, low-risk package. It defaults to zero scouts, skips Grill/Specification/Plan only when the bounded contract resolves them, runs one independent Development Review, executes the full manifest once, and generates Final Review deterministically when no blocking risk remains.
+- `standard` preserves the normal single-candidate ten-stage workflow.
+- `high-risk` preserves the full workflow for multi-package, security, schema, migration, concurrency, and architectural work.
+
+Selection and every escalation reason are persisted. Existing state migrates to `standard`. Operators can override the profile before implementation; changed paths, dependency boundaries, focused-check failures, or discovered risk can automatically escalate `fast`. A scope or focused-check escalation discovered after a fast package commit returns the task to the standard evidence frontier before more implementation; the slice commit and failed telemetry remain retained, but no candidate is assembled from abbreviated evidence.
+
 ## Runtime and authentication contract
 
 - Binary discovery uses `CODEX_BIN` when set, otherwise `where.exe codex` on Windows or `which codex` elsewhere.
 - Readiness uses `codex login status` and reports availability, authentication method, configured model, and binary path.
-- The canonical orchestrated workflow stage policy is:
-  - Luna XHigh (`gpt-5.6-luna`, `xhigh`): triage, selected scouts, Grill Me, specification, implementation, and test.
-  - Sol High (`gpt-5.6-sol`, `high`): implementation planning, repair, Development Review, and Final Review.
+- Model policy is configurable by profile and stage. Defaults use Luna Medium for fast triage/optional scouting, Luna High for fast implementation, Luna XHigh for standard/high-risk implementation, Sol High for planning and independent Development Review, and Luna Medium for model-backed Final Review. High-risk planning may opt into Sol XHigh; it is not the default. Repair starts with the implementation policy and escalates to Sol High for architectural defects or after a failed repair.
 - The operator uses the ChatGPT-authenticated local Codex CLI. API keys are neither required nor forwarded to agent children; each child removes `OPENAI_API_KEY` and `CODEX_API_KEY` from its environment.
 - Each Codex run records real input, cached-input, and output token counts, with cache rate shown where available. ChatGPT-plan sessions do not expose an attributable per-task dollar charge; calculated values are labelled **Approx. cost** and **API-rate estimate**.
 - Prompts are streamed over stdin so accumulated artifacts do not hit the Windows command-line length limit.
@@ -61,7 +67,8 @@ Repository hooks and configured Git identity are respected. A hook or missing id
 | `GET` | `/api/runtime/status` | Codex/ChatGPT readiness and suggested repository |
 | `GET` | `/api/runtime/worktrees` | Read-only retained slice/candidate worktree inventory with live Git state |
 | `GET` | `/api/tasks` | Persisted task list |
-| `POST` | `/api/tasks` | Validate and create a task |
+| `POST` | `/api/tasks` | Validate and create a task with deterministic or explicit workflow-profile selection |
+| `PUT` | `/api/tasks/:id/workflow-profile` | Override the persisted profile before implementation |
 | `GET` | `/api/tasks/:id` | Full task, decisions, approvals, candidates, artifacts, usage, and activity |
 | `GET` | `/api/tasks/:id/candidates/:candidateId/diff` | Verified, capped unified diff for the recorded candidate revision |
 | `POST` | `/api/tasks/:id/run` | Start or retry investigation |
@@ -92,6 +99,8 @@ The API validates action eligibility from persisted task status. A task has one 
 - `decisions` and `approvals` with timestamps;
 - a `grillSession` with generated options, recommendation provenance, answer source, completion reason, and timestamps;
 - `workPackages` with dependencies, topological batch, ownership, verification, attempt state, worktree/branch, files, and exact package commit;
+- `workflowProfile`, selection/escalation history, explicit stage dispositions, review retries, and automatic-repair count;
+- profile-specific stage policy snapshots so historical runs remain reproducible;
 - `candidates` with base/head SHA, branch, repository/worktree paths, lifecycle status, revision number, and revision lineage;
 - ordered candidate membership linking every assembled package ID and commit;
 - artifact-level candidate ID/revision provenance; and
@@ -106,6 +115,7 @@ Writes use a temporary file plus rename and are serialized in-process. Atomic re
 - The global next action is in the stage command bar; duplicate header actions were removed.
 - Completed stages remain green while a selected historical stage remains blue.
 - The universal inspector preserves task brief, viewed/active stage context, model/access/sandbox metadata, decision frontier, current candidate identity, and living artifacts.
+- The inspector shows the selected workflow profile, selection/escalation reason, pre-implementation override, per-stage wall time/tokens/cache/credits/API-rate estimate, focused/full verification counts and durations, review retries, and candidate repairs. It explicitly says attributable ChatGPT-plan billing is unavailable.
 - Human decisions can be recorded inline and are injected into every downstream prompt.
 - Grill Me distinguishes an open decision session from recorded history, reveals a text field for a custom single-choice answer, and makes finishing with recommendations explicit.
 - Implement shows packages by dependency batch with status, declared ownership, attempts, and package commit; candidate membership is visible in the inspector.
@@ -121,16 +131,16 @@ Writes use a temporary file plus rename and are serialized in-process. Atomic re
 ## Known limitations and next work
 
 1. Work-package concurrency is one agent per package in the active dependency batch with no configurable global concurrency limit. Git worktree preparation is serialized to avoid repository lock contention; agent executions are concurrent.
-2. Slice qualification is harness-executed and fail-closed against the repository-owned `.agent-harness/verification.json` manifest before a package commit can become ready for integration. The bounded command evidence is retained on the slice artifact. Candidate-level Focused Test reruns the same authoritative manifest against the assembled candidate revision.
+2. Slice qualification is harness-executed and fail-closed using only the package's validated command IDs from `.agent-harness/verification.json`, bound to the exact package commit. Candidate Focused Test runs the complete manifest once per candidate revision and reuses the result until that revision changes.
 3. Assembly conflicts stop safely with all slice commits retained, but there is no dedicated conflict-resolution UI or integration-repair agent yet.
 4. Focused Test command selection and result facts come from the repository-owned verification manifest; the review model only interprets that retained evidence. Exit-code-only commands do not yet provide normalized individual framework test cases unless the manifest declares a supported machine-readable report.
-5. Gate verdict parsing is conservative but simple: a top-line `PASS` advances; any other response requires repair. Structured output schemas and a code-specific rubric model should replace this.
+5. Review gates require structured candidate-bound evidence. Reviewer tooling failures create `review_retry_required`; only consolidated blocking findings or deterministic candidate verification failures authorize repair. P2/P3 advice is retained as non-blocking follow-up unless tied to an acceptance criterion.
 6. Repairs update the current candidate branch and retain revision history/artifacts, but the data model does not yet represent a separate immutable candidate object for every revision.
 7. API mutations do not yet use idempotency keys or optimistic revision tokens. Process-local locks prevent duplicate active agents only within one companion process.
 8. Worktree cleanup readiness is visible but deliberately read-only. No cleanup mutation, rebase, conflict-resolution, repository picker, streamed activity, or PR publishing exists in the product UI.
 9. The JSON store is appropriate for one local user, not concurrent or remote workers.
 10. The hosted Sites artifact is UI-only: a Cloudflare worker cannot access the user's local Codex login, Git checkouts, or filesystem.
-11. The real runtime is limited to the canonical orchestrated stage policy above; prototype-only concepts are not wired into this workflow.
+11. Profile selection uses deterministic scope/risk heuristics plus bounded structured triage evidence. Future work should evaluate those thresholds on repeated real task suites and expose richer policy versioning without weakening automatic escalation.
 
 ## Fast verification record
 

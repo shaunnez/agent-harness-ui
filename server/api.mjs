@@ -20,11 +20,12 @@ import {
   stageRunLimitFor,
 } from "./run-activity.mjs";
 import { SCOUT_NAMES } from "./scouts.mjs";
+import { selectWorkflowProfile, WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
 import { isCanonicalCommitId } from "../src/commit-id.ts";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
-const RUNTIME_SCHEMA_VERSION = 5;
+const RUNTIME_SCHEMA_VERSION = 6;
 const DIFF_CHAR_LIMIT = 300_000;
 const OUTPUT_LIMIT = 512 * 1024;
 
@@ -182,11 +183,21 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         if (!selected.reasoningLevels.includes(defaultReasoning)) throw new Error(`${selected.label} does not support ${defaultReasoning || "that"} reasoning.`);
         const currentSettings = await store.settings();
         const stagePolicies = validateStagePolicies(input.stagePolicies, known, allowedModels, currentSettings.stagePolicies);
+        const profileStagePolicies = Object.fromEntries(WORKFLOW_PROFILE_IDS.map((profile) => [
+          profile,
+          validateStagePolicies(
+            input.profileStagePolicies?.[profile] ?? (profile === "standard" ? stagePolicies : null),
+            known,
+            allowedModels,
+            currentSettings.profileStagePolicies?.[profile] ?? stagePolicies,
+          ),
+        ]));
         const settings = await store.updateSettings((draft) => {
           draft.allowedModels = allowedModels;
           draft.defaultModel = defaultModel;
           draft.defaultReasoning = defaultReasoning;
           draft.stagePolicies = stagePolicies;
+          draft.profileStagePolicies = profileStagePolicies;
         });
         send(response, 200, { settings });
         return;
@@ -335,6 +346,9 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         const input = await readJson(request);
         if (!input.title?.trim() || !input.description?.trim()) throw new Error("Title and description are required.");
         if (!VALID_WORKFLOWS.has(input.workflow)) throw new Error("invalid workflow");
+        if (input.workflowProfile != null && input.workflowProfile !== "auto" && !WORKFLOW_PROFILE_IDS.includes(input.workflowProfile)) {
+          throw new Error("Workflow profile must be auto, fast, standard, or high-risk.");
+        }
         const attachments = validateAttachments(input.attachments);
         const settings = await store.settings();
         const catalog = await readExecutionProviderCatalog();
@@ -343,9 +357,20 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         if (!settings.allowedModels.includes(requestedModel) || !selectedModel) throw new Error("Choose a model from the allowed runtime list in Settings.");
         const requestedReasoning = String(input.reasoning ?? settings.defaultReasoning);
         if (!selectedModel.reasoningLevels.includes(requestedReasoning)) throw new Error(`${selectedModel.label} does not support ${requestedReasoning} reasoning.`);
-        const taskPolicies = input.model || input.reasoning
-          ? Object.fromEntries(POLICY_IDS.map((policyId) => [policyId, { model: requestedModel, reasoning: requestedReasoning }]))
-          : structuredClone(settings.stagePolicies);
+        const workflowProfile = selectWorkflowProfile({
+          title: input.title,
+          description: input.description,
+          requestedProfile: WORKFLOW_PROFILE_IDS.includes(input.workflowProfile) ? input.workflowProfile : null,
+        });
+        const taskProfilePolicies = input.model || input.reasoning
+          ? Object.fromEntries(WORKFLOW_PROFILE_IDS.map((profile) => [
+              profile,
+              Object.fromEntries(POLICY_IDS.map((policyId) => [policyId, { model: requestedModel, reasoning: requestedReasoning }])),
+            ]))
+          : structuredClone(settings.profileStagePolicies);
+        const taskPolicies = structuredClone(
+          taskProfilePolicies?.[workflowProfile.selected] ?? settings.stagePolicies,
+        );
         const repositoryPath = await validateRepository(input.repositoryPath);
         const priority = ["low", "medium", "high"].includes(input.priority) ? input.priority : "medium";
         let experiment = null;
@@ -370,6 +395,8 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
           model: requestedModel,
           reasoning: requestedReasoning,
           stagePolicies: taskPolicies,
+          profileStagePolicies: taskProfilePolicies,
+          workflowProfile,
           experiment,
         });
         if (attachments.length) {
@@ -392,6 +419,17 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
       if (request.method === "GET" && taskMatch) {
         const task = await store.get(decodeURIComponent(taskMatch[1]));
         send(response, task ? 200 : 404, task ? { task } : { error: "Task not found." });
+        return;
+      }
+
+      const workflowProfileMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/workflow-profile$/);
+      if (request.method === "PUT" && workflowProfileMatch) {
+        const id = decodeURIComponent(workflowProfileMatch[1]);
+        const input = await readJson(request);
+        if (!WORKFLOW_PROFILE_IDS.includes(input.profile)) throw new Error("Choose fast, standard, or high-risk.");
+        if (typeof orchestrator.overrideWorkflowProfile !== "function") throw new Error("Workflow profile overrides are unavailable.");
+        const task = await orchestrator.overrideWorkflowProfile(id, input.profile, String(input.reason ?? ""));
+        send(response, 200, { task });
         return;
       }
 
@@ -798,7 +836,7 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
             statuses: ["repair-required", "failed", "cancelled"],
             stages: ["implement", "dev-review", "test", "final-review"],
           },
-          review: { kind: "review", statuses: ["ready-for-review", "failed", "cancelled"], stages: ["dev-review"] },
+          review: { kind: "review", statuses: ["ready-for-review", "review-retry-required", "failed", "cancelled"], stages: ["dev-review"] },
           test: { kind: "test", statuses: ["ready-for-test", "failed", "cancelled"], stages: ["test"] },
           "final-review": {
             kind: "final-review",
@@ -849,6 +887,13 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
 
 function retryGrantContext(task) {
   const candidate = task.candidates?.at(-1);
+  if (
+    task.workflowProfile?.selected === "fast" &&
+    candidate?.status === "repair_required" &&
+    (task.automaticRepairCycles ?? 0) >= 1
+  ) {
+    return { error: "Fast tasks permit one automatic review-driven candidate repair. A further candidate defect requires human direction, not another repair-loop grant." };
+  }
   const grantedStage = candidate?.status === "repair_required" ? "implement" : task.currentStage;
   if (!CANONICAL_RUN_STAGES.includes(grantedStage)) {
     return { error: "The current stage cannot receive a retry grant." };
@@ -866,6 +911,7 @@ function retryGrantContext(task) {
     currentAttempts >= currentLimit;
   const readyGateTuple = {
     "ready-for-review": { stage: "dev-review", candidateStatus: "ready_for_review" },
+    "review-retry-required": { stage: "dev-review", candidateStatus: "review_retry_required" },
     "ready-for-test": { stage: "test", candidateStatus: "ready_for_test" },
     "ready-for-final-review": { stage: "final-review", candidateStatus: "ready_for_final_review" },
   }[task.status] ?? null;

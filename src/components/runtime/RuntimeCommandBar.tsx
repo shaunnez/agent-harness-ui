@@ -40,7 +40,7 @@ export function RuntimeCommandBar({
   const repairRequired = task.status === "repair-required";
   const exhaustedReadyGate =
     currentAttempts >= currentStageRunLimit &&
-    ["ready-for-review", "ready-for-test", "ready-for-final-review"].includes(task.status);
+    ["ready-for-review", "review-retry-required", "ready-for-test", "ready-for-final-review"].includes(task.status);
   const blocked =
     task.status === "blocked" ||
     exhaustedReadyGate ||
@@ -51,7 +51,8 @@ export function RuntimeCommandBar({
     task.status.startsWith("awaiting-") ||
     task.status.startsWith("ready-for-") ||
     task.status === "merged-to-target" ||
-    task.status === "completed";
+    task.status === "completed" ||
+    task.status === "review-retry-required";
   const accessBoundary = getAccessBoundaryCopy(task);
   const next = nextAction(task);
   const approvalBlocked = task.status === "awaiting-human-approval" && !candidateGateStages.every((stage) => isStageComplete(task, stage));
@@ -140,7 +141,9 @@ export function RuntimeCommandBar({
                       : "Every material question is settled. Finish Grill Me to build the task specification."
                     : ready
                       ? (next?.detail ?? "The retained workflow evidence is ready for review.")
-                      : "Four focused agents will produce durable Markdown handoffs."}
+                      : task.workflowProfile?.selected === "fast"
+                        ? "The fast profile will use only the model calls and repository evidence this bounded change requires."
+                        : "The workflow will produce durable, inspectable handoffs."}
         </span>
       </span>
       <div className="stage-command-bar__actions">
@@ -248,7 +251,7 @@ export function nextAction(task: RuntimeTask) {
     };
   if (
     retryAllowanceExhausted &&
-    ["ready-for-review", "ready-for-test", "ready-for-final-review"].includes(task.status)
+    ["ready-for-review", "review-retry-required", "ready-for-test", "ready-for-final-review"].includes(task.status)
   )
     return {
       action: "grant-retry" as const,
@@ -301,20 +304,22 @@ export function nextAction(task: RuntimeTask) {
       detail:
         "The harness verifies a clean repository, creates a Git worktree, and gives Codex write access only there.",
     };
-  if (task.status === "ready-for-review")
+  if (task.status === "ready-for-review" || task.status === "review-retry-required")
     return {
       action: "review" as const,
-      label: "Run development review",
-      title: "Review the exact candidate revision",
-      detail: "The reviewer is bound to the candidate commit and cannot modify it.",
+      label: task.status === "review-retry-required" ? "Retry independent review" : "Run development review",
+      title: task.status === "review-retry-required" ? "Reviewer tooling failed — candidate repair is not indicated" : "Review the exact candidate revision",
+      detail: task.status === "review-retry-required"
+        ? "Failed reviewer telemetry is retained. A fresh read-only review must inspect the complete unchanged candidate diff."
+        : "The reviewer is bound to the candidate commit and cannot modify it.",
     };
   if (task.status === "ready-for-test")
     return {
       action: "test" as const,
-      label: "Run focused tests",
-      title: "Test the reviewed candidate",
+      label: "Run full candidate verification",
+      title: "Verify the reviewed candidate",
       detail:
-        "The test agent runs focused repository-defined checks without installing dependencies or running end-to-end suites.",
+        "The harness runs the complete argv-only repository verification manifest once for this exact candidate revision.",
     };
   if (task.status === "ready-for-final-review")
     return {

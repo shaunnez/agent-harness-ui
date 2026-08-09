@@ -75,9 +75,13 @@ export function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
                       value={workPackage.ownedPaths.join(", ") || "Plan-defined scope"}
                     />
                     <RuntimeRow
-                      label="Verification"
-                      value={workPackage.verification.join(" \u00b7 ") || "No command recorded"}
+                      label="Focused verification IDs"
+                      value={workPackage.verificationCommandIds?.join(" \u00b7 ") || "No validated manifest command ID recorded"}
                       mono
+                    />
+                    <RuntimeRow
+                      label="Focused executions"
+                      value={`${workPackage.verificationRuns?.length ?? 0} bound to package commit`}
                     />
                     <RuntimeRow label="Interfaces" value="Not recorded by the runtime" />
                     <RuntimeRow label="Agent / model" value={packageArtifact ? `${packageArtifact.model} \u00b7 ${packageArtifact.reasoning ?? "reasoning not recorded"}` : "Not run yet"} />

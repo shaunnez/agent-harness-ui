@@ -17,6 +17,7 @@ import {
   runTask,
   runTaskAction,
   updateRuntimeSettings,
+  updateTaskWorkflowProfile,
   verifyRuntimePricing,
 } from "./api";
 import { AgentsScreen } from "./components/AgentsScreen";
@@ -307,7 +308,7 @@ export function App() {
   };
 
   const saveRuntimeSettings = async (
-    settings: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies">,
+    settings: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies">,
   ) => {
     const saved = await updateRuntimeSettings(settings);
     const [status, evaluation] = await Promise.all([getRuntimeStatus(), getEvaluationSummary()]);
@@ -459,6 +460,18 @@ export function App() {
                   "error",
                   error instanceof Error ? error.message : "The worktree could not be removed.",
                 );
+                throw error;
+              }
+            }}
+            onProfileChange={async (profile, reason) => {
+              try {
+                const updated = await updateTaskWorkflowProfile(activeRuntimeTask.id, profile, reason);
+                setActiveRuntimeTask(updated);
+                setRuntimeTasks((tasks) => tasks.map((task) => task.id === updated.id ? updated : task));
+                showToast("success", `Workflow profile changed to ${profile}.`);
+              } catch (error) {
+                const message = error instanceof Error ? error.message : "The workflow profile could not be changed.";
+                showToast("error", message);
                 throw error;
               }
             }}

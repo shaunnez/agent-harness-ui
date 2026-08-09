@@ -50,7 +50,7 @@ const STAGE_PROMPTS = {
     label: "Development review",
     artifactName: "development-review.md",
     instruction:
-      "Review the exact integration candidate against the approved specification and plan. Inspect the diff and relevant surrounding code using this eight-part rubric: correctness, architecture/conventions, security, maintainability, scope control, compatibility, tests, and operability. Give P0-P3 findings with file/line evidence. Do not modify files. The structured gate evidence is authoritative.",
+      "Review the exact integration candidate against the approved specification and plan. Inspect the complete candidate diff before deciding, then inspect only the surrounding code needed to validate it. Use this eight-part rubric: correctness, architecture/conventions, security, maintainability, scope control, compatibility, tests, and operability. Return every blocking finding in one consolidated response rather than stopping at the first issue. P2/P3 advice is non-blocking unless it names the acceptance criterion it prevents. Give exact reproduction evidence for every blocking finding. Do not modify files. The structured gate evidence is authoritative.",
     headings: ["Verdict", "Candidate reviewed", "Findings", "Rubric", "Required repairs"],
   },
   test: {
@@ -104,12 +104,14 @@ ${taskContext.description}
 
 Workflow: ${taskContext.workflow}
 Priority: ${taskContext.priority}
+Workflow profile: ${task.workflowProfile?.selected ?? "standard"}
+Profile reason: ${task.workflowProfile?.reason ?? "Compatibility-safe standard profile."}
 
 ${formatAttachments(task)}${formatDecisions(task)}${artifactContext.text ? `Prior retained workflow artifacts:\n${artifactContext.text}\n` : ""}
 Your stage assignment:
 ${stage.instruction}
 
-Return one concise Markdown artifact. Use these exact H2 headings in order: ${stage.headings.join(", ")}. Cite repository paths and symbols inline when making repository-specific claims. Be concrete enough that the next agent can work without rereading the whole repository.${structuredOutputInstruction(stageId)}`;
+Return one concise Markdown artifact. Use these exact H2 headings in order: ${stage.headings.join(", ")}. Cite repository paths and symbols inline when making repository-specific claims. Be concrete enough that the next agent can work without rereading the whole repository.${structuredOutputInstruction(stageId, null, task)}`;
   return {
     prompt,
     contextManifest: makeContextManifest(task, taskContext, stageId, prompt, artifactContext.sources, "read-only", "The agent may inspect repository files relevant to this stage."),
@@ -220,7 +222,7 @@ Use these retained handoffs before reading surrounding code. Inspect only the ex
 Your stage assignment:
 ${stage.instruction}
 
-Return one concise Markdown artifact. Use these exact H2 headings in order: ${stage.headings.join(", ")}. Cite repository paths and symbols inline. Keep command output summarized; never dump a whole large file.${structuredOutputInstruction(stageId, candidate)}`;
+Return one concise Markdown artifact. Use these exact H2 headings in order: ${stage.headings.join(", ")}. Cite repository paths and symbols inline. Keep command output summarized; never dump a whole large file.${structuredOutputInstruction(stageId, candidate, task)}`;
   return {
     prompt,
     contextManifest: makeContextManifest(
@@ -266,7 +268,7 @@ Work package: ${workPackage.id} - ${workPackage.title}
 Package assignment: ${workPackage.description}
 Dependencies already present in this worktree: ${workPackage.dependencies.join(", ") || "None"}
 Owned paths: ${workPackage.ownedPaths.join(", ") || "Infer the narrowest safe ownership from the approved plan"}
-Focused verification: ${workPackage.verification.join("; ") || "Use the approved plan"}
+Focused repository manifest command IDs: ${(workPackage.verificationCommandIds ?? workPackage.verification).join(", ") || "No validated focused command IDs were retained"}
 Slice base revision: ${slice.baseRevision}
 
 ${formatAttachments(task)}${formatDecisions(task)}Approved specification and plan:
@@ -274,7 +276,7 @@ ${artifactContext.text}
 
 Implement only this package. Do not redo dependency work. You may make a necessary adjacent edit outside declared ownership only when compilation or the approved interface requires it; call that out explicitly. Run focused, non-interactive checks when practical. Never re-run a command byte-for-byte identical to one you already ran in this session; you already have its output.
 
-If the Focused verification commands above already confirm this package's goal is met, make no changes and end your response with exactly one line: <no-changes-needed>{"reason":"one sentence citing the verification evidence"}</no-changes-needed>. Only do this when the evidence leaves no doubt; if there is any, make the minimal edit instead.
+The harness, not you, executes the focused repository manifest commands after it commits the package. You may use narrower read-only diagnostics while implementing, but do not rerun the full repository manifest. If the current repository already satisfies the package, make no changes and end your response with exactly one line: <no-changes-needed>{"reason":"one sentence citing the repository evidence"}</no-changes-needed>. Only do this when the evidence leaves no doubt; if there is any, make the minimal edit instead.
 
 Return concise Markdown with these exact H2 headings in order: Outcome, Changes, Verification, Ownership exceptions, Remaining risks.`;
   return {
@@ -302,7 +304,7 @@ export function buildRepairRequest(task, candidate) {
     .replace("You are the Implementation agent", "You are the candidate Repair agent")
     .replace(
       "Your stage assignment:\n",
-      `Authoritative structured repair evidence (typed JSON; do not infer repair scope from Markdown artifacts):\n<repair-evidence>\n${serializedRepairEvidence}\n</repair-evidence>\n\nYour stage assignment:\nRepair only the findings in the newest failing gate represented above. Remove generated or out-of-scope files already present in the candidate, but do not install dependencies or create new generated state. Preserve unrelated approved implementation.\n\nIf every finding above is explicitly non-blocking (no P0 or P1) and none describes an actual code change to make, make no changes and end your response with exactly one line: <no-changes-needed>{"reason":"one sentence citing which finding(s) require no code change"}</no-changes-needed>. Only do this when the evidence leaves no doubt; if any finding could be addressed by an edit, make it instead.\n\n`,
+      `Authoritative structured repair evidence (typed JSON; do not infer repair scope from Markdown artifacts):\n<repair-evidence>\n${serializedRepairEvidence}\n</repair-evidence>\n\nYour stage assignment:\nRepair every consolidated blocking finding in the newest failing gate represented above, using its exact reproduction evidence. Do not address non-blocking follow-up advice. Remove generated or out-of-scope files already present in the candidate, but do not install dependencies or create new generated state. Preserve unrelated approved implementation.\n\nIf the blockingFindings list is empty, make no changes and end your response with exactly one line: <no-changes-needed>{"reason":"one sentence explaining that the gate retained follow-up advice only"}</no-changes-needed>. If any blocking finding could be addressed by an edit, make it instead.\n\n`,
     );
   request.repairEvidence = repairEvidence;
   request.contextManifest.sources.push({
@@ -335,6 +337,9 @@ export function buildRepairEvidence(task, candidate) {
       stage: failingGate.stage,
       status: failingGate.status,
       gateResult: structuredClone(failingGate.gateResult),
+      blockingFindings: projectRepairFindings(
+        failingGate.gateResult.findings.filter((finding) => finding.blocking === true || ["P0", "P1"].includes(finding.severity)),
+      ),
     },
     repairLineage: (candidate.revisions ?? []).map((revision) => ({
       number: revision.number,
@@ -355,6 +360,9 @@ export function projectRepairFindings(findings) {
     detail: finding?.detail ?? null,
     file: finding?.file ?? null,
     line: finding?.line ?? null,
+    blocking: finding?.blocking ?? (["P0", "P1"].includes(finding?.severity)),
+    acceptanceCriterion: finding?.acceptanceCriterion ?? null,
+    reproductionEvidence: finding?.reproductionEvidence ?? null,
   }));
 }
 
@@ -504,15 +512,16 @@ function makeContextManifest(
   };
 }
 
-function structuredOutputInstruction(stageId, candidate = null) {
+function structuredOutputInstruction(stageId, candidate = null, task = null) {
   if (stageId === "triage") {
-    return `\n\nAt the end of Recommended route, include exactly one JSON block between <scout-dispatch> and </scout-dispatch> tags. Choose only from scout-code-path, scout-dependency, scout-pattern, scout-schema, scout-test-inventory, and scout-user-journey. Select at most 1 scout for low priority, 2 for medium, or 3 for high. Every selected scout needs a narrow focus and reason.\n\n<scout-dispatch>\n{"scouts":[{"name":"scout-code-path","focus":"Trace the task-relevant entry point to its immediate outcome","reason":"The change crosses a runtime control path"}]}\n</scout-dispatch>`;
+    const fastContract = taskProfileStructuredInstruction(task);
+    return `\n\nAt the end of Recommended route, include exactly one JSON block between <scout-dispatch> and </scout-dispatch> tags. Choose only from scout-code-path, scout-dependency, scout-pattern, scout-schema, scout-test-inventory, and scout-user-journey. For a fast profile, select zero scouts by default and at most one only when a named repository fact remains unresolved. Otherwise select at most 1 scout for low priority, 2 for medium, or 3 for high. Every selected scout needs a narrow focus and reason.\n\n<scout-dispatch>\n{"scouts":[],"rationale":"The bounded task contract resolves the repository facts needed for implementation."}\n</scout-dispatch>${fastContract}`;
   }
   if (stageId === "grill") {
     return `\n\nAt the end of the Grill questions section, include exactly one JSON block between <grill-questions> and </grill-questions> tags with this shape:\n\n<grill-questions>\n{"questions":[{"question":"A consequential question","whyItMatters":"Why the answer changes implementation","options":[{"label":"Option A","description":"Tradeoff","recommended":true},{"label":"Option B","description":"Tradeoff","recommended":false}],"allowCustom":true}]}\n</grill-questions>\n\nUse zero questions when repository evidence and safe reversible defaults settle everything. Provide two to four mutually exclusive options per question and exactly one recommended option.`;
   }
   if (stageId === "plan") {
-    return `\n\nAt the end of the Work package manifest section, include exactly one JSON block between <work-packages> and </work-packages> tags with this shape:\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Small outcome","description":"Exact implementation responsibility","dependencies":[],"ownedPaths":["src/example.ts"],"verification":["npm test -- example"]}]}\n</work-packages>\n\nUse 1-8 packages. IDs must be S1, S2, and so on. Dependencies must reference earlier package IDs and form an acyclic graph. Split only where ownership and verification are genuinely separable.`;
+    return `\n\nRead .agent-harness/verification.json and reference only command ids it declares. At the end of the Work package manifest section, include exactly one JSON block between <work-packages> and </work-packages> tags with this shape:\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Small outcome","description":"Exact implementation responsibility","dependencies":[],"ownedPaths":["src/example.ts"],"verificationCommandIds":["test"]}]}\n</work-packages>\n\nUse 1-8 packages. IDs must be S1, S2, and so on. Dependencies must reference earlier package IDs and form an acyclic graph. Split only where ownership and verification are genuinely separable. verificationCommandIds must be the smallest focused subset of the repository-owned argv manifest needed to qualify that package.`;
   }
   if (stageId === "test") {
     // Deliberately empty. The focused-test-evidence block used to be requested here, and the
@@ -523,9 +532,14 @@ function structuredOutputInstruction(stageId, candidate = null) {
     return "";
   }
   if (["dev-review", "final-review"].includes(stageId)) {
-    return `\n\nAt the end of the artifact, include exactly one JSON block between <gate-evidence> and </gate-evidence> tags. Bind the envelope and every finding to the exact current candidate. P0 or P1 findings require REPAIR. Use an empty findings array for a clean PASS. Every finding must use exactly candidateId, candidateRevision, severity, title, detail, file, and line; do not substitute path or summary fields.\n\n<gate-evidence>\n{"candidateId":"${candidate?.id}","candidateRevision":${candidate?.revisionNumber},"verdict":"REPAIR","summary":"Concise candidate-bound conclusion","findings":[{"candidateId":"${candidate?.id}","candidateRevision":${candidate?.revisionNumber},"severity":"P1","title":"Concise finding title","detail":"Concrete failure scenario and smallest correction","file":"src/example.ts","line":123}]}\n</gate-evidence>\n\nFor a clean result, return verdict PASS with findings [].`;
+    return `\n\nAt the end of the artifact, include exactly one JSON block between <gate-evidence> and </gate-evidence> tags. Bind the envelope and every finding to the exact current candidate. P0 or P1 findings require REPAIR. P2/P3 are follow-up evidence unless blocking is true and acceptanceCriterion names the exact unmet criterion. Return all blocking findings together. Every blocking finding needs deterministic reproductionEvidence. Use an empty findings array for a clean PASS.\n\n<gate-evidence>\n{"candidateId":"${candidate?.id}","candidateRevision":${candidate?.revisionNumber},"verdict":"REPAIR","summary":"Concise candidate-bound conclusion","findings":[{"candidateId":"${candidate?.id}","candidateRevision":${candidate?.revisionNumber},"severity":"P1","title":"Concise finding title","detail":"Concrete failure scenario and smallest correction","file":"src/example.ts","line":123,"blocking":true,"acceptanceCriterion":"Exact unmet acceptance criterion","reproductionEvidence":"Exact command, test, or deterministic code path that reproduces the defect"}]}\n</gate-evidence>\n\nFor a clean result, return verdict PASS with findings [].`;
   }
   return "";
+}
+
+function taskProfileStructuredInstruction(candidate) {
+  if (candidate?.workflowProfile?.selected !== "fast") return "";
+  return `\n\nBecause this task is currently fast, also return exactly one bounded contract. Read .agent-harness/verification.json and reference only ids it declares. If any product decision is unresolved, list it; the harness will escalate instead of guessing.\n\n<fast-change-contract>\n{"title":"One coherent change","description":"Exact bounded implementation responsibility","acceptanceCriteria":["Observable outcome"],"ownedPaths":["src/example.ts"],"verificationCommandIds":["test"],"unresolvedDecisions":[],"riskSignals":[]}\n</fast-change-contract>`;
 }
 
 export function suppliedTaskContext(task, options = {}) {

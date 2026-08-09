@@ -64,37 +64,44 @@ export const POLICY_IDS = [
 ];
 
 export function defaultStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
+  return defaultProfileStagePolicies(provider).standard;
+}
+
+export function defaultProfileStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
   if (provider === "claude") {
-    // Mirrors the sol/luna split: the deeper model for planning and every gate,
-    // the faster one for gathering and execution.
-    const opus = { model: "claude-opus-5", reasoning: "xhigh" };
-    const sonnet = { model: "claude-sonnet-5", reasoning: "high" };
+    const opusHigh = { model: "claude-opus-5", reasoning: "high" };
+    const sonnetMedium = { model: "claude-sonnet-5", reasoning: "medium" };
+    const sonnetHigh = { model: "claude-sonnet-5", reasoning: "high" };
+    const sonnetXHigh = { model: "claude-sonnet-5", reasoning: "xhigh" };
     return {
-      triage: { ...sonnet },
-      scouts: { ...sonnet },
-      grill: { ...sonnet },
-      specification: { ...sonnet },
-      plan: { ...opus },
-      implement: { ...sonnet },
-      repair: { ...opus },
-      "dev-review": { ...opus },
-      test: { ...sonnet },
-      "final-review": { ...opus },
+      fast: profilePolicy(sonnetMedium, opusHigh, sonnetHigh, sonnetHigh, sonnetMedium),
+      standard: profilePolicy(sonnetXHigh, opusHigh, sonnetXHigh, sonnetXHigh, sonnetMedium),
+      "high-risk": profilePolicy(sonnetXHigh, opusHigh, sonnetXHigh, sonnetXHigh, sonnetMedium),
     };
   }
-  const luna = { model: "gpt-5.6-luna", reasoning: "xhigh" };
-  const sol = { model: "gpt-5.6-sol", reasoning: "high" };
+  const lunaMedium = { model: "gpt-5.6-luna", reasoning: "medium" };
+  const lunaHigh = { model: "gpt-5.6-luna", reasoning: "high" };
+  const lunaXHigh = { model: "gpt-5.6-luna", reasoning: "xhigh" };
+  const solHigh = { model: "gpt-5.6-sol", reasoning: "high" };
   return {
-    triage: { ...luna },
-    scouts: { ...luna },
-    grill: { ...luna },
-    specification: { ...luna },
-    plan: { ...sol },
-    implement: { ...luna },
-    repair: { ...sol },
-    "dev-review": { ...sol },
-    test: { ...luna },
-    "final-review": { ...sol },
+    fast: profilePolicy(lunaMedium, solHigh, lunaHigh, lunaHigh, lunaMedium),
+    standard: profilePolicy(lunaXHigh, solHigh, lunaXHigh, lunaXHigh, lunaMedium),
+    "high-risk": profilePolicy(lunaXHigh, solHigh, lunaXHigh, lunaXHigh, lunaMedium),
+  };
+}
+
+function profilePolicy(gathering, planning, implementation, repair, finalReview) {
+  return {
+    triage: { ...gathering },
+    scouts: { ...gathering },
+    grill: { ...gathering },
+    specification: { ...gathering },
+    plan: { ...planning },
+    implement: { ...implementation },
+    repair: { ...repair },
+    "dev-review": { ...planning },
+    test: { ...gathering },
+    "final-review": { ...finalReview },
   };
 }
 
@@ -203,7 +210,7 @@ export function resolveTaskProvider(stagePolicies, fallbackModel, explicit = nul
  * runtime both resolve their defaults from here so runtime status, allowed models,
  * and spawned agents cannot advertise different models.
  */
-export const DEFAULT_RUNTIME_MODEL = "claude-sonnet-5";
+export const DEFAULT_RUNTIME_MODEL = "gpt-5.6-luna";
 export const DEFAULT_RUNTIME_REASONING = "xhigh";
 
 /** Codex's own default, which is not the global one and must not follow it. */
@@ -255,10 +262,8 @@ export function defaultRuntimeSettings() {
     defaultReasoning,
     // Nothing moves to another provider until an operator changes this.
     defaultProvider: providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER,
-    // Claude by default now that no stage needs network access (#47): the test stage was the
-    // only one pinned to Codex, and it no longer runs commands itself. Sonnet for gathering and
-    // execution, Opus wherever the Codex set used Sol — planning and every gate.
     stagePolicies: defaultStagePolicies(providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER),
+    profileStagePolicies: defaultProfileStagePolicies(providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER),
     pricing: {
       version: PRICING_VERSION,
       sourceUrl: PRICING_SOURCE_URL,

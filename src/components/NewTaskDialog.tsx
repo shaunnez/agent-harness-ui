@@ -9,6 +9,7 @@ const initialDraft: NewTaskDraft = {
   repositoryPath: "",
   workflow: "investigate",
   priority: "medium",
+  workflowProfile: "auto",
   experiment: null,
   attachments: [],
 };
@@ -162,6 +163,23 @@ export function NewTaskDialog({
             </span>
           </label>
         </fieldset>
+
+        <label className="field dialog-priority-field">
+          <span>Workflow profile <small className="wired-field">Deterministic and inspectable</small></span>
+          <select
+            value={draft.workflowProfile ?? "auto"}
+            onChange={(event) => setDraft({
+              ...draft,
+              workflowProfile: event.target.value as NewTaskDraft["workflowProfile"],
+            })}
+          >
+            <option value="auto">Automatic — classify from scope and risk</option>
+            <option value="fast">Fast — one narrow low-risk package</option>
+            <option value="standard">Standard — normal single-candidate workflow</option>
+            <option value="high-risk">High-risk — broad, schema, security, or concurrent work</option>
+          </select>
+          <small>Fast automatically escalates when repository evidence or verification exceeds its limits.</small>
+        </label>
 
         <label className="field dialog-priority-field">
           <span>Priority <small className="wired-field">Persisted and shown in task views</small></span>

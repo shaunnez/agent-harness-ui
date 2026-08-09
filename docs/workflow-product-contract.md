@@ -22,6 +22,7 @@ Use these terms consistently in the product, API, database, events, and document
 - **Agent**: a configured execution role with provider/model, reasoning, tools, skills, permissions, and budget policy.
 - **Skill**: an inspectable and optionally editable instruction/tool bundle invoked by an agent.
 - **Stage**: one of the ten visible workflow phases.
+- **Workflow profile**: the persisted risk/efficiency policy (`fast`, `standard`, or `high-risk`) that controls required stages, scout limits, model policy, verification breadth, and repair limits.
 - **Stage run**: one execution attempt of a stage. Attempts belong to individual stage/agent/gate runs, not vaguely to the entire task.
 - **Slice / work package**: an independently executable part of the implementation plan.
 - **Worktree**: the isolated repository checkout in which a slice or integration operation runs.
@@ -55,6 +56,14 @@ The stage navigator distinguishes:
 
 Inspecting history must never accidentally mutate or advance the current workflow.
 
+### Workflow profiles
+
+- **Fast** is limited to one coherent, low-risk package. It normally uses zero scouts and at most one for an unresolved repository fact. A bounded change contract may replace separate Specification and Plan model calls only when acceptance criteria contain no unresolved decision and the contract names owned paths and validated focused verification command IDs. Skipped stages are persisted as `not-required` with a reason; they are never added to completed stages and never receive fabricated artifacts or runs.
+- **Standard** is the compatibility-safe default for existing tasks and normal single-candidate implementation.
+- **High-risk** retains the full workflow for multi-package, security, schema, migration, concurrency, data-integrity, or broad architectural work.
+
+Profile selection is deterministic and inspectable. Operators may override it before implementation. Fast automatically escalates when discovered scope, path ownership, dependency boundaries, focused verification, or review findings exceed its limits. Escalation changes future policy but retains the prior selection and reason in history. If a committed fast slice first reveals a scope boundary or fails its focused qualification, the task returns to standard investigation and planning before more implementation; it retains the slice and telemetry for audit and does not fabricate an integration candidate.
+
 ## 4. Slice and candidate lifecycle
 
 ### Slice state machine
@@ -75,7 +84,7 @@ Each slice records:
 - worktree/branch;
 - base revision and output commit;
 - touched files and declared interfaces;
-- local verification commands/results;
+- validated focused manifest command IDs and results bound to the exact package commit;
 - tokens, cache usage, approximate cost, and duration;
 - artifacts and attempt history.
 
@@ -96,7 +105,7 @@ Candidate membership is explicit and ordered. It records every included slice co
 
 ## 5. Why review and test happen after integration
 
-Slice-local checks are useful and should fail fast, but they cannot prove cross-slice behavior. The authoritative Dev Review and Test gates run against the assembled candidate because that is what can expose:
+Slice-local checks are useful and should fail fast, but they cannot prove cross-slice behavior. Each package executes only its validated, argv-only subset of the repository manifest after the harness creates the exact package commit. Focused Test executes the complete repository manifest once for the assembled candidate revision and reuses that result unless the revision changes. Dev Review and Final Review consume the recorded results; they do not rerun the manifest. The candidate gates can therefore expose:
 
 - incompatible interfaces;
 - migration/API/UI mismatches;
@@ -136,6 +145,10 @@ A failure produces a structured repair packet containing:
 - required reruns and invalidated verdicts;
 - remaining repair allowance.
 
+A reviewer execution/tooling failure is a **review retry**, not a candidate repair. Failed telemetry remains retained and a fresh read-only review is required. Candidate repair is authorized only by a confirmed candidate defect, an explicit acceptance gap, a security/data-integrity problem, or deterministic candidate verification failure. Reviewers inspect the complete candidate diff and return all blocking findings together. P2/P3 maintainability advice is non-blocking unless explicitly tied to an acceptance criterion.
+
+Fast permits one automatic review-driven repair cycle. A further candidate defect stops for human direction. Every repair creates a new candidate revision, makes downstream evidence stale, and reruns every invalidated gate.
+
 Route repair to the smallest responsible boundary:
 
 - slice-owned defect → reopen that slice in a repair worktree;
@@ -173,7 +186,7 @@ Implement is a work-package overview plus a distinct integration object.
 
 ### Dev Review
 
-Dev Review always names the candidate revision under review. It uses a fresh-context reviewer, code-specific rubric, P0–P3 findings, file/line evidence, suggested changes, and repair lineage. A repaired candidate shows that prior verdicts became stale and that the current review applies to the new revision.
+Dev Review always names the candidate revision under review and inspects its complete diff. It uses a fresh-context reviewer, code-specific rubric, one consolidated P0–P3 response, file/line and reproduction evidence, acceptance-criterion links for blocking P2/P3 findings, suggested changes, and repair lineage. A repaired candidate shows that prior verdicts became stale and that the current review applies to the new revision. Reviewer tooling failure visibly requests review retry without asserting a candidate defect.
 
 ### Test
 
@@ -181,7 +194,7 @@ The default is a mixed result list showing passed and failed tests. Each result 
 
 ### Final Review
 
-Final Review summarizes Triage, Repo Scouts, Grill Me, Task Spec, Implementation Plan, Implement, Dev Review, and Test. Each row shows state, key outcome, tokens, cost, and artifacts/repairs when relevant. It explicitly identifies the candidate that cleared the gates and what will happen next.
+Final Review summarizes Triage, Repo Scouts, Grill Me, Task Spec, Implementation Plan, Implement, Dev Review, and Test. Each row shows completed, not-required, or stale state; key outcome; tokens; API-rate estimate; and artifacts/repairs when relevant. It explicitly identifies the candidate that cleared the gates and what will happen next. Fast generates this summary deterministically from recorded evidence when no unresolved risk remains; otherwise the configured model policy applies.
 
 ### Human Approval
 
@@ -214,7 +227,7 @@ Run activity is collapsed by default and opens into a chronological telemetry ta
 
 Filters are **Activity**, **Agent runs**, **Test runs**, and **Decisions**. Events are not a separate user-facing category because all rows are events.
 
-Each row records time, event, scope, model/agent, tokens/cost, duration, and artifact. Scope must identify the candidate, slice, stage, or test run. Selecting a row sends its full evidence to the universal inspector. Avoid duplicating stage summaries or artifacts here.
+Each row records time, event, scope, model/agent, input/cached/output tokens, cache rate, work credits when available, clearly labelled API-rate estimate, duration, and artifact. Task/stage telemetry separately counts focused checks, full-manifest executions, review retries, and candidate repairs. It states that attributable ChatGPT-plan billing is unavailable. Scope must identify the candidate, slice, stage, or test run. Selecting a row sends its full evidence to the universal inspector. Avoid duplicating stage summaries or artifacts here.
 
 ## 9. Durable artifacts
 

@@ -9,6 +9,7 @@ import {
   readVerificationManifest,
   resolveReportPath,
   runRepositoryVerification,
+  selectVerificationCommands,
   VERIFICATION_MANIFEST_PATH,
   verificationSummaryCommand,
 } from "../server/verification.mjs";
@@ -138,6 +139,19 @@ test("produces evidence the existing contract accepts, from what the harness obs
   assert.equal(evidence.headRevision, candidate.headRevision);
   assert.match(evidence.command, /^\.agent-harness/);
   assert.equal(verificationSummaryCommand(parsed), `${parsed.source}: lint, test`);
+});
+
+test("selects only validated focused command ids while preserving the complete manifest", () => {
+  const parsed = manifest([
+    { id: "lint", command: ["npm", "run", "lint"] },
+    { id: "typecheck", command: ["npm", "run", "typecheck"] },
+    { id: "test", command: ["npm", "test"] },
+  ]);
+  const focused = selectVerificationCommands(parsed, ["typecheck"]);
+  assert.deepEqual(focused.commands.map((command) => command.id), ["typecheck"]);
+  assert.deepEqual(parsed.commands.map((command) => command.id), ["lint", "typecheck", "test"]);
+  assert.throws(() => selectVerificationCommands(parsed, ["unknown"]), /does not declare focused command id unknown/i);
+  assert.throws(() => selectVerificationCommands(parsed, []), /at least one repository manifest command id/i);
 });
 
 test("stops at the first failure and says which commands never ran", async () => {

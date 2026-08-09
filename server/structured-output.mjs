@@ -108,6 +108,50 @@ export function parseGrillQuestions(text) {
   });
 }
 
+export function parseFastChangeContract(text, repositoryPath = null) {
+  const value = parseLabelledJson(text, "fast-change-contract");
+  const acceptanceCriteria = Array.isArray(value.acceptanceCriteria)
+    ? value.acceptanceCriteria.map((entry) => String(entry).trim()).filter(Boolean).slice(0, 12)
+    : [];
+  const ownedPaths = Array.isArray(value.ownedPaths)
+    ? value.ownedPaths.map((entry) => normalizeOwnedPath(entry, repositoryPath)).filter(Boolean).slice(0, 20)
+    : [];
+  const verificationCommandIds = normalizeVerificationCommandIds(value.verificationCommandIds, "Fast change contract");
+  if (!acceptanceCriteria.length) throw new Error("The fast change contract needs at least one authoritative acceptance criterion.");
+  if (!ownedPaths.length) throw new Error("The fast change contract needs one to three repository-relative owned paths.");
+  if (!verificationCommandIds.length) throw new Error("The fast change contract needs at least one repository manifest command ID.");
+  return {
+    acceptanceCriteria,
+    ownedPaths,
+    verificationCommandIds,
+    unresolvedDecisions: Array.isArray(value.unresolvedDecisions)
+      ? value.unresolvedDecisions.map((entry) => String(entry).trim()).filter(Boolean).slice(0, 8)
+      : [],
+    riskSignals: Array.isArray(value.riskSignals)
+      ? value.riskSignals.map((entry) => String(entry).trim()).filter(Boolean).slice(0, 12)
+      : [],
+    workPackage: {
+      id: "S1",
+      title: String(value.title ?? "Bounded fast change").trim().slice(0, 300) || "Bounded fast change",
+      description: String(value.description ?? acceptanceCriteria.join(" ")).trim().slice(0, 3_000),
+      dependencies: [],
+      batch: 1,
+      ownedPaths,
+      verification: verificationCommandIds,
+      verificationCommandIds,
+      verificationRuns: [],
+      status: "planned",
+      attempts: 0,
+      branch: null,
+      worktreePath: null,
+      baseRevision: null,
+      headRevision: null,
+      files: [],
+      error: null,
+    },
+  };
+}
+
 export function parseFocusedTestEvidence(text) {
   const value = parseCandidateEvidenceJson(text, "focused-test-evidence");
   const binding = readExplicitCandidateBinding(value);
@@ -255,6 +299,19 @@ export function parseGateEvidence(text, candidate, stageId) {
     if (hasFindingCandidateId !== hasFindingCandidateRevision) throw candidateEvidenceError("malformed_binding");
     const findingBinding = findingExplicitBinding ? readExplicitCandidateBinding(finding) : binding;
     if (!findingBinding.valid) throw candidateEvidenceError(findingBinding.code);
+    const acceptanceCriterion = typeof finding.acceptanceCriterion === "string" && finding.acceptanceCriterion.trim()
+      ? finding.acceptanceCriterion.trim().slice(0, 2_000)
+      : null;
+    const reproductionEvidence = typeof finding.reproductionEvidence === "string" && finding.reproductionEvidence.trim()
+      ? finding.reproductionEvidence.trim().slice(0, 4_000)
+      : null;
+    const blocking = severity === "P0" || severity === "P1" || (finding.blocking === true && acceptanceCriterion != null);
+    if (blocking && !reproductionEvidence) {
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `Blocking gate finding ${index + 1} must include deterministic reproductionEvidence.`,
+      );
+    }
     return {
       severity,
       title,
@@ -264,6 +321,9 @@ export function parseGateEvidence(text, candidate, stageId) {
       candidateId: findingBinding.candidateId,
       candidateRevision: findingBinding.candidateRevision,
       bindingExplicit: findingExplicitBinding,
+      blocking,
+      acceptanceCriterion,
+      reproductionEvidence,
     };
   });
   const identities = new Set([
@@ -273,8 +333,8 @@ export function parseGateEvidence(text, candidate, stageId) {
   if (identities.size > 1) throw candidateEvidenceError("mixed_evidence");
   const identityReason = compareEvidenceBinding(binding, candidate);
   if (identityReason) throw candidateEvidenceError(identityReason);
-  const blockingFindings = findings.filter((finding) => finding.severity === "P0" || finding.severity === "P1");
-  const verdict = value.verdict === "PASS" && blockingFindings.length === 0 && findings.every((finding) => finding.bindingExplicit)
+  const blockingFindings = findings.filter((finding) => finding.blocking);
+  const verdict = blockingFindings.length === 0 && findings.every((finding) => finding.bindingExplicit)
     ? "PASS"
     : "REPAIR";
   return {
@@ -287,7 +347,7 @@ export function parseGateEvidence(text, candidate, stageId) {
     summary: String(value.summary ?? "").trim().slice(0, 4_000),
     findings,
     blockingReasons: [
-      ...blockingFindings.map((finding) => `${finding.severity}: ${finding.title}`),
+      ...blockingFindings.map((finding) => `${finding.severity}: ${finding.title}${finding.reproductionEvidence ? ` — ${finding.reproductionEvidence}` : ""}`),
       ...findings
         .filter((finding) => !finding.bindingExplicit)
         .map((finding) => `Finding ${finding.title} is missing explicit candidate identity fields.`),
@@ -336,6 +396,12 @@ export function parseWorkPackages(text, repositoryPath = null) {
       verification: Array.isArray(item.verification)
         ? item.verification.map((entry) => String(entry).trim()).filter(Boolean).slice(0, 20)
         : [],
+      verificationCommandIds: normalizeVerificationCommandIds(
+        item.verificationCommandIds ?? item.verification,
+        ids[index],
+        { tolerateLegacyProse: true },
+      ),
+      verificationRuns: [],
       status: "planned",
       attempts: 0,
       branch: null,
@@ -377,6 +443,21 @@ export function parseWorkPackages(text, repositoryPath = null) {
     }
   }
   return packages;
+}
+
+function normalizeVerificationCommandIds(value, label, options = {}) {
+  if (!Array.isArray(value)) return [];
+  const ids = [];
+  for (const entry of value.slice(0, 20)) {
+    const id = String(entry ?? "").trim();
+    if (!id) continue;
+    if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(id)) {
+      if (options.tolerateLegacyProse) continue;
+      throw new Error(`${label} verificationCommandIds must contain lowercase repository manifest command IDs.`);
+    }
+    if (!ids.includes(id)) ids.push(id);
+  }
+  return ids;
 }
 
 function normalizeOwnedPath(value, repositoryPath) {
