@@ -2,6 +2,7 @@ import type { RuntimeTask, StageId, WorkflowProfileId } from "../../domain";
 import type { TaskRouteDetail } from "../../routes";
 
 export type RuntimeWorkflowAction =
+  | "continue-implementation"
   | "approve-spec"
   | "approve-plan"
   | "specification"

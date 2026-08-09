@@ -82,6 +82,8 @@ export interface RuntimeArtifact {
   focusedTest?: RuntimeFocusedTestEvidence | null;
   evidenceError?: { code: string; copy: string } | null;
   freshness?: RuntimeGateFreshness | null;
+  sourceTaskId?: string | null;
+  sourceArtifactId?: string | null;
   gateResult?: {
     schemaVersion?: number;
     stage?: StageId;
@@ -168,6 +170,8 @@ export interface RuntimeDecision {
   newLimit?: number;
   sourceRunId?: string | null;
   sourceRunIds?: string[];
+  sourceTaskId?: string | null;
+  sourceDecisionId?: string | null;
   candidateId?: string | null;
   candidateRevision?: number | null;
   candidateHeadRevision?: string | null;
@@ -269,6 +273,8 @@ export interface RuntimeApproval {
   stage: StageId;
   note: string;
   createdAt: string;
+  sourceTaskId?: string | null;
+  sourceApprovalId?: string | null;
 }
 
 export interface RuntimeCandidate {
@@ -333,6 +339,8 @@ export interface RuntimeTask {
   description: string;
   repositoryPath: string;
   workflow: "investigate" | "implement";
+  continuedFromTaskId?: string | null;
+  continuedByTaskId?: string | null;
   priority: "low" | "medium" | "high";
   workflowProfile?: RuntimeWorkflowProfile;
   stageDispositions?: Partial<Record<StageId, RuntimeStageDisposition>>;

@@ -2957,6 +2957,33 @@ test("keeps plan approval primary while exposing evidence-backed revision", () =
   });
 });
 
+test("offers an implementation continuation only for completed investigations", () => {
+  return withWorkspace(async ({ RuntimeCommandBar, nextAction }) => {
+    const task = createTask({
+      workflow: "investigate",
+      status: "completed",
+      currentStage: "specification",
+      completedStages: ["triage", "scouts", "grill", "specification"],
+    });
+    assert.equal(nextAction(task).action, "continue-implementation");
+    assert.equal(nextAction(task).label, "Continue to implementation");
+
+    const markup = renderToStaticMarkup(React.createElement(RuntimeCommandBar, {
+      task,
+      viewedStageId: "specification",
+      onRun: async () => {},
+      onAction: async () => {},
+      onFinishGrill: async () => {},
+    }));
+    assert.match(markup, />Continue to implementation</);
+    assert.match(markup, /separate implementation task/);
+
+    const linked = { ...task, continuedByTaskId: "AH-012" };
+    assert.equal(nextAction(linked).label, "Open implementation task");
+    assert.match(nextAction(linked).title, /AH-012/);
+  });
+});
+
 test("uses the authoritative current-stage allowance for workspace attempts and retry actions", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const task = createTask({

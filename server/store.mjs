@@ -372,12 +372,18 @@ export function createTaskRecord(state, input) {
   );
   const model = normalizeModelId(input.model ?? state.settings.defaultModel);
   const provider = resolveTaskProvider(stagePolicies, model, input.provider ?? null);
+  const continuation = clone(input.continuation ?? null);
+  const importedArtifacts = clone(continuation?.artifacts ?? []);
+  const importedDecisions = clone(continuation?.decisions ?? []);
+  const importedStages = ["triage", "scouts", "grill", "specification"];
   const task = {
     id: `AH-${String(state.nextId).padStart(3, "0")}`,
     title: input.title,
     description: input.description,
     repositoryPath: input.repositoryPath,
     workflow: input.workflow,
+    continuedFromTaskId: continuation?.sourceTaskId ?? null,
+    continuedByTaskId: null,
     priority: input.priority,
     agentConfig: {
       provider,
@@ -387,20 +393,20 @@ export function createTaskRecord(state, input) {
       profileStagePolicies,
       policySnapshotVersion: 2,
     },
-    attachments: [],
+    attachments: clone(continuation?.attachments ?? []),
     closure: null,
     archive: null,
     evaluation: null,
     experiment: clone(input.experiment ?? null),
     mergeIntent: null,
-    scoutDispatch: null,
+    scoutDispatch: clone(continuation?.scoutDispatch ?? null),
     workflowProfile,
-    stageDispositions: {},
+    stageDispositions: clone(continuation?.stageDispositions ?? {}),
     reviewRetries: [],
     automaticRepairCycles: 0,
-    status: "queued",
-    currentStage: "triage",
-    completedStages: [],
+    status: continuation ? "awaiting-plan-approval" : "queued",
+    currentStage: continuation ? "plan" : "triage",
+    completedStages: continuation ? importedStages : [],
     stageRun: 0,
     stageRunLimit: DEFAULT_STAGE_RUN_LIMIT,
     stageRunLimits: Object.fromEntries(
@@ -418,10 +424,19 @@ export function createTaskRecord(state, input) {
     stageRunReservations: {},
     models: configuredModels(stagePolicies),
     usage: enrichUsage(model, {}),
-    artifacts: [],
-    decisions: [],
-    grillSession: null,
-    approvals: [],
+    artifacts: importedArtifacts,
+    decisions: importedDecisions,
+    grillSession: clone(continuation?.grillSession ?? null),
+    approvals: continuation
+      ? [{
+          id: crypto.randomUUID(),
+          stage: "specification",
+          note: `Imported approved investigation handoff from ${continuation.sourceTaskId}.`,
+          createdAt: continuation.sourceApprovedAt,
+          sourceTaskId: continuation.sourceTaskId,
+          sourceApprovalId: continuation.sourceApprovalId,
+        }]
+      : [],
     workPackages: [],
     candidates: [],
     runs: [],
@@ -431,9 +446,11 @@ export function createTaskRecord(state, input) {
         at: now,
         category: "activity",
         tone: "info",
-        stage: "triage",
-        title: "Task created",
-        detail: "Ready to start with the local Codex runtime.",
+        stage: continuation ? "plan" : "triage",
+        title: continuation ? "Implementation continuation created" : "Task created",
+        detail: continuation
+          ? `Approved investigation evidence imported from ${continuation.sourceTaskId}. Read-only planning is ready to start.`
+          : "Ready to start with the local Codex runtime.",
       },
     ],
   };

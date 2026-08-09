@@ -177,6 +177,12 @@ Primary actions should not be hidden below long evidence. Examples include `Star
 
 Plan approval is not a forced choice. Before implementation authorization, an operator may record a concrete correction as a task decision and choose `Revise plan`. The bounded read-only planning attempt replaces the executable package graph while retaining the rejected plan artifact and run for audit. No repository write is authorized until a plan is explicitly approved.
 
+### Investigation-to-implementation continuation
+
+A completed investigate-only task may continue as one separately identified implementation task. The source investigation remains completed and read-only; it is never converted into a write-capable task. The implementation task records the source task ID, imports the approved investigation artifacts, decisions, and attachment references with their source IDs, and starts at read-only Implementation Plan. Plan approval remains the first authority that can advance the new task toward an isolated implementation worktree.
+
+The continuation action is idempotent. Repeating it opens the already-linked implementation task instead of creating another task or duplicating planning authority. Both tasks retain the link in their persisted state and activity history.
+
 ### Implement
 
 Implement is a work-package overview plus a distinct integration object.

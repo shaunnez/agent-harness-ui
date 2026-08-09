@@ -195,7 +195,7 @@ export function RuntimeStagePresentation({
               ["Artifact", artifact?.name ?? "Pending"],
               ["Approval", task.approvals.some((item) => item.stage === "specification") ? "Approved" : "Awaiting approval"],
               ["Task decision log", `${task.decisions.length} recorded across the workflow`],
-              ["Provenance", artifact?.model ?? "Not recorded"],
+              ["Provenance", artifact?.model ?? (artifact?.sourceTaskId ? `Imported from ${artifact.sourceTaskId}` : "Not recorded")],
             ]}
           />
           {task.decisions.length ? <RuntimeTaskDecisionSummary task={task} artifact={artifact} /> : null}
@@ -523,7 +523,7 @@ function RuntimeArtifactCard({
       <MarkdownContent content={content.trim() || "The structured result list above is the authoritative test evidence."} />
       <footer>
         <span>{new Date(artifact.createdAt).toLocaleString()}</span>
-        <span>{isModelRunArtifact(artifact) ? `${artifact.model} · ${formatTokenCount(artifact.usage.inputTokens)} in / ${formatTokenCount(artifact.usage.outputTokens)} out · ${formatCacheRate(artifact.usage)} cached · ${formatApproximateCost(artifact.usage.cost)}` : "Harness-generated · no model call"}</span>
+        <span>{isModelRunArtifact(artifact) ? `${artifact.model} · ${formatTokenCount(artifact.usage.inputTokens)} in / ${formatTokenCount(artifact.usage.outputTokens)} out · ${formatCacheRate(artifact.usage)} cached · ${formatApproximateCost(artifact.usage.cost)}` : artifact.sourceTaskId ? `Imported from ${artifact.sourceTaskId} · no new model call` : "Harness-generated · no model call"}</span>
       </footer>
     </article>
   );

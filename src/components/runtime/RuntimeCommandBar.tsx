@@ -350,10 +350,20 @@ export function nextAction(task: RuntimeTask) {
     };
   if (task.status === "completed")
     return {
-      action: null,
-      label: "Completed",
-      title: task.workflow === "implement" ? "Candidate merged" : "Investigation approved",
-      detail: "The durable task evidence remains available from every completed stage.",
+      action: task.workflow === "investigate" ? "continue-implementation" as const : null,
+      label: task.workflow === "investigate"
+        ? task.continuedByTaskId ? "Open implementation task" : "Continue to implementation"
+        : "Completed",
+      title: task.workflow === "implement"
+        ? "Candidate merged"
+        : task.continuedByTaskId
+          ? `Implementation continued as ${task.continuedByTaskId}`
+          : "Investigation approved",
+      detail: task.workflow === "investigate"
+        ? task.continuedByTaskId
+          ? "The approved investigation remains read-only; the linked task owns planning and implementation authority."
+          : "Create a separate implementation task with this approved evidence, then begin read-only planning."
+        : "The durable task evidence remains available from every completed stage.",
     };
   if (task.status === "failed") {
     if (task.candidates?.at(-1)?.status === "repair_required") {

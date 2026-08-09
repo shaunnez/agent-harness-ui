@@ -5,6 +5,7 @@ import {
   cancelTask,
   closeTask,
   createTask,
+  continueTaskToImplementation,
   evaluateTask,
   finishGrill,
   getEvaluationSummary,
@@ -498,6 +499,23 @@ export function App() {
             }}
             onAction={async (action, note) => {
               try {
+                if (action === "continue-implementation") {
+                  const result = await continueTaskToImplementation(activeRuntimeTask.id);
+                  setActiveRuntimeTask(result.task);
+                  await refreshTasks();
+                  navigateToRoute({
+                    kind: "task",
+                    taskId: result.task.id,
+                    stageId: result.task.currentStage,
+                  });
+                  showToast(
+                    "success",
+                    result.created
+                      ? `${result.task.id} created from the approved investigation; planning started.`
+                      : `Opened existing implementation task ${result.task.id}.`,
+                  );
+                  return;
+                }
                 await runTaskAction(activeRuntimeTask.id, action, note);
                 await refreshActiveTask(activeRuntimeTask.id);
                 showToast(

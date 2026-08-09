@@ -5770,6 +5770,87 @@ for (const [name, payload] of [
   });
 }
 
+for (const sqlite of [false, true]) {
+  test(`continues an approved investigation as one linked implementation task${sqlite ? " in SQLite" : ""}`, async () => {
+    const { directory, origin, server, store, startedIdRef, startedKindRef } = await createServer({ sqlite });
+    try {
+      const response = await createTask(origin, {
+        title: "Investigate the delivery boundary",
+        description: "Produce an approved, repository-grounded implementation contract.",
+        repositoryPath: directory,
+        workflow: "investigate",
+        priority: "high",
+      });
+      const { task: source } = await response.json();
+      await store.update(source.id, (draft) => {
+        draft.status = "completed";
+        draft.currentStage = "specification";
+        draft.completedStages = ["triage", "scouts", "grill", "specification"];
+        draft.completedAt = "2026-08-10T01:00:00.000Z";
+        draft.artifacts.push({
+          id: "source-specification",
+          runId: "source-run",
+          stage: "specification",
+          name: "task-specification.md",
+          kind: "markdown",
+          content: "# Approved investigation handoff",
+          createdAt: "2026-08-10T00:59:00.000Z",
+          model: "gpt-5.6-luna",
+          usage: { inputTokens: 10, cachedInputTokens: 5, outputTokens: 2, totalTokens: 12, cost: 0.001 },
+        });
+        draft.decisions.push({
+          id: "source-decision",
+          question: "Preserve the current contract?",
+          answer: "Yes.",
+          createdAt: "2026-08-10T00:58:00.000Z",
+        });
+        draft.approvals.push({
+          id: "source-approval",
+          stage: "specification",
+          note: "Approved for a separate implementation task.",
+          createdAt: "2026-08-10T01:00:00.000Z",
+        });
+      });
+
+      const continuedResponses = await Promise.all([
+        fetch(`${origin}/api/tasks/${source.id}/continue-implementation`, { method: "POST" }),
+        fetch(`${origin}/api/tasks/${source.id}/continue-implementation`, { method: "POST" }),
+      ]);
+      assert.deepEqual(continuedResponses.map((item) => item.status).sort(), [200, 201]);
+      const continuedBodies = await Promise.all(continuedResponses.map((item) => item.json()));
+      const first = continuedBodies.find((item) => item.created);
+      assert.ok(first);
+      assert.equal(continuedBodies.find((item) => !item.created).task.id, first.task.id);
+      assert.equal(first.created, true);
+      assert.equal(first.task.workflow, "implement");
+      assert.equal(first.task.continuedFromTaskId, source.id);
+      assert.equal(first.task.currentStage, "plan");
+      assert.deepEqual(first.task.completedStages, ["triage", "scouts", "grill", "specification"]);
+      assert.equal(first.task.artifacts[0].content, "# Approved investigation handoff");
+      assert.equal(first.task.artifacts[0].sourceTaskId, source.id);
+      assert.equal(first.task.artifacts[0].sourceArtifactId, "source-specification");
+      assert.equal(first.task.artifacts[0].model, null);
+      assert.equal(first.task.decisions[0].sourceDecisionId, "source-decision");
+      assert.equal(startedIdRef(), first.task.id);
+      assert.equal(startedKindRef(), "planning");
+
+      const retainedSource = await store.get(source.id);
+      assert.equal(retainedSource.status, "completed");
+      assert.equal(retainedSource.workflow, "investigate");
+      assert.equal(retainedSource.continuedByTaskId, first.task.id);
+
+      const repeated = await fetch(`${origin}/api/tasks/${source.id}/continue-implementation`, { method: "POST" });
+      assert.equal(repeated.status, 200);
+      const second = await repeated.json();
+      assert.equal(second.created, false);
+      assert.equal(second.task.id, first.task.id);
+      assert.equal((await store.list()).length, 2);
+    } finally {
+      await cleanup(server, directory);
+    }
+  });
+}
+
 function rawHttpRequest(origin, pathname, { method, headers, body }) {
   const url = new URL(origin);
   return new Promise((resolve, reject) => {

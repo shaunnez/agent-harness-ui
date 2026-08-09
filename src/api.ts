@@ -80,7 +80,6 @@ export async function verifyRuntimePricing() {
     method: "POST",
   });
 }
-
 export async function getRuntimeWorktreeInventory(taskId?: string) {
   return request<{ rows: RuntimeWorktreeInventoryRow[] }>(
     taskId ? `/api/tasks/${encodeURIComponent(taskId)}/worktrees` : "/api/runtime/worktrees",
@@ -206,6 +205,13 @@ export async function createTask(draft: NewTaskDraft) {
       body: JSON.stringify(draft),
     })
   ).task;
+}
+
+export async function continueTaskToImplementation(id: string) {
+  return request<{ task: RuntimeTask; created: boolean }>(
+    `/api/tasks/${encodeURIComponent(id)}/continue-implementation`,
+    { method: "POST" },
+  );
 }
 
 export async function updateTaskWorkflowProfile(

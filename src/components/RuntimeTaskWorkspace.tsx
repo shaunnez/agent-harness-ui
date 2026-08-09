@@ -540,6 +540,16 @@ export function RuntimeTaskWorkspace({
                 </div>
               ) : null}
             </InspectorSection>
+            {task.continuedFromTaskId ? (
+              <InspectorSection title="Investigation handoff" meta={task.continuedFromTaskId}>
+                <RuntimeRow label="Authority" value="This task owns planning and implementation" />
+                <RuntimeRow label="Source" value={`${task.continuedFromTaskId} remains read-only`} mono />
+                <RuntimeRow
+                  label="Imported evidence"
+                  value={`${task.artifacts.filter((artifact) => artifact.sourceTaskId === task.continuedFromTaskId).length} artifacts · ${task.decisions.filter((decision) => decision.sourceTaskId === task.continuedFromTaskId).length} decisions`}
+                />
+              </InspectorSection>
+            ) : null}
             {task.experiment ? (
               <InspectorSection title="Controlled experiment" meta={`${task.experiment.groupId} \u00b7 ${task.experiment.variantId}`}>
                 <RuntimeRow label="Frozen base" value={task.experiment.frozenBaseSha.slice(0, 12)} mono />

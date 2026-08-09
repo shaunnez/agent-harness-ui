@@ -173,6 +173,7 @@ export function createApiServer({
   // `prepare`, which the API never calls. It still uses the shared default rather than a
   // second literal: two places computing a worktree root independently is how they drift.
   const worktrees = new GitWorktreeManager(defaultWorktreeRoot());
+  const continuationLocks = new Map();
   return createServer(async (request, response) => {
     const url = new URL(request.url, "http://127.0.0.1");
     requestMetrics.set(response, {
@@ -754,6 +755,128 @@ export function createApiServer({
         const result = await orchestrator.finishGrill(id, { acceptRemaining: input.acceptRemaining === true });
         send(response, 202, result);
         return;
+      }
+
+      const continueImplementationMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/continue-implementation$/);
+      if (request.method === "POST" && continueImplementationMatch) {
+        const sourceId = decodeURIComponent(continueImplementationMatch[1]);
+        const priorContinuation = continuationLocks.get(sourceId) ?? Promise.resolve();
+        let releaseContinuation;
+        const continuation = new Promise((resolve) => { releaseContinuation = resolve; });
+        const continuationTail = priorContinuation.then(() => continuation);
+        continuationLocks.set(sourceId, continuationTail);
+        await priorContinuation;
+        try {
+          const source = await store.get(sourceId);
+          if (!source) {
+            send(response, 404, { error: "Task not found." });
+            return;
+          }
+          if (source.continuedByTaskId) {
+            const existing = await store.get(source.continuedByTaskId);
+            if (!existing) {
+              send(response, 409, { error: `Linked implementation task ${source.continuedByTaskId} could not be found.` });
+              return;
+            }
+            send(response, 200, { task: existing, created: false });
+            return;
+          }
+          if (source.workflow !== "investigate" || source.status !== "completed") {
+            send(response, 409, { error: "Only a completed investigate-only task can continue to implementation." });
+            return;
+          }
+          const specificationApproval = [...(source.approvals ?? [])]
+            .reverse()
+            .find((approval) => approval.stage === "specification");
+          const specificationArtifact = [...(source.artifacts ?? [])]
+            .reverse()
+            .find((artifact) => artifact.stage === "specification");
+          if (!specificationApproval || !specificationArtifact) {
+            send(response, 409, { error: "The investigation needs an approved specification artifact before implementation can continue." });
+            return;
+          }
+
+          const repositoryPath = await validateRepository(source.repositoryPath);
+          const settings = await store.settings();
+          const selectedProfile = source.workflowProfile?.selected ?? "standard";
+          const workflowProfile = selectWorkflowProfile({
+            title: source.title,
+            description: source.description,
+            requestedProfile: selectedProfile,
+          });
+          const importedStages = new Set(["triage", "scouts", "grill", "specification"]);
+          const importedArtifacts = (source.artifacts ?? [])
+            .filter((artifact) => importedStages.has(artifact.stage))
+            .map((artifact) => ({
+              ...structuredClone(artifact),
+              id: crypto.randomUUID(),
+              runId: null,
+              model: null,
+              reasoning: null,
+              agentRole: null,
+              usage: { inputTokens: 0, cachedInputTokens: 0, cacheWriteTokens: 0, outputTokens: 0, totalTokens: 0, cost: null, credits: null },
+              contextManifest: null,
+              candidateId: null,
+              candidateRevision: null,
+              workPackageId: null,
+              sourceTaskId: source.id,
+              sourceArtifactId: artifact.id,
+            }));
+          const importedDecisions = (source.decisions ?? []).map((decision) => ({
+            ...structuredClone(decision),
+            id: crypto.randomUUID(),
+            sourceTaskId: source.id,
+            sourceDecisionId: decision.id,
+          }));
+          const target = await store.create({
+            title: `Implement: ${source.title}`.slice(0, 300),
+            description: source.description,
+            repositoryPath,
+            workflow: "implement",
+            priority: source.priority,
+            model: source.agentConfig?.model ?? settings.defaultModel,
+            reasoning: source.agentConfig?.reasoning ?? settings.defaultReasoning,
+            stagePolicies: structuredClone(source.agentConfig?.stagePolicies ?? settings.stagePolicies),
+            profileStagePolicies: structuredClone(source.agentConfig?.profileStagePolicies ?? settings.profileStagePolicies),
+            workflowProfile,
+            continuation: {
+              sourceTaskId: source.id,
+              sourceApprovedAt: specificationApproval.createdAt,
+              sourceApprovalId: specificationApproval.id,
+              artifacts: importedArtifacts,
+              decisions: importedDecisions,
+              attachments: structuredClone(source.attachments ?? []),
+              scoutDispatch: structuredClone(source.scoutDispatch ?? null),
+              grillSession: structuredClone(source.grillSession ?? null),
+              stageDispositions: structuredClone(source.stageDispositions ?? {}),
+            },
+          });
+          await store.update(source.id, (draft) => {
+            draft.continuedByTaskId = target.id;
+            draft.events.push({
+              id: crypto.randomUUID(),
+              at: new Date().toISOString(),
+              category: "decision",
+              tone: "success",
+              stage: "specification",
+              title: "Continued to implementation",
+              detail: `${target.id} owns planning and implementation authority; ${source.id} remains an approved read-only investigation.`,
+            });
+          });
+          const started = await orchestrator.start(target.id, "planning");
+          if (!started) {
+            await store.update(target.id, (draft) => {
+              draft.status = "failed";
+              draft.currentStage = "plan";
+              draft.error = "Planning did not start. Retry planning from this implementation task.";
+            });
+          }
+          send(response, 201, { task: await store.get(target.id), created: true });
+          return;
+        } finally {
+          releaseContinuation();
+          if (continuationLocks.get(sourceId) === continuationTail) continuationLocks.delete(sourceId);
+        }
       }
 
       const actionMatch = url.pathname.match(
