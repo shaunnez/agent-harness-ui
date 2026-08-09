@@ -290,19 +290,33 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
           send(response, 404, { error: "Candidate not found." });
           return;
         }
+        const requestedHeadRevision = url.searchParams.get("headRevision")?.trim() || null;
+        const requestedRevision = requestedHeadRevision
+          ? candidate.revisions?.find((entry) => entry.headRevision === requestedHeadRevision)
+          : null;
+        if (requestedHeadRevision && !requestedRevision && requestedHeadRevision !== candidate.headRevision) {
+          send(response, 409, { error: "Requested candidate revision is no longer recorded for this task." });
+          return;
+        }
+        const targetHeadRevision = requestedRevision?.headRevision ?? candidate.headRevision;
+        const targetRevisionNumber = requestedRevision?.number ?? candidate.revisionNumber;
+        if (!targetHeadRevision) {
+          send(response, 409, { error: "Requested candidate revision has no recorded head commit." });
+          return;
+        }
         await worktrees.verifyCandidate(candidate);
         const diff = await git(candidate.worktreePath, [
           "diff",
           "--no-ext-diff",
           "--unified=3",
           candidate.baseRevision,
-          candidate.headRevision,
+          targetHeadRevision,
         ]);
         const cappedDiff = diff.slice(0, DIFF_CHAR_LIMIT);
         send(response, 200, {
           candidateId: candidate.id,
-          revisionNumber: candidate.revisionNumber,
-          headRevision: candidate.headRevision,
+          revisionNumber: targetRevisionNumber,
+          headRevision: targetHeadRevision,
           worktreePath: candidate.worktreePath,
           diff: cappedDiff,
           truncated: diff.length > DIFF_CHAR_LIMIT,

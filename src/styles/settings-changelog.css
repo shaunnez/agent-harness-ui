@@ -88,6 +88,16 @@
   color: var(--muted);
 }
 
+.pricing-table__row > span:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.pricing-table__row > span:first-child small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .settings-section__head--nested {
   margin-top: 18px;
 }
@@ -140,6 +150,94 @@
 .evaluation-table__empty {
   padding: 18px;
   color: var(--muted);
+}
+
+.evaluation-evidence {
+  margin: 10px 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.evaluation-evidence > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 52px;
+  padding: 10px 13px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.evaluation-evidence > summary::-webkit-details-marker {
+  display: none;
+}
+
+.evaluation-evidence > summary:hover {
+  background: var(--surface-2);
+}
+
+.evaluation-evidence > summary > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.evaluation-evidence > summary > span:first-child {
+  display: grid;
+  gap: 3px;
+  color: var(--text);
+}
+
+.evaluation-evidence > summary small,
+.evaluation-evidence > p,
+.evaluation-evidence__metrics small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.evaluation-evidence > summary svg {
+  transition: transform 120ms ease;
+}
+
+.evaluation-evidence[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.evaluation-evidence__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: 1px solid var(--border);
+  background: var(--border);
+  gap: 1px;
+}
+
+.evaluation-evidence__metrics > span {
+  display: grid;
+  gap: 4px;
+  padding: 11px 13px;
+  background: var(--bg-deep);
+}
+
+.evaluation-evidence__metrics strong {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+}
+
+.evaluation-evidence > p {
+  margin: 0;
+  padding: 12px 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 850px) {
+  .evaluation-evidence__metrics {
+    grid-template-columns: 1fr;
+  }
 }
 
 .sidebar__changelog {

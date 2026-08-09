@@ -133,7 +133,7 @@ export function SettingsScreen({
         </fieldset>
         <fieldset className="role-policy-grid">
      
-          {agentRoles.filter((role) => role.provider === "codex" && !role.id.startsWith("scout-")).map((role) => {
+          {agentRoles.filter((role) => role.provider === "model" && !role.id.startsWith("scout-")).map((role) => {
             const policy = stagePolicies[role.id] ?? globalDefault;
             return (
               <div className="role-policy-row" key={role.id}>
@@ -177,21 +177,21 @@ export function SettingsScreen({
         />
       </section>
       <section className="settings-section">
-        <div className="settings-section__head"><span><h3>Approximate cost rate card</h3><p>Standard short-context API prices per 1M tokens. Calculated task costs are comparison estimates; ChatGPT-plan charges are not exposed.</p></span><Button tone="secondary" disabled={verifyingPricing || !runtimeStatus?.authenticated} onClick={async () => { setError(null); setVerifyingPricing(true); try { await onVerifyPricing(); } catch (reason) { setError(reason instanceof Error ? reason.message : "Pricing could not be verified."); } finally { setVerifyingPricing(false); } }}>{verifyingPricing ? "Agent checking…" : "Verify with agent"}</Button></div>
+        <div className="settings-section__head"><span><h3>Approximate cost rate card</h3><p>OpenAI and Anthropic short-context API-equivalent prices per 1M tokens. The execution allowlist controls new runs, not which recorded rate cards remain inspectable.</p></span><Button tone="secondary" disabled={verifyingPricing || !runtimeStatus?.authenticated} onClick={async () => { setError(null); setVerifyingPricing(true); try { await onVerifyPricing(); } catch (reason) { setError(reason instanceof Error ? reason.message : "Pricing could not be verified."); } finally { setVerifyingPricing(false); } }}>{verifyingPricing ? "Agent checking…" : "Verify with agent"}</Button></div>
         <div className="pricing-table">
           <div className="pricing-table__header"><span>Model</span><span>Input</span><span>Cached input</span><span>Cache write</span><span>Output</span></div>
-          {catalog.filter((model) => allowedModels.includes(model.id)).map((model) => {
+          {catalog.filter((model) => runtimeStatus?.settings?.pricing?.rates?.[model.id]?.short ?? model.pricing?.short).map((model) => {
             const rate = runtimeStatus?.settings?.pricing?.rates?.[model.id]?.short ?? model.pricing?.short;
-            return <div className="pricing-table__row" key={model.id}><strong>{model.label}</strong><code>{rate ? `$${rate.input}` : "—"}</code><code>{rate ? `$${rate.cachedInput}` : "—"}</code><code>{rate?.cacheWrite == null ? "—" : `$${rate.cacheWrite}`}</code><code>{rate ? `$${rate.output}` : "—"}</code></div>;
+            return <div className="pricing-table__row" key={model.id}><span><strong>{model.label}</strong><small>{model.id.startsWith("claude-") ? "Anthropic" : "OpenAI"}{allowedModels.includes(model.id) ? " · allowed" : " · reference"}</small></span><code>{rate ? `$${rate.input}` : "—"}</code><code>{rate ? `$${rate.cachedInput}` : "—"}</code><code>{rate?.cacheWrite == null ? "—" : `$${rate.cacheWrite}`}</code><code>{rate ? `$${rate.output}` : "—"}</code></div>;
           })}
         </div>
         <small className="settings-pricing-source">{runtimeStatus?.settings?.pricing ? `Version ${runtimeStatus.settings.pricing.version} · ${runtimeStatus.settings.pricing.verifiedBy} · ${new Date(runtimeStatus.settings.pricing.verifiedAt).toLocaleString()}` : "Pricing metadata unavailable"}</small>
         {runtimeStatus?.settings?.pricing.creditRates ? (
           <>
-            <div className="settings-section__head settings-section__head--nested"><span><h3>ChatGPT work credits</h3><p>Current Codex credit units per 1M tokens. Credits measure plan usage; they are not dollars.</p></span></div>
+            <div className="settings-section__head settings-section__head--nested"><span><h3>ChatGPT work credits</h3><p>OpenAI's Codex/ChatGPT plan usage units per 1M tokens; they are not dollars. Claude Team exposes tokens and an API-equivalent cost, but no equivalent work-credit unit, so the harness does not invent one.</p></span></div>
             <div className="pricing-table pricing-table--credits">
               <div className="pricing-table__header"><span>Model</span><span>Input</span><span>Cached input</span><span>Output</span></div>
-              {catalog.filter((model) => allowedModels.includes(model.id) && runtimeStatus.settings?.pricing.creditRates?.[model.id]).map((model) => { const rate = runtimeStatus.settings?.pricing.creditRates?.[model.id]; return <div className="pricing-table__row" key={model.id}><strong>{model.label}</strong><code>{rate?.input}</code><code>{rate?.cachedInput}</code><code>{rate?.output}</code></div>; })}
+              {catalog.filter((model) => runtimeStatus.settings?.pricing.creditRates?.[model.id]).map((model) => { const rate = runtimeStatus.settings?.pricing.creditRates?.[model.id]; return <div className="pricing-table__row" key={model.id}><strong>{model.label}</strong><code>{rate?.input}</code><code>{rate?.cachedInput}</code><code>{rate?.output}</code></div>; })}
             </div>
             <small className="settings-pricing-source">Source: {runtimeStatus.settings.pricing.creditSourceUrl ?? "OpenAI ChatGPT pricing"}</small>
           </>

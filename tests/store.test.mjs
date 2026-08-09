@@ -125,3 +125,94 @@ test("does not relabel a completed investigate-only task without a candidate", a
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("rebuilds task usage from each artifact's recorded model and preserves synthetic origins", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-store-usage-"));
+  try {
+    const filePath = path.join(directory, "tasks.json");
+    const store = new JsonTaskStore(filePath);
+    await store.init();
+    const task = await store.create({
+      title: "Mixed model accounting",
+      description: "Keep model-specific credits when task policies use multiple models.",
+      repositoryPath: "/repo",
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.usage = { inputTokens: 2_000, cachedInputTokens: 500, outputTokens: 200, totalTokens: 2_200, cost: 0, credits: 999 };
+      draft.artifacts = [
+        {
+          id: "luna",
+          runId: "run-luna",
+          stage: "triage",
+          name: "triage.md",
+          kind: "markdown",
+          content: "# Triage",
+          createdAt: "2026-08-01T12:00:00.000Z",
+          model: "gpt-5.6-luna",
+          reasoning: "xhigh",
+          usage: { inputTokens: 1_000, cachedInputTokens: 500, outputTokens: 100, totalTokens: 1_100 },
+        },
+        {
+          id: "sol",
+          runId: "run-sol",
+          stage: "plan",
+          name: "implementation-plan.md",
+          kind: "markdown",
+          content: "# Plan",
+          createdAt: "2026-08-01T12:01:00.000Z",
+          model: "gpt-5.6-sol",
+          reasoning: "high",
+          usage: { inputTokens: 1_000, cachedInputTokens: 0, outputTokens: 100, totalTokens: 1_100 },
+        },
+        {
+          id: "assembly",
+          stage: "implement",
+          name: "candidate-assembly.md",
+          kind: "markdown",
+          content: "# Candidate assembly",
+          createdAt: "2026-08-01T12:02:00.000Z",
+          model: null,
+          reasoning: null,
+          usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0 },
+        },
+      ];
+    });
+
+    const rebooted = new JsonTaskStore(filePath);
+    await rebooted.init();
+    const restored = await rebooted.get(task.id);
+    assert.equal(restored.artifacts[2].model, null, "a harness-generated artifact must not inherit the task model on boot");
+    assert.equal(restored.usage.inputTokens, 2_000);
+    assert.equal(restored.usage.outputTokens, 200);
+    assert.equal(
+      restored.usage.credits,
+      Math.round((restored.artifacts[0].usage.credits + restored.artifacts[1].usage.credits) * 1_000_000) / 1_000_000,
+      "task credits sum the rates of the actual artifact models",
+    );
+    assert.notEqual(restored.usage.credits, 999);
+    assert.equal(restored.usage.cost, Math.round((restored.artifacts[0].usage.cost + restored.artifacts[1].usage.cost) * 1_000_000) / 1_000_000);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("records Anthropic provenance for tasks whose stage policies use Claude", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-store-provider-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Claude policy",
+      description: "Retain the configured execution provider in the task model snapshot.",
+      repositoryPath: "/repo",
+      workflow: "implement",
+      priority: "medium",
+      stagePolicies: { triage: { model: "claude-sonnet-5", reasoning: "high" } },
+    });
+    assert.deepEqual(task.models, [{ provider: "anthropic", model: "claude-sonnet-5" }]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

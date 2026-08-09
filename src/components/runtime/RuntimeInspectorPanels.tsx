@@ -9,6 +9,7 @@ import {
   type RuntimeTask,
   workflowStages,
 } from "../../domain";
+import { isModelRunArtifact } from "../../artifactPresentation";
 import { MarkdownContent } from "../MarkdownContent";
 import { Button } from "../Primitives";
 import { RuntimeContextDisclosure } from "./RuntimeEvidencePanels";
@@ -220,6 +221,7 @@ export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: Runtime
     setCopyStatus("error");
     setCopyError(result.message);
   };
+  const modelRun = isModelRunArtifact(artifact);
   return (
     <div
       className="artifact-overlay"
@@ -260,21 +262,25 @@ export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: Runtime
           </div>
         </header>
         <div className="artifact-viewer__summary">
-          <span>{artifact.model ? "Real agent output · read-only" : "Harness-generated · no model call"}</span>
+          <span>{modelRun ? "Real agent output · read-only" : "Harness-generated · no model call"}</span>
           <p>
-            {artifact.model
+            {modelRun
               ? `Produced by ${artifact.model}${artifact.reasoning ? ` at ${artifact.reasoning} reasoning` : ""}; retained as the handoff to downstream stages.`
-              : "Produced mechanically by the harness, not by an agent; retained as the handoff to downstream stages."}
+              : artifact.stage === "scouts"
+                ? "Combined mechanically from the selected scout reports, without an additional agent run; retained as the downstream repository-evidence handoff."
+                : "Produced mechanically by the harness, not by an agent; retained as the handoff to downstream stages."}
           </p>
           {copyStatus === "copied" ? <small className="text-green">Copied</small> : null}
           {copyError ? <small className="text-red">{copyError}</small> : null}
         </div>
-        <div className="artifact-viewer__usage">
-          <span><small>Input</small><strong>{formatTokenCount(artifact.usage.inputTokens)}</strong></span>
-          <span><small>Output</small><strong>{formatTokenCount(artifact.usage.outputTokens)}</strong></span>
-          <span><small>Cached input</small><strong className="text-green">{formatCacheRate(artifact.usage)} &middot; {formatTokenCount(artifact.usage.cachedInputTokens)}</strong></span>
-          <span><small>Approx. cost</small><strong>{formatApproximateCost(artifact.usage.cost)}</strong></span>
-        </div>
+        {modelRun ? (
+          <div className="artifact-viewer__usage">
+            <span><small>Input</small><strong>{formatTokenCount(artifact.usage.inputTokens)}</strong></span>
+            <span><small>Output</small><strong>{formatTokenCount(artifact.usage.outputTokens)}</strong></span>
+            <span><small>Cached input</small><strong className="text-green">{formatCacheRate(artifact.usage)} &middot; {formatTokenCount(artifact.usage.cachedInputTokens)}</strong></span>
+            <span><small>Approx. cost</small><strong>{formatApproximateCost(artifact.usage.cost)}</strong></span>
+          </div>
+        ) : null}
         <MarkdownContent content={stripEmbeddedCandidatePatch(artifact.content)} className="artifact-viewer__markdown" />
         <RuntimeContextDisclosure artifact={artifact} />
         <details className="artifact-viewer__raw">

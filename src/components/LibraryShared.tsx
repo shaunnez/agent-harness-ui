@@ -7,6 +7,7 @@ import {
   type AgentRoleId,
   type RuntimeTask,
 } from "../domain";
+import { isModelRunArtifact, sumArtifactUsage } from "../artifactPresentation";
 
 export function Metric({ label, value }: { label: string; value: string }) {
   return <div><span><CheckCircle size={16} /> {label}</span><strong>{value}</strong></div>;
@@ -19,21 +20,14 @@ export function SettingRow({ title, copy, control }: { title: string; copy: stri
 export function stageUsage(tasks: RuntimeTask[], stageId: AgentRoleId) {
   const artifacts = tasks
     .flatMap((task) => task.artifacts)
-    .filter((artifact) => (artifact.agentRole ?? artifact.stage) === stageId);
-  const usage = artifacts.reduce(
-    (total, artifact) => ({
-      inputTokens: total.inputTokens + artifact.usage.inputTokens,
-      cachedInputTokens: total.cachedInputTokens + artifact.usage.cachedInputTokens,
-      outputTokens: total.outputTokens + artifact.usage.outputTokens,
-      totalTokens: total.totalTokens + artifact.usage.totalTokens,
-      cost: total.cost + (artifact.usage.cost ?? 0),
-    }),
-    { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0, cost: 0 },
-  );
+    .filter((artifact) => {
+      if (!isModelRunArtifact(artifact)) return false;
+      if (stageId === "scouts") return artifact.stage === "scouts" && artifact.agentRole?.startsWith("scout-");
+      return (artifact.agentRole ?? artifact.stage) === stageId;
+    });
+  const usage = sumArtifactUsage(artifacts);
   return {
-    runs: artifacts.length,
     artifacts,
-    pricedRuns: artifacts.filter((artifact) => artifact.usage.cost != null).length,
     tokens: usage.totalTokens,
     ...usage,
   };
@@ -47,6 +41,7 @@ export function UsageSummary({ tasks, roleId }: { tasks: RuntimeTask[]; roleId: 
       <Metric label="Input / output" value={`${formatTokenCount(usage.inputTokens)} / ${formatTokenCount(usage.outputTokens)}`} />
       <Metric label="Cache rate" value={formatCacheRate(usage)} />
       <Metric label="Approx. cost" value={usage.pricedRuns ? formatApproximateCost(usage.cost) : "Unavailable"} />
+      <Metric label="Work credits" value={usage.creditRuns ? usage.credits?.toFixed(3) ?? "Unavailable" : "Unavailable for provider"} />
     </div>
   );
 }

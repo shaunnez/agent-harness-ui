@@ -1,7 +1,13 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 import path from "node:path";
-import { defaultRuntimeSettings, enrichUsage, normalizeModelId, resolveTaskProvider } from "./model-catalog.mjs";
+import {
+  defaultRuntimeSettings,
+  enrichUsage,
+  normalizeModelId,
+  providerForModelId,
+  resolveTaskProvider,
+} from "./model-catalog.mjs";
 import {
   CANONICAL_RUN_STAGES,
   DEFAULT_STAGE_RUN_LIMIT,
@@ -23,30 +29,69 @@ function clone(value) {
 }
 
 function repriceTaskUsage(task, settings) {
-  const taskModel = normalizeModelId(task.agentConfig?.model ?? task.models?.[0]?.model ?? settings.defaultModel);
+  let inputTokens = 0;
+  let cachedInputTokens = 0;
+  let cacheWriteTokens = 0;
+  let outputTokens = 0;
   let taskCost = 0;
   let hasTaskCost = false;
+  let taskCredits = 0;
+  let hasTaskCredits = false;
   for (const artifact of task.artifacts ?? []) {
-    const artifactModel = normalizeModelId(artifact.model ?? taskModel);
-    artifact.usage = enrichUsage(
-      artifactModel,
-      artifact.usage,
-      settings.pricing?.rates,
-      settings.pricing?.version,
-    );
+    const artifactModel = artifact.model == null ? null : normalizeModelId(artifact.model);
+    artifact.model = artifactModel;
+    artifact.usage = artifactModel
+      ? enrichUsage(
+          artifactModel,
+          artifact.usage,
+          settings.pricing?.rates,
+          settings.pricing?.version,
+        )
+      : normalizeHarnessUsage(artifact.usage, settings.pricing?.version);
+    inputTokens += artifact.usage.inputTokens;
+    cachedInputTokens += artifact.usage.cachedInputTokens;
+    cacheWriteTokens += artifact.usage.cacheWriteTokens ?? 0;
+    outputTokens += artifact.usage.outputTokens;
     if (artifact.usage.cost != null) {
       taskCost += artifact.usage.cost;
       hasTaskCost = true;
     }
+    if (artifact.usage.credits != null) {
+      taskCredits += artifact.usage.credits;
+      hasTaskCredits = true;
+    }
   }
-  const taskUsage = enrichUsage(
-    taskModel,
-    task.usage,
-    settings.pricing?.rates,
-    settings.pricing?.version,
-  );
-  taskUsage.cost = hasTaskCost ? Math.round(taskCost * 1_000_000) / 1_000_000 : taskUsage.cost;
-  task.usage = taskUsage;
+  task.usage = {
+    inputTokens,
+    cachedInputTokens,
+    cacheWriteTokens,
+    outputTokens,
+    totalTokens: inputTokens + outputTokens,
+    cost: hasTaskCost ? roundUsageTotal(taskCost) : null,
+    credits: hasTaskCredits ? roundUsageTotal(taskCredits) : null,
+    pricingVersion: settings.pricing?.version ?? null,
+  };
+}
+
+function normalizeHarnessUsage(usage, pricingVersion) {
+  const inputTokens = Number.isFinite(usage?.inputTokens) ? usage.inputTokens : 0;
+  const cachedInputTokens = Number.isFinite(usage?.cachedInputTokens) ? usage.cachedInputTokens : 0;
+  const cacheWriteTokens = Number.isFinite(usage?.cacheWriteTokens) ? usage.cacheWriteTokens : 0;
+  const outputTokens = Number.isFinite(usage?.outputTokens) ? usage.outputTokens : 0;
+  return {
+    inputTokens,
+    cachedInputTokens,
+    cacheWriteTokens,
+    outputTokens,
+    totalTokens: inputTokens + outputTokens,
+    cost: null,
+    credits: null,
+    pricingVersion: pricingVersion ?? null,
+  };
+}
+
+function roundUsageTotal(value) {
+  return Math.round(value * 1_000_000) / 1_000_000;
 }
 
 export class JsonTaskStore {
@@ -268,44 +313,21 @@ export class JsonTaskStore {
           task.models = configured;
           changed = true;
         }
-        let taskCost = 0;
-        let hasTaskCost = false;
         for (const artifact of task.artifacts ?? []) {
-          const artifactModel = normalizeModelId(artifact.model ?? taskModel);
-          if (artifact.model !== artifactModel) {
-            artifact.model = artifactModel;
-            changed = true;
-          }
           if (artifact.reasoning === undefined) {
             artifact.reasoning = null;
             changed = true;
           }
-          const enriched = enrichUsage(
-            artifactModel,
-            artifact.usage,
-            state.settings.pricing?.rates,
-            state.settings.pricing?.version,
-          );
-          if (JSON.stringify(artifact.usage) !== JSON.stringify(enriched)) {
-            artifact.usage = enriched;
-            changed = true;
-          }
-          if (enriched.cost != null) {
-            taskCost += enriched.cost;
-            hasTaskCost = true;
-          }
         }
-        const enrichedTaskUsage = enrichUsage(
-          taskModel,
-          { ...task.usage, cost: hasTaskCost ? taskCost : null },
-          state.settings.pricing?.rates,
-          state.settings.pricing?.version,
-        );
-        enrichedTaskUsage.cost = hasTaskCost ? Math.round(taskCost * 1_000_000) / 1_000_000 : enrichedTaskUsage.cost;
-        if (JSON.stringify(task.usage) !== JSON.stringify(enrichedTaskUsage)) {
-          task.usage = enrichedTaskUsage;
-          changed = true;
-        }
+        const usageSnapshot = JSON.stringify({
+          usage: task.usage,
+          artifacts: task.artifacts?.map((artifact) => ({ model: artifact.model, usage: artifact.usage })),
+        });
+        repriceTaskUsage(task, state.settings);
+        if (JSON.stringify({
+          usage: task.usage,
+          artifacts: task.artifacts?.map((artifact) => ({ model: artifact.model, usage: artifact.usage })),
+        }) !== usageSnapshot) changed = true;
         if (task.status === "awaiting-approval") {
           task.status = "awaiting-spec-approval";
           changed = true;
@@ -385,7 +407,10 @@ export class JsonTaskStore {
 
 function configuredModels(stagePolicies) {
   const models = [...new Set(Object.values(stagePolicies ?? {}).map((policy) => normalizeModelId(policy?.model)).filter(Boolean))];
-  return (models.length ? models : ["gpt-5.6-luna"]).map((model) => ({ provider: "openai", model }));
+  return (models.length ? models : ["gpt-5.6-luna"]).map((model) => ({
+    provider: providerForModelId(model) === "claude" ? "anthropic" : "openai",
+    model,
+  }));
 }
 
 async function renameWithRetry(sourcePath, targetPath) {

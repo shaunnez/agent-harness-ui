@@ -36,22 +36,23 @@ export function AgentsScreen({
   }
   return (
     <div className="page library-page">
-      <SectionHeader eyebrow="Execution roles" title="Agents" description="Each temporary role uses a policy snapshotted when a task is created. Candidate Repair is separate; Human Approval is deterministic." />
-      <div className="truth-banner"><Robot size={20} /><span><strong>{runtimeStatus?.model ?? "Configured Codex model"} · {runtimeStatus?.reasoning ?? "unknown"} reasoning</strong><small>Current single-provider execution policy. Claude and local model execution are not wired into the harness.</small></span></div>
+      <SectionHeader eyebrow="Execution roles" title="Agents" description="Roles are ordered by workflow execution. Repository scouts is the parent coordinator; its scout roles are the model runs aggregated into that parent." />
+      <div className="truth-banner"><Robot size={20} /><span><strong>{runtimeStatus?.settings?.defaultModel ?? runtimeStatus?.model ?? "Configured model"} · {runtimeStatus?.settings?.defaultReasoning ?? runtimeStatus?.reasoning ?? "unknown"} reasoning</strong><small>{providerSummary(runtimeStatus)}. Every task snapshots the stage policy it actually uses.</small></span></div>
       <div className="agent-grid agent-grid--roles">
         {agentRoles.map((role) => {
           const usage = stageUsage(runtimeTasks, role.id);
           const deterministic = role.provider === "harness";
           const configuredPolicy = rolePolicy(runtimeStatus, role.id);
           return (
-            <button className="agent-panel" type="button" key={role.id} onClick={() => onSelect(role.id)}>
-              <div className="agent-panel__head"><span className={`agent-icon agent-icon--${deterministic ? "harness" : "codex"}`}><Robot size={22} /></span><span><strong>{role.label}</strong><small>{deterministic ? "Harness-owned gate" : "Ephemeral Codex agent run"}</small></span></div>
+            <button className={`agent-panel${role.parentId ? " agent-panel--child" : ""}`} type="button" key={role.id} onClick={() => onSelect(role.id)}>
+              <div className="agent-panel__head"><span className={`agent-icon agent-icon--${deterministic ? "harness" : "codex"}`}><Robot size={22} /></span><span><strong>{role.label}</strong><small>{deterministic ? "Harness-owned gate" : role.parentId ? "Repository scout child · parent: Repository scouts" : role.id === "scouts" ? "Scout coordinator · child-run usage aggregated" : "Ephemeral configured-model run"}</small></span></div>
               <dl>
                 <div><dt>Capability</dt><dd>{role.skill}</dd></div>
-                <div><dt>Runtime</dt><dd>{deterministic ? "Local harness" : configuredPolicy?.model ?? "Codex (checking)"}</dd></div>
+                <div><dt>Runtime</dt><dd>{deterministic ? "Local harness" : configuredPolicy?.model ?? "Model policy (checking)"}</dd></div>
                 <div><dt>Reasoning</dt><dd>{deterministic ? "Deterministic" : configuredPolicy?.reasoning ?? "Checking"}</dd></div>
-                <div><dt>Observed usage</dt><dd>{usage.runs} runs · {formatTokenCount(usage.inputTokens)} in · {formatTokenCount(usage.outputTokens)} out</dd></div>
-                <div><dt>Cache / cost</dt><dd>{formatCacheRate(usage)} cached · {usage.pricedRuns ? formatApproximateCost(usage.cost) : deterministic ? "$0.00" : "Unavailable"}</dd></div>
+                <div><dt>Observed usage</dt><dd>{usage.runs ? `${usage.runs} runs · ${formatTokenCount(usage.inputTokens)} in · ${formatTokenCount(usage.outputTokens)} out` : deterministic ? "No model run · deterministic" : "No recorded model runs"}</dd></div>
+                <div><dt>Cache / cost</dt><dd>{usage.runs ? `${formatCacheRate(usage)} cached · ${usage.pricedRuns ? formatApproximateCost(usage.cost) : "Cost unavailable"}` : "No observed usage"}</dd></div>
+                <div><dt>Work credits</dt><dd>{usage.creditRuns ? usage.credits?.toFixed(3) : deterministic ? "Not applicable" : "Unavailable for recorded provider"}</dd></div>
               </dl>
               <span className="agent-panel__open">Inspect role <ArrowRight size={15} /></span>
             </button>
@@ -85,7 +86,7 @@ function AgentDetail({
       <SectionHeader
         eyebrow="Execution role"
         title={`${role.label} agent`}
-        description={deterministic ? "A deterministic human-owned gate with no model context." : `An ephemeral ${role.skill} run. Each artifact records its model, reasoning, usage, and supplied context.`}
+        description={deterministic ? "A deterministic human-owned gate with no model context." : role.id === "scouts" ? "A parent coordinator view that aggregates only the selected child scout model runs. The repository-scout.md handoff itself is mechanical and adds no tokens." : role.parentId ? `A child of Repository scouts. Each ${role.skill} artifact records its own model, reasoning, usage, and supplied context.` : `An ephemeral ${role.skill} run. Each artifact records its model, reasoning, usage, and supplied context.`}
       />
       <div className="detail-metrics detail-metrics--truthful">
         <Metric label="Default policy" value={configuredPolicy ? `${configuredPolicy.model} · ${configuredPolicy.reasoning}` : "Checking runtime"} />
@@ -93,6 +94,7 @@ function AgentDetail({
         <Metric label="Input / output" value={`${formatTokenCount(usage.inputTokens)} / ${formatTokenCount(usage.outputTokens)}`} />
         <Metric label="Cache rate" value={formatCacheRate(usage)} />
         <Metric label="Approx. cost" value={usage.pricedRuns ? formatApproximateCost(usage.cost) : deterministic ? "$0.00" : "Unavailable"} />
+        <Metric label="Work credits" value={usage.creditRuns ? usage.credits?.toFixed(3) ?? "Unavailable" : deterministic ? "Not applicable" : "Unavailable for provider"} />
       </div>
       {deterministic ? <DeterministicPolicyNotice /> : <AgentPolicyPanel role={role} runtimeStatus={runtimeStatus} onSave={onSave} />}
       <div className="detail-grid">
@@ -209,4 +211,12 @@ function DeterministicPolicyNotice() {
       <p>Human Approval records a human merge decision against a candidate revision. It does not call a model, so model and reasoning controls do not apply.</p>
     </section>
   );
+}
+
+function providerSummary(runtimeStatus: RuntimeStatus | null) {
+  const enabled = runtimeStatus?.providers
+    ?.filter((provider) => provider.executionEnabled && provider.available)
+    .map((provider) => provider.label ?? (provider.id === "claude" ? "Claude" : "Codex")) ?? [];
+  if (enabled.length) return `${enabled.join(" and ")} execution available through the local companion`;
+  return "Provider availability is still being checked by the local companion";
 }

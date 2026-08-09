@@ -168,6 +168,33 @@
   background: color-mix(in srgb, var(--green) 8%, transparent);
 }
 
+.runtime-grill-empty {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--green) 45%, var(--border));
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--green) 7%, var(--surface));
+}
+
+.runtime-grill-empty > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--green);
+}
+
+.runtime-grill-empty > span {
+  display: grid;
+  gap: 3px;
+}
+
+.runtime-grill-empty small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .runtime-grill__questions,
 .runtime-package-batches {
   display: grid;

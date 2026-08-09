@@ -338,7 +338,7 @@ export interface RuntimeTask {
   activeRunKind: string | null;
   activeRunIds?: string[];
   attemptsByStage: Partial<Record<StageId, number>>;
-  models: Array<{ provider: "openai"; model: string }>;
+  models: Array<{ provider: "openai" | "anthropic"; model: string }>;
   usage: RuntimeUsage;
   artifacts: RuntimeArtifact[];
   decisions: RuntimeDecision[];

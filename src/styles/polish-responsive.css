@@ -197,6 +197,28 @@
   padding: 14px 15px;
 }
 
+.runtime-candidate-desk .runtime-fact-grid,
+.runtime-candidate-desk--compact .runtime-fact-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.runtime-candidate-desk .runtime-fact-grid > div,
+.runtime-candidate-desk--compact .runtime-fact-grid > div {
+  border-right: 1px solid var(--border);
+}
+
+.runtime-candidate-desk .runtime-fact-grid > div:nth-child(3n),
+.runtime-candidate-desk .runtime-fact-grid > div:last-child,
+.runtime-candidate-desk--compact .runtime-fact-grid > div:nth-child(3n),
+.runtime-candidate-desk--compact .runtime-fact-grid > div:last-child {
+  border-right: 0;
+}
+
+.runtime-candidate-desk .runtime-fact-grid > div:nth-child(n + 4),
+.runtime-candidate-desk--compact .runtime-fact-grid > div:nth-child(n + 4) {
+  border-top: 1px solid var(--border);
+}
+
 .runtime-candidate-desk .runtime-fact-grid strong {
   font-size: 14px;
   line-height: 1.45;
@@ -214,7 +236,7 @@
 }
 
 .runtime-repair-lineage > div {
-  grid-template-columns: minmax(124px, auto) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(124px, auto) minmax(0, 1fr) auto auto;
   align-items: baseline;
   gap: 12px;
   padding: 12px 0;
@@ -259,6 +281,22 @@
 }
 
 @media (max-width: 850px) {
+  .runtime-candidate-desk .runtime-fact-grid,
+  .runtime-candidate-desk--compact .runtime-fact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .runtime-candidate-desk .runtime-fact-grid > div,
+  .runtime-candidate-desk--compact .runtime-fact-grid > div {
+    border-right: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .runtime-candidate-desk .runtime-fact-grid > div:first-child,
+  .runtime-candidate-desk--compact .runtime-fact-grid > div:first-child {
+    border-top: 0;
+  }
+
   .runtime-repair-lineage > div {
     grid-template-columns: 110px minmax(0, 1fr);
   }
@@ -266,6 +304,24 @@
   .runtime-repair-lineage > div small {
     grid-column: 2;
     white-space: normal;
+  }
+
+  .runtime-repair-lineage > div button {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .runtime-artifact-history button,
+  .runtime-task-decision-summary article {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .runtime-artifact-history button > span:nth-child(2) {
+    justify-items: start;
+  }
+
+  .runtime-artifact-history button > svg {
+    display: none;
   }
 }
 
