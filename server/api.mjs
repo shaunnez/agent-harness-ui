@@ -33,7 +33,8 @@ import { isCanonicalCommitId } from "../src/commit-id.ts";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
-const RUNTIME_SCHEMA_VERSION = 7;
+const RUNTIME_SCHEMA_VERSION = 8;
+const GRILL_POLICIES = new Set(["manual", "auto-accept-recommendations"]);
 const DIFF_CHAR_LIMIT = 300_000;
 const OUTPUT_LIMIT = 512 * 1024;
 
@@ -221,6 +222,8 @@ export function createApiServer({
         const defaultReasoning = String(input.defaultReasoning ?? "");
         if (!selected.reasoningLevels.includes(defaultReasoning)) throw new Error(`${selected.label} does not support ${defaultReasoning || "that"} reasoning.`);
         const currentSettings = await store.settings();
+        const grillPolicy = input.grillPolicy === undefined ? currentSettings.grillPolicy : String(input.grillPolicy);
+        if (!GRILL_POLICIES.has(grillPolicy)) throw new Error("Choose a supported Grill interaction policy.");
         const stagePolicies = validateStagePolicies(input.stagePolicies, known, allowedModels, currentSettings.stagePolicies);
         const profileStagePolicies = Object.fromEntries(WORKFLOW_PROFILE_IDS.map((profile) => [
           profile,
@@ -235,6 +238,7 @@ export function createApiServer({
           draft.allowedModels = allowedModels;
           draft.defaultModel = defaultModel;
           draft.defaultReasoning = defaultReasoning;
+          draft.grillPolicy = grillPolicy;
           draft.stagePolicies = stagePolicies;
           draft.profileStagePolicies = profileStagePolicies;
         });
@@ -741,9 +745,16 @@ export function createApiServer({
         const id = decodeURIComponent(grillAnswerMatch[1]);
         const input = await readJson(request);
         if (!input.questionId?.trim() || !input.answer?.trim()) throw new Error("Question ID and answer are required.");
+        if (input.interactionSource !== "operator-ui") {
+          throw new Error("Grill answers require an explicit operator UI action.");
+        }
         input.questionId = input.questionId.trim();
         input.answer = input.answer.trim();
-        await orchestrator.answerGrillQuestion(id, input);
+        await orchestrator.answerGrillQuestion(id, {
+          questionId: input.questionId,
+          answer: input.answer,
+          source: "operator",
+        });
         send(response, 201, { recorded: true });
         return;
       }
@@ -752,7 +763,13 @@ export function createApiServer({
       if (request.method === "POST" && finishGrillMatch) {
         const id = decodeURIComponent(finishGrillMatch[1]);
         const input = await readJson(request);
-        const result = await orchestrator.finishGrill(id, { acceptRemaining: input.acceptRemaining === true });
+        if (input.interactionSource !== "operator-ui") {
+          throw new Error("Finishing Grill requires an explicit operator UI action.");
+        }
+        const result = await orchestrator.finishGrill(id, {
+          acceptRemaining: input.acceptRemaining === true,
+          source: "operator",
+        });
         send(response, 202, result);
         return;
       }

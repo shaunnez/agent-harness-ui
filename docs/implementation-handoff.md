@@ -1,13 +1,13 @@
 # Agent Harness implementation handoff
 
-Updated: 2026-08-09
+Updated: 2026-08-10
 
 ## Delivered cut
 
 The repository now contains both the approved ten-stage interaction prototype and a real local vertical slice that can carry an implementation-mode task through every workflow gate:
 
 1. Triage and Repository Scouts run read-only against a selected repository.
-2. Grill Me produces real, mutually exclusive questions and pauses for persisted answers. The user can answer every question or explicitly finish by accepting the remaining recommendations before specification synthesis begins.
+2. Grill Me produces real, mutually exclusive questions. The default policy pauses for persisted operator answers; the operator can answer each question or manually accept all remaining recommendations. Settings can opt new tasks into automatic recommendation acceptance, which is snapshotted on the task and recorded with automation provenance. A zero-question session continues automatically.
 3. Task Specification runs only after Grill is explicitly completed. Specification approval either completes an investigate-only task or starts planning for an implementation task.
 4. Implementation Plan emits a validated work-package manifest with dependencies, topological batches, path ownership, and focused verification commands, then waits for explicit approval.
 5. Implement creates one isolated worktree and harness-owned branch per work package. Packages in the same dependency batch run concurrently; dependent slices start with their complete dependency commit closure applied.
@@ -80,8 +80,8 @@ Repository hooks and configured Git identity are respected. A hook or missing id
 | `POST` | `/api/tasks/:id/run` | Start or retry investigation |
 | `POST` | `/api/tasks/:id/cancel` | Abort the active Codex subprocess |
 | `POST` | `/api/tasks/:id/decisions` | Record an authoritative human question/answer pair |
-| `POST` | `/api/tasks/:id/grill/answers` | Answer one generated Grill question |
-| `POST` | `/api/tasks/:id/grill/finish` | Complete Grill, optionally accept remaining recommendations, and start specification synthesis |
+| `POST` | `/api/tasks/:id/grill/answers` | Record one explicit operator UI answer to a generated Grill question |
+| `POST` | `/api/tasks/:id/grill/finish` | Complete Grill from an explicit operator UI action, optionally accept remaining recommendations, and start specification synthesis |
 | `POST` | `/api/tasks/:id/approve-spec` | Approve the specification; complete investigation or start planning |
 | `POST` | `/api/tasks/:id/plan` | Retry a failed planning run |
 | `POST` | `/api/tasks/:id/approve-plan` | Authorize isolated implementation |
@@ -103,7 +103,7 @@ The API validates action eligibility from persisted task status. A task has one 
 
 - `attemptsByStage` rather than presenting a global run counter as a stage retry count;
 - `decisions` and `approvals` with timestamps;
-- a `grillSession` with generated options, recommendation provenance, answer source, completion reason, and timestamps;
+- a snapshotted `grillPolicy` plus `grillSession` options, recommendation provenance, answer/completion source, accepted-recommendation count, completion reason, and timestamps;
 - `workPackages` with dependencies, topological batch, ownership, verification, attempt state, worktree/branch, files, and exact package commit;
 - `workflowProfile`, selection/escalation history, explicit stage dispositions, review retries, and automatic-repair count;
 - profile-specific stage policy snapshots so historical runs remain reproducible;
@@ -127,7 +127,7 @@ The normal UI uses bounded contracts: `/api/tasks` excludes run/event collection
 - The universal inspector preserves task brief, viewed/active stage context, model/access/sandbox metadata, decision frontier, current candidate identity, and living artifacts.
 - The inspector shows the selected workflow profile, selection/escalation reason, pre-implementation override, per-stage wall time/tokens/cache/credits/API-rate estimate, focused/full verification counts and durations, review retries, and candidate repairs. It explicitly says attributable ChatGPT-plan billing is unavailable.
 - Human decisions can be recorded inline and are injected into every downstream prompt.
-- Grill Me distinguishes an open decision session from recorded history, reveals a text field for a custom single-choice answer, and makes finishing with recommendations explicit.
+- Grill Me distinguishes an open decision session from recorded history, shows the task's manual/automatic policy, reveals a text field for a custom single-choice answer, and makes manual finishing with recommendations explicit.
 - Implement shows packages by dependency batch with status, declared ownership, attempts, and package commit; candidate membership is visible in the inspector.
 - Candidate diff inspection opens a verified, revision-bound inline diff and prevents stale asynchronous responses from crossing candidate changes.
 - Test artifacts include structured candidate-bound rows with command, duration, assertions, failure details, and drill-back controls while preserving the Markdown narrative.

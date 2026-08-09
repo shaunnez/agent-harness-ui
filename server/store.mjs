@@ -268,6 +268,21 @@ export function migratePersistedTaskState(state) {
       task.workflowProfile = migratedStandardProfile();
       changed = true;
     }
+    if (task.grillPolicy === undefined) {
+      task.grillPolicy = "manual";
+      changed = true;
+    }
+    if (task.grillSession && task.grillSession.policySnapshot === undefined) {
+      task.grillSession.policySnapshot = task.grillPolicy;
+      task.grillSession.acceptedRecommendationCount = task.grillSession.questions
+        .filter((question) => question.answerSource === "accepted-assumption").length;
+      task.grillSession.completionSource = task.grillSession.status === "completed"
+        ? task.grillSession.questions.length === 0
+          ? "no-questions"
+          : "legacy-unverified"
+        : null;
+      changed = true;
+    }
     const taskModel = normalizeModelId(task.agentConfig?.model ?? task.models?.[0]?.model ?? state.settings.defaultModel);
     if (!task.agentConfig) {
       task.agentConfig = {
@@ -387,6 +402,7 @@ export function createTaskRecord(state, input) {
     continuedFromTaskId: continuation?.sourceTaskId ?? null,
     continuedByTaskId: null,
     priority: input.priority,
+    grillPolicy: input.grillPolicy ?? state.settings.grillPolicy ?? "manual",
     agentConfig: {
       provider,
       model,

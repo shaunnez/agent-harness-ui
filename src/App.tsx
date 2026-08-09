@@ -402,7 +402,8 @@ export function App() {
   };
 
   const saveRuntimeSettings = async (
-    settings: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies">,
+    settings: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies">
+      & Partial<Pick<RuntimeSettings, "grillPolicy">>,
   ) => {
     const saved = await updateRuntimeSettings(settings);
     const [status, evaluation] = await Promise.all([getRuntimeStatus(), getEvaluationSummary()]);

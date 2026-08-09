@@ -724,7 +724,7 @@ test("binds gate evidence to the reserving execution provider", () => {
   }
 });
 
-test("backfills the default execution provider while migrating through schema 7", () => {
+test("backfills the default execution provider while migrating through schema 8", () => {
   const run = makeRuntimeRun({ gateResult: makeGateResult() });
   delete run.provider;
   const task = makeRuntimeTask({ runs: [run] });
@@ -745,7 +745,7 @@ test("backfills the default execution provider while migrating through schema 7"
 
   assert.equal(migrateRunActivityState(state), true);
   assert.equal(state.schemaVersion, TASK_STORE_SCHEMA_VERSION);
-  assert.equal(TASK_STORE_SCHEMA_VERSION, 7);
+  assert.equal(TASK_STORE_SCHEMA_VERSION, 8);
   assert.equal(task.runs[0].provider, DEFAULT_EXECUTION_PROVIDER);
   assert.equal(task.stageRunReservations["dev-review"].provider, DEFAULT_EXECUTION_PROVIDER);
   assert.equal(task.gateFreshness["dev-review"].fresh, true);
@@ -3576,12 +3576,19 @@ test("runs the investigation frontier and retains each stage handoff", async () 
     }
 
     assert.equal(finished.status, "awaiting-grill", finished.error);
+    assert.equal(finished.grillPolicy, "manual");
     assert.deepEqual(finished.completedStages, ["triage", "scouts"]);
     assert.equal(finished.artifacts.length, 5);
     assert.equal(finished.grillSession.questions.length, 1);
-    await orchestrator.answerGrillQuestion(task.id, { questionId: "Q1", answer: "Preserve it" });
-    await orchestrator.finishGrill(task.id);
+    await assert.rejects(
+      orchestrator.finishGrill(task.id, { acceptRemaining: true }),
+      /explicit operator action/,
+    );
+    await orchestrator.answerGrillQuestion(task.id, { questionId: "Q1", answer: "Preserve it", source: "operator" });
+    await orchestrator.finishGrill(task.id, { source: "operator" });
     finished = await waitForStatus(store, task.id, "awaiting-spec-approval");
+    assert.equal(finished.grillSession.questions[0].answerSource, "operator-answer");
+    assert.equal(finished.grillSession.completionSource, "operator");
     assert.deepEqual(finished.completedStages, ["triage", "scouts", "grill", "specification"]);
     assert.equal(finished.artifacts.length, 6);
     assert.equal(finished.usage.totalTokens, 75);
@@ -3600,6 +3607,102 @@ test("runs the investigation frontier and retains each stage handoff", async () 
     const scoutRuns = finished.runs.filter((run) => run.stage === "scouts");
     assert.deepEqual(scoutRuns.map((run) => run.role).sort(), dispatchedScoutNames);
     assert.equal(scoutRuns.every((run) => run.kind === "scout" && run.attempt === 1), true);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("automatically accepts Grill recommendations only for a task that snapshotted the opt-in policy", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-auto-grill-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    await store.updateSettings((draft) => {
+      draft.grillPolicy = "auto-accept-recommendations";
+    });
+    const task = await store.create({
+      title: "Opt-in automatic Grill",
+      description: "Accept recommendations only because this task snapshots the setting.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "medium",
+    });
+    await store.updateSettings((draft) => {
+      draft.grillPolicy = "manual";
+    });
+    assert.equal((await store.get(task.id)).grillPolicy, "auto-accept-recommendations");
+
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      runCodex: async ({ prompt, onEvent }) => {
+        onEvent?.({ type: "activity", tone: "success", title: "Repository inspected", detail: "mock" });
+        return {
+          finalText: /<scout-report>/.test(prompt)
+            ? SCOUT_OUTPUT
+            : /<grill-questions>/.test(prompt)
+              ? GRILL_OUTPUT
+              : "## Specification\n\nRecommendations were accepted under the task policy.",
+          usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+        };
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id), true);
+    const finished = await waitForStatus(store, task.id, "awaiting-spec-approval");
+    assert.equal(finished.grillSession.status, "completed");
+    assert.equal(finished.grillSession.policySnapshot, "auto-accept-recommendations");
+    assert.equal(finished.grillSession.completionSource, "automation-policy");
+    assert.equal(finished.grillSession.acceptedRecommendationCount, 1);
+    assert.equal(finished.grillSession.questions[0].answerSource, "automation-policy");
+    assert.equal(finished.grillSession.questions[0].answer, "Preserve it");
+    assert.match(finished.grillSession.completionReason, /Automatically accepted 1 recommended assumption/);
+    assert.equal(finished.events.some((event) => event.title === "Grill recommendations accepted automatically"), true);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("lets an operator manually accept every remaining Grill recommendation", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-manual-grill-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Manual Grill acceptance",
+      description: "Retain the bulk operator action without making it automatic.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-grill";
+      draft.currentStage = "grill";
+      draft.completedStages = ["triage", "scouts"];
+      draft.grillSession = {
+        status: "open",
+        questions: parseGrillQuestions(GRILL_OUTPUT),
+        createdAt: "2026-08-01T12:00:00.000Z",
+        completedAt: null,
+        completionReason: null,
+        completionSource: null,
+        policySnapshot: "manual",
+        acceptedRecommendationCount: 0,
+      };
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      runCodex: async () => ({
+        finalText: "## Specification\n\nThe operator accepted the remaining recommendation.",
+        usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    await orchestrator.finishGrill(task.id, { acceptRemaining: true, source: "operator" });
+    const finished = await waitForStatus(store, task.id, "awaiting-spec-approval");
+    assert.equal(finished.grillSession.questions[0].answerSource, "operator-accepted-recommendation");
+    assert.equal(finished.grillSession.completionSource, "operator");
+    assert.equal(finished.grillSession.acceptedRecommendationCount, 1);
+    assert.match(finished.grillSession.completionReason, /Finished by the operator/);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -4075,8 +4178,8 @@ test("advances an approved implementation task through a revision-bound candidat
 
     await orchestrator.start(task.id);
     await waitForStatus(store, task.id, "awaiting-grill");
-    await orchestrator.answerGrillQuestion(task.id, { questionId: "Q1", answer: "Keep it backwards compatible." });
-    await orchestrator.finishGrill(task.id);
+    await orchestrator.answerGrillQuestion(task.id, { questionId: "Q1", answer: "Keep it backwards compatible.", source: "operator" });
+    await orchestrator.finishGrill(task.id, { source: "operator" });
     await waitForStatus(store, task.id, "awaiting-spec-approval");
     await orchestrator.approveSpecification(task.id);
     await waitForStatus(store, task.id, "awaiting-plan-approval");
@@ -4323,8 +4426,8 @@ test("retains explicit P3 advice without opening a candidate repair", async () =
 
     await orchestrator.start(task.id);
     await waitForStatus(store, task.id, "awaiting-grill");
-    await orchestrator.answerGrillQuestion(task.id, { questionId: "Q1", answer: "Keep it backwards compatible." });
-    await orchestrator.finishGrill(task.id);
+    await orchestrator.answerGrillQuestion(task.id, { questionId: "Q1", answer: "Keep it backwards compatible.", source: "operator" });
+    await orchestrator.finishGrill(task.id, { source: "operator" });
     await waitForStatus(store, task.id, "awaiting-spec-approval");
     await orchestrator.approveSpecification(task.id);
     await waitForStatus(store, task.id, "awaiting-plan-approval");

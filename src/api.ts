@@ -66,7 +66,10 @@ export async function getRuntimeStatus() {
   return status;
 }
 
-export async function updateRuntimeSettings(input: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies">) {
+export async function updateRuntimeSettings(
+  input: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies">
+    & Partial<Pick<RuntimeSettings, "grillPolicy">>,
+) {
   return (
     await request<{ settings: RuntimeSettings }>("/api/settings", {
       method: "PUT",
@@ -245,14 +248,14 @@ export async function recordTaskDecision(id: string, question: string, answer: s
 export async function answerGrillQuestion(id: string, questionId: string, answer: string) {
   return request<{ recorded: true }>(`/api/tasks/${encodeURIComponent(id)}/grill/answers`, {
     method: "POST",
-    body: JSON.stringify({ questionId, answer }),
+    body: JSON.stringify({ questionId, answer, interactionSource: "operator-ui" }),
   });
 }
 
 export async function finishGrill(id: string, acceptRemaining: boolean) {
   return request<{ started: true }>(`/api/tasks/${encodeURIComponent(id)}/grill/finish`, {
     method: "POST",
-    body: JSON.stringify({ acceptRemaining }),
+    body: JSON.stringify({ acceptRemaining, interactionSource: "operator-ui" }),
   });
 }
 

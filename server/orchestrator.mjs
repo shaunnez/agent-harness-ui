@@ -160,6 +160,62 @@ function activity(stage, title, detail, tone = "info", category = "activity", me
   return { id: crypto.randomUUID(), at: now(), category, tone, stage, title, detail, ...metadata };
 }
 
+function completeGrillSession(draft, { source, acceptRemaining }) {
+  if (!draft.grillSession || draft.grillSession.status !== "open") {
+    throw new Error("This task does not have an open Grill Me session.");
+  }
+  const unresolved = draft.grillSession.questions.filter((question) => !question.answer);
+  if (unresolved.length && !acceptRemaining) {
+    throw new Error("Answer every Grill question or explicitly accept the recommended assumptions.");
+  }
+
+  const acceptedDecisionIds = [];
+  for (const question of unresolved) {
+    const recommendation = question.options.find((option) => option.recommended);
+    if (!recommendation) throw new Error(`Grill question ${question.id} has no recommended answer.`);
+    question.answer = recommendation.label;
+    question.answerSource = source === "automation-policy"
+      ? "automation-policy"
+      : "operator-accepted-recommendation";
+    question.resolvedAt = now();
+    const decision = {
+      id: crypto.randomUUID(),
+      grillQuestionId: question.id,
+      question: question.question,
+      answer: recommendation.label,
+      createdAt: now(),
+    };
+    draft.decisions.push(decision);
+    acceptedDecisionIds.push(decision.id);
+  }
+
+  const acceptedCount = unresolved.length;
+  draft.grillSession.status = "completed";
+  draft.grillSession.completedAt = now();
+  draft.grillSession.completionSource = source;
+  draft.grillSession.policySnapshot = draft.grillPolicy ?? "manual";
+  draft.grillSession.acceptedRecommendationCount = acceptedCount;
+  draft.grillSession.completionReason = source === "automation-policy"
+    ? `Automatically accepted ${acceptedCount} recommended assumption${acceptedCount === 1 ? "" : "s"} under the task's Grill policy.`
+    : acceptedCount
+      ? `Finished by the operator with ${acceptedCount} recommended assumption${acceptedCount === 1 ? "" : "s"} accepted.`
+      : "All material questions were answered by the operator.";
+  if (!draft.completedStages.includes("grill")) draft.completedStages.push("grill");
+  draft.events.push(activity(
+    "grill",
+    source === "automation-policy" ? "Grill recommendations accepted automatically" : "Grill Me completed",
+    draft.grillSession.completionReason,
+    "success",
+    "decision",
+    {
+      decisionIds: acceptedDecisionIds,
+      grillCompletionSource: source,
+      grillPolicy: draft.grillSession.policySnapshot,
+      acceptedRecommendationCount: acceptedCount,
+    },
+  ));
+}
+
 export class TaskOrchestrator {
   #store;
   #active = new Map();
@@ -517,6 +573,7 @@ export class TaskOrchestrator {
   }
 
   async answerGrillQuestion(id, input) {
+    if (input.source !== "operator") throw new Error("Grill answers require an explicit operator action.");
     const answer = String(input.answer ?? "").trim().slice(0, 5_000);
     if (!answer) throw new Error("An answer is required.");
     const updated = await this.#store.transition(id, (draft) => {
@@ -530,7 +587,7 @@ export class TaskOrchestrator {
     }, (draft) => {
       const target = draft.grillSession.questions.find((item) => item.id === input.questionId);
       target.answer = answer;
-      target.answerSource = "user";
+      target.answerSource = "operator-answer";
       target.resolvedAt = now();
       const existing = draft.decisions.find((decision) => decision.grillQuestionId === target.id);
       if (existing) {
@@ -559,53 +616,19 @@ export class TaskOrchestrator {
     return updated;
   }
 
-  async finishGrill(id, { acceptRemaining = false } = {}) {
-    let unresolvedCount = 0;
+  async finishGrill(id, { acceptRemaining = false, source = null } = {}) {
+    if (source !== "operator") throw new Error("Finishing Grill requires an explicit operator action.");
     const started = await this.start(id, "specification", {
       canStart: (draft) => {
         if (draft.status !== "awaiting-grill" || draft.grillSession?.status !== "open") {
           throw new Error("This task does not have an open Grill Me session.");
         }
-        unresolvedCount = draft.grillSession.questions.filter((question) => !question.answer).length;
-        if (unresolvedCount && !acceptRemaining) {
+        if (draft.grillSession.questions.some((question) => !question.answer) && !acceptRemaining) {
           throw new Error("Answer every Grill question or explicitly accept the recommended assumptions.");
         }
         return true;
       },
-      onReserve: (draft) => {
-        const acceptedDecisionIds = [];
-        for (const question of draft.grillSession.questions.filter((item) => !item.answer)) {
-          const recommendation = question.options.find((option) => option.recommended);
-          question.answer = recommendation.label;
-          question.answerSource = "accepted-assumption";
-          question.resolvedAt = now();
-          const decision = {
-            id: crypto.randomUUID(),
-            grillQuestionId: question.id,
-            question: question.question,
-            answer: recommendation.label,
-            createdAt: now(),
-          };
-          draft.decisions.push(decision);
-          acceptedDecisionIds.push(decision.id);
-        }
-        draft.grillSession.status = "completed";
-        draft.grillSession.completedAt = now();
-        draft.grillSession.completionReason = unresolvedCount
-          ? `Finished by the user with ${unresolvedCount} recommended assumption${unresolvedCount === 1 ? "" : "s"} accepted.`
-          : draft.grillSession.questions.length
-            ? "All material questions were answered."
-            : "No material product decisions remained after repository investigation.";
-        if (!draft.completedStages.includes("grill")) draft.completedStages.push("grill");
-        draft.events.push(activity(
-          "grill",
-          "Grill Me completed",
-          draft.grillSession.completionReason,
-          "success",
-          "decision",
-          { decisionIds: acceptedDecisionIds },
-        ));
-      },
+      onReserve: (draft) => completeGrillSession(draft, { source: "operator", acceptRemaining }),
     });
     if (!started) throw new Error("Task is already running.");
     return { started: true };
@@ -1118,6 +1141,9 @@ export class TaskOrchestrator {
           createdAt: now(),
           completedAt: grillQuestions.length ? null : now(),
           completionReason: grillQuestions.length ? null : "No material product decisions remained after repository investigation.",
+          completionSource: grillQuestions.length ? null : "no-questions",
+          policySnapshot: draft.grillPolicy ?? "manual",
+          acceptedRecommendationCount: 0,
         };
       });
     }
@@ -1131,6 +1157,14 @@ export class TaskOrchestrator {
           "success",
           "decision",
         ));
+      });
+      await this.#reserveInvestigationStage(id, "specification");
+      await this.#runSpecification(id, signal);
+      return;
+    }
+    if (task.grillSession?.status === "open" && task.grillPolicy === "auto-accept-recommendations") {
+      await this.#store.update(id, (draft) => {
+        completeGrillSession(draft, { source: "automation-policy", acceptRemaining: true });
       });
       await this.#reserveInvestigationStage(id, "specification");
       await this.#runSpecification(id, signal);

@@ -253,3 +253,57 @@ test("migrates existing task state to the compatibility-safe standard workflow p
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("migrates legacy Grill state to manual policy without inventing human provenance", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-store-grill-migration-"));
+  try {
+    const filePath = path.join(directory, "tasks.json");
+    const store = new JsonTaskStore(filePath);
+    await store.init();
+    const task = await store.create({
+      title: "Legacy Grill",
+      description: "Created before Grill policy snapshots and completion provenance.",
+      repositoryPath: "/repo",
+      workflow: "investigate",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      delete draft.grillPolicy;
+      draft.grillSession = {
+        status: "completed",
+        questions: [{
+          id: "Q1",
+          question: "Preserve compatibility?",
+          whyItMatters: "Clients depend on it.",
+          options: [{ id: "Q1-O1", label: "Preserve it", description: "Keep clients working.", recommended: true }],
+          allowCustom: true,
+          answer: "Preserve it",
+          answerSource: "accepted-assumption",
+          resolvedAt: "2026-08-01T12:01:00.000Z",
+        }],
+        createdAt: "2026-08-01T12:00:00.000Z",
+        completedAt: "2026-08-01T12:01:00.000Z",
+        completionReason: "Finished by the user with 1 recommended assumption accepted.",
+      };
+    });
+    await store.updateSettings((draft) => {
+      delete draft.grillPolicy;
+    });
+
+    const rebooted = new JsonTaskStore(filePath);
+    await rebooted.init();
+    const migrated = await rebooted.get(task.id);
+    assert.equal((await rebooted.settings()).grillPolicy, "manual");
+    assert.equal(migrated.grillPolicy, "manual");
+    assert.equal(migrated.grillSession.policySnapshot, "manual");
+    assert.equal(migrated.grillSession.completionSource, "legacy-unverified");
+    assert.equal(migrated.grillSession.acceptedRecommendationCount, 1);
+    assert.equal(
+      migrated.grillSession.completionReason,
+      "Finished by the user with 1 recommended assumption accepted.",
+      "historical copy remains intact while new metadata marks its origin unverified",
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

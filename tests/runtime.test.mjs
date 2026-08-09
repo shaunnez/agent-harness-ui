@@ -1584,6 +1584,7 @@ test("renders an open Grill session as active decisions and completed Grill as h
         ...sharedProps,
         initialViewedStageId: "grill",
         task: createTask({
+          grillPolicy: "manual",
           status: "awaiting-spec-approval",
           currentStage: "specification",
           completedStages: ["triage", "scouts", "grill", "specification"],
@@ -1593,21 +1594,55 @@ test("renders an open Grill session as active decisions and completed Grill as h
               {
                 ...question,
                 answer: "Preserve it",
-                answerSource: "user",
+                answerSource: "operator-answer",
                 resolvedAt: "2026-08-01T12:05:00.000Z",
               },
             ],
             createdAt: "2026-08-01T12:00:00.000Z",
             completedAt: "2026-08-01T12:05:00.000Z",
-            completionReason: "All material questions were answered.",
+            completionReason: "All material questions were answered by the operator.",
+            completionSource: "operator",
+            policySnapshot: "manual",
+            acceptedRecommendationCount: 0,
           },
         }),
       }),
     );
-    assert.match(completedMarkup, /All material questions were answered/);
-    assert.match(completedMarkup, /Your answer/);
+    assert.match(completedMarkup, /All material questions were answered by the operator/);
+    assert.match(completedMarkup, /Operator answer/);
+    assert.match(completedMarkup, /Manual policy/);
     assert.doesNotMatch(completedMarkup, /Confirm answer/);
     assert.doesNotMatch(completedMarkup, /Finish with 1 recommendation/);
+
+    const automaticMarkup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        ...sharedProps,
+        initialViewedStageId: "grill",
+        task: createTask({
+          grillPolicy: "auto-accept-recommendations",
+          status: "awaiting-spec-approval",
+          currentStage: "specification",
+          completedStages: ["triage", "scouts", "grill", "specification"],
+          grillSession: {
+            status: "completed",
+            questions: [{
+              ...question,
+              answer: "Preserve it",
+              answerSource: "automation-policy",
+              resolvedAt: "2026-08-01T12:05:00.000Z",
+            }],
+            createdAt: "2026-08-01T12:00:00.000Z",
+            completedAt: "2026-08-01T12:05:00.000Z",
+            completionReason: "Automatically accepted 1 recommended assumption under the task's Grill policy.",
+            completionSource: "automation-policy",
+            policySnapshot: "auto-accept-recommendations",
+            acceptedRecommendationCount: 1,
+          },
+        }),
+      }),
+    );
+    assert.match(automaticMarkup, /Automatic policy/);
+    assert.match(automaticMarkup, /Recommendation accepted automatically/);
   });
 });
 

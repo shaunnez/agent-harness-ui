@@ -168,6 +168,16 @@
   background: color-mix(in srgb, var(--green) 8%, transparent);
 }
 
+.runtime-grill__legacy {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--amber);
+  background: var(--amber-soft);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .runtime-grill-empty {
   display: flex;
   align-items: flex-start;

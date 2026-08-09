@@ -214,6 +214,23 @@ export interface RuntimeGrillOption {
   recommended: boolean;
 }
 
+export type RuntimeGrillPolicy = "manual" | "auto-accept-recommendations";
+
+export type RuntimeGrillAnswerSource =
+  | "operator-answer"
+  | "operator-accepted-recommendation"
+  | "automation-policy"
+  | "user"
+  | "accepted-assumption"
+  | null;
+
+export type RuntimeGrillCompletionSource =
+  | "operator"
+  | "automation-policy"
+  | "no-questions"
+  | "legacy-unverified"
+  | null;
+
 export interface RuntimeGrillQuestion {
   id: string;
   question: string;
@@ -221,7 +238,7 @@ export interface RuntimeGrillQuestion {
   options: RuntimeGrillOption[];
   allowCustom: boolean;
   answer: string | null;
-  answerSource: "user" | "accepted-assumption" | null;
+  answerSource: RuntimeGrillAnswerSource;
   resolvedAt: string | null;
 }
 
@@ -231,6 +248,9 @@ export interface RuntimeGrillSession {
   createdAt: string;
   completedAt: string | null;
   completionReason: string | null;
+  completionSource?: RuntimeGrillCompletionSource;
+  policySnapshot?: RuntimeGrillPolicy;
+  acceptedRecommendationCount?: number;
 }
 
 export interface RuntimeWorkPackage {
@@ -344,6 +364,7 @@ export interface RuntimeTask {
   continuedFromTaskId?: string | null;
   continuedByTaskId?: string | null;
   priority: "low" | "medium" | "high";
+  grillPolicy?: RuntimeGrillPolicy;
   workflowProfile?: RuntimeWorkflowProfile;
   stageDispositions?: Partial<Record<StageId, RuntimeStageDisposition>>;
   reviewRetries?: Array<{
@@ -546,6 +567,7 @@ export interface RuntimeModelCatalog {
 }
 
 export interface RuntimeSettings {
+  grillPolicy: RuntimeGrillPolicy;
   allowedModels: string[];
   defaultModel: string;
   defaultReasoning: string;

@@ -354,6 +354,7 @@
   .command-side--split,
   .task-filters,
   .model-allowlist,
+  .settings-grill-policy,
   .settings-default-grid,
   .dialog-model-grid {
     grid-template-columns: 1fr;

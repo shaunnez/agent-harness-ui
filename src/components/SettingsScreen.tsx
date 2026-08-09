@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type {
   RuntimeAgentPolicy,
   RuntimeEvaluationSummary,
+  RuntimeGrillPolicy,
   RuntimeSettings,
   RuntimeStatus,
   WorkflowProfileId,
@@ -14,7 +15,7 @@ import { SettingRow } from "./LibraryShared";
 import { Button, SectionHeader } from "./Primitives";
 import { connectionStateLabel, providerConnectionState } from "./Shell";
 
-type RuntimePolicyInput = Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies">;
+type RuntimePolicyInput = Pick<RuntimeSettings, "grillPolicy" | "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies">;
 
 export function SettingsScreen({
   runtimeStatus,
@@ -45,6 +46,7 @@ export function SettingsScreen({
         }
       : undefined);
   const [allowedModels, setAllowedModels] = useState<string[]>([]);
+  const [grillPolicy, setGrillPolicy] = useState<RuntimeGrillPolicy>("manual");
   const [defaultModel, setDefaultModel] = useState("");
   const [defaultReasoning, setDefaultReasoning] = useState("");
   const [stagePolicies, setStagePolicies] = useState<Record<string, RuntimeAgentPolicy>>({});
@@ -57,6 +59,7 @@ export function SettingsScreen({
   useEffect(() => {
     const settings = runtimeStatus?.settings;
     if (!settings) return;
+    setGrillPolicy(settings.grillPolicy ?? "manual");
     setAllowedModels(settings.allowedModels);
     setDefaultModel(settings.defaultModel);
     setDefaultReasoning(settings.defaultReasoning);
@@ -78,13 +81,14 @@ export function SettingsScreen({
     try {
       const matrices = { ...profileStagePolicies, [editingProfile]: stagePolicies };
       await onSave({
+        grillPolicy,
         allowedModels,
         defaultModel,
         defaultReasoning,
         stagePolicies: matrices.standard,
         profileStagePolicies: matrices,
       });
-      setSaveMessage("Model policy saved. New tasks will use these defaults; existing task snapshots are unchanged.");
+      setSaveMessage("Settings saved. New tasks will use these defaults; existing task snapshots are unchanged.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Settings could not be saved.");
     } finally {
@@ -98,7 +102,43 @@ export function SettingsScreen({
   };
   return (
     <div className="page library-page settings-page">
-      <SectionHeader eyebrow="Local orchestration" title="Settings" description="Choose the model allowlist and defaults used for new tasks. Each task snapshots its model and reasoning level so later settings changes do not rewrite history." action={<Button tone="secondary" icon={MagnifyingGlass} onClick={() => void onRefresh()} disabled={refreshing}>{refreshing ? "Searching…" : "Search available models"}</Button>} />
+      <SectionHeader eyebrow="Local orchestration" title="Settings" description="Choose the interaction and model defaults used for new tasks. Each task snapshots these policies so later settings changes do not rewrite history." action={<Button tone="secondary" icon={MagnifyingGlass} onClick={() => void onRefresh()} disabled={refreshing}>{refreshing ? "Searching…" : "Search available models"}</Button>} />
+      {saveMessage ? <p className="agent-policy-feedback agent-policy-feedback--success" role="status">{saveMessage}</p> : null}
+      {error ? <p className="dialog-error" role="alert">{error}</p> : null}
+      <section className="settings-section">
+        <h3>Grill decisions</h3>
+        <p className="settings-section__intro">Choose whether new tasks pause when Grill finds material questions. A task keeps the policy it was created with.</p>
+        <fieldset className="settings-grill-policy">
+          <legend className="sr-only">Default Grill interaction policy</legend>
+          <label className={grillPolicy === "manual" ? "selected" : ""}>
+            <input
+              type="radio"
+              name="grill-policy"
+              value="manual"
+              checked={grillPolicy === "manual"}
+              onChange={() => { setGrillPolicy("manual"); setSaveMessage(null); }}
+            />
+            <span>
+              <strong>Pause for my answers <em>Default</em></strong>
+              <small>Answer one question at a time, or manually accept all remaining recommendations.</small>
+            </span>
+          </label>
+          <label className={grillPolicy === "auto-accept-recommendations" ? "selected" : ""}>
+            <input
+              type="radio"
+              name="grill-policy"
+              value="auto-accept-recommendations"
+              checked={grillPolicy === "auto-accept-recommendations"}
+              onChange={() => { setGrillPolicy("auto-accept-recommendations"); setSaveMessage(null); }}
+            />
+            <span>
+              <strong>Automatically accept recommendations</strong>
+              <small>New tasks will not pause; every unresolved Grill recommendation is accepted and recorded as automation.</small>
+            </span>
+          </label>
+        </fieldset>
+        <Button type="button" tone="primary" disabled={saving || !allowedModels.length || !defaultModel || !defaultReasoning} onClick={() => void save()}>{saving ? "Saving…" : "Save interaction policy"}</Button>
+      </section>
       <section className="settings-section">
         <h3>Allowed models</h3>
         <p className="settings-section__intro">Entries identify whether they were discovered locally, retained from configuration, or supplied only as unsupported bundled reference metadata{runtimeStatus?.catalog?.fetchedAt ? ` · refreshed ${new Date(runtimeStatus.catalog.fetchedAt).toLocaleString()}` : ""}. Only discovered models are editable.</p>
@@ -189,8 +229,6 @@ export function SettingsScreen({
             );
           })}
         </fieldset>
-        {saveMessage ? <p className="agent-policy-feedback agent-policy-feedback--success" role="status">{saveMessage}</p> : null}
-        {error ? <p className="dialog-error" role="alert">{error}</p> : null}
       </section>
       <section className="settings-section">
         <h3>Runtime connection</h3>

@@ -245,7 +245,9 @@ export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, arti
         title: unresolved[0]?.question ?? (artifact ? "Decision frontier settled" : fallback.title),
         detail: unresolved[0]
           ? "Repository evidence comes first, followed by one recommended answer and explicit alternatives."
-          : task.grillSession?.completionReason ?? fallback.detail,
+          : task.grillSession?.completionSource === "legacy-unverified"
+            ? "This Grill session completed under the legacy runtime; whether a person or automation supplied its answers was not recorded."
+            : task.grillSession?.completionReason ?? fallback.detail,
       };
     }
     case "specification":

@@ -15,6 +15,7 @@ export function RuntimeGrillPanel({
   const settled = session.questions.filter((question) => question.answer).length;
   const interactive = session.status === "open" && task.status === "awaiting-grill";
   const activeQuestion = session.questions.find((question) => !question.answer);
+  const policy = session.policySnapshot ?? task.grillPolicy ?? "manual";
   return (
     <section className="runtime-grill" aria-label="Grill Me decision session">
       <header>
@@ -22,14 +23,19 @@ export function RuntimeGrillPanel({
           {/* Named "Grill session", not "Decision frontier" — the sidebar's Decision
               frontier (RuntimeEvidencePanels.tsx) is a durable, any-stage decision log
               distinct from this stage-scoped Q&A, and sharing the name confused the two. */}
-          <small>Grill session</small>
+          <small>Grill session &middot; {policy === "manual" ? "Manual policy" : "Automatic policy"}</small>
           <strong>
             {settled} of {session.questions.length} material questions settled
           </strong>
         </span>
         <StateBadge state={session.status === "completed" ? "completed" : "needs-input"} />
       </header>
-      {session.completionReason && session.questions.length ? <p className="runtime-grill__reason">{session.completionReason}</p> : null}
+      {session.completionSource === "legacy-unverified" ? (
+        <p className="runtime-grill__legacy">Legacy completion record: this runtime did not record whether a person or automation supplied these answers.</p>
+      ) : null}
+      {session.completionReason && session.questions.length && session.completionSource !== "legacy-unverified" ? (
+        <p className="runtime-grill__reason">{session.completionReason}</p>
+      ) : null}
       {activeQuestion ? (
         <div className="runtime-grill__questions">
           <RuntimeGrillQuestionCard
@@ -127,9 +133,7 @@ function RuntimeGrillQuestionCard({
         </summary>
         <p>{question.whyItMatters}</p>
         <div className="runtime-grill-answer">
-          <small>
-            {question.answerSource === "accepted-assumption" ? "Accepted recommendation" : "Your answer"}
-          </small>
+          <small>{answerSourceLabel(question.answerSource)}</small>
           <strong>{question.answer}</strong>
         </div>
       </details>
@@ -229,4 +233,13 @@ function RuntimeGrillQuestionCard({
       )}
     </article>
   );
+}
+
+function answerSourceLabel(source: RuntimeGrillQuestion["answerSource"]) {
+  if (source === "operator-answer") return "Operator answer";
+  if (source === "operator-accepted-recommendation") return "Recommendation accepted by operator";
+  if (source === "automation-policy") return "Recommendation accepted automatically";
+  if (source === "accepted-assumption") return "Accepted recommendation · legacy origin unverified";
+  if (source === "user") return "Recorded answer · legacy origin unverified";
+  return "Recorded answer";
 }

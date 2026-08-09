@@ -969,7 +969,7 @@ test("returns backward-compatible structured run activity through task APIs", as
     const detail = await (await fetch(`${origin}/api/tasks/${task.id}`)).json();
     const list = await (await fetch(`${origin}/api/tasks`)).json();
     const health = await (await fetch(`${origin}/api/health`)).json();
-    assert.equal(health.runtimeSchemaVersion, 7);
+    assert.equal(health.runtimeSchemaVersion, 8);
     assert.equal(detail.task.runs[0].id, "RUN-API");
     assert.equal(detail.task.runs[0].toolCalls[0].result, "Exit code 0");
     assert.equal(detail.task.events.at(-1).runId, "RUN-API");
@@ -1535,6 +1535,7 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
+        grillPolicy: "auto-accept-recommendations",
         allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna"],
         defaultModel: "gpt-5.6-sol",
         defaultReasoning: "xhigh",
@@ -1544,6 +1545,18 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
     const settings = (await settingsResponse.json()).settings;
     assert.equal(settings.defaultModel, "gpt-5.6-sol");
     assert.equal(settings.defaultReasoning, "xhigh");
+    assert.equal(settings.grillPolicy, "auto-accept-recommendations");
+
+    const legacySettingsResponse = await fetch(`${origin}/api/settings`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna"],
+        defaultModel: "gpt-5.6-sol",
+        defaultReasoning: "xhigh",
+      }),
+    });
+    assert.equal((await legacySettingsResponse.json()).settings.grillPolicy, "auto-accept-recommendations");
 
     const createResponse = await createTask(origin, {
       title: "Sol task",
@@ -1561,6 +1574,20 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
     assert.equal(task.agentConfig.stagePolicies.plan.model, "gpt-5.6-sol");
     assert.equal(task.agentConfig.stagePolicies.test.reasoning, "xhigh");
     assert.equal(task.models[0].model, "gpt-5.6-sol");
+    assert.equal(task.grillPolicy, "auto-accept-recommendations");
+
+    const invalidPolicyResponse = await fetch(`${origin}/api/settings`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        grillPolicy: "always-automatic",
+        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna"],
+        defaultModel: "gpt-5.6-sol",
+        defaultReasoning: "xhigh",
+      }),
+    });
+    assert.equal(invalidPolicyResponse.status, 400);
+    assert.deepEqual(await invalidPolicyResponse.json(), { error: "Choose a supported Grill interaction policy." });
   } finally {
     await cleanup(server, directory);
   }
@@ -1603,25 +1630,37 @@ test("records Grill answers and requires an explicit finish mode", async () => {
       workflow: "implement",
     });
     const { task } = await response.json();
+    const bareFinishResponse = await fetch(`${origin}/api/tasks/${task.id}/grill/finish`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ acceptRemaining: true }),
+    });
+    assert.equal(bareFinishResponse.status, 400);
+    assert.deepEqual(await bareFinishResponse.json(), {
+      error: "Finishing Grill requires an explicit operator UI action.",
+    });
+    assert.equal(grillFinishRef(), null, "the AH-016-style bare automation call never reaches orchestration");
+
     const answerResponse = await fetch(`${origin}/api/tasks/${task.id}/grill/answers`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ questionId: "Q1", answer: "Preserve compatibility" }),
+      body: JSON.stringify({ questionId: "Q1", answer: "Preserve compatibility", interactionSource: "operator-ui" }),
     });
     assert.equal(answerResponse.status, 201);
     assert.deepEqual(grillAnswerRef(), {
       id: task.id,
       questionId: "Q1",
       answer: "Preserve compatibility",
+      source: "operator",
     });
 
     const finishResponse = await fetch(`${origin}/api/tasks/${task.id}/grill/finish`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ acceptRemaining: true }),
+      body: JSON.stringify({ acceptRemaining: true, interactionSource: "operator-ui" }),
     });
     assert.equal(finishResponse.status, 202);
-    assert.deepEqual(grillFinishRef(), { id: task.id, acceptRemaining: true });
+    assert.deepEqual(grillFinishRef(), { id: task.id, acceptRemaining: true, source: "operator" });
   } finally {
     await cleanup(server, directory);
   }

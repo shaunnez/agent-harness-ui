@@ -582,6 +582,10 @@ export function RuntimeTaskWorkspace({
               <p>{task.workflowProfile?.reason ?? "Migrated safely to the standard profile."}</p>
               <RuntimeRow label="Escalations / overrides" value={`${Math.max(0, (task.workflowProfile?.history.length ?? 1) - 1)} recorded`} />
               <RuntimeRow label="Override boundary" value={canOverrideProfile ? "Available before implementation" : "Locked after implementation began"} />
+              <RuntimeRow
+                label="Grill interaction"
+                value={(task.grillPolicy ?? "manual") === "manual" ? "Pause for operator answers" : "Automatically accept recommendations"}
+              />
             </InspectorSection>
             <InspectorSection title="Stage context">
               <RuntimeRow

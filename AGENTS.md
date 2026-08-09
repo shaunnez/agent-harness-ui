@@ -42,6 +42,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Durable workflow decisions
 
+- Grill is manual by default: when material questions exist, pause for operator answers while still offering a manual **accept all remaining recommendations** action. Automatic recommendation acceptance is opt-in in Settings, snapshots onto new tasks, runs inside orchestration rather than through operator endpoints, and records automation provenance. Zero-question Grill sessions may continue automatically.
 - Treat parallel implementation slices as isolated worktree units that become **ready for integration** after local qualification; never present a green slice as proof that the whole task passed.
 - Assemble the qualified slice commits into an explicit, versioned integration candidate inside Implement. Dev Review, Test, Final Review, and Human Approval are bound to the exact candidate revision.
 - A repair creates a new candidate revision and makes affected review/test verdicts stale. Preserve prior evidence for audit, show repair lineage, and rerun the invalidated gates.

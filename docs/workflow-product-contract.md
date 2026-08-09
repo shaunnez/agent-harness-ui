@@ -47,6 +47,8 @@ Avoid using “model” when the UI means an agent, and avoid showing a singular
 9. **Final Review** — a legible summary of every prior stage, costs, evidence, repairs, candidate identity, and outstanding risk.
 10. **Human Approval** — explicitly approve and merge the qualified candidate using a visible target branch and merge method.
 
+Grill is a human decision gate by default. When it produces questions, the task pauses so the operator can answer them individually or explicitly accept all remaining recommendations. Automatic acceptance is available only through an opt-in Settings policy snapshotted onto new tasks; those answers and the session completion must identify automation as their source. A Grill run that produces no material questions may continue automatically under either policy.
+
 The stage navigator distinguishes:
 
 - **Current execution stage** — where the workflow can advance.
