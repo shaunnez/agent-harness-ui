@@ -49,6 +49,8 @@ async function createServer(options = {}) {
   let grillFinish = null;
   let approvedSpecification = null;
   let completedMergedTask = null;
+  let refreshedCandidateTask = null;
+  let retriedTestTask = null;
   const orchestrator = {
     status: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
     start(id, kind) {
@@ -80,6 +82,14 @@ async function createServer(options = {}) {
     async approveMerge() {},
     async completeMergedTask(id, note) {
       completedMergedTask = { id, note };
+    },
+    async refreshCandidate(id) {
+      refreshedCandidateTask = id;
+      return store.get(id);
+    },
+    async retryTestOnSameCandidate(id) {
+      retriedTestTask = id;
+      return { started: true };
     },
   };
   let transitionIntercepted = false;
@@ -121,6 +131,8 @@ async function createServer(options = {}) {
     grillFinishRef: () => grillFinish,
     approvedSpecificationRef: () => approvedSpecification,
     completedMergedTaskRef: () => completedMergedTask,
+    refreshedCandidateTaskRef: () => refreshedCandidateTask,
+    retriedTestTaskRef: () => retriedTestTask,
   };
 }
 
@@ -662,6 +674,37 @@ test("dispatches the complete-merged action to the orchestrator and reports 404 
   }
 });
 
+test("dispatches candidate refresh and same-candidate Test retry actions", async () => {
+  const {
+    directory,
+    origin,
+    server,
+    refreshedCandidateTaskRef,
+    retriedTestTaskRef,
+  } = await createServer();
+  try {
+    const createResponse = await createTask(origin, {
+      title: "Recover a candidate",
+      description: "Exercise explicit recovery actions.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await createResponse.json();
+
+    const refreshResponse = await fetch(`${origin}/api/tasks/${task.id}/refresh-candidate`, { method: "POST" });
+    assert.equal(refreshResponse.status, 200);
+    assert.equal((await refreshResponse.json()).refreshed, true);
+    assert.equal(refreshedCandidateTaskRef(), task.id);
+
+    const retryResponse = await fetch(`${origin}/api/tasks/${task.id}/retry-test`, { method: "POST" });
+    assert.equal(retryResponse.status, 202);
+    assert.deepEqual(await retryResponse.json(), { started: true });
+    assert.equal(retriedTestTaskRef(), task.id);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("rejects invalid closure reasons without mutating task state", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
@@ -1189,6 +1232,8 @@ test("enforces one Host, Origin, content-type, CSRF, and missing-Origin policy a
       ["POST", "/api/tasks/AH-999/specification"],
       ["POST", "/api/tasks/AH-999/cancel"],
       ["POST", "/api/tasks/AH-999/approve-merge"],
+      ["POST", "/api/tasks/AH-999/refresh-candidate"],
+      ["POST", "/api/tasks/AH-999/retry-test"],
       ["POST", "/api/tasks/AH-999/complete-merged"],
     ];
     for (const [method, target] of mutationTargets) {

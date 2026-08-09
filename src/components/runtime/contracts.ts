@@ -11,9 +11,11 @@ export type RuntimeWorkflowAction =
   | "repair"
   | "review"
   | "test"
+  | "retry-test"
   | "final-review"
   | "approve-merge"
   | "complete-merged"
+  | "refresh-candidate"
   | "grant-retry";
 
 export interface RuntimeTaskWorkspaceProps {

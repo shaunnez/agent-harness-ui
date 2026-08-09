@@ -183,6 +183,77 @@ test("refuses to merge a candidate into a sibling branch at the same base revisi
   }
 });
 
+test("refreshes a clean candidate onto an advanced target without rewriting the recorded revision", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-refresh-"));
+  const repository = path.join(directory, "repository");
+  try {
+    await git(directory, ["init", "repository"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+    const manager = new GitWorktreeManager(path.join(directory, "worktrees"));
+    const task = { id: "AH-REFRESH", repositoryPath: repository };
+    const base = await manager.base(task);
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+    await writeFile(path.join(candidate.worktreePath, "feature.txt"), "candidate\n", "utf8");
+    const committed = await manager.commit(candidate, "candidate");
+    candidate.headRevision = committed.headRevision;
+
+    await writeFile(path.join(repository, "README.md"), "base\ntarget advanced\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "advance target"]);
+    const targetRevision = (await git(repository, ["rev-parse", "HEAD"])).stdout.trim();
+
+    assert.equal(await manager.mergeState(candidate), "diverged");
+    const refreshed = await manager.refreshCandidate(candidate);
+    assert.equal(refreshed.previousBaseRevision, base.baseRevision);
+    assert.equal(refreshed.previousHeadRevision, committed.headRevision);
+    assert.equal(refreshed.targetRevision, targetRevision);
+    assert.notEqual(refreshed.headRevision, committed.headRevision);
+    assert.deepEqual(refreshed.files, ["feature.txt"]);
+    assert.equal((await readFile(path.join(candidate.worktreePath, "README.md"), "utf8")).replaceAll("\r\n", "\n"), "base\ntarget advanced\n");
+    assert.equal((await readFile(path.join(candidate.worktreePath, "feature.txt"), "utf8")).replaceAll("\r\n", "\n"), "candidate\n");
+
+    candidate.baseRevision = refreshed.targetRevision;
+    candidate.headRevision = refreshed.headRevision;
+    assert.equal(await manager.mergeState(candidate), "pending");
+    assert.equal(await manager.merge(candidate), refreshed.headRevision);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("aborts a conflicting candidate refresh and restores the recorded head", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-refresh-conflict-"));
+  const repository = path.join(directory, "repository");
+  try {
+    await git(directory, ["init", "repository"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "shared.txt"), "base\n", "utf8");
+    await git(repository, ["add", "shared.txt"]);
+    await git(repository, ["commit", "-m", "base"]);
+    const manager = new GitWorktreeManager(path.join(directory, "worktrees"));
+    const task = { id: "AH-CONFLICT", repositoryPath: repository };
+    const base = await manager.base(task);
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+    await writeFile(path.join(candidate.worktreePath, "shared.txt"), "candidate\n", "utf8");
+    const committed = await manager.commit(candidate, "candidate");
+    candidate.headRevision = committed.headRevision;
+    await writeFile(path.join(repository, "shared.txt"), "target\n", "utf8");
+    await git(repository, ["add", "shared.txt"]);
+    await git(repository, ["commit", "-m", "advance target"]);
+
+    await assert.rejects(() => manager.refreshCandidate(candidate), /refresh conflicted/i);
+    assert.equal(await manager.verifyCandidate(candidate), committed.headRevision);
+    assert.equal((await readFile(path.join(candidate.worktreePath, "shared.txt"), "utf8")).replaceAll("\r\n", "\n"), "candidate\n");
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("a symlinked dependency directory is not ignored by git status", async () => {
   // The exclusion in the harness scans exists because of this: `.gitignore` entries such as
   // `node_modules/` match directories, and a symlink named `node_modules` is a file to Git.

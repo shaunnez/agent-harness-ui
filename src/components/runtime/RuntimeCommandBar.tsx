@@ -226,6 +226,54 @@ export function RuntimeWorkflowActionButton({
 export function nextAction(task: RuntimeTask) {
   const currentAttempts = getEffectiveStageRunAttempts(task);
   const retryAllowanceExhausted = currentAttempts >= getEffectiveStageRunLimit(task);
+  const candidate = task.candidates?.at(-1);
+  const targetDiverged = task.status === "blocked" && (
+    task.blocker?.code === "target-diverged" ||
+    /target ref (?:diverged|moved)|target branch advanced/i.test(task.error ?? "")
+  );
+  if (targetDiverged)
+    return {
+      action: "refresh-candidate" as const,
+      label: `Refresh candidate from ${candidate?.baseBranch ?? "target"}`,
+      title: "Target branch advanced",
+      detail:
+        "Replay the retained candidate onto the latest target as a new revision. The prior revision remains inspectable and every candidate-bound gate must run again.",
+    };
+  const invalidApprovedPlan = task.status === "failed" && task.currentStage === "implement" &&
+    /verification requires at least one repository manifest command id|approved plan does not contain executable work packages/i.test(task.error ?? "");
+  if (invalidApprovedPlan)
+    return {
+      action: "plan" as const,
+      label: "Correct implementation plan",
+      title: "Approved plan is not executable",
+      detail:
+        "Return to read-only planning and produce valid repository manifest command IDs before another implementation attempt.",
+    };
+  const latestTestArtifact = [...task.artifacts].reverse().find((artifact) =>
+    artifact.stage === "test" &&
+    artifact.candidateId === candidate?.id &&
+    artifact.candidateRevision === candidate?.revisionNumber
+  );
+  const blockingCandidateDefect = latestTestArtifact?.gateResult?.findings?.some((finding) =>
+    finding.blocking === true && finding.kind === "candidate-defect"
+  );
+  const sameCandidateTestRetryUsed = task.sameCandidateTestRetries?.some((retry) =>
+    retry.candidateId === candidate?.id && retry.candidateRevision === candidate?.revisionNumber
+  );
+  if (
+    task.status === "repair-required" &&
+    task.currentStage === "test" &&
+    latestTestArtifact?.focusedTest?.status === "failed" &&
+    !blockingCandidateDefect &&
+    !sameCandidateTestRetryUsed
+  )
+    return {
+      action: "retry-test" as const,
+      label: `Retry Test on ${candidate?.id} r${candidate?.revisionNumber}`,
+      title: "Verification failed without a typed candidate defect",
+      detail:
+        "Run the full repository manifest once more against the unchanged candidate. Repair remains unauthorized unless retained evidence identifies a candidate defect.",
+    };
   if (
     ["failed", "cancelled"].includes(task.status) &&
     task.currentStage === "specification" &&

@@ -880,7 +880,7 @@ export function createApiServer({
       }
 
       const actionMatch = url.pathname.match(
-        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|specification|plan|implement|repair|review|test|final-review|approve-merge|complete-merged|grant-retry)$/,
+        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|specification|plan|implement|repair|review|test|retry-test|final-review|approve-merge|complete-merged|grant-retry|refresh-candidate)$/,
       );
       if (request.method === "POST" && actionMatch) {
         const id = decodeURIComponent(actionMatch[1]);
@@ -917,6 +917,16 @@ export function createApiServer({
         if (action === "complete-merged") {
           await orchestrator.completeMergedTask(id, notes.note ?? "");
           send(response, 200, { completed: true });
+          return;
+        }
+        if (action === "refresh-candidate") {
+          const refreshed = await orchestrator.refreshCandidate(id);
+          send(response, 200, { refreshed: true, task: refreshed });
+          return;
+        }
+        if (action === "retry-test") {
+          const result = await orchestrator.retryTestOnSameCandidate(id);
+          send(response, 202, result);
           return;
         }
         if (action === "grant-retry") {
@@ -1054,7 +1064,7 @@ export function createApiServer({
             stages: ["triage", "scouts", "grill"],
           },
           specification: { kind: "specification", statuses: ["failed", "cancelled"], stages: ["specification"] },
-          plan: { kind: "planning", statuses: ["awaiting-plan-approval", "failed", "cancelled"], stages: ["plan"] },
+          plan: { kind: "planning", statuses: ["awaiting-plan-approval", "failed", "cancelled"], stages: ["plan", "implement"] },
           implement: {
             kind: "implementation",
             statuses: ["ready-for-implementation", "failed", "cancelled"],
@@ -1102,7 +1112,22 @@ export function createApiServer({
           send(response, 409, { error: "The current stage has exhausted its retry allowance." });
           return;
         }
-        const started = await orchestrator.start(id, runConfiguration.kind);
+        const started = await orchestrator.start(id, runConfiguration.kind, action === "plan" && task.currentStage === "implement"
+          ? {
+              onReserve: (draft) => {
+                draft.currentStage = "plan";
+                draft.events.push({
+                  id: crypto.randomUUID(),
+                  at: new Date().toISOString(),
+                  category: "decision",
+                  tone: "warning",
+                  stage: "plan",
+                  title: "Invalid approved plan returned for correction",
+                  detail: "Implementation did not have a valid focused verification contract. Planning must produce a corrected work-package manifest before writes resume.",
+                });
+              },
+            }
+          : {});
         send(response, started ? 202 : 409, started ? { started: true } : { error: "Task is already running." });
         return;
       }

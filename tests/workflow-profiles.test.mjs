@@ -61,6 +61,13 @@ function verification(candidate, executionKind) {
   };
 }
 
+function verificationManifest() {
+  return {
+    version: 1,
+    commands: [{ id: "typecheck", command: ["npm", "run", "typecheck"] }],
+  };
+}
+
 function worktreeManager(directory) {
   return {
     async base() {
@@ -191,6 +198,7 @@ test("fast path uses zero scouts, one package, focused checks, one full manifest
     const orchestrator = new TaskOrchestrator(store, {
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       worktreeManager: worktreeManager(directory),
+      readVerificationManifest: async () => verificationManifest(),
       runPackageVerification: async ({ workPackageId, attempt, headRevision }) => {
         focusedExecutions += 1;
         return verification({ id: `${workPackageId}-A${attempt}`, revisionNumber: attempt, headRevision }, "focused-package");
@@ -269,6 +277,7 @@ test("late fast scope expansion returns to the standard evidence frontier", asyn
     const orchestrator = new TaskOrchestrator(store, {
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       worktreeManager: manager,
+      readVerificationManifest: async () => verificationManifest(),
       runCodex: async (options) => ({
         finalText: options.sandbox === "workspace-write" ? "## Outcome\n\nChanged two production boundaries." : fastContract(),
         usage,

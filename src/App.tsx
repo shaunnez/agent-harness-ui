@@ -522,13 +522,17 @@ export function App() {
                   "success",
                   action === "grant-retry"
                     ? "One repair attempt was granted. The stage limit is updated."
+                    : action === "refresh-candidate"
+                      ? "Candidate refreshed from the latest target. All candidate-bound gates must run again."
+                    : action === "retry-test"
+                      ? "Test retry started against the unchanged candidate revision."
                     : action === "repair"
                       ? "Repair started. Downstream gates now require fresh evidence."
                       : action === "complete-merged"
                         ? "Task marked completed."
                         : "Task action completed.",
                 );
-                if (["repair", "implement", "review", "test", "final-review"].includes(action)) {
+                if (["repair", "implement", "review", "test", "retry-test", "final-review"].includes(action)) {
                   window.setTimeout(() => {
                     void getTaskCore(activeRuntimeTask.id)
                       .then((latest) => {

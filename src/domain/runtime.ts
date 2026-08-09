@@ -157,6 +157,8 @@ export interface RuntimeFocusedTestEvidence {
   executionKind?: "focused-package" | "full-manifest";
   executedCommandIds?: string[];
   declaredCommandIds?: string[];
+  retryDisposition?: "human-rerun-requested";
+  retryRequestedAt?: string | null;
 }
 
 export interface RuntimeDecision {
@@ -354,6 +356,14 @@ export interface RuntimeTask {
     createdAt: string;
   }>;
   automaticRepairCycles?: number;
+  sameCandidateTestRetries?: Array<{
+    id: string;
+    candidateId: string;
+    candidateRevision: number;
+    candidateHeadRevision: string;
+    failedVerificationCompletedAt: string | null;
+    requestedAt: string;
+  }>;
   agentConfig?: {
     model: string;
     reasoning: string;
@@ -385,6 +395,14 @@ export interface RuntimeTask {
     startedAt: string;
     completedAt: string | null;
     error: string | null;
+  } | null;
+  blocker?: {
+    code: "target-diverged" | "merge-reconciliation" | string;
+    detail: string;
+    detectedAt: string;
+    candidateId?: string | null;
+    candidateRevision?: number | null;
+    candidateBaseRevision?: string | null;
   } | null;
   scoutDispatch?: RuntimeScoutDispatch | null;
   currentStage: StageId;

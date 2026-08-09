@@ -64,7 +64,12 @@ import {
   renderManifestFile,
   VERIFICATION_MANIFEST_PATH,
 } from "./onboarding.mjs";
-import { gitHeadRevision, runRepositoryVerification } from "./verification.mjs";
+import {
+  gitHeadRevision,
+  readVerificationManifest,
+  runRepositoryVerification,
+  selectVerificationCommands,
+} from "./verification.mjs";
 import {
   canOverrideWorkflowProfile,
   fastEscalation,
@@ -159,11 +164,13 @@ export class TaskOrchestrator {
   #store;
   #active = new Map();
   #mergeActive = new Set();
+  #refreshActive = new Set();
   #runCodex;
   #getStatus;
   #worktrees;
   #runVerification;
   #runPackageVerification;
+  #readVerificationManifest;
 
   constructor(store, options = {}) {
     this.#store = store;
@@ -176,6 +183,7 @@ export class TaskOrchestrator {
     // rather than stand up a repository to obtain it. The real path is exercised directly in
     // `tests/verification.test.mjs`, including against a real git worktree.
     this.#runVerification = options.runVerification ?? runRepositoryVerification;
+    this.#readVerificationManifest = options.readVerificationManifest ?? readVerificationManifest;
     // Production slices qualify with the same repository-owned, argv-only manifest as
     // Focused Test. Unit tests that inject a model runner keep their existing lightweight
     // seam unless they explicitly inject package verification; real runtime execution never
@@ -630,6 +638,11 @@ export class TaskOrchestrator {
     const task = await this.#store.get(id);
     if (!task) throw new Error("Task not found.");
     if (task.status !== "awaiting-plan-approval") throw new Error("The task is not awaiting plan approval.");
+    if (!task.workPackages?.length) throw new Error("The implementation plan does not contain executable work packages.");
+    const verificationManifest = await this.#readVerificationManifest(task.repositoryPath);
+    for (const workPackage of task.workPackages) {
+      selectVerificationCommands(verificationManifest, workPackage.verificationCommandIds);
+    }
     if (task.workflowProfile?.selected === "fast") {
       if (task.workPackages?.length !== 1 || task.workPackages[0].dependencies.length) {
         throw new Error("Fast requires exactly one coherent work package with no package dependencies.");
@@ -661,6 +674,29 @@ export class TaskOrchestrator {
       assertCandidateGatesFresh(task, candidate);
       const targetRef = candidate.baseRef ?? (candidate.baseBranch && candidate.baseBranch !== "detached" ? `refs/heads/${candidate.baseBranch}` : null);
       if (!targetRef || !candidate.headRevision) throw new Error("The candidate does not have a mergeable target revision.");
+      const preflightState = typeof this.#worktrees.mergeState === "function"
+        ? await this.#worktrees.mergeState(candidate)
+        : "pending";
+      if (preflightState === "diverged") {
+        await this.#store.transition(id, (draft) => (
+          draft.status === "awaiting-human-approval" &&
+          currentCandidate(draft).headRevision === candidate.headRevision
+        ), (draft) => {
+          const detectedAt = now();
+          draft.status = "blocked";
+          draft.error = "The target branch advanced after this candidate was created. Refresh the candidate from the target before approval.";
+          draft.blocker = {
+            code: "target-diverged",
+            detail: draft.error,
+            detectedAt,
+            candidateId: candidate.id,
+            candidateRevision: candidate.revisionNumber,
+            candidateBaseRevision: candidate.baseRevision,
+          };
+          draft.events.push(activity("approval", "Target branch advanced", draft.error, "warning", "decision"));
+        });
+        throw new Error("The target branch advanced. Refresh the candidate from the target before approval.");
+      }
       task = await this.#store.transition(id, (draft) => {
         const activeCandidate = currentCandidate(draft);
         return draft.status === "awaiting-human-approval" &&
@@ -701,6 +737,19 @@ export class TaskOrchestrator {
         if (draft.status !== "merging" || draft.mergeIntent?.status !== "pending") return;
         draft.error = error.message;
         draft.mergeIntent.error = error.message;
+        if (/target ref moved|target branch advanced/i.test(error.message)) {
+          const activeCandidate = currentCandidate(draft);
+          draft.status = "blocked";
+          draft.blocker = {
+            code: "target-diverged",
+            detail: error.message,
+            detectedAt: now(),
+            candidateId: activeCandidate.id,
+            candidateRevision: activeCandidate.revisionNumber,
+            candidateBaseRevision: activeCandidate.baseRevision,
+          };
+          draft.mergeIntent.status = "failed";
+        }
         draft.events.push(activity("approval", "Merge reconciliation required", error.message, "danger", "decision"));
       });
       throw error;
@@ -710,8 +759,8 @@ export class TaskOrchestrator {
   async recoverMergeIntents() {
     const tasks = await this.#store.list();
     for (const task of tasks.filter((item) => item.status === "merging" && item.mergeIntent?.status === "pending")) {
+      const candidate = currentCandidate(task);
       try {
-        const candidate = currentCandidate(task);
         assertCandidateGatesFresh(task, candidate);
         const mergeState = typeof this.#worktrees.mergeState === "function"
           ? await this.#worktrees.mergeState(candidate)
@@ -724,12 +773,127 @@ export class TaskOrchestrator {
           if (draft.status !== "merging" || draft.mergeIntent?.status !== "pending") return;
           draft.status = "blocked";
           draft.error = error.message;
+          draft.blocker = {
+            code: error.message.includes("target ref diverged") ? "target-diverged" : "merge-reconciliation",
+            detail: error.message,
+            detectedAt: now(),
+            candidateId: candidate.id,
+            candidateRevision: candidate.revisionNumber,
+            candidateBaseRevision: candidate.baseRevision,
+          };
           draft.mergeIntent.status = "failed";
           draft.mergeIntent.error = error.message;
           draft.events.push(activity("approval", "Pending merge blocked", error.message, "danger", "decision"));
         });
       }
     }
+  }
+
+  async refreshCandidate(id) {
+    if (this.#refreshActive.has(id) || this.#mergeActive.has(id)) {
+      throw new Error("This task already has a candidate or merge reconciliation in progress.");
+    }
+    this.#refreshActive.add(id);
+    try {
+      const task = await this.#store.get(id);
+      if (!task) throw new Error("Task not found.");
+      const candidate = currentCandidate(task);
+      const legacyTargetDivergence = task.status === "blocked" && /target ref (?:diverged|moved)|target branch advanced/i.test(task.error ?? "");
+      if (task.status !== "blocked" || (task.blocker?.code !== "target-diverged" && !legacyTargetDivergence)) {
+        throw new Error("The task is not blocked by an advanced target branch.");
+      }
+      if (!candidate?.headRevision) throw new Error("The task does not have a refreshable candidate revision.");
+      const refreshed = await this.#worktrees.refreshCandidate(candidate);
+      const nextRevision = candidate.revisionNumber + 1;
+      try {
+        return await this.#store.transition(id, (draft) => {
+          const activeCandidate = currentCandidate(draft);
+          return draft.status === "blocked" &&
+            activeCandidate.id === candidate.id &&
+            activeCandidate.revisionNumber === candidate.revisionNumber &&
+            activeCandidate.baseRevision === refreshed.previousBaseRevision &&
+            activeCandidate.headRevision === refreshed.previousHeadRevision;
+        }, (draft) => {
+          const activeCandidate = currentCandidate(draft);
+          activeCandidate.revisionNumber = nextRevision;
+          activeCandidate.baseRevision = refreshed.targetRevision;
+          activeCandidate.headRevision = refreshed.headRevision;
+          activeCandidate.status = "ready_for_review";
+          activeCandidate.updatedAt = now();
+          activeCandidate.revisions.push({
+            number: nextRevision,
+            headRevision: refreshed.headRevision,
+            reason: "target-refresh",
+            previousBaseRevision: refreshed.previousBaseRevision,
+            baseRevision: refreshed.targetRevision,
+            createdAt: now(),
+          });
+          draft.status = "ready-for-review";
+          draft.currentStage = "dev-review";
+          draft.error = null;
+          draft.blocker = null;
+          draft.mergeIntent = null;
+          draft.completedStages = draft.completedStages.filter(
+            (stage) => !["dev-review", "test", "final-review", "approval"].includes(stage),
+          );
+          refreshGateFreshness(draft);
+          draft.events.push(activity(
+            "implement",
+            "Candidate refreshed from target",
+            `${candidate.id} revision ${nextRevision} now starts from ${refreshed.targetRevision.slice(0, 8)} and must pass every candidate-bound gate again.`,
+            "success",
+            "decision",
+          ));
+        });
+      } catch (error) {
+        if (typeof this.#worktrees.recoverCandidate === "function") await this.#worktrees.recoverCandidate(candidate);
+        throw error;
+      }
+    } finally {
+      this.#refreshActive.delete(id);
+    }
+  }
+
+  async retryTestOnSameCandidate(id) {
+    const started = await this.start(id, "test", {
+      canStart: (draft) => {
+        sameCandidateTestRetryContext(draft);
+        return true;
+      },
+      onReserve: (draft) => {
+        const context = sameCandidateTestRetryContext(draft);
+        context.verification.retryDisposition = "human-rerun-requested";
+        context.verification.retryRequestedAt = now();
+        draft.sameCandidateTestRetries ??= [];
+        draft.sameCandidateTestRetries.push({
+          id: crypto.randomUUID(),
+          candidateId: context.candidate.id,
+          candidateRevision: context.candidate.revisionNumber,
+          candidateHeadRevision: context.candidate.headRevision,
+          failedVerificationCompletedAt: context.verification.completedAt ?? null,
+          requestedAt: now(),
+        });
+        const attempts = draft.attemptsByStage?.test ?? 0;
+        draft.stageRunLimits ??= {};
+        draft.stageRunLimits.test = Math.max(stageRunLimitFor(draft, "test"), attempts + 1);
+        context.candidate.status = "ready_for_test";
+        draft.status = "ready-for-test";
+        draft.currentStage = "test";
+        draft.error = null;
+        draft.blocker = null;
+        draft.completedStages = draft.completedStages.filter((stage) => !["test", "final-review", "approval"].includes(stage));
+        refreshGateFreshness(draft);
+        draft.events.push(activity(
+          "test",
+          "Same-candidate Test retry authorized",
+          `${context.candidate.id} revision ${context.candidate.revisionNumber} is unchanged. The failed full manifest will run once more without authorizing candidate repair.`,
+          "warning",
+          "decision",
+        ));
+      },
+    });
+    if (!started) throw new Error("The same-candidate Test retry could not be reserved.");
+    return { started: true };
   }
 
   async #finalizeMerge(id) {
@@ -1165,6 +1329,10 @@ export class TaskOrchestrator {
     let workPackages;
     try {
       workPackages = parseWorkPackages(result.finalText, task.repositoryPath);
+      const verificationManifest = await this.#readVerificationManifest(task.repositoryPath);
+      for (const workPackage of workPackages) {
+        selectVerificationCommands(verificationManifest, workPackage.verificationCommandIds);
+      }
     } catch (error) {
       await this.#retainAgentResult(id, "plan", result, {
         ...artifactOptions,
@@ -1186,6 +1354,10 @@ export class TaskOrchestrator {
     if (profileEscalation) await this.#escalateProfile(id, profileEscalation, "plan");
     await this.#retainAgentResult(id, "plan", result, artifactOptions);
     await this.#store.update(id, (draft) => {
+      for (const workPackage of workPackages) {
+        const prior = draft.workPackages?.find((item) => item.id === workPackage.id);
+        if (prior) workPackage.attempts = Math.max(workPackage.attempts, prior.attempts ?? 0);
+      }
       draft.workPackages = workPackages;
       draft.status = "awaiting-plan-approval";
       draft.currentStage = "plan";
@@ -1701,11 +1873,12 @@ export class TaskOrchestrator {
     // having a model invent the commands — the exact thing this change exists to prevent.
     let harnessVerification = null;
     if (stageId === "test") {
-      harnessVerification = (candidate.verificationRuns ?? []).find((verification) =>
+      harnessVerification = [...(candidate.verificationRuns ?? [])].reverse().find((verification) =>
         verification.executionKind === "full-manifest" &&
         verification.candidateId === candidate.id &&
         verification.candidateRevision === candidate.revisionNumber &&
-        verification.headRevision === candidate.headRevision
+        verification.headRevision === candidate.headRevision &&
+        verification.retryDisposition !== "human-rerun-requested"
       ) ?? null;
       if (harnessVerification) {
         await this.#store.update(id, (draft) => {
@@ -2437,6 +2610,38 @@ function candidateGateFailure(task, candidate, stages = CANDIDATE_GATE_STAGES) {
   return null;
 }
 
+function sameCandidateTestRetryContext(task) {
+  const candidate = currentCandidate(task);
+  if (task.status !== "repair-required" || task.currentStage !== "test" || candidate.status !== "repair_required") {
+    throw new Error("The task is not awaiting a retryable Test failure.");
+  }
+  const verification = [...(candidate.verificationRuns ?? [])].reverse().find((entry) =>
+    (entry.executionKind == null || entry.executionKind === "full-manifest") &&
+    entry.candidateId === candidate.id &&
+    entry.candidateRevision === candidate.revisionNumber &&
+    entry.headRevision === candidate.headRevision &&
+    entry.status === "failed" &&
+    entry.retryDisposition !== "human-rerun-requested"
+  );
+  if (!verification) throw new Error("No failed exact-candidate verification is available to rerun.");
+  const alreadyRetried = (task.sameCandidateTestRetries ?? []).some((retry) =>
+    retry.candidateId === candidate.id && retry.candidateRevision === candidate.revisionNumber
+  );
+  if (alreadyRetried) throw new Error("This candidate revision already used its one same-candidate Test retry.");
+  const latestArtifact = [...(task.artifacts ?? [])].reverse().find((artifact) =>
+    artifact.stage === "test" &&
+    artifact.candidateId === candidate.id &&
+    artifact.candidateRevision === candidate.revisionNumber
+  );
+  const blockingCandidateDefect = latestArtifact?.gateResult?.findings?.some((finding) =>
+    finding.blocking === true && finding.kind === "candidate-defect"
+  );
+  if (blockingCandidateDefect) {
+    throw new Error("The retained Test evidence identifies a blocking candidate defect; use candidate repair instead.");
+  }
+  return { candidate, verification };
+}
+
 function assertCandidateGatesFresh(task, candidate) {
   const failure = candidateGateFailure(task, candidate);
   if (!failure) return;
@@ -2477,7 +2682,7 @@ function stageTimeoutMs(stageId, sandbox) {
 
 function reviewCommandLimit(stageId) {
   return {
-    "dev-review": 4,
+    "dev-review": 8,
     test: 2,
     "final-review": 2,
   }[stageId] ?? null;

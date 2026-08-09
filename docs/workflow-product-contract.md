@@ -216,6 +216,24 @@ Approval is not merely “approve.” It is `Approve & merge Cx` and shows:
 - identity and timestamp of the approver;
 - resulting merge commit or structured merge failure.
 
+Before recording merge intent, the companion compares the candidate's recorded base with the live target ref. If the target advanced, approval stops without mutating the target and the command bar offers **Refresh candidate from main**. Refresh runs only in the isolated candidate worktree, replays the candidate onto the current target, and records a new candidate revision with reason `target-refresh`. The prior revision and its evidence remain inspectable, while Dev Review, Test, Final Review, and Human Approval become stale and must run again. A refresh conflict aborts back to the recorded candidate head; it never leaves a partial rebase or silently resolves conflicts.
+
+The UI describes this as refreshing the candidate rather than “merge main into branch.” The target branch remains untouched until the later **Approve & merge** action, and the resulting candidate stays eligible for the existing fast-forward-only merge contract.
+
+### Recovery actions
+
+Recovery actions are selected from typed failure state rather than a generic retry button:
+
+- `target-diverged` offers **Refresh candidate from main**;
+- an invalid approved work-package verification contract offers **Correct implementation plan** and returns to read-only Planning;
+- a failed full-manifest Test with no typed blocking candidate defect may receive one explicit **Retry Test on Cx ry** against the unchanged candidate revision;
+- a typed blocking candidate defect offers **Repair candidate**;
+- exhausted model/tool attempts retain the bounded human retry-grant flow.
+
+Every new work package must name at least one command ID from the repository-owned `.agent-harness/verification.json` manifest. Planning validates both presence and membership before presenting the plan for approval, and approval revalidates the same contract for migrated or previously persisted plans.
+
+Fresh-context Development Review may use at most eight repository commands. Test and Final Review retain their two-command ceilings because their inputs are already candidate-bound and structured. Exceeding a ceiling still stops the model run and retains the failure; the higher Development Review allowance prevents ordinary candidate inspection from being misclassified as runaway review activity.
+
 ### Universal inspector
 
 Keep one right sidebar across stages. It contains:

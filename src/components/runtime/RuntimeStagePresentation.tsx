@@ -637,7 +637,7 @@ function RuntimeCandidateDesk({
       {candidate.revisions.length ? (
         <details className="runtime-repair-lineage" open={candidate.revisions.length > 1}>
           <summary>
-            <Wrench size={15} /> Repair lineage &middot; {candidate.revisions.length} revision{candidate.revisions.length === 1 ? "" : "s"}
+            <Wrench size={15} /> Candidate revision lineage &middot; {candidate.revisions.length} revision{candidate.revisions.length === 1 ? "" : "s"}
             <CaretDown className="disclosure-caret" size={15} />
           </summary>
           {candidate.revisions.map((revision) => (

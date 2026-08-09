@@ -2957,6 +2957,92 @@ test("keeps plan approval primary while exposing evidence-backed revision", () =
   });
 });
 
+test("offers recovery actions that match target drift, invalid plans, and retryable Test failures", () => {
+  return withWorkspace(async ({ RuntimeCommandBar, nextAction }) => {
+    const baseProps = {
+      onRun: async () => {},
+      onAction: async () => {},
+      onFinishGrill: async () => {},
+    };
+    const candidate = {
+      id: "C1",
+      revisionNumber: 2,
+      baseRevision: "a".repeat(40),
+      baseBranch: "main",
+      headRevision: "b".repeat(40),
+      branch: "agent-harness/ah-999-c1",
+      repositoryRoot: "C:/repo/task",
+      worktreePath: "C:/worktrees/AH-999/C1",
+      status: "repair_required",
+      createdAt: "2026-08-01T12:00:00.000Z",
+      updatedAt: "2026-08-01T12:00:00.000Z",
+      revisions: [],
+    };
+    const diverged = createTask({
+      status: "blocked",
+      currentStage: "approval",
+      error: "The recorded target ref diverged while recovering a pending merge.",
+      blocker: { code: "target-diverged", detail: "main advanced", detectedAt: "2026-08-01T12:00:00.000Z" },
+      candidates: [{ ...candidate, status: "awaiting_human_approval" }],
+    });
+    assert.equal(nextAction(diverged).action, "refresh-candidate");
+    assert.match(renderToStaticMarkup(React.createElement(RuntimeCommandBar, {
+      ...baseProps,
+      task: diverged,
+      viewedStageId: "approval",
+    })), />Refresh candidate from main</);
+
+    const invalidPlan = createTask({
+      status: "failed",
+      currentStage: "implement",
+      error: "S1: Focused package verification requires at least one repository manifest command id.",
+    });
+    assert.equal(nextAction(invalidPlan).action, "plan");
+    assert.match(nextAction(invalidPlan).label, /Correct implementation plan/);
+
+    const failedVerification = {
+      candidateId: "C1",
+      candidateRevision: 2,
+      headRevision: candidate.headRevision,
+      command: ".agent-harness/verification.json: test",
+      status: "failed",
+      durationMs: 100,
+      rows: [],
+      executionKind: "full-manifest",
+    };
+    const retryableTest = createTask({
+      status: "repair-required",
+      currentStage: "test",
+      candidates: [candidate],
+      artifacts: [{
+        id: "test-c1-r2",
+        stage: "test",
+        name: "test-c1-r2.md",
+        kind: "markdown",
+        content: "Failed unrelated verification.",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        candidateId: "C1",
+        candidateRevision: 2,
+        focusedTest: failedVerification,
+        gateResult: { verdict: "REPAIR", findings: [] },
+      }],
+    });
+    assert.equal(nextAction(retryableTest).action, "retry-test");
+    assert.match(nextAction(retryableTest).label, /Retry Test on C1 r2/);
+    assert.equal(nextAction({
+      ...retryableTest,
+      sameCandidateTestRetries: [{
+        id: "retry-1",
+        candidateId: "C1",
+        candidateRevision: 2,
+        candidateHeadRevision: candidate.headRevision,
+        failedVerificationCompletedAt: null,
+        requestedAt: "2026-08-01T12:01:00.000Z",
+      }],
+    }).action, "repair");
+  });
+});
+
 test("offers an implementation continuation only for completed investigations", () => {
   return withWorkspace(async ({ RuntimeCommandBar, nextAction }) => {
     const task = createTask({

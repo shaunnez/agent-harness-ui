@@ -431,6 +431,9 @@ export function parseWorkPackages(text, repositoryPath = null) {
   if (packages.some((item) => item.ownedPaths.length === 0)) {
     throw new Error("Every work package needs at least one explicit repository-relative owned path.");
   }
+  if (packages.some((item) => item.verificationCommandIds.length === 0)) {
+    throw new Error("Every work package needs at least one repository manifest command ID.");
+  }
   const byId = new Map(packages.map((item) => [item.id, item]));
   const visiting = new Set();
   const visited = new Set();

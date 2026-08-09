@@ -261,6 +261,53 @@ export class GitWorktreeManager {
     return "diverged";
   }
 
+  async refreshCandidate(candidate) {
+    const repositoryRoot = await this.repositoryRoot(candidate.repositoryRoot);
+    await this.verifyCandidate(candidate);
+    const targetRef = candidate.baseRef ?? (candidate.baseBranch && candidate.baseBranch !== "detached" ? `refs/heads/${candidate.baseBranch}` : null);
+    if (!targetRef) throw new Error("The candidate does not have a recorded target ref.");
+    const targetResult = await git(repositoryRoot, ["rev-parse", "--verify", targetRef], { allowFailure: true });
+    if (targetResult.code !== 0) throw new Error("The candidate target ref no longer exists.");
+    const targetRevision = targetResult.stdout.trim();
+    if (targetRevision === candidate.baseRevision) {
+      throw new Error("The candidate already starts from the current target revision.");
+    }
+    if (targetRevision === candidate.headRevision) {
+      throw new Error("The candidate is already present on the target branch.");
+    }
+    const targetAdvanced = await git(repositoryRoot, ["merge-base", "--is-ancestor", candidate.baseRevision, targetRevision], {
+      allowFailure: true,
+    });
+    if (targetAdvanced.code !== 0) {
+      throw new Error("The target branch history was rewritten; recreate the candidate instead of refreshing it automatically.");
+    }
+
+    try {
+      await git(candidate.worktreePath, ["rebase", "--onto", targetRevision, candidate.baseRevision]);
+    } catch (error) {
+      await git(candidate.worktreePath, ["rebase", "--abort"], { allowFailure: true });
+      await this.verifyCandidate(candidate);
+      throw new Error(`Candidate refresh conflicted while replaying it onto ${candidate.baseBranch}: ${error.message}`);
+    }
+    await assertClean(candidate.worktreePath);
+    const headRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
+    if (headRevision === candidate.headRevision) {
+      throw new Error("Candidate refresh did not produce a new candidate revision.");
+    }
+    const summary = (await git(candidate.worktreePath, ["diff", "--stat", targetRevision, headRevision])).stdout.trim();
+    const files = (await git(candidate.worktreePath, ["diff", "--name-only", targetRevision, headRevision])).stdout
+      .split(/\r?\n/)
+      .filter(Boolean);
+    return {
+      previousBaseRevision: candidate.baseRevision,
+      previousHeadRevision: candidate.headRevision,
+      targetRevision,
+      headRevision,
+      files,
+      summary,
+    };
+  }
+
   async verifyCandidate(candidate) {
     const worktreeRoot = await this.repositoryRoot(candidate.worktreePath);
     const recordedPath = await realpath(path.resolve(candidate.worktreePath));
