@@ -1,13 +1,13 @@
 import { ArrowLeft, ArrowRight, CaretDown, Code } from "@phosphor-icons/react";
-import domainRuntimeSource from "../domain/runtime.ts?raw";
-import type { RuntimeTask, StageId } from "../domain";
 import apiRuntimeSource from "../../server/api.mjs?raw";
 import promptRuntimeSource from "../../server/prompts.mjs?raw";
 import scoutRuntimeSource from "../../server/scouts.mjs?raw";
 import parserRuntimeSource from "../../server/structured-output.mjs?raw";
-import { stageUsage } from "./LibraryShared";
-import { SectionHeader } from "./Primitives";
+import type { RuntimeTask, StageId } from "../domain";
 import { formatApproximateCost, formatTokenCount, workflowStages } from "../domain";
+import domainRuntimeSource from "../domain/runtime.ts?raw";
+import { recordedRunsLabel, stageUsage, usageValueLabel } from "./LibraryShared";
+import { SectionHeader } from "./Primitives";
 
 type TypeReference = { label: string; file: string; description: string; code: string };
 type SourceReference = { label: string; file: string; symbol: string; description: string; code: string };
@@ -98,10 +98,10 @@ export function SkillsScreen({
         <button type="button" className="detail-back" onClick={() => onSelect(null)}><ArrowLeft size={16} /> Back to Skills</button>
         <SectionHeader eyebrow="Runtime capability" title={selected.skill} description={`${selected.label} is a workflow-stage contract executed by ${selected.provider === "harness" ? "the deterministic harness" : "the configured model runtime"}. Supporting scout and repair agent roles are listed separately under Agents.`} />
         <div className="detail-metrics detail-metrics--truthful">
-          <Metric label="Recorded model runs" value={usage.runs ? String(usage.runs) : "No runs yet"} />
-          <Metric label="Recorded tokens" value={usage.runs ? formatTokenCount(usage.tokens) : "No observed usage"} />
-          <Metric label="Approx. API-rate cost" value={usage.pricedRuns ? formatApproximateCost(usage.cost) : usage.runs ? "Unavailable for provider" : "No observed usage"} />
-          <Metric label="Work credits" value={usage.creditRuns ? usage.credits?.toFixed(3) ?? "Unavailable" : usage.runs ? "Unavailable for provider" : "No observed usage"} />
+          <Metric label="Recorded model runs" value={recordedRunsLabel(usage, "No runs yet")} />
+          <Metric label="Recorded tokens" value={usageValueLabel(usage, formatTokenCount(usage.tokens), "No observed usage")} />
+          <Metric label="Approx. API-rate cost" value={usageValueLabel(usage, usage.pricedRuns ? formatApproximateCost(usage.cost) : "Unavailable for provider", "No observed usage")} />
+          <Metric label="Work credits" value={usageValueLabel(usage, usage.creditRuns ? usage.credits?.toFixed(3) ?? "Unavailable" : "Unavailable for provider", "No observed usage")} />
           <Metric label="Source set" value={selected.id === "scouts" ? "prompts + scouts" : selected.id === "approval" ? "API action" : "prompts"} />
         </div>
         <section className="skill-contract-map">
@@ -133,8 +133,8 @@ export function SkillsScreen({
             <button className="skill-row" type="button" key={stage.id} onClick={() => onSelect(stage.id)}>
               <Code size={20} />
               <span><strong>{stage.skill}</strong><small>{stage.label} · {stage.provider === "harness" ? "deterministic harness" : "configured-model prompt"}</small></span>
-              <span className="skill-metric"><strong>{usage.runs || "No runs"}</strong><small>recorded model runs</small></span>
-              <span className="skill-metric"><strong>{usage.runs ? formatTokenCount(usage.tokens) : "—"}</strong><small>recorded tokens</small></span>
+              <span className="skill-metric"><strong>{recordedRunsLabel(usage, "No runs")}</strong><small>recorded model runs</small></span>
+              <span className="skill-metric"><strong>{usageValueLabel(usage, formatTokenCount(usage.tokens), "—")}</strong><small>recorded tokens</small></span>
               <ArrowRight size={16} />
             </button>
           );
