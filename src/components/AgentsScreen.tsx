@@ -1,18 +1,19 @@
 import { ArrowLeft, ArrowRight, Robot } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
+import { SCOUT_USAGE_NOT_RETAINED } from "../artifactPresentation";
 import {
+  type AgentRoleId,
   formatApproximateCost,
   formatCacheRate,
   formatTokenCount,
-  type AgentRoleId,
   type RuntimeAgentPolicy,
   type RuntimeSettings,
   type RuntimeStatus,
   type RuntimeTask,
 } from "../domain";
 import { AgentPolicyEditor } from "./AgentPolicyEditor";
-import { agentRoles, policyIdForRole, rolePolicy, type AgentRoleDefinition } from "./AgentRoles";
-import { Metric, stageUsage } from "./LibraryShared";
+import { type AgentRoleDefinition, agentRoles, policyIdForRole, rolePolicy } from "./AgentRoles";
+import { Metric, recordedRunsLabel, stageUsage, usageValueLabel } from "./LibraryShared";
 import { Button, SectionHeader } from "./Primitives";
 
 type RuntimePolicyInput = Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies">;
@@ -43,6 +44,13 @@ export function AgentsScreen({
           const usage = stageUsage(runtimeTasks, role.id);
           const deterministic = role.provider === "harness";
           const configuredPolicy = rolePolicy(runtimeStatus, role.id);
+          const observedUsage = usage.usageNotRetained
+            ? usage.runs
+              ? `${recordedRunsLabel(usage, deterministic ? "No model run · deterministic" : "No recorded model runs")} · ${formatTokenCount(usage.inputTokens)} in · ${formatTokenCount(usage.outputTokens)} out`
+              : SCOUT_USAGE_NOT_RETAINED
+            : usage.runs
+              ? `${usage.runs} runs · ${formatTokenCount(usage.inputTokens)} in · ${formatTokenCount(usage.outputTokens)} out`
+              : deterministic ? "No model run · deterministic" : "No recorded model runs";
           return (
             <button className={`agent-panel${role.parentId ? " agent-panel--child" : ""}`} type="button" key={role.id} onClick={() => onSelect(role.id)}>
               <div className="agent-panel__head"><span className={`agent-icon agent-icon--${deterministic ? "harness" : "codex"}`}><Robot size={22} /></span><span><strong>{role.label}</strong><small>{deterministic ? "Harness-owned gate" : role.parentId ? "Repository scout child · parent: Repository scouts" : role.id === "scouts" ? "Scout coordinator · child-run usage aggregated" : "Ephemeral configured-model run"}</small></span></div>
@@ -50,9 +58,9 @@ export function AgentsScreen({
                 <div><dt>Capability</dt><dd>{role.skill}</dd></div>
                 <div><dt>Runtime</dt><dd>{deterministic ? "Local harness" : configuredPolicy?.model ?? "Model policy (checking)"}</dd></div>
                 <div><dt>Reasoning</dt><dd>{deterministic ? "Deterministic" : configuredPolicy?.reasoning ?? "Checking"}</dd></div>
-                <div><dt>Observed usage</dt><dd>{usage.runs ? `${usage.runs} runs · ${formatTokenCount(usage.inputTokens)} in · ${formatTokenCount(usage.outputTokens)} out` : deterministic ? "No model run · deterministic" : "No recorded model runs"}</dd></div>
-                <div><dt>Cache / cost</dt><dd>{usage.runs ? `${formatCacheRate(usage)} cached · ${usage.pricedRuns ? formatApproximateCost(usage.cost) : "Cost unavailable"}` : "No observed usage"}</dd></div>
-                <div><dt>Work credits</dt><dd>{usage.creditRuns ? usage.credits?.toFixed(3) : deterministic ? "Not applicable" : "Unavailable for recorded provider"}</dd></div>
+                <div><dt>Observed usage</dt><dd>{observedUsage}</dd></div>
+                <div><dt>Cache / cost</dt><dd>{usageValueLabel(usage, usage.runs ? `${formatCacheRate(usage)} cached · ${usage.pricedRuns ? formatApproximateCost(usage.cost) : "Cost unavailable"}` : "No observed usage", "No observed usage")}</dd></div>
+                <div><dt>Work credits</dt><dd>{usageValueLabel(usage, usage.creditRuns ? usage.credits?.toFixed(3) ?? "Unavailable" : deterministic ? "Not applicable" : "Unavailable for recorded provider", deterministic ? "Not applicable" : "Unavailable for recorded provider")}</dd></div>
               </dl>
               <span className="agent-panel__open">Inspect role <ArrowRight size={15} /></span>
             </button>
@@ -90,11 +98,11 @@ function AgentDetail({
       />
       <div className="detail-metrics detail-metrics--truthful">
         <Metric label="Default policy" value={configuredPolicy ? `${configuredPolicy.model} · ${configuredPolicy.reasoning}` : "Checking runtime"} />
-        <Metric label="Recorded runs" value={String(usage.runs)} />
-        <Metric label="Input / output" value={`${formatTokenCount(usage.inputTokens)} / ${formatTokenCount(usage.outputTokens)}`} />
-        <Metric label="Cache rate" value={formatCacheRate(usage)} />
-        <Metric label="Approx. cost" value={usage.pricedRuns ? formatApproximateCost(usage.cost) : deterministic ? "$0.00" : "Unavailable"} />
-        <Metric label="Work credits" value={usage.creditRuns ? usage.credits?.toFixed(3) ?? "Unavailable" : deterministic ? "Not applicable" : "Unavailable for provider"} />
+        <Metric label="Recorded runs" value={recordedRunsLabel(usage, "0")} />
+        <Metric label="Input / output" value={usageValueLabel(usage, `${formatTokenCount(usage.inputTokens)} / ${formatTokenCount(usage.outputTokens)}`, "0 / 0")} />
+        <Metric label="Cache rate" value={usageValueLabel(usage, formatCacheRate(usage), "—")} />
+        <Metric label="Approx. cost" value={usageValueLabel(usage, usage.pricedRuns ? formatApproximateCost(usage.cost) : deterministic ? "$0.00" : "Unavailable", deterministic ? "$0.00" : "Unavailable")} />
+        <Metric label="Work credits" value={usageValueLabel(usage, usage.creditRuns ? usage.credits?.toFixed(3) ?? "Unavailable" : deterministic ? "Not applicable" : "Unavailable for provider", deterministic ? "Not applicable" : "Unavailable for provider")} />
       </div>
       {deterministic ? <DeterministicPolicyNotice /> : <AgentPolicyPanel role={role} runtimeStatus={runtimeStatus} onSave={onSave} />}
       <div className="detail-grid">
@@ -111,7 +119,7 @@ function AgentDetail({
                 <div><dt>Approx. cost</dt><dd>{formatApproximateCost(artifact.usage.cost)}</dd></div>
               </dl>
             </article>
-          )) : <p>No persisted runs for this role yet.</p>}
+          )) : <p>{usage.usageNotRetained ? SCOUT_USAGE_NOT_RETAINED : "No persisted runs for this role yet."}</p>}
         </section>
         <aside className="detail-panel agent-context-panel">
           <h3>Context boundary</h3>
