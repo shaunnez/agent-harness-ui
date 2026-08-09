@@ -104,6 +104,76 @@ Responsive checks used the user's in-app browser at full width, an approximately
 
 final result: passed
 
+## Workflow Atlas bottom-drawer and motion refinement — 2026-08-09
+
+### Review setup and source truth
+
+- Highest-authority visual feedback: `/Users/shaun/.codex/attachments/501279fc-3e70-4693-8f6e-52d111a3e5f9/pasted-text.txt`.
+- Selected visual source: `/Users/shaun/.codex/generated_images/019fe023-68c5-7ab0-8069-2d72656a8908/exec-a18b3f7f-b1ce-4416-804f-ff6e1a2e75ad.png`.
+- Exact worktree preview: `http://127.0.0.1:5177/?preview=atlas#/command`.
+- Primary collapsed implementation: `/Users/shaun/.codex/visualizations/2026/08/09/019fe3d9-af0a-7d53-a410-7176962d9e0d/atlas-polish-final-map-1920x1080.png`.
+- Primary expanded drawer: `/Users/shaun/.codex/visualizations/2026/08/09/019fe3d9-af0a-7d53-a410-7176962d9e0d/atlas-polish-final-drawer-1920x1080.png`.
+- Actual Chrome window: `/Users/shaun/.codex/visualizations/2026/08/09/019fe3d9-af0a-7d53-a410-7176962d9e0d/atlas-live-return-no-synthetic-handoff.png` at 1920 x 873 CSS pixels.
+- 1488 desktop fallback: `/Users/shaun/.codex/visualizations/2026/08/09/019fe3d9-af0a-7d53-a410-7176962d9e0d/atlas-polish-final-1488x1058-v2.png` and `/Users/shaun/.codex/visualizations/2026/08/09/019fe3d9-af0a-7d53-a410-7176962d9e0d/atlas-drawer-final-1488x1058-v3.png`.
+- Source pixels were 1486 x 1059. The comparison normalized the source to 1488 x 1058; implementation captures matched their stated CSS viewport at DPR 1.
+- Compared state: hosted illustrative Live map with AH-008 selected, plus explicit Running and Handoff previews. Preview controls changed cloned display state only.
+
+### Combined comparison evidence
+
+- Full frame: `/Users/shaun/.codex/visualizations/2026/08/09/019fe3d9-af0a-7d53-a410-7176962d9e0d/atlas-polish-comparison-full.png`.
+- Focused map and task rail: `/Users/shaun/.codex/visualizations/2026/08/09/019fe3d9-af0a-7d53-a410-7176962d9e0d/atlas-polish-comparison-map.png`.
+- Focused support treatment: `/Users/shaun/.codex/visualizations/2026/08/09/019fe3d9-af0a-7d53-a410-7176962d9e0d/atlas-polish-comparison-support-drawer.png`.
+- The support treatment intentionally differs from the older source frame: the latest operator feedback replaces the always-visible support row with a bottom-anchored drawer that overlays the map only while open.
+
+### Required fidelity surfaces
+
+- Typography: the 280 px primary task rail shows representative titles on two lines at 14 px; the 220 px 1488 fallback permits three lines. Implement and Dev Review use wider 220 px signs with unclipped stage and room names. Drawer metadata stays at the 12 px floor.
+- Spacing and layout: the drawer is collapsed to a 44 px bottom handle, expands to 430 px at 1920 and 460 px at the 1488 fallback, and never changes the task-rail height. All ten rooms remain visible at 1488 x 1058 without document scrolling.
+- Colors and tokens: the selected room retains the single blue perimeter and selected routes retain each task's persisted colour. Real running agents and active package machinery use a stronger orange glow; blocked and repair semantics stay red.
+- Image quality and assets: existing transparent room shells, courier pods, signal cores, cargo crates, and function consoles remain sharp and correctly masked. The implementation adds motion to those real assets and existing icon-library glyphs rather than introducing substitute CSS or SVG artwork.
+- Copy and content: `Atlas details`, the two-line `RETURN TO / IMPLEMENT` label, and `HANDOFF IN TRANSIT` are legible and do not collide with stage labels or occupancy counters. Persisted task, candidate, package, and handoff content remains unchanged.
+
+### Comparison history and fixes
+
+1. P1 — The 184 px task rail clipped multi-word titles and made active-task identity hard to scan. Increased the primary desktop rail to 280 px, used a 220 px 1488 fallback, and retained local scrolling plus the persistent View all tasks action.
+2. P1 — Legend, handoffs, and inspector consumed a permanent lower row and pushed the map out of the normal Chrome viewport. Replaced that row with an accessible bottom drawer whose panel slides over the canvas and whose closed content is inert.
+3. P2 — Empty-room machinery was static and a running worker did not read as stronger than ambient occupancy. Added function-specific idle loops for radar, drafting lines, route grid, consoles, and pulse machinery; running agents and active package machines now use the stronger orange treatment. Reduced motion disables all added loops.
+4. P2 — Selecting a task lit a solid route that blended with the other task paths. The selected route now retains its task colour but uses a lightly animated dash, with a static dashed fallback under reduced motion.
+5. P2 — Returning from a prototype state to Live could compare cloned and persisted stages and fabricate a noncanonical cross-map transition. Persisted tracking is now reseeded when Live resumes, and transition animation accepts only canonical adjacent or repair paths.
+6. P2 — The Handoff label sat beneath room counters and the repair label sat over its road. Moved Handoff into the clear gap between the plan counter and Implement roof; moved Return to Implement above the red road and split it across two lines.
+7. P2 — Implement and Dev Review dominated the canvas while their signs remained cramped. Reduced both footprints modestly, kept the implementation-to-review bridge shape, and enlarged the signs so both names fit cleanly.
+8. P2 — The first 1488 drawer pass squeezed legend route labels and created a local scrollbar. Reflowed legend routes into three columns, reduced only the object art at that breakpoint, and increased the expanded drawer height to fit the complete support content.
+
+### Interaction and responsive coverage
+
+- Exercised Live, Running, Needs input, Blocked, Handoff, and Completed; each control reported pressed state and the selected task rendered the corresponding visual status.
+- Captured explicit Handoff in transit at `/Users/shaun/.codex/visualizations/2026/08/09/019fe3d9-af0a-7d53-a410-7176962d9e0d/atlas-handoff-actual-chrome.png`.
+- Captured the orange running treatment at `/Users/shaun/.codex/visualizations/2026/08/09/019fe3d9-af0a-7d53-a410-7176962d9e0d/atlas-running-orange-actual-chrome.png`.
+- Switched from Handoff directly to Live and confirmed no transit label or direct Human Gate-to-review path remained.
+- Expanded and collapsed Atlas details; closed and reopened the selected-task inspector inside the drawer.
+- Checked 1920 x 1080, the actual 1920 x 873 Chrome viewport, and 1488 x 1058. The final tab was left on Map with the drawer collapsed at the actual Chrome size.
+- A clean reload and the complete exercised flow produced no console warnings or errors.
+
+### Automated verification
+
+- `npm run typecheck` — passed.
+- `npm run lint` — passed across 78 source files.
+- `node --test tests/atlas-model.test.mjs` — 3 passed, including canonical transition-path coverage.
+- `npm test` — 333 passed.
+- `npm run build` — passed; the existing large-chunk advisory remained non-fatal.
+- `npm run test:sites` — 4 passed.
+- `git diff --check` — passed.
+- Required Sites artifacts exist: `dist/client/index.html`, `dist/server/index.js`, and `dist/.openai/hosting.json`.
+
+### Remaining findings
+
+- P0: none.
+- P1: none after fixes.
+- P2: none after fixes.
+- P3: the collapsed drawer intentionally leaves more open ground at unusually tall desktop viewports than the older always-visible support composition.
+
+final result: passed
+
 ## Courier Rooms workflow atlas fidelity rebuild — 2026-08-09
 
 ### Review setup and source truth

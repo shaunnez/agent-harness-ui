@@ -5,6 +5,7 @@ import {
   atlasRepairRoads,
   atlasRoads,
   atlasRooms,
+  getAtlasTransitionPath,
   getAtlasStatusLabel,
   getAtlasTaskTone,
   getPackageOverview,
@@ -22,6 +23,9 @@ test("atlas renders the ten canonical workflow rooms once and in order", () => {
   assert.deepEqual(atlasConnections[8], ["final-review", "approval"]);
   assert.equal(atlasRoads.length, 9);
   assert.deepEqual(atlasRepairRoads.map((road) => road.from), ["dev-review", "test"]);
+  assert.deepEqual(getAtlasTransitionPath("implement", "dev-review"), atlasRoads[5].points);
+  assert.deepEqual(getAtlasTransitionPath("dev-review", "implement"), atlasRepairRoads[0].points);
+  assert.deepEqual(getAtlasTransitionPath("approval", "dev-review"), []);
 });
 
 test("package summary scales from one package to more than four without fixed slots", () => {

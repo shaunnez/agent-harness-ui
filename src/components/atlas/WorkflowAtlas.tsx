@@ -1,4 +1,13 @@
-import { ArrowRight, CheckCircle, Hand, Play, Robot, WarningCircle } from "@phosphor-icons/react";
+import {
+  ArrowRight,
+  CaretUp,
+  CheckCircle,
+  Hand,
+  Info,
+  Play,
+  Robot,
+  WarningCircle,
+} from "@phosphor-icons/react";
 import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { type RuntimeTask, type StageId, workflowStages } from "../../domain";
 import { PriorityBadge } from "../Primitives";
@@ -47,6 +56,7 @@ export function WorkflowAtlas({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(visibleTasks[0]?.id ?? null);
   const [workbenchOpen, setWorkbenchOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [supportOpen, setSupportOpen] = useState(false);
   const displayedTasks = useMemo(
     () =>
       visibleTasks.map((task) =>
@@ -162,31 +172,60 @@ export function WorkflowAtlas({
             setWorkbenchOpen(true);
           }}
         />
-        <div className={`atlas-support-grid ${inspectorOpen ? "" : "atlas-support-grid--summary-closed"}`}>
-          <div className="atlas-support-grid__left">
-            <AtlasLegend tasks={displayedTasks} selectedTaskId={selectedTask?.id ?? null} />
-            <RecentHandoffs
-              tasks={visibleTasks}
-              onOpenTask={onOpenTask}
-              onViewAll={onViewAllTasks}
-              readOnly={readOnly}
-            />
-          </div>
-          {selectedTask ? (
-            inspectorOpen ? (
-              <TaskAtlasInspector
-                task={selectedTask}
+        <section
+          className={`atlas-support-drawer ${supportOpen ? "atlas-support-drawer--open" : ""}`}
+          aria-label="Atlas details"
+        >
+          <button
+            type="button"
+            className="atlas-support-drawer__toggle"
+            aria-expanded={supportOpen}
+            aria-controls="atlas-support-panel"
+            onClick={() => setSupportOpen((open) => !open)}
+          >
+            <span className="atlas-support-drawer__label">
+              <Info size={17} weight="fill" />
+              <span>
+                <strong>Atlas details</strong>
+                <small>Legend · recent handoffs · selected task</small>
+              </span>
+            </span>
+            <span className="atlas-support-drawer__action">
+              {supportOpen ? "Hide" : "Show"}
+              <CaretUp size={17} weight="bold" aria-hidden />
+            </span>
+          </button>
+          <div
+            id="atlas-support-panel"
+            className={`atlas-support-grid ${inspectorOpen ? "" : "atlas-support-grid--summary-closed"}`}
+            aria-hidden={!supportOpen}
+            inert={supportOpen ? undefined : true}
+          >
+            <div className="atlas-support-grid__left">
+              <AtlasLegend tasks={displayedTasks} selectedTaskId={selectedTask?.id ?? null} />
+              <RecentHandoffs
+                tasks={visibleTasks}
                 onOpenTask={onOpenTask}
-                onOpenWorkbench={() => setWorkbenchOpen(true)}
-                onClose={() => setInspectorOpen(false)}
+                onViewAll={onViewAllTasks}
                 readOnly={readOnly}
-                previewing={previewState !== "live"}
               />
-            ) : (
-              <InspectorReopen task={selectedTask} onOpen={() => setInspectorOpen(true)} />
-            )
-          ) : null}
-        </div>
+            </div>
+            {selectedTask ? (
+              inspectorOpen ? (
+                <TaskAtlasInspector
+                  task={selectedTask}
+                  onOpenTask={onOpenTask}
+                  onOpenWorkbench={() => setWorkbenchOpen(true)}
+                  onClose={() => setInspectorOpen(false)}
+                  readOnly={readOnly}
+                  previewing={previewState !== "live"}
+                />
+              ) : (
+                <InspectorReopen task={selectedTask} onOpen={() => setInspectorOpen(true)} />
+              )
+            ) : null}
+          </div>
+        </section>
       </div>
       {selectedTask ? (
         <PackageWorkbench task={selectedTask} open={workbenchOpen} onClose={() => setWorkbenchOpen(false)} />
