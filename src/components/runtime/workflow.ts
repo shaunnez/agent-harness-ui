@@ -1,6 +1,7 @@
 import {
   type RuntimeArtifact,
   type RuntimeTask,
+  type RuntimeTaskSummary,
   type StageId,
   type TaskRunState,
   workflowStages,
@@ -8,6 +9,8 @@ import {
 import type { RuntimeGateFreshness, RuntimeGateStage, RuntimeRunFreshness } from "../../runtime-activity";
 
 export const candidateGateStages: RuntimeGateStage[] = ["dev-review", "test", "final-review"];
+
+type RuntimeTaskView = RuntimeTask | RuntimeTaskSummary;
 
 const candidateBoundStages: StageId[] = [...candidateGateStages, "approval"];
 
@@ -42,14 +45,14 @@ export function isStageInvalidatedByRepair(task: RuntimeTask, stageId: StageId) 
  * stage is running right now" apart from "this stage is stale because something else
  * invalidated it" — the two states render identically if only `task.status` is consulted.
  */
-export function getActiveRunStage(task: RuntimeTask): StageId | null {
+export function getActiveRunStage(task: RuntimeTaskView): StageId | null {
   if (task.status !== "running") return null;
   const runningRun = [...(task.runs ?? [])].reverse().find((run) => run.status === "running");
   if (runningRun) return runningRun.stage;
   return task.activeRunKind ? task.currentStage : null;
 }
 
-export function isStageRunning(task: RuntimeTask, stageId: StageId): boolean {
+export function isStageRunning(task: RuntimeTaskView, stageId: StageId): boolean {
   return getActiveRunStage(task) === stageId;
 }
 
@@ -110,7 +113,7 @@ export function isArtifactFresh(
   return persistedFreshness.sourceArtifactId === artifact.id;
 }
 
-export function isStageComplete(task: RuntimeTask, stageId: StageId): boolean {
+export function isStageComplete(task: RuntimeTaskView, stageId: StageId): boolean {
   if (!candidateBoundStages.includes(stageId)) {
     return task.completedStages.includes(stageId);
   }
@@ -139,7 +142,7 @@ export function isCandidateBoundStage(stageId: StageId) {
  * active candidate tuple. A missing or contradictory projection is not
  * repaired in the UI; it is treated as not fresh.
  */
-export function getRuntimeGateFreshness(task: RuntimeTask, stageId: StageId): RuntimeGateFreshness | null {
+export function getRuntimeGateFreshness(task: RuntimeTaskView, stageId: StageId): RuntimeGateFreshness | null {
   if (!isCandidateGateStage(stageId)) return null;
   const candidate = task.candidates?.at(-1);
   const freshness = task.gateFreshness?.[stageId];
@@ -183,7 +186,7 @@ export function isGateUnattempted(freshness: RuntimeGateFreshness | RuntimeRunFr
   return freshness?.reasonCode === "missing_authoritative_summary";
 }
 
-export function getRuntimeFreshnessLabel(task: RuntimeTask, stageId: RuntimeGateStage) {
+export function getRuntimeFreshnessLabel(task: RuntimeTaskView, stageId: RuntimeGateStage) {
   const freshness = getRuntimeGateFreshness(task, stageId);
   if (freshness?.fresh) return "Fresh";
   if (!freshness || isGateUnattempted(freshness)) return "Not started";

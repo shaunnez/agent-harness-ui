@@ -5,7 +5,7 @@ import {
   formatCacheRate,
   formatTokenCount,
   type AgentRoleId,
-  type RuntimeTask,
+  type RuntimeTaskSummary,
 } from "../domain";
 import { isModelRunArtifact, sumArtifactUsage } from "../artifactPresentation";
 
@@ -17,7 +17,7 @@ export function SettingRow({ title, copy, control }: { title: string; copy: stri
   return <div className="setting-row"><span><strong>{title}</strong><small>{copy}</small></span><div>{control}</div></div>;
 }
 
-export function stageUsage(tasks: RuntimeTask[], stageId: AgentRoleId) {
+export function stageUsage(tasks: RuntimeTaskSummary[], stageId: AgentRoleId) {
   const artifacts = tasks
     .flatMap((task) => task.artifacts)
     .filter((artifact) => {
@@ -33,7 +33,7 @@ export function stageUsage(tasks: RuntimeTask[], stageId: AgentRoleId) {
   };
 }
 
-export function UsageSummary({ tasks, roleId }: { tasks: RuntimeTask[]; roleId: AgentRoleId }) {
+export function UsageSummary({ tasks, roleId }: { tasks: RuntimeTaskSummary[]; roleId: AgentRoleId }) {
   const usage = stageUsage(tasks, roleId);
   return (
     <div className="detail-metrics detail-metrics--truthful">

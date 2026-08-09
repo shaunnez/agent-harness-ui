@@ -16,7 +16,7 @@ import {
   formatTaskDate,
   formatTokenCount,
   type RuntimeStatus,
-  type RuntimeTask,
+  type RuntimeTaskSummary,
   runtimeTaskToRecentTask,
   type StageId,
   workflowStages,
@@ -28,7 +28,7 @@ import { Button, ModelStack, PriorityBadge, SectionHeader } from "./Primitives";
 import { TaskTable } from "./TaskTable";
 import { WorkflowProgressRing } from "./WorkflowProgressRing";
 
-function isGateStatus(status: RuntimeTask["status"]) {
+function isGateStatus(status: RuntimeTaskSummary["status"]) {
   return status.startsWith("awaiting-") || status.startsWith("ready-for-");
 }
 
@@ -46,7 +46,7 @@ export function CommandCentre({
   onOpenTask: (taskId: string, stageId?: StageId) => void;
   onNewTask: () => void;
   onSeeAllTasks: () => void;
-  runtimeTasks: RuntimeTask[];
+  runtimeTasks: RuntimeTaskSummary[];
   runtimeStatus: RuntimeStatus | null;
   runtimeLoading: boolean;
   runtimeError: string | null;

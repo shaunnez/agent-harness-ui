@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, CaretDown, Code } from "@phosphor-icons/react";
 import domainRuntimeSource from "../domain/runtime.ts?raw";
-import type { RuntimeTask, StageId } from "../domain";
+import type { RuntimeTaskSummary, StageId } from "../domain";
 import apiRuntimeSource from "../../server/api.mjs?raw";
 import promptRuntimeSource from "../../server/prompts.mjs?raw";
 import scoutRuntimeSource from "../../server/scouts.mjs?raw";
@@ -85,7 +85,7 @@ export function SkillsScreen({
   selectedId,
   onSelect,
 }: {
-  runtimeTasks: RuntimeTask[];
+  runtimeTasks: RuntimeTaskSummary[];
   selectedId: StageId | null;
   onSelect: (stageId: StageId | null) => void;
 }) {

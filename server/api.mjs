@@ -21,17 +21,43 @@ import {
 } from "./run-activity.mjs";
 import { SCOUT_NAMES } from "./scouts.mjs";
 import { selectWorkflowProfile, WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
+import {
+  findTaskArtifact,
+  paginateTaskArtifacts,
+  paginateTaskEvents,
+  paginateTaskRuns,
+  projectTaskCore,
+  projectTaskSummary,
+} from "./task-projections.mjs";
 import { isCanonicalCommitId } from "../src/commit-id.ts";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
-const RUNTIME_SCHEMA_VERSION = 6;
+const RUNTIME_SCHEMA_VERSION = 7;
 const DIFF_CHAR_LIMIT = 300_000;
 const OUTPUT_LIMIT = 512 * 1024;
 
+const requestMetrics = new WeakMap();
+
 function send(response, status, value) {
-  response.writeHead(status, JSON_HEADERS);
-  response.end(JSON.stringify(value));
+  const body = JSON.stringify(value);
+  const bytes = Buffer.byteLength(body);
+  const metric = requestMetrics.get(response);
+  const durationMs = metric ? performance.now() - metric.startedAt : 0;
+  response.writeHead(status, {
+    ...JSON_HEADERS,
+    "content-length": String(bytes),
+    "server-timing": `app;dur=${durationMs.toFixed(2)}`,
+    "x-agent-harness-response-bytes": String(bytes),
+  });
+  response.end(body);
+  metric?.report({
+    method: metric.method,
+    path: metric.path,
+    status,
+    durationMs: Math.round(durationMs * 100) / 100,
+    responseBytes: bytes,
+  });
 }
 
 async function readJson(request) {
@@ -136,13 +162,25 @@ function worktreeEntriesForTask(task) {
   return entries;
 }
 
-export function createApiServer({ store, orchestrator, suggestedRepository, csrfToken = crypto.randomUUID() }) {
+export function createApiServer({
+  store,
+  orchestrator,
+  suggestedRepository,
+  csrfToken = crypto.randomUUID(),
+  reportHttpMetric = () => {},
+}) {
   // Reads resolve each entry's recorded absolute path, so this root only matters for
   // `prepare`, which the API never calls. It still uses the shared default rather than a
   // second literal: two places computing a worktree root independently is how they drift.
   const worktrees = new GitWorktreeManager(defaultWorktreeRoot());
   return createServer(async (request, response) => {
     const url = new URL(request.url, "http://127.0.0.1");
+    requestMetrics.set(response, {
+      startedAt: performance.now(),
+      method: request.method ?? "UNKNOWN",
+      path: url.pathname,
+      report: reportHttpMetric,
+    });
     if (request.method === "OPTIONS") {
       try {
         assertHttpBoundary(request, csrfToken);
@@ -224,7 +262,9 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/runtime/worktrees") {
-        const tasks = await store.list();
+        const tasks = typeof store.listSummaries === "function"
+          ? await store.listSummaries()
+          : (await store.list()).map(projectTaskSummary);
         const entries = tasks.flatMap(worktreeEntriesForTask);
         const rows = await worktrees.inventory(entries);
         send(response, 200, { rows });
@@ -335,11 +375,22 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/tasks") {
-        send(response, 200, { tasks: await store.list() });
+        const full = url.searchParams.get("view") === "full";
+        const tasks = full || typeof store.listSummaries !== "function"
+          ? await store.list()
+          : await store.listSummaries();
+        send(response, 200, {
+          tasks: full || typeof store.listSummaries === "function"
+            ? tasks
+            : tasks.map(projectTaskSummary),
+        });
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/evaluations/summary") {
-        send(response, 200, buildEvaluationSummary(await store.list()));
+        const tasks = typeof store.listEvaluationTasks === "function"
+          ? await store.listEvaluationTasks()
+          : await store.list();
+        send(response, 200, buildEvaluationSummary(tasks));
         return;
       }
       if (request.method === "POST" && url.pathname === "/api/tasks") {
@@ -415,10 +466,65 @@ export function createApiServer({ store, orchestrator, suggestedRepository, csrf
         return;
       }
 
+      const taskActivityMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/activity$/);
+      if (request.method === "GET" && taskActivityMatch) {
+        const id = decodeURIComponent(taskActivityMatch[1]);
+        const page = typeof store.pageEvents === "function"
+          ? await store.pageEvents(id, url.searchParams)
+          : null;
+        const task = page ? null : await store.get(id);
+        send(response, page || task ? 200 : 404, page
+          ?? (task ? paginateTaskEvents(task, url.searchParams) : { error: "Task not found." }));
+        return;
+      }
+
+      const taskRunsMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/runs$/);
+      if (request.method === "GET" && taskRunsMatch) {
+        const id = decodeURIComponent(taskRunsMatch[1]);
+        const page = typeof store.pageRuns === "function"
+          ? await store.pageRuns(id, url.searchParams)
+          : null;
+        const task = page ? null : await store.get(id);
+        send(response, page || task ? 200 : 404, page
+          ?? (task ? paginateTaskRuns(task, url.searchParams) : { error: "Task not found." }));
+        return;
+      }
+
+      const taskArtifactMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/artifacts\/([^/]+)$/);
+      if (request.method === "GET" && taskArtifactMatch) {
+        const taskId = decodeURIComponent(taskArtifactMatch[1]);
+        const artifactId = decodeURIComponent(taskArtifactMatch[2]);
+        const artifact = typeof store.getArtifact === "function"
+          ? await store.getArtifact(taskId, artifactId)
+          : findTaskArtifact(await store.get(taskId), artifactId);
+        send(response, artifact ? 200 : 404, artifact
+          ? { artifact }
+          : { error: "Task or artifact not found." });
+        return;
+      }
+
+      const taskArtifactsMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/artifacts$/);
+      if (request.method === "GET" && taskArtifactsMatch) {
+        const id = decodeURIComponent(taskArtifactsMatch[1]);
+        const page = typeof store.pageArtifacts === "function"
+          ? await store.pageArtifacts(id, url.searchParams)
+          : null;
+        const task = page ? null : await store.get(id);
+        send(response, page || task ? 200 : 404, page
+          ?? (task ? paginateTaskArtifacts(task, url.searchParams) : { error: "Task not found." }));
+        return;
+      }
+
       const taskMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)$/);
       if (request.method === "GET" && taskMatch) {
-        const task = await store.get(decodeURIComponent(taskMatch[1]));
-        send(response, task ? 200 : 404, task ? { task } : { error: "Task not found." });
+        const id = decodeURIComponent(taskMatch[1]);
+        const core = url.searchParams.get("view") === "core";
+        const task = core && typeof store.getCore === "function"
+          ? await store.getCore(id)
+          : await store.get(id);
+        send(response, task ? 200 : 404, task
+          ? { task: core && typeof store.getCore !== "function" ? projectTaskCore(task) : task }
+          : { error: "Task not found." });
         return;
       }
 

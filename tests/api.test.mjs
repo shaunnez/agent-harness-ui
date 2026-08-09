@@ -8,6 +8,7 @@ import test from "node:test";
 import { createApiServer } from "../server/api.mjs";
 import { defaultWorktreeRoot, GitWorktreeManager } from "../server/git-worktree.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
+import { SqliteTaskStore } from "../server/sqlite-store.mjs";
 import { parseFocusedTestEvidence } from "../server/structured-output.mjs";
 import {
   attachRunArtifact,
@@ -35,7 +36,11 @@ function fetch(input, init = {}) {
 
 async function createServer(options = {}) {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-api-"));
-  const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+  const store = options.sqlite
+    ? new SqliteTaskStore(path.join(directory, "tasks.sqlite3"), {
+        legacyJsonPath: path.join(directory, "tasks.json"),
+      })
+    : new JsonTaskStore(path.join(directory, "tasks.json"));
   await store.init();
   let startedId = null;
   let startedKind = null;
@@ -100,6 +105,7 @@ async function createServer(options = {}) {
     orchestrator,
     suggestedRepository: directory,
     csrfToken: options.csrfToken ?? TEST_CSRF_TOKEN,
+    reportHttpMetric: options.reportHttpMetric,
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
@@ -920,12 +926,135 @@ test("returns backward-compatible structured run activity through task APIs", as
     const detail = await (await fetch(`${origin}/api/tasks/${task.id}`)).json();
     const list = await (await fetch(`${origin}/api/tasks`)).json();
     const health = await (await fetch(`${origin}/api/health`)).json();
-    assert.equal(health.runtimeSchemaVersion, 6);
+    assert.equal(health.runtimeSchemaVersion, 7);
     assert.equal(detail.task.runs[0].id, "RUN-API");
     assert.equal(detail.task.runs[0].toolCalls[0].result, "Exit code 0");
     assert.equal(detail.task.events.at(-1).runId, "RUN-API");
-    assert.equal(list.tasks[0].runs[0].apiEstimate, 0.001);
+    assert.equal("runs" in list.tasks[0], false);
+    assert.equal("events" in list.tasks[0], false);
+    assert.equal(list.tasks[0].runCount, 1);
+    assert.equal(list.tasks[0].eventCount, 2);
   } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("serves lightweight task projections, paginated retained evidence, and response metrics", async () => {
+  const metrics = [];
+  const { directory, origin, server, store } = await createServer({
+    reportHttpMetric: (metric) => metrics.push(metric),
+  });
+  try {
+    const response = await createTask(origin, {
+      title: "Paged evidence",
+      description: "Keep heavy evidence outside list and core polling payloads.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      for (let index = 1; index <= 3; index += 1) {
+        draft.artifacts.push({
+          id: `artifact-${index}`,
+          stage: "triage",
+          name: `artifact-${index}.md`,
+          kind: "markdown",
+          content: `secret retained content ${index}`,
+          createdAt: `2026-08-09T00:00:0${index}.000Z`,
+          model: "gpt-5.6-luna",
+          usage: { inputTokens: index, cachedInputTokens: 0, outputTokens: 1, totalTokens: index + 1 },
+        });
+        draft.runs.push({ id: `run-${index}`, stage: "triage", startedAt: `2026-08-09T00:00:0${index}.000Z` });
+        draft.events.push({
+          id: `event-${index}`,
+          at: `2026-08-09T00:00:0${index}.000Z`,
+          category: "agent",
+          tone: "info",
+          stage: "triage",
+          title: `Agent event ${index}`,
+          detail: `detail ${index}`,
+        });
+      }
+    });
+
+    const listResponse = await fetch(`${origin}/api/tasks`);
+    const list = await listResponse.json();
+    assert.equal(list.tasks[0].artifactCount, 3);
+    assert.equal("content" in list.tasks[0].artifacts[0], false);
+    assert.equal("runs" in list.tasks[0], false);
+    assert.equal("events" in list.tasks[0], false);
+    assert.ok(Number(listResponse.headers.get("content-length")) > 0);
+    assert.equal(
+      listResponse.headers.get("content-length"),
+      listResponse.headers.get("x-agent-harness-response-bytes"),
+    );
+    assert.match(listResponse.headers.get("server-timing"), /^app;dur=/);
+
+    const core = await (await fetch(`${origin}/api/tasks/${task.id}?view=core`)).json();
+    assert.equal(core.task.artifactCount, 3);
+    assert.equal("events" in core.task, false);
+    assert.equal("runs" in core.task, false);
+
+    const firstArtifacts = await (await fetch(`${origin}/api/tasks/${task.id}/artifacts?limit=2`)).json();
+    assert.deepEqual(firstArtifacts.items.map((item) => item.id), ["artifact-3", "artifact-2"]);
+    assert.ok(firstArtifacts.nextCursor);
+    assert.equal("content" in firstArtifacts.items[0], false);
+    const secondArtifacts = await (await fetch(
+      `${origin}/api/tasks/${task.id}/artifacts?limit=2&cursor=${encodeURIComponent(firstArtifacts.nextCursor)}`,
+    )).json();
+    assert.deepEqual(secondArtifacts.items.map((item) => item.id), ["artifact-1"]);
+
+    const artifact = await (await fetch(`${origin}/api/tasks/${task.id}/artifacts/artifact-2`)).json();
+    assert.equal(artifact.artifact.content, "secret retained content 2");
+    const runs = await (await fetch(`${origin}/api/tasks/${task.id}/runs?limit=2`)).json();
+    assert.deepEqual(runs.items.map((item) => item.id), ["run-3", "run-2"]);
+    const activity = await (await fetch(`${origin}/api/tasks/${task.id}/activity?filter=agent&limit=2`)).json();
+    assert.deepEqual(activity.items.map((item) => item.id), ["event-3", "event-2"]);
+
+    assert.ok(metrics.some((metric) => metric.path === "/api/tasks" && metric.responseBytes > 0));
+    assert.ok(metrics.every((metric) => !Object.hasOwn(metric, "body")));
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("serves task summaries, core polling, and retained evidence directly from SQLite", async () => {
+  const { directory, origin, server, store } = await createServer({ sqlite: true });
+  try {
+    const response = await createTask(origin, {
+      title: "SQLite API",
+      description: "Use normalized runtime persistence through the public API.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    assert.equal(response.status, 201);
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.artifacts.push({
+        id: "sqlite-artifact",
+        stage: "triage",
+        name: "sqlite.md",
+        kind: "markdown",
+        content: "SQLite retained content",
+        createdAt: "2026-08-09T00:00:01.000Z",
+        model: "gpt-5.6-luna",
+        usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+      });
+    });
+
+    const list = await (await fetch(`${origin}/api/tasks`)).json();
+    assert.equal(list.tasks[0].artifactCount, 1);
+    assert.equal("content" in list.tasks[0].artifacts[0], false);
+    const core = await (await fetch(`${origin}/api/tasks/${task.id}?view=core`)).json();
+    assert.equal(core.task.artifactCount, 1);
+    assert.equal("events" in core.task, false);
+    const page = await (await fetch(`${origin}/api/tasks/${task.id}/artifacts?limit=1`)).json();
+    assert.equal(page.items[0].id, "sqlite-artifact");
+    assert.equal("content" in page.items[0], false);
+    const artifact = await (await fetch(`${origin}/api/tasks/${task.id}/artifacts/sqlite-artifact`)).json();
+    assert.equal(artifact.artifact.content, "SQLite retained content");
+  } finally {
+    store.close();
     await cleanup(server, directory);
   }
 });

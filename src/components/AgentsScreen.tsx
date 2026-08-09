@@ -1,5 +1,6 @@
 import { ArrowLeft, ArrowRight, Robot } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
+import { getTaskArtifact } from "../api";
 import {
   formatApproximateCost,
   formatCacheRate,
@@ -8,7 +9,8 @@ import {
   type RuntimeAgentPolicy,
   type RuntimeSettings,
   type RuntimeStatus,
-  type RuntimeTask,
+  type RuntimeArtifact,
+  type RuntimeTaskSummary,
 } from "../domain";
 import { AgentPolicyEditor } from "./AgentPolicyEditor";
 import { agentRoles, policyIdForRole, rolePolicy, type AgentRoleDefinition } from "./AgentRoles";
@@ -24,7 +26,7 @@ export function AgentsScreen({
   onSelect,
   onSave,
 }: {
-  runtimeTasks: RuntimeTask[];
+  runtimeTasks: RuntimeTaskSummary[];
   runtimeStatus: RuntimeStatus | null;
   selectedId: AgentRoleId | null;
   onSelect: (stageId: AgentRoleId | null) => void;
@@ -71,15 +73,36 @@ function AgentDetail({
   onSave,
 }: {
   role: AgentRoleDefinition;
-  runtimeTasks: RuntimeTask[];
+  runtimeTasks: RuntimeTaskSummary[];
   runtimeStatus: RuntimeStatus | null;
   onBack: () => void;
   onSave: (settings: RuntimePolicyInput) => Promise<RuntimeSettings>;
 }) {
   const usage = stageUsage(runtimeTasks, role.id);
   const latestArtifact = [...usage.artifacts].sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
+  const latestArtifactId = latestArtifact?.id ?? null;
+  const latestTaskId = latestArtifact
+    ? runtimeTasks.find((task) => task.artifacts.some((artifact) => artifact.id === latestArtifact.id))?.id
+    : null;
+  const [latestArtifactDetail, setLatestArtifactDetail] = useState<RuntimeArtifact | null>(null);
+  const [contextLoading, setContextLoading] = useState(false);
   const deterministic = role.provider === "harness";
   const configuredPolicy = rolePolicy(runtimeStatus, role.id);
+  useEffect(() => {
+    let current = true;
+    setLatestArtifactDetail(null);
+    if (!latestArtifactId || !latestTaskId || deterministic) return () => { current = false; };
+    setContextLoading(true);
+    void getTaskArtifact(latestTaskId, latestArtifactId)
+      .then((artifact) => {
+        if (current) setLatestArtifactDetail(artifact);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (current) setContextLoading(false);
+      });
+    return () => { current = false; };
+  }, [deterministic, latestArtifactId, latestTaskId]);
   return (
     <div className="page library-page detail-page">
       <button type="button" className="detail-back" onClick={onBack}><ArrowLeft size={16} /> Back to Agents</button>
@@ -115,19 +138,19 @@ function AgentDetail({
         </section>
         <aside className="detail-panel agent-context-panel">
           <h3>Context boundary</h3>
-          {latestArtifact?.contextManifest ? (
+          {latestArtifactDetail?.contextManifest ? (
             <>
-              <p>{latestArtifact.contextManifest.policy}</p>
-              <div className="agent-context-summary"><span>Rendered prompt</span><strong>~{formatTokenCount(latestArtifact.contextManifest.estimatedPromptTokens)} tokens</strong><small>{latestArtifact.contextManifest.promptCharacters.toLocaleString()} characters before CLI/runtime instructions</small></div>
+              <p>{latestArtifactDetail.contextManifest.policy}</p>
+              <div className="agent-context-summary"><span>Rendered prompt</span><strong>~{formatTokenCount(latestArtifactDetail.contextManifest.estimatedPromptTokens)} tokens</strong><small>{latestArtifactDetail.contextManifest.promptCharacters.toLocaleString()} characters before CLI/runtime instructions</small></div>
               <ul>
-                {latestArtifact.contextManifest.sources.map((source) => (
-                  <li key={`${source.kind}-${source.id}`}><span><strong>{source.label}</strong><small>{source.kind}{source.stage ? ` · ${source.stage}` : ""}{source.truncated ? " · truncated" : ""}</small></span>{source.includedCharacters != null ? <code>{source.includedCharacters.toLocaleString()} chars</code> : <code>{latestArtifact.contextManifest?.repositoryAccess}</code>}</li>
+                {latestArtifactDetail.contextManifest.sources.map((source) => (
+                  <li key={`${source.kind}-${source.id}`}><span><strong>{source.label}</strong><small>{source.kind}{source.stage ? ` · ${source.stage}` : ""}{source.truncated ? " · truncated" : ""}</small></span>{source.includedCharacters != null ? <code>{source.includedCharacters.toLocaleString()} chars</code> : <code>{latestArtifactDetail.contextManifest?.repositoryAccess}</code>}</li>
                 ))}
               </ul>
               <small>“Supplied” means placed in the prompt or made available through repository access. The runtime cannot prove which supplied text the model semantically relied on.</small>
             </>
           ) : (
-            <p>{deterministic ? "No model context is sent for this gate." : "Older runs did not record a context manifest. New runs will show every supplied artifact and access boundary here."}</p>
+            <p>{deterministic ? "No model context is sent for this gate." : contextLoading ? "Loading the latest retained context manifest…" : "This run did not record a context manifest. New runs will show every supplied artifact and access boundary here."}</p>
           )}
         </aside>
       </div>

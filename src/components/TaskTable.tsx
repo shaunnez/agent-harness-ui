@@ -1,5 +1,5 @@
 import { ArrowClockwise, ArrowRight, CheckCircle, Circle, CircleNotch, XCircle } from "@phosphor-icons/react";
-import { type RuntimeTask, runtimeTaskToRecentTask, workflowStages } from "../domain";
+import { type RuntimeTaskSummary, runtimeTaskToRecentTask, workflowStages } from "../domain";
 import { ModelStack, PriorityBadge, StateBadge } from "./Primitives";
 
 export function TaskTable({
@@ -9,7 +9,7 @@ export function TaskTable({
   emptyCopy = "Create a task to begin a real local workflow.",
   onSeeAll,
 }: {
-  tasks: RuntimeTask[];
+  tasks: RuntimeTaskSummary[];
   onOpenTask: (taskId: string) => void;
   emptyTitle?: string;
   emptyCopy?: string;
@@ -93,7 +93,7 @@ export function TaskTable({
   );
 }
 
-function StageProgress({ task }: { task: RuntimeTask }) {
+function StageProgress({ task }: { task: RuntimeTaskSummary }) {
   return (
     <span className="task-table__stage-icons" role="img" aria-label={`Stage progress: ${task.completedStages.length} complete; current stage ${task.currentStage}`}>
       {workflowStages.map((stage) => {

@@ -25,7 +25,7 @@ import scoutRadarConsole from "../../assets/atlas/scout-radar-console.png";
 import synthesisConsole from "../../assets/atlas/synthesis-console.png";
 import testLabRig from "../../assets/atlas/test-lab-rig.png";
 import workerDrone from "../../assets/atlas/worker-drone.png";
-import type { RuntimeTask, RuntimeWorkPackage, StageId } from "../../domain";
+import type { RuntimeTaskSummary, RuntimeWorkPackage, StageId } from "../../domain";
 import {
   ATLAS_WORLD_HEIGHT,
   ATLAS_WORLD_WIDTH,
@@ -57,7 +57,7 @@ export function AtlasRoomCard({
   onOpenWorkbench,
 }: {
   room: AtlasRoom;
-  tasks: RuntimeTask[];
+  tasks: RuntimeTaskSummary[];
   selectedTaskId: string | null;
   onSelectTask: (taskId: string) => void;
   onOpenWorkbench: (taskId: string) => void;
@@ -144,7 +144,7 @@ function StandardRoom({
   Icon,
   stageId,
 }: {
-  tasks: RuntimeTask[];
+  tasks: RuntimeTaskSummary[];
   selectedTaskId: string | null;
   onSelectTask: (taskId: string) => void;
   Icon: Icon;
@@ -192,7 +192,7 @@ function ImplementHangar({
   onSelectTask,
   onOpenWorkbench,
 }: {
-  tasks: RuntimeTask[];
+  tasks: RuntimeTaskSummary[];
   selectedTaskId: string | null;
   onSelectTask: (taskId: string) => void;
   onOpenWorkbench: (taskId: string) => void;
@@ -259,7 +259,7 @@ function ImplementationJob({
   condensed,
   onSelect,
 }: {
-  task: RuntimeTask;
+  task: RuntimeTaskSummary;
   selected: boolean;
   condensed: boolean;
   onSelect: () => void;
@@ -324,7 +324,7 @@ function ReviewBays({
   selectedTaskId,
   onSelectTask,
 }: {
-  tasks: RuntimeTask[];
+  tasks: RuntimeTaskSummary[];
   selectedTaskId: string | null;
   onSelectTask: (taskId: string) => void;
 }) {
@@ -370,7 +370,7 @@ function ReviewBays({
   );
 }
 
-function shortBlockedReason(task: RuntimeTask) {
+function shortBlockedReason(task: RuntimeTaskSummary) {
   const persisted = task.error ?? task.workPackages.find((item) => item.status === "failed")?.error;
   if (!persisted) return "Repair required";
   if (/denied tool calls?|tool policy|read-only stage/i.test(persisted)) return "Tool policy violation";
@@ -390,7 +390,7 @@ function TaskPod({
   compact,
   onSelect,
 }: {
-  task: RuntimeTask;
+  task: RuntimeTaskSummary;
   selected: boolean;
   compact: boolean;
   onSelect: () => void;
@@ -422,7 +422,7 @@ function TaskPod({
   );
 }
 
-function TaskCore({ task }: { task: RuntimeTask }) {
+function TaskCore({ task }: { task: RuntimeTaskSummary }) {
   const tone = getAtlasTaskTone(task);
   return (
     <span

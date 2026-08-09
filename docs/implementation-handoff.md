@@ -68,10 +68,14 @@ Repository hooks and configured Git identity are respected. A hook or missing id
 | `GET` | `/api/health` | Local companion liveness |
 | `GET` | `/api/runtime/status` | Codex/ChatGPT readiness and suggested repository |
 | `GET` | `/api/runtime/worktrees` | Read-only retained slice/candidate worktree inventory with live Git state |
-| `GET` | `/api/tasks` | Persisted task list |
+| `GET` | `/api/tasks` | Lightweight persisted task summaries; `?view=full` is the compatibility path |
 | `POST` | `/api/tasks` | Validate and create a task with deterministic or explicit workflow-profile selection |
 | `PUT` | `/api/tasks/:id/workflow-profile` | Override the persisted profile before implementation |
-| `GET` | `/api/tasks/:id` | Full task, decisions, approvals, candidates, artifacts, usage, and activity |
+| `GET` | `/api/tasks/:id` | Full compatibility payload; `?view=core` returns bounded polling state |
+| `GET` | `/api/tasks/:id/activity` | Cursor-paginated retained activity with optional category filter |
+| `GET` | `/api/tasks/:id/runs` | Cursor-paginated agent or test runs |
+| `GET` | `/api/tasks/:id/artifacts` | Cursor-paginated artifact metadata without retained content |
+| `GET` | `/api/tasks/:id/artifacts/:artifactId` | One complete retained artifact on demand |
 | `GET` | `/api/tasks/:id/candidates/:candidateId/diff` | Verified, capped unified diff for the recorded candidate revision |
 | `POST` | `/api/tasks/:id/run` | Start or retry investigation |
 | `POST` | `/api/tasks/:id/cancel` | Abort the active Codex subprocess |
@@ -95,7 +99,7 @@ The API validates action eligibility from persisted task status. A task has one 
 
 ## Persistence contract
 
-`.data/tasks.json` remains a deliberately straightforward local document. In addition to the original task brief, stage state, usage, artifacts, and capped activity, a task now stores:
+`.data/tasks.sqlite3` is the live transactional current-state store. It normalizes tasks, artifacts, events, and runs so list, core polling, pagination, and task-scoped mutations do not clone or rewrite every retained task. This is deliberately not an immutable temporal ledger. In addition to the original task brief, stage state, usage, artifacts, and capped activity, a task stores:
 
 - `attemptsByStage` rather than presenting a global run counter as a stage retry count;
 - `decisions` and `approvals` with timestamps;
@@ -109,7 +113,11 @@ The API validates action eligibility from persisted task status. A task has one 
 - structured focused-test evidence retained beside the Markdown artifact; and
 - `activeRunKind` for interruption recovery.
 
-Writes use a temporary file plus rename and are serialized in-process. Atomic replacement has bounded backoff for transient Windows rename errors only. Startup adds defaults to older task documents and converts the old `awaiting-approval` state. A task found in `running` state is marked failed with an explicit interruption event. This is intentionally not an immutable temporal ledger.
+SQLite writes use `BEGIN IMMEDIATE` transactions, foreign keys, WAL, full synchronous durability, a busy timeout, and revision compare-and-swap. Startup still adds task defaults, migrates older status/contracts, and marks a task found in `running` state failed with an explicit interruption event.
+
+On first start, `.data/tasks.json` is parsed, migrated in memory, imported transactionally, and compared back to the source by canonical task content before SQLite becomes authoritative. The JSON source is never overwritten or deleted. Its SHA-256 is retained; a later source change fails closed. `npm run data:export-json` writes the current SQLite state atomically to a separate rollback-compatible JSON file. `AGENT_HARNESS_STORE=json` retains a deliberate legacy fallback, but there is no dual-write mode.
+
+The normal UI uses bounded contracts: `/api/tasks` excludes run/event collections and artifact content, an open task hydrates core state plus paginated evidence, subsequent polling requests core state only until `updatedAt` changes, Run activity loads on disclosure, and artifact content travels through individual artifact requests rather than list/core responses. Every JSON response carries `Content-Length`, `Server-Timing`, and `X-Agent-Harness-Response-Bytes`; slow or large responses produce metadata-only structured logs.
 
 ## Frontend behavior
 

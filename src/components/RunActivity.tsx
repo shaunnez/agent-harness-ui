@@ -1,5 +1,6 @@
 import { ArrowSquareOut, Robot } from "@phosphor-icons/react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { getTaskActivity, getTaskRuns } from "../api";
 import {
   formatApproximateCost,
   formatTokenCount,
@@ -106,7 +107,23 @@ export function RunActivity({
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<RunActivityFilter>(initialFilter);
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
-  const items = useMemo(() => filterRunActivity(task, filter).slice(0, 60), [task, filter]);
+  const [pagedEvents, setPagedEvents] = useState<RuntimeEvent[]>(task.events);
+  const [pagedRuns, setPagedRuns] = useState<RuntimeRun[]>(task.runs ?? []);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const pagedTask = useMemo(
+    () => ({
+      ...task,
+      events: [...pagedEvents].sort((left, right) => left.at.localeCompare(right.at)),
+      runs: [...pagedRuns].sort((left, right) => (
+        left.startedAt ?? left.completedAt ?? ""
+      ).localeCompare(right.startedAt ?? right.completedAt ?? "")),
+    }),
+    [pagedEvents, pagedRuns, task],
+  );
+  const items = useMemo(() => filterRunActivity(pagedTask, filter), [pagedTask, filter]);
   const latestActivity = useMemo(() => filterRunActivity(task, "activity")[0] ?? null, [task]);
   const selected = items.find((item) => item.id === selectedId) ?? null;
   const selectedRun = selected?.run ?? (selected?.event?.runId
@@ -116,6 +133,40 @@ export function RunActivity({
   const selectedArtifact = selectedArtifactId
     ? task.artifacts.find((artifact) => artifact.id === selectedArtifactId) ?? null
     : null;
+  const activityVersion = task.updatedAt;
+
+  const loadPage = useCallback(async (cursor: string | null, append: boolean) => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      if (filter === "agent" || filter === "test") {
+        const page = await getTaskRuns(task.id, { cursor, limit: 60, filter });
+        setPagedRuns((current) => append ? mergePage(current, page.items) : page.items);
+        setPagedEvents([]);
+        setNextCursor(page.nextCursor);
+        setTotal(page.total);
+      } else {
+        const page = await getTaskActivity(task.id, {
+          cursor,
+          limit: 60,
+          filter: filter === "decision" ? "decision" : "all",
+        });
+        setPagedEvents((current) => append ? mergePage(current, page.items) : page.items);
+        setPagedRuns([]);
+        setNextCursor(page.nextCursor);
+        setTotal(page.total);
+      }
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Run activity could not be loaded.");
+    } finally {
+      setLoading(false);
+    }
+  }, [filter, task.id]);
+
+  useEffect(() => {
+    if (!open || !activityVersion) return;
+    void loadPage(null, false);
+  }, [activityVersion, loadPage, open]);
 
   const selectFilter = (next: RunActivityFilter) => {
     setFilter(next);
@@ -135,7 +186,7 @@ export function RunActivity({
         <span>
           <Robot size={16} />
           <strong>Run activity</strong>
-          <small>Persisted runs, tools, artifacts, tests, approvals, and decisions · {task.events.length} events · {task.runs?.length ?? 0} runs</small>
+          <small>Persisted runs, tools, artifacts, tests, approvals, and decisions · {task.eventCount ?? task.events.length} events · {task.runCount ?? task.runs?.length ?? 0} runs</small>
         </span>
         <span>
           <span className="connection-dot" />
@@ -175,8 +226,18 @@ export function RunActivity({
               <em>{stageLabel(item.stage)}</em>
             </button>
           )) : (
-            <div className="runtime-activity-empty">No persisted data matches this filter.</div>
+            <div className="runtime-activity-empty">{loading ? "Loading retained activity…" : loadError ?? "No persisted data matches this filter."}</div>
           )}
+          {nextCursor ? (
+            <button
+              type="button"
+              className="run-activity-link"
+              disabled={loading}
+              onClick={() => void loadPage(nextCursor, true)}
+            >
+              {loading ? "Loading…" : `Load older · ${items.length} of ${total}`}
+            </button>
+          ) : null}
         </div>
         {selected ? (
           <aside className="run-activity-detail" aria-label="Run activity detail">
@@ -265,6 +326,12 @@ function ToolDetails({ toolCall }: { toolCall: NonNullable<RuntimeEvent["toolCal
 
 function Detail({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return <div><dt>{label}</dt><dd className={mono ? "mono" : ""}>{value}</dd></div>;
+}
+
+function mergePage<T extends { id: string }>(current: T[], incoming: T[]) {
+  const byId = new Map(current.map((item) => [item.id, item]));
+  for (const item of incoming) byId.set(item.id, item);
+  return [...byId.values()];
 }
 
 function runLabel(run: RuntimeRun) {

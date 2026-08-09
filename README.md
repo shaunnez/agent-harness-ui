@@ -20,7 +20,7 @@ A local-first AI development workflow that turns a task into inspectable, persis
 
 Prerequisites:
 
-- Node.js 22 or newer.
+- Node.js 22.13 or newer.
 - Codex CLI installed and authenticated with ChatGPT. Verify with `codex login status`.
 
 ```powershell
@@ -34,10 +34,19 @@ Optional environment settings:
 
 ```powershell
 $env:AGENT_HARNESS_REPOSITORY = "C:\path\to\default-repository"
-$env:AGENT_HARNESS_DATA = "C:\path\to\tasks.json"
+$env:AGENT_HARNESS_DATA = "C:\path\to\tasks.json" # legacy JSON import source
+$env:AGENT_HARNESS_DATABASE = "C:\path\to\tasks.sqlite3"
 $env:AGENT_HARNESS_MODEL = "gpt-5.6-luna"
 $env:AGENT_HARNESS_REASONING = "xhigh"
 npm run dev
+```
+
+SQLite is the default live store. On first start, the companion imports `AGENT_HARNESS_DATA` into the SQLite database, verifies exact task parity, and leaves the JSON file unchanged. Set `AGENT_HARNESS_STORE=json` only for an intentional legacy rollback. If the legacy JSON changes after migration, SQLite startup fails closed rather than guessing which copy is authoritative.
+
+Export current SQLite state to a new rollback-compatible JSON snapshot with:
+
+```powershell
+npm run data:export-json -- "C:\path\to\tasks.sqlite3" "C:\path\to\tasks-export.json"
 ```
 
 ## Authentication, model policy, and billing
@@ -62,7 +71,8 @@ React/Vite UI :4173
     │ /api proxy
     ▼
 Node companion :4310
-    ├── JSON task store (.data/tasks.json)
+    ├── SQLite task store (.data/tasks.sqlite3)
+    │     └── one-time verified import from .data/tasks.json
     ├── task orchestrator (one active run per task)
     ├── Codex CLI subprocess (OAuth session; read-only or isolated workspace-write)
     └── Git worktree manager (.data/worktrees; guarded fast-forward merge)

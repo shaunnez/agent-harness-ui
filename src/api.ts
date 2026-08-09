@@ -7,6 +7,13 @@ import type {
   RuntimeSettings,
   RuntimeStatus,
   RuntimeTask,
+  RuntimeTaskCore,
+  RuntimeTaskSummary,
+  RuntimeArtifact,
+  RuntimeArtifactMetadata,
+  RuntimeEvent,
+  RuntimePage,
+  RuntimeRun,
   RuntimeUsage,
   RuntimeWorktreeInventoryRow,
 } from "./domain";
@@ -143,11 +150,53 @@ export async function getCandidateDiff(taskId: string, candidateId: string, head
 }
 
 export async function listTasks() {
-  return (await request<{ tasks: RuntimeTask[] }>("/api/tasks")).tasks;
+  return (await request<{ tasks: RuntimeTaskSummary[] }>("/api/tasks")).tasks;
 }
 
 export async function getTask(id: string) {
-  return (await request<{ task: RuntimeTask }>(`/api/tasks/${encodeURIComponent(id)}`)).task;
+  return (await request<{ task: RuntimeTask }>(`/api/tasks/${encodeURIComponent(id)}?view=full`)).task;
+}
+
+export async function getTaskCore(id: string) {
+  return (await request<{ task: RuntimeTaskCore }>(`/api/tasks/${encodeURIComponent(id)}?view=core`)).task;
+}
+
+export async function getTaskActivity(id: string, options: PageOptions = {}) {
+  return request<RuntimePage<RuntimeEvent>>(
+    `/api/tasks/${encodeURIComponent(id)}/activity?${pageParams(options)}`,
+  );
+}
+
+export async function getTaskRuns(id: string, options: PageOptions = {}) {
+  return request<RuntimePage<RuntimeRun>>(
+    `/api/tasks/${encodeURIComponent(id)}/runs?${pageParams(options)}`,
+  );
+}
+
+export async function getTaskArtifacts(id: string, options: PageOptions = {}) {
+  return request<RuntimePage<RuntimeArtifactMetadata>>(
+    `/api/tasks/${encodeURIComponent(id)}/artifacts?${pageParams(options)}`,
+  );
+}
+
+export async function getTaskArtifact(id: string, artifactId: string) {
+  return (await request<{ artifact: RuntimeArtifact }>(
+    `/api/tasks/${encodeURIComponent(id)}/artifacts/${encodeURIComponent(artifactId)}`,
+  )).artifact;
+}
+
+interface PageOptions {
+  cursor?: string | null;
+  limit?: number;
+  filter?: "all" | "activity" | "agent" | "test" | "decision";
+}
+
+function pageParams(options: PageOptions) {
+  const params = new URLSearchParams();
+  if (options.cursor) params.set("cursor", options.cursor);
+  if (options.limit != null) params.set("limit", String(options.limit));
+  if (options.filter) params.set("filter", options.filter);
+  return params.toString();
 }
 
 export async function createTask(draft: NewTaskDraft) {

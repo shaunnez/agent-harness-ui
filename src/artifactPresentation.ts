@@ -1,4 +1,6 @@
-import type { RuntimeArtifact, RuntimeUsage } from "./domain";
+import type { RuntimeArtifact, RuntimeArtifactMetadata, RuntimeUsage } from "./domain";
+
+type UsageArtifact = Pick<RuntimeArtifact, "model" | "runId" | "usage"> | Pick<RuntimeArtifactMetadata, "model" | "runId" | "usage">;
 
 type AggregatedUsage = Omit<RuntimeUsage, "cacheWriteTokens"> & {
   cacheWriteTokens: number;
@@ -26,12 +28,12 @@ export function stripStructuredArtifactPayloads(content: string) {
   ).replace(/\n{3,}/g, "\n\n").trim();
 }
 
-export function isModelRunArtifact(artifact: RuntimeArtifact) {
+export function isModelRunArtifact(artifact: UsageArtifact) {
   if (!artifact.model || artifact.model === "deterministic-aggregation") return false;
   return Boolean(artifact.runId || artifact.usage.totalTokens > 0);
 }
 
-export function sumArtifactUsage(artifacts: RuntimeArtifact[]) {
+export function sumArtifactUsage(artifacts: UsageArtifact[]) {
   const usage = artifacts.reduce(
     (total, artifact) => {
       total.inputTokens += artifact.usage.inputTokens;
