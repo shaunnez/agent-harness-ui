@@ -3348,7 +3348,7 @@ test("grants one bounded stage attempt to a reservation-bound candidate at an ex
   }
 });
 
-test("grants a fresh gate attempt after a target refresh without requiring repair lineage", async () => {
+test("grants a fresh gate attempt after consecutive target refreshes without requiring repair lineage", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
     const response = await createTask(origin, {
@@ -3377,17 +3377,25 @@ test("grants a fresh gate attempt after a target refresh without requiring repai
         status: "failed",
       })));
       bindLatestWorkflowAttempt(draft, "dev-review", "review");
-      candidate.revisionNumber = 2;
-      candidate.baseRevision = "target-base-r2";
-      candidate.headRevision = "candidate-target-refresh-r2";
+      candidate.revisionNumber = 3;
+      candidate.baseRevision = "target-base-r3";
+      candidate.headRevision = "candidate-target-refresh-r3";
       candidate.revisions.push({
         number: 2,
-        headRevision: candidate.headRevision,
+        headRevision: "candidate-target-refresh-r2",
         reason: "target-refresh",
         previousBaseRevision: "target-base-r1",
         previousHeadRevision: oldHead,
-        baseRevision: candidate.baseRevision,
+        baseRevision: "target-base-r2",
         createdAt: "2026-08-04T00:03:00.000Z",
+      }, {
+        number: 3,
+        headRevision: candidate.headRevision,
+        reason: "target-refresh",
+        previousBaseRevision: "target-base-r2",
+        previousHeadRevision: "candidate-target-refresh-r2",
+        baseRevision: candidate.baseRevision,
+        createdAt: "2026-08-04T00:04:00.000Z",
       });
     });
 
@@ -3395,7 +3403,10 @@ test("grants a fresh gate attempt after a target refresh without requiring repai
     assert.equal(grantResponse.status, 200);
     const updated = await store.get(task.id);
     assert.equal(updated.stageRunLimits["dev-review"], 4);
-    assert.equal(updated.candidates[0].revisions[1].reason, "target-refresh");
+    assert.deepEqual(updated.candidates[0].revisions.slice(1).map((revision) => revision.reason), [
+      "target-refresh",
+      "target-refresh",
+    ]);
     assert.equal(updated.candidates[0].sourceWorkflowAttempt, 1);
   } finally {
     await cleanup(server, directory);

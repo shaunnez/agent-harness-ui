@@ -1300,13 +1300,15 @@ function retryGrantContext(task) {
     candidate?.status !== "repair_required" &&
     reservation.candidateId === candidate?.id &&
     reservation.candidateRevision + 1 === candidate?.revisionNumber;
-  const adjacentTargetRefresh = adjacentPriorRevision && lineage?.currentRevision?.reason === "target-refresh";
-  if (adjacentPriorRevision && reservationRuns.length !== 1) {
+  const priorTargetRefreshRevision = candidateBoundGrant &&
+    candidate?.status !== "repair_required" &&
+    targetRefreshesDescendFromReservation(lineage, candidate, reservation);
+  if ((adjacentPriorRevision || priorTargetRefreshRevision) && reservationRuns.length !== 1) {
     return { error: "The exhausted stage has an inconsistent workflow reservation; resolve it before granting a retry." };
   }
   const authorizingGate = candidate?.status === "repair_required"
     ? failedRepairAuthorizingGate(task, candidate, lineage)
-    : adjacentPriorRevision && !adjacentTargetRefresh
+    : adjacentPriorRevision && !priorTargetRefreshRevision
       ? adjacentRepairAuthorizingGate(
           task,
           candidate,
@@ -1316,7 +1318,7 @@ function retryGrantContext(task) {
           task.attemptsByStage?.implement ?? 0,
         )
       : null;
-  if ((candidate?.status === "repair_required" || (adjacentPriorRevision && !adjacentTargetRefresh)) && !authorizingGate) {
+  if ((candidate?.status === "repair_required" || (adjacentPriorRevision && !priorTargetRefreshRevision)) && !authorizingGate) {
     return { error: "The exhausted candidate repair is missing an exact authorizing gate; resolve the inconsistent history before granting a retry." };
   }
   const authorizingGateRun = authorizingGate?.sourceRunId
@@ -1485,20 +1487,9 @@ function validRetryReservationCandidateBinding(
     return validCandidateProducerReservation(task, candidate, reservations?.implement, lineage, implementationAttempt);
   }
   if (grantedStage !== "implement") {
-    if (
-      reservation.candidateId !== candidate?.id ||
-      reservation.candidateRevision + 1 !== candidate?.revisionNumber
-    ) {
+    if (targetRefreshesDescendFromReservation(lineage, candidate, reservation)) return true;
+    if (reservation.candidateId !== candidate?.id || reservation.candidateRevision + 1 !== candidate?.revisionNumber) {
       return false;
-    }
-    if (lineage.currentRevision.reason === "target-refresh") {
-      const priorRevision = lineage.byNumber.get(candidate.revisionNumber - 1);
-      return Boolean(
-        priorRevision &&
-        reservation.candidateHeadRevision === priorRevision.headRevision &&
-        validPersistedTimestamp(reservation.reservedAt) &&
-        Date.parse(reservation.reservedAt) >= Date.parse(priorRevision.createdAt),
-      );
     }
     return Boolean(adjacentRepairAuthorizingGate(
       task,
@@ -1809,6 +1800,31 @@ function candidateRevisionLineage(candidate) {
     currentRevision,
     sourceReservations,
   };
+}
+
+function targetRefreshesDescendFromReservation(lineage, candidate, reservation) {
+  if (
+    !lineage ||
+    reservation?.candidateId !== candidate?.id ||
+    !Number.isInteger(reservation?.candidateRevision) ||
+    reservation.candidateRevision < 1 ||
+    reservation.candidateRevision >= candidate.revisionNumber ||
+    !validPersistedTimestamp(reservation.reservedAt)
+  ) {
+    return false;
+  }
+  const reservedRevision = lineage.byNumber.get(reservation.candidateRevision);
+  if (
+    !reservedRevision ||
+    reservation.candidateHeadRevision !== reservedRevision.headRevision ||
+    Date.parse(reservation.reservedAt) < Date.parse(reservedRevision.createdAt)
+  ) {
+    return false;
+  }
+  for (let number = reservation.candidateRevision + 1; number <= candidate.revisionNumber; number += 1) {
+    if (lineage.byNumber.get(number)?.reason !== "target-refresh") return false;
+  }
+  return true;
 }
 
 function candidateRevisionProducerEvidence(task, candidate, lineage) {
