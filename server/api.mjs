@@ -897,7 +897,7 @@ export function createApiServer({
       }
 
       const actionMatch = url.pathname.match(
-        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|specification|plan|implement|continue-package|repair|review|test|retry-test|final-review|approve-merge|complete-merged|grant-retry|refresh-candidate|rebuild-candidate)$/,
+        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|specification|plan|implement|continue-package|repair|review|test|retry-test|final-review|approve-merge|complete-merged|grant-retry|refresh-candidate|rebuild-candidate|restart-implementation)$/,
       );
       if (request.method === "POST" && actionMatch) {
         const id = decodeURIComponent(actionMatch[1]);
@@ -944,6 +944,11 @@ export function createApiServer({
         if (action === "rebuild-candidate") {
           const rebuilt = await orchestrator.rebuildCandidateFromTarget(id);
           send(response, 200, { rebuilt: true, task: rebuilt });
+          return;
+        }
+        if (action === "restart-implementation") {
+          const restarted = await orchestrator.restartImplementationFromTarget(id);
+          send(response, 200, { restarted: true, task: restarted });
           return;
         }
         if (action === "retry-test") {

@@ -51,6 +51,7 @@ async function createServer(options = {}) {
   let completedMergedTask = null;
   let refreshedCandidateTask = null;
   let rebuiltCandidateTask = null;
+  let restartedImplementationTask = null;
   let retriedTestTask = null;
   const orchestrator = {
     status: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
@@ -90,6 +91,10 @@ async function createServer(options = {}) {
     },
     async rebuildCandidateFromTarget(id) {
       rebuiltCandidateTask = id;
+      return store.get(id);
+    },
+    async restartImplementationFromTarget(id) {
+      restartedImplementationTask = id;
       return store.get(id);
     },
     async retryTestOnSameCandidate(id) {
@@ -138,6 +143,7 @@ async function createServer(options = {}) {
     completedMergedTaskRef: () => completedMergedTask,
     refreshedCandidateTaskRef: () => refreshedCandidateTask,
     rebuiltCandidateTaskRef: () => rebuiltCandidateTask,
+    restartedImplementationTaskRef: () => restartedImplementationTask,
     retriedTestTaskRef: () => retriedTestTask,
   };
 }
@@ -730,6 +736,25 @@ test("dispatches a clean candidate rebuild after refresh conflict", async () => 
   }
 });
 
+test("dispatches an implementation restart from the latest target", async () => {
+  const { directory, origin, server, restartedImplementationTaskRef } = await createServer();
+  try {
+    const createResponse = await createTask(origin, {
+      title: "Restart implementation",
+      description: "Exercise pre-candidate target-drift recovery.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await createResponse.json();
+    const response = await fetch(`${origin}/api/tasks/${task.id}/restart-implementation`, { method: "POST" });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).restarted, true);
+    assert.equal(restartedImplementationTaskRef(), task.id);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("lets blocked candidate gates reach the target-drift preflight", async () => {
   const { directory, origin, server, store, startedIdRef, startedKindRef } = await createServer();
   try {
@@ -1284,6 +1309,7 @@ test("enforces one Host, Origin, content-type, CSRF, and missing-Origin policy a
       ["POST", "/api/tasks/AH-999/approve-merge"],
       ["POST", "/api/tasks/AH-999/refresh-candidate"],
       ["POST", "/api/tasks/AH-999/rebuild-candidate"],
+      ["POST", "/api/tasks/AH-999/restart-implementation"],
       ["POST", "/api/tasks/AH-999/retry-test"],
       ["POST", "/api/tasks/AH-999/complete-merged"],
     ];

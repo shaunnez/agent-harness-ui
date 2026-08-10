@@ -3059,6 +3059,14 @@ test("offers recovery actions that match target drift, invalid plans, and retrya
     assert.equal(nextAction(refreshConflict).action, "rebuild-candidate");
     assert.match(nextAction(refreshConflict).label, /Rebuild from latest target/);
 
+    const implementationDrift = createTask({
+      status: "blocked",
+      currentStage: "implement",
+      blocker: { code: "implementation-target-diverged", detail: "main advanced", detectedAt: "2026-08-01T12:00:00.000Z" },
+    });
+    assert.equal(nextAction(implementationDrift).action, "restart-implementation");
+    assert.match(nextAction(implementationDrift).label, /Restart from latest target/);
+
     const invalidPlan = createTask({
       status: "blocked",
       currentStage: "implement",

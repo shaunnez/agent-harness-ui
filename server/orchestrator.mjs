@@ -1179,6 +1179,64 @@ export class TaskOrchestrator {
     }
   }
 
+  async restartImplementationFromTarget(id) {
+    if (this.#refreshActive.has(id) || this.#mergeActive.has(id)) {
+      throw new Error("This task already has a candidate or target reconciliation in progress.");
+    }
+    this.#refreshActive.add(id);
+    try {
+      const task = await this.#store.get(id);
+      if (!task) throw new Error("Task not found.");
+      if (!['failed', 'blocked'].includes(task.status) || task.currentStage !== "implement") {
+        throw new Error("The task is not stopped during implementation.");
+      }
+      if (task.activeRunKind || task.activeRunReservationId) {
+        throw new Error("Wait for the active run before restarting implementation.");
+      }
+      if (task.candidates?.length) {
+        throw new Error("This task already has a candidate; use candidate refresh or rebuild instead.");
+      }
+      const target = await this.#worktrees.base(task, { allowDirty: true });
+      const attemptedBases = new Set(
+        (task.workPackages ?? []).map((workPackage) => workPackage.baseRevision).filter(Boolean),
+      );
+      if (!attemptedBases.size || [...attemptedBases].every((revision) => revision === target.baseRevision)) {
+        throw new Error("The implementation packages already use the latest target revision.");
+      }
+      return await this.#store.transition(id, (draft) => (
+        ['failed', 'blocked'].includes(draft.status) &&
+        draft.currentStage === "implement" &&
+        !draft.activeRunKind &&
+        !draft.activeRunReservationId &&
+        !(draft.candidates?.length)
+      ), (draft) => {
+        for (const workPackage of draft.workPackages ?? []) {
+          workPackage.status = "planned";
+          workPackage.error = null;
+          workPackage.retainedContinuation = null;
+          workPackage.retainedForRequalification = false;
+          workPackage.retainedReplacementReason = null;
+          workPackage.verificationRuns = [];
+        }
+        const attempts = draft.attemptsByStage?.implement ?? 0;
+        draft.stageRunLimits ??= {};
+        draft.stageRunLimits.implement = Math.max(stageRunLimitFor(draft, "implement"), attempts + 1);
+        draft.status = "ready-for-implementation";
+        draft.error = null;
+        draft.blocker = null;
+        draft.events.push(activity(
+          "implement",
+          "Implementation restart authorized from latest target",
+          `Prior slice artifacts remain retained. Approved packages will restart from ${target.baseRevision.slice(0, 8)} with bounded concurrency and fresh qualification.`,
+          "warning",
+          "decision",
+        ));
+      });
+    } finally {
+      this.#refreshActive.delete(id);
+    }
+  }
+
   async retryTestOnSameCandidate(id) {
     const started = await this.start(id, "test", {
       canStart: (draft) => {
@@ -1290,6 +1348,19 @@ export class TaskOrchestrator {
       if (kind === "test") await this.#runEvaluation(id, "test", signal);
       if (kind === "final-review") await this.#runEvaluation(id, "final-review", signal);
     } catch (error) {
+      let implementationTargetDrift = null;
+      if (kind === "implementation") {
+        try {
+          const stoppedTask = await this.#store.get(id);
+          const latestTarget = await this.#worktrees.base(stoppedTask, { allowDirty: true });
+          const attemptedBases = new Set(
+            (stoppedTask.workPackages ?? []).map((workPackage) => workPackage.baseRevision).filter(Boolean),
+          );
+          if (attemptedBases.size && [...attemptedBases].some((revision) => revision !== latestTarget.baseRevision)) {
+            implementationTargetDrift = latestTarget.baseRevision;
+          }
+        } catch { /* Preserve the original implementation failure when target inspection is unavailable. */ }
+      }
       await this.#store.update(id, (draft) => {
         const failedKind = draft.activeRunKind ?? kind;
         const stage = stageForRun(failedKind, draft.currentStage);
@@ -1306,6 +1377,15 @@ export class TaskOrchestrator {
           }
         }
         draft.error = error.message;
+        if (implementationTargetDrift) {
+          draft.status = "blocked";
+          draft.blocker = {
+            code: "implementation-target-diverged",
+            detail: `The target advanced to ${implementationTargetDrift}. Restart approved packages from the latest target instead of continuing historical slices.`,
+            detectedAt: now(),
+            targetRevision: implementationTargetDrift,
+          };
+        }
         draft.activeRunKind = null;
         draft.activeRunReservationId = null;
         const candidate = draft.candidates?.at(-1);

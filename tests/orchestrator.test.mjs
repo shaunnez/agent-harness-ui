@@ -5191,6 +5191,62 @@ test("records refresh conflicts and rebuilds approved packages from the latest t
   }
 });
 
+test("restarts stopped pre-candidate packages from an advanced target", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-restart-implementation-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Restart stale packages",
+      description: "Do not continue historical slices after the target advances.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "implement";
+      draft.error = "S1 crossed its ownership boundary.";
+      draft.attemptsByStage.implement = 3;
+      draft.stageRunLimits.implement = 3;
+      draft.workPackages = [{
+        id: "S1",
+        title: "Approved slice",
+        description: "Implement from the current target.",
+        dependencies: [],
+        batch: 1,
+        ownedPaths: ["src/change.ts"],
+        verificationCommandIds: ["test"],
+        status: "failed",
+        attempts: 1,
+        baseRevision: "a".repeat(40),
+        branch: "agent-harness/old-slice",
+        worktreePath: directory,
+        headRevision: null,
+        files: [],
+        error: draft.error,
+        verificationRuns: [{ status: "failed" }],
+      }];
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        base: async () => ({ baseRevision: "b".repeat(40), baseBranch: "main", repositoryRoot: directory }),
+      },
+    });
+
+    await orchestrator.restartImplementationFromTarget(task.id);
+    const restarted = await store.get(task.id);
+    assert.equal(restarted.status, "ready-for-implementation");
+    assert.equal(restarted.currentStage, "implement");
+    assert.equal(restarted.workPackages[0].status, "planned");
+    assert.deepEqual(restarted.workPackages[0].verificationRuns, []);
+    assert.equal(restarted.stageRunLimits.implement, 4);
+    assert.match(restarted.events.at(-1).detail, /bbbbbbbb/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("continues a timed-out retained package without discarding progress or incrementing its package attempt", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-retained-continuation-"));
   try {

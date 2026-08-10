@@ -527,6 +527,8 @@ export function App() {
                       ? "Candidate refreshed from the latest target. All candidate-bound gates must run again."
                     : action === "rebuild-candidate"
                       ? "Candidate rebuild authorized from the latest target. The prior candidate remains retained."
+                    : action === "restart-implementation"
+                      ? "Implementation restart authorized from the latest target. Prior artifacts remain retained."
                     : action === "retry-test"
                       ? "Test retry started against the unchanged candidate revision."
                     : action === "continue-package"

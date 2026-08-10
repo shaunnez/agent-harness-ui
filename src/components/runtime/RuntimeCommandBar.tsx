@@ -235,6 +235,14 @@ export function nextAction(task: RuntimeTask) {
       detail:
         "Retain the prior candidate for audit, re-run its approved work packages from the latest target, and assemble a new exact candidate.",
     };
+  if (task.status === "blocked" && task.blocker?.code === "implementation-target-diverged")
+    return {
+      action: "restart-implementation" as const,
+      label: "Restart from latest target",
+      title: "Target advanced during implementation",
+      detail:
+        "Keep prior artifacts for audit, restart the approved packages from the current target, and qualify them under bounded concurrency.",
+    };
   const targetDiverged = task.status === "blocked" && (
     task.blocker?.code === "target-diverged" ||
     /target ref (?:diverged|moved)|target branch advanced/i.test(task.error ?? "")

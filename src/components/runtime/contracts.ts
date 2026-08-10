@@ -18,6 +18,7 @@ export type RuntimeWorkflowAction =
   | "complete-merged"
   | "refresh-candidate"
   | "rebuild-candidate"
+  | "restart-implementation"
   | "grant-retry";
 
 export interface RuntimeTaskWorkspaceProps {
