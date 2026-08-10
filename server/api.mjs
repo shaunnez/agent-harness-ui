@@ -1110,7 +1110,17 @@ export function createApiServer({
             stages: ["final-review"],
           },
         }[action];
-        if (!runConfiguration?.statuses.includes(task.status) || !runConfiguration.stages.includes(task.currentStage)) {
+        // Candidate-gate actions must reach the orchestrator's exact-target
+        // preflight even when the prior gate left the task blocked or awaiting
+        // repair. The preflight can then replace that stale blocker with the safe
+        // target-refresh action without spending an attempt. All other actions keep
+        // the ordinary API status guard.
+        const candidateGateAction = ["review", "test", "final-review"].includes(action);
+        if (
+          !runConfiguration ||
+          !runConfiguration.stages.includes(task.currentStage) ||
+          (!candidateGateAction && !runConfiguration.statuses.includes(task.status))
+        ) {
           send(response, 409, { error: `Task cannot run ${action} while it is ${task.status}.` });
           return;
         }
@@ -1135,7 +1145,7 @@ export function createApiServer({
         }
         const runStage = runConfiguration.kind === "repair" ? "implement" : task.currentStage;
         const stageAttempts = task.attemptsByStage?.[runStage] ?? 0;
-        if (task.status === "blocked" || stageAttempts >= stageRunLimitFor(task, runStage)) {
+        if (!candidateGateAction && (task.status === "blocked" || stageAttempts >= stageRunLimitFor(task, runStage))) {
           send(response, 409, { error: "The current stage has exhausted its retry allowance." });
           return;
         }

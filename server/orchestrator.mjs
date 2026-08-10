@@ -1037,7 +1037,9 @@ export class TaskOrchestrator {
           draft.events.push(activity(
             "implement",
             "Candidate refreshed from target",
-            `${candidate.id} revision ${nextRevision} now starts from ${refreshed.targetRevision.slice(0, 8)} and must pass every candidate-bound gate again.`,
+            refreshed.alreadyApplied
+              ? `${candidate.id} revision ${nextRevision} records that its complete patch is already present at target ${refreshed.targetRevision.slice(0, 8)}. Every candidate-bound gate must still pass again.`
+              : `${candidate.id} revision ${nextRevision} now starts from ${refreshed.targetRevision.slice(0, 8)} and must pass every candidate-bound gate again.`,
             "success",
             "decision",
           ));

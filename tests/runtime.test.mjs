@@ -399,6 +399,26 @@ test("records the exact prior artifacts and repository permission supplied to an
   assert.equal(artifactSource.truncated, false);
 });
 
+test("planning corrections receive the retained qualification failure and affected ownership", () => {
+  const task = createTask({
+    status: "blocked",
+    currentStage: "plan",
+    error: "S1 did not qualify: backend-test failed in tests/unit/test_contract.py.",
+    workPackages: [{
+      id: "S1",
+      status: "failed",
+      error: "tests/unit/test_contract.py expected the old response schema",
+      ownedPaths: ["backend/router.py"],
+      verificationCommandIds: ["backend-test"],
+    }],
+  });
+  const request = buildStageRequest(task, "plan");
+  assert.match(request.prompt, /Retained plan-correction evidence/);
+  assert.match(request.prompt, /tests\/unit\/test_contract\.py/);
+  assert.match(request.prompt, /Explicitly own every source or test path/);
+  assert.match(request.prompt, /smallest focused manifest commands/);
+});
+
 test("context manifests report description truncation independently across every prompt shape", () => {
   for (const length of [5_999, 6_000, 6_001, 10_000, 10_001]) {
     const marker = "__TASK_CONTEXT_SENTINEL__";

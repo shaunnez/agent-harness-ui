@@ -311,6 +311,39 @@ test("aborts a conflicting candidate refresh and restores the recorded head", as
   }
 });
 
+test("refresh collapses an equivalent candidate patch already committed on the target", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-refresh-applied-"));
+  const repository = path.join(directory, "repository");
+  try {
+    await git(directory, ["init", "repository"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+    const manager = new GitWorktreeManager(path.join(directory, "worktrees"));
+    const task = { id: "AH-APPLIED", repositoryPath: repository };
+    const base = await manager.base(task);
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+    await writeFile(path.join(candidate.worktreePath, "reporter.ts"), "export const reporter = 'json';\n", "utf8");
+    const committed = await manager.commit(candidate, "candidate reporter");
+    candidate.headRevision = committed.headRevision;
+
+    await writeFile(path.join(repository, "reporter.ts"), "export const reporter = 'json';\n", "utf8");
+    await git(repository, ["add", "reporter.ts"]);
+    await git(repository, ["commit", "-m", "target reporter"]);
+    const targetRevision = (await git(repository, ["rev-parse", "HEAD"])).stdout.trim();
+
+    const refreshed = await manager.refreshCandidate(candidate);
+    assert.equal(refreshed.alreadyApplied, true);
+    assert.equal(refreshed.headRevision, targetRevision);
+    assert.deepEqual(refreshed.files, []);
+    assert.equal(await manager.verifyCandidate({ ...candidate, headRevision: targetRevision }), targetRevision);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("a symlinked dependency directory is not ignored by git status", async () => {
   // The exclusion in the harness scans exists because of this: `.gitignore` entries such as
   // `node_modules/` match directories, and a symlink named `node_modules` is a file to Git.

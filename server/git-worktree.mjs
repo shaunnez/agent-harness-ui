@@ -296,6 +296,45 @@ export class GitWorktreeManager {
       throw new Error("The target branch history was rewritten; recreate the candidate instead of refreshing it automatically.");
     }
 
+    // The target may have received the same patch independently (for example, a
+    // harness repair was committed directly after a retained candidate was built).
+    // Rebasing an equivalent patch can conflict even though there is nothing left to
+    // replay. `git cherry` compares patch identities, so only an exact all-applied
+    // candidate is collapsed onto the target; mixed or genuinely conflicting
+    // candidates still take the ordinary rebase path and fail closed on conflict.
+    const candidateCommits = (await git(candidate.worktreePath, [
+      "rev-list",
+      "--reverse",
+      `${candidate.baseRevision}..${candidate.headRevision}`,
+    ])).stdout.split(/\r?\n/).filter(Boolean);
+    const cherryRows = (await git(candidate.worktreePath, ["cherry", targetRevision, candidate.headRevision])).stdout
+      .split(/\r?\n/)
+      .filter(Boolean);
+    const targetContainsHead = (await git(repositoryRoot, [
+      "merge-base",
+      "--is-ancestor",
+      candidate.headRevision,
+      targetRevision,
+    ], { allowFailure: true })).code === 0;
+    const alreadyApplied = targetContainsHead || (
+      candidateCommits.length > 0 &&
+      cherryRows.length === candidateCommits.length &&
+      cherryRows.every((row) => row.startsWith("- "))
+    );
+    if (alreadyApplied) {
+      await git(candidate.worktreePath, ["reset", "--hard", targetRevision]);
+      await assertClean(candidate.worktreePath);
+      return {
+        previousBaseRevision: candidate.baseRevision,
+        previousHeadRevision: candidate.headRevision,
+        targetRevision,
+        headRevision: targetRevision,
+        files: [],
+        summary: "",
+        alreadyApplied: true,
+      };
+    }
+
     try {
       await git(candidate.worktreePath, ["rebase", "--onto", targetRevision, candidate.baseRevision]);
     } catch (error) {

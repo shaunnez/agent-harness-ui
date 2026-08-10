@@ -705,6 +705,31 @@ test("dispatches candidate refresh and same-candidate Test retry actions", async
   }
 });
 
+test("lets blocked candidate gates reach the target-drift preflight", async () => {
+  const { directory, origin, server, store, startedIdRef, startedKindRef } = await createServer();
+  try {
+    const createResponse = await createTask(origin, {
+      title: "Refresh before retry",
+      description: "A stale blocker must not hide target drift.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await createResponse.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "test";
+      draft.attemptsByStage.test = draft.stageRunLimits.test;
+    });
+
+    const response = await fetch(`${origin}/api/tasks/${task.id}/test`, { method: "POST" });
+    assert.equal(response.status, 202);
+    assert.equal(startedIdRef(), task.id);
+    assert.equal(startedKindRef(), "test");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("rejects invalid closure reasons without mutating task state", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
