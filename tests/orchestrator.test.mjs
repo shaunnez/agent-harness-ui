@@ -5742,3 +5742,81 @@ test("binds each stage's runs to that stage's own provider across a mixed task",
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 });
+
+test("recovers a stale process-local run lock only after durable reservation state is clear", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-stale-active-lock-"));
+  let releaseTerminalUpdate = null;
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Recover terminal run lock",
+      description: "A completed review must not strand the exact candidate before Test.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+      stagePolicies: defaultStagePolicies("codex"),
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 2,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        baseRef: "refs/heads/main",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/ah-stale-c1",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "ready_for_review",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        updatedAt: "2026-08-01T12:00:00.000Z",
+        revisions: [],
+        verificationRuns: [],
+      }];
+    });
+
+    const durableUpdate = store.update.bind(store);
+    let delayedTerminalUpdate = false;
+    store.update = async (...args) => {
+      const updated = await durableUpdate(...args);
+      if (!delayedTerminalUpdate && updated?.status === "ready-for-test" && !updated.activeRunKind) {
+        delayedTerminalUpdate = true;
+        await new Promise((resolve) => {
+          releaseTerminalUpdate = resolve;
+        });
+      }
+      return updated;
+    };
+
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      worktreeManager: {
+        verifyCandidate: async () => {},
+        mergeState: async () => "pending",
+        recoverCandidate: async () => {},
+      },
+      runVerification: passingVerification,
+      runCodex: async (options) => ({
+        finalText: options.prompt.includes("Development Review") ? gateOutput(2, "PASS") : "PASS",
+        usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    assert.equal(await orchestrator.start(task.id, "review"), true);
+    await waitForStatus(store, task.id, "ready-for-test");
+    assert.equal(orchestrator.isRunning(task.id), true);
+
+    assert.equal(await orchestrator.start(task.id, "test"), true);
+    releaseTerminalUpdate();
+    releaseTerminalUpdate = null;
+    await waitForStatus(store, task.id, "ready-for-final-review");
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    assert.equal(orchestrator.isRunning(task.id), false);
+  } finally {
+    releaseTerminalUpdate?.();
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
