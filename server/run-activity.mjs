@@ -507,14 +507,24 @@ function evaluateRunFreshness(run, artifact, target, stage, expectedProvider = n
   // result is therefore authoritative candidate-repair evidence even when that later
   // read-only interpreter also emitted failed command telemetry. Preserve the telemetry,
   // but do not let it downgrade a concrete failed Test into a same-revision rerun loop.
+  let testEvaluation = null;
   if (stage === "test" && run.status === "completed") {
-    const testFailure = evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId);
-    if (testFailure.reasonCode === "repair_required") return testFailure;
+    testEvaluation = evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId);
+    if (testEvaluation.reasonCode === "repair_required" && testEvaluation.focusedTest?.status === "failed") {
+      return testEvaluation;
+    }
   }
 
   const evidenceErrorReason = persistedEvidenceErrorReason(run.evidenceError);
   if (evidenceErrorReason) {
-    return createFreshness(stage, target, sourceRunId, sourceArtifactId, evidenceErrorReason, null);
+    return createFreshness(
+      stage,
+      target,
+      sourceRunId,
+      sourceArtifactId,
+      evidenceErrorReason,
+      testEvaluation?.focusedTest ?? null,
+    );
   }
   if (run.status === "running") return createFreshness(stage, target, sourceRunId, sourceArtifactId, "run_in_progress", null);
   if (isTimeoutRun(run)) return createFreshness(stage, target, sourceRunId, sourceArtifactId, "timeout", null);
@@ -523,7 +533,7 @@ function evaluateRunFreshness(run, artifact, target, stage, expectedProvider = n
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "command_failure", null);
   }
 
-  if (stage === "test") return evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId);
+  if (stage === "test") return testEvaluation ?? evaluateTestRun(run, artifact, target, sourceRunId, sourceArtifactId);
   return evaluateGateRun(run, target, stage, sourceRunId, sourceArtifactId);
 }
 

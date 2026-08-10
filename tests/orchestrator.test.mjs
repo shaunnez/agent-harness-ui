@@ -3802,6 +3802,70 @@ test("migration recovers a failed Focused Test stranded at ready-for-test", () =
   assert.equal(migrateRunActivityState(state), false, "recovery is idempotent once repair-required");
 });
 
+test("migration keeps a passed Focused Test with failed interpreter diagnostics on the same-candidate retry path", () => {
+  const devRun = makeRuntimeRun({ id: "RUN-DEV-PASSED-TEST-RETRY", artifactId: "ART-DEV-PASSED-TEST-RETRY" });
+  const devArtifact = makeArtifact({ id: "ART-DEV-PASSED-TEST-RETRY", gateResult: devRun.gateResult });
+  const passedFocusedTest = makeFocusedTestSummary({
+    status: "passed",
+    rows: [makeTestRow({ id: "frontend-test", status: "passed" })],
+  });
+  const testGateResult = makeGateResult({
+    stage: "test",
+    verdict: "REPAIR",
+    reportedVerdict: null,
+    blockingReasons: [RUNTIME_FRESHNESS_REASONS.review_tooling_failure],
+  });
+  const evidenceError = {
+    code: "review_tooling_failure",
+    copy: RUNTIME_FRESHNESS_REASONS.review_tooling_failure,
+  };
+  const testRun = makeRuntimeRun({
+    id: "RUN-PASSED-TEST-RETRY",
+    stage: "test",
+    kind: "test",
+    artifactId: "ART-PASSED-TEST-RETRY",
+    gateResult: testGateResult,
+    evidenceError,
+  });
+  testRun.toolCalls = [{
+    id: "cmd-interpreter-failed-after-pass",
+    name: "command_execution",
+    category: "repository-command",
+    phase: "completed",
+    result: "Exit code 2",
+    commandFailed: true,
+    runtimeScope: "agent-diagnostic",
+  }];
+  const testArtifact = makeArtifact({
+    id: "ART-PASSED-TEST-RETRY",
+    stage: "test",
+    gateResult: testGateResult,
+    focusedTest: passedFocusedTest,
+  });
+  testArtifact.evidenceError = evidenceError;
+  const task = makeRuntimeTask({
+    runs: [devRun, testRun],
+    artifacts: [devArtifact, testArtifact],
+  });
+  attachRunArtifact(task, devRun.id, devArtifact);
+  attachRunArtifact(task, testRun.id, testArtifact);
+  task.status = "ready-for-test";
+  task.currentStage = "test";
+  task.activeRunKind = null;
+  task.activeRunReservationId = null;
+  task.activeRunIds = [];
+  task.candidates[0].status = "ready_for_test";
+  const state = { schemaVersion: TASK_STORE_SCHEMA_VERSION, tasks: [task] };
+
+  assert.equal(migrateRunActivityState(state), true);
+  assert.equal(task.gateFreshness.test.reasonCode, "review_tooling_failure");
+  assert.equal(task.gateFreshness.test.focusedTest.status, "passed");
+  assert.equal(task.status, "ready-for-test");
+  assert.equal(task.currentStage, "test");
+  assert.equal(task.candidates[0].status, "ready_for_test");
+  assert.equal(migrateRunActivityState(state), false, "same-candidate retry state remains stable");
+});
+
 test("runs the investigation frontier and retains each stage handoff", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-orchestrator-"));
   try {
