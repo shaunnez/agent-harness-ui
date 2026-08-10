@@ -1014,6 +1014,7 @@ export function createApiServer({
             draft.stageRunLimits[grantedStage] = nextStageLimit;
             draft.status = "failed";
             draft.error = null;
+            retainQualificationFailuresForImplementationRetry(draft, grantedStage);
             const decision = {
               id: crypto.randomUUID(),
               question: candidate?.status === "repair_required" ? "Grant another repair attempt?" : "Grant another stage attempt?",
@@ -1404,6 +1405,41 @@ function validRetryCandidate(candidate) {
   return typeof candidate?.id === "string" && candidate.id.trim().length > 0 &&
     Number.isInteger(candidate.revisionNumber) && candidate.revisionNumber > 0 &&
     typeof candidate.headRevision === "string" && candidate.headRevision.trim().length > 0;
+}
+
+function retainQualificationFailuresForImplementationRetry(task, grantedStage) {
+  if (grantedStage !== "implement") return;
+  for (const workPackage of task.workPackages ?? []) {
+    const latestVerification = [...(workPackage.verificationRuns ?? [])].reverse().find((verification) => (
+      verification.headRevision === workPackage.headRevision
+    ));
+    if (
+      workPackage.status !== "failed" ||
+      typeof workPackage.error !== "string" ||
+      !/did not qualify/i.test(workPackage.error) ||
+      typeof workPackage.branch !== "string" ||
+      !workPackage.branch.trim() ||
+      typeof workPackage.worktreePath !== "string" ||
+      !workPackage.worktreePath.trim() ||
+      typeof workPackage.baseRevision !== "string" ||
+      !workPackage.baseRevision.trim() ||
+      typeof workPackage.headRevision !== "string" ||
+      !workPackage.headRevision.trim() ||
+      !Array.isArray(workPackage.files) ||
+      !workPackage.files.length ||
+      latestVerification?.status !== "failed"
+    ) {
+      continue;
+    }
+    workPackage.retainedContinuation = {
+      requestedAt: new Date().toISOString(),
+      files: [...workPackage.files],
+      outsideOwnership: [],
+      qualificationFailure: workPackage.error,
+    };
+    workPackage.retainedForRequalification = false;
+    workPackage.retainedReplacementReason = null;
+  }
 }
 
 function validateGlobalRetryIdentities(task) {

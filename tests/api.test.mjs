@@ -3304,6 +3304,68 @@ test("grants only implement and admits one repair when its budget is exhausted",
   }
 });
 
+test("retains a committed slice when granting an exhausted implementation qualification retry", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Retain failed qualification",
+      description: "Resume the committed slice instead of rebuilding it from the target.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "implement";
+      draft.attemptsByStage.implement = draft.stageRunLimits.implement;
+      draft.workPackages = [{
+        id: "S1",
+        title: "Qualified slice",
+        description: "Repair only the focused qualification failure.",
+        dependencies: [],
+        batch: 1,
+        ownedPaths: ["server/api.mjs"],
+        verificationCommandIds: ["unit"],
+        verificationRuns: [{
+          headRevision: "slice-head-r1",
+          status: "failed",
+        }],
+        status: "failed",
+        attempts: 1,
+        branch: "agent-harness/retained-s1-a1",
+        worktreePath: "/tmp/retained-s1-a1",
+        baseRevision: "target-base-r1",
+        headRevision: "slice-head-r1",
+        files: ["server/api.mjs"],
+        error: "S1 did not qualify: unit failed — formatter exited 1.",
+        retainedContinuation: null,
+        retainedForRequalification: false,
+        retainedReplacementReason: null,
+      }];
+      draft.runs.push(...[1, 2, 3].map((attempt) => ({
+        id: `run-failed-qualification-${attempt}`,
+        stage: "implement",
+        status: "failed",
+      })));
+      bindLatestWorkflowAttempt(draft, "implement", "implementation");
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits.implement, 4);
+    assert.deepEqual(updated.workPackages[0].retainedContinuation, {
+      requestedAt: updated.workPackages[0].retainedContinuation.requestedAt,
+      files: ["server/api.mjs"],
+      outsideOwnership: [],
+      qualificationFailure: "S1 did not qualify: unit failed — formatter exited 1.",
+    });
+    assert.match(updated.workPackages[0].retainedContinuation.requestedAt, /^\d{4}-\d{2}-\d{2}T/);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("grants one bounded stage attempt to a reservation-bound candidate at an exhausted ready gate", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
