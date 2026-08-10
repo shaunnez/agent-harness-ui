@@ -1176,7 +1176,22 @@ export function createApiServer({
               },
             }
           : {});
-        send(response, started ? 202 : 409, started ? { started: true } : { error: "Task is already running." });
+        if (started) {
+          send(response, 202, { started: true });
+          return;
+        }
+        const latest = await store.get(id);
+        const latestStage = runConfiguration.kind === "repair" ? "implement" : latest.currentStage;
+        const actuallyRunning = orchestrator.isRunning?.(id) === true ||
+          Boolean(latest.activeRunKind || latest.activeRunReservationId || (latest.activeRunIds?.length ?? 0) > 0);
+        const exhausted = (latest.attemptsByStage?.[latestStage] ?? 0) >= stageRunLimitFor(latest, latestStage);
+        send(response, 409, {
+          error: actuallyRunning
+            ? "Task is already running."
+            : exhausted
+              ? "The current stage has exhausted its retry allowance."
+              : `Task cannot run ${action} while it is ${latest.status}.`,
+        });
         return;
       }
 

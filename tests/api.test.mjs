@@ -58,8 +58,9 @@ async function createServer(options = {}) {
     start(id, kind) {
       startedId = id;
       startedKind = kind;
-      return true;
+      return options.startResult ?? true;
     },
+    isRunning: () => options.orchestratorRunning === true,
     cancel: () => false,
     async recordDecision(id, input) {
       recordedDecision = { id, ...input };
@@ -147,6 +148,32 @@ async function createServer(options = {}) {
     retriedTestTaskRef: () => retriedTestTask,
   };
 }
+
+test("does not misreport an ineligible candidate gate as already running", async () => {
+  const { directory, origin, server, store } = await createServer({ startResult: false });
+  try {
+    const response = await createTask(origin, {
+      title: "Ineligible Test action",
+      description: "A repair-required task has no active run.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "test";
+      draft.attemptsByStage.test = 1;
+    });
+
+    const testResponse = await fetch(`${origin}/api/tasks/${task.id}/test`, { method: "POST" });
+    assert.equal(testResponse.status, 409);
+    assert.deepEqual(await testResponse.json(), {
+      error: "Task cannot run test while it is repair-required.",
+    });
+  } finally {
+    await cleanup(server, directory);
+  }
+});
 
 async function cleanup(server, directory) {
   await new Promise((resolve) => server.close(resolve));
