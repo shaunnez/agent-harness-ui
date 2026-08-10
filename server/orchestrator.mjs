@@ -1623,7 +1623,11 @@ export class TaskOrchestrator {
     const retainedPackage = task.workPackages.find((item) =>
       item.retainedContinuation || item.retainedForRequalification || item.retainedReplacementReason,
     );
-    const base = await this.#worktrees.base(task, { allowDirty: Boolean(retainedPackage) });
+    // Implementation is isolated from the operator's checkout at an exact committed
+    // HEAD. Unrelated local edits must remain untouched, but they do not make that
+    // commit unsafe to use as a worktree base. Human Approval still requires the
+    // target checkout to be clean before merge.
+    const base = await this.#worktrees.base(task, { allowDirty: true });
     const batchNumbers = [...new Set(task.workPackages.map((item) => item.batch))].sort((a, b) => a - b);
     for (const batch of batchNumbers) {
       throwIfAborted(signal);
@@ -1673,6 +1677,7 @@ export class TaskOrchestrator {
     const candidate = await this.#worktrees.prepare(task, candidateId, {
       baseRevision: base.baseRevision,
       allowHistoricalBase: Boolean(retainedPackage),
+      allowDirtySource: true,
     });
     candidate.status = "assembling";
     candidate.verificationRuns = [];
@@ -1767,6 +1772,7 @@ export class TaskOrchestrator {
             dependencyRevisions,
             branchId: sliceId,
             allowHistoricalBase: Boolean(workPackage.retainedReplacementReason),
+            allowDirtySource: true,
           });
       if (retainedContinuation) {
         await this.#worktrees.inspectRetainedSlice(workPackage, { requireClean: false });

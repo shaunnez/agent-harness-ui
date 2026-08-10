@@ -177,6 +177,39 @@ test("only accepts an empty diff as success when the caller explicitly allows a 
   }
 });
 
+test("can create an isolated exact-HEAD worktree without touching dirty source files", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-dirty-source-"));
+  const repository = path.join(directory, "repository");
+  try {
+    await git(directory, ["init", "repository"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "committed\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+
+    const manager = new GitWorktreeManager(path.join(directory, "worktrees"));
+    const task = { id: "AH-DIRTY", repositoryPath: repository };
+    const base = await manager.base(task);
+    await writeFile(path.join(repository, "README.md"), "operator draft\n", "utf8");
+
+    await assert.rejects(
+      () => manager.prepare(task, "C-BLOCKED", { baseRevision: base.baseRevision }),
+      /uncommitted changes/i,
+    );
+    const candidate = await manager.prepare(task, "C1", {
+      baseRevision: base.baseRevision,
+      allowDirtySource: true,
+    });
+
+    assert.equal(await readFile(path.join(candidate.worktreePath, "README.md"), "utf8"), "committed\n");
+    assert.equal(await readFile(path.join(repository, "README.md"), "utf8"), "operator draft\n");
+    await assert.rejects(() => manager.merge({ ...candidate, headRevision: base.baseRevision }), /uncommitted changes/i);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("refuses to merge a candidate into a sibling branch at the same base revision", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-target-ref-"));
   const repository = path.join(directory, "repository");

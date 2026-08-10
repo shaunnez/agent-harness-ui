@@ -75,7 +75,7 @@ export class GitWorktreeManager {
 
   async #prepare(task, candidateId, options = {}) {
     const repositoryRoot = await this.repositoryRoot(task.repositoryPath);
-    if (!options.allowHistoricalBase) await assertClean(repositoryRoot);
+    if (!options.allowHistoricalBase && !options.allowDirtySource) await assertClean(repositoryRoot);
     const sourceRevision = (await git(repositoryRoot, ["rev-parse", "HEAD"])).stdout.trim();
     const baseRevision = options.baseRevision ?? sourceRevision;
     if (sourceRevision !== baseRevision && !options.allowHistoricalBase) {
