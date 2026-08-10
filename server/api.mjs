@@ -1565,6 +1565,9 @@ function failedRepairAuthorizingGate(
   ) {
     return null;
   }
+  const requestedGateStage = CANDIDATE_GATE_STAGES.includes(task.currentStage)
+    ? task.currentStage
+    : task.stageRunReservations?.implement?.authorizingGateStage;
   const exactCandidateGates = retainedGates.filter((reservation) => (
     reservation?.candidateId === candidate.id &&
     reservation?.candidateRevision === candidate.revisionNumber &&
@@ -1572,7 +1575,6 @@ function failedRepairAuthorizingGate(
   ));
   if (!exactCandidateGates.length) return null;
   const candidateCreatedAt = Date.parse(lineage.currentRevision.createdAt);
-  let latestGateReservedAt = -Infinity;
   let authorizingGate = null;
   for (const gateReservation of exactCandidateGates) {
     if (
@@ -1589,11 +1591,9 @@ function failedRepairAuthorizingGate(
     }
     const gateReservedAt = Date.parse(gateReservation.reservedAt);
     if (gateReservedAt < candidateCreatedAt) return null;
-    if (gateReservedAt > latestGateReservedAt) {
-      latestGateReservedAt = gateReservedAt;
+    if (gateReservation.stage === requestedGateStage) {
+      if (authorizingGate) return null;
       authorizingGate = gateReservation;
-    } else if (gateReservedAt === latestGateReservedAt) {
-      return null;
     }
   }
   // `task.currentStage` is not a stable stand-in for "the gate stage this repair
@@ -1606,9 +1606,6 @@ function failedRepairAuthorizingGate(
   // way to grant another: recorded live on AH-002, whose second repair attempt failed
   // (an unrelated, real empty-diff bug now fixed separately) and left `currentStage`
   // at "implement" while the authorizing dev-review reservation never moved.
-  const requestedGateStage = CANDIDATE_GATE_STAGES.includes(task.currentStage)
-    ? task.currentStage
-    : task.stageRunReservations?.implement?.authorizingGateStage;
   if (authorizingGate?.stage !== requestedGateStage) return null;
   const authoritativeGate = candidateGateAuthorizerEvidence(
     task,
@@ -1633,7 +1630,7 @@ function failedRepairAuthorizingGate(
   const sourceArtifact = (task.artifacts ?? []).find((artifact) => artifact.id === authoritativeGate.sourceArtifactId);
   return repairReservation.workflowAttempt > candidate.sourceWorkflowAttempt &&
     !lineage.sourceReservations.has(repairReservation.id) &&
-    Date.parse(repairReservation.reservedAt) > latestGateReservedAt &&
+    Date.parse(repairReservation.reservedAt) > Date.parse(authorizingGate.reservedAt) &&
     Date.parse(repairReservation.reservedAt) > Date.parse(sourceArtifact.createdAt)
     ? authoritativeGate
     : null;

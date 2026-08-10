@@ -2866,6 +2866,132 @@ test("grants an exhausted dev-review retry after a no-op repair left the impleme
   }
 });
 
+test("grants a failed Test repair after a later Review reservation follows a no-op repair", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Test repair after later review",
+      description: "A later gate must not mask the persisted failing stage that still authorizes repair.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      const candidate = attachAssemblyLineage(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "repair_required",
+      });
+      draft.candidates.push(candidate);
+      const failedTest = attachExactCandidateGate(draft, candidate, {
+        stage: "test",
+        workflowAttempt: 1,
+        reservedAt: "2026-08-04T00:02:00.000Z",
+      });
+      const testRun = draft.runs.find((run) => run.id === failedTest.sourceRunId);
+      const testArtifact = draft.artifacts.find((artifact) => artifact.id === failedTest.sourceArtifactId);
+      const failedRow = {
+        id: "playwright-e2e",
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        bindingExplicit: true,
+        command: "make e2e-native",
+        status: "failed",
+        durationMs: 5,
+        title: "Real browser suite",
+        artifactReferences: [],
+        assertions: [{ label: "exit code", expected: "0", actual: "2" }],
+        failureDetails: "A candidate-owned Playwright helper used an invalid API.",
+      };
+      const focusedTest = {
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        bindingExplicit: true,
+        command: failedRow.command,
+        status: "failed",
+        startedAt: testRun.startedAt,
+        completedAt: testRun.completedAt,
+        durationMs: 1_000,
+        rowCount: 1,
+        failedRowIds: [failedRow.id],
+        rows: [failedRow],
+      };
+      testRun.test = { ...focusedTest };
+      testArtifact.focusedTest = focusedTest;
+      const noOpAttempt = 2;
+      const noOpReservationId = `reservation-${draft.id}-noop-repair-${noOpAttempt}`;
+      draft.attemptsByStage.implement = noOpAttempt;
+      draft.stageRunLimits.implement = noOpAttempt;
+      draft.stageRunReservations.implement = {
+        id: noOpReservationId,
+        stage: "implement",
+        kind: "repair",
+        workflowAttempt: noOpAttempt,
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        candidateHeadRevision: candidate.headRevision,
+        authorizedRunScopes: [],
+        reservedAt: "2026-08-04T00:05:00.000Z",
+        authorizingGateStage: failedTest.stage,
+        authorizingGateWorkflowAttempt: failedTest.workflowAttempt,
+        authorizingGateReservationId: failedTest.id,
+        authorizingGateReservedAt: failedTest.reservedAt,
+        authorizingGateRunId: failedTest.sourceRunId,
+        authorizingGateArtifactId: failedTest.sourceArtifactId,
+      };
+      const noOpRun = {
+        id: `run-${noOpReservationId}`,
+        stage: "implement",
+        kind: "repair",
+        role: "repair",
+        status: "completed",
+        workPackageId: null,
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        candidateHeadRevision: candidate.headRevision,
+        attempt: 1,
+        workflowAttempt: noOpAttempt,
+        workflowReservationId: noOpReservationId,
+        startedAt: "2026-08-04T00:05:01.000Z",
+        completedAt: "2026-08-04T00:05:02.000Z",
+      };
+      attachLinkedArtifact(draft, noOpRun, {
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        createdAt: "2026-08-04T00:05:03.000Z",
+      });
+      draft.runs.push(noOpRun);
+
+      const laterReview = attachExactCandidateGate(draft, candidate, {
+        stage: "dev-review",
+        workflowAttempt: 1,
+        reservedAt: "2026-08-04T00:06:00.000Z",
+      });
+      const laterReviewRun = draft.runs.find((run) => run.id === laterReview.sourceRunId);
+      laterReviewRun.gateResult.verdict = "PASS";
+      laterReviewRun.gateResult.reportedVerdict = "PASS";
+      laterReviewRun.gateResult.findings = [];
+      laterReviewRun.gateResult.blockingReasons = [];
+      const laterReviewArtifact = draft.artifacts.find((artifact) => artifact.id === laterReview.sourceArtifactId);
+      laterReviewArtifact.gateResult = structuredClone(laterReviewRun.gateResult);
+
+      draft.status = "repair-required";
+      draft.currentStage = "test";
+      candidate.status = "repair_required";
+      refreshGateFreshness(draft);
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits.implement, 3);
+    assert.equal(updated.decisions.at(-1).authorizingGateStage, "test");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("grants repair after a candidate is assembled on the final implementation allowance", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
