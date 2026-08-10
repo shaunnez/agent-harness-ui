@@ -3537,6 +3537,103 @@ test("grants a fresh gate attempt to a rebuilt candidate after the prior candida
   }
 });
 
+test("grants a fresh gate attempt to a repaired descendant of a rebuilt candidate", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Repaired rebuilt candidate exhausted gate",
+      description: "A valid repair descendant must retain the rebuilt candidate's retry authority.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-test";
+      draft.currentStage = "test";
+      draft.attemptsByStage.test = draft.stageRunLimits.test;
+      const priorCandidate = attachAssemblyLineage(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        baseRevision: "target-base-r1",
+        headRevision: "candidate-c1-r1",
+        status: "failed",
+      });
+      draft.candidates.push(priorCandidate);
+      draft.runs.push(...[1, 2, 3].map((attempt) => ({
+        id: `run-superseded-test-${attempt}`,
+        stage: "test",
+        status: "failed",
+      })));
+      const exhaustedReservation = bindLatestWorkflowAttempt(draft, "test", "test");
+
+      const rebuiltCandidate = attachAssemblyLineage(draft, {
+        id: "C2",
+        revisionNumber: 1,
+        baseRevision: "target-base-r2",
+        headRevision: "candidate-c2-r1",
+        status: "ready_for_test",
+      }, {
+        workflowAttempt: 2,
+        reservationId: `reservation-${draft.id}-assembly-2`,
+        reservedAt: "2026-08-04T00:03:00.000Z",
+        createdAt: "2026-08-04T00:04:00.000Z",
+      });
+      draft.candidates.push(rebuiltCandidate);
+      const rebuiltProducerRun = draft.runs.find((run) => (
+        run.workflowReservationId === rebuiltCandidate.sourceWorkflowReservationId
+      ));
+      rebuiltProducerRun.attempt = 2;
+      const repairRevision = {
+        number: 2,
+        headRevision: "candidate-c2-r2",
+        reason: "repair",
+        sourceWorkflowAttempt: 3,
+        sourceWorkflowReservationId: `reservation-${draft.id}-repair-3`,
+        sourceWorkflowReservedAt: "2026-08-04T00:06:00.000Z",
+        createdAt: "2026-08-04T00:07:00.000Z",
+      };
+      rebuiltCandidate.revisionNumber = repairRevision.number;
+      rebuiltCandidate.headRevision = repairRevision.headRevision;
+      rebuiltCandidate.sourceWorkflowAttempt = repairRevision.sourceWorkflowAttempt;
+      rebuiltCandidate.sourceWorkflowReservationId = repairRevision.sourceWorkflowReservationId;
+      rebuiltCandidate.revisions.push(repairRevision);
+      attachCandidateProducerEvidence(draft, rebuiltCandidate);
+      draft.attemptsByStage.implement = 3;
+      draft.stageRunReservations.implement = {
+        id: repairRevision.sourceWorkflowReservationId,
+        stage: "implement",
+        kind: "repair",
+        workflowAttempt: repairRevision.sourceWorkflowAttempt,
+        candidateId: rebuiltCandidate.id,
+        candidateRevision: 1,
+        candidateHeadRevision: rebuiltCandidate.revisions[0].headRevision,
+        authorizedRunScopes: [],
+        reservedAt: repairRevision.sourceWorkflowReservedAt,
+        authorizingGateStage: repairRevision.authorizingGateStage,
+        authorizingGateWorkflowAttempt: repairRevision.authorizingGateWorkflowAttempt,
+        authorizingGateReservationId: repairRevision.authorizingGateReservationId,
+        authorizingGateReservedAt: repairRevision.authorizingGateReservedAt,
+        authorizingGateRunId: repairRevision.authorizingGateRunId,
+        authorizingGateArtifactId: repairRevision.authorizingGateArtifactId,
+      };
+      draft.attemptsByStage.test = draft.stageRunLimits.test;
+      draft.stageRunReservations.test = exhaustedReservation;
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    const grantBody = await grantResponse.json();
+    assert.equal(grantResponse.status, 200, grantBody.error);
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits.test, 4);
+    assert.equal(updated.candidates[0].status, "failed");
+    assert.equal(updated.candidates[1].id, "C2");
+    assert.equal(updated.candidates[1].revisionNumber, 2);
+    assert.equal(updated.candidates[1].sourceWorkflowAttempt, 3);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("grants an exhausted repair after a mechanical target refresh", async () => {
   const { directory, origin, server, store } = await createServer();
   try {

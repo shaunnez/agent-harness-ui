@@ -1874,7 +1874,6 @@ function replacedCandidateMatchesReservation(task, candidate, reservation) {
   const currentRevision = candidate?.revisions?.[0];
   return currentIndex > 0 &&
     candidates[currentIndex] === candidate &&
-    candidate.revisionNumber === 1 &&
     currentRevision?.reason === "assembly" &&
     ["failed", "superseded"].includes(previous?.status) &&
     validRetryCandidate(previous) &&

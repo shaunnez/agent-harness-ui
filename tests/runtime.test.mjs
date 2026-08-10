@@ -528,6 +528,8 @@ test("candidate review prompts name the exact structured finding fields", () => 
   assert.match(request.prompt, /"file":"src\/example\.ts"/);
   assert.match(request.prompt, /Do not run tests, builds, linters, type checks, package scripts, or verification-manifest commands/);
   assert.match(request.prompt, /Use at most four targeted repository commands/);
+  assert.match(request.prompt, /Every command must be constructed to exit zero when the intended inspection succeeds/);
+  assert.match(request.prompt, /A non-zero diagnostic command invalidates an otherwise-PASS review/);
   assert.match(request.prompt, /S1 @ b{40}: PASSED \(frontend-lint=PASSED, frontend-test=PASSED\) in 38034ms/);
   assert.match(request.prompt, /Full exact-candidate manifest verification belongs to the later Test gate/);
   assert.match(request.prompt, /Do not inspect global memory, skill, plugin, cache, configuration/);
