@@ -134,13 +134,22 @@ export class GitWorktreeManager {
   async commit(candidate, message, options = {}) {
     if (options.squashFromBase) {
       const currentHead = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
-      const baseIsAncestor = await git(candidate.worktreePath, ["merge-base", "--is-ancestor", candidate.baseRevision, currentHead], {
+      const retainedHead = candidate.headRevision ?? currentHead;
+      const retainedHeadIsAncestor = await git(candidate.worktreePath, ["merge-base", "--is-ancestor", retainedHead, currentHead], {
         allowFailure: true,
       });
-      if (baseIsAncestor.code !== 0 || currentHead === candidate.baseRevision) {
-        throw new Error("The retained package cannot be squashed because its recorded base is not an earlier ancestor.");
+      const retainedParent = await git(candidate.worktreePath, ["rev-parse", `${retainedHead}^`], { allowFailure: true });
+      const squashBase = retainedParent.code === 0 ? retainedParent.stdout.trim() : candidate.baseRevision;
+      const baseIsAncestor = await git(candidate.worktreePath, ["merge-base", "--is-ancestor", candidate.baseRevision, squashBase], {
+        allowFailure: true,
+      });
+      if (retainedHeadIsAncestor.code !== 0 || baseIsAncestor.code !== 0 || currentHead === squashBase) {
+        throw new Error("The retained package cannot be squashed because its recorded revision is not on the current package lineage.");
       }
-      await git(candidate.worktreePath, ["reset", "--mixed", candidate.baseRevision]);
+      // A dependent slice starts above its dependency commits. Rebuild only the
+      // retained package commit and its continuation edits; resetting to the target
+      // base would incorrectly attribute dependency files to this package's ownership.
+      await git(candidate.worktreePath, ["reset", "--mixed", squashBase]);
     }
     const provisioned = await provisionedDependencies(candidate.worktreePath);
     const status = (await git(candidate.worktreePath, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout;
