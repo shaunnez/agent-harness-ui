@@ -2020,28 +2020,38 @@ function validCandidateProducerReservation(task, candidate, producerReservation,
   ) {
     return true;
   }
+  // A target refresh is mechanical lineage: it changes the candidate base and head,
+  // but it does not create a new implementation producer. Retry authority therefore
+  // remains bound to the newest preceding assembly/repair reservation. Without this
+  // lookup, a genuine defect found after refresh can never receive a human-granted
+  // repair once the Implement allowance is exhausted—the refresh revision correctly
+  // has no sourceWorkflowReservationId of its own.
+  const producerRevision = currentRevision.reason === "target-refresh"
+    ? [...lineage.byNumber.values()].reverse().find((revision) => revision.reason !== "target-refresh")
+    : currentRevision;
+  if (!producerRevision) return false;
   if (
-    producerReservation.id !== currentRevision.sourceWorkflowReservationId ||
-    producerReservation.workflowAttempt !== currentRevision.sourceWorkflowAttempt ||
-    producerReservation.reservedAt !== currentRevision.sourceWorkflowReservedAt
+    producerReservation.id !== producerRevision.sourceWorkflowReservationId ||
+    producerReservation.workflowAttempt !== producerRevision.sourceWorkflowAttempt ||
+    producerReservation.reservedAt !== producerRevision.sourceWorkflowReservedAt
   ) {
     return false;
   }
-  if (currentRevision.number === 1) {
+  if (producerRevision.number === 1) {
     return producerReservation.kind === "implementation" &&
       producerReservation.candidateId == null &&
       producerReservation.candidateRevision == null &&
       producerReservation.candidateHeadRevision == null &&
-      producerReservedAt <= currentCreatedAt &&
+      producerReservedAt <= Date.parse(producerRevision.createdAt) &&
       validInitialCandidateProducer(task, candidate, producerReservation);
   }
-  const priorRevision = lineage.byNumber.get(currentRevision.number - 1);
+  const priorRevision = lineage.byNumber.get(producerRevision.number - 1);
   return producerReservation.kind === "repair" &&
     producerReservation.candidateId === candidate.id &&
     producerReservation.candidateRevision === priorRevision.number &&
     producerReservation.candidateHeadRevision === priorRevision.headRevision &&
     producerReservedAt > Date.parse(priorRevision.createdAt) &&
-    producerReservedAt <= currentCreatedAt;
+    producerReservedAt <= Date.parse(producerRevision.createdAt);
 }
 
 function adjacentRepairAuthorizingGate(task, candidate, priorReservation, repairReservation, lineage, implementationAttempt) {

@@ -3376,6 +3376,104 @@ test("grants a fresh gate attempt after a target refresh without requiring repai
   }
 });
 
+test("grants an exhausted repair after a mechanical target refresh", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Repair after target refresh",
+      description: "Mechanical lineage must retain the prior implementation producer.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "dev-review";
+      const candidate = attachAssemblyLineage(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        baseRevision: "target-base-r1",
+        headRevision: "candidate-c1-r1",
+        status: "repair_required",
+      });
+      draft.candidates.push(candidate);
+      const priorGate = attachExactCandidateGate(draft, candidate, {
+        stage: "dev-review",
+        workflowAttempt: 1,
+        reservedAt: "2026-08-04T00:01:30.000Z",
+      });
+      const repairRevision = {
+        number: 2,
+        headRevision: "candidate-c1-r2",
+        reason: "repair",
+        sourceWorkflowAttempt: 2,
+        sourceWorkflowReservationId: `reservation-${draft.id}-repair-2`,
+        sourceWorkflowReservedAt: "2026-08-04T00:02:00.000Z",
+        authorizingGateStage: priorGate.stage,
+        authorizingGateWorkflowAttempt: priorGate.workflowAttempt,
+        authorizingGateReservationId: priorGate.id,
+        authorizingGateReservedAt: priorGate.reservedAt,
+        authorizingGateRunId: priorGate.sourceRunId,
+        authorizingGateArtifactId: priorGate.sourceArtifactId,
+        createdAt: "2026-08-04T00:03:00.000Z",
+      };
+      candidate.revisionNumber = 2;
+      candidate.headRevision = repairRevision.headRevision;
+      candidate.sourceWorkflowAttempt = repairRevision.sourceWorkflowAttempt;
+      candidate.sourceWorkflowReservationId = repairRevision.sourceWorkflowReservationId;
+      candidate.revisions.push(repairRevision);
+      attachCandidateProducerEvidence(draft, candidate);
+      draft.attemptsByStage.implement = 2;
+      draft.stageRunLimits.implement = 2;
+      draft.stageRunReservations.implement = {
+        id: repairRevision.sourceWorkflowReservationId,
+        stage: "implement",
+        kind: "repair",
+        workflowAttempt: 2,
+        candidateId: candidate.id,
+        candidateRevision: 1,
+        candidateHeadRevision: candidate.revisions[0].headRevision,
+        authorizedRunScopes: [],
+        reservedAt: repairRevision.sourceWorkflowReservedAt,
+        authorizingGateStage: repairRevision.authorizingGateStage,
+        authorizingGateWorkflowAttempt: repairRevision.authorizingGateWorkflowAttempt,
+        authorizingGateReservationId: repairRevision.authorizingGateReservationId,
+        authorizingGateReservedAt: repairRevision.authorizingGateReservedAt,
+        authorizingGateRunId: repairRevision.authorizingGateRunId,
+        authorizingGateArtifactId: repairRevision.authorizingGateArtifactId,
+      };
+      candidate.revisionNumber = 3;
+      candidate.baseRevision = "target-base-r3";
+      candidate.headRevision = "candidate-target-refresh-r3";
+      candidate.revisions.push({
+        number: 3,
+        headRevision: candidate.headRevision,
+        reason: "target-refresh",
+        previousBaseRevision: "target-base-r2",
+        previousHeadRevision: repairRevision.headRevision,
+        baseRevision: candidate.baseRevision,
+        createdAt: "2026-08-04T00:04:00.000Z",
+      });
+      const refreshedGate = attachExactCandidateGate(draft, candidate, {
+        stage: "dev-review",
+        workflowAttempt: 2,
+        reservationId: `reservation-${draft.id}-dev-review-refresh-2`,
+        reservedAt: "2026-08-04T00:05:00.000Z",
+      });
+      draft.runs.find((run) => run.id === refreshedGate.sourceRunId).attempt = 1;
+      refreshGateFreshness(draft);
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits.implement, 3);
+    assert.equal(updated.decisions.at(-1).candidateRevision, 3);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("retains exact run provenance for an authorized adjacent prior-candidate grant", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
