@@ -116,6 +116,24 @@ function zeroUsage() {
   };
 }
 
+async function allSettledWithConcurrency(items, limit, worker) {
+  const outcomes = new Array(items.length);
+  let nextIndex = 0;
+  const runWorker = async () => {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      try {
+        outcomes[index] = { status: "fulfilled", value: await worker(items[index], index) };
+      } catch (reason) {
+        outcomes[index] = { status: "rejected", reason };
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => runWorker()));
+  return outcomes;
+}
+
 function deterministicGateResult(stage, candidate, passed, blockingReasons) {
   return {
     verdict: passed ? "PASS" : "REPAIR",
@@ -229,6 +247,8 @@ export class TaskOrchestrator {
   #worktrees;
   #runVerification;
   #runPackageVerification;
+  #packageVerificationQueue = Promise.resolve();
+  #packageConcurrency;
   #readVerificationManifest;
   #readVerificationManifestInjected;
   #readVerificationManifestAtRevision;
@@ -267,6 +287,22 @@ export class TaskOrchestrator {
               manifest,
             });
           });
+    this.#packageConcurrency = Number.isInteger(options.packageConcurrency)
+      ? Math.max(1, Math.min(8, options.packageConcurrency))
+      : 3;
+  }
+
+  #qualifyPackage(input) {
+    const run = () => {
+      throwIfAborted(input.signal);
+      return this.#runPackageVerification(input);
+    };
+    const pending = this.#packageVerificationQueue.then(run, run);
+    this.#packageVerificationQueue = pending.then(
+      () => undefined,
+      () => undefined,
+    );
+    return pending;
   }
 
   /**
@@ -1738,8 +1774,10 @@ export class TaskOrchestrator {
       await this.#store.update(id, (draft) => {
         draft.events.push(activity("implement", `Dependency batch ${batch} started`, `${packages.map((item) => item.id).join(", ")} running in isolated worktrees.`, "info", "agent"));
       });
-      const outcomes = await Promise.allSettled(
-        packages.map((workPackage) => this.#runWorkPackage(id, workPackage.id, base.baseRevision, signal)),
+      const outcomes = await allSettledWithConcurrency(
+        packages,
+        this.#packageConcurrency,
+        (workPackage) => this.#runWorkPackage(id, workPackage.id, base.baseRevision, signal),
       );
       const failures = outcomes
         .map((outcome, index) => ({ outcome, workPackage: packages[index] }))
@@ -1935,7 +1973,7 @@ export class TaskOrchestrator {
       }
       let qualification = null;
       if (this.#runPackageVerification) {
-        qualification = await this.#runPackageVerification({
+        qualification = await this.#qualifyPackage({
           worktreePath: slice.worktreePath,
           workPackage: currentPackage,
           workPackageId,
@@ -2040,7 +2078,7 @@ export class TaskOrchestrator {
       task.repositoryPath,
       manifestSourceRevision,
     );
-    const qualification = await this.#runPackageVerification({
+    const qualification = await this.#qualifyPackage({
       worktreePath: retained.worktreePath,
       workPackage,
       workPackageId,

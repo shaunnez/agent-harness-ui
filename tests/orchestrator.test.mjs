@@ -3368,7 +3368,7 @@ test("fails a slice closed when harness-executed package verification fails", as
   }
 });
 
-test("runs independent work packages concurrently before candidate assembly", async () => {
+test("bounds parallel package agents and serializes heavy package qualification", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-parallel-"));
   try {
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
@@ -3383,10 +3383,19 @@ test("runs independent work packages concurrently before candidate assembly", as
     await store.update(task.id, (draft) => {
       draft.status = "ready-for-implementation";
       draft.currentStage = "implement";
-      draft.workPackages = parseWorkPackages(PLAN_OUTPUT);
+      draft.workPackages = parseWorkPackages(
+        `<work-packages>{"packages":[
+          {"id":"S1","title":"One","description":"First slice.","dependencies":[],"ownedPaths":["one.ts"],"verificationCommandIds":["test"]},
+          {"id":"S2","title":"Two","description":"Second slice.","dependencies":[],"ownedPaths":["two.ts"],"verificationCommandIds":["test"]},
+          {"id":"S3","title":"Three","description":"Third slice.","dependencies":[],"ownedPaths":["three.ts"],"verificationCommandIds":["test"]},
+          {"id":"S4","title":"Four","description":"Fourth slice.","dependencies":[],"ownedPaths":["four.ts"],"verificationCommandIds":["test"]}
+        ]}</work-packages>`,
+      );
     });
     let activeAgents = 0;
     let maximumActiveAgents = 0;
+    let activeQualifications = 0;
+    let maximumActiveQualifications = 0;
     const releases = [];
     const orchestrator = new TaskOrchestrator(store, {
       worktreeManager: {
@@ -3406,7 +3415,7 @@ test("runs independent work packages concurrently before candidate assembly", as
           revisions: [],
         }),
         commit: async (slice) => ({
-          headRevision: (slice.id.startsWith("S1") ? "b" : "c").repeat(40),
+          headRevision: ({ S1: "b", S2: "c", S3: "d", S4: "e" }[slice.id.slice(0, 2)]).repeat(40),
           files: [`${slice.id}.txt`],
           summary: "1 file changed",
           diff: "+change",
@@ -3414,9 +3423,9 @@ test("runs independent work packages concurrently before candidate assembly", as
           ownDiff: "+change",
         }),
         assemble: async () => ({
-          headRevision: "d".repeat(40),
-          files: ["S1.txt", "S2.txt"],
-          summary: "2 files changed",
+          headRevision: "f".repeat(40),
+          files: ["S1.txt", "S2.txt", "S3.txt", "S4.txt"],
+          summary: "4 files changed",
           diff: "+changes",
         }),
       },
@@ -3429,7 +3438,7 @@ test("runs independent work packages concurrently before candidate assembly", as
             clearTimeout(fallback);
             resolve();
           });
-          if (releases.length === 2) releases.forEach((release) => release());
+          if (activeAgents === 2) releases.splice(0).forEach((release) => release());
         });
         activeAgents -= 1;
         return {
@@ -3437,12 +3446,21 @@ test("runs independent work packages concurrently before candidate assembly", as
           usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
         };
       },
+      packageConcurrency: 2,
+      runPackageVerification: async ({ workPackageId, attempt }) => {
+        activeQualifications += 1;
+        maximumActiveQualifications = Math.max(maximumActiveQualifications, activeQualifications);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        activeQualifications -= 1;
+        return makeFocusedTestSummary({ candidateId: workPackageId, candidateRevision: attempt });
+      },
     });
 
     assert.equal(await orchestrator.start(task.id, "implementation"), true);
     const finished = await waitForStatus(store, task.id, "ready-for-review");
     assert.equal(maximumActiveAgents, 2);
-    assert.deepEqual(finished.candidates[0].members.map((member) => member.packageId), ["S1", "S2"]);
+    assert.equal(maximumActiveQualifications, 1);
+    assert.deepEqual(finished.candidates[0].members.map((member) => member.packageId), ["S1", "S2", "S3", "S4"]);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
