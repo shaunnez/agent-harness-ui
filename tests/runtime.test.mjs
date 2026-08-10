@@ -1855,6 +1855,28 @@ test("resolves selected Repository scouts by fallback identity and shares the ag
       cost: 1.1,
       credits: 0.4,
     });
+    const runMatched = scoutArtifact({
+      id: "historical-code-run",
+      name: "historical-code-run.md",
+      runId: "RUN-CODE-HISTORY",
+      inputTokens: 60,
+      cachedInputTokens: 20,
+      outputTokens: 10,
+      totalTokens: 70,
+      cost: 0.6,
+      credits: 0.2,
+    });
+    const roleMatchedSchema = scoutArtifact({
+      id: "historical-schema-current",
+      name: "historical-schema-current.md",
+      agentRole: "scout-schema",
+      inputTokens: 25,
+      cachedInputTokens: 5,
+      outputTokens: 5,
+      totalTokens: 30,
+      cost: 0.3,
+      credits: 0.1,
+    });
     const nameMatched = scoutArtifact({
       id: "historical-schema",
       name: "scout-schema.md",
@@ -1911,34 +1933,34 @@ test("resolves selected Repository scouts by fallback identity and shares the ag
       },
       runs: [{ id: "RUN-CODE-HISTORY", stage: "scouts", role: "scout-code-path", artifactId: null }],
       // Deliberately scrambled: resolution must follow dispatch order, not artifact order.
-      artifacts: [roleMatched, nameMatched, overlapMatchedByRun, nameMatchedRetry, handoff],
+      artifacts: [roleMatched, nameMatched, overlapMatchedByRun, nameMatchedRetry, runMatched, roleMatchedSchema, handoff],
     });
 
     const resolved = resolveScoutUsage(task);
     assert.deepEqual(resolved.perScout.map((entry) => entry.scout.name), selected.map((scout) => scout.name));
-    assert.deepEqual(resolved.perScout.map((entry) => entry.matchedBy), ["run-id", null, "artifact-name", "agent-role", null]);
-    assert.deepEqual(resolved.perScout.map((entry) => entry.state), ["matched", "unmatched", "matched", "matched", "unmatched"]);
-    assert.deepEqual(resolved.perScout.map((entry) => entry.usage.totalTokens), [120, 0, 285, 340, 0]);
-    assert.deepEqual(resolved.matchedArtifacts.map((artifact) => artifact.id), ["historical-code", "historical-schema", "historical-schema-retry", "historical-journey"]);
-    assert.deepEqual(resolved.unmatched.map((entry) => entry.scout.name), ["scout-pattern", "scout-test-inventory"]);
-    assert.equal(resolved.aggregate.runs, 4);
-    assert.equal(resolved.aggregate.inputTokens, 650);
-    assert.equal(resolved.aggregate.cachedInputTokens, 200);
+    assert.deepEqual(resolved.perScout.map((entry) => entry.matchedBy), ["run-id", "agent-role", "agent-role", "agent-role", null]);
+    assert.deepEqual(resolved.perScout.map((entry) => entry.state), ["matched", "matched", "matched", "matched", "unmatched"]);
+    assert.deepEqual(resolved.perScout.map((entry) => entry.usage.totalTokens), [70, 120, 315, 340, 0]);
+    assert.deepEqual(resolved.matchedArtifacts.map((artifact) => artifact.id), ["historical-code-run", "historical-code", "historical-schema-current", "historical-schema", "historical-schema-retry", "historical-journey"]);
+    assert.deepEqual(resolved.unmatched.map((entry) => entry.scout.name), ["scout-test-inventory"]);
+    assert.equal(resolved.aggregate.runs, 6);
+    assert.equal(resolved.aggregate.inputTokens, 735);
+    assert.equal(resolved.aggregate.cachedInputTokens, 225);
     assert.equal(resolved.aggregate.cacheWriteTokens, 5);
-    assert.equal(resolved.aggregate.outputTokens, 95);
-    assert.equal(resolved.aggregate.totalTokens, 745);
-    assert.equal(resolved.aggregate.cost, 3.8);
-    assert.equal(resolved.aggregate.credits, 1.3);
+    assert.equal(resolved.aggregate.outputTokens, 110);
+    assert.equal(resolved.aggregate.totalTokens, 845);
+    assert.equal(resolved.aggregate.cost, 4.7);
+    assert.equal(resolved.aggregate.credits, 1.6);
     assert.equal(resolveScoutUsage(task).matchedArtifacts.filter((artifact) => artifact.id === "historical-code").length, 1);
     assert.equal(resolveScoutUsage(task).matchedArtifacts.some((artifact) => artifact.id === handoff.id), false);
 
     const parentUsage = stageUsage([task], "scouts");
-    assert.equal(parentUsage.runs, 4);
-    assert.equal(parentUsage.inputTokens, 650);
-    assert.equal(parentUsage.outputTokens, 95);
-    assert.equal(parentUsage.cost, 3.8);
-    assert.deepEqual(parentUsage.artifacts.map((artifact) => artifact.id), ["historical-code", "historical-schema", "historical-schema-retry", "historical-journey"]);
-    assert.equal(stageUsage([task], "scout-pattern").runs, 0);
+    assert.equal(parentUsage.runs, 6);
+    assert.equal(parentUsage.inputTokens, 735);
+    assert.equal(parentUsage.outputTokens, 110);
+    assert.equal(parentUsage.cost, 4.7);
+    assert.deepEqual(parentUsage.artifacts.map((artifact) => artifact.id), ["historical-code-run", "historical-code", "historical-schema-current", "historical-schema", "historical-schema-retry", "historical-journey"]);
+    assert.equal(stageUsage([task], "scout-pattern").runs, 1);
     assert.equal(stageUsage([task], "scout-code-path").runs, 1);
 
     const workspaceMarkup = renderToStaticMarkup(
@@ -1952,26 +1974,26 @@ test("resolves selected Repository scouts by fallback identity and shares the ag
         onDecision: async () => {},
       }),
     );
-    assert.match(workspaceMarkup, /5 dispatched · 1 skipped · 650 in \/ 95 out/);
+    assert.match(workspaceMarkup, /5 dispatched · 1 skipped · 735 in \/ 110 out/);
     assert.match(workspaceMarkup, /scout-code-path/);
-    assert.match(workspaceMarkup, /100 in · 20 out/);
+    assert.match(workspaceMarkup, /60 in · 10 out/);
     assert.match(workspaceMarkup, /scout-pattern/);
-    assert.match(workspaceMarkup, /0 in · 0 out · No recorded child scout run/);
+    assert.match(workspaceMarkup, /100 in · 20 out/);
     assert.match(workspaceMarkup, /scout-schema/);
-    assert.match(workspaceMarkup, /250 in · 35 out/);
+    assert.match(workspaceMarkup, /275 in · 40 out/);
     assert.match(workspaceMarkup, /scout-user-journey/);
     assert.match(workspaceMarkup, /300 in · 40 out/);
-    assert.equal(workspaceMarkup.match(/0 in · 0 out · No recorded child scout run/g)?.length, 2);
+    assert.equal(workspaceMarkup.match(/0 in · 0 out · No recorded child scout run/g)?.length, 1);
     const renderedScoutPositions = selected.map((scout) => workspaceMarkup.indexOf(`<strong>${scout.name}</strong>`));
     assert.equal(renderedScoutPositions.every((position, index) => index === 0 || position > renderedScoutPositions[index - 1]), true);
     assert.match(workspaceMarkup, /Downstream handoff · deterministic aggregation/);
-    assert.match(workspaceMarkup, /Inputs: child scout reports \(4 retained\); no additional model call/);
+    assert.match(workspaceMarkup, /Inputs: child scout reports \(6 retained\); no additional model call/);
     assert.match(workspaceMarkup, /Stage telemetry/);
-    assert.match(workspaceMarkup, /650 input · 200 cached · 95 output/);
+    assert.match(workspaceMarkup, /735 input · 225 cached · 110 output/);
     assert.match(workspaceMarkup, /Viewed downstream handoff/);
     assert.match(workspaceMarkup, /Child scout reports/);
     assert.match(workspaceMarkup, /Child scout runs/);
-    assert.match(workspaceMarkup, /4 recorded/);
+    assert.match(workspaceMarkup, /6 recorded/);
     assert.doesNotMatch(workspaceMarkup, /Viewed agent run/);
 
     const skillsMarkup = renderToStaticMarkup(
@@ -1981,9 +2003,9 @@ test("resolves selected Repository scouts by fallback identity and shares the ag
         onSelect: () => {},
       }),
     );
-    assert.match(skillsMarkup, /Recorded model runs<\/span><strong>4<\/strong>/);
-    assert.match(skillsMarkup, /Recorded tokens<\/span><strong>745<\/strong>/);
-    assert.match(skillsMarkup, /Approx\. API-rate cost<\/span><strong>\$3\.80<\/strong>/);
+    assert.match(skillsMarkup, /Recorded model runs<\/span><strong>6<\/strong>/);
+    assert.match(skillsMarkup, /Recorded tokens<\/span><strong>845<\/strong>/);
+    assert.match(skillsMarkup, /Approx\. API-rate cost<\/span><strong>\$4\.70<\/strong>/);
 
     const runtimeStatus = { model: "gpt-5.6-luna", reasoning: "xhigh", settings: { allowedModels: ["gpt-5.6-luna"], defaultModel: "gpt-5.6-luna", defaultReasoning: "xhigh", stagePolicies: { scouts: { model: "gpt-5.6-luna", reasoning: "xhigh" } } } };
     const agentsMarkup = renderToStaticMarkup(
@@ -1995,9 +2017,9 @@ test("resolves selected Repository scouts by fallback identity and shares the ag
         onSave: async () => ({}),
       }),
     );
-    assert.match(agentsMarkup, /Recorded runs<\/span><strong>4<\/strong>/);
-    assert.match(agentsMarkup, /Input \/ output<\/span><strong>650 \/ 95<\/strong>/);
-    assert.match(agentsMarkup, /Approx\. cost<\/span><strong>\$3\.80<\/strong>/);
+    assert.match(agentsMarkup, /Recorded runs<\/span><strong>6<\/strong>/);
+    assert.match(agentsMarkup, /Input \/ output<\/span><strong>735 \/ 110<\/strong>/);
+    assert.match(agentsMarkup, /Approx\. cost<\/span><strong>\$4\.70<\/strong>/);
     assert.doesNotMatch(agentsMarkup, /repository-handoff/);
 
     const patternAgentMarkup = renderToStaticMarkup(
@@ -2009,8 +2031,8 @@ test("resolves selected Repository scouts by fallback identity and shares the ag
         onSave: async () => ({}),
       }),
     );
-    assert.match(patternAgentMarkup, /Recorded runs<\/span><strong>0<\/strong>/);
-    assert.doesNotMatch(patternAgentMarkup, /historical-code-report/);
+    assert.match(patternAgentMarkup, /Recorded runs<\/span><strong>1<\/strong>/);
+    assert.match(patternAgentMarkup, /historical-code-report/);
   });
 });
 

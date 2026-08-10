@@ -126,54 +126,49 @@ export function resolveScoutUsage(task: ScoutTask): ScoutUsageResolution<ScoutAr
   );
   const claimedArtifactIds = new Set<string>();
   const zeroUsage = sumArtifactUsage([]);
-  const perScout = (task.scoutDispatch?.selected ?? []).map<ScoutUsageMatch<ScoutArtifact>>((scout) => {
-    const available = (candidates: ScoutArtifact[]) =>
-      candidates.filter((artifact) => !claimedArtifactIds.has(artifact.id));
-    let candidates = available(eligibleArtifacts.filter((artifact) => artifact.agentRole === scout.name));
-    let matchedBy: ScoutUsageMatch["matchedBy"] = candidates.length ? "agent-role" : null;
-    let unmatchedReason: ScoutUsageMatch["unmatchedReason"] = null;
+  const perScout = (task.scoutDispatch?.selected ?? []).map((scout) => ({
+    scout,
+    artifacts: [] as ScoutArtifact[],
+    matchedBy: null as ScoutUsageMatch["matchedBy"],
+  }));
 
-    if (!candidates.length) {
-      const runIds = scoutRunIds(task, scout);
-      candidates = available(
-        eligibleArtifacts.filter((artifact) => matchesScoutRun(task, artifact, scout, runIds)),
-      );
-      if (candidates.length) {
-        matchedBy = "run-id";
-      }
-    }
+  const assignMatches = (
+    matchedBy: NonNullable<ScoutUsageMatch["matchedBy"]>,
+    matches: (artifact: ScoutArtifact, scout: ScoutDispatchEntry) => boolean,
+  ) => {
+    perScout.forEach((entry) => {
+      eligibleArtifacts.forEach((artifact) => {
+        if (claimedArtifactIds.has(artifact.id) || !matches(artifact, entry.scout)) return;
+        claimedArtifactIds.add(artifact.id);
+        entry.artifacts.push(artifact);
+        entry.matchedBy ??= matchedBy;
+      });
+    });
+  };
 
-    if (!candidates.length) {
-      const nameMatches = available(
-        eligibleArtifacts.filter((artifact) => matchesScoutArtifactName(artifact, scout)),
-      );
-      if (nameMatches.length) {
-        candidates = nameMatches;
-        matchedBy = "artifact-name";
-      } else {
-        unmatchedReason = "missing";
-      }
-    }
+  // Resolve identity strength globally so a weaker match from an earlier row
+  // cannot claim an artifact before a stronger match on a later row.
+  assignMatches("agent-role", (artifact, scout) => artifact.agentRole === scout.name);
+  assignMatches("run-id", (artifact, scout) =>
+    matchesScoutRun(task, artifact, scout, scoutRunIds(task, scout)),
+  );
+  assignMatches("artifact-name", (artifact, scout) => matchesScoutArtifactName(artifact, scout));
 
-    const artifacts = distinctArtifacts(candidates);
-    for (const artifact of artifacts) claimedArtifactIds.add(artifact.id);
-    return {
-      scout,
-      artifacts,
-      representativeArtifact: artifacts[0] ?? null,
-      usage: artifacts.length ? sumArtifactUsage(artifacts) : zeroUsage,
-      matchedBy: artifacts.length ? matchedBy : null,
-      state: artifacts.length ? "matched" : "unmatched",
-      unmatchedReason: artifacts.length ? null : (unmatchedReason ?? "missing"),
-    };
-  });
-  const matchedArtifacts = perScout.flatMap((entry) => entry.artifacts);
+  const resolvedPerScout: ScoutUsageMatch<ScoutArtifact>[] = perScout.map((entry) => ({
+    ...entry,
+    representativeArtifact: entry.artifacts[0] ?? null,
+    usage: entry.artifacts.length ? sumArtifactUsage(entry.artifacts) : zeroUsage,
+    matchedBy: entry.artifacts.length ? entry.matchedBy : null,
+    state: entry.artifacts.length ? "matched" : "unmatched",
+    unmatchedReason: entry.artifacts.length ? null : "missing",
+  }));
+  const matchedArtifacts = resolvedPerScout.flatMap((entry) => entry.artifacts);
 
   return {
     aggregate: sumArtifactUsage(matchedArtifacts),
-    perScout,
+    perScout: resolvedPerScout,
     matchedArtifacts,
-    unmatched: perScout.filter((entry) => entry.state === "unmatched"),
+    unmatched: resolvedPerScout.filter((entry) => entry.state === "unmatched"),
   };
 }
 
