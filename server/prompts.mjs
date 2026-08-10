@@ -320,9 +320,9 @@ ${artifactContext.text}
 
 Implement only this package. Do not redo dependency work and do not edit outside declared ownership. If the approved interface genuinely requires another path, stop and report the required plan correction rather than widening scope yourself. Run focused, non-interactive checks when practical. Never re-run a command byte-for-byte identical to one you already ran in this session; you already have its output.
 
-The harness, not you, executes the focused repository manifest commands after it commits the package. You may use narrower read-only diagnostics while implementing, but do not rerun the full repository manifest. If the current repository already satisfies the package, make no changes and end your response with exactly one line: <no-changes-needed>{"reason":"one sentence citing the repository evidence"}</no-changes-needed>. Only do this when the evidence leaves no doubt; if there is any, make the minimal edit instead.
+The harness, not you, executes the focused repository manifest commands after it commits the package. You may use narrower read-only diagnostics while implementing, but do not rerun the full repository manifest.
 
-Return concise Markdown with these exact H2 headings in order: Outcome, Changes, Verification, Ownership exceptions, Remaining risks.`;
+Return concise Markdown with these exact H2 headings in order: Outcome, Changes, Verification, Ownership exceptions, Remaining risks. If the current repository already satisfies the package, make no changes, use those headings to cite the conclusive repository evidence, and append this machine-readable marker as the final non-blank line after Remaining risks: <no-changes-needed>{"reason":"one sentence citing the repository evidence"}</no-changes-needed>. The marker is mandatory for every no-change outcome; without it, the harness will fail the package as an unproven empty diff. Only declare no changes when the evidence leaves no doubt; if there is any, make the minimal edit instead.`;
   return {
     prompt,
     contextManifest: makeContextManifest(

@@ -534,6 +534,32 @@ test("candidate review prompts name the exact structured finding fields", () => 
   assert.doesNotMatch(request.prompt, /"path":/);
 });
 
+test("implementation prompts make the no-change marker part of one unambiguous output contract", () => {
+  const task = createTask({
+    id: "AH-NOOP-PROMPT",
+    title: "Qualify an already-satisfied package",
+    description: "Retain repository evidence for a legitimate no-op.",
+    workflow: "implement",
+    artifacts: [],
+    decisions: [],
+    attachments: [],
+  });
+  const request = buildWorkPackageRequest(task, {
+    id: "S1",
+    title: "Confirm existing contract",
+    description: "Change nothing when the repository already matches.",
+    dependencies: [],
+    ownedPaths: ["server/prompts.mjs"],
+    verificationCommandIds: ["unit"],
+  }, { baseRevision: "a".repeat(40) });
+
+  assert.match(request.prompt, /exact H2 headings in order: Outcome, Changes, Verification, Ownership exceptions, Remaining risks/);
+  assert.match(request.prompt, /append this machine-readable marker as the final non-blank line after Remaining risks/);
+  assert.match(request.prompt, /<no-changes-needed>\{"reason":"one sentence citing the repository evidence"\}<\/no-changes-needed>/);
+  assert.match(request.prompt, /marker is mandatory for every no-change outcome/);
+  assert.match(request.prompt, /fail the package as an unproven empty diff/);
+});
+
 test("context manifests report title truncation at 299, 300, and 301 characters", () => {
   for (const length of [299, 300, 301]) {
     const marker = "__TASK_TITLE_SENTINEL__";
