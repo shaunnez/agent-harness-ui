@@ -164,6 +164,20 @@ export async function readVerificationManifest(worktreePath) {
   return parseVerificationManifest(raw, VERIFICATION_MANIFEST_PATH);
 }
 
+export async function readVerificationManifestAtRevision(repositoryPath, revision) {
+  const result = await runProcess("git", ["show", `${revision}:${VERIFICATION_MANIFEST_PATH}`], {
+    cwd: repositoryPath,
+    timeoutMs: 30_000,
+    label: "verification-manifest:git-show",
+  });
+  if (result.code !== 0) {
+    throw new VerificationConfigError(
+      `${VERIFICATION_MANIFEST_PATH} is not available at target revision ${revision}; commit the repository-owned verification commands before using them in a plan.`,
+    );
+  }
+  return parseVerificationManifest(result.stdout, `${VERIFICATION_MANIFEST_PATH}@${revision}`);
+}
+
 /**
  * Resolve a declared report file inside the worktree, refusing anything that escapes it.
  * Mirrors the worktree path guard: a manifest is repository content, so it is data to be

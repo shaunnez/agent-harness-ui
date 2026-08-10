@@ -527,13 +527,15 @@ export function App() {
                       ? "Candidate refreshed from the latest target. All candidate-bound gates must run again."
                     : action === "retry-test"
                       ? "Test retry started against the unchanged candidate revision."
+                    : action === "continue-package"
+                      ? "Retained package continuation started with exact worktree validation."
                     : action === "repair"
                       ? "Repair started. Downstream gates now require fresh evidence."
                       : action === "complete-merged"
                         ? "Task marked completed."
                         : "Task action completed.",
                 );
-                if (["repair", "implement", "review", "test", "retry-test", "final-review"].includes(action)) {
+                if (["repair", "implement", "continue-package", "review", "test", "retry-test", "final-review"].includes(action)) {
                   window.setTimeout(() => {
                     void getTaskCore(activeRuntimeTask.id)
                       .then((latest) => {

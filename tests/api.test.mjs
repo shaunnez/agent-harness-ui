@@ -3271,6 +3271,60 @@ test("grants one bounded stage attempt to a reservation-bound candidate at an ex
   }
 });
 
+test("grants a fresh gate attempt after a target refresh without requiring repair lineage", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Target-refreshed exhausted gate",
+      description: "A harness target refresh must not masquerade as candidate Repair.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+      const oldHead = "candidate-target-refresh-r1";
+      const candidate = attachAssemblyLineage(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        baseRevision: "target-base-r1",
+        headRevision: oldHead,
+        status: "ready_for_review",
+      });
+      draft.candidates.push(candidate);
+      draft.runs.push(...[1, 2, 3].map((attempt) => ({
+        id: `run-target-refresh-review-${attempt}`,
+        stage: "dev-review",
+        status: "failed",
+      })));
+      bindLatestWorkflowAttempt(draft, "dev-review", "review");
+      candidate.revisionNumber = 2;
+      candidate.baseRevision = "target-base-r2";
+      candidate.headRevision = "candidate-target-refresh-r2";
+      candidate.revisions.push({
+        number: 2,
+        headRevision: candidate.headRevision,
+        reason: "target-refresh",
+        previousBaseRevision: "target-base-r1",
+        previousHeadRevision: oldHead,
+        baseRevision: candidate.baseRevision,
+        createdAt: "2026-08-04T00:03:00.000Z",
+      });
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200);
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits["dev-review"], 4);
+    assert.equal(updated.candidates[0].revisions[1].reason, "target-refresh");
+    assert.equal(updated.candidates[0].sourceWorkflowAttempt, 1);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("retains exact run provenance for an authorized adjacent prior-candidate grant", async () => {
   const { directory, origin, server, store } = await createServer();
   try {

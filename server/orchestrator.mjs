@@ -15,6 +15,7 @@ import {
 } from "./prompts.mjs";
 import { getCodexStatus } from "./codex-runtime.mjs";
 import { resolveExecutionProvider } from "./execution-providers.mjs";
+import { candidateGateCommandLimit } from "./candidate-gate-policy.mjs";
 import { isProcessTimeoutError } from "./process-runtime.mjs";
 import { defaultWorktreeRoot, GitWorktreeManager, symlinkedDependencySourceRoots } from "./git-worktree.mjs";
 import {
@@ -55,6 +56,7 @@ import {
   parseGateEvidence,
   parseGrillQuestions,
   parseWorkPackages,
+  isOwnedFile,
   validateFocusedTestEvidence,
 } from "./structured-output.mjs";
 import {
@@ -67,6 +69,7 @@ import {
 import {
   gitHeadRevision,
   readVerificationManifest,
+  readVerificationManifestAtRevision,
   runRepositoryVerification,
   selectVerificationCommands,
 } from "./verification.mjs";
@@ -227,6 +230,8 @@ export class TaskOrchestrator {
   #runVerification;
   #runPackageVerification;
   #readVerificationManifest;
+  #readVerificationManifestInjected;
+  #readVerificationManifestAtRevision;
 
   constructor(store, options = {}) {
     this.#store = store;
@@ -240,6 +245,11 @@ export class TaskOrchestrator {
     // `tests/verification.test.mjs`, including against a real git worktree.
     this.#runVerification = options.runVerification ?? runRepositoryVerification;
     this.#readVerificationManifest = options.readVerificationManifest ?? readVerificationManifest;
+    this.#readVerificationManifestInjected = Boolean(options.readVerificationManifest);
+    this.#readVerificationManifestAtRevision = options.readVerificationManifestAtRevision
+      ?? (options.readVerificationManifest
+        ? async (repositoryPath) => options.readVerificationManifest(repositoryPath)
+        : readVerificationManifestAtRevision);
     // Production slices qualify with the same repository-owned, argv-only manifest as
     // Focused Test. Unit tests that inject a model runner keep their existing lightweight
     // seam unless they explicitly inject package verification; real runtime execution never
@@ -247,13 +257,14 @@ export class TaskOrchestrator {
     this.#runPackageVerification = options.runPackageVerification
       ?? (this.#runCodex
         ? null
-        : async ({ worktreePath, workPackage, workPackageId, attempt, headRevision, signal }) => {
+        : async ({ worktreePath, workPackage, workPackageId, attempt, headRevision, signal, manifest = null }) => {
             return this.#runVerification({
               worktreePath,
               candidate: { id: workPackageId, revisionNumber: attempt, headRevision },
               commandIds: workPackage.verificationCommandIds,
               executionKind: "focused-package",
               signal,
+              manifest,
             });
           });
   }
@@ -482,6 +493,9 @@ export class TaskOrchestrator {
     const reservation = { controller, kind, promise: null };
     this.#active.set(id, reservation);
     try {
+      if (await this.#blockCandidateGateOnTargetDrift(id, kind)) {
+        throw new Error("The target branch advanced. Refresh the candidate before spending another candidate-bound gate attempt.");
+      }
       const reserved = await this.#store.transition(
         id,
         (draft) => !draft.activeRunKind && !draft.activeRunReservationId && (options.canStart ? options.canStart(draft) : canStartRun(draft, kind)),
@@ -504,6 +518,48 @@ export class TaskOrchestrator {
     });
     reservation.promise = promise;
     return true;
+  }
+
+  async #blockCandidateGateOnTargetDrift(id, kind) {
+    if (!["review", "test", "final-review"].includes(kind) || typeof this.#worktrees.mergeState !== "function") {
+      return false;
+    }
+    const task = await this.#store.get(id);
+    const candidate = currentCandidate(task);
+    if (!candidate?.headRevision || task.activeRunKind || task.activeRunReservationId) return false;
+    if (await this.#worktrees.mergeState(candidate) !== "diverged") return false;
+    const message = "The target branch advanced after this candidate was created. Refresh the candidate before running another candidate-bound gate.";
+    const blocked = await this.#store.transition(
+      id,
+      (draft) => {
+        const current = currentCandidate(draft);
+        return !draft.activeRunKind &&
+          !draft.activeRunReservationId &&
+          current?.id === candidate.id &&
+          current.revisionNumber === candidate.revisionNumber &&
+          current.headRevision === candidate.headRevision;
+      },
+      (draft) => {
+        draft.status = "blocked";
+        draft.error = message;
+        draft.blocker = {
+          code: "target-diverged",
+          detail: message,
+          detectedAt: now(),
+          candidateId: candidate.id,
+          candidateRevision: candidate.revisionNumber,
+          candidateBaseRevision: candidate.baseRevision,
+        };
+        draft.events.push(activity(
+          draft.currentStage,
+          "Candidate gate paused for target refresh",
+          `${candidate.id} revision ${candidate.revisionNumber} remains retained, but its target advanced before ${draft.currentStage}. No gate attempt was spent.`,
+          "warning",
+          "decision",
+        ));
+      },
+    );
+    return Boolean(blocked);
   }
 
   async cancel(id) {
@@ -661,11 +717,7 @@ export class TaskOrchestrator {
     const task = await this.#store.get(id);
     if (!task) throw new Error("Task not found.");
     if (task.status !== "awaiting-plan-approval") throw new Error("The task is not awaiting plan approval.");
-    if (!task.workPackages?.length) throw new Error("The implementation plan does not contain executable work packages.");
-    const verificationManifest = await this.#readVerificationManifest(task.repositoryPath);
-    for (const workPackage of task.workPackages) {
-      selectVerificationCommands(verificationManifest, workPackage.verificationCommandIds);
-    }
+    await this.#assertExecutablePlan(task);
     if (task.workflowProfile?.selected === "fast") {
       if (task.workPackages?.length !== 1 || task.workPackages[0].dependencies.length) {
         throw new Error("Fast requires exactly one coherent work package with no package dependencies.");
@@ -680,6 +732,127 @@ export class TaskOrchestrator {
       draft.currentStage = "implement";
       draft.events.push(activity("implement", "Implementation authorized", "The approved plan may now run in an isolated Git worktree.", "success", "decision"));
     });
+  }
+
+  async correctInvalidPlan(id) {
+    const task = await this.#store.get(id);
+    if (!task) throw new Error("Task not found.");
+    if (!["failed", "blocked"].includes(task.status) || task.currentStage !== "implement") {
+      throw new Error("The task is not blocked by an invalid approved plan.");
+    }
+    let validationError = null;
+    try {
+      await this.#assertExecutablePlan(task);
+    } catch (error) {
+      validationError = error;
+    }
+    const failedQualification = task.workPackages?.find((workPackage) =>
+      workPackage.status === "failed" &&
+      workPackage.headRevision &&
+      workPackage.worktreePath &&
+      /did not qualify/i.test(workPackage.error ?? task.error ?? ""),
+    );
+    if (!validationError && !failedQualification) {
+      throw new Error("The retained approved plan is executable and does not require plan correction.");
+    }
+    const correctionReason = validationError?.message
+      ?? `${failedQualification.id} needs a corrected ownership or verification plan after focused package qualification failed.`;
+    const planAttempts = task.attemptsByStage?.plan ?? 0;
+    if (planAttempts >= stageRunLimitFor(task, "plan")) {
+      throw new Error("The Plan correction allowance is exhausted; inspect the retained plans before granting another Plan attempt.");
+    }
+    const workPackageSnapshot = JSON.stringify(task.workPackages ?? []);
+    const started = await this.start(id, "planning", {
+      canStart: (draft) =>
+        ["failed", "blocked"].includes(draft.status) &&
+        draft.currentStage === "implement" &&
+        JSON.stringify(draft.workPackages ?? []) === workPackageSnapshot,
+      onReserve: (draft) => {
+        const attempts = draft.attemptsByStage?.implement ?? 0;
+        draft.stageRunLimits ??= {};
+        draft.stageRunLimits.implement = Math.max(stageRunLimitFor(draft, "implement"), attempts + 1);
+        draft.currentStage = "plan";
+        draft.events.push(activity(
+          "plan",
+          "Invalid approved plan returned for correction",
+          `${correctionReason} One implementation allowance was reserved for the corrected plan; prior attempts remain retained for audit.`,
+          "warning",
+          "decision",
+        ));
+      },
+    });
+    if (!started) throw new Error("The invalid approved plan could not be reserved for correction.");
+    return { started: true };
+  }
+
+  async continueRetainedPackage(id) {
+    const task = await this.#store.get(id);
+    if (!task) throw new Error("Task not found.");
+    if (!["failed", "blocked"].includes(task.status) || task.currentStage !== "implement") {
+      throw new Error("The task is not awaiting a retained implementation continuation.");
+    }
+    const workPackage = [...(task.workPackages ?? [])].reverse().find((item) =>
+      item.status === "failed" &&
+      item.worktreePath &&
+      /run exceeded \d+ seconds|harness stopped while this task was running/i.test(item.error ?? task.error ?? ""),
+    );
+    if (!workPackage) throw new Error("No timed-out or interrupted retained work package is available to continue.");
+    const retained = await this.#worktrees.inspectRetainedSlice(workPackage, { requireClean: false });
+    if (retained.clean) throw new Error("The retained package is clean; use exact retained-slice requalification or a new implementation attempt.");
+    const outsideOwnership = retained.files.filter((file) => !isOwnedFile(file, workPackage.ownedPaths));
+    const worktreeSnapshot = workPackage.worktreePath;
+    const started = await this.start(id, "implementation", {
+      canStart: (draft) => {
+        const current = draft.workPackages?.find((item) => item.id === workPackage.id);
+        return ["failed", "blocked"].includes(draft.status) &&
+          draft.currentStage === "implement" &&
+          current?.status === "failed" &&
+          current.worktreePath === worktreeSnapshot;
+      },
+      onReserve: (draft) => {
+        const attempts = draft.attemptsByStage?.implement ?? 0;
+        draft.stageRunLimits ??= {};
+        draft.stageRunLimits.implement = Math.max(stageRunLimitFor(draft, "implement"), attempts + 1);
+        draft.stageTimeoutOverridesMs ??= {};
+        draft.stageTimeoutOverridesMs.implement = Math.max(draft.stageTimeoutOverridesMs.implement ?? 0, 1_800_000);
+        const current = draft.workPackages.find((item) => item.id === workPackage.id);
+        current.retainedContinuation = {
+          requestedAt: now(),
+          files: retained.files,
+          outsideOwnership,
+        };
+        draft.events.push(activity(
+          "implement",
+          "Retained package continuation authorized",
+          `${workPackage.id} will continue in ${workPackage.branch} with a 30-minute timeout. ${outsideOwnership.length ? `${outsideOwnership.length} path(s) outside declared ownership must be restored before qualification.` : "All retained paths are within declared ownership."}`,
+          "warning",
+          "decision",
+        ));
+      },
+    });
+    if (!started) throw new Error("The retained package continuation could not be reserved.");
+    return { started: true };
+  }
+
+  async #assertExecutablePlan(task) {
+    if (!task.workPackages?.length) {
+      throw new Error("The approved plan does not contain executable work packages.");
+    }
+    for (const workPackage of task.workPackages) {
+      if (!workPackage.verificationCommandIds?.length) {
+        throw new Error(`${workPackage.id}: Focused package verification requires at least one repository manifest command id.`);
+      }
+    }
+    if (this.#runCodex && !this.#readVerificationManifestInjected) return;
+    const verificationManifest = this.#readVerificationManifestInjected
+      ? await this.#readVerificationManifest(task.repositoryPath)
+      : await this.#readVerificationManifestAtRevision(
+          task.repositoryPath,
+          (await this.#worktrees.base(task, { allowDirty: true })).baseRevision,
+        );
+    for (const workPackage of task.workPackages) {
+      selectVerificationCommands(verificationManifest, workPackage.verificationCommandIds);
+    }
   }
 
   async approveMerge(id, note = "") {
@@ -848,6 +1021,7 @@ export class TaskOrchestrator {
             headRevision: refreshed.headRevision,
             reason: "target-refresh",
             previousBaseRevision: refreshed.previousBaseRevision,
+            previousHeadRevision: refreshed.previousHeadRevision,
             baseRevision: refreshed.targetRevision,
             createdAt: now(),
           });
@@ -1386,11 +1560,52 @@ export class TaskOrchestrator {
       dependencyCount: workPackages.reduce((total, workPackage) => total + workPackage.dependencies.length, 0),
     });
     if (profileEscalation) await this.#escalateProfile(id, profileEscalation, "plan");
+    const retainedDispositions = new Map();
+    if (typeof this.#worktrees.retainedPatchDisposition === "function") {
+      try {
+        const targetRevision = (await this.#worktrees.base(task, { allowDirty: true })).baseRevision;
+        for (const workPackage of workPackages) {
+          const prior = task.workPackages?.find((item) => item.id === workPackage.id);
+          if (!retainedSliceCanBeRequalified(prior, workPackage)) continue;
+          try {
+            retainedDispositions.set(
+              workPackage.id,
+              await this.#worktrees.retainedPatchDisposition(
+                { ...prior, repositoryRoot: task.repositoryPath },
+                targetRevision,
+              ),
+            );
+          } catch {
+            retainedDispositions.set(workPackage.id, "conflicts");
+          }
+        }
+      } catch { /* Test seams without a repository retain the conservative requalification path. */ }
+    }
     await this.#retainAgentResult(id, "plan", result, artifactOptions);
     await this.#store.update(id, (draft) => {
       for (const workPackage of workPackages) {
         const prior = draft.workPackages?.find((item) => item.id === workPackage.id);
-        if (prior) workPackage.attempts = Math.max(workPackage.attempts, prior.attempts ?? 0);
+        if (!prior) continue;
+        workPackage.attempts = Math.max(workPackage.attempts, prior.attempts ?? 0);
+        if (retainedSliceCanBeRequalified(prior, workPackage)) {
+          workPackage.branch = prior.branch;
+          workPackage.worktreePath = prior.worktreePath;
+          workPackage.baseRevision = prior.baseRevision;
+          workPackage.headRevision = prior.headRevision;
+          workPackage.files = [...prior.files];
+          const disposition = retainedDispositions.get(workPackage.id) ?? "pending";
+          const qualificationRepair = /did not qualify/i.test(prior.error ?? "");
+          workPackage.retainedForRequalification = disposition === "pending" && !qualificationRepair;
+          workPackage.retainedReplacementReason = disposition === "pending" ? null : disposition;
+          if (disposition === "pending" && qualificationRepair) {
+            workPackage.retainedContinuation = {
+              requestedAt: now(),
+              files: [...prior.files],
+              outsideOwnership: [],
+              qualificationFailure: prior.error,
+            };
+          }
+        }
       }
       draft.workPackages = workPackages;
       draft.status = "awaiting-plan-approval";
@@ -1404,10 +1619,11 @@ export class TaskOrchestrator {
 
   async #runImplementation(id, signal) {
     let task = await this.#store.get(id);
-    if (!task.workPackages?.length) {
-      throw new Error("The approved plan does not contain executable work packages. Rerun planning with the current planner.");
-    }
-    const base = await this.#worktrees.base(task);
+    await this.#assertExecutablePlan(task);
+    const retainedPackage = task.workPackages.find((item) =>
+      item.retainedContinuation || item.retainedForRequalification || item.retainedReplacementReason,
+    );
+    const base = await this.#worktrees.base(task, { allowDirty: Boolean(retainedPackage) });
     const batchNumbers = [...new Set(task.workPackages.map((item) => item.batch))].sort((a, b) => a - b);
     for (const batch of batchNumbers) {
       throwIfAborted(signal);
@@ -1454,7 +1670,10 @@ export class TaskOrchestrator {
     }
     const candidateId = `C${(task.candidates?.length ?? 0) + 1}`;
     const implementationReservation = requireActiveRunReservation(task, "implementation", "implement");
-    const candidate = await this.#worktrees.prepare(task, candidateId, { baseRevision: base.baseRevision });
+    const candidate = await this.#worktrees.prepare(task, candidateId, {
+      baseRevision: base.baseRevision,
+      allowHistoricalBase: Boolean(retainedPackage),
+    });
     candidate.status = "assembling";
     candidate.verificationRuns = [];
     candidate.sourceWorkflowAttempt = implementationReservation.workflowAttempt;
@@ -1512,7 +1731,12 @@ export class TaskOrchestrator {
   async #runWorkPackage(id, workPackageId, baseRevision, signal) {
     let task = await this.#store.get(id);
     const workPackage = task.workPackages.find((item) => item.id === workPackageId);
-    const attempt = workPackage.attempts + 1;
+    if (workPackage.retainedForRequalification) {
+      await this.#requalifyRetainedWorkPackage(id, workPackageId, signal);
+      return;
+    }
+    const retainedContinuation = workPackage.retainedContinuation ?? null;
+    const attempt = retainedContinuation ? workPackage.attempts : workPackage.attempts + 1;
     const dependencyIds = dependencyClosure(workPackage, task.workPackages);
     const dependencyRevisions = task.workPackages
       .filter((item) => dependencyIds.includes(item.id))
@@ -1527,23 +1751,41 @@ export class TaskOrchestrator {
       // this repository's shared exec-argument budget (see claude-exec-budget.mjs).
       // Kept around for exactly one generation past its own failure, for inspection,
       // and reaped here rather than immediately on failure.
-      if (workPackage.worktreePath) {
+      if (workPackage.worktreePath && !retainedContinuation) {
         await this.#cleanupSliceWorktree(id, task, workPackage.worktreePath);
       }
-      const slice = await this.#worktrees.prepare(task, sliceId, {
-        baseRevision,
-        dependencyRevisions,
-        branchId: sliceId,
-      });
+      const slice = retainedContinuation
+        ? {
+            id: sliceId,
+            baseRevision: workPackage.baseRevision,
+            branch: workPackage.branch,
+            worktreePath: workPackage.worktreePath,
+            headRevision: workPackage.headRevision,
+          }
+        : await this.#worktrees.prepare(task, sliceId, {
+            baseRevision,
+            dependencyRevisions,
+            branchId: sliceId,
+            allowHistoricalBase: Boolean(workPackage.retainedReplacementReason),
+          });
+      if (retainedContinuation) {
+        await this.#worktrees.inspectRetainedSlice(workPackage, { requireClean: false });
+      }
       await this.#store.update(id, (draft) => {
         const target = draft.workPackages.find((item) => item.id === workPackageId);
         target.status = "running";
-        target.attempts = attempt;
+        if (!retainedContinuation) target.attempts = attempt;
         target.branch = slice.branch;
         target.worktreePath = slice.worktreePath;
         target.baseRevision = slice.baseRevision;
         target.error = null;
-        draft.events.push(activity("implement", `${workPackageId} agent started`, `${slice.branch} in dependency batch ${target.batch}.`, "info", "agent"));
+        draft.events.push(activity(
+          "implement",
+          retainedContinuation ? `${workPackageId} retained agent resumed` : `${workPackageId} agent started`,
+          `${slice.branch} in dependency batch ${target.batch}.`,
+          "info",
+          "agent",
+        ));
       });
       task = await this.#store.get(id);
       const currentPackage = task.workPackages.find((item) => item.id === workPackageId);
@@ -1569,7 +1811,11 @@ export class TaskOrchestrator {
       const committed = await this.#worktrees.commit(
         slice,
         `agent-harness(${task.id}): ${workPackageId} ${currentPackage.title}`,
-        { ownedPaths: currentPackage.ownedPaths, allowNoChanges: Boolean(noChangesNeeded) },
+        {
+          ownedPaths: currentPackage.ownedPaths,
+          allowNoChanges: Boolean(noChangesNeeded),
+          squashFromBase: Boolean(retainedContinuation && workPackage.headRevision),
+        },
       );
       const packageHeadRevision = committed.headRevision ?? slice.baseRevision;
       await this.#store.update(id, (draft) => {
@@ -1657,6 +1903,8 @@ export class TaskOrchestrator {
         target.files = committed.files;
         target.verificationRuns ??= qualification ? [qualification] : [];
         target.error = null;
+        target.retainedContinuation = null;
+        target.retainedReplacementReason = null;
         draft.events.push(activity(
           "implement",
           `${workPackageId} ready for integration`,
@@ -1676,6 +1924,113 @@ export class TaskOrchestrator {
       });
       throw error;
     }
+  }
+
+  async #requalifyRetainedWorkPackage(id, workPackageId, signal) {
+    let task = await this.#store.get(id);
+    const workPackage = task.workPackages.find((item) => item.id === workPackageId);
+    if (!workPackage?.headRevision || !workPackage.worktreePath) {
+      throw new Error(`${workPackageId} has no exact retained slice to requalify.`);
+    }
+    const retained = await this.#worktrees.inspectRetainedSlice(workPackage, {
+      ownedPaths: workPackage.ownedPaths,
+      requireClean: true,
+    });
+    throwIfAborted(signal);
+    const manifestSourceRevision = (await this.#worktrees.base(task, { allowDirty: true })).baseRevision;
+    const manifest = await this.#readVerificationManifestAtRevision(
+      task.repositoryPath,
+      manifestSourceRevision,
+    );
+    const qualification = await this.#runPackageVerification({
+      worktreePath: retained.worktreePath,
+      workPackage,
+      workPackageId,
+      attempt: workPackage.attempts,
+      headRevision: retained.headRevision,
+      signal,
+      manifest,
+    });
+    qualification.manifestSourceRevision = manifestSourceRevision;
+    throwIfAborted(signal);
+    if (qualification.status !== "passed") {
+      await this.#store.update(id, (draft) => {
+        const target = draft.workPackages.find((item) => item.id === workPackageId);
+        target.verificationRuns ??= [];
+        target.verificationRuns.push(qualification);
+        target.status = "failed";
+        target.error = `${workPackageId} retained slice did not qualify under the corrected verification plan.`;
+      });
+      const failed = qualification.rows?.find((row) => row.status !== "passed");
+      throw new Error(
+        `${workPackageId} retained slice did not qualify: ${failed?.id ?? "repository verification"} failed${failed?.failureDetails ? ` — ${failed.failureDetails}` : "."}`,
+      );
+    }
+    const startedAt = now();
+    let runId = null;
+    await this.#store.update(id, (draft) => {
+      const reservation = requireActiveRunReservation(draft, "implementation", "implement");
+      const run = beginAgentRun(draft, {
+        kind: "implementation",
+        provider: reservation.provider,
+        stage: "implement",
+        role: "implement",
+        model: null,
+        reasoning: null,
+        startedAt,
+        candidateId: null,
+        candidateRevision: null,
+        candidateHeadRevision: null,
+        workPackageId,
+        workflowAttempt: reservation.workflowAttempt,
+        workflowReservationId: reservation.id,
+      });
+      run.source = "harness-requalification";
+      runId = run.id;
+      completeAgentRun(draft, run.id, {
+        status: "completed",
+        completedAt: now(),
+        durationMs: qualification.durationMs ?? 0,
+        usage: null,
+        runtimeEvents: [],
+        error: null,
+      });
+    });
+    const content = `## Outcome\n\n${workPackageId} reused its exact clean retained commit after the corrected repository verification plan passed. No model implementation was rerun.\n\n${workPackageVerificationMarkdown(qualification)}\n\n## Harness retained-slice evidence\n\n- Work package: ${workPackageId}\n- Base: ${workPackage.baseRevision}\n- Package commit: ${retained.headRevision}\n- Branch: ${retained.branch}\n- Verification manifest source revision: ${manifestSourceRevision}\n- Changed files: ${retained.files.length}`;
+    await this.#retainAgentResult(id, "implement", {
+      runId,
+      finalText: content,
+      startedAt,
+      completedAt: now(),
+      durationMs: qualification.durationMs ?? 0,
+      usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0 },
+      runtimeEvents: [],
+    }, {
+      synthetic: true,
+      complete: false,
+      replace: false,
+      name: `slice-${workPackageId.toLowerCase()}-retained-requalification.md`,
+      workPackageId,
+      focusedTestEvidence: qualification,
+      artifactTitle: `${workPackageId} retained slice requalified`,
+    });
+    task = await this.#store.get(id);
+    await this.#cleanupSliceWorktree(id, task, retained.worktreePath);
+    await this.#store.update(id, (draft) => {
+      const target = draft.workPackages.find((item) => item.id === workPackageId);
+      target.status = "ready_for_integration";
+      target.verificationRuns ??= [];
+      target.verificationRuns.push(qualification);
+      target.error = null;
+      target.retainedForRequalification = false;
+      draft.events.push(activity(
+        "implement",
+        `${workPackageId} retained commit ready for integration`,
+        `${retained.headRevision.slice(0, 8)} passed the corrected focused repository verification without another model implementation run.`,
+        "success",
+        "decision",
+      ));
+    });
   }
 
   /**
@@ -2402,7 +2757,7 @@ export class TaskOrchestrator {
       ));
     });
     const runtimeEvents = [];
-    const commandLimit = reviewCommandLimit(stageId);
+    const commandLimit = candidateGateCommandLimit(stageId);
     const runController = commandLimit == null ? null : new AbortController();
     let commandStarts = 0;
     let commandLimitExceeded = false;
@@ -2437,7 +2792,7 @@ export class TaskOrchestrator {
         model: policy.model,
         reasoning: policy.reasoning,
         tempDirectory: runtimeTemp,
-        timeoutMs: stageTimeoutMs(stageId, effectiveSandbox),
+        timeoutMs: stageTimeoutMs(stageId, effectiveSandbox, task),
         onEvent(event) {
           if (event.type === "activity") runtimeEvents.push(event);
           if (
@@ -2646,7 +3001,11 @@ function candidateGateFailure(task, candidate, stages = CANDIDATE_GATE_STAGES) {
 
 function sameCandidateTestRetryContext(task) {
   const candidate = currentCandidate(task);
-  if (task.status !== "repair-required" || task.currentStage !== "test" || candidate.status !== "repair_required") {
+  if (
+    !["repair-required", "failed", "blocked"].includes(task.status) ||
+    task.currentStage !== "test" ||
+    !["repair_required", "ready_for_test"].includes(candidate.status)
+  ) {
     throw new Error("The task is not awaiting a retryable Test failure.");
   }
   const verification = [...(candidate.verificationRuns ?? [])].reverse().find((entry) =>
@@ -2708,18 +3067,16 @@ function resolveRunAgentPolicy(task, policyId, settings) {
   return resolveAgentPolicy(task, "implement", settings);
 }
 
-function stageTimeoutMs(stageId, sandbox) {
-  if (["implement", "repair"].includes(stageId)) return 900_000;
-  if (sandbox === "workspace-write" || ["plan", "dev-review", "final-review"].includes(stageId)) return 600_000;
-  return 360_000;
-}
-
-function reviewCommandLimit(stageId) {
-  return {
-    "dev-review": 8,
-    test: 2,
-    "final-review": 2,
-  }[stageId] ?? null;
+function stageTimeoutMs(stageId, sandbox, task = null) {
+  const defaultTimeout = ["implement", "repair"].includes(stageId)
+    ? 900_000
+    : sandbox === "workspace-write" || ["plan", "dev-review", "final-review"].includes(stageId)
+      ? 600_000
+      : 360_000;
+  const configured = task?.stageTimeoutOverridesMs?.[stageId];
+  return Number.isInteger(configured) && configured >= defaultTimeout && configured <= 3_600_000
+    ? configured
+    : defaultTimeout;
 }
 
 export function evaluationVerdict(stageId, result, focusedTestEvidence = null, structuredGateEvidence = null) {
@@ -3124,6 +3481,24 @@ function parseNoChangesNeeded(text) {
   } catch {
     return null;
   }
+}
+
+function retainedSliceCanBeRequalified(prior, revised) {
+  if (
+    prior?.status !== "failed" ||
+    !prior.headRevision ||
+    !prior.worktreePath ||
+    !prior.branch ||
+    !prior.baseRevision ||
+    !Array.isArray(prior.files) ||
+    !/(?:repository manifest command id|did not qualify)/i.test(prior.error ?? "") ||
+    !revised.verificationCommandIds?.length
+  ) {
+    return false;
+  }
+  const priorOwnedPaths = [...(prior.ownedPaths ?? [])].sort();
+  const revisedOwnedPaths = [...(revised.ownedPaths ?? [])].sort();
+  return priorOwnedPaths.every((priorPath) => isOwnedFile(priorPath, revisedOwnedPaths));
 }
 
 function dependencyClosure(workPackage, packages, seen = new Set()) {

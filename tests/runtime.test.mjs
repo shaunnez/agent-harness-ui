@@ -1068,6 +1068,7 @@ test("persists tasks and recovers interrupted runs", async () => {
     const recovered = await reloaded.get(task.id);
     assert.equal(recovered.status, "failed");
     assert.match(recovered.error, /stopped while this task was running/i);
+    assert.equal(recovered.stageRunLimits.triage, 4, "a harness restart preserves the human retry allowance");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -1097,6 +1098,7 @@ test("cancellation wins when an implementation agent completes after abort", asy
           batch: 1,
           ownedPaths: ["feature.txt"],
           verification: [],
+          verificationCommandIds: ["test"],
           status: "planned",
           attempts: 0,
           branch: null,
@@ -3028,12 +3030,19 @@ test("offers recovery actions that match target drift, invalid plans, and retrya
     })), />Refresh candidate from main</);
 
     const invalidPlan = createTask({
-      status: "failed",
+      status: "blocked",
       currentStage: "implement",
       error: "S1: Focused package verification requires at least one repository manifest command id.",
     });
     assert.equal(nextAction(invalidPlan).action, "plan");
     assert.match(nextAction(invalidPlan).label, /Correct implementation plan/);
+
+    const failedQualification = createTask({
+      status: "blocked",
+      currentStage: "implement",
+      error: "S1 did not qualify: backend-test failed.",
+    });
+    assert.equal(nextAction(failedQualification).action, "plan");
 
     const failedVerification = {
       candidateId: "C1",

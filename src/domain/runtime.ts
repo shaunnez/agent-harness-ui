@@ -271,6 +271,14 @@ export interface RuntimeWorkPackage {
   headRevision: string | null;
   files: string[];
   error: string | null;
+  retainedForRequalification?: boolean;
+  retainedReplacementReason?: "already-applied" | "conflicts" | null;
+  retainedContinuation?: {
+    requestedAt: string;
+    files: string[];
+    outsideOwnership: string[];
+    qualificationFailure?: string;
+  } | null;
 }
 
 export interface RuntimeWorktreeInventoryRow {
@@ -328,6 +336,9 @@ export interface RuntimeCandidate {
     authorizingGateReservedAt?: string | null;
     authorizingGateRunId?: string | null;
     authorizingGateArtifactId?: string | null;
+    previousBaseRevision?: string | null;
+    previousHeadRevision?: string | null;
+    baseRevision?: string | null;
   }>;
   members?: Array<{ packageId: string; headRevision: string; order: number }>;
   verificationRuns?: RuntimeFocusedTestEvidence[];

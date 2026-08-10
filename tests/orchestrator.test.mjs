@@ -271,6 +271,239 @@ test("a revised plan retains the rejected plan artifact and replaces package sco
   }
 });
 
+test("corrects a blocked legacy plan and preserves an exact clean slice for requalification", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-correct-blocked-plan-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Correct blocked plan",
+      description: "A persisted zero-command plan must return to read-only planning.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "implement";
+      draft.error = "S1: Focused package verification requires at least one repository manifest command id.";
+      draft.attemptsByStage.plan = 1;
+      draft.attemptsByStage.implement = 6;
+      draft.stageRunLimits.implement = 6;
+      draft.workPackages = [{
+        id: "S1",
+        title: "Browser contract",
+        description: "Retain the exact committed browser change.",
+        dependencies: [],
+        batch: 1,
+        ownedPaths: ["e2e/example.spec.ts"],
+        verification: [],
+        verificationCommandIds: [],
+        verificationRuns: [],
+        status: "failed",
+        attempts: 6,
+        branch: "agent-harness/blocked-plan-s1-a6",
+        worktreePath: "/tmp/blocked-plan-s1-a6",
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        files: ["e2e/example.spec.ts"],
+        error: draft.error,
+      }];
+    });
+    const revisedOutput = `<work-packages>{"packages":[{"id":"S1","title":"Browser contract","description":"Retain the exact committed browser change.","dependencies":[],"ownedPaths":["e2e/example.spec.ts"],"verificationCommandIds":["playwright-e2e"]}]}</work-packages>`;
+    const orchestrator = new TaskOrchestrator(store, {
+      readVerificationManifest: async () => ({
+        source: ".agent-harness/verification.json",
+        commands: [{ id: "playwright-e2e", command: ["make", "e2e-native"] }],
+      }),
+      runCodex: async () => ({
+        finalText: revisedOutput,
+        model: "gpt-5.6-sol",
+        reasoning: "high",
+        usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    assert.deepEqual(await orchestrator.correctInvalidPlan(task.id), { started: true });
+    const revised = await waitForStatus(store, task.id, "awaiting-plan-approval");
+    assert.equal(revised.stageRunLimits.implement, 7);
+    assert.equal(revised.workPackages[0].retainedForRequalification, true);
+    assert.equal(revised.workPackages[0].headRevision, "b".repeat(40));
+    assert.deepEqual(revised.workPackages[0].verificationCommandIds, ["playwright-e2e"]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("returns a failed package qualification to Plan and retains its commit for scoped continuation", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-correct-qualification-plan-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Correct qualification scope",
+      description: "Add the contract test exposed by focused package verification.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "implement";
+      draft.error = "S1 did not qualify: backend-test failed.";
+      draft.attemptsByStage.plan = 1;
+      draft.attemptsByStage.implement = 3;
+      draft.workPackages = [{
+        id: "S1",
+        title: "Change route contract",
+        description: "Implement the route change.",
+        dependencies: [],
+        batch: 1,
+        ownedPaths: ["src/route.ts"],
+        verification: [],
+        verificationCommandIds: ["test"],
+        verificationRuns: [],
+        status: "failed",
+        attempts: 3,
+        branch: "agent-harness/qualification-s1-a3",
+        worktreePath: "/tmp/qualification-s1-a3",
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        files: ["src/route.ts"],
+        error: draft.error,
+      }];
+    });
+    const revisedOutput = `<work-packages>{"packages":[{"id":"S1","title":"Change route contract","description":"Repair the route and its contract snapshot.","dependencies":[],"ownedPaths":["src","tests/contract.test.ts"],"verificationCommandIds":["test"]}]}</work-packages>`;
+    const orchestrator = new TaskOrchestrator(store, {
+      readVerificationManifest: async () => ({
+        source: ".agent-harness/verification.json",
+        commands: [{ id: "test", command: ["npm", "test"] }],
+      }),
+      worktreeManager: {
+        base: async () => ({ repositoryRoot: directory, baseRevision: "c".repeat(40), baseBranch: "main" }),
+        retainedPatchDisposition: async () => "pending",
+      },
+      runCodex: async () => ({
+        finalText: revisedOutput,
+        model: "gpt-5.6-sol",
+        reasoning: "high",
+        usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    assert.deepEqual(await orchestrator.correctInvalidPlan(task.id), { started: true });
+    const revised = await waitForStatus(store, task.id, "awaiting-plan-approval");
+    assert.equal(revised.stageRunLimits.implement, 4);
+    assert.equal(revised.workPackages[0].retainedForRequalification, false);
+    assert.match(revised.workPackages[0].retainedContinuation.qualificationFailure, /did not qualify/);
+    assert.deepEqual(revised.workPackages[0].ownedPaths, ["src", "tests/contract.test.ts"]);
+    assert.equal(revised.workPackages[0].headRevision, "b".repeat(40));
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("requalifies an exact clean retained slice without rerunning model implementation", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-requalify-retained-slice-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Requalify retained slice",
+      description: "Use the corrected manifest against the exact clean package commit.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const baseRevision = "a".repeat(40);
+    const packageRevision = "b".repeat(40);
+    const candidateRevision = "c".repeat(40);
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-implementation";
+      draft.currentStage = "implement";
+      draft.workPackages = [{
+        id: "S1",
+        title: "Browser contract",
+        description: "Requalify the exact retained browser change.",
+        dependencies: [],
+        batch: 1,
+        ownedPaths: ["e2e/example.spec.ts"],
+        verification: [],
+        verificationCommandIds: ["playwright-e2e"],
+        verificationRuns: [],
+        status: "planned",
+        attempts: 6,
+        branch: "agent-harness/requalify-s1-a6",
+        worktreePath: "/tmp/requalify-s1-a6",
+        baseRevision,
+        headRevision: packageRevision,
+        files: ["e2e/example.spec.ts"],
+        error: null,
+        retainedForRequalification: true,
+      }];
+    });
+    let modelCalls = 0;
+    const qualification = {
+      ...makeFocusedTestSummary({ candidateId: "S1", candidateRevision: 6 }),
+      headRevision: packageRevision,
+      executionKind: "focused-package",
+    };
+    const orchestrator = new TaskOrchestrator(store, {
+      readVerificationManifest: async () => ({
+        source: ".agent-harness/verification.json",
+        commands: [{ id: "playwright-e2e", command: ["make", "e2e-native"] }],
+      }),
+      runCodex: async () => {
+        modelCalls += 1;
+        throw new Error("Model implementation must not rerun for exact retained requalification.");
+      },
+      runPackageVerification: async () => qualification,
+      worktreeManager: {
+        base: async () => ({ repositoryRoot: directory, baseRevision, baseBranch: "main" }),
+        inspectRetainedSlice: async () => ({
+          branch: "agent-harness/requalify-s1-a6",
+          files: ["e2e/example.spec.ts"],
+          headRevision: packageRevision,
+          worktreePath: "/tmp/requalify-s1-a6",
+          clean: true,
+        }),
+        removeWorktree: async () => [],
+        prepare: async (_task, candidateId, options) => ({
+          id: candidateId,
+          revisionNumber: 1,
+          baseRevision: options.baseRevision,
+          baseBranch: "main",
+          baseRef: "refs/heads/main",
+          headRevision: null,
+          branch: `agent-harness/${candidateId.toLowerCase()}`,
+          repositoryRoot: directory,
+          worktreePath: directory,
+          status: "assembling",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          revisions: [],
+        }),
+        assemble: async () => ({
+          headRevision: candidateRevision,
+          files: ["e2e/example.spec.ts"],
+          summary: "1 file changed",
+          diff: "",
+        }),
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id, "implementation"), true);
+    const ready = await waitForStatus(store, task.id, "ready-for-review");
+    assert.equal(modelCalls, 0);
+    assert.equal(ready.workPackages[0].status, "integrated");
+    const retainedRun = ready.runs.find((run) => run.source === "harness-requalification");
+    assert.equal(retainedRun.status, "completed");
+    assert.equal(ready.artifacts.find((artifact) => artifact.runId === retainedRun.id).model, null);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("a plan parse failure retains the exact failed attempt without replacing prior scope", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-invalid-plan-"));
   try {
@@ -1686,6 +1919,10 @@ test("malformed focused Test ingestion persists the exact reason and blocks appr
       (candidate) => harnessEvidence(candidate, { bindingExplicit: false }),
     ];
     const orchestrator = new TaskOrchestrator(store, {
+      readVerificationManifest: async () => ({
+        source: ".agent-harness/verification.json",
+        commands: [{ id: "test", command: ["npm", "test"] }],
+      }),
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       worktreeManager: {
         async verifyCandidate() {},
@@ -2021,7 +2258,7 @@ test("stops Development Review when it exceeds the hard repository-command budge
 
     assert.equal(await orchestrator.start(task.id, "review"), true);
     const failed = await waitForStatus(store, task.id, "failed");
-    assert.match(failed.error, /hard 8-command review budget/i);
+    assert.match(failed.error, /hard 4-command review budget/i);
     assert.equal(failed.runs.at(-1).status, "failed");
     assert.ok(failed.events.some((event) => event.title === "Review command budget exceeded"));
   } finally {
@@ -2184,6 +2421,13 @@ test("an exact failed Focused Test permits one explicit same-candidate rerun wit
     assert.equal(repairReady.gateFreshness.test.reasonCode, "repair_required");
     assert.equal(repairReady.gateFreshness.test.focusedTest.status, "failed");
     assert.equal(repairReady.candidates.at(-1).status, "repair_required");
+
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "test";
+      draft.attemptsByStage.test = draft.stageRunLimits.test;
+      draft.candidates.at(-1).status = "ready_for_test";
+    });
 
     assert.deepEqual(await orchestrator.retryTestOnSameCandidate(task.id), { started: true });
     const failedAgain = await waitForStatus(store, task.id, "repair-required");
@@ -3962,6 +4206,7 @@ test("keeps implementation reservations candidate-unbound across assembly retrie
         batch: 1,
         ownedPaths: ["server/example.mjs"],
         verification: ["npm test"],
+        verificationCommandIds: ["test"],
         status: "ready_for_integration",
         attempts: 1,
         branch: "agent-harness/test-s1",
@@ -3974,6 +4219,10 @@ test("keeps implementation reservations candidate-unbound across assembly retrie
     });
     const orchestrator = new TaskOrchestrator(store, {
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      readVerificationManifest: async () => ({
+        source: ".agent-harness/verification.json",
+        commands: [{ id: "test", title: "test", command: ["npm", "test"], report: null }],
+      }),
       worktreeManager: {
         base: async () => ({ repositoryRoot: directory, baseRevision: "a".repeat(40), baseBranch: "main" }),
         prepare: async (_task, candidateId) => ({
@@ -4789,6 +5038,168 @@ test("refreshes a target-diverged candidate as a new revision and invalidates do
     assert.equal(candidate.revisions.at(-1).reason, "target-refresh");
     assert.deepEqual(refreshed.completedStages, ["triage", "scouts", "grill", "specification", "plan", "implement"]);
     assert.match(refreshed.events.at(-1).detail, /must pass every candidate-bound gate again/i);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("blocks a candidate gate on target drift before reserving an attempt", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-gate-target-drift-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Pause stale candidate gate",
+      description: "Do not spend a review attempt after the target advances.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage["dev-review"] = 2;
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 1,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        baseRef: "refs/heads/main",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/stale-candidate",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "ready_for_review",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        revisions: [],
+      }];
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: { mergeState: async () => "diverged" },
+    });
+
+    await assert.rejects(
+      () => orchestrator.start(task.id, "review"),
+      /Refresh the candidate before spending another candidate-bound gate attempt/,
+    );
+    const blocked = await store.get(task.id);
+    assert.equal(blocked.status, "blocked");
+    assert.equal(blocked.blocker.code, "target-diverged");
+    assert.equal(blocked.attemptsByStage["dev-review"], 2);
+    assert.equal(blocked.activeRunKind, null);
+    assert.match(blocked.events.at(-1).detail, /No gate attempt was spent/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("continues a timed-out retained package without discarding progress or incrementing its package attempt", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-retained-continuation-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Continue retained package",
+      description: "Resume the exact timed-out slice with a bounded longer timeout.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+    });
+    const baseRevision = "a".repeat(40);
+    const packageRevision = "b".repeat(40);
+    const candidateRevision = "c".repeat(40);
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "implement";
+      draft.error = "S1: Codex run exceeded 900 seconds.";
+      draft.attemptsByStage.implement = 4;
+      draft.stageRunLimits.implement = 4;
+      draft.workPackages = [{
+        id: "S1",
+        title: "Retained implementation",
+        description: "Finish the retained package.",
+        dependencies: [],
+        batch: 1,
+        ownedPaths: ["src/feature.ts"],
+        verification: [],
+        verificationCommandIds: ["test"],
+        verificationRuns: [],
+        status: "failed",
+        attempts: 4,
+        branch: "agent-harness/retained-s1-a4",
+        worktreePath: "/tmp/retained-s1-a4",
+        baseRevision,
+        headRevision: null,
+        files: [],
+        error: "Codex run exceeded 900 seconds.",
+      }];
+    });
+    let request = null;
+    const orchestrator = new TaskOrchestrator(store, {
+      readVerificationManifest: async () => ({
+        source: ".agent-harness/verification.json",
+        commands: [{ id: "test", command: ["npm", "test"] }],
+      }),
+      runCodex: async (input) => {
+        request = input;
+        return {
+          finalText: "## Outcome\nDone\n## Changes\nScoped\n## Verification\nFocused\n## Ownership exceptions\nNone\n## Remaining risks\nNone",
+          model: "gpt-5.6-sol",
+          reasoning: "xhigh",
+          usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5, totalTokens: 15 },
+        };
+      },
+      runPackageVerification: async () => makeFocusedTestSummary({ candidateId: "S1", candidateRevision: 4 }),
+      worktreeManager: {
+        base: async () => ({ repositoryRoot: directory, baseRevision, baseBranch: "main" }),
+        inspectRetainedSlice: async () => ({
+          branch: "agent-harness/retained-s1-a4",
+          files: ["src/feature.ts", "src/outside.ts"],
+          headRevision: baseRevision,
+          worktreePath: "/tmp/retained-s1-a4",
+          clean: false,
+        }),
+        commit: async () => ({
+          headRevision: packageRevision,
+          files: ["src/feature.ts"],
+          summary: "1 file changed",
+          ownSummary: "1 file changed",
+          noChangesNeeded: false,
+        }),
+        removeWorktree: async () => [],
+        prepare: async (_task, candidateId, options) => ({
+          id: candidateId,
+          revisionNumber: 1,
+          baseRevision: options.baseRevision,
+          baseBranch: "main",
+          baseRef: "refs/heads/main",
+          headRevision: null,
+          branch: `agent-harness/${candidateId.toLowerCase()}`,
+          repositoryRoot: directory,
+          worktreePath: directory,
+          status: "assembling",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          revisions: [],
+        }),
+        assemble: async () => ({
+          headRevision: candidateRevision,
+          files: ["src/feature.ts"],
+          summary: "1 file changed",
+          diff: "",
+        }),
+      },
+    });
+
+    assert.deepEqual(await orchestrator.continueRetainedPackage(task.id), { started: true });
+    const ready = await waitForStatus(store, task.id, "ready-for-review");
+    assert.equal(ready.workPackages[0].attempts, 4);
+    assert.equal(ready.stageRunLimits.implement, 5);
+    assert.equal(request.timeoutMs, 1_800_000);
+    assert.match(request.prompt, /restore every retained path outside declared ownership: src\/outside\.ts/i);
+    assert.equal(ready.candidates[0].baseRevision, baseRevision);
+    assert.equal(ready.candidates[0].headRevision, candidateRevision);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

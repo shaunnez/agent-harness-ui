@@ -51,9 +51,9 @@ export class GitWorktreeManager {
     this.#root = path.resolve(root);
   }
 
-  async base(task) {
+  async base(task, options = {}) {
     const repositoryRoot = await this.repositoryRoot(task.repositoryPath);
-    await assertClean(repositoryRoot);
+    if (!options.allowDirty) await assertClean(repositoryRoot);
     const baseBranch = (await git(repositoryRoot, ["branch", "--show-current"])).stdout.trim() || "detached";
     return {
       repositoryRoot,
@@ -75,11 +75,15 @@ export class GitWorktreeManager {
 
   async #prepare(task, candidateId, options = {}) {
     const repositoryRoot = await this.repositoryRoot(task.repositoryPath);
-    await assertClean(repositoryRoot);
+    if (!options.allowHistoricalBase) await assertClean(repositoryRoot);
     const sourceRevision = (await git(repositoryRoot, ["rev-parse", "HEAD"])).stdout.trim();
     const baseRevision = options.baseRevision ?? sourceRevision;
-    if (sourceRevision !== baseRevision) {
+    if (sourceRevision !== baseRevision && !options.allowHistoricalBase) {
       throw new Error("The source checkout moved after implementation scheduling began.");
+    }
+    if (options.allowHistoricalBase) {
+      const retainedBase = await git(repositoryRoot, ["cat-file", "-e", `${baseRevision}^{commit}`], { allowFailure: true });
+      if (retainedBase.code !== 0) throw new Error("The retained implementation base is no longer available in the repository.");
     }
     const baseBranch = (await git(repositoryRoot, ["branch", "--show-current"])).stdout.trim() || "detached";
     const baseRef = baseBranch === "detached" ? null : `refs/heads/${baseBranch}`;
@@ -128,6 +132,16 @@ export class GitWorktreeManager {
   }
 
   async commit(candidate, message, options = {}) {
+    if (options.squashFromBase) {
+      const currentHead = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
+      const baseIsAncestor = await git(candidate.worktreePath, ["merge-base", "--is-ancestor", candidate.baseRevision, currentHead], {
+        allowFailure: true,
+      });
+      if (baseIsAncestor.code !== 0 || currentHead === candidate.baseRevision) {
+        throw new Error("The retained package cannot be squashed because its recorded base is not an earlier ancestor.");
+      }
+      await git(candidate.worktreePath, ["reset", "--mixed", candidate.baseRevision]);
+    }
     const provisioned = await provisionedDependencies(candidate.worktreePath);
     const status = (await git(candidate.worktreePath, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout;
     const entries = statusEntries(status).filter((entry) => !isProvisionedPath(entry.file, provisioned));
@@ -353,6 +367,77 @@ export class GitWorktreeManager {
   async assertWorktreeClean(worktreePath) {
     await assertClean(await this.repositoryRoot(worktreePath));
     return true;
+  }
+
+  async inspectRetainedSlice(candidate, options = {}) {
+    const worktreePath = await realpath(path.resolve(candidate.worktreePath));
+    const worktreeRootBoundary = await realpath(this.#root).catch(() => this.#root);
+    if (!worktreePath.startsWith(`${worktreeRootBoundary}${path.sep}`)) {
+      throw new Error("Retained slice validation refused a worktree outside harness storage.");
+    }
+    const worktreeRoot = await this.repositoryRoot(worktreePath);
+    if (worktreeRoot !== worktreePath) {
+      throw new Error("Retained slice validation could not verify the recorded worktree root.");
+    }
+    const headRevision = (await git(worktreeRoot, ["rev-parse", "HEAD"])).stdout.trim();
+    if (candidate.headRevision && headRevision !== candidate.headRevision) {
+      throw new Error("The retained slice no longer matches its recorded revision.");
+    }
+    const branch = (await git(worktreeRoot, ["branch", "--show-current"])).stdout.trim();
+    if (candidate.branch && branch !== candidate.branch) {
+      throw new Error("The retained slice no longer matches its recorded branch.");
+    }
+    const provisioned = await provisionedDependencies(worktreeRoot);
+    const status = statusEntries(
+      (await git(worktreeRoot, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout,
+    ).filter((entry) => !isProvisionedPath(entry.file, provisioned));
+    if (options.requireClean !== false && status.length) {
+      throw new Error("The retained slice is not clean and cannot be requalified without another implementation run.");
+    }
+    const committedFiles = candidate.baseRevision
+      ? (await git(worktreeRoot, ["diff", "--name-only", candidate.baseRevision, headRevision])).stdout
+          .split(/\r?\n/)
+          .filter(Boolean)
+      : [];
+    const files = [...new Set([...committedFiles, ...status.map((entry) => entry.file)])].sort();
+    if (options.ownedPaths) {
+      const outOfScope = files.find((file) => !isOwnedFile(file, options.ownedPaths));
+      if (outOfScope) {
+        throw new Error(
+          `The retained slice changed ${outOfScope}, which is outside the current work package ownership (${options.ownedPaths.join(", ")}).`,
+        );
+      }
+    }
+    if (candidate.files?.length && options.requireClean !== false) {
+      const recordedFiles = [...candidate.files].sort();
+      if (JSON.stringify(recordedFiles) !== JSON.stringify([...committedFiles].sort())) {
+        throw new Error("The retained slice file set no longer matches its recorded package evidence.");
+      }
+    }
+    return { branch, files, headRevision, worktreePath, clean: status.length === 0 };
+  }
+
+  async retainedPatchDisposition(candidate, targetRevision) {
+    const retained = await this.inspectRetainedSlice(candidate, { requireClean: true });
+    const repositoryRoot = await this.repositoryRoot(candidate.repositoryRoot ?? retained.worktreePath);
+    const checkedOutTarget = (await git(repositoryRoot, ["rev-parse", "HEAD"])).stdout.trim();
+    if (checkedOutTarget !== targetRevision) {
+      throw new Error("The target checkout moved while the retained slice was being compared.");
+    }
+    const diffArgs = ["diff", "--binary", candidate.baseRevision, retained.headRevision];
+    if (candidate.files?.length) diffArgs.push("--", ...candidate.files);
+    const patch = (await git(retained.worktreePath, diffArgs)).stdout;
+    if (!patch.trim()) return "already-applied";
+    const reverse = await git(repositoryRoot, ["apply", "--check", "--reverse"], {
+      allowFailure: true,
+      input: patch,
+    });
+    if (reverse.code === 0) return "already-applied";
+    const forward = await git(repositoryRoot, ["apply", "--check"], {
+      allowFailure: true,
+      input: patch,
+    });
+    return forward.code === 0 ? "pending" : "conflicts";
   }
 
   async removeWorktree(candidate) {

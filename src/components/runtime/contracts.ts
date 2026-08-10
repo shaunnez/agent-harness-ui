@@ -8,6 +8,7 @@ export type RuntimeWorkflowAction =
   | "specification"
   | "plan"
   | "implement"
+  | "continue-package"
   | "repair"
   | "review"
   | "test"

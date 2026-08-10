@@ -346,10 +346,17 @@ export function migratePersistedTaskState(state) {
     }
     if (task.status !== "running") continue;
     changed = true;
+    const interruptedReservation = Object.values(task.stageRunReservations ?? {}).find(
+      (reservation) => reservation?.id === task.activeRunReservationId,
+    );
+    const interruptedStage = interruptedReservation?.stage ?? task.currentStage;
+    const priorLimit = task.stageRunLimits?.[interruptedStage] ?? DEFAULT_STAGE_RUN_LIMIT;
+    task.stageRunLimits ??= {};
+    task.stageRunLimits[interruptedStage] = priorLimit + 1;
     task.status = "failed";
     task.activeRunKind = null;
     task.activeRunReservationId = null;
-    task.error = "The local harness stopped while this task was running. Start it again to retry the stage.";
+    task.error = "The local harness stopped while this task was running. Start it again to retry the stage; the interruption did not consume the human retry allowance.";
     interruptActiveRuns(task, now, task.error);
     task.updatedAt = now;
     const interruptedRun = [...task.runs].reverse().find((run) => run.status === "interrupted");

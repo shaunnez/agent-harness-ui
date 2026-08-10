@@ -1,12 +1,15 @@
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { promisify } from "node:util";
 import test from "node:test";
 import {
   parsePlaywrightJsonReport,
   parseVerificationManifest,
   readVerificationManifest,
+  readVerificationManifestAtRevision,
   resolveReportPath,
   runRepositoryVerification,
   selectVerificationCommands,
@@ -15,6 +18,7 @@ import {
 } from "../server/verification.mjs";
 import { validateFocusedTestEvidence } from "../server/structured-output.mjs";
 
+const exec = promisify(execFile);
 const candidate = { id: "AH-001", revisionNumber: 2, headRevision: "a".repeat(40) };
 const manifest = (commands) => parseVerificationManifest(JSON.stringify({ version: 1, commands }));
 
@@ -101,6 +105,36 @@ test("refuses the stage when the repository declares no verification commands", 
     );
     const parsed = await readVerificationManifest(directory);
     assert.deepEqual(parsed.commands[0].command, ["npm", "test"]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("reads planning commands from the exact target revision rather than uncommitted files", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-manifest-revision-"));
+  try {
+    await exec("git", ["init", "-b", "main"], { cwd: directory });
+    await exec("git", ["config", "user.email", "agent-harness@example.invalid"], { cwd: directory });
+    await exec("git", ["config", "user.name", "Agent Harness Tests"], { cwd: directory });
+    await mkdir(path.join(directory, ".agent-harness"), { recursive: true });
+    const manifestPath = path.join(directory, VERIFICATION_MANIFEST_PATH);
+    await writeFile(
+      manifestPath,
+      JSON.stringify({ version: 1, commands: [{ id: "committed", command: ["npm", "test"] }] }),
+      "utf8",
+    );
+    await exec("git", ["add", VERIFICATION_MANIFEST_PATH], { cwd: directory });
+    await exec("git", ["commit", "-m", "Add verification manifest"], { cwd: directory });
+    const { stdout } = await exec("git", ["rev-parse", "HEAD"], { cwd: directory });
+    await writeFile(
+      manifestPath,
+      JSON.stringify({ version: 1, commands: [{ id: "uncommitted", command: ["npm", "run", "lint"] }] }),
+      "utf8",
+    );
+
+    const parsed = await readVerificationManifestAtRevision(directory, stdout.trim());
+    assert.deepEqual(parsed.commands.map((command) => command.id), ["committed"]);
+    assert.match(parsed.source, new RegExp(`@${stdout.trim()}$`));
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

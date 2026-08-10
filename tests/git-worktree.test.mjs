@@ -38,10 +38,25 @@ test("creates, commits, and fast-forward merges an isolated candidate", async ()
     candidate.headRevision = assembled.headRevision;
 
     assert.deepEqual(firstCommit.files, ["feature.txt"]);
+    const retainedSlice = { ...firstSlice, headRevision: firstCommit.headRevision, files: firstCommit.files };
+    const retainedInspection = await manager.inspectRetainedSlice(retainedSlice, { ownedPaths: ["feature.txt"] });
+    assert.equal(retainedInspection.clean, true);
+    assert.deepEqual(retainedInspection.files, ["feature.txt"]);
+    assert.equal(await manager.retainedPatchDisposition(retainedSlice, base.baseRevision), "pending");
+    await writeFile(path.join(firstSlice.worktreePath, "outside.txt"), "unfinished\n", "utf8");
+    const dirtyInspection = await manager.inspectRetainedSlice(retainedSlice, { requireClean: false });
+    assert.equal(dirtyInspection.clean, false);
+    assert.deepEqual(dirtyInspection.files, ["feature.txt", "outside.txt"]);
+    await assert.rejects(
+      () => manager.inspectRetainedSlice(retainedSlice, { ownedPaths: ["feature.txt"], requireClean: false }),
+      /outside the current work package ownership/i,
+    );
+    await rm(path.join(firstSlice.worktreePath, "outside.txt"));
     assert.match(assembled.summary, /feature\.txt/);
     assert.match(assembled.summary, /second\.txt/);
     assert.equal(await manager.verifyCandidate(candidate), assembled.headRevision);
     await manager.merge(candidate);
+    assert.equal(await manager.retainedPatchDisposition(retainedSlice, assembled.headRevision), "already-applied");
     assert.equal((await readFile(path.join(repository, "feature.txt"), "utf8")).replaceAll("\r\n", "\n"), "candidate\n");
     assert.equal((await readFile(path.join(repository, "second.txt"), "utf8")).replaceAll("\r\n", "\n"), "parallel\n");
 
@@ -129,24 +144,33 @@ test("only accepts an empty diff as success when the caller explicitly allows a 
     const real = await manager.commit(realSlice, "S3", { allowNoChanges: true });
     assert.equal(real.noChangesNeeded, undefined);
     assert.ok(real.headRevision);
+    await writeFile(path.join(realSlice.worktreePath, "contract.test.txt"), "repair\n", "utf8");
+    const squashed = await manager.commit(realSlice, "S3 qualification repair", { squashFromBase: true });
+    assert.equal(squashed.parentRevision, base.baseRevision);
+    assert.deepEqual(squashed.files.sort(), ["contract.test.txt", "feature.txt"]);
+    assert.equal((await git(realSlice.worktreePath, ["rev-list", "--count", `${base.baseRevision}..HEAD`])).stdout.trim(), "1");
 
     // Assembly skips a no-op member entirely rather than cherry-picking a null revision.
     const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
     const assembled = await manager.assemble(candidate, [
       { packageId: "S2", headRevision: noop.headRevision },
-      { packageId: "S3", headRevision: real.headRevision },
+      { packageId: "S3", headRevision: squashed.headRevision },
     ]);
-    assert.deepEqual(assembled.files, ["feature.txt"]);
+    assert.deepEqual(assembled.files, ["contract.test.txt", "feature.txt"]);
 
     // A dependent slice tolerates a no-op dependency's null revision the same way.
     const dependentSlice = await manager.prepare(task, "S4-A1", {
       baseRevision: base.baseRevision,
-      dependencyRevisions: [noop.headRevision, real.headRevision],
+      dependencyRevisions: [noop.headRevision, squashed.headRevision],
       branchId: "S4-A1",
     });
     assert.equal(
       (await readFile(path.join(dependentSlice.worktreePath, "feature.txt"), "utf8")).replaceAll("\r\n", "\n"),
       "candidate\n",
+    );
+    assert.equal(
+      (await readFile(path.join(dependentSlice.worktreePath, "contract.test.txt"), "utf8")).replaceAll("\r\n", "\n"),
+      "repair\n",
     );
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });

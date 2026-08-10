@@ -897,7 +897,7 @@ export function createApiServer({
       }
 
       const actionMatch = url.pathname.match(
-        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|specification|plan|implement|repair|review|test|retry-test|final-review|approve-merge|complete-merged|grant-retry|refresh-candidate)$/,
+        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|specification|plan|implement|continue-package|repair|review|test|retry-test|final-review|approve-merge|complete-merged|grant-retry|refresh-candidate)$/,
       );
       if (request.method === "POST" && actionMatch) {
         const id = decodeURIComponent(actionMatch[1]);
@@ -943,6 +943,16 @@ export function createApiServer({
         }
         if (action === "retry-test") {
           const result = await orchestrator.retryTestOnSameCandidate(id);
+          send(response, 202, result);
+          return;
+        }
+        if (action === "continue-package") {
+          const result = await orchestrator.continueRetainedPackage(id);
+          send(response, 202, result);
+          return;
+        }
+        if (action === "plan" && ["failed", "blocked"].includes(task.status) && task.currentStage === "implement") {
+          const result = await orchestrator.correctInvalidPlan(id);
           send(response, 202, result);
           return;
         }
@@ -1270,12 +1280,13 @@ function retryGrantContext(task) {
     candidate?.status !== "repair_required" &&
     reservation.candidateId === candidate?.id &&
     reservation.candidateRevision + 1 === candidate?.revisionNumber;
+  const adjacentTargetRefresh = adjacentPriorRevision && lineage?.currentRevision?.reason === "target-refresh";
   if (adjacentPriorRevision && reservationRuns.length !== 1) {
     return { error: "The exhausted stage has an inconsistent workflow reservation; resolve it before granting a retry." };
   }
   const authorizingGate = candidate?.status === "repair_required"
     ? failedRepairAuthorizingGate(task, candidate, lineage)
-    : adjacentPriorRevision
+    : adjacentPriorRevision && !adjacentTargetRefresh
       ? adjacentRepairAuthorizingGate(
           task,
           candidate,
@@ -1285,7 +1296,7 @@ function retryGrantContext(task) {
           task.attemptsByStage?.implement ?? 0,
         )
       : null;
-  if ((candidate?.status === "repair_required" || adjacentPriorRevision) && !authorizingGate) {
+  if ((candidate?.status === "repair_required" || (adjacentPriorRevision && !adjacentTargetRefresh)) && !authorizingGate) {
     return { error: "The exhausted candidate repair is missing an exact authorizing gate; resolve the inconsistent history before granting a retry." };
   }
   const authorizingGateRun = authorizingGate?.sourceRunId
@@ -1459,6 +1470,15 @@ function validRetryReservationCandidateBinding(
       reservation.candidateRevision + 1 !== candidate?.revisionNumber
     ) {
       return false;
+    }
+    if (lineage.currentRevision.reason === "target-refresh") {
+      const priorRevision = lineage.byNumber.get(candidate.revisionNumber - 1);
+      return Boolean(
+        priorRevision &&
+        reservation.candidateHeadRevision === priorRevision.headRevision &&
+        validPersistedTimestamp(reservation.reservedAt) &&
+        Date.parse(reservation.reservedAt) >= Date.parse(priorRevision.createdAt),
+      );
     }
     return Boolean(adjacentRepairAuthorizingGate(
       task,
@@ -1652,7 +1672,8 @@ function candidateRevisionLineage(candidate) {
   const authorizingRuns = new Set();
   const authorizingArtifacts = new Set();
   for (const revision of revisions) {
-    const repairRevision = revision?.number > 1;
+    const repairRevision = revision?.number > 1 && revision?.reason === "repair";
+    const targetRefreshRevision = revision?.number > 1 && revision?.reason === "target-refresh";
     const hasValidRepairAuthorizer = repairRevision &&
       CANDIDATE_GATE_STAGES.includes(revision.authorizingGateStage) &&
       Number.isInteger(revision.authorizingGateWorkflowAttempt) &&
@@ -1664,7 +1685,7 @@ function candidateRevisionLineage(candidate) {
       typeof revision.authorizingGateArtifactId === "string" &&
       revision.authorizingGateArtifactId.trim().length > 0 &&
       validPersistedTimestamp(revision.authorizingGateReservedAt);
-    const initialHasNoRepairAuthorizer = !repairRevision && [
+    const hasNoRepairAuthorizer = !repairRevision && [
       revision?.authorizingGateStage,
       revision?.authorizingGateWorkflowAttempt,
       revision?.authorizingGateReservationId,
@@ -1680,14 +1701,27 @@ function candidateRevisionLineage(candidate) {
       typeof revision.headRevision !== "string" ||
       !revision.headRevision.trim() ||
       heads.has(revision.headRevision) ||
-      revision.reason !== (revision.number === 1 ? "assembly" : "repair") ||
-      !Number.isInteger(revision.sourceWorkflowAttempt) ||
-      revision.sourceWorkflowAttempt < 1 ||
-      typeof revision.sourceWorkflowReservationId !== "string" ||
-      !revision.sourceWorkflowReservationId.trim() ||
-      sourceReservations.has(revision.sourceWorkflowReservationId) ||
-      !validPersistedTimestamp(revision.sourceWorkflowReservedAt) ||
-      (!repairRevision && !initialHasNoRepairAuthorizer) ||
+      (revision.number === 1
+        ? revision.reason !== "assembly"
+        : !["repair", "target-refresh"].includes(revision.reason)) ||
+      (!targetRefreshRevision && (
+        !Number.isInteger(revision.sourceWorkflowAttempt) ||
+        revision.sourceWorkflowAttempt < 1 ||
+        typeof revision.sourceWorkflowReservationId !== "string" ||
+        !revision.sourceWorkflowReservationId.trim() ||
+        sourceReservations.has(revision.sourceWorkflowReservationId) ||
+        !validPersistedTimestamp(revision.sourceWorkflowReservedAt)
+      )) ||
+      (targetRefreshRevision && (
+        typeof revision.previousBaseRevision !== "string" ||
+        !revision.previousBaseRevision.trim() ||
+        typeof revision.baseRevision !== "string" ||
+        !revision.baseRevision.trim() ||
+        revision.previousBaseRevision === revision.baseRevision ||
+        [revision.sourceWorkflowAttempt, revision.sourceWorkflowReservationId, revision.sourceWorkflowReservedAt]
+          .some((value) => value != null)
+      )) ||
+      (!repairRevision && !hasNoRepairAuthorizer) ||
       (repairRevision && !hasValidRepairAuthorizer) ||
       (repairRevision && (
         authorizingReservations.has(revision.authorizingGateReservationId) ||
@@ -1701,7 +1735,7 @@ function candidateRevisionLineage(candidate) {
     }
     byNumber.set(revision.number, revision);
     heads.add(revision.headRevision);
-    sourceReservations.add(revision.sourceWorkflowReservationId);
+    if (!targetRefreshRevision) sourceReservations.add(revision.sourceWorkflowReservationId);
     if (repairRevision) {
       authorizingReservations.add(revision.authorizingGateReservationId);
       authorizingRuns.add(revision.authorizingGateRunId);
@@ -1711,27 +1745,39 @@ function candidateRevisionLineage(candidate) {
   if ([...authorizingReservations].some((id) => sourceReservations.has(id))) return null;
   let previousAttempt = 0;
   let previousCreatedAt = -Infinity;
+  let currentProducerRevision = null;
   for (let number = 1; number <= candidate.revisionNumber; number += 1) {
     const revision = byNumber.get(number);
     if (!revision) return null;
     const createdAt = Date.parse(revision.createdAt);
-    const sourceReservedAt = Date.parse(revision.sourceWorkflowReservedAt);
+    if (createdAt <= previousCreatedAt) return null;
     if (
-      revision.sourceWorkflowAttempt <= previousAttempt ||
-      createdAt <= previousCreatedAt ||
-      sourceReservedAt > createdAt ||
-      (number > 1 && sourceReservedAt <= previousCreatedAt)
+      revision.reason === "target-refresh" &&
+      revision.previousHeadRevision != null &&
+      revision.previousHeadRevision !== byNumber.get(number - 1)?.headRevision
     ) {
       return null;
     }
-    previousAttempt = revision.sourceWorkflowAttempt;
+    if (revision.reason !== "target-refresh") {
+      const sourceReservedAt = Date.parse(revision.sourceWorkflowReservedAt);
+      if (
+        revision.sourceWorkflowAttempt <= previousAttempt ||
+        sourceReservedAt > createdAt ||
+        (number > 1 && sourceReservedAt <= previousCreatedAt)
+      ) {
+        return null;
+      }
+      previousAttempt = revision.sourceWorkflowAttempt;
+      currentProducerRevision = revision;
+    }
     previousCreatedAt = createdAt;
   }
   const currentRevision = byNumber.get(candidate.revisionNumber);
   if (
     currentRevision.headRevision !== candidate.headRevision ||
-    currentRevision.sourceWorkflowReservationId !== candidate.sourceWorkflowReservationId ||
-    currentRevision.sourceWorkflowAttempt !== candidate.sourceWorkflowAttempt
+    currentProducerRevision?.sourceWorkflowReservationId !== candidate.sourceWorkflowReservationId ||
+    currentProducerRevision?.sourceWorkflowAttempt !== candidate.sourceWorkflowAttempt ||
+    (currentRevision.reason === "target-refresh" && currentRevision.baseRevision !== candidate.baseRevision)
   ) {
     return null;
   }
@@ -1756,6 +1802,7 @@ function candidateRevisionProducerEvidence(task, candidate, lineage) {
   const packageIds = new Set(task.workPackages.map((workPackage) => workPackage.id));
   for (let number = 1; number <= candidate.revisionNumber; number += 1) {
     const revision = lineage.byNumber.get(number);
+    if (revision.reason === "target-refresh") continue;
     const revisionRuns = allRuns.filter((run) => (
       run.workflowReservationId === revision.sourceWorkflowReservationId &&
       run.workflowAttempt === revision.sourceWorkflowAttempt

@@ -239,8 +239,25 @@ export function nextAction(task: RuntimeTask) {
       detail:
         "Replay the retained candidate onto the latest target as a new revision. The prior revision remains inspectable and every candidate-bound gate must run again.",
     };
-  const invalidApprovedPlan = task.status === "failed" && task.currentStage === "implement" &&
-    /verification requires at least one repository manifest command id|approved plan does not contain executable work packages/i.test(task.error ?? "");
+  const retainedTimedOutPackage = [...(task.workPackages ?? [])].reverse().find((workPackage) =>
+    workPackage.status === "failed" &&
+    Boolean(workPackage.worktreePath) &&
+    /run exceeded \d+ seconds|harness stopped while this task was running/i.test(workPackage.error ?? task.error ?? "")
+  );
+  if (
+    retainedTimedOutPackage &&
+    ["failed", "blocked"].includes(task.status) &&
+    task.currentStage === "implement"
+  )
+    return {
+      action: "continue-package" as const,
+      label: `Continue retained ${retainedTimedOutPackage.id}`,
+      title: "Resume the retained implementation package",
+      detail:
+        "Validate the exact retained branch and dirty files, continue without discarding in-scope progress, restore paths outside declared ownership, and use the bounded 30-minute continuation timeout.",
+    };
+  const invalidApprovedPlan = ["failed", "blocked"].includes(task.status) && task.currentStage === "implement" &&
+    /verification requires at least one repository manifest command id|approved plan does not contain executable work packages|did not qualify/i.test(task.error ?? "");
   if (invalidApprovedPlan)
     return {
       action: "plan" as const,
@@ -260,10 +277,17 @@ export function nextAction(task: RuntimeTask) {
   const sameCandidateTestRetryUsed = task.sameCandidateTestRetries?.some((retry) =>
     retry.candidateId === candidate?.id && retry.candidateRevision === candidate?.revisionNumber
   );
+  const failedExactCandidateVerification = [...(candidate?.verificationRuns ?? [])].reverse().find((verification) =>
+    verification.candidateId === candidate?.id &&
+    verification.candidateRevision === candidate?.revisionNumber &&
+    verification.headRevision === candidate?.headRevision &&
+    verification.status === "failed" &&
+    verification.retryDisposition !== "human-rerun-requested"
+  );
   if (
-    task.status === "repair-required" &&
+    ["repair-required", "failed", "blocked"].includes(task.status) &&
     task.currentStage === "test" &&
-    latestTestArtifact?.focusedTest?.status === "failed" &&
+    (latestTestArtifact?.focusedTest?.status === "failed" || failedExactCandidateVerification) &&
     !blockingCandidateDefect &&
     !sameCandidateTestRetryUsed
   )
