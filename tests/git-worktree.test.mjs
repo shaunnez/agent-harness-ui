@@ -172,6 +172,7 @@ test("only accepts an empty diff as success when the caller explicitly allows a 
       (await readFile(path.join(dependentSlice.worktreePath, "contract.test.txt"), "utf8")).replaceAll("\r\n", "\n"),
       "repair\n",
     );
+    const dependentBase = (await git(dependentSlice.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
     await writeFile(path.join(dependentSlice.worktreePath, "dependent.txt"), "initial\n", "utf8");
     const dependent = await manager.commit(dependentSlice, "S4", { ownedPaths: ["dependent.txt", "dependent-repair.txt"] });
     dependentSlice.headRevision = dependent.headRevision;
@@ -180,9 +181,9 @@ test("only accepts an empty diff as success when the caller explicitly allows a 
       ownedPaths: ["dependent.txt", "dependent-repair.txt"],
       squashFromBase: true,
     });
-    assert.equal(continued.parentRevision, squashed.headRevision);
+    assert.equal(continued.parentRevision, dependentBase);
     assert.deepEqual(continued.files.sort(), ["dependent-repair.txt", "dependent.txt"]);
-    assert.equal((await git(dependentSlice.worktreePath, ["rev-list", "--count", `${squashed.headRevision}..HEAD`])).stdout.trim(), "1");
+    assert.equal((await git(dependentSlice.worktreePath, ["rev-list", "--count", `${dependentBase}..HEAD`])).stdout.trim(), "1");
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
