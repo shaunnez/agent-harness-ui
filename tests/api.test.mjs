@@ -3413,6 +3413,68 @@ test("grants a fresh gate attempt after consecutive target refreshes without req
   }
 });
 
+test("grants a fresh gate attempt to a rebuilt candidate after the prior candidate is superseded", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Rebuilt candidate exhausted gate",
+      description: "A newly assembled candidate must not inherit an unusable prior-candidate reservation.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+      const priorCandidate = attachAssemblyLineage(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        baseRevision: "target-base-r1",
+        headRevision: "candidate-c1-r1",
+        status: "superseded",
+      });
+      draft.candidates.push(priorCandidate);
+      draft.runs.push(...[1, 2, 3].map((attempt) => ({
+        id: `run-superseded-review-${attempt}`,
+        stage: "dev-review",
+        status: "failed",
+      })));
+      bindLatestWorkflowAttempt(draft, "dev-review", "review");
+
+      const rebuiltCandidate = attachAssemblyLineage(draft, {
+        id: "C2",
+        revisionNumber: 1,
+        baseRevision: "target-base-r2",
+        headRevision: "candidate-c2-r1",
+        status: "ready_for_review",
+      }, {
+        workflowAttempt: 2,
+        reservationId: `reservation-${draft.id}-assembly-2`,
+        reservedAt: "2026-08-04T00:02:00.000Z",
+        createdAt: "2026-08-04T00:03:00.000Z",
+      });
+      draft.candidates.push(rebuiltCandidate);
+      draft.attemptsByStage.implement = 2;
+      const rebuiltProducerRun = draft.runs.find((run) => (
+        run.workflowReservationId === rebuiltCandidate.sourceWorkflowReservationId
+      ));
+      rebuiltProducerRun.attempt = 2;
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    const grantBody = await grantResponse.json();
+    assert.equal(grantResponse.status, 200, grantBody.error);
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits["dev-review"], 4);
+    assert.equal(updated.candidates[0].status, "superseded");
+    assert.equal(updated.candidates[1].id, "C2");
+    assert.equal(updated.candidates[1].sourceWorkflowAttempt, 2);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("grants an exhausted repair after a mechanical target refresh", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
