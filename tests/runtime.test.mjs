@@ -733,6 +733,19 @@ test("repair requests carry complete typed gate findings and current-candidate r
         status: "completed",
         candidateId: "C1",
         candidateRevision: 3,
+        test: {
+          status: "failed",
+          rows: [{
+            id: "playwright-e2e",
+            title: "Real browser suite",
+            command: "make e2e-native",
+            exitCode: 2,
+            status: "failed",
+            failureDetails: "TypeError: response.request is not a function at e2e/tests/04-upload.spec.ts:355",
+            assertions: [{ label: "playwright-json report", actual: "2 unexpected", expected: "no unexpected or flaky results" }],
+            artifactReferences: [{ name: "playwright-e2e report", kind: "playwright-json", path: "e2e/playwright-report/results.json" }],
+          }],
+        },
         gateResult: {
           stage: "test",
           candidateId: "C1",
@@ -775,6 +788,17 @@ test("repair requests carry complete typed gate findings and current-candidate r
   assert.equal(evidence.newestFailingGate.stage, "test");
   assert.deepEqual(evidence.newestFailingGate.gateResult.findings, newestFindings);
   assert.equal(evidence.newestFailingGate.gateResult.findings[0].detail, completeDetail);
+  assert.deepEqual(evidence.newestFailingGate.failedTestRows, [{
+    id: "playwright-e2e",
+    title: "Real browser suite",
+    command: "make e2e-native",
+    exitCode: 2,
+    status: "failed",
+    failureDetails: "TypeError: response.request is not a function at e2e/tests/04-upload.spec.ts:355",
+    assertions: [{ label: "playwright-json report", actual: "2 unexpected", expected: "no unexpected or flaky results" }],
+    artifactReferences: [{ name: "playwright-e2e report", kind: "playwright-json", path: "e2e/playwright-report/results.json" }],
+  }]);
+  assert.match(request.prompt, /an empty blockingFindings list is not evidence for a no-op/);
   assert.deepEqual(evidence.repairLineage, [
     { number: 1, headRevision: "a".repeat(40), reason: "assembly" },
     {

@@ -350,7 +350,7 @@ export function buildRepairRequest(task, candidate) {
     .replace("You are the Implementation agent", "You are the candidate Repair agent")
     .replace(
       "Your stage assignment:\n",
-      `Authoritative structured repair evidence (typed JSON; do not infer repair scope from Markdown artifacts):\n<repair-evidence>\n${serializedRepairEvidence}\n</repair-evidence>\n\nYour stage assignment:\nRepair every consolidated blocking candidate defect in the newest failing gate represented above, using its exact reproduction evidence. Do not address non-blocking follow-up advice. Remove generated or out-of-scope files already present in the candidate, but do not install dependencies or create new generated state. Preserve unrelated approved implementation.\n\nIf the blockingFindings list is empty, or if no source edit can address the retained finding because it is only a verification/environment gap, make no changes and end your response with exactly one line: <no-changes-needed>{"reason":"one sentence explaining why no candidate edit is warranted"}</no-changes-needed>. If a candidate defect can be addressed by an edit, make it instead.\n\n`,
+      `Authoritative structured repair evidence (typed JSON; do not infer repair scope from Markdown artifacts):\n<repair-evidence>\n${serializedRepairEvidence}\n</repair-evidence>\n\nYour stage assignment:\nRepair every consolidated blocking candidate defect in the newest failing gate represented above, using its exact reproduction evidence. Do not address non-blocking follow-up advice. Remove generated or out-of-scope files already present in the candidate, but do not install dependencies or create new generated state. Preserve unrelated approved implementation.\n\nA deterministic Test gate records failed manifest rows in failedTestRows and normally has no model-authored blockingFindings. When failedTestRows is non-empty, an empty blockingFindings list is not evidence for a no-op: correlate each failure with the candidate diff, the named failing path, and any retained structured report, then repair every candidate-caused failure. Classify a row as only a verification/environment gap only when exact retained evidence rules out a candidate edit.\n\nIf both blockingFindings and failedTestRows are empty, or if no source edit can address the retained evidence because it is only a verification/environment gap, make no changes and end your response with exactly one line: <no-changes-needed>{"reason":"one sentence explaining why no candidate edit is warranted"}</no-changes-needed>. If a candidate defect can be addressed by an edit, make it instead.\n\n`,
     );
   request.repairEvidence = repairEvidence;
   request.contextManifest.sources.push({
@@ -386,6 +386,9 @@ export function buildRepairEvidence(task, candidate) {
       blockingFindings: projectRepairFindings(
         failingGate.gateResult.findings.filter((finding) => finding.blocking === true),
       ),
+      failedTestRows: failingGate.stage === "test"
+        ? projectFailedTestRows(failingGate.test?.rows)
+        : [],
     },
     repairLineage: (candidate.revisions ?? []).map((revision) => ({
       number: revision.number,
@@ -396,6 +399,20 @@ export function buildRepairEvidence(task, candidate) {
         : {}),
     })),
   };
+}
+
+function projectFailedTestRows(rows) {
+  if (!Array.isArray(rows)) return [];
+  return rows.filter((row) => row?.status === "failed").map((row) => ({
+    id: row.id ?? null,
+    title: row.title ?? null,
+    command: row.command ?? null,
+    exitCode: row.exitCode ?? null,
+    status: row.status,
+    failureDetails: row.failureDetails ?? null,
+    assertions: structuredClone(row.assertions ?? []),
+    artifactReferences: structuredClone(row.artifactReferences ?? []),
+  }));
 }
 
 export function projectRepairFindings(findings) {
