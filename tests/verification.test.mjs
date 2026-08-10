@@ -76,7 +76,33 @@ test("decides a Playwright report from its own totals, and fails closed on a sui
   assert.equal(ok.passed, true);
   assert.match(ok.detail, /12 expected/);
 
-  assert.equal(parsePlaywrightJsonReport(JSON.stringify({ stats: { expected: 4, unexpected: 1 } })).passed, false);
+  const unexpected = parsePlaywrightJsonReport(JSON.stringify({
+    stats: { expected: 4, unexpected: 1 },
+    suites: [{
+      title: "04-upload.spec.ts",
+      suites: [{
+        title: "Document upload page",
+        specs: [{
+          title: "keeps legacy requests unprojected",
+          tests: [{
+            status: "unexpected",
+            results: [{
+              status: "failed",
+              errors: [{
+                location: { file: "/tmp/wt/e2e/tests/04-upload.spec.ts", line: 355, column: 36 },
+                message: "TypeError: response.request is not a function\n\nlong context",
+              }],
+            }],
+          }],
+        }],
+      }],
+      specs: [],
+    }],
+  }));
+  assert.equal(unexpected.passed, false);
+  assert.match(unexpected.failureDetails, /Document upload page/);
+  assert.match(unexpected.failureDetails, /04-upload\.spec\.ts:355/);
+  assert.match(unexpected.failureDetails, /response\.request is not a function/);
   // Flaky is not a pass: a test that only sometimes holds has not established anything.
   assert.equal(parsePlaywrightJsonReport(JSON.stringify({ stats: { expected: 4, flaky: 2 } })).passed, false);
 

@@ -223,13 +223,61 @@ export function parsePlaywrightJsonReport(raw, source = "report") {
     return { passed: false, counts, detail: `${source} reports no tests at all, so nothing was verified.` };
   }
   const passed = counts.unexpected === 0 && counts.flaky === 0;
+  const failures = passed ? [] : playwrightFailureSummaries(value.suites);
   return {
     passed,
     counts,
     detail: passed
       ? `${counts.expected} expected, ${counts.skipped} skipped`
       : `${counts.unexpected} unexpected, ${counts.flaky} flaky, ${counts.expected} expected`,
+    failureDetails: failures.length
+      ? `Playwright unexpected results:\n${failures.join("\n")}`.slice(0, 8_000)
+      : null,
   };
+}
+
+function playwrightFailureSummaries(suites) {
+  const failures = [];
+  const visit = (suite, parents = []) => {
+    if (!suite || failures.length >= 8) return;
+    const titles = suite.title ? [...parents, String(suite.title)] : parents;
+    for (const spec of suite.specs ?? []) {
+      for (const test of spec.tests ?? []) {
+        if (test?.status !== "unexpected" && !(test?.results ?? []).some((result) => (
+          ["failed", "timedOut", "interrupted"].includes(result?.status)
+        ))) {
+          continue;
+        }
+        const result = [...(test.results ?? [])].reverse().find((entry) => (
+          ["failed", "timedOut", "interrupted"].includes(entry?.status)
+        ));
+        const errors = result?.errors?.length ? result.errors : result?.error ? [result.error] : [];
+        const messages = [...new Set(errors.map((error) => (
+          String(error?.message ?? error?.value ?? "Playwright reported an unexpected result.")
+            .replace(/\u001b\[[0-9;]*m/g, "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 1_200)
+        )).filter(Boolean))].slice(0, 2);
+        const location = errors.find((error) => error?.location)?.location ?? result?.error?.location ?? null;
+        const locationLabel = location?.file
+          ? ` (${location.file}${Number.isInteger(location.line) ? `:${location.line}` : ""})`
+          : "";
+        const title = [...titles, spec.title].filter(Boolean).join(" › ") || "Unnamed Playwright test";
+        failures.push(`- ${title}${locationLabel}: ${messages.join(" | ") || "Unexpected result."}`);
+        if (failures.length >= 8) return;
+      }
+    }
+    for (const child of suite.suites ?? []) {
+      visit(child, titles);
+      if (failures.length >= 8) return;
+    }
+  };
+  for (const suite of suites ?? []) {
+    visit(suite);
+    if (failures.length >= 8) break;
+  }
+  return failures;
 }
 
 /**
@@ -442,6 +490,7 @@ async function runVerificationCommand({ command, worktreePath, candidate, signal
         result.code === 0 ? null : `${display} exited ${result.code}.`,
         reportError ? `Declared report ${command.report.outputFile} could not be used: ${reportError}` : null,
         reportOutcome && !reportOutcome.passed ? reportOutcome.detail : null,
+        reportOutcome?.failureDetails,
         retainedOutput(result),
       ].filter(Boolean).join("\n"),
   };
