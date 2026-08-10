@@ -554,6 +554,11 @@ test("implementation prompts make the no-change marker part of one unambiguous o
   }, { baseRevision: "a".repeat(40) });
 
   assert.match(request.prompt, /exact H2 headings in order: Outcome, Changes, Verification, Ownership exceptions, Remaining risks/);
+  assert.ok(
+    request.prompt.indexOf("Critical completion contract") < request.prompt.indexOf("Task ID: AH-NOOP-PROMPT"),
+    "the no-op machine contract must be visible before the large task context",
+  );
+  assert.match(request.prompt, /ordinary prose saying "no changes" is not machine-readable/);
   assert.match(request.prompt, /append this machine-readable marker as the final non-blank line after Remaining risks/);
   assert.match(request.prompt, /<no-changes-needed>\{"reason":"one sentence citing the repository evidence"\}<\/no-changes-needed>/);
   assert.match(request.prompt, /marker is mandatory for every no-change outcome/);
