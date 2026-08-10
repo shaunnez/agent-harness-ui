@@ -3802,7 +3802,7 @@ test("migration recovers a failed Focused Test stranded at ready-for-test", () =
   assert.equal(migrateRunActivityState(state), false, "recovery is idempotent once repair-required");
 });
 
-test("migration keeps a passed Focused Test with failed interpreter diagnostics on the same-candidate retry path", () => {
+test("migration recovers a passed Focused Test with failed interpreter diagnostics from the repair path", () => {
   const devRun = makeRuntimeRun({ id: "RUN-DEV-PASSED-TEST-RETRY", artifactId: "ART-DEV-PASSED-TEST-RETRY" });
   const devArtifact = makeArtifact({ id: "ART-DEV-PASSED-TEST-RETRY", gateResult: devRun.gateResult });
   const passedFocusedTest = makeFocusedTestSummary({
@@ -3849,12 +3849,12 @@ test("migration keeps a passed Focused Test with failed interpreter diagnostics 
   });
   attachRunArtifact(task, devRun.id, devArtifact);
   attachRunArtifact(task, testRun.id, testArtifact);
-  task.status = "ready-for-test";
+  task.status = "repair-required";
   task.currentStage = "test";
   task.activeRunKind = null;
   task.activeRunReservationId = null;
   task.activeRunIds = [];
-  task.candidates[0].status = "ready_for_test";
+  task.candidates[0].status = "repair_required";
   const state = { schemaVersion: TASK_STORE_SCHEMA_VERSION, tasks: [task] };
 
   assert.equal(migrateRunActivityState(state), true);
@@ -3863,6 +3863,7 @@ test("migration keeps a passed Focused Test with failed interpreter diagnostics 
   assert.equal(task.status, "ready-for-test");
   assert.equal(task.currentStage, "test");
   assert.equal(task.candidates[0].status, "ready_for_test");
+  assert.equal(task.events.at(-1).title, "Persisted Test rerun state recovered");
   assert.equal(migrateRunActivityState(state), false, "same-candidate retry state remains stable");
 });
 

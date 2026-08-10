@@ -1188,6 +1188,36 @@ function reconcileAdvancedCandidateGateState(task) {
   if (task.activeRunKind || task.activeRunReservationId || (task.activeRunIds?.length ?? 0) > 0) return false;
   const candidate = task.candidates?.at(-1);
   if (!candidate) return false;
+  const testFreshness = task.gateFreshness?.test ?? null;
+  const recoverablePassedTestRerun =
+    task.status === "repair-required" &&
+    task.currentStage === "test" &&
+    candidate.status === "repair_required" &&
+    testFreshness?.fresh === false &&
+    testFreshness?.reasonCode !== "repair_required" &&
+    testFreshness?.focusedTest?.status === "passed";
+  if (recoverablePassedTestRerun) {
+    task.status = "ready-for-test";
+    candidate.status = "ready_for_test";
+    task.error = testFreshness.reasonCopy;
+    task.events ??= [];
+    const sourceRunId = testFreshness.sourceRunId ?? null;
+    if (!task.events.some((event) => event.title === "Persisted Test rerun state recovered" && event.runId === sourceRunId)) {
+      task.events.push({
+        id: crypto.randomUUID(),
+        at: new Date().toISOString(),
+        category: "decision",
+        tone: "warning",
+        stage: "test",
+        title: "Persisted Test rerun state recovered",
+        detail: `The exact full manifest passed. ${testFreshness.reasonCopy}`,
+        runId: sourceRunId,
+        artifactId: testFreshness.sourceArtifactId ?? null,
+        freshness: structuredClone(testFreshness),
+      });
+    }
+    return true;
+  }
   const requiredCompletedGates = {
     "ready-for-test": ["dev-review"],
     "ready-for-final-review": ["dev-review", "test"],
