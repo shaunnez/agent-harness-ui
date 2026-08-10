@@ -525,6 +525,8 @@ export function App() {
                     ? "One repair attempt was granted. The stage limit is updated."
                     : action === "refresh-candidate"
                       ? "Candidate refreshed from the latest target. All candidate-bound gates must run again."
+                    : action === "rebuild-candidate"
+                      ? "Candidate rebuild authorized from the latest target. The prior candidate remains retained."
                     : action === "retry-test"
                       ? "Test retry started against the unchanged candidate revision."
                     : action === "continue-package"

@@ -276,6 +276,7 @@ export async function runTaskAction(
     | "approve-merge"
     | "complete-merged"
     | "refresh-candidate"
+    | "rebuild-candidate"
     | "grant-retry",
   note = "",
 ) {

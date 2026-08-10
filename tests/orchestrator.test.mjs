@@ -5094,6 +5094,85 @@ test("blocks a candidate gate on target drift before reserving an attempt", asyn
   }
 });
 
+test("records refresh conflicts and rebuilds approved packages from the latest target", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-rebuild-candidate-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Rebuild conflicted candidate",
+      description: "Retain the old candidate and rerun the approved plan.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "test";
+      draft.error = "The target branch advanced.";
+      draft.blocker = { code: "target-diverged", detail: draft.error, detectedAt: new Date().toISOString() };
+      draft.completedStages = ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review"];
+      draft.attemptsByStage.implement = 3;
+      draft.stageRunLimits.implement = 3;
+      draft.workPackages = [{
+        id: "S1",
+        title: "Approved slice",
+        description: "Reapply the approved outcome.",
+        dependencies: [],
+        batch: 1,
+        ownedPaths: ["src/change.ts"],
+        verificationCommandIds: ["test"],
+        verification: ["test"],
+        status: "integrated",
+        attempts: 1,
+        branch: "agent-harness/old-slice",
+        worktreePath: directory,
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        files: ["src/change.ts"],
+        verificationRuns: [{ status: "passed" }],
+      }];
+      draft.candidates = [{
+        id: "C1",
+        revisionNumber: 1,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        baseRef: "refs/heads/main",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/old-candidate",
+        repositoryRoot: directory,
+        worktreePath: directory,
+        status: "ready_for_test",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        revisions: [],
+      }];
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        refreshCandidate: async () => { throw new Error("Candidate refresh conflicted while replaying it onto main: overlap"); },
+        mergeState: async () => "diverged",
+      },
+    });
+
+    await assert.rejects(() => orchestrator.refreshCandidate(task.id), /refresh conflicted/i);
+    const conflicted = await store.get(task.id);
+    assert.equal(conflicted.blocker.code, "target-refresh-conflict");
+
+    await orchestrator.rebuildCandidateFromTarget(task.id);
+    const rebuilt = await store.get(task.id);
+    assert.equal(rebuilt.status, "ready-for-implementation");
+    assert.equal(rebuilt.currentStage, "implement");
+    assert.equal(rebuilt.candidates[0].status, "superseded");
+    assert.equal(rebuilt.workPackages[0].status, "planned");
+    assert.deepEqual(rebuilt.workPackages[0].verificationRuns, []);
+    assert.equal(rebuilt.stageRunLimits.implement, 4);
+    assert.deepEqual(rebuilt.completedStages, ["triage", "scouts", "grill", "specification", "plan"]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("continues a timed-out retained package without discarding progress or incrementing its package attempt", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-retained-continuation-"));
   try {

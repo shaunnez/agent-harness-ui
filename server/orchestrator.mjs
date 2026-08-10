@@ -999,7 +999,35 @@ export class TaskOrchestrator {
         throw new Error("The task is not blocked by an advanced target branch.");
       }
       if (!candidate?.headRevision) throw new Error("The task does not have a refreshable candidate revision.");
-      const refreshed = await this.#worktrees.refreshCandidate(candidate);
+      let refreshed;
+      try {
+        refreshed = await this.#worktrees.refreshCandidate(candidate);
+      } catch (error) {
+        if (/candidate refresh conflicted/i.test(error.message)) {
+          await this.#store.update(id, (draft) => {
+            const activeCandidate = currentCandidate(draft);
+            if (activeCandidate.id !== candidate.id || activeCandidate.revisionNumber !== candidate.revisionNumber) return;
+            draft.status = "blocked";
+            draft.error = error.message;
+            draft.blocker = {
+              code: "target-refresh-conflict",
+              detail: error.message,
+              detectedAt: now(),
+              candidateId: candidate.id,
+              candidateRevision: candidate.revisionNumber,
+              candidateBaseRevision: candidate.baseRevision,
+            };
+            draft.events.push(activity(
+              "implement",
+              "Candidate refresh needs a clean rebuild",
+              "The target and retained patch overlap. Re-run the approved work packages from the latest target instead of guessing a conflict resolution.",
+              "warning",
+              "decision",
+            ));
+          });
+        }
+        throw error;
+      }
       const nextRevision = candidate.revisionNumber + 1;
       try {
         return await this.#store.transition(id, (draft) => {
@@ -1048,6 +1076,68 @@ export class TaskOrchestrator {
         if (typeof this.#worktrees.recoverCandidate === "function") await this.#worktrees.recoverCandidate(candidate);
         throw error;
       }
+    } finally {
+      this.#refreshActive.delete(id);
+    }
+  }
+
+  async rebuildCandidateFromTarget(id) {
+    if (this.#refreshActive.has(id) || this.#mergeActive.has(id)) {
+      throw new Error("This task already has a candidate or merge reconciliation in progress.");
+    }
+    this.#refreshActive.add(id);
+    try {
+      const task = await this.#store.get(id);
+      if (!task) throw new Error("Task not found.");
+      const candidate = currentCandidate(task);
+      if (task.status !== "blocked" || task.blocker?.code !== "target-refresh-conflict") {
+        throw new Error("The task is not blocked by a candidate refresh conflict.");
+      }
+      if (task.activeRunKind || task.activeRunReservationId) {
+        throw new Error("Wait for the active run before rebuilding this candidate.");
+      }
+      if (typeof this.#worktrees.mergeState !== "function" || await this.#worktrees.mergeState(candidate) !== "diverged") {
+        throw new Error("The candidate target is no longer diverged; refresh task state before rebuilding.");
+      }
+      return await this.#store.transition(id, (draft) => {
+        const activeCandidate = currentCandidate(draft);
+        return draft.status === "blocked" &&
+          draft.blocker?.code === "target-refresh-conflict" &&
+          activeCandidate.id === candidate.id &&
+          activeCandidate.revisionNumber === candidate.revisionNumber &&
+          activeCandidate.headRevision === candidate.headRevision;
+      }, (draft) => {
+        const activeCandidate = currentCandidate(draft);
+        activeCandidate.status = "superseded";
+        activeCandidate.updatedAt = now();
+        for (const workPackage of draft.workPackages ?? []) {
+          workPackage.status = "planned";
+          workPackage.error = null;
+          workPackage.retainedContinuation = null;
+          workPackage.retainedForRequalification = false;
+          workPackage.retainedReplacementReason = null;
+          workPackage.verificationRuns = [];
+        }
+        const attempts = draft.attemptsByStage?.implement ?? 0;
+        draft.stageRunLimits ??= {};
+        draft.stageRunLimits.implement = Math.max(stageRunLimitFor(draft, "implement"), attempts + 1);
+        draft.status = "ready-for-implementation";
+        draft.currentStage = "implement";
+        draft.error = null;
+        draft.blocker = null;
+        draft.mergeIntent = null;
+        draft.completedStages = draft.completedStages.filter(
+          (stage) => !["implement", "dev-review", "test", "final-review", "approval"].includes(stage),
+        );
+        refreshGateFreshness(draft);
+        draft.events.push(activity(
+          "implement",
+          "Clean candidate rebuild authorized",
+          `${candidate.id} remains retained for audit. The approved packages will run again from the latest target and assemble a new candidate.`,
+          "warning",
+          "decision",
+        ));
+      });
     } finally {
       this.#refreshActive.delete(id);
     }

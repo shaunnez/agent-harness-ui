@@ -50,6 +50,7 @@ async function createServer(options = {}) {
   let approvedSpecification = null;
   let completedMergedTask = null;
   let refreshedCandidateTask = null;
+  let rebuiltCandidateTask = null;
   let retriedTestTask = null;
   const orchestrator = {
     status: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
@@ -85,6 +86,10 @@ async function createServer(options = {}) {
     },
     async refreshCandidate(id) {
       refreshedCandidateTask = id;
+      return store.get(id);
+    },
+    async rebuildCandidateFromTarget(id) {
+      rebuiltCandidateTask = id;
       return store.get(id);
     },
     async retryTestOnSameCandidate(id) {
@@ -132,6 +137,7 @@ async function createServer(options = {}) {
     approvedSpecificationRef: () => approvedSpecification,
     completedMergedTaskRef: () => completedMergedTask,
     refreshedCandidateTaskRef: () => refreshedCandidateTask,
+    rebuiltCandidateTaskRef: () => rebuiltCandidateTask,
     retriedTestTaskRef: () => retriedTestTask,
   };
 }
@@ -705,6 +711,25 @@ test("dispatches candidate refresh and same-candidate Test retry actions", async
   }
 });
 
+test("dispatches a clean candidate rebuild after refresh conflict", async () => {
+  const { directory, origin, server, rebuiltCandidateTaskRef } = await createServer();
+  try {
+    const createResponse = await createTask(origin, {
+      title: "Rebuild candidate",
+      description: "Exercise the explicit refresh-conflict recovery action.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await createResponse.json();
+    const response = await fetch(`${origin}/api/tasks/${task.id}/rebuild-candidate`, { method: "POST" });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).rebuilt, true);
+    assert.equal(rebuiltCandidateTaskRef(), task.id);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("lets blocked candidate gates reach the target-drift preflight", async () => {
   const { directory, origin, server, store, startedIdRef, startedKindRef } = await createServer();
   try {
@@ -1258,6 +1283,7 @@ test("enforces one Host, Origin, content-type, CSRF, and missing-Origin policy a
       ["POST", "/api/tasks/AH-999/cancel"],
       ["POST", "/api/tasks/AH-999/approve-merge"],
       ["POST", "/api/tasks/AH-999/refresh-candidate"],
+      ["POST", "/api/tasks/AH-999/rebuild-candidate"],
       ["POST", "/api/tasks/AH-999/retry-test"],
       ["POST", "/api/tasks/AH-999/complete-merged"],
     ];

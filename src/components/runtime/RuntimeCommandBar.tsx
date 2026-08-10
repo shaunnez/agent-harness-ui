@@ -227,6 +227,14 @@ export function nextAction(task: RuntimeTask) {
   const currentAttempts = getEffectiveStageRunAttempts(task);
   const retryAllowanceExhausted = currentAttempts >= getEffectiveStageRunLimit(task);
   const candidate = task.candidates?.at(-1);
+  if (task.status === "blocked" && task.blocker?.code === "target-refresh-conflict")
+    return {
+      action: "rebuild-candidate" as const,
+      label: "Rebuild from latest target",
+      title: "Candidate refresh conflicted",
+      detail:
+        "Retain the prior candidate for audit, re-run its approved work packages from the latest target, and assemble a new exact candidate.",
+    };
   const targetDiverged = task.status === "blocked" && (
     task.blocker?.code === "target-diverged" ||
     /target ref (?:diverged|moved)|target branch advanced/i.test(task.error ?? "")

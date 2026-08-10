@@ -3049,6 +3049,16 @@ test("offers recovery actions that match target drift, invalid plans, and retrya
       viewedStageId: "approval",
     })), />Refresh candidate from main</);
 
+    const refreshConflict = createTask({
+      status: "blocked",
+      currentStage: "test",
+      error: "Candidate refresh conflicted while replaying it onto main.",
+      blocker: { code: "target-refresh-conflict", detail: "overlap", detectedAt: "2026-08-01T12:00:00.000Z" },
+      candidates: [{ ...candidate, status: "ready_for_test" }],
+    });
+    assert.equal(nextAction(refreshConflict).action, "rebuild-candidate");
+    assert.match(nextAction(refreshConflict).label, /Rebuild from latest target/);
+
     const invalidPlan = createTask({
       status: "blocked",
       currentStage: "implement",
