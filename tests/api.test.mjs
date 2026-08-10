@@ -3413,7 +3413,7 @@ test("grants a fresh gate attempt after consecutive target refreshes without req
   }
 });
 
-test("grants a fresh gate attempt to a rebuilt candidate after the prior candidate is superseded", async () => {
+test("grants a fresh gate attempt to a rebuilt candidate after the prior candidate failed", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
     const response = await createTask(origin, {
@@ -3432,7 +3432,7 @@ test("grants a fresh gate attempt to a rebuilt candidate after the prior candida
         revisionNumber: 1,
         baseRevision: "target-base-r1",
         headRevision: "candidate-c1-r1",
-        status: "superseded",
+        status: "failed",
       });
       draft.candidates.push(priorCandidate);
       draft.runs.push(...[1, 2, 3].map((attempt) => ({
@@ -3467,7 +3467,7 @@ test("grants a fresh gate attempt to a rebuilt candidate after the prior candida
     assert.equal(grantResponse.status, 200, grantBody.error);
     const updated = await store.get(task.id);
     assert.equal(updated.stageRunLimits["dev-review"], 4);
-    assert.equal(updated.candidates[0].status, "superseded");
+    assert.equal(updated.candidates[0].status, "failed");
     assert.equal(updated.candidates[1].id, "C2");
     assert.equal(updated.candidates[1].sourceWorkflowAttempt, 2);
   } finally {

@@ -1303,10 +1303,10 @@ function retryGrantContext(task) {
   const priorTargetRefreshRevision = candidateBoundGrant &&
     candidate?.status !== "repair_required" &&
     targetRefreshesDescendFromReservation(lineage, candidate, reservation);
-  const priorSupersededCandidate = candidateBoundGrant &&
+  const priorReplacedCandidate = candidateBoundGrant &&
     candidate?.status !== "repair_required" &&
-    supersededCandidateMatchesReservation(task, candidate, reservation);
-  if ((adjacentPriorRevision || priorTargetRefreshRevision || priorSupersededCandidate) && reservationRuns.length !== 1) {
+    replacedCandidateMatchesReservation(task, candidate, reservation);
+  if ((adjacentPriorRevision || priorTargetRefreshRevision || priorReplacedCandidate) && reservationRuns.length !== 1) {
     return { error: "The exhausted stage has an inconsistent workflow reservation; resolve it before granting a retry." };
   }
   const authorizingGate = candidate?.status === "repair_required"
@@ -1491,7 +1491,7 @@ function validRetryReservationCandidateBinding(
   }
   if (grantedStage !== "implement") {
     if (targetRefreshesDescendFromReservation(lineage, candidate, reservation)) return true;
-    if (supersededCandidateMatchesReservation(task, candidate, reservation)) return true;
+    if (replacedCandidateMatchesReservation(task, candidate, reservation)) return true;
     if (reservation.candidateId !== candidate?.id || reservation.candidateRevision + 1 !== candidate?.revisionNumber) {
       return false;
     }
@@ -1831,7 +1831,7 @@ function targetRefreshesDescendFromReservation(lineage, candidate, reservation) 
   return true;
 }
 
-function supersededCandidateMatchesReservation(task, candidate, reservation) {
+function replacedCandidateMatchesReservation(task, candidate, reservation) {
   const candidates = task.candidates ?? [];
   const currentIndex = candidates.length - 1;
   const previous = candidates[currentIndex - 1];
@@ -1840,7 +1840,7 @@ function supersededCandidateMatchesReservation(task, candidate, reservation) {
     candidates[currentIndex] === candidate &&
     candidate.revisionNumber === 1 &&
     currentRevision?.reason === "assembly" &&
-    previous?.status === "superseded" &&
+    ["failed", "superseded"].includes(previous?.status) &&
     validRetryCandidate(previous) &&
     reservation?.candidateId === previous.id &&
     reservation.candidateRevision === previous.revisionNumber &&
