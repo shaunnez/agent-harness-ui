@@ -20,7 +20,11 @@ import {
   type StageId,
   workflowStages,
 } from "../../domain";
-import { isModelRunArtifact, sumArtifactUsage } from "../../artifactPresentation";
+import {
+  SCOUT_USAGE_NOT_RETAINED,
+  isModelRunArtifact,
+  resolveScoutUsage,
+} from "../../artifactPresentation";
 import { MarkdownContent } from "../MarkdownContent";
 import { Button } from "../Primitives";
 import { RuntimeGrillPanel } from "./RuntimeGrillPanel";
@@ -69,6 +73,7 @@ export function RuntimeStagePresentation({
   onSelectTestResult: (resultId: string | null) => void;
 }) {
   const focusedTest = getRuntimeFocusedTest(task);
+  const scoutUsage = resolveScoutUsage(task);
   const stageArtifacts = task.artifacts.filter((item) => item.stage === viewedStageId);
   const artifactHistory = stageArtifacts.length > 1 && viewedStageId !== "scouts" ? (
     <RuntimeArtifactHistory
@@ -128,35 +133,45 @@ export function RuntimeStagePresentation({
         <div className="runtime-stage-stack">
           {task.scoutDispatch ? (
             <section className="scout-dispatch-panel">
-              <header>
-                <span><Robot size={18} /><strong>Selective scout dispatch</strong></span>
-                <small>{scoutDispatchSummary(task)}</small>
-              </header>
-              <p>{task.scoutDispatch.rationale ?? "No dispatch rationale was retained for this historical task."}</p>
-              <div>
-                {task.scoutDispatch.selected.map((scout) => {
-                  const scoutArtifact = task.artifacts.find((item) => item.agentRole === scout.name && isModelRunArtifact(item));
-                  return (
-                    <article key={scout.name}>
-                      <span className={`scout-dispatch-state scout-dispatch-state--${scout.status}`} />
-                      <span>
-                        <strong>{scout.name}</strong>
-                        <small>{scout.focus}</small>
-                        <p>{scout.reason}</p>
-                        {scoutArtifact ? (
-                          <button type="button" className="scout-dispatch-usage" onClick={() => onOpenArtifact(scoutArtifact)}>
-                            <span>{formatTokenCount(scoutArtifact.usage.inputTokens)} in &middot; {formatTokenCount(scoutArtifact.usage.outputTokens)} out</span>
-                            <span>{formatCacheRate(scoutArtifact.usage)} cached &middot; {formatApproximateCost(scoutArtifact.usage.cost)}</span>
-                            <ArrowSquareOut size={14} />
-                          </button>
-                        ) : <small>{scout.status === "complete" ? "Usage was not retained for this historical scout." : "Usage will appear when this scout completes."}</small>}
-                        {scout.error ? <p className="text-red">{scout.error}</p> : null}
-                      </span>
-                    </article>
-                  );
-                })}
-                {task.scoutDispatch.selected.length === 0 ? <p>No scouts were dispatched; triage explicitly determined that no additional repository evidence was needed.</p> : null}
-              </div>
+              {task.scoutDispatch.selected.length === 0 ? (
+                <div className="scout-dispatch-empty">
+                  <strong>No scouts dispatched</strong>
+                  <p>{task.scoutDispatch.rationale ?? "No dispatch rationale was retained for this historical task."}</p>
+                </div>
+              ) : (
+                <>
+                  <header>
+                    <span><Robot size={18} /><strong>Selective scout dispatch</strong></span>
+                    <small>{scoutDispatchSummary(task, scoutUsage)}</small>
+                  </header>
+                  <p>{task.scoutDispatch.rationale ?? "No dispatch rationale was retained for this historical task."}</p>
+                  <div>
+                    {task.scoutDispatch.selected.map((scout) => {
+                      const usageMatch = scoutUsage.perScout.find((entry) => entry.scout.name === scout.name);
+                      const scoutArtifact = usageMatch?.artifacts[0];
+                      const usage = usageMatch?.usage;
+                      return (
+                        <article key={scout.name}>
+                          <span className={`scout-dispatch-state scout-dispatch-state--${scout.status}`} />
+                          <span>
+                            <strong>{scout.name}</strong>
+                            <small>{scout.focus}</small>
+                            <p>{scout.reason}</p>
+                            {usage && scoutArtifact ? (
+                              <button type="button" className="scout-dispatch-usage" onClick={() => onOpenArtifact(scoutArtifact as RuntimeArtifact)}>
+                                <span>{formatTokenCount(usage.inputTokens)} in &middot; {formatTokenCount(usage.outputTokens)} out</span>
+                                <span>{formatCacheRate(usage)} cached &middot; {formatApproximateCost(usage.cost)}</span>
+                                <ArrowSquareOut size={14} />
+                              </button>
+                            ) : <small>{scout.status === "queued" && !task.scoutDispatch?.completedAt ? "Usage will appear when this scout completes." : SCOUT_USAGE_NOT_RETAINED}</small>}
+                            {scout.error ? <p className="text-red">{scout.error}</p> : null}
+                          </span>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </section>
           ) : null}
           <section className="runtime-evidence-source">
@@ -164,7 +179,7 @@ export function RuntimeStagePresentation({
             <span>
               <small>Repository evidence &middot; deterministic handoff</small>
               <strong>{artifact?.name ?? "No scout artifact yet"}</strong>
-              <p>{artifact ? `Mechanically combined from ${task.scoutDispatch?.selected.filter((scout) => scout.status === "complete").length ?? 0} retained scout reports; no extra model call \u00b7 ${new Date(artifact.createdAt).toLocaleString()}` : "The scout stage has not produced an artifact."}</p>
+              <p>{artifact ? `Mechanically combined from ${task.scoutDispatch?.selected.filter((scout) => scout.status === "complete").length ?? 0} child scout reports; no extra model call \u00b7 ${new Date(artifact.createdAt).toLocaleString()}` : "The scout stage has not produced an artifact."}</p>
             </span>
           </section>
           {artifactCard ?? empty}
@@ -313,16 +328,13 @@ export function RuntimeStagePresentation({
   }
 }
 
-function scoutDispatchSummary(task: RuntimeTask) {
-  const scoutArtifacts = task.artifacts.filter(
-    (artifact) => artifact.stage === "scouts" && artifact.agentRole?.startsWith("scout-") && isModelRunArtifact(artifact),
-  );
-  const usage = sumArtifactUsage(scoutArtifacts);
+function scoutDispatchSummary(task: RuntimeTask, scoutUsage: ReturnType<typeof resolveScoutUsage>) {
+  const usage = scoutUsage.aggregate;
   const dispatch = task.scoutDispatch;
   return [
     `${dispatch?.selected.length ?? 0} dispatched`,
     `${dispatch?.skipped.length ?? 0} skipped`,
-    scoutArtifacts.length ? `${formatTokenCount(usage.inputTokens)} in / ${formatTokenCount(usage.outputTokens)} out` : null,
+    usage.runs ? `${formatTokenCount(usage.inputTokens)} in / ${formatTokenCount(usage.outputTokens)} out` : null,
     usage.pricedRuns ? `${formatApproximateCost(usage.cost)} API-rate estimate` : null,
   ].filter(Boolean).join(" \u00b7 ");
 }
