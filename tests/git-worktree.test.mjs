@@ -330,8 +330,9 @@ test("refresh collapses an equivalent candidate patch already committed on the t
     candidate.headRevision = committed.headRevision;
 
     await writeFile(path.join(repository, "reporter.ts"), "export const reporter = 'json';\n", "utf8");
-    await git(repository, ["add", "reporter.ts"]);
-    await git(repository, ["commit", "-m", "target reporter"]);
+    await writeFile(path.join(repository, "unrelated.txt"), "landed in the same target commit\n", "utf8");
+    await git(repository, ["add", "reporter.ts", "unrelated.txt"]);
+    await git(repository, ["commit", "-m", "larger target change"]);
     const targetRevision = (await git(repository, ["rev-parse", "HEAD"])).stdout.trim();
 
     const refreshed = await manager.refreshCandidate(candidate);

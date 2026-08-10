@@ -316,7 +316,18 @@ export class GitWorktreeManager {
       candidate.headRevision,
       targetRevision,
     ], { allowFailure: true })).code === 0;
-    const alreadyApplied = targetContainsHead || (
+    const combinedPatch = (await git(candidate.worktreePath, [
+      "diff",
+      "--binary",
+      candidate.baseRevision,
+      candidate.headRevision,
+    ])).stdout;
+    const reverseApplied = combinedPatch.trim() && (await git(repositoryRoot, [
+      "apply",
+      "--check",
+      "--reverse",
+    ], { allowFailure: true, input: combinedPatch })).code === 0;
+    const alreadyApplied = targetContainsHead || reverseApplied || (
       candidateCommits.length > 0 &&
       cherryRows.length === candidateCommits.length &&
       cherryRows.every((row) => row.startsWith("- "))
