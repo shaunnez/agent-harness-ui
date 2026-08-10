@@ -1,4 +1,4 @@
-export const TASK_STORE_SCHEMA_VERSION = 8;
+export const TASK_STORE_SCHEMA_VERSION = 9;
 
 /**
  * Execution provider identity for persisted runs and stage-run reservations.

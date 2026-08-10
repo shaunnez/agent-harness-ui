@@ -59,7 +59,8 @@ export function CommandCentre({
   // Archived tasks leave every list on this screen, including the attention list — archiving is
   // how an operator says "stop showing me this". The spend totals below deliberately still count
   // them: that money was really spent, and quietly dropping it would misreport the run cost.
-  const visibleTasks = runtimeTasks.filter((task) => task.status !== "archived");
+  const visibleTasks = runtimeTasks.filter((task) =>
+    task.status !== "archived" && !(task.workflow === "investigate" && task.continuedByTaskId));
   const openTasks = visibleTasks.filter((task) => task.status !== "closed");
   const recentTasks = [...openTasks]
     .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())

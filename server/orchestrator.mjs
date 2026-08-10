@@ -897,6 +897,13 @@ export class TaskOrchestrator {
     return this.#approveMerge(id, note).finally(() => this.#mergeActive.delete(id));
   }
 
+  async reconcileMerge(id) {
+    if (this.#mergeActive.has(id)) throw new Error("This task already has a merge reconciliation in progress.");
+    this.#mergeActive.add(id);
+    return this.#reconcileMergeIntent(id, { operatorRequested: true })
+      .finally(() => this.#mergeActive.delete(id));
+  }
+
   async #approveMerge(id, note = "") {
     let task = await this.#store.get(id);
     if (!task) throw new Error("Task not found.");
@@ -955,9 +962,56 @@ export class TaskOrchestrator {
       throw new Error("The task is not awaiting merge approval.");
     }
 
+    return this.#reconcileMergeIntent(id);
+  }
+
+  async #reconcileMergeIntent(id, { operatorRequested = false } = {}) {
+    let task = await this.#store.get(id);
+    if (!task) throw new Error("Task not found.");
+    if (task.status === "merged-to-target" && task.mergeIntent?.status === "completed") return task;
+    const retryableFailure = task.status === "blocked" &&
+      task.blocker?.code === "merge-reconciliation" &&
+      task.mergeIntent?.status === "failed";
+    if (retryableFailure) {
+      task = await this.#store.transition(id, (draft) => (
+        draft.status === "blocked" &&
+        draft.blocker?.code === "merge-reconciliation" &&
+        draft.mergeIntent?.status === "failed"
+      ), (draft) => {
+        draft.status = "merging";
+        draft.error = null;
+        draft.blocker = null;
+        draft.mergeIntent.status = "pending";
+        draft.mergeIntent.error = null;
+        draft.mergeIntent.reconciliationAttempts = (draft.mergeIntent.reconciliationAttempts ?? 0) + 1;
+        draft.mergeIntent.lastReconciliationAt = now();
+        draft.events.push(activity(
+          "approval",
+          "Merge reconciliation requested",
+          "The original exact-candidate approval intent is retained while the target and candidate are checked again.",
+          "warning",
+          "decision",
+        ));
+      });
+    } else if (task.status !== "merging" || task.mergeIntent?.status !== "pending") {
+      throw new Error(operatorRequested
+        ? "This task does not have a retained merge intent that can be reconciled."
+        : "The task is not awaiting merge reconciliation.");
+    }
+
     const candidate = currentCandidate(task);
-    assertCandidateGatesFresh(task, candidate);
+    if (
+      task.mergeIntent.candidateId !== candidate.id ||
+      task.mergeIntent.candidateRevision !== candidate.revisionNumber ||
+      task.mergeIntent.headRevision !== candidate.headRevision ||
+      task.mergeIntent.baseRevision !== candidate.baseRevision
+    ) {
+      const error = new Error("The retained merge intent no longer matches the exact current candidate revision.");
+      await this.#blockMergeIntent(id, candidate, error);
+      throw error;
+    }
     try {
+      assertCandidateGatesFresh(task, candidate);
       const mergeState = typeof this.#worktrees.mergeState === "function"
         ? await this.#worktrees.mergeState(candidate)
         : "pending";
@@ -965,58 +1019,46 @@ export class TaskOrchestrator {
       if (mergeState === "pending") await this.#worktrees.merge(candidate);
       return this.#finalizeMerge(id);
     } catch (error) {
-      await this.#store.update(id, (draft) => {
-        if (draft.status !== "merging" || draft.mergeIntent?.status !== "pending") return;
-        draft.error = error.message;
-        draft.mergeIntent.error = error.message;
-        if (/target ref moved|target branch advanced/i.test(error.message)) {
-          const activeCandidate = currentCandidate(draft);
-          draft.status = "blocked";
-          draft.blocker = {
-            code: "target-diverged",
-            detail: error.message,
-            detectedAt: now(),
-            candidateId: activeCandidate.id,
-            candidateRevision: activeCandidate.revisionNumber,
-            candidateBaseRevision: activeCandidate.baseRevision,
-          };
-          draft.mergeIntent.status = "failed";
-        }
-        draft.events.push(activity("approval", "Merge reconciliation required", error.message, "danger", "decision"));
-      });
+      await this.#blockMergeIntent(id, candidate, error);
       throw error;
     }
+  }
+
+  async #blockMergeIntent(id, candidate, error) {
+    await this.#store.update(id, (draft) => {
+      if (draft.status !== "merging" || draft.mergeIntent?.status !== "pending") return;
+      const targetDiverged = /target ref (?:diverged|moved)|target branch advanced|source branch moved/i.test(error.message);
+      draft.status = "blocked";
+      draft.error = error.message;
+      draft.blocker = {
+        code: targetDiverged ? "target-diverged" : "merge-reconciliation",
+        detail: error.message,
+        detectedAt: now(),
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        candidateBaseRevision: candidate.baseRevision,
+      };
+      draft.mergeIntent.status = "failed";
+      draft.mergeIntent.error = error.message;
+      draft.mergeIntent.failedAt = now();
+      draft.events.push(activity(
+        "approval",
+        targetDiverged ? "Target branch advanced" : "Merge reconciliation required",
+        error.message,
+        "danger",
+        "decision",
+      ));
+    });
   }
 
   async recoverMergeIntents() {
     const tasks = await this.#store.list();
     for (const task of tasks.filter((item) => item.status === "merging" && item.mergeIntent?.status === "pending")) {
-      const candidate = currentCandidate(task);
       try {
-        assertCandidateGatesFresh(task, candidate);
-        const mergeState = typeof this.#worktrees.mergeState === "function"
-          ? await this.#worktrees.mergeState(candidate)
-          : "pending";
-        if (mergeState === "diverged") throw new Error("The recorded target ref diverged while recovering a pending merge.");
-        if (mergeState === "pending") await this.#worktrees.merge(candidate);
-        await this.#finalizeMerge(task.id);
-      } catch (error) {
-        await this.#store.update(task.id, (draft) => {
-          if (draft.status !== "merging" || draft.mergeIntent?.status !== "pending") return;
-          draft.status = "blocked";
-          draft.error = error.message;
-          draft.blocker = {
-            code: error.message.includes("target ref diverged") ? "target-diverged" : "merge-reconciliation",
-            detail: error.message,
-            detectedAt: now(),
-            candidateId: candidate.id,
-            candidateRevision: candidate.revisionNumber,
-            candidateBaseRevision: candidate.baseRevision,
-          };
-          draft.mergeIntent.status = "failed";
-          draft.mergeIntent.error = error.message;
-          draft.events.push(activity("approval", "Pending merge blocked", error.message, "danger", "decision"));
-        });
+        await this.#reconcileMergeIntent(task.id);
+      } catch {
+        // Reconciliation persists its exact blocker before returning. Startup recovery is
+        // deliberately best-effort so one blocked task cannot keep the companion offline.
       }
     }
   }
@@ -1093,6 +1135,16 @@ export class TaskOrchestrator {
           draft.currentStage = "dev-review";
           draft.error = null;
           draft.blocker = null;
+          if (draft.mergeIntent) {
+            draft.mergeIntentHistory ??= [];
+            draft.mergeIntentHistory.push({
+              ...structuredClone(draft.mergeIntent),
+              status: "failed",
+              error: draft.mergeIntent.error ?? "The target advanced; the approved candidate revision was superseded by target refresh.",
+              supersededAt: now(),
+              supersededByCandidateRevision: nextRevision,
+            });
+          }
           draft.mergeIntent = null;
           draft.completedStages = draft.completedStages.filter(
             (stage) => !["dev-review", "test", "final-review", "approval"].includes(stage),

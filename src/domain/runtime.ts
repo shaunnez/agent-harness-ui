@@ -24,6 +24,27 @@ export type RuntimeTaskStatus =
   | "closed"
   | "archived";
 
+export type RuntimeAvailableAction =
+  | "continue-implementation"
+  | "approve-spec"
+  | "approve-plan"
+  | "specification"
+  | "plan"
+  | "implement"
+  | "continue-package"
+  | "repair"
+  | "review"
+  | "test"
+  | "retry-test"
+  | "final-review"
+  | "approve-merge"
+  | "reconcile-merge"
+  | "complete-merged"
+  | "refresh-candidate"
+  | "rebuild-candidate"
+  | "restart-implementation"
+  | "grant-retry";
+
 export interface RuntimeUsage {
   inputTokens: number;
   cachedInputTokens: number;
@@ -427,7 +448,14 @@ export interface RuntimeTask {
     startedAt: string;
     completedAt: string | null;
     error: string | null;
+    failedAt?: string | null;
+    reconciliationAttempts?: number;
+    lastReconciliationAt?: string | null;
   } | null;
+  mergeIntentHistory?: Array<NonNullable<RuntimeTask["mergeIntent"]> & {
+    supersededAt?: string | null;
+    supersededByCandidateRevision?: number | null;
+  }>;
   blocker?: {
     code: "target-diverged" | "merge-reconciliation" | string;
     detail: string;
@@ -436,6 +464,10 @@ export interface RuntimeTask {
     candidateRevision?: number | null;
     candidateBaseRevision?: string | null;
   } | null;
+  actionEligibility?: {
+    generatedAt: string;
+    actions: Partial<Record<RuntimeAvailableAction | "run", { allowed: boolean; reason: string | null }>>;
+  };
   scoutDispatch?: RuntimeScoutDispatch | null;
   currentStage: StageId;
   completedStages: StageId[];

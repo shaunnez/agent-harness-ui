@@ -29,6 +29,7 @@ export type TaskRunState =
   | "merged-to-target"
   | "completed"
   | "closed"
+  | "continued"
   | "archived";
 export type AppScreen = "command" | "tasks" | "skills" | "agents" | "settings";
 
@@ -43,7 +44,7 @@ export interface WorkflowStage {
 export interface RecentTask {
   id: string;
   title: string;
-  status: "Running" | "Blocked" | "Completed" | "Needs input" | "Closed" | "Archived";
+  status: "Running" | "Blocked" | "Completed" | "Needs input" | "Closed" | "Continued" | "Archived";
   stage: string;
   stageIndex: number;
   duration: string;
@@ -105,11 +106,15 @@ export function runtimeTaskToRecentTask(task: RuntimeTask | RuntimeTaskSummary):
   const status: RecentTask["status"] =
     task.status === "archived"
       ? "Archived"
+      : task.workflow === "investigate" && task.continuedByTaskId
+      ? "Continued"
       : task.status === "closed"
       ? "Closed"
       : task.status === "completed"
       ? "Completed"
       : task.status === "merged-to-target"
+      ? "Needs input"
+      : task.status === "merging"
       ? "Needs input"
       : task.status === "queued" ||
           task.status.startsWith("awaiting-") ||
@@ -120,7 +125,9 @@ export function runtimeTaskToRecentTask(task: RuntimeTask | RuntimeTaskSummary):
             task.status === "cancelled" ||
             task.status === "repair-required"
           ? "Blocked"
-          : "Running";
+          : task.status === "running" || task.status === "cancelling"
+            ? "Running"
+            : "Needs input";
   const effectiveStage = getEffectiveRunStage(task);
   const effectiveStageLabel = workflowStages.find((stage) => stage.id === effectiveStage)?.shortLabel ?? effectiveStage;
   return {

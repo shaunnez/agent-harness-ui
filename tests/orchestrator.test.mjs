@@ -957,7 +957,7 @@ test("binds gate evidence to the reserving execution provider", () => {
   }
 });
 
-test("backfills the default execution provider while migrating through schema 8", () => {
+test("backfills the default execution provider while migrating through schema 9", () => {
   const run = makeRuntimeRun({ gateResult: makeGateResult() });
   delete run.provider;
   const task = makeRuntimeTask({ runs: [run] });
@@ -978,7 +978,7 @@ test("backfills the default execution provider while migrating through schema 8"
 
   assert.equal(migrateRunActivityState(state), true);
   assert.equal(state.schemaVersion, TASK_STORE_SCHEMA_VERSION);
-  assert.equal(TASK_STORE_SCHEMA_VERSION, 8);
+  assert.equal(TASK_STORE_SCHEMA_VERSION, 9);
   assert.equal(task.runs[0].provider, DEFAULT_EXECUTION_PROVIDER);
   assert.equal(task.stageRunReservations["dev-review"].provider, DEFAULT_EXECUTION_PROVIDER);
   assert.equal(task.gateFreshness["dev-review"].fresh, true);
@@ -4941,7 +4941,7 @@ test("cleans a failed Test run before allowing its retry", async () => {
   }
 });
 
-test("reconciles a recorded merge intent without duplicating approval", async () => {
+test("blocks a failed pending merge and idempotently reconciles the retained approval intent", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-merge-recovery-"));
   try {
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
@@ -5036,18 +5036,32 @@ test("reconciles a recorded merge intent without duplicating approval", async ()
       refreshGateFreshness(draft);
     });
     let mergeCalls = 0;
+    let mergeStateCalls = 0;
     const orchestrator = new TaskOrchestrator(store, {
       worktreeManager: {
-        mergeState: async () => "merged",
+        mergeState: async () => {
+          mergeStateCalls += 1;
+          if (mergeStateCalls === 1) throw new Error("Known fast-forward failure after approval intent was recorded.");
+          return "merged";
+        },
         merge: async () => { mergeCalls += 1; },
       },
     });
 
     await orchestrator.recoverMergeIntents();
-    await orchestrator.recoverMergeIntents();
+    const blocked = await store.get(task.id);
+    assert.equal(blocked.status, "blocked");
+    assert.equal(blocked.blocker.code, "merge-reconciliation");
+    assert.equal(blocked.mergeIntent.status, "failed");
+    assert.match(blocked.mergeIntent.error, /Known fast-forward failure/);
+
+    await orchestrator.reconcileMerge(task.id);
+    await orchestrator.reconcileMerge(task.id);
     const recovered = await store.get(task.id);
     assert.equal(recovered.status, "merged-to-target");
     assert.equal(recovered.mergeIntent.status, "completed");
+    assert.equal(recovered.mergeIntent.note, "Approved before restart.");
+    assert.equal(recovered.mergeIntent.reconciliationAttempts, 1);
     assert.equal(recovered.approvals.filter((approval) => approval.stage === "approval").length, 1);
     assert.equal(mergeCalls, 0);
   } finally {
@@ -5119,6 +5133,10 @@ test("refreshes a target-diverged candidate as a new revision and invalidates do
     assert.equal(candidate.baseRevision, targetHead);
     assert.equal(candidate.headRevision, refreshedHead);
     assert.equal(candidate.revisions.at(-1).reason, "target-refresh");
+    assert.equal(refreshed.mergeIntent, null);
+    assert.equal(refreshed.mergeIntentHistory.length, 1);
+    assert.equal(refreshed.mergeIntentHistory[0].status, "failed");
+    assert.equal(refreshed.mergeIntentHistory[0].supersededByCandidateRevision, 2);
     assert.deepEqual(refreshed.completedStages, ["triage", "scouts", "grill", "specification", "plan", "implement"]);
     assert.match(refreshed.events.at(-1).detail, /must pass every candidate-bound gate again/i);
   } finally {

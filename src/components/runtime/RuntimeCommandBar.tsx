@@ -32,12 +32,15 @@ export function RuntimeCommandBar({
   const [actionError, setActionError] = useState<string | null>(null);
   const historical = viewedStageId !== task.currentStage;
   const running = task.status === "running" || task.status === "cancelling";
+  const persistedRunActive = running && (task.activeRunIds?.length ?? 0) > 0;
   const cancelling = task.status === "cancelling";
   const repairRunning = running && task.activeRunKind === "repair";
   const currentAttempts = getEffectiveStageRunAttempts(task);
   const currentStageRunLimit = getEffectiveStageRunLimit(task);
   const retryAllowanceExhausted = currentAttempts >= currentStageRunLimit;
   const repairRequired = task.status === "repair-required";
+  const mergeReconciliation = task.status === "merging" ||
+    (task.status === "blocked" && task.blocker?.code === "merge-reconciliation");
   const exhaustedReadyGate =
     currentAttempts >= currentStageRunLimit &&
     ["ready-for-review", "review-retry-required", "ready-for-test", "ready-for-final-review"].includes(task.status);
@@ -58,8 +61,8 @@ export function RuntimeCommandBar({
   const approvalBlocked = task.status === "awaiting-human-approval" && !candidateGateStages.every((stage) => isStageComplete(task, stage));
   const openGrill = task.status === "awaiting-grill" && task.grillSession?.status === "open";
   const unresolvedGrill = task.grillSession?.questions.filter((question) => !question.answer).length ?? 0;
-  const actionable = ready || failed || repairRequired || blocked;
-  const Icon = running ? CircleNotch : failed || blocked || repairRequired || approvalBlocked ? WarningCircle : CheckCircle;
+  const actionable = ready || failed || repairRequired || blocked || mergeReconciliation;
+  const Icon = persistedRunActive ? CircleNotch : failed || blocked || repairRequired || approvalBlocked ? WarningCircle : CheckCircle;
   const invoke = async (action: RuntimeWorkflowAction) => {
     setPending(true);
     setActionError(null);
@@ -100,7 +103,7 @@ export function RuntimeCommandBar({
     <section
       className={`stage-command-bar stage-command-bar--${running ? "active" : failed || blocked || repairRequired || approvalBlocked ? "blocked" : ready ? "ready" : "waiting"}`}
     >
-      <Icon className={running ? "spin" : ""} size={18} weight="fill" />
+      <Icon className={persistedRunActive ? "spin" : ""} size={18} weight="fill" />
       <span className="stage-command-bar__copy">
         <small>{repairRunning ? "Candidate repair in progress" : accessBoundary.kicker}</small>
         <strong>
@@ -110,6 +113,8 @@ export function RuntimeCommandBar({
             ? "Repairing the retained integration candidate"
             : running
             ? accessBoundary.title
+            : mergeReconciliation
+              ? (next?.title ?? "Merge reconciliation needs operator input")
             : blocked
               ? (next?.title ?? "Repair allowance exhausted")
               : repairRequired
@@ -129,6 +134,8 @@ export function RuntimeCommandBar({
             ? "The Implement agent is writing inside the isolated candidate worktree. Dev Review, Test, Final Review, and Approval require fresh evidence after the new revision is assembled."
             : running
             ? accessBoundary.detail
+            : mergeReconciliation
+              ? (next?.detail ?? task.error ?? "Recheck the retained exact-candidate merge intent before continuing.")
             : blocked
               ? (next?.detail ?? "Review the retained activity before granting another attempt.")
               : repairRequired
@@ -149,12 +156,15 @@ export function RuntimeCommandBar({
       <div className="stage-command-bar__actions">
         {(task.status === "queued" ||
           (failed &&
-            !["specification", "plan", "implement", "dev-review", "test", "final-review"].includes(task.currentStage))) && (
+            !["specification", "plan", "implement", "dev-review", "test", "final-review"].includes(task.currentStage))) &&
+          (task.actionEligibility?.actions.run?.allowed ?? true) && (
           <Button tone="primary" compact icon={Play} onClick={() => void onRun()}>
             {failed ? "Retry stage" : "Run investigation"}
           </Button>
         )}
-        {task.status === "awaiting-plan-approval" && !retryAllowanceExhausted ? (
+        {task.status === "awaiting-plan-approval" &&
+        !retryAllowanceExhausted &&
+        (task.actionEligibility?.actions.plan?.allowed ?? true) ? (
           <Button
             tone="secondary"
             compact
@@ -224,9 +234,37 @@ export function RuntimeWorkflowActionButton({
 }
 
 export function nextAction(task: RuntimeTask) {
+  const next = deriveNextAction(task);
+  if (!next?.action) {
+    if (task.actionEligibility?.actions["grant-retry"]?.allowed) {
+      return {
+        action: "grant-retry" as const,
+        label: "Grant one stage attempt",
+        title: "Stage retry allowance exhausted",
+        detail: "The server has authorized exactly one additional attempt while retaining the existing evidence.",
+      };
+    }
+    return null;
+  }
+  if (!task.actionEligibility) return next;
+  return task.actionEligibility.actions[next.action]?.allowed ? next : null;
+}
+
+function deriveNextAction(task: RuntimeTask) {
   const currentAttempts = getEffectiveStageRunAttempts(task);
   const retryAllowanceExhausted = currentAttempts >= getEffectiveStageRunLimit(task);
   const candidate = task.candidates?.at(-1);
+  if (
+    (task.status === "merging" && task.mergeIntent?.status === "pending") ||
+    (task.status === "blocked" && task.blocker?.code === "merge-reconciliation" && task.mergeIntent?.status === "failed")
+  )
+    return {
+      action: "reconcile-merge" as const,
+      label: "Reconcile retained merge",
+      title: "Merge intent requires reconciliation",
+      detail:
+        "Recheck the exact approved candidate and target. If the target advanced, the task will move to candidate refresh and require fresh candidate-bound gates and approval.",
+    };
   if (task.status === "blocked" && task.blocker?.code === "target-refresh-conflict")
     return {
       action: "rebuild-candidate" as const,
@@ -353,14 +391,6 @@ export function nextAction(task: RuntimeTask) {
       label: "Grant one Plan attempt",
       title: "Plan revision allowance exhausted",
       detail: "After inspecting the retained plans, a human may grant exactly one additional correction attempt.",
-    };
-  if (task.status === "blocked")
-    return {
-      action: "grant-retry" as const,
-      label: "Grant one stage attempt",
-      title: "Stage retry allowance exhausted",
-      detail:
-        "A human may grant one additional attempt. Qualified package commits and all failure evidence remain retained.",
     };
   if (task.status === "awaiting-spec-approval") {
     return task.workflow === "implement"

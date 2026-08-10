@@ -258,8 +258,10 @@ const completeStatuses = new Set<RuntimeTaskSummary["status"]>([
 export function getAtlasTaskTone(task: RuntimeTaskSummary): AtlasTaskTone {
   if (blockedStatuses.has(task.status)) return "blocked";
   if (completeStatuses.has(task.status)) return "complete";
-  if (task.status === "running" || task.status === "merging" || task.status === "cancelling")
+  if ((task.status === "running" || task.status === "cancelling") && (task.activeRunIds?.length ?? 0) > 0)
     return "running";
+  if (task.status === "running" || task.status === "cancelling") return "attention";
+  if (task.status === "merging") return "attention";
   if (task.status.startsWith("awaiting-") || task.status.startsWith("ready-for-")) return "attention";
   return "idle";
 }
@@ -276,6 +278,7 @@ export function getAtlasStatusLabel(task: RuntimeTaskSummary) {
     "ready-for-test": "Ready for test",
     "ready-for-final-review": "Ready for final review",
     "repair-required": "Repair required",
+    merging: "Needs input",
     "merged-to-target": "Merged",
   };
   return labels[task.status] ?? task.status.replaceAll("-", " ");

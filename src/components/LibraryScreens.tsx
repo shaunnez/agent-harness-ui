@@ -40,8 +40,15 @@ export function TasksScreen({
           if (task.status === "archived" || status === "archived") {
             if (task.status !== "archived" || status !== "archived") return false;
           }
+          const continued = task.workflow === "investigate" && Boolean(task.continuedByTaskId);
+          if (status === "continued") {
+            if (!continued) return false;
+          } else if (status === "open" && continued) {
+            return false;
+          }
           const statusMatches =
             status === "all" ||
+            status === "continued" ||
             (status === "open" && task.status !== "closed") ||
             (status === "attention"
               ? ["failed", "blocked", "cancelled", "repair-required"].includes(task.status)
@@ -99,6 +106,7 @@ export function TasksScreen({
               <option value="running">Running</option>
               <option value="completed">Completed</option>
               <option value="closed">Closed</option>
+              <option value="continued">Continued investigations</option>
               <option value="archived">Archived</option>
             </select>
           </label>

@@ -3005,6 +3005,10 @@ test("renders and dispatches the bounded specification retry action", () => {
       currentStage: "specification",
       attemptsByStage: { specification: 3 },
       stageRunLimits: { specification: 3 },
+      actionEligibility: {
+        generatedAt: "2026-08-01T12:01:00.000Z",
+        actions: { "grant-retry": { allowed: true, reason: null } },
+      },
     });
     assert.equal(nextAction(blockedTask).action, "grant-retry");
     const blockedMarkup = renderToStaticMarkup(React.createElement(RuntimeCommandBar, {
@@ -3206,6 +3210,7 @@ test("offers an implementation continuation only for completed investigations", 
     const linked = { ...task, continuedByTaskId: "AH-012" };
     assert.equal(nextAction(linked).label, "Open implementation task");
     assert.match(nextAction(linked).title, /AH-012/);
+    assert.equal(runtimeTaskToRecentTask(linked).status, "Continued");
   });
 });
 
@@ -3525,6 +3530,45 @@ test("disables task closure while merge reconciliation is pending", () => {
       onCloseTask: async () => {},
     }));
     assert.match(markup, /disabled=""[^>]*title="Wait for the pending merge reconciliation before closing this task\."[^>]*>.*Close task/s);
+  });
+});
+
+test("renders merge reconciliation as Needs input without investigation or running copy", () => {
+  return withWorkspace(async ({ RuntimeCommandBar, nextAction, toTaskRunState }) => {
+    const task = createTask({
+      status: "merging",
+      currentStage: "approval",
+      mergeIntent: {
+        status: "pending",
+        candidateId: "C1",
+        candidateRevision: 1,
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        targetRef: "refs/heads/main",
+        note: "Approved exact candidate.",
+        startedAt: "2026-08-04T00:00:00.000Z",
+        completedAt: null,
+        error: null,
+      },
+      actionEligibility: {
+        generatedAt: "2026-08-04T00:01:00.000Z",
+        actions: { "reconcile-merge": { allowed: true, reason: null } },
+      },
+    });
+    assert.equal(toTaskRunState(task.status), "needs-input");
+    assert.equal(runtimeTaskToRecentTask(task).status, "Needs input");
+    assert.equal(nextAction(task).action, "reconcile-merge");
+    const markup = renderToStaticMarkup(React.createElement(RuntimeCommandBar, {
+      task,
+      viewedStageId: "approval",
+      onRun: async () => {},
+      onAction: async () => {},
+      onFinishGrill: async () => {},
+    }));
+    assert.match(markup, /Merge intent requires reconciliation/);
+    assert.match(markup, /Reconcile retained merge/);
+    assert.doesNotMatch(markup, /Start the read-only investigation/);
+    assert.doesNotMatch(markup, /spin/);
   });
 });
 

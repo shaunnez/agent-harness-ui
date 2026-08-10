@@ -33,7 +33,7 @@ import { isCanonicalCommitId } from "../src/commit-id.ts";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
-const RUNTIME_SCHEMA_VERSION = 8;
+const RUNTIME_SCHEMA_VERSION = 9;
 const GRILL_POLICIES = new Set(["manual", "auto-accept-recommendations"]);
 const DIFF_CHAR_LIMIT = 300_000;
 const OUTPUT_LIMIT = 512 * 1024;
@@ -524,11 +524,10 @@ export function createApiServer({
       if (request.method === "GET" && taskMatch) {
         const id = decodeURIComponent(taskMatch[1]);
         const core = url.searchParams.get("view") === "core";
-        const task = core && typeof store.getCore === "function"
-          ? await store.getCore(id)
-          : await store.get(id);
+        const persistedTask = await store.get(id);
+        const task = persistedTask ? withActionEligibility(persistedTask) : null;
         send(response, task ? 200 : 404, task
-          ? { task: core && typeof store.getCore !== "function" ? projectTaskCore(task) : task }
+          ? { task: core ? projectTaskCore(task) : task }
           : { error: "Task not found." });
         return;
       }
@@ -795,7 +794,7 @@ export function createApiServer({
               send(response, 409, { error: `Linked implementation task ${source.continuedByTaskId} could not be found.` });
               return;
             }
-            send(response, 200, { task: existing, created: false });
+            send(response, 200, { task: withActionEligibility(existing), created: false });
             return;
           }
           if (source.workflow !== "investigate" || source.status !== "completed") {
@@ -877,7 +876,7 @@ export function createApiServer({
               tone: "success",
               stage: "specification",
               title: "Continued to implementation",
-              detail: `${target.id} owns planning and implementation authority; ${source.id} remains an approved read-only investigation.`,
+              detail: `${target.id} owns planning and implementation authority and imports approved artifacts, decisions, and attachment references. ${source.id} remains the complete read-only investigation record, including its original run telemetry.`,
             });
           });
           const started = await orchestrator.start(target.id, "planning");
@@ -888,7 +887,7 @@ export function createApiServer({
               draft.error = "Planning did not start. Retry planning from this implementation task.";
             });
           }
-          send(response, 201, { task: await store.get(target.id), created: true });
+          send(response, 201, { task: withActionEligibility(await store.get(target.id)), created: true });
           return;
         } finally {
           releaseContinuation();
@@ -897,7 +896,7 @@ export function createApiServer({
       }
 
       const actionMatch = url.pathname.match(
-        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|specification|plan|implement|continue-package|repair|review|test|retry-test|final-review|approve-merge|complete-merged|grant-retry|refresh-candidate|rebuild-candidate|restart-implementation)$/,
+        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|specification|plan|implement|continue-package|repair|review|test|retry-test|final-review|approve-merge|reconcile-merge|complete-merged|grant-retry|refresh-candidate|rebuild-candidate|restart-implementation)$/,
       );
       if (request.method === "POST" && actionMatch) {
         const id = decodeURIComponent(actionMatch[1]);
@@ -929,6 +928,11 @@ export function createApiServer({
         if (action === "approve-merge") {
           await orchestrator.approveMerge(id, notes.note ?? "");
           send(response, 200, { merged: true });
+          return;
+        }
+        if (action === "reconcile-merge") {
+          const reconciled = await orchestrator.reconcileMerge(id);
+          send(response, 200, { reconciled: true, task: withActionEligibility(reconciled) });
           return;
         }
         if (action === "complete-merged") {
@@ -1200,6 +1204,148 @@ export function createApiServer({
       send(response, error.statusCode ?? 400, { error: error.message });
     }
   });
+}
+
+const PROJECTED_ACTIONS = [
+  "run",
+  "continue-implementation",
+  "approve-spec",
+  "approve-plan",
+  "specification",
+  "plan",
+  "implement",
+  "continue-package",
+  "repair",
+  "review",
+  "test",
+  "retry-test",
+  "final-review",
+  "approve-merge",
+  "reconcile-merge",
+  "complete-merged",
+  "refresh-candidate",
+  "rebuild-candidate",
+  "restart-implementation",
+  "grant-retry",
+];
+
+function withActionEligibility(task) {
+  return {
+    ...task,
+    actionEligibility: {
+      generatedAt: new Date().toISOString(),
+      actions: Object.fromEntries(PROJECTED_ACTIONS.map((action) => [action, actionEligibilityFor(task, action)])),
+    },
+  };
+}
+
+function actionEligibilityFor(task, action) {
+  const deny = (reason = `Task cannot run ${action} while it is ${task.status}.`) => ({ allowed: false, reason });
+  const allow = () => ({ allowed: true, reason: null });
+  const candidate = task.candidates?.at(-1);
+  const running = task.status === "running" || task.status === "cancelling" ||
+    Boolean(task.activeRunKind || task.activeRunReservationId || (task.activeRunIds?.length ?? 0) > 0);
+  if (running) return deny("Wait for the active run to finish before starting another workflow action.");
+  if (action === "run") {
+    return ["queued", "failed", "cancelled"].includes(task.status) && ["triage", "scouts", "grill"].includes(task.currentStage)
+      ? allow()
+      : deny("This task is not eligible to start or retry its read-only investigation stage.");
+  }
+  if (action === "continue-implementation") {
+    if (task.workflow !== "investigate" || task.status !== "completed") return deny("Only a completed investigate-only task can continue to implementation.");
+    return allow();
+  }
+  if (action === "reconcile-merge") {
+    const retainedPending = task.status === "merging" && task.mergeIntent?.status === "pending";
+    const retryableFailure = task.status === "blocked" && task.blocker?.code === "merge-reconciliation" && task.mergeIntent?.status === "failed";
+    return retainedPending || retryableFailure ? allow() : deny("This task does not have a retained merge intent that can be reconciled.");
+  }
+  if (action === "refresh-candidate") {
+    return task.status === "blocked" && task.blocker?.code === "target-diverged"
+      ? allow()
+      : deny("The task is not blocked by an advanced target branch.");
+  }
+  if (action === "rebuild-candidate") {
+    return task.status === "blocked" && task.blocker?.code === "target-refresh-conflict"
+      ? allow()
+      : deny("The task is not blocked by a candidate refresh conflict.");
+  }
+  if (action === "restart-implementation") {
+    return task.status === "blocked" && task.blocker?.code === "implementation-target-diverged"
+      ? allow()
+      : deny("The task is not blocked by target divergence during implementation.");
+  }
+  if (task.status === "blocked" && task.blocker?.code === "target-diverged") {
+    return deny("Refresh the candidate from the current target before running another candidate-bound action.");
+  }
+  if (action === "grant-retry") {
+    if (task.currentStage === "approval") return deny("Human Approval never accepts a stage retry grant.");
+    const grant = retryGrantContext(task);
+    return grant.error ? deny(grant.error) : allow();
+  }
+  if (action === "approve-spec") return task.status === "awaiting-spec-approval" ? allow() : deny();
+  if (action === "approve-plan") return task.status === "awaiting-plan-approval" ? allow() : deny();
+  if (action === "approve-merge") {
+    if (task.status !== "awaiting-human-approval" || candidate?.status !== "awaiting_human_approval") return deny();
+    const stale = CANDIDATE_GATE_STAGES.find((stage) => {
+      const freshness = resolveGateFreshness(task, stage);
+      return !freshness?.fresh || freshness.candidateId !== candidate.id || freshness.candidateRevision !== candidate.revisionNumber;
+    });
+    return stale ? deny(`Approval is blocked until ${stale} is fresh for the exact candidate revision.`) : allow();
+  }
+  if (action === "complete-merged") return task.status === "merged-to-target" ? allow() : deny();
+  if (action === "continue-package") {
+    const retained = (task.workPackages ?? []).some((workPackage) =>
+      workPackage.status === "failed" && workPackage.worktreePath &&
+      /run exceeded \d+ seconds|harness stopped while this task was running/i.test(workPackage.error ?? task.error ?? ""));
+    return ["failed", "blocked"].includes(task.status) && task.currentStage === "implement" && retained
+      ? allow()
+      : deny("No retained timed-out implementation package is available to continue.");
+  }
+  if (action === "retry-test") {
+    const verification = [...(candidate?.verificationRuns ?? [])].reverse().find((entry) =>
+      (entry.executionKind == null || entry.executionKind === "full-manifest") &&
+      entry.candidateId === candidate?.id &&
+      entry.candidateRevision === candidate?.revisionNumber &&
+      entry.headRevision === candidate?.headRevision &&
+      entry.status === "failed" &&
+      entry.retryDisposition !== "human-rerun-requested");
+    const alreadyRetried = (task.sameCandidateTestRetries ?? []).some((retry) =>
+      retry.candidateId === candidate?.id && retry.candidateRevision === candidate?.revisionNumber);
+    const latestTest = [...(task.artifacts ?? [])].reverse().find((artifact) =>
+      artifact.stage === "test" && artifact.candidateId === candidate?.id && artifact.candidateRevision === candidate?.revisionNumber);
+    const candidateDefect = latestTest?.gateResult?.findings?.some((finding) => finding.blocking === true && finding.kind === "candidate-defect");
+    return ["repair-required", "failed", "blocked"].includes(task.status) && task.currentStage === "test" &&
+      verification && !alreadyRetried && !candidateDefect
+      ? allow()
+      : deny("The exact candidate is not eligible for a same-revision Test retry.");
+  }
+  if (action === "plan" && ["failed", "blocked"].includes(task.status) && task.currentStage === "implement") return allow();
+  if (action === "plan" && task.status === "awaiting-plan-approval") {
+    const latestPlan = task.artifacts?.filter((artifact) => artifact.stage === "plan").at(-1);
+    const latestDecision = task.decisions?.at(-1);
+    return latestPlan && latestDecision?.createdAt > latestPlan.createdAt
+      ? allow()
+      : deny("Record the required plan correction as a task decision before revising the plan.");
+  }
+  const runState = {
+    specification: { statuses: ["failed", "cancelled"], stages: ["specification"] },
+    implement: { statuses: ["ready-for-implementation", "failed", "cancelled"], stages: ["implement"] },
+    repair: { statuses: ["repair-required", "failed", "cancelled"], stages: ["implement", "dev-review", "test", "final-review"] },
+    review: { statuses: ["ready-for-review", "review-retry-required", "failed", "cancelled"], stages: ["dev-review"] },
+    test: { statuses: ["ready-for-test", "failed", "cancelled"], stages: ["test"] },
+    "final-review": { statuses: ["ready-for-final-review", "failed", "cancelled"], stages: ["final-review"] },
+  }[action];
+  if (runState) {
+    if (!runState.statuses.includes(task.status) || !runState.stages.includes(task.currentStage)) return deny();
+    if (action === "repair" && candidate?.status !== "repair_required") return deny("The current candidate is not awaiting repair.");
+    const effectiveStage = action === "repair" ? "implement" : task.currentStage;
+    const effectiveAttempts = task.attemptsByStage?.[effectiveStage] ?? 0;
+    const effectiveAllowanceExhausted = effectiveAttempts >= stageRunLimitFor(task, effectiveStage);
+    if (task.status === "blocked" || effectiveAllowanceExhausted) return deny(`The ${effectiveStage} stage has exhausted its retry allowance.`);
+    return allow();
+  }
+  return deny();
 }
 
 function retryGrantContext(task) {
@@ -1531,12 +1677,20 @@ function validRetryReservationCandidateBinding(
       return false;
     }
     if (grantedStage === "implement" && reservation.kind === "repair") {
-      return Boolean(failedRepairAuthorizingGate(
+      const originalAuthorizer = failedRepairAuthorizingGate(
         task,
         candidate,
         lineage,
         reservation,
-      ));
+      );
+      if (originalAuthorizer) return true;
+      const latestAuthorizer = failedRepairAuthorizingGate(task, candidate, lineage);
+      const validNoOp = latestAuthorizer &&
+        validCompletedNoOpRepairBeforeLaterGate(task, candidate, reservation, lineage, latestAuthorizer);
+      return Boolean(
+        latestAuthorizer &&
+        validNoOp
+      );
     }
     return validCandidateProducerReservation(task, candidate, reservations?.implement, lineage, implementationAttempt);
   }
@@ -1555,9 +1709,73 @@ function validRetryReservationCandidateBinding(
       implementationAttempt,
     ));
   }
+  if (
+    reservation.kind === "repair" &&
+    targetRefreshesDescendFromReservation(lineage, candidate, reservation)
+  ) {
+    return validCandidateProducerReservation(task, candidate, reservation, lineage, implementationAttempt);
+  }
   return sourceReservation &&
     ["implementation", "repair"].includes(reservation.kind) &&
     validCandidateProducerReservation(task, candidate, reservation, lineage, implementationAttempt);
+}
+
+function validCompletedNoOpRepairBeforeLaterGate(task, candidate, reservation, lineage, latestAuthorizer) {
+  if (!validCandidateProducerReservation(
+    task,
+    candidate,
+    reservation,
+    lineage,
+    task.attemptsByStage?.implement ?? 0,
+  )) return false;
+  const reservationRuns = (task.runs ?? []).filter((run) => run.workflowReservationId === reservation.id);
+  const run = reservationRuns[0] ?? null;
+  const artifact = run?.artifactId
+    ? (task.artifacts ?? []).find((entry) => entry.id === run.artifactId)
+    : null;
+  const historicalReservation = {
+    id: reservation.authorizingGateReservationId,
+    stage: reservation.authorizingGateStage,
+    kind: reservation.authorizingGateStage === "dev-review" ? "review" : reservation.authorizingGateStage,
+    provider: reservation.authorizingGateProvider,
+    workflowAttempt: reservation.authorizingGateWorkflowAttempt,
+    candidateId: candidate.id,
+    candidateRevision: candidate.revisionNumber,
+    candidateHeadRevision: candidate.headRevision,
+    authorizedRunScopes: [],
+    reservedAt: reservation.authorizingGateReservedAt,
+  };
+  const historicalAuthorizer = candidateGateAuthorizerEvidence(
+    task,
+    historicalReservation,
+    { candidateId: candidate.id, candidateRevision: candidate.revisionNumber },
+    { latestArtifactAt: reservation.reservedAt },
+  );
+  return reservationRuns.length === 1 &&
+    run?.stage === "implement" &&
+    run.kind === "repair" &&
+    run.role === "repair" &&
+    run.status === "completed" &&
+    run.workPackageId == null &&
+    run.workflowAttempt === reservation.workflowAttempt &&
+    run.candidateId === candidate.id &&
+    run.candidateRevision === candidate.revisionNumber &&
+    run.candidateHeadRevision === candidate.headRevision &&
+    artifact?.runId === run.id &&
+    artifact.stage === "implement" &&
+    artifact.kind === "markdown" &&
+    artifact.candidateId === candidate.id &&
+    artifact.candidateRevision === candidate.revisionNumber &&
+    /<no-changes-needed>[\s\S]*<\/no-changes-needed>/i.test(artifact.content ?? "") &&
+    validDurableRunArtifactEnvelope(run, artifact, {
+      earliestStartedAt: reservation.reservedAt,
+      latestCompletedAt: artifact.createdAt,
+      latestArtifactAt: latestAuthorizer.reservedAt,
+    }) &&
+    historicalAuthorizer?.id === reservation.authorizingGateReservationId &&
+    historicalAuthorizer.sourceRunId === reservation.authorizingGateRunId &&
+    historicalAuthorizer.sourceArtifactId === reservation.authorizingGateArtifactId &&
+    Date.parse(latestAuthorizer.reservedAt) > Date.parse(artifact.createdAt);
 }
 
 function failedRepairAuthorizingGate(
@@ -2095,6 +2313,19 @@ function validCandidateProducerReservation(task, candidate, producerReservation,
   }
   const producerReservedAt = Date.parse(producerReservation.reservedAt);
   const currentCreatedAt = Date.parse(currentRevision.createdAt);
+  const latestImplementedRevision = currentRevision.reason === "target-refresh"
+    ? [...lineage.byNumber.values()].reverse().find((revision) => revision.reason !== "target-refresh")
+    : currentRevision;
+  const noOpBoundRevision = Number.isInteger(producerReservation.candidateRevision)
+    ? lineage.byNumber.get(producerReservation.candidateRevision)
+    : null;
+  const noOpStillCurrent = noOpBoundRevision?.number === currentRevision.number || (
+    noOpBoundRevision &&
+    producerReservedAt <= currentCreatedAt &&
+    [...lineage.byNumber.values()].every((revision) => (
+      revision.number <= noOpBoundRevision.number || revision.reason === "target-refresh"
+    ))
+  );
   // A no-op repair (its own `<no-changes-needed>` marker, verified by `commit` — see
   // `#runRepair`) leaves the candidate at its *existing* revision by design: nothing
   // about the revision's true provenance changed, so the most recent implement
@@ -2103,11 +2334,12 @@ function validCandidateProducerReservation(task, candidate, producerReservation,
   // exact identity match here would treat every such no-op repair as if it had
   // corrupted the candidate's lineage, when the lineage never moved at all.
   if (
+    noOpBoundRevision &&
+    noOpStillCurrent &&
     producerReservation.kind === "repair" &&
     producerReservation.candidateId === candidate.id &&
-    producerReservation.candidateRevision === currentRevision.number &&
-    producerReservation.candidateHeadRevision === currentRevision.headRevision &&
-    producerReservedAt > currentCreatedAt
+    producerReservation.candidateHeadRevision === noOpBoundRevision.headRevision &&
+    producerReservedAt > Date.parse(noOpBoundRevision.createdAt)
   ) {
     return true;
   }
@@ -2117,9 +2349,7 @@ function validCandidateProducerReservation(task, candidate, producerReservation,
   // lookup, a genuine defect found after refresh can never receive a human-granted
   // repair once the Implement allowance is exhausted—the refresh revision correctly
   // has no sourceWorkflowReservationId of its own.
-  const producerRevision = currentRevision.reason === "target-refresh"
-    ? [...lineage.byNumber.values()].reverse().find((revision) => revision.reason !== "target-refresh")
-    : currentRevision;
+  const producerRevision = latestImplementedRevision;
   if (!producerRevision) return false;
   if (
     producerReservation.id !== producerRevision.sourceWorkflowReservationId ||

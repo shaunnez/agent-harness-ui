@@ -1,25 +1,7 @@
-import type { RuntimeTask, StageId, WorkflowProfileId } from "../../domain";
+import type { RuntimeAvailableAction, RuntimeTask, StageId, WorkflowProfileId } from "../../domain";
 import type { TaskRouteDetail } from "../../routes";
 
-export type RuntimeWorkflowAction =
-  | "continue-implementation"
-  | "approve-spec"
-  | "approve-plan"
-  | "specification"
-  | "plan"
-  | "implement"
-  | "continue-package"
-  | "repair"
-  | "review"
-  | "test"
-  | "retry-test"
-  | "final-review"
-  | "approve-merge"
-  | "complete-merged"
-  | "refresh-candidate"
-  | "rebuild-candidate"
-  | "restart-implementation"
-  | "grant-retry";
+export type RuntimeWorkflowAction = RuntimeAvailableAction;
 
 export interface RuntimeTaskWorkspaceProps {
   task: RuntimeTask;

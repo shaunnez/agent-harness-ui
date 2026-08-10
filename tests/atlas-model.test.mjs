@@ -54,7 +54,8 @@ test("package summary scales from one package to more than four without fixed sl
 });
 
 test("task tones make blocked and human-attention states explicit", () => {
-  assert.equal(getAtlasTaskTone({ status: "running" }), "running");
+  assert.equal(getAtlasTaskTone({ status: "running", activeRunIds: ["RUN-1"] }), "running");
+  assert.equal(getAtlasTaskTone({ status: "running", activeRunIds: [] }), "attention");
   assert.equal(getAtlasTaskTone({ status: "repair-required" }), "blocked");
   assert.equal(getAtlasTaskTone({ status: "awaiting-human-approval" }), "attention");
   assert.equal(getAtlasTaskTone({ status: "completed" }), "complete");

@@ -274,6 +274,7 @@ export async function runTaskAction(
     | "retry-test"
     | "final-review"
     | "approve-merge"
+    | "reconcile-merge"
     | "complete-merged"
     | "refresh-candidate"
     | "rebuild-candidate"

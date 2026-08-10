@@ -52,6 +52,8 @@ export function TaskTable({
                     ? "completed"
                     : task.status === "Closed"
                       ? "closed"
+                      : task.status === "Continued"
+                        ? "continued"
                       : task.status === "Archived"
                         ? "archived"
                         : "needs-input"
@@ -100,11 +102,13 @@ function StageProgress({ task }: { task: RuntimeTaskSummary }) {
         const complete = task.completedStages.includes(stage.id);
         const active = task.currentStage === stage.id;
         const failed = active && ["failed", "blocked", "repair-required"].includes(task.status);
-        const repairing = active && task.activeRunKind === "repair";
+        const persistedRunActive = ["running", "cancelling"].includes(task.status) &&
+          (task.activeRunIds?.length ?? 0) > 0;
+        const repairing = active && persistedRunActive && task.activeRunKind === "repair";
         if (repairing) return <ArrowClockwise key={stage.id} size={13} className="is-running" />;
         if (failed) return <XCircle key={stage.id} size={13} className="is-failed" weight="fill" />;
         if (complete) return <CheckCircle key={stage.id} size={13} className="is-complete" weight="fill" />;
-        if (active && task.status === "running") return <CircleNotch key={stage.id} size={13} className="is-running spin" />;
+        if (active && persistedRunActive) return <CircleNotch key={stage.id} size={13} className="is-running spin" />;
         return <Circle key={stage.id} size={13} />;
       })}
     </span>

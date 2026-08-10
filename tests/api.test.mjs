@@ -49,6 +49,7 @@ async function createServer(options = {}) {
   let grillFinish = null;
   let approvedSpecification = null;
   let completedMergedTask = null;
+  let reconciledMergeTask = null;
   let refreshedCandidateTask = null;
   let rebuiltCandidateTask = null;
   let restartedImplementationTask = null;
@@ -83,6 +84,10 @@ async function createServer(options = {}) {
       });
     },
     async approveMerge() {},
+    async reconcileMerge(id) {
+      reconciledMergeTask = id;
+      return store.get(id);
+    },
     async completeMergedTask(id, note) {
       completedMergedTask = { id, note };
     },
@@ -146,6 +151,7 @@ async function createServer(options = {}) {
     rebuiltCandidateTaskRef: () => rebuiltCandidateTask,
     restartedImplementationTaskRef: () => restartedImplementationTask,
     retriedTestTaskRef: () => retriedTestTask,
+    reconciledMergeTaskRef: () => reconciledMergeTask,
   };
 }
 
@@ -647,6 +653,44 @@ test("creates, lists, and starts a local task", async () => {
   }
 });
 
+test("returns server-authoritative action eligibility and never grants Human Approval retries", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Authoritative action projection",
+      description: "The command bar must consume backend eligibility rather than infer actions from counters.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    let detail = await (await fetch(`${origin}/api/tasks/${task.id}?view=core`)).json();
+    assert.equal(detail.task.actionEligibility.actions.run.allowed, true);
+
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "approval";
+      draft.error = "Promotion policy requires operator input.";
+      draft.blocker = { code: "promotion-policy", detail: draft.error, detectedAt: "2026-08-04T00:00:00.000Z" };
+    });
+    detail = await (await fetch(`${origin}/api/tasks/${task.id}?view=core`)).json();
+    assert.equal(detail.task.actionEligibility.actions["grant-retry"].allowed, false);
+    assert.match(detail.task.actionEligibility.actions["grant-retry"].reason, /Human Approval never accepts/i);
+
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "test";
+      draft.blocker = { code: "target-diverged", detail: "The target advanced.", detectedAt: "2026-08-04T00:01:00.000Z" };
+    });
+    detail = await (await fetch(`${origin}/api/tasks/${task.id}?view=core`)).json();
+    assert.equal(detail.task.actionEligibility.actions["refresh-candidate"].allowed, true);
+    assert.equal(detail.task.actionEligibility.actions["retry-test"].allowed, false);
+    assert.equal(detail.task.actionEligibility.actions.repair.allowed, false);
+    assert.match(detail.task.actionEligibility.actions["retry-test"].reason, /refresh the candidate/i);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("persists deterministic workflow-profile selection and permits an operator override before implementation", async () => {
   const { directory, origin, server } = await createServer();
   try {
@@ -1071,7 +1115,7 @@ test("returns backward-compatible structured run activity through task APIs", as
     const detail = await (await fetch(`${origin}/api/tasks/${task.id}`)).json();
     const list = await (await fetch(`${origin}/api/tasks`)).json();
     const health = await (await fetch(`${origin}/api/health`)).json();
-    assert.equal(health.runtimeSchemaVersion, 8);
+    assert.equal(health.runtimeSchemaVersion, 9);
     assert.equal(detail.task.runs[0].id, "RUN-API");
     assert.equal(detail.task.runs[0].toolCalls[0].result, "Exit code 0");
     assert.equal(detail.task.events.at(-1).runId, "RUN-API");
@@ -2853,13 +2897,27 @@ test("grants an exhausted dev-review retry after a no-op repair left the impleme
       const candidate = attachAssemblyLineage(draft, {
         id: "C1",
         revisionNumber: 1,
+        baseRevision: "target-base-r1",
         headRevision: "candidate-c1-r1",
         status: "ready_for_review",
       });
       draft.candidates.push(candidate);
+      candidate.revisionNumber = 2;
+      candidate.baseRevision = "target-base-r2";
+      candidate.headRevision = "candidate-c1-r2";
+      candidate.revisions.push({
+        number: 2,
+        headRevision: candidate.headRevision,
+        reason: "target-refresh",
+        previousBaseRevision: "target-base-r1",
+        previousHeadRevision: "candidate-c1-r1",
+        baseRevision: candidate.baseRevision,
+        createdAt: "2026-08-04T00:04:00.000Z",
+      });
       previousLimit = draft.stageRunLimits["dev-review"];
       attachExactCandidateGate(draft, candidate, {
         workflowAttempt: previousLimit,
+        reservedAt: "2026-08-04T00:06:00.000Z",
       });
       draft.attemptsByStage["dev-review"] = previousLimit;
       // The no-op repair reservation: bound to the candidate's *current* (unchanged)
@@ -2888,6 +2946,78 @@ test("grants an exhausted dev-review retry after a no-op repair left the impleme
     const updated = (await (await fetch(`${origin}/api/tasks/${task.id}`)).json()).task;
     assert.equal(updated.stageRunLimits["dev-review"], previousLimit + 1);
     assert.equal(updated.decisions.at(-1).grantedStage, "dev-review");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("grants an exact review retry after a no-op repair is followed by target refresh", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "No-op repair then target refresh",
+      description: "A mechanical refresh must preserve the latest valid no-op Implement reservation.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    let previousLimit;
+    await store.update(task.id, (draft) => {
+      draft.status = "review-retry-required";
+      draft.currentStage = "dev-review";
+      const candidate = attachAssemblyLineage(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        baseRevision: "target-base-r1",
+        headRevision: "candidate-c1-r1",
+        status: "review_retry_required",
+      });
+      draft.candidates.push(candidate);
+
+      const noOpRepairWorkflowAttempt = draft.attemptsByStage.implement + 1;
+      draft.attemptsByStage.implement = noOpRepairWorkflowAttempt;
+      draft.stageRunReservations.implement = {
+        id: `reservation-${draft.id}-noop-repair-before-refresh`,
+        stage: "implement",
+        kind: "repair",
+        workflowAttempt: noOpRepairWorkflowAttempt,
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        candidateHeadRevision: candidate.headRevision,
+        authorizedRunScopes: [],
+        reservedAt: "2026-08-04T00:05:00.000Z",
+      };
+
+      candidate.revisionNumber = 2;
+      candidate.baseRevision = "target-base-r2";
+      candidate.headRevision = "candidate-c1-r2";
+      candidate.revisions.push({
+        number: 2,
+        headRevision: candidate.headRevision,
+        reason: "target-refresh",
+        previousBaseRevision: "target-base-r1",
+        previousHeadRevision: "candidate-c1-r1",
+        baseRevision: candidate.baseRevision,
+        createdAt: "2026-08-04T00:06:00.000Z",
+      });
+
+      previousLimit = draft.stageRunLimits["dev-review"];
+      attachExactCandidateGate(draft, candidate, {
+        workflowAttempt: previousLimit,
+        reservedAt: "2026-08-04T00:07:00.000Z",
+      });
+      refreshGateFreshness(draft);
+    });
+
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
+    assert.deepEqual(await grantResponse.json(), { granted: true });
+
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits["dev-review"], previousLimit + 1);
+    assert.equal(updated.candidates.at(-1).revisionNumber, 2);
+    assert.equal(updated.candidates.at(-1).revisions.at(-1).reason, "target-refresh");
+    assert.equal(updated.stageRunReservations.implement.kind, "repair");
   } finally {
     await cleanup(server, directory);
   }
@@ -3014,6 +3144,167 @@ test("grants a failed Test repair after a later Review reservation follows a no-
     const updated = await store.get(task.id);
     assert.equal(updated.stageRunLimits.implement, 3);
     assert.equal(updated.decisions.at(-1).authorizingGateStage, "test");
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("grants AH-020 repair from the latest exact-candidate Test after prior no-op repairs exhaust Implement", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "AH-020 no-op repair lineage",
+      description: "The latest exact-candidate Test remains the repair authorizer after earlier no-op repairs.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      const candidate = attachAssemblyLineage(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "repair_required",
+      });
+      draft.candidates.push(candidate);
+      const firstTest = attachExactCandidateGate(draft, candidate, {
+        stage: "test",
+        workflowAttempt: 1,
+        reservationId: `reservation-${draft.id}-test-1`,
+        reservedAt: "2026-08-04T00:02:00.000Z",
+      });
+      const attachFailedTestEvidence = (gate, rowId) => {
+        const run = draft.runs.find((entry) => entry.id === gate.sourceRunId);
+        const artifact = draft.artifacts.find((entry) => entry.id === gate.sourceArtifactId);
+        const row = {
+          id: rowId,
+          candidateId: candidate.id,
+          candidateRevision: candidate.revisionNumber,
+          bindingExplicit: true,
+          command: "node --test tests/api.test.mjs",
+          status: "failed",
+          durationMs: 5,
+          title: "Exact candidate regression",
+          artifactReferences: [],
+          assertions: [{ label: "exit code", expected: "0", actual: "1" }],
+          failureDetails: "The exact candidate requires one bounded repair.",
+        };
+        const focusedTest = {
+          candidateId: candidate.id,
+          candidateRevision: candidate.revisionNumber,
+          bindingExplicit: true,
+          command: row.command,
+          status: "failed",
+          startedAt: run.startedAt,
+          completedAt: run.completedAt,
+          durationMs: 1_000,
+          rowCount: 1,
+          failedRowIds: [row.id],
+          rows: [row],
+        };
+        run.test = structuredClone(focusedTest);
+        artifact.focusedTest = focusedTest;
+      };
+      attachFailedTestEvidence(firstTest, "first-test-failure");
+
+      for (const [attempt, reservedAt] of [[2, "2026-08-04T00:05:00.000Z"], [3, "2026-08-04T00:06:00.000Z"]]) {
+        const reservationId = `reservation-${draft.id}-noop-repair-${attempt}`;
+        draft.attemptsByStage.implement = attempt;
+        draft.stageRunReservations.implement = {
+          id: reservationId,
+          stage: "implement",
+          kind: "repair",
+          workflowAttempt: attempt,
+          candidateId: candidate.id,
+          candidateRevision: candidate.revisionNumber,
+          candidateHeadRevision: candidate.headRevision,
+          authorizedRunScopes: [],
+          reservedAt,
+          authorizingGateStage: firstTest.stage,
+          authorizingGateWorkflowAttempt: firstTest.workflowAttempt,
+          authorizingGateReservationId: firstTest.id,
+          authorizingGateReservedAt: firstTest.reservedAt,
+          authorizingGateRunId: firstTest.sourceRunId,
+          authorizingGateArtifactId: firstTest.sourceArtifactId,
+        };
+        const reservedAtMs = Date.parse(reservedAt);
+        const run = {
+          id: `run-${reservationId}`,
+          stage: "implement",
+          kind: "repair",
+          role: "repair",
+          status: "completed",
+          workPackageId: null,
+          candidateId: candidate.id,
+          candidateRevision: candidate.revisionNumber,
+          candidateHeadRevision: candidate.headRevision,
+          attempt: attempt - 1,
+          workflowAttempt: attempt,
+          workflowReservationId: reservationId,
+          startedAt: new Date(reservedAtMs + 1_000).toISOString(),
+          completedAt: new Date(reservedAtMs + 2_000).toISOString(),
+        };
+        attachLinkedArtifact(draft, run, {
+          candidateId: candidate.id,
+          candidateRevision: candidate.revisionNumber,
+          createdAt: new Date(reservedAtMs + 3_000).toISOString(),
+        });
+        draft.artifacts.at(-1).content = "<no-changes-needed>{\"reason\":\"The exact candidate already contains the requested repair.\"}</no-changes-needed>";
+        draft.runs.push(run);
+      }
+      draft.stageRunLimits.implement = 3;
+
+      candidate.revisionNumber = 2;
+      candidate.baseRevision = "target-base-r2";
+      candidate.headRevision = "candidate-c1-r2";
+      candidate.revisions.push({
+        number: 2,
+        headRevision: candidate.headRevision,
+        reason: "target-refresh",
+        previousBaseRevision: "target-base",
+        previousHeadRevision: "candidate-c1-r1",
+        baseRevision: candidate.baseRevision,
+        createdAt: "2026-08-04T00:08:00.000Z",
+      });
+
+      const latestTest = attachExactCandidateGate(draft, candidate, {
+        stage: "test",
+        workflowAttempt: 2,
+        reservationId: `reservation-${draft.id}-test-2`,
+        reservedAt: "2026-08-04T00:10:00.000Z",
+      });
+      draft.runs.find((run) => run.id === latestTest.sourceRunId).attempt = 1;
+      attachFailedTestEvidence(latestTest, "latest-test-failure");
+      draft.status = "repair-required";
+      draft.currentStage = "test";
+      candidate.status = "repair_required";
+      refreshGateFreshness(draft);
+      assert.equal(draft.gateFreshness.test.sourceRunId, latestTest.sourceRunId);
+      assert.equal(draft.gateFreshness.test.reasonCode, "repair_required", JSON.stringify(draft.gateFreshness.test));
+    });
+
+    const before = await store.get(task.id);
+    const retainedImplementRunIds = before.runs.filter((run) => run.stage === "implement").map((run) => run.id);
+    const detail = await (await fetch(`${origin}/api/tasks/${task.id}?view=core`)).json();
+    assert.equal(detail.task.actionEligibility.actions.repair.allowed, false);
+    assert.match(detail.task.actionEligibility.actions.repair.reason, /implement stage has exhausted/i);
+    assert.equal(
+      detail.task.actionEligibility.actions["grant-retry"].allowed,
+      true,
+      JSON.stringify(detail.task.actionEligibility.actions["grant-retry"]),
+    );
+    const grantResponse = await fetch(`${origin}/api/tasks/${task.id}/grant-retry`, { method: "POST" });
+    assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
+    const updated = await store.get(task.id);
+    assert.equal(updated.stageRunLimits.implement, 4);
+    assert.equal(updated.decisions.at(-1).authorizingGateStage, "test");
+    assert.equal(updated.decisions.at(-1).authorizingGateWorkflowAttempt, 2);
+    assert.equal(updated.decisions.at(-1).authorizingGateRunId, `run-reservation-${task.id}-test-2`);
+    assert.deepEqual(
+      updated.runs.filter((run) => run.stage === "implement").map((run) => run.id),
+      retainedImplementRunIds,
+      "the grant retains every original Implement and no-op repair run",
+    );
   } finally {
     await cleanup(server, directory);
   }
@@ -6496,6 +6787,17 @@ for (const sqlite of [false, true]) {
           model: "gpt-5.6-luna",
           usage: { inputTokens: 10, cachedInputTokens: 5, outputTokens: 2, totalTokens: 12, cost: 0.001 },
         });
+        draft.runs.push({
+          id: "source-run",
+          stage: "specification",
+          kind: "agent",
+          role: "specification",
+          status: "completed",
+          startedAt: "2026-08-10T00:57:00.000Z",
+          completedAt: "2026-08-10T00:59:00.000Z",
+          artifactId: "source-specification",
+          usage: { inputTokens: 10, cachedInputTokens: 5, outputTokens: 2, totalTokens: 12 },
+        });
         draft.decisions.push({
           id: "source-decision",
           question: "Preserve the current contract?",
@@ -6528,6 +6830,7 @@ for (const sqlite of [false, true]) {
       assert.equal(first.task.artifacts[0].sourceTaskId, source.id);
       assert.equal(first.task.artifacts[0].sourceArtifactId, "source-specification");
       assert.equal(first.task.artifacts[0].model, null);
+      assert.equal(first.task.runs.length, 0, "the implementation task does not claim imported source run telemetry");
       assert.equal(first.task.decisions[0].sourceDecisionId, "source-decision");
       assert.equal(startedIdRef(), first.task.id);
       assert.equal(startedKindRef(), "planning");
@@ -6536,6 +6839,8 @@ for (const sqlite of [false, true]) {
       assert.equal(retainedSource.status, "completed");
       assert.equal(retainedSource.workflow, "investigate");
       assert.equal(retainedSource.continuedByTaskId, first.task.id);
+      assert.equal(retainedSource.runs[0].id, "source-run");
+      assert.match(retainedSource.events.at(-1).detail, /complete read-only investigation record, including its original run telemetry/i);
 
       const repeated = await fetch(`${origin}/api/tasks/${source.id}/continue-implementation`, { method: "POST" });
       assert.equal(repeated.status, 200);
