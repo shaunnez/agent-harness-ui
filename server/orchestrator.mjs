@@ -524,31 +524,7 @@ export class TaskOrchestrator {
 
   async start(id, kind = "investigation", options = {}) {
     if (!RUN_KINDS.has(kind)) throw new Error(`Unknown run kind: ${kind}`);
-    const retainedActive = this.#active.get(id);
-    if (retainedActive) {
-      // Durable reservation state is the workflow authority. A completed run can very
-      // occasionally leave its in-memory promise pending after the terminal task update
-      // (for example while a provider stream is being torn down). Do not strand the task
-      // behind that process-local lock forever: give the promise one short quiescence
-      // window, then recover only when the same map entry is still present and the durable
-      // reservation remains clear. A genuinely active run returns immediately, and the
-      // identity check prevents an older finalizer from deleting a newer reservation.
-      const retainedTask = await this.#store.get(id);
-      if (retainedTask?.activeRunKind || retainedTask?.activeRunReservationId || !retainedActive.promise) {
-        return false;
-      }
-      await Promise.race([
-        retainedActive.promise,
-        new Promise((resolve) => setTimeout(resolve, 150)),
-      ]);
-      if (this.#active.get(id) === retainedActive) {
-        const recheckedTask = await this.#store.get(id);
-        if (recheckedTask?.activeRunKind || recheckedTask?.activeRunReservationId) return false;
-        this.#active.delete(id);
-      } else if (this.#active.has(id)) {
-        return false;
-      }
-    }
+    if (this.#active.has(id)) return false;
     const controller = new AbortController();
     const reservation = { controller, kind, promise: null };
     this.#active.set(id, reservation);
