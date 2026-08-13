@@ -40,6 +40,21 @@ export function withActionEligibility(task) {
   };
 }
 
+function gateFreshnessForAdmission(task, stage, candidate) {
+  if (Array.isArray(task.runs)) return resolveGateFreshness(task, stage);
+  const freshness = task.gateFreshness?.[stage];
+  if (
+    freshness?.fresh === true &&
+    freshness.candidateId === candidate?.id &&
+    freshness.candidateRevision === candidate?.revisionNumber &&
+    freshness.target?.candidateId === candidate?.id &&
+    freshness.target?.candidateRevision === candidate?.revisionNumber
+  ) {
+    return freshness;
+  }
+  return null;
+}
+
 function actionEligibilityFor(task, action) {
   const deny = (reason = `Task cannot run ${action} while it is ${task.status}.`) => ({
     allowed: false,
@@ -113,7 +128,7 @@ function actionEligibilityFor(task, action) {
     if (task.status !== "awaiting-human-approval" || candidate?.status !== "awaiting_human_approval")
       return deny();
     const stale = CANDIDATE_GATE_STAGES.find((stage) => {
-      const freshness = resolveGateFreshness(task, stage);
+      const freshness = gateFreshnessForAdmission(task, stage, candidate);
       return (
         !freshness?.fresh ||
         freshness.candidateId !== candidate.id ||
@@ -128,7 +143,7 @@ function actionEligibilityFor(task, action) {
     if (task.status !== "awaiting-human-approval" || candidate?.status !== "awaiting_human_approval")
       return deny();
     const stale = CANDIDATE_GATE_STAGES.find((stage) => {
-      const freshness = resolveGateFreshness(task, stage);
+      const freshness = gateFreshnessForAdmission(task, stage, candidate);
       return (
         !freshness?.fresh ||
         freshness.candidateId !== candidate.id ||

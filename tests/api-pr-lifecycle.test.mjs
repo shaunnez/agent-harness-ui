@@ -77,6 +77,54 @@ test("returns server-authoritative action eligibility and never grants Human App
   }
 });
 
+test("keeps exact-candidate PR approval eligible in the compact task response", async () => {
+  const { directory, origin, server, store } = await createServer();
+  try {
+    const response = await createTask(origin, {
+      title: "Compact approval projection",
+      description: "The workspace refresh must retain exact-candidate PR eligibility.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      const candidate = {
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "awaiting_human_approval",
+        revisions: [],
+      };
+      draft.candidates = [candidate];
+      draft.status = "awaiting-human-approval";
+      draft.currentStage = "approval";
+      draft.gateFreshness = Object.fromEntries(
+        ["dev-review", "test", "final-review"].map((stage) => [
+          stage,
+          {
+            stage,
+            candidateId: candidate.id,
+            candidateRevision: candidate.revisionNumber,
+            target: { candidateId: candidate.id, candidateRevision: candidate.revisionNumber },
+            state: "fresh",
+            fresh: true,
+            sourceRunId: `run-${stage}`,
+            sourceArtifactId: `artifact-${stage}`,
+            reasonCode: "fresh",
+            reasonCopy: "The latest terminal run is authoritative for the active candidate.",
+          },
+        ]),
+      );
+    });
+
+    const detail = await (await fetch(`${origin}/api/tasks/${task.id}?view=core`)).json();
+    assert.equal(detail.task.gateFreshness["dev-review"].fresh, true);
+    assert.equal(detail.task.actionEligibility.actions["open-pr"].allowed, true);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("dispatches the complete-merged action to the orchestrator and reports 404 for an unknown task", async () => {
   const { directory, origin, server, completedMergedTaskRef } = await createServer();
   try {

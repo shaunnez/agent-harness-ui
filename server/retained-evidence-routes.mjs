@@ -115,10 +115,10 @@ export function createRetainedEvidenceRoutes({ store, send, withActionEligibilit
       let responseTask = task;
       if (task && core && !usedCoreStore) {
         const pollState = typeof store.getPollState === "function" ? await store.getPollState(id) : null;
-        responseTask = {
+        responseTask = withActionEligibility({
           ...projectTaskCore(task),
           ...(pollState ? { pollVersion: pollState.pollVersion } : {}),
-        };
+        });
       }
       send(
         response,
