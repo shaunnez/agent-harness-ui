@@ -7,7 +7,7 @@ import {
   runRepositoryVerification,
 } from "./verification.mjs";
 
-export class OrchestratorRuntimeBase {
+export class OrchestratorRuntimeContext {
   _store;
   _active = new Map();
   _mergeActive = new Set();

@@ -14,8 +14,9 @@ import { validPersistedTimestamp, validRetryReservationKind } from "./retry-rese
 export function validateGlobalRetryIdentities(task) {
   const runs = task.runs ?? [];
   const artifacts = task.artifacts ?? [];
-  const reservationEntries = Object.entries(task.stageRunReservations ?? {})
-    .filter(([, reservation]) => reservation != null);
+  const reservationEntries = Object.entries(task.stageRunReservations ?? {}).filter(
+    ([, reservation]) => reservation != null,
+  );
   const runIds = runs.map((run) => run?.id);
   const artifactIds = artifacts.map((artifact) => artifact?.id);
   const linkedRunIds = artifacts.map((artifact) => artifact?.runId).filter((runId) => runId != null);
@@ -33,12 +34,16 @@ export function validateGlobalRetryIdentities(task) {
     reservationIds.some((id) => typeof id !== "string" || !id.trim()) ||
     new Set(reservationIds).size !== reservationIds.length ||
     reservationEntries.some(([stage, reservation]) => reservation?.stage !== stage) ||
-    artifacts.some((artifact) => artifact?.runId != null && !runs.some((run) => (
-      run.id === artifact.runId && run.artifactId === artifact.id
-    ))) ||
-    runs.some((run) => run?.artifactId != null && !artifacts.some((artifact) => (
-      artifact.id === run.artifactId && artifact.runId === run.id
-    )))
+    artifacts.some(
+      (artifact) =>
+        artifact?.runId != null &&
+        !runs.some((run) => run.id === artifact.runId && run.artifactId === artifact.id),
+    ) ||
+    runs.some(
+      (run) =>
+        run?.artifactId != null &&
+        !artifacts.some((artifact) => artifact.id === run.artifactId && artifact.runId === run.id),
+    )
   ) {
     return "The exhausted workflow has duplicate or inconsistent persisted identities; resolve it before granting a retry.";
   }
@@ -54,7 +59,8 @@ export function validRetryReservationCandidateBinding(
 ) {
   const reservations = task.stageRunReservations;
   const implementationAttempt = task.attemptsByStage?.implement ?? 0;
-  const allNull = reservation.candidateId == null &&
+  const allNull =
+    reservation.candidateId == null &&
     reservation.candidateRevision == null &&
     reservation.candidateHeadRevision == null;
   if (!candidateRequired) return allNull;
@@ -62,19 +68,27 @@ export function validRetryReservationCandidateBinding(
   if (!lineage) return false;
   if (!candidateRevisionProducerEvidence(task, candidate, lineage)) return false;
   if (grantedStage !== "implement" && lineage.sourceReservations.has(reservation.id)) return false;
-  const sourceReservation = reservation.id === candidate?.sourceWorkflowReservationId &&
+  const sourceReservation =
+    reservation.id === candidate?.sourceWorkflowReservationId &&
     reservation.workflowAttempt === candidate?.sourceWorkflowAttempt;
   if (allNull) {
-    return grantedStage === "implement" &&
+    return (
+      grantedStage === "implement" &&
       sourceReservation &&
       reservation.kind === "implementation" &&
-      validCandidateProducerReservation(task, candidate, reservation, lineage, implementationAttempt);
+      validCandidateProducerReservation(task, candidate, reservation, lineage, implementationAttempt)
+    );
   }
-  const completeBinding = typeof reservation.candidateId === "string" && reservation.candidateId.trim().length > 0 &&
-    Number.isInteger(reservation.candidateRevision) && reservation.candidateRevision > 0 &&
-    typeof reservation.candidateHeadRevision === "string" && reservation.candidateHeadRevision.trim().length > 0;
+  const completeBinding =
+    typeof reservation.candidateId === "string" &&
+    reservation.candidateId.trim().length > 0 &&
+    Number.isInteger(reservation.candidateRevision) &&
+    reservation.candidateRevision > 0 &&
+    typeof reservation.candidateHeadRevision === "string" &&
+    reservation.candidateHeadRevision.trim().length > 0;
   if (!completeBinding) return false;
-  const exactCurrentCandidate = reservation.candidateId === candidate?.id &&
+  const exactCurrentCandidate =
+    reservation.candidateId === candidate?.id &&
     reservation.candidateRevision === candidate?.revisionNumber &&
     reservation.candidateHeadRevision === candidate?.headRevision;
   if (exactCurrentCandidate) {
@@ -85,37 +99,41 @@ export function validRetryReservationCandidateBinding(
       return false;
     }
     if (grantedStage === "implement" && reservation.kind === "repair") {
-      const originalAuthorizer = failedRepairAuthorizingGate(
-        task,
-        candidate,
-        lineage,
-        reservation,
-      );
+      const originalAuthorizer = failedRepairAuthorizingGate(task, candidate, lineage, reservation);
       if (originalAuthorizer) return true;
       const latestAuthorizer = failedRepairAuthorizingGate(task, candidate, lineage);
-      const validNoOp = latestAuthorizer &&
-        validCompletedNoOpRepairBeforeLaterGate(task, candidate, reservation, lineage, latestAuthorizer);
-      return Boolean(
+      const validNoOp =
         latestAuthorizer &&
-        validNoOp
-      );
+        validCompletedNoOpRepairBeforeLaterGate(task, candidate, reservation, lineage, latestAuthorizer);
+      return Boolean(latestAuthorizer && validNoOp);
     }
-    return validCandidateProducerReservation(task, candidate, reservations?.implement, lineage, implementationAttempt);
+    return validCandidateProducerReservation(
+      task,
+      candidate,
+      reservations?.implement,
+      lineage,
+      implementationAttempt,
+    );
   }
   if (grantedStage !== "implement") {
     if (targetRefreshesDescendFromReservation(lineage, candidate, reservation)) return true;
     if (replacedCandidateMatchesReservation(task, candidate, reservation)) return true;
-    if (reservation.candidateId !== candidate?.id || reservation.candidateRevision + 1 !== candidate?.revisionNumber) {
+    if (
+      reservation.candidateId !== candidate?.id ||
+      reservation.candidateRevision + 1 !== candidate?.revisionNumber
+    ) {
       return false;
     }
-    return Boolean(adjacentRepairAuthorizingGate(
-      task,
-      candidate,
-      reservation,
-      reservations?.implement,
-      lineage,
-      implementationAttempt,
-    ));
+    return Boolean(
+      adjacentRepairAuthorizingGate(
+        task,
+        candidate,
+        reservation,
+        reservations?.implement,
+        lineage,
+        implementationAttempt,
+      ),
+    );
   }
   if (
     reservation.kind === "repair" &&
@@ -123,19 +141,24 @@ export function validRetryReservationCandidateBinding(
   ) {
     return validCandidateProducerReservation(task, candidate, reservation, lineage, implementationAttempt);
   }
-  return sourceReservation &&
+  return (
+    sourceReservation &&
     ["implementation", "repair"].includes(reservation.kind) &&
-    validCandidateProducerReservation(task, candidate, reservation, lineage, implementationAttempt);
+    validCandidateProducerReservation(task, candidate, reservation, lineage, implementationAttempt)
+  );
 }
 
 function validCompletedNoOpRepairBeforeLaterGate(task, candidate, reservation, lineage, latestAuthorizer) {
-  if (!validCandidateProducerReservation(
-    task,
-    candidate,
-    reservation,
-    lineage,
-    task.attemptsByStage?.implement ?? 0,
-  )) return false;
+  if (
+    !validCandidateProducerReservation(
+      task,
+      candidate,
+      reservation,
+      lineage,
+      task.attemptsByStage?.implement ?? 0,
+    )
+  )
+    return false;
   const reservationRuns = (task.runs ?? []).filter((run) => run.workflowReservationId === reservation.id);
   const run = reservationRuns[0] ?? null;
   const artifact = run?.artifactId
@@ -159,7 +182,8 @@ function validCompletedNoOpRepairBeforeLaterGate(task, candidate, reservation, l
     { candidateId: candidate.id, candidateRevision: candidate.revisionNumber },
     { latestArtifactAt: reservation.reservedAt },
   );
-  return reservationRuns.length === 1 &&
+  return (
+    reservationRuns.length === 1 &&
     run?.stage === "implement" &&
     run.kind === "repair" &&
     run.role === "repair" &&
@@ -183,21 +207,20 @@ function validCompletedNoOpRepairBeforeLaterGate(task, candidate, reservation, l
     historicalAuthorizer?.id === reservation.authorizingGateReservationId &&
     historicalAuthorizer.sourceRunId === reservation.authorizingGateRunId &&
     historicalAuthorizer.sourceArtifactId === reservation.authorizingGateArtifactId &&
-    Date.parse(latestAuthorizer.reservedAt) > Date.parse(artifact.createdAt);
+    Date.parse(latestAuthorizer.reservedAt) > Date.parse(artifact.createdAt)
+  );
 }
 
-export function failedRepairAuthorizingGate(
-  task,
-  candidate,
-  lineage,
-  repairReservation = null,
-) {
+export function failedRepairAuthorizingGate(task, candidate, lineage, repairReservation = null) {
   if (!lineage) return null;
   const reservations = task.stageRunReservations;
   const attemptsByStage = task.attemptsByStage;
   const gateStages = new Set(["dev-review", "test", "final-review"]);
-  const retainedGates = Object.values(reservations ?? {}).filter((reservation) => gateStages.has(reservation?.stage));
-  if (repairReservation && retainedGates.some((reservation) => reservation?.id === repairReservation.id)) return null;
+  const retainedGates = Object.values(reservations ?? {}).filter((reservation) =>
+    gateStages.has(reservation?.stage),
+  );
+  if (repairReservation && retainedGates.some((reservation) => reservation?.id === repairReservation.id))
+    return null;
   const retainedGateIds = retainedGates.map((reservation) => reservation?.id);
   if (
     retainedGateIds.some((id) => typeof id !== "string" || !id.trim()) ||
@@ -209,11 +232,12 @@ export function failedRepairAuthorizingGate(
   const requestedGateStage = CANDIDATE_GATE_STAGES.includes(task.currentStage)
     ? task.currentStage
     : task.stageRunReservations?.implement?.authorizingGateStage;
-  const exactCandidateGates = retainedGates.filter((reservation) => (
-    reservation?.candidateId === candidate.id &&
-    reservation?.candidateRevision === candidate.revisionNumber &&
-    reservation?.candidateHeadRevision === candidate.headRevision
-  ));
+  const exactCandidateGates = retainedGates.filter(
+    (reservation) =>
+      reservation?.candidateId === candidate.id &&
+      reservation?.candidateRevision === candidate.revisionNumber &&
+      reservation?.candidateHeadRevision === candidate.headRevision,
+  );
   if (!exactCandidateGates.length) return null;
   const candidateCreatedAt = Date.parse(lineage.currentRevision.createdAt);
   let authorizingGate = null;
@@ -268,7 +292,9 @@ export function failedRepairAuthorizingGate(
     return null;
   }
   if (!repairReservation) return authoritativeGate;
-  const sourceArtifact = (task.artifacts ?? []).find((artifact) => artifact.id === authoritativeGate.sourceArtifactId);
+  const sourceArtifact = (task.artifacts ?? []).find(
+    (artifact) => artifact.id === authoritativeGate.sourceArtifactId,
+  );
   return repairReservation.workflowAttempt > candidate.sourceWorkflowAttempt &&
     !lineage.sourceReservations.has(repairReservation.id) &&
     Date.parse(repairReservation.reservedAt) > Date.parse(authorizingGate.reservedAt) &&
@@ -276,4 +302,3 @@ export function failedRepairAuthorizingGate(
     ? authoritativeGate
     : null;
 }
-

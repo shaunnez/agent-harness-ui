@@ -1,4 +1,11 @@
 import "./runtime-process-provider.test.mjs";
 import "./runtime-prompts-context.test.mjs";
-import "./runtime-workspace-routing.test.mjs";
-import "./runtime-policy.test.mjs";
+import "./runtime-artifact-routing.test.mjs";
+import "./runtime-stage-navigation.test.mjs";
+import "./runtime-artifact-freshness.test.mjs";
+import "./runtime-candidate-workspace.test.mjs";
+import "./runtime-activity-routing.test.mjs";
+import "./runtime-command-dispatch.test.mjs";
+import "./runtime-repair-policy.test.mjs";
+import "./runtime-persistence-policy.test.mjs";
+import "./runtime-task-presentation.test.mjs";

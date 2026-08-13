@@ -15,9 +15,24 @@ import {
   reserveRun,
 } from "./orchestrator-run-policy.mjs";
 
-import { CandidateGateOrchestrator } from "./orchestrator-gates.mjs";
-
-export class GateEvaluationOrchestrator extends CandidateGateOrchestrator {
+export class GateEvaluationOrchestrator {
+  constructor({
+    store,
+    worktrees,
+    runVerification,
+    completeDeterministicFastGates,
+    executeAgent,
+    retainAgentResult,
+    runRepair,
+  }) {
+    this._store = store;
+    this._worktrees = worktrees;
+    this._runVerification = runVerification;
+    this._completeDeterministicFastGates = completeDeterministicFastGates;
+    this._executeAgent = executeAgent;
+    this._retainAgentResult = retainAgentResult;
+    this._runRepair = runRepair;
+  }
   async _runReviewWithFastRepair(id, signal) {
     await this._runEvaluation(id, "dev-review", signal);
     let task = await this._store.get(id);

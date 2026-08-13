@@ -22,11 +22,29 @@ import {
 } from "./onboarding.mjs";
 import { gitHeadRevision } from "./verification.mjs";
 
-import { OrchestratorRuntimeBase } from "./orchestrator-runtime-base.mjs";
 import { now } from "./orchestrator-stage-support.mjs";
 import { throwIfAborted } from "./orchestrator-run-policy.mjs";
 
-export class RuntimeBoundariesOrchestrator extends OrchestratorRuntimeBase {
+export class RuntimeBoundariesOrchestrator {
+  constructor({
+    store,
+    runCodex,
+    getStatus,
+    worktrees,
+    runVerification,
+    runPackageVerification,
+    packageVerificationQueue,
+    packageConcurrency,
+  }) {
+    this._store = store;
+    this._runCodex = runCodex;
+    this._getStatus = getStatus;
+    this._worktrees = worktrees;
+    this._runVerification = runVerification;
+    this._runPackageVerification = runPackageVerification;
+    this._packageVerificationQueue = packageVerificationQueue;
+    this._packageConcurrency = packageConcurrency;
+  }
   _qualifyPackage(input) {
     const run = () => {
       throwIfAborted(input.signal);

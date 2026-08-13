@@ -21,7 +21,6 @@ import {
   runKindFor,
 } from "./run-activity.mjs";
 
-import { GateEvaluationOrchestrator } from "./orchestrator-gate-evaluation.mjs";
 import { now, activity } from "./orchestrator-stage-support.mjs";
 import {
   throwIfAborted,
@@ -35,7 +34,24 @@ import {
 } from "./orchestrator-repair-authority.mjs";
 import { requireActiveRunReservation, parseNoChangesNeeded } from "./orchestrator-task-helpers.mjs";
 
-export class RepairExecutionOrchestrator extends GateEvaluationOrchestrator {
+export class RepairExecutionOrchestrator {
+  constructor({
+    store,
+    worktrees,
+    assertProviderConfinement,
+    runAgent,
+    snapshotSource,
+    finishAgentRun,
+    retainAgentResult,
+  }) {
+    this._store = store;
+    this._worktrees = worktrees;
+    this._assertProviderConfinement = assertProviderConfinement;
+    this._runAgent = runAgent;
+    this._snapshotSource = snapshotSource;
+    this._finishAgentRun = finishAgentRun;
+    this._retainAgentResult = retainAgentResult;
+  }
   async _runRepair(id, signal) {
     const task = await this._store.get(id);
     const candidate = currentCandidate(task);

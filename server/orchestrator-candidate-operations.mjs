@@ -1,11 +1,18 @@
 import { refreshGateFreshness, stageRunLimitFor } from "./run-activity.mjs";
 
-import { MergeRecoveryOrchestrator } from "./orchestrator-merge-recovery.mjs";
 import { now, activity } from "./orchestrator-stage-support.mjs";
 import { sameCandidateTestRetryContext, currentCandidate } from "./orchestrator-run-policy.mjs";
 import { recordApproval } from "./orchestrator-task-helpers.mjs";
 
-export class CandidateOperationsOrchestrator extends MergeRecoveryOrchestrator {
+export class CandidateOperationsOrchestrator {
+  constructor({ store, github, mergeActive, refreshActive, worktrees, start }) {
+    this._store = store;
+    this._github = github;
+    this._mergeActive = mergeActive;
+    this._refreshActive = refreshActive;
+    this._worktrees = worktrees;
+    this.start = start;
+  }
   async refreshCandidate(id) {
     if (this._refreshActive.has(id) || this._mergeActive.has(id)) {
       throw new Error("This task already has a candidate or merge reconciliation in progress.");

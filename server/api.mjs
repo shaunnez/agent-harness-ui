@@ -48,20 +48,29 @@ function send(response, status, value, extraHeaders = {}) {
 
 function sendError(response, error) {
   const status = error.statusCode ?? 400;
-  const firstApplicationFrame = String(error.stack ?? "").split("\n").find((line) => line.includes("/server/")) ?? "";
-  const category = status >= 500
-    ? "operational"
-    : status === 409
-      ? "conflict"
-      : error.statusCode != null ||
-          firstApplicationFrame.includes("/server/api.mjs") ||
-          firstApplicationFrame.includes("-routes.mjs")
-        ? "request"
-        : "operational";
-  send(response, status, { error: error.message }, {
-    "x-agent-harness-error-category": category,
-    "x-agent-harness-retryable": category === "operational" ? "true" : "false",
-  });
+  const firstApplicationFrame =
+    String(error.stack ?? "")
+      .split("\n")
+      .find((line) => line.includes("/server/")) ?? "";
+  const category =
+    status >= 500
+      ? "operational"
+      : status === 409
+        ? "conflict"
+        : error.statusCode != null ||
+            firstApplicationFrame.includes("/server/api.mjs") ||
+            firstApplicationFrame.includes("-routes.mjs")
+          ? "request"
+          : "operational";
+  send(
+    response,
+    status,
+    { error: error.message },
+    {
+      "x-agent-harness-error-category": category,
+      "x-agent-harness-retryable": category === "operational" ? "true" : "false",
+    },
+  );
 }
 
 async function readJson(request) {
@@ -78,7 +87,8 @@ async function readJson(request) {
 }
 
 async function validateRepository(repositoryPath) {
-  if (!repositoryPath || !path.isAbsolute(repositoryPath)) throw new Error("Choose an absolute local repository path.");
+  if (!repositoryPath || !path.isAbsolute(repositoryPath))
+    throw new Error("Choose an absolute local repository path.");
   const info = await stat(repositoryPath).catch(() => null);
   if (!info?.isDirectory()) throw new Error("The selected repository path is not a readable directory.");
   await access(repositoryPath);
@@ -94,8 +104,10 @@ function validateAttachments(input) {
     const name = path.basename(String(item?.name ?? "")).slice(0, 180);
     const size = Number(item?.size ?? 0);
     const data = String(item?.data ?? "");
-    if (!name || !allowed.has(path.extname(name).toLowerCase())) throw new Error("Attachments must be HTML, an image, or a ZIP file.");
-    if (!Number.isFinite(size) || size <= 0 || size > 5_000_000) throw new Error(`${name} must be 5 MB or smaller.`);
+    if (!name || !allowed.has(path.extname(name).toLowerCase()))
+      throw new Error("Attachments must be HTML, an image, or a ZIP file.");
+    if (!Number.isFinite(size) || size <= 0 || size > 5_000_000)
+      throw new Error(`${name} must be 5 MB or smaller.`);
     total += size;
     if (total > 6_000_000) throw new Error("Attachments must total 6 MB or less.");
     const decoded = Buffer.from(data, "base64");
@@ -108,16 +120,17 @@ function validateStagePolicies(input, known, allowedModels, fallback) {
   const policies = {};
   for (const policyId of POLICY_IDS) {
     const fallbackPolicy = fallback?.[policyId];
-    const requested = input?.[policyId] ?? (
-      allowedModels.includes(normalizeModelId(fallbackPolicy?.model))
+    const requested =
+      input?.[policyId] ??
+      (allowedModels.includes(normalizeModelId(fallbackPolicy?.model))
         ? fallbackPolicy
-        : { model: allowedModels[0], reasoning: known.get(allowedModels[0])?.defaultReasoning }
-    );
+        : { model: allowedModels[0], reasoning: known.get(allowedModels[0])?.defaultReasoning });
     const modelId = normalizeModelId(requested?.model);
     const model = known.get(modelId);
     const reasoning = String(requested?.reasoning ?? "");
     if (!model || !allowedModels.includes(modelId)) throw new Error(`${policyId} must use an allowed model.`);
-    if (!model.reasoningLevels.includes(reasoning)) throw new Error(`${model.label} does not support ${reasoning || "that"} reasoning for ${policyId}.`);
+    if (!model.reasoningLevels.includes(reasoning))
+      throw new Error(`${model.label} does not support ${reasoning || "that"} reasoning for ${policyId}.`);
     policies[policyId] = { model: modelId, reasoning };
   }
   return policies;
@@ -144,7 +157,7 @@ function worktreeEntriesForTask(task) {
       baseRevision: workPackage.baseRevision ?? null,
       headRevision: workPackage.headRevision ?? null,
       recordedHeadRevision: workPackage.headRevision ?? null,
-      lifecycleState: RETIRED_TASK_STATUSES.has(task.status) ? "stale" : workPackage.status ?? "retained",
+      lifecycleState: RETIRED_TASK_STATUSES.has(task.status) ? "stale" : (workPackage.status ?? "retained"),
     });
   }
   for (const candidate of task.candidates ?? []) {
@@ -160,7 +173,7 @@ function worktreeEntriesForTask(task) {
       baseRevision: candidate.baseRevision ?? null,
       headRevision: candidate.headRevision ?? null,
       recordedHeadRevision: candidate.headRevision ?? null,
-      lifecycleState: RETIRED_TASK_STATUSES.has(task.status) ? "stale" : candidate.status ?? "retained",
+      lifecycleState: RETIRED_TASK_STATUSES.has(task.status) ? "stale" : (candidate.status ?? "retained"),
     });
   }
   return entries;

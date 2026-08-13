@@ -6,9 +6,22 @@ import { now, activity } from "./orchestrator-stage-support.mjs";
 import { throwIfAborted } from "./orchestrator-run-policy.mjs";
 import { retainedSliceCanBeRequalified } from "./orchestrator-task-helpers.mjs";
 
-import { InvestigationProgressionOrchestrator } from "./orchestrator-investigation.mjs";
-
-export class SpecificationPlanningOrchestrator extends InvestigationProgressionOrchestrator {
+export class SpecificationPlanningOrchestrator {
+  constructor({
+    store,
+    worktrees,
+    readVerificationManifest,
+    escalateProfile,
+    executeAgent,
+    retainAgentResult,
+  }) {
+    this._store = store;
+    this._worktrees = worktrees;
+    this._readVerificationManifest = readVerificationManifest;
+    this._escalateProfile = escalateProfile;
+    this._executeAgent = executeAgent;
+    this._retainAgentResult = retainAgentResult;
+  }
   async _runSpecification(id, signal) {
     const task = await this._store.get(id);
     const result = await this._executeAgent(task, "specification", signal, task.repositoryPath, "read-only");

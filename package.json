@@ -11,7 +11,7 @@
     "dev:web": "vite",
     "dev:api": "node server/index.mjs",
     "lint": "biome lint src server scripts tests worker",
-    "format:check": "biome format src",
+    "format:check": "biome format src server/api.mjs server/*-routes.mjs server/orchestrator*.mjs server/retry-*.mjs server/candidate-lineage-validation.mjs tests/api*.test.mjs tests/orchestrator*.test.mjs tests/runtime*.test.mjs",
     "typecheck": "tsc --noEmit",
     "build": "vite build && node scripts/prepare-sites-build.mjs",
     "preview": "vite preview",

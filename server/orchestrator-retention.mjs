@@ -7,11 +7,13 @@ import {
   runEventMetadata,
 } from "./run-activity.mjs";
 
-import { RepairExecutionOrchestrator } from "./orchestrator-repair-execution.mjs";
 import { now, activity } from "./orchestrator-stage-support.mjs";
 import { removeStageArtifacts } from "./orchestrator-run-policy.mjs";
 
-export class RetentionOrchestrator extends RepairExecutionOrchestrator {
+export class RetentionOrchestrator {
+  constructor({ store }) {
+    this._store = store;
+  }
   async _finishAgentRun(id, stageId, label, result, status) {
     await this._store.update(id, (draft) => {
       const run = completeAgentRun(draft, result.runId, {

@@ -34,50 +34,58 @@ export function validRetryWorkflowIdentities(stageRuns, reservation, currentAtte
     }
     if (!reservation) return false;
     if (run.workflowAttempt === currentAttempts && run.workflowReservationId !== reservation.id) return false;
-    if (run.workflowReservationId === reservation.id && run.workflowAttempt !== reservation.workflowAttempt) return false;
+    if (run.workflowReservationId === reservation.id && run.workflowAttempt !== reservation.workflowAttempt)
+      return false;
   }
   return true;
 }
 
 export function validRetryReservationKind(stage, kind) {
-  const allowed = {
-    triage: ["investigation"],
-    scouts: ["investigation"],
-    grill: ["investigation"],
-    specification: ["investigation", "specification"],
-    plan: ["planning"],
-    implement: ["implementation", "repair"],
-    "dev-review": ["review"],
-    test: ["test"],
-    "final-review": ["final-review"],
-  }[stage] ?? [];
+  const allowed =
+    {
+      triage: ["investigation"],
+      scouts: ["investigation"],
+      grill: ["investigation"],
+      specification: ["investigation", "specification"],
+      plan: ["planning"],
+      implement: ["implementation", "repair"],
+      "dev-review": ["review"],
+      test: ["test"],
+      "final-review": ["final-review"],
+    }[stage] ?? [];
   return allowed.includes(kind);
 }
 
 export function validRetryRunTuple(run, reservation, stageRuns) {
-  const expected = reservation.kind === "repair"
-    ? { kind: "repair", role: "repair", workPackage: "none" }
-    : reservation.kind === "implementation"
-      ? { kind: "implementation", role: "implement", workPackage: "required" }
-      : {
-          triage: { kind: "agent", role: "triage", workPackage: "none" },
-          scouts: Array.isArray(reservation.authorizedRunScopes) && reservation.authorizedRunScopes.length
-            ? { kind: "scout", role: "authorized-scout", workPackage: "none" }
-            : { kind: "agent", role: "scouts", workPackage: "none" },
-          grill: { kind: "agent", role: "grill", workPackage: "none" },
-          specification: { kind: "agent", role: "specification", workPackage: "none" },
-          plan: { kind: "agent", role: "plan", workPackage: "none" },
-          "dev-review": { kind: "review", role: "dev-review", workPackage: "none" },
-          test: { kind: "test", role: "test", workPackage: "none" },
-          "final-review": { kind: "final-review", role: "final-review", workPackage: "none" },
-        }[reservation.stage];
+  const expected =
+    reservation.kind === "repair"
+      ? { kind: "repair", role: "repair", workPackage: "none" }
+      : reservation.kind === "implementation"
+        ? { kind: "implementation", role: "implement", workPackage: "required" }
+        : {
+            triage: { kind: "agent", role: "triage", workPackage: "none" },
+            scouts:
+              Array.isArray(reservation.authorizedRunScopes) && reservation.authorizedRunScopes.length
+                ? { kind: "scout", role: "authorized-scout", workPackage: "none" }
+                : { kind: "agent", role: "scouts", workPackage: "none" },
+            grill: { kind: "agent", role: "grill", workPackage: "none" },
+            specification: { kind: "agent", role: "specification", workPackage: "none" },
+            plan: { kind: "agent", role: "plan", workPackage: "none" },
+            "dev-review": { kind: "review", role: "dev-review", workPackage: "none" },
+            test: { kind: "test", role: "test", workPackage: "none" },
+            "final-review": { kind: "final-review", role: "final-review", workPackage: "none" },
+          }[reservation.stage];
   if (typeof run.id !== "string" || !run.id.trim()) return false;
   if (!expected || run.kind !== expected.kind) return false;
   if (expected.role === "authorized-scout") {
     if (!reservation.authorizedRunScopes.includes(run.role)) return false;
   } else if (run.role !== expected.role) return false;
   if (expected.workPackage === "none" && run.workPackageId != null) return false;
-  if (expected.workPackage === "required" && (typeof run.workPackageId !== "string" || !run.workPackageId.trim())) return false;
+  if (
+    expected.workPackage === "required" &&
+    (typeof run.workPackageId !== "string" || !run.workPackageId.trim())
+  )
+    return false;
   if (!Number.isInteger(run.attempt) || run.attempt < 1) return false;
   let scopeAttempt = 0;
   for (const scopedRun of stageRuns) {
@@ -134,10 +142,13 @@ export function validateRetryRunScopes(task, reservation, reservationRuns) {
       return "The exhausted Scout reservation does not match its persisted dispatch; resolve the inconsistent history before granting a retry.";
     }
   }
-  const runScopes = reservationRuns.map((run) => (
-    reservation.kind === "implementation" ? run.workPackageId : run.role
-  ));
-  if (new Set(runScopes).size !== runScopes.length || runScopes.some((scope) => !authorized.includes(scope))) {
+  const runScopes = reservationRuns.map((run) =>
+    reservation.kind === "implementation" ? run.workPackageId : run.role,
+  );
+  if (
+    new Set(runScopes).size !== runScopes.length ||
+    runScopes.some((scope) => !authorized.includes(scope))
+  ) {
     return "The exhausted multi-run reservation contains duplicate or unauthorized run scopes; resolve the inconsistent history before granting a retry.";
   }
   return null;
@@ -149,11 +160,13 @@ function validImplementationScopeSnapshot(task, authorizedScopes) {
   const unresolvedPackageIds = workPackages
     .filter((workPackage) => !["ready_for_integration", "integrated"].includes(workPackage?.status))
     .map((workPackage) => workPackage.id);
-  return packageIds.length > 0 &&
+  return (
+    packageIds.length > 0 &&
     packageIds.every((packageId) => typeof packageId === "string" && packageId.trim().length > 0) &&
     packageIds.length === new Set(packageIds).size &&
     authorizedScopes.every((scope) => packageIds.includes(scope)) &&
-    unresolvedPackageIds.every((packageId) => authorizedScopes.includes(packageId));
+    unresolvedPackageIds.every((packageId) => authorizedScopes.includes(packageId))
+  );
 }
 
 export function validInitialCandidateProducer(task, candidate, reservation) {
@@ -170,24 +183,27 @@ export function validInitialCandidateProducer(task, candidate, reservation) {
   const producerRuns = (task.runs ?? []).filter((run) => run.workflowReservationId === reservation.id);
   if (!authorized.length) return producerRuns.length === 0;
   const runScopes = producerRuns.map((run) => run.workPackageId);
-  return producerRuns.length === authorized.length &&
+  return (
+    producerRuns.length === authorized.length &&
     new Set(producerRuns.map((run) => run.id)).size === producerRuns.length &&
     new Set(runScopes).size === runScopes.length &&
     authorized.every((scope) => runScopes.includes(scope)) &&
-    producerRuns.every((run) => (
-      typeof run.id === "string" &&
-      run.id.trim().length > 0 &&
-      run.stage === "implement" &&
-      run.kind === "implementation" &&
-      run.role === "implement" &&
-      run.status === "completed" &&
-      Number.isInteger(run.attempt) &&
-      run.attempt > 0 &&
-      run.workflowAttempt === reservation.workflowAttempt &&
-      run.candidateId == null &&
-      run.candidateRevision == null &&
-      run.candidateHeadRevision == null
-    ));
+    producerRuns.every(
+      (run) =>
+        typeof run.id === "string" &&
+        run.id.trim().length > 0 &&
+        run.stage === "implement" &&
+        run.kind === "implementation" &&
+        run.role === "implement" &&
+        run.status === "completed" &&
+        Number.isInteger(run.attempt) &&
+        run.attempt > 0 &&
+        run.workflowAttempt === reservation.workflowAttempt &&
+        run.candidateId == null &&
+        run.candidateRevision == null &&
+        run.candidateHeadRevision == null,
+    )
+  );
 }
 
 export function validCandidateAssemblyMembership(task, candidate) {
@@ -197,18 +213,22 @@ export function validCandidateAssemblyMembership(task, candidate) {
   // already confirmed its goal was met commits nothing (see `allowNoChanges` in
   // git-worktree.mjs). Only a non-null revision must be a real, non-empty commit hash;
   // multiple work packages are allowed to independently be no-ops.
-  const validHeadRevision = (value) => value === null || (typeof value === "string" && value.trim().length > 0);
-  const committedHeadRevisions = workPackages.map((workPackage) => workPackage.headRevision).filter((value) => value !== null);
+  const validHeadRevision = (value) =>
+    value === null || (typeof value === "string" && value.trim().length > 0);
+  const committedHeadRevisions = workPackages
+    .map((workPackage) => workPackage.headRevision)
+    .filter((value) => value !== null);
   if (
     !workPackages.length ||
-    !workPackages.every((workPackage) => (
-      workPackage.status === "integrated" &&
-      typeof workPackage.id === "string" &&
-      workPackage.id.trim().length > 0 &&
-      validHeadRevision(workPackage.headRevision) &&
-      Number.isInteger(workPackage.batch) &&
-      workPackage.batch > 0
-    )) ||
+    !workPackages.every(
+      (workPackage) =>
+        workPackage.status === "integrated" &&
+        typeof workPackage.id === "string" &&
+        workPackage.id.trim().length > 0 &&
+        validHeadRevision(workPackage.headRevision) &&
+        Number.isInteger(workPackage.batch) &&
+        workPackage.batch > 0,
+    ) ||
     new Set(workPackages.map((workPackage) => workPackage.id)).size !== workPackages.length ||
     // Two *committed* packages must never share a revision; any number of no-ops may
     // all be null at once.
@@ -216,20 +236,28 @@ export function validCandidateAssemblyMembership(task, candidate) {
   ) {
     return false;
   }
-  const orderedPackages = [...workPackages].sort((left, right) => left.batch - right.batch || left.id.localeCompare(right.id));
-  return members.length === orderedPackages.length &&
-    members.every((member, index) => (
-      member?.packageId === orderedPackages[index].id &&
-      member?.headRevision === orderedPackages[index].headRevision &&
-      member?.order === index + 1
-    ));
+  const orderedPackages = [...workPackages].sort(
+    (left, right) => left.batch - right.batch || left.id.localeCompare(right.id),
+  );
+  return (
+    members.length === orderedPackages.length &&
+    members.every(
+      (member, index) =>
+        member?.packageId === orderedPackages[index].id &&
+        member?.headRevision === orderedPackages[index].headRevision &&
+        member?.order === index + 1,
+    )
+  );
 }
 
 function validAssemblyOnlyCandidateProducer(task, reservation, reservationRuns) {
   if (reservationRuns.length > 0) return false;
   const candidate = task.candidates?.at(-1);
-  const currentRevision = candidate?.revisions?.find((revision) => revision.number === candidate?.revisionNumber);
-  return candidate?.status === "repair_required" &&
+  const currentRevision = candidate?.revisions?.find(
+    (revision) => revision.number === candidate?.revisionNumber,
+  );
+  return (
+    candidate?.status === "repair_required" &&
     candidate.revisionNumber === 1 &&
     candidate.sourceWorkflowAttempt === reservation.workflowAttempt &&
     candidate.sourceWorkflowReservationId === reservation.id &&
@@ -240,7 +268,8 @@ function validAssemblyOnlyCandidateProducer(task, reservation, reservationRuns) 
     reservation.candidateId == null &&
     reservation.candidateRevision == null &&
     reservation.candidateHeadRevision == null &&
-    validCandidateAssemblyMembership(task, candidate);
+    validCandidateAssemblyMembership(task, candidate)
+  );
 }
 
 export function orderRetrySourceRuns(reservation, runs) {

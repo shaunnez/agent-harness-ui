@@ -1,4 +1,3 @@
-import { PullRequestOrchestrator } from "./orchestrator-pr-lifecycle.mjs";
 import { now, activity } from "./orchestrator-stage-support.mjs";
 import {
   candidateGateFailure,
@@ -6,7 +5,13 @@ import {
   currentCandidate,
 } from "./orchestrator-run-policy.mjs";
 
-export class MergeRecoveryOrchestrator extends PullRequestOrchestrator {
+export class MergeRecoveryOrchestrator {
+  constructor({ store, mergeActive, worktrees, finalizeMerge }) {
+    this._store = store;
+    this._mergeActive = mergeActive;
+    this._worktrees = worktrees;
+    this._finalizeMerge = finalizeMerge;
+  }
   async approveMerge(id, note = "") {
     if (this._mergeActive.has(id))
       throw new Error("This task already has a merge reconciliation in progress.");

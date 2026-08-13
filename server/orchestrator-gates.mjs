@@ -7,7 +7,6 @@ import {
 } from "./run-activity.mjs";
 import { fastEscalation, recordWorkflowProfile } from "./workflow-profiles.mjs";
 
-import { WorkPackageOrchestrator } from "./orchestrator-work-packages.mjs";
 import {
   now,
   zeroUsage,
@@ -19,7 +18,10 @@ import {
 import { currentCandidate, createStageRunReservation } from "./orchestrator-run-policy.mjs";
 import { applyStageRunReservation, requireActiveRunReservation } from "./orchestrator-task-helpers.mjs";
 
-export class CandidateGateOrchestrator extends WorkPackageOrchestrator {
+export class CandidateGateOrchestrator {
+  constructor({ store }) {
+    this._store = store;
+  }
   async _escalateProfile(id, escalation, stage) {
     await this._store.update(id, (draft) => {
       const prior = draft.workflowProfile?.selected ?? "standard";

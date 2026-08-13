@@ -3,12 +3,30 @@ import { isOwnedFile } from "./structured-output.mjs";
 import { selectVerificationCommands } from "./verification.mjs";
 import { canOverrideWorkflowProfile, recordWorkflowProfile } from "./workflow-profiles.mjs";
 
-import { RuntimeBoundariesOrchestrator } from "./orchestrator-runtime-boundaries.mjs";
 import { RUN_KINDS, now, activity, completeGrillSession } from "./orchestrator-stage-support.mjs";
 import { currentCandidate, canStartRun, reserveRun } from "./orchestrator-run-policy.mjs";
 import { recordApproval } from "./orchestrator-task-helpers.mjs";
 
-export class TaskControlOrchestrator extends RuntimeBoundariesOrchestrator {
+export class TaskControlOrchestrator {
+  constructor({
+    store,
+    active,
+    worktrees,
+    runCodex,
+    readVerificationManifest,
+    readVerificationManifestAtRevision,
+    readVerificationManifestInjected,
+    run,
+  }) {
+    this._store = store;
+    this._active = active;
+    this._worktrees = worktrees;
+    this._runCodex = runCodex;
+    this._readVerificationManifest = readVerificationManifest;
+    this._readVerificationManifestAtRevision = readVerificationManifestAtRevision;
+    this._readVerificationManifestInjected = readVerificationManifestInjected;
+    this._run = run;
+  }
   isRunning(id) {
     return this._active.has(id);
   }

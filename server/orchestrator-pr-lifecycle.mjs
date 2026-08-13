@@ -1,6 +1,5 @@
 import { pullRequestBranch } from "./github-pull-request.mjs";
 
-import { TaskControlOrchestrator } from "./orchestrator-task-control.mjs";
 import { now, zeroUsage, activity } from "./orchestrator-stage-support.mjs";
 import {
   candidateGateFailure,
@@ -8,7 +7,13 @@ import {
   currentCandidate,
 } from "./orchestrator-run-policy.mjs";
 
-export class PullRequestOrchestrator extends TaskControlOrchestrator {
+export class PullRequestOrchestrator {
+  constructor({ store, github, mergeActive, worktrees }) {
+    this._store = store;
+    this._github = github;
+    this._mergeActive = mergeActive;
+    this._worktrees = worktrees;
+  }
   async approvePullRequest(id, note = "") {
     if (this._mergeActive.has(id))
       throw new Error("This task already has a GitHub PR reconciliation in progress.");

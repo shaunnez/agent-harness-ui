@@ -1,4 +1,8 @@
-import { CANDIDATE_GATE_STAGES, readExecutionProvider, resolvePersistedRunFreshness } from "./run-activity.mjs";
+import {
+  CANDIDATE_GATE_STAGES,
+  readExecutionProvider,
+  resolvePersistedRunFreshness,
+} from "./run-activity.mjs";
 import {
   validCandidateAssemblyMembership,
   validInitialCandidateProducer,
@@ -7,7 +11,12 @@ import {
   validRetryRunTuple,
 } from "./retry-reservation-validation.mjs";
 
-export function candidateGateAuthorizerEvidence(task, gateReservation, target, { latestArtifactAt = null } = {}) {
+export function candidateGateAuthorizerEvidence(
+  task,
+  gateReservation,
+  target,
+  { latestArtifactAt = null } = {},
+) {
   const gateStageRuns = (task.runs ?? []).filter((run) => run.stage === gateReservation?.stage);
   const reservationRuns = gateStageRuns.filter((run) => run.workflowReservationId === gateReservation?.id);
   const sourceRun = reservationRuns[0] ?? null;
@@ -93,7 +102,8 @@ export function candidateRevisionLineage(candidate) {
   for (const revision of revisions) {
     const repairRevision = revision?.number > 1 && revision?.reason === "repair";
     const targetRefreshRevision = revision?.number > 1 && revision?.reason === "target-refresh";
-    const hasValidRepairAuthorizer = repairRevision &&
+    const hasValidRepairAuthorizer =
+      repairRevision &&
       CANDIDATE_GATE_STAGES.includes(revision.authorizingGateStage) &&
       Number.isInteger(revision.authorizingGateWorkflowAttempt) &&
       revision.authorizingGateWorkflowAttempt > 0 &&
@@ -104,14 +114,16 @@ export function candidateRevisionLineage(candidate) {
       typeof revision.authorizingGateArtifactId === "string" &&
       revision.authorizingGateArtifactId.trim().length > 0 &&
       validPersistedTimestamp(revision.authorizingGateReservedAt);
-    const hasNoRepairAuthorizer = !repairRevision && [
-      revision?.authorizingGateStage,
-      revision?.authorizingGateWorkflowAttempt,
-      revision?.authorizingGateReservationId,
-      revision?.authorizingGateReservedAt,
-      revision?.authorizingGateRunId,
-      revision?.authorizingGateArtifactId,
-    ].every((value) => value == null);
+    const hasNoRepairAuthorizer =
+      !repairRevision &&
+      [
+        revision?.authorizingGateStage,
+        revision?.authorizingGateWorkflowAttempt,
+        revision?.authorizingGateReservationId,
+        revision?.authorizingGateReservedAt,
+        revision?.authorizingGateRunId,
+        revision?.authorizingGateArtifactId,
+      ].every((value) => value == null);
     if (
       !Number.isInteger(revision?.number) ||
       revision.number < 1 ||
@@ -123,31 +135,31 @@ export function candidateRevisionLineage(candidate) {
       (revision.number === 1
         ? revision.reason !== "assembly"
         : !["repair", "target-refresh"].includes(revision.reason)) ||
-      (!targetRefreshRevision && (
-        !Number.isInteger(revision.sourceWorkflowAttempt) ||
-        revision.sourceWorkflowAttempt < 1 ||
-        typeof revision.sourceWorkflowReservationId !== "string" ||
-        !revision.sourceWorkflowReservationId.trim() ||
-        sourceReservations.has(revision.sourceWorkflowReservationId) ||
-        !validPersistedTimestamp(revision.sourceWorkflowReservedAt)
-      )) ||
-      (targetRefreshRevision && (
-        typeof revision.previousBaseRevision !== "string" ||
-        !revision.previousBaseRevision.trim() ||
-        typeof revision.baseRevision !== "string" ||
-        !revision.baseRevision.trim() ||
-        revision.previousBaseRevision === revision.baseRevision ||
-        [revision.sourceWorkflowAttempt, revision.sourceWorkflowReservationId, revision.sourceWorkflowReservedAt]
-          .some((value) => value != null)
-      )) ||
+      (!targetRefreshRevision &&
+        (!Number.isInteger(revision.sourceWorkflowAttempt) ||
+          revision.sourceWorkflowAttempt < 1 ||
+          typeof revision.sourceWorkflowReservationId !== "string" ||
+          !revision.sourceWorkflowReservationId.trim() ||
+          sourceReservations.has(revision.sourceWorkflowReservationId) ||
+          !validPersistedTimestamp(revision.sourceWorkflowReservedAt))) ||
+      (targetRefreshRevision &&
+        (typeof revision.previousBaseRevision !== "string" ||
+          !revision.previousBaseRevision.trim() ||
+          typeof revision.baseRevision !== "string" ||
+          !revision.baseRevision.trim() ||
+          revision.previousBaseRevision === revision.baseRevision ||
+          [
+            revision.sourceWorkflowAttempt,
+            revision.sourceWorkflowReservationId,
+            revision.sourceWorkflowReservedAt,
+          ].some((value) => value != null))) ||
       (!repairRevision && !hasNoRepairAuthorizer) ||
       (repairRevision && !hasValidRepairAuthorizer) ||
-      (repairRevision && (
-        authorizingReservations.has(revision.authorizingGateReservationId) ||
-        authorizingRuns.has(revision.authorizingGateRunId) ||
-        authorizingArtifacts.has(revision.authorizingGateArtifactId) ||
-        revision.authorizingGateReservationId === revision.sourceWorkflowReservationId
-      )) ||
+      (repairRevision &&
+        (authorizingReservations.has(revision.authorizingGateReservationId) ||
+          authorizingRuns.has(revision.authorizingGateRunId) ||
+          authorizingArtifacts.has(revision.authorizingGateArtifactId) ||
+          revision.authorizingGateReservationId === revision.sourceWorkflowReservationId)) ||
       !validPersistedTimestamp(revision.createdAt)
     ) {
       return null;
@@ -240,7 +252,8 @@ export function replacedCandidateMatchesReservation(task, candidate, reservation
   const currentIndex = candidates.length - 1;
   const previous = candidates[currentIndex - 1];
   const currentRevision = candidate?.revisions?.[0];
-  return currentIndex > 0 &&
+  return (
+    currentIndex > 0 &&
     candidates[currentIndex] === candidate &&
     currentRevision?.reason === "assembly" &&
     ["failed", "superseded"].includes(previous?.status) &&
@@ -250,7 +263,8 @@ export function replacedCandidateMatchesReservation(task, candidate, reservation
     reservation.candidateHeadRevision === previous.headRevision &&
     validPersistedTimestamp(reservation.reservedAt) &&
     validPersistedTimestamp(currentRevision.createdAt) &&
-    Date.parse(reservation.reservedAt) < Date.parse(currentRevision.createdAt);
+    Date.parse(reservation.reservedAt) < Date.parse(currentRevision.createdAt)
+  );
 }
 
 export function candidateRevisionProducerEvidence(task, candidate, lineage) {
@@ -265,10 +279,11 @@ export function candidateRevisionProducerEvidence(task, candidate, lineage) {
   for (let number = 1; number <= candidate.revisionNumber; number += 1) {
     const revision = lineage.byNumber.get(number);
     if (revision.reason === "target-refresh") continue;
-    const revisionRuns = allRuns.filter((run) => (
-      run.workflowReservationId === revision.sourceWorkflowReservationId &&
-      run.workflowAttempt === revision.sourceWorkflowAttempt
-    ));
+    const revisionRuns = allRuns.filter(
+      (run) =>
+        run.workflowReservationId === revision.sourceWorkflowReservationId &&
+        run.workflowAttempt === revision.sourceWorkflowAttempt,
+    );
     if (number === 1) {
       const runScopes = revisionRuns.map((run) => run.workPackageId);
       const syntheticReservation = {
@@ -283,18 +298,23 @@ export function candidateRevisionProducerEvidence(task, candidate, lineage) {
       };
       if (
         new Set(runScopes).size !== runScopes.length ||
-        revisionRuns.some((run) => (
-          run.stage !== "implement" ||
-          run.kind !== "implementation" ||
-          run.role !== "implement" ||
-          run.status !== "completed" ||
-          typeof run.workPackageId !== "string" ||
-          !packageIds.has(run.workPackageId) ||
-          run.candidateId != null ||
-          run.candidateRevision != null ||
-          run.candidateHeadRevision != null ||
-          !validRetryRunTuple(run, syntheticReservation, allRuns.filter((item) => item.stage === "implement"))
-        ))
+        revisionRuns.some(
+          (run) =>
+            run.stage !== "implement" ||
+            run.kind !== "implementation" ||
+            run.role !== "implement" ||
+            run.status !== "completed" ||
+            typeof run.workPackageId !== "string" ||
+            !packageIds.has(run.workPackageId) ||
+            run.candidateId != null ||
+            run.candidateRevision != null ||
+            run.candidateHeadRevision != null ||
+            !validRetryRunTuple(
+              run,
+              syntheticReservation,
+              allRuns.filter((item) => item.stage === "implement"),
+            ),
+        )
       ) {
         return null;
       }
@@ -327,7 +347,11 @@ export function candidateRevisionProducerEvidence(task, candidate, lineage) {
         run.candidateId !== candidate.id ||
         run.candidateRevision !== priorRevision.number ||
         run.candidateHeadRevision !== priorRevision.headRevision ||
-        !validRetryRunTuple(run, syntheticReservation, allRuns.filter((item) => item.stage === "implement"))
+        !validRetryRunTuple(
+          run,
+          syntheticReservation,
+          allRuns.filter((item) => item.stage === "implement"),
+        )
       ) {
         return null;
       }
@@ -415,11 +439,11 @@ function linkedProducerArtifact(task, candidate, revision, run) {
     : null;
 }
 
-export function validDurableRunArtifactEnvelope(run, artifact, {
-  earliestStartedAt,
-  latestCompletedAt,
-  latestArtifactAt,
-}) {
+export function validDurableRunArtifactEnvelope(
+  run,
+  artifact,
+  { earliestStartedAt, latestCompletedAt, latestArtifactAt },
+) {
   if (
     !validPersistedTimestamp(run?.startedAt) ||
     !validPersistedTimestamp(run?.completedAt) ||
@@ -430,40 +454,49 @@ export function validDurableRunArtifactEnvelope(run, artifact, {
   const startedAt = Date.parse(run.startedAt);
   const completedAt = Date.parse(run.completedAt);
   const artifactAt = Date.parse(artifact.createdAt);
-  return startedAt <= completedAt &&
+  return (
+    startedAt <= completedAt &&
     completedAt <= artifactAt &&
-    (earliestStartedAt == null || (
-      validPersistedTimestamp(earliestStartedAt) && Date.parse(earliestStartedAt) <= startedAt
-    )) &&
-    (latestCompletedAt == null || (
-      validPersistedTimestamp(latestCompletedAt) && completedAt <= Date.parse(latestCompletedAt)
-    )) &&
-    (latestArtifactAt == null || (
-      validPersistedTimestamp(latestArtifactAt) && artifactAt <= Date.parse(latestArtifactAt)
-    ));
+    (earliestStartedAt == null ||
+      (validPersistedTimestamp(earliestStartedAt) && Date.parse(earliestStartedAt) <= startedAt)) &&
+    (latestCompletedAt == null ||
+      (validPersistedTimestamp(latestCompletedAt) && completedAt <= Date.parse(latestCompletedAt))) &&
+    (latestArtifactAt == null ||
+      (validPersistedTimestamp(latestArtifactAt) && artifactAt <= Date.parse(latestArtifactAt)))
+  );
 }
 
-export function validCandidateProducerReservation(task, candidate, producerReservation, lineage, implementationAttempt) {
+export function validCandidateProducerReservation(
+  task,
+  candidate,
+  producerReservation,
+  lineage,
+  implementationAttempt,
+) {
   if (!producerReservation || !validPersistedTimestamp(producerReservation.reservedAt)) return false;
   const currentRevision = lineage.currentRevision;
-  if (producerReservation.workflowAttempt !== implementationAttempt || producerReservation.stage !== "implement") {
+  if (
+    producerReservation.workflowAttempt !== implementationAttempt ||
+    producerReservation.stage !== "implement"
+  ) {
     return false;
   }
   const producerReservedAt = Date.parse(producerReservation.reservedAt);
   const currentCreatedAt = Date.parse(currentRevision.createdAt);
-  const latestImplementedRevision = currentRevision.reason === "target-refresh"
-    ? [...lineage.byNumber.values()].reverse().find((revision) => revision.reason !== "target-refresh")
-    : currentRevision;
+  const latestImplementedRevision =
+    currentRevision.reason === "target-refresh"
+      ? [...lineage.byNumber.values()].reverse().find((revision) => revision.reason !== "target-refresh")
+      : currentRevision;
   const noOpBoundRevision = Number.isInteger(producerReservation.candidateRevision)
     ? lineage.byNumber.get(producerReservation.candidateRevision)
     : null;
-  const noOpStillCurrent = noOpBoundRevision?.number === currentRevision.number || (
-    noOpBoundRevision &&
-    producerReservedAt <= currentCreatedAt &&
-    [...lineage.byNumber.values()].every((revision) => (
-      revision.number <= noOpBoundRevision.number || revision.reason === "target-refresh"
-    ))
-  );
+  const noOpStillCurrent =
+    noOpBoundRevision?.number === currentRevision.number ||
+    (noOpBoundRevision &&
+      producerReservedAt <= currentCreatedAt &&
+      [...lineage.byNumber.values()].every(
+        (revision) => revision.number <= noOpBoundRevision.number || revision.reason === "target-refresh",
+      ));
   // A no-op repair (its own `<no-changes-needed>` marker, verified by `commit` — see
   // `#runRepair`) leaves the candidate at its *existing* revision by design: nothing
   // about the revision's true provenance changed, so the most recent implement
@@ -497,31 +530,44 @@ export function validCandidateProducerReservation(task, candidate, producerReser
     return false;
   }
   if (producerRevision.number === 1) {
-    return producerReservation.kind === "implementation" &&
+    return (
+      producerReservation.kind === "implementation" &&
       producerReservation.candidateId == null &&
       producerReservation.candidateRevision == null &&
       producerReservation.candidateHeadRevision == null &&
       producerReservedAt <= Date.parse(producerRevision.createdAt) &&
-      validInitialCandidateProducer(task, candidate, producerReservation);
+      validInitialCandidateProducer(task, candidate, producerReservation)
+    );
   }
   const priorRevision = lineage.byNumber.get(producerRevision.number - 1);
-  return producerReservation.kind === "repair" &&
+  return (
+    producerReservation.kind === "repair" &&
     producerReservation.candidateId === candidate.id &&
     producerReservation.candidateRevision === priorRevision.number &&
     producerReservation.candidateHeadRevision === priorRevision.headRevision &&
     producerReservedAt > Date.parse(priorRevision.createdAt) &&
-    producerReservedAt <= Date.parse(producerRevision.createdAt);
+    producerReservedAt <= Date.parse(producerRevision.createdAt)
+  );
 }
 
-export function adjacentRepairAuthorizingGate(task, candidate, priorReservation, repairReservation, lineage, implementationAttempt) {
-  if (!validCandidateProducerReservation(task, candidate, repairReservation, lineage, implementationAttempt)) return false;
+export function adjacentRepairAuthorizingGate(
+  task,
+  candidate,
+  priorReservation,
+  repairReservation,
+  lineage,
+  implementationAttempt,
+) {
+  if (!validCandidateProducerReservation(task, candidate, repairReservation, lineage, implementationAttempt))
+    return false;
   const currentRevision = lineage.currentRevision;
   const priorRevision = lineage.byNumber.get(currentRevision.number - 1);
   const priorCreatedAt = Date.parse(priorRevision?.createdAt);
   const currentCreatedAt = Date.parse(currentRevision?.createdAt);
   const priorReservedAt = Date.parse(priorReservation?.reservedAt);
   const repairReservedAt = Date.parse(repairReservation?.reservedAt);
-  const validLineage = priorReservation.candidateRevision + 1 === candidate.revisionNumber &&
+  const validLineage =
+    priorReservation.candidateRevision + 1 === candidate.revisionNumber &&
     priorReservation.candidateId === candidate.id &&
     priorRevision?.headRevision === priorReservation.candidateHeadRevision &&
     priorReservation.id !== repairReservation.id &&
@@ -543,7 +589,8 @@ export function adjacentRepairAuthorizingGate(task, candidate, priorReservation,
     currentRevision,
     priorRevision,
   );
-  if (!revisionAuthorizer || Date.parse(revisionAuthorizer.artifact.createdAt) >= repairReservedAt) return null;
+  if (!revisionAuthorizer || Date.parse(revisionAuthorizer.artifact.createdAt) >= repairReservedAt)
+    return null;
   return {
     ...revisionAuthorizer.reservation,
     sourceArtifactId: revisionAuthorizer.artifact.id,
