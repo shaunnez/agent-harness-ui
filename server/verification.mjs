@@ -254,6 +254,7 @@ function playwrightFailureSummaries(suites) {
         const errors = result?.errors?.length ? result.errors : result?.error ? [result.error] : [];
         const messages = [...new Set(errors.map((error) => (
           String(error?.message ?? error?.value ?? "Playwright reported an unexpected result.")
+            // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape stripping requires ESC.
             .replace(/\u001b\[[0-9;]*m/g, "")
             .replace(/\s+/g, " ")
             .trim()

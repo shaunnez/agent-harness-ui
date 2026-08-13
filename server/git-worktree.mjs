@@ -907,17 +907,13 @@ async function isDirectory(target) {
     .catch(() => false);
 }
 
-function changedFiles(status) {
-  return statusEntries(status).map((entry) => entry.file);
-}
-
 function statusEntries(status) {
   return status
     .split(/\r?\n/)
     .filter(Boolean)
     .map((line) => ({
       code: line.slice(0, 2),
-      file: line.slice(3).split(" -> ").at(-1)?.replace(/^\"|\"$/g, "") ?? "",
+      file: line.slice(3).split(" -> ").at(-1)?.replace(/^"|"$/g, "") ?? "",
     }))
     .filter((entry) => entry.file);
 }

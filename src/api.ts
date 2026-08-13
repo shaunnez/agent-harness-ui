@@ -9,6 +9,7 @@ import type {
   RuntimeTask,
   RuntimeTaskCore,
   RuntimeTaskSummary,
+  RuntimeTaskPollState,
   RuntimeArtifact,
   RuntimeArtifactMetadata,
   RuntimeEvent,
@@ -183,6 +184,15 @@ export async function getCandidateDiff(taskId: string, candidateId: string, head
 
 export async function listTasks() {
   return (await request<{ tasks: RuntimeTaskSummary[] }>("/api/tasks")).tasks;
+}
+
+export async function listTaskPollStates() {
+  return (await request<{ tasks: RuntimeTaskPollState[] }>("/api/tasks?view=poll")).tasks;
+}
+
+export async function getTaskPollState(id: string) {
+  return (await request<{ task: RuntimeTaskPollState }>(`/api/tasks/${encodeURIComponent(id)}?view=poll`))
+    .task;
 }
 
 export async function getTask(id: string) {

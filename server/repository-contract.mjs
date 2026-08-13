@@ -6,16 +6,40 @@ import { parseVerificationManifest, VERIFICATION_MANIFEST_PATH } from "./verific
 const INSPECTION_TIMEOUT_MS = 10_000;
 
 async function git(repositoryPath, args, { required = true } = {}) {
-  const result = await runProcess("git", args, {
-    cwd: repositoryPath,
-    timeoutMs: INSPECTION_TIMEOUT_MS,
-    label: "Repository contract inspection",
-    stdoutBudgetBytes: 256 * 1024,
-  });
+  let result;
+  try {
+    result = await runProcess("git", args, {
+      cwd: repositoryPath,
+      timeoutMs: INSPECTION_TIMEOUT_MS,
+      label: "Repository contract inspection",
+      stdoutBudgetBytes: 256 * 1024,
+    });
+  } catch (error) {
+    error.statusCode ??= 503;
+    throw error;
+  }
   if (required && result.code !== 0) {
-    throw new Error(result.stderr.trim() || `git ${args.join(" ")} failed.`);
+    const error = new Error(result.stderr.trim() || `git ${args.join(" ")} failed.`);
+    error.code = "REPOSITORY_INSPECTION_FAILED";
+    error.statusCode = 502;
+    throw error;
   }
   return result.code === 0 ? result.stdout.trim() : null;
+}
+
+async function discoverDeliveryRemote(repositoryRoot) {
+  const names = (await git(repositoryRoot, ["remote"], { required: false }))
+    ?.split(/\r?\n/)
+    .map((value) => value.trim())
+    .filter(Boolean) ?? [];
+  const ordered = ["origin", ...names.filter((name) => name !== "origin")];
+  for (const name of ordered) {
+    const remoteUrl = await git(repositoryRoot, ["remote", "get-url", name], { required: false });
+    if (remoteUrl && /(?:github\.com[:/])/i.test(remoteUrl)) {
+      return { remoteName: name, remoteUrl };
+    }
+  }
+  return { remoteName: null, remoteUrl: null };
 }
 
 async function optionalFile(filePath) {
@@ -35,11 +59,11 @@ export async function inspectRepositoryContract(repositoryPath) {
   const requestedPath = await realpath(repositoryPath);
   const rootOutput = await git(requestedPath, ["rev-parse", "--show-toplevel"]);
   const repositoryRoot = await realpath(rootOutput);
-  const [branchOutput, headRevision, statusOutput, remoteUrl, agentsFile, verificationFile, nvmrc, nodeVersion, packageFile] = await Promise.all([
+  const [branchOutput, headRevision, statusOutput, deliveryRemote, agentsFile, verificationFile, nvmrc, nodeVersion, packageFile] = await Promise.all([
     git(repositoryRoot, ["branch", "--show-current"]),
     git(repositoryRoot, ["rev-parse", "HEAD"]),
     git(repositoryRoot, ["status", "--porcelain=v1"]),
-    git(repositoryRoot, ["config", "--get", "remote.origin.url"], { required: false }),
+    discoverDeliveryRemote(repositoryRoot),
     optionalFile(path.join(repositoryRoot, "AGENTS.md")),
     optionalFile(path.join(repositoryRoot, VERIFICATION_MANIFEST_PATH)),
     optionalFile(path.join(repositoryRoot, ".nvmrc")),
@@ -80,7 +104,6 @@ export async function inspectRepositoryContract(repositoryPath) {
     }
   }
 
-  const normalizedRemote = remoteUrl || null;
   return {
     repositoryRoot,
     git: {
@@ -92,8 +115,9 @@ export async function inspectRepositoryContract(repositoryPath) {
     verification,
     runtime: { declarations: runtimeDeclarations },
     delivery: {
-      remoteUrl: normalizedRemote,
-      github: Boolean(normalizedRemote && /(?:github\.com[:/])/i.test(normalizedRemote)),
+      remoteName: deliveryRemote.remoteName,
+      remoteUrl: deliveryRemote.remoteUrl,
+      github: Boolean(deliveryRemote.remoteUrl),
     },
   };
 }

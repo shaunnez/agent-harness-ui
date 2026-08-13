@@ -99,11 +99,13 @@ function linkedRunFreshness(event: RuntimeEvent, linkedRun: RuntimeRun | null | 
 export function RunActivity({
   task,
   onOpenArtifact,
+  onLoadArtifact,
   initialFilter = "activity",
   initialSelectedId = null,
 }: {
   task: RuntimeTask;
   onOpenArtifact?: (artifact: RuntimeArtifact) => void;
+  onLoadArtifact?: (artifactId: string) => Promise<RuntimeArtifact>;
   initialFilter?: RunActivityFilter;
   initialSelectedId?: string | null;
 }) {
@@ -116,6 +118,7 @@ export function RunActivity({
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [artifactLoading, setArtifactLoading] = useState(false);
   const pagedTask = useMemo(
     () => ({
       ...task,
@@ -304,6 +307,24 @@ export function RunActivity({
                 onClick={() => onOpenArtifact(selectedArtifact)}
               >
                 Open {selectedArtifact.name} <ArrowSquareOut size={14} />
+              </button>
+            ) : null}
+            {!selectedArtifact && selectedArtifactId && onLoadArtifact && onOpenArtifact ? (
+              <button
+                className="run-activity-link"
+                type="button"
+                disabled={artifactLoading}
+                onClick={async () => {
+                  setArtifactLoading(true);
+                  try {
+                    onOpenArtifact(await onLoadArtifact(selectedArtifactId));
+                  } finally {
+                    setArtifactLoading(false);
+                  }
+                }}
+              >
+                {artifactLoading ? "Loading retained artifact…" : "Open retained artifact"}
+                <ArrowSquareOut size={14} />
               </button>
             ) : null}
           </aside>

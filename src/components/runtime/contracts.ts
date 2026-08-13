@@ -17,6 +17,8 @@ export interface RuntimeTaskWorkspaceProps {
   onFinishGrill: (acceptRemaining: boolean) => Promise<void>;
   onRemoveWorktree: (rowId: string) => Promise<void>;
   onProfileChange: (profile: WorkflowProfileId, reason: string) => Promise<void>;
+  onLoadMoreArtifacts?: () => Promise<void>;
+  onLoadArtifact?: (artifactId: string) => Promise<RuntimeTask["artifacts"][number]>;
   initialViewedStageId?: StageId;
   initialSelectedWorktreeId?: string | null;
   onViewedStageChange?: (stageId: StageId) => void;

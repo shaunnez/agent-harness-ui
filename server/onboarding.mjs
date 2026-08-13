@@ -199,7 +199,6 @@ function blockScalarCommands(body) {
  * somewhere inside an unrelated step is not a source.
  */
 export function evidenceForCommand(argv, evidence) {
-  const joined = argv.join(" ");
   const scriptNames = new Set(evidence.scripts.map((script) => script.name));
   const runner = argv[0];
   const isPackageRunner = ["npm", "pnpm", "yarn", "bun", "npx"].includes(path.basename(runner ?? ""));

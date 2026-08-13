@@ -94,9 +94,61 @@ test("fails closed before push when the GitHub target advanced", async () => {
   });
   await assert.rejects(
     () => manager.publish({ task, candidate }),
-    (error) => error.code === "GITHUB_TARGET_DIVERGED" && error.targetRevision === "c".repeat(40),
+    (error) => error.code === "GITHUB_TARGET_DIVERGED" &&
+      error.statusCode === 409 &&
+      error.targetRevision === "c".repeat(40),
   );
   assert.equal(pushed, false);
+});
+
+test("discovers and persists a GitHub delivery remote when it is not named origin", async () => {
+  const calls = [];
+  const headBranch = pullRequestBranch(task, candidate);
+  const manager = new GitHubPullRequestManager({
+    run: async (command, args) => {
+      calls.push({ command, args });
+      if (command === "git" && args.join(" ") === "remote") {
+        return { stdout: "upstream\neversor\n", stderr: "" };
+      }
+      if (command === "git" && args.join(" ") === "remote get-url upstream") {
+        return { stdout: "https://gitlab.com/acme/widgets.git\n", stderr: "" };
+      }
+      if (command === "git" && args.join(" ") === "remote get-url eversor") {
+        return { stdout: "git@github.com:acme/widgets.git\n", stderr: "" };
+      }
+      if (command === "git" && args[0] === "ls-remote") {
+        const ref = args.at(-1);
+        return {
+          stdout: `${ref === "refs/heads/main" ? baseRevision : headRevision}\t${ref}\n`,
+          stderr: "",
+        };
+      }
+      if (command === "git" && args[0] === "push") return { stdout: "", stderr: "" };
+      if (command === "gh" && args[1] === "list") {
+        return {
+          stdout: JSON.stringify([{
+            number: 84,
+            url: "https://github.com/acme/widgets/pull/84",
+            state: "OPEN",
+            baseRefName: "main",
+            baseRefOid: baseRevision,
+            headRefName: headBranch,
+            headRefOid: headRevision,
+            mergedAt: null,
+            closedAt: null,
+            mergeCommit: null,
+          }]),
+          stderr: "",
+        };
+      }
+      throw new Error(`Unexpected command: ${command} ${args.join(" ")}`);
+    },
+  });
+
+  const result = await manager.publish({ task, candidate });
+  assert.equal(result.remoteName, "eversor");
+  assert.ok(calls.some((call) => call.command === "git" && call.args.join(" ") ===
+    `push eversor ${headRevision}:refs/heads/${headBranch}`));
 });
 
 test("rejects a PR whose head moved away from the approved SHA", async () => {
@@ -118,13 +170,16 @@ test("rejects a PR whose head moved away from the approved SHA", async () => {
       stderr: "",
     }),
   });
-  await assert.rejects(() => manager.inspect({
-    repository: "acme/widgets",
-    number: 84,
-    targetBranch: "main",
-    headBranch,
-    headRevision,
-  }), /head moved away/i);
+  await assert.rejects(
+    () => manager.inspect({
+      repository: "acme/widgets",
+      number: 84,
+      targetBranch: "main",
+      headBranch,
+      headRevision,
+    }),
+    (error) => error.statusCode === 409 && /head moved away/i.test(error.message),
+  );
 });
 
 test("fetches a moved GitHub target without updating the local target branch", async () => {

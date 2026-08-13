@@ -57,6 +57,7 @@ test("inspects the repository contract without writing or running its commands",
       { source: "package.json packageManager", value: "npm@11" },
     ]);
     assert.equal(contract.delivery.github, true);
+    assert.equal(contract.delivery.remoteName, "origin");
     assert.equal(await readFile(path.join(directory, ".agent-harness", "verification.json"), "utf8").then(Boolean), true);
   } finally {
     await rm(directory, { recursive: true, force: true });

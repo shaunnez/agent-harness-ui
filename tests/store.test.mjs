@@ -5,7 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import { JsonTaskStore } from "../server/store.mjs";
 
-async function seedLegacyMergedCompletion(store, { id, promoted = false } = {}) {
+async function seedLegacyMergedCompletion(store, { promoted = false } = {}) {
   const task = await store.create({
     title: "Legacy merged completion",
     description: "A pre-fix task that merged and completed in a single step.",

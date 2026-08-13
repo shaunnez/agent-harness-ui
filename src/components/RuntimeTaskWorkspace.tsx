@@ -81,6 +81,8 @@ export function RuntimeTaskWorkspace({
   onFinishGrill,
   onRemoveWorktree,
   onProfileChange,
+  onLoadMoreArtifacts,
+  onLoadArtifact,
   initialViewedStageId,
   initialSelectedWorktreeId,
   onViewedStageChange,
@@ -107,6 +109,7 @@ export function RuntimeTaskWorkspace({
     RuntimeTaskWorkspaceProps["task"]["candidates"][number] | null
   >(null);
   const [runError, setRunError] = useState<string | null>(null);
+  const [artifactPageLoading, setArtifactPageLoading] = useState(false);
   const artifactReturnFocusRef = useRef<HTMLElement | null>(null);
   const candidateDiffReturnFocusRef = useRef<HTMLElement | null>(null);
   const candidateDiffRequestRef = useRef(0);
@@ -305,8 +308,21 @@ export function RuntimeTaskWorkspace({
     }
     if (routeDetail.kind === "artifact") {
       const artifact = task.artifacts.find((item) => item.id === routeDetail.artifactId);
-      if (artifact) setOpenArtifact(artifact);
-      else onRouteDetailChange?.(null);
+      if (artifact) {
+        setOpenArtifact(artifact);
+      } else if (onLoadArtifact) {
+        let current = true;
+        void onLoadArtifact(routeDetail.artifactId)
+          .then((loaded) => {
+            if (current) setOpenArtifact(loaded);
+          })
+          .catch(() => {
+            if (current) onRouteDetailChange?.(null);
+          });
+        return () => {
+          current = false;
+        };
+      } else onRouteDetailChange?.(null);
       return;
     }
     setOpenArtifact(null);
@@ -342,6 +358,7 @@ export function RuntimeTaskWorkspace({
     candidateDiffLoading,
     candidateDiffTarget,
     onRouteDetailChange,
+    onLoadArtifact,
     openCandidateDiff,
     routeDetail,
     task.artifacts,
@@ -950,7 +967,14 @@ export function RuntimeTaskWorkspace({
                 />
               </InspectorSection>
             ) : null}
-            <InspectorSection title="Living artifacts" meta={`${task.artifacts.length} retained`}>
+            <InspectorSection
+              title="Living artifacts"
+              meta={
+                (task.artifactCount ?? task.artifacts.length) > task.artifacts.length
+                  ? `${task.artifacts.length} of ${task.artifactCount} retained`
+                  : `${task.artifacts.length} retained`
+              }
+            >
               <div className="runtime-artifact-list">
                 {task.artifacts.length ? (
                   // Artifacts are appended in the order stages complete, so this is
@@ -987,6 +1011,24 @@ export function RuntimeTaskWorkspace({
                   <small>Artifacts appear as stage agents complete.</small>
                 )}
               </div>
+              {task.artifactNextCursor && onLoadMoreArtifacts ? (
+                <Button
+                  tone="secondary"
+                  disabled={artifactPageLoading}
+                  onClick={async () => {
+                    setArtifactPageLoading(true);
+                    try {
+                      await onLoadMoreArtifacts();
+                    } finally {
+                      setArtifactPageLoading(false);
+                    }
+                  }}
+                >
+                  {artifactPageLoading
+                    ? "Loading older artifacts…"
+                    : `Load ${Math.min(60, Math.max(0, (task.artifactCount ?? 0) - task.artifacts.length))} older artifacts`}
+                </Button>
+              ) : null}
             </InspectorSection>
           </aside>
         </div>
@@ -996,6 +1038,7 @@ export function RuntimeTaskWorkspace({
             selectViewedStage(artifact.stage);
             openRuntimeArtifact(artifact);
           }}
+          onLoadArtifact={onLoadArtifact}
         />
       </div>
 

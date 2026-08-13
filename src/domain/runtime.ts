@@ -480,6 +480,7 @@ export interface RuntimeTask {
     headRevision: string;
     targetBranch: string;
     headBranch: string;
+    remoteName?: string | null;
     repository: string | null;
     number: number | null;
     url: string | null;
@@ -511,6 +512,7 @@ export interface RuntimeTask {
     candidateBaseRevision?: string | null;
     targetRevision?: string | null;
     source?: string | null;
+    remoteName?: string | null;
   } | null;
   actionEligibility?: {
     generatedAt: string;
@@ -554,6 +556,8 @@ export interface RuntimeTask {
   artifactCount?: number;
   eventCount?: number;
   runCount?: number;
+  pollVersion?: string;
+  artifactNextCursor?: string | null;
 }
 
 export type RuntimeTaskSummary = Pick<
@@ -598,7 +602,13 @@ export type RuntimeTaskSummary = Pick<
   artifactCount?: number;
   eventCount?: number;
   runCount?: number;
+  pollVersion?: string;
 };
+
+export interface RuntimeTaskPollState {
+  id: string;
+  pollVersion: string;
+}
 
 export type RuntimeTaskCore = Omit<RuntimeTask, "artifacts" | "events" | "runs" | "worktreeInventory"> & {
   artifacts: RuntimeArtifactMetadata[];
@@ -661,6 +671,7 @@ export interface RuntimeRepositoryContract {
     declarations: Array<{ source: string; value: string }>;
   };
   delivery: {
+    remoteName: string | null;
     remoteUrl: string | null;
     github: boolean;
   };

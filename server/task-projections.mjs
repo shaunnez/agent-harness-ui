@@ -1,8 +1,10 @@
 const DEFAULT_PAGE_LIMIT = 50;
 const MAX_PAGE_LIMIT = 200;
+const SUMMARY_ARTIFACT_LIMIT = 10;
 
 export function projectTaskSummary(task, retainedCounts = {}) {
-  const artifacts = (task.artifacts ?? []).map(projectArtifactMetadata);
+  const retainedArtifacts = task.artifacts ?? [];
+  const artifacts = projectSummaryArtifacts(retainedArtifacts);
   const events = task.events ?? [];
   const runs = task.runs ?? [];
   return {
@@ -42,10 +44,32 @@ export function projectTaskSummary(task, retainedCounts = {}) {
     candidates: (task.candidates ?? []).map(projectCandidateSummary),
     gateFreshness: projectGateFreshness(task.gateFreshness),
     artifacts,
-    artifactCount: retainedCounts.artifactCount ?? artifacts.length,
+    artifactCount: retainedCounts.artifactCount ?? retainedArtifacts.length,
     eventCount: retainedCounts.eventCount ?? events.length,
     runCount: retainedCounts.runCount ?? runs.length,
+    pollVersion: String(retainedCounts.pollVersion ?? task.pollVersion ?? task.updatedAt ?? ""),
   };
+}
+
+export function projectTaskPollState(task, pollVersion = task.pollVersion ?? task.updatedAt) {
+  return {
+    id: task.id,
+    pollVersion: String(pollVersion ?? ""),
+  };
+}
+
+function projectSummaryArtifacts(artifacts) {
+  const latestByStage = new Map();
+  for (const artifact of artifacts) {
+    const current = latestByStage.get(artifact.stage);
+    if (!current || compareKeys(artifactSortKey(artifact), artifactSortKey(current)) > 0) {
+      latestByStage.set(artifact.stage, artifact);
+    }
+  }
+  return [...latestByStage.values()]
+    .sort((left, right) => compareKeys(artifactSortKey(left), artifactSortKey(right)))
+    .slice(-SUMMARY_ARTIFACT_LIMIT)
+    .map(projectArtifactMetadata);
 }
 
 function projectWorkPackageSummary(workPackage) {

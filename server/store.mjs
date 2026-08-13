@@ -17,6 +17,10 @@ import {
   TASK_STORE_SCHEMA_VERSION,
 } from "./run-activity.mjs";
 import { migratedStandardProfile } from "./workflow-profiles.mjs";
+import {
+  projectTaskPollState,
+  projectTaskSummary,
+} from "./task-projections.mjs";
 
 const EMPTY_STATE = {
   schemaVersion: TASK_STORE_SCHEMA_VERSION,
@@ -27,6 +31,19 @@ const EMPTY_STATE = {
 
 function clone(value) {
   return structuredClone(value);
+}
+
+function jsonPollVersion(task) {
+  return [
+    task.updatedAt ?? "",
+    task.pullRequestIntent?.lastCheckedAt ?? "",
+    task.pullRequestIntent?.lastError ?? "",
+    task.status ?? "",
+    task.currentStage ?? "",
+    task.artifacts?.length ?? 0,
+    task.events?.length ?? 0,
+    task.runs?.length ?? 0,
+  ].join(":");
 }
 
 function repriceTaskUsage(task, settings) {
@@ -124,6 +141,16 @@ export class JsonTaskStore {
     return clone(this.#state.tasks).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
+  async listSummaries() {
+    return (await this.list()).map((task) => projectTaskSummary(task, {
+      pollVersion: jsonPollVersion(task),
+    }));
+  }
+
+  async listPollStates() {
+    return (await this.list()).map((task) => projectTaskPollState(task, jsonPollVersion(task)));
+  }
+
   async listPullRequestTasks() {
     return clone(this.#state.tasks).filter((task) => (
       (task.status === "merging" && task.pullRequestIntent?.status === "publishing") ||
@@ -139,6 +166,11 @@ export class JsonTaskStore {
   async get(id) {
     const task = this.#state.tasks.find((item) => item.id === id);
     return task ? clone(task) : null;
+  }
+
+  async getPollState(id) {
+    const task = await this.get(id);
+    return task ? projectTaskPollState(task, jsonPollVersion(task)) : null;
   }
 
   async settings() {

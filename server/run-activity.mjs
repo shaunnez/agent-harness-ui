@@ -212,8 +212,8 @@ function isValidStageRunLimit(value) {
  */
 export function readExplicitCandidateBinding(value) {
   const object = value && typeof value === "object" ? value : {};
-  const hasCandidateId = Object.prototype.hasOwnProperty.call(object, "candidateId");
-  const hasCandidateRevision = Object.prototype.hasOwnProperty.call(object, "candidateRevision");
+  const hasCandidateId = Object.hasOwn(object, "candidateId");
+  const hasCandidateRevision = Object.hasOwn(object, "candidateRevision");
   if (!hasCandidateId && !hasCandidateRevision) return invalidBinding("missing_binding");
   if (!hasCandidateId || !hasCandidateRevision) return invalidBinding("malformed_binding");
   if (object.candidateId == null && object.candidateRevision == null) return invalidBinding("missing_binding");
@@ -467,7 +467,7 @@ export function refreshGateFreshness(task) {
 }
 
 function isLegacyCandidateGateEvent(event) {
-  if (!event || event.category !== "decision" || !CANDIDATE_GATE_STAGES.includes(event.stage)) return false;
+  if (event?.category !== "decision" || !CANDIDATE_GATE_STAGES.includes(event.stage)) return false;
   const title = String(event.title ?? "").trim().toLowerCase();
   if (title === "candidate requires repair") return true;
   return {
@@ -963,14 +963,14 @@ function hasExplicitCandidateFields(value) {
   return Boolean(
     value &&
       typeof value === "object" &&
-      Object.prototype.hasOwnProperty.call(value, "candidateId") &&
-      Object.prototype.hasOwnProperty.call(value, "candidateRevision"),
+      Object.hasOwn(value, "candidateId") &&
+      Object.hasOwn(value, "candidateRevision"),
   );
 }
 
 function persistedBindingMarkerReason(value) {
   if (!value || typeof value !== "object") return null;
-  if (!Object.prototype.hasOwnProperty.call(value, "bindingExplicit")) return null;
+  if (!Object.hasOwn(value, "bindingExplicit")) return null;
   if (value.bindingExplicit === false) return "missing_binding";
   if (value.bindingExplicit !== true) return "contradictory_evidence";
   return null;
@@ -1025,7 +1025,7 @@ function isValidPersistedTestRow(row) {
   ))) return false;
   if (row.failureDetails != null && typeof row.failureDetails !== "string") return false;
   if (
-    Object.prototype.hasOwnProperty.call(row, "bindingExplicit") &&
+    Object.hasOwn(row, "bindingExplicit") &&
     typeof row.bindingExplicit !== "boolean"
   ) return false;
   return true;

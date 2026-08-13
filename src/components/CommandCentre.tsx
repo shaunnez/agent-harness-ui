@@ -318,7 +318,12 @@ export function CommandCentre({
                   <span>
                     <Cpu size={16} /> Agent runs
                   </span>
-                  <strong>{runtimeTasks.reduce((total, task) => total + task.artifacts.length, 0)}</strong>
+                  <strong>
+                    {runtimeTasks.reduce(
+                      (total, task) => total + (task.runCount ?? task.runs?.length ?? 0),
+                      0,
+                    )}
+                  </strong>
                   <small>Codex · ChatGPT plan</small>
                 </div>
                 <div className="usage-line">

@@ -10,7 +10,6 @@ import {
   buildTestInterpretationRequest,
   buildWorkPackageRequest,
   getStageMetadata,
-  INVESTIGATION_PIPELINE,
   projectRepairFindings,
 } from "./prompts.mjs";
 import { getCodexStatus } from "./codex-runtime.mjs";
@@ -183,7 +182,7 @@ function activity(stage, title, detail, tone = "info", category = "activity", me
 }
 
 function completeGrillSession(draft, { source, acceptRemaining }) {
-  if (!draft.grillSession || draft.grillSession.status !== "open") {
+  if (draft.grillSession?.status !== "open") {
     throw new Error("This task does not have an open Grill Me session.");
   }
   const unresolved = draft.grillSession.questions.filter((question) => !question.answer);
@@ -934,6 +933,7 @@ export class TaskOrchestrator {
           headRevision: activeCandidate.headRevision,
           targetBranch: activeCandidate.baseBranch,
           headBranch: pullRequestBranch(draft, activeCandidate),
+          remoteName: null,
           repository: null,
           number: null,
           url: null,
@@ -1167,8 +1167,10 @@ export class TaskOrchestrator {
         candidateRevision: candidate.revisionNumber,
         candidateBaseRevision: candidate.baseRevision,
         targetRevision: error.targetRevision ?? null,
+        remoteName: error.remoteName ?? draft.pullRequestIntent.remoteName ?? null,
         source: targetDiverged ? "github" : null,
       };
+      if (error.remoteName) draft.pullRequestIntent.remoteName = error.remoteName;
       draft.pullRequestIntent.status = "failed";
       draft.pullRequestIntent.lastError = error.message;
       draft.events.push(activity(
@@ -1446,7 +1448,9 @@ export class TaskOrchestrator {
       let refreshed;
       try {
         const remoteTargetRevision = task.blocker?.source === "github" && typeof this.#github.fetchTarget === "function"
-          ? await this.#github.fetchTarget(candidate)
+          ? await this.#github.fetchTarget(candidate, {
+              remoteName: task.pullRequestIntent?.remoteName ?? task.blocker?.remoteName ?? "origin",
+            })
           : null;
         refreshed = await this.#worktrees.refreshCandidate(candidate, remoteTargetRevision ? { targetRevision: remoteTargetRevision } : undefined);
       } catch (error) {
@@ -1752,7 +1756,7 @@ export class TaskOrchestrator {
     if (!task) throw new Error("Task not found.");
     if (task.status !== "merged-to-target") throw new Error("The task is not merged to its target branch.");
     const candidate = currentCandidate(task);
-    if (!candidate || candidate.status !== "merged") throw new Error("The task does not have a merged candidate to promote.");
+    if (candidate?.status !== "merged") throw new Error("The task does not have a merged candidate to promote.");
     return this.#store.transition(id, (draft) => draft.status === "merged-to-target", (draft) => {
       const approvedAt = now();
       const activeCandidate = currentCandidate(draft);
@@ -3622,14 +3626,6 @@ function removeStageArtifacts(task, stageId) {
   for (const run of task.runs ?? []) {
     if (removedIds.has(run.artifactId)) run.artifactId = null;
   }
-}
-
-function summarizeAgentReport(text) {
-  const summary = String(text ?? "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 500);
-  return summary ? `Agent report: ${summary}` : "";
 }
 
 function throwIfAborted(signal) {

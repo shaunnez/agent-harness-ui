@@ -6,10 +6,9 @@ import path from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
 import { ProcessTimeoutError } from "../server/codex-runtime.mjs";
-import { defaultWorktreeRoot } from "../server/git-worktree.mjs";
 import { evaluationVerdict, structuredEvidenceError, TaskOrchestrator } from "../server/orchestrator.mjs";
 import { defaultStagePolicies } from "../server/model-catalog.mjs";
-import { buildExecutionPrompt, buildTestInterpretationRequest } from "../server/prompts.mjs";
+import { buildTestInterpretationRequest } from "../server/prompts.mjs";
 import { selectScoutDispatch } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import {
@@ -1960,7 +1959,7 @@ test("malformed focused Test ingestion persists the exact reason and blocks appr
     });
 
     let merged = false;
-    const malformedRowOutput = `<focused-test-evidence>${JSON.stringify({
+    const _malformedRowOutput = `<focused-test-evidence>${JSON.stringify({
       candidateId: "C1",
       candidateRevision: 2,
       command: "npm test",
@@ -1977,7 +1976,7 @@ test("malformed focused Test ingestion persists the exact reason and blocks appr
         failureDetails: null,
       }],
     })}</focused-test-evidence>`;
-    const malformedTimestampOutput = `<focused-test-evidence>${JSON.stringify({
+    const _malformedTimestampOutput = `<focused-test-evidence>${JSON.stringify({
       candidateId: "C1",
       candidateRevision: 2,
       command: "npm test",
@@ -3531,7 +3530,9 @@ test("bounds parallel package agents and serializes heavy package qualification"
             clearTimeout(fallback);
             resolve();
           });
-          if (activeAgents === 2) releases.splice(0).forEach((release) => release());
+          if (activeAgents === 2) releases.splice(0).forEach((release) => {
+            release();
+          });
         });
         activeAgents -= 1;
         return {

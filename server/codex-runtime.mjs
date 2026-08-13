@@ -190,7 +190,7 @@ export function parseCodexEvent(line) {
 
 function isRuntimeContextPreflightCommand(command) {
   const tokens = tokenizeRuntimePreflight(command);
-  if (!tokens || tokens[0] !== "rg") return false;
+  if (tokens?.[0] !== "rg") return false;
   const positional = [];
   for (let index = 1; index < tokens.length; index += 1) {
     const token = tokens[index];
@@ -204,7 +204,7 @@ function isRuntimeContextPreflightCommand(command) {
     positional.push(token);
   }
   if (positional.length !== 2 || !/^[A-Za-z0-9_.|\\:\-\s]+$/.test(positional[0])) return false;
-  if (/[\$~]/.test(positional[1])) return false;
+  if (/[$~]/.test(positional[1])) return false;
   const memoryRoot = path.resolve(process.env.CODEX_HOME ?? path.join(os.homedir(), ".codex"), "memories");
   return ["MEMORY.md", "memory_summary.md"].some((name) => positional[1] === path.join(memoryRoot, name));
 }
@@ -336,7 +336,7 @@ export function buildCodexSpawnArgs({ cwd, sandbox, networkAccess = false, model
     "--model",
     model,
     "-c",
-    `model_reasoning_effort=\"${reasoning}\"`,
+    `model_reasoning_effort="${reasoning}"`,
     "--cd",
     cwd,
     "-",

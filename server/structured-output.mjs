@@ -7,7 +7,7 @@ import {
 
 class CandidateEvidenceError extends Error {
   constructor(code, detail = null) {
-    const reasonCode = Object.prototype.hasOwnProperty.call(RUNTIME_FRESHNESS_REASONS, code)
+    const reasonCode = Object.hasOwn(RUNTIME_FRESHNESS_REASONS, code)
       ? code
       : "contradictory_evidence";
     super(detail ?? RUNTIME_FRESHNESS_REASONS[reasonCode]);
@@ -24,7 +24,7 @@ function candidateEvidenceError(code, detail = null) {
 export function isCandidateEvidenceError(error) {
   return error instanceof CandidateEvidenceError &&
     typeof error.code === "string" &&
-    Object.prototype.hasOwnProperty.call(RUNTIME_FRESHNESS_REASONS, error.code);
+    Object.hasOwn(RUNTIME_FRESHNESS_REASONS, error.code);
 }
 
 function compareEvidenceBinding(binding, candidate) {
@@ -300,8 +300,8 @@ export function parseGateEvidence(text, candidate, stageId) {
         `Gate finding ${index + 1} is missing its title or detail.`,
       );
     }
-    const hasFindingCandidateId = Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateId");
-    const hasFindingCandidateRevision = Object.prototype.hasOwnProperty.call(finding ?? {}, "candidateRevision");
+    const hasFindingCandidateId = Object.hasOwn(finding ?? {}, "candidateId");
+    const hasFindingCandidateRevision = Object.hasOwn(finding ?? {}, "candidateRevision");
     const findingExplicitBinding = hasFindingCandidateId && hasFindingCandidateRevision;
     if (hasFindingCandidateId !== hasFindingCandidateRevision) throw candidateEvidenceError("malformed_binding");
     const findingBinding = findingExplicitBinding ? readExplicitCandidateBinding(finding) : binding;
@@ -531,8 +531,8 @@ function normalizeFocusedTestRow(row, rowIndex, parent) {
     throw candidateEvidenceError("contradictory_evidence", `Focused test row ${rowIndex + 1} must be an object.`);
   }
   validateFocusedTestRowFields(row, rowIndex);
-  const hasCandidateId = Object.prototype.hasOwnProperty.call(row ?? {}, "candidateId");
-  const hasCandidateRevision = Object.prototype.hasOwnProperty.call(row ?? {}, "candidateRevision");
+  const hasCandidateId = Object.hasOwn(row ?? {}, "candidateId");
+  const hasCandidateRevision = Object.hasOwn(row ?? {}, "candidateRevision");
   const explicitBinding = hasCandidateId && hasCandidateRevision;
   if (hasCandidateId !== hasCandidateRevision) throw candidateEvidenceError("malformed_binding");
   const binding = explicitBinding ? readExplicitCandidateBinding(row) : readExplicitCandidateBinding(parent);

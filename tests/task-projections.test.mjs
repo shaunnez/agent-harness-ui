@@ -5,6 +5,7 @@ import {
   paginateTaskEvents,
   paginateTaskRuns,
   projectTaskCore,
+  projectTaskPollState,
   projectTaskSummary,
 } from "../server/task-projections.mjs";
 
@@ -124,6 +125,34 @@ test("task summaries and core detail omit retained heavy evidence", () => {
     Buffer.byteLength(JSON.stringify(summary)) < Buffer.byteLength(JSON.stringify(task)) * 0.1,
     "the list projection must remain at least 90% smaller than this retained-evidence fixture",
   );
+});
+
+test("task summaries bound artifact metadata while preserving the latest artifact for every stage", () => {
+  const task = taskFixture();
+  task.artifacts = Array.from({ length: 100 }, (_, index) => ({
+    id: `artifact-${index}`,
+    stage: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review", "approval"][index % 10],
+    name: `artifact-${index}.md`,
+    kind: "markdown",
+    content: "retained content",
+    createdAt: new Date(Date.UTC(2026, 7, 9, 0, 0, index)).toISOString(),
+  }));
+
+  const summary = projectTaskSummary(task, { artifactCount: 100, pollVersion: "17" });
+  assert.equal(summary.artifactCount, 100);
+  assert.equal(summary.artifacts.length, 10);
+  assert.equal(summary.pollVersion, "17");
+  assert.deepEqual(
+    summary.artifacts.map((artifact) => artifact.id),
+    Array.from({ length: 10 }, (_, index) => `artifact-${90 + index}`),
+  );
+});
+
+test("poll state exposes only the revision token needed to detect change", () => {
+  assert.deepEqual(projectTaskPollState(taskFixture(), "23"), {
+    id: "AH-001",
+    pollVersion: "23",
+  });
 });
 
 test("cursor pages are stable, descending, and do not repeat boundary rows", () => {

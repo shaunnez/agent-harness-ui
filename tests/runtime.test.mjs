@@ -34,7 +34,6 @@ import { buildScoutRequest } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import { parseGateEvidence } from "../server/structured-output.mjs";
-import { formatApprovalStage, formatApprovalTimestamp, getApprovalHistory } from "../src/components/runtimeApprovalHistory.js";
 import { runtimeTaskToRecentTask } from "../src/domain.ts";
 
 test("parses Codex final messages and usage", () => {
@@ -97,6 +96,7 @@ test("parses Codex final messages and usage", () => {
     `/bin/zsh -lc 'rg needle\n${memoryFile}'`,
     `/bin/zsh -lc 'rg needle\r\n${memoryFile}'`,
     "/bin/zsh -lc 'rg needle /tmp/candidate/.codex/memories/MEMORY.md'",
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: This is an intentionally literal shell expansion.
     "/bin/zsh -lc 'rg needle ${PWD}/.codex/memories/MEMORY.md'",
     `/bin/zsh -lc 'rg * ${memoryFile}'`,
     `/bin/bash -lc 'rg *.ts ${memoryFile}'`,
@@ -709,7 +709,7 @@ test("artifact manifests account for transformations, prefixes, separators, and 
 });
 
 test("repair requests carry complete typed gate findings and current-candidate repair lineage", () => {
-  const completeDetail = "Complete persisted finding detail.\n" + "D".repeat(8_000);
+  const completeDetail = `Complete persisted finding detail.\n${"D".repeat(8_000)}`;
   const newestFindings = [
     {
       severity: "P1",
@@ -1312,6 +1312,56 @@ test("renders approvals history in the runtime task inspector", () => {
     );
     assert.match(emptyMarkup, /<strong>Approvals<\/strong>/);
     assert.match(emptyMarkup, /No approvals recorded yet\./);
+  });
+});
+
+test("command centre reports persisted run totals rather than artifact totals", () => {
+  return withWorkspace(async ({ CommandCentre }) => {
+    const task = createTask({
+      artifacts: [
+        { id: "A1", stage: "triage", name: "triage.md", createdAt: "2026-08-01T00:00:00.000Z" },
+        { id: "A2", stage: "plan", name: "plan.md", createdAt: "2026-08-01T00:01:00.000Z" },
+      ],
+      runCount: 7,
+    });
+    const markup = renderToStaticMarkup(React.createElement(CommandCentre, {
+      runtimeTasks: [task],
+      runtimeStatus: null,
+      runtimeLoading: false,
+      runtimeError: null,
+      onOpenTask: () => {},
+      onNewTask: () => {},
+      onSeeAllTasks: () => {},
+    }));
+    assert.match(markup, /Agent runs<\/span><strong>7<\/strong>/);
+  });
+});
+
+test("living artifacts exposes retained totals and a bounded way to load older pages", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const task = createTask({
+      artifacts: Array.from({ length: 60 }, (_, index) => ({
+        id: `A${index}`,
+        stage: "triage",
+        name: `artifact-${index}.md`,
+        kind: "markdown",
+        content: "retained",
+        createdAt: new Date(Date.UTC(2026, 7, 1, 0, 0, index)).toISOString(),
+      })),
+      artifactCount: 75,
+      artifactNextCursor: "older-page",
+    });
+    const markup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task,
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onLoadMoreArtifacts: async () => {},
+    }));
+    assert.match(markup, /60 of 75 retained/);
+    assert.match(markup, /Load 15 older artifacts/);
   });
 });
 
@@ -4175,7 +4225,8 @@ async function withWorkspace(run) {
     const libraryShared = await vite.ssrLoadModule("/src/components/LibraryShared.tsx");
     const skillsScreen = await vite.ssrLoadModule("/src/components/SkillsScreen.tsx");
     const agentsScreen = await vite.ssrLoadModule("/src/components/AgentsScreen.tsx");
-    return await run({ ...module, ...candidateDiffViewer, ...runActivity, ...runtimeInspector, ...runtimeWorkflow, ...runtimeCommandBar, ...runtimeStageLimits, ...requestIdentity, ...artifactPresentation, ...libraryShared, ...skillsScreen, ...agentsScreen, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
+    const commandCentre = await vite.ssrLoadModule("/src/components/CommandCentre.tsx");
+    return await run({ ...module, ...candidateDiffViewer, ...runActivity, ...runtimeInspector, ...runtimeWorkflow, ...runtimeCommandBar, ...runtimeStageLimits, ...requestIdentity, ...artifactPresentation, ...libraryShared, ...skillsScreen, ...agentsScreen, ...commandCentre, loadApiModule: () => vite.ssrLoadModule("/src/api.ts") });
   } finally {
     await vite.close();
   }

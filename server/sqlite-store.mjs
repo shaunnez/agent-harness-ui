@@ -12,6 +12,7 @@ import {
   normalizeActivityFilter,
   projectArtifactMetadata,
   projectTaskCore,
+  projectTaskPollState,
   projectTaskSummary,
 } from "./task-projections.mjs";
 import {
@@ -90,6 +91,7 @@ export class SqliteTaskStore {
     const taskRows = this.#db.prepare(`
       SELECT
         tasks.core_json,
+        tasks.revision AS poll_version,
         (SELECT COUNT(*) FROM artifacts WHERE artifacts.task_id = tasks.id) AS artifact_count,
         (SELECT COUNT(*) FROM events WHERE events.task_id = tasks.id) AS event_count,
         (SELECT COUNT(*) FROM runs WHERE runs.task_id = tasks.id) AS run_count
@@ -98,7 +100,15 @@ export class SqliteTaskStore {
     `).all();
     const metadataRows = this.#db.prepare(`
       SELECT task_id, metadata_json
-      FROM artifacts
+      FROM (
+        SELECT
+          task_id,
+          metadata_json,
+          ordinal,
+          ROW_NUMBER() OVER (PARTITION BY task_id, stage ORDER BY created_at DESC, id DESC) AS stage_rank
+        FROM artifacts
+      )
+      WHERE stage_rank = 1
       ORDER BY task_id, ordinal
     `).all();
     const artifactsByTask = new Map();
@@ -116,8 +126,17 @@ export class SqliteTaskStore {
         artifactCount: Number(row.artifact_count),
         eventCount: Number(row.event_count),
         runCount: Number(row.run_count),
+        pollVersion: String(row.poll_version),
       });
     });
+  }
+
+  async listPollStates() {
+    return this.#db.prepare(`
+      SELECT id, revision
+      FROM tasks
+      ORDER BY created_at DESC, id DESC
+    `).all().map((row) => projectTaskPollState({ id: row.id }, row.revision));
   }
 
   async listEvaluationTasks() {
@@ -160,16 +179,23 @@ export class SqliteTaskStore {
     if (!task) return null;
     const counts = this.#db.prepare(`
       SELECT
+        (SELECT revision FROM tasks WHERE id = ?) AS poll_version,
         (SELECT COUNT(*) FROM artifacts WHERE task_id = ?) AS artifact_count,
         (SELECT COUNT(*) FROM events WHERE task_id = ?) AS event_count,
         (SELECT COUNT(*) FROM runs WHERE task_id = ?) AS run_count
-    `).get(id, id, id);
+    `).get(id, id, id, id);
     return {
       ...projectTaskCore(task),
       artifactCount: Number(counts.artifact_count),
       eventCount: Number(counts.event_count),
       runCount: Number(counts.run_count),
+      pollVersion: String(counts.poll_version),
     };
+  }
+
+  async getPollState(id) {
+    const row = this.#db.prepare("SELECT id, revision FROM tasks WHERE id = ?").get(id);
+    return row ? projectTaskPollState({ id: row.id }, row.revision) : null;
   }
 
   async getArtifact(taskId, artifactId) {

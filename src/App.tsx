@@ -12,9 +12,12 @@ import {
   getRuntimeStatus,
   getRuntimeWorktreeInventory,
   getTaskActivity,
+  getTaskArtifact,
   getTaskArtifactContents,
   getTaskCore,
+  getTaskPollState,
   getTaskRuns,
+  listTaskPollStates,
   listTasks,
   recordTaskDecision,
   removeRuntimeWorktree,
@@ -61,7 +64,7 @@ import {
 } from "./routes";
 
 async function refreshTaskEvidence(current: RuntimeTask, core: RuntimeTaskCore): Promise<RuntimeTask> {
-  const coreChanged = current.updatedAt !== core.updatedAt;
+  const coreChanged = current.pollVersion !== core.pollVersion;
   const { artifacts: _coreArtifacts, ...coreState } = core;
   if (!coreChanged) return { ...current, ...coreState };
 
@@ -84,6 +87,7 @@ async function refreshTaskEvidence(current: RuntimeTask, core: RuntimeTaskCore):
     artifacts,
     events: mergeNewestPage(current.events, activity.items, (item) => item.id),
     runs: mergeNewestPage(current.runs ?? [], runs.items, (item) => item.id),
+    artifactNextCursor: artifactPage.nextCursor,
   };
 }
 
@@ -102,6 +106,7 @@ async function hydrateTask(id: string): Promise<RuntimeTask> {
     runs: [...runs.items].sort((left, right) =>
       (left.startedAt ?? left.completedAt ?? "").localeCompare(right.startedAt ?? right.completedAt ?? ""),
     ),
+    artifactNextCursor: artifactPage.nextCursor,
   };
 }
 
@@ -116,9 +121,9 @@ function taskSummaryFromDetail(task: RuntimeTask): RuntimeTaskSummary {
   return {
     ...core,
     artifacts: artifacts.map(artifactMetadata),
-    artifactCount: artifacts.length,
-    eventCount: events.length,
-    runCount: runs?.length ?? 0,
+    artifactCount: task.artifactCount ?? artifacts.length,
+    eventCount: task.eventCount ?? events.length,
+    runCount: task.runCount ?? runs?.length ?? 0,
   };
 }
 
@@ -161,31 +166,51 @@ export function App() {
   const activeTaskIdentityRef = useRef<string | null>(null);
   const activeTaskRequestRef = useRef(0);
   const activeRuntimeTaskRef = useRef<RuntimeTask | null>(null);
+  const runtimeTasksRef = useRef<RuntimeTaskSummary[]>(runtimeTasks);
 
   const showToast = useCallback((tone: "success" | "error", message: string) => {
     setToast({ tone, message });
     window.setTimeout(() => setToast(null), 4_000);
   }, []);
 
-  const refreshTasks = useCallback(async () => {
-    if (hostedPreviewMode) {
-      setRuntimeTasks(hostedAtlasPreviewTasks);
-      return hostedAtlasPreviewTasks;
-    }
-    const tasks = await listTasks();
-    setRuntimeTasks(tasks);
-    setRuntimeError(null);
-    return tasks;
-  }, [hostedPreviewMode]);
+  const refreshTasks = useCallback(
+    async (pollOnly = false) => {
+      if (hostedPreviewMode) {
+        setRuntimeTasks(hostedAtlasPreviewTasks);
+        return hostedAtlasPreviewTasks;
+      }
+      if (pollOnly) {
+        const pollStates = await listTaskPollStates();
+        const currentVersions = new Map(runtimeTasksRef.current.map((task) => [task.id, task.pollVersion]));
+        if (
+          pollStates.length === currentVersions.size &&
+          pollStates.every((task) => currentVersions.get(task.id) === task.pollVersion)
+        ) {
+          setRuntimeError(null);
+          return runtimeTasksRef.current;
+        }
+      }
+      const tasks = await listTasks();
+      setRuntimeTasks(tasks);
+      setRuntimeError(null);
+      return tasks;
+    },
+    [hostedPreviewMode],
+  );
 
   const refreshActiveTask = useCallback(async (id: string) => {
     const requestId = activeTaskRequestRef.current + 1;
     activeTaskRequestRef.current = requestId;
     const requested = { identity: id, generation: requestId };
     const currentTask = activeRuntimeTaskRef.current?.id === id ? activeRuntimeTaskRef.current : null;
-    const task = currentTask
-      ? await refreshTaskEvidence(currentTask, await getTaskCore(id))
-      : await hydrateTask(id);
+    let task: RuntimeTask;
+    if (currentTask) {
+      const pollState = await getTaskPollState(id);
+      task =
+        pollState.pollVersion === currentTask.pollVersion
+          ? currentTask
+          : await refreshTaskEvidence(currentTask, await getTaskCore(id));
+    } else task = await hydrateTask(id);
     if (
       !isCurrentRequest(requested, {
         identity: activeTaskIdentityRef.current,
@@ -200,7 +225,7 @@ export function App() {
     }));
     setRuntimeTasks((tasks) => [taskSummaryFromDetail(task), ...tasks.filter((item) => item.id !== task.id)]);
     const shouldRefreshInventory =
-      !currentTask || currentTask.updatedAt !== task.updatedAt || currentTask.worktreeInventory == null;
+      !currentTask || currentTask.pollVersion !== task.pollVersion || currentTask.worktreeInventory == null;
     if (!shouldRefreshInventory) {
       setRuntimeError(null);
       return task;
@@ -220,9 +245,50 @@ export function App() {
     return enriched;
   }, []);
 
+  const loadMoreTaskArtifacts = useCallback(async () => {
+    const current = activeRuntimeTaskRef.current;
+    if (!current?.artifactNextCursor) return;
+    const page = await getTaskArtifactContents(current.id, {
+      cursor: current.artifactNextCursor,
+      limit: 60,
+    });
+    const artifacts = mergeNewestPage(current.artifacts, page.items, (artifact) => artifact.id).sort(
+      (left, right) => left.createdAt.localeCompare(right.createdAt),
+    );
+    const updated = {
+      ...current,
+      artifacts,
+      artifactCount: page.total,
+      artifactNextCursor: page.nextCursor,
+    };
+    activeRuntimeTaskRef.current = updated;
+    setActiveRuntimeTask((task) => (task?.id === updated.id ? updated : task));
+  }, []);
+
+  const loadTaskArtifact = useCallback(async (artifactId: string) => {
+    const current = activeRuntimeTaskRef.current;
+    if (!current) throw new Error("No task is open.");
+    const retained = current.artifacts.find((artifact) => artifact.id === artifactId);
+    if (retained) return retained;
+    const artifact = await getTaskArtifact(current.id, artifactId);
+    const updated = {
+      ...current,
+      artifacts: [...current.artifacts, artifact].sort((left, right) =>
+        left.createdAt.localeCompare(right.createdAt),
+      ),
+    };
+    activeRuntimeTaskRef.current = updated;
+    setActiveRuntimeTask((task) => (task?.id === updated.id ? updated : task));
+    return artifact;
+  }, []);
+
   useEffect(() => {
     activeRuntimeTaskRef.current = activeRuntimeTask;
   }, [activeRuntimeTask]);
+
+  useEffect(() => {
+    runtimeTasksRef.current = runtimeTasks;
+  }, [runtimeTasks]);
 
   const navigateToRoute = useCallback((route: HashRoute, replace = false) => {
     const hash = serializeHashRoute(route);
@@ -361,7 +427,7 @@ export function App() {
       if (document.visibilityState === "hidden" || polling) return;
       polling = true;
       try {
-        await refreshTasks();
+        await refreshTasks(true);
       } catch (error) {
         if (!cancelled)
           setRuntimeError(error instanceof Error ? error.message : "The task list could not be refreshed.");
@@ -658,6 +724,8 @@ export function App() {
                 throw error;
               }
             }}
+            onLoadMoreArtifacts={loadMoreTaskArtifacts}
+            onLoadArtifact={loadTaskArtifact}
           />
         ) : workspaceOpen && activeTaskLoading ? (
           <TaskWorkspaceSkeleton />

@@ -29,13 +29,14 @@ import {
   paginateTaskEvents,
   paginateTaskRuns,
   projectTaskCore,
+  projectTaskPollState,
   projectTaskSummary,
 } from "./task-projections.mjs";
 import { isCanonicalCommitId } from "../src/commit-id.ts";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
-const RUNTIME_SCHEMA_VERSION = 10;
+const RUNTIME_SCHEMA_VERSION = 11;
 const GRILL_POLICIES = new Set(["manual", "auto-accept-recommendations"]);
 const DIFF_CHAR_LIMIT = 300_000;
 const OUTPUT_LIMIT = 512 * 1024;
@@ -414,6 +415,13 @@ export function createApiServer({
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/tasks") {
+        if (url.searchParams.get("view") === "poll") {
+          const tasks = typeof store.listPollStates === "function"
+            ? await store.listPollStates()
+            : (await store.list()).map(projectTaskPollState);
+          send(response, 200, { tasks });
+          return;
+        }
         const full = url.searchParams.get("view") === "full";
         const tasks = full || typeof store.listSummaries !== "function"
           ? await store.list()
@@ -557,14 +565,36 @@ export function createApiServer({
       const taskMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)$/);
       if (request.method === "GET" && taskMatch) {
         const id = decodeURIComponent(taskMatch[1]);
+        if (url.searchParams.get("view") === "poll") {
+          const persistedPollState = typeof store.getPollState === "function"
+            ? await store.getPollState(id)
+            : await store.get(id);
+          const pollState = persistedPollState && "pollVersion" in persistedPollState
+            ? persistedPollState
+            : persistedPollState
+              ? projectTaskPollState(persistedPollState)
+              : null;
+          send(response, pollState ? 200 : 404, pollState
+            ? { task: pollState }
+            : { error: "Task not found." });
+          return;
+        }
         const core = url.searchParams.get("view") === "core";
         const usedCoreStore = core && typeof store.getCore === "function";
         const persistedTask = usedCoreStore
           ? await store.getCore(id)
           : await store.get(id);
         const task = persistedTask ? withActionEligibility(persistedTask) : null;
-        send(response, task ? 200 : 404, task
-          ? { task: core && !usedCoreStore ? projectTaskCore(task) : task }
+        let responseTask = task;
+        if (task && core && !usedCoreStore) {
+          const pollState = typeof store.getPollState === "function" ? await store.getPollState(id) : null;
+          responseTask = {
+            ...projectTaskCore(task),
+            ...(pollState ? { pollVersion: pollState.pollVersion } : {}),
+          };
+        }
+        send(response, responseTask ? 200 : 404, responseTask
+          ? { task: responseTask }
           : { error: "Task not found." });
         return;
       }
@@ -1166,7 +1196,6 @@ export function createApiServer({
             return;
           }
         }
-        const runStage = runConfiguration.kind === "repair" ? "implement" : task.currentStage;
         const started = await orchestrator.start(id, runConfiguration.kind, action === "plan" && task.currentStage === "implement"
           ? {
               onReserve: (draft) => {
