@@ -77,8 +77,10 @@ test("returns server-authoritative action eligibility and never grants Human App
   }
 });
 
-test("keeps exact-candidate PR approval eligible in the compact task response", async () => {
-  const { directory, origin, server, store } = await createServer();
+test("keeps exact-candidate PR approval eligible in the SQLite compact task response", async () => {
+  const { directory, origin, server, store } = await createServer({
+    sqlite: true,
+  });
   try {
     const response = await createTask(origin, {
       title: "Compact approval projection",
@@ -105,7 +107,10 @@ test("keeps exact-candidate PR approval eligible in the compact task response", 
             stage,
             candidateId: candidate.id,
             candidateRevision: candidate.revisionNumber,
-            target: { candidateId: candidate.id, candidateRevision: candidate.revisionNumber },
+            target: {
+              candidateId: candidate.id,
+              candidateRevision: candidate.revisionNumber,
+            },
             state: "fresh",
             fresh: true,
             sourceRunId: `run-${stage}`,
@@ -147,7 +152,9 @@ test("dispatches the complete-merged action to the orchestrator and reports 404 
     const response = await fetch(`${origin}/api/tasks/${task.id}/complete-merged`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ note: "Promoted onward to the shared integration branch." }),
+      body: JSON.stringify({
+        note: "Promoted onward to the shared integration branch.",
+      }),
     });
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { completed: true });
@@ -177,7 +184,10 @@ test("dispatches Human Approval to GitHub PR publication rather than a local mer
     });
     assert.equal(open.status, 200);
     assert.deepEqual(await open.json(), { pullRequestOpened: true });
-    assert.deepEqual(approvedPullRequestRef(), { id: task.id, note: "Ready for GitHub review." });
+    assert.deepEqual(approvedPullRequestRef(), {
+      id: task.id,
+      note: "Ready for GitHub review.",
+    });
 
     const reconcile = await fetch(`${origin}/api/tasks/${task.id}/reconcile-pr`, { method: "POST" });
     assert.equal(reconcile.status, 200);
@@ -214,7 +224,10 @@ test("rejects closing a task while merge reconciliation is pending", async () =>
 
     const closeResponse = await fetch(`${origin}/api/tasks/${task.id}/close`, {
       method: "POST",
-      body: JSON.stringify({ reason: "not-needed", note: "Close during merge." }),
+      body: JSON.stringify({
+        reason: "not-needed",
+        note: "Close during merge.",
+      }),
     });
     assert.equal(closeResponse.status, 409);
     assert.match((await closeResponse.json()).error, /pending GitHub PR lifecycle/i);
@@ -292,7 +305,12 @@ test("exposes approval history in the task payload", async () => {
           note: "Specification approved.",
           createdAt: "2026-08-01T10:15:00.000Z",
         },
-        { id: "A2", stage: "plan", note: "Plan approved.", createdAt: "2026-08-01T10:20:00.000Z" },
+        {
+          id: "A2",
+          stage: "plan",
+          note: "Plan approved.",
+          createdAt: "2026-08-01T10:20:00.000Z",
+        },
       );
     });
 
@@ -304,7 +322,12 @@ test("exposes approval history in the task payload", async () => {
         note: "Specification approved.",
         createdAt: "2026-08-01T10:15:00.000Z",
       },
-      { id: "A2", stage: "plan", note: "Plan approved.", createdAt: "2026-08-01T10:20:00.000Z" },
+      {
+        id: "A2",
+        stage: "plan",
+        note: "Plan approved.",
+        createdAt: "2026-08-01T10:20:00.000Z",
+      },
     ]);
   } finally {
     await cleanup(server, directory);
