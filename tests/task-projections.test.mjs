@@ -14,40 +14,44 @@ function taskFixture() {
     id: "AH-001",
     title: "Projection fixture",
     status: "running",
-    candidates: [{
-      id: "candidate-1",
-      revisionNumber: 7,
-      baseRevision: "a".repeat(40),
-      baseBranch: "main",
-      headRevision: "b".repeat(40),
-      branch: "agent-harness/AH-001",
-      repositoryRoot: "/repository",
-      worktreePath: "/worktree",
-      status: "ready_for_review",
-      createdAt: "2026-08-09T00:00:00.000Z",
-      updatedAt: "2026-08-09T00:00:02.000Z",
-      revisions: Array.from({ length: 30 }, (_, number) => ({ number, evidence: "x".repeat(2_000) })),
-      verificationRuns: [{ rows: [{ output: "x".repeat(20_000) }] }],
-    }],
-    workPackages: [{
-      id: "S1",
-      title: "Package",
-      description: "Bounded package",
-      dependencies: [],
-      batch: 1,
-      ownedPaths: ["src/example.ts"],
-      verification: ["npm test"],
-      status: "planned",
-      attempts: 0,
-      branch: null,
-      worktreePath: null,
-      baseRevision: null,
-      headRevision: null,
-      files: [],
-      error: null,
-      verificationRuns: [{ rows: [{ output: "x".repeat(20_000) }] }],
-      retainedContinuation: { files: Array.from({ length: 50 }, (_, index) => `file-${index}`) },
-    }],
+    candidates: [
+      {
+        id: "candidate-1",
+        revisionNumber: 7,
+        baseRevision: "a".repeat(40),
+        baseBranch: "main",
+        headRevision: "b".repeat(40),
+        branch: "agent-harness/AH-001",
+        repositoryRoot: "/repository",
+        worktreePath: "/worktree",
+        status: "ready_for_review",
+        createdAt: "2026-08-09T00:00:00.000Z",
+        updatedAt: "2026-08-09T00:00:02.000Z",
+        revisions: Array.from({ length: 30 }, (_, number) => ({ number, evidence: "x".repeat(2_000) })),
+        verificationRuns: [{ rows: [{ output: "x".repeat(20_000) }] }],
+      },
+    ],
+    workPackages: [
+      {
+        id: "S1",
+        title: "Package",
+        description: "Bounded package",
+        dependencies: [],
+        batch: 1,
+        ownedPaths: ["src/example.ts"],
+        verification: ["npm test"],
+        status: "planned",
+        attempts: 0,
+        branch: null,
+        worktreePath: null,
+        baseRevision: null,
+        headRevision: null,
+        files: [],
+        error: null,
+        verificationRuns: [{ rows: [{ output: "x".repeat(20_000) }] }],
+        retainedContinuation: { files: Array.from({ length: 50 }, (_, index) => `file-${index}`) },
+      },
+    ],
     gateFreshness: {
       test: {
         candidateId: "candidate-1",
@@ -58,7 +62,10 @@ function taskFixture() {
         focusedTestRows: [{ output: "x".repeat(20_000) }],
       },
     },
-    decisions: Array.from({ length: 20 }, (_, index) => ({ id: `decision-${index}`, answer: "x".repeat(2_000) })),
+    decisions: Array.from({ length: 20 }, (_, index) => ({
+      id: `decision-${index}`,
+      answer: "x".repeat(2_000),
+    })),
     artifacts: [
       {
         id: "artifact-1",
@@ -88,7 +95,14 @@ function taskFixture() {
     events: [
       { id: "event-1", at: "2026-08-09T00:00:01.000Z", category: "activity", title: "Created" },
       { id: "event-2", at: "2026-08-09T00:00:02.000Z", category: "agent", role: "triage", title: "Started" },
-      { id: "event-3", at: "2026-08-09T00:00:03.000Z", category: "agent", role: "test", runKind: "test", title: "Tested" },
+      {
+        id: "event-3",
+        at: "2026-08-09T00:00:03.000Z",
+        category: "agent",
+        role: "test",
+        runKind: "test",
+        title: "Tested",
+      },
     ],
     runs: [
       { id: "run-1", startedAt: "2026-08-09T00:00:01.000Z" },
@@ -131,7 +145,18 @@ test("task summaries bound artifact metadata while preserving the latest artifac
   const task = taskFixture();
   task.artifacts = Array.from({ length: 100 }, (_, index) => ({
     id: `artifact-${index}`,
-    stage: ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review", "approval"][index % 10],
+    stage: [
+      "triage",
+      "scouts",
+      "grill",
+      "specification",
+      "plan",
+      "implement",
+      "dev-review",
+      "test",
+      "final-review",
+      "approval",
+    ][index % 10],
     name: `artifact-${index}.md`,
     kind: "markdown",
     content: "retained content",
@@ -158,11 +183,17 @@ test("poll state exposes only the revision token needed to detect change", () =>
 test("cursor pages are stable, descending, and do not repeat boundary rows", () => {
   const task = taskFixture();
   const first = paginateTaskArtifacts(task, new URLSearchParams({ limit: "1" }));
-  assert.deepEqual(first.items.map((item) => item.id), ["artifact-2"]);
+  assert.deepEqual(
+    first.items.map((item) => item.id),
+    ["artifact-2"],
+  );
   assert.equal(first.total, 2);
   assert.ok(first.nextCursor);
   const second = paginateTaskArtifacts(task, new URLSearchParams({ limit: "1", cursor: first.nextCursor }));
-  assert.deepEqual(second.items.map((item) => item.id), ["artifact-1"]);
+  assert.deepEqual(
+    second.items.map((item) => item.id),
+    ["artifact-1"],
+  );
   assert.equal(second.nextCursor, null);
   assert.equal("content" in second.items[0], false);
 });
@@ -170,11 +201,20 @@ test("cursor pages are stable, descending, and do not repeat boundary rows", () 
 test("activity filters and run pagination use retained structured data", () => {
   const task = taskFixture();
   const tests = paginateTaskEvents(task, new URLSearchParams({ filter: "test" }));
-  assert.deepEqual(tests.items.map((item) => item.id), ["event-3"]);
+  assert.deepEqual(
+    tests.items.map((item) => item.id),
+    ["event-3"],
+  );
   const agents = paginateTaskEvents(task, new URLSearchParams({ filter: "agent" }));
-  assert.deepEqual(agents.items.map((item) => item.id), ["event-2"]);
+  assert.deepEqual(
+    agents.items.map((item) => item.id),
+    ["event-2"],
+  );
   const runs = paginateTaskRuns(task, new URLSearchParams({ limit: "1" }));
-  assert.deepEqual(runs.items.map((item) => item.id), ["run-2"]);
+  assert.deepEqual(
+    runs.items.map((item) => item.id),
+    ["run-2"],
+  );
   assert.ok(runs.nextCursor);
 });
 

@@ -201,15 +201,22 @@ test("core-only and unchanged collection updates do not rewrite retained evidenc
       draft.pullRequestIntent = { status: "open" };
     });
     const semanticUpdatedAt = (await sqlite.getCore(context.taskId)).updatedAt;
-    await sqlite.updateCore(context.taskId, (draft) => {
-      draft.pullRequestIntent.lastCheckedAt = "2026-08-09T00:10:00.000Z";
-    }, { touchUpdatedAt: false });
+    await sqlite.updateCore(
+      context.taskId,
+      (draft) => {
+        draft.pullRequestIntent.lastCheckedAt = "2026-08-09T00:10:00.000Z";
+      },
+      { touchUpdatedAt: false },
+    );
     const after = await sqlite.get(context.taskId);
     assert.equal(after.updatedAt, semanticUpdatedAt);
     assert.deepEqual(after.artifacts, before.artifacts);
     assert.deepEqual(after.runs, before.runs);
     assert.deepEqual(after.events, before.events);
-    assert.deepEqual((await sqlite.listPullRequestTasks()).map((task) => task.id), [context.taskId]);
+    assert.deepEqual(
+      (await sqlite.listPullRequestTasks()).map((task) => task.id),
+      [context.taskId],
+    );
   } finally {
     observer?.close();
     sqlite.close();
@@ -227,14 +234,18 @@ test("serializes competing transitions across independent SQLite connections", a
     const accepted = await first.transition(
       context.taskId,
       (task) => task.status === "queued",
-      (task) => { task.status = "awaiting-triage"; },
+      (task) => {
+        task.status = "awaiting-triage";
+      },
     );
     assert.equal(accepted.status, "awaiting-triage");
     await assert.rejects(
       second.transition(
         context.taskId,
         (task) => task.status === "queued",
-        (task) => { task.status = "cancelled"; },
+        (task) => {
+          task.status = "cancelled";
+        },
       ),
       (error) => error.code === "TASK_TRANSITION_CONFLICT",
     );
@@ -287,7 +298,9 @@ test("exports a rollback-compatible JSON snapshot with current SQLite state", as
   const sqlite = new SqliteTaskStore(context.databasePath, { legacyJsonPath: context.jsonPath });
   try {
     await sqlite.init();
-    await sqlite.update(context.taskId, (task) => { task.title = "Exported current title"; });
+    await sqlite.update(context.taskId, (task) => {
+      task.title = "Exported current title";
+    });
     const exportPath = path.join(context.directory, "rollback.json");
     const result = await sqlite.exportJson(exportPath);
     assert.equal(result.tasks, 1);
@@ -310,10 +323,7 @@ test("fails closed when the legacy JSON authority changes after migration", asyn
     state.tasks[0].title = "Changed through legacy fallback";
     await writeFile(context.jsonPath, `${JSON.stringify(state, null, 2)}\n`, "utf8");
     const reopened = new SqliteTaskStore(context.databasePath, { legacyJsonPath: context.jsonPath });
-    await assert.rejects(
-      reopened.init(),
-      /changed after SQLite migration/i,
-    );
+    await assert.rejects(reopened.init(), /changed after SQLite migration/i);
     reopened.close();
   } finally {
     sqlite.close();

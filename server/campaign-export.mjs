@@ -50,10 +50,14 @@ function validateUnifiedDiff(patch) {
     }
     if (inHunk && line.startsWith("diff --git ")) inHunk = false;
     if (inHunk && line === "") {
-      throw new Error("Candidate patch failed git apply --check: a unified-diff hunk contains an unprefixed blank context line.");
+      throw new Error(
+        "Candidate patch failed git apply --check: a unified-diff hunk contains an unprefixed blank context line.",
+      );
     }
     if (inHunk && !/^[ +\\-]/.test(line)) {
-      throw new Error(`Candidate patch failed git apply --check: invalid unified-diff hunk line ${JSON.stringify(line)}.`);
+      throw new Error(
+        `Candidate patch failed git apply --check: invalid unified-diff hunk line ${JSON.stringify(line)}.`,
+      );
     }
   }
 }
@@ -76,6 +80,8 @@ export async function appendCorrectionEvidence(correctionPath, evidence) {
 }
 
 export function normalizeUnifiedDiff(value) {
-  const normalized = String(value ?? "").replaceAll("\r\n", "\n").replaceAll("\r", "\n");
+  const normalized = String(value ?? "")
+    .replaceAll("\r\n", "\n")
+    .replaceAll("\r", "\n");
   return normalized && !normalized.endsWith("\n") ? `${normalized}\n` : normalized;
 }

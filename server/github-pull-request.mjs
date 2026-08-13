@@ -33,7 +33,11 @@ export class GitHubPullRequestManager {
     const repository = intent?.repository ?? remote.repository;
     const headBranch = intent?.headBranch ?? pullRequestBranch(task, candidate);
     const targetBranch = candidate.baseBranch;
-    const remoteBaseRevision = await this.#remoteRevision(candidate.repositoryRoot, remote.name, `refs/heads/${targetBranch}`);
+    const remoteBaseRevision = await this.#remoteRevision(
+      candidate.repositoryRoot,
+      remote.name,
+      `refs/heads/${targetBranch}`,
+    );
     if (remoteBaseRevision !== candidate.baseRevision) {
       const error = new Error(
         `GitHub target ${targetBranch} advanced from ${candidate.baseRevision.slice(0, 8)} to ${remoteBaseRevision.slice(0, 8)}. Refresh the candidate before raising a PR.`,
@@ -48,32 +52,43 @@ export class GitHubPullRequestManager {
     await this.#run("git", ["push", remote.name, `${candidate.headRevision}:refs/heads/${headBranch}`], {
       cwd: candidate.worktreePath,
     });
-    const remoteHeadRevision = await this.#remoteRevision(candidate.repositoryRoot, remote.name, `refs/heads/${headBranch}`);
+    const remoteHeadRevision = await this.#remoteRevision(
+      candidate.repositoryRoot,
+      remote.name,
+      `refs/heads/${headBranch}`,
+    );
     if (remoteHeadRevision !== candidate.headRevision) {
       throw typedError("The pushed GitHub branch does not match the exact approved candidate revision.", 502);
     }
 
     let pullRequest = await this.#find(repository, headBranch, targetBranch);
     if (!pullRequest) {
-      await this.#run("gh", [
-        "pr",
-        "create",
-        "--repo",
-        repository,
-        "--base",
-        targetBranch,
-        "--head",
-        headBranch,
-        "--title",
-        `${task.id}: ${task.title}`.slice(0, 240),
-        "--body",
-        pullRequestBody(task, candidate, intent?.note ?? ""),
-        "--no-maintainer-edit",
-      ], { cwd: candidate.worktreePath });
+      await this.#run(
+        "gh",
+        [
+          "pr",
+          "create",
+          "--repo",
+          repository,
+          "--base",
+          targetBranch,
+          "--head",
+          headBranch,
+          "--title",
+          `${task.id}: ${task.title}`.slice(0, 240),
+          "--body",
+          pullRequestBody(task, candidate, intent?.note ?? ""),
+          "--no-maintainer-edit",
+        ],
+        { cwd: candidate.worktreePath },
+      );
       pullRequest = await this.#find(repository, headBranch, targetBranch);
     }
     if (!pullRequest) {
-      throw typedError("GitHub accepted the PR request but the created pull request could not be resolved.", 502);
+      throw typedError(
+        "GitHub accepted the PR request but the created pull request could not be resolved.",
+        502,
+      );
     }
     return validatePullRequest(pullRequest, {
       repository,
@@ -116,7 +131,10 @@ export class GitHubPullRequestManager {
     const fetched = await this.#run("git", ["rev-parse", "FETCH_HEAD"], { cwd: candidate.worktreePath });
     const revision = fetched.stdout.trim().toLowerCase();
     if (revision !== expected) {
-      throw typedError("The fetched GitHub target changed while the candidate refresh was being prepared.", 409);
+      throw typedError(
+        "The fetched GitHub target changed while the candidate refresh was being prepared.",
+        409,
+      );
     }
     return revision;
   }
@@ -148,7 +166,10 @@ export class GitHubPullRequestManager {
     if (!preferredName) {
       try {
         const result = await this.#run("git", ["remote"], { cwd: repositoryRoot });
-        for (const name of result.stdout.split(/\r?\n/).map((value) => value.trim()).filter(Boolean)) {
+        for (const name of result.stdout
+          .split(/\r?\n/)
+          .map((value) => value.trim())
+          .filter(Boolean)) {
           if (!candidates.includes(name)) candidates.push(name);
         }
       } catch {
@@ -170,7 +191,9 @@ export class GitHubPullRequestManager {
   }
 
   async #remoteRevision(repositoryRoot, remoteName, ref) {
-    const result = await this.#run("git", ["ls-remote", "--exit-code", remoteName, ref], { cwd: repositoryRoot });
+    const result = await this.#run("git", ["ls-remote", "--exit-code", remoteName, ref], {
+      cwd: repositoryRoot,
+    });
     const [revision, resolvedRef] = result.stdout.trim().split(/\s+/);
     if (!/^[0-9a-f]{40}$/i.test(revision ?? "") || resolvedRef !== ref) {
       throw typedError(`GitHub remote did not resolve ${ref} to one exact commit.`, 502);
@@ -180,14 +203,20 @@ export class GitHubPullRequestManager {
 }
 
 export function parseGitHubRepository(remoteUrl) {
-  const value = String(remoteUrl ?? "").trim().replace(/\.git$/, "");
+  const value = String(remoteUrl ?? "")
+    .trim()
+    .replace(/\.git$/, "");
   const match = value.match(/^(?:https?:\/\/|ssh:\/\/git@|git@)github\.com[/:]([^/]+\/[^/]+)$/i);
   if (!match) throw new Error("The Git remote is not a supported GitHub repository URL.");
   return match[1];
 }
 
 export function pullRequestBranch(task, candidate) {
-  const segment = (value) => String(value).toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+  const segment = (value) =>
+    String(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
   return `agent-harness/${segment(task.id)}-${segment(candidate.id)}-r${candidate.revisionNumber}-${candidate.headRevision.slice(0, 8)}`;
 }
 
@@ -213,13 +242,24 @@ function validatePullRequest(row, expected) {
     throw typedError("GitHub returned incomplete pull request identity.", 502);
   }
   if (row.headRefName !== expected.headBranch || row.baseRefName !== expected.targetBranch) {
-    throw typedError("The GitHub pull request branch identity does not match the retained approval intent.", 409);
+    throw typedError(
+      "The GitHub pull request branch identity does not match the retained approval intent.",
+      409,
+    );
   }
   if (String(row.headRefOid ?? "").toLowerCase() !== String(expected.headRevision).toLowerCase()) {
-    throw typedError("The GitHub pull request head moved away from the exact approved candidate revision.", 409);
+    throw typedError(
+      "The GitHub pull request head moved away from the exact approved candidate revision.",
+      409,
+    );
   }
-  if (expected.baseRevision && String(row.baseRefOid ?? "").toLowerCase() !== String(expected.baseRevision).toLowerCase()) {
-    const error = new Error("The GitHub target advanced while the pull request was being published. Refresh the candidate before retrying.");
+  if (
+    expected.baseRevision &&
+    String(row.baseRefOid ?? "").toLowerCase() !== String(expected.baseRevision).toLowerCase()
+  ) {
+    const error = new Error(
+      "The GitHub target advanced while the pull request was being published. Refresh the candidate before retrying.",
+    );
     error.code = "GITHUB_TARGET_DIVERGED";
     error.statusCode = 409;
     error.targetRevision = row.baseRefOid ?? null;
@@ -271,8 +311,12 @@ function runCommand(command, args, options = {}) {
       const next = target + chunk.toString("utf8");
       return next.length > OUTPUT_LIMIT ? next.slice(-OUTPUT_LIMIT) : next;
     };
-    child.stdout.on("data", (chunk) => { stdout = collect(stdout, chunk); });
-    child.stderr.on("data", (chunk) => { stderr = collect(stderr, chunk); });
+    child.stdout.on("data", (chunk) => {
+      stdout = collect(stdout, chunk);
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr = collect(stderr, chunk);
+    });
     child.on("error", (error) => {
       if (finished) return;
       finished = true;

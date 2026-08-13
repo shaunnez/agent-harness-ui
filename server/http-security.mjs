@@ -17,11 +17,17 @@ export const MISSING_ORIGIN_POLICY =
 
 export function assertHttpBoundary(request, csrfToken) {
   const host = parseHost(request.headers.host);
-  if (!host || !isLoopback(host.hostname)) throw httpError(403, "The local companion only accepts loopback hosts.");
+  if (!host || !isLoopback(host.hostname))
+    throw httpError(403, "The local companion only accepts loopback hosts.");
   const origin = request.headers.origin;
-  if (origin && !ALLOWED_BROWSER_ORIGINS.has(origin)) throw httpError(403, "The request origin is not allowed.");
+  if (origin && !ALLOWED_BROWSER_ORIGINS.has(origin))
+    throw httpError(403, "The request origin is not allowed.");
   if (!MUTATION_METHODS.has(request.method ?? "GET")) return;
-  if (!String(request.headers["content-type"] ?? "").toLowerCase().startsWith("application/json")) {
+  if (
+    !String(request.headers["content-type"] ?? "")
+      .toLowerCase()
+      .startsWith("application/json")
+  ) {
     throw httpError(415, "State-changing requests require application/json.");
   }
   if (!csrfToken || request.headers["x-agent-harness-csrf"] !== csrfToken) {

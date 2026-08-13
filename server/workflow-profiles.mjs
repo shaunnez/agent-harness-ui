@@ -1,10 +1,16 @@
 export const WORKFLOW_PROFILE_IDS = Object.freeze(["fast", "standard", "high-risk"]);
 
 const HIGH_RISK_SIGNALS = Object.freeze([
-  ["security or access control", /\b(security|authentication|authorization|permission|credential|secret|encryption|privacy)\b/i],
+  [
+    "security or access control",
+    /\b(security|authentication|authorization|permission|credential|secret|encryption|privacy)\b/i,
+  ],
   ["schema or migration", /\b(schema|migration|database|backfill|ddl|data[- ]integrity)\b/i],
   ["concurrency", /\b(concurrency|race condition|locking|deadlock|atomicity|parallel write)\b/i],
-  ["broad architecture", /\b(architecture|architectural|cross[- ]cutting|rewrite|large refactor|multi[- ]package)\b/i],
+  [
+    "broad architecture",
+    /\b(architecture|architectural|cross[- ]cutting|rewrite|large refactor|multi[- ]package)\b/i,
+  ],
 ]);
 
 const FAST_SIGNALS = Object.freeze([
@@ -13,16 +19,15 @@ const FAST_SIGNALS = Object.freeze([
   ["explicitly narrow scope", /\b(small|tiny|narrow|isolated|single[- ]file|one[- ]file)\b/i],
 ]);
 
-const SENSITIVE_PATH = /(^|\/)(auth|security|migrations?|schema|database|infra|terraform|permissions?|secrets?)(\/|$)/i;
+const SENSITIVE_PATH =
+  /(^|\/)(auth|security|migrations?|schema|database|infra|terraform|permissions?|secrets?)(\/|$)/i;
 
 function now() {
   return new Date().toISOString();
 }
 
 export function selectWorkflowProfile(input = {}) {
-  const requested = WORKFLOW_PROFILE_IDS.includes(input.requestedProfile)
-    ? input.requestedProfile
-    : null;
+  const requested = WORKFLOW_PROFILE_IDS.includes(input.requestedProfile) ? input.requestedProfile : null;
   const text = `${input.title ?? ""}\n${input.description ?? ""}`;
   const highRisk = matchingSignals(text, HIGH_RISK_SIGNALS);
   const fast = matchingSignals(text, FAST_SIGNALS);
@@ -44,7 +49,8 @@ export function selectWorkflowProfile(input = {}) {
     reason = `Deterministic triage selected fast because the task is limited to ${fast.join(", ")} and names no high-risk boundary.`;
   } else {
     selected = "standard";
-    reason = "Deterministic triage selected standard because the task does not prove a narrow fast-path scope or a high-risk boundary.";
+    reason =
+      "Deterministic triage selected standard because the task does not prove a narrow fast-path scope or a high-risk boundary.";
   }
 
   const selectedAt = now();
@@ -74,15 +80,16 @@ export function recordWorkflowProfile(task, selected, reason, source = "automati
   const prior = task.workflowProfile?.selected ?? "standard";
   if (prior === selected && task.workflowProfile) return false;
   const at = now();
-  const history = Array.isArray(task.workflowProfile?.history)
-    ? task.workflowProfile.history
-    : [];
+  const history = Array.isArray(task.workflowProfile?.history) ? task.workflowProfile.history : [];
   task.workflowProfile = {
     selected,
     reason: String(reason).trim().slice(0, 2_000),
     source,
     selectedAt: at,
-    history: [...history, { from: prior, to: selected, reason: String(reason).trim().slice(0, 2_000), source, at }],
+    history: [
+      ...history,
+      { from: prior, to: selected, reason: String(reason).trim().slice(0, 2_000), source, at },
+    ],
   };
   const policies = task.agentConfig?.profileStagePolicies?.[selected];
   if (policies) task.agentConfig.stagePolicies = structuredClone(policies);
@@ -95,14 +102,19 @@ export function fastEscalation(input = {}) {
   let target = "standard";
 
   if (input.kind === "triage") {
-    const highRisk = matchingSignals(`${input.text ?? ""}\n${(input.riskSignals ?? []).join("\n")}`, HIGH_RISK_SIGNALS);
+    const highRisk = matchingSignals(
+      `${input.text ?? ""}\n${(input.riskSignals ?? []).join("\n")}`,
+      HIGH_RISK_SIGNALS,
+    );
     if (highRisk.length) {
       target = "high-risk";
       reasons.push(`triage discovered ${highRisk.join(", ")}`);
     }
-    if ((input.unresolvedDecisions ?? []).length) reasons.push("authoritative acceptance criteria still contain unresolved decisions");
+    if ((input.unresolvedDecisions ?? []).length)
+      reasons.push("authoritative acceptance criteria still contain unresolved decisions");
     if ((input.ownedPaths ?? []).length > 3) reasons.push("the bounded contract owns more than three paths");
-    if (topLevelBoundaries(input.ownedPaths).size > 1) reasons.push("the bounded contract crosses repository boundaries");
+    if (topLevelBoundaries(input.ownedPaths).size > 1)
+      reasons.push("the bounded contract crosses repository boundaries");
   }
 
   if (input.kind === "plan") {
@@ -134,13 +146,24 @@ export function fastEscalation(input = {}) {
 }
 
 export function canOverrideWorkflowProfile(task) {
-  if (["running", "cancelling", "merging", "merged-to-target", "completed", "closed", "archived"].includes(task?.status)) return false;
+  if (
+    ["running", "cancelling", "merging", "merged-to-target", "completed", "closed", "archived"].includes(
+      task?.status,
+    )
+  )
+    return false;
   if ((task?.candidates ?? []).length) return false;
-  return !(task?.workPackages ?? []).some((workPackage) => ["running", "ready_for_integration", "integrated"].includes(workPackage.status));
+  return !(task?.workPackages ?? []).some((workPackage) =>
+    ["running", "ready_for_integration", "integrated"].includes(workPackage.status),
+  );
 }
 
 export function isArchitecturalRisk(findings = []) {
-  return findings.some((finding) => HIGH_RISK_SIGNALS.some(([, expression]) => expression.test(`${finding?.title ?? ""} ${finding?.detail ?? ""} ${finding?.file ?? ""}`)));
+  return findings.some((finding) =>
+    HIGH_RISK_SIGNALS.some(([, expression]) =>
+      expression.test(`${finding?.title ?? ""} ${finding?.detail ?? ""} ${finding?.file ?? ""}`),
+    ),
+  );
 }
 
 function matchingSignals(text, definitions) {
@@ -148,13 +171,18 @@ function matchingSignals(text, definitions) {
 }
 
 function topLevelBoundaries(paths = []) {
-  return new Set(paths
-    .map(normalizePath)
-    .filter(Boolean)
-    .map((file) => file.split("/")[0])
-    .filter((boundary) => !["test", "tests", "__tests__", "docs"].includes(boundary)));
+  return new Set(
+    paths
+      .map(normalizePath)
+      .filter(Boolean)
+      .map((file) => file.split("/")[0])
+      .filter((boundary) => !["test", "tests", "__tests__", "docs"].includes(boundary)),
+  );
 }
 
 function normalizePath(value) {
-  return String(value ?? "").trim().replaceAll("\\", "/").replace(/^\.\//, "");
+  return String(value ?? "")
+    .trim()
+    .replaceAll("\\", "/")
+    .replace(/^\.\//, "");
 }

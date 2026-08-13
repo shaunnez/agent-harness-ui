@@ -1,8 +1,4 @@
-import {
-  decodePageCursor,
-  encodePageCursor,
-  normalizePageLimit,
-} from "./task-projections.mjs";
+import { decodePageCursor, encodePageCursor, normalizePageLimit } from "./task-projections.mjs";
 
 export const DATABASE_SCHEMA_VERSION = 2;
 
@@ -65,9 +61,10 @@ export function migrateSqliteSchema(db) {
     CREATE INDEX IF NOT EXISTS events_page_idx ON events(task_id, occurred_at DESC, id DESC);
     CREATE INDEX IF NOT EXISTS runs_page_idx ON runs(task_id, started_at DESC, id DESC);
   `);
-  db.prepare(
-    "INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (?, ?)",
-  ).run(DATABASE_SCHEMA_VERSION, new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (?, ?)").run(
+    DATABASE_SCHEMA_VERSION,
+    new Date().toISOString(),
+  );
 }
 
 export function syncTaskCollection(db, table, taskId, items, project) {
@@ -91,53 +88,56 @@ function storedCollectionRowMatches(table, stored, projected) {
   if (!stored || Number(stored.ordinal) !== projected.ordinal) return false;
   if (stored.payload_json !== projected.payload) return false;
   if (table === "artifacts") {
-    return stored.created_at === projected.sort &&
+    return (
+      stored.created_at === projected.sort &&
       stored.stage === projected.type &&
-      stored.metadata_json === projected.metadata;
+      stored.metadata_json === projected.metadata
+    );
   }
   if (table === "events") {
     return stored.occurred_at === projected.sort && stored.category === projected.type;
   }
-  return stored.started_at === projected.sort &&
+  return (
+    stored.started_at === projected.sort &&
     stored.stage === projected.type &&
-    stored.status === projected.status;
+    stored.status === projected.status
+  );
 }
 
-export function querySqlitePage(db, {
-  table,
-  taskId,
-  searchParams,
-  sortColumn,
-  payloadColumn,
-  filterSql = "",
-}) {
+export function querySqlitePage(
+  db,
+  { table, taskId, searchParams, sortColumn, payloadColumn, filterSql = "" },
+) {
   if (!db.prepare("SELECT 1 AS present FROM tasks WHERE id = ?").get(taskId)) return null;
   const limit = normalizePageLimit(searchParams.get("limit"));
   const cursor = decodePageCursor(searchParams.get("cursor"));
-  const cursorSql = cursor
-    ? `AND (${sortColumn} < ? OR (${sortColumn} = ? AND id < ?))`
-    : "";
-  const parameters = cursor
-    ? [taskId, cursor[0], cursor[0], cursor[1], limit + 1]
-    : [taskId, limit + 1];
-  const rows = db.prepare(`
+  const cursorSql = cursor ? `AND (${sortColumn} < ? OR (${sortColumn} = ? AND id < ?))` : "";
+  const parameters = cursor ? [taskId, cursor[0], cursor[0], cursor[1], limit + 1] : [taskId, limit + 1];
+  const rows = db
+    .prepare(`
     SELECT id, ${sortColumn} AS sort_value, ${payloadColumn} AS payload_json
     FROM ${table}
     WHERE task_id = ? ${filterSql} ${cursorSql}
     ORDER BY ${sortColumn} DESC, id DESC
     LIMIT ?
-  `).all(...parameters);
+  `)
+    .all(...parameters);
   const hasMore = rows.length > limit;
   const pageRows = rows.slice(0, limit);
-  const total = Number(db.prepare(`
+  const total = Number(
+    db
+      .prepare(`
     SELECT COUNT(*) AS count FROM ${table} WHERE task_id = ? ${filterSql}
-  `).get(taskId).count);
+  `)
+      .get(taskId).count,
+  );
   return {
     items: pageRows.map((row) => JSON.parse(row.payload_json)),
     total,
-    nextCursor: hasMore && pageRows.length
-      ? encodePageCursor([String(pageRows.at(-1).sort_value), String(pageRows.at(-1).id)])
-      : null,
+    nextCursor:
+      hasMore && pageRows.length
+        ? encodePageCursor([String(pageRows.at(-1).sort_value), String(pageRows.at(-1).id)])
+        : null,
   };
 }
 
@@ -161,7 +161,10 @@ export function assertImportState(state) {
 export function canonicalJson(value) {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   if (value && typeof value === "object") {
-    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
+      .join(",")}}`;
   }
   return JSON.stringify(value);
 }

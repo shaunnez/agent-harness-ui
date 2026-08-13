@@ -16,22 +16,29 @@ async function seedLegacyMergedCompletion(store, { promoted = false } = {}) {
   await store.update(task.id, (draft) => {
     draft.status = "completed";
     draft.completedAt = "2026-08-01T12:05:00.000Z";
-    draft.candidates = [{
-      id: "C1",
-      revisionNumber: 1,
-      status: "merged",
-      baseRevision: "a".repeat(40),
-      headRevision: "b".repeat(40),
-      baseBranch: "main",
-      branch: "agent-harness/c1",
-      worktreePath: "/repo/C1",
-      repositoryRoot: "/repo",
-      createdAt: "2026-08-01T12:00:00.000Z",
-      updatedAt: "2026-08-01T12:05:00.000Z",
-      revisions: [],
-    }];
+    draft.candidates = [
+      {
+        id: "C1",
+        revisionNumber: 1,
+        status: "merged",
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        baseBranch: "main",
+        branch: "agent-harness/c1",
+        worktreePath: "/repo/C1",
+        repositoryRoot: "/repo",
+        createdAt: "2026-08-01T12:00:00.000Z",
+        updatedAt: "2026-08-01T12:05:00.000Z",
+        revisions: [],
+      },
+    ];
     if (promoted) {
-      draft.approvals.push({ id: "A-promotion", stage: "promotion", note: "Promoted onward.", createdAt: "2026-08-01T12:06:00.000Z" });
+      draft.approvals.push({
+        id: "A-promotion",
+        stage: "promotion",
+        note: "Promoted onward.",
+        createdAt: "2026-08-01T12:06:00.000Z",
+      });
     }
   });
   return task.id;
@@ -50,7 +57,11 @@ test("migrates a legacy completed task with a merged candidate to merged-to-targ
     const migrated = await rebootedStore.get(legacyId);
     assert.equal(migrated.status, "merged-to-target");
     assert.equal(migrated.candidates.at(-1).status, "merged", "the migration only relabels task status");
-    assert.equal(migrated.completedAt, "2026-08-01T12:05:00.000Z", "historical completion evidence is not rewritten");
+    assert.equal(
+      migrated.completedAt,
+      "2026-08-01T12:05:00.000Z",
+      "historical completion evidence is not rewritten",
+    );
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -72,11 +83,19 @@ test("store migration is idempotent across repeated boots", async () => {
     const secondBoot = new JsonTaskStore(filePath);
     await secondBoot.init();
     const afterSecondBoot = await secondBoot.get(legacyId);
-    assert.equal(afterSecondBoot.status, "merged-to-target", "a second boot must not move the task any further");
+    assert.equal(
+      afterSecondBoot.status,
+      "merged-to-target",
+      "a second boot must not move the task any further",
+    );
     assert.deepEqual(afterSecondBoot, afterFirstBoot, "repeated migrations converge without drift");
 
     const changedOnSecondPass = await secondBoot.recoverInterrupted();
-    assert.equal(changedOnSecondPass, false, "recovering an already-migrated store reports no further change");
+    assert.equal(
+      changedOnSecondPass,
+      false,
+      "recovering an already-migrated store reports no further change",
+    );
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -93,7 +112,11 @@ test("does not relabel a task that was explicitly promoted to completed", async 
     const rebootedStore = new JsonTaskStore(filePath);
     await rebootedStore.init();
     const task = await rebootedStore.get(promotedId);
-    assert.equal(task.status, "completed", "an explicit promotion decision must not be reverted by the migration");
+    assert.equal(
+      task.status,
+      "completed",
+      "an explicit promotion decision must not be reverted by the migration",
+    );
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -140,7 +163,14 @@ test("rebuilds task usage from each artifact's recorded model and preserves synt
       priority: "medium",
     });
     await store.update(task.id, (draft) => {
-      draft.usage = { inputTokens: 2_000, cachedInputTokens: 500, outputTokens: 200, totalTokens: 2_200, cost: 0, credits: 999 };
+      draft.usage = {
+        inputTokens: 2_000,
+        cachedInputTokens: 500,
+        outputTokens: 200,
+        totalTokens: 2_200,
+        cost: 0,
+        credits: 999,
+      };
       draft.artifacts = [
         {
           id: "luna",
@@ -183,16 +213,25 @@ test("rebuilds task usage from each artifact's recorded model and preserves synt
     const rebooted = new JsonTaskStore(filePath);
     await rebooted.init();
     const restored = await rebooted.get(task.id);
-    assert.equal(restored.artifacts[2].model, null, "a harness-generated artifact must not inherit the task model on boot");
+    assert.equal(
+      restored.artifacts[2].model,
+      null,
+      "a harness-generated artifact must not inherit the task model on boot",
+    );
     assert.equal(restored.usage.inputTokens, 2_000);
     assert.equal(restored.usage.outputTokens, 200);
     assert.equal(
       restored.usage.credits,
-      Math.round((restored.artifacts[0].usage.credits + restored.artifacts[1].usage.credits) * 1_000_000) / 1_000_000,
+      Math.round((restored.artifacts[0].usage.credits + restored.artifacts[1].usage.credits) * 1_000_000) /
+        1_000_000,
       "task credits sum the rates of the actual artifact models",
     );
     assert.notEqual(restored.usage.credits, 999);
-    assert.equal(restored.usage.cost, Math.round((restored.artifacts[0].usage.cost + restored.artifacts[1].usage.cost) * 1_000_000) / 1_000_000);
+    assert.equal(
+      restored.usage.cost,
+      Math.round((restored.artifacts[0].usage.cost + restored.artifacts[1].usage.cost) * 1_000_000) /
+        1_000_000,
+    );
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -271,16 +310,20 @@ test("migrates legacy Grill state to manual policy without inventing human prove
       delete draft.grillPolicy;
       draft.grillSession = {
         status: "completed",
-        questions: [{
-          id: "Q1",
-          question: "Preserve compatibility?",
-          whyItMatters: "Clients depend on it.",
-          options: [{ id: "Q1-O1", label: "Preserve it", description: "Keep clients working.", recommended: true }],
-          allowCustom: true,
-          answer: "Preserve it",
-          answerSource: "accepted-assumption",
-          resolvedAt: "2026-08-01T12:01:00.000Z",
-        }],
+        questions: [
+          {
+            id: "Q1",
+            question: "Preserve compatibility?",
+            whyItMatters: "Clients depend on it.",
+            options: [
+              { id: "Q1-O1", label: "Preserve it", description: "Keep clients working.", recommended: true },
+            ],
+            allowCustom: true,
+            answer: "Preserve it",
+            answerSource: "accepted-assumption",
+            resolvedAt: "2026-08-01T12:01:00.000Z",
+          },
+        ],
         createdAt: "2026-08-01T12:00:00.000Z",
         completedAt: "2026-08-01T12:01:00.000Z",
         completionReason: "Finished by the user with 1 recommended assumption accepted.",

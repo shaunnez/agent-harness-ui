@@ -14,7 +14,7 @@ import { MarkdownContent } from "../MarkdownContent";
 import { Button } from "../Primitives";
 import { RuntimeContextDisclosure } from "./RuntimeEvidencePanels";
 import { RetryGrantAudit } from "./RetryGrantAudit";
-import { stripEmbeddedCandidatePatch } from "./RuntimeStagePresentation";
+import { stripEmbeddedCandidatePatch } from "./RuntimeStageArtifactPanels";
 
 // The server accepts an evaluation at any task status (server/api.mjs, POST
 // .../evaluation has no status guard), so nothing stops a rating from landing mid-run

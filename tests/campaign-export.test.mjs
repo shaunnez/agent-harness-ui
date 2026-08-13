@@ -30,7 +30,12 @@ test("exports apply-checkable patches and gates READY without rewriting blind sc
     await git(repository, ["commit", "-am", "candidate"]);
     const headRevision = (await git(repository, ["rev-parse", "HEAD"])).stdout.trim();
     const patchPath = path.join(directory, "candidate.diff");
-    await exportCandidatePatch({ repositoryPath: repository, baseRevision, headRevision, outputPath: patchPath });
+    await exportCandidatePatch({
+      repositoryPath: repository,
+      baseRevision,
+      headRevision,
+      outputPath: patchPath,
+    });
     const patch = await readFile(patchPath, "utf8");
     assert.match(patch, /\n \n/, "blank hunk context must retain its unified-diff prefix");
     await assertPatchApplies({ repositoryPath: repository, baseRevision, patchPath });
@@ -50,7 +55,10 @@ test("exports apply-checkable patches and gates READY without rewriting blind sc
     const lockedScores = "Locked blind score: 3.67\n";
     await writeFile(blindScoresPath, lockedScores, "utf8");
     const correctionsPath = path.join(directory, "corrections.jsonl");
-    await appendCorrectionEvidence(correctionsPath, { candidate: "I", correction: "Patch serialization repaired" });
+    await appendCorrectionEvidence(correctionsPath, {
+      candidate: "I",
+      correction: "Patch serialization repaired",
+    });
     await appendCorrectionEvidence(correctionsPath, { candidate: "B", correction: "Apply check recorded" });
     assert.equal(await readFile(blindScoresPath, "utf8"), lockedScores);
     assert.equal((await readFile(correctionsPath, "utf8")).trim().split("\n").length, 2);

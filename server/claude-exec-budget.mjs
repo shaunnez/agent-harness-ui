@@ -129,7 +129,9 @@ export async function readRegisteredWorktrees(cwd) {
   }).catch(() => null);
   const gitCommonDir = common?.code === 0 ? common.stdout.trim() : "";
   if (!gitCommonDir) return { repositoryRoot: null, registeredWorktrees: null };
-  const entries = await readdir(path.join(gitCommonDir, "worktrees"), { withFileTypes: true }).catch(() => null);
+  const entries = await readdir(path.join(gitCommonDir, "worktrees"), { withFileTypes: true }).catch(
+    () => null,
+  );
   return {
     repositoryRoot: path.dirname(gitCommonDir),
     // A missing directory means no worktree has ever been registered, which is a
@@ -167,9 +169,11 @@ export async function readRegisteredWorktrees(cwd) {
 export function extrapolatedExecArgBoundBytes({ registeredWorktrees, cwdLength }) {
   const worktrees = Math.max(0, Number(registeredWorktrees) || 0);
   const chars = Math.max(0, Number(cwdLength) || 0);
-  return MEASURED_FLOOR_BYTES
-    + Math.max(0, worktrees - MEASURED_FLOOR_WORKTREES) * MEASURED_BYTES_PER_WORKTREE
-    + Math.max(0, chars - MEASURED_FLOOR_CWD_CHARS) * BOUND_BYTES_PER_CWD_CHAR;
+  return (
+    MEASURED_FLOOR_BYTES +
+    Math.max(0, worktrees - MEASURED_FLOOR_WORKTREES) * MEASURED_BYTES_PER_WORKTREE +
+    Math.max(0, chars - MEASURED_FLOOR_CWD_CHARS) * BOUND_BYTES_PER_CWD_CHAR
+  );
 }
 
 /**
@@ -220,7 +224,8 @@ export function classifyExecArgBudget({
       availableBytes: null,
       worktreesRemaining: null,
       refusal: null,
-      detail: "The inlined-profile exec limit is macOS-specific, so there is no exec-argument budget to preflight on this platform.",
+      detail:
+        "The inlined-profile exec limit is macOS-specific, so there is no exec-argument budget to preflight on this platform.",
     };
   }
   if (e2bigObserved) {
@@ -233,7 +238,8 @@ export function classifyExecArgBudget({
       usedBytes: null,
       availableBytes: 0,
       worktreesRemaining: 0,
-      detail: "A probe run could not start a shell at this cwd (E2BIG), so the exec argument list already exceeds the OS ceiling.",
+      detail:
+        "A probe run could not start a shell at this cwd (E2BIG), so the exec argument list already exceeds the OS ceiling.",
       refusal: execArgBudgetRefusal({ ...base, usedBytes: null, observed: true }),
     };
   }
@@ -246,11 +252,14 @@ export function classifyExecArgBudget({
       availableBytes: null,
       worktreesRemaining: null,
       refusal: null,
-      detail: "The registered worktree count for this repository could not be read, so the exec-argument budget was not established; the mid-run shell-start guard remains the only check.",
+      detail:
+        "The registered worktree count for this repository could not be read, so the exec-argument budget was not established; the mid-run shell-start guard remains the only check.",
     };
   }
   const measured = Number.isFinite(measuredBytes) && measuredBytes > 0;
-  const usedBytes = measured ? Math.round(measuredBytes) : extrapolatedExecArgBoundBytes({ registeredWorktrees, cwdLength });
+  const usedBytes = measured
+    ? Math.round(measuredBytes)
+    : extrapolatedExecArgBoundBytes({ registeredWorktrees, cwdLength });
   const headroomBytes = limitBytes - reserveBytes - usedBytes;
   const availableBytes = Math.max(0, headroomBytes);
   const worktreesRemaining = Math.floor(availableBytes / MEASURED_BYTES_PER_WORKTREE);
@@ -268,9 +277,10 @@ export function classifyExecArgBudget({
       ok: true,
       measurementUnavailable: true,
       refusal: null,
-      detail: headroomBytes <= 0
-        ? `No measurement could be taken; the bound puts this repository at ${spend} ${at}, already past the ceiling. The bound is not evidence and does not refuse a stage, so the mid-run shell-start guard remains the only check here.`
-        : `${spend} bounded ${at}; ${availableBytes.toLocaleString("en-US")} bytes spare after the ${reserveBytes.toLocaleString("en-US")}-byte concurrency reserve, so about ${worktreesRemaining} more worktree${worktreesRemaining === 1 ? "" : "s"} fit by the bound, which is an extrapolation rather than a measurement.`,
+      detail:
+        headroomBytes <= 0
+          ? `No measurement could be taken; the bound puts this repository at ${spend} ${at}, already past the ceiling. The bound is not evidence and does not refuse a stage, so the mid-run shell-start guard remains the only check here.`
+          : `${spend} bounded ${at}; ${availableBytes.toLocaleString("en-US")} bytes spare after the ${reserveBytes.toLocaleString("en-US")}-byte concurrency reserve, so about ${worktreesRemaining} more worktree${worktreesRemaining === 1 ? "" : "s"} fit by the bound, which is an extrapolation rather than a measurement.`,
     };
   }
   if (headroomBytes <= 0) {
@@ -307,9 +317,7 @@ export function execArgBudgetRefusal({
   observed = false,
 } = {}) {
   const where = repositoryRoot ? ` in ${repositoryRoot}` : "";
-  const spend = usedBytes == null
-    ? "already exceeds"
-    : `needs ${usedBytes.toLocaleString("en-US")} of`;
+  const spend = usedBytes == null ? "already exceeds" : `needs ${usedBytes.toLocaleString("en-US")} of`;
   const ceiling = `${limitBytes.toLocaleString("en-US")}-byte OS exec argument ceiling`;
   return [
     `A Claude ${sandbox} stage cannot spawn${where}: the Bash sandbox profile is inlined on the command line, and this repository's`,
@@ -389,7 +397,8 @@ export function argvMeasuringShimScript({ outputPath, realShell }) {
  */
 export function resolveRealShell(environment = process.env) {
   const shell = environment?.SHELL;
-  const usable = typeof shell === "string" && path.isAbsolute(shell) && /(bash|zsh)$/.test(path.basename(shell));
+  const usable =
+    typeof shell === "string" && path.isAbsolute(shell) && /(bash|zsh)$/.test(path.basename(shell));
   return usable ? shell : "/bin/zsh";
 }
 
@@ -398,7 +407,10 @@ export async function createArgvMeasuringShim(directory, { realShell = resolveRe
   const outputPath = path.join(directory, SHIM_OUTPUT_FILE);
   const shimPath = path.join(directory, shimFileName(realShell));
   await writeFile(outputPath, "", "utf8");
-  await writeFile(shimPath, argvMeasuringShimScript({ outputPath, realShell }), { encoding: "utf8", mode: 0o700 });
+  await writeFile(shimPath, argvMeasuringShimScript({ outputPath, realShell }), {
+    encoding: "utf8",
+    mode: 0o700,
+  });
   return { shimPath, outputPath, realShell };
 }
 

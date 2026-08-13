@@ -79,18 +79,21 @@ function activities(events) {
 test("maps recorded Claude tool calls onto the internal event shape", async () => {
   const { events, parsed } = await replayFixture("stream-json-tool-calls.jsonl");
 
-  assert.deepEqual(events.map((event) => event.type), [
-    "activity", // system/init
-    "activity", // rate_limit_event
-    "activity", // Read started
-    "activity", // Read completed
-    "activity", // Bash: wc -l started
-    "activity", // Bash: cat nonexistent started
-    "activity", // Bash: cat nonexistent completed (out of order)
-    "activity", // Bash: wc -l completed
-    "message",
-    "usage",
-  ]);
+  assert.deepEqual(
+    events.map((event) => event.type),
+    [
+      "activity", // system/init
+      "activity", // rate_limit_event
+      "activity", // Read started
+      "activity", // Read completed
+      "activity", // Bash: wc -l started
+      "activity", // Bash: cat nonexistent started
+      "activity", // Bash: cat nonexistent completed (out of order)
+      "activity", // Bash: wc -l completed
+      "message",
+      "usage",
+    ],
+  );
 
   const [session, rateLimit] = events;
   assert.deepEqual(session, {
@@ -121,7 +124,10 @@ test("maps recorded Claude tool calls onto the internal event shape", async () =
     assert.equal(event.toolCall.name, "command_execution");
     assert.equal(event.toolCall.category, "repository-command");
   }
-  assert.deepEqual(bashStarted.map((event) => event.detail), ["wc -l a.txt", "cat nonexistent-file.txt"]);
+  assert.deepEqual(
+    bashStarted.map((event) => event.detail),
+    ["wc -l a.txt", "cat nonexistent-file.txt"],
+  );
 
   // Results arrive out of order: the second Bash call completes first. Correlation
   // is by tool_use_id, so a positional parser would mislabel both.
@@ -198,7 +204,10 @@ test("surfaces every recorded permission denial as a danger activity", async () 
   const denials = activities(events).filter((event) => event.tone === "danger");
 
   assert.equal(denials.length, 2);
-  assert.deepEqual(denials.map((event) => event.title), ["Permission denied", "Permission denied"]);
+  assert.deepEqual(
+    denials.map((event) => event.title),
+    ["Permission denied", "Permission denied"],
+  );
   assert.match(denials[0].detail, /^Bash · printf 'MUTATED' > guarded\.txt/);
   assert.equal(parsed.permissionDenials.length, 2);
   assert.equal(parsed.permissionDenials[0].tool_input.dangerouslyDisableSandbox, true);
@@ -209,29 +218,41 @@ test("surfaces every recorded permission denial as a danger activity", async () 
 
   // The recorded tool_use command and the denial's tool_input disagree: an operator
   // PreToolUse hook rewrote the command after the event the harness would record.
-  const started = activities(events).find((event) => event.toolCall?.phase === "started" && event.detail.includes("guarded.txt"));
+  const started = activities(events).find(
+    (event) => event.toolCall?.phase === "started" && event.detail.includes("guarded.txt"),
+  );
   assert.ok(started);
   assert.notEqual(started.detail, parsed.permissionDenials[1].tool_input.command);
 });
 
 test("does not treat a denial as fatal when it exactly repeats a call that already succeeded", () => {
   const parser = createClaudeStreamParser();
-  parser.parse(JSON.stringify({
-    type: "assistant",
-    message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "git status --porcelain" } }] },
-  }));
-  parser.parse(JSON.stringify({
-    type: "user",
-    message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "", is_error: false }] },
-  }));
+  parser.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "git status --porcelain" } }],
+      },
+    }),
+  );
+  parser.parse(
+    JSON.stringify({
+      type: "user",
+      message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "", is_error: false }] },
+    }),
+  );
 
-  const [denied] = parser.parse(JSON.stringify({
-    type: "result",
-    subtype: "success",
-    is_error: false,
-    result: "done",
-    permission_denials: [{ tool_name: "Bash", tool_use_id: "t2", tool_input: { command: "git status --porcelain" } }],
-  }));
+  const [denied] = parser.parse(
+    JSON.stringify({
+      type: "result",
+      subtype: "success",
+      is_error: false,
+      result: "done",
+      permission_denials: [
+        { tool_name: "Bash", tool_use_id: "t2", tool_input: { command: "git status --porcelain" } },
+      ],
+    }),
+  );
 
   // The raw count still reflects everything the CLI reported...
   assert.equal(parser.result().permissionDenials.length, 1);
@@ -249,22 +270,36 @@ test("does not treat a denial as fatal when it exactly repeats a call that alrea
   // already has that exact command's real (failing) output — a failed answer is still
   // an answer, and the denial adds nothing a successful-repeat guard alone would miss.
   const parser = createClaudeStreamParser();
-  parser.parse(JSON.stringify({
-    type: "assistant",
-    message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "git check-ignore -v missing.txt" } }] },
-  }));
-  parser.parse(JSON.stringify({
-    type: "user",
-    message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "Exit code 1", is_error: true }] },
-  }));
+  parser.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          { type: "tool_use", id: "t1", name: "Bash", input: { command: "git check-ignore -v missing.txt" } },
+        ],
+      },
+    }),
+  );
+  parser.parse(
+    JSON.stringify({
+      type: "user",
+      message: {
+        content: [{ type: "tool_result", tool_use_id: "t1", content: "Exit code 1", is_error: true }],
+      },
+    }),
+  );
 
-  const [denied] = parser.parse(JSON.stringify({
-    type: "result",
-    subtype: "success",
-    is_error: false,
-    result: "done",
-    permission_denials: [{ tool_name: "Bash", tool_use_id: "t2", tool_input: { command: "git check-ignore -v missing.txt" } }],
-  }));
+  const [denied] = parser.parse(
+    JSON.stringify({
+      type: "result",
+      subtype: "success",
+      is_error: false,
+      result: "done",
+      permission_denials: [
+        { tool_name: "Bash", tool_use_id: "t2", tool_input: { command: "git check-ignore -v missing.txt" } },
+      ],
+    }),
+  );
 
   assert.equal(parser.result().fatalPermissionDenials.length, 0);
   assert.equal(denied.tone, "warning");
@@ -277,33 +312,51 @@ test("ignores Bash's own reworded description when matching a denial to an earli
   // differently-worded `description` on the retry. `description` is not part of what
   // runs, so it must not be part of the identity a denial is matched against.
   const parser = createClaudeStreamParser();
-  parser.parse(JSON.stringify({
-    type: "assistant",
-    message: {
-      content: [{
-        type: "tool_use",
-        id: "t1",
-        name: "Bash",
-        input: { command: "git check-ignore -v e2e/playwright-report/index.html", description: "Check the gitignore rule" },
-      }],
-    },
-  }));
-  parser.parse(JSON.stringify({
-    type: "user",
-    message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "Exit code 1", is_error: true }] },
-  }));
+  parser.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "tool_use",
+            id: "t1",
+            name: "Bash",
+            input: {
+              command: "git check-ignore -v e2e/playwright-report/index.html",
+              description: "Check the gitignore rule",
+            },
+          },
+        ],
+      },
+    }),
+  );
+  parser.parse(
+    JSON.stringify({
+      type: "user",
+      message: {
+        content: [{ type: "tool_result", tool_use_id: "t1", content: "Exit code 1", is_error: true }],
+      },
+    }),
+  );
 
-  const [denied] = parser.parse(JSON.stringify({
-    type: "result",
-    subtype: "success",
-    is_error: false,
-    result: "done",
-    permission_denials: [{
-      tool_name: "Bash",
-      tool_use_id: "t2",
-      tool_input: { command: "git check-ignore -v e2e/playwright-report/index.html", description: "Re-check after the edit" },
-    }],
-  }));
+  const [denied] = parser.parse(
+    JSON.stringify({
+      type: "result",
+      subtype: "success",
+      is_error: false,
+      result: "done",
+      permission_denials: [
+        {
+          tool_name: "Bash",
+          tool_use_id: "t2",
+          tool_input: {
+            command: "git check-ignore -v e2e/playwright-report/index.html",
+            description: "Re-check after the edit",
+          },
+        },
+      ],
+    }),
+  );
 
   assert.equal(parser.result().fatalPermissionDenials.length, 0);
   assert.equal(denied.tone, "warning");
@@ -314,26 +367,40 @@ test("still treats a Bash escalation as fatal even when its command matches an e
   // same request the first attempt made — dropping only `description` (never
   // `dangerouslyDisableSandbox`) is what keeps this fatal.
   const parser = createClaudeStreamParser();
-  parser.parse(JSON.stringify({
-    type: "assistant",
-    message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "printf 'MUTATED' > guarded.txt" } }] },
-  }));
-  parser.parse(JSON.stringify({
-    type: "user",
-    message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "Exit code 1", is_error: true }] },
-  }));
+  parser.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          { type: "tool_use", id: "t1", name: "Bash", input: { command: "printf 'MUTATED' > guarded.txt" } },
+        ],
+      },
+    }),
+  );
+  parser.parse(
+    JSON.stringify({
+      type: "user",
+      message: {
+        content: [{ type: "tool_result", tool_use_id: "t1", content: "Exit code 1", is_error: true }],
+      },
+    }),
+  );
 
-  const [denied] = parser.parse(JSON.stringify({
-    type: "result",
-    subtype: "success",
-    is_error: false,
-    result: "done",
-    permission_denials: [{
-      tool_name: "Bash",
-      tool_use_id: "t2",
-      tool_input: { command: "printf 'MUTATED' > guarded.txt", dangerouslyDisableSandbox: true },
-    }],
-  }));
+  const [denied] = parser.parse(
+    JSON.stringify({
+      type: "result",
+      subtype: "success",
+      is_error: false,
+      result: "done",
+      permission_denials: [
+        {
+          tool_name: "Bash",
+          tool_use_id: "t2",
+          tool_input: { command: "printf 'MUTATED' > guarded.txt", dangerouslyDisableSandbox: true },
+        },
+      ],
+    }),
+  );
 
   assert.equal(parser.result().fatalPermissionDenials.length, 1);
   assert.equal(denied.tone, "danger");
@@ -341,13 +408,17 @@ test("still treats a Bash escalation as fatal even when its command matches an e
 
 test("still treats a denial as fatal when it does not match any earlier answer", () => {
   const parser = createClaudeStreamParser();
-  const [denied] = parser.parse(JSON.stringify({
-    type: "result",
-    subtype: "success",
-    is_error: false,
-    result: "done",
-    permission_denials: [{ tool_name: "Write", tool_use_id: "t1", tool_input: { file_path: "/etc/passwd" } }],
-  }));
+  const [denied] = parser.parse(
+    JSON.stringify({
+      type: "result",
+      subtype: "success",
+      is_error: false,
+      result: "done",
+      permission_denials: [
+        { tool_name: "Write", tool_use_id: "t1", tool_input: { file_path: "/etc/passwd" } },
+      ],
+    }),
+  );
 
   assert.equal(parser.result().fatalPermissionDenials.length, 1);
   assert.equal(denied.tone, "danger");
@@ -361,23 +432,37 @@ test("does not mistake a denial's own tool_result for an independent prior answe
   // evidence the call ever ran. Treating it as an answered call would make the entry in
   // `permission_denials` look like a denied repeat of a call that already went through.
   const parser = createClaudeStreamParser();
-  parser.parse(JSON.stringify({
-    type: "assistant",
-    message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "rm guarded.txt" } }] },
-  }));
-  parser.parse(JSON.stringify({
-    type: "user",
-    message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "Run outside of the sandbox", is_error: true }] },
-    tool_result_meta: [{ id: "t1", non_execution_kind: "user-rejected" }],
-  }));
+  parser.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "rm guarded.txt" } }],
+      },
+    }),
+  );
+  parser.parse(
+    JSON.stringify({
+      type: "user",
+      message: {
+        content: [
+          { type: "tool_result", tool_use_id: "t1", content: "Run outside of the sandbox", is_error: true },
+        ],
+      },
+      tool_result_meta: [{ id: "t1", non_execution_kind: "user-rejected" }],
+    }),
+  );
 
-  const [denied] = parser.parse(JSON.stringify({
-    type: "result",
-    subtype: "success",
-    is_error: false,
-    result: "done",
-    permission_denials: [{ tool_name: "Bash", tool_use_id: "t1", tool_input: { command: "rm guarded.txt" } }],
-  }));
+  const [denied] = parser.parse(
+    JSON.stringify({
+      type: "result",
+      subtype: "success",
+      is_error: false,
+      result: "done",
+      permission_denials: [
+        { tool_name: "Bash", tool_use_id: "t1", tool_input: { command: "rm guarded.txt" } },
+      ],
+    }),
+  );
 
   assert.equal(parser.result().fatalPermissionDenials.length, 1);
   assert.equal(denied.tone, "danger");
@@ -417,10 +502,21 @@ test("tolerates unknown event types, unknown system subtypes and malformed lines
 
 test("does not invent a tool call for an uncorrelated result", () => {
   const parser = createClaudeStreamParser();
-  const orphan = parser.parse(JSON.stringify({
-    type: "user",
-    message: { content: [{ type: "tool_result", tool_use_id: "toolu_never_seen", content: "Exit code 1\nboom", is_error: true }] },
-  }));
+  const orphan = parser.parse(
+    JSON.stringify({
+      type: "user",
+      message: {
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: "toolu_never_seen",
+            content: "Exit code 1\nboom",
+            is_error: true,
+          },
+        ],
+      },
+    }),
+  );
 
   // A truncated stream must not be reported as a failed verification command:
   // guessing the tool was Bash would fabricate a REPAIR verdict out of nothing.
@@ -430,34 +526,46 @@ test("does not invent a tool call for an uncorrelated result", () => {
 
 test("reports an unterminated tool call rather than silently closing it", () => {
   const parser = createClaudeStreamParser();
-  parser.parse(JSON.stringify({
-    type: "assistant",
-    message: { content: [{ type: "tool_use", id: "toolu_open", name: "Bash", input: { command: "sleep 600" } }] },
-  }));
+  parser.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [{ type: "tool_use", id: "toolu_open", name: "Bash", input: { command: "sleep 600" } }],
+      },
+    }),
+  );
   assert.equal(parser.result().pendingToolCalls, 1);
 });
 
 test("maps MCP tool names onto the Codex MCP tool-call shape", () => {
   const parser = createClaudeStreamParser();
-  const [started] = parser.parse(JSON.stringify({
-    type: "assistant",
-    message: {
-      content: [{
-        type: "tool_use",
-        id: "toolu_mcp",
-        name: "mcp__notion__notion-fetch",
-        input: { url: "https://example.invalid/page" },
-      }],
-    },
-  }));
+  const [started] = parser.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "tool_use",
+            id: "toolu_mcp",
+            name: "mcp__notion__notion-fetch",
+            input: { url: "https://example.invalid/page" },
+          },
+        ],
+      },
+    }),
+  );
   assert.equal(started.toolCall.category, "mcp");
   assert.equal(started.toolCall.server, "notion");
   assert.equal(started.toolCall.name, "notion-fetch");
 
-  const [completed] = parser.parse(JSON.stringify({
-    type: "user",
-    message: { content: [{ type: "tool_result", tool_use_id: "toolu_mcp", content: [{ type: "text", text: "ok" }] }] },
-  }));
+  const [completed] = parser.parse(
+    JSON.stringify({
+      type: "user",
+      message: {
+        content: [{ type: "tool_result", tool_use_id: "toolu_mcp", content: [{ type: "text", text: "ok" }] }],
+      },
+    }),
+  );
   assert.equal(completed.toolCall.category, "mcp");
   assert.equal(completed.toolCall.server, "notion");
   assert.equal(completed.toolCall.result, "Array result · 1 items (content not retained)");
@@ -466,54 +574,72 @@ test("maps MCP tool names onto the Codex MCP tool-call shape", () => {
 
 test("treats a successful Bash result and an absent is_error identically", () => {
   const parser = createClaudeStreamParser();
-  parser.parse(JSON.stringify({
-    type: "assistant",
-    message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "true" } }] },
-  }));
-  const [explicitFalse] = parser.parse(JSON.stringify({
-    type: "user",
-    message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "", is_error: false }] },
-  }));
+  parser.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "true" } }] },
+    }),
+  );
+  const [explicitFalse] = parser.parse(
+    JSON.stringify({
+      type: "user",
+      message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "", is_error: false }] },
+    }),
+  );
 
-  parser.parse(JSON.stringify({
-    type: "assistant",
-    message: { content: [{ type: "tool_use", id: "t2", name: "Bash", input: { command: "true" } }] },
-  }));
-  const [absent] = parser.parse(JSON.stringify({
-    type: "user",
-    message: { content: [{ type: "tool_result", tool_use_id: "t2", content: "" }] },
-  }));
+  parser.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "tool_use", id: "t2", name: "Bash", input: { command: "true" } }] },
+    }),
+  );
+  const [absent] = parser.parse(
+    JSON.stringify({
+      type: "user",
+      message: { content: [{ type: "tool_result", tool_use_id: "t2", content: "" }] },
+    }),
+  );
 
   assert.equal(explicitFalse.commandFailed, false);
   assert.equal(absent.commandFailed, false);
 
   // Only `is_error === true` is a failure. `is_error === false` as the success test
   // would report every successful Read as failed, since Read omits the field.
-  parser.parse(JSON.stringify({
-    type: "assistant",
-    message: { content: [{ type: "tool_use", id: "t3", name: "Bash", input: { command: "false" } }] },
-  }));
-  const [failed] = parser.parse(JSON.stringify({
-    type: "user",
-    message: { content: [{ type: "tool_result", tool_use_id: "t3", content: "Exit code 7\nnope", is_error: true }] },
-  }));
+  parser.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "tool_use", id: "t3", name: "Bash", input: { command: "false" } }] },
+    }),
+  );
+  const [failed] = parser.parse(
+    JSON.stringify({
+      type: "user",
+      message: {
+        content: [{ type: "tool_result", tool_use_id: "t3", content: "Exit code 7\nnope", is_error: true }],
+      },
+    }),
+  );
   assert.equal(failed.commandFailed, true);
   assert.equal(failed.toolCall.result, "Exit code 7");
 });
 
 test("extracts a failure from the result line rather than stderr", () => {
   const parser = createClaudeStreamParser();
-  parser.parse(JSON.stringify({
-    type: "result",
-    subtype: "error_during_execution",
-    is_error: true,
-    result: "Invalid API key · Please run /login",
-    usage: { input_tokens: 0, output_tokens: 0 },
-  }));
+  parser.parse(
+    JSON.stringify({
+      type: "result",
+      subtype: "error_during_execution",
+      is_error: true,
+      result: "Invalid API key · Please run /login",
+      usage: { input_tokens: 0, output_tokens: 0 },
+    }),
+  );
   assert.equal(extractClaudeFailure(parser.result()), "Invalid API key · Please run /login");
 
   const truncated = createClaudeStreamParser();
-  truncated.parse(JSON.stringify({ type: "result", subtype: "error_max_turns", is_error: false, result: "" }));
+  truncated.parse(
+    JSON.stringify({ type: "result", subtype: "error_max_turns", is_error: false, result: "" }),
+  );
   assert.equal(extractClaudeFailure(truncated.result()), "Claude ended with error_max_turns.");
 
   assert.equal(extractClaudeFailure(createClaudeStreamParser().result()), null);
@@ -521,11 +647,15 @@ test("extracts a failure from the result line rather than stderr", () => {
 
 test("falls back to the last assistant text when the result carries none", () => {
   const parser = createClaudeStreamParser();
-  parser.parse(JSON.stringify({
-    type: "assistant",
-    message: { content: [{ type: "text", text: "  buffered verdict  " }] },
-  }));
-  const events = parser.parse(JSON.stringify({ type: "result", subtype: "success", is_error: false, result: "" }));
+  parser.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "text", text: "  buffered verdict  " }] },
+    }),
+  );
+  const events = parser.parse(
+    JSON.stringify({ type: "result", subtype: "success", is_error: false, result: "" }),
+  );
   assert.deepEqual(events, [{ type: "message", text: "buffered verdict" }]);
   assert.equal(parser.result().finalText, "buffered verdict");
 });
@@ -548,24 +678,27 @@ test("defaults missing usage counters to zero without producing NaN", () => {
 });
 
 test("excludes every API-key path from the Claude environment", () => {
-  const environment = buildClaudeEnvironment({
-    PATH: "/usr/local/bin:/usr/bin",
-    HOME: "/Users/agent",
-    USER: "agent",
-    LANG: "en_GB.UTF-8",
-    CLAUDE_CONFIG_DIR: "/Users/agent/.claude",
-    // The three that would move execution off the local CLI session onto metered
-    // API billing, or point it at a different endpoint entirely.
-    ANTHROPIC_API_KEY: "sk-ant-secret",
-    ANTHROPIC_AUTH_TOKEN: "oauth-bearer-secret",
-    ANTHROPIC_BASE_URL: "https://proxy.invalid/v1",
-    // Plus the usual unrelated credentials an allowlist must not admit.
-    GH_TOKEN: "secret-github-token",
-    AWS_SECRET_ACCESS_KEY: "secret-aws-key",
-    OPENAI_API_KEY: "secret-openai-key",
-    DATABASE_URL: "postgres://secret",
-    ARBITRARY_SECRET: "secret-value",
-  }, "/tmp/agent-harness-claude");
+  const environment = buildClaudeEnvironment(
+    {
+      PATH: "/usr/local/bin:/usr/bin",
+      HOME: "/Users/agent",
+      USER: "agent",
+      LANG: "en_GB.UTF-8",
+      CLAUDE_CONFIG_DIR: "/Users/agent/.claude",
+      // The three that would move execution off the local CLI session onto metered
+      // API billing, or point it at a different endpoint entirely.
+      ANTHROPIC_API_KEY: "sk-ant-secret",
+      ANTHROPIC_AUTH_TOKEN: "oauth-bearer-secret",
+      ANTHROPIC_BASE_URL: "https://proxy.invalid/v1",
+      // Plus the usual unrelated credentials an allowlist must not admit.
+      GH_TOKEN: "secret-github-token",
+      AWS_SECRET_ACCESS_KEY: "secret-aws-key",
+      OPENAI_API_KEY: "secret-openai-key",
+      DATABASE_URL: "postgres://secret",
+      ARBITRARY_SECRET: "secret-value",
+    },
+    "/tmp/agent-harness-claude",
+  );
 
   assert.equal(environment.PATH, "/usr/local/bin:/usr/bin");
   assert.equal(environment.HOME, "/Users/agent");
@@ -577,12 +710,21 @@ test("excludes every API-key path from the Claude environment", () => {
     assert.equal(environment[name], undefined, `${name} must never reach a Claude spawn`);
   }
   assert.deepEqual(CLAUDE_ENV_DENYLIST, ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL"]);
-  for (const name of ["GH_TOKEN", "AWS_SECRET_ACCESS_KEY", "OPENAI_API_KEY", "DATABASE_URL", "ARBITRARY_SECRET"]) {
+  for (const name of [
+    "GH_TOKEN",
+    "AWS_SECRET_ACCESS_KEY",
+    "OPENAI_API_KEY",
+    "DATABASE_URL",
+    "ARBITRARY_SECRET",
+  ]) {
     assert.equal(environment[name], undefined, name);
   }
 
   // Case-insensitive matching must not become a bypass.
-  const lowercase = buildClaudeEnvironment({ anthropic_api_key: "sk-ant-secret", PATH: "/usr/bin" }, "/tmp/x");
+  const lowercase = buildClaudeEnvironment(
+    { anthropic_api_key: "sk-ant-secret", PATH: "/usr/bin" },
+    "/tmp/x",
+  );
   assert.deepEqual(
     Object.keys(lowercase).filter((key) => key.toLowerCase().includes("anthropic")),
     [],
@@ -601,12 +743,15 @@ test("guarantees the variables the Claude CLI cannot run without", () => {
 test("keeps the Codex environment allowlist untouched", () => {
   // The two allowlists are deliberately separate: Codex needs CODEX_HOME and must
   // not gain HOME, and neither should inherit the other's exclusions by accident.
-  const codex = buildCodexEnvironment({
-    PATH: "/usr/bin",
-    CODEX_HOME: "/Users/agent/.codex",
-    HOME: "/Users/agent",
-    ANTHROPIC_API_KEY: "sk-ant-secret",
-  }, "/tmp/codex");
+  const codex = buildCodexEnvironment(
+    {
+      PATH: "/usr/bin",
+      CODEX_HOME: "/Users/agent/.codex",
+      HOME: "/Users/agent",
+      ANTHROPIC_API_KEY: "sk-ant-secret",
+    },
+    "/tmp/codex",
+  );
   assert.equal(codex.CODEX_HOME, "/Users/agent/.codex");
   assert.equal(codex.HOME, undefined);
   assert.equal(codex.ANTHROPIC_API_KEY, undefined);
@@ -614,35 +759,36 @@ test("keeps the Codex environment allowlist untouched", () => {
 
 test("reads the auth probe as a hint without treating it as authority", () => {
   assert.deepEqual(
-    readClaudeAuthProbe({ code: 0, stdout: '{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"team"}' }),
+    readClaudeAuthProbe({
+      code: 0,
+      stdout: '{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"team"}',
+    }),
     { authenticated: true, authMethod: "claude.ai · team" },
   );
   // Environment-supplied credentials report loggedIn:false for a usable CLI, which
   // is why the canary rather than this probe gates execution.
-  assert.deepEqual(
-    readClaudeAuthProbe({ code: 0, stdout: '{"loggedIn":false,"authMethod":"none"}' }),
-    { authenticated: false, authMethod: "none" },
-  );
-  assert.deepEqual(
-    readClaudeAuthProbe({ code: 0, stdout: "Logged in as agent@example.com", stderr: "" }),
-    { authenticated: true, authMethod: null },
-  );
-  assert.deepEqual(
-    readClaudeAuthProbe({ code: 1, stdout: "not json", stderr: "" }),
-    { authenticated: false, authMethod: null },
-  );
+  assert.deepEqual(readClaudeAuthProbe({ code: 0, stdout: '{"loggedIn":false,"authMethod":"none"}' }), {
+    authenticated: false,
+    authMethod: "none",
+  });
+  assert.deepEqual(readClaudeAuthProbe({ code: 0, stdout: "Logged in as agent@example.com", stderr: "" }), {
+    authenticated: true,
+    authMethod: null,
+  });
+  assert.deepEqual(readClaudeAuthProbe({ code: 1, stdout: "not json", stderr: "" }), {
+    authenticated: false,
+    authMethod: null,
+  });
 });
 
 test("publishes a bundled Claude catalogue attributed to its provider", async () => {
   const catalog = await readClaudeModelCatalog();
   assert.equal(catalog.source, "Bundled Claude model catalog");
   assert.equal(catalog.fetchedAt, null);
-  assert.deepEqual(catalog.models.map((model) => model.id), [
-    "claude-opus-5",
-    "claude-sonnet-5",
-    "claude-fable-5",
-    "claude-haiku-4-5",
-  ]);
+  assert.deepEqual(
+    catalog.models.map((model) => model.id),
+    ["claude-opus-5", "claude-sonnet-5", "claude-fable-5", "claude-haiku-4-5"],
+  );
   for (const model of catalog.models) {
     assert.equal(model.provider, "claude", model.id);
     assert.equal(model.provenance, "bundled", model.id);
@@ -660,7 +806,10 @@ test("publishes a bundled Claude catalogue attributed to its provider", async ()
   assert.equal(assertSupportedReasoning("claude-haiku-4-5", NO_REASONING_EFFORT), null);
   assert.throws(() => assertSupportedReasoning("claude-haiku-4-5", "high"), /does not support high/);
   // "none" is Haiku-only: no other model may silently drop its effort level.
-  assert.throws(() => assertSupportedReasoning("claude-opus-5", NO_REASONING_EFFORT), /does not support none/);
+  assert.throws(
+    () => assertSupportedReasoning("claude-opus-5", NO_REASONING_EFFORT),
+    /does not support none/,
+  );
 
   assert.equal(assertSupportedReasoning("claude-opus-5", "xhigh"), "xhigh");
   // Codex has `ultra`; Claude does not. An unsupported level refuses rather than
@@ -676,7 +825,11 @@ test("attributes model ids to providers and leaves unknown ids unattributed", ()
   assert.equal(providerForModelId("mistral-large"), null);
   // The global default remains on the locally verified Codex path; Claude stays
   // selectable per stage and per task but is never selected implicitly.
-  assert.equal(providerForModelId(""), "codex", "the empty id normalizes to the verified default model's provider");
+  assert.equal(
+    providerForModelId(""),
+    "codex",
+    "the empty id normalizes to the verified default model's provider",
+  );
   assert.deepEqual(providerRuntimeDefaults("claude"), { model: "claude-sonnet-5", reasoning: "xhigh" });
   assert.deepEqual(providerRuntimeDefaults("codex"), { model: "gpt-5.6-luna", reasoning: "xhigh" });
   assert.deepEqual(providerRuntimeDefaults(), { model: "gpt-5.6-luna", reasoning: "xhigh" });
@@ -715,16 +868,39 @@ test("reproduces the CLI's own Sonnet 5 accounting from the bundled rate card", 
   assert.ok(Math.abs(estimated - sonnet.costUSD) < 1e-6, `${estimated} vs ${sonnet.costUSD}`);
   assert.equal(costDivergence(sonnet.costUSD, estimated).material, false);
 
-  assert.deepEqual(MODEL_PRICING["claude-sonnet-5"].short, { input: 3, cachedInput: 0.3, cacheWrite: 6, output: 15 });
+  assert.deepEqual(MODEL_PRICING["claude-sonnet-5"].short, {
+    input: 3,
+    cachedInput: 0.3,
+    cacheWrite: 6,
+    output: 15,
+  });
 });
 
 test("prefers the provider's reported cost over the bundled estimate", () => {
-  const usage = { inputTokens: 63_111, cachedInputTokens: 10_308, cacheWriteTokens: 52_740, outputTokens: 304, totalTokens: 63_415 };
+  const usage = {
+    inputTokens: 63_111,
+    cachedInputTokens: 10_308,
+    cacheWriteTokens: 52_740,
+    outputTokens: 304,
+    totalTokens: 63_415,
+  };
   const enriched = enrichUsage("claude-sonnet-5", usage, undefined, "2026-08-05", {
     reportedCost: 0.3249354,
     modelUsage: {
-      "claude-haiku-4-5-20251001": { inputTokens: 579, outputTokens: 15, cacheReadInputTokens: 0, cacheCreationInputTokens: 0, canonicalModel: "claude-haiku-4-5" },
-      "claude-sonnet-5": { inputTokens: 63, outputTokens: 304, cacheReadInputTokens: 10_308, cacheCreationInputTokens: 52_740, canonicalModel: "claude-sonnet-5" },
+      "claude-haiku-4-5-20251001": {
+        inputTokens: 579,
+        outputTokens: 15,
+        cacheReadInputTokens: 0,
+        cacheCreationInputTokens: 0,
+        canonicalModel: "claude-haiku-4-5",
+      },
+      "claude-sonnet-5": {
+        inputTokens: 63,
+        outputTokens: 304,
+        cacheReadInputTokens: 10_308,
+        cacheCreationInputTokens: 52_740,
+        canonicalModel: "claude-sonnet-5",
+      },
     },
   });
 
@@ -744,12 +920,21 @@ test("prefers the provider's reported cost over the bundled estimate", () => {
   const reenriched = enrichUsage("claude-sonnet-5", enriched, undefined, "2026-08-05");
   assert.equal(reenriched.cost, 0.3249354);
   assert.equal(reenriched.reportedCost, 0.3249354);
-  assert.deepEqual(Object.keys(reenriched.modelUsage).sort(), ["claude-haiku-4-5-20251001", "claude-sonnet-5"]);
+  assert.deepEqual(Object.keys(reenriched.modelUsage).sort(), [
+    "claude-haiku-4-5-20251001",
+    "claude-sonnet-5",
+  ]);
   assert.deepEqual(enrichUsage("claude-sonnet-5", reenriched, undefined, "2026-08-05"), reenriched);
 });
 
 test("leaves a Codex usage record byte-identical when nothing was reported", () => {
-  const usage = { inputTokens: 1_000, cachedInputTokens: 800, cacheWriteTokens: 0, outputTokens: 500, totalTokens: 1_500 };
+  const usage = {
+    inputTokens: 1_000,
+    cachedInputTokens: 800,
+    cacheWriteTokens: 0,
+    outputTokens: 500,
+    totalTokens: 1_500,
+  };
   const enriched = enrichUsage("gpt-5.6-sol", usage, undefined, "2026-08-02");
   assert.deepEqual(Object.keys(enriched), [
     "inputTokens",
@@ -780,9 +965,15 @@ test("flags material divergence between a reported cost and the rate card", () =
 test("prices a zero-cost reported run as zero rather than falling back", () => {
   // A reported 0 is a real figure, not a missing one: `??` on a falsy cost would
   // silently substitute the rate-card estimate.
-  const enriched = enrichUsage("claude-sonnet-5", { inputTokens: 100, outputTokens: 10 }, undefined, "2026-08-05", {
-    reportedCost: 0,
-  });
+  const enriched = enrichUsage(
+    "claude-sonnet-5",
+    { inputTokens: 100, outputTokens: 10 },
+    undefined,
+    "2026-08-05",
+    {
+      reportedCost: 0,
+    },
+  );
   assert.equal(enriched.cost, 0);
   assert.equal(enriched.reportedCost, 0);
   assert.ok(enriched.estimatedCost > 0);
@@ -802,13 +993,25 @@ test("survives a store boot without replacing a reported cost with an estimate",
     });
     const usage = enrichUsage(
       "claude-sonnet-5",
-      { inputTokens: 63_111, cachedInputTokens: 10_308, cacheWriteTokens: 52_740, outputTokens: 304, totalTokens: 63_415 },
+      {
+        inputTokens: 63_111,
+        cachedInputTokens: 10_308,
+        cacheWriteTokens: 52_740,
+        outputTokens: 304,
+        totalTokens: 63_415,
+      },
       undefined,
       "2026-08-05",
       {
         reportedCost: 0.3249354,
         modelUsage: {
-          "claude-sonnet-5": { inputTokens: 63, outputTokens: 304, cacheReadInputTokens: 10_308, cacheCreationInputTokens: 52_740, canonicalModel: "claude-sonnet-5" },
+          "claude-sonnet-5": {
+            inputTokens: 63,
+            outputTokens: 304,
+            cacheReadInputTokens: 10_308,
+            cacheCreationInputTokens: 52_740,
+            canonicalModel: "claude-sonnet-5",
+          },
         },
       },
     );
@@ -857,11 +1060,22 @@ test("keeps stage content on stdin and off the argv", () => {
   }
   assert.equal(args.includes(prompt), false);
 
-  assert.deepEqual(args.slice(0, 6), ["-p", "--output-format", "stream-json", "--verbose", "--model", "claude-opus-5"]);
+  assert.deepEqual(args.slice(0, 6), [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    "claude-opus-5",
+  ]);
   assert.ok(args.includes("--safe-mode"));
   assert.ok(args.includes("--strict-mcp-config"));
   assert.ok(args.includes("--no-session-persistence"));
-  assert.equal(args.includes("--bare"), false, "--bare forces API-key auth and never reads the OAuth session");
+  assert.equal(
+    args.includes("--bare"),
+    false,
+    "--bare forces API-key auth and never reads the OAuth session",
+  );
   assert.equal(args.includes("--add-dir"), false, "the agent gets the stage cwd only");
   assert.equal(args.includes("--cd"), false, "there is no --cd; Claude inherits the spawn cwd");
 
@@ -898,26 +1112,42 @@ test("uses one fixed system prompt for every stage", () => {
   for (const [index, stage] of stages.entries()) {
     for (const fragment of stage.split(" ")) {
       if (fragment.length < 5) continue;
-      assert.equal(systemPrompts[index].includes(fragment), false, `${fragment} leaked into the system prompt`);
+      assert.equal(
+        systemPrompts[index].includes(fragment),
+        false,
+        `${fragment} leaked into the system prompt`,
+      );
     }
   }
 });
 
 test("omits --effort for a model that takes none", () => {
   const withEffort = buildClaudeSpawn({
-    cwd: "/tmp/x", prompt: "x", model: "claude-sonnet-5", effort: "high", sessionId: "s",
+    cwd: "/tmp/x",
+    prompt: "x",
+    model: "claude-sonnet-5",
+    effort: "high",
+    sessionId: "s",
   }).args;
   assert.equal(withEffort[withEffort.indexOf("--effort") + 1], "high");
 
   const withoutEffort = buildClaudeSpawn({
-    cwd: "/tmp/x", prompt: "x", model: "claude-haiku-4-5", effort: assertSupportedReasoning("claude-haiku-4-5", NO_REASONING_EFFORT), sessionId: "s",
+    cwd: "/tmp/x",
+    prompt: "x",
+    model: "claude-haiku-4-5",
+    effort: assertSupportedReasoning("claude-haiku-4-5", NO_REASONING_EFFORT),
+    sessionId: "s",
   }).args;
   assert.equal(withoutEffort.includes("--effort"), false);
 });
 
 test("supplies a mandatory sandbox block through inline settings", () => {
   const { args } = buildClaudeSpawn({
-    cwd: "/tmp/worktree", prompt: "x", model: "claude-sonnet-5", effort: "high", sessionId: "s",
+    cwd: "/tmp/worktree",
+    prompt: "x",
+    model: "claude-sonnet-5",
+    effort: "high",
+    sessionId: "s",
   });
   const settings = JSON.parse(args[args.indexOf("--settings") + 1]);
 
@@ -935,9 +1165,17 @@ test("supplies a mandatory sandbox block through inline settings", () => {
 
   // Inline JSON, so the operator's ~/.claude/settings.json is never touched.
   assert.equal(args[args.indexOf("--settings") + 1].startsWith("{"), true);
-  assert.throws(() => buildClaudeSpawn({
-    cwd: "/tmp/x", prompt: "x", sandbox: "danger-full-access", model: "claude-sonnet-5", sessionId: "s",
-  }), /Unsupported Claude sandbox: danger-full-access/);
+  assert.throws(
+    () =>
+      buildClaudeSpawn({
+        cwd: "/tmp/x",
+        prompt: "x",
+        sandbox: "danger-full-access",
+        model: "claude-sonnet-5",
+        sessionId: "s",
+      }),
+    /Unsupported Claude sandbox: danger-full-access/,
+  );
 
   // Read-only gets blanket Bash/Read/Grep/Glob allow rules (so a compound `cmd1; cmd2`
   // diagnostic or a Grep over a directory does not fall back to a prompt nobody is
@@ -948,7 +1186,14 @@ test("supplies a mandatory sandbox block through inline settings", () => {
   });
   assert.equal(args.includes("--permission-mode"), false);
   assert.throws(
-    () => buildClaudeSpawn({ cwd: "/tmp/x", prompt: "x", networkAccess: true, model: "claude-sonnet-5", sessionId: "s" }),
+    () =>
+      buildClaudeSpawn({
+        cwd: "/tmp/x",
+        prompt: "x",
+        networkAccess: true,
+        model: "claude-sonnet-5",
+        sessionId: "s",
+      }),
     /cannot be granted network access/,
   );
 });
@@ -964,41 +1209,66 @@ test("permits a denial of a compound Bash command with no matching earlier answe
   // every multi-statement diagnostic was denied with nobody present to approve it.
   // This is not the duplicate-call guard from the other tests in this file — it is a
   // missing permission rule, fixed by `Bash(*)` in `buildClaudeSandboxSettings`.
-  const { args } = buildClaudeSpawn({ cwd: "/tmp/worktree", prompt: "x", model: "claude-sonnet-5", sessionId: "s" });
+  const { args } = buildClaudeSpawn({
+    cwd: "/tmp/worktree",
+    prompt: "x",
+    model: "claude-sonnet-5",
+    sessionId: "s",
+  });
   const settings = JSON.parse(args[args.indexOf("--settings") + 1]);
-  assert.ok(settings.permissions.allow.includes("Bash(*)"), "read-only settings must pre-approve Bash regardless of compound structure");
+  assert.ok(
+    settings.permissions.allow.includes("Bash(*)"),
+    "read-only settings must pre-approve Bash regardless of compound structure",
+  );
 
   const parser = createClaudeStreamParser();
-  parser.parse(JSON.stringify({
-    type: "assistant",
-    message: {
-      content: [{
-        type: "tool_use",
-        id: "t1",
-        name: "Bash",
-        input: { command: 'git check-ignore -v foo; echo "exit=$?"', description: "Check gitignore" },
-      }],
-    },
-  }));
-  parser.parse(JSON.stringify({
-    type: "user",
-    message: {
-      content: [{
-        type: "tool_result",
-        tool_use_id: "t1",
-        is_error: true,
-        content: 'This Bash command contains multiple operations. The following parts require approval: git check-ignore -v foo, echo "exit=$?"',
-      }],
-    },
-    tool_result_meta: [{ id: "t1", non_execution_kind: "user-rejected" }],
-  }));
-  const [denied] = parser.parse(JSON.stringify({
-    type: "result",
-    subtype: "success",
-    is_error: false,
-    result: "done",
-    permission_denials: [{ tool_name: "Bash", tool_use_id: "t1", tool_input: { command: 'git check-ignore -v foo; echo "exit=$?"', description: "Check gitignore" } }],
-  }));
+  parser.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "tool_use",
+            id: "t1",
+            name: "Bash",
+            input: { command: 'git check-ignore -v foo; echo "exit=$?"', description: "Check gitignore" },
+          },
+        ],
+      },
+    }),
+  );
+  parser.parse(
+    JSON.stringify({
+      type: "user",
+      message: {
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: "t1",
+            is_error: true,
+            content:
+              'This Bash command contains multiple operations. The following parts require approval: git check-ignore -v foo, echo "exit=$?"',
+          },
+        ],
+      },
+      tool_result_meta: [{ id: "t1", non_execution_kind: "user-rejected" }],
+    }),
+  );
+  const [denied] = parser.parse(
+    JSON.stringify({
+      type: "result",
+      subtype: "success",
+      is_error: false,
+      result: "done",
+      permission_denials: [
+        {
+          tool_name: "Bash",
+          tool_use_id: "t1",
+          tool_input: { command: 'git check-ignore -v foo; echo "exit=$?"', description: "Check gitignore" },
+        },
+      ],
+    }),
+  );
 
   // With no earlier answered call to match, this denial is correctly fatal at the
   // parser level — the fix is the settings rule that stops the CLI from ever denying it
@@ -1034,7 +1304,12 @@ test("grants workspace-write through two gates and no ancestor denyWrite", () =>
   // Harness worktrees are nested inside the repository they operate on.
   const cwd = "/repo/.data/worktrees/AH-1/C1";
   const { args } = buildClaudeSpawn({
-    cwd, prompt: "x", sandbox: "workspace-write", model: "claude-sonnet-5", effort: "high", sessionId: "s",
+    cwd,
+    prompt: "x",
+    sandbox: "workspace-write",
+    model: "claude-sonnet-5",
+    effort: "high",
+    sessionId: "s",
   });
   const settings = JSON.parse(args[args.indexOf("--settings") + 1]);
 
@@ -1070,7 +1345,15 @@ test("grants workspace-write through two gates and no ancestor denyWrite", () =>
   assert.equal(resolveExecutionProvider("claude").capabilities().grantsNetworkAccess, false);
   assert.equal(resolveExecutionProvider("codex").capabilities().grantsNetworkAccess, true);
   assert.throws(
-    () => buildClaudeSpawn({ cwd, prompt: "x", sandbox: "workspace-write", networkAccess: true, model: "claude-sonnet-5", sessionId: "s" }),
+    () =>
+      buildClaudeSpawn({
+        cwd,
+        prompt: "x",
+        sandbox: "workspace-write",
+        networkAccess: true,
+        model: "claude-sonnet-5",
+        sessionId: "s",
+      }),
     /cannot be granted network access/,
   );
 });
@@ -1101,7 +1384,8 @@ test("fails the write canary closed unless writes work inside and nowhere else",
 
   // An escape outranks a broken stage: report the confinement failure, not the noise.
   assert.match(
-    classifyClaudeWriteCanary({ insideWritten: false, editToolWorked: false, escaped: ["sourceRoot"] }).detail,
+    classifyClaudeWriteCanary({ insideWritten: false, editToolWorked: false, escaped: ["sourceRoot"] })
+      .detail,
     /escaped the worktree/,
   );
 });
@@ -1120,13 +1404,20 @@ test("reports read-only confinement as layered and offers no workspace-write", (
   assert.equal(capabilities.sandboxes["danger-full-access"], undefined);
   assert.equal(resolveExecutionProvider("codex").capabilities().sandboxes["workspace-write"], "os-enforced");
   assert.equal(capabilities.stdoutBudgetBytes, CLAUDE_STDOUT_BUDGET);
-  assert.ok(capabilities.stdoutBudgetBytes > resolveExecutionProvider("codex").capabilities().stdoutBudgetBytes);
+  assert.ok(
+    capabilities.stdoutBudgetBytes > resolveExecutionProvider("codex").capabilities().stdoutBudgetBytes,
+  );
   assert.deepEqual(claude.defaults(), { model: "claude-sonnet-5", reasoning: "xhigh" });
 });
 
-
 test("fails the sandbox canary closed for anything short of a demonstrated refusal", () => {
-  const refused = classifyClaudeSandboxCanary({ mutated: false, attempted: true, refused: true, refusedCommands: 2, escalationAttempts: 1 });
+  const refused = classifyClaudeSandboxCanary({
+    mutated: false,
+    attempted: true,
+    refused: true,
+    refusedCommands: 2,
+    escalationAttempts: 1,
+  });
   assert.equal(refused.passed, true);
   assert.equal(refused.escalationBlocked, true);
 
@@ -1140,19 +1431,26 @@ test("fails the sandbox canary closed for anything short of a demonstrated refus
   assert.equal(untried.passed, false);
   assert.equal(untried.inconclusive, true);
 
-  const ambiguous = classifyClaudeSandboxCanary({ mutated: false, attempted: true, refused: false, permissionDenials: 0 });
+  const ambiguous = classifyClaudeSandboxCanary({
+    mutated: false,
+    attempted: true,
+    refused: false,
+    permissionDenials: 0,
+  });
   assert.equal(ambiguous.passed, false);
   assert.equal(ambiguous.inconclusive, true);
 
   // A permission-gate denial with the file intact is a genuine demonstration.
   assert.equal(
-    classifyClaudeSandboxCanary({ mutated: false, attempted: true, refused: false, permissionDenials: 2 }).passed,
+    classifyClaudeSandboxCanary({ mutated: false, attempted: true, refused: false, permissionDenials: 2 })
+      .passed,
     true,
   );
 
   // Never claim the escalation path was blocked when it was never exercised.
   assert.equal(
-    classifyClaudeSandboxCanary({ mutated: false, attempted: true, refused: true, escalationAttempts: 0 }).escalationBlocked,
+    classifyClaudeSandboxCanary({ mutated: false, attempted: true, refused: true, escalationAttempts: 0 })
+      .escalationBlocked,
     null,
   );
 });
@@ -1172,7 +1470,15 @@ test("cross-checks a reported cost against the per-model breakdown", async () =>
   // this cross-check exists to avoid.
   assert.ok(aggregate < perModel, "pricing the aggregate as one model under-reports");
   assert.equal(
-    costDivergence(0.01826, priceUsage("claude-sonnet-5", { inputTokens: 21_591, cachedInputTokens: 20_640, cacheWriteTokens: 947, outputTokens: 355 })).material,
+    costDivergence(
+      0.01826,
+      priceUsage("claude-sonnet-5", {
+        inputTokens: 21_591,
+        cachedInputTokens: 20_640,
+        cacheWriteTokens: 947,
+        outputTokens: 355,
+      }),
+    ).material,
     true,
     "observed live-run proportions false-alarm on the aggregate",
   );
@@ -1196,19 +1502,24 @@ test("cross-checks a reported cost against the per-model breakdown", async () =>
   assert.notEqual(enriched.estimatedCost, aggregate);
 });
 
-const E2BIG_BODY = "Could not start /bin/zsh: the command line plus environment exceed the OS exec"
-  + " argument limit (E2BIG). At spawn: command line 1.1MB across 3 args";
+const E2BIG_BODY =
+  "Could not start /bin/zsh: the command line plus environment exceed the OS exec" +
+  " argument limit (E2BIG). At spawn: command line 1.1MB across 3 args";
 
 function e2bigStreamLines() {
   return [
     JSON.stringify({ type: "system", subtype: "init", session_id: "sess-e2big" }),
     JSON.stringify({
       type: "assistant",
-      message: { content: [{ type: "tool_use", id: "toolu_e2big", name: "Bash", input: { command: "npm test" } }] },
+      message: {
+        content: [{ type: "tool_use", id: "toolu_e2big", name: "Bash", input: { command: "npm test" } }],
+      },
     }),
     JSON.stringify({
       type: "user",
-      message: { content: [{ type: "tool_result", tool_use_id: "toolu_e2big", content: E2BIG_BODY, is_error: true }] },
+      message: {
+        content: [{ type: "tool_result", tool_use_id: "toolu_e2big", content: E2BIG_BODY, is_error: true }],
+      },
     }),
   ];
 }
@@ -1248,22 +1559,32 @@ test("counts an E2BIG shell start as parser state rather than a failed command",
   // REPAIR verdict, so surfacing a host exec fault through it would launder an
   // environment fault into a verdict about the candidate's code.
   assert.equal(completed.commandFailed, undefined);
-  assert.equal(
-    evaluationVerdict("test", { runtimeEvents: [completed] }, { status: "passed" }),
-    "PASS",
-  );
+  assert.equal(evaluationVerdict("test", { runtimeEvents: [completed] }, { status: "passed" }), "PASS");
 
   // An ordinary "could not start" is still an ordinary command failure: narrow
   // detection must not swallow a missing interpreter into the environment-fault path.
   const ordinary = createClaudeStreamParser();
-  ordinary.parse(JSON.stringify({
-    type: "assistant",
-    message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "./x" } }] },
-  }));
-  const [failed] = ordinary.parse(JSON.stringify({
-    type: "user",
-    message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "Could not start ./x: not found", is_error: true }] },
-  }));
+  ordinary.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "./x" } }] },
+    }),
+  );
+  const [failed] = ordinary.parse(
+    JSON.stringify({
+      type: "user",
+      message: {
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: "t1",
+            content: "Could not start ./x: not found",
+            is_error: true,
+          },
+        ],
+      },
+    }),
+  );
   assert.equal(ordinary.result().shellStartFailures, 0);
   assert.equal(failed.commandFailed, true);
 });
@@ -1286,31 +1607,35 @@ test("fails the whole run when the Bash tool could not start a shell", async () 
       }),
     ]);
     await assert.rejects(
-      () => runClaude({
-        cwd: directory,
-        prompt: "do the work",
-        sandbox: "workspace-write",
-        model: "claude-haiku-4-5",
-        reasoning: NO_REASONING_EFFORT,
-        tempDirectory: directory,
-        timeoutMs: 30_000,
-      }),
+      () =>
+        runClaude({
+          cwd: directory,
+          prompt: "do the work",
+          sandbox: "workspace-write",
+          model: "claude-haiku-4-5",
+          reasoning: NO_REASONING_EFFORT,
+          tempDirectory: directory,
+          timeoutMs: 30_000,
+        }),
       /could not start a shell during a workspace-write stage.*E2BIG/s,
     );
 
     // And it aborts rather than waiting the run out. The cancellation this causes must
     // not be reported as a cancellation — the real cause has to win.
-    process.env.CLAUDE_BIN = await writeFakeClaudeCli(directory, e2bigStreamLines(), { thenSleepSeconds: 120 });
+    process.env.CLAUDE_BIN = await writeFakeClaudeCli(directory, e2bigStreamLines(), {
+      thenSleepSeconds: 120,
+    });
     await assert.rejects(
-      () => runClaude({
-        cwd: directory,
-        prompt: "do the work",
-        sandbox: "workspace-write",
-        model: "claude-haiku-4-5",
-        reasoning: NO_REASONING_EFFORT,
-        tempDirectory: directory,
-        timeoutMs: 30_000,
-      }),
+      () =>
+        runClaude({
+          cwd: directory,
+          prompt: "do the work",
+          sandbox: "workspace-write",
+          model: "claude-haiku-4-5",
+          reasoning: NO_REASONING_EFFORT,
+          tempDirectory: directory,
+          timeoutMs: 30_000,
+        }),
       /could not start a shell.*E2BIG/s,
     );
   } finally {
@@ -1331,7 +1656,11 @@ test("does not fail runClaude when the only denial repeats an already-succeeded 
       JSON.stringify({ type: "system", subtype: "init", session_id: "sess-dup" }),
       JSON.stringify({
         type: "assistant",
-        message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "git status --porcelain" } }] },
+        message: {
+          content: [
+            { type: "tool_use", id: "t1", name: "Bash", input: { command: "git status --porcelain" } },
+          ],
+        },
       }),
       JSON.stringify({
         type: "user",
@@ -1343,7 +1672,9 @@ test("does not fail runClaude when the only denial repeats an already-succeeded 
         is_error: false,
         result: "Edited the files.",
         usage: { input_tokens: 10, output_tokens: 2 },
-        permission_denials: [{ tool_name: "Bash", tool_use_id: "t2", tool_input: { command: "git status --porcelain" } }],
+        permission_denials: [
+          { tool_name: "Bash", tool_use_id: "t2", tool_input: { command: "git status --porcelain" } },
+        ],
       }),
     ]);
 
@@ -1376,11 +1707,22 @@ test("does not fail a read-only runClaude when the only denial repeats an alread
       JSON.stringify({ type: "system", subtype: "init", session_id: "sess-dup-failed" }),
       JSON.stringify({
         type: "assistant",
-        message: { content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command: "git check-ignore -v missing.txt" } }] },
+        message: {
+          content: [
+            {
+              type: "tool_use",
+              id: "t1",
+              name: "Bash",
+              input: { command: "git check-ignore -v missing.txt" },
+            },
+          ],
+        },
       }),
       JSON.stringify({
         type: "user",
-        message: { content: [{ type: "tool_result", tool_use_id: "t1", content: "Exit code 1", is_error: true }] },
+        message: {
+          content: [{ type: "tool_result", tool_use_id: "t1", content: "Exit code 1", is_error: true }],
+        },
       }),
       JSON.stringify({
         type: "result",
@@ -1388,7 +1730,13 @@ test("does not fail a read-only runClaude when the only denial repeats an alread
         is_error: false,
         result: "Reviewed the candidate.",
         usage: { input_tokens: 10, output_tokens: 2 },
-        permission_denials: [{ tool_name: "Bash", tool_use_id: "t2", tool_input: { command: "git check-ignore -v missing.txt" } }],
+        permission_denials: [
+          {
+            tool_name: "Bash",
+            tool_use_id: "t2",
+            tool_input: { command: "git check-ignore -v missing.txt" },
+          },
+        ],
       }),
     ]);
 
@@ -1421,20 +1769,23 @@ test("still fails runClaude when a denial is not a repeat of a successful call",
         is_error: false,
         result: "Edited the files.",
         usage: { input_tokens: 10, output_tokens: 2 },
-        permission_denials: [{ tool_name: "Write", tool_use_id: "t1", tool_input: { file_path: "/etc/passwd" } }],
+        permission_denials: [
+          { tool_name: "Write", tool_use_id: "t1", tool_input: { file_path: "/etc/passwd" } },
+        ],
       }),
     ]);
 
     await assert.rejects(
-      () => runClaude({
-        cwd: directory,
-        prompt: "do the work",
-        sandbox: "workspace-write",
-        model: "claude-haiku-4-5",
-        reasoning: NO_REASONING_EFFORT,
-        tempDirectory: directory,
-        timeoutMs: 30_000,
-      }),
+      () =>
+        runClaude({
+          cwd: directory,
+          prompt: "do the work",
+          sandbox: "workspace-write",
+          model: "claude-haiku-4-5",
+          reasoning: NO_REASONING_EFFORT,
+          tempDirectory: directory,
+          timeoutMs: 30_000,
+        }),
       /Claude attempted 1 denied tool call during a workspace-write stage\./,
     );
   } finally {
@@ -1466,15 +1817,16 @@ test("names the denied call so an allowlist hole is not misread as agent misbeha
     ]);
 
     await assert.rejects(
-      () => runClaude({
-        cwd: directory,
-        prompt: "review the work",
-        sandbox: "read-only",
-        model: "claude-haiku-4-5",
-        reasoning: NO_REASONING_EFFORT,
-        tempDirectory: directory,
-        timeoutMs: 30_000,
-      }),
+      () =>
+        runClaude({
+          cwd: directory,
+          prompt: "review the work",
+          sandbox: "read-only",
+          model: "claude-haiku-4-5",
+          reasoning: NO_REASONING_EFFORT,
+          tempDirectory: directory,
+          timeoutMs: 30_000,
+        }),
       (error) => {
         assert.match(error.message, /Claude attempted 1 denied tool call during a read-only stage\./);
         assert.match(error.message, /First denied: Bash awk/);
@@ -1531,9 +1883,16 @@ test("lets every stage pick its own provider, model and reasoning", async () => 
     });
 
     const expected = {
-      triage: "claude", scouts: "claude", grill: "claude", specification: "claude",
-      plan: "codex", implement: "claude", repair: "claude",
-      "dev-review": "codex", test: "codex", "final-review": "codex",
+      triage: "claude",
+      scouts: "claude",
+      grill: "claude",
+      specification: "claude",
+      plan: "codex",
+      implement: "claude",
+      repair: "claude",
+      "dev-review": "codex",
+      test: "codex",
+      "final-review": "codex",
     };
     for (const [policyId, provider] of Object.entries(expected)) {
       const resolved = resolveAgentPolicy(task, policyId);
@@ -1558,7 +1917,15 @@ test("lets every stage pick its own provider, model and reasoning", async () => 
     // A model no provider claims falls back rather than being routed to a guess.
     assert.equal(providerForModelId("mistral-large"), null);
     assert.equal(
-      resolveAgentPolicy({ agentConfig: { provider: "claude", stagePolicies: { plan: { model: "mistral-large", reasoning: "high" } } } }, "plan").provider,
+      resolveAgentPolicy(
+        {
+          agentConfig: {
+            provider: "claude",
+            stagePolicies: { plan: { model: "mistral-large", reasoning: "high" } },
+          },
+        },
+        "plan",
+      ).provider,
       "claude",
     );
     // A task persisted before provider identity existed follows the locally verified
@@ -1588,7 +1955,11 @@ test("offers both providers' models with their own reasoning levels", async () =
   for (const id of ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"]) {
     assert.equal(byId.get(id).editable, true, id);
   }
-  assert.equal(new Set(catalog.models.map((model) => model.id)).size, catalog.models.length, "no duplicate ids");
+  assert.equal(
+    new Set(catalog.models.map((model) => model.id)).size,
+    catalog.models.length,
+    "no duplicate ids",
+  );
 });
 
 test("records the authorizing gate's provider on the candidate revision", () => {
@@ -1623,7 +1994,12 @@ test("refuses to pass either canary when the OS sandbox never started", () => {
   // A dead sandbox outranks every other signal, including an escape: the escape is a
   // consequence, and reporting the cause is what sends someone to the right place.
   assert.equal(
-    classifyClaudeWriteCanary({ insideWritten: true, editToolWorked: true, escaped: ["sourceRoot"], sandboxUnavailable: true }).sandboxUnavailable,
+    classifyClaudeWriteCanary({
+      insideWritten: true,
+      editToolWorked: true,
+      escaped: ["sourceRoot"],
+      sandboxUnavailable: true,
+    }).sandboxUnavailable,
     true,
   );
 });
@@ -1642,7 +2018,10 @@ test("reports exec-argument headroom as numbers an operator can act on, not a bo
   assert.match(floor.detail, /more worktrees fit/);
   // Consistent with the measured boundary (21 ok / 28 E2BIG) and below it, because the
   // reserve is held back.
-  assert.ok(floor.worktreesRemaining + 3 < 28, `${floor.worktreesRemaining + 3} total must stay under the measured failure point`);
+  assert.ok(
+    floor.worktreesRemaining + 3 < 28,
+    `${floor.worktreesRemaining + 3} total must stay under the measured failure point`,
+  );
 
   // Every additional worktree costs the measured amount, so headroom falls by one.
   const oneMore = classifyExecArgBudget({ registeredWorktrees: 4, cwdLength: 64, repositoryRoot: "/repo" });
@@ -1686,14 +2065,24 @@ test("refuses an exhausted exec-argument budget, names the remedy, and never pru
 test("an observed E2BIG outranks any computed exec-argument number", () => {
   // A probe whose own shell could not start is the failure itself, not a prediction of
   // it, so it refuses even at a worktree count the bound would happily pass.
-  const observed = classifyExecArgBudget({ registeredWorktrees: 3, cwdLength: 64, e2bigObserved: true, repositoryRoot: "/repo" });
+  const observed = classifyExecArgBudget({
+    registeredWorktrees: 3,
+    cwdLength: 64,
+    e2bigObserved: true,
+    repositoryRoot: "/repo",
+  });
   assert.equal(observed.ok, false);
   assert.equal(observed.source, "measured");
   assert.match(observed.detail, /already exceeds the OS ceiling/);
   assert.match(observed.refusal, /could not start a shell/);
   // Even a measured byte count that looks fine does not rescue it.
   assert.equal(
-    classifyExecArgBudget({ registeredWorktrees: 3, cwdLength: 64, measuredBytes: 10_000, e2bigObserved: true }).ok,
+    classifyExecArgBudget({
+      registeredWorktrees: 3,
+      cwdLength: 64,
+      measuredBytes: 10_000,
+      e2bigObserved: true,
+    }).ok,
     false,
   );
 });
@@ -1715,12 +2104,26 @@ test("labels the fallback a bound and lets a real measurement outrank it", () =>
   // That second one is the real counter-example, not a hypothetical. 30 worktrees at a
   // 12-char path measured 726,741 bytes and Bash ran fine, where the extrapolation lands
   // past the ceiling — gating on it would have refused a working configuration.
-  const measuredFine = classifyExecArgBudget({ registeredWorktrees: 30, cwdLength: 12, repositoryRoot: "/tmp/ahp/src" });
-  assert.ok(measuredFine.usedBytes > EXEC_ARG_LIMIT_BYTES, "the extrapolation is past the ceiling at this state");
+  const measuredFine = classifyExecArgBudget({
+    registeredWorktrees: 30,
+    cwdLength: 12,
+    repositoryRoot: "/tmp/ahp/src",
+  });
+  assert.ok(
+    measuredFine.usedBytes > EXEC_ARG_LIMIT_BYTES,
+    "the extrapolation is past the ceiling at this state",
+  );
   assert.equal(measuredFine.ok, true, "yet 726,741 bytes was measured here and Bash ran");
-  assert.equal(classifyExecArgBudget({ registeredWorktrees: 30, cwdLength: 12, measuredBytes: 726_741 }).ok, true);
+  assert.equal(
+    classifyExecArgBudget({ registeredWorktrees: 30, cwdLength: 12, measuredBytes: 726_741 }).ok,
+    true,
+  );
 
-  const overBound = classifyExecArgBudget({ registeredWorktrees: 40, cwdLength: 300, repositoryRoot: "/repo" });
+  const overBound = classifyExecArgBudget({
+    registeredWorktrees: 40,
+    cwdLength: 300,
+    repositoryRoot: "/repo",
+  });
   assert.ok(overBound.usedBytes > EXEC_ARG_LIMIT_BYTES);
   assert.equal(overBound.ok, true);
   assert.equal(overBound.refusal, null);
@@ -1739,7 +2142,10 @@ test("labels the fallback a bound and lets a real measurement outrank it", () =>
   // measured per-character cost rather than the typical one, because a deeper cwd also
   // adds deny paths and the two factors interact multiplicatively.
   assert.equal(extrapolatedExecArgBoundBytes({ registeredWorktrees: 0, cwdLength: 0 }), MEASURED_FLOOR_BYTES);
-  assert.equal(extrapolatedExecArgBoundBytes({ registeredWorktrees: 3, cwdLength: 64 }), MEASURED_FLOOR_BYTES);
+  assert.equal(
+    extrapolatedExecArgBoundBytes({ registeredWorktrees: 3, cwdLength: 64 }),
+    MEASURED_FLOOR_BYTES,
+  );
   assert.equal(
     extrapolatedExecArgBoundBytes({ registeredWorktrees: 4, cwdLength: 64 }) - MEASURED_FLOOR_BYTES,
     MEASURED_BYTES_PER_WORKTREE,
@@ -1751,8 +2157,8 @@ test("labels the fallback a bound and lets a real measurement outrank it", () =>
   assert.ok(BOUND_BYTES_PER_CWD_CHAR > 301, "the bound must not use the shallow-path 301 B/char rate");
   // Monotone in both axes, so neither can be traded for the other.
   assert.ok(
-    extrapolatedExecArgBoundBytes({ registeredWorktrees: 12, cwdLength: 700 })
-      > extrapolatedExecArgBoundBytes({ registeredWorktrees: 11, cwdLength: 700 }),
+    extrapolatedExecArgBoundBytes({ registeredWorktrees: 12, cwdLength: 700 }) >
+      extrapolatedExecArgBoundBytes({ registeredWorktrees: 11, cwdLength: 700 }),
   );
 });
 
@@ -1808,11 +2214,15 @@ test("measures real exec argument bytes with a shim that cannot break the comman
     // Shaped like the real thing: `<shell> -c <string>` where the string is what carries
     // the bulk. `$0` inside `sh -c` is the argument after the command, so writing it out
     // proves the arguments reached the real shell byte for byte.
-    const run = await runProcess(shimPath, ["-c", `printf '%s' "$0" > ${JSON.stringify(path.join(directory, "ran"))}`, payload], {
-      cwd: directory,
-      timeoutMs: 20_000,
-      env: { PATH: process.env.PATH ?? "/usr/bin:/bin", HOME: directory },
-    });
+    const run = await runProcess(
+      shimPath,
+      ["-c", `printf '%s' "$0" > ${JSON.stringify(path.join(directory, "ran"))}`, payload],
+      {
+        cwd: directory,
+        timeoutMs: 20_000,
+        env: { PATH: process.env.PATH ?? "/usr/bin:/bin", HOME: directory },
+      },
+    );
     // The shim execs the real shell unchanged: the command still ran, with its arguments.
     assert.equal(run.code, 0);
     assert.equal(await readFile(path.join(directory, "ran"), "utf8"), payload);
@@ -1824,7 +2234,11 @@ test("measures real exec argument bytes with a shim that cannot break the comman
     assert.ok(measured < payload.length + 5_000, `${measured} must not be inflated far beyond it`);
 
     // The largest invocation is the one that has to fit, so repeated calls report the max.
-    await runProcess(shimPath, ["-c", "exit 0"], { cwd: directory, timeoutMs: 20_000, env: { PATH: process.env.PATH ?? "/usr/bin:/bin" } });
+    await runProcess(shimPath, ["-c", "exit 0"], {
+      cwd: directory,
+      timeoutMs: 20_000,
+      env: { PATH: process.env.PATH ?? "/usr/bin:/bin" },
+    });
     assert.equal(await readArgvMeasurement(outputPath), measured);
 
     const script = argvMeasuringShimScript({ outputPath: "/tmp/out", realShell: "/bin/zsh" });
@@ -1880,7 +2294,10 @@ test("counts the registered worktrees the CLI's deny paths are generated from", 
 
     // Outside a repository the count is unknown rather than zero: zero would understate
     // the budget in the optimistic direction.
-    assert.deepEqual(await readRegisteredWorktrees(root), { repositoryRoot: null, registeredWorktrees: null });
+    assert.deepEqual(await readRegisteredWorktrees(root), {
+      repositoryRoot: null,
+      registeredWorktrees: null,
+    });
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -1922,9 +2339,27 @@ test("referencing a discovered model in settings does not make it unselectable",
   // tickable in the allowlist, absent from every dropdown, with no error anywhere.
   const catalog = {
     models: [
-      { id: "claude-sonnet-5", provider: "claude", provenance: "bundled", availability: "discovered", editable: true },
-      { id: "gpt-5.6-luna", provider: "codex", provenance: "discovered", availability: "discovered", editable: true },
-      { id: "gpt-5.3-codex-spark", provider: "codex", provenance: "bundled-fallback", availability: "unsupported", editable: false },
+      {
+        id: "claude-sonnet-5",
+        provider: "claude",
+        provenance: "bundled",
+        availability: "discovered",
+        editable: true,
+      },
+      {
+        id: "gpt-5.6-luna",
+        provider: "codex",
+        provenance: "discovered",
+        availability: "discovered",
+        editable: true,
+      },
+      {
+        id: "gpt-5.3-codex-spark",
+        provider: "codex",
+        provenance: "bundled-fallback",
+        availability: "unsupported",
+        editable: false,
+      },
     ],
     fetchedAt: null,
     source: "test",

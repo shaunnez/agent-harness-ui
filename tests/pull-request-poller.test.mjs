@@ -6,7 +6,11 @@ test("PR reconciliation is deferred until after startup and remains periodically
   const scheduled = [];
   let polls = 0;
   const stop = startPullRequestPolling(
-    { pollPullRequests: async () => { polls += 1; } },
+    {
+      pollPullRequests: async () => {
+        polls += 1;
+      },
+    },
     {
       intervalMs: 30_000,
       schedule: (callback, delay) => {

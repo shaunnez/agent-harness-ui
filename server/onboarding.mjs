@@ -44,7 +44,22 @@ const CI_DIRECTORY = path.join(".github", "workflows");
  * runner is an environment detail — which python, which package manager — while the script path or
  * target is the thing being cited.
  */
-const RUNNERS = new Set(["npm", "pnpm", "yarn", "bun", "npx", "node", "python", "python3", "make", "sh", "bash", "zsh", "uv", "poetry"]);
+const RUNNERS = new Set([
+  "npm",
+  "pnpm",
+  "yarn",
+  "bun",
+  "npx",
+  "node",
+  "python",
+  "python3",
+  "make",
+  "sh",
+  "bash",
+  "zsh",
+  "uv",
+  "poetry",
+]);
 
 /**
  * How much of a workflow file is scanned for `run:` steps.
@@ -73,12 +88,18 @@ export async function discoverVerificationEvidence(repositoryRoot) {
     packageManager: detectPackageManager(packageJson, await listFiles(repositoryRoot)),
     scripts: Object.entries(scripts).map(([name, command]) => ({ name, command: String(command) })),
     makeTargets: makefileTargets(makefile),
-    ciCommands: workflows.flatMap((workflow) => workflow.commands.map((command) => ({ workflow: workflow.name, command }))),
+    ciCommands: workflows.flatMap((workflow) =>
+      workflow.commands.map((command) => ({ workflow: workflow.name, command })),
+    ),
     // Empty in the ordinary case. Non-empty means the harness stopped reading a workflow before
     // its end, which is a different statement from "that workflow declares nothing".
     truncatedWorkflows: workflows
       .filter((workflow) => workflow.truncated)
-      .map((workflow) => ({ workflow: workflow.name, scannedLines: MAX_EVIDENCE_LINES, totalLines: workflow.totalLines })),
+      .map((workflow) => ({
+        workflow: workflow.name,
+        scannedLines: MAX_EVIDENCE_LINES,
+        totalLines: workflow.totalLines,
+      })),
   };
 }
 
@@ -203,13 +224,18 @@ export function evidenceForCommand(argv, evidence) {
   const runner = argv[0];
   const isPackageRunner = ["npm", "pnpm", "yarn", "bun", "npx"].includes(path.basename(runner ?? ""));
   if (isPackageRunner) {
-    const target = argv.find((argument, index) => index > 0 && !argument.startsWith("-") && argument !== "run");
-    if (target && scriptNames.has(target)) return { kind: "package-script", detail: `package.json scripts.${target}` };
-    if (target === "test" && scriptNames.has("test")) return { kind: "package-script", detail: "package.json scripts.test" };
+    const target = argv.find(
+      (argument, index) => index > 0 && !argument.startsWith("-") && argument !== "run",
+    );
+    if (target && scriptNames.has(target))
+      return { kind: "package-script", detail: `package.json scripts.${target}` };
+    if (target === "test" && scriptNames.has("test"))
+      return { kind: "package-script", detail: "package.json scripts.test" };
   }
   if (path.basename(runner ?? "") === "make") {
     const target = argv[1];
-    if (target && evidence.makeTargets.includes(target)) return { kind: "make-target", detail: `Makefile target ${target}` };
+    if (target && evidence.makeTargets.includes(target))
+      return { kind: "make-target", detail: `Makefile target ${target}` };
   }
   const sources = evidenceSources(evidence);
 
@@ -231,11 +257,15 @@ export function evidenceForCommand(argv, evidence) {
   // `python -m pip install -r backend/requirements-dev.txt` on the word `backend` — the harness
   // found a worse source than the agent had claimed and recorded it as fact. Script and Makefile
   // names are still citeable, but only through fallback 1, where they must match exactly.
-  const distinctive = argv.slice(1).filter((argument) =>
-    !argument.startsWith("-")
-    && argument !== "run"
-    && !isRunner(argument)
-    && isDistinctiveToken(argument));
+  const distinctive = argv
+    .slice(1)
+    .filter(
+      (argument) =>
+        !argument.startsWith("-") &&
+        argument !== "run" &&
+        !isRunner(argument) &&
+        isDistinctiveToken(argument),
+    );
   const cited = sources.find((source) => distinctive.some((token) => containsToken(source.text, token)));
   if (cited) return { kind: cited.kind, detail: cited.detail };
   return null;
@@ -255,7 +285,9 @@ function evidenceSources(evidence) {
       kind: "ci-step",
       text,
       detail: `${CI_DIRECTORY}/${entry.workflow}: ${text}`,
-      tails: shellSegments(text).map((segment) => commandTail(segment.split(/\s+/))).filter(Boolean),
+      tails: shellSegments(text)
+        .map((segment) => commandTail(segment.split(/\s+/)))
+        .filter(Boolean),
     });
   }
   for (const script of evidence.scripts ?? []) {
@@ -264,7 +296,9 @@ function evidenceSources(evidence) {
       kind: "package-script",
       text: `${script.name} ${text}`,
       detail: `package.json scripts.${script.name}`,
-      tails: [script.name, ...shellSegments(text).map((segment) => commandTail(segment.split(/\s+/)))].filter(Boolean),
+      tails: [script.name, ...shellSegments(text).map((segment) => commandTail(segment.split(/\s+/)))].filter(
+        Boolean,
+      ),
     });
   }
   for (const target of evidence.makeTargets ?? []) {
@@ -274,7 +308,10 @@ function evidenceSources(evidence) {
 }
 
 function shellSegments(text) {
-  return text.split(/\s*(?:&&|\|\||;)\s*/).map((segment) => segment.trim()).filter(Boolean);
+  return text
+    .split(/\s*(?:&&|\|\||;)\s*/)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
 }
 
 /**
@@ -323,7 +360,8 @@ const PROPOSAL_CLOSE = "</verification-proposal>";
 export function parseOnboardingProposal(text, evidence) {
   const start = String(text ?? "").indexOf(PROPOSAL_OPEN);
   const end = String(text ?? "").indexOf(PROPOSAL_CLOSE);
-  if (start < 0 || end <= start) throw new OnboardingError(`The onboarding agent returned no ${PROPOSAL_OPEN} block.`);
+  if (start < 0 || end <= start)
+    throw new OnboardingError(`The onboarding agent returned no ${PROPOSAL_OPEN} block.`);
   let value;
   try {
     value = JSON.parse(text.slice(start + PROPOSAL_OPEN.length, end).trim());
@@ -332,12 +370,21 @@ export function parseOnboardingProposal(text, evidence) {
   }
   if (value?.determined === false) {
     if (typeof value.reason !== "string" || !value.reason.trim()) {
-      throw new OnboardingError("An undetermined proposal must say why the repository's verification could not be established.");
+      throw new OnboardingError(
+        "An undetermined proposal must say why the repository's verification could not be established.",
+      );
     }
-    return { determined: false, reason: value.reason.trim(), commands: [], notes: normalizeNotes(value.notes) };
+    return {
+      determined: false,
+      reason: value.reason.trim(),
+      commands: [],
+      notes: normalizeNotes(value.notes),
+    };
   }
   if (!Array.isArray(value?.commands) || !value.commands.length) {
-    throw new OnboardingError("The onboarding proposal must declare commands, or set determined:false with a reason.");
+    throw new OnboardingError(
+      "The onboarding proposal must declare commands, or set determined:false with a reason.",
+    );
   }
   // Validated as a manifest before anything else is said about it, so the operator never
   // approves something the harness would later refuse to read.
@@ -350,8 +397,8 @@ export function parseOnboardingProposal(text, evidence) {
     const found = evidenceForCommand(command.command, evidence);
     if (!found) {
       throw new OnboardingError(
-        `Proposed command ${command.id} (${command.command.join(" ")}) traces to nothing in the repository. `
-          + "Every verification command must come from a package script, a Makefile target or a CI step.",
+        `Proposed command ${command.id} (${command.command.join(" ")}) traces to nothing in the repository. ` +
+          "Every verification command must come from a package script, a Makefile target or a CI step.",
       );
     }
     const claimedEvidence = typeof claimed === "string" ? claimed.trim() : null;
@@ -383,7 +430,11 @@ export function parseOnboardingProposal(text, evidence) {
     // rather than converted into a failure whose usual cause is wording.
     disagreements: commands
       .filter((command) => command.evidenceDisagrees)
-      .map((command) => ({ id: command.id, claimed: command.claimedEvidence, found: command.evidence.detail })),
+      .map((command) => ({
+        id: command.id,
+        claimed: command.claimedEvidence,
+        found: command.evidence.detail,
+      })),
   };
 }
 
@@ -393,9 +444,13 @@ export function parseOnboardingProposal(text, evidence) {
  * nothing.
  */
 function citationsAgree(claimed, found) {
-  const words = (text) => new Set(
-    text.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length >= 4),
-  );
+  const words = (text) =>
+    new Set(
+      text
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((word) => word.length >= 4),
+    );
   const claimedWords = words(claimed);
   if (!claimedWords.size) return false;
   return [...words(found)].some((word) => claimedWords.has(word));
@@ -403,7 +458,9 @@ function citationsAgree(claimed, found) {
 
 function normalizeNotes(notes) {
   if (!Array.isArray(notes)) return [];
-  return notes.filter((note) => typeof note === "string" && note.trim()).map((note) => note.trim().slice(0, 500));
+  return notes
+    .filter((note) => typeof note === "string" && note.trim())
+    .map((note) => note.trim().slice(0, 500));
 }
 
 /**
@@ -412,21 +469,25 @@ function normalizeNotes(notes) {
  */
 export function renderManifestFile(proposal, provenance) {
   if (!proposal.determined) throw new OnboardingError("An undetermined proposal has no manifest to write.");
-  return `${JSON.stringify({
-    version: 1,
-    provenance: {
-      proposedBy: provenance.model,
-      proposedAt: provenance.at,
-      approvedBy: provenance.approvedBy ?? "operator",
-      derivedFrom: proposal.commands.map((command) => command.evidence.detail),
+  return `${JSON.stringify(
+    {
+      version: 1,
+      provenance: {
+        proposedBy: provenance.model,
+        proposedAt: provenance.at,
+        approvedBy: provenance.approvedBy ?? "operator",
+        derivedFrom: proposal.commands.map((command) => command.evidence.detail),
+      },
+      commands: proposal.commands.map((command) => ({
+        id: command.id,
+        title: command.title,
+        command: command.command,
+        ...(command.report ? { report: command.report } : {}),
+      })),
     },
-    commands: proposal.commands.map((command) => ({
-      id: command.id,
-      title: command.title,
-      command: command.command,
-      ...(command.report ? { report: command.report } : {}),
-    })),
-  }, null, 2)}\n`;
+    null,
+    2,
+  )}\n`;
 }
 
 export { VERIFICATION_MANIFEST_PATH };

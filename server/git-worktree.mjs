@@ -1,5 +1,16 @@
 import { spawn } from "node:child_process";
-import { lstat, mkdir, readFile, readdir, realpath, rm, stat, symlink, unlink, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  mkdir,
+  readFile,
+  readdir,
+  realpath,
+  rm,
+  stat,
+  symlink,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -82,20 +93,35 @@ export class GitWorktreeManager {
       throw new Error("The source checkout moved after implementation scheduling began.");
     }
     if (options.allowHistoricalBase) {
-      const retainedBase = await git(repositoryRoot, ["cat-file", "-e", `${baseRevision}^{commit}`], { allowFailure: true });
-      if (retainedBase.code !== 0) throw new Error("The retained implementation base is no longer available in the repository.");
+      const retainedBase = await git(repositoryRoot, ["cat-file", "-e", `${baseRevision}^{commit}`], {
+        allowFailure: true,
+      });
+      if (retainedBase.code !== 0)
+        throw new Error("The retained implementation base is no longer available in the repository.");
     }
     const baseBranch = (await git(repositoryRoot, ["branch", "--show-current"])).stdout.trim() || "detached";
     const baseRef = baseBranch === "detached" ? null : `refs/heads/${baseBranch}`;
     const branch = `agent-harness/${task.id.toLowerCase()}-${safeSegment(options.branchId ?? candidateId).toLowerCase()}`;
-    const branchCheck = await git(repositoryRoot, ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`], {
-      allowFailure: true,
-    });
-    if (branchCheck.code === 0) throw new Error(`The candidate branch ${branch} already exists. Remove it manually or start a new task.`);
+    const branchCheck = await git(
+      repositoryRoot,
+      ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`],
+      {
+        allowFailure: true,
+      },
+    );
+    if (branchCheck.code === 0)
+      throw new Error(
+        `The candidate branch ${branch} already exists. Remove it manually or start a new task.`,
+      );
 
     const worktreePath = path.resolve(this.#root, safeSegment(task.id), safeSegment(candidateId));
-    if (!worktreePath.startsWith(`${this.#root}${path.sep}`)) throw new Error("The resolved worktree path escaped harness storage.");
-    if (await stat(worktreePath).then(() => true).catch(() => false)) {
+    if (!worktreePath.startsWith(`${this.#root}${path.sep}`))
+      throw new Error("The resolved worktree path escaped harness storage.");
+    if (
+      await stat(worktreePath)
+        .then(() => true)
+        .catch(() => false)
+    ) {
       throw new Error(`The candidate worktree already exists at ${worktreePath}.`);
     }
     await mkdir(path.dirname(worktreePath), { recursive: true });
@@ -109,7 +135,9 @@ export class GitWorktreeManager {
         await git(worktreePath, ["cherry-pick", dependencyRevision]);
       } catch (error) {
         await git(worktreePath, ["cherry-pick", "--abort"], { allowFailure: true });
-        throw new Error(`Could not prepare ${candidateId} with dependency ${dependencyRevision.slice(0, 8)}: ${error.message}`);
+        throw new Error(
+          `Could not prepare ${candidateId} with dependency ${dependencyRevision.slice(0, 8)}: ${error.message}`,
+        );
       }
     }
     return {
@@ -135,16 +163,28 @@ export class GitWorktreeManager {
     if (options.squashFromBase) {
       const currentHead = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
       const retainedHead = candidate.headRevision ?? currentHead;
-      const retainedHeadIsAncestor = await git(candidate.worktreePath, ["merge-base", "--is-ancestor", retainedHead, currentHead], {
+      const retainedHeadIsAncestor = await git(
+        candidate.worktreePath,
+        ["merge-base", "--is-ancestor", retainedHead, currentHead],
+        {
+          allowFailure: true,
+        },
+      );
+      const retainedParent = await git(candidate.worktreePath, ["rev-parse", `${retainedHead}^`], {
         allowFailure: true,
       });
-      const retainedParent = await git(candidate.worktreePath, ["rev-parse", `${retainedHead}^`], { allowFailure: true });
       const squashBase = retainedParent.code === 0 ? retainedParent.stdout.trim() : candidate.baseRevision;
-      const baseIsAncestor = await git(candidate.worktreePath, ["merge-base", "--is-ancestor", candidate.baseRevision, squashBase], {
-        allowFailure: true,
-      });
+      const baseIsAncestor = await git(
+        candidate.worktreePath,
+        ["merge-base", "--is-ancestor", candidate.baseRevision, squashBase],
+        {
+          allowFailure: true,
+        },
+      );
       if (retainedHeadIsAncestor.code !== 0 || baseIsAncestor.code !== 0 || currentHead === squashBase) {
-        throw new Error("The retained package cannot be squashed because its recorded revision is not on the current package lineage.");
+        throw new Error(
+          "The retained package cannot be squashed because its recorded revision is not on the current package lineage.",
+        );
       }
       // A dependent slice starts above its dependency commits. Rebuild only the
       // retained package commit and its continuation edits; resetting to the target
@@ -152,7 +192,8 @@ export class GitWorktreeManager {
       await git(candidate.worktreePath, ["reset", "--mixed", squashBase]);
     }
     const provisioned = await provisionedDependencies(candidate.worktreePath);
-    const status = (await git(candidate.worktreePath, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout;
+    const status = (await git(candidate.worktreePath, ["status", "--porcelain=v1", "--untracked-files=all"]))
+      .stdout;
     const entries = statusEntries(status).filter((entry) => !isProvisionedPath(entry.file, provisioned));
     const files = entries.map((entry) => entry.file);
     if (!files.length) {
@@ -180,9 +221,13 @@ export class GitWorktreeManager {
       throw new Error("The implementation agent completed without changing any files.");
     }
     const suspicious = files.find(isSensitivePath);
-    if (suspicious) throw new Error(`Candidate contains a potentially sensitive file (${suspicious}); it was preserved but not committed.`);
+    if (suspicious)
+      throw new Error(
+        `Candidate contains a potentially sensitive file (${suspicious}); it was preserved but not committed.`,
+      );
     const generated = entries.find(
-      (entry) => isGeneratedPath(entry.file) && !(options.allowGeneratedDeletions && entry.code.trim() === "D"),
+      (entry) =>
+        isGeneratedPath(entry.file) && !(options.allowGeneratedDeletions && entry.code.trim() === "D"),
     );
     if (generated) {
       throw new Error(
@@ -208,10 +253,30 @@ export class GitWorktreeManager {
     ]);
     await git(candidate.worktreePath, ["commit", "-m", message]);
     const headRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
-    const summary = (await git(candidate.worktreePath, ["diff", "--stat", candidate.baseRevision, headRevision])).stdout.trim();
-    const diff = (await git(candidate.worktreePath, ["diff", "--no-ext-diff", "--unified=3", candidate.baseRevision, headRevision])).stdout;
-    const ownSummary = (await git(candidate.worktreePath, ["diff", "--stat", parentRevision, headRevision])).stdout.trim();
-    const ownDiff = (await git(candidate.worktreePath, ["diff", "--no-ext-diff", "--unified=3", parentRevision, headRevision])).stdout;
+    const summary = (
+      await git(candidate.worktreePath, ["diff", "--stat", candidate.baseRevision, headRevision])
+    ).stdout.trim();
+    const diff = (
+      await git(candidate.worktreePath, [
+        "diff",
+        "--no-ext-diff",
+        "--unified=3",
+        candidate.baseRevision,
+        headRevision,
+      ])
+    ).stdout;
+    const ownSummary = (
+      await git(candidate.worktreePath, ["diff", "--stat", parentRevision, headRevision])
+    ).stdout.trim();
+    const ownDiff = (
+      await git(candidate.worktreePath, [
+        "diff",
+        "--no-ext-diff",
+        "--unified=3",
+        parentRevision,
+        headRevision,
+      ])
+    ).stdout;
     return {
       headRevision,
       parentRevision,
@@ -239,9 +304,21 @@ export class GitWorktreeManager {
     }
     await assertClean(candidate.worktreePath);
     const headRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
-    const summary = (await git(candidate.worktreePath, ["diff", "--stat", candidate.baseRevision, headRevision])).stdout.trim();
-    const diff = (await git(candidate.worktreePath, ["diff", "--no-ext-diff", "--unified=3", candidate.baseRevision, headRevision])).stdout;
-    const files = (await git(candidate.worktreePath, ["diff", "--name-only", candidate.baseRevision, headRevision])).stdout
+    const summary = (
+      await git(candidate.worktreePath, ["diff", "--stat", candidate.baseRevision, headRevision])
+    ).stdout.trim();
+    const diff = (
+      await git(candidate.worktreePath, [
+        "diff",
+        "--no-ext-diff",
+        "--unified=3",
+        candidate.baseRevision,
+        headRevision,
+      ])
+    ).stdout;
+    const files = (
+      await git(candidate.worktreePath, ["diff", "--name-only", candidate.baseRevision, headRevision])
+    ).stdout
       .split(/\r?\n/)
       .filter(Boolean);
     return { headRevision, files, summary, diff: diff.slice(0, 300_000) };
@@ -252,10 +329,18 @@ export class GitWorktreeManager {
     await assertClean(repositoryRoot);
     const currentRevision = (await git(repositoryRoot, ["rev-parse", "HEAD"])).stdout.trim();
     if (currentRevision !== candidate.baseRevision) {
-      throw new Error("The source branch moved after this candidate was created. Rebase or recreate the candidate before merging.");
+      throw new Error(
+        "The source branch moved after this candidate was created. Rebase or recreate the candidate before merging.",
+      );
     }
-    const targetRef = candidate.baseRef ?? (candidate.baseBranch && candidate.baseBranch !== "detached" ? `refs/heads/${candidate.baseBranch}` : null);
-    const currentRefResult = await git(repositoryRoot, ["symbolic-ref", "--quiet", "HEAD"], { allowFailure: true });
+    const targetRef =
+      candidate.baseRef ??
+      (candidate.baseBranch && candidate.baseBranch !== "detached"
+        ? `refs/heads/${candidate.baseBranch}`
+        : null);
+    const currentRefResult = await git(repositoryRoot, ["symbolic-ref", "--quiet", "HEAD"], {
+      allowFailure: true,
+    });
     const currentRef = currentRefResult.code === 0 ? currentRefResult.stdout.trim() : null;
     if (!targetRef || currentRef !== targetRef) {
       throw new Error("The checked-out target branch no longer matches the candidate's recorded target ref.");
@@ -270,13 +355,19 @@ export class GitWorktreeManager {
 
   async mergeState(candidate) {
     const repositoryRoot = await this.repositoryRoot(candidate.repositoryRoot);
-    const targetRef = candidate.baseRef ?? (candidate.baseBranch && candidate.baseBranch !== "detached" ? `refs/heads/${candidate.baseBranch}` : null);
+    const targetRef =
+      candidate.baseRef ??
+      (candidate.baseBranch && candidate.baseBranch !== "detached"
+        ? `refs/heads/${candidate.baseBranch}`
+        : null);
     if (!targetRef) throw new Error("The candidate does not have a recorded target ref.");
     const candidateRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
     if (!candidate.headRevision || candidateRevision !== candidate.headRevision) {
       throw new Error("The candidate worktree no longer matches the reviewed revision.");
     }
-    const targetResult = await git(repositoryRoot, ["rev-parse", "--verify", targetRef], { allowFailure: true });
+    const targetResult = await git(repositoryRoot, ["rev-parse", "--verify", targetRef], {
+      allowFailure: true,
+    });
     if (targetResult.code !== 0) throw new Error("The candidate target ref no longer exists.");
     const targetRevision = targetResult.stdout.trim();
     if (targetRevision === candidate.headRevision) return "merged";
@@ -287,10 +378,16 @@ export class GitWorktreeManager {
   async refreshCandidate(candidate, options = {}) {
     const repositoryRoot = await this.repositoryRoot(candidate.repositoryRoot);
     await this.verifyCandidate(candidate);
-    const targetRef = candidate.baseRef ?? (candidate.baseBranch && candidate.baseBranch !== "detached" ? `refs/heads/${candidate.baseBranch}` : null);
+    const targetRef =
+      candidate.baseRef ??
+      (candidate.baseBranch && candidate.baseBranch !== "detached"
+        ? `refs/heads/${candidate.baseBranch}`
+        : null);
     if (!targetRef) throw new Error("The candidate does not have a recorded target ref.");
     const targetResult = options.targetRevision
-      ? await git(repositoryRoot, ["cat-file", "-e", `${options.targetRevision}^{commit}`], { allowFailure: true })
+      ? await git(repositoryRoot, ["cat-file", "-e", `${options.targetRevision}^{commit}`], {
+          allowFailure: true,
+        })
       : await git(repositoryRoot, ["rev-parse", "--verify", targetRef], { allowFailure: true });
     if (targetResult.code !== 0) throw new Error("The candidate target revision no longer exists.");
     const targetRevision = options.targetRevision ?? targetResult.stdout.trim();
@@ -300,11 +397,17 @@ export class GitWorktreeManager {
     if (targetRevision === candidate.headRevision) {
       throw new Error("The candidate is already present on the target branch.");
     }
-    const targetAdvanced = await git(repositoryRoot, ["merge-base", "--is-ancestor", candidate.baseRevision, targetRevision], {
-      allowFailure: true,
-    });
+    const targetAdvanced = await git(
+      repositoryRoot,
+      ["merge-base", "--is-ancestor", candidate.baseRevision, targetRevision],
+      {
+        allowFailure: true,
+      },
+    );
     if (targetAdvanced.code !== 0) {
-      throw new Error("The target branch history was rewritten; recreate the candidate instead of refreshing it automatically.");
+      throw new Error(
+        "The target branch history was rewritten; recreate the candidate instead of refreshing it automatically.",
+      );
     }
 
     // The target may have received the same patch independently (for example, a
@@ -313,36 +416,43 @@ export class GitWorktreeManager {
     // replay. `git cherry` compares patch identities, so only an exact all-applied
     // candidate is collapsed onto the target; mixed or genuinely conflicting
     // candidates still take the ordinary rebase path and fail closed on conflict.
-    const candidateCommits = (await git(candidate.worktreePath, [
-      "rev-list",
-      "--reverse",
-      `${candidate.baseRevision}..${candidate.headRevision}`,
-    ])).stdout.split(/\r?\n/).filter(Boolean);
-    const cherryRows = (await git(candidate.worktreePath, ["cherry", targetRevision, candidate.headRevision])).stdout
+    const candidateCommits = (
+      await git(candidate.worktreePath, [
+        "rev-list",
+        "--reverse",
+        `${candidate.baseRevision}..${candidate.headRevision}`,
+      ])
+    ).stdout
       .split(/\r?\n/)
       .filter(Boolean);
-    const targetContainsHead = (await git(repositoryRoot, [
-      "merge-base",
-      "--is-ancestor",
-      candidate.headRevision,
-      targetRevision,
-    ], { allowFailure: true })).code === 0;
-    const combinedPatch = (await git(candidate.worktreePath, [
-      "diff",
-      "--binary",
-      candidate.baseRevision,
-      candidate.headRevision,
-    ])).stdout;
-    const reverseApplied = combinedPatch.trim() && (await git(repositoryRoot, [
-      "apply",
-      "--check",
-      "--reverse",
-    ], { allowFailure: true, input: combinedPatch })).code === 0;
-    const alreadyApplied = targetContainsHead || reverseApplied || (
-      candidateCommits.length > 0 &&
-      cherryRows.length === candidateCommits.length &&
-      cherryRows.every((row) => row.startsWith("- "))
-    );
+    const cherryRows = (
+      await git(candidate.worktreePath, ["cherry", targetRevision, candidate.headRevision])
+    ).stdout
+      .split(/\r?\n/)
+      .filter(Boolean);
+    const targetContainsHead =
+      (
+        await git(repositoryRoot, ["merge-base", "--is-ancestor", candidate.headRevision, targetRevision], {
+          allowFailure: true,
+        })
+      ).code === 0;
+    const combinedPatch = (
+      await git(candidate.worktreePath, ["diff", "--binary", candidate.baseRevision, candidate.headRevision])
+    ).stdout;
+    const reverseApplied =
+      combinedPatch.trim() &&
+      (
+        await git(repositoryRoot, ["apply", "--check", "--reverse"], {
+          allowFailure: true,
+          input: combinedPatch,
+        })
+      ).code === 0;
+    const alreadyApplied =
+      targetContainsHead ||
+      reverseApplied ||
+      (candidateCommits.length > 0 &&
+        cherryRows.length === candidateCommits.length &&
+        cherryRows.every((row) => row.startsWith("- ")));
     if (alreadyApplied) {
       await git(candidate.worktreePath, ["reset", "--hard", targetRevision]);
       await assertClean(candidate.worktreePath);
@@ -362,15 +472,21 @@ export class GitWorktreeManager {
     } catch (error) {
       await git(candidate.worktreePath, ["rebase", "--abort"], { allowFailure: true });
       await this.verifyCandidate(candidate);
-      throw new Error(`Candidate refresh conflicted while replaying it onto ${candidate.baseBranch}: ${error.message}`);
+      throw new Error(
+        `Candidate refresh conflicted while replaying it onto ${candidate.baseBranch}: ${error.message}`,
+      );
     }
     await assertClean(candidate.worktreePath);
     const headRevision = (await git(candidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
     if (headRevision === candidate.headRevision) {
       throw new Error("Candidate refresh did not produce a new candidate revision.");
     }
-    const summary = (await git(candidate.worktreePath, ["diff", "--stat", targetRevision, headRevision])).stdout.trim();
-    const files = (await git(candidate.worktreePath, ["diff", "--name-only", targetRevision, headRevision])).stdout
+    const summary = (
+      await git(candidate.worktreePath, ["diff", "--stat", targetRevision, headRevision])
+    ).stdout.trim();
+    const files = (
+      await git(candidate.worktreePath, ["diff", "--name-only", targetRevision, headRevision])
+    ).stdout
       .split(/\r?\n/)
       .filter(Boolean);
     return {
@@ -404,24 +520,34 @@ export class GitWorktreeManager {
       throw new Error("Candidate recovery refused a worktree outside harness storage.");
     }
     const worktreeRoot = await this.repositoryRoot(worktreePath);
-    if (worktreeRoot !== worktreePath) throw new Error("Candidate recovery could not verify the recorded worktree root.");
+    if (worktreeRoot !== worktreePath)
+      throw new Error("Candidate recovery could not verify the recorded worktree root.");
     if (!candidate.headRevision) throw new Error("Candidate recovery requires a recorded revision.");
     const provisioned = await provisionedDependencies(worktreeRoot);
     const currentHead = (await git(worktreeRoot, ["rev-parse", "HEAD"])).stdout.trim();
-    const status = statusEntries((await git(worktreeRoot, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout).filter(
-      (entry) => !isProvisionedPath(entry.file, provisioned),
-    );
+    const status = statusEntries(
+      (await git(worktreeRoot, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout,
+    ).filter((entry) => !isProvisionedPath(entry.file, provisioned));
     if (currentHead === candidate.headRevision && !status.length) return false;
     if (currentHead !== candidate.headRevision) {
       await git(worktreeRoot, ["reset", "--mixed", candidate.headRevision]);
     }
-    await git(worktreeRoot, ["restore", "--source", candidate.headRevision, "--staged", "--worktree", "--", "."]);
+    await git(worktreeRoot, [
+      "restore",
+      "--source",
+      candidate.headRevision,
+      "--staged",
+      "--worktree",
+      "--",
+      ".",
+    ]);
     // `-x` would otherwise remove the provisioned links, leaving a recovered worktree
     // unable to run the Test stage.
     await git(worktreeRoot, ["clean", "-fdx", ...provisioned.flatMap((entry) => ["-e", entry])]);
     await assertClean(worktreeRoot);
     const recoveredHead = (await git(worktreeRoot, ["rev-parse", "HEAD"])).stdout.trim();
-    if (recoveredHead !== candidate.headRevision) throw new Error("Candidate recovery did not restore the recorded revision.");
+    if (recoveredHead !== candidate.headRevision)
+      throw new Error("Candidate recovery did not restore the recorded revision.");
     return true;
   }
 
@@ -453,7 +579,9 @@ export class GitWorktreeManager {
       (await git(worktreeRoot, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout,
     ).filter((entry) => !isProvisionedPath(entry.file, provisioned));
     if (options.requireClean !== false && status.length) {
-      throw new Error("The retained slice is not clean and cannot be requalified without another implementation run.");
+      throw new Error(
+        "The retained slice is not clean and cannot be requalified without another implementation run.",
+      );
     }
     const committedFiles = candidate.baseRevision
       ? (await git(worktreeRoot, ["diff", "--name-only", candidate.baseRevision, headRevision])).stdout
@@ -508,7 +636,8 @@ export class GitWorktreeManager {
       throw new Error("Candidate removal refused a worktree outside harness storage.");
     }
     const worktreeRoot = await this.repositoryRoot(worktreePath);
-    if (worktreeRoot !== worktreePath) throw new Error("Candidate removal could not verify the recorded worktree root.");
+    if (worktreeRoot !== worktreePath)
+      throw new Error("Candidate removal could not verify the recorded worktree root.");
     const repositoryRoot = await this.repositoryRoot(candidate.repositoryRoot);
     const removed = await deprovisionDependencies(worktreePath);
     await git(repositoryRoot, ["worktree", "remove", "--force", worktreePath]);
@@ -518,9 +647,11 @@ export class GitWorktreeManager {
   async inventory(entries = []) {
     const rows = new Array(entries.length);
     for (let offset = 0; offset < entries.length; offset += 4) {
-      await Promise.all(entries.slice(offset, offset + 4).map(async (entry, index) => {
-        rows[offset + index] = await this.#inventoryRow(entry);
-      }));
+      await Promise.all(
+        entries.slice(offset, offset + 4).map(async (entry, index) => {
+          rows[offset + index] = await this.#inventoryRow(entry);
+        }),
+      );
     }
     return rows;
   }
@@ -538,7 +669,9 @@ export class GitWorktreeManager {
         repositoryRoot = await this.repositoryRoot(worktreePath);
         headRevision = (await git(repositoryRoot, ["rev-parse", "HEAD"])).stdout.trim();
         const provisioned = await provisionedDependencies(repositoryRoot);
-        const status = statusEntries((await git(repositoryRoot, ["status", "--porcelain=v1", "--untracked-files=normal"])).stdout);
+        const status = statusEntries(
+          (await git(repositoryRoot, ["status", "--porcelain=v1", "--untracked-files=normal"])).stdout,
+        );
         clean = !status.some((entry) => !isProvisionedPath(entry.file, provisioned));
       } catch {
         clean = false;
@@ -622,8 +755,12 @@ export class GitWorktreeManager {
 }
 
 function normalizeLifecycleState(value) {
-  const normalized = String(value ?? "").trim().toLowerCase().replaceAll("_", "-");
-  if (["active", "running", "retained", "stale", "missing", "cleaning", "ready"].includes(normalized)) return normalized;
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replaceAll("_", "-");
+  if (["active", "running", "retained", "stale", "missing", "cleaning", "ready"].includes(normalized))
+    return normalized;
   return "retained";
 }
 
@@ -632,7 +769,9 @@ async function assertClean(repositoryRoot) {
   const status = (await git(repositoryRoot, ["status", "--porcelain=v1", "--untracked-files=normal"])).stdout;
   const entries = statusEntries(status).filter((entry) => !isProvisionedPath(entry.file, provisioned));
   if (entries.length) {
-    throw new Error("The selected repository has uncommitted changes. Commit or stash them before creating or merging a candidate.");
+    throw new Error(
+      "The selected repository has uncommitted changes. Commit or stash them before creating or merging a candidate.",
+    );
   }
 }
 
@@ -644,13 +783,16 @@ export async function discoverDependencyDirectories(repositoryRoot) {
   for (let depth = 0; depth < DEPENDENCY_SCAN_DEPTH && level.length; depth += 1) {
     const children = [];
     for (const relative of level) {
-      const dirents = await readdir(path.join(repositoryRoot, relative), { withFileTypes: true }).catch(() => []);
+      const dirents = await readdir(path.join(repositoryRoot, relative), { withFileTypes: true }).catch(
+        () => [],
+      );
       for (const dirent of dirents) {
         if (dirent.name === ".git") continue;
         const child = relative ? `${relative}/${dirent.name}` : dirent.name;
         const named = DEPENDENCY_DIRECTORY_NAMES.includes(dirent.name);
         if (dirent.isDirectory()) children.push(child);
-        else if (named && dirent.isSymbolicLink() && (await isDirectory(path.join(repositoryRoot, child)))) children.push(child);
+        else if (named && dirent.isSymbolicLink() && (await isDirectory(path.join(repositoryRoot, child))))
+          children.push(child);
       }
     }
     if (!children.length) break;
@@ -683,7 +825,13 @@ async function ignoredPaths(repositoryRoot, candidates) {
 
 // Infrastructure entries a dependency directory needs to function. Every other
 // dot-entry is treated as tool state rather than an installed package.
-const DEPENDENCY_INFRASTRUCTURE_ENTRIES = [".bin", ".pnpm", ".package-lock.json", ".modules.yaml", ".yarn-state.yml"];
+const DEPENDENCY_INFRASTRUCTURE_ENTRIES = [
+  ".bin",
+  ".pnpm",
+  ".package-lock.json",
+  ".modules.yaml",
+  ".yarn-state.yml",
+];
 
 function isInheritableDependencyEntry(name) {
   return !name.startsWith(".") || DEPENDENCY_INFRASTRUCTURE_ENTRIES.includes(name);
@@ -719,7 +867,12 @@ async function provisionDependencies(repositoryRoot, worktreePath) {
   const entries = [];
   for (const relative of await discoverDependencyDirectories(repositoryRoot)) {
     const destination = path.join(worktreePath, relative);
-    if (await lstat(destination).then(() => true).catch(() => false)) continue;
+    if (
+      await lstat(destination)
+        .then(() => true)
+        .catch(() => false)
+    )
+      continue;
     const source = path.join(repositoryRoot, relative);
     await mkdir(path.dirname(destination), { recursive: true });
     const cloned = await cloneDependencyDirectory(source, destination);
@@ -755,16 +908,25 @@ async function symlinkDependencyEntries(source, destination) {
 async function cloneDependencyDirectory(source, destination) {
   if (process.platform !== "darwin" && process.platform !== "linux") return false;
   const [sourceDevice, destinationParentDevice] = await Promise.all([
-    stat(source).then((info) => info.dev).catch(() => null),
-    stat(path.dirname(destination)).then((info) => info.dev).catch(() => null),
+    stat(source)
+      .then((info) => info.dev)
+      .catch(() => null),
+    stat(path.dirname(destination))
+      .then((info) => info.dev)
+      .catch(() => null),
   ]);
-  if (sourceDevice === null || destinationParentDevice === null || sourceDevice !== destinationParentDevice) return false;
+  if (sourceDevice === null || destinationParentDevice === null || sourceDevice !== destinationParentDevice)
+    return false;
   const args =
     process.platform === "darwin"
       ? ["-c", "-R", "--", source, destination]
       : ["--reflink=auto", "-R", "--", source, destination];
   const succeeded = await runToCompletion("cp", args);
-  const created = succeeded && (await lstat(destination).then((info) => info.isDirectory()).catch(() => false));
+  const created =
+    succeeded &&
+    (await lstat(destination)
+      .then((info) => info.isDirectory())
+      .catch(() => false));
   if (!created) {
     await rm(destination, { recursive: true, force: true }).catch(() => {});
     return false;
@@ -790,7 +952,8 @@ async function manifestPath(repositoryRoot) {
 
 async function writeProvisionManifest(worktreePath, entries) {
   const file = await manifestPath(worktreePath);
-  if (!file) throw new Error("Could not resolve the worktree Git directory to record provisioned dependencies.");
+  if (!file)
+    throw new Error("Could not resolve the worktree Git directory to record provisioned dependencies.");
   const paths = entries.map((entry) => entry.path);
   await writeFile(file, `${JSON.stringify({ paths, entries }, null, 2)}\n`, "utf8");
 }
@@ -829,13 +992,19 @@ export async function provisionedDependencyEntries(repositoryRoot) {
     const data = JSON.parse(raw);
     if (Array.isArray(data.entries)) {
       return data.entries.filter(
-        (entry) => entry && typeof entry.path === "string" && entry.path && (entry.mode === "clone" || entry.mode === "symlink"),
+        (entry) =>
+          entry &&
+          typeof entry.path === "string" &&
+          entry.path &&
+          (entry.mode === "clone" || entry.mode === "symlink"),
       );
     }
     // A manifest written before clone support recorded only paths; every provisioned
     // path from that era was a symlink structure, so it is read back as one.
     if (Array.isArray(data.paths)) {
-      return data.paths.filter((value) => typeof value === "string" && value).map((value) => ({ path: value, mode: "symlink" }));
+      return data.paths
+        .filter((value) => typeof value === "string" && value)
+        .map((value) => ({ path: value, mode: "symlink" }));
     }
     return [];
   } catch {
@@ -859,7 +1028,9 @@ async function deprovisionDependencies(worktreePath) {
       // gigabyte of the operator's real dependencies is not a mistake to risk on "should".
       const resolved = await realpath(targetPath).catch(() => null);
       if (!resolved || !(resolved === worktreeRoot || resolved.startsWith(`${worktreeRoot}${path.sep}`))) {
-        throw new Error(`Dependency removal refused a clone whose real path escaped the worktree: ${relative}`);
+        throw new Error(
+          `Dependency removal refused a clone whose real path escaped the worktree: ${relative}`,
+        );
       }
       await rm(targetPath, { recursive: true, force: true });
       continue;
@@ -948,7 +1119,9 @@ function isGeneratedPath(file) {
 }
 
 function safeSegment(value) {
-  return String(value).replace(/[^a-z0-9_-]/gi, "-").slice(0, 80);
+  return String(value)
+    .replace(/[^a-z0-9_-]/gi, "-")
+    .slice(0, 80);
 }
 
 function git(cwd, args, options = {}) {

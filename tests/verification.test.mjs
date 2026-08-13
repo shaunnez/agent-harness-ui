@@ -25,7 +25,11 @@ const manifest = (commands) => parseVerificationManifest(JSON.stringify({ versio
 test("reads verification commands from the repository and refuses a shell string", () => {
   const parsed = manifest([
     { id: "test", title: "Unit tests", command: ["npm", "test"] },
-    { id: "e2e", command: ["npx", "playwright", "test"], report: { format: "playwright-json", outputFile: "report.json" } },
+    {
+      id: "e2e",
+      command: ["npx", "playwright", "test"],
+      report: { format: "playwright-json", outputFile: "report.json" },
+    },
   ]);
   assert.equal(parsed.commands.length, 2);
   assert.deepEqual(parsed.commands[0].command, ["npm", "test"]);
@@ -43,7 +47,11 @@ test("reads verification commands from the repository and refuses a shell string
   assert.throws(() => manifest([{ id: "test", command: ["npm", ""] }]), /non-empty strings/);
   assert.throws(() => manifest([{ id: "Test", command: ["npm"] }]), /lowercase id/);
   assert.throws(
-    () => manifest([{ id: "a", command: ["x"] }, { id: "a", command: ["y"] }]),
+    () =>
+      manifest([
+        { id: "a", command: ["x"] },
+        { id: "a", command: ["y"] },
+      ]),
     /repeats command id a/,
   );
   assert.throws(() => parseVerificationManifest('{"version":2,"commands":[]}'), /"version": 1/);
@@ -63,42 +71,68 @@ test("refuses a report format the harness cannot check, rather than downgrading 
     /needs an outputFile/,
   );
   assert.throws(
-    () => manifest([{ id: "e2e", command: ["x"], report: { format: "playwright-json", outputFile: "/etc/passwd" } }]),
+    () =>
+      manifest([
+        { id: "e2e", command: ["x"], report: { format: "playwright-json", outputFile: "/etc/passwd" } },
+      ]),
     /must be repository-relative/,
   );
   // Traversal is refused at resolve time too, since the manifest is repository content.
-  assert.throws(() => resolveReportPath("/tmp/wt", "../../escape.json"), /resolves outside the candidate worktree/);
+  assert.throws(
+    () => resolveReportPath("/tmp/wt", "../../escape.json"),
+    /resolves outside the candidate worktree/,
+  );
   assert.equal(resolveReportPath("/tmp/wt", "out/report.json"), path.resolve("/tmp/wt/out/report.json"));
 });
 
 test("decides a Playwright report from its own totals, and fails closed on a suite that ran nothing", () => {
-  const ok = parsePlaywrightJsonReport(JSON.stringify({ stats: { expected: 12, unexpected: 0, flaky: 0, skipped: 1 } }));
+  const ok = parsePlaywrightJsonReport(
+    JSON.stringify({ stats: { expected: 12, unexpected: 0, flaky: 0, skipped: 1 } }),
+  );
   assert.equal(ok.passed, true);
   assert.match(ok.detail, /12 expected/);
 
-  const unexpected = parsePlaywrightJsonReport(JSON.stringify({
-    stats: { expected: 4, unexpected: 1 },
-    suites: [{
-      title: "04-upload.spec.ts",
-      suites: [{
-        title: "Document upload page",
-        specs: [{
-          title: "keeps legacy requests unprojected",
-          tests: [{
-            status: "unexpected",
-            results: [{
-              status: "failed",
-              errors: [{
-                location: { file: "/tmp/wt/e2e/tests/04-upload.spec.ts", line: 355, column: 36 },
-                message: "TypeError: response.request is not a function\n\nlong context",
-              }],
-            }],
-          }],
-        }],
-      }],
-      specs: [],
-    }],
-  }));
+  const unexpected = parsePlaywrightJsonReport(
+    JSON.stringify({
+      stats: { expected: 4, unexpected: 1 },
+      suites: [
+        {
+          title: "04-upload.spec.ts",
+          suites: [
+            {
+              title: "Document upload page",
+              specs: [
+                {
+                  title: "keeps legacy requests unprojected",
+                  tests: [
+                    {
+                      status: "unexpected",
+                      results: [
+                        {
+                          status: "failed",
+                          errors: [
+                            {
+                              location: {
+                                file: "/tmp/wt/e2e/tests/04-upload.spec.ts",
+                                line: 355,
+                                column: 36,
+                              },
+                              message: "TypeError: response.request is not a function\n\nlong context",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          specs: [],
+        },
+      ],
+    }),
+  );
   assert.equal(unexpected.passed, false);
   assert.match(unexpected.failureDetails, /Document upload page/);
   assert.match(unexpected.failureDetails, /04-upload\.spec\.ts:355/);
@@ -121,7 +155,10 @@ test("refuses the stage when the repository declares no verification commands", 
     // Refused rather than fallen back to a model-chosen command. A fallback would give the
     // harness evidence it cannot check while looking exactly like evidence it can.
     await assert.rejects(() => readVerificationManifest(directory), /declares no verification commands/);
-    await assert.rejects(() => readVerificationManifest(directory), new RegExp(VERIFICATION_MANIFEST_PATH.replace(/\\/g, "\\\\")));
+    await assert.rejects(
+      () => readVerificationManifest(directory),
+      new RegExp(VERIFICATION_MANIFEST_PATH.replace(/\\/g, "\\\\")),
+    );
 
     await mkdir(path.join(directory, ".agent-harness"), { recursive: true });
     await writeFile(
@@ -159,7 +196,10 @@ test("reads planning commands from the exact target revision rather than uncommi
     );
 
     const parsed = await readVerificationManifestAtRevision(directory, stdout.trim());
-    assert.deepEqual(parsed.commands.map((command) => command.id), ["committed"]);
+    assert.deepEqual(
+      parsed.commands.map((command) => command.id),
+      ["committed"],
+    );
     assert.match(parsed.source, new RegExp(`@${stdout.trim()}$`));
   } finally {
     await rm(directory, { recursive: true, force: true });
@@ -208,9 +248,18 @@ test("selects only validated focused command ids while preserving the complete m
     { id: "test", command: ["npm", "test"] },
   ]);
   const focused = selectVerificationCommands(parsed, ["typecheck"]);
-  assert.deepEqual(focused.commands.map((command) => command.id), ["typecheck"]);
-  assert.deepEqual(parsed.commands.map((command) => command.id), ["lint", "typecheck", "test"]);
-  assert.throws(() => selectVerificationCommands(parsed, ["unknown"]), /does not declare focused command id unknown/i);
+  assert.deepEqual(
+    focused.commands.map((command) => command.id),
+    ["typecheck"],
+  );
+  assert.deepEqual(
+    parsed.commands.map((command) => command.id),
+    ["lint", "typecheck", "test"],
+  );
+  assert.throws(
+    () => selectVerificationCommands(parsed, ["unknown"]),
+    /does not declare focused command id unknown/i,
+  );
   assert.throws(() => selectVerificationCommands(parsed, []), /at least one repository manifest command id/i);
 });
 
@@ -246,18 +295,31 @@ test("stops at the first failure and says which commands never ran", async () =>
 
 test("refuses to attribute evidence to a revision the worktree is not at", async () => {
   const parsed = manifest([{ id: "test", command: ["npm", "test"] }]);
-  const run = (readHeadRevision) => runRepositoryVerification({
-    worktreePath: "/tmp/wt",
-    candidate,
-    manifest: parsed,
-    readHeadRevision,
-    runCommand: async () => ({ id: "test", candidateId: candidate.id, candidateRevision: 2, bindingExplicit: true, command: "npm test", status: "passed" }),
-  });
+  const run = (readHeadRevision) =>
+    runRepositoryVerification({
+      worktreePath: "/tmp/wt",
+      candidate,
+      manifest: parsed,
+      readHeadRevision,
+      runCommand: async () => ({
+        id: "test",
+        candidateId: candidate.id,
+        candidateRevision: 2,
+        bindingExplicit: true,
+        command: "npm test",
+        status: "passed",
+      }),
+    });
 
   // Evidence that does not name the tree it came from is evidence about nothing.
   await assert.rejects(() => run(async () => "b".repeat(40)), /would describe a different commit/);
   await assert.rejects(
-    () => runRepositoryVerification({ worktreePath: "/tmp/wt", candidate: { id: "AH-1", revisionNumber: 1 }, manifest: parsed }),
+    () =>
+      runRepositoryVerification({
+        worktreePath: "/tmp/wt",
+        candidate: { id: "AH-1", revisionNumber: 1 },
+        manifest: parsed,
+      }),
     /recorded head revision/,
   );
 

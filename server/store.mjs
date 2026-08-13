@@ -17,10 +17,7 @@ import {
   TASK_STORE_SCHEMA_VERSION,
 } from "./run-activity.mjs";
 import { migratedStandardProfile } from "./workflow-profiles.mjs";
-import {
-  projectTaskPollState,
-  projectTaskSummary,
-} from "./task-projections.mjs";
+import { projectTaskPollState, projectTaskSummary } from "./task-projections.mjs";
 
 const EMPTY_STATE = {
   schemaVersion: TASK_STORE_SCHEMA_VERSION,
@@ -59,12 +56,7 @@ function repriceTaskUsage(task, settings) {
     const artifactModel = artifact.model == null ? null : normalizeModelId(artifact.model);
     artifact.model = artifactModel;
     artifact.usage = artifactModel
-      ? enrichUsage(
-          artifactModel,
-          artifact.usage,
-          settings.pricing?.rates,
-          settings.pricing?.version,
-        )
+      ? enrichUsage(artifactModel, artifact.usage, settings.pricing?.rates, settings.pricing?.version)
       : normalizeHarnessUsage(artifact.usage, settings.pricing?.version);
     inputTokens += artifact.usage.inputTokens;
     cachedInputTokens += artifact.usage.cachedInputTokens;
@@ -142,9 +134,11 @@ export class JsonTaskStore {
   }
 
   async listSummaries() {
-    return (await this.list()).map((task) => projectTaskSummary(task, {
-      pollVersion: jsonPollVersion(task),
-    }));
+    return (await this.list()).map((task) =>
+      projectTaskSummary(task, {
+        pollVersion: jsonPollVersion(task),
+      }),
+    );
   }
 
   async listPollStates() {
@@ -152,15 +146,17 @@ export class JsonTaskStore {
   }
 
   async listPullRequestTasks() {
-    return clone(this.#state.tasks).filter((task) => (
-      (task.status === "merging" && task.pullRequestIntent?.status === "publishing") ||
-      (task.status === "awaiting-pr-merge" && task.pullRequestIntent?.status === "open")
-    ));
+    return clone(this.#state.tasks).filter(
+      (task) =>
+        (task.status === "merging" && task.pullRequestIntent?.status === "publishing") ||
+        (task.status === "awaiting-pr-merge" && task.pullRequestIntent?.status === "open"),
+    );
   }
 
   async listWorktreeTasks() {
-    return clone(this.#state.tasks).filter((task) =>
-      (task.workPackages?.length ?? 0) > 0 || (task.candidates?.length ?? 0) > 0);
+    return clone(this.#state.tasks).filter(
+      (task) => (task.workPackages?.length ?? 0) > 0 || (task.candidates?.length ?? 0) > 0,
+    );
   }
 
   async get(id) {
@@ -257,7 +253,13 @@ export class JsonTaskStore {
 }
 
 function configuredModels(stagePolicies) {
-  const models = [...new Set(Object.values(stagePolicies ?? {}).map((policy) => normalizeModelId(policy?.model)).filter(Boolean))];
+  const models = [
+    ...new Set(
+      Object.values(stagePolicies ?? {})
+        .map((policy) => normalizeModelId(policy?.model))
+        .filter(Boolean),
+    ),
+  ];
   return (models.length ? models : ["gpt-5.6-luna"]).map((model) => ({
     provider: providerForModelId(model) === "claude" ? "anthropic" : "openai",
     model,
@@ -331,16 +333,20 @@ export function migratePersistedTaskState(state) {
     }
     if (task.grillSession && task.grillSession.policySnapshot === undefined) {
       task.grillSession.policySnapshot = task.grillPolicy;
-      task.grillSession.acceptedRecommendationCount = task.grillSession.questions
-        .filter((question) => question.answerSource === "accepted-assumption").length;
-      task.grillSession.completionSource = task.grillSession.status === "completed"
-        ? task.grillSession.questions.length === 0
-          ? "no-questions"
-          : "legacy-unverified"
-        : null;
+      task.grillSession.acceptedRecommendationCount = task.grillSession.questions.filter(
+        (question) => question.answerSource === "accepted-assumption",
+      ).length;
+      task.grillSession.completionSource =
+        task.grillSession.status === "completed"
+          ? task.grillSession.questions.length === 0
+            ? "no-questions"
+            : "legacy-unverified"
+          : null;
       changed = true;
     }
-    const taskModel = normalizeModelId(task.agentConfig?.model ?? task.models?.[0]?.model ?? state.settings.defaultModel);
+    const taskModel = normalizeModelId(
+      task.agentConfig?.model ?? task.models?.[0]?.model ?? state.settings.defaultModel,
+    );
     if (!task.agentConfig) {
       task.agentConfig = {
         model: taskModel,
@@ -381,10 +387,13 @@ export function migratePersistedTaskState(state) {
       artifacts: task.artifacts?.map((artifact) => ({ model: artifact.model, usage: artifact.usage })),
     });
     repriceTaskUsage(task, state.settings);
-    if (JSON.stringify({
-      usage: task.usage,
-      artifacts: task.artifacts?.map((artifact) => ({ model: artifact.model, usage: artifact.usage })),
-    }) !== usageSnapshot) changed = true;
+    if (
+      JSON.stringify({
+        usage: task.usage,
+        artifacts: task.artifacts?.map((artifact) => ({ model: artifact.model, usage: artifact.usage })),
+      }) !== usageSnapshot
+    )
+      changed = true;
     if (task.status === "awaiting-approval") {
       task.status = "awaiting-spec-approval";
       changed = true;
@@ -413,7 +422,8 @@ export function migratePersistedTaskState(state) {
     task.status = "failed";
     task.activeRunKind = null;
     task.activeRunReservationId = null;
-    task.error = "The local harness stopped while this task was running. Start it again to retry the stage; the interruption did not consume the human retry allowance.";
+    task.error =
+      "The local harness stopped while this task was running. Start it again to retry the stage; the interruption did not consume the human retry allowance.";
     interruptActiveRuns(task, now, task.error);
     task.updatedAt = now;
     const interruptedRun = [...task.runs].reverse().find((run) => run.status === "interrupted");
@@ -447,9 +457,7 @@ export function createTaskRecord(state, input) {
   const profileStagePolicies = clone(input.profileStagePolicies ?? state.settings.profileStagePolicies);
   const workflowProfile = clone(input.workflowProfile ?? migratedStandardProfile());
   const stagePolicies = clone(
-    input.stagePolicies
-      ?? profileStagePolicies?.[workflowProfile.selected]
-      ?? state.settings.stagePolicies,
+    input.stagePolicies ?? profileStagePolicies?.[workflowProfile.selected] ?? state.settings.stagePolicies,
   );
   const model = normalizeModelId(input.model ?? state.settings.defaultModel);
   const provider = resolveTaskProvider(stagePolicies, model, input.provider ?? null);
@@ -496,9 +504,7 @@ export function createTaskRecord(state, input) {
     completedStages: continuation ? importedStages : [],
     stageRun: 0,
     stageRunLimit: DEFAULT_STAGE_RUN_LIMIT,
-    stageRunLimits: Object.fromEntries(
-      CANONICAL_RUN_STAGES.map((stage) => [stage, DEFAULT_STAGE_RUN_LIMIT]),
-    ),
+    stageRunLimits: Object.fromEntries(CANONICAL_RUN_STAGES.map((stage) => [stage, DEFAULT_STAGE_RUN_LIMIT])),
     createdAt: now,
     updatedAt: now,
     startedAt: null,
@@ -515,14 +521,16 @@ export function createTaskRecord(state, input) {
     decisions: importedDecisions,
     grillSession: clone(continuation?.grillSession ?? null),
     approvals: continuation
-      ? [{
-          id: crypto.randomUUID(),
-          stage: "specification",
-          note: `Imported approved investigation handoff from ${continuation.sourceTaskId}.`,
-          createdAt: continuation.sourceApprovedAt,
-          sourceTaskId: continuation.sourceTaskId,
-          sourceApprovalId: continuation.sourceApprovalId,
-        }]
+      ? [
+          {
+            id: crypto.randomUUID(),
+            stage: "specification",
+            note: `Imported approved investigation handoff from ${continuation.sourceTaskId}.`,
+            createdAt: continuation.sourceApprovedAt,
+            sourceTaskId: continuation.sourceTaskId,
+            sourceApprovalId: continuation.sourceApprovalId,
+          },
+        ]
       : [],
     workPackages: [],
     candidates: [],

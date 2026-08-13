@@ -9,18 +9,17 @@ import { SqliteTaskStore } from "./sqlite-store.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dataPath = process.env.AGENT_HARNESS_DATA ?? path.join(root, ".data", "tasks.json");
-const databasePath = process.env.AGENT_HARNESS_DATABASE ?? (
-  dataPath.toLowerCase().endsWith(".json")
-    ? `${dataPath.slice(0, -5)}.sqlite3`
-    : `${dataPath}.sqlite3`
-);
+const databasePath =
+  process.env.AGENT_HARNESS_DATABASE ??
+  (dataPath.toLowerCase().endsWith(".json") ? `${dataPath.slice(0, -5)}.sqlite3` : `${dataPath}.sqlite3`);
 const configuredRepository = process.env.AGENT_HARNESS_REPOSITORY;
 const suggestedRepository = configuredRepository ?? root;
 const port = Number(process.env.AGENT_HARNESS_PORT ?? 4310);
 
-const store = process.env.AGENT_HARNESS_STORE === "json"
-  ? new JsonTaskStore(dataPath)
-  : new SqliteTaskStore(databasePath, { legacyJsonPath: dataPath });
+const store =
+  process.env.AGENT_HARNESS_STORE === "json"
+    ? new JsonTaskStore(dataPath)
+    : new SqliteTaskStore(databasePath, { legacyJsonPath: dataPath });
 await store.init();
 const orchestrator = new TaskOrchestrator(store);
 await orchestrator.recoverMergeIntents();
@@ -52,9 +51,11 @@ server.listen(port, "127.0.0.1", () => {
 });
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
-  process.on(signal, () => server.close(() => {
-    stopPullRequestPolling();
-    store.close?.();
-    process.exit(0);
-  }));
+  process.on(signal, () =>
+    server.close(() => {
+      stopPullRequestPolling();
+      store.close?.();
+      process.exit(0);
+    }),
+  );
 }

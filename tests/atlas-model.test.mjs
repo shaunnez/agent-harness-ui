@@ -14,7 +14,18 @@ import {
 test("atlas renders the ten canonical workflow rooms once and in order", () => {
   assert.deepEqual(
     atlasRooms.map((room) => room.stageId),
-    ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review", "approval"],
+    [
+      "triage",
+      "scouts",
+      "grill",
+      "specification",
+      "plan",
+      "implement",
+      "dev-review",
+      "test",
+      "final-review",
+      "approval",
+    ],
   );
   assert.equal(new Set(atlasRooms.map((room) => room.stageId)).size, 10);
   assert.equal(new Set(atlasRooms.map((room) => room.roomName)).size, 10);
@@ -22,7 +33,10 @@ test("atlas renders the ten canonical workflow rooms once and in order", () => {
   assert.deepEqual(atlasConnections[5], ["implement", "dev-review"]);
   assert.deepEqual(atlasConnections[8], ["final-review", "approval"]);
   assert.equal(atlasRoads.length, 9);
-  assert.deepEqual(atlasRepairRoads.map((road) => road.from), ["dev-review", "test"]);
+  assert.deepEqual(
+    atlasRepairRoads.map((road) => road.from),
+    ["dev-review", "test"],
+  );
   assert.deepEqual(getAtlasTransitionPath("implement", "dev-review"), atlasRoads[5].points);
   assert.deepEqual(getAtlasTransitionPath("dev-review", "implement"), atlasRepairRoads[0].points);
   assert.deepEqual(getAtlasTransitionPath("approval", "dev-review"), []);

@@ -23,7 +23,10 @@ test("parses supported GitHub remotes and derives a revision-bound branch", () =
   assert.equal(parseGitHubRepository("https://github.com/acme/widgets.git"), "acme/widgets");
   assert.equal(parseGitHubRepository("git@github.com:acme/widgets.git"), "acme/widgets");
   assert.equal(parseGitHubRepository("ssh://git@github.com/acme/widgets.git"), "acme/widgets");
-  assert.throws(() => parseGitHubRepository("https://gitlab.com/acme/widgets.git"), /not a supported GitHub/i);
+  assert.throws(
+    () => parseGitHubRepository("https://gitlab.com/acme/widgets.git"),
+    /not a supported GitHub/i,
+  );
   assert.equal(pullRequestBranch(task, candidate), `agent-harness/ah-042-c1-r3-${headRevision.slice(0, 8)}`);
 });
 
@@ -71,7 +74,11 @@ test("pushes the exact candidate and idempotently creates one matching PR", asyn
   assert.equal(result.number, 84);
   assert.equal(result.state, "open");
   assert.equal(result.headRevision, headRevision);
-  assert.ok(calls.some((call) => call.command === "git" && call.args.includes(`${headRevision}:refs/heads/${headBranch}`)));
+  assert.ok(
+    calls.some(
+      (call) => call.command === "git" && call.args.includes(`${headRevision}:refs/heads/${headBranch}`),
+    ),
+  );
   const create = calls.find((call) => call.command === "gh" && call.args[1] === "create");
   assert.ok(create);
   assert.match(create.args[create.args.indexOf("--body") + 1], /Ship it/);
@@ -94,7 +101,8 @@ test("fails closed before push when the GitHub target advanced", async () => {
   });
   await assert.rejects(
     () => manager.publish({ task, candidate }),
-    (error) => error.code === "GITHUB_TARGET_DIVERGED" &&
+    (error) =>
+      error.code === "GITHUB_TARGET_DIVERGED" &&
       error.statusCode === 409 &&
       error.targetRevision === "c".repeat(40),
   );
@@ -126,18 +134,20 @@ test("discovers and persists a GitHub delivery remote when it is not named origi
       if (command === "git" && args[0] === "push") return { stdout: "", stderr: "" };
       if (command === "gh" && args[1] === "list") {
         return {
-          stdout: JSON.stringify([{
-            number: 84,
-            url: "https://github.com/acme/widgets/pull/84",
-            state: "OPEN",
-            baseRefName: "main",
-            baseRefOid: baseRevision,
-            headRefName: headBranch,
-            headRefOid: headRevision,
-            mergedAt: null,
-            closedAt: null,
-            mergeCommit: null,
-          }]),
+          stdout: JSON.stringify([
+            {
+              number: 84,
+              url: "https://github.com/acme/widgets/pull/84",
+              state: "OPEN",
+              baseRefName: "main",
+              baseRefOid: baseRevision,
+              headRefName: headBranch,
+              headRefOid: headRevision,
+              mergedAt: null,
+              closedAt: null,
+              mergeCommit: null,
+            },
+          ]),
           stderr: "",
         };
       }
@@ -147,8 +157,13 @@ test("discovers and persists a GitHub delivery remote when it is not named origi
 
   const result = await manager.publish({ task, candidate });
   assert.equal(result.remoteName, "eversor");
-  assert.ok(calls.some((call) => call.command === "git" && call.args.join(" ") ===
-    `push eversor ${headRevision}:refs/heads/${headBranch}`));
+  assert.ok(
+    calls.some(
+      (call) =>
+        call.command === "git" &&
+        call.args.join(" ") === `push eversor ${headRevision}:refs/heads/${headBranch}`,
+    ),
+  );
 });
 
 test("rejects a PR whose head moved away from the approved SHA", async () => {
@@ -171,13 +186,14 @@ test("rejects a PR whose head moved away from the approved SHA", async () => {
     }),
   });
   await assert.rejects(
-    () => manager.inspect({
-      repository: "acme/widgets",
-      number: 84,
-      targetBranch: "main",
-      headBranch,
-      headRevision,
-    }),
+    () =>
+      manager.inspect({
+        repository: "acme/widgets",
+        number: 84,
+        targetBranch: "main",
+        headBranch,
+        headRevision,
+      }),
     (error) => error.statusCode === 409 && /head moved away/i.test(error.message),
   );
 });
@@ -200,5 +216,8 @@ test("fetches a moved GitHub target without updating the local target branch", a
   });
   assert.equal(await manager.fetchTarget(candidate), targetRevision);
   assert.ok(calls.some((call) => call.args.join(" ") === "fetch --no-tags origin refs/heads/main"));
-  assert.equal(calls.some((call) => call.args.includes("refs/heads/main:refs/heads/main")), false);
+  assert.equal(
+    calls.some((call) => call.args.includes("refs/heads/main:refs/heads/main")),
+    false,
+  );
 });

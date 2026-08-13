@@ -21,11 +21,7 @@ import {
   providerRuntimeDefaults,
   readClaudeModelCatalog,
 } from "./model-catalog.mjs";
-import {
-  conciseToolResult,
-  formatCommand,
-  runProcess,
-} from "./process-runtime.mjs";
+import { conciseToolResult, formatCommand, runProcess } from "./process-runtime.mjs";
 
 /**
  * Claude Code `--output-format stream-json` parsing.
@@ -99,9 +95,7 @@ const CLAUDE_ENV_ALLOWLIST = [
   "SSL_CERT_DIR",
 ];
 
-const FALLBACK_PATH = process.platform === "win32"
-  ? "C:\\Windows\\System32"
-  : "/usr/local/bin:/usr/bin:/bin";
+const FALLBACK_PATH = process.platform === "win32" ? "C:\\Windows\\System32" : "/usr/local/bin:/usr/bin:/bin";
 
 /**
  * Build the child environment for a Claude spawn. A new function beside
@@ -139,7 +133,12 @@ export async function locateClaude() {
   if (process.env.CLAUDE_BIN) return process.env.CLAUDE_BIN;
   const command = process.platform === "win32" ? "where.exe" : "which";
   const result = await runProcess(command, ["claude"], { timeoutMs: 5_000, label: CLAUDE_RUN_LABEL });
-  return result.stdout.split(/\r?\n/).map((line) => line.trim()).find(Boolean) ?? null;
+  return (
+    result.stdout
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find(Boolean) ?? null
+  );
 }
 
 /**
@@ -202,13 +201,13 @@ export async function getClaudeStatus({ canary = false, cwd = null } = {}) {
             ? `${probe.authMethod ?? "Signed in"}; read-only confinement verified${execArgBudget?.detail ? ` · ${execArgBudget.detail}` : ""}`
             : confinement
               ? `${probe.authMethod ?? "Signed in"}; ${confinement.detail}`
-              // No canary ran, because status never asks for one — `canary` defaults to false
-              // and the only caller leaves it that way, so this branch is what the Settings
-              // and sidebar rows always show. Read bare, "not yet verified" suggests something
-              // is outstanding; nothing is. Confinement is asserted fresh immediately before
-              // every Claude stage dispatch instead, so say where it is checked rather than
-              // reporting the absence of a check this call deliberately did not pay for.
-              : `${probe.authMethod ?? "Signed in"}; read-only confinement is checked before each stage runs, not by this status view`,
+              : // No canary ran, because status never asks for one — `canary` defaults to false
+                // and the only caller leaves it that way, so this branch is what the Settings
+                // and sidebar rows always show. Read bare, "not yet verified" suggests something
+                // is outstanding; nothing is. Confinement is asserted fresh immediately before
+                // every Claude stage dispatch instead, so say where it is checked rather than
+                // reporting the absence of a check this call deliberately did not pay for.
+                `${probe.authMethod ?? "Signed in"}; read-only confinement is checked before each stage runs, not by this status view`,
     };
   } catch (error) {
     return {
@@ -359,12 +358,14 @@ export function createClaudeStreamParser() {
   function parseSystem(event) {
     if (event.subtype !== "init") return [];
     state.sessionId = event.session_id ?? null;
-    return [{
-      type: "activity",
-      tone: "info",
-      title: "Agent session started",
-      detail: event.session_id ?? "Claude session created",
-    }];
+    return [
+      {
+        type: "activity",
+        tone: "info",
+        title: "Agent session started",
+        detail: event.session_id ?? "Claude session created",
+      },
+    ];
   }
 
   function parseRateLimit(event) {
@@ -372,14 +373,16 @@ export function createClaudeStreamParser() {
     if (!info || typeof info !== "object") return [];
     state.rateLimitInfo = info;
     const allowed = info.status === "allowed";
-    return [{
-      type: "activity",
-      tone: allowed ? "info" : "warning",
-      title: allowed ? "Plan allocation available" : "Plan allocation limited",
-      detail: [info.rateLimitType, info.status, info.isUsingOverage ? "using overage" : null]
-        .filter(Boolean)
-        .join(" · "),
-    }];
+    return [
+      {
+        type: "activity",
+        tone: allowed ? "info" : "warning",
+        title: allowed ? "Plan allocation available" : "Plan allocation limited",
+        detail: [info.rateLimitType, info.status, info.isUsingOverage ? "using overage" : null]
+          .filter(Boolean)
+          .join(" · "),
+      },
+    ];
   }
 
   function parseAssistant(event) {
@@ -421,7 +424,13 @@ export function createClaudeStreamParser() {
         tone: "info",
         title: "Inspecting repository",
         detail,
-        toolCall: { id, name: "command_execution", category: "repository-command", phase: "started", result: null },
+        toolCall: {
+          id,
+          name: "command_execution",
+          category: "repository-command",
+          phase: "started",
+          result: null,
+        },
       };
     }
 
@@ -430,14 +439,28 @@ export function createClaudeStreamParser() {
     const category = mcp ? "mcp" : "builtin-tool";
     const server = mcp ? mcp.server : null;
     const detail = [server, toolName, describeToolInput(input)].filter(Boolean).join(" · ");
-    const entry = { kind: "tool", name: toolName, category, server, detail, signature: toolCallSignature(name, input) };
+    const entry = {
+      kind: "tool",
+      name: toolName,
+      category,
+      server,
+      detail,
+      signature: toolCallSignature(name, input),
+    };
     if (id) pending.set(id, entry);
     return {
       type: "activity",
       tone: "info",
       title: "Tool started",
       detail,
-      toolCall: { id, name: toolName, category, ...(server ? { server } : {}), phase: "started", result: null },
+      toolCall: {
+        id,
+        name: toolName,
+        category,
+        ...(server ? { server } : {}),
+        phase: "started",
+        result: null,
+      },
     };
   }
 
@@ -563,7 +586,9 @@ export function createClaudeStreamParser() {
       events.push({
         type: "activity",
         tone: isRepeatOfAnswered ? "warning" : "danger",
-        title: isRepeatOfAnswered ? "Permission denied (ignored — repeat of a call already answered)" : "Permission denied",
+        title: isRepeatOfAnswered
+          ? "Permission denied (ignored — repeat of a call already answered)"
+          : "Permission denied",
         detail: [denial?.tool_name, formatCommand(denial?.tool_input?.command)].filter(Boolean).join(" · "),
       });
     }
@@ -794,21 +819,21 @@ export function buildClaudeSandboxSettings(cwd, sandbox, networkAccess = false, 
       filesystem: {
         allowRead: [cwd, ...extraReadRoots],
         ...(writable
-          // Deliberately no denyWrite: the sandbox is default-deny, so the allow entry is
-          // necessary and sufficient.
-          //
-          // It used also to be *unsafe* to add one, because candidates lived inside the
-          // repository (`<repo>/.data/worktrees/…`) and a repo-root denyWrite would have
-          // been an ancestor of this allow, defeating it entirely and blocking the writes
-          // the stage exists to make. `defaultWorktreeRoot` now places candidates outside
-          // the checkout, so that particular trap is gone and a repo-root denyWrite would
-          // be defence in depth rather than a footgun. It is still not added here: it would
-          // be a change to a safety-relevant profile and needs its own write-canary run to
-          // establish, not a comment claiming it is fine.
-          ? { allowWrite: [cwd] }
-          // Read-only has no nested allowWrite for a denyWrite to defeat, so the
-          // explicit deny stays as belt-and-braces on top of default-deny.
-          : { allowWrite: [], denyWrite: [cwd] }),
+          ? // Deliberately no denyWrite: the sandbox is default-deny, so the allow entry is
+            // necessary and sufficient.
+            //
+            // It used also to be *unsafe* to add one, because candidates lived inside the
+            // repository (`<repo>/.data/worktrees/…`) and a repo-root denyWrite would have
+            // been an ancestor of this allow, defeating it entirely and blocking the writes
+            // the stage exists to make. `defaultWorktreeRoot` now places candidates outside
+            // the checkout, so that particular trap is gone and a repo-root denyWrite would
+            // be defence in depth rather than a footgun. It is still not added here: it would
+            // be a change to a safety-relevant profile and needs its own write-canary run to
+            // establish, not a comment claiming it is fine.
+            { allowWrite: [cwd] }
+          : // Read-only has no nested allowWrite for a denyWrite to defeat, so the
+            // explicit deny stays as belt-and-braces on top of default-deny.
+            { allowWrite: [], denyWrite: [cwd] }),
       },
       // Deterministic denial. WebFetch/WebSearch are absent from the tool allowlist,
       // and the CLI's own API traffic is necessarily outside the sandbox.
@@ -892,13 +917,21 @@ export async function runClaude({
   }
   // Refuses rather than silently downgrading an unsupported effort level.
   const effort = assertSupportedReasoning(model, reasoning);
-  const runtimeTemp = tempDirectory
-    ?? process.env.AGENT_HARNESS_TEMP
-    ?? path.join(os.tmpdir(), "agent-harness");
+  const runtimeTemp =
+    tempDirectory ?? process.env.AGENT_HARNESS_TEMP ?? path.join(os.tmpdir(), "agent-harness");
   await mkdir(runtimeTemp, { recursive: true });
 
   const sessionId = randomUUID();
-  const { args, stdin } = buildClaudeSpawn({ cwd, prompt, sandbox, networkAccess, extraReadRoots, model, effort, sessionId });
+  const { args, stdin } = buildClaudeSpawn({
+    cwd,
+    prompt,
+    sandbox,
+    networkAccess,
+    extraReadRoots,
+    model,
+    effort,
+    sessionId,
+  });
   const parser = createClaudeStreamParser();
   // Abort the child the moment the host stops being able to exec a shell. Waiting adds
   // nothing — every remaining command dies the same way — and in a write stage the
@@ -958,7 +991,9 @@ export async function runClaude({
     // permission allowlist. The tool and command distinguish the two: an ordinary
     // read-only command here means the allowlist is wrong, not the agent.
     const denied = parsed.fatalPermissionDenials
-      .map((denial) => [denial?.tool_name, formatCommand(denial?.tool_input?.command)].filter(Boolean).join(" "))
+      .map((denial) =>
+        [denial?.tool_name, formatCommand(denial?.tool_input?.command)].filter(Boolean).join(" "),
+      )
       .filter(Boolean);
     throw new Error(
       `Claude attempted ${parsed.fatalPermissionDenials.length} denied tool call${parsed.fatalPermissionDenials.length === 1 ? "" : "s"} during a ${sandbox} stage.${denied.length ? ` First denied: ${denied[0]}.` : ""}`,
@@ -981,7 +1016,13 @@ export async function runClaude({
   if (!parsed.finalText) throw new Error("Claude completed without returning an artifact.");
 
   const usage = {
-    ...(parsed.usage ?? { inputTokens: 0, cachedInputTokens: 0, cacheWriteTokens: 0, outputTokens: 0, totalTokens: 0 }),
+    ...(parsed.usage ?? {
+      inputTokens: 0,
+      cachedInputTokens: 0,
+      cacheWriteTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+    }),
     // Carried on the usage record itself so `enrichUsage` picks both up with no
     // orchestrator change, and so re-enriching on boot stays idempotent.
     ...(parsed.totalCostUsd == null ? {} : { reportedCost: parsed.totalCostUsd }),
@@ -998,9 +1039,19 @@ export async function runClaude({
     // How the harness notices the provider changing its prices.
     const detail = `Reported $${divergence.reportedCost} vs rate card $${divergence.estimatedCost}`;
     console.warn(`[claude-runtime] cost divergence for ${model}: ${detail}`);
-    onEvent({ type: "activity", tone: "warning", title: "Reported cost diverges from the rate card", detail });
+    onEvent({
+      type: "activity",
+      tone: "warning",
+      title: "Reported cost diverges from the rate card",
+      detail,
+    });
   }
-  return { finalText: parsed.finalText, usage, sessionId: parsed.sessionId, rateLimitInfo: parsed.rateLimitInfo };
+  return {
+    finalText: parsed.finalText,
+    usage,
+    sessionId: parsed.sessionId,
+    rateLimitInfo: parsed.rateLimitInfo,
+  };
 }
 
 /**
@@ -1012,8 +1063,8 @@ export async function runClaude({
  */
 function shellStartFailureError(sandbox, cwd) {
   return new Error(
-    `The Bash tool could not start a shell during a ${sandbox} stage at ${cwd}: the sandbox profile's exec argument list exceeds the OS limit (E2BIG). `
-      + "This is a host environment fault, not a verification result, so the run is failed rather than reported as needing repair.",
+    `The Bash tool could not start a shell during a ${sandbox} stage at ${cwd}: the sandbox profile's exec argument list exceeds the OS limit (E2BIG). ` +
+      "This is a host environment fault, not a verification result, so the run is failed rather than reported as needing repair.",
   );
 }
 
@@ -1058,7 +1109,13 @@ async function readExecArgBudgetInputs(cwd) {
   const target = cwd ?? process.cwd();
   const applicable = execArgBudgetApplies();
   if (!applicable) {
-    return { applicable, cwd: target, cwdLength: target.length, repositoryRoot: null, registeredWorktrees: null };
+    return {
+      applicable,
+      cwd: target,
+      cwdLength: target.length,
+      repositoryRoot: null,
+      registeredWorktrees: null,
+    };
   }
   const { repositoryRoot, registeredWorktrees } = await readRegisteredWorktrees(target);
   return { applicable, cwd: target, cwdLength: target.length, repositoryRoot, registeredWorktrees };
@@ -1223,9 +1280,10 @@ export async function runClaudeSandboxCanary({
   const key = hostCheckCacheKey("canary", sandbox, inputs);
   const cached = canaryCache.get(key);
   if (cached && now() - cached.at < CANARY_TTL_MS) return cached.result;
-  const result = sandbox === "workspace-write"
-    ? await executeClaudeWriteCanary({ timeoutMs, model })
-    : await executeClaudeSandboxCanary({ timeoutMs, model });
+  const result =
+    sandbox === "workspace-write"
+      ? await executeClaudeWriteCanary({ timeoutMs, model })
+      : await executeClaudeSandboxCanary({ timeoutMs, model });
   canaryCache.set(key, { at: now(), result });
   return result;
 }
@@ -1280,10 +1338,14 @@ export function classifyClaudeWriteCanary({
   // guard — one layer, and not the one that matches resolved paths, which is what makes
   // the provisioned-dependency symlink safe.
   if (sandboxUnavailable) {
-    return canaryResult(false, "The OS sandbox failed to initialize, so write confinement rests on the permission layer alone.", {
-      sandboxUnavailable: true,
-      exitCode,
-    });
+    return canaryResult(
+      false,
+      "The OS sandbox failed to initialize, so write confinement rests on the permission layer alone.",
+      {
+        sandboxUnavailable: true,
+        exitCode,
+      },
+    );
   }
   if (escaped.length) {
     return canaryResult(false, `Writes escaped the worktree: ${escaped.join(", ")}.`, { escaped, exitCode });
@@ -1301,15 +1363,23 @@ export function classifyClaudeWriteCanary({
     );
   }
   if (!editToolWorked) {
-    return canaryResult(false, "Bash writes work but the Edit tool was refused; the permission rule or acceptEdits is not taking effect.", {
-      inconclusive: true,
-      exitCode,
-    });
+    return canaryResult(
+      false,
+      "Bash writes work but the Edit tool was refused; the permission rule or acceptEdits is not taking effect.",
+      {
+        inconclusive: true,
+        exitCode,
+      },
+    );
   }
-  return canaryResult(true, "Writes inside the worktree succeeded through both Bash and the Edit tool, and every escape target is untouched.", {
-    exitCode,
-    escaped: [],
-  });
+  return canaryResult(
+    true,
+    "Writes inside the worktree succeeded through both Bash and the Edit tool, and every escape target is untouched.",
+    {
+      exitCode,
+      escaped: [],
+    },
+  );
 }
 
 async function executeClaudeWriteCanary({ timeoutMs, model }) {
@@ -1384,8 +1454,12 @@ async function executeClaudeWriteCanary({ timeoutMs, model }) {
     }
     return classifyClaudeWriteCanary({
       sandboxUnavailable,
-      insideWritten: (await readFile(path.join(worktree, "inside.txt"), "utf8").catch(() => "")).includes("INSIDE"),
-      editToolWorked: (await readFile(path.join(worktree, "editable.txt"), "utf8").catch(() => "")).includes("EDITED"),
+      insideWritten: (await readFile(path.join(worktree, "inside.txt"), "utf8").catch(() => "")).includes(
+        "INSIDE",
+      ),
+      editToolWorked: (await readFile(path.join(worktree, "editable.txt"), "utf8").catch(() => "")).includes(
+        "EDITED",
+      ),
       escaped,
       shellFailed,
       exitCode: run.code,
@@ -1495,28 +1569,44 @@ export function classifyClaudeSandboxCanary({
   // observations a pass is built from, so without this the canary reports agreement
   // precisely when the thing it verifies is missing.
   if (sandboxUnavailable) {
-    return canaryResult(false, "The OS sandbox failed to initialize, so read-only confinement rests on one layer instead of two.", {
-      sandboxUnavailable: true,
-      exitCode,
-    });
+    return canaryResult(
+      false,
+      "The OS sandbox failed to initialize, so read-only confinement rests on one layer instead of two.",
+      {
+        sandboxUnavailable: true,
+        exitCode,
+      },
+    );
   }
   if (mutated) {
-    return canaryResult(false, "A sandboxed write into the scratch directory succeeded; read-only is not confined on this host.", {
-      mutated: true,
-      exitCode,
-    });
+    return canaryResult(
+      false,
+      "A sandboxed write into the scratch directory succeeded; read-only is not confined on this host.",
+      {
+        mutated: true,
+        exitCode,
+      },
+    );
   }
   if (!attempted) {
-    return canaryResult(false, "The canary agent never attempted the guarded write, so confinement was not demonstrated.", {
-      inconclusive: true,
-      exitCode,
-    });
+    return canaryResult(
+      false,
+      "The canary agent never attempted the guarded write, so confinement was not demonstrated.",
+      {
+        inconclusive: true,
+        exitCode,
+      },
+    );
   }
   if (!refused && !permissionDenials) {
-    return canaryResult(false, "The guarded write was neither refused nor denied, and the file is unchanged; the result is ambiguous.", {
-      inconclusive: true,
-      exitCode,
-    });
+    return canaryResult(
+      false,
+      "The guarded write was neither refused nor denied, and the file is unchanged; the result is ambiguous.",
+      {
+        inconclusive: true,
+        exitCode,
+      },
+    );
   }
   return canaryResult(true, "A sandboxed write was refused and the guarded file is unchanged.", {
     exitCode,
@@ -1539,7 +1629,9 @@ function countEscalationAttempts(line) {
     return 0;
   }
   const blocks = Array.isArray(event?.message?.content) ? event.message.content : [];
-  return blocks.filter((block) => block?.type === "tool_use" && block?.input?.dangerouslyDisableSandbox === true).length;
+  return blocks.filter(
+    (block) => block?.type === "tool_use" && block?.input?.dangerouslyDisableSandbox === true,
+  ).length;
 }
 
 function canaryResult(passed, detail, extra = {}) {

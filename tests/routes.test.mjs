@@ -74,7 +74,10 @@ test("stores a safe parent route for changelog commit and file links", () => {
   for (const commitSha of ["2f9a8bcd00000000000000000000000000000000", "A".repeat(64)]) {
     const commitRoute = changelogRoute(parent, commitSha);
     const commitHash = serializeHashRoute(commitRoute);
-    assert.equal(commitHash, `#/changelog/commit/${commitSha}?from=tasks%2FAH-42%2Ftest%2Fresults%2Fapi-contract`);
+    assert.equal(
+      commitHash,
+      `#/changelog/commit/${commitSha}?from=tasks%2FAH-42%2Ftest%2Fresults%2Fapi-contract`,
+    );
     assert.deepEqual(parseHashRoute(commitHash), { route: commitRoute, valid: true });
 
     const route = changelogRoute(parent, commitSha, "src/components/RuntimeTaskWorkspace.tsx");
@@ -85,8 +88,16 @@ test("stores a safe parent route for changelog commit and file links", () => {
     );
     assert.deepEqual(parseHashRoute(hash), { route, valid: true });
   }
-  assert.equal(serializeHashRoute(changelogRoute(parent)), "#/changelog?from=tasks%2FAH-42%2Ftest%2Fresults%2Fapi-contract");
-  assert.deepEqual(parentTaskRoute(parent), { kind: "task", taskId: "AH-42", stageId: "test", detail: undefined });
+  assert.equal(
+    serializeHashRoute(changelogRoute(parent)),
+    "#/changelog?from=tasks%2FAH-42%2Ftest%2Fresults%2Fapi-contract",
+  );
+  assert.deepEqual(parentTaskRoute(parent), {
+    kind: "task",
+    taskId: "AH-42",
+    stageId: "test",
+    detail: undefined,
+  });
   assert.equal(appScreenForRoute(parent), "tasks");
 });
 
@@ -131,7 +142,12 @@ test("detail close and Escape return every task detail route to its stage parent
     { kind: "test-result", resultId: "browser-smoke" },
   ]) {
     const route = { kind: "task", taskId: "AH-42", stageId: "test", detail };
-    assert.deepEqual(parentTaskRoute(route), { kind: "task", taskId: "AH-42", stageId: "test", detail: undefined });
+    assert.deepEqual(parentTaskRoute(route), {
+      kind: "task",
+      taskId: "AH-42",
+      stageId: "test",
+      detail: undefined,
+    });
   }
 });
 
@@ -167,7 +183,12 @@ test("rejects a candidate-diff detail built from undefined candidate identity", 
 });
 
 test("round-trips candidate-diff routes across representative candidate identities and revisions", () => {
-  for (const [candidateId, revision] of [["C1", 1], ["C2", 3], ["candidate-with-dashes", 12], ["C1", 0]]) {
+  for (const [candidateId, revision] of [
+    ["C1", 1],
+    ["C2", 3],
+    ["candidate-with-dashes", 12],
+    ["C1", 0],
+  ]) {
     const route = {
       kind: "task",
       taskId: "AH-42",

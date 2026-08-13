@@ -3,33 +3,45 @@ import { suppliedTaskContext } from "./prompts.mjs";
 const SCOUTS = {
   "scout-code-path": {
     label: "Code path",
-    instruction: "Trace the entry point, direct callers, important branches, and terminal outcome for one task-relevant symbol or flow.",
-    limits: "Use at most 2 targeted searches and read at most 7 files. Stop at direct callers and immediate branches.",
+    instruction:
+      "Trace the entry point, direct callers, important branches, and terminal outcome for one task-relevant symbol or flow.",
+    limits:
+      "Use at most 2 targeted searches and read at most 7 files. Stop at direct callers and immediate branches.",
   },
   "scout-dependency": {
     label: "Dependencies",
-    instruction: "Map direct and first-tier transitive imports for the task-relevant module. Distinguish workspace packages from relative imports.",
-    limits: "Use at most 3 searches and read the target plus at most 5 directly imported local modules. Stop after one transitive layer.",
+    instruction:
+      "Map direct and first-tier transitive imports for the task-relevant module. Distinguish workspace packages from relative imports.",
+    limits:
+      "Use at most 3 searches and read the target plus at most 5 directly imported local modules. Stop after one transitive layer.",
   },
   "scout-pattern": {
     label: "Existing patterns",
-    instruction: "Find three or four representative usages of the task-relevant code pattern, including a conspicuous absence when useful.",
-    limits: "Use at most 3 searches and read at most 5 files. Sample the pattern; do not enumerate every call site.",
+    instruction:
+      "Find three or four representative usages of the task-relevant code pattern, including a conspicuous absence when useful.",
+    limits:
+      "Use at most 3 searches and read at most 5 files. Sample the pattern; do not enumerate every call site.",
   },
   "scout-schema": {
     label: "Schemas and boundaries",
-    instruction: "Locate task-relevant persistence schemas, validation schemas, event payloads, and TypeScript interfaces used at boundaries.",
-    limits: "Use at most 2 targeted searches and read at most 6 schema, config, migration, or boundary-type files.",
+    instruction:
+      "Locate task-relevant persistence schemas, validation schemas, event payloads, and TypeScript interfaces used at boundaries.",
+    limits:
+      "Use at most 2 targeted searches and read at most 6 schema, config, migration, or boundary-type files.",
   },
   "scout-test-inventory": {
     label: "Test inventory",
-    instruction: "Catalog representative unit, integration, and browser tests covering the task surface, or report a high-confidence absence.",
-    limits: "Use at most 3 searches and read at most 6 test files. Do not inspect implementation except to identify the target name.",
+    instruction:
+      "Catalog representative unit, integration, and browser tests covering the task surface, or report a high-confidence absence.",
+    limits:
+      "Use at most 3 searches and read at most 6 test files. Do not inspect implementation except to identify the target name.",
   },
   "scout-user-journey": {
     label: "User journey",
-    instruction: "Walk the implicated UI, API, or CLI journey from entry through branch to user-visible outcome.",
-    limits: "Use at most 3 searches and read at most 6 files. Stay on the selected surface except for a direct route or action crossing.",
+    instruction:
+      "Walk the implicated UI, API, or CLI journey from entry through branch to user-visible outcome.",
+    limits:
+      "Use at most 3 searches and read at most 6 files. Stay on the selected surface except for a direct route or action crossing.",
   },
 };
 
@@ -48,8 +60,12 @@ export function selectScoutDispatch(task, triageText = "") {
     ? requested
         .map((entry) => ({
           name: String(entry?.name ?? ""),
-          focus: String(entry?.focus ?? "").trim().slice(0, 500),
-          reason: String(entry?.reason ?? "").trim().slice(0, 500),
+          focus: String(entry?.focus ?? "")
+            .trim()
+            .slice(0, 500),
+          reason: String(entry?.reason ?? "")
+            .trim()
+            .slice(0, 500),
         }))
         .filter((entry) => SCOUTS[entry.name] && entry.focus)
     : [];
@@ -57,24 +73,34 @@ export function selectScoutDispatch(task, triageText = "") {
   if (Array.isArray(requested) && requested.length === 0) {
     return {
       selected: [],
-      rationale: String(selection?.rationale ?? "Triage found enough repository evidence and explicitly requested no scouts.").trim().slice(0, 1_000),
+      rationale: String(
+        selection?.rationale ?? "Triage found enough repository evidence and explicitly requested no scouts.",
+      )
+        .trim()
+        .slice(0, 1_000),
     };
   }
   if (unique.length) {
     return {
       selected: unique,
-      rationale: String(selection?.rationale ?? "Triage selected the smallest evidence set needed for this task.").trim().slice(0, 1_000),
+      rationale: String(
+        selection?.rationale ?? "Triage selected the smallest evidence set needed for this task.",
+      )
+        .trim()
+        .slice(0, 1_000),
     };
   }
   if (fastProfile) {
     return {
       selected: [],
-      rationale: "Fast profile defaults to zero scouts because triage did not identify one unresolved repository fact.",
+      rationale:
+        "Fast profile defaults to zero scouts because triage did not identify one unresolved repository fact.",
     };
   }
   return {
     selected: fallbackDispatch(task, cap),
-    rationale: "The triage response did not contain a usable explicit dispatch, so deterministic fallback routing was applied.",
+    rationale:
+      "The triage response did not contain a usable explicit dispatch, so deterministic fallback routing was applied.",
   };
 }
 
@@ -128,15 +154,17 @@ Return exactly one JSON object between these tags and no prose after the closing
           truncated: taskContext.truncated,
         },
         ...(triageArtifact
-          ? [{
-              kind: "artifact",
-              id: triageArtifact.id,
-              label: triageArtifact.name,
-              stage: "triage",
-              includedCharacters: triage.length,
-              originalCharacters: triageOriginal.length,
-              truncated: triage.length !== triageOriginal.length,
-            }]
+          ? [
+              {
+                kind: "artifact",
+                id: triageArtifact.id,
+                label: triageArtifact.name,
+                stage: "triage",
+                includedCharacters: triage.length,
+                originalCharacters: triageOriginal.length,
+                truncated: triage.length !== triageOriginal.length,
+              },
+            ]
           : []),
         {
           kind: "repository",
@@ -153,20 +181,29 @@ Return exactly one JSON object between these tags and no prose after the closing
 
 export function parseScoutReport(text) {
   const value = parseTaggedJson(text, "scout-report");
-  if (!value || !Array.isArray(value.findings)) throw new Error("Scout output did not contain a valid <scout-report> payload.");
+  if (!value || !Array.isArray(value.findings))
+    throw new Error("Scout output did not contain a valid <scout-report> payload.");
   return {
     status: value.status === "ok" ? "ok" : "error",
     findings: value.findings
       .slice(0, 12)
       .map((finding) => ({
-        file: String(finding?.file ?? "").trim().slice(0, 500),
-        line: Number.isInteger(Number(finding?.line)) && Number(finding.line) >= 0 ? Number(finding.line) : null,
-        fact: String(finding?.fact ?? "").trim().slice(0, 2_000),
+        file: String(finding?.file ?? "")
+          .trim()
+          .slice(0, 500),
+        line:
+          Number.isInteger(Number(finding?.line)) && Number(finding.line) >= 0 ? Number(finding.line) : null,
+        fact: String(finding?.fact ?? "")
+          .trim()
+          .slice(0, 2_000),
         confidence: ["high", "medium", "low"].includes(finding?.confidence) ? finding.confidence : "low",
       }))
       .filter((finding) => finding.file && finding.fact),
     uncertainties: Array.isArray(value.uncertainties)
-      ? value.uncertainties.map((item) => String(item).trim().slice(0, 1_000)).filter(Boolean).slice(0, 8)
+      ? value.uncertainties
+          .map((item) => String(item).trim().slice(0, 1_000))
+          .filter(Boolean)
+          .slice(0, 8)
       : [],
   };
 }
@@ -175,7 +212,10 @@ export function scoutReportMarkdown(spec, report) {
   const definition = SCOUTS[spec.name];
   const findings = report.findings.length
     ? report.findings
-        .map((finding) => `- \`${finding.file}${finding.line == null ? "" : `:${finding.line}`}\` - ${finding.fact} _(${finding.confidence})_`)
+        .map(
+          (finding) =>
+            `- \`${finding.file}${finding.line == null ? "" : `:${finding.line}`}\` - ${finding.fact} _(${finding.confidence})_`,
+        )
         .join("\n")
     : "- No relevant facts were found inside the scout budget.";
   const uncertainties = report.uncertainties.length
@@ -196,7 +236,8 @@ export function aggregateScoutReports(dispatch, reports) {
     .filter((entry) => entry.status === "ok")
     .flatMap((entry) =>
       entry.report.findings.map(
-        (finding) => `- **${SCOUTS[entry.spec.name].label}:** \`${finding.file}${finding.line == null ? "" : `:${finding.line}`}\` - ${finding.fact} _(${finding.confidence})_`,
+        (finding) =>
+          `- **${SCOUTS[entry.spec.name].label}:** \`${finding.file}${finding.line == null ? "" : `:${finding.line}`}\` - ${finding.fact} _(${finding.confidence})_`,
       ),
     );
   const uncertainties = reports.flatMap((entry) =>
@@ -212,11 +253,29 @@ function fallbackDispatch(task, cap) {
   const text = `${task.title} ${task.description}`.toLowerCase();
   const scored = [
     { name: "scout-code-path", score: 4 },
-    { name: "scout-user-journey", score: matches(text, /\b(ui|page|screen|button|modal|sidebar|dashboard|search|filter|toast|loading|url|route)\b/g) },
-    { name: "scout-schema", score: matches(text, /\b(api|schema|type|model|setting|token|cost|cache|persist|state|event|data)\b/g) },
-    { name: "scout-test-inventory", score: matches(text, /\b(test|verify|failure|failed|bug|repair|regression|qa)\b/g) },
-    { name: "scout-dependency", score: matches(text, /\b(dependency|integration|package|worktree|build|runtime|provider|connector)\b/g) },
-    { name: "scout-pattern", score: matches(text, /\b(pattern|existing|same|consistent|reuse|shared|component)\b/g) },
+    {
+      name: "scout-user-journey",
+      score: matches(
+        text,
+        /\b(ui|page|screen|button|modal|sidebar|dashboard|search|filter|toast|loading|url|route)\b/g,
+      ),
+    },
+    {
+      name: "scout-schema",
+      score: matches(text, /\b(api|schema|type|model|setting|token|cost|cache|persist|state|event|data)\b/g),
+    },
+    {
+      name: "scout-test-inventory",
+      score: matches(text, /\b(test|verify|failure|failed|bug|repair|regression|qa)\b/g),
+    },
+    {
+      name: "scout-dependency",
+      score: matches(text, /\b(dependency|integration|package|worktree|build|runtime|provider|connector)\b/g),
+    },
+    {
+      name: "scout-pattern",
+      score: matches(text, /\b(pattern|existing|same|consistent|reuse|shared|component)\b/g),
+    },
   ].sort((left, right) => right.score - left.score);
   return scored.slice(0, cap).map((entry) => ({
     name: entry.name,

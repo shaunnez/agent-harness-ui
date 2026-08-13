@@ -3,10 +3,7 @@ import { access, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { defaultRuntimeSettings } from "./model-catalog.mjs";
-import {
-  retainRunActivityEvents,
-  TASK_STORE_SCHEMA_VERSION,
-} from "./run-activity.mjs";
+import { retainRunActivityEvents, TASK_STORE_SCHEMA_VERSION } from "./run-activity.mjs";
 import { createTaskRecord, migratePersistedTaskState } from "./store.mjs";
 import {
   normalizeActivityFilter,
@@ -50,8 +47,7 @@ export class SqliteTaskStore {
       if (legacy) {
         this.#importState(legacy.state, legacy.sourceHash);
         await this.#assertLegacySourceUnchanged();
-      }
-      else this.#initializeEmptyState();
+      } else this.#initializeEmptyState();
     } else await this.#assertLegacySourceUnchanged();
     await this.recoverInterrupted();
     this.#db.exec("PRAGMA optimize");
@@ -67,28 +63,39 @@ export class SqliteTaskStore {
   }
 
   async listPullRequestTasks() {
-    return clone(this.#db.prepare(`
+    return clone(
+      this.#db
+        .prepare(`
       SELECT id
       FROM tasks
       WHERE
         (status = 'merging' AND json_extract(core_json, '$.pullRequestIntent.status') = 'publishing') OR
         (status = 'awaiting-pr-merge' AND json_extract(core_json, '$.pullRequestIntent.status') = 'open')
       ORDER BY updated_at ASC, id ASC
-    `).all().map((row) => this.#readTask(row.id)));
+    `)
+        .all()
+        .map((row) => this.#readTask(row.id)),
+    );
   }
 
   async listWorktreeTasks() {
-    return clone(this.#db.prepare(`
+    return clone(
+      this.#db
+        .prepare(`
       SELECT core_json
       FROM tasks
       WHERE json_array_length(json_extract(core_json, '$.workPackages')) > 0 OR
         json_array_length(json_extract(core_json, '$.candidates')) > 0
       ORDER BY created_at DESC, id DESC
-    `).all().map((row) => JSON.parse(row.core_json)));
+    `)
+        .all()
+        .map((row) => JSON.parse(row.core_json)),
+    );
   }
 
   async listSummaries() {
-    const taskRows = this.#db.prepare(`
+    const taskRows = this.#db
+      .prepare(`
       SELECT
         tasks.core_json,
         tasks.revision AS poll_version,
@@ -97,8 +104,10 @@ export class SqliteTaskStore {
         (SELECT COUNT(*) FROM runs WHERE runs.task_id = tasks.id) AS run_count
       FROM tasks
       ORDER BY created_at DESC, id DESC
-    `).all();
-    const metadataRows = this.#db.prepare(`
+    `)
+      .all();
+    const metadataRows = this.#db
+      .prepare(`
       SELECT task_id, metadata_json
       FROM (
         SELECT
@@ -110,7 +119,8 @@ export class SqliteTaskStore {
       )
       WHERE stage_rank = 1
       ORDER BY task_id, ordinal
-    `).all();
+    `)
+      .all();
     const artifactsByTask = new Map();
     for (const row of metadataRows) {
       const artifacts = artifactsByTask.get(row.task_id) ?? [];
@@ -119,37 +129,47 @@ export class SqliteTaskStore {
     }
     return taskRows.map((row) => {
       const core = JSON.parse(row.core_json);
-      return projectTaskSummary({
-        ...core,
-        artifacts: artifactsByTask.get(core.id) ?? [],
-      }, {
-        artifactCount: Number(row.artifact_count),
-        eventCount: Number(row.event_count),
-        runCount: Number(row.run_count),
-        pollVersion: String(row.poll_version),
-      });
+      return projectTaskSummary(
+        {
+          ...core,
+          artifacts: artifactsByTask.get(core.id) ?? [],
+        },
+        {
+          artifactCount: Number(row.artifact_count),
+          eventCount: Number(row.event_count),
+          runCount: Number(row.run_count),
+          pollVersion: String(row.poll_version),
+        },
+      );
     });
   }
 
   async listPollStates() {
-    return this.#db.prepare(`
+    return this.#db
+      .prepare(`
       SELECT id, revision
       FROM tasks
       ORDER BY created_at DESC, id DESC
-    `).all().map((row) => projectTaskPollState({ id: row.id }, row.revision));
+    `)
+      .all()
+      .map((row) => projectTaskPollState({ id: row.id }, row.revision));
   }
 
   async listEvaluationTasks() {
-    const tasks = this.#db.prepare(`
+    const tasks = this.#db
+      .prepare(`
       SELECT core_json
       FROM tasks
       ORDER BY created_at DESC, id DESC
-    `).all().map((row) => ({
-      ...JSON.parse(row.core_json),
-      artifacts: [],
-    }));
+    `)
+      .all()
+      .map((row) => ({
+        ...JSON.parse(row.core_json),
+        artifacts: [],
+      }));
     const byId = new Map(tasks.map((task) => [task.id, task]));
-    const artifactRows = this.#db.prepare(`
+    const artifactRows = this.#db
+      .prepare(`
       SELECT
         task_id,
         metadata_json,
@@ -157,7 +177,8 @@ export class SqliteTaskStore {
         json_extract(payload_json, '$.contextManifest') AS context_manifest_json
       FROM artifacts
       ORDER BY task_id, ordinal
-    `).all();
+    `)
+      .all();
     for (const row of artifactRows) {
       const task = byId.get(row.task_id);
       if (!task) continue;
@@ -177,13 +198,15 @@ export class SqliteTaskStore {
   async getCore(id) {
     const task = this.#readTask(id, { includeEvents: false, includeRuns: false, includeArtifacts: false });
     if (!task) return null;
-    const counts = this.#db.prepare(`
+    const counts = this.#db
+      .prepare(`
       SELECT
         (SELECT revision FROM tasks WHERE id = ?) AS poll_version,
         (SELECT COUNT(*) FROM artifacts WHERE task_id = ?) AS artifact_count,
         (SELECT COUNT(*) FROM events WHERE task_id = ?) AS event_count,
         (SELECT COUNT(*) FROM runs WHERE task_id = ?) AS run_count
-    `).get(id, id, id, id);
+    `)
+      .get(id, id, id, id);
     return {
       ...projectTaskCore(task),
       artifactCount: Number(counts.artifact_count),
@@ -199,9 +222,9 @@ export class SqliteTaskStore {
   }
 
   async getArtifact(taskId, artifactId) {
-    const row = this.#db.prepare(
-      "SELECT payload_json FROM artifacts WHERE task_id = ? AND id = ?",
-    ).get(taskId, artifactId);
+    const row = this.#db
+      .prepare("SELECT payload_json FROM artifacts WHERE task_id = ? AND id = ?")
+      .get(taskId, artifactId);
     return row ? JSON.parse(row.payload_json) : null;
   }
 
@@ -218,11 +241,12 @@ export class SqliteTaskStore {
 
   async pageRuns(taskId, searchParams) {
     const filter = normalizeActivityFilter(searchParams.get("filter"));
-    const filterSql = filter === "test"
-      ? "AND (stage = 'test' OR json_extract(payload_json, '$.kind') = 'test')"
-      : filter === "agent"
-        ? "AND stage <> 'test' AND COALESCE(json_extract(payload_json, '$.kind'), '') <> 'test'"
-        : "";
+    const filterSql =
+      filter === "test"
+        ? "AND (stage = 'test' OR json_extract(payload_json, '$.kind') = 'test')"
+        : filter === "agent"
+          ? "AND stage <> 'test' AND COALESCE(json_extract(payload_json, '$.kind'), '') <> 'test'"
+          : "";
     return querySqlitePage(this.#db, {
       table: "runs",
       taskId,
@@ -238,9 +262,11 @@ export class SqliteTaskStore {
     const filterSql = {
       all: "",
       activity: "AND category IN ('activity', 'artifact')",
-      agent: "AND category = 'agent' AND COALESCE(json_extract(payload_json, '$.runKind'), '') <> 'test' AND COALESCE(json_extract(payload_json, '$.role'), '') <> 'test'",
+      agent:
+        "AND category = 'agent' AND COALESCE(json_extract(payload_json, '$.runKind'), '') <> 'test' AND COALESCE(json_extract(payload_json, '$.role'), '') <> 'test'",
       test: "AND (json_extract(payload_json, '$.runKind') = 'test' OR json_extract(payload_json, '$.role') = 'test')",
-      decision: "AND (category = 'decision' OR json_extract(payload_json, '$.decisionId') IS NOT NULL OR json_extract(payload_json, '$.approvalId') IS NOT NULL)",
+      decision:
+        "AND (category = 'decision' OR json_extract(payload_json, '$.decisionId') IS NOT NULL OR json_extract(payload_json, '$.approvalId') IS NOT NULL)",
     }[filter];
     return querySqlitePage(this.#db, {
       table: "events",
@@ -257,23 +283,27 @@ export class SqliteTaskStore {
   }
 
   async updateSettings(updater) {
-    return this.#enqueue(() => this.#transaction(() => {
-      const settings = this.#readSettings();
-      updater(settings);
-      this.#db.prepare("UPDATE settings SET payload_json = ? WHERE id = 1").run(JSON.stringify(settings));
-      return clone(settings);
-    }));
+    return this.#enqueue(() =>
+      this.#transaction(() => {
+        const settings = this.#readSettings();
+        updater(settings);
+        this.#db.prepare("UPDATE settings SET payload_json = ? WHERE id = 1").run(JSON.stringify(settings));
+        return clone(settings);
+      }),
+    );
   }
 
   async create(input) {
-    return this.#enqueue(() => this.#transaction(() => {
-      const nextId = Number(this.#metadata("next_id") ?? 1);
-      const state = { nextId, settings: this.#readSettings(), tasks: [] };
-      const task = createTaskRecord(state, input);
-      this.#insertTask(task);
-      this.#setMetadata("next_id", String(state.nextId));
-      return clone(task);
-    }));
+    return this.#enqueue(() =>
+      this.#transaction(() => {
+        const nextId = Number(this.#metadata("next_id") ?? 1);
+        const state = { nextId, settings: this.#readSettings(), tasks: [] };
+        const task = createTaskRecord(state, input);
+        this.#insertTask(task);
+        this.#setMetadata("next_id", String(state.nextId));
+        return clone(task);
+      }),
+    );
   }
 
   async update(id, updater) {
@@ -281,15 +311,21 @@ export class SqliteTaskStore {
   }
 
   async updateCore(id, updater, { touchUpdatedAt = true } = {}) {
-    return this.#enqueue(() => this.#transaction(() => {
-      const row = this.#db.prepare("SELECT revision FROM tasks WHERE id = ?").get(id);
-      if (!row) return null;
-      const task = this.#readTask(id, { includeEvents: false, includeRuns: false, includeArtifacts: false });
-      updater(task);
-      if (touchUpdatedAt) task.updatedAt = new Date().toISOString();
-      this.#updateTaskCore(task, Number(row.revision));
-      return clone(task);
-    }));
+    return this.#enqueue(() =>
+      this.#transaction(() => {
+        const row = this.#db.prepare("SELECT revision FROM tasks WHERE id = ?").get(id);
+        if (!row) return null;
+        const task = this.#readTask(id, {
+          includeEvents: false,
+          includeRuns: false,
+          includeArtifacts: false,
+        });
+        updater(task);
+        if (touchUpdatedAt) task.updatedAt = new Date().toISOString();
+        this.#updateTaskCore(task, Number(row.revision));
+        return clone(task);
+      }),
+    );
   }
 
   async transition(id, condition, updater) {
@@ -297,24 +333,28 @@ export class SqliteTaskStore {
   }
 
   async recoverInterrupted() {
-    return this.#enqueue(() => this.#transaction(() => {
-      const state = {
-        schemaVersion: Number(this.#metadata("task_store_schema_version") ?? TASK_STORE_SCHEMA_VERSION),
-        nextId: Number(this.#metadata("next_id") ?? 1),
-        settings: this.#readSettings(),
-        tasks: this.#readAllTasks(),
-      };
-      const changed = migratePersistedTaskState(state);
-      if (!changed) return false;
-      this.#db.prepare("UPDATE settings SET payload_json = ? WHERE id = 1").run(JSON.stringify(state.settings));
-      this.#setMetadata("next_id", String(state.nextId));
-      this.#setMetadata("task_store_schema_version", String(TASK_STORE_SCHEMA_VERSION));
-      for (const task of state.tasks) {
-        const row = this.#db.prepare("SELECT revision FROM tasks WHERE id = ?").get(task.id);
-        this.#updateTask(task, Number(row.revision));
-      }
-      return true;
-    }));
+    return this.#enqueue(() =>
+      this.#transaction(() => {
+        const state = {
+          schemaVersion: Number(this.#metadata("task_store_schema_version") ?? TASK_STORE_SCHEMA_VERSION),
+          nextId: Number(this.#metadata("next_id") ?? 1),
+          settings: this.#readSettings(),
+          tasks: this.#readAllTasks(),
+        };
+        const changed = migratePersistedTaskState(state);
+        if (!changed) return false;
+        this.#db
+          .prepare("UPDATE settings SET payload_json = ? WHERE id = 1")
+          .run(JSON.stringify(state.settings));
+        this.#setMetadata("next_id", String(state.nextId));
+        this.#setMetadata("task_store_schema_version", String(TASK_STORE_SCHEMA_VERSION));
+        for (const task of state.tasks) {
+          const row = this.#db.prepare("SELECT revision FROM tasks WHERE id = ?").get(task.id);
+          this.#updateTask(task, Number(row.revision));
+        }
+        return true;
+      }),
+    );
   }
 
   async exportJson(outputPath) {
@@ -332,27 +372,32 @@ export class SqliteTaskStore {
   }
 
   #mutateTask(id, condition, updater) {
-    return this.#enqueue(() => this.#transaction(() => {
-      const row = this.#db.prepare("SELECT revision FROM tasks WHERE id = ?").get(id);
-      if (!row) return null;
-      const task = this.#readTask(id);
-      if (condition && !condition(task)) {
-        const error = new Error("Task state changed before the requested action could be reserved.");
-        error.code = "TASK_TRANSITION_CONFLICT";
-        error.statusCode = 409;
-        throw error;
-      }
-      updater(task);
-      task.updatedAt = new Date().toISOString();
-      task.events = retainRunActivityEvents(task.events);
-      this.#updateTask(task, Number(row.revision));
-      return clone(task);
-    }));
+    return this.#enqueue(() =>
+      this.#transaction(() => {
+        const row = this.#db.prepare("SELECT revision FROM tasks WHERE id = ?").get(id);
+        if (!row) return null;
+        const task = this.#readTask(id);
+        if (condition && !condition(task)) {
+          const error = new Error("Task state changed before the requested action could be reserved.");
+          error.code = "TASK_TRANSITION_CONFLICT";
+          error.statusCode = 409;
+          throw error;
+        }
+        updater(task);
+        task.updatedAt = new Date().toISOString();
+        task.events = retainRunActivityEvents(task.events);
+        this.#updateTask(task, Number(row.revision));
+        return clone(task);
+      }),
+    );
   }
 
   #enqueue(operation) {
     const pending = this.#queue.then(operation, operation);
-    this.#queue = pending.then(() => undefined, () => undefined);
+    this.#queue = pending.then(
+      () => undefined,
+      () => undefined,
+    );
     return pending;
   }
 
@@ -374,9 +419,9 @@ export class SqliteTaskStore {
 
   #initializeEmptyState() {
     this.#transaction(() => {
-      this.#db.prepare("INSERT INTO settings(id, payload_json) VALUES (1, ?)").run(
-        JSON.stringify(defaultRuntimeSettings()),
-      );
+      this.#db
+        .prepare("INSERT INTO settings(id, payload_json) VALUES (1, ?)")
+        .run(JSON.stringify(defaultRuntimeSettings()));
       this.#setMetadata("next_id", "1");
       this.#setMetadata("task_store_schema_version", String(TASK_STORE_SCHEMA_VERSION));
     });
@@ -403,7 +448,9 @@ export class SqliteTaskStore {
     const importedHash = this.#metadata("legacy_json_sha256");
     if (!importedHash || !this.#legacyJsonPath) return;
     if (!this.#metadata("legacy_import_complete")) {
-      throw new Error("SQLite task-store migration is incomplete; the JSON task store remains authoritative.");
+      throw new Error(
+        "SQLite task-store migration is incomplete; the JSON task store remains authoritative.",
+      );
     }
     let source;
     try {
@@ -422,11 +469,14 @@ export class SqliteTaskStore {
 
   #importState(state, sourceHash) {
     this.#transaction(() => {
-      this.#db.prepare("INSERT INTO settings(id, payload_json) VALUES (1, ?)").run(
-        JSON.stringify(state.settings ?? defaultRuntimeSettings()),
-      );
+      this.#db
+        .prepare("INSERT INTO settings(id, payload_json) VALUES (1, ?)")
+        .run(JSON.stringify(state.settings ?? defaultRuntimeSettings()));
       this.#setMetadata("next_id", String(state.nextId));
-      this.#setMetadata("task_store_schema_version", String(state.schemaVersion ?? TASK_STORE_SCHEMA_VERSION));
+      this.#setMetadata(
+        "task_store_schema_version",
+        String(state.schemaVersion ?? TASK_STORE_SCHEMA_VERSION),
+      );
       this.#setMetadata("legacy_json_sha256", sourceHash);
       for (const task of state.tasks) this.#insertTask(task);
       const imported = this.#readAllTasks();
@@ -442,42 +492,51 @@ export class SqliteTaskStore {
   }
 
   #readAllTasks() {
-    return this.#db.prepare("SELECT id FROM tasks ORDER BY created_at DESC, id DESC").all()
+    return this.#db
+      .prepare("SELECT id FROM tasks ORDER BY created_at DESC, id DESC")
+      .all()
       .map((row) => this.#readTask(row.id));
   }
 
-  #readTask(id, {
-    includeEvents = true,
-    includeRuns = true,
-    includeArtifacts = true,
-    artifactMetadataOnly = false,
-  } = {}) {
+  #readTask(
+    id,
+    { includeEvents = true, includeRuns = true, includeArtifacts = true, artifactMetadataOnly = false } = {},
+  ) {
     const row = this.#db.prepare("SELECT core_json FROM tasks WHERE id = ?").get(id);
     if (!row) return null;
     const task = JSON.parse(row.core_json);
     task.artifacts = includeArtifacts
-      ? this.#db.prepare(
-        `SELECT ${artifactMetadataOnly ? "metadata_json" : "payload_json"} AS payload_json
+      ? this.#db
+          .prepare(
+            `SELECT ${artifactMetadataOnly ? "metadata_json" : "payload_json"} AS payload_json
          FROM artifacts WHERE task_id = ? ORDER BY ordinal`,
-      ).all(id).map((item) => JSON.parse(item.payload_json))
+          )
+          .all(id)
+          .map((item) => JSON.parse(item.payload_json))
       : [];
     task.events = includeEvents
-      ? this.#db.prepare("SELECT payload_json FROM events WHERE task_id = ? ORDER BY ordinal").all(id)
-        .map((item) => JSON.parse(item.payload_json))
+      ? this.#db
+          .prepare("SELECT payload_json FROM events WHERE task_id = ? ORDER BY ordinal")
+          .all(id)
+          .map((item) => JSON.parse(item.payload_json))
       : [];
     task.runs = includeRuns
-      ? this.#db.prepare("SELECT payload_json FROM runs WHERE task_id = ? ORDER BY ordinal").all(id)
-        .map((item) => JSON.parse(item.payload_json))
+      ? this.#db
+          .prepare("SELECT payload_json FROM runs WHERE task_id = ? ORDER BY ordinal")
+          .all(id)
+          .map((item) => JSON.parse(item.payload_json))
       : [];
     return task;
   }
 
   #insertTask(task) {
     const core = taskCore(task);
-    this.#db.prepare(`
+    this.#db
+      .prepare(`
       INSERT INTO tasks(id, created_at, updated_at, status, current_stage, revision, core_json)
       VALUES (?, ?, ?, ?, ?, 1, ?)
-    `).run(task.id, task.createdAt, task.updatedAt, task.status, task.currentStage, JSON.stringify(core));
+    `)
+      .run(task.id, task.createdAt, task.updatedAt, task.status, task.currentStage, JSON.stringify(core));
     this.#syncCollections(task);
   }
 
@@ -487,19 +546,21 @@ export class SqliteTaskStore {
   }
 
   #updateTaskCore(task, expectedRevision) {
-    const result = this.#db.prepare(`
+    const result = this.#db
+      .prepare(`
       UPDATE tasks
       SET created_at = ?, updated_at = ?, status = ?, current_stage = ?, revision = revision + 1, core_json = ?
       WHERE id = ? AND revision = ?
-    `).run(
-      task.createdAt,
-      task.updatedAt,
-      task.status,
-      task.currentStage,
-      JSON.stringify(taskCore(task)),
-      task.id,
-      expectedRevision,
-    );
+    `)
+      .run(
+        task.createdAt,
+        task.updatedAt,
+        task.status,
+        task.currentStage,
+        JSON.stringify(taskCore(task)),
+        task.id,
+        expectedRevision,
+      );
     if (Number(result.changes) !== 1) {
       const error = new Error("Task state changed before the requested action could be persisted.");
       error.code = "TASK_TRANSITION_CONFLICT";
@@ -545,10 +606,12 @@ export class SqliteTaskStore {
   }
 
   #setMetadata(key, value) {
-    this.#db.prepare(`
+    this.#db
+      .prepare(`
       INSERT INTO metadata(key, value) VALUES (?, ?)
       ON CONFLICT(key) DO UPDATE SET value = excluded.value
-    `).run(key, value);
+    `)
+      .run(key, value);
   }
 }
 

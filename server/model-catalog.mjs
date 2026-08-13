@@ -106,10 +106,36 @@ function profilePolicy(gathering, planning, implementation, repair, finalReview)
 }
 
 const FALLBACK_MODELS = [
-  model("gpt-5.6-sol", "GPT-5.6 Sol", "Latest frontier agentic coding model.", "low", ["low", "medium", "high", "xhigh", "max", "ultra"]),
-  model("gpt-5.6-terra", "GPT-5.6 Terra", "Balanced agentic coding model for everyday work.", "medium", ["low", "medium", "high", "xhigh", "max", "ultra"]),
-  model("gpt-5.6-luna", "GPT-5.6 Luna", "Fast and affordable agentic coding model.", "medium", ["low", "medium", "high", "xhigh", "max"]),
-  model("gpt-5.4-mini", "GPT-5.4 Mini", "Small, fast, and cost-efficient model for simpler coding tasks.", "medium", ["low", "medium", "high", "xhigh"]),
+  model("gpt-5.6-sol", "GPT-5.6 Sol", "Latest frontier agentic coding model.", "low", [
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+    "ultra",
+  ]),
+  model("gpt-5.6-terra", "GPT-5.6 Terra", "Balanced agentic coding model for everyday work.", "medium", [
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+    "ultra",
+  ]),
+  model("gpt-5.6-luna", "GPT-5.6 Luna", "Fast and affordable agentic coding model.", "medium", [
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+  ]),
+  model(
+    "gpt-5.4-mini",
+    "GPT-5.4 Mini",
+    "Small, fast, and cost-efficient model for simpler coding tasks.",
+    "medium",
+    ["low", "medium", "high", "xhigh"],
+  ),
 ];
 
 /**
@@ -137,10 +163,34 @@ const CLAUDE_EFFORT_LEVELS = ["low", "medium", "high", "xhigh", "max"];
 export const NO_REASONING_EFFORT = "none";
 
 const CLAUDE_MODELS = [
-  claudeModel("claude-opus-5", "Claude Opus 5", "Deepest Claude coding model for planning and gates.", "xhigh", CLAUDE_EFFORT_LEVELS),
-  claudeModel("claude-sonnet-5", "Claude Sonnet 5", "Balanced Claude coding model for everyday work.", "xhigh", CLAUDE_EFFORT_LEVELS),
-  claudeModel("claude-fable-5", "Claude Fable 5", "Highest-capability Claude model at a premium rate.", "xhigh", CLAUDE_EFFORT_LEVELS),
-  claudeModel("claude-haiku-4-5", "Claude Haiku 4.5", "Fast Claude model with no reasoning-effort control.", NO_REASONING_EFFORT, [NO_REASONING_EFFORT]),
+  claudeModel(
+    "claude-opus-5",
+    "Claude Opus 5",
+    "Deepest Claude coding model for planning and gates.",
+    "xhigh",
+    CLAUDE_EFFORT_LEVELS,
+  ),
+  claudeModel(
+    "claude-sonnet-5",
+    "Claude Sonnet 5",
+    "Balanced Claude coding model for everyday work.",
+    "xhigh",
+    CLAUDE_EFFORT_LEVELS,
+  ),
+  claudeModel(
+    "claude-fable-5",
+    "Claude Fable 5",
+    "Highest-capability Claude model at a premium rate.",
+    "xhigh",
+    CLAUDE_EFFORT_LEVELS,
+  ),
+  claudeModel(
+    "claude-haiku-4-5",
+    "Claude Haiku 4.5",
+    "Fast Claude model with no reasoning-effort control.",
+    NO_REASONING_EFFORT,
+    [NO_REASONING_EFFORT],
+  ),
 ];
 
 export async function readClaudeModelCatalog() {
@@ -260,13 +310,17 @@ export function defaultRuntimeSettings() {
     // Both providers' models are selectable, because a stage policy is validated
     // against this list and a Claude task's policies must name Claude models. The
     // selected provider, not this list, decides which runtime executes.
-    allowedModels: [...new Set([defaultModel, "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", ...CLAUDE_MODEL_IDS])],
+    allowedModels: [
+      ...new Set([defaultModel, "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", ...CLAUDE_MODEL_IDS]),
+    ],
     defaultModel,
     defaultReasoning,
     // Nothing moves to another provider until an operator changes this.
     defaultProvider: providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER,
     stagePolicies: defaultStagePolicies(providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER),
-    profileStagePolicies: defaultProfileStagePolicies(providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER),
+    profileStagePolicies: defaultProfileStagePolicies(
+      providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER,
+    ),
     pricing: {
       version: PRICING_VERSION,
       sourceUrl: PRICING_SOURCE_URL,
@@ -287,10 +341,11 @@ export function resolveAgentPolicy(task, policyId, fallbackSettings = defaultRun
     // runtime its model belongs to. A model no provider claims falls back to the task's
     // recorded provider, then the configured default — so a task persisted before
     // provider identity existed stays on Codex whatever the setting later becomes.
-    provider: providerForModelId(model)
-      ?? task?.agentConfig?.provider
-      ?? fallbackSettings.defaultProvider
-      ?? DEFAULT_EXECUTION_PROVIDER,
+    provider:
+      providerForModelId(model) ??
+      task?.agentConfig?.provider ??
+      fallbackSettings.defaultProvider ??
+      DEFAULT_EXECUTION_PROVIDER,
     model,
     reasoning: String(policy?.reasoning ?? task?.agentConfig?.reasoning ?? fallbackSettings.defaultReasoning),
   };
@@ -320,7 +375,9 @@ export async function readCodexModelCatalog() {
         description: String(entry.description ?? "Available through the installed Codex runtime."),
         provider: "codex",
         defaultReasoning: String(entry.default_reasoning_level ?? "medium"),
-        reasoningLevels: (entry.supported_reasoning_levels ?? []).map((level) => String(level.effort)).filter(Boolean),
+        reasoningLevels: (entry.supported_reasoning_levels ?? [])
+          .map((level) => String(level.effort))
+          .filter(Boolean),
         pricing: MODEL_PRICING[entry.slug] ?? null,
         provenance: "discovered",
         availability: "discovered",
@@ -337,11 +394,15 @@ export async function readCodexModelCatalog() {
 }
 
 export function withConfiguredModels(catalog, settings) {
-  const configuredIds = new Set([
-    settings?.defaultModel,
-    ...(settings?.allowedModels ?? []),
-    ...Object.values(settings?.stagePolicies ?? {}).map((policy) => policy?.model),
-  ].filter(Boolean).map(normalizeModelId));
+  const configuredIds = new Set(
+    [
+      settings?.defaultModel,
+      ...(settings?.allowedModels ?? []),
+      ...Object.values(settings?.stagePolicies ?? {}).map((policy) => policy?.model),
+    ]
+      .filter(Boolean)
+      .map(normalizeModelId),
+  );
   // Keyed on availability, not provenance. "configured" means the runtime could not confirm the
   // model exists, and the downgrade to editable:false exists to stop an operator selecting one.
   // Claude entries are `provenance: "bundled"` with `availability: "discovered"` — bundled is how
@@ -369,11 +430,7 @@ export function normalizeModelId(value) {
   let source = String(value ?? "").trim();
   const planIndex = source.toLowerCase().indexOf("chatgpt plan");
   if (planIndex >= 0) source = source.slice(0, planIndex).replace(/[\s\p{P}\p{S}]+$/gu, "");
-  const normalized = source
-    .trim()
-    .toLowerCase()
-    .replaceAll("_", "-")
-    .replace(/\s+/g, "-");
+  const normalized = source.trim().toLowerCase().replaceAll("_", "-").replace(/\s+/g, "-");
   return normalized || DEFAULT_RUNTIME_MODEL;
 }
 
@@ -414,12 +471,16 @@ export function priceModelUsage(modelUsage, pricing = MODEL_PRICING) {
   for (const [id, entry] of entries) {
     const cachedInputTokens = finite(entry?.cacheReadInputTokens);
     const cacheWriteTokens = finite(entry?.cacheCreationInputTokens);
-    const cost = priceUsage(entry?.canonicalModel ?? id, {
-      inputTokens: finite(entry?.inputTokens) + cachedInputTokens + cacheWriteTokens,
-      cachedInputTokens,
-      cacheWriteTokens,
-      outputTokens: finite(entry?.outputTokens),
-    }, pricing);
+    const cost = priceUsage(
+      entry?.canonicalModel ?? id,
+      {
+        inputTokens: finite(entry?.inputTokens) + cachedInputTokens + cacheWriteTokens,
+        cachedInputTokens,
+        cacheWriteTokens,
+        outputTokens: finite(entry?.outputTokens),
+      },
+      pricing,
+    );
     if (cost == null) return null;
     total += cost;
   }
@@ -497,7 +558,8 @@ export function priceCredits(modelId, usage, creditRates = MODEL_CREDIT_RATES) {
 }
 
 export function validatePricingRates(value) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Pricing verification did not return a rate map.");
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Error("Pricing verification did not return a rate map.");
   const validated = {};
   for (const [modelId, entry] of Object.entries(value)) {
     const normalized = normalizeModelId(modelId);
@@ -512,7 +574,16 @@ export function validatePricingRates(value) {
   return validated;
 }
 
-function rate(input, cachedInput, cacheWrite, output, longInput, longCachedInput, longCacheWrite, longOutput) {
+function rate(
+  input,
+  cachedInput,
+  cacheWrite,
+  output,
+  longInput,
+  longCachedInput,
+  longCacheWrite,
+  longOutput,
+) {
   return {
     short: { input, cachedInput, cacheWrite, output },
     long:
@@ -580,7 +651,11 @@ function validateRate(entry) {
     cacheWrite: entry?.cacheWrite == null ? null : Number(entry.cacheWrite),
     output: Number(entry?.output),
   };
-  if (![validated.input, validated.cachedInput, validated.output].every((number) => Number.isFinite(number) && number >= 0)) {
+  if (
+    ![validated.input, validated.cachedInput, validated.output].every(
+      (number) => Number.isFinite(number) && number >= 0,
+    )
+  ) {
     throw new Error("Pricing verification returned an invalid token rate.");
   }
   if (validated.cacheWrite != null && (!Number.isFinite(validated.cacheWrite) || validated.cacheWrite < 0)) {

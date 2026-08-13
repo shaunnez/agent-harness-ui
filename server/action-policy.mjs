@@ -26,14 +26,38 @@ export const PROJECTED_ACTIONS = Object.freeze([
 ]);
 
 const RUN_ACTIONS = Object.freeze({
-  run: { kind: "investigation", statuses: ["queued", "failed", "cancelled"], stages: ["triage", "scouts", "grill"] },
+  run: {
+    kind: "investigation",
+    statuses: ["queued", "failed", "cancelled"],
+    stages: ["triage", "scouts", "grill"],
+  },
   specification: { kind: "specification", statuses: ["failed", "cancelled"], stages: ["specification"] },
-  plan: { kind: "planning", statuses: ["awaiting-plan-approval", "failed", "cancelled"], stages: ["plan", "implement"] },
-  implement: { kind: "implementation", statuses: ["ready-for-implementation", "failed", "cancelled"], stages: ["implement"] },
-  repair: { kind: "repair", statuses: ["repair-required", "failed", "cancelled"], stages: ["implement", "dev-review", "test", "final-review"] },
-  review: { kind: "review", statuses: ["ready-for-review", "review-retry-required", "failed", "cancelled"], stages: ["dev-review"] },
+  plan: {
+    kind: "planning",
+    statuses: ["awaiting-plan-approval", "failed", "cancelled"],
+    stages: ["plan", "implement"],
+  },
+  implement: {
+    kind: "implementation",
+    statuses: ["ready-for-implementation", "failed", "cancelled"],
+    stages: ["implement"],
+  },
+  repair: {
+    kind: "repair",
+    statuses: ["repair-required", "failed", "cancelled"],
+    stages: ["implement", "dev-review", "test", "final-review"],
+  },
+  review: {
+    kind: "review",
+    statuses: ["ready-for-review", "review-retry-required", "failed", "cancelled"],
+    stages: ["dev-review"],
+  },
   test: { kind: "test", statuses: ["ready-for-test", "failed", "cancelled"], stages: ["test"] },
-  "final-review": { kind: "final-review", statuses: ["ready-for-final-review", "failed", "cancelled"], stages: ["final-review"] },
+  "final-review": {
+    kind: "final-review",
+    statuses: ["ready-for-final-review", "failed", "cancelled"],
+    stages: ["final-review"],
+  },
 });
 
 const CANDIDATE_GATE_ACTIONS = new Set(["review", "test", "final-review"]);
@@ -53,12 +77,16 @@ export function runActionAdmission(task, action) {
     return deny("The current candidate is not awaiting repair.");
   }
   const effectiveStage = action === "repair" ? "implement" : task.currentStage;
-  const allowanceExhausted = (task.attemptsByStage?.[effectiveStage] ?? 0) >= stageRunLimitFor(task, effectiveStage);
+  const allowanceExhausted =
+    (task.attemptsByStage?.[effectiveStage] ?? 0) >= stageRunLimitFor(task, effectiveStage);
   if (CANDIDATE_GATE_ACTIONS.has(action)) {
-    const executable = configuration.statuses.includes(task.status) && task.status !== "blocked" && !allowanceExhausted;
+    const executable =
+      configuration.statuses.includes(task.status) && task.status !== "blocked" && !allowanceExhausted;
     return {
       allowed: true,
-      reason: executable ? null : "Candidate-gate preflight is available to detect target drift before another attempt is authorized.",
+      reason: executable
+        ? null
+        : "Candidate-gate preflight is available to detect target drift before another attempt is authorized.",
       mode: executable ? "execute" : "preflight-only",
       configuration,
     };

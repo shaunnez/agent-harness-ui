@@ -1,11 +1,27 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { lstat, mkdir, mkdtemp, readFile, readdir, realpath, rm, stat, symlink, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  realpath,
+  rm,
+  stat,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
-import { defaultWorktreeRoot, GitWorktreeManager, discoverDependencyDirectories, provisionedDependencyEntries } from "../server/git-worktree.mjs";
+import {
+  defaultWorktreeRoot,
+  GitWorktreeManager,
+  discoverDependencyDirectories,
+  provisionedDependencyEntries,
+} from "../server/git-worktree.mjs";
 
 const exec = promisify(execFile);
 
@@ -39,7 +55,9 @@ test("creates, commits, and fast-forward merges an isolated candidate", async ()
 
     assert.deepEqual(firstCommit.files, ["feature.txt"]);
     const retainedSlice = { ...firstSlice, headRevision: firstCommit.headRevision, files: firstCommit.files };
-    const retainedInspection = await manager.inspectRetainedSlice(retainedSlice, { ownedPaths: ["feature.txt"] });
+    const retainedInspection = await manager.inspectRetainedSlice(retainedSlice, {
+      ownedPaths: ["feature.txt"],
+    });
     assert.equal(retainedInspection.clean, true);
     assert.deepEqual(retainedInspection.files, ["feature.txt"]);
     assert.equal(await manager.retainedPatchDisposition(retainedSlice, base.baseRevision), "pending");
@@ -56,9 +74,18 @@ test("creates, commits, and fast-forward merges an isolated candidate", async ()
     assert.match(assembled.summary, /second\.txt/);
     assert.equal(await manager.verifyCandidate(candidate), assembled.headRevision);
     await manager.merge(candidate);
-    assert.equal(await manager.retainedPatchDisposition(retainedSlice, assembled.headRevision), "already-applied");
-    assert.equal((await readFile(path.join(repository, "feature.txt"), "utf8")).replaceAll("\r\n", "\n"), "candidate\n");
-    assert.equal((await readFile(path.join(repository, "second.txt"), "utf8")).replaceAll("\r\n", "\n"), "parallel\n");
+    assert.equal(
+      await manager.retainedPatchDisposition(retainedSlice, assembled.headRevision),
+      "already-applied",
+    );
+    assert.equal(
+      (await readFile(path.join(repository, "feature.txt"), "utf8")).replaceAll("\r\n", "\n"),
+      "candidate\n",
+    );
+    assert.equal(
+      (await readFile(path.join(repository, "second.txt"), "utf8")).replaceAll("\r\n", "\n"),
+      "parallel\n",
+    );
 
     const unsafeCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C2");
     await writeFile(path.join(unsafeCandidate.worktreePath, ".env"), "SECRET=do-not-commit\n", "utf8");
@@ -66,33 +93,68 @@ test("creates, commits, and fast-forward merges an isolated candidate", async ()
 
     const generatedCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C3");
     await mkdir(path.join(generatedCandidate.worktreePath, ".tmp", "npm-cache"), { recursive: true });
-    await writeFile(path.join(generatedCandidate.worktreePath, ".tmp", "npm-cache", "state.json"), "{}\n", "utf8");
+    await writeFile(
+      path.join(generatedCandidate.worktreePath, ".tmp", "npm-cache", "state.json"),
+      "{}\n",
+      "utf8",
+    );
     await assert.rejects(() => manager.commit(generatedCandidate, "generated"), /generated tool state/);
 
     const pnpmCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C4");
     await mkdir(path.join(pnpmCandidate.worktreePath, ".pnpm-store", "v11"), { recursive: true });
-    await writeFile(path.join(pnpmCandidate.worktreePath, ".pnpm-store", "v11", "state.json"), "{}\n", "utf8");
+    await writeFile(
+      path.join(pnpmCandidate.worktreePath, ".pnpm-store", "v11", "state.json"),
+      "{}\n",
+      "utf8",
+    );
     await assert.rejects(() => manager.commit(pnpmCandidate, "pnpm cache"), /generated tool state/);
 
     const recoveryCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C5");
     await writeFile(path.join(recoveryCandidate.worktreePath, "repair-target.txt"), "committed\n", "utf8");
     const recoveryCommit = await manager.commit(recoveryCandidate, "recorded candidate");
     recoveryCandidate.headRevision = recoveryCommit.headRevision;
-    await writeFile(path.join(recoveryCandidate.worktreePath, "repair-target.txt"), "dirty partial repair\n", "utf8");
+    await writeFile(
+      path.join(recoveryCandidate.worktreePath, "repair-target.txt"),
+      "dirty partial repair\n",
+      "utf8",
+    );
     await mkdir(path.join(recoveryCandidate.worktreePath, ".pnpm-store", "partial"), { recursive: true });
-    await writeFile(path.join(recoveryCandidate.worktreePath, ".pnpm-store", "partial", "state.json"), "{}\n", "utf8");
+    await writeFile(
+      path.join(recoveryCandidate.worktreePath, ".pnpm-store", "partial", "state.json"),
+      "{}\n",
+      "utf8",
+    );
     assert.equal(await manager.recoverCandidate(recoveryCandidate), true);
-    assert.equal((await readFile(path.join(recoveryCandidate.worktreePath, "repair-target.txt"), "utf8")).replaceAll("\r\n", "\n"), "committed\n");
-    assert.equal((await git(recoveryCandidate.worktreePath, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout.trim(), "");
+    assert.equal(
+      (await readFile(path.join(recoveryCandidate.worktreePath, "repair-target.txt"), "utf8")).replaceAll(
+        "\r\n",
+        "\n",
+      ),
+      "committed\n",
+    );
+    assert.equal(
+      (
+        await git(recoveryCandidate.worktreePath, ["status", "--porcelain=v1", "--untracked-files=all"])
+      ).stdout.trim(),
+      "",
+    );
 
     const cleanupCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C6");
     await mkdir(path.join(cleanupCandidate.worktreePath, ".pnpm-store"), { recursive: true });
     await writeFile(path.join(cleanupCandidate.worktreePath, ".pnpm-store", "tracked.json"), "{}\n", "utf8");
     await git(cleanupCandidate.worktreePath, ["add", "-f", ".pnpm-store/tracked.json"]);
-    await git(cleanupCandidate.worktreePath, ["commit", "-m", "candidate accidentally tracks generated state"]);
-    cleanupCandidate.headRevision = (await git(cleanupCandidate.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
+    await git(cleanupCandidate.worktreePath, [
+      "commit",
+      "-m",
+      "candidate accidentally tracks generated state",
+    ]);
+    cleanupCandidate.headRevision = (
+      await git(cleanupCandidate.worktreePath, ["rev-parse", "HEAD"])
+    ).stdout.trim();
     await rm(path.join(cleanupCandidate.worktreePath, ".pnpm-store", "tracked.json"));
-    const cleaned = await manager.commit(cleanupCandidate, "repair removes generated state", { allowGeneratedDeletions: true });
+    const cleaned = await manager.commit(cleanupCandidate, "repair removes generated state", {
+      allowGeneratedDeletions: true,
+    });
     assert.equal(cleaned.files.includes(".pnpm-store/tracked.json"), true);
 
     const scopedCandidate = await manager.prepare({ id: "AH-001", repositoryPath: repository }, "C7");
@@ -148,7 +210,12 @@ test("only accepts an empty diff as success when the caller explicitly allows a 
     const squashed = await manager.commit(realSlice, "S3 qualification repair", { squashFromBase: true });
     assert.equal(squashed.parentRevision, base.baseRevision);
     assert.deepEqual(squashed.files.sort(), ["contract.test.txt", "feature.txt"]);
-    assert.equal((await git(realSlice.worktreePath, ["rev-list", "--count", `${base.baseRevision}..HEAD`])).stdout.trim(), "1");
+    assert.equal(
+      (
+        await git(realSlice.worktreePath, ["rev-list", "--count", `${base.baseRevision}..HEAD`])
+      ).stdout.trim(),
+      "1",
+    );
 
     // Assembly skips a no-op member entirely rather than cherry-picking a null revision.
     const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
@@ -165,16 +232,24 @@ test("only accepts an empty diff as success when the caller explicitly allows a 
       branchId: "S4-A1",
     });
     assert.equal(
-      (await readFile(path.join(dependentSlice.worktreePath, "feature.txt"), "utf8")).replaceAll("\r\n", "\n"),
+      (await readFile(path.join(dependentSlice.worktreePath, "feature.txt"), "utf8")).replaceAll(
+        "\r\n",
+        "\n",
+      ),
       "candidate\n",
     );
     assert.equal(
-      (await readFile(path.join(dependentSlice.worktreePath, "contract.test.txt"), "utf8")).replaceAll("\r\n", "\n"),
+      (await readFile(path.join(dependentSlice.worktreePath, "contract.test.txt"), "utf8")).replaceAll(
+        "\r\n",
+        "\n",
+      ),
       "repair\n",
     );
     const dependentBase = (await git(dependentSlice.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
     await writeFile(path.join(dependentSlice.worktreePath, "dependent.txt"), "initial\n", "utf8");
-    const dependent = await manager.commit(dependentSlice, "S4", { ownedPaths: ["dependent.txt", "dependent-repair.txt"] });
+    const dependent = await manager.commit(dependentSlice, "S4", {
+      ownedPaths: ["dependent.txt", "dependent-repair.txt"],
+    });
     dependentSlice.headRevision = dependent.headRevision;
     await writeFile(path.join(dependentSlice.worktreePath, "dependent-repair.txt"), "continued\n", "utf8");
     const continued = await manager.commit(dependentSlice, "S4 qualification repair", {
@@ -183,7 +258,12 @@ test("only accepts an empty diff as success when the caller explicitly allows a 
     });
     assert.equal(continued.parentRevision, dependentBase);
     assert.deepEqual(continued.files.sort(), ["dependent-repair.txt", "dependent.txt"]);
-    assert.equal((await git(dependentSlice.worktreePath, ["rev-list", "--count", `${dependentBase}..HEAD`])).stdout.trim(), "1");
+    assert.equal(
+      (
+        await git(dependentSlice.worktreePath, ["rev-list", "--count", `${dependentBase}..HEAD`])
+      ).stdout.trim(),
+      "1",
+    );
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -216,7 +296,10 @@ test("can create an isolated exact-HEAD worktree without touching dirty source f
 
     assert.equal(await readFile(path.join(candidate.worktreePath, "README.md"), "utf8"), "committed\n");
     assert.equal(await readFile(path.join(repository, "README.md"), "utf8"), "operator draft\n");
-    await assert.rejects(() => manager.merge({ ...candidate, headRevision: base.baseRevision }), /uncommitted changes/i);
+    await assert.rejects(
+      () => manager.merge({ ...candidate, headRevision: base.baseRevision }),
+      /uncommitted changes/i,
+    );
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -282,8 +365,14 @@ test("refreshes a clean candidate onto an advanced target without rewriting the 
     assert.equal(refreshed.targetRevision, targetRevision);
     assert.notEqual(refreshed.headRevision, committed.headRevision);
     assert.deepEqual(refreshed.files, ["feature.txt"]);
-    assert.equal((await readFile(path.join(candidate.worktreePath, "README.md"), "utf8")).replaceAll("\r\n", "\n"), "base\ntarget advanced\n");
-    assert.equal((await readFile(path.join(candidate.worktreePath, "feature.txt"), "utf8")).replaceAll("\r\n", "\n"), "candidate\n");
+    assert.equal(
+      (await readFile(path.join(candidate.worktreePath, "README.md"), "utf8")).replaceAll("\r\n", "\n"),
+      "base\ntarget advanced\n",
+    );
+    assert.equal(
+      (await readFile(path.join(candidate.worktreePath, "feature.txt"), "utf8")).replaceAll("\r\n", "\n"),
+      "candidate\n",
+    );
 
     candidate.baseRevision = refreshed.targetRevision;
     candidate.headRevision = refreshed.headRevision;
@@ -317,7 +406,10 @@ test("aborts a conflicting candidate refresh and restores the recorded head", as
 
     await assert.rejects(() => manager.refreshCandidate(candidate), /refresh conflicted/i);
     assert.equal(await manager.verifyCandidate(candidate), committed.headRevision);
-    assert.equal((await readFile(path.join(candidate.worktreePath, "shared.txt"), "utf8")).replaceAll("\r\n", "\n"), "candidate\n");
+    assert.equal(
+      (await readFile(path.join(candidate.worktreePath, "shared.txt"), "utf8")).replaceAll("\r\n", "\n"),
+      "candidate\n",
+    );
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -337,7 +429,11 @@ test("refresh collapses an equivalent candidate patch already committed on the t
     const task = { id: "AH-APPLIED", repositoryPath: repository };
     const base = await manager.base(task);
     const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
-    await writeFile(path.join(candidate.worktreePath, "reporter.ts"), "export const reporter = 'json';\n", "utf8");
+    await writeFile(
+      path.join(candidate.worktreePath, "reporter.ts"),
+      "export const reporter = 'json';\n",
+      "utf8",
+    );
     const committed = await manager.commit(candidate, "candidate reporter");
     candidate.headRevision = committed.headRevision;
 
@@ -351,7 +447,10 @@ test("refresh collapses an equivalent candidate patch already committed on the t
     assert.equal(refreshed.alreadyApplied, true);
     assert.equal(refreshed.headRevision, targetRevision);
     assert.deepEqual(refreshed.files, []);
-    assert.equal(await manager.verifyCandidate({ ...candidate, headRevision: targetRevision }), targetRevision);
+    assert.equal(
+      await manager.verifyCandidate({ ...candidate, headRevision: targetRevision }),
+      targetRevision,
+    );
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -366,7 +465,11 @@ test("a symlinked dependency directory is not ignored by git status", async () =
     await git(directory, ["init", "repository"]);
     await writeFile(path.join(repository, ".gitignore"), "node_modules/\n", "utf8");
     await mkdir(path.join(repository, "node_modules", "left-pad"), { recursive: true });
-    await writeFile(path.join(repository, "node_modules", "left-pad", "index.js"), "module.exports = 1;\n", "utf8");
+    await writeFile(
+      path.join(repository, "node_modules", "left-pad", "index.js"),
+      "module.exports = 1;\n",
+      "utf8",
+    );
     const realStatus = (await git(repository, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout;
     assert.doesNotMatch(realStatus, /node_modules/, "a real node_modules directory is ignored");
 
@@ -374,7 +477,11 @@ test("a symlinked dependency directory is not ignored by git status", async () =
     await mkdir(path.join(repository, "installed"), { recursive: true });
     await symlinkDirectory(path.join(repository, "installed"), path.join(repository, "node_modules"));
     const linkStatus = (await git(repository, ["status", "--porcelain=v1", "--untracked-files=all"])).stdout;
-    assert.match(linkStatus, /^\?\? node_modules$/m, "a symlinked node_modules is NOT ignored, so linking alone is insufficient");
+    assert.match(
+      linkStatus,
+      /^\?\? node_modules$/m,
+      "a symlinked node_modules is NOT ignored, so linking alone is insufficient",
+    );
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -401,27 +508,46 @@ test("provisions nested and non-Node dependencies into slice and candidate workt
     const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
 
     for (const worktree of [slice, candidate]) {
-      assert.deepEqual(worktree.provisionedDependencyPaths, [".venv", "frontend/node_modules", "node_modules"]);
+      assert.deepEqual(worktree.provisionedDependencyPaths, [
+        ".venv",
+        "frontend/node_modules",
+        "node_modules",
+      ]);
       // Every provisioned path resolves to the source checkout's installed dependencies.
       assert.equal(
-        (await readFile(path.join(worktree.worktreePath, "node_modules", "left-pad", "index.js"), "utf8")).trim(),
+        (
+          await readFile(path.join(worktree.worktreePath, "node_modules", "left-pad", "index.js"), "utf8")
+        ).trim(),
         "module.exports = 1;",
       );
       assert.equal(
-        (await readFile(path.join(worktree.worktreePath, "frontend", "node_modules", "vite", "index.js"), "utf8")).trim(),
+        (
+          await readFile(
+            path.join(worktree.worktreePath, "frontend", "node_modules", "vite", "index.js"),
+            "utf8",
+          )
+        ).trim(),
         "module.exports = 2;",
       );
-      assert.equal((await readFile(path.join(worktree.worktreePath, ".venv", "pyvenv.cfg"), "utf8")).trim(), "home = /usr");
+      assert.equal(
+        (await readFile(path.join(worktree.worktreePath, ".venv", "pyvenv.cfg"), "utf8")).trim(),
+        "home = /usr",
+      );
       assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules"))).isSymbolicLink(), false);
       assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules"))).isDirectory(), true);
 
-      const modeByPath = new Map((await provisionedDependencyEntries(worktree.worktreePath)).map((entry) => [entry.path, entry.mode]));
+      const modeByPath = new Map(
+        (await provisionedDependencyEntries(worktree.worktreePath)).map((entry) => [entry.path, entry.mode]),
+      );
       assert.deepEqual([...modeByPath.keys()].sort(), [".venv", "frontend/node_modules", "node_modules"]);
       const nodeModulesMode = modeByPath.get("node_modules");
       if (nodeModulesMode === "clone") {
         // A clone is real, independent content: an installed package is its own copy,
         // not a pointer back into the source checkout.
-        assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules", "left-pad"))).isSymbolicLink(), false);
+        assert.equal(
+          (await lstat(path.join(worktree.worktreePath, "node_modules", "left-pad"))).isSymbolicLink(),
+          false,
+        );
         assert.notEqual(
           await realpath(path.join(worktree.worktreePath, "node_modules", "left-pad")),
           await realpath(path.join(repository, "node_modules", "left-pad")),
@@ -434,7 +560,10 @@ test("provisions nested and non-Node dependencies into slice and candidate workt
         // into the shared source checkout, and both sandboxes resolve symlinks before
         // matching — so tool caches written under node_modules (vite's `.vite-temp`,
         // written while merely loading its config) are refused and the stage fails.
-        assert.equal((await lstat(path.join(worktree.worktreePath, "node_modules", "left-pad"))).isSymbolicLink(), true);
+        assert.equal(
+          (await lstat(path.join(worktree.worktreePath, "node_modules", "left-pad"))).isSymbolicLink(),
+          true,
+        );
         assert.equal(
           await realpath(path.join(worktree.worktreePath, "node_modules", "left-pad")),
           await realpath(path.join(repository, "node_modules", "left-pad")),
@@ -446,13 +575,18 @@ test("provisions nested and non-Node dependencies into slice and candidate workt
       // contaminating the source checkout that every other worktree shares.
       await writeFile(path.join(worktree.worktreePath, "node_modules", ".tool-cache"), "local\n", "utf8");
       assert.equal(
-        await stat(path.join(repository, "node_modules", ".tool-cache")).then(() => true).catch(() => false),
+        await stat(path.join(repository, "node_modules", ".tool-cache"))
+          .then(() => true)
+          .catch(() => false),
         false,
         "the source checkout is untouched by a worktree-local cache write",
       );
       await rm(path.join(worktree.worktreePath, "node_modules", ".tool-cache"), { force: true });
       // Provisioning never writes a lockfile.
-      assert.equal((await readFile(path.join(worktree.worktreePath, "package-lock.json"), "utf8")).trim(), '{"lockfileVersion":3}');
+      assert.equal(
+        (await readFile(path.join(worktree.worktreePath, "package-lock.json"), "utf8")).trim(),
+        '{"lockfileVersion":3}',
+      );
       // A clean worktree despite the provisioned dependencies being present.
       assert.equal(await manager.assertWorktreeClean(worktree.worktreePath), true);
     }
@@ -462,7 +596,11 @@ test("provisions nested and non-Node dependencies into slice and candidate workt
     assert.deepEqual(await readdir(path.join(slice.worktreePath, "node_modules")), ["left-pad"]);
     await mkdir(path.join(slice.worktreePath, "test-results"), { recursive: true });
     await writeFile(path.join(slice.worktreePath, "test-results", "report.json"), "{}\n", "utf8");
-    await assert.rejects(() => manager.assertWorktreeClean(slice.worktreePath), /uncommitted changes/, "report output is still seen");
+    await assert.rejects(
+      () => manager.assertWorktreeClean(slice.worktreePath),
+      /uncommitted changes/,
+      "report output is still seen",
+    );
     await rm(path.join(slice.worktreePath, "test-results"), { recursive: true, force: true });
     assert.equal(await manager.assertWorktreeClean(slice.worktreePath), true, "clean again after a Test run");
 
@@ -472,7 +610,10 @@ test("provisions nested and non-Node dependencies into slice and candidate workt
     assert.deepEqual(committed.files, ["feature.txt"], "no provisioned path reaches the commit");
     const tracked = (await git(slice.worktreePath, ["ls-files"])).stdout.split(/\r?\n/).filter(Boolean);
     assert.equal(
-      tracked.some((file) => file.startsWith("node_modules") || file.startsWith(".venv") || file.includes("/node_modules")),
+      tracked.some(
+        (file) =>
+          file.startsWith("node_modules") || file.startsWith(".venv") || file.includes("/node_modules"),
+      ),
       false,
       "no provisioned path is tracked",
     );
@@ -488,24 +629,44 @@ test("provisions nested and non-Node dependencies into slice and candidate workt
     await assert.rejects(() => manager.commit(candidate, "generated"), /generated tool state/);
     await rm(path.join(candidate.worktreePath, "test-results"), { recursive: true, force: true });
 
-    const assembled = await manager.assemble(candidate, [{ packageId: "S1", headRevision: committed.headRevision }]);
+    const assembled = await manager.assemble(candidate, [
+      { packageId: "S1", headRevision: committed.headRevision },
+    ]);
     candidate.headRevision = assembled.headRevision;
     assert.equal(await manager.verifyCandidate(candidate), assembled.headRevision);
 
     // Recovery keeps the worktree usable for a rerun instead of stripping its dependencies.
     await writeFile(path.join(candidate.worktreePath, "feature.txt"), "dirty\n", "utf8");
     assert.equal(await manager.recoverCandidate(candidate), true);
-    assert.equal((await readFile(path.join(candidate.worktreePath, "node_modules", "left-pad", "index.js"), "utf8")).trim(), "module.exports = 1;");
-    assert.equal(await manager.recoverCandidate(candidate), false, "a provisioned worktree reads as already recovered");
+    assert.equal(
+      (
+        await readFile(path.join(candidate.worktreePath, "node_modules", "left-pad", "index.js"), "utf8")
+      ).trim(),
+      "module.exports = 1;",
+    );
+    assert.equal(
+      await manager.recoverCandidate(candidate),
+      false,
+      "a provisioned worktree reads as already recovered",
+    );
 
     // Removal unlinks the provisioned paths and leaves the source dependencies intact.
     const removed = await manager.removeWorktree(candidate);
     assert.deepEqual(removed, [".venv", "frontend/node_modules", "node_modules"]);
     assert.equal(await exists(candidate.worktreePath), false);
     assert.deepEqual(await readdir(path.join(repository, "node_modules")), ["left-pad"]);
-    assert.equal((await readFile(path.join(repository, "node_modules", "left-pad", "index.js"), "utf8")).trim(), "module.exports = 1;");
-    assert.equal((await readFile(path.join(repository, "frontend", "node_modules", "vite", "index.js"), "utf8")).trim(), "module.exports = 2;");
-    assert.equal((await readFile(path.join(repository, ".venv", "pyvenv.cfg"), "utf8")).trim(), "home = /usr");
+    assert.equal(
+      (await readFile(path.join(repository, "node_modules", "left-pad", "index.js"), "utf8")).trim(),
+      "module.exports = 1;",
+    );
+    assert.equal(
+      (await readFile(path.join(repository, "frontend", "node_modules", "vite", "index.js"), "utf8")).trim(),
+      "module.exports = 2;",
+    );
+    assert.equal(
+      (await readFile(path.join(repository, ".venv", "pyvenv.cfg"), "utf8")).trim(),
+      "home = /usr",
+    );
     await manager.base(task);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
@@ -524,7 +685,9 @@ test("a write inside a cloned dependency directory succeeds, which a symlinked o
     const base = await manager.base(task);
     const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
 
-    const modeByPath = new Map((await provisionedDependencyEntries(candidate.worktreePath)).map((entry) => [entry.path, entry.mode]));
+    const modeByPath = new Map(
+      (await provisionedDependencyEntries(candidate.worktreePath)).map((entry) => [entry.path, entry.mode]),
+    );
     if (modeByPath.get("node_modules") !== "clone") {
       t.skip("this host has no same-volume clonefile/reflink support; the symlink fallback is covered above");
       return;
@@ -544,14 +707,20 @@ test("a write inside a cloned dependency directory succeeds, which a symlinked o
       "the write's resolved path stays inside the worktree",
     );
     assert.equal(
-      await stat(path.join(repository, "node_modules", "left-pad", "generated-cache.json")).then(() => true).catch(() => false),
+      await stat(path.join(repository, "node_modules", "left-pad", "generated-cache.json"))
+        .then(() => true)
+        .catch(() => false),
       false,
       "the write never reaches the source checkout",
     );
 
     // Rewriting a file that was already part of the installed package, not just adding a
     // new one, is the case a wholesale directory link could never satisfy either.
-    await writeFile(path.join(candidate.worktreePath, "node_modules", "left-pad", "index.js"), "module.exports = 99;\n", "utf8");
+    await writeFile(
+      path.join(candidate.worktreePath, "node_modules", "left-pad", "index.js"),
+      "module.exports = 99;\n",
+      "utf8",
+    );
     assert.equal(
       (await readFile(path.join(repository, "node_modules", "left-pad", "index.js"), "utf8")).trim(),
       "module.exports = 1;",
@@ -562,7 +731,10 @@ test("a write inside a cloned dependency directory succeeds, which a symlinked o
     const removed = await manager.removeWorktree(candidate);
     assert.deepEqual(removed, [".venv", "frontend/node_modules", "node_modules"]);
     assert.equal(await exists(candidate.worktreePath), false);
-    assert.equal((await readFile(path.join(repository, "node_modules", "left-pad", "index.js"), "utf8")).trim(), "module.exports = 1;");
+    assert.equal(
+      (await readFile(path.join(repository, "node_modules", "left-pad", "index.js"), "utf8")).trim(),
+      "module.exports = 1;",
+    );
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -579,7 +751,11 @@ test("does not provision tracked directories that share a dependency name", asyn
     await git(repository, ["add", "vendor"]);
     await git(repository, ["commit", "-m", "vendored source"]);
     await mkdir(path.join(repository, "node_modules", "left-pad"), { recursive: true });
-    await writeFile(path.join(repository, "node_modules", "left-pad", "index.js"), "module.exports = 1;\n", "utf8");
+    await writeFile(
+      path.join(repository, "node_modules", "left-pad", "index.js"),
+      "module.exports = 1;\n",
+      "utf8",
+    );
 
     assert.deepEqual(await discoverDependencyDirectories(await realRepository(repository)), ["node_modules"]);
     const manager = new GitWorktreeManager(path.join(directory, "worktrees"));
@@ -607,9 +783,17 @@ async function seedRepository(directory, repository) {
 
 async function seedDependencies(repository) {
   await mkdir(path.join(repository, "node_modules", "left-pad"), { recursive: true });
-  await writeFile(path.join(repository, "node_modules", "left-pad", "index.js"), "module.exports = 1;\n", "utf8");
+  await writeFile(
+    path.join(repository, "node_modules", "left-pad", "index.js"),
+    "module.exports = 1;\n",
+    "utf8",
+  );
   await mkdir(path.join(repository, "frontend", "node_modules", "vite"), { recursive: true });
-  await writeFile(path.join(repository, "frontend", "node_modules", "vite", "index.js"), "module.exports = 2;\n", "utf8");
+  await writeFile(
+    path.join(repository, "frontend", "node_modules", "vite", "index.js"),
+    "module.exports = 2;\n",
+    "utf8",
+  );
   await mkdir(path.join(repository, ".venv"), { recursive: true });
   await writeFile(path.join(repository, ".venv", "pyvenv.cfg"), "home = /usr\n", "utf8");
 }
@@ -623,7 +807,9 @@ async function symlinkDirectory(target, linkPath) {
 }
 
 async function exists(target) {
-  return lstat(target).then(() => true).catch(() => false);
+  return lstat(target)
+    .then(() => true)
+    .catch(() => false);
 }
 
 async function git(cwd, args) {

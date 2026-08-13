@@ -7,9 +7,7 @@ import {
 
 class CandidateEvidenceError extends Error {
   constructor(code, detail = null) {
-    const reasonCode = Object.hasOwn(RUNTIME_FRESHNESS_REASONS, code)
-      ? code
-      : "contradictory_evidence";
+    const reasonCode = Object.hasOwn(RUNTIME_FRESHNESS_REASONS, code) ? code : "contradictory_evidence";
     super(detail ?? RUNTIME_FRESHNESS_REASONS[reasonCode]);
     this.name = "CandidateEvidenceError";
     this.code = reasonCode;
@@ -22,9 +20,11 @@ function candidateEvidenceError(code, detail = null) {
 }
 
 export function isCandidateEvidenceError(error) {
-  return error instanceof CandidateEvidenceError &&
+  return (
+    error instanceof CandidateEvidenceError &&
     typeof error.code === "string" &&
-    Object.hasOwn(RUNTIME_FRESHNESS_REASONS, error.code);
+    Object.hasOwn(RUNTIME_FRESHNESS_REASONS, error.code)
+  );
 }
 
 function compareEvidenceBinding(binding, candidate) {
@@ -88,12 +88,21 @@ export function parseGrillQuestions(text) {
     }
     const options = question.options.map((option, optionIndex) => ({
       id: `Q${questionIndex + 1}-O${optionIndex + 1}`,
-      label: String(option?.label ?? "").trim().slice(0, 300),
-      description: String(option?.description ?? "").trim().slice(0, 1_000),
+      label: String(option?.label ?? "")
+        .trim()
+        .slice(0, 300),
+      description: String(option?.description ?? "")
+        .trim()
+        .slice(0, 1_000),
       recommended: option?.recommended === true,
     }));
-    if (options.some((option) => !option.label) || options.filter((option) => option.recommended).length !== 1) {
-      throw new Error(`Grill question ${questionIndex + 1} must have labelled options and exactly one recommendation.`);
+    if (
+      options.some((option) => !option.label) ||
+      options.filter((option) => option.recommended).length !== 1
+    ) {
+      throw new Error(
+        `Grill question ${questionIndex + 1} must have labelled options and exactly one recommendation.`,
+      );
     }
     return {
       id: `Q${questionIndex + 1}`,
@@ -111,29 +120,52 @@ export function parseGrillQuestions(text) {
 export function parseFastChangeContract(text, repositoryPath = null) {
   const value = parseLabelledJson(text, "fast-change-contract");
   const acceptanceCriteria = Array.isArray(value.acceptanceCriteria)
-    ? value.acceptanceCriteria.map((entry) => String(entry).trim()).filter(Boolean).slice(0, 12)
+    ? value.acceptanceCriteria
+        .map((entry) => String(entry).trim())
+        .filter(Boolean)
+        .slice(0, 12)
     : [];
   const ownedPaths = Array.isArray(value.ownedPaths)
-    ? value.ownedPaths.map((entry) => normalizeOwnedPath(entry, repositoryPath)).filter(Boolean).slice(0, 20)
+    ? value.ownedPaths
+        .map((entry) => normalizeOwnedPath(entry, repositoryPath))
+        .filter(Boolean)
+        .slice(0, 20)
     : [];
-  const verificationCommandIds = normalizeVerificationCommandIds(value.verificationCommandIds, "Fast change contract");
-  if (!acceptanceCriteria.length) throw new Error("The fast change contract needs at least one authoritative acceptance criterion.");
-  if (!ownedPaths.length) throw new Error("The fast change contract needs one to three repository-relative owned paths.");
-  if (!verificationCommandIds.length) throw new Error("The fast change contract needs at least one repository manifest command ID.");
+  const verificationCommandIds = normalizeVerificationCommandIds(
+    value.verificationCommandIds,
+    "Fast change contract",
+  );
+  if (!acceptanceCriteria.length)
+    throw new Error("The fast change contract needs at least one authoritative acceptance criterion.");
+  if (!ownedPaths.length)
+    throw new Error("The fast change contract needs one to three repository-relative owned paths.");
+  if (!verificationCommandIds.length)
+    throw new Error("The fast change contract needs at least one repository manifest command ID.");
   return {
     acceptanceCriteria,
     ownedPaths,
     verificationCommandIds,
     unresolvedDecisions: Array.isArray(value.unresolvedDecisions)
-      ? value.unresolvedDecisions.map((entry) => String(entry).trim()).filter(Boolean).slice(0, 8)
+      ? value.unresolvedDecisions
+          .map((entry) => String(entry).trim())
+          .filter(Boolean)
+          .slice(0, 8)
       : [],
     riskSignals: Array.isArray(value.riskSignals)
-      ? value.riskSignals.map((entry) => String(entry).trim()).filter(Boolean).slice(0, 12)
+      ? value.riskSignals
+          .map((entry) => String(entry).trim())
+          .filter(Boolean)
+          .slice(0, 12)
       : [],
     workPackage: {
       id: "S1",
-      title: String(value.title ?? "Bounded fast change").trim().slice(0, 300) || "Bounded fast change",
-      description: String(value.description ?? acceptanceCriteria.join(" ")).trim().slice(0, 3_000),
+      title:
+        String(value.title ?? "Bounded fast change")
+          .trim()
+          .slice(0, 300) || "Bounded fast change",
+      description: String(value.description ?? acceptanceCriteria.join(" "))
+        .trim()
+        .slice(0, 3_000),
       dependencies: [],
       batch: 1,
       ownedPaths,
@@ -157,10 +189,16 @@ export function parseFocusedTestEvidence(text) {
   const binding = readExplicitCandidateBinding(value);
   if (!binding.valid) throw candidateEvidenceError(binding.code);
   if (typeof value.command !== "string" || !value.command.trim()) {
-    throw candidateEvidenceError("contradictory_evidence", "Focused test evidence must include a string command.");
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      "Focused test evidence must include a string command.",
+    );
   }
   if (value.durationMs != null && (!Number.isFinite(value.durationMs) || value.durationMs < 0)) {
-    throw candidateEvidenceError("contradictory_evidence", "Focused test evidence durationMs must be a non-negative number or null.");
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      "Focused test evidence durationMs must be a non-negative number or null.",
+    );
   }
   for (const field of ["startedAt", "completedAt"]) {
     if (value[field] != null && !isCanonicalIsoTimestamp(value[field])) {
@@ -172,10 +210,16 @@ export function parseFocusedTestEvidence(text) {
   }
   const rows = Array.isArray(value.rows) ? value.rows : [];
   if (!rows.length) {
-    throw candidateEvidenceError("contradictory_evidence", "Focused test evidence must include at least one row.");
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      "Focused test evidence must include at least one row.",
+    );
   }
   if (!["passed", "failed"].includes(value.status)) {
-    throw candidateEvidenceError("contradictory_evidence", "Focused test evidence status must be passed or failed.");
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      "Focused test evidence status must be passed or failed.",
+    );
   }
   const normalized = {
     candidateId: binding.candidateId,
@@ -204,7 +248,8 @@ export function parseFocusedTestEvidence(text) {
 }
 
 export function validateFocusedTestEvidence(evidence, candidate) {
-  if (!candidate?.id || !Number.isInteger(candidate.revisionNumber)) throw new Error("Focused test evidence requires an active candidate identity.");
+  if (!candidate?.id || !Number.isInteger(candidate.revisionNumber))
+    throw new Error("Focused test evidence requires an active candidate identity.");
   if (!Array.isArray(evidence?.rows)) throw new Error("Focused test evidence must include a rows array.");
   if (evidence?.bindingExplicit !== true) throw candidateEvidenceError("missing_binding");
   const implicitRow = evidence.rows.find((row) => row?.bindingExplicit !== true);
@@ -269,7 +314,10 @@ export function parseGateEvidence(text, candidate, stageId) {
       throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} must be an object.`);
     }
     if (typeof finding.severity !== "string") {
-      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} severity must be a string.`);
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `Gate finding ${index + 1} severity must be a string.`,
+      );
     }
     const severity = finding.severity.toUpperCase();
     if (!["P0", "P1", "P2", "P3"].includes(severity)) {
@@ -286,10 +334,16 @@ export function parseGateEvidence(text, candidate, stageId) {
     }
     const kind = finding.kind;
     if (typeof finding.title !== "string" || typeof finding.detail !== "string") {
-      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} title and detail must be strings.`);
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `Gate finding ${index + 1} title and detail must be strings.`,
+      );
     }
     if (finding.file != null && typeof finding.file !== "string") {
-      throw candidateEvidenceError("contradictory_evidence", `Gate finding ${index + 1} file must be a string or null.`);
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `Gate finding ${index + 1} file must be a string or null.`,
+      );
     }
     const line = normalizeGateFindingLine(finding.line, index);
     const title = finding.title.trim();
@@ -303,21 +357,24 @@ export function parseGateEvidence(text, candidate, stageId) {
     const hasFindingCandidateId = Object.hasOwn(finding ?? {}, "candidateId");
     const hasFindingCandidateRevision = Object.hasOwn(finding ?? {}, "candidateRevision");
     const findingExplicitBinding = hasFindingCandidateId && hasFindingCandidateRevision;
-    if (hasFindingCandidateId !== hasFindingCandidateRevision) throw candidateEvidenceError("malformed_binding");
+    if (hasFindingCandidateId !== hasFindingCandidateRevision)
+      throw candidateEvidenceError("malformed_binding");
     const findingBinding = findingExplicitBinding ? readExplicitCandidateBinding(finding) : binding;
     if (!findingBinding.valid) throw candidateEvidenceError(findingBinding.code);
-    const acceptanceCriterion = typeof finding.acceptanceCriterion === "string" && finding.acceptanceCriterion.trim()
-      ? finding.acceptanceCriterion.trim().slice(0, 2_000)
-      : null;
-    const reproductionEvidence = typeof finding.reproductionEvidence === "string" && finding.reproductionEvidence.trim()
-      ? finding.reproductionEvidence.trim().slice(0, 4_000)
-      : null;
+    const acceptanceCriterion =
+      typeof finding.acceptanceCriterion === "string" && finding.acceptanceCriterion.trim()
+        ? finding.acceptanceCriterion.trim().slice(0, 2_000)
+        : null;
+    const reproductionEvidence =
+      typeof finding.reproductionEvidence === "string" && finding.reproductionEvidence.trim()
+        ? finding.reproductionEvidence.trim().slice(0, 4_000)
+        : null;
     // Verification gaps are owned by the later Harness Test gate, not by candidate
     // Repair. They remain visible findings, but only an actual candidate defect can
     // become a blocking repair authorizer.
-    const blocking = kind === "candidate-defect" && (
-      severity === "P0" || severity === "P1" || (finding.blocking === true && acceptanceCriterion != null)
-    );
+    const blocking =
+      kind === "candidate-defect" &&
+      (severity === "P0" || severity === "P1" || (finding.blocking === true && acceptanceCriterion != null));
     if (blocking && !reproductionEvidence) {
       throw candidateEvidenceError(
         "contradictory_evidence",
@@ -347,9 +404,8 @@ export function parseGateEvidence(text, candidate, stageId) {
   const identityReason = compareEvidenceBinding(binding, candidate);
   if (identityReason) throw candidateEvidenceError(identityReason);
   const blockingFindings = findings.filter((finding) => finding.blocking);
-  const verdict = blockingFindings.length === 0 && findings.every((finding) => finding.bindingExplicit)
-    ? "PASS"
-    : "REPAIR";
+  const verdict =
+    blockingFindings.length === 0 && findings.every((finding) => finding.bindingExplicit) ? "PASS" : "REPAIR";
   return {
     schemaVersion: 1,
     stage: stageId,
@@ -357,10 +413,15 @@ export function parseGateEvidence(text, candidate, stageId) {
     candidateRevision,
     verdict,
     reportedVerdict: value.verdict,
-    summary: String(value.summary ?? "").trim().slice(0, 4_000),
+    summary: String(value.summary ?? "")
+      .trim()
+      .slice(0, 4_000),
     findings,
     blockingReasons: [
-      ...blockingFindings.map((finding) => `${finding.severity}: ${finding.title}${finding.reproductionEvidence ? ` — ${finding.reproductionEvidence}` : ""}`),
+      ...blockingFindings.map(
+        (finding) =>
+          `${finding.severity}: ${finding.title}${finding.reproductionEvidence ? ` — ${finding.reproductionEvidence}` : ""}`,
+      ),
       ...findings
         .filter((finding) => !finding.bindingExplicit)
         .map((finding) => `Finding ${finding.title} is missing explicit candidate identity fields.`),
@@ -383,7 +444,11 @@ export function parseWorkPackages(text, repositoryPath = null) {
   if (!Array.isArray(value.packages) || value.packages.length < 1 || value.packages.length > 8) {
     throw new Error("The plan must contain 1-8 work packages.");
   }
-  const ids = value.packages.map((item) => String(item?.id ?? "").trim().toUpperCase());
+  const ids = value.packages.map((item) =>
+    String(item?.id ?? "")
+      .trim()
+      .toUpperCase(),
+  );
   if (new Set(ids).size !== ids.length || ids.some((id, index) => id !== `S${index + 1}`)) {
     throw new Error("Work package IDs must be unique and ordered as S1, S2, and so on.");
   }
@@ -396,8 +461,12 @@ export function parseWorkPackages(text, repositoryPath = null) {
     }
     return {
       id: ids[index],
-      title: String(item.title ?? "").trim().slice(0, 300),
-      description: String(item.description ?? "").trim().slice(0, 3_000),
+      title: String(item.title ?? "")
+        .trim()
+        .slice(0, 300),
+      description: String(item.description ?? "")
+        .trim()
+        .slice(0, 3_000),
       dependencies: [...new Set(dependencies)],
       batch: 0,
       ownedPaths: Array.isArray(item.ownedPaths)
@@ -407,7 +476,10 @@ export function parseWorkPackages(text, repositoryPath = null) {
             .slice(0, 40)
         : [],
       verification: Array.isArray(item.verification)
-        ? item.verification.map((entry) => String(entry).trim()).filter(Boolean).slice(0, 20)
+        ? item.verification
+            .map((entry) => String(entry).trim())
+            .filter(Boolean)
+            .slice(0, 20)
         : [],
       verificationCommandIds: normalizeVerificationCommandIds(
         item.verificationCommandIds ?? item.verification,
@@ -454,8 +526,11 @@ export function parseWorkPackages(text, repositoryPath = null) {
       const a = packages[left];
       const b = packages[right];
       const independent = !dependsOn(a, b.id, byId) && !dependsOn(b, a.id, byId);
-      const overlap = a.ownedPaths.find((entry) => b.ownedPaths.some((other) => ownedPathsOverlap(entry, other)));
-      if (independent && overlap) throw new Error(`${a.id} and ${b.id} both own ${overlap} without a dependency.`);
+      const overlap = a.ownedPaths.find((entry) =>
+        b.ownedPaths.some((other) => ownedPathsOverlap(entry, other)),
+      );
+      if (independent && overlap)
+        throw new Error(`${a.id} and ${b.id} both own ${overlap} without a dependency.`);
     }
   }
   return packages;
@@ -469,7 +544,9 @@ function normalizeVerificationCommandIds(value, label, options = {}) {
     if (!id) continue;
     if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(id)) {
       if (options.tolerateLegacyProse) continue;
-      throw new Error(`${label} verificationCommandIds must contain lowercase repository manifest command IDs.`);
+      throw new Error(
+        `${label} verificationCommandIds must contain lowercase repository manifest command IDs.`,
+      );
     }
     if (!ids.includes(id)) ids.push(id);
   }
@@ -484,12 +561,17 @@ function normalizeOwnedPath(value, repositoryPath) {
   if (pathApi.isAbsolute(raw)) {
     if (!repositoryPath) throw new Error(`Owned path must be repository-relative: ${raw}`);
     const repositoryApi = path.win32.isAbsolute(repositoryPath) ? path.win32 : path;
-    if (repositoryApi !== pathApi) throw new Error(`Owned path uses a different path style than the repository: ${raw}`);
+    if (repositoryApi !== pathApi)
+      throw new Error(`Owned path uses a different path style than the repository: ${raw}`);
     const repositoryRoot = repositoryApi.resolve(repositoryPath);
     const resolved = repositoryApi.resolve(raw);
     const relative = repositoryApi.relative(repositoryRoot, resolved);
     if (!relative || relative === ".") throw new Error("A work package cannot own the repository root.");
-    if (relative.startsWith(`..${repositoryApi.sep}`) || relative === ".." || repositoryApi.isAbsolute(relative)) {
+    if (
+      relative.startsWith(`..${repositoryApi.sep}`) ||
+      relative === ".." ||
+      repositoryApi.isAbsolute(relative)
+    ) {
       throw new Error(`Owned path is outside the selected repository: ${raw}`);
     }
     normalized = relative.replaceAll("\\", "/");
@@ -516,7 +598,12 @@ function ownedPathsOverlap(left, right) {
 }
 
 function canonicalOwnedPath(value) {
-  return String(value ?? "").trim().replaceAll("\\", "/").replace(/^\.\//, "").replace(/\/+$/g, "").toLowerCase();
+  return String(value ?? "")
+    .trim()
+    .replaceAll("\\", "/")
+    .replace(/^\.\//, "")
+    .replace(/\/+$/g, "")
+    .toLowerCase();
 }
 
 function dependsOn(item, targetId, byId, seen = new Set()) {
@@ -528,7 +615,10 @@ function dependsOn(item, targetId, byId, seen = new Set()) {
 
 function normalizeFocusedTestRow(row, rowIndex, parent) {
   if (!row || typeof row !== "object" || Array.isArray(row)) {
-    throw candidateEvidenceError("contradictory_evidence", `Focused test row ${rowIndex + 1} must be an object.`);
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      `Focused test row ${rowIndex + 1} must be an object.`,
+    );
   }
   validateFocusedTestRowFields(row, rowIndex);
   const hasCandidateId = Object.hasOwn(row ?? {}, "candidateId");
@@ -546,8 +636,13 @@ function normalizeFocusedTestRow(row, rowIndex, parent) {
   const status = row.status;
   const assertions = Array.isArray(row?.assertions)
     ? row.assertions.map((assertion, assertionIndex) => ({
-        label: String(assertion?.label ?? "").trim().slice(0, 300) || `Assertion ${assertionIndex + 1}`,
-        actual: String(assertion?.actual ?? "").trim().slice(0, 1_000),
+        label:
+          String(assertion?.label ?? "")
+            .trim()
+            .slice(0, 300) || `Assertion ${assertionIndex + 1}`,
+        actual: String(assertion?.actual ?? "")
+          .trim()
+          .slice(0, 1_000),
         expected: assertion?.expected == null ? null : String(assertion.expected).trim().slice(0, 1_000),
       }))
     : [];
@@ -556,15 +651,24 @@ function normalizeFocusedTestRow(row, rowIndex, parent) {
     bindingExplicit: explicitBinding,
     candidateId: binding.candidateId,
     candidateRevision: binding.candidateRevision,
-    command: String(row?.command ?? parent.command ?? "").trim().slice(0, 2_000),
+    command: String(row?.command ?? parent.command ?? "")
+      .trim()
+      .slice(0, 2_000),
     status,
     durationMs: normalizeDuration(row?.durationMs),
-    title: String(row?.title ?? "").trim().slice(0, 300) || `Focused test ${rowIndex + 1}`,
+    title:
+      String(row?.title ?? "")
+        .trim()
+        .slice(0, 300) || `Focused test ${rowIndex + 1}`,
     artifactReferences: Array.isArray(row?.artifactReferences)
       ? row.artifactReferences.map((reference) => ({
-          name: String(reference?.name ?? "").trim().slice(0, 300),
+          name: String(reference?.name ?? "")
+            .trim()
+            .slice(0, 300),
           path: reference?.path == null ? null : String(reference.path).trim().slice(0, 1_000),
-          kind: String(reference?.kind ?? "artifact").trim().slice(0, 100),
+          kind: String(reference?.kind ?? "artifact")
+            .trim()
+            .slice(0, 100),
         }))
       : [],
     assertions,
@@ -580,23 +684,38 @@ function validateFocusedTestRowFields(row, rowIndex) {
     }
   }
   if (row.durationMs != null && (!Number.isFinite(row.durationMs) || row.durationMs < 0)) {
-    throw candidateEvidenceError("contradictory_evidence", `${label} durationMs must be a non-negative number or null.`);
+    throw candidateEvidenceError(
+      "contradictory_evidence",
+      `${label} durationMs must be a non-negative number or null.`,
+    );
   }
   if (row.artifactReferences != null && !Array.isArray(row.artifactReferences)) {
     throw candidateEvidenceError("contradictory_evidence", `${label} artifactReferences must be an array.`);
   }
   for (const [referenceIndex, reference] of (row.artifactReferences ?? []).entries()) {
     if (!reference || typeof reference !== "object" || Array.isArray(reference)) {
-      throw candidateEvidenceError("contradictory_evidence", `${label} artifact reference ${referenceIndex + 1} must be an object.`);
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `${label} artifact reference ${referenceIndex + 1} must be an object.`,
+      );
     }
     if (reference.name != null && typeof reference.name !== "string") {
-      throw candidateEvidenceError("contradictory_evidence", `${label} artifact reference ${referenceIndex + 1} name must be a string or null.`);
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `${label} artifact reference ${referenceIndex + 1} name must be a string or null.`,
+      );
     }
     if (reference.path != null && typeof reference.path !== "string") {
-      throw candidateEvidenceError("contradictory_evidence", `${label} artifact reference ${referenceIndex + 1} path must be a string or null.`);
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `${label} artifact reference ${referenceIndex + 1} path must be a string or null.`,
+      );
     }
     if (reference.kind != null && typeof reference.kind !== "string") {
-      throw candidateEvidenceError("contradictory_evidence", `${label} artifact reference ${referenceIndex + 1} kind must be a string or null.`);
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `${label} artifact reference ${referenceIndex + 1} kind must be a string or null.`,
+      );
     }
   }
   if (row.assertions != null && !Array.isArray(row.assertions)) {
@@ -604,7 +723,10 @@ function validateFocusedTestRowFields(row, rowIndex) {
   }
   for (const [assertionIndex, assertion] of (row.assertions ?? []).entries()) {
     if (!assertion || typeof assertion !== "object" || Array.isArray(assertion)) {
-      throw candidateEvidenceError("contradictory_evidence", `${label} assertion ${assertionIndex + 1} must be an object.`);
+      throw candidateEvidenceError(
+        "contradictory_evidence",
+        `${label} assertion ${assertionIndex + 1} must be an object.`,
+      );
     }
     for (const field of ["label", "actual", "expected"]) {
       if (assertion[field] != null && typeof assertion[field] !== "string") {

@@ -43,7 +43,9 @@ const FORMAT_COMMAND_LIMIT = 220;
  * off mid-line.
  */
 export function formatCommand(command) {
-  const joined = Array.isArray(command) ? command.join(" ") : String(command ?? "Repository inspection").replace(/\s+/g, " ");
+  const joined = Array.isArray(command)
+    ? command.join(" ")
+    : String(command ?? "Repository inspection").replace(/\s+/g, " ");
   if (joined.length <= FORMAT_COMMAND_LIMIT) return joined;
   return `${joined.slice(0, FORMAT_COMMAND_LIMIT)}…`;
 }
@@ -101,7 +103,8 @@ export function runProcess(command, args, options = {}) {
       } else {
         await terminateProcessTree(child, true);
       }
-      if (!closed) error.message = `${error.message} The process tree did not close after forced termination.`;
+      if (!closed)
+        error.message = `${error.message} The process tree did not close after forced termination.`;
       finish(reject, error);
     };
     const abort = () => void terminate(new Error(`${label} run cancelled.`));
@@ -115,7 +118,9 @@ export function runProcess(command, args, options = {}) {
       const text = chunk.toString();
       stdoutBytes += Buffer.byteLength(chunk);
       if (stdoutBytes > stdoutBudget) {
-        void terminate(new Error(`${label} exceeded the stage evidence-output budget. Narrow the task and retry.`));
+        void terminate(
+          new Error(`${label} exceeded the stage evidence-output budget. Narrow the task and retry.`),
+        );
         return;
       }
       stdout = `${stdout}${text}`.slice(-STDOUT_LIMIT);

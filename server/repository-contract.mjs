@@ -28,10 +28,11 @@ async function git(repositoryPath, args, { required = true } = {}) {
 }
 
 async function discoverDeliveryRemote(repositoryRoot) {
-  const names = (await git(repositoryRoot, ["remote"], { required: false }))
-    ?.split(/\r?\n/)
-    .map((value) => value.trim())
-    .filter(Boolean) ?? [];
+  const names =
+    (await git(repositoryRoot, ["remote"], { required: false }))
+      ?.split(/\r?\n/)
+      .map((value) => value.trim())
+      .filter(Boolean) ?? [];
   const ordered = ["origin", ...names.filter((name) => name !== "origin")];
   for (const name of ordered) {
     const remoteUrl = await git(repositoryRoot, ["remote", "get-url", name], { required: false });
@@ -59,7 +60,17 @@ export async function inspectRepositoryContract(repositoryPath) {
   const requestedPath = await realpath(repositoryPath);
   const rootOutput = await git(requestedPath, ["rev-parse", "--show-toplevel"]);
   const repositoryRoot = await realpath(rootOutput);
-  const [branchOutput, headRevision, statusOutput, deliveryRemote, agentsFile, verificationFile, nvmrc, nodeVersion, packageFile] = await Promise.all([
+  const [
+    branchOutput,
+    headRevision,
+    statusOutput,
+    deliveryRemote,
+    agentsFile,
+    verificationFile,
+    nvmrc,
+    nodeVersion,
+    packageFile,
+  ] = await Promise.all([
     git(repositoryRoot, ["branch", "--show-current"]),
     git(repositoryRoot, ["rev-parse", "HEAD"]),
     git(repositoryRoot, ["status", "--porcelain=v1"]),
@@ -81,9 +92,16 @@ export async function inspectRepositoryContract(repositoryPath) {
   if (verificationFile != null) {
     try {
       const manifest = parseVerificationManifest(verificationFile);
-      verification = { ...verification, valid: true, commandIds: manifest.commands.map((command) => command.id) };
+      verification = {
+        ...verification,
+        valid: true,
+        commandIds: manifest.commands.map((command) => command.id),
+      };
     } catch (error) {
-      verification = { ...verification, error: error instanceof Error ? error.message : "Verification manifest is invalid." };
+      verification = {
+        ...verification,
+        error: error instanceof Error ? error.message : "Verification manifest is invalid.",
+      };
     }
   }
 
@@ -97,7 +115,10 @@ export async function inspectRepositoryContract(repositoryPath) {
         runtimeDeclarations.push({ source: "package.json engines.node", value: packageJson.engines.node });
       }
       if (typeof packageJson?.packageManager === "string") {
-        runtimeDeclarations.push({ source: "package.json packageManager", value: packageJson.packageManager });
+        runtimeDeclarations.push({
+          source: "package.json packageManager",
+          value: packageJson.packageManager,
+        });
       }
     } catch {
       runtimeDeclarations.push({ source: "package.json", value: "Invalid JSON" });

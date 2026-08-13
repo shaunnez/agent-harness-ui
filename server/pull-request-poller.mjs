@@ -2,9 +2,11 @@ export function startPullRequestPolling(orchestrator, options = {}) {
   const intervalMs = options.intervalMs ?? 30_000;
   const schedule = options.schedule ?? setTimeout;
   const cancel = options.cancel ?? clearTimeout;
-  const reportError = options.reportError ?? ((error) => {
-    console.error(JSON.stringify({ event: "github_pr_poll_failed", error: error.message }));
-  });
+  const reportError =
+    options.reportError ??
+    ((error) => {
+      console.error(JSON.stringify({ event: "github_pr_poll_failed", error: error.message }));
+    });
   let stopped = false;
   let timer = null;
 

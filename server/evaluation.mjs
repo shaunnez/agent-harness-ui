@@ -1,7 +1,16 @@
 import { createHash } from "node:crypto";
 
 const GATE_STAGES = ["dev-review", "test", "final-review"];
-const TERMINAL_STATUSES = new Set(["awaiting-human-approval", "merged-to-target", "completed", "closed", "archived", "blocked", "failed", "cancelled"]);
+const TERMINAL_STATUSES = new Set([
+  "awaiting-human-approval",
+  "merged-to-target",
+  "completed",
+  "closed",
+  "archived",
+  "blocked",
+  "failed",
+  "cancelled",
+]);
 
 function round(value, places = 6) {
   const factor = 10 ** places;
@@ -20,7 +29,7 @@ function passesGate(artifact) {
 
 function qualityScore(evaluation, kind) {
   if (evaluation?.scores?.[kind]?.score) return evaluation.scores[kind].score;
-  return kind === "human" ? evaluation?.score ?? null : null;
+  return kind === "human" ? (evaluation?.score ?? null) : null;
 }
 
 function addUsage(target, usage = {}) {
@@ -43,7 +52,9 @@ export function hashTaskBrief(input) {
     type: String(attachment.type ?? ""),
     size: Number(attachment.size ?? 0),
     contentHash: attachment.data
-      ? createHash("sha256").update(Buffer.from(String(attachment.data), "base64")).digest("hex")
+      ? createHash("sha256")
+          .update(Buffer.from(String(attachment.data), "base64"))
+          .digest("hex")
       : null,
   }));
   const canonical = JSON.stringify({
@@ -58,13 +69,19 @@ export function hashTaskBrief(input) {
 
 export function normalizeExperimentInput(input, { taskBriefHash, policyMatrix, frozenBaseSha }) {
   if (input == null) return null;
-  if (typeof input !== "object" || Array.isArray(input)) throw new Error("Experiment configuration must be an object.");
-  const groupId = String(input.groupId ?? "").trim().slice(0, 120);
-  const variantId = String(input.variantId ?? "").trim().slice(0, 120);
+  if (typeof input !== "object" || Array.isArray(input))
+    throw new Error("Experiment configuration must be an object.");
+  const groupId = String(input.groupId ?? "")
+    .trim()
+    .slice(0, 120);
+  const variantId = String(input.variantId ?? "")
+    .trim()
+    .slice(0, 120);
   const acceptanceCriteria = cleanStringList(input.acceptanceCriteria, "acceptance criteria");
   const verificationCommands = cleanStringList(input.verificationCommands, "verification commands");
   if (!groupId || !variantId) throw new Error("Controlled experiments require group and variant IDs.");
-  if (!/^[a-f0-9]{40,64}$/i.test(frozenBaseSha ?? "")) throw new Error("Controlled experiments require a verified frozen base commit SHA.");
+  if (!/^[a-f0-9]{40,64}$/i.test(frozenBaseSha ?? ""))
+    throw new Error("Controlled experiments require a verified frozen base commit SHA.");
   if (!acceptanceCriteria.length || !verificationCommands.length) {
     throw new Error("Controlled experiments require acceptance criteria and verification commands.");
   }
@@ -81,42 +98,65 @@ export function normalizeExperimentInput(input, { taskBriefHash, policyMatrix, f
 }
 
 function cleanStringList(value, label) {
-  if (!Array.isArray(value) || value.length > 30) throw new Error(`Experiment ${label} must be a list of at most 30 items.`);
-  return value.map((item) => String(item ?? "").trim().slice(0, 1_000)).filter(Boolean);
+  if (!Array.isArray(value) || value.length > 30)
+    throw new Error(`Experiment ${label} must be a list of at most 30 items.`);
+  return value
+    .map((item) =>
+      String(item ?? "")
+        .trim()
+        .slice(0, 1_000),
+    )
+    .filter(Boolean);
 }
 
 export function normalizeEvaluationInput(input, previous = null) {
   const score = Number(input.score);
-  if (!Number.isInteger(score) || score < 1 || score > 5) throw new Error("Evaluation score must be an integer from 1 to 5.");
+  if (!Number.isInteger(score) || score < 1 || score > 5)
+    throw new Error("Evaluation score must be an integer from 1 to 5.");
   const kind = input.kind === "blind" ? "blind" : "human";
   const rubric = normalizeRubric(input.rubric, score);
   const entry = {
     score,
     outcome: ["accepted", "rejected", "mixed"].includes(input.outcome) ? input.outcome : "mixed",
     rubric,
-    notes: String(input.notes ?? "").trim().slice(0, 5_000),
-    evaluator: String(input.evaluator ?? "").trim().slice(0, 160) || null,
+    notes: String(input.notes ?? "")
+      .trim()
+      .slice(0, 5_000),
+    evaluator:
+      String(input.evaluator ?? "")
+        .trim()
+        .slice(0, 160) || null,
     evaluatedAt: new Date().toISOString(),
   };
   const scores = { ...(previous?.scores ?? {}), [kind]: entry };
   return {
     ...previous,
     ...(kind === "human" ? entry : {}),
-    suiteId: String(input.suiteId ?? previous?.suiteId ?? "").trim().slice(0, 120) || null,
-    caseId: String(input.caseId ?? previous?.caseId ?? "").trim().slice(0, 120) || null,
+    suiteId:
+      String(input.suiteId ?? previous?.suiteId ?? "")
+        .trim()
+        .slice(0, 120) || null,
+    caseId:
+      String(input.caseId ?? previous?.caseId ?? "")
+        .trim()
+        .slice(0, 120) || null,
     scores,
   };
 }
 
 function normalizeRubric(value, fallbackScore) {
   if (value == null) return { overall: fallbackScore };
-  if (typeof value !== "object" || Array.isArray(value)) throw new Error("Evaluation rubric must be an object of named 1-5 scores.");
-  const entries = Object.entries(value).slice(0, 30).map(([key, rawScore]) => {
-    const name = String(key).trim().slice(0, 80);
-    const score = Number(rawScore);
-    if (!name || !Number.isInteger(score) || score < 1 || score > 5) throw new Error("Every rubric score must be an integer from 1 to 5.");
-    return [name, score];
-  });
+  if (typeof value !== "object" || Array.isArray(value))
+    throw new Error("Evaluation rubric must be an object of named 1-5 scores.");
+  const entries = Object.entries(value)
+    .slice(0, 30)
+    .map(([key, rawScore]) => {
+      const name = String(key).trim().slice(0, 80);
+      const score = Number(rawScore);
+      if (!name || !Number.isInteger(score) || score < 1 || score > 5)
+        throw new Error("Every rubric score must be an integer from 1 to 5.");
+      return [name, score];
+    });
   return entries.length ? Object.fromEntries(entries) : { overall: fallbackScore };
 }
 
@@ -174,14 +214,18 @@ function observationalSummary(tasks) {
       credits: group.creditSamples ? round(group.credits) : null,
       gatePasses: group.gatePasses,
       gateRepairs: group.gateRepairs,
-      averageHumanScore: group.humanScores.length ? round(group.humanScores.reduce((sum, value) => sum + value, 0) / group.humanScores.length, 2) : null,
+      averageHumanScore: group.humanScores.length
+        ? round(group.humanScores.reduce((sum, value) => sum + value, 0) / group.humanScores.length, 2)
+        : null,
     }))
     .sort((left, right) => left.role.localeCompare(right.role) || right.runs - left.runs);
 }
 
 function experimentTaskMetrics(task) {
   const gateResults = GATE_STAGES.map((stage) => {
-    const attempts = (task.artifacts ?? []).filter((artifact) => artifact.stage === stage && artifact.gateResult);
+    const attempts = (task.artifacts ?? []).filter(
+      (artifact) => artifact.stage === stage && artifact.gateResult,
+    );
     return {
       stage,
       attempts: attempts.length,
@@ -198,9 +242,13 @@ function experimentTaskMetrics(task) {
     contextCharacters += artifact.contextManifest?.promptCharacters ?? 0;
     estimatedContextTokens += artifact.contextManifest?.estimatedPromptTokens ?? 0;
   }
-  const retryCount = Object.values(task.attemptsByStage ?? {}).reduce((sum, attempts) => sum + Math.max(0, Number(attempts ?? 0) - 1), 0);
+  const retryCount = Object.values(task.attemptsByStage ?? {}).reduce(
+    (sum, attempts) => sum + Math.max(0, Number(attempts ?? 0) - 1),
+    0,
+  );
   const repairCount = (task.candidates ?? []).reduce(
-    (sum, candidate) => sum + (candidate.revisions ?? []).filter((revision) => revision.reason === "repair").length,
+    (sum, candidate) =>
+      sum + (candidate.revisions ?? []).filter((revision) => revision.reason === "repair").length,
     0,
   );
   const end = task.completedAt ?? (TERMINAL_STATUSES.has(task.status) ? task.updatedAt : null);
@@ -266,7 +314,8 @@ function controlledSummary(tasks) {
       group.wallTimeMs += metrics.wallTimeMs;
       group.wallTimeSamples += 1;
     }
-    for (const [role, duration] of Object.entries(metrics.roleDurations)) group.roleDurations[role] = (group.roleDurations[role] ?? 0) + duration;
+    for (const [role, duration] of Object.entries(metrics.roleDurations))
+      group.roleDurations[role] = (group.roleDurations[role] ?? 0) + duration;
     group.contextCharacters += metrics.contextCharacters;
     group.estimatedContextTokens += metrics.estimatedContextTokens;
     if (metrics.humanScore) group.humanScores.push(metrics.humanScore);
@@ -303,10 +352,17 @@ function controlledSummary(tasks) {
       apiEstimate: group.apiEstimateSamples ? round(group.apiEstimate) : null,
       contextCharacters: group.contextCharacters,
       estimatedContextTokens: group.estimatedContextTokens,
-      averageHumanScore: group.humanScores.length ? round(group.humanScores.reduce((sum, value) => sum + value, 0) / group.humanScores.length, 2) : null,
-      averageBlindScore: group.blindScores.length ? round(group.blindScores.reduce((sum, value) => sum + value, 0) / group.blindScores.length, 2) : null,
+      averageHumanScore: group.humanScores.length
+        ? round(group.humanScores.reduce((sum, value) => sum + value, 0) / group.humanScores.length, 2)
+        : null,
+      averageBlindScore: group.blindScores.length
+        ? round(group.blindScores.reduce((sum, value) => sum + value, 0) / group.blindScores.length, 2)
+        : null,
     }))
-    .sort((left, right) => left.groupId.localeCompare(right.groupId) || left.variantId.localeCompare(right.variantId));
+    .sort(
+      (left, right) =>
+        left.groupId.localeCompare(right.groupId) || left.variantId.localeCompare(right.variantId),
+    );
 }
 
 export function buildEvaluationSummary(tasks) {
@@ -314,16 +370,19 @@ export function buildEvaluationSummary(tasks) {
   const experiments = controlledSummary(tasks);
   return {
     generatedAt: new Date().toISOString(),
-    methodology: "Historical observations and controlled experiments are reported separately. Percentages include sample counts and do not imply statistical significance.",
+    methodology:
+      "Historical observations and controlled experiments are reported separately. Percentages include sample counts and do not imply statistical significance.",
     evaluatedTasks: tasks.filter((task) => task.evaluation).length,
     variants: observations,
     observations: {
-      methodology: "Observational stage-run metrics across historical tasks; differences may be confounded by task, context, and policy.",
+      methodology:
+        "Observational stage-run metrics across historical tasks; differences may be confounded by task, context, and policy.",
       evaluatedTasks: tasks.filter((task) => task.evaluation && !task.experiment).length,
       variants: observations,
     },
     experiments: {
-      methodology: "Controlled task variants grouped by explicit experiment and variant IDs with frozen briefs, bases, policies, acceptance criteria, and verification commands.",
+      methodology:
+        "Controlled task variants grouped by explicit experiment and variant IDs with frozen briefs, bases, policies, acceptance criteria, and verification commands.",
       taskCount: tasks.filter((task) => task.experiment).length,
       variants: experiments,
     },

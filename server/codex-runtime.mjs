@@ -67,7 +67,16 @@ export async function getCodexStatus() {
     const catalog = await readCodexModelCatalog();
     const binary = await locateCodex();
     if (!binary) {
-      return { available: false, authenticated: false, authMethod: null, model: DEFAULT_MODEL, reasoning: DEFAULT_REASONING, binary: null, message: "Codex CLI was not found.", catalog };
+      return {
+        available: false,
+        authenticated: false,
+        authMethod: null,
+        model: DEFAULT_MODEL,
+        reasoning: DEFAULT_REASONING,
+        binary: null,
+        message: "Codex CLI was not found.",
+        catalog,
+      };
     }
     const result = await runProcess(binary, ["login", "status"], { timeoutMs: 10_000, label: "Codex" });
     const message = `${result.stdout}\n${result.stderr}`.trim();
@@ -82,12 +91,28 @@ export async function getCodexStatus() {
       message: message || "Codex CLI is available.",
       catalog,
       providers: [
-        { id: "codex", label: "Codex", available: true, authenticated: result.code === 0 && /logged in/i.test(message), executionEnabled: true, detail: /chatgpt/i.test(message) ? "ChatGPT signed in" : "Codex login" },
+        {
+          id: "codex",
+          label: "Codex",
+          available: true,
+          authenticated: result.code === 0 && /logged in/i.test(message),
+          executionEnabled: true,
+          detail: /chatgpt/i.test(message) ? "ChatGPT signed in" : "Codex login",
+        },
         claude,
       ],
     };
   } catch (error) {
-    return { available: false, authenticated: false, authMethod: null, model: DEFAULT_MODEL, reasoning: DEFAULT_REASONING, binary: null, message: error.message, catalog: await readCodexModelCatalog() };
+    return {
+      available: false,
+      authenticated: false,
+      authMethod: null,
+      model: DEFAULT_MODEL,
+      reasoning: DEFAULT_REASONING,
+      binary: null,
+      message: error.message,
+      catalog: await readCodexModelCatalog(),
+    };
   }
 }
 
@@ -100,7 +125,12 @@ export function parseCodexEvent(line) {
   }
 
   if (event.type === "thread.started") {
-    return { type: "activity", tone: "info", title: "Agent session started", detail: event.thread_id ?? "Codex thread created" };
+    return {
+      type: "activity",
+      tone: "info",
+      title: "Agent session started",
+      detail: event.thread_id ?? "Codex thread created",
+    };
   }
 
   if (event.type === "item.started" && event.item?.type === "command_execution") {
@@ -121,9 +151,10 @@ export function parseCodexEvent(line) {
 
   if (event.type === "item.completed" && event.item?.type === "command_execution") {
     const succeeded = event.item.status === "completed" || event.item.exit_code === 0;
-    const runtimeScope = !succeeded && isRuntimeContextPreflightCommand(event.item.command)
-      ? "context-preflight"
-      : "agent-diagnostic";
+    const runtimeScope =
+      !succeeded && isRuntimeContextPreflightCommand(event.item.command)
+        ? "context-preflight"
+        : "agent-diagnostic";
     return {
       type: "activity",
       tone: succeeded ? "success" : "warning",
@@ -158,7 +189,9 @@ export function parseCodexEvent(line) {
         server: event.item.server ?? null,
         phase: completed ? "completed" : "started",
         result: completed
-          ? conciseToolResult(event.item.result ?? event.item.output ?? event.item.error?.message ?? event.item.error)
+          ? conciseToolResult(
+              event.item.result ?? event.item.output ?? event.item.error?.message ?? event.item.error,
+            )
           : null,
       },
     };
@@ -171,7 +204,9 @@ export function parseCodexEvent(line) {
   if (event.type === "turn.completed" && event.usage) {
     const inputTokens = Number(event.usage.input_tokens ?? 0);
     const cachedInputTokens = Number(event.usage.cached_input_tokens ?? 0);
-    const cacheWriteTokens = Number(event.usage.cache_write_input_tokens ?? event.usage.cache_write_tokens ?? 0);
+    const cacheWriteTokens = Number(
+      event.usage.cache_write_input_tokens ?? event.usage.cache_write_tokens ?? 0,
+    );
     const outputTokens = Number(event.usage.output_tokens ?? 0);
     return {
       type: "usage",
@@ -217,7 +252,7 @@ function tokenizeRuntimePreflight(command) {
   if (shell) {
     const argument = shell[1].trim();
     const quote = argument[0];
-    if (!["'", "\""].includes(quote) || argument.at(-1) !== quote) return null;
+    if (!["'", '"'].includes(quote) || argument.at(-1) !== quote) return null;
     source = argument.slice(1, -1);
   }
   const tokens = [];
@@ -238,11 +273,11 @@ function tokenizeRuntimePreflight(command) {
     }
     if (quote) {
       if (character === quote) quote = null;
-      else if (character === "\\" && quote === "\"") escaped = true;
+      else if (character === "\\" && quote === '"') escaped = true;
       else token += character;
       continue;
     }
-    if (["'", "\""].includes(character)) {
+    if (["'", '"'].includes(character)) {
       quote = character;
       continue;
     }
@@ -250,7 +285,10 @@ function tokenizeRuntimePreflight(command) {
       flush();
       continue;
     }
-    if (["|", "&", ";", ">", "<", "`"].includes(character) || (character === "$" && source[index + 1] === "(")) {
+    if (
+      ["|", "&", ";", ">", "<", "`"].includes(character) ||
+      (character === "$" && source[index + 1] === "(")
+    ) {
       return null;
     }
     if (character === "\\") {
@@ -278,7 +316,8 @@ export async function runCodex({
 }) {
   const binary = await locateCodex();
   if (!binary) throw new Error("Codex CLI was not found. Install Codex and sign in with ChatGPT first.");
-  if (!["read-only", "workspace-write"].includes(sandbox)) throw new Error(`Unsupported Codex sandbox: ${sandbox}`);
+  if (!["read-only", "workspace-write"].includes(sandbox))
+    throw new Error(`Unsupported Codex sandbox: ${sandbox}`);
 
   const args = buildCodexSpawnArgs({ cwd, sandbox, networkAccess, model, reasoning });
   const runtimeTemp =
@@ -301,7 +340,9 @@ export async function runCodex({
     },
   });
   if (result.code !== 0) {
-    throw new Error(extractFailure(result.stdout) ?? cleanStderr(result.stderr) ?? `Codex exited with code ${result.code}.`);
+    throw new Error(
+      extractFailure(result.stdout) ?? cleanStderr(result.stderr) ?? `Codex exited with code ${result.code}.`,
+    );
   }
 
   let finalText = "";
@@ -316,7 +357,8 @@ export async function runCodex({
 }
 
 export function buildCodexSpawnArgs({ cwd, sandbox, networkAccess = false, model, reasoning }) {
-  if (!["read-only", "workspace-write"].includes(sandbox)) throw new Error(`Unsupported Codex sandbox: ${sandbox}`);
+  if (!["read-only", "workspace-write"].includes(sandbox))
+    throw new Error(`Unsupported Codex sandbox: ${sandbox}`);
   return [
     "exec",
     "--json",
@@ -384,7 +426,8 @@ function extractFailure(stdout) {
     } catch {
       continue;
     }
-    const raw = event.type === "turn.failed" ? event.error?.message : event.type === "error" ? event.message : null;
+    const raw =
+      event.type === "turn.failed" ? event.error?.message : event.type === "error" ? event.message : null;
     if (!raw) continue;
     try {
       const nested = JSON.parse(raw);

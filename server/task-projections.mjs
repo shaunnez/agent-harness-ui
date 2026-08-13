@@ -103,15 +103,13 @@ function projectCandidateSummary(candidate) {
 
 function projectGateFreshness(gateFreshness) {
   if (!gateFreshness) return null;
-  return Object.fromEntries(Object.entries(gateFreshness).map(([stage, freshness]) => {
-    if (!freshness) return [stage, freshness];
-    const {
-      focusedTest: _focusedTest,
-      focusedTestRows: _focusedTestRows,
-      ...summary
-    } = freshness;
-    return [stage, { ...summary, focusedTest: null, focusedTestRows: [] }];
-  }));
+  return Object.fromEntries(
+    Object.entries(gateFreshness).map(([stage, freshness]) => {
+      if (!freshness) return [stage, freshness];
+      const { focusedTest: _focusedTest, focusedTestRows: _focusedTestRows, ...summary } = freshness;
+      return [stage, { ...summary, focusedTest: null, focusedTestRows: [] }];
+    }),
+  );
 }
 
 export function projectTaskCore(task) {
@@ -145,11 +143,12 @@ export function paginateTaskEvents(task, searchParams) {
 
 export function paginateTaskRuns(task, searchParams) {
   const filter = normalizeActivityFilter(searchParams.get("filter"));
-  const runs = filter === "test"
-    ? (task.runs ?? []).filter((run) => run.stage === "test" || run.kind === "test")
-    : filter === "agent"
-      ? (task.runs ?? []).filter((run) => run.stage !== "test" && run.kind !== "test")
-      : task.runs ?? [];
+  const runs =
+    filter === "test"
+      ? (task.runs ?? []).filter((run) => run.stage === "test" || run.kind === "test")
+      : filter === "agent"
+        ? (task.runs ?? []).filter((run) => run.stage !== "test" && run.kind !== "test")
+        : (task.runs ?? []);
   return paginate(runs, searchParams, runSortKey);
 }
 
@@ -169,17 +168,13 @@ function paginate(items, searchParams, keyFor) {
   const limit = normalizePageLimit(searchParams.get("limit"));
   const cursor = decodePageCursor(searchParams.get("cursor"));
   const sorted = [...items].sort((left, right) => compareKeys(keyFor(right), keyFor(left)));
-  const eligible = cursor
-    ? sorted.filter((item) => compareKeys(keyFor(item), cursor) < 0)
-    : sorted;
+  const eligible = cursor ? sorted.filter((item) => compareKeys(keyFor(item), cursor) < 0) : sorted;
   const pageItems = eligible.slice(0, limit);
   const hasMore = eligible.length > pageItems.length;
   return {
     items: pageItems,
     total: sorted.length,
-    nextCursor: hasMore && pageItems.length
-      ? encodePageCursor(keyFor(pageItems.at(-1)))
-      : null,
+    nextCursor: hasMore && pageItems.length ? encodePageCursor(keyFor(pageItems.at(-1))) : null,
   };
 }
 
@@ -213,7 +208,9 @@ function filterEvents(events, filter) {
     return events.filter((event) => event.runKind === "test" || event.role === "test");
   }
   if (filter === "agent") {
-    return events.filter((event) => event.category === "agent" && event.runKind !== "test" && event.role !== "test");
+    return events.filter(
+      (event) => event.category === "agent" && event.runKind !== "test" && event.role !== "test",
+    );
   }
   return events.filter((event) => event.category === "activity" || event.category === "artifact");
 }

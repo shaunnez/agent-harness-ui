@@ -84,7 +84,9 @@ export function parseVerificationManifest(raw, source = VERIFICATION_MANIFEST_PA
     throw new VerificationConfigError(`${source} must declare a non-empty commands array.`);
   }
   if (value.commands.length > MAX_COMMANDS) {
-    throw new VerificationConfigError(`${source} declares ${value.commands.length} commands; at most ${MAX_COMMANDS} are allowed.`);
+    throw new VerificationConfigError(
+      `${source} declares ${value.commands.length} commands; at most ${MAX_COMMANDS} are allowed.`,
+    );
   }
   const ids = new Set();
   const commands = value.commands.map((entry, index) => {
@@ -141,10 +143,14 @@ function parseReportDeclaration(report, label) {
     );
   }
   if (typeof report.outputFile !== "string" || !report.outputFile.trim()) {
-    throw new VerificationConfigError(`${label} report needs an outputFile path relative to the repository root.`);
+    throw new VerificationConfigError(
+      `${label} report needs an outputFile path relative to the repository root.`,
+    );
   }
   if (path.isAbsolute(report.outputFile)) {
-    throw new VerificationConfigError(`${label} report outputFile must be repository-relative, not absolute.`);
+    throw new VerificationConfigError(
+      `${label} report outputFile must be repository-relative, not absolute.`,
+    );
   }
   return { format: report.format, outputFile: report.outputFile.trim() };
 }
@@ -156,9 +162,9 @@ export async function readVerificationManifest(worktreePath) {
     // Refused, not fallen back to. Falling back to a model-chosen command would give the
     // harness evidence it cannot check while looking exactly like evidence it can.
     throw new VerificationConfigError(
-      `This repository declares no verification commands, so the harness cannot verify the candidate. `
-        + `Add ${VERIFICATION_MANIFEST_PATH} with {"version":1,"commands":[{"id":"test","command":["npm","test"]}]} `
-        + `and commit it. Commands must come from the repository so that what ran is what was declared.`,
+      `This repository declares no verification commands, so the harness cannot verify the candidate. ` +
+        `Add ${VERIFICATION_MANIFEST_PATH} with {"version":1,"commands":[{"id":"test","command":["npm","test"]}]} ` +
+        `and commit it. Commands must come from the repository so that what ran is what was declared.`,
     );
   }
   return parseVerificationManifest(raw, VERIFICATION_MANIFEST_PATH);
@@ -187,7 +193,9 @@ export function resolveReportPath(worktreePath, outputFile) {
   const root = path.resolve(worktreePath);
   const resolved = path.resolve(root, outputFile);
   if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) {
-    throw new VerificationConfigError(`Report outputFile ${outputFile} resolves outside the candidate worktree.`);
+    throw new VerificationConfigError(
+      `Report outputFile ${outputFile} resolves outside the candidate worktree.`,
+    );
   }
   return resolved;
 }
@@ -206,7 +214,9 @@ export function parsePlaywrightJsonReport(raw, source = "report") {
   }
   const stats = value?.stats;
   if (!stats || typeof stats !== "object") {
-    throw new VerificationConfigError(`${source} has no stats object; it does not look like a Playwright JSON report.`);
+    throw new VerificationConfigError(
+      `${source} has no stats object; it does not look like a Playwright JSON report.`,
+    );
   }
   const counts = {};
   for (const field of ["expected", "unexpected", "flaky", "skipped"]) {
@@ -243,23 +253,32 @@ function playwrightFailureSummaries(suites) {
     const titles = suite.title ? [...parents, String(suite.title)] : parents;
     for (const spec of suite.specs ?? []) {
       for (const test of spec.tests ?? []) {
-        if (test?.status !== "unexpected" && !(test?.results ?? []).some((result) => (
-          ["failed", "timedOut", "interrupted"].includes(result?.status)
-        ))) {
+        if (
+          test?.status !== "unexpected" &&
+          !(test?.results ?? []).some((result) =>
+            ["failed", "timedOut", "interrupted"].includes(result?.status),
+          )
+        ) {
           continue;
         }
-        const result = [...(test.results ?? [])].reverse().find((entry) => (
-          ["failed", "timedOut", "interrupted"].includes(entry?.status)
-        ));
+        const result = [...(test.results ?? [])]
+          .reverse()
+          .find((entry) => ["failed", "timedOut", "interrupted"].includes(entry?.status));
         const errors = result?.errors?.length ? result.errors : result?.error ? [result.error] : [];
-        const messages = [...new Set(errors.map((error) => (
-          String(error?.message ?? error?.value ?? "Playwright reported an unexpected result.")
-            // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape stripping requires ESC.
-            .replace(/\u001b\[[0-9;]*m/g, "")
-            .replace(/\s+/g, " ")
-            .trim()
-            .slice(0, 1_200)
-        )).filter(Boolean))].slice(0, 2);
+        const messages = [
+          ...new Set(
+            errors
+              .map((error) =>
+                String(error?.message ?? error?.value ?? "Playwright reported an unexpected result.")
+                  // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape stripping requires ESC.
+                  .replace(/\u001b\[[0-9;]*m/g, "")
+                  .replace(/\s+/g, " ")
+                  .trim()
+                  .slice(0, 1_200),
+              )
+              .filter(Boolean),
+          ),
+        ].slice(0, 2);
         const location = errors.find((error) => error?.location)?.location ?? result?.error?.location ?? null;
         const locationLabel = location?.file
           ? ` (${location.file}${Number.isInteger(location.line) ? `:${location.line}` : ""})`
@@ -292,12 +311,15 @@ export function verificationSummaryCommand(manifest) {
 
 export function selectVerificationCommands(manifest, commandIds) {
   if (!Array.isArray(commandIds) || !commandIds.length) {
-    throw new VerificationConfigError("Focused package verification requires at least one repository manifest command id.");
+    throw new VerificationConfigError(
+      "Focused package verification requires at least one repository manifest command id.",
+    );
   }
   const requested = [...new Set(commandIds.map((id) => String(id).trim()).filter(Boolean))];
   const commands = requested.map((id) => {
     const command = manifest.commands.find((entry) => entry.id === id);
-    if (!command) throw new VerificationConfigError(`${manifest.source} does not declare focused command id ${id}.`);
+    if (!command)
+      throw new VerificationConfigError(`${manifest.source} does not declare focused command id ${id}.`);
     return command;
   });
   return { ...manifest, commands };
@@ -330,9 +352,8 @@ export async function runRepositoryVerification({
     throw new Error("Harness verification requires an active candidate identity.");
   }
   const completeManifest = manifest ?? (await readVerificationManifest(worktreePath));
-  const resolved = commandIds == null
-    ? completeManifest
-    : selectVerificationCommands(completeManifest, commandIds);
+  const resolved =
+    commandIds == null ? completeManifest : selectVerificationCommands(completeManifest, commandIds);
   // The SHA is read here, not taken on trust, and again after the commands finish. Evidence
   // that does not name the tree it was produced from is evidence about nothing, and the test
   // stage is expected to dirty its worktree — so the commit must be what is pinned, and it
@@ -396,7 +417,8 @@ export async function gitHeadRevision(worktreePath) {
     timeoutMs: 30_000,
     label: "verification:rev-parse",
   });
-  if (result.code !== 0) throw new Error(`Could not read the candidate worktree's HEAD: ${result.stderr.trim()}`);
+  if (result.code !== 0)
+    throw new Error(`Could not read the candidate worktree's HEAD: ${result.stderr.trim()}`);
   return result.stdout.trim();
 }
 
@@ -466,7 +488,11 @@ async function runVerificationCommand({ command, worktreePath, candidate, signal
       // A declared report the harness cannot read means the command was not checked the way
       // the manifest says it is checked. That is unverified, and unverified is not passed.
       reportError = error instanceof Error ? error.message : String(error);
-      assertions.push({ label: `${command.report.format} report`, actual: "unreadable", expected: "parseable" });
+      assertions.push({
+        label: `${command.report.format} report`,
+        actual: "unreadable",
+        expected: "parseable",
+      });
     }
   }
   const passed = result.code === 0 && !reportError && (reportOutcome ? reportOutcome.passed : true);
@@ -488,12 +514,16 @@ async function runVerificationCommand({ command, worktreePath, candidate, signal
     failureDetails: passed
       ? null
       : [
-        result.code === 0 ? null : `${display} exited ${result.code}.`,
-        reportError ? `Declared report ${command.report.outputFile} could not be used: ${reportError}` : null,
-        reportOutcome && !reportOutcome.passed ? reportOutcome.detail : null,
-        reportOutcome?.failureDetails,
-        retainedOutput(result),
-      ].filter(Boolean).join("\n"),
+          result.code === 0 ? null : `${display} exited ${result.code}.`,
+          reportError
+            ? `Declared report ${command.report.outputFile} could not be used: ${reportError}`
+            : null,
+          reportOutcome && !reportOutcome.passed ? reportOutcome.detail : null,
+          reportOutcome?.failureDetails,
+          retainedOutput(result),
+        ]
+          .filter(Boolean)
+          .join("\n"),
   };
 }
 
