@@ -1,7 +1,15 @@
 import type { StageId } from "./domain";
 import type { RuntimeFocusedTestEvidence, RuntimeFocusedTestRow, RuntimeUsage } from "./domain/runtime";
 
-export type RuntimeRunStatus = "running" | "completed" | "failed" | "cancelled" | "interrupted" | "timed-out" | "timed_out" | "timeout";
+export type RuntimeRunStatus =
+  | "running"
+  | "completed"
+  | "failed"
+  | "cancelled"
+  | "interrupted"
+  | "timed-out"
+  | "timed_out"
+  | "timeout";
 
 export type RuntimeGateStage = "dev-review" | "test" | "final-review";
 export type RuntimeFreshnessReasonCode =

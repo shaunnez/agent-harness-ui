@@ -1794,6 +1794,99 @@ test("merge approval fails closed for cross-layer mixed candidate evidence", asy
   }
 });
 
+test("raises an exact-candidate GitHub PR and completes only after polling observes its merge", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-pr-lifecycle-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await createApprovalReadyTask(store, directory, "Raise a governed PR");
+    let state = "open";
+    const pullRequestManager = {
+      async publish({ candidate, intent }) {
+        assert.equal(candidate.headRevision, "b".repeat(40));
+        assert.equal(intent.note, "Approved for GitHub review.");
+        return pullRequestObservation({ state: "open" });
+      },
+      async inspect(intent) {
+        assert.equal(intent.number, 84);
+        return pullRequestObservation({ state });
+      },
+    };
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: { async verifyCandidate() {} },
+      pullRequestManager,
+    });
+
+    const opened = await orchestrator.approvePullRequest(task.id, "Approved for GitHub review.");
+    assert.equal(opened.status, "awaiting-pr-merge");
+    assert.equal(opened.candidates.at(-1).status, "pull_request_open");
+    assert.equal(opened.pullRequestIntent.status, "open");
+    assert.equal(opened.pullRequestIntent.number, 84);
+    assert.equal(opened.approvals.length, 1);
+    assert.match(opened.artifacts.at(-1).content, /github\.com\/acme\/widgets\/pull\/84/i);
+    assert.equal(opened.completedStages.includes("approval"), false);
+
+    const openedUpdatedAt = opened.updatedAt;
+    await orchestrator.pollPullRequests();
+    const stillOpen = await store.get(task.id);
+    assert.equal(stillOpen.status, "awaiting-pr-merge");
+    assert.equal(stillOpen.pullRequestIntent.consecutivePollFailures, 0);
+    assert.equal(stillOpen.updatedAt, openedUpdatedAt, "poll telemetry must not masquerade as semantic task progress");
+
+    state = "merged";
+    await orchestrator.pollPullRequests();
+    const completed = await store.get(task.id);
+    assert.equal(completed.status, "completed");
+    assert.equal(completed.candidates.at(-1).status, "merged");
+    assert.equal(completed.pullRequestIntent.status, "merged");
+    assert.equal(completed.pullRequestIntent.mergeCommitRevision, "c".repeat(40));
+    assert.equal(completed.completedStages.includes("approval"), true);
+    assert.match(completed.events.at(-1).title, /GitHub PR merged/i);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("retains open PR state across transient polling errors and blocks a closed-unmerged PR", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-pr-polling-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await createApprovalReadyTask(store, directory, "Poll a governed PR");
+    let inspection = "error";
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: { async verifyCandidate() {} },
+      pullRequestManager: {
+        async publish() { return pullRequestObservation({ state: "open" }); },
+        async inspect() {
+          if (inspection === "error") throw new Error("GitHub is temporarily unavailable.");
+          return pullRequestObservation({ state: "closed" });
+        },
+      },
+    });
+    await orchestrator.approvePullRequest(task.id);
+    const openedUpdatedAt = (await store.get(task.id)).updatedAt;
+
+    await orchestrator.pollPullRequests();
+    const unavailable = await store.get(task.id);
+    assert.equal(unavailable.status, "awaiting-pr-merge");
+    assert.equal(unavailable.pullRequestIntent.status, "open");
+    assert.equal(unavailable.pullRequestIntent.consecutivePollFailures, 1);
+    assert.match(unavailable.pullRequestIntent.lastError, /temporarily unavailable/i);
+    assert.equal(unavailable.updatedAt, openedUpdatedAt);
+
+    inspection = "closed";
+    await orchestrator.pollPullRequests();
+    const closed = await store.get(task.id);
+    assert.equal(closed.status, "blocked");
+    assert.equal(closed.blocker.code, "pull-request-closed");
+    assert.equal(closed.pullRequestIntent.status, "closed");
+    assert.equal(closed.completedStages.includes("approval"), false);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("structured ingestion preserves mixed, revision-change, and candidate-mismatch reason codes", () => {
   const candidate = { id: "C1", revisionNumber: 2 };
   const oldRevision = gateOutput(1);
@@ -5589,6 +5682,70 @@ function makeArtifact({
     candidateRevision,
     gateResult,
     focusedTest,
+  };
+}
+
+async function createApprovalReadyTask(store, directory, title) {
+  const task = await store.create({
+    title,
+    description: "Publish the exact qualified candidate through a GitHub pull request.",
+    repositoryPath: directory,
+    workflow: "implement",
+    priority: "medium",
+  });
+  await store.update(task.id, (draft) => {
+    draft.status = "awaiting-human-approval";
+    draft.currentStage = "approval";
+    draft.completedStages = ["triage", "scouts", "grill", "specification", "plan", "implement", "dev-review", "test", "final-review"];
+    draft.candidates = [{
+      id: "C1",
+      revisionNumber: 2,
+      baseRevision: "a".repeat(40),
+      baseBranch: "main",
+      baseRef: "refs/heads/main",
+      headRevision: "b".repeat(40),
+      branch: "agent-harness/ah-pr-c1",
+      repositoryRoot: directory,
+      worktreePath: directory,
+      status: "awaiting_human_approval",
+      createdAt: "2026-08-01T12:00:00.000Z",
+      updatedAt: "2026-08-01T12:00:00.000Z",
+      revisions: [],
+    }];
+    draft.runs = [
+      makeRuntimeRun({ id: "RUN-DEV-PR" }),
+      makeRuntimeRun({
+        id: "RUN-TEST-PR",
+        stage: "test",
+        kind: "test",
+        gateResult: makeGateResult({ stage: "test" }),
+        test: makeFocusedTestSummary(),
+      }),
+      makeRuntimeRun({
+        id: "RUN-FINAL-PR",
+        stage: "final-review",
+        gateResult: makeGateResult({ stage: "final-review" }),
+      }),
+    ];
+    refreshGateFreshness(draft);
+  });
+  return store.get(task.id);
+}
+
+function pullRequestObservation({ state }) {
+  return {
+    repository: "acme/widgets",
+    number: 84,
+    url: "https://github.com/acme/widgets/pull/84",
+    state,
+    isDraft: false,
+    targetBranch: "main",
+    targetRevision: "a".repeat(40),
+    headBranch: `agent-harness/ah-042-c1-r2-${"b".repeat(8)}`,
+    headRevision: "b".repeat(40),
+    mergedAt: state === "merged" ? "2026-08-01T12:10:00.000Z" : null,
+    closedAt: state === "closed" ? "2026-08-01T12:10:00.000Z" : null,
+    mergeCommitRevision: state === "merged" ? "c".repeat(40) : null,
   };
 }
 

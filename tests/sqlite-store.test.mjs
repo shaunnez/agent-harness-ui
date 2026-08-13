@@ -3,6 +3,7 @@ import { execFile } from "node:child_process";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import { promisify } from "node:util";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
@@ -165,6 +166,52 @@ test("persists targeted updates, rolls failed mutations back, and reopens withou
     assert.equal(task.artifacts[0].content, "# Triage\n\nRetained content.");
     reopened.close();
   } finally {
+    sqlite.close();
+    await rm(context.directory, { recursive: true, force: true });
+  }
+});
+
+test("core-only and unchanged collection updates do not rewrite retained evidence", async () => {
+  const context = await fixture();
+  const sqlite = new SqliteTaskStore(context.databasePath, { legacyJsonPath: context.jsonPath });
+  let observer;
+  try {
+    await sqlite.init();
+    observer = new DatabaseSync(context.databasePath);
+    observer.exec(`
+      CREATE TABLE collection_update_audit(table_name TEXT NOT NULL);
+      CREATE TRIGGER audit_artifact_update AFTER UPDATE ON artifacts BEGIN
+        INSERT INTO collection_update_audit(table_name) VALUES ('artifacts');
+      END;
+      CREATE TRIGGER audit_event_update AFTER UPDATE ON events BEGIN
+        INSERT INTO collection_update_audit(table_name) VALUES ('events');
+      END;
+      CREATE TRIGGER audit_run_update AFTER UPDATE ON runs BEGIN
+        INSERT INTO collection_update_audit(table_name) VALUES ('runs');
+      END;
+    `);
+    const before = await sqlite.get(context.taskId);
+    await sqlite.update(context.taskId, (draft) => {
+      draft.priority = "low";
+    });
+    assert.equal(observer.prepare("SELECT COUNT(*) AS count FROM collection_update_audit").get().count, 0);
+
+    await sqlite.update(context.taskId, (draft) => {
+      draft.status = "awaiting-pr-merge";
+      draft.pullRequestIntent = { status: "open" };
+    });
+    const semanticUpdatedAt = (await sqlite.getCore(context.taskId)).updatedAt;
+    await sqlite.updateCore(context.taskId, (draft) => {
+      draft.pullRequestIntent.lastCheckedAt = "2026-08-09T00:10:00.000Z";
+    }, { touchUpdatedAt: false });
+    const after = await sqlite.get(context.taskId);
+    assert.equal(after.updatedAt, semanticUpdatedAt);
+    assert.deepEqual(after.artifacts, before.artifacts);
+    assert.deepEqual(after.runs, before.runs);
+    assert.deepEqual(after.events, before.events);
+    assert.deepEqual((await sqlite.listPullRequestTasks()).map((task) => task.id), [context.taskId]);
+  } finally {
+    observer?.close();
     sqlite.close();
     await rm(context.directory, { recursive: true, force: true });
   }

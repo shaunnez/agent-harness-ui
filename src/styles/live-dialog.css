@@ -270,6 +270,89 @@
   background: #151513;
   color: var(--text);
 }
+.repository-contract {
+  margin-top: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #171714;
+}
+.repository-contract > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 46px;
+  padding: 8px 11px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.repository-contract > header > span:first-child {
+  display: grid;
+  gap: 3px;
+}
+.repository-contract > header strong,
+.repository-contract li strong {
+  color: var(--text);
+  font-size: 12px;
+}
+.repository-contract > header small,
+.repository-contract li small {
+  overflow-wrap: anywhere;
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.repository-contract__loading,
+.repository-contract__state {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 5px;
+  font-size: 12px;
+}
+.repository-contract__loading {
+  color: var(--blue);
+}
+.repository-contract > p {
+  padding: 11px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.repository-contract__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: #ffd0d0 !important;
+}
+.repository-contract ul {
+  padding: 3px 11px;
+}
+.repository-contract li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.repository-contract li:last-child {
+  border-bottom: 0;
+}
+.repository-contract li > svg {
+  color: var(--muted);
+}
+.repository-contract li > span:nth-child(2) {
+  display: grid;
+  gap: 3px;
+}
+.repository-contract__state--ready {
+  color: var(--green);
+}
+.repository-contract__state--attention {
+  color: var(--amber);
+}
 .field input {
   min-height: 37px;
   padding: 0 11px;

@@ -30,8 +30,8 @@ export function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
         <span>
           <small>Dependency-aware implementation</small>
           <strong>
-            {task.workPackages.length} package{task.workPackages.length === 1 ? "" : "s"} &middot; {batches.length}{" "}
-            batch
+            {task.workPackages.length} package{task.workPackages.length === 1 ? "" : "s"} &middot;{" "}
+            {batches.length} batch
             {batches.length === 1 ? "" : "es"}
           </strong>
         </span>
@@ -44,57 +44,86 @@ export function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
               {task.workPackages
                 .filter((item) => item.batch === batch)
                 .map((workPackage) => {
-                  const packageArtifact = [...task.artifacts].reverse().find((artifact) => artifact.workPackageId === workPackage.id);
+                  const packageArtifact = [...task.artifacts]
+                    .reverse()
+                    .find((artifact) => artifact.workPackageId === workPackage.id);
                   return (
-                  <details
-                    key={workPackage.id}
-                    className={`runtime-package runtime-package--${workPackage.status}`}
-                  >
-                    <summary>
-                      {workPackage.status === "running" ? (
-                        <CircleNotch className="spin" size={17} />
-                      ) : workPackage.status === "failed" ? (
-                        <WarningCircle size={17} />
-                      ) : workPackage.status === "planned" ? (
-                        <FileCode size={17} />
-                      ) : (
-                        <CheckCircle size={17} weight="fill" />
-                      )}
-                      <span>
-                        <small>
-                          {workPackage.id} &middot; {workPackage.status === "ready_for_integration" ? "ready for integration" : workPackage.status.replaceAll("_", " ")}
-                        </small>
-                        <strong>{workPackage.title}</strong>
-                      </span>
-                      <CaretDown className="disclosure-caret" size={15} />
-                    </summary>
-                    <p>{workPackage.description}</p>
-                    <RuntimeRow label="Depends on" value={workPackage.dependencies.join(", ") || "None"} />
-                    <RuntimeRow
-                      label="Owned paths"
-                      value={workPackage.ownedPaths.join(", ") || "Plan-defined scope"}
-                    />
-                    <RuntimeRow
-                      label="Focused verification IDs"
-                      value={workPackage.verificationCommandIds?.join(" \u00b7 ") || "No validated manifest command ID recorded"}
-                      mono
-                    />
-                    <RuntimeRow
-                      label="Focused executions"
-                      value={`${workPackage.verificationRuns?.length ?? 0} bound to package commit`}
-                    />
-                    <RuntimeRow label="Interfaces" value="Not recorded by the runtime" />
-                    <RuntimeRow label="Agent / model" value={packageArtifact ? `${packageArtifact.model} \u00b7 ${packageArtifact.reasoning ?? "reasoning not recorded"}` : "Not run yet"} />
-                    <RuntimeRow label="Usage" value={packageArtifact ? `${formatTokenCount(packageArtifact.usage.inputTokens)} in \u00b7 ${formatTokenCount(packageArtifact.usage.outputTokens)} out \u00b7 ${formatCacheRate(packageArtifact.usage)} cached \u00b7 ${formatApproximateCost(packageArtifact.usage.cost)}` : "Not run yet"} />
-                    <RuntimeRow label="Attempts" value={String(workPackage.attempts)} />
-                    <RuntimeRow label="Branch" value={workPackage.branch ?? "Not created"} mono />
-                    <RuntimeRow label="Worktree" value={workPackage.worktreePath ?? "Not created"} mono />
-                    <RuntimeRow label="Changed files" value={workPackage.files.join(", ") || "None recorded"} />
-                    {workPackage.headRevision ? (
-                      <RuntimeRow label="Package commit" value={workPackage.headRevision.slice(0, 8)} mono />
-                    ) : null}
-                    {workPackage.error ? <small className="text-red">{workPackage.error}</small> : null}
-                  </details>
+                    <details
+                      key={workPackage.id}
+                      className={`runtime-package runtime-package--${workPackage.status}`}
+                    >
+                      <summary>
+                        {workPackage.status === "running" ? (
+                          <CircleNotch className="spin" size={17} />
+                        ) : workPackage.status === "failed" ? (
+                          <WarningCircle size={17} />
+                        ) : workPackage.status === "planned" ? (
+                          <FileCode size={17} />
+                        ) : (
+                          <CheckCircle size={17} weight="fill" />
+                        )}
+                        <span>
+                          <small>
+                            {workPackage.id} &middot;{" "}
+                            {workPackage.status === "ready_for_integration"
+                              ? "ready for integration"
+                              : workPackage.status.replaceAll("_", " ")}
+                          </small>
+                          <strong>{workPackage.title}</strong>
+                        </span>
+                        <CaretDown className="disclosure-caret" size={15} />
+                      </summary>
+                      <p>{workPackage.description}</p>
+                      <RuntimeRow label="Depends on" value={workPackage.dependencies.join(", ") || "None"} />
+                      <RuntimeRow
+                        label="Owned paths"
+                        value={workPackage.ownedPaths.join(", ") || "Plan-defined scope"}
+                      />
+                      <RuntimeRow
+                        label="Focused verification IDs"
+                        value={
+                          workPackage.verificationCommandIds?.join(" \u00b7 ") ||
+                          "No validated manifest command ID recorded"
+                        }
+                        mono
+                      />
+                      <RuntimeRow
+                        label="Focused executions"
+                        value={`${workPackage.verificationRuns?.length ?? 0} bound to package commit`}
+                      />
+                      <RuntimeRow label="Interfaces" value="Not recorded by the runtime" />
+                      <RuntimeRow
+                        label="Agent / model"
+                        value={
+                          packageArtifact
+                            ? `${packageArtifact.model} \u00b7 ${packageArtifact.reasoning ?? "reasoning not recorded"}`
+                            : "Not run yet"
+                        }
+                      />
+                      <RuntimeRow
+                        label="Usage"
+                        value={
+                          packageArtifact
+                            ? `${formatTokenCount(packageArtifact.usage.inputTokens)} in \u00b7 ${formatTokenCount(packageArtifact.usage.outputTokens)} out \u00b7 ${formatCacheRate(packageArtifact.usage)} cached \u00b7 ${formatApproximateCost(packageArtifact.usage.cost)}`
+                            : "Not run yet"
+                        }
+                      />
+                      <RuntimeRow label="Attempts" value={String(workPackage.attempts)} />
+                      <RuntimeRow label="Branch" value={workPackage.branch ?? "Not created"} mono />
+                      <RuntimeRow label="Worktree" value={workPackage.worktreePath ?? "Not created"} mono />
+                      <RuntimeRow
+                        label="Changed files"
+                        value={workPackage.files.join(", ") || "None recorded"}
+                      />
+                      {workPackage.headRevision ? (
+                        <RuntimeRow
+                          label="Package commit"
+                          value={workPackage.headRevision.slice(0, 8)}
+                          mono
+                        />
+                      ) : null}
+                      {workPackage.error ? <small className="text-red">{workPackage.error}</small> : null}
+                    </details>
                   );
                 })}
             </div>
@@ -126,7 +155,12 @@ export function RuntimeWorktreeInventory({
     const removing = removingId === selectedRow.id;
     return (
       <div className="runtime-worktree-inventory runtime-worktree-inventory--detail">
-        <button type="button" className="icon-button" onClick={() => onSelect(null)} aria-label="Return to inventory list">
+        <button
+          type="button"
+          className="icon-button"
+          onClick={() => onSelect(null)}
+          aria-label="Return to inventory list"
+        >
           <ArrowLeft size={16} />
         </button>
         <details className="runtime-worktree-inventory__detail" open>
@@ -149,7 +183,10 @@ export function RuntimeWorktreeInventory({
             <RuntimeRow label="Work package" value={selectedRow.workPackageId ?? "n/a"} mono />
             <RuntimeRow label="Git exists" value={selectedRow.gitExists ? "present" : "missing"} />
             <RuntimeRow label="Git head" value={selectedRow.gitHeadRevision ?? "n/a"} mono />
-            <RuntimeRow label="Cleanliness" value={selectedRow.gitClean == null ? "unknown" : selectedRow.gitClean ? "clean" : "dirty"} />
+            <RuntimeRow
+              label="Cleanliness"
+              value={selectedRow.gitClean == null ? "unknown" : selectedRow.gitClean ? "clean" : "dirty"}
+            />
             <RuntimeRow label="Cleanup" value={selectedRow.cleanupReady ? "ready" : "not ready"} />
           </div>
         </details>
@@ -175,11 +212,16 @@ export function RuntimeWorktreeInventory({
             {removing ? "Removing…" : "Remove worktree"}
           </Button>
           {!selectedRow.cleanupReady ? (
-            <small className="runtime-worktree-inventory__hint">Only a clean, inactive worktree can be removed — the server re-derives that from disk at removal time and refuses one that is still active.</small>
+            <small className="runtime-worktree-inventory__hint">
+              Only a clean, inactive worktree can be removed — the server re-derives that from disk at removal
+              time and refuses one that is still active.
+            </small>
           ) : null}
           {removeError ? <small className="text-red">{removeError}</small> : null}
         </div>
-        <p className="runtime-worktree-inventory__return">Return to the inventory list to inspect another retained worktree.</p>
+        <p className="runtime-worktree-inventory__return">
+          Return to the inventory list to inspect another retained worktree.
+        </p>
       </div>
     );
   }
@@ -201,13 +243,21 @@ export function RuntimeWorktreeInventory({
           </span>
           <span className="runtime-worktree-row__badges">
             <span className={`badge badge--${row.kind === "candidate" ? "red" : "green"}`}>{row.kind}</span>
-            <span className={`badge badge--${row.lifecycleState === "active" ? "green" : row.lifecycleState === "retained" ? "yellow" : "red"}`}>{row.lifecycleState}</span>
+            <span
+              className={`badge badge--${row.lifecycleState === "active" ? "green" : row.lifecycleState === "retained" ? "yellow" : "red"}`}
+            >
+              {row.lifecycleState}
+            </span>
             <span
               className={`badge badge--${row.cleanupReady ? "green" : "yellow"}`}
-              title={row.cleanupReady
-                ? "Present, clean, and not in use — safe to remove."
-                : "Still in use or holding uncommitted changes, so removal is refused."}
-            >{row.cleanupReady ? "cleanup ready" : "keep retained"}</span>
+              title={
+                row.cleanupReady
+                  ? "Present, clean, and not in use — safe to remove."
+                  : "Still in use or holding uncommitted changes, so removal is refused."
+              }
+            >
+              {row.cleanupReady ? "cleanup ready" : "keep retained"}
+            </span>
           </span>
           <span className="runtime-worktree-row__path mono">{row.worktreePath}</span>
         </button>
@@ -224,7 +274,14 @@ export function RuntimeContextDisclosure({ artifact }: { artifact: RuntimeArtifa
   return (
     <section className="runtime-context-disclosure">
       <header>
-        <span><strong>Context supplied</strong><small>{manifest ? `${manifest.sources.length} sources \u00b7 ~${formatTokenCount(manifest.estimatedPromptTokens)} rendered prompt tokens` : "Not recorded for this historical run"}</small></span>
+        <span>
+          <strong>Context supplied</strong>
+          <small>
+            {manifest
+              ? `${manifest.sources.length} sources \u00b7 ~${formatTokenCount(manifest.estimatedPromptTokens)} rendered prompt tokens`
+              : "Not recorded for this historical run"}
+          </small>
+        </span>
       </header>
       {manifest ? (
         <div>
@@ -232,14 +289,33 @@ export function RuntimeContextDisclosure({ artifact }: { artifact: RuntimeArtifa
           <ul>
             {manifest.sources.map((source) => (
               <li key={`${source.kind}-${source.id}`}>
-                <span><strong>{source.label}</strong><small>{source.kind}{source.stage ? ` \u00b7 ${source.stage}` : ""}{source.truncated ? " \u00b7 truncated" : ""}</small></span>
-                <code>{source.includedCharacters == null ? manifest.repositoryAccess : `${source.includedCharacters.toLocaleString()} chars`}</code>
+                <span>
+                  <strong>{source.label}</strong>
+                  <small>
+                    {source.kind}
+                    {source.stage ? ` \u00b7 ${source.stage}` : ""}
+                    {source.truncated ? " \u00b7 truncated" : ""}
+                  </small>
+                </span>
+                <code>
+                  {source.includedCharacters == null
+                    ? manifest.repositoryAccess
+                    : `${source.includedCharacters.toLocaleString()} chars`}
+                </code>
               </li>
             ))}
           </ul>
-          <small>Supplied context records what was included or accessible. It cannot prove which text the model relied on.</small>
+          <small>
+            Supplied context records what was included or accessible. It cannot prove which text the model
+            relied on.
+          </small>
         </div>
-      ) : <p>Context manifests are recorded for new agent runs. Older artifacts retain usage but cannot reconstruct the exact prompt boundary.</p>}
+      ) : (
+        <p>
+          Context manifests are recorded for new agent runs. Older artifacts retain usage but cannot
+          reconstruct the exact prompt boundary.
+        </p>
+      )}
     </section>
   );
 }
@@ -275,7 +351,8 @@ export function RuntimeFocusedTestEvidencePanel({
         <span>
           <small>Candidate-bound structured evidence</small>
           <strong>
-            {passed} passed &middot; {failed} failed &middot; {evidence.candidateId} r{evidence.candidateRevision}
+            {passed} passed &middot; {failed} failed &middot; {evidence.candidateId} r
+            {evidence.candidateRevision}
           </strong>
         </span>
         <span className="mono">{evidence.command}</span>
@@ -286,18 +363,32 @@ export function RuntimeFocusedTestEvidencePanel({
             <ArrowLeft size={15} /> Back to test list
           </button>
           <div className="runtime-focused-test__detail-title">
-            {selectedRow.status === "passed" ? <CheckCircle size={18} weight="fill" /> : <WarningCircle size={18} weight="fill" />}
+            {selectedRow.status === "passed" ? (
+              <CheckCircle size={18} weight="fill" />
+            ) : (
+              <WarningCircle size={18} weight="fill" />
+            )}
             <span>
               <small>{selectedRow.status} result details</small>
               <strong>{selectedRow.title}</strong>
             </span>
           </div>
           <RuntimeRow label="Command" value={selectedRow.command} mono />
-          <RuntimeRow label="Candidate" value={`${selectedRow.candidateId} r${selectedRow.candidateRevision}`} mono />
-          <RuntimeRow label="Duration" value={selectedRow.durationMs == null ? "Not recorded" : `${selectedRow.durationMs}ms`} />
+          <RuntimeRow
+            label="Candidate"
+            value={`${selectedRow.candidateId} r${selectedRow.candidateRevision}`}
+            mono
+          />
+          <RuntimeRow
+            label="Duration"
+            value={selectedRow.durationMs == null ? "Not recorded" : `${selectedRow.durationMs}ms`}
+          />
           <RuntimeRow
             label="Artifacts"
-            value={selectedRow.artifactReferences.map((item) => `${item.name} \u00b7 ${item.kind}`).join(", ") || "Markdown test artifact"}
+            value={
+              selectedRow.artifactReferences.map((item) => `${item.name} \u00b7 ${item.kind}`).join(", ") ||
+              "Markdown test artifact"
+            }
           />
           <div className="runtime-test-assertions">
             <small>Assertions</small>
@@ -309,7 +400,9 @@ export function RuntimeFocusedTestEvidencePanel({
               </div>
             ))}
           </div>
-          {selectedRow.failureDetails ? <p className="runtime-test-failure">{selectedRow.failureDetails}</p> : null}
+          {selectedRow.failureDetails ? (
+            <p className="runtime-test-failure">{selectedRow.failureDetails}</p>
+          ) : null}
           <Button tone="ghost" compact icon={ArrowLeft} onClick={() => onSelectResult(null)}>
             Back to all tests
           </Button>
@@ -318,10 +411,18 @@ export function RuntimeFocusedTestEvidencePanel({
         <div className="runtime-focused-test__rows">
           {evidence.rows.map((row) => (
             <button type="button" key={row.id} onClick={() => onSelectResult(row.id)}>
-              {row.status === "passed" ? <CheckCircle size={18} weight="fill" /> : <WarningCircle size={18} weight="fill" />}
+              {row.status === "passed" ? (
+                <CheckCircle size={18} weight="fill" />
+              ) : (
+                <WarningCircle size={18} weight="fill" />
+              )}
               <span>
                 <strong>{row.title}</strong>
-                <small>{row.command} &middot; {row.assertions.map((assertion) => assertion.label).join(" \u00b7 ") || "No assertions recorded"}</small>
+                <small>
+                  {row.command} &middot;{" "}
+                  {row.assertions.map((assertion) => assertion.label).join(" \u00b7 ") ||
+                    "No assertions recorded"}
+                </small>
               </span>
               <span>
                 <strong className={row.status === "failed" ? "text-red" : "text-green"}>{row.status}</strong>
@@ -334,9 +435,13 @@ export function RuntimeFocusedTestEvidencePanel({
       )}
       <footer>
         <small>
-          {candidate ? `Current candidate ${candidate.id} r${candidate.revisionNumber}` : "No active candidate"}
+          {candidate
+            ? `Current candidate ${candidate.id} r${candidate.revisionNumber}`
+            : "No active candidate"}
         </small>
-        <small>{evidence.status === "passed" ? "Pass" : "Failure"} evidence retained with Markdown output</small>
+        <small>
+          {evidence.status === "passed" ? "Pass" : "Failure"} evidence retained with Markdown output
+        </small>
       </footer>
     </section>
   );
@@ -363,8 +468,8 @@ export function DecisionFrontier({
           against the task, and stays open at every stage until the task stops being
           worked — the same window `canRecord` below tests for. */}
       <p className="runtime-decisions__explainer">
-        A durable decision or constraint recorded against the task — not limited to Grill Me.
-        Usable at any stage while the task is not running and has not reached approval, merge, or completion.
+        A durable decision or constraint recorded against the task — not limited to Grill Me. Usable at any
+        stage while the task is not running and has not reached approval, merge, or completion.
       </p>
       {task.decisions?.length ? (
         task.decisions.map((decision) => (
@@ -379,7 +484,8 @@ export function DecisionFrontier({
           No human decisions recorded. Recommended assumptions remain visible in the decision brief.
         </small>
       )}
-      {canRecord && !task.status.startsWith("running") &&
+      {canRecord &&
+      !task.status.startsWith("running") &&
       !["completed", "merged-to-target", "awaiting-human-approval"].includes(task.status) ? (
         <form
           onSubmit={async (event) => {

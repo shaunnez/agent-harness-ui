@@ -8,7 +8,7 @@ small,
 .task-table__header,
 .attention-row small,
 .usage-line > small,
-.runtime-stage-heading > p:last-child,
+.runtime-stage-heading__detail,
 .runtime-inspector-section > header > small,
 .runtime-inspector-section > p,
 .runtime-meta-row small,
@@ -257,7 +257,7 @@ small,
   font-size: 22px;
 }
 
-.runtime-stage-heading > p:last-child,
+.runtime-stage-heading__detail,
 .stage-command-bar__copy > span,
 .runtime-stage-empty > span,
 .runtime-inspector-section > p,
@@ -327,7 +327,9 @@ small,
 .runtime-package > summary,
 .runtime-repair-lineage > summary,
 .runtime-grill-history > summary {
-  transition: background 120ms ease, border-color 120ms ease;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
 }
 
 .runtime-grill-question > summary:hover,

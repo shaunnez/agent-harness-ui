@@ -198,8 +198,7 @@
 }
 
 .atlas-room--working {
-  filter: drop-shadow(0 14px 11px rgb(0 0 0 / 66%))
-    drop-shadow(0 0 17px rgb(243 154 60 / 58%));
+  filter: drop-shadow(0 14px 11px rgb(0 0 0 / 66%)) drop-shadow(0 0 17px rgb(243 154 60 / 58%));
 }
 
 .atlas-room::before,

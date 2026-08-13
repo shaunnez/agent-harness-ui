@@ -10,7 +10,6 @@
   border-left: 0;
 }
 
-
 .role-policy-grid {
   display: grid;
   margin-top: 16px;
@@ -420,8 +419,14 @@
   cursor: pointer;
 }
 
-.changelog-files > button:hover { background: var(--surface-2); }
-.changelog-file-status { color: var(--blue); font-family: var(--mono); font-size: 12px; }
+.changelog-files > button:hover {
+  background: var(--surface-2);
+}
+.changelog-file-status {
+  color: var(--blue);
+  font-family: var(--mono);
+  font-size: 12px;
+}
 
 .changelog-diff {
   display: flex;
@@ -440,12 +445,46 @@
   border-bottom: 1px solid var(--border);
 }
 
-.changelog-detail__bar > span { display: grid; gap: 2px; text-align: right; }
-.changelog-detail__bar small { color: var(--muted); }
-.changelog-error { padding: 10px 16px; border-bottom: 1px solid #733; background: var(--red-soft); color: var(--red); }
-.changelog-empty { display: grid; gap: 7px; padding: 22px; color: var(--muted); }
-.changelog-empty--center { height: 100%; place-content: center; justify-items: center; text-align: center; }
-.changelog-skeleton { display: grid; gap: 13px; }
-.changelog-skeleton span { height: 16px; border-radius: 4px; background: linear-gradient(90deg, var(--surface), var(--surface-2), var(--surface)); background-size: 200% 100%; animation: skeleton-shift 1.4s infinite linear; }
-.changelog-skeleton span:nth-child(2) { width: 68%; }
-.changelog-skeleton span:nth-child(3) { height: 52px; }
+.changelog-detail__bar > span {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+}
+.changelog-detail__bar small {
+  color: var(--muted);
+}
+.changelog-error {
+  padding: 10px 16px;
+  border-bottom: 1px solid #733;
+  background: var(--red-soft);
+  color: var(--red);
+}
+.changelog-empty {
+  display: grid;
+  gap: 7px;
+  padding: 22px;
+  color: var(--muted);
+}
+.changelog-empty--center {
+  height: 100%;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+}
+.changelog-skeleton {
+  display: grid;
+  gap: 13px;
+}
+.changelog-skeleton span {
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--surface), var(--surface-2), var(--surface));
+  background-size: 200% 100%;
+  animation: skeleton-shift 1.4s infinite linear;
+}
+.changelog-skeleton span:nth-child(2) {
+  width: 68%;
+}
+.changelog-skeleton span:nth-child(3) {
+  height: 52px;
+}

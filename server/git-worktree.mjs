@@ -284,14 +284,16 @@ export class GitWorktreeManager {
     return "diverged";
   }
 
-  async refreshCandidate(candidate) {
+  async refreshCandidate(candidate, options = {}) {
     const repositoryRoot = await this.repositoryRoot(candidate.repositoryRoot);
     await this.verifyCandidate(candidate);
     const targetRef = candidate.baseRef ?? (candidate.baseBranch && candidate.baseBranch !== "detached" ? `refs/heads/${candidate.baseBranch}` : null);
     if (!targetRef) throw new Error("The candidate does not have a recorded target ref.");
-    const targetResult = await git(repositoryRoot, ["rev-parse", "--verify", targetRef], { allowFailure: true });
-    if (targetResult.code !== 0) throw new Error("The candidate target ref no longer exists.");
-    const targetRevision = targetResult.stdout.trim();
+    const targetResult = options.targetRevision
+      ? await git(repositoryRoot, ["cat-file", "-e", `${options.targetRevision}^{commit}`], { allowFailure: true })
+      : await git(repositoryRoot, ["rev-parse", "--verify", targetRef], { allowFailure: true });
+    if (targetResult.code !== 0) throw new Error("The candidate target revision no longer exists.");
+    const targetRevision = options.targetRevision ?? targetResult.stdout.trim();
     if (targetRevision === candidate.baseRevision) {
       throw new Error("The candidate already starts from the current target revision.");
     }
@@ -514,9 +516,11 @@ export class GitWorktreeManager {
   }
 
   async inventory(entries = []) {
-    const rows = [];
-    for (const entry of entries) {
-      rows.push(await this.#inventoryRow(entry));
+    const rows = new Array(entries.length);
+    for (let offset = 0; offset < entries.length; offset += 4) {
+      await Promise.all(entries.slice(offset, offset + 4).map(async (entry, index) => {
+        rows[offset + index] = await this.#inventoryRow(entry);
+      }));
     }
     return rows;
   }

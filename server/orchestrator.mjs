@@ -18,6 +18,7 @@ import { resolveExecutionProvider } from "./execution-providers.mjs";
 import { candidateGateCommandLimit } from "./candidate-gate-policy.mjs";
 import { isProcessTimeoutError } from "./process-runtime.mjs";
 import { defaultWorktreeRoot, GitWorktreeManager, symlinkedDependencySourceRoots } from "./git-worktree.mjs";
+import { GitHubPullRequestManager, pullRequestBranch } from "./github-pull-request.mjs";
 import {
   CREDIT_SOURCE_URL,
   enrichUsage,
@@ -245,6 +246,7 @@ export class TaskOrchestrator {
   #runCodex;
   #getStatus;
   #worktrees;
+  #github;
   #runVerification;
   #runPackageVerification;
   #packageVerificationQueue = Promise.resolve();
@@ -258,6 +260,7 @@ export class TaskOrchestrator {
     this.#runCodex = options.runCodex ?? null;
     this.#getStatus = options.getStatus ?? getCodexStatus;
     this.#worktrees = options.worktreeManager ?? new GitWorktreeManager(defaultWorktreeRoot());
+    this.#github = options.pullRequestManager ?? new GitHubPullRequestManager();
     // The same injection seam `runCodex` and `worktreeManager` already use, for the same
     // reason: harness verification spawns real processes in a real worktree, so a test about
     // gate ingestion, freshness or retry accounting should be able to supply the observation
@@ -891,6 +894,369 @@ export class TaskOrchestrator {
     }
   }
 
+  async approvePullRequest(id, note = "") {
+    if (this.#mergeActive.has(id)) throw new Error("This task already has a GitHub PR reconciliation in progress.");
+    this.#mergeActive.add(id);
+    return this.#approvePullRequest(id, note).finally(() => this.#mergeActive.delete(id));
+  }
+
+  async reconcilePullRequest(id) {
+    if (this.#mergeActive.has(id)) throw new Error("This task already has a GitHub PR reconciliation in progress.");
+    this.#mergeActive.add(id);
+    return this.#reconcilePullRequestIntent(id, { operatorRequested: true })
+      .finally(() => this.#mergeActive.delete(id));
+  }
+
+  async #approvePullRequest(id, note = "") {
+    let task = await this.#store.get(id);
+    if (!task) throw new Error("Task not found.");
+    if (task.status === "awaiting-human-approval") {
+      const candidate = currentCandidate(task);
+      if (candidate.status !== "awaiting_human_approval") throw new Error("The current candidate has not cleared every gate.");
+      assertCandidateGatesFresh(task, candidate);
+      if (!candidate.headRevision || !candidate.baseBranch || candidate.baseBranch === "detached") {
+        throw new Error("The candidate does not have a named GitHub target and exact head revision.");
+      }
+      await this.#worktrees.verifyCandidate(candidate);
+      task = await this.#store.transition(id, (draft) => {
+        const activeCandidate = currentCandidate(draft);
+        return draft.status === "awaiting-human-approval" &&
+          activeCandidate.status === "awaiting_human_approval" &&
+          candidateGateFailure(draft, activeCandidate) == null;
+      }, (draft) => {
+        const activeCandidate = currentCandidate(draft);
+        const startedAt = now();
+        draft.status = "merging";
+        draft.pullRequestIntent = {
+          candidateId: activeCandidate.id,
+          candidateRevision: activeCandidate.revisionNumber,
+          baseRevision: activeCandidate.baseRevision,
+          headRevision: activeCandidate.headRevision,
+          targetBranch: activeCandidate.baseBranch,
+          headBranch: pullRequestBranch(draft, activeCandidate),
+          repository: null,
+          number: null,
+          url: null,
+          note: note.trim().slice(0, 5_000),
+          status: "publishing",
+          startedAt,
+          openedAt: null,
+          mergedAt: null,
+          closedAt: null,
+          mergeCommitRevision: null,
+          lastCheckedAt: null,
+          lastError: null,
+          consecutivePollFailures: 0,
+        };
+        draft.events.push(activity(
+          "approval",
+          "GitHub PR intent recorded",
+          `${activeCandidate.id} revision ${activeCandidate.revisionNumber} is reserved for a PR into ${activeCandidate.baseBranch}.`,
+          "warning",
+          "decision",
+        ));
+      });
+    } else if (task.status !== "merging" || task.pullRequestIntent?.status !== "publishing") {
+      throw new Error("The task is not awaiting GitHub PR approval.");
+    }
+    return this.#reconcilePullRequestIntent(id);
+  }
+
+  async #reconcilePullRequestIntent(id, { operatorRequested = false } = {}) {
+    let task = await this.#store.get(id);
+    if (!task) throw new Error("Task not found.");
+    if (task.status === "completed" && task.pullRequestIntent?.status === "merged") return task;
+
+    const retryablePublication = task.status === "blocked" &&
+      task.blocker?.code === "pull-request-publication" &&
+      task.pullRequestIntent?.status === "failed";
+    if (retryablePublication) {
+      task = await this.#store.transition(id, (draft) => (
+        draft.status === "blocked" &&
+        draft.blocker?.code === "pull-request-publication" &&
+        draft.pullRequestIntent?.status === "failed"
+      ), (draft) => {
+        draft.status = "merging";
+        draft.error = null;
+        draft.blocker = null;
+        draft.pullRequestIntent.status = "publishing";
+        draft.pullRequestIntent.lastError = null;
+        draft.events.push(activity(
+          "approval",
+          "GitHub PR publication retry requested",
+          "The original exact-candidate approval is retained while the remote branch and PR are reconciled idempotently.",
+          "warning",
+          "decision",
+        ));
+      });
+    }
+
+    const retryableClosedPullRequest = task.status === "blocked" &&
+      task.blocker?.code === "pull-request-closed" &&
+      task.pullRequestIntent?.status === "closed";
+    if (retryableClosedPullRequest) {
+      task = await this.#store.transition(id, (draft) => (
+        draft.status === "blocked" &&
+        draft.blocker?.code === "pull-request-closed" &&
+        draft.pullRequestIntent?.status === "closed"
+      ), (draft) => {
+        draft.status = "awaiting-pr-merge";
+        draft.error = null;
+        draft.blocker = null;
+        draft.pullRequestIntent.status = "open";
+        draft.pullRequestIntent.lastError = null;
+        draft.events.push(activity(
+          "approval",
+          "GitHub PR recheck requested",
+          "The PR will progress only if GitHub now reports the same exact candidate head open or merged.",
+          "warning",
+          "decision",
+        ));
+      });
+    }
+
+    const intent = task.pullRequestIntent;
+    const candidate = currentCandidate(task);
+    if (!intent || (
+      intent.candidateId !== candidate.id ||
+      intent.candidateRevision !== candidate.revisionNumber ||
+      intent.headRevision !== candidate.headRevision ||
+      intent.baseRevision !== candidate.baseRevision
+    )) {
+      throw new Error(operatorRequested
+        ? "This task does not have a retained GitHub PR intent for its exact current candidate."
+        : "The retained GitHub PR intent no longer matches the exact current candidate revision.");
+    }
+    assertCandidateGatesFresh(task, candidate);
+
+    if (task.status === "merging" && intent.status === "publishing") {
+      try {
+        await this.#worktrees.verifyCandidate(candidate);
+        const pullRequest = await this.#github.publish({ task, candidate, intent });
+        return this.#recordOpenPullRequest(id, pullRequest);
+      } catch (error) {
+        await this.#blockPullRequestPublication(id, candidate, error);
+        throw error;
+      }
+    }
+
+    if (task.status !== "awaiting-pr-merge" || intent.status !== "open") {
+      throw new Error(operatorRequested
+        ? "This task does not have an open GitHub PR that can be reconciled."
+        : "The task is not awaiting a GitHub PR merge.");
+    }
+
+    let pullRequest;
+    try {
+      pullRequest = await this.#github.inspect(intent);
+    } catch (error) {
+      if (/branch identity|head moved|exact approved candidate/i.test(error.message)) {
+        await this.#blockPullRequestDrift(id, candidate, error);
+      } else {
+        const updated = await this.#recordPullRequestPollFailure(id, error);
+        if (!operatorRequested) return updated;
+      }
+      if (operatorRequested) throw error;
+      return this.#store.get(id);
+    }
+    if (pullRequest.state === "merged") return this.#finalizePullRequestMerge(id, pullRequest);
+    if (pullRequest.state === "closed") {
+      const error = new Error(`GitHub PR #${pullRequest.number} was closed without merging the approved candidate.`);
+      await this.#blockPullRequestClosed(id, candidate, pullRequest, error);
+      if (operatorRequested) throw error;
+      return this.#store.get(id);
+    }
+    const updated = await this.#updatePullRequestTelemetry(id, (draft) => {
+      if (draft.status !== "awaiting-pr-merge" || draft.pullRequestIntent?.status !== "open") return;
+      draft.pullRequestIntent.lastCheckedAt = now();
+      draft.pullRequestIntent.lastError = null;
+      draft.pullRequestIntent.consecutivePollFailures = 0;
+      draft.error = null;
+    });
+    return operatorRequested ? this.#store.get(id) : updated;
+  }
+
+  async #recordOpenPullRequest(id, pullRequest) {
+    return this.#store.transition(id, (draft) => (
+      draft.status === "merging" && draft.pullRequestIntent?.status === "publishing"
+    ), (draft) => {
+      const candidate = currentCandidate(draft);
+      const openedAt = now();
+      const intent = draft.pullRequestIntent;
+      Object.assign(intent, {
+        ...pullRequest,
+        status: "open",
+        openedAt,
+        lastCheckedAt: openedAt,
+        lastError: null,
+        consecutivePollFailures: 0,
+      });
+      candidate.status = "pull_request_open";
+      candidate.updatedAt = openedAt;
+      draft.status = "awaiting-pr-merge";
+      draft.currentStage = "approval";
+      draft.error = null;
+      draft.blocker = null;
+      draft.approvals ??= [];
+      const approval = { id: crypto.randomUUID(), stage: "approval", note: intent.note, createdAt: openedAt };
+      draft.approvals.push(approval);
+      const artifact = {
+        id: crypto.randomUUID(),
+        stage: "approval",
+        name: `approval-${candidate.id.toLowerCase()}-r${candidate.revisionNumber}.md`,
+        kind: "markdown",
+        content: `# Human approval and GitHub pull request\n\n- Candidate: ${candidate.id} revision ${candidate.revisionNumber}\n- Repository: ${intent.repository}\n- Target branch: ${intent.targetBranch}\n- PR branch: ${intent.headBranch}\n- Exact candidate head: ${candidate.headRevision}\n- Pull request: [#${intent.number}](${intent.url})\n- Approved at: ${openedAt}\n- Note: ${intent.note || "Approved without an additional note."}\n\nThe task remains open until GitHub reports this exact pull request merged.`,
+        createdAt: openedAt,
+        model: "Human approval",
+        usage: zeroUsage(),
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+      };
+      draft.artifacts.push(artifact);
+      draft.events.push(activity("approval", "Human approval recorded", intent.note || "Approved without an additional note.", "success", "decision", { approvalId: approval.id }));
+      draft.events.push(activity("approval", "GitHub PR opened", `PR #${intent.number} tracks ${candidate.id} revision ${candidate.revisionNumber} at ${intent.url}.`, "success", "decision", { approvalId: approval.id }));
+      draft.events.push(activity("approval", "Approval artifact ready", artifact.name, "success", "artifact", { artifactId: artifact.id, approvalId: approval.id }));
+    });
+  }
+
+  async #finalizePullRequestMerge(id, pullRequest) {
+    return this.#store.transition(id, (draft) => (
+      draft.status === "awaiting-pr-merge" &&
+      draft.pullRequestIntent?.status === "open" &&
+      draft.pullRequestIntent.number === pullRequest.number &&
+      draft.pullRequestIntent.headRevision === pullRequest.headRevision
+    ), (draft) => {
+      const candidate = currentCandidate(draft);
+      const completedAt = pullRequest.mergedAt ?? now();
+      candidate.status = "merged";
+      candidate.updatedAt = completedAt;
+      draft.status = "completed";
+      draft.completedAt = completedAt;
+      draft.currentStage = "approval";
+      if (!draft.completedStages.includes("approval")) draft.completedStages.push("approval");
+      Object.assign(draft.pullRequestIntent, {
+        ...pullRequest,
+        status: "merged",
+        lastCheckedAt: now(),
+        lastError: null,
+        consecutivePollFailures: 0,
+      });
+      draft.error = null;
+      draft.blocker = null;
+      draft.events.push(activity(
+        "approval",
+        "GitHub PR merged",
+        `PR #${pullRequest.number} merged ${candidate.id} revision ${candidate.revisionNumber}${pullRequest.mergeCommitRevision ? ` as ${pullRequest.mergeCommitRevision.slice(0, 8)}` : ""}. The task is complete.`,
+        "success",
+        "decision",
+      ));
+    });
+  }
+
+  async #blockPullRequestPublication(id, candidate, error) {
+    await this.#store.update(id, (draft) => {
+      if (draft.status !== "merging" || draft.pullRequestIntent?.status !== "publishing") return;
+      const targetDiverged = error.code === "GITHUB_TARGET_DIVERGED";
+      draft.status = "blocked";
+      draft.error = error.message;
+      draft.blocker = {
+        code: targetDiverged ? "target-diverged" : "pull-request-publication",
+        detail: error.message,
+        detectedAt: now(),
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        candidateBaseRevision: candidate.baseRevision,
+        targetRevision: error.targetRevision ?? null,
+        source: targetDiverged ? "github" : null,
+      };
+      draft.pullRequestIntent.status = "failed";
+      draft.pullRequestIntent.lastError = error.message;
+      draft.events.push(activity(
+        "approval",
+        targetDiverged ? "GitHub target advanced" : "GitHub PR publication blocked",
+        error.message,
+        "danger",
+        "decision",
+      ));
+    });
+  }
+
+  async #blockPullRequestDrift(id, candidate, error) {
+    await this.#store.update(id, (draft) => {
+      if (draft.status !== "awaiting-pr-merge" || draft.pullRequestIntent?.status !== "open") return;
+      draft.status = "blocked";
+      draft.error = error.message;
+      draft.blocker = {
+        code: "pull-request-drift",
+        detail: error.message,
+        detectedAt: now(),
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        candidateBaseRevision: candidate.baseRevision,
+      };
+      draft.pullRequestIntent.status = "failed";
+      draft.pullRequestIntent.lastError = error.message;
+      draft.events.push(activity("approval", "GitHub PR identity changed", error.message, "danger", "decision"));
+    });
+  }
+
+  async #blockPullRequestClosed(id, candidate, pullRequest, error) {
+    await this.#store.update(id, (draft) => {
+      if (draft.status !== "awaiting-pr-merge" || draft.pullRequestIntent?.status !== "open") return;
+      draft.status = "blocked";
+      draft.error = error.message;
+      draft.blocker = {
+        code: "pull-request-closed",
+        detail: error.message,
+        detectedAt: now(),
+        candidateId: candidate.id,
+        candidateRevision: candidate.revisionNumber,
+        candidateBaseRevision: candidate.baseRevision,
+      };
+      Object.assign(draft.pullRequestIntent, { ...pullRequest, status: "closed", lastCheckedAt: now(), lastError: error.message });
+      draft.events.push(activity("approval", "GitHub PR closed", error.message, "danger", "decision"));
+    });
+  }
+
+  async #recordPullRequestPollFailure(id, error) {
+    return this.#updatePullRequestTelemetry(id, (draft) => {
+      if (draft.status !== "awaiting-pr-merge" || draft.pullRequestIntent?.status !== "open") return;
+      draft.pullRequestIntent.lastCheckedAt = now();
+      draft.pullRequestIntent.lastError = error.message;
+      draft.pullRequestIntent.consecutivePollFailures = (draft.pullRequestIntent.consecutivePollFailures ?? 0) + 1;
+    });
+  }
+
+  async #updatePullRequestTelemetry(id, updater) {
+    if (typeof this.#store.updateCore === "function") {
+      return this.#store.updateCore(id, updater, { touchUpdatedAt: false });
+    }
+    return this.#store.update(id, updater);
+  }
+
+  async pollPullRequests() {
+    const tasks = typeof this.#store.listPullRequestTasks === "function"
+      ? await this.#store.listPullRequestTasks()
+      : (await this.#store.list()).filter((item) => (
+          (item.status === "merging" && item.pullRequestIntent?.status === "publishing") ||
+          (item.status === "awaiting-pr-merge" && item.pullRequestIntent?.status === "open")
+        ));
+    for (let offset = 0; offset < tasks.length; offset += 4) {
+      await Promise.all(tasks.slice(offset, offset + 4).map(async (task) => {
+        if (this.#mergeActive.has(task.id)) return;
+        this.#mergeActive.add(task.id);
+        try {
+          await this.#reconcilePullRequestIntent(task.id);
+        } catch {
+          // The exact retained state is persisted by reconciliation. Polling is best effort
+          // so one unavailable repository cannot prevent other PRs from advancing.
+        } finally {
+          this.#mergeActive.delete(task.id);
+        }
+      }));
+    }
+  }
+
   async approveMerge(id, note = "") {
     if (this.#mergeActive.has(id)) throw new Error("This task already has a merge reconciliation in progress.");
     this.#mergeActive.add(id);
@@ -1079,7 +1445,10 @@ export class TaskOrchestrator {
       if (!candidate?.headRevision) throw new Error("The task does not have a refreshable candidate revision.");
       let refreshed;
       try {
-        refreshed = await this.#worktrees.refreshCandidate(candidate);
+        const remoteTargetRevision = task.blocker?.source === "github" && typeof this.#github.fetchTarget === "function"
+          ? await this.#github.fetchTarget(candidate)
+          : null;
+        refreshed = await this.#worktrees.refreshCandidate(candidate, remoteTargetRevision ? { targetRevision: remoteTargetRevision } : undefined);
       } catch (error) {
         if (/candidate refresh conflicted/i.test(error.message)) {
           await this.#store.update(id, (draft) => {
@@ -1146,6 +1515,17 @@ export class TaskOrchestrator {
             });
           }
           draft.mergeIntent = null;
+          if (draft.pullRequestIntent) {
+            draft.pullRequestIntentHistory ??= [];
+            draft.pullRequestIntentHistory.push({
+              ...structuredClone(draft.pullRequestIntent),
+              status: "failed",
+              lastError: draft.pullRequestIntent.lastError ?? "The GitHub target advanced; this PR intent was superseded by target refresh.",
+              supersededAt: now(),
+              supersededByCandidateRevision: nextRevision,
+            });
+          }
+          draft.pullRequestIntent = null;
           draft.completedStages = draft.completedStages.filter(
             (stage) => !["dev-review", "test", "final-review", "approval"].includes(stage),
           );
@@ -3689,7 +4069,8 @@ function requireActiveRunReservation(task, kind, stage) {
 function recordApproval(task, stage, note) {
   const approvalNote = note.trim().slice(0, 5_000);
   task.approvals ??= [];
-  const approval = { id: crypto.randomUUID(), stage, note: approvalNote, createdAt: now() };
+  const artifactId = [...(task.artifacts ?? [])].reverse().find((artifact) => artifact.stage === stage)?.id ?? null;
+  const approval = { id: crypto.randomUUID(), stage, note: approvalNote, createdAt: now(), artifactId };
   task.approvals.push(approval);
   task.events.push(activity(
     stage,

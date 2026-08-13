@@ -1,17 +1,8 @@
-import {
-  CheckCircle,
-  CircleNotch,
-  FileCode,
-  Play,
-  WarningCircle,
-} from "@phosphor-icons/react";
+import { CheckCircle, CircleNotch, FileCode, Play, WarningCircle } from "@phosphor-icons/react";
 import { useState } from "react";
 import { type RuntimeTask, type StageId, workflowStages } from "../../domain";
 import { Button } from "../Primitives";
-import {
-  getEffectiveStageRunAttempts,
-  getEffectiveStageRunLimit,
-} from "../../runtime-stage-limits";
+import { getEffectiveStageRunAttempts, getEffectiveStageRunLimit } from "../../runtime-stage-limits";
 import type { RuntimeWorkflowAction } from "./contracts";
 import { candidateGateStages, getRuntimeGateFreshness, isStageComplete } from "./workflow";
 
@@ -39,11 +30,21 @@ export function RuntimeCommandBar({
   const currentStageRunLimit = getEffectiveStageRunLimit(task);
   const retryAllowanceExhausted = currentAttempts >= currentStageRunLimit;
   const repairRequired = task.status === "repair-required";
-  const mergeReconciliation = task.status === "merging" ||
-    (task.status === "blocked" && task.blocker?.code === "merge-reconciliation");
+  const mergeReconciliation =
+    task.status === "merging" ||
+    task.status === "awaiting-pr-merge" ||
+    (task.status === "blocked" &&
+      [
+        "merge-reconciliation",
+        "pull-request-publication",
+        "pull-request-closed",
+        "pull-request-drift",
+      ].includes(task.blocker?.code ?? ""));
   const exhaustedReadyGate =
     currentAttempts >= currentStageRunLimit &&
-    ["ready-for-review", "review-retry-required", "ready-for-test", "ready-for-final-review"].includes(task.status);
+    ["ready-for-review", "review-retry-required", "ready-for-test", "ready-for-final-review"].includes(
+      task.status,
+    );
   const blocked =
     task.status === "blocked" ||
     exhaustedReadyGate ||
@@ -57,12 +58,24 @@ export function RuntimeCommandBar({
     task.status === "completed" ||
     task.status === "review-retry-required";
   const accessBoundary = getAccessBoundaryCopy(task);
+  const proposedNext = deriveNextAction(task);
   const next = nextAction(task);
-  const approvalBlocked = task.status === "awaiting-human-approval" && !candidateGateStages.every((stage) => isStageComplete(task, stage));
+  const nextEligibility = proposedNext?.action
+    ? task.actionEligibility?.actions[proposedNext.action]
+    : undefined;
+  const nextActionDenied =
+    proposedNext?.action != null && next?.action == null && nextEligibility?.allowed === false;
+  const approvalBlocked =
+    task.status === "awaiting-human-approval" &&
+    !candidateGateStages.every((stage) => isStageComplete(task, stage));
   const openGrill = task.status === "awaiting-grill" && task.grillSession?.status === "open";
   const unresolvedGrill = task.grillSession?.questions.filter((question) => !question.answer).length ?? 0;
   const actionable = ready || failed || repairRequired || blocked || mergeReconciliation;
-  const Icon = persistedRunActive ? CircleNotch : failed || blocked || repairRequired || approvalBlocked ? WarningCircle : CheckCircle;
+  const Icon = persistedRunActive
+    ? CircleNotch
+    : failed || blocked || repairRequired || approvalBlocked
+      ? WarningCircle
+      : CheckCircle;
   const invoke = async (action: RuntimeWorkflowAction) => {
     setPending(true);
     setActionError(null);
@@ -86,14 +99,17 @@ export function RuntimeCommandBar({
     }
   };
   if (historical) {
-    const activeStage = workflowStages.find((stage) => stage.id === task.currentStage)?.label ?? task.currentStage;
+    const activeStage =
+      workflowStages.find((stage) => stage.id === task.currentStage)?.label ?? task.currentStage;
     return (
       <section className="stage-command-bar stage-command-bar--history">
         <FileCode size={18} />
         <span className="stage-command-bar__copy">
           <small>Historical stage &middot; read-only</small>
           <strong>Viewing retained evidence</strong>
-          <span>Workflow actions are hidden here. Return to {activeStage} to operate on the current state.</span>
+          <span>
+            Workflow actions are hidden here. Return to {activeStage} to operate on the current state.
+          </span>
         </span>
         <span className="badge badge--neutral">Recorded history</span>
       </section>
@@ -110,58 +126,66 @@ export function RuntimeCommandBar({
           {cancelling
             ? "Terminating the active process tree"
             : repairRunning
-            ? "Repairing the retained integration candidate"
-            : running
-            ? accessBoundary.title
-            : mergeReconciliation
-              ? (next?.title ?? "Merge reconciliation needs operator input")
-            : blocked
-              ? (next?.title ?? "Repair allowance exhausted")
-              : repairRequired
-                ? `${accessBoundary.title} - repair the retained candidate`
-                : failed
-                  ? "Retry the failed stage"
-                  : openGrill
-                    ? "Resolve the decision frontier"
-                    : ready
-                      ? (next?.title ?? "Workflow gate ready")
-                      : "Start the read-only investigation"}
+              ? "Repairing the retained integration candidate"
+              : running
+                ? accessBoundary.title
+                : mergeReconciliation
+                  ? (next?.title ?? "Merge reconciliation needs operator input")
+                  : nextActionDenied
+                    ? "No safe action available"
+                    : blocked
+                      ? (next?.title ?? "Repair allowance exhausted")
+                      : repairRequired
+                        ? `${accessBoundary.title} - repair the retained candidate`
+                        : failed
+                          ? "Retry the failed stage"
+                          : openGrill
+                            ? "Resolve the decision frontier"
+                            : ready
+                              ? (next?.title ?? "Workflow gate ready")
+                              : "Start the read-only investigation"}
         </strong>
         <span>
           {cancelling
             ? "The task remains reserved until the operating system confirms that the agent and its descendants have closed. Retries stay disabled."
             : repairRunning
-            ? "The Implement agent is writing inside the isolated candidate worktree. Dev Review, Test, Final Review, and Approval require fresh evidence after the new revision is assembled."
-            : running
-            ? accessBoundary.detail
-            : mergeReconciliation
-              ? (next?.detail ?? task.error ?? "Recheck the retained exact-candidate merge intent before continuing.")
-            : blocked
-              ? (next?.detail ?? "Review the retained activity before granting another attempt.")
-              : repairRequired
-                ? `${accessBoundary.detail} ${next?.detail ?? "The retained gate evidence identifies the required repair."}`
-                : failed
-                  ? task.error
-                  : openGrill
-                    ? unresolvedGrill
-                      ? `${unresolvedGrill} material question${unresolvedGrill === 1 ? "" : "s"} remain. You can answer them below or explicitly accept the recommended assumptions.`
-                      : "Every material question is settled. Finish Grill Me to build the task specification."
-                    : ready
-                      ? (next?.detail ?? "The retained workflow evidence is ready for review.")
-                      : task.workflowProfile?.selected === "fast"
-                        ? "The fast profile will use only the model calls and repository evidence this bounded change requires."
-                        : "The workflow will produce durable, inspectable handoffs."}
+              ? "The Implement agent is writing inside the isolated candidate worktree. Dev Review, Test, Final Review, and Approval require fresh evidence after the new revision is assembled."
+              : running
+                ? accessBoundary.detail
+                : mergeReconciliation
+                  ? (next?.detail ??
+                    task.error ??
+                    "Recheck the retained exact-candidate merge intent before continuing.")
+                  : nextActionDenied
+                    ? `${task.error ?? "The proposed action is not currently safe."} ${nextEligibility?.reason ?? "The backend denied this action."}`
+                    : blocked
+                      ? (next?.detail ?? "Review the retained activity before granting another attempt.")
+                      : repairRequired
+                        ? `${accessBoundary.detail} ${next?.detail ?? "The retained gate evidence identifies the required repair."}`
+                        : failed
+                          ? task.error
+                          : openGrill
+                            ? unresolvedGrill
+                              ? `${unresolvedGrill} material question${unresolvedGrill === 1 ? "" : "s"} remain. You can answer them below or explicitly accept the recommended assumptions.`
+                              : "Every material question is settled. Finish Grill Me to build the task specification."
+                            : ready
+                              ? (next?.detail ?? "The retained workflow evidence is ready for review.")
+                              : task.workflowProfile?.selected === "fast"
+                                ? "The fast profile will use only the model calls and repository evidence this bounded change requires."
+                                : "The workflow will produce durable, inspectable handoffs."}
         </span>
       </span>
       <div className="stage-command-bar__actions">
         {(task.status === "queued" ||
           (failed &&
-            !["specification", "plan", "implement", "dev-review", "test", "final-review"].includes(task.currentStage))) &&
+            !["specification", "plan", "implement", "dev-review", "test", "final-review"].includes(
+              task.currentStage,
+            ))) &&
           (task.actionEligibility?.actions.run?.allowed ?? true) && (
-          <Button tone="primary" compact icon={Play} onClick={() => void onRun()}>
-            {failed ? "Retry stage" : "Run investigation"}
-          </Button>
-        )}
+            <Button tone="primary" compact icon={Play} onClick={() => void onRun()}>
+              {failed ? "Retry stage" : "Run investigation"}
+            </Button>
+          )}
         {task.status === "awaiting-plan-approval" &&
         !retryAllowanceExhausted &&
         (task.actionEligibility?.actions.plan?.allowed ?? true) ? (
@@ -176,7 +200,7 @@ export function RuntimeCommandBar({
             {pending ? "Starting..." : "Revise plan"}
           </Button>
         ) : null}
-        {actionable && next?.action ? (
+        {actionable && next?.action && !nextActionDenied ? (
           <RuntimeWorkflowActionButton
             action={next.action}
             label={next.label}
@@ -241,7 +265,8 @@ export function nextAction(task: RuntimeTask) {
         action: "grant-retry" as const,
         label: "Grant one stage attempt",
         title: "Stage retry allowance exhausted",
-        detail: "The server has authorized exactly one additional attempt while retaining the existing evidence.",
+        detail:
+          "The server has authorized exactly one additional attempt while retaining the existing evidence.",
       };
     }
     return null;
@@ -255,8 +280,41 @@ function deriveNextAction(task: RuntimeTask) {
   const retryAllowanceExhausted = currentAttempts >= getEffectiveStageRunLimit(task);
   const candidate = task.candidates?.at(-1);
   if (
+    (task.status === "merging" && task.pullRequestIntent?.status === "publishing") ||
+    (task.status === "awaiting-pr-merge" && task.pullRequestIntent?.status === "open") ||
+    (task.status === "blocked" &&
+      task.blocker?.code === "pull-request-publication" &&
+      task.pullRequestIntent?.status === "failed") ||
+    (task.status === "blocked" &&
+      task.blocker?.code === "pull-request-closed" &&
+      task.pullRequestIntent?.status === "closed")
+  )
+    return {
+      action: "reconcile-pr" as const,
+      label:
+        task.status === "awaiting-pr-merge"
+          ? "Check GitHub now"
+          : task.blocker?.code === "pull-request-closed"
+            ? "Check reopened PR"
+            : "Retry PR publication",
+      title:
+        task.status === "awaiting-pr-merge"
+          ? "Awaiting GitHub PR merge"
+          : task.blocker?.code === "pull-request-closed"
+            ? "GitHub PR closed without merge"
+            : "GitHub PR publication needs reconciliation",
+      detail:
+        task.status === "awaiting-pr-merge"
+          ? `The Harness polls GitHub automatically. PR #${task.pullRequestIntent?.number ?? "pending"} must retain the exact approved head before a merge can complete this task.`
+          : task.blocker?.code === "pull-request-closed"
+            ? "If the same PR was reopened on GitHub, recheck it without changing the approved candidate revision."
+            : "Reconcile the exact remote branch and PR identity without changing the approved candidate revision.",
+    };
+  if (
     (task.status === "merging" && task.mergeIntent?.status === "pending") ||
-    (task.status === "blocked" && task.blocker?.code === "merge-reconciliation" && task.mergeIntent?.status === "failed")
+    (task.status === "blocked" &&
+      task.blocker?.code === "merge-reconciliation" &&
+      task.mergeIntent?.status === "failed")
   )
     return {
       action: "reconcile-merge" as const,
@@ -281,10 +339,10 @@ function deriveNextAction(task: RuntimeTask) {
       detail:
         "Keep prior artifacts for audit, restart the approved packages from the current target, and qualify them under bounded concurrency.",
     };
-  const targetDiverged = task.status === "blocked" && (
-    task.blocker?.code === "target-diverged" ||
-    /target ref (?:diverged|moved)|target branch advanced/i.test(task.error ?? "")
-  );
+  const targetDiverged =
+    task.status === "blocked" &&
+    (task.blocker?.code === "target-diverged" ||
+      /target ref (?:diverged|moved)|target branch advanced/i.test(task.error ?? ""));
   if (targetDiverged)
     return {
       action: "refresh-candidate" as const,
@@ -293,11 +351,16 @@ function deriveNextAction(task: RuntimeTask) {
       detail:
         "Replay the retained candidate onto the latest target as a new revision. The prior revision remains inspectable and every candidate-bound gate must run again.",
     };
-  const retainedTimedOutPackage = [...(task.workPackages ?? [])].reverse().find((workPackage) =>
-    workPackage.status === "failed" &&
-    Boolean(workPackage.worktreePath) &&
-    /run exceeded \d+ seconds|harness stopped while this task was running/i.test(workPackage.error ?? task.error ?? "")
-  );
+  const retainedTimedOutPackage = [...(task.workPackages ?? [])]
+    .reverse()
+    .find(
+      (workPackage) =>
+        workPackage.status === "failed" &&
+        Boolean(workPackage.worktreePath) &&
+        /run exceeded \d+ seconds|harness stopped while this task was running/i.test(
+          workPackage.error ?? task.error ?? "",
+        ),
+    );
   if (
     retainedTimedOutPackage &&
     ["failed", "blocked"].includes(task.status) &&
@@ -310,8 +373,12 @@ function deriveNextAction(task: RuntimeTask) {
       detail:
         "Validate the exact retained branch and dirty files, continue without discarding in-scope progress, restore paths outside declared ownership, and use the bounded 30-minute continuation timeout.",
     };
-  const invalidApprovedPlan = ["failed", "blocked"].includes(task.status) && task.currentStage === "implement" &&
-    /verification requires at least one repository manifest command id|approved plan does not contain executable work packages|did not qualify/i.test(task.error ?? "");
+  const invalidApprovedPlan =
+    ["failed", "blocked"].includes(task.status) &&
+    task.currentStage === "implement" &&
+    /verification requires at least one repository manifest command id|approved plan does not contain executable work packages|did not qualify/i.test(
+      task.error ?? "",
+    );
   if (invalidApprovedPlan)
     return {
       action: "plan" as const,
@@ -320,24 +387,30 @@ function deriveNextAction(task: RuntimeTask) {
       detail:
         "Return to read-only planning and produce valid repository manifest command IDs before another implementation attempt.",
     };
-  const latestTestArtifact = [...task.artifacts].reverse().find((artifact) =>
-    artifact.stage === "test" &&
-    artifact.candidateId === candidate?.id &&
-    artifact.candidateRevision === candidate?.revisionNumber
+  const latestTestArtifact = [...task.artifacts]
+    .reverse()
+    .find(
+      (artifact) =>
+        artifact.stage === "test" &&
+        artifact.candidateId === candidate?.id &&
+        artifact.candidateRevision === candidate?.revisionNumber,
+    );
+  const blockingCandidateDefect = latestTestArtifact?.gateResult?.findings?.some(
+    (finding) => finding.blocking === true && finding.kind === "candidate-defect",
   );
-  const blockingCandidateDefect = latestTestArtifact?.gateResult?.findings?.some((finding) =>
-    finding.blocking === true && finding.kind === "candidate-defect"
+  const sameCandidateTestRetryUsed = task.sameCandidateTestRetries?.some(
+    (retry) => retry.candidateId === candidate?.id && retry.candidateRevision === candidate?.revisionNumber,
   );
-  const sameCandidateTestRetryUsed = task.sameCandidateTestRetries?.some((retry) =>
-    retry.candidateId === candidate?.id && retry.candidateRevision === candidate?.revisionNumber
-  );
-  const failedExactCandidateVerification = [...(candidate?.verificationRuns ?? [])].reverse().find((verification) =>
-    verification.candidateId === candidate?.id &&
-    verification.candidateRevision === candidate?.revisionNumber &&
-    verification.headRevision === candidate?.headRevision &&
-    verification.status === "failed" &&
-    verification.retryDisposition !== "human-rerun-requested"
-  );
+  const failedExactCandidateVerification = [...(candidate?.verificationRuns ?? [])]
+    .reverse()
+    .find(
+      (verification) =>
+        verification.candidateId === candidate?.id &&
+        verification.candidateRevision === candidate?.revisionNumber &&
+        verification.headRevision === candidate?.headRevision &&
+        verification.status === "failed" &&
+        verification.retryDisposition !== "human-rerun-requested",
+    );
   if (
     ["repair-required", "failed", "blocked"].includes(task.status) &&
     task.currentStage === "test" &&
@@ -377,7 +450,9 @@ function deriveNextAction(task: RuntimeTask) {
     };
   if (
     retryAllowanceExhausted &&
-    ["ready-for-review", "review-retry-required", "ready-for-test", "ready-for-final-review"].includes(task.status)
+    ["ready-for-review", "review-retry-required", "ready-for-test", "ready-for-final-review"].includes(
+      task.status,
+    )
   )
     return {
       action: "grant-retry" as const,
@@ -390,7 +465,8 @@ function deriveNextAction(task: RuntimeTask) {
       action: "grant-retry" as const,
       label: "Grant one Plan attempt",
       title: "Plan revision allowance exhausted",
-      detail: "After inspecting the retained plans, a human may grant exactly one additional correction attempt.",
+      detail:
+        "After inspecting the retained plans, a human may grant exactly one additional correction attempt.",
     };
   if (task.status === "awaiting-spec-approval") {
     return task.workflow === "implement"
@@ -412,7 +488,8 @@ function deriveNextAction(task: RuntimeTask) {
       action: "approve-plan" as const,
       label: "Approve plan",
       title: "Approve the dependency-ordered plan",
-      detail: "Approve it, or record a concrete correction and revise it. No repository changes happen until approval.",
+      detail:
+        "Approve it, or record a concrete correction and revise it. No repository changes happen until approval.",
     };
   if (task.status === "ready-for-implementation")
     return {
@@ -426,10 +503,14 @@ function deriveNextAction(task: RuntimeTask) {
     return {
       action: "review" as const,
       label: task.status === "review-retry-required" ? "Retry independent review" : "Run development review",
-      title: task.status === "review-retry-required" ? "Reviewer tooling failed — candidate repair is not indicated" : "Review the exact candidate revision",
-      detail: task.status === "review-retry-required"
-        ? "Failed reviewer telemetry is retained. A fresh read-only review must inspect the complete unchanged candidate diff."
-        : "The reviewer is bound to the candidate commit and cannot modify it.",
+      title:
+        task.status === "review-retry-required"
+          ? "Reviewer tooling failed — candidate repair is not indicated"
+          : "Review the exact candidate revision",
+      detail:
+        task.status === "review-retry-required"
+          ? "Failed reviewer telemetry is retained. A fresh read-only review must inspect the complete unchanged candidate diff."
+          : "The reviewer is bound to the candidate commit and cannot modify it.",
     };
   if (task.status === "ready-for-test")
     return {
@@ -451,12 +532,12 @@ function deriveNextAction(task: RuntimeTask) {
       .map((stage) => ({ stage, freshness: getRuntimeGateFreshness(task, stage) }))
       .find(({ freshness }) => !freshness?.fresh);
     return {
-      action: "approve-merge" as const,
-      label: "Approve & merge",
-      title: staleGate ? "Human approval blocked" : "Human merge approval required",
+      action: "open-pr" as const,
+      label: "Approve & raise PR",
+      title: staleGate ? "Human approval blocked" : "Human PR approval required",
       detail: staleGate
         ? `Approval is blocked until ${workflowStages.find((stage) => stage.id === staleGate.stage)?.shortLabel ?? staleGate.stage} is fresh. ${staleGate.freshness?.reasonCopy ?? "No authoritative persisted terminal run summary is available for this candidate."}`
-        : "The harness will merge only if the source branch is clean, unchanged, and can fast-forward to the reviewed commit.",
+        : "The Harness will push only the exact reviewed candidate SHA, raise a GitHub PR to the recorded target, and complete this task after that PR is merged.",
     };
   }
   if (task.status === "merged-to-target")
@@ -464,24 +545,32 @@ function deriveNextAction(task: RuntimeTask) {
       action: "complete-merged" as const,
       label: "Mark completed",
       title: "Candidate merged · promotion is a manual step",
-      detail: "The candidate fast-forwarded its recorded target branch. The harness does not promote it further; copy the git command below to push it onward, then mark this task completed to record that decision.",
+      detail:
+        "The candidate fast-forwarded its recorded target branch. The harness does not promote it further; copy the git command below to push it onward, then mark this task completed to record that decision.",
     };
   if (task.status === "completed")
     return {
-      action: task.workflow === "investigate" ? "continue-implementation" as const : null,
-      label: task.workflow === "investigate"
-        ? task.continuedByTaskId ? "Open implementation task" : "Continue to implementation"
-        : "Completed",
-      title: task.workflow === "implement"
-        ? "Candidate merged"
-        : task.continuedByTaskId
-          ? `Implementation continued as ${task.continuedByTaskId}`
-          : "Investigation approved",
-      detail: task.workflow === "investigate"
-        ? task.continuedByTaskId
-          ? "The approved investigation remains read-only; the linked task owns planning and implementation authority."
-          : "Create a separate implementation task with this approved evidence, then begin read-only planning."
-        : "The durable task evidence remains available from every completed stage.",
+      action: task.workflow === "investigate" ? ("continue-implementation" as const) : null,
+      label:
+        task.workflow === "investigate"
+          ? task.continuedByTaskId
+            ? "Open implementation task"
+            : "Continue to implementation"
+          : "Completed",
+      title:
+        task.workflow === "implement"
+          ? task.pullRequestIntent?.status === "merged"
+            ? "GitHub PR merged"
+            : "Candidate merged"
+          : task.continuedByTaskId
+            ? `Implementation continued as ${task.continuedByTaskId}`
+            : "Investigation approved",
+      detail:
+        task.workflow === "investigate"
+          ? task.continuedByTaskId
+            ? "The approved investigation remains read-only; the linked task owns planning and implementation authority."
+            : "Create a separate implementation task with this approved evidence, then begin read-only planning."
+          : "The durable task evidence remains available from every completed stage.",
     };
   if (task.status === "failed") {
     if (task.candidates?.at(-1)?.status === "repair_required") {

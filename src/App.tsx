@@ -12,8 +12,7 @@ import {
   getRuntimeStatus,
   getRuntimeWorktreeInventory,
   getTaskActivity,
-  getTaskArtifact,
-  getTaskArtifacts,
+  getTaskArtifactContents,
   getTaskCore,
   getTaskRuns,
   listTasks,
@@ -69,16 +68,16 @@ async function refreshTaskEvidence(current: RuntimeTask, core: RuntimeTaskCore):
   const [activity, runs, artifactPage] = await Promise.all([
     getTaskActivity(core.id, { limit: 200 }),
     getTaskRuns(core.id, { limit: 200 }),
-    getTaskArtifacts(core.id, { limit: 60 }),
+    getTaskArtifactContents(core.id, { limit: 60 }),
   ]);
   const existingArtifacts = new Map(current.artifacts.map((artifact) => [artifact.id, artifact]));
-  const newestArtifacts = await Promise.all(artifactPage.items.map(async (metadata) => {
-    const existing = existingArtifacts.get(metadata.id);
-    if (existing) return { ...existing, ...metadata };
-    return getTaskArtifact(core.id, metadata.id);
+  const newestArtifacts = artifactPage.items.map((artifact) => ({
+    ...existingArtifacts.get(artifact.id),
+    ...artifact,
   }));
-  const artifacts = mergeNewestPage(current.artifacts, newestArtifacts, (item) => item.id)
-    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+  const artifacts = mergeNewestPage(current.artifacts, newestArtifacts, (item) => item.id).sort(
+    (left, right) => left.createdAt.localeCompare(right.createdAt),
+  );
   return {
     ...current,
     ...coreState,
@@ -93,18 +92,16 @@ async function hydrateTask(id: string): Promise<RuntimeTask> {
     getTaskCore(id),
     getTaskActivity(id, { limit: 200 }),
     getTaskRuns(id, { limit: 200 }),
-    getTaskArtifacts(id, { limit: 60 }),
+    getTaskArtifactContents(id, { limit: 60 }),
   ]);
-  const artifacts = await Promise.all(
-    artifactPage.items.map((artifact) => getTaskArtifact(id, artifact.id)),
-  );
+  const artifacts = artifactPage.items;
   return {
     ...core,
     artifacts: artifacts.sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
     events: [...activity.items].sort((left, right) => left.at.localeCompare(right.at)),
-    runs: [...runs.items].sort((left, right) => (
-      left.startedAt ?? left.completedAt ?? ""
-    ).localeCompare(right.startedAt ?? right.completedAt ?? "")),
+    runs: [...runs.items].sort((left, right) =>
+      (left.startedAt ?? left.completedAt ?? "").localeCompare(right.startedAt ?? right.completedAt ?? ""),
+    ),
   };
 }
 
@@ -177,6 +174,7 @@ export function App() {
     }
     const tasks = await listTasks();
     setRuntimeTasks(tasks);
+    setRuntimeError(null);
     return tasks;
   }, [hostedPreviewMode]);
 
@@ -201,6 +199,12 @@ export function App() {
       worktreeInventory: current?.id === id ? current.worktreeInventory : [],
     }));
     setRuntimeTasks((tasks) => [taskSummaryFromDetail(task), ...tasks.filter((item) => item.id !== task.id)]);
+    const shouldRefreshInventory =
+      !currentTask || currentTask.updatedAt !== task.updatedAt || currentTask.worktreeInventory == null;
+    if (!shouldRefreshInventory) {
+      setRuntimeError(null);
+      return task;
+    }
     const inventory = await getRuntimeWorktreeInventory(id);
     if (
       !isCurrentRequest(requested, {
@@ -212,6 +216,7 @@ export function App() {
     const enriched = { ...task, worktreeInventory: inventory.rows };
     activeRuntimeTaskRef.current = enriched;
     setActiveRuntimeTask((current) => (current?.id === id ? enriched : current));
+    setRuntimeError(null);
     return enriched;
   }, []);
 
@@ -311,12 +316,31 @@ export function App() {
   useEffect(() => {
     const id = activeRuntimeTask?.id;
     if (!id) return;
-    const interval = window.setInterval(
-      () => void refreshActiveTask(id).catch(() => undefined),
-      activeRuntimeTask.status === "running" ? 1_250 : 5_000,
-    );
-    return () => window.clearInterval(interval);
-  }, [activeRuntimeTask?.id, activeRuntimeTask?.status, refreshActiveTask]);
+    let cancelled = false;
+    let timeout: number | undefined;
+    let failureShown = false;
+    const delay = activeRuntimeTask.status === "running" ? 1_250 : 5_000;
+    const poll = async () => {
+      try {
+        await refreshActiveTask(id);
+        failureShown = false;
+      } catch (error) {
+        if (!cancelled) {
+          const message = error instanceof Error ? error.message : "The active task could not be refreshed.";
+          setRuntimeError(message);
+          if (!failureShown) showToast("error", `${message} Showing the last retained task state.`);
+          failureShown = true;
+        }
+      } finally {
+        if (!cancelled) timeout = window.setTimeout(() => void poll(), delay);
+      }
+    };
+    timeout = window.setTimeout(() => void poll(), delay);
+    return () => {
+      cancelled = true;
+      if (timeout != null) window.clearTimeout(timeout);
+    };
+  }, [activeRuntimeTask?.id, activeRuntimeTask?.status, refreshActiveTask, showToast]);
 
   // The Command Centre and Tasks screen both read runtimeTasks, which the active-task
   // effect above never touches (it only ever writes activeRuntimeTask). Without this,
@@ -329,17 +353,34 @@ export function App() {
     // A hidden tab can't show the update anyway, so skip the network call; catch up with
     // one immediate refresh when the tab becomes visible again instead of waiting out the
     // rest of the interval.
-    const poll = () => {
-      if (document.visibilityState === "hidden") return;
-      void refreshTasks().catch(() => undefined);
+    let cancelled = false;
+    let timeout: number | undefined;
+    let polling = false;
+    const delay = anyTaskRunning ? 5_000 : 15_000;
+    const poll = async () => {
+      if (document.visibilityState === "hidden" || polling) return;
+      polling = true;
+      try {
+        await refreshTasks();
+      } catch (error) {
+        if (!cancelled)
+          setRuntimeError(error instanceof Error ? error.message : "The task list could not be refreshed.");
+      } finally {
+        polling = false;
+      }
     };
-    const interval = window.setInterval(poll, anyTaskRunning ? 5_000 : 15_000);
+    const schedule = async () => {
+      await poll();
+      if (!cancelled) timeout = window.setTimeout(() => void schedule(), delay);
+    };
+    timeout = window.setTimeout(() => void schedule(), delay);
     const handleVisibility = () => {
-      if (document.visibilityState === "visible") poll();
+      if (document.visibilityState === "visible") void poll();
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => {
-      window.clearInterval(interval);
+      cancelled = true;
+      if (timeout != null) window.clearTimeout(timeout);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [anyTaskRunning, hostedPreviewMode, refreshTasks]);
@@ -402,8 +443,11 @@ export function App() {
   };
 
   const saveRuntimeSettings = async (
-    settings: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies">
-      & Partial<Pick<RuntimeSettings, "grillPolicy">>,
+    settings: Pick<
+      RuntimeSettings,
+      "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies"
+    > &
+      Partial<Pick<RuntimeSettings, "grillPolicy">>,
   ) => {
     const saved = await updateRuntimeSettings(settings);
     const [status, evaluation] = await Promise.all([getRuntimeStatus(), getEvaluationSummary()]);
@@ -525,21 +569,35 @@ export function App() {
                     ? "One repair attempt was granted. The stage limit is updated."
                     : action === "refresh-candidate"
                       ? "Candidate refreshed from the latest target. All candidate-bound gates must run again."
-                    : action === "rebuild-candidate"
-                      ? "Candidate rebuild authorized from the latest target. The prior candidate remains retained."
-                    : action === "restart-implementation"
-                      ? "Implementation restart authorized from the latest target. Prior artifacts remain retained."
-                    : action === "retry-test"
-                      ? "Test retry started against the unchanged candidate revision."
-                    : action === "continue-package"
-                      ? "Retained package continuation started with exact worktree validation."
-                    : action === "repair"
-                      ? "Repair started. Downstream gates now require fresh evidence."
-                      : action === "complete-merged"
-                        ? "Task marked completed."
-                        : "Task action completed.",
+                      : action === "rebuild-candidate"
+                        ? "Candidate rebuild authorized from the latest target. The prior candidate remains retained."
+                        : action === "restart-implementation"
+                          ? "Implementation restart authorized from the latest target. Prior artifacts remain retained."
+                          : action === "retry-test"
+                            ? "Test retry started against the unchanged candidate revision."
+                            : action === "open-pr"
+                              ? "GitHub PR opened for the exact approved candidate. The task will complete after GitHub reports it merged."
+                              : action === "reconcile-pr"
+                                ? "GitHub PR state reconciled."
+                                : action === "continue-package"
+                                  ? "Retained package continuation started with exact worktree validation."
+                                  : action === "repair"
+                                    ? "Repair started. Downstream gates now require fresh evidence."
+                                    : action === "complete-merged"
+                                      ? "Task marked completed."
+                                      : "Task action completed.",
                 );
-                if (["repair", "implement", "continue-package", "review", "test", "retry-test", "final-review"].includes(action)) {
+                if (
+                  [
+                    "repair",
+                    "implement",
+                    "continue-package",
+                    "review",
+                    "test",
+                    "retry-test",
+                    "final-review",
+                  ].includes(action)
+                ) {
                   window.setTimeout(() => {
                     void getTaskCore(activeRuntimeTask.id)
                       .then((latest) => {
@@ -589,10 +647,13 @@ export function App() {
               try {
                 const updated = await updateTaskWorkflowProfile(activeRuntimeTask.id, profile, reason);
                 setActiveRuntimeTask(updated);
-                setRuntimeTasks((tasks) => tasks.map((task) => task.id === updated.id ? taskSummaryFromDetail(updated) : task));
+                setRuntimeTasks((tasks) =>
+                  tasks.map((task) => (task.id === updated.id ? taskSummaryFromDetail(updated) : task)),
+                );
                 showToast("success", `Workflow profile changed to ${profile}.`);
               } catch (error) {
-                const message = error instanceof Error ? error.message : "The workflow profile could not be changed.";
+                const message =
+                  error instanceof Error ? error.message : "The workflow profile could not be changed.";
                 showToast("error", message);
                 throw error;
               }

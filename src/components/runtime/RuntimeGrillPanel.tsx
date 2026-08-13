@@ -31,9 +31,14 @@ export function RuntimeGrillPanel({
         <StateBadge state={session.status === "completed" ? "completed" : "needs-input"} />
       </header>
       {session.completionSource === "legacy-unverified" ? (
-        <p className="runtime-grill__legacy">Legacy completion record: this runtime did not record whether a person or automation supplied these answers.</p>
+        <p className="runtime-grill__legacy">
+          Legacy completion record: this runtime did not record whether a person or automation supplied these
+          answers.
+        </p>
       ) : null}
-      {session.completionReason && session.questions.length && session.completionSource !== "legacy-unverified" ? (
+      {session.completionReason &&
+      session.questions.length &&
+      session.completionSource !== "legacy-unverified" ? (
         <p className="runtime-grill__reason">{session.completionReason}</p>
       ) : null}
       {activeQuestion ? (
@@ -47,16 +52,23 @@ export function RuntimeGrillPanel({
           />
           {settled ? (
             <details className="runtime-grill-history">
-              <summary><span>{settled} accumulated decision{settled === 1 ? "" : "s"}</span><CaretDown className="disclosure-caret" size={15} /></summary>
-              {session.questions.filter((question) => question.answer).map((question) => (
-                <RuntimeGrillQuestionCard
-                  key={question.id}
-                  question={question}
-                  index={session.questions.indexOf(question)}
-                  interactive={false}
-                  onAnswer={onAnswer}
-                />
-              ))}
+              <summary>
+                <span>
+                  {settled} accumulated decision{settled === 1 ? "" : "s"}
+                </span>
+                <CaretDown className="disclosure-caret" size={15} />
+              </summary>
+              {session.questions
+                .filter((question) => question.answer)
+                .map((question) => (
+                  <RuntimeGrillQuestionCard
+                    key={question.id}
+                    question={question}
+                    index={session.questions.indexOf(question)}
+                    interactive={false}
+                    onAnswer={onAnswer}
+                  />
+                ))}
             </details>
           ) : null}
         </div>
@@ -78,7 +90,8 @@ export function RuntimeGrillPanel({
           <span>
             <strong>No material questions remained</strong>
             <small>
-              {session.completionReason ?? "Repository evidence and safe reversible defaults were sufficient to build the specification."}
+              {session.completionReason ??
+                "Repository evidence and safe reversible defaults were sufficient to build the specification."}
             </small>
           </span>
         </div>
@@ -86,7 +99,9 @@ export function RuntimeGrillPanel({
       {task.decisions.length ? (
         <details className="runtime-grill-history runtime-grill-history--all" open>
           <summary>
-            <span>{task.decisions.length} accumulated task decision{task.decisions.length === 1 ? "" : "s"}</span>
+            <span>
+              {task.decisions.length} accumulated task decision{task.decisions.length === 1 ? "" : "s"}
+            </span>
             <CaretDown size={16} />
           </summary>
           <div className="runtime-task-decisions">

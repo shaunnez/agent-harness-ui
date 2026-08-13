@@ -94,9 +94,11 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
       {audit.candidateId !== undefined || audit.candidateRevision !== undefined ? (
         <RuntimeRow
           label="Candidate"
-          value={audit.candidateId === null
-            ? "No candidate binding"
-            : `${audit.candidateId ?? "Unknown"} revision ${audit.candidateRevision ?? "?"}`}
+          value={
+            audit.candidateId === null
+              ? "No candidate binding"
+              : `${audit.candidateId ?? "Unknown"} revision ${audit.candidateRevision ?? "?"}`
+          }
           mono={audit.candidateId !== null}
         />
       ) : null}
@@ -144,45 +146,55 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
       {audit.candidateAuthorizerReservationIds !== undefined ? (
         <RuntimeRow
           label="Candidate repair authorizers"
-          value={audit.candidateAuthorizerReservationIds.length
-            ? audit.candidateAuthorizerReservationIds.join(", ")
-            : "No repair revisions"}
+          value={
+            audit.candidateAuthorizerReservationIds.length
+              ? audit.candidateAuthorizerReservationIds.join(", ")
+              : "No repair revisions"
+          }
           mono={audit.candidateAuthorizerReservationIds.length > 0}
         />
       ) : null}
       {audit.candidateAuthorizerRunIds !== undefined ? (
         <RuntimeRow
           label="Candidate authorizer runs"
-          value={audit.candidateAuthorizerRunIds.length
-            ? audit.candidateAuthorizerRunIds.join(", ")
-            : "No repair authorizer runs"}
+          value={
+            audit.candidateAuthorizerRunIds.length
+              ? audit.candidateAuthorizerRunIds.join(", ")
+              : "No repair authorizer runs"
+          }
           mono={audit.candidateAuthorizerRunIds.length > 0}
         />
       ) : null}
       {audit.candidateAuthorizerArtifactIds !== undefined ? (
         <RuntimeRow
           label="Candidate authorizer artifacts"
-          value={audit.candidateAuthorizerArtifactIds.length
-            ? audit.candidateAuthorizerArtifactIds.join(", ")
-            : "No repair authorizer artifacts"}
+          value={
+            audit.candidateAuthorizerArtifactIds.length
+              ? audit.candidateAuthorizerArtifactIds.join(", ")
+              : "No repair authorizer artifacts"
+          }
           mono={audit.candidateAuthorizerArtifactIds.length > 0}
         />
       ) : null}
       {audit.candidateProducerRunIds !== undefined ? (
         <RuntimeRow
           label="Candidate producer runs"
-          value={audit.candidateProducerRunIds.length
-            ? audit.candidateProducerRunIds.join(", ")
-            : "Assembly-only producer; no agent run"}
+          value={
+            audit.candidateProducerRunIds.length
+              ? audit.candidateProducerRunIds.join(", ")
+              : "Assembly-only producer; no agent run"
+          }
           mono={audit.candidateProducerRunIds.length > 0}
         />
       ) : null}
       {audit.candidateProducerArtifactIds !== undefined ? (
         <RuntimeRow
           label="Candidate producer artifacts"
-          value={audit.candidateProducerArtifactIds.length
-            ? audit.candidateProducerArtifactIds.join(", ")
-            : "No producer artifacts"}
+          value={
+            audit.candidateProducerArtifactIds.length
+              ? audit.candidateProducerArtifactIds.join(", ")
+              : "No producer artifacts"
+          }
           mono={audit.candidateProducerArtifactIds.length > 0}
         />
       ) : null}
@@ -195,9 +207,11 @@ export function RetryGrantAudit({ audit }: { audit: RetryGrantAuditFields }) {
       {audit.workflowCandidateId !== undefined || audit.workflowCandidateRevision !== undefined ? (
         <RuntimeRow
           label="Workflow candidate binding"
-          value={audit.workflowCandidateId === null
-            ? "No candidate binding"
-            : `${audit.workflowCandidateId ?? "Unknown"} revision ${audit.workflowCandidateRevision ?? "?"}`}
+          value={
+            audit.workflowCandidateId === null
+              ? "No candidate binding"
+              : `${audit.workflowCandidateId ?? "Unknown"} revision ${audit.workflowCandidateRevision ?? "?"}`
+          }
           mono={audit.workflowCandidateId !== null}
         />
       ) : null}

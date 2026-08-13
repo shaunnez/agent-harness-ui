@@ -1,16 +1,93 @@
 const DEFAULT_PAGE_LIMIT = 50;
 const MAX_PAGE_LIMIT = 200;
 
-export function projectTaskSummary(task) {
+export function projectTaskSummary(task, retainedCounts = {}) {
   const artifacts = (task.artifacts ?? []).map(projectArtifactMetadata);
-  const { events = [], runs = [], ...core } = task;
+  const events = task.events ?? [];
+  const runs = task.runs ?? [];
   return {
-    ...core,
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    repositoryPath: task.repositoryPath,
+    workflow: task.workflow,
+    continuedFromTaskId: task.continuedFromTaskId ?? null,
+    continuedByTaskId: task.continuedByTaskId ?? null,
+    priority: task.priority,
+    status: task.status,
+    closure: task.closure ?? null,
+    archive: task.archive ?? null,
+    blocker: task.blocker ?? null,
+    currentStage: task.currentStage,
+    completedStages: task.completedStages ?? [],
+    stageDispositions: task.stageDispositions ?? {},
+    stageRun: task.stageRun,
+    stageRunLimit: task.stageRunLimit,
+    stageRunLimits: task.stageRunLimits ?? null,
+    attemptsByStage: task.attemptsByStage ?? {},
+    createdAt: task.createdAt,
+    updatedAt: task.updatedAt,
+    startedAt: task.startedAt ?? null,
+    completedAt: task.completedAt ?? null,
+    error: task.error ?? null,
+    activeRunKind: task.activeRunKind ?? null,
+    activeRunIds: task.activeRunIds ?? [],
+    models: task.models ?? [],
+    agentConfig: task.agentConfig
+      ? { model: task.agentConfig.model, reasoning: task.agentConfig.reasoning }
+      : undefined,
+    usage: task.usage,
+    scoutDispatch: task.scoutDispatch ?? null,
+    workPackages: (task.workPackages ?? []).map(projectWorkPackageSummary),
+    candidates: (task.candidates ?? []).map(projectCandidateSummary),
+    gateFreshness: projectGateFreshness(task.gateFreshness),
     artifacts,
-    artifactCount: artifacts.length,
-    eventCount: events.length,
-    runCount: runs.length,
+    artifactCount: retainedCounts.artifactCount ?? artifacts.length,
+    eventCount: retainedCounts.eventCount ?? events.length,
+    runCount: retainedCounts.runCount ?? runs.length,
   };
+}
+
+function projectWorkPackageSummary(workPackage) {
+  const {
+    verificationRuns: _verificationRuns,
+    retainedContinuation: _retainedContinuation,
+    ...summary
+  } = workPackage;
+  return summary;
+}
+
+function projectCandidateSummary(candidate) {
+  return {
+    id: candidate.id,
+    revisionNumber: candidate.revisionNumber,
+    baseRevision: candidate.baseRevision,
+    baseBranch: candidate.baseBranch,
+    baseRef: candidate.baseRef ?? null,
+    headRevision: candidate.headRevision ?? null,
+    branch: candidate.branch,
+    repositoryRoot: candidate.repositoryRoot,
+    worktreePath: candidate.worktreePath,
+    status: candidate.status,
+    createdAt: candidate.createdAt,
+    updatedAt: candidate.updatedAt,
+    sourceWorkflowAttempt: candidate.sourceWorkflowAttempt ?? null,
+    sourceWorkflowReservationId: candidate.sourceWorkflowReservationId ?? null,
+    revisions: [],
+  };
+}
+
+function projectGateFreshness(gateFreshness) {
+  if (!gateFreshness) return null;
+  return Object.fromEntries(Object.entries(gateFreshness).map(([stage, freshness]) => {
+    if (!freshness) return [stage, freshness];
+    const {
+      focusedTest: _focusedTest,
+      focusedTestRows: _focusedTestRows,
+      ...summary
+    } = freshness;
+    return [stage, { ...summary, focusedTest: null, focusedTestRows: [] }];
+  }));
 }
 
 export function projectTaskCore(task) {
@@ -54,7 +131,9 @@ export function paginateTaskRuns(task, searchParams) {
 
 export function paginateTaskArtifacts(task, searchParams) {
   const page = paginate(task.artifacts ?? [], searchParams, artifactSortKey);
-  return { ...page, items: page.items.map(projectArtifactMetadata) };
+  return searchParams.get("include") === "content"
+    ? page
+    : { ...page, items: page.items.map(projectArtifactMetadata) };
 }
 
 export function findTaskArtifact(task, artifactId) {

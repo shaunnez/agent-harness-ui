@@ -22,9 +22,15 @@
   color: #4d4f49;
 }
 
-.task-table__stage-icons .is-complete { color: var(--green); }
-.task-table__stage-icons .is-failed { color: var(--red); }
-.task-table__stage-icons .is-running { color: var(--blue); }
+.task-table__stage-icons .is-complete {
+  color: var(--green);
+}
+.task-table__stage-icons .is-failed {
+  color: var(--red);
+}
+.task-table__stage-icons .is-running {
+  color: var(--blue);
+}
 
 .task-table__usage,
 .task-table__cost {
@@ -203,6 +209,101 @@
 .settings-section__head span {
   display: grid;
   gap: 6px;
+}
+
+.system-boundary {
+  margin-bottom: 28px;
+  border-block: 1px solid var(--border);
+}
+.system-boundary > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 0;
+}
+.system-boundary > header div {
+  display: grid;
+  gap: 5px;
+}
+.system-boundary > header h3 {
+  font-size: 15px;
+}
+.system-boundary > header p,
+.system-boundary > header code {
+  color: var(--muted);
+  font-size: 12px;
+}
+.system-boundary > header code {
+  max-width: 46%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.system-boundary ol {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  padding: 0 0 16px;
+}
+.system-boundary__node {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(58px, auto) auto;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-right: 0;
+  background: var(--surface);
+}
+.system-boundary__node:first-child {
+  border-radius: 7px 0 0 7px;
+}
+.system-boundary__node:last-child {
+  border-right: 1px solid var(--border);
+  border-radius: 0 7px 7px 0;
+}
+.system-boundary__node > span:nth-child(2) {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+}
+.system-boundary__node strong {
+  color: var(--text);
+  font-size: 12px;
+}
+.system-boundary__node small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.system-boundary__node em {
+  width: fit-content;
+  padding: 3px 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-style: normal;
+}
+.system-boundary__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--blue);
+}
+.system-boundary__node--ready em {
+  background: var(--green-soft);
+  color: var(--green);
+}
+.system-boundary__node--conditional em {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.system-boundary__node--attention em {
+  background: var(--amber-soft);
+  color: var(--amber);
 }
 
 .model-allowlist {

@@ -18,6 +18,7 @@ export type RuntimeTaskStatus =
   | "ready-for-final-review"
   | "repair-required"
   | "awaiting-human-approval"
+  | "awaiting-pr-merge"
   | "merging"
   | "merged-to-target"
   | "completed"
@@ -38,6 +39,8 @@ export type RuntimeAvailableAction =
   | "retry-test"
   | "final-review"
   | "approve-merge"
+  | "open-pr"
+  | "reconcile-pr"
   | "reconcile-merge"
   | "complete-merged"
   | "refresh-candidate"
@@ -221,7 +224,13 @@ export interface RuntimeDecision {
 }
 
 export interface RuntimeScoutDispatch {
-  selected: Array<{ name: string; focus: string; reason: string; status: "queued" | "complete" | "failed"; error?: string }>;
+  selected: Array<{
+    name: string;
+    focus: string;
+    reason: string;
+    status: "queued" | "complete" | "failed";
+    error?: string;
+  }>;
   skipped: string[];
   rationale?: string;
   createdAt: string;
@@ -324,6 +333,7 @@ export interface RuntimeApproval {
   stage: StageId;
   note: string;
   createdAt: string;
+  artifactId?: string | null;
   sourceTaskId?: string | null;
   sourceApprovalId?: string | null;
 }
@@ -426,7 +436,12 @@ export interface RuntimeTask {
   };
   attachments?: Array<{ id: string; name: string; type: string; size: number; path: string }>;
   status: RuntimeTaskStatus;
-  closure?: { reason: "not-needed" | "superseded" | "duplicate"; supersededBy: string | null; note: string; closedAt: string } | null;
+  closure?: {
+    reason: "not-needed" | "superseded" | "duplicate";
+    supersededBy: string | null;
+    note: string;
+    closedAt: string;
+  } | null;
   /** `previousStatus` is where the task actually stopped; archiving is a visibility decision, not a verdict. */
   archive?: {
     archivedAt: string;
@@ -452,10 +467,41 @@ export interface RuntimeTask {
     reconciliationAttempts?: number;
     lastReconciliationAt?: string | null;
   } | null;
-  mergeIntentHistory?: Array<NonNullable<RuntimeTask["mergeIntent"]> & {
-    supersededAt?: string | null;
-    supersededByCandidateRevision?: number | null;
-  }>;
+  mergeIntentHistory?: Array<
+    NonNullable<RuntimeTask["mergeIntent"]> & {
+      supersededAt?: string | null;
+      supersededByCandidateRevision?: number | null;
+    }
+  >;
+  pullRequestIntent?: {
+    candidateId: string;
+    candidateRevision: number;
+    baseRevision: string;
+    headRevision: string;
+    targetBranch: string;
+    headBranch: string;
+    repository: string | null;
+    number: number | null;
+    url: string | null;
+    note: string;
+    status: "publishing" | "open" | "merged" | "closed" | "failed";
+    startedAt: string;
+    openedAt: string | null;
+    mergedAt: string | null;
+    closedAt: string | null;
+    mergeCommitRevision: string | null;
+    lastCheckedAt: string | null;
+    lastError: string | null;
+    consecutivePollFailures: number;
+    isDraft?: boolean;
+    targetRevision?: string | null;
+  } | null;
+  pullRequestIntentHistory?: Array<
+    NonNullable<RuntimeTask["pullRequestIntent"]> & {
+      supersededAt?: string | null;
+      supersededByCandidateRevision?: number | null;
+    }
+  >;
   blocker?: {
     code: "target-diverged" | "merge-reconciliation" | string;
     detail: string;
@@ -463,10 +509,21 @@ export interface RuntimeTask {
     candidateId?: string | null;
     candidateRevision?: number | null;
     candidateBaseRevision?: string | null;
+    targetRevision?: string | null;
+    source?: string | null;
   } | null;
   actionEligibility?: {
     generatedAt: string;
-    actions: Partial<Record<RuntimeAvailableAction | "run", { allowed: boolean; reason: string | null }>>;
+    actions: Partial<
+      Record<
+        RuntimeAvailableAction | "run",
+        {
+          allowed: boolean;
+          reason: string | null;
+          mode?: "execute" | "preflight-only" | "denied";
+        }
+      >
+    >;
   };
   scoutDispatch?: RuntimeScoutDispatch | null;
   currentStage: StageId;
@@ -499,13 +556,55 @@ export interface RuntimeTask {
   runCount?: number;
 }
 
-export type RuntimeTaskSummary = Omit<RuntimeTask, "artifacts" | "events" | "runs" | "worktreeInventory"> & {
+export type RuntimeTaskSummary = Pick<
+  RuntimeTask,
+  | "id"
+  | "title"
+  | "description"
+  | "repositoryPath"
+  | "workflow"
+  | "continuedFromTaskId"
+  | "continuedByTaskId"
+  | "priority"
+  | "status"
+  | "closure"
+  | "archive"
+  | "blocker"
+  | "scoutDispatch"
+  | "currentStage"
+  | "completedStages"
+  | "stageDispositions"
+  | "stageRun"
+  | "stageRunLimit"
+  | "stageRunLimits"
+  | "createdAt"
+  | "updatedAt"
+  | "startedAt"
+  | "completedAt"
+  | "error"
+  | "activeRunKind"
+  | "activeRunIds"
+  | "attemptsByStage"
+  | "models"
+  | "usage"
+  | "agentConfig"
+  | "workPackages"
+  | "candidates"
+  | "gateFreshness"
+> & {
+  artifacts: RuntimeArtifactMetadata[];
+  events?: RuntimeEvent[];
+  runs?: RuntimeRun[];
+  artifactCount?: number;
+  eventCount?: number;
+  runCount?: number;
+};
+
+export type RuntimeTaskCore = Omit<RuntimeTask, "artifacts" | "events" | "runs" | "worktreeInventory"> & {
   artifacts: RuntimeArtifactMetadata[];
   events?: RuntimeEvent[];
   runs?: RuntimeRun[];
 };
-
-export type RuntimeTaskCore = RuntimeTaskSummary;
 
 export interface RuntimePage<T> {
   items: T[];
@@ -538,6 +637,33 @@ export interface RuntimeStatus {
     detail: string;
   }>;
   scouts?: Array<{ id: string; label: string; instruction: string; limits: string }>;
+}
+
+export interface RuntimeRepositoryContract {
+  repositoryRoot: string;
+  git: {
+    branch: string;
+    headRevision: string;
+    clean: boolean;
+  };
+  instructions: {
+    path: string;
+    present: boolean;
+  };
+  verification: {
+    path: string;
+    present: boolean;
+    valid: boolean;
+    commandIds: string[];
+    error: string | null;
+  };
+  runtime: {
+    declarations: Array<{ source: string; value: string }>;
+  };
+  delivery: {
+    remoteUrl: string | null;
+    github: boolean;
+  };
 }
 
 export interface RuntimeAgentPolicy {

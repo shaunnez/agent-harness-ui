@@ -45,7 +45,7 @@ Avoid using “model” when the UI means an agent, and avoid showing a singular
 7. **Dev Review** — a fresh-context code review of the whole candidate with the code-specific rubric and repair lineage.
 8. **Test** — deterministic and/or agent-assisted candidate-level gates with drillable pass and failure evidence.
 9. **Final Review** — a legible summary of every prior stage, costs, evidence, repairs, candidate identity, and outstanding risk.
-10. **Human Approval** — explicitly approve and merge the qualified candidate using a visible target branch and merge method.
+10. **Human Approval** — explicitly approve the qualified candidate for a GitHub pull request using a visible target branch and exact candidate head. The task completes only after GitHub reports that exact PR merged.
 
 Grill is a human decision gate by default. When it produces questions, the task pauses so the operator can answer them individually or explicitly accept all remaining recommendations. Automatic acceptance is available only through an opt-in Settings policy snapshotted onto new tasks; those answers and the session completion must identify automation as their source. A Grill run that produces no material questions may continue automatically under either policy.
 
@@ -175,7 +175,7 @@ Every stage has a consistent action area at the top of the stage canvas. It comm
 - any secondary inspect/retry/repair action;
 - why an action is disabled or blocked.
 
-Primary actions should not be hidden below long evidence. Examples include `Start scouts`, `Confirm answer`, `Approve plan & start worktrees`, `Assemble candidate`, `Send C1 to tests`, `Send to repair`, `Send C2 to human approval`, and `Approve & merge C2`.
+Primary actions should not be hidden below long evidence. Examples include `Start scouts`, `Confirm answer`, `Approve plan & start worktrees`, `Assemble candidate`, `Send C1 to tests`, `Send to repair`, `Send C2 to human approval`, and `Approve & raise PR for C2`.
 
 Plan approval is not a forced choice. Before implementation authorization, an operator may record a concrete correction as a task decision and choose `Revise plan`. The bounded read-only planning attempt replaces the executable package graph while retaining the rejected plan artifact and run for audit. No repository write is authorized until a plan is explicitly approved.
 
@@ -208,7 +208,7 @@ Final Review summarizes Triage, Repo Scouts, Grill Me, Task Spec, Implementation
 
 ### Human Approval
 
-Approval is not merely “approve.” It is `Approve & merge Cx` and shows:
+Approval is not merely “approve.” It is `Approve & raise PR Cx` and shows:
 
 - exact candidate ID and revision;
 - target repository and branch;
@@ -216,11 +216,11 @@ Approval is not merely “approve.” It is `Approve & merge Cx` and shows:
 - current required gate count;
 - residual risks and policy acknowledgements;
 - identity and timestamp of the approver;
-- resulting merge commit or structured merge failure.
+- resulting PR number and URL, exact remote head, current GitHub state, and eventual merge commit or structured reconciliation failure.
 
-Before recording merge intent, the companion compares the candidate's recorded base with the live target ref. If the target advanced, approval stops without mutating the target and the command bar offers **Refresh candidate from main**. Refresh runs only in the isolated candidate worktree, replays the candidate onto the current target, and records a new candidate revision with reason `target-refresh`. The prior revision and its evidence remain inspectable, while Dev Review, Test, Final Review, and Human Approval become stale and must run again. A refresh conflict aborts back to the recorded candidate head; it never leaves a partial rebase or silently resolves conflicts.
+Before recording PR publication, the companion compares the candidate's recorded base with the live GitHub target ref. If the target advanced, approval stops without opening a PR and the command bar offers **Refresh candidate from main**. Refresh fetches the remote target commit without moving the user's local target branch, runs only in the isolated candidate worktree, replays the candidate onto that commit, and records a new candidate revision with reason `target-refresh`. The prior revision and its evidence remain inspectable, while Dev Review, Test, Final Review, and Human Approval become stale and must run again. A refresh conflict aborts back to the recorded candidate head; it never leaves a partial rebase or silently resolves conflicts.
 
-The UI describes this as refreshing the candidate rather than “merge main into branch.” The target branch remains untouched until the later **Approve & merge** action, and the resulting candidate stays eligible for the existing fast-forward-only merge contract.
+The UI describes this as refreshing the candidate rather than “merge main into branch.” A new approval pushes only the exact candidate SHA to a unique remote branch and raises or rediscovers one matching GitHub PR. The local target checkout remains untouched. The companion polls retained open PRs in the background and may also reconcile on demand. It completes the task only when the PR repository, number, base branch, head branch, and head SHA still match the approval intent and GitHub reports the PR merged. Closed-unmerged PRs and identity drift block rather than progressing.
 
 ### Recovery actions
 

@@ -25,7 +25,10 @@ export const agentRoles: AgentRoleDefinition[] = [
   workflowRole("scouts"),
   ...scoutRoleIds.map((id) => ({
     id,
-    label: id.replace(/^scout-/, "").replaceAll("-", " ").replace(/^./, (value) => value.toUpperCase()),
+    label: id
+      .replace(/^scout-/, "")
+      .replaceAll("-", " ")
+      .replace(/^./, (value) => value.toUpperCase()),
     skill: id,
     provider: "model" as const,
     parentId: "scouts" as const,
@@ -45,7 +48,10 @@ export function policyIdForRole(roleId: AgentRoleId) {
   return roleId.startsWith("scout-") ? "scouts" : roleId;
 }
 
-export function rolePolicy(runtimeStatus: RuntimeStatus | null, roleId: AgentRoleId): RuntimeAgentPolicy | null {
+export function rolePolicy(
+  runtimeStatus: RuntimeStatus | null,
+  roleId: AgentRoleId,
+): RuntimeAgentPolicy | null {
   if (roleId === "approval") return null;
   return runtimeStatus?.settings?.stagePolicies?.[policyIdForRole(roleId)] ?? null;
 }

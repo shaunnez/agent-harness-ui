@@ -48,6 +48,8 @@ async function createServer(options = {}) {
   let grillAnswer = null;
   let grillFinish = null;
   let approvedSpecification = null;
+  let approvedPullRequest = null;
+  let reconciledPullRequestTask = null;
   let completedMergedTask = null;
   let reconciledMergeTask = null;
   let refreshedCandidateTask = null;
@@ -84,6 +86,13 @@ async function createServer(options = {}) {
       });
     },
     async approveMerge() {},
+    async approvePullRequest(id, note) {
+      approvedPullRequest = { id, note };
+    },
+    async reconcilePullRequest(id) {
+      reconciledPullRequestTask = id;
+      return store.get(id);
+    },
     async reconcileMerge(id) {
       reconciledMergeTask = id;
       return store.get(id);
@@ -146,6 +155,8 @@ async function createServer(options = {}) {
     grillAnswerRef: () => grillAnswer,
     grillFinishRef: () => grillFinish,
     approvedSpecificationRef: () => approvedSpecification,
+    approvedPullRequestRef: () => approvedPullRequest,
+    reconciledPullRequestTaskRef: () => reconciledPullRequestTask,
     completedMergedTaskRef: () => completedMergedTask,
     refreshedCandidateTaskRef: () => refreshedCandidateTask,
     rebuiltCandidateTaskRef: () => rebuiltCandidateTask,
@@ -667,6 +678,23 @@ test("returns server-authoritative action eligibility and never grants Human App
     assert.equal(detail.task.actionEligibility.actions.run.allowed, true);
 
     await store.update(task.id, (draft) => {
+      draft.status = "failed";
+      draft.currentStage = "plan";
+      draft.attemptsByStage.plan = 1;
+      draft.stageRunLimits.plan = 3;
+      draft.error = "Every work package needs at least one repository manifest command ID.";
+    });
+    detail = await (await fetch(`${origin}/api/tasks/${task.id}?view=core`)).json();
+    assert.equal(detail.task.actionEligibility.actions.plan.allowed, true);
+
+    await store.update(task.id, (draft) => {
+      draft.attemptsByStage.plan = 3;
+    });
+    detail = await (await fetch(`${origin}/api/tasks/${task.id}?view=core`)).json();
+    assert.equal(detail.task.actionEligibility.actions.plan.allowed, false);
+    assert.match(detail.task.actionEligibility.actions.plan.reason, /plan stage has exhausted/i);
+
+    await store.update(task.id, (draft) => {
       draft.status = "blocked";
       draft.currentStage = "approval";
       draft.error = "Promotion policy requires operator input.";
@@ -757,6 +785,32 @@ test("dispatches the complete-merged action to the orchestrator and reports 404 
   }
 });
 
+test("dispatches Human Approval to GitHub PR publication rather than a local merge", async () => {
+  const { directory, origin, server, approvedPullRequestRef, reconciledPullRequestTaskRef } = await createServer();
+  try {
+    const createResponse = await createTask(origin, {
+      title: "Raise an exact candidate PR",
+      description: "Human Approval must not fast-forward the local checkout.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await createResponse.json();
+    const open = await fetch(`${origin}/api/tasks/${task.id}/open-pr`, {
+      method: "POST",
+      body: JSON.stringify({ note: "Ready for GitHub review." }),
+    });
+    assert.equal(open.status, 200);
+    assert.deepEqual(await open.json(), { pullRequestOpened: true });
+    assert.deepEqual(approvedPullRequestRef(), { id: task.id, note: "Ready for GitHub review." });
+
+    const reconcile = await fetch(`${origin}/api/tasks/${task.id}/reconcile-pr`, { method: "POST" });
+    assert.equal(reconcile.status, 200);
+    assert.equal(reconciledPullRequestTaskRef(), task.id);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("dispatches candidate refresh and same-candidate Test retry actions", async () => {
   const {
     directory,
@@ -841,6 +895,10 @@ test("lets blocked candidate gates reach the target-drift preflight", async () =
       draft.currentStage = "test";
       draft.attemptsByStage.test = draft.stageRunLimits.test;
     });
+
+    const detail = await (await fetch(`${origin}/api/tasks/${task.id}?view=core`)).json();
+    assert.equal(detail.task.actionEligibility.actions.test.allowed, true);
+    assert.equal(detail.task.actionEligibility.actions.test.mode, "preflight-only");
 
     const response = await fetch(`${origin}/api/tasks/${task.id}/test`, { method: "POST" });
     assert.equal(response.status, 202);
@@ -1003,7 +1061,7 @@ test("rejects closing a task while merge reconciliation is pending", async () =>
       body: JSON.stringify({ reason: "not-needed", note: "Close during merge." }),
     });
     assert.equal(closeResponse.status, 409);
-    assert.match((await closeResponse.json()).error, /pending merge reconciliation/i);
+    assert.match((await closeResponse.json()).error, /pending GitHub PR lifecycle/i);
     const unchanged = await store.get(task.id);
     assert.equal(unchanged.status, "merging");
     assert.equal(unchanged.mergeIntent.status, "pending");
@@ -1115,7 +1173,7 @@ test("returns backward-compatible structured run activity through task APIs", as
     const detail = await (await fetch(`${origin}/api/tasks/${task.id}`)).json();
     const list = await (await fetch(`${origin}/api/tasks`)).json();
     const health = await (await fetch(`${origin}/api/health`)).json();
-    assert.equal(health.runtimeSchemaVersion, 9);
+    assert.equal(health.runtimeSchemaVersion, 10);
     assert.equal(detail.task.runs[0].id, "RUN-API");
     assert.equal(detail.task.runs[0].toolCalls[0].result, "Exit code 0");
     assert.equal(detail.task.events.at(-1).runId, "RUN-API");
@@ -1193,6 +1251,14 @@ test("serves lightweight task projections, paginated retained evidence, and resp
     )).json();
     assert.deepEqual(secondArtifacts.items.map((item) => item.id), ["artifact-1"]);
 
+    const artifactContents = await (await fetch(
+      `${origin}/api/tasks/${task.id}/artifacts?limit=2&include=content`,
+    )).json();
+    assert.deepEqual(artifactContents.items.map((item) => item.content), [
+      "secret retained content 3",
+      "secret retained content 2",
+    ]);
+
     const artifact = await (await fetch(`${origin}/api/tasks/${task.id}/artifacts/artifact-2`)).json();
     assert.equal(artifact.artifact.content, "secret retained content 2");
     const runs = await (await fetch(`${origin}/api/tasks/${task.id}/runs?limit=2`)).json();
@@ -1240,6 +1306,10 @@ test("serves task summaries, core polling, and retained evidence directly from S
     const page = await (await fetch(`${origin}/api/tasks/${task.id}/artifacts?limit=1`)).json();
     assert.equal(page.items[0].id, "sqlite-artifact");
     assert.equal("content" in page.items[0], false);
+    const contentPage = await (await fetch(
+      `${origin}/api/tasks/${task.id}/artifacts?limit=1&include=content`,
+    )).json();
+    assert.equal(contentPage.items[0].content, "SQLite retained content");
     const artifact = await (await fetch(`${origin}/api/tasks/${task.id}/artifacts/sqlite-artifact`)).json();
     assert.equal(artifact.artifact.content, "SQLite retained content");
   } finally {
@@ -1378,6 +1448,8 @@ test("enforces one Host, Origin, content-type, CSRF, and missing-Origin policy a
       ["POST", "/api/tasks/AH-999/specification"],
       ["POST", "/api/tasks/AH-999/cancel"],
       ["POST", "/api/tasks/AH-999/approve-merge"],
+      ["POST", "/api/tasks/AH-999/open-pr"],
+      ["POST", "/api/tasks/AH-999/reconcile-pr"],
       ["POST", "/api/tasks/AH-999/refresh-candidate"],
       ["POST", "/api/tasks/AH-999/rebuild-candidate"],
       ["POST", "/api/tasks/AH-999/restart-implementation"],
@@ -1735,6 +1807,8 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
       }),
     });
     assert.equal(invalidPolicyResponse.status, 400);
+    assert.equal(invalidPolicyResponse.headers.get("x-agent-harness-error-category"), "request");
+    assert.equal(invalidPolicyResponse.headers.get("x-agent-harness-retryable"), "false");
     assert.deepEqual(await invalidPolicyResponse.json(), { error: "Choose a supported Grill interaction policy." });
   } finally {
     await cleanup(server, directory);
@@ -2581,6 +2655,7 @@ test("rejects stale or mismatched candidate diff requests", async () => {
     await mkdir(path.join(candidate.worktreePath, "nested"), { recursive: true });
     const staleWorktree = await fetch(`${origin}/api/tasks/${task.id}/candidates/C1/diff`);
     assert.equal(staleWorktree.status, 400);
+    assert.equal(staleWorktree.headers.get("x-agent-harness-error-category"), "operational");
     assert.match((await staleWorktree.json()).error, /no longer resolves to its recorded path/i);
   } finally {
     await cleanup(server, directory);

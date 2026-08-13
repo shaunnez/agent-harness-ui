@@ -12,6 +12,7 @@ import {
   normalizeActivityFilter,
   projectArtifactMetadata,
   projectTaskCore,
+  projectTaskSummary,
 } from "./task-projections.mjs";
 import {
   assertImportState,
@@ -64,6 +65,27 @@ export class SqliteTaskStore {
     return clone(this.#readAllTasks());
   }
 
+  async listPullRequestTasks() {
+    return clone(this.#db.prepare(`
+      SELECT id
+      FROM tasks
+      WHERE
+        (status = 'merging' AND json_extract(core_json, '$.pullRequestIntent.status') = 'publishing') OR
+        (status = 'awaiting-pr-merge' AND json_extract(core_json, '$.pullRequestIntent.status') = 'open')
+      ORDER BY updated_at ASC, id ASC
+    `).all().map((row) => this.#readTask(row.id)));
+  }
+
+  async listWorktreeTasks() {
+    return clone(this.#db.prepare(`
+      SELECT core_json
+      FROM tasks
+      WHERE json_array_length(json_extract(core_json, '$.workPackages')) > 0 OR
+        json_array_length(json_extract(core_json, '$.candidates')) > 0
+      ORDER BY created_at DESC, id DESC
+    `).all().map((row) => JSON.parse(row.core_json)));
+  }
+
   async listSummaries() {
     const taskRows = this.#db.prepare(`
       SELECT
@@ -87,13 +109,14 @@ export class SqliteTaskStore {
     }
     return taskRows.map((row) => {
       const core = JSON.parse(row.core_json);
-      return {
+      return projectTaskSummary({
         ...core,
         artifacts: artifactsByTask.get(core.id) ?? [],
+      }, {
         artifactCount: Number(row.artifact_count),
         eventCount: Number(row.event_count),
         runCount: Number(row.run_count),
-      };
+      });
     });
   }
 
@@ -157,12 +180,13 @@ export class SqliteTaskStore {
   }
 
   async pageArtifacts(taskId, searchParams) {
+    const includeContent = searchParams.get("include") === "content";
     return querySqlitePage(this.#db, {
       table: "artifacts",
       taskId,
       searchParams,
       sortColumn: "created_at",
-      payloadColumn: "metadata_json",
+      payloadColumn: includeContent ? "payload_json" : "metadata_json",
     });
   }
 
@@ -228,6 +252,18 @@ export class SqliteTaskStore {
 
   async update(id, updater) {
     return this.#mutateTask(id, null, updater);
+  }
+
+  async updateCore(id, updater, { touchUpdatedAt = true } = {}) {
+    return this.#enqueue(() => this.#transaction(() => {
+      const row = this.#db.prepare("SELECT revision FROM tasks WHERE id = ?").get(id);
+      if (!row) return null;
+      const task = this.#readTask(id, { includeEvents: false, includeRuns: false, includeArtifacts: false });
+      updater(task);
+      if (touchUpdatedAt) task.updatedAt = new Date().toISOString();
+      this.#updateTaskCore(task, Number(row.revision));
+      return clone(task);
+    }));
   }
 
   async transition(id, condition, updater) {
@@ -420,6 +456,11 @@ export class SqliteTaskStore {
   }
 
   #updateTask(task, expectedRevision) {
+    this.#updateTaskCore(task, expectedRevision);
+    this.#syncCollections(task);
+  }
+
+  #updateTaskCore(task, expectedRevision) {
     const result = this.#db.prepare(`
       UPDATE tasks
       SET created_at = ?, updated_at = ?, status = ?, current_stage = ?, revision = revision + 1, core_json = ?
@@ -439,7 +480,6 @@ export class SqliteTaskStore {
       error.statusCode = 409;
       throw error;
     }
-    this.#syncCollections(task);
   }
 
   #syncCollections(task) {

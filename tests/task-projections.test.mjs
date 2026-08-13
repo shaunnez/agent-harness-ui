@@ -13,6 +13,51 @@ function taskFixture() {
     id: "AH-001",
     title: "Projection fixture",
     status: "running",
+    candidates: [{
+      id: "candidate-1",
+      revisionNumber: 7,
+      baseRevision: "a".repeat(40),
+      baseBranch: "main",
+      headRevision: "b".repeat(40),
+      branch: "agent-harness/AH-001",
+      repositoryRoot: "/repository",
+      worktreePath: "/worktree",
+      status: "ready_for_review",
+      createdAt: "2026-08-09T00:00:00.000Z",
+      updatedAt: "2026-08-09T00:00:02.000Z",
+      revisions: Array.from({ length: 30 }, (_, number) => ({ number, evidence: "x".repeat(2_000) })),
+      verificationRuns: [{ rows: [{ output: "x".repeat(20_000) }] }],
+    }],
+    workPackages: [{
+      id: "S1",
+      title: "Package",
+      description: "Bounded package",
+      dependencies: [],
+      batch: 1,
+      ownedPaths: ["src/example.ts"],
+      verification: ["npm test"],
+      status: "planned",
+      attempts: 0,
+      branch: null,
+      worktreePath: null,
+      baseRevision: null,
+      headRevision: null,
+      files: [],
+      error: null,
+      verificationRuns: [{ rows: [{ output: "x".repeat(20_000) }] }],
+      retainedContinuation: { files: Array.from({ length: 50 }, (_, index) => `file-${index}`) },
+    }],
+    gateFreshness: {
+      test: {
+        candidateId: "candidate-1",
+        candidateRevision: 7,
+        target: { candidateId: "candidate-1", candidateRevision: 7 },
+        fresh: true,
+        focusedTest: { rows: [{ output: "x".repeat(20_000) }] },
+        focusedTestRows: [{ output: "x".repeat(20_000) }],
+      },
+    },
+    decisions: Array.from({ length: 20 }, (_, index) => ({ id: `decision-${index}`, answer: "x".repeat(2_000) })),
     artifacts: [
       {
         id: "artifact-1",
@@ -67,6 +112,14 @@ test("task summaries and core detail omit retained heavy evidence", () => {
   assert.equal("focusedTest" in summary.artifacts[0], false);
   assert.equal("gateResult" in summary.artifacts[0], false);
   assert.equal("freshness" in summary.artifacts[0], false);
+  assert.equal("decisions" in summary, false);
+  assert.equal(summary.candidates.length, 1);
+  assert.deepEqual(summary.candidates[0].revisions, []);
+  assert.equal("verificationRuns" in summary.candidates[0], false);
+  assert.equal("verificationRuns" in summary.workPackages[0], false);
+  assert.equal("retainedContinuation" in summary.workPackages[0], false);
+  assert.equal(summary.gateFreshness.test.focusedTest, null);
+  assert.deepEqual(summary.gateFreshness.test.focusedTestRows, []);
   assert.ok(
     Buffer.byteLength(JSON.stringify(summary)) < Buffer.byteLength(JSON.stringify(task)) * 0.1,
     "the list projection must remain at least 90% smaller than this retained-evidence fixture",

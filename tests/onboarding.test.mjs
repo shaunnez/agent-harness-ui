@@ -14,6 +14,7 @@ import {
 } from "../server/onboarding.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import { providerForModelId } from "../server/model-catalog.mjs";
+import { inspectRepositoryContract } from "../server/repository-contract.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { parseVerificationManifest } from "../server/verification.mjs";
 
@@ -27,6 +28,40 @@ const evidence = {
 
 const proposal = (commands, extra = {}) =>
   `noise before <verification-proposal>${JSON.stringify({ commands, ...extra })}</verification-proposal> noise after`;
+
+test("inspects the repository contract without writing or running its commands", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-contract-"));
+  try {
+    const git = (args) => new Promise((resolve, reject) => {
+      const child = spawn("git", args, { cwd: directory, stdio: "ignore" });
+      child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`git ${args.join(" ")}`))));
+    });
+    await git(["init", "--initial-branch=main"]);
+    await git(["config", "user.email", "t@example.test"]);
+    await git(["config", "user.name", "T"]);
+    await git(["remote", "add", "origin", "https://github.com/example/repository.git"]);
+    await mkdir(path.join(directory, ".agent-harness"));
+    await writeFile(path.join(directory, "AGENTS.md"), "# Instructions\n", "utf8");
+    await writeFile(path.join(directory, "package.json"), JSON.stringify({ engines: { node: ">=24" }, packageManager: "npm@11" }), "utf8");
+    await writeFile(path.join(directory, ".agent-harness", "verification.json"), JSON.stringify({ version: 1, commands: [{ id: "test", command: ["npm", "test"] }] }), "utf8");
+    await git(["add", "."]);
+    await git(["commit", "-m", "repository contract"]);
+
+    const contract = await inspectRepositoryContract(directory);
+    assert.equal(contract.git.branch, "main");
+    assert.equal(contract.git.clean, true);
+    assert.equal(contract.instructions.present, true);
+    assert.deepEqual(contract.verification.commandIds, ["test"]);
+    assert.deepEqual(contract.runtime.declarations, [
+      { source: "package.json engines.node", value: ">=24" },
+      { source: "package.json packageManager", value: "npm@11" },
+    ]);
+    assert.equal(contract.delivery.github, true);
+    assert.equal(await readFile(path.join(directory, ".agent-harness", "verification.json"), "utf8").then(Boolean), true);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
 
 test("discovers what the repository already says about verifying itself", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-onboard-"));

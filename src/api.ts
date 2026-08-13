@@ -13,7 +13,9 @@ import type {
   RuntimeArtifactMetadata,
   RuntimeEvent,
   RuntimePage,
+  RuntimeAvailableAction,
   RuntimeRun,
+  RuntimeRepositoryContract,
   RuntimeUsage,
   RuntimeWorktreeInventoryRow,
 } from "./domain";
@@ -34,7 +36,9 @@ async function request<T>(path: string, init?: RequestInit, retried = false): Pr
       ...init,
       headers: {
         "content-type": "application/json",
-        ...(init?.method && init.method !== "GET" && runtimeCsrfToken ? { "x-agent-harness-csrf": runtimeCsrfToken } : {}),
+        ...(init?.method && init.method !== "GET" && runtimeCsrfToken
+          ? { "x-agent-harness-csrf": runtimeCsrfToken }
+          : {}),
         ...init?.headers,
       },
     });
@@ -67,8 +71,11 @@ export async function getRuntimeStatus() {
 }
 
 export async function updateRuntimeSettings(
-  input: Pick<RuntimeSettings, "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies">
-    & Partial<Pick<RuntimeSettings, "grillPolicy">>,
+  input: Pick<
+    RuntimeSettings,
+    "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies"
+  > &
+    Partial<Pick<RuntimeSettings, "grillPolicy">>,
 ) {
   return (
     await request<{ settings: RuntimeSettings }>("/api/settings", {
@@ -82,6 +89,15 @@ export async function verifyRuntimePricing() {
   return request<{ settings: RuntimeSettings; usage: RuntimeUsage }>("/api/runtime/pricing/verify", {
     method: "POST",
   });
+}
+
+export async function getRepositoryContract(repositoryPath: string) {
+  return (
+    await request<{ contract: RuntimeRepositoryContract }>("/api/runtime/repository-contract", {
+      method: "POST",
+      body: JSON.stringify({ repositoryPath }),
+    })
+  ).contract;
 }
 export async function getRuntimeWorktreeInventory(taskId?: string) {
   return request<{ rows: RuntimeWorktreeInventoryRow[] }>(
@@ -105,15 +121,23 @@ export async function listChangelog() {
 }
 
 export async function getChangelogCommit(commitId: string) {
-  return (await request<{ commit: RuntimeChangelogDetail }>(`/api/changelog/${encodeURIComponent(commitId)}`)).commit;
+  return (await request<{ commit: RuntimeChangelogDetail }>(`/api/changelog/${encodeURIComponent(commitId)}`))
+    .commit;
 }
 
 export async function getChangelogFileDiff(commitId: string, filePath: string) {
   const params = new URLSearchParams({ path: filePath });
-  return request<RuntimeChangelogDiff>(`/api/changelog/${encodeURIComponent(commitId)}/file?${params.toString()}`);
+  return request<RuntimeChangelogDiff>(
+    `/api/changelog/${encodeURIComponent(commitId)}/file?${params.toString()}`,
+  );
 }
 
-export async function closeTask(id: string, reason: "not-needed" | "superseded" | "duplicate", note = "", supersededBy = "") {
+export async function closeTask(
+  id: string,
+  reason: "not-needed" | "superseded" | "duplicate",
+  note = "",
+  supersededBy = "",
+) {
   return request<{ task: RuntimeTask }>(`/api/tasks/${encodeURIComponent(id)}/close`, {
     method: "POST",
     body: JSON.stringify({ reason, note, supersededBy }),
@@ -136,7 +160,13 @@ export async function evaluateTask(
   score: number,
   outcome: "accepted" | "rejected" | "mixed",
   notes = "",
-  options?: { kind?: "human" | "blind"; rubric?: Record<string, number>; evaluator?: string; suiteId?: string; caseId?: string },
+  options?: {
+    kind?: "human" | "blind";
+    rubric?: Record<string, number>;
+    evaluator?: string;
+    suiteId?: string;
+    caseId?: string;
+  },
 ) {
   return request<{ task: RuntimeTask }>(`/api/tasks/${encodeURIComponent(id)}/evaluation`, {
     method: "POST",
@@ -170,9 +200,7 @@ export async function getTaskActivity(id: string, options: PageOptions = {}) {
 }
 
 export async function getTaskRuns(id: string, options: PageOptions = {}) {
-  return request<RuntimePage<RuntimeRun>>(
-    `/api/tasks/${encodeURIComponent(id)}/runs?${pageParams(options)}`,
-  );
+  return request<RuntimePage<RuntimeRun>>(`/api/tasks/${encodeURIComponent(id)}/runs?${pageParams(options)}`);
 }
 
 export async function getTaskArtifacts(id: string, options: PageOptions = {}) {
@@ -181,10 +209,20 @@ export async function getTaskArtifacts(id: string, options: PageOptions = {}) {
   );
 }
 
+export async function getTaskArtifactContents(id: string, options: PageOptions = {}) {
+  const params = pageParams(options);
+  params.set("include", "content");
+  return request<RuntimePage<RuntimeArtifact>>(
+    `/api/tasks/${encodeURIComponent(id)}/artifacts?${params.toString()}`,
+  );
+}
+
 export async function getTaskArtifact(id: string, artifactId: string) {
-  return (await request<{ artifact: RuntimeArtifact }>(
-    `/api/tasks/${encodeURIComponent(id)}/artifacts/${encodeURIComponent(artifactId)}`,
-  )).artifact;
+  return (
+    await request<{ artifact: RuntimeArtifact }>(
+      `/api/tasks/${encodeURIComponent(id)}/artifacts/${encodeURIComponent(artifactId)}`,
+    )
+  ).artifact;
 }
 
 interface PageOptions {
@@ -198,7 +236,7 @@ function pageParams(options: PageOptions) {
   if (options.cursor) params.set("cursor", options.cursor);
   if (options.limit != null) params.set("limit", String(options.limit));
   if (options.filter) params.set("filter", options.filter);
-  return params.toString();
+  return params;
 }
 
 export async function createTask(draft: NewTaskDraft) {
@@ -261,25 +299,7 @@ export async function finishGrill(id: string, acceptRemaining: boolean) {
 
 export async function runTaskAction(
   id: string,
-  action:
-    | "approve-spec"
-    | "approve-plan"
-    | "specification"
-    | "plan"
-    | "implement"
-    | "continue-package"
-    | "repair"
-    | "review"
-    | "test"
-    | "retry-test"
-    | "final-review"
-    | "approve-merge"
-    | "reconcile-merge"
-    | "complete-merged"
-    | "refresh-candidate"
-    | "rebuild-candidate"
-    | "restart-implementation"
-    | "grant-retry",
+  action: Exclude<RuntimeAvailableAction, "continue-implementation">,
   note = "",
 ) {
   return request<Record<string, boolean>>(`/api/tasks/${encodeURIComponent(id)}/${action}`, {

@@ -2,6 +2,7 @@ import { FolderOpen, Lightning, Paperclip, Trash, X } from "@phosphor-icons/reac
 import { useEffect, useRef, useState } from "react";
 import { EXAMPLE_DESCRIPTION, EXAMPLE_TITLE, type NewTaskDraft, type RuntimeStatus } from "../domain";
 import { Button } from "./Primitives";
+import { RepositoryContractPanel } from "./RepositoryContractPanel";
 
 const initialDraft: NewTaskDraft = {
   title: EXAMPLE_TITLE,
@@ -18,7 +19,13 @@ function readAttachment(file: File) {
   return new Promise<{ name: string; type: string; size: number; data: string }>((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error(`${file.name} could not be read.`));
-    reader.onload = () => resolve({ name: file.name, type: file.type || "application/octet-stream", size: file.size, data: String(reader.result).split(",")[1] ?? "" });
+    reader.onload = () =>
+      resolve({
+        name: file.name,
+        type: file.type || "application/octet-stream",
+        size: file.size,
+        data: String(reader.result).split(",")[1] ?? "",
+      });
     reader.readAsDataURL(file);
   });
 }
@@ -41,15 +48,19 @@ export function NewTaskDialog({
   const [error, setError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const policyEntries = Object.entries(runtimeStatus?.settings?.stagePolicies ?? {});
-  const policySummary = [...policyEntries.reduce((groups, [, policy]) => {
-    const label = `${formatModelName(policy.model)} ${formatReasoning(policy.reasoning)}`;
-    groups.set(label, (groups.get(label) ?? 0) + 1);
-    return groups;
-  }, new Map<string, number>())].map(([label, count]) => `${label} · ${count} role${count === 1 ? "" : "s"}`).join("  /  ");
+  const policySummary = [
+    ...policyEntries.reduce((groups, [, policy]) => {
+      const label = `${formatModelName(policy.model)} ${formatReasoning(policy.reasoning)}`;
+      groups.set(label, (groups.get(label) ?? 0) + 1);
+      return groups;
+    }, new Map<string, number>()),
+  ]
+    .map(([label, count]) => `${label} · ${count} role${count === 1 ? "" : "s"}`)
+    .join("  /  ");
   const updateExperiment = (value: Partial<NonNullable<NewTaskDraft["experiment"]>>) => {
-    setDraft((current) => current.experiment
-      ? { ...current, experiment: { ...current.experiment, ...value } }
-      : current);
+    setDraft((current) =>
+      current.experiment ? { ...current, experiment: { ...current.experiment, ...value } } : current,
+    );
   };
 
   useEffect(() => {
@@ -93,8 +104,8 @@ export function NewTaskDialog({
             <p className="eyebrow">Deterministic workflow</p>
             <h2 id="new-task-title">New task</h2>
             <p>
-              Give the work a scannable title and enough context for triage. The configured role
-              policies are snapshotted so every agent run records its model and reasoning level.
+              Give the work a scannable title and enough context for triage. The configured role policies are
+              snapshotted so every agent run records its model and reasoning level.
             </p>
           </div>
           <button type="button" className="icon-button" aria-label="Close new task" onClick={onClose}>
@@ -103,7 +114,9 @@ export function NewTaskDialog({
         </header>
 
         <label className="field">
-          <span>Task title <small className="wired-field">Creates persisted task</small></span>
+          <span>
+            Task title <small className="wired-field">Creates persisted task</small>
+          </span>
           <input
             value={draft.title}
             onChange={(event) => setDraft({ ...draft, title: event.target.value })}
@@ -112,7 +125,9 @@ export function NewTaskDialog({
         </label>
 
         <label className="field">
-          <span>Description <small className="wired-field">Sent to every stage</small></span>
+          <span>
+            Description <small className="wired-field">Sent to every stage</small>
+          </span>
           <textarea
             rows={5}
             value={draft.description}
@@ -121,7 +136,9 @@ export function NewTaskDialog({
         </label>
 
         <label className="field">
-          <span>Local repository <small className="wired-field">Validated by backend</small></span>
+          <span>
+            Local repository <small className="wired-field">Validated by backend</small>
+          </span>
           <span className="field-with-icon">
             <FolderOpen size={16} />
             <input
@@ -136,8 +153,12 @@ export function NewTaskDialog({
           </small>
         </label>
 
+        <RepositoryContractPanel repositoryPath={open ? draft.repositoryPath : ""} />
+
         <fieldset className="segmented-field">
-          <legend>Workflow <small className="wired-field">Controls stopping point</small></legend>
+          <legend>
+            Workflow <small className="wired-field">Controls stopping point</small>
+          </legend>
           <label className={draft.workflow === "investigate" ? "selected" : ""}>
             <input
               type="radio"
@@ -165,24 +186,32 @@ export function NewTaskDialog({
         </fieldset>
 
         <label className="field dialog-priority-field">
-          <span>Workflow profile <small className="wired-field">Deterministic and inspectable</small></span>
+          <span>
+            Workflow profile <small className="wired-field">Deterministic and inspectable</small>
+          </span>
           <select
             value={draft.workflowProfile ?? "auto"}
-            onChange={(event) => setDraft({
-              ...draft,
-              workflowProfile: event.target.value as NewTaskDraft["workflowProfile"],
-            })}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                workflowProfile: event.target.value as NewTaskDraft["workflowProfile"],
+              })
+            }
           >
             <option value="auto">Automatic — classify from scope and risk</option>
             <option value="fast">Fast — one narrow low-risk package</option>
             <option value="standard">Standard — normal single-candidate workflow</option>
             <option value="high-risk">High-risk — broad, schema, security, or concurrent work</option>
           </select>
-          <small>Fast automatically escalates when repository evidence or verification exceeds its limits.</small>
+          <small>
+            Fast automatically escalates when repository evidence or verification exceeds its limits.
+          </small>
         </label>
 
         <label className="field dialog-priority-field">
-          <span>Priority <small className="wired-field">Persisted and shown in task views</small></span>
+          <span>
+            Priority <small className="wired-field">Persisted and shown in task views</small>
+          </span>
           <select
             value={draft.priority}
             onChange={(event) =>
@@ -197,67 +226,124 @@ export function NewTaskDialog({
 
         <details className="dialog-policy-summary">
           <summary>
-            <span><strong>Agent policy</strong><small className="wired-field">Snapshotted on creation</small></span>
+            <span>
+              <strong>Agent policy</strong>
+              <small className="wired-field">Snapshotted on creation</small>
+            </span>
             <span>{policySummary || "No editable model policy is available"}</span>
             <small>Show role details</small>
           </summary>
           <ul className="dialog-policy-details" aria-label="Agent role policy details">
             {policyEntries.map(([role, policy]) => (
-              <li key={role}><strong>{role.replaceAll("-", " ")}</strong><code>{formatModelName(policy.model)} · {formatReasoning(policy.reasoning)}</code></li>
+              <li key={role}>
+                <strong>{role.replaceAll("-", " ")}</strong>
+                <code>
+                  {formatModelName(policy.model)} · {formatReasoning(policy.reasoning)}
+                </code>
+              </li>
             ))}
           </ul>
           <p>Change these defaults in Settings. Every run retains the exact policy it used.</p>
         </details>
 
         <div className="dialog-role-policy">
-          <span>Controlled experiment <small className="wired-field">Optional frozen comparison</small></span>
+          <span>
+            Controlled experiment <small className="wired-field">Optional frozen comparison</small>
+          </span>
           <label>
             <input
               type="checkbox"
               checked={Boolean(draft.experiment)}
-              onChange={(event) => setDraft({
-                ...draft,
-                experiment: event.target.checked
-                  ? { groupId: "", variantId: "", frozenBaseSha: "", acceptanceCriteria: [], verificationCommands: [] }
-                  : null,
-              })}
+              onChange={(event) =>
+                setDraft({
+                  ...draft,
+                  experiment: event.target.checked
+                    ? {
+                        groupId: "",
+                        variantId: "",
+                        frozenBaseSha: "",
+                        acceptanceCriteria: [],
+                        verificationCommands: [],
+                      }
+                    : null,
+                })
+              }
             />
             <strong>Record this task as a controlled variant</strong>
           </label>
-          <small>Experiment identity, the exact base, task-brief hash, role policies, acceptance criteria, and verification commands are snapshotted on creation.</small>
+          <small>
+            Experiment identity, the exact base, task-brief hash, role policies, acceptance criteria, and
+            verification commands are snapshotted on creation.
+          </small>
         </div>
 
         {draft.experiment ? (
           <fieldset className="segmented-field">
-            <legend>Experiment definition <small className="wired-field">Persisted with task</small></legend>
+            <legend>
+              Experiment definition <small className="wired-field">Persisted with task</small>
+            </legend>
             <label className="field">
               <span>Group ID</span>
-              <input value={draft.experiment.groupId} onChange={(event) => updateExperiment({ groupId: event.target.value })} />
+              <input
+                value={draft.experiment.groupId}
+                onChange={(event) => updateExperiment({ groupId: event.target.value })}
+              />
             </label>
             <label className="field">
               <span>Variant ID</span>
-              <input value={draft.experiment.variantId} onChange={(event) => updateExperiment({ variantId: event.target.value })} />
+              <input
+                value={draft.experiment.variantId}
+                onChange={(event) => updateExperiment({ variantId: event.target.value })}
+              />
             </label>
             <label className="field">
               <span>Frozen base commit SHA</span>
-              <input className="mono" spellCheck={false} value={draft.experiment.frozenBaseSha} onChange={(event) => updateExperiment({ frozenBaseSha: event.target.value })} />
+              <input
+                className="mono"
+                spellCheck={false}
+                value={draft.experiment.frozenBaseSha}
+                onChange={(event) => updateExperiment({ frozenBaseSha: event.target.value })}
+              />
             </label>
             <label className="field">
-              <span>Acceptance criteria <small>One per line</small></span>
-              <textarea rows={3} value={draft.experiment.acceptanceCriteria.join("\n")} onChange={(event) => updateExperiment({ acceptanceCriteria: event.target.value.split(/\r?\n/) })} />
+              <span>
+                Acceptance criteria <small>One per line</small>
+              </span>
+              <textarea
+                rows={3}
+                value={draft.experiment.acceptanceCriteria.join("\n")}
+                onChange={(event) =>
+                  updateExperiment({ acceptanceCriteria: event.target.value.split(/\r?\n/) })
+                }
+              />
             </label>
             <label className="field">
-              <span>Verification commands <small>One per line</small></span>
-              <textarea rows={3} className="mono" spellCheck={false} value={draft.experiment.verificationCommands.join("\n")} onChange={(event) => updateExperiment({ verificationCommands: event.target.value.split(/\r?\n/) })} />
+              <span>
+                Verification commands <small>One per line</small>
+              </span>
+              <textarea
+                rows={3}
+                className="mono"
+                spellCheck={false}
+                value={draft.experiment.verificationCommands.join("\n")}
+                onChange={(event) =>
+                  updateExperiment({ verificationCommands: event.target.value.split(/\r?\n/) })
+                }
+              />
             </label>
           </fieldset>
         ) : null}
 
         <div className="field attachment-field">
-          <span>Reference artifacts <small className="wired-field">Available to stage agents</small></span>
+          <span>
+            Reference artifacts <small className="wired-field">Available to stage agents</small>
+          </span>
           <label className="attachment-picker">
             <Paperclip size={17} />
-            <span><strong>Attach HTML, images, or ZIP files</strong><small>Up to 6 files, 5 MB each and 6 MB total</small></span>
+            <span>
+              <strong>Attach HTML, images, or ZIP files</strong>
+              <small>Up to 6 files, 5 MB each and 6 MB total</small>
+            </span>
             <input
               type="file"
               multiple
@@ -266,10 +352,16 @@ export function NewTaskDialog({
                 setError(null);
                 try {
                   const files = [...(event.target.files ?? [])];
-                  if (files.length + (draft.attachments?.length ?? 0) > 6) throw new Error("Attach no more than six files.");
-                  if (files.some((file) => file.size > 5_000_000)) throw new Error("Each attachment must be 5 MB or smaller.");
-                  const next = [...(draft.attachments ?? []), ...(await Promise.all(files.map(readAttachment)))];
-                  if (next.reduce((total, file) => total + file.size, 0) > 6_000_000) throw new Error("Attachments must total 6 MB or less.");
+                  if (files.length + (draft.attachments?.length ?? 0) > 6)
+                    throw new Error("Attach no more than six files.");
+                  if (files.some((file) => file.size > 5_000_000))
+                    throw new Error("Each attachment must be 5 MB or smaller.");
+                  const next = [
+                    ...(draft.attachments ?? []),
+                    ...(await Promise.all(files.map(readAttachment))),
+                  ];
+                  if (next.reduce((total, file) => total + file.size, 0) > 6_000_000)
+                    throw new Error("Attachments must total 6 MB or less.");
                   setDraft({ ...draft, attachments: next });
                 } catch (reason) {
                   setError(reason instanceof Error ? reason.message : "The attachment could not be added.");
@@ -282,7 +374,25 @@ export function NewTaskDialog({
           {draft.attachments?.length ? (
             <ul className="attachment-list">
               {draft.attachments.map((attachment, index) => (
-                <li key={`${attachment.name}-${attachment.size}-${attachment.data.slice(0, 16)}`}><span><strong>{attachment.name}</strong><small>{Math.ceil(attachment.size / 1024)} KB</small></span><button type="button" className="icon-button" aria-label={`Remove ${attachment.name}`} onClick={() => setDraft({ ...draft, attachments: draft.attachments?.filter((_, itemIndex) => itemIndex !== index) })}><Trash size={15} /></button></li>
+                <li key={`${attachment.name}-${attachment.size}-${attachment.data.slice(0, 16)}`}>
+                  <span>
+                    <strong>{attachment.name}</strong>
+                    <small>{Math.ceil(attachment.size / 1024)} KB</small>
+                  </span>
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label={`Remove ${attachment.name}`}
+                    onClick={() =>
+                      setDraft({
+                        ...draft,
+                        attachments: draft.attachments?.filter((_, itemIndex) => itemIndex !== index),
+                      })
+                    }
+                  >
+                    <Trash size={15} />
+                  </button>
+                </li>
               ))}
             </ul>
           ) : null}
@@ -308,13 +418,14 @@ export function NewTaskDialog({
                 !draft.title.trim() ||
                 !draft.description.trim() ||
                 !draft.repositoryPath.trim() ||
-                Boolean(draft.experiment && (
-                  !draft.experiment.groupId.trim() ||
-                  !draft.experiment.variantId.trim() ||
-                  !draft.experiment.frozenBaseSha.trim() ||
-                  !draft.experiment.acceptanceCriteria.some((item) => item.trim()) ||
-                  !draft.experiment.verificationCommands.some((item) => item.trim())
-                ))
+                Boolean(
+                  draft.experiment &&
+                    (!draft.experiment.groupId.trim() ||
+                      !draft.experiment.variantId.trim() ||
+                      !draft.experiment.frozenBaseSha.trim() ||
+                      !draft.experiment.acceptanceCriteria.some((item) => item.trim()) ||
+                      !draft.experiment.verificationCommands.some((item) => item.trim())),
+                )
               }
             >
               {pending ? "Creating…" : "Start task"}

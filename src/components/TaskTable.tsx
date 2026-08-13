@@ -34,49 +34,62 @@ export function TaskTable({
         const runtimeTask = tasks.find((item) => item.id === task.id);
         if (!runtimeTask) return null;
         return (
-        <button className="task-table__row" type="button" key={task.id} onClick={() => onOpenTask(task.id)}>
-          <span className="task-table__title">
-            <span className="task-title-line">
-              <span className="mono">{task.id}</span>
-              <PriorityBadge priority={task.priority.toLowerCase() as "low" | "medium" | "high"} />
+          <button className="task-table__row" type="button" key={task.id} onClick={() => onOpenTask(task.id)}>
+            <span className="task-table__title">
+              <span className="task-title-line">
+                <span className="mono">{task.id}</span>
+                <PriorityBadge priority={task.priority.toLowerCase() as "low" | "medium" | "high"} />
+              </span>
+              <strong>{task.title}</strong>
             </span>
-            <strong>{task.title}</strong>
-          </span>
-          <StateBadge
-            state={
-              task.status === "Running"
-                ? "running"
-                : task.status === "Blocked"
-                  ? "blocked"
-                  : task.status === "Completed"
-                    ? "completed"
-                    : task.status === "Closed"
-                      ? "closed"
-                      : task.status === "Continued"
-                        ? "continued"
-                      : task.status === "Archived"
-                        ? "archived"
-                        : "needs-input"
-            }
-          />
-          <span className="task-table__stage"><strong>{task.stage}</strong><StageProgress task={runtimeTask} /></span>
-          <time>{task.startedAt}</time>
-          <time>{task.endedAt === "—" ? task.updatedAt : task.endedAt}</time>
-          <span className="task-table__usage" title={`${task.uncachedInputTokens ?? "—"} uncached input · ${task.cachedTokens ?? "—"} cached input`}>
-            <strong className="mono">{task.inputTokens ?? task.tokens}</strong>
-            <small>{task.uncachedInputTokens ?? "—"} uncached</small>
-          </span>
-          <span className="mono">{task.outputTokens ?? "—"}</span>
-          <span className="task-table__usage" title={`${task.cachedTokens ?? "—"} cached input tokens`}>
-            <strong className="mono text-green">{task.cacheRate ?? "—"}</strong>
-            <small>{task.cachedTokens ?? "—"} cached</small>
-          </span>
-          <span className="task-table__cost" title={`${runtimeTask.usage.credits == null ? "Work credits unavailable" : `${runtimeTask.usage.credits.toFixed(3)} ChatGPT work credits`} · API-rate estimate after cached-input discounts. Your ChatGPT-plan session does not report an attributable dollar charge.`}>
-            {task.cost}
-            <small>{runtimeTask.usage.credits == null ? "API-rate estimate" : `${runtimeTask.usage.credits.toFixed(2)} credits`}</small>
-          </span>
-          <ModelStack models={task.models} compact />
-        </button>
+            <StateBadge
+              state={
+                task.status === "Running"
+                  ? "running"
+                  : task.status === "Blocked"
+                    ? "blocked"
+                    : task.status === "Completed"
+                      ? "completed"
+                      : task.status === "Closed"
+                        ? "closed"
+                        : task.status === "Continued"
+                          ? "continued"
+                          : task.status === "Archived"
+                            ? "archived"
+                            : "needs-input"
+              }
+            />
+            <span className="task-table__stage">
+              <strong>{task.stage}</strong>
+              <StageProgress task={runtimeTask} />
+            </span>
+            <time>{task.startedAt}</time>
+            <time>{task.endedAt === "—" ? task.updatedAt : task.endedAt}</time>
+            <span
+              className="task-table__usage"
+              title={`${task.uncachedInputTokens ?? "—"} uncached input · ${task.cachedTokens ?? "—"} cached input`}
+            >
+              <strong className="mono">{task.inputTokens ?? task.tokens}</strong>
+              <small>{task.uncachedInputTokens ?? "—"} uncached</small>
+            </span>
+            <span className="mono">{task.outputTokens ?? "—"}</span>
+            <span className="task-table__usage" title={`${task.cachedTokens ?? "—"} cached input tokens`}>
+              <strong className="mono text-green">{task.cacheRate ?? "—"}</strong>
+              <small>{task.cachedTokens ?? "—"} cached</small>
+            </span>
+            <span
+              className="task-table__cost"
+              title={`${runtimeTask.usage.credits == null ? "Work credits unavailable" : `${runtimeTask.usage.credits.toFixed(3)} ChatGPT work credits`} · API-rate estimate after cached-input discounts. Your ChatGPT-plan session does not report an attributable dollar charge.`}
+            >
+              {task.cost}
+              <small>
+                {runtimeTask.usage.credits == null
+                  ? "API-rate estimate"
+                  : `${runtimeTask.usage.credits.toFixed(2)} credits`}
+              </small>
+            </span>
+            <ModelStack models={task.models} compact />
+          </button>
         );
       })}
       {!rows.length ? (
@@ -97,18 +110,23 @@ export function TaskTable({
 
 function StageProgress({ task }: { task: RuntimeTaskSummary }) {
   return (
-    <span className="task-table__stage-icons" role="img" aria-label={`Stage progress: ${task.completedStages.length} complete; current stage ${task.currentStage}`}>
+    <span
+      className="task-table__stage-icons"
+      role="img"
+      aria-label={`Stage progress: ${task.completedStages.length} complete; current stage ${task.currentStage}`}
+    >
       {workflowStages.map((stage) => {
         const complete = task.completedStages.includes(stage.id);
         const active = task.currentStage === stage.id;
         const failed = active && ["failed", "blocked", "repair-required"].includes(task.status);
-        const persistedRunActive = ["running", "cancelling"].includes(task.status) &&
-          (task.activeRunIds?.length ?? 0) > 0;
+        const persistedRunActive =
+          ["running", "cancelling"].includes(task.status) && (task.activeRunIds?.length ?? 0) > 0;
         const repairing = active && persistedRunActive && task.activeRunKind === "repair";
         if (repairing) return <ArrowClockwise key={stage.id} size={13} className="is-running" />;
         if (failed) return <XCircle key={stage.id} size={13} className="is-failed" weight="fill" />;
         if (complete) return <CheckCircle key={stage.id} size={13} className="is-complete" weight="fill" />;
-        if (active && persistedRunActive) return <CircleNotch key={stage.id} size={13} className="is-running spin" />;
+        if (active && persistedRunActive)
+          return <CircleNotch key={stage.id} size={13} className="is-running spin" />;
         return <Circle key={stage.id} size={13} />;
       })}
     </span>

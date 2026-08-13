@@ -1,10 +1,4 @@
-import {
-  agentRoleIds,
-  type AgentRoleId,
-  type AppScreen,
-  type StageId,
-  workflowStages,
-} from "./domain.ts";
+import { agentRoleIds, type AgentRoleId, type AppScreen, type StageId, workflowStages } from "./domain.ts";
 import { isCanonicalCommitId } from "./commit-id.ts";
 
 export type TaskRouteDetail =
@@ -72,7 +66,11 @@ export function parentTaskRoute(route: TaskRoute): TaskRoute {
   return { ...route, detail: undefined };
 }
 
-export function changelogRoute(returnTo: PrimaryRoute, commitSha?: string, filePath?: string): ChangelogRoute {
+export function changelogRoute(
+  returnTo: PrimaryRoute,
+  commitSha?: string,
+  filePath?: string,
+): ChangelogRoute {
   return { kind: "changelog", returnTo, commitSha, filePath };
 }
 
@@ -87,7 +85,9 @@ function parseHashRouteInternal(hash: string, allowChangelog: boolean): ParsedHa
   if (screen === "skills") return parseSkill(parts);
   if (screen === "agents") return parseAgent(parts);
   if (screen === "tasks") return parseTask(parts, query);
-  return parts.length === 0 ? { route: { kind: "screen", screen: screen as AppScreen }, valid: true } : invalidRoute();
+  return parts.length === 0
+    ? { route: { kind: "screen", screen: screen as AppScreen }, valid: true }
+    : invalidRoute();
 }
 
 function parseSkill(parts: string[]): ParsedHashRoute {
@@ -122,7 +122,13 @@ function parseTask(parts: string[], query: string): ParsedHashRoute {
   if (detailKind === "artifacts" && detailId && parts.length === 4) {
     return { route: { ...route, detail: { kind: "artifact", artifactId: detailId } }, valid: true };
   }
-  if (detailKind === "candidates" && detailId && /^r\d+$/.test(revisionPart ?? "") && suffix === "diff" && parts.length === 6) {
+  if (
+    detailKind === "candidates" &&
+    detailId &&
+    /^r\d+$/.test(revisionPart ?? "") &&
+    suffix === "diff" &&
+    parts.length === 6
+  ) {
     return {
       route: {
         ...route,
@@ -143,7 +149,13 @@ function parseChangelog(parts: string[], query: string): ParsedHashRoute {
   if (parts.length === 2 && parts[0] === "commit" && isCanonicalCommitId(parts[1])) {
     return { route: changelogRoute(returnTo, parts[1]), valid: true };
   }
-  if (parts.length === 4 && parts[0] === "commit" && isCanonicalCommitId(parts[1]) && parts[2] === "file" && parts[3]) {
+  if (
+    parts.length === 4 &&
+    parts[0] === "commit" &&
+    isCanonicalCommitId(parts[1]) &&
+    parts[2] === "file" &&
+    parts[3]
+  ) {
     return { route: changelogRoute(returnTo, parts[1], parts[3]), valid: true };
   }
   return invalidRoute();
@@ -154,13 +166,14 @@ function serializePrimaryRoute(route: PrimaryRoute): string {
   if (route.kind === "skill") return `#/skills/${encode(route.skillId)}`;
   if (route.kind === "agent") return `#/agents/${encode(route.agentId)}`;
   const base = `#/tasks/${encode(route.taskId)}${route.stageId ? `/${encode(route.stageId)}` : ""}`;
-  const detail = route.detail?.kind === "artifact"
-    ? `/artifacts/${encode(route.detail.artifactId)}`
-    : route.detail?.kind === "candidate-diff"
-      ? `/candidates/${encode(route.detail.candidateId)}/r${route.detail.revision}/diff`
-      : route.detail?.kind === "test-result"
-        ? `/results/${encode(route.detail.resultId)}`
-        : "";
+  const detail =
+    route.detail?.kind === "artifact"
+      ? `/artifacts/${encode(route.detail.artifactId)}`
+      : route.detail?.kind === "candidate-diff"
+        ? `/candidates/${encode(route.detail.candidateId)}/r${route.detail.revision}/diff`
+        : route.detail?.kind === "test-result"
+          ? `/results/${encode(route.detail.resultId)}`
+          : "";
   return `${base}${detail}${route.returnTo === "command" ? "?from=command" : ""}`;
 }
 

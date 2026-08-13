@@ -24,7 +24,7 @@ export const runtimeStageSkills: Record<StageId, string> = {
   "dev-review": "fresh-context-review",
   test: "verify-candidate",
   "final-review": "holdout-review",
-  approval: "approve-fast-forward",
+  approval: "approve-github-pr",
 };
 
 export function isStageInvalidatedByRepair(task: RuntimeTask, stageId: StageId) {
@@ -101,15 +101,18 @@ export function isArtifactFresh(
   const candidateBound = candidateBoundStages.includes(artifact.stage);
   if (!artifact.candidateId || artifact.candidateRevision == null || !candidate) return !candidateBound;
   if (!persistedFreshness) {
-    return artifact.stage === "approval" &&
+    return (
+      artifact.stage === "approval" &&
       artifact.candidateId === candidate.id &&
-      artifact.candidateRevision === candidate.revisionNumber;
+      artifact.candidateRevision === candidate.revisionNumber
+    );
   }
   if (!persistedFreshness.fresh) return false;
   if (
     persistedFreshness.target?.candidateId !== candidate.id ||
     persistedFreshness.target.candidateRevision !== candidate.revisionNumber
-  ) return false;
+  )
+    return false;
   return persistedFreshness.sourceArtifactId === artifact.id;
 }
 
@@ -142,7 +145,10 @@ export function isCandidateBoundStage(stageId: StageId) {
  * active candidate tuple. A missing or contradictory projection is not
  * repaired in the UI; it is treated as not fresh.
  */
-export function getRuntimeGateFreshness(task: RuntimeTaskView, stageId: StageId): RuntimeGateFreshness | null {
+export function getRuntimeGateFreshness(
+  task: RuntimeTaskView,
+  stageId: StageId,
+): RuntimeGateFreshness | null {
   if (!isCandidateGateStage(stageId)) return null;
   const candidate = task.candidates?.at(-1);
   const freshness = task.gateFreshness?.[stageId];
@@ -158,11 +164,12 @@ export function getRuntimeGateFreshness(task: RuntimeTaskView, stageId: StageId)
   return freshness;
 }
 
-export function getRuntimeArtifactFreshness(task: RuntimeTask, artifact: RuntimeArtifact): RuntimeRunFreshness | null {
+export function getRuntimeArtifactFreshness(
+  task: RuntimeTask,
+  artifact: RuntimeArtifact,
+): RuntimeRunFreshness | null {
   if (!isCandidateGateStage(artifact.stage)) return null;
-  const run = task.runs?.find(
-    (item) => item.id === artifact.runId || item.artifactId === artifact.id,
-  );
+  const run = task.runs?.find((item) => item.id === artifact.runId || item.artifactId === artifact.id);
   return run?.freshness ?? artifact.freshness ?? getRuntimeGateFreshness(task, artifact.stage);
 }
 
@@ -171,8 +178,14 @@ export function getRuntimeFocusedTest(task: RuntimeTask) {
   const candidate = task.candidates?.at(-1);
   const evidence = freshness?.focusedTest ?? null;
   if (!freshness || !evidence || !candidate) return null;
-  if (evidence.candidateId !== candidate.id || evidence.candidateRevision !== candidate.revisionNumber) return null;
-  if (freshness.focusedTestRows.some((row) => row.candidateId !== candidate.id || row.candidateRevision !== candidate.revisionNumber)) return null;
+  if (evidence.candidateId !== candidate.id || evidence.candidateRevision !== candidate.revisionNumber)
+    return null;
+  if (
+    freshness.focusedTestRows.some(
+      (row) => row.candidateId !== candidate.id || row.candidateRevision !== candidate.revisionNumber,
+    )
+  )
+    return null;
   return { ...evidence, rows: freshness.focusedTestRows };
 }
 
@@ -194,23 +207,35 @@ export function getRuntimeFreshnessLabel(task: RuntimeTaskView, stageId: Runtime
 }
 
 export function getRuntimeFreshnessReason(task: RuntimeTask, stageId: RuntimeGateStage) {
-  return getRuntimeGateFreshness(task, stageId)?.reasonCopy ??
-    "No authoritative persisted terminal run summary is available for this candidate.";
+  return (
+    getRuntimeGateFreshness(task, stageId)?.reasonCopy ??
+    "No authoritative persisted terminal run summary is available for this candidate."
+  );
 }
 
-export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, artifact?: RuntimeArtifact, isRunning = false) {
+export function getRuntimeStageSummary(
+  task: RuntimeTask,
+  stageId: StageId,
+  artifact?: RuntimeArtifact,
+  isRunning = false,
+) {
   const candidate = task.candidates?.at(-1);
   const packages = task.workPackages ?? [];
   const packageBatchCount = new Set(packages.map((item) => item.batch)).size;
   const focused = getRuntimeFocusedTest(task);
-  const completedPackages = packages.filter((item) => ["integrated", "ready_for_integration"].includes(item.status)).length;
+  const completedPackages = packages.filter((item) =>
+    ["integrated", "ready_for_integration"].includes(item.status),
+  ).length;
   const stageLabel = workflowStages.find((stage) => stage.id === stageId)?.label ?? stageId;
   const waiting = !artifact && !isStageComplete(task, stageId);
   const disposition = task.stageDispositions?.[stageId];
   if (disposition) {
     return {
       kicker: `${stageLabel} · ${disposition.status === "not-required" ? "not required" : "deterministic evidence"}`,
-      title: disposition.status === "not-required" ? `${stageLabel} was not required` : `${stageLabel} completed deterministically`,
+      title:
+        disposition.status === "not-required"
+          ? `${stageLabel} was not required`
+          : `${stageLabel} completed deterministically`,
       detail: disposition.reason,
     };
   }
@@ -225,7 +250,9 @@ export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, arti
     case "triage":
       return {
         kicker: "Triage \u00b7 routing gate",
-        title: artifact ? `${task.priority.charAt(0).toUpperCase()}${task.priority.slice(1)} priority \u00b7 ${task.workflow} workflow` : fallback.title,
+        title: artifact
+          ? `${task.priority.charAt(0).toUpperCase()}${task.priority.slice(1)} priority \u00b7 ${task.workflow} workflow`
+          : fallback.title,
         detail: artifact
           ? "Task scope, repository, priority, and workflow are fixed before repository investigation begins."
           : fallback.detail,
@@ -247,7 +274,7 @@ export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, arti
           ? "Repository evidence comes first, followed by one recommended answer and explicit alternatives."
           : task.grillSession?.completionSource === "legacy-unverified"
             ? "This Grill session completed under the legacy runtime; whether a person or automation supplied its answers was not recorded."
-            : task.grillSession?.completionReason ?? fallback.detail,
+            : (task.grillSession?.completionReason ?? fallback.detail),
       };
     }
     case "specification":
@@ -271,7 +298,9 @@ export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, arti
     case "implement":
       return {
         kicker: "Implement \u00b7 isolated work packages",
-        title: packages.length ? `${completedPackages} of ${packages.length} packages qualified` : fallback.title,
+        title: packages.length
+          ? `${completedPackages} of ${packages.length} packages qualified`
+          : fallback.title,
         detail: candidate
           ? `${candidate.id} revision ${candidate.revisionNumber} is the explicit integration candidate for every downstream gate.`
           : fallback.detail,
@@ -279,8 +308,22 @@ export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, arti
     case "dev-review":
       return {
         kicker: "Dev review \u00b7 fresh-context advisor",
-        title: gateStageTitle("Dev Review", task, "dev-review", candidate, artifact, fallback.title, isRunning),
-        detail: gateStageDetail(task, "dev-review", artifact, "The authoritative review remains in the persisted candidate-bound run summary; prose findings remain inside the retained artifact.", isRunning),
+        title: gateStageTitle(
+          "Dev Review",
+          task,
+          "dev-review",
+          candidate,
+          artifact,
+          fallback.title,
+          isRunning,
+        ),
+        detail: gateStageDetail(
+          task,
+          "dev-review",
+          artifact,
+          "The authoritative review remains in the persisted candidate-bound run summary; prose findings remain inside the retained artifact.",
+          isRunning,
+        ),
       };
     case "test": {
       const passed = focused?.rows.filter((row) => row.status === "passed").length ?? 0;
@@ -302,20 +345,36 @@ export function getRuntimeStageSummary(task: RuntimeTask, stageId: StageId, arti
     case "final-review":
       return {
         kicker: "Final review \u00b7 holdout",
-        title: gateStageTitle("Final Review", task, "final-review", candidate, artifact, fallback.title, isRunning),
-        detail: gateStageDetail(task, "final-review", artifact, "Every prior stage is summarized from persisted state, real token usage, and its durable artifact reference.", isRunning),
+        title: gateStageTitle(
+          "Final Review",
+          task,
+          "final-review",
+          candidate,
+          artifact,
+          fallback.title,
+          isRunning,
+        ),
+        detail: gateStageDetail(
+          task,
+          "final-review",
+          artifact,
+          "Every prior stage is summarized from persisted state, real token usage, and its durable artifact reference.",
+          isRunning,
+        ),
       };
     case "approval":
       return {
         kicker: "Human approval \u00b7 exact candidate",
         title:
           candidate?.status === "merged"
-            ? `Candidate merged successfully \u00b7 ${candidate.id} r${candidate.revisionNumber}`
-            : candidate
-              ? `${candidate.id} r${candidate.revisionNumber} awaits approval`
-              : fallback.title,
+            ? `${task.pullRequestIntent?.status === "merged" ? "GitHub PR merged" : "Candidate merged successfully"} \u00b7 ${candidate.id} r${candidate.revisionNumber}`
+            : task.status === "awaiting-pr-merge"
+              ? `PR #${task.pullRequestIntent?.number ?? "pending"} awaits merge \u00b7 ${candidate?.id ?? "candidate"}`
+              : candidate
+                ? `${candidate.id} r${candidate.revisionNumber} awaits approval`
+                : fallback.title,
         detail: candidate
-          ? `Target ${candidate.baseBranch} \u00b7 fast-forward only \u00b7 reviewed head ${candidate.headRevision?.slice(0, 8) ?? "pending"}. ${approvalFreshnessDetail(task)}`
+          ? `Target ${candidate.baseBranch} \u00b7 GitHub pull request \u00b7 reviewed head ${candidate.headRevision?.slice(0, 8) ?? "pending"}. ${approvalFreshnessDetail(task)}`
           : fallback.detail,
       };
   }
@@ -334,15 +393,25 @@ function gateStageTitle(
   // "fresh" nor genuinely "requires rerun" while its own rerun is already underway.
   if (isRunning) return `${label} is running`;
   const freshness = getRuntimeGateFreshness(task, stageId);
-  if (freshness?.fresh) return `${label} retained for ${candidate?.id ?? "candidate"} r${candidate?.revisionNumber ?? "\u2014"}`;
+  if (freshness?.fresh)
+    return `${label} retained for ${candidate?.id ?? "candidate"} r${candidate?.revisionNumber ?? "\u2014"}`;
   if (freshness && !isGateUnattempted(freshness)) return `${label} requires rerun`;
   return artifact ? `${label} evidence retained` : fallback;
 }
 
-function gateStageDetail(task: RuntimeTask, stageId: RuntimeGateStage, artifact: RuntimeArtifact | undefined, freshCopy: string, isRunning = false) {
+function gateStageDetail(
+  task: RuntimeTask,
+  stageId: RuntimeGateStage,
+  artifact: RuntimeArtifact | undefined,
+  freshCopy: string,
+  isRunning = false,
+) {
   if (isRunning) return "A rerun for this stage is in progress; earlier evidence remains inspectable below.";
   const freshness = getRuntimeGateFreshness(task, stageId);
-  if (!freshness || isGateUnattempted(freshness)) return artifact ? `${freshCopy} Freshness is unavailable until an authoritative persisted run summary is present.` : freshCopy;
+  if (!freshness || isGateUnattempted(freshness))
+    return artifact
+      ? `${freshCopy} Freshness is unavailable until an authoritative persisted run summary is present.`
+      : freshCopy;
   if (!freshness.fresh) return `Rerun required: ${freshness.reasonCopy}`;
   return freshCopy;
 }
@@ -354,7 +423,6 @@ function approvalFreshnessDetail(task: RuntimeTask) {
   if (!stale) return "All candidate-bound gates are fresh.";
   return `Approval blocked: ${stale.freshness?.reasonCopy ?? "No authoritative persisted freshness is available for this gate."}`;
 }
-
 
 export function toTaskRunState(status: RuntimeTask["status"]): TaskRunState {
   if (status === "closed") return "closed";
@@ -387,7 +455,8 @@ export function getMergePromotionDetails(
 ): MergePromotionDetails | null {
   if (task.status !== "merged-to-target") return null;
   if (candidate?.status !== "merged" || !candidate.headRevision) return null;
-  const targetRef = task.mergeIntent?.targetRef ?? (candidate.baseBranch ? `refs/heads/${candidate.baseBranch}` : null);
+  const targetRef =
+    task.mergeIntent?.targetRef ?? (candidate.baseBranch ? `refs/heads/${candidate.baseBranch}` : null);
   if (!targetRef) return null;
   const targetBranch = targetRef.replace(/^refs\/heads\//, "");
   return {

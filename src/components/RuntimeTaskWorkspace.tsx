@@ -38,6 +38,7 @@ import {
 import { RuntimeArtifactViewer, TaskEvaluation } from "./runtime/RuntimeInspectorPanels";
 import { InspectorSection, RuntimeRow } from "./runtime/RuntimeInspectorPrimitives";
 import { RuntimeStagePresentation } from "./runtime/RuntimeStagePresentation";
+import { StageEvidenceStrip } from "./runtime/StageEvidenceStrip";
 import { RuntimeWorkspaceFooter } from "./runtime/RuntimeWorkspaceFooter";
 import {
   getEffectiveRunStage,
@@ -95,12 +96,16 @@ export function RuntimeTaskWorkspace({
   const effectiveRunStage = getEffectiveRunStage(task);
   const stageRunLabel = effectiveRunStage === task.currentStage ? "Stage" : "Implement repair";
   const [viewedStageId, setViewedStageId] = useState<StageId>(initialViewedStageId ?? task.currentStage);
-  const [selectedWorktreeId, setSelectedWorktreeId] = useState<string | null>(initialSelectedWorktreeId ?? null);
+  const [selectedWorktreeId, setSelectedWorktreeId] = useState<string | null>(
+    initialSelectedWorktreeId ?? null,
+  );
   const [openArtifact, setOpenArtifact] = useState<RuntimeArtifact | null>(null);
   const [candidateDiff, setCandidateDiff] = useState<CandidateDiffResponse | null>(null);
   const [candidateDiffError, setCandidateDiffError] = useState<string | null>(null);
   const [candidateDiffLoading, setCandidateDiffLoading] = useState(false);
-  const [candidateDiffTarget, setCandidateDiffTarget] = useState<RuntimeTaskWorkspaceProps["task"]["candidates"][number] | null>(null);
+  const [candidateDiffTarget, setCandidateDiffTarget] = useState<
+    RuntimeTaskWorkspaceProps["task"]["candidates"][number] | null
+  >(null);
   const [runError, setRunError] = useState<string | null>(null);
   const artifactReturnFocusRef = useRef<HTMLElement | null>(null);
   const candidateDiffReturnFocusRef = useRef<HTMLElement | null>(null);
@@ -116,17 +121,17 @@ export function RuntimeTaskWorkspace({
     ? getRuntimeGateFreshness(task, viewedStageId)
     : null;
   const stageArtifact = isCandidateGateStage(viewedStageId)
-    ? task.artifacts.find((artifact) => (
-        artifact.stage === viewedStageId && artifact.id === gateFreshness?.sourceArtifactId
-      ))
+    ? task.artifacts.find(
+        (artifact) => artifact.stage === viewedStageId && artifact.id === gateFreshness?.sourceArtifactId,
+      )
     : [...task.artifacts].reverse().find((artifact) => artifact.stage === viewedStageId);
-  const stageArtifactFreshness = stageArtifact
-    ? getRuntimeArtifactFreshness(task, stageArtifact)
-    : null;
-  const stageArtifactStaleReason = stageArtifact && stageArtifactFreshness &&
+  const stageArtifactFreshness = stageArtifact ? getRuntimeArtifactFreshness(task, stageArtifact) : null;
+  const stageArtifactStaleReason =
+    stageArtifact &&
+    stageArtifactFreshness &&
     !isArtifactFresh(stageArtifact, candidate, stageArtifactFreshness)
-    ? stageArtifactFreshness.reasonCopy
-    : null;
+      ? stageArtifactFreshness.reasonCopy
+      : null;
   const state = toTaskRunState(task.status);
   const viewedStageStopped =
     viewedStageId === task.currentStage && ["failed", "cancelled", "blocked"].includes(task.status);
@@ -134,7 +139,11 @@ export function RuntimeTaskWorkspace({
   const runningPackages = task.workPackages?.filter((item) => item.status === "running") ?? [];
   const worktreeInventory = task.worktreeInventory ?? [];
   const accessBoundary = getAccessBoundaryCopy(task);
-  const mergeReconciliationPending = task.status === "merging" || task.mergeIntent?.status === "pending";
+  const mergeReconciliationPending =
+    task.status === "merging" ||
+    task.status === "awaiting-pr-merge" ||
+    task.mergeIntent?.status === "pending" ||
+    ["publishing", "open"].includes(task.pullRequestIntent?.status ?? "");
   const completedApprovalWithoutArtifact =
     viewedStageId === "approval" &&
     (task.status === "completed" || task.status === "merged-to-target") &&
@@ -162,22 +171,35 @@ export function RuntimeTaskWorkspace({
         output: viewedScoutUsage.aggregate.outputTokens,
         credits: viewedScoutUsage.aggregate.credits ?? 0,
         estimate: viewedScoutUsage.aggregate.cost ?? 0,
-        duration: viewedScoutUsage.matchedArtifacts.reduce((total, artifact) => total + (artifact.durationMs ?? 0), 0),
+        duration: viewedScoutUsage.matchedArtifacts.reduce(
+          (total, artifact) => total + (artifact.durationMs ?? 0),
+          0,
+        ),
       }
-    : viewedRuns.reduce((usage, run) => ({
-        input: usage.input + (run.usage?.inputTokens ?? 0),
-        cached: usage.cached + (run.usage?.cachedInputTokens ?? 0),
-        output: usage.output + (run.usage?.outputTokens ?? 0),
-        credits: usage.credits + (run.credits ?? run.usage?.credits ?? 0),
-        estimate: usage.estimate + (run.apiEstimate ?? run.usage?.cost ?? 0),
-        duration: usage.duration + (run.durationMs ?? 0),
-      }), { input: 0, cached: 0, output: 0, credits: 0, estimate: 0, duration: 0 });
+    : viewedRuns.reduce(
+        (usage, run) => ({
+          input: usage.input + (run.usage?.inputTokens ?? 0),
+          cached: usage.cached + (run.usage?.cachedInputTokens ?? 0),
+          output: usage.output + (run.usage?.outputTokens ?? 0),
+          credits: usage.credits + (run.credits ?? run.usage?.credits ?? 0),
+          estimate: usage.estimate + (run.apiEstimate ?? run.usage?.cost ?? 0),
+          duration: usage.duration + (run.durationMs ?? 0),
+        }),
+        { input: 0, cached: 0, output: 0, credits: 0, estimate: 0, duration: 0 },
+      );
   const recordedVerification = uniqueVerificationExecutions(
     task.artifacts.map((artifact) => artifact.focusedTest).filter((item) => item != null),
   );
   const focusedExecutions = recordedVerification.filter((item) => item.executionKind === "focused-package");
-  const fullManifestExecutions = recordedVerification.filter((item) => item.executionKind === "full-manifest");
-  const stageChecks = viewedStageId === "implement" ? focusedExecutions : viewedStageId === "test" ? fullManifestExecutions : [];
+  const fullManifestExecutions = recordedVerification.filter(
+    (item) => item.executionKind === "full-manifest",
+  );
+  const stageChecks =
+    viewedStageId === "implement"
+      ? focusedExecutions
+      : viewedStageId === "test"
+        ? fullManifestExecutions
+        : [];
   const stageCheckDuration = stageChecks.reduce((total, item) => total + (item.durationMs ?? 0), 0);
   const stageWallDuration = viewedScoutUsage
     ? elapsedWindow(viewedScoutUsage.matchedArtifacts)
@@ -186,8 +208,14 @@ export function RuntimeTaskWorkspace({
     ? elapsedWindow([{ startedAt: task.startedAt, completedAt: task.completedAt ?? task.updatedAt }])
     : elapsedWindow([...(task.runs ?? []), ...recordedVerification]);
   const focusedDuration = focusedExecutions.reduce((total, item) => total + (item.durationMs ?? 0), 0);
-  const fullManifestDuration = fullManifestExecutions.reduce((total, item) => total + (item.durationMs ?? 0), 0);
-  const canOverrideProfile = !candidate && task.status !== "running" && task.status !== "cancelling" &&
+  const fullManifestDuration = fullManifestExecutions.reduce(
+    (total, item) => total + (item.durationMs ?? 0),
+    0,
+  );
+  const canOverrideProfile =
+    !candidate &&
+    task.status !== "running" &&
+    task.status !== "cancelling" &&
     ["triage", "scouts", "grill", "specification", "plan"].includes(task.currentStage);
 
   useEffect(() => {
@@ -200,7 +228,8 @@ export function RuntimeTaskWorkspace({
   };
 
   const openRuntimeArtifact = (artifact: RuntimeArtifact) => {
-    artifactReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    artifactReturnFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     if (onRouteDetailChange) {
       onRouteDetailChange({ kind: "artifact", artifactId: artifact.id }, artifact.stage);
       return;
@@ -225,33 +254,40 @@ export function RuntimeTaskWorkspace({
     window.requestAnimationFrame(() => candidateDiffReturnFocusRef.current?.focus({ preventScroll: true }));
   };
 
-  const openCandidateDiff = useCallback(async (target = candidate) => {
-    if (!target?.headRevision) return;
-    const requestId = candidateDiffRequestRef.current + 1;
-    candidateDiffRequestRef.current = requestId;
-    candidateDiffReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    setCandidateDiffLoading(true);
-    setCandidateDiffError(null);
-    setCandidateDiffTarget(target);
-    try {
-      const diff = await getCandidateDiff(task.id, target.id, target.headRevision);
-      if (!matchesCandidateDiffResponse(target, diff)) {
-        throw new Error("The candidate diff response did not match the requested candidate revision.");
+  const openCandidateDiff = useCallback(
+    async (target = candidate) => {
+      if (!target?.headRevision) return;
+      const requestId = candidateDiffRequestRef.current + 1;
+      candidateDiffRequestRef.current = requestId;
+      candidateDiffReturnFocusRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      setCandidateDiffLoading(true);
+      setCandidateDiffError(null);
+      setCandidateDiffTarget(target);
+      try {
+        const diff = await getCandidateDiff(task.id, target.id, target.headRevision);
+        if (!matchesCandidateDiffResponse(target, diff)) {
+          throw new Error("The candidate diff response did not match the requested candidate revision.");
+        }
+        if (candidateDiffRequestRef.current === requestId) setCandidateDiff(diff);
+      } catch (error) {
+        if (candidateDiffRequestRef.current === requestId) {
+          setCandidateDiff(null);
+          setCandidateDiffError(
+            error instanceof Error ? error.message : "The exact candidate diff could not be loaded.",
+          );
+        }
+      } finally {
+        if (candidateDiffRequestRef.current === requestId) setCandidateDiffLoading(false);
       }
-      if (candidateDiffRequestRef.current === requestId) setCandidateDiff(diff);
-    } catch (error) {
-      if (candidateDiffRequestRef.current === requestId) {
-        setCandidateDiff(null);
-        setCandidateDiffError(error instanceof Error ? error.message : "The exact candidate diff could not be loaded.");
-      }
-    } finally {
-      if (candidateDiffRequestRef.current === requestId) setCandidateDiffLoading(false);
-    }
-  }, [candidate, task.id]);
+    },
+    [candidate, task.id],
+  );
 
   const requestCandidateDiff = (target = candidate) => {
     if (!target) return;
-    candidateDiffReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    candidateDiffReturnFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     if (onRouteDetailChange) {
       onRouteDetailChange(
         { kind: "candidate-diff", candidateId: target.id, revision: target.revisionNumber },
@@ -276,9 +312,12 @@ export function RuntimeTaskWorkspace({
     setOpenArtifact(null);
     if (routeDetail.kind !== "candidate-diff") return;
     const recordedCandidate = task.candidates.find((item) => item.id === routeDetail.candidateId);
-    const recordedRevision = recordedCandidate?.revisions.find((item) => item.number === routeDetail.revision);
-    const target = recordedCandidate && (
-      recordedCandidate.revisionNumber === routeDetail.revision
+    const recordedRevision = recordedCandidate?.revisions.find(
+      (item) => item.number === routeDetail.revision,
+    );
+    const target =
+      recordedCandidate &&
+      (recordedCandidate.revisionNumber === routeDetail.revision
         ? recordedCandidate
         : recordedRevision
           ? {
@@ -287,8 +326,7 @@ export function RuntimeTaskWorkspace({
               headRevision: recordedRevision.headRevision,
               status: "superseded",
             }
-          : null
-    );
+          : null);
     if (!target) {
       onRouteDetailChange?.(null);
       return;
@@ -322,12 +360,20 @@ export function RuntimeTaskWorkspace({
   const archiveTask = async () => {
     // Archiving destroys worktrees, so it asks first — and says so in the prompt, because the
     // consequence is not recoverable from the UI afterwards.
-    if (!window.confirm(`Archive ${task.id}? It leaves the command centre and task list, and its clean worktrees are removed. Anything with uncommitted work is left in place.`)) return;
+    if (
+      !window.confirm(
+        `Archive ${task.id}? It leaves the command centre and task list, and its clean worktrees are removed. Anything with uncommitted work is left in place.`,
+      )
+    )
+      return;
     await onArchiveTask();
   };
 
   const closeTask = async () => {
-    const supersededBy = window.prompt("Optional superseding task ID. Leave blank to close this task as not needed.", "");
+    const supersededBy = window.prompt(
+      "Optional superseding task ID. Leave blank to close this task as not needed.",
+      "",
+    );
     if (supersededBy === null) return;
     const replacement = supersededBy.trim();
     await onCloseTask(
@@ -354,7 +400,16 @@ export function RuntimeTaskWorkspace({
         </div>
         <PriorityBadge priority={task.priority} />
         <div className="task-header__meta">
-          <StateBadge state={state} />
+          <StateBadge
+            state={state}
+            label={
+              task.status === "awaiting-pr-merge"
+                ? "Awaiting PR merge"
+                : state === "failed"
+                  ? `${workflowStages[currentIndex]?.label ?? "Stage"} failed`
+                  : undefined
+            }
+          />
           <span>
             <small>Repository</small>
             <strong>{repoName}</strong>
@@ -376,14 +431,20 @@ export function RuntimeTaskWorkspace({
             tone="secondary"
             compact
             icon={Prohibit}
-            disabled={["running", "cancelling"].includes(task.status) || task.status === "closed" || mergeReconciliationPending}
-            title={mergeReconciliationPending
-              ? "Wait for the pending merge reconciliation before closing this task."
-              : ["running", "cancelling"].includes(task.status)
-                ? "Wait for the active process tree to terminate before closing this task."
-                : task.status === "closed"
-                  ? "This task is already closed."
-                  : "Close as not needed or record the superseding task."}
+            disabled={
+              ["running", "cancelling"].includes(task.status) ||
+              task.status === "closed" ||
+              mergeReconciliationPending
+            }
+            title={
+              mergeReconciliationPending
+                ? "Wait for the pending GitHub PR lifecycle before closing this task."
+                : ["running", "cancelling"].includes(task.status)
+                  ? "Wait for the active process tree to terminate before closing this task."
+                  : task.status === "closed"
+                    ? "This task is already closed."
+                    : "Close as not needed or record the superseding task."
+            }
             onClick={() => void closeTask()}
           >
             Close task
@@ -392,14 +453,20 @@ export function RuntimeTaskWorkspace({
             tone="secondary"
             compact
             icon={Archive}
-            disabled={["running", "cancelling"].includes(task.status) || task.status === "archived" || mergeReconciliationPending}
-            title={mergeReconciliationPending
-              ? "Wait for the pending merge reconciliation before archiving this task."
-              : ["running", "cancelling"].includes(task.status)
-                ? "Wait for the active process tree to terminate before archiving this task."
-                : task.status === "archived"
-                  ? "This task is already archived."
-                  : "Hide this task from the command centre and task list, and reclaim its worktrees."}
+            disabled={
+              ["running", "cancelling"].includes(task.status) ||
+              task.status === "archived" ||
+              mergeReconciliationPending
+            }
+            title={
+              mergeReconciliationPending
+                ? "Wait for the pending GitHub PR lifecycle before archiving this task."
+                : ["running", "cancelling"].includes(task.status)
+                  ? "Wait for the active process tree to terminate before archiving this task."
+                  : task.status === "archived"
+                    ? "This task is already archived."
+                    : "Hide this task from the command centre and task list, and reclaim its worktrees."
+            }
             onClick={() => void archiveTask()}
           >
             Archive
@@ -418,7 +485,13 @@ export function RuntimeTaskWorkspace({
             compact
             icon={X}
             disabled={task.status !== "running"}
-            title={task.status === "cancelling" ? "Process-tree termination is already in progress" : task.status === "running" ? "Cancel the active Codex run" : "No active run to cancel"}
+            title={
+              task.status === "cancelling"
+                ? "Process-tree termination is already in progress"
+                : task.status === "running"
+                  ? "Cancel the active Codex run"
+                  : "No active run to cancel"
+            }
             onClick={() => void onCancel()}
           >
             Cancel
@@ -443,7 +516,9 @@ export function RuntimeTaskWorkspace({
               type="button"
               key={stage.id}
               className={`stage-step ${complete ? "stage-step--complete" : ""} ${active ? "stage-step--active" : ""} ${selected ? "stage-step--selected" : ""} ${failed ? "stage-step--failed" : ""} ${invalidated && !running ? "stage-step--stale" : ""} ${running ? "stage-step--running" : ""} ${future ? "stage-step--disabled" : ""}`}
-              onClick={() => { if (!future) selectViewedStage(stage.id); }}
+              onClick={() => {
+                if (!future) selectViewedStage(stage.id);
+              }}
               disabled={future}
               title={future ? "This stage has not started yet." : undefined}
               aria-current={selected ? "step" : undefined}
@@ -465,18 +540,18 @@ export function RuntimeTaskWorkspace({
                   {running
                     ? "running"
                     : invalidated
-                    ? "rerun required"
-                    : task.stageDispositions?.[stage.id]
-                    ? task.stageDispositions[stage.id]?.status.replace("-", " ")
-                    : active
-                    ? task.status === "running"
-                      ? "current"
-                      : task.status.replace("-", " ")
-                    : complete
-                      ? "done"
-                      : future
-                        ? "not started"
-                        : "\u2014"}
+                      ? "rerun required"
+                      : task.stageDispositions?.[stage.id]
+                        ? task.stageDispositions[stage.id]?.status.replace("-", " ")
+                        : active
+                          ? task.status === "running"
+                            ? "current"
+                            : task.status.replace("-", " ")
+                          : complete
+                            ? "done"
+                            : future
+                              ? "not started"
+                              : "\u2014"}
                 </small>
               </span>
             </button>
@@ -511,7 +586,13 @@ export function RuntimeTaskWorkspace({
                   </>
                 ) : null}
               </div>
-              <p>{stageSummary.detail}</p>
+              <p className="runtime-stage-heading__detail">{stageSummary.detail}</p>
+              <StageEvidenceStrip
+                stageId={viewedStageId}
+                artifact={stageArtifact}
+                candidate={candidate}
+                workPackages={task.workPackages ?? []}
+              />
             </header>
 
             <RuntimeCommandBar
@@ -534,10 +615,12 @@ export function RuntimeTaskWorkspace({
               onOpenCandidateDiff={requestCandidateDiff}
               candidateDiffLoading={candidateDiffLoading}
               selectedTestResultId={routeDetail?.kind === "test-result" ? routeDetail.resultId : null}
-              onSelectTestResult={(resultId) => onRouteDetailChange?.(
-                resultId ? { kind: "test-result", resultId } satisfies TaskRouteDetail : null,
-                "test",
-              )}
+              onSelectTestResult={(resultId) =>
+                onRouteDetailChange?.(
+                  resultId ? ({ kind: "test-result", resultId } satisfies TaskRouteDetail) : null,
+                  "test",
+                )
+              }
             />
           </main>
 
@@ -547,8 +630,16 @@ export function RuntimeTaskWorkspace({
               <MarkdownContent content={task.description} className="runtime-task-brief-markdown" />
               {task.attachments?.length ? (
                 <div className="runtime-attachments">
-                  <small>{task.attachments.length} reference artifact{task.attachments.length === 1 ? "" : "s"}</small>
-                  {task.attachments.map((attachment) => <span key={attachment.id}><FileCode size={14} /><strong>{attachment.name}</strong><small>{Math.ceil(attachment.size / 1024)} KB</small></span>)}
+                  <small>
+                    {task.attachments.length} reference artifact{task.attachments.length === 1 ? "" : "s"}
+                  </small>
+                  {task.attachments.map((attachment) => (
+                    <span key={attachment.id}>
+                      <FileCode size={14} />
+                      <strong>{attachment.name}</strong>
+                      <small>{Math.ceil(attachment.size / 1024)} KB</small>
+                    </span>
+                  ))}
                 </div>
               ) : null}
             </InspectorSection>
@@ -563,12 +654,24 @@ export function RuntimeTaskWorkspace({
               </InspectorSection>
             ) : null}
             {task.experiment ? (
-              <InspectorSection title="Controlled experiment" meta={`${task.experiment.groupId} \u00b7 ${task.experiment.variantId}`}>
+              <InspectorSection
+                title="Controlled experiment"
+                meta={`${task.experiment.groupId} \u00b7 ${task.experiment.variantId}`}
+              >
                 <RuntimeRow label="Frozen base" value={task.experiment.frozenBaseSha.slice(0, 12)} mono />
                 <RuntimeRow label="Brief hash" value={task.experiment.taskBriefHash.slice(0, 12)} mono />
-                <RuntimeRow label="Policy snapshot" value={`${Object.keys(task.experiment.policyMatrix).length} model-driven roles`} />
-                <RuntimeRow label="Acceptance" value={`${task.experiment.acceptanceCriteria.length} criteria`} />
-                <RuntimeRow label="Verification" value={`${task.experiment.verificationCommands.length} commands`} />
+                <RuntimeRow
+                  label="Policy snapshot"
+                  value={`${Object.keys(task.experiment.policyMatrix).length} model-driven roles`}
+                />
+                <RuntimeRow
+                  label="Acceptance"
+                  value={`${task.experiment.acceptanceCriteria.length} criteria`}
+                />
+                <RuntimeRow
+                  label="Verification"
+                  value={`${task.experiment.verificationCommands.length} commands`}
+                />
               </InspectorSection>
             ) : null}
             <InspectorSection title="Workflow profile" meta={task.workflowProfile?.source ?? "migration"}>
@@ -592,11 +695,23 @@ export function RuntimeTaskWorkspace({
                 </select>
               </label>
               <p>{task.workflowProfile?.reason ?? "Migrated safely to the standard profile."}</p>
-              <RuntimeRow label="Escalations / overrides" value={`${Math.max(0, (task.workflowProfile?.history.length ?? 1) - 1)} recorded`} />
-              <RuntimeRow label="Override boundary" value={canOverrideProfile ? "Available before implementation" : "Locked after implementation began"} />
+              <RuntimeRow
+                label="Escalations / overrides"
+                value={`${Math.max(0, (task.workflowProfile?.history.length ?? 1) - 1)} recorded`}
+              />
+              <RuntimeRow
+                label="Override boundary"
+                value={
+                  canOverrideProfile ? "Available before implementation" : "Locked after implementation began"
+                }
+              />
               <RuntimeRow
                 label="Grill interaction"
-                value={(task.grillPolicy ?? "manual") === "manual" ? "Pause for operator answers" : "Automatically accept recommendations"}
+                value={
+                  (task.grillPolicy ?? "manual") === "manual"
+                    ? "Pause for operator answers"
+                    : "Automatically accept recommendations"
+                }
               />
             </InspectorSection>
             <InspectorSection title="Stage context">
@@ -609,33 +724,70 @@ export function RuntimeTaskWorkspace({
             </InspectorSection>
             <InspectorSection title="Stage telemetry" meta={viewedStage.label}>
               <RuntimeRow label="Wall time" value={formatDuration(stageWallDuration)} />
-              <RuntimeRow label="Tokens" value={`${formatTokenCount(viewedUsage.input)} input · ${formatTokenCount(viewedUsage.cached)} cached · ${formatTokenCount(viewedUsage.output)} output`} />
-              <RuntimeRow label="Cache rate" value={viewedUsage.input > 0 ? `${Math.round((viewedUsage.cached / viewedUsage.input) * 100)}%` : "—"} />
-              <RuntimeRow label="Work credits" value={viewedUsage.credits > 0 ? viewedUsage.credits.toFixed(3) : "Not reported"} />
-              <RuntimeRow label="API-rate estimate" value={formatApproximateCost(viewedUsage.estimate || null)} />
+              <RuntimeRow
+                label="Tokens"
+                value={`${formatTokenCount(viewedUsage.input)} input · ${formatTokenCount(viewedUsage.cached)} cached · ${formatTokenCount(viewedUsage.output)} output`}
+              />
+              <RuntimeRow
+                label="Cache rate"
+                value={
+                  viewedUsage.input > 0
+                    ? `${Math.round((viewedUsage.cached / viewedUsage.input) * 100)}%`
+                    : "—"
+                }
+              />
+              <RuntimeRow
+                label="Work credits"
+                value={viewedUsage.credits > 0 ? viewedUsage.credits.toFixed(3) : "Not reported"}
+              />
+              <RuntimeRow
+                label="API-rate estimate"
+                value={formatApproximateCost(viewedUsage.estimate || null)}
+              />
               <RuntimeRow label="ChatGPT-plan billing" value="Attributable billing unavailable" />
-              <RuntimeRow label="Focused checks" value={`${viewedStageId === "implement" ? focusedExecutions.length : 0} · ${formatDuration(viewedStageId === "implement" ? stageCheckDuration : 0)}`} />
-              <RuntimeRow label="Full manifests" value={`${viewedStageId === "test" ? fullManifestExecutions.length : 0} · ${formatDuration(viewedStageId === "test" ? stageCheckDuration : 0)}`} />
+              <RuntimeRow
+                label="Focused checks"
+                value={`${viewedStageId === "implement" ? focusedExecutions.length : 0} · ${formatDuration(viewedStageId === "implement" ? stageCheckDuration : 0)}`}
+              />
+              <RuntimeRow
+                label="Full manifests"
+                value={`${viewedStageId === "test" ? fullManifestExecutions.length : 0} · ${formatDuration(viewedStageId === "test" ? stageCheckDuration : 0)}`}
+              />
               <RuntimeRow label="Review retries" value={`${task.reviewRetries?.length ?? 0}`} />
-              <RuntimeRow label="Candidate repairs" value={`${candidate?.revisions.filter((revision) => /repair/i.test(revision.reason)).length ?? 0}`} />
+              <RuntimeRow
+                label="Candidate repairs"
+                value={`${candidate?.revisions.filter((revision) => /repair/i.test(revision.reason)).length ?? 0}`}
+              />
             </InspectorSection>
             <InspectorSection title="Task telemetry" meta="All retained runs">
               <RuntimeRow label="Wall time" value={formatDuration(taskWallDuration)} />
-              <RuntimeRow label="Tokens" value={`${formatTokenCount(task.usage.inputTokens)} input · ${formatTokenCount(task.usage.cachedInputTokens)} cached · ${formatTokenCount(task.usage.outputTokens)} output`} />
+              <RuntimeRow
+                label="Tokens"
+                value={`${formatTokenCount(task.usage.inputTokens)} input · ${formatTokenCount(task.usage.cachedInputTokens)} cached · ${formatTokenCount(task.usage.outputTokens)} output`}
+              />
               <RuntimeRow label="Cache rate" value={formatCacheRate(task.usage)} />
-              <RuntimeRow label="Work credits" value={task.usage.credits == null ? "Not reported" : task.usage.credits.toFixed(3)} />
+              <RuntimeRow
+                label="Work credits"
+                value={task.usage.credits == null ? "Not reported" : task.usage.credits.toFixed(3)}
+              />
               <RuntimeRow label="API-rate estimate" value={formatApproximateCost(task.usage.cost)} />
-              <RuntimeRow label="Focused checks" value={`${focusedExecutions.length} · ${formatDuration(focusedDuration)}`} />
-              <RuntimeRow label="Full manifests" value={`${fullManifestExecutions.length} · ${formatDuration(fullManifestDuration)}`} />
+              <RuntimeRow
+                label="Focused checks"
+                value={`${focusedExecutions.length} · ${formatDuration(focusedDuration)}`}
+              />
+              <RuntimeRow
+                label="Full manifests"
+                value={`${fullManifestExecutions.length} · ${formatDuration(fullManifestDuration)}`}
+              />
               <RuntimeRow label="Review retries" value={`${task.reviewRetries?.length ?? 0}`} />
-              <RuntimeRow label="Candidate repairs" value={`${candidate?.revisions.filter((revision) => /repair/i.test(revision.reason)).length ?? 0}`} />
+              <RuntimeRow
+                label="Candidate repairs"
+                value={`${candidate?.revisions.filter((revision) => /repair/i.test(revision.reason)).length ?? 0}`}
+              />
               <RuntimeRow label="ChatGPT-plan billing" value="Attributable billing unavailable" />
             </InspectorSection>
             <InspectorSection title="Execution metadata">
-              <RuntimeRow
-                label="Skill"
-                value={runtimeStageSkills[task.currentStage]}
-              />
+              <RuntimeRow label="Skill" value={runtimeStageSkills[task.currentStage]} />
               <RuntimeRow
                 label="Agent"
                 value={
@@ -656,31 +808,62 @@ export function RuntimeTaskWorkspace({
                   }
                 />
               ) : null}
-              <RuntimeRow label="Model / reasoning" value={`${activePolicy.model} \u00b7 ${activePolicy.reasoning}`} />
-              <RuntimeRow label={`${stageRunLabel} run`} value={`${currentStageRunAttempts} of ${currentStageRunLimit}`} />
+              <RuntimeRow
+                label="Model / reasoning"
+                value={`${activePolicy.model} \u00b7 ${activePolicy.reasoning}`}
+              />
+              <RuntimeRow
+                label={`${stageRunLabel} run`}
+                value={`${currentStageRunAttempts} of ${currentStageRunLimit}`}
+              />
               <RuntimeRow label="Run" value={task.activeRunKind ?? "No active agent run"} />
               <RuntimeRow label="Repository" value={repoName} mono />
             </InspectorSection>
             {stageArtifact ? (
               <InspectorSection
-                title={isModelRunArtifact(stageArtifact) ? "Viewed agent run" : stageArtifact.stage === "scouts" ? "Viewed downstream handoff" : "Viewed artifact"}
+                title={
+                  isModelRunArtifact(stageArtifact)
+                    ? "Viewed agent run"
+                    : stageArtifact.stage === "scouts"
+                      ? "Viewed downstream handoff"
+                      : "Viewed artifact"
+                }
                 meta={stageArtifact.name}
               >
                 {isModelRunArtifact(stageArtifact) ? (
                   <>
                     <RuntimeRow label="Model" value={stageArtifact.model ?? "Unknown model"} mono />
                     <RuntimeRow label="Reasoning" value={stageArtifact.reasoning ?? "Not recorded"} />
-                    <RuntimeRow label="Input" value={`${formatTokenCount(stageArtifact.usage.inputTokens)} total \u00b7 ${formatTokenCount(Math.max(0, stageArtifact.usage.inputTokens - stageArtifact.usage.cachedInputTokens - (stageArtifact.usage.cacheWriteTokens ?? 0)))} uncached`} />
+                    <RuntimeRow
+                      label="Input"
+                      value={`${formatTokenCount(stageArtifact.usage.inputTokens)} total \u00b7 ${formatTokenCount(Math.max(0, stageArtifact.usage.inputTokens - stageArtifact.usage.cachedInputTokens - (stageArtifact.usage.cacheWriteTokens ?? 0)))} uncached`}
+                    />
                     <RuntimeRow label="Output" value={formatTokenCount(stageArtifact.usage.outputTokens)} />
-                    <RuntimeRow label="Cached input" value={`${formatCacheRate(stageArtifact.usage)} \u00b7 ${formatTokenCount(stageArtifact.usage.cachedInputTokens)}`} />
-                    <RuntimeRow label="Work credits" value={stageArtifact.usage.credits == null ? "Not reported for this model" : stageArtifact.usage.credits.toFixed(3)} />
-                    <RuntimeRow label="Approx. cost" value={`${formatApproximateCost(stageArtifact.usage.cost)} \u00b7 API-rate estimate`} />
+                    <RuntimeRow
+                      label="Cached input"
+                      value={`${formatCacheRate(stageArtifact.usage)} \u00b7 ${formatTokenCount(stageArtifact.usage.cachedInputTokens)}`}
+                    />
+                    <RuntimeRow
+                      label="Work credits"
+                      value={
+                        stageArtifact.usage.credits == null
+                          ? "Not reported for this model"
+                          : stageArtifact.usage.credits.toFixed(3)
+                      }
+                    />
+                    <RuntimeRow
+                      label="Approx. cost"
+                      value={`${formatApproximateCost(stageArtifact.usage.cost)} \u00b7 API-rate estimate`}
+                    />
                     <RuntimeContextDisclosure artifact={stageArtifact} />
                   </>
                 ) : stageArtifact.stage === "scouts" ? (
                   <ScoutAggregationUsage task={task} artifact={stageArtifact} />
                 ) : (
-                  <RuntimeRow label="Origin" value="Harness-generated \u2014 no model call, so there is no token usage to report" />
+                  <RuntimeRow
+                    label="Origin"
+                    value="Harness-generated \u2014 no model call, so there is no token usage to report"
+                  />
                 )}
               </InspectorSection>
             ) : null}
@@ -719,7 +902,11 @@ export function RuntimeTaskWorkspace({
               </InspectorSection>
             ) : null}
             <InspectorSection title="Decision frontier" meta={`${task.decisions?.length ?? 0} recorded`}>
-              <DecisionFrontier task={task} canRecord={viewedTemporalState === "current"} onDecision={onDecision} />
+              <DecisionFrontier
+                task={task}
+                canRecord={viewedTemporalState === "current"}
+                onDecision={onDecision}
+              />
             </InspectorSection>
             <InspectorSection
               title="Approvals"
@@ -727,20 +914,33 @@ export function RuntimeTaskWorkspace({
             >
               <ApprovalHistorySection approvals={task.approvals ?? []} />
             </InspectorSection>
-            <InspectorSection title="Outcome evaluation" meta={task.evaluation?.scores?.blind?.score ? `Blind ${task.evaluation.scores.blind.score} / 5` : task.evaluation?.score ? `${task.evaluation.score} / 5` : "Not rated"}>
-              <TaskEvaluation evaluation={task.evaluation} disabled={task.status === "running"} status={task.status} onEvaluate={onEvaluate} />
+            <InspectorSection
+              title="Outcome evaluation"
+              meta={
+                task.evaluation?.scores?.blind?.score
+                  ? `Blind ${task.evaluation.scores.blind.score} / 5`
+                  : task.evaluation?.score
+                    ? `${task.evaluation.score} / 5`
+                    : "Not rated"
+              }
+            >
+              <TaskEvaluation
+                evaluation={task.evaluation}
+                disabled={task.status === "running"}
+                status={task.status}
+                onEvaluate={onEvaluate}
+              />
             </InspectorSection>
             {worktreeInventory.length ? (
               <InspectorSection title="Isolated worktrees" meta={`${worktreeInventory.length} for this task`}>
                 <p className="runtime-worktree-explainer">
-                  Temporary Git copies that keep Implement and Repair changes away from your main
-                  checkout until approval. A <strong>slice</strong> backs one work package; a
-                  candidate worktree backs the assembled patch. <strong>Retained</strong> means the
-                  copy still exists on disk so its evidence stays inspectable, and{" "}
-                  <strong>keep retained</strong> means it cannot be removed yet — it is either still
-                  in use or has uncommitted changes. Removal is re-checked against the filesystem
-                  when you ask for it, not taken from this list, so a worktree an agent is currently
-                  running in is refused rather than pulled out from under it.
+                  Temporary Git copies that keep Implement and Repair changes away from your main checkout
+                  until approval. A <strong>slice</strong> backs one work package; a candidate worktree backs
+                  the assembled patch. <strong>Retained</strong> means the copy still exists on disk so its
+                  evidence stays inspectable, and <strong>keep retained</strong> means it cannot be removed
+                  yet — it is either still in use or has uncommitted changes. Removal is re-checked against
+                  the filesystem when you ask for it, not taken from this list, so a worktree an agent is
+                  currently running in is refused rather than pulled out from under it.
                 </p>
                 <RuntimeWorktreeInventory
                   inventory={worktreeInventory}
@@ -757,9 +957,10 @@ export function RuntimeTaskWorkspace({
                   // already triage-first; do not reverse it into latest-first.
                   task.artifacts.map((artifact) => {
                     const freshness = getRuntimeArtifactFreshness(task, artifact);
-                    const staleReason = freshness && !isArtifactFresh(artifact, candidate, freshness)
-                      ? freshness.reasonCopy
-                      : null;
+                    const staleReason =
+                      freshness && !isArtifactFresh(artifact, candidate, freshness)
+                        ? freshness.reasonCopy
+                        : null;
                     return (
                       <button
                         type="button"
@@ -800,9 +1001,7 @@ export function RuntimeTaskWorkspace({
 
       <RuntimeWorkspaceFooter task={task} activeModel={activePolicy.model} />
 
-      {openArtifact ? (
-        <RuntimeArtifactViewer artifact={openArtifact} onClose={closeRuntimeArtifact} />
-      ) : null}
+      {openArtifact ? <RuntimeArtifactViewer artifact={openArtifact} onClose={closeRuntimeArtifact} /> : null}
       {candidateDiff && candidateDiffTarget ? (
         <CandidateDiffViewer
           taskId={task.id}
@@ -835,10 +1034,7 @@ function ScoutAggregationUsage({
 
   return (
     <>
-      <RuntimeRow
-        label="Origin"
-        value="Harness-generated deterministic aggregation; no extra model call"
-      />
+      <RuntimeRow label="Origin" value="Harness-generated deterministic aggregation; no extra model call" />
       <RuntimeRow label="Inputs" value="Child scout reports" />
       <RuntimeRow label="Child scout runs" value={`${usage.runs} recorded`} />
       <RuntimeRow
@@ -870,23 +1066,33 @@ function formatDuration(durationMs: number) {
   return `${Math.floor(durationMs / 60_000)}m ${Math.round((durationMs % 60_000) / 1_000)}s`;
 }
 
-function elapsedWindow(records: Array<{ startedAt?: string | null; completedAt?: string | null; durationMs?: number | null }>) {
+function elapsedWindow(
+  records: Array<{ startedAt?: string | null; completedAt?: string | null; durationMs?: number | null }>,
+) {
   const starts = records.map((record) => Date.parse(record.startedAt ?? "")).filter(Number.isFinite);
   const ends = records.map((record) => Date.parse(record.completedAt ?? "")).filter(Number.isFinite);
   if (starts.length && ends.length) return Math.max(0, Math.max(...ends) - Math.min(...starts));
   return records.reduce((total, record) => total + (record.durationMs ?? 0), 0);
 }
 
-function uniqueVerificationExecutions<T extends {
-  executionKind?: string;
-  candidateId: string;
-  candidateRevision: number;
-  headRevision?: string;
-  startedAt?: string | null;
-}>(items: T[]) {
+function uniqueVerificationExecutions<
+  T extends {
+    executionKind?: string;
+    candidateId: string;
+    candidateRevision: number;
+    headRevision?: string;
+    startedAt?: string | null;
+  },
+>(items: T[]) {
   const seen = new Set<string>();
   return items.filter((item) => {
-    const key = [item.executionKind, item.candidateId, item.candidateRevision, item.headRevision, item.startedAt].join(":");
+    const key = [
+      item.executionKind,
+      item.candidateId,
+      item.candidateRevision,
+      item.headRevision,
+      item.startedAt,
+    ].join(":");
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

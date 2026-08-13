@@ -145,23 +145,40 @@ export function Shell({
 
       <section className="provider-connections" aria-label="Model connections">
         <span className="sidebar-label">Connections</span>
-        {(runtimeStatus?.providers ?? [{ id: "codex", label: "Codex", available: Boolean(runtimeStatus?.available), authenticated: Boolean(runtimeStatus?.authenticated), executionEnabled: true, detail: runtimeStatus?.message ?? "Runtime unavailable" }]).filter((provider) => provider.available).map((provider) => {
-          // The orb variant is the provider's own brand colour (Codex blue, Claude
-          // violet), independent of connection state — it used to fall through to the
-          // generic "harness" grey for anything that wasn't Codex, which is why Claude's
-          // dot stayed grey while signed in and reads as "inactive" even when connected.
-          const variant = provider.id === "codex" || provider.id === "claude" ? provider.id : "harness";
-          const state = providerConnectionState(provider);
-          return (
-            <div className={`provider-connection provider-connection--${variant}`} key={provider.id} title={provider.detail}>
-              <span className="provider-orb" aria-hidden />
-              <span>{provider.label}</span>
-              <span className={`provider-connection__state provider-connection__state--${state}`}>
-                {connectionStateLabel(state)}
-              </span>
-            </div>
-          );
-        })}
+        {(
+          runtimeStatus?.providers ?? [
+            {
+              id: "codex",
+              label: "Codex",
+              available: Boolean(runtimeStatus?.available),
+              authenticated: Boolean(runtimeStatus?.authenticated),
+              executionEnabled: true,
+              detail: runtimeStatus?.message ?? "Runtime unavailable",
+            },
+          ]
+        )
+          .filter((provider) => provider.available)
+          .map((provider) => {
+            // The orb variant is the provider's own brand colour (Codex blue, Claude
+            // violet), independent of connection state — it used to fall through to the
+            // generic "harness" grey for anything that wasn't Codex, which is why Claude's
+            // dot stayed grey while signed in and reads as "inactive" even when connected.
+            const variant = provider.id === "codex" || provider.id === "claude" ? provider.id : "harness";
+            const state = providerConnectionState(provider);
+            return (
+              <div
+                className={`provider-connection provider-connection--${variant}`}
+                key={provider.id}
+                title={provider.detail}
+              >
+                <span className="provider-orb" aria-hidden />
+                <span>{provider.label}</span>
+                <span className={`provider-connection__state provider-connection__state--${state}`}>
+                  {connectionStateLabel(state)}
+                </span>
+              </div>
+            );
+          })}
       </section>
 
       <div className="sidebar-profile">
@@ -176,7 +193,7 @@ export function Shell({
           onClick={onToggleCollapsed}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? <CaretDoubleRightIcon size={15}  /> : <CaretDoubleLeftIcon size={15} />}
+          {collapsed ? <CaretDoubleRightIcon size={15} /> : <CaretDoubleLeftIcon size={15} />}
         </button>
       </div>
     </aside>

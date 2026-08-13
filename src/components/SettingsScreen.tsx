@@ -14,8 +14,17 @@ import { EvaluationScorecard } from "./EvaluationScorecard";
 import { SettingRow } from "./LibraryShared";
 import { Button, SectionHeader } from "./Primitives";
 import { connectionStateLabel, providerConnectionState } from "./Shell";
+import { SystemBoundaryMap } from "./SystemBoundaryMap";
 
-type RuntimePolicyInput = Pick<RuntimeSettings, "grillPolicy" | "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies">;
+type RuntimePolicyInput = Pick<
+  RuntimeSettings,
+  | "grillPolicy"
+  | "allowedModels"
+  | "defaultModel"
+  | "defaultReasoning"
+  | "stagePolicies"
+  | "profileStagePolicies"
+>;
 
 export function SettingsScreen({
   runtimeStatus,
@@ -36,7 +45,8 @@ export function SettingsScreen({
   // Mirrors the fallback Shell.tsx builds when the server has not reported a `providers`
   // array (an older status shape) — without it this row would silently disappear instead
   // of degrading to the same generic reading the sidebar falls back to.
-  const codex = runtimeStatus?.providers?.find((provider) => provider.id === "codex") ??
+  const codex =
+    runtimeStatus?.providers?.find((provider) => provider.id === "codex") ??
     (runtimeStatus
       ? {
           available: Boolean(runtimeStatus.available),
@@ -50,7 +60,9 @@ export function SettingsScreen({
   const [defaultModel, setDefaultModel] = useState("");
   const [defaultReasoning, setDefaultReasoning] = useState("");
   const [stagePolicies, setStagePolicies] = useState<Record<string, RuntimeAgentPolicy>>({});
-  const [profileStagePolicies, setProfileStagePolicies] = useState<NonNullable<RuntimeSettings["profileStagePolicies"]>>({ fast: {}, standard: {}, "high-risk": {} });
+  const [profileStagePolicies, setProfileStagePolicies] = useState<
+    NonNullable<RuntimeSettings["profileStagePolicies"]>
+  >({ fast: {}, standard: {}, "high-risk": {} });
   const [editingProfile, setEditingProfile] = useState<WorkflowProfileId>("standard");
   const [saving, setSaving] = useState(false);
   const [verifyingPricing, setVerifyingPricing] = useState(false);
@@ -88,7 +100,9 @@ export function SettingsScreen({
         stagePolicies: matrices.standard,
         profileStagePolicies: matrices,
       });
-      setSaveMessage("Settings saved. New tasks will use these defaults; existing task snapshots are unchanged.");
+      setSaveMessage(
+        "Settings saved. New tasks will use these defaults; existing task snapshots are unchanged.",
+      );
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Settings could not be saved.");
     } finally {
@@ -102,12 +116,38 @@ export function SettingsScreen({
   };
   return (
     <div className="page library-page settings-page">
-      <SectionHeader eyebrow="Local orchestration" title="Settings" description="Choose the interaction and model defaults used for new tasks. Each task snapshots these policies so later settings changes do not rewrite history." action={<Button tone="secondary" icon={MagnifyingGlass} onClick={() => void onRefresh()} disabled={refreshing}>{refreshing ? "Searching…" : "Search available models"}</Button>} />
-      {saveMessage ? <p className="agent-policy-feedback agent-policy-feedback--success" role="status">{saveMessage}</p> : null}
-      {error ? <p className="dialog-error" role="alert">{error}</p> : null}
+      <SectionHeader
+        eyebrow="Local orchestration"
+        title="Settings"
+        description="Choose the interaction and model defaults used for new tasks. Each task snapshots these policies so later settings changes do not rewrite history."
+        action={
+          <Button
+            tone="secondary"
+            icon={MagnifyingGlass}
+            onClick={() => void onRefresh()}
+            disabled={refreshing}
+          >
+            {refreshing ? "Searching…" : "Search available models"}
+          </Button>
+        }
+      />
+      {saveMessage ? (
+        <p className="agent-policy-feedback agent-policy-feedback--success" role="status">
+          {saveMessage}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="dialog-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <SystemBoundaryMap runtimeStatus={runtimeStatus} />
       <section className="settings-section">
         <h3>Grill decisions</h3>
-        <p className="settings-section__intro">Choose whether new tasks pause when Grill finds material questions. A task keeps the policy it was created with.</p>
+        <p className="settings-section__intro">
+          Choose whether new tasks pause when Grill finds material questions. A task keeps the policy it was
+          created with.
+        </p>
         <fieldset className="settings-grill-policy">
           <legend className="sr-only">Default Grill interaction policy</legend>
           <label className={grillPolicy === "manual" ? "selected" : ""}>
@@ -116,10 +156,15 @@ export function SettingsScreen({
               name="grill-policy"
               value="manual"
               checked={grillPolicy === "manual"}
-              onChange={() => { setGrillPolicy("manual"); setSaveMessage(null); }}
+              onChange={() => {
+                setGrillPolicy("manual");
+                setSaveMessage(null);
+              }}
             />
             <span>
-              <strong>Pause for my answers <em>Default</em></strong>
+              <strong>
+                Pause for my answers <em>Default</em>
+              </strong>
               <small>Answer one question at a time, or manually accept all remaining recommendations.</small>
             </span>
           </label>
@@ -129,19 +174,39 @@ export function SettingsScreen({
               name="grill-policy"
               value="auto-accept-recommendations"
               checked={grillPolicy === "auto-accept-recommendations"}
-              onChange={() => { setGrillPolicy("auto-accept-recommendations"); setSaveMessage(null); }}
+              onChange={() => {
+                setGrillPolicy("auto-accept-recommendations");
+                setSaveMessage(null);
+              }}
             />
             <span>
               <strong>Automatically accept recommendations</strong>
-              <small>New tasks will not pause; every unresolved Grill recommendation is accepted and recorded as automation.</small>
+              <small>
+                New tasks will not pause; every unresolved Grill recommendation is accepted and recorded as
+                automation.
+              </small>
             </span>
           </label>
         </fieldset>
-        <Button type="button" tone="primary" disabled={saving || !allowedModels.length || !defaultModel || !defaultReasoning} onClick={() => void save()}>{saving ? "Saving…" : "Save interaction policy"}</Button>
+        <Button
+          type="button"
+          tone="primary"
+          disabled={saving || !allowedModels.length || !defaultModel || !defaultReasoning}
+          onClick={() => void save()}
+        >
+          {saving ? "Saving…" : "Save interaction policy"}
+        </Button>
       </section>
       <section className="settings-section">
         <h3>Allowed models</h3>
-        <p className="settings-section__intro">Entries identify whether they were discovered locally, retained from configuration, or supplied only as unsupported bundled reference metadata{runtimeStatus?.catalog?.fetchedAt ? ` · refreshed ${new Date(runtimeStatus.catalog.fetchedAt).toLocaleString()}` : ""}. Only discovered models are editable.</p>
+        <p className="settings-section__intro">
+          Entries identify whether they were discovered locally, retained from configuration, or supplied only
+          as unsupported bundled reference metadata
+          {runtimeStatus?.catalog?.fetchedAt
+            ? ` · refreshed ${new Date(runtimeStatus.catalog.fetchedAt).toLocaleString()}`
+            : ""}
+          . Only discovered models are editable.
+        </p>
         <div className="model-allowlist">
           {catalog.map((model) => {
             const allowed = allowedModels.includes(model.id);
@@ -150,12 +215,21 @@ export function SettingsScreen({
               ...Object.values(profileStagePolicies).flatMap((matrix) => Object.values(matrix)),
             ].some((policy) => policy.model === model.id);
             return (
-              <label className={allowed ? "model-option model-option--allowed" : "model-option"} key={model.id}>
+              <label
+                className={allowed ? "model-option model-option--allowed" : "model-option"}
+                key={model.id}
+              >
                 <input
                   type="checkbox"
                   checked={allowed}
                   disabled={!model.editable || (allowed && inUse)}
-                  title={!model.editable ? "This model was not discovered as an editable local capability." : allowed && inUse ? "Move every role away from this model before removing it." : undefined}
+                  title={
+                    !model.editable
+                      ? "This model was not discovered as an editable local capability."
+                      : allowed && inUse
+                        ? "Move every role away from this model before removing it."
+                        : undefined
+                  }
                   onChange={(event) => {
                     const next = event.target.checked
                       ? [...new Set([...allowedModels, model.id])]
@@ -169,7 +243,12 @@ export function SettingsScreen({
                     }
                   }}
                 />
-                <span><strong>{model.label}</strong><small>{model.description} · {model.provenance.replace("-", " ")} · {model.availability}</small></span>
+                <span>
+                  <strong>{model.label}</strong>
+                  <small>
+                    {model.description} · {model.provenance.replace("-", " ")} · {model.availability}
+                  </small>
+                </span>
                 <code>{model.id}</code>
               </label>
             );
@@ -184,7 +263,14 @@ export function SettingsScreen({
             disabled={saving}
             onChange={updateDefault}
           />
-          <Button type="button" tone="primary" disabled={saving || !allowedModels.length || !defaultModel || !defaultReasoning} onClick={() => void save()}>{saving ? "Saving…" : "Save model policy"}</Button>
+          <Button
+            type="button"
+            tone="primary"
+            disabled={saving || !allowedModels.length || !defaultModel || !defaultReasoning}
+            onClick={() => void save()}
+          >
+            {saving ? "Saving…" : "Save model policy"}
+          </Button>
         </div>
 
         <fieldset className="role-policy-header">
@@ -209,25 +295,35 @@ export function SettingsScreen({
           </label>
         </fieldset>
         <fieldset className="role-policy-grid">
-     
-          {agentRoles.filter((role) => role.provider === "model" && !role.id.startsWith("scout-")).map((role) => {
-            const policy = stagePolicies[role.id] ?? globalDefault;
-            return (
-              <div className="role-policy-row" key={role.id}>
-                <span><strong>{role.label}</strong><small>{role.skill}</small></span>
-                <AgentPolicyEditor
-                  value={policy}
-                  globalDefault={globalDefault}
-                  models={catalog}
-                  allowedModels={allowedModels}
-                  idPrefix={`settings-role-${role.id}`}
-                  disabled={saving}
-                  onChange={(nextPolicy) => { setStagePolicies((current) => ({ ...current, [role.id]: nextPolicy })); setSaveMessage(null); }}
-                  onReset={() => { setStagePolicies((current) => ({ ...current, [role.id]: globalDefault })); setSaveMessage(null); }}
-                />
-              </div>
-            );
-          })}
+          {agentRoles
+            .filter((role) => role.provider === "model" && !role.id.startsWith("scout-"))
+            .map((role) => {
+              const policy = stagePolicies[role.id] ?? globalDefault;
+              return (
+                <div className="role-policy-row" key={role.id}>
+                  <span>
+                    <strong>{role.label}</strong>
+                    <small>{role.skill}</small>
+                  </span>
+                  <AgentPolicyEditor
+                    value={policy}
+                    globalDefault={globalDefault}
+                    models={catalog}
+                    allowedModels={allowedModels}
+                    idPrefix={`settings-role-${role.id}`}
+                    disabled={saving}
+                    onChange={(nextPolicy) => {
+                      setStagePolicies((current) => ({ ...current, [role.id]: nextPolicy }));
+                      setSaveMessage(null);
+                    }}
+                    onReset={() => {
+                      setStagePolicies((current) => ({ ...current, [role.id]: globalDefault }));
+                      setSaveMessage(null);
+                    }}
+                  />
+                </div>
+              );
+            })}
         </fieldset>
       </section>
       <section className="settings-section">
@@ -252,37 +348,140 @@ export function SettingsScreen({
         />
       </section>
       <section className="settings-section">
-        <div className="settings-section__head"><span><h3>Approximate cost rate card</h3><p>OpenAI and Anthropic short-context API-equivalent prices per 1M tokens. The execution allowlist controls new runs, not which recorded rate cards remain inspectable.</p></span><Button tone="secondary" disabled={verifyingPricing || !runtimeStatus?.authenticated} onClick={async () => { setError(null); setVerifyingPricing(true); try { await onVerifyPricing(); } catch (reason) { setError(reason instanceof Error ? reason.message : "Pricing could not be verified."); } finally { setVerifyingPricing(false); } }}>{verifyingPricing ? "Agent checking…" : "Verify with agent"}</Button></div>
-        <div className="pricing-table">
-          <div className="pricing-table__header"><span>Model</span><span>Input</span><span>Cached input</span><span>Cache write</span><span>Output</span></div>
-          {catalog.filter((model) => runtimeStatus?.settings?.pricing?.rates?.[model.id]?.short ?? model.pricing?.short).map((model) => {
-            const rate = runtimeStatus?.settings?.pricing?.rates?.[model.id]?.short ?? model.pricing?.short;
-            return <div className="pricing-table__row" key={model.id}><span><strong>{model.label}</strong><small>{model.id.startsWith("claude-") ? "Anthropic" : "OpenAI"}{allowedModels.includes(model.id) ? " · allowed" : " · reference"}</small></span><code>{rate ? `$${rate.input}` : "—"}</code><code>{rate ? `$${rate.cachedInput}` : "—"}</code><code>{rate?.cacheWrite == null ? "—" : `$${rate.cacheWrite}`}</code><code>{rate ? `$${rate.output}` : "—"}</code></div>;
-          })}
+        <div className="settings-section__head">
+          <span>
+            <h3>Approximate cost rate card</h3>
+            <p>
+              OpenAI and Anthropic short-context API-equivalent prices per 1M tokens. The execution allowlist
+              controls new runs, not which recorded rate cards remain inspectable.
+            </p>
+          </span>
+          <Button
+            tone="secondary"
+            disabled={verifyingPricing || !runtimeStatus?.authenticated}
+            onClick={async () => {
+              setError(null);
+              setVerifyingPricing(true);
+              try {
+                await onVerifyPricing();
+              } catch (reason) {
+                setError(reason instanceof Error ? reason.message : "Pricing could not be verified.");
+              } finally {
+                setVerifyingPricing(false);
+              }
+            }}
+          >
+            {verifyingPricing ? "Agent checking…" : "Verify with agent"}
+          </Button>
         </div>
-        <small className="settings-pricing-source">{runtimeStatus?.settings?.pricing ? `Version ${runtimeStatus.settings.pricing.version} · ${runtimeStatus.settings.pricing.verifiedBy} · ${new Date(runtimeStatus.settings.pricing.verifiedAt).toLocaleString()}` : "Pricing metadata unavailable"}</small>
+        <div className="pricing-table">
+          <div className="pricing-table__header">
+            <span>Model</span>
+            <span>Input</span>
+            <span>Cached input</span>
+            <span>Cache write</span>
+            <span>Output</span>
+          </div>
+          {catalog
+            .filter(
+              (model) => runtimeStatus?.settings?.pricing?.rates?.[model.id]?.short ?? model.pricing?.short,
+            )
+            .map((model) => {
+              const rate = runtimeStatus?.settings?.pricing?.rates?.[model.id]?.short ?? model.pricing?.short;
+              return (
+                <div className="pricing-table__row" key={model.id}>
+                  <span>
+                    <strong>{model.label}</strong>
+                    <small>
+                      {model.id.startsWith("claude-") ? "Anthropic" : "OpenAI"}
+                      {allowedModels.includes(model.id) ? " · allowed" : " · reference"}
+                    </small>
+                  </span>
+                  <code>{rate ? `$${rate.input}` : "—"}</code>
+                  <code>{rate ? `$${rate.cachedInput}` : "—"}</code>
+                  <code>{rate?.cacheWrite == null ? "—" : `$${rate.cacheWrite}`}</code>
+                  <code>{rate ? `$${rate.output}` : "—"}</code>
+                </div>
+              );
+            })}
+        </div>
+        <small className="settings-pricing-source">
+          {runtimeStatus?.settings?.pricing
+            ? `Version ${runtimeStatus.settings.pricing.version} · ${runtimeStatus.settings.pricing.verifiedBy} · ${new Date(runtimeStatus.settings.pricing.verifiedAt).toLocaleString()}`
+            : "Pricing metadata unavailable"}
+        </small>
         {runtimeStatus?.settings?.pricing.creditRates ? (
           <>
-            <div className="settings-section__head settings-section__head--nested"><span><h3>ChatGPT work credits</h3><p>OpenAI's Codex/ChatGPT plan usage units per 1M tokens; they are not dollars. Claude Team exposes tokens and an API-equivalent cost, but no equivalent work-credit unit, so the harness does not invent one.</p></span></div>
-            <div className="pricing-table pricing-table--credits">
-              <div className="pricing-table__header"><span>Model</span><span>Input</span><span>Cached input</span><span>Output</span></div>
-              {catalog.filter((model) => runtimeStatus.settings?.pricing.creditRates?.[model.id]).map((model) => { const rate = runtimeStatus.settings?.pricing.creditRates?.[model.id]; return <div className="pricing-table__row" key={model.id}><strong>{model.label}</strong><code>{rate?.input}</code><code>{rate?.cachedInput}</code><code>{rate?.output}</code></div>; })}
+            <div className="settings-section__head settings-section__head--nested">
+              <span>
+                <h3>ChatGPT work credits</h3>
+                <p>
+                  OpenAI's Codex/ChatGPT plan usage units per 1M tokens; they are not dollars. Claude Team
+                  exposes tokens and an API-equivalent cost, but no equivalent work-credit unit, so the
+                  harness does not invent one.
+                </p>
+              </span>
             </div>
-            <small className="settings-pricing-source">Source: {runtimeStatus.settings.pricing.creditSourceUrl ?? "OpenAI ChatGPT pricing"}</small>
+            <div className="pricing-table pricing-table--credits">
+              <div className="pricing-table__header">
+                <span>Model</span>
+                <span>Input</span>
+                <span>Cached input</span>
+                <span>Output</span>
+              </div>
+              {catalog
+                .filter((model) => runtimeStatus.settings?.pricing.creditRates?.[model.id])
+                .map((model) => {
+                  const rate = runtimeStatus.settings?.pricing.creditRates?.[model.id];
+                  return (
+                    <div className="pricing-table__row" key={model.id}>
+                      <strong>{model.label}</strong>
+                      <code>{rate?.input}</code>
+                      <code>{rate?.cachedInput}</code>
+                      <code>{rate?.output}</code>
+                    </div>
+                  );
+                })}
+            </div>
+            <small className="settings-pricing-source">
+              Source: {runtimeStatus.settings.pricing.creditSourceUrl ?? "OpenAI ChatGPT pricing"}
+            </small>
           </>
         ) : null}
       </section>
       <section className="settings-section">
         <EvaluationScorecard summary={evaluationSummary} />
-        <p className="settings-section__intro">Recommended experiment: run the same small, medium, and high-risk task suite against Luna XHigh, Luna Max, and Sol High; blind-score the final patch, then compare gate pass rate, repair count, wall time, cache rate, credits, and API-equivalent cost.</p>
+        <p className="settings-section__intro">
+          Recommended experiment: run the same small, medium, and high-risk task suite against Luna XHigh,
+          Luna Max, and Sol High; blind-score the final patch, then compare gate pass rate, repair count, wall
+          time, cache rate, credits, and API-equivalent cost.
+        </p>
       </section>
       <section className="settings-section">
         <h3>Local environment</h3>
-        <SettingRow title="Repository root" copy="Default for new tasks; AGENT_HARNESS_REPOSITORY may override it" control={<code>{runtimeStatus?.suggestedRepository ?? "Checking…"}</code>} />
-        <SettingRow title="Codex binary" copy="Discovered by the local companion" control={<code>{runtimeStatus?.binary ?? "Not found"}</code>} />
-        <SettingRow title="Worktree policy" copy="Implement and Repair write only inside isolated candidate worktrees" control={<strong>Enforced by backend</strong>} />
+        <SettingRow
+          title="Repository root"
+          copy="Default for new tasks; AGENT_HARNESS_REPOSITORY may override it"
+          control={<code>{runtimeStatus?.suggestedRepository ?? "Checking…"}</code>}
+        />
+        <SettingRow
+          title="Codex binary"
+          copy="Discovered by the local companion"
+          control={<code>{runtimeStatus?.binary ?? "Not found"}</code>}
+        />
+        <SettingRow
+          title="Worktree policy"
+          copy="Implement and Repair write only inside isolated candidate worktrees"
+          control={<strong>Enforced by backend</strong>}
+        />
       </section>
-      <div className="settings-note"><WarningCircle size={18} /><p>The estimate subtracts cached input from ordinary input, applies the cached-input rate, and prices output separately. Cache-write tokens are included only when the CLI reports them.</p></div>
+      <div className="settings-note">
+        <WarningCircle size={18} />
+        <p>
+          The estimate subtracts cached input from ordinary input, applies the cached-input rate, and prices
+          output separately. Cache-write tokens are included only when the CLI reports them.
+        </p>
+      </div>
     </div>
   );
 }

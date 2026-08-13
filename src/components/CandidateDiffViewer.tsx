@@ -11,12 +11,7 @@ interface CandidateDiffViewerProps {
   taskId: string;
 }
 
-export function CandidateDiffViewer({
-  candidateIdentity,
-  diff,
-  onClose,
-  taskId,
-}: CandidateDiffViewerProps) {
+export function CandidateDiffViewer({ candidateIdentity, diff, onClose, taskId }: CandidateDiffViewerProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     closeButtonRef.current?.focus();
@@ -27,8 +22,18 @@ export function CandidateDiffViewer({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [onClose]);
   return (
-    <div className="artifact-overlay candidate-diff-overlay" role="dialog" aria-modal="true" aria-label="Candidate diff">
-      <button type="button" className="artifact-overlay__backdrop" onClick={onClose} aria-label="Close candidate diff" />
+    <div
+      className="artifact-overlay candidate-diff-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Candidate diff"
+    >
+      <button
+        type="button"
+        className="artifact-overlay__backdrop"
+        onClick={onClose}
+        aria-label="Close candidate diff"
+      />
       <section className="artifact-viewer candidate-diff-viewer">
         <header>
           <span>
@@ -51,7 +56,9 @@ export function CandidateDiffViewer({
         </header>
         <div className="artifact-viewer__summary">
           <span>
-            Revision {diff.revisionNumber}{" \u00b7 "}{diff.worktreePath}
+            Revision {diff.revisionNumber}
+            {" \u00b7 "}
+            {diff.worktreePath}
           </span>
           <p>
             Head revision <code>{diff.headRevision}</code>
@@ -95,8 +102,18 @@ export function CandidateDiffErrorViewer({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [onClose]);
   return (
-    <div className="artifact-overlay candidate-diff-overlay" role="dialog" aria-modal="true" aria-label="Candidate diff error">
-      <button type="button" className="artifact-overlay__backdrop" onClick={onClose} aria-label="Dismiss candidate diff error" />
+    <div
+      className="artifact-overlay candidate-diff-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Candidate diff error"
+    >
+      <button
+        type="button"
+        className="artifact-overlay__backdrop"
+        onClick={onClose}
+        aria-label="Dismiss candidate diff error"
+      />
       <section className="artifact-viewer candidate-diff-viewer">
         <header>
           <span>

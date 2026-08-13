@@ -57,12 +57,65 @@ export function TaskEvaluation({
     <div className="task-evaluation">
       <fieldset className="task-evaluation__scores" disabled={gated}>
         <legend className="sr-only">Outcome quality score</legend>
-        {[1, 2, 3, 4, 5].map((value) => <button type="button" key={value} className={score === value ? "is-selected" : ""} disabled={gated} onClick={() => setScore(value)} aria-label={`${value} out of 5`}>{value}</button>)}
+        {[1, 2, 3, 4, 5].map((value) => (
+          <button
+            type="button"
+            key={value}
+            className={score === value ? "is-selected" : ""}
+            disabled={gated}
+            onClick={() => setScore(value)}
+            aria-label={`${value} out of 5`}
+          >
+            {value}
+          </button>
+        ))}
       </fieldset>
-      <label>Outcome<select value={outcome} disabled={gated} onChange={(event) => setOutcome(event.target.value as typeof outcome)}><option value="accepted">Accepted</option><option value="mixed">Mixed</option><option value="rejected">Rejected</option></select></label>
-      <label>Evaluator notes<textarea rows={3} value={notes} disabled={gated} onChange={(event) => setNotes(event.target.value)} placeholder="What made the output good or poor?" /></label>
-      <Button tone="secondary" compact disabled={gated || !score || saving} onClick={async () => { setSaving(true); setError(null); try { await onEvaluate(score, outcome, notes); } catch (reason) { setError(reason instanceof Error ? reason.message : "The evaluation could not be saved."); } finally { setSaving(false); } }}>{saving ? "Saving\u2026" : evaluation ? "Update evaluation" : "Add to scorecard"}</Button>
-      {notYetFinished ? <small className="task-evaluation__hint">Evaluation opens once this task finishes \u2014 reaches approval, merge, completion, closure, archive, or stops on a block, failure, or cancellation.</small> : null}
+      <label>
+        Outcome
+        <select
+          value={outcome}
+          disabled={gated}
+          onChange={(event) => setOutcome(event.target.value as typeof outcome)}
+        >
+          <option value="accepted">Accepted</option>
+          <option value="mixed">Mixed</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </label>
+      <label>
+        Evaluator notes
+        <textarea
+          rows={3}
+          value={notes}
+          disabled={gated}
+          onChange={(event) => setNotes(event.target.value)}
+          placeholder="What made the output good or poor?"
+        />
+      </label>
+      <Button
+        tone="secondary"
+        compact
+        disabled={gated || !score || saving}
+        onClick={async () => {
+          setSaving(true);
+          setError(null);
+          try {
+            await onEvaluate(score, outcome, notes);
+          } catch (reason) {
+            setError(reason instanceof Error ? reason.message : "The evaluation could not be saved.");
+          } finally {
+            setSaving(false);
+          }
+        }}
+      >
+        {saving ? "Saving\u2026" : evaluation ? "Update evaluation" : "Add to scorecard"}
+      </Button>
+      {notYetFinished ? (
+        <small className="task-evaluation__hint">
+          Evaluation opens once this task finishes \u2014 reaches approval, merge, completion, closure,
+          archive, or stops on a block, failure, or cancellation.
+        </small>
+      ) : null}
       {error ? <small className="text-red">{error}</small> : null}
     </div>
   );
@@ -93,7 +146,9 @@ export function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
         <span>
           <Robot size={16} />
           <strong>Run activity</strong>
-          <small>Agent sessions, repository commands, artifacts, and decisions &middot; {events.length} events</small>
+          <small>
+            Agent sessions, repository commands, artifacts, and decisions &middot; {events.length} events
+          </small>
         </span>
         <span>
           <span className="connection-dot" />
@@ -101,12 +156,14 @@ export function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
         </span>
       </summary>
       <div className="runtime-activity-filters" role="tablist" aria-label="Run activity filters">
-        {([
-          ["activity", "Activity"],
-          ["agent", "Agent runs"],
-          ["test", "Test runs"],
-          ["decision", "Decisions"],
-        ] as const).map(([id, label]) => (
+        {(
+          [
+            ["activity", "Activity"],
+            ["agent", "Agent runs"],
+            ["test", "Test runs"],
+            ["decision", "Decisions"],
+          ] as const
+        ).map(([id, label]) => (
           <button
             type="button"
             role="tab"
@@ -118,31 +175,39 @@ export function RuntimeActivity({ events }: { events: RuntimeEvent[] }) {
             {label}
           </button>
         ))}
-        <small>These are persisted runtime events. Model, token, duration, and artifact linkage appear only when the Codex event stream records them.</small>
+        <small>
+          These are persisted runtime events. Model, token, duration, and artifact linkage appear only when
+          the Codex event stream records them.
+        </small>
       </div>
       <div className="runtime-activity-list">
-        {visibleEvents.length ? visibleEvents.map((event) => {
-          const presentation = runtimeEventPresentation(event);
-          return (
-            <div className={`runtime-activity-row runtime-activity-row--${presentation.tone}`} key={event.id}>
-              <time className="mono">
-                {new Date(event.at).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })}
-              </time>
-              <span>
-                <strong>{presentation.title}</strong>
-                <small>{presentation.detail}</small>
-                <RetryGrantAudit audit={event} />
-              </span>
-              <em>{workflowStages.find((stage) => stage.id === event.stage)?.shortLabel ?? event.stage}</em>
-            </div>
-          );
-        }) : (
-            <div className="runtime-activity-empty">No recorded events match this filter.</div>
-          )}
+        {visibleEvents.length ? (
+          visibleEvents.map((event) => {
+            const presentation = runtimeEventPresentation(event);
+            return (
+              <div
+                className={`runtime-activity-row runtime-activity-row--${presentation.tone}`}
+                key={event.id}
+              >
+                <time className="mono">
+                  {new Date(event.at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })}
+                </time>
+                <span>
+                  <strong>{presentation.title}</strong>
+                  <small>{presentation.detail}</small>
+                  <RetryGrantAudit audit={event} />
+                </span>
+                <em>{workflowStages.find((stage) => stage.id === event.stage)?.shortLabel ?? event.stage}</em>
+              </div>
+            );
+          })
+        ) : (
+          <div className="runtime-activity-empty">No recorded events match this filter.</div>
+        )}
       </div>
     </details>
   );
@@ -166,13 +231,19 @@ export async function copyArtifactContent(
   clipboard: Pick<Clipboard, "writeText"> | null | undefined = globalThis.navigator?.clipboard,
 ) {
   if (!clipboard?.writeText) {
-    return { ok: false as const, message: "Clipboard access failed. Your browser did not expose clipboard write support." };
+    return {
+      ok: false as const,
+      message: "Clipboard access failed. Your browser did not expose clipboard write support.",
+    };
   }
   try {
     await clipboard.writeText(content);
     return { ok: true as const };
   } catch {
-    return { ok: false as const, message: "Clipboard access failed. The browser blocked copying this artifact." };
+    return {
+      ok: false as const,
+      message: "Clipboard access failed. The browser blocked copying this artifact.",
+    };
   }
 }
 
@@ -180,7 +251,13 @@ export function shouldApplyArtifactCopyFeedback(requestedArtifactId: string, act
   return requestedArtifactId === activeArtifactId;
 }
 
-export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: RuntimeArtifact; onClose: () => void }) {
+export function RuntimeArtifactViewer({
+  artifact,
+  onClose,
+}: {
+  artifact: RuntimeArtifact;
+  onClose: () => void;
+}) {
   const [copyStatus, setCopyStatus] = useState<"copied" | "error" | null>(null);
   const [copyError, setCopyError] = useState<string | null>(null);
   const activeArtifactIdRef = useRef(artifact.id);
@@ -275,13 +352,31 @@ export function RuntimeArtifactViewer({ artifact, onClose }: { artifact: Runtime
         </div>
         {modelRun ? (
           <div className="artifact-viewer__usage">
-            <span><small>Input</small><strong>{formatTokenCount(artifact.usage.inputTokens)}</strong></span>
-            <span><small>Output</small><strong>{formatTokenCount(artifact.usage.outputTokens)}</strong></span>
-            <span><small>Cached input</small><strong className="text-green">{formatCacheRate(artifact.usage)} &middot; {formatTokenCount(artifact.usage.cachedInputTokens)}</strong></span>
-            <span><small>Approx. cost</small><strong>{formatApproximateCost(artifact.usage.cost)}</strong></span>
+            <span>
+              <small>Input</small>
+              <strong>{formatTokenCount(artifact.usage.inputTokens)}</strong>
+            </span>
+            <span>
+              <small>Output</small>
+              <strong>{formatTokenCount(artifact.usage.outputTokens)}</strong>
+            </span>
+            <span>
+              <small>Cached input</small>
+              <strong className="text-green">
+                {formatCacheRate(artifact.usage)} &middot;{" "}
+                {formatTokenCount(artifact.usage.cachedInputTokens)}
+              </strong>
+            </span>
+            <span>
+              <small>Approx. cost</small>
+              <strong>{formatApproximateCost(artifact.usage.cost)}</strong>
+            </span>
           </div>
         ) : null}
-        <MarkdownContent content={stripEmbeddedCandidatePatch(artifact.content)} className="artifact-viewer__markdown" />
+        <MarkdownContent
+          content={stripEmbeddedCandidatePatch(artifact.content)}
+          className="artifact-viewer__markdown"
+        />
         <RuntimeContextDisclosure artifact={artifact} />
         <details className="artifact-viewer__raw">
           <summary>View raw Markdown source</summary>

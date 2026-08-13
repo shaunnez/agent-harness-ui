@@ -54,12 +54,35 @@
   color: var(--muted);
   font-size: 12px;
 }
+.current-run__evidence {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 12px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+}
+.current-run__evidence svg {
+  flex: 0 0 auto;
+  color: var(--blue);
+}
+.current-run__evidence span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .current-run__meta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 11px;
-  margin-top: 15px;
+  margin-top: 10px;
   color: var(--muted);
   font-size: 12px;
 }

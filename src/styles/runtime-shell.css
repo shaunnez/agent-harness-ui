@@ -71,7 +71,7 @@
 .runtime-stage-heading h2 {
   font-size: 18px;
 }
-.runtime-stage-heading > p:last-child {
+.runtime-stage-heading__detail {
   max-width: 760px;
   color: var(--muted);
   font-size: 12px;

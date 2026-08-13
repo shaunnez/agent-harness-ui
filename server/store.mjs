@@ -124,6 +124,18 @@ export class JsonTaskStore {
     return clone(this.#state.tasks).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
+  async listPullRequestTasks() {
+    return clone(this.#state.tasks).filter((task) => (
+      (task.status === "merging" && task.pullRequestIntent?.status === "publishing") ||
+      (task.status === "awaiting-pr-merge" && task.pullRequestIntent?.status === "open")
+    ));
+  }
+
+  async listWorktreeTasks() {
+    return clone(this.#state.tasks).filter((task) =>
+      (task.workPackages?.length ?? 0) > 0 || (task.candidates?.length ?? 0) > 0);
+  }
+
   async get(id) {
     const task = this.#state.tasks.find((item) => item.id === id);
     return task ? clone(task) : null;
@@ -151,6 +163,16 @@ export class JsonTaskStore {
       updater(task);
       task.updatedAt = new Date().toISOString();
       task.events = retainRunActivityEvents(task.events);
+      return task;
+    });
+  }
+
+  async updateCore(id, updater, { touchUpdatedAt = true } = {}) {
+    return this.#mutate((state) => {
+      const task = state.tasks.find((item) => item.id === id);
+      if (!task) return null;
+      updater(task);
+      if (touchUpdatedAt) task.updatedAt = new Date().toISOString();
       return task;
     });
   }
@@ -245,6 +267,8 @@ export function migratePersistedTaskState(state) {
       ["experiment", null],
       ["mergeIntent", null],
       ["mergeIntentHistory", []],
+      ["pullRequestIntent", null],
+      ["pullRequestIntentHistory", []],
       ["blocker", null],
       ["scoutDispatch", null],
       ["stageDispositions", {}],
@@ -426,6 +450,8 @@ export function createTaskRecord(state, input) {
     experiment: clone(input.experiment ?? null),
     mergeIntent: null,
     mergeIntentHistory: [],
+    pullRequestIntent: null,
+    pullRequestIntentHistory: [],
     blocker: null,
     scoutDispatch: clone(continuation?.scoutDispatch ?? null),
     workflowProfile,

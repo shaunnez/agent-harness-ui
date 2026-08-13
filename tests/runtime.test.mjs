@@ -417,6 +417,8 @@ test("planning corrections receive the retained qualification failure and affect
   assert.match(request.prompt, /tests\/unit\/test_contract\.py/);
   assert.match(request.prompt, /Explicitly own every source or test path/);
   assert.match(request.prompt, /smallest focused manifest commands/);
+  assert.match(request.prompt, /Every package, including documentation-only or configuration-only packages/);
+  assert.match(request.prompt, /never emit an empty array or None/);
 });
 
 test("context manifests report description truncation independently across every prompt shape", () => {
@@ -565,6 +567,38 @@ test("implementation prompts make the no-change marker part of one unambiguous o
   assert.match(request.prompt, /<no-changes-needed>\{"reason":"one sentence citing the repository evidence"\}<\/no-changes-needed>/);
   assert.match(request.prompt, /marker is mandatory for every no-change outcome/);
   assert.match(request.prompt, /fail the package as an unproven empty diff/);
+});
+
+test("work-package prompts use only the exact approved specification and plan", () => {
+  const task = createTask({
+    id: "AH-APPROVED-CONTEXT",
+    artifacts: [
+      { id: "SPEC-1", stage: "specification", name: "task-specification.md", content: "APPROVED SPEC", createdAt: "2026-08-01T00:00:00.000Z" },
+      { id: "PLAN-1", stage: "plan", name: "implementation-plan.md", content: "SUPERSEDED PLAN", createdAt: "2026-08-01T00:01:00.000Z" },
+      { id: "PLAN-2", stage: "plan", name: "implementation-plan-r2.md", content: "EXACT APPROVED PLAN", createdAt: "2026-08-01T00:02:00.000Z" },
+      { id: "PLAN-3", stage: "plan", name: "implementation-plan-r3.md", content: "UNAPPROVED LATER PLAN", createdAt: "2026-08-01T00:04:00.000Z" },
+    ],
+    approvals: [
+      { id: "APP-SPEC", stage: "specification", artifactId: "SPEC-1", note: "", createdAt: "2026-08-01T00:00:30.000Z" },
+      { id: "APP-PLAN", stage: "plan", artifactId: "PLAN-2", note: "", createdAt: "2026-08-01T00:03:00.000Z" },
+    ],
+  });
+  const request = buildWorkPackageRequest(task, {
+    id: "S1",
+    title: "Use the approved handoff",
+    description: "Do not read rejected plan revisions.",
+    dependencies: [],
+    ownedPaths: ["server/prompts.mjs"],
+    verificationCommandIds: ["unit"],
+  }, { baseRevision: "a".repeat(40) });
+
+  assert.match(request.prompt, /APPROVED SPEC/);
+  assert.match(request.prompt, /EXACT APPROVED PLAN/);
+  assert.doesNotMatch(request.prompt, /SUPERSEDED PLAN|UNAPPROVED LATER PLAN/);
+  assert.deepEqual(
+    request.contextManifest.sources.filter((source) => source.kind === "artifact").map((source) => source.id),
+    ["SPEC-1", "PLAN-2"],
+  );
 });
 
 test("context manifests report title truncation at 299, 300, and 301 characters", () => {
@@ -2904,6 +2938,83 @@ test("surfaces the merged candidate, target ref, and a copy-only promotion comma
   });
 });
 
+test("raises a GitHub PR at Human Approval and renders automatic merge tracking", () => {
+  return withWorkspace(async ({ RuntimeCommandBar, RuntimeTaskWorkspace, nextAction, toTaskRunState }) => {
+    const candidate = {
+      id: "C1",
+      revisionNumber: 3,
+      status: "awaiting_human_approval",
+      baseRevision: "a".repeat(40),
+      headRevision: "b".repeat(40),
+      baseBranch: "main",
+      branch: "agent-harness/ah-999-c1",
+      revisions: [],
+    };
+    const approvalTask = createTask({
+      status: "awaiting-human-approval",
+      currentStage: "approval",
+      candidates: [candidate],
+      gateFreshness: {
+        "dev-review": makeGateFreshness("dev-review", { fresh: true, candidateRevision: 3 }),
+        test: makeGateFreshness("test", { fresh: true, candidateRevision: 3 }),
+        "final-review": makeGateFreshness("final-review", { fresh: true, candidateRevision: 3 }),
+      },
+    });
+    assert.equal(nextAction(approvalTask).action, "open-pr");
+    const approvalMarkup = renderToStaticMarkup(React.createElement(RuntimeCommandBar, {
+      task: approvalTask,
+      viewedStageId: "approval",
+      onRun: async () => {},
+      onAction: async () => {},
+      onFinishGrill: async () => {},
+    }));
+    assert.match(approvalMarkup, /Approve &amp; raise PR/);
+    assert.match(approvalMarkup, /push only the exact reviewed candidate SHA/i);
+
+    const waitingTask = createTask({
+      ...approvalTask,
+      status: "awaiting-pr-merge",
+      candidates: [{ ...candidate, status: "pull_request_open" }],
+      pullRequestIntent: {
+        candidateId: "C1",
+        candidateRevision: 3,
+        baseRevision: "a".repeat(40),
+        headRevision: "b".repeat(40),
+        targetBranch: "main",
+        headBranch: "agent-harness/ah-999-c1-r3-bbbbbbbb",
+        repository: "acme/widgets",
+        number: 84,
+        url: "https://github.com/acme/widgets/pull/84",
+        note: "",
+        status: "open",
+        startedAt: "2026-08-01T12:00:00.000Z",
+        openedAt: "2026-08-01T12:01:00.000Z",
+        mergedAt: null,
+        closedAt: null,
+        mergeCommitRevision: null,
+        lastCheckedAt: "2026-08-01T12:02:00.000Z",
+        lastError: null,
+        consecutivePollFailures: 0,
+      },
+    });
+    assert.equal(toTaskRunState(waitingTask.status), "needs-input");
+    assert.equal(nextAction(waitingTask).action, "reconcile-pr");
+    const waitingMarkup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task: waitingTask,
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+    }));
+    assert.match(waitingMarkup, /Awaiting PR merge/);
+    assert.match(waitingMarkup, /Awaiting GitHub merge/);
+    assert.match(waitingMarkup, /#84/);
+    assert.match(waitingMarkup, /Open PR on GitHub/);
+    assert.match(waitingMarkup, /Check GitHub now/);
+  });
+});
+
 test("filters structured activity and renders test run and artifact drilldown", () => {
   return withWorkspace(async ({ RunActivity, filterRunActivity }) => {
     const runBase = {
@@ -3336,6 +3447,63 @@ test("keeps plan approval primary while exposing evidence-backed revision", () =
     assert.match(exhaustedMarkup, />Grant one Plan attempt</);
     assert.doesNotMatch(exhaustedMarkup, />Revise plan</);
     assert.doesNotMatch(exhaustedMarkup, />Approve plan</);
+  });
+});
+
+test("renders only backend-authorized failed Plan recovery and names the failed stage", () => {
+  return withWorkspace(async ({ RuntimeCommandBar, RuntimeTaskWorkspace, nextAction }) => {
+    const baseProps = {
+      onRun: async () => {},
+      onAction: async () => {},
+      onFinishGrill: async () => {},
+    };
+    const failedPlan = createTask({
+      status: "failed",
+      currentStage: "plan",
+      attemptsByStage: { plan: 1 },
+      stageRunLimits: { plan: 3 },
+      error: "Every work package needs at least one repository manifest command ID.",
+      actionEligibility: {
+        generatedAt: "2026-08-11T00:58:24.901Z",
+        actions: { plan: { allowed: true, reason: null } },
+      },
+    });
+    assert.equal(nextAction(failedPlan).action, "plan");
+    const retryMarkup = renderToStaticMarkup(React.createElement(RuntimeCommandBar, {
+      ...baseProps,
+      task: failedPlan,
+      viewedStageId: "plan",
+    }));
+    assert.match(retryMarkup, />Retry Impl plan</);
+    assert.doesNotMatch(retryMarkup, /No safe retry available/);
+
+    const workspaceMarkup = renderToStaticMarkup(React.createElement(RuntimeTaskWorkspace, {
+      task: failedPlan,
+      onBack: async () => {},
+      onRun: async () => {},
+      onCancel: async () => {},
+      onAction: async () => {},
+      onDecision: async () => {},
+      onCloseTask: async () => {},
+    }));
+    assert.match(workspaceMarkup, /Implementation plan failed/);
+    assert.doesNotMatch(workspaceMarkup, /Test failed/);
+
+    const deniedPlan = {
+      ...failedPlan,
+      actionEligibility: {
+        generatedAt: "2026-08-11T00:59:24.901Z",
+        actions: { plan: { allowed: false, reason: "The plan stage has exhausted its retry allowance." } },
+      },
+    };
+    const deniedMarkup = renderToStaticMarkup(React.createElement(RuntimeCommandBar, {
+      ...baseProps,
+      task: deniedPlan,
+      viewedStageId: "plan",
+    }));
+    assert.match(deniedMarkup, /No safe action available/);
+    assert.match(deniedMarkup, /plan stage has exhausted its retry allowance/);
+    assert.doesNotMatch(deniedMarkup, />Retry Impl plan</);
   });
 });
 
@@ -3793,7 +3961,7 @@ test("disables task closure while merge reconciliation is pending", () => {
       onDecision: async () => {},
       onCloseTask: async () => {},
     }));
-    assert.match(markup, /disabled=""[^>]*title="Wait for the pending merge reconciliation before closing this task\."[^>]*>.*Close task/s);
+    assert.match(markup, /disabled=""[^>]*title="Wait for the pending GitHub PR lifecycle before closing this task\."[^>]*>.*Close task/s);
   });
 });
 

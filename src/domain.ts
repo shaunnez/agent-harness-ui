@@ -12,7 +12,14 @@ export const stageIds = [
 ] as const;
 
 export type StageId = (typeof stageIds)[number];
-export const scoutRoleIds = ["scout-code-path", "scout-dependency", "scout-pattern", "scout-schema", "scout-test-inventory", "scout-user-journey"] as const;
+export const scoutRoleIds = [
+  "scout-code-path",
+  "scout-dependency",
+  "scout-pattern",
+  "scout-schema",
+  "scout-test-inventory",
+  "scout-user-journey",
+] as const;
 export type ScoutRoleId = (typeof scoutRoleIds)[number];
 export type AgentRoleId = StageId | "repair" | ScoutRoleId;
 export const agentRoleIds: AgentRoleId[] = [...stageIds.slice(0, -1), "repair", ...scoutRoleIds, "approval"];
@@ -84,7 +91,6 @@ export interface NewTaskDraft {
   attachments?: Array<{ name: string; type: string; size: number; data: string }>;
 }
 
-
 import type { RuntimeTask, RuntimeTaskSummary, RuntimeUsage } from "./domain/runtime.ts";
 import {
   getEffectiveRunStage,
@@ -107,29 +113,30 @@ export function runtimeTaskToRecentTask(task: RuntimeTask | RuntimeTaskSummary):
     task.status === "archived"
       ? "Archived"
       : task.workflow === "investigate" && task.continuedByTaskId
-      ? "Continued"
-      : task.status === "closed"
-      ? "Closed"
-      : task.status === "completed"
-      ? "Completed"
-      : task.status === "merged-to-target"
-      ? "Needs input"
-      : task.status === "merging"
-      ? "Needs input"
-      : task.status === "queued" ||
-          task.status.startsWith("awaiting-") ||
-          task.status.startsWith("ready-for-")
-        ? "Needs input"
-        : task.status === "failed" ||
-            task.status === "blocked" ||
-            task.status === "cancelled" ||
-            task.status === "repair-required"
-          ? "Blocked"
-          : task.status === "running" || task.status === "cancelling"
-            ? "Running"
-            : "Needs input";
+        ? "Continued"
+        : task.status === "closed"
+          ? "Closed"
+          : task.status === "completed"
+            ? "Completed"
+            : task.status === "merged-to-target"
+              ? "Needs input"
+              : task.status === "merging"
+                ? "Needs input"
+                : task.status === "queued" ||
+                    task.status.startsWith("awaiting-") ||
+                    task.status.startsWith("ready-for-")
+                  ? "Needs input"
+                  : task.status === "failed" ||
+                      task.status === "blocked" ||
+                      task.status === "cancelled" ||
+                      task.status === "repair-required"
+                    ? "Blocked"
+                    : task.status === "running" || task.status === "cancelling"
+                      ? "Running"
+                      : "Needs input";
   const effectiveStage = getEffectiveRunStage(task);
-  const effectiveStageLabel = workflowStages.find((stage) => stage.id === effectiveStage)?.shortLabel ?? effectiveStage;
+  const effectiveStageLabel =
+    workflowStages.find((stage) => stage.id === effectiveStage)?.shortLabel ?? effectiveStage;
   return {
     id: task.id,
     title: task.title,
@@ -142,26 +149,37 @@ export function runtimeTaskToRecentTask(task: RuntimeTask | RuntimeTaskSummary):
     ),
     stageRun: getEffectiveStageRunAttempts(task),
     stageRunLimit: getEffectiveStageRunLimit(task),
-    stageRunLabel: effectiveStage === task.currentStage ? `${effectiveStageLabel} run` : `${effectiveStageLabel} repair budget run`,
+    stageRunLabel:
+      effectiveStage === task.currentStage
+        ? `${effectiveStageLabel} run`
+        : `${effectiveStageLabel} repair budget run`,
     tokens: formatTokenCount(task.usage.totalTokens),
     cost: formatApproximateCost(task.usage.cost),
     inputTokens: formatTokenCount(task.usage.inputTokens),
     uncachedInputTokens: formatTokenCount(
-      Math.max(
-        0,
-        task.usage.inputTokens - task.usage.cachedInputTokens - (task.usage.cacheWriteTokens ?? 0),
-      ),
+      Math.max(0, task.usage.inputTokens - task.usage.cachedInputTokens - (task.usage.cacheWriteTokens ?? 0)),
     ),
     outputTokens: formatTokenCount(task.usage.outputTokens),
     cachedTokens: formatTokenCount(task.usage.cachedInputTokens),
     cacheRate: formatCacheRate(task.usage),
-    models: (task.models?.length ? task.models : [{ provider: "openai" as const, model: task.agentConfig?.model ?? "gpt-5.6-luna" }]).map((item) => ({
-      provider: item.provider === "anthropic" || item.model.startsWith("claude-") ? "claude" as const : "codex" as const,
+    models: (task.models?.length
+      ? task.models
+      : [{ provider: "openai" as const, model: task.agentConfig?.model ?? "gpt-5.6-luna" }]
+    ).map((item) => ({
+      provider:
+        item.provider === "anthropic" || item.model.startsWith("claude-")
+          ? ("claude" as const)
+          : ("codex" as const),
       model: item.model,
     })),
     priority: `${task.priority[0]?.toUpperCase()}${task.priority.slice(1)}` as RecentTask["priority"],
     startedAt: formatTaskDate(task.startedAt),
-    endedAt: formatTaskDate(task.archive?.archivedAt ?? task.closure?.closedAt ?? task.completedAt ?? (task.status === "running" ? null : task.updatedAt)),
+    endedAt: formatTaskDate(
+      task.archive?.archivedAt ??
+        task.closure?.closedAt ??
+        task.completedAt ??
+        (task.status === "running" ? null : task.updatedAt),
+    ),
     updatedAt: formatTaskDate(task.updatedAt),
   };
 }
@@ -173,9 +191,7 @@ export function formatApproximateCost(value: number | null | undefined) {
   return `$${value.toFixed(2)}`;
 }
 
-export function formatCacheRate(
-  usage: Pick<RuntimeUsage, "inputTokens" | "cachedInputTokens">,
-) {
+export function formatCacheRate(usage: Pick<RuntimeUsage, "inputTokens" | "cachedInputTokens">) {
   if (!usage.inputTokens) return "\u2014";
   return `${Math.round((usage.cachedInputTokens / usage.inputTokens) * 100)}%`;
 }

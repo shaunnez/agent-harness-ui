@@ -65,7 +65,7 @@ const runStateCopy: Record<TaskRunState, string> = {
   running: "Running",
   paused: "Paused",
   "needs-input": "Needs input",
-  failed: "Test failed",
+  failed: "Failed",
   repairing: "Repairing",
   blocked: "Blocked",
   "awaiting-approval": "Awaiting approval",
@@ -76,7 +76,7 @@ const runStateCopy: Record<TaskRunState, string> = {
   archived: "Archived",
 };
 
-export function StateBadge({ state }: { state: TaskRunState }) {
+export function StateBadge({ state, label }: { state: TaskRunState; label?: string }) {
   const StateIcon =
     state === "failed" || state === "blocked"
       ? XCircle
@@ -84,13 +84,13 @@ export function StateBadge({ state }: { state: TaskRunState }) {
         ? CheckCircle
         : state === "closed" || state === "continued" || state === "archived"
           ? Circle
-        : state === "needs-input" || state === "awaiting-approval" || state === "merged-to-target"
-          ? WarningCircle
-          : Info;
+          : state === "needs-input" || state === "awaiting-approval" || state === "merged-to-target"
+            ? WarningCircle
+            : Info;
   return (
     <span className={`state-badge state-badge--${state}`}>
       <StateIcon aria-hidden size={14} weight="fill" />
-      {runStateCopy[state]}
+      {label ?? runStateCopy[state]}
     </span>
   );
 }

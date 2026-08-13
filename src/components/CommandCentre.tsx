@@ -4,6 +4,7 @@ import {
   Clock,
   Cpu,
   CurrencyDollar,
+  FileCode,
   GitBranch,
   HourglassMedium,
   ShieldCheck,
@@ -30,6 +31,29 @@ import { WorkflowProgressRing } from "./WorkflowProgressRing";
 
 function isGateStatus(status: RuntimeTaskSummary["status"]) {
   return status.startsWith("awaiting-") || status.startsWith("ready-for-");
+}
+
+function currentTaskEvidence(task: RuntimeTaskSummary) {
+  const stageArtifact = [...task.artifacts]
+    .filter((artifact) => artifact.stage === task.currentStage)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
+  const latestArtifact =
+    stageArtifact ??
+    [...task.artifacts].sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
+  const batches = new Set((task.workPackages ?? []).map((workPackage) => workPackage.batch));
+  const candidate = task.candidates?.at(-1);
+  const evidence = [latestArtifact?.name ?? "No handoff artifact yet"];
+  if (task.workPackages?.length) {
+    evidence.push(
+      `${task.workPackages.length} package${task.workPackages.length === 1 ? "" : "s"} / ${batches.size} batch${batches.size === 1 ? "" : "es"}`,
+    );
+  }
+  evidence.push(
+    candidate
+      ? `${candidate.id} r${candidate.revisionNumber} · ${candidate.status.replaceAll("-", " ")}`
+      : "No candidate yet",
+  );
+  return evidence.join(" · ");
 }
 
 export function CommandCentre({
@@ -59,8 +83,9 @@ export function CommandCentre({
   // Archived tasks leave every list on this screen, including the attention list — archiving is
   // how an operator says "stop showing me this". The spend totals below deliberately still count
   // them: that money was really spent, and quietly dropping it would misreport the run cost.
-  const visibleTasks = runtimeTasks.filter((task) =>
-    task.status !== "archived" && !(task.workflow === "investigate" && task.continuedByTaskId));
+  const visibleTasks = runtimeTasks.filter(
+    (task) => task.status !== "archived" && !(task.workflow === "investigate" && task.continuedByTaskId),
+  );
   const openTasks = visibleTasks.filter((task) => task.status !== "closed");
   const recentTasks = [...openTasks]
     .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
@@ -168,19 +193,27 @@ export function CommandCentre({
                         ? "Checking the loopback companion and persisted task store."
                         : "Create a task to start a real ten-stage Evidence Gate workflow."}
               </p>
-              {activeTask ? (
-                <div className="current-run__meta">
-                  <span className="mono">{activeTask.id}</span>
-                  <PriorityBadge priority={activeTask.priority.toLowerCase() as "low" | "medium" | "high"} />
-                  <ModelStack models={activeTask.models} compact />
-                  <span>
-                    <Clock size={15} /> {activeTask.duration}
-                  </span>
-                  <span>
-                    <GitBranch size={15} /> {activeTask.stageRunLabel ?? `${activeTask.stage} run`}{" "}
-                    {activeTask.stageRun} of {activeTask.stageRunLimit}
-                  </span>
-                </div>
+              {activeRuntimeTask && activeTask ? (
+                <>
+                  <div className="current-run__evidence">
+                    <FileCode size={15} aria-hidden />
+                    <span>{currentTaskEvidence(activeRuntimeTask)}</span>
+                  </div>
+                  <div className="current-run__meta">
+                    <span className="mono">{activeTask.id}</span>
+                    <PriorityBadge
+                      priority={activeTask.priority.toLowerCase() as "low" | "medium" | "high"}
+                    />
+                    <ModelStack models={activeTask.models} compact />
+                    <span>
+                      <Clock size={15} /> {activeTask.duration}
+                    </span>
+                    <span>
+                      <GitBranch size={15} /> {activeTask.stageRunLabel ?? `${activeTask.stage} run`}{" "}
+                      {activeTask.stageRun} of {activeTask.stageRunLimit}
+                    </span>
+                  </div>
+                </>
               ) : null}
             </div>
             <div className="current-run__progress">

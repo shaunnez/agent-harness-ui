@@ -23,6 +23,17 @@ const store = process.env.AGENT_HARNESS_STORE === "json"
 await store.init();
 const orchestrator = new TaskOrchestrator(store);
 await orchestrator.recoverMergeIntents();
+await orchestrator.pollPullRequests();
+const configuredPullRequestPollIntervalMs = Number(process.env.AGENT_HARNESS_GITHUB_POLL_MS ?? 30_000);
+const pullRequestPollIntervalMs = Number.isFinite(configuredPullRequestPollIntervalMs)
+  ? Math.max(5_000, configuredPullRequestPollIntervalMs)
+  : 30_000;
+const pullRequestPoller = setInterval(() => {
+  void orchestrator.pollPullRequests().catch((error) => {
+    console.error(JSON.stringify({ event: "github_pr_poll_failed", error: error.message }));
+  });
+}, pullRequestPollIntervalMs);
+pullRequestPoller.unref();
 const server = createApiServer({
   store,
   orchestrator,
@@ -44,6 +55,7 @@ server.listen(port, "127.0.0.1", () => {
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, () => server.close(() => {
+    clearInterval(pullRequestPoller);
     store.close?.();
     process.exit(0);
   }));

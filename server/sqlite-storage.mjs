@@ -71,19 +71,36 @@ export function migrateSqliteSchema(db) {
 }
 
 export function syncTaskCollection(db, table, taskId, items, project) {
-  const existingIds = db.prepare(`SELECT id FROM ${table} WHERE task_id = ?`).all(taskId)
-    .map((row) => row.id);
+  const existingRows = db.prepare(`SELECT * FROM ${table} WHERE task_id = ?`).all(taskId);
+  const existingById = new Map(existingRows.map((row) => [row.id, row]));
   const incomingIds = new Set(items.map((item) => item.id));
   const remove = db.prepare(`DELETE FROM ${table} WHERE task_id = ? AND id = ?`);
-  for (const id of existingIds) {
+  for (const id of existingById.keys()) {
     if (!incomingIds.has(id)) remove.run(taskId, id);
   }
   for (const [ordinal, item] of items.entries()) {
     const row = project(item, ordinal);
+    if (storedCollectionRowMatches(table, existingById.get(row.id), row)) continue;
     if (table === "artifacts") upsertArtifact(db, taskId, row);
     else if (table === "events") upsertEvent(db, taskId, row);
     else upsertRun(db, taskId, row);
   }
+}
+
+function storedCollectionRowMatches(table, stored, projected) {
+  if (!stored || Number(stored.ordinal) !== projected.ordinal) return false;
+  if (stored.payload_json !== projected.payload) return false;
+  if (table === "artifacts") {
+    return stored.created_at === projected.sort &&
+      stored.stage === projected.type &&
+      stored.metadata_json === projected.metadata;
+  }
+  if (table === "events") {
+    return stored.occurred_at === projected.sort && stored.category === projected.type;
+  }
+  return stored.started_at === projected.sort &&
+    stored.stage === projected.type &&
+    stored.status === projected.status;
 }
 
 export function querySqlitePage(db, {

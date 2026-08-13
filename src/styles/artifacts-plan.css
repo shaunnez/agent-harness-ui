@@ -112,8 +112,7 @@
   box-shadow: var(--shadow-popover);
 }
 .artifact-viewer .runtime-context-disclosure {
-
-    padding: 18px 22px;
+  padding: 18px 22px;
 }
 
 .artifact-viewer > header {

@@ -285,9 +285,11 @@ export function buildWorkPackagePrompt(task, workPackage, slice) {
 }
 
 export function buildWorkPackageRequest(task, workPackage, slice) {
+  const specification = approvedArtifactForStage(task, "specification");
+  const plan = approvedArtifactForStage(task, "plan");
   const artifactContext = selectArtifactContext(
-    task.artifacts
-      .filter((artifact) => ["specification", "plan"].includes(artifact.stage))
+    [specification, plan]
+      .filter(Boolean)
       .map((artifact) => ({ artifact, prefix: `## ${artifact.stage}: ${artifact.name}\n`, contentLimit: 12_000 })),
     24_000,
     "oldest",
@@ -543,6 +545,19 @@ function latestByStage(task, stages) {
     .filter(Boolean);
 }
 
+function approvedArtifactForStage(task, stage) {
+  const approval = [...(task.approvals ?? [])]
+    .reverse()
+    .find((entry) => entry.stage === stage);
+  if (approval?.artifactId) {
+    const exact = (task.artifacts ?? []).find((artifact) => artifact.id === approval.artifactId);
+    if (exact?.stage === stage) return exact;
+  }
+  const artifacts = (task.artifacts ?? []).filter((artifact) => artifact.stage === stage);
+  if (!approval) return artifacts.at(-1) ?? null;
+  return artifacts.filter((artifact) => artifact.createdAt <= approval.createdAt).at(-1) ?? null;
+}
+
 function narrativeArtifactContent(value) {
   const text = String(value ?? "");
   const patchStart = text.search(/<details><summary>(?:Candidate|Package) patch/i);
@@ -615,7 +630,7 @@ function structuredOutputInstruction(stageId, candidate = null, task = null) {
     return `\n\nAt the end of the Grill questions section, include exactly one JSON block between <grill-questions> and </grill-questions> tags with this shape:\n\n<grill-questions>\n{"questions":[{"question":"A consequential question","whyItMatters":"Why the answer changes implementation","options":[{"label":"Option A","description":"Tradeoff","recommended":true},{"label":"Option B","description":"Tradeoff","recommended":false}],"allowCustom":true}]}\n</grill-questions>\n\nUse zero questions when repository evidence and safe reversible defaults settle everything. Provide two to four mutually exclusive options per question and exactly one recommended option.`;
   }
   if (stageId === "plan") {
-    return `\n\nRead .agent-harness/verification.json and reference only command ids it declares. At the end of the Work package manifest section, include exactly one JSON block between <work-packages> and </work-packages> tags with this shape:\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Small outcome","description":"Exact implementation responsibility","dependencies":[],"ownedPaths":["src/example.ts"],"verificationCommandIds":["test"]}]}\n</work-packages>\n\nUse 1-8 packages. IDs must be S1, S2, and so on. Dependencies must reference earlier package IDs and form an acyclic graph. Split only where ownership and verification are genuinely separable. verificationCommandIds must be the smallest focused subset of the repository-owned argv manifest needed to qualify that package.`;
+    return `\n\nRead .agent-harness/verification.json and reference only command ids it declares. At the end of the Work package manifest section, include exactly one JSON block between <work-packages> and </work-packages> tags with this shape:\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Small outcome","description":"Exact implementation responsibility","dependencies":[],"ownedPaths":["src/example.ts"],"verificationCommandIds":["test"]}]}\n</work-packages>\n\nUse 1-8 packages. IDs must be S1, S2, and so on. Dependencies must reference earlier package IDs and form an acyclic graph. Split only where ownership and verification are genuinely separable. Every package, including documentation-only or configuration-only packages, must contain at least one verificationCommandIds entry from the repository manifest; never emit an empty array or None. If a proposed package cannot be independently qualified by any declared command, combine it with a package that can. verificationCommandIds must be the smallest focused subset of the repository-owned argv manifest needed to qualify that package.`;
   }
   if (stageId === "test") {
     // Deliberately empty. The focused-test-evidence block used to be requested here, and the

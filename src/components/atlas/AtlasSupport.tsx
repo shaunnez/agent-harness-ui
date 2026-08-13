@@ -325,6 +325,7 @@ function getInspectorAction(task: RuntimeTaskSummary, tone: ReturnType<typeof ge
   if (tone === "blocked") return { label: "Resolve blocker", stageId: task.currentStage };
   if (task.status === "awaiting-human-approval")
     return { label: "Review & continue", stageId: "approval" as StageId };
+  if (task.status === "awaiting-pr-merge") return { label: "Open PR status", stageId: "approval" as StageId };
   if (task.status.startsWith("awaiting-")) return { label: "Provide input", stageId: task.currentStage };
   if (tone === "running") return { label: "Open live task", stageId: task.currentStage };
   if (tone === "complete") return { label: "View task", stageId: task.currentStage };

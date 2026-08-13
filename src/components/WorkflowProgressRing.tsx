@@ -1,12 +1,6 @@
 import type { CSSProperties } from "react";
 
-export function WorkflowProgressRing({
-  completed,
-  total,
-}: {
-  completed: number;
-  total: number;
-}) {
+export function WorkflowProgressRing({ completed, total }: { completed: number; total: number }) {
   const safeTotal = Math.max(total, 1);
   const completeStages = Math.max(0, Math.min(completed, safeTotal));
   const percentage = Math.round((completeStages / safeTotal) * 100);

@@ -223,7 +223,8 @@
   width: auto;
 }
 
-.sidebar--collapsed .repository-switcher, .sidebar--collapsed .provider-connections {
+.sidebar--collapsed .repository-switcher,
+.sidebar--collapsed .provider-connections {
   display: none;
 }
 .sidebar--collapsed .brand-row {
@@ -263,16 +264,18 @@
 }
 
 .sidebar-profile__toggle {
-  background: none; 
+  background: none;
   border: none;
   cursor: pointer;
   padding: 0px;
 }
 
-.sidebar-profile__toggle:focus, .sidebar-profile__toggle:focus-visible, .sidebar-profile__toggle:active, .sidebar-profile__toggle:hover {
+.sidebar-profile__toggle:focus,
+.sidebar-profile__toggle:focus-visible,
+.sidebar-profile__toggle:active,
+.sidebar-profile__toggle:hover {
   outline: 2px solid var(--blue);
   outline-offset: -2px;
-
 }
 
 /* Shared controls */

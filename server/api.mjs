@@ -8,6 +8,7 @@ import {
   normalizeEvaluationInput,
   normalizeExperimentInput,
 } from "./evaluation.mjs";
+import { PROJECTED_ACTIONS, runActionAdmission } from "./action-policy.mjs";
 import { defaultWorktreeRoot, GitWorktreeManager } from "./git-worktree.mjs";
 import { assertHttpBoundary, corsHeaders } from "./http-security.mjs";
 import { normalizeModelId, POLICY_IDS, readExecutionProviderCatalog } from "./model-catalog.mjs";
@@ -20,6 +21,7 @@ import {
   stageRunLimitFor,
 } from "./run-activity.mjs";
 import { SCOUT_NAMES } from "./scouts.mjs";
+import { inspectRepositoryContract } from "./repository-contract.mjs";
 import { selectWorkflowProfile, WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
 import {
   findTaskArtifact,
@@ -33,14 +35,15 @@ import { isCanonicalCommitId } from "../src/commit-id.ts";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
-const RUNTIME_SCHEMA_VERSION = 9;
+const RUNTIME_SCHEMA_VERSION = 10;
 const GRILL_POLICIES = new Set(["manual", "auto-accept-recommendations"]);
 const DIFF_CHAR_LIMIT = 300_000;
 const OUTPUT_LIMIT = 512 * 1024;
+const ROUTED_TASK_ACTIONS = new Set([...PROJECTED_ACTIONS.filter((action) => action !== "continue-implementation"), "cancel"]);
 
 const requestMetrics = new WeakMap();
 
-function send(response, status, value) {
+function send(response, status, value, extraHeaders = {}) {
   const body = JSON.stringify(value);
   const bytes = Buffer.byteLength(body);
   const metric = requestMetrics.get(response);
@@ -50,6 +53,7 @@ function send(response, status, value) {
     "content-length": String(bytes),
     "server-timing": `app;dur=${durationMs.toFixed(2)}`,
     "x-agent-harness-response-bytes": String(bytes),
+    ...extraHeaders,
   });
   response.end(body);
   metric?.report({
@@ -58,6 +62,25 @@ function send(response, status, value) {
     status,
     durationMs: Math.round(durationMs * 100) / 100,
     responseBytes: bytes,
+    ...(extraHeaders["x-agent-harness-error-category"]
+      ? { errorCategory: extraHeaders["x-agent-harness-error-category"] }
+      : {}),
+  });
+}
+
+function sendError(response, error) {
+  const status = error.statusCode ?? 400;
+  const firstApplicationFrame = String(error.stack ?? "").split("\n").find((line) => line.includes("/server/")) ?? "";
+  const category = status >= 500
+    ? "operational"
+    : status === 409
+      ? "conflict"
+      : error.statusCode != null || firstApplicationFrame.includes("/server/api.mjs")
+        ? "request"
+        : "operational";
+  send(response, status, { error: error.message }, {
+    "x-agent-harness-error-category": category,
+    "x-agent-harness-retryable": category === "operational" ? "true" : "false",
   });
 }
 
@@ -189,7 +212,7 @@ export function createApiServer({
         response.writeHead(204, corsHeaders(request.headers.origin));
         response.end();
       } catch (error) {
-        send(response, error.statusCode ?? 400, { error: error.message });
+        sendError(response, error);
       }
       return;
     }
@@ -260,6 +283,12 @@ export function createApiServer({
         send(response, 200, await orchestrator.proposeOnboarding(body?.repositoryPath));
         return;
       }
+      if (request.method === "POST" && url.pathname === "/api/runtime/repository-contract") {
+        const body = await readJson(request);
+        const repositoryPath = await validateRepository(body?.repositoryPath);
+        send(response, 200, { contract: await inspectRepositoryContract(repositoryPath) });
+        return;
+      }
       if (request.method === "POST" && url.pathname === "/api/runtime/onboarding/approve") {
         if (typeof orchestrator.approveOnboarding !== "function") throw new Error("Repository onboarding is unavailable in this runtime.");
         const body = await readJson(request);
@@ -267,9 +296,11 @@ export function createApiServer({
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/runtime/worktrees") {
-        const tasks = typeof store.listSummaries === "function"
-          ? await store.listSummaries()
-          : (await store.list()).map(projectTaskSummary);
+        const tasks = typeof store.listWorktreeTasks === "function"
+          ? await store.listWorktreeTasks()
+          : typeof store.listSummaries === "function"
+            ? await store.listSummaries()
+            : (await store.list()).map(projectTaskSummary);
         const entries = tasks.flatMap(worktreeEntriesForTask);
         const rows = await worktrees.inventory(entries);
         send(response, 200, { rows });
@@ -299,7 +330,10 @@ export function createApiServer({
       }
       const taskWorktreesMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/worktrees$/);
       if (request.method === "GET" && taskWorktreesMatch) {
-        const task = await store.get(decodeURIComponent(taskWorktreesMatch[1]));
+        const taskId = decodeURIComponent(taskWorktreesMatch[1]);
+        const task = typeof store.getCore === "function"
+          ? await store.getCore(taskId)
+          : await store.get(taskId);
         if (!task) {
           send(response, 404, { error: "Task not found." });
           return;
@@ -524,10 +558,13 @@ export function createApiServer({
       if (request.method === "GET" && taskMatch) {
         const id = decodeURIComponent(taskMatch[1]);
         const core = url.searchParams.get("view") === "core";
-        const persistedTask = await store.get(id);
+        const usedCoreStore = core && typeof store.getCore === "function";
+        const persistedTask = usedCoreStore
+          ? await store.getCore(id)
+          : await store.get(id);
         const task = persistedTask ? withActionEligibility(persistedTask) : null;
         send(response, task ? 200 : 404, task
-          ? { task: core ? projectTaskCore(task) : task }
+          ? { task: core && !usedCoreStore ? projectTaskCore(task) : task }
           : { error: "Task not found." });
         return;
       }
@@ -552,8 +589,8 @@ export function createApiServer({
           return;
         }
         if (task.status === "running") throw new Error("Cancel the active run before closing this task.");
-        if (task.status === "merging" || task.mergeIntent?.status === "pending") {
-          send(response, 409, { error: "Wait for the pending merge reconciliation before closing this task." });
+        if (task.status === "merging" || task.mergeIntent?.status === "pending" || ["publishing", "open"].includes(task.pullRequestIntent?.status)) {
+          send(response, 409, { error: "Wait for the pending GitHub PR lifecycle before closing this task." });
           return;
         }
         const input = await readJson(request);
@@ -578,7 +615,8 @@ export function createApiServer({
             !draft.activeRunKind &&
             draft.status !== "closed" &&
             draft.status !== "merging" &&
-            draft.mergeIntent?.status !== "pending"
+            draft.mergeIntent?.status !== "pending" &&
+            !["publishing", "open"].includes(draft.pullRequestIntent?.status)
           ), (draft) => {
             draft.status = "closed";
             draft.activeRunKind = null;
@@ -596,7 +634,7 @@ export function createApiServer({
           });
         } catch (error) {
           if (error.code !== "TASK_TRANSITION_CONFLICT") throw error;
-          send(response, 409, { error: "Task state changed or merge reconciliation began before it could be closed." });
+          send(response, 409, { error: "Task state changed or GitHub PR reconciliation began before it could be closed." });
           return;
         }
         send(response, 200, { task: closed });
@@ -619,8 +657,8 @@ export function createApiServer({
           send(response, 409, { error: "Cancel the active run before archiving this task." });
           return;
         }
-        if (task.status === "merging" || task.mergeIntent?.status === "pending") {
-          send(response, 409, { error: "Wait for the pending merge reconciliation before archiving this task." });
+        if (task.status === "merging" || task.mergeIntent?.status === "pending" || ["publishing", "open"].includes(task.pullRequestIntent?.status)) {
+          send(response, 409, { error: "Wait for the pending GitHub PR lifecycle before archiving this task." });
           return;
         }
         const note = String((await readJson(request))?.note ?? "").trim().slice(0, 2_000);
@@ -641,7 +679,8 @@ export function createApiServer({
             draft.status !== "cancelling" &&
             !draft.activeRunKind &&
             draft.status !== "merging" &&
-            draft.mergeIntent?.status !== "pending"
+            draft.mergeIntent?.status !== "pending" &&
+            !["publishing", "open"].includes(draft.pullRequestIntent?.status)
           ), (draft) => {
             // `previousStatus` is recorded because archiving is a *visibility* decision, not a
             // verdict on the work: the status it interrupted is the only remaining evidence of
@@ -895,10 +934,8 @@ export function createApiServer({
         }
       }
 
-      const actionMatch = url.pathname.match(
-        /^\/api\/tasks\/([^/]+)\/(run|cancel|approve-spec|approve-plan|specification|plan|implement|continue-package|repair|review|test|retry-test|final-review|approve-merge|reconcile-merge|complete-merged|grant-retry|refresh-candidate|rebuild-candidate|restart-implementation)$/,
-      );
-      if (request.method === "POST" && actionMatch) {
+      const actionMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/([^/]+)$/);
+      if (request.method === "POST" && actionMatch && ROUTED_TASK_ACTIONS.has(actionMatch[2])) {
         const id = decodeURIComponent(actionMatch[1]);
         const task = await store.get(id);
         if (!task) {
@@ -912,7 +949,7 @@ export function createApiServer({
           return;
         }
 
-        const notes = ["approve-spec", "approve-plan", "approve-merge", "complete-merged"].includes(action)
+        const notes = ["approve-spec", "approve-plan", "approve-merge", "open-pr", "complete-merged"].includes(action)
           ? await readJson(request)
           : {};
         if (action === "approve-spec") {
@@ -926,12 +963,22 @@ export function createApiServer({
           return;
         }
         if (action === "approve-merge") {
-          await orchestrator.approveMerge(id, notes.note ?? "");
-          send(response, 200, { merged: true });
+          await orchestrator.approvePullRequest(id, notes.note ?? "");
+          send(response, 200, { pullRequestOpened: true });
+          return;
+        }
+        if (action === "open-pr") {
+          await orchestrator.approvePullRequest(id, notes.note ?? "");
+          send(response, 200, { pullRequestOpened: true });
           return;
         }
         if (action === "reconcile-merge") {
           const reconciled = await orchestrator.reconcileMerge(id);
+          send(response, 200, { reconciled: true, task: withActionEligibility(reconciled) });
+          return;
+        }
+        if (action === "reconcile-pr") {
+          const reconciled = await orchestrator.reconcilePullRequest(id);
           send(response, 200, { reconciled: true, task: withActionEligibility(reconciled) });
           return;
         }
@@ -1099,46 +1146,16 @@ export function createApiServer({
           return;
         }
 
-        const runConfiguration = {
-          run: {
-            kind: "investigation",
-            statuses: ["queued", "failed", "cancelled"],
-            stages: ["triage", "scouts", "grill"],
-          },
-          specification: { kind: "specification", statuses: ["failed", "cancelled"], stages: ["specification"] },
-          plan: { kind: "planning", statuses: ["awaiting-plan-approval", "failed", "cancelled"], stages: ["plan", "implement"] },
-          implement: {
-            kind: "implementation",
-            statuses: ["ready-for-implementation", "failed", "cancelled"],
-            stages: ["implement"],
-          },
-          repair: {
-            kind: "repair",
-            statuses: ["repair-required", "failed", "cancelled"],
-            stages: ["implement", "dev-review", "test", "final-review"],
-          },
-          review: { kind: "review", statuses: ["ready-for-review", "review-retry-required", "failed", "cancelled"], stages: ["dev-review"] },
-          test: { kind: "test", statuses: ["ready-for-test", "failed", "cancelled"], stages: ["test"] },
-          "final-review": {
-            kind: "final-review",
-            statuses: ["ready-for-final-review", "failed", "cancelled"],
-            stages: ["final-review"],
-          },
-        }[action];
-        // Candidate-gate actions must reach the orchestrator's exact-target
-        // preflight even when the prior gate left the task blocked or awaiting
-        // repair. The preflight can then replace that stale blocker with the safe
-        // target-refresh action without spending an attempt. All other actions keep
-        // the ordinary API status guard.
-        const candidateGateAction = ["review", "test", "final-review"].includes(action);
-        if (
-          !runConfiguration ||
-          !runConfiguration.stages.includes(task.currentStage) ||
-          (!candidateGateAction && !runConfiguration.statuses.includes(task.status))
-        ) {
-          send(response, 409, { error: `Task cannot run ${action} while it is ${task.status}.` });
+        const admission = runActionAdmission(task, action);
+        if (!admission?.allowed) {
+          send(response, 409, {
+            error: admission?.code === "retry-exhausted"
+              ? "The current stage has exhausted its retry allowance."
+              : admission?.reason ?? `Task cannot run ${action} while it is ${task.status}.`,
+          });
           return;
         }
+        const runConfiguration = admission.configuration;
         if (action === "plan" && task.status === "awaiting-plan-approval") {
           const latestPlanArtifact = task.artifacts?.filter((artifact) => artifact.stage === "plan").at(-1);
           const latestDecision = task.decisions?.at(-1);
@@ -1149,21 +1166,7 @@ export function createApiServer({
             return;
           }
         }
-        const candidate = task.candidates?.at(-1);
-        if (action === "implement" && candidate?.status === "repair_required") {
-          send(response, 409, { error: "Use the repair action to create a new revision of this candidate." });
-          return;
-        }
-        if (action === "repair" && candidate?.status !== "repair_required") {
-          send(response, 409, { error: "The current candidate is not awaiting repair." });
-          return;
-        }
         const runStage = runConfiguration.kind === "repair" ? "implement" : task.currentStage;
-        const stageAttempts = task.attemptsByStage?.[runStage] ?? 0;
-        if (!candidateGateAction && (task.status === "blocked" || stageAttempts >= stageRunLimitFor(task, runStage))) {
-          send(response, 409, { error: "The current stage has exhausted its retry allowance." });
-          return;
-        }
         const started = await orchestrator.start(id, runConfiguration.kind, action === "plan" && task.currentStage === "implement"
           ? {
               onReserve: (draft) => {
@@ -1201,33 +1204,10 @@ export function createApiServer({
 
       send(response, 404, { error: "Not found." });
     } catch (error) {
-      send(response, error.statusCode ?? 400, { error: error.message });
+      sendError(response, error);
     }
   });
 }
-
-const PROJECTED_ACTIONS = [
-  "run",
-  "continue-implementation",
-  "approve-spec",
-  "approve-plan",
-  "specification",
-  "plan",
-  "implement",
-  "continue-package",
-  "repair",
-  "review",
-  "test",
-  "retry-test",
-  "final-review",
-  "approve-merge",
-  "reconcile-merge",
-  "complete-merged",
-  "refresh-candidate",
-  "rebuild-candidate",
-  "restart-implementation",
-  "grant-retry",
-];
 
 function withActionEligibility(task) {
   return {
@@ -1246,11 +1226,6 @@ function actionEligibilityFor(task, action) {
   const running = task.status === "running" || task.status === "cancelling" ||
     Boolean(task.activeRunKind || task.activeRunReservationId || (task.activeRunIds?.length ?? 0) > 0);
   if (running) return deny("Wait for the active run to finish before starting another workflow action.");
-  if (action === "run") {
-    return ["queued", "failed", "cancelled"].includes(task.status) && ["triage", "scouts", "grill"].includes(task.currentStage)
-      ? allow()
-      : deny("This task is not eligible to start or retry its read-only investigation stage.");
-  }
   if (action === "continue-implementation") {
     if (task.workflow !== "investigate" || task.status !== "completed") return deny("Only a completed investigate-only task can continue to implementation.");
     return allow();
@@ -1259,6 +1234,17 @@ function actionEligibilityFor(task, action) {
     const retainedPending = task.status === "merging" && task.mergeIntent?.status === "pending";
     const retryableFailure = task.status === "blocked" && task.blocker?.code === "merge-reconciliation" && task.mergeIntent?.status === "failed";
     return retainedPending || retryableFailure ? allow() : deny("This task does not have a retained merge intent that can be reconciled.");
+  }
+  if (action === "reconcile-pr") {
+    const publishing = task.status === "merging" && task.pullRequestIntent?.status === "publishing";
+    const open = task.status === "awaiting-pr-merge" && task.pullRequestIntent?.status === "open";
+    const retryableFailure = task.status === "blocked" &&
+      task.blocker?.code === "pull-request-publication" && task.pullRequestIntent?.status === "failed";
+    const closed = task.status === "blocked" &&
+      task.blocker?.code === "pull-request-closed" && task.pullRequestIntent?.status === "closed";
+    return publishing || open || retryableFailure || closed
+      ? allow()
+      : deny("This task does not have a retained GitHub PR intent that can be reconciled.");
   }
   if (action === "refresh-candidate") {
     return task.status === "blocked" && task.blocker?.code === "target-diverged"
@@ -1292,6 +1278,14 @@ function actionEligibilityFor(task, action) {
       return !freshness?.fresh || freshness.candidateId !== candidate.id || freshness.candidateRevision !== candidate.revisionNumber;
     });
     return stale ? deny(`Approval is blocked until ${stale} is fresh for the exact candidate revision.`) : allow();
+  }
+  if (action === "open-pr") {
+    if (task.status !== "awaiting-human-approval" || candidate?.status !== "awaiting_human_approval") return deny();
+    const stale = CANDIDATE_GATE_STAGES.find((stage) => {
+      const freshness = resolveGateFreshness(task, stage);
+      return !freshness?.fresh || freshness.candidateId !== candidate.id || freshness.candidateRevision !== candidate.revisionNumber;
+    });
+    return stale ? deny(`PR approval is blocked until ${stale} is fresh for the exact candidate revision.`) : allow();
   }
   if (action === "complete-merged") return task.status === "merged-to-target" ? allow() : deny();
   if (action === "continue-package") {
@@ -1328,23 +1322,12 @@ function actionEligibilityFor(task, action) {
       ? allow()
       : deny("Record the required plan correction as a task decision before revising the plan.");
   }
-  const runState = {
-    specification: { statuses: ["failed", "cancelled"], stages: ["specification"] },
-    implement: { statuses: ["ready-for-implementation", "failed", "cancelled"], stages: ["implement"] },
-    repair: { statuses: ["repair-required", "failed", "cancelled"], stages: ["implement", "dev-review", "test", "final-review"] },
-    review: { statuses: ["ready-for-review", "review-retry-required", "failed", "cancelled"], stages: ["dev-review"] },
-    test: { statuses: ["ready-for-test", "failed", "cancelled"], stages: ["test"] },
-    "final-review": { statuses: ["ready-for-final-review", "failed", "cancelled"], stages: ["final-review"] },
-  }[action];
-  if (runState) {
-    if (!runState.statuses.includes(task.status) || !runState.stages.includes(task.currentStage)) return deny();
-    if (action === "repair" && candidate?.status !== "repair_required") return deny("The current candidate is not awaiting repair.");
-    const effectiveStage = action === "repair" ? "implement" : task.currentStage;
-    const effectiveAttempts = task.attemptsByStage?.[effectiveStage] ?? 0;
-    const effectiveAllowanceExhausted = effectiveAttempts >= stageRunLimitFor(task, effectiveStage);
-    if (task.status === "blocked" || effectiveAllowanceExhausted) return deny(`The ${effectiveStage} stage has exhausted its retry allowance.`);
-    return allow();
-  }
+  const runAdmission = runActionAdmission(task, action);
+  if (runAdmission) return {
+    allowed: runAdmission.allowed,
+    reason: runAdmission.reason,
+    mode: runAdmission.mode,
+  };
   return deny();
 }
 
