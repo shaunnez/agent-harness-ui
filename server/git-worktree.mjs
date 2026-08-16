@@ -84,6 +84,60 @@ export class GitWorktreeManager {
     return pending;
   }
 
+  ensureCandidate(candidate) {
+    const run = () => this.#ensureCandidate(candidate);
+    const pending = this.#prepareQueue.then(run, run);
+    this.#prepareQueue = pending.then(
+      () => undefined,
+      () => undefined,
+    );
+    return pending;
+  }
+
+  async #ensureCandidate(candidate) {
+    const repositoryRoot = await this.repositoryRoot(candidate.repositoryRoot);
+    const worktreePath = path.resolve(candidate.worktreePath);
+    if (!worktreePath.startsWith(`${this.#root}${path.sep}`)) {
+      throw new Error("Candidate recovery refused a worktree outside harness storage.");
+    }
+    if (
+      await stat(worktreePath)
+        .then((result) => result.isDirectory())
+        .catch(() => false)
+    ) {
+      return false;
+    }
+    if (!candidate.headRevision || !candidate.branch) {
+      throw new Error("Candidate recovery requires a recorded branch and revision.");
+    }
+    const branchRef = `refs/heads/${candidate.branch}`;
+    const branchResult = await git(repositoryRoot, ["rev-parse", "--verify", branchRef], {
+      allowFailure: true,
+    });
+    if (branchResult.code !== 0 || branchResult.stdout.trim() !== candidate.headRevision) {
+      throw new Error("Candidate recovery refused a branch that no longer matches its recorded revision.");
+    }
+    const commitResult = await git(repositoryRoot, ["cat-file", "-e", `${candidate.headRevision}^{commit}`], {
+      allowFailure: true,
+    });
+    if (commitResult.code !== 0) {
+      throw new Error("Candidate recovery could not find its recorded revision.");
+    }
+    await mkdir(path.dirname(worktreePath), { recursive: true });
+    try {
+      await git(repositoryRoot, ["worktree", "add", worktreePath, candidate.branch]);
+      await provisionDependencies(repositoryRoot, worktreePath);
+      await this.verifyCandidate(candidate);
+    } catch (error) {
+      await deprovisionDependencies(worktreePath).catch(() => []);
+      await git(repositoryRoot, ["worktree", "remove", "--force", worktreePath], {
+        allowFailure: true,
+      });
+      throw error;
+    }
+    return true;
+  }
+
   async #prepare(task, candidateId, options = {}) {
     const repositoryRoot = await this.repositoryRoot(task.repositoryPath);
     if (!options.allowHistoricalBase && !options.allowDirtySource) await assertClean(repositoryRoot);
@@ -701,7 +755,8 @@ export class GitWorktreeManager {
       gitClean: exists ? clean : null,
       lifecycleState,
       currentState,
-      cleanupReady: Boolean(exists && clean && currentState !== "active"),
+      retainedRequired: Boolean(entry.retainedRequired),
+      cleanupReady: Boolean(exists && clean && currentState !== "active" && !entry.retainedRequired),
     };
   }
 

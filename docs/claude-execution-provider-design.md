@@ -933,7 +933,10 @@ instead of a global N. Tracked on #41.
 `server/claude-exec-budget.mjs` decides before a Claude stage spawns whether the budget
 will hold at that cwd in that repository, and reports the remaining headroom either way.
 `claudeExecutionProvider.preflight` exposes it; `#assertProviderConfinement` calls it
-ahead of the canary, so an exhausted budget refuses before anything is spawned.
+ahead of the canary. An exhausted write-stage budget refuses before anything is spawned.
+An exhausted read-only budget instead removes Bash from that run and continues with
+permission-scoped `Read`, `Grep`, and `Glob`: the limit prevents a shell from starting,
+not the Claude CLI or its built-in filesystem readers.
 
 The number comes from measurement rather than from a reimplementation of the CLI's rule
 expansion. A model of that expansion would look exact and go stale silently, in the
@@ -964,17 +967,20 @@ Two things measured while building it, both of which changed the design:
    the deny-path *set* varies by layout, neither of which is an input to the
    extrapolation. Making it pessimistic enough to be safe (charging every cwd character
    at the worst measured 2,670 B rate) produced refusals at worktree counts that in fact
-   run. So **only a measurement, or an observed E2BIG, refuses a stage.** The bound
-   reports headroom, is labelled a bound wherever it appears, and when it lands past the
-   ceiling it says so and names the mid-run guard instead of refusing.
+   run. So **only a measurement, or an observed E2BIG, marks Bash unavailable.** The
+   bound reports headroom, is labelled a bound wherever it appears, and when it lands
+   past the ceiling it says so and names the mid-run guard instead of disabling Bash.
 
 Three deliberate consequences:
 
-- **Refuse, never prune.** The refusal names the count, the ceiling, the fact that the
-  budget is shared per repository, and `git worktree list` / `git worktree remove <path>`
-  / `git worktree prune`. Nothing is removed automatically — a worktree may hold
-  uncommitted work, so pruning to make room for a stage would trade a loud recoverable
-  failure for a quiet unrecoverable one — and there is no flag that skips the check.
+- **Degrade read-only, refuse write, never prune.** A measured read-only exhaustion is
+  surfaced in run activity and continues without Bash. Write stages still refuse because
+  edits that cannot be checked by a shell must never be committed. The write-stage
+  refusal names the count, the ceiling, the fact that the budget is shared per repository,
+  and `git worktree list` / `git worktree remove <path>` / `git worktree prune`. Nothing
+  is removed automatically — a worktree may hold uncommitted work, so pruning to make
+  room for a stage would trade a loud recoverable failure for a quiet unrecoverable one —
+  and there is no flag that skips the check.
 - **Headroom is a first-class output.** `provider.status()` carries `execArgBudget` with
   bytes used, bytes available, cost per additional worktree and how many more fit, so the
   ceiling is visible before an operator queues work rather than after a stage dies. The
@@ -982,8 +988,9 @@ Three deliberate consequences:
 - **`856ed50` stays.** The budget is per repository, so a task can register a worktree
   between the preflight and the spawn, or during the run. A correct preflight can still be
   overtaken, which is the argument for a generous reserve rather than an exact threshold,
-  and it is why the mid-run shell-start failure check is not redundant: the preflight stops
-  a doomed stage from starting, the guard stops an overtaken stage from being committed.
+  and it is why the mid-run shell-start failure check is not redundant: the preflight
+  removes Bash from a read-only run or stops a doomed write stage, while the guard stops
+  an overtaken run from being trusted or committed.
 
 ### Operational requirements the spike did not surface
 

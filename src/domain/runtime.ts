@@ -325,6 +325,7 @@ export interface RuntimeWorktreeInventoryRow {
   gitExists: boolean;
   gitHeadRevision: string | null;
   gitClean: boolean | null;
+  retainedRequired: boolean;
   cleanupReady: boolean;
 }
 

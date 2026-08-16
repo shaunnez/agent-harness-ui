@@ -26,6 +26,11 @@ export function createCandidateWorktreeRoutes(context) {
         send(response, 404, { error: "Worktree entry not found for this task." });
         return true;
       }
+      if (entry.retainedRequired) {
+        throw new Error(
+          "This candidate worktree is still required by the unfinished task and cannot be removed.",
+        );
+      }
       // Re-derive cleanup readiness now, from the filesystem, rather than trusting a
       // client-held row: the state behind it can change between the list request and
       // this one, and a currently active worktree must never be pulled out from under

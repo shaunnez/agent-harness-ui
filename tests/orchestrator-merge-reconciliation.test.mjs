@@ -278,8 +278,15 @@ test("blocks a candidate gate on target drift before reserving an attempt", asyn
         },
       ];
     });
+    let restoreCalls = 0;
     const orchestrator = new TaskOrchestrator(store, {
-      worktreeManager: { mergeState: async () => "diverged" },
+      worktreeManager: {
+        ensureCandidate: async () => {
+          restoreCalls += 1;
+          return true;
+        },
+        mergeState: async () => "diverged",
+      },
     });
 
     await assert.rejects(
@@ -291,6 +298,11 @@ test("blocks a candidate gate on target drift before reserving an attempt", asyn
     assert.equal(blocked.blocker.code, "target-diverged");
     assert.equal(blocked.attemptsByStage["dev-review"], 2);
     assert.equal(blocked.activeRunKind, null);
+    assert.equal(restoreCalls, 1);
+    assert.equal(
+      blocked.events.some((event) => event.title === "Candidate worktree restored"),
+      true,
+    );
     assert.match(blocked.events.at(-1).detail, /No gate attempt was spent/);
   } finally {
     await rm(directory, { recursive: true, force: true });

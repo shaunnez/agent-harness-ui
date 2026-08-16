@@ -23,10 +23,12 @@ import { runProcess } from "./process-runtime.mjs";
  *    produce a number that looks exact and goes stale — silently, and in the
  *    optimistic direction — the first time the CLI changes profile generation. So the
  *    authoritative path measures the real argv of a real CLI run (`measuredBytes`),
- *    and **only a measurement may refuse a stage.** `extrapolatedExecArgBoundBytes` is
- *    a fallback for *reporting* headroom when no measurement could be taken, it is
- *    labelled a bound and not an estimate everywhere it appears, and it is not allowed
- *    to gate anything — see the note on that function for the measured reason why.
+ *    and **only a measurement may mark Bash unavailable.** The provider may continue a
+ *    read-only stage without Bash; write stages fail closed.
+ *    `extrapolatedExecArgBoundBytes` is a fallback for *reporting* headroom when no
+ *    measurement could be taken, it is labelled a bound and not an estimate everywhere
+ *    it appears, and it is not allowed to gate anything — see the note on that function
+ *    for the measured reason why.
  * 2. **Every input the stage varies, the check must vary** — the standing rule above
  *    `classifyClaudeWriteCanary`. What this check varies: repository, registered
  *    worktree count, cwd, and sandbox posture. What it deliberately holds fixed, and
@@ -146,8 +148,8 @@ export async function readRegisteredWorktrees(cwd) {
  * sweep using the measured per-worktree cost and the *worst* measured per-character
  * cost, never subtracting below the measured floor.
  *
- * It is not allowed to refuse a stage, and this is measured rather than cautious. It has
- * been observed wrong in **both** directions, which is the whole argument:
+ * It is not allowed to mark Bash unavailable, and this is measured rather than cautious.
+ * It has been observed wrong in **both** directions, which is the whole argument:
  *
  * - 3 worktrees under a deep `/private/var/folders` root measured **765,023** where this
  *   gives **731,555** — ~33 KB *optimistic*, the direction that would wave through a
@@ -178,8 +180,8 @@ export function extrapolatedExecArgBoundBytes({ registeredWorktrees, cwdLength }
 
 /**
  * Decide what an observed budget state means, and report the numbers an operator can
- * act on rather than only a boolean. Pure, so the safety-critical property — that an
- * exhausted budget refuses and names the remedy — is testable without spawning a CLI.
+ * act on rather than only a boolean. Pure, so the safety-critical Bash-capacity verdict
+ * and its operator remedy are testable without spawning a CLI.
  *
  * Precedence, highest first:
  *
@@ -320,7 +322,7 @@ export function execArgBudgetRefusal({
   const spend = usedBytes == null ? "already exceeds" : `needs ${usedBytes.toLocaleString("en-US")} of`;
   const ceiling = `${limitBytes.toLocaleString("en-US")}-byte OS exec argument ceiling`;
   return [
-    `A Claude ${sandbox} stage cannot spawn${where}: the Bash sandbox profile is inlined on the command line, and this repository's`,
+    `The Bash tool for a Claude ${sandbox} stage cannot start${where}: its sandbox profile is inlined on the command line, and this repository's`,
     `${registeredWorktrees ?? "unknown"} registered worktrees put it at ${spend} the ${ceiling}`,
     observed
       ? "— a probe run could not start a shell here at all."

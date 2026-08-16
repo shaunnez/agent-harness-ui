@@ -181,7 +181,11 @@ export async function getClaudeStatus({ canary = false, cwd = null } = {}) {
     // canary was paid for, because a probe is a real CLI run and the status view must
     // stay free; `source` says which of the two it is, and a bound never disables
     // execution on its own.
-    const execArgBudget = await preflightClaudeExecArgBudget({ cwd, measure: canary }).catch(() => null);
+    const execArgBudget = await preflightClaudeStage({
+      sandbox: "read-only",
+      cwd,
+      measure: canary,
+    }).catch(() => null);
     const budgetExhausted = execArgBudget?.ok === false;
     return {
       id: "claude",
@@ -729,6 +733,13 @@ export const CLAUDE_SYSTEM_PROMPT =
 export const CLAUDE_READ_ONLY_TOOLS = Object.freeze(["Read", "Grep", "Glob", "Bash"]);
 
 /**
+ * Read-only remains useful when macOS cannot exec Claude's generated Bash sandbox
+ * profile. These tools are permission-scoped to the stage cwd and do not start a
+ * shell, so they avoid the profile-size limit without widening access.
+ */
+export const CLAUDE_FILESYSTEM_READ_ONLY_TOOLS = Object.freeze(["Read", "Grep", "Glob"]);
+
+/**
  * Write stages add exactly the two editing tools. `NotebookEdit`, `WebFetch`,
  * `WebSearch` and `Task` stay absent, so they are not present in the request at all.
  */
@@ -862,6 +873,11 @@ export function buildClaudeSpawn({
   sessionId,
   tools = null,
 }) {
+  const selectedTools = tools ?? claudeToolsFor(sandbox);
+  const allowedTools = new Set(claudeToolsFor(sandbox));
+  if (!Array.isArray(selectedTools) || selectedTools.some((tool) => !allowedTools.has(tool))) {
+    throw new Error(`Claude tools must stay within the ${sandbox} stage allowlist.`);
+  }
   const args = [
     "-p",
     "--output-format",
@@ -887,7 +903,7 @@ export function buildClaudeSpawn({
     ...(sandbox === "workspace-write" ? ["--permission-mode", "acceptEdits"] : []),
     ...(effort ? ["--effort", effort] : []),
     "--tools",
-    (tools ?? claudeToolsFor(sandbox)).join(","),
+    selectedTools.join(","),
   ];
   return { args, stdin: prompt };
 }
@@ -900,6 +916,7 @@ export async function runClaude({
   sandbox = "read-only",
   networkAccess = false,
   extraReadRoots = [],
+  tools = null,
   tempDirectory = null,
   model,
   reasoning,
@@ -931,6 +948,7 @@ export async function runClaude({
     model,
     effort,
     sessionId,
+    tools,
   });
   const parser = createClaudeStreamParser();
   // Abort the child the moment the host stops being able to exec a shell. Waiting adds
@@ -1147,8 +1165,9 @@ export function hostCheckCacheKey(kind, sandbox, inputs) {
  * overtaken. That is the argument for the generous `PREFLIGHT_RESERVE_BYTES` rather
  * than an exact threshold, and it is why the shell-start failure check added in
  * `856ed50` (`shellStartFailureError`, reached from `runClaude`) is not redundant with
- * this and must not be removed as such: this one stops a doomed stage from starting,
- * that one stops a stage overtaken mid-run from being committed.
+ * this and must not be removed as such: this one removes Bash from a read-only stage or
+ * stops a doomed write stage, and that one stops a run overtaken mid-flight from being
+ * trusted or committed.
  *
  * The probe may run at the stage's real cwd only because it mutates nothing — it runs
  * `/usr/bin/true`. The write canary must never be reused for this: it writes files,
@@ -1186,6 +1205,51 @@ export async function preflightClaudeExecArgBudget({
   });
   canaryCache.set(key, { at: now(), result });
   return result;
+}
+
+/**
+ * Convert Bash capacity into stage capacity.
+ *
+ * An exhausted exec-argument budget means Claude cannot start the Bash tool; it
+ * does not mean the CLI or its permission-scoped Read/Grep/Glob tools cannot run.
+ * Read-only stages therefore continue with that smaller surface. Write stages keep
+ * failing closed because edits without shell verification must never be committed.
+ */
+export function applyClaudeReadOnlyShellFallback(budget) {
+  if (budget?.ok !== false || budget?.sandbox !== "read-only") return budget;
+  return {
+    ...budget,
+    ok: true,
+    degraded: true,
+    shellAvailable: false,
+    tools: [...CLAUDE_FILESYSTEM_READ_ONLY_TOOLS],
+    bashRefusal: budget.refusal ?? budget.detail ?? null,
+    refusal: null,
+    detail:
+      "The sandboxed Bash tool exceeds this host's exec argument capacity, so this read-only stage will continue with permission-scoped Read, Grep, and Glob inspection. No worktrees were removed.",
+  };
+}
+
+export async function preflightClaudeStage(options = {}) {
+  return applyClaudeReadOnlyShellFallback(await preflightClaudeExecArgBudget(options));
+}
+
+async function runClaudeStage(request) {
+  const capacity = await preflightClaudeStage({ sandbox: request.sandbox, cwd: request.cwd });
+  if (capacity?.ok === false) throw new Error(capacity.refusal ?? capacity.detail);
+  if (capacity?.degraded) {
+    request.onEvent?.({
+      type: "activity",
+      tone: "warning",
+      title: "Repository shell unavailable",
+      detail: capacity.detail,
+      runtimeScope: "provider-capacity",
+    });
+  }
+  return runClaude({
+    ...request,
+    ...(capacity?.tools ? { tools: capacity.tools } : {}),
+  });
 }
 
 /**
@@ -1679,12 +1743,11 @@ export const claudeExecutionProvider = {
     // "content not retained" discipline are unchanged; only the streamed cap moves.
     stdoutBudgetBytes: CLAUDE_STDOUT_BUDGET,
   }),
-  run: runClaude,
+  run: runClaudeStage,
   canary: runClaudeSandboxCanary,
   // Checked before the canary and before anything is spawned. Separate from `canary`
   // because it answers a different question — the canary asks whether confinement holds
-  // on this host, this asks whether the stage can be exec'd in this repository at all —
-  // and because its refusal names a remedy the operator applies rather than a
-  // configuration fault.
-  preflight: preflightClaudeExecArgBudget,
+  // on this host, this asks whether Bash can be exec'd in this repository. Read-only can
+  // continue without Bash; write mode refuses and names the operator-owned remedy.
+  preflight: preflightClaudeStage,
 };

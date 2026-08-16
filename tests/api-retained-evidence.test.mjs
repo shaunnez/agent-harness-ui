@@ -264,6 +264,51 @@ test("serves task summaries, core polling, and retained evidence directly from S
   }
 });
 
+test("keeps core action eligibility authoritative for an exhausted candidate gate", async () => {
+  const { directory, origin, server, store } = await createServer({ sqlite: true });
+  try {
+    const response = await createTask(origin, {
+      title: "Blocked Dev Review retry",
+      description: "Retain exact-candidate evidence while authorizing one bounded retry.",
+      repositoryPath: directory,
+      workflow: "implement",
+    });
+    const { task } = await response.json();
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "dev-review";
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+      const candidate = attachAssemblyLineage(draft, {
+        id: "C1",
+        revisionNumber: 1,
+        headRevision: "candidate-c1-r1",
+        status: "ready_for_review",
+      });
+      draft.candidates.push(candidate);
+      draft.runs.push(
+        ...[1, 2, 3].map((attempt) => ({
+          id: `run-dev-review-${attempt}`,
+          stage: "dev-review",
+          status: "failed",
+        })),
+      );
+      bindLatestWorkflowAttempt(draft, "dev-review", "review");
+    });
+
+    const full = await (await fetch(`${origin}/api/tasks/${task.id}?view=full`)).json();
+    const core = await (await fetch(`${origin}/api/tasks/${task.id}?view=core`)).json();
+
+    assert.equal(full.task.actionEligibility.actions["grant-retry"].allowed, true);
+    assert.deepEqual(core.task.actionEligibility.actions, full.task.actionEligibility.actions);
+    assert.equal("events" in core.task, false);
+    assert.equal("runs" in core.task, false);
+    assert.deepEqual(core.task.artifacts, []);
+  } finally {
+    store.close();
+    await cleanup(server, directory);
+  }
+});
+
 test("returns live changelog commits, changed files, and a selected file diff", async () => {
   const { directory, origin, server } = await createServer();
   try {

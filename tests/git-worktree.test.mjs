@@ -667,6 +667,17 @@ test("provisions nested and non-Node dependencies into slice and candidate workt
       (await readFile(path.join(repository, ".venv", "pyvenv.cfg"), "utf8")).trim(),
       "home = /usr",
     );
+    assert.equal(await manager.ensureCandidate(candidate), true, "the exact retained branch is reattached");
+    assert.equal(await manager.verifyCandidate(candidate), assembled.headRevision);
+    assert.equal(
+      (
+        await readFile(path.join(candidate.worktreePath, "node_modules", "left-pad", "index.js"), "utf8")
+      ).trim(),
+      "module.exports = 1;",
+      "reattachment reprovisions dependencies",
+    );
+    assert.equal(await manager.ensureCandidate(candidate), false, "an existing candidate is left unchanged");
+    await manager.removeWorktree(candidate);
     await manager.base(task);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });

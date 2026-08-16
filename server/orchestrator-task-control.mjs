@@ -80,6 +80,23 @@ export class TaskControlOrchestrator {
     const task = await this._store.get(id);
     const candidate = currentCandidate(task);
     if (!candidate?.headRevision || task.activeRunKind || task.activeRunReservationId) return false;
+    const restored =
+      typeof this._worktrees.ensureCandidate === "function"
+        ? await this._worktrees.ensureCandidate(candidate)
+        : false;
+    if (restored) {
+      await this._store.update(id, (draft) => {
+        draft.events.push(
+          activity(
+            draft.currentStage,
+            "Candidate worktree restored",
+            `${candidate.id} was reattached at recorded revision ${candidate.headRevision.slice(0, 8)} before the gate retry.`,
+            "warning",
+            "decision",
+          ),
+        );
+      });
+    }
     if ((await this._worktrees.mergeState(candidate)) !== "diverged") return false;
     const message =
       "The target branch advanced after this candidate was created. Refresh the candidate before running another candidate-bound gate.";

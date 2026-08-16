@@ -109,11 +109,15 @@ export function createRetainedEvidenceRoutes({ store, send, withActionEligibilit
         return true;
       }
       const core = url.searchParams.get("view") === "core";
-      const usedCoreStore = core && typeof store.getCore === "function";
-      const persistedTask = usedCoreStore ? await store.getCore(id) : await store.get(id);
+      // Action admission must be derived from the authoritative retained task. The
+      // bounded SQLite core projection intentionally omits normalized runs and
+      // artifacts, but retry admission validates those identities and must fail
+      // closed when they are inconsistent. Computing eligibility after getCore()
+      // therefore turns valid exhausted candidate gates into false denials.
+      const persistedTask = await store.get(id);
       const task = persistedTask ? withActionEligibility(persistedTask) : null;
       let responseTask = task;
-      if (task && core && !usedCoreStore) {
+      if (task && core) {
         const pollState = typeof store.getPollState === "function" ? await store.getPollState(id) : null;
         responseTask = {
           ...projectTaskCore(task),

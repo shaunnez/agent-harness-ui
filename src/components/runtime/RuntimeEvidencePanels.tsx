@@ -187,6 +187,10 @@ export function RuntimeWorktreeInventory({
               label="Cleanliness"
               value={selectedRow.gitClean == null ? "unknown" : selectedRow.gitClean ? "clean" : "dirty"}
             />
+            <RuntimeRow
+              label="Workflow retention"
+              value={selectedRow.retainedRequired ? "required" : "releasable"}
+            />
             <RuntimeRow label="Cleanup" value={selectedRow.cleanupReady ? "ready" : "not ready"} />
           </div>
         </details>
@@ -213,8 +217,9 @@ export function RuntimeWorktreeInventory({
           </Button>
           {!selectedRow.cleanupReady ? (
             <small className="runtime-worktree-inventory__hint">
-              Only a clean, inactive worktree can be removed — the server re-derives that from disk at removal
-              time and refuses one that is still active.
+              {selectedRow.retainedRequired
+                ? "This candidate is still required by the unfinished task."
+                : "Only a clean, inactive worktree can be removed — the server re-derives that from disk at removal time and refuses one that is still active."}
             </small>
           ) : null}
           {removeError ? <small className="text-red">{removeError}</small> : null}
@@ -253,7 +258,9 @@ export function RuntimeWorktreeInventory({
               title={
                 row.cleanupReady
                   ? "Present, clean, and not in use — safe to remove."
-                  : "Still in use or holding uncommitted changes, so removal is refused."
+                  : row.retainedRequired
+                    ? "Still required by the unfinished task, so removal is refused."
+                    : "Still in use or holding uncommitted changes, so removal is refused."
               }
             >
               {row.cleanupReady ? "cleanup ready" : "keep retained"}

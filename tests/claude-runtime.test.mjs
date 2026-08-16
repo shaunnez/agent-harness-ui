@@ -21,9 +21,11 @@ import {
   readRegisteredWorktrees,
 } from "../server/claude-exec-budget.mjs";
 import {
+  applyClaudeReadOnlyShellFallback,
   buildClaudeEnvironment,
   buildClaudeSpawn,
   CLAUDE_ENV_DENYLIST,
+  CLAUDE_FILESYSTEM_READ_ONLY_TOOLS,
   CLAUDE_STDOUT_BUDGET,
   CLAUDE_SYSTEM_PROMPT,
   classifyClaudeSandboxCanary,
@@ -1086,6 +1088,30 @@ test("keeps stage content on stdin and off the argv", () => {
   }
 });
 
+test("can remove Bash from a read-only spawn without widening the tool allowlist", () => {
+  const { args } = buildClaudeSpawn({
+    cwd: "/tmp/worktree",
+    prompt: "Inspect the repository.",
+    model: "claude-sonnet-5",
+    effort: "high",
+    sessionId: "11111111-2222-3333-4444-555555555555",
+    tools: CLAUDE_FILESYSTEM_READ_ONLY_TOOLS,
+  });
+
+  assert.equal(args[args.indexOf("--tools") + 1], "Read,Grep,Glob");
+  assert.throws(
+    () =>
+      buildClaudeSpawn({
+        cwd: "/tmp/worktree",
+        prompt: "x",
+        model: "claude-sonnet-5",
+        sessionId: "s",
+        tools: ["Read", "Write"],
+      }),
+    /must stay within the read-only stage allowlist/,
+  );
+});
+
 test("uses one fixed system prompt for every stage", () => {
   const stages = [
     "Triage this task.",
@@ -2030,8 +2056,8 @@ test("reports exec-argument headroom as numbers an operator can act on, not a bo
 });
 
 test("refuses an exhausted exec-argument budget, names the remedy, and never prunes", () => {
-  // Measured, because only a measurement may refuse: the extrapolation has been observed
-  // landing on the wrong side of the real number, so it reports and never gates.
+  // Measured, because only a measurement may mark Bash unavailable: the extrapolation has
+  // been observed landing on the wrong side of the real number, so it reports and never gates.
   const exhausted = classifyExecArgBudget({
     sandbox: "workspace-write",
     registeredWorktrees: 40,
@@ -2060,6 +2086,38 @@ test("refuses an exhausted exec-argument budget, names the remedy, and never pru
   // The budget is shared, so the message says so — otherwise the operator reads it as a
   // property of their own stage.
   assert.match(exhausted.refusal, /per repository/);
+});
+
+test("degrades an exhausted read-only Bash budget to filesystem inspection only", () => {
+  const exhausted = classifyExecArgBudget({
+    sandbox: "read-only",
+    registeredWorktrees: 97,
+    cwdLength: 48,
+    e2bigObserved: true,
+    repositoryRoot: "/Users/dev/repository",
+  });
+  const fallback = applyClaudeReadOnlyShellFallback(exhausted);
+
+  assert.equal(exhausted.ok, false, "the Bash capacity measurement itself remains failed");
+  assert.equal(fallback.ok, true, "the read-only stage can still inspect files without Bash");
+  assert.equal(fallback.degraded, true);
+  assert.equal(fallback.shellAvailable, false);
+  assert.deepEqual(fallback.tools, ["Read", "Grep", "Glob"]);
+  assert.equal(fallback.refusal, null);
+  assert.match(fallback.bashRefusal, /97 registered worktrees/);
+  assert.match(fallback.detail, /No worktrees were removed/);
+
+  const writeBudget = classifyExecArgBudget({
+    sandbox: "workspace-write",
+    registeredWorktrees: 97,
+    cwdLength: 48,
+    e2bigObserved: true,
+  });
+  assert.equal(
+    applyClaudeReadOnlyShellFallback(writeBudget),
+    writeBudget,
+    "write stages must still fail closed when their verification shell cannot start",
+  );
 });
 
 test("an observed E2BIG outranks any computed exec-argument number", () => {
@@ -2303,10 +2361,10 @@ test("counts the registered worktrees the CLI's deny paths are generated from", 
   }
 });
 
-test("preflights the exec-argument budget before the canary and offers no way past it", async () => {
+test("preflights the exec-argument budget before the canary", async () => {
   const claude = resolveExecutionProvider("claude");
-  // The refusal has to route through the provider seam the orchestrator already calls
-  // before anything is spawned, so it cannot be reached after a stage has started.
+  // Capacity has to route through the provider seam the orchestrator already calls
+  // before anything is spawned, so write mode can refuse and read-only can remove Bash.
   assert.equal(typeof claude.preflight, "function");
   assert.equal(typeof claude.canary, "function");
 

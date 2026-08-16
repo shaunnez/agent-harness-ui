@@ -215,6 +215,21 @@ test("returns a read-only worktree inventory with slice and candidate rows", asy
     assert.equal(candidateRow.currentState, "retained");
     assert.equal(candidateRow.recordedHeadRevision, candidateCommitted.headRevision);
     assert.equal(candidateRow.gitHeadRevision, candidateCommitted.headRevision);
+    assert.equal(candidateRow.retainedRequired, true);
+    assert.equal(candidateRow.cleanupReady, false);
+
+    const refused = await fetch(
+      `${origin}/api/tasks/${candidateTask.id}/worktrees/${encodeURIComponent(`candidate:${candidateTask.id}:C1`)}`,
+      { method: "DELETE" },
+    );
+    assert.equal(refused.status, 400);
+    assert.match((await refused.json()).error, /still required by the unfinished task/);
+    assert.equal(
+      await stat(candidate.worktreePath)
+        .then(() => true)
+        .catch(() => false),
+      true,
+    );
   } finally {
     await cleanup(server, directory);
     await rm(sliceRepository, { recursive: true, force: true });

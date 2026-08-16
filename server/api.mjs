@@ -141,6 +141,7 @@ function validateStagePolicies(input, known, allowedModels, fallback) {
 // ones it safely can, so for an archived task this mostly describes whatever archiving had to
 // leave behind — an entry it could not discard without destroying uncommitted work.
 const RETIRED_TASK_STATUSES = new Set(["closed", "archived"]);
+const DISCARDABLE_CANDIDATE_TASK_STATUSES = new Set(["completed", "closed", "archived"]);
 
 function worktreeEntriesForTask(task) {
   const entries = [];
@@ -160,7 +161,9 @@ function worktreeEntriesForTask(task) {
       lifecycleState: RETIRED_TASK_STATUSES.has(task.status) ? "stale" : (workPackage.status ?? "retained"),
     });
   }
-  for (const candidate of task.candidates ?? []) {
+  const candidates = task.candidates ?? [];
+  const currentCandidate = candidates.at(-1) ?? null;
+  for (const candidate of candidates) {
     if (!candidate?.worktreePath) continue;
     entries.push({
       id: `candidate:${task.id}:${candidate.id ?? candidate.worktreePath}`,
@@ -174,6 +177,8 @@ function worktreeEntriesForTask(task) {
       headRevision: candidate.headRevision ?? null,
       recordedHeadRevision: candidate.headRevision ?? null,
       lifecycleState: RETIRED_TASK_STATUSES.has(task.status) ? "stale" : (candidate.status ?? "retained"),
+      retainedRequired:
+        candidate === currentCandidate && !DISCARDABLE_CANDIDATE_TASK_STATUSES.has(task.status),
     });
   }
   return entries;

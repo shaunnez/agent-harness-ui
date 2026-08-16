@@ -39,10 +39,10 @@ export function RuntimeRetainedEvidenceSections({
             Temporary Git copies that keep Implement and Repair changes away from your main checkout until
             approval. A <strong>slice</strong> backs one work package; a candidate worktree backs the
             assembled patch. <strong>Retained</strong> means the copy still exists on disk so its evidence
-            stays inspectable, and <strong>keep retained</strong> means it cannot be removed yet — it is
-            either still in use or has uncommitted changes. Removal is re-checked against the filesystem when
-            you ask for it, not taken from this list, so a worktree an agent is currently running in is
-            refused rather than pulled out from under it.
+            stays inspectable, and <strong>keep retained</strong> means it cannot be removed yet — it is still
+            required by the workflow, still in use, or has uncommitted changes. Removal is re-checked when you
+            ask for it, so a required candidate or a worktree an agent is currently running in is refused
+            rather than pulled out from under it.
           </p>
           <RuntimeWorktreeInventory
             inventory={worktreeInventory}

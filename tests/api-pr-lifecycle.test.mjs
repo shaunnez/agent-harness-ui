@@ -8,6 +8,7 @@ import {
   formatApprovalStage,
   formatApprovalTimestamp,
   getApprovalHistory,
+  refreshGateFreshness,
 } from "./api-test-support.mjs";
 
 test("returns server-authoritative action eligibility and never grants Human Approval retries", async () => {
@@ -100,31 +101,80 @@ test("keeps exact-candidate PR approval eligible in the SQLite compact task resp
       draft.candidates = [candidate];
       draft.status = "awaiting-human-approval";
       draft.currentStage = "approval";
-      draft.gateFreshness = Object.fromEntries(
-        ["dev-review", "test", "final-review"].map((stage) => [
-          stage,
-          {
+      draft.runs.push(
+        ...["dev-review", "test", "final-review"].map((stage, index) => {
+          const startedAt = `2026-08-04T00:0${index}:00.000Z`;
+          const completedAt = `2026-08-04T00:0${index}:01.000Z`;
+          const gateResult = {
+            schemaVersion: 1,
             stage,
+            verdict: "PASS",
+            reportedVerdict: "PASS",
             candidateId: candidate.id,
             candidateRevision: candidate.revisionNumber,
-            target: {
-              candidateId: candidate.id,
-              candidateRevision: candidate.revisionNumber,
-            },
-            state: "fresh",
-            fresh: true,
-            sourceRunId: `run-${stage}`,
-            sourceArtifactId: `artifact-${stage}`,
-            reasonCode: "fresh",
-            reasonCopy: "The latest terminal run is authoritative for the active candidate.",
-          },
-        ]),
+            evaluatedAt: completedAt,
+            blockingReasons: [],
+            findings: [],
+          };
+          return {
+            id: `run-${stage}`,
+            stage,
+            kind: stage === "dev-review" ? "review" : stage,
+            role: stage,
+            status: "completed",
+            startedAt,
+            completedAt,
+            durationMs: 1_000,
+            candidateId: candidate.id,
+            candidateRevision: candidate.revisionNumber,
+            candidateHeadRevision: candidate.headRevision,
+            workPackageId: null,
+            attempt: 1,
+            gateResult,
+            test:
+              stage === "test"
+                ? {
+                    candidateId: candidate.id,
+                    candidateRevision: candidate.revisionNumber,
+                    bindingExplicit: true,
+                    command: "npm test",
+                    status: "passed",
+                    startedAt,
+                    completedAt,
+                    durationMs: 1_000,
+                    rowCount: 1,
+                    failedRowIds: [],
+                    rows: [
+                      {
+                        id: "repository-tests",
+                        candidateId: candidate.id,
+                        candidateRevision: candidate.revisionNumber,
+                        bindingExplicit: true,
+                        title: "Repository tests",
+                        command: "npm test",
+                        status: "passed",
+                        durationMs: 1_000,
+                        artifactReferences: [],
+                        assertions: [{ label: "exit code", actual: "0", expected: "0" }],
+                        failureDetails: null,
+                      },
+                    ],
+                  }
+                : null,
+          };
+        }),
       );
+      refreshGateFreshness(draft);
     });
 
     const detail = await (await fetch(`${origin}/api/tasks/${task.id}?view=core`)).json();
     assert.equal(detail.task.gateFreshness["dev-review"].fresh, true);
-    assert.equal(detail.task.actionEligibility.actions["open-pr"].allowed, true);
+    assert.equal(detail.task.gateFreshness.test.fresh, true, JSON.stringify(detail.task.gateFreshness.test));
+    assert.equal(
+      detail.task.actionEligibility.actions["open-pr"].allowed,
+      true,
+      JSON.stringify(detail.task.actionEligibility.actions["open-pr"]),
+    );
   } finally {
     await cleanup(server, directory);
   }
