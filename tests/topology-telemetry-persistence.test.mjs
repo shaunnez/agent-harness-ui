@@ -190,3 +190,77 @@ test("settings recorded before the new reasoning stages are backfilled, not reje
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+/**
+ * Observed by booting the app against a copy of the real store: a workflow that is mostly OpenAI
+ * but plans on `claude-opus-5` was getting a critic on `gpt-5.6-luna`. That is technically a
+ * different model, but different by accident across vendors rather than opposition by design. The
+ * new stages anchor to the provider the operator chose for planning.
+ */
+test("a mixed-provider workflow gets a critic from its planner's provider, not the majority's", () => {
+  const mixed = {
+    triage: { model: "gpt-5.6-luna", reasoning: "xhigh" },
+    scouts: { model: "gpt-5.6-luna", reasoning: "xhigh" },
+    grill: { model: "claude-sonnet-5", reasoning: "high" },
+    specification: { model: "claude-opus-5", reasoning: "high" },
+    plan: { model: "claude-opus-5", reasoning: "xhigh" },
+    implement: { model: "gpt-5.6-luna", reasoning: "xhigh" },
+    repair: { model: "gpt-5.6-sol", reasoning: "high" },
+    "dev-review": { model: "claude-opus-5", reasoning: "high" },
+    test: { model: "gpt-5.6-luna", reasoning: "xhigh" },
+    "final-review": { model: "gpt-5.6-sol", reasoning: "high" },
+  };
+  const state = {
+    settings: {
+      ...defaultRuntimeSettings(),
+      stagePolicies: structuredClone(mixed),
+      profileStagePolicies: {
+        fast: structuredClone(mixed),
+        standard: structuredClone(mixed),
+        "high-risk": structuredClone(mixed),
+      },
+    },
+    tasks: [],
+  };
+  assert.equal(migratePersistedTaskState(state), true);
+
+  const policies = state.settings.stagePolicies;
+  // The majority of these policies are OpenAI, but planning is Claude, so the stages defined
+  // relative to planning follow planning.
+  assert.match(policies["plan-review"].model, /^claude-/);
+  assert.match(policies.synthesis.model, /^claude-/);
+  assert.notEqual(
+    policies["plan-review"].model,
+    policies.plan.model,
+    "the critic must still be a different model from the planner",
+  );
+  for (const profile of ["fast", "standard", "high-risk"]) {
+    assert.match(state.settings.profileStagePolicies[profile]["plan-review"].model, /^claude-/);
+  }
+});
+
+test("an all-OpenAI workflow keeps its critic on OpenAI", () => {
+  const openai = {
+    triage: { model: "gpt-5.6-luna", reasoning: "xhigh" },
+    scouts: { model: "gpt-5.6-luna", reasoning: "xhigh" },
+    grill: { model: "gpt-5.6-luna", reasoning: "xhigh" },
+    specification: { model: "gpt-5.6-luna", reasoning: "xhigh" },
+    plan: { model: "gpt-5.6-sol", reasoning: "high" },
+    implement: { model: "gpt-5.6-luna", reasoning: "xhigh" },
+    repair: { model: "gpt-5.6-luna", reasoning: "xhigh" },
+    "dev-review": { model: "gpt-5.6-sol", reasoning: "high" },
+    test: { model: "gpt-5.6-luna", reasoning: "xhigh" },
+    "final-review": { model: "gpt-5.6-luna", reasoning: "medium" },
+  };
+  const state = {
+    settings: {
+      ...defaultRuntimeSettings(),
+      stagePolicies: structuredClone(openai),
+      profileStagePolicies: {},
+    },
+    tasks: [],
+  };
+  assert.equal(migratePersistedTaskState(state), true);
+  assert.match(state.settings.stagePolicies["plan-review"].model, /^gpt-/);
+  assert.notEqual(state.settings.stagePolicies["plan-review"].model, state.settings.stagePolicies.plan.model);
+});

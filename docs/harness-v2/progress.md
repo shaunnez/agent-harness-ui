@@ -334,3 +334,36 @@ are first baselines. The honest claim they can support is "this topology execute
 measured", never "this topology is better". Real comparison needs roughly twenty paired runs that
 do not exist yet, and accumulating them is now the long pole — which was true before any of this
 work started, and is the reason Phase 1 came first.
+
+### F9 (Phase 6) — booting the app found a real bug that no test would have
+
+Nobody had started the harness with five phases of changes in it. I booted the API against a
+**copy** of the live store (`AGENT_HARNESS_DATABASE` pointed at a scratch copy, never the real
+file) and hit `/api/settings` and `/api/evaluations/summary`. Both worked, all 29 tasks stayed
+readable, and the evaluation endpoint reported 33 observational variants with the topology-aware
+methodology string.
+
+**The bug.** Shaun's live settings are a mixed-provider workflow: mostly OpenAI, but
+`plan`, `specification` and `dev-review` run on Claude. My Phase 3/5 backfill read defaults from
+`defaultRuntimeSettings()`, which uses the global `DEFAULT_EXECUTION_PROVIDER` — so a planner on
+`claude-opus-5` was getting a critic on `gpt-5.6-luna`. Technically a different model, and the
+"cross-model opposition" assertion would have passed. But different *by accident across vendors*
+rather than opposition by design, and not a choice the operator made.
+
+A majority vote over the existing policies did not fix it either: the majority genuinely is
+OpenAI, so the vote picked OpenAI and the planner stayed the odd one out.
+
+**The fix.** `POLICY_PROVIDER_ANCHORS` in `server/store.mjs`: a stage whose model choice is only
+meaningful relative to another stage's follows that stage's provider. `plan-review` exists to
+oppose `plan`, and `synthesis` is priced against the same planning tier, so both anchor to `plan`
+and fall back to the majority only when there is no anchor. Re-verified against a fresh copy of
+the live store: `plan` = `claude-opus-5`, `plan-review` = `claude-sonnet-5`, `synthesis` =
+`claude-opus-5`. Cross-model, same vendor, as designed.
+
+Two tests pin it: a mixed-provider workflow must take its critic from the planner's provider
+rather than the majority's, and an all-OpenAI workflow must keep its critic on OpenAI.
+
+**The lesson for Phase 6 proper.** This was found by starting the process, not by reading code or
+adding unit tests — the unit test I had written asserted only "the models differ", which the bug
+satisfied. It is a good argument for doing the live runs rather than treating a green suite as
+sufficient, and a reminder that an assertion can be true while the behaviour is wrong.

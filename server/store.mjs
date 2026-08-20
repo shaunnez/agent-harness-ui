@@ -2,9 +2,12 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import {
+  defaultProfileStagePolicies,
   defaultRuntimeSettings,
+  defaultStagePolicies,
   enrichUsage,
   normalizeModelId,
+  POLICY_IDS,
   providerForModelId,
   resolveTaskProvider,
 } from "./model-catalog.mjs";
@@ -266,20 +269,61 @@ function configuredModels(stagePolicies) {
   }));
 }
 
-function backfillStagePolicies(settings, defaults) {
+/**
+ * Which provider a set of stage policies is actually configured against. An operator who moved
+ * their whole workflow onto one provider should not have a newly added stage silently backfilled
+ * from the other one — that was the observed bug: a plan on `claude-opus-5` getting a critic on
+ * `gpt-5.6-luna`, which is cross-model in the wrong sense, across vendors rather than by design.
+ *
+ * The majority of the existing policies decides, which is more reliable than any single stage:
+ * `defaultProvider` can disagree with the policies actually in force.
+ */
+function configuredPolicyProvider(policies) {
+  const counts = new Map();
+  for (const policy of Object.values(policies ?? {})) {
+    const provider = providerForModelId(policy?.model);
+    if (provider) counts.set(provider, (counts.get(provider) ?? 0) + 1);
+  }
+  let winner = null;
+  for (const [provider, count] of counts) {
+    if (!winner || count > winner.count) winner = { provider, count };
+  }
+  return winner?.provider ?? null;
+}
+
+/**
+ * A stage whose model choice is only meaningful relative to another stage's. `plan-review` exists
+ * to oppose `plan`, and `synthesis` is priced against the same planning tier, so both follow the
+ * provider the operator chose for planning rather than whatever the rest of the workflow happens
+ * to use. Without this, a plan on `claude-opus-5` in a mostly-OpenAI workflow gets a critic from
+ * the other vendor — still "a different model", but different by accident rather than by design.
+ */
+const POLICY_PROVIDER_ANCHORS = Object.freeze({ "plan-review": "plan", synthesis: "plan" });
+
+/**
+ * A new reasoning stage adds a policy id. Persisted settings predate it and
+ * `validateStagePolicies` iterates POLICY_IDS, so an unbackfilled install would fail validation
+ * on a key it had no way to know about. Backfill from the defaults for the provider those
+ * settings are already using.
+ */
+function backfillStagePolicies(settings) {
   let changed = false;
-  const fill = (target, source) => {
-    if (!target || !source) return;
-    for (const [policyId, policy] of Object.entries(source)) {
-      if (target[policyId] === undefined) {
-        target[policyId] = clone(policy);
-        changed = true;
-      }
+  const fill = (target) => {
+    if (!target) return;
+    const majorityProvider = configuredPolicyProvider(target);
+    for (const policyId of POLICY_IDS) {
+      if (target[policyId] !== undefined) continue;
+      const anchor = POLICY_PROVIDER_ANCHORS[policyId];
+      const provider =
+        (anchor ? providerForModelId(target[anchor]?.model) : null) ?? majorityProvider ?? null;
+      const source = provider ? defaultProfileStagePolicies(provider).standard : defaultStagePolicies();
+      if (source[policyId] === undefined) continue;
+      target[policyId] = clone(source[policyId]);
+      changed = true;
     }
   };
-  fill(settings.stagePolicies, defaults.stagePolicies);
-  for (const [profile, policies] of Object.entries(defaults.profileStagePolicies ?? {}))
-    fill(settings.profileStagePolicies?.[profile], policies);
+  fill(settings.stagePolicies);
+  for (const policies of Object.values(settings.profileStagePolicies ?? {})) fill(policies);
   return changed;
 }
 
@@ -308,7 +352,7 @@ export function migratePersistedTaskState(state) {
     // A new reasoning stage adds a policy id. Persisted settings predate it, and
     // `validateStagePolicies` iterates POLICY_IDS, so an unbackfilled install would fail
     // validation on a key it had no way to know about. Backfill from defaults instead.
-    if (backfillStagePolicies(state.settings, defaults)) changed = true;
+    if (backfillStagePolicies(state.settings)) changed = true;
   }
   for (const task of state.tasks) {
     for (const [key, fallback] of [
