@@ -13,6 +13,7 @@ export class OrchestratorRunCoordinator {
     runRepair,
     runReviewWithFastRepair,
     runEvaluation,
+    diagnoseRunFailure,
   }) {
     this._store = store;
     this._worktrees = worktrees;
@@ -23,6 +24,14 @@ export class OrchestratorRunCoordinator {
     this._runRepair = runRepair;
     this._runReviewWithFastRepair = runReviewWithFastRepair;
     this._runEvaluation = runEvaluation;
+    /**
+     * Attribution for a run that failed outright, as opposed to a candidate that failed a gate.
+     * Observed live on AH-030: a work package that fails its own verification manifest throws
+     * from `orchestrator-work-packages.mjs` and lands here, never reaching the gate/repair path
+     * where diagnosis was originally wired — so the likeliest way a task dies was the one way it
+     * was never attributed. Optional so every existing construction keeps working untouched.
+     */
+    this._diagnoseRunFailure = diagnoseRunFailure ?? (async () => {});
   }
 
   async run(id, kind, signal) {
@@ -53,6 +62,32 @@ export class OrchestratorRunCoordinator {
         } catch {
           /* Preserve the original implementation failure when target inspection is unavailable. */
         }
+      }
+      // Attribution runs before the failure is recorded, because the update below clears
+      // `activeRunKind` and the diagnosis agent executes under the live run reservation — the
+      // same ordering the gate-path diagnosis already relies on.
+      //
+      // Scoped to implementation deliberately. An investigation, specification or planning stage
+      // that throws *is* the failure: there is no upstream chain to attribute it to that is not
+      // already the current stage, so a model call there would buy nothing. A failed
+      // implementation run is the one that carries a plan, a specification and an environment
+      // behind it, and the one AH-030 showed was going unattributed.
+      // Narrower still than "an implementation run failed": only a package that could not qualify
+      // against its own verification manifest. That is the failure AH-030 exposed and the only one
+      // with an upstream chain worth attributing. A candidate assembly conflict, a target that
+      // moved, a cancelled run — those are mechanical, and spending a model call on them would buy
+      // nothing while adding a model call to paths that never had one.
+      const qualificationFailure = /did not qualify/i.test(error?.message ?? "");
+      if (!signal.aborted && kind === "implementation" && qualificationFailure) {
+        let rewound = false;
+        try {
+          rewound = await this._diagnoseRunFailure(id, signal, { kind, error });
+        } catch {
+          /* Attribution is additive. A failed diagnosis must not mask the original failure. */
+        }
+        // A rewind has already restated the task at an earlier stage. Recording the failure on
+        // top of that would overwrite the destination with the failure it came from.
+        if (rewound) return;
       }
       await this._store.update(id, (draft) => {
         const failedKind = draft.activeRunKind ?? kind;
@@ -112,6 +147,9 @@ export class OrchestratorRunCoordinator {
           ),
         );
       });
+      // Attribution happens after the failure is recorded, so a diagnosis that itself fails
+      // leaves exactly the state this handler already produced rather than stranding the task.
+      // It classifies and may rewind; it never repairs.
     }
   }
 }

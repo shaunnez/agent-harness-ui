@@ -19,10 +19,15 @@ import { renderFailureDiagnosisMarkdown } from "./contract-rendering.mjs";
 import { admitBackjump, routeFailure } from "./failure-routing.mjs";
 import { currentCandidate } from "./orchestrator-run-policy.mjs";
 import { activity, now } from "./orchestrator-stage-support.mjs";
-import { buildFailureDiagnosisRequest } from "./prompts.mjs";
+import { buildFailureDiagnosisRequest, buildRunFailureDiagnosisRequest } from "./prompts.mjs";
 import { refreshGateFreshness, stageRunLimitFor } from "./run-activity.mjs";
 import { parseFailureDiagnosis } from "./structured-output.mjs";
-import { recordEdge, recordNodeSkipped, recordRoutingDecision } from "./topology-trace.mjs";
+import {
+  recordEdge,
+  recordNodeExecuted,
+  recordNodeSkipped,
+  recordRoutingDecision,
+} from "./topology-trace.mjs";
 
 /** Where each rewind target puts the task, using only statuses the harness already had. */
 const REWIND_STATES = Object.freeze({
@@ -161,6 +166,103 @@ export class FailureDiagnosisOrchestrator {
 
     await this._applyRewind(id, diagnosis, route);
     return false;
+  }
+
+  /**
+   * Attribution for a run that failed outright, rather than a candidate that failed a gate.
+   *
+   * AH-030 is why this exists: a work package that cannot qualify against its own verification
+   * manifest throws from `orchestrator-work-packages.mjs` and is recorded by the run coordinator,
+   * never reaching the gate/repair path where `_diagnoseFailure` is wired. So the likeliest way a
+   * task dies was the one way it was never attributed, and an environment problem — a missing
+   * binary, exit 127 — presented as a bare package failure indistinguishable from wrong code.
+   *
+   * @returns {Promise<boolean>} true when a rewind was applied, so the caller must not then
+   * record the failure over the destination it rewound to.
+   */
+  async _diagnoseRunFailure(id, signal, { kind, error }) {
+    const task = await this._store.get(id);
+    if (task.workflowProfile?.selected === "fast") {
+      await this._store.update(id, (draft) => {
+        recordNodeSkipped(
+          draft,
+          "failure-diagnosis",
+          "The fast profile cannot rewind, so a failed run escalates to standard rather than paying for attribution.",
+        );
+      });
+      return false;
+    }
+
+    const request = buildRunFailureDiagnosisRequest(task, {
+      kind,
+      errorMessage: error?.message ?? task.error,
+    });
+    const result = await this._executeAgent(
+      task,
+      "implement",
+      signal,
+      task.repositoryPath,
+      "read-only",
+      null,
+      request,
+      "Run failure diagnosis",
+      "repair",
+    );
+    const diagnosis = parseFailureDiagnosis(result.finalText);
+    const route = routeFailure(diagnosis.classification);
+    const admission = admitBackjump(task, route);
+    const rewinding = admission.admitted && !route.requiresHuman && Boolean(REWIND_STATES[route.rewindTo]);
+
+    await this._retainAgentResult(
+      id,
+      "implement",
+      {
+        ...result,
+        finalText: renderFailureDiagnosisMarkdown(diagnosis, {
+          routedTo: rewinding ? route.rewindTo : null,
+        }),
+      },
+      {
+        replace: false,
+        complete: false,
+        name: "run-failure-diagnosis.md",
+        artifactTitle: `Run failure attributed to ${diagnosis.classification}`,
+        agentRole: "failure-diagnosis",
+      },
+    );
+    // Retained with `complete: false` — diagnosis is not a stage that completes — so the
+    // retention choke point does not record it. It still ran, so it is recorded here.
+    await this._store.update(id, (draft) => {
+      recordNodeExecuted(draft, "failure-diagnosis");
+      recordEdge(draft, task.currentStage, "failure-diagnosis");
+    });
+
+    if (!rewinding) {
+      // No rewind: the task stays failed exactly as the coordinator left it, but now says which
+      // assumption broke. An ENVIRONMENT_FAILURE reported as such is the whole point — it tells
+      // the operator the code may be fine and the toolchain is not.
+      await this._store.update(id, (draft) => {
+        recordRoutingDecision(draft, {
+          at: draft.currentStage,
+          classification: diagnosis.classification,
+          rewindTo: "",
+          rationale: admission.admitted ? route.rationale : `Refused: ${admission.reason}`,
+        });
+        draft.events.push(
+          activity(
+            draft.currentStage,
+            `Run failure attributed to ${diagnosis.classification}`,
+            admission.admitted ? route.rationale : admission.reason,
+            "warning",
+            "decision",
+          ),
+        );
+      });
+      return false;
+    }
+
+    await this._applyRewind(id, diagnosis, route);
+    return true;
   }
 
   /**

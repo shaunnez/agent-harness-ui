@@ -48,7 +48,7 @@ What I did instead, and why:
 and I will reflow the top row. Otherwise the current split is the honest one: full telemetry,
 unchanged map. `plan-review` (Phase 5) is excluded from the floor plan for the same reason.
 
-### Q3 (Phase 6) — this repo cannot verify itself, so it cannot be dogfooded
+### Q3 (Phase 6) — RESOLVED, and my diagnosis of it was wrong
 
 AH-030's implementation was **correct** and still failed. The agent made exactly the right edit —
 the failure output contains `biome lint src server scripts tests worker vite.config.mjs`, the
@@ -63,8 +63,15 @@ So any repository whose verification commands need locally-installed binaries ca
 qualification in this harness. That is almost certainly why all 29 historical tasks target
 `eversor-mystrataassist` and not this repo.
 
-This is a pre-existing harness constraint, not something Phases 1-5 caused. Options, none of
-which I have taken:
+**I was wrong about the cause.** `discoverDependencyDirectories` in `server/git-worktree.mjs`
+already provisions dependency directories into every new worktree, from the source checkout. It
+worked correctly: I had pointed the task at `.claude/worktrees/mailbox-oauth-prd-revision-950e7a`,
+a git worktree that has no `node_modules` of its own (Node resolves up to the main repository's,
+which is why lint and tests ran there but provisioning found nothing to copy). The harness
+provisioned exactly what the source had, which was nothing.
+
+Fixed by running `npm ci` in the worktree so provisioning has a real source. No code change was
+needed and none was made. The options below are recorded only because they were considered:
 
 1. Populate the worktree's `node_modules` when it is created — symlink or hardlink the source
    repository's, since a worktree of the same commit has the same lockfile.
@@ -78,7 +85,7 @@ the "dependencies are already available" promise in the implement prompt becomes
 aspirational. But it touches worktree creation, which the loop's hard rules put off limits, so it
 is your call.
 
-### Q4 (Phase 6) — failure diagnosis never sees the commonest failure
+### Q4 (Phase 6) — RESOLVED: qualification failures are now attributed
 
 `routingDecisions` on AH-030 is empty and `failureDiagnosis` is null, despite the run failing.
 `_diagnoseFailure` is wired at `server/orchestrator-core.mjs:52`, on the repair path that follows
@@ -92,9 +99,30 @@ apply where it would help most, and AH-030 is exactly the case that would have b
 `ENVIRONMENT_FAILURE` and routed to environment remediation rather than presented as a bare
 package failure.
 
-Extending diagnosis to the qualification path is additive in principle — a read-only classifier
-before the existing failure handling — but it sits on the work-package path, so I have not done
-it unprompted. **This is the highest-value remaining change in the whole plan.**
+**Done.** `_diagnoseRunFailure` in `server/orchestrator-failure-diagnosis.mjs`, wired through
+`server/orchestrator-run-coordinator.mjs`, with `buildRunFailureDiagnosisRequest` in
+`server/prompts.mjs`. It reuses the existing `routeFailure` / `admitBackjump` / `_applyRewind`
+machinery unchanged, so the routing table stays the single authority and the backjump budget still
+bounds it.
+
+Three scoping decisions, each made after a test caught the previous one being too broad:
+
+1. **Attribution runs before the failure is recorded**, not after. The failure update clears
+   `activeRunKind`, and the diagnosis agent executes under the live run reservation — the same
+   ordering the gate-path diagnosis already relies on. My first attempt ran it afterwards and
+   silently did nothing, because `_executeAgent` had no reservation to run under.
+2. **Only implementation runs.** An investigation, specification or planning stage that throws
+   *is* the failure; there is no upstream chain to attribute it to that is not already the current
+   stage. Running it everywhere broke the scouts retry-allowance test.
+3. **Only a package that could not qualify** (`/did not qualify/i`). A candidate assembly conflict
+   or a moved target is mechanical. Gating only on "implementation failed" added a model call to
+   `tests/orchestrator-package-qualification.test.mjs`, which has no `runCodex` stub because it
+   never expected one — so the test hit the real runtime and hung. That test failing was the
+   design telling me the scope was wrong.
+
+A rewind returns `true` so the coordinator does not then record the failure over the destination
+it rewound to. `ENVIRONMENT_FAILURE` routes to `requiresHuman` with no rewind, so AH-030's exact
+case now leaves the task failed but says *why* — the code may be fine and the toolchain is not.
 
 ### Q2 (Phase 5) — the revise loop is operator-triggered, not automatic
 
@@ -490,3 +518,16 @@ outside the `completedStages` dedup: that set answers "is this stage done", the 
 
 Three bugs in Phases 1-5 have now been found by running the thing and none by adding tests
 afterwards. That is the finding I would keep if I could keep only one.
+
+### F12 — Q3 and Q4 closed
+
+`npm ci` in the worktree fixed Q3, which was never a harness bug (see the correction above).
+
+Q4 is real work: run failures on the qualification path are now attributed, using the Phase 4
+routing table unchanged. `tests/run-failure-diagnosis.test.mjs` pins both halves — that the
+failure is sent for attribution and the classification recorded, and that a fast run records the
+skip instead of paying for a diagnosis it cannot act on.
+
+Worth keeping: each of the three scoping decisions above was forced by a test failing, and each
+time the honest reading was "the scope is wrong", not "the test is wrong". The suite was a better
+designer than my first instinct in all three cases.

@@ -108,6 +108,7 @@ export class TaskOrchestratorCore {
       runRepair: (...args) => diagnoseThenRepair(...args),
       runReviewWithFastRepair: (...args) => evaluation._runReviewWithFastRepair(...args),
       runSpecification: (...args) => planning._runSpecification(...args),
+      diagnoseRunFailure: (...args) => failureDiagnosis._diagnoseRunFailure(...args),
     });
     taskControl = new TaskControlOrchestrator({
       store: runtime._store,
