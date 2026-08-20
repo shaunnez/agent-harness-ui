@@ -1,3 +1,5 @@
+import { recordNodeExecuted } from "./topology-trace.mjs";
+
 export const RUN_KINDS = new Set([
   "investigation",
   "specification",
@@ -145,7 +147,10 @@ export function completeGrillSession(draft, { source, acceptRemaining }) {
       : acceptedCount
         ? `Finished by the operator with ${acceptedCount} recommended assumption${acceptedCount === 1 ? "" : "s"} accepted.`
         : "All material questions were answered by the operator.";
-  if (!draft.completedStages.includes("grill")) draft.completedStages.push("grill");
+  if (!draft.completedStages.includes("grill")) {
+    draft.completedStages.push("grill");
+    recordNodeExecuted(draft, "grill");
+  }
   draft.events.push(
     activity(
       "grill",

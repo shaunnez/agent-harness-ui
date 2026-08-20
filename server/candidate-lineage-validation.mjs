@@ -1,15 +1,15 @@
 import {
-  CANDIDATE_GATE_STAGES,
-  readExecutionProvider,
-  resolvePersistedRunFreshness,
-} from "./run-activity.mjs";
-import {
   validCandidateAssemblyMembership,
   validInitialCandidateProducer,
   validPersistedTimestamp,
   validRetryCandidate,
   validRetryRunTuple,
 } from "./retry-reservation-validation.mjs";
+import {
+  CANDIDATE_GATE_STAGES,
+  readExecutionProvider,
+  resolvePersistedRunFreshness,
+} from "./run-activity.mjs";
 
 export function candidateGateAuthorizerEvidence(
   task,

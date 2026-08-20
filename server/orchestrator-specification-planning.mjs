@@ -4,7 +4,7 @@ import { activity, now } from "./orchestrator-stage-support.mjs";
 import { retainedSliceCanBeRequalified } from "./orchestrator-task-helpers.mjs";
 import { buildStageRequest } from "./prompts.mjs";
 import { parsePlanCritique, parseWorkPackages } from "./structured-output.mjs";
-import { recordEdge, recordNodeExecuted, recordNodeSkipped } from "./topology-trace.mjs";
+import { recordEdge, recordNodeSkipped } from "./topology-trace.mjs";
 import { selectVerificationCommands } from "./verification.mjs";
 import { fastEscalation } from "./workflow-profiles.mjs";
 
@@ -126,10 +126,10 @@ export class SpecificationPlanningOrchestrator {
             ? "Plan critique passed"
             : `Plan critique found ${critique.blocking.length} blocking issue${critique.blocking.length === 1 ? "" : "s"}`,
         agentRole: "plan-review",
+        topologyNode: "plan-review",
       },
     );
     await this._store.update(id, (draft) => {
-      recordNodeExecuted(draft, "plan-review");
       recordEdge(draft, "plan", "plan-review");
       draft.planCritique = critique;
       if (critique.verdict === "PASS") {

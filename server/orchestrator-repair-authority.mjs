@@ -1,12 +1,11 @@
 import { createHash } from "node:crypto";
+import { now } from "./orchestrator-stage-support.mjs";
 import {
   CANDIDATE_GATE_STAGES,
   readExecutionProvider,
   refreshGateFreshness,
   runKindFor,
 } from "./run-activity.mjs";
-
-import { now } from "./orchestrator-stage-support.mjs";
 
 export function repairAuthorizerSnapshot(task, candidate, requestedStage = null) {
   const stage =

@@ -1,14 +1,14 @@
-import { getStageMetadata } from "./prompts.mjs";
 import { enrichUsage, resolveAgentPolicy } from "./model-catalog.mjs";
+import { removeStageArtifacts } from "./orchestrator-run-policy.mjs";
+import { activity, now } from "./orchestrator-stage-support.mjs";
+import { getStageMetadata } from "./prompts.mjs";
 import {
   attachRunArtifact,
   CANDIDATE_GATE_STAGES,
   completeAgentRun,
   runEventMetadata,
 } from "./run-activity.mjs";
-
-import { now, activity } from "./orchestrator-stage-support.mjs";
-import { removeStageArtifacts } from "./orchestrator-run-policy.mjs";
+import { recordNodeExecuted } from "./topology-trace.mjs";
 
 export class RetentionOrchestrator {
   constructor({ store }) {
@@ -101,8 +101,20 @@ export class RetentionOrchestrator {
       draft.artifacts.push(artifact);
       const run = attachRunArtifact(draft, result.runId, artifact);
       const stageIsAuthoritative = !CANDIDATE_GATE_STAGES.includes(stageId) || run?.freshness?.fresh === true;
-      if (options.complete !== false && stageIsAuthoritative && !draft.completedStages.includes(stageId)) {
-        draft.completedStages.push(stageId);
+      if (options.complete !== false && stageIsAuthoritative) {
+        if (!draft.completedStages.includes(stageId)) draft.completedStages.push(stageId);
+        // Observed on the first live run (AH-030): `nodesExecuted` held only the five stages
+        // that happened to call `recordNodeExecuted` directly, so specification, plan and every
+        // execution stage were silently absent and the counter understated the graph. Recording
+        // it here — the one place a stage is marked authoritative — is what makes the trace
+        // describe the whole walk instead of the parts someone remembered to instrument.
+        //
+        // Deliberately outside the `completedStages` dedup: that set answers "is this stage
+        // done", while the trace answers "what ran". A stage that produced authoritative
+        // evidence twice ran twice, and the counters exist to show it. `topologyNode` lets a
+        // stage that files its artifact under another stage's id — the plan critic retains
+        // under "plan" so it lands in the Planning room — still be counted as itself.
+        recordNodeExecuted(draft, options.topologyNode ?? stageId);
       }
       for (const key of [
         "inputTokens",

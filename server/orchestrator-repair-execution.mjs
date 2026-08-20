@@ -1,6 +1,22 @@
-import path from "node:path";
-import os from "node:os";
 import { rm } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { candidateGateCommandLimit } from "./candidate-gate-policy.mjs";
+import { symlinkedDependencySourceRoots } from "./git-worktree.mjs";
+import { enrichUsage } from "./model-catalog.mjs";
+import {
+  assertRepairAuthorizerUnchanged,
+  sameRepairReservationAuthority,
+} from "./orchestrator-repair-authority.mjs";
+import {
+  currentCandidate,
+  resolveRunAgentPolicy,
+  stageTimeoutMs,
+  throwIfAborted,
+} from "./orchestrator-run-policy.mjs";
+import { activity, now } from "./orchestrator-stage-support.mjs";
+import { parseNoChangesNeeded, requireActiveRunReservation } from "./orchestrator-task-helpers.mjs";
+import { isProcessTimeoutError } from "./process-runtime.mjs";
 import {
   buildExecutionRequest,
   buildRepairRequest,
@@ -8,10 +24,6 @@ import {
   getStageMetadata,
   projectRepairFindings,
 } from "./prompts.mjs";
-import { candidateGateCommandLimit } from "./candidate-gate-policy.mjs";
-import { isProcessTimeoutError } from "./process-runtime.mjs";
-import { symlinkedDependencySourceRoots } from "./git-worktree.mjs";
-import { enrichUsage } from "./model-catalog.mjs";
 import {
   beginAgentRun,
   DEFAULT_EXECUTION_PROVIDER,
@@ -20,19 +32,6 @@ import {
   runEventMetadata,
   runKindFor,
 } from "./run-activity.mjs";
-
-import { now, activity } from "./orchestrator-stage-support.mjs";
-import {
-  throwIfAborted,
-  currentCandidate,
-  resolveRunAgentPolicy,
-  stageTimeoutMs,
-} from "./orchestrator-run-policy.mjs";
-import {
-  assertRepairAuthorizerUnchanged,
-  sameRepairReservationAuthority,
-} from "./orchestrator-repair-authority.mjs";
-import { requireActiveRunReservation, parseNoChangesNeeded } from "./orchestrator-task-helpers.mjs";
 
 export class RepairExecutionOrchestrator {
   constructor({

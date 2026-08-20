@@ -8,8 +8,8 @@ import {
   validCandidateProducerReservation,
   validDurableRunArtifactEnvelope,
 } from "./candidate-lineage-validation.mjs";
-import { CANDIDATE_GATE_STAGES, resolveGateFreshness } from "./run-activity.mjs";
 import { validPersistedTimestamp, validRetryReservationKind } from "./retry-reservation-validation.mjs";
+import { CANDIDATE_GATE_STAGES, resolveGateFreshness } from "./run-activity.mjs";
 
 export function validateGlobalRetryIdentities(task) {
   const runs = task.runs ?? [];

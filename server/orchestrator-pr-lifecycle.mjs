@@ -1,11 +1,10 @@
 import { pullRequestBranch } from "./github-pull-request.mjs";
-
-import { now, zeroUsage, activity } from "./orchestrator-stage-support.mjs";
 import {
-  candidateGateFailure,
   assertCandidateGatesFresh,
+  candidateGateFailure,
   currentCandidate,
 } from "./orchestrator-run-policy.mjs";
+import { activity, now, zeroUsage } from "./orchestrator-stage-support.mjs";
 
 export class PullRequestOrchestrator {
   constructor({ store, github, mergeActive, worktrees }) {

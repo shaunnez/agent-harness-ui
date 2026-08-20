@@ -1,7 +1,7 @@
-import { beginAgentRun, completeAgentRun } from "./run-activity.mjs";
-import { now, activity, workPackageVerificationMarkdown } from "./orchestrator-stage-support.mjs";
 import { throwIfAborted } from "./orchestrator-run-policy.mjs";
+import { activity, now, workPackageVerificationMarkdown } from "./orchestrator-stage-support.mjs";
 import { requireActiveRunReservation } from "./orchestrator-task-helpers.mjs";
+import { beginAgentRun, completeAgentRun } from "./run-activity.mjs";
 
 export class RetainedPackageOrchestrator {
   constructor({ store, worktrees, readVerificationManifestAtRevision, qualifyPackage, retainAgentResult }) {

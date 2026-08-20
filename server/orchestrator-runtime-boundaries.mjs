@@ -1,6 +1,5 @@
-import path from "node:path";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { buildOnboardingRequest } from "./prompts.mjs";
+import path from "node:path";
 import { resolveExecutionProvider } from "./execution-providers.mjs";
 import {
   CREDIT_SOURCE_URL,
@@ -11,8 +10,6 @@ import {
   validatePricingRates,
   withConfiguredModels,
 } from "./model-catalog.mjs";
-import { scoutCatalog } from "./scouts.mjs";
-import { DEFAULT_EXECUTION_PROVIDER } from "./run-activity.mjs";
 import {
   discoverVerificationEvidence,
   OnboardingError,
@@ -20,10 +17,12 @@ import {
   renderManifestFile,
   VERIFICATION_MANIFEST_PATH,
 } from "./onboarding.mjs";
-import { gitHeadRevision } from "./verification.mjs";
-
-import { now } from "./orchestrator-stage-support.mjs";
 import { throwIfAborted } from "./orchestrator-run-policy.mjs";
+import { now } from "./orchestrator-stage-support.mjs";
+import { buildOnboardingRequest } from "./prompts.mjs";
+import { DEFAULT_EXECUTION_PROVIDER } from "./run-activity.mjs";
+import { scoutCatalog } from "./scouts.mjs";
+import { gitHeadRevision } from "./verification.mjs";
 
 export class RuntimeBoundariesOrchestrator {
   constructor({

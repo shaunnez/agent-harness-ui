@@ -4,8 +4,8 @@ import { fileURLToPath } from "node:url";
 import { createApiServer } from "./api.mjs";
 import { TaskOrchestrator } from "./orchestrator.mjs";
 import { startPullRequestPolling } from "./pull-request-poller.mjs";
-import { JsonTaskStore } from "./store.mjs";
 import { SqliteTaskStore } from "./sqlite-store.mjs";
+import { JsonTaskStore } from "./store.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dataPath = process.env.AGENT_HARNESS_DATA ?? path.join(root, ".data", "tasks.json");

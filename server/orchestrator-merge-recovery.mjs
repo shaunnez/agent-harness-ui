@@ -1,9 +1,9 @@
-import { now, activity } from "./orchestrator-stage-support.mjs";
 import {
-  candidateGateFailure,
   assertCandidateGatesFresh,
+  candidateGateFailure,
   currentCandidate,
 } from "./orchestrator-run-policy.mjs";
+import { activity, now } from "./orchestrator-stage-support.mjs";
 
 export class MergeRecoveryOrchestrator {
   constructor({ store, mergeActive, worktrees, finalizeMerge }) {

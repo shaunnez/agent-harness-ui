@@ -940,8 +940,7 @@ export function parsePlanCritique(text) {
   };
 
   const blocking = Array.isArray(value.blocking) ? value.blocking : [];
-  if (blocking.length > 15)
-    throw new Error("A plan critique must raise at most 15 blocking findings.");
+  if (blocking.length > 15) throw new Error("A plan critique must raise at most 15 blocking findings.");
   const advisory = Array.isArray(value.advisory) ? value.advisory : [];
   if (advisory.length > 25) throw new Error("A plan critique must raise at most 25 advisory notes.");
 

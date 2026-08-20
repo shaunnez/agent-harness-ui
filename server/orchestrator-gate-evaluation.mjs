@@ -1,19 +1,18 @@
+import {
+  candidateGateFailure,
+  currentCandidate,
+  evaluationRerunState,
+  evaluationVerdict,
+  modelCommandFailed,
+  reserveRun,
+  structuredEvidenceError,
+  throwIfAborted,
+} from "./orchestrator-run-policy.mjs";
+import { activity, now } from "./orchestrator-stage-support.mjs";
 import { buildTestInterpretationRequest, getStageMetadata } from "./prompts.mjs";
 import { RUNTIME_FRESHNESS_REASONS, runEventMetadata, stageRunLimitFor } from "./run-activity.mjs";
 import { parseGateEvidence, validateFocusedTestEvidence } from "./structured-output.mjs";
 import { fastEscalation, isArchitecturalRisk, recordWorkflowProfile } from "./workflow-profiles.mjs";
-
-import { now, activity } from "./orchestrator-stage-support.mjs";
-import {
-  throwIfAborted,
-  candidateGateFailure,
-  currentCandidate,
-  evaluationVerdict,
-  modelCommandFailed,
-  structuredEvidenceError,
-  evaluationRerunState,
-  reserveRun,
-} from "./orchestrator-run-policy.mjs";
 
 export class GateEvaluationOrchestrator {
   constructor({

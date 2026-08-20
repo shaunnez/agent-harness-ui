@@ -4,6 +4,13 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { defaultRuntimeSettings } from "./model-catalog.mjs";
 import { retainRunActivityEvents, TASK_STORE_SCHEMA_VERSION } from "./run-activity.mjs";
+import {
+  assertImportState,
+  canonicalJson,
+  migrateSqliteSchema,
+  querySqlitePage,
+  syncTaskCollection,
+} from "./sqlite-storage.mjs";
 import { createTaskRecord, migratePersistedTaskState } from "./store.mjs";
 import {
   normalizeActivityFilter,
@@ -12,13 +19,6 @@ import {
   projectTaskPollState,
   projectTaskSummary,
 } from "./task-projections.mjs";
-import {
-  assertImportState,
-  canonicalJson,
-  migrateSqliteSchema,
-  querySqlitePage,
-  syncTaskCollection,
-} from "./sqlite-storage.mjs";
 
 export class SqliteTaskStore {
   #filePath;

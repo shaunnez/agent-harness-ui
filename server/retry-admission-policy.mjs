@@ -1,8 +1,4 @@
-import {
-  failedRepairAuthorizingGate,
-  validRetryReservationCandidateBinding,
-  validateGlobalRetryIdentities,
-} from "./retry-authority-validation.mjs";
+import { PROJECTED_ACTIONS, runActionAdmission } from "./action-policy.mjs";
 import {
   adjacentRepairAuthorizingGate,
   candidateRevisionLineage,
@@ -10,14 +6,11 @@ import {
   replacedCandidateMatchesReservation,
   targetRefreshesDescendFromReservation,
 } from "./candidate-lineage-validation.mjs";
-import { PROJECTED_ACTIONS, runActionAdmission } from "./action-policy.mjs";
 import {
-  CANONICAL_RUN_STAGES,
-  CANDIDATE_GATE_STAGES,
-  readExecutionProvider,
-  resolveGateFreshness,
-  stageRunLimitFor,
-} from "./run-activity.mjs";
+  failedRepairAuthorizingGate,
+  validateGlobalRetryIdentities,
+  validRetryReservationCandidateBinding,
+} from "./retry-authority-validation.mjs";
 import {
   orderRetrySourceRuns,
   validateRetryRunScopes,
@@ -27,6 +20,13 @@ import {
   validRetryRunTuple,
   validRetryWorkflowIdentities,
 } from "./retry-reservation-validation.mjs";
+import {
+  CANDIDATE_GATE_STAGES,
+  CANONICAL_RUN_STAGES,
+  readExecutionProvider,
+  resolveGateFreshness,
+  stageRunLimitFor,
+} from "./run-activity.mjs";
 
 export function withActionEligibility(task) {
   return {

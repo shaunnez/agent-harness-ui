@@ -21,7 +21,7 @@ import {
   parseGrillQuestions,
   parseInvestigationResult,
 } from "./structured-output.mjs";
-import { recordEdge, recordNodeExecuted, recordNodeSkipped } from "./topology-trace.mjs";
+import { recordEdge, recordNodeSkipped } from "./topology-trace.mjs";
 import { fastEscalation } from "./workflow-profiles.mjs";
 
 export class InvestigationProgressionOrchestrator {
@@ -42,7 +42,6 @@ export class InvestigationProgressionOrchestrator {
       const result = await this._executeAgent(task, "triage", signal, task.repositoryPath, "read-only");
       throwIfAborted(signal);
       await this._retainAgentResult(id, "triage", result, { replace: true });
-      await this._store.update(id, (draft) => recordNodeExecuted(draft, "triage"));
     }
 
     task = await this._store.get(id);
@@ -161,10 +160,7 @@ export class InvestigationProgressionOrchestrator {
       task = await this._store.get(id);
       if (stageId === "scouts") {
         await this._runScouts(id, task, signal);
-        await this._store.update(id, (draft) => {
-          recordNodeExecuted(draft, "scouts");
-          recordEdge(draft, "triage", "scouts");
-        });
+        await this._store.update(id, (draft) => recordEdge(draft, "triage", "scouts"));
         continue;
       }
       if (stageId === "synthesis") {
@@ -179,7 +175,6 @@ export class InvestigationProgressionOrchestrator {
         complete: grillQuestions.length === 0,
       });
       await this._store.update(id, (draft) => {
-        recordNodeExecuted(draft, "grill");
         recordEdge(draft, task.completedStages.includes("synthesis") ? "synthesis" : "scouts", "grill");
         draft.grillSession = {
           status: grillQuestions.length ? "open" : "completed",
@@ -260,7 +255,6 @@ export class InvestigationProgressionOrchestrator {
     );
     await this._store.update(id, (draft) => {
       draft.investigation = investigation;
-      recordNodeExecuted(draft, "synthesis");
       recordEdge(draft, "scouts", "synthesis");
       const recommended = investigation.hypotheses.find(
         (hypothesis) => hypothesis.id === investigation.recommendedDiagnosis,

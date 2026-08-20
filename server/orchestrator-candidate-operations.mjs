@@ -1,8 +1,8 @@
-import { refreshGateFreshness, stageRunLimitFor } from "./run-activity.mjs";
-
-import { now, activity } from "./orchestrator-stage-support.mjs";
-import { sameCandidateTestRetryContext, currentCandidate } from "./orchestrator-run-policy.mjs";
+import { currentCandidate, sameCandidateTestRetryContext } from "./orchestrator-run-policy.mjs";
+import { activity, now } from "./orchestrator-stage-support.mjs";
 import { recordApproval } from "./orchestrator-task-helpers.mjs";
+import { refreshGateFreshness, stageRunLimitFor } from "./run-activity.mjs";
+import { recordNodeExecuted } from "./topology-trace.mjs";
 
 export class CandidateOperationsOrchestrator {
   constructor({ store, github, mergeActive, refreshActive, worktrees, start }) {
@@ -366,7 +366,10 @@ export class CandidateOperationsOrchestrator {
         activeCandidate.updatedAt = approvedAt;
         draft.status = "merged-to-target";
         draft.currentStage = "approval";
-        if (!draft.completedStages.includes("approval")) draft.completedStages.push("approval");
+        if (!draft.completedStages.includes("approval")) {
+          draft.completedStages.push("approval");
+          recordNodeExecuted(draft, "approval");
+        }
         draft.mergeIntent.status = "completed";
         draft.mergeIntent.completedAt = approvedAt;
         draft.mergeIntent.error = null;

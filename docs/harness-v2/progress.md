@@ -7,9 +7,9 @@ Plan: `docs/harness-v2-cognitive-layer-plan.md`
 
 ## State
 
-Current phase: **6 — blocked on live runs (see F8). Phases 0-5 complete.**
+Current phase: **6 — first live run done (AH-030). See F11. Two open items: Q3, Q4.**
 Last updated: 2026-08-20
-Blocked on: Shaun driving three live runs — docs/harness-v2/phase-6-runbook.md
+Blocked on: Q3 (self-hosted verification is impossible) and Q4 (diagnosis misses qualification failures)
 
 ## Phase log
 
@@ -47,6 +47,54 @@ What I did instead, and why:
 **If you want synthesis on the Atlas, that is a layout decision to make deliberately** — say so
 and I will reflow the top row. Otherwise the current split is the honest one: full telemetry,
 unchanged map. `plan-review` (Phase 5) is excluded from the floor plan for the same reason.
+
+### Q3 (Phase 6) — this repo cannot verify itself, so it cannot be dogfooded
+
+AH-030's implementation was **correct** and still failed. The agent made exactly the right edit —
+the failure output contains `biome lint src server scripts tests worker vite.config.mjs`, the
+change working — and then `npm run lint` exited 127 with `sh: biome: command not found`.
+
+Cause: the harness runs package verification in a worktree at `/Users/shaun/.ah/w/AH-030/S1-A1`,
+whose `node_modules` is an **empty directory**, and which sits outside the repository tree so
+Node cannot resolve upward to the real one. The implement prompt then explicitly forbids the only
+fix: "do not run npm install, pnpm, yarn, bun, npx, package-manager bootstrap commands".
+
+So any repository whose verification commands need locally-installed binaries cannot pass
+qualification in this harness. That is almost certainly why all 29 historical tasks target
+`eversor-mystrataassist` and not this repo.
+
+This is a pre-existing harness constraint, not something Phases 1-5 caused. Options, none of
+which I have taken:
+
+1. Populate the worktree's `node_modules` when it is created — symlink or hardlink the source
+   repository's, since a worktree of the same commit has the same lockfile.
+2. Allow an explicit, manifest-declared bootstrap command that the harness runs itself (not the
+   agent) before verification.
+3. Accept that this repo is verified by the operator rather than the harness, and dogfood
+   topology on a different repository.
+
+**My recommendation: option 1.** It is the smallest change, it needs no new agent authority, and
+the "dependencies are already available" promise in the implement prompt becomes true instead of
+aspirational. But it touches worktree creation, which the loop's hard rules put off limits, so it
+is your call.
+
+### Q4 (Phase 6) — failure diagnosis never sees the commonest failure
+
+`routingDecisions` on AH-030 is empty and `failureDiagnosis` is null, despite the run failing.
+`_diagnoseFailure` is wired at `server/orchestrator-core.mjs:52`, on the repair path that follows
+a **candidate gate** failure. AH-030 failed earlier than that: package qualification threw at
+`server/orchestrator-work-packages.mjs:375` and the task went straight to `failed`.
+
+So Phase 4's deterministic router covers dev-review / test / final-review failures, but not a
+package that fails its own verification manifest — which on the evidence of this one run is the
+likeliest way a task dies. "Retry means return to the stage whose assumption failed" does not yet
+apply where it would help most, and AH-030 is exactly the case that would have been classified
+`ENVIRONMENT_FAILURE` and routed to environment remediation rather than presented as a bare
+package failure.
+
+Extending diagnosis to the qualification path is additive in principle — a read-only classifier
+before the existing failure handling — but it sits on the work-package path, so I have not done
+it unprompted. **This is the highest-value remaining change in the whole plan.**
 
 ### Q2 (Phase 5) — the revise loop is operator-triggered, not automatic
 
@@ -393,3 +441,52 @@ other a fallback branch that got common. Together with F9 that is three bugs fou
 the process and reading the screen, against zero found by adding unit tests after the fact. The
 argument for actually doing the Phase 6 live runs rather than trusting a green suite is now
 evidence rather than principle.
+
+### F11 (Phase 6) — the first live run, and what it actually proved
+
+AH-030 "Lint the root vite config", fast profile requested, `topology-fast-bounded-v1`, frozen at
+`3b55f66`, run against this worktree with both providers authenticated. It reached implementation
+and failed there on an environment problem (Q3). Everything upstream of that worked, and one part
+worked better than I expected.
+
+**Synthesis found a defect in my own task brief.** I wrote "add `vite.config.mjs` to `biome.json`
+includes". The first live `investigation-result` came back at 0.84 confidence saying the gap is
+dual: `npm run lint` and `npm run format:check` hardcode the argument list
+`src server scripts tests worker` (package.json:13-14), and Biome ignores files not passed as CLI
+arguments regardless of `files.includes` — so the change I asked for would have looked done and
+not been. Three hypotheses, every claim cited to a path and line, the right unknowns named
+(including whether the harness would permit widening `ownedPaths` to `package.json`). Grill then
+turned exactly that into the single question worth asking a human. This is the stage doing the
+job it was added for, on its first attempt, and it caught a human error rather than a machine one.
+
+**The profile escalated correctly, and my first read of it was wrong.** I saw synthesis execute on
+a task created as `fast` and flagged it as a bug. It was not: `fast → standard` had already fired
+with "the bounded contract crosses repository boundaries", because the fix genuinely needs two
+files. Synthesis ran on the standard path, as designed. Worth recording that the escalation logic
+and the new stage interact correctly, and that the obvious-looking alarm was mine, not the
+harness's.
+
+**The plan critic returned PASS with substance.** Two advisory findings, both in-dimension and
+both real: that the plan leaned on parsing Biome's "Checked N files" summary (`assumptions`), and
+that `format:check` and `npx biome check` are ad hoc because the verification manifest does not
+declare them (`verification-adequacy`). Neither is a defect against the specification, so neither
+blocked — which is the behaviour the closed-dimension contract was built to produce. Not a rubber
+stamp, and not an over-reach.
+
+**Cost of the cognitive layer, measured rather than guessed.** Through plan approval: 117k input
+tokens (63k cached), 10k output, 0.221 credits, $0.374 estimated. Four distinct models in one
+task — Luna, Sonnet, Opus, Sol.
+
+**And the run exposed a hole in my own instrumentation.** The live trace read
+`['triage','scouts','synthesis','grill','plan-review']`. `specification` and `plan` were missing,
+along with every execution stage, because Phase 3 and Phase 5 called `recordNodeExecuted` by hand
+in five places and nowhere else. `nodesExecuted` was systematically understating the graph, which
+would have quietly corrupted any topology comparison — the exact thing Phase 1 exists to make
+possible. Fixed by recording at the one choke point where a stage produces authoritative evidence
+(`server/orchestrator-retention.mjs`), with a `topologyNode` override for the plan critic, which
+files its artifact under `plan` so it lands in the Planning room. The record is deliberately
+outside the `completedStages` dedup: that set answers "is this stage done", the trace answers
+"what ran", and a stage that produced authoritative evidence twice ran twice.
+
+Three bugs in Phases 1-5 have now been found by running the thing and none by adding tests
+afterwards. That is the finding I would keep if I could keep only one.

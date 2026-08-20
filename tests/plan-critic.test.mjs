@@ -159,6 +159,13 @@ test("the critic records its own execution as a node and its edge from the plan"
     const { orchestrator } = orchestratorFor(store, PLAN_CRITIQUE_OUTPUT);
     await orchestrator.start(task.id, "planning");
     const done = await waitForStatus(store, task.id, "awaiting-plan-approval");
+    // AH-030, the first live run, recorded only the five stages that called recordNodeExecuted
+    // directly: `plan` and `specification` were silently absent. Both halves matter — the stage
+    // that ran and the critic that read it.
+    assert.ok(
+      done.topologyTrace.nodesExecuted.includes("plan"),
+      "the plan stage itself must appear in the trace, not only its critic",
+    );
     assert.ok(done.topologyTrace.nodesExecuted.includes("plan-review"));
     assert.deepEqual(done.topologyTrace.edgesTaken.at(-1), {
       from: "plan",

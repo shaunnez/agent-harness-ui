@@ -1,5 +1,13 @@
-import { getStageMetadata } from "./prompts.mjs";
 import { policyIdForRun, resolveAgentPolicy } from "./model-catalog.mjs";
+import { repairAuthorizerSnapshot, timestampAfter } from "./orchestrator-repair-authority.mjs";
+import { activity, now } from "./orchestrator-stage-support.mjs";
+import {
+  applyStageRunReservation,
+  labelForRun,
+  runDetail,
+  stageForRun,
+} from "./orchestrator-task-helpers.mjs";
+import { getStageMetadata } from "./prompts.mjs";
 import {
   CANDIDATE_GATE_STAGES,
   RUNTIME_FRESHNESS_REASONS,
@@ -8,15 +16,6 @@ import {
 } from "./run-activity.mjs";
 import { isCandidateEvidenceError } from "./structured-output.mjs";
 import { isArchitecturalRisk } from "./workflow-profiles.mjs";
-
-import { activity, now } from "./orchestrator-stage-support.mjs";
-import { repairAuthorizerSnapshot, timestampAfter } from "./orchestrator-repair-authority.mjs";
-import {
-  applyStageRunReservation,
-  labelForRun,
-  runDetail,
-  stageForRun,
-} from "./orchestrator-task-helpers.mjs";
 
 export function removeStageArtifacts(task, stageId) {
   const removedIds = new Set(

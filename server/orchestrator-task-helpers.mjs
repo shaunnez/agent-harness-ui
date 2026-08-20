@@ -1,7 +1,6 @@
+import { activity, now } from "./orchestrator-stage-support.mjs";
 import { getStageMetadata } from "./prompts.mjs";
 import { isOwnedFile } from "./structured-output.mjs";
-
-import { activity, now } from "./orchestrator-stage-support.mjs";
 
 export function applyStageRunReservation(task, reservation) {
   task.stageRun += 1;

@@ -1,3 +1,13 @@
+import { createStageRunReservation, currentCandidate } from "./orchestrator-run-policy.mjs";
+import {
+  activity,
+  deterministicFinalReviewMarkdown,
+  deterministicGateResult,
+  deterministicTestMarkdown,
+  now,
+  zeroUsage,
+} from "./orchestrator-stage-support.mjs";
+import { applyStageRunReservation, requireActiveRunReservation } from "./orchestrator-task-helpers.mjs";
 import {
   attachRunArtifact,
   beginAgentRun,
@@ -5,18 +15,8 @@ import {
   readExecutionProvider,
   runEventMetadata,
 } from "./run-activity.mjs";
+import { recordNodeExecuted } from "./topology-trace.mjs";
 import { fastEscalation, recordWorkflowProfile } from "./workflow-profiles.mjs";
-
-import {
-  now,
-  zeroUsage,
-  deterministicGateResult,
-  deterministicTestMarkdown,
-  deterministicFinalReviewMarkdown,
-  activity,
-} from "./orchestrator-stage-support.mjs";
-import { currentCandidate, createStageRunReservation } from "./orchestrator-run-policy.mjs";
-import { applyStageRunReservation, requireActiveRunReservation } from "./orchestrator-task-helpers.mjs";
 
 export class CandidateGateOrchestrator {
   constructor({ store }) {
@@ -136,7 +136,10 @@ export class CandidateGateOrchestrator {
         );
         return;
       }
-      if (!draft.completedStages.includes("test")) draft.completedStages.push("test");
+      if (!draft.completedStages.includes("test")) {
+        draft.completedStages.push("test");
+        recordNodeExecuted(draft, "test");
+      }
       draft.events.push(
         activity(
           "test",
@@ -201,7 +204,10 @@ export class CandidateGateOrchestrator {
       };
       draft.artifacts.push(finalArtifact);
       const attachedFinalRun = attachRunArtifact(draft, finalRun.id, finalArtifact);
-      if (!draft.completedStages.includes("final-review")) draft.completedStages.push("final-review");
+      if (!draft.completedStages.includes("final-review")) {
+        draft.completedStages.push("final-review");
+        recordNodeExecuted(draft, "final-review");
+      }
       draft.stageDispositions["final-review"] = {
         status: "deterministic",
         reason:

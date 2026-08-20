@@ -1,20 +1,19 @@
+import { currentCandidate, throwIfAborted } from "./orchestrator-run-policy.mjs";
+import {
+  activity,
+  allSettledWithConcurrency,
+  FastProfileReplanError,
+  now,
+  workPackageVerificationMarkdown,
+} from "./orchestrator-stage-support.mjs";
+import {
+  dependencyClosure,
+  parseNoChangesNeeded,
+  requireActiveRunReservation,
+} from "./orchestrator-task-helpers.mjs";
 import { buildWorkPackageRequest } from "./prompts.mjs";
 import { refreshGateFreshness } from "./run-activity.mjs";
 import { fastEscalation } from "./workflow-profiles.mjs";
-
-import {
-  now,
-  FastProfileReplanError,
-  allSettledWithConcurrency,
-  workPackageVerificationMarkdown,
-  activity,
-} from "./orchestrator-stage-support.mjs";
-import { throwIfAborted, currentCandidate } from "./orchestrator-run-policy.mjs";
-import {
-  requireActiveRunReservation,
-  parseNoChangesNeeded,
-  dependencyClosure,
-} from "./orchestrator-task-helpers.mjs";
 
 export class WorkPackageOrchestrator {
   constructor({
