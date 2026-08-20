@@ -1,0 +1,55 @@
+=== baseline captured: 3f6d6c1 ===
+
+=== npm run lint ===
+
+> agent-harness-ui@0.0.0 lint
+> biome lint src server scripts tests worker
+
+Checked 219 files in 97ms. No fixes applied.
+
+=== npm run typecheck ===
+
+> agent-harness-ui@0.0.0 typecheck
+> tsc --noEmit
+
+
+=== npm test ===
+✔ activity filters and run pagination use retained structured data (0.885875ms)
+✔ invalid cursors and limits fail closed (0.280334ms)
+✔ reads verification commands from the repository and refuses a shell string (2.31975ms)
+✔ refuses a report format the harness cannot check, rather than downgrading silently (0.442917ms)
+✔ decides a Playwright report from its own totals, and fails closed on a suite that ran nothing (0.770875ms)
+✔ refuses the stage when the repository declares no verification commands (6.361708ms)
+✔ reads planning commands from the exact target revision rather than uncommitted files (132.829583ms)
+✔ produces evidence the existing contract accepts, from what the harness observed (0.6235ms)
+✔ selects only validated focused command ids while preserving the complete manifest (0.189042ms)
+✔ stops at the first failure and says which commands never ran (0.53925ms)
+✔ refuses to attribute evidence to a revision the worktree is not at (0.146542ms)
+✔ selects deterministic profiles and escalates fast at explicit boundaries (3.542041ms)
+✔ keeps all blocking review findings and makes P2 advice non-blocking by default (1.395458ms)
+✔ fast path uses zero scouts, one package, focused checks, one full manifest, and deterministic final review (64.244ms)
+✔ late fast scope expansion returns to the standard evidence frontier (21.852417ms)
+✔ reuses one full-manifest execution when a same-revision Test model call retries (16.26025ms)
+✔ fast review allows one automatic consolidated repair, invalidates old evidence, then stops on a second defect (18.896458ms)
+ℹ tests 429
+ℹ suites 0
+ℹ pass 429
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10142.100917
+
+=== summary ===
+lint: clean (219 files)
+typecheck: clean
+test: 429 pass, 0 fail (10.1s)
+
+=== task corpus (.data/tasks.sqlite3, 37M, snapshot read) ===
+tasks: 29   artifacts: 480   runs: 554
+date range: 2026-08-06 .. 2026-08-14
+status: closed 14, archived 6, failed 5, completed 4  (all terminal)
+workflow: implement 27, investigate 2
+workflowProfile.selected: "standard" on all 29, every one via source="migration"
+tasks with experiment != null: 0
+tasks with evaluation != null: 0
