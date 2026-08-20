@@ -246,7 +246,13 @@ export class SpecificationPlanningOrchestrator {
       if (critique?.verdict === "REVISE") {
         // A plan with a cited, in-dimension defect must not be approvable: approving it would
         // spend implementation tokens building something the critic already showed is wrong.
-        draft.status = "blocked";
+        //
+        // `failed`, not `blocked`: AH-034 blocked on a correct critique and then had nowhere to
+        // go, because the plan action accepts awaiting-plan-approval, failed or cancelled and a
+        // blocked task matches none of them. The revise loop was a dead end. `failed` is also the
+        // honest description — the plan stage did not produce an acceptable plan — and it routes
+        // through the existing attempt-counted retry path.
+        draft.status = "failed";
         draft.error = `The plan critic raised ${critique.blocking.length} blocking finding${critique.blocking.length === 1 ? "" : "s"}: ${critique.blocking.map((finding) => `${finding.dimension} — ${finding.claim}`).join("; ")}`;
         draft.events.push(
           activity(

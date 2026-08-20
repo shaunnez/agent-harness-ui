@@ -1,10 +1,58 @@
 {
   "version": 1,
   "commands": [
-    { "id": "lint", "title": "Biome lint", "command": ["npm", "run", "lint"] },
-    { "id": "typecheck", "title": "TypeScript", "command": ["npm", "run", "typecheck"] },
-    { "id": "test", "title": "Node test suite", "command": ["npm", "test"] },
-    { "id": "build", "title": "Vite build and Sites packaging", "command": ["npm", "run", "build"] },
-    { "id": "test-sites", "title": "Sites worker tests", "command": ["npm", "run", "test:sites"] }
+    {
+      "id": "lint",
+      "title": "Biome lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ]
+    },
+    {
+      "id": "format-check",
+      "title": "Biome format",
+      "command": [
+        "npm",
+        "run",
+        "format:check"
+      ]
+    },
+    {
+      "id": "typecheck",
+      "title": "TypeScript",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ]
+    },
+    {
+      "id": "test",
+      "title": "Node test suite",
+      "command": [
+        "npm",
+        "test"
+      ]
+    },
+    {
+      "id": "build",
+      "title": "Vite build and Sites packaging",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ]
+    },
+    {
+      "id": "test-sites",
+      "title": "Sites worker tests",
+      "command": [
+        "npm",
+        "run",
+        "test:sites"
+      ]
+    }
   ]
 }

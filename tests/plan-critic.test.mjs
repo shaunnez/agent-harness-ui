@@ -104,7 +104,7 @@ test("a cited blocking finding stops the plan becoming approvable", async () => 
     const { store, task } = await planningTask(directory);
     const { orchestrator } = orchestratorFor(store, PLAN_CRITIQUE_REVISE_OUTPUT);
     assert.equal(await orchestrator.start(task.id, "planning"), true);
-    const blocked = await waitForStatus(store, task.id, "blocked");
+    const blocked = await waitForStatus(store, task.id, "failed");
 
     assert.equal(blocked.planCritique.verdict, "REVISE");
     assert.match(blocked.error, /acceptance-coverage/);
@@ -114,6 +114,9 @@ test("a cited blocking finding stops the plan becoming approvable", async () => 
       "awaiting-plan-approval",
       "a plan with a cited defect must not be one click from spending implementation tokens",
     );
+    // AH-034: "blocked" left the task with no way back to planning, so the revise loop was a dead
+    // end. "failed" is retryable through the existing plan action.
+    assert.equal(blocked.status, "failed");
     assert.equal(
       blocked.workPackages.length,
       1,
