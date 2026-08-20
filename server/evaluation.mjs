@@ -46,6 +46,148 @@ function addUsage(target, usage = {}) {
   }
 }
 
+/**
+ * The eight assumption-owners a failed run can be routed back to. Each maps to a distinct
+ * rewind target, which is why none of them collapse into another. Phase 4's deterministic
+ * router imports this list rather than restating it.
+ */
+export const FAILURE_CLASSIFICATIONS = Object.freeze([
+  "IMPLEMENTATION_DEFECT",
+  "PLAN_DEFECT",
+  "SPECIFICATION_GAP",
+  "INVESTIGATION_GAP",
+  "VERIFICATION_GAP",
+  "ENVIRONMENT_FAILURE",
+  "INTEGRATION_FAILURE",
+  "TARGET_DRIFT",
+]);
+
+const FAILURE_CLASSIFICATION_SET = new Set(FAILURE_CLASSIFICATIONS);
+
+/**
+ * `advance` is the ordinary next stage. `backjump` returns to an earlier stage whose
+ * assumption failed. `revise` is a bounded same-stage retry driven by a critic. `challenge`
+ * is an independent adversarial pass over a stage's own output.
+ */
+export const TOPOLOGY_EDGE_KINDS = Object.freeze(["advance", "backjump", "revise", "challenge"]);
+
+export const UNSPECIFIED_TOPOLOGY_ID = "topology-unspecified";
+
+const TOPOLOGY_ID_PATTERN = /^topology-[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function cleanIdentifier(value, max = 80) {
+  return String(value ?? "")
+    .trim()
+    .slice(0, max);
+}
+
+function boundedList(value, label, max) {
+  if (value == null) return [];
+  if (!Array.isArray(value) || value.length > max)
+    throw new Error(`Topology trace ${label} must be a list of at most ${max} entries.`);
+  return value;
+}
+
+export function emptyTopologyTrace() {
+  return { nodesExecuted: [], nodesSkipped: [], edgesTaken: [], routingDecisions: [] };
+}
+
+/**
+ * Topologies are named by shape and versioned in the id (`topology-bug-localisation-v2`) so
+ * experiment output stays readable. An explicit `topologyVersion` is allowed but must agree
+ * with the suffix, so the two can never drift apart in the record.
+ */
+export function normalizeTopologyIdentity(input = {}) {
+  const topologyId = cleanIdentifier(input.topologyId, 120).toLowerCase();
+  if (!topologyId) return { topologyId: UNSPECIFIED_TOPOLOGY_ID, topologyVersion: null };
+  if (!TOPOLOGY_ID_PATTERN.test(topologyId))
+    throw new Error('Topology ids must look like "topology-<shape>-v<n>", using lowercase words and digits.');
+  const suffix = topologyId.match(/-v(\d+)$/);
+  if (input.topologyVersion == null)
+    return { topologyId, topologyVersion: suffix ? Number(suffix[1]) : null };
+  const topologyVersion = Number(input.topologyVersion);
+  if (!Number.isInteger(topologyVersion) || topologyVersion < 0 || topologyVersion > 9_999)
+    throw new Error("Topology version must be a non-negative integer.");
+  if (suffix && Number(suffix[1]) !== topologyVersion)
+    throw new Error("Topology version contradicts the version suffix in the topology id.");
+  return { topologyId, topologyVersion };
+}
+
+/**
+ * The record of which reasoning graph a run actually walked. Written by the orchestrator as
+ * stages execute; read here only for reporting. Fail-closed on malformed input so a bad
+ * writer is caught at the write site rather than silently producing empty telemetry.
+ */
+export function normalizeTopologyTrace(value) {
+  if (value == null) return emptyTopologyTrace();
+  if (typeof value !== "object" || Array.isArray(value)) throw new Error("Topology trace must be an object.");
+  return {
+    nodesExecuted: boundedList(value.nodesExecuted, "nodesExecuted", 200)
+      .map((node) => cleanIdentifier(node))
+      .filter(Boolean),
+    nodesSkipped: boundedList(value.nodesSkipped, "nodesSkipped", 200)
+      .map((entry) => ({
+        node: cleanIdentifier(entry?.node),
+        reason: cleanIdentifier(entry?.reason, 300) || null,
+      }))
+      .filter((entry) => entry.node),
+    edgesTaken: boundedList(value.edgesTaken, "edgesTaken", 400)
+      .map((edge) => {
+        const kind = cleanIdentifier(edge?.kind).toLowerCase() || "advance";
+        if (!TOPOLOGY_EDGE_KINDS.includes(kind))
+          throw new Error(`Topology edge kind must be one of: ${TOPOLOGY_EDGE_KINDS.join(", ")}.`);
+        return { from: cleanIdentifier(edge?.from), to: cleanIdentifier(edge?.to), kind };
+      })
+      .filter((edge) => edge.from && edge.to),
+    routingDecisions: boundedList(value.routingDecisions, "routingDecisions", 200).map((decision) => {
+      const classification = cleanIdentifier(decision?.classification, 60).toUpperCase();
+      if (!FAILURE_CLASSIFICATION_SET.has(classification))
+        throw new Error(
+          `Routing decisions must use a known failure classification: ${FAILURE_CLASSIFICATIONS.join(", ")}.`,
+        );
+      return {
+        at: cleanIdentifier(decision?.at) || null,
+        classification,
+        rewindTo: cleanIdentifier(decision?.rewindTo) || null,
+        rationale: cleanIdentifier(decision?.rationale, 1_000) || null,
+      };
+    }),
+  };
+}
+
+/**
+ * Reporting must never crash on one badly-written trace, so an invalid trace degrades to
+ * empty telemetry and is counted instead. A non-zero `invalid` count in the summary is the
+ * signal that a writer is broken.
+ */
+function topologyTraceMetrics(value) {
+  let trace;
+  let invalid = false;
+  try {
+    trace = normalizeTopologyTrace(value);
+  } catch {
+    trace = emptyTopologyTrace();
+    invalid = true;
+  }
+  const failureClassifications = {};
+  for (const decision of trace.routingDecisions) {
+    failureClassifications[decision.classification] =
+      (failureClassifications[decision.classification] ?? 0) + 1;
+  }
+  const countKind = (kind) => trace.edgesTaken.filter((edge) => edge.kind === kind).length;
+  return {
+    invalid,
+    nodesExecuted: trace.nodesExecuted,
+    nodesSkipped: trace.nodesSkipped.map((entry) => entry.node),
+    edgesTaken: trace.edgesTaken.length,
+    routingDecisions: trace.routingDecisions.length,
+    backjumpCount: countKind("backjump"),
+    reviseCount: countKind("revise"),
+    challengeCount: countKind("challenge"),
+    failureClassifications,
+  };
+}
+
 export function hashTaskBrief(input) {
   const attachments = (input.attachments ?? []).map((attachment) => ({
     name: String(attachment.name ?? ""),
@@ -85,9 +227,12 @@ export function normalizeExperimentInput(input, { taskBriefHash, policyMatrix, f
   if (!acceptanceCriteria.length || !verificationCommands.length) {
     throw new Error("Controlled experiments require acceptance criteria and verification commands.");
   }
+  const { topologyId, topologyVersion } = normalizeTopologyIdentity(input);
   return {
     groupId,
     variantId,
+    topologyId,
+    topologyVersion,
     frozenBaseSha: frozenBaseSha.toLowerCase(),
     taskBriefHash,
     policyMatrix: structuredClone(policyMatrix),
@@ -262,6 +407,7 @@ function experimentTaskMetrics(task) {
     estimatedContextTokens,
     humanScore: qualityScore(task.evaluation, "human"),
     blindScore: qualityScore(task.evaluation, "blind"),
+    topology: topologyTraceMetrics(task.topologyTrace),
   };
 }
 
@@ -269,10 +415,16 @@ function controlledSummary(tasks) {
   const groups = new Map();
   for (const task of tasks.filter((item) => item.experiment)) {
     const experiment = task.experiment;
-    const key = `${experiment.groupId}|${experiment.variantId}`;
+    const topologyId = experiment.topologyId ?? UNSPECIFIED_TOPOLOGY_ID;
+    const topologyVersion = experiment.topologyVersion ?? null;
+    // Topology is an independent variable, so two runs that share a variant label but walked
+    // different graphs are reported apart rather than averaged into one misleading row.
+    const key = `${experiment.groupId}|${experiment.variantId}|${topologyId}@${topologyVersion}`;
     const group = groups.get(key) ?? {
       groupId: experiment.groupId,
       variantId: experiment.variantId,
+      topologyId,
+      topologyVersion,
       frozenBaseSha: experiment.frozenBaseSha,
       taskBriefHashes: new Set(),
       policyMatrices: new Map(),
@@ -298,6 +450,17 @@ function controlledSummary(tasks) {
       estimatedContextTokens: 0,
       humanScores: [],
       blindScores: [],
+      nodesExecuted: 0,
+      nodesSkipped: 0,
+      nodeExecutionCounts: {},
+      nodeSkipCounts: {},
+      edgesTaken: 0,
+      routingDecisions: 0,
+      backjumpCount: 0,
+      reviseCount: 0,
+      challengeCount: 0,
+      failureClassifications: {},
+      invalidTopologyTraces: 0,
     };
     const metrics = experimentTaskMetrics(task);
     group.taskIds.push(task.id);
@@ -320,6 +483,22 @@ function controlledSummary(tasks) {
     group.estimatedContextTokens += metrics.estimatedContextTokens;
     if (metrics.humanScore) group.humanScores.push(metrics.humanScore);
     if (metrics.blindScore) group.blindScores.push(metrics.blindScore);
+    const topology = metrics.topology;
+    group.nodesExecuted += topology.nodesExecuted.length;
+    group.nodesSkipped += topology.nodesSkipped.length;
+    for (const node of topology.nodesExecuted)
+      group.nodeExecutionCounts[node] = (group.nodeExecutionCounts[node] ?? 0) + 1;
+    for (const node of topology.nodesSkipped)
+      group.nodeSkipCounts[node] = (group.nodeSkipCounts[node] ?? 0) + 1;
+    group.edgesTaken += topology.edgesTaken;
+    group.routingDecisions += topology.routingDecisions;
+    group.backjumpCount += topology.backjumpCount;
+    group.reviseCount += topology.reviseCount;
+    group.challengeCount += topology.challengeCount;
+    for (const [classification, count] of Object.entries(topology.failureClassifications))
+      group.failureClassifications[classification] =
+        (group.failureClassifications[classification] ?? 0) + count;
+    if (topology.invalid) group.invalidTopologyTraces += 1;
     addUsage(group, task.usage);
     groups.set(key, group);
   }
@@ -327,6 +506,8 @@ function controlledSummary(tasks) {
     .map((group) => ({
       groupId: group.groupId,
       variantId: group.variantId,
+      topologyId: group.topologyId,
+      topologyVersion: group.topologyVersion,
       frozenBaseSha: group.frozenBaseSha,
       taskIds: group.taskIds,
       sampleCount: group.taskIds.length,
@@ -358,10 +539,24 @@ function controlledSummary(tasks) {
       averageBlindScore: group.blindScores.length
         ? round(group.blindScores.reduce((sum, value) => sum + value, 0) / group.blindScores.length, 2)
         : null,
+      nodesExecuted: group.nodesExecuted,
+      nodesSkipped: group.nodesSkipped,
+      nodeExecutionCounts: group.nodeExecutionCounts,
+      nodeSkipCounts: group.nodeSkipCounts,
+      edgesTaken: group.edgesTaken,
+      routingDecisions: group.routingDecisions,
+      backjumpCount: group.backjumpCount,
+      reviseCount: group.reviseCount,
+      challengeCount: group.challengeCount,
+      failureClassifications: group.failureClassifications,
+      invalidTopologyTraces: group.invalidTopologyTraces,
     }))
     .sort(
       (left, right) =>
-        left.groupId.localeCompare(right.groupId) || left.variantId.localeCompare(right.variantId),
+        left.groupId.localeCompare(right.groupId) ||
+        left.variantId.localeCompare(right.variantId) ||
+        left.topologyId.localeCompare(right.topologyId) ||
+        (left.topologyVersion ?? -1) - (right.topologyVersion ?? -1),
     );
 }
 
@@ -382,7 +577,7 @@ export function buildEvaluationSummary(tasks) {
     },
     experiments: {
       methodology:
-        "Controlled task variants grouped by explicit experiment and variant IDs with frozen briefs, bases, policies, acceptance criteria, and verification commands.",
+        "Controlled task variants grouped by explicit experiment, variant, and topology IDs with frozen briefs, bases, policies, acceptance criteria, and verification commands. Topology counters describe which reasoning graph each run walked and are zero for runs recorded before topology tracing existed.",
       taskCount: tasks.filter((task) => task.experiment).length,
       variants: experiments,
     },

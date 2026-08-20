@@ -7,7 +7,7 @@ Plan: `docs/harness-v2-cognitive-layer-plan.md`
 
 ## State
 
-Current phase: **1 — topology telemetry**
+Current phase: **2 — typed cross-stage contracts**
 Last updated: 2026-08-20
 Blocked on: nothing
 
@@ -16,7 +16,7 @@ Blocked on: nothing
 | Phase | Status | Commit | Notes |
 |---|---|---|---|
 | 0 Baseline | **done** | (this commit) | lint/typecheck/test all green, 429 tests. Corpus: 29 terminal tasks, 0 experiments, 0 evaluations. |
-| 1 Topology telemetry | not started | — | — |
+| 1 Topology telemetry | **done** | (this commit) | Additive. 436 tests green (was 429). Topology is now a group key in `controlledSummary`. |
 | 2 Typed contracts | not started | — | — |
 | 3 Investigation synthesis | not started | — | — |
 | 4 Failure diagnosis + backjump | not started | — | — |
@@ -60,3 +60,31 @@ Phase 6 conclusion.
 The profile lives at `workflowProfile.selected`, not `workflowProfile.id`. Phase 1's topology
 snapshot should sit alongside it as `workflowProfile.topologyId` / `.topologyVersion`, or in the
 experiment record — decide when implementing, but do not invent `.id`.
+
+### F3 (Phase 1) — what was added, and the one judgement call
+
+`server/evaluation.mjs` now exports `FAILURE_CLASSIFICATIONS` (all 8), `TOPOLOGY_EDGE_KINDS`
+(`advance` / `backjump` / `revise` / `challenge`), `normalizeTopologyIdentity`,
+`normalizeTopologyTrace`, and `emptyTopologyTrace`. Phase 4's `failure-routing.mjs` must import
+the classification list from here rather than restating it.
+
+The trace shape written by the orchestrator, persisted as `task.topologyTrace`:
+
+    { nodesExecuted: ["triage", ...],
+      nodesSkipped: [{node, reason}],
+      edgesTaken:   [{from, to, kind}],
+      routingDecisions: [{at, classification, rewindTo, rationale}] }
+
+**Judgement call:** topology is part of the experiment group key
+(`groupId|variantId|topologyId@version`), so two runs sharing a variant label but walking
+different graphs are reported as separate rows rather than averaged together. Averaging them
+would silently produce a meaningless middle number, which is worse than an extra row. Runs
+without a topology all collapse to `topology-unspecified`, so existing grouping is unchanged.
+
+**Deliberate asymmetry:** `normalizeTopologyTrace` is fail-closed at the write site (a bad edge
+kind throws) but fail-soft at the read site (`buildEvaluationSummary` degrades a bad trace to
+zeros and increments `invalidTopologyTraces`). Reporting must not be crashable by one bad row.
+
+`server/store.mjs` gained `topologyTrace: null` in both the create shape and the migration
+fallback list, so existing tasks migrate cleanly and later phases have somewhere to write.
+Nothing in the orchestrator writes a trace yet — that starts in Phase 3.
