@@ -66,7 +66,10 @@ export function RuntimeStageNavigator({ task, viewedStageId, onSelect }: Props) 
                           ? "done"
                           : future
                             ? "not started"
-                            : "—"}
+                            : // A stage the run passed without producing evidence and without
+                              // recording a disposition. Rare before the cognitive stages existed;
+                              // now every task predating them has two, so it needs a word.
+                              "not run"}
               </small>
             </span>
           </button>

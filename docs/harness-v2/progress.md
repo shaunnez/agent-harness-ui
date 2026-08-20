@@ -367,3 +367,29 @@ rather than the majority's, and an all-OpenAI workflow must keep its critic on O
 adding unit tests — the unit test I had written asserted only "the models differ", which the bug
 satisfied. It is a good argument for doing the live runs rather than treating a green suite as
 sufficient, and a reminder that an assertion can be true while the behaviour is wrong.
+
+### F10 (Phase 6) — looking at the UI found two more bugs the suite could not
+
+Booted the full app (API plus Vite) against a copy of the live store and actually looked at it.
+Note for anyone repeating this: the worktree has no `node_modules`; Node resolves up to the main
+repository's, which is how the test runs worked, but Vite has to be launched by absolute path.
+
+**What was right.** The Atlas floor plan renders exactly as intended — ten rooms, contiguous
+numbering 1 to 10, no gaps and no layout damage, because `atlasStages` filters before numbering.
+The Q1 decision to keep synthesis and plan-review off the map holds up visually. The 12-dot stage
+rows on the Command Centre table also still fit.
+
+**Bug one: `STAGE 10 / 10`.** `src/components/runtime/RuntimeTaskHeader.tsx` hardcoded the
+denominator. It was correct by coincidence while there were exactly ten stages; with twelve, a
+task sitting at stage 10 of 12 displayed as complete. Now reads `{workflowStages.length}`.
+
+**Bug two: two bare em-dashes on every pre-existing task.** The stage rail falls back to `—` for a
+stage the run passed without evidence and without a recorded disposition. That state existed
+before, but was rare; now every task predating the cognitive stages shows two of them, next to
+stages that all say a real word. Replaced with `not run`.
+
+Neither was findable by the test suite, and neither is exotic — one was a hardcoded number, the
+other a fallback branch that got common. Together with F9 that is three bugs found by starting
+the process and reading the screen, against zero found by adding unit tests after the fact. The
+argument for actually doing the Phase 6 live runs rather than trusting a green suite is now
+evidence rather than principle.

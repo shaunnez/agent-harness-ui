@@ -87,7 +87,9 @@ export function RuntimeTaskHeader({ task, onBack, onCancel, onCloseTask, onArchi
         </span>
         <span>
           <small>Stage</small>
-          <strong>{currentIndex + 1} / 10</strong>
+          <strong>
+            {currentIndex + 1} / {workflowStages.length}
+          </strong>
         </span>
         <span>
           <small>{stageRunLabel} attempts</small>
