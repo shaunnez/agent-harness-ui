@@ -131,6 +131,8 @@ test("merge approval fails closed when persisted Test verdicts contradict", asyn
     });
     await store.update(task.id, (draft) => {
       draft.status = "awaiting-human-approval";
+      // Local merge is opt-in now; this test drives that path deliberately.
+      draft.approvalCompletion = "local-merge";
       draft.currentStage = "approval";
       draft.candidates = [
         {
@@ -217,6 +219,8 @@ test("merge approval fails closed when persisted gate findings are malformed", a
     });
     await store.update(task.id, (draft) => {
       draft.status = "awaiting-human-approval";
+      // Local merge is opt-in now; this test drives that path deliberately.
+      draft.approvalCompletion = "local-merge";
       draft.currentStage = "approval";
       draft.candidates = [
         {

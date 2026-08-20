@@ -395,6 +395,12 @@ export function migratePersistedTaskState(state) {
       task.workflowProfile = migratedStandardProfile();
       changed = true;
     }
+    if (task.approvalCompletion === undefined) {
+      // Existing tasks predate the setting. They take the same default as a new one: a local
+      // merge is the surprising outcome, so nothing should inherit it implicitly.
+      task.approvalCompletion = "pull-request";
+      changed = true;
+    }
     if (task.grillPolicy === undefined) {
       task.grillPolicy = "manual";
       changed = true;
@@ -553,6 +559,7 @@ export function createTaskRecord(state, input) {
     continuedByTaskId: null,
     priority: input.priority,
     grillPolicy: input.grillPolicy ?? state.settings.grillPolicy ?? "manual",
+    approvalCompletion: input.approvalCompletion ?? state.settings.approvalCompletion ?? "pull-request",
     agentConfig: {
       provider,
       model,

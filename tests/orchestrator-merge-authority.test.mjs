@@ -256,6 +256,8 @@ test("merge approval fails closed for malformed persisted errors and failed-row 
       });
       await store.update(task.id, (draft) => {
         draft.status = "awaiting-human-approval";
+        // Local merge is opt-in now; this test drives that path deliberately.
+        draft.approvalCompletion = "local-merge";
         draft.currentStage = "approval";
         draft.candidates = [
           {
@@ -338,6 +340,8 @@ test("merge approval fails closed for cross-layer mixed candidate evidence", asy
     });
     await store.update(task.id, (draft) => {
       draft.status = "awaiting-human-approval";
+      // Local merge is opt-in now; this test drives that path deliberately.
+      draft.approvalCompletion = "local-merge";
       draft.currentStage = "approval";
       draft.candidates = [
         {

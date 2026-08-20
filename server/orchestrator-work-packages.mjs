@@ -241,6 +241,7 @@ export class WorkPackageOrchestrator {
         ? {
             id: sliceId,
             baseRevision: workPackage.baseRevision,
+            preparedRevision: workPackage.headRevision ?? workPackage.baseRevision,
             branch: workPackage.branch,
             worktreePath: workPackage.worktreePath,
             headRevision: workPackage.headRevision,
@@ -305,7 +306,11 @@ export class WorkPackageOrchestrator {
           squashFromBase: Boolean(retainedContinuation && workPackage.headRevision),
         },
       );
-      const packageHeadRevision = committed.headRevision ?? slice.baseRevision;
+      // A package that committed nothing is verified at whatever its worktree is actually on.
+      // For an independent slice that is the base; for a slice stacked on a dependency it is the
+      // dependency's commit. Falling back to `baseRevision` in the second case is what made a
+      // dependent package fail as drifted from its own predecessor.
+      const packageHeadRevision = committed.headRevision ?? slice.preparedRevision ?? slice.baseRevision;
       await this._store.update(id, (draft) => {
         const target = draft.workPackages.find((item) => item.id === workPackageId);
         target.headRevision = committed.headRevision;

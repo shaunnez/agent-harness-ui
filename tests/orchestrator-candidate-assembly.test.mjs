@@ -31,6 +31,8 @@ test("advances an approved implementation task through a revision-bound candidat
       repositoryPath: directory,
       workflow: "implement",
       priority: "medium",
+      // This test drives the local merge path end to end; that is opt-in now.
+      approvalCompletion: "local-merge",
     });
     let merged = false;
     let commitCount = 0;

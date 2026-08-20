@@ -32,6 +32,15 @@ export class MergeRecoveryOrchestrator {
     let task = await this._store.get(id);
     if (!task) throw new Error("Task not found.");
     if (task.status === "awaiting-human-approval") {
+      // A local merge writes to the operator's own checkout, which is why it is no longer the
+      // default: their working tree ends up ahead of what their tooling expects, watchers and
+      // builds see changes nobody asked for, and the work has to be retriggered by hand. The
+      // capability is intact — this refuses the implicit path, not the explicit one.
+      if ((task.approvalCompletion ?? "pull-request") === "pull-request") {
+        throw new Error(
+          "This task completes approval by raising a pull request, not by merging into the local checkout. Open the PR instead, or set approvalCompletion to local-merge for this task.",
+        );
+      }
       const candidate = currentCandidate(task);
       if (candidate.status !== "awaiting_human_approval")
         throw new Error("The current candidate has not cleared every gate.");

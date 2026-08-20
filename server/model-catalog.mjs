@@ -317,6 +317,12 @@ export function defaultRuntimeSettings() {
     // A Grill question is a human decision gate unless the operator explicitly
     // changes this setting. Each new task snapshots the value.
     grillPolicy: "manual",
+    // What clearing the approval gate actually does. Raising a pull request is the default
+    // because a local merge writes to the operator's own checkout: the working tree then differs
+    // from the branch their tooling expects, every watcher and build sees changes it did not ask
+    // for, and the operator has to retrigger things by hand. A PR leaves their checkout alone and
+    // puts the decision where review already happens. Each new task snapshots the value.
+    approvalCompletion: "pull-request",
     // Both providers' models are selectable, because a stage policy is validated
     // against this list and a Claude task's policies must name Claude models. The
     // selected provider, not this list, decides which runtime executes.

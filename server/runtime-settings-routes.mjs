@@ -3,6 +3,8 @@ import { inspectRepositoryContract } from "./repository-contract.mjs";
 import { projectTaskSummary } from "./task-projections.mjs";
 import { WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
 
+const APPROVAL_COMPLETIONS = new Set(["pull-request", "local-merge"]);
+
 const GRILL_POLICIES = new Set(["manual", "auto-accept-recommendations"]);
 
 export function createRuntimeSettingsRoutes({
@@ -53,6 +55,13 @@ export function createRuntimeSettingsRoutes({
       const grillPolicy =
         input.grillPolicy === undefined ? currentSettings.grillPolicy : String(input.grillPolicy);
       if (!GRILL_POLICIES.has(grillPolicy)) throw new Error("Choose a supported Grill interaction policy.");
+      const approvalCompletion =
+        input.approvalCompletion === undefined
+          ? (currentSettings.approvalCompletion ?? "pull-request")
+          : String(input.approvalCompletion);
+      if (!APPROVAL_COMPLETIONS.has(approvalCompletion)) {
+        throw new Error("Approval must complete by raising a pull request or by a local merge.");
+      }
       const stagePolicies = validateStagePolicies(
         input.stagePolicies,
         known,
@@ -75,6 +84,7 @@ export function createRuntimeSettingsRoutes({
         draft.defaultModel = defaultModel;
         draft.defaultReasoning = defaultReasoning;
         draft.grillPolicy = grillPolicy;
+        draft.approvalCompletion = approvalCompletion;
         draft.stagePolicies = stagePolicies;
         draft.profileStagePolicies = profileStagePolicies;
       });

@@ -255,6 +255,8 @@ test("unresolvable attempt evidence fails closed and blocks approval", async () 
       });
       await store.update(task.id, (draft) => {
         draft.status = "awaiting-human-approval";
+        // Local merge is opt-in now; this test drives that path deliberately.
+        draft.approvalCompletion = "local-merge";
         draft.currentStage = "approval";
         draft.candidates = [
           {

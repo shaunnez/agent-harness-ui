@@ -100,6 +100,8 @@ test("keeps exact-candidate PR approval eligible in the SQLite compact task resp
       };
       draft.candidates = [candidate];
       draft.status = "awaiting-human-approval";
+      // Local merge is opt-in now; this test drives that path deliberately.
+      draft.approvalCompletion = "local-merge";
       draft.currentStage = "approval";
       draft.runs.push(
         ...["dev-review", "test", "final-review"].map((stage, index) => {

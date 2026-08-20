@@ -124,7 +124,7 @@ A rewind returns `true` so the coordinator does not then record the failure over
 it rewound to. `ENVIRONMENT_FAILURE` routes to `requiresHuman` with no rewind, so AH-030's exact
 case now leaves the task failed but says *why* — the code may be fine and the toolchain is not.
 
-### Q5 (Phase 6) — a dependent slice is rejected as drifted from its own predecessor
+### Q5 (Phase 6) — FIXED: a dependent slice was rejected as drifted from its own predecessor
 
 Found on AH-031 and **not fixed**: it is inside the candidate/worktree lineage machinery, and the
 check it would change exists to stop verification evidence being attributed to the wrong commit.
@@ -144,8 +144,23 @@ Consequence: any plan with a dependent second package cannot get past implementa
 single-package plan reached implementation fine, which is consistent with this being specific to
 sequential slices.
 
-This is pre-existing and unrelated to Phases 1-5. It is also the single thing standing between
-this harness and dogfooding itself on anything non-trivial.
+**Cause.** `GitWorktreeManager.#prepare` cherry-picks each `dependencyRevisions` entry onto the
+base, which advances the worktree, but returned `baseRevision` unchanged and `headRevision: null` —
+it never reported where the worktree actually ended up. The qualification step then computed
+`packageHeadRevision = committed.headRevision ?? slice.baseRevision`, so a dependent package that
+committed nothing of its own was pinned to the candidate base while its worktree sat on its
+predecessor's commit. `assertCandidateHead` correctly refused evidence for a revision that was not
+checked out.
+
+**Fix.** `#prepare` now reads and returns `preparedRevision` — the revision the slice actually
+starts from, base plus any stacked dependencies — and the qualification fallback prefers it. The
+safeguard is untouched and still fails closed; it is simply no longer told the wrong revision to
+expect. For an independent slice `preparedRevision === baseRevision`, so the common case is
+unchanged.
+
+Pinned in `tests/git-worktree.test.mjs`: a dependent slice's prepared revision differs from the
+base, `assertCandidateHead` still rejects the base for it, accepts the prepared revision, and an
+independent slice's two values stay equal.
 
 ### Q2 (Phase 5) — the revise loop is operator-triggered, not automatic
 
@@ -594,3 +609,26 @@ gap in how I had been verifying my own work all along.
 Running tally of bugs in Phases 1-5 found by running the system rather than by adding tests: five
 (provider mis-anchoring, hardcoded stage denominator, bare dash in the rail, incomplete topology
 trace, unformatted files). Found by adding tests afterwards: zero.
+
+### F14 — approval completes by raising a pull request, not by merging locally
+
+Requested directly: a local merge writes into the operator's own checkout, so the working tree ends
+up ahead of what their tooling expects, watchers and builds see changes nobody asked for, and the
+work has to be retriggered by hand.
+
+`approvalCompletion` is a new runtime setting defaulting to `"pull-request"`, snapshotted per task
+the way `grillPolicy` already is, and settable through `PUT /api/runtime/settings`. `approveMerge`
+refuses when a task's policy is `pull-request` and names the alternative in the error. The local
+merge path is entirely intact — it is opt-in rather than implicit.
+
+Both halves of the migration take the same default: a task recorded before the setting existed
+becomes `pull-request`, because a local merge is the surprising outcome and nothing should inherit
+it silently.
+
+Seventeen existing tests failed, and all seventeen were legitimate: each drives the local merge
+path deliberately, so each now declares `approvalCompletion: "local-merge"`. None were weakened —
+they assert the same fail-closed evidence behaviour they always did, and the guard was masking it
+rather than replacing it.
+
+`tests/approval-completion.test.mjs` pins the default, the per-task snapshot, the refusal and its
+message, that an opted-in task is not refused for that reason, and the migration default.

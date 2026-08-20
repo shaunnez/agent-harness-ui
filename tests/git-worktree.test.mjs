@@ -22,6 +22,7 @@ import {
   GitWorktreeManager,
   provisionedDependencyEntries,
 } from "../server/git-worktree.mjs";
+import { assertCandidateHead } from "../server/verification.mjs";
 
 const exec = promisify(execFile);
 
@@ -246,6 +247,37 @@ test("only accepts an empty diff as success when the caller explicitly allows a 
       "repair\n",
     );
     const dependentBase = (await git(dependentSlice.worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
+
+    // AH-031: cherry-picking a dependency advances the worktree past `baseRevision`, and `prepare`
+    // used to report only the base. A dependent package that committed nothing of its own was then
+    // verified against the base while its worktree sat on its predecessor's commit, and
+    // `assertCandidateHead` refused it as drift — so no plan with a dependent second package could
+    // pass implementation. `preparedRevision` is where the slice actually starts.
+    assert.equal(dependentSlice.preparedRevision, dependentBase);
+    assert.notEqual(
+      dependentSlice.preparedRevision,
+      dependentSlice.baseRevision,
+      "a slice stacked on a dependency does not start at the candidate base",
+    );
+    await assert.rejects(
+      assertCandidateHead(dependentSlice.worktreePath, { headRevision: dependentSlice.baseRevision }),
+      /verification evidence would describe a different commit/,
+      "the base is the wrong revision to pin a dependent slice to, and the guard still says so",
+    );
+    assert.equal(
+      await assertCandidateHead(dependentSlice.worktreePath, {
+        headRevision: dependentSlice.preparedRevision,
+      }),
+      dependentBase,
+      "the prepared revision is checked out, so evidence pinned to it is honest",
+    );
+
+    // An independent slice starts exactly at the base, so nothing changes for the common case.
+    const independentSlice = await manager.prepare(task, "S5-A1", {
+      baseRevision: base.baseRevision,
+      branchId: "S5-A1",
+    });
+    assert.equal(independentSlice.preparedRevision, independentSlice.baseRevision);
     await writeFile(path.join(dependentSlice.worktreePath, "dependent.txt"), "initial\n", "utf8");
     const dependent = await manager.commit(dependentSlice, "S4", {
       ownedPaths: ["dependent.txt", "dependent-repair.txt"],

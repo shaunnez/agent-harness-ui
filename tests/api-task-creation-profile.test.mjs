@@ -50,6 +50,8 @@ test("snapshots controlled experiment inputs and reports measured outcomes separ
       draft.startedAt = "2026-08-03T00:00:00.000Z";
       draft.completedAt = "2026-08-03T00:10:00.000Z";
       draft.status = "awaiting-human-approval";
+      // Local merge is opt-in now; this test drives that path deliberately.
+      draft.approvalCompletion = "local-merge";
       draft.attemptsByStage["dev-review"] = 2;
       draft.candidates.push({ revisions: [{ reason: "assembly" }, { reason: "repair" }] });
       draft.usage = {

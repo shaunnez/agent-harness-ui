@@ -261,13 +261,19 @@ function makeArtifact({
   };
 }
 
-async function createApprovalReadyTask(store, directory, title) {
+/**
+ * `approvalCompletion` defaults to "pull-request", so a test that drives the local merge path has
+ * to opt into it explicitly. Passing `localMerge` says which path is under test rather than
+ * leaving it to the default.
+ */
+async function createApprovalReadyTask(store, directory, title, { localMerge = false } = {}) {
   const task = await store.create({
     title,
     description: "Publish the exact qualified candidate through a GitHub pull request.",
     repositoryPath: directory,
     workflow: "implement",
     priority: "medium",
+    ...(localMerge ? { approvalCompletion: "local-merge" } : {}),
   });
   await store.update(task.id, (draft) => {
     draft.status = "awaiting-human-approval";

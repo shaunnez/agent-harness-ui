@@ -194,10 +194,17 @@ export class GitWorktreeManager {
         );
       }
     }
+    // Cherry-picking a dependency advances the worktree past `baseRevision`, so the base alone no
+    // longer describes where the slice actually starts. Reported explicitly because the caller
+    // needs it to pin verification evidence: a dependent slice that commits nothing of its own is
+    // still sitting on its predecessor's commit, and claiming the base for it attributes evidence
+    // to a revision that is not checked out.
+    const preparedRevision = (await git(worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
     return {
       id: candidateId,
       revisionNumber: 1,
       baseRevision,
+      preparedRevision,
       baseBranch,
       baseRef,
       headRevision: null,

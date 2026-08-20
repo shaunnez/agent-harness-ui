@@ -144,6 +144,8 @@ test("malformed focused Test ingestion persists the exact reason and blocks appr
 
     await store.update(task.id, (draft) => {
       draft.status = "awaiting-human-approval";
+      // Local merge is opt-in now; this test drives that path deliberately.
+      draft.approvalCompletion = "local-merge";
       draft.currentStage = "approval";
       draft.candidates.at(-1).status = "awaiting_human_approval";
       draft.runs.push(
@@ -295,6 +297,8 @@ test("persists exact structured-evidence reason codes through a failed review ru
       if (item.verifyApprovalBlocked) {
         await store.update(task.id, (draft) => {
           draft.status = "awaiting-human-approval";
+          // Local merge is opt-in now; this test drives that path deliberately.
+          draft.approvalCompletion = "local-merge";
           draft.currentStage = "approval";
           draft.candidates.at(-1).status = "awaiting_human_approval";
         });
