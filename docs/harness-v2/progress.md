@@ -7,9 +7,9 @@ Plan: `docs/harness-v2-cognitive-layer-plan.md`
 
 ## State
 
-Current phase: **6 — first live run done (AH-030). See F11. Two open items: Q3, Q4.**
+Current phase: **6 — complete. Two live runs (AH-030, AH-031). Q3/Q4 closed. One harness bug found: Q5.**
 Last updated: 2026-08-20
-Blocked on: Q3 (self-hosted verification is impossible) and Q4 (diagnosis misses qualification failures)
+Blocked on: nothing. Q5 is a pre-existing harness bug, reported not fixed.
 
 ## Phase log
 
@@ -21,7 +21,7 @@ Blocked on: Q3 (self-hosted verification is impossible) and Q4 (diagnosis misses
 | 3 Investigation synthesis | **done** | (this commit) | First real orchestrator change. 465 tests green (was 456). Unit-tested only; not yet observed on a live run. |
 | 4 Failure diagnosis + backjump | **done** | (this commit) | 22 new tests, 487 total green. Decision logic fully covered; full-pipeline chain not yet exercised — see F6. |
 | 5 Plan critic | **done** | (this commit) | 492 tests green (was 487). Critic is automatic; the revise loop is operator-triggered — see Q2. |
-| 6 Verify S/M/L | **prepared, handed off** | (this commit) | Everything verifiable without credits is done: 496 tests green. Live runs need Shaun. |
+| 6 Verify S/M/L | **done** | (this commit) | Two live runs. Whole cognitive layer executed live; the change it produced is landed and verified. |
 
 ## Open questions for Shaun
 
@@ -123,6 +123,29 @@ Three scoping decisions, each made after a test caught the previous one being to
 A rewind returns `true` so the coordinator does not then record the failure over the destination
 it rewound to. `ENVIRONMENT_FAILURE` routes to `requiresHuman` with no rewind, so AH-030's exact
 case now leaves the task failed but says *why* — the code may be fine and the toolchain is not.
+
+### Q5 (Phase 6) — a dependent slice is rejected as drifted from its own predecessor
+
+Found on AH-031 and **not fixed**: it is inside the candidate/worktree lineage machinery, and the
+check it would change exists to stop verification evidence being attributed to the wrong commit.
+Changing that blind is the wrong move.
+
+Exact signature. A two-package plan where S2 depends on S1:
+
+    S2: The candidate worktree is at ec3d624 but the candidate records 5cd3583;
+        verification evidence would describe a different commit.
+
+`ec3d624` is *S1's own commit*. The harness correctly based the dependent slice on its
+predecessor's work; the lineage check then compared the slice worktree against the candidate's
+original base revision and refused it as drift. Reproducible: it failed identically on a retry
+with a fresh slice worktree (`ef469d7`, then `ec3d624`).
+
+Consequence: any plan with a dependent second package cannot get past implementation. AH-030's
+single-package plan reached implementation fine, which is consistent with this being specific to
+sequential slices.
+
+This is pre-existing and unrelated to Phases 1-5. It is also the single thing standing between
+this harness and dogfooding itself on anything non-trivial.
 
 ### Q2 (Phase 5) — the revise loop is operator-triggered, not automatic
 
@@ -531,3 +554,43 @@ skip instead of paying for a diagnosis it cannot act on.
 Worth keeping: each of the three scoping decisions above was forced by a test failing, and each
 time the honest reading was "the scope is wrong", not "the test is wrong". The suite was a better
 designer than my first instinct in all three cases.
+
+### F13 (Phase 6) — AH-031, and the task's actual goal landed
+
+Second live run, standard profile, `topology-cognitive-v1`. The whole cognitive layer executed:
+`['triage','scouts','synthesis','grill','specification','plan','plan-review']` — seven nodes, with
+`specification` and `plan` present this time, confirming the instrumentation fix live. Grill
+self-resolved with zero questions, because the brief now named both gates that synthesis had found
+on AH-030. The plan critic PASSed again.
+
+Implementation split into two packages: S1 owning `biome.json` and `package.json`, S2 owning
+`vite.config.mjs`. **S1 qualified**, which is what Q3's fix bought — the same stage that died on
+AH-030 with `biome: command not found` now passes verification. S2 then failed on Q5.
+
+**I got the diagnosis of that wrong twice and want both corrections recorded.** First I called S2
+a redundant package the critic should have caught under `package-boundaries`. It was not
+redundant: `vite.config.mjs` genuinely had a finding (`assist/source/organizeImports` — the two
+imports were out of order), which is exactly the "fix any findings that surface" half of the
+brief. The two-package split was correct and the critic was right to pass it. Second, my Q4 gate
+correctly did *not* fire here, because a lineage drift is not a qualification failure — that is
+the scoping working, not a gap.
+
+**The change the harness produced is correct, and it is now landed.** S1's commit was applied and
+S2's work finished by hand:
+
+    biome.json    files.includes gains "vite.config.mjs"
+    package.json  lint and format:check both gain the vite.config.mjs argument
+    vite.config.mjs  imports sorted
+
+`npm run lint` now checks 231 files where it checked 229, and `npx biome check vite.config.mjs` no
+longer reports the path as ignored. All four gates pass: lint, format:check, typecheck, 498 tests.
+
+**And running format:check found two files of my own that were never formatted** —
+`src/components/runtime/workflow.ts` and `tests/run-failure-diagnosis.test.mjs`. `format:check` is
+not part of `npm test` or `npm run lint`, so nothing in the loop's own verification would ever
+have caught them. Fixed. Worth noting that the task I chose as a throwaway smoke test found a real
+gap in how I had been verifying my own work all along.
+
+Running tally of bugs in Phases 1-5 found by running the system rather than by adding tests: five
+(provider mis-anchoring, hardcoded stage denominator, bare dash in the rail, incomplete topology
+trace, unformatted files). Found by adding tests afterwards: zero.

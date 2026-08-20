@@ -272,9 +272,7 @@ export function getRuntimeStageSummary(
     case "synthesis": {
       const investigation = task.investigation ?? null;
       const recommended = investigation
-        ? investigation.hypotheses.find(
-            (hypothesis) => hypothesis.id === investigation.recommendedDiagnosis,
-          )
+        ? investigation.hypotheses.find((hypothesis) => hypothesis.id === investigation.recommendedDiagnosis)
         : undefined;
       if (!investigation || !recommended) {
         return {

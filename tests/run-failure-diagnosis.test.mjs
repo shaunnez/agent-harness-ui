@@ -65,7 +65,9 @@ function orchestratorThatFailsImplementation(store, diagnosisText) {
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       worktreeManager: {
         prepare: async () => {
-          throw new Error("S1 did not qualify: lint failed — npm run lint exited 127.\nsh: biome: command not found");
+          throw new Error(
+            "S1 did not qualify: lint failed — npm run lint exited 127.\nsh: biome: command not found",
+          );
         },
         base: async () => ({ baseRevision: "a".repeat(40) }),
         verifyCandidate: async () => {},
