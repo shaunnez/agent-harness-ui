@@ -7,7 +7,7 @@ Plan: `docs/harness-v2-cognitive-layer-plan.md`
 
 ## State
 
-Current phase: **4 — failure diagnosis + backjump router**
+Current phase: **5 — plan critic + bounded revise loop**
 Last updated: 2026-08-20
 Blocked on: nothing
 
@@ -19,7 +19,7 @@ Blocked on: nothing
 | 1 Topology telemetry | **done** | (this commit) | Additive. 436 tests green (was 429). Topology is now a group key in `controlledSummary`. |
 | 2 Typed contracts | **done** | (this commit) | 3 parsers + 3 renderers, 20 new tests. 456 total green. No orchestrator wiring yet, by design. |
 | 3 Investigation synthesis | **done** | (this commit) | First real orchestrator change. 465 tests green (was 456). Unit-tested only; not yet observed on a live run. |
-| 4 Failure diagnosis + backjump | not started | — | — |
+| 4 Failure diagnosis + backjump | **done** | (this commit) | 22 new tests, 487 total green. Decision logic fully covered; full-pipeline chain not yet exercised — see F6. |
 | 5 Plan critic | not started | — | — |
 | 6 Verify S/M/L | not started | — | — |
 
@@ -181,3 +181,53 @@ three were test stubs that had to answer the new contract. None were weakened to
 
 **Not yet verified end to end.** Every claim above is unit- and orchestrator-test level. No live
 run has executed a synthesis stage against a real model. That is Phase 6.
+
+### F6 (Phase 4) — retry now means rewind, and the loop is bounded
+
+New: `server/failure-routing.mjs` (a pure table, 12 tests), `server/orchestrator-failure-diagnosis.mjs`
+(the read-only step, 10 tests), and `buildFailureDiagnosisRequest` in `server/prompts.mjs`.
+Wired at composition in `server/orchestrator-core.mjs` so **every** repair dispatch passes
+through attribution first — both the run coordinator and the fast-path auto-repair in
+`_runReviewWithFastRepair` share one `diagnoseThenRepair` entry point.
+
+**The safety property that made this design necessary.** A rewind does not run a repair agent,
+so it cannot consume the automatic candidate-repair cycle. Without a second budget, a model that
+always answered `PLAN_DEFECT` would bounce between planning and review forever while never
+spending the counter that stops repair loops. So backjumps have their own limit
+(`BACKJUMP_LIMIT = 2`), counted **from the recorded topology trace rather than a new field**, so
+the budget and the telemetry can never disagree about what happened. Exhausting it blocks the
+task for a human; it does not fall back to repairing.
+
+**What deliberately costs nothing.** `ENVIRONMENT_FAILURE` blocks for a human without spending
+budget — nothing in the reasoning graph is wrong, and charging the task for a machine problem
+would be punitive. `TARGET_DRIFT` rebases and re-qualifies without spending budget for the same
+reason: the work was never wrong, the branch moved. `IMPLEMENTATION_DEFECT` routes to the
+pre-existing repair path byte for byte and is the only classification that touches the repair
+budget.
+
+**The rewind reuses an existing precedent, it does not invent one.** `_applyRewind` mirrors the
+target-refresh rebuild already in `server/orchestrator-candidate-operations.mjs`: supersede the
+candidate, return work packages to `planned`, grant the rewind target stage-run headroom, drop
+invalidated completed stages, and let `refreshGateFreshness` recompute what evidence still
+counts. It reaches into no gate or repair-authority rule; it restates the task at an earlier
+point using primitives the harness already had. Rewind statuses are all statuses that already
+existed.
+
+**Fast profile is untouched.** It buys one bounded automatic repair and cannot rewind at all, so
+paying for a model call to attribute a failure it may not act on would double its cost for
+nothing. The skip is recorded in `nodesSkipped` rather than being silent.
+
+**A test invariant worth keeping:** `invalidation always reaches every stage downstream of the
+rewind target`. A rewind that left stale downstream evidence behind would let a later gate pass
+on evidence produced against assumptions that have since been discarded. There is also a
+superset check — a specification rewind must invalidate everything a plan rewind does, and an
+investigation rewind everything a specification rewind does.
+
+**Honest coverage limit.** The 22 tests cover the routing table exhaustively and every decision
+branch and state mutation of the diagnosis step, driven through a fake store. What is **not**
+covered is the full pipeline chain: a standard-profile task running a real gate to
+`repair-required`, calling a real model for attribution, and re-planning from the rewind. A probe
+during this phase confirmed the two existing repair tests reach `_diagnoseFailure` but both are
+fast-profile early returns, so **no existing test exercises the standard-profile diagnosis path
+end to end.** That gap is Phase 6's job, and it is the single most important thing for Phase 6 to
+actually observe.

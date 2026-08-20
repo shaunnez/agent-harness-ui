@@ -1,18 +1,19 @@
-import { OrchestratorRuntimeContext } from "./orchestrator-runtime-base.mjs";
-import { RuntimeBoundariesOrchestrator } from "./orchestrator-runtime-boundaries.mjs";
-import { TaskControlOrchestrator } from "./orchestrator-task-control.mjs";
-import { PullRequestOrchestrator } from "./orchestrator-pr-lifecycle.mjs";
-import { MergeRecoveryOrchestrator } from "./orchestrator-merge-recovery.mjs";
 import { CandidateOperationsOrchestrator } from "./orchestrator-candidate-operations.mjs";
-import { InvestigationProgressionOrchestrator } from "./orchestrator-investigation.mjs";
-import { SpecificationPlanningOrchestrator } from "./orchestrator-specification-planning.mjs";
-import { WorkPackageOrchestrator } from "./orchestrator-work-packages.mjs";
-import { CandidateGateOrchestrator } from "./orchestrator-gates.mjs";
+import { FailureDiagnosisOrchestrator } from "./orchestrator-failure-diagnosis.mjs";
 import { GateEvaluationOrchestrator } from "./orchestrator-gate-evaluation.mjs";
+import { CandidateGateOrchestrator } from "./orchestrator-gates.mjs";
+import { InvestigationProgressionOrchestrator } from "./orchestrator-investigation.mjs";
+import { MergeRecoveryOrchestrator } from "./orchestrator-merge-recovery.mjs";
+import { PullRequestOrchestrator } from "./orchestrator-pr-lifecycle.mjs";
 import { RepairExecutionOrchestrator } from "./orchestrator-repair-execution.mjs";
+import { RetainedPackageOrchestrator } from "./orchestrator-retained-package.mjs";
 import { RetentionOrchestrator } from "./orchestrator-retention.mjs";
 import { OrchestratorRunCoordinator } from "./orchestrator-run-coordinator.mjs";
-import { RetainedPackageOrchestrator } from "./orchestrator-retained-package.mjs";
+import { OrchestratorRuntimeContext } from "./orchestrator-runtime-base.mjs";
+import { RuntimeBoundariesOrchestrator } from "./orchestrator-runtime-boundaries.mjs";
+import { SpecificationPlanningOrchestrator } from "./orchestrator-specification-planning.mjs";
+import { TaskControlOrchestrator } from "./orchestrator-task-control.mjs";
+import { WorkPackageOrchestrator } from "./orchestrator-work-packages.mjs";
 
 export class TaskOrchestratorCore {
   constructor(store, options = {}) {
@@ -37,6 +38,19 @@ export class TaskOrchestratorCore {
       finishAgentRun: (...args) => retention._finishAgentRun(...args),
       retainAgentResult: (...args) => retention._retainAgentResult(...args),
     });
+    const failureDiagnosis = new FailureDiagnosisOrchestrator({
+      store: runtime._store,
+      executeAgent: (...args) => repair._executeAgent(...args),
+      retainAgentResult: (...args) => retention._retainAgentResult(...args),
+    });
+    /**
+     * Every repair dispatch goes through attribution first. When the candidate really is the
+     * problem the diagnosis returns true and the original repair path runs untouched; otherwise
+     * the graph has already been rewound and there is nothing to repair.
+     */
+    const diagnoseThenRepair = async (...args) => {
+      if (await failureDiagnosis._diagnoseFailure(...args)) await repair._runRepair(...args);
+    };
     const gates = new CandidateGateOrchestrator({ store: runtime._store });
     const evaluation = new GateEvaluationOrchestrator({
       store: runtime._store,
@@ -45,7 +59,7 @@ export class TaskOrchestratorCore {
       completeDeterministicFastGates: (...args) => gates._completeDeterministicFastGates(...args),
       executeAgent: (...args) => repair._executeAgent(...args),
       retainAgentResult: (...args) => retention._retainAgentResult(...args),
-      runRepair: (...args) => repair._runRepair(...args),
+      runRepair: (...args) => diagnoseThenRepair(...args),
     });
     const planning = new SpecificationPlanningOrchestrator({
       store: runtime._store,
@@ -91,7 +105,7 @@ export class TaskOrchestratorCore {
       runEvaluation: (...args) => evaluation._runEvaluation(...args),
       runImplementation: (...args) => workPackages._runImplementation(...args),
       runPlanning: (...args) => planning._runPlanning(...args),
-      runRepair: (...args) => repair._runRepair(...args),
+      runRepair: (...args) => diagnoseThenRepair(...args),
       runReviewWithFastRepair: (...args) => evaluation._runReviewWithFastRepair(...args),
       runSpecification: (...args) => planning._runSpecification(...args),
     });
