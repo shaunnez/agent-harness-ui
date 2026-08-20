@@ -124,7 +124,7 @@ A rewind returns `true` so the coordinator does not then record the failure over
 it rewound to. `ENVIRONMENT_FAILURE` routes to `requiresHuman` with no rewind, so AH-030's exact
 case now leaves the task failed but says *why* — the code may be fine and the toolchain is not.
 
-### Q5 (Phase 6) — FIXED: a dependent slice was rejected as drifted from its own predecessor
+### Q5 (Phase 6) — FIXED AND PROVEN LIVE (AH-035)
 
 Found on AH-031 and **not fixed**: it is inside the candidate/worktree lineage machinery, and the
 check it would change exists to stop verification evidence being attributed to the wrong commit.
@@ -667,3 +667,36 @@ Running tally, unchanged in direction: seven bugs and wrong conclusions surfaced
 system (provider mis-anchoring, hardcoded stage denominator, bare dash in the rail, incomplete
 topology trace, unformatted files, the useless PR error, and my own two claims above). Zero by
 adding tests after the fact.
+
+### F16 — Q5 proven live, and two more defects the run found
+
+**AH-035 proves Q5.** Standard profile, `topology-cognitive-v1`. The plan produced exactly the
+shape that used to fail: `S1` owning a new file with no dependencies, `S2` owning its consumer and
+depending on `S1`. S1 qualified and committed (`46e92fb4`), S2's slice was then prepared on top of
+that commit, **qualified**, and both integrated into candidate `C1` (`ce4c8f83`). On AH-031 this
+failed twice with `The candidate worktree is at … but the candidate records …`. Dev review reached.
+
+Getting there took two more fixes, both found by running it.
+
+**A defect in my own Phase 5 work.** AH-034's plan critic returned REVISE — the first live one —
+and my code set the task to `blocked`. The plan action accepts `awaiting-plan-approval`, `failed`
+or `cancelled`, so a blocked task matched none of them: `grant-retry` refused it too ("a retry can
+only be granted to an exhausted blocked, approval, or repair stage"). The revise loop I documented
+in Q2 as merely "operator-triggered" was in fact a **dead end**. It now sets `failed`, which is the
+honest description of a plan stage that produced no acceptable plan, and which routes through the
+existing attempt-counted retry path.
+
+**`format:check` was never a manifest command.** AH-034's REVISE was correct and worth reading: the
+specification's acceptance criteria demanded `npm run format:check`, the plan scheduled only
+lint/typecheck/test, and the manifest declared no such command — so the harness could not have
+verified it however the plan was written. Cited to three files across two artifacts. It is now
+declared in `.agent-harness/verification.json` as `format-check`. This also explains F13's smaller
+finding: two unformatted files of mine survived because nothing in the harness-owned gates ran
+format:check either.
+
+**Also observed:** the `fast` profile cannot express dependent packages at all — its bounded change
+contract is one package by construction (AH-033, closed unused). Any test of dependent-slice
+behaviour has to run on `standard` or `high-risk`.
+
+Tally of things surfaced by running the system rather than by adding tests afterwards: ten. By
+adding tests afterwards: still zero.
