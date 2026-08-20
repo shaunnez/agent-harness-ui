@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildEvaluationSummary, normalizeTopologyTrace } from "../server/evaluation.mjs";
-import { INVESTIGATION_PIPELINE, buildStagePrompt } from "../server/prompts.mjs";
+import { buildStagePrompt, INVESTIGATION_PIPELINE } from "../server/prompts.mjs";
 import {
   assertTopologyTraceValid,
   recordEdge,

@@ -222,10 +222,7 @@ test("an exhausted budget still lets an implementation repair through", async ()
 test("a malformed diagnosis fails closed rather than guessing a route", async () => {
   const task = makeTask();
   const { orchestrator } = harness(task, "## Classification\n\nProbably the plan, I think.");
-  await assert.rejects(
-    () => orchestrator._diagnoseFailure("AH-1"),
-    /required failure-diagnosis JSON block/,
-  );
+  await assert.rejects(() => orchestrator._diagnoseFailure("AH-1"), /required failure-diagnosis JSON block/);
   assert.equal(task.status, "repair-required", "the task is left exactly as it was found");
   assert.equal(task.currentStage, "dev-review");
 });

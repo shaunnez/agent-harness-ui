@@ -7,9 +7,9 @@ Plan: `docs/harness-v2-cognitive-layer-plan.md`
 
 ## State
 
-Current phase: **6 — verify against small / medium / large**
+Current phase: **6 — blocked on live runs (see F8). Phases 0-5 complete.**
 Last updated: 2026-08-20
-Blocked on: nothing
+Blocked on: Shaun driving three live runs — docs/harness-v2/phase-6-runbook.md
 
 ## Phase log
 
@@ -21,7 +21,7 @@ Blocked on: nothing
 | 3 Investigation synthesis | **done** | (this commit) | First real orchestrator change. 465 tests green (was 456). Unit-tested only; not yet observed on a live run. |
 | 4 Failure diagnosis + backjump | **done** | (this commit) | 22 new tests, 487 total green. Decision logic fully covered; full-pipeline chain not yet exercised — see F6. |
 | 5 Plan critic | **done** | (this commit) | 492 tests green (was 487). Critic is automatic; the revise loop is operator-triggered — see Q2. |
-| 6 Verify S/M/L | not started | — | — |
+| 6 Verify S/M/L | **prepared, handed off** | (this commit) | Everything verifiable without credits is done: 496 tests green. Live runs need Shaun. |
 
 ## Open questions for Shaun
 
@@ -289,3 +289,48 @@ not identify the cause, so it is recorded here rather than dismissed. If it recu
 chasing before Phase 6 conclusions rest on suite colour.
 
 **Not verified end to end.** As with Phases 3 and 4, no live model has produced a real critique.
+
+### F8 (Phase 6) — what I verified without spending credits, and what I could not
+
+Both CLIs (`codex`, `claude`) are on PATH and `.agent-harness/verification.json` is present, so
+live runs are technically possible. I did not start them: they spend real credits and the
+high-risk task stops at human approval gates. That is the handoff, written up in
+`docs/harness-v2/phase-6-runbook.md` with three concrete task briefs, the frozen base, the
+experiment ids, and the five acceptance checks.
+
+**What I did verify, and it was worth doing.**
+
+1. **Telemetry survives persistence.** `tests/topology-telemetry-persistence.test.mjs` drives the
+   path the running app uses — create with an experiment, write a trace, persist, read back
+   through `listEvaluationTasks`, summarise — on both the JSON and SQLite stores. The specific
+   risk was a projection that dropped `topologyTrace`: that would have zeroed all telemetry in
+   production while every unit test stayed green. `listEvaluationTasks` spreads `core_json`
+   wholesale, so it survives. This closes the persistence half of F1.
+2. **The real database migrates cleanly.** Adding `synthesis` and `plan-review` adds two POLICY_IDS,
+   and `validateStagePolicies` iterates that list — an install whose settings predate them would
+   have failed validation on keys it could not know about. I ran `init()` against a copy of the
+   live 37MB store: all 29 tasks stayed readable, both policies were backfilled across all three
+   profiles, and `plan` (Sol) versus `plan-review` (Luna) came out genuinely cross-model as
+   designed. Pinned as a test against a synthetic legacy shape so it stays true.
+3. **Absent is distinguished from malformed.** A task with no `topologyTrace` field at all reports
+   zeroes with `invalidTopologyTraces: 0`; only a genuinely broken writer increments that counter.
+
+**What remains unverified, and this is the real limit of the whole effort.** No live model has
+produced a synthesis, a failure diagnosis, or a plan critique. Every claim in F5, F6 and F7 rests
+on stubs. Specifically:
+
+- Whether a real model will produce a well-evidenced `investigation-result` at all, or fail the
+  coherence checks often enough to be annoying.
+- Whether the plan critic's ten closed dimensions are the right ten, or whether real critiques
+  keep wanting an eleventh.
+- Whether models over-reach for upstream classifications when `IMPLEMENTATION_DEFECT` is the
+  honest answer. The prompt pushes hard against this and the backjump budget bounds the damage,
+  but the tendency is unmeasured.
+- What the cognitive layer actually costs per run.
+
+**And the framing that matters most:** these three runs cannot be a comparison. F1 established
+that no historical task carries experiment metadata, so there is nothing to replay against. They
+are first baselines. The honest claim they can support is "this topology executed and was
+measured", never "this topology is better". Real comparison needs roughly twenty paired runs that
+do not exist yet, and accumulating them is now the long pole — which was true before any of this
+work started, and is the reason Phase 1 came first.

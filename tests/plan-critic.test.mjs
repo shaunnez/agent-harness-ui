@@ -1,17 +1,17 @@
 import test from "node:test";
+import { parsePlanCritique } from "../server/structured-output.mjs";
 import {
   assert,
   JsonTaskStore,
   mkdtemp,
   os,
-  path,
   PLAN_CRITIQUE_OUTPUT,
   PLAN_CRITIQUE_REVISE_OUTPUT,
+  path,
   rm,
   TaskOrchestrator,
   waitForStatus,
 } from "./orchestrator-test-support.mjs";
-import { parsePlanCritique } from "../server/structured-output.mjs";
 
 const PLAN_OUTPUT = `<work-packages>{"packages":[{"id":"S1","title":"Scope","description":"One coherent package.","dependencies":[],"ownedPaths":["src/correct.ts"],"verificationCommandIds":["test"]}]}</work-packages>`;
 
