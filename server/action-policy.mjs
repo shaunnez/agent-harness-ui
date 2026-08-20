@@ -29,7 +29,7 @@ const RUN_ACTIONS = Object.freeze({
   run: {
     kind: "investigation",
     statuses: ["queued", "failed", "cancelled"],
-    stages: ["triage", "scouts", "grill"],
+    stages: ["triage", "scouts", "synthesis", "grill"],
   },
   specification: { kind: "specification", statuses: ["failed", "cancelled"], stages: ["specification"] },
   plan: {

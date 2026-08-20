@@ -10,6 +10,7 @@ import {
   path,
   rm,
   SCOUT_OUTPUT,
+  SYNTHESIS_OUTPUT,
   selectScoutDispatch,
   TaskOrchestrator,
   waitForStatus,
@@ -91,9 +92,11 @@ test("runs the investigation frontier and retains each stage handoff", async () 
         return {
           finalText: /<scout-report>/.test(prompt)
             ? SCOUT_OUTPUT
-            : /<grill-questions>/.test(prompt)
-              ? GRILL_OUTPUT
-              : `## Artifact\n\n${prompt.match(/Your stage assignment:\n([^\n]+)/)?.[1] ?? "Ready"}`,
+            : /<investigation-result>/.test(prompt)
+              ? SYNTHESIS_OUTPUT
+              : /<grill-questions>/.test(prompt)
+                ? GRILL_OUTPUT
+                : `## Artifact\n\n${prompt.match(/Your stage assignment:\n([^\n]+)/)?.[1] ?? "Ready"}`,
           usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
         };
       },
@@ -109,8 +112,8 @@ test("runs the investigation frontier and retains each stage handoff", async () 
 
     assert.equal(finished.status, "awaiting-grill", finished.error);
     assert.equal(finished.grillPolicy, "manual");
-    assert.deepEqual(finished.completedStages, ["triage", "scouts"]);
-    assert.equal(finished.artifacts.length, 5);
+    assert.deepEqual(finished.completedStages, ["triage", "scouts", "synthesis"]);
+    assert.equal(finished.artifacts.length, 6);
     assert.equal(finished.grillSession.questions.length, 1);
     await assert.rejects(
       orchestrator.finishGrill(task.id, { acceptRemaining: true }),
@@ -125,10 +128,10 @@ test("runs the investigation frontier and retains each stage handoff", async () 
     finished = await waitForStatus(store, task.id, "awaiting-spec-approval");
     assert.equal(finished.grillSession.questions[0].answerSource, "operator-answer");
     assert.equal(finished.grillSession.completionSource, "operator");
-    assert.deepEqual(finished.completedStages, ["triage", "scouts", "grill", "specification"]);
-    assert.equal(finished.artifacts.length, 6);
-    assert.equal(finished.usage.totalTokens, 75);
-    for (const stage of ["triage", "scouts", "grill", "specification"]) {
+    assert.deepEqual(finished.completedStages, ["triage", "scouts", "synthesis", "grill", "specification"]);
+    assert.equal(finished.artifacts.length, 7);
+    assert.equal(finished.usage.totalTokens, 90);
+    for (const stage of ["triage", "scouts", "synthesis", "grill", "specification"]) {
       assert.equal(finished.attemptsByStage[stage], 1, `${stage} consumes exactly one workflow attempt`);
       const reservation = finished.stageRunReservations[stage];
       assert.equal(reservation.stage, stage);
@@ -181,9 +184,11 @@ test("automatically accepts Grill recommendations only for a task that snapshott
         return {
           finalText: /<scout-report>/.test(prompt)
             ? SCOUT_OUTPUT
-            : /<grill-questions>/.test(prompt)
-              ? GRILL_OUTPUT
-              : "## Specification\n\nRecommendations were accepted under the task policy.",
+            : /<investigation-result>/.test(prompt)
+              ? SYNTHESIS_OUTPUT
+              : /<grill-questions>/.test(prompt)
+                ? GRILL_OUTPUT
+                : "## Specification\n\nRecommendations were accepted under the task policy.",
           usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
         };
       },
@@ -284,9 +289,11 @@ test("auto-advances a zero-question Grill session into specification", async () 
         }
         const finalText = /Your stage assignment:\nClassify the task/.test(prompt)
           ? `<scout-dispatch>{"scouts":[],"rationale":"No additional scout evidence is needed."}</scout-dispatch>`
-          : /Your stage assignment:\nSeparate repository facts/.test(prompt)
-            ? `<grill-questions>{"questions":[]}</grill-questions>`
-            : "## Specification\n\nThe bounded change is ready for approval.";
+          : /<investigation-result>/.test(prompt)
+            ? SYNTHESIS_OUTPUT
+            : /Your stage assignment:\nSeparate repository facts/.test(prompt)
+              ? `<grill-questions>{"questions":[]}</grill-questions>`
+              : "## Specification\n\nThe bounded change is ready for approval.";
         return {
           finalText,
           usage: { inputTokens: 10, cachedInputTokens: 5, outputTokens: 5, totalTokens: 15 },
@@ -302,12 +309,12 @@ test("auto-advances a zero-question Grill session into specification", async () 
     assert.equal(finished.scoutDispatch.rationale, "No additional scout evidence is needed.");
     assert.equal(finished.grillSession.status, "completed");
     assert.equal(finished.grillSession.questions.length, 0);
-    assert.deepEqual(finished.completedStages, ["triage", "scouts", "grill", "specification"]);
+    assert.deepEqual(finished.completedStages, ["triage", "scouts", "synthesis", "grill", "specification"]);
     assert.equal(
       finished.events.some((event) => event.title === "Grill Me completed automatically"),
       true,
     );
-    for (const stage of ["triage", "scouts", "grill", "specification"]) {
+    for (const stage of ["triage", "scouts", "synthesis", "grill", "specification"]) {
       assert.equal(finished.attemptsByStage[stage], 1, `${stage} consumes exactly one workflow attempt`);
       const reservation = finished.stageRunReservations[stage];
       assert.equal(reservation.stage, stage);

@@ -1,4 +1,13 @@
+import { renderInvestigationResultMarkdown } from "./contract-rendering.mjs";
+import {
+  createStageRunReservation,
+  removeStageArtifacts,
+  throwIfAborted,
+} from "./orchestrator-run-policy.mjs";
+import { activity, completeGrillSession, now } from "./orchestrator-stage-support.mjs";
+import { applyStageRunReservation, requireActiveRunReservation } from "./orchestrator-task-helpers.mjs";
 import { getStageMetadata } from "./prompts.mjs";
+import { stageRunLimitFor } from "./run-activity.mjs";
 import {
   aggregateScoutReports,
   buildScoutRequest,
@@ -7,17 +16,13 @@ import {
   scoutReportMarkdown,
   selectScoutDispatch,
 } from "./scouts.mjs";
-import { stageRunLimitFor } from "./run-activity.mjs";
-import { parseFastChangeContract, parseGrillQuestions } from "./structured-output.mjs";
-import { fastEscalation } from "./workflow-profiles.mjs";
-
-import { now, activity, completeGrillSession } from "./orchestrator-stage-support.mjs";
 import {
-  removeStageArtifacts,
-  throwIfAborted,
-  createStageRunReservation,
-} from "./orchestrator-run-policy.mjs";
-import { applyStageRunReservation, requireActiveRunReservation } from "./orchestrator-task-helpers.mjs";
+  parseFastChangeContract,
+  parseGrillQuestions,
+  parseInvestigationResult,
+} from "./structured-output.mjs";
+import { recordEdge, recordNodeExecuted, recordNodeSkipped } from "./topology-trace.mjs";
+import { fastEscalation } from "./workflow-profiles.mjs";
 
 export class InvestigationProgressionOrchestrator {
   constructor({ store, escalateProfile, executeAgent, retainAgentResult, runSpecification }) {
@@ -37,6 +42,7 @@ export class InvestigationProgressionOrchestrator {
       const result = await this._executeAgent(task, "triage", signal, task.repositoryPath, "read-only");
       throwIfAborted(signal);
       await this._retainAgentResult(id, "triage", result, { replace: true });
+      await this._store.update(id, (draft) => recordNodeExecuted(draft, "triage"));
     }
 
     task = await this._store.get(id);
@@ -113,6 +119,8 @@ export class InvestigationProgressionOrchestrator {
           await this._store.update(id, (draft) => {
             draft.workPackages = [contract.workPackage];
             for (const [stage, reason] of Object.entries({
+              synthesis:
+                "A bounded fast change has one hypothesis by construction, so ranking competing diagnoses would cost a model call without changing the route.",
               grill:
                 "Authoritative acceptance criteria contained no unresolved product decision, so Grill Me was not invoked.",
               specification:
@@ -120,6 +128,7 @@ export class InvestigationProgressionOrchestrator {
               plan: "The bounded fast change contract defines exactly one package and its focused manifest command IDs; a separate Plan model call is not required.",
             })) {
               draft.stageDispositions[stage] = { status: "not-required", reason, decidedAt: now() };
+              recordNodeSkipped(draft, stage, reason);
               draft.events.push(
                 activity(stage, `${getStageMetadata(stage).label} not required`, reason, "info", "decision"),
               );
@@ -145,13 +154,21 @@ export class InvestigationProgressionOrchestrator {
     }
 
     task = await this._store.get(id);
-    const stages = ["scouts", "grill"].filter((stage) => !task.completedStages.includes(stage));
+    const stages = ["scouts", "synthesis", "grill"].filter((stage) => !task.completedStages.includes(stage));
     for (const stageId of stages) {
       if (signal.aborted) throw new Error("Codex run cancelled.");
       await this._reserveInvestigationStage(id, stageId);
       task = await this._store.get(id);
       if (stageId === "scouts") {
         await this._runScouts(id, task, signal);
+        await this._store.update(id, (draft) => {
+          recordNodeExecuted(draft, "scouts");
+          recordEdge(draft, "triage", "scouts");
+        });
+        continue;
+      }
+      if (stageId === "synthesis") {
+        await this._runSynthesis(id, task, signal);
         continue;
       }
       const result = await this._executeAgent(task, stageId, signal, task.repositoryPath, "read-only");
@@ -162,6 +179,8 @@ export class InvestigationProgressionOrchestrator {
         complete: grillQuestions.length === 0,
       });
       await this._store.update(id, (draft) => {
+        recordNodeExecuted(draft, "grill");
+        recordEdge(draft, task.completedStages.includes("synthesis") ? "synthesis" : "scouts", "grill");
         draft.grillSession = {
           status: grillQuestions.length ? "open" : "completed",
           questions: grillQuestions,
@@ -214,6 +233,45 @@ export class InvestigationProgressionOrchestrator {
           `${count} material question${count === 1 ? "" : "s"} need a decision.`,
           "success",
           "decision",
+        ),
+      );
+    });
+  }
+
+  /**
+   * Facts become a belief. The scouts produced a concatenated evidence report; this stage is
+   * the first thing in the pipeline whose job is to decide what that evidence *means*, and it
+   * is the only investigation stage whose output downstream stages read in place of the raw
+   * aggregate.
+   *
+   * Read-only and fresh-context like every other investigation stage. The parsed contract is
+   * authoritative; the Markdown retained alongside it is a rendering of that contract, so the
+   * UI and the next agent can never disagree about what was concluded.
+   */
+  async _runSynthesis(id, task, signal) {
+    const result = await this._executeAgent(task, "synthesis", signal, task.repositoryPath, "read-only");
+    throwIfAborted(signal);
+    const investigation = parseInvestigationResult(result.finalText);
+    await this._retainAgentResult(
+      id,
+      "synthesis",
+      { ...result, finalText: renderInvestigationResultMarkdown(investigation) },
+      { replace: true, name: "investigation-synthesis.md", artifactTitle: "Investigation synthesis ready" },
+    );
+    await this._store.update(id, (draft) => {
+      draft.investigation = investigation;
+      recordNodeExecuted(draft, "synthesis");
+      recordEdge(draft, "scouts", "synthesis");
+      const recommended = investigation.hypotheses.find(
+        (hypothesis) => hypothesis.id === investigation.recommendedDiagnosis,
+      );
+      draft.events.push(
+        activity(
+          "synthesis",
+          `${investigation.recommendedDiagnosis} at ${Math.round(recommended.confidence * 100)}% confidence`,
+          `${recommended.claim} · ${Math.round(investigation.remainingUncertainty * 100)}% uncertainty remains across ${investigation.hypotheses.length} hypothes${investigation.hypotheses.length === 1 ? "is" : "es"}.`,
+          "success",
+          "agent",
         ),
       );
     });

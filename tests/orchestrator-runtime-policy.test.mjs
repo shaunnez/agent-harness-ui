@@ -20,6 +20,7 @@ import {
   RUNTIME_FRESHNESS_REASONS,
   refreshGateFreshness,
   rm,
+  SYNTHESIS_OUTPUT,
   TASK_STORE_SCHEMA_VERSION,
   TaskOrchestrator,
   waitForStatus,
@@ -241,9 +242,11 @@ test("sends byte-identical stage content whichever provider runs it", async () =
         runCodex: async (options) => {
           captured.push(options.prompt);
           return {
-            finalText: /Grill/i.test(options.prompt)
-              ? `## Grill\n\nNothing to settle.\n\n<grill-questions>{"questions":[]}</grill-questions>`
-              : `## Triage\n\nGrounded.\n\n<scout-dispatch>{"scouts":[],"rationale":"Triage already identifies the complete code path."}</scout-dispatch>`,
+            finalText: /<investigation-result>/.test(options.prompt)
+              ? SYNTHESIS_OUTPUT
+              : /Grill/i.test(options.prompt)
+                ? `## Grill\n\nNothing to settle.\n\n<grill-questions>{"questions":[]}</grill-questions>`
+                : `## Triage\n\nGrounded.\n\n<scout-dispatch>{"scouts":[],"rationale":"Triage already identifies the complete code path."}</scout-dispatch>`,
             usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
           };
         },

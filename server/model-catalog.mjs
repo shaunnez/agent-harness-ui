@@ -53,6 +53,7 @@ export const MODEL_CREDIT_RATES = {
 export const POLICY_IDS = [
   "triage",
   "scouts",
+  "synthesis",
   "grill",
   "specification",
   "plan",
@@ -94,6 +95,9 @@ function profilePolicy(gathering, planning, implementation, repair, finalReview)
   return {
     triage: { ...gathering },
     scouts: { ...gathering },
+    // Synthesis turns scout facts into ranked hypotheses. It is the one investigation stage
+    // doing genuine reasoning rather than retrieval, so it gets the planning-tier model.
+    synthesis: { ...planning },
     grill: { ...gathering },
     specification: { ...gathering },
     plan: { ...planning },

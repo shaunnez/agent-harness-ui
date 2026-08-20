@@ -8,7 +8,7 @@ import {
 export type AtlasTaskTone = "running" | "blocked" | "attention" | "complete" | "idle";
 
 export interface AtlasRoom {
-  stageId: StageId;
+  stageId: AtlasStageId;
   number: number;
   roomName: string;
   x: number;
@@ -43,7 +43,16 @@ export interface AtlasRoad {
 export const ATLAS_WORLD_WIDTH = 1240;
 export const ATLAS_WORLD_HEIGHT = 650;
 
-const roomDetails: Record<StageId, Omit<AtlasRoom, "stageId" | "number">> = {
+/**
+ * The Atlas floor plan is a hand-placed spatial map, not a generated list. Synthesis is a real
+ * backend stage with its own telemetry, but it is deliberately not a room: there is no free
+ * slot in the top row without reflowing five rooms, and `final-review` already occupies the
+ * name "Synthesis Room". It surfaces inside Survey Bay as part of the investigation evidence
+ * instead, which is also what keeps the Atlas from turning into an aircraft cockpit.
+ */
+export type AtlasStageId = Exclude<StageId, "synthesis">;
+
+const roomDetails: Record<AtlasStageId, Omit<AtlasRoom, "stageId" | "number">> = {
   triage: {
     roomName: "Intake Dock",
     x: 18,
@@ -128,15 +137,21 @@ const roomDetails: Record<StageId, Omit<AtlasRoom, "stageId" | "number">> = {
   },
 };
 
-export const atlasRooms: AtlasRoom[] = workflowStages.map((stage, index) => ({
+/** The stages that have a room on the floor plan, in walking order. */
+export const atlasStages = workflowStages.filter(
+  (stage): stage is (typeof workflowStages)[number] & { id: AtlasStageId } =>
+    stage.id !== "synthesis",
+);
+
+export const atlasRooms: AtlasRoom[] = atlasStages.map((stage, index) => ({
   stageId: stage.id,
   number: index + 1,
   ...roomDetails[stage.id],
 }));
 
-export const atlasConnections: Array<[StageId, StageId]> = workflowStages
+export const atlasConnections: Array<[AtlasStageId, AtlasStageId]> = atlasStages
   .slice(0, -1)
-  .map((stage, index) => [stage.id, workflowStages[index + 1]?.id ?? stage.id]);
+  .map((stage, index) => [stage.id, atlasStages[index + 1]?.id ?? stage.id]);
 
 export const atlasRoads: AtlasRoad[] = [
   {

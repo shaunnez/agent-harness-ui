@@ -47,7 +47,7 @@ export function recordApproval(task, stage, note) {
 
 export function stageForRun(kind, currentStage) {
   return {
-    investigation: ["triage", "scouts", "grill", "specification"].includes(currentStage)
+    investigation: ["triage", "scouts", "synthesis", "grill", "specification"].includes(currentStage)
       ? currentStage
       : "triage",
     specification: "specification",

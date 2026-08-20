@@ -7,10 +7,10 @@ import {
 } from "../server/contract-rendering.mjs";
 import {
   COGNITIVE_STAGE_IDS,
+  PLAN_CRITIQUE_DIMENSIONS,
   parseFailureDiagnosis,
   parseInvestigationResult,
   parsePlanCritique,
-  PLAN_CRITIQUE_DIMENSIONS,
 } from "../server/structured-output.mjs";
 
 function block(label, payload) {
@@ -162,10 +162,7 @@ test("a blocking finding without evidence cannot block", () => {
 test("a blocking finding outside the closed dimension list cannot block", () => {
   const payload = structuredClone(CRITIQUE);
   payload.blocking[0].dimension = "elegance";
-  assert.throws(
-    () => parsePlanCritique(block("plan-critique", payload)),
-    /not a plan defect/,
-  );
+  assert.throws(() => parsePlanCritique(block("plan-critique", payload)), /not a plan defect/);
   assert.equal(PLAN_CRITIQUE_DIMENSIONS.includes("elegance"), false);
 });
 
@@ -199,8 +196,7 @@ test("a failure diagnosis normalises its classification and keeps the proposal s
 
 test("an unknown classification or unknown rewind stage is refused", () => {
   assert.throws(
-    () =>
-      parseFailureDiagnosis(block("failure-diagnosis", { ...DIAGNOSIS, classification: "VIBES" })),
+    () => parseFailureDiagnosis(block("failure-diagnosis", { ...DIAGNOSIS, classification: "VIBES" })),
     /classification must be one of/,
   );
   assert.throws(

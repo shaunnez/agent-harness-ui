@@ -272,6 +272,22 @@ export interface RuntimeGrillQuestion {
   resolvedAt: string | null;
 }
 
+export interface RuntimeInvestigationHypothesis {
+  id: string;
+  claim: string;
+  confidence: number;
+  supportingEvidence: string[];
+  contradictingEvidence: string[];
+  unknowns: string[];
+}
+
+export interface RuntimeInvestigationResult {
+  hypotheses: RuntimeInvestigationHypothesis[];
+  recommendedDiagnosis: string;
+  remainingUncertainty: number;
+  additionalEvidenceNeeded: string[];
+}
+
 export interface RuntimeGrillSession {
   status: "open" | "completed";
   questions: RuntimeGrillQuestion[];
@@ -547,6 +563,11 @@ export interface RuntimeTask {
   artifacts: RuntimeArtifact[];
   decisions: RuntimeDecision[];
   grillSession: RuntimeGrillSession | null;
+  /**
+   * The synthesis stage's typed conclusion. Optional because a fast-profile run skips the
+   * stage entirely, and because tasks recorded before synthesis existed never had one.
+   */
+  investigation?: RuntimeInvestigationResult | null;
   approvals: RuntimeApproval[];
   workPackages: RuntimeWorkPackage[];
   candidates: RuntimeCandidate[];

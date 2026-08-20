@@ -32,6 +32,13 @@ const STAGE_PROMPTS = {
       "Suggested seams",
     ],
   },
+  synthesis: {
+    label: "Investigation synthesis",
+    artifactName: "investigation-synthesis.md",
+    instruction:
+      "The scouts answered facts. Your job is meaning: decide what you believe is actually happening. Rank competing hypotheses, cite the exact evidence for and against each, and name what remains unknown. Do not propose an implementation, and do not invent a hypothesis the retained evidence cannot support. A single well-evidenced hypothesis is a better answer than three speculative ones. Where the scout reports disagree, say so explicitly rather than averaging them.",
+    headings: ["Recommended diagnosis", "Hypotheses", "Evidence", "Unknowns", "Confidence"],
+  },
   grill: {
     label: "Grill Me",
     artifactName: "decision-brief.md",
@@ -109,7 +116,7 @@ const STAGE_PROMPTS = {
   },
 };
 
-export const INVESTIGATION_PIPELINE = ["triage", "scouts", "grill"];
+export const INVESTIGATION_PIPELINE = ["triage", "scouts", "synthesis", "grill"];
 export const REAL_PIPELINE = INVESTIGATION_PIPELINE;
 
 export function buildStagePrompt(task, stageId) {
@@ -119,7 +126,8 @@ export function buildStagePrompt(task, stageId) {
 export function buildStageRequest(task, stageId) {
   const stage = STAGE_PROMPTS[stageId];
   if (!stage) throw new Error(`Unknown stage: ${stageId}`);
-  const commandLimit = { triage: 4, scouts: 6, grill: 4, specification: 3, plan: 2 }[stageId] ?? 4;
+  const commandLimit =
+    { triage: 4, scouts: 6, synthesis: 3, grill: 4, specification: 3, plan: 2 }[stageId] ?? 4;
   const contextEntries = stageArtifactEntries(task, stageId);
   const artifactContext = selectArtifactContext(
     contextEntries.map((artifact) => ({
@@ -543,11 +551,23 @@ function selectArtifactContext(entries, characterLimit, direction) {
   };
 }
 
+function investigationEvidenceNames(task) {
+  const hasSynthesis = (task.artifacts ?? []).some(
+    (artifact) => artifact.name === "investigation-synthesis.md",
+  );
+  return hasSynthesis ? ["investigation-synthesis.md"] : ["repository-scout.md"];
+}
+
 function stageArtifactEntries(task, stageId) {
   if (stageId === "triage") return [];
   if (stageId === "scouts") return latestNamed(task, ["triage.md"]);
-  if (stageId === "grill") return latestNamed(task, ["triage.md", "repository-scout.md"]);
-  if (stageId === "specification") return latestNamed(task, ["repository-scout.md", "decision-brief.md"]);
+  if (stageId === "synthesis") return latestNamed(task, ["triage.md", "repository-scout.md"]);
+  // Once synthesis has run, downstream stages read its typed conclusion rather than the
+  // concatenated scout aggregate. The scout report remains the fallback so a fast-profile run
+  // (which skips synthesis) and any task recorded before synthesis existed behave as before.
+  if (stageId === "grill") return latestNamed(task, ["triage.md", ...investigationEvidenceNames(task)]);
+  if (stageId === "specification")
+    return latestNamed(task, [...investigationEvidenceNames(task), "decision-brief.md"]);
   if (stageId === "plan") return latestNamed(task, ["task-specification.md"]);
   return [];
 }
@@ -716,6 +736,9 @@ function structuredOutputInstruction(stageId, candidate = null, task = null) {
   if (stageId === "triage") {
     const fastContract = taskProfileStructuredInstruction(task);
     return `\n\nAt the end of Recommended route, include exactly one JSON block between <scout-dispatch> and </scout-dispatch> tags. Choose only from scout-code-path, scout-dependency, scout-pattern, scout-schema, scout-test-inventory, and scout-user-journey. For a fast profile, select zero scouts by default and at most one only when a named repository fact remains unresolved. Otherwise select at most 1 scout for low priority, 2 for medium, or 3 for high. Every selected scout needs a narrow focus and reason.\n\n<scout-dispatch>\n{"scouts":[],"rationale":"The bounded task contract resolves the repository facts needed for implementation."}\n</scout-dispatch>${fastContract}`;
+  }
+  if (stageId === "synthesis") {
+    return `\n\nAt the end of the Confidence section, include exactly one JSON block between <investigation-result> and </investigation-result> tags with this shape:\n\n<investigation-result>\n{"hypotheses":[{"id":"H1","claim":"What you believe is happening","confidence":0.82,"supportingEvidence":["path/to/file.ts:183"],"contradictingEvidence":[],"unknowns":["What the evidence cannot settle"]}],"recommendedDiagnosis":"H1","remainingUncertainty":0.18,"additionalEvidenceNeeded":[]}\n</investigation-result>\n\nUse 1-8 hypotheses. Every hypothesis needs at least one supportingEvidence entry citing a repository path, and a path with a line number is better than a bare filename. confidence and remainingUncertainty are numbers from 0 to 1. recommendedDiagnosis must name one of your hypothesis ids. If remainingUncertainty is above 0, the recommended hypothesis must list unknowns or you must list additionalEvidenceNeeded; if it is 0, both must be empty. Do not pad the list with hypotheses you do not believe.`;
   }
   if (stageId === "grill") {
     return `\n\nAt the end of the Grill questions section, include exactly one JSON block between <grill-questions> and </grill-questions> tags with this shape:\n\n<grill-questions>\n{"questions":[{"question":"A consequential question","whyItMatters":"Why the answer changes implementation","options":[{"label":"Option A","description":"Tradeoff","recommended":true},{"label":"Option B","description":"Tradeoff","recommended":false}],"allowCustom":true}]}\n</grill-questions>\n\nUse zero questions when repository evidence and safe reversible defaults settle everything. Provide two to four mutually exclusive options per question and exactly one recommended option.`;

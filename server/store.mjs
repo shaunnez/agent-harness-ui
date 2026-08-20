@@ -1,6 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { setTimeout as delay } from "node:timers/promises";
 import path from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import {
   defaultRuntimeSettings,
   enrichUsage,
@@ -16,8 +16,8 @@ import {
   retainRunActivityEvents,
   TASK_STORE_SCHEMA_VERSION,
 } from "./run-activity.mjs";
-import { migratedStandardProfile } from "./workflow-profiles.mjs";
 import { projectTaskPollState, projectTaskSummary } from "./task-projections.mjs";
+import { migratedStandardProfile } from "./workflow-profiles.mjs";
 
 const EMPTY_STATE = {
   schemaVersion: TASK_STORE_SCHEMA_VERSION,
@@ -266,6 +266,23 @@ function configuredModels(stagePolicies) {
   }));
 }
 
+function backfillStagePolicies(settings, defaults) {
+  let changed = false;
+  const fill = (target, source) => {
+    if (!target || !source) return;
+    for (const [policyId, policy] of Object.entries(source)) {
+      if (target[policyId] === undefined) {
+        target[policyId] = clone(policy);
+        changed = true;
+      }
+    }
+  };
+  fill(settings.stagePolicies, defaults.stagePolicies);
+  for (const [profile, policies] of Object.entries(defaults.profileStagePolicies ?? {}))
+    fill(settings.profileStagePolicies?.[profile], policies);
+  return changed;
+}
+
 export function migratePersistedTaskState(state) {
   const now = new Date().toISOString();
   let changed = migrateRunActivityState(state);
@@ -288,6 +305,10 @@ export function migratePersistedTaskState(state) {
       state.settings.pricing.creditSourceUrl = defaults.pricing.creditSourceUrl;
       changed = true;
     }
+    // A new reasoning stage adds a policy id. Persisted settings predate it, and
+    // `validateStagePolicies` iterates POLICY_IDS, so an unbackfilled install would fail
+    // validation on a key it had no way to know about. Backfill from defaults instead.
+    if (backfillStagePolicies(state.settings, defaults)) changed = true;
   }
   for (const task of state.tasks) {
     for (const [key, fallback] of [
@@ -300,6 +321,7 @@ export function migratePersistedTaskState(state) {
       ["evaluation", null],
       ["experiment", null],
       ["topologyTrace", null],
+      ["investigation", null],
       ["mergeIntent", null],
       ["mergeIntentHistory", []],
       ["pullRequestIntent", null],
@@ -465,7 +487,17 @@ export function createTaskRecord(state, input) {
   const continuation = clone(input.continuation ?? null);
   const importedArtifacts = clone(continuation?.artifacts ?? []);
   const importedDecisions = clone(continuation?.decisions ?? []);
-  const importedStages = ["triage", "scouts", "grill", "specification"];
+  // A continuation inherits the source task's investigation evidence, so those stages count as
+  // complete. Synthesis is conditional rather than assumed: a source task that never ran it
+  // (fast profile, or a task recorded before the stage existed) must not have it marked done,
+  // or the continuation would skip forming a hypothesis it never actually formed.
+  const importedStages = [
+    "triage",
+    "scouts",
+    ...(importedArtifacts.some((artifact) => artifact.stage === "synthesis") ? ["synthesis"] : []),
+    "grill",
+    "specification",
+  ];
   const task = {
     id: `AH-${String(state.nextId).padStart(3, "0")}`,
     title: input.title,
@@ -490,6 +522,7 @@ export function createTaskRecord(state, input) {
     evaluation: null,
     experiment: clone(input.experiment ?? null),
     topologyTrace: null,
+    investigation: null,
     mergeIntent: null,
     mergeIntentHistory: [],
     pullRequestIntent: null,

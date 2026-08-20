@@ -24,6 +24,7 @@ import {
   refreshGateFreshness,
   rm,
   SCOUT_OUTPUT,
+  SYNTHESIS_OUTPUT,
   TASK_STORE_SCHEMA_VERSION,
   TaskOrchestrator,
   TEST_OUTPUT,
@@ -549,6 +550,7 @@ test("retains explicit P3 advice without opening a candidate repair", async () =
         // full end-to-end test above uses for exactly this reason.
         let finalText = "## Outcome\n\nReady";
         if (/<scout-report>/.test(prompt)) finalText = SCOUT_OUTPUT;
+        if (/<investigation-result>/.test(prompt)) finalText = SYNTHESIS_OUTPUT;
         if (/<grill-questions>/.test(prompt)) finalText = GRILL_OUTPUT;
         if (/<work-packages>/.test(prompt)) finalText = PLAN_OUTPUT;
         if (/You are the candidate Repair agent/.test(prompt)) {

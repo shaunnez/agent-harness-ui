@@ -5,9 +5,24 @@ import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { ProcessTimeoutError } from "../server/codex-runtime.mjs";
-import { evaluationVerdict, structuredEvidenceError, TaskOrchestrator } from "../server/orchestrator.mjs";
 import { defaultStagePolicies } from "../server/model-catalog.mjs";
+import { evaluationVerdict, structuredEvidenceError, TaskOrchestrator } from "../server/orchestrator.mjs";
 import { buildTestInterpretationRequest } from "../server/prompts.mjs";
+import {
+  attachRunArtifact,
+  beginAgentRun,
+  CANONICAL_RUN_STAGES,
+  DEFAULT_EXECUTION_PROVIDER,
+  DEFAULT_STAGE_RUN_LIMIT,
+  migrateRunActivityState,
+  RUN_ACTIVITY_EVENT_LIMIT,
+  RUNTIME_FRESHNESS_REASONS,
+  readExplicitCandidateBinding,
+  refreshGateFreshness,
+  retainRunActivityEvents,
+  stageRunLimitFor,
+  TASK_STORE_SCHEMA_VERSION,
+} from "../server/run-activity.mjs";
 import { selectScoutDispatch } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import {
@@ -18,23 +33,10 @@ import {
   tryParseFocusedTestEvidence,
   validateFocusedTestEvidence,
 } from "../server/structured-output.mjs";
-import {
-  attachRunArtifact,
-  beginAgentRun,
-  CANONICAL_RUN_STAGES,
-  DEFAULT_EXECUTION_PROVIDER,
-  DEFAULT_STAGE_RUN_LIMIT,
-  migrateRunActivityState,
-  readExplicitCandidateBinding,
-  refreshGateFreshness,
-  retainRunActivityEvents,
-  RUNTIME_FRESHNESS_REASONS,
-  RUN_ACTIVITY_EVENT_LIMIT,
-  stageRunLimitFor,
-  TASK_STORE_SCHEMA_VERSION,
-} from "../server/run-activity.mjs";
 
 const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"questions":[{"question":"Compatibility?","whyItMatters":"Changes the public contract.","options":[{"label":"Preserve it","description":"Keep existing clients working.","recommended":true},{"label":"Break it","description":"Allow a clean break.","recommended":false}],"allowCustom":true}]}\n</grill-questions>`;
+
+const SYNTHESIS_OUTPUT = `## Recommended diagnosis\n\nH1.\n\n<investigation-result>\n{"hypotheses":[{"id":"H1","claim":"The runtime path and the UI path disagree about task priority.","confidence":0.8,"supportingEvidence":["server/runtime.mjs:12"],"contradictingEvidence":[],"unknowns":["Whether any caller depends on the old default."]}],"recommendedDiagnosis":"H1","remainingUncertainty":0.2,"additionalEvidenceNeeded":[]}\n</investigation-result>`;
 
 const PLAN_OUTPUT = `## Plan summary\n\nTwo independent slices.\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verificationCommandIds":["test"]},{"id":"S2","title":"UI","description":"Implement the task UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verificationCommandIds":["typecheck"]}]}\n</work-packages>`;
 
@@ -357,33 +359,25 @@ async function git(cwd, args) {
 }
 
 export {
-  CANONICAL_RUN_STAGES,
-  DEFAULT_EXECUTION_PROVIDER,
-  DEFAULT_STAGE_RUN_LIMIT,
-  GRILL_OUTPUT,
-  JsonTaskStore,
-  PLAN_OUTPUT,
-  ProcessTimeoutError,
-  RUNTIME_FRESHNESS_REASONS,
-  RUN_ACTIVITY_EVENT_LIMIT,
-  SCOUT_OUTPUT,
-  TASK_STORE_SCHEMA_VERSION,
-  TEST_OUTPUT,
-  TaskOrchestrator,
   assert,
   attachRunArtifact,
   beginAgentRun,
   buildTestInterpretationRequest,
+  CANONICAL_RUN_STAGES,
   claudeRunWithoutProvider,
   createApprovalReadyTask,
+  DEFAULT_EXECUTION_PROVIDER,
+  DEFAULT_STAGE_RUN_LIMIT,
   defaultStagePolicies,
   escapeRegex,
   evaluationVerdict,
   execFile,
   execFileAsync,
+  GRILL_OUTPUT,
   gateOutput,
   git,
   harnessEvidence,
+  JsonTaskStore,
   makeArtifact,
   makeFocusedTestSummary,
   makeGateResult,
@@ -394,6 +388,8 @@ export {
   migrateRunActivityState,
   mkdtemp,
   os,
+  PLAN_OUTPUT,
+  ProcessTimeoutError,
   parseFocusedTestEvidence,
   parseGateEvidence,
   parseGrillQuestions,
@@ -402,13 +398,20 @@ export {
   path,
   promisify,
   pullRequestObservation,
+  RUN_ACTIVITY_EVENT_LIMIT,
+  RUNTIME_FRESHNESS_REASONS,
   readExplicitCandidateBinding,
   refreshGateFreshness,
   retainRunActivityEvents,
   rm,
+  SCOUT_OUTPUT,
+  SYNTHESIS_OUTPUT,
   selectScoutDispatch,
   stageRunLimitFor,
   structuredEvidenceError,
+  TASK_STORE_SCHEMA_VERSION,
+  TaskOrchestrator,
+  TEST_OUTPUT,
   tryParseFocusedTestEvidence,
   validateFocusedTestEvidence,
   waitForStatus,

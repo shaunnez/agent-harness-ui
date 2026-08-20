@@ -17,6 +17,7 @@ const candidateBoundStages: StageId[] = [...candidateGateStages, "approval"];
 export const runtimeStageSkills: Record<StageId, string> = {
   triage: "classify-task",
   scouts: "scout-repository",
+  synthesis: "synthesize-investigation",
   grill: "grill-with-docs",
   specification: "build-specification",
   plan: "plan-work-packages",
@@ -82,6 +83,7 @@ export function getStageTemporalState(task: RuntimeTask, stageId: StageId): Stag
 export const runtimeStageAgents: Record<StageId, string> = {
   triage: "Triage agent",
   scouts: "Repository scout agent",
+  synthesis: "Investigation synthesis agent",
   grill: "Clarification agent",
   specification: "Task specification agent",
   plan: "Planning agent",
@@ -265,6 +267,28 @@ export function getRuntimeStageSummary(
           ? "The real scout handoff is preserved with its model provenance and token usage; file-level claims remain inside the artifact."
           : fallback.detail,
       };
+    case "synthesis": {
+      const investigation = task.investigation ?? null;
+      const recommended = investigation
+        ? investigation.hypotheses.find(
+            (hypothesis) => hypothesis.id === investigation.recommendedDiagnosis,
+          )
+        : undefined;
+      if (!investigation || !recommended) {
+        return {
+          kicker: "Synthesis \u00b7 hypothesis gate",
+          title: fallback.title,
+          detail:
+            "The scouts answer facts; this stage decides what those facts mean before any plan is drafted.",
+        };
+      }
+      const count = investigation.hypotheses.length;
+      return {
+        kicker: "Synthesis \u00b7 hypothesis gate",
+        title: `${investigation.recommendedDiagnosis} at ${Math.round(recommended.confidence * 100)}% confidence`,
+        detail: `${recommended.claim} \u00b7 ${Math.round(investigation.remainingUncertainty * 100)}% uncertainty remains across ${count} ranked hypothes${count === 1 ? "is" : "es"}.`,
+      };
+    }
     case "grill": {
       const unresolved = task.grillSession?.questions.filter((question) => !question.answer) ?? [];
       return {

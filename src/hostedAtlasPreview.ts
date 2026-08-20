@@ -20,6 +20,7 @@ const previewUsage: RuntimeUsage = {
 const artifactNames: Record<StageId, string> = {
   triage: "Triage classification",
   scouts: "Repository scout synthesis",
+  synthesis: "Investigation synthesis",
   grill: "Recorded decisions",
   specification: "Task specification",
   plan: "Implementation plan",

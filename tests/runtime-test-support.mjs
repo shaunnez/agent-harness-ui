@@ -6,12 +6,12 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createServer as createViteServer } from "vite";
 import {
-  buildCodexSpawnArgs,
   buildCodexEnvironment,
+  buildCodexSpawnArgs,
   DEFAULT_MODEL,
   DEFAULT_REASONING,
-  parseCodexEvent,
   ProcessTimeoutError,
+  parseCodexEvent,
   runProcess,
   selectCodexCandidate,
 } from "../server/codex-runtime.mjs";
@@ -21,18 +21,19 @@ import {
   resolveExecutionProvider,
 } from "../server/execution-providers.mjs";
 import {
+  normalizeModelId,
+  priceUsage,
+  readCodexModelCatalog,
+  withConfiguredModels,
+} from "../server/model-catalog.mjs";
+import { TaskOrchestrator } from "../server/orchestrator.mjs";
+import {
   DEFAULT_RUN_LABEL,
   DEFAULT_STDOUT_BUDGET,
   isProcessTimeoutError,
   ProcessTimeoutError as SharedProcessTimeoutError,
   runProcess as sharedRunProcess,
 } from "../server/process-runtime.mjs";
-import {
-  normalizeModelId,
-  priceUsage,
-  readCodexModelCatalog,
-  withConfiguredModels,
-} from "../server/model-catalog.mjs";
 import {
   buildExecutionRequest,
   buildRepairRequest,
@@ -41,7 +42,6 @@ import {
 } from "../server/prompts.mjs";
 import { buildScoutRequest } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
-import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import { parseGateEvidence } from "../server/structured-output.mjs";
 import { runtimeTaskToRecentTask } from "../src/domain.ts";
 
@@ -244,15 +244,6 @@ async function withWorkspace(run) {
 }
 
 export {
-  DEFAULT_MODEL,
-  DEFAULT_REASONING,
-  DEFAULT_RUN_LABEL,
-  DEFAULT_STDOUT_BUDGET,
-  JsonTaskStore,
-  ProcessTimeoutError,
-  React,
-  SharedProcessTimeoutError,
-  TaskOrchestrator,
   access,
   assert,
   attachRepairAuthorizerFixture,
@@ -265,17 +256,24 @@ export {
   buildWorkPackageRequest,
   createTask,
   createViteServer,
+  DEFAULT_MODEL,
+  DEFAULT_REASONING,
+  DEFAULT_RUN_LABEL,
+  DEFAULT_STDOUT_BUDGET,
   hasExecutionProvider,
   isProcessTimeoutError,
+  JsonTaskStore,
   listExecutionProviders,
   makeGateFreshness,
   mkdtemp,
   normalizeModelId,
   os,
+  ProcessTimeoutError,
   parseCodexEvent,
   parseGateEvidence,
   path,
   priceUsage,
+  React,
   readCodexModelCatalog,
   readFile,
   renderToStaticMarkup,
@@ -283,8 +281,10 @@ export {
   rm,
   runProcess,
   runtimeTaskToRecentTask,
+  SharedProcessTimeoutError,
   selectCodexCandidate,
   sharedRunProcess,
+  TaskOrchestrator,
   waitUntil,
   withConfiguredModels,
   withWorkspace,

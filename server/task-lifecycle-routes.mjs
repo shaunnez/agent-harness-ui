@@ -357,7 +357,7 @@ export function createTaskLifecycleRoutes({
           description: source.description,
           requestedProfile: selectedProfile,
         });
-        const importedStages = new Set(["triage", "scouts", "grill", "specification"]);
+        const importedStages = new Set(["triage", "scouts", "synthesis", "grill", "specification"]);
         const importedArtifacts = (source.artifacts ?? [])
           .filter((artifact) => importedStages.has(artifact.stage))
           .map((artifact) => ({

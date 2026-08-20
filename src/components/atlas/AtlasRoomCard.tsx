@@ -30,13 +30,14 @@ import {
   ATLAS_WORLD_HEIGHT,
   ATLAS_WORLD_WIDTH,
   type AtlasRoom,
+  type AtlasStageId,
   getAtlasStatusLabel,
   getAtlasTaskTone,
   getPackageOverview,
   getTaskColor,
 } from "./atlasModel";
 
-const stageIcons: Record<StageId, Icon> = {
+const stageIcons: Record<AtlasStageId, Icon> = {
   triage: Cube,
   scouts: MagnifyingGlass,
   grill: Question,
@@ -445,8 +446,8 @@ function packageStatus(status: RuntimeWorkPackage["status"]) {
   return { label: "queued", tone: "queued" };
 }
 
-function stageLabel(stageId: StageId) {
-  const labels: Record<StageId, string> = {
+function stageLabel(stageId: AtlasStageId) {
+  const labels: Record<AtlasStageId, string> = {
     triage: "Triage",
     scouts: "Repo scouts",
     grill: "Grill",

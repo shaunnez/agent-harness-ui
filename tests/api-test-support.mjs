@@ -1,29 +1,29 @@
 import assert from "node:assert/strict";
-import test from "node:test";
 import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { request as httpRequest } from "node:http";
 import os from "node:os";
 import path from "node:path";
+import test from "node:test";
+import { promisify } from "node:util";
 import { createApiServer } from "../server/api.mjs";
 import { defaultWorktreeRoot, GitWorktreeManager } from "../server/git-worktree.mjs";
-import { JsonTaskStore } from "../server/store.mjs";
-import { SqliteTaskStore } from "../server/sqlite-store.mjs";
-import { parseFocusedTestEvidence } from "../server/structured-output.mjs";
 import {
   attachRunArtifact,
   CANONICAL_RUN_STAGES,
-  refreshGateFreshness,
-  RUNTIME_FRESHNESS_REASONS,
   RUN_ACTIVITY_EVENT_LIMIT,
+  RUNTIME_FRESHNESS_REASONS,
+  refreshGateFreshness,
 } from "../server/run-activity.mjs";
+import { SqliteTaskStore } from "../server/sqlite-store.mjs";
+import { JsonTaskStore } from "../server/store.mjs";
+import { parseFocusedTestEvidence } from "../server/structured-output.mjs";
+import { recordWorkflowProfile } from "../server/workflow-profiles.mjs";
 import {
   formatApprovalStage,
   formatApprovalTimestamp,
   getApprovalHistory,
 } from "../src/components/runtimeApprovalHistory.js";
-import { promisify } from "node:util";
-import { recordWorkflowProfile } from "../server/workflow-profiles.mjs";
 
 const exec = promisify(execFile);
 
@@ -781,13 +781,6 @@ for (const [name, payload] of [
 }
 
 export {
-  CANONICAL_RUN_STAGES,
-  GitWorktreeManager,
-  JsonTaskStore,
-  RUNTIME_FRESHNESS_REASONS,
-  RUN_ACTIVITY_EVENT_LIMIT,
-  SqliteTaskStore,
-  TEST_CSRF_TOKEN,
   assert,
   attachAssemblyLineage,
   attachCandidateProducerEvidence,
@@ -796,6 +789,7 @@ export {
   attachLinkedArtifact,
   attachRunArtifact,
   bindLatestWorkflowAttempt,
+  CANONICAL_RUN_STAGES,
   cleanup,
   createApiServer,
   createServer,
@@ -806,9 +800,11 @@ export {
   fetch,
   formatApprovalStage,
   formatApprovalTimestamp,
+  GitWorktreeManager,
   getApprovalHistory,
   git,
   httpRequest,
+  JsonTaskStore,
   mkdir,
   mkdtemp,
   nativeFetch,
@@ -816,12 +812,16 @@ export {
   parseFocusedTestEvidence,
   path,
   promisify,
+  RUN_ACTIVITY_EVENT_LIMIT,
+  RUNTIME_FRESHNESS_REASONS,
   rawHttpRequest,
   readFile,
   recordWorkflowProfile,
   refreshGateFreshness,
   rm,
+  SqliteTaskStore,
   stat,
+  TEST_CSRF_TOKEN,
   threeRevisionCandidate,
   twoRevisionCandidate,
   writeFile,

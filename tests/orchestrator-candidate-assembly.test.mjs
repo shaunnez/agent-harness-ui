@@ -13,6 +13,7 @@ import {
   refreshGateFreshness,
   rm,
   SCOUT_OUTPUT,
+  SYNTHESIS_OUTPUT,
   TaskOrchestrator,
   TEST_OUTPUT,
   waitForStatus,
@@ -158,6 +159,7 @@ test("advances an approved implementation task through a revision-bound candidat
         }
         let finalText = "## Outcome\n\nReady";
         if (/<scout-report>/.test(prompt)) finalText = SCOUT_OUTPUT;
+        if (/<investigation-result>/.test(prompt)) finalText = SYNTHESIS_OUTPUT;
         if (/<grill-questions>/.test(prompt)) finalText = GRILL_OUTPUT;
         if (/<work-packages>/.test(prompt)) finalText = PLAN_OUTPUT;
         if (/Development review/.test(prompt)) {
@@ -247,7 +249,7 @@ test("advances an approved implementation task through a revision-bound candidat
       approvalTask.candidates[0].members.map((member) => member.packageId),
       ["S1", "S2"],
     );
-    assert.equal(approvalTask.artifacts.length, 16);
+    assert.equal(approvalTask.artifacts.length, 17);
     assert.equal(
       approvalTask.artifacts.filter(
         (artifact) => artifact.stage === "implement" && artifact.candidateRevision === 2,
@@ -352,7 +354,7 @@ test("advances an approved implementation task through a revision-bound candidat
       "merging onto the target branch does not itself complete the task",
     );
     assert.equal(merged1.candidates[0].status, "merged");
-    assert.equal(merged1.artifacts.length, 17);
+    assert.equal(merged1.artifacts.length, 18);
     assert.equal(merged1.artifacts.at(-1).stage, "approval");
     assert.equal(merged1.artifacts.at(-1).candidateId, "C1");
     assert.equal(merged1.artifacts.at(-1).candidateRevision, 2);

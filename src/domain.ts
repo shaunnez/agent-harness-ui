@@ -1,6 +1,7 @@
 export const stageIds = [
   "triage",
   "scouts",
+  "synthesis",
   "grill",
   "specification",
   "plan",
@@ -229,6 +230,13 @@ export const workflowStages: WorkflowStage[] = [
     shortLabel: "Repo scouts",
     provider: "codex",
     skill: "scout-repository",
+  },
+  {
+    id: "synthesis",
+    label: "Investigation synthesis",
+    shortLabel: "Synthesis",
+    provider: "codex",
+    skill: "synthesize-investigation",
   },
   {
     id: "grill",

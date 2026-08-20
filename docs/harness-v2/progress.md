@@ -7,7 +7,7 @@ Plan: `docs/harness-v2-cognitive-layer-plan.md`
 
 ## State
 
-Current phase: **3 — investigation synthesis**
+Current phase: **4 — failure diagnosis + backjump router**
 Last updated: 2026-08-20
 Blocked on: nothing
 
@@ -18,14 +18,35 @@ Blocked on: nothing
 | 0 Baseline | **done** | (this commit) | lint/typecheck/test all green, 429 tests. Corpus: 29 terminal tasks, 0 experiments, 0 evaluations. |
 | 1 Topology telemetry | **done** | (this commit) | Additive. 436 tests green (was 429). Topology is now a group key in `controlledSummary`. |
 | 2 Typed contracts | **done** | (this commit) | 3 parsers + 3 renderers, 20 new tests. 456 total green. No orchestrator wiring yet, by design. |
-| 3 Investigation synthesis | not started | — | — |
+| 3 Investigation synthesis | **done** | (this commit) | First real orchestrator change. 465 tests green (was 456). Unit-tested only; not yet observed on a live run. |
 | 4 Failure diagnosis + backjump | not started | — | — |
 | 5 Plan critic | not started | — | — |
 | 6 Verify S/M/L | not started | — | — |
 
 ## Open questions for Shaun
 
-_None yet. Append here rather than blocking, unless proceeding would be unsafe._
+### Q1 (Phase 3) — the plan's "no new rooms" UI decision was based on a wrong picture
+
+The plan said synthesis would render as a sub-step inside an Investigation room. There is no
+such room: `src/domain.ts` `workflowStages` is one room per stage, so triage / scouts / grill are
+already separate rooms and there was no container to nest inside.
+
+What I did instead, and why:
+
+- **Synthesis is a real stage** in `stageIds`, `workflowStages`, and the runtime workspace, with
+  its own label, agent name, and stage summary. Hiding it inside the scouts room would have
+  required labelling its artifact `stage: "scouts"`, which would corrupt exactly the telemetry
+  Phase 1 just built.
+- **Synthesis is deliberately NOT a room on the Atlas floor plan.** Three concrete reasons: the
+  top row has no free 142px slot (rooms sit at x=18/176/334/492/650 and `test` starts at 820, a
+  28px gap), reflowing five hand-placed rooms is a design change I should not make blind, and
+  `final-review` is *already* named "Synthesis Room" — a second synthesis would read as a bug.
+  A new `AtlasStageId = Exclude<StageId, "synthesis">` keeps the floor plan at ten rooms with no
+  runtime change.
+
+**If you want synthesis on the Atlas, that is a layout decision to make deliberately** — say so
+and I will reflow the top row. Otherwise the current split is the honest one: full telemetry,
+unchanged map.
 
 ## Findings
 
@@ -124,3 +145,39 @@ Speculative contracts rot; build them when a stage needs one.
 
 `COGNITIVE_STAGE_IDS` includes `synthesis` and `plan-review` ahead of Phases 3 and 5, so a
 `rewindTo` naming a stage that does not exist yet is still caught at the contract boundary.
+
+### F5 (Phase 3) — what changed, and what the typechecker caught
+
+`synthesis` now runs between scouts and grill on the standard and high-risk paths, and is
+skipped with a recorded reason on the fast path. New: `server/topology-trace.mjs` (the only
+writers for `task.topologyTrace`), `_runSynthesis` in `server/orchestrator-investigation.mjs`,
+`STAGE_PROMPTS.synthesis` and its `<investigation-result>` contract instruction.
+
+**Downstream context actually changed.** `stageArtifactEntries` now hands grill and
+specification the synthesis conclusion *in place of* `repository-scout.md`, falling back to the
+scout aggregate whenever synthesis did not run. That fallback is what keeps fast-profile runs
+and every pre-existing task behaving exactly as before.
+
+**The typechecker earned its keep.** Adding one stage id surfaced eight distinct places that
+declare per-stage data — atlas icons, atlas labels, atlas room geometry, runtime skills, runtime
+agent names, hosted preview names, and an exhaustive `switch` in `getRuntimeStageSummary` that
+would otherwise have silently returned `undefined` and crashed the workspace header. None of
+these were findable by grep alone.
+
+**Two behaviour decisions worth knowing:**
+
+1. **Synthesis gets the planning-tier model** (Sol / Opus rather than Luna / Sonnet). It is the
+   one investigation stage doing reasoning rather than retrieval. This is a real per-run cost
+   increase on standard and high-risk, and is exactly the kind of thing Phase 6 should measure.
+2. **A continuation no longer claims synthesis it never ran.** `createTaskRecord` previously
+   marked a static list of investigation stages complete on any continued task. Adding synthesis
+   to that list unconditionally would have let a continuation skip forming a hypothesis it never
+   formed, so synthesis is included only when the continuation actually carries a synthesis
+   artifact.
+
+**Nine existing tests failed and all nine were legitimate.** Six were expectation updates
+(completed stages, artifact counts, token totals — the pipeline really is one stage longer) and
+three were test stubs that had to answer the new contract. None were weakened to pass.
+
+**Not yet verified end to end.** Every claim above is unit- and orchestrator-test level. No live
+run has executed a synthesis stage against a real model. That is Phase 6.

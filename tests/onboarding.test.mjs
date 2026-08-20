@@ -4,6 +4,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { providerForModelId } from "../server/model-catalog.mjs";
 import {
   discoverVerificationEvidence,
   evidenceForCommand,
@@ -13,7 +14,6 @@ import {
   VERIFICATION_MANIFEST_PATH,
 } from "../server/onboarding.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
-import { providerForModelId } from "../server/model-catalog.mjs";
 import { inspectRepositoryContract } from "../server/repository-contract.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { parseVerificationManifest } from "../server/verification.mjs";

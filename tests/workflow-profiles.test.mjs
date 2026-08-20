@@ -3,8 +3,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import { defaultProfileStagePolicies } from "../server/model-catalog.mjs";
+import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { parseGateEvidence } from "../server/structured-output.mjs";
 import { fastEscalation, selectWorkflowProfile } from "../server/workflow-profiles.mjs";
@@ -327,6 +327,7 @@ test("fast path uses zero scouts, one package, focused checks, one full manifest
       "plan",
       "scouts",
       "specification",
+      "synthesis",
     ]);
     assert.equal(current.workPackages.length, 1);
     assert.deepEqual(current.workPackages[0].verificationCommandIds, ["typecheck"]);
