@@ -191,10 +191,19 @@ export class GitHubPullRequestManager {
   }
 
   async #remoteRevision(repositoryRoot, remoteName, ref) {
-    const result = await this.#run("git", ["ls-remote", "--exit-code", remoteName, ref], {
-      cwd: repositoryRoot,
-    });
-    const [revision, resolvedRef] = result.stdout.trim().split(/\s+/);
+    // Deliberately without `--exit-code`. With it, a ref the remote simply does not have exits 2
+    // and prints nothing, so the only thing left to report was "git exited with code 2" — which
+    // says nothing about the cause. Observed on AH-032: the PR's base branch had never been
+    // pushed, and that is a one-line fix the operator cannot make from that message.
+    const result = await this.#run("git", ["ls-remote", remoteName, ref], { cwd: repositoryRoot });
+    const output = result.stdout.trim();
+    if (!output) {
+      throw typedError(
+        `The GitHub remote ${remoteName} has no ${ref}. A pull request needs its base branch to exist on the remote: push it, or retarget the candidate at a branch that is already there.`,
+        409,
+      );
+    }
+    const [revision, resolvedRef] = output.split(/\s+/);
     if (!/^[0-9a-f]{40}$/i.test(revision ?? "") || resolvedRef !== ref) {
       throw typedError(`GitHub remote did not resolve ${ref} to one exact commit.`, 502);
     }

@@ -1,4 +1,6 @@
 import test from "node:test";
+import { defaultRuntimeSettings } from "../server/model-catalog.mjs";
+import { migratePersistedTaskState } from "../server/store.mjs";
 import {
   assert,
   JsonTaskStore,
@@ -8,8 +10,6 @@ import {
   rm,
   TaskOrchestrator,
 } from "./orchestrator-test-support.mjs";
-import { defaultRuntimeSettings } from "../server/model-catalog.mjs";
-import { migratePersistedTaskState } from "../server/store.mjs";
 
 /**
  * A local merge writes into the operator's own checkout. Their working tree then sits ahead of
@@ -115,5 +115,54 @@ test("a task recorded before the setting existed takes the pull-request default,
     state.tasks[0].approvalCompletion,
     "pull-request",
     "a local merge is the surprising outcome, so nothing inherits it implicitly",
+  );
+});
+
+/**
+ * AH-032 reached the approval gate cleanly and then reported only "git exited with code 2". The
+ * cause was that the PR's base branch had never been pushed: `git ls-remote --exit-code` exits 2
+ * and prints nothing for a ref the remote does not have, so there was nothing left to report. The
+ * fix the operator needs is one push, and the message has to say so.
+ */
+test("a pull request whose base branch is missing on the remote says exactly that", async () => {
+  const { GitHubPullRequestManager } = await import("../server/github-pull-request.mjs");
+  const calls = [];
+  const manager = new GitHubPullRequestManager({
+    run: async (_command, args) => {
+      calls.push(args.join(" "));
+      if (args[0] === "remote" && args.length === 1) return { stdout: "origin\n", stderr: "" };
+      if (args[0] === "remote" && args[1] === "get-url")
+        return { stdout: "https://github.com/acme/widgets.git\n", stderr: "" };
+      // The remote genuinely does not have the ref: exit 0, no output.
+      if (args[0] === "ls-remote") return { stdout: "", stderr: "" };
+      return { stdout: "", stderr: "" };
+    },
+  });
+
+  await assert.rejects(
+    () =>
+      manager.publish({
+        task: { id: "AH-032", title: "Move the helpers", description: "d" },
+        candidate: {
+          id: "C1",
+          revisionNumber: 1,
+          headRevision: "a".repeat(40),
+          baseRevision: "b".repeat(40),
+          baseBranch: "feature/never-pushed",
+          repositoryRoot: "/tmp/repo",
+          worktreePath: "/tmp/repo",
+        },
+        intent: { headBranch: "agent-harness/ah-032-c1" },
+      }),
+    (error) => {
+      assert.match(error.message, /has no refs\/heads\/feature\/never-pushed/);
+      assert.match(error.message, /needs its base branch to exist on the remote/);
+      assert.doesNotMatch(error.message, /exited with code/);
+      return true;
+    },
+  );
+  assert.ok(
+    calls.some((call) => call.startsWith("ls-remote") && !call.includes("--exit-code")),
+    "--exit-code hides the cause, so it is not used",
   );
 });

@@ -632,3 +632,38 @@ rather than replacing it.
 
 `tests/approval-completion.test.mjs` pins the default, the per-task snapshot, the refusal and its
 message, that an opted-in task is not refused for that reason, and the migration default.
+
+### F15 — AH-032: every gate passed, and two corrections to what I told Shaun
+
+Third live run, high-risk profile, `topology-cognitive-v1`. **The first run to clear the whole
+workflow**: triage → scouts → synthesis → grill → specification → plan → plan-review → implement →
+candidate assembled → dev-review PASS → test PASS (real lint, typecheck and test executed in the
+candidate worktree) → final-review PASS → awaiting-human-approval.
+
+**Correction one: my `approveMerge` guard was not the fix for the local-merge complaint, because
+that path was already unreachable.** `server/task-action-routes.mjs` routes the `approve-merge`
+action to `orchestrator.approvePullRequest`, identically to `open-pr`, and
+`orchestrator.approveMerge` is called from nowhere in `server/` or `src/` — only from tests. So
+approval over HTTP already raised a PR and never wrote to the operator's checkout. Verified live:
+`local main` stayed at `481c91c`, clean, throughout. The guard and the `approvalCompletion` setting
+are defence-in-depth and an explicit statement of intent, which is worth having, but they did not
+change what the app does.
+
+**Correction two: Q5 was not exercised.** The planner produced one work package, correctly — moving
+two symbols and updating an import is not separable. So the dependent-slice path this run was meant
+to test never ran. Q5's fix remains unit-tested only, in `tests/git-worktree.test.mjs`. Saying the
+live run confirmed it would have been false.
+
+**What did fail, and the real fix it produced.** PR publication reported only
+`git exited with code 2`. Cause: `git ls-remote --exit-code` exits 2 and prints nothing for a ref
+the remote does not have, and the PR's base branch — `claude/agentic-sdlc-orchestration-3c10ae` —
+had never been pushed. Twelve other `claude/*` branches exist on the remote; a `push --dry-run`
+succeeded, so auth was never the problem. `#remoteRevision` no longer passes `--exit-code`: it
+checks for empty output and reports which ref is missing on which remote and that a PR needs its
+base branch to exist there. That is a one-push fix the operator could not have derived from the old
+message.
+
+Running tally, unchanged in direction: seven bugs and wrong conclusions surfaced by running the
+system (provider mis-anchoring, hardcoded stage denominator, bare dash in the rail, incomplete
+topology trace, unformatted files, the useless PR error, and my own two claims above). Zero by
+adding tests after the fact.
