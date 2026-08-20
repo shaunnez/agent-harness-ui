@@ -2,12 +2,14 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import {
+  configuredPolicyProvider,
   defaultProfileStagePolicies,
   defaultRuntimeSettings,
   defaultStagePolicies,
   enrichUsage,
   normalizeModelId,
   POLICY_IDS,
+  POLICY_PROVIDER_ANCHORS,
   providerForModelId,
   resolveTaskProvider,
 } from "./model-catalog.mjs";
@@ -268,37 +270,6 @@ function configuredModels(stagePolicies) {
     model,
   }));
 }
-
-/**
- * Which provider a set of stage policies is actually configured against. An operator who moved
- * their whole workflow onto one provider should not have a newly added stage silently backfilled
- * from the other one — that was the observed bug: a plan on `claude-opus-5` getting a critic on
- * `gpt-5.6-luna`, which is cross-model in the wrong sense, across vendors rather than by design.
- *
- * The majority of the existing policies decides, which is more reliable than any single stage:
- * `defaultProvider` can disagree with the policies actually in force.
- */
-function configuredPolicyProvider(policies) {
-  const counts = new Map();
-  for (const policy of Object.values(policies ?? {})) {
-    const provider = providerForModelId(policy?.model);
-    if (provider) counts.set(provider, (counts.get(provider) ?? 0) + 1);
-  }
-  let winner = null;
-  for (const [provider, count] of counts) {
-    if (!winner || count > winner.count) winner = { provider, count };
-  }
-  return winner?.provider ?? null;
-}
-
-/**
- * A stage whose model choice is only meaningful relative to another stage's. `plan-review` exists
- * to oppose `plan`, and `synthesis` is priced against the same planning tier, so both follow the
- * provider the operator chose for planning rather than whatever the rest of the workflow happens
- * to use. Without this, a plan on `claude-opus-5` in a mostly-OpenAI workflow gets a critic from
- * the other vendor — still "a different model", but different by accident rather than by design.
- */
-const POLICY_PROVIDER_ANCHORS = Object.freeze({ "plan-review": "plan", synthesis: "plan" });
 
 /**
  * A new reasoning stage adds a policy id. Persisted settings predate it and
