@@ -35,7 +35,7 @@ const RUN_ACTIONS = Object.freeze({
   plan: {
     kind: "planning",
     statuses: ["awaiting-plan-approval", "failed", "cancelled"],
-    stages: ["plan", "implement"],
+    stages: ["plan", "plan-review", "implement"],
   },
   implement: {
     kind: "implementation",

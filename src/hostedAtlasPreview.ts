@@ -24,6 +24,7 @@ const artifactNames: Record<StageId, string> = {
   grill: "Recorded decisions",
   specification: "Task specification",
   plan: "Implementation plan",
+  "plan-review": "Plan critique",
   implement: "Integration candidate",
   "dev-review": "Development review",
   test: "Focused test evidence",

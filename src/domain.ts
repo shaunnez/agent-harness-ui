@@ -5,6 +5,7 @@ export const stageIds = [
   "grill",
   "specification",
   "plan",
+  "plan-review",
   "implement",
   "dev-review",
   "test",
@@ -258,6 +259,13 @@ export const workflowStages: WorkflowStage[] = [
     shortLabel: "Impl plan",
     provider: "codex",
     skill: "to-tickets",
+  },
+  {
+    id: "plan-review",
+    label: "Plan critique",
+    shortLabel: "Plan critic",
+    provider: "codex",
+    skill: "critique-plan",
   },
   {
     id: "implement",

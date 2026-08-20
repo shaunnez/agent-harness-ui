@@ -57,6 +57,7 @@ export const POLICY_IDS = [
   "grill",
   "specification",
   "plan",
+  "plan-review",
   "implement",
   "repair",
   "dev-review",
@@ -101,6 +102,11 @@ function profilePolicy(gathering, planning, implementation, repair, finalReview)
     grill: { ...gathering },
     specification: { ...gathering },
     plan: { ...planning },
+    // Cross-model opposition by default. The gathering tier is the other frontier model on both
+    // providers (Luna against Sol, Sonnet against Opus), so the critic is a genuinely different
+    // reader of the plan rather than the planner grading its own work. Phase 6 should test
+    // whether same-model opposition does as well for less money.
+    "plan-review": { ...gathering },
     implement: { ...implementation },
     repair: { ...repair },
     "dev-review": { ...planning },

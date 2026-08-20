@@ -51,7 +51,7 @@ export function stageForRun(kind, currentStage) {
       ? currentStage
       : "triage",
     specification: "specification",
-    planning: "plan",
+    planning: ["plan", "plan-review"].includes(currentStage) ? currentStage : "plan",
     implementation: "implement",
     repair: "implement",
     review: "dev-review",

@@ -288,6 +288,18 @@ export interface RuntimeInvestigationResult {
   additionalEvidenceNeeded: string[];
 }
 
+export interface RuntimePlanCritiqueFinding {
+  dimension: string;
+  claim: string;
+  evidence: string[];
+}
+
+export interface RuntimePlanCritique {
+  verdict: "PASS" | "REVISE";
+  blocking: RuntimePlanCritiqueFinding[];
+  advisory: RuntimePlanCritiqueFinding[];
+}
+
 export interface RuntimeGrillSession {
   status: "open" | "completed";
   questions: RuntimeGrillQuestion[];
@@ -568,6 +580,8 @@ export interface RuntimeTask {
    * stage entirely, and because tasks recorded before synthesis existed never had one.
    */
   investigation?: RuntimeInvestigationResult | null;
+  /** The newest plan critique. Absent on a fast-profile run and on any pre-existing task. */
+  planCritique?: RuntimePlanCritique | null;
   approvals: RuntimeApproval[];
   workPackages: RuntimeWorkPackage[];
   candidates: RuntimeCandidate[];

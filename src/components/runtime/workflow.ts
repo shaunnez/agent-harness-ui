@@ -21,6 +21,7 @@ export const runtimeStageSkills: Record<StageId, string> = {
   grill: "grill-with-docs",
   specification: "build-specification",
   plan: "plan-work-packages",
+  "plan-review": "critique-plan",
   implement: "implement-isolated-slices",
   "dev-review": "fresh-context-review",
   test: "verify-candidate",
@@ -87,6 +88,7 @@ export const runtimeStageAgents: Record<StageId, string> = {
   grill: "Clarification agent",
   specification: "Task specification agent",
   plan: "Planning agent",
+  "plan-review": "Plan critique agent",
   implement: "Implement agent",
   "dev-review": "Fresh-context review agent",
   test: "Verification agent",
@@ -319,6 +321,29 @@ export function getRuntimeStageSummary(
           ? "Each package exposes real dependencies, ownership, verification commands, attempts, and integration readiness."
           : fallback.detail,
       };
+    case "plan-review": {
+      const critique = task.planCritique ?? null;
+      if (!critique) {
+        return {
+          kicker: "Plan critic \u00b7 fresh-context gate",
+          title: fallback.title,
+          detail:
+            "A different model reads the plan against the specification before any code is written. Only a cited defect in one of ten dimensions can block; taste is advisory.",
+        };
+      }
+      const blocking = critique.blocking.length;
+      return {
+        kicker: `Plan critic \u00b7 ${critique.verdict === "PASS" ? "passed" : "revision required"}`,
+        title:
+          critique.verdict === "PASS"
+            ? "Plan critique passed"
+            : `${blocking} blocking finding${blocking === 1 ? "" : "s"} against the plan`,
+        detail:
+          critique.verdict === "PASS"
+            ? `No blocking findings. ${critique.advisory.length} advisory note${critique.advisory.length === 1 ? "" : "s"} retained without gating.`
+            : critique.blocking.map((finding) => `${finding.dimension}: ${finding.claim}`).join(" \u00b7 "),
+      };
+    }
     case "implement":
       return {
         kicker: "Implement \u00b7 isolated work packages",

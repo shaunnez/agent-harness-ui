@@ -16,6 +16,7 @@ import {
   migrateRunActivityState,
   mkdtemp,
   os,
+  PLAN_CRITIQUE_OUTPUT,
   PLAN_OUTPUT,
   parseFocusedTestEvidence,
   passingVerification,
@@ -553,6 +554,7 @@ test("retains explicit P3 advice without opening a candidate repair", async () =
         if (/<investigation-result>/.test(prompt)) finalText = SYNTHESIS_OUTPUT;
         if (/<grill-questions>/.test(prompt)) finalText = GRILL_OUTPUT;
         if (/<work-packages>/.test(prompt)) finalText = PLAN_OUTPUT;
+        if (/<plan-critique>/.test(prompt)) finalText = PLAN_CRITIQUE_OUTPUT;
         if (/You are the candidate Repair agent/.test(prompt)) {
           finalText =
             '## Outcome\n\nThe one finding is informational only.\n\n<no-changes-needed>{"reason":"The P3 finding explicitly requires no code change"}</no-changes-needed>';

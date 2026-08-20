@@ -50,7 +50,7 @@ export const ATLAS_WORLD_HEIGHT = 650;
  * name "Synthesis Room". It surfaces inside Survey Bay as part of the investigation evidence
  * instead, which is also what keeps the Atlas from turning into an aircraft cockpit.
  */
-export type AtlasStageId = Exclude<StageId, "synthesis">;
+export type AtlasStageId = Exclude<StageId, "synthesis" | "plan-review">;
 
 const roomDetails: Record<AtlasStageId, Omit<AtlasRoom, "stageId" | "number">> = {
   triage: {
@@ -140,7 +140,7 @@ const roomDetails: Record<AtlasStageId, Omit<AtlasRoom, "stageId" | "number">> =
 /** The stages that have a room on the floor plan, in walking order. */
 export const atlasStages = workflowStages.filter(
   (stage): stage is (typeof workflowStages)[number] & { id: AtlasStageId } =>
-    stage.id !== "synthesis",
+    stage.id !== "synthesis" && stage.id !== "plan-review",
 );
 
 export const atlasRooms: AtlasRoom[] = atlasStages.map((stage, index) => ({

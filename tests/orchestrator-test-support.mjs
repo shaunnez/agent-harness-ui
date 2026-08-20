@@ -38,6 +38,10 @@ const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"ques
 
 const SYNTHESIS_OUTPUT = `## Recommended diagnosis\n\nH1.\n\n<investigation-result>\n{"hypotheses":[{"id":"H1","claim":"The runtime path and the UI path disagree about task priority.","confidence":0.8,"supportingEvidence":["server/runtime.mjs:12"],"contradictingEvidence":[],"unknowns":["Whether any caller depends on the old default."]}],"recommendedDiagnosis":"H1","remainingUncertainty":0.2,"additionalEvidenceNeeded":[]}\n</investigation-result>`;
 
+const PLAN_CRITIQUE_OUTPUT = `## Verdict\n\nPASS\n\n<plan-critique>\n{"verdict":"PASS","blocking":[],"advisory":[{"dimension":"scope","claim":"The plan is tightly scoped to the specification."}]}\n</plan-critique>`;
+
+const PLAN_CRITIQUE_REVISE_OUTPUT = `## Verdict\n\nREVISE\n\n<plan-critique>\n{"verdict":"REVISE","blocking":[{"dimension":"acceptance-coverage","claim":"No work package covers the second acceptance criterion.","evidence":["task-specification.md: Acceptance criteria"]}],"advisory":[]}\n</plan-critique>`;
+
 const PLAN_OUTPUT = `## Plan summary\n\nTwo independent slices.\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verificationCommandIds":["test"]},{"id":"S2","title":"UI","description":"Implement the task UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verificationCommandIds":["typecheck"]}]}\n</work-packages>`;
 
 function harnessEvidence(candidate, overrides = {}) {
@@ -388,6 +392,8 @@ export {
   migrateRunActivityState,
   mkdtemp,
   os,
+  PLAN_CRITIQUE_OUTPUT,
+  PLAN_CRITIQUE_REVISE_OUTPUT,
   PLAN_OUTPUT,
   ProcessTimeoutError,
   parseFocusedTestEvidence,

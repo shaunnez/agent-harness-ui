@@ -82,6 +82,13 @@ const STAGE_PROMPTS = {
       "Work package manifest",
     ],
   },
+  "plan-review": {
+    label: "Plan critique",
+    artifactName: "plan-critique.md",
+    instruction:
+      "Read the plan against the approved specification and the retained repository evidence, and try to find the concrete reason it will fail. You are not redesigning it and you are not grading its style: a finding blocks only if you can name a specific defect against the specification or the evidence, in one of the ten dimensions below, with a citation. Anything you merely would have done differently is advisory. A plan you cannot fault is a PASS, and saying so is a useful answer.",
+    headings: ["Verdict", "Blocking findings", "Advisory notes", "Coverage check"],
+  },
   implement: {
     label: "Implementation",
     artifactName: "implementation-candidate.md",
@@ -127,7 +134,8 @@ export function buildStageRequest(task, stageId) {
   const stage = STAGE_PROMPTS[stageId];
   if (!stage) throw new Error(`Unknown stage: ${stageId}`);
   const commandLimit =
-    { triage: 4, scouts: 6, synthesis: 3, grill: 4, specification: 3, plan: 2 }[stageId] ?? 4;
+    { triage: 4, scouts: 6, synthesis: 3, grill: 4, specification: 3, plan: 2, "plan-review": 4 }[stageId] ??
+    4;
   const contextEntries = stageArtifactEntries(task, stageId);
   const artifactContext = selectArtifactContext(
     contextEntries.map((artifact) => ({
@@ -621,6 +629,14 @@ function selectArtifactContext(entries, characterLimit, direction) {
   };
 }
 
+/** The newest plan revision, whichever revision suffix it happens to carry. */
+function planArtifactNames(task) {
+  const plans = (task.artifacts ?? [])
+    .filter((item) => item.stage === "plan" && /^implementation-plan(-r\d+)?\.md$/.test(item.name))
+    .map((item) => item.name);
+  return plans.length ? [plans.at(-1)] : ["implementation-plan.md"];
+}
+
 function investigationEvidenceNames(task) {
   const hasSynthesis = (task.artifacts ?? []).some(
     (artifact) => artifact.name === "investigation-synthesis.md",
@@ -639,6 +655,15 @@ function stageArtifactEntries(task, stageId) {
   if (stageId === "specification")
     return latestNamed(task, [...investigationEvidenceNames(task), "decision-brief.md"]);
   if (stageId === "plan") return latestNamed(task, ["task-specification.md"]);
+  // Fresh context on purpose: the critic sees the specification, the evidence the plan was
+  // drawn from, and the plan. It never sees a previous critique of its own, so a second pass
+  // cannot anchor on what the first pass happened to notice.
+  if (stageId === "plan-review")
+    return latestNamed(task, [
+      "task-specification.md",
+      ...investigationEvidenceNames(task),
+      ...planArtifactNames(task),
+    ]);
   return [];
 }
 
@@ -815,6 +840,9 @@ function structuredOutputInstruction(stageId, candidate = null, task = null) {
   }
   if (stageId === "plan") {
     return `\n\nRead .agent-harness/verification.json and reference only command ids it declares. At the end of the Work package manifest section, include exactly one JSON block between <work-packages> and </work-packages> tags with this shape:\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Small outcome","description":"Exact implementation responsibility","dependencies":[],"ownedPaths":["src/example.ts"],"verificationCommandIds":["test"]}]}\n</work-packages>\n\nUse 1-8 packages. IDs must be S1, S2, and so on. Dependencies must reference earlier package IDs and form an acyclic graph. Split only where ownership and verification are genuinely separable. Every package, including documentation-only or configuration-only packages, must contain at least one verificationCommandIds entry from the repository manifest; never emit an empty array or None. If a proposed package cannot be independently qualified by any declared command, combine it with a package that can. verificationCommandIds must be the smallest focused subset of the repository-owned argv manifest needed to qualify that package.`;
+  }
+  if (stageId === "plan-review") {
+    return `\n\nAt the end of the artifact, include exactly one JSON block between <plan-critique> and </plan-critique> tags with this shape:\n\n<plan-critique>\n{"verdict":"REVISE","blocking":[{"dimension":"acceptance-coverage","claim":"No package covers the delegated-connection acceptance criterion","evidence":["task-specification.md: Acceptance criteria","implementation-plan.md: Work package manifest"]}],"advisory":[{"dimension":"scope","claim":"Renaming the helper is unrelated to the brief"}]}\n</plan-critique>\n\nverdict is PASS or REVISE. A REVISE verdict must carry at least one blocking finding, and a PASS verdict must carry none. Every blocking finding needs at least one evidence citation; a finding you cannot cite belongs in advisory. dimension must be one of: acceptance-coverage, affected-surfaces, assumptions, package-boundaries, dependency-ordering, owned-path-completeness, verification-adequacy, migration-risk, rollback-strategy, scope. A concern that fits none of those ten is not a plan defect. At most 15 blocking findings and 25 advisory notes.`;
   }
   if (stageId === "test") {
     // Deliberately empty. The focused-test-evidence block used to be requested here, and the

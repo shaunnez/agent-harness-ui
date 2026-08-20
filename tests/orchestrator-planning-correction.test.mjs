@@ -5,6 +5,7 @@ import {
   makeFocusedTestSummary,
   mkdtemp,
   os,
+  PLAN_CRITIQUE_OUTPUT,
   path,
   rm,
   TaskOrchestrator,
@@ -63,8 +64,8 @@ test("a revised plan retains the rejected plan artifact and replaces package sco
         commands: [{ id: "test", command: ["npm", "test"] }],
       }),
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
-      runCodex: async () => ({
-        finalText: revisedOutput,
+      runCodex: async ({ prompt }) => ({
+        finalText: /<plan-critique>/.test(prompt) ? PLAN_CRITIQUE_OUTPUT : revisedOutput,
         model: "gpt-5.6-sol",
         reasoning: "high",
         usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5, totalTokens: 15 },
@@ -80,7 +81,7 @@ test("a revised plan retains the rejected plan artifact and replaces package sco
     );
     assert.deepEqual(
       revised.artifacts.filter((artifact) => artifact.stage === "plan").map((artifact) => artifact.name),
-      ["implementation-plan.md", "implementation-plan-r2.md"],
+      ["implementation-plan.md", "implementation-plan-r2.md", "plan-critique-r2.md"],
     );
     assert.equal(revised.artifacts.find((artifact) => artifact.id === "plan-r1").content, "Rejected plan");
   } finally {
@@ -135,8 +136,8 @@ test("corrects a blocked legacy plan and preserves an exact clean slice for requ
         source: ".agent-harness/verification.json",
         commands: [{ id: "playwright-e2e", command: ["make", "e2e-native"] }],
       }),
-      runCodex: async () => ({
-        finalText: revisedOutput,
+      runCodex: async ({ prompt }) => ({
+        finalText: /<plan-critique>/.test(prompt) ? PLAN_CRITIQUE_OUTPUT : revisedOutput,
         model: "gpt-5.6-sol",
         reasoning: "high",
         usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5, totalTokens: 15 },
@@ -204,8 +205,8 @@ test("returns a failed package qualification to Plan and retains its commit for 
         base: async () => ({ repositoryRoot: directory, baseRevision: "c".repeat(40), baseBranch: "main" }),
         retainedPatchDisposition: async () => "pending",
       },
-      runCodex: async () => ({
-        finalText: revisedOutput,
+      runCodex: async ({ prompt }) => ({
+        finalText: /<plan-critique>/.test(prompt) ? PLAN_CRITIQUE_OUTPUT : revisedOutput,
         model: "gpt-5.6-sol",
         reasoning: "high",
         usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5, totalTokens: 15 },

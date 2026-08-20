@@ -7,7 +7,7 @@ Plan: `docs/harness-v2-cognitive-layer-plan.md`
 
 ## State
 
-Current phase: **5 — plan critic + bounded revise loop**
+Current phase: **6 — verify against small / medium / large**
 Last updated: 2026-08-20
 Blocked on: nothing
 
@@ -20,7 +20,7 @@ Blocked on: nothing
 | 2 Typed contracts | **done** | (this commit) | 3 parsers + 3 renderers, 20 new tests. 456 total green. No orchestrator wiring yet, by design. |
 | 3 Investigation synthesis | **done** | (this commit) | First real orchestrator change. 465 tests green (was 456). Unit-tested only; not yet observed on a live run. |
 | 4 Failure diagnosis + backjump | **done** | (this commit) | 22 new tests, 487 total green. Decision logic fully covered; full-pipeline chain not yet exercised — see F6. |
-| 5 Plan critic | not started | — | — |
+| 5 Plan critic | **done** | (this commit) | 492 tests green (was 487). Critic is automatic; the revise loop is operator-triggered — see Q2. |
 | 6 Verify S/M/L | not started | — | — |
 
 ## Open questions for Shaun
@@ -46,7 +46,30 @@ What I did instead, and why:
 
 **If you want synthesis on the Atlas, that is a layout decision to make deliberately** — say so
 and I will reflow the top row. Otherwise the current split is the honest one: full telemetry,
-unchanged map.
+unchanged map. `plan-review` (Phase 5) is excluded from the floor plan for the same reason.
+
+### Q2 (Phase 5) — the revise loop is operator-triggered, not automatic
+
+The plan called for `REVISE → planner v2 → critic again`, bounded at 2, automatically. I built
+the critic and the bound, but **not** the automatic re-planning. The reason is concrete rather
+than a preference:
+
+`_planningAttempt` clears `activeRunKind` and `activeRunReservationId` when it finalises. A critic
+running after that has no reservation to execute under — my first attempt failed with "The active
+workflow attempt is missing its persisted run reservation" on three existing tests. So the critic
+now runs *inside* the attempt, while the reservation is live. But that means an automatic second
+plan would need a fresh reservation mid-flight, and minting one would mean touching run-reservation
+and workflow-attempt semantics — the exact machinery the loop's hard rules put off limits.
+
+What happens instead on REVISE: the task goes to `blocked` with the blocking findings as its
+error, and the operator grants a plan retry. That path already exists and is already tested —
+`_planningAttempt` has handled `planAttempt > 1` and `implementation-plan-r{n}.md` since before
+this work, and `tests/orchestrator-planning-correction.test.mjs` covers it.
+
+So the expensive half is automatic (a fresh, cross-model reader finds the defect before any
+implementation tokens are spent) and the cheap half is one click. **Making it fully automatic
+means changing reservation semantics — your call whether that is worth it.** My view: measure
+first. If critics rarely REVISE, the automation buys nothing.
 
 ## Findings
 
@@ -231,3 +254,38 @@ during this phase confirmed the two existing repair tests reach `_diagnoseFailur
 fast-profile early returns, so **no existing test exercises the standard-profile diagnosis path
 end to end.** That gap is Phase 6's job, and it is the single most important thing for Phase 6 to
 actually observe.
+
+### F7 (Phase 5) — the critic, and why REVISE blocks rather than approving
+
+New stage `plan-review`: fresh context, read-only, runs after the plan and before approval.
+`server/prompts.mjs` gained its stage prompt and `<plan-critique>` contract; the loop lives in
+`server/orchestrator-specification-planning.mjs`.
+
+**Cross-model by default.** The critic uses the `gathering` policy tier, which on both providers
+is the *other* frontier model from the planner — Luna against Sol, Sonnet against Opus. So the
+default is a genuinely different reader rather than the planner grading its own work. Phase 6
+should test whether same-model opposition does as well for less money.
+
+**It runs under the planning reservation, not its own.** Stage `"plan"`, policy id
+`"plan-review"` — exactly the precedent the repair agent already sets by running at stage
+`"implement"` under policy `"repair"`. Nothing in the run-activity contract changed.
+
+**A REVISE verdict blocks instead of becoming approvable.** This is the point of the stage: a
+plan with a cited, in-dimension defect must not be one click away from spending implementation
+tokens building something the critic already showed is wrong. The rejected plan is retained, not
+discarded, so the revision can see what it is fixing.
+
+**Taste cannot block, and that is enforced by shape rather than by prompt.** A blocking finding
+must cite evidence and name one of ten closed dimensions (Phase 2's `parsePlanCritique`). An
+aesthetic objection has no citation and fits no dimension, so it can only ever land as advisory.
+`tests/plan-critic.test.mjs` pins both halves of that.
+
+**Fast profile skips it** — a bounded one-package change contract has no plan to fault — and the
+skip is recorded in `nodesSkipped` rather than being silent.
+
+**One transient test failure observed.** A single `npm test` run reported 491/492 with an empty
+failing-tests section; three subsequent full runs and the isolated file all reported clean. I did
+not identify the cause, so it is recorded here rather than dismissed. If it recurs, it is worth
+chasing before Phase 6 conclusions rest on suite colour.
+
+**Not verified end to end.** As with Phases 3 and 4, no live model has produced a real critique.
