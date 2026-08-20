@@ -7,7 +7,7 @@ Plan: `docs/harness-v2-cognitive-layer-plan.md`
 
 ## State
 
-Current phase: **2 — typed cross-stage contracts**
+Current phase: **3 — investigation synthesis**
 Last updated: 2026-08-20
 Blocked on: nothing
 
@@ -17,7 +17,7 @@ Blocked on: nothing
 |---|---|---|---|
 | 0 Baseline | **done** | (this commit) | lint/typecheck/test all green, 429 tests. Corpus: 29 terminal tasks, 0 experiments, 0 evaluations. |
 | 1 Topology telemetry | **done** | (this commit) | Additive. 436 tests green (was 429). Topology is now a group key in `controlledSummary`. |
-| 2 Typed contracts | not started | — | — |
+| 2 Typed contracts | **done** | (this commit) | 3 parsers + 3 renderers, 20 new tests. 456 total green. No orchestrator wiring yet, by design. |
 | 3 Investigation synthesis | not started | — | — |
 | 4 Failure diagnosis + backjump | not started | — | — |
 | 5 Plan critic | not started | — | — |
@@ -88,3 +88,39 @@ zeros and increments `invalidTopologyTraces`). Reporting must not be crashable b
 `server/store.mjs` gained `topologyTrace: null` in both the create shape and the migration
 fallback list, so existing tasks migrate cleanly and later phases have somewhere to write.
 Nothing in the orchestrator writes a trace yet — that starts in Phase 3.
+
+### F4 (Phase 2) — the constraints are structural, not prompt-only
+
+Three parsers in `server/structured-output.mjs`, three renderers in the new
+`server/contract-rendering.mjs`, 20 tests in `tests/cognitive-contracts.test.mjs`
+(registered in the `npm test` list). No orchestrator wiring — that is Phase 3 onward.
+
+Where a rule could be enforced by shape instead of by prompt, it was:
+
+- **A hypothesis must cite at least one piece of supporting evidence.** An unevidenced guess
+  cannot enter the record dressed as a hypothesis.
+- **A blocking plan critique finding must cite evidence and name one of ten closed
+  dimensions.** This is the plan's "the critic cannot redesign for taste" rule made
+  mechanical: an aesthetic objection fits no dimension and carries no evidence, so it can only
+  ever land as advisory. Prompt wording is now a backup, not the enforcement.
+- **Verdict and findings must agree both ways.** `REVISE` with no blocking findings and `PASS`
+  with blocking findings are both refused.
+- **Coherence cross-checks on uncertainty**, in the spirit of the existing focused-test
+  status/rows check: claiming zero remaining uncertainty while listing unknowns is refused,
+  and so is reporting uncertainty without naming what is unknown.
+
+**Judgement call — `rewindTo` is a proposal, not a decision.** `parseFailureDiagnosis` returns
+`proposedRewindTo`, deliberately renamed from the agent's `rewindTo`. Phase 4's routing table
+is authoritative and may overrule it; the field is kept so model-vs-router disagreement is
+measurable rather than invisible, and `renderFailureDiagnosisMarkdown` says plainly when the
+router overruled the agent. The naming makes it impossible for a later phase to mistake the
+proposal for the decision.
+
+**Scope decision — four contracts deliberately not built.** The original sketch listed seven
+typed contracts (adding `SpecContract`, `PlanContract`, `RepairRequest`, `FinalAssessment`).
+Only the three that Phases 3-5 actually consume were built. The other four have no consumer
+yet, and `parseWorkPackages` / the fast change contract already cover part of that ground.
+Speculative contracts rot; build them when a stage needs one.
+
+`COGNITIVE_STAGE_IDS` includes `synthesis` and `plan-review` ahead of Phases 3 and 5, so a
+`rewindTo` naming a stage that does not exist yet is still caught at the contract boundary.

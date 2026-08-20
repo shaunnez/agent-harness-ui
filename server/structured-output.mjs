@@ -1,8 +1,9 @@
 import path from "node:path";
+import { FAILURE_CLASSIFICATIONS } from "./evaluation.mjs";
 import {
   isCanonicalIsoTimestamp,
-  readExplicitCandidateBinding,
   RUNTIME_FRESHNESS_REASONS,
+  readExplicitCandidateBinding,
 } from "./run-activity.mjs";
 
 class CandidateEvidenceError extends Error {
@@ -743,4 +744,253 @@ function normalizeDuration(value) {
   if (value == null || value === "") return null;
   const duration = Number(value);
   return Number.isFinite(duration) && duration >= 0 ? duration : null;
+}
+
+// ---------------------------------------------------------------------------
+// Cross-stage cognitive contracts (Harness V2, Phase 2).
+//
+// These are the typed handoffs between reasoning stages. Downstream agents receive the
+// object; humans and the UI receive Markdown rendered from it by `contract-rendering.mjs`.
+// Markdown is a presentation format here, never the protocol.
+//
+// None of these are candidate-bound, so they use the plain `parseLabelledJson` path and
+// throw ordinary Errors rather than CandidateEvidenceError. Candidate freshness remains the
+// concern of the gate/repair contracts above, untouched.
+// ---------------------------------------------------------------------------
+
+/**
+ * Every stage a diagnosis is allowed to rewind to, including the two stages Phases 3 and 5
+ * introduce. Listed here so a `rewindTo` naming a stage that does not exist is caught at the
+ * contract boundary rather than becoming a silent no-op in the router.
+ */
+export const COGNITIVE_STAGE_IDS = Object.freeze([
+  "triage",
+  "scouts",
+  "synthesis",
+  "grill",
+  "specification",
+  "plan",
+  "plan-review",
+  "implement",
+  "dev-review",
+  "test",
+  "final-review",
+]);
+
+/**
+ * The dimensions a plan critique is allowed to speak to. A closed list is what stops the
+ * critic drifting into taste: an objection that fits none of these has nowhere to go.
+ */
+export const PLAN_CRITIQUE_DIMENSIONS = Object.freeze([
+  "acceptance-coverage",
+  "affected-surfaces",
+  "assumptions",
+  "package-boundaries",
+  "dependency-ordering",
+  "owned-path-completeness",
+  "verification-adequacy",
+  "migration-risk",
+  "rollback-strategy",
+  "scope",
+]);
+
+function contractText(value, label, { max = 1_000, required = false } = {}) {
+  const text = String(value ?? "")
+    .trim()
+    .slice(0, max);
+  if (required && !text) throw new Error(`${label} is required and must be a non-empty string.`);
+  return text || null;
+}
+
+function contractList(value, label, { max, min = 0, itemMax = 500 } = {}) {
+  if (value == null) {
+    if (min > 0) throw new Error(`${label} must list at least ${min} entr${min === 1 ? "y" : "ies"}.`);
+    return [];
+  }
+  if (!Array.isArray(value)) throw new Error(`${label} must be an array.`);
+  if (value.length > max) throw new Error(`${label} must list at most ${max} entries.`);
+  const items = value
+    .map((item) =>
+      String(item ?? "")
+        .trim()
+        .slice(0, itemMax),
+    )
+    .filter(Boolean);
+  if (items.length < min)
+    throw new Error(`${label} must list at least ${min} entr${min === 1 ? "y" : "ies"}.`);
+  return items;
+}
+
+function contractUnitInterval(value, label) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0 || number > 1)
+    throw new Error(`${label} must be a number from 0 to 1.`);
+  return Math.round(number * 1_000) / 1_000;
+}
+
+/**
+ * What the investigation stage believes, as opposed to what the scouts found. Scouts answer
+ * facts; this answers meaning. Every hypothesis must cite at least one piece of supporting
+ * evidence, so an unevidenced guess cannot enter the record dressed as a hypothesis.
+ *
+ * Hypothesis ids are reassigned canonically (H1..Hn) the way `parseGrillQuestions` reassigns
+ * question ids, and `recommendedDiagnosis` is resolved against the ids the agent supplied so
+ * a rename cannot silently repoint the recommendation.
+ */
+export function parseInvestigationResult(text) {
+  const value = parseLabelledJson(text, "investigation-result");
+  if (!Array.isArray(value.hypotheses) || value.hypotheses.length < 1 || value.hypotheses.length > 8)
+    throw new Error("An investigation result must contain 1-8 hypotheses.");
+
+  const suppliedIds = new Map();
+  const hypotheses = value.hypotheses.map((hypothesis, index) => {
+    const label = `Hypothesis ${index + 1}`;
+    if (hypothesis == null || typeof hypothesis !== "object" || Array.isArray(hypothesis))
+      throw new Error(`${label} must be an object.`);
+    const id = `H${index + 1}`;
+    const suppliedId = contractText(hypothesis.id, `${label} id`, { max: 40 });
+    if (suppliedId) {
+      if (suppliedIds.has(suppliedId)) throw new Error(`${label} reuses the hypothesis id ${suppliedId}.`);
+      suppliedIds.set(suppliedId, id);
+    }
+    return {
+      id,
+      claim: contractText(hypothesis.claim, `${label} claim`, { max: 2_000, required: true }),
+      confidence: contractUnitInterval(hypothesis.confidence, `${label} confidence`),
+      supportingEvidence: contractList(hypothesis.supportingEvidence, `${label} supporting evidence`, {
+        max: 20,
+        min: 1,
+      }),
+      contradictingEvidence: contractList(
+        hypothesis.contradictingEvidence,
+        `${label} contradicting evidence`,
+        { max: 20 },
+      ),
+      unknowns: contractList(hypothesis.unknowns, `${label} unknowns`, { max: 20, itemMax: 1_000 }),
+    };
+  });
+
+  const requestedDiagnosis = contractText(value.recommendedDiagnosis, "Recommended diagnosis", {
+    max: 40,
+    required: true,
+  });
+  const recommendedDiagnosis =
+    suppliedIds.get(requestedDiagnosis) ??
+    (hypotheses.some((hypothesis) => hypothesis.id === requestedDiagnosis) ? requestedDiagnosis : null);
+  if (!recommendedDiagnosis)
+    throw new Error(
+      `Recommended diagnosis ${requestedDiagnosis} does not match any hypothesis in the result.`,
+    );
+
+  const remainingUncertainty = contractUnitInterval(value.remainingUncertainty, "Remaining uncertainty");
+  const additionalEvidenceNeeded = contractList(
+    value.additionalEvidenceNeeded,
+    "Additional evidence needed",
+    { max: 20, itemMax: 1_000 },
+  );
+
+  // Coherence, in the spirit of the focused-test-evidence status/rows cross-check: claiming
+  // zero remaining uncertainty while still naming unknowns or asking for more evidence is a
+  // contradiction, and a contradictory artifact is worse downstream than a rejected one.
+  const recommended = hypotheses.find((hypothesis) => hypothesis.id === recommendedDiagnosis);
+  if (remainingUncertainty === 0 && (recommended.unknowns.length || additionalEvidenceNeeded.length)) {
+    throw new Error(
+      "An investigation result claiming no remaining uncertainty cannot also list unknowns or request further evidence.",
+    );
+  }
+  if (remainingUncertainty > 0 && !recommended.unknowns.length && !additionalEvidenceNeeded.length) {
+    throw new Error(
+      "An investigation result reporting remaining uncertainty must say what is still unknown or what evidence is missing.",
+    );
+  }
+
+  return { hypotheses, recommendedDiagnosis, remainingUncertainty, additionalEvidenceNeeded };
+}
+
+/**
+ * The plan critic's verdict. The "cannot redesign for taste" rule is enforced structurally
+ * rather than by prompt alone: a blocking finding must cite evidence and name one of the
+ * closed dimensions, so an aesthetic objection can only ever land as advisory.
+ */
+export function parsePlanCritique(text) {
+  const value = parseLabelledJson(text, "plan-critique");
+  if (!["PASS", "REVISE"].includes(value.verdict))
+    throw new Error("A plan critique verdict must be PASS or REVISE.");
+
+  const readFinding = (finding, index, kind, { requireEvidence }) => {
+    const label = `${kind} finding ${index + 1}`;
+    if (finding == null || typeof finding !== "object" || Array.isArray(finding))
+      throw new Error(`${label} must be an object.`);
+    const dimension = contractText(finding.dimension, `${label} dimension`, {
+      max: 60,
+      required: true,
+    }).toLowerCase();
+    if (!PLAN_CRITIQUE_DIMENSIONS.includes(dimension))
+      throw new Error(
+        `${label} dimension must be one of: ${PLAN_CRITIQUE_DIMENSIONS.join(", ")}. A concern that fits none of these is not a plan defect.`,
+      );
+    return {
+      dimension,
+      claim: contractText(finding.claim, `${label} claim`, { max: 2_000, required: true }),
+      evidence: contractList(finding.evidence, `${label} evidence`, {
+        max: 20,
+        min: requireEvidence ? 1 : 0,
+      }),
+    };
+  };
+
+  const blocking = Array.isArray(value.blocking) ? value.blocking : [];
+  if (blocking.length > 15)
+    throw new Error("A plan critique must raise at most 15 blocking findings.");
+  const advisory = Array.isArray(value.advisory) ? value.advisory : [];
+  if (advisory.length > 25) throw new Error("A plan critique must raise at most 25 advisory notes.");
+
+  const normalized = {
+    verdict: value.verdict,
+    blocking: blocking.map((finding, index) =>
+      readFinding(finding, index, "Blocking", { requireEvidence: true }),
+    ),
+    advisory: advisory.map((finding, index) =>
+      readFinding(finding, index, "Advisory", { requireEvidence: false }),
+    ),
+  };
+
+  if (normalized.verdict === "REVISE" && !normalized.blocking.length)
+    throw new Error("A REVISE verdict must name at least one blocking finding.");
+  if (normalized.verdict === "PASS" && normalized.blocking.length)
+    throw new Error("A PASS verdict cannot carry blocking findings.");
+  return normalized;
+}
+
+/**
+ * Which stage's assumption failed. Read-only: this contract classifies, it never fixes.
+ *
+ * `rewindTo` is the agent's *proposal*. Phase 4's routing table is authoritative and will
+ * overrule it; the field is retained so disagreement between model and router is measurable
+ * rather than invisible.
+ */
+export function parseFailureDiagnosis(text) {
+  const value = parseLabelledJson(text, "failure-diagnosis");
+  const classification = contractText(value.classification, "Failure classification", {
+    max: 60,
+    required: true,
+  }).toUpperCase();
+  if (!FAILURE_CLASSIFICATIONS.includes(classification))
+    throw new Error(`Failure classification must be one of: ${FAILURE_CLASSIFICATIONS.join(", ")}.`);
+  const proposedRewindTo = contractText(value.rewindTo, "Failure diagnosis rewindTo", {
+    max: 60,
+    required: true,
+  }).toLowerCase();
+  if (!COGNITIVE_STAGE_IDS.includes(proposedRewindTo))
+    throw new Error(`Failure diagnosis rewindTo must name a known stage: ${COGNITIVE_STAGE_IDS.join(", ")}.`);
+  return {
+    classification,
+    proposedRewindTo,
+    rationale: contractText(value.rationale, "Failure diagnosis rationale", {
+      max: 4_000,
+      required: true,
+    }),
+    evidence: contractList(value.evidence, "Failure diagnosis evidence", { max: 20, min: 1 }),
+    confidence: contractUnitInterval(value.confidence, "Failure diagnosis confidence"),
+  };
 }
