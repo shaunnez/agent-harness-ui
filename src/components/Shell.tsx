@@ -7,9 +7,11 @@ import {
   CodeIcon,
   GearSixIcon,
   ListChecksIcon,
+  MoonIcon,
   PlusIcon,
   RobotIcon,
   SidebarSimpleIcon,
+  SunIcon,
 } from "@phosphor-icons/react";
 import type { AppScreen, RuntimeStatus } from "../domain";
 import { Button } from "./Primitives";
@@ -56,6 +58,8 @@ interface ShellProps {
   onNewTask: () => void;
   onOpenChangelog: () => void;
   runtimeStatus: RuntimeStatus | null;
+  theme: "dark" | "light";
+  onToggleTheme: () => void;
 }
 
 const navItems = [
@@ -74,6 +78,8 @@ export function Shell({
   onNewTask,
   onOpenChangelog,
   runtimeStatus,
+  theme,
+  onToggleTheme,
 }: ShellProps) {
   const repositoryName =
     runtimeStatus?.suggestedRepository.split(/[\\/]/).filter(Boolean).at(-1) ?? "local workspace";
@@ -84,6 +90,14 @@ export function Shell({
           <BirdIcon size={25} weight="duotone" />
         </span>
         <span className="brand-name">Agent Harness</span>
+        <button
+          className="icon-button"
+          type="button"
+          aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+          onClick={onToggleTheme}
+        >
+          {theme === "light" ? <MoonIcon size={18} /> : <SunIcon size={18} />}
+        </button>
         <button
           className="icon-button sidebar__toggle"
           type="button"

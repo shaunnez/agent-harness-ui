@@ -63,6 +63,26 @@ import {
   type TaskRoute,
 } from "./routes";
 
+type Theme = "dark" | "light";
+
+const THEME_STORAGE_KEY = "agent-harness.theme";
+
+function readStoredTheme(): Theme {
+  try {
+    return window.localStorage.getItem(THEME_STORAGE_KEY) === "light" ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
+}
+
+function writeStoredTheme(theme: Theme): void {
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // Unavailable storage falls back to the in-memory React state.
+  }
+}
+
 async function refreshTaskEvidence(current: RuntimeTask, core: RuntimeTaskCore): Promise<RuntimeTask> {
   const coreChanged = current.pollVersion !== core.pollVersion;
   const { artifacts: _coreArtifacts, ...coreState } = core;
@@ -144,6 +164,7 @@ export function App() {
   const [screen, setScreen] = useState<AppScreen>("command");
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [theme, setTheme] = useState<Theme>(() => readStoredTheme());
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus | null>(null);
   const [runtimeTasks, setRuntimeTasks] = useState<RuntimeTaskSummary[]>(() =>
@@ -168,10 +189,18 @@ export function App() {
   const activeRuntimeTaskRef = useRef<RuntimeTask | null>(null);
   const runtimeTasksRef = useRef<RuntimeTaskSummary[]>(runtimeTasks);
 
+  const toggleTheme = useCallback(() => setTheme((t) => (t === "light" ? "dark" : "light")), []);
+
   const showToast = useCallback((tone: "success" | "error", message: string) => {
     setToast({ tone, message });
     window.setTimeout(() => setToast(null), 4_000);
   }, []);
+
+  useEffect(() => {
+    if (theme === "light") document.documentElement.setAttribute("data-theme", "light");
+    else document.documentElement.removeAttribute("data-theme");
+    writeStoredTheme(theme);
+  }, [theme]);
 
   const refreshTasks = useCallback(
     async (pollOnly = false) => {
@@ -532,6 +561,8 @@ export function App() {
         screen={screen}
         collapsed={sidebarCollapsed}
         onToggleCollapsed={() => setSidebarCollapsed((value) => !value)}
+        theme={theme}
+        onToggleTheme={toggleTheme}
         onNavigate={navigate}
         onNewTask={() => {
           if (hostedPreviewMode)
