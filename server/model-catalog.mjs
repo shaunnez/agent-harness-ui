@@ -304,6 +304,7 @@ export function defaultRuntimeSettings() {
   const defaultModel = normalizeModelId(process.env.AGENT_HARNESS_MODEL ?? DEFAULT_RUNTIME_MODEL);
   const defaultReasoning = process.env.AGENT_HARNESS_REASONING ?? DEFAULT_RUNTIME_REASONING;
   return {
+    projects: [],
     // A Grill question is a human decision gate unless the operator explicitly
     // changes this setting. Each new task snapshots the value.
     grillPolicy: "manual",

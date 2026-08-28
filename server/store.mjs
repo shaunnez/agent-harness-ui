@@ -173,6 +173,21 @@ export class JsonTaskStore {
     return clone(this.#state.settings);
   }
 
+  async listProjects() {
+    return clone(this.#state.settings.projects ?? []);
+  }
+
+  async createProject(input) {
+    return this.#mutate((state) => {
+      state.settings.projects ??= [];
+      const projects = state.settings.projects;
+      assertProjectIsUnique(projects, input);
+      const project = projectRecord(input);
+      projects.push(project);
+      return project;
+    });
+  }
+
   async updateSettings(updater) {
     return this.#mutate((state) => {
       updater(state.settings);
@@ -264,6 +279,26 @@ function configuredModels(stagePolicies) {
     provider: providerForModelId(model) === "claude" ? "anthropic" : "openai",
     model,
   }));
+}
+
+export function assertProjectIsUnique(projects, input) {
+  const name = input.name.trim().toLowerCase();
+  const repositoryPath = path.resolve(input.repositoryPath);
+  if (projects.some((project) => project.name.trim().toLowerCase() === name)) {
+    throw new Error("A project with that name already exists.");
+  }
+  if (projects.some((project) => path.resolve(project.repositoryPath) === repositoryPath)) {
+    throw new Error("That repository is already registered as a project.");
+  }
+}
+
+export function projectRecord(input) {
+  return {
+    id: crypto.randomUUID(),
+    name: input.name.trim(),
+    repositoryPath: path.resolve(input.repositoryPath),
+    createdAt: new Date().toISOString(),
+  };
 }
 
 export function migratePersistedTaskState(state) {

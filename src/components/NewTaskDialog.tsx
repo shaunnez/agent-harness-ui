@@ -1,6 +1,14 @@
-import { FolderOpen, Lightning, Paperclip, Trash, X } from "@phosphor-icons/react";
-import { useEffect, useRef, useState } from "react";
-import { EXAMPLE_DESCRIPTION, EXAMPLE_TITLE, type NewTaskDraft, type RuntimeStatus } from "../domain";
+import { Lightning, Paperclip, Plus, Trash, X } from "@phosphor-icons/react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { listProjects } from "../api";
+import {
+  EXAMPLE_DESCRIPTION,
+  EXAMPLE_TITLE,
+  type NewTaskDraft,
+  type RuntimeProject,
+  type RuntimeStatus,
+} from "../domain";
+import { AddProjectDialog } from "./AddProjectDialog";
 import { Button } from "./Primitives";
 import { RepositoryContractPanel } from "./RepositoryContractPanel";
 
@@ -46,6 +54,10 @@ export function NewTaskDialog({
   const [draft, setDraft] = useState(initialDraft);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [projects, setProjects] = useState<RuntimeProject[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [addProjectOpen, setAddProjectOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const policyEntries = Object.entries(runtimeStatus?.settings?.stagePolicies ?? {});
   const policySummary = [
@@ -62,6 +74,31 @@ export function NewTaskDialog({
       current.experiment ? { ...current, experiment: { ...current.experiment, ...value } } : current,
     );
   };
+  const refreshProjects = useCallback(
+    async (preferredRepositoryPath?: string) => {
+      setProjectsLoading(true);
+      setProjectsError(null);
+      try {
+        const nextProjects = await listProjects();
+        setProjects(nextProjects);
+        setDraft((current) => {
+          const preferredPath = preferredRepositoryPath ?? current.repositoryPath ?? defaultRepository;
+          const selected =
+            nextProjects.find((project) => project.repositoryPath === preferredPath) ?? nextProjects[0];
+          return selected && selected.repositoryPath !== current.repositoryPath
+            ? { ...current, repositoryPath: selected.repositoryPath }
+            : current;
+        });
+        return nextProjects;
+      } catch (reason) {
+        setProjectsError(reason instanceof Error ? reason.message : "Projects could not be loaded.");
+        throw reason;
+      } finally {
+        setProjectsLoading(false);
+      }
+    },
+    [defaultRepository],
+  );
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -76,12 +113,22 @@ export function NewTaskDialog({
     }
   }, [defaultRepository, draft.repositoryPath]);
 
+  useEffect(() => {
+    if (!open) return;
+    void refreshProjects().catch(() => undefined);
+  }, [open, refreshProjects]);
+
+  const closeDialog = () => {
+    setAddProjectOpen(false);
+    onClose();
+  };
+
   return (
     <dialog
       ref={dialogRef}
       className="new-task-dialog"
-      onCancel={onClose}
-      onClose={onClose}
+      onCancel={closeDialog}
+      onClose={closeDialog}
       aria-labelledby="new-task-title"
     >
       <form
@@ -108,7 +155,7 @@ export function NewTaskDialog({
               snapshotted so every agent run records its model and reasoning level.
             </p>
           </div>
-          <button type="button" className="icon-button" aria-label="Close new task" onClick={onClose}>
+          <button type="button" className="icon-button" aria-label="Close new task" onClick={closeDialog}>
             <X size={18} />
           </button>
         </header>
@@ -135,23 +182,43 @@ export function NewTaskDialog({
           />
         </label>
 
-        <label className="field">
-          <span>
-            Local repository <small className="wired-field">Validated by backend</small>
-          </span>
-          <span className="field-with-icon">
-            <FolderOpen size={16} />
-            <input
+        <div className="field project-field">
+          <label htmlFor="new-task-project">
+            Project <small className="wired-field">Local repository</small>
+          </label>
+          <span className="project-picker">
+            <select
+              id="new-task-project"
               value={draft.repositoryPath}
               onChange={(event) => setDraft({ ...draft, repositoryPath: event.target.value })}
-              placeholder="C:\\path\\to\\repository"
-              spellCheck={false}
-            />
+              disabled={projectsLoading}
+              aria-label="Project"
+            >
+              {projectsLoading ? <option value="">Loading projects…</option> : null}
+              {!projectsLoading && projects.length === 0 ? (
+                <option value="">No projects added yet</option>
+              ) : null}
+              {projects.map((project) => (
+                <option key={project.id} value={project.repositoryPath}>
+                  {project.name} — {project.repositoryPath}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="button project-picker__add"
+              aria-label="Add project"
+              title="Add project"
+              onClick={() => setAddProjectOpen(true)}
+            >
+              <Plus size={16} weight="bold" />
+            </button>
           </span>
+          {projectsError ? <small className="project-field__error">{projectsError}</small> : null}
           <small>
             Investigation is read-only. Approved implementation runs only in an isolated Git worktree.
           </small>
-        </label>
+        </div>
 
         <RepositoryContractPanel repositoryPath={open ? draft.repositoryPath : ""} />
 
@@ -405,7 +472,7 @@ export function NewTaskDialog({
         ) : null}
         <footer className="dialog-footer">
           <div>
-            <Button tone="ghost" type="button" onClick={onClose}>
+            <Button tone="ghost" type="button" onClick={closeDialog}>
               Cancel
             </Button>
             <Button
@@ -433,6 +500,13 @@ export function NewTaskDialog({
           </div>
         </footer>
       </form>
+      <AddProjectDialog
+        open={addProjectOpen}
+        onClose={() => setAddProjectOpen(false)}
+        onSaved={async (project) => {
+          await refreshProjects(project.repositoryPath);
+        }}
+      />
     </dialog>
   );
 }

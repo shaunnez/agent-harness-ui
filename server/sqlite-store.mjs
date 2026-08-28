@@ -4,7 +4,12 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { defaultRuntimeSettings } from "./model-catalog.mjs";
 import { retainRunActivityEvents, TASK_STORE_SCHEMA_VERSION } from "./run-activity.mjs";
-import { createTaskRecord, migratePersistedTaskState } from "./store.mjs";
+import {
+  assertProjectIsUnique,
+  createTaskRecord,
+  migratePersistedTaskState,
+  projectRecord,
+} from "./store.mjs";
 import {
   normalizeActivityFilter,
   projectArtifactMetadata,
@@ -280,6 +285,25 @@ export class SqliteTaskStore {
 
   async settings() {
     return clone(this.#readSettings());
+  }
+
+  async listProjects() {
+    return clone(this.#readSettings().projects ?? []);
+  }
+
+  async createProject(input) {
+    return this.#enqueue(() =>
+      this.#transaction(() => {
+        const settings = this.#readSettings();
+        settings.projects ??= [];
+        const projects = settings.projects;
+        assertProjectIsUnique(projects, input);
+        const project = projectRecord(input);
+        projects.push(project);
+        this.#db.prepare("UPDATE settings SET payload_json = ? WHERE id = 1").run(JSON.stringify(settings));
+        return clone(project);
+      }),
+    );
   }
 
   async updateSettings(updater) {

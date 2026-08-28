@@ -1,4 +1,5 @@
 import "./api-runtime-settings.test.mjs";
+import "./api-projects.test.mjs";
 import "./api-retained-evidence.test.mjs";
 import "./api-candidate-worktree.test.mjs";
 import "./api-pr-lifecycle.test.mjs";

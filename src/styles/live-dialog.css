@@ -256,6 +256,7 @@
   margin-top: 15px;
 }
 .field > span,
+.field > label,
 .segmented-field legend {
   color: #c9c7bf;
   font-size: 12px;
@@ -368,6 +369,25 @@
   min-height: 35px;
   padding: 0 9px;
   font-size: 12px;
+}
+.project-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 37px;
+  gap: 7px;
+}
+.project-picker__add {
+  min-width: 37px;
+  min-height: 37px;
+  padding: 0;
+}
+.project-field__error {
+  color: #ffd0d0 !important;
+}
+.add-project-dialog {
+  width: min(480px, calc(100vw - 32px));
+}
+.add-project-dialog .dialog-footer {
+  justify-content: flex-end;
 }
 .segmented-field {
   display: grid;

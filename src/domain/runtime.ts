@@ -678,6 +678,13 @@ export interface RuntimeRepositoryContract {
   };
 }
 
+export interface RuntimeProject {
+  id: string;
+  name: string;
+  repositoryPath: string;
+  createdAt: string | null;
+}
+
 export interface RuntimeAgentPolicy {
   model: string;
   reasoning: string;
@@ -748,6 +755,7 @@ export interface RuntimeModelCatalog {
 }
 
 export interface RuntimeSettings {
+  projects?: RuntimeProject[];
   grillPolicy: RuntimeGrillPolicy;
   allowedModels: string[];
   defaultModel: string;

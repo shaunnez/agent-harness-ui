@@ -14,6 +14,7 @@ import type {
   RuntimeArtifactMetadata,
   RuntimeEvent,
   RuntimePage,
+  RuntimeProject,
   RuntimeAvailableAction,
   RuntimeRun,
   RuntimeRepositoryContract,
@@ -100,6 +101,20 @@ export async function getRepositoryContract(repositoryPath: string) {
     })
   ).contract;
 }
+
+export async function listProjects() {
+  return (await request<{ projects: RuntimeProject[] }>("/api/projects")).projects;
+}
+
+export async function createProject(input: { name: string; repositoryPath: string }) {
+  return (
+    await request<{ project: RuntimeProject }>("/api/projects", {
+      method: "POST",
+      body: JSON.stringify(input),
+    })
+  ).project;
+}
+
 export async function getRuntimeWorktreeInventory(taskId?: string) {
   return request<{ rows: RuntimeWorktreeInventoryRow[] }>(
     taskId ? `/api/tasks/${encodeURIComponent(taskId)}/worktrees` : "/api/runtime/worktrees",

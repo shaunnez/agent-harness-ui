@@ -9,6 +9,7 @@ import { withActionEligibility } from "./retry-admission-policy.mjs";
 import { createCandidateWorktreeRoutes } from "./candidate-worktree-routes.mjs";
 import { createChangelogRoutes } from "./changelog-routes.mjs";
 import { createRetainedEvidenceRoutes } from "./retained-evidence-routes.mjs";
+import { createProjectRoutes } from "./project-routes.mjs";
 import { createRuntimeSettingsRoutes } from "./runtime-settings-routes.mjs";
 import { createTaskCreationRoutes } from "./task-creation-routes.mjs";
 import { createTaskActionRoutes } from "./task-action-routes.mjs";
@@ -226,6 +227,13 @@ export function createApiServer({
     diffCharLimit,
   });
   const retainedEvidenceRoutes = createRetainedEvidenceRoutes({ store, send, withActionEligibility });
+  const projectRoutes = createProjectRoutes({
+    store,
+    suggestedRepository,
+    send,
+    readJson,
+    validateRepository,
+  });
   const taskCreationRoutes = createTaskCreationRoutes({
     store,
     send,
@@ -271,6 +279,7 @@ export function createApiServer({
       if (await runtimeSettingsRoutes(request, response, url)) return;
       if (await changelogRoutes(request, response, url)) return;
       if (await candidateWorktreeRoutes(request, response, url)) return;
+      if (await projectRoutes(request, response, url)) return;
       if (await taskCreationRoutes(request, response, url)) return;
       if (await retainedEvidenceRoutes(request, response, url)) return;
       if (await taskLifecycleRoutes(request, response, url)) return;
