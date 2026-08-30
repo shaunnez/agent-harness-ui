@@ -20,9 +20,11 @@ import {
   listTaskPollStates,
   listTasks,
   recordTaskDecision,
+  retryTaskDesigns,
   removeRuntimeWorktree,
   runTask,
   runTaskAction,
+  selectTaskDesign,
   updateRuntimeSettings,
   updateTaskWorkflowProfile,
   verifyRuntimePricing,
@@ -730,6 +732,16 @@ export function App() {
               await finishGrill(activeRuntimeTask.id, acceptRemaining);
               await refreshActiveTask(activeRuntimeTask.id);
               showToast("success", "Grill completed; specification run started.");
+            }}
+            onSelectDesign={async (variantId) => {
+              await selectTaskDesign(activeRuntimeTask.id, variantId);
+              await refreshActiveTask(activeRuntimeTask.id);
+              showToast("success", "Design revision selected; Task Spec started.");
+            }}
+            onRetryDesigns={async () => {
+              await retryTaskDesigns(activeRuntimeTask.id);
+              await refreshActiveTask(activeRuntimeTask.id);
+              showToast("success", "Both design generators restarted.");
             }}
             onRemoveWorktree={async (rowId) => {
               try {

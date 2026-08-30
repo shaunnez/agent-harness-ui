@@ -1,0 +1,128 @@
+.runtime-prototype-comparison {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.runtime-prototype-comparison > header,
+.runtime-prototype-comparison > header > span:first-child,
+.runtime-prototype-comparison > header > span:first-child > span {
+  display: flex;
+}
+.runtime-prototype-comparison > header {
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.runtime-prototype-comparison > header > span:first-child {
+  align-items: center;
+  gap: 9px;
+}
+.runtime-prototype-comparison > header > span:first-child > span {
+  flex-direction: column;
+  gap: 3px;
+}
+.runtime-prototype-comparison small,
+.runtime-prototype-comparison > p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.runtime-prototype-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.runtime-prototype-grid > article {
+  display: grid;
+  grid-template-rows: auto 320px minmax(58px, auto) auto;
+  gap: 10px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-raised, #1a1a17);
+}
+.runtime-prototype-grid > article.selected {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--blue) 35%, transparent);
+}
+.runtime-prototype-grid article > header,
+.runtime-prototype-grid article > footer,
+.runtime-prototype-grid article > footer > span {
+  display: flex;
+  align-items: center;
+}
+.runtime-prototype-grid article > header,
+.runtime-prototype-grid article > footer {
+  justify-content: space-between;
+  gap: 10px;
+}
+.runtime-prototype-grid article > header > span {
+  display: grid;
+  gap: 3px;
+}
+.runtime-prototype-grid code {
+  color: var(--faint);
+  font-size: 12px;
+}
+.runtime-prototype-preview {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #11110f;
+}
+.runtime-prototype-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: white;
+}
+.runtime-prototype-state {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 7px;
+  height: 100%;
+  padding: 20px;
+  text-align: center;
+}
+.runtime-prototype-state--failed {
+  color: var(--red);
+}
+.runtime-prototype-grid article > p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.runtime-prototype-grid article > footer > span {
+  gap: 8px;
+}
+.runtime-prototype-grid article > footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--blue);
+  font-size: 12px;
+}
+.runtime-prototype-retry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.runtime-prototype-retry > span {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: var(--red);
+}
+@media (max-width: 980px) {
+  .runtime-prototype-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -15,6 +15,8 @@ export interface RuntimeTaskWorkspaceProps {
   onDecision: (question: string, answer: string) => Promise<void>;
   onGrillAnswer: (questionId: string, answer: string) => Promise<void>;
   onFinishGrill: (acceptRemaining: boolean) => Promise<void>;
+  onSelectDesign: (variantId: string) => Promise<void>;
+  onRetryDesigns: () => Promise<void>;
   onRemoveWorktree: (rowId: string) => Promise<void>;
   onProfileChange: (profile: WorkflowProfileId, reason: string) => Promise<void>;
   onLoadMoreArtifacts?: () => Promise<void>;

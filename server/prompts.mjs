@@ -131,6 +131,7 @@ export function buildStageRequest(task, stageId) {
     "oldest",
   );
   const taskContext = suppliedTaskContext(task);
+  const prototypeContext = selectedPrototypeContext(task);
   const planCorrectionContext = stageId === "plan" ? formatPlanCorrectionContext(task) : "";
   const prompt = `You are the ${stage.label} agent in a local development workflow harness.
 
@@ -150,7 +151,7 @@ Priority: ${taskContext.priority}
 Workflow profile: ${task.workflowProfile?.selected ?? "standard"}
 Profile reason: ${task.workflowProfile?.reason ?? "Compatibility-safe standard profile."}
 
-${formatAttachments(task)}${formatDecisions(task)}${artifactContext.text ? `Prior retained workflow artifacts:\n${artifactContext.text}\n` : ""}${planCorrectionContext}
+${formatAttachments(task)}${formatDecisions(task)}${prototypeContext.text}${artifactContext.text ? `Prior retained workflow artifacts:\n${artifactContext.text}\n` : ""}${planCorrectionContext}
 Your stage assignment:
 ${stage.instruction}
 
@@ -162,7 +163,7 @@ Return one concise Markdown artifact. Use these exact H2 headings in order: ${st
       taskContext,
       stageId,
       prompt,
-      artifactContext.sources,
+      [...prototypeContext.sources, ...artifactContext.sources],
       "read-only",
       "The agent may inspect repository files relevant to this stage.",
     ),
@@ -211,6 +212,7 @@ export function buildExecutionPrompt(task, stageId, candidate) {
 export function buildTestInterpretationRequest(task, candidate, verification) {
   const stage = STAGE_PROMPTS.test;
   const taskContext = suppliedTaskContext(task, { includeWorkflow: false, includePriority: false });
+  const prototypeContext = selectedPrototypeContext(task);
   const skipped = (verification.declaredCommandIds ?? []).filter(
     (id) => !(verification.executedCommandIds ?? []).includes(id),
   );
@@ -237,6 +239,8 @@ Title: ${taskContext.title}
 Description:
 ${taskContext.description}
 
+${prototypeContext.text}
+
 Candidate: ${candidate.id} revision ${candidate.revisionNumber}
 Candidate revision: ${candidate.headRevision ?? "not committed yet"}
 Verification ran against: ${verification.headRevision ?? candidate.headRevision ?? "unknown"}
@@ -259,7 +263,7 @@ Return one concise Markdown artifact. Use these exact H2 headings in order: ${st
       taskContext,
       "test",
       prompt,
-      [],
+      prototypeContext.sources,
       "read-only",
       `The agent may inspect the exact ${candidate.id} revision read-only. Verification was executed by the harness, not by this agent.`,
       candidate,
@@ -283,6 +287,7 @@ export function buildExecutionRequest(task, stageId, candidate) {
   );
   const modifying = stageId === "implement";
   const taskContext = suppliedTaskContext(task, { includeWorkflow: false, includePriority: false });
+  const prototypeContext = selectedPrototypeContext(task);
   const qualificationContext =
     stageId === "dev-review" ? candidateQualificationContext(task, candidate) : null;
   const prompt = `You are the ${stage.label} agent in a local development workflow harness.
@@ -300,7 +305,7 @@ Candidate: ${candidate.id} revision ${candidate.revisionNumber}
 Base revision: ${candidate.baseRevision}
 Candidate revision: ${candidate.headRevision ?? "not committed yet"}
 
-${formatAttachments(task)}${formatDecisions(task)}Retained workflow artifacts (the specification and plan are approval-gated; review/test artifacts may describe failures):
+${formatAttachments(task)}${formatDecisions(task)}${prototypeContext.text}Retained workflow artifacts (the specification and plan are approval-gated; review/test artifacts may describe failures):
 ${artifactContext.text}${qualificationContext ? `\n\n${qualificationContext.text}` : ""}
 
 Use these retained handoffs before reading surrounding code. Inspect only the exact candidate diff and files needed to verify this stage; do not repeat broad repository discovery.
@@ -316,7 +321,7 @@ Return one concise Markdown artifact. Use these exact H2 headings in order: ${st
       taskContext,
       stageId,
       prompt,
-      [...artifactContext.sources, ...(qualificationContext?.sources ?? [])],
+      [...prototypeContext.sources, ...artifactContext.sources, ...(qualificationContext?.sources ?? [])],
       modifying ? "workspace-write" : "read-only",
       modifying
         ? `The agent may read and edit only the isolated ${candidate.id} candidate worktree.`
@@ -345,6 +350,7 @@ export function buildWorkPackageRequest(task, workPackage, slice) {
     "oldest",
   );
   const taskContext = suppliedTaskContext(task, { includeWorkflow: false, includePriority: false });
+  const prototypeContext = selectedPrototypeContext(task);
   const continuationContext = workPackage.retainedContinuation
     ? `\nRetained continuation: continue the existing work in this exact worktree; do not start over or discard valid in-scope progress. Before finishing, restore every retained path outside declared ownership: ${workPackage.retainedContinuation.outsideOwnership.join(", ") || "None"}. The harness will refuse to commit any remaining ownership exception.${workPackage.retainedContinuation.qualificationFailure ? ` Repair this retained focused-verification failure under the corrected plan: ${workPackage.retainedContinuation.qualificationFailure}` : ""}\n`
     : "";
@@ -369,7 +375,7 @@ Focused repository manifest command IDs: ${(workPackage.verificationCommandIds ?
 Slice base revision: ${slice.baseRevision}
 ${continuationContext}
 
-${formatAttachments(task)}${formatDecisions(task)}Approved specification and plan:
+${formatAttachments(task)}${formatDecisions(task)}${prototypeContext.text}Approved specification and plan:
 ${artifactContext.text}
 
 Implement only this package. Do not redo dependency work and do not edit outside declared ownership. If the approved interface genuinely requires another path, stop and report the required plan correction rather than widening scope yourself. Run focused, non-interactive checks when practical. Never re-run a command byte-for-byte identical to one you already ran in this session; you already have its output.
@@ -384,7 +390,7 @@ Return concise Markdown with these exact H2 headings in order: Outcome, Changes,
       taskContext,
       "implement",
       prompt,
-      artifactContext.sources,
+      [...prototypeContext.sources, ...artifactContext.sources],
       "workspace-write",
       `The ${workPackage.id} agent may read and edit only its isolated slice worktree; declared ownership is ${workPackage.ownedPaths.join(", ") || "plan-defined"}.`,
       null,
@@ -499,6 +505,30 @@ function newestFailingGate(task, candidate) {
       Array.isArray(gateResult.findings)
     );
   });
+}
+
+function selectedPrototypeContext(task) {
+  const request = task.designRequest;
+  const variant = request?.variants?.find((item) => item.id === request.selectedVariantId);
+  if (request?.status !== "selected" || !variant) return { text: "", sources: [] };
+  const reference = variant.externalUrl ?? variant.previewUrl ?? "Retained local prototype bundle";
+  const originalContract = String(variant.designContract ?? variant.summary ?? "");
+  const contract = originalContract.slice(0, 12_000);
+  const text = `Selected design prototype (approved operator input):\n- ${variant.title}\n- Generator: ${variant.generator}\n- Revision: ${variant.revision}\n- Reference: ${reference}\n- Bundle SHA-256: ${variant.bundleHash ?? "provider-hosted artifact"}\n- Design summary: ${variant.summary}\n\nSelected design implementation contract:\n${contract}\n\nUse this exact selected revision as the visual and interaction source of truth. Do not blend it with the rejected variant.\n\n`;
+  return {
+    text,
+    sources: [
+      {
+        kind: "prototype",
+        id: variant.id,
+        label: `${variant.title} revision ${variant.revision}`,
+        stage: "specification",
+        includedCharacters: text.length,
+        originalCharacters: text.length + Math.max(0, originalContract.length - contract.length),
+        truncated: contract.length !== originalContract.length,
+      },
+    ],
+  };
 }
 
 function selectArtifactContext(entries, characterLimit, direction) {

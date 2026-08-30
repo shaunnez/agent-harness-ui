@@ -43,6 +43,8 @@ export function RuntimeTaskWorkspace({
   onDecision,
   onGrillAnswer,
   onFinishGrill,
+  onSelectDesign,
+  onRetryDesigns,
   onRemoveWorktree,
   onProfileChange,
   onLoadMoreArtifacts,
@@ -208,6 +210,8 @@ export function RuntimeTaskWorkspace({
                   "test",
                 )
               }
+              onSelectDesign={onSelectDesign}
+              onRetryDesigns={onRetryDesigns}
             />
           </main>
 

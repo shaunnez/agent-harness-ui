@@ -322,6 +322,23 @@ export async function finishGrill(id: string, acceptRemaining: boolean) {
   });
 }
 
+export async function selectTaskDesign(id: string, variantId: string) {
+  return request<{ started: true }>(
+    `/api/tasks/${encodeURIComponent(id)}/designs/${encodeURIComponent(variantId)}/select`,
+    {
+      method: "POST",
+      body: JSON.stringify({ interactionSource: "operator-ui" }),
+    },
+  );
+}
+
+export async function retryTaskDesigns(id: string) {
+  return request<{ started: true }>(`/api/tasks/${encodeURIComponent(id)}/designs/retry`, {
+    method: "POST",
+    body: JSON.stringify({ interactionSource: "operator-ui" }),
+  });
+}
+
 export async function runTaskAction(
   id: string,
   action: Exclude<RuntimeAvailableAction, "continue-implementation">,

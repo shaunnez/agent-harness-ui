@@ -523,6 +523,20 @@ export function createTaskRecord(state, input) {
     continuedFromTaskId: continuation?.sourceTaskId ?? null,
     continuedByTaskId: null,
     priority: input.priority,
+    designRequest: input.designRequested
+      ? {
+          requested: true,
+          status: "not-started",
+          requestedAt: now,
+          startedAt: null,
+          completedAt: null,
+          selectedVariantId: null,
+          selectedAt: null,
+          selectedBy: null,
+          variants: [],
+          error: null,
+        }
+      : null,
     grillPolicy: input.grillPolicy ?? state.settings.grillPolicy ?? "manual",
     agentConfig: {
       provider,

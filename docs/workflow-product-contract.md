@@ -49,6 +49,8 @@ Avoid using “model” when the UI means an agent, and avoid showing a singular
 
 Grill is a human decision gate by default. When it produces questions, the task pauses so the operator can answer them individually or explicitly accept all remaining recommendations. Automatic acceptance is available only through an opt-in Settings policy snapshotted onto new tasks; those answers and the session completion must identify automation as their source. A Grill run that produces no material questions may continue automatically under either policy.
 
+Tasks may opt into a governed design exploration after Grill and before Task Spec. This is a subflow inside **Task Spec**, not an eleventh stage: Claude Design and Codex Design run independently, retain two provider-attributed prototype revisions, and pause for an explicit operator selection. Task Spec cannot start until one complete revision is selected. The selected revision is immutable for that specification run and is supplied—with its URL or local bundle hash, summary, and context manifest—to Specification, Plan, implementation, review, and test. The rejected variant remains inspectable for provenance but is never blended into downstream context. Provider failure retains partial output but fails the subflow closed; the operator may retry both generators. Local prototype HTML is served from a sandboxed frame under a restrictive content-security policy, and server filesystem paths are never projected to the client.
+
 The stage navigator distinguishes:
 
 - **Current execution stage** — where the workflow can advance.
@@ -264,6 +266,7 @@ Artifacts are first-class, versioned records, not transient UI copy. Important e
 - triage report;
 - scout findings and cited code excerpts;
 - Grill decision frontier and evidence;
+- dual design prototype revisions, provider metadata, exact selected revision, and context manifests;
 - full task specification;
 - dependency graph and implementation plan;
 - slice manifests, commits, and local check results;
@@ -300,6 +303,8 @@ Minimum relational/event model:
 - `repair_packets`
 - `repair_actions`
 - `artifacts`
+- `design_requests`
+- `prototype_variants`
 - `decisions`
 - `usage_records`
 - `approvals`

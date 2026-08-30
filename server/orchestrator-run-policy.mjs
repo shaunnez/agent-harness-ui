@@ -181,6 +181,14 @@ export function canStartRun(task, kind) {
   ) {
     return false;
   }
+  if (
+    kind === "specification" &&
+    task.designRequest?.requested === true &&
+    task.designRequest.status !== "selected" &&
+    task.status !== "awaiting-grill"
+  ) {
+    return false;
+  }
   const allowed = {
     investigation: ["queued", "failed", "cancelled"],
     specification: ["awaiting-grill", "failed", "cancelled"],

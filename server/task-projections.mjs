@@ -16,6 +16,7 @@ export function projectTaskSummary(task, retainedCounts = {}) {
     continuedFromTaskId: task.continuedFromTaskId ?? null,
     continuedByTaskId: task.continuedByTaskId ?? null,
     priority: task.priority,
+    designRequest: projectDesignRequest(task.designRequest, { includeVariants: false }),
     status: task.status,
     closure: task.closure ?? null,
     archive: task.archive ?? null,
@@ -51,6 +52,18 @@ export function projectTaskSummary(task, retainedCounts = {}) {
     eventCount: retainedCounts.eventCount ?? events.length,
     runCount: retainedCounts.runCount ?? runs.length,
     pollVersion: String(retainedCounts.pollVersion ?? task.pollVersion ?? task.updatedAt ?? ""),
+  };
+}
+
+export function projectDesignRequest(designRequest, { includeVariants = true } = {}) {
+  if (!designRequest) return null;
+  return {
+    ...designRequest,
+    variants: includeVariants
+      ? (designRequest.variants ?? []).map(
+          ({ bundlePath: _bundlePath, designContract: _designContract, ...variant }) => variant,
+        )
+      : [],
   };
 }
 
@@ -119,6 +132,7 @@ export function projectTaskCore(task) {
   const { events = [], runs = [], artifacts = [], ...core } = task;
   return {
     ...core,
+    designRequest: projectDesignRequest(core.designRequest),
     artifacts: [],
     artifactCount: artifacts.length,
     eventCount: events.length,

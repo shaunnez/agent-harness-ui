@@ -1,5 +1,7 @@
 import { normalizeEvaluationInput } from "./evaluation.mjs";
 import { selectWorkflowProfile, WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 export function createTaskLifecycleRoutes({
   store,
@@ -14,6 +16,61 @@ export function createTaskLifecycleRoutes({
   repositoryAuthorityService,
 }) {
   return async function handleTaskLifecycleRoute(request, response, url) {
+    const designPreviewMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/designs\/([^/]+)\/preview$/);
+    if (request.method === "GET" && designPreviewMatch) {
+      const id = decodeURIComponent(designPreviewMatch[1]);
+      const variantId = decodeURIComponent(designPreviewMatch[2]);
+      const task = await store.get(id);
+      const variant = task?.designRequest?.variants.find((item) => item.id === variantId);
+      if (!variant?.bundlePath || variant.status !== "ready") {
+        send(response, 404, { error: "Prototype preview not found." });
+        return true;
+      }
+      const prototypeRoot = path.resolve(store.dataDirectory(), "prototypes", id, variant.id);
+      if (path.resolve(variant.bundlePath) !== prototypeRoot) {
+        send(response, 409, { error: "Prototype asset path does not match its persisted identity." });
+        return true;
+      }
+      const html = await readFile(path.join(prototypeRoot, "index.html"), "utf8");
+      response.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "private, no-store",
+        "content-security-policy":
+          "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'; frame-ancestors 'self'",
+        "x-content-type-options": "nosniff",
+      });
+      response.end(html);
+      return true;
+    }
+
+    const designSelectMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/designs\/([^/]+)\/select$/);
+    if (request.method === "POST" && designSelectMatch) {
+      const input = await readJson(request);
+      if (input.interactionSource !== "operator-ui") {
+        throw new Error("Selecting a design requires an explicit operator UI action.");
+      }
+      const result = await orchestrator.selectDesign(
+        decodeURIComponent(designSelectMatch[1]),
+        decodeURIComponent(designSelectMatch[2]),
+        { source: "operator" },
+      );
+      send(response, 202, result);
+      return true;
+    }
+
+    const designRetryMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/designs\/retry$/);
+    if (request.method === "POST" && designRetryMatch) {
+      const input = await readJson(request);
+      if (input.interactionSource !== "operator-ui") {
+        throw new Error("Retrying design requires an explicit operator UI action.");
+      }
+      const result = await orchestrator.retryDesigns(decodeURIComponent(designRetryMatch[1]), {
+        source: "operator",
+      });
+      send(response, 202, result);
+      return true;
+    }
+
     const workflowProfileMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/workflow-profile$/);
     if (request.method === "PUT" && workflowProfileMatch) {
       const id = decodeURIComponent(workflowProfileMatch[1]);

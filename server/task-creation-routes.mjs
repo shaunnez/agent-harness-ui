@@ -87,6 +87,7 @@ export function createTaskCreationRoutes({
         repositoryPath,
         workflow: input.workflow,
         priority,
+        designRequested: input.designRequested === true,
         model: requestedModel,
         reasoning: requestedReasoning,
         stagePolicies: taskPolicies,

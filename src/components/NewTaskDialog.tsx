@@ -18,6 +18,7 @@ const initialDraft: NewTaskDraft = {
   repositoryPath: "",
   workflow: "investigate",
   priority: "medium",
+  designRequested: false,
   workflowProfile: "auto",
   experiment: null,
   attachments: [],
@@ -275,6 +276,21 @@ export function NewTaskDialog({
           <small>
             Fast automatically escalates when repository evidence or verification exceeds its limits.
           </small>
+        </label>
+
+        <label className={`dialog-design-option ${draft.designRequested ? "selected" : ""}`}>
+          <input
+            type="checkbox"
+            checked={draft.designRequested === true}
+            onChange={(event) => setDraft({ ...draft, designRequested: event.target.checked })}
+          />
+          <span>
+            <strong>Generate two design prototypes</strong>
+            <small>
+              Run Claude Design and Codex Design after Grill, then pause for a human selection before Task
+              Spec.
+            </small>
+          </span>
         </label>
 
         <label className="field dialog-priority-field">

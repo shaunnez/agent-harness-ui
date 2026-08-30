@@ -1,4 +1,5 @@
 import "./orchestrator-investigation-grill.test.mjs";
+import "./orchestrator-prototype-design.test.mjs";
 import "./orchestrator-planning-correction.test.mjs";
 import "./orchestrator-package-qualification.test.mjs";
 import "./orchestrator-candidate-assembly.test.mjs";
