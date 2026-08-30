@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -96,6 +96,58 @@ test("store migration is idempotent across repeated boots", async () => {
       false,
       "recovering an already-migrated store reports no further change",
     );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("repository-authority migration keeps completed tasks readable and marks active plans for revalidation", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-authority-migration-"));
+  try {
+    const filePath = path.join(directory, "tasks.json");
+    const seedingStore = new JsonTaskStore(filePath);
+    await seedingStore.init();
+    const active = await seedingStore.create({
+      title: "Legacy active plan",
+      description: "A plan from before repository authority was persisted.",
+      repositoryPath: "/repo",
+      workflow: "implement",
+      priority: "medium",
+    });
+    const completed = await seedingStore.create({
+      title: "Legacy completed task",
+      description: "Historical evidence remains readable.",
+      repositoryPath: "/repo",
+      workflow: "implement",
+      priority: "medium",
+    });
+    await seedingStore.update(active.id, (draft) => {
+      draft.status = "awaiting-plan-approval";
+      draft.currentStage = "plan";
+    });
+    await seedingStore.update(completed.id, (draft) => {
+      draft.status = "completed";
+    });
+    const legacy = JSON.parse(await readFile(filePath, "utf8"));
+    legacy.schemaVersion = 9;
+    for (const task of legacy.tasks) {
+      delete task.repositoryAuthority;
+      delete task.repositoryAuthorityHistory;
+      delete task.repositoryAuthorityStatus;
+      delete task.planResult;
+      delete task.planRevalidation;
+    }
+    await writeFile(filePath, `${JSON.stringify(legacy, null, 2)}\n`);
+
+    const migratedStore = new JsonTaskStore(filePath);
+    await migratedStore.init();
+    const migratedActive = await migratedStore.get(active.id);
+    const migratedCompleted = await migratedStore.get(completed.id);
+    assert.equal(migratedActive.repositoryAuthorityStatus, "legacy-unbound");
+    assert.equal(migratedActive.repositoryAuthority, null);
+    assert.deepEqual(migratedActive.repositoryAuthorityHistory, []);
+    assert.equal(migratedCompleted.repositoryAuthorityStatus, "legacy-readable");
+    assert.equal(migratedCompleted.status, "completed");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

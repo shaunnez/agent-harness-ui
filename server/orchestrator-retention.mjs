@@ -93,6 +93,16 @@ export class RetentionOrchestrator {
         candidateId: options.candidateId ?? null,
         candidateRevision: options.candidateRevision ?? null,
         workPackageId: options.workPackageId ?? null,
+        repositoryAuthorityId:
+          result.contextManifest?.repositoryAuthorityId ?? draft.repositoryAuthority?.id ?? null,
+        repositoryRevision:
+          result.contextManifest?.repositoryRevision ?? draft.repositoryAuthority?.selectedRevision ?? null,
+        repositoryTargetRef:
+          result.contextManifest?.repositoryTargetRef ?? draft.repositoryAuthority?.targetRef ?? null,
+        repositoryAuthorityCheckedAt:
+          result.contextManifest?.repositoryAuthorityCheckedAt ??
+          draft.repositoryAuthority?.capturedAt ??
+          null,
         focusedTest: options.focusedTestEvidence ?? null,
         evidenceError: options.evidenceError ?? null,
         gateResult: options.gateResult ?? null,

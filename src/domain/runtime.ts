@@ -11,6 +11,7 @@ export type RuntimeTaskStatus =
   | "awaiting-grill"
   | "awaiting-spec-approval"
   | "awaiting-plan-approval"
+  | "awaiting-already-satisfied"
   | "ready-for-implementation"
   | "ready-for-review"
   | "review-retry-required"
@@ -29,6 +30,8 @@ export type RuntimeAvailableAction =
   | "continue-implementation"
   | "approve-spec"
   | "approve-plan"
+  | "revalidate-plan"
+  | "close-already-satisfied"
   | "specification"
   | "plan"
   | "implement"
@@ -78,6 +81,10 @@ export interface RuntimeContextManifest {
   candidateId?: string | null;
   candidateRevision?: number | null;
   workPackageId?: string | null;
+  repositoryAuthorityId?: string | null;
+  repositoryRevision?: string | null;
+  repositoryTargetRef?: string | null;
+  repositoryAuthorityCheckedAt?: string | null;
   scoutName?: string | null;
   scoutFocus?: string | null;
   sources: RuntimeContextSource[];
@@ -103,6 +110,10 @@ export interface RuntimeArtifact {
   candidateId?: string | null;
   candidateRevision?: number | null;
   workPackageId?: string | null;
+  repositoryAuthorityId?: string | null;
+  repositoryRevision?: string | null;
+  repositoryTargetRef?: string | null;
+  repositoryAuthorityCheckedAt?: string | null;
   focusedTest?: RuntimeFocusedTestEvidence | null;
   evidenceError?: { code: string; copy: string } | null;
   freshness?: RuntimeGateFreshness | null;
@@ -398,6 +409,27 @@ export interface RuntimeStageDisposition {
   decidedAt: string;
 }
 
+export interface RuntimeRepositoryAuthority {
+  id: string;
+  repositoryRoot: string;
+  checkoutBranch: string | null;
+  localBranchRef: string | null;
+  localHead: string;
+  upstreamBranch: string | null;
+  upstreamRef: string | null;
+  fetchedRevision: string | null;
+  selectedRevision: string;
+  targetRef: string;
+  source: "tracked-upstream" | "local-head" | "frozen-experiment";
+  checkoutDirty: boolean;
+  relationship: "equal" | "ahead" | "behind" | "diverged" | "unknown";
+  capturedAt: string;
+  remoteVerification: {
+    status: "verified" | "failed" | "not-configured" | "not-applicable";
+    error: string | null;
+  };
+}
+
 export interface RuntimeTask {
   id: string;
   title: string;
@@ -438,10 +470,11 @@ export interface RuntimeTask {
   attachments?: Array<{ id: string; name: string; type: string; size: number; path: string }>;
   status: RuntimeTaskStatus;
   closure?: {
-    reason: "not-needed" | "superseded" | "duplicate";
+    reason: "not-needed" | "superseded" | "duplicate" | "already-satisfied";
     supersededBy: string | null;
     note: string;
     closedAt: string;
+    source?: "operator";
   } | null;
   /** `previousStatus` is where the task actually stopped; archiving is a visibility decision, not a verdict. */
   archive?: {
@@ -453,6 +486,20 @@ export interface RuntimeTask {
   } | null;
   evaluation?: RuntimeTaskEvaluation | null;
   experiment?: RuntimeExperimentSnapshot | null;
+  repositoryAuthority?: RuntimeRepositoryAuthority | null;
+  repositoryAuthorityStatus?: "bound" | "legacy-unbound" | "legacy-readable";
+  repositoryAuthorityHistory?: RuntimeRepositoryAuthority[];
+  planResult?: {
+    disposition: "changes-required" | "already-satisfied";
+    evidence: Array<{ path: string; detail: string }>;
+    changesRemainNecessary: boolean;
+    artifactId: string | null;
+    repositoryAuthorityId: string | null;
+    repositoryRevision: string | null;
+    repositoryTargetRef: string | null;
+    repositoryAuthorityCheckedAt: string | null;
+    createdAt: string;
+  } | null;
   mergeIntent?: {
     candidateId: string;
     candidateRevision: number;
@@ -575,6 +622,9 @@ export type RuntimeTaskSummary = Pick<
   | "closure"
   | "archive"
   | "blocker"
+  | "repositoryAuthority"
+  | "repositoryAuthorityStatus"
+  | "planResult"
   | "scoutDispatch"
   | "currentStage"
   | "completedStages"

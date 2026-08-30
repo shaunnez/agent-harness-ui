@@ -13,6 +13,7 @@ import { RepairExecutionOrchestrator } from "./orchestrator-repair-execution.mjs
 import { RetentionOrchestrator } from "./orchestrator-retention.mjs";
 import { OrchestratorRunCoordinator } from "./orchestrator-run-coordinator.mjs";
 import { RetainedPackageOrchestrator } from "./orchestrator-retained-package.mjs";
+import { PlanAuthorityOrchestrator } from "./orchestrator-plan-authority.mjs";
 
 export class TaskOrchestratorCore {
   constructor(store, options = {}) {
@@ -54,6 +55,7 @@ export class TaskOrchestratorCore {
       escalateProfile: (...args) => gates._escalateProfile(...args),
       executeAgent: (...args) => repair._executeAgent(...args),
       retainAgentResult: (...args) => retention._retainAgentResult(...args),
+      repositoryAuthority: runtime._repositoryAuthority,
     });
     let taskControl;
     const retainedPackages = new RetainedPackageOrchestrator({
@@ -79,6 +81,8 @@ export class TaskOrchestratorCore {
     });
     const investigation = new InvestigationProgressionOrchestrator({
       store: runtime._store,
+      worktrees: runtime._worktrees,
+      repositoryAuthority: runtime._repositoryAuthority,
       escalateProfile: (...args) => gates._escalateProfile(...args),
       executeAgent: (...args) => repair._executeAgent(...args),
       retainAgentResult: (...args) => retention._retainAgentResult(...args),
@@ -95,6 +99,11 @@ export class TaskOrchestratorCore {
       runReviewWithFastRepair: (...args) => evaluation._runReviewWithFastRepair(...args),
       runSpecification: (...args) => planning._runSpecification(...args),
     });
+    const planAuthority = new PlanAuthorityOrchestrator({
+      store: runtime._store,
+      repositoryAuthority: runtime._repositoryAuthority,
+      start: (...args) => taskControl.start(...args),
+    });
     taskControl = new TaskControlOrchestrator({
       store: runtime._store,
       active: runtime._active,
@@ -103,6 +112,7 @@ export class TaskOrchestratorCore {
       readVerificationManifest: runtime._readVerificationManifest,
       readVerificationManifestAtRevision: runtime._readVerificationManifestAtRevision,
       readVerificationManifestInjected: runtime._readVerificationManifestInjected,
+      planAuthority,
       run: (...args) => runCoordinator.run(...args),
     });
     const pullRequests = new PullRequestOrchestrator({

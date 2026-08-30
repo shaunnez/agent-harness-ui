@@ -67,6 +67,29 @@ function actionEligibilityFor(task, action) {
     task.status === "cancelling" ||
     Boolean(task.activeRunKind || task.activeRunReservationId || (task.activeRunIds?.length ?? 0) > 0);
   if (running) return deny("Wait for the active run to finish before starting another workflow action.");
+  if (action === "revalidate-plan") {
+    const legacyPlan =
+      task.repositoryAuthorityStatus === "legacy-unbound" &&
+      (task.currentStage === "plan" ||
+        task.currentStage === "implement" ||
+        (task.workPackages?.length ?? 0) > 0 ||
+        (task.artifacts ?? []).some((artifact) => artifact.stage === "plan"));
+    return task.blocker?.code === "stale-plan" || legacyPlan
+      ? allow()
+      : deny("The retained plan is already bound to the current repository authority.");
+  }
+  if (action === "close-already-satisfied") {
+    return task.status === "awaiting-already-satisfied" &&
+      task.planResult?.disposition === "already-satisfied"
+      ? allow()
+      : deny("The task is not awaiting a human already-satisfied decision.");
+  }
+  if (
+    task.repositoryAuthorityStatus === "legacy-unbound" &&
+    (task.currentStage === "plan" || task.currentStage === "implement")
+  ) {
+    return deny("This active legacy task must be revalidated before approval or implementation.");
+  }
   if (action === "continue-implementation") {
     if (task.workflow !== "investigate" || task.status !== "completed")
       return deny("Only a completed investigate-only task can continue to implementation.");
@@ -116,6 +139,9 @@ function actionEligibilityFor(task, action) {
     return deny(
       "Refresh the candidate from the current target before running another candidate-bound action.",
     );
+  }
+  if (task.status === "blocked" && task.blocker?.code === "stale-plan") {
+    return deny("Revalidate the retained plan against the current target revision.");
   }
   if (action === "grant-retry") {
     if (task.currentStage === "approval") return deny("Human Approval never accepts a stage retry grant.");

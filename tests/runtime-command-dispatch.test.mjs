@@ -165,6 +165,71 @@ test("keeps plan approval primary while exposing evidence-backed revision", () =
   });
 });
 
+test("offers revision revalidation and human-controlled already-satisfied closure", () => {
+  return withWorkspace(async ({ RuntimeCommandBar, RuntimeWorkflowActionButton, nextAction }) => {
+    const baseProps = {
+      onRun: async () => {},
+      onAction: async () => {},
+      onFinishGrill: async () => {},
+    };
+    const stalePlan = createTask({
+      status: "blocked",
+      currentStage: "plan",
+      repositoryAuthorityStatus: "bound",
+      blocker: {
+        code: "stale-plan",
+        detail: "main advanced after planning.",
+        detectedAt: "2026-08-01T12:01:00.000Z",
+      },
+    });
+    assert.equal(nextAction(stalePlan).action, "revalidate-plan");
+    assert.match(
+      renderToStaticMarkup(
+        React.createElement(RuntimeCommandBar, {
+          ...baseProps,
+          task: stalePlan,
+          viewedStageId: "plan",
+        }),
+      ),
+      />Revalidate plan against current target</,
+    );
+
+    const alreadySatisfied = createTask({
+      status: "awaiting-already-satisfied",
+      currentStage: "plan",
+      repositoryAuthorityStatus: "bound",
+      planResult: {
+        disposition: "already-satisfied",
+        evidence: [{ path: "server/example.mjs", detail: "The requested behavior is present." }],
+        changesRemainNecessary: false,
+      },
+    });
+    const closeAction = nextAction(alreadySatisfied);
+    assert.equal(closeAction.action, "close-already-satisfied");
+    assert.match(
+      renderToStaticMarkup(
+        React.createElement(RuntimeCommandBar, {
+          ...baseProps,
+          task: alreadySatisfied,
+          viewedStageId: "plan",
+        }),
+      ),
+      />Close — already implemented</,
+    );
+
+    const dispatched = [];
+    const button = RuntimeWorkflowActionButton({
+      action: closeAction.action,
+      label: closeAction.label,
+      pending: false,
+      approvalBlocked: false,
+      onInvoke: async (action) => dispatched.push(action),
+    });
+    await button.props.onClick();
+    assert.deepEqual(dispatched, ["close-already-satisfied"]);
+  });
+});
+
 test("renders only backend-authorized failed Plan recovery and names the failed stage", () => {
   return withWorkspace(async ({ RuntimeCommandBar, RuntimeTaskWorkspace, nextAction }) => {
     const baseProps = {

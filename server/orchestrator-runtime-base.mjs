@@ -1,6 +1,7 @@
 import { getCodexStatus } from "./codex-runtime.mjs";
 import { defaultWorktreeRoot, GitWorktreeManager } from "./git-worktree.mjs";
 import { GitHubPullRequestManager } from "./github-pull-request.mjs";
+import { RepositoryAuthorityService } from "./repository-authority.mjs";
 import {
   readVerificationManifest,
   readVerificationManifestAtRevision,
@@ -23,6 +24,7 @@ export class OrchestratorRuntimeContext {
   _readVerificationManifest;
   _readVerificationManifestInjected;
   _readVerificationManifestAtRevision;
+  _repositoryAuthority;
 
   constructor(store, options = {}) {
     this._store = store;
@@ -30,6 +32,7 @@ export class OrchestratorRuntimeContext {
     this._getStatus = options.getStatus ?? getCodexStatus;
     this._worktrees = options.worktreeManager ?? new GitWorktreeManager(defaultWorktreeRoot());
     this._github = options.pullRequestManager ?? new GitHubPullRequestManager();
+    this._repositoryAuthority = options.repositoryAuthorityService ?? new RepositoryAuthorityService();
     // The same injection seam `runCodex` and `worktreeManager` already use, for the same
     // reason: harness verification spawns real processes in a real worktree, so a test about
     // gate ingestion, freshness or retry accounting should be able to supply the observation

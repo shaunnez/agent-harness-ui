@@ -89,7 +89,7 @@ test("returns backward-compatible structured run activity through task APIs", as
     const detail = await (await fetch(`${origin}/api/tasks/${task.id}`)).json();
     const list = await (await fetch(`${origin}/api/tasks`)).json();
     const health = await (await fetch(`${origin}/api/health`)).json();
-    assert.equal(health.runtimeSchemaVersion, 11);
+    assert.equal(health.runtimeSchemaVersion, 12);
     assert.equal(detail.task.runs[0].id, "RUN-API");
     assert.equal(detail.task.runs[0].toolCalls[0].result, "Exit code 0");
     assert.equal(detail.task.events.at(-1).runId, "RUN-API");

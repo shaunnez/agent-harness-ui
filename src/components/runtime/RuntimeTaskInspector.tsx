@@ -326,6 +326,25 @@ export function RuntimeTaskInspector({
         />
         <RuntimeRow label="Run" value={task.activeRunKind ?? "No active agent run"} />
         <RuntimeRow label="Repository" value={repoName} mono />
+        <RuntimeRow
+          label="Authority"
+          value={
+            task.repositoryAuthority
+              ? `${task.repositoryAuthority.source.replaceAll("-", " ")} · ${task.repositoryAuthority.selectedRevision.slice(0, 8)}`
+              : "Legacy artifact — revision not recorded"
+          }
+          mono
+        />
+        {task.repositoryAuthority ? (
+          <RuntimeRow
+            label="Target / checked"
+            value={`${task.repositoryAuthority.targetRef} · ${new Date(task.repositoryAuthority.capturedAt).toLocaleString()}`}
+            mono
+          />
+        ) : null}
+        {task.repositoryAuthority?.checkoutDirty ? (
+          <RuntimeRow label="Operator checkout" value="Dirty · excluded from evidence workspace" />
+        ) : null}
       </InspectorSection>
       {stageArtifact ? (
         <InspectorSection
@@ -381,6 +400,13 @@ export function RuntimeTaskInspector({
         <RuntimeRow label="Access" value="Local OAuth session" />
         <RuntimeRow label="Sandbox" value={accessBoundary.sandbox} />
         <RuntimeRow label="Write boundary" value={accessBoundary.detail} />
+        {task.planResult ? (
+          <RuntimeRow
+            label="Plan revision"
+            value={`${task.planResult.repositoryRevision?.slice(0, 8) ?? "unbound"} · ${task.planResult.disposition.replaceAll("-", " ")}`}
+            mono
+          />
+        ) : null}
       </InspectorSection>
       {candidate ? (
         <InspectorSection title="Integration candidate" meta={`${candidate.id} r${candidate.revisionNumber}`}>

@@ -14,10 +14,11 @@ import { createRuntimeSettingsRoutes } from "./runtime-settings-routes.mjs";
 import { createTaskCreationRoutes } from "./task-creation-routes.mjs";
 import { createTaskActionRoutes } from "./task-action-routes.mjs";
 import { createTaskLifecycleRoutes } from "./task-lifecycle-routes.mjs";
+import { RepositoryAuthorityService } from "./repository-authority.mjs";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
-const RUNTIME_SCHEMA_VERSION = 11;
+const RUNTIME_SCHEMA_VERSION = 12;
 const diffCharLimit = 300_000;
 const OUTPUT_LIMIT = 512 * 1024;
 const requestMetrics = new WeakMap();
@@ -191,6 +192,7 @@ export function createApiServer({
   suggestedRepository,
   csrfToken = crypto.randomUUID(),
   reportHttpMetric = () => {},
+  repositoryAuthorityService = orchestrator?._repositoryAuthority ?? new RepositoryAuthorityService(),
 }) {
   // Reads resolve each entry's recorded absolute path, so this root only matters for
   // `prepare`, which the API never calls. It still uses the shared default rather than a
@@ -241,6 +243,7 @@ export function createApiServer({
     validateAttachments,
     validateRepository,
     git,
+    repositoryAuthorityService,
     validWorkflows: VALID_WORKFLOWS,
   });
   const taskLifecycleRoutes = createTaskLifecycleRoutes({
@@ -253,6 +256,7 @@ export function createApiServer({
     validateRepository,
     worktreeEntriesForTask,
     withActionEligibility,
+    repositoryAuthorityService,
   });
   const taskActionRoutes = createTaskActionRoutes({ store, orchestrator, send, readJson });
   return createServer(async (request, response) => {

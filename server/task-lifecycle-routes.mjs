@@ -11,6 +11,7 @@ export function createTaskLifecycleRoutes({
   validateRepository,
   worktreeEntriesForTask,
   withActionEligibility,
+  repositoryAuthorityService,
 }) {
   return async function handleTaskLifecycleRoute(request, response, url) {
     const workflowProfileMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/workflow-profile$/);
@@ -35,6 +36,12 @@ export function createTaskLifecycleRoutes({
         return true;
       }
       if (task.status === "running") throw new Error("Cancel the active run before closing this task.");
+      if (task.status === "awaiting-already-satisfied") {
+        send(response, 409, {
+          error: "Review the revision-bound evidence and use Close — already implemented.",
+        });
+        return true;
+      }
       if (
         task.status === "merging" ||
         task.mergeIntent?.status === "pending" ||
@@ -350,6 +357,9 @@ export function createTaskLifecycleRoutes({
         }
 
         const repositoryPath = await validateRepository(source.repositoryPath);
+        const repositoryAuthority = await repositoryAuthorityService.capture(repositoryPath, {
+          frozenRevision: source.experiment?.frozenBaseSha ?? null,
+        });
         const settings = await store.settings();
         const selectedProfile = source.workflowProfile?.selected ?? "standard";
         const workflowProfile = selectWorkflowProfile({
@@ -402,6 +412,7 @@ export function createTaskLifecycleRoutes({
             source.agentConfig?.profileStagePolicies ?? settings.profileStagePolicies,
           ),
           workflowProfile,
+          repositoryAuthority,
           continuation: {
             sourceTaskId: source.id,
             sourceApprovedAt: specificationApproval.createdAt,

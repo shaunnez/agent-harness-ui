@@ -46,16 +46,28 @@ export class WorkPackageOrchestrator {
   }
   async _runImplementation(id, signal) {
     let task = await this._store.get(id);
+    const implementationReservation = requireActiveRunReservation(task, "implementation", "implement");
+    if (
+      !implementationReservation.repositoryRevision ||
+      implementationReservation.repositoryRevision !== task.planResult?.repositoryRevision ||
+      implementationReservation.repositoryRevision !== task.repositoryAuthority?.selectedRevision ||
+      implementationReservation.repositoryTargetRef !== task.planResult?.repositoryTargetRef ||
+      implementationReservation.repositoryTargetRef !== task.repositoryAuthority?.targetRef
+    ) {
+      throw new Error(
+        "Implementation refused a reservation that is not bound to the current revision-bound plan.",
+      );
+    }
     await this._assertExecutablePlan(task);
-    const retainedPackage = task.workPackages.find(
-      (item) =>
-        item.retainedContinuation || item.retainedForRequalification || item.retainedReplacementReason,
-    );
     // Implementation is isolated from the operator's checkout at an exact committed
     // HEAD. Unrelated local edits must remain untouched, but they do not make that
     // commit unsafe to use as a worktree base. Human Approval still requires the
     // target checkout to be clean before merge.
-    const base = await this._worktrees.base(task, { allowDirty: true });
+    const base = {
+      baseRevision: implementationReservation.repositoryRevision,
+      baseBranch: implementationReservation.repositoryCheckoutBranch ?? "detached",
+      baseRef: implementationReservation.repositoryTargetRef ?? null,
+    };
     const batchNumbers = [...new Set(task.workPackages.map((item) => item.batch))].sort((a, b) => a - b);
     for (const batch of batchNumbers) {
       throwIfAborted(signal);
@@ -128,10 +140,11 @@ export class WorkPackageOrchestrator {
       throw new Error("Candidate assembly cannot start until every work package is ready for integration.");
     }
     const candidateId = `C${(task.candidates?.length ?? 0) + 1}`;
-    const implementationReservation = requireActiveRunReservation(task, "implementation", "implement");
     const candidate = await this._worktrees.prepare(task, candidateId, {
       baseRevision: base.baseRevision,
-      allowHistoricalBase: Boolean(retainedPackage),
+      baseBranch: base.baseBranch,
+      baseRef: base.baseRef,
+      allowHistoricalBase: true,
       allowDirtySource: true,
     });
     candidate.status = "assembling";

@@ -86,6 +86,17 @@ async function createServer(options = {}) {
       return { started: false, completed: true };
     },
     async approvePlan() {},
+    async revalidatePlan(id) {
+      startedId = id;
+      startedKind = "revalidate-plan";
+      return { started: true };
+    },
+    async closeAlreadySatisfied(id, note) {
+      return store.update(id, (draft) => {
+        draft.status = "closed";
+        draft.closure = { reason: "already-satisfied", note, source: "operator" };
+      });
+    },
     async overrideWorkflowProfile(id, profile, reason) {
       return store.update(id, (draft) => {
         recordWorkflowProfile(draft, profile, reason, "operator");
@@ -147,6 +158,31 @@ async function createServer(options = {}) {
     suggestedRepository: directory,
     csrfToken: options.csrfToken ?? TEST_CSRF_TOKEN,
     reportHttpMetric: options.reportHttpMetric,
+    repositoryAuthorityService: options.repositoryAuthorityService ?? {
+      async capture(repositoryPath, captureOptions = {}) {
+        const revision = captureOptions.frozenRevision ?? "a".repeat(40);
+        return {
+          id: crypto.randomUUID(),
+          repositoryRoot: path.resolve(repositoryPath),
+          checkoutBranch: "main",
+          localBranchRef: "refs/heads/main",
+          localHead: revision,
+          upstreamBranch: null,
+          upstreamRef: null,
+          fetchedRevision: null,
+          selectedRevision: revision,
+          targetRef: captureOptions.frozenRevision ? `commit:${revision}` : "refs/heads/main",
+          source: captureOptions.frozenRevision ? "frozen-experiment" : "local-head",
+          checkoutDirty: false,
+          relationship: "equal",
+          capturedAt: "2026-08-04T00:00:00.000Z",
+          remoteVerification: {
+            status: captureOptions.frozenRevision ? "not-applicable" : "not-configured",
+            error: null,
+          },
+        };
+      },
+    },
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();

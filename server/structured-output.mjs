@@ -119,6 +119,10 @@ export function parseGrillQuestions(text) {
 
 export function parseFastChangeContract(text, repositoryPath = null) {
   const value = parseLabelledJson(text, "fast-change-contract");
+  const disposition = value.disposition == null ? "changes-required" : String(value.disposition).trim();
+  if (!["changes-required", "already-satisfied"].includes(disposition)) {
+    throw new Error("The fast change disposition must be changes-required or already-satisfied.");
+  }
   const acceptanceCriteria = Array.isArray(value.acceptanceCriteria)
     ? value.acceptanceCriteria
         .map((entry) => String(entry).trim())
@@ -137,11 +141,41 @@ export function parseFastChangeContract(text, repositoryPath = null) {
   );
   if (!acceptanceCriteria.length)
     throw new Error("The fast change contract needs at least one authoritative acceptance criterion.");
+  const evidence = Array.isArray(value.evidence)
+    ? value.evidence
+        .map((entry) => ({
+          path: normalizeOwnedPath(entry?.path, repositoryPath),
+          detail: String(entry?.detail ?? "")
+            .trim()
+            .slice(0, 2_000),
+        }))
+        .filter((entry) => entry.path || entry.detail)
+        .slice(0, 20)
+    : [];
+  if (disposition === "already-satisfied") {
+    if (!evidence.length || evidence.some((entry) => !entry.path || !entry.detail)) {
+      throw new Error(
+        "An already-satisfied fast result requires concrete repository path evidence and detail.",
+      );
+    }
+    return {
+      disposition,
+      evidence,
+      acceptanceCriteria,
+      ownedPaths: [],
+      verificationCommandIds: [],
+      unresolvedDecisions: [],
+      riskSignals: [],
+      workPackage: null,
+    };
+  }
   if (!ownedPaths.length)
     throw new Error("The fast change contract needs one to three repository-relative owned paths.");
   if (!verificationCommandIds.length)
     throw new Error("The fast change contract needs at least one repository manifest command ID.");
   return {
+    disposition,
+    evidence,
     acceptanceCriteria,
     ownedPaths,
     verificationCommandIds,
@@ -441,6 +475,39 @@ export function tryParseFocusedTestEvidence(text) {
 
 export function parseWorkPackages(text, repositoryPath = null) {
   const value = parseLabelledJson(text, "work-packages");
+  return parseWorkPackageValue(value, repositoryPath);
+}
+
+export function parsePlanResult(text, repositoryPath = null) {
+  const value = parseLabelledJson(text, "work-packages");
+  const disposition = value.disposition == null ? "changes-required" : String(value.disposition).trim();
+  if (!["changes-required", "already-satisfied"].includes(disposition)) {
+    throw new Error("The plan disposition must be changes-required or already-satisfied.");
+  }
+  const evidence = Array.isArray(value.evidence)
+    ? value.evidence
+        .map((entry) => ({
+          path: normalizeOwnedPath(entry?.path, repositoryPath),
+          detail: String(entry?.detail ?? "")
+            .trim()
+            .slice(0, 2_000),
+        }))
+        .filter((entry) => entry.path || entry.detail)
+        .slice(0, 20)
+    : [];
+  if (disposition === "already-satisfied") {
+    if (Array.isArray(value.packages) && value.packages.length) {
+      throw new Error("An already-satisfied plan cannot contain work packages.");
+    }
+    if (!evidence.length || evidence.some((entry) => !entry.path || !entry.detail)) {
+      throw new Error("An already-satisfied plan requires concrete repository path evidence and detail.");
+    }
+    return { disposition, evidence, packages: [] };
+  }
+  return { disposition, evidence, packages: parseWorkPackageValue(value, repositoryPath) };
+}
+
+function parseWorkPackageValue(value, repositoryPath) {
   if (!Array.isArray(value.packages) || value.packages.length < 1 || value.packages.length > 8) {
     throw new Error("The plan must contain 1-8 work packages.");
   }

@@ -24,6 +24,30 @@ export function deriveNextAction(task: RuntimeTask) {
   const currentAttempts = getEffectiveStageRunAttempts(task);
   const retryAllowanceExhausted = currentAttempts >= getEffectiveStageRunLimit(task);
   const candidate = task.candidates?.at(-1);
+  const legacyPlanNeedsRevalidation =
+    task.repositoryAuthorityStatus === "legacy-unbound" &&
+    (task.currentStage === "plan" ||
+      task.currentStage === "implement" ||
+      (task.workPackages?.length ?? 0) > 0 ||
+      task.artifacts.some((artifact) => artifact.stage === "plan"));
+  if (task.blocker?.code === "stale-plan" || legacyPlanNeedsRevalidation)
+    return {
+      action: "revalidate-plan" as const,
+      label: "Revalidate plan against current target",
+      title:
+        task.repositoryAuthorityStatus === "legacy-unbound" ? "Plan revision is unbound" : "Plan is stale",
+      detail:
+        task.blocker?.detail ??
+        "Retain the historical plan, inspect the current target revision, and produce a new revision-bound plan before approval or implementation.",
+    };
+  if (task.status === "awaiting-already-satisfied")
+    return {
+      action: "close-already-satisfied" as const,
+      label: "Close — already implemented",
+      title: "Human review required",
+      detail:
+        "Review the concrete repository evidence. The harness will not close this task from model judgement alone.",
+    };
   if (
     (task.status === "merging" && task.pullRequestIntent?.status === "publishing") ||
     (task.status === "awaiting-pr-merge" && task.pullRequestIntent?.status === "open") ||
@@ -389,7 +413,9 @@ export function getAccessBoundaryCopy(task: RuntimeTask) {
   return {
     kicker: "Read-only boundary",
     title: `${stageLabel} is read-only`,
-    detail: "Codex reads the repository without writing to it in this stage.",
-    sandbox: "Read-only",
+    detail: task.repositoryAuthority
+      ? `Codex reads a detached evidence worktree at ${task.repositoryAuthority.selectedRevision.slice(0, 8)}. Operator checkout changes are excluded.`
+      : "Codex reads the repository without writing to it in this stage.",
+    sandbox: task.repositoryAuthority ? "Detached read-only evidence worktree" : "Read-only",
   };
 }

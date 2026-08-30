@@ -105,16 +105,19 @@ export function RuntimeTaskHeader({ task, onBack, onCancel, onCloseTask, onArchi
           disabled={
             ["running", "cancelling"].includes(task.status) ||
             task.status === "closed" ||
+            task.status === "awaiting-already-satisfied" ||
             mergeReconciliationPending
           }
           title={
             mergeReconciliationPending
               ? "Wait for the pending GitHub PR lifecycle before closing this task."
-              : ["running", "cancelling"].includes(task.status)
-                ? "Wait for the active process tree to terminate before closing this task."
-                : task.status === "closed"
-                  ? "This task is already closed."
-                  : "Close as not needed or record the superseding task."
+              : task.status === "awaiting-already-satisfied"
+                ? "Use Close — already implemented after reviewing the revision-bound evidence."
+                : ["running", "cancelling"].includes(task.status)
+                  ? "Wait for the active process tree to terminate before closing this task."
+                  : task.status === "closed"
+                    ? "This task is already closed."
+                    : "Close as not needed or record the superseding task."
           }
           onClick={() => void closeTask()}
         >

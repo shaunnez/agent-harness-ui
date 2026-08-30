@@ -1,10 +1,11 @@
-export const TASK_STORE_SCHEMA_VERSION = 9;
+export const TASK_STORE_SCHEMA_VERSION = 10;
 
 /**
  * Execution provider identity for persisted runs and stage-run reservations.
  *
  * `provider` was introduced in schema 6. Workflow profiles were added in schema 7,
- * and schema 8 adds the snapshotted Grill interaction policy and provenance.
+ * schema 8 adds the snapshotted Grill interaction policy and provenance, and
+ * schema 10 binds pre-candidate evidence and plans to repository authority.
  * An absent provider means the default provider, and
  * that is enforced twice on purpose: the schema-6 migration backfills it onto
  * every persisted run and reservation, and every read goes through
@@ -274,6 +275,10 @@ export function beginAgentRun(task, input) {
     candidateId: input.candidateId ?? null,
     candidateRevision: input.candidateRevision ?? null,
     candidateHeadRevision: input.candidateHeadRevision ?? null,
+    repositoryAuthorityId: input.repositoryAuthorityId ?? null,
+    repositoryRevision: input.repositoryRevision ?? null,
+    repositoryTargetRef: input.repositoryTargetRef ?? null,
+    repositoryAuthorityCheckedAt: input.repositoryAuthorityCheckedAt ?? null,
     workPackageId: input.workPackageId ?? null,
     workflowAttempt: input.workflowAttempt ?? null,
     workflowReservationId: input.workflowReservationId ?? null,

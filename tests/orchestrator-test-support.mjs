@@ -5,7 +5,13 @@ import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { ProcessTimeoutError } from "../server/codex-runtime.mjs";
-import { evaluationVerdict, structuredEvidenceError, TaskOrchestrator } from "../server/orchestrator.mjs";
+import {
+  evaluationVerdict,
+  structuredEvidenceError,
+  TaskOrchestrator as RuntimeTaskOrchestrator,
+} from "../server/orchestrator.mjs";
+import { RepositoryAuthorityService } from "../server/repository-authority.mjs";
+import { defaultWorktreeRoot, GitWorktreeManager } from "../server/git-worktree.mjs";
 import { defaultStagePolicies } from "../server/model-catalog.mjs";
 import { buildTestInterpretationRequest } from "../server/prompts.mjs";
 import { selectScoutDispatch } from "../server/scouts.mjs";
@@ -37,6 +43,96 @@ import {
 const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"questions":[{"question":"Compatibility?","whyItMatters":"Changes the public contract.","options":[{"label":"Preserve it","description":"Keep existing clients working.","recommended":true},{"label":"Break it","description":"Allow a clean break.","recommended":false}],"allowCustom":true}]}\n</grill-questions>`;
 
 const PLAN_OUTPUT = `## Plan summary\n\nTwo independent slices.\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verificationCommandIds":["test"]},{"id":"S2","title":"UI","description":"Implement the task UI.","dependencies":[],"ownedPaths":["src/App.tsx"],"verificationCommandIds":["typecheck"]}]}\n</work-packages>`;
+
+class TaskOrchestrator extends RuntimeTaskOrchestrator {
+  constructor(store, options = {}) {
+    const realAuthority = new RepositoryAuthorityService({ fetchTimeoutMs: 2_000 });
+    const repositoryAuthorityService = options.repositoryAuthorityService ?? {
+      async capture(repositoryPath, captureOptions = {}) {
+        try {
+          return await realAuthority.capture(repositoryPath, captureOptions);
+        } catch {
+          const revision = captureOptions.frozenRevision ?? "a".repeat(40);
+          return {
+            id: crypto.randomUUID(),
+            repositoryRoot: path.resolve(repositoryPath),
+            checkoutBranch: "main",
+            localBranchRef: "refs/heads/main",
+            localHead: revision,
+            upstreamBranch: null,
+            upstreamRef: null,
+            fetchedRevision: null,
+            selectedRevision: revision,
+            targetRef: captureOptions.frozenRevision ? `commit:${revision}` : "refs/heads/main",
+            source: captureOptions.frozenRevision ? "frozen-experiment" : "local-head",
+            checkoutDirty: false,
+            relationship: "equal",
+            capturedAt: new Date().toISOString(),
+            remoteVerification: {
+              status: captureOptions.frozenRevision ? "not-applicable" : "not-configured",
+              error: null,
+            },
+          };
+        }
+      },
+    };
+    const realWorktrees = new GitWorktreeManager(defaultWorktreeRoot());
+    const legacyTestWorktrees = new Proxy(realWorktrees, {
+      get(target, property) {
+        if (property === "prepareEvidence" || property === "removeEvidence") return undefined;
+        const value = Reflect.get(target, property, target);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    super(store, {
+      ...options,
+      worktreeManager: options.worktreeManager ?? legacyTestWorktrees,
+      repositoryAuthorityService,
+    });
+    this._testStore = store;
+    this._testAuthority = repositoryAuthorityService;
+  }
+
+  async _bindSyntheticPlan(id) {
+    const task = await this._testStore.get(id);
+    if (!task?.workPackages?.length || task.planResult?.repositoryRevision) return;
+    const authority = await this._testAuthority.capture(task.repositoryPath, {
+      frozenRevision: task.experiment?.frozenBaseSha ?? null,
+    });
+    await this._testStore.update(id, (draft) => {
+      draft.repositoryAuthority = authority;
+      draft.repositoryAuthorityHistory = [authority];
+      draft.repositoryAuthorityStatus = "bound";
+      draft.planResult = {
+        disposition: "changes-required",
+        evidence: [],
+        changesRemainNecessary: true,
+        artifactId:
+          [...(draft.artifacts ?? [])].reverse().find((artifact) => artifact.stage === "plan")?.id ?? null,
+        repositoryAuthorityId: authority.id,
+        repositoryRevision: authority.selectedRevision,
+        repositoryTargetRef: authority.targetRef,
+        repositoryAuthorityCheckedAt: authority.capturedAt,
+        createdAt: authority.capturedAt,
+      };
+    });
+  }
+
+  async approvePlan(id, note = "") {
+    await this._bindSyntheticPlan(id);
+    return super.approvePlan(id, note);
+  }
+
+  async start(id, kind = "investigation", options = {}) {
+    if (kind === "implementation") await this._bindSyntheticPlan(id);
+    return super.start(id, kind, options);
+  }
+
+  async continueRetainedPackage(id) {
+    await this._bindSyntheticPlan(id);
+    return super.continueRetainedPackage(id);
+  }
+}
 
 function harnessEvidence(candidate, overrides = {}) {
   return {

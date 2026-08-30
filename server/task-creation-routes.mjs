@@ -11,6 +11,7 @@ export function createTaskCreationRoutes({
   validateAttachments,
   validateRepository,
   git,
+  repositoryAuthorityService,
   validWorkflows: VALID_WORKFLOWS,
 }) {
   return async function handleTaskCreationRoute(request, response, url) {
@@ -77,6 +78,9 @@ export function createTaskCreationRoutes({
           frozenBaseSha,
         });
       }
+      const repositoryAuthority = await repositoryAuthorityService.capture(repositoryPath, {
+        frozenRevision: experiment?.frozenBaseSha ?? null,
+      });
       let task = await store.create({
         title: input.title.trim().slice(0, 300),
         description: input.description.trim().slice(0, 20_000),
@@ -89,6 +93,7 @@ export function createTaskCreationRoutes({
         profileStagePolicies: taskProfilePolicies,
         workflowProfile,
         experiment,
+        repositoryAuthority,
       });
       if (attachments.length) {
         const attachmentRoot = path.join(store.dataDirectory(), "attachments", task.id);

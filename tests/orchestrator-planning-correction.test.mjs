@@ -131,6 +131,9 @@ test("corrects a blocked legacy plan and preserves an exact clean slice for requ
     });
     const revisedOutput = `<work-packages>{"packages":[{"id":"S1","title":"Browser contract","description":"Retain the exact committed browser change.","dependencies":[],"ownedPaths":["e2e/example.spec.ts"],"verificationCommandIds":["playwright-e2e"]}]}</work-packages>`;
     const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        retainedPatchDisposition: async () => "pending",
+      },
       readVerificationManifest: async () => ({
         source: ".agent-harness/verification.json",
         commands: [{ id: "playwright-e2e", command: ["make", "e2e-native"] }],

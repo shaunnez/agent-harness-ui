@@ -41,7 +41,7 @@ import {
 } from "../server/prompts.mjs";
 import { buildScoutRequest } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
-import { TaskOrchestrator } from "../server/orchestrator.mjs";
+import { TaskOrchestrator } from "./orchestrator-test-support.mjs";
 import { parseGateEvidence } from "../server/structured-output.mjs";
 import { runtimeTaskToRecentTask } from "../src/domain.ts";
 

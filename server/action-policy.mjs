@@ -5,6 +5,8 @@ export const PROJECTED_ACTIONS = Object.freeze([
   "continue-implementation",
   "approve-spec",
   "approve-plan",
+  "revalidate-plan",
+  "close-already-satisfied",
   "specification",
   "plan",
   "implement",

@@ -46,7 +46,7 @@ test("backfills the default execution provider while migrating through schema 9"
 
   assert.equal(migrateRunActivityState(state), true);
   assert.equal(state.schemaVersion, TASK_STORE_SCHEMA_VERSION);
-  assert.equal(TASK_STORE_SCHEMA_VERSION, 9);
+  assert.equal(TASK_STORE_SCHEMA_VERSION, 10);
   assert.equal(task.runs[0].provider, DEFAULT_EXECUTION_PROVIDER);
   assert.equal(task.stageRunReservations["dev-review"].provider, DEFAULT_EXECUTION_PROVIDER);
   assert.equal(task.gateFreshness["dev-review"].fresh, true);

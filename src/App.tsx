@@ -678,11 +678,15 @@ export function App() {
                                 ? "GitHub PR state reconciled."
                                 : action === "continue-package"
                                   ? "Retained package continuation started with exact worktree validation."
-                                  : action === "repair"
-                                    ? "Repair started. Downstream gates now require fresh evidence."
-                                    : action === "complete-merged"
-                                      ? "Task marked completed."
-                                      : "Task action completed.",
+                                  : action === "revalidate-plan"
+                                    ? "Plan revalidation started against the current repository target."
+                                    : action === "close-already-satisfied"
+                                      ? "Task closed after explicit review of the repository evidence."
+                                      : action === "repair"
+                                        ? "Repair started. Downstream gates now require fresh evidence."
+                                        : action === "complete-merged"
+                                          ? "Task marked completed."
+                                          : "Task action completed.",
                 );
                 if (
                   [

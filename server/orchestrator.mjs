@@ -61,6 +61,14 @@ export class TaskOrchestrator {
     return this.#core.tasks.approvePlan(id, note);
   }
 
+  async revalidatePlan(id) {
+    return this.#core.tasks.revalidatePlan(id);
+  }
+
+  async closeAlreadySatisfied(id, note = "") {
+    return this.#core.tasks.closeAlreadySatisfied(id, note);
+  }
+
   async correctInvalidPlan(id) {
     return this.#core.tasks.correctInvalidPlan(id);
   }

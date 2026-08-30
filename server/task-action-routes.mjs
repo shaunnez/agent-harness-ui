@@ -33,9 +33,14 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson }) 
         return true;
       }
 
-      const notes = ["approve-spec", "approve-plan", "approve-merge", "open-pr", "complete-merged"].includes(
-        action,
-      )
+      const notes = [
+        "approve-spec",
+        "approve-plan",
+        "approve-merge",
+        "open-pr",
+        "complete-merged",
+        "close-already-satisfied",
+      ].includes(action)
         ? await readJson(request)
         : {};
       if (action === "approve-spec") {
@@ -46,6 +51,16 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson }) 
       if (action === "approve-plan") {
         await orchestrator.approvePlan(id, notes.note ?? "");
         send(response, 200, { approved: true });
+        return true;
+      }
+      if (action === "revalidate-plan") {
+        const result = await orchestrator.revalidatePlan(id);
+        send(response, 202, result);
+        return true;
+      }
+      if (action === "close-already-satisfied") {
+        await orchestrator.closeAlreadySatisfied(id, notes.note ?? "");
+        send(response, 200, { closed: true });
         return true;
       }
       if (action === "approve-merge") {

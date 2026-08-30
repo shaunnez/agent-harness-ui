@@ -708,6 +708,10 @@ function makeContextManifest(
     candidateId: candidate?.id ?? null,
     candidateRevision: candidate?.revisionNumber ?? null,
     workPackageId: workPackage?.id ?? null,
+    repositoryAuthorityId: task.repositoryAuthority?.id ?? null,
+    repositoryRevision: task.repositoryAuthority?.selectedRevision ?? null,
+    repositoryTargetRef: task.repositoryAuthority?.targetRef ?? null,
+    repositoryAuthorityCheckedAt: task.repositoryAuthority?.capturedAt ?? null,
     sources,
   };
 }
@@ -721,7 +725,7 @@ function structuredOutputInstruction(stageId, candidate = null, task = null) {
     return `\n\nAt the end of the Grill questions section, include exactly one JSON block between <grill-questions> and </grill-questions> tags with this shape:\n\n<grill-questions>\n{"questions":[{"question":"A consequential question","whyItMatters":"Why the answer changes implementation","options":[{"label":"Option A","description":"Tradeoff","recommended":true},{"label":"Option B","description":"Tradeoff","recommended":false}],"allowCustom":true}]}\n</grill-questions>\n\nUse zero questions when repository evidence and safe reversible defaults settle everything. Provide two to four mutually exclusive options per question and exactly one recommended option.`;
   }
   if (stageId === "plan") {
-    return `\n\nRead .agent-harness/verification.json and reference only command ids it declares. At the end of the Work package manifest section, include exactly one JSON block between <work-packages> and </work-packages> tags with this shape:\n\n<work-packages>\n{"packages":[{"id":"S1","title":"Small outcome","description":"Exact implementation responsibility","dependencies":[],"ownedPaths":["src/example.ts"],"verificationCommandIds":["test"]}]}\n</work-packages>\n\nUse 1-8 packages. IDs must be S1, S2, and so on. Dependencies must reference earlier package IDs and form an acyclic graph. Split only where ownership and verification are genuinely separable. Every package, including documentation-only or configuration-only packages, must contain at least one verificationCommandIds entry from the repository manifest; never emit an empty array or None. If a proposed package cannot be independently qualified by any declared command, combine it with a package that can. verificationCommandIds must be the smallest focused subset of the repository-owned argv manifest needed to qualify that package.`;
+    return `\n\nRead .agent-harness/verification.json and reference only command ids it declares. At the end of the Work package manifest section, include exactly one JSON block between <work-packages> and </work-packages> tags. When changes are required, use:\n\n<work-packages>\n{"disposition":"changes-required","evidence":[],"packages":[{"id":"S1","title":"Small outcome","description":"Exact implementation responsibility","dependencies":[],"ownedPaths":["src/example.ts"],"verificationCommandIds":["test"]}]}\n</work-packages>\n\nWhen the requested outcome is already present at the inspected revision, use {"disposition":"already-satisfied","evidence":[{"path":"src/example.ts","detail":"Concrete repository evidence proving the outcome"}],"packages":[]}. Never infer completion without naming concrete repository path evidence. Use 1-8 packages only for changes-required. IDs must be S1, S2, and so on. Dependencies must reference earlier package IDs and form an acyclic graph. Split only where ownership and verification are genuinely separable. Every package, including documentation-only or configuration-only packages, must contain at least one verificationCommandIds entry from the repository manifest; never emit an empty array or None. If a proposed package cannot be independently qualified by any declared command, combine it with a package that can. verificationCommandIds must be the smallest focused subset of the repository-owned argv manifest needed to qualify that package.`;
   }
   if (stageId === "test") {
     // Deliberately empty. The focused-test-evidence block used to be requested here, and the
@@ -739,7 +743,7 @@ function structuredOutputInstruction(stageId, candidate = null, task = null) {
 
 function taskProfileStructuredInstruction(candidate) {
   if (candidate?.workflowProfile?.selected !== "fast") return "";
-  return `\n\nBecause this task is currently fast, also return exactly one bounded contract. Read .agent-harness/verification.json and reference only ids it declares. If any product decision is unresolved, list it; the harness will escalate instead of guessing.\n\n<fast-change-contract>\n{"title":"One coherent change","description":"Exact bounded implementation responsibility","acceptanceCriteria":["Observable outcome"],"ownedPaths":["src/example.ts"],"verificationCommandIds":["test"],"unresolvedDecisions":[],"riskSignals":[]}\n</fast-change-contract>`;
+  return `\n\nBecause this task is currently fast, also return exactly one bounded contract. Read .agent-harness/verification.json and reference only ids it declares. If any product decision is unresolved, list it; the harness will escalate instead of guessing. Use disposition changes-required with one bounded package contract, or already-satisfied with no owned paths or verification commands and concrete path evidence.\n\n<fast-change-contract>\n{"disposition":"changes-required","title":"One coherent change","description":"Exact bounded implementation responsibility","acceptanceCriteria":["Observable outcome"],"evidence":[],"ownedPaths":["src/example.ts"],"verificationCommandIds":["test"],"unresolvedDecisions":[],"riskSignals":[]}\n</fast-change-contract>`;
 }
 
 export function suppliedTaskContext(task, options = {}) {

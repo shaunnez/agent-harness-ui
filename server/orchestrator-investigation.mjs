@@ -1,4 +1,6 @@
 import { getStageMetadata } from "./prompts.mjs";
+import { stat } from "node:fs/promises";
+import path from "node:path";
 import {
   aggregateScoutReports,
   buildScoutRequest,
@@ -20,8 +22,18 @@ import {
 import { applyStageRunReservation, requireActiveRunReservation } from "./orchestrator-task-helpers.mjs";
 
 export class InvestigationProgressionOrchestrator {
-  constructor({ store, escalateProfile, executeAgent, retainAgentResult, runSpecification }) {
+  constructor({
+    store,
+    worktrees,
+    repositoryAuthority,
+    escalateProfile,
+    executeAgent,
+    retainAgentResult,
+    runSpecification,
+  }) {
     this._store = store;
+    this._worktrees = worktrees;
+    this._repositoryAuthority = repositoryAuthority;
     this._escalateProfile = escalateProfile;
     this._executeAgent = executeAgent;
     this._retainAgentResult = retainAgentResult;
@@ -30,11 +42,40 @@ export class InvestigationProgressionOrchestrator {
 
   async _runInvestigation(id, signal) {
     let task = await this._store.get(id);
+    if (!task.repositoryAuthority?.selectedRevision) {
+      const authority = await this._repositoryAuthority.capture(task.repositoryPath, {
+        frozenRevision: task.experiment?.frozenBaseSha ?? null,
+      });
+      task = await this._store.update(id, (draft) => {
+        draft.repositoryAuthority = authority;
+        draft.repositoryAuthorityHistory ??= [];
+        draft.repositoryAuthorityHistory.push(authority);
+        draft.repositoryAuthorityStatus = "bound";
+      });
+    }
+    const authority = task.repositoryAuthority;
+    if (!authority?.selectedRevision || typeof this._worktrees?.prepareEvidence !== "function") {
+      return this._runInvestigationAt(id, signal, task.repositoryPath);
+    }
+    const workspace = await this._worktrees.prepareEvidence(
+      task,
+      authority,
+      `investigation-${crypto.randomUUID()}`,
+    );
+    try {
+      return await this._runInvestigationAt(id, signal, workspace.worktreePath);
+    } finally {
+      await this._worktrees.removeEvidence(workspace);
+    }
+  }
+
+  async _runInvestigationAt(id, signal, evidencePath) {
+    let task = await this._store.get(id);
     if (!task.completedStages.includes("triage")) {
       if (signal.aborted) throw new Error("Codex run cancelled.");
       await this._reserveInvestigationStage(id, "triage");
       task = await this._store.get(id);
-      const result = await this._executeAgent(task, "triage", signal, task.repositoryPath, "read-only");
+      const result = await this._executeAgent(task, "triage", signal, evidencePath, "read-only");
       throwIfAborted(signal);
       await this._retainAgentResult(id, "triage", result, { replace: true });
     }
@@ -44,7 +85,7 @@ export class InvestigationProgressionOrchestrator {
       const triageArtifact = [...task.artifacts].reverse().find((artifact) => artifact.stage === "triage");
       let contract = null;
       try {
-        contract = parseFastChangeContract(triageArtifact?.content, task.repositoryPath);
+        contract = parseFastChangeContract(triageArtifact?.content, evidencePath);
       } catch (error) {
         await this._escalateProfile(
           id,
@@ -71,7 +112,7 @@ export class InvestigationProgressionOrchestrator {
         const dispatch = selectScoutDispatch(task, triageArtifact?.content ?? "").selected;
         if (dispatch.length) {
           await this._reserveInvestigationStage(id, "scouts");
-          await this._runScouts(id, await this._store.get(id), signal);
+          await this._runScouts(id, await this._store.get(id), signal, evidencePath);
           const scoutArtifact = [...(await this._store.get(id)).artifacts]
             .reverse()
             .find((artifact) => artifact.name === "repository-scout.md");
@@ -110,8 +151,60 @@ export class InvestigationProgressionOrchestrator {
         }
         task = await this._store.get(id);
         if (task.workflowProfile?.selected === "fast") {
+          if (contract.disposition === "already-satisfied") {
+            for (const evidence of contract.evidence) {
+              const info = await stat(path.resolve(evidencePath, evidence.path)).catch(() => null);
+              if (!info) throw new Error(`Already-satisfied evidence path does not exist: ${evidence.path}`);
+            }
+          }
+          const planText =
+            contract.disposition === "already-satisfied"
+              ? `# Fast plan result\n\nDisposition: already satisfied.\n\n${contract.evidence.map((entry) => `- \`${entry.path}\` — ${entry.detail}`).join("\n")}`
+              : `# Fast implementation plan\n\nThe bounded triage contract defines one work package at repository revision ${task.repositoryAuthority?.selectedRevision ?? "unbound"}.`;
+          await this._retainAgentResult(
+            id,
+            "plan",
+            {
+              finalText: planText,
+              usage: {
+                inputTokens: 0,
+                cachedInputTokens: 0,
+                cacheWriteTokens: 0,
+                outputTokens: 0,
+                totalTokens: 0,
+              },
+              runtimeEvents: [],
+              model: null,
+              reasoning: null,
+              contextManifest: {
+                stage: "plan",
+                promptCharacters: 0,
+                estimatedPromptTokens: 0,
+                repositoryAccess: "read-only",
+                policy: "Deterministic projection of the revision-bound Fast triage contract.",
+                repositoryAuthorityId: task.repositoryAuthority?.id ?? null,
+                repositoryRevision: task.repositoryAuthority?.selectedRevision ?? null,
+                repositoryTargetRef: task.repositoryAuthority?.targetRef ?? null,
+                repositoryAuthorityCheckedAt: task.repositoryAuthority?.capturedAt ?? null,
+                sources: [],
+              },
+            },
+            { replace: true, synthetic: true, complete: false },
+          );
           await this._store.update(id, (draft) => {
-            draft.workPackages = [contract.workPackage];
+            const planArtifact = [...draft.artifacts].reverse().find((artifact) => artifact.stage === "plan");
+            draft.workPackages = contract.workPackage ? [contract.workPackage] : [];
+            draft.planResult = {
+              disposition: contract.disposition,
+              evidence: contract.evidence,
+              changesRemainNecessary: contract.disposition === "changes-required",
+              artifactId: planArtifact?.id ?? null,
+              repositoryAuthorityId: task.repositoryAuthority?.id ?? null,
+              repositoryRevision: task.repositoryAuthority?.selectedRevision ?? null,
+              repositoryTargetRef: task.repositoryAuthority?.targetRef ?? null,
+              repositoryAuthorityCheckedAt: task.repositoryAuthority?.capturedAt ?? null,
+              createdAt: now(),
+            };
             for (const [stage, reason] of Object.entries({
               grill:
                 "Authoritative acceptance criteria contained no unresolved product decision, so Grill Me was not invoked.",
@@ -124,7 +217,10 @@ export class InvestigationProgressionOrchestrator {
                 activity(stage, `${getStageMetadata(stage).label} not required`, reason, "info", "decision"),
               );
             }
-            draft.status = "awaiting-plan-approval";
+            draft.status =
+              contract.disposition === "already-satisfied"
+                ? "awaiting-already-satisfied"
+                : "awaiting-plan-approval";
             draft.currentStage = "plan";
             draft.activeRunKind = null;
             draft.activeRunReservationId = null;
@@ -132,8 +228,12 @@ export class InvestigationProgressionOrchestrator {
             draft.events.push(
               activity(
                 "plan",
-                "Bounded fast change ready",
-                "Approve the one-package contract or change the workflow profile before implementation.",
+                contract.disposition === "already-satisfied"
+                  ? "Fast evidence indicates the request is already satisfied"
+                  : "Bounded fast change ready",
+                contract.disposition === "already-satisfied"
+                  ? "No work package was created. A human must explicitly close the task."
+                  : "Approve the one-package contract or change the workflow profile before implementation.",
                 "success",
                 "decision",
               ),
@@ -151,10 +251,10 @@ export class InvestigationProgressionOrchestrator {
       await this._reserveInvestigationStage(id, stageId);
       task = await this._store.get(id);
       if (stageId === "scouts") {
-        await this._runScouts(id, task, signal);
+        await this._runScouts(id, task, signal, evidencePath);
         continue;
       }
-      const result = await this._executeAgent(task, stageId, signal, task.repositoryPath, "read-only");
+      const result = await this._executeAgent(task, stageId, signal, evidencePath, "read-only");
       throwIfAborted(signal);
       const grillQuestions = parseGrillQuestions(result.finalText);
       await this._retainAgentResult(id, stageId, result, {
@@ -280,7 +380,7 @@ export class InvestigationProgressionOrchestrator {
     }
   }
 
-  async _runScouts(id, task, signal) {
+  async _runScouts(id, task, signal, evidencePath) {
     const triageArtifact = [...task.artifacts].reverse().find((artifact) => artifact.stage === "triage");
     const selection = selectScoutDispatch(task, triageArtifact?.content ?? "");
     const dispatch = selection.selected;
@@ -316,7 +416,7 @@ export class InvestigationProgressionOrchestrator {
             task,
             "scouts",
             signal,
-            task.repositoryPath,
+            evidencePath,
             "read-only",
             null,
             request,
@@ -374,6 +474,10 @@ export class InvestigationProgressionOrchestrator {
           promptCharacters: 0,
           estimatedPromptTokens: 0,
           repositoryAccess: "read-only",
+          repositoryAuthorityId: task.repositoryAuthority?.id ?? null,
+          repositoryRevision: task.repositoryAuthority?.selectedRevision ?? null,
+          repositoryTargetRef: task.repositoryAuthority?.targetRef ?? null,
+          repositoryAuthorityCheckedAt: task.repositoryAuthority?.capturedAt ?? null,
           policy:
             "Deterministic aggregation of selected scout reports; no additional model or repository access.",
           sources: reports

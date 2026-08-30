@@ -94,6 +94,83 @@ export class GitWorktreeManager {
     return pending;
   }
 
+  prepareEvidence(task, authority, runId = crypto.randomUUID()) {
+    const run = () => this.#prepareEvidence(task, authority, runId);
+    const pending = this.#prepareQueue.then(run, run);
+    this.#prepareQueue = pending.then(
+      () => undefined,
+      () => undefined,
+    );
+    return pending;
+  }
+
+  async #prepareEvidence(task, authority, runId) {
+    const repositoryRoot = await this.repositoryRoot(task.repositoryPath);
+    const revision = String(authority?.selectedRevision ?? "").trim();
+    if (!/^[a-f0-9]{40,64}$/i.test(revision)) {
+      throw new Error("Read-only evidence work requires an exact repository revision.");
+    }
+    const retainedRevision = await git(repositoryRoot, ["cat-file", "-e", `${revision}^{commit}`], {
+      allowFailure: true,
+    });
+    if (retainedRevision.code !== 0) {
+      throw new Error("The repository authority revision is no longer available locally.");
+    }
+    const worktreePath = path.resolve(
+      this.#root,
+      safeSegment(task.id),
+      `e-${safeSegment(runId).slice(0, 36)}`,
+    );
+    if (!worktreePath.startsWith(`${this.#root}${path.sep}`)) {
+      throw new Error("The evidence worktree path escaped harness storage.");
+    }
+    if (
+      await stat(worktreePath)
+        .then(() => true)
+        .catch(() => false)
+    ) {
+      throw new Error(`The evidence worktree already exists at ${worktreePath}.`);
+    }
+    await mkdir(path.dirname(worktreePath), { recursive: true });
+    try {
+      await git(repositoryRoot, ["worktree", "add", "--detach", worktreePath, revision]);
+      const actualRevision = (await git(worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
+      if (actualRevision !== revision) {
+        throw new Error("The evidence worktree did not resolve to the authority revision.");
+      }
+    } catch (error) {
+      await git(repositoryRoot, ["worktree", "remove", "--force", worktreePath], {
+        allowFailure: true,
+      });
+      throw error;
+    }
+    return { repositoryRoot, worktreePath, revision };
+  }
+
+  removeEvidence(workspace) {
+    const run = () => this.#removeEvidence(workspace);
+    const pending = this.#prepareQueue.then(run, run);
+    this.#prepareQueue = pending.then(
+      () => undefined,
+      () => undefined,
+    );
+    return pending;
+  }
+
+  async #removeEvidence(workspace) {
+    const repositoryRoot = await this.repositoryRoot(workspace.repositoryRoot);
+    const worktreePath = path.resolve(workspace.worktreePath);
+    if (!worktreePath.startsWith(`${this.#root}${path.sep}`)) {
+      throw new Error("Evidence cleanup refused a worktree outside harness storage.");
+    }
+    const result = await git(repositoryRoot, ["worktree", "remove", "--force", worktreePath], {
+      allowFailure: true,
+    });
+    if (result.code !== 0) {
+      throw new Error(result.stderr.trim() || "The evidence worktree could not be removed.");
+    }
+  }
+
   async #ensureCandidate(candidate) {
     const repositoryRoot = await this.repositoryRoot(candidate.repositoryRoot);
     const worktreePath = path.resolve(candidate.worktreePath);
@@ -153,8 +230,10 @@ export class GitWorktreeManager {
       if (retainedBase.code !== 0)
         throw new Error("The retained implementation base is no longer available in the repository.");
     }
-    const baseBranch = (await git(repositoryRoot, ["branch", "--show-current"])).stdout.trim() || "detached";
-    const baseRef = baseBranch === "detached" ? null : `refs/heads/${baseBranch}`;
+    const baseBranch =
+      options.baseBranch ??
+      ((await git(repositoryRoot, ["branch", "--show-current"])).stdout.trim() || "detached");
+    const baseRef = options.baseRef ?? (baseBranch === "detached" ? null : `refs/heads/${baseBranch}`);
     const branch = `agent-harness/${task.id.toLowerCase()}-${safeSegment(options.branchId ?? candidateId).toLowerCase()}`;
     const branchCheck = await git(
       repositoryRoot,

@@ -272,6 +272,7 @@ export function getAtlasStatusLabel(task: RuntimeTaskSummary) {
     "awaiting-grill": "Needs input",
     "awaiting-spec-approval": "Spec approval",
     "awaiting-plan-approval": "Plan approval",
+    "awaiting-already-satisfied": "Human close decision",
     "awaiting-human-approval": "Human approval",
     "awaiting-pr-merge": "Awaiting PR merge",
     "ready-for-implementation": "Ready to implement",

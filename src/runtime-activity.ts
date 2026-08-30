@@ -41,6 +41,10 @@ export interface RuntimeRunFreshness {
   stage: RuntimeGateStage;
   candidateId: string | null;
   candidateRevision: number | null;
+  repositoryAuthorityId?: string | null;
+  repositoryRevision?: string | null;
+  repositoryTargetRef?: string | null;
+  repositoryAuthorityCheckedAt?: string | null;
   target: { candidateId: string; candidateRevision: number } | null;
   state: "fresh" | "stale";
   fresh: boolean;

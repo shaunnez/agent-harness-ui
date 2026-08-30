@@ -16,6 +16,7 @@ export class TaskControlOrchestrator {
     readVerificationManifest,
     readVerificationManifestAtRevision,
     readVerificationManifestInjected,
+    planAuthority,
     run,
   }) {
     this._store = store;
@@ -25,6 +26,7 @@ export class TaskControlOrchestrator {
     this._readVerificationManifest = readVerificationManifest;
     this._readVerificationManifestAtRevision = readVerificationManifestAtRevision;
     this._readVerificationManifestInjected = readVerificationManifestInjected;
+    this._planAuthority = planAuthority;
     this._run = run;
   }
   isRunning(id) {
@@ -38,6 +40,16 @@ export class TaskControlOrchestrator {
     const reservation = { controller, kind, promise: null };
     this._active.set(id, reservation);
     try {
+      const preflightTask = kind === "implementation" ? await this._store.get(id) : null;
+      const implementationCanStart =
+        kind === "implementation" &&
+        preflightTask &&
+        (options.canStart ? options.canStart(preflightTask) : canStartRun(preflightTask, kind));
+      if (implementationCanStart && (await this._planAuthority.blockStalePlan(id))) {
+        throw new Error(
+          "Repository authority changed or could not be verified. Revalidate the retained plan before implementation.",
+        );
+      }
       if (await this._blockCandidateGateOnTargetDrift(id, kind)) {
         throw new Error(
           "The target branch advanced. Refresh the candidate before spending another candidate-bound gate attempt.",
@@ -325,9 +337,13 @@ export class TaskControlOrchestrator {
   }
 
   async approvePlan(id, note = "") {
-    const task = await this._store.get(id);
+    let task = await this._store.get(id);
     if (!task) throw new Error("Task not found.");
     if (task.status !== "awaiting-plan-approval") throw new Error("The task is not awaiting plan approval.");
+    if (await this._planAuthority.blockStalePlan(id)) {
+      throw new Error("Repository authority changed or could not be verified. Revalidate the retained plan.");
+    }
+    task = await this._store.get(id);
     await this._assertExecutablePlan(task);
     if (task.workflowProfile?.selected === "fast") {
       if (task.workPackages?.length !== 1 || task.workPackages[0].dependencies.length) {
@@ -414,6 +430,14 @@ export class TaskControlOrchestrator {
     return { started: true };
   }
 
+  async revalidatePlan(id) {
+    return this._planAuthority.revalidatePlan(id);
+  }
+
+  async closeAlreadySatisfied(id, note = "") {
+    return this._planAuthority.closeAlreadySatisfied(id, note);
+  }
+
   async continueRetainedPackage(id) {
     const task = await this._store.get(id);
     if (!task) throw new Error("Task not found.");
@@ -495,7 +519,7 @@ export class TaskControlOrchestrator {
       ? await this._readVerificationManifest(task.repositoryPath)
       : await this._readVerificationManifestAtRevision(
           task.repositoryPath,
-          (await this._worktrees.base(task, { allowDirty: true })).baseRevision,
+          task.planResult?.repositoryRevision ?? task.repositoryAuthority?.selectedRevision,
         );
     for (const workPackage of task.workPackages) {
       selectVerificationCommands(verificationManifest, workPackage.verificationCommandIds);

@@ -250,7 +250,7 @@ export function RuntimeWorkflowActionButton({
     <Button
       tone="primary"
       compact
-      icon={Play}
+      icon={action === "close-already-satisfied" ? CheckCircle : Play}
       disabled={pending || approvalBlocked}
       title={approvalBlocked ? "Approval is blocked until every candidate-bound gate is fresh." : undefined}
       onClick={() => onInvoke(action)}

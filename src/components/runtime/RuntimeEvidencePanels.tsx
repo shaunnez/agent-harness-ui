@@ -293,6 +293,12 @@ export function RuntimeContextDisclosure({ artifact }: { artifact: RuntimeArtifa
       {manifest ? (
         <div>
           <p>{manifest.policy}</p>
+          {manifest.repositoryRevision ? (
+            <p>
+              Repository evidence: <code>{manifest.repositoryRevision.slice(0, 12)}</code> at{" "}
+              <code>{manifest.repositoryTargetRef ?? "detached commit"}</code>
+            </p>
+          ) : null}
           <ul>
             {manifest.sources.map((source) => (
               <li key={`${source.kind}-${source.id}`}>

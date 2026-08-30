@@ -339,6 +339,10 @@ export function migratePersistedTaskState(state) {
       ["pullRequestIntent", null],
       ["pullRequestIntentHistory", []],
       ["blocker", null],
+      ["repositoryAuthority", null],
+      ["repositoryAuthorityHistory", []],
+      ["planResult", null],
+      ["planRevalidation", null],
       ["scoutDispatch", null],
       ["stageDispositions", {}],
       ["reviewRetries", []],
@@ -357,6 +361,16 @@ export function migratePersistedTaskState(state) {
         task[key] = clone(fallback);
         changed = true;
       }
+    }
+    const retired = ["completed", "closed", "archived", "merged-to-target"].includes(task.status);
+    const expectedAuthorityStatus = task.repositoryAuthority
+      ? "bound"
+      : retired || (task.candidates?.length ?? 0) > 0
+        ? "legacy-readable"
+        : "legacy-unbound";
+    if (task.repositoryAuthorityStatus !== expectedAuthorityStatus) {
+      task.repositoryAuthorityStatus = expectedAuthorityStatus;
+      changed = true;
     }
     if (!task.workflowProfile) {
       task.workflowProfile = migratedStandardProfile();
@@ -523,6 +537,16 @@ export function createTaskRecord(state, input) {
     archive: null,
     evaluation: null,
     experiment: clone(input.experiment ?? null),
+    repositoryAuthority: clone(input.repositoryAuthority ?? continuation?.repositoryAuthority ?? null),
+    repositoryAuthorityHistory: clone(
+      input.repositoryAuthorityHistory ??
+        continuation?.repositoryAuthorityHistory ??
+        (input.repositoryAuthority ? [input.repositoryAuthority] : []),
+    ),
+    repositoryAuthorityStatus:
+      input.repositoryAuthority || continuation?.repositoryAuthority ? "bound" : "legacy-unbound",
+    planResult: clone(continuation?.planResult ?? null),
+    planRevalidation: null,
     mergeIntent: null,
     mergeIntentHistory: [],
     pullRequestIntent: null,

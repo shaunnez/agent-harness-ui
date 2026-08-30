@@ -11,6 +11,29 @@ import { fastEscalation, selectWorkflowProfile } from "../server/workflow-profil
 
 const usage = { inputTokens: 100, cachedInputTokens: 60, outputTokens: 20, totalTokens: 120 };
 
+const repositoryAuthorityService = {
+  async capture(repositoryPath) {
+    const revision = "a".repeat(40);
+    return {
+      id: crypto.randomUUID(),
+      repositoryRoot: repositoryPath,
+      checkoutBranch: "main",
+      localBranchRef: "refs/heads/main",
+      localHead: revision,
+      upstreamBranch: null,
+      upstreamRef: null,
+      fetchedRevision: null,
+      selectedRevision: revision,
+      targetRef: "refs/heads/main",
+      source: "local-head",
+      checkoutDirty: false,
+      relationship: "equal",
+      capturedAt: new Date().toISOString(),
+      remoteVerification: { status: "not-configured", error: null },
+    };
+  },
+};
+
 function gateOutput(revision, verdict = "PASS", findings = []) {
   return `<gate-evidence>${JSON.stringify({
     candidateId: "C1",
@@ -288,6 +311,7 @@ test("fast path uses zero scouts, one package, focused checks, one full manifest
     let focusedExecutions = 0;
     let fullExecutions = 0;
     const orchestrator = new TaskOrchestrator(store, {
+      repositoryAuthorityService,
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       worktreeManager: worktreeManager(directory),
       readVerificationManifest: async () => verificationManifest(),
@@ -390,6 +414,7 @@ test("late fast scope expansion returns to the standard evidence frontier", asyn
       ownDiff: "+Delivery state",
     });
     const orchestrator = new TaskOrchestrator(store, {
+      repositoryAuthorityService,
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       worktreeManager: manager,
       readVerificationManifest: async () => verificationManifest(),
@@ -467,6 +492,7 @@ test("reuses one full-manifest execution when a same-revision Test model call re
     let manifestExecutions = 0;
     let modelAttempts = 0;
     const orchestrator = new TaskOrchestrator(store, {
+      repositoryAuthorityService,
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       worktreeManager: worktreeManager(directory),
       runVerification: async ({ candidate }) => {
@@ -557,6 +583,7 @@ test("fast review allows one automatic consolidated repair, invalidates old evid
       },
     ];
     const orchestrator = new TaskOrchestrator(store, {
+      repositoryAuthorityService,
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       worktreeManager: worktreeManager(directory),
       runCodex: async (options) => {
