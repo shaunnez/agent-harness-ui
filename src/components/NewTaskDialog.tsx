@@ -13,8 +13,8 @@ import { Button } from "./Primitives";
 import { RepositoryContractPanel } from "./RepositoryContractPanel";
 
 const initialDraft: NewTaskDraft = {
-  title: EXAMPLE_TITLE,
-  description: EXAMPLE_DESCRIPTION,
+  title: "",
+  description: "",
   repositoryPath: "",
   workflow: "investigate",
   priority: "medium",
@@ -167,6 +167,7 @@ export function NewTaskDialog({
           <input
             value={draft.title}
             onChange={(event) => setDraft({ ...draft, title: event.target.value })}
+            placeholder={EXAMPLE_TITLE}
             autoFocus
           />
         </label>
@@ -179,6 +180,7 @@ export function NewTaskDialog({
             rows={5}
             value={draft.description}
             onChange={(event) => setDraft({ ...draft, description: event.target.value })}
+            placeholder={EXAMPLE_DESCRIPTION}
           />
         </label>
 
