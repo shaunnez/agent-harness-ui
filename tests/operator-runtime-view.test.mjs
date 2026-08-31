@@ -57,7 +57,8 @@ async function withOperatorModules(run) {
   try {
     const viewModel = await vite.ssrLoadModule("/src/components/runtime/operatorViewModel.ts");
     const workspace = await vite.ssrLoadModule("/src/components/RuntimeTaskWorkspace.tsx");
-    return await run({ ...viewModel, ...workspace });
+    const packageFlow = await vite.ssrLoadModule("/src/components/runtime/RuntimeOperatorPackageFlow.tsx");
+    return await run({ ...viewModel, ...workspace, ...packageFlow });
   } finally {
     await vite.close();
   }
@@ -74,6 +75,29 @@ test("operator view model treats one package as a truthful single-package path",
     assert.equal(model.packageBatches.length, 1);
     assert.equal(model.packageBatches[0].packages.length, 1);
     assert.equal(model.facts.find((fact) => fact.label === "Packages")?.detail, "Single-package path.");
+  });
+});
+
+test("operator package flow renders one honest zero-package state", async () => {
+  await withOperatorModules(({ RuntimeOperatorPackageFlow }) => {
+    const empty = renderToStaticMarkup(
+      React.createElement(RuntimeOperatorPackageFlow, {
+        batches: [],
+        stageFailed: false,
+        stageError: null,
+      }),
+    );
+    const failed = renderToStaticMarkup(
+      React.createElement(RuntimeOperatorPackageFlow, {
+        batches: [],
+        stageFailed: true,
+        stageError: "Package plan failed schema validation.",
+      }),
+    );
+    assert.match(empty, /No work packages produced/);
+    assert.doesNotMatch(empty, /healthy|qualified/i);
+    assert.match(failed, /Package plan unavailable/);
+    assert.match(failed, /Package plan failed schema validation/);
   });
 });
 
@@ -114,7 +138,7 @@ test("operator view surfaces package failure and its persisted reason", async ()
     const model = buildOperatorViewModel(task, "implement");
     assert.equal(model.alert?.tone, "red");
     assert.match(model.alert?.detail ?? "", /qualification failed/i);
-    assert.match(model.briefing.find((item) => item.key === "health")?.value ?? "", /error|failed/i);
+    assert.equal(model.now.value, "Failed");
   });
 });
 
@@ -211,7 +235,7 @@ test("operator state projection covers active, stopped, repair, terminal, and fu
     for (const [overrides, expected] of cases) {
       const task = createTask(overrides);
       const model = buildOperatorViewModel(task, task.currentStage);
-      assert.equal(model.briefing.find((item) => item.key === "state")?.value, expected);
+      assert.equal(model.now.value, expected);
     }
 
     const future = buildOperatorViewModel(
@@ -219,7 +243,7 @@ test("operator state projection covers active, stopped, repair, terminal, and fu
       "approval",
     );
     assert.equal(future.temporalState, "future");
-    assert.equal(future.briefing.find((item) => item.key === "state")?.value, "Not started");
+    assert.equal(future.now.value, "Not started");
   });
 });
 
@@ -240,7 +264,9 @@ test("every workflow stage has a concise real-state signal", async () => {
     const task = createTask({ status: "awaiting-human-approval", currentStage: "approval" });
     for (const stageId of stages) {
       const model = buildOperatorViewModel(task, stageId);
-      assert.equal(model.briefing.length, 5);
+      assert.equal(model.now.key, "now");
+      assert.equal(model.next.key, "next");
+      assert.ok(model.signals.length >= 1 && model.signals.length <= 3);
       assert.equal(model.facts.length, 3);
       assert.ok(model.summary.title);
     }
@@ -322,7 +348,96 @@ test("final review summarizes every prior stage with recorded usage and no inven
     );
     assert.match(html, /Every prior stage/);
     assert.match(html, /API-rate estimate/);
-    assert.match(html, /Unavailable/);
+    assert.match(html, /API-rate estimate[^<]*partial/);
+    assert.doesNotMatch(html, /<span>Unavailable<\/span>/);
+  });
+});
+
+test("calm briefing omits neutral health and uses the command bar as the only next-action region", async () => {
+  await withOperatorModules(({ RuntimeTaskWorkspace }) => {
+    const task = createTask({
+      status: "awaiting-plan-approval",
+      currentStage: "plan",
+      workPackages: [packageFixture()],
+    });
+    const noop = async () => {};
+    const html = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task,
+        initialViewMode: "operator",
+        onBack: () => {},
+        onRun: noop,
+        onCancel: noop,
+        onCloseTask: noop,
+        onArchiveTask: noop,
+        onEvaluate: noop,
+        onAction: noop,
+        onDecision: noop,
+        onGrillAnswer: noop,
+        onFinishGrill: noop,
+        onRemoveWorktree: noop,
+        onProfileChange: noop,
+      }),
+    );
+    assert.match(html, />Now</);
+    assert.match(html, />Output</);
+    assert.doesNotMatch(html, /No recorded issue/);
+    assert.equal((html.match(/Approve the dependency-ordered plan/g) ?? []).length, 1);
+  });
+});
+
+test("approval renders one decision receipt with exact candidate, target, gates, and PR state", async () => {
+  await withOperatorModules(({ RuntimeTaskWorkspace }) => {
+    const task = createTask({
+      status: "awaiting-human-approval",
+      currentStage: "approval",
+      candidates: [
+        {
+          id: "C2",
+          revisionNumber: 1,
+          headRevision: "abc12345def",
+          baseBranch: "main",
+          revisions: [],
+        },
+      ],
+      gateFreshness: {
+        "dev-review": makeGateFreshness("dev-review", {
+          fresh: true,
+          candidateId: "C2",
+          candidateRevision: 1,
+        }),
+        test: makeGateFreshness("test", { fresh: true, candidateId: "C2", candidateRevision: 1 }),
+        "final-review": makeGateFreshness("final-review", {
+          fresh: true,
+          candidateId: "C2",
+          candidateRevision: 1,
+        }),
+      },
+    });
+    const noop = async () => {};
+    const html = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task,
+        initialViewMode: "operator",
+        onBack: () => {},
+        onRun: noop,
+        onCancel: noop,
+        onCloseTask: noop,
+        onArchiveTask: noop,
+        onEvaluate: noop,
+        onAction: noop,
+        onDecision: noop,
+        onGrillAnswer: noop,
+        onFinishGrill: noop,
+        onRemoveWorktree: noop,
+        onProfileChange: noop,
+      }),
+    );
+    assert.match(html, /Decision receipt/);
+    assert.match(html, /C2 r1/);
+    assert.match(html, /Exact head abc12345 · target branch main/);
+    assert.match(html, /3 \/ 3/);
+    assert.match(html, /Pull request/);
   });
 });
 

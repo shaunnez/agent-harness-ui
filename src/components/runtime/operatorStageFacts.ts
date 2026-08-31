@@ -161,12 +161,19 @@ export function buildOperatorStageFacts(
         {
           label: "Candidate",
           value: candidate ? `${candidate.id} r${candidate.revisionNumber}` : "Unavailable",
-          detail: candidate?.headRevision?.slice(0, 8) ?? "No exact candidate head.",
+          detail: candidate?.headRevision
+            ? `Exact head ${candidate.headRevision.slice(0, 8)} · target branch ${task.pullRequestIntent?.targetBranch ?? candidate.baseBranch}`
+            : "No exact candidate head.",
         },
         {
-          label: "Fresh gates",
+          label: "Candidate-bound gates",
           value: `${candidateGateStages.filter((gate) => getRuntimeGateFreshness(task, gate)?.fresh).length} / ${candidateGateStages.length}`,
-          detail: "Dev Review, Test, and Final Review must match the exact candidate.",
+          detail: candidateGateStages
+            .map(
+              (gate) =>
+                `${humanizeStatus(gate)} ${getRuntimeGateFreshness(task, gate)?.fresh ? "fresh" : "not fresh"}`,
+            )
+            .join(" · "),
         },
         {
           label: "Pull request",

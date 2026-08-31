@@ -1,4 +1,5 @@
 import { Check, CircleNotch, X } from "@phosphor-icons/react";
+import { useEffect, useRef } from "react";
 import type { StageId } from "../../domain";
 import { workflowStages } from "../../domain";
 import type { RuntimeTaskWorkspaceProps } from "./contracts";
@@ -16,8 +17,15 @@ type Props = {
 };
 
 export function RuntimeStageNavigator({ task, viewedStageId, onSelect }: Props) {
+  const navigatorRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!viewedStageId) return;
+    navigatorRef.current
+      ?.querySelector<HTMLElement>("[aria-current='step']")
+      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [viewedStageId]);
   return (
-    <nav className="stage-navigator" aria-label="Workflow stages">
+    <nav className="stage-navigator" aria-label="Workflow stages" ref={navigatorRef}>
       {workflowStages.map((stage, index) => {
         const invalidated = isStageInvalidatedByRepair(task, stage.id);
         const complete = isStageComplete(task, stage.id) && !invalidated;

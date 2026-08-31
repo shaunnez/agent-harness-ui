@@ -1,12 +1,5 @@
-import {
-  CheckCircle,
-  CircleNotch,
-  FileText,
-  GitCommit,
-  ShieldCheck,
-  WarningCircle,
-} from "@phosphor-icons/react";
-import type { RuntimeArtifact, RuntimeTask, StageId } from "../../domain";
+import { FileText, GitCommit, WarningCircle } from "@phosphor-icons/react";
+import { type RuntimeArtifact, type RuntimeTask, type StageId, workflowStages } from "../../domain";
 import { Button } from "../Primitives";
 import { RuntimeCommandBar } from "./RuntimeCommandBar";
 import { RuntimeOperatorFinalReview } from "./RuntimeOperatorFinalReview";
@@ -23,6 +16,7 @@ export function RuntimeOperatorWorkspace({
   onAction,
   onFinishGrill,
   onOpenEvidence,
+  onOpenEvidenceStage,
   onOpenArtifact,
   onOpenCandidateDiff,
   candidateDiffLoading,
@@ -35,54 +29,81 @@ export function RuntimeOperatorWorkspace({
   onAction: (action: RuntimeWorkflowAction) => Promise<void>;
   onFinishGrill: (acceptRemaining: boolean) => Promise<void>;
   onOpenEvidence: () => void;
+  onOpenEvidenceStage: (stageId: StageId) => void;
   onOpenArtifact: (artifact: RuntimeArtifact) => void;
   onOpenCandidateDiff: () => void;
   candidateDiffLoading: boolean;
 }) {
   const model = buildOperatorViewModel(task, viewedStageId);
   const candidate = task.candidates?.at(-1);
-  const StateIcon =
-    model.alert?.tone === "red" || model.alert?.tone === "amber" ? WarningCircle : CheckCircle;
   const packageStage = viewedStageId === "plan" || viewedStageId === "implement";
   const stageFailed =
     viewedStageId === task.currentStage && ["failed", "blocked", "cancelled"].includes(task.status);
+  const visibleFacts = model.facts.filter((fact) => {
+    if (viewedStageId === "approval") return true;
+    if (fact.label === "Candidate" && model.signals.some((signal) => signal.key === "candidate"))
+      return false;
+    if (fact.label === "Gate" && model.signals.some((signal) => signal.key === "gate")) return false;
+    return true;
+  });
+  const currentStageLabel =
+    workflowStages.find((stage) => stage.id === task.currentStage)?.label ?? task.currentStage;
 
   return (
     <div className="runtime-operator-scroll">
       <section className="runtime-operator-briefing" aria-label="Operator briefing">
-        <header>Operator briefing</header>
-        <div>
-          {model.briefing.map((item, index) => (
-            <article key={item.key}>
-              <small>
-                {index + 1} · {item.label}
-              </small>
-              <strong className={`runtime-operator-tone--${item.tone ?? "neutral"}`}>{item.value}</strong>
-              <span title={item.detail}>{item.detail}</span>
+        <header>
+          <span>Operator briefing</span>
+          {readOnlyPreview ? <span className="badge badge--neutral">Read-only preview</span> : null}
+        </header>
+        <div className="runtime-operator-briefing__primary">
+          <article className="runtime-operator-briefing__now">
+            <small>{model.now.label}</small>
+            <strong className={`runtime-operator-tone--${model.now.tone ?? "neutral"}`}>
+              {model.now.value}
+            </strong>
+            <span>{model.now.detail}</span>
+          </article>
+          {readOnlyPreview ? (
+            <article className="runtime-operator-briefing__next">
+              <small>{model.next.label}</small>
+              <strong className={`runtime-operator-tone--${model.next.tone ?? "neutral"}`}>
+                {model.next.value}
+              </strong>
+              <span>{model.next.detail}</span>
             </article>
-          ))}
+          ) : (
+            <div className="runtime-operator-briefing__command">
+              <RuntimeCommandBar
+                task={task}
+                viewedStageId={viewedStageId}
+                onRun={onRun}
+                onAction={onAction}
+                onFinishGrill={onFinishGrill}
+              />
+            </div>
+          )}
         </div>
+        {model.signals.length ? (
+          <div className="runtime-operator-briefing__signals">
+            {model.signals.map((signal) => (
+              <article key={signal.key}>
+                <small>{signal.label}</small>
+                <strong className={`runtime-operator-tone--${signal.tone ?? "neutral"}`}>
+                  {signal.value}
+                </strong>
+                <span>{signal.detail}</span>
+              </article>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       {readOnlyPreview ? (
-        <section className="stage-command-bar stage-command-bar--history">
-          <FileText size={18} />
-          <span className="stage-command-bar__copy">
-            <small>Prototype fixture · read-only</small>
-            <strong>Inspect the workflow without changing task state</strong>
-            <span>Actions are available only in the local runtime.</span>
-          </span>
-          <span className="badge badge--neutral">Preview</span>
-        </section>
-      ) : (
-        <RuntimeCommandBar
-          task={task}
-          viewedStageId={viewedStageId}
-          onRun={onRun}
-          onAction={onAction}
-          onFinishGrill={onFinishGrill}
-        />
-      )}
+        <p className="runtime-operator-preview-label">
+          <FileText size={15} /> Hosted fixture · actions remain available only in the local runtime
+        </p>
+      ) : null}
 
       {runError ? (
         <div className="runtime-error" role="alert">
@@ -92,50 +113,27 @@ export function RuntimeOperatorWorkspace({
 
       <div className="runtime-operator-grid">
         <main className="runtime-operator-main">
-          <header className="runtime-operator-stage-heading">
-            <span>
-              <p className="eyebrow">{model.summary.kicker}</p>
-              <h2>{model.summary.title}</h2>
-              <small>{model.summary.detail}</small>
-            </span>
-            <span
-              className={`runtime-operator-state runtime-operator-state--${model.briefing[0]?.tone ?? "neutral"}`}
-            >
-              {task.status === "running" && viewedStageId === task.currentStage ? (
-                <CircleNotch className="spin" size={15} />
-              ) : (
-                <StateIcon size={15} weight="fill" />
-              )}
-              {model.briefing[0]?.value}
-            </span>
-          </header>
-
-          {model.alert ? (
-            <section
-              className={`runtime-operator-alert runtime-operator-alert--${model.alert.tone}`}
-              role="alert"
-            >
-              <WarningCircle size={20} weight="fill" />
-              <span>
-                <strong>{model.alert.title}</strong>
-                <small>{model.alert.detail}</small>
-              </span>
-            </section>
+          {visibleFacts.length ? (
+            <>
+              <section className="runtime-operator-section-title">
+                <span>{viewedStageId === "approval" ? "Decision receipt" : "Stage detail"}</span>
+                <i />
+              </section>
+              <div
+                className={`runtime-operator-facts ${viewedStageId === "approval" ? "runtime-operator-facts--approval" : ""}`}
+              >
+                {visibleFacts.map((fact) => (
+                  <article key={fact.label}>
+                    <small>{fact.label}</small>
+                    <strong className={`runtime-operator-tone--${fact.tone ?? "neutral"}`}>
+                      {fact.value}
+                    </strong>
+                    <p>{fact.detail}</p>
+                  </article>
+                ))}
+              </div>
+            </>
           ) : null}
-
-          <section className="runtime-operator-section-title">
-            <span>Stage signal</span>
-            <i />
-          </section>
-          <div className="runtime-operator-facts">
-            {model.facts.map((fact) => (
-              <article key={fact.label}>
-                <small>{fact.label}</small>
-                <strong className={`runtime-operator-tone--${fact.tone ?? "neutral"}`}>{fact.value}</strong>
-                <p>{fact.detail}</p>
-              </article>
-            ))}
-          </div>
 
           {packageStage ? (
             <>
@@ -178,7 +176,9 @@ export function RuntimeOperatorWorkspace({
             </>
           ) : null}
 
-          {viewedStageId === "final-review" ? <RuntimeOperatorFinalReview task={task} /> : null}
+          {viewedStageId === "final-review" ? (
+            <RuntimeOperatorFinalReview task={task} onInspectStage={onOpenEvidenceStage} />
+          ) : null}
 
           {model.staleGates.length &&
           ["implement", "dev-review", "test", "final-review", "approval"].includes(viewedStageId) ? (
@@ -201,32 +201,14 @@ export function RuntimeOperatorWorkspace({
           <header>
             <small>Viewed stage</small>
             <strong>{model.stageLabel}</strong>
-          </header>
-          <section>
-            <small>Temporal state</small>
-            <strong>
-              {model.temporalState === "past"
-                ? "Recorded history"
-                : model.temporalState === "future"
-                  ? "Not started"
-                  : "Current"}
-            </strong>
-            <p>Future stages remain unavailable until persisted evidence exists.</p>
-          </section>
-          <section>
-            <small>Candidate</small>
-            <strong>{candidate ? `${candidate.id} r${candidate.revisionNumber}` : "Not assembled"}</strong>
             <p>
-              {candidate?.headRevision
-                ? `Exact head ${candidate.headRevision.slice(0, 8)}`
-                : "No candidate-bound authority yet."}
+              {model.temporalState === "past"
+                ? `Recorded history · current work is ${currentStageLabel}`
+                : model.temporalState === "future"
+                  ? `Not started · current work is ${currentStageLabel}`
+                  : "Current workflow stage"}
             </p>
-          </section>
-          <section>
-            <small>Handoff readiness</small>
-            <strong className={`runtime-operator-tone--${model.handoff.tone}`}>{model.handoff.label}</strong>
-            <p>{model.handoff.detail}</p>
-          </section>
+          </header>
           <div className="runtime-operator-rail__actions">
             {model.artifact ? (
               <Button
@@ -249,15 +231,6 @@ export function RuntimeOperatorWorkspace({
           </div>
         </aside>
       </div>
-
-      <footer className={`runtime-operator-handoff runtime-operator-handoff--${model.handoff.tone}`}>
-        <ShieldCheck size={24} weight="duotone" />
-        <span>
-          <small>Handoff readiness</small>
-          <strong>{model.handoff.label}</strong>
-        </span>
-        <small>{model.handoff.detail}</small>
-      </footer>
     </div>
   );
 }

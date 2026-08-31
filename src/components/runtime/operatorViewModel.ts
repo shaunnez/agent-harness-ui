@@ -29,8 +29,12 @@ export interface OperatorFact {
   tone?: OperatorTone;
 }
 
-export interface OperatorBriefingItem extends OperatorFact {
-  key: "state" | "health" | "change" | "decision" | "action";
+export interface OperatorPrimarySignal extends OperatorFact {
+  key: "now" | "next";
+}
+
+export interface OperatorSecondarySignal extends OperatorFact {
+  key: "output" | "candidate" | "gate";
 }
 
 export interface OperatorPackageBatch {
@@ -44,7 +48,9 @@ export interface OperatorViewModel {
   temporalState: "past" | "current" | "future";
   summary: ReturnType<typeof getRuntimeStageSummary>;
   artifact: RuntimeArtifact | undefined;
-  briefing: OperatorBriefingItem[];
+  now: OperatorPrimarySignal;
+  next: OperatorPrimarySignal;
+  signals: OperatorSecondarySignal[];
   facts: OperatorFact[];
   alert: { title: string; detail: string; tone: OperatorTone } | null;
   handoff: { label: string; detail: string; tone: OperatorTone };
@@ -75,10 +81,37 @@ export function buildOperatorViewModel(task: RuntimeTask, stageId: StageId): Ope
   const staleGates = getStaleGates(task);
   const packageBatches = groupPackagesByBatch(task.workPackages ?? []);
   const state = statePresentation(task, stageId, temporalState, running);
-  const health = healthPresentation(task, stageId, temporalState, staleGates);
   const decision = decisionPresentation(task, stageId, temporalState);
   const action = actionPresentation(task, temporalState);
   const alert = alertPresentation(task, stageId, temporalState, staleGates);
+  const candidate = task.candidates?.at(-1);
+  const signals: OperatorSecondarySignal[] = [
+    {
+      key: "output",
+      label: "Output",
+      value: summary.title,
+      detail: summary.detail,
+      tone: artifact || isStageComplete(task, stageId) ? "green" : "neutral",
+    },
+  ];
+  if (
+    candidate &&
+    stageId !== "approval" &&
+    ["implement", "dev-review", "test", "final-review"].includes(stageId)
+  ) {
+    signals.push({
+      key: "candidate",
+      label: "Candidate",
+      value: `${candidate.id} r${candidate.revisionNumber}`,
+      detail: candidate.headRevision
+        ? `Exact head ${candidate.headRevision.slice(0, 8)}`
+        : "Candidate head is pending.",
+      tone: "blue",
+    });
+  }
+  if (temporalState === "current" && stageId !== "approval") {
+    signals.push({ key: "gate", label: "Gate", ...decision });
+  }
 
   return {
     stageId,
@@ -90,19 +123,9 @@ export function buildOperatorViewModel(task: RuntimeTask, stageId: StageId): Ope
     staleGates,
     alert,
     facts: buildOperatorStageFacts(task, stageId, artifact),
-    briefing: [
-      { key: "state", label: "Current state", ...state },
-      { key: "health", label: "Health", ...health },
-      {
-        key: "change",
-        label: "What changed",
-        value: summary.title,
-        detail: summary.detail,
-        tone: artifact || isStageComplete(task, stageId) ? "green" : "neutral",
-      },
-      { key: "decision", label: "Decision / readiness", ...decision },
-      { key: "action", label: "Next safe action", ...action },
-    ],
+    now: { key: "now", label: "Now", ...state },
+    next: { key: "next", label: "Next", ...action },
+    signals,
     handoff: handoffPresentation(task, stageId, artifact, running),
   };
 }
@@ -195,42 +218,6 @@ function statePresentation(
   };
 }
 
-function healthPresentation(
-  task: RuntimeTask,
-  stageId: StageId,
-  temporalState: OperatorViewModel["temporalState"],
-  staleGates: OperatorViewModel["staleGates"],
-): Omit<OperatorFact, "label"> {
-  const failedPackages = (task.workPackages ?? []).filter((item) => item.status === "failed");
-  const viewedStaleGate = staleGates.find((gate) => gate.stageId === stageId);
-  if (viewedStaleGate) return { value: "Rerun required", detail: viewedStaleGate.reason, tone: "amber" };
-  if (task.blocker) return { value: "Blocked", detail: task.blocker.detail, tone: "red" };
-  if (task.error) return { value: "Stopped with an error", detail: task.error, tone: "red" };
-  if (stageId === "implement" && failedPackages.length)
-    return {
-      value: `${failedPackages.length} package${failedPackages.length === 1 ? "" : "s"} failed`,
-      detail: failedPackages.map((item) => item.id).join(", "),
-      tone: "red",
-    };
-  if (staleGates.length && ["implement", "dev-review", "test", "final-review", "approval"].includes(stageId))
-    return {
-      value: `${staleGates.length} stale gate${staleGates.length === 1 ? "" : "s"}`,
-      detail: staleGates.map((gate) => gate.label).join(", "),
-      tone: "amber",
-    };
-  if (temporalState === "future")
-    return {
-      value: "No evidence yet",
-      detail: "Health is unavailable before the stage starts.",
-      tone: "neutral",
-    };
-  return {
-    value: "No recorded issue",
-    detail: "No persisted blocker, error, failed package, or stale gate applies.",
-    tone: "green",
-  };
-}
-
 function decisionPresentation(
   task: RuntimeTask,
   stageId: StageId,
@@ -262,15 +249,28 @@ function decisionPresentation(
       tone: fresh === candidateGateStages.length ? "green" : "amber",
     };
   }
-  const candidate = task.candidates?.at(-1);
-  if (["implement", "dev-review", "test", "final-review"].includes(stageId) && candidate)
+  if (stageId === "implement") {
+    const fresh = candidateGateStages.filter((gate) => getRuntimeGateFreshness(task, gate)?.fresh).length;
     return {
-      value: `${candidate.id} r${candidate.revisionNumber}`,
-      detail: candidate.headRevision
-        ? `Exact head ${candidate.headRevision.slice(0, 8)}.`
-        : "Candidate head is pending.",
-      tone: "blue",
+      value: `${fresh} / ${candidateGateStages.length} downstream gates fresh`,
+      detail: fresh ? "Fresh gate evidence is retained." : "Candidate-bound gates have not run yet.",
+      tone: fresh ? "green" : "neutral",
     };
+  }
+  if (isCandidateGateStage(stageId)) {
+    const freshness = getRuntimeGateFreshness(task, stageId);
+    if (!freshness)
+      return {
+        value: "Not run",
+        detail: "No candidate-bound verdict is persisted for this gate.",
+        tone: "neutral",
+      };
+    return {
+      value: freshness.fresh ? "Fresh" : "Rerun required",
+      detail: freshness.reasonCopy,
+      tone: freshness.fresh ? "green" : "amber",
+    };
+  }
   return {
     value: isStageComplete(task, stageId) ? "Handoff retained" : "Awaiting authoritative handoff",
     detail: isStageComplete(task, stageId)

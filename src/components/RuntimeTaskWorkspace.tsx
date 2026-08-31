@@ -168,6 +168,10 @@ export function RuntimeTaskWorkspace({
           onAction={readOnlyPreview ? previewNoop : onAction}
           onFinishGrill={readOnlyPreview ? previewNoop : onFinishGrill}
           onOpenEvidence={() => setViewMode("evidence")}
+          onOpenEvidenceStage={(stageId) => {
+            selectViewedStage(stageId);
+            setViewMode("evidence");
+          }}
           onOpenArtifact={openRuntimeArtifact}
           onOpenCandidateDiff={() => requestCandidateDiff()}
           candidateDiffLoading={candidateDiffLoading}
@@ -210,7 +214,7 @@ export function RuntimeTaskWorkspace({
               </header>
 
               {readOnlyPreview ? (
-                <section className="stage-command-bar stage-command-bar--history">
+                <section className="stage-command-bar stage-command-bar--history stage-command-bar--preview">
                   <span className="stage-command-bar__copy">
                     <small>Prototype fixture · read-only</small>
                     <strong>Inspect retained evidence without changing task state</strong>
@@ -277,7 +281,11 @@ export function RuntimeTaskWorkspace({
         </div>
       )}
 
-      <RuntimeWorkspaceFooter task={task} activeModel={activePolicy.model} />
+      <RuntimeWorkspaceFooter
+        task={task}
+        activeModel={activePolicy.model}
+        compact={viewMode === "operator"}
+      />
 
       {openArtifact ? <RuntimeArtifactViewer artifact={openArtifact} onClose={closeRuntimeArtifact} /> : null}
       {candidateDiff && candidateDiffTarget ? (
