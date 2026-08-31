@@ -75,6 +75,60 @@ test("raises an exact-candidate GitHub PR and completes only after polling obser
   }
 });
 
+test("does not publish when the confirmed candidate changes before approval reservation", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-stale-candidate-approval-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await createApprovalReadyTask(store, directory, "Reject stale candidate approval");
+    const expectedCandidate = {
+      candidateId: "C1",
+      candidateRevision: 2,
+      candidateHeadRevision: "b".repeat(40),
+    };
+    let transitioned = false;
+    const racedStore = new Proxy(store, {
+      get(target, property) {
+        if (property === "transition") {
+          return async (...args) => {
+            if (!transitioned) {
+              transitioned = true;
+              await target.update(task.id, (draft) => {
+                draft.candidates.at(-1).revisionNumber = 3;
+                draft.candidates.at(-1).headRevision = "d".repeat(40);
+              });
+            }
+            return target.transition(...args);
+          };
+        }
+        const value = Reflect.get(target, property, target);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    let publishCalled = false;
+    const orchestrator = new TaskOrchestrator(racedStore, {
+      worktreeManager: { async verifyCandidate() {} },
+      pullRequestManager: {
+        async publish() {
+          publishCalled = true;
+          return pullRequestObservation({ state: "open" });
+        },
+      },
+    });
+
+    await assert.rejects(
+      () => orchestrator.approvePullRequest(task.id, "Approve exact candidate", expectedCandidate),
+      (error) => error.code === "STALE_CANDIDATE" && /candidate changed/i.test(error.message),
+    );
+    const rejected = await store.get(task.id);
+    assert.equal(publishCalled, false);
+    assert.equal(rejected.status, "awaiting-human-approval");
+    assert.equal(rejected.pullRequestIntent, null);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("retains open PR state across transient polling errors and blocks a closed-unmerged PR", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-pr-polling-"));
   try {

@@ -101,12 +101,36 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson, re
         return true;
       }
       if (action === "approve-merge") {
-        await orchestrator.approvePullRequest(id, actionInput.note ?? "");
+        try {
+          await orchestrator.approvePullRequest(
+            id,
+            actionInput.note ?? "",
+            companionCandidateScope ? candidateScopeFrom(actionInput) : undefined,
+          );
+        } catch (error) {
+          if (error?.code === "STALE_CANDIDATE") {
+            send(response, 409, staleCandidateResponse(error));
+            return true;
+          }
+          throw error;
+        }
         send(response, 200, { pullRequestOpened: true });
         return true;
       }
       if (action === "open-pr") {
-        await orchestrator.approvePullRequest(id, actionInput.note ?? "");
+        try {
+          await orchestrator.approvePullRequest(
+            id,
+            actionInput.note ?? "",
+            companionCandidateScope ? candidateScopeFrom(actionInput) : undefined,
+          );
+        } catch (error) {
+          if (error?.code === "STALE_CANDIDATE") {
+            send(response, 409, staleCandidateResponse(error));
+            return true;
+          }
+          throw error;
+        }
         send(response, 200, { pullRequestOpened: true });
         return true;
       }
@@ -385,6 +409,18 @@ const CANDIDATE_SCOPE_FIELDS = ["candidateId", "candidateRevision", "candidateHe
 
 function hasCandidateScope(value) {
   return CANDIDATE_SCOPE_FIELDS.some((field) => Object.hasOwn(value, field));
+}
+
+function candidateScopeFrom(value) {
+  return Object.fromEntries(CANDIDATE_SCOPE_FIELDS.map((field) => [field, value[field]]));
+}
+
+function staleCandidateResponse(error) {
+  return {
+    error: error.message,
+    code: "stale-candidate",
+    evidence: error.evidence ?? [error.message],
+  };
 }
 
 function isRecord(value) {

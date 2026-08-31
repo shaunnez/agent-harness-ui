@@ -14,11 +14,11 @@ export class PullRequestOrchestrator {
     this._mergeActive = mergeActive;
     this._worktrees = worktrees;
   }
-  async approvePullRequest(id, note = "") {
+  async approvePullRequest(id, note = "", expectedCandidate = null) {
     if (this._mergeActive.has(id))
       throw new Error("This task already has a GitHub PR reconciliation in progress.");
     this._mergeActive.add(id);
-    return this._approvePullRequest(id, note).finally(() => this._mergeActive.delete(id));
+    return this._approvePullRequest(id, note, expectedCandidate).finally(() => this._mergeActive.delete(id));
   }
 
   async reconcilePullRequest(id) {
@@ -30,11 +30,13 @@ export class PullRequestOrchestrator {
     );
   }
 
-  async _approvePullRequest(id, note = "") {
+  async _approvePullRequest(id, note = "", expectedCandidate = null) {
     let task = await this._store.get(id);
     if (!task) throw new Error("Task not found.");
     if (task.status === "awaiting-human-approval") {
-      const candidate = currentCandidate(task);
+      const candidate = expectedCandidate
+        ? assertExpectedCandidate(task, expectedCandidate)
+        : currentCandidate(task);
       if (candidate.status !== "awaiting_human_approval")
         throw new Error("The current candidate has not cleared every gate.");
       assertCandidateGatesFresh(task, candidate);
@@ -42,53 +44,63 @@ export class PullRequestOrchestrator {
         throw new Error("The candidate does not have a named GitHub target and exact head revision.");
       }
       await this._worktrees.verifyCandidate(candidate);
-      task = await this._store.transition(
-        id,
-        (draft) => {
-          const activeCandidate = currentCandidate(draft);
-          return (
-            draft.status === "awaiting-human-approval" &&
-            activeCandidate.status === "awaiting_human_approval" &&
-            candidateGateFailure(draft, activeCandidate) == null
-          );
-        },
-        (draft) => {
-          const activeCandidate = currentCandidate(draft);
-          const startedAt = now();
-          draft.status = "merging";
-          draft.pullRequestIntent = {
-            candidateId: activeCandidate.id,
-            candidateRevision: activeCandidate.revisionNumber,
-            baseRevision: activeCandidate.baseRevision,
-            headRevision: activeCandidate.headRevision,
-            targetBranch: activeCandidate.baseBranch,
-            headBranch: pullRequestBranch(draft, activeCandidate),
-            remoteName: null,
-            repository: null,
-            number: null,
-            url: null,
-            note: note.trim().slice(0, 5_000),
-            status: "publishing",
-            startedAt,
-            openedAt: null,
-            mergedAt: null,
-            closedAt: null,
-            mergeCommitRevision: null,
-            lastCheckedAt: null,
-            lastError: null,
-            consecutivePollFailures: 0,
-          };
-          draft.events.push(
-            activity(
-              "approval",
-              "GitHub PR intent recorded",
-              `${activeCandidate.id} revision ${activeCandidate.revisionNumber} is reserved for a PR into ${activeCandidate.baseBranch}.`,
-              "warning",
-              "decision",
-            ),
-          );
-        },
-      );
+      let staleCandidateError = null;
+      try {
+        task = await this._store.transition(
+          id,
+          (draft) => {
+            const activeCandidate = draft.candidates?.at(-1);
+            if (expectedCandidate && !sameExpectedCandidate(activeCandidate, expectedCandidate)) {
+              staleCandidateError = expectedCandidateError(expectedCandidate, activeCandidate);
+              return false;
+            }
+            return (
+              draft.status === "awaiting-human-approval" &&
+              activeCandidate?.status === "awaiting_human_approval" &&
+              candidateGateFailure(draft, activeCandidate) == null
+            );
+          },
+          (draft) => {
+            const activeCandidate = currentCandidate(draft);
+            const startedAt = now();
+            draft.status = "merging";
+            draft.pullRequestIntent = {
+              candidateId: activeCandidate.id,
+              candidateRevision: activeCandidate.revisionNumber,
+              baseRevision: activeCandidate.baseRevision,
+              headRevision: activeCandidate.headRevision,
+              targetBranch: activeCandidate.baseBranch,
+              headBranch: pullRequestBranch(draft, activeCandidate),
+              remoteName: null,
+              repository: null,
+              number: null,
+              url: null,
+              note: note.trim().slice(0, 5_000),
+              status: "publishing",
+              startedAt,
+              openedAt: null,
+              mergedAt: null,
+              closedAt: null,
+              mergeCommitRevision: null,
+              lastCheckedAt: null,
+              lastError: null,
+              consecutivePollFailures: 0,
+            };
+            draft.events.push(
+              activity(
+                "approval",
+                "GitHub PR intent recorded",
+                `${activeCandidate.id} revision ${activeCandidate.revisionNumber} is reserved for a PR into ${activeCandidate.baseBranch}.`,
+                "warning",
+                "decision",
+              ),
+            );
+          },
+        );
+      } catch (error) {
+        if (staleCandidateError && error?.code === "TASK_TRANSITION_CONFLICT") throw staleCandidateError;
+        throw error;
+      }
     } else if (task.status !== "merging" || task.pullRequestIntent?.status !== "publishing") {
       throw new Error("The task is not awaiting GitHub PR approval.");
     }
@@ -459,4 +471,35 @@ export class PullRequestOrchestrator {
       );
     }
   }
+}
+
+function assertExpectedCandidate(task, expectedCandidate) {
+  const candidate = task?.candidates?.at(-1) ?? null;
+  if (!sameExpectedCandidate(candidate, expectedCandidate)) {
+    throw expectedCandidateError(expectedCandidate, candidate);
+  }
+  return candidate;
+}
+
+function sameExpectedCandidate(candidate, expectedCandidate) {
+  return Boolean(
+    candidate &&
+      candidate.id === expectedCandidate?.candidateId &&
+      candidate.revisionNumber === expectedCandidate?.candidateRevision &&
+      candidate.headRevision === expectedCandidate?.candidateHeadRevision,
+  );
+}
+
+function expectedCandidateError(expectedCandidate, candidate) {
+  const error = new Error(
+    "The candidate changed after this action was proposed. The proposal remains reviewable and must be refreshed.",
+  );
+  error.code = "STALE_CANDIDATE";
+  error.evidence = [
+    `Expected ${expectedCandidate?.candidateId} revision ${expectedCandidate?.candidateRevision} @ ${expectedCandidate?.candidateHeadRevision}.`,
+    candidate
+      ? `Current ${candidate.id} revision ${candidate.revisionNumber} @ ${candidate.headRevision ?? "no head revision"}.`
+      : "No integration candidate is retained on this task.",
+  ];
+  return error;
 }

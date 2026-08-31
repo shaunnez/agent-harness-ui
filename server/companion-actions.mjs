@@ -115,20 +115,29 @@ export function applyTaskRolePolicy(task, role, policy) {
 export async function updateTaskRolePolicy({ store, taskId, input, catalog } = {}) {
   const task = await store?.get(taskId);
   if (!task) return companionDenial("unauthorized", "The selected task is no longer available.", [], 404);
+  const authority = repositoryAuthorityEligibility(task);
+  if (!authority.ok) return authority;
   const settings = await store.settings();
   const resolvedCatalog = catalog ?? (await readExecutionProviderCatalog());
   const eligibility = resolveRolePolicyEligibility(task, input, settings, resolvedCatalog);
   if (!eligibility.ok) return eligibility;
 
+  let authorityDenial;
   let updated;
   try {
     updated = await store.transition(
       taskId,
-      (draft) => Boolean(draft.agentConfig?.stagePolicies) && draft.id === taskId,
+      (draft) => {
+        if (!draft.agentConfig?.stagePolicies || draft.id !== taskId) return false;
+        const currentAuthority = repositoryAuthorityEligibility(draft);
+        if (!currentAuthority.ok) authorityDenial = currentAuthority;
+        return currentAuthority.ok;
+      },
       (draft) => applyTaskRolePolicy(draft, eligibility.role, eligibility.policy),
     );
   } catch (error) {
     if (error?.code === "TASK_TRANSITION_CONFLICT") {
+      if (authorityDenial) return authorityDenial;
       return companionDenial(
         "unauthorized",
         "The task changed before its policy snapshot could be updated. Review the task and try again.",
@@ -186,8 +195,10 @@ export function repositoryAuthorityEligibility(task) {
   if (task?.repositoryAuthorityStatus !== "bound" || !isRecord(authority)) {
     return companionDenial(
       "repository-authority",
-      "The task is not bound to a verified repository authority, so candidate promotion is not permitted.",
-      ["Revalidate the retained plan and repository authority before promoting this candidate."],
+      "The task is not bound to a verified repository authority, so this governed action is not permitted.",
+      [
+        "Revalidate the retained plan and repository authority before changing task policy or promoting a candidate.",
+      ],
     );
   }
   const missing = REQUIRED_AUTHORITY_FIELDS.filter((field) => !nonEmptyString(authority[field]));

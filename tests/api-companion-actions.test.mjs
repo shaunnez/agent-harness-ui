@@ -85,9 +85,10 @@ function readyForReviewTask(overrides = {}) {
   });
 }
 
-function memoryStore(task) {
+function memoryStore(task, { beforeTransition = null } = {}) {
   const current = structuredClone(task);
   const globalSettings = structuredClone(settings);
+  let transitionHook = beforeTransition;
   return {
     async get(id) {
       return current.id === id ? structuredClone(current) : null;
@@ -97,6 +98,11 @@ function memoryStore(task) {
     },
     async transition(id, condition, updater) {
       if (current.id !== id) return null;
+      if (transitionHook) {
+        const hook = transitionHook;
+        transitionHook = null;
+        await hook(current);
+      }
       if (!condition(current)) {
         const error = new Error("Task state changed before the requested action could be reserved.");
         error.code = "TASK_TRANSITION_CONFLICT";
@@ -119,10 +125,15 @@ function memoryStore(task) {
   };
 }
 
-function routeHarness(store, { mutateBeforeReservation = false } = {}) {
+function routeHarness(store, { mutateBeforeReservation = false, approvePullRequest = null } = {}) {
   let sent = null;
   let started = null;
+  let approved = null;
   const orchestrator = {
+    async approvePullRequest(id, note, expectedCandidate) {
+      approved = { id, note, expectedCandidate };
+      return approvePullRequest?.({ id, note, expectedCandidate });
+    },
     async start(id, kind, options = {}) {
       started = { id, kind };
       if (mutateBeforeReservation) {
@@ -150,6 +161,7 @@ function routeHarness(store, { mutateBeforeReservation = false } = {}) {
       return sent;
     },
     started: () => started,
+    approved: () => approved,
   };
 }
 
@@ -186,6 +198,44 @@ test("task role policy mutation is isolated from global settings and historical 
   assert.equal(after.agentConfig.model, task.agentConfig.model);
   assert.deepEqual(after.runs, task.runs);
   assert.deepEqual(store.settingsRead(), settings);
+});
+
+test("task role policy rejects a task without repository authority", async () => {
+  const task = taskFixture({ repositoryAuthorityStatus: "legacy-unbound", repositoryAuthority: null });
+  const store = memoryStore(task);
+  const result = await updateTaskRolePolicy({
+    store,
+    taskId: task.id,
+    input: { role: "implement", model: "gpt-5.6-sol", reasoning: "high" },
+    catalog: modelCatalog,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, "repository-authority");
+  assert.deepEqual(
+    store.read().agentConfig.stagePolicies.implement,
+    task.agentConfig.stagePolicies.implement,
+  );
+});
+
+test("task role policy revalidates repository authority inside its transition", async () => {
+  const task = taskFixture();
+  const store = memoryStore(task, {
+    beforeTransition(current) {
+      current.repositoryAuthorityStatus = "legacy-unbound";
+    },
+  });
+  const result = await updateTaskRolePolicy({
+    store,
+    taskId: task.id,
+    input: { role: "implement", model: "gpt-5.6-sol", reasoning: "high" },
+    catalog: modelCatalog,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, "repository-authority");
+  assert.deepEqual(
+    store.read().agentConfig.stagePolicies.implement,
+    task.agentConfig.stagePolicies.implement,
+  );
 });
 
 test("role policy route rejects unknown fields and invalid model policy", async () => {
@@ -269,6 +319,53 @@ test("gate promotion delegates an eligible exact candidate to the existing actio
   assert.equal(result.status, 202);
   assert.deepEqual(result.body, { started: true });
   assert.deepEqual(route.started(), { id: "AH-001", kind: "review" });
+});
+
+test("open-pr forwards exact candidate scope and retains a stale approval denial", async () => {
+  const candidate = candidateFixture({ status: "awaiting_human_approval" });
+  const freshness = {
+    fresh: true,
+    candidateId: candidate.id,
+    candidateRevision: candidate.revisionNumber,
+    target: { candidateId: candidate.id, candidateRevision: candidate.revisionNumber },
+  };
+  const store = memoryStore(
+    taskFixture({
+      status: "awaiting-human-approval",
+      currentStage: "approval",
+      runs: undefined,
+      candidates: [candidate],
+      gateFreshness: {
+        "dev-review": freshness,
+        test: freshness,
+        "final-review": freshness,
+      },
+    }),
+  );
+  const route = routeHarness(store, {
+    approvePullRequest: async () => {
+      const error = new Error("The candidate changed after this action was proposed.");
+      error.code = "STALE_CANDIDATE";
+      error.evidence = ["Current C1 revision 2 @ dddddddd."];
+      throw error;
+    },
+  });
+  const result = await route.invoke("/api/tasks/AH-001/open-pr", "POST", {
+    candidateId: "C1",
+    candidateRevision: 1,
+    candidateHeadRevision: "b".repeat(40),
+  });
+  assert.equal(result.status, 409);
+  assert.equal(result.body.code, "stale-candidate");
+  assert.deepEqual(route.approved(), {
+    id: "AH-001",
+    note: "",
+    expectedCandidate: {
+      candidateId: "C1",
+      candidateRevision: 1,
+      candidateHeadRevision: "b".repeat(40),
+    },
+  });
 });
 
 test("gate promotion rejects payload fields that are not part of the fixed confirmation scope", () => {
