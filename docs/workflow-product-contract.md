@@ -259,7 +259,92 @@ Filters are **Activity**, **Agent runs**, **Test runs**, and **Decisions**. Even
 
 Each row records time, event, scope, model/agent, input/cached/output tokens, cache rate, work credits when available, clearly labelled API-rate estimate, duration, and artifact. Task/stage telemetry separately counts focused checks, full-manifest executions, review retries, and candidate repairs. It states that attributable ChatGPT-plan billing is unavailable. Scope must identify the candidate, slice, stage, or test run. Selecting a row sends its full evidence to the universal inspector. Avoid duplicating stage summaries or artifacts here.
 
-## 9. Durable artifacts
+## 9. Contextual chat companion
+
+The companion is a contextual, evidence-first operator surface. It derives a
+fresh `CompanionContext` for every assistant turn from:
+
+```ts
+{
+  route,
+  taskId?,
+  activeStage,
+  viewedStage,
+  candidateId?,
+  candidateRevision?,
+}
+```
+
+`activeStage` is the task's runtime stage. `viewedStage` is the stage selected
+for inspection and is not a workflow transition; it may be stale or may be an
+unstarted future stage. Context answers name the route, selected task, active
+runtime stage, viewed stage, and exact candidate/revision when one is recorded.
+A stale viewed stage is described as inspection evidence and never as the
+current runtime stage.
+
+### Closed hybrid intent protocol
+
+The companion accepts a small deterministic natural-language vocabulary and its
+equivalent closed typed intents:
+
+- contextual explanation;
+- read-only navigation to the Tasks page or a task;
+- create-task proposal;
+- task-scoped role-model proposal; and
+- candidate-bound gate-promotion proposal.
+
+The parser emits a discriminated `CompanionIntent` union. Unknown, malformed,
+or ambiguous text returns an explanation plus available examples. It never
+falls through to a tool call, URL, endpoint, repository path, handler, or
+arbitrary executable intent. Read-only navigation can execute directly; every
+mutation stops at a reviewable proposal.
+
+### Governed action proposals
+
+Mutation cards use the lifecycle
+`proposed → confirmed → executed`, with
+`proposed → dismissed` for cancellation. A proposal contains a human-readable
+summary, eligibility rationale and evidence, `confirmationRequired: true`, and
+an exact target:
+
+- task creation carries a validated `NewTaskDraft`;
+- role-model changes carry `scope: "task_snapshot"`, task ID, role, model, and
+  reasoning; and
+- gate promotion carries the task ID, candidate ID, candidate revision, and
+  next gate.
+
+Proposal creation, rendering, dismissal, and local confirmation do not invoke a
+mutation endpoint. The existing server-authoritative local boundary is the
+only execution path after explicit operator confirmation. It must revalidate
+CSRF, task identity, repository authority, discovered model/reasoning policy,
+candidate identity/revision, and canonical gate eligibility. Stale,
+unauthorized, or ineligible confirmation fails closed, retains its reason on
+the proposal, and never becomes `executed`.
+
+Role-model changes update only the selected task's reproducible policy snapshot;
+they cannot change global settings. Existing task and agent-run records retain
+their historical model and reasoning metadata. Promotion is bound to the exact
+candidate revision, so candidate drift or a later repair invalidates downstream
+gate evidence rather than allowing an old proposal to advance the task.
+
+### Trusted catalogue and A2UI decision
+
+The action-card renderer accepts only the fixed local catalogue of create-task,
+role-model, and gate-promotion cards. Catalogue data has fixed fields and
+contains no callbacks, JSX, HTML, scripts, URLs, endpoints, repository
+commands, or free-form model-selected mutation payloads. Catalogue validation
+rejects unknown card types, extra fields, mismatched action types, and malformed
+targets. Model output is therefore an untrusted intent suggestion, not
+executable UI.
+
+A2UI was evaluated as a declarative protocol pattern and fits only when its
+output is projected into this trusted local React catalogue. It does not
+justify a network dependency or arbitrary model-generated components and event
+handlers. The companion keeps prompt-supplied context separate from repository
+access permission and never claims that supplied context proves what a model
+semantically used.
+
+## 10. Durable artifacts
 
 Artifacts are first-class, versioned records, not transient UI copy. Important examples include:
 
@@ -279,7 +364,7 @@ Artifacts are first-class, versioned records, not transient UI copy. Important e
 
 Artifact viewers should be wide, read-only by default, version-aware, linkable, and able to show provenance. Editable skills/prompts belong to their own configuration/editor flow, not an artifact viewer.
 
-## 10. Suggested backend entities
+## 11. Suggested backend entities
 
 Minimum relational/event model:
 
@@ -313,7 +398,7 @@ Minimum relational/event model:
 
 Use immutable revision tables for agents, skills, candidates, and gate definitions so historical runs remain reproducible.
 
-## 11. API and event boundaries
+## 12. API and event boundaries
 
 Representative commands:
 
@@ -352,7 +437,7 @@ Representative emitted events:
 
 Commands that mutate workflow state require idempotency keys and optimistic concurrency against the expected task/candidate revision. Event records should be append-only.
 
-## 12. Cost and usage
+## 13. Cost and usage
 
 Store usage at the lowest available run granularity, then aggregate upward by slice, stage, candidate, task, provider, model, and day. Preserve:
 
@@ -364,7 +449,7 @@ Store usage at the lowest available run granularity, then aggregate upward by sl
 
 Label calculated values **Approx. cost**. A task can display a total plus a provider/model breakdown.
 
-## 13. Concurrency, auditability, and safety
+## 14. Concurrency, auditability, and safety
 
 - Only one candidate revision can be current, but historical candidates remain inspectable.
 - Candidate assembly must verify expected base and member SHAs before writing.
@@ -374,7 +459,7 @@ Label calculated values **Approx. cost**. A task can display a total plus a prov
 - Secrets and raw model context must be redacted from artifacts and activity rows according to policy.
 - Agent/skill configuration changes create revisions; they never rewrite the configuration attached to past runs.
 
-## 14. Prototype-only behavior vs production behavior
+## 15. Prototype-only behavior vs production behavior
 
 The current prototype uses hard-coded data and a **Prototype states** menu to expose active, Grill, failed, blocked, and approval scenarios. That menu is intentionally not part of the production workflow.
 
