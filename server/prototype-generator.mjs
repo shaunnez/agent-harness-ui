@@ -77,8 +77,8 @@ ${designBrief(
 After DesignSync succeeds, reply with the published Claude Design URL, a short title, a two-sentence summary, and a detailed implementation contract covering layout, component anatomy, interaction states, accessibility, and mutation-confirmation behavior. The contract must be sufficient for a downstream coding agent that cannot open the hosted prototype.`;
 }
 
-function parseUrl(text) {
-  return text.match(/https:\/\/[^\s)\]}>"']+/)?.[0] ?? null;
+export function parseUrl(text) {
+  return text.match(/https:\/\/[^\s)\]}>"'`*]+/)?.[0] ?? null;
 }
 
 function zeroUsage() {

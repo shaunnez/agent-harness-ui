@@ -5,7 +5,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
-import { claudeDesignArgs } from "../server/prototype-generator.mjs";
+import { claudeDesignArgs, parseUrl } from "../server/prototype-generator.mjs";
 import { parseGrillQuestions } from "../server/structured-output.mjs";
 
 const GRILL = `<grill-questions>{"questions":[{"question":"How safe?","whyItMatters":"A human gate is required.","options":[{"label":"Confirm first","description":"Require confirmation.","recommended":true},{"label":"Execute immediately","description":"Skip confirmation.","recommended":false}],"allowCustom":true}]}</grill-questions>`;
@@ -24,6 +24,13 @@ test("confines non-interactive Claude Design publication to DesignSync", () => {
   );
   assert.equal(args.includes("--safe-mode"), true);
   assert.equal(args.includes("--dangerously-skip-permissions"), false);
+});
+
+test("extracts a Claude Design URL without Markdown emphasis", () => {
+  assert.equal(
+    parseUrl("**https://claude.ai/design/project-123** — published"),
+    "https://claude.ai/design/project-123",
+  );
 });
 
 async function waitForStatus(store, id, status) {
