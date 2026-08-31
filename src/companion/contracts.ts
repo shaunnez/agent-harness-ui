@@ -280,6 +280,14 @@ export function assertActionProposal(value: unknown): asserts value is ActionPro
   if (value.confirmationRequired !== true) throw new Error("All companion mutations require confirmation.");
   if (!isProposalState(value.state)) throw new Error("Action proposal has an unknown lifecycle state.");
   assertEligibility(value.eligibility);
+  if (
+    value.actionType === "create-task" &&
+    isRecord(value.target) &&
+    value.target.draft === null &&
+    value.eligibility.eligible
+  ) {
+    throw new Error("Create-task proposals require a validated draft before confirmation.");
+  }
   assertTarget(value.actionType, value.target);
   if (value.failure !== undefined) assertFailure(value.failure);
   for (const key of ["confirmedAt", "executedAt", "dismissedAt", "dismissedReason"]) {

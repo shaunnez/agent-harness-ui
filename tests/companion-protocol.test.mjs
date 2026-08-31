@@ -295,6 +295,21 @@ test("proposal construction rejects runtime extras before a card can be rendered
   );
 });
 
+test("rejects an eligible create-task proposal without an exact draft", () => {
+  assert.throws(
+    () =>
+      createActionProposal({
+        id: "draftless-create-proposal",
+        actionType: "create-task",
+        summary: "Prepare a new task.",
+        eligibility,
+        target: { kind: "new-task", draft: null },
+        createdAt: "2026-08-31T00:00:00.000Z",
+      }),
+    /validated draft before confirmation/,
+  );
+});
+
 test("catalogue preserves exact task snapshot and candidate scopes", () => {
   const modelProposal = createActionProposal({
     id: "model-proposal",

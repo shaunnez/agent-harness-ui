@@ -1,12 +1,12 @@
-import test from "node:test";
 import assert from "node:assert/strict";
-import { createTaskActionRoutes } from "../server/task-action-routes.mjs";
+import test from "node:test";
 import {
   applyTaskRolePolicy,
   resolveGatePromotionEligibility,
   resolveRolePolicyEligibility,
   updateTaskRolePolicy,
 } from "../server/companion-actions.mjs";
+import { createTaskActionRoutes } from "../server/task-action-routes.mjs";
 
 const modelCatalog = {
   models: [
@@ -366,6 +366,47 @@ test("open-pr forwards exact candidate scope and retains a stale approval denial
       candidateHeadRevision: "b".repeat(40),
     },
   });
+});
+
+test("open-pr retains a repository-authority denial from the reservation boundary", async () => {
+  const candidate = candidateFixture({ status: "awaiting_human_approval" });
+  const freshness = {
+    fresh: true,
+    candidateId: candidate.id,
+    candidateRevision: candidate.revisionNumber,
+    target: { candidateId: candidate.id, candidateRevision: candidate.revisionNumber },
+  };
+  const store = memoryStore(
+    taskFixture({
+      status: "awaiting-human-approval",
+      currentStage: "approval",
+      runs: undefined,
+      candidates: [candidate],
+      gateFreshness: {
+        "dev-review": freshness,
+        test: freshness,
+        "final-review": freshness,
+      },
+    }),
+  );
+  const route = routeHarness(store, {
+    approvePullRequest: async () => {
+      const error = new Error("The task is no longer bound to a verified repository authority.");
+      error.code = "REPOSITORY_AUTHORITY";
+      error.statusCode = 409;
+      error.evidence = ["Repository authority status changed before PR reservation."];
+      throw error;
+    },
+  });
+
+  const result = await route.invoke("/api/tasks/AH-001/open-pr", "POST", {
+    candidateId: "C1",
+    candidateRevision: 1,
+    candidateHeadRevision: "b".repeat(40),
+  });
+  assert.equal(result.status, 409);
+  assert.equal(result.body.code, "repository-authority");
+  assert.deepEqual(result.body.evidence, ["Repository authority status changed before PR reservation."]);
 });
 
 test("gate promotion rejects payload fields that are not part of the fixed confirmation scope", () => {

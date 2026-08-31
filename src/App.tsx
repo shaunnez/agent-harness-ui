@@ -651,11 +651,11 @@ export function App() {
           actionType: "create-task",
           summary: "Prepare a validated task draft for explicit confirmation.",
           eligibility: {
-            eligible: true,
-            rationale: "A complete NewTaskDraft will be captured and shown before the task API is called.",
+            eligible: false,
+            rationale: "A complete NewTaskDraft must be captured and shown before confirmation is available.",
             evidence: [
-              "Drafting performs no mutation.",
-              "Confirmation will reuse the existing CSRF-protected /api/tasks boundary.",
+              "No exact task mutation exists until the draft dialog is submitted.",
+              "After capture, confirmation will reuse the existing CSRF-protected /api/tasks boundary.",
             ],
           },
           target: { kind: "new-task", draft: null },

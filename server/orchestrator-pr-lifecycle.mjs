@@ -1,11 +1,11 @@
+import { repositoryAuthorityEligibility } from "./companion-actions.mjs";
 import { pullRequestBranch } from "./github-pull-request.mjs";
-
-import { now, zeroUsage, activity } from "./orchestrator-stage-support.mjs";
 import {
-  candidateGateFailure,
   assertCandidateGatesFresh,
+  candidateGateFailure,
   currentCandidate,
 } from "./orchestrator-run-policy.mjs";
+import { activity, now, zeroUsage } from "./orchestrator-stage-support.mjs";
 
 export class PullRequestOrchestrator {
   constructor({ store, github, mergeActive, worktrees }) {
@@ -45,6 +45,7 @@ export class PullRequestOrchestrator {
       }
       await this._worktrees.verifyCandidate(candidate);
       let staleCandidateError = null;
+      let reservationDenial = null;
       try {
         task = await this._store.transition(
           id,
@@ -53,6 +54,10 @@ export class PullRequestOrchestrator {
             if (expectedCandidate && !sameExpectedCandidate(activeCandidate, expectedCandidate)) {
               staleCandidateError = expectedCandidateError(expectedCandidate, activeCandidate);
               return false;
+            }
+            if (expectedCandidate) {
+              reservationDenial = candidateRepositoryAuthorityError(draft, activeCandidate);
+              if (reservationDenial) return false;
             }
             return (
               draft.status === "awaiting-human-approval" &&
@@ -99,6 +104,7 @@ export class PullRequestOrchestrator {
         );
       } catch (error) {
         if (staleCandidateError && error?.code === "TASK_TRANSITION_CONFLICT") throw staleCandidateError;
+        if (reservationDenial && error?.code === "TASK_TRANSITION_CONFLICT") throw reservationDenial;
         throw error;
       }
     } else if (task.status !== "merging" || task.pullRequestIntent?.status !== "publishing") {
@@ -500,6 +506,29 @@ function expectedCandidateError(expectedCandidate, candidate) {
     candidate
       ? `Current ${candidate.id} revision ${candidate.revisionNumber} @ ${candidate.headRevision ?? "no head revision"}.`
       : "No integration candidate is retained on this task.",
+  ];
+  return error;
+}
+
+function candidateRepositoryAuthorityError(task, candidate) {
+  const authority = repositoryAuthorityEligibility(task);
+  if (!authority.ok) {
+    const error = new Error(authority.reason);
+    error.code = "REPOSITORY_AUTHORITY";
+    error.statusCode = authority.status ?? 409;
+    error.evidence = authority.evidence;
+    return error;
+  }
+  if (candidate?.baseRevision === authority.authority.selectedRevision) return null;
+
+  const error = new Error(
+    "The candidate is not based on the current repository authority revision, so PR approval is not permitted.",
+  );
+  error.code = "REPOSITORY_AUTHORITY";
+  error.statusCode = 409;
+  error.evidence = [
+    `Candidate base revision: ${candidate?.baseRevision ?? "missing"}.`,
+    `Bound repository revision: ${authority.authority.selectedRevision}.`,
   ];
   return error;
 }

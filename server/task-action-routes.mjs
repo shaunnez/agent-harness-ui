@@ -1,16 +1,16 @@
 import { PROJECTED_ACTIONS, runActionAdmission } from "./action-policy.mjs";
-import { stageRunLimitFor } from "./run-activity.mjs";
+import {
+  companionActionResponse,
+  resolveGatePromotionEligibility,
+  updateTaskRolePolicy,
+} from "./companion-actions.mjs";
 import {
   retainQualificationFailuresForImplementationRetry,
   retryGrantContext,
   sameRetryGrantContext,
   withActionEligibility,
 } from "./retry-admission-policy.mjs";
-import {
-  companionActionResponse,
-  resolveGatePromotionEligibility,
-  updateTaskRolePolicy,
-} from "./companion-actions.mjs";
+import { stageRunLimitFor } from "./run-activity.mjs";
 
 const ROUTED_TASK_ACTIONS = new Set([
   ...PROJECTED_ACTIONS.filter((action) => action !== "continue-implementation"),
@@ -112,6 +112,10 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson, re
             send(response, 409, staleCandidateResponse(error));
             return true;
           }
+          if (error?.code === "REPOSITORY_AUTHORITY") {
+            send(response, error.statusCode ?? 409, repositoryAuthorityResponse(error));
+            return true;
+          }
           throw error;
         }
         send(response, 200, { pullRequestOpened: true });
@@ -127,6 +131,10 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson, re
         } catch (error) {
           if (error?.code === "STALE_CANDIDATE") {
             send(response, 409, staleCandidateResponse(error));
+            return true;
+          }
+          if (error?.code === "REPOSITORY_AUTHORITY") {
+            send(response, error.statusCode ?? 409, repositoryAuthorityResponse(error));
             return true;
           }
           throw error;
@@ -416,9 +424,17 @@ function candidateScopeFrom(value) {
 }
 
 function staleCandidateResponse(error) {
+  return companionErrorResponse(error, "stale-candidate");
+}
+
+function repositoryAuthorityResponse(error) {
+  return companionErrorResponse(error, "repository-authority");
+}
+
+function companionErrorResponse(error, code) {
   return {
     error: error.message,
-    code: "stale-candidate",
+    code,
     evidence: error.evidence ?? [error.message],
   };
 }
