@@ -1,19 +1,46 @@
 import { PROJECTED_ACTIONS, runActionAdmission } from "./action-policy.mjs";
-import { stageRunLimitFor } from "./run-activity.mjs";
+import {
+  companionActionResponse,
+  resolveGatePromotionEligibility,
+  updateTaskRolePolicy,
+} from "./companion-actions.mjs";
 import {
   retainQualificationFailuresForImplementationRetry,
   retryGrantContext,
   sameRetryGrantContext,
   withActionEligibility,
 } from "./retry-admission-policy.mjs";
+import { stageRunLimitFor } from "./run-activity.mjs";
 
 const ROUTED_TASK_ACTIONS = new Set([
   ...PROJECTED_ACTIONS.filter((action) => action !== "continue-implementation"),
   "cancel",
 ]);
 
-export function createTaskActionRoutes({ store, orchestrator, send, readJson }) {
+export function createTaskActionRoutes({ store, orchestrator, send, readJson, readModelCatalog }) {
   return async function handleTaskActionRoute(request, response, url) {
+    const rolePolicyMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/(?:agent-policy|role-policy)$/);
+    if (rolePolicyMatch && ["PUT", "POST"].includes(request.method)) {
+      const id = decodeURIComponent(rolePolicyMatch[1]);
+      const result = await updateTaskRolePolicy({
+        store,
+        taskId: id,
+        input: await readJson(request),
+        catalog: readModelCatalog ? await readModelCatalog() : undefined,
+      });
+      if (!result.ok) {
+        send(response, result.status, companionActionResponse(result));
+        return true;
+      }
+      send(response, 200, {
+        task: result.task,
+        scope: "task_snapshot",
+        role: result.role,
+        policy: result.policy,
+      });
+      return true;
+    }
+
     const actionMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/([^/]+)$/);
     if (request.method === "POST" && actionMatch && ROUTED_TASK_ACTIONS.has(actionMatch[2])) {
       const id = decodeURIComponent(actionMatch[1]);
@@ -33,23 +60,33 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson }) 
         return true;
       }
 
-      const notes = [
-        "approve-spec",
-        "approve-plan",
-        "approve-merge",
-        "open-pr",
-        "complete-merged",
-        "close-already-satisfied",
-      ].includes(action)
-        ? await readJson(request)
-        : {};
+      const notes =
+        [
+          "approve-spec",
+          "approve-plan",
+          "approve-merge",
+          "open-pr",
+          "complete-merged",
+          "close-already-satisfied",
+        ].includes(action) || CANDIDATE_BOUND_ACTIONS.has(action)
+          ? await readJson(request)
+          : {};
+      const actionInput = isRecord(notes) ? notes : {};
+      const companionCandidateScope = CANDIDATE_BOUND_ACTIONS.has(action) && hasCandidateScope(actionInput);
+      const companionGateEligibility = companionCandidateScope
+        ? resolveGatePromotionEligibility(task, { action, ...actionInput })
+        : null;
+      if (companionGateEligibility && !companionGateEligibility.ok) {
+        send(response, companionGateEligibility.status, companionActionResponse(companionGateEligibility));
+        return true;
+      }
       if (action === "approve-spec") {
-        const result = await orchestrator.approveSpecification(id, notes.note ?? "");
+        const result = await orchestrator.approveSpecification(id, actionInput.note ?? "");
         send(response, result.started ? 202 : 200, result);
         return true;
       }
       if (action === "approve-plan") {
-        await orchestrator.approvePlan(id, notes.note ?? "");
+        await orchestrator.approvePlan(id, actionInput.note ?? "");
         send(response, 200, { approved: true });
         return true;
       }
@@ -59,17 +96,49 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson }) 
         return true;
       }
       if (action === "close-already-satisfied") {
-        await orchestrator.closeAlreadySatisfied(id, notes.note ?? "");
+        await orchestrator.closeAlreadySatisfied(id, actionInput.note ?? "");
         send(response, 200, { closed: true });
         return true;
       }
       if (action === "approve-merge") {
-        await orchestrator.approvePullRequest(id, notes.note ?? "");
+        try {
+          await orchestrator.approvePullRequest(
+            id,
+            actionInput.note ?? "",
+            companionCandidateScope ? candidateScopeFrom(actionInput) : undefined,
+          );
+        } catch (error) {
+          if (error?.code === "STALE_CANDIDATE") {
+            send(response, 409, staleCandidateResponse(error));
+            return true;
+          }
+          if (error?.code === "REPOSITORY_AUTHORITY") {
+            send(response, error.statusCode ?? 409, repositoryAuthorityResponse(error));
+            return true;
+          }
+          throw error;
+        }
         send(response, 200, { pullRequestOpened: true });
         return true;
       }
       if (action === "open-pr") {
-        await orchestrator.approvePullRequest(id, notes.note ?? "");
+        try {
+          await orchestrator.approvePullRequest(
+            id,
+            actionInput.note ?? "",
+            companionCandidateScope ? candidateScopeFrom(actionInput) : undefined,
+          );
+        } catch (error) {
+          if (error?.code === "STALE_CANDIDATE") {
+            send(response, 409, staleCandidateResponse(error));
+            return true;
+          }
+          if (error?.code === "REPOSITORY_AUTHORITY") {
+            send(response, error.statusCode ?? 409, repositoryAuthorityResponse(error));
+            return true;
+          }
+          throw error;
+        }
         send(response, 200, { pullRequestOpened: true });
         return true;
       }
@@ -84,7 +153,7 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson }) 
         return true;
       }
       if (action === "complete-merged") {
-        await orchestrator.completeMergedTask(id, notes.note ?? "");
+        await orchestrator.completeMergedTask(id, actionInput.note ?? "");
         send(response, 200, { completed: true });
         return true;
       }
@@ -286,32 +355,42 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson }) 
           return true;
         }
       }
-      const started = await orchestrator.start(
-        id,
-        runConfiguration.kind,
-        action === "plan" && task.currentStage === "implement"
-          ? {
-              onReserve: (draft) => {
-                draft.currentStage = "plan";
-                draft.events.push({
-                  id: crypto.randomUUID(),
-                  at: new Date().toISOString(),
-                  category: "decision",
-                  tone: "warning",
-                  stage: "plan",
-                  title: "Invalid approved plan returned for correction",
-                  detail:
-                    "Implementation did not have a valid focused verification contract. Planning must produce a corrected work-package manifest before writes resume.",
-                });
-              },
-            }
-          : {},
-      );
+      const startOptions = companionCandidateScope
+        ? {
+            canStart: (draft) => resolveGatePromotionEligibility(draft, { action, ...actionInput }).ok,
+          }
+        : {};
+      if (action === "plan" && task.currentStage === "implement") {
+        startOptions.onReserve = (draft) => {
+          draft.currentStage = "plan";
+          draft.events.push({
+            id: crypto.randomUUID(),
+            at: new Date().toISOString(),
+            category: "decision",
+            tone: "warning",
+            stage: "plan",
+            title: "Invalid approved plan returned for correction",
+            detail:
+              "Implementation did not have a valid focused verification contract. Planning must produce a corrected work-package manifest before writes resume.",
+          });
+        };
+      }
+      const started = await orchestrator.start(id, runConfiguration.kind, startOptions);
       if (started) {
         send(response, 202, { started: true });
         return true;
       }
       const latest = await store.get(id);
+      if (companionCandidateScope) {
+        const latestEligibility = resolveGatePromotionEligibility(latest, {
+          action,
+          ...actionInput,
+        });
+        if (!latestEligibility.ok) {
+          send(response, latestEligibility.status, companionActionResponse(latestEligibility));
+          return true;
+        }
+      }
       const latestStage = runConfiguration.kind === "repair" ? "implement" : latest.currentStage;
       const actuallyRunning =
         orchestrator.isRunning?.(id) === true ||
@@ -331,4 +410,35 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson }) 
 
     return false;
   };
+}
+
+const CANDIDATE_BOUND_ACTIONS = new Set(["review", "test", "final-review", "approve-merge", "open-pr"]);
+const CANDIDATE_SCOPE_FIELDS = ["candidateId", "candidateRevision", "candidateHeadRevision"];
+
+function hasCandidateScope(value) {
+  return CANDIDATE_SCOPE_FIELDS.some((field) => Object.hasOwn(value, field));
+}
+
+function candidateScopeFrom(value) {
+  return Object.fromEntries(CANDIDATE_SCOPE_FIELDS.map((field) => [field, value[field]]));
+}
+
+function staleCandidateResponse(error) {
+  return companionErrorResponse(error, "stale-candidate");
+}
+
+function repositoryAuthorityResponse(error) {
+  return companionErrorResponse(error, "repository-authority");
+}
+
+function companionErrorResponse(error, code) {
+  return {
+    error: error.message,
+    code,
+    evidence: error.evidence ?? [error.message],
+  };
+}
+
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

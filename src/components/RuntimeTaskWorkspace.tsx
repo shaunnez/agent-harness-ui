@@ -1,18 +1,19 @@
 import { CircleNotch } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { type StageId, workflowStages } from "../domain";
-import { RunActivity } from "./RunActivity";
 import type { TaskRouteDetail } from "../routes";
 import { CandidateDiffErrorViewer, CandidateDiffViewer } from "./CandidateDiffViewer";
-import { RuntimeCommandBar } from "./runtime/RuntimeCommandBar";
+import { CompanionPanel } from "./companion/CompanionPanel";
+import { RunActivity } from "./RunActivity";
 import type { RuntimeTaskWorkspaceProps } from "./runtime/contracts";
+import { RuntimeCommandBar } from "./runtime/RuntimeCommandBar";
 import { RuntimeArtifactViewer } from "./runtime/RuntimeInspectorPanels";
-import { RuntimeStagePresentation } from "./runtime/RuntimeStagePresentation";
 import { RuntimeStageNavigator } from "./runtime/RuntimeStageNavigator";
-import { RuntimeTaskInspector } from "./runtime/RuntimeTaskInspector";
+import { RuntimeStagePresentation } from "./runtime/RuntimeStagePresentation";
 import { RuntimeTaskHeader } from "./runtime/RuntimeTaskHeader";
-import { StageEvidenceStrip } from "./runtime/StageEvidenceStrip";
+import { RuntimeTaskInspector } from "./runtime/RuntimeTaskInspector";
 import { RuntimeWorkspaceFooter } from "./runtime/RuntimeWorkspaceFooter";
+import { StageEvidenceStrip } from "./runtime/StageEvidenceStrip";
 import { useRuntimeWorkspaceOverlays } from "./runtime/useRuntimeWorkspaceOverlays";
 import {
   getRuntimeArtifactFreshness,
@@ -54,6 +55,13 @@ export function RuntimeTaskWorkspace({
   onViewedStageChange,
   routeDetail,
   onRouteDetailChange,
+  companionContext,
+  companionMessages,
+  companionProposals,
+  onCompanionSubmitText,
+  onCompanionConfirmAction,
+  onCompanionDismissAction,
+  companionPendingProposalId,
 }: RuntimeTaskWorkspaceProps) {
   const [viewedStageId, setViewedStageId] = useState<StageId>(initialViewedStageId ?? task.currentStage);
   const [runError, setRunError] = useState<string | null>(null);
@@ -215,20 +223,42 @@ export function RuntimeTaskWorkspace({
             />
           </main>
 
-          <RuntimeTaskInspector
-            task={task}
-            viewedStageId={viewedStageId}
-            initialSelectedWorktreeId={initialSelectedWorktreeId}
-            candidateDiffLoading={candidateDiffLoading}
-            onProfileChange={onProfileChange}
-            onDecision={onDecision}
-            onEvaluate={onEvaluate}
-            onRemoveWorktree={onRemoveWorktree}
-            onLoadMoreArtifacts={onLoadMoreArtifacts}
-            onSelectStage={selectViewedStage}
-            onOpenArtifact={openRuntimeArtifact}
-            onOpenCandidateDiff={() => requestCandidateDiff()}
-          />
+          <div
+            className="runtime-support-column"
+            style={{
+              display: "grid",
+              gridTemplateRows: companionContext ? "minmax(0, 1fr) minmax(460px, 0.95fr)" : "minmax(0, 1fr)",
+              minWidth: 0,
+              minHeight: 0,
+              overflow: "hidden",
+            }}
+          >
+            <RuntimeTaskInspector
+              task={task}
+              viewedStageId={viewedStageId}
+              initialSelectedWorktreeId={initialSelectedWorktreeId}
+              candidateDiffLoading={candidateDiffLoading}
+              onProfileChange={onProfileChange}
+              onDecision={onDecision}
+              onEvaluate={onEvaluate}
+              onRemoveWorktree={onRemoveWorktree}
+              onLoadMoreArtifacts={onLoadMoreArtifacts}
+              onSelectStage={selectViewedStage}
+              onOpenArtifact={openRuntimeArtifact}
+              onOpenCandidateDiff={() => requestCandidateDiff()}
+            />
+            {companionContext ? (
+              <CompanionPanel
+                context={companionContext}
+                messages={companionMessages}
+                proposals={companionProposals ?? []}
+                onSubmitText={onCompanionSubmitText}
+                onConfirmAction={onCompanionConfirmAction ?? (() => undefined)}
+                onDismissAction={onCompanionDismissAction ?? (() => undefined)}
+                pendingProposalId={companionPendingProposalId}
+              />
+            ) : null}
+          </div>
         </div>
         <RunActivity
           task={task}

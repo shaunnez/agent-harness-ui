@@ -1,10 +1,19 @@
+import type { ActionProposal, CompanionContext } from "../../companion/contracts";
 import type { RuntimeAvailableAction, RuntimeTask, StageId, WorkflowProfileId } from "../../domain";
 import type { TaskRouteDetail } from "../../routes";
+import type { CompanionMessage } from "../companion/CompanionPanel";
 
 export type RuntimeWorkflowAction = RuntimeAvailableAction;
 
 export interface RuntimeTaskWorkspaceProps {
   task: RuntimeTask;
+  companionContext?: CompanionContext;
+  companionMessages?: readonly CompanionMessage[];
+  companionProposals?: readonly ActionProposal[];
+  onCompanionSubmitText?: (value: string) => void | Promise<void>;
+  onCompanionConfirmAction?: (proposal: ActionProposal) => void | Promise<void>;
+  onCompanionDismissAction?: (proposal: ActionProposal) => void | Promise<void>;
+  companionPendingProposalId?: string | null;
   onBack: () => void;
   onRun: () => Promise<void>;
   onCancel: () => Promise<void>;

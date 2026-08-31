@@ -4,8 +4,8 @@ import {
   archiveTask,
   cancelTask,
   closeTask,
-  createTask,
   continueTaskToImplementation,
+  createTask,
   evaluateTask,
   finishGrill,
   getEvaluationSummary,
@@ -19,21 +19,40 @@ import {
   getTaskRuns,
   listTaskPollStates,
   listTasks,
+  type MutationRequestOptions,
+  promoteTaskThroughGate,
+  RuntimeApiError,
   recordTaskDecision,
-  retryTaskDesigns,
   removeRuntimeWorktree,
+  retryTaskDesigns,
   runTask,
   runTaskAction,
   selectTaskDesign,
   updateRuntimeSettings,
+  updateTaskRolePolicy,
   updateTaskWorkflowProfile,
   verifyRuntimePricing,
 } from "./api";
+import { contextualAnswer, deriveCompanionContext } from "./companion/context";
+import {
+  type ActionProposal,
+  type CompanionGateStage,
+  type CompanionIntent,
+  confirmActionProposal,
+  createActionProposal,
+  dismissActionProposal,
+  executeActionProposal,
+  type ProposalFailureCode,
+  retainProposalDenial,
+} from "./companion/contracts";
+import { parseCompanionIntent } from "./companion/intentParser";
 import { AgentsScreen } from "./components/AgentsScreen";
 import { ChangelogModal } from "./components/ChangelogModal";
 import { CommandCentre } from "./components/CommandCentre";
+import type { CompanionMessage } from "./components/companion/CompanionPanel";
 import { TasksScreen } from "./components/LibraryScreens";
 import { NewTaskDialog } from "./components/NewTaskDialog";
+import { isValidNewTaskDraft } from "./components/NewTaskFields";
 import { RuntimeTaskWorkspace } from "./components/RuntimeTaskWorkspace";
 import { SettingsScreen } from "./components/SettingsScreen";
 import { Shell } from "./components/Shell";
@@ -42,8 +61,9 @@ import {
   type AgentRoleId,
   type AppScreen,
   type NewTaskDraft,
-  type RuntimeEvaluationSummary,
   type RuntimeArtifactMetadata,
+  type RuntimeAvailableAction,
+  type RuntimeEvaluationSummary,
   type RuntimeSettings,
   type RuntimeStatus,
   type RuntimeTask,
@@ -68,6 +88,16 @@ import {
 type Theme = "dark" | "light";
 
 const THEME_STORAGE_KEY = "agent-harness.theme";
+
+const companionGateActions: Record<
+  CompanionGateStage,
+  Extract<RuntimeAvailableAction, "review" | "test" | "final-review" | "open-pr">
+> = {
+  "dev-review": "review",
+  test: "test",
+  "final-review": "final-review",
+  approval: "open-pr",
+};
 
 function readStoredTheme(): Theme {
   try {
@@ -168,6 +198,10 @@ export function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<Theme>(() => readStoredTheme());
   const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [newTaskCaptureProposalId, setNewTaskCaptureProposalId] = useState<string | null>(null);
+  const [companionMessages, setCompanionMessages] = useState<CompanionMessage[]>([]);
+  const [companionProposals, setCompanionProposals] = useState<ActionProposal[]>([]);
+  const [companionPendingProposalId, setCompanionPendingProposalId] = useState<string | null>(null);
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus | null>(null);
   const [runtimeTasks, setRuntimeTasks] = useState<RuntimeTaskSummary[]>(() =>
     hostedPreviewMode ? hostedAtlasPreviewTasks : [],
@@ -190,6 +224,8 @@ export function App() {
   const activeTaskRequestRef = useRef(0);
   const activeRuntimeTaskRef = useRef<RuntimeTask | null>(null);
   const runtimeTasksRef = useRef<RuntimeTaskSummary[]>(runtimeTasks);
+  const companionMessageNumber = useRef(0);
+  const companionCandidateHeads = useRef(new Map<string, string | null>());
 
   const toggleTheme = useCallback(() => setTheme((t) => (t === "light" ? "dark" : "light")), []);
 
@@ -377,6 +413,10 @@ export function App() {
       setSelectedSkillId(primaryRoute.kind === "skill" ? primaryRoute.skillId : null);
       setSelectedAgentId(primaryRoute.kind === "agent" ? primaryRoute.agentId : null);
       if (primaryRoute.kind !== "task") {
+        setCompanionMessages([]);
+        setCompanionProposals([]);
+        setCompanionPendingProposalId(null);
+        companionCandidateHeads.current.clear();
         activeTaskIdentityRef.current = null;
         activeTaskRequestRef.current += 1;
         setActiveTaskLoading(false);
@@ -387,6 +427,12 @@ export function App() {
         return;
       }
       const { taskId, stageId, detail } = primaryRoute;
+      if (activeTaskIdentityRef.current !== taskId) {
+        setCompanionMessages([]);
+        setCompanionProposals([]);
+        setCompanionPendingProposalId(null);
+        companionCandidateHeads.current.clear();
+      }
       activeTaskIdentityRef.current = taskId;
       setViewedStageId(stageId);
       setTaskRouteDetail(detail);
@@ -493,6 +539,7 @@ export function App() {
         !(event.target instanceof HTMLTextAreaElement)
       ) {
         event.preventDefault();
+        setNewTaskCaptureProposalId(null);
         setNewTaskOpen(true);
       }
     };
@@ -516,9 +563,9 @@ export function App() {
       });
   };
 
-  const startTask = async (draft: NewTaskDraft) => {
-    const task = await createTask(draft);
-    await runTask(task.id);
+  const startTask = async (draft: NewTaskDraft, requestOptions: MutationRequestOptions = {}) => {
+    const task = await createTask(draft, requestOptions);
+    await runTask(task.id, requestOptions);
     setNewTaskOpen(false);
     setRuntimeTasks((tasks) => [taskSummaryFromDetail(task), ...tasks.filter((item) => item.id !== task.id)]);
     navigateToRoute({ kind: "task", taskId: task.id, stageId: task.currentStage });
@@ -556,6 +603,280 @@ export function App() {
 
   const primaryRoute: PrimaryRoute = currentRoute.kind === "changelog" ? currentRoute.returnTo : currentRoute;
   const taskRoute = primaryRoute.kind === "task" ? primaryRoute : null;
+  const companionContext = deriveCompanionContext({
+    route: serializeHashRoute(currentRoute),
+    task: activeRuntimeTask,
+    viewedStage: activeRuntimeTask ? (viewedStageId ?? activeRuntimeTask.currentStage) : null,
+  });
+  const companionThreadMessages: readonly CompanionMessage[] = companionMessages.length
+    ? companionMessages
+    : [
+        {
+          id: "companion-app-welcome",
+          role: "assistant",
+          content: `I’m grounded in the visible Evidence Gate context.\n\n${contextualAnswer(companionContext)}`,
+        },
+      ];
+
+  const addCompanionMessage = (role: CompanionMessage["role"], content: string) => {
+    companionMessageNumber.current += 1;
+    setCompanionMessages((current) => [
+      ...current,
+      { id: `companion-app-message-${companionMessageNumber.current}`, role, content },
+    ]);
+  };
+
+  const replaceCompanionProposal = (next: ActionProposal) => {
+    setCompanionProposals((current) =>
+      current.map((proposal) => (proposal.id === next.id ? next : proposal)),
+    );
+  };
+
+  const handleCompanionIntent = async (intent: CompanionIntent) => {
+    if (intent.kind === "context") return;
+    if (intent.kind === "navigate") {
+      navigateToRoute(
+        intent.target === "tasks"
+          ? { kind: "screen", screen: "tasks" }
+          : { kind: "task", taskId: intent.taskId },
+      );
+      return;
+    }
+
+    if (intent.kind === "create-task") {
+      const id = newCompanionProposalId();
+      setCompanionProposals((current) => [
+        ...current,
+        createActionProposal({
+          id,
+          actionType: "create-task",
+          summary: "Prepare a validated task draft for explicit confirmation.",
+          eligibility: {
+            eligible: false,
+            rationale: "A complete NewTaskDraft must be captured and shown before confirmation is available.",
+            evidence: [
+              "No exact task mutation exists until the draft dialog is submitted.",
+              "After capture, confirmation will reuse the existing CSRF-protected /api/tasks boundary.",
+            ],
+          },
+          target: { kind: "new-task", draft: null },
+        }),
+      ]);
+      setNewTaskCaptureProposalId(id);
+      setNewTaskOpen(true);
+      return;
+    }
+
+    if (!activeRuntimeTask) throw new Error("Open a task before proposing a task-scoped action.");
+
+    if (intent.kind === "change-role-model") {
+      const policy = suggestedRolePolicy(intent, activeRuntimeTask, runtimeStatus);
+      const id = newCompanionProposalId();
+      setCompanionProposals((current) => [
+        ...current,
+        createActionProposal({
+          id,
+          actionType: "change-role-model",
+          summary: `Use ${policy.model ?? "a discovered model"} for the ${intent.role} agent on ${activeRuntimeTask.id}.`,
+          eligibility: {
+            eligible: Boolean(
+              policy.model && policy.reasoning && activeRuntimeTask.agentConfig?.stagePolicies,
+            ),
+            rationale:
+              policy.model && policy.reasoning
+                ? "This is a task-scoped snapshot change; the server will revalidate the discovered model and reasoning policy."
+                : "A discovered, editable model and supported reasoning level are required before confirmation.",
+            evidence: [
+              `Task scope: ${activeRuntimeTask.id}; global Settings remain unchanged.`,
+              policy.model
+                ? `Requested policy: ${policy.model} · ${policy.reasoning ?? "reasoning not selected"}.`
+                : "No suitable discovered model is available in the current runtime catalog.",
+            ],
+          },
+          target: {
+            kind: "task-agent-policy",
+            scope: "task_snapshot",
+            taskId: activeRuntimeTask.id,
+            role: intent.role,
+            model: policy.model,
+            reasoning: policy.reasoning,
+          },
+        }),
+      ]);
+      return;
+    }
+
+    const candidate = activeRuntimeTask.candidates?.at(-1);
+    const action = companionGateActions[intent.nextStage];
+    if (!candidate) throw new Error("This task has no persisted integration candidate to promote.");
+    const id = newCompanionProposalId();
+    companionCandidateHeads.current.set(id, candidate.headRevision);
+    const actionEligibility = activeRuntimeTask.actionEligibility?.actions?.[action];
+    const candidateReady = Boolean(candidate.headRevision);
+    setCompanionProposals((current) => [
+      ...current,
+      createActionProposal({
+        id,
+        actionType: "promote-gate",
+        summary: `Promote ${activeRuntimeTask.id} to ${stageLabel(intent.nextStage)} using the exact candidate revision.`,
+        eligibility: {
+          eligible: candidateReady && actionEligibility?.allowed !== false,
+          rationale:
+            actionEligibility?.allowed === false
+              ? (actionEligibility.reason ?? "Canonical task admission currently denies this gate.")
+              : "The server will re-read repository authority, candidate identity, and canonical gate eligibility after confirmation.",
+          evidence: [
+            `Candidate scope: ${candidate.id} · revision ${candidate.revisionNumber}.`,
+            candidate.headRevision
+              ? `Candidate head: ${candidate.headRevision}.`
+              : "The candidate has no persisted head revision.",
+            actionEligibility?.reason ?? "No browser-side eligibility is treated as authoritative.",
+          ],
+        },
+        target: {
+          kind: "candidate-gate",
+          scope: "candidate",
+          taskId: activeRuntimeTask.id,
+          candidateId: candidate.id,
+          candidateRevision: candidate.revisionNumber,
+          nextStage: intent.nextStage,
+        },
+      }),
+    ]);
+  };
+
+  const handleCompanionText = async (value: string) => {
+    addCompanionMessage("user", value);
+    const parsed = parseCompanionIntent(value);
+    if (parsed.status === "rejected") {
+      addCompanionMessage(
+        "assistant",
+        `${parsed.message}\n\nTry one of these:\n${parsed.examples.join("\n")}`,
+      );
+      return;
+    }
+
+    const intent = parsed.intent;
+    try {
+      await handleCompanionIntent(intent);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "The request could not be prepared.";
+      addCompanionMessage("assistant", `I could not prepare that request. ${reason}`);
+      return;
+    }
+
+    if (intent.kind === "context") {
+      addCompanionMessage("assistant", contextualAnswer(companionContext));
+    } else if (intent.kind === "navigate") {
+      addCompanionMessage(
+        "assistant",
+        intent.target === "tasks"
+          ? "Opening Tasks. Navigation is read-only and does not require confirmation."
+          : `Opening task ${intent.taskId}. Navigation is read-only and does not require confirmation.`,
+      );
+    } else {
+      const actionLabel =
+        intent.kind === "create-task"
+          ? "prepare a new task draft"
+          : intent.kind === "change-role-model"
+            ? "change a task-scoped agent model"
+            : `promote this task to ${stageLabel(intent.nextStage)}`;
+      addCompanionMessage(
+        "assistant",
+        `I can ${actionLabel}. Review the governed action card below; no mutation is sent until you confirm it.`,
+      );
+    }
+  };
+
+  const confirmCompanionAction = async (proposal: ActionProposal) => {
+    const confirmed = confirmActionProposal(proposal);
+    replaceCompanionProposal(confirmed);
+    setCompanionPendingProposalId(proposal.id);
+    try {
+      if (proposal.actionType === "create-task") {
+        const draft = proposal.target.draft;
+        if (!draft || !isValidNewTaskDraft(draft)) throw new Error("A valid task draft is required.");
+        const task = await createTask(draft, { retryOnCsrf: false });
+        setNewTaskOpen(false);
+        setNewTaskCaptureProposalId(null);
+        setRuntimeTasks((tasks) => [
+          taskSummaryFromDetail(task),
+          ...tasks.filter((item) => item.id !== task.id),
+        ]);
+        navigateToRoute({ kind: "task", taskId: task.id, stageId: task.currentStage });
+      } else if (proposal.actionType === "change-role-model") {
+        const { target } = proposal;
+        if (!target.model || !target.reasoning) throw new Error("A model and reasoning policy are required.");
+        const result = await updateTaskRolePolicy(target.taskId, {
+          role: target.role,
+          model: target.model,
+          reasoning: target.reasoning,
+        });
+        activeRuntimeTaskRef.current = result.task;
+        setActiveRuntimeTask(result.task);
+        setRuntimeTasks((tasks) =>
+          tasks.map((task) => (task.id === result.task.id ? taskSummaryFromDetail(result.task) : task)),
+        );
+        await refreshActiveTask(target.taskId);
+      } else {
+        const { target } = proposal;
+        const candidateHeadRevision = companionCandidateHeads.current.get(proposal.id);
+        if (!candidateHeadRevision) throw new Error("The exact candidate head revision is unavailable.");
+        await promoteTaskThroughGate(target.taskId, companionGateActions[target.nextStage], {
+          candidateId: target.candidateId,
+          candidateRevision: target.candidateRevision,
+          candidateHeadRevision,
+        });
+        await refreshActiveTask(target.taskId);
+        await refreshTasks();
+      }
+      const executed = executeActionProposal(confirmed);
+      replaceCompanionProposal(executed);
+      addCompanionMessage("system", `${proposal.summary} Executed after server confirmation.`);
+    } catch (error) {
+      const failure = companionFailure(error);
+      const retained = retainProposalDenial(confirmed, failure);
+      replaceCompanionProposal(retained);
+      addCompanionMessage("system", `Confirmation failed and remains reviewable: ${failure.reason}`);
+      showToast("error", failure.reason);
+    } finally {
+      setCompanionPendingProposalId(null);
+    }
+  };
+
+  const dismissCompanionAction = async (proposal: ActionProposal) => {
+    const dismissed = dismissActionProposal(proposal, { reason: "Dismissed by the operator." });
+    replaceCompanionProposal(dismissed);
+    addCompanionMessage("system", `Dismissed: ${proposal.summary}`);
+  };
+
+  const captureCompanionTaskDraft = async (draft: NewTaskDraft) => {
+    const proposalId = newTaskCaptureProposalId;
+    if (!proposalId || !isValidNewTaskDraft(draft))
+      throw new Error("Complete the required task fields first.");
+    setCompanionProposals((current) =>
+      current.map((proposal) =>
+        proposal.id === proposalId && proposal.actionType === "create-task"
+          ? {
+              ...proposal,
+              target: { kind: "new-task", draft },
+              eligibility: {
+                ...proposal.eligibility,
+                eligible: true,
+                rationale: "The complete NewTaskDraft is ready for explicit confirmation.",
+                evidence: [
+                  "Every submitted NewTaskDraft field and attachment selection is shown on the card.",
+                  "No task API was called while the draft was captured.",
+                ],
+              },
+            }
+          : proposal,
+      ),
+    );
+    setNewTaskOpen(false);
+    setNewTaskCaptureProposalId(null);
+    addCompanionMessage("system", "Task draft captured. Review the exact draft and confirm it when ready.");
+  };
 
   return (
     <div className={`app-shell ${sidebarCollapsed ? "app-shell--collapsed" : ""}`}>
@@ -569,7 +890,10 @@ export function App() {
         onNewTask={() => {
           if (hostedPreviewMode)
             showToast("error", "The hosted atlas is a read-only UI preview. Task execution remains local.");
-          else setNewTaskOpen(true);
+          else {
+            setNewTaskCaptureProposalId(null);
+            setNewTaskOpen(true);
+          }
         }}
         onOpenChangelog={() => navigateToRoute(createChangelogRoute(primaryRoute))}
         runtimeStatus={runtimeStatus}
@@ -579,6 +903,13 @@ export function App() {
           <RuntimeTaskWorkspace
             key={activeRuntimeTask.id}
             task={activeRuntimeTask}
+            companionContext={companionContext}
+            companionMessages={companionThreadMessages}
+            companionProposals={companionProposals}
+            onCompanionSubmitText={handleCompanionText}
+            onCompanionConfirmAction={confirmCompanionAction}
+            onCompanionDismissAction={dismissCompanionAction}
+            companionPendingProposalId={companionPendingProposalId}
             initialViewedStageId={viewedStageId}
             onViewedStageChange={(stageId) => {
               setViewedStageId(stageId);
@@ -790,7 +1121,10 @@ export function App() {
                   "error",
                   "The hosted atlas is a read-only UI preview. Task execution remains local.",
                 );
-              else setNewTaskOpen(true);
+              else {
+                setNewTaskCaptureProposalId(null);
+                setNewTaskOpen(true);
+              }
             }}
             onOpenTask={(taskId, stageId) => openWorkspace("command", taskId, stageId)}
             onSeeAllTasks={() => navigate("tasks")}
@@ -846,6 +1180,8 @@ export function App() {
         runtimeStatus={runtimeStatus}
         onClose={() => setNewTaskOpen(false)}
         onStart={startTask}
+        captureOnly={newTaskCaptureProposalId !== null}
+        onCaptureDraft={captureCompanionTaskDraft}
       />
       {currentRoute.kind === "changelog" ? (
         <ChangelogModal
@@ -899,4 +1235,64 @@ function TaskWorkspaceSkeleton() {
       </div>
     </div>
   );
+}
+
+function newCompanionProposalId() {
+  return `companion-${crypto.randomUUID()}`;
+}
+
+function stageLabel(stage: StageId | CompanionGateStage) {
+  return workflowStages.find((stageInfo) => stageInfo.id === stage)?.label ?? stage;
+}
+
+function suggestedRolePolicy(
+  intent: Extract<CompanionIntent, { kind: "change-role-model" }>,
+  task: RuntimeTask,
+  runtimeStatus: RuntimeStatus | null,
+) {
+  const current = task.agentConfig?.stagePolicies?.[intent.role];
+  const allowedModels = runtimeStatus?.settings?.allowedModels ?? [];
+  const catalog = runtimeStatus?.catalog?.models ?? [];
+  const editable = catalog.filter((model) => model.editable && allowedModels.includes(model.id));
+  const recommended =
+    editable.find((model) => model.id !== current?.model && /sol/i.test(model.id)) ??
+    editable.find((model) => model.id !== current?.model);
+  const model = intent.model ?? recommended?.id ?? null;
+  const selected = catalog.find((option) => option.id === model);
+  const reasoning =
+    intent.reasoning ??
+    (selected?.reasoningLevels.includes("high")
+      ? "high"
+      : (selected?.defaultReasoning ?? (model === current?.model ? current.reasoning : null)));
+  return { model, reasoning };
+}
+
+function companionFailure(error: unknown): {
+  code: ProposalFailureCode;
+  reason: string;
+} {
+  const knownCodes: ProposalFailureCode[] = [
+    "stale-csrf",
+    "unauthorized",
+    "repository-authority",
+    "stale-candidate",
+    "invalid-policy",
+    "ineligible",
+    "unknown",
+  ];
+  const apiError = error instanceof RuntimeApiError ? error : null;
+  const code =
+    apiError?.code && knownCodes.includes(apiError.code as ProposalFailureCode)
+      ? (apiError.code as ProposalFailureCode)
+      : apiError?.status === 403
+        ? "stale-csrf"
+        : "unknown";
+  const evidence = apiError?.evidence ?? [];
+  const reason = [
+    error instanceof Error ? error.message : "The server denied this companion action.",
+    ...evidence,
+  ]
+    .filter((item, index, values) => item && values.indexOf(item) === index)
+    .join(" ");
+  return { code, reason };
 }
