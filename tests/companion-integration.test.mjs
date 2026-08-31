@@ -360,6 +360,25 @@ test("task navigation clears only a switched-task draft and retains the companio
   });
 });
 
+test("retained role-policy proposals cannot project the active task into another task", async () => {
+  await withApp(async ({ rolePolicyOptionsForProposal }) => {
+    const activeTask = createTask({ id: "AH-002" });
+    const options = rolePolicyOptionsForProposal(activeTask, "AH-001", true, {
+      catalog: { models: [] },
+      settings: { allowedModels: [] },
+    });
+    assert.equal(options.currentPolicies, undefined);
+    const eligibility = options.resolveEligibility?.({
+      role: "plan",
+      model: "gpt-5.6-sol",
+      reasoning: "high",
+    });
+    assert.equal(eligibility?.eligible, false);
+    assert.match(eligibility?.rationale ?? "", /target task/i);
+    assert.deepEqual(eligibility?.evidence, ["Target task: AH-001.", "Active task: AH-002."]);
+  });
+});
+
 test("future-role policy confirmation remains eligible while another role is active", async () => {
   await withApp(async ({ projectRolePolicyEligibility, RolePolicyActionCard }) => {
     const task = createTask({
@@ -515,6 +534,7 @@ test("shell keyboard events focus, close, restore, and contain the narrow compan
     assert.equal(focusIn.defaultPrevented, true);
 
     const modal = new FakeElement(documentRef);
+    shell.focusable.push(modal);
     documentRef.openModals = [modal];
     const nestedEscape = keyboardEvent("Escape");
     eventTarget.dispatchEvent(nestedEscape);

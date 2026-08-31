@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   createTrustedActionCard,
   type RolePolicyFormOptions,
+  type RolePolicyFormOptionsSource,
   type TrustedActionCard,
 } from "../../companion/catalog";
 import type { ActionProposal, CompanionGateStage } from "../../companion/contracts";
@@ -16,7 +17,7 @@ export interface ActionCardCatalogProps {
   onConfirmAction: CompanionActionHandler;
   onDismissAction: CompanionActionHandler;
   pendingProposalId?: string | null;
-  rolePolicyOptions?: RolePolicyFormOptions;
+  rolePolicyOptions?: RolePolicyFormOptionsSource;
 }
 
 /**
@@ -111,7 +112,7 @@ export function ActionCardCatalog({
               void confirm(nextProposal ? createTrustedActionCard(nextProposal) : card)
             }
             onDismiss={() => void dismiss(card)}
-            rolePolicyOptions={rolePolicyOptions}
+            rolePolicyOptions={rolePolicyOptionsForCard(card, rolePolicyOptions)}
           />
         ))}
       </div>
@@ -279,6 +280,17 @@ function ActionCard({
       ) : null}
     </article>
   );
+}
+
+function rolePolicyOptionsForCard(
+  card: TrustedActionCard,
+  source?: RolePolicyFormOptionsSource,
+): RolePolicyFormOptions | undefined {
+  if (card.proposal.actionType !== "change-role-model") {
+    return typeof source === "function" ? undefined : source;
+  }
+  if (typeof source !== "function") return source;
+  return source(card.proposal);
 }
 
 function ActionScope({ proposal }: { proposal: ActionProposal }) {

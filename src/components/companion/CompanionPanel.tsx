@@ -1,6 +1,6 @@
 import { ChatCircleDots, Compass, X } from "@phosphor-icons/react";
 import { type ReactNode, type Ref, useEffect, useId, useRef, useState } from "react";
-import type { RolePolicyFormOptions } from "../../companion/catalog";
+import type { RolePolicyFormOptionsSource } from "../../companion/catalog";
 import { contextualAnswer } from "../../companion/context";
 import type { ActionProposal, CompanionContext, CompanionIntent } from "../../companion/contracts";
 import { companionIntentExamples, parseCompanionIntent } from "../../companion/intentParser";
@@ -31,7 +31,7 @@ export interface CompanionPanelProps {
   onDraftChange?: (value: string) => void;
   composerRef?: Ref<HTMLTextAreaElement>;
   onClose?: () => void;
-  rolePolicyOptions?: RolePolicyFormOptions;
+  rolePolicyOptions?: RolePolicyFormOptionsSource;
 }
 
 /**

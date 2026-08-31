@@ -37,6 +37,8 @@ import {
   companionPolicyRoleIds,
   rolePolicyReasoningOptions,
   selectableRolePolicyModels,
+  type RolePolicyFormOptions,
+  type RolePolicyFormOptionsSource,
 } from "./companion/catalog";
 import { contextualAnswer, deriveCompanionContext } from "./companion/context";
 import {
@@ -613,13 +615,13 @@ export function App() {
     task: activeRuntimeTask,
     viewedStage: activeRuntimeTask ? (viewedStageId ?? activeRuntimeTask.currentStage) : null,
   });
-  const companionRolePolicyOptions = {
-    models: runtimeStatus?.catalog?.models ?? [],
-    allowedModels: runtimeStatus?.settings?.allowedModels ?? [],
-    currentPolicies: activeRuntimeTask?.agentConfig?.stagePolicies,
-    resolveEligibility: (request: RolePolicyRequest) =>
-      projectRolePolicyEligibility(activeRuntimeTask, request, runtimeStatus),
-  };
+  const companionRolePolicyOptions: RolePolicyFormOptionsSource = (proposal) =>
+    rolePolicyOptionsForProposal(
+      activeRuntimeTask,
+      proposal.target.taskId,
+      !activeTaskLoading,
+      runtimeStatus,
+    );
   const companionThreadMessages: readonly CompanionMessage[] = companionMessages.length
     ? companionMessages
     : [
@@ -1409,6 +1411,34 @@ export function projectRolePolicyEligibility(
       `Task ${task.id} authority is bound to the current repository revision.`,
       `The ${request.role} role has no retained execution evidence.`,
     ],
+  };
+}
+
+export function rolePolicyOptionsForProposal(
+  activeTask: RuntimeTask | null,
+  targetTaskId: string,
+  targetTaskLoaded: boolean,
+  runtimeStatus: RuntimeStatus | null,
+): RolePolicyFormOptions {
+  const models = runtimeStatus?.catalog?.models ?? [];
+  const allowedModels = runtimeStatus?.settings?.allowedModels ?? [];
+  const targetTask = targetTaskLoaded && activeTask?.id === targetTaskId ? activeTask : null;
+  if (targetTask) {
+    return {
+      models,
+      allowedModels,
+      currentPolicies: targetTask.agentConfig?.stagePolicies,
+      resolveEligibility: (request) => projectRolePolicyEligibility(targetTask, request, runtimeStatus),
+    };
+  }
+  return {
+    models,
+    allowedModels,
+    resolveEligibility: () =>
+      ineligibleRolePolicy("The proposal target task is not active and freshly loaded.", [
+        `Target task: ${targetTaskId}.`,
+        `Active task: ${activeTask?.id ?? "none"}.`,
+      ]),
   };
 }
 

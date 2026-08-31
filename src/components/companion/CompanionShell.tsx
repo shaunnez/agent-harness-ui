@@ -243,5 +243,5 @@ export function getFocusableElements(container: HTMLElement | null): HTMLElement
 function hasOpenModal(documentRef: Document, owner?: HTMLElement | null) {
   return [
     ...documentRef.querySelectorAll<HTMLElement>("dialog[open], [role='dialog'][aria-modal='true']"),
-  ].some((element) => element !== owner && !owner?.contains(element));
+  ].some((element) => element !== owner);
 }

@@ -3,6 +3,7 @@ import {
   assertActionProposal,
   companionActionTypes,
   type EligibilityEvidence,
+  type RoleModelProposal,
   type RolePolicyRequest,
 } from "./contracts.ts";
 import {
@@ -135,6 +136,10 @@ export interface RolePolicyFormOptions {
   currentPolicies?: Partial<Record<AgentRoleId, RuntimeAgentPolicy>>;
   resolveEligibility?: (request: RolePolicyRequest) => EligibilityEvidence;
 }
+
+export type RolePolicyFormOptionsSource =
+  | RolePolicyFormOptions
+  | ((proposal: RoleModelProposal) => RolePolicyFormOptions);
 
 function isSupportedReasoning(value: unknown): value is CompanionReasoningLevel {
   return typeof value === "string" && companionReasoningLevels.includes(value as CompanionReasoningLevel);
