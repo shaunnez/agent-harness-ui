@@ -1,5 +1,5 @@
 import { ChatCircleDots, X } from "@phosphor-icons/react";
-import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CompanionPanel, type CompanionPanelProps, isCompanionFocusShortcut } from "./CompanionPanel";
 
 export interface CompanionShellProps
@@ -37,13 +37,21 @@ export function CompanionShell({ open, onOpen, onClose, ...panelProps }: Compani
   useEffect(() => {
     if (!open) {
       if (wasOpen.current) {
-        wasOpen.current = false;
-        launcherRef.current?.focus();
+        syncCompanionShellFocus(
+          open,
+          wasOpen,
+          () => {},
+          () => launcherRef.current?.focus(),
+        );
       }
       return;
     }
-    wasOpen.current = true;
-    composerRef.current?.focus();
+    syncCompanionShellFocus(
+      open,
+      wasOpen,
+      () => composerRef.current?.focus(),
+      () => {},
+    );
   }, [open]);
 
   useEffect(() => {
@@ -64,59 +72,18 @@ export function CompanionShell({ open, onOpen, onClose, ...panelProps }: Compani
   }, [narrow, open]);
 
   useEffect(() => {
-    const handleShortcut = (event: KeyboardEvent) => {
-      if (
-        !isCompanionFocusShortcut(event) ||
-        event.defaultPrevented ||
-        (open ? hasOpenModal(shellRef.current) : hasOpenModal())
-      )
-        return;
-      event.preventDefault();
-      onOpen();
-      window.setTimeout(() => composerRef.current?.focus(), 0);
-    };
-    const handleEscape = (event: KeyboardEvent) => {
-      if (!open || event.key !== "Escape" || event.defaultPrevented || hasOpenModal(shellRef.current)) return;
-      event.preventDefault();
-      onClose();
-    };
-    window.addEventListener("keydown", handleShortcut);
-    window.addEventListener("keydown", handleEscape);
-    return () => {
-      window.removeEventListener("keydown", handleShortcut);
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [onClose, onOpen, open]);
-
-  const containFocus = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (!narrow || event.key !== "Tab" || hasOpenModal(shellRef.current)) return;
-    const focusable = getFocusableElements(shellRef.current);
-    if (!focusable.length) return;
-    const first = focusable[0];
-    const last = focusable.at(-1);
-    if (!first || !last) return;
-    const active = document.activeElement;
-    if (event.shiftKey && active === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
-
-  useEffect(() => {
-    if (!open || !narrow) return;
-    const containProgrammaticFocus = (event: FocusEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node) || shellRef.current?.contains(target) || hasOpenModal(shellRef.current))
-        return;
-      event.preventDefault();
-      composerRef.current?.focus();
-    };
-    document.addEventListener("focusin", containProgrammaticFocus);
-    return () => document.removeEventListener("focusin", containProgrammaticFocus);
-  }, [narrow, open]);
+    return installCompanionShellInteractions({
+      documentRef: document,
+      eventTarget: window,
+      getOpen: () => open,
+      getNarrow: () => narrow,
+      getShell: () => shellRef.current,
+      onOpen,
+      onClose,
+      focusComposer: () => composerRef.current?.focus(),
+      scheduleFocus: (focus) => window.setTimeout(focus, 0),
+    });
+  }, [narrow, onClose, onOpen, open]);
 
   return (
     <>
@@ -152,7 +119,6 @@ export function CompanionShell({ open, onOpen, onClose, ...panelProps }: Compani
             role="dialog"
             aria-modal={narrow ? true : undefined}
             aria-label="Contextual companion"
-            onKeyDown={containFocus}
           >
             <CompanionPanel
               {...panelProps}
@@ -171,6 +137,100 @@ export function isCompanionNarrowViewport() {
   return typeof window !== "undefined" && Boolean(window.matchMedia?.("(max-width: 760px)").matches);
 }
 
+export interface CompanionShellFocusState {
+  current: boolean;
+}
+
+export function syncCompanionShellFocus(
+  open: boolean,
+  state: CompanionShellFocusState,
+  focusComposer: () => void,
+  focusLauncher: () => void,
+) {
+  if (!open) {
+    if (state.current) {
+      state.current = false;
+      focusLauncher();
+    }
+    return;
+  }
+  state.current = true;
+  focusComposer();
+}
+
+interface CompanionShellInteractionOptions {
+  documentRef: Document;
+  eventTarget: Window;
+  getOpen: () => boolean;
+  getNarrow: () => boolean;
+  getShell: () => HTMLElement | null;
+  onOpen: () => void;
+  onClose: () => void;
+  focusComposer: () => void;
+  scheduleFocus: (focus: () => void) => void;
+}
+
+export function installCompanionShellInteractions({
+  documentRef,
+  eventTarget,
+  getOpen,
+  getNarrow,
+  getShell,
+  onOpen,
+  onClose,
+  focusComposer,
+  scheduleFocus,
+}: CompanionShellInteractionOptions) {
+  const hasNestedModal = () => hasOpenModal(documentRef, getShell());
+  const handleShortcut = (event: KeyboardEvent) => {
+    if (!isCompanionFocusShortcut(event) || event.defaultPrevented || hasNestedModal()) return;
+    event.preventDefault();
+    onOpen();
+    scheduleFocus(focusComposer);
+  };
+  const handleEscape = (event: KeyboardEvent) => {
+    if (!getOpen() || event.key !== "Escape" || event.defaultPrevented || hasNestedModal()) return;
+    event.preventDefault();
+    onClose();
+  };
+  const handleShellKeydown = (event: KeyboardEvent) => {
+    if (!getNarrow() || event.key !== "Tab" || hasNestedModal()) return;
+    const shell = getShell();
+    const focusable = getFocusableElements(shell);
+    if (!shell || !focusable.length) return;
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    if (!first || !last) return;
+    const active = documentRef.activeElement;
+    if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+  const containProgrammaticFocus = (event: FocusEvent) => {
+    const shell = getShell();
+    const target = event.target;
+    if (!target || shell?.contains(target as Node) || hasNestedModal()) return;
+    event.preventDefault();
+    focusComposer();
+  };
+
+  eventTarget.addEventListener("keydown", handleShortcut);
+  eventTarget.addEventListener("keydown", handleEscape);
+  const shell = getShell();
+  shell?.addEventListener("keydown", handleShellKeydown);
+  if (getOpen() && getNarrow()) documentRef.addEventListener("focusin", containProgrammaticFocus);
+  return () => {
+    eventTarget.removeEventListener("keydown", handleShortcut);
+    eventTarget.removeEventListener("keydown", handleEscape);
+    shell?.removeEventListener("keydown", handleShellKeydown);
+    documentRef.removeEventListener("focusin", containProgrammaticFocus);
+  };
+}
+
 export function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
   if (!container) return [];
   return [
@@ -180,8 +240,8 @@ export function getFocusableElements(container: HTMLElement | null): HTMLElement
   ].filter((element) => !element.hasAttribute("aria-hidden"));
 }
 
-function hasOpenModal(owner?: HTMLElement | null) {
-  return [...document.querySelectorAll<HTMLElement>("dialog[open], [role='dialog'][aria-modal='true']")].some(
-    (element) => element !== owner && !owner?.contains(element),
-  );
+function hasOpenModal(documentRef: Document, owner?: HTMLElement | null) {
+  return [
+    ...documentRef.querySelectorAll<HTMLElement>("dialog[open], [role='dialog'][aria-modal='true']"),
+  ].some((element) => element !== owner && !owner?.contains(element));
 }

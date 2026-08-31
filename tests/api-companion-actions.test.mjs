@@ -109,14 +109,15 @@ function memoryStore(task, { beforeTransition = null } = {}) {
     async settings() {
       return structuredClone(globalSettings);
     },
-    async transition(id, condition, updater) {
+    async transition(id, condition, updater, readTransitionContext) {
       if (current.id !== id) return null;
       if (transitionHook) {
         const hook = transitionHook;
         transitionHook = null;
-        await hook(current);
+        await hook(current, (updater) => updater(globalSettings));
       }
-      if (!condition(current)) {
+      const context = await readTransitionContext?.();
+      if (!condition(current, { ...(context ?? {}), settings: structuredClone(globalSettings) })) {
         const error = new Error("Task state changed before the requested action could be reserved.");
         error.code = "TASK_TRANSITION_CONFLICT";
         throw error;
@@ -134,6 +135,9 @@ function memoryStore(task, { beforeTransition = null } = {}) {
     },
     settingsRead() {
       return structuredClone(globalSettings);
+    },
+    updateSettings(updater) {
+      updater(globalSettings);
     },
   };
 }
@@ -305,6 +309,36 @@ test("role policy lifecycle denies Implement candidates and Repair history but a
   assert.equal(future.lifecycle, "future-or-unstarted");
 });
 
+test("Repair policy freezes on automatic cycles with stable projection and transition denials", async () => {
+  const input = { role: "repair", model: "gpt-5.6-sol", reasoning: "high" };
+  const projected = resolveRolePolicyLifecycleEligibility(
+    taskFixture({ automaticRepairCycles: 1 }),
+    "repair",
+  );
+  assert.equal(projected.ok, false);
+  assert.equal(projected.code, "ineligible");
+  assert.match(projected.reason, /automatic repair cycle/i);
+  assert.ok(projected.evidence.includes("Automatic repair cycles: 1."));
+
+  const task = taskFixture();
+  const store = memoryStore(task, {
+    beforeTransition(current) {
+      current.automaticRepairCycles = 1;
+    },
+  });
+  const result = await updateTaskRolePolicy({
+    store,
+    taskId: task.id,
+    input,
+    catalog: modelCatalog,
+  });
+  assert.deepEqual(result, {
+    ...projected,
+    status: 409,
+  });
+  assert.deepEqual(store.read().agentConfig.stagePolicies.repair, task.agentConfig.stagePolicies.repair);
+});
+
 test("role policy validation fails closed for authority, catalogue, allowlist, and reasoning drift", () => {
   const input = { role: "implement", model: "gpt-5.6-sol", reasoning: "high" };
   const invalidAuthority = resolveRolePolicyEligibility(
@@ -439,6 +473,43 @@ test("task role policy revalidates lifecycle and identity inside its transition 
     identityStore.read().agentConfig.stagePolicies.implement,
     task.agentConfig.stagePolicies.implement,
   );
+});
+
+test("task role policy reads Settings and catalogue authority at the transition boundary", async () => {
+  const input = { role: "implement", model: "gpt-5.6-sol", reasoning: "high" };
+  for (const [label, mutateAuthority] of [
+    [
+      "Settings allowlist",
+      (_current, updateSettings) =>
+        updateSettings((next) => {
+          next.allowedModels = [];
+        }),
+    ],
+    ["model catalogue", (_current, _updateSettings) => {}],
+  ]) {
+    let currentCatalog = modelCatalog;
+    const store = memoryStore(taskFixture(), {
+      beforeTransition(current, updateSettings) {
+        mutateAuthority(current, updateSettings);
+        if (label === "model catalogue") currentCatalog = { models: [] };
+      },
+    });
+    const result = await updateTaskRolePolicy({
+      store,
+      taskId: "AH-001",
+      input,
+      catalog: modelCatalog,
+      readCatalog: async () => currentCatalog,
+    });
+    assert.equal(result.ok, false, label);
+    assert.equal(result.code, "invalid-policy", label);
+    assert.match(result.reason, /discovered|allowlist/i, label);
+    assert.deepEqual(
+      store.read().agentConfig.stagePolicies.implement,
+      taskFixture().agentConfig.stagePolicies.implement,
+      label,
+    );
+  }
 });
 
 test("role policy route rejects unknown fields and invalid model policy", async () => {

@@ -163,6 +163,13 @@ function repairRoleEligibility(task) {
     ]);
   }
 
+  if (task.automaticRepairCycles > 0) {
+    return lifecycleDenial(
+      "The Repair role has recorded an automatic repair cycle and its policy is no longer mutable.",
+      [`Automatic repair cycles: ${task.automaticRepairCycles}.`],
+    );
+  }
+
   const repairRun = (task.runs ?? []).find((run) => isRepairEvidence(run));
   if (repairRun) {
     return lifecycleDenial("The Repair role has already begun work and its policy is no longer mutable.", [
@@ -353,6 +360,8 @@ function malformedLifecycleEvidence(task) {
     "completedStages",
     "workPackages",
     "activeRunIds",
+    "repairLineage",
+    "repairHistory",
   ]) {
     if (task[field] !== undefined && !Array.isArray(task[field])) {
       return lifecycleDenial(
@@ -361,11 +370,25 @@ function malformedLifecycleEvidence(task) {
       );
     }
   }
-  for (const field of ["runs", "artifacts", "candidates", "workPackages"]) {
+  for (const field of ["runs", "artifacts", "candidates", "workPackages", "repairLineage", "repairHistory"]) {
     if (task[field]?.some((entry) => !isRecord(entry))) {
       return lifecycleDenial(
         "The task lifecycle evidence is malformed, so the role-policy mutation is not permitted.",
         [`Malformed evidence entry: ${field}.`],
+      );
+    }
+  }
+  for (const candidate of task.candidates ?? []) {
+    if (candidate.revisions !== undefined && !Array.isArray(candidate.revisions)) {
+      return lifecycleDenial(
+        "The task lifecycle evidence is malformed, so the role-policy mutation is not permitted.",
+        ["Malformed evidence field: candidate.revisions."],
+      );
+    }
+    if (candidate.revisions?.some((revision) => !isRecord(revision))) {
+      return lifecycleDenial(
+        "The task lifecycle evidence is malformed, so the role-policy mutation is not permitted.",
+        ["Malformed evidence entry: candidate.revisions."],
       );
     }
   }
@@ -384,6 +407,15 @@ function malformedLifecycleEvidence(task) {
         [`Malformed evidence field: ${field}.`],
       );
     }
+  }
+  if (
+    task.automaticRepairCycles !== undefined &&
+    (!Number.isInteger(task.automaticRepairCycles) || task.automaticRepairCycles < 0)
+  ) {
+    return lifecycleDenial(
+      "The task lifecycle evidence is malformed, so the role-policy mutation is not permitted.",
+      ["Malformed evidence field: automaticRepairCycles."],
+    );
   }
   for (const [stage, attempts] of Object.entries(task.attemptsByStage ?? {})) {
     if (ROLE_IDS.has(stage) && (!Number.isInteger(attempts) || attempts < 0)) {

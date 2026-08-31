@@ -132,11 +132,12 @@ export function applyTaskRolePolicy(task, role, policy) {
   task.agentConfig.stagePolicies[role] = { model: policy.model, reasoning: policy.reasoning };
 }
 
-export async function updateTaskRolePolicy({ store, taskId, input, catalog } = {}) {
+export async function updateTaskRolePolicy({ store, taskId, input, catalog, readCatalog } = {}) {
   const task = await store?.get(taskId);
   if (!task) return companionDenial("unauthorized", "The selected task is no longer available.", [], 404);
   const settings = await store.settings();
-  const resolvedCatalog = catalog ?? (await readExecutionProviderCatalog());
+  const catalogReader = readCatalog ?? (catalog ? async () => catalog : readExecutionProviderCatalog);
+  const resolvedCatalog = catalog ?? (await catalogReader());
   const eligibility = resolveRolePolicyEligibility(task, input, settings, resolvedCatalog, taskId);
   if (!eligibility.ok) return eligibility;
 
@@ -145,11 +146,18 @@ export async function updateTaskRolePolicy({ store, taskId, input, catalog } = {
   try {
     updated = await store.transition(
       taskId,
-      (draft) => {
-        transitionDenial = resolveRolePolicyEligibility(draft, input, settings, resolvedCatalog, taskId);
+      (draft, transitionContext) => {
+        transitionDenial = resolveRolePolicyEligibility(
+          draft,
+          input,
+          transitionContext?.settings ?? settings,
+          transitionContext?.catalog ?? resolvedCatalog,
+          taskId,
+        );
         return transitionDenial.ok;
       },
       (draft) => applyTaskRolePolicy(draft, eligibility.role, eligibility.policy),
+      async () => ({ catalog: await catalogReader() }),
     );
   } catch (error) {
     if (error?.code === "TASK_TRANSITION_CONFLICT") {

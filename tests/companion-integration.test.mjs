@@ -264,6 +264,20 @@ async function withShell(run) {
   }
 }
 
+async function withApp(run) {
+  const vite = await createViteServer({
+    configFile: false,
+    logLevel: "error",
+    optimizeDeps: { noDiscovery: true },
+    server: { middlewareMode: true, hmr: false, host: "127.0.0.1", ws: false },
+  });
+  try {
+    return await run(await vite.ssrLoadModule("/src/App.tsx"));
+  } finally {
+    await vite.close();
+  }
+}
+
 test("the shell renders one global companion surface and a labelled launcher", async () => {
   await withShell(async ({ CompanionShell }) => {
     const markup = renderToStaticMarkup(
@@ -310,27 +324,216 @@ test("companion has one internal scroll owner and no workspace support-column re
   assert.doesNotMatch(workspace, /CompanionPanel|companionContext|onCompanion/);
 });
 
-test("App owns retention and the shell owns keyboard, focus, and narrow-sheet boundaries", async () => {
-  const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
-  const shell = await readFile(
-    new URL("../src/components/companion/CompanionShell.tsx", import.meta.url),
-    "utf8",
-  );
-  assert.equal((app.match(/<CompanionShell\b/g) ?? []).length, 1);
-  assert.match(app, /const \[companionDraft, setCompanionDraft\] = useState\(""\)/);
-  assert.match(app, /setCompanionDraft\(""\)/);
-  assert.doesNotMatch(
-    app.match(/if \(primaryRoute\.kind !== "task"\) \{([\s\S]*?)return;/)?.[1] ?? "",
-    /setCompanionMessages|setCompanionProposals/,
-  );
-  assert.match(shell, /isCompanionFocusShortcut/);
-  assert.match(shell, /event\.key !== "Escape"/);
-  assert.match(shell, /getFocusableElements/);
-  assert.match(shell, /aria-modal=\{narrow \? true : undefined\}/);
-  assert.match(shell, /setAttribute\("aria-hidden", "true"\)/);
-  assert.match(shell, /composerRef\.current\?\.focus\(\)/);
-  assert.match(shell, /launcherRef\.current\?\.focus\(\)/);
+test("task navigation clears only a switched-task draft and retains the companion thread", async () => {
+  await withApp(async ({ shouldClearCompanionDraft }) => {
+    assert.equal(shouldClearCompanionDraft("AH-001", "AH-001"), false);
+    assert.equal(shouldClearCompanionDraft("AH-001", "AH-002"), true);
+    assert.equal(shouldClearCompanionDraft(null, "AH-001"), false);
+
+    const retainedMessages = [{ id: "message", role: "assistant", content: "Retained answer" }];
+    const retainedProposals = [{ id: "proposal", state: "proposed", actionType: "create-task" }];
+    const companionState = {
+      taskId: "AH-001",
+      draft: "unsent question",
+      messages: retainedMessages,
+      proposals: retainedProposals,
+    };
+    const sameTaskNavigation = {
+      ...companionState,
+      draft: shouldClearCompanionDraft(companionState.taskId, "AH-001") ? "" : companionState.draft,
+    };
+    assert.equal(sameTaskNavigation.draft, "unsent question");
+    assert.deepEqual(sameTaskNavigation.messages, retainedMessages);
+    assert.deepEqual(sameTaskNavigation.proposals, retainedProposals);
+
+    const switchedTaskNavigation = {
+      ...sameTaskNavigation,
+      taskId: "AH-002",
+      draft: shouldClearCompanionDraft(sameTaskNavigation.taskId, "AH-002") ? "" : sameTaskNavigation.draft,
+    };
+    assert.equal(switchedTaskNavigation.draft, "");
+    assert.deepEqual(switchedTaskNavigation.messages, retainedMessages);
+    assert.deepEqual(switchedTaskNavigation.proposals, retainedProposals);
+  });
 });
+
+test("shell keyboard events focus, close, restore, and contain the narrow companion", async () => {
+  await withShell(async ({ installCompanionShellInteractions, syncCompanionShellFocus }) => {
+    const documentRef = new FakeDocument();
+    const eventTarget = new FakeEventTarget();
+    const shell = new FakeElement(documentRef);
+    const first = new FakeElement(documentRef);
+    const last = new FakeElement(documentRef);
+    const composer = new FakeElement(documentRef);
+    const launcher = new FakeElement(documentRef);
+    const outside = new FakeElement(documentRef);
+    shell.focusable = [first, last];
+    let open = false;
+    let closeCount = 0;
+
+    const closedCleanup = installCompanionShellInteractions({
+      documentRef,
+      eventTarget,
+      getOpen: () => open,
+      getNarrow: () => false,
+      getShell: () => shell,
+      onOpen: () => {
+        open = true;
+      },
+      onClose: () => {
+        open = false;
+        closeCount += 1;
+      },
+      focusComposer: () => composer.focus(),
+      scheduleFocus: (focus) => focus(),
+    });
+    const shortcut = keyboardEvent("k", { ctrlKey: true });
+    eventTarget.dispatchEvent(shortcut);
+    assert.equal(open, true);
+    assert.equal(documentRef.activeElement, composer);
+    assert.equal(shortcut.defaultPrevented, true);
+    closedCleanup();
+
+    const openCleanup = installCompanionShellInteractions({
+      documentRef,
+      eventTarget,
+      getOpen: () => open,
+      getNarrow: () => true,
+      getShell: () => shell,
+      onOpen: () => {
+        open = true;
+      },
+      onClose: () => {
+        open = false;
+        closeCount += 1;
+      },
+      focusComposer: () => composer.focus(),
+      scheduleFocus: (focus) => focus(),
+    });
+    first.focus();
+    const backwards = keyboardEvent("Tab", { shiftKey: true });
+    shell.dispatchEvent(backwards);
+    assert.equal(documentRef.activeElement, last);
+    assert.equal(backwards.defaultPrevented, true);
+    const forwards = keyboardEvent("Tab");
+    shell.dispatchEvent(forwards);
+    assert.equal(documentRef.activeElement, first);
+    assert.equal(forwards.defaultPrevented, true);
+
+    const focusIn = {
+      type: "focusin",
+      target: outside,
+      defaultPrevented: false,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+    };
+    documentRef.dispatchEvent(focusIn);
+    assert.equal(documentRef.activeElement, composer);
+    assert.equal(focusIn.defaultPrevented, true);
+
+    const modal = new FakeElement(documentRef);
+    documentRef.openModals = [modal];
+    const nestedEscape = keyboardEvent("Escape");
+    eventTarget.dispatchEvent(nestedEscape);
+    assert.equal(closeCount, 0);
+    assert.equal(nestedEscape.defaultPrevented, false);
+    documentRef.openModals = [];
+    const escapeEvent = keyboardEvent("Escape");
+    eventTarget.dispatchEvent(escapeEvent);
+    assert.equal(open, false);
+    assert.equal(closeCount, 1);
+    assert.equal(escapeEvent.defaultPrevented, true);
+
+    const focusState = { current: false };
+    syncCompanionShellFocus(
+      true,
+      focusState,
+      () => composer.focus(),
+      () => launcher.focus(),
+    );
+    assert.equal(documentRef.activeElement, composer);
+    syncCompanionShellFocus(
+      false,
+      focusState,
+      () => composer.focus(),
+      () => launcher.focus(),
+    );
+    assert.equal(documentRef.activeElement, launcher);
+    openCleanup();
+  });
+});
+
+class FakeEventTarget {
+  listeners = new Map();
+
+  addEventListener(type, listener) {
+    const current = this.listeners.get(type) ?? [];
+    current.push(listener);
+    this.listeners.set(type, current);
+  }
+
+  removeEventListener(type, listener) {
+    this.listeners.set(
+      type,
+      (this.listeners.get(type) ?? []).filter((entry) => entry !== listener),
+    );
+  }
+
+  dispatchEvent(event) {
+    event.target ??= this;
+    for (const listener of this.listeners.get(event.type) ?? []) listener(event);
+    return !event.defaultPrevented;
+  }
+}
+
+class FakeDocument extends FakeEventTarget {
+  activeElement = null;
+  openModals = [];
+
+  querySelectorAll() {
+    return this.openModals;
+  }
+}
+
+class FakeElement extends FakeEventTarget {
+  constructor(documentRef) {
+    super();
+    this.documentRef = documentRef;
+    this.focusable = [];
+  }
+
+  focus() {
+    this.documentRef.activeElement = this;
+  }
+
+  contains(target) {
+    return target === this || this.focusable.includes(target);
+  }
+
+  querySelectorAll() {
+    return this.focusable;
+  }
+
+  hasAttribute() {
+    return false;
+  }
+}
+
+function keyboardEvent(key, options = {}) {
+  return {
+    type: "keydown",
+    key,
+    metaKey: false,
+    ctrlKey: false,
+    shiftKey: false,
+    defaultPrevented: false,
+    ...options,
+    preventDefault() {
+      this.defaultPrevented = true;
+    },
+  };
+}
 
 function baseShellContext(route) {
   return deriveCompanionContext({

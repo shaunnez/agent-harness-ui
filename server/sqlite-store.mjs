@@ -352,8 +352,8 @@ export class SqliteTaskStore {
     );
   }
 
-  async transition(id, condition, updater) {
-    return this.#mutateTask(id, condition, updater);
+  async transition(id, condition, updater, readTransitionContext) {
+    return this.#mutateTask(id, condition, updater, readTransitionContext);
   }
 
   async recoverInterrupted() {
@@ -395,13 +395,14 @@ export class SqliteTaskStore {
     return { path: target, tasks: state.tasks.length };
   }
 
-  #mutateTask(id, condition, updater) {
-    return this.#enqueue(() =>
-      this.#transaction(() => {
+  #mutateTask(id, condition, updater, readTransitionContext) {
+    return this.#enqueue(async () => {
+      const context = await readTransitionContext?.();
+      return this.#transaction(() => {
         const row = this.#db.prepare("SELECT revision FROM tasks WHERE id = ?").get(id);
         if (!row) return null;
         const task = this.#readTask(id);
-        if (condition && !condition(task)) {
+        if (condition && !condition(task, { ...(context ?? {}), settings: this.#readSettings() })) {
           const error = new Error("Task state changed before the requested action could be reserved.");
           error.code = "TASK_TRANSITION_CONFLICT";
           error.statusCode = 409;
@@ -412,8 +413,8 @@ export class SqliteTaskStore {
         task.events = retainRunActivityEvents(task.events);
         this.#updateTask(task, Number(row.revision));
         return clone(task);
-      }),
-    );
+      });
+    });
   }
 
   #enqueue(operation) {

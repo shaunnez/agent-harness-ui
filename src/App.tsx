@@ -434,7 +434,7 @@ export function App() {
         return;
       }
       const { taskId, stageId, detail } = primaryRoute;
-      if (companionTaskIdentityRef.current !== null && companionTaskIdentityRef.current !== taskId) {
+      if (shouldClearCompanionDraft(companionTaskIdentityRef.current, taskId)) {
         setCompanionDraft("");
       }
       companionTaskIdentityRef.current = taskId;
@@ -1252,6 +1252,10 @@ function TaskWorkspaceSkeleton() {
 
 function newCompanionProposalId() {
   return `companion-${crypto.randomUUID()}`;
+}
+
+export function shouldClearCompanionDraft(previousTaskId: string | null, nextTaskId: string | null) {
+  return previousTaskId !== null && nextTaskId !== null && previousTaskId !== nextTaskId;
 }
 
 function projectRolePolicyEligibility(
