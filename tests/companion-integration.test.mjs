@@ -272,7 +272,10 @@ async function withApp(run) {
     server: { middlewareMode: true, hmr: false, host: "127.0.0.1", ws: false },
   });
   try {
-    return await run(await vite.ssrLoadModule("/src/App.tsx"));
+    return await run({
+      ...(await vite.ssrLoadModule("/src/App.tsx")),
+      ...(await vite.ssrLoadModule("/src/components/companion/RolePolicyActionCard.tsx")),
+    });
   } finally {
     await vite.close();
   }
@@ -354,6 +357,85 @@ test("task navigation clears only a switched-task draft and retains the companio
     assert.equal(switchedTaskNavigation.draft, "");
     assert.deepEqual(switchedTaskNavigation.messages, retainedMessages);
     assert.deepEqual(switchedTaskNavigation.proposals, retainedProposals);
+  });
+});
+
+test("future-role policy confirmation remains eligible while another role is active", async () => {
+  await withApp(async ({ projectRolePolicyEligibility, RolePolicyActionCard }) => {
+    const task = createTask({
+      id: "AH-001",
+      status: "running",
+      currentStage: "triage",
+      activeRunKind: "triage",
+      activeRunIds: ["triage-run"],
+      runs: [{ id: "triage-run", role: "triage", stage: "triage", status: "running" }],
+      repositoryAuthorityStatus: "bound",
+      repositoryAuthority: {
+        id: "authority-1",
+        selectedRevision: "a".repeat(40),
+        targetRef: "refs/heads/main",
+        capturedAt: "2026-08-31T00:00:00.000Z",
+        upstreamRef: null,
+      },
+      agentConfig: {
+        model: "gpt-5.6-luna",
+        reasoning: "high",
+        stagePolicies: {
+          triage: { model: "gpt-5.6-luna", reasoning: "high" },
+          plan: { model: "gpt-5.6-luna", reasoning: "high" },
+        },
+      },
+    });
+    const runtimeStatus = {
+      catalog: {
+        models: [
+          {
+            id: "gpt-5.6-sol",
+            label: "GPT-5.6 Sol",
+            defaultReasoning: "high",
+            reasoningLevels: ["high"],
+            availability: "discovered",
+            editable: true,
+          },
+        ],
+      },
+      settings: { allowedModels: ["gpt-5.6-sol"] },
+    };
+    const request = { role: "plan", model: "gpt-5.6-sol", reasoning: "high" };
+    const eligibility = projectRolePolicyEligibility(task, request, runtimeStatus);
+    assert.equal(eligibility.eligible, true);
+
+    const proposal = createActionProposal({
+      id: "future-role-proposal",
+      actionType: "change-role-model",
+      summary: "Use Sol for the future Plan role.",
+      eligibility,
+      target: {
+        kind: "task-agent-policy",
+        scope: "task_snapshot",
+        taskId: task.id,
+        role: request.role,
+        model: request.model,
+        reasoning: request.reasoning,
+      },
+    });
+    const markup = renderToStaticMarkup(
+      React.createElement(RolePolicyActionCard, {
+        proposal,
+        models: runtimeStatus.catalog.models,
+        allowedModels: runtimeStatus.settings.allowedModels,
+        currentPolicies: task.agentConfig.stagePolicies,
+        resolveEligibility: (nextRequest) => projectRolePolicyEligibility(task, nextRequest, runtimeStatus),
+        onConfirm: () => {},
+        onDismiss: () => {},
+      }),
+    );
+    assert.match(markup, /data-request-eligible="true"/);
+    const confirmButton = markup.match(
+      /<button[^>]*button--primary[^>]*>[\s\S]*?Confirm[\s\S]*?<\/button>/,
+    )?.[0];
+    assert.ok(confirmButton);
+    assert.doesNotMatch(confirmButton, /disabled/);
   });
 });
 

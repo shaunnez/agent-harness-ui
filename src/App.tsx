@@ -1258,7 +1258,7 @@ export function shouldClearCompanionDraft(previousTaskId: string | null, nextTas
   return previousTaskId !== null && nextTaskId !== null && previousTaskId !== nextTaskId;
 }
 
-function projectRolePolicyEligibility(
+export function projectRolePolicyEligibility(
   task: RuntimeTask | null,
   request: RolePolicyRequest,
   runtimeStatus: RuntimeStatus | null,
@@ -1321,15 +1321,22 @@ function projectRolePolicyEligibility(
     ]);
   }
 
-  if ((task.activeRunIds?.length ?? 0) > 0 || task.activeRunKind !== null) {
+  const activeRunIds = task.activeRunIds ?? [];
+  if (activeRunIds.length > 0 && !(task.runs ?? []).some((run) => activeRunIds.includes(run.id))) {
     return ineligibleRolePolicy("A retained or active run prevents policy changes until it is resolved.", [
-      `Active run records: ${task.activeRunIds?.length ?? 0}.`,
+      `Active run records: ${activeRunIds.length}.`,
     ]);
   }
   const roleRun = (task.runs ?? []).find((run) => run.role === request.role || run.stage === request.role);
   if (roleRun) {
     return ineligibleRolePolicy(`The ${request.role} role has already begun work.`, [
       `Role run: ${roleRun.id}.`,
+    ]);
+  }
+  const activeRole = clientActiveRoleFor(task);
+  if (activeRole === request.role) {
+    return ineligibleRolePolicy(`The ${request.role} role has already begun work.`, [
+      `Active role: ${request.role}.`,
     ]);
   }
   const roleArtifact = task.artifacts.find(
@@ -1407,6 +1414,16 @@ function projectRolePolicyEligibility(
 
 function ineligibleRolePolicy(rationale: string, evidence: string[]): EligibilityEvidence {
   return { eligible: false, rationale, evidence };
+}
+
+function clientActiveRoleFor(task: RuntimeTask): string | null {
+  const activeKind = task.activeRunKind;
+  if (!activeKind) return null;
+  if (activeKind === "repair") return "repair";
+  if (activeKind === "implementation") return "implement";
+  if (companionPolicyRoleIds.includes(activeKind as (typeof companionPolicyRoleIds)[number]))
+    return activeKind;
+  return workflowStages.some((stage) => stage.id === task.currentStage) ? task.currentStage : null;
 }
 
 function stageLabel(stage: StageId | CompanionGateStage) {
