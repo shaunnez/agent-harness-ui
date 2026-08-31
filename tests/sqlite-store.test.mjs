@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, utimes, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -10,6 +10,42 @@ import { SqliteTaskStore } from "../server/sqlite-store.mjs";
 import { JsonTaskStore, migratePersistedTaskState } from "../server/store.mjs";
 
 const exec = promisify(execFile);
+
+test("cleans orphaned attachment staging sets on SQLite store startup", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-sqlite-attachment-cleanup-"));
+  const databasePath = path.join(directory, "tasks.sqlite3");
+  const referencedSet = path.join(directory, "attachments", "set-33333333-3333-4333-8333-333333333333");
+  const orphanedSet = path.join(directory, "attachments", "set-44444444-4444-4444-8444-444444444444");
+  try {
+    const referencedFile = path.join(referencedSet, "evidence.txt");
+    const store = new SqliteTaskStore(databasePath);
+    await store.init();
+    await store.create({
+      title: "SQLite attachment owner",
+      description: "Retain the staged attachment referenced by this task.",
+      repositoryPath: "/repo",
+      workflow: "implement",
+      priority: "medium",
+      attachments: [{ name: "evidence.txt", path: referencedFile }],
+    });
+    await Promise.all([mkdir(referencedSet, { recursive: true }), mkdir(orphanedSet, { recursive: true })]);
+    await Promise.all([
+      writeFile(referencedFile, "referenced"),
+      writeFile(path.join(orphanedSet, "abandoned.txt"), "orphaned"),
+    ]);
+    const abandonedAt = new Date(Date.now() - 10 * 60 * 1_000);
+    await utimes(orphanedSet, abandonedAt, abandonedAt);
+    store.close();
+
+    const rebooted = new SqliteTaskStore(databasePath);
+    await rebooted.init();
+    await access(referencedFile);
+    await assert.rejects(access(orphanedSet), { code: "ENOENT" });
+    rebooted.close();
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
 
 async function fixture() {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-sqlite-store-"));

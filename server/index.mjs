@@ -18,11 +18,16 @@ const port = Number(process.env.AGENT_HARNESS_PORT ?? 4310);
 
 const store =
   process.env.AGENT_HARNESS_STORE === "json"
-    ? new JsonTaskStore(dataPath)
+    ? new JsonTaskStore(dataPath, { singleProcessLock: true })
     : new SqliteTaskStore(databasePath, { legacyJsonPath: dataPath });
 await store.init();
 const orchestrator = new TaskOrchestrator(store);
-await orchestrator.recoverMergeIntents();
+try {
+  await orchestrator.recoverMergeIntents();
+} catch (error) {
+  await store.close?.();
+  throw error;
+}
 const configuredPullRequestPollIntervalMs = Number(process.env.AGENT_HARNESS_GITHUB_POLL_MS ?? 30_000);
 const pullRequestPollIntervalMs = Number.isFinite(configuredPullRequestPollIntervalMs)
   ? Math.max(5_000, configuredPullRequestPollIntervalMs)
@@ -43,6 +48,15 @@ const server = createApiServer({
   },
 });
 
+server.once("error", async (error) => {
+  stopPullRequestPolling();
+  await Promise.resolve(store.close?.()).catch((closeError) =>
+    console.error("Failed to close the task store after a server error.", closeError),
+  );
+  console.error("Agent Harness local runtime failed.", error);
+  process.exit(1);
+});
+
 server.listen(port, "127.0.0.1", () => {
   console.log(`Agent Harness local runtime listening on http://127.0.0.1:${port}`);
   stopPullRequestPolling = startPullRequestPolling(orchestrator, {
@@ -50,12 +64,20 @@ server.listen(port, "127.0.0.1", () => {
   });
 });
 
+let shuttingDown = false;
 for (const signal of ["SIGINT", "SIGTERM"]) {
-  process.on(signal, () =>
-    server.close(() => {
-      stopPullRequestPolling();
-      store.close?.();
-      process.exit(0);
-    }),
-  );
+  process.on(signal, () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    stopPullRequestPolling();
+    server.close(async () => {
+      try {
+        await store.close?.();
+        process.exit(0);
+      } catch (error) {
+        console.error("Failed to close the task store cleanly.", error);
+        process.exit(1);
+      }
+    });
+  });
 }

@@ -1,6 +1,8 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 import path from "node:path";
+import { cleanupOrphanAttachmentSets } from "./attachment-storage.mjs";
+import { acquireJsonStoreLock } from "./json-store-lock.mjs";
 import {
   defaultRuntimeSettings,
   enrichUsage,
@@ -107,10 +109,13 @@ function roundUsageTotal(value) {
 export class JsonTaskStore {
   #filePath;
   #queue = Promise.resolve();
+  #runtimeLock = null;
+  #singleProcessLock;
   #state = null;
 
-  constructor(filePath) {
+  constructor(filePath, { singleProcessLock = false } = {}) {
     this.#filePath = filePath;
+    this.#singleProcessLock = singleProcessLock;
   }
 
   dataDirectory() {
@@ -119,14 +124,29 @@ export class JsonTaskStore {
 
   async init() {
     await mkdir(path.dirname(this.#filePath), { recursive: true });
+    if (this.#runtimeLock) throw new Error("This JSON task store is already initialized.");
+    if (this.#singleProcessLock) this.#runtimeLock = await acquireJsonStoreLock(this.#filePath);
     try {
-      this.#state = JSON.parse(await readFile(this.#filePath, "utf8"));
+      try {
+        this.#state = JSON.parse(await readFile(this.#filePath, "utf8"));
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+        this.#state = clone(EMPTY_STATE);
+        await this.#write(EMPTY_STATE);
+      }
+      await this.recoverInterrupted();
+      await cleanupOrphanAttachmentSets(this.dataDirectory(), this.#state.tasks);
     } catch (error) {
-      if (error.code !== "ENOENT") throw error;
-      this.#state = clone(EMPTY_STATE);
-      await this.#write(EMPTY_STATE);
+      await this.close();
+      throw error;
     }
-    await this.recoverInterrupted();
+  }
+
+  async close() {
+    const runtimeLock = this.#runtimeLock;
+    if (!runtimeLock) return;
+    await runtimeLock.release();
+    if (this.#runtimeLock === runtimeLock) this.#runtimeLock = null;
   }
 
   async list() {

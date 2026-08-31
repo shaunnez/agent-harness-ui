@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   answerGrillQuestion,
   archiveTask,
@@ -35,7 +35,6 @@ import { NewTaskDialog } from "./components/NewTaskDialog";
 import { RuntimeTaskWorkspace } from "./components/RuntimeTaskWorkspace";
 import { SettingsScreen } from "./components/SettingsScreen";
 import { Shell } from "./components/Shell";
-import { SkillsScreen } from "./components/SkillsScreen";
 import {
   type AgentRoleId,
   type AppScreen,
@@ -66,6 +65,9 @@ import {
 type Theme = "dark" | "light";
 
 const THEME_STORAGE_KEY = "agent-harness.theme";
+const SkillsScreen = lazy(() =>
+  import("./components/SkillsScreen").then((module) => ({ default: module.SkillsScreen })),
+);
 
 function readStoredTheme(): Theme {
   try {
@@ -791,13 +793,15 @@ export function App() {
           />
         ) : null}
         {!workspaceOpen && screen === "skills" ? (
-          <SkillsScreen
-            runtimeTasks={runtimeTasks}
-            selectedId={selectedSkillId}
-            onSelect={(skillId) =>
-              navigateToRoute(skillId ? { kind: "skill", skillId } : { kind: "screen", screen: "skills" })
-            }
-          />
+          <Suspense fallback={<div aria-busy="true">Loading Skills…</div>}>
+            <SkillsScreen
+              runtimeTasks={runtimeTasks}
+              selectedId={selectedSkillId}
+              onSelect={(skillId) =>
+                navigateToRoute(skillId ? { kind: "skill", skillId } : { kind: "screen", screen: "skills" })
+              }
+            />
+          </Suspense>
         ) : null}
         {!workspaceOpen && screen === "agents" ? (
           <AgentsScreen

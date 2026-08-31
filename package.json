@@ -21,6 +21,7 @@
     "test:runtime": "node --test tests/runtime.test.mjs tests/api.test.mjs",
     "test:sites": "node --test tests/sites-worker.test.mjs",
     "benchmark:store": "node scripts/benchmark-task-store.mjs",
+    "profile:bundle": "node scripts/profile-bundle.mjs",
     "data:export-json": "node scripts/export-task-store-json.mjs"
   },
   "dependencies": {

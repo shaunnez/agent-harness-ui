@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { access, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { cleanupOrphanAttachmentSets } from "./attachment-storage.mjs";
 import { defaultRuntimeSettings } from "./model-catalog.mjs";
 import { retainRunActivityEvents, TASK_STORE_SCHEMA_VERSION } from "./run-activity.mjs";
 import {
@@ -59,6 +60,7 @@ export class SqliteTaskStore {
       } else this.#initializeEmptyState();
     } else await this.#assertLegacySourceUnchanged();
     await this.recoverInterrupted();
+    await cleanupOrphanAttachmentSets(this.dataDirectory(), this.#readAttachmentOwners());
     this.#db.exec("PRAGMA optimize");
   }
 
@@ -562,6 +564,13 @@ export class SqliteTaskStore {
       .prepare("SELECT id FROM tasks ORDER BY created_at DESC, id DESC")
       .all()
       .map((row) => this.#readTask(row.id));
+  }
+
+  #readAttachmentOwners() {
+    return this.#db
+      .prepare("SELECT json_extract(core_json, '$.attachments') AS attachments_json FROM tasks")
+      .all()
+      .map((row) => ({ attachments: JSON.parse(row.attachments_json ?? "[]") }));
   }
 
   #readTask(
