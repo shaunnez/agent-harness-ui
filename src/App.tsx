@@ -19,6 +19,7 @@ import {
   getTaskRuns,
   listTaskPollStates,
   listTasks,
+  type MutationRequestOptions,
   promoteTaskThroughGate,
   RuntimeApiError,
   recordTaskDecision,
@@ -562,9 +563,9 @@ export function App() {
       });
   };
 
-  const startTask = async (draft: NewTaskDraft) => {
-    const task = await createTask(draft);
-    await runTask(task.id);
+  const startTask = async (draft: NewTaskDraft, requestOptions: MutationRequestOptions = {}) => {
+    const task = await createTask(draft, requestOptions);
+    await runTask(task.id, requestOptions);
     setNewTaskOpen(false);
     setRuntimeTasks((tasks) => [taskSummaryFromDetail(task), ...tasks.filter((item) => item.id !== task.id)]);
     navigateToRoute({ kind: "task", taskId: task.id, stageId: task.currentStage });
@@ -795,7 +796,7 @@ export function App() {
       if (proposal.actionType === "create-task") {
         const draft = proposal.target.draft;
         if (!draft || !isValidNewTaskDraft(draft)) throw new Error("A valid task draft is required.");
-        await startTask(draft);
+        await startTask(draft, { retryOnCsrf: false });
         setNewTaskCaptureProposalId(null);
       } else if (proposal.actionType === "change-role-model") {
         const { target } = proposal;

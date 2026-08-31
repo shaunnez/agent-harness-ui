@@ -104,6 +104,41 @@ test("companion API retains a stale-candidate denial instead of presenting succe
   });
 });
 
+test("companion task creation fails closed on stale CSRF without retrying or creating a task", async () => {
+  await withApi(async ({ createTask, RuntimeApiError }) => {
+    const originalFetch = globalThis.fetch;
+    const calls = [];
+    let taskCreationCalls = 0;
+    globalThis.fetch = async (input) => {
+      const path = String(input);
+      calls.push(path);
+      if (path === "/api/runtime/status") {
+        return new Response(JSON.stringify({ csrfToken: "fresh-csrf" }), { status: 200 });
+      }
+      if (path === "/api/tasks") {
+        taskCreationCalls += 1;
+        return new Response(JSON.stringify({ error: "The CSRF token is stale." }), { status: 403 });
+      }
+      return new Response(JSON.stringify({ task: { id: "unexpected" } }), { status: 201 });
+    };
+    try {
+      await assert.rejects(
+        () => createTask({}, { retryOnCsrf: false }),
+        (error) => {
+          assert.equal(error instanceof RuntimeApiError, true);
+          assert.equal(error.status, 403);
+          assert.match(error.message, /csrf token/i);
+          return true;
+        },
+      );
+      assert.deepEqual(calls, ["/api/tasks"]);
+      assert.equal(taskCreationCalls, 1);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
 test("companion API retains a stale-CSRF denial without retrying the mutation", async () => {
   await withApi(
     async ({ getRuntimeStatus, updateTaskRolePolicy, promoteTaskThroughGate, RuntimeApiError }) => {

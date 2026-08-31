@@ -46,8 +46,11 @@ export class RuntimeApiError extends Error {
   }
 }
 
-interface RequestOptions {
+export interface MutationRequestOptions {
   retryOnCsrf?: boolean;
+}
+
+interface RequestOptions extends MutationRequestOptions {
   retried?: boolean;
 }
 
@@ -302,12 +305,16 @@ function pageParams(options: PageOptions) {
   return params;
 }
 
-export async function createTask(draft: NewTaskDraft) {
+export async function createTask(draft: NewTaskDraft, options: MutationRequestOptions = {}) {
   return (
-    await request<{ task: RuntimeTask }>("/api/tasks", {
-      method: "POST",
-      body: JSON.stringify(draft),
-    })
+    await request<{ task: RuntimeTask }>(
+      "/api/tasks",
+      {
+        method: "POST",
+        body: JSON.stringify(draft),
+      },
+      options,
+    )
   ).task;
 }
 
@@ -350,8 +357,8 @@ export async function updateTaskWorkflowProfile(
   ).task;
 }
 
-export async function runTask(id: string) {
-  return request<{ started: true }>(`/api/tasks/${encodeURIComponent(id)}/run`, { method: "POST" });
+export async function runTask(id: string, options: MutationRequestOptions = {}) {
+  return request<{ started: true }>(`/api/tasks/${encodeURIComponent(id)}/run`, { method: "POST" }, options);
 }
 
 export async function cancelTask(id: string) {
