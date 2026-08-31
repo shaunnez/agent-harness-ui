@@ -5,6 +5,52 @@ import path from "node:path";
 import test from "node:test";
 import { JsonTaskStore } from "../server/store.mjs";
 
+function continuationInput(source) {
+  return {
+    title: `Implement: ${source.title}`,
+    description: source.description,
+    repositoryPath: source.repositoryPath,
+    workflow: "implement",
+    priority: source.priority,
+    continuation: {
+      sourceTaskId: source.id,
+      sourceApprovedAt: "2026-08-31T00:00:00.000Z",
+      sourceApprovalId: "approval-specification",
+      artifacts: [],
+      decisions: [],
+      attachments: [],
+      stageDispositions: {},
+    },
+  };
+}
+
+test("creates and links exactly one JSON continuation under concurrent requests", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-store-continuation-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const source = await store.create({
+      title: "Investigate continuation",
+      description: "Carry approved evidence into one implementation task.",
+      repositoryPath: "/repo",
+      workflow: "investigate",
+      priority: "medium",
+    });
+    const input = continuationInput(source);
+    const [first, second] = await Promise.all([
+      store.createContinuation(source.id, input, { expectedUpdatedAt: source.updatedAt }),
+      store.createContinuation(source.id, input, { expectedUpdatedAt: source.updatedAt }),
+    ]);
+
+    assert.equal([first, second].filter((result) => result.created).length, 1);
+    assert.equal(first.task.id, second.task.id);
+    assert.equal((await store.get(source.id)).continuedByTaskId, first.task.id);
+    assert.equal((await store.list()).length, 2);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 async function seedLegacyMergedCompletion(store, { promoted = false } = {}) {
   const task = await store.create({
     title: "Legacy merged completion",

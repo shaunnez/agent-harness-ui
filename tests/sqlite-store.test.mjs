@@ -171,6 +171,66 @@ test("persists targeted updates, rolls failed mutations back, and reopens withou
   }
 });
 
+test("rolls continuation creation and source linkage back as one SQLite transaction", async () => {
+  const context = await fixture();
+  const sqlite = new SqliteTaskStore(context.databasePath, { legacyJsonPath: context.jsonPath });
+  let observer;
+  try {
+    await sqlite.init();
+    const source = await sqlite.get(context.taskId);
+    const input = {
+      title: `Implement: ${source.title}`,
+      description: source.description,
+      repositoryPath: source.repositoryPath,
+      workflow: "implement",
+      priority: source.priority,
+      continuation: {
+        sourceTaskId: source.id,
+        sourceApprovedAt: "2026-08-31T00:00:00.000Z",
+        sourceApprovalId: "approval-specification",
+        artifacts: [],
+        decisions: [],
+        attachments: [],
+        stageDispositions: {},
+      },
+    };
+    observer = new DatabaseSync(context.databasePath);
+    observer.exec(`
+      CREATE TRIGGER fail_continuation_link
+      BEFORE UPDATE ON tasks
+      WHEN OLD.id = '${source.id}'
+      BEGIN
+        SELECT RAISE(ABORT, 'simulated source-link failure');
+      END;
+    `);
+
+    await assert.rejects(
+      sqlite.createContinuation(source.id, input, { expectedUpdatedAt: source.updatedAt }),
+      /simulated source-link failure/,
+    );
+    assert.equal((await sqlite.list()).length, 1, "the inserted target rolls back with the failed link");
+    assert.equal((await sqlite.get(source.id)).continuedByTaskId, null);
+
+    observer.exec("DROP TRIGGER fail_continuation_link");
+    const created = await sqlite.createContinuation(source.id, input, {
+      expectedUpdatedAt: source.updatedAt,
+    });
+    const repeated = await sqlite.createContinuation(source.id, input, {
+      expectedUpdatedAt: source.updatedAt,
+    });
+    assert.equal(created.created, true);
+    assert.equal(repeated.created, false);
+    assert.equal(repeated.task.id, created.task.id);
+    assert.equal(created.task.id, "AH-002", "a rolled-back target does not consume task identity");
+    assert.equal((await sqlite.get(source.id)).continuedByTaskId, created.task.id);
+    assert.equal((await sqlite.list()).length, 2);
+  } finally {
+    observer?.close();
+    sqlite.close();
+    await rm(context.directory, { recursive: true, force: true });
+  }
+});
+
 test("core-only and unchanged collection updates do not rewrite retained evidence", async () => {
   const context = await fixture();
   const sqlite = new SqliteTaskStore(context.databasePath, { legacyJsonPath: context.jsonPath });

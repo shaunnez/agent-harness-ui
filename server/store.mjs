@@ -199,6 +199,29 @@ export class JsonTaskStore {
     return this.#mutate((state) => createTaskRecord(state, input));
   }
 
+  async createContinuation(sourceId, input, { expectedUpdatedAt = null } = {}) {
+    return this.#mutate((state) => {
+      const source = state.tasks.find((item) => item.id === sourceId);
+      if (!source) return null;
+      if (source.continuedByTaskId) {
+        const existing = state.tasks.find((item) => item.id === source.continuedByTaskId);
+        if (!existing) {
+          const error = new Error(
+            `Linked implementation task ${source.continuedByTaskId} could not be found.`,
+          );
+          error.code = "TASK_TRANSITION_CONFLICT";
+          error.statusCode = 409;
+          throw error;
+        }
+        return { task: existing, created: false };
+      }
+      assertExpectedContinuationSource(source, expectedUpdatedAt);
+      const task = createTaskRecord(state, input);
+      linkTaskContinuation(source, task);
+      return { task, created: true };
+    });
+  }
+
   async update(id, updater) {
     return this.#mutate((state) => {
       const task = state.tasks.find((item) => item.id === id);
@@ -532,7 +555,7 @@ export function createTaskRecord(state, input) {
       profileStagePolicies,
       policySnapshotVersion: 2,
     },
-    attachments: clone(continuation?.attachments ?? []),
+    attachments: clone(input.attachments ?? continuation?.attachments ?? []),
     closure: null,
     archive: null,
     evaluation: null,
@@ -611,6 +634,30 @@ export function createTaskRecord(state, input) {
   state.nextId += 1;
   state.tasks.push(task);
   return task;
+}
+
+export function linkTaskContinuation(source, target) {
+  const linkedAt = new Date().toISOString();
+  source.continuedByTaskId = target.id;
+  source.updatedAt = linkedAt;
+  source.events.push({
+    id: crypto.randomUUID(),
+    at: linkedAt,
+    category: "decision",
+    tone: "success",
+    stage: "specification",
+    title: "Continued to implementation",
+    detail: `${target.id} owns planning and implementation authority and imports approved artifacts, decisions, and attachment references. ${source.id} remains the complete read-only investigation record, including its original run telemetry.`,
+  });
+  source.events = retainRunActivityEvents(source.events);
+}
+
+function assertExpectedContinuationSource(source, expectedUpdatedAt) {
+  if (!expectedUpdatedAt || source.updatedAt === expectedUpdatedAt) return;
+  const error = new Error("The investigation changed before its implementation continuation was created.");
+  error.code = "TASK_TRANSITION_CONFLICT";
+  error.statusCode = 409;
+  throw error;
 }
 
 async function renameWithRetry(sourcePath, targetPath) {

@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { hashTaskBrief, normalizeExperimentInput } from "./evaluation.mjs";
 import { normalizeModelId, POLICY_IDS, readExecutionProviderCatalog } from "./model-catalog.mjs";
@@ -81,39 +81,53 @@ export function createTaskCreationRoutes({
       const repositoryAuthority = await repositoryAuthorityService.capture(repositoryPath, {
         frozenRevision: experiment?.frozenBaseSha ?? null,
       });
-      let task = await store.create({
-        title: input.title.trim().slice(0, 300),
-        description: input.description.trim().slice(0, 20_000),
-        repositoryPath,
-        workflow: input.workflow,
-        priority,
-        model: requestedModel,
-        reasoning: requestedReasoning,
-        stagePolicies: taskPolicies,
-        profileStagePolicies: taskProfilePolicies,
-        workflowProfile,
-        experiment,
-        repositoryAuthority,
-      });
-      if (attachments.length) {
-        const attachmentRoot = path.join(store.dataDirectory(), "attachments", task.id);
-        await mkdir(attachmentRoot, { recursive: true });
-        const saved = [];
-        for (const attachment of attachments) {
-          const extension = path.extname(attachment.name).toLowerCase();
-          const storedPath = path.join(attachmentRoot, `${crypto.randomUUID()}${extension}`);
-          await writeFile(storedPath, Buffer.from(attachment.data, "base64"));
-          saved.push({
-            id: crypto.randomUUID(),
-            name: attachment.name,
-            type: attachment.type,
-            size: attachment.size,
-            path: storedPath,
-          });
+      let attachmentRoot = null;
+      const savedAttachments = [];
+      let task;
+      try {
+        if (attachments.length) {
+          attachmentRoot = path.join(store.dataDirectory(), "attachments", `set-${crypto.randomUUID()}`);
+          await mkdir(attachmentRoot, { recursive: true });
+          for (const attachment of attachments) {
+            const extension = path.extname(attachment.name).toLowerCase();
+            const storedPath = path.join(attachmentRoot, `${crypto.randomUUID()}${extension}`);
+            await writeFile(storedPath, Buffer.from(attachment.data, "base64"));
+            savedAttachments.push({
+              id: crypto.randomUUID(),
+              name: attachment.name,
+              type: attachment.type,
+              size: attachment.size,
+              path: storedPath,
+            });
+          }
         }
-        task = await store.update(task.id, (draft) => {
-          draft.attachments = saved;
+        task = await store.create({
+          title: input.title.trim().slice(0, 300),
+          description: input.description.trim().slice(0, 20_000),
+          repositoryPath,
+          workflow: input.workflow,
+          priority,
+          model: requestedModel,
+          reasoning: requestedReasoning,
+          stagePolicies: taskPolicies,
+          profileStagePolicies: taskProfilePolicies,
+          workflowProfile,
+          experiment,
+          repositoryAuthority,
+          attachments: savedAttachments,
         });
+      } catch (error) {
+        if (attachmentRoot) {
+          try {
+            await rm(attachmentRoot, { recursive: true, force: true });
+          } catch (cleanupError) {
+            throw new AggregateError(
+              [error, cleanupError],
+              `${error.message} Attachment staging cleanup also failed: ${cleanupError.message}`,
+            );
+          }
+        }
+        throw error;
       }
       send(response, 201, { task });
       return true;
