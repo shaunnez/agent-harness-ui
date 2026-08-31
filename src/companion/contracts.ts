@@ -65,6 +65,13 @@ export interface RoleModelTarget {
   reasoning: string | null;
 }
 
+/** The only policy values a trusted role-policy form may request. */
+export interface RolePolicyRequest {
+  role: AgentRoleId;
+  model: string | null;
+  reasoning: string | null;
+}
+
 export interface GatePromotionTarget {
   kind: "candidate-gate";
   scope: "candidate";
@@ -178,6 +185,39 @@ export function createActionProposal(input: ActionProposalInput): ActionProposal
   } as ActionProposal;
   assertActionProposal(proposal);
   return proposal;
+}
+
+/**
+ * Replace only the unexecuted task-snapshot request represented by a role-model
+ * proposal. This is a local projection helper; the server remains authoritative
+ * when the proposal is confirmed.
+ */
+export function updateRoleModelProposal(
+  proposal: ActionProposal,
+  request: RolePolicyRequest,
+  eligibility = proposal.eligibility,
+): RoleModelProposal {
+  assertActionProposal(proposal);
+  if (proposal.actionType !== "change-role-model") {
+    throw new Error("Only role-model proposals can receive a role policy request.");
+  }
+  if (proposal.state !== "proposed") {
+    throw new Error(`Only proposed role-model actions can be edited; received ${proposal.state}.`);
+  }
+  const next = {
+    ...proposal,
+    summary: `Use ${request.model ?? "a discovered model"} for the ${request.role} agent on ${proposal.target.taskId}.`,
+    eligibility,
+    target: {
+      ...proposal.target,
+      role: request.role,
+      model: request.model,
+      reasoning: request.reasoning,
+    },
+  };
+  delete next.failure;
+  assertActionProposal(next);
+  return next;
 }
 
 /** Confirm locally after the operator has reviewed the card; this still does not invoke an API. */
