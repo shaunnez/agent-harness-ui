@@ -5,9 +5,21 @@ import path from "node:path";
 import assert from "node:assert/strict";
 import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
+import { claudeDesignArgs } from "../server/prototype-generator.mjs";
 import { parseGrillQuestions } from "../server/structured-output.mjs";
 
 const GRILL = `<grill-questions>{"questions":[{"question":"How safe?","whyItMatters":"A human gate is required.","options":[{"label":"Confirm first","description":"Require confirmation.","recommended":true},{"label":"Execute immediately","description":"Skip confirmation.","recommended":false}],"allowCustom":true}]}</grill-questions>`;
+
+test("pre-approves only DesignSync for the non-interactive Claude design run", () => {
+  const args = claudeDesignArgs("session-123");
+  assert.deepEqual(args.slice(args.indexOf("--tools"), args.indexOf("--tools") + 4), [
+    "--tools",
+    "DesignSync",
+    "--allowedTools",
+    "DesignSync",
+  ]);
+  assert.equal(args.includes("--dangerously-skip-permissions"), false);
+});
 
 async function waitForStatus(store, id, status) {
   for (let attempt = 0; attempt < 1_000; attempt += 1) {
