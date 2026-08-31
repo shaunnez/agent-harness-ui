@@ -796,8 +796,14 @@ export function App() {
       if (proposal.actionType === "create-task") {
         const draft = proposal.target.draft;
         if (!draft || !isValidNewTaskDraft(draft)) throw new Error("A valid task draft is required.");
-        await startTask(draft, { retryOnCsrf: false });
+        const task = await createTask(draft, { retryOnCsrf: false });
+        setNewTaskOpen(false);
         setNewTaskCaptureProposalId(null);
+        setRuntimeTasks((tasks) => [
+          taskSummaryFromDetail(task),
+          ...tasks.filter((item) => item.id !== task.id),
+        ]);
+        navigateToRoute({ kind: "task", taskId: task.id, stageId: task.currentStage });
       } else if (proposal.actionType === "change-role-model") {
         const { target } = proposal;
         if (!target.model || !target.reasoning) throw new Error("A model and reasoning policy are required.");
@@ -859,7 +865,7 @@ export function App() {
                 eligible: true,
                 rationale: "The complete NewTaskDraft is ready for explicit confirmation.",
                 evidence: [
-                  "The exact title, description, repository, workflow, priority, and optional attachments are shown on the card.",
+                  "Every submitted NewTaskDraft field and attachment selection is shown on the card.",
                   "No task API was called while the draft was captured.",
                 ],
               },

@@ -70,8 +70,18 @@ function createTaskProposal() {
         repositoryPath: "/work/agent-harness",
         workflow: "implement",
         priority: "medium",
+        designRequested: true,
+        workflowProfile: "high-risk",
         model: "gpt-5.6-luna",
         reasoning: "xhigh",
+        experiment: {
+          groupId: "companion-suite",
+          variantId: "governed-card",
+          frozenBaseSha: "base-sha",
+          acceptanceCriteria: ["Card shows exact draft"],
+          verificationCommands: ["npm run typecheck"],
+        },
+        attachments: [{ name: "brief.md", type: "text/markdown", size: 4, data: "ZGF0" }],
       },
     },
     createdAt: "2026-08-31T00:00:00.000Z",
@@ -158,6 +168,14 @@ test("renders all supported mutations as fixed, reviewable proposed cards withou
     assert.match(markup, /Improve task routing/);
     assert.match(markup, /Task snapshot only/);
     assert.match(markup, /gpt-5\.6-sol/);
+    assert.match(markup, /high-risk/);
+    assert.match(markup, /Requested/);
+    assert.match(markup, /gpt-5\.6-luna/);
+    assert.match(markup, /xhigh/);
+    assert.match(markup, /companion-suite/);
+    assert.match(markup, /governed-card/);
+    assert.match(markup, /brief\.md/);
+    assert.match(markup, /text\/markdown/);
     assert.match(markup, /Global settings/);
     assert.match(markup, /Exact candidate revision/);
     assert.match(markup, /C1 · r4/);

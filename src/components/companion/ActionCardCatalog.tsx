@@ -2,7 +2,7 @@ import { CheckCircle, CircleNotch, Info, WarningCircle, X, XCircle } from "@phos
 import { useState } from "react";
 import { createTrustedActionCard, type TrustedActionCard } from "../../companion/catalog";
 import type { ActionProposal, CompanionGateStage } from "../../companion/contracts";
-import { type AgentRoleId, workflowStages } from "../../domain";
+import { type AgentRoleId, type NewTaskDraft, workflowStages } from "../../domain";
 
 export type CompanionActionHandler = (proposal: ActionProposal) => void | Promise<void>;
 
@@ -285,10 +285,34 @@ function ActionScope({ proposal }: { proposal: ActionProposal }) {
                 {draft.workflow} / {draft.priority}
               </dd>
             </div>
+            <div>
+              <dt>Workflow profile</dt>
+              <dd>{draft.workflowProfile === undefined ? "Not specified" : draft.workflowProfile}</dd>
+            </div>
+            <div>
+              <dt>Design prototypes</dt>
+              <dd>
+                {draft.designRequested === undefined
+                  ? "Not specified"
+                  : draft.designRequested
+                    ? "Requested"
+                    : "Not requested"}
+              </dd>
+            </div>
+            <div>
+              <dt>Model</dt>
+              <dd className="mono">{draft.model ?? "Not specified"}</dd>
+            </div>
+            <div>
+              <dt>Reasoning</dt>
+              <dd>{draft.reasoning ?? "Not specified"}</dd>
+            </div>
             <div className="companion-action-card__scope-wide">
               <dt>Description</dt>
               <dd>{draft.description}</dd>
             </div>
+            <DraftExperimentScope experiment={draft.experiment} />
+            <DraftAttachmentsScope attachments={draft.attachments} />
           </>
         ) : null}
       </dl>
@@ -349,6 +373,53 @@ function ActionScope({ proposal }: { proposal: ActionProposal }) {
         <dd>{gateLabel(target.nextStage)}</dd>
       </div>
     </dl>
+  );
+}
+
+function DraftExperimentScope({ experiment }: { experiment: NewTaskDraft["experiment"] }) {
+  return (
+    <div className="companion-action-card__scope-wide">
+      <dt>Experiment</dt>
+      <dd>
+        {experiment === undefined ? (
+          "Not specified"
+        ) : experiment === null ? (
+          "None"
+        ) : (
+          <ul>
+            <li>Group: {experiment.groupId}</li>
+            <li>Variant: {experiment.variantId}</li>
+            <li>Frozen base: {experiment.frozenBaseSha}</li>
+            <li>Acceptance criteria: {experiment.acceptanceCriteria.join(" · ")}</li>
+            <li>Verification commands: {experiment.verificationCommands.join(" · ")}</li>
+          </ul>
+        )}
+      </dd>
+    </div>
+  );
+}
+
+function DraftAttachmentsScope({ attachments }: { attachments: NewTaskDraft["attachments"] }) {
+  return (
+    <div className="companion-action-card__scope-wide">
+      <dt>Attachment selections</dt>
+      <dd>
+        {attachments === undefined ? (
+          "Not specified"
+        ) : attachments.length === 0 ? (
+          "None"
+        ) : (
+          <ul>
+            {attachments.map((attachment) => (
+              <li key={`${attachment.name}-${attachment.size}-${attachment.data.slice(0, 16)}`}>
+                {attachment.name} · {attachment.type} · {attachment.size} bytes ·{" "}
+                {attachment.data ? `${attachment.data.length} encoded characters captured` : "empty content"}
+              </li>
+            ))}
+          </ul>
+        )}
+      </dd>
+    </div>
   );
 }
 
