@@ -1,23 +1,24 @@
 import type {
+  AgentRoleId,
   NewTaskDraft,
+  RuntimeArtifact,
+  RuntimeArtifactMetadata,
+  RuntimeAvailableAction,
   RuntimeChangelogCommit,
   RuntimeChangelogDetail,
   RuntimeChangelogDiff,
   RuntimeEvaluationSummary,
+  RuntimeEvent,
+  RuntimePage,
+  RuntimeProject,
+  RuntimeRepositoryContract,
+  RuntimeRun,
   RuntimeSettings,
   RuntimeStatus,
   RuntimeTask,
   RuntimeTaskCore,
-  RuntimeTaskSummary,
   RuntimeTaskPollState,
-  RuntimeArtifact,
-  RuntimeArtifactMetadata,
-  RuntimeEvent,
-  RuntimePage,
-  RuntimeProject,
-  RuntimeAvailableAction,
-  RuntimeRun,
-  RuntimeRepositoryContract,
+  RuntimeTaskSummary,
   RuntimeUsage,
   RuntimeWorktreeInventoryRow,
 } from "./domain";
@@ -29,6 +30,20 @@ export interface CandidateDiffResponse {
   worktreePath: string;
   diff: string;
   truncated: boolean;
+}
+
+export class RuntimeApiError extends Error {
+  readonly status: number;
+  readonly code: string | null;
+  readonly evidence: string[];
+
+  constructor(message: string, status: number, code: string | null = null, evidence: string[] = []) {
+    super(message);
+    this.name = "RuntimeApiError";
+    this.status = status;
+    this.code = code;
+    this.evidence = evidence;
+  }
 }
 
 async function request<T>(path: string, init?: RequestInit, retried = false): Promise<T> {
@@ -47,7 +62,11 @@ async function request<T>(path: string, init?: RequestInit, retried = false): Pr
   } catch {
     throw new Error("The local Agent Harness runtime is offline. Start the app with npm run dev.");
   }
-  const value = (await response.json().catch(() => ({}))) as T & { error?: string };
+  const value = (await response.json().catch(() => ({}))) as T & {
+    error?: string;
+    code?: string;
+    evidence?: unknown;
+  };
   if (!response.ok) {
     const message = value.error ?? `Local runtime request failed (${response.status}).`;
     // The server mints a fresh CSRF token on every restart (see getRuntimeStatus below), so a
@@ -59,7 +78,14 @@ async function request<T>(path: string, init?: RequestInit, retried = false): Pr
       await getRuntimeStatus();
       return request<T>(path, init, true);
     }
-    throw new Error(message);
+    throw new RuntimeApiError(
+      message,
+      response.status,
+      typeof value.code === "string" ? value.code : null,
+      Array.isArray(value.evidence)
+        ? value.evidence.filter((item): item is string => typeof item === "string")
+        : [],
+    );
   }
   return value;
 }
@@ -273,6 +299,21 @@ export async function createTask(draft: NewTaskDraft) {
   ).task;
 }
 
+export async function updateTaskRolePolicy(
+  id: string,
+  input: { role: AgentRoleId; model: string; reasoning: string },
+) {
+  return request<{
+    task: RuntimeTask;
+    scope: "task_snapshot";
+    role: AgentRoleId;
+    policy: { model: string; reasoning: string };
+  }>(`/api/tasks/${encodeURIComponent(id)}/agent-policy`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
 export async function continueTaskToImplementation(id: string) {
   return request<{ task: RuntimeTask; created: boolean }>(
     `/api/tasks/${encodeURIComponent(id)}/continue-implementation`,
@@ -343,9 +384,27 @@ export async function runTaskAction(
   id: string,
   action: Exclude<RuntimeAvailableAction, "continue-implementation">,
   note = "",
+  candidateScope?: {
+    candidateId: string;
+    candidateRevision: number;
+    candidateHeadRevision: string;
+  },
 ) {
   return request<Record<string, boolean>>(`/api/tasks/${encodeURIComponent(id)}/${action}`, {
     method: "POST",
-    body: JSON.stringify({ note }),
+    body: JSON.stringify({ note, ...(candidateScope ?? {}) }),
   });
+}
+
+export async function promoteTaskThroughGate(
+  id: string,
+  action: Extract<RuntimeAvailableAction, "review" | "test" | "final-review" | "open-pr">,
+  candidateScope: {
+    candidateId: string;
+    candidateRevision: number;
+    candidateHeadRevision: string;
+  },
+  note = "",
+) {
+  return runTaskAction(id, action, note, candidateScope);
 }
