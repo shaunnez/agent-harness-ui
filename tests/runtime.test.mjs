@@ -9,3 +9,4 @@ import "./runtime-command-dispatch.test.mjs";
 import "./runtime-repair-policy.test.mjs";
 import "./runtime-persistence-policy.test.mjs";
 import "./runtime-task-presentation.test.mjs";
+import "./server-lifecycle.test.mjs";
