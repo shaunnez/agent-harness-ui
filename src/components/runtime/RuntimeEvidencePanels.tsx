@@ -142,11 +142,13 @@ export function RuntimeWorktreeInventory({
   selectedId,
   onSelect,
   onRemove,
+  allowRemove = true,
 }: {
   inventory: RuntimeWorktreeInventoryRow[];
   selectedId: string | null;
   onSelect: (rowId: string | null) => void;
   onRemove: (rowId: string) => Promise<void>;
+  allowRemove?: boolean;
 }) {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
@@ -199,7 +201,7 @@ export function RuntimeWorktreeInventory({
             tone="danger"
             compact
             icon={Trash}
-            disabled={!selectedRow.cleanupReady || removing}
+            disabled={!allowRemove || !selectedRow.cleanupReady || removing}
             onClick={async () => {
               setRemoveError(null);
               setRemovingId(selectedRow.id);
@@ -215,7 +217,11 @@ export function RuntimeWorktreeInventory({
           >
             {removing ? "Removing…" : "Remove worktree"}
           </Button>
-          {!selectedRow.cleanupReady ? (
+          {!allowRemove ? (
+            <small className="runtime-worktree-inventory__hint">
+              Hosted preview is read-only. Worktree cleanup is available only in the local runtime.
+            </small>
+          ) : !selectedRow.cleanupReady ? (
             <small className="runtime-worktree-inventory__hint">
               {selectedRow.retainedRequired
                 ? "This candidate is still required by the unfinished task."

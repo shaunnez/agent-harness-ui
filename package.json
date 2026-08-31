@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit",
     "build": "vite build && node scripts/prepare-sites-build.mjs",
     "preview": "vite preview",
-    "test": "node --test tests/api-contract-characterization.test.mjs tests/api.test.mjs tests/atlas-model.test.mjs tests/campaign-export.test.mjs tests/claude-runtime.test.mjs tests/evaluation.test.mjs tests/git-worktree.test.mjs tests/github-pull-request.test.mjs tests/orchestrator.test.mjs tests/pull-request-poller.test.mjs tests/repository-authority.test.mjs tests/routes.test.mjs tests/runtime.test.mjs tests/onboarding.test.mjs tests/sqlite-store.test.mjs tests/store.test.mjs tests/task-projections.test.mjs tests/verification.test.mjs tests/workflow-profiles.test.mjs",
+    "test": "node --test tests/api-contract-characterization.test.mjs tests/api.test.mjs tests/atlas-model.test.mjs tests/campaign-export.test.mjs tests/claude-runtime.test.mjs tests/evaluation.test.mjs tests/git-worktree.test.mjs tests/github-pull-request.test.mjs tests/operator-prototype.test.mjs tests/operator-runtime-view.test.mjs tests/orchestrator.test.mjs tests/pull-request-poller.test.mjs tests/repository-authority.test.mjs tests/routes.test.mjs tests/runtime.test.mjs tests/onboarding.test.mjs tests/sqlite-store.test.mjs tests/store.test.mjs tests/task-projections.test.mjs tests/verification.test.mjs tests/workflow-profiles.test.mjs",
     "test:api": "node --test tests/api.test.mjs",
     "test:orchestrator": "node --test tests/orchestrator.test.mjs",
     "test:runtime": "node --test tests/runtime.test.mjs tests/api.test.mjs",

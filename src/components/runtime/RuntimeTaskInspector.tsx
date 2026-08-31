@@ -33,6 +33,7 @@ import {
 
 type Props = {
   task: RuntimeTaskWorkspaceProps["task"];
+  readOnlyPreview?: boolean;
   viewedStageId: StageId;
   initialSelectedWorktreeId?: string | null;
   candidateDiffLoading: boolean;
@@ -48,6 +49,7 @@ type Props = {
 
 export function RuntimeTaskInspector({
   task,
+  readOnlyPreview = false,
   viewedStageId,
   initialSelectedWorktreeId,
   candidateDiffLoading,
@@ -131,6 +133,7 @@ export function RuntimeTaskInspector({
     0,
   );
   const canOverrideProfile =
+    !readOnlyPreview &&
     !candidate &&
     task.status !== "running" &&
     task.status !== "cancelling" &&
@@ -433,7 +436,11 @@ export function RuntimeTaskInspector({
         </InspectorSection>
       ) : null}
       <InspectorSection title="Decision frontier" meta={`${task.decisions?.length ?? 0} recorded`}>
-        <DecisionFrontier task={task} canRecord={viewedTemporalState === "current"} onDecision={onDecision} />
+        <DecisionFrontier
+          task={task}
+          canRecord={!readOnlyPreview && viewedTemporalState === "current"}
+          onDecision={onDecision}
+        />
       </InspectorSection>
       <InspectorSection title="Approvals" meta={`${getApprovalHistory(task.approvals).length} recorded`}>
         <ApprovalHistorySection approvals={task.approvals ?? []} />
@@ -450,13 +457,14 @@ export function RuntimeTaskInspector({
       >
         <TaskEvaluation
           evaluation={task.evaluation}
-          disabled={task.status === "running"}
+          disabled={readOnlyPreview || task.status === "running"}
           status={task.status}
           onEvaluate={onEvaluate}
         />
       </InspectorSection>
       <RuntimeRetainedEvidenceSections
         task={task}
+        readOnlyPreview={readOnlyPreview}
         initialSelectedWorktreeId={initialSelectedWorktreeId}
         onRemoveWorktree={onRemoveWorktree}
         onLoadMoreArtifacts={onLoadMoreArtifacts}

@@ -32,6 +32,7 @@ import { ChangelogModal } from "./components/ChangelogModal";
 import { CommandCentre } from "./components/CommandCentre";
 import { TasksScreen } from "./components/LibraryScreens";
 import { NewTaskDialog } from "./components/NewTaskDialog";
+import { OperatorTaskPrototype } from "./components/operator/OperatorTaskPrototype";
 import { RuntimeTaskWorkspace } from "./components/RuntimeTaskWorkspace";
 import { SettingsScreen } from "./components/SettingsScreen";
 import { Shell } from "./components/Shell";
@@ -50,7 +51,11 @@ import {
   type StageId,
   workflowStages,
 } from "./domain";
-import { hostedAtlasPreviewRequested, hostedAtlasPreviewTasks } from "./hostedAtlasPreview";
+import {
+  hostedAtlasPreviewRequested,
+  hostedAtlasPreviewTasks,
+  operatorTaskPreviewRequested,
+} from "./hostedAtlasPreview";
 import { isCurrentRequest } from "./requestIdentity";
 import {
   appScreenForRoute,
@@ -160,7 +165,8 @@ function artifactMetadata(artifact: RuntimeTask["artifacts"][number]): RuntimeAr
 }
 
 export function App() {
-  const hostedPreviewMode = hostedAtlasPreviewRequested();
+  const operatorPreviewMode = operatorTaskPreviewRequested();
+  const hostedPreviewMode = hostedAtlasPreviewRequested() || operatorPreviewMode;
   const [screen, setScreen] = useState<AppScreen>("command");
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -227,52 +233,65 @@ export function App() {
     [hostedPreviewMode],
   );
 
-  const refreshActiveTask = useCallback(async (id: string) => {
-    const requestId = activeTaskRequestRef.current + 1;
-    activeTaskRequestRef.current = requestId;
-    const requested = { identity: id, generation: requestId };
-    const currentTask = activeRuntimeTaskRef.current?.id === id ? activeRuntimeTaskRef.current : null;
-    let task: RuntimeTask;
-    if (currentTask) {
-      const pollState = await getTaskPollState(id);
-      task =
-        pollState.pollVersion === currentTask.pollVersion
-          ? currentTask
-          : await refreshTaskEvidence(currentTask, await getTaskCore(id));
-    } else task = await hydrateTask(id);
-    if (
-      !isCurrentRequest(requested, {
-        identity: activeTaskIdentityRef.current,
-        generation: activeTaskRequestRef.current,
-      })
-    )
-      return null;
-    activeRuntimeTaskRef.current = task;
-    setActiveRuntimeTask((current) => ({
-      ...task,
-      worktreeInventory: current?.id === id ? current.worktreeInventory : [],
-    }));
-    setRuntimeTasks((tasks) => [taskSummaryFromDetail(task), ...tasks.filter((item) => item.id !== task.id)]);
-    const shouldRefreshInventory =
-      !currentTask || currentTask.pollVersion !== task.pollVersion || currentTask.worktreeInventory == null;
-    if (!shouldRefreshInventory) {
+  const refreshActiveTask = useCallback(
+    async (id: string) => {
+      if (hostedPreviewMode) {
+        const previewTask = hostedAtlasPreviewTasks.find((task) => task.id === id);
+        if (!previewTask) throw new Error(`Preview task ${id} was not found.`);
+        activeRuntimeTaskRef.current = previewTask;
+        setActiveRuntimeTask(previewTask);
+        return previewTask;
+      }
+      const requestId = activeTaskRequestRef.current + 1;
+      activeTaskRequestRef.current = requestId;
+      const requested = { identity: id, generation: requestId };
+      const currentTask = activeRuntimeTaskRef.current?.id === id ? activeRuntimeTaskRef.current : null;
+      let task: RuntimeTask;
+      if (currentTask) {
+        const pollState = await getTaskPollState(id);
+        task =
+          pollState.pollVersion === currentTask.pollVersion
+            ? currentTask
+            : await refreshTaskEvidence(currentTask, await getTaskCore(id));
+      } else task = await hydrateTask(id);
+      if (
+        !isCurrentRequest(requested, {
+          identity: activeTaskIdentityRef.current,
+          generation: activeTaskRequestRef.current,
+        })
+      )
+        return null;
+      activeRuntimeTaskRef.current = task;
+      setActiveRuntimeTask((current) => ({
+        ...task,
+        worktreeInventory: current?.id === id ? current.worktreeInventory : [],
+      }));
+      setRuntimeTasks((tasks) => [
+        taskSummaryFromDetail(task),
+        ...tasks.filter((item) => item.id !== task.id),
+      ]);
+      const shouldRefreshInventory =
+        !currentTask || currentTask.pollVersion !== task.pollVersion || currentTask.worktreeInventory == null;
+      if (!shouldRefreshInventory) {
+        setRuntimeError(null);
+        return task;
+      }
+      const inventory = await getRuntimeWorktreeInventory(id);
+      if (
+        !isCurrentRequest(requested, {
+          identity: activeTaskIdentityRef.current,
+          generation: activeTaskRequestRef.current,
+        })
+      )
+        return null;
+      const enriched = { ...task, worktreeInventory: inventory.rows };
+      activeRuntimeTaskRef.current = enriched;
+      setActiveRuntimeTask((current) => (current?.id === id ? enriched : current));
       setRuntimeError(null);
-      return task;
-    }
-    const inventory = await getRuntimeWorktreeInventory(id);
-    if (
-      !isCurrentRequest(requested, {
-        identity: activeTaskIdentityRef.current,
-        generation: activeTaskRequestRef.current,
-      })
-    )
-      return null;
-    const enriched = { ...task, worktreeInventory: inventory.rows };
-    activeRuntimeTaskRef.current = enriched;
-    setActiveRuntimeTask((current) => (current?.id === id ? enriched : current));
-    setRuntimeError(null);
-    return enriched;
-  }, []);
+      return enriched;
+    },
+    [hostedPreviewMode],
+  );
 
   const loadMoreTaskArtifacts = useCallback(async () => {
     const current = activeRuntimeTaskRef.current;
@@ -501,10 +520,6 @@ export function App() {
   const navigate = (nextScreen: AppScreen) => navigateToRoute({ kind: "screen", screen: nextScreen });
 
   const openWorkspace = (from: "command" | "tasks", taskId?: string, stageId?: StageId) => {
-    if (hostedPreviewMode) {
-      showToast("error", "The hosted atlas is a read-only UI preview. Task execution remains local.");
-      return;
-    }
     if (taskId)
       navigateToRoute({
         kind: "task",
@@ -555,6 +570,36 @@ export function App() {
   const primaryRoute: PrimaryRoute = currentRoute.kind === "changelog" ? currentRoute.returnTo : currentRoute;
   const taskRoute = primaryRoute.kind === "task" ? primaryRoute : null;
 
+  if (operatorPreviewMode) {
+    const leavePrototype = (nextScreen: AppScreen = "tasks") => {
+      const target = new URL(window.location.href);
+      target.searchParams.delete("preview");
+      target.hash = `#/${nextScreen}`;
+      window.location.assign(target.toString());
+    };
+    return (
+      <div
+        className={`app-shell app-shell--operator-preview ${sidebarCollapsed ? "app-shell--collapsed" : ""}`}
+      >
+        <Shell
+          screen="tasks"
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed((value) => !value)}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onNavigate={leavePrototype}
+          onNewTask={() => showToast("error", "This is a read-only visual prototype.")}
+          onOpenChangelog={() => leavePrototype("tasks")}
+          runtimeStatus={null}
+        />
+        <main className="app-main">
+          <OperatorTaskPrototype onExit={() => leavePrototype("tasks")} />
+        </main>
+        {toast ? <div className={`toast toast--${toast.tone}`}>{toast.message}</div> : null}
+      </div>
+    );
+  }
+
   return (
     <div className={`app-shell ${sidebarCollapsed ? "app-shell--collapsed" : ""}`}>
       <Shell
@@ -577,6 +622,8 @@ export function App() {
           <RuntimeTaskWorkspace
             key={activeRuntimeTask.id}
             task={activeRuntimeTask}
+            readOnlyPreview={hostedPreviewMode}
+            initialViewMode={taskRouteDetail ? "evidence" : "operator"}
             initialViewedStageId={viewedStageId}
             onViewedStageChange={(stageId) => {
               setViewedStageId(stageId);
