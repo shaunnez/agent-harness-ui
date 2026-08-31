@@ -10,7 +10,7 @@ import { parseGrillQuestions } from "../server/structured-output.mjs";
 
 const GRILL = `<grill-questions>{"questions":[{"question":"How safe?","whyItMatters":"A human gate is required.","options":[{"label":"Confirm first","description":"Require confirmation.","recommended":true},{"label":"Execute immediately","description":"Skip confirmation.","recommended":false}],"allowCustom":true}]}</grill-questions>`;
 
-test("pre-approves only DesignSync for the non-interactive Claude design run", () => {
+test("confines non-interactive Claude Design publication to DesignSync", () => {
   const args = claudeDesignArgs("session-123");
   assert.deepEqual(args.slice(args.indexOf("--tools"), args.indexOf("--tools") + 4), [
     "--tools",
@@ -18,6 +18,11 @@ test("pre-approves only DesignSync for the non-interactive Claude design run", (
     "--allowedTools",
     "DesignSync",
   ]);
+  assert.deepEqual(
+    args.slice(args.indexOf("--permission-mode"), args.indexOf("--permission-mode") + 2),
+    ["--permission-mode", "bypassPermissions"],
+  );
+  assert.equal(args.includes("--safe-mode"), true);
   assert.equal(args.includes("--dangerously-skip-permissions"), false);
 });
 
