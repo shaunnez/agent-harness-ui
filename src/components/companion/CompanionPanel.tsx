@@ -1,5 +1,6 @@
-import { ChatCircleDots, Compass } from "@phosphor-icons/react";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { ChatCircleDots, Compass, X } from "@phosphor-icons/react";
+import { type ReactNode, type Ref, useEffect, useId, useRef, useState } from "react";
+import type { RolePolicyFormOptions } from "../../companion/catalog";
 import { contextualAnswer } from "../../companion/context";
 import type { ActionProposal, CompanionContext, CompanionIntent } from "../../companion/contracts";
 import { companionIntentExamples, parseCompanionIntent } from "../../companion/intentParser";
@@ -26,6 +27,11 @@ export interface CompanionPanelProps {
   pendingProposalId?: string | null;
   isSubmitting?: boolean;
   className?: string;
+  draft?: string;
+  onDraftChange?: (value: string) => void;
+  composerRef?: Ref<HTMLTextAreaElement>;
+  onClose?: () => void;
+  rolePolicyOptions?: RolePolicyFormOptions;
 }
 
 /**
@@ -44,9 +50,14 @@ export function CompanionPanel({
   pendingProposalId = null,
   isSubmitting = false,
   className = "",
+  draft,
+  onDraftChange,
+  composerRef: externalComposerRef,
+  onClose,
+  rolePolicyOptions,
 }: CompanionPanelProps) {
   const panelId = useId();
-  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const internalComposerRef = useRef<HTMLTextAreaElement>(null);
   const localMessageNumber = useRef(0);
   const [localMessages, setLocalMessages] = useState<CompanionMessage[]>(() => [welcomeMessage(context)]);
   const [announcement, setAnnouncement] = useState("Contextual companion ready.");
@@ -69,7 +80,7 @@ export function CompanionPanel({
     const handleShortcut = (event: KeyboardEvent) => {
       if (!isCompanionFocusShortcut(event)) return;
       event.preventDefault();
-      composerRef.current?.focus();
+      internalComposerRef.current?.focus();
       setAnnouncement("Companion composer focused.");
     };
     window.addEventListener("keydown", handleShortcut);
@@ -101,6 +112,7 @@ export function CompanionPanel({
     appendLocalMessage({ role: "user", content: value });
     if (onSubmitText) {
       await onSubmitText(value);
+      onDraftChange?.("");
       setAnnouncement("Message sent to the contextual companion.");
       return;
     }
@@ -127,11 +139,13 @@ export function CompanionPanel({
 
     if (intent.kind === "context") {
       appendLocalMessage({ role: "assistant", content: contextualAnswer(context) });
+      onDraftChange?.("");
       setAnnouncement("Current route and workflow context described.");
       return;
     }
     if (intent.kind === "navigate") {
       appendLocalMessage({ role: "assistant", content: navigationAnswer(intent) });
+      onDraftChange?.("");
       setAnnouncement(navigationAnswer(intent));
       return;
     }
@@ -146,6 +160,7 @@ export function CompanionPanel({
       role: "assistant",
       content: `I can ${actionLabel}. Review the governed action card below; no mutation is sent until you confirm it.`,
     });
+    onDraftChange?.("");
     setAnnouncement(`Governed proposal requested to ${actionLabel}.`);
   };
 
@@ -155,68 +170,92 @@ export function CompanionPanel({
       aria-labelledby={`${panelId}-title`}
       aria-keyshortcuts="Control+K Meta+K"
     >
-      <header className="companion-panel__header">
-        <div className="companion-panel__title">
-          <span className="companion-panel__mark" aria-hidden>
-            <ChatCircleDots size={18} weight="fill" />
-          </span>
-          <div>
-            <p className="companion-panel__eyebrow">Evidence Gate companion</p>
-            <h2 id={`${panelId}-title`}>Contextual assistant</h2>
+      <div className="companion-panel__scroll" data-scroll-owner="companion">
+        <header className="companion-panel__header">
+          <div className="companion-panel__title">
+            <span className="companion-panel__mark" aria-hidden>
+              <ChatCircleDots size={18} weight="fill" />
+            </span>
+            <div>
+              <p className="companion-panel__eyebrow">Evidence Gate companion</p>
+              <h2 id={`${panelId}-title`}>Contextual assistant</h2>
+            </div>
           </div>
-        </div>
-        <span className="companion-panel__mode">
-          <i aria-hidden /> Local · governed
-        </span>
-      </header>
-
-      <ContextRibbon context={context} />
-
-      <div className="companion-thread-wrap">
-        <ol className="companion-thread" role="log" aria-label="Companion conversation" aria-live="polite">
-          {thread.map((message) => (
-            <li className={`companion-message companion-message--${message.role}`} key={message.id}>
-              <div className="companion-message__meta">
-                <span>{messageRoleLabel(message.role)}</span>
-                {message.createdAt ? <time>{message.createdAt}</time> : null}
-              </div>
-              <p>{message.content}</p>
-            </li>
-          ))}
-          <li className="companion-thread__cards">
-            <ActionCardCatalog
-              proposals={proposals}
-              onConfirmAction={onConfirmAction}
-              onDismissAction={onDismissAction}
-              pendingProposalId={pendingProposalId}
-            />
-          </li>
-        </ol>
-
-        <fieldset className="companion-intent-chips" aria-label="Suggested companion requests">
-          <legend className="companion-intent-chips__label">Try asking</legend>
-          <div>
-            {companionIntentExamples.map((example) => (
-              <button
-                type="button"
-                className="companion-intent-chip"
-                key={example}
-                onClick={() => void submit(example)}
-                disabled={isSubmitting}
-              >
-                {example}
+          <div className="companion-panel__header-actions">
+            <span className="companion-panel__mode">
+              <i aria-hidden /> Local · governed
+            </span>
+            {onClose ? (
+              <button type="button" className="icon-button" onClick={onClose} aria-label="Close companion">
+                <X size={17} />
               </button>
-            ))}
+            ) : null}
           </div>
-        </fieldset>
-      </div>
+        </header>
 
-      <p className="companion-live-announcement" role="status" aria-live="polite" aria-atomic="true">
-        {announcement}
-      </p>
-      <CompanionComposer onSubmit={submit} isSubmitting={isSubmitting} textareaRef={composerRef} />
+        <ContextRibbon context={context} />
+
+        <div className="companion-thread-wrap">
+          <ol className="companion-thread" role="log" aria-label="Companion conversation" aria-live="polite">
+            {thread.map((message) => (
+              <li className={`companion-message companion-message--${message.role}`} key={message.id}>
+                <div className="companion-message__meta">
+                  <span>{messageRoleLabel(message.role)}</span>
+                  {message.createdAt ? <time>{message.createdAt}</time> : null}
+                </div>
+                <p>{message.content}</p>
+              </li>
+            ))}
+            <li className="companion-thread__cards">
+              <ActionCardCatalog
+                proposals={proposals}
+                onConfirmAction={onConfirmAction}
+                onDismissAction={onDismissAction}
+                pendingProposalId={pendingProposalId}
+                rolePolicyOptions={rolePolicyOptions}
+              />
+            </li>
+          </ol>
+
+          <fieldset className="companion-intent-chips" aria-label="Suggested companion requests">
+            <legend className="companion-intent-chips__label">Try asking</legend>
+            <div>
+              {companionIntentExamples.map((example) => (
+                <button
+                  type="button"
+                  className="companion-intent-chip"
+                  key={example}
+                  onClick={() => void submit(example)}
+                  disabled={isSubmitting}
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        </div>
+
+        <p className="companion-live-announcement" role="status" aria-live="polite" aria-atomic="true">
+          {announcement}
+        </p>
+        <CompanionComposer
+          onSubmit={submit}
+          isSubmitting={isSubmitting}
+          textareaRef={composeRefs(internalComposerRef, externalComposerRef)}
+          value={draft}
+          onChange={onDraftChange}
+        />
+      </div>
     </section>
   );
+}
+
+function composeRefs<T>(internal: { current: T | null }, external?: Ref<T>): Ref<T> {
+  return (value) => {
+    internal.current = value;
+    if (typeof external === "function") external(value);
+    else if (external) external.current = value;
+  };
 }
 
 export function isCompanionFocusShortcut(event: Pick<KeyboardEvent, "key" | "metaKey" | "ctrlKey">) {

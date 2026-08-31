@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { createServer as createViteServer } from "vite";
 import { deriveCompanionContext } from "../src/companion/context.ts";
@@ -186,7 +187,7 @@ test("companion API retains a stale-CSRF denial without retrying the mutation", 
   );
 });
 
-test("workspace keeps the companion next to the inspector without changing active/viewed stage semantics", async () => {
+test("workspace keeps the universal inspector separate from the global companion", async () => {
   await withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const task = createTask({ id: "AH-001", currentStage: "dev-review", status: "ready-for-review" });
     const context = deriveCompanionContext({
@@ -243,11 +244,102 @@ test("workspace keeps the companion next to the inspector without changing activ
         onProfileChange: async () => {},
       }),
     );
-    assert.match(markup, /Evidence Gate companion/);
-    assert.match(markup, /Active runtime stage: Dev review/);
-    assert.match(markup, /Viewed stage: Implement \(stale\)/);
-    assert.match(markup, /data-proposal-state="proposed"/);
-    assert.match(markup, /C1 · r4/);
-    assert.match(markup, /Explicit confirmation is required/);
+    assert.match(markup, /class="stage-inspector runtime-inspector"/);
+    assert.doesNotMatch(markup, /Evidence Gate companion/);
+    assert.doesNotMatch(markup, /data-proposal-state="proposed"/);
   });
 });
+
+async function withShell(run) {
+  const vite = await createViteServer({
+    configFile: false,
+    logLevel: "error",
+    optimizeDeps: { noDiscovery: true },
+    server: { middlewareMode: true, hmr: false, host: "127.0.0.1", ws: false },
+  });
+  try {
+    return await run(await vite.ssrLoadModule("/src/components/companion/CompanionShell.tsx"));
+  } finally {
+    await vite.close();
+  }
+}
+
+test("the shell renders one global companion surface and a labelled launcher", async () => {
+  await withShell(async ({ CompanionShell }) => {
+    const markup = renderToStaticMarkup(
+      React.createElement(CompanionShell, {
+        open: true,
+        onOpen: () => {},
+        onClose: () => {},
+        context: baseShellContext("#/tasks/AH-001/implement"),
+        messages: [{ id: "message", role: "assistant", content: "Retained message" }],
+        proposals: [],
+        onConfirmAction: async () => {},
+        onDismissAction: async () => {},
+      }),
+    );
+    assert.equal((markup.match(/Evidence Gate companion/g) ?? []).length, 1);
+    assert.match(markup, /Open contextual companion|Close contextual companion/);
+    assert.match(markup, /aria-controls="companion-surface"/);
+    assert.match(markup, /aria-keyshortcuts="Control\+K Meta\+K"/);
+    assert.match(markup, /Retained message/);
+  });
+});
+
+test("companion context refreshes by route and viewed stage without changing the retained thread contract", () => {
+  const taskContext = baseShellContext("#/tasks/AH-001/implement");
+  const settingsContext = deriveCompanionContext({ route: "#/settings", viewedStage: null });
+  assert.equal(taskContext.taskId, "AH-001");
+  assert.equal(taskContext.viewedStage, "implement");
+  assert.equal(settingsContext.taskId, undefined);
+  assert.equal(settingsContext.viewedStage, null);
+});
+
+test("companion has one internal scroll owner and no workspace support-column reservation", async () => {
+  const styles = await readFile(
+    new URL("../src/components/companion/companion.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(styles, /\.companion-panel__scroll[\s\S]*?overflow: auto/);
+  assert.doesNotMatch(styles, /\.companion-thread\s*\{[\s\S]*?overflow:\s*(?:auto|scroll)/);
+  assert.doesNotMatch(styles, /gridTemplateRows/);
+  const workspace = await readFile(
+    new URL("../src/components/RuntimeTaskWorkspace.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(workspace, /CompanionPanel|companionContext|onCompanion/);
+});
+
+test("App owns retention and the shell owns keyboard, focus, and narrow-sheet boundaries", async () => {
+  const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
+  const shell = await readFile(
+    new URL("../src/components/companion/CompanionShell.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.equal((app.match(/<CompanionShell\b/g) ?? []).length, 1);
+  assert.match(app, /const \[companionDraft, setCompanionDraft\] = useState\(""\)/);
+  assert.match(app, /setCompanionDraft\(""\)/);
+  assert.doesNotMatch(
+    app.match(/if \(primaryRoute\.kind !== "task"\) \{([\s\S]*?)return;/)?.[1] ?? "",
+    /setCompanionMessages|setCompanionProposals/,
+  );
+  assert.match(shell, /isCompanionFocusShortcut/);
+  assert.match(shell, /event\.key !== "Escape"/);
+  assert.match(shell, /getFocusableElements/);
+  assert.match(shell, /aria-modal=\{narrow \? true : undefined\}/);
+  assert.match(shell, /setAttribute\("aria-hidden", "true"\)/);
+  assert.match(shell, /composerRef\.current\?\.focus\(\)/);
+  assert.match(shell, /launcherRef\.current\?\.focus\(\)/);
+});
+
+function baseShellContext(route) {
+  return deriveCompanionContext({
+    route,
+    task: {
+      id: "AH-001",
+      currentStage: "dev-review",
+      candidates: [{ id: "C1", revisionNumber: 4 }],
+    },
+    viewedStage: "implement",
+  });
+}
