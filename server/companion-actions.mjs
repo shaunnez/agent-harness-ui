@@ -258,10 +258,14 @@ export function resolveGatePromotionEligibility(task, input) {
   if (!authority.ok) return authority;
   const binding = exactCandidateBinding(task, input);
   if (!binding.ok) return binding;
-  if (
-    nonEmptyString(binding.candidate.baseRevision) &&
-    binding.candidate.baseRevision !== authority.authority.selectedRevision
-  ) {
+  if (!nonEmptyString(binding.candidate.baseRevision)) {
+    return companionDenial(
+      "repository-authority",
+      "The candidate has no base revision bound to the task repository authority, so promotion is not permitted.",
+      [`Bound repository revision: ${authority.authority.selectedRevision}.`],
+    );
+  }
+  if (binding.candidate.baseRevision !== authority.authority.selectedRevision) {
     return companionDenial(
       "repository-authority",
       "The candidate is based on a different repository revision than the task authority, so promotion is not permitted.",

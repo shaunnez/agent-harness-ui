@@ -308,6 +308,17 @@ test("gate promotion rejects candidate bases outside the bound repository revisi
   assert.equal(result.code, "repository-authority");
 });
 
+test("gate promotion rejects candidates without a base revision", () => {
+  for (const baseRevision of ["", undefined]) {
+    const result = resolveGatePromotionEligibility(
+      readyForReviewTask({ candidates: [candidateFixture({ baseRevision })] }),
+      { action: "review", candidateId: "C1", candidateRevision: 1, candidateHeadRevision: "b".repeat(40) },
+    );
+    assert.equal(result.code, "repository-authority");
+    assert.match(result.reason, /no base revision/i);
+  }
+});
+
 test("gate promotion delegates an eligible exact candidate to the existing action admission", async () => {
   const store = memoryStore(readyForReviewTask());
   const route = routeHarness(store);

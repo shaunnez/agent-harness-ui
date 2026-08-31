@@ -104,6 +104,53 @@ test("companion API retains a stale-candidate denial instead of presenting succe
   });
 });
 
+test("companion API retains a stale-CSRF denial without retrying the mutation", async () => {
+  await withApi(
+    async ({ getRuntimeStatus, updateTaskRolePolicy, promoteTaskThroughGate, RuntimeApiError }) => {
+      const originalFetch = globalThis.fetch;
+      const calls = [];
+      globalThis.fetch = async (input) => {
+        calls.push(String(input));
+        if (String(input) === "/api/runtime/status") {
+          return new Response(JSON.stringify({ csrfToken: "s4-csrf" }), { status: 200 });
+        }
+        return new Response(JSON.stringify({ error: "The CSRF token is stale." }), { status: 403 });
+      };
+      try {
+        await getRuntimeStatus();
+        for (const attempt of [
+          () =>
+            updateTaskRolePolicy("AH-001", {
+              role: "implement",
+              model: "gpt-5.6-sol",
+              reasoning: "high",
+            }),
+          () =>
+            promoteTaskThroughGate("AH-001", "review", {
+              candidateId: "cand-9f2ac7",
+              candidateRevision: 4,
+              candidateHeadRevision: "4ce91b2",
+            }),
+        ]) {
+          await assert.rejects(attempt, (error) => {
+            assert.equal(error instanceof RuntimeApiError, true);
+            assert.equal(error.status, 403);
+            assert.match(error.message, /csrf token/i);
+            return true;
+          });
+        }
+        assert.deepEqual(calls, [
+          "/api/runtime/status",
+          "/api/tasks/AH-001/agent-policy",
+          "/api/tasks/AH-001/review",
+        ]);
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    },
+  );
+});
+
 test("workspace keeps the companion next to the inspector without changing active/viewed stage semantics", async () => {
   await withWorkspace(async ({ RuntimeTaskWorkspace }) => {
     const task = createTask({ id: "AH-001", currentStage: "dev-review", status: "ready-for-review" });

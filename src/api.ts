@@ -46,7 +46,13 @@ export class RuntimeApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit, retried = false): Promise<T> {
+interface RequestOptions {
+  retryOnCsrf?: boolean;
+  retried?: boolean;
+}
+
+async function request<T>(path: string, init?: RequestInit, options: RequestOptions = {}): Promise<T> {
+  const retryOnCsrf = options.retryOnCsrf ?? true;
   let response: Response;
   try {
     response = await fetch(path, {
@@ -74,9 +80,15 @@ async function request<T>(path: string, init?: RequestInit, retried = false): Pr
     // reloaded. GETs carry no token and can't hit this, and we only retry once: a second 403
     // naming the token means it is genuinely invalid, not just stale, and should surface as-is.
     const isMutation = Boolean(init?.method && init.method !== "GET");
-    if (response.status === 403 && isMutation && !retried && /csrf token/i.test(message)) {
+    if (
+      response.status === 403 &&
+      isMutation &&
+      retryOnCsrf &&
+      !options.retried &&
+      /csrf token/i.test(message)
+    ) {
       await getRuntimeStatus();
-      return request<T>(path, init, true);
+      return request<T>(path, init, { ...options, retried: true });
     }
     throw new RuntimeApiError(
       message,
@@ -308,10 +320,14 @@ export async function updateTaskRolePolicy(
     scope: "task_snapshot";
     role: AgentRoleId;
     policy: { model: string; reasoning: string };
-  }>(`/api/tasks/${encodeURIComponent(id)}/agent-policy`, {
-    method: "PUT",
-    body: JSON.stringify(input),
-  });
+  }>(
+    `/api/tasks/${encodeURIComponent(id)}/agent-policy`,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    },
+    { retryOnCsrf: false },
+  );
 }
 
 export async function continueTaskToImplementation(id: string) {
@@ -389,11 +405,16 @@ export async function runTaskAction(
     candidateRevision: number;
     candidateHeadRevision: string;
   },
+  requestOptions: RequestOptions = {},
 ) {
-  return request<Record<string, boolean>>(`/api/tasks/${encodeURIComponent(id)}/${action}`, {
-    method: "POST",
-    body: JSON.stringify({ note, ...(candidateScope ?? {}) }),
-  });
+  return request<Record<string, boolean>>(
+    `/api/tasks/${encodeURIComponent(id)}/${action}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ note, ...(candidateScope ?? {}) }),
+    },
+    requestOptions,
+  );
 }
 
 export async function promoteTaskThroughGate(
@@ -406,5 +427,5 @@ export async function promoteTaskThroughGate(
   },
   note = "",
 ) {
-  return runTaskAction(id, action, note, candidateScope);
+  return runTaskAction(id, action, note, candidateScope, { retryOnCsrf: false });
 }
