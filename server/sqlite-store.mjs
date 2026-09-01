@@ -2,11 +2,13 @@ import { createHash } from "node:crypto";
 import { access, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { cleanupOrphanAttachmentSets } from "./attachment-storage.mjs";
 import { defaultRuntimeSettings } from "./model-catalog.mjs";
 import { retainRunActivityEvents, TASK_STORE_SCHEMA_VERSION } from "./run-activity.mjs";
 import {
   assertProjectIsUnique,
   createTaskRecord,
+  linkTaskContinuation,
   migratePersistedTaskState,
   projectRecord,
 } from "./store.mjs";
@@ -42,10 +44,13 @@ export class SqliteTaskStore {
 
   async init() {
     this.#db = new DatabaseSync(this.#filePath);
+    // Startup can legitimately overlap when a stale companion is still exiting or a second
+    // process is competing for one transition. Apply the busy handler before WAL negotiation,
+    // because `journal_mode = WAL` itself takes a database lock.
+    this.#db.exec("PRAGMA busy_timeout = 5000");
     this.#db.exec("PRAGMA foreign_keys = ON");
     this.#db.exec("PRAGMA journal_mode = WAL");
     this.#db.exec("PRAGMA synchronous = FULL");
-    this.#db.exec("PRAGMA busy_timeout = 5000");
     migrateSqliteSchema(this.#db);
     if (!this.#hasState()) {
       const legacy = await this.#readLegacyState();
@@ -55,6 +60,7 @@ export class SqliteTaskStore {
       } else this.#initializeEmptyState();
     } else await this.#assertLegacySourceUnchanged();
     await this.recoverInterrupted();
+    await cleanupOrphanAttachmentSets(this.dataDirectory(), this.#readAttachmentOwners());
     this.#db.exec("PRAGMA optimize");
   }
 
@@ -330,6 +336,44 @@ export class SqliteTaskStore {
     );
   }
 
+  async createContinuation(sourceId, input, { expectedUpdatedAt = null } = {}) {
+    return this.#enqueue(() =>
+      this.#transaction(() => {
+        const sourceRow = this.#db.prepare("SELECT revision FROM tasks WHERE id = ?").get(sourceId);
+        if (!sourceRow) return null;
+        const source = this.#readTask(sourceId);
+        if (source.continuedByTaskId) {
+          const existing = this.#readTask(source.continuedByTaskId);
+          if (!existing) {
+            const error = new Error(
+              `Linked implementation task ${source.continuedByTaskId} could not be found.`,
+            );
+            error.code = "TASK_TRANSITION_CONFLICT";
+            error.statusCode = 409;
+            throw error;
+          }
+          return clone({ task: existing, created: false });
+        }
+        if (expectedUpdatedAt && source.updatedAt !== expectedUpdatedAt) {
+          const error = new Error(
+            "The investigation changed before its implementation continuation was created.",
+          );
+          error.code = "TASK_TRANSITION_CONFLICT";
+          error.statusCode = 409;
+          throw error;
+        }
+        const nextId = Number(this.#metadata("next_id") ?? 1);
+        const state = { nextId, settings: this.#readSettings(), tasks: [] };
+        const task = createTaskRecord(state, input);
+        linkTaskContinuation(source, task);
+        this.#insertTask(task);
+        this.#updateTask(source, Number(sourceRow.revision));
+        this.#setMetadata("next_id", String(state.nextId));
+        return clone({ task, created: true });
+      }),
+    );
+  }
+
   async update(id, updater) {
     return this.#mutateTask(id, null, updater);
   }
@@ -520,6 +564,13 @@ export class SqliteTaskStore {
       .prepare("SELECT id FROM tasks ORDER BY created_at DESC, id DESC")
       .all()
       .map((row) => this.#readTask(row.id));
+  }
+
+  #readAttachmentOwners() {
+    return this.#db
+      .prepare("SELECT json_extract(core_json, '$.attachments') AS attachments_json FROM tasks")
+      .all()
+      .map((row) => ({ attachments: JSON.parse(row.attachments_json ?? "[]") }));
   }
 
   #readTask(

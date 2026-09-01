@@ -1,9 +1,125 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, utimes, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { JsonTaskStore } from "../server/store.mjs";
+
+function continuationInput(source) {
+  return {
+    title: `Implement: ${source.title}`,
+    description: source.description,
+    repositoryPath: source.repositoryPath,
+    workflow: "implement",
+    priority: source.priority,
+    continuation: {
+      sourceTaskId: source.id,
+      sourceApprovedAt: "2026-08-31T00:00:00.000Z",
+      sourceApprovalId: "approval-specification",
+      artifacts: [],
+      decisions: [],
+      attachments: [],
+      stageDispositions: {},
+    },
+  };
+}
+
+test("cleans orphaned attachment staging sets on JSON store startup", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-attachment-cleanup-"));
+  const referencedSet = path.join(directory, "attachments", "set-11111111-1111-4111-8111-111111111111");
+  const orphanedSet = path.join(directory, "attachments", "set-22222222-2222-4222-8222-222222222222");
+  const recentSet = path.join(directory, "attachments", "set-55555555-5555-4555-8555-555555555555");
+  const legacyDirectory = path.join(directory, "attachments", "AH-037");
+  try {
+    const referencedFile = path.join(referencedSet, "evidence.txt");
+    const storePath = path.join(directory, "tasks.json");
+    const store = new JsonTaskStore(storePath);
+    await store.init();
+    await store.create({
+      title: "Attachment owner",
+      description: "Retain the staged attachment referenced by this task.",
+      repositoryPath: "/repo",
+      workflow: "implement",
+      priority: "medium",
+      attachments: [{ name: "evidence.txt", path: referencedFile }],
+    });
+    await Promise.all([
+      mkdir(referencedSet, { recursive: true }),
+      mkdir(orphanedSet, { recursive: true }),
+      mkdir(recentSet, { recursive: true }),
+      mkdir(legacyDirectory, { recursive: true }),
+    ]);
+    await Promise.all([
+      writeFile(referencedFile, "referenced"),
+      writeFile(path.join(orphanedSet, "abandoned.txt"), "orphaned"),
+      writeFile(path.join(recentSet, "uploading.txt"), "in progress"),
+      writeFile(path.join(legacyDirectory, "legacy.txt"), "legacy"),
+    ]);
+    const abandonedAt = new Date(Date.now() - 10 * 60 * 1_000);
+    await utimes(orphanedSet, abandonedAt, abandonedAt);
+
+    const rebooted = new JsonTaskStore(storePath);
+    await rebooted.init();
+    await access(referencedFile);
+    await access(path.join(recentSet, "uploading.txt"));
+    await access(path.join(legacyDirectory, "legacy.txt"));
+    await assert.rejects(access(orphanedSet), { code: "ENOENT" });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("enforces single-process ownership when JSON rollback mode opts into locking", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-json-lock-"));
+  const filePath = path.join(directory, "tasks.json");
+  const first = new JsonTaskStore(filePath, { singleProcessLock: true });
+  const second = new JsonTaskStore(filePath, { singleProcessLock: true });
+  try {
+    await first.init();
+    await assert.rejects(second.init(), (error) => {
+      assert.equal(error.code, "JSON_STORE_LOCKED");
+      assert.match(error.message, /single-process-only/i);
+      assert.match(error.message, /verify.*no JSON runtime/i);
+      return true;
+    });
+
+    await first.close();
+    await second.init();
+    await second.close();
+    await assert.rejects(access(`${filePath}.lock`), { code: "ENOENT" });
+  } finally {
+    await first.close();
+    await second.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("creates and links exactly one JSON continuation under concurrent requests", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-store-continuation-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const source = await store.create({
+      title: "Investigate continuation",
+      description: "Carry approved evidence into one implementation task.",
+      repositoryPath: "/repo",
+      workflow: "investigate",
+      priority: "medium",
+    });
+    const input = continuationInput(source);
+    const [first, second] = await Promise.all([
+      store.createContinuation(source.id, input, { expectedUpdatedAt: source.updatedAt }),
+      store.createContinuation(source.id, input, { expectedUpdatedAt: source.updatedAt }),
+    ]);
+
+    assert.equal([first, second].filter((result) => result.created).length, 1);
+    assert.equal(first.task.id, second.task.id);
+    assert.equal((await store.get(source.id)).continuedByTaskId, first.task.id);
+    assert.equal((await store.list()).length, 2);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
 
 async function seedLegacyMergedCompletion(store, { promoted = false } = {}) {
   const task = await store.create({

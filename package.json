@@ -21,6 +21,7 @@
     "test:runtime": "node --test tests/runtime.test.mjs tests/api.test.mjs",
     "test:sites": "node --test tests/sites-worker.test.mjs",
     "benchmark:store": "node scripts/benchmark-task-store.mjs",
+    "profile:bundle": "node scripts/profile-bundle.mjs",
     "data:export-json": "node scripts/export-task-store-json.mjs"
   },
   "dependencies": {
@@ -31,7 +32,7 @@
     "react-dom": "19.2.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "vite": "6.4.2"
+    "vite": "6.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.6",
