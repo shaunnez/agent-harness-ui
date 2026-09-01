@@ -12,6 +12,7 @@ test("preserves the TaskOrchestrator public method signatures", () => {
     isRunning: [1, false],
     start: [1, true],
     cancel: [1, true],
+    shutdown: [0, true],
     recordDecision: [2, true],
     overrideWorkflowProfile: [2, true],
     answerGrillQuestion: [2, true],

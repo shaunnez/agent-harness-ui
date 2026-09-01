@@ -6,6 +6,7 @@ import { TaskOrchestrator } from "./orchestrator.mjs";
 import { startPullRequestPolling } from "./pull-request-poller.mjs";
 import { JsonTaskStore } from "./store.mjs";
 import { SqliteTaskStore } from "./sqlite-store.mjs";
+import { acquireRuntimeLock } from "./runtime-lock.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dataPath = process.env.AGENT_HARNESS_DATA ?? path.join(root, ".data", "tasks.json");
@@ -16,16 +17,27 @@ const configuredRepository = process.env.AGENT_HARNESS_REPOSITORY;
 const suggestedRepository = configuredRepository ?? root;
 const port = Number(process.env.AGENT_HARNESS_PORT ?? 4310);
 
-const store =
-  process.env.AGENT_HARNESS_STORE === "json"
-    ? new JsonTaskStore(dataPath, { singleProcessLock: true })
-    : new SqliteTaskStore(databasePath, { legacyJsonPath: dataPath });
-await store.init();
+const jsonStore = process.env.AGENT_HARNESS_STORE === "json";
+// The store recovers interrupted runs during init, before the HTTP listener can reveal a
+// duplicate process through EADDRINUSE. Own the store first so a second companion cannot
+// rewrite live task state or start a second set of process-local coordinators.
+const runtimeLock = await acquireRuntimeLock(jsonStore ? dataPath : databasePath);
+const store = jsonStore
+  ? new JsonTaskStore(dataPath, { singleProcessLock: true })
+  : new SqliteTaskStore(databasePath, { legacyJsonPath: dataPath });
+try {
+  await store.init();
+} catch (error) {
+  await Promise.resolve(store.close?.()).catch(() => undefined);
+  await runtimeLock.release().catch(() => undefined);
+  throw error;
+}
 const orchestrator = new TaskOrchestrator(store);
 try {
   await orchestrator.recoverMergeIntents();
 } catch (error) {
   await store.close?.();
+  await runtimeLock.release();
   throw error;
 }
 const configuredPullRequestPollIntervalMs = Number(process.env.AGENT_HARNESS_GITHUB_POLL_MS ?? 30_000);
@@ -49,12 +61,8 @@ const server = createApiServer({
 });
 
 server.once("error", async (error) => {
-  stopPullRequestPolling();
-  await Promise.resolve(store.close?.()).catch((closeError) =>
-    console.error("Failed to close the task store after a server error.", closeError),
-  );
   console.error("Agent Harness local runtime failed.", error);
-  process.exit(1);
+  await shutdown(1);
 });
 
 server.listen(port, "127.0.0.1", () => {
@@ -65,19 +73,38 @@ server.listen(port, "127.0.0.1", () => {
 });
 
 let shuttingDown = false;
+async function shutdown(exitCode) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  stopPullRequestPolling();
+  const serverClosed = server.listening
+    ? new Promise((resolve, reject) => {
+        server.close((error) => (error ? reject(error) : resolve()));
+      })
+    : Promise.resolve();
+  const failures = [];
+  const [orchestratorResult, serverResult] = await Promise.allSettled([
+    orchestrator.shutdown(),
+    serverClosed,
+  ]);
+  if (orchestratorResult.status === "rejected") failures.push(orchestratorResult.reason);
+  if (serverResult.status === "rejected") failures.push(serverResult.reason);
+  try {
+    await store.close?.();
+  } catch (error) {
+    failures.push(error);
+  }
+  try {
+    await runtimeLock.release();
+  } catch (error) {
+    failures.push(error);
+  }
+  for (const failure of failures) console.error("Failed to stop the local runtime cleanly.", failure);
+  process.exitCode = failures.length ? 1 : exitCode;
+}
+
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, () => {
-    if (shuttingDown) return;
-    shuttingDown = true;
-    stopPullRequestPolling();
-    server.close(async () => {
-      try {
-        await store.close?.();
-        process.exit(0);
-      } catch (error) {
-        console.error("Failed to close the task store cleanly.", error);
-        process.exit(1);
-      }
-    });
+    void shutdown(0);
   });
 }
