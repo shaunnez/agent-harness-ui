@@ -34,6 +34,12 @@ export interface CompanionPanelProps {
   rolePolicyOptions?: RolePolicyFormOptionsSource;
 }
 
+export const companionSuggestedRequests = [
+  "Why is this task broken?",
+  "What should I check next?",
+  ...companionIntentExamples,
+] as const;
+
 /**
  * Evidence-first companion presentation. This component can parse the small
  * local intent vocabulary for a standalone preview, while an integrated parent
@@ -111,8 +117,8 @@ export function CompanionPanel({
   const submit = async (value: string) => {
     appendLocalMessage({ role: "user", content: value });
     if (onSubmitText) {
-      await onSubmitText(value);
       onDraftChange?.("");
+      await onSubmitText(value);
       setAnnouncement("Message sent to the contextual companion.");
       return;
     }
@@ -177,13 +183,13 @@ export function CompanionPanel({
               <ChatCircleDots size={18} weight="fill" />
             </span>
             <div>
-              <p className="companion-panel__eyebrow">Evidence Gate companion</p>
-              <h2 id={`${panelId}-title`}>Contextual assistant</h2>
+              <p className="companion-panel__eyebrow">Evidence Gate</p>
+              <h2 id={`${panelId}-title`}>Companion</h2>
             </div>
           </div>
           <div className="companion-panel__header-actions">
             <span className="companion-panel__mode">
-              <i aria-hidden /> Local · governed
+              <i aria-hidden /> Read-only AI · governed actions
             </span>
             {onClose ? (
               <button type="button" className="icon-button" onClick={onClose} aria-label="Close companion">
@@ -220,7 +226,7 @@ export function CompanionPanel({
           <fieldset className="companion-intent-chips" aria-label="Suggested companion requests">
             <legend className="companion-intent-chips__label">Try asking</legend>
             <div>
-              {companionIntentExamples.map((example) => (
+              {companionSuggestedRequests.map((example) => (
                 <button
                   type="button"
                   className="companion-intent-chip"

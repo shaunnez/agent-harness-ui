@@ -71,6 +71,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Evaluate model variants on repeated task suites using observed quality, gate pass rate, repair count, wall time, tokens, cache rate, work credits, and API-equivalent cost. Never infer quality from cost or completion alone.
 - Keep production source files below roughly 500 lines where practical. Extract cohesive components and contracts instead of cosmetically splitting files, and remove legacy prototype paths only after proving they are unreachable through imports, routes, builds, and tests.
 - For the contextual chat companion, evaluate A2UI as the preferred declarative agent-UI protocol before inventing a custom card schema. Keep the renderer on a trusted local component catalogue, require explicit confirmation for mutations, and do not let a model emit arbitrary executable UI.
+- Keep the contextual Companion as a floating desktop sidebar that does not resize the active workspace. It may answer general task and repository questions through a model-backed read-only boundary, while navigation and mutation intents remain deterministic; every mutation still requires a trusted local action card, server revalidation, and explicit operator confirmation.
 
 ## Current implementation boundary
 

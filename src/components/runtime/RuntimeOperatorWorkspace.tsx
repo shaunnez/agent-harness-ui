@@ -111,6 +111,19 @@ export function RuntimeOperatorWorkspace({
         </div>
       ) : null}
 
+      {model.alert ? (
+        <section
+          className={`runtime-operator-alert runtime-operator-alert--${model.alert.tone}`}
+          role="alert"
+        >
+          <WarningCircle size={18} weight="fill" aria-hidden />
+          <span>
+            <strong>{model.alert.title}</strong>
+            <small>{model.alert.detail}</small>
+          </span>
+        </section>
+      ) : null}
+
       <div className="runtime-operator-grid">
         <main className="runtime-operator-main">
           {visibleFacts.length ? (

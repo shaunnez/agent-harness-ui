@@ -20,9 +20,9 @@
 }
 
 .companion-panel__header {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   padding: 13px 16px 12px;
   border-bottom: 1px solid var(--border);
@@ -85,14 +85,17 @@
 }
 
 .companion-panel__header-actions {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-  gap: 7px;
+  display: contents;
+}
+
+.companion-panel__header-actions .icon-button {
+  grid-row: 1;
+  grid-column: 2;
 }
 
 .companion-panel__mode {
-  flex: 0 0 auto;
+  grid-row: 2;
+  grid-column: 1 / -1;
   gap: 6px;
   color: var(--muted);
   font-size: 12px;
@@ -349,33 +352,33 @@
   flex: 0 0 auto;
 }
 
-/* The shell is the one global companion mount. Desktop reserves this width from
-   routed content while the surface itself remains fixed to the viewport. */
+/* The shell is one global, floating companion mount. It never changes the routed
+   workspace geometry on desktop; operators can inspect the page underneath it. */
 .app-shell--companion-open {
-  --companion-shell-width: clamp(350px, 30vw, 420px);
-}
-
-.app-shell--companion-open .app-main {
-  margin-right: var(--companion-shell-width);
+  --companion-shell-width: clamp(370px, 31vw, 440px);
 }
 
 .companion-shell {
   position: fixed;
   z-index: 40;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  top: 16px;
+  right: 16px;
+  bottom: 66px;
   width: var(--companion-shell-width, clamp(350px, 30vw, 420px));
   min-width: 0;
-  padding: 12px;
-  border-left: 1px solid var(--border);
-  background: var(--bg-deep);
-  box-shadow: -12px 0 30px rgb(0 0 0 / 16%);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 18px 54px rgb(0 0 0 / 34%);
 }
 
 .companion-shell .companion-panel {
   height: 100%;
   min-height: 0;
+  border: 0;
+  border-radius: 0;
 }
 
 .companion-shell .companion-context-ribbon {
@@ -431,10 +434,6 @@
   font-weight: 500;
 }
 
-.app-shell--companion-open .companion-launcher {
-  right: calc(var(--companion-shell-width) + 18px);
-}
-
 .companion-shell__backdrop {
   display: none;
 }
@@ -458,10 +457,6 @@
 }
 
 @media (max-width: 760px) {
-  .app-shell--companion-open .app-main {
-    margin-right: 0;
-  }
-
   .companion-shell__backdrop {
     position: fixed;
     z-index: 39;
@@ -476,6 +471,8 @@
   .companion-shell--sheet {
     z-index: 40;
     top: auto;
+    right: 0;
+    bottom: 0;
     width: min(100vw, 460px);
     height: min(100dvh, 760px);
     max-height: 100dvh;

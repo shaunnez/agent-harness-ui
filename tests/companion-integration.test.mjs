@@ -67,6 +67,50 @@ test("companion API helpers keep CSRF, task-policy, and exact candidate scope at
   });
 });
 
+test("general companion questions use the read-only contextual answer boundary", async () => {
+  await withApi(async ({ askCompanionQuestion, getRuntimeStatus }) => {
+    const originalFetch = globalThis.fetch;
+    const calls = [];
+    globalThis.fetch = async (input, init) => {
+      calls.push({ path: String(input), init });
+      if (String(input) === "/api/runtime/status") {
+        return new Response(JSON.stringify({ csrfToken: "s4-csrf" }), { status: 200 });
+      }
+      return new Response(
+        JSON.stringify({
+          answer: "The retained Grill run failed its confinement preflight.",
+          model: "gpt-5.6-luna",
+          reasoning: "xhigh",
+          usage: { inputTokens: 10, cachedInputTokens: 2, outputTokens: 5, totalTokens: 15 },
+          scope: { taskId: "AH-040", mode: "read-only" },
+        }),
+        { status: 200 },
+      );
+    };
+    try {
+      await getRuntimeStatus();
+      const answer = await askCompanionQuestion("Why is this task broken?", {
+        route: "#/tasks/AH-040/grill",
+        taskId: "AH-040",
+        activeStage: "grill",
+        viewedStage: "grill",
+      });
+      assert.match(answer.answer, /confinement preflight/i);
+      assert.equal(calls[1].path, "/api/companion/questions");
+      assert.equal(calls[1].init.headers["x-agent-harness-csrf"], "s4-csrf");
+      assert.deepEqual(JSON.parse(calls[1].init.body), {
+        question: "Why is this task broken?",
+        taskId: "AH-040",
+        route: "#/tasks/AH-040/grill",
+        activeStage: "grill",
+        viewedStage: "grill",
+      });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
 test("companion API retains a stale-candidate denial instead of presenting success", async () => {
   await withApi(async ({ getRuntimeStatus, promoteTaskThroughGate, RuntimeApiError }) => {
     const originalFetch = globalThis.fetch;
@@ -295,7 +339,8 @@ test("the shell renders one global companion surface and a labelled launcher", a
         onDismissAction: async () => {},
       }),
     );
-    assert.equal((markup.match(/Evidence Gate companion/g) ?? []).length, 1);
+    assert.equal((markup.match(/Evidence Gate/g) ?? []).length, 1);
+    assert.match(markup, />Companion<\/h2>/);
     assert.match(markup, /Open contextual companion|Close contextual companion/);
     assert.match(markup, /aria-controls="companion-surface"/);
     assert.match(markup, /aria-keyshortcuts="Control\+K Meta\+K"/);
@@ -312,7 +357,7 @@ test("companion context refreshes by route and viewed stage without changing the
   assert.equal(settingsContext.viewedStage, null);
 });
 
-test("companion has one internal scroll owner and no workspace support-column reservation", async () => {
+test("companion has one internal scroll owner and floats without reserving workspace width", async () => {
   const styles = await readFile(
     new URL("../src/components/companion/companion.css", import.meta.url),
     "utf8",
@@ -320,6 +365,8 @@ test("companion has one internal scroll owner and no workspace support-column re
   assert.match(styles, /\.companion-panel__scroll[\s\S]*?overflow: auto/);
   assert.doesNotMatch(styles, /\.companion-thread\s*\{[\s\S]*?overflow:\s*(?:auto|scroll)/);
   assert.doesNotMatch(styles, /gridTemplateRows/);
+  assert.doesNotMatch(styles, /\.app-shell--companion-open \.app-main/);
+  assert.match(styles, /\.companion-shell\s*\{[\s\S]*?position: fixed/);
   const workspace = await readFile(
     new URL("../src/components/RuntimeTaskWorkspace.tsx", import.meta.url),
     "utf8",

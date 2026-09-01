@@ -183,6 +183,8 @@ test("operator package flow retains continuation and requalification evidence", 
     );
     assert.match(html, /Retained continuation/);
     assert.match(html, /requalification required: npm run typecheck failed/);
+    assert.match(html, /runtime-operator-alert--red/);
+    assert.match(html, /The retained package exceeded its run allowance/);
   });
 });
 

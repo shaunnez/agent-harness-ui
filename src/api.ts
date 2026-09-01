@@ -22,6 +22,7 @@ import type {
   RuntimeUsage,
   RuntimeWorktreeInventoryRow,
 } from "./domain";
+import type { CompanionContext } from "./companion/contracts";
 
 export interface CandidateDiffResponse {
   candidateId: string;
@@ -30,6 +31,14 @@ export interface CandidateDiffResponse {
   worktreePath: string;
   diff: string;
   truncated: boolean;
+}
+
+export interface CompanionQuestionResponse {
+  answer: string;
+  model: string;
+  reasoning: string;
+  usage: RuntimeUsage;
+  scope: { taskId: string | null; mode: "read-only" };
 }
 
 export class RuntimeApiError extends Error {
@@ -111,6 +120,19 @@ export async function getRuntimeStatus() {
   const status = await request<RuntimeStatus>("/api/runtime/status");
   runtimeCsrfToken = status.csrfToken ?? null;
   return status;
+}
+
+export async function askCompanionQuestion(question: string, context: CompanionContext) {
+  return request<CompanionQuestionResponse>("/api/companion/questions", {
+    method: "POST",
+    body: JSON.stringify({
+      question,
+      taskId: context.taskId ?? null,
+      route: context.route,
+      activeStage: context.activeStage,
+      viewedStage: context.viewedStage,
+    }),
+  });
 }
 
 export async function updateRuntimeSettings(

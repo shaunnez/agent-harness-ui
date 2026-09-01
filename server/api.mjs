@@ -8,6 +8,7 @@ import { normalizeModelId, POLICY_IDS } from "./model-catalog.mjs";
 import { withActionEligibility } from "./retry-admission-policy.mjs";
 import { createCandidateWorktreeRoutes } from "./candidate-worktree-routes.mjs";
 import { createChangelogRoutes } from "./changelog-routes.mjs";
+import { createCompanionChatRoutes } from "./companion-chat.mjs";
 import { createRetainedEvidenceRoutes } from "./retained-evidence-routes.mjs";
 import { createProjectRoutes } from "./project-routes.mjs";
 import { createRuntimeSettingsRoutes } from "./runtime-settings-routes.mjs";
@@ -193,6 +194,7 @@ export function createApiServer({
   csrfToken = crypto.randomUUID(),
   reportHttpMetric = () => {},
   repositoryAuthorityService = orchestrator?._repositoryAuthority ?? new RepositoryAuthorityService(),
+  runCompanionAgent,
 }) {
   // Reads resolve each entry's recorded absolute path, so this root only matters for
   // `prepare`, which the API never calls. It still uses the shared default rather than a
@@ -259,6 +261,13 @@ export function createApiServer({
     repositoryAuthorityService,
   });
   const taskActionRoutes = createTaskActionRoutes({ store, orchestrator, send, readJson });
+  const companionChatRoutes = createCompanionChatRoutes({
+    store,
+    send,
+    readJson,
+    suggestedRepository,
+    runAgent: runCompanionAgent,
+  });
   return createServer(async (request, response) => {
     const url = new URL(request.url, "http://127.0.0.1");
     requestMetrics.set(response, {
@@ -288,6 +297,7 @@ export function createApiServer({
       if (await retainedEvidenceRoutes(request, response, url)) return;
       if (await taskLifecycleRoutes(request, response, url)) return;
       if (await taskActionRoutes(request, response, url)) return;
+      if (await companionChatRoutes(request, response, url)) return;
       send(response, 404, { error: "Not found." });
     } catch (error) {
       sendError(response, error);
