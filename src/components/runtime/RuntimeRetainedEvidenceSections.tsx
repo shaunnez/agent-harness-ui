@@ -9,6 +9,7 @@ import { getRuntimeArtifactFreshness, isArtifactFresh } from "./workflow";
 
 type Props = {
   task: RuntimeTaskWorkspaceProps["task"];
+  readOnlyPreview?: boolean;
   initialSelectedWorktreeId?: string | null;
   onRemoveWorktree: RuntimeTaskWorkspaceProps["onRemoveWorktree"];
   onLoadMoreArtifacts: RuntimeTaskWorkspaceProps["onLoadMoreArtifacts"];
@@ -18,6 +19,7 @@ type Props = {
 
 export function RuntimeRetainedEvidenceSections({
   task,
+  readOnlyPreview = false,
   initialSelectedWorktreeId,
   onRemoveWorktree,
   onLoadMoreArtifacts,
@@ -49,6 +51,7 @@ export function RuntimeRetainedEvidenceSections({
             selectedId={selectedWorktreeId}
             onSelect={setSelectedWorktreeId}
             onRemove={onRemoveWorktree}
+            allowRemove={!readOnlyPreview}
           />
         </InspectorSection>
       ) : null}

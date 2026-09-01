@@ -1,0 +1,101 @@
+.operator-evidence-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  min-height: 0;
+  overflow: hidden;
+}
+.operator-evidence-preview > main,
+.operator-evidence-preview > aside {
+  min-width: 0;
+  overflow: auto;
+  padding: 22px;
+}
+.operator-evidence-preview > main > header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.operator-evidence-preview > main > header > span {
+  display: grid;
+  gap: 6px;
+}
+.operator-evidence-preview > main > header small {
+  font-size: 13px;
+}
+.operator-evidence-preview > aside {
+  border-left: 1px solid var(--border);
+  background: #141412;
+}
+.operator-evidence-preview > aside section {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.operator-evidence-preview > aside strong {
+  font-size: 14px;
+}
+.operator-evidence-preview > aside p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.operator-evidence-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 18px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.operator-evidence-strip article {
+  display: flex;
+  gap: 11px;
+  padding: 14px;
+  border-right: 1px solid var(--border);
+  color: var(--blue);
+}
+.operator-evidence-strip article:last-child {
+  border-right: 0;
+}
+.operator-evidence-strip article span {
+  display: grid;
+  gap: 5px;
+}
+.operator-evidence-strip strong {
+  color: var(--text);
+  font-size: 13px;
+}
+.operator-evidence-strip p {
+  color: var(--muted);
+  font-size: 12px;
+}
+.operator-evidence-artifact {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #11110f;
+}
+.operator-evidence-artifact > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border);
+}
+.operator-evidence-artifact > div {
+  display: grid;
+  gap: 13px;
+  padding: 20px;
+}
+.operator-evidence-artifact h3 {
+  margin-top: 5px;
+}
+.operator-evidence-artifact p,
+.operator-evidence-artifact li {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}

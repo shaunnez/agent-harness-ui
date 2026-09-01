@@ -5,6 +5,7 @@ export type RuntimeWorkflowAction = RuntimeAvailableAction;
 
 export interface RuntimeTaskWorkspaceProps {
   task: RuntimeTask;
+  readOnlyPreview?: boolean;
   onBack: () => void;
   onRun: () => Promise<void>;
   onCancel: () => Promise<void>;
@@ -19,6 +20,7 @@ export interface RuntimeTaskWorkspaceProps {
   onProfileChange: (profile: WorkflowProfileId, reason: string) => Promise<void>;
   onLoadMoreArtifacts?: () => Promise<void>;
   onLoadArtifact?: (artifactId: string) => Promise<RuntimeTask["artifacts"][number]>;
+  initialViewMode?: "operator" | "evidence";
   initialViewedStageId?: StageId;
   initialSelectedWorktreeId?: string | null;
   onViewedStageChange?: (stageId: StageId) => void;
