@@ -1,8 +1,14 @@
 import { CheckCircle, CircleNotch, Info, WarningCircle, X, XCircle } from "@phosphor-icons/react";
 import { useState } from "react";
-import { createTrustedActionCard, type TrustedActionCard } from "../../companion/catalog";
+import {
+  createTrustedActionCard,
+  type RolePolicyFormOptions,
+  type RolePolicyFormOptionsSource,
+  type TrustedActionCard,
+} from "../../companion/catalog";
 import type { ActionProposal, CompanionGateStage } from "../../companion/contracts";
 import { type AgentRoleId, type NewTaskDraft, workflowStages } from "../../domain";
+import { RolePolicyActionCard } from "./RolePolicyActionCard";
 
 export type CompanionActionHandler = (proposal: ActionProposal) => void | Promise<void>;
 
@@ -11,6 +17,7 @@ export interface ActionCardCatalogProps {
   onConfirmAction: CompanionActionHandler;
   onDismissAction: CompanionActionHandler;
   pendingProposalId?: string | null;
+  rolePolicyOptions?: RolePolicyFormOptionsSource;
 }
 
 /**
@@ -22,6 +29,7 @@ export function ActionCardCatalog({
   onConfirmAction,
   onDismissAction,
   pendingProposalId = null,
+  rolePolicyOptions,
 }: ActionCardCatalogProps) {
   const [internalPendingId, setInternalPendingId] = useState<string | null>(null);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
@@ -100,8 +108,11 @@ export function ActionCardCatalog({
             pending={pendingProposalId === card.proposal.id || internalPendingId === card.proposal.id}
             anyPending={pendingProposalId !== null || internalPendingId !== null}
             localError={localErrors[card.proposal.id]}
-            onConfirm={() => void confirm(card)}
+            onConfirm={(nextProposal) =>
+              void confirm(nextProposal ? createTrustedActionCard(nextProposal) : card)
+            }
             onDismiss={() => void dismiss(card)}
+            rolePolicyOptions={rolePolicyOptionsForCard(card, rolePolicyOptions)}
           />
         ))}
       </div>
@@ -116,15 +127,30 @@ function ActionCard({
   localError,
   onConfirm,
   onDismiss,
+  rolePolicyOptions,
 }: {
   card: TrustedActionCard;
   pending: boolean;
   anyPending: boolean;
   localError?: string;
-  onConfirm: () => void;
+  onConfirm: (proposal?: ActionProposal) => void;
   onDismiss: () => void;
+  rolePolicyOptions?: RolePolicyFormOptions;
 }) {
   const { proposal } = card;
+  if (proposal.actionType === "change-role-model") {
+    return (
+      <RolePolicyActionCard
+        {...(rolePolicyOptions ?? { models: [], allowedModels: [] })}
+        proposal={proposal}
+        pending={pending}
+        anyPending={anyPending}
+        localError={localError}
+        onConfirm={onConfirm}
+        onDismiss={onDismiss}
+      />
+    );
+  }
   const titleId = `companion-action-${proposal.id}-title`;
   const canConfirm =
     proposal.state === "proposed" &&
@@ -206,7 +232,7 @@ function ActionCard({
             <button
               type="button"
               className="button button--primary button--compact"
-              onClick={onConfirm}
+              onClick={() => onConfirm()}
               disabled={!canConfirm || anyPending}
               title={
                 !proposal.eligibility.eligible
@@ -256,66 +282,89 @@ function ActionCard({
   );
 }
 
+function rolePolicyOptionsForCard(
+  card: TrustedActionCard,
+  source?: RolePolicyFormOptionsSource,
+): RolePolicyFormOptions | undefined {
+  if (card.proposal.actionType !== "change-role-model") {
+    return typeof source === "function" ? undefined : source;
+  }
+  if (typeof source !== "function") return source;
+  return source(card.proposal);
+}
+
 function ActionScope({ proposal }: { proposal: ActionProposal }) {
   if (proposal.actionType === "create-task") {
     const draft = proposal.target.draft;
     return (
-      <dl className="companion-action-card__scope">
-        <div>
-          <dt>Scope</dt>
-          <dd>New task</dd>
-        </div>
-        <div>
-          <dt>Validated draft</dt>
-          <dd>{draft ? "Ready for confirmation" : "Required before confirmation"}</dd>
-        </div>
+      <>
+        <dl className="companion-action-card__scope">
+          <div>
+            <dt>Scope</dt>
+            <dd>New task</dd>
+          </div>
+          <div>
+            <dt>Captured proposal draft</dt>
+            <dd>{draft ? "Ready for separate confirmation" : "Capture is required before confirmation"}</dd>
+          </div>
+          {draft ? (
+            <>
+              <div>
+                <dt>Title</dt>
+                <dd>{draft.title}</dd>
+              </div>
+              <div>
+                <dt>Repository</dt>
+                <dd className="mono">{draft.repositoryPath}</dd>
+              </div>
+              <div>
+                <dt>Workflow / priority</dt>
+                <dd>
+                  {draft.workflow} / {draft.priority}
+                </dd>
+              </div>
+              <div>
+                <dt>Workflow profile</dt>
+                <dd>{draft.workflowProfile === undefined ? "Not specified" : draft.workflowProfile}</dd>
+              </div>
+              <div>
+                <dt>Design prototypes</dt>
+                <dd>
+                  {draft.designRequested === undefined
+                    ? "Not specified"
+                    : draft.designRequested
+                      ? "Requested"
+                      : "Not requested"}
+                </dd>
+              </div>
+              <div>
+                <dt>Model</dt>
+                <dd className="mono">{draft.model ?? "Not specified"}</dd>
+              </div>
+              <div>
+                <dt>Reasoning</dt>
+                <dd>{draft.reasoning ?? "Not specified"}</dd>
+              </div>
+              <div className="companion-action-card__scope-wide">
+                <dt>Description</dt>
+                <dd>{draft.description}</dd>
+              </div>
+              <DraftExperimentScope experiment={draft.experiment} />
+              <DraftAttachmentsScope attachments={draft.attachments} />
+            </>
+          ) : null}
+        </dl>
         {draft ? (
-          <>
-            <div>
-              <dt>Title</dt>
-              <dd>{draft.title}</dd>
-            </div>
-            <div>
-              <dt>Repository</dt>
-              <dd className="mono">{draft.repositoryPath}</dd>
-            </div>
-            <div>
-              <dt>Workflow / priority</dt>
-              <dd>
-                {draft.workflow} / {draft.priority}
-              </dd>
-            </div>
-            <div>
-              <dt>Workflow profile</dt>
-              <dd>{draft.workflowProfile === undefined ? "Not specified" : draft.workflowProfile}</dd>
-            </div>
-            <div>
-              <dt>Design prototypes</dt>
-              <dd>
-                {draft.designRequested === undefined
-                  ? "Not specified"
-                  : draft.designRequested
-                    ? "Requested"
-                    : "Not requested"}
-              </dd>
-            </div>
-            <div>
-              <dt>Model</dt>
-              <dd className="mono">{draft.model ?? "Not specified"}</dd>
-            </div>
-            <div>
-              <dt>Reasoning</dt>
-              <dd>{draft.reasoning ?? "Not specified"}</dd>
-            </div>
-            <div className="companion-action-card__scope-wide">
-              <dt>Description</dt>
-              <dd>{draft.description}</dd>
-            </div>
-            <DraftExperimentScope experiment={draft.experiment} />
-            <DraftAttachmentsScope attachments={draft.attachments} />
-          </>
-        ) : null}
-      </dl>
+          <p className="companion-action-card__capture-note">
+            Capture only attaches this draft to the proposal. A separate confirmation creates the task.
+          </p>
+        ) : (
+          <p className="companion-action-card__capture-note">
+            Capture only attaches a draft to this proposal; no task is created until you confirm the exact
+            draft.
+          </p>
+        )}
+      </>
     );
   }
 

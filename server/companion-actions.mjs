@@ -1,6 +1,7 @@
-import { normalizeModelId, POLICY_IDS, readExecutionProviderCatalog } from "./model-catalog.mjs";
 import { runActionAdmission } from "./action-policy.mjs";
+import { normalizeModelId, POLICY_IDS, readExecutionProviderCatalog } from "./model-catalog.mjs";
 import { withActionEligibility } from "./retry-admission-policy.mjs";
+import { resolveRolePolicyLifecycleEligibility } from "./role-policy-eligibility.mjs";
 
 const GATE_ACTIONS = Object.freeze({
   "dev-review": "review",
@@ -33,9 +34,16 @@ export function companionSuccess(value) {
   return { ok: true, ...value };
 }
 
-/** Resolve a role policy against the current discovered catalogue and settings. */
-export function resolveRolePolicyEligibility(task, input, settings, catalog) {
+/** Resolve a role policy against the current task lifecycle, authority, catalogue, and settings. */
+export function resolveRolePolicyEligibility(task, input, settings, catalog, expectedTaskId) {
   if (!task?.id) return companionDenial("unauthorized", "The selected task is no longer available.");
+  if (expectedTaskId !== undefined && task.id !== expectedTaskId) {
+    return companionDenial(
+      "unauthorized",
+      "The selected task identity changed before its policy snapshot could be updated.",
+      [`Expected task: ${String(expectedTaskId)}.`, `Current task: ${String(task.id)}.`],
+    );
+  }
   if (!task.agentConfig || !isRecord(task.agentConfig.stagePolicies)) {
     return companionDenial("invalid-policy", "The selected task has no mutable policy snapshot.", [
       "This task must be migrated or recreated before a role policy can be changed.",
@@ -69,19 +77,31 @@ export function resolveRolePolicyEligibility(task, input, settings, catalog) {
     );
   }
 
+  const lifecycle = resolveRolePolicyLifecycleEligibility(task, input.role);
+  if (!lifecycle.ok) return lifecycle;
+
+  const authority = repositoryAuthorityEligibility(task);
+  if (!authority.ok) return authority;
+
   const modelId = normalizeModelId(input.model);
-  const model = (catalog?.models ?? []).find((entry) => entry.id === modelId);
+  const model = Array.isArray(catalog?.models) ? catalog.models.find((entry) => entry?.id === modelId) : null;
   const allowed = Array.isArray(settings?.allowedModels) && settings.allowedModels.includes(modelId);
-  if (!model || !allowed || model.editable !== true) {
+  const discovered = model?.availability === "discovered";
+  const selectable = model?.editable === true && discovered && model?.provenance !== "configured";
+  if (!model || !allowed || !selectable) {
     return companionDenial(
       "invalid-policy",
       "The requested model is not in the discovered, editable runtime allowlist.",
-      [`Requested model: ${modelId}.`, `Allowed models: ${settings?.allowedModels?.join(", ") || "none"}.`],
+      [
+        `Requested model: ${modelId}.`,
+        `Allowed models: ${settings?.allowedModels?.join(", ") || "none"}.`,
+        `Catalogue availability: ${model?.availability ?? "not reported"}.`,
+      ],
       400,
     );
   }
   const reasoning = input.reasoning.trim().toLowerCase();
-  if (!model.reasoningLevels?.includes(reasoning)) {
+  if (!Array.isArray(model.reasoningLevels) || !model.reasoningLevels.includes(reasoning)) {
     return companionDenial(
       "invalid-policy",
       `${model.label ?? modelId} does not support ${reasoning} reasoning for this role.`,
@@ -112,32 +132,36 @@ export function applyTaskRolePolicy(task, role, policy) {
   task.agentConfig.stagePolicies[role] = { model: policy.model, reasoning: policy.reasoning };
 }
 
-export async function updateTaskRolePolicy({ store, taskId, input, catalog } = {}) {
+export async function updateTaskRolePolicy({ store, taskId, input, catalog, readCatalog } = {}) {
   const task = await store?.get(taskId);
   if (!task) return companionDenial("unauthorized", "The selected task is no longer available.", [], 404);
-  const authority = repositoryAuthorityEligibility(task);
-  if (!authority.ok) return authority;
   const settings = await store.settings();
-  const resolvedCatalog = catalog ?? (await readExecutionProviderCatalog());
-  const eligibility = resolveRolePolicyEligibility(task, input, settings, resolvedCatalog);
+  const catalogReader = readCatalog ?? (catalog ? async () => catalog : readExecutionProviderCatalog);
+  const resolvedCatalog = catalog ?? (await catalogReader());
+  const eligibility = resolveRolePolicyEligibility(task, input, settings, resolvedCatalog, taskId);
   if (!eligibility.ok) return eligibility;
 
-  let authorityDenial;
+  let transitionDenial;
   let updated;
   try {
     updated = await store.transition(
       taskId,
-      (draft) => {
-        if (!draft.agentConfig?.stagePolicies || draft.id !== taskId) return false;
-        const currentAuthority = repositoryAuthorityEligibility(draft);
-        if (!currentAuthority.ok) authorityDenial = currentAuthority;
-        return currentAuthority.ok;
+      (draft, transitionContext) => {
+        transitionDenial = resolveRolePolicyEligibility(
+          draft,
+          input,
+          transitionContext?.settings ?? settings,
+          transitionContext?.catalog ?? resolvedCatalog,
+          taskId,
+        );
+        return transitionDenial.ok;
       },
       (draft) => applyTaskRolePolicy(draft, eligibility.role, eligibility.policy),
+      async () => ({ catalog: await catalogReader() }),
     );
   } catch (error) {
     if (error?.code === "TASK_TRANSITION_CONFLICT") {
-      if (authorityDenial) return authorityDenial;
+      if (transitionDenial && !transitionDenial.ok) return transitionDenial;
       return companionDenial(
         "unauthorized",
         "The task changed before its policy snapshot could be updated. Review the task and try again.",
@@ -145,7 +169,10 @@ export async function updateTaskRolePolicy({ store, taskId, input, catalog } = {
     }
     throw error;
   }
-  if (!updated) return companionDenial("unauthorized", "The selected task is no longer available.", [], 404);
+  if (!updated) {
+    if (transitionDenial && !transitionDenial.ok) return transitionDenial;
+    return companionDenial("unauthorized", "The selected task is no longer available.", [], 404);
+  }
   return companionSuccess({ task: updated, role: eligibility.role, policy: eligibility.policy });
 }
 

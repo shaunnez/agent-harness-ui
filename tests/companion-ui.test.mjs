@@ -3,7 +3,15 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createServer as createViteServer } from "vite";
-import { createTrustedActionCard } from "../src/companion/catalog.ts";
+import {
+  companionPolicyRoleIds,
+  companionRoleOptions,
+  createTrustedActionCard,
+  isExactRolePolicyRequest,
+  isTrustedRolePolicyRequest,
+  resetInvalidRolePolicyReasoning,
+  selectableRolePolicyModels,
+} from "../src/companion/catalog.ts";
 import { deriveCompanionContext } from "../src/companion/context.ts";
 import {
   confirmActionProposal,
@@ -18,6 +26,69 @@ const eligibility = {
   rationale: "The current task carries the required persisted evidence.",
   evidence: ["Repository authority is bound.", "The exact candidate worktree is clean."],
 };
+
+const modelCatalog = [
+  {
+    id: "gpt-5.6-luna",
+    label: "GPT-5.6 Luna",
+    description: "Discovered Luna model.",
+    defaultReasoning: "xhigh",
+    reasoningLevels: ["medium", "high", "xhigh"],
+    pricing: null,
+    provider: "codex",
+    provenance: "discovered",
+    availability: "discovered",
+    editable: true,
+  },
+  {
+    id: "gpt-5.6-sol",
+    label: "GPT-5.6 Sol",
+    description: "Discovered Sol model.",
+    defaultReasoning: "high",
+    reasoningLevels: ["high", "xhigh"],
+    pricing: null,
+    provider: "codex",
+    provenance: "discovered",
+    availability: "discovered",
+    editable: true,
+  },
+  {
+    id: "gpt-configured-only",
+    label: "Configured only",
+    description: "Not discovered.",
+    defaultReasoning: "high",
+    reasoningLevels: ["high"],
+    pricing: null,
+    provider: "codex",
+    provenance: "configured",
+    availability: "configured",
+    editable: false,
+  },
+  {
+    id: "gpt-unsupported",
+    label: "Unsupported",
+    description: "Not selectable.",
+    defaultReasoning: "high",
+    reasoningLevels: ["high"],
+    pricing: null,
+    provider: null,
+    provenance: "bundled-fallback",
+    availability: "unsupported",
+    editable: false,
+  },
+  {
+    id: "https://untrusted.invalid/render",
+    label: "Untrusted endpoint",
+    description: "Must never become a control.",
+    defaultReasoning: "high",
+    reasoningLevels: ["high"],
+    pricing: null,
+    provider: "codex",
+    provenance: "discovered",
+    availability: "discovered",
+    editable: true,
+  },
+];
 
 function roleModelProposal() {
   return createActionProposal({
@@ -99,7 +170,8 @@ async function withCompanion(run) {
     const panel = await vite.ssrLoadModule("/src/components/companion/CompanionPanel.tsx");
     const catalog = await vite.ssrLoadModule("/src/components/companion/ActionCardCatalog.tsx");
     const composer = await vite.ssrLoadModule("/src/components/companion/CompanionComposer.tsx");
-    return await run({ ...panel, ...catalog, ...composer });
+    const rolePolicy = await vite.ssrLoadModule("/src/components/companion/RolePolicyActionCard.tsx");
+    return await run({ ...panel, ...catalog, ...composer, ...rolePolicy });
   } finally {
     await vite.close();
   }
@@ -215,6 +287,152 @@ test("renders lifecycle and denial evidence without inventing execution", async 
     assert.match(markup, /Confirmation not executed\./);
     assert.match(markup, /selected model is not in the discovered allowlist/);
     assert.doesNotMatch(markup, /data-proposal-state="confirmed"[\s\S]*>Confirm</);
+  });
+});
+
+test("projects only discovered editable allowlisted models and resets unsupported reasoning", () => {
+  const selectable = selectableRolePolicyModels(modelCatalog, [
+    "gpt-5.6-luna",
+    "gpt-5.6-sol",
+    "gpt-configured-only",
+    "gpt-unsupported",
+    "https://untrusted.invalid/render",
+  ]);
+  assert.deepEqual(
+    selectable.map((model) => model.id),
+    ["gpt-5.6-luna", "gpt-5.6-sol"],
+  );
+  assert.equal(resetInvalidRolePolicyReasoning(selectable[1], "max"), "high");
+  assert.equal(resetInvalidRolePolicyReasoning(selectable[1], "xhigh"), "xhigh");
+  assert.equal(
+    isTrustedRolePolicyRequest(
+      { role: "implement", model: "gpt-configured-only", reasoning: "high" },
+      companionRoleOptions,
+      selectable,
+      ["gpt-configured-only"],
+    ),
+    false,
+  );
+  assert.equal(
+    isTrustedRolePolicyRequest(
+      { role: "implement", model: "gpt-5.6-sol", reasoning: "high" },
+      companionRoleOptions,
+      selectable,
+      ["gpt-5.6-sol"],
+    ),
+    true,
+  );
+  assert.equal(
+    isExactRolePolicyRequest(
+      { model: "gpt-5.6-sol", reasoning: "high" },
+      {
+        role: "implement",
+        model: "gpt-5.6-sol",
+        reasoning: "high",
+      },
+    ),
+    false,
+  );
+  assert.equal(companionPolicyRoleIds.includes("approval"), false);
+  assert.equal(companionPolicyRoleIds.includes("scout-code-path"), false);
+  assert.equal(
+    companionRoleOptions.some((role) => role.id === "implement"),
+    true,
+  );
+  assert.equal(
+    isTrustedRolePolicyRequest(
+      { role: "approval", model: "gpt-5.6-sol", reasoning: "high" },
+      companionRoleOptions,
+      selectable,
+      ["gpt-5.6-sol"],
+    ),
+    false,
+  );
+  assert.equal(
+    isTrustedRolePolicyRequest(
+      { role: "scout-code-path", model: "gpt-5.6-sol", reasoning: "high" },
+      companionRoleOptions,
+      selectable,
+      ["gpt-5.6-sol"],
+    ),
+    false,
+  );
+  assert.deepEqual(selectableRolePolicyModels(null, null), []);
+});
+
+test("renders the role policy as a trusted exact-request form", async () => {
+  await withCompanion(async ({ RolePolicyActionCard }) => {
+    const markup = render(
+      React.createElement(RolePolicyActionCard, {
+        proposal: roleModelProposal(),
+        models: modelCatalog,
+        allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "gpt-configured-only"],
+        currentPolicy: { model: "gpt-5.6-luna", reasoning: "high" },
+        onConfirm: () => {},
+        onDismiss: () => {},
+      }),
+    );
+
+    assert.match(markup, /data-role-policy-form="trusted"/);
+    assert.match(markup, /name="role"/);
+    assert.match(markup, /name="model"/);
+    assert.match(markup, /name="reasoning"/);
+    assert.match(markup, /Known workflow role/);
+    assert.match(markup, /Current policy/);
+    assert.match(markup, /gpt-5\.6-luna · high/);
+    assert.match(markup, /Requested policy/);
+    assert.match(markup, /gpt-5\.6-sol · high/);
+    assert.match(markup, /GPT-5\.6 Sol · gpt-5\.6-sol/);
+    assert.doesNotMatch(markup, /Configured only|Unsupported/);
+    assert.match(markup, /data-request-exact="true"/);
+    assert.match(markup, /data-request-eligible="true"/);
+    const confirmButton = markup.match(/<button[^>]*>[\s\S]*?Confirm<\/button>/)?.[0];
+    assert.ok(confirmButton);
+    assert.doesNotMatch(confirmButton, /disabled/);
+  });
+});
+
+test("disables confirmation when the request is unchanged and makes draft capture explicit", async () => {
+  await withCompanion(async ({ RolePolicyActionCard, ActionCardCatalog }) => {
+    const unchanged = render(
+      React.createElement(RolePolicyActionCard, {
+        proposal: roleModelProposal(),
+        models: modelCatalog,
+        allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol"],
+        currentPolicy: { model: "gpt-5.6-sol", reasoning: "high" },
+        onConfirm: () => {},
+        onDismiss: () => {},
+      }),
+    );
+    assert.match(unchanged, /data-request-exact="false"/);
+    assert.match(unchanged, /The requested policy must differ from the current policy/);
+    const unchangedConfirmButton = unchanged.match(/<button[^>]*>[\s\S]*?Confirm<\/button>/)?.[0];
+    assert.ok(unchangedConfirmButton);
+    assert.match(unchangedConfirmButton, /disabled/);
+
+    const draftless = createActionProposal({
+      id: "draftless-capture",
+      actionType: "create-task",
+      summary: "Prepare a new task draft for explicit confirmation.",
+      eligibility: {
+        eligible: false,
+        rationale: "A complete draft must be captured before confirmation.",
+        evidence: ["Capture attaches data to the proposal only."],
+      },
+      target: { kind: "new-task", draft: null },
+    });
+    const captureMarkup = render(
+      React.createElement(ActionCardCatalog, {
+        proposals: [draftless],
+        ...callbackProps(),
+      }),
+    );
+    assert.match(captureMarkup, /Capture only attaches a draft to this proposal/);
+    assert.match(captureMarkup, /no task is created until you confirm/);
+    assert.match(captureMarkup, /data-proposal-state="proposed"/);
+    const captureConfirmButton = captureMarkup.match(/<button[^>]*>[\s\S]*?Confirm<\/button>/)?.[0];
+    assert.ok(captureConfirmButton);
+    assert.match(captureConfirmButton, /disabled/);
   });
 });
 

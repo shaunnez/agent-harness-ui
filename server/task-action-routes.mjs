@@ -26,7 +26,7 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson, re
         store,
         taskId: id,
         input: await readJson(request),
-        catalog: readModelCatalog ? await readModelCatalog() : undefined,
+        readCatalog: readModelCatalog,
       });
       if (!result.ok) {
         send(response, result.status, companionActionResponse(result));

@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { type StageId, workflowStages } from "../domain";
 import type { TaskRouteDetail } from "../routes";
 import { CandidateDiffErrorViewer, CandidateDiffViewer } from "./CandidateDiffViewer";
-import { CompanionPanel } from "./companion/CompanionPanel";
 import { RunActivity } from "./RunActivity";
 import type { RuntimeTaskWorkspaceProps } from "./runtime/contracts";
 import { RuntimeCommandBar } from "./runtime/RuntimeCommandBar";
@@ -55,13 +54,6 @@ export function RuntimeTaskWorkspace({
   onViewedStageChange,
   routeDetail,
   onRouteDetailChange,
-  companionContext,
-  companionMessages,
-  companionProposals,
-  onCompanionSubmitText,
-  onCompanionConfirmAction,
-  onCompanionDismissAction,
-  companionPendingProposalId,
 }: RuntimeTaskWorkspaceProps) {
   const [viewedStageId, setViewedStageId] = useState<StageId>(initialViewedStageId ?? task.currentStage);
   const [runError, setRunError] = useState<string | null>(null);
@@ -223,16 +215,7 @@ export function RuntimeTaskWorkspace({
             />
           </main>
 
-          <div
-            className="runtime-support-column"
-            style={{
-              display: "grid",
-              gridTemplateRows: companionContext ? "minmax(0, 1fr) minmax(460px, 0.95fr)" : "minmax(0, 1fr)",
-              minWidth: 0,
-              minHeight: 0,
-              overflow: "hidden",
-            }}
-          >
+          <div className="runtime-support-column">
             <RuntimeTaskInspector
               task={task}
               viewedStageId={viewedStageId}
@@ -247,17 +230,6 @@ export function RuntimeTaskWorkspace({
               onOpenArtifact={openRuntimeArtifact}
               onOpenCandidateDiff={() => requestCandidateDiff()}
             />
-            {companionContext ? (
-              <CompanionPanel
-                context={companionContext}
-                messages={companionMessages}
-                proposals={companionProposals ?? []}
-                onSubmitText={onCompanionSubmitText}
-                onConfirmAction={onCompanionConfirmAction ?? (() => undefined)}
-                onDismissAction={onCompanionDismissAction ?? (() => undefined)}
-                pendingProposalId={companionPendingProposalId}
-              />
-            ) : null}
           </div>
         </div>
         <RunActivity

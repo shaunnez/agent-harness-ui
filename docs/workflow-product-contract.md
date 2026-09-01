@@ -282,6 +282,34 @@ runtime stage, viewed stage, and exact candidate/revision when one is recorded.
 A stale viewed stage is described as inspection evidence and never as the
 current runtime stage.
 
+### App-shell surface and navigation ownership
+
+The contextual companion is mounted exactly once by the App shell, as a
+sibling of routed content. It is available on Command Centre, Tasks, Skills,
+Agents, Settings, and every task workspace. App-owned conversation messages,
+governed proposals, and the unsent composer draft therefore survive route and
+stage navigation. Context is recalculated from the serialized route, the
+currently active task identity, and the viewed stage on every render; a route
+change must never present stale task or stage context as current evidence.
+
+Changing task identity clears only the unsent composer draft. Conversation and
+proposal records remain inspectable until their own lifecycle completes or the
+operator dismisses them. Leaving a task for a global screen does not create a
+new companion session, and returning to that task does not clear its retained
+companion state.
+
+On desktop the companion is a fixed, closeable side panel whose reserved width
+is taken from routed content, so it cannot cover the universal task inspector.
+The inspector remains open, static, and independently scrollable. The
+companion has one internal scroll owner containing its header, compact context,
+conversation, cards, and composer; nested message or card regions do not claim
+scroll ownership. Its labelled launcher remains available globally. Cmd/Ctrl+K
+opens the panel and focuses the composer; Escape closes it only when an active
+nested dialog has not consumed the event, and every close path restores focus to
+the launcher. At narrow widths it becomes a modal sheet with dialog semantics,
+background exclusion, contained Tab/Shift+Tab navigation, initial composer
+focus, and the same Escape and launcher-focus rules.
+
 ### Closed hybrid intent protocol
 
 The companion accepts a small deterministic natural-language vocabulary and its
@@ -326,6 +354,29 @@ they cannot change global settings. Existing task and agent-run records retain
 their historical model and reasoning metadata. Promotion is bound to the exact
 candidate revision, so candidate drift or a later repair invalidates downstream
 gate evidence rather than allowing an old proposal to advance the task.
+
+### Role-policy mutation frontier
+
+Role-policy eligibility is a server-owned lifecycle predicate shared by
+projection and mutation. A known role may be changed only while it is genuinely
+future: before that role begins work and before any role-owned evidence makes
+its policy historical. The predicate denies terminal, archived, cancelled,
+identity-drift, and awaiting-PR-merge task states; active or retained runs for
+the selected role; role artifacts; reached or passed role stages; Implement
+after any candidate exists; and Repair after a repair run or repair lineage
+exists. It also fails closed for invalid task identity, repository authority,
+model-catalogue, Settings allowlist/editability, or supported-reasoning
+combinations. The approval role and scout roles are not selectable through the
+role-policy form.
+
+Both the eligibility projection and the confirmation transition return the
+same stable ineligible code, reason, and structured evidence. The transition
+revalidates task identity, repository authority, discovered catalogue entry,
+Settings allowlist/editability, reasoning support, and the lifecycle predicate
+inside the atomic store transition immediately before changing the unexecuted
+task snapshot. A lifecycle or authority change between projection and
+confirmation therefore leaves the policy unchanged. Client preflight only
+improves usability and is never authoritative.
 
 ### Trusted catalogue and A2UI decision
 
