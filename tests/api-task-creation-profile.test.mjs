@@ -163,7 +163,11 @@ test("snapshots controlled experiment inputs and reports measured outcomes separ
 });
 
 test("persists supported task attachments outside the repository", async () => {
-  const { directory, origin, server } = await createServer();
+  const { directory, origin, server } = await createServer({
+    beforeUpdate() {
+      throw new Error("Attachment creation must not require a second task-store write.");
+    },
+  });
   try {
     const content = "<main>Reference artifact</main>";
     const response = await createTask(origin, {

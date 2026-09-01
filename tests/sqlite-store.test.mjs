@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, utimes, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -10,6 +10,42 @@ import { SqliteTaskStore } from "../server/sqlite-store.mjs";
 import { JsonTaskStore, migratePersistedTaskState } from "../server/store.mjs";
 
 const exec = promisify(execFile);
+
+test("cleans orphaned attachment staging sets on SQLite store startup", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-sqlite-attachment-cleanup-"));
+  const databasePath = path.join(directory, "tasks.sqlite3");
+  const referencedSet = path.join(directory, "attachments", "set-33333333-3333-4333-8333-333333333333");
+  const orphanedSet = path.join(directory, "attachments", "set-44444444-4444-4444-8444-444444444444");
+  try {
+    const referencedFile = path.join(referencedSet, "evidence.txt");
+    const store = new SqliteTaskStore(databasePath);
+    await store.init();
+    await store.create({
+      title: "SQLite attachment owner",
+      description: "Retain the staged attachment referenced by this task.",
+      repositoryPath: "/repo",
+      workflow: "implement",
+      priority: "medium",
+      attachments: [{ name: "evidence.txt", path: referencedFile }],
+    });
+    await Promise.all([mkdir(referencedSet, { recursive: true }), mkdir(orphanedSet, { recursive: true })]);
+    await Promise.all([
+      writeFile(referencedFile, "referenced"),
+      writeFile(path.join(orphanedSet, "abandoned.txt"), "orphaned"),
+    ]);
+    const abandonedAt = new Date(Date.now() - 10 * 60 * 1_000);
+    await utimes(orphanedSet, abandonedAt, abandonedAt);
+    store.close();
+
+    const rebooted = new SqliteTaskStore(databasePath);
+    await rebooted.init();
+    await access(referencedFile);
+    await assert.rejects(access(orphanedSet), { code: "ENOENT" });
+    rebooted.close();
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
 
 async function fixture() {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-sqlite-store-"));
@@ -166,6 +202,66 @@ test("persists targeted updates, rolls failed mutations back, and reopens withou
     assert.equal(task.artifacts[0].content, "# Triage\n\nRetained content.");
     reopened.close();
   } finally {
+    sqlite.close();
+    await rm(context.directory, { recursive: true, force: true });
+  }
+});
+
+test("rolls continuation creation and source linkage back as one SQLite transaction", async () => {
+  const context = await fixture();
+  const sqlite = new SqliteTaskStore(context.databasePath, { legacyJsonPath: context.jsonPath });
+  let observer;
+  try {
+    await sqlite.init();
+    const source = await sqlite.get(context.taskId);
+    const input = {
+      title: `Implement: ${source.title}`,
+      description: source.description,
+      repositoryPath: source.repositoryPath,
+      workflow: "implement",
+      priority: source.priority,
+      continuation: {
+        sourceTaskId: source.id,
+        sourceApprovedAt: "2026-08-31T00:00:00.000Z",
+        sourceApprovalId: "approval-specification",
+        artifacts: [],
+        decisions: [],
+        attachments: [],
+        stageDispositions: {},
+      },
+    };
+    observer = new DatabaseSync(context.databasePath);
+    observer.exec(`
+      CREATE TRIGGER fail_continuation_link
+      BEFORE UPDATE ON tasks
+      WHEN OLD.id = '${source.id}'
+      BEGIN
+        SELECT RAISE(ABORT, 'simulated source-link failure');
+      END;
+    `);
+
+    await assert.rejects(
+      sqlite.createContinuation(source.id, input, { expectedUpdatedAt: source.updatedAt }),
+      /simulated source-link failure/,
+    );
+    assert.equal((await sqlite.list()).length, 1, "the inserted target rolls back with the failed link");
+    assert.equal((await sqlite.get(source.id)).continuedByTaskId, null);
+
+    observer.exec("DROP TRIGGER fail_continuation_link");
+    const created = await sqlite.createContinuation(source.id, input, {
+      expectedUpdatedAt: source.updatedAt,
+    });
+    const repeated = await sqlite.createContinuation(source.id, input, {
+      expectedUpdatedAt: source.updatedAt,
+    });
+    assert.equal(created.created, true);
+    assert.equal(repeated.created, false);
+    assert.equal(repeated.task.id, created.task.id);
+    assert.equal(created.task.id, "AH-002", "a rolled-back target does not consume task identity");
+    assert.equal((await sqlite.get(source.id)).continuedByTaskId, created.task.id);
+    assert.equal((await sqlite.list()).length, 2);
+  } finally {
+    observer?.close();
     sqlite.close();
     await rm(context.directory, { recursive: true, force: true });
   }

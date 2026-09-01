@@ -5,15 +5,17 @@ import { Button, StateBadge } from "../Primitives";
 
 export function RuntimeGrillPanel({
   task,
+  readOnly = false,
   onAnswer,
 }: {
   task: RuntimeTask;
+  readOnly?: boolean;
   onAnswer: (questionId: string, answer: string) => Promise<void>;
 }) {
   const session = task.grillSession;
   if (!session) return null;
   const settled = session.questions.filter((question) => question.answer).length;
-  const interactive = session.status === "open" && task.status === "awaiting-grill";
+  const interactive = !readOnly && session.status === "open" && task.status === "awaiting-grill";
   const activeQuestion = session.questions.find((question) => !question.answer);
   const policy = session.policySnapshot ?? task.grillPolicy ?? "manual";
   return (

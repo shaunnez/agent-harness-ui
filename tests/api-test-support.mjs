@@ -141,23 +141,34 @@ async function createServer(options = {}) {
     },
   };
   let transitionIntercepted = false;
-  const apiStore = options.beforeTransition
-    ? new Proxy(store, {
-        get(target, property) {
-          if (property === "transition") {
-            return async (...args) => {
-              if (!transitionIntercepted) {
-                transitionIntercepted = true;
-                await options.beforeTransition(store, ...args);
-              }
-              return target.transition(...args);
-            };
-          }
-          const value = Reflect.get(target, property, target);
-          return typeof value === "function" ? value.bind(target) : value;
-        },
-      })
-    : store;
+  let updateIntercepted = false;
+  const apiStore =
+    options.beforeTransition || options.beforeUpdate
+      ? new Proxy(store, {
+          get(target, property) {
+            if (property === "transition") {
+              return async (...args) => {
+                if (!transitionIntercepted) {
+                  transitionIntercepted = true;
+                  await options.beforeTransition?.(store, ...args);
+                }
+                return target.transition(...args);
+              };
+            }
+            if (property === "update") {
+              return async (...args) => {
+                if (!updateIntercepted) {
+                  updateIntercepted = true;
+                  await options.beforeUpdate?.(store, ...args);
+                }
+                return target.update(...args);
+              };
+            }
+            const value = Reflect.get(target, property, target);
+            return typeof value === "function" ? value.bind(target) : value;
+          },
+        })
+      : store;
   const server = createApiServer({
     store: apiStore,
     orchestrator,

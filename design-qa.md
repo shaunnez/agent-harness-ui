@@ -355,3 +355,38 @@ final result: passed
 No actionable P0, P1, or P2 visual or interaction issues remain in the reviewed state.
 
 final result: passed
+
+---
+
+# Operator task prototype design QA
+
+## Target and implementation
+
+- Selected design reference: `/Users/shaun/.codex/generated_images/01a051a2-620c-7532-99c0-1587c8d05111/exec-f403e39a-bb85-4a9d-931b-ab6c81c59ddb.png`
+- Local implementation: `http://127.0.0.1:4175/?preview=operator`
+- Final implementation capture: `/tmp/operator-prototype-implement-final.png`
+- Final side-by-side comparison: `/tmp/operator-design-comparison-final.png`
+
+The in-app browser provided a 1280 × 720 capture surface while the selected reference is 1487 × 1058. The implementation preserves document-level fit at the available desktop size and uses local workspace overflow, matching the product contract for smaller viewports.
+
+## Comparison history
+
+### Pass 1
+
+- **P1 · State coherence:** the prototype state switcher changed the global status treatment but left stage briefing, health, action, and handoff copy unchanged. This could make a blocked or repair-required task appear safe to continue.
+- Fix: added state-specific briefing health, an inline semantic callout, the correct next safe action, and coherent handoff readiness copy for Running, Needs input, Blocked, Repair required, and Completed.
+
+### Pass 2
+
+- No remaining P0, P1, or P2 findings.
+- Layout and hierarchy retain the selected warm-ink Evidence Gate shell, compact sidebar, horizontal stage navigator, five-part operator briefing, central stage workbench, right context rail, and low-profile handoff/activity treatment.
+- Typography stays within the established Inter hierarchy and 12px metadata / 14px body floor. Long task identity is intentionally truncated in the compact header.
+- Semantic colors remain restrained and consistent across active, healthy, attention, blocked, and repair states.
+- Phosphor icons are used consistently; no custom SVG, CSS illustration, placeholder imagery, or decorative gradients were introduced.
+- All ten stage controls, Operator/Evidence switching, representative state controls, Grill answer selection, package inspection, and retained-evidence navigation were exercised in-browser.
+- The page has no document-level scrolling at 1280 × 720; constrained workbench content scrolls locally. Browser console inspection returned no errors or warnings.
+- Controls use semantic buttons and fieldsets, retain visible keyboard focus treatment, and respect the existing reduced-motion rules.
+
+## Result
+
+Passed with no open P0, P1, or P2 design QA findings.

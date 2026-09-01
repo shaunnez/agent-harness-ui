@@ -456,44 +456,45 @@ export function createTaskLifecycleRoutes({
           sourceTaskId: source.id,
           sourceDecisionId: decision.id,
         }));
-        const target = await store.create({
-          title: `Implement: ${source.title}`.slice(0, 300),
-          description: source.description,
-          repositoryPath,
-          workflow: "implement",
-          priority: source.priority,
-          model: source.agentConfig?.model ?? settings.defaultModel,
-          reasoning: source.agentConfig?.reasoning ?? settings.defaultReasoning,
-          stagePolicies: structuredClone(source.agentConfig?.stagePolicies ?? settings.stagePolicies),
-          profileStagePolicies: structuredClone(
-            source.agentConfig?.profileStagePolicies ?? settings.profileStagePolicies,
-          ),
-          workflowProfile,
-          repositoryAuthority,
-          continuation: {
-            sourceTaskId: source.id,
-            sourceApprovedAt: specificationApproval.createdAt,
-            sourceApprovalId: specificationApproval.id,
-            artifacts: importedArtifacts,
-            decisions: importedDecisions,
-            attachments: structuredClone(source.attachments ?? []),
-            scoutDispatch: structuredClone(source.scoutDispatch ?? null),
-            grillSession: structuredClone(source.grillSession ?? null),
-            stageDispositions: structuredClone(source.stageDispositions ?? {}),
+        const continuationResult = await store.createContinuation(
+          source.id,
+          {
+            title: `Implement: ${source.title}`.slice(0, 300),
+            description: source.description,
+            repositoryPath,
+            workflow: "implement",
+            priority: source.priority,
+            model: source.agentConfig?.model ?? settings.defaultModel,
+            reasoning: source.agentConfig?.reasoning ?? settings.defaultReasoning,
+            stagePolicies: structuredClone(source.agentConfig?.stagePolicies ?? settings.stagePolicies),
+            profileStagePolicies: structuredClone(
+              source.agentConfig?.profileStagePolicies ?? settings.profileStagePolicies,
+            ),
+            workflowProfile,
+            repositoryAuthority,
+            continuation: {
+              sourceTaskId: source.id,
+              sourceApprovedAt: specificationApproval.createdAt,
+              sourceApprovalId: specificationApproval.id,
+              artifacts: importedArtifacts,
+              decisions: importedDecisions,
+              attachments: structuredClone(source.attachments ?? []),
+              scoutDispatch: structuredClone(source.scoutDispatch ?? null),
+              grillSession: structuredClone(source.grillSession ?? null),
+              stageDispositions: structuredClone(source.stageDispositions ?? {}),
+            },
           },
-        });
-        await store.update(source.id, (draft) => {
-          draft.continuedByTaskId = target.id;
-          draft.events.push({
-            id: crypto.randomUUID(),
-            at: new Date().toISOString(),
-            category: "decision",
-            tone: "success",
-            stage: "specification",
-            title: "Continued to implementation",
-            detail: `${target.id} owns planning and implementation authority and imports approved artifacts, decisions, and attachment references. ${source.id} remains the complete read-only investigation record, including its original run telemetry.`,
-          });
-        });
+          { expectedUpdatedAt: source.updatedAt },
+        );
+        if (!continuationResult) {
+          send(response, 404, { error: "Task not found." });
+          return true;
+        }
+        const target = continuationResult.task;
+        if (!continuationResult.created) {
+          send(response, 200, { task: withActionEligibility(target), created: false });
+          return true;
+        }
         const started = await orchestrator.start(target.id, "planning");
         if (!started) {
           await store.update(target.id, (draft) => {

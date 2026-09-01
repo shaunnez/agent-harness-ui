@@ -190,6 +190,52 @@ test("reserves a run exactly once across concurrent start requests", async () =>
   }
 });
 
+test("runtime shutdown aborts active runs, preserves their retry allowance, and closes admission", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-runtime-shutdown-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Stop active work before shutdown",
+      description: "The companion must own and await the process tree before closing persistence.",
+      repositoryPath: directory,
+      workflow: "investigate",
+      priority: "high",
+    });
+    let agentStarted;
+    const started = new Promise((resolve) => {
+      agentStarted = resolve;
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      runCodex: ({ signal }) =>
+        new Promise((_resolve, reject) => {
+          agentStarted();
+          signal.addEventListener("abort", () => reject(new Error("Codex run cancelled.")), { once: true });
+        }),
+    });
+
+    assert.equal(await orchestrator.start(task.id), true);
+    await started;
+    const active = await store.get(task.id);
+    const priorLimit = active.stageRunLimits.triage;
+    assert.equal(active.status, "running");
+
+    assert.equal(await orchestrator.shutdown(), 1);
+    const stopped = await store.get(task.id);
+    assert.equal(stopped.status, "cancelled");
+    assert.equal(stopped.activeRunKind, null);
+    assert.equal(stopped.stageRunLimits.triage, priorLimit + 1);
+    assert.ok(stopped.events.some((event) => /runtime shutdown requested/i.test(event.title)));
+    assert.equal(
+      await orchestrator.start(task.id),
+      false,
+      "shutdown permanently closes this runtime's admission",
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("persists typed process timeouts as a terminal timed-out run", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-typed-timeout-"));
   try {

@@ -37,6 +37,10 @@ export class TaskOrchestrator {
     return this.#core.tasks.cancel(id);
   }
 
+  async shutdown() {
+    return this.#core.tasks.shutdown();
+  }
+
   async recordDecision(id, input) {
     return this.#core.tasks.recordDecision(id, input);
   }

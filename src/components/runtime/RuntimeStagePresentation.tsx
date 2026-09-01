@@ -35,6 +35,7 @@ export function RuntimeStagePresentation({
   candidate,
   completedApprovalWithoutArtifact,
   viewedStageStopped,
+  readOnlyPreview = false,
   onAnswer,
   onOpenArtifact,
   onOpenCandidateDiff,
@@ -50,6 +51,7 @@ export function RuntimeStagePresentation({
   candidate: RuntimeTask["candidates"][number] | undefined;
   completedApprovalWithoutArtifact: boolean;
   viewedStageStopped: boolean;
+  readOnlyPreview?: boolean;
   onAnswer: (questionId: string, answer: string) => Promise<void>;
   onOpenArtifact: (artifact: RuntimeArtifact) => void;
   onOpenCandidateDiff: (target?: RuntimeTask["candidates"][number]) => void;
@@ -230,7 +232,11 @@ export function RuntimeStagePresentation({
               </p>
             </span>
           </section>
-          {task.grillSession ? <RuntimeGrillPanel task={task} onAnswer={onAnswer} /> : empty}
+          {task.grillSession ? (
+            <RuntimeGrillPanel task={task} readOnly={readOnlyPreview} onAnswer={onAnswer} />
+          ) : (
+            empty
+          )}
           {artifactCard}
         </div>
       );

@@ -5,9 +5,11 @@ import { canOverrideWorkflowProfile, recordWorkflowProfile } from "./workflow-pr
 
 import { RUN_KINDS, now, activity, completeGrillSession } from "./orchestrator-stage-support.mjs";
 import { currentCandidate, canStartRun, reserveRun } from "./orchestrator-run-policy.mjs";
-import { recordApproval } from "./orchestrator-task-helpers.mjs";
+import { recordApproval, stageForRun } from "./orchestrator-task-helpers.mjs";
 
 export class TaskControlOrchestrator {
+  _acceptingRuns = true;
+
   constructor({
     store,
     active,
@@ -37,6 +39,7 @@ export class TaskControlOrchestrator {
 
   async start(id, kind = "investigation", options = {}) {
     if (!RUN_KINDS.has(kind)) throw new Error(`Unknown run kind: ${kind}`);
+    if (!this._acceptingRuns) return false;
     if (this._active.has(id)) return false;
     const controller = new AbortController();
     const reservation = { controller, kind, promise: null };
@@ -72,6 +75,7 @@ export class TaskControlOrchestrator {
         this._active.delete(id);
         return false;
       }
+      reservation.runReservationId = reserved.activeRunReservationId;
     } catch (error) {
       this._active.delete(id);
       if (error.code === "TASK_TRANSITION_CONFLICT") return false;
@@ -168,6 +172,52 @@ export class TaskControlOrchestrator {
     });
     active.controller.abort();
     return true;
+  }
+
+  async shutdown() {
+    this._acceptingRuns = false;
+    const active = [...this._active.entries()];
+    const persistenceErrors = [];
+    for (const [id, reservation] of active) {
+      try {
+        await this._store.transition(
+          id,
+          (draft) => draft.activeRunReservationId === reservation.runReservationId,
+          (draft) => {
+            const stage = stageForRun(draft.activeRunKind ?? reservation.kind, draft.currentStage);
+            draft.stageRunLimits ??= {};
+            draft.stageRunLimits[stage] = stageRunLimitFor(draft, stage) + 1;
+            draft.status = "cancelling";
+            draft.events.push(
+              activity(
+                stage,
+                "Runtime shutdown requested",
+                "The active process tree is being terminated before the task store closes. This interruption does not consume the human retry allowance.",
+                "warning",
+                "decision",
+              ),
+            );
+          },
+        );
+      } catch (error) {
+        if (error.code !== "TASK_TRANSITION_CONFLICT") persistenceErrors.push(error);
+      } finally {
+        reservation.controller.abort();
+      }
+    }
+    const runResults = await Promise.allSettled(
+      active.map(([, reservation]) => reservation.promise).filter(Boolean),
+    );
+    for (const result of runResults) {
+      if (result.status === "rejected") persistenceErrors.push(result.reason);
+    }
+    if (persistenceErrors.length) {
+      throw new AggregateError(
+        persistenceErrors,
+        "One or more active tasks could not record runtime shutdown.",
+      );
+    }
+    return active.length;
   }
 
   async recordDecision(id, input) {

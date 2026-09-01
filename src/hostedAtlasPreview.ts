@@ -39,6 +39,10 @@ export function hostedAtlasPreviewRequested(search?: string) {
   return queryParameter("preview", search) === "atlas";
 }
 
+export function operatorTaskPreviewRequested(search?: string) {
+  return queryParameter("preview", search) === "operator";
+}
+
 export function hostedAtlasMapRequested(search?: string) {
   return queryParameter("view", search) === "map";
 }
@@ -142,6 +146,42 @@ function previewTask({
   ).toISOString();
   const hasCandidate = currentStageIndex >= stageIds.indexOf("implement");
   const candidateId = `C${(Number(id.split("-")[1] ?? 1) % 3) + 1}`;
+  const artifacts = artifactsFor(id, [...completedStages], createdAt).map((artifact) =>
+    ["dev-review", "test", "final-review"].includes(artifact.stage)
+      ? { ...artifact, candidateId, candidateRevision: 1 }
+      : artifact,
+  );
+  const previewGateFreshness = (stage: "dev-review" | "test" | "final-review") => {
+    const fresh = completedStages.includes(stage);
+    const sourceArtifactId = fresh ? `${id.toLowerCase()}-${stage}` : null;
+    const reason = fresh
+      ? {
+          code: "fresh" as const,
+          copy: "The illustrative gate is bound to the exact preview candidate.",
+        }
+      : {
+          code: "missing_authoritative_summary" as const,
+          copy: "No authoritative persisted terminal run summary is available for this gate.",
+        };
+    return {
+      stage,
+      candidateId,
+      candidateRevision: 1,
+      target: { candidateId, candidateRevision: 1 },
+      state: fresh ? ("fresh" as const) : ("stale" as const),
+      fresh,
+      sourceRunId: null,
+      sourceArtifactId,
+      reasonCode: reason.code,
+      reasonCopy: reason.copy,
+      reason,
+      staleReasonCode: fresh ? null : ("missing_authoritative_summary" as const),
+      staleReasonCopy: fresh ? null : reason.copy,
+      staleReason: fresh ? null : reason,
+      focusedTest: null,
+      focusedTestRows: [],
+    };
+  };
 
   return {
     id,
@@ -164,7 +204,7 @@ function previewTask({
     attemptsByStage: status === "queued" ? {} : { [currentStage]: 1 },
     models: [{ provider: "openai", model: "gpt-5.6-luna" }],
     usage: previewUsage,
-    artifacts: artifactsFor(id, [...completedStages], createdAt),
+    artifacts,
     decisions: [],
     grillSession: null,
     approvals: [],
@@ -194,6 +234,13 @@ function previewTask({
           },
         ]
       : [],
+    gateFreshness: hasCandidate
+      ? {
+          "dev-review": previewGateFreshness("dev-review"),
+          test: previewGateFreshness("test"),
+          "final-review": previewGateFreshness("final-review"),
+        }
+      : null,
     events: [],
   };
 }

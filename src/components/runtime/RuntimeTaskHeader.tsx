@@ -11,10 +11,22 @@ import { toTaskRunState } from "./workflow";
 
 type Props = Pick<
   RuntimeTaskWorkspaceProps,
-  "task" | "onBack" | "onCancel" | "onCloseTask" | "onArchiveTask"
->;
+  "task" | "readOnlyPreview" | "onBack" | "onCancel" | "onCloseTask" | "onArchiveTask"
+> & {
+  viewMode: "operator" | "evidence";
+  onViewModeChange: (viewMode: "operator" | "evidence") => void;
+};
 
-export function RuntimeTaskHeader({ task, onBack, onCancel, onCloseTask, onArchiveTask }: Props) {
+export function RuntimeTaskHeader({
+  task,
+  readOnlyPreview = false,
+  onBack,
+  onCancel,
+  onCloseTask,
+  onArchiveTask,
+  viewMode,
+  onViewModeChange,
+}: Props) {
   const currentIndex = Math.max(
     0,
     workflowStages.findIndex((stage) => stage.id === task.currentStage),
@@ -96,6 +108,25 @@ export function RuntimeTaskHeader({ task, onBack, onCancel, onCloseTask, onArchi
           </strong>
         </span>
       </div>
+      <fieldset className="operator-view-toggle runtime-view-toggle">
+        <legend className="sr-only">Workspace detail level</legend>
+        <button
+          type="button"
+          className={viewMode === "operator" ? "is-selected" : ""}
+          aria-pressed={viewMode === "operator"}
+          onClick={() => onViewModeChange("operator")}
+        >
+          Operator
+        </button>
+        <button
+          type="button"
+          className={viewMode === "evidence" ? "is-selected" : ""}
+          aria-pressed={viewMode === "evidence"}
+          onClick={() => onViewModeChange("evidence")}
+        >
+          Evidence
+        </button>
+      </fieldset>
       <fieldset className="task-header__actions">
         <legend className="sr-only">Global task controls</legend>
         <Button
@@ -103,6 +134,7 @@ export function RuntimeTaskHeader({ task, onBack, onCancel, onCloseTask, onArchi
           compact
           icon={Prohibit}
           disabled={
+            readOnlyPreview ||
             ["running", "cancelling"].includes(task.status) ||
             task.status === "closed" ||
             task.status === "awaiting-already-satisfied" ||
@@ -128,6 +160,7 @@ export function RuntimeTaskHeader({ task, onBack, onCancel, onCloseTask, onArchi
           compact
           icon={Archive}
           disabled={
+            readOnlyPreview ||
             ["running", "cancelling"].includes(task.status) ||
             task.status === "archived" ||
             mergeReconciliationPending
@@ -158,7 +191,7 @@ export function RuntimeTaskHeader({ task, onBack, onCancel, onCloseTask, onArchi
           tone="danger"
           compact
           icon={X}
-          disabled={task.status !== "running"}
+          disabled={readOnlyPreview || task.status !== "running"}
           title={
             task.status === "cancelling"
               ? "Process-tree termination is already in progress"
