@@ -81,6 +81,12 @@ async function createServer(options = {}) {
       grillFinish = { id, ...input };
       return { started: true };
     },
+    async selectDesign() {
+      return { started: true };
+    },
+    async retryDesigns() {
+      return { started: true };
+    },
     async approveSpecification(id, note) {
       approvedSpecification = { id, note };
       return { started: false, completed: true };

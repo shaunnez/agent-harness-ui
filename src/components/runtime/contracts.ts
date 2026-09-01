@@ -1,10 +1,19 @@
+import type { ActionProposal, CompanionContext } from "../../companion/contracts";
 import type { RuntimeAvailableAction, RuntimeTask, StageId, WorkflowProfileId } from "../../domain";
 import type { TaskRouteDetail } from "../../routes";
+import type { CompanionMessage } from "../companion/CompanionPanel";
 
 export type RuntimeWorkflowAction = RuntimeAvailableAction;
 
 export interface RuntimeTaskWorkspaceProps {
   task: RuntimeTask;
+  companionContext?: CompanionContext;
+  companionMessages?: readonly CompanionMessage[];
+  companionProposals?: readonly ActionProposal[];
+  onCompanionSubmitText?: (value: string) => void | Promise<void>;
+  onCompanionConfirmAction?: (proposal: ActionProposal) => void | Promise<void>;
+  onCompanionDismissAction?: (proposal: ActionProposal) => void | Promise<void>;
+  companionPendingProposalId?: string | null;
   readOnlyPreview?: boolean;
   onBack: () => void;
   onRun: () => Promise<void>;
@@ -16,6 +25,8 @@ export interface RuntimeTaskWorkspaceProps {
   onDecision: (question: string, answer: string) => Promise<void>;
   onGrillAnswer: (questionId: string, answer: string) => Promise<void>;
   onFinishGrill: (acceptRemaining: boolean) => Promise<void>;
+  onSelectDesign: (variantId: string) => Promise<void>;
+  onRetryDesigns: () => Promise<void>;
   onRemoveWorktree: (rowId: string) => Promise<void>;
   onProfileChange: (profile: WorkflowProfileId, reason: string) => Promise<void>;
   onLoadMoreArtifacts?: () => Promise<void>;

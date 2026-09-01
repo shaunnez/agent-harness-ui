@@ -70,6 +70,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Use the Goose scout taxonomy: code path, dependency, pattern, schema, test inventory, and user journey. Dispatch only the evidence needed for the task (normally one low-risk, up to two medium-risk, and up to three high-risk scouts), retain the selected/skipped set, and pass a compact deterministic synthesis downstream.
 - Evaluate model variants on repeated task suites using observed quality, gate pass rate, repair count, wall time, tokens, cache rate, work credits, and API-equivalent cost. Never infer quality from cost or completion alone.
 - Keep production source files below roughly 500 lines where practical. Extract cohesive components and contracts instead of cosmetically splitting files, and remove legacy prototype paths only after proving they are unreachable through imports, routes, builds, and tests.
+- For the contextual chat companion, evaluate A2UI as the preferred declarative agent-UI protocol before inventing a custom card schema. Keep the renderer on a trusted local component catalogue, require explicit confirmation for mutations, and do not let a model emit arbitrary executable UI.
 
 ## Current implementation boundary
 

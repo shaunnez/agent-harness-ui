@@ -263,11 +263,12 @@ export class JsonTaskStore {
     });
   }
 
-  async transition(id, condition, updater) {
-    return this.#mutate((state) => {
+  async transition(id, condition, updater, readTransitionContext) {
+    return this.#mutate(async (state) => {
       const task = state.tasks.find((item) => item.id === id);
       if (!task) return null;
-      if (!condition(task)) {
+      const context = await readTransitionContext?.();
+      if (!condition(task, { ...(context ?? {}), settings: state.settings })) {
         const error = new Error("Task state changed before the requested action could be reserved.");
         error.code = "TASK_TRANSITION_CONFLICT";
         error.statusCode = 409;
@@ -296,7 +297,7 @@ export class JsonTaskStore {
   #mutate(operation) {
     const run = async () => {
       const state = clone(this.#state);
-      const result = operation(state);
+      const result = await operation(state);
       await this.#write(state);
       this.#state = state;
       return clone(result);
@@ -566,6 +567,20 @@ export function createTaskRecord(state, input) {
     continuedFromTaskId: continuation?.sourceTaskId ?? null,
     continuedByTaskId: null,
     priority: input.priority,
+    designRequest: input.designRequested
+      ? {
+          requested: true,
+          status: "not-started",
+          requestedAt: now,
+          startedAt: null,
+          completedAt: null,
+          selectedVariantId: null,
+          selectedAt: null,
+          selectedBy: null,
+          variants: [],
+          error: null,
+        }
+      : null,
     grillPolicy: input.grillPolicy ?? state.settings.grillPolicy ?? "manual",
     agentConfig: {
       provider,

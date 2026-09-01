@@ -9,6 +9,8 @@ export type RuntimeTaskStatus =
   | "blocked"
   | "cancelled"
   | "awaiting-grill"
+  | "generating-designs"
+  | "awaiting-design-selection"
   | "awaiting-spec-approval"
   | "awaiting-plan-approval"
   | "awaiting-already-satisfied"
@@ -63,7 +65,14 @@ export interface RuntimeUsage {
 }
 
 export interface RuntimeContextSource {
-  kind: "task" | "decisions" | "attachments" | "artifact" | "repository" | "structured-evidence";
+  kind:
+    | "task"
+    | "decisions"
+    | "attachments"
+    | "artifact"
+    | "prototype"
+    | "repository"
+    | "structured-evidence";
   id: string;
   label: string;
   stage?: StageId;
@@ -76,7 +85,7 @@ export interface RuntimeContextManifest {
   stage: StageId;
   promptCharacters: number;
   estimatedPromptTokens: number;
-  repositoryAccess: "read-only" | "workspace-write";
+  repositoryAccess: "none" | "read-only" | "workspace-write";
   policy: string;
   candidateId?: string | null;
   candidateRevision?: number | null;
@@ -87,6 +96,7 @@ export interface RuntimeContextManifest {
   repositoryAuthorityCheckedAt?: string | null;
   scoutName?: string | null;
   scoutFocus?: string | null;
+  prototypeVariantId?: string | null;
   sources: RuntimeContextSource[];
 }
 
@@ -403,6 +413,40 @@ export interface RuntimeWorkflowProfile {
   }>;
 }
 
+export interface RuntimePrototypeVariant {
+  id: string;
+  revision: number;
+  generator: "claude-design" | "codex-design";
+  provider: "claude" | "codex";
+  status: "queued" | "generating" | "ready" | "failed";
+  title: string;
+  summary: string;
+  designContract?: string;
+  previewUrl: string | null;
+  externalUrl: string | null;
+  bundleHash: string | null;
+  model: string | null;
+  reasoning: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  error: string | null;
+  usage: RuntimeUsage;
+  contextManifest: RuntimeContextManifest | null;
+}
+
+export interface RuntimeDesignRequest {
+  requested: boolean;
+  status: "not-started" | "generating" | "awaiting-selection" | "selected" | "failed" | "skipped";
+  requestedAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  selectedVariantId: string | null;
+  selectedAt: string | null;
+  selectedBy: "operator" | null;
+  variants: RuntimePrototypeVariant[];
+  error: string | null;
+}
+
 export interface RuntimeStageDisposition {
   status: "not-required" | "deterministic";
   reason: string;
@@ -439,6 +483,7 @@ export interface RuntimeTask {
   continuedFromTaskId?: string | null;
   continuedByTaskId?: string | null;
   priority: "low" | "medium" | "high";
+  designRequest?: RuntimeDesignRequest | null;
   grillPolicy?: RuntimeGrillPolicy;
   workflowProfile?: RuntimeWorkflowProfile;
   stageDispositions?: Partial<Record<StageId, RuntimeStageDisposition>>;
@@ -618,6 +663,7 @@ export type RuntimeTaskSummary = Pick<
   | "continuedFromTaskId"
   | "continuedByTaskId"
   | "priority"
+  | "designRequest"
   | "status"
   | "closure"
   | "archive"

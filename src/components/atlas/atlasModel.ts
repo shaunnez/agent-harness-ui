@@ -260,6 +260,7 @@ export function getAtlasTaskTone(task: RuntimeTaskSummary): AtlasTaskTone {
   if (completeStatuses.has(task.status)) return "complete";
   if ((task.status === "running" || task.status === "cancelling") && (task.activeRunIds?.length ?? 0) > 0)
     return "running";
+  if (task.status === "generating-designs") return "running";
   if (task.status === "running" || task.status === "cancelling") return "attention";
   if (task.status === "merging") return "attention";
   if (task.status.startsWith("awaiting-") || task.status.startsWith("ready-for-")) return "attention";
@@ -270,6 +271,8 @@ export function getAtlasStatusLabel(task: RuntimeTaskSummary) {
   const labels: Partial<Record<RuntimeTaskSummary["status"], string>> = {
     queued: "Queued",
     "awaiting-grill": "Needs input",
+    "generating-designs": "Generating designs",
+    "awaiting-design-selection": "Choose a design",
     "awaiting-spec-approval": "Spec approval",
     "awaiting-plan-approval": "Plan approval",
     "awaiting-already-satisfied": "Human close decision",

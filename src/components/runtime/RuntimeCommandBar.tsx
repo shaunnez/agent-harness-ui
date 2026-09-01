@@ -25,7 +25,8 @@ export function RuntimeCommandBar({
   const [pending, setPending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const historical = viewedStageId !== task.currentStage;
-  const running = task.status === "running" || task.status === "cancelling";
+  const running =
+    task.status === "running" || task.status === "cancelling" || task.status === "generating-designs";
   const persistedRunActive = running && (task.activeRunIds?.length ?? 0) > 0;
   const cancelling = task.status === "cancelling";
   const repairRunning = running && task.activeRunKind === "repair";

@@ -1,19 +1,19 @@
 import { CircleNotch } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { type StageId, workflowStages } from "../domain";
-import { RunActivity } from "./RunActivity";
 import type { TaskRouteDetail } from "../routes";
 import { CandidateDiffErrorViewer, CandidateDiffViewer } from "./CandidateDiffViewer";
-import { RuntimeCommandBar } from "./runtime/RuntimeCommandBar";
+import { RunActivity } from "./RunActivity";
 import type { RuntimeTaskWorkspaceProps } from "./runtime/contracts";
+import { RuntimeCommandBar } from "./runtime/RuntimeCommandBar";
 import { RuntimeArtifactViewer } from "./runtime/RuntimeInspectorPanels";
 import { RuntimeOperatorWorkspace } from "./runtime/RuntimeOperatorWorkspace";
-import { RuntimeStagePresentation } from "./runtime/RuntimeStagePresentation";
 import { RuntimeStageNavigator } from "./runtime/RuntimeStageNavigator";
-import { RuntimeTaskInspector } from "./runtime/RuntimeTaskInspector";
+import { RuntimeStagePresentation } from "./runtime/RuntimeStagePresentation";
 import { RuntimeTaskHeader } from "./runtime/RuntimeTaskHeader";
-import { StageEvidenceStrip } from "./runtime/StageEvidenceStrip";
+import { RuntimeTaskInspector } from "./runtime/RuntimeTaskInspector";
 import { RuntimeWorkspaceFooter } from "./runtime/RuntimeWorkspaceFooter";
+import { StageEvidenceStrip } from "./runtime/StageEvidenceStrip";
 import { useRuntimeWorkspaceOverlays } from "./runtime/useRuntimeWorkspaceOverlays";
 import {
   getRuntimeArtifactFreshness,
@@ -45,6 +45,8 @@ export function RuntimeTaskWorkspace({
   onDecision,
   onGrillAnswer,
   onFinishGrill,
+  onSelectDesign,
+  onRetryDesigns,
   onRemoveWorktree,
   onProfileChange,
   onLoadMoreArtifacts,
@@ -251,6 +253,8 @@ export function RuntimeTaskWorkspace({
                     "test",
                   )
                 }
+                onSelectDesign={readOnlyPreview ? previewNoop : onSelectDesign}
+                onRetryDesigns={readOnlyPreview ? previewNoop : onRetryDesigns}
               />
             </main>
 

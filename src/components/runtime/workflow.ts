@@ -46,6 +46,7 @@ export function isStageInvalidatedByRepair(task: RuntimeTask, stageId: StageId) 
  * invalidated it" — the two states render identically if only `task.status` is consulted.
  */
 export function getActiveRunStage(task: RuntimeTaskView): StageId | null {
+  if (task.status === "generating-designs") return "specification";
   if (task.status !== "running") return null;
   const runningRun = [...(task.runs ?? [])].reverse().find((run) => run.status === "running");
   if (runningRun) return runningRun.stage;

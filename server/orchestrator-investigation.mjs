@@ -30,6 +30,7 @@ export class InvestigationProgressionOrchestrator {
     executeAgent,
     retainAgentResult,
     runSpecification,
+    runDesigns,
   }) {
     this._store = store;
     this._worktrees = worktrees;
@@ -38,6 +39,7 @@ export class InvestigationProgressionOrchestrator {
     this._executeAgent = executeAgent;
     this._retainAgentResult = retainAgentResult;
     this._runSpecification = runSpecification;
+    this._runDesigns = runDesigns;
   }
 
   async _runInvestigation(id, signal) {
@@ -81,6 +83,18 @@ export class InvestigationProgressionOrchestrator {
     }
 
     task = await this._store.get(id);
+    if (task.workflowProfile?.selected === "fast" && task.designRequest?.requested) {
+      await this._escalateProfile(
+        id,
+        {
+          target: "standard",
+          reason:
+            "Fast escalated to standard because the task requests two governed prototype revisions and an explicit design selection before Task Spec.",
+        },
+        "triage",
+      );
+      task = await this._store.get(id);
+    }
     if (task.workflowProfile?.selected === "fast") {
       const triageArtifact = [...task.artifacts].reverse().find((artifact) => artifact.stage === "triage");
       let contract = null;
@@ -289,6 +303,10 @@ export class InvestigationProgressionOrchestrator {
           ),
         );
       });
+      if (task.designRequest?.requested) {
+        await this._runDesigns(id, signal);
+        return;
+      }
       await this._reserveInvestigationStage(id, "specification");
       await this._runSpecification(id, signal);
       return;
@@ -297,6 +315,11 @@ export class InvestigationProgressionOrchestrator {
       await this._store.update(id, (draft) => {
         completeGrillSession(draft, { source: "automation-policy", acceptRemaining: true });
       });
+      task = await this._store.get(id);
+      if (task.designRequest?.requested) {
+        await this._runDesigns(id, signal);
+        return;
+      }
       await this._reserveInvestigationStage(id, "specification");
       await this._runSpecification(id, signal);
       return;

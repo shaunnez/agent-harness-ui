@@ -57,6 +57,14 @@ export class TaskOrchestrator {
     return this.#core.tasks.finishGrill(id, { acceptRemaining, source });
   }
 
+  async retryDesigns(id, { source = null } = {}) {
+    return this.#core.designs.retry(id, { source });
+  }
+
+  async selectDesign(id, variantId, { source = null } = {}) {
+    return this.#core.designs.select(id, variantId, { source });
+  }
+
   async approveSpecification(id, note = "") {
     return this.#core.tasks.approveSpecification(id, note);
   }
@@ -81,8 +89,8 @@ export class TaskOrchestrator {
     return this.#core.tasks.continueRetainedPackage(id);
   }
 
-  async approvePullRequest(id, note = "") {
-    return this.#core.pullRequests.approvePullRequest(id, note);
+  async approvePullRequest(id, note = "", expectedCandidate = null) {
+    return this.#core.pullRequests.approvePullRequest(id, note, expectedCandidate);
   }
 
   async reconcilePullRequest(id) {

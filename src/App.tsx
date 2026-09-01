@@ -4,8 +4,8 @@ import {
   archiveTask,
   cancelTask,
   closeTask,
-  createTask,
   continueTaskToImplementation,
+  createTask,
   evaluateTask,
   finishGrill,
   getEvaluationSummary,
@@ -19,19 +19,50 @@ import {
   getTaskRuns,
   listTaskPollStates,
   listTasks,
+  type MutationRequestOptions,
+  promoteTaskThroughGate,
+  RuntimeApiError,
   recordTaskDecision,
   removeRuntimeWorktree,
+  retryTaskDesigns,
   runTask,
   runTaskAction,
+  selectTaskDesign,
   updateRuntimeSettings,
+  updateTaskRolePolicy,
   updateTaskWorkflowProfile,
   verifyRuntimePricing,
 } from "./api";
+import {
+  companionPolicyRoleIds,
+  rolePolicyReasoningOptions,
+  selectableRolePolicyModels,
+  type RolePolicyFormOptions,
+  type RolePolicyFormOptionsSource,
+} from "./companion/catalog";
+import { contextualAnswer, deriveCompanionContext } from "./companion/context";
+import {
+  type ActionProposal,
+  type CompanionGateStage,
+  type CompanionIntent,
+  confirmActionProposal,
+  createActionProposal,
+  dismissActionProposal,
+  type EligibilityEvidence,
+  executeActionProposal,
+  type ProposalFailureCode,
+  type RolePolicyRequest,
+  retainProposalDenial,
+} from "./companion/contracts";
+import { parseCompanionIntent } from "./companion/intentParser";
 import { AgentsScreen } from "./components/AgentsScreen";
 import { ChangelogModal } from "./components/ChangelogModal";
 import { CommandCentre } from "./components/CommandCentre";
+import type { CompanionMessage } from "./components/companion/CompanionPanel";
+import { CompanionShell } from "./components/companion/CompanionShell";
 import { TasksScreen } from "./components/LibraryScreens";
 import { NewTaskDialog } from "./components/NewTaskDialog";
+import { isValidNewTaskDraft } from "./components/NewTaskFields";
 import { OperatorTaskPrototype } from "./components/operator/OperatorTaskPrototype";
 import { RuntimeTaskWorkspace } from "./components/RuntimeTaskWorkspace";
 import { SettingsScreen } from "./components/SettingsScreen";
@@ -40,8 +71,9 @@ import {
   type AgentRoleId,
   type AppScreen,
   type NewTaskDraft,
-  type RuntimeEvaluationSummary,
   type RuntimeArtifactMetadata,
+  type RuntimeAvailableAction,
+  type RuntimeEvaluationSummary,
   type RuntimeSettings,
   type RuntimeStatus,
   type RuntimeTask,
@@ -73,6 +105,16 @@ const THEME_STORAGE_KEY = "agent-harness.theme";
 const SkillsScreen = lazy(() =>
   import("./components/SkillsScreen").then((module) => ({ default: module.SkillsScreen })),
 );
+
+const companionGateActions: Record<
+  CompanionGateStage,
+  Extract<RuntimeAvailableAction, "review" | "test" | "final-review" | "open-pr">
+> = {
+  "dev-review": "review",
+  test: "test",
+  "final-review": "final-review",
+  approval: "open-pr",
+};
 
 function readStoredTheme(): Theme {
   try {
@@ -174,6 +216,12 @@ export function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<Theme>(() => readStoredTheme());
   const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [newTaskCaptureProposalId, setNewTaskCaptureProposalId] = useState<string | null>(null);
+  const [companionMessages, setCompanionMessages] = useState<CompanionMessage[]>([]);
+  const [companionProposals, setCompanionProposals] = useState<ActionProposal[]>([]);
+  const [companionPendingProposalId, setCompanionPendingProposalId] = useState<string | null>(null);
+  const [companionDraft, setCompanionDraft] = useState("");
+  const [companionOpen, setCompanionOpen] = useState(false);
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus | null>(null);
   const [runtimeTasks, setRuntimeTasks] = useState<RuntimeTaskSummary[]>(() =>
     hostedPreviewMode ? hostedAtlasPreviewTasks : [],
@@ -196,6 +244,9 @@ export function App() {
   const activeTaskRequestRef = useRef(0);
   const activeRuntimeTaskRef = useRef<RuntimeTask | null>(null);
   const runtimeTasksRef = useRef<RuntimeTaskSummary[]>(runtimeTasks);
+  const companionMessageNumber = useRef(0);
+  const companionCandidateHeads = useRef(new Map<string, string | null>());
+  const companionTaskIdentityRef = useRef<string | null>(null);
 
   const toggleTheme = useCallback(() => setTheme((t) => (t === "light" ? "dark" : "light")), []);
 
@@ -406,6 +457,10 @@ export function App() {
         return;
       }
       const { taskId, stageId, detail } = primaryRoute;
+      if (shouldClearCompanionDraft(companionTaskIdentityRef.current, taskId)) {
+        setCompanionDraft("");
+      }
+      companionTaskIdentityRef.current = taskId;
       activeTaskIdentityRef.current = taskId;
       setViewedStageId(stageId);
       setTaskRouteDetail(detail);
@@ -512,6 +567,7 @@ export function App() {
         !(event.target instanceof HTMLTextAreaElement)
       ) {
         event.preventDefault();
+        setNewTaskCaptureProposalId(null);
         setNewTaskOpen(true);
       }
     };
@@ -531,9 +587,9 @@ export function App() {
       });
   };
 
-  const startTask = async (draft: NewTaskDraft) => {
-    const task = await createTask(draft);
-    await runTask(task.id);
+  const startTask = async (draft: NewTaskDraft, requestOptions: MutationRequestOptions = {}) => {
+    const task = await createTask(draft, requestOptions);
+    await runTask(task.id, requestOptions);
     setNewTaskOpen(false);
     setRuntimeTasks((tasks) => [taskSummaryFromDetail(task), ...tasks.filter((item) => item.id !== task.id)]);
     navigateToRoute({ kind: "task", taskId: task.id, stageId: task.currentStage });
@@ -571,6 +627,278 @@ export function App() {
 
   const primaryRoute: PrimaryRoute = currentRoute.kind === "changelog" ? currentRoute.returnTo : currentRoute;
   const taskRoute = primaryRoute.kind === "task" ? primaryRoute : null;
+  const companionContext = deriveCompanionContext({
+    route: serializeHashRoute(currentRoute),
+    task: activeRuntimeTask,
+    viewedStage: activeRuntimeTask ? (viewedStageId ?? activeRuntimeTask.currentStage) : null,
+  });
+  const companionRolePolicyOptions: RolePolicyFormOptionsSource = (proposal) =>
+    rolePolicyOptionsForProposal(
+      activeRuntimeTask,
+      proposal.target.taskId,
+      !activeTaskLoading,
+      runtimeStatus,
+    );
+  const companionThreadMessages: readonly CompanionMessage[] = companionMessages.length
+    ? companionMessages
+    : [
+        {
+          id: "companion-app-welcome",
+          role: "assistant",
+          content: `I’m grounded in the visible Evidence Gate context.\n\n${contextualAnswer(companionContext)}`,
+        },
+      ];
+
+  const addCompanionMessage = (role: CompanionMessage["role"], content: string) => {
+    companionMessageNumber.current += 1;
+    setCompanionMessages((current) => [
+      ...current,
+      { id: `companion-app-message-${companionMessageNumber.current}`, role, content },
+    ]);
+  };
+
+  const replaceCompanionProposal = (next: ActionProposal) => {
+    setCompanionProposals((current) =>
+      current.map((proposal) => (proposal.id === next.id ? next : proposal)),
+    );
+  };
+
+  const handleCompanionIntent = async (intent: CompanionIntent) => {
+    if (intent.kind === "context") return;
+    if (intent.kind === "navigate") {
+      navigateToRoute(
+        intent.target === "tasks"
+          ? { kind: "screen", screen: "tasks" }
+          : { kind: "task", taskId: intent.taskId },
+      );
+      return;
+    }
+
+    if (intent.kind === "create-task") {
+      const id = newCompanionProposalId();
+      setCompanionProposals((current) => [
+        ...current,
+        createActionProposal({
+          id,
+          actionType: "create-task",
+          summary: "Prepare a validated task draft for explicit confirmation.",
+          eligibility: {
+            eligible: false,
+            rationale: "A complete NewTaskDraft must be captured and shown before confirmation is available.",
+            evidence: [
+              "No exact task mutation exists until the draft dialog is submitted.",
+              "After capture, confirmation will reuse the existing CSRF-protected /api/tasks boundary.",
+            ],
+          },
+          target: { kind: "new-task", draft: null },
+        }),
+      ]);
+      setNewTaskCaptureProposalId(id);
+      setNewTaskOpen(true);
+      return;
+    }
+
+    if (!activeRuntimeTask) throw new Error("Open a task before proposing a task-scoped action.");
+
+    if (intent.kind === "change-role-model") {
+      const policy = suggestedRolePolicy(intent, activeRuntimeTask, runtimeStatus);
+      const eligibility = projectRolePolicyEligibility(
+        activeRuntimeTask,
+        { ...policy, role: intent.role },
+        runtimeStatus,
+      );
+      const id = newCompanionProposalId();
+      setCompanionProposals((current) => [
+        ...current,
+        createActionProposal({
+          id,
+          actionType: "change-role-model",
+          summary: `Use ${policy.model ?? "a discovered model"} for the ${intent.role} agent on ${activeRuntimeTask.id}.`,
+          eligibility,
+          target: {
+            kind: "task-agent-policy",
+            scope: "task_snapshot",
+            taskId: activeRuntimeTask.id,
+            role: intent.role,
+            model: policy.model,
+            reasoning: policy.reasoning,
+          },
+        }),
+      ]);
+      return;
+    }
+
+    const candidate = activeRuntimeTask.candidates?.at(-1);
+    const action = companionGateActions[intent.nextStage];
+    if (!candidate) throw new Error("This task has no persisted integration candidate to promote.");
+    const id = newCompanionProposalId();
+    companionCandidateHeads.current.set(id, candidate.headRevision);
+    const actionEligibility = activeRuntimeTask.actionEligibility?.actions?.[action];
+    const candidateReady = Boolean(candidate.headRevision);
+    setCompanionProposals((current) => [
+      ...current,
+      createActionProposal({
+        id,
+        actionType: "promote-gate",
+        summary: `Promote ${activeRuntimeTask.id} to ${stageLabel(intent.nextStage)} using the exact candidate revision.`,
+        eligibility: {
+          eligible: candidateReady && actionEligibility?.allowed !== false,
+          rationale:
+            actionEligibility?.allowed === false
+              ? (actionEligibility.reason ?? "Canonical task admission currently denies this gate.")
+              : "The server will re-read repository authority, candidate identity, and canonical gate eligibility after confirmation.",
+          evidence: [
+            `Candidate scope: ${candidate.id} · revision ${candidate.revisionNumber}.`,
+            candidate.headRevision
+              ? `Candidate head: ${candidate.headRevision}.`
+              : "The candidate has no persisted head revision.",
+            actionEligibility?.reason ?? "No browser-side eligibility is treated as authoritative.",
+          ],
+        },
+        target: {
+          kind: "candidate-gate",
+          scope: "candidate",
+          taskId: activeRuntimeTask.id,
+          candidateId: candidate.id,
+          candidateRevision: candidate.revisionNumber,
+          nextStage: intent.nextStage,
+        },
+      }),
+    ]);
+  };
+
+  const handleCompanionText = async (value: string) => {
+    addCompanionMessage("user", value);
+    const parsed = parseCompanionIntent(value);
+    if (parsed.status === "rejected") {
+      addCompanionMessage(
+        "assistant",
+        `${parsed.message}\n\nTry one of these:\n${parsed.examples.join("\n")}`,
+      );
+      return;
+    }
+
+    const intent = parsed.intent;
+    try {
+      await handleCompanionIntent(intent);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "The request could not be prepared.";
+      addCompanionMessage("assistant", `I could not prepare that request. ${reason}`);
+      return;
+    }
+
+    if (intent.kind === "context") {
+      addCompanionMessage("assistant", contextualAnswer(companionContext));
+    } else if (intent.kind === "navigate") {
+      addCompanionMessage(
+        "assistant",
+        intent.target === "tasks"
+          ? "Opening Tasks. Navigation is read-only and does not require confirmation."
+          : `Opening task ${intent.taskId}. Navigation is read-only and does not require confirmation.`,
+      );
+    } else {
+      const actionLabel =
+        intent.kind === "create-task"
+          ? "prepare a new task draft"
+          : intent.kind === "change-role-model"
+            ? "change a task-scoped agent model"
+            : `promote this task to ${stageLabel(intent.nextStage)}`;
+      addCompanionMessage(
+        "assistant",
+        `I can ${actionLabel}. Review the governed action card below; no mutation is sent until you confirm it.`,
+      );
+    }
+  };
+
+  const confirmCompanionAction = async (proposal: ActionProposal) => {
+    const confirmed = confirmActionProposal(proposal);
+    replaceCompanionProposal(confirmed);
+    setCompanionPendingProposalId(proposal.id);
+    try {
+      if (proposal.actionType === "create-task") {
+        const draft = proposal.target.draft;
+        if (!draft || !isValidNewTaskDraft(draft)) throw new Error("A valid task draft is required.");
+        const task = await createTask(draft, { retryOnCsrf: false });
+        setNewTaskOpen(false);
+        setNewTaskCaptureProposalId(null);
+        setRuntimeTasks((tasks) => [
+          taskSummaryFromDetail(task),
+          ...tasks.filter((item) => item.id !== task.id),
+        ]);
+        navigateToRoute({ kind: "task", taskId: task.id, stageId: task.currentStage });
+      } else if (proposal.actionType === "change-role-model") {
+        const { target } = proposal;
+        if (!target.model || !target.reasoning) throw new Error("A model and reasoning policy are required.");
+        const result = await updateTaskRolePolicy(target.taskId, {
+          role: target.role,
+          model: target.model,
+          reasoning: target.reasoning,
+        });
+        activeRuntimeTaskRef.current = result.task;
+        setActiveRuntimeTask(result.task);
+        setRuntimeTasks((tasks) =>
+          tasks.map((task) => (task.id === result.task.id ? taskSummaryFromDetail(result.task) : task)),
+        );
+        await refreshActiveTask(target.taskId);
+      } else {
+        const { target } = proposal;
+        const candidateHeadRevision = companionCandidateHeads.current.get(proposal.id);
+        if (!candidateHeadRevision) throw new Error("The exact candidate head revision is unavailable.");
+        await promoteTaskThroughGate(target.taskId, companionGateActions[target.nextStage], {
+          candidateId: target.candidateId,
+          candidateRevision: target.candidateRevision,
+          candidateHeadRevision,
+        });
+        await refreshActiveTask(target.taskId);
+        await refreshTasks();
+      }
+      const executed = executeActionProposal(confirmed);
+      replaceCompanionProposal(executed);
+      addCompanionMessage("system", `${proposal.summary} Executed after server confirmation.`);
+    } catch (error) {
+      const failure = companionFailure(error);
+      const retained = retainProposalDenial(confirmed, failure);
+      replaceCompanionProposal(retained);
+      addCompanionMessage("system", `Confirmation failed and remains reviewable: ${failure.reason}`);
+      showToast("error", failure.reason);
+    } finally {
+      setCompanionPendingProposalId(null);
+    }
+  };
+
+  const dismissCompanionAction = async (proposal: ActionProposal) => {
+    const dismissed = dismissActionProposal(proposal, { reason: "Dismissed by the operator." });
+    replaceCompanionProposal(dismissed);
+    addCompanionMessage("system", `Dismissed: ${proposal.summary}`);
+  };
+
+  const captureCompanionTaskDraft = async (draft: NewTaskDraft) => {
+    const proposalId = newTaskCaptureProposalId;
+    if (!proposalId || !isValidNewTaskDraft(draft))
+      throw new Error("Complete the required task fields first.");
+    setCompanionProposals((current) =>
+      current.map((proposal) =>
+        proposal.id === proposalId && proposal.actionType === "create-task"
+          ? {
+              ...proposal,
+              target: { kind: "new-task", draft },
+              eligibility: {
+                ...proposal.eligibility,
+                eligible: true,
+                rationale: "The complete NewTaskDraft is ready for explicit confirmation.",
+                evidence: [
+                  "Every submitted NewTaskDraft field and attachment selection is shown on the card.",
+                  "No task API was called while the draft was captured.",
+                ],
+              },
+            }
+          : proposal,
+      ),
+    );
+    setNewTaskOpen(false);
+    setNewTaskCaptureProposalId(null);
+    addCompanionMessage("system", "Task draft captured. Review the exact draft and confirm it when ready.");
+  };
 
   if (operatorPreviewMode) {
     const leavePrototype = (nextScreen: AppScreen = "tasks") => {
@@ -603,7 +931,9 @@ export function App() {
   }
 
   return (
-    <div className={`app-shell ${sidebarCollapsed ? "app-shell--collapsed" : ""}`}>
+    <div
+      className={`app-shell ${sidebarCollapsed ? "app-shell--collapsed" : ""} ${companionOpen ? "app-shell--companion-open" : ""}`}
+    >
       <Shell
         screen={screen}
         collapsed={sidebarCollapsed}
@@ -614,7 +944,10 @@ export function App() {
         onNewTask={() => {
           if (hostedPreviewMode)
             showToast("error", "The hosted atlas is a read-only UI preview. Task execution remains local.");
-          else setNewTaskOpen(true);
+          else {
+            setNewTaskCaptureProposalId(null);
+            setNewTaskOpen(true);
+          }
         }}
         onOpenChangelog={() => navigateToRoute(createChangelogRoute(primaryRoute))}
         runtimeStatus={runtimeStatus}
@@ -780,6 +1113,16 @@ export function App() {
               await refreshActiveTask(activeRuntimeTask.id);
               showToast("success", "Grill completed; specification run started.");
             }}
+            onSelectDesign={async (variantId) => {
+              await selectTaskDesign(activeRuntimeTask.id, variantId);
+              await refreshActiveTask(activeRuntimeTask.id);
+              showToast("success", "Design revision selected; Task Spec started.");
+            }}
+            onRetryDesigns={async () => {
+              await retryTaskDesigns(activeRuntimeTask.id);
+              await refreshActiveTask(activeRuntimeTask.id);
+              showToast("success", "Both design generators restarted.");
+            }}
             onRemoveWorktree={async (rowId) => {
               try {
                 await removeRuntimeWorktree(activeRuntimeTask.id, rowId);
@@ -827,7 +1170,10 @@ export function App() {
                   "error",
                   "The hosted atlas is a read-only UI preview. Task execution remains local.",
                 );
-              else setNewTaskOpen(true);
+              else {
+                setNewTaskCaptureProposalId(null);
+                setNewTaskOpen(true);
+              }
             }}
             onOpenTask={(taskId, stageId) => openWorkspace("command", taskId, stageId)}
             onSeeAllTasks={() => navigate("tasks")}
@@ -879,12 +1225,29 @@ export function App() {
           />
         ) : null}
       </main>
+      <CompanionShell
+        open={companionOpen}
+        onOpen={() => setCompanionOpen(true)}
+        onClose={() => setCompanionOpen(false)}
+        context={companionContext}
+        messages={companionThreadMessages}
+        proposals={companionProposals}
+        draft={companionDraft}
+        onDraftChange={setCompanionDraft}
+        onSubmitText={handleCompanionText}
+        onConfirmAction={confirmCompanionAction}
+        onDismissAction={dismissCompanionAction}
+        pendingProposalId={companionPendingProposalId}
+        rolePolicyOptions={companionRolePolicyOptions}
+      />
       <NewTaskDialog
         open={newTaskOpen}
         defaultRepository={runtimeStatus?.suggestedRepository ?? ""}
         runtimeStatus={runtimeStatus}
         onClose={() => setNewTaskOpen(false)}
         onStart={startTask}
+        captureOnly={newTaskCaptureProposalId !== null}
+        onCaptureDraft={captureCompanionTaskDraft}
       />
       {currentRoute.kind === "changelog" ? (
         <ChangelogModal
@@ -938,4 +1301,264 @@ function TaskWorkspaceSkeleton() {
       </div>
     </div>
   );
+}
+
+function newCompanionProposalId() {
+  return `companion-${crypto.randomUUID()}`;
+}
+
+export function shouldClearCompanionDraft(previousTaskId: string | null, nextTaskId: string | null) {
+  return previousTaskId !== null && nextTaskId !== null && previousTaskId !== nextTaskId;
+}
+
+export function projectRolePolicyEligibility(
+  task: RuntimeTask | null,
+  request: RolePolicyRequest,
+  runtimeStatus: RuntimeStatus | null,
+): EligibilityEvidence {
+  const models = selectableRolePolicyModels(
+    runtimeStatus?.catalog?.models ?? [],
+    runtimeStatus?.settings?.allowedModels ?? [],
+  );
+  const model = models.find((option) => option.id === request.model) ?? null;
+  if (!companionPolicyRoleIds.includes(request.role as (typeof companionPolicyRoleIds)[number])) {
+    return ineligibleRolePolicy("Choose a known, mutable workflow role.", [
+      `Requested role: ${String(request.role)}.`,
+    ]);
+  }
+  if (!model) {
+    return ineligibleRolePolicy("Choose a discovered, editable model allowed by Settings.", [
+      `Requested model: ${request.model ?? "none"}.`,
+    ]);
+  }
+  if (!request.reasoning || !rolePolicyReasoningOptions(model).some((level) => level === request.reasoning)) {
+    return ineligibleRolePolicy("Choose reasoning supported by the selected model.", [
+      `Supported reasoning: ${rolePolicyReasoningOptions(model).join(", ") || "none"}.`,
+    ]);
+  }
+  if (!task?.id) return ineligibleRolePolicy("The selected task is not available for policy review.", []);
+
+  const lockedStatuses = new Set([
+    "terminal",
+    "completed",
+    "closed",
+    "archived",
+    "cancelled",
+    "cancelling",
+    "identity-drift",
+    "awaiting-pr-merge",
+    "awaiting-human-approval",
+    "merging",
+    "merged-to-target",
+  ]);
+  if (lockedStatuses.has(task.status)) {
+    return ineligibleRolePolicy(`The task is ${task.status}; role policies are no longer mutable.`, [
+      `Task status: ${task.status}.`,
+    ]);
+  }
+  if (
+    (task as RuntimeTask & { identityDrift?: boolean }).identityDrift === true ||
+    task.blocker?.code === "identity-drift" ||
+    (task.repositoryAuthorityStatus as string | undefined) === "identity-drift" ||
+    task.repositoryAuthorityStatus !== "bound" ||
+    !task.repositoryAuthority?.id ||
+    !task.repositoryAuthority.selectedRevision ||
+    !task.repositoryAuthority.targetRef ||
+    !task.repositoryAuthority.capturedAt ||
+    (task.repositoryAuthority.upstreamRef !== null &&
+      task.repositoryAuthority.upstreamRef !== undefined &&
+      task.repositoryAuthority.remoteVerification?.status !== "verified")
+  ) {
+    return ineligibleRolePolicy("The task repository authority is not currently verified.", [
+      "A bound authority with a selected revision, target ref, and capture time is required.",
+    ]);
+  }
+
+  const activeRunIds = task.activeRunIds ?? [];
+  if (activeRunIds.length > 0 && !(task.runs ?? []).some((run) => activeRunIds.includes(run.id))) {
+    return ineligibleRolePolicy("A retained or active run prevents policy changes until it is resolved.", [
+      `Active run records: ${activeRunIds.length}.`,
+    ]);
+  }
+  const roleRun = (task.runs ?? []).find((run) => run.role === request.role || run.stage === request.role);
+  if (roleRun) {
+    return ineligibleRolePolicy(`The ${request.role} role has already begun work.`, [
+      `Role run: ${roleRun.id}.`,
+    ]);
+  }
+  const activeRole = clientActiveRoleFor(task);
+  if (activeRole === request.role) {
+    return ineligibleRolePolicy(`The ${request.role} role has already begun work.`, [
+      `Active role: ${request.role}.`,
+    ]);
+  }
+  const roleArtifact = task.artifacts.find(
+    (artifact) => artifact.agentRole === request.role || artifact.stage === request.role,
+  );
+  if (roleArtifact) {
+    return ineligibleRolePolicy(`The ${request.role} role has retained evidence.`, [
+      `Role artifact: ${roleArtifact.id}.`,
+    ]);
+  }
+  if (task.completedStages.includes(request.role as StageId)) {
+    return ineligibleRolePolicy(`The ${request.role} stage has already been reached or passed.`, [
+      `Completed stage: ${request.role}.`,
+    ]);
+  }
+  if (Object.hasOwn(task.stageDispositions ?? {}, request.role)) {
+    return ineligibleRolePolicy(`The ${request.role} stage has a recorded disposition.`, [
+      `Stage disposition recorded: ${request.role}.`,
+    ]);
+  }
+  const recordedAttempts = task.attemptsByStage[request.role as StageId] ?? 0;
+  if (recordedAttempts > 0) {
+    return ineligibleRolePolicy(`The ${request.role} stage has a recorded attempt.`, [
+      `Recorded attempts: ${recordedAttempts}.`,
+    ]);
+  }
+  if (request.role === "implement" && task.candidates.length > 0) {
+    return ineligibleRolePolicy("Implement is immutable after an integration candidate exists.", [
+      `Integration candidates retained: ${task.candidates.length}.`,
+    ]);
+  }
+  if (
+    request.role === "implement" &&
+    task.workPackages.some((workPackage) =>
+      ["running", "failed", "ready_for_integration", "integrated"].includes(workPackage.status),
+    )
+  ) {
+    return ineligibleRolePolicy("Implement has retained implementation work and is no longer mutable.", [
+      "An implementation work package is retained on the task.",
+    ]);
+  }
+  if (
+    request.role === "repair" &&
+    ((task.runs ?? []).some((run) => run.role === "repair" || run.kind === "repair") ||
+      (task.automaticRepairCycles !== undefined && task.automaticRepairCycles > 0) ||
+      (task.reviewRetries?.length ?? 0) > 0)
+  ) {
+    return ineligibleRolePolicy("Repair is immutable after repair evidence or lineage exists.", [
+      "A repair run, retry, or repair lineage is retained.",
+    ]);
+  }
+  if (request.role === "repair" && task.currentStage === "approval") {
+    return ineligibleRolePolicy("The workflow has reached Human Approval; Repair is no longer mutable.", [
+      "Current stage: approval.",
+    ]);
+  }
+
+  const currentIndex = workflowStages.findIndex((stage) => stage.id === task.currentStage);
+  const roleIndex = workflowStages.findIndex((stage) => stage.id === request.role);
+  if (request.role !== "repair" && (currentIndex < 0 || roleIndex < 0 || roleIndex <= currentIndex)) {
+    return ineligibleRolePolicy(`The ${request.role} stage has already been reached or passed.`, [
+      `Current stage: ${task.currentStage}.`,
+      `Requested role: ${request.role}.`,
+    ]);
+  }
+  return {
+    eligible: true,
+    rationale: "The selected role remains future and the requested policy is a trusted task-snapshot change.",
+    evidence: [
+      `Task ${task.id} authority is bound to the current repository revision.`,
+      `The ${request.role} role has no retained execution evidence.`,
+    ],
+  };
+}
+
+export function rolePolicyOptionsForProposal(
+  activeTask: RuntimeTask | null,
+  targetTaskId: string,
+  targetTaskLoaded: boolean,
+  runtimeStatus: RuntimeStatus | null,
+): RolePolicyFormOptions {
+  const models = runtimeStatus?.catalog?.models ?? [];
+  const allowedModels = runtimeStatus?.settings?.allowedModels ?? [];
+  const targetTask = targetTaskLoaded && activeTask?.id === targetTaskId ? activeTask : null;
+  if (targetTask) {
+    return {
+      models,
+      allowedModels,
+      currentPolicies: targetTask.agentConfig?.stagePolicies,
+      resolveEligibility: (request) => projectRolePolicyEligibility(targetTask, request, runtimeStatus),
+    };
+  }
+  return {
+    models,
+    allowedModels,
+    resolveEligibility: () =>
+      ineligibleRolePolicy("The proposal target task is not active and freshly loaded.", [
+        `Target task: ${targetTaskId}.`,
+        `Active task: ${activeTask?.id ?? "none"}.`,
+      ]),
+  };
+}
+
+function ineligibleRolePolicy(rationale: string, evidence: string[]): EligibilityEvidence {
+  return { eligible: false, rationale, evidence };
+}
+
+function clientActiveRoleFor(task: RuntimeTask): string | null {
+  const activeKind = task.activeRunKind;
+  if (!activeKind) return null;
+  if (activeKind === "repair") return "repair";
+  if (activeKind === "implementation") return "implement";
+  if (companionPolicyRoleIds.includes(activeKind as (typeof companionPolicyRoleIds)[number]))
+    return activeKind;
+  return workflowStages.some((stage) => stage.id === task.currentStage) ? task.currentStage : null;
+}
+
+function stageLabel(stage: StageId | CompanionGateStage) {
+  return workflowStages.find((stageInfo) => stageInfo.id === stage)?.label ?? stage;
+}
+
+function suggestedRolePolicy(
+  intent: Extract<CompanionIntent, { kind: "change-role-model" }>,
+  task: RuntimeTask,
+  runtimeStatus: RuntimeStatus | null,
+) {
+  const current = task.agentConfig?.stagePolicies?.[intent.role];
+  const allowedModels = runtimeStatus?.settings?.allowedModels ?? [];
+  const catalog = runtimeStatus?.catalog?.models ?? [];
+  const editable = catalog.filter((model) => model.editable && allowedModels.includes(model.id));
+  const recommended =
+    editable.find((model) => model.id !== current?.model && /sol/i.test(model.id)) ??
+    editable.find((model) => model.id !== current?.model);
+  const model = intent.model ?? recommended?.id ?? null;
+  const selected = catalog.find((option) => option.id === model);
+  const reasoning =
+    intent.reasoning ??
+    (selected?.reasoningLevels.includes("high")
+      ? "high"
+      : (selected?.defaultReasoning ?? (model === current?.model ? current.reasoning : null)));
+  return { model, reasoning };
+}
+
+function companionFailure(error: unknown): {
+  code: ProposalFailureCode;
+  reason: string;
+} {
+  const knownCodes: ProposalFailureCode[] = [
+    "stale-csrf",
+    "unauthorized",
+    "repository-authority",
+    "stale-candidate",
+    "invalid-policy",
+    "ineligible",
+    "unknown",
+  ];
+  const apiError = error instanceof RuntimeApiError ? error : null;
+  const code =
+    apiError?.code && knownCodes.includes(apiError.code as ProposalFailureCode)
+      ? (apiError.code as ProposalFailureCode)
+      : apiError?.status === 403
+        ? "stale-csrf"
+        : "unknown";
+  const evidence = apiError?.evidence ?? [];
+  const reason = [
+    error instanceof Error ? error.message : "The server denied this companion action.",
+    ...evidence,
+  ]
+    .filter((item, index, values) => item && values.indexOf(item) === index)
+    .join(" ");
+  return { code, reason };
 }

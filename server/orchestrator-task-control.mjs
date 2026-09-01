@@ -20,6 +20,7 @@ export class TaskControlOrchestrator {
     readVerificationManifestInjected,
     planAuthority,
     run,
+    startDesigns,
   }) {
     this._store = store;
     this._active = active;
@@ -30,6 +31,7 @@ export class TaskControlOrchestrator {
     this._readVerificationManifestInjected = readVerificationManifestInjected;
     this._planAuthority = planAuthority;
     this._run = run;
+    this._startDesigns = startDesigns;
   }
   isRunning(id) {
     return this._active.has(id);
@@ -335,6 +337,10 @@ export class TaskControlOrchestrator {
 
   async finishGrill(id, { acceptRemaining = false, source = null } = {}) {
     if (source !== "operator") throw new Error("Finishing Grill requires an explicit operator action.");
+    const task = await this._store.get(id);
+    if (task?.designRequest?.requested === true) {
+      return this._startDesigns(id, { acceptRemaining, source });
+    }
     const started = await this.start(id, "specification", {
       canStart: (draft) => {
         if (draft.status !== "awaiting-grill" || draft.grillSession?.status !== "open") {

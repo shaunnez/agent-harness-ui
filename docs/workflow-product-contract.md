@@ -49,6 +49,8 @@ Avoid using “model” when the UI means an agent, and avoid showing a singular
 
 Grill is a human decision gate by default. When it produces questions, the task pauses so the operator can answer them individually or explicitly accept all remaining recommendations. Automatic acceptance is available only through an opt-in Settings policy snapshotted onto new tasks; those answers and the session completion must identify automation as their source. A Grill run that produces no material questions may continue automatically under either policy.
 
+Tasks may opt into a governed design exploration after Grill and before Task Spec. This is a subflow inside **Task Spec**, not an eleventh stage: Claude Design and Codex Design run independently, retain two provider-attributed prototype revisions, and pause for an explicit operator selection. Task Spec cannot start until one complete revision is selected. The selected revision is immutable for that specification run and is supplied—with its URL or local bundle hash, summary, and context manifest—to Specification, Plan, implementation, review, and test. The rejected variant remains inspectable for provenance but is never blended into downstream context. Provider failure retains partial output but fails the subflow closed; the operator may retry both generators. Local prototype HTML is served from a sandboxed frame under a restrictive content-security policy, and server filesystem paths are never projected to the client.
+
 The stage navigator distinguishes:
 
 - **Current execution stage** — where the workflow can advance.
@@ -257,13 +259,150 @@ Filters are **Activity**, **Agent runs**, **Test runs**, and **Decisions**. Even
 
 Each row records time, event, scope, model/agent, input/cached/output tokens, cache rate, work credits when available, clearly labelled API-rate estimate, duration, and artifact. Task/stage telemetry separately counts focused checks, full-manifest executions, review retries, and candidate repairs. It states that attributable ChatGPT-plan billing is unavailable. Scope must identify the candidate, slice, stage, or test run. Selecting a row sends its full evidence to the universal inspector. Avoid duplicating stage summaries or artifacts here.
 
-## 9. Durable artifacts
+## 9. Contextual chat companion
+
+The companion is a contextual, evidence-first operator surface. It derives a
+fresh `CompanionContext` for every assistant turn from:
+
+```ts
+{
+  route,
+  taskId?,
+  activeStage,
+  viewedStage,
+  candidateId?,
+  candidateRevision?,
+}
+```
+
+`activeStage` is the task's runtime stage. `viewedStage` is the stage selected
+for inspection and is not a workflow transition; it may be stale or may be an
+unstarted future stage. Context answers name the route, selected task, active
+runtime stage, viewed stage, and exact candidate/revision when one is recorded.
+A stale viewed stage is described as inspection evidence and never as the
+current runtime stage.
+
+### App-shell surface and navigation ownership
+
+The contextual companion is mounted exactly once by the App shell, as a
+sibling of routed content. It is available on Command Centre, Tasks, Skills,
+Agents, Settings, and every task workspace. App-owned conversation messages,
+governed proposals, and the unsent composer draft therefore survive route and
+stage navigation. Context is recalculated from the serialized route, the
+currently active task identity, and the viewed stage on every render; a route
+change must never present stale task or stage context as current evidence.
+
+Changing task identity clears only the unsent composer draft. Conversation and
+proposal records remain inspectable until their own lifecycle completes or the
+operator dismisses them. Leaving a task for a global screen does not create a
+new companion session, and returning to that task does not clear its retained
+companion state.
+
+On desktop the companion is a fixed, closeable side panel whose reserved width
+is taken from routed content, so it cannot cover the universal task inspector.
+The inspector remains open, static, and independently scrollable. The
+companion has one internal scroll owner containing its header, compact context,
+conversation, cards, and composer; nested message or card regions do not claim
+scroll ownership. Its labelled launcher remains available globally. Cmd/Ctrl+K
+opens the panel and focuses the composer; Escape closes it only when an active
+nested dialog has not consumed the event, and every close path restores focus to
+the launcher. At narrow widths it becomes a modal sheet with dialog semantics,
+background exclusion, contained Tab/Shift+Tab navigation, initial composer
+focus, and the same Escape and launcher-focus rules.
+
+### Closed hybrid intent protocol
+
+The companion accepts a small deterministic natural-language vocabulary and its
+equivalent closed typed intents:
+
+- contextual explanation;
+- read-only navigation to the Tasks page or a task;
+- create-task proposal;
+- task-scoped role-model proposal; and
+- candidate-bound gate-promotion proposal.
+
+The parser emits a discriminated `CompanionIntent` union. Unknown, malformed,
+or ambiguous text returns an explanation plus available examples. It never
+falls through to a tool call, URL, endpoint, repository path, handler, or
+arbitrary executable intent. Read-only navigation can execute directly; every
+mutation stops at a reviewable proposal.
+
+### Governed action proposals
+
+Mutation cards use the lifecycle
+`proposed → confirmed → executed`, with
+`proposed → dismissed` for cancellation. A proposal contains a human-readable
+summary, eligibility rationale and evidence, `confirmationRequired: true`, and
+an exact target:
+
+- task creation carries a validated `NewTaskDraft`;
+- role-model changes carry `scope: "task_snapshot"`, task ID, role, model, and
+  reasoning; and
+- gate promotion carries the task ID, candidate ID, candidate revision, and
+  next gate.
+
+Proposal creation, rendering, dismissal, and local confirmation do not invoke a
+mutation endpoint. The existing server-authoritative local boundary is the
+only execution path after explicit operator confirmation. It must revalidate
+CSRF, task identity, repository authority, discovered model/reasoning policy,
+candidate identity/revision, and canonical gate eligibility. Stale,
+unauthorized, or ineligible confirmation fails closed, retains its reason on
+the proposal, and never becomes `executed`.
+
+Role-model changes update only the selected task's reproducible policy snapshot;
+they cannot change global settings. Existing task and agent-run records retain
+their historical model and reasoning metadata. Promotion is bound to the exact
+candidate revision, so candidate drift or a later repair invalidates downstream
+gate evidence rather than allowing an old proposal to advance the task.
+
+### Role-policy mutation frontier
+
+Role-policy eligibility is a server-owned lifecycle predicate shared by
+projection and mutation. A known role may be changed only while it is genuinely
+future: before that role begins work and before any role-owned evidence makes
+its policy historical. The predicate denies terminal, archived, cancelled,
+identity-drift, and awaiting-PR-merge task states; active or retained runs for
+the selected role; role artifacts; reached or passed role stages; Implement
+after any candidate exists; and Repair after a repair run or repair lineage
+exists. It also fails closed for invalid task identity, repository authority,
+model-catalogue, Settings allowlist/editability, or supported-reasoning
+combinations. The approval role and scout roles are not selectable through the
+role-policy form.
+
+Both the eligibility projection and the confirmation transition return the
+same stable ineligible code, reason, and structured evidence. The transition
+revalidates task identity, repository authority, discovered catalogue entry,
+Settings allowlist/editability, reasoning support, and the lifecycle predicate
+inside the atomic store transition immediately before changing the unexecuted
+task snapshot. A lifecycle or authority change between projection and
+confirmation therefore leaves the policy unchanged. Client preflight only
+improves usability and is never authoritative.
+
+### Trusted catalogue and A2UI decision
+
+The action-card renderer accepts only the fixed local catalogue of create-task,
+role-model, and gate-promotion cards. Catalogue data has fixed fields and
+contains no callbacks, JSX, HTML, scripts, URLs, endpoints, repository
+commands, or free-form model-selected mutation payloads. Catalogue validation
+rejects unknown card types, extra fields, mismatched action types, and malformed
+targets. Model output is therefore an untrusted intent suggestion, not
+executable UI.
+
+A2UI was evaluated as a declarative protocol pattern and fits only when its
+output is projected into this trusted local React catalogue. It does not
+justify a network dependency or arbitrary model-generated components and event
+handlers. The companion keeps prompt-supplied context separate from repository
+access permission and never claims that supplied context proves what a model
+semantically used.
+
+## 10. Durable artifacts
 
 Artifacts are first-class, versioned records, not transient UI copy. Important examples include:
 
 - triage report;
 - scout findings and cited code excerpts;
 - Grill decision frontier and evidence;
+- dual design prototype revisions, provider metadata, exact selected revision, and context manifests;
 - full task specification;
 - dependency graph and implementation plan;
 - slice manifests, commits, and local check results;
@@ -276,7 +415,7 @@ Artifacts are first-class, versioned records, not transient UI copy. Important e
 
 Artifact viewers should be wide, read-only by default, version-aware, linkable, and able to show provenance. Editable skills/prompts belong to their own configuration/editor flow, not an artifact viewer.
 
-## 10. Suggested backend entities
+## 11. Suggested backend entities
 
 Minimum relational/event model:
 
@@ -300,6 +439,8 @@ Minimum relational/event model:
 - `repair_packets`
 - `repair_actions`
 - `artifacts`
+- `design_requests`
+- `prototype_variants`
 - `decisions`
 - `usage_records`
 - `approvals`
@@ -308,7 +449,7 @@ Minimum relational/event model:
 
 Use immutable revision tables for agents, skills, candidates, and gate definitions so historical runs remain reproducible.
 
-## 11. API and event boundaries
+## 12. API and event boundaries
 
 Representative commands:
 
@@ -347,7 +488,7 @@ Representative emitted events:
 
 Commands that mutate workflow state require idempotency keys and optimistic concurrency against the expected task/candidate revision. Event records should be append-only.
 
-## 12. Cost and usage
+## 13. Cost and usage
 
 Store usage at the lowest available run granularity, then aggregate upward by slice, stage, candidate, task, provider, model, and day. Preserve:
 
@@ -359,7 +500,7 @@ Store usage at the lowest available run granularity, then aggregate upward by sl
 
 Label calculated values **Approx. cost**. A task can display a total plus a provider/model breakdown.
 
-## 13. Concurrency, auditability, and safety
+## 14. Concurrency, auditability, and safety
 
 - Only one candidate revision can be current, but historical candidates remain inspectable.
 - Candidate assembly must verify expected base and member SHAs before writing.
@@ -369,7 +510,7 @@ Label calculated values **Approx. cost**. A task can display a total plus a prov
 - Secrets and raw model context must be redacted from artifacts and activity rows according to policy.
 - Agent/skill configuration changes create revisions; they never rewrite the configuration attached to past runs.
 
-## 14. Prototype-only behavior vs production behavior
+## 15. Prototype-only behavior vs production behavior
 
 The current prototype uses hard-coded data and a **Prototype states** menu to expose active, Grill, failed, blocked, and approval scenarios. That menu is intentionally not part of the production workflow.
 

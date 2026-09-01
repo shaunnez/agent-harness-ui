@@ -1,23 +1,24 @@
 import type {
+  AgentRoleId,
   NewTaskDraft,
+  RuntimeArtifact,
+  RuntimeArtifactMetadata,
+  RuntimeAvailableAction,
   RuntimeChangelogCommit,
   RuntimeChangelogDetail,
   RuntimeChangelogDiff,
   RuntimeEvaluationSummary,
+  RuntimeEvent,
+  RuntimePage,
+  RuntimeProject,
+  RuntimeRepositoryContract,
+  RuntimeRun,
   RuntimeSettings,
   RuntimeStatus,
   RuntimeTask,
   RuntimeTaskCore,
-  RuntimeTaskSummary,
   RuntimeTaskPollState,
-  RuntimeArtifact,
-  RuntimeArtifactMetadata,
-  RuntimeEvent,
-  RuntimePage,
-  RuntimeProject,
-  RuntimeAvailableAction,
-  RuntimeRun,
-  RuntimeRepositoryContract,
+  RuntimeTaskSummary,
   RuntimeUsage,
   RuntimeWorktreeInventoryRow,
 } from "./domain";
@@ -31,7 +32,30 @@ export interface CandidateDiffResponse {
   truncated: boolean;
 }
 
-async function request<T>(path: string, init?: RequestInit, retried = false): Promise<T> {
+export class RuntimeApiError extends Error {
+  readonly status: number;
+  readonly code: string | null;
+  readonly evidence: string[];
+
+  constructor(message: string, status: number, code: string | null = null, evidence: string[] = []) {
+    super(message);
+    this.name = "RuntimeApiError";
+    this.status = status;
+    this.code = code;
+    this.evidence = evidence;
+  }
+}
+
+export interface MutationRequestOptions {
+  retryOnCsrf?: boolean;
+}
+
+interface RequestOptions extends MutationRequestOptions {
+  retried?: boolean;
+}
+
+async function request<T>(path: string, init?: RequestInit, options: RequestOptions = {}): Promise<T> {
+  const retryOnCsrf = options.retryOnCsrf ?? true;
   let response: Response;
   try {
     response = await fetch(path, {
@@ -47,7 +71,11 @@ async function request<T>(path: string, init?: RequestInit, retried = false): Pr
   } catch {
     throw new Error("The local Agent Harness runtime is offline. Start the app with npm run dev.");
   }
-  const value = (await response.json().catch(() => ({}))) as T & { error?: string };
+  const value = (await response.json().catch(() => ({}))) as T & {
+    error?: string;
+    code?: string;
+    evidence?: unknown;
+  };
   if (!response.ok) {
     const message = value.error ?? `Local runtime request failed (${response.status}).`;
     // The server mints a fresh CSRF token on every restart (see getRuntimeStatus below), so a
@@ -55,11 +83,24 @@ async function request<T>(path: string, init?: RequestInit, retried = false): Pr
     // reloaded. GETs carry no token and can't hit this, and we only retry once: a second 403
     // naming the token means it is genuinely invalid, not just stale, and should surface as-is.
     const isMutation = Boolean(init?.method && init.method !== "GET");
-    if (response.status === 403 && isMutation && !retried && /csrf token/i.test(message)) {
+    if (
+      response.status === 403 &&
+      isMutation &&
+      retryOnCsrf &&
+      !options.retried &&
+      /csrf token/i.test(message)
+    ) {
       await getRuntimeStatus();
-      return request<T>(path, init, true);
+      return request<T>(path, init, { ...options, retried: true });
     }
-    throw new Error(message);
+    throw new RuntimeApiError(
+      message,
+      response.status,
+      typeof value.code === "string" ? value.code : null,
+      Array.isArray(value.evidence)
+        ? value.evidence.filter((item): item is string => typeof item === "string")
+        : [],
+    );
   }
   return value;
 }
@@ -264,13 +305,36 @@ function pageParams(options: PageOptions) {
   return params;
 }
 
-export async function createTask(draft: NewTaskDraft) {
+export async function createTask(draft: NewTaskDraft, options: MutationRequestOptions = {}) {
   return (
-    await request<{ task: RuntimeTask }>("/api/tasks", {
-      method: "POST",
-      body: JSON.stringify(draft),
-    })
+    await request<{ task: RuntimeTask }>(
+      "/api/tasks",
+      {
+        method: "POST",
+        body: JSON.stringify(draft),
+      },
+      options,
+    )
   ).task;
+}
+
+export async function updateTaskRolePolicy(
+  id: string,
+  input: { role: AgentRoleId; model: string; reasoning: string },
+) {
+  return request<{
+    task: RuntimeTask;
+    scope: "task_snapshot";
+    role: AgentRoleId;
+    policy: { model: string; reasoning: string };
+  }>(
+    `/api/tasks/${encodeURIComponent(id)}/agent-policy`,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    },
+    { retryOnCsrf: false },
+  );
 }
 
 export async function continueTaskToImplementation(id: string) {
@@ -293,8 +357,8 @@ export async function updateTaskWorkflowProfile(
   ).task;
 }
 
-export async function runTask(id: string) {
-  return request<{ started: true }>(`/api/tasks/${encodeURIComponent(id)}/run`, { method: "POST" });
+export async function runTask(id: string, options: MutationRequestOptions = {}) {
+  return request<{ started: true }>(`/api/tasks/${encodeURIComponent(id)}/run`, { method: "POST" }, options);
 }
 
 export async function cancelTask(id: string) {
@@ -322,13 +386,53 @@ export async function finishGrill(id: string, acceptRemaining: boolean) {
   });
 }
 
+export async function selectTaskDesign(id: string, variantId: string) {
+  return request<{ started: true }>(
+    `/api/tasks/${encodeURIComponent(id)}/designs/${encodeURIComponent(variantId)}/select`,
+    {
+      method: "POST",
+      body: JSON.stringify({ interactionSource: "operator-ui" }),
+    },
+  );
+}
+
+export async function retryTaskDesigns(id: string) {
+  return request<{ started: true }>(`/api/tasks/${encodeURIComponent(id)}/designs/retry`, {
+    method: "POST",
+    body: JSON.stringify({ interactionSource: "operator-ui" }),
+  });
+}
+
 export async function runTaskAction(
   id: string,
   action: Exclude<RuntimeAvailableAction, "continue-implementation">,
   note = "",
+  candidateScope?: {
+    candidateId: string;
+    candidateRevision: number;
+    candidateHeadRevision: string;
+  },
+  requestOptions: RequestOptions = {},
 ) {
-  return request<Record<string, boolean>>(`/api/tasks/${encodeURIComponent(id)}/${action}`, {
-    method: "POST",
-    body: JSON.stringify({ note }),
-  });
+  return request<Record<string, boolean>>(
+    `/api/tasks/${encodeURIComponent(id)}/${action}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ note, ...(candidateScope ?? {}) }),
+    },
+    requestOptions,
+  );
+}
+
+export async function promoteTaskThroughGate(
+  id: string,
+  action: Extract<RuntimeAvailableAction, "review" | "test" | "final-review" | "open-pr">,
+  candidateScope: {
+    candidateId: string;
+    candidateRevision: number;
+    candidateHeadRevision: string;
+  },
+  note = "",
+) {
+  return runTaskAction(id, action, note, candidateScope, { retryOnCsrf: false });
 }

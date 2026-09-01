@@ -5,6 +5,7 @@ import {
   paginateTaskEvents,
   paginateTaskRuns,
   projectTaskCore,
+  projectDesignRequest,
   projectTaskPollState,
   projectTaskSummary,
 } from "./task-projections.mjs";
@@ -21,8 +22,11 @@ export function createRetainedEvidenceRoutes({ store, send, withActionEligibilit
         return true;
       }
       const full = url.searchParams.get("view") === "full";
-      const tasks =
+      let tasks =
         full || typeof store.listSummaries !== "function" ? await store.list() : await store.listSummaries();
+      if (full) {
+        tasks = tasks.map((task) => ({ ...task, designRequest: projectDesignRequest(task.designRequest) }));
+      }
       send(response, 200, {
         tasks: full || typeof store.listSummaries === "function" ? tasks : tasks.map(projectTaskSummary),
       });
@@ -116,7 +120,7 @@ export function createRetainedEvidenceRoutes({ store, send, withActionEligibilit
       // therefore turns valid exhausted candidate gates into false denials.
       const persistedTask = await store.get(id);
       const task = persistedTask ? withActionEligibility(persistedTask) : null;
-      let responseTask = task;
+      let responseTask = task ? { ...task, designRequest: projectDesignRequest(task.designRequest) } : null;
       if (task && core) {
         const pollState = typeof store.getPollState === "function" ? await store.getPollState(id) : null;
         responseTask = {

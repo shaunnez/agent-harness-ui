@@ -14,6 +14,7 @@ import { RetentionOrchestrator } from "./orchestrator-retention.mjs";
 import { OrchestratorRunCoordinator } from "./orchestrator-run-coordinator.mjs";
 import { RetainedPackageOrchestrator } from "./orchestrator-retained-package.mjs";
 import { PlanAuthorityOrchestrator } from "./orchestrator-plan-authority.mjs";
+import { PrototypeDesignOrchestrator } from "./orchestrator-prototype-design.mjs";
 
 export class TaskOrchestratorCore {
   constructor(store, options = {}) {
@@ -79,6 +80,7 @@ export class TaskOrchestratorCore {
       executeAgent: (...args) => repair._executeAgent(...args),
       retainAgentResult: (...args) => retention._retainAgentResult(...args),
     });
+    let designs;
     const investigation = new InvestigationProgressionOrchestrator({
       store: runtime._store,
       worktrees: runtime._worktrees,
@@ -87,6 +89,7 @@ export class TaskOrchestratorCore {
       executeAgent: (...args) => repair._executeAgent(...args),
       retainAgentResult: (...args) => retention._retainAgentResult(...args),
       runSpecification: (...args) => planning._runSpecification(...args),
+      runDesigns: (...args) => designs.runWithinInvestigation(...args),
     });
     const runCoordinator = new OrchestratorRunCoordinator({
       store: runtime._store,
@@ -114,6 +117,13 @@ export class TaskOrchestratorCore {
       readVerificationManifestInjected: runtime._readVerificationManifestInjected,
       planAuthority,
       run: (...args) => runCoordinator.run(...args),
+      startDesigns: (...args) => designs.startAfterGrill(...args),
+    });
+    designs = new PrototypeDesignOrchestrator({
+      store: runtime._store,
+      active: runtime._active,
+      generatePrototype: runtime._generatePrototype,
+      startSpecification: (id, options) => taskControl.start(id, "specification", options),
     });
     const pullRequests = new PullRequestOrchestrator({
       store: runtime._store,
@@ -141,5 +151,6 @@ export class TaskOrchestratorCore {
     this.pullRequests = pullRequests;
     this.mergeRecovery = mergeRecovery;
     this.candidates = candidates;
+    this.designs = designs;
   }
 }

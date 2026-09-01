@@ -9,6 +9,7 @@ import {
   type StageId,
 } from "../../domain";
 import { RuntimeGrillPanel } from "./RuntimeGrillPanel";
+import { RuntimePrototypeComparison } from "./RuntimePrototypeComparison";
 import { RuntimeFocusedTestEvidencePanel, RuntimeWorkPackages } from "./RuntimeEvidencePanels";
 import {
   RuntimeCandidateDesk,
@@ -41,6 +42,8 @@ export function RuntimeStagePresentation({
   candidateDiffLoading,
   selectedTestResultId,
   onSelectTestResult,
+  onSelectDesign,
+  onRetryDesigns,
 }: {
   task: RuntimeTask;
   viewedStageId: StageId;
@@ -55,6 +58,8 @@ export function RuntimeStagePresentation({
   candidateDiffLoading: boolean;
   selectedTestResultId: string | null;
   onSelectTestResult: (resultId: string | null) => void;
+  onSelectDesign: (variantId: string) => Promise<void>;
+  onRetryDesigns: () => Promise<void>;
 }) {
   const focusedTest = getRuntimeFocusedTest(task);
   const stageArtifacts = task.artifacts.filter((item) => item.stage === viewedStageId);
@@ -238,6 +243,9 @@ export function RuntimeStagePresentation({
     case "specification":
       return (
         <div className="runtime-stage-stack">
+          {task.designRequest?.requested ? (
+            <RuntimePrototypeComparison task={task} onSelect={onSelectDesign} onRetry={onRetryDesigns} />
+          ) : null}
           {artifactHistory}
           <RuntimeFactGrid
             facts={[

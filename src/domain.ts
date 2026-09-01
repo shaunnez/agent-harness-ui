@@ -78,6 +78,7 @@ export interface NewTaskDraft {
   repositoryPath: string;
   workflow: "investigate" | "implement";
   priority: "low" | "medium" | "high";
+  designRequested?: boolean;
   workflowProfile?: "auto" | "fast" | "standard" | "high-risk";
   model?: string;
   reasoning?: string;
