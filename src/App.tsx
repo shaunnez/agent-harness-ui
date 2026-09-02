@@ -617,7 +617,7 @@ export function App() {
       RuntimeSettings,
       "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies"
     > &
-      Partial<Pick<RuntimeSettings, "grillPolicy">>,
+      Partial<Pick<RuntimeSettings, "grillPolicy" | "designPolicies">>,
   ) => {
     const saved = await updateRuntimeSettings(settings);
     const [status, evaluation] = await Promise.all([getRuntimeStatus(), getEvaluationSummary()]);

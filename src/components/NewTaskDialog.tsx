@@ -99,7 +99,9 @@ export function NewTaskDialog({
               tone="primary"
               icon={Lightning}
               type="submit"
-              disabled={pending || !runtimeStatus?.authenticated || !isValidNewTaskDraft(draft)}
+              disabled={
+                pending || !runtimeStatus?.authenticated || !isValidNewTaskDraft(draft, runtimeStatus)
+              }
             >
               {pending ? (captureOnly ? "Capturing…" : "Creating…") : submitLabel}
             </Button>

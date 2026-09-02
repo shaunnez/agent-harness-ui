@@ -2,6 +2,7 @@ import { MagnifyingGlass, WarningCircle } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import type {
   RuntimeAgentPolicy,
+  RuntimeDesignPolicies,
   RuntimeEvaluationSummary,
   RuntimeGrillPolicy,
   RuntimeSettings,
@@ -9,10 +10,12 @@ import type {
   WorkflowProfileId,
 } from "../domain";
 import { AgentPolicyEditor } from "./AgentPolicyEditor";
+import { isDesignPolicyValid } from "./DesignPolicyEditor";
 import { agentRoles } from "./AgentRoles";
 import { EvaluationScorecard } from "./EvaluationScorecard";
 import { SettingRow } from "./LibraryShared";
 import { Button, SectionHeader } from "./Primitives";
+import { SettingsDesignPolicies } from "./SettingsDesignPolicies";
 import { connectionStateLabel, providerConnectionState } from "./Shell";
 import { SystemBoundaryMap } from "./SystemBoundaryMap";
 
@@ -24,6 +27,7 @@ type RuntimePolicyInput = Pick<
   | "defaultReasoning"
   | "stagePolicies"
   | "profileStagePolicies"
+  | "designPolicies"
 >;
 
 export function SettingsScreen({
@@ -60,6 +64,7 @@ export function SettingsScreen({
   const [defaultModel, setDefaultModel] = useState("");
   const [defaultReasoning, setDefaultReasoning] = useState("");
   const [stagePolicies, setStagePolicies] = useState<Record<string, RuntimeAgentPolicy>>({});
+  const [designPolicies, setDesignPolicies] = useState<RuntimeDesignPolicies | null>(null);
   const [profileStagePolicies, setProfileStagePolicies] = useState<
     NonNullable<RuntimeSettings["profileStagePolicies"]>
   >({ fast: {}, standard: {}, "high-risk": {} });
@@ -75,6 +80,7 @@ export function SettingsScreen({
     setAllowedModels(settings.allowedModels);
     setDefaultModel(settings.defaultModel);
     setDefaultReasoning(settings.defaultReasoning);
+    setDesignPolicies(settings.designPolicies);
     const matrices = settings.profileStagePolicies ?? {
       fast: settings.stagePolicies ?? {},
       standard: settings.stagePolicies ?? {},
@@ -91,6 +97,9 @@ export function SettingsScreen({
     setSaveMessage(null);
     setSaving(true);
     try {
+      if (!designPoliciesValid || !designPolicies) {
+        throw new Error("Choose one eligible Claude Design model and one eligible Codex Design model.");
+      }
       const matrices = { ...profileStagePolicies, [editingProfile]: stagePolicies };
       await onSave({
         grillPolicy,
@@ -99,6 +108,7 @@ export function SettingsScreen({
         defaultReasoning,
         stagePolicies: matrices.standard,
         profileStagePolicies: matrices,
+        designPolicies,
       });
       setSaveMessage(
         "Settings saved. New tasks will use these defaults; existing task snapshots are unchanged.",
@@ -109,6 +119,11 @@ export function SettingsScreen({
       setSaving(false);
     }
   };
+  const designPoliciesValid = Boolean(
+    designPolicies &&
+      isDesignPolicyValid(designPolicies["claude-design"], "claude", catalog, allowedModels) &&
+      isDesignPolicyValid(designPolicies["codex-design"], "codex", catalog, allowedModels),
+  );
   const updateDefault = (policy: RuntimeAgentPolicy) => {
     setDefaultModel(policy.model);
     setDefaultReasoning(policy.reasoning);
@@ -191,7 +206,9 @@ export function SettingsScreen({
         <Button
           type="button"
           tone="primary"
-          disabled={saving || !allowedModels.length || !defaultModel || !defaultReasoning}
+          disabled={
+            saving || !allowedModels.length || !defaultModel || !defaultReasoning || !designPoliciesValid
+          }
           onClick={() => void save()}
         >
           {saving ? "Saving…" : "Save interaction policy"}
@@ -213,6 +230,7 @@ export function SettingsScreen({
             const inUse = [
               ...Object.values(stagePolicies),
               ...Object.values(profileStagePolicies).flatMap((matrix) => Object.values(matrix)),
+              ...Object.values(designPolicies ?? {}),
             ].some((policy) => policy.model === model.id);
             return (
               <label
@@ -254,6 +272,16 @@ export function SettingsScreen({
             );
           })}
         </div>
+        <SettingsDesignPolicies
+          value={designPolicies}
+          models={catalog}
+          allowedModels={allowedModels}
+          disabled={saving}
+          onChange={(policies) => {
+            setDesignPolicies(policies);
+            setSaveMessage(null);
+          }}
+        />
         <div className="settings-default-grid">
           <AgentPolicyEditor
             value={globalDefault}
@@ -266,7 +294,9 @@ export function SettingsScreen({
           <Button
             type="button"
             tone="primary"
-            disabled={saving || !allowedModels.length || !defaultModel || !defaultReasoning}
+            disabled={
+              saving || !allowedModels.length || !defaultModel || !defaultReasoning || !designPoliciesValid
+            }
             onClick={() => void save()}
           >
             {saving ? "Saving…" : "Save model policy"}

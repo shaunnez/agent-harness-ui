@@ -1,5 +1,6 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { validateDesignPolicies } from "./design-policies.mjs";
 import { hashTaskBrief, normalizeExperimentInput } from "./evaluation.mjs";
 import { normalizeModelId, POLICY_IDS, readExecutionProviderCatalog } from "./model-catalog.mjs";
 import { selectWorkflowProfile, WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
@@ -30,6 +31,9 @@ export function createTaskCreationRoutes({
       const attachments = validateAttachments(input.attachments);
       const settings = await store.settings();
       const catalog = await readExecutionProviderCatalog();
+      const knownModels = new Map(
+        catalog.models.filter((model) => model.editable).map((model) => [model.id, model]),
+      );
       const requestedModel = normalizeModelId(input.model ?? settings.defaultModel);
       const selectedModel = catalog.models.find((model) => model.id === requestedModel && model.editable);
       if (!settings.allowedModels.includes(requestedModel) || !selectedModel)
@@ -37,6 +41,15 @@ export function createTaskCreationRoutes({
       const requestedReasoning = String(input.reasoning ?? settings.defaultReasoning);
       if (!selectedModel.reasoningLevels.includes(requestedReasoning))
         throw new Error(`${selectedModel.label} does not support ${requestedReasoning} reasoning.`);
+      const designPolicies =
+        input.designRequested === true
+          ? validateDesignPolicies(
+              input.designPolicies,
+              knownModels,
+              settings.allowedModels,
+              settings.designPolicies,
+            )
+          : null;
       const workflowProfile = selectWorkflowProfile({
         title: input.title,
         description: input.description,
@@ -108,6 +121,8 @@ export function createTaskCreationRoutes({
           workflow: input.workflow,
           priority,
           designRequested: input.designRequested === true,
+          designPolicies,
+          designPolicyProvenance: input.designPolicies ? "task-selection" : "settings-default",
           model: requestedModel,
           reasoning: requestedReasoning,
           stagePolicies: taskPolicies,

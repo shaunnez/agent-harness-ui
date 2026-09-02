@@ -263,6 +263,18 @@ export function resolveTaskProvider(stagePolicies, fallbackModel, explicit = nul
 export const DEFAULT_RUNTIME_MODEL = "gpt-5.6-luna";
 export const DEFAULT_RUNTIME_REASONING = "xhigh";
 
+export const DEFAULT_DESIGN_POLICIES = Object.freeze({
+  "claude-design": Object.freeze({ provider: "claude", model: "claude-opus-5", reasoning: "high" }),
+  "codex-design": Object.freeze({ provider: "codex", model: "gpt-5.6-sol", reasoning: "high" }),
+});
+
+// Design requests created before provider-specific selection existed must keep
+// the exact models and effort semantics the legacy generator used.
+export const LEGACY_DESIGN_POLICIES = Object.freeze({
+  "claude-design": Object.freeze({ provider: "claude", model: "claude-sonnet-5", reasoning: null }),
+  "codex-design": Object.freeze({ provider: "codex", model: "gpt-5.6-luna", reasoning: "xhigh" }),
+});
+
 /** Codex's own default, which is not the global one and must not follow it. */
 export const DEFAULT_CODEX_MODEL = "gpt-5.6-luna";
 
@@ -322,6 +334,7 @@ export function defaultRuntimeSettings() {
     profileStagePolicies: defaultProfileStagePolicies(
       providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER,
     ),
+    designPolicies: structuredClone(DEFAULT_DESIGN_POLICIES),
     pricing: {
       version: PRICING_VERSION,
       sourceUrl: PRICING_SOURCE_URL,
@@ -400,6 +413,7 @@ export function withConfiguredModels(catalog, settings) {
       settings?.defaultModel,
       ...(settings?.allowedModels ?? []),
       ...Object.values(settings?.stagePolicies ?? {}).map((policy) => policy?.model),
+      ...Object.values(settings?.designPolicies ?? {}).map((policy) => policy?.model),
     ]
       .filter(Boolean)
       .map(normalizeModelId),

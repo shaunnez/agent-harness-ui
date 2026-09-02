@@ -8,6 +8,7 @@ import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import {
   claudeDesignArgs,
   createClaudeDesignUrlCollector,
+  createPrototypeGenerator,
   parseUrl,
 } from "../server/prototype-generator.mjs";
 import { parseGrillQuestions } from "../server/structured-output.mjs";
@@ -15,7 +16,16 @@ import { parseGrillQuestions } from "../server/structured-output.mjs";
 const GRILL = `<grill-questions>{"questions":[{"question":"How safe?","whyItMatters":"A human gate is required.","options":[{"label":"Confirm first","description":"Require confirmation.","recommended":true},{"label":"Execute immediately","description":"Skip confirmation.","recommended":false}],"allowCustom":true}]}</grill-questions>`;
 
 test("confines non-interactive Claude Design publication to DesignSync", () => {
-  const args = claudeDesignArgs("session-123");
+  const args = claudeDesignArgs("session-123", {
+    provider: "claude",
+    model: "claude-opus-5",
+    reasoning: "high",
+  });
+  assert.deepEqual(args.slice(args.indexOf("--model"), args.indexOf("--model") + 2), [
+    "--model",
+    "claude-opus-5",
+  ]);
+  assert.deepEqual(args.slice(args.indexOf("--effort"), args.indexOf("--effort") + 2), ["--effort", "high"]);
   assert.deepEqual(args.slice(args.indexOf("--tools"), args.indexOf("--tools") + 4), [
     "--tools",
     "DesignSync",
@@ -60,6 +70,51 @@ test("retains the published URL from the DesignSync tool result", () => {
     }),
   );
   assert.equal(collector.result(), "https://claude.ai/design/task-light-mode");
+});
+
+test("invokes Codex Design with the exact snapshotted model and reasoning", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-design-generator-"));
+  try {
+    let invocation = null;
+    const generate = createPrototypeGenerator({
+      runCodexImpl: async (input) => {
+        invocation = input;
+        await Promise.all([
+          writeFile(path.join(input.cwd, "index.html"), "<!doctype html><h1>Exact policy</h1>"),
+          writeFile(path.join(input.cwd, "design.md"), "# Exact policy"),
+          writeFile(
+            path.join(input.cwd, "manifest.json"),
+            JSON.stringify({ title: "Exact policy", summary: "Used the task snapshot." }),
+          ),
+        ]);
+        return { usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 } };
+      },
+    });
+    const policy = {
+      provider: "codex",
+      model: "gpt-5.6-sol",
+      reasoning: "high",
+      provenance: "task-selection",
+    };
+    const result = await generate({
+      task: {
+        id: "AH-001",
+        title: "Exact policy",
+        description: "Use the retained task policy.",
+        repositoryPath: directory,
+        decisions: [],
+      },
+      variant: { id: "variant-1", generator: "codex-design", provider: "codex", policy },
+      bundlePath: directory,
+      signal: new AbortController().signal,
+    });
+    assert.equal(invocation.model, "gpt-5.6-sol");
+    assert.equal(invocation.reasoning, "high");
+    assert.equal(result.model, "gpt-5.6-sol");
+    assert.equal(result.reasoning, "high");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 async function waitForStatus(store, id, status) {
@@ -114,8 +169,8 @@ test("generates two retained designs, selects one exact revision, and supplies i
           externalUrl:
             variant.generator === "claude-design" ? "https://claude.ai/design/mock-prototype" : null,
           bundleHash: variant.generator === "codex-design" ? "abc123" : null,
-          model: variant.provider === "claude" ? "claude-sonnet-5" : "gpt-5.6-luna",
-          reasoning: variant.provider === "codex" ? "xhigh" : null,
+          model: variant.policy.model,
+          reasoning: variant.policy.reasoning,
           usage: {
             inputTokens: 10,
             cachedInputTokens: 2,
@@ -185,8 +240,8 @@ test("a design-checked Fast task escalates instead of bypassing prototype select
         summary: "Ready for selection.",
         externalUrl: `https://example.test/${variant.id}`,
         bundleHash: null,
-        model: variant.provider === "claude" ? "claude-sonnet-5" : "gpt-5.6-luna",
-        reasoning: null,
+        model: variant.policy.model,
+        reasoning: variant.policy.reasoning,
         usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
       }),
       runCodex: async ({ prompt }) => ({
@@ -247,8 +302,8 @@ test("retry retains successful provider evidence and replaces only the failed di
           designContract: "Retained exact design contract.",
           externalUrl: `https://example.test/${variant.id}`,
           bundleHash: null,
-          model: variant.provider === "claude" ? "claude-sonnet-5" : "gpt-5.6-luna",
-          reasoning: null,
+          model: variant.policy.model,
+          reasoning: variant.policy.reasoning,
           usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
         };
       },
@@ -261,6 +316,17 @@ test("retry retains successful provider evidence and replaces only the failed di
     await orchestrator.finishGrill(task.id, { source: "operator" });
     const failed = await waitForStatus(store, task.id, "failed");
     const priorVariantId = failed.designRequest.variants.find((variant) => variant.status === "ready").id;
+    const originalPolicies = structuredClone(failed.designRequest.policies);
+    assert.equal(
+      failed.designRequest.variants.find((variant) => variant.status === "failed").model,
+      "claude-opus-5",
+    );
+    await store.updateSettings((draft) => {
+      draft.designPolicies = {
+        "claude-design": { provider: "claude", model: "claude-sonnet-5", reasoning: "high" },
+        "codex-design": { provider: "codex", model: "gpt-5.6-luna", reasoning: "xhigh" },
+      };
+    });
 
     await orchestrator.retryDesigns(task.id, { source: "operator" });
     const retried = await waitForStatus(store, task.id, "awaiting-design-selection");
@@ -268,6 +334,11 @@ test("retry retains successful provider evidence and replaces only the failed di
     assert.deepEqual(
       retried.designRequest.variants.map((variant) => variant.revision),
       [1, 1, 2],
+    );
+    assert.deepEqual(retried.designRequest.policies, originalPolicies);
+    assert.deepEqual(
+      retried.designRequest.variants.slice(2).map((variant) => variant.policy),
+      [originalPolicies["claude-design"]],
     );
     await orchestrator.selectDesign(task.id, priorVariantId, { source: "operator" });
     const specified = await waitForStatus(store, task.id, "awaiting-spec-approval");

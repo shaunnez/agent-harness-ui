@@ -4,6 +4,8 @@ import path from "node:path";
 import { cleanupOrphanAttachmentSets } from "./attachment-storage.mjs";
 import { acquireJsonStoreLock } from "./json-store-lock.mjs";
 import {
+  DEFAULT_DESIGN_POLICIES,
+  LEGACY_DESIGN_POLICIES,
   defaultRuntimeSettings,
   enrichUsage,
   normalizeModelId,
@@ -30,6 +32,49 @@ const EMPTY_STATE = {
 
 function clone(value) {
   return structuredClone(value);
+}
+
+function snapshotDesignPolicies(policies, provenance) {
+  return Object.fromEntries(
+    Object.entries(policies).map(([generator, policy]) => [generator, { ...clone(policy), provenance }]),
+  );
+}
+
+function migrateDesignRequest(designRequest) {
+  if (!designRequest) return false;
+  let changed = false;
+  if (!designRequest.policies) {
+    const policies = snapshotDesignPolicies(LEGACY_DESIGN_POLICIES, "legacy-fixed-default");
+    for (const generator of Object.keys(policies)) {
+      const recorded = [...(designRequest.variants ?? [])]
+        .reverse()
+        .find((variant) => variant.generator === generator && variant.model);
+      if (recorded) {
+        policies[generator] = {
+          provider: recorded.provider,
+          model: recorded.model,
+          reasoning: recorded.reasoning ?? policies[generator].reasoning,
+          provenance: "legacy-fixed-default",
+        };
+      }
+    }
+    designRequest.policies = policies;
+    changed = true;
+  }
+  for (const variant of designRequest.variants ?? []) {
+    if (variant.policy) continue;
+    const snapshot = designRequest.policies[variant.generator];
+    variant.policy = variant.model
+      ? {
+          provider: variant.provider,
+          model: variant.model,
+          reasoning: variant.reasoning ?? snapshot?.reasoning ?? null,
+          provenance: "legacy-fixed-default",
+        }
+      : clone(snapshot);
+    changed = true;
+  }
+  return changed;
 }
 
 function jsonPollVersion(task) {
@@ -369,6 +414,7 @@ export function migratePersistedTaskState(state) {
     }
   }
   for (const task of state.tasks) {
+    if (migrateDesignRequest(task.designRequest)) changed = true;
     for (const [key, fallback] of [
       ["activeRunKind", null],
       ["activeRunReservationId", null],
@@ -547,6 +593,10 @@ export function migratePersistedTaskState(state) {
 
 export function createTaskRecord(state, input) {
   const now = new Date().toISOString();
+  const designPolicies = snapshotDesignPolicies(
+    input.designPolicies ?? state.settings.designPolicies ?? DEFAULT_DESIGN_POLICIES,
+    input.designPolicyProvenance ?? (input.designPolicies ? "task-selection" : "settings-default"),
+  );
   const profileStagePolicies = clone(input.profileStagePolicies ?? state.settings.profileStagePolicies);
   const workflowProfile = clone(input.workflowProfile ?? migratedStandardProfile());
   const stagePolicies = clone(
@@ -577,6 +627,7 @@ export function createTaskRecord(state, input) {
           selectedVariantId: null,
           selectedAt: null,
           selectedBy: null,
+          policies: designPolicies,
           variants: [],
           error: null,
         }

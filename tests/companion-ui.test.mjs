@@ -142,6 +142,10 @@ function createTaskProposal() {
         workflow: "implement",
         priority: "medium",
         designRequested: true,
+        designPolicies: {
+          "claude-design": { provider: "claude", model: "claude-opus-5", reasoning: "high" },
+          "codex-design": { provider: "codex", model: "gpt-5.6-sol", reasoning: "high" },
+        },
         workflowProfile: "high-risk",
         model: "gpt-5.6-luna",
         reasoning: "xhigh",
@@ -242,6 +246,9 @@ test("renders all supported mutations as fixed, reviewable proposed cards withou
     assert.match(markup, /gpt-5\.6-sol/);
     assert.match(markup, /high-risk/);
     assert.match(markup, /Requested/);
+    assert.match(markup, /Claude Design/);
+    assert.match(markup, /claude-opus-5 · high/);
+    assert.match(markup, /Codex Design/);
     assert.match(markup, /gpt-5\.6-luna/);
     assert.match(markup, /xhigh/);
     assert.match(markup, /companion-suite/);

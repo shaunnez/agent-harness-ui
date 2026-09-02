@@ -413,11 +413,26 @@ export interface RuntimeWorkflowProfile {
   }>;
 }
 
+export type RuntimeDesignGenerator = "claude-design" | "codex-design";
+
+export interface RuntimeDesignPolicy {
+  provider: "claude" | "codex";
+  model: string;
+  reasoning: string | null;
+}
+
+export type RuntimeDesignPolicies = Record<RuntimeDesignGenerator, RuntimeDesignPolicy>;
+
+export interface RuntimeDesignPolicySnapshot extends RuntimeDesignPolicy {
+  provenance: "settings-default" | "task-selection" | "legacy-fixed-default";
+}
+
 export interface RuntimePrototypeVariant {
   id: string;
   revision: number;
-  generator: "claude-design" | "codex-design";
+  generator: RuntimeDesignGenerator;
   provider: "claude" | "codex";
+  policy: RuntimeDesignPolicySnapshot;
   status: "queued" | "generating" | "ready" | "failed";
   title: string;
   summary: string;
@@ -443,6 +458,7 @@ export interface RuntimeDesignRequest {
   selectedVariantId: string | null;
   selectedAt: string | null;
   selectedBy: "operator" | null;
+  policies: Record<RuntimeDesignGenerator, RuntimeDesignPolicySnapshot>;
   variants: RuntimePrototypeVariant[];
   error: string | null;
 }
@@ -858,6 +874,7 @@ export interface RuntimeSettings {
   defaultReasoning: string;
   stagePolicies: Record<string, RuntimeAgentPolicy>;
   profileStagePolicies?: Record<WorkflowProfileId, Record<string, RuntimeAgentPolicy>>;
+  designPolicies: RuntimeDesignPolicies;
   pricing: {
     version: string;
     sourceUrl: string;

@@ -79,6 +79,7 @@ export interface NewTaskDraft {
   workflow: "investigate" | "implement";
   priority: "low" | "medium" | "high";
   designRequested?: boolean;
+  designPolicies?: import("./domain/runtime.ts").RuntimeDesignPolicies;
   workflowProfile?: "auto" | "fast" | "standard" | "high-risk";
   model?: string;
   reasoning?: string;

@@ -59,6 +59,7 @@ async function fixture() {
     repositoryPath: directory,
     workflow: "implement",
     priority: "high",
+    designRequested: true,
   });
   await jsonStore.update(task.id, (draft) => {
     draft.artifacts.push({

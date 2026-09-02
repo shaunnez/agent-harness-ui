@@ -337,6 +337,24 @@ function ActionScope({ proposal }: { proposal: ActionProposal }) {
                       : "Not requested"}
                 </dd>
               </div>
+              {draft.designRequested && draft.designPolicies ? (
+                <>
+                  <div>
+                    <dt>Claude Design</dt>
+                    <dd className="mono">
+                      {draft.designPolicies["claude-design"].model} ·{" "}
+                      {draft.designPolicies["claude-design"].reasoning}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Codex Design</dt>
+                    <dd className="mono">
+                      {draft.designPolicies["codex-design"].model} ·{" "}
+                      {draft.designPolicies["codex-design"].reasoning}
+                    </dd>
+                  </div>
+                </>
+              ) : null}
               <div>
                 <dt>Model</dt>
                 <dd className="mono">{draft.model ?? "Not specified"}</dd>

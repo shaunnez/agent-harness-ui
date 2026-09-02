@@ -389,6 +389,7 @@
   .model-allowlist,
   .settings-grill-policy,
   .settings-default-grid,
+  .settings-design-policy__grid,
   .dialog-model-grid {
     grid-template-columns: 1fr;
   }
