@@ -242,6 +242,86 @@ Done when: the note exists and either the task reached `awaiting-human-approval`
 or the blocking defect is written up with the exact error. If it blocked in the
 harness, fix that defect as its own package before WP2.
 
+**Result (2026-09-03): blocked.** Full detail in `docs/eval-spike-2026-09-03.md`
+and the "Blocked" heading previously at the top of this document (now resolved
+by WP0b below; see git history for the original note). Task creation, triage,
+scouts, Grill, specification, and planning all ran for real against a detached,
+frozen-SHA worktree via the ChatGPT-authenticated Codex CLI, and both approval
+gates worked. The task then failed at the implement stage:
+`S1 failed: The candidate branch agent-harness/ah-001-s1-a1 already exists.
+Remove it manually or start a new task.` Root cause and fix: see WP0b.
+
+### WP0b. Fix candidate branch collision against the target repository (half a day)
+
+Goal: fix the defect WP0 found so the spike can be rerun and reach
+`awaiting-human-approval`. Do not touch anything else the spike surfaced (see
+"Gaps found in WP0's own steps" in `docs/eval-spike-2026-09-03.md`) unless it
+blocks the rerun.
+
+The defect: `createTaskRecord` (`server/store.mjs:612`) assigns task IDs
+(`AH-001`, `AH-002`, ...) sequentially per task store, with no relationship to
+the target repository's git history. `GitWorktreeManager.prepare`
+(`server/git-worktree.mjs:237-247`) derives each slice's candidate branch name
+directly from the task ID (`agent-harness/<task-id>-<candidate-id>`, e.g.
+`agent-harness/ah-001-s1-a1`) and refuses to proceed if
+`git show-ref --verify refs/heads/<branch>` already resolves in
+`repositoryRoot`. A `git worktree add --detach` checkout is not an isolated
+clone: it shares one `refs/heads` namespace with the whole repository it came
+from. Any repository with prior harness usage — this repository included, and
+every repository after its first evaluation campaign — already has real
+`agent-harness/ah-NNN-*` branches, so a fresh task store's low-numbered task
+IDs collide unconditionally. Reproduced twice, including with an isolated
+`AGENT_HARNESS_WORKTREE_ROOT`, which does not avoid it because the collision
+check runs against the frozen worktree's shared ref namespace, not against the
+store or worktree root.
+
+Files: `server/git-worktree.mjs` (`GitWorktreeManager.prepare` and wherever it
+builds the candidate branch name), `server/store.mjs` if the fix needs the
+task record to carry the actual branch name used, new test
+`tests/git-worktree-branch-collision.test.mjs`. Before changing anything, grep
+the repository for `agent-harness/` and for however `git-worktree.mjs` derives
+its branch string, to find every place that assumes the branch name equals a
+deterministic function of the task/candidate ID (campaign export, PR creation,
+review, task summaries) — the fix must not break any of them.
+
+Behaviour:
+
+- When the initial candidate branch name already exists as a ref in
+  `repositoryRoot`, `GitWorktreeManager.prepare` must not fail. It must pick a
+  disambiguated branch name deterministically checked against the repository's
+  actual refs (for example, appending a short suffix and retrying until
+  `git show-ref` finds no match, bounded so it cannot loop forever) and
+  proceed with that name.
+- The branch name actually used must be the one every downstream consumer
+  reads and acts on — nothing may independently recompute
+  `agent-harness/<task-id>-<candidate-id>` and diverge from what
+  `GitWorktreeManager.prepare` created. If the branch name is not already
+  persisted on the task/slice record for downstream use, persist it there.
+- This must not change branch naming for the common case where no collision
+  exists — a repository with no prior conflicting branch must still get the
+  plain `agent-harness/<task-id>-<candidate-id>` name, so existing tests and
+  any operator expectations about branch naming stay valid.
+- Do not touch the candidate/merge gates, grill policy, or anything in section
+  3's decisions; this package is scoped to the branch-allocation collision
+  only.
+
+Tests:
+
+- Preparing a worktree when the plain candidate branch name already exists in
+  the repository succeeds with a disambiguated name, and a second, third
+  collision in a row also resolves rather than failing.
+- Preparing a worktree when no collision exists still produces the plain,
+  undecorated branch name (no behaviour change for the common case).
+- Whatever downstream code reads the branch name (export, PR push, review)
+  reads the actual disambiguated name, not a recomputed one.
+
+Done when: tests pass, `npm run lint` and `npm run typecheck` pass, and rerunning
+the WP0 spike steps against this repository (which already has colliding
+`agent-harness/ah-001-*` branches) reaches `awaiting-human-approval` without
+manual branch deletion. Update `docs/eval-spike-<new-date>.md` with the rerun
+result and remove the "Blocked" heading from the top of this document once the
+rerun succeeds.
+
 ### WP1. Per-task policy matrix and grill policy on task creation (2 to 4 hours)
 
 Files: `server/task-creation-routes.mjs`, `server/api.mjs` (export
