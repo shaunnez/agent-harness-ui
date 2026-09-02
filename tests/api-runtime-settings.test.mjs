@@ -1,6 +1,19 @@
 import test from "node:test";
 import { assert, cleanup, createServer, createTask, fetch, nativeFetch } from "./api-test-support.mjs";
 
+test("new runtime settings default design generation to Opus High and Sol High", async () => {
+  const { directory, origin, server } = await createServer();
+  try {
+    const settings = (await (await fetch(`${origin}/api/settings`)).json()).settings;
+    assert.deepEqual(settings.designPolicies, {
+      "claude-design": { provider: "claude", model: "claude-opus-5", reasoning: "high" },
+      "codex-design": { provider: "codex", model: "gpt-5.6-sol", reasoning: "high" },
+    });
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
 test("a rotated CSRF token rejects the old value, and runtime status hands out the new one", async () => {
   // The server mints a fresh csrfToken per process (see createApiServer's default of
   // crypto.randomUUID()), so a restart is indistinguishable, from the client's side, from
@@ -70,7 +83,7 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         grillPolicy: "auto-accept-recommendations",
-        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna"],
+        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna", "claude-opus-5"],
         defaultModel: "gpt-5.6-sol",
         defaultReasoning: "xhigh",
       }),
@@ -85,7 +98,7 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna"],
+        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna", "claude-opus-5"],
         defaultModel: "gpt-5.6-sol",
         defaultReasoning: "xhigh",
       }),
@@ -115,7 +128,7 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         grillPolicy: "always-automatic",
-        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna"],
+        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna", "claude-opus-5"],
         defaultModel: "gpt-5.6-sol",
         defaultReasoning: "xhigh",
       }),
@@ -138,9 +151,13 @@ test("rejects a task model outside the configured allowlist", async () => {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        allowedModels: ["gpt-5.6-luna"],
+        allowedModels: ["gpt-5.6-luna", "claude-opus-5"],
         defaultModel: "gpt-5.6-luna",
         defaultReasoning: "medium",
+        designPolicies: {
+          "claude-design": { provider: "claude", model: "claude-opus-5", reasoning: "high" },
+          "codex-design": { provider: "codex", model: "gpt-5.6-luna", reasoning: "high" },
+        },
       }),
     });
     const response = await createTask(origin, {

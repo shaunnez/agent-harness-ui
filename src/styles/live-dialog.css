@@ -561,32 +561,45 @@
   line-height: 1.45;
 }
 .dialog-design-option {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  display: grid;
+  gap: 12px;
   padding: 12px;
   margin-top: 15px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: #181816;
-  cursor: pointer;
 }
 .dialog-design-option.selected {
   border-color: #906318;
   background: #241f15;
 }
-.dialog-design-option input {
+.dialog-design-option > label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+.dialog-design-option > label input {
   flex: 0 0 auto;
   margin-top: 3px;
   accent-color: var(--amber);
 }
-.dialog-design-option > span {
+.dialog-design-option > label > span {
   display: grid;
   gap: 4px;
 }
 .dialog-design-option strong,
 .dialog-design-option small {
   font-size: 12px;
+}
+.dialog-design-policies {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border-top: 1px solid #594419;
+}
+.dialog-design-policies > small {
+  color: var(--muted);
 }
 .dialog-design-option small {
   color: var(--muted);

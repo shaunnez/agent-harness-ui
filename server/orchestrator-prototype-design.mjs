@@ -13,12 +13,17 @@ function publicPreviewUrl(taskId, variant) {
   );
 }
 
-function variantRecord(direction, revision) {
+function variantRecord(direction, revision, policy) {
+  if (!policy) throw new Error(`${direction.generator} has no snapshotted design policy.`);
+  if (policy.provider !== direction.provider) {
+    throw new Error(`${direction.generator} requires a ${direction.provider} policy.`);
+  }
   return {
     id: crypto.randomUUID(),
     revision,
     generator: direction.generator,
     provider: direction.provider,
+    policy: structuredClone(policy),
     status: "queued",
     title: direction.title,
     summary: "",
@@ -27,8 +32,8 @@ function variantRecord(direction, revision) {
     externalUrl: null,
     bundlePath: null,
     bundleHash: null,
-    model: null,
-    reasoning: null,
+    model: policy.model,
+    reasoning: policy.reasoning,
     createdAt: now(),
     completedAt: null,
     error: null,
@@ -113,7 +118,11 @@ export class PrototypeDesignOrchestrator {
     draft.designRequest.selectedAt = null;
     draft.designRequest.selectedBy = null;
     draft.designRequest.error = null;
-    draft.designRequest.variants.push(...DIRECTIONS.map((direction) => variantRecord(direction, revision)));
+    draft.designRequest.variants.push(
+      ...DIRECTIONS.map((direction) =>
+        variantRecord(direction, revision, draft.designRequest.policies?.[direction.generator]),
+      ),
+    );
     draft.status = "generating-designs";
     draft.currentStage = "specification";
     draft.activeRunKind = "design";
@@ -141,6 +150,11 @@ export class PrototypeDesignOrchestrator {
         });
         const bundlePath = path.join(this._store.dataDirectory(), "prototypes", id, variant.id);
         const result = await this._generatePrototype({ task, variant, bundlePath, signal });
+        if (result.model !== variant.policy.model || result.reasoning !== variant.policy.reasoning) {
+          throw new Error(
+            `${variant.generator} returned ${result.model ?? "no model"} / ${result.reasoning ?? "provider default"}, but the task snapshot requires ${variant.policy.model} / ${variant.policy.reasoning ?? "provider default"}. Automatic substitution is not allowed.`,
+          );
+        }
         await this._store.update(id, (draft) => {
           const target = draft.designRequest.variants.find((item) => item.id === variant.id);
           if (!target) return;

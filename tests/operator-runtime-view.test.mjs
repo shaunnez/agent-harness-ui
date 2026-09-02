@@ -186,6 +186,85 @@ test("operator package flow retains continuation and requalification evidence", 
   });
 });
 
+test("design comparison and inspector render the task-snapshotted model provenance", async () => {
+  await withOperatorModules(({ RuntimeTaskWorkspace }) => {
+    const policies = {
+      "claude-design": {
+        provider: "claude",
+        model: "claude-opus-5",
+        reasoning: "high",
+        provenance: "task-selection",
+      },
+      "codex-design": {
+        provider: "codex",
+        model: "gpt-5.6-sol",
+        reasoning: "high",
+        provenance: "task-selection",
+      },
+    };
+    const task = createTask({
+      status: "generating-designs",
+      currentStage: "specification",
+      designRequest: {
+        requested: true,
+        status: "generating",
+        requestedAt: "2026-08-01T12:00:00.000Z",
+        startedAt: "2026-08-01T12:00:01.000Z",
+        completedAt: null,
+        selectedVariantId: null,
+        selectedAt: null,
+        selectedBy: null,
+        policies,
+        error: null,
+        variants: Object.entries(policies).map(([generator, policy], index) => ({
+          id: `variant-${index + 1}`,
+          revision: 1,
+          generator,
+          provider: policy.provider,
+          policy,
+          status: "queued",
+          title: `${policy.provider} direction`,
+          summary: "",
+          previewUrl: null,
+          externalUrl: null,
+          bundleHash: null,
+          model: policy.model,
+          reasoning: policy.reasoning,
+          createdAt: "2026-08-01T12:00:01.000Z",
+          completedAt: null,
+          error: null,
+          usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0 },
+          contextManifest: null,
+        })),
+      },
+    });
+    const noop = async () => {};
+    const html = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task,
+        initialViewMode: "evidence",
+        onBack: () => {},
+        onRun: noop,
+        onCancel: noop,
+        onCloseTask: noop,
+        onArchiveTask: noop,
+        onEvaluate: noop,
+        onAction: noop,
+        onDecision: noop,
+        onGrillAnswer: noop,
+        onFinishGrill: noop,
+        onRemoveWorktree: noop,
+        onProfileChange: noop,
+        onSelectDesign: noop,
+        onRetryDesigns: noop,
+      }),
+    );
+    assert.match(html, /claude-opus-5 · High · task selection/);
+    assert.match(html, /gpt-5\.6-sol · High · task selection/);
+    assert.match(html, /Exact snapshot retained · no automatic substitution/);
+  });
+});
+
 test("operator view distinguishes stale gates from gates that never started", async () => {
   await withOperatorModules(({ buildOperatorViewModel }) => {
     const task = createTask({

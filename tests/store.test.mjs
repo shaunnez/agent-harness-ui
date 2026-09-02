@@ -518,3 +518,72 @@ test("migrates legacy Grill state to manual policy without inventing human prove
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("migrates legacy design requests without rewriting recorded provider models", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-store-design-migration-"));
+  try {
+    const filePath = path.join(directory, "tasks.json");
+    const store = new JsonTaskStore(filePath);
+    await store.init();
+    const unstarted = await store.create({
+      title: "Legacy unstarted design",
+      description: "Created before selectable design policies.",
+      repositoryPath: "/repo",
+      workflow: "implement",
+      priority: "medium",
+      designRequested: true,
+    });
+    const completed = await store.create({
+      title: "Legacy completed design",
+      description: "Retain the model recorded by the completed variant.",
+      repositoryPath: "/repo",
+      workflow: "implement",
+      priority: "medium",
+      designRequested: true,
+    });
+    await store.update(unstarted.id, (draft) => {
+      delete draft.designRequest.policies;
+    });
+    await store.update(completed.id, (draft) => {
+      delete draft.designRequest.policies;
+      draft.designRequest.status = "selected";
+      draft.designRequest.variants = [
+        {
+          id: "legacy-claude",
+          revision: 1,
+          generator: "claude-design",
+          provider: "claude",
+          status: "ready",
+          model: "claude-fable-5",
+          reasoning: "high",
+        },
+      ];
+    });
+
+    const rebooted = new JsonTaskStore(filePath);
+    await rebooted.init();
+    const migratedUnstarted = await rebooted.get(unstarted.id);
+    const migratedCompleted = await rebooted.get(completed.id);
+    assert.deepEqual(migratedUnstarted.designRequest.policies, {
+      "claude-design": {
+        provider: "claude",
+        model: "claude-sonnet-5",
+        reasoning: null,
+        provenance: "legacy-fixed-default",
+      },
+      "codex-design": {
+        provider: "codex",
+        model: "gpt-5.6-luna",
+        reasoning: "xhigh",
+        provenance: "legacy-fixed-default",
+      },
+    });
+    assert.equal(migratedCompleted.designRequest.variants[0].model, "claude-fable-5");
+    assert.equal(migratedCompleted.designRequest.variants[0].policy.model, "claude-fable-5");
+    assert.equal(migratedCompleted.designRequest.policies["claude-design"].model, "claude-fable-5");
+    assert.equal((await rebooted.settings()).designPolicies["claude-design"].model, "claude-opus-5");
+    assert.equal((await rebooted.settings()).designPolicies["codex-design"].model, "gpt-5.6-sol");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

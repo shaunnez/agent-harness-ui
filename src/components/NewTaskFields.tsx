@@ -9,6 +9,8 @@ import {
   type RuntimeStatus,
 } from "../domain";
 import { AddProjectDialog } from "./AddProjectDialog";
+import { isDesignPolicyValid } from "./DesignPolicyEditor";
+import { NewTaskDesignFields } from "./NewTaskDesignFields";
 import { RepositoryContractPanel } from "./RepositoryContractPanel";
 
 export const initialNewTaskDraft: NewTaskDraft = {
@@ -31,11 +33,30 @@ export interface NewTaskFieldsProps {
   onChange: (update: NewTaskDraft | ((current: NewTaskDraft) => NewTaskDraft)) => void;
 }
 
-export function isValidNewTaskDraft(draft: NewTaskDraft) {
+export function isValidNewTaskDraft(draft: NewTaskDraft, runtimeStatus?: RuntimeStatus | null) {
+  const designPoliciesValid =
+    !draft.designRequested ||
+    (draft.designPolicies &&
+      (!runtimeStatus ||
+        (runtimeStatus.catalog &&
+          runtimeStatus.settings &&
+          isDesignPolicyValid(
+            draft.designPolicies["claude-design"],
+            "claude",
+            runtimeStatus.catalog.models,
+            runtimeStatus.settings.allowedModels,
+          ) &&
+          isDesignPolicyValid(
+            draft.designPolicies["codex-design"],
+            "codex",
+            runtimeStatus.catalog.models,
+            runtimeStatus.settings.allowedModels,
+          ))));
   return Boolean(
     draft.title.trim() &&
       draft.description.trim() &&
       draft.repositoryPath.trim() &&
+      designPoliciesValid &&
       (!draft.experiment ||
         (draft.experiment.groupId.trim() &&
           draft.experiment.variantId.trim() &&
@@ -228,19 +249,7 @@ export function NewTaskFields({
         </small>
       </label>
 
-      <label className={`dialog-design-option ${draft.designRequested ? "selected" : ""}`}>
-        <input
-          type="checkbox"
-          checked={draft.designRequested === true}
-          onChange={(event) => onChange({ ...draft, designRequested: event.target.checked })}
-        />
-        <span>
-          <strong>Generate two design prototypes</strong>
-          <small>
-            Run Claude Design and Codex Design after Grill, then pause for a human selection before Task Spec.
-          </small>
-        </span>
-      </label>
+      <NewTaskDesignFields draft={draft} runtimeStatus={runtimeStatus} onChange={onChange} />
 
       <label className="field dialog-priority-field">
         <span>

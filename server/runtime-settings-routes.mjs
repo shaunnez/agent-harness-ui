@@ -1,3 +1,4 @@
+import { validateDesignPolicies } from "./design-policies.mjs";
 import { normalizeModelId, readExecutionProviderCatalog } from "./model-catalog.mjs";
 import { inspectRepositoryContract } from "./repository-contract.mjs";
 import { projectTaskSummary } from "./task-projections.mjs";
@@ -70,6 +71,12 @@ export function createRuntimeSettingsRoutes({
           ),
         ]),
       );
+      const designPolicies = validateDesignPolicies(
+        input.designPolicies,
+        known,
+        allowedModels,
+        currentSettings.designPolicies,
+      );
       const settings = await store.updateSettings((draft) => {
         draft.allowedModels = allowedModels;
         draft.defaultModel = defaultModel;
@@ -77,6 +84,7 @@ export function createRuntimeSettingsRoutes({
         draft.grillPolicy = grillPolicy;
         draft.stagePolicies = stagePolicies;
         draft.profileStagePolicies = profileStagePolicies;
+        draft.designPolicies = designPolicies;
       });
       send(response, 200, { settings });
       return true;

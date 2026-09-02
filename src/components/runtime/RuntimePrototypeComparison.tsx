@@ -116,7 +116,8 @@ export function RuntimePrototypeComparison({
               <p>{variant.summary || "A retained summary will appear when this provider completes."}</p>
               <footer>
                 <small>
-                  {variant.model ?? providerLabel(variant)}
+                  {variant.policy.model} · {formatReasoning(variant.policy.reasoning)} ·{" "}
+                  {variant.policy.provenance.replaceAll("-", " ")}
                   {variant.bundleHash ? ` · ${variant.bundleHash.slice(0, 10)}` : " · provider-hosted"}
                 </small>
                 <span>
@@ -157,4 +158,11 @@ export function RuntimePrototypeComparison({
       {error ? <div className="runtime-command-error">{error}</div> : null}
     </section>
   );
+}
+
+function formatReasoning(reasoning: string | null) {
+  if (!reasoning) return "provider default";
+  return reasoning.toLowerCase() === "xhigh"
+    ? "XHigh"
+    : reasoning.charAt(0).toUpperCase() + reasoning.slice(1);
 }

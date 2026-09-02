@@ -407,6 +407,34 @@
   gap: 12px;
 }
 
+.settings-design-policy {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.settings-design-policy h4,
+.settings-design-policy p {
+  margin: 0;
+}
+
+.settings-design-policy p {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.settings-design-policy__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
 .dialog-model-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }

@@ -5,6 +5,7 @@ import {
   formatCacheRate,
   formatTokenCount,
   type RuntimeArtifact,
+  type RuntimeDesignPolicySnapshot,
   type StageId,
   type WorkflowProfileId,
   workflowStages,
@@ -238,6 +239,21 @@ export function RuntimeTaskInspector({
         <RuntimeRow label="Active" value={workflowStages[currentIndex]?.label ?? "Triage"} />
         <RuntimeRow label="State" value={task.status.replace("-", " ")} />
       </InspectorSection>
+      {task.designRequest?.requested ? (
+        <InspectorSection title="Design generation" meta="Task snapshot">
+          <RuntimeRow
+            label="Claude Design"
+            value={formatDesignPolicy(task.designRequest.policies["claude-design"])}
+            mono
+          />
+          <RuntimeRow
+            label="Codex Design"
+            value={formatDesignPolicy(task.designRequest.policies["codex-design"])}
+            mono
+          />
+          <RuntimeRow label="Retry policy" value="Exact snapshot retained · no automatic substitution" />
+        </InspectorSection>
+      ) : null}
       <InspectorSection title="Stage telemetry" meta={viewedStage.label}>
         <RuntimeRow label="Wall time" value={formatDuration(stageWallDuration)} />
         <RuntimeRow
@@ -473,6 +489,15 @@ export function RuntimeTaskInspector({
       />
     </aside>
   );
+}
+
+function formatDesignPolicy(policy: RuntimeDesignPolicySnapshot) {
+  const reasoning = policy.reasoning
+    ? policy.reasoning.toLowerCase() === "xhigh"
+      ? "XHigh"
+      : policy.reasoning.charAt(0).toUpperCase() + policy.reasoning.slice(1)
+    : "provider default";
+  return `${policy.model} · ${reasoning} · ${policy.provenance.replaceAll("-", " ")}`;
 }
 
 function ScoutAggregationUsage({

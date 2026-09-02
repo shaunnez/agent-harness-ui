@@ -431,7 +431,15 @@ function assertTarget(
 function assertNewTaskDraft(value: unknown): asserts value is NewTaskDraft {
   if (!isRecord(value)) throw new Error("Create-task proposal draft is malformed.");
   const required = ["title", "description", "repositoryPath", "workflow", "priority"];
-  const optional = ["designRequested", "workflowProfile", "model", "reasoning", "experiment", "attachments"];
+  const optional = [
+    "designRequested",
+    "designPolicies",
+    "workflowProfile",
+    "model",
+    "reasoning",
+    "experiment",
+    "attachments",
+  ];
   if (
     required.some((key) => !Object.hasOwn(value, key)) ||
     Object.keys(value).some((key) => ![...required, ...optional].includes(key)) ||
@@ -443,6 +451,31 @@ function assertNewTaskDraft(value: unknown): asserts value is NewTaskDraft {
   }
   if (value.designRequested !== undefined && typeof value.designRequested !== "boolean") {
     throw new Error("NewTaskDraft.designRequested must be boolean.");
+  }
+  if (value.designPolicies !== undefined) {
+    if (
+      !isRecord(value.designPolicies) ||
+      !exactKeys(value.designPolicies, ["claude-design", "codex-design"])
+    ) {
+      throw new Error("NewTaskDraft.designPolicies is invalid.");
+    }
+    for (const [generator, provider] of [
+      ["claude-design", "claude"],
+      ["codex-design", "codex"],
+    ] as const) {
+      const policy = value.designPolicies[generator];
+      if (
+        !isRecord(policy) ||
+        !exactKeys(policy, ["provider", "model", "reasoning"]) ||
+        policy.provider !== provider ||
+        typeof policy.model !== "string" ||
+        !validModelId(policy.model) ||
+        typeof policy.reasoning !== "string" ||
+        !validReasoning(policy.reasoning)
+      ) {
+        throw new Error(`NewTaskDraft.designPolicies.${generator} is invalid.`);
+      }
+    }
   }
   if (
     value.workflowProfile !== undefined &&
