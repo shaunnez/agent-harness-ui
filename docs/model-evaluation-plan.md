@@ -1,5 +1,42 @@
 # Model evaluation suite: implementation plan
 
+## Blocked
+
+**WP0 blocked in the harness on 2026-09-03.** Task creation, triage, scouts,
+Grill, specification, and planning all ran for real against a detached,
+frozen-SHA worktree using the ChatGPT-authenticated Codex CLI, and both
+approval gates worked. The task then failed at the implement stage with:
+
+```
+S1 failed: The candidate branch agent-harness/ah-001-s1-a1 already exists.
+Remove it manually or start a new task.
+```
+
+Root cause: `createTaskRecord` (`server/store.mjs:612`) assigns task IDs
+(`AH-001`, `AH-002`, ...) sequentially per task store, with no relationship to
+the target repository's actual git history. `GitWorktreeManager.prepare`
+(`server/git-worktree.mjs:237-247`) derives the candidate branch name directly
+from the task ID and refuses to proceed if that branch ref already exists in
+`repositoryRoot`. A `git worktree add --detach` checkout shares one
+`refs/heads` namespace with the whole repository it was created from — it is
+not an isolated clone — so a fresh store's first task (`AH-001`) collides with
+any repository that already has real `agent-harness/ah-001-*` branches, which
+this repository does (through `ah-202-*` at spike time). Reproduced twice: once
+with a completely fresh JSON store, and again with a fresh store plus
+`AGENT_HARNESS_WORKTREE_ROOT` pointed at an unused scratch directory — neither
+isolation avoids the collision, because the check runs against the frozen
+worktree's own shared ref namespace, not against the store or the worktree
+root.
+
+This blocks WP3 in particular: its runner will create many tasks per campaign
+against the real target repository, and nothing today gives a generated task ID
+any relationship to that repository's actual branch namespace. Per section 8,
+a fix for this (verifying/disambiguating the candidate branch name against the
+repository before or at creation, rather than only after `git show-ref` fails)
+is needed as its own package before WP2 proceeds. No code change was made here;
+WP0 is a spike. Full run detail, both attempts, and what worked despite the
+block: `docs/eval-spike-2026-09-03.md`.
+
 Status: plan, not implemented. Written 2026-09-03.
 
 This plan is written for implementing agents that have not seen the repository
