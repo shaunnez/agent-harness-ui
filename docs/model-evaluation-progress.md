@@ -5,7 +5,7 @@ Coordinator tracking file. Integration branch: `claude/model-selection-harness-2
 
 | ID | Status | Branch | Commit | Last test result |
 | --- | --- | --- | --- | --- |
-| WP0 | todo | - | - | - |
+| WP0 | running | - | - | - |
 | WP1 | todo | - | - | - |
 | WP1b | todo | - | - | - |
 | WP2 | todo | - | - | - |
