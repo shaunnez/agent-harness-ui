@@ -41,10 +41,14 @@ function newestRevision(variants) {
   return Math.max(0, ...(variants ?? []).map((item) => item.revision));
 }
 
-function newestVariants(designRequest) {
+function activeVariants(designRequest) {
   const variants = designRequest?.variants ?? [];
-  const revision = newestRevision(variants);
-  return variants.filter((item) => item.revision === revision);
+  return DIRECTIONS.map(
+    (direction) =>
+      variants
+        .filter((item) => item.generator === direction.generator)
+        .sort((left, right) => right.revision - left.revision)[0],
+  ).filter(Boolean);
 }
 
 function accumulateUsage(task, usage) {
@@ -132,7 +136,7 @@ export class PrototypeDesignOrchestrator {
 
   async run(id, signal) {
     const task = await this._store.get(id);
-    const variants = newestVariants(task.designRequest);
+    const variants = activeVariants(task.designRequest).filter((variant) => variant.status === "queued");
     const outcomes = await Promise.allSettled(
       variants.map(async (variant) => {
         await this._store.update(id, (draft) => {
@@ -164,7 +168,7 @@ export class PrototypeDesignOrchestrator {
         target.error = outcome.reason?.message ?? String(outcome.reason);
         target.completedAt = now();
       });
-      const currentVariants = newestVariants(draft.designRequest);
+      const currentVariants = activeVariants(draft.designRequest);
       const ready = currentVariants.filter((variant) => variant.status === "ready");
       draft.activeRunKind = null;
       draft.activeRunReservationId = null;
@@ -215,7 +219,39 @@ export class PrototypeDesignOrchestrator {
     const reservation = { controller, kind: "design", promise: null };
     this._active.set(id, reservation);
     try {
-      await this._store.update(id, (draft) => this._reserve(draft));
+      await this._store.update(id, (draft) => {
+        const failedDirections = activeVariants(draft.designRequest)
+          .filter((variant) => variant.status === "failed")
+          .map((variant) => DIRECTIONS.find((direction) => direction.generator === variant.generator))
+          .filter(Boolean);
+        if (failedDirections.length === 0)
+          throw new Error("No failed design direction is available to retry.");
+        const nextRevision = newestRevision(draft.designRequest.variants) + 1;
+        draft.designRequest.status = "generating";
+        draft.designRequest.startedAt = now();
+        draft.designRequest.completedAt = null;
+        draft.designRequest.selectedVariantId = null;
+        draft.designRequest.selectedAt = null;
+        draft.designRequest.selectedBy = null;
+        draft.designRequest.error = null;
+        draft.designRequest.variants.push(
+          ...failedDirections.map((direction) => variantRecord(direction, nextRevision)),
+        );
+        draft.status = "generating-designs";
+        draft.currentStage = "specification";
+        draft.activeRunKind = "design";
+        draft.activeRunReservationId = null;
+        draft.error = null;
+        draft.events.push(
+          activity(
+            "specification",
+            "Failed design direction retry started",
+            `${failedDirections.map((direction) => direction.title).join(" and ")} will run again; completed provider evidence is retained.`,
+            "info",
+            "agent",
+          ),
+        );
+      });
     } catch (error) {
       this._active.delete(id);
       throw error;
@@ -231,7 +267,7 @@ export class PrototypeDesignOrchestrator {
     if (source !== "operator") throw new Error("Selecting a design requires an explicit operator action.");
     const started = await this._startSpecification(id, {
       canStart: (draft) => {
-        const currentVariants = newestVariants(draft.designRequest);
+        const currentVariants = activeVariants(draft.designRequest);
         const variant = currentVariants.find((item) => item.id === variantId);
         if (
           draft.status !== "awaiting-design-selection" ||

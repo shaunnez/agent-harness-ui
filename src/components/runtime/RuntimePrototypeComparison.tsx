@@ -20,8 +20,14 @@ export function RuntimePrototypeComparison({
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   if (!request?.requested) return null;
-  const latestRevision = Math.max(0, ...request.variants.map((variant) => variant.revision));
-  const visibleVariants = request.variants.filter((variant) => variant.revision === latestRevision);
+  const visibleVariants = ["claude-design", "codex-design"]
+    .map(
+      (generator) =>
+        request.variants
+          .filter((variant) => variant.generator === generator)
+          .sort((left, right) => right.revision - left.revision)[0],
+    )
+    .filter((variant): variant is RuntimePrototypeVariant => variant != null);
   const retainedPreviousCount = request.variants.length - visibleVariants.length;
 
   const select = async (variantId: string) => {
@@ -150,7 +156,7 @@ export function RuntimePrototypeComparison({
             <small>{request.error}</small>
           </span>
           <Button tone="primary" compact disabled={pendingId != null} onClick={() => void retry()}>
-            {pendingId === "retry" ? "Retrying..." : "Retry both designs"}
+            {pendingId === "retry" ? "Retrying..." : "Retry failed design"}
           </Button>
         </div>
       ) : null}

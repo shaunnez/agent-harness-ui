@@ -5,7 +5,11 @@ import path from "node:path";
 import assert from "node:assert/strict";
 import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
-import { claudeDesignArgs, parseUrl } from "../server/prototype-generator.mjs";
+import {
+  claudeDesignArgs,
+  createClaudeDesignUrlCollector,
+  parseUrl,
+} from "../server/prototype-generator.mjs";
 import { parseGrillQuestions } from "../server/structured-output.mjs";
 
 const GRILL = `<grill-questions>{"questions":[{"question":"How safe?","whyItMatters":"A human gate is required.","options":[{"label":"Confirm first","description":"Require confirmation.","recommended":true},{"label":"Execute immediately","description":"Skip confirmation.","recommended":false}],"allowCustom":true}]}</grill-questions>`;
@@ -18,10 +22,10 @@ test("confines non-interactive Claude Design publication to DesignSync", () => {
     "--allowedTools",
     "DesignSync",
   ]);
-  assert.deepEqual(
-    args.slice(args.indexOf("--permission-mode"), args.indexOf("--permission-mode") + 2),
-    ["--permission-mode", "bypassPermissions"],
-  );
+  assert.deepEqual(args.slice(args.indexOf("--permission-mode"), args.indexOf("--permission-mode") + 2), [
+    "--permission-mode",
+    "bypassPermissions",
+  ]);
   assert.equal(args.includes("--safe-mode"), true);
   assert.equal(args.includes("--dangerously-skip-permissions"), false);
 });
@@ -31,6 +35,31 @@ test("extracts a Claude Design URL without Markdown emphasis", () => {
     parseUrl("**https://claude.ai/design/project-123** — published"),
     "https://claude.ai/design/project-123",
   );
+});
+
+test("retains the published URL from the DesignSync tool result", () => {
+  const collector = createClaudeDesignUrlCollector();
+  collector.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "tool_use", id: "design-1", name: "DesignSync", input: {} }] },
+    }),
+  );
+  collector.parse(
+    JSON.stringify({
+      type: "user",
+      message: {
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: "design-1",
+            content: [{ type: "text", text: "Published https://claude.ai/design/task-light-mode" }],
+          },
+        ],
+      },
+    }),
+  );
+  assert.equal(collector.result(), "https://claude.ai/design/task-light-mode");
 });
 
 async function waitForStatus(store, id, status) {
@@ -178,7 +207,7 @@ test("a design-checked Fast task escalates instead of bypassing prototype select
   }
 });
 
-test("retry retains failed prototype revisions and only permits selection from the newest pair", async () => {
+test("retry retains successful provider evidence and replaces only the failed direction", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-design-retry-"));
   try {
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
@@ -235,15 +264,14 @@ test("retry retains failed prototype revisions and only permits selection from t
 
     await orchestrator.retryDesigns(task.id, { source: "operator" });
     const retried = await waitForStatus(store, task.id, "awaiting-design-selection");
-    assert.equal(retried.designRequest.variants.length, 4);
+    assert.equal(retried.designRequest.variants.length, 3);
     assert.deepEqual(
       retried.designRequest.variants.map((variant) => variant.revision),
-      [1, 1, 2, 2],
+      [1, 1, 2],
     );
-    await assert.rejects(
-      orchestrator.selectDesign(task.id, priorVariantId, { source: "operator" }),
-      /completed prototype revision/,
-    );
+    await orchestrator.selectDesign(task.id, priorVariantId, { source: "operator" });
+    const specified = await waitForStatus(store, task.id, "awaiting-spec-approval");
+    assert.equal(specified.designRequest.selectedVariantId, priorVariantId);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }

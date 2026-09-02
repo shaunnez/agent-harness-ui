@@ -81,6 +81,43 @@ export function parseUrl(text) {
   return text.match(/https:\/\/[^\s)\]}>"'`*]+/)?.[0] ?? null;
 }
 
+export function createClaudeDesignUrlCollector() {
+  const designToolCalls = new Set();
+  let publishedUrl = null;
+
+  return {
+    parse(line) {
+      let event;
+      try {
+        event = JSON.parse(line);
+      } catch {
+        return;
+      }
+      const blocks = Array.isArray(event?.message?.content) ? event.message.content : [];
+      if (event?.type === "assistant") {
+        for (const block of blocks) {
+          if (block?.type === "tool_use" && /designsync$/i.test(String(block.name ?? "")) && block.id) {
+            designToolCalls.add(block.id);
+          }
+        }
+        return;
+      }
+      if (event?.type !== "user") return;
+      for (const block of blocks) {
+        if (block?.type !== "tool_result" || !designToolCalls.has(block.tool_use_id)) continue;
+        designToolCalls.delete(block.tool_use_id);
+        const url = parseUrl(
+          typeof block.content === "string" ? block.content : JSON.stringify(block.content),
+        );
+        if (url) publishedUrl = url;
+      }
+    },
+    result() {
+      return publishedUrl;
+    },
+  };
+}
+
 function zeroUsage() {
   return {
     inputTokens: 0,
@@ -122,28 +159,26 @@ export async function runClaudeDesign({ task, variant, signal }) {
   const runtimeTemp = path.join(os.tmpdir(), "agent-harness-design");
   await mkdir(runtimeTemp, { recursive: true });
   const parser = createClaudeStreamParser();
+  const designUrlCollector = createClaudeDesignUrlCollector();
   const prompt = claudePrompt(task);
-  const result = await runProcess(
-    binary,
-    claudeDesignArgs(sessionId),
-    {
-      cwd: task.repositoryPath,
-      timeoutMs: 900_000,
-      signal,
-      env: buildClaudeEnvironment(process.env, runtimeTemp),
-      input: prompt,
-      label: "Claude Design",
-      stdoutBudgetBytes: 8_000_000,
-      onStdoutLine(line) {
-        parser.parse(line);
-      },
+  const result = await runProcess(binary, claudeDesignArgs(sessionId), {
+    cwd: task.repositoryPath,
+    timeoutMs: 900_000,
+    signal,
+    env: buildClaudeEnvironment(process.env, runtimeTemp),
+    input: prompt,
+    label: "Claude Design",
+    stdoutBudgetBytes: 8_000_000,
+    onStdoutLine(line) {
+      parser.parse(line);
+      designUrlCollector.parse(line);
     },
-  );
+  });
   const parsed = parser.result();
   if (result.code !== 0) {
     throw new Error(parsed.finalText || result.stderr || `Claude Design exited with code ${result.code}.`);
   }
-  const externalUrl = parseUrl(parsed.finalText);
+  const externalUrl = parseUrl(parsed.finalText) ?? designUrlCollector.result();
   if (!externalUrl) throw new Error("Claude Design completed without returning a published URL.");
   return {
     title: "Claude Design direction",
