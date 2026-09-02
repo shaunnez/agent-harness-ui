@@ -198,13 +198,24 @@ export function deriveNextAction(task: RuntimeTask) {
     ["failed", "cancelled"].includes(task.status) &&
     task.currentStage === "specification" &&
     !retryAllowanceExhausted
-  )
+  ) {
+    if (task.designRequest?.status === "failed") {
+      return {
+        action: "specification" as const,
+        label: "Retry failed design",
+        title: "Retry the failed design provider",
+        detail:
+          task.designRequest.error ??
+          "Only failed design directions will run again; completed provider evidence remains retained.",
+      };
+    }
     return {
       action: "specification" as const,
       label: "Retry specification",
       title: "Retry the failed specification synthesis",
       detail: task.error ?? "The prior specification synthesis failed; retained evidence remains available.",
     };
+  }
   if (
     (task.status === "blocked" ||
       (["repair-required", "failed"].includes(task.status) && retryAllowanceExhausted)) &&

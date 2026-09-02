@@ -61,6 +61,21 @@ test("renders and dispatches the bounded specification retry action", () => {
     assert.equal(retryAction.label, "Retry specification");
     assert.equal(nextAction({ ...failedSpecification, status: "cancelled" }).action, "specification");
 
+    const failedDesign = createTask({
+      status: "failed",
+      currentStage: "specification",
+      designRequest: {
+        requested: true,
+        status: "failed",
+        variants: [],
+        error: "Claude Design did not return a published URL.",
+      },
+    });
+    const designRetryAction = nextAction(failedDesign);
+    assert.equal(designRetryAction.action, "specification");
+    assert.equal(designRetryAction.label, "Retry failed design");
+    assert.match(designRetryAction.detail, /published URL/);
+
     const retryMarkup = renderToStaticMarkup(
       React.createElement(RuntimeCommandBar, {
         ...baseProps,
