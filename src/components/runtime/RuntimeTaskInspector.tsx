@@ -5,6 +5,7 @@ import {
   formatCacheRate,
   formatTokenCount,
   type RuntimeArtifact,
+  type RuntimeDesignGenerator,
   type RuntimeDesignPolicySnapshot,
   type StageId,
   type WorkflowProfileId,
@@ -241,17 +242,16 @@ export function RuntimeTaskInspector({
       </InspectorSection>
       {task.designRequest?.requested ? (
         <InspectorSection title="Design generation" meta="Task snapshot">
+          <RuntimeRow label="Claude Design" value={formatTaskDesignPolicy(task, "claude-design")} mono />
+          <RuntimeRow label="Codex Design" value={formatTaskDesignPolicy(task, "codex-design")} mono />
           <RuntimeRow
-            label="Claude Design"
-            value={formatDesignPolicy(task.designRequest.policies["claude-design"])}
-            mono
+            label="Retry policy"
+            value={
+              task.designRequest.policies
+                ? "Exact snapshot retained · no automatic substitution"
+                : "Legacy recorded models retained · no automatic substitution"
+            }
           />
-          <RuntimeRow
-            label="Codex Design"
-            value={formatDesignPolicy(task.designRequest.policies["codex-design"])}
-            mono
-          />
-          <RuntimeRow label="Retry policy" value="Exact snapshot retained · no automatic substitution" />
         </InspectorSection>
       ) : null}
       <InspectorSection title="Stage telemetry" meta={viewedStage.label}>
@@ -498,6 +498,23 @@ function formatDesignPolicy(policy: RuntimeDesignPolicySnapshot) {
       : policy.reasoning.charAt(0).toUpperCase() + policy.reasoning.slice(1)
     : "provider default";
   return `${policy.model} · ${reasoning} · ${policy.provenance.replaceAll("-", " ")}`;
+}
+
+function formatTaskDesignPolicy(task: RuntimeTaskWorkspaceProps["task"], generator: RuntimeDesignGenerator) {
+  const request = task.designRequest;
+  const snapshot = request?.policies?.[generator];
+  if (snapshot) return formatDesignPolicy(snapshot);
+  const variant = [...(request?.variants ?? [])]
+    .filter((item) => item.generator === generator)
+    .sort((left, right) => right.revision - left.revision)[0];
+  if (variant?.policy) return formatDesignPolicy(variant.policy);
+  if (!variant?.model) return "Not recorded";
+  const reasoning = variant.reasoning
+    ? variant.reasoning.toLowerCase() === "xhigh"
+      ? "XHigh"
+      : variant.reasoning.charAt(0).toUpperCase() + variant.reasoning.slice(1)
+    : "provider default";
+  return `${variant.model} · ${reasoning} · recorded model`;
 }
 
 function ScoutAggregationUsage({

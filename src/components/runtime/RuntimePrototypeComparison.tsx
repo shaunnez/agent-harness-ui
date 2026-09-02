@@ -1,6 +1,6 @@
 import { ArrowSquareOut, Check, CircleNotch, Palette, WarningCircle } from "@phosphor-icons/react";
 import { useState } from "react";
-import type { RuntimePrototypeVariant, RuntimeTask } from "../../domain";
+import type { RuntimeDesignPolicySnapshot, RuntimePrototypeVariant, RuntimeTask } from "../../domain";
 import { Button } from "../Primitives";
 
 function providerLabel(variant: RuntimePrototypeVariant) {
@@ -122,8 +122,7 @@ export function RuntimePrototypeComparison({
               <p>{variant.summary || "A retained summary will appear when this provider completes."}</p>
               <footer>
                 <small>
-                  {variant.policy.model} · {formatReasoning(variant.policy.reasoning)} ·{" "}
-                  {variant.policy.provenance.replaceAll("-", " ")}
+                  {formatVariantPolicy(variant, request.policies?.[variant.generator])}
                   {variant.bundleHash ? ` · ${variant.bundleHash.slice(0, 10)}` : " · provider-hosted"}
                 </small>
                 <span>
@@ -171,4 +170,18 @@ function formatReasoning(reasoning: string | null) {
   return reasoning.toLowerCase() === "xhigh"
     ? "XHigh"
     : reasoning.charAt(0).toUpperCase() + reasoning.slice(1);
+}
+
+function formatVariantPolicy(
+  variant: RuntimePrototypeVariant,
+  requestPolicy: RuntimeDesignPolicySnapshot | undefined,
+) {
+  const model = variant.policy?.model ?? variant.model ?? requestPolicy?.model;
+  if (!model) return "Model provenance unavailable";
+  const reasoning = variant.policy?.reasoning ?? variant.reasoning ?? requestPolicy?.reasoning ?? null;
+  const provenance =
+    variant.policy?.provenance ??
+    (variant.model ? "recorded model" : requestPolicy?.provenance?.replaceAll("-", " ")) ??
+    "provenance unavailable";
+  return `${model} · ${formatReasoning(reasoning)} · ${provenance.replaceAll("-", " ")}`;
 }

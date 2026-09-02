@@ -267,6 +267,71 @@ test("design comparison and inspector render the task-snapshotted model provenan
   });
 });
 
+test("legacy design evidence renders recorded model provenance without policy snapshots", async () => {
+  await withOperatorModules(({ RuntimeTaskWorkspace }) => {
+    const task = createTask({
+      status: "awaiting-design-selection",
+      currentStage: "specification",
+      designRequest: {
+        requested: true,
+        status: "awaiting-selection",
+        requestedAt: "2026-08-01T12:00:00.000Z",
+        startedAt: "2026-08-01T12:00:01.000Z",
+        completedAt: "2026-08-01T12:01:00.000Z",
+        selectedVariantId: null,
+        selectedAt: null,
+        selectedBy: null,
+        error: null,
+        variants: [
+          {
+            id: "legacy-claude-variant",
+            revision: 1,
+            generator: "claude-design",
+            provider: "claude",
+            status: "ready",
+            title: "Legacy Claude direction",
+            summary: "Retained before policy snapshots were introduced.",
+            previewUrl: null,
+            externalUrl: "https://claude.ai/design/legacy",
+            bundleHash: null,
+            model: "claude-sonnet-5",
+            reasoning: "high",
+            createdAt: "2026-08-01T12:00:01.000Z",
+            completedAt: "2026-08-01T12:01:00.000Z",
+            error: null,
+            usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+            contextManifest: null,
+          },
+        ],
+      },
+    });
+    const noop = async () => {};
+    const html = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task,
+        initialViewMode: "evidence",
+        onBack: () => {},
+        onRun: noop,
+        onCancel: noop,
+        onCloseTask: noop,
+        onArchiveTask: noop,
+        onEvaluate: noop,
+        onAction: noop,
+        onDecision: noop,
+        onGrillAnswer: noop,
+        onFinishGrill: noop,
+        onRemoveWorktree: noop,
+        onProfileChange: noop,
+        onSelectDesign: noop,
+        onRetryDesigns: noop,
+      }),
+    );
+    assert.match(html, /claude-sonnet-5 · High · recorded model/);
+    assert.match(html, /Codex Design[\s\S]*Not recorded/);
+    assert.match(html, /Legacy recorded models retained · no automatic substitution/);
+  });
+});
+
 test("operator view distinguishes stale gates from gates that never started", async () => {
   await withOperatorModules(({ buildOperatorViewModel }) => {
     const task = createTask({
