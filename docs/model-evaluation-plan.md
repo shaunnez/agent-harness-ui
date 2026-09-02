@@ -22,8 +22,9 @@ Non-goals for this plan:
 - Do not make the orchestrator choose models dynamically per task. The existing
   workflow profiles (`fast`, `standard`, `high-risk`) already carry a per-role model
   table each. The suite's output is a better version of those three tables.
-- Do not add an orchestrator-level auto-approve for human gates. The runner acts as
-  the operator through the existing API instead (see section 3).
+- Do not auto-approve the candidate or merge gates. Only the specification and
+  plan gates gain an automatic policy in this plan (see WP1b). Every evaluation task
+  still stops at `awaiting-human-approval`.
 - Do not merge or open a PR for any evaluation candidate. Every task stops at
   `awaiting-human-approval`, `blocked`, or `failed`.
 
@@ -56,11 +57,13 @@ Existing evaluation machinery to reuse, not rewrite:
 Do not reopen these. They are recorded so an implementing agent does not
 re-derive them.
 
-1. **The runner is the operator.** When a task parks at `awaiting-grill`,
-   `awaiting-spec-approval`, or `awaiting-plan-approval`, the runner calls the same
-   API the UI calls, with an approval note of `eval-runner:<campaignId>`. This avoids
-   changing what a human approval record means. Grill is handled by creating the
-   task with `grillPolicy: "auto-accept-recommendations"`.
+1. **Gates auto-approve on clean evidence; the runner is the fallback operator.**
+   Tasks are created with `grillPolicy: "auto-accept-recommendations"` and
+   `gatePolicy: { specification: "auto-on-clean", plan: "auto-on-clean" }` (WP1b).
+   Approval records made by policy carry `actor: "policy"` so a human approval keeps
+   its meaning. If a gate still parks because the evidence is not clean, the runner
+   calls the same API the UI calls, with the note `eval-runner:<campaignId>`, and
+   records in the manifest that it did so. Candidate and merge gates stay manual.
 2. **Per-task policy matrix at creation.** Today `POST /api/tasks` accepts one
    `model` and `reasoning` and applies it to every role. The runner needs to send a
    full matrix. This is work package 1.
@@ -233,6 +236,64 @@ Tests:
 
 Done when: tests pass and `npm run lint` and `npm run typecheck` pass.
 
+### WP1b. Per-gate auto-approve for specification and plan (1 day)
+
+Design source: `docs/auto-approve-gates-proposal.md`. Implement its recommendation
+with two values only, `manual` and `auto-on-clean`, and for two gates only,
+`specification` and `plan`. Candidate and merge are out of scope; leave them
+`manual` with no code path that could advance them automatically.
+
+Files: `server/model-catalog.mjs` (`defaultRuntimeSettings`),
+`server/runtime-settings-routes.mjs`, `server/store.mjs` (creation input and
+settings backfill), `server/task-creation-routes.mjs`,
+`server/orchestrator-task-helpers.mjs` (`recordApproval`),
+`server/orchestrator-specification-planning.mjs` and
+`server/orchestrator-investigation.mjs` (the two places that set
+`awaiting-spec-approval` and `awaiting-plan-approval`),
+`server/orchestrator-task-control.mjs` (`approveSpecification`, `approvePlan`),
+`src/components/SettingsScreen.tsx`, the task inspector approval rendering, new
+test `tests/orchestrator-gate-policy.test.mjs`.
+
+Behaviour:
+
+- Settings gain `gatePolicy: { specification: "manual", plan: "manual" }`.
+  Existing stores backfill the default through the same
+  `state.settings[key] === undefined` path `store.mjs` already uses for other keys.
+  `PUT /api/settings` validates each value against `manual` and `auto-on-clean`.
+- `POST /api/tasks` accepts optional `gatePolicy` with the same shape and snapshots
+  it onto `task.gatePolicy`, defaulting to the settings value. Store backfill sets
+  `task.gatePolicy` to all `manual` on tasks that predate the field.
+- `recordApproval(task, stage, note, actor = { kind: "human" })` stores
+  `actor: { kind: "human" | "policy", policy?: "auto-on-clean" }` on the approval.
+  Approvals without `actor` read as `human` everywhere they are displayed.
+- When the orchestrator would set `awaiting-spec-approval` and
+  `task.gatePolicy.specification === "auto-on-clean"`, it checks the stage is clean
+  and, if so, records a policy approval and continues into planning by the same
+  code path `approveSpecification` uses. Same for `awaiting-plan-approval` and
+  `approvePlan`, including the fast-profile and executable-plan checks that
+  `approvePlan` already performs. If any check fails, the task parks exactly as it
+  does today and the event log says why the policy did not apply.
+- "Clean" for specification: the specification artifact exists, the run that
+  produced it succeeded, and no unresolved Grill decisions remain. "Clean" for
+  plan: `_assertExecutablePlan` passes and `blockStalePlan` is false. Do not invent
+  a third notion of clean; reuse these checks.
+- Settings UI: two rows, `manual` default. Task UI: a policy approval renders with
+  a visible "approved by policy" label, never as a silent skip.
+
+Tests:
+
+- `manual` at each gate parks as today.
+- `auto-on-clean` at specification records `actor.kind === "policy"` and reaches
+  planning without an API call.
+- `auto-on-clean` at plan with a stale repository authority parks and logs the
+  reason.
+- A persisted approval with no `actor` is reported as human.
+- `POST /api/tasks` with `gatePolicy.candidate` or `gatePolicy.merge` returns 400.
+
+Done when: tests pass and a task created with both gates on `auto-on-clean` runs
+from creation to `awaiting-human-approval` with zero approval API calls, observed
+in the WP0 spike setup.
+
 ### WP2. Suite and variant loaders (2 to 3 hours)
 
 Files: new `evals/lib/suite.mjs`, new `evals/lib/variants.mjs`, new
@@ -285,13 +346,15 @@ Behaviour, in order, for each case x variant pair:
    exists.
 2. `POST /api/tasks` with the case brief, `repositoryPath` set to the worktree,
    `stagePolicies` from the variant, `grillPolicy: "auto-accept-recommendations"`,
-   and `experiment: { groupId: caseId, variantId, frozenBaseSha, acceptanceCriteria,
+   `gatePolicy: { specification: "auto-on-clean", plan: "auto-on-clean" }`, and
+   `experiment: { groupId: caseId, variantId, frozenBaseSha, acceptanceCriteria,
    verificationCommands }`.
-3. Poll `GET /api/tasks/:id` every 15 seconds. On `awaiting-spec-approval` call
-   `approve-spec`; on `awaiting-plan-approval` call `approve-plan`; on
-   `awaiting-grill` (only if auto-accept did not clear it) call
+3. Poll `GET /api/tasks/:id` every 15 seconds. Gates normally clear themselves.
+   If a task still parks at `awaiting-spec-approval` call `approve-spec`; at
+   `awaiting-plan-approval` call `approve-plan`; at `awaiting-grill` call
    `POST /api/tasks/:id/grill/finish`. Every approval note is
-   `eval-runner:<campaignId>`.
+   `eval-runner:<campaignId>`, and the manifest records `runnerApprovals` as the
+   list of gates the runner had to clear by hand. A high count is itself a finding.
 4. Stop on `awaiting-human-approval`, `blocked`, `failed`, `cancelled`, or when
    `--timeout-minutes` elapses. On timeout call `POST /api/tasks/:id/cancel` and
    record `terminalState: "timeout"`.
@@ -473,7 +536,28 @@ machine:
 - Wall time varies more than 30 percent between reruns of the same pair: run at
   concurrency 1 and check nothing else is using the machine.
 
-## 7. Guardrails for implementing agents
+## 7. Dispatch graph for a coordinating agent
+
+A coordinating agent may run these packages through subagents. Packages in the
+same row are independent and may run in parallel, each in its own Git worktree.
+A row starts only when every package above it is merged and `npm test` passes on
+the integration branch.
+
+| Row | Packages | Mode | Why |
+| --- | --- | --- | --- |
+| 1 | WP0 | alone | Its result decides whether anything else proceeds. |
+| 2 | WP1, WP1b, WP2 | parallel | Disjoint files. WP1 and WP1b both touch `task-creation-routes.mjs`; merge WP1 first, then rebase WP1b. |
+| 3 | WP3 | alone | Depends on all of row 2. Largest package. |
+| 4 | WP4, WP5 | parallel | Both read WP3's manifest format. Disjoint files. |
+| 5 | WP6 | alone | Wires the others together. |
+| 6 | first real campaign | alone | Baseline variant only, then the role sweep. |
+
+Merge order inside a row is the order listed. After each merge run
+`npm run lint`, `npm run typecheck`, and `npm test`. A subagent's branch that
+fails these is sent back once with the failing output; a second failure is
+escalated to the operator rather than retried again.
+
+## 8. Guardrails for implementing agents
 
 - Never call `approve-merge`, `open-pr`, or `complete-merged` from any evaluation
   code or test. Add an assertion for this in the runner tests.
