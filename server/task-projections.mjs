@@ -35,7 +35,7 @@ export function projectTaskSummary(task, retainedCounts = {}) {
     updatedAt: task.updatedAt,
     startedAt: task.startedAt ?? null,
     completedAt: task.completedAt ?? null,
-    error: task.error ?? null,
+    error: effectiveTaskError(task),
     activeRunKind: task.activeRunKind ?? null,
     activeRunIds: task.activeRunIds ?? [],
     models: task.models ?? [],
@@ -132,12 +132,34 @@ export function projectTaskCore(task) {
   const { events = [], runs = [], artifacts = [], ...core } = task;
   return {
     ...core,
+    error: effectiveTaskError(task),
     designRequest: projectDesignRequest(core.designRequest),
     artifacts: [],
     artifactCount: artifacts.length,
     eventCount: events.length,
     runCount: runs.length,
   };
+}
+
+/**
+ * Older interrupted/provider-preflight failures can retain the authoritative error on
+ * the failed run while leaving the task-level convenience field empty. A failed task
+ * must still explain itself at every projection boundary; successful later states must
+ * never inherit a stale historical run error.
+ */
+export function effectiveTaskError(task) {
+  if (typeof task?.error === "string" && task.error.trim()) return task.error.trim();
+  if (!["failed", "blocked", "cancelled", "repair-required"].includes(task?.status)) return null;
+  const failedRun = [...(task?.runs ?? [])]
+    .reverse()
+    .find(
+      (run) =>
+        run?.stage === task.currentStage &&
+        ["failed", "cancelled"].includes(run?.status) &&
+        typeof run?.error === "string" &&
+        run.error.trim(),
+    );
+  return failedRun?.error?.trim() ?? null;
 }
 
 export function projectArtifactMetadata(artifact) {

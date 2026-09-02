@@ -111,22 +111,39 @@ export function CompanionShell({ open, onOpen, onClose, ...panelProps }: Compani
               onClick={onClose}
             />
           ) : null}
-          <div
-            ref={shellRef}
-            id="companion-surface"
-            className={`companion-shell ${narrow ? "companion-shell--sheet" : "companion-shell--desktop"}`}
-            data-companion-surface="global"
-            role="dialog"
-            aria-modal={narrow ? true : undefined}
-            aria-label="Contextual companion"
-          >
-            <CompanionPanel
-              {...panelProps}
-              composerRef={composerRef}
-              onClose={onClose}
-              className="companion-panel--shell"
-            />
-          </div>
+          {narrow ? (
+            <div
+              ref={shellRef}
+              id="companion-surface"
+              className="companion-shell companion-shell--sheet"
+              data-companion-surface="global"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Contextual companion"
+            >
+              <CompanionPanel
+                {...panelProps}
+                composerRef={composerRef}
+                onClose={onClose}
+                className="companion-panel--shell"
+              />
+            </div>
+          ) : (
+            <aside
+              ref={shellRef}
+              id="companion-surface"
+              className="companion-shell companion-shell--desktop"
+              data-companion-surface="global"
+              aria-label="Contextual companion"
+            >
+              <CompanionPanel
+                {...panelProps}
+                composerRef={composerRef}
+                onClose={onClose}
+                className="companion-panel--shell"
+              />
+            </aside>
+          )}
         </>
       ) : null}
     </>

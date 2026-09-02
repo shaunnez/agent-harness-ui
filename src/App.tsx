@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   answerGrillQuestion,
+  askCompanionQuestion,
   archiveTask,
   cancelTask,
   closeTask,
@@ -222,6 +223,7 @@ export function App() {
   const [companionPendingProposalId, setCompanionPendingProposalId] = useState<string | null>(null);
   const [companionDraft, setCompanionDraft] = useState("");
   const [companionOpen, setCompanionOpen] = useState(false);
+  const [companionSubmitting, setCompanionSubmitting] = useState(false);
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus | null>(null);
   const [runtimeTasks, setRuntimeTasks] = useState<RuntimeTaskSummary[]>(() =>
     hostedPreviewMode ? hostedAtlasPreviewTasks : [],
@@ -771,10 +773,23 @@ export function App() {
     addCompanionMessage("user", value);
     const parsed = parseCompanionIntent(value);
     if (parsed.status === "rejected") {
-      addCompanionMessage(
-        "assistant",
-        `${parsed.message}\n\nTry one of these:\n${parsed.examples.join("\n")}`,
-      );
+      if (parsed.reasonCode !== "unknown-intent") {
+        addCompanionMessage(
+          "assistant",
+          `${parsed.message}\n\nTry one of these:\n${parsed.examples.join("\n")}`,
+        );
+        return;
+      }
+      setCompanionSubmitting(true);
+      try {
+        const result = await askCompanionQuestion(value, companionContext);
+        addCompanionMessage("assistant", result.answer);
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "Read-only analysis is unavailable.";
+        addCompanionMessage("assistant", `I could not complete the read-only analysis. ${reason}`);
+      } finally {
+        setCompanionSubmitting(false);
+      }
       return;
     }
 
@@ -1238,6 +1253,7 @@ export function App() {
         onConfirmAction={confirmCompanionAction}
         onDismissAction={dismissCompanionAction}
         pendingProposalId={companionPendingProposalId}
+        isSubmitting={companionSubmitting}
         rolePolicyOptions={companionRolePolicyOptions}
       />
       <NewTaskDialog

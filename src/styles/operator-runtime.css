@@ -29,7 +29,6 @@
 
 .runtime-operator-briefing > div {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .runtime-operator-briefing article {
@@ -675,14 +674,8 @@
   .runtime-view-toggle {
     order: 4;
   }
-  .runtime-operator-briefing > div {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
   .runtime-operator-briefing article {
     border-bottom: 1px solid var(--border);
-  }
-  .runtime-operator-grid {
-    grid-template-columns: minmax(0, 1fr) 220px;
   }
 }
 
