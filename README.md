@@ -82,6 +82,16 @@ Node companion :4310
 
 The Vite/Sites build remains a frontend handoff. A hosted Cloudflare worker cannot launch the user's local Codex binary or access local repositories, so real agent execution requires the local companion process.
 
+## Evaluating models
+
+Run a fixed set of task briefs through the whole harness under several model configurations and get a report saying which model should own each agent role:
+
+```powershell
+npm run eval -- --suite evals/suites/core.json --variants evals/variants/role-sweep.json
+```
+
+This runs the eval-suite runner, the blind judge, and the comparison report in sequence against one campaign and prints the path to the finished `report.md`. Add `--skip-judge` to skip blind scoring. Each stage is also runnable alone (`scripts/run-eval-suite.mjs`, `scripts/judge-eval-campaign.mjs`, `scripts/report-eval-campaign.mjs`). See [docs/model-evaluation-plan.md](docs/model-evaluation-plan.md) for the suite/variant file formats, the campaign output layout, and how to read the results.
+
 ## Verification
 
 ```powershell
