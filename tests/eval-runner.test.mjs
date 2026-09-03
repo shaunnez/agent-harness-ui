@@ -52,6 +52,10 @@ function makeSuite(cases) {
  * A minimal fake companion: `onAction(task, action, body)` mutates the in-memory task however
  * the test wants, and every request is recorded in `requestLog` so tests can assert exactly
  * which endpoints the runner called and with what body.
+ *
+ * `onAction` may return a `{ statusCode, error }` object instead of mutating the task, to script
+ * the WP3c gate-conflict race: the fake server then responds with that status and an error body
+ * shaped like `TASK_TRANSITION_CONFLICT` instead of the usual `202`.
  */
 async function startFakeServer(onAction) {
   const tasks = new Map();
@@ -104,7 +108,10 @@ async function startFakeServer(onAction) {
       if (!task) return send(404, { error: "Task not found." });
       if (request.method === "GET" && !match[2]) return send(200, { task });
       if (request.method === "POST" && match[2]) {
-        onAction(task, match[2], body);
+        const result = onAction(task, match[2], body);
+        if (result?.statusCode) {
+          return send(result.statusCode, { error: result.error ?? "Conflict.", code: result.code });
+        }
         return send(202, { started: true });
       }
     }
@@ -376,6 +383,195 @@ test("an already-absolute --worktree-root is unchanged (WP3b)", async () => {
         createCall.body.repositoryPath,
         path.join(worktreeRoot, "campaign-absolute-root-test-case-a-baseline"),
       );
+    });
+  } finally {
+    await fake.close();
+  }
+});
+
+// WP3c (docs/model-evaluation-plan.md, "Fix the gate-approval race that crashes the runner, and
+// recognize `awaiting-already-satisfied`"): the row 6 baseline campaign crashed the whole runner
+// process the first time WP1b's async `auto-on-clean` gate policy raced ahead of the runner's own
+// poll-then-approve call. These tests reproduce that race against the fake server and confirm the
+// runner absorbs the resulting 409 instead of dying, while still propagating any other error.
+
+test("a 409 from approveSpecification does not crash pollUntilStopped; the run continues to its actual terminal state (WP3c)", async () => {
+  let conflictDelivered = false;
+  const fake = await startFakeServer((task, action) => {
+    if (action === "approve-spec" && !conflictDelivered) {
+      conflictDelivered = true;
+      // Simulate WP1b's auto-on-clean gate policy racing ahead of the runner: the task has
+      // already moved on server-side (as the policy would do) by the time this stale request
+      // from the runner's earlier poll lands, and the server rejects the conflicting transition.
+      task.status = "awaiting-plan-approval";
+      return {
+        statusCode: 409,
+        code: "TASK_TRANSITION_CONFLICT",
+        error: "Task state changed before the requested action could be reserved.",
+      };
+    }
+    task.status = HAPPY_PATH_TRANSITIONS[action] ?? task.status;
+  });
+  try {
+    await withTempDataRoot(async (dataRoot) => {
+      const client = createHarnessClient({ baseUrl: fake.baseUrl });
+      await client.connect();
+      const { manifest } = await runEvalCampaign({
+        suite: makeSuite([makeCase("case-a")]),
+        variants: makeVariants(["baseline"]),
+        campaignId: "campaign-409-spec-test",
+        client,
+        worktreeRoot: path.join(dataRoot, "worktrees"),
+        dataRoot,
+        sleepFn: NOOP_SLEEP,
+        addWorktree: NOOP_ADD_WORKTREE,
+      });
+      assert.equal(manifest.runs.length, 1);
+      assert.equal(manifest.runs[0].terminalState, "awaiting-human-approval");
+      const specAttempts = fake.requestLog.filter((entry) => entry.path.endsWith("/approve-spec"));
+      assert.equal(specAttempts.length, 1, "the runner must not retry approve-spec after a 409");
+      assert.equal(
+        manifest.runs[0].runnerApprovals.some((entry) => entry.stage === "specification"),
+        false,
+        "a swallowed 409 must not be recorded as a runner approval — the policy did it, not the runner",
+      );
+    });
+  } finally {
+    await fake.close();
+  }
+});
+
+test("a 409 from approvePlan does not crash pollUntilStopped; the run continues to its actual terminal state (WP3c)", async () => {
+  let conflictDelivered = false;
+  const fake = await startFakeServer((task, action) => {
+    if (action === "approve-plan" && !conflictDelivered) {
+      conflictDelivered = true;
+      task.status = "ready-for-implementation";
+      return {
+        statusCode: 409,
+        code: "TASK_TRANSITION_CONFLICT",
+        error: "Task state changed before the requested action could be reserved.",
+      };
+    }
+    task.status = HAPPY_PATH_TRANSITIONS[action] ?? task.status;
+  });
+  try {
+    await withTempDataRoot(async (dataRoot) => {
+      const client = createHarnessClient({ baseUrl: fake.baseUrl });
+      await client.connect();
+      const { manifest } = await runEvalCampaign({
+        suite: makeSuite([makeCase("case-a")]),
+        variants: makeVariants(["baseline"]),
+        campaignId: "campaign-409-plan-test",
+        client,
+        worktreeRoot: path.join(dataRoot, "worktrees"),
+        dataRoot,
+        sleepFn: NOOP_SLEEP,
+        addWorktree: NOOP_ADD_WORKTREE,
+      });
+      assert.equal(manifest.runs.length, 1);
+      assert.equal(manifest.runs[0].terminalState, "awaiting-human-approval");
+      const planAttempts = fake.requestLog.filter((entry) => entry.path.endsWith("/approve-plan"));
+      assert.equal(planAttempts.length, 1, "the runner must not retry approve-plan after a 409");
+      assert.equal(
+        manifest.runs[0].runnerApprovals.some((entry) => entry.stage === "plan"),
+        false,
+        "a swallowed 409 must not be recorded as a runner approval — the policy did it, not the runner",
+      );
+    });
+  } finally {
+    await fake.close();
+  }
+});
+
+test("a non-409 error from approveSpecification still propagates and fails the pair (WP3c)", async () => {
+  const fake = await startFakeServer((task, action) => {
+    if (action === "approve-spec") {
+      return { statusCode: 500, error: "internal error: boom" };
+    }
+    task.status = HAPPY_PATH_TRANSITIONS[action] ?? task.status;
+  });
+  try {
+    await withTempDataRoot(async (dataRoot) => {
+      const client = createHarnessClient({ baseUrl: fake.baseUrl });
+      await client.connect();
+      await assert.rejects(
+        () =>
+          runEvalCampaign({
+            suite: makeSuite([makeCase("case-a")]),
+            variants: makeVariants(["baseline"]),
+            campaignId: "campaign-500-spec-test",
+            client,
+            worktreeRoot: path.join(dataRoot, "worktrees"),
+            dataRoot,
+            sleepFn: NOOP_SLEEP,
+            addWorktree: NOOP_ADD_WORKTREE,
+          }),
+        /boom/,
+      );
+    });
+  } finally {
+    await fake.close();
+  }
+});
+
+test("a non-409 error from approvePlan still propagates and fails the pair (WP3c)", async () => {
+  const fake = await startFakeServer((task, action) => {
+    if (action === "approve-plan") {
+      return { statusCode: 503, error: "internal error: kaboom" };
+    }
+    task.status = HAPPY_PATH_TRANSITIONS[action] ?? task.status;
+  });
+  try {
+    await withTempDataRoot(async (dataRoot) => {
+      const client = createHarnessClient({ baseUrl: fake.baseUrl });
+      await client.connect();
+      await assert.rejects(
+        () =>
+          runEvalCampaign({
+            suite: makeSuite([makeCase("case-a")]),
+            variants: makeVariants(["baseline"]),
+            campaignId: "campaign-503-plan-test",
+            client,
+            worktreeRoot: path.join(dataRoot, "worktrees"),
+            dataRoot,
+            sleepFn: NOOP_SLEEP,
+            addWorktree: NOOP_ADD_WORKTREE,
+          }),
+        /kaboom/,
+      );
+    });
+  } finally {
+    await fake.close();
+  }
+});
+
+test("a task reaching awaiting-already-satisfied is recorded with that exact terminalState (WP3c)", async () => {
+  const fake = await startFakeServer((task, action) => {
+    if (action === "run") {
+      task.status = "awaiting-already-satisfied";
+      return;
+    }
+    task.status = HAPPY_PATH_TRANSITIONS[action] ?? task.status;
+  });
+  try {
+    await withTempDataRoot(async (dataRoot) => {
+      const client = createHarnessClient({ baseUrl: fake.baseUrl });
+      await client.connect();
+      const { manifest } = await runEvalCampaign({
+        suite: makeSuite([makeCase("case-a")]),
+        variants: makeVariants(["baseline"]),
+        campaignId: "campaign-already-satisfied-test",
+        client,
+        worktreeRoot: path.join(dataRoot, "worktrees"),
+        dataRoot,
+        sleepFn: NOOP_SLEEP,
+        addWorktree: NOOP_ADD_WORKTREE,
+      });
+      assert.equal(manifest.runs.length, 1);
+      assert.equal(manifest.runs[0].terminalState, "awaiting-already-satisfied");
+      assert.equal(manifest.runs[0].finalStatus, "awaiting-already-satisfied");
+      assert.notEqual(manifest.runs[0].terminalState, "awaiting-human-approval");
     });
   } finally {
     await fake.close();
