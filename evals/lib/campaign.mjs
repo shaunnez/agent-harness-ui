@@ -12,7 +12,18 @@ const exec = promisify(execFile);
 
 // Section 6.6 / evaluation.mjs's TERMINAL_STATUSES minus the merge/PR states this runner must
 // never reach (see FORBIDDEN_ACTIONS below) — the plan's own stop list (section 5, step 4).
-const TERMINAL_STOP_STATUSES = new Set(["awaiting-human-approval", "blocked", "failed", "cancelled"]);
+// `awaiting-already-satisfied` (WP3c, docs/model-evaluation-plan.md's "Defect 2"): the fast-path
+// investigation decided the requested change is already present at the frozen SHA. Like
+// `awaiting-human-approval`, this requires a human decision (`close`) that section 8's guardrails
+// do not permit the runner to take on its own, so it stops here and is recorded as its own,
+// distinct `terminalState` rather than being left unrecognized or conflated with another status.
+const TERMINAL_STOP_STATUSES = new Set([
+  "awaiting-human-approval",
+  "blocked",
+  "failed",
+  "cancelled",
+  "awaiting-already-satisfied",
+]);
 
 // `awaiting-spec-approval`, `awaiting-plan-approval`, and `awaiting-grill` are section 3.1's
 // three named gates: a task normally clears them on its own via `grillPolicy`/`gatePolicy`. If
@@ -65,32 +76,59 @@ export async function addDetachedWorktree({ repositoryPath, worktreePath, sha })
 }
 
 /**
+ * Runs one gate/stage-advance call, absorbing the WP1b gate-policy race (WP3c, "Defect 1"):
+ * WP1b's `auto-on-clean` policy can clear `awaiting-spec-approval`/`awaiting-plan-approval`
+ * asynchronously, off the run promise that just parked the task, between the runner's poll and
+ * its own approval call landing. `store.mjs`'s `transition` detects that race and rejects with
+ * `error.statusCode === 409` (`TASK_TRANSITION_CONFLICT`), which `harness-client.mjs`'s `send()`
+ * already attaches to every error it throws. A 409 here means "nothing to do, keep polling" —
+ * some other actor already moved the task on — so it is swallowed and the entry is not recorded
+ * as a runner approval. Any other error (a different status code, or none at all) still
+ * propagates: this is scoped to the specific race, not to swallowing every gate-call failure.
+ */
+async function runParkedTaskAction(actionFn, { runnerApprovals, approvalEntry }) {
+  try {
+    await actionFn();
+  } catch (error) {
+    if (error?.statusCode === 409) return true;
+    throw error;
+  }
+  if (approvalEntry) runnerApprovals.push(approvalEntry);
+  return true;
+}
+
+/**
  * Clears exactly one parked status, mutating `runnerApprovals` when the status was one of the
- * three named gates. Returns `false` when the status is `running` or otherwise unrecognized —
- * the caller stops rather than guessing at an action the plan does not name.
+ * three named gates and the runner's own call actually performed the transition (see
+ * `runParkedTaskAction` above for the case where it did not). Returns `false` when the status is
+ * `running` or otherwise unrecognized — the caller stops rather than guessing at an action the
+ * plan does not name.
  */
 async function advanceParkedTask(client, task, { campaignId, runnerApprovals }) {
   const status = task.status;
   const note = `eval-runner:${campaignId}`;
+  const at = new Date().toISOString();
   if (status === "awaiting-spec-approval") {
-    await client.approveSpecification(task.id, note);
-    runnerApprovals.push({ stage: "specification", status, action: "approve-spec", at: new Date().toISOString() });
-    return true;
+    return runParkedTaskAction(() => client.approveSpecification(task.id, note), {
+      runnerApprovals,
+      approvalEntry: { stage: "specification", status, action: "approve-spec", at },
+    });
   }
   if (status === "awaiting-plan-approval") {
-    await client.approvePlan(task.id, note);
-    runnerApprovals.push({ stage: "plan", status, action: "approve-plan", at: new Date().toISOString() });
-    return true;
+    return runParkedTaskAction(() => client.approvePlan(task.id, note), {
+      runnerApprovals,
+      approvalEntry: { stage: "plan", status, action: "approve-plan", at },
+    });
   }
   if (status === "awaiting-grill") {
-    await client.finishGrill(task.id, { acceptRemaining: true });
-    runnerApprovals.push({ stage: "grill", status, action: "grill/finish", at: new Date().toISOString() });
-    return true;
+    return runParkedTaskAction(() => client.finishGrill(task.id, { acceptRemaining: true }), {
+      runnerApprovals,
+      approvalEntry: { stage: "grill", status, action: "grill/finish", at },
+    });
   }
   const action = STAGE_ADVANCE_ACTIONS[status];
   if (!action) return false;
-  await client.runAction(task.id, action);
-  return true;
+  return runParkedTaskAction(() => client.runAction(task.id, action), { runnerApprovals, approvalEntry: null });
 }
 
 /**
