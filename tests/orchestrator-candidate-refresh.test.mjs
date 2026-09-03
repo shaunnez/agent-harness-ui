@@ -120,6 +120,14 @@ test("restarts stopped pre-candidate packages from an advanced target", async ()
       draft.status = "blocked";
       draft.currentStage = "implement";
       draft.error = "S1 crossed its ownership boundary.";
+      draft.blocker = {
+        code: "implementation-target-diverged",
+        detail: "The checkout advanced beyond the captured upstream authority.",
+        detectedAt: "2026-08-01T12:00:00.000Z",
+      };
+      draft.repositoryAuthority = {
+        selectedRevision: "a".repeat(40),
+      };
       draft.attemptsByStage.implement = 3;
       draft.stageRunLimits.implement = 3;
       draft.workPackages = [
@@ -156,7 +164,7 @@ test("restarts stopped pre-candidate packages from an advanced target", async ()
     assert.equal(restarted.workPackages[0].status, "planned");
     assert.deepEqual(restarted.workPackages[0].verificationRuns, []);
     assert.equal(restarted.stageRunLimits.implement, 4);
-    assert.match(restarted.events.at(-1).detail, /bbbbbbbb/);
+    assert.match(restarted.events.at(-1).detail, /aaaaaaaa/);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

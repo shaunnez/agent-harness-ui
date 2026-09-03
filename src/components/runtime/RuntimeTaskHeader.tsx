@@ -42,6 +42,8 @@ export function RuntimeTaskHeader({
     task.status === "awaiting-pr-merge" ||
     task.mergeIntent?.status === "pending" ||
     ["publishing", "open"].includes(task.pullRequestIntent?.status ?? "");
+  const hasActiveRun = ["running", "cancelling"].includes(task.status) || Boolean(task.activeRunKind);
+  const canCancelActiveRun = task.status !== "cancelling" && hasActiveRun;
 
   const archiveTask = async () => {
     if (
@@ -135,7 +137,7 @@ export function RuntimeTaskHeader({
           icon={Prohibit}
           disabled={
             readOnlyPreview ||
-            ["running", "cancelling"].includes(task.status) ||
+            hasActiveRun ||
             task.status === "closed" ||
             task.status === "awaiting-already-satisfied" ||
             mergeReconciliationPending
@@ -145,7 +147,7 @@ export function RuntimeTaskHeader({
               ? "Wait for the pending GitHub PR lifecycle before closing this task."
               : task.status === "awaiting-already-satisfied"
                 ? "Use Close — already implemented after reviewing the revision-bound evidence."
-                : ["running", "cancelling"].includes(task.status)
+                : hasActiveRun
                   ? "Wait for the active process tree to terminate before closing this task."
                   : task.status === "closed"
                     ? "This task is already closed."
@@ -160,15 +162,12 @@ export function RuntimeTaskHeader({
           compact
           icon={Archive}
           disabled={
-            readOnlyPreview ||
-            ["running", "cancelling"].includes(task.status) ||
-            task.status === "archived" ||
-            mergeReconciliationPending
+            readOnlyPreview || hasActiveRun || task.status === "archived" || mergeReconciliationPending
           }
           title={
             mergeReconciliationPending
               ? "Wait for the pending GitHub PR lifecycle before archiving this task."
-              : ["running", "cancelling"].includes(task.status)
+              : hasActiveRun
                 ? "Wait for the active process tree to terminate before archiving this task."
                 : task.status === "archived"
                   ? "This task is already archived."
@@ -191,13 +190,15 @@ export function RuntimeTaskHeader({
           tone="danger"
           compact
           icon={X}
-          disabled={readOnlyPreview || task.status !== "running"}
+          disabled={readOnlyPreview || !canCancelActiveRun}
           title={
             task.status === "cancelling"
               ? "Process-tree termination is already in progress"
-              : task.status === "running"
-                ? "Cancel the active Codex run"
-                : "No active run to cancel"
+              : task.activeRunKind === "design"
+                ? "Cancel active design generation"
+                : canCancelActiveRun
+                  ? "Cancel the active Codex run"
+                  : "No active run to cancel"
           }
           onClick={() => void onCancel()}
         >

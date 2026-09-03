@@ -93,7 +93,6 @@ export class TaskOrchestratorCore {
     });
     const runCoordinator = new OrchestratorRunCoordinator({
       store: runtime._store,
-      worktrees: runtime._worktrees,
       runInvestigation: (...args) => investigation._runInvestigation(...args),
       runEvaluation: (...args) => evaluation._runEvaluation(...args),
       runImplementation: (...args) => workPackages._runImplementation(...args),

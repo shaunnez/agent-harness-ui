@@ -137,6 +137,68 @@ test("persists tasks and recovers interrupted runs", async () => {
   }
 });
 
+test("recovers interrupted prototype generation as a retryable design failure", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-design-recovery-"));
+  try {
+    const filePath = path.join(directory, "tasks.json");
+    const store = new JsonTaskStore(filePath);
+    await store.init();
+    const task = await store.create({
+      title: "Recover prototypes",
+      description: "Retain completed design evidence and release a stranded task.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+      designRequested: true,
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "generating-designs";
+      draft.currentStage = "specification";
+      draft.activeRunKind = "design";
+      draft.designRequest.status = "generating";
+      draft.designRequest.startedAt = "2026-08-01T12:00:00.000Z";
+      draft.designRequest.variants = [
+        {
+          id: "claude-ready",
+          revision: 1,
+          generator: "claude-design",
+          provider: "claude",
+          status: "ready",
+          completedAt: "2026-08-01T12:01:00.000Z",
+          error: null,
+        },
+        {
+          id: "codex-running",
+          revision: 1,
+          generator: "codex-design",
+          provider: "codex",
+          status: "generating",
+          completedAt: null,
+          error: null,
+        },
+      ];
+    });
+
+    const reloaded = new JsonTaskStore(filePath);
+    await reloaded.init();
+    const recovered = await reloaded.get(task.id);
+    assert.equal(recovered.status, "failed");
+    assert.equal(recovered.activeRunKind, null);
+    assert.equal(recovered.designRequest.status, "failed");
+    assert.match(recovered.designRequest.error, /stopped while design generation was running/i);
+    assert.equal(recovered.designRequest.variants[0].status, "ready");
+    assert.equal(recovered.designRequest.variants[1].status, "failed");
+    assert.match(recovered.designRequest.variants[1].error, /retry the failed design directions/i);
+    assert.equal(recovered.events.at(-1).title, "Design exploration interrupted");
+
+    const recoveredAgain = new JsonTaskStore(filePath);
+    await recoveredAgain.init();
+    assert.deepEqual(await recoveredAgain.get(task.id), recovered);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("cancellation wins when an implementation agent completes after abort", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-cancel-"));
   try {

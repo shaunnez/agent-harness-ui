@@ -37,7 +37,9 @@ test("fails a slice closed when harness-executed package verification fails", as
     let assembleCalls = 0;
     const orchestrator = new TaskOrchestrator(store, {
       worktreeManager: {
-        base: async () => ({ repositoryRoot: directory, baseRevision: "a".repeat(40), baseBranch: "main" }),
+        // Simulate an operator checkout that is locally ahead of the captured
+        // repository authority. The real qualification error must remain primary.
+        base: async () => ({ repositoryRoot: directory, baseRevision: "f".repeat(40), baseBranch: "main" }),
         prepare: async (_task, id) => ({
           id,
           revisionNumber: 1,
@@ -431,6 +433,78 @@ test("does not flag a work package's own successful edit as a change to the sour
     const finished = await waitForStatus(store, task.id, "ready-for-review");
     assert.equal(finished.workPackages[0].status, "integrated");
     assert.deepEqual(finished.workPackages[0].files, ["feature.txt"]);
+  } finally {
+    if (previousRoot === undefined) delete process.env.AGENT_HARNESS_WORKTREE_ROOT;
+    else process.env.AGENT_HARNESS_WORKTREE_ROOT = previousRoot;
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("runs an upstream-bound implementation while the operator checkout is locally ahead", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-upstream-bound-"));
+  const repository = path.join(directory, "repository");
+  const remote = path.join(directory, "remote.git");
+  const worktreeRootDirectory = path.join(directory, "worktrees");
+  const previousRoot = process.env.AGENT_HARNESS_WORKTREE_ROOT;
+  process.env.AGENT_HARNESS_WORKTREE_ROOT = worktreeRootDirectory;
+  try {
+    await git(directory, ["init", "--bare", remote]);
+    await git(directory, ["init", repository]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+    const baseRevision = (await git(repository, ["rev-parse", "HEAD"])).stdout.trim();
+    const branch = (await git(repository, ["branch", "--show-current"])).stdout.trim();
+    await git(repository, ["remote", "add", "origin", remote]);
+    await git(repository, ["push", "-u", "origin", branch]);
+    await writeFile(path.join(repository, "operator-local.txt"), "unpublished local commit\n", "utf8");
+    await git(repository, ["add", "operator-local.txt"]);
+    await git(repository, ["commit", "-m", "operator local commit"]);
+    const localRevision = (await git(repository, ["rev-parse", "HEAD"])).stdout.trim();
+
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Implement from the tracked target",
+      description: "Keep an unrelated local commit out of the approved implementation base.",
+      repositoryPath: repository,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-implementation";
+      draft.currentStage = "implement";
+      draft.workPackages = parseWorkPackages(
+        `<work-packages>{"packages":[{"id":"S1","title":"Add feature","description":"Add feature.txt.","dependencies":[],"ownedPaths":["feature.txt"],"verificationCommandIds":["test"]}]}</work-packages>`,
+      );
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      runCodex: async ({ cwd }) => {
+        await writeFile(path.join(cwd, "feature.txt"), "candidate change\n", "utf8");
+        return {
+          finalText:
+            "## Outcome\n\nAdded feature.txt.\n\n## Changes\n\nfeature.txt\n\n## Verification\n\nNone.\n\n## Ownership exceptions\n\nNone.\n\n## Remaining risks\n\nNone.",
+          usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, totalTokens: 2 },
+        };
+      },
+    });
+
+    assert.equal(await orchestrator.start(task.id, "implementation"), true);
+    const finished = await waitForStatus(store, task.id, "ready-for-review");
+    assert.equal(finished.repositoryAuthority.selectedRevision, baseRevision);
+    assert.equal(finished.repositoryAuthority.localHead, localRevision);
+    assert.equal(finished.repositoryAuthority.relationship, "ahead");
+    assert.equal(finished.candidates[0].baseRevision, baseRevision);
+    assert.deepEqual(finished.workPackages[0].files, ["feature.txt"]);
+    const candidateFiles = (
+      await git(finished.candidates[0].worktreePath, ["ls-tree", "--name-only", "HEAD"])
+    ).stdout
+      .trim()
+      .split("\n");
+    assert.deepEqual(candidateFiles, ["README.md", "feature.txt"]);
+    assert.equal((await git(repository, ["rev-parse", "HEAD"])).stdout.trim(), localRevision);
   } finally {
     if (previousRoot === undefined) delete process.env.AGENT_HARNESS_WORKTREE_ROOT;
     else process.env.AGENT_HARNESS_WORKTREE_ROOT = previousRoot;

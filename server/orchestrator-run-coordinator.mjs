@@ -5,7 +5,6 @@ import { stageForRun } from "./orchestrator-task-helpers.mjs";
 export class OrchestratorRunCoordinator {
   constructor({
     store,
-    worktrees,
     runInvestigation,
     runSpecification,
     runPlanning,
@@ -15,7 +14,6 @@ export class OrchestratorRunCoordinator {
     runEvaluation,
   }) {
     this._store = store;
-    this._worktrees = worktrees;
     this._runInvestigation = runInvestigation;
     this._runSpecification = runSpecification;
     this._runPlanning = runPlanning;
@@ -40,15 +38,17 @@ export class OrchestratorRunCoordinator {
       if (kind === "implementation") {
         try {
           const stoppedTask = await this._store.get(id);
-          const latestTarget = await this._worktrees.base(stoppedTask, { allowDirty: true });
+          const authorityRevision = stoppedTask.repositoryAuthority?.selectedRevision ?? null;
           const attemptedBases = new Set(
             (stoppedTask.workPackages ?? []).map((workPackage) => workPackage.baseRevision).filter(Boolean),
           );
           if (
+            !signal.aborted &&
+            authorityRevision &&
             attemptedBases.size &&
-            [...attemptedBases].some((revision) => revision !== latestTarget.baseRevision)
+            [...attemptedBases].some((revision) => revision !== authorityRevision)
           ) {
-            implementationTargetDrift = latestTarget.baseRevision;
+            implementationTargetDrift = authorityRevision;
           }
         } catch {
           /* Preserve the original implementation failure when target inspection is unavailable. */
