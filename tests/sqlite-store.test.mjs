@@ -47,6 +47,53 @@ test("cleans orphaned attachment staging sets on SQLite store startup", async ()
   }
 });
 
+test("recovers interrupted prototype generation on SQLite startup", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-sqlite-design-recovery-"));
+  const databasePath = path.join(directory, "tasks.sqlite3");
+  try {
+    const store = new SqliteTaskStore(databasePath);
+    await store.init();
+    const task = await store.create({
+      title: "Recover SQLite prototypes",
+      description: "Release a prototype task after the local runtime exits.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+      designRequested: true,
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "generating-designs";
+      draft.currentStage = "specification";
+      draft.activeRunKind = "design";
+      draft.designRequest.status = "generating";
+      draft.designRequest.variants = [
+        {
+          id: "codex-running",
+          revision: 1,
+          generator: "codex-design",
+          provider: "codex",
+          status: "generating",
+          completedAt: null,
+          error: null,
+        },
+      ];
+    });
+    store.close();
+
+    const rebooted = new SqliteTaskStore(databasePath);
+    await rebooted.init();
+    const recovered = await rebooted.get(task.id);
+    assert.equal(recovered.status, "failed");
+    assert.equal(recovered.activeRunKind, null);
+    assert.equal(recovered.designRequest.status, "failed");
+    assert.equal(recovered.designRequest.variants[0].status, "failed");
+    assert.equal(recovered.events.at(-1).title, "Design exploration interrupted");
+    rebooted.close();
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 async function fixture() {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-sqlite-store-"));
   const jsonPath = path.join(directory, "tasks.json");

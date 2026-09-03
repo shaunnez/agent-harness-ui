@@ -549,6 +549,45 @@ export function migratePersistedTaskState(state) {
       task.attemptsByStage[task.currentStage] = task.stageRun;
       changed = true;
     }
+    const interruptedDesign =
+      task.designRequest &&
+      (task.status === "generating-designs" ||
+        (task.activeRunKind === "design" && task.designRequest.status === "generating"));
+    if (interruptedDesign) {
+      changed = true;
+      const error =
+        "The local harness stopped while design generation was running. Retry the failed design directions or archive or close the task.";
+      const activeRevision = Math.max(
+        0,
+        ...(task.designRequest?.variants ?? []).map((variant) => variant.revision ?? 0),
+      );
+      for (const variant of task.designRequest?.variants ?? []) {
+        if (variant.revision === activeRevision && ["queued", "generating"].includes(variant.status)) {
+          variant.status = "failed";
+          variant.error = error;
+          variant.completedAt = now;
+        }
+      }
+      task.designRequest.status = "failed";
+      task.designRequest.error = error;
+      task.designRequest.completedAt = now;
+      task.status = "failed";
+      task.activeRunKind = null;
+      task.activeRunReservationId = null;
+      task.error = error;
+      interruptActiveRuns(task, now, error);
+      task.updatedAt = now;
+      task.events.push({
+        id: crypto.randomUUID(),
+        at: now,
+        category: "activity",
+        tone: "danger",
+        stage: task.currentStage,
+        title: "Design exploration interrupted",
+        detail: error,
+      });
+      continue;
+    }
     if (task.status !== "running") continue;
     changed = true;
     const interruptedReservation = Object.values(task.stageRunReservations ?? {}).find(

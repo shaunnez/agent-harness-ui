@@ -148,3 +148,37 @@ test("disables task closure while merge reconciliation is pending", () => {
     );
   });
 });
+
+test("keeps retirement controls disabled and cancellation available during prototype generation", () => {
+  return withWorkspace(async ({ RuntimeTaskWorkspace }) => {
+    const task = createTask({
+      status: "generating-designs",
+      currentStage: "specification",
+      activeRunKind: "design",
+    });
+    const markup = renderToStaticMarkup(
+      React.createElement(RuntimeTaskWorkspace, {
+        task,
+        onBack: async () => {},
+        onRun: async () => {},
+        onCancel: async () => {},
+        onAction: async () => {},
+        onDecision: async () => {},
+        onCloseTask: async () => {},
+        onArchiveTask: async () => {},
+      }),
+    );
+
+    assert.match(
+      markup,
+      /disabled=""[^>]*title="Wait for the active process tree to terminate before closing this task\."[^>]*>.*Close task/s,
+    );
+    assert.match(
+      markup,
+      /disabled=""[^>]*title="Wait for the active process tree to terminate before archiving this task\."[^>]*>.*Archive/s,
+    );
+    const cancelButton = markup.match(/<button[^>]*title="Cancel active design generation"[^>]*>/)?.[0];
+    assert.ok(cancelButton);
+    assert.doesNotMatch(cancelButton, /disabled=""/);
+  });
+});
