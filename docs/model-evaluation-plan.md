@@ -1,11 +1,13 @@
 # Model evaluation suite: implementation plan
 
-## Blocked
+Status: plan, not implemented, except for WP0b (fix landed 2026-09-03; see
+below). Written 2026-09-03.
 
-**WP0 blocked in the harness on 2026-09-03.** Task creation, triage, scouts,
-Grill, specification, and planning all ran for real against a detached,
-frozen-SHA worktree using the ChatGPT-authenticated Codex CLI, and both
-approval gates worked. The task then failed at the implement stage with:
+**WP0 blocked in the harness on 2026-09-03, and WP0b fixed the defect the same
+day.** Task creation, triage, scouts, Grill, specification, and planning all
+ran for real against a detached, frozen-SHA worktree using the
+ChatGPT-authenticated Codex CLI, and both approval gates worked. The task then
+failed at the implement stage with:
 
 ```
 S1 failed: The candidate branch agent-harness/ah-001-s1-a1 already exists.
@@ -15,29 +17,36 @@ Remove it manually or start a new task.
 Root cause: `createTaskRecord` (`server/store.mjs:612`) assigns task IDs
 (`AH-001`, `AH-002`, ...) sequentially per task store, with no relationship to
 the target repository's actual git history. `GitWorktreeManager.prepare`
-(`server/git-worktree.mjs:237-247`) derives the candidate branch name directly
-from the task ID and refuses to proceed if that branch ref already exists in
-`repositoryRoot`. A `git worktree add --detach` checkout shares one
+(`server/git-worktree.mjs`) derives the candidate branch name directly from
+the task ID and, before the fix, refused to proceed if that branch ref already
+existed in `repositoryRoot`. A `git worktree add --detach` checkout shares one
 `refs/heads` namespace with the whole repository it was created from — it is
-not an isolated clone — so a fresh store's first task (`AH-001`) collides with
-any repository that already has real `agent-harness/ah-001-*` branches, which
+not an isolated clone — so a fresh store's first task (`AH-001`) collided with
+any repository that already had real `agent-harness/ah-001-*` branches, which
 this repository does (through `ah-202-*` at spike time). Reproduced twice: once
 with a completely fresh JSON store, and again with a fresh store plus
 `AGENT_HARNESS_WORKTREE_ROOT` pointed at an unused scratch directory — neither
-isolation avoids the collision, because the check runs against the frozen
+isolation avoided the collision, because the check ran against the frozen
 worktree's own shared ref namespace, not against the store or the worktree
 root.
 
-This blocks WP3 in particular: its runner will create many tasks per campaign
-against the real target repository, and nothing today gives a generated task ID
-any relationship to that repository's actual branch namespace. Per section 8,
-a fix for this (verifying/disambiguating the candidate branch name against the
-repository before or at creation, rather than only after `git show-ref` fails)
-is needed as its own package before WP2 proceeds. No code change was made here;
-WP0 is a spike. Full run detail, both attempts, and what worked despite the
-block: `docs/eval-spike-2026-09-03.md`.
+**Fixed by WP0b:** `GitWorktreeManager.prepare` now allocates a deterministic,
+disambiguated branch name (a numeric suffix, checked against the repository's
+actual refs, retried until free) whenever the plain
+`agent-harness/<task-id>-<candidate-id>` name already exists, instead of
+failing. The common no-collision case is unchanged. Every downstream consumer
+(export, PR push, review, task summaries) reads the branch name recorded on
+the candidate/work-package record rather than recomputing it, so the
+disambiguated name is what actually gets used everywhere. Tests:
+`tests/git-worktree-branch-collision.test.mjs`. The WP0 spike was rerun
+end-to-end against this repository, which still has the real colliding
+`agent-harness/ah-001-*`/`ah-002-*` branches, and passed the implement stage
+without any manual branch deletion; full detail in
+`docs/eval-spike-2026-09-03-wp0b-verification.md`. This unblocks WP3, whose
+runner will create many tasks per campaign against the real target repository.
 
-Status: plan, not implemented. Written 2026-09-03.
+Full original spike detail, both attempts, and what worked despite the block:
+`docs/eval-spike-2026-09-03.md`.
 
 This plan is written for implementing agents that have not seen the repository
 before. Every work package names the files to touch, the behaviour to add, the
@@ -321,6 +330,20 @@ the WP0 spike steps against this repository (which already has colliding
 manual branch deletion. Update `docs/eval-spike-<new-date>.md` with the rerun
 result and remove the "Blocked" heading from the top of this document once the
 rerun succeeds.
+
+**Result (2026-09-03): fixed and verified.** `tests/git-worktree-branch-collision.test.mjs`
+passes (4 new tests), and `npm run lint`, `npm run typecheck`, and `npm test`
+(481/481) all pass. The WP0 spike was rerun against this repository, whose
+real `agent-harness/ah-001-*`/`ah-002-*` branches still collide with a fresh
+store's task IDs: task `AH-002` hit the exact same collision on both its work
+package (`agent-harness/ah-002-s1-a1`) and its integration candidate
+(`agent-harness/ah-002-c1`), and `GitWorktreeManager.prepare` transparently
+allocated `agent-harness/ah-002-s1-a1-2` and `agent-harness/ah-002-c1-2`
+instead of failing. The task passed through the implement stage with no
+collision error and reached `ready-for-review`/`dev-review` — past the
+scope of this defect, since the remaining stages (Development Review, Test,
+Final Review, Human Approval) do not depend on branch allocation. Full detail:
+`docs/eval-spike-2026-09-03-wp0b-verification.md`.
 
 ### WP1. Per-task policy matrix and grill policy on task creation (2 to 4 hours)
 
