@@ -78,5 +78,14 @@ export function createHarnessClient({ baseUrl, fetchImpl = fetch } = {}) {
     async cancel(id) {
       return this.runAction(id, "cancel");
     },
+    /**
+     * `POST /api/tasks/:id/evaluation` (WP4, docs/model-evaluation-plan.md section 5's blind
+     * judge): posts a `kind: "blind"` or `kind: "human"` score. `body` mirrors what
+     * `normalizeEvaluationInput` (`server/evaluation.mjs`) accepts.
+     */
+    async postEvaluation(id, body) {
+      const { task } = await send("POST", `/api/tasks/${encodeURIComponent(id)}/evaluation`, { body });
+      return task;
+    },
   };
 }
