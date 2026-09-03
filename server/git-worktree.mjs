@@ -215,6 +215,39 @@ export class GitWorktreeManager {
     return true;
   }
 
+  /**
+   * Picks a candidate branch name that is actually free in `repositoryRoot`.
+   *
+   * `git worktree add` shares one `refs/heads` namespace with the whole repository it
+   * came from — it is not an isolated clone. A task ID is assigned sequentially by the
+   * local task store (`createTaskRecord` in `store.mjs`) with no relationship to that
+   * repository's real branch history, so `agent-harness/<task-id>-<candidate-id>` can
+   * already exist as a ref from a prior task, a prior store, or genuine prior harness
+   * usage against the same repository. Failing outright there made every low-numbered
+   * task in a fresh store unusable against any repository with history. Instead, when
+   * the plain name collides, retry with a numeric suffix, checked against the
+   * repository's actual refs each time, until a free name is found. The common case —
+   * no collision — still returns the plain, undecorated name unchanged.
+   */
+  async #allocateBranchName(repositoryRoot, branchStem) {
+    const MAX_ATTEMPTS = 100;
+    let candidate = branchStem;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+      const branchCheck = await git(
+        repositoryRoot,
+        ["show-ref", "--verify", "--quiet", `refs/heads/${candidate}`],
+        {
+          allowFailure: true,
+        },
+      );
+      if (branchCheck.code !== 0) return candidate;
+      candidate = `${branchStem}-${attempt + 1}`;
+    }
+    throw new Error(
+      `Could not allocate a free candidate branch for ${branchStem} after ${MAX_ATTEMPTS} attempts. Remove stale branches or start a new task.`,
+    );
+  }
+
   async #prepare(task, candidateId, options = {}) {
     const repositoryRoot = await this.repositoryRoot(task.repositoryPath);
     if (!options.allowHistoricalBase && !options.allowDirtySource) await assertClean(repositoryRoot);
@@ -234,18 +267,8 @@ export class GitWorktreeManager {
       options.baseBranch ??
       ((await git(repositoryRoot, ["branch", "--show-current"])).stdout.trim() || "detached");
     const baseRef = options.baseRef ?? (baseBranch === "detached" ? null : `refs/heads/${baseBranch}`);
-    const branch = `agent-harness/${task.id.toLowerCase()}-${safeSegment(options.branchId ?? candidateId).toLowerCase()}`;
-    const branchCheck = await git(
-      repositoryRoot,
-      ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`],
-      {
-        allowFailure: true,
-      },
-    );
-    if (branchCheck.code === 0)
-      throw new Error(
-        `The candidate branch ${branch} already exists. Remove it manually or start a new task.`,
-      );
+    const branchStem = `agent-harness/${task.id.toLowerCase()}-${safeSegment(options.branchId ?? candidateId).toLowerCase()}`;
+    const branch = await this.#allocateBranchName(repositoryRoot, branchStem);
 
     const worktreePath = path.resolve(this.#root, safeSegment(task.id), safeSegment(candidateId));
     if (!worktreePath.startsWith(`${this.#root}${path.sep}`))

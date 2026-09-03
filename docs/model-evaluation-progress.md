@@ -6,7 +6,7 @@ Coordinator tracking file. Integration branch: `claude/model-selection-harness-2
 | ID | Status | Branch | Commit | Last test result |
 | --- | --- | --- | --- | --- |
 | WP0 | blocked→WP0b | worktree-agent-aca8b5e28c29932bd | 857e484 | spike blocked at implement: branch collision, see docs/eval-spike-2026-09-03.md |
-| WP0b | running | - | - | - |
+| WP0b | done | worktree-agent-a7122f992b237649e | (pending commit) | 481/481 passing; spike rerun passed implement, see docs/eval-spike-2026-09-03-wp0b-verification.md |
 | WP1 | todo | - | - | - |
 | WP1b | todo | - | - | - |
 | WP2 | todo | - | - | - |
