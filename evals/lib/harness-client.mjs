@@ -50,6 +50,12 @@ export function createHarnessClient({ baseUrl, fetchImpl = fetch } = {}) {
       const { settings } = await send("GET", "/api/settings");
       return settings;
     },
+    /** GET /api/evaluations/summary (WP5, docs/model-evaluation-plan.md section 5): the live,
+     * authoritative summary of controlled-experiment variants the report reads for blind scores
+     * posted after this campaign ran (see `server/evaluation.mjs`'s `buildEvaluationSummary`). */
+    async evaluationSummary() {
+      return send("GET", "/api/evaluations/summary");
+    },
     async createTask(payload) {
       const { task } = await send("POST", "/api/tasks", { body: payload });
       return task;
