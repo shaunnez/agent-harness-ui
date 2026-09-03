@@ -14,8 +14,8 @@ Coordinator tracking file. Integration branch: `claude/model-selection-harness-2
 | WP4 | merged | worktree-agent-ac7fb05405c37e107 | 86a34cc (merged 9a4551b, pushed origin) | 526/526 standalone; live smoke test against real server verified |
 | WP5 | merged | worktree-agent-a4c21003b4f7dccff | a458fea (merged 9a4551b, pushed origin) | 533/533 standalone |
 | WP6 | merged | worktree-agent-a2d6f01b7e89f2d52 | de8c13a (merged fe04034, pushed origin) | 547/547 standalone |
-| WP3b | running | - | - | - |
-| Campaign (row 6) | running (blocked by WP3b) | - | - | - |
+| WP3b | merged | worktree-agent-a6d931652227559dc | d5cc5d7 (merged dd9ba66, pushed origin) | 549/549 passing; real POST /api/tasks 201 verified with a relative --worktree-root |
+| Campaign (row 6) | running (baseline rerun after WP3b) | - | - | - |
 
 Baseline check on integration tip `e8d9476` before dispatch: `npm run lint` clean,
 `npm run typecheck` clean, `npm test` 477/477 passing.
