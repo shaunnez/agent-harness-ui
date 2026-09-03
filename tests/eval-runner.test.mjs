@@ -313,6 +313,75 @@ test("--resume skips pairs already present in the manifest", async () => {
   }
 });
 
+test("a relative --worktree-root resolves to an absolute repositoryPath (WP3b)", async () => {
+  const fake = await startFakeServer((task, action) => {
+    task.status = HAPPY_PATH_TRANSITIONS[action] ?? task.status;
+  });
+  try {
+    await withTempDataRoot(async (dataRoot) => {
+      const client = createHarnessClient({ baseUrl: fake.baseUrl });
+      await client.connect();
+      const relativeWorktreeRoot = path.join(".", "eval-runner-relative-worktree-root-fixture", "worktrees");
+      await runEvalCampaign({
+        suite: makeSuite([makeCase("case-a")]),
+        variants: makeVariants(["baseline"]),
+        campaignId: "campaign-relative-root-test",
+        client,
+        worktreeRoot: relativeWorktreeRoot,
+        dataRoot,
+        sleepFn: NOOP_SLEEP,
+        addWorktree: NOOP_ADD_WORKTREE,
+      });
+      const createCall = fake.requestLog.find(
+        (entry) => entry.method === "POST" && entry.path === "/api/tasks",
+      );
+      assert.ok(createCall, "task creation must have been requested");
+      assert.ok(
+        path.isAbsolute(createCall.body.repositoryPath),
+        `repositoryPath must be absolute, got ${createCall.body.repositoryPath}`,
+      );
+      assert.equal(
+        createCall.body.repositoryPath,
+        path.resolve(relativeWorktreeRoot, "campaign-relative-root-test-case-a-baseline"),
+      );
+    });
+  } finally {
+    await fake.close();
+  }
+});
+
+test("an already-absolute --worktree-root is unchanged (WP3b)", async () => {
+  const fake = await startFakeServer((task, action) => {
+    task.status = HAPPY_PATH_TRANSITIONS[action] ?? task.status;
+  });
+  try {
+    await withTempDataRoot(async (dataRoot) => {
+      const client = createHarnessClient({ baseUrl: fake.baseUrl });
+      await client.connect();
+      const worktreeRoot = path.join(dataRoot, "worktrees");
+      await runEvalCampaign({
+        suite: makeSuite([makeCase("case-a")]),
+        variants: makeVariants(["baseline"]),
+        campaignId: "campaign-absolute-root-test",
+        client,
+        worktreeRoot,
+        dataRoot,
+        sleepFn: NOOP_SLEEP,
+        addWorktree: NOOP_ADD_WORKTREE,
+      });
+      const createCall = fake.requestLog.find(
+        (entry) => entry.method === "POST" && entry.path === "/api/tasks",
+      );
+      assert.equal(
+        createCall.body.repositoryPath,
+        path.join(worktreeRoot, "campaign-absolute-root-test-case-a-baseline"),
+      );
+    });
+  } finally {
+    await fake.close();
+  }
+});
+
 test("no forbidden action is ever requested", async () => {
   const fake = await startFakeServer((task, action) => {
     task.status = HAPPY_PATH_TRANSITIONS[action] ?? task.status;

@@ -329,6 +329,13 @@ export async function runEvalCampaign({
   nowFn = Date.now,
   addWorktree,
 }) {
+  // WP3b (docs/model-evaluation-plan.md section 5): resolve a relative `--worktree-root` to an
+  // absolute path once, here, before it is used to build any per-pair worktree path. Every path
+  // built from `worktreeRoot` below (the normal `repositoryPath` sent to `POST /api/tasks` in
+  // `runPair`, and the `exportBundle` fallback) is a `path.join` off this value, so resolving it
+  // once at the top of the campaign is sufficient to make all of them absolute.
+  // `path.resolve` is a no-op for an input that is already absolute.
+  worktreeRoot = path.resolve(worktreeRoot);
   const { campaignDir, manifestPath, variantMapPath } = manifestPaths(dataRoot, campaignId);
   await mkdir(campaignDir, { recursive: true });
   const manifest = await readJsonFile(manifestPath, { schemaVersion: 1, campaignId, suiteId: suite.suiteId, runs: [] });
