@@ -526,6 +526,57 @@ Done when: `node scripts/run-eval-suite.mjs --suite evals/suites/core.json
 --variants evals/variants/role-sweep.json --only-cases <one> --only-variants
 <baseline>` completes a real task locally, and the tests above pass.
 
+**Result: found broken during the row 6 baseline campaign (2026-09-03).** See
+WP3b below.
+
+### WP3b. Fix relative `--worktree-root` in the eval runner (30 minutes)
+
+Goal: fix a defect found while running the actual row 6 baseline campaign, so
+the campaign can proceed. Do not touch anything else in WP3's scope.
+
+The defect: `scripts/run-eval-suite.mjs`'s `--worktree-root` defaults to the
+relative path `path.join(".data", "evaluations", "worktrees")` and the flag
+parser stores whatever string is passed on the command line verbatim, with no
+call to `path.resolve`. `runEvalCampaign` (`evals/lib/campaign.mjs`) joins this
+value with the campaign/case/variant id to build `worktreePath`
+(`path.join(worktreeRoot, ...)`) and then — with no further resolution — sends
+that same `worktreePath` as `repositoryPath` in the `POST /api/tasks` payload
+(`evals/lib/campaign.mjs` around the `runPair` function, and in the
+`exportBundle` fallback). `validateRepository` in `server/api.mjs` requires an
+absolute path (`Choose an absolute local repository path.`) and rejects
+anything else. Running the documented command exactly as written in WP3's own
+"Done when" clause and in section 1's example — a relative `--worktree-root`,
+which is also what both example command lines in the plan use — fails
+immediately, before any task is created, with that exact error. This is not a
+per-case harness defect; it is a runner bug that blocks every run in a
+campaign at concurrency 1 or any other setting.
+
+Files: `scripts/run-eval-suite.mjs` (or `evals/lib/campaign.mjs`, whichever
+implementing agent's judgement says is the more correct single place),
+`tests/eval-runner.test.mjs` (extend, do not replace, the existing tests).
+
+Behaviour:
+
+- Resolve `--worktree-root` to an absolute path once, relative to
+  `process.cwd()` at the time the CLI runs, before it is used to build any
+  worktree path. A worktree root that is already absolute must be unchanged.
+- Every path handed to `POST /api/tasks` as `repositoryPath` (both the normal
+  run path and the `exportBundle` fallback) must be absolute as a result.
+- Do not change `--worktree-root`'s default value or any other flag's
+  behaviour.
+
+Tests:
+
+- Passing a relative `--worktree-root` produces an absolute `repositoryPath`
+  in the created task (extend the existing fake-API test harness rather than
+  hitting a real server).
+- Passing an already-absolute `--worktree-root` is unchanged.
+
+Done when: tests pass, `npm run lint` and `npm run typecheck` pass, and
+re-running the row 6 baseline campaign with a relative `--worktree-root`
+(exactly as both example command lines in this document show) creates tasks
+successfully instead of failing at the first `POST /api/tasks` call.
+
 ### WP4. Blind judge (half a day to a day)
 
 Files: new `evals/lib/judge.mjs`, new `scripts/judge-eval-campaign.mjs`, test
