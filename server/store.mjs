@@ -6,6 +6,7 @@ import { acquireJsonStoreLock } from "./json-store-lock.mjs";
 import {
   DEFAULT_DESIGN_POLICIES,
   LEGACY_DESIGN_POLICIES,
+  defaultGatePolicy,
   defaultRuntimeSettings,
   enrichUsage,
   normalizeModelId,
@@ -470,6 +471,16 @@ export function migratePersistedTaskState(state) {
       task.grillPolicy = "manual";
       changed = true;
     }
+    if (!task.gatePolicy) {
+      task.gatePolicy = defaultGatePolicy();
+      changed = true;
+    }
+    for (const approval of task.approvals ?? []) {
+      if (!approval.actor) {
+        approval.actor = { kind: "human" };
+        changed = true;
+      }
+    }
     if (task.grillSession && task.grillSession.policySnapshot === undefined) {
       task.grillSession.policySnapshot = task.grillPolicy;
       task.grillSession.acceptedRecommendationCount = task.grillSession.questions.filter(
@@ -633,6 +644,7 @@ export function createTaskRecord(state, input) {
         }
       : null,
     grillPolicy: input.grillPolicy ?? state.settings.grillPolicy ?? "manual",
+    gatePolicy: clone(input.gatePolicy ?? state.settings.gatePolicy ?? defaultGatePolicy()),
     agentConfig: {
       provider,
       model,

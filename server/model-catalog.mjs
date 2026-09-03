@@ -63,6 +63,20 @@ export const POLICY_IDS = [
   "final-review",
 ];
 
+/**
+ * The only two human gates a policy can automate. Candidate and merge stay manual with
+ * no code path that could advance them automatically — merge is the only gate that
+ * writes outside the worktree, and Grill's input is a conversation rather than a verdict.
+ * See `docs/auto-approve-gates-proposal.md`.
+ */
+export const AUTOMATABLE_GATE_IDS = ["specification", "plan"];
+
+export const GATE_POLICY_VALUES = ["manual", "auto-on-clean"];
+
+export function defaultGatePolicy() {
+  return Object.fromEntries(AUTOMATABLE_GATE_IDS.map((gate) => [gate, "manual"]));
+}
+
 export function defaultStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
   return defaultProfileStagePolicies(provider).standard;
 }
@@ -320,6 +334,8 @@ export function defaultRuntimeSettings() {
     // A Grill question is a human decision gate unless the operator explicitly
     // changes this setting. Each new task snapshots the value.
     grillPolicy: "manual",
+    // Specification and plan gates default to manual; each new task snapshots the value.
+    gatePolicy: defaultGatePolicy(),
     // Both providers' models are selectable, because a stage policy is validated
     // against this list and a Claude task's policies must name Claude models. The
     // selected provider, not this list, decides which runtime executes.

@@ -26,23 +26,119 @@ export function requireActiveRunReservation(task, kind, stage) {
   return reservation;
 }
 
-export function recordApproval(task, stage, note) {
+/**
+ * `actor` records who actually approved this gate: a human clicking approve, or a
+ * `gatePolicy: "auto-on-clean"` policy advancing the task on its own. Every approval
+ * ever recorded carries one — absent values (from before this field existed) are
+ * backfilled as human in `migratePersistedTaskState` — so an audit can always answer
+ * "did a person see this?" for any approval. See `docs/auto-approve-gates-proposal.md`.
+ */
+export function recordApproval(task, stage, note, actor = { kind: "human" }) {
   const approvalNote = note.trim().slice(0, 5_000);
   task.approvals ??= [];
   const artifactId =
     [...(task.artifacts ?? [])].reverse().find((artifact) => artifact.stage === stage)?.id ?? null;
-  const approval = { id: crypto.randomUUID(), stage, note: approvalNote, createdAt: now(), artifactId };
+  const normalizedActor =
+    actor?.kind === "policy" ? { kind: "policy", policy: actor.policy ?? "auto-on-clean" } : { kind: "human" };
+  const approval = {
+    id: crypto.randomUUID(),
+    stage,
+    note: approvalNote,
+    createdAt: now(),
+    artifactId,
+    actor: normalizedActor,
+  };
   task.approvals.push(approval);
   task.events.push(
     activity(
       stage,
       `${getStageMetadata(stage)?.label ?? stage} approved`,
-      approvalNote || "Approved without an additional note.",
+      approvalNote ||
+        (normalizedActor.kind === "policy"
+          ? `Approved automatically by policy (${normalizedActor.policy}).`
+          : "Approved without an additional note."),
       "success",
       "decision",
       { approvalId: approval.id },
     ),
   );
+}
+
+/**
+ * "Clean" for specification, per `docs/auto-approve-gates-proposal.md`: the artifact
+ * exists, the run that produced it succeeded, and no unresolved Grill decision remains.
+ * This is the only notion of "clean" for this gate — nothing else invents a second one.
+ */
+export function specificationCleanliness(task) {
+  const artifact = [...(task.artifacts ?? [])].reverse().find((item) => item.stage === "specification");
+  if (!artifact) return { clean: false, reason: "No specification artifact has been recorded yet." };
+  const run = artifact.runId ? (task.runs ?? []).find((item) => item.id === artifact.runId) : null;
+  if (run && run.status !== "completed") {
+    return {
+      clean: false,
+      reason: `The specification run did not complete successfully (status: ${run.status}).`,
+    };
+  }
+  const unresolved = (task.grillSession?.questions ?? []).filter((question) => !question.answer);
+  if (unresolved.length) {
+    return {
+      clean: false,
+      reason: `${unresolved.length} Grill question${unresolved.length === 1 ? "" : "s"} remain unanswered.`,
+    };
+  }
+  return { clean: true, reason: null };
+}
+
+/**
+ * Auto-approve the specification gate when `task.gatePolicy.specification` is
+ * `"auto-on-clean"` and the stage is clean. Reuses `approveSpecification`'s own code
+ * path — the same one a human approval goes through — via the injected callback, so a
+ * policy approval and a human approval can never diverge in what they do. When the
+ * gate is not clean, the task parks exactly as it does today and the event log
+ * explains why the policy did not apply.
+ */
+export async function maybeAutoApproveSpecification(store, id, approveSpecification) {
+  if (typeof approveSpecification !== "function") return false;
+  const task = await store.get(id);
+  if (task?.status !== "awaiting-spec-approval" || task.gatePolicy?.specification !== "auto-on-clean") {
+    return false;
+  }
+  const { clean, reason } = specificationCleanliness(task);
+  if (!clean) {
+    await store.update(id, (draft) => {
+      draft.events.push(
+        activity("specification", "Automatic specification approval did not apply", reason, "warning", "decision"),
+      );
+    });
+    return false;
+  }
+  await approveSpecification(id, "", { kind: "policy", policy: "auto-on-clean" });
+  return true;
+}
+
+/**
+ * Auto-approve the plan gate when `task.gatePolicy.plan` is `"auto-on-clean"`.
+ * "Clean" for plan is deliberately not re-derived here: `approvePlan` already runs
+ * `blockStalePlan` and `_assertExecutablePlan` (plus the fast-profile checks) before it
+ * commits the transition, so this simply attempts the same call a human approval makes
+ * and treats any thrown error as "not clean" — the task parks exactly as it does today,
+ * with an additional event explaining that the policy did not apply.
+ */
+export async function maybeAutoApprovePlan(store, id, approvePlan) {
+  if (typeof approvePlan !== "function") return false;
+  const task = await store.get(id);
+  if (task?.status !== "awaiting-plan-approval" || task.gatePolicy?.plan !== "auto-on-clean") {
+    return false;
+  }
+  try {
+    await approvePlan(id, "", { kind: "policy", policy: "auto-on-clean" });
+    return true;
+  } catch (error) {
+    await store.update(id, (draft) => {
+      draft.events.push(activity("plan", "Automatic plan approval did not apply", error.message, "warning", "decision"));
+    });
+    return false;
+  }
 }
 
 export function stageForRun(kind, currentStage) {

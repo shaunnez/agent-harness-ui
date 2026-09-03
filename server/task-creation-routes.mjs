@@ -11,6 +11,7 @@ export function createTaskCreationRoutes({
   readJson,
   validateAttachments,
   validateRepository,
+  validateGatePolicy,
   git,
   repositoryAuthorityService,
   validWorkflows: VALID_WORKFLOWS,
@@ -41,6 +42,7 @@ export function createTaskCreationRoutes({
       const requestedReasoning = String(input.reasoning ?? settings.defaultReasoning);
       if (!selectedModel.reasoningLevels.includes(requestedReasoning))
         throw new Error(`${selectedModel.label} does not support ${requestedReasoning} reasoning.`);
+      const gatePolicy = validateGatePolicy(input.gatePolicy, settings.gatePolicy);
       const designPolicies =
         input.designRequested === true
           ? validateDesignPolicies(
@@ -128,6 +130,7 @@ export function createTaskCreationRoutes({
           stagePolicies: taskPolicies,
           profileStagePolicies: taskProfilePolicies,
           workflowProfile,
+          gatePolicy,
           experiment,
           repositoryAuthority,
           attachments: savedAttachments,

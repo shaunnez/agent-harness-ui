@@ -4,7 +4,7 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 import { defaultWorktreeRoot, GitWorktreeManager } from "./git-worktree.mjs";
 import { assertHttpBoundary, corsHeaders } from "./http-security.mjs";
-import { normalizeModelId, POLICY_IDS } from "./model-catalog.mjs";
+import { AUTOMATABLE_GATE_IDS, GATE_POLICY_VALUES, normalizeModelId, POLICY_IDS } from "./model-catalog.mjs";
 import { withActionEligibility } from "./retry-admission-policy.mjs";
 import { createCandidateWorktreeRoutes } from "./candidate-worktree-routes.mjs";
 import { createChangelogRoutes } from "./changelog-routes.mjs";
@@ -139,6 +139,31 @@ function validateStagePolicies(input, known, allowedModels, fallback) {
   return policies;
 }
 
+/**
+ * Only `specification` and `plan` can be automated. `candidate` and `merge` are
+ * rejected outright rather than silently coerced to `manual`, so a caller that sends
+ * either learns immediately that the harness has no automatic path for them.
+ */
+function validateGatePolicy(input, fallback) {
+  if (input == null) return { ...fallback };
+  if (typeof input !== "object" || Array.isArray(input)) throw new Error("Gate policy must be an object.");
+  const unsupported = Object.keys(input).filter((key) => !AUTOMATABLE_GATE_IDS.includes(key));
+  if (unsupported.length) {
+    throw new Error(
+      `Only ${AUTOMATABLE_GATE_IDS.join(" and ")} gates can be automated; ${unsupported.join(", ")} must stay manual.`,
+    );
+  }
+  const policy = {};
+  for (const gate of AUTOMATABLE_GATE_IDS) {
+    const value = input[gate] === undefined ? (fallback?.[gate] ?? "manual") : String(input[gate]);
+    if (!GATE_POLICY_VALUES.includes(value)) {
+      throw new Error(`${gate} gate policy must be manual or auto-on-clean.`);
+    }
+    policy[gate] = value;
+  }
+  return policy;
+}
+
 // A closed or archived task's worktrees are no longer part of live work, so they report as
 // `stale` regardless of the recorded per-entry status. Archiving additionally *removes* the
 // ones it safely can, so for an archived task this mostly describes whatever archiving had to
@@ -211,6 +236,7 @@ export function createApiServer({
     readJson,
     validateRepository,
     validateStagePolicies,
+    validateGatePolicy,
     worktreeEntriesForTask,
     runtimeSchemaVersion: RUNTIME_SCHEMA_VERSION,
   });
@@ -244,6 +270,7 @@ export function createApiServer({
     readJson,
     validateAttachments,
     validateRepository,
+    validateGatePolicy,
     git,
     repositoryAuthorityService,
     validWorkflows: VALID_WORKFLOWS,
