@@ -163,8 +163,15 @@ test("keeps plan approval primary while exposing evidence-backed revision", () =
       currentStage: "plan",
       attemptsByStage: { plan: 3 },
       stageRunLimits: { plan: 3 },
+      actionEligibility: {
+        generatedAt: "2026-08-11T00:58:24.901Z",
+        actions: {
+          "approve-plan": { allowed: true, reason: null },
+          "grant-retry": { allowed: true, reason: null },
+        },
+      },
     });
-    assert.equal(nextAction(exhausted).action, "grant-retry");
+    assert.equal(nextAction(exhausted).action, "approve-plan");
     const exhaustedMarkup = renderToStaticMarkup(
       React.createElement(RuntimeCommandBar, {
         task: exhausted,
@@ -176,7 +183,7 @@ test("keeps plan approval primary while exposing evidence-backed revision", () =
     );
     assert.match(exhaustedMarkup, />Grant one Plan attempt</);
     assert.doesNotMatch(exhaustedMarkup, />Revise plan</);
-    assert.doesNotMatch(exhaustedMarkup, />Approve plan</);
+    assert.match(exhaustedMarkup, />Approve plan</);
   });
 });
 

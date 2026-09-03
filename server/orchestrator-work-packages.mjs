@@ -263,7 +263,10 @@ export class WorkPackageOrchestrator {
             baseRevision,
             dependencyRevisions,
             branchId: sliceId,
-            allowHistoricalBase: Boolean(workPackage.retainedReplacementReason),
+            // The implementation reservation is bound to an exact repository-authority
+            // revision. The operator's checkout may legitimately move ahead of that
+            // tracked target without changing the approved plan or its execution base.
+            allowHistoricalBase: true,
             allowDirtySource: true,
           });
       if (retainedContinuation) {

@@ -240,14 +240,6 @@ export function deriveNextAction(task: RuntimeTask) {
       title: "Stage retry allowance exhausted",
       detail: "A human may grant one additional attempt before this retained candidate enters the next gate.",
     };
-  if (retryAllowanceExhausted && task.status === "awaiting-plan-approval")
-    return {
-      action: "grant-retry" as const,
-      label: "Grant one Plan attempt",
-      title: "Plan revision allowance exhausted",
-      detail:
-        "After inspecting the retained plans, a human may grant exactly one additional correction attempt.",
-    };
   if (task.status === "awaiting-spec-approval") {
     return task.workflow === "implement"
       ? {
