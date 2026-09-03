@@ -18,7 +18,10 @@ import { createTaskLifecycleRoutes } from "./task-lifecycle-routes.mjs";
 import { RepositoryAuthorityService } from "./repository-authority.mjs";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
-const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
+// Exported so callers outside the HTTP layer — the eval-suite loaders in `evals/lib/` — validate
+// against the same set of workflows the create route enforces, instead of keeping a second copy
+// that can silently drift.
+export const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
 const RUNTIME_SCHEMA_VERSION = 12;
 const diffCharLimit = 300_000;
 const OUTPUT_LIMIT = 512 * 1024;
@@ -98,7 +101,10 @@ async function validateRepository(repositoryPath) {
   return path.resolve(repositoryPath);
 }
 
-function validateAttachments(input) {
+// Exported for reuse by the eval-suite loader (`evals/lib/suite.mjs`), which builds the same
+// `{ name, type, size, data }` shape from files on disk and needs the create route's own
+// extension, size, and base64-integrity checks rather than a second copy of them.
+export function validateAttachments(input) {
   if (input == null) return [];
   if (!Array.isArray(input) || input.length > 6) throw new Error("Attach no more than six files.");
   const allowed = new Set([".html", ".htm", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".zip"]);
@@ -119,7 +125,10 @@ function validateAttachments(input) {
   });
 }
 
-function validateStagePolicies(input, known, allowedModels, fallback) {
+// Exported for reuse by the eval-suite loader (`evals/lib/variants.mjs`), which validates a
+// variant's policy matrix against the same catalogue and allow-list rules as settings and task
+// creation, instead of re-deriving the model/reasoning validation rules a second time.
+export function validateStagePolicies(input, known, allowedModels, fallback) {
   const policies = {};
   for (const policyId of POLICY_IDS) {
     const fallbackPolicy = fallback?.[policyId];

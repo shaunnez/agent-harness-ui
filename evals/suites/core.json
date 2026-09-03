@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "core",
+  "repositoryPath": ".",
+  "frozenBaseSha": "401bf4904253ed50bad6c7d61d7ce612c3458bd2",
+  "verificationCommands": ["npm run lint", "npm run typecheck", "npm test"],
+  "cases": [
+    {
+      "caseId": "readme-quickstart-wording",
+      "shape": "single-package",
+      "title": "Fix the README quick-start wording",
+      "description": "The README quick-start section has a stale typo in the dev-server command. Correct the wording so the documented command matches the real `npm run dev` script, and fix the typo without touching anything else in the file.",
+      "workflow": "implement",
+      "workflowProfile": "auto",
+      "attachments": [],
+      "acceptanceCriteria": [
+        "The README quick-start section names the real `npm run dev` command",
+        "No file other than the README changes"
+      ],
+      "verificationCommands": null
+    },
+    {
+      "caseId": "tasks-table-empty-state-copy",
+      "shape": "single-package",
+      "title": "Tighten the empty-state copy on the shared task table",
+      "description": "The shared task-table component's empty-state label reads as a placeholder rather than finished copy. Rewrite the wording so it reads as a deliberate, isolated styling and copy touch-up, with no change to layout, data fetching, or any other component.",
+      "workflow": "implement",
+      "workflowProfile": "auto",
+      "attachments": [],
+      "acceptanceCriteria": [
+        "The empty-state label no longer reads as placeholder text",
+        "No component other than the shared task-table changes"
+      ],
+      "verificationCommands": null
+    },
+    {
+      "caseId": "evaluation-summary-empty-campaign-guard",
+      "shape": "single-package",
+      "title": "Guard buildEvaluationSummary against a campaign with zero recorded runs",
+      "description": "server/evaluation.mjs's buildEvaluationSummary assumes at least one recorded evaluation exists and throws on an empty campaign. Make it return a summary with zero counts instead of throwing when no evaluations have been recorded yet, and add a test in tests/evaluation.test.mjs covering that case.",
+      "workflow": "implement",
+      "workflowProfile": "auto",
+      "attachments": [],
+      "acceptanceCriteria": [
+        "buildEvaluationSummary returns a zero-count summary instead of throwing when no evaluations are recorded",
+        "tests/evaluation.test.mjs covers the empty-campaign case"
+      ],
+      "verificationCommands": ["node --test tests/evaluation.test.mjs"]
+    },
+    {
+      "caseId": "campaign-export-executable-bit",
+      "shape": "single-package",
+      "title": "Preserve the executable bit when exporting a candidate patch",
+      "description": "server/campaign-export.mjs's exportCandidatePatch drops a changed file's executable permission bit in the generated unified diff. Preserve the permission-mode lines Git already emits so the exported patch applies with the original file mode intact, and extend tests/campaign-export.test.mjs to cover a candidate that changes a file's executable bit.",
+      "workflow": "implement",
+      "workflowProfile": "auto",
+      "attachments": [],
+      "acceptanceCriteria": [
+        "A candidate patch for a file whose executable bit changed preserves that mode change",
+        "tests/campaign-export.test.mjs covers a file whose executable bit changed"
+      ],
+      "verificationCommands": ["node --test tests/campaign-export.test.mjs"]
+    },
+    {
+      "caseId": "context-manifest-truncation-indicator",
+      "shape": "multi-package",
+      "title": "Surface a supplied context manifest's truncation flag in the task inspector",
+      "description": "The task inspector's context-supplied panel already renders each context manifest entry but does not show whether an entry was truncated before the model saw it. Add a truncated flag to the manifest data server-side wherever it is not already present, and render a visible truncation indicator next to any truncated entry in the task inspector's context panel in src/. Keep the panel non-collapsible per the existing inspector convention.",
+      "workflow": "implement",
+      "workflowProfile": "auto",
+      "attachments": [],
+      "acceptanceCriteria": [
+        "A context manifest entry that was truncated carries a truncated flag from the server",
+        "The task inspector's context panel visibly marks a truncated entry without requiring a click to reveal it",
+        "An entry that was not truncated shows no truncation indicator"
+      ],
+      "verificationCommands": null
+    },
+    {
+      "caseId": "grill-policy-approval-provenance",
+      "shape": "multi-package",
+      "title": "Show which Grill decisions were accepted by policy rather than by a human",
+      "description": "When a task's Grill policy is auto-accept-recommendations, recorded decisions do not currently distinguish a policy acceptance from a human one anywhere in the UI. Extend the recorded decision shape server-side to carry who accepted it, and render a visible 'accepted by policy' label next to any such decision in the Grill history view in src/, leaving human-made decisions unlabeled as they are today.",
+      "workflow": "implement",
+      "workflowProfile": "auto",
+      "attachments": [],
+      "acceptanceCriteria": [
+        "A Grill decision accepted under auto-accept-recommendations records that it was accepted by policy",
+        "The Grill history view labels a policy-accepted decision as accepted by policy",
+        "A human-made decision renders exactly as it does today, with no new label"
+      ],
+      "verificationCommands": null
+    }
+  ]
+}
