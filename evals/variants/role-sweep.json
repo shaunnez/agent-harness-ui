@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "baselineId": "codex-hybrid",
+  "variants": {
+    "codex-hybrid": {
+      "matrix": {
+        "triage": { "model": "gpt-5.6-luna", "reasoning": "xhigh" },
+        "scouts": { "model": "gpt-5.6-luna", "reasoning": "xhigh" },
+        "grill": { "model": "gpt-5.6-luna", "reasoning": "xhigh" },
+        "specification": { "model": "gpt-5.6-luna", "reasoning": "xhigh" },
+        "plan": { "model": "gpt-5.6-sol", "reasoning": "high" },
+        "implement": { "model": "gpt-5.6-luna", "reasoning": "xhigh" },
+        "repair": { "model": "gpt-5.6-sol", "reasoning": "high" },
+        "dev-review": { "model": "gpt-5.6-sol", "reasoning": "high" },
+        "test": { "model": "gpt-5.6-luna", "reasoning": "xhigh" },
+        "final-review": { "model": "gpt-5.6-luna", "reasoning": "medium" }
+      }
+    },
+    "sonnet-triage": {
+      "extends": "codex-hybrid",
+      "override": { "triage": { "model": "claude-sonnet-5", "reasoning": "xhigh" } }
+    },
+    "sonnet-scouts": {
+      "extends": "codex-hybrid",
+      "override": { "scouts": { "model": "claude-sonnet-5", "reasoning": "xhigh" } }
+    },
+    "sonnet-grill": {
+      "extends": "codex-hybrid",
+      "override": { "grill": { "model": "claude-sonnet-5", "reasoning": "xhigh" } }
+    },
+    "sonnet-specification": {
+      "extends": "codex-hybrid",
+      "override": { "specification": { "model": "claude-sonnet-5", "reasoning": "xhigh" } }
+    },
+    "sonnet-plan": {
+      "extends": "codex-hybrid",
+      "override": { "plan": { "model": "claude-sonnet-5", "reasoning": "xhigh" } }
+    },
+    "sonnet-implement": {
+      "extends": "codex-hybrid",
+      "override": { "implement": { "model": "claude-sonnet-5", "reasoning": "xhigh" } }
+    },
+    "sonnet-repair": {
+      "extends": "codex-hybrid",
+      "override": { "repair": { "model": "claude-sonnet-5", "reasoning": "xhigh" } }
+    },
+    "sonnet-dev-review": {
+      "extends": "codex-hybrid",
+      "override": { "dev-review": { "model": "claude-sonnet-5", "reasoning": "xhigh" } }
+    },
+    "sonnet-test": {
+      "extends": "codex-hybrid",
+      "override": { "test": { "model": "claude-sonnet-5", "reasoning": "xhigh" } }
+    },
+    "sonnet-final-review": {
+      "extends": "codex-hybrid",
+      "override": { "final-review": { "model": "claude-sonnet-5", "reasoning": "xhigh" } }
+    }
+  }
+}
