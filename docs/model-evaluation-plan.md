@@ -577,6 +577,98 @@ re-running the row 6 baseline campaign with a relative `--worktree-root`
 (exactly as both example command lines in this document show) creates tasks
 successfully instead of failing at the first `POST /api/tasks` call.
 
+**Result: fixed (2026-09-03).** Rerunning the baseline surfaced a second,
+unrelated defect — see WP3c below.
+
+### WP3c. Fix the gate-approval race that crashes the runner, and recognize `awaiting-already-satisfied` (2 to 3 hours)
+
+Goal: fix two defects found by actually running the row 6 baseline campaign
+against this repository. Do not touch anything else in WP3's scope.
+
+**Defect 1 (crash, the priority fix).** `pollUntilStopped`/`advanceParkedTask`
+in `evals/lib/campaign.mjs` poll a task, and when it is parked at
+`awaiting-spec-approval` or `awaiting-plan-approval`, call
+`client.approveSpecification`/`client.approvePlan`. WP1b's `auto-on-clean`
+gate policy also clears these same gates asynchronously, off the run promise
+that just parked the task (see WP1b's own note about this in
+`server/orchestrator-task-control.mjs`). This is an intentional race: most of
+the time the runner's poll finds the task already past the gate and has
+nothing to do, but occasionally the runner's GET catches the task still
+parked, and by the time its approval call reaches the server the policy has
+already advanced it. `store.mjs`'s `transition` (and `sqlite-store.mjs`'s
+equivalent) detects this and throws `Task state changed before the requested
+action could be reserved.` with `error.code = "TASK_TRANSITION_CONFLICT"` and
+`error.statusCode = 409`; `evals/lib/harness-client.mjs`'s `send()` already
+attaches `statusCode` to everything it throws. `advanceParkedTask` does not
+catch this, so the error propagates out of `pollUntilStopped`, out of
+`runPair`, out of the `Promise.all` in `runWithConcurrency`, and crashes the
+whole `run-eval-suite.mjs` process — not just the one pair. Reproduced on the
+real row 6 baseline run: of six baseline cases, only one produced a manifest
+entry before the process died on the second case's gate call.
+
+**Defect 2 (misclassification, not a crash).** A task can independently reach
+`awaiting-already-satisfied` (`server/orchestrator-investigation.mjs`,
+`server/orchestrator-specification-planning.mjs`): the fast-path investigation
+decided the case's requested change is already present in the repository at
+the frozen SHA, and — like `awaiting-human-approval` — a human decision is
+required to close it out (`POST /api/tasks/:id/close`,
+`retry-admission-policy.mjs`'s `close-already-satisfied` action;
+`src/components/atlas/atlasModel.ts` labels it "Human close decision"). This
+status already existed before this plan and is unrelated to any work package
+in it. `pollUntilStopped`'s `TERMINAL_STOP_STATUSES` only lists
+`awaiting-human-approval`, `blocked`, `failed`, `cancelled` — it does not know
+about this status, so `advanceParkedTask` correctly finds no mapped action,
+returns `false`, and the poll loop stops (this part does not crash) but
+records the raw status as `terminalState`, which is not one of the plan's
+four named terminal states and will not be counted as a reached decision
+point anywhere that checks for `terminalState === "awaiting-human-approval"`
+specifically (`scripts/run-eval-suite.mjs`'s own completion summary, and
+WP5's `evals/lib/report.mjs`).
+
+Files: `evals/lib/campaign.mjs`, `tests/eval-runner.test.mjs` (extend, do not
+replace).
+
+Behaviour:
+
+- In `advanceParkedTask`, when the call to `approveSpecification`, `approvePlan`,
+  `finishGrill`, or `runAction` throws an error whose `statusCode` is `409`,
+  do not rethrow. Treat this exactly like the "nothing to do, keep polling"
+  case: return `true` so `pollUntilStopped`'s loop re-fetches the task's
+  actual current status on its next iteration and continues from wherever the
+  policy or another actor actually left it. Any other status code (or an
+  error with no `statusCode`) must still propagate — this fix is scoped to
+  the specific race, not to swallowing every error a gate call can raise.
+- Add `"awaiting-already-satisfied"` to `TERMINAL_STOP_STATUSES` in
+  `evals/lib/campaign.mjs`, so a task that reaches it is recorded with that
+  exact status as `terminalState` and the poll loop stops cleanly, the same
+  way it already does for `awaiting-human-approval`. Do not add an action
+  that automatically closes it — closing a task is not one of the actions
+  section 8's guardrails or WP3's own step 3 list permit the runner to take
+  on its own; a human still decides.
+- Do not change `FORBIDDEN_ACTIONS`, `STAGE_ADVANCE_ACTIONS`, or anything
+  about the three named gates' `runnerApprovals` bookkeeping.
+
+Tests:
+
+- A 409 from `approveSpecification` (simulated via the fake API returning
+  409 with `TASK_TRANSITION_CONFLICT`-shaped body) does not crash
+  `pollUntilStopped`; the next poll picks up the task's real, already-advanced
+  status and the run continues to its actual terminal state.
+- The same for a 409 from `approvePlan`.
+- A non-409 error from either call still propagates and fails the pair (does
+  not get silently swallowed).
+- A task that reaches `awaiting-already-satisfied` is recorded with that
+  `terminalState` in the manifest, and the runner's own completion summary
+  and `evals/lib/report.mjs` still work (they may still count it separately
+  from `awaiting-human-approval`; this test only needs to confirm it is
+  captured as a real terminal state rather than crashing or being conflated).
+
+Done when: tests pass, `npm run lint` and `npm run typecheck` pass, and
+re-running the row 6 baseline campaign completes all six cases (each reaching
+one of `awaiting-human-approval`, `awaiting-already-satisfied`, `blocked`,
+`failed`, `cancelled`, or `timeout`) instead of the whole process crashing
+partway through.
+
 ### WP4. Blind judge (half a day to a day)
 
 Files: new `evals/lib/judge.mjs`, new `scripts/judge-eval-campaign.mjs`, test
