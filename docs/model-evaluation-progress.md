@@ -15,8 +15,8 @@ Coordinator tracking file. Integration branch: `claude/model-selection-harness-2
 | WP5 | merged | worktree-agent-a4c21003b4f7dccff | a458fea (merged 9a4551b, pushed origin) | 533/533 standalone |
 | WP6 | merged | worktree-agent-a2d6f01b7e89f2d52 | de8c13a (merged fe04034, pushed origin) | 547/547 standalone |
 | WP3b | merged | worktree-agent-a6d931652227559dc | d5cc5d7 (merged dd9ba66, pushed origin) | 549/549 passing; real POST /api/tasks 201 verified with a relative --worktree-root |
-| WP3c | running | - | - | - |
-| Campaign (row 6) | running (blocked by WP3c: gate-approval race crashed runner after 1/6 cases) | - | - | - |
+| WP3c | merged | worktree-agent-ae49b90aa0190ccb7 | 8dfc992 (merged 0ed13e7, pushed origin) | 554/554 passing |
+| Campaign (row 6) | running (baseline rerun after WP3c) | - | - | - |
 
 Baseline check on integration tip `e8d9476` before dispatch: `npm run lint` clean,
 `npm run typecheck` clean, `npm test` 477/477 passing.
@@ -55,3 +55,9 @@ in server/api.mjs, server/task-creation-routes.mjs, package.json's test script):
   isolation loss on this row). Row 4 merged with one trivial package.json
   test-script conflict (both packages appended to the same array), resolved
   by keeping both new test files. `npm test` after row 4 merge: 539/539.
+- Baseline rerun 2 crashed the whole campaign after 1/6 cases: a real race
+  between WP1b's async auto-on-clean gate policy and the runner's own gate
+  approval calls threw an uncaught 409, killing run-eval-suite.mjs entirely.
+  Also found `awaiting-already-satisfied` (a genuine pre-existing task status,
+  unrelated to any WP) wasn't recognized as a terminal state by the runner.
+  Both fixed in WP3c.
