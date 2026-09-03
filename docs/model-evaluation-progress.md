@@ -7,9 +7,9 @@ Coordinator tracking file. Integration branch: `claude/model-selection-harness-2
 | --- | --- | --- | --- | --- |
 | WP0 | blocked→WP0b | worktree-agent-aca8b5e28c29932bd | 857e484 (merged c3e3880) | spike blocked at implement: branch collision, see docs/eval-spike-2026-09-03.md |
 | WP0b | merged | worktree-agent-a7122f992b237649e | 87d19c5 (merged c3e3880, pushed origin) | 481/481 passing; spike rerun passed implement, see docs/eval-spike-2026-09-03-wp0b-verification.md |
-| WP1 | todo | - | - | - |
-| WP1b | todo | - | - | - |
-| WP2 | todo | - | - | - |
+| WP1 | running | - | - | - |
+| WP1b | running | - | - | - |
+| WP2 | running | - | - | - |
 | WP3 | todo | - | - | - |
 | WP4 | todo | - | - | - |
 | WP5 | todo | - | - | - |
