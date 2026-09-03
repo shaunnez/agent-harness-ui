@@ -33,7 +33,7 @@ function compareEvidenceBinding(binding, candidate) {
   return null;
 }
 
-function parseLabelledJson(text, label) {
+export function parseLabelledJson(text, label) {
   const expression = new RegExp(`<${label}>\\s*([\\s\\S]*?)\\s*</${label}>`, "i");
   const match = String(text ?? "").match(expression);
   if (!match) throw new Error(`The agent did not return the required ${label} JSON block.`);
@@ -471,6 +471,52 @@ export function tryParseFocusedTestEvidence(text) {
     if (isCandidateEvidenceError(error)) throw error;
     throw candidateEvidenceError("contradictory_evidence");
   }
+}
+
+/**
+ * WP4 (docs/model-evaluation-plan.md section 5): the blind judge's verdict on one
+ * campaign bundle. Not candidate-bound (there is no live task or candidate identity in
+ * scope when a bundle is judged offline), so this uses the plain `parseLabelledJson`
+ * rejection path rather than the candidate-evidence one above.
+ */
+export function parseJudgeVerdict(text) {
+  const value = parseLabelledJson(text, "eval-judgment");
+  const score = Number(value.score);
+  if (!Number.isInteger(score) || score < 1 || score > 5) {
+    throw new Error("Judge verdict score must be an integer from 1 to 5.");
+  }
+  if (!Array.isArray(value.criteria) || value.criteria.length === 0) {
+    throw new Error("Judge verdict must include a non-empty criteria array.");
+  }
+  const criteria = value.criteria.map((criterion, index) => {
+    if (!criterion || typeof criterion !== "object" || Array.isArray(criterion)) {
+      throw new Error(`Judge verdict criterion ${index + 1} must be an object.`);
+    }
+    const criterionText = String(criterion.text ?? "")
+      .trim()
+      .slice(0, 500);
+    if (!criterionText) throw new Error(`Judge verdict criterion ${index + 1} is missing its text.`);
+    if (typeof criterion.met !== "boolean") {
+      throw new Error(`Judge verdict criterion ${index + 1} met must be a boolean.`);
+    }
+    return {
+      text: criterionText,
+      met: criterion.met,
+      evidence: String(criterion.evidence ?? "")
+        .trim()
+        .slice(0, 2_000),
+    };
+  });
+  const defects = Array.isArray(value.defects)
+    ? value.defects
+        .map((defect) => String(defect ?? "").trim().slice(0, 1_000))
+        .filter(Boolean)
+        .slice(0, 30)
+    : [];
+  const notes = String(value.notes ?? "")
+    .trim()
+    .slice(0, 4_000);
+  return { schemaVersion: 1, score, criteria, defects, notes };
 }
 
 export function parseWorkPackages(text, repositoryPath = null) {

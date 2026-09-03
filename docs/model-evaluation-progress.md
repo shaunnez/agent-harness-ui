@@ -10,9 +10,9 @@ Coordinator tracking file. Integration branch: `claude/model-selection-harness-2
 | WP1 | merged | worktree-agent-a0b58aa575ad924b3 | b8eec71 (merged into integration) | 486/486 passing standalone |
 | WP1b | merged | claude/model-eval-plan-delivery-f66117 (isolation lost on resume, see note) | 111ecde (merged into integration) | 498/498 passing standalone |
 | WP2 | merged | worktree-agent-a9ddeb9b8ae88ab23 | 20ef6b0 (merged into integration) | 488/488 passing standalone |
-| WP3 | running | - | - | - |
-| WP4 | todo | - | - | - |
-| WP5 | todo | - | - | - |
+| WP3 | merged | claude/model-eval-plan-delivery-f66117 (isolation lost on resume, same pattern as WP1b) | fc2000c (merged d6ffbb6, pushed origin) | 520/520 passing; real smoke test against live server also verified |
+| WP4 | running | - | - | - |
+| WP5 | running | - | - | - |
 | WP6 | todo | - | - | - |
 | Campaign (row 6) | todo | - | - | - |
 
@@ -42,3 +42,9 @@ in server/api.mjs, server/task-creation-routes.mjs, package.json's test script):
   own test server. That pattern matches any process with that command line,
   not just its own PID. Flagged to the operator; unconfirmed whether it
   affected another process.
+- WP3's subagent also hit the "false blocker" pattern (assigned worktree lacked
+  the plan) and, after being told to merge `origin/claude/model-selection-harness-2f8d82`,
+  its resumed session again lost isolation and committed directly onto this
+  coordinator branch/worktree (`fc2000c`), same as WP1b. Reviewed and verified
+  independently before merging. It also ran the same risky
+  `pkill -f "node server/index.mjs"` cleanup pattern a second time.
