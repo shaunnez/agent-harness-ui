@@ -83,6 +83,9 @@ export interface NewTaskDraft {
   workflowProfile?: "auto" | "fast" | "standard" | "high-risk";
   model?: string;
   reasoning?: string;
+  /** A full per-role policy matrix. Mutually exclusive with `model`/`reasoning`. */
+  stagePolicies?: Record<string, import("./domain/runtime.ts").RuntimeAgentPolicy>;
+  grillPolicy?: import("./domain/runtime.ts").RuntimeGrillPolicy;
   experiment?: {
     groupId: string;
     variantId: string;

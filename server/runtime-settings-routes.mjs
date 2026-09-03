@@ -4,7 +4,7 @@ import { inspectRepositoryContract } from "./repository-contract.mjs";
 import { projectTaskSummary } from "./task-projections.mjs";
 import { WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
 
-const GRILL_POLICIES = new Set(["manual", "auto-accept-recommendations"]);
+export const GRILL_POLICIES = new Set(["manual", "auto-accept-recommendations"]);
 
 export function createRuntimeSettingsRoutes({
   store,
