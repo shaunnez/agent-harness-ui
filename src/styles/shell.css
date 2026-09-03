@@ -106,8 +106,8 @@
 }
 .nav-item--active {
   color: var(--text);
-  background: #1e2934;
-  border-color: #2c5479;
+  background: light-dark(var(--blue-soft), #1e2934);
+  border-color: light-dark(#a8c3dd, #2c5479);
 }
 .sidebar__new-task {
   margin: 2px 10px;
@@ -309,13 +309,13 @@
   font-size: 12px;
 }
 .button--primary {
-  border-color: #b57618;
-  background: #9b681b;
-  color: #fff9eb;
+  border-color: light-dark(#704800, #b57618);
+  background: light-dark(var(--amber), #9b681b);
+  color: #fff;
 }
 .button--primary:hover:not(:disabled) {
-  border-color: #d7962b;
-  background: #ac741d;
+  border-color: light-dark(#5f3d00, #d7962b);
+  background: light-dark(#704900, #ac741d);
 }
 .button--danger {
   color: var(--red);
@@ -344,47 +344,47 @@
   text-transform: capitalize;
 }
 .badge--low {
-  color: #9ea39e;
-  background: #242724;
+  color: light-dark(var(--muted), #9ea39e);
+  background: light-dark(var(--surface-2), #242724);
 }
 .badge--medium {
   color: var(--amber);
-  background: #2e2515;
-  border-color: #70521d;
+  background: light-dark(var(--amber-soft), #2e2515);
+  border-color: light-dark(#d7bd83, #70521d);
 }
 .badge--high {
   color: var(--red);
   background: var(--red-soft);
-  border-color: #6c2d2d;
+  border-color: light-dark(#dda9a9, #6c2d2d);
 }
 .badge--neutral {
-  color: #c3c1b9;
-  background: #25241f;
+  color: light-dark(var(--muted), #c3c1b9);
+  background: light-dark(var(--surface-2), #25241f);
 }
 .badge--success {
   color: var(--green);
   background: var(--green-soft);
-  border-color: #29543d;
+  border-color: light-dark(#a7cdb4, #29543d);
 }
 .badge--blue {
   color: var(--blue);
-  background: #151d22;
-  border-color: #35526b;
+  background: light-dark(var(--blue-soft), #151d22);
+  border-color: light-dark(#a8c3dd, #35526b);
 }
 .badge--green {
   color: var(--green);
   background: var(--green-soft);
-  border-color: #29543d;
+  border-color: light-dark(#a7cdb4, #29543d);
 }
 .badge--yellow {
   color: var(--amber);
   background: var(--amber-soft);
-  border-color: #70521d;
+  border-color: light-dark(#d7bd83, #70521d);
 }
 .badge--red {
   color: var(--red);
   background: var(--red-soft);
-  border-color: #6c2d2d;
+  border-color: light-dark(#dda9a9, #6c2d2d);
 }
 .provider-tag {
   display: inline-flex;
@@ -403,21 +403,21 @@
   flex: 0 0 auto;
 }
 .provider-tag--codex {
-  color: #8cbcf7;
+  color: light-dark(var(--blue), #8cbcf7);
 }
 .provider-tag--codex .provider-tag__dot,
 .provider-dot--codex {
   background: var(--blue);
 }
 .provider-tag--claude {
-  color: #c7a1f8;
+  color: light-dark(var(--violet), #c7a1f8);
 }
 .provider-tag--claude .provider-tag__dot,
 .provider-dot--claude {
   background: var(--violet);
 }
 .provider-tag--harness {
-  color: #c4c4be;
+  color: light-dark(var(--muted), #c4c4be);
 }
 .state-badge {
   display: inline-flex;

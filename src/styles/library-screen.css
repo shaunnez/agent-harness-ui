@@ -126,9 +126,9 @@
     monospace;
 }
 .stage-trail__nodes .stage-trail__done {
-  border-color: #527e61;
-  color: #dff7e8;
-  background: #26523a;
+  border-color: light-dark(#a7cdb4, #527e61);
+  color: light-dark(var(--green), #dff7e8);
+  background: light-dark(var(--green-soft), #26523a);
 }
 .stage-trail__nodes .stage-trail__active {
   border-color: var(--amber);
@@ -329,7 +329,7 @@
   padding: 13px;
   border: 1px solid var(--border-strong);
   border-radius: 6px;
-  background: #131311;
+  background: light-dark(var(--surface), #131311);
   color: var(--text);
   font:
     10px / 1.65 "SFMono-Regular",
@@ -415,7 +415,7 @@
   padding: 0;
   border: 1px solid var(--border-strong);
   border-radius: 999px;
-  background: #2e2d29;
+  background: light-dark(var(--surface-3), #2e2d29);
   cursor: pointer;
 }
 .toggle span {
@@ -425,14 +425,14 @@
   width: 11px;
   height: 11px;
   border-radius: 50%;
-  background: #aaa9a2;
+  background: light-dark(#ffffff, #aaa9a2);
   transition: transform 0.15s ease;
 }
 .toggle--on {
-  border-color: #43805b;
-  background: #27533a;
+  border-color: light-dark(#8fbea0, #43805b);
+  background: light-dark(var(--green), #27533a);
 }
 .toggle--on span {
-  background: #e6f5eb;
+  background: #ffffff;
   transform: translateX(15px);
 }

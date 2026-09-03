@@ -44,10 +44,10 @@
 .dialog-error,
 .runtime-error {
   padding: 9px 10px;
-  border: 1px solid #6c3030;
+  border: 1px solid light-dark(#dda9a9, #6c3030);
   border-radius: 5px;
   background: var(--red-soft);
-  color: #ffdada;
+  color: light-dark(var(--red), #ffdada);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -84,7 +84,7 @@
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 7px;
-  background: #11110f;
+  background: light-dark(var(--bg-deep), #11110f);
 }
 .runtime-artifact-card > header {
   display: flex;
@@ -114,7 +114,7 @@
   padding: 18px;
   margin: 0;
   overflow: auto;
-  color: #d8d6ce;
+  color: light-dark(var(--text), #d8d6ce);
   font-size: 12px;
   line-height: 1.65;
   white-space: pre-wrap;
@@ -128,7 +128,7 @@
   border: 1px dashed var(--border-strong);
   border-radius: 7px;
   color: var(--faint);
-  background: #131311;
+  background: light-dark(var(--surface-2), #131311);
   text-align: center;
 }
 .runtime-stage-empty > strong {
@@ -142,9 +142,9 @@
   line-height: 1.5;
 }
 .runtime-stage-empty--failed {
-  border-color: #6c3030;
+  border-color: light-dark(#dda9a9, #6c3030);
   color: var(--red);
-  background: #1c1414;
+  background: light-dark(var(--red-soft), #1c1414);
 }
 .runtime-inspector {
   display: flex;

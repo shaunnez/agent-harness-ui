@@ -3,7 +3,7 @@
   min-width: 0;
   height: 46px;
   overflow: hidden;
-  background: #141412;
+  background: light-dark(var(--surface), #141412);
   transition: height 160ms ease;
 }
 .live-run--open {
@@ -149,7 +149,7 @@
 }
 .event-table__row:hover,
 .event-table__row--selected {
-  background: #1b1c1a;
+  background: light-dark(var(--surface-2), #1b1c1a);
 }
 .event-table__row--selected {
   box-shadow: inset 2px 0 var(--blue);
@@ -167,7 +167,7 @@
   min-width: 0;
 }
 .event-title strong {
-  color: #d7d5ce;
+  color: light-dark(var(--text), #d7d5ce);
   font-size: 12px;
 }
 .event-title small {
@@ -221,7 +221,7 @@
   padding: 0;
   border: 1px solid var(--border-strong);
   border-radius: 9px;
-  background: #1c1c19;
+  background: light-dark(var(--surface), #1c1c19);
   color: var(--text);
   box-shadow: var(--shadow-popover);
 }
@@ -258,7 +258,7 @@
 .field > span,
 .field > label,
 .segmented-field legend {
-  color: #c9c7bf;
+  color: light-dark(var(--muted), #c9c7bf);
   font-size: 12px;
   font-weight: 550;
 }
@@ -268,7 +268,7 @@
   width: 100%;
   border: 1px solid var(--border-strong);
   border-radius: 6px;
-  background: #151513;
+  background: light-dark(var(--surface), #151513);
   color: var(--text);
 }
 .repository-contract {
@@ -276,7 +276,7 @@
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 7px;
-  background: #171714;
+  background: light-dark(var(--surface-2), #171714);
 }
 .repository-contract > header {
   display: flex;
@@ -325,7 +325,7 @@
   display: flex;
   align-items: flex-start;
   gap: 7px;
-  color: #ffd0d0 !important;
+  color: light-dark(var(--red), #ffd0d0) !important;
 }
 .repository-contract ul {
   padding: 3px 11px;
@@ -381,7 +381,7 @@
   padding: 0;
 }
 .project-field__error {
-  color: #ffd0d0 !important;
+  color: light-dark(var(--red), #ffd0d0) !important;
 }
 .add-project-dialog {
   width: min(480px, calc(100vw - 32px));
@@ -408,12 +408,12 @@
   padding: 9px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: #181816;
+  background: light-dark(var(--surface), #181816);
   cursor: pointer;
 }
 .segmented-field label.selected {
-  border-color: #906318;
-  background: #241f15;
+  border-color: light-dark(#d7bd83, #906318);
+  background: light-dark(var(--amber-soft), #241f15);
 }
 .segmented-field input {
   accent-color: var(--amber);
@@ -464,7 +464,7 @@
   margin-left: -20px;
   margin-top: 18px;
   border-top: 1px solid var(--border);
-  background: #1c1c19;
+  background: light-dark(var(--surface), #1c1c19);
 }
 .dialog-footer > span {
   display: flex;
@@ -483,7 +483,7 @@
   margin-top: 15px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: #181816;
+  background: light-dark(var(--surface), #181816);
 }
 .dialog-policy-summary summary {
   display: grid;
@@ -540,7 +540,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  color: #c9c7bf;
+  color: light-dark(var(--muted), #c9c7bf);
   font-size: 12px;
   font-weight: 550;
 }
@@ -567,11 +567,11 @@
   margin-top: 15px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: #181816;
+  background: light-dark(var(--surface), #181816);
 }
 .dialog-design-option.selected {
-  border-color: #906318;
-  background: #241f15;
+  border-color: light-dark(#d7bd83, #906318);
+  background: light-dark(var(--amber-soft), #241f15);
 }
 .dialog-design-option > label {
   display: flex;
@@ -596,7 +596,7 @@
   display: grid;
   gap: 12px;
   padding: 12px;
-  border-top: 1px solid #594419;
+  border-top: 1px solid light-dark(#d7bd83, #594419);
 }
 .dialog-design-policies > small {
   color: var(--muted);

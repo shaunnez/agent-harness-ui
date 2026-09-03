@@ -45,7 +45,7 @@ small,
 .task-table--shared {
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: #131311;
+  background: light-dark(var(--surface), #131311);
 }
 
 .task-table--shared .task-table__header,
@@ -205,8 +205,8 @@ small,
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: #0d0e0d;
-  color: #d8d6ce;
+  background: light-dark(var(--bg-deep), #0d0e0d);
+  color: light-dark(var(--text), #d8d6ce);
   font-size: 12px;
   line-height: 1.65;
   white-space: pre-wrap;
@@ -227,20 +227,20 @@ small,
 .connection-state--connected {
   color: var(--green);
   background: var(--green-soft);
-  border-color: #29543d;
+  border-color: light-dark(#a7cdb4, #29543d);
 }
 .connection-state--unverified {
   color: var(--amber);
   background: var(--amber-soft);
-  border-color: #6a4c19;
+  border-color: light-dark(#d7bd83, #6a4c19);
 }
 .connection-state--not-signed-in {
   color: var(--muted);
-  background: #242724;
+  background: light-dark(var(--surface-2), #242724);
 }
 .connection-state--unavailable {
   color: var(--faint);
-  background: #242724;
+  background: light-dark(var(--surface-2), #242724);
 }
 
 .stage-step--stale .stage-step__node {

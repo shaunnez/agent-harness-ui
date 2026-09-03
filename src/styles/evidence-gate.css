@@ -63,7 +63,7 @@
 }
 .stage-command-bar--history {
   border-left-color: var(--blue);
-  background: #151b20;
+  background: light-dark(var(--blue-soft), #151b20);
 }
 .stage-command-bar--history > svg {
   color: var(--blue);
@@ -181,7 +181,7 @@
 .task-evaluation__scores button:hover,
 .task-evaluation__scores button.is-selected {
   border-color: var(--blue);
-  background: #172533;
+  background: light-dark(var(--blue-soft), #172533);
   color: var(--text);
 }
 
@@ -258,11 +258,11 @@
   border: 1px solid var(--border);
   border-left: 2px solid var(--green);
   border-radius: 7px;
-  background: #171916;
+  background: light-dark(var(--green-soft), #171916);
 }
 .runtime-contract-note {
   border-left-color: var(--blue);
-  background: #15191d;
+  background: light-dark(var(--blue-soft), #15191d);
 }
 .runtime-evidence-source > svg {
   color: var(--green);
@@ -298,9 +298,9 @@
   display: grid;
   gap: 13px;
   padding: 14px;
-  border: 1px solid #35526b;
+  border: 1px solid light-dark(#a8c3dd, #35526b);
   border-radius: 8px;
-  background: #13191d;
+  background: light-dark(var(--blue-soft), #13191d);
 }
 .runtime-candidate-desk > header,
 .runtime-final-review > header {
@@ -310,7 +310,7 @@
   gap: 12px;
 }
 .runtime-candidate-desk .runtime-fact-grid {
-  background: #121616;
+  background: light-dark(var(--surface), #121616);
 }
 .runtime-candidate-desk--compact .runtime-fact-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -483,27 +483,27 @@
   font-size: 12px;
 }
 .runtime-artifact-card--stale {
-  border-color: #6c542a;
+  border-color: light-dark(#d7bd83, #6c542a);
 }
 .runtime-stale-banner {
   padding: 8px 13px;
-  border-bottom: 1px solid #6c542a;
-  color: #f1c36a;
-  background: #241d12;
+  border-bottom: 1px solid light-dark(#d7bd83, #6c542a);
+  color: light-dark(var(--amber), #f1c36a);
+  background: light-dark(var(--amber-soft), #241d12);
   font-size: 12px;
 }
 .runtime-stage-empty--success {
-  border-color: #3b6f4d;
+  border-color: light-dark(#a7cdb4, #3b6f4d);
   color: var(--green);
-  background: #142019;
+  background: light-dark(var(--green-soft), #142019);
 }
 .runtime-merge-promotion {
   display: grid;
   gap: 13px;
   padding: 14px;
-  border: 1px solid #3b6f4d;
+  border: 1px solid light-dark(#a7cdb4, #3b6f4d);
   border-radius: 8px;
-  background: #13191d;
+  background: light-dark(var(--green-soft), #13191d);
 }
 .runtime-merge-promotion > header {
   display: flex;
@@ -520,7 +520,7 @@
   font-size: 12px;
 }
 .runtime-merge-promotion .runtime-fact-grid {
-  background: #121616;
+  background: light-dark(var(--surface), #121616);
 }
 .runtime-merge-promotion__command {
   display: flex;
@@ -540,7 +540,7 @@
   min-width: 0;
   padding: 6px 9px;
   border-radius: 6px;
-  background: #121616;
+  background: light-dark(var(--surface), #121616);
   overflow-x: auto;
   white-space: nowrap;
 }

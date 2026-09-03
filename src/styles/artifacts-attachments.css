@@ -7,7 +7,7 @@
 .markdown-content {
   min-height: 0;
   padding: 18px 22px;
-  color: #d8d6ce;
+  color: light-dark(var(--text), #d8d6ce);
   font-size: 14px;
   line-height: 1.7;
 }
@@ -40,8 +40,8 @@
 .markdown-content code {
   padding: 2px 5px;
   border-radius: 4px;
-  background: #0d0e0d;
-  color: #d6e7ff;
+  background: light-dark(var(--bg-deep), #0d0e0d);
+  color: light-dark(var(--blue), #d6e7ff);
   font-size: 12px;
 }
 
@@ -50,7 +50,7 @@
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: #0d0e0d;
+  background: light-dark(var(--bg-deep), #0d0e0d);
   white-space: pre-wrap;
 }
 
@@ -112,7 +112,7 @@
   min-height: 0;
   padding: 14px;
   overflow: auto;
-  background: #0c0d0c;
+  background: light-dark(var(--bg-deep), #0c0d0c);
 }
 
 .unified-diff details {
@@ -120,7 +120,7 @@
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 7px;
-  background: #111210;
+  background: light-dark(var(--surface), #111210);
 }
 
 .unified-diff summary {
@@ -171,30 +171,30 @@
 }
 
 .unified-diff__line i {
-  border-right: 1px solid #24251f;
+  border-right: 1px solid light-dark(var(--border), #24251f);
   color: var(--faint);
   text-align: right;
   user-select: none;
 }
 
 .unified-diff__line--add {
-  color: #a9e6bf;
-  background: #12261a;
+  color: light-dark(#205f3c, #a9e6bf);
+  background: light-dark(var(--green-soft), #12261a);
 }
 
 .unified-diff__line--remove {
-  color: #ffb5b5;
-  background: #2a1515;
+  color: light-dark(#9f3131, #ffb5b5);
+  background: light-dark(var(--red-soft), #2a1515);
 }
 
 .unified-diff__line--hunk {
-  color: #b8d6ff;
-  background: #152437;
+  color: light-dark(var(--blue), #b8d6ff);
+  background: light-dark(var(--blue-soft), #152437);
 }
 
 .unified-diff__line--meta {
-  color: #c9b2f4;
-  background: #191624;
+  color: light-dark(var(--violet), #c9b2f4);
+  background: light-dark(var(--violet-soft), #191624);
 }
 
 .wired-field {
@@ -286,10 +286,10 @@
 }
 
 .app-toast--success {
-  border-color: #2b6b45;
+  border-color: light-dark(#a7cdb4, #2b6b45);
 }
 
 .app-toast--error {
-  border-color: #7a3434;
+  border-color: light-dark(#dda9a9, #7a3434);
   background: var(--red-soft);
 }

@@ -26,7 +26,7 @@
 }
 .operator-evidence-preview > aside {
   border-left: 1px solid var(--border);
-  background: #141412;
+  background: light-dark(var(--surface), #141412);
 }
 .operator-evidence-preview > aside section {
   display: grid;
@@ -76,7 +76,7 @@
 .operator-evidence-artifact {
   border: 1px solid var(--border);
   border-radius: 7px;
-  background: #11110f;
+  background: light-dark(var(--bg-deep), #11110f);
 }
 .operator-evidence-artifact > header {
   display: flex;

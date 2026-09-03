@@ -11,6 +11,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 ## Approved product-design direction
 
 - Use the selected “Evidence Gate” direction as the shared visual system for every screen and workflow state: warm ink surfaces, compact full sidebar, horizontal stage navigator, structured evidence, restrained semantic colour, and an event ledger that stays out of the way until opened.
+- Keep generated design directions task-specific. When a task asks to restyle or theme the existing app, preserve the current product shell, information architecture, component anatomy, density, content hierarchy, and interactions; do not turn it into a new product concept or inject unrelated companion workflows.
 - Provide a low-fatigue **Operator** view across all ten task stages. Each stage should answer five questions at a glance: current state, health, what changed, the material decision or readiness signal, and the next safe action.
 - Keep the detailed workflow available through a neighbouring **Evidence** view rather than removing it. The prototype may make every stage clickable for review only when it is explicitly labelled as non-persisted visual QA state.
 - Use the selected “Stage Desk” direction only for the Grill Me interaction: one question at a time, repository evidence before answer choices, a recommended answer with concise rationale, accumulated decisions, and specification readiness.

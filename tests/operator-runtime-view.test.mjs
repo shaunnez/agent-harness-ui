@@ -1,4 +1,5 @@
 import test from "node:test";
+import { readFile } from "node:fs/promises";
 import {
   React,
   assert,
@@ -63,6 +64,25 @@ async function withOperatorModules(run) {
     await vite.close();
   }
 }
+
+test("light mode carries semantic colours through the existing task workspace", async () => {
+  const [foundation, shell, workspace, operator] = await Promise.all([
+    readFile(new URL("../src/styles/foundation.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/shell.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/workspace-shell.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/operator-runtime.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(foundation, /:root\[data-theme="light"\]\s*{[\s\S]*color-scheme: light/);
+  for (const token of ["amber", "green", "red", "blue", "violet"]) {
+    assert.match(foundation, new RegExp(`--${token}:`));
+    assert.match(foundation, new RegExp(`--${token}-soft:`));
+  }
+  assert.match(shell, /\.nav-item--active\s*{[\s\S]*light-dark\(var\(--blue-soft\), #1e2934\)/);
+  assert.match(workspace, /\.task-header\s*{[\s\S]*light-dark\(var\(--surface\), #141412\)/);
+  assert.match(operator, /\.runtime-operator-briefing\s*{[\s\S]*light-dark\(var\(--surface\), #161614\)/);
+  assert.match(operator, /\.runtime-operator-alert--red\s*{[\s\S]*var\(--red-soft\)/);
+});
 
 test("operator view model treats one package as a truthful single-package path", async () => {
   await withOperatorModules(({ buildOperatorViewModel }) => {

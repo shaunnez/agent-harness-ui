@@ -23,7 +23,7 @@
 }
 .diff-scope button.selected {
   color: var(--blue);
-  border-color: #3b6a9d;
+  border-color: light-dark(#a8c3dd, #3b6a9d);
   background: var(--blue-soft);
 }
 .diff-workspace {
@@ -36,7 +36,7 @@
 }
 .diff-files {
   border-right: 1px solid var(--border);
-  background: #151513;
+  background: light-dark(var(--surface), #151513);
 }
 .diff-files > header,
 .diff-code > header {
@@ -86,7 +86,7 @@
 }
 .diff-code {
   min-width: 0;
-  background: #10110f;
+  background: light-dark(var(--bg-deep), #10110f);
 }
 .diff-code > header code {
   color: var(--blue);
@@ -106,7 +106,7 @@
   display: block;
   min-width: 530px;
   padding: 0 10px;
-  color: #c8c6be;
+  color: light-dark(var(--text), #c8c6be);
   white-space: pre;
 }
 .diff-line i {
@@ -118,12 +118,12 @@
   text-align: right;
 }
 .diff-line--add {
-  color: #c9ead4;
-  background: #17291e;
+  color: light-dark(#205f3c, #c9ead4);
+  background: light-dark(var(--green-soft), #17291e);
 }
 .diff-line--remove {
-  color: #f2baba;
-  background: #301919;
+  color: light-dark(#9f3131, #f2baba);
+  background: light-dark(var(--red-soft), #301919);
 }
 
 /* Review, test drill-down, and final workflow record */
@@ -140,7 +140,7 @@
   align-items: center;
   gap: 5px;
   padding: 5px 7px;
-  border: 1px solid #3f7150;
+  border: 1px solid light-dark(#a7cdb4, #3f7150);
   border-radius: 4px;
 }
 .severity-counts small {
@@ -148,7 +148,7 @@
   font-size: 7px;
 }
 .severity-counts strong {
-  color: #dff7e8;
+  color: light-dark(var(--green), #dff7e8);
   font-size: 12px;
 }
 .revision-policy {
@@ -225,7 +225,7 @@
 .test-detail {
   padding: 12px 14px 14px 34px;
   border-top: 1px solid var(--border);
-  background: #131614;
+  background: light-dark(var(--surface-2), #131614);
 }
 .test-detail__header {
   display: flex;
@@ -255,7 +255,7 @@
 }
 .test-detail .failure-evidence,
 .test-detail__facts {
-  background: #151513;
+  background: light-dark(var(--surface), #151513);
 }
 .test-detail .structured-row {
   min-height: 30px;
@@ -270,7 +270,7 @@
 .test-gate-summary {
   padding: 10px 12px 5px;
   margin-top: 10px;
-  border: 1px solid #76511b;
+  border: 1px solid light-dark(#d7bd83, #76511b);
   border-radius: 6px;
   background: var(--amber-soft);
 }
@@ -279,7 +279,7 @@
 }
 .test-gate-summary .attempt-meter {
   margin-top: 7px;
-  border-top: 1px solid #5a431d;
+  border-top: 1px solid light-dark(#d7bd83, #5a431d);
 }
 .test-global-actions {
   padding: 0 0 11px;
@@ -357,9 +357,9 @@
 .final-review-note {
   margin: 12px 0 0;
   color: var(--green);
-  border-color: #315d41;
+  border-color: light-dark(#a7cdb4, #315d41);
   background: var(--green-soft);
 }
 .final-review-note strong {
-  color: #dff7e8;
+  color: light-dark(var(--green), #dff7e8);
 }

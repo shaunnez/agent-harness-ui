@@ -30,27 +30,27 @@
 }
 
 .operator-state-callout--blue {
-  border-color: #315172;
+  border-color: light-dark(#a8c3dd, #315172);
   color: var(--blue);
-  background: #121c26;
+  background: light-dark(var(--blue-soft), #121c26);
 }
 
 .operator-state-callout--green {
-  border-color: #315c48;
+  border-color: light-dark(#a7cdb4, #315c48);
   color: var(--green);
-  background: #14241b;
+  background: light-dark(var(--green-soft), #14241b);
 }
 
 .operator-state-callout--amber {
-  border-color: #735e29;
+  border-color: light-dark(#d7bd83, #735e29);
   color: var(--amber);
-  background: #221c10;
+  background: light-dark(var(--amber-soft), #221c10);
 }
 
 .operator-state-callout--red {
-  border-color: #743832;
+  border-color: light-dark(#dda9a9, #743832);
   color: var(--red);
-  background: #271414;
+  background: light-dark(var(--red-soft), #271414);
 }
 
 .operator-stage-section-title {
@@ -87,7 +87,7 @@
   padding: 18px;
   border: 1px solid var(--border);
   border-radius: 7px;
-  background: #171715;
+  background: light-dark(var(--surface), #171715);
 }
 
 .operator-route-summary article > span,
@@ -198,10 +198,10 @@
   align-items: center;
   gap: 12px;
   padding: 13px 15px;
-  border: 1px solid #735e29;
+  border: 1px solid light-dark(#d7bd83, #735e29);
   border-radius: 7px;
   color: var(--amber);
-  background: #221c10;
+  background: light-dark(var(--amber-soft), #221c10);
 }
 
 .operator-exception-line > span,
@@ -219,15 +219,15 @@
   font-size: 12px;
 }
 .operator-exception-line--success {
-  border-color: #315c48;
+  border-color: light-dark(#a7cdb4, #315c48);
   color: var(--green);
-  background: #14241b;
+  background: light-dark(var(--green-soft), #14241b);
 }
 
 .operator-evidence-note {
-  border-color: #315172;
+  border-color: light-dark(#a8c3dd, #315172);
   color: var(--blue);
-  background: #121c26;
+  background: light-dark(var(--blue-soft), #121c26);
 }
 .operator-evidence-note .badge {
   margin-left: auto;
@@ -280,7 +280,7 @@
 .operator-answer-list button.is-selected {
   border-color: var(--blue);
   color: var(--blue);
-  background: #141f2b;
+  background: light-dark(var(--blue-soft), #141f2b);
 }
 
 .operator-criteria-list {
@@ -357,19 +357,19 @@ button.operator-package {
 }
 .operator-package--ready,
 .operator-package--qualified {
-  border-color: #417756;
+  border-color: light-dark(#a7cdb4, #417756);
   color: var(--green);
-  background: #142019;
+  background: light-dark(var(--green-soft), #142019);
 }
 .operator-package--running {
   border-color: var(--blue);
   color: var(--blue);
-  background: #121b25;
+  background: light-dark(var(--blue-soft), #121b25);
 }
 .operator-package--waiting {
-  border-color: #735e29;
+  border-color: light-dark(#d7bd83, #735e29);
   color: var(--amber);
-  background: #201a0f;
+  background: light-dark(var(--amber-soft), #201a0f);
 }
 .operator-package.is-selected {
   box-shadow: 0 0 0 2px rgb(90 157 245 / 24%);
@@ -555,9 +555,9 @@ button.operator-package {
   font-size: 12px;
 }
 .operator-readiness {
-  border-color: #315c48;
+  border-color: light-dark(#a7cdb4, #315c48);
   color: var(--green);
-  background: #14241b;
+  background: light-dark(var(--green-soft), #14241b);
 }
 
 .operator-approval-layout {
@@ -569,7 +569,7 @@ button.operator-package {
   display: grid;
   align-content: start;
   gap: 9px;
-  border-color: #315172;
+  border-color: light-dark(#a8c3dd, #315172);
   color: var(--blue);
 }
 .operator-candidate-card > strong {

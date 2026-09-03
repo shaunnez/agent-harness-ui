@@ -155,7 +155,7 @@
 }
 .runtime-test-failure {
   padding: 9px;
-  color: #ffd4d4;
+  color: light-dark(var(--red), #ffd4d4);
   background: var(--red-soft);
 }
 .runtime-final-review {

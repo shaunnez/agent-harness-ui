@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #ecebe6;
   background: #151513;
@@ -31,6 +32,7 @@
 }
 
 :root[data-theme="light"] {
+  color-scheme: light;
   color: #1c1c18;
   background: #f7f6f2;
   --bg: #f7f6f2;
@@ -43,6 +45,16 @@
   --text: #1c1c18;
   --muted: #5a584f;
   --faint: #8a877c;
+  --amber: #855800;
+  --amber-soft: #fff3d6;
+  --green: #287249;
+  --green-soft: #e7f5ec;
+  --red: #b43b3b;
+  --red-soft: #fce9e9;
+  --blue: #286cad;
+  --blue-soft: #e8f1fa;
+  --violet: #7549a8;
+  --violet-soft: #f0e9f8;
   --sidebar-bg: #f0efe9;
   --shadow-popover: 0 16px 40px rgb(28 28 24 / 14%);
 }

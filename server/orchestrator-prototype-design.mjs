@@ -178,6 +178,14 @@ export class PrototypeDesignOrchestrator {
         if (outcome.status === "fulfilled") return;
         const target = draft.designRequest.variants.find((item) => item.id === variants[index].id);
         if (!target) return;
+        const partial = outcome.reason?.prototypeEvidence;
+        if (partial && typeof partial === "object") {
+          target.summary = String(partial.summary ?? "");
+          target.designContract = String(partial.designContract ?? "");
+          target.contextManifest = partial.contextManifest ?? null;
+          target.usage = partial.usage ?? zeroUsage();
+          accumulateUsage(draft, target.usage);
+        }
         target.status = "failed";
         target.error = outcome.reason?.message ?? String(outcome.reason);
         target.completedAt = now();

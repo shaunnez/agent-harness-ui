@@ -72,7 +72,7 @@
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: #11110f;
+  background: light-dark(var(--bg-deep), #11110f);
 }
 .runtime-prototype-preview iframe {
   width: 100%;

@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import {
+  buildPrototypePrompt,
   claudeDesignArgs,
   createClaudeDesignUrlCollector,
   createPrototypeGenerator,
@@ -72,6 +73,70 @@ test("retains the published URL from the DesignSync tool result", () => {
   assert.equal(collector.result(), "https://claude.ai/design/task-light-mode");
 });
 
+test("derives the canonical Claude Design URL from a correlated create_project result", () => {
+  const collector = createClaudeDesignUrlCollector();
+  collector.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "tool_use",
+            id: "design-create",
+            name: "DesignSync",
+            input: { method: "create_project", name: "Light mode" },
+          },
+        ],
+      },
+    }),
+  );
+  collector.parse(
+    JSON.stringify({
+      type: "user",
+      message: {
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: "design-create",
+            content: "Project created successfully.",
+          },
+        ],
+      },
+      toolUseResult: {
+        method: "create_project",
+        projectId: "e400e0f0-1129-4703-8021-86daa218db92",
+      },
+    }),
+  );
+  assert.equal(collector.result(), "https://claude.ai/design/p/e400e0f0-1129-4703-8021-86daa218db92");
+});
+
+test("keeps design prompts task-driven and supplies retained repository evidence", () => {
+  const prompt = buildPrototypePrompt(
+    {
+      id: "AH-042",
+      title: "Explore the existing light mode",
+      description: "Preserve the current app and show its existing screen in light mode.",
+      decisions: [{ question: "Scope?", answer: "Existing screen only" }],
+      artifacts: [
+        {
+          id: "artifact-1",
+          stage: "grill",
+          name: "decision-brief.md",
+          content: "The app already has a persisted light/dark theme toggle.",
+        },
+      ],
+    },
+    "codex-design",
+  );
+  assert.match(prompt, /Preserve the current app and show its existing screen in light mode/);
+  assert.match(prompt, /Scope\?: Existing screen only/);
+  assert.match(prompt, /The app already has a persisted light\/dark theme toggle/);
+  assert.match(prompt, /preserve its information architecture, component anatomy, density/i);
+  assert.doesNotMatch(prompt, /The prototype must visibly demonstrate/);
+  assert.doesNotMatch(prompt, /A2UI/);
+});
+
 test("invokes Codex Design with the exact snapshotted model and reasoning", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-design-generator-"));
   try {
@@ -103,6 +168,14 @@ test("invokes Codex Design with the exact snapshotted model and reasoning", asyn
         description: "Use the retained task policy.",
         repositoryPath: directory,
         decisions: [],
+        artifacts: [
+          {
+            id: "triage-1",
+            stage: "triage",
+            name: "triage.md",
+            content: "Preserve the existing task workspace shell.",
+          },
+        ],
       },
       variant: { id: "variant-1", generator: "codex-design", provider: "codex", policy },
       bundlePath: directory,
@@ -110,6 +183,7 @@ test("invokes Codex Design with the exact snapshotted model and reasoning", asyn
     });
     assert.equal(invocation.model, "gpt-5.6-sol");
     assert.equal(invocation.reasoning, "high");
+    assert.match(invocation.prompt, /Preserve the existing task workspace shell/);
     assert.equal(result.model, "gpt-5.6-sol");
     assert.equal(result.reasoning, "high");
   } finally {
@@ -294,7 +368,21 @@ test("retry retains successful provider evidence and replaces only the failed di
       generatePrototype: async ({ variant }) => {
         if (variant.generator === "claude-design" && failFirstClaude) {
           failFirstClaude = false;
-          throw new Error("Provider unavailable");
+          const error = new Error("Provider unavailable");
+          error.prototypeEvidence = {
+            summary: "Claude retained partial output before publication failed.",
+            designContract: "Partial implementation contract.",
+            usage: { inputTokens: 3, cachedInputTokens: 1, outputTokens: 2, totalTokens: 5 },
+            contextManifest: {
+              stage: "specification",
+              promptCharacters: 100,
+              estimatedPromptTokens: 25,
+              repositoryAccess: "none",
+              policy: "Bounded design context.",
+              sources: [],
+            },
+          };
+          throw error;
         }
         return {
           title: variant.generator,
@@ -316,6 +404,10 @@ test("retry retains successful provider evidence and replaces only the failed di
     await orchestrator.finishGrill(task.id, { source: "operator" });
     const failed = await waitForStatus(store, task.id, "failed");
     const priorVariantId = failed.designRequest.variants.find((variant) => variant.status === "ready").id;
+    const failedClaude = failed.designRequest.variants.find((variant) => variant.status === "failed");
+    assert.equal(failedClaude.summary, "Claude retained partial output before publication failed.");
+    assert.equal(failedClaude.contextManifest.promptCharacters, 100);
+    assert.equal(failedClaude.usage.totalTokens, 5);
     const originalPolicies = structuredClone(failed.designRequest.policies);
     assert.equal(
       failed.designRequest.variants.find((variant) => variant.status === "failed").model,

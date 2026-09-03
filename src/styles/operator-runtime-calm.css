@@ -178,7 +178,7 @@
 
 .runtime-operator-package:hover {
   border-color: var(--blue);
-  background: #1a1c1c;
+  background: light-dark(var(--surface-2), #1a1c1c);
 }
 
 .runtime-operator-package.is-expanded {
@@ -307,12 +307,12 @@
 }
 
 .runtime-operator-final-review__row:hover {
-  background: #1a1c1c;
+  background: light-dark(var(--surface-2), #1a1c1c);
 }
 
 .runtime-operator-final-review__row.is-exception {
   min-height: 52px;
-  background: #201916;
+  background: light-dark(var(--amber-soft), #201916);
 }
 
 .runtime-operator-final-review__row:not(.is-exception) small {
@@ -347,7 +347,7 @@
 }
 
 .runtime-operator-final-review__row--head:hover {
-  background: #10100e;
+  background: light-dark(var(--bg-deep), #10100e);
 }
 
 .runtime-workspace .stage-command-bar--history {

@@ -325,8 +325,8 @@
 }
 
 .model-option--allowed {
-  border-color: #355f7d;
-  background: #15212a;
+  border-color: light-dark(#a8c3dd, #355f7d);
+  background: light-dark(var(--blue-soft), #15212a);
 }
 
 .model-option > span {
@@ -367,8 +367,8 @@
 }
 
 .settings-grill-policy label.selected {
-  border-color: #355f7d;
-  background: #15212a;
+  border-color: light-dark(#a8c3dd, #355f7d);
+  background: light-dark(var(--blue-soft), #15212a);
 }
 
 .settings-grill-policy input {

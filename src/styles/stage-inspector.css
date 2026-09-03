@@ -43,9 +43,9 @@
   border-left: 1px solid var(--border-strong);
 }
 .decision-item--active {
-  border: 1px solid #8c6218;
+  border: 1px solid light-dark(#d7bd83, #8c6218);
   border-radius: 5px;
-  background: #241f15;
+  background: light-dark(var(--amber-soft), #241f15);
 }
 .decision-item > span {
   display: flex;
@@ -80,7 +80,7 @@
 .trace-row--failed {
   margin: 2px 0;
   padding-inline: 7px;
-  color: #f3b5b5;
+  color: light-dark(var(--red), #f3b5b5);
   background: var(--red-soft);
   border-radius: 4px;
 }
@@ -89,7 +89,7 @@
   margin: 9px 0;
   overflow: hidden;
   border-radius: 999px;
-  background: #4b4a45;
+  background: light-dark(var(--surface-3), #4b4a45);
 }
 .progress-line span {
   display: block;

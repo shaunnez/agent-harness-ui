@@ -320,7 +320,7 @@
   min-height: 0;
   overflow-y: auto;
   border-right: 1px solid var(--border);
-  background: #10110f;
+  background: light-dark(var(--bg-deep), #10110f);
 }
 
 .changelog-list > div:first-child {
@@ -332,7 +332,7 @@
   gap: 12px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
-  background: #10110f;
+  background: light-dark(var(--bg-deep), #10110f);
 }
 
 .changelog-list > button {

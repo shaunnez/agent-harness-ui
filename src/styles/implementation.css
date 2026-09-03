@@ -54,7 +54,7 @@
 .work-package--active,
 .work-package--repairing {
   box-shadow: inset 2px 0 var(--amber);
-  background: #1f1b14;
+  background: light-dark(var(--amber-soft), #1f1b14);
 }
 .work-package__state {
   color: var(--green);
@@ -104,16 +104,16 @@
   min-height: 76px;
   padding: 10px 11px;
   margin-top: 12px;
-  border: 1px solid #76511b;
+  border: 1px solid light-dark(#d7bd83, #76511b);
   border-left: 2px solid var(--amber);
   border-radius: 6px;
-  background: #201b14;
+  background: light-dark(var(--amber-soft), #201b14);
   color: var(--text);
   text-align: left;
   cursor: pointer;
 }
 .integration-candidate:hover {
-  background: #252017;
+  background: light-dark(#f8e9c7, #252017);
 }
 .integration-candidate__state {
   color: var(--amber);
@@ -144,7 +144,7 @@
   text-align: right;
 }
 .integration-candidate__meta strong {
-  color: #a8c8e2;
+  color: light-dark(var(--blue), #a8c8e2);
   font:
     9px "SFMono-Regular",
     Consolas,
@@ -229,7 +229,7 @@
   cursor: pointer;
 }
 .merge-queue > button:hover {
-  background: #1b1d1c;
+  background: light-dark(var(--surface-2), #1b1d1c);
 }
 .merge-queue > button > span:first-child {
   display: grid;
@@ -249,7 +249,7 @@
   font-size: 12px;
 }
 .merge-queue > button code {
-  color: #a8c8e2;
+  color: light-dark(var(--blue), #a8c8e2);
 }
 .stale-gate-history {
   display: flex;
@@ -260,7 +260,7 @@
   border: 1px solid var(--border);
   border-left: 2px solid var(--muted);
   border-radius: 6px;
-  background: #181817;
+  background: light-dark(var(--surface), #181817);
   color: var(--muted);
 }
 .stale-gate-history > span:nth-child(2) {
@@ -287,7 +287,7 @@
   gap: 10px;
   padding: 11px 12px;
   margin-bottom: 12px;
-  border: 1px solid #76511b;
+  border: 1px solid light-dark(#d7bd83, #76511b);
   border-radius: 6px;
   background: var(--amber-soft);
   color: var(--amber);
@@ -303,7 +303,7 @@
 .repair-banner strong,
 .repair-lineage strong,
 .final-review-note strong {
-  color: #f0d49a;
+  color: light-dark(var(--amber), #f0d49a);
   font-size: 12px;
 }
 .repair-banner small,
