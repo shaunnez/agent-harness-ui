@@ -13,8 +13,8 @@ Coordinator tracking file. Integration branch: `claude/model-selection-harness-2
 | WP3 | merged | claude/model-eval-plan-delivery-f66117 (isolation lost on resume, same pattern as WP1b) | fc2000c (merged d6ffbb6, pushed origin) | 520/520 passing; real smoke test against live server also verified |
 | WP4 | merged | worktree-agent-ac7fb05405c37e107 | 86a34cc (merged 9a4551b, pushed origin) | 526/526 standalone; live smoke test against real server verified |
 | WP5 | merged | worktree-agent-a4c21003b4f7dccff | a458fea (merged 9a4551b, pushed origin) | 533/533 standalone |
-| WP6 | running | - | - | - |
-| Campaign (row 6) | todo | - | - | - |
+| WP6 | merged | worktree-agent-a2d6f01b7e89f2d52 | de8c13a (merged fe04034, pushed origin) | 547/547 standalone |
+| Campaign (row 6) | running | - | - | - |
 
 Baseline check on integration tip `e8d9476` before dispatch: `npm run lint` clean,
 `npm run typecheck` clean, `npm test` 477/477 passing.
