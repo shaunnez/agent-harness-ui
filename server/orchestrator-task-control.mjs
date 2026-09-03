@@ -5,7 +5,19 @@ import { canOverrideWorkflowProfile, recordWorkflowProfile } from "./workflow-pr
 
 import { RUN_KINDS, now, activity, completeGrillSession } from "./orchestrator-stage-support.mjs";
 import { currentCandidate, canStartRun, reserveRun } from "./orchestrator-run-policy.mjs";
-import { recordApproval, stageForRun } from "./orchestrator-task-helpers.mjs";
+import {
+  maybeAutoApprovePlan,
+  maybeAutoApproveSpecification,
+  recordApproval,
+  stageForRun,
+} from "./orchestrator-task-helpers.mjs";
+
+/**
+ * Only these run kinds can land a task on `awaiting-spec-approval` or
+ * `awaiting-plan-approval` as their terminal parked state, so only these are worth the
+ * post-run gate-policy check below.
+ */
+const GATE_POLICY_RUN_KINDS = new Set(["investigation", "specification", "planning"]);
 
 export class TaskControlOrchestrator {
   _acceptingRuns = true;
@@ -85,7 +97,33 @@ export class TaskControlOrchestrator {
       if (this._active.get(id) === reservation) this._active.delete(id);
     });
     reservation.promise = promise;
+    // Chained off `promise` (not awaited, and not assigned to `reservation.promise`) so a
+    // rejected run's error still reaches `shutdown()`'s bookkeeping unchanged. This runs
+    // only after the `.finally` above has already cleared `_active` for this id — calling
+    // `approveSpecification`/`approvePlan` (which call `start()` again) synchronously
+    // *inside* the still-active run they conclude would make `start()` see this task as
+    // already running and fail it.
+    if (GATE_POLICY_RUN_KINDS.has(kind)) {
+      promise.then(
+        () => this._applyGatePolicy(id),
+        () => {},
+      );
+    }
     return true;
+  }
+
+  /**
+   * Best-effort continuation after a run parks the task at a gate. `maybeAutoApprove*`
+   * already parks the task and logs why when its check fails, so a failure here should
+   * not surface as anything worse than the task staying at its already-parked status.
+   */
+  async _applyGatePolicy(id) {
+    try {
+      await maybeAutoApproveSpecification(this._store, id, (...args) => this.approveSpecification(...args));
+      await maybeAutoApprovePlan(this._store, id, (...args) => this.approvePlan(...args));
+    } catch {
+      /* Fire-and-forget continuation; the task remains at its already-parked status. */
+    }
   }
 
   async _blockCandidateGateOnTargetDrift(id, kind) {
@@ -357,7 +395,7 @@ export class TaskControlOrchestrator {
     return { started: true };
   }
 
-  async approveSpecification(id, note = "") {
+  async approveSpecification(id, note = "", actor = { kind: "human" }) {
     const task = await this._store.get(id);
     if (!task) throw new Error("Task not found.");
     if (!["awaiting-spec-approval", "awaiting-approval"].includes(task.status)) {
@@ -368,7 +406,7 @@ export class TaskControlOrchestrator {
         id,
         (draft) => ["awaiting-spec-approval", "awaiting-approval"].includes(draft.status),
         (draft) => {
-          recordApproval(draft, "specification", note);
+          recordApproval(draft, "specification", note, actor);
           draft.status = "completed";
           draft.completedAt = now();
           draft.events.push(
@@ -386,13 +424,13 @@ export class TaskControlOrchestrator {
     }
     const started = await this.start(id, "planning", {
       canStart: (draft) => ["awaiting-spec-approval", "awaiting-approval"].includes(draft.status),
-      onReserve: (draft) => recordApproval(draft, "specification", note),
+      onReserve: (draft) => recordApproval(draft, "specification", note, actor),
     });
     if (!started) throw new Error("Task is already running.");
     return { started: true, completed: false };
   }
 
-  async approvePlan(id, note = "") {
+  async approvePlan(id, note = "", actor = { kind: "human" }) {
     let task = await this._store.get(id);
     if (!task) throw new Error("Task not found.");
     if (task.status !== "awaiting-plan-approval") throw new Error("The task is not awaiting plan approval.");
@@ -413,7 +451,7 @@ export class TaskControlOrchestrator {
       id,
       (draft) => draft.status === "awaiting-plan-approval",
       (draft) => {
-        recordApproval(draft, "plan", note);
+        recordApproval(draft, "plan", note, actor);
         draft.status = "ready-for-implementation";
         draft.currentStage = "implement";
         draft.events.push(

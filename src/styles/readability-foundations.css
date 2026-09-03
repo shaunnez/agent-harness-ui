@@ -300,6 +300,11 @@ small,
   background: var(--surface);
 }
 
+.runtime-approval-row__policy-badge {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
 .runtime-grill,
 .runtime-packages {
   gap: 18px;

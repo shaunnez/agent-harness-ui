@@ -267,6 +267,20 @@ export interface RuntimeGrillOption {
 
 export type RuntimeGrillPolicy = "manual" | "auto-accept-recommendations";
 
+// Only the specification and plan gates can be automated. Candidate and merge stay
+// manual with no `auto-on-clean` option; see `docs/auto-approve-gates-proposal.md`.
+export type RuntimeGatePolicyValue = "manual" | "auto-on-clean";
+
+export interface RuntimeGatePolicy {
+  specification: RuntimeGatePolicyValue;
+  plan: RuntimeGatePolicyValue;
+}
+
+export interface RuntimeApprovalActor {
+  kind: "human" | "policy";
+  policy?: string;
+}
+
 export type RuntimeGrillAnswerSource =
   | "operator-answer"
   | "operator-accepted-recommendation"
@@ -358,6 +372,8 @@ export interface RuntimeApproval {
   artifactId?: string | null;
   sourceTaskId?: string | null;
   sourceApprovalId?: string | null;
+  // Absent on approvals persisted before this field existed; those read as human.
+  actor?: RuntimeApprovalActor | null;
 }
 
 export interface RuntimeCandidate {
@@ -501,6 +517,7 @@ export interface RuntimeTask {
   priority: "low" | "medium" | "high";
   designRequest?: RuntimeDesignRequest | null;
   grillPolicy?: RuntimeGrillPolicy;
+  gatePolicy?: RuntimeGatePolicy;
   workflowProfile?: RuntimeWorkflowProfile;
   stageDispositions?: Partial<Record<StageId, RuntimeStageDisposition>>;
   reviewRetries?: Array<{
@@ -869,6 +886,7 @@ export interface RuntimeModelCatalog {
 export interface RuntimeSettings {
   projects?: RuntimeProject[];
   grillPolicy: RuntimeGrillPolicy;
+  gatePolicy: RuntimeGatePolicy;
   allowedModels: string[];
   defaultModel: string;
   defaultReasoning: string;

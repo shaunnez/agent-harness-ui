@@ -13,6 +13,7 @@ export function createTaskCreationRoutes({
   validateAttachments,
   validateRepository,
   validateStagePolicies,
+  validateGatePolicy,
   git,
   repositoryAuthorityService,
   validWorkflows: VALID_WORKFLOWS,
@@ -60,6 +61,7 @@ export function createTaskCreationRoutes({
       }
       if (input.grillPolicy != null && !GRILL_POLICIES.has(String(input.grillPolicy)))
         throw new Error("Choose a supported Grill interaction policy.");
+      const gatePolicy = validateGatePolicy(input.gatePolicy, settings.gatePolicy);
       const designPolicies =
         input.designRequested === true
           ? validateDesignPolicies(
@@ -151,6 +153,7 @@ export function createTaskCreationRoutes({
           profileStagePolicies: taskProfilePolicies,
           grillPolicy: input.grillPolicy != null ? String(input.grillPolicy) : undefined,
           workflowProfile,
+          gatePolicy,
           experiment,
           repositoryAuthority,
           attachments: savedAttachments,

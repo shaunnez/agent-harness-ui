@@ -16,6 +16,7 @@ export function createRuntimeSettingsRoutes({
   readJson,
   validateRepository,
   validateStagePolicies,
+  validateGatePolicy,
   worktreeEntriesForTask,
   runtimeSchemaVersion,
 }) {
@@ -54,6 +55,7 @@ export function createRuntimeSettingsRoutes({
       const grillPolicy =
         input.grillPolicy === undefined ? currentSettings.grillPolicy : String(input.grillPolicy);
       if (!GRILL_POLICIES.has(grillPolicy)) throw new Error("Choose a supported Grill interaction policy.");
+      const gatePolicy = validateGatePolicy(input.gatePolicy, currentSettings.gatePolicy);
       const stagePolicies = validateStagePolicies(
         input.stagePolicies,
         known,
@@ -82,6 +84,7 @@ export function createRuntimeSettingsRoutes({
         draft.defaultModel = defaultModel;
         draft.defaultReasoning = defaultReasoning;
         draft.grillPolicy = grillPolicy;
+        draft.gatePolicy = gatePolicy;
         draft.stagePolicies = stagePolicies;
         draft.profileStagePolicies = profileStagePolicies;
         draft.designPolicies = designPolicies;

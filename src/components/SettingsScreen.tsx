@@ -4,6 +4,8 @@ import type {
   RuntimeAgentPolicy,
   RuntimeDesignPolicies,
   RuntimeEvaluationSummary,
+  RuntimeGatePolicy,
+  RuntimeGatePolicyValue,
   RuntimeGrillPolicy,
   RuntimeSettings,
   RuntimeStatus,
@@ -22,6 +24,7 @@ import { SystemBoundaryMap } from "./SystemBoundaryMap";
 type RuntimePolicyInput = Pick<
   RuntimeSettings,
   | "grillPolicy"
+  | "gatePolicy"
   | "allowedModels"
   | "defaultModel"
   | "defaultReasoning"
@@ -29,6 +32,21 @@ type RuntimePolicyInput = Pick<
   | "profileStagePolicies"
   | "designPolicies"
 >;
+
+const DEFAULT_GATE_POLICY: RuntimeGatePolicy = { specification: "manual", plan: "manual" };
+
+const GATE_POLICY_ROWS: Array<{ id: keyof RuntimeGatePolicy; label: string; description: string }> = [
+  {
+    id: "specification",
+    label: "Specification",
+    description: "Whether the written spec is the thing the operator wanted built.",
+  },
+  {
+    id: "plan",
+    label: "Plan",
+    description: "Whether the implementation approach is acceptable.",
+  },
+];
 
 export function SettingsScreen({
   runtimeStatus,
@@ -61,6 +79,7 @@ export function SettingsScreen({
       : undefined);
   const [allowedModels, setAllowedModels] = useState<string[]>([]);
   const [grillPolicy, setGrillPolicy] = useState<RuntimeGrillPolicy>("manual");
+  const [gatePolicy, setGatePolicy] = useState<RuntimeGatePolicy>(DEFAULT_GATE_POLICY);
   const [defaultModel, setDefaultModel] = useState("");
   const [defaultReasoning, setDefaultReasoning] = useState("");
   const [stagePolicies, setStagePolicies] = useState<Record<string, RuntimeAgentPolicy>>({});
@@ -77,6 +96,7 @@ export function SettingsScreen({
     const settings = runtimeStatus?.settings;
     if (!settings) return;
     setGrillPolicy(settings.grillPolicy ?? "manual");
+    setGatePolicy(settings.gatePolicy ?? DEFAULT_GATE_POLICY);
     setAllowedModels(settings.allowedModels);
     setDefaultModel(settings.defaultModel);
     setDefaultReasoning(settings.defaultReasoning);
@@ -103,6 +123,7 @@ export function SettingsScreen({
       const matrices = { ...profileStagePolicies, [editingProfile]: stagePolicies };
       await onSave({
         grillPolicy,
+        gatePolicy,
         allowedModels,
         defaultModel,
         defaultReasoning,
@@ -212,6 +233,69 @@ export function SettingsScreen({
           onClick={() => void save()}
         >
           {saving ? "Saving…" : "Save interaction policy"}
+        </Button>
+      </section>
+      <section className="settings-section">
+        <h3>Approval gates</h3>
+        <p className="settings-section__intro">
+          Choose whether new tasks pause for a human at the specification and plan gates, or advance on their
+          own once the evidence is clean. A policy approval is always recorded and labelled as automatic — it
+          never reads as a silent skip. Candidate and merge approvals always stay manual.
+        </p>
+        {GATE_POLICY_ROWS.map((row) => (
+          <fieldset className="settings-grill-policy" key={row.id}>
+            <legend>{row.label} gate</legend>
+            <label className={gatePolicy[row.id] === "manual" ? "selected" : ""}>
+              <input
+                type="radio"
+                name={`gate-policy-${row.id}`}
+                value="manual"
+                checked={gatePolicy[row.id] === "manual"}
+                onChange={() => {
+                  setGatePolicy((current) => ({ ...current, [row.id]: "manual" as RuntimeGatePolicyValue }));
+                  setSaveMessage(null);
+                }}
+              />
+              <span>
+                <strong>
+                  Pause for my approval <em>Default</em>
+                </strong>
+                <small>{row.description}</small>
+              </span>
+            </label>
+            <label className={gatePolicy[row.id] === "auto-on-clean" ? "selected" : ""}>
+              <input
+                type="radio"
+                name={`gate-policy-${row.id}`}
+                value="auto-on-clean"
+                checked={gatePolicy[row.id] === "auto-on-clean"}
+                onChange={() => {
+                  setGatePolicy((current) => ({
+                    ...current,
+                    [row.id]: "auto-on-clean" as RuntimeGatePolicyValue,
+                  }));
+                  setSaveMessage(null);
+                }}
+              />
+              <span>
+                <strong>Advance automatically when clean</strong>
+                <small>
+                  Approves and continues without pausing, but only when nothing is flagged. Any other case
+                  parks exactly as it does today.
+                </small>
+              </span>
+            </label>
+          </fieldset>
+        ))}
+        <Button
+          type="button"
+          tone="primary"
+          disabled={
+            saving || !allowedModels.length || !defaultModel || !defaultReasoning || !designPoliciesValid
+          }
+          onClick={() => void save()}
+        >
+          {saving ? "Saving…" : "Save gate policy"}
         </Button>
       </section>
       <section className="settings-section">
