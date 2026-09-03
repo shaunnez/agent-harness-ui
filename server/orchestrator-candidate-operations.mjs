@@ -254,11 +254,19 @@ export class CandidateOperationsOrchestrator {
       if (task.candidates?.length) {
         throw new Error("This task already has a candidate; use candidate refresh or rebuild instead.");
       }
-      const target = await this._worktrees.base(task, { allowDirty: true });
+      const checkoutTarget = task.repositoryAuthority?.selectedRevision
+        ? null
+        : await this._worktrees.base(task, { allowDirty: true });
+      const targetRevision = task.repositoryAuthority?.selectedRevision ?? checkoutTarget.baseRevision;
       const attemptedBases = new Set(
         (task.workPackages ?? []).map((workPackage) => workPackage.baseRevision).filter(Boolean),
       );
-      if (!attemptedBases.size || [...attemptedBases].every((revision) => revision === target.baseRevision)) {
+      const recoveringRecordedDivergence = task.blocker?.code === "implementation-target-diverged";
+      if (
+        !attemptedBases.size ||
+        (!recoveringRecordedDivergence &&
+          [...attemptedBases].every((revision) => revision === targetRevision))
+      ) {
         throw new Error("The implementation packages already use the latest target revision.");
       }
       return await this._store.transition(
@@ -288,7 +296,7 @@ export class CandidateOperationsOrchestrator {
             activity(
               "implement",
               "Implementation restart authorized from latest target",
-              `Prior slice artifacts remain retained. Approved packages will restart from ${target.baseRevision.slice(0, 8)} with bounded concurrency and fresh qualification.`,
+              `Prior slice artifacts remain retained. Approved packages will restart from ${targetRevision.slice(0, 8)} with bounded concurrency and fresh qualification.`,
               "warning",
               "decision",
             ),

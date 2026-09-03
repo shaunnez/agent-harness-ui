@@ -191,8 +191,21 @@ export function RuntimeCommandBar({
             </Button>
           )}
         {task.status === "awaiting-plan-approval" &&
-        !retryAllowanceExhausted &&
-        (task.actionEligibility?.actions.plan?.allowed ?? true) ? (
+        retryAllowanceExhausted &&
+        task.actionEligibility?.actions["grant-retry"]?.allowed ? (
+          <Button
+            tone="secondary"
+            compact
+            icon={Play}
+            disabled={pending}
+            title="Grant one additional correction attempt while keeping this successful plan available for approval."
+            onClick={() => void invoke("grant-retry")}
+          >
+            {pending ? "Granting..." : "Grant one Plan attempt"}
+          </Button>
+        ) : task.status === "awaiting-plan-approval" &&
+          !retryAllowanceExhausted &&
+          (task.actionEligibility?.actions.plan?.allowed ?? true) ? (
           <Button
             tone="secondary"
             compact
