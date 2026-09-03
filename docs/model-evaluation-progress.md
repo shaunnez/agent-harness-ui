@@ -10,7 +10,7 @@ Coordinator tracking file. Integration branch: `claude/model-selection-harness-2
 | WP1 | merged | worktree-agent-a0b58aa575ad924b3 | b8eec71 (merged into integration) | 486/486 passing standalone |
 | WP1b | merged | claude/model-eval-plan-delivery-f66117 (isolation lost on resume, see note) | 111ecde (merged into integration) | 498/498 passing standalone |
 | WP2 | merged | worktree-agent-a9ddeb9b8ae88ab23 | 20ef6b0 (merged into integration) | 488/488 passing standalone |
-| WP3 | todo | - | - | - |
+| WP3 | running | - | - | - |
 | WP4 | todo | - | - | - |
 | WP5 | todo | - | - | - |
 | WP6 | todo | - | - | - |
