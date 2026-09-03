@@ -13,5 +13,6 @@ import "./api-retry-reservation-drift.test.mjs";
 import "./api-task-admission.test.mjs";
 import "./api-prototype-design.test.mjs";
 import "./api-task-creation-profile.test.mjs";
+import "./api-task-creation-matrix.test.mjs";
 import "./api-candidate-diff.test.mjs";
 import "./api-task-authority.test.mjs";

@@ -3,6 +3,7 @@ import path from "node:path";
 import { validateDesignPolicies } from "./design-policies.mjs";
 import { hashTaskBrief, normalizeExperimentInput } from "./evaluation.mjs";
 import { normalizeModelId, POLICY_IDS, readExecutionProviderCatalog } from "./model-catalog.mjs";
+import { GRILL_POLICIES } from "./runtime-settings-routes.mjs";
 import { selectWorkflowProfile, WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
 
 export function createTaskCreationRoutes({
@@ -11,6 +12,7 @@ export function createTaskCreationRoutes({
   readJson,
   validateAttachments,
   validateRepository,
+  validateStagePolicies,
   git,
   repositoryAuthorityService,
   validWorkflows: VALID_WORKFLOWS,
@@ -29,6 +31,8 @@ export function createTaskCreationRoutes({
         throw new Error("Workflow profile must be auto, fast, standard, or high-risk.");
       }
       const attachments = validateAttachments(input.attachments);
+      if (input.stagePolicies != null && input.model != null)
+        throw new Error("Provide either stagePolicies or model, not both.");
       const settings = await store.settings();
       const catalog = await readExecutionProviderCatalog();
       const knownModels = new Map(
@@ -41,6 +45,21 @@ export function createTaskCreationRoutes({
       const requestedReasoning = String(input.reasoning ?? settings.defaultReasoning);
       if (!selectedModel.reasoningLevels.includes(requestedReasoning))
         throw new Error(`${selectedModel.label} does not support ${requestedReasoning} reasoning.`);
+      let requestedStagePolicies = null;
+      if (input.stagePolicies != null) {
+        if (typeof input.stagePolicies !== "object" || Array.isArray(input.stagePolicies))
+          throw new Error("stagePolicies must be an object keyed by role.");
+        const missingRole = POLICY_IDS.find((policyId) => input.stagePolicies[policyId] == null);
+        if (missingRole) throw new Error(`stagePolicies is missing an entry for "${missingRole}".`);
+        requestedStagePolicies = validateStagePolicies(
+          input.stagePolicies,
+          knownModels,
+          settings.allowedModels,
+          null,
+        );
+      }
+      if (input.grillPolicy != null && !GRILL_POLICIES.has(String(input.grillPolicy)))
+        throw new Error("Choose a supported Grill interaction policy.");
       const designPolicies =
         input.designRequested === true
           ? validateDesignPolicies(
@@ -55,8 +74,11 @@ export function createTaskCreationRoutes({
         description: input.description,
         requestedProfile: WORKFLOW_PROFILE_IDS.includes(input.workflowProfile) ? input.workflowProfile : null,
       });
-      const taskProfilePolicies =
-        input.model || input.reasoning
+      const taskProfilePolicies = requestedStagePolicies
+        ? Object.fromEntries(
+            WORKFLOW_PROFILE_IDS.map((profile) => [profile, structuredClone(requestedStagePolicies)]),
+          )
+        : input.model || input.reasoning
           ? Object.fromEntries(
               WORKFLOW_PROFILE_IDS.map((profile) => [
                 profile,
@@ -69,9 +91,9 @@ export function createTaskCreationRoutes({
               ]),
             )
           : structuredClone(settings.profileStagePolicies);
-      const taskPolicies = structuredClone(
-        taskProfilePolicies?.[workflowProfile.selected] ?? settings.stagePolicies,
-      );
+      const taskPolicies = requestedStagePolicies
+        ? structuredClone(requestedStagePolicies)
+        : structuredClone(taskProfilePolicies?.[workflowProfile.selected] ?? settings.stagePolicies);
       const repositoryPath = await validateRepository(input.repositoryPath);
       const priority = ["low", "medium", "high"].includes(input.priority) ? input.priority : "medium";
       let experiment = null;
@@ -127,6 +149,7 @@ export function createTaskCreationRoutes({
           reasoning: requestedReasoning,
           stagePolicies: taskPolicies,
           profileStagePolicies: taskProfilePolicies,
+          grillPolicy: input.grillPolicy != null ? String(input.grillPolicy) : undefined,
           workflowProfile,
           experiment,
           repositoryAuthority,

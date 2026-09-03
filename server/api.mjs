@@ -119,7 +119,7 @@ function validateAttachments(input) {
   });
 }
 
-function validateStagePolicies(input, known, allowedModels, fallback) {
+export function validateStagePolicies(input, known, allowedModels, fallback) {
   const policies = {};
   for (const policyId of POLICY_IDS) {
     const fallbackPolicy = fallback?.[policyId];
@@ -244,6 +244,7 @@ export function createApiServer({
     readJson,
     validateAttachments,
     validateRepository,
+    validateStagePolicies,
     git,
     repositoryAuthorityService,
     validWorkflows: VALID_WORKFLOWS,
