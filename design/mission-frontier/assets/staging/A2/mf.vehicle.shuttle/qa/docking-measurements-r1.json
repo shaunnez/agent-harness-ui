@@ -1,0 +1,33 @@
+{
+  "padDockLogical": [
+    198.0345,
+    266.11685
+  ],
+  "shuttleContactCentreLogical": [
+    120.8158,
+    186.89475
+  ],
+  "pasteOffsetSource": [
+    154,
+    158
+  ],
+  "contactPointsOnPadSource": [
+    [
+      288.7895,
+      543.9474
+    ],
+    [
+      406.68420000000003,
+      490.5263
+    ],
+    [
+      502.4737,
+      519.6315999999999
+    ],
+    [
+      384.5789,
+      573.0526
+    ]
+  ],
+  "note": "Three visible skid contacts plus estimated hidden fourth; clearance comparison requires coordinator visual qualification."
+}

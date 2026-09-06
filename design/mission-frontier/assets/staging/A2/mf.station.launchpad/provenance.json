@@ -1,0 +1,32 @@
+{
+  "assetId": "mf.station.launchpad",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-6ced0bca-2bf4-427a-8422-03dd2182252b",
+  "sourceSha256": "31def4b348f8ccedfaf4e9d4534c034d3efb33d9c755109a1829b0ce690bc163",
+  "prompt": "ONE isolated game production sprite: HUMAN APPROVAL DELIVERY DOCKING PAD, NO SHUTTLE. Ceramic-white/slate industrial style matching supplied game stations, warm upper-left daylight, fixed orthographic 2:1 isometric. Broad raised rectangular/octagonal low platform, ground footprint230x120logical, fullwidth about250logical, verticalheight only12\u201318logical (much LOWER than workbenches). Dark steel flat docking deck with white ceramic bevelled rim, passive physical alignment rails and four low docking stops along outer edges. Central70percent deck remains completely EMPTY and unobstructed for a separate small shuttle added later. At LEFT edge only, one compact low angled operator console with blank dark glass and a real round dark front-facing diagnostic connector reachable by an independent worker. No bridge or ramp extending out; clear front corner ground contact for registration. Precise restrained industrial detail, clean memorable pad silhouette, no decorative clutter. NO spacecraft, workers, cargo, labels, numbers, text, logos, success badges, arrows, status lamps, glowing lights or beams, floor scenery or shadow plane. All passive neutral hardware. Full isolated platform entirely within image with generous margins, perfectly flat vivid green RGB(0,255,0) background; no checkerboard or gradient.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.station.fabrication/exports/station-fabrication-r1.png",
+      "sha256": "3bb80f14413e70b0398b4d6770e601affcf3d9b20d2a5553dd3f01cebf1d966d"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.station.communications/exports/station-communications-r1.png",
+      "sha256": "81a0c8c2e1f4de2f034afa0d3f36e86983f8bd348b0c9e69b20dd63d9656d6da"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Green key and spill cleanup",
+    "Crop subject and uniformly fit500source pixels wide",
+    "Lanczos resize and register bottom at660source on768canvas",
+    "QA-only comparison at requested consumer factors"
+  ],
+  "exportSha256": "19bb79ad69a79aa65e8660e817c5f4b5a3493587b8e0561e8bfad93f603780b6",
+  "exportBytes": 174088,
+  "rightsNote": "Supplied/generated project references only; provenance is not legal clearance."
+}

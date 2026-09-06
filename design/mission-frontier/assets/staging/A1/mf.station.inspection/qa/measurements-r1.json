@@ -1,0 +1,15 @@
+{
+  "mode": "RGBA",
+  "size": [
+    512,
+    512
+  ],
+  "alphaRange": [
+    0,
+    255
+  ],
+  "borderNontransparent": 0,
+  "benchHeightLogical": 41.88235,
+  "approxFootprintWidthLogical": 142.7451,
+  "approxFootprintDepthLogical": 84.86275
+}

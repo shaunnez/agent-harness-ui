@@ -1,8 +1,8 @@
-import { type RuntimeTask, type StageId, workflowStages } from "../../domain";
+import { type RuntimeTask, type RuntimeTaskCore, type StageId, workflowStages } from "../../domain";
 import { getEffectiveStageRunAttempts, getEffectiveStageRunLimit } from "../../runtime-stage-limits";
 import { candidateGateStages, getRuntimeGateFreshness } from "./workflow";
 
-export function nextAction(task: RuntimeTask) {
+export function nextAction(task: RuntimeTask | RuntimeTaskCore) {
   const next = deriveNextAction(task);
   if (!next?.action) {
     if (task.actionEligibility?.actions["grant-retry"]?.allowed) {
@@ -20,7 +20,7 @@ export function nextAction(task: RuntimeTask) {
   return task.actionEligibility.actions[next.action]?.allowed ? next : null;
 }
 
-export function deriveNextAction(task: RuntimeTask) {
+export function deriveNextAction(task: RuntimeTask | RuntimeTaskCore) {
   const currentAttempts = getEffectiveStageRunAttempts(task);
   const retryAllowanceExhausted = currentAttempts >= getEffectiveStageRunLimit(task);
   const candidate = task.candidates?.at(-1);
@@ -164,7 +164,9 @@ export function deriveNextAction(task: RuntimeTask) {
         artifact.candidateId === candidate?.id &&
         artifact.candidateRevision === candidate?.revisionNumber,
     );
-  const blockingCandidateDefect = latestTestArtifact?.gateResult?.findings?.some(
+  const detailedTestArtifact =
+    latestTestArtifact && "content" in latestTestArtifact ? latestTestArtifact : undefined;
+  const blockingCandidateDefect = detailedTestArtifact?.gateResult?.findings?.some(
     (finding) => finding.blocking === true && finding.kind === "candidate-defect",
   );
   const sameCandidateTestRetryUsed = task.sameCandidateTestRetries?.some(
@@ -183,7 +185,7 @@ export function deriveNextAction(task: RuntimeTask) {
   if (
     ["repair-required", "failed", "blocked"].includes(task.status) &&
     task.currentStage === "test" &&
-    (latestTestArtifact?.focusedTest?.status === "failed" || failedExactCandidateVerification) &&
+    (detailedTestArtifact?.focusedTest?.status === "failed" || failedExactCandidateVerification) &&
     !blockingCandidateDefect &&
     !sameCandidateTestRetryUsed
   )
@@ -381,7 +383,7 @@ export function deriveNextAction(task: RuntimeTask) {
   return null;
 }
 
-export function getAccessBoundaryCopy(task: RuntimeTask) {
+export function getAccessBoundaryCopy(task: RuntimeTask | RuntimeTaskCore) {
   const stage = workflowStages.find((entry) => entry.id === task.currentStage);
   const stageLabel = stage?.label ?? "Current stage";
   if (task.status === "awaiting-grill") {

@@ -1,0 +1,95 @@
+{
+  "id": "mf.worker.standard.se.working",
+  "revision": 1,
+  "status": "pending-coordinator-motion-review",
+  "file": "exports/worker-working-assembled-r1.png",
+  "sourceSize": [
+    768,
+    768
+  ],
+  "logicalSize": [
+    384,
+    384
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    136.2275,
+    339.9605
+  ],
+  "layer": "worker",
+  "occlusionClass": "actor",
+  "sockets": {
+    "elbow": [
+      211.9505,
+      164.7525
+    ],
+    "probeTip": [
+      331.713,
+      192.0
+    ]
+  },
+  "parts": [
+    {
+      "name": "body",
+      "file": "exports/worker-working-body-r1.png",
+      "sourceSize": [
+        768,
+        768
+      ],
+      "logicalSize": [
+        384,
+        384
+      ],
+      "anchor": [
+        136.2275,
+        339.9605
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "rotationDegrees": 0
+    },
+    {
+      "name": "forearm-probe",
+      "file": "exports/worker-working-forearm-probe-r1.png",
+      "sourceSize": [
+        768,
+        768
+      ],
+      "logicalSize": [
+        384,
+        384
+      ],
+      "anchor": [
+        136.2275,
+        339.9605
+      ],
+      "pivot": [
+        211.9505,
+        164.7525
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "maxRotationDegrees": 4,
+      "drawOrder": 1
+    }
+  ],
+  "motionContract": "Render body fixed. Place moving part in the same untrimmed frame and rotate around elbow pivot only, maximum\u00b14degrees. Active-run only. Stop at0 and use assembled fallback for reduced motion; neutral/finished uses parked ID. Probe tip moves with part.",
+  "sha256": "e676f04f016b05b3471c3a4dbbce4a78fdb5df3f88fada9f2b2b3c1e063c930a",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/actual-scale-motion-r1.gif",
+    "qa/elbow-contact-r1.png",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/registration-r1.png"
+  ],
+  "limits": [
+    "Station contact requires renderer placement; no station is baked in.",
+    "Only elbow forearm/probe articulation, not a full skeleton.",
+    "At58px the motion is subtle; do not exaggerate beyond4degrees to force visibility."
+  ]
+}

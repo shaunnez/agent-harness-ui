@@ -1,0 +1,15 @@
+{
+  "entry.json": "cf06ab47b14cb3009ad5aac083f7115d67f9e492b4340d0d16deaf3920ee13b1",
+  "exports/station-launchpad-r1.png": "19bb79ad69a79aa65e8660e817c5f4b5a3493587b8e0561e8bfad93f603780b6",
+  "geometry.json": "ef0c368b020ad9d37eca60c5b8bf7db14362f787da2d9a801e957b8033cdc0ff",
+  "process.py": "09735b5320f2059493421f451d0c27ee7ae4f6b6ac1d92085f3cea2e02ddc0fe",
+  "provenance.json": "9b8bda968e738aef5431f3407d1f65607007474201e053ac1e817e0ae2eb35cd",
+  "qa/QA.md": "e953497a170e3f10d0512339bb2d812141ea188f460d7fc9755f60620cfa6a1f",
+  "qa/alpha-backgrounds-r1.png": "d4c5564b52782d569947066781dae2123185a52ee0c65155e22a51e215351a8f",
+  "qa/calibrated-scale-comparison-r1.png": "b5cf3fd1bfc06774902aaa95fe74f4d125ec6b94f214fdc2048622115e017aeb",
+  "qa/measurements-r1.json": "da735b6d37647ceccc517b61fa4f57d28ec284eaca3890cdf5f7c937b784c159",
+  "qa/socket-registration-r1.png": "6c271b97f932fb8f1d34da2450ce24034374fd343a969367e699ed2b718fdd04",
+  "source/generation-prompt.txt": "e7fe2d4a23594ba362b57fd294f245bee45ced5bc93746d61f1afefc7d6d668b",
+  "source/launchpad-alpha-master-r1.png": "bf925e7b18f8e03a14c94a62592c7c55da8d28a26847519322f1cb7eec2e6e94",
+  "source/launchpad-master-r1.png": "31def4b348f8ccedfaf4e9d4534c034d3efb33d9c755109a1829b0ce690bc163"
+}

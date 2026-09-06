@@ -1,0 +1,23 @@
+{
+  "entry.json": "6881ebe803803ea407fec48880120995d81f971d864eb0fcb29e18abc27ed888",
+  "exports/vehicle-shuttle-r1.png": "41e49a8cff4de991a83f14bb13c4cc9d287a91b0d531b12713a3fc8e4556e7bc",
+  "geometry.json": "9d429fbbfaefd9ce56ef17b8e2534540c19208ee081d81879c30ea783afa5d83",
+  "process.py": "8ab1880b03e19dbc512da75134064a4d83d0013cb09d80018cd0000073337dd3",
+  "provenance.json": "8bc35afb8c24e41b25cb6cc9de47087463570a3d6e1ef3ab9b9e3e1bee955beb",
+  "qa/QA.md": "5e3dfa93da3abcbdd1a7b966d8a8fb807cc1681fdbcc6d6749c5a151a35f45eb",
+  "qa/alpha-backgrounds-r1.png": "39aa50cf9de23ab592616524623b82fb295f748c6428183f7710914186f8c5ed",
+  "qa/calibrated-scale-comparison-r1.png": "709569cd49cc8531c383faeb27a51dd9b5acac12745983f2ab29102035c76b23",
+  "qa/clearance-fit-measurements-r1.json": "14c67f7b380aff4502cfe59338a6d81df4751c3fe49f231ed480eaa29d9164f9",
+  "qa/dock-contact-r1.png": "4f89d7cfe44c1bfe2222f8e61945deaba4817e5863114e019b703187ae363572",
+  "qa/docked-actual-scale-r1.png": "1fdf80e8aac085516b07ccb2c5dc24fc40df580e24f9e5cb84074ab97225be64",
+  "qa/docking-measurements-r1.json": "4912ce7cc0208f6f0b918fd357f608d16eefb063aa9d7f0f8e5a5fc606995a67",
+  "qa/measurements-r1.json": "7ecec65f50de4c9c29becc8fcbd813667162f8587503af9e96acd97f41cffe36",
+  "qa/pad-shuttle-clearance-fit-r1.png": "24a357a586864672e5b17b9ab5adb49b0cb63ad26075ed49ca0ff233b37f48e2",
+  "qa/pad-shuttle-composite-r1.png": "78247510b7c2f9a5c80725a1afcb4283cdb72b308124f3073f47f5398752710d",
+  "qa/socket-registration-r1.png": "288db94afb6ab3afe81e4e11e4801677fd6f8511c907a48a7656295338393cba",
+  "source/correction-prompt.txt": "27cc395da63919a06062808c1fa63edbf8f94992aa6ab9851e470ad04f719d85",
+  "source/generation-prompt.txt": "ab4a0afb143558b26d8782a03a0c313868c6f79d279ecbb5c964f70a6538d963",
+  "source/shuttle-alpha-master-r1.png": "20e94ee0631e52cd758ca523c9306b18e2fc6d499c0a35a8c11c922311fe8ed2",
+  "source/shuttle-initial-bright-sensor.png": "680ccdaae5e082362dd74520b1fd111d56f3e9848ef932125f30e02b33736c82",
+  "source/shuttle-master-r1.png": "405282b2e9efb17494995eb9b804a428d8f3988a499c39cb6e64a7b2973893a2"
+}

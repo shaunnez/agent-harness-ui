@@ -1,0 +1,52 @@
+{
+  "assetId": "mf.worker.standard.se.neutral",
+  "revision": 1,
+  "classification": "original AI-generated art using supplied project reference images",
+  "generator": "Built-in ImageGen",
+  "model": "not selected or asserted by the asset agent; built-in tool",
+  "sourceId": "exec-0d136c05-5ba2-42b2-8bba-ad6d29bf2ee7",
+  "generationPath": "/Users/shaun/.codex/generated_images/01a0749d-4c28-78f1-ba94-00501ef2ade3/exec-0d136c05-5ba2-42b2-8bba-ad6d29bf2ee7.png",
+  "sourceFile": "source/worker-standard-se-neutral-master-r1.png",
+  "sourceSha256": "26bd0f5420c61cb9cdcb614c105121716ed4331df708a21b231d5ba7ddbf0f23",
+  "prompt": "Use case: stylized-concept.\nAsset type: one production game worker sprite, not a UI screen.\nUsing the supplied Mission Frontier images as character-identity references, create an isolated full-body version of their friendly round-headed ceramic-white mechanical worker. First image supplies world style; second supplies the worker identity. Preserve the compact substantial proportions, white/off-white segmented rounded head, glossy very dark face panel with two tiny cyan-blue eyes, round dark ear joints, white torso and limb shells over charcoal mechanical joints, broad useful mechanical feet and subtle surface wear. No logos.\nPose: stationary parked neutral standing, both feet planted, arms relaxed at sides, head and torso facing screen lower right (southeast), three-quarter view with the robot's left side visible. Both eyes visible, far eye foreshortened. Camera fixed orthographic game view looking downward about 30 degrees, compatible with a 2:1 isometric ground projection. No tool, console or other object.\nLighting: restrained warm daylight from upper left with neutral fill; no environmental color spill. Crisp high-quality softly realistic rendered game art, same material world as reference, not cartoon, not voxel, not low-poly.\nComposition: square image. Entire character from head to feet, no cropping, centered on a clean perfectly uniform saturated green #00FF00 background that will be removed. No cast shadow, no ground, no pedestal, no horizon, no vignette. Keep transparent-looking gaps between arms and torso and between legs as the same flat green. Robot only; no UI, text, numbers, status effects, selection ring, scenery, tool, extra limbs or characters. Height about 80% of canvas with generous margins. The background must not illuminate or tint the white robot.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/reference/selected-world.png",
+      "sha256": "929dba738d20981573cfe52b951a45bd18357991a70adb82b92b622399f29758",
+      "role": "world style and worker identity"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/agent-work-blocked-v1.1.png",
+      "sha256": "a6ff3c3c26cdc4df7df355b0e091ba6acc59de28f07fed0034c09093d89b52b3",
+      "role": "worker close-up identity"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    {
+      "script": "process.py",
+      "operations": [
+        "RGB source kept unchanged",
+        "Green chroma key alpha = 1 - clamp((G-max(R,B)-20)/170,0,1)",
+        "Green-only spill clamp to max(R,B)+10 on chroma-key affected pixels",
+        "Zero RGB beneath alpha=0",
+        "Crop alpha bounds; Lanczos resize to 141x312; composite at 122,28 into transparent 384x384 canvas",
+        "Post-resize green spill clamp; zero RGB under alpha=0",
+        "Actual-scale compositing QA; no anatomy redraw, no inpainting, no perspective transform"
+      ]
+    },
+    {
+      "script": "finalize.py",
+      "operations": [
+        "Pixel-contour measurement in visually chosen sole spans",
+        "Runtime entry and provenance metadata",
+        "Registration overlay QA"
+      ]
+    }
+  ],
+  "exportSha256": "2fb35d56130d44035ec3962e640b03e994e716b8204e8e611bebbaade53941b0",
+  "exportBytes": 92595,
+  "decodedRgbaBytes": 589824,
+  "approval": "Not accepted; coordinator render review required",
+  "rightsNote": "Supplied project references and built-in generated output only. No third-party asset imported. Generation provenance is not an assertion of legal clearance."
+}

@@ -1,0 +1,17 @@
+{
+  "entry.json": "27e1193ae108ad7ba5ed8c585bcf5eed1ed48d1bab5bfa931f95df0cbc8b6594",
+  "exports/terrain-ground-r1.png": "12bec3d7f9d85f2e42a1c617d2574e7ad2b697ff38fee93a0f6256389e7fb731",
+  "geometry.json": "33027a90e7d7b8498d4781bfe3f1061e807be6a54879cbc2b64b98d7a462fa73",
+  "process.py": "9907ceba50a0cd56c4ae27b71887277befc851ea18c181b838707933dbe123d2",
+  "provenance.json": "7d7cec501c49b157a848a7a94a3d760b15edd43da5d8a8cb155313a17321dbb0",
+  "qa/QA.md": "232300a810ef3965dfc5f7a014333911475fa18d0ff70d59edc9916f1d76306c",
+  "qa/alpha-backgrounds-r1.png": "057dfd174dec853c82d1243445e1ba9541a3b751f9344b19e6d104b4a11e91fc",
+  "qa/measurements-r1.json": "e3074978a54eb41e7e6daa058817c45753a5518838ee7b8ad96e404d076d4ae6",
+  "qa/overview-placement-r1.png": "b7c47360417727935e4f18650fc491dab64c25d9ad6df4af6373cc7881d9ebf9",
+  "qa/surface-registration-r1.png": "d32d94996a93eb3369203fe6bef8953e5a7dbbe7617bcf6e5d0c2f8af0ebdffb",
+  "source/generation-prompt.txt": "1bbf871cdada0318dde748b68aafb293d06ccbfd2529fdf68cdcafdfdb1e10b4",
+  "source/ground-alpha-mask-r1.png": "b51b7552b1d7102b676191db8c1cc6911a7716e5a3f47d8283e38183c1bff62d",
+  "source/ground-alpha-master-r1.png": "2e66b8ecb2349c2dae942e710145a59203b36025f374f648dba662ef86a07660",
+  "source/ground-master-r1.png": "2c176f785a4698098c21293b95f35e2ecb7fad7afa2ec6db02bb7773a8bec966",
+  "source/registered-alpha-mask-r1.png": "e40a93d2859de8719b1125054b4bcc475188aef2384724078bb357ab8de6ed82"
+}

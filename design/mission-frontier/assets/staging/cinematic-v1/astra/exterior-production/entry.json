@@ -1,0 +1,320 @@
+{
+  "id": "mf.base.standard.roof",
+  "revision": 1,
+  "status": "production-pending-final-in-app-review",
+  "file": "renders/exterior.png",
+  "sourceSize": [
+    1536,
+    1280
+  ],
+  "logicalSize": [
+    768,
+    640
+  ],
+  "groundAnchor": [
+    384,
+    522
+  ],
+  "groundAnchorSource": [
+    768.0,
+    1044.0
+  ],
+  "samples": 64,
+  "floorCornersSource": [
+    [
+      768.0,
+      339.964
+    ],
+    [
+      1472.036,
+      691.982
+    ],
+    [
+      768.0,
+      1044.0
+    ],
+    [
+      63.964,
+      691.982
+    ]
+  ],
+  "usedMeshes": [
+    "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/modular-sci-fi-megakit/Modular SciFi MegaKit[Standard]/glTF/Platforms/Door_Frame_Square.gltf",
+    "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/modular-sci-fi-megakit/Modular SciFi MegaKit[Standard]/glTF/Walls/WallAstra_Straight.gltf",
+    "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/modular-sci-fi-megakit/Modular SciFi MegaKit[Standard]/glTF/Walls/WallAstra_Straight_Window.gltf"
+  ],
+  "importPlacements": [
+    {
+      "mesh": "WallAstra_Straight_Window.gltf",
+      "location": [
+        4.639999866485596,
+        -3.5999999046325684,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 0.0
+    },
+    {
+      "mesh": "WallAstra_Straight.gltf",
+      "location": [
+        4.639999866485596,
+        -1.2000000476837158,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 0.0
+    },
+    {
+      "mesh": "WallAstra_Straight.gltf",
+      "location": [
+        4.639999866485596,
+        1.2000000476837158,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 0.0
+    },
+    {
+      "mesh": "WallAstra_Straight_Window.gltf",
+      "location": [
+        4.639999866485596,
+        3.5999999046325684,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 0.0
+    },
+    {
+      "mesh": "WallAstra_Straight_Window.gltf",
+      "location": [
+        3.6000001430511475,
+        4.6399993896484375,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 1.5707963267948966
+    },
+    {
+      "mesh": "WallAstra_Straight.gltf",
+      "location": [
+        1.2000004053115845,
+        4.639999866485596,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 1.5707963267948966
+    },
+    {
+      "mesh": "WallAstra_Straight.gltf",
+      "location": [
+        -1.1999996900558472,
+        4.639999866485596,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 1.5707963267948966
+    },
+    {
+      "mesh": "WallAstra_Straight_Window.gltf",
+      "location": [
+        -3.5999996662139893,
+        4.640000343322754,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 1.5707963267948966
+    },
+    {
+      "mesh": "WallAstra_Straight_Window.gltf",
+      "location": [
+        -4.6399993896484375,
+        3.6000003814697266,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 3.141592653589793
+    },
+    {
+      "mesh": "WallAstra_Straight.gltf",
+      "location": [
+        -4.639999866485596,
+        1.2000004053115845,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 3.141592653589793
+    },
+    {
+      "mesh": "WallAstra_Straight.gltf",
+      "location": [
+        -4.639999866485596,
+        -1.1999996900558472,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 3.141592653589793
+    },
+    {
+      "mesh": "WallAstra_Straight_Window.gltf",
+      "location": [
+        -4.640000343322754,
+        -3.59999942779541,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 3.141592653589793
+    },
+    {
+      "mesh": "WallAstra_Straight_Window.gltf",
+      "location": [
+        -3.5999996662139893,
+        -4.640000343322754,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 4.71238898038469
+    },
+    {
+      "mesh": "WallAstra_Straight.gltf",
+      "location": [
+        -1.1999996900558472,
+        -4.639999866485596,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 4.71238898038469
+    },
+    {
+      "mesh": "WallAstra_Straight.gltf",
+      "location": [
+        1.2000004053115845,
+        -4.639999866485596,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 4.71238898038469
+    },
+    {
+      "mesh": "WallAstra_Straight_Window.gltf",
+      "location": [
+        3.6000001430511475,
+        -4.6399993896484375,
+        1.2799999713897705
+      ],
+      "size": [
+        0.64,
+        2.39,
+        2.52
+      ],
+      "rotationZ": 4.71238898038469
+    },
+    {
+      "mesh": "Door_Frame_Square.gltf",
+      "location": [
+        4.96,
+        0,
+        1.25
+      ],
+      "size": [
+        0.22,
+        1.45,
+        2.2
+      ],
+      "rotationZ": 0.0
+    },
+    {
+      "mesh": "Door_Frame_Square.gltf",
+      "location": [
+        0,
+        4.96,
+        1.25
+      ],
+      "size": [
+        0.22,
+        1.45,
+        2.2
+      ],
+      "rotationZ": 1.5707963267948966
+    }
+  ],
+  "camera": {
+    "location": [
+      11.815413475036621,
+      11.815413475036621,
+      10.250102043151855
+    ],
+    "orthoScale": 15.427,
+    "elevationDegrees": 30,
+    "azimuthDegrees": 45
+  },
+  "shellContactWorldZ": 0,
+  "provenance": "Quaternius Modular SciFi FREE STANDARD meshes+trim textures with retained originals and acquisition evidence. Agent-authored terraced drum, segmentation and mechanical dish. Whole exterior shell disappears in HQ.",
+  "alphaBoundsSource": [
+    75,
+    30,
+    1461,
+    1034
+  ],
+  "topAlphaMarginSource": 30,
+  "sha256": "5680f12e6697462f93939bb63339f26a9720fb92bed68a28769e45641925db6a"
+}

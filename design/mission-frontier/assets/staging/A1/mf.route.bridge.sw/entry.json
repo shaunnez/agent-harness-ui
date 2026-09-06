@@ -1,0 +1,89 @@
+{
+  "id": "mf.route.bridge.sw",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/bridge-sw-r1.png",
+  "sourceSize": [
+    512,
+    384
+  ],
+  "logicalSize": [
+    256,
+    192
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    128,
+    128
+  ],
+  "footprint": [
+    [
+      196,
+      82
+    ],
+    [
+      220,
+      94
+    ],
+    [
+      60,
+      174
+    ],
+    [
+      36,
+      162
+    ]
+  ],
+  "layer": "route",
+  "occlusionClass": "ground-route",
+  "sockets": {
+    "ne": [
+      208,
+      88
+    ],
+    "sw": [
+      48,
+      168
+    ]
+  },
+  "crossSections": {
+    "ne": [
+      [
+        196,
+        82
+      ],
+      [
+        220,
+        94
+      ]
+    ],
+    "sw": [
+      [
+        36,
+        162
+      ],
+      [
+        60,
+        174
+      ]
+    ]
+  },
+  "repeatDisplacement": [
+    -160,
+    80
+  ],
+  "undersideDepthLogical": 4.5,
+  "sha256": "8d437a1d18c6afc7fd45554cb3fde89ebd77c037f42b3f67345599a22abbfbcb",
+  "alpha": "straight RGBA",
+  "qa": [
+    "qa/QA.md",
+    "qa/both-axes-consumer-scales-r1.png",
+    "qa/join-contact-magnified-r1.png",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/join-measurements-r1.json"
+  ],
+  "limits": [
+    "Authorized mirror reverses small structural-side highlight direction; shallow underside remains credible.",
+    "No opposite-view rerender or water baked in. Scene filtering remains coordinator review."
+  ]
+}

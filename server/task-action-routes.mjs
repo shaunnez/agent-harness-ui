@@ -1,6 +1,7 @@
 import { PROJECTED_ACTIONS, runActionAdmission } from "./action-policy.mjs";
 import {
   companionActionResponse,
+  exactCandidateBinding,
   resolveGatePromotionEligibility,
   updateTaskRolePolicy,
 } from "./companion-actions.mjs";
@@ -68,11 +69,21 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson, re
           "open-pr",
           "complete-merged",
           "close-already-satisfied",
-        ].includes(action) || CANDIDATE_BOUND_ACTIONS.has(action)
+        ].includes(action) ||
+        CANDIDATE_BOUND_ACTIONS.has(action) ||
+        action === "repair" ||
+        action === "retry-test"
           ? await readJson(request)
           : {};
       const actionInput = isRecord(notes) ? notes : {};
       const companionCandidateScope = CANDIDATE_BOUND_ACTIONS.has(action) && hasCandidateScope(actionInput);
+      const repairCandidateScope =
+        ["repair", "retry-test"].includes(action) && hasCandidateScope(actionInput);
+      const repairBinding = repairCandidateScope ? exactCandidateBinding(task, actionInput) : null;
+      if (repairBinding && !repairBinding.ok) {
+        send(response, repairBinding.status, companionActionResponse(repairBinding));
+        return true;
+      }
       const companionGateEligibility = companionCandidateScope
         ? resolveGatePromotionEligibility(task, { action, ...actionInput })
         : null;
@@ -173,7 +184,10 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson, re
         return true;
       }
       if (action === "retry-test") {
-        const result = await orchestrator.retryTestOnSameCandidate(id);
+        const result = await orchestrator.retryTestOnSameCandidate(
+          id,
+          repairCandidateScope ? candidateScopeFrom(actionInput) : undefined,
+        );
         send(response, 202, result);
         return true;
       }
@@ -359,7 +373,9 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson, re
         ? {
             canStart: (draft) => resolveGatePromotionEligibility(draft, { action, ...actionInput }).ok,
           }
-        : {};
+        : repairCandidateScope
+          ? { canStart: (draft) => exactCandidateBinding(draft, actionInput).ok }
+          : {};
       if (action === "plan" && task.currentStage === "implement") {
         startOptions.onReserve = (draft) => {
           draft.currentStage = "plan";
@@ -381,6 +397,13 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson, re
         return true;
       }
       const latest = await store.get(id);
+      if (repairCandidateScope) {
+        const latestBinding = exactCandidateBinding(latest, actionInput);
+        if (!latestBinding.ok) {
+          send(response, latestBinding.status, companionActionResponse(latestBinding));
+          return true;
+        }
+      }
       if (companionCandidateScope) {
         const latestEligibility = resolveGatePromotionEligibility(latest, {
           action,

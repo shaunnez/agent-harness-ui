@@ -1,0 +1,36 @@
+{
+  "assetId": "mf.station.survey",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-6522454f-a646-42f6-bcc5-f178d0c8c900",
+  "sourceSha256": "c38b82d491785fbdf02bed6086c20823d5c571ddaddcbc06f1e77b68ed770824",
+  "prompt": "Create ONE isolated game production sprite: a SURVEY / REPOSITORY SCOUTS work station. Same ceramic white/slate steel materials, warm upper-left daylight and fixed orthographic 2:1 isometric camera as supplied stations. Broad low rectangular bevelled workbench, same footprint and bench thickness as reference (about146x80 logical footprint,40logical benchheight). Distinct silhouette: a compact rear sensor mast carrying two dark optical lenses in a modest angled scanner head, plus a docked rugged non-character survey instrument lying horizontally in a fitted cradle on the tabletop (a compact surveying telescope/camera device, no face, no robot). Small dark reflective blue-glass calibration tablet at rear left, no graphics. Actual circular dark diagnostic port on front left vertical bench face, accessible to an independent worker probe. Believable high quality crisp mechanical detail, clean readable forms. Station is neutral and inactive: NO glowing lights, beams, state indicators, text, symbols, numbers, logos, selection markers. NO workers, people, robot characters, floor, shadow plane, scenery. Full object visible with margin, on completely flat solid vivid green RGB(0,255,0) background for later alpha extraction. No checkerboard or gradient. Do not duplicate the intake beacon tower, fabrication machine, or communications screen bank; retain family kinship but make this visibly a surveying instrument station.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A2/mf.station.intake/exports/station-intake-r1.png",
+      "sha256": "623461a3e441421299f869f0d664d8dc3c8b2d6e225d0ff9ed88873be9805cef"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.station.fabrication/exports/station-fabrication-r1.png",
+      "sha256": "3bb80f14413e70b0398b4d6770e601affcf3d9b20d2a5553dd3f01cebf1d966d"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.station.communications/exports/station-communications-r1.png",
+      "sha256": "81a0c8c2e1f4de2f034afa0d3f36e86983f8bd348b0c9e69b20dd63d9656d6da"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Green key and spill cleanup",
+    "Crop subject and uniformly fit320source pixels wide",
+    "Lanczos resize and register bottom at430source on512canvas",
+    "QA-only comparison at requested consumer factors"
+  ],
+  "exportSha256": "24856ae21fcb67acb71cb12401c0194dda77aceb31a4eacf3fa796eb5788ec61",
+  "exportBytes": 144883,
+  "rightsNote": "Supplied/generated project references only; provenance is not legal clearance."
+}

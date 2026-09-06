@@ -1,0 +1,14 @@
+{
+  "entry.json": "f2ab53bfd690b4b1110df0eda325f6c122485e9b40b373f8ef8abcda76e41370",
+  "exports/bridge-sw-r1.png": "8d437a1d18c6afc7fd45554cb3fde89ebd77c037f42b3f67345599a22abbfbcb",
+  "geometry.json": "4e4488933d4a1aab72877183f4007b991a19bf955ae65c538ef32364419aa996",
+  "process.py": "491dcf3449383850ad26340b62b15651459c8cec2905d75973b98856e110d8ea",
+  "provenance.json": "4cfd307796dfdbb1a8acc48b1c694e03a5e732cde374a1574820805b7f2fd95d",
+  "qa/QA.md": "89e96451a576ca257e3b53dea056edc90ecebd8bbd82318f1cbb5595fb7d76e7",
+  "qa/alpha-backgrounds-r1.png": "48b707b800c0f884e23e7d2ea2420a848bdd320ea54925abf70948573dcae6bb",
+  "qa/both-axes-consumer-scales-r1.png": "58f722009a7e436cda73b46e4e190eea983e8ded5febd4b743d7de1035be8f2f",
+  "qa/join-contact-magnified-r1.png": "1110fe4b2069430aba6f82e5384cdef996f3dc69ea8b681d564d7f70be820696",
+  "qa/join-measurements-r1.json": "2f99357f6f0bc3d57c651614a360623f054ed9099bc28a2c3553892b642a538a",
+  "qa/joined-se-native-r1.png": "d0f6b4c3b49954f603e14da964b8f8e395ff17289c84f86d0c61eacadc369ce6",
+  "qa/joined-sw-native-r1.png": "fa6e608835a06a0ec4569c64828b2130991ab1ee23e24e23e711be38476d5ea5"
+}

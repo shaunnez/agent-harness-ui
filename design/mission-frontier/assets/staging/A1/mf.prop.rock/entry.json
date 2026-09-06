@@ -1,0 +1,53 @@
+{
+  "id": "mf.prop.rock",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/rock-r1.png",
+  "sourceSize": [
+    384,
+    256
+  ],
+  "logicalSize": [
+    192,
+    128
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    96.0874,
+    105.1958
+  ],
+  "footprint": [
+    [
+      46.87415,
+      96.979
+    ],
+    [
+      96.5245,
+      85.7902
+    ],
+    [
+      145.3881,
+      96.7168
+    ],
+    [
+      94.6014,
+      106.24475
+    ]
+  ],
+  "layer": "scenery-prop",
+  "occlusionClass": "low-prop",
+  "sockets": {},
+  "sha256": "56518d649ca8c25a989059c0f84d57cb69289843f94e50ec68d2a7477081e237",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/ground-instances-r1.png",
+    "qa/actual-scales-r1.png"
+  ],
+  "limits": [
+    "Rear footprint point estimated; no collision mesh.",
+    "Single static low cluster; no shadow or land tile."
+  ]
+}

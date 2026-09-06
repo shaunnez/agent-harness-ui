@@ -1,0 +1,39 @@
+{
+  "masterDimensions": [
+    1254,
+    1254
+  ],
+  "masterAlphaBounds": [
+    32,
+    58,
+    1227,
+    1176
+  ],
+  "uniformScale": 0.5008944543828264,
+  "scaledSize": [
+    599,
+    560
+  ],
+  "pasteOffset": [
+    62,
+    134
+  ],
+  "exportAlphaBounds": [
+    62,
+    134,
+    661,
+    694
+  ],
+  "rootContactMaster": [
+    675,
+    1156
+  ],
+  "groundAnchorLogical": [
+    192.0375670840787,
+    341.9910554561717
+  ],
+  "rootMeasurementMethod": "Manual central trunk/root-ground contact estimate within8master pixels; broad root tips extend slightly below anchor.",
+  "actualVisibleHeightLogical": 280.0,
+  "actualCanopyWidthLogical": 299.5,
+  "shadow": "No cast shadow supplied; independent ground contact shadow is renderer-owned if needed."
+}

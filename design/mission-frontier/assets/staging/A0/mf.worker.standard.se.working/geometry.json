@@ -1,0 +1,64 @@
+{
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "masterAlphaBounds": [
+    238,
+    75,
+    1127,
+    1085
+  ],
+  "exportAlphaBounds": [
+    102,
+    64,
+    665,
+    704
+  ],
+  "uniformScale": 0.6336633663366337,
+  "scaledSize": [
+    563,
+    640
+  ],
+  "pasteOffset": [
+    102,
+    64
+  ],
+  "pivotSourcePixels": [
+    423.901,
+    329.505
+  ],
+  "groundAnchorSourcePixels": [
+    272.455,
+    679.921
+  ],
+  "soleContactsSourcePixels": [
+    [
+      204.653,
+      693.228
+    ],
+    [
+      340.257,
+      666.614
+    ]
+  ],
+  "probeTipSourcePixels": [
+    663.426,
+    384.0
+  ],
+  "partition": {
+    "masterPivot": [
+      746,
+      494
+    ],
+    "bearingRadiusMaster": 39,
+    "movingMask": "x>=773 OR pivot disk",
+    "bodyMask": "x<776 OR pivot disk",
+    "overlapReason": "Existing circular elbow source pixels retained beneath moving cuff to prevent pivot opening; no invented/inpainted pixels."
+  },
+  "rotationDegrees": [
+    -4,
+    4
+  ],
+  "measurementToleranceMasterPixels": 5
+}

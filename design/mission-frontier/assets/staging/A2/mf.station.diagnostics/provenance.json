@@ -1,0 +1,34 @@
+{
+  "assetId": "mf.station.diagnostics",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-115f83b3-4b88-4986-891f-5cf102664d6e",
+  "sourceSha256": "1ae7dca566fe71e1782caa892d5a7f9d5f04e8c1c89759284688391c5f150ac1",
+  "prompt": "ONE isolated game asset: TEST DIAGNOSTICS STATION, matching reference fabrication and communications benches. Fixed orthographic 2:1 isometric camera, warm upper-left daylight, ceramic-white/slate steel. Keep reference bench EXACT relative proportions: full width160 logical, support footprint146x80 logical, front vertical tabletop-to-foot height40logical (one quarter full width). Broad substantial bevelled bench. Distinct diagnostic apparatus: recessed rectangular dark inspection tray centered on tabletop, holding a small passive ceramic component between two mechanical clamps. Along back edge compact clustered diagnostic instruments: two small dark round analog meter windows with plain unmarked needles, one small blank dark blue glass readout panel, and a coiled probe lead neatly docked on side. No upright large screen, no circular scanning platter, no tall mast. Real accessible circular front-left diagnostic connector for independent worker tool contact. Attractive readable mechanical forms, clean fine detailing, white ceramic shell, dark steel seams. Neutral inactive hardware ONLY: no pass/fail lamps, no glowing lights, no test results, no text, numbers, tickmarks, symbols, labels, UI, logos, people or robots. No floor/scenery/shadow plane. Full object centered with generous margin on perfectly flat bright green RGB(0,255,0) background, no checkerboard or gradient.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.station.fabrication/exports/station-fabrication-r1.png",
+      "sha256": "3bb80f14413e70b0398b4d6770e601affcf3d9b20d2a5553dd3f01cebf1d966d"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.station.communications/exports/station-communications-r1.png",
+      "sha256": "81a0c8c2e1f4de2f034afa0d3f36e86983f8bd348b0c9e69b20dd63d9656d6da"
+    }
+  ],
+  "correctiveGenerations": 1,
+  "correctionPrompt": "Keep this exact diagnostic station unchanged except clean BOTH round meter faces: remove all numbers, graduations, tick marks and glyphs. Each meter must be plain dark blank glass with ONLY one simple neutral thin needle and its central pivot. No markings around the perimeter. Preserve every other detail and identical green background, camera, bench dimensions and framing. No lights or text anywhere.\n",
+  "initialSourceSha256": "88c22d6633f6569c75e145ff25d26d6604e2d01e6aa7c63725b22f4c4834e04d",
+  "transforms": [
+    "Green key and spill cleanup",
+    "Crop subject and uniformly fit320source pixels wide",
+    "Lanczos resize and register bottom at430source on512canvas",
+    "QA-only comparison at requested consumer factors"
+  ],
+  "exportSha256": "bc217af03b9903766b4e12df7b71e49d0c8af1b63176554e9622d91eb599ebd2",
+  "exportBytes": 127137,
+  "rightsNote": "Supplied/generated project references only; provenance is not legal clearance."
+}

@@ -1,0 +1,12 @@
+{
+  "entry-r2.json": "97e0c61eb8243c954a2ba3143b44802fa695ae772477d45fca32331c7ba4c55c",
+  "exports/terrain-region-r2.png": "4e7548883ecf18ae6fc4f05e9dec3bf3afef4176f3fb1df68ece132c8f9f9ec0",
+  "geometry-r2.json": "012bde6a2fea63a76180f9af32e787c57b93341dece161711fa044d3948c0fa1",
+  "process-r2.py": "436040f32165d39e127fee77e88711d873d95ee58daa615c02dddfbc7c7390cb",
+  "provenance-r2.json": "3c878ace39403abd8c5bc0ef71e5fe3ebb0f2fc6bbbb835827416e448e195330",
+  "qa/QA-r2.md": "37338f1193878c8e3e5b0475bdb598e39ecc7c7b34cda3cf3ccd0b52c9e80481",
+  "qa/independent-bases-proof-r2.png": "bcc9ca1314aa4c12e236d2a6d467c1312eeeb36f2a05486b803f62677051c73f",
+  "qa/placement-registration-r2.png": "88ad9f4130d29575f7ec36d0f544f4bbf720c79e28ebdc79b6f0e682a9d5abb6",
+  "qa/scene-1568-r2.png": "8522686e1b5f1fb48a19ed6aab7d00fcf48616d910307ef56004ea636fdf0d6a",
+  "source/terrain-region-master-attempt1.png": "975e46beee2daaec1e9c7f989e35cd52ad9b011430b7c0ded7fdf4de6b295689"
+}

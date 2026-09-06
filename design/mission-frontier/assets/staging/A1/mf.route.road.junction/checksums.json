@@ -1,0 +1,16 @@
+{
+  "entry.json": "80336f6fbd7ac05231e1d465c2358db848e612d59d18e2e473b5a02268281444",
+  "exports/road-junction-r1.png": "3126ea2ed43c4845b2daec9921cb11fe0fdc8f1ac469dd33f1b69257aeea3c1c",
+  "geometry.json": "7c0b8976587d590340021ef207a845d6a5da8f8f5d741a97189d6e01cfb2bdd9",
+  "process.py": "2fbc094b5e10dd7e23fa87e926d82962fa497e9af245de11ece39a06a822e080",
+  "provenance.json": "9a2e09232c775cadf4c688f7a31f4f98ecbf7ba2cbad8f3632ef611c94f40058",
+  "qa/QA.md": "ed54e90143f5b7e93de9eb4e2cc6feb644dbb62c2bbbea08c80df97dea082fe3",
+  "qa/alpha-backgrounds-r1.png": "a99debc5bbcb14932b1625dfb2bc4735932b7558cad1402f1fb1ceffbd68f08c",
+  "qa/center-and-joins-magnified-r1.png": "3e5d588c7f9738db2e40a3baf4d6c1ba3584bbaec792e2fb4d8584d8998e2b10",
+  "qa/four-arms-consumer-scales-r1.png": "edfe525c024d44756a4eb206d712967280d9f9bada6cb9dcf1853bc936318800",
+  "qa/four-arms-native-r1.png": "cb10f200ebb5272dbd4e09182818628ff7383ca0e05599710b9d45811b4b2ae7",
+  "qa/join-measurements-r1.json": "5320b28528bbec6e3578f7e8ec6ed40f8b5e75d00efa4ed772f62eb919cad629",
+  "source/se-crop-mask-r1.png": "f2676f49755e095341c77e353e077ee1bbcc2b305ce3612e18b692f95bbaf377",
+  "source/sw-crop-mask-r1.png": "50e8769ee9af46cc674b90df14bf0dd31a02c4640a8126eb95134ef6e38604f0",
+  "source/sw-pixel-ownership-mask-r1.png": "60cbb7dfbabc282821d8648029ed01e8950633e1f3334a3fd50e96f6f66c4434"
+}

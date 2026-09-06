@@ -1,0 +1,22 @@
+[
+  {
+    "publisherUrl": "https://quaternius.itch.io/modular-sci-fi-megakit",
+    "downloadDateUtc": "2026-09-06T09:52:42.035054+00:00",
+    "edition": "Free Standard",
+    "uploadId": "13454739",
+    "archive": "modular-sci-fi-megakit-standard.zip",
+    "sha256": "6fae60cf5189e44dff0bd91097f094a765acc6d57d64a85a0cc0dd56e03035e3",
+    "bytes": 48559316,
+    "license": "CC0 as stated on publisher page retained alongside archive"
+  },
+  {
+    "publisherUrl": "https://quaternius.itch.io/stylized-nature-megakit",
+    "downloadDateUtc": "2026-09-06T09:52:50.514603+00:00",
+    "edition": "Free Standard",
+    "uploadId": "11055123",
+    "archive": "stylized-nature-megakit-standard.zip",
+    "sha256": "298f6732b872e4cf7b30e6e7abf9641c7f6dc6b326df37ac089533ed7e3d58c9",
+    "bytes": 104088529,
+    "license": "CC0 as stated on publisher page retained alongside archive"
+  }
+]

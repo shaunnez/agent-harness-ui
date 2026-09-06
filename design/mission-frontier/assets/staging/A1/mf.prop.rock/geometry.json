@@ -1,0 +1,56 @@
+{
+  "masterSize": [
+    1536,
+    1024
+  ],
+  "sourceAlphaBounds": [
+    212,
+    265,
+    1356,
+    764
+  ],
+  "uniformScale": 0.17482517482517482,
+  "scaledSize": [
+    200,
+    87
+  ],
+  "pasteOffset": [
+    92,
+    127
+  ],
+  "exportAlphaBounds": [
+    92,
+    127,
+    292,
+    214
+  ],
+  "groundAnchorLogical": [
+    96.0874,
+    105.1958
+  ],
+  "contactMaster": [
+    785,
+    742
+  ],
+  "footprintSourcePixels": [
+    [
+      93.7483,
+      193.958
+    ],
+    [
+      193.049,
+      171.5804
+    ],
+    [
+      290.7762,
+      193.4336
+    ],
+    [
+      189.2028,
+      212.4895
+    ]
+  ],
+  "measurementNote": "Manual visible left/right/front rock-ground contacts; rear support point is hidden estimate. Anchor central low contact, not entire image bottom.",
+  "actualVisibleWidthLogical": 100,
+  "actualVisibleHeightLogical": 43.5
+}

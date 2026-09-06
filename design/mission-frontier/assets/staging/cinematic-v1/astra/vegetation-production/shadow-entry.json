@@ -1,0 +1,23 @@
+{
+  "id": "mf.prop.purple-tree.shadow",
+  "revision": 1,
+  "file": "renders/spreading-grove-shadow-final.png",
+  "sourceSize": [
+    1536,
+    768
+  ],
+  "logicalSize": [
+    768,
+    384
+  ],
+  "groundAnchor": [
+    384,
+    340
+  ],
+  "samples": 64,
+  "status": "pending-in-app-review",
+  "sha256": "d4a629c2475058a3a44292888cf542e0c5d9ba72fea7f9496dfeb6cab083383f",
+  "camera": "Same30/45orientation and position as foliage; ortho19 preserves vertical9.5coverage and pixel/world density",
+  "lighting": "Same key(+10,-6,16),4800W/size7 and fill1300W as foliage",
+  "provenance": "Independent Cycles shadow catcher, tree camera-invisible; authorized alpha noise cleanup; raw source and rejected narrower experiments retained."
+}

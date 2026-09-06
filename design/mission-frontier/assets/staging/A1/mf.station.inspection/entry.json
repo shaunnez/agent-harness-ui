@@ -1,0 +1,72 @@
+{
+  "id": "mf.station.inspection",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/station-inspection-r1.png",
+  "sourceSize": [
+    512,
+    512
+  ],
+  "logicalSize": [
+    256,
+    256
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    126.2745,
+    213.36275
+  ],
+  "footprint": [
+    [
+      58.9804,
+      170.85295
+    ],
+    [
+      128.0,
+      128.5
+    ],
+    [
+      201.7255,
+      171.32355
+    ],
+    [
+      126.2745,
+      213.36275
+    ]
+  ],
+  "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+  "layer": "station",
+  "occlusionClass": "solid-station",
+  "sockets": {
+    "frontToolPort": [
+      61.64705,
+      150.3039
+    ],
+    "screenCenter": [
+      117.33335,
+      75.63725
+    ],
+    "scanCenter": [
+      127.0588,
+      129.91175
+    ],
+    "sensorHead": [
+      154.82355,
+      109.2059
+    ]
+  },
+  "sha256": "3f82240e5723017910af1e8795e08187ae6aabe2de05c412f985dda4948d0f1d",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/socket-registration-r1.png",
+    "qa/calibrated-scale-comparison-r1.png"
+  ],
+  "limits": [
+    "Static neutral powered scan platter/readouts; waiting/finished require no art variant. Sensor arm is scenery for this ID, not an independently articulated part.",
+    "No workers, floor, state labels or animated parts baked in.",
+    "A1 integrated scene review pending."
+  ]
+}

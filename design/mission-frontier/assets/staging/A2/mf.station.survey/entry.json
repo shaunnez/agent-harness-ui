@@ -1,0 +1,68 @@
+{
+  "id": "mf.station.survey",
+  "revision": 1,
+  "status": "pending-coordinator-A2-review",
+  "file": "exports/station-survey-r1.png",
+  "sourceSize": [
+    512,
+    512
+  ],
+  "logicalSize": [
+    256,
+    256
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    139.5247,
+    213.4411
+  ],
+  "footprint": [
+    [
+      56.7487,
+      176.09095
+    ],
+    [
+      106.38065,
+      138.4043
+    ],
+    [
+      201.4385,
+      177.94165
+    ],
+    [
+      139.5247,
+      213.4411
+    ]
+  ],
+  "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+  "layer": "station",
+  "occlusionClass": "solid-station",
+  "sockets": {
+    "frontToolPort": [
+      70.37645,
+      166.16455
+    ],
+    "screenCenter": [
+      88.04205,
+      126.9637
+    ],
+    "receiver": [
+      174.85595,
+      96.3433
+    ]
+  },
+  "sha256": "24856ae21fcb67acb71cb12401c0194dda77aceb31a4eacf3fa796eb5788ec61",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/socket-registration-r1.png",
+    "qa/calibrated-scale-comparison-r1.png"
+  ],
+  "limits": [
+    "Static sensor mast and docked optical instrument; no active beams or status lighting. No separately articulated part is supplied.",
+    "No workers, floor, state labels or animated parts baked in.",
+    "A2 integrated scene review pending."
+  ]
+}

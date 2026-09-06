@@ -1,0 +1,53 @@
+{
+  "id": "mf.worker.standard.sw.neutral",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/worker-standard-sw-neutral-r1.png",
+  "sourceSize": [
+    384,
+    384
+  ],
+  "logicalSize": [
+    192,
+    192
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    96.05324999999999,
+    163.530625
+  ],
+  "footprint": [
+    [
+      82.9675,
+      159.41375
+    ],
+    [
+      109.139,
+      167.6475
+    ]
+  ],
+  "footprintUse": "Two measured sole centers; not a full collision polygon.",
+  "layer": "worker",
+  "occlusionClass": "actor",
+  "sockets": {
+    "face": [
+      88.84875,
+      52.2281
+    ]
+  },
+  "facing": "SW screen lower left",
+  "sha256": "c4ee094fee3f1911592e27619dfb3c59044bccb404187d0aa17e1a02031f7b3a",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/both-facings-actual-scale-r1.png",
+    "qa/basefloor-contact-r1.png"
+  ],
+  "limits": [
+    "One neutral parked pose; no active motion, tool or portrait variant.",
+    "New opposite-facing render preserves identity but is not pixel-mirrored anatomy.",
+    "Runtime owns selection/task state and neutral-versus-active semantics."
+  ]
+}

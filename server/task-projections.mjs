@@ -1,3 +1,5 @@
+import { projectTaskAttention } from "./task-attention.mjs";
+
 const DEFAULT_PAGE_LIMIT = 50;
 const MAX_PAGE_LIMIT = 200;
 const SUMMARY_ARTIFACT_LIMIT = 10;
@@ -25,6 +27,7 @@ export function projectTaskSummary(task, retainedCounts = {}) {
     repositoryAuthorityStatus: task.repositoryAuthorityStatus ?? null,
     planResult: task.planResult ?? null,
     currentStage: task.currentStage,
+    attention: projectTaskAttention({ ...task, error: effectiveTaskError(task) }),
     completedStages: task.completedStages ?? [],
     stageDispositions: task.stageDispositions ?? {},
     stageRun: task.stageRun,
@@ -132,6 +135,7 @@ export function projectTaskCore(task) {
   const { events = [], runs = [], artifacts = [], ...core } = task;
   return {
     ...core,
+    attention: projectTaskAttention({ ...task, error: effectiveTaskError(task) }),
     error: effectiveTaskError(task),
     designRequest: projectDesignRequest(core.designRequest),
     artifacts: [],

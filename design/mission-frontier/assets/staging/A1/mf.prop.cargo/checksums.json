@@ -1,0 +1,15 @@
+{
+  "entry.json": "35c7d959b5a8ffcdbb2a0c816dbadba15b0641c22dba0aced8c4945175b866d1",
+  "exports/cargo-r1.png": "d9fcc471bf4d3f6fbf61d7043b4987d0bf166842a3fd85ea5d9ae96cdfe2e41b",
+  "geometry.json": "718f101bb6461f1bc66eb29167717bdfd4cf0b4b1320735b1e1e902bea659dea",
+  "process.py": "3fd70045eb3a1f489d165baaf7ca8bc87d7f739599ed8a1fe9133ec742d2638d",
+  "provenance.json": "eee2219c93b044c7425daf99c1ab8f119124c9ead831d9f82b55eccab8e1fe75",
+  "qa/QA.md": "6b6820b0743fbf2664cdc085d7991c0d661893b05b0cf56d9e88725d3d43376c",
+  "qa/actual-scales-r1.png": "1826e4699acebed74817767fec9fcc0882cb022724b41376b1be197fb208eeed",
+  "qa/alpha-backgrounds-r1.png": "4a514e5a48b09b714628c43cb035f623dcf671812c27becf4075faceddc0cb81",
+  "qa/basefloor-instances-r1.png": "c3c4c8f9e7741a1b006793b389d2695c8849bcb2f8eec2408edbc3fccfa1a1e8",
+  "qa/measurements-r1.json": "f4a8ea549fb7b2b8a49477462c3cf00a83a52c123959d6750766c3c4f980675b",
+  "source/cargo-alpha-master-r1.png": "8d2c5665b17ee6735b25a603e5d18ed74bb15654734ffe833ea8c41084f881a7",
+  "source/cargo-master-r1.png": "a94cc9f680dd65e3c65a297536c325ba28528ad2d8f0fac43bf16affa16c752c",
+  "source/generation-prompt.txt": "4b3c1647c5b9ab45b0a637b24eb77ff069a27d88dd327ca1004e608e5dea9bd1"
+}

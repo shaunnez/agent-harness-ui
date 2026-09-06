@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mission Frontier — Design Review</title>
+  <link rel="stylesheet" href="review.css">
+  <script src="screen-catalog.js"></script>
+  <script defer src="review.js"></script>
+</head>
+<body>
+  <header class="review-header">
+    <div><span class="eyebrow">Design study / v1.1</span><h1>Mission Frontier</h1></div>
+    <p>Core direction accepted. Clearer waiting and blocked states.</p>
+    <div class="header-actions"><button id="grid-toggle" type="button">All screens</button><button id="export" type="button">Export feedback</button><a href="mission-frontier-build-handoff-v1.zip" download>Download pack</a></div>
+  </header>
+  <div class="review-layout">
+    <aside class="screen-nav" aria-label="Design screens">
+      <label class="search-label" for="search">Find a screen</label><input id="search" type="search" placeholder="Search screens…">
+      <nav id="screen-list"></nav>
+      <div class="nav-docs"><a href="IMPLEMENTATION-PLAN.md" target="_blank">Implementation plan ↗</a><a href="BUILD-GOALS.md" target="_blank">Build goals ↗</a><a href="ASSET-PRODUCTION.md" target="_blank">Astra asset brief ↗</a><a href="ATTENTION-CONTRACT.md" target="_blank">Waiting & blocked states ↗</a><a href="DESIGN-SPEC.md" target="_blank">Interaction specification ↗</a><a href="BACKEND-COVERAGE.md" target="_blank">Backend coverage ↗</a><a href="README.md" target="_blank">About this design set ↗</a></div>
+    </aside>
+    <main id="main">
+      <section id="screen-view" aria-label="Selected design">
+        <div class="screen-toolbar"><div><span id="screen-group" class="eyebrow"></span><h2 id="screen-title"></h2></div><div class="page-controls"><button id="previous" aria-label="Previous screen" type="button">←</button><span id="screen-position"></span><button id="next" aria-label="Next screen" type="button">→</button><a id="full-image" target="_blank">Full size ↗</a><button id="notes-toggle" type="button" aria-expanded="true">Notes</button></div></div>
+        <div id="design-states" class="design-states" hidden><span>Design state</span><div id="design-state-list" role="group" aria-label="Design states"></div></div>
+        <div class="design-frame"><img id="design-image" alt="" decoding="async"><p id="image-error" hidden>Image unavailable. Refresh this review when generation has finished.</p></div>
+        <p class="artifact-notice">Visual design study with illustrative data. This viewer does not operate the application or backend.</p>
+      </section>
+      <section id="grid-view" hidden aria-label="All screen designs"><div class="grid-heading"><h2>Full design set</h2><p>Choose any screen to inspect it and leave notes.</p></div><div id="screen-grid"></div></section>
+    </main>
+    <aside class="notes-panel" id="notes-panel" aria-label="Review notes">
+      <span class="eyebrow">Review this screen</span><h3 id="notes-title"></h3><p id="screen-summary"></p>
+      <div class="review-context"><span id="backend-status" class="status-tag"></span><p id="backend-note"></p></div>
+      <label for="review-state">Your decision</label><select id="review-state"><option value="unreviewed">Not reviewed</option><option value="keep">Keep this direction</option><option value="refine">Refine this screen</option></select>
+      <label for="review-note">What would you change?</label><textarea id="review-note" rows="9" placeholder="Layout, game feel, content, controls, missing states…"></textarea>
+      <p id="save-status" class="save-status" aria-live="polite">Notes stay in this browser. Export feedback to keep or share them.</p>
+      <div class="detail-section"><h4>Screen contract</h4><p id="screen-contract"></p></div>
+      <div class="detail-section" id="qa-section"><h4>Design notes</h4><p id="qa-note"></p></div>
+    </aside>
+  </div>
+  <div id="fatal-error" hidden role="alert"></div>
+</body>
+</html>

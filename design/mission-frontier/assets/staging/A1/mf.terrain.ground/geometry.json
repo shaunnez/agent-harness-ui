@@ -1,0 +1,90 @@
+{
+  "masterDimensions": [
+    1448,
+    1086
+  ],
+  "masterSurfaceCorners": [
+    [
+      717.0,
+      198.0
+    ],
+    [
+      1419.0,
+      530.0
+    ],
+    [
+      726.0,
+      886.0
+    ],
+    [
+      37.0,
+      528.0
+    ]
+  ],
+  "registeredSurfaceCorners": [
+    [
+      512.0,
+      130.0
+    ],
+    [
+      962.0,
+      355.0
+    ],
+    [
+      512.0,
+      580.0
+    ],
+    [
+      62.0,
+      355.0
+    ]
+  ],
+  "groundAnchorSourcePixels": [
+    512,
+    580
+  ],
+  "groundAnchorLogical": [
+    256,
+    290
+  ],
+  "frontCliffBottomSourcePixels": [
+    515.9641009276475,
+    609.5330112658256
+  ],
+  "frontDropSourcePixels": 29.53301126582562,
+  "registrationHomography": [
+    [
+      0.7064916490240389,
+      0.05124680429690548,
+      12.69664551868943
+    ],
+    [
+      0.004244313764237907,
+      0.7447622317308654,
+      -16.0886275361179
+    ],
+    [
+      1.4821187758241622e-05,
+      0.00011794811206706852,
+      1.0
+    ]
+  ],
+  "inverseHomography": [
+    [
+      1.419638242936927,
+      -0.09458918952449577,
+      -19.546453774548148
+    ],
+    [
+      -0.008523166846462964,
+      1.3429078983739244,
+      21.713760620395128
+    ],
+    [
+      -2.0035433508975493e-05,
+      -0.00015699152715531667,
+      1.0
+    ]
+  ],
+  "measurementNote": "Manual visible surface-corner landmarks within approximately8master pixels; organic rim is not a geometric sharp corner. Ground anchor is top surface, not cliff bottom. Exact registration retained for next shore derivation."
+}

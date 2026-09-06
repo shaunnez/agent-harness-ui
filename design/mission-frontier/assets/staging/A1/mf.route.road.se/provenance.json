@@ -1,0 +1,23 @@
+{
+  "assetId": "mf.route.road.se",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-d481cede-04dd-4d5f-a0f3-0e9764761c9f",
+  "sourceSha256": "6af36f2b93cf7379f37e450a56cdb037f08a762a186d75b60eda331a73c741f8",
+  "prompt": "Mission Frontier reusable road segment sprite. One long narrow flat ceramic/slate walking road in fixed orthographic2:1 isometric. Its long direction runs from screen upper-left to lower-right, exact slope down1 for right2. Rectangular dark slate modular walking surface, thin understated cream ceramic curbs on BOTH long sides, subtle metal panel seams. No tall railings, no lamps, no status markings, no text, no stripes, no ground foundation. Length about7times width in physical ground dimensions. Both short ends are clean square open cut joints exposing flat walkway, NO curb across short end, no end cap, step, ramp or terminal ornament. Very shallow construction, nearly flush ground.\nWarm upper-left daylight, same ceramicwhite/charcoal steel road material as selected-world reference. Full isolated diagonal road from upper-left quarter to lower-right quarter with generous margin. Rectilinear straight sides, no curve/bridge/support columns. No objects/workers/building/scenery/UI/ground shadow.\nOutput512x384 intended. Target road long center from(96,176)to(416,336), road side offset(\u00b124,\u221312) so road top corners(72,188),(120,164),(440,324),(392,348). Use these only as framing guidance; final geometry will be registered exactly. Perfectly uniform saturated green#00FF00 removable background, no greenreflection.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/reference/selected-world.png",
+      "sha256": "929dba738d20981573cfe52b951a45bd18357991a70adb82b92b622399f29758"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Green alpha cleanup",
+    "Measured4corner projective registration to contract road top with1.5percent inward longitudinal endpoint sampling to remove generated end gaps",
+    "Clip beyond end cross-sections for square flat connection ends",
+    "QA-only three segments translated exact[320,160]source; displayed0.65/1logical scales"
+  ],
+  "exportSha256": "2304520e709f8239a2ded113eb895b6e7a0b84cc69df33ca019fe857de99df77",
+  "exportBytes": 45066
+}

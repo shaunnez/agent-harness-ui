@@ -1,0 +1,38 @@
+{
+  "assetId": "mf.station.blueprint",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-0795e9ef-5a8d-4f0f-ba15-a5499f696983",
+  "sourceSha256": "80f8696a0c7ae9450f4254a673e95bfc96942e59f38b0c8fec56ede20ae8bad5",
+  "prompt": "Create ONE isolated game production sprite: a SPECIFICATION BLUEPRINT DRAFTING STATION. Match supplied ceramic-white/slate steel workstations, warm upper-left daylight, fixed orthographic 2:1 isometric camera. Same broad low bevelled rectangular support bench, about146x80 logical footprint and40logical benchheight. Distinct readable drafting apparatus: a large slightly inclined physical drafting board resting on a low mechanical hinge above the tabletop, holding a matte desaturated navy blueprint sheet with only a few thin pale unlabeled geometric outlines (rectangles, circles and construction lines, absolutely NO text, numbers, letters, annotations, symbols or icons). Narrow metal drafting straightedge physically lying across one edge of the board, a restrained document roller or paper feed at rear, and small closed document cassette on the right. No upright computer monitor. Accessible actual circular dark diagnostic tool port on front left vertical bench face. Clean substantial memorable shapes and fine credible mechanical detail. Entire station neutral/static: no glow, lamps, active beams, status lights, semantic colors, workers or people. No floor, scenery, shadows on a ground plane, labels, logos, UI. Full object entirely visible with generous margin on perfectly uniform bright green RGB(0,255,0) background, no checkerboard or gradient. Preserve same camera and material family, but distinguish from the fabrication machine, screen bank and projection screen.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A2/mf.station.intake/exports/station-intake-r1.png",
+      "sha256": "623461a3e441421299f869f0d664d8dc3c8b2d6e225d0ff9ed88873be9805cef"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.station.fabrication/exports/station-fabrication-r1.png",
+      "sha256": "3bb80f14413e70b0398b4d6770e601affcf3d9b20d2a5553dd3f01cebf1d966d"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.station.communications/exports/station-communications-r1.png",
+      "sha256": "81a0c8c2e1f4de2f034afa0d3f36e86983f8bd348b0c9e69b20dd63d9656d6da"
+    }
+  ],
+  "correctiveGenerations": 1,
+  "correctionPrompt": "Keep this exact blueprint drafting station, camera, tabletop and drafting apparatus unchanged. Make only the lower support bench/chassis about one third TALLER vertically: increase distance between tabletop rim and feet by 33%, extending white ceramic side panels and dark base structure downward, keeping identical footprint width and ground projection. We need a substantial 40logical pixel tall bench at160logical outerwidth. Preserve accessible circular front-left port, blank geometric blueprint with no writing, warm upper-left light and completely flat vivid green background. No other changes, no text, no lights, no floor.\n",
+  "initialSourceSha256": "976b6e7ee8056c2c7505ded63537099b4a766844a9be9ee6ef8425334b091ab6",
+  "transforms": [
+    "Green key and spill cleanup",
+    "Crop subject and uniformly fit320source pixels wide",
+    "Lanczos resize and register bottom at430source on512canvas",
+    "QA-only comparison at requested consumer factors"
+  ],
+  "exportSha256": "4aaf5d64d8c4f536c4a460e10255e6de022c704af602e0a9b93b3f3ddc8b31f4",
+  "exportBytes": 132298,
+  "rightsNote": "Supplied/generated project references only; provenance is not legal clearance."
+}

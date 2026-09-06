@@ -22,6 +22,7 @@ export const scoutRoleIds = [
 ] as const;
 export type ScoutRoleId = (typeof scoutRoleIds)[number];
 export type AgentRoleId = StageId | "repair" | ScoutRoleId;
+export type RolePolicyId = Exclude<StageId, "approval"> | "repair";
 export const agentRoleIds: AgentRoleId[] = [...stageIds.slice(0, -1), "repair", ...scoutRoleIds, "approval"];
 export type Provider = "codex" | "claude" | "harness";
 export type { RuntimeEvent, RuntimeRun, RuntimeToolCall } from "./runtime-activity";
@@ -83,6 +84,7 @@ export interface NewTaskDraft {
   workflowProfile?: "auto" | "fast" | "standard" | "high-risk";
   model?: string;
   reasoning?: string;
+  rolePolicyOverrides?: Partial<Record<RolePolicyId, import("./domain/runtime.ts").RuntimeAgentPolicy>>;
   experiment?: {
     groupId: string;
     variantId: string;

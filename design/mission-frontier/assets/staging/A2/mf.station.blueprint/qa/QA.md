@@ -1,0 +1,7 @@
+# Blueprint station A2 r1
+
+Distinct inclined drafting board, physical straightedge and paper roller; blueprint carries only generic unlabeled geometry. Ceramic/slate materials and warm light match fabrication. No worker/floor/wall/task text or status symbols; glass is reflective with no semantic illumination. Initial shallow-bench source retained; one ImageGen correction increased the support chassis height to the accepted station family.
+
+512×512RGBA, logical256×256. Visible feet and front connector/screen centers manually measured, rear footprint estimated. FrontToolPort is an actual visible circular connector for independent active probe contact. See measurements for actual desk height and footprint rather than assuming prompted dimensions.
+
+QA compares approved fabrication, communications and independent worker at HQ0.85×1.5=1.275 and detail2.1×1.2=2.52. Worker shown74px/200px. Alpha inspected on dark/light/magenta. Main renderer owns contact, live state, selection and attention. Pending coordinator A2 integration review.

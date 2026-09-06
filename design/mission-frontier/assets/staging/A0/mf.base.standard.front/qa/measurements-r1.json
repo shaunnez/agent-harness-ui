@@ -1,0 +1,41 @@
+{
+  "size": [
+    1536,
+    1280
+  ],
+  "mode": "RGBA",
+  "alphaRange": [
+    0,
+    255
+  ],
+  "transparentPixels": 1884185,
+  "partialAlphaPixels": 4629,
+  "borderNontransparent": 0,
+  "greenDominantVisiblePixels": 0,
+  "centralOpeningRegion": {
+    "sourceRect": [
+      502,
+      780,
+      1034,
+      1150
+    ],
+    "nontransparentPixels": 3
+  },
+  "workerFootPositionsLogical": [
+    [
+      205,
+      405
+    ],
+    [
+      385,
+      465
+    ]
+  ],
+  "workerVisibleHeightPx": 58,
+  "workerAlphaVisibleFractions": [
+    0.6818,
+    1.0
+  ],
+  "pngBytes": 236367,
+  "decodedRgbaBytes": 7864320
+}

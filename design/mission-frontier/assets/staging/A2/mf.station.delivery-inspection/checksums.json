@@ -1,0 +1,15 @@
+{
+  "entry.json": "85fd82d9c76d9dc1e3f8da9d7fa3fca2ae36a76bf572f11df6ab05becc2f69db",
+  "exports/station-delivery-inspection-r1.png": "03f63172691e7d97af075705a374dad3291181a28de3c5b76eeea703af084daa",
+  "geometry.json": "20d66efe43fbe27a6c4247925314de63a7d84d5e0b44b0acf89e294ac33a0e7d",
+  "process.py": "5f68e962cdc1193ceea71b696423aca8de80f086e306515bde09a8174cea49ee",
+  "provenance.json": "1dc3b58a61fd8bed81485438ca4055b2742b1bcdec5458d006bd58e13421c979",
+  "qa/QA.md": "acae067956405a2e9788272d9e88af6597b2a6244a18bc1c8f6fed4def6db251",
+  "qa/alpha-backgrounds-r1.png": "648bb3d0bd29b6fde29edf111100a1760f4d078d98dff4aa1678aeaa7bb05a2c",
+  "qa/calibrated-scale-comparison-r1.png": "89652daa9be82f593554f7dedca72ff08855d0a3521cab82e0dbbd6a4119c81b",
+  "qa/measurements-r1.json": "493318b79f1ad597150ed13815c4b75b9c48b24bb2e2ce478c68df88f5216525",
+  "qa/socket-registration-r1.png": "e8c234abe1744287e1d8fb38978783b333d1d7c7c0bf7221a7d28d65b02d36fe",
+  "source/delivery-inspection-alpha-master-r1.png": "35b0a381d50d7ffa7fa8c7f192683fc9a815384001cc602d338994f8daaf17cd",
+  "source/delivery-inspection-master-r1.png": "e29809d6c341058848d539797ed77423b57a2caf5a6293e2eebf7565986735b9",
+  "source/generation-prompt.txt": "e2e9b762a98835af8ea429cae252d2fca7b23e7c4b11e1a4b776fb2b3cd8a632"
+}

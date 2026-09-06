@@ -1,0 +1,15 @@
+{
+  "entry.json": "f27ad3ed44d0bda81ed6fb97bab650efd7733436069733ae360b0e6c237ef216",
+  "exports/capsule-r1.png": "02efc6fe8323d74f83dc2587efbd0b93904947ff2a03da2aded62ef52ae77c08",
+  "geometry.json": "ac26b9527c051a28395894ef24f678e0d5d1e236d18ab2d14fd5031592aa8a58",
+  "process.py": "b482c324b62a2f3b240c36fab522f88cf3f6e84962504ebc3744d5982ecf25e1",
+  "provenance.json": "c1832ae159d0a8b652cc9f70ceecc8707d5ac3cf8f0d34d72eab1d15b21244b2",
+  "qa/QA.md": "77b44b4e2d54dc2a33e717c18c1dcc38f667c4b9111a28c3236c4d58e2a7557b",
+  "qa/actual-scales-r1.png": "3d88e3c6442896c40d6b52c53440c284c8e5ca06512999feb8edb3f423163f34",
+  "qa/alpha-backgrounds-r1.png": "1e74c9b323f314700bb0d10c922eb5ce9d0f8f385875d22b50448d1d9e2f16f4",
+  "qa/basefloor-instances-r1.png": "7978fafd33c872f5a09c3e0f2c74834c63e6db3cd96762e02b444ded34840534",
+  "qa/measurements-r1.json": "6436a8db9a353ae347fe193970eff5993d96a608ef97dc3445ef3c686663cfd0",
+  "source/capsule-alpha-master-r1.png": "a0c1877e5ef1dcf077d17cc2f9b9a46ee44b63f050b0f6d2d03ead1fe67aebb3",
+  "source/capsule-master-r1.png": "54171cef7037ae518bbe0d555eb345ca68fc880752781c2aca4a25d0bf49b151",
+  "source/generation-prompt.txt": "1f5429533a9c173e1e9d88a95f285e49572c567af32a0f1fea625ed8619c854e"
+}

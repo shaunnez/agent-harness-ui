@@ -1,0 +1,14 @@
+{
+  "renders/spreading-grove-shadow-final.png": "d4a629c2475058a3a44292888cf542e0c5d9ba72fea7f9496dfeb6cab083383f",
+  "renders/spreading-grove-shadow-short.png": "5c8cf376e92fafbc4e6454f4c30e6c693c9bcd88157c6849a8f74bc6fed81e93",
+  "renders/spreading-grove-shadow.png": "22f2e4d9be499512734456a1b75c9050c8ac9f4e549d89696d811e3993618ad0",
+  "renders/spreading-grove.png": "ab399f630214af8a7fefc9e80c79b63f3c5e72706eb23b5c70560b7c6bc46f27",
+  "renders/spreading-grove-shadow-wide.png": "3428f21f897e7f5507b53b495d1e7aaaa22984271cb0e2826fd3e2e4cb1581b0",
+  "renders/shadow-composite-proof.png": "0cc6d46d0bf8e3e4854008d2a8c0534742bb66fa97e42d6e5290a4a6576b2102",
+  "blend/spreading-grove.blend": "5853dd89883713691d7a7b64873d86d3033908b31f2c632df2c9276a9ed58303",
+  "entry.json": "2ec71d0f99105da4ad8e7184844fd6cc8901fe2bc470d5ef790c51fed3b1c0ad",
+  "shadow-entry.json": "ef8a32bc1ed5a80e327177c1617f322ffc2dfa80e35e65a7f0f1af9235548d82",
+  "renders/spreading-grove-r2.png": "9267c14619ba7180346369fde6b9ab0aa3b01876a944146c770414351eab1a53",
+  "blend/spreading-grove-r2.blend": "5c331957742e5fb3053e54ae4a269eae4a0104f8ecb18000141cf6fb38507c65",
+  "entry-r2.json": "f6346d474a23af8ca7e811f74d677e056162a8b29d579db9ce5891c199e37a4a"
+}

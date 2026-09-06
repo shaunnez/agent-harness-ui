@@ -1,0 +1,20 @@
+{
+  "entry.json": "1312150571b6e04dc34049b3c4ae2743752e2fed8c79780583a32737f68280a8",
+  "exports/terrain-region-r1.png": "ccd93afa096e0d5e2e30697a27c8e4fb6b1cb3474603e73d63f064a7f005640a",
+  "geometry.json": "e6eb5bd8660b09d8dad166e900ad36bb57695aec56a11650e2a5608aa36109a2",
+  "prepare.py": "669c04d99c52b4db56d6877ac7304c9b92980f75231fbb5336fde51ffb75a649",
+  "process.py": "e98cb091cbb04056519f8886ef78f457bcb70e71d2f73b9593fcf1e59e9b97d4",
+  "provenance.json": "506af8a36c8d92b344c5a2fdf62dba15d5f04950333d2cd79554bf484f86c1bf",
+  "qa/QA.md": "87cf5905abf88b9e93716c0d14f51f04ee1a664cb0f680485c5422a3cf0d5377",
+  "qa/clearing-registration-r1.png": "935f80a4b509a8c914b0406cd2e0ddffed311cfebb3958689f1ea16c058d675a",
+  "qa/independent-bases-proof-r1.png": "9092549547bc1c71382cd5d853c2c2a92b2af209b700f50b1220d222acb9a899",
+  "qa/scene-1568x1003-r1.png": "2fb0179b39a4ce5e6ca692cc620801a29783fa1c7ce2034020797055a1531b37",
+  "source/clearing-placement-guidance.png": "f0d0694e0036db58f257cd76deacbf9a05afec3202b0cb3ed36e872779d8e008",
+  "source/correction1-prompt.txt": "3b6168a2d930c51f828b269bac63c4c20a77375f657ec10525e0f09a2602558e",
+  "source/correction2-prompt.txt": "99b29884be1e885e00f2038833619abb45a2bcc61e4329d2a73e6a5789e676b9",
+  "source/generation-prompt.txt": "91e7ed7625f9aaa3184a8d3f613ce35c14e3e7f7429efd93ba14e0cc525ffd3f",
+  "source/terrain-region-attempt1-resized.png": "4e7548883ecf18ae6fc4f05e9dec3bf3afef4176f3fb1df68ece132c8f9f9ec0",
+  "source/terrain-region-master-attempt1.png": "975e46beee2daaec1e9c7f989e35cd52ad9b011430b7c0ded7fdf4de6b295689",
+  "source/terrain-region-master-correction1.png": "6cc70965e1952e722078e0a55050b8c3af7af56ea55516676b0e9c9ac391717c",
+  "source/terrain-region-master-r1.png": "01ee77dc3ab80d0a22db35be98168cdfebccca62bf3a631b228f4bb3c02e27f1"
+}

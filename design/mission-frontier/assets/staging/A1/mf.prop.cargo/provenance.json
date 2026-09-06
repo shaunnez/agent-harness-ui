@@ -1,0 +1,23 @@
+{
+  "assetId": "mf.prop.cargo",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-49fafed1-74fe-4e7e-9c99-95b4f97e778e",
+  "sourceSha256": "a94cc9f680dd65e3c65a297536c325ba28528ad2d8f0fac43bf16affa16c752c",
+  "prompt": "One compact Mission Frontier sci-fi CARGO CASE game prop, matching reference fabrication bench ceramic white/slate materials and upper-left daylight. Fixed orthographic2:1 isometric, front three-quarter faces visible. Sturdy rectangular portable case with ivory ceramic armored lid/corner blocks, dark slate recessed side panels, small physical latches and recessed carry handles, restrained seams and warm wear. Low squat practical cargo case, not a building, chest with treasure, battery, robot or vehicle. No glowing light or colored status indicator whatsoever. Absolutely no letters, numbers, logo, stickers, symbols or labels on any surface.\nFull independent case on perfectly flat saturated green#00FF00 removable background, no green reflections. No floor/ground/base/stand/castshadow, no objects around it, no second case or open lid. Closed neutral case. Target export384x384RGBA,logical192\u00b2; actualcase around160sourcepx wide\u00d7110high, rootcontact near(192,300), margins comfortable. Useful at24\u201356px apparent width and readable as cargo. Full silhouette from lid to feet, slightly beveled edges, consistent realistic strategy-game style.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.station.fabrication/source/station-fabrication-master-r1.png",
+      "sha256": "b64a45a2bf6557e212cafce5069888820c425386213e8e338775ca28d4c99145"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Green key/spill cleanup",
+    "Uniform fit160source pixels wide",
+    "Register front ground corner near192,300source",
+    "QA-only instances at consumer scales on accepted floor"
+  ],
+  "exportSha256": "d9fcc471bf4d3f6fbf61d7043b4987d0bf166842a3fd85ea5d9ae96cdfe2e41b",
+  "exportBytes": 30534
+}

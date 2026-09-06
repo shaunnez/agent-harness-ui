@@ -1,0 +1,17 @@
+{
+  "size": [
+    768,
+    768
+  ],
+  "mode": "RGBA",
+  "alphaBounds": [
+    62,
+    134,
+    661,
+    694
+  ],
+  "transparentPixels": 411684,
+  "partialAlphaPixels": 51486,
+  "borderNontransparent": 0,
+  "greenDominantVisiblePixels": 0
+}

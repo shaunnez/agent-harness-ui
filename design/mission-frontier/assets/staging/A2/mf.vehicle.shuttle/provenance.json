@@ -1,0 +1,34 @@
+{
+  "assetId": "mf.vehicle.shuttle",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-684c6327-6c03-40c7-bec4-71b7d525107c",
+  "sourceSha256": "405282b2e9efb17494995eb9b804a428d8f3988a499c39cb6e64a7b2973893a2",
+  "prompt": "ONE isolated game sprite: a small UNCREWED CARGO SHUTTLE parked on landing skids, to fit the supplied empty docking pad. Match ceramic-white/slate sci-fi material language, restrained amber metallic trim (not glowing), warm upper-left daylight and pad's fixed orthographic isometric orientation. Compact rounded streamlined cargo fuselage, no cockpit or occupant, a sealed cargo hatch, two low side nacelles and sturdy landing skids. Nose points toward screen lower-left along the pad long axis; compact footprint roughly140x70logical, body height60\u201380logical above skids. No big wings: entire ship should fit comfortably on central empty pad. Clean memorable friendly industrial silhouette, detailed panel seams, dark steel underside and neutral dark blue glass sensor strip. Full vehicle alone, with landing skids visibly supporting it, no pad or ground. NO text, numbers, logos, pilot, robot, exhaust, jets, flames, status glow, active lamps, cargo outside, scenery or shadow plane. Static parked neutral asset. Entire object in frame with generous margins on perfectly flat vivid green RGB(0,255,0) background; no checkerboard or gradient. Supplied pad is geometry reference only, do not include it.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A2/mf.station.launchpad/exports/station-launchpad-r1.png",
+      "sha256": "19bb79ad69a79aa65e8660e817c5f4b5a3493587b8e0561e8bfad93f603780b6"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.station.fabrication/exports/station-fabrication-r1.png",
+      "sha256": "3bb80f14413e70b0398b4d6770e601affcf3d9b20d2a5553dd3f01cebf1d966d"
+    }
+  ],
+  "correctiveGenerations": 1,
+  "correctionPrompt": "Keep this exact uncrewed cargo shuttle and green background unchanged. Remove the luminous cyan line on the front sensor strip completely: make whole front strip plain dark reflective navy glass, no bright edge, no emitted light, no glow. Preserve all ceramic shape, warm lighting, metal amber trim, landing skids and framing. No other changes.\n",
+  "initialSourceSha256": "680ccdaae5e082362dd74520b1fd111d56f3e9848ef932125f30e02b33736c82",
+  "transforms": [
+    "Green key and spill cleanup",
+    "Crop subject and uniformly fit280source pixels wide",
+    "Lanczos resize and register bottom at430source on512canvas",
+    "QA-only comparison at requested consumer factors"
+  ],
+  "exportSha256": "41e49a8cff4de991a83f14bb13c4cc9d287a91b0d531b12713a3fc8e4556e7bc",
+  "exportBytes": 113303,
+  "rightsNote": "Supplied/generated project references only; provenance is not legal clearance."
+}

@@ -1,0 +1,21 @@
+{
+  "entry.json": "0803f04ea6c35d498c260e48ade367db3ffb57c59c92853a453ad015de229430",
+  "exports/worker-working-assembled-r1.png": "e676f04f016b05b3471c3a4dbbce4a78fdb5df3f88fada9f2b2b3c1e063c930a",
+  "exports/worker-working-body-r1.png": "85eb746606e5719c4ce2acf45a55cb6a50b8d05db69ee064d55fc15e1adacc40",
+  "exports/worker-working-forearm-probe-r1.png": "976fa3368d871e2935f3de509d0d7dbfcf8d6ad31e8fcf900f1b510b8bab37e9",
+  "geometry.json": "eeb195f00578ebefcffce6664be36b41b5af74bc8cd25ea7ce08b534e821ca0c",
+  "process.py": "c48ac8186983f9a1d229ffb41f8217d7ff895d43576030429305ae7ad7aebc9e",
+  "provenance.json": "84eb57172da09b13b9e64531814eb05f27fc1702b8377cdada3372b3d488ad81",
+  "qa/QA.md": "2d031c87bf5bd9f66faac596c3e2053eb7092398351d1196dcf0d7d83f3e84cf",
+  "qa/actual-scale-motion-frame-r1.png": "9e8979ae11ed63db4eb2ab7e77b046d0450316b262d1d276ec45c11b76e22c3c",
+  "qa/actual-scale-motion-r1.gif": "6309c7b897a6828aaec33559f38321bd64713690daac5ca525a9af939c314f33",
+  "qa/alpha-backgrounds-r1.png": "27d2951a06030a4a1be718ed18dfb37cb7a838410129ff06e467744ac00d1a7d",
+  "qa/elbow-contact-r1.png": "757dabd7768161dc9b2b459518413059481d1276f6bb63431c24371b471ae9db",
+  "qa/motion-validation-r1.json": "77097f405d0a0805380330b5a18ea21d1bb6e2356be6af5798be2bae36731914",
+  "qa/registration-r1.png": "3934607a914582f98ad49a45d68c647285dacedb6b83afaa0cd8c735cb906480",
+  "source/body-mask-r1.png": "14d5624224ce5c3e782fdbc8d4c85d563c3f357d3a700c06eba33fbc01a80cbe",
+  "source/generation-prompt.txt": "455bc4a98b6237b3210f1f53964f701ed8373df752b1363d877045b6dfd8200f",
+  "source/moving-part-mask-r1.png": "c4426c4ae33ad0dcd648ac5db12d3866d23267ddaa5e71866fc15bda0acaaf2e",
+  "source/working-alpha-master-r1.png": "947560f2a3dfb1e8586f48bae1e326ccb3b47dfa7e14913afe51efa3282beb2f",
+  "source/working-master-r1.png": "6650a858f2ac1312f4432fe1455af3f2382c60722d3b96e3fc50e443f8e52d2f"
+}

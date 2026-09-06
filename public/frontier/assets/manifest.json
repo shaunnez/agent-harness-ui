@@ -1,0 +1,2870 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "id": "mf.worker.standard.se.neutral",
+      "revision": 1,
+      "status": "M1-calibration-accepted",
+      "file": "/assets/mf.worker.standard.se.neutral.r1.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        103.875,
+        163.8765
+      ],
+      "footprint": [
+        [
+          74,
+          162
+        ],
+        [
+          106.5,
+          155
+        ],
+        [
+          126,
+          157.5
+        ],
+        [
+          125.5,
+          158
+        ],
+        [
+          119,
+          160.5
+        ],
+        [
+          96.5,
+          167.5
+        ],
+        [
+          89.5,
+          169.5
+        ],
+        [
+          87.5,
+          169.5
+        ],
+        [
+          83,
+          168
+        ],
+        [
+          82,
+          167.5
+        ],
+        [
+          79.5,
+          166
+        ]
+      ],
+      "labelAnchor": [
+        96,
+        10
+      ],
+      "occlusionClass": "entity",
+      "layer": "entity",
+      "sockets": {},
+      "sourceId": "exec-0d136c05-5ba2-42b2-8bba-ad6d29bf2ee7",
+      "sha256": "2fb35d56130d44035ec3962e640b03e994e716b8204e8e611bebbaade53941b0",
+      "alpha": "straight RGBA",
+      "facing": "screen lower right (SE), authored orthographic-like view",
+      "boundsSourcePixels": [
+        122,
+        28,
+        263,
+        340
+      ],
+      "groundAnchorSourcePixels": [
+        207.75,
+        327.753
+      ],
+      "contactMeasurementsSourcePixels": {
+        "nearSoleContourColumns": [
+          165,
+          194
+        ],
+        "farSoleContourColumns": [
+          224,
+          248
+        ],
+        "nearMean": [
+          179.5,
+          336.6666666666667
+        ],
+        "farMean": [
+          236,
+          318.84
+        ],
+        "method": "Visually identify two front sole contour spans on registered raster; obtain lowest alpha >=128 pixel in each column; ground anchor is midpoint of mean contact points. Footprint is convex hull of lower sole contours x148..196 and x213..252. This is a projected raster support footprint, not recovered 3D geometry."
+      },
+      "labelAnchorMethod": "Source x192 at y20, 8px above visible bounds y28. Placement aid; not a physical attachment.",
+      "display": {
+        "hqVisibleHeightCssPx": 58,
+        "hqFullCanvasCssPx": 71.3846,
+        "detailVisibleHeightCssPx": 180,
+        "detailFullCanvasCssPx": 221.5385
+      },
+      "qa": [
+        "qa/alpha-and-hq-r1.png",
+        "qa/detail-actual-scale-r1.png",
+        "qa/registration-r1.png",
+        "qa/measurements-r1.json",
+        "qa/QA.md"
+      ],
+      "limits": [
+        "One parked pose only; no rig or independent animation parts.",
+        "Projected ground anchor is measured from visible sole silhouettes, not a 3D ground solve.",
+        "Actual worker is slimmer/taller than the squat close-up concept; coordinator must assess identity/proportions in scene.",
+        "58px display preserves silhouette and face; tiny eye separation and mechanical detail are reduced.",
+        "No cast shadow; renderer supplies separate ground shadow."
+      ],
+      "bytes": 92595,
+      "sourceDirectory": "design/mission-frontier/assets/staging/A0/mf.worker.standard.se.neutral"
+    },
+    {
+      "id": "mf.base.standard.floor",
+      "revision": 1,
+      "status": "M1-calibration-accepted",
+      "file": "/assets/mf.base.standard.floor.r1.png",
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "logicalSize": [
+        768,
+        512
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        384,
+        422
+      ],
+      "anchorConvention": "front top-surface corner as assigned; physical bottom bevel is lower",
+      "footprint": [
+        [
+          384,
+          70
+        ],
+        [
+          736,
+          246
+        ],
+        [
+          384,
+          422
+        ],
+        [
+          32,
+          246
+        ]
+      ],
+      "labelAnchor": [
+        384,
+        62
+      ],
+      "labelAnchorMethod": "8 logical pixels above back top-surface corner; placement aid only",
+      "occlusionClass": "floor",
+      "layer": "floor",
+      "sockets": {
+        "surfaceBack": [
+          384,
+          70
+        ],
+        "surfaceRight": [
+          736,
+          246
+        ],
+        "surfaceFront": [
+          384,
+          422
+        ],
+        "surfaceLeft": [
+          32,
+          246
+        ]
+      },
+      "physicalFrontBottomBevel": [
+        383.9747,
+        439.4466
+      ],
+      "surfaceToBottomBevelLogicalY": 17.4466,
+      "sourceId": "exec-c871c81d-2430-4acf-a75b-ef3aa2c40860",
+      "sha256": "863ce265015fb0742e9d4031a29c2b49ec546b004effafbe78e6ef6258edd25e",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/hq-logical-scale-r1.png",
+        "qa/overview-scale-r1.png",
+        "qa/registered-corners-r1.png",
+        "qa/source-corner-measurements-r1.png",
+        "qa/measurements-r1.json"
+      ],
+      "limits": [
+        "One fixed projection, no animation or walls/roof.",
+        "Source corners manually measured within approximately 3 pixels; geometry projected to exact target landmarks.",
+        "New generated layers require individual verification against this registered export; old source homography is not a guarantee of shared geometry.",
+        "Not accepted until coordinator integration review."
+      ],
+      "bytes": 1439654,
+      "sourceDirectory": "design/mission-frontier/assets/staging/A0/mf.base.standard.floor"
+    },
+    {
+      "id": "mf.base.standard.back",
+      "revision": 2,
+      "supersedesRevisionForCalibration": 1,
+      "status": "M1-calibration-accepted",
+      "file": "/assets/mf.base.standard.back.r2.png",
+      "sourceSize": [
+        1536,
+        1280
+      ],
+      "logicalSize": [
+        768,
+        640
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        384,
+        522
+      ],
+      "anchorConvention": "Inherited floor front surface anchor with200sourcepx top padding; relative footprint unchanged",
+      "footprint": [
+        [
+          384,
+          170
+        ],
+        [
+          736,
+          346
+        ],
+        [
+          384,
+          522
+        ],
+        [
+          32,
+          346
+        ]
+      ],
+      "footprintUse": "shared floor alignment reference, not a solid wall hit area",
+      "attachmentPolyline": [
+        [
+          56.5012,
+          345.7494
+        ],
+        [
+          384,
+          182
+        ],
+        [
+          711.4988,
+          345.7494
+        ]
+      ],
+      "labelAnchor": [
+        384,
+        64
+      ],
+      "labelAnchorMethod": "8logical pixels above measured central wall top",
+      "occlusionClass": "back-structure",
+      "layer": "back-structure",
+      "sockets": {
+        "leftEnd": [
+          56.5012,
+          345.7494
+        ],
+        "backJoint": [
+          384,
+          182
+        ],
+        "rightEnd": [
+          711.4988,
+          345.7494
+        ]
+      },
+      "visibleCenterWallHeightLogical": 110,
+      "sourceId": "exec-97a67028-ee56-4f19-976c-e661ae25bff5",
+      "sha256": "1cf082700a88050c2a475c5e1ccb4596675312be9eb7f0421cc7366edd15b4fd",
+      "alpha": "straight RGBA",
+      "geometry": "geometry-r2.json",
+      "qa": [
+        "qa/QA-r2.md",
+        "qa/alpha-backgrounds-r2.png",
+        "qa/floor-back-composite-r2.png",
+        "qa/hq-composite-logical-scale-r2.png",
+        "qa/hq-worker-scale-r2.png",
+        "qa/hq-reference-comparison-r2.png",
+        "qa/registration-composite-r2.png",
+        "qa/measurements-r2.json",
+        "qa/contact-coverage-r2.json"
+      ],
+      "limits": [
+        "No floor/front/roof or stations in export; reference comparison is incomplete scene calibration.",
+        "Landmarks manually measured and registered in2D, not recovered3D geometry.",
+        "Utility lights baked physical architecture only, never state evidence."
+      ],
+      "bytes": 765877,
+      "sourceDirectory": "design/mission-frontier/assets/staging/A0/mf.base.standard.back"
+    },
+    {
+      "id": "mf.base.standard.front",
+      "revision": 1,
+      "status": "M1-calibration-accepted",
+      "file": "/assets/mf.base.standard.front.r1.png",
+      "sourceSize": [
+        1536,
+        1280
+      ],
+      "logicalSize": [
+        768,
+        640
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        384,
+        522
+      ],
+      "footprint": [
+        [
+          384,
+          170
+        ],
+        [
+          736,
+          346
+        ],
+        [
+          384,
+          522
+        ],
+        [
+          32,
+          346
+        ]
+      ],
+      "footprintUse": "shared alignment only, not solid foreground hit area",
+      "labelAnchor": [
+        384,
+        460
+      ],
+      "labelAnchorMethod": "open entrance label placement aid only",
+      "layer": "front-structure",
+      "occlusionClass": "foreground",
+      "sockets": {
+        "leftCorner": [
+          32,
+          346
+        ],
+        "rightCorner": [
+          736,
+          346
+        ],
+        "frontOpen": [
+          384,
+          522
+        ]
+      },
+      "parts": [
+        {
+          "name": "left-parapet",
+          "sourceFrame": [
+            0,
+            0,
+            768,
+            1280
+          ]
+        },
+        {
+          "name": "right-parapet",
+          "sourceFrame": [
+            768,
+            0,
+            768,
+            1280
+          ]
+        }
+      ],
+      "partsNote": "Frames reference one export; preserve full-canvas registration when splitting. Optional renderer-controlled selected-worker fade, no new asset IDs.",
+      "geometry": "geometry.json",
+      "sourceId": "exec-89f74e05-a783-4b4d-8430-4d296793336b",
+      "sha256": "d893aedaa181ef2848b3bc31da06b864e0ab2761005476098f935d2060a30448",
+      "alpha": "straight RGBA",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/compound-composite-r1.png",
+        "qa/hq-compound-logical-scale-r1.png",
+        "qa/two-workers-occlusion-r1.png",
+        "qa/contact-coverage-r1.json",
+        "qa/measurements-r1.json"
+      ],
+      "limits": [
+        "Low front parts can partially occlude workers placed directly behind them; renderer owns layout and selection fade.",
+        "No roof/front beam/floor or internal partitions.",
+        "Visual gate awaits coordinator integration."
+      ],
+      "bytes": 236367,
+      "sourceDirectory": "design/mission-frontier/assets/staging/A0/mf.base.standard.front"
+    },
+    {
+      "id": "mf.base.standard.roof",
+      "revision": 1,
+      "status": "M1-calibration-accepted",
+      "file": "/assets/mf.base.standard.roof.r1.png",
+      "sourceSize": [
+        1536,
+        1280
+      ],
+      "logicalSize": [
+        768,
+        640
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        384,
+        522
+      ],
+      "footprint": [
+        [
+          384,
+          170
+        ],
+        [
+          736,
+          346
+        ],
+        [
+          384,
+          522
+        ],
+        [
+          32,
+          346
+        ]
+      ],
+      "footprintUse": "shared physical floor reference; roof deck is elevated110logical pixels",
+      "roofDeck": [
+        [
+          384,
+          60
+        ],
+        [
+          736,
+          236
+        ],
+        [
+          384,
+          412
+        ],
+        [
+          32,
+          236
+        ]
+      ],
+      "labelAnchor": [
+        384,
+        50
+      ],
+      "labelAnchorMethod": "label placement aid10logical pixels above roofback silhouette",
+      "layer": "roof",
+      "occlusionClass": "roof",
+      "sockets": {},
+      "sourceId": "exec-6d4b39ed-52e8-43ea-9691-49f66bdd9a19",
+      "sha256": "3187c645988fc55645cf818f06021d4f6d1acf8016f0a04006d7109e718a8c78",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/closed-compound-r1.png",
+        "qa/closed-overview-r1.png",
+        "qa/closed-open-logical-scale-r1.png",
+        "qa/closed-open-overview-r1.png",
+        "qa/roof-seat-registration-r1.png",
+        "qa/back-top-overlap-r1.json",
+        "qa/measurements-r1.json"
+      ],
+      "remainingP3": [
+        "Generated fascia~106.7153source pixels deep; coordinator reviewed and retained as a proportion detail pending integrated M1."
+      ],
+      "limits": [
+        "One fixed authored roof composition; no rotation/interior geometry.",
+        "Rear underside not directly visible/measurable in source.",
+        "Full scene M1 remains unverified."
+      ],
+      "bytes": 1549206,
+      "sourceDirectory": "design/mission-frontier/assets/staging/A0/mf.base.standard.roof"
+    },
+    {
+      "id": "mf.station.fabrication",
+      "revision": 1,
+      "status": "M1-calibration-accepted",
+      "file": "/assets/mf.station.fabrication.r1.png",
+      "sourceSize": [
+        512,
+        512
+      ],
+      "logicalSize": [
+        256,
+        256
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        131.3846,
+        214.5
+      ],
+      "footprint": [
+        [
+          57.5384,
+          173.2692
+        ],
+        [
+          130.6154,
+          134.3461
+        ],
+        [
+          203.5385,
+          173.5769
+        ],
+        [
+          131.3846,
+          214.5
+        ]
+      ],
+      "footprintUse": "Approximate support polygon; rear point is occluded and estimated. Visible support span146x80 logical.",
+      "labelAnchor": [
+        128,
+        60
+      ],
+      "layer": "station",
+      "occlusionClass": "solid-station",
+      "sockets": {
+        "moduleCradle": [
+          130.6154,
+          133.8846
+        ],
+        "frontToolPort": [
+          83.6923,
+          170.6539
+        ],
+        "screenCenter": [
+          100,
+          91.5769
+        ]
+      },
+      "socketUse": "Fixed visible feature centers; independent worker/tools are renderer-owned. No rig or detachable parts supplied.",
+      "sourceId": "exec-cfd035fe-140f-4cd4-a3cd-3463319c22af",
+      "sha256": "3bb80f14413e70b0398b4d6770e601affcf3d9b20d2a5553dd3f01cebf1d966d",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/worker-comparison-r1.png",
+        "qa/station-logical-scale-r1.png",
+        "qa/sockets-registration-r1.png",
+        "qa/measurements-r1.json"
+      ],
+      "limits": [
+        "Single static powered workbench; cyan screen is not execution status.",
+        "Bench surface measured about38logical pixels above front foot. Full sprite silhouette146.5logical high includes isometric depth; tallest feature physical height cannot be directly verified from flattened raster.",
+        "Integrated M1 and station-worker action pose remain unverified."
+      ],
+      "bytes": 164157,
+      "sourceDirectory": "design/mission-frontier/assets/staging/A0/mf.station.fabrication"
+    },
+    {
+      "id": "mf.terrain.region",
+      "revision": 2,
+      "status": "M1-calibration-accepted",
+      "file": "/assets/mf.terrain.region.r2.png",
+      "sourceSize": [
+        2048,
+        1280
+      ],
+      "logicalSize": [
+        1024,
+        640
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        512,
+        540
+      ],
+      "footprint": [
+        [
+          0,
+          0
+        ],
+        [
+          1024,
+          0
+        ],
+        [
+          1024,
+          640
+        ],
+        [
+          0,
+          640
+        ]
+      ],
+      "layer": "terrain",
+      "occlusionClass": "background",
+      "sockets": {},
+      "sourceId": "exec-937b5774-80a6-425f-8f51-4a7f6caee8f2",
+      "sha256": "4e7548883ecf18ae6fc4f05e9dec3bf3afef4176f3fb1df68ece132c8f9f9ec0",
+      "alpha": "opaque RGB terrain",
+      "geometry": "geometry-r2.json",
+      "qa": [
+        "qa/QA-r2.md",
+        "qa/independent-bases-proof-r2.png",
+        "qa/placement-registration-r2.png",
+        "qa/scene-1568-r2.png"
+      ],
+      "limits": [
+        "Natural clearings determine runtime placements; original specified clearing centers superseded.",
+        "Not a seamless repeating tile; static scenery only."
+      ],
+      "bytes": 5175963,
+      "sourceDirectory": "design/mission-frontier/assets/staging/A0/mf.terrain.region"
+    },
+    {
+      "id": "mf.worker.standard.detail.neutral",
+      "revision": 1,
+      "status": "M1-calibration-accepted",
+      "file": "/assets/mf.worker.standard.detail.neutral.r1.png",
+      "sourceSize": [
+        768,
+        768
+      ],
+      "logicalSize": [
+        384,
+        384
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        203.5345,
+        339.781
+      ],
+      "footprint": [
+        [
+          172.9145,
+          348.55
+        ],
+        [
+          234.1545,
+          331.0115
+        ]
+      ],
+      "footprintUse": "Two sole-contact centers only; renderer may expand a navigation footprint separately.",
+      "layer": "worker",
+      "occlusionClass": "actor",
+      "sockets": {
+        "leftHand": [
+          136.688,
+          255.6835
+        ],
+        "rightHand": [
+          253.993,
+          236.9955
+        ],
+        "face": [
+          214.604,
+          103.878
+        ]
+      },
+      "sourceId": "exec-00c48322-9b05-4aac-affd-745ba69e97e8",
+      "sha256": "9f27605d39c50d3a9c1cc6551b218bd2764575c36eabc1e1a20ba32584104be7",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/actual-scale-r1.png",
+        "qa/registration-r1.png"
+      ],
+      "limits": [
+        "Single neutral full-body pose, no rig, tool, animation or portrait export.",
+        "Hand sockets are parked-pose feature centers; contact animation requires separate work proof."
+      ],
+      "bytes": 341635,
+      "sourceDirectory": "design/mission-frontier/assets/staging/A0/mf.worker.standard.detail.neutral"
+    },
+    {
+      "id": "mf.worker.standard.se.working",
+      "revision": 1,
+      "status": "M1-calibration-accepted",
+      "file": "/assets/mf.worker.standard.se.working.r1.png",
+      "sourceSize": [
+        768,
+        768
+      ],
+      "logicalSize": [
+        384,
+        384
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        136.2275,
+        339.9605
+      ],
+      "layer": "worker",
+      "occlusionClass": "actor",
+      "sockets": {
+        "elbow": [
+          211.9505,
+          164.7525
+        ],
+        "probeTip": [
+          331.713,
+          192
+        ]
+      },
+      "parts": [
+        {
+          "name": "body",
+          "file": "/assets/mf.worker.standard.se.working.body.r1.png",
+          "sourceSize": [
+            768,
+            768
+          ],
+          "logicalSize": [
+            384,
+            384
+          ],
+          "anchor": [
+            136.2275,
+            339.9605
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "rotationDegrees": 0,
+          "bytes": 329270,
+          "sha256": "85eb746606e5719c4ce2acf45a55cb6a50b8d05db69ee064d55fc15e1adacc40"
+        },
+        {
+          "name": "forearm-probe",
+          "file": "/assets/mf.worker.standard.se.working.forearm-probe.r1.png",
+          "sourceSize": [
+            768,
+            768
+          ],
+          "logicalSize": [
+            384,
+            384
+          ],
+          "anchor": [
+            136.2275,
+            339.9605
+          ],
+          "pivot": [
+            211.9505,
+            164.7525
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "maxRotationDegrees": 4,
+          "drawOrder": 1,
+          "bytes": 52593,
+          "sha256": "976fa3368d871e2935f3de509d0d7dbfcf8d6ad31e8fcf900f1b510b8bab37e9"
+        }
+      ],
+      "motionContract": "Render body fixed. Place moving part in the same untrimmed frame and rotate around elbow pivot only, maximum±4degrees. Active-run only. Stop at0 and use assembled fallback for reduced motion; neutral/finished uses parked ID. Probe tip moves with part.",
+      "sha256": "e676f04f016b05b3471c3a4dbbce4a78fdb5df3f88fada9f2b2b3c1e063c930a",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/actual-scale-motion-r1.gif",
+        "qa/elbow-contact-r1.png",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/registration-r1.png"
+      ],
+      "limits": [
+        "Station contact requires renderer placement; no station is baked in.",
+        "Only elbow forearm/probe articulation, not a full skeleton.",
+        "At58px the motion is subtle; do not exaggerate beyond4degrees to force visibility."
+      ],
+      "bytes": 367532,
+      "sourceDirectory": "design/mission-frontier/assets/staging/A0/mf.worker.standard.se.working"
+    },
+    {
+      "id": "mf.worker.standard.portrait",
+      "revision": 1,
+      "status": "M1-calibration-accepted",
+      "file": "/assets/mf.worker.standard.portrait.r1.png",
+      "sourceSize": [
+        256,
+        320
+      ],
+      "logicalSize": [
+        128,
+        160
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "layer": "hud-portrait",
+      "occlusionClass": "ui-image",
+      "groundAnchor": null,
+      "sockets": {},
+      "sha256": "e1e3384a7603cd8a46c6666d9ad356f88a6359b9467c7e804b9faeb58930afb1",
+      "alpha": "straight RGBA",
+      "displaySlots": [
+        [
+          80,
+          122
+        ],
+        [
+          64,
+          86
+        ]
+      ],
+      "displayFit": {
+        "objectFit": "cover",
+        "objectPosition": "center top"
+      },
+      "qa": [
+        "qa/QA.md",
+        "qa/hud-actual-scale-r1.png",
+        "qa/alpha-backgrounds-r1.png"
+      ],
+      "limits": [
+        "Portrait only; no world placement or ground anchor.",
+        "Bottom torso crop is intentional. No status/UI baked in."
+      ],
+      "bytes": 133331,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A0/mf.worker.standard.portrait"
+    },
+    {
+      "id": "mf.station.communications",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.station.communications.r1.png",
+      "sourceSize": [
+        512,
+        512
+      ],
+      "logicalSize": [
+        256,
+        256
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        157.52725,
+        212.8818
+      ],
+      "footprint": [
+        [
+          64.43635,
+          177.97275
+        ],
+        [
+          107.7818,
+          142.1909
+        ],
+        [
+          200.87275,
+          186.55455
+        ],
+        [
+          157.52725,
+          212.8818
+        ]
+      ],
+      "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+      "layer": "station",
+      "occlusionClass": "solid-station",
+      "sockets": {
+        "frontToolPort": [
+          64.14545,
+          153.3909
+        ],
+        "screenCenter": [
+          135.85455,
+          100.73635
+        ],
+        "receiver": [
+          157.67275,
+          149.17275
+        ]
+      },
+      "sha256": "81a0c8c2e1f4de2f034afa0d3f36e86983f8bd348b0c9e69b20dd63d9656d6da",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/socket-registration-r1.png",
+        "qa/calibrated-scale-comparison-r1.png"
+      ],
+      "limits": [
+        "Static neutral powered screen bank; waiting/finished require no art variant.",
+        "No workers, floor, state labels or animated parts baked in."
+      ],
+      "bytes": 162859,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.station.communications"
+    },
+    {
+      "id": "mf.station.inspection",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.station.inspection.r1.png",
+      "sourceSize": [
+        512,
+        512
+      ],
+      "logicalSize": [
+        256,
+        256
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        126.2745,
+        213.36275
+      ],
+      "footprint": [
+        [
+          58.9804,
+          170.85295
+        ],
+        [
+          128,
+          128.5
+        ],
+        [
+          201.7255,
+          171.32355
+        ],
+        [
+          126.2745,
+          213.36275
+        ]
+      ],
+      "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+      "layer": "station",
+      "occlusionClass": "solid-station",
+      "sockets": {
+        "frontToolPort": [
+          61.64705,
+          150.3039
+        ],
+        "screenCenter": [
+          117.33335,
+          75.63725
+        ],
+        "scanCenter": [
+          127.0588,
+          129.91175
+        ],
+        "sensorHead": [
+          154.82355,
+          109.2059
+        ]
+      },
+      "sha256": "3f82240e5723017910af1e8795e08187ae6aabe2de05c412f985dda4948d0f1d",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/socket-registration-r1.png",
+        "qa/calibrated-scale-comparison-r1.png"
+      ],
+      "limits": [
+        "Static neutral powered scan platter/readouts; waiting/finished require no art variant. Sensor arm is scenery for this ID, not an independently articulated part.",
+        "No workers, floor, state labels or animated parts baked in."
+      ],
+      "bytes": 183304,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.station.inspection"
+    },
+    {
+      "id": "mf.terrain.ground",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.terrain.ground.r1.png",
+      "sourceSize": [
+        1024,
+        768
+      ],
+      "logicalSize": [
+        512,
+        384
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        256,
+        290
+      ],
+      "footprint": [
+        [
+          256,
+          65
+        ],
+        [
+          481,
+          177.5
+        ],
+        [
+          256,
+          290
+        ],
+        [
+          31,
+          177.5
+        ]
+      ],
+      "layer": "terrain",
+      "occlusionClass": "ground",
+      "sockets": {
+        "center": [
+          256,
+          177.5
+        ]
+      },
+      "sha256": "12bec3d7f9d85f2e42a1c617d2574e7ad2b697ff38fee93a0f6256389e7fb731",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/surface-registration-r1.png",
+        "qa/overview-placement-r1.png"
+      ],
+      "limits": [
+        "Organic edge is not seamless. Connectors/shore remain separately assigned.",
+        "Flat top surface supports object placement; rim has no independent collision mesh.",
+        "No water/background outside plate."
+      ],
+      "bytes": 763288,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.terrain.ground"
+    },
+    {
+      "id": "mf.terrain.shore.rim",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.terrain.shore.rim.r1.png",
+      "sourceSize": [
+        1024,
+        768
+      ],
+      "logicalSize": [
+        512,
+        384
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        256,
+        290
+      ],
+      "layer": "terrain",
+      "occlusionClass": "ground",
+      "parts": [
+        {
+          "name": "interior",
+          "file": "/assets/mf.terrain.shore.rim.interior.r1.png",
+          "sourceSize": [
+            1024,
+            768
+          ],
+          "logicalSize": [
+            512,
+            384
+          ],
+          "anchor": [
+            256,
+            290
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "sha256": "c94965ebf4dcabdd5967874f6450b658751e20c58c7ceec0b651b596bb50ce21",
+          "bytes": 341509
+        },
+        {
+          "name": "nw",
+          "file": "/assets/mf.terrain.shore.rim.nw.r1.png",
+          "sourceSize": [
+            1024,
+            768
+          ],
+          "logicalSize": [
+            512,
+            384
+          ],
+          "anchor": [
+            256,
+            290
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "sha256": "fcd91f7d53b64bc8a57b535f3e409d47dbe855e38ba92cba8898e368e86714fe",
+          "sockets": {
+            "start": [
+              31,
+              177
+            ],
+            "end": [
+              255.5,
+              65
+            ],
+            "approach": [
+              143.5,
+              121
+            ]
+          },
+          "bytes": 108197
+        },
+        {
+          "name": "ne",
+          "file": "/assets/mf.terrain.shore.rim.ne.r1.png",
+          "sourceSize": [
+            1024,
+            768
+          ],
+          "logicalSize": [
+            512,
+            384
+          ],
+          "anchor": [
+            256,
+            290
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "sha256": "20fd1c86a08a2b6ba4decb11d6c02d6598a197d2006dcf925df8fae97b28b00a",
+          "sockets": {
+            "start": [
+              256,
+              65
+            ],
+            "end": [
+              481,
+              177
+            ],
+            "approach": [
+              368.5,
+              121
+            ]
+          },
+          "bytes": 94210
+        },
+        {
+          "name": "se",
+          "file": "/assets/mf.terrain.shore.rim.se.r1.png",
+          "sourceSize": [
+            1024,
+            768
+          ],
+          "logicalSize": [
+            512,
+            384
+          ],
+          "anchor": [
+            256,
+            290
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "sha256": "06d4f9b784b89e96c567ba56dd01d80b445d6b171dc697e83011ddba2f15b1b8",
+          "sockets": {
+            "start": [
+              481,
+              177.5
+            ],
+            "end": [
+              256,
+              290
+            ],
+            "approach": [
+              368.5,
+              233.5
+            ]
+          },
+          "bytes": 137916
+        },
+        {
+          "name": "sw",
+          "file": "/assets/mf.terrain.shore.rim.sw.r1.png",
+          "sourceSize": [
+            1024,
+            768
+          ],
+          "logicalSize": [
+            512,
+            384
+          ],
+          "anchor": [
+            256,
+            290
+          ],
+          "offset": [
+            0,
+            0
+          ],
+          "sha256": "05bddb799956757040555a06d5cc9e109a87d3e1b7df3f9d403995d664316c5b",
+          "sockets": {
+            "start": [
+              255.5,
+              290
+            ],
+            "end": [
+              31,
+              177.5
+            ],
+            "approach": [
+              143.5,
+              233.5
+            ]
+          },
+          "bytes": 134844
+        }
+      ],
+      "sockets": {
+        "nwStart": [
+          31,
+          177
+        ],
+        "nwEnd": [
+          255.5,
+          65
+        ],
+        "nwApproach": [
+          143.5,
+          121
+        ],
+        "neStart": [
+          256,
+          65
+        ],
+        "neEnd": [
+          481,
+          177
+        ],
+        "neApproach": [
+          368.5,
+          121
+        ],
+        "seStart": [
+          481,
+          177.5
+        ],
+        "seEnd": [
+          256,
+          290
+        ],
+        "seApproach": [
+          368.5,
+          233.5
+        ],
+        "swStart": [
+          255.5,
+          290
+        ],
+        "swEnd": [
+          31,
+          177.5
+        ],
+        "swApproach": [
+          143.5,
+          233.5
+        ]
+      },
+      "sha256": "12bec3d7f9d85f2e42a1c617d2574e7ad2b697ff38fee93a0f6256389e7fb731",
+      "alpha": "straight RGBA; mutually exclusive source alpha ownership",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/reconstruction-r1.json",
+        "qa/reconstruction-at-scale2-r1.png",
+        "qa/joins-at-scale2-r1.png",
+        "qa/part-ownership-r1.png"
+      ],
+      "limits": [
+        "Do not draw assembled export beneath parts; choose assembled OR parts.",
+        "Part boundaries are registered to this plate, not a guarantee of arbitrary seamless island-to-island tiling.",
+        "No rotations baked; preserve lighting and use measured sockets for approach alignment.",
+        "Exact reconstruction is at registered native source pixels. Independently linear-filtered part edges can form fractional-alpha seams under zoom; assemble same-island parts at source resolution into one render texture before scene scaling, or validate an equivalent sampling approach."
+      ],
+      "bytes": 763288,
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.terrain.shore.rim"
+    },
+    {
+      "id": "mf.terrain.water",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.terrain.water.r1.png",
+      "sourceSize": [
+        512,
+        512
+      ],
+      "logicalSize": [
+        256,
+        256
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        0,
+        0
+      ],
+      "layer": "water",
+      "occlusionClass": "background",
+      "sockets": {},
+      "repeat": [
+        "x",
+        "y"
+      ],
+      "sha256": "9ffb2f2cc97d044f4c237bb4832922a42c11a8f847ce6a49ce66d7df44ff3bb9",
+      "alpha": "opaque RGB",
+      "qa": [
+        "qa/QA.md",
+        "qa/tiled-3x3-r1.png",
+        "qa/tile-boundary-locations-r1.png",
+        "qa/wrap-junction-magnified-r1.png",
+        "qa/seam-measurements-r1.json"
+      ],
+      "limits": [
+        "Static texture, no animation or shoreline foam.",
+        "A512px repeating texture can reveal repeated motifs over large uninterrupted water areas.",
+        "Use repeat texture sampling; avoid independently filtered clamp-to-edge sprites."
+      ],
+      "bytes": 492623,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.terrain.water"
+    },
+    {
+      "id": "mf.route.road.se",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.route.road.se.r1.png",
+      "sourceSize": [
+        512,
+        384
+      ],
+      "logicalSize": [
+        256,
+        192
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        128,
+        128
+      ],
+      "footprint": [
+        [
+          36,
+          94
+        ],
+        [
+          60,
+          82
+        ],
+        [
+          220,
+          162
+        ],
+        [
+          196,
+          174
+        ]
+      ],
+      "layer": "route",
+      "occlusionClass": "ground-route",
+      "sockets": {
+        "nw": [
+          48,
+          88
+        ],
+        "se": [
+          208,
+          168
+        ]
+      },
+      "crossSections": {
+        "nw": [
+          [
+            36,
+            94
+          ],
+          [
+            60,
+            82
+          ]
+        ],
+        "se": [
+          [
+            196,
+            174
+          ],
+          [
+            220,
+            162
+          ]
+        ]
+      },
+      "repeatDisplacement": [
+        160,
+        80
+      ],
+      "sha256": "2304520e709f8239a2ded113eb895b6e7a0b84cc69df33ca019fe857de99df77",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/joined-consumer-scales-r1.png",
+        "qa/join-contact-magnified-r1.png",
+        "qa/alpha-backgrounds-r1.png"
+      ],
+      "limits": [
+        "Single SE orientation; no rotated/faked opposite lighting.",
+        "Small material discontinuity at repeated panels may remain; scene joins must be inspected with actual filtering."
+      ],
+      "bytes": 45066,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.route.road.se"
+    },
+    {
+      "id": "mf.route.road.sw",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.route.road.sw.r1.png",
+      "sourceSize": [
+        512,
+        384
+      ],
+      "logicalSize": [
+        256,
+        192
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        128,
+        128
+      ],
+      "footprint": [
+        [
+          196,
+          82
+        ],
+        [
+          220,
+          94
+        ],
+        [
+          60,
+          174
+        ],
+        [
+          36,
+          162
+        ]
+      ],
+      "layer": "route",
+      "occlusionClass": "ground-route",
+      "sockets": {
+        "ne": [
+          208,
+          88
+        ],
+        "sw": [
+          48,
+          168
+        ]
+      },
+      "crossSections": {
+        "ne": [
+          [
+            196,
+            82
+          ],
+          [
+            220,
+            94
+          ]
+        ],
+        "sw": [
+          [
+            36,
+            162
+          ],
+          [
+            60,
+            174
+          ]
+        ]
+      },
+      "repeatDisplacement": [
+        -160,
+        80
+      ],
+      "sha256": "66f586d89c5471a15b2473a9798ac754b1b6718c91eed99817cf4e8e5324f7a1",
+      "alpha": "straight RGBA",
+      "qa": [
+        "qa/QA.md",
+        "qa/both-axes-consumer-scales-r1.png",
+        "qa/join-contact-magnified-r1.png",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/join-measurements-r1.json"
+      ],
+      "limits": [
+        "Permitted mirrored ground material; tiny curb-side shading reverses. No tall geometry or cast shadow is present.",
+        "Live scene filtering and connection composition remain coordinator verification."
+      ],
+      "bytes": 44982,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.route.road.sw"
+    },
+    {
+      "id": "mf.route.road.junction",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.route.road.junction.r1.png",
+      "sourceSize": [
+        512,
+        384
+      ],
+      "logicalSize": [
+        256,
+        192
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        128,
+        128
+      ],
+      "layer": "route",
+      "occlusionClass": "ground-route",
+      "sockets": {
+        "nw": [
+          80,
+          104
+        ],
+        "ne": [
+          176,
+          104
+        ],
+        "se": [
+          176,
+          152
+        ],
+        "sw": [
+          80,
+          152
+        ]
+      },
+      "crossSections": {
+        "nw": [
+          [
+            68,
+            110
+          ],
+          [
+            92,
+            98
+          ]
+        ],
+        "ne": [
+          [
+            164,
+            98
+          ],
+          [
+            188,
+            110
+          ]
+        ],
+        "se": [
+          [
+            164,
+            158
+          ],
+          [
+            188,
+            146
+          ]
+        ],
+        "sw": [
+          [
+            68,
+            146
+          ],
+          [
+            92,
+            158
+          ]
+        ]
+      },
+      "sha256": "3126ea2ed43c4845b2daec9921cb11fe0fdc8f1ac469dd33f1b69257aeea3c1c",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/four-arms-consumer-scales-r1.png",
+        "qa/center-and-joins-magnified-r1.png",
+        "qa/alpha-backgrounds-r1.png"
+      ],
+      "limits": [
+        "Deterministic crossing made from existing flat surface pixels; center panel patterns meet rather than continuing as one unique manufactured panel.",
+        "No gate/railing/central ornament. Scene filtering remains coordinator verification."
+      ],
+      "bytes": 45187,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.route.road.junction"
+    },
+    {
+      "id": "mf.route.bridge.se",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.route.bridge.se.r1.png",
+      "sourceSize": [
+        512,
+        384
+      ],
+      "logicalSize": [
+        256,
+        192
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        128,
+        128
+      ],
+      "footprint": [
+        [
+          36,
+          94
+        ],
+        [
+          60,
+          82
+        ],
+        [
+          220,
+          162
+        ],
+        [
+          196,
+          174
+        ]
+      ],
+      "layer": "route",
+      "occlusionClass": "ground-route",
+      "sockets": {
+        "nw": [
+          48,
+          88
+        ],
+        "se": [
+          208,
+          168
+        ]
+      },
+      "crossSections": {
+        "nw": [
+          [
+            36,
+            94
+          ],
+          [
+            60,
+            82
+          ]
+        ],
+        "se": [
+          [
+            196,
+            174
+          ],
+          [
+            220,
+            162
+          ]
+        ]
+      },
+      "repeatDisplacement": [
+        160,
+        80
+      ],
+      "sha256": "207100c9c01e3538834072ca0f1fdb9c885153944a80e6aa2799c47e228054d3",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/joined-consumer-scales-r1.png",
+        "qa/join-contact-magnified-r1.png",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/bridge-measurements-r1.json"
+      ],
+      "limits": [
+        "SE bridge only. Approved road deck retained verbatim; generated structure below near edge.",
+        "Small material discontinuity at repeated panels may remain; scene joins must be inspected with actual filtering."
+      ],
+      "undersideDepthLogical": 4.5,
+      "bytes": 50477,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.route.bridge.se"
+    },
+    {
+      "id": "mf.route.bridge.sw",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.route.bridge.sw.r1.png",
+      "sourceSize": [
+        512,
+        384
+      ],
+      "logicalSize": [
+        256,
+        192
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        128,
+        128
+      ],
+      "footprint": [
+        [
+          196,
+          82
+        ],
+        [
+          220,
+          94
+        ],
+        [
+          60,
+          174
+        ],
+        [
+          36,
+          162
+        ]
+      ],
+      "layer": "route",
+      "occlusionClass": "ground-route",
+      "sockets": {
+        "ne": [
+          208,
+          88
+        ],
+        "sw": [
+          48,
+          168
+        ]
+      },
+      "crossSections": {
+        "ne": [
+          [
+            196,
+            82
+          ],
+          [
+            220,
+            94
+          ]
+        ],
+        "sw": [
+          [
+            36,
+            162
+          ],
+          [
+            60,
+            174
+          ]
+        ]
+      },
+      "repeatDisplacement": [
+        -160,
+        80
+      ],
+      "undersideDepthLogical": 4.5,
+      "sha256": "8d437a1d18c6afc7fd45554cb3fde89ebd77c037f42b3f67345599a22abbfbcb",
+      "alpha": "straight RGBA",
+      "qa": [
+        "qa/QA.md",
+        "qa/both-axes-consumer-scales-r1.png",
+        "qa/join-contact-magnified-r1.png",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/join-measurements-r1.json"
+      ],
+      "limits": [
+        "Authorized mirror reverses small structural-side highlight direction; shallow underside remains credible.",
+        "No opposite-view rerender or water baked in. Scene filtering remains coordinator review."
+      ],
+      "bytes": 50433,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.route.bridge.sw"
+    },
+    {
+      "id": "mf.prop.purple-tree",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.prop.purple-tree.r1.png",
+      "sourceSize": [
+        768,
+        768
+      ],
+      "logicalSize": [
+        384,
+        384
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        192.0375670840787,
+        341.9910554561717
+      ],
+      "layer": "scenery-prop",
+      "occlusionClass": "foliage",
+      "sockets": {
+        "root": [
+          192.0375670840787,
+          341.9910554561717
+        ]
+      },
+      "sha256": "5fe30e28efebc71ba0ce2269cfb3434a7f21b9915ed743fbec1adcd6b85eceed",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/ground-water-instances-r1.png",
+        "qa/actual-scales-r1.png",
+        "qa/measurements-r1.json"
+      ],
+      "limits": [
+        "Natural canopy is broader than nominal target, approximately300logical wide and280logical tall; uniform scale preserves branches.",
+        "One static tree instance, repeated silhouette recognizable. No foliage animation or shadow asset.",
+        "Canopy can occlude workers; renderer owns depth/placement."
+      ],
+      "bytes": 617075,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.prop.purple-tree"
+    },
+    {
+      "id": "mf.prop.rock",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.prop.rock.r1.png",
+      "sourceSize": [
+        384,
+        256
+      ],
+      "logicalSize": [
+        192,
+        128
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        96.0874,
+        105.1958
+      ],
+      "footprint": [
+        [
+          46.87415,
+          96.979
+        ],
+        [
+          96.5245,
+          85.7902
+        ],
+        [
+          145.3881,
+          96.7168
+        ],
+        [
+          94.6014,
+          106.24475
+        ]
+      ],
+      "layer": "scenery-prop",
+      "occlusionClass": "low-prop",
+      "sockets": {},
+      "sha256": "56518d649ca8c25a989059c0f84d57cb69289843f94e50ec68d2a7477081e237",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/ground-instances-r1.png",
+        "qa/actual-scales-r1.png"
+      ],
+      "limits": [
+        "Rear footprint point estimated; no collision mesh.",
+        "Single static low cluster; no shadow or land tile."
+      ],
+      "bytes": 37388,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.prop.rock"
+    },
+    {
+      "id": "mf.prop.cargo",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.prop.cargo.r1.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        95.78875,
+        150.1459
+      ],
+      "footprint": [
+        [
+          71.79685,
+          137.9068
+        ],
+        [
+          123.347,
+          123.3171
+        ],
+        [
+          149.1221,
+          136.04255
+        ],
+        [
+          95.78875,
+          150.1459
+        ]
+      ],
+      "layer": "task-prop",
+      "occlusionClass": "low-prop",
+      "sockets": {
+        "handle": [
+          122.6986,
+          137.66365
+        ]
+      },
+      "sha256": "d9fcc471bf4d3f6fbf61d7043b4987d0bf166842a3fd85ea5d9ae96cdfe2e41b",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/basefloor-instances-r1.png",
+        "qa/actual-scales-r1.png"
+      ],
+      "limits": [
+        "Display eligibility and interaction are runtime-owned: show only for task with retained artifacts. No evidence semantics baked into art.",
+        "No text/logo/status light, shadow, floor or opening animation.",
+        "Rear footprint point estimated."
+      ],
+      "bytes": 30534,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.prop.cargo",
+      "boundsSourcePixels": [
+        141,
+        204,
+        301,
+        302
+      ]
+    },
+    {
+      "id": "mf.artifact.capsule",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.artifact.capsule.r1.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        96.25,
+        149.9375
+      ],
+      "footprint": [
+        [
+          75.7969,
+          141.7031
+        ],
+        [
+          93.3281,
+          133.29165
+        ],
+        [
+          111.9219,
+          142.2344
+        ],
+        [
+          96.25,
+          149.9375
+        ]
+      ],
+      "layer": "task-prop",
+      "occlusionClass": "low-prop",
+      "sockets": {
+        "glassInset": [
+          86.4219,
+          107.6146
+        ]
+      },
+      "sha256": "02efc6fe8323d74f83dc2587efbd0b93904947ff2a03da2aded62ef52ae77c08",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/basefloor-instances-r1.png",
+        "qa/actual-scales-r1.png"
+      ],
+      "limits": [
+        "Runtime binds capsule to one retained artifact and opens evidence. No progress or autonomous travel implied.",
+        "No text/logo/status symbols, shadow, floor or opening animation. Blue glass is non-semantic material; metallic brass fittings are not lights.",
+        "Rear footprint point estimated."
+      ],
+      "bytes": 33960,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.artifact.capsule",
+      "boundsSourcePixels": [
+        150,
+        132,
+        228,
+        302
+      ]
+    },
+    {
+      "id": "mf.worker.standard.sw.neutral",
+      "revision": 1,
+      "status": "M2-first-playable-accepted",
+      "file": "/assets/mf.worker.standard.sw.neutral.r1.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        96.05324999999999,
+        163.530625
+      ],
+      "footprint": [
+        [
+          82.9675,
+          159.41375
+        ],
+        [
+          109.139,
+          167.6475
+        ]
+      ],
+      "footprintUse": "Two measured sole centers; not a full collision polygon.",
+      "layer": "worker",
+      "occlusionClass": "actor",
+      "sockets": {
+        "face": [
+          88.84875,
+          52.2281
+        ]
+      },
+      "facing": "SW screen lower left",
+      "sha256": "c4ee094fee3f1911592e27619dfb3c59044bccb404187d0aa17e1a02031f7b3a",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/both-facings-actual-scale-r1.png",
+        "qa/basefloor-contact-r1.png"
+      ],
+      "limits": [
+        "One neutral parked pose; no active motion, tool or portrait variant.",
+        "New opposite-facing render preserves identity but is not pixel-mirrored anatomy.",
+        "Runtime owns selection/task state and neutral-versus-active semantics."
+      ],
+      "bytes": 91802,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A1/mf.worker.standard.sw.neutral"
+    },
+    {
+      "id": "mf.station.intake",
+      "revision": 1,
+      "status": "M7-integrated-visual-qualified",
+      "file": "/assets/mf.station.intake.r1.png",
+      "sourceSize": [
+        512,
+        512
+      ],
+      "logicalSize": [
+        256,
+        256
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        145.18395,
+        213.38745
+      ],
+      "footprint": [
+        [
+          56.7153,
+          175.73075
+        ],
+        [
+          103.5807,
+          139.55395
+        ],
+        [
+          202.90235,
+          179.01955
+        ],
+        [
+          145.18395,
+          213.38745
+        ]
+      ],
+      "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+      "layer": "station",
+      "occlusionClass": "solid-station",
+      "sockets": {
+        "frontToolPort": [
+          71.35045,
+          163.2333
+        ],
+        "screenCenter": [
+          119.86025,
+          138.074
+        ],
+        "receiver": [
+          178.7297,
+          87.2621
+        ]
+      },
+      "sha256": "623461a3e441421299f869f0d664d8dc3c8b2d6e225d0ff9ed88873be9805cef",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/socket-registration-r1.png",
+        "qa/calibrated-scale-comparison-r1.png"
+      ],
+      "limits": [
+        "Static unlit glass briefing panel and beacon; illumination belongs to runtime.",
+        "No workers, floor, state labels or animated parts baked in."
+      ],
+      "bytes": 137099,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A2/mf.station.intake",
+      "integratedQa": "design/mission-frontier/build-evidence/M7/assets.md"
+    },
+    {
+      "id": "mf.station.survey",
+      "revision": 1,
+      "status": "M7-integrated-visual-qualified",
+      "file": "/assets/mf.station.survey.r1.png",
+      "sourceSize": [
+        512,
+        512
+      ],
+      "logicalSize": [
+        256,
+        256
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        139.5247,
+        213.4411
+      ],
+      "footprint": [
+        [
+          56.7487,
+          176.09095
+        ],
+        [
+          106.38065,
+          138.4043
+        ],
+        [
+          201.4385,
+          177.94165
+        ],
+        [
+          139.5247,
+          213.4411
+        ]
+      ],
+      "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+      "layer": "station",
+      "occlusionClass": "solid-station",
+      "sockets": {
+        "frontToolPort": [
+          70.37645,
+          166.16455
+        ],
+        "screenCenter": [
+          88.04205,
+          126.9637
+        ],
+        "receiver": [
+          174.85595,
+          96.3433
+        ]
+      },
+      "sha256": "24856ae21fcb67acb71cb12401c0194dda77aceb31a4eacf3fa796eb5788ec61",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/socket-registration-r1.png",
+        "qa/calibrated-scale-comparison-r1.png"
+      ],
+      "limits": [
+        "Static sensor mast and docked optical instrument; no active beams or status lighting. No separately articulated part is supplied.",
+        "No workers, floor, state labels or animated parts baked in."
+      ],
+      "bytes": 144883,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A2/mf.station.survey",
+      "integratedQa": "design/mission-frontier/build-evidence/M7/assets.md"
+    },
+    {
+      "id": "mf.station.projection",
+      "revision": 1,
+      "status": "M7-integrated-visual-qualified",
+      "file": "/assets/mf.station.projection.r1.png",
+      "sourceSize": [
+        512,
+        512
+      ],
+      "logicalSize": [
+        256,
+        256
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        145.20825,
+        213.3112
+      ],
+      "footprint": [
+        [
+          56.97025,
+          177.4302
+        ],
+        [
+          97.0618,
+          132.2128
+        ],
+        [
+          202.1419,
+          180.90845
+        ],
+        [
+          145.20825,
+          213.3112
+        ]
+      ],
+      "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+      "layer": "station",
+      "occlusionClass": "solid-station",
+      "sockets": {
+        "frontToolPort": [
+          69.96795,
+          166.0801
+        ],
+        "screenCenter": [
+          141.1808,
+          103.10525
+        ],
+        "projectorLens": [
+          114.4531,
+          130.93135
+        ]
+      },
+      "sha256": "571c04b65818805e806d6824da07c4d2e6e825b92c9c898b62e6a3e68252b084",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/socket-registration-r1.png",
+        "qa/calibrated-scale-comparison-r1.png"
+      ],
+      "limits": [
+        "Static blank screen and unlit projector; no active hologram, beams, status lighting or articulated part.",
+        "No workers, floor, state labels or animated parts baked in."
+      ],
+      "bytes": 154989,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A2/mf.station.projection",
+      "integratedQa": "design/mission-frontier/build-evidence/M7/assets.md"
+    },
+    {
+      "id": "mf.station.blueprint",
+      "revision": 1,
+      "status": "M7-integrated-visual-qualified",
+      "file": "/assets/mf.station.blueprint.r1.png",
+      "sourceSize": [
+        512,
+        512
+      ],
+      "logicalSize": [
+        256,
+        256
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        150.0665,
+        213.23585
+      ],
+      "footprint": [
+        [
+          56.19405,
+          183.19095
+        ],
+        [
+          103.92095,
+          147.82705
+        ],
+        [
+          202.5373,
+          186.64105
+        ],
+        [
+          150.0665,
+          213.23585
+        ]
+      ],
+      "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+      "layer": "station",
+      "occlusionClass": "solid-station",
+      "sockets": {
+        "frontToolPort": [
+          66.97575,
+          161.34005
+        ],
+        "screenCenter": [
+          118.15275,
+          130.00135
+        ],
+        "documentFeed": [
+          138.9973,
+          108.7255
+        ]
+      },
+      "sha256": "4aaf5d64d8c4f536c4a460e10255e6de022c704af602e0a9b93b3f3ddc8b31f4",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/socket-registration-r1.png",
+        "qa/calibrated-scale-comparison-r1.png"
+      ],
+      "limits": [
+        "Static drafting apparatus with unlabeled geometric outlines; no execution lighting or articulated part.",
+        "No workers, floor, state labels or animated parts baked in."
+      ],
+      "bytes": 132298,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A2/mf.station.blueprint",
+      "integratedQa": "design/mission-frontier/build-evidence/M7/assets.md"
+    },
+    {
+      "id": "mf.station.planning",
+      "revision": 1,
+      "status": "M7-integrated-visual-qualified",
+      "file": "/assets/mf.station.planning.r1.png",
+      "sourceSize": [
+        512,
+        512
+      ],
+      "logicalSize": [
+        256,
+        256
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        156.64405,
+        212.9322
+      ],
+      "footprint": [
+        [
+          57.8305,
+          182.7627
+        ],
+        [
+          101.5593,
+          137.67795
+        ],
+        [
+          200.71185,
+          181.0678
+        ],
+        [
+          156.64405,
+          212.9322
+        ]
+      ],
+      "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+      "layer": "station",
+      "occlusionClass": "solid-station",
+      "sockets": {
+        "frontToolPort": [
+          72.0678,
+          157
+        ],
+        "screenCenter": [
+          120.54235,
+          136.8305
+        ],
+        "assemblyCenter": [
+          120.54235,
+          136.8305
+        ]
+      },
+      "sha256": "db194aba70876e0fcfc930746c4572a665fb2067356d3f94d23a8897af3e4961",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/socket-registration-r1.png",
+        "qa/calibrated-scale-comparison-r1.png"
+      ],
+      "limits": [
+        "Static illustrative assembly layout, not live package count or dependency state. No execution lighting or articulated part.",
+        "No workers, floor, state labels or animated parts baked in."
+      ],
+      "bytes": 135434,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A2/mf.station.planning",
+      "integratedQa": "design/mission-frontier/build-evidence/M7/assets.md"
+    },
+    {
+      "id": "mf.station.diagnostics",
+      "revision": 1,
+      "status": "M7-integrated-visual-qualified",
+      "file": "/assets/mf.station.diagnostics.r1.png",
+      "sourceSize": [
+        512,
+        512
+      ],
+      "logicalSize": [
+        256,
+        256
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        156.36225,
+        213.3025
+      ],
+      "footprint": [
+        [
+          57.711,
+          182.31985
+        ],
+        [
+          97.9422,
+          137.6185
+        ],
+        [
+          201.0636,
+          181.8574
+        ],
+        [
+          156.36225,
+          213.3025
+        ]
+      ],
+      "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+      "layer": "station",
+      "occlusionClass": "solid-station",
+      "sockets": {
+        "frontToolPort": [
+          63.2601,
+          164.90175
+        ],
+        "screenCenter": [
+          137.24855,
+          125.13295
+        ],
+        "inspectionTray": [
+          120.7553,
+          145.78805
+        ]
+      },
+      "sha256": "bc217af03b9903766b4e12df7b71e49d0c8af1b63176554e9622d91eb599ebd2",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/socket-registration-r1.png",
+        "qa/calibrated-scale-comparison-r1.png"
+      ],
+      "limits": [
+        "Static neutral instruments; no pass/fail lights, literal test results or execution claims.",
+        "No workers, floor, state labels or animated parts baked in."
+      ],
+      "bytes": 127137,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A2/mf.station.diagnostics",
+      "integratedQa": "design/mission-frontier/build-evidence/M7/assets.md"
+    },
+    {
+      "id": "mf.station.delivery-inspection",
+      "revision": 1,
+      "status": "M7-integrated-visual-qualified",
+      "file": "/assets/mf.station.delivery-inspection.r1.png",
+      "sourceSize": [
+        512,
+        512
+      ],
+      "logicalSize": [
+        256,
+        256
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        128.57435,
+        213.6
+      ],
+      "footprint": [
+        [
+          55.7128,
+          185.04615
+        ],
+        [
+          128.41025,
+          146.15385
+        ],
+        [
+          201.2718,
+          188.6564
+        ],
+        [
+          128.57435,
+          213.6
+        ]
+      ],
+      "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+      "layer": "station",
+      "occlusionClass": "solid-station",
+      "sockets": {
+        "frontToolPort": [
+          65.06665,
+          173.23075
+        ],
+        "screenCenter": [
+          78.19485,
+          131.7128
+        ],
+        "inspectionCase": [
+          124.4718,
+          144.5128
+        ]
+      },
+      "sha256": "03f63172691e7d97af075705a374dad3291181a28de3c5b76eeea703af084daa",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/socket-registration-r1.png",
+        "qa/calibrated-scale-comparison-r1.png"
+      ],
+      "limits": [
+        "Static sealed case and passive scanner hood. Case does not indicate approval or retained artifact availability; brass hardware accents are non-semantic.",
+        "No workers, floor, state labels or animated parts baked in."
+      ],
+      "bytes": 129866,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A2/mf.station.delivery-inspection",
+      "integratedQa": "design/mission-frontier/build-evidence/M7/assets.md"
+    },
+    {
+      "id": "mf.station.launchpad",
+      "revision": 1,
+      "status": "M7-integrated-visual-qualified",
+      "file": "/assets/mf.station.launchpad.r1.png",
+      "sourceSize": [
+        768,
+        768
+      ],
+      "logicalSize": [
+        384,
+        384
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        151.67435,
+        327.8027
+      ],
+      "footprint": [
+        [
+          72.74715,
+          281.6341
+        ],
+        [
+          243.05365,
+          226.07855
+        ],
+        [
+          309.9119,
+          278.76055
+        ],
+        [
+          151.67435,
+          327.8027
+        ]
+      ],
+      "footprintUse": "Approximate support footprint; rear ground point is estimated beneath visible rim.",
+      "layer": "station",
+      "occlusionClass": "solid-station",
+      "sockets": {
+        "frontToolPort": [
+          97.45975,
+          280.67625
+        ],
+        "screenCenter": [
+          105.1226,
+          273.205
+        ],
+        "shuttleDock": [
+          198.0345,
+          266.11685
+        ]
+      },
+      "sha256": "19bb79ad69a79aa65e8660e817c5f4b5a3493587b8e0561e8bfad93f603780b6",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "dockClearancePolygon": [
+        [
+          149.56705,
+          262.6686
+        ],
+        [
+          226.1954,
+          235.84865
+        ],
+        [
+          272.1724,
+          260.75285
+        ],
+        [
+          187.88125,
+          289.4885
+        ]
+      ],
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/socket-registration-r1.png",
+        "qa/calibrated-scale-comparison-r1.png"
+      ],
+      "limits": [
+        "Passive empty docking pad; no shuttle or delivery state. Rear ground footprint is estimated beneath the visible rear rim.",
+        "No workers, floor, state labels or animated parts baked in."
+      ],
+      "bytes": 174088,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A2/mf.station.launchpad",
+      "integratedQa": "design/mission-frontier/build-evidence/M7/assets.md"
+    },
+    {
+      "id": "mf.vehicle.shuttle",
+      "revision": 1,
+      "status": "M7-integrated-visual-qualified",
+      "file": "/assets/mf.vehicle.shuttle.r1.png",
+      "sourceSize": [
+        512,
+        512
+      ],
+      "logicalSize": [
+        256,
+        256
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        120.8158,
+        186.89475
+      ],
+      "footprint": [
+        [
+          67.39475,
+          192.9737
+        ],
+        [
+          126.3421,
+          166.26315
+        ],
+        [
+          174.23685,
+          180.8158
+        ],
+        [
+          115.28945,
+          207.5263
+        ]
+      ],
+      "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+      "layer": "vehicle",
+      "occlusionClass": "solid-vehicle",
+      "dockingAnchor": [
+        120.8158,
+        186.89475
+      ],
+      "sockets": {
+        "contactCentre": [
+          120.8158,
+          186.89475
+        ]
+      },
+      "sha256": "41e49a8cff4de991a83f14bb13c4cc9d287a91b0d531b12713a3fc8e4556e7bc",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/QA.md",
+        "qa/alpha-backgrounds-r1.png",
+        "qa/socket-registration-r1.png",
+        "qa/calibrated-scale-comparison-r1.png",
+        "qa/pad-shuttle-composite-r1.png",
+        "qa/dock-contact-r1.png",
+        "qa/docked-actual-scale-r1.png",
+        "qa/pad-shuttle-clearance-fit-r1.png"
+      ],
+      "limits": [
+        "Static parked shuttle. Runtime travel must be tied to persisted delivery or handoff events.",
+        "No workers, floor, state labels or animated parts baked in."
+      ],
+      "docking": {
+        "padId": "mf.station.launchpad",
+        "socket": "shuttleDock",
+        "sameLogicalScale": true,
+        "sourcePixelPasteOffset": [
+          154,
+          158
+        ],
+        "recommendedShuttleScaleRelativeToPad": 0.7,
+        "nativeScaleNote": "Native skids fit deck, but left skid falls outside conservative clearance polygon. Use0.70relative scale to put all contact centres inside declared clearance."
+      },
+      "bytes": 113303,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A2/mf.vehicle.shuttle",
+      "integratedQa": "design/mission-frontier/build-evidence/M7/assets.md"
+    },
+    {
+      "id": "mf.base.observatory.roof",
+      "revision": 1,
+      "status": "M7-integrated-visual-qualified",
+      "file": "/assets/mf.base.observatory.roof.r1.png",
+      "sourceSize": [
+        1536,
+        1280
+      ],
+      "logicalSize": [
+        768,
+        640
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        384,
+        522
+      ],
+      "footprint": [
+        [
+          384,
+          170
+        ],
+        [
+          736,
+          346
+        ],
+        [
+          384,
+          522
+        ],
+        [
+          32,
+          346
+        ]
+      ],
+      "footprintUse": "shared physical floor reference; roof deck is elevated110logical pixels",
+      "roofDeck": [
+        [
+          384,
+          60
+        ],
+        [
+          736,
+          236
+        ],
+        [
+          384,
+          412
+        ],
+        [
+          32,
+          236
+        ]
+      ],
+      "labelAnchor": [
+        384,
+        8
+      ],
+      "labelAnchorMethod": "10 logical pixels above full roof and dish alpha bounds",
+      "layer": "roof",
+      "occlusionClass": "roof",
+      "sockets": {},
+      "sourceId": "exec-0308d1a3-9ed5-4bd0-bb9d-10b01d51567c",
+      "sha256": "77e16d3c838dfba9a3b182496588240fd642e83d9abc12c0400ecfeb1a1cfb17",
+      "alpha": "straight RGBA",
+      "geometry": "geometry.json",
+      "qa": [
+        "qa/alpha-backgrounds-r1.png",
+        "qa/closed-compound-r1.png",
+        "qa/closed-open-logical-scale-r1.png",
+        "qa/overview-comparison-r1.png",
+        "qa/measurements-r1.json",
+        "qa/QA.md"
+      ],
+      "limits": [
+        "Original perimeter and fascia are retained pixel-for-pixel; new dish is an independent generated component baked into this roof export.",
+        "No dish motion or state lighting.",
+        "Dish bottom contact manually measured within6 master pixels.",
+        "Existing standard-roof fascia depth retained."
+      ],
+      "bytes": 1578746,
+      "parts": [],
+      "sourceDirectory": "design/mission-frontier/assets/staging/A2/mf.base.observatory.roof",
+      "integratedQa": "design/mission-frontier/build-evidence/M7/assets.md"
+    }
+  ]
+}

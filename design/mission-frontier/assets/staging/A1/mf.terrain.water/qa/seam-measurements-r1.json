@@ -1,0 +1,16 @@
+{
+  "mode": "RGB",
+  "size": [
+    512,
+    512
+  ],
+  "opposedLeftRightMaxDifference": 0,
+  "opposedTopBottomMaxDifference": 0,
+  "interiorHorizontalMeanAdjacentDifference": 6.110057893020222,
+  "interiorVerticalMeanAdjacentDifference": 9.750366927592955,
+  "transformMeanAbsoluteChannelChange": 1.1596603393554688,
+  "tileProofDimensions": [
+    1536,
+    1536
+  ]
+}

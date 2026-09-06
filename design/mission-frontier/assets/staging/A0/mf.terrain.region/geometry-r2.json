@@ -1,0 +1,74 @@
+{
+  "masterDimensions": [
+    1586,
+    992
+  ],
+  "sourceSize": [
+    2048,
+    1280
+  ],
+  "logicalSize": [
+    1024,
+    640
+  ],
+  "groundAnchor": [
+    512,
+    540
+  ],
+  "terrainRuntimePosition": [
+    760,
+    750
+  ],
+  "terrainRuntimeScale": 2,
+  "terrainWorldTopLeft": [
+    -264,
+    -330
+  ],
+  "compoundRuntimeScale": 0.55,
+  "compoundSourceToWorldScale": 0.275,
+  "placements": {
+    "PC": {
+      "frontAnchorWorld": [
+        280,
+        650
+      ],
+      "frontAnchorTerrainSource": [
+        544,
+        980
+      ],
+      "footprintCenterTerrainSource": [
+        544,
+        883.2
+      ]
+    },
+    "Harness": {
+      "frontAnchorWorld": [
+        340,
+        120
+      ],
+      "frontAnchorTerrainSource": [
+        604,
+        450
+      ],
+      "footprintCenterTerrainSource": [
+        604,
+        353.2
+      ]
+    },
+    "MyStrata": {
+      "frontAnchorWorld": [
+        1090,
+        560
+      ],
+      "frontAnchorTerrainSource": [
+        1354,
+        890
+      ],
+      "footprintCenterTerrainSource": [
+        1354,
+        793.2
+      ]
+    }
+  },
+  "note": "QA uses coordinator supplied runtime placement transform and accepted closed compound; no placement marks or bases baked into terrain."
+}

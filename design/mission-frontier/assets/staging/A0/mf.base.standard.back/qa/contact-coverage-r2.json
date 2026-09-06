@@ -1,0 +1,422 @@
+{
+  "samples": [
+    {
+      "x": 112,
+      "wallBottom": 691,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 128,
+      "wallBottom": 685,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 144,
+      "wallBottom": 677,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 160,
+      "wallBottom": 669,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 176,
+      "wallBottom": 660,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 192,
+      "wallBottom": 643,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 208,
+      "wallBottom": 634,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 224,
+      "wallBottom": 626,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 240,
+      "wallBottom": 619,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 256,
+      "wallBottom": 615,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 272,
+      "wallBottom": 607,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 288,
+      "wallBottom": 598,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 304,
+      "wallBottom": 582,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 320,
+      "wallBottom": 574,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 336,
+      "wallBottom": 565,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 352,
+      "wallBottom": 557,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 368,
+      "wallBottom": 549,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 384,
+      "wallBottom": 541,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 400,
+      "wallBottom": 533,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 416,
+      "wallBottom": 524,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 432,
+      "wallBottom": 516,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 448,
+      "wallBottom": 508,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 464,
+      "wallBottom": 501,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 480,
+      "wallBottom": 498,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 496,
+      "wallBottom": 493,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 512,
+      "wallBottom": 485,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 528,
+      "wallBottom": 477,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 544,
+      "wallBottom": 469,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 560,
+      "wallBottom": 462,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 576,
+      "wallBottom": 446,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 592,
+      "wallBottom": 438,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 608,
+      "wallBottom": 430,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 624,
+      "wallBottom": 421,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 640,
+      "wallBottom": 413,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 656,
+      "wallBottom": 405,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 672,
+      "wallBottom": 397,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 688,
+      "wallBottom": 389,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 704,
+      "wallBottom": 381,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 720,
+      "wallBottom": 374,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 736,
+      "wallBottom": 370,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 752,
+      "wallBottom": 369,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 768,
+      "wallBottom": 365,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 784,
+      "wallBottom": 369,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 800,
+      "wallBottom": 370,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 816,
+      "wallBottom": 374,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 832,
+      "wallBottom": 382,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 848,
+      "wallBottom": 390,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 864,
+      "wallBottom": 398,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 880,
+      "wallBottom": 407,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 896,
+      "wallBottom": 415,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 912,
+      "wallBottom": 423,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 928,
+      "wallBottom": 431,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 944,
+      "wallBottom": 439,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 960,
+      "wallBottom": 447,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 976,
+      "wallBottom": 463,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 992,
+      "wallBottom": 470,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1008,
+      "wallBottom": 478,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1024,
+      "wallBottom": 487,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1040,
+      "wallBottom": 495,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1056,
+      "wallBottom": 498,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1072,
+      "wallBottom": 502,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1088,
+      "wallBottom": 509,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1104,
+      "wallBottom": 517,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1120,
+      "wallBottom": 525,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1136,
+      "wallBottom": 533,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1152,
+      "wallBottom": 541,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1168,
+      "wallBottom": 550,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1184,
+      "wallBottom": 558,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1200,
+      "wallBottom": 566,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1216,
+      "wallBottom": 574,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1232,
+      "wallBottom": 582,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1248,
+      "wallBottom": 599,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1264,
+      "wallBottom": 607,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1280,
+      "wallBottom": 615,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1296,
+      "wallBottom": 619,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1312,
+      "wallBottom": 626,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1328,
+      "wallBottom": 634,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1344,
+      "wallBottom": 643,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1360,
+      "wallBottom": 661,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1376,
+      "wallBottom": 669,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1392,
+      "wallBottom": 677,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1408,
+      "wallBottom": 686,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1424,
+      "wallBottom": 691,
+      "floorAlphaBelow": 255
+    }
+  ],
+  "sampleCount": 83,
+  "unsupportedContacts": 0,
+  "method": "Bottom wall alpha >=128; accepted padded floor sampled 2px below at16px horizontal intervals."
+}

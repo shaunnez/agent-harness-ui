@@ -1,0 +1,94 @@
+{
+  "id": "mf.route.road.junction",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/road-junction-r1.png",
+  "sourceSize": [
+    512,
+    384
+  ],
+  "logicalSize": [
+    256,
+    192
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    128,
+    128
+  ],
+  "layer": "route",
+  "occlusionClass": "ground-route",
+  "sockets": {
+    "nw": [
+      80,
+      104
+    ],
+    "ne": [
+      176,
+      104
+    ],
+    "se": [
+      176,
+      152
+    ],
+    "sw": [
+      80,
+      152
+    ]
+  },
+  "crossSections": {
+    "nw": [
+      [
+        68,
+        110
+      ],
+      [
+        92,
+        98
+      ]
+    ],
+    "ne": [
+      [
+        164,
+        98
+      ],
+      [
+        188,
+        110
+      ]
+    ],
+    "se": [
+      [
+        164,
+        158
+      ],
+      [
+        188,
+        146
+      ]
+    ],
+    "sw": [
+      [
+        68,
+        146
+      ],
+      [
+        92,
+        158
+      ]
+    ]
+  },
+  "sha256": "3126ea2ed43c4845b2daec9921cb11fe0fdc8f1ac469dd33f1b69257aeea3c1c",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/four-arms-consumer-scales-r1.png",
+    "qa/center-and-joins-magnified-r1.png",
+    "qa/alpha-backgrounds-r1.png"
+  ],
+  "limits": [
+    "Deterministic crossing made from existing flat surface pixels; center panel patterns meet rather than continuing as one unique manufactured panel.",
+    "No gate/railing/central ornament. Scene filtering remains coordinator verification."
+  ]
+}

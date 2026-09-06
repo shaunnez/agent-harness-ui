@@ -1,0 +1,14 @@
+# M5 — workflow and evidence qualification
+
+Passed for the local v1 build on 6 September 2026. External model/GitHub outcomes in this milestone used explicitly labelled deterministic fixtures. The actual Codex investigation remains the separate M3 evidence.
+
+- Started-stage evidence, future-stage inertness, selected/skipped scouts, Markdown/raw documents, context manifests, manual Grill and exact specification approval use the existing task/run/artifact contracts. `research-final.jpg` also demonstrates missing scout-dispatch metadata without invented conclusions.
+- Provider failure and success coexist in `design-provider-failure.jpg`. Retry retained the successful sibling, original failed attempt and original provider/model/effort; selection continued to the exact retained design revision (`design-retry.jpg`, `specification-final.jpg`). Previews are sandboxed and sample HTML is explicitly labelled.
+- One, four and twelve packages were inspected through the browser: `implementation-one.jpg`, `plan-four.jpg`, `plan-twelve.jpg`, `package-twelve-detail.jpg`. Dependency waits, ready-for-integration and integrated states remain distinct. Approval and starting implementation are separate actions.
+- PC-148 repair was reviewed against candidate r1, created r2, retained old findings/diffs and invalidated the downstream gates. Review, full verification and final review then passed against r2. `repair-confirmation-final.jpg`, `repaired-lineage.jpg`, `approval-ready-final.jpg` record those boundaries.
+- The exact diff viewer groups files, preserves old/new source line numbers, colours added/deleted lines and exposes raw source. Previous revisions remain independently readable (`candidate-diff-final.jpg`).
+- Mixed pass/fail tests and individual assertion/log details are reachable with an explicit return to results. A same-candidate retry preserves failed evidence and creates a new attempt without changing the candidate head. Attempt labels separate retained failures from the latest result. `test-detail-final.jpg`, `test-failure-detail.jpg`, `test-retry-same-head-final.jpg`.
+- Opening a sample PR remained awaiting merge; only the matching candidate/PR merge completed it. Closed and identity-drifted PRs retain the approved candidate and block completion. `delivery-final.jpg`, `delivery-merged-final.jpg`, `delivery-closed.jpg`, `delivery-drift-final.jpg`.
+- Repair and retry requests from this frontend carry the reviewed candidate identity. The server validates that optional scope again at reservation, preserving legacy callers while rejecting scope drift. Route, reservation-race, workflow, candidate and PR boundary tests passed in the final 1,040-test suite (`../M7/full-tests.log`).
+
+No real PR, push, implementation run or additional paid provider execution occurred. The QA fixture route cannot dispatch through the live gateway.

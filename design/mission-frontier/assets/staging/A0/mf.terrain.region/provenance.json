@@ -1,0 +1,44 @@
+{
+  "assetId": "mf.terrain.region",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/reference/selected-world.png",
+      "sha256": "929dba738d20981573cfe52b951a45bd18357991a70adb82b92b622399f29758",
+      "role": "Initial primary landscape source"
+    },
+    {
+      "path": "source/clearing-placement-guidance.png",
+      "sha256": "f0d0694e0036db58f257cd76deacbf9a05afec3202b0cb3ed36e872779d8e008",
+      "role": "Correction1 input; QA-only orange guide overlay on initial generation"
+    },
+    {
+      "path": "source/terrain-region-master-correction1.png",
+      "sha256": "6cc70965e1952e722078e0a55050b8c3af7af56ea55516676b0e9c9ac391717c",
+      "role": "Correction2 input"
+    }
+  ],
+  "generationIds": [
+    "exec-937b5774-80a6-425f-8f51-4a7f6caee8f2",
+    "exec-af400100-dc8a-4b6d-b98f-a64242baf802",
+    "exec-cf838e4f-cdf6-4307-ba34-6e2e35b6a8a4"
+  ],
+  "prompts": {
+    "correction1-prompt.txt": "Edit this terrain region, preserving its beautiful high detail, water/materials/purple trees, fixed isometric projection and warm upper-left lighting. The orange rectangles/dots are EDIT GUIDES ONLY and must be completely removed from the finished image.\nInside EACH of the three orange rectangles, create a continuous flat grassy/sandy empty natural plateau clearing. In the left-center rectangle, fill the present water and cliff with natural land extending the existing plateau above and below it. In the lower-center rectangle, extend flat land into the current cliff/water gap and remove the obstructing rocks. Right-center rectangle already mostly land: gently clear any raised rocks and shrubs. Each rectangle's entire inner area must be flat unobstructed natural ground suitable for an independently placed building. These are not pads or slots: no straight edges, rectangle outlines, circles, foundations, labels or architecture. Blend outward beyond each guide by a little to make natural organic boundaries and shift water around those areas.\nRetain rich water channels elsewhere and retain all untouched landscape identity. No buildings/robots/people/vehicles/stations/UI/text. No orange marks anywhere. Output full opaque2048x1280 landscape. No crop or camera change. Exact clearing centers source(824,950),(544,590),(1364,750), each at least450x250pixels clear ground. This is fixed scenery only.\n",
+    "correction2-prompt.txt": "Make ONE local terrain correction to this image. Preserve all other scenery, camera, framing, materials and quality exactly. In the LEFT-MIDDLE area there is a bright turquoise pool protruding far into the land between the upper-left clearing and lower-left clearing. Fill this inward-protruding pool and its surrounding rocky rims with broad smooth natural sandy/olive grassy land, joining those two clearings into a continuous open flat plateau. Specifically the whole region x15%..40% and y34%..58% of canvas must be unobstructed flat land, no water, cliff, tall rock or tree. Keep a narrow strip of water along the far left edge only (x0..10%). Blend into existing terrain organically, no rectangular boundary.\nMaintain the lower-middle and right-middle large empty clearings exactly. Keep upper/right/lower perimeter blue water, purple trees, one bridge and all untouched details. No buildings or structures added, no workers, UI, orange guides, text, platforms or markers. Opaque2048x1280 output. Fixed isometric game landscape.\n",
+    "generation-prompt.txt": "Use case: stylized-concept.\nCreate ONLY the environmental ground art for Mission Frontier, a high fidelity strategy-game world. Use the supplied selected-world image as the exact material, color, lighting and landscape quality reference. Remove all UI, buildings, bases, spacecraft, workers, vehicles, task objects, labels and markers. Keep its richly rendered teal and bright-blue water, sunlit pale rock cliffs, mossy olive-green grass plateaus, purple flowering trees, small shrubs and worn sandy footpaths.\nOutput landscape canvas 2048x1280. Fixed orthographic 2:1 isometric view, warm daylight from upper left. Fill the whole frame with a convincing explorable region, no sky/horizon, no floating island vignette, no border.\nComposition: interconnected natural grass-and-rock plateaus with blue water channels flowing between them. Three LARGE clean flat natural grass/sandy clearings MUST remain open and unobstructed: center (824,950), center (544,590), center (1364,750), each roughly450px wide x250px high in this output's pixel coordinates. They should be subtle naturally empty areas on land, NOT painted rectangles, project slots, circular pads, foundations, architecture, outlines or semantic markers. No trees, rocks, bridges or water inside those clearings. Broader land surrounds them. Their centers correspond to40%,74%;27%,46%;67%,59%of canvas.\nArrange water channels and cliff outcrops around the clearings with rich teal near-shore shallows and sapphire deeper water. Purple foliage clusters accent the upper left, far upper slopes, far right and lower corners while leaving the middle workspace readable. A few understated worn dirt paths connect the clearings across land. At most one quiet empty narrow stone/steel bridge over a water gap, no utility lights/status lights. Natural land/water continues to image edges for future region extension; do not claim exact seamless tiling.\nMatch the reference's realistic miniature/game-render detail, soft warm sunlight and cool shadows, believable rock strata and tufts of grass. Dense interesting landscape at the perimeter but calm usable open workspace through the central/lower clearings. Do not add any buildings, roofs, floors, platforms, robots, people, tools, workstations, occupied bays, text, lettering, minimap, HUD, rings, labels or icons. This is an opaque terrain image, not an alpha cutout.\n"
+  },
+  "correctiveGenerations": 2,
+  "transforms": [
+    "Preserve all source attempts",
+    "QA guide overlay after resize for creative correction only",
+    "Final full-frame Lanczos resize to2048x1280 opaqueRGB",
+    "QA-only independent base compositions; not included in export"
+  ],
+  "sourceSha256": "01ee77dc3ab80d0a22db35be98168cdfebccca62bf3a631b228f4bb3c02e27f1",
+  "exportSha256": "ccd93afa096e0d5e2e30697a27c8e4fb6b1cb3474603e73d63f064a7f005640a",
+  "exportBytes": 5083471,
+  "decodedRgbBytes": 7864320,
+  "rightsNote": "Supplied/generated project references; no external licensed assets added. Provenance is not legal clearance."
+}

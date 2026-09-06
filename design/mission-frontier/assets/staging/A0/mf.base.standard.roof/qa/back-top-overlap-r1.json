@@ -1,0 +1,432 @@
+{
+  "method": "Sample roof alpha2px below the visible top of tall backr2 at85x positions. This measures image overlap, not hidden structural contact or3D support.",
+  "samples": [
+    {
+      "x": 96,
+      "backTopY": 476,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 112,
+      "backTopY": 468,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 128,
+      "backTopY": 461,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 144,
+      "backTopY": 457,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 160,
+      "backTopY": 449,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 176,
+      "backTopY": 441,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 192,
+      "backTopY": 433,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 208,
+      "backTopY": 425,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 224,
+      "backTopY": 414,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 240,
+      "backTopY": 406,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 256,
+      "backTopY": 399,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 272,
+      "backTopY": 391,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 288,
+      "backTopY": 383,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 304,
+      "backTopY": 375,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 320,
+      "backTopY": 367,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 336,
+      "backTopY": 359,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 352,
+      "backTopY": 351,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 368,
+      "backTopY": 343,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 384,
+      "backTopY": 335,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 400,
+      "backTopY": 327,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 416,
+      "backTopY": 319,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 432,
+      "backTopY": 311,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 448,
+      "backTopY": 302,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 464,
+      "backTopY": 293,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 480,
+      "backTopY": 286,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 496,
+      "backTopY": 278,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 512,
+      "backTopY": 270,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 528,
+      "backTopY": 263,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 544,
+      "backTopY": 255,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 560,
+      "backTopY": 247,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 576,
+      "backTopY": 239,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 592,
+      "backTopY": 231,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 608,
+      "backTopY": 223,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 624,
+      "backTopY": 216,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 640,
+      "backTopY": 207,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 656,
+      "backTopY": 199,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 672,
+      "backTopY": 191,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 688,
+      "backTopY": 183,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 704,
+      "backTopY": 172,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 720,
+      "backTopY": 164,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 736,
+      "backTopY": 155,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 752,
+      "backTopY": 148,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 768,
+      "backTopY": 143,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 784,
+      "backTopY": 149,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 800,
+      "backTopY": 156,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 816,
+      "backTopY": 165,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 832,
+      "backTopY": 176,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 848,
+      "backTopY": 183,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 864,
+      "backTopY": 190,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 880,
+      "backTopY": 198,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 896,
+      "backTopY": 206,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 912,
+      "backTopY": 215,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 928,
+      "backTopY": 223,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 944,
+      "backTopY": 230,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 960,
+      "backTopY": 238,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 976,
+      "backTopY": 246,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 992,
+      "backTopY": 254,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1008,
+      "backTopY": 262,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1024,
+      "backTopY": 270,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1040,
+      "backTopY": 278,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1056,
+      "backTopY": 286,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1072,
+      "backTopY": 293,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1088,
+      "backTopY": 303,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1104,
+      "backTopY": 311,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1120,
+      "backTopY": 319,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1136,
+      "backTopY": 327,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1152,
+      "backTopY": 335,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1168,
+      "backTopY": 342,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1184,
+      "backTopY": 350,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1200,
+      "backTopY": 358,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1216,
+      "backTopY": 366,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1232,
+      "backTopY": 374,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1248,
+      "backTopY": 382,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1264,
+      "backTopY": 390,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1280,
+      "backTopY": 398,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1296,
+      "backTopY": 405,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1312,
+      "backTopY": 413,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1328,
+      "backTopY": 424,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1344,
+      "backTopY": 432,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1360,
+      "backTopY": 440,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1376,
+      "backTopY": 448,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1392,
+      "backTopY": 456,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1408,
+      "backTopY": 460,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1424,
+      "backTopY": 468,
+      "roofAlphaAtBackTopPlusTwo": 255
+    },
+    {
+      "x": 1440,
+      "backTopY": 476,
+      "roofAlphaAtBackTopPlusTwo": 255
+    }
+  ],
+  "sampleCount": 85,
+  "uncoveredSamples": 0
+}

@@ -1,0 +1,37 @@
+{
+  "assetId": "mf.worker.standard.portrait",
+  "revision": 1,
+  "production": "Deterministic crop of approved detail worker; no new creative generation",
+  "sourceAssetId": "mf.worker.standard.detail.neutral",
+  "sourceRevision": 1,
+  "sourcePath": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.worker.standard.detail.neutral/source/detail-alpha-master-r1.png",
+  "sourceSha256": "21cd90b5344453e7bf87653ce546a4ca2ec298f8270eab81de0f7e9aec9b51c0",
+  "sourceDimensions": [
+    1254,
+    1254
+  ],
+  "sourceProvenance": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.worker.standard.detail.neutral/provenance.json",
+  "cropSourcePixels": [
+    370,
+    30,
+    890,
+    680
+  ],
+  "cropDimensions": [
+    520,
+    650
+  ],
+  "exportDimensions": [
+    256,
+    320
+  ],
+  "resampling": "Lanczos uniform256/520",
+  "transforms": [
+    "Crop original alpha master at[370,30,890,680]",
+    "Uniform resize to256x320",
+    "Zero hiddenRGB under fully transparent pixels",
+    "QA-only cover crops for two HUD slots"
+  ],
+  "exportSha256": "e1e3384a7603cd8a46c6666d9ad356f88a6359b9467c7e804b9faeb58930afb1",
+  "exportBytes": 133331
+}

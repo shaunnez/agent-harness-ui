@@ -1,0 +1,104 @@
+{
+  "sourceCanvas": [
+    1536,
+    1024
+  ],
+  "exportCanvas": [
+    1536,
+    1024
+  ],
+  "logicalCanvas": [
+    768,
+    512
+  ],
+  "cornerOrder": [
+    "back",
+    "right",
+    "front",
+    "left"
+  ],
+  "sourceSurfaceCorners": [
+    [
+      767.0,
+      51.0
+    ],
+    [
+      1508.0,
+      460.0
+    ],
+    [
+      768.0,
+      934.0
+    ],
+    [
+      29.0,
+      461.0
+    ]
+  ],
+  "targetSurfaceCorners": [
+    [
+      768.0,
+      140.0
+    ],
+    [
+      1472.0,
+      492.0
+    ],
+    [
+      768.0,
+      844.0
+    ],
+    [
+      64.0,
+      492.0
+    ]
+  ],
+  "sourceFrontBottomBevel": [
+    768,
+    985
+  ],
+  "registeredFrontBottomBevel": [
+    767.9494,
+    878.8932
+  ],
+  "sourceToExportHomography": [
+    [
+      1.0336843571077878,
+      0.13622665926452143,
+      -23.495025276223775
+    ],
+    [
+      0.0016576252838419348,
+      0.9568784888311834,
+      91.43871133460027
+    ],
+    [
+      2.1751241576566094e-06,
+      0.00017890028370423858,
+      1.0
+    ]
+  ],
+  "exportToSourcePerspectiveCoefficients": [
+    0.9510919275760117,
+    -0.14200841871213662,
+    35.3309956841129,
+    -0.001475131539615539,
+    1.0453550928558049,
+    -95.62058083060525,
+    -1.8048415768844834e-06,
+    -0.0001867054367414428
+  ],
+  "exportAlphaBounds": [
+    63,
+    139,
+    1475,
+    880
+  ],
+  "method": "Visually measured top perimeter corner intersections on generated raster, then one projective registration to the specified diamond. Corner estimate tolerance +/-3 source pixels, retained for scene review. No inferred 3D geometry.",
+  "groundAnchorRequested": [
+    768,
+    844
+  ],
+  "anchorConvention": "Front top-surface corner, as assigned. Physical bevel extends below this anchor.",
+  "frontBevelVerticalOffsetExport": 34.8932
+}

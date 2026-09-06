@@ -1,0 +1,78 @@
+{
+  "masterSize": [
+    1254,
+    1254
+  ],
+  "masterAlphaBounds": [
+    269,
+    362,
+    1029,
+    1002
+  ],
+  "uniformScale": 0.3684210526315789,
+  "scaledSize": [
+    280,
+    236
+  ],
+  "pasteOffset": [
+    116,
+    194
+  ],
+  "exportAlphaBounds": [
+    116,
+    194,
+    396,
+    430
+  ],
+  "landmarksSourcePixels": {
+    "contactCentre": [
+      241.6316,
+      373.7895
+    ],
+    "frontSkid": [
+      230.5789,
+      415.0526
+    ],
+    "leftSkid": [
+      134.7895,
+      385.9474
+    ],
+    "rightSkid": [
+      348.4737,
+      361.6316
+    ],
+    "rearSkidEstimate": [
+      252.6842,
+      332.5263
+    ],
+    "roof": [
+      304.2632,
+      195.4737
+    ]
+  },
+  "groundAnchorSourcePixels": [
+    241.6316,
+    373.7895
+  ],
+  "approxSupportFootprintSourcePixels": [
+    [
+      134.7895,
+      385.9474
+    ],
+    [
+      252.6842,
+      332.5263
+    ],
+    [
+      348.4737,
+      361.6316
+    ],
+    [
+      230.5789,
+      415.0526
+    ]
+  ],
+  "footprintNote": "Three visible skid contacts manually measured; hidden fourth contact estimated. Contact centre is the mean of these four contacts.",
+  "bodyHeightLogical": 81.60524999999998,
+  "measurementToleranceMasterPixels": 6
+}

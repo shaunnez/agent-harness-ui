@@ -1,0 +1,144 @@
+import { ArrowCounterClockwise } from "@phosphor-icons/react";
+import type { RolePolicyId, RuntimeAgentPolicy, RuntimeStatus } from "../../domain";
+import { policyRoles, selectableModels } from "../runtime/policies";
+import { modelLabel, reasoningLabel } from "../runtime/presentation";
+
+export function PolicyChoice({
+  label,
+  value,
+  status,
+  provider = "codex",
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: RuntimeAgentPolicy;
+  status: RuntimeStatus | null;
+  provider?: "codex" | "claude";
+  disabled?: boolean;
+  onChange(value: RuntimeAgentPolicy): void;
+}) {
+  const models = selectableModels(status, provider);
+  const selected = models.find((model) => model.id === value.model);
+  return (
+    <>
+      <select
+        aria-label={`${label} model`}
+        value={value.model}
+        disabled={disabled || !models.length}
+        onChange={(event) => {
+          const model = models.find((item) => item.id === event.target.value);
+          if (model)
+            onChange({
+              model: model.id,
+              reasoning: model.reasoningLevels.includes(value.reasoning)
+                ? value.reasoning
+                : model.defaultReasoning,
+            });
+        }}
+      >
+        {!selected && <option value={value.model}>{modelLabel(value.model)} · unavailable</option>}
+        {models.map((model) => (
+          <option key={model.id} value={model.id}>
+            {model.label}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label={`${label} reasoning`}
+        value={value.reasoning}
+        disabled={disabled || !selected}
+        onChange={(event) => onChange({ ...value, reasoning: event.target.value })}
+      >
+        {!selected?.reasoningLevels.includes(value.reasoning) && (
+          <option value={value.reasoning}>{reasoningLabel(value.reasoning)}</option>
+        )}
+        {selected?.reasoningLevels.map((level) => (
+          <option key={level} value={level}>
+            {reasoningLabel(level)}
+          </option>
+        ))}
+      </select>
+    </>
+  );
+}
+
+export function PolicyMatrix({
+  policies,
+  overrides,
+  status,
+  readOnly,
+  onChange,
+  onReset,
+}: {
+  policies: Record<string, RuntimeAgentPolicy>;
+  overrides?: Partial<Record<RolePolicyId, RuntimeAgentPolicy>>;
+  status: RuntimeStatus | null;
+  readOnly?: boolean;
+  onChange(role: RolePolicyId, policy: RuntimeAgentPolicy): void;
+  onReset(role: RolePolicyId): void;
+}) {
+  return (
+    <div className="policy-matrix-scroll">
+      <table className="policy-matrix">
+        <thead>
+          <tr>
+            <th>Stage / role</th>
+            <th>Model</th>
+            <th>Reasoning</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          {policyRoles.map((role) => {
+            const policy = policies[role.id];
+            return (
+              <tr key={role.id}>
+                <th>
+                  <strong>{role.label}</strong>
+                  <small>{role.skill}</small>
+                </th>
+                {policy ? (
+                  <>
+                    {readOnly ? (
+                      <>
+                        <td>{modelLabel(policy.model)}</td>
+                        <td>{reasoningLabel(policy.reasoning)}</td>
+                      </>
+                    ) : (
+                      <td colSpan={2}>
+                        <div className="policy-selects">
+                          <PolicyChoice
+                            label={role.label}
+                            value={policy}
+                            status={status}
+                            onChange={(value) => onChange(role.id, value)}
+                          />
+                        </div>
+                      </td>
+                    )}
+                    <td>
+                      <span>{overrides?.[role.id] ? "Task override" : "Inherited"}</span>
+                      {overrides?.[role.id] && !readOnly && (
+                        <button
+                          type="button"
+                          className="icon-button"
+                          aria-label={`Reset ${role.label} to inherited policy`}
+                          onClick={() => onReset(role.id)}
+                        >
+                          <ArrowCounterClockwise size={17} />
+                        </button>
+                      )}
+                    </td>
+                  </>
+                ) : (
+                  <td colSpan={3}>Policy unavailable</td>
+                )}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}

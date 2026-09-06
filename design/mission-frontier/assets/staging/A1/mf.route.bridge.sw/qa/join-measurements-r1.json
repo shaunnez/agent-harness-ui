@@ -1,0 +1,17 @@
+{
+  "joins": [
+    {
+      "samples": 41,
+      "minimumAlpha": 255,
+      "zeroAlphaSamples": 0
+    },
+    {
+      "samples": 41,
+      "minimumAlpha": 255,
+      "zeroAlphaSamples": 0
+    }
+  ],
+  "losslessMirrorVerified": true,
+  "approvedOpaqueSwRoadDeckEqual": true,
+  "undersideDepthLogical": 4.5
+}

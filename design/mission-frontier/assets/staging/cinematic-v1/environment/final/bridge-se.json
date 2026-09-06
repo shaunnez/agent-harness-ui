@@ -1,0 +1,30 @@
+{
+  "id": "mf.cinematic.bridge-se",
+  "file": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/bridge-se.png",
+  "sourceSize": [
+    1024,
+    768
+  ],
+  "logicalSize": [
+    512.0,
+    384.0
+  ],
+  "groundAnchor": [
+    255.99996948242188,
+    195.1673355102539
+  ],
+  "seed": 602617,
+  "blenderVersion": "5.2.1 LTS",
+  "samples": 72,
+  "projection": {
+    "type": "orthographic",
+    "elevationDegrees": 30,
+    "azimuthDegrees": 45,
+    "orthoScale": 14.0
+  },
+  "sha256": "8c77d453b322b136dede3d3771af759325ae9fece6735b471ad10c5505501e68",
+  "bytes": 404866,
+  "sources": [],
+  "sourceBlend": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/bridge-se.blend",
+  "note": "Static scenery only. No task identity, semantic indicators or worker occupancy baked in."
+}

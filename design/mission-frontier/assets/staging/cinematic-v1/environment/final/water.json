@@ -1,0 +1,30 @@
+{
+  "id": "mf.cinematic.water",
+  "file": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/water.png",
+  "sourceSize": [
+    1024,
+    1024
+  ],
+  "logicalSize": [
+    512.0,
+    512.0
+  ],
+  "groundAnchor": [
+    256.0,
+    256.0
+  ],
+  "seed": 602617,
+  "blenderVersion": "5.2.1 LTS",
+  "samples": 72,
+  "projection": {
+    "type": "orthographic",
+    "elevationDegrees": 90,
+    "azimuthDegrees": 0,
+    "orthoScale": 26.0
+  },
+  "sha256": "fc93cd013d23e0ce08085bd38a8da4ecf9b3d9c5531ef68ce9dd801fa63e2c31",
+  "bytes": 1062533,
+  "sources": [],
+  "sourceBlend": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/water.blend",
+  "note": "Static scenery only. No task identity, semantic indicators or worker occupancy baked in."
+}

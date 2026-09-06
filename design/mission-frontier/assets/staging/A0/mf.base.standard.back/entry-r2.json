@@ -1,0 +1,97 @@
+{
+  "id": "mf.base.standard.back",
+  "revision": 2,
+  "supersedesRevisionForCalibration": 1,
+  "status": "delivered-pending-coordinator-scene-review",
+  "file": "exports/base-standard-back-r2.png",
+  "sourceSize": [
+    1536,
+    1280
+  ],
+  "logicalSize": [
+    768,
+    640
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    384,
+    522
+  ],
+  "anchorConvention": "Inherited floor front surface anchor with200sourcepx top padding; relative footprint unchanged",
+  "footprint": [
+    [
+      384,
+      170
+    ],
+    [
+      736,
+      346
+    ],
+    [
+      384,
+      522
+    ],
+    [
+      32,
+      346
+    ]
+  ],
+  "footprintUse": "shared floor alignment reference, not a solid wall hit area",
+  "attachmentPolyline": [
+    [
+      56.5012,
+      345.7494
+    ],
+    [
+      384.0,
+      182.0
+    ],
+    [
+      711.4988,
+      345.7494
+    ]
+  ],
+  "labelAnchor": [
+    384,
+    64
+  ],
+  "labelAnchorMethod": "8logical pixels above measured central wall top",
+  "occlusionClass": "back-structure",
+  "layer": "back-structure",
+  "sockets": {
+    "leftEnd": [
+      56.5012,
+      345.7494
+    ],
+    "backJoint": [
+      384.0,
+      182.0
+    ],
+    "rightEnd": [
+      711.4988,
+      345.7494
+    ]
+  },
+  "visibleCenterWallHeightLogical": 110,
+  "sourceId": "exec-97a67028-ee56-4f19-976c-e661ae25bff5",
+  "sha256": "1cf082700a88050c2a475c5e1ccb4596675312be9eb7f0421cc7366edd15b4fd",
+  "alpha": "straight RGBA",
+  "geometry": "geometry-r2.json",
+  "qa": [
+    "qa/QA-r2.md",
+    "qa/alpha-backgrounds-r2.png",
+    "qa/floor-back-composite-r2.png",
+    "qa/hq-composite-logical-scale-r2.png",
+    "qa/hq-worker-scale-r2.png",
+    "qa/hq-reference-comparison-r2.png",
+    "qa/registration-composite-r2.png",
+    "qa/measurements-r2.json",
+    "qa/contact-coverage-r2.json"
+  ],
+  "limits": [
+    "No floor/front/roof or stations in export; reference comparison is incomplete scene calibration.",
+    "Landmarks manually measured and registered in2D, not recovered3D geometry.",
+    "Utility lights baked physical architecture only, never state evidence.",
+    "Coordinator final scene acceptance pending."
+  ]
+}

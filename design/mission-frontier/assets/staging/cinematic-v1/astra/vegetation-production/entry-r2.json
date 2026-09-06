@@ -1,0 +1,75 @@
+{
+  "id": "mf.prop.purple-tree",
+  "revision": 2,
+  "status": "production-pending-review",
+  "sourceSize": [
+    768,
+    768
+  ],
+  "logicalSize": [
+    384,
+    384
+  ],
+  "groundAnchor": [
+    192,
+    340
+  ],
+  "camera": {
+    "elevationDegrees": 30,
+    "azimuthDegrees": 45,
+    "location": [
+      10.70547866821289,
+      10.70547866821289,
+      12.968875885009766
+    ],
+    "orthoScale": 9.5
+  },
+  "samples": 64,
+  "usedMeshes": [
+    "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/TwistedTree_3.gltf",
+    "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/TwistedTree_5.gltf",
+    "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Bush_Common.gltf"
+  ],
+  "transforms": "TwistedTree3 broad5.7x5.75x5.5, companion TwistedTree5 2.9x2.9x3, lower-trunk taper53percent interpolating to unchanged branching at48percent height. Purple leaf noise coloration and alpha-preserving translucency.",
+  "lighting": {
+    "key": [
+      10,
+      -6,
+      16
+    ],
+    "keyWatts": 4800,
+    "fillWatts": 1300,
+    "worldStrength": 0.55
+  },
+  "buildScriptSha256": "c3c6d9e115f1825d8c4325cdb6f350338d63b458300aa3f1b5f6bd60064a4a02",
+  "provenance": "Quaternius Nature FREE STANDARD CC0; original acquisition/license/archive evidence in sibling sources. No baked ground or shadow.",
+  "file": "renders/spreading-grove-r2.png",
+  "leafAlbedoRange": [
+    [
+      0.45,
+      0.12,
+      0.53
+    ],
+    [
+      0.82,
+      0.4,
+      0.75
+    ]
+  ],
+  "shadow": {
+    "entry": "shadow-entry.json",
+    "unchangedGeometryAndLighting": true
+  },
+  "alphaBoundsSource": [
+    110,
+    266,
+    689,
+    746
+  ],
+  "sha256": "9267c14619ba7180346369fde6b9ab0aa3b01876a944146c770414351eab1a53",
+  "measuredPurpleLumaP10P50P90": [
+    11.140799999999999,
+    55.424800000000005,
+    129.41680000000002
+  ]
+}

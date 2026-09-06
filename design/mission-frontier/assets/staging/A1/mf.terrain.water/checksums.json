@@ -1,0 +1,14 @@
+{
+  "entry.json": "8e19079c76e60793a51537aec9ba5606a2dc87d64261c04887e0f798ee02d829",
+  "exports/terrain-water-r1.png": "9ffb2f2cc97d044f4c237bb4832922a42c11a8f847ce6a49ce66d7df44ff3bb9",
+  "process.py": "1df36c66a4ed8c0fde86c0880f5b51515cb7c3f5f32d4a417ed56bf002a1b744",
+  "provenance.json": "5928eba705dfc05b243e44f9d741a23698174412256f1f417f7eed009d894975",
+  "qa/QA.md": "4ca48068ead79522c4a878991360e08c17d723049b717069abb91b61d30a7cda",
+  "qa/seam-measurements-r1.json": "2ea01c059c92a495fb64a0fee7b089039fd90002f4de519643fbbeeb40ef1caa",
+  "qa/tile-boundary-locations-r1.png": "d4ea7980f95cdd1d7f99c65bc499b734d6d499421d02834650b9dfbf003ee8ef",
+  "qa/tiled-3x3-r1.png": "de0df059c5e3f141f60846cea36ca35e06416dd6cb007b366bbc306fca4710b4",
+  "qa/wrap-junction-magnified-r1.png": "1424771b73d0c13ba04fbdaf6f4b3071db00e78afd7566d40af23d814e339de5",
+  "source/generation-prompt.txt": "1b8cd799dfbaafa0c4a6f609740d88c2a293149bc273f47b6e526d50c75da497",
+  "source/water-master-r1.png": "51e6952e838d5b060a1cc2dff545692a7d6ccfc408261b75524d9c6ae42ed0bd",
+  "source/water-resized-before-periodic-r1.png": "9905f2b12bfdf8e7ff555fca36f235090aa73648193e24f0487b4a55d280577b"
+}

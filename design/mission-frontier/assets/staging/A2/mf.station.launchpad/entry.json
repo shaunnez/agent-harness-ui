@@ -1,0 +1,86 @@
+{
+  "id": "mf.station.launchpad",
+  "revision": 1,
+  "status": "pending-coordinator-A2-review",
+  "file": "exports/station-launchpad-r1.png",
+  "sourceSize": [
+    768,
+    768
+  ],
+  "logicalSize": [
+    384,
+    384
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    151.67435,
+    327.8027
+  ],
+  "footprint": [
+    [
+      72.74715,
+      281.6341
+    ],
+    [
+      243.05365,
+      226.07855
+    ],
+    [
+      309.9119,
+      278.76055
+    ],
+    [
+      151.67435,
+      327.8027
+    ]
+  ],
+  "footprintUse": "Approximate support footprint; rear ground point is estimated beneath visible rim.",
+  "layer": "station",
+  "occlusionClass": "solid-station",
+  "sockets": {
+    "frontToolPort": [
+      97.45975,
+      280.67625
+    ],
+    "screenCenter": [
+      105.1226,
+      273.205
+    ],
+    "shuttleDock": [
+      198.0345,
+      266.11685
+    ]
+  },
+  "sha256": "19bb79ad69a79aa65e8660e817c5f4b5a3493587b8e0561e8bfad93f603780b6",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "dockClearancePolygon": [
+    [
+      149.56705,
+      262.6686
+    ],
+    [
+      226.1954,
+      235.84865
+    ],
+    [
+      272.1724,
+      260.75285
+    ],
+    [
+      187.88125,
+      289.4885
+    ]
+  ],
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/socket-registration-r1.png",
+    "qa/calibrated-scale-comparison-r1.png"
+  ],
+  "limits": [
+    "Passive empty docking pad; no shuttle or delivery state. Rear ground footprint is estimated beneath the visible rear rim.",
+    "No workers, floor, state labels or animated parts baked in.",
+    "A2 integrated scene review pending."
+  ]
+}

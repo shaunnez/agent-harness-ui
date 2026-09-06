@@ -1,0 +1,68 @@
+{
+  "id": "mf.station.blueprint",
+  "revision": 1,
+  "status": "pending-coordinator-A2-review",
+  "file": "exports/station-blueprint-r1.png",
+  "sourceSize": [
+    512,
+    512
+  ],
+  "logicalSize": [
+    256,
+    256
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    150.0665,
+    213.23585
+  ],
+  "footprint": [
+    [
+      56.19405,
+      183.19095
+    ],
+    [
+      103.92095,
+      147.82705
+    ],
+    [
+      202.5373,
+      186.64105
+    ],
+    [
+      150.0665,
+      213.23585
+    ]
+  ],
+  "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+  "layer": "station",
+  "occlusionClass": "solid-station",
+  "sockets": {
+    "frontToolPort": [
+      66.97575,
+      161.34005
+    ],
+    "screenCenter": [
+      118.15275,
+      130.00135
+    ],
+    "documentFeed": [
+      138.9973,
+      108.7255
+    ]
+  },
+  "sha256": "4aaf5d64d8c4f536c4a460e10255e6de022c704af602e0a9b93b3f3ddc8b31f4",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/socket-registration-r1.png",
+    "qa/calibrated-scale-comparison-r1.png"
+  ],
+  "limits": [
+    "Static drafting apparatus with unlabeled geometric outlines; no execution lighting or articulated part.",
+    "No workers, floor, state labels or animated parts baked in.",
+    "A2 integrated scene review pending."
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "assetId": "mf.station.delivery-inspection",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-db8d11ec-a01c-4b06-a540-9a66ae8cf03e",
+  "sourceSha256": "e29809d6c341058848d539797ed77423b57a2caf5a6293e2eebf7565986735b9",
+  "prompt": "ONE isolated production game sprite: FINAL REVIEW DELIVERY INSPECTION STATION. Same reference ceramic-white/slate steel workbench family, fixed orthographic 2:1 camera and warm upper-left daylight. Same fullbenchwidth160logical, footprint146x80logical, tabletop-to-foot verticalheight40logical. Broad substantial bevelled rectangular bench. Distinct dispatch inspection identity: ONE sealed compact neutral ceramic artifact case sits on a recessed dark inspection deck under a low cantilevered scanner hood. Hood is supported at the rear right, reaching above the case with a dark unlit sensor underside; keep the front and left side open so the case and worker tool approach remain visible. Case has physical clasps and plain inset panels, no marks. Small blank dark reflective glass control pad at rear left. Actual accessible circular diagnostic connector on front left vertical bench face. Clean memorable substantial shape, crisp steel and ceramic seams, sophisticated restrained mechanical detailing. NO pass/fail lamps, approval marks, ticks, labels, numbers, letters, text, logos, semantic colors, glowing beams, worker/robot, floor or scenery. Sealed case and scanner are static illustrative machinery, no completion meaning. Entire object visible with generous margin on pure flat vivid green RGB(0,255,0), no checkerboard, gradient or ground shadow.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.station.fabrication/exports/station-fabrication-r1.png",
+      "sha256": "3bb80f14413e70b0398b4d6770e601affcf3d9b20d2a5553dd3f01cebf1d966d"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.station.communications/exports/station-communications-r1.png",
+      "sha256": "81a0c8c2e1f4de2f034afa0d3f36e86983f8bd348b0c9e69b20dd63d9656d6da"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Green key and spill cleanup",
+    "Crop subject and uniformly fit320source pixels wide",
+    "Lanczos resize and register bottom at430source on512canvas",
+    "QA-only comparison at requested consumer factors"
+  ],
+  "exportSha256": "03f63172691e7d97af075705a374dad3291181a28de3c5b76eeea703af084daa",
+  "exportBytes": 129866,
+  "rightsNote": "Supplied/generated project references only; provenance is not legal clearance."
+}

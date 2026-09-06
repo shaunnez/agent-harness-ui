@@ -1,0 +1,25 @@
+{
+  "size": [
+    1536,
+    1280
+  ],
+  "mode": "RGBA",
+  "alphaRange": [
+    0,
+    255
+  ],
+  "alphaBounds": [
+    63,
+    36,
+    1472,
+    931
+  ],
+  "borderNontransparent": 0,
+  "changedOutsideDishAlpha": 0,
+  "changedBelowSourceY300": 0,
+  "dishVisibleSourceSize": [
+    140,
+    210
+  ],
+  "acceptedFasciaDepthSource": 106.7153
+}

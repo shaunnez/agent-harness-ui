@@ -1,0 +1,14 @@
+{
+  "mode": "RGBA",
+  "size": [
+    384,
+    256
+  ],
+  "alphaBounds": [
+    92,
+    127,
+    292,
+    214
+  ],
+  "borderNontransparent": 0
+}

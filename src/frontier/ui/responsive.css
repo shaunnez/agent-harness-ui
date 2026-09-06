@@ -1,0 +1,289 @@
+@media (max-width: 1280px) {
+  .world-clock {
+    display: none;
+  }
+  .selection-hud {
+    left: 245px;
+    right: 300px;
+    gap: 10px;
+    padding: 14px;
+  }
+  .view-project .selection-hud {
+    left: 270px;
+    right: 20px;
+  }
+  .world-actions {
+    width: 278px;
+  }
+  .minimap {
+    width: 216px;
+  }
+  .selection-hud .worker-portrait {
+    display: none;
+  }
+  .selection-actions {
+    width: 165px;
+  }
+  .attention-queue {
+    width: 270px;
+  }
+  .task-layout {
+    grid-template-columns: 140px minmax(0, 1fr) 250px;
+  }
+  .new-task-layout {
+    grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.9fr);
+  }
+  .form-row {
+    grid-template-columns: 100px 1fr;
+    gap: 12px;
+  }
+  .agent-panel {
+    width: 42%;
+    min-width: 410px;
+  }
+}
+@media (max-height: 800px) and (min-width: 761px) {
+  .selection-hud {
+    min-height: 155px;
+  }
+  .selection-copy p {
+    max-height: 40px;
+    overflow: auto;
+  }
+  .project-hud {
+    bottom: 230px;
+    padding: 12px;
+  }
+  .minimap-image {
+    height: 118px;
+  }
+  .attention-rows {
+    max-height: 180px;
+  }
+}
+@media (min-width: 761px) and (max-width: 1050px) {
+  .minimap {
+    width: 144px;
+  }
+  .minimap-image {
+    height: 82px;
+  }
+  .camera-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .selection-hud,
+  .view-project .selection-hud {
+    left: 170px;
+  }
+  .selection-actions {
+    width: 150px;
+    flex-shrink: 0;
+  }
+  .project-hud {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .brand {
+    font-size: 13px;
+  }
+  .project-picker select {
+    max-width: 150px;
+    min-width: 90px;
+  }
+  .top-hud {
+    flex-wrap: wrap;
+    height: auto;
+  }
+  .world-navigation {
+    top: 64px;
+  }
+  .return-world {
+    position: fixed;
+    top: 105px;
+    right: 12px;
+    font-size: 12px;
+  }
+  .attention-queue,
+  .world-labels,
+  .minimap,
+  .project-hud {
+    display: none;
+  }
+  .world-actions {
+    left: 12px;
+    right: 12px;
+    bottom: 45px;
+    width: auto;
+  }
+  .secondary-actions {
+    margin-bottom: 6px;
+  }
+  .secondary-actions button {
+    min-height: 48px;
+    flex-direction: row;
+  }
+  .world-actions > small {
+    display: none;
+  }
+  .selection-hud,
+  .view-project .selection-hud {
+    left: 12px;
+    right: 12px;
+    bottom: 225px;
+    min-height: 0;
+    flex-direction: column;
+  }
+  .selection-actions {
+    flex-direction: row;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .selection-actions > button {
+    flex: 1;
+  }
+  .selection-meta {
+    margin-top: 8px;
+  }
+  .hq-new-task {
+    top: auto;
+    bottom: 50px;
+    left: 12px;
+    right: 12px;
+  }
+  .agent-panel {
+    top: 154px;
+    left: 10px;
+    right: 10px;
+    bottom: 40px;
+    width: auto;
+    min-width: 0;
+  }
+  .agent-heading h1 {
+    font-size: 20px;
+  }
+  .inline-metadata {
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .work-overlay {
+    width: calc(100vw - 16px);
+    max-height: calc(100svh - 24px);
+  }
+  .overlay-header {
+    padding: 12px;
+  }
+  .overlay-header h1 {
+    font-size: 20px;
+  }
+  .overlay-body {
+    padding: 12px;
+  }
+  .overlay-footer {
+    padding: 12px;
+    flex-wrap: wrap;
+  }
+  .overlay-footer > .primary {
+    min-width: 0;
+    flex: 1;
+  }
+  .new-task-layout,
+  .grill-layout,
+  .task-layout,
+  .settings-body {
+    display: block;
+  }
+  .form-surface,
+  .mission-briefing {
+    padding: 14px;
+    margin-bottom: 15px;
+  }
+  .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 18px;
+  }
+  .form-row > span {
+    padding: 0;
+  }
+  .mission-briefing .notice {
+    margin-bottom: 0;
+  }
+  .mission-briefing .workflow-checklist,
+  .mission-briefing > .quiet {
+    display: none;
+  }
+  .question-copy {
+    font-size: 20px;
+  }
+  .grill-title {
+    gap: 9px;
+  }
+  .grill-title > span {
+    font-size: 12px;
+  }
+  .decisions-panel {
+    margin-top: 20px;
+  }
+  .stage-navigation {
+    display: flex;
+    overflow-x: auto;
+    margin-bottom: 15px;
+  }
+  .stage-navigation button {
+    min-width: 115px;
+    width: auto;
+  }
+  .task-brief {
+    display: block;
+    margin-top: 20px;
+  }
+  .journal-tools {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .journal-tools label {
+    flex-basis: 100%;
+  }
+  .task-journal,
+  .task-journal tbody,
+  .task-journal tr,
+  .task-journal td {
+    display: block;
+  }
+  .task-journal thead {
+    display: none;
+  }
+  .task-journal tr {
+    border-bottom: 1px solid #486373;
+    padding: 12px 0;
+  }
+  .task-journal td {
+    border: 0;
+    padding: 5px;
+  }
+  .table-task span {
+    max-width: none;
+  }
+  .settings-body section {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .connection-badge {
+    font-size: 12px;
+    left: 8px;
+    max-width: calc(100% - 16px);
+  }
+  .empty-world {
+    top: 22%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}

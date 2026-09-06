@@ -1,0 +1,432 @@
+{
+  "sampleMethod": "Every16sourcepx x96..1440, find bottom wall alpha>=128; sample accepted floor alpha two pixels below that point. Tests contact coverage, not lighting.",
+  "samples": [
+    {
+      "x": 96,
+      "wallBottom": 499,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 112,
+      "wallBottom": 493,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 128,
+      "wallBottom": 485,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 144,
+      "wallBottom": 474,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 160,
+      "wallBottom": 466,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 176,
+      "wallBottom": 458,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 192,
+      "wallBottom": 448,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 208,
+      "wallBottom": 440,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 224,
+      "wallBottom": 432,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 240,
+      "wallBottom": 423,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 256,
+      "wallBottom": 415,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 272,
+      "wallBottom": 407,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 288,
+      "wallBottom": 399,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 304,
+      "wallBottom": 390,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 320,
+      "wallBottom": 382,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 336,
+      "wallBottom": 374,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 352,
+      "wallBottom": 365,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 368,
+      "wallBottom": 357,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 384,
+      "wallBottom": 349,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 400,
+      "wallBottom": 341,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 416,
+      "wallBottom": 333,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 432,
+      "wallBottom": 325,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 448,
+      "wallBottom": 317,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 464,
+      "wallBottom": 311,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 480,
+      "wallBottom": 303,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 496,
+      "wallBottom": 295,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 512,
+      "wallBottom": 285,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 528,
+      "wallBottom": 276,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 544,
+      "wallBottom": 268,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 560,
+      "wallBottom": 260,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 576,
+      "wallBottom": 251,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 592,
+      "wallBottom": 243,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 608,
+      "wallBottom": 235,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 624,
+      "wallBottom": 227,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 640,
+      "wallBottom": 218,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 656,
+      "wallBottom": 210,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 672,
+      "wallBottom": 202,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 688,
+      "wallBottom": 194,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 704,
+      "wallBottom": 186,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 720,
+      "wallBottom": 178,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 736,
+      "wallBottom": 170,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 752,
+      "wallBottom": 166,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 768,
+      "wallBottom": 165,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 784,
+      "wallBottom": 167,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 800,
+      "wallBottom": 171,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 816,
+      "wallBottom": 179,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 832,
+      "wallBottom": 188,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 848,
+      "wallBottom": 196,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 864,
+      "wallBottom": 204,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 880,
+      "wallBottom": 212,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 896,
+      "wallBottom": 220,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 912,
+      "wallBottom": 228,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 928,
+      "wallBottom": 237,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 944,
+      "wallBottom": 245,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 960,
+      "wallBottom": 253,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 976,
+      "wallBottom": 261,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 992,
+      "wallBottom": 269,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1008,
+      "wallBottom": 277,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1024,
+      "wallBottom": 286,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1040,
+      "wallBottom": 296,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1056,
+      "wallBottom": 304,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1072,
+      "wallBottom": 312,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1088,
+      "wallBottom": 317,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1104,
+      "wallBottom": 325,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1120,
+      "wallBottom": 333,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1136,
+      "wallBottom": 341,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1152,
+      "wallBottom": 349,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1168,
+      "wallBottom": 358,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1184,
+      "wallBottom": 366,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1200,
+      "wallBottom": 374,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1216,
+      "wallBottom": 383,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1232,
+      "wallBottom": 391,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1248,
+      "wallBottom": 399,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1264,
+      "wallBottom": 407,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1280,
+      "wallBottom": 415,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1296,
+      "wallBottom": 424,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1312,
+      "wallBottom": 432,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1328,
+      "wallBottom": 440,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1344,
+      "wallBottom": 448,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1360,
+      "wallBottom": 458,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1376,
+      "wallBottom": 466,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1392,
+      "wallBottom": 474,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1408,
+      "wallBottom": 485,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1424,
+      "wallBottom": 493,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1440,
+      "wallBottom": 499,
+      "floorAlphaBelow": 255
+    }
+  ],
+  "sampleCount": 85,
+  "unsupportedContacts": 0
+}

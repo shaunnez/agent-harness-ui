@@ -8,3 +8,20 @@ output/
 .env
 .env.*
 *.log
+
+# Independent hosted journal and local Mission Frontier production archives.
+/journal-site/
+/design/mission-frontier/*.zip
+/design/mission-frontier/assets/staging/**/*.blend*
+/design/mission-frontier/assets/staging/**/*.png
+/design/mission-frontier/assets/staging/**/*.jpg
+/design/mission-frontier/assets/staging/**/*.gif
+/design/mission-frontier/assets/staging/**/*.zip
+/design/mission-frontier/assets/staging/**/*.fbx
+/design/mission-frontier/assets/staging/**/*.obj
+/design/mission-frontier/assets/staging/**/*.mtl
+/design/mission-frontier/assets/staging/**/*.gltf
+/design/mission-frontier/assets/staging/**/*.bin
+/design/mission-frontier/assets/staging/**/*.html
+__pycache__/
+*.pyc

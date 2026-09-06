@@ -1,0 +1,683 @@
+{
+  "version": 1,
+  "revision": "cinematic-v1-final",
+  "status": "qualified-in-app",
+  "projection": "fixed orthographic 2:1, common measured ground anchors",
+  "assets": [
+    {
+      "id": "mf.cinematic.island",
+      "file": "/assets/cinematic/island-1954423207.png",
+      "sourceSize": [
+        2048,
+        1536
+      ],
+      "logicalSize": [
+        1024,
+        768
+      ],
+      "groundAnchor": [
+        511.9999694824219,
+        372.0162048339844
+      ],
+      "bytes": 2680618,
+      "sha256": "19544232075bcd540b1af4a7e20b89ed536a7428bddaeafa80fa2666ffc9fed9",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/island.png",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/island.blend",
+        "sources": [
+          "design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Rock_Medium_1.gltf",
+          "design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Rock_Medium_2.gltf",
+          "design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Rock_Medium_3.gltf"
+        ],
+        "quality": "final"
+      }
+    },
+    {
+      "id": "mf.cinematic.water",
+      "file": "/assets/cinematic/water-fc93cd013d.png",
+      "sourceSize": [
+        1024,
+        1024
+      ],
+      "logicalSize": [
+        512,
+        512
+      ],
+      "groundAnchor": [
+        256,
+        256
+      ],
+      "bytes": 1062533,
+      "sha256": "fc93cd013d23e0ce08085bd38a8da4ecf9b3d9c5531ef68ce9dd801fa63e2c31",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/water.png",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/water.blend",
+        "sources": [],
+        "quality": "final"
+      }
+    },
+    {
+      "id": "mf.cinematic.bridge",
+      "file": "/assets/cinematic/bridge-5fae2a2827.png",
+      "sourceSize": [
+        1024,
+        768
+      ],
+      "logicalSize": [
+        512,
+        384
+      ],
+      "groundAnchor": [
+        255.99996948242188,
+        195.1673355102539
+      ],
+      "bytes": 424102,
+      "sha256": "5fae2a2827a90937204a0af11f790a5c519dca55fb4176d724709c92a7b90dc7",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/bridge.png",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/bridge.blend",
+        "sources": [],
+        "quality": "final"
+      }
+    },
+    {
+      "id": "mf.cinematic.bridge-se",
+      "file": "/assets/cinematic/bridge-se-8c77d453b3.png",
+      "sourceSize": [
+        1024,
+        768
+      ],
+      "logicalSize": [
+        512,
+        384
+      ],
+      "groundAnchor": [
+        255.99996948242188,
+        195.1673355102539
+      ],
+      "bytes": 404866,
+      "sha256": "8c77d453b322b136dede3d3771af759325ae9fece6735b471ad10c5505501e68",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/bridge-se.png",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/bridge-se.blend",
+        "sources": [],
+        "quality": "final"
+      }
+    },
+    {
+      "id": "mf.cinematic.roof",
+      "file": "/assets/cinematic/mf.cinematic.roof-5680f12e66.png",
+      "sourceSize": [
+        1536,
+        1280
+      ],
+      "logicalSize": [
+        768,
+        640
+      ],
+      "groundAnchor": [
+        384,
+        522
+      ],
+      "boundsSourcePixels": [
+        75,
+        30,
+        1461,
+        1034
+      ],
+      "bytes": 1576715,
+      "sha256": "5680f12e6697462f93939bb63339f26a9720fb92bed68a28769e45641925db6a",
+      "sockets": {},
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/exterior-production/renders/exterior.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/exterior-production/entry.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/exterior-production/blend/exterior.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.idle",
+      "file": "/assets/cinematic/mf.cinematic.worker.idle-a39b395acd.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        261,
+        360
+      ],
+      "bytes": 95521,
+      "sha256": "a39b395acd3bea3646b874f933f6c158564427ac81cbb5ac4a357f5d089acfb4",
+      "sockets": {},
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-idle.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.work.0",
+      "file": "/assets/cinematic/mf.cinematic.worker.work.0-169f2bc2b4.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        261,
+        360
+      ],
+      "bytes": 96076,
+      "sha256": "169f2bc2b4f5155a23a349d98e4956047def017f7c17126633c6e11aebd5877c",
+      "sockets": {
+        "probeTip": [
+          110.9725,
+          131.633
+        ]
+      },
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-work-00.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.work.1",
+      "file": "/assets/cinematic/mf.cinematic.worker.work.1-001a31d666.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        261,
+        360
+      ],
+      "bytes": 96204,
+      "sha256": "001a31d6669e0a324e7cb5b1950c5a6f3a11712a3fbd3402b69ac6d26e4b4c07",
+      "sockets": {
+        "probeTip": [
+          110.7295,
+          132.264
+        ]
+      },
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-work-01.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.work.2",
+      "file": "/assets/cinematic/mf.cinematic.worker.work.2-b8def300d0.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        261,
+        360
+      ],
+      "bytes": 96289,
+      "sha256": "b8def300d0ed4bfbaa13242ddbcb2ea862b47bfcde348ea1fd424b56eae8c344",
+      "sockets": {
+        "probeTip": [
+          110.582,
+          132.594
+        ]
+      },
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-work-02.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.work.3",
+      "file": "/assets/cinematic/mf.cinematic.worker.work.3-bc43b5b15d.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        261,
+        360
+      ],
+      "bytes": 96283,
+      "sha256": "bc43b5b15d473e19902bd645cbfe2d46e596c924c36521f695be8a50cbf86631",
+      "sockets": {
+        "probeTip": [
+          110.579,
+          132.544
+        ]
+      },
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-work-03.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.work.4",
+      "file": "/assets/cinematic/mf.cinematic.worker.work.4-846af64219.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        261,
+        360
+      ],
+      "bytes": 96001,
+      "sha256": "846af64219b13833eb84b15f277f8a578defd252b5e9b21a86cac2c19efd864d",
+      "sockets": {
+        "probeTip": [
+          110.7185,
+          132.1245
+        ]
+      },
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-work-04.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.work.5",
+      "file": "/assets/cinematic/mf.cinematic.worker.work.5-6c1d600afa.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        261,
+        360
+      ],
+      "bytes": 95967,
+      "sha256": "6c1d600afa9f95f6d34b6927e60572869d1727d6b24adc5c44794ea7dc4e5e42",
+      "sockets": {
+        "probeTip": [
+          110.952,
+          131.4385
+        ]
+      },
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-work-05.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.work.6",
+      "file": "/assets/cinematic/mf.cinematic.worker.work.6-f68048aedb.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        261,
+        360
+      ],
+      "bytes": 96003,
+      "sha256": "f68048aedbfb32c45dcd6528f2d90e0835711e0983064149f951f425f65bed24",
+      "sockets": {
+        "probeTip": [
+          111.2075,
+          130.662
+        ]
+      },
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-work-06.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.work.7",
+      "file": "/assets/cinematic/mf.cinematic.worker.work.7-0165a965f0.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        261,
+        360
+      ],
+      "bytes": 95978,
+      "sha256": "0165a965f03bfa245afaebf3403cdf6cdd0bbb2a1378351ed0522a7d5a3681a9",
+      "sockets": {
+        "probeTip": [
+          111.4195,
+          130.0045
+        ]
+      },
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-work-07.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.work.8",
+      "file": "/assets/cinematic/mf.cinematic.worker.work.8-5f9e2fd719.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        261,
+        360
+      ],
+      "bytes": 96151,
+      "sha256": "5f9e2fd7191770255e0906e2232b42c526e558201f6b671f3aadd462f6d6c6f3",
+      "sockets": {
+        "probeTip": [
+          111.5415,
+          129.652
+        ]
+      },
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-work-08.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.work.9",
+      "file": "/assets/cinematic/mf.cinematic.worker.work.9-20a5810ebe.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        261,
+        360
+      ],
+      "bytes": 96076,
+      "sha256": "20a5810ebe6de02faadc6f742575c4687c97602e0d4b1a79d6866fd4dcd76929",
+      "sockets": {
+        "probeTip": [
+          111.551,
+          129.707
+        ]
+      },
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-work-09.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.work.10",
+      "file": "/assets/cinematic/mf.cinematic.worker.work.10-67c9a9ac85.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        261,
+        360
+      ],
+      "bytes": 95956,
+      "sha256": "67c9a9ac8593c0db637a2c93538d6b6c4d1184702eb187a763e5548a3e77f2da",
+      "sockets": {
+        "probeTip": [
+          111.4425,
+          130.1525
+        ]
+      },
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-work-10.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.work.11",
+      "file": "/assets/cinematic/mf.cinematic.worker.work.11-4f72de4bab.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        261,
+        360
+      ],
+      "bytes": 95990,
+      "sha256": "4f72de4babb0bfebf9a088b15463fb901c13c1a21acc6cd39e884369cd811a70",
+      "sockets": {
+        "probeTip": [
+          111.2345,
+          130.861
+        ]
+      },
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-work-11.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.worker.portrait",
+      "file": "/assets/cinematic/mf.cinematic.worker.portrait-2b3815b7e1.png",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        96
+      ],
+      "bytes": 139209,
+      "sha256": "2b3815b7e1420100f55ae87d02a2aaa50c41dc400555917d56f18d571d5aa71d",
+      "sockets": {},
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/renders/worker-portrait.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/worker-metadata.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/production/blend/worker-production.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.tree",
+      "file": "/assets/cinematic/mf.cinematic.tree-9267c14619.png",
+      "sourceSize": [
+        768,
+        768
+      ],
+      "logicalSize": [
+        384,
+        384
+      ],
+      "groundAnchor": [
+        192,
+        340
+      ],
+      "boundsSourcePixels": [
+        110,
+        266,
+        689,
+        746
+      ],
+      "bytes": 514790,
+      "sha256": "9267c14619ba7180346369fde6b9ab0aa3b01876a944146c770414351eab1a53",
+      "sockets": {},
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/vegetation-production/renders/spreading-grove-r2.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/vegetation-production/entry-r2.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/vegetation-production/blend/spreading-grove-r2.blend"
+      }
+    },
+    {
+      "id": "mf.cinematic.tree.shadow",
+      "file": "/assets/cinematic/mf.cinematic.tree.shadow-d4a629c247.png",
+      "sourceSize": [
+        1536,
+        768
+      ],
+      "logicalSize": [
+        768,
+        384
+      ],
+      "groundAnchor": [
+        384,
+        340
+      ],
+      "bytes": 253081,
+      "sha256": "d4a629c2475058a3a44292888cf542e0c5d9ba72fea7f9496dfeb6cab083383f",
+      "sockets": {},
+      "production": {
+        "source": "design/mission-frontier/assets/staging/cinematic-v1/astra/vegetation-production/renders/spreading-grove-shadow-final.png",
+        "metadata": "design/mission-frontier/assets/staging/cinematic-v1/astra/vegetation-production/shadow-entry.json",
+        "quality": "64-sample-production",
+        "blend": "design/mission-frontier/assets/staging/cinematic-v1/astra/vegetation-production/blend/spreading-grove.blend"
+      }
+    }
+  ]
+}

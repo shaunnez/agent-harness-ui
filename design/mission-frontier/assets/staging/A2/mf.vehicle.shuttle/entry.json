@@ -1,0 +1,79 @@
+{
+  "id": "mf.vehicle.shuttle",
+  "revision": 1,
+  "status": "pending-coordinator-A2-review",
+  "file": "exports/vehicle-shuttle-r1.png",
+  "sourceSize": [
+    512,
+    512
+  ],
+  "logicalSize": [
+    256,
+    256
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    120.8158,
+    186.89475
+  ],
+  "footprint": [
+    [
+      67.39475,
+      192.9737
+    ],
+    [
+      126.3421,
+      166.26315
+    ],
+    [
+      174.23685,
+      180.8158
+    ],
+    [
+      115.28945,
+      207.5263
+    ]
+  ],
+  "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+  "layer": "vehicle",
+  "occlusionClass": "solid-vehicle",
+  "dockingAnchor": [
+    120.8158,
+    186.89475
+  ],
+  "sockets": {
+    "contactCentre": [
+      120.8158,
+      186.89475
+    ]
+  },
+  "sha256": "41e49a8cff4de991a83f14bb13c4cc9d287a91b0d531b12713a3fc8e4556e7bc",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/socket-registration-r1.png",
+    "qa/calibrated-scale-comparison-r1.png",
+    "qa/pad-shuttle-composite-r1.png",
+    "qa/dock-contact-r1.png",
+    "qa/docked-actual-scale-r1.png",
+    "qa/pad-shuttle-clearance-fit-r1.png"
+  ],
+  "limits": [
+    "Static parked shuttle. Runtime travel must be tied to persisted delivery or handoff events.",
+    "No workers, floor, state labels or animated parts baked in.",
+    "A2 integrated scene review pending."
+  ],
+  "docking": {
+    "padId": "mf.station.launchpad",
+    "socket": "shuttleDock",
+    "sameLogicalScale": true,
+    "sourcePixelPasteOffset": [
+      154,
+      158
+    ],
+    "recommendedShuttleScaleRelativeToPad": 0.7,
+    "nativeScaleNote": "Native skids fit deck, but left skid falls outside conservative clearance polygon. Use0.70relative scale to put all contact centres inside declared clearance."
+  }
+}

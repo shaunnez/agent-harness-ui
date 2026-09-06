@@ -1,0 +1,90 @@
+{
+  "id": "mf.route.bridge.se",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/bridge-se-r1.png",
+  "sourceSize": [
+    512,
+    384
+  ],
+  "logicalSize": [
+    256,
+    192
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    128,
+    128
+  ],
+  "footprint": [
+    [
+      36.0,
+      94.0
+    ],
+    [
+      60.0,
+      82.0
+    ],
+    [
+      220.0,
+      162.0
+    ],
+    [
+      196.0,
+      174.0
+    ]
+  ],
+  "layer": "route",
+  "occlusionClass": "ground-route",
+  "sockets": {
+    "nw": [
+      48,
+      88
+    ],
+    "se": [
+      208,
+      168
+    ]
+  },
+  "crossSections": {
+    "nw": [
+      [
+        36,
+        94
+      ],
+      [
+        60,
+        82
+      ]
+    ],
+    "se": [
+      [
+        196,
+        174
+      ],
+      [
+        220,
+        162
+      ]
+    ]
+  },
+  "repeatDisplacement": [
+    160,
+    80
+  ],
+  "sha256": "207100c9c01e3538834072ca0f1fdb9c885153944a80e6aa2799c47e228054d3",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/joined-consumer-scales-r1.png",
+    "qa/join-contact-magnified-r1.png",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/bridge-measurements-r1.json"
+  ],
+  "limits": [
+    "SE bridge only. Approved road deck retained verbatim; generated structure below near edge.",
+    "Small material discontinuity at repeated panels may remain; scene joins must be inspected with actual filtering."
+  ],
+  "undersideDepthLogical": 4.5
+}

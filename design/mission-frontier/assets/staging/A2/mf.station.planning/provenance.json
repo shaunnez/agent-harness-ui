@@ -1,0 +1,40 @@
+{
+  "assetId": "mf.station.planning",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-c6705c93-6c1c-47dd-ba80-d36aa3eac2aa",
+  "sourceSha256": "3151288bb160ff176bc3014e3dc735a3d2ab2be60c2ef1589e1317b9783c0004",
+  "prompt": "Create ONE isolated production game sprite: an IMPLEMENTATION PLANNING ASSEMBLY TABLE. Same ceramic-white/slate steel bench family as supplied references, warm upper-left daylight, fixed orthographic 2:1 isometric view. Broad substantial low bevelled rectangular bench with support footprint about146x80logical and tabletop height40logical. Distinct functional identity: a flat dark matte planning tabletop holding THREE small neutral ceramic mechanical module blocks of varied simple shape, arranged along a compact branching assembly fixture of physical steel rails. One block at the rear branches via rails toward two front blocks, readable as an assembly plan but NOT a UI diagram; all parts are real tangible tabletop miniature components sitting in slots. A folded compact mechanical caliper/straightedge along one edge, low rear storage lip. No screens, no paper drafting board, no tall mast. Actual accessible circular dark diagnostic tool port on front left vertical bench face. Clean memorable broad silhouette, detailed metal seams and ceramic panels, substantial bench chassis matching fabrication. No text, numbers, arrows, ticks, labels, logos, semantic colors, glowing lamps, beams, animated effects, robots, people, floor or scenery. Neutral static hardware; pieces have no state meaning. Full isolated object entirely visible with generous margin on perfectly uniform vivid green RGB(0,255,0) background for alpha removal; no checkerboard, no ground shadow, no gradient.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A2/mf.station.intake/exports/station-intake-r1.png",
+      "sha256": "623461a3e441421299f869f0d664d8dc3c8b2d6e225d0ff9ed88873be9805cef"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.station.fabrication/exports/station-fabrication-r1.png",
+      "sha256": "3bb80f14413e70b0398b4d6770e601affcf3d9b20d2a5553dd3f01cebf1d966d"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.station.communications/exports/station-communications-r1.png",
+      "sha256": "81a0c8c2e1f4de2f034afa0d3f36e86983f8bd348b0c9e69b20dd63d9656d6da"
+    }
+  ],
+  "correctiveGenerations": 2,
+  "secondCorrectionPrompt": "Preserve this exact assembly-planning station identity and materials. Fix framing: zoom out enough that the ENTIRE station including every bottom foot is visible, with at least80px clear green margin all four sides; front bottom currently clipped. Also reduce ONLY vertical support bench height by15percent, keeping tabletop and miniature pieces unchanged. Keep broad support footprint and same fixed isometric camera. Uniform vivid green background, no ground shadows, no text or lights. Full station cutout, no cropped edges.\n",
+  "intermediateSourceSha256": "898824c4b348c66b0601ae6a11302a59fd7702a33cd8773768fe0fa6feb14008",
+  "correctionPrompt": "Preserve this exact planning table, tabletop miniature blocks/rails, camera, materials and green background. Correct only the SUPPORT BENCH HEIGHT: extend the ceramic and dark steel vertical side panels DOWNWARD by 45%, moving its feet down to make tabletop-to-ground height forty logical pixels when full table width is160 logical pixels. Keep tabletop dimensions and perspective unchanged. No new details, text, lights or other objects. The bench must be substantially taller while keeping exact same assembly layout above it. Full object with margin on flat vivid green background.\n",
+  "initialSourceSha256": "61749e5a6de2dd516d7fe220524486d39fda4fb8332e71fa1103b70cf5f149a7",
+  "transforms": [
+    "Green key and spill cleanup",
+    "Crop subject and uniformly fit320source pixels wide",
+    "Lanczos resize and register bottom at430source on512canvas",
+    "QA-only comparison at requested consumer factors"
+  ],
+  "exportSha256": "db194aba70876e0fcfc930746c4572a665fb2067356d3f94d23a8897af3e4961",
+  "exportBytes": 135434,
+  "rightsNote": "Supplied/generated project references only; provenance is not legal clearance."
+}
