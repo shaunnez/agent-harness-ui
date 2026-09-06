@@ -1,4 +1,5 @@
 import { stageRunLimitFor } from "./run-activity.mjs";
+import { supportsRetainedPackageContinuation } from "../src/retained-package-continuation.ts";
 import { isOwnedFile } from "./structured-output.mjs";
 import { selectVerificationCommands } from "./verification.mjs";
 import { canOverrideWorkflowProfile, recordWorkflowProfile } from "./workflow-profiles.mjs";
@@ -506,12 +507,12 @@ export class TaskControlOrchestrator {
         (item) =>
           item.status === "failed" &&
           item.worktreePath &&
-          /run exceeded \d+ seconds|harness stopped while this task was running/i.test(
-            item.error ?? task.error ?? "",
-          ),
+          supportsRetainedPackageContinuation(item.error ?? task.error ?? ""),
       );
     if (!workPackage)
-      throw new Error("No timed-out or interrupted retained work package is available to continue.");
+      throw new Error(
+        "No interrupted, timed-out or ownership-blocked retained package is available to continue.",
+      );
     const retained = await this._worktrees.inspectRetainedSlice(workPackage, { requireClean: false });
     if (retained.clean)
       throw new Error(
