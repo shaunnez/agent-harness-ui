@@ -1,6 +1,6 @@
 # Mission Frontier — PR handoff
 
-The Mission Frontier v1 implementation and cinematic island are packaged for review in `codex/mission-frontier-v1`, based on current `main` at `91f6d3a8464842846153f0d621b5ba2360ccabd0`. Publication is being finalized; the PR URL and implementation commit will be recorded here after creation. No merge or game deployment is part of this handoff.
+The Mission Frontier v1 implementation and cinematic island are packaged for review in `codex/mission-frontier-v1`, based on current `main` at `91f6d3a8464842846153f0d621b5ba2360ccabd0`. [PR #73 — Add Mission Frontier game workspace and cinematic island](https://github.com/shaunnez/agent-harness-ui/pull/73) is open for review. The implementation commit is `597a07147e50b7a26b373a8efe79d75e17a1c4ed`; subsequent publication-record changes are documentation only. GitHub reported the PR mergeable with no status checks reported at publication; that is separate from the local 1,041-test qualification. No merge or game deployment is part of this handoff.
 
 ## Scope
 

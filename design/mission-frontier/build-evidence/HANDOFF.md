@@ -1,5 +1,7 @@
 # Mission Frontier — complete v1 handoff
 
+**PR publication update:** [PR #73](https://github.com/shaunnez/agent-harness-ui/pull/73) is open against `main` from the isolated `codex/mission-frontier-v1` branch. The PR checkout passed 1,041 tests and both builds. See [the current PR handoff](../PR-HANDOFF.md). Statements below about uncommitted work describe the earlier Goal 2 checkpoint; the original source workspace remains preserved.
+
 Goal 3 visual qualification has passed; see [VISUAL-FIDELITY/progress.md](VISUAL-FIDELITY/progress.md). This document retains the completed v1 qualification record.
 
 Goal 2 (M4–M7) completed on 6 September 2026 following Shaun's acceptance of M0–M3. The 25 destinations, supported task workflows, model/effort controls, project management, usage views and A2 artwork are implemented in the independent React/Pixi entry.
