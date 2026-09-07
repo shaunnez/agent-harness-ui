@@ -1,0 +1,34 @@
+{
+  "date": "2026-09-07",
+  "sourceCommit": "c784d92",
+  "scope": "PR source with retained ownership-failure recovery",
+  "node": "24.19.0",
+  "tests": {
+    "passed": 1047,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "command": "node --test --test-concurrency=2 tests/*.test.mjs tests/frontier/*.test.mjs tests/frontier/api/*.test.mjs",
+  "durationMs": 67446.494792,
+  "checks": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "format": "passed",
+    "build": "passed",
+    "buildFrontier": "passed"
+  },
+  "sha256": {
+    "recovery-full-tests.txt": "9c44eaf64e1326aec5c028903897f706857cee5c061a04c8f84f4fac67097c31",
+    "recovery-typecheck.txt": "0de190a1b717d16f6eac63f1e1b0282a46b4a1f92da6d05e7aa9d0675611f9f5",
+    "recovery-lint.txt": "3f21803c9b63f2aab90a84f1a8487a1a030dc17156f6eabe5eac8c205078e08f",
+    "recovery-format.txt": "a1414c3929e7432ddb59193fbab136a341ab21c161bb13ff3efb1e37daa6a940",
+    "recovery-build.txt": "906a70afaf3da9da09d8f51cc6673906a46798b91f31163c8f00d0c77e683b37",
+    "recovery-build-frontier.txt": "0884172fd9199501bc88ea1ca900296b75dc3d1736d77352d08e2977bb7c0633"
+  },
+  "limits": [
+    "The default npm test file list does not automatically discover every new test; this qualification uses the explicit broader command above.",
+    "Native browser and visual performance checks were not repeated for this runtime recovery patch.",
+    "The game remains unmerged and unpublished."
+  ]
+}

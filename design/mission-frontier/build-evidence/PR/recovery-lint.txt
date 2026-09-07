@@ -1,0 +1,5 @@
+
+> agent-harness-ui@0.0.0 lint
+> biome lint src server scripts tests worker
+
+Checked 383 files in 1449ms. No fixes applied.
