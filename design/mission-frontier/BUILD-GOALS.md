@@ -1,6 +1,6 @@
 # Mission Frontier — prompts and goals
 
-Revision 3 · 6 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. Goal 3 is ready for Shaun’s island review; see its final handoff and evidence. The implementation plan, asset contract and goal-specific brief define each run's scope.
+Revision 5 · 9 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. The later living-world pass is recorded in [PR-HANDOFF.md](PR-HANDOFF.md). **Goal 4 is implemented, with native 200% zoom still pending. Goals 5 and 6 have not started.** See the [Goal 4 handoff](build-evidence/USABILITY/goal-4/HANDOFF.md). [USABILITY-PLAN.md](USABILITY-PLAN.md) defines their scope, dependencies and acceptance checks; the earlier plans remain the history for completed work.
 
 ## How to use
 
@@ -153,6 +153,124 @@ blocker requires my input. Do not create a duplicate goal if this run is already
 active. Leave the working preview ready for my review.
 ```
 
+## Goal 4 — laptop windows and an activity-first agent view
+
+**Started 9 September 2026; implementation built and reviewed in the browser. Native 200% zoom remains pending.** See [acceptance and limits](build-evidence/USABILITY/goal-4/acceptance.md). Complete U0–U2 only; Goals 5/6 remain separate. No new art or asset agent is required.
+
+```text
+Run Goal 4 from design/mission-frontier/BUILD-GOALS.md. Read
+design/mission-frontier/USABILITY-PLAN.md, the laptop review and AGENTS.md.
+Create a goal to complete U0–U2, then execute it. Do not start Goals 5 or 6.
+
+Revalidate the actual worktree, remote and current PR/merge state. Use an
+isolated checkout from the authoritative Mission Frontier source; the retained
+planning baseline is fdbe171 on codex/mission-frontier-v1. Previously documented
+checkout paths may no longer exist. Preserve all unrelated dirty files and
+running services; do not copy the entire original workspace into the branch.
+
+Implement generous laptop windows with bounded resize, maximise/restore,
+remembered dimensions and obvious scrolling. Compact the task header and stage
+layout, preserve the always-open inspector and all task/model/approval controls,
+and give Watch an agent a compact identity/status/usage area above its activity.
+Keep current versus historical run states and event/usage availability truthful.
+Goal 4 improves presentation of recorded activity; it does not claim to fix the
+backend's buffered-event boundary, which belongs to UB2 in Goal 6.
+
+Follow the plan's measured 1280-by-720 acceptance checks, keyboard/focus and zoom
+checks, representative workflow states and matched before/after comparisons.
+Use an isolated fixture server and store for commands. Do not restart my live
+runtime, resume existing tasks or launch paid model workflows for QA.
+
+Work through build, focused checks, computer-use interaction, visual comparison
+and fixes until U0–U2 pass. Keep build-evidence/USABILITY/progress.md and the
+goal-4 acceptance evidence current. Run typing, lint, formatting and both builds.
+Preserve protected Sites files, accepted art, motion and lighting preferences.
+
+Finish with the local preview running and open, screenshots, a reviewable diff,
+acceptance coverage and honest limits. Update the separate project journal as
+planned/built/verified evidence warrants, preserving its existing audience.
+Do not start the next goal, merge a PR or publish the game. Routine fixes within
+scope do not require further approval; report material blockers with evidence.
+```
+
+## Goal 5 — decision navigation, return briefing and watch pins
+
+**Planned, not started.** Start after the Goal 4 handoff. Complete U3–U5 and UB1.
+
+```text
+Run Goal 5 from design/mission-frontier/BUILD-GOALS.md. Read USABILITY-PLAN.md,
+AGENTS.md and build-evidence/USABILITY/progress.md. Verify Goal 4's actual source
+and acceptance before extending it. Create and execute a goal for U3–U5 and UB1.
+Preserve existing work and use the current authoritative isolated checkout.
+
+Extend Needs you with stable Previous/Next decision navigation and return to the
+same world location. Add a dated While you were away briefing and up to four
+locally remembered task/run watch pins. Preserve drafts, exact candidate-bound
+actions and explicit confirmation; navigation never submits an action.
+
+Implement the narrow UB1 retained-history read projection only as needed for
+accurate cross-project catch-up. Revalidate source identity, cursor ordering and
+retention contracts first. Keep stable paging, an acknowledged upper bound,
+explicit incomplete coverage and correct completed-run usage accounting. Do not
+invent history, infer interval spend, hydrate every task history or add a new
+poller per pin. Keep legacy behavior compatible and test any required metadata
+migration/export path. This does not authorize a replacement event ledger.
+
+Use deterministic isolated fixtures to verify changing queues, stale approvals,
+duplicates, late events, reconnect, source replacement, retention gaps, multiple
+tabs and large workspaces. Measure request counts and payloads with zero and four
+pins. Keep the laptop space and accessibility checks from Goal 4 passing.
+
+Continue through the plan's build/check/browser/fix loop until U3–U5 and UB1 pass.
+Keep goal-5 evidence and the shared progress file current; run relevant API/store
+tests, typing, lint, formatting and both builds. Leave the working preview open
+with a reviewable diff, acceptance evidence and an updated dated journal entry.
+Preserve journal access. Do not mutate unrelated live tasks, launch paid runs,
+start Goal 6, merge a PR or publish the game.
+```
+
+## Goal 6 — recorded activity and meaningful world feedback
+
+**Planned, not started.** Start after the Goal 5 handoff. Complete UB2, U6 and the combined qualification.
+
+```text
+Run Goal 6 from design/mission-frontier/BUILD-GOALS.md. Read USABILITY-PLAN.md,
+AGENTS.md, LIVING-WORLD.md and build-evidence/USABILITY/progress.md. Verify the
+accepted Goal 4/5 source and evidence. Create and execute a goal to complete UB2,
+U6 and the combined usability qualification in the current isolated checkout.
+
+Persist bounded batches of permitted operational activity while its exact run
+is active, using existing store coordination and HTTP refresh. Keep terminal
+retention idempotent, preserve task/run/package/candidate identity, and handle
+interruption and persistence failures visibly. Do not expose private reasoning,
+raw provider streams or estimated live token usage.
+
+Extend the existing world transition infrastructure with brief feedback for
+recorded stage advances, artifact arrival, started repair, attention and actual
+task completion. Reuse the current art first. If a concrete missing asset is
+proven in the integrated scene, you may assign one bounded Astra asset task
+under ASSET-PRODUCTION.md with disjoint staging ownership and measured output.
+The builder owns integration and visual acceptance; no speculative asset batch.
+
+Never animate a waiting/historical worker as executing, a required repair as
+already started, an integrated package as task completion, or an initial load /
+reconnect / history page as a new event. Keep motion, audio and day/night controls
+authoritative. Preserve attention clarity, camera controls and immediate actions.
+
+Use isolated provider/API fixtures for timing, duplicate/late-event, cancellation,
+concurrent-package and store-failure tests. Complete real computer-use checks,
+matched screenshots, request/latency and normal/stress performance measurements.
+Run the final complete root, Frontier and Frontier API suite after both builds,
+plus typing, lint and formatting. Do not substitute these checks for the separate
+real end-to-end implementation-to-PR qualification or restart live tasks for QA.
+
+Finish only when UB2, U6 and the combined acceptance matrix pass. Retain evidence
+and any explicitly unverified native-platform checks in goal-6 and progress.md.
+Leave the preview running/open, update the project journal with verified results
+for its existing audience, and give a concise handoff with screenshots and issues.
+Do not merge a PR, publish the game or introduce v2 progression.
+```
+
 ## Steering and resumption
 
 Send ordinary follow-up feedback while a goal is active; name the affected milestone or screen/state. For a later continuation, use:
@@ -160,8 +278,10 @@ Send ordinary follow-up feedback while a goal is active; name the affected miles
 ```text
 Continue the current Mission Frontier build goal. Read its status, the approved
 plan, its goal-specific brief and progress file; inspect the actual worktree and
-latest evidence. For Goal 3 use build-evidence/VISUAL-FIDELITY/progress.md; the
-older build-evidence/progress.md records completed Goal 2. Preserve completed
+latest evidence. For Goals 4–6 use build-evidence/USABILITY/progress.md and its
+goal-specific evidence folder. For Goal 3 use
+build-evidence/VISUAL-FIDELITY/progress.md; the older build-evidence/progress.md
+records completed Goal 2. Preserve completed
 work and accepted assets. Resume the next incomplete acceptance item, including
 any feedback I have supplied. Keep the same scope and
 verification loop; do not create a duplicate goal or restart the implementation.

@@ -1,0 +1,43 @@
+{
+  "date": "2026-09-09",
+  "applicationCommit": "b8f6915169f9bf9232b05f02946d193973893bb9",
+  "baseCommit": "fdbe171a8545a6b9ae206b67ce01fe79606496f1",
+  "status": "implemented-native-zoom-pending",
+  "goal4Complete": false,
+  "laterGoalsStarted": false,
+  "measuredPixels": {
+    "taskNormal": 425,
+    "taskMaximised": 457,
+    "agentActivity": 244
+  },
+  "checks": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "format": "passed",
+    "legacyBuild": "passed",
+    "frontierBuild": "passed",
+    "frontierApi": {
+      "passed": 74,
+      "failed": 0
+    },
+    "completeSuite": {
+      "total": 1068,
+      "passed": 1064,
+      "failed": 4,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "orchestrationRecheck": {
+      "passed": 121,
+      "failed": 0
+    }
+  },
+  "nativeZoom": "pending-control-interrupted",
+  "gamePublished": false,
+  "pushedToPr": false,
+  "paidRunsStarted": 0,
+  "runtime": {
+    "frontendPort": 5204,
+    "disposableApiPort": 4324
+  }
+}
