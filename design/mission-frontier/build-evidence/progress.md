@@ -1,6 +1,6 @@
 # Goal 2 — complete v1
 
-**9 September living-world update:** Idle robot patrols, six role animations and the configurable day/night cycle are implemented and qualified in an isolated review checkout. See [the living-world handoff](LIVING-WORLD/HANDOFF.md) for the design, 1,065-test qualification, fresh captures and performance, preview links and explicit browser limits. This visual pass does not restart the companion or change the live database. The earlier checkpoints below remain historical.
+**9 September PR integration:** Idle robot patrols, six role animations and the configurable day/night cycle are included in [PR #73](https://github.com/shaunnez/agent-harness-ui/pull/73). The combined PR source passed 1,060 tests and both builds; see [the current PR handoff](../PR-HANDOFF.md) and [exact qualification](PR/living-world/verification.json). The [living-world handoff](LIVING-WORLD/HANDOFF.md) retains the original local 1,065-test checkpoint, captures, performance and browser limits. Integration did not restart the companion or change the live database. The earlier checkpoints below remain historical.
 
 Goal 3 is complete and ready for review; its final checkpoint is [VISUAL-FIDELITY/progress.md](VISUAL-FIDELITY/progress.md). The completed Goal 2 record below remains historical.
 

@@ -1,5 +1,7 @@
 # Living world — review handoff
 
+**PR integration — 9 September 2026:** This pass is included in [PR #73](https://github.com/shaunnez/agent-harness-ui/pull/73) as `5eaa8b6`, with the original evidence in `efc0ba3`. The combined PR source passed 1,060 tests, typing, lint, formatting and both builds. See [the PR handoff](../../PR-HANDOFF.md) and [qualification](../PR/living-world/verification.json). The record below preserves the earlier local checkpoint and its visual measurements; statements about pending integration describe that checkpoint.
+
 9 September 2026 · implemented and qualified locally, with the native-browser limits below.
 
 The cinematic world now has idle patrols, six illustrative work rhythms, a configurable 60-minute day, separate land/sea lighting and staged warm lights. The design and implementation plan is [LIVING-WORLD.md](../../LIVING-WORLD.md). Application source is commit `882e02b6727116a4ad45008d39c89e82b709a076` on `codex/frontier-living-world`, based on the shared runtime `4c5ef6c`.

@@ -1,6 +1,6 @@
 # Mission Frontier — source package boundary
 
-This PR packages the independent game frontend, additive backend contracts, tests, 56 runtime asset entries, design study, current screenshots and written qualification records. A normal application install/build/test uses committed files; it does not need Blender or asset downloads.
+This PR packages the independent game frontend, additive backend contracts, tests, 81 runtime asset entries, design study, current screenshots and written qualification records. The art consists of 35 base, 21 cinematic and 25 living-world entries. A normal application install/build/test uses committed files; it does not need Blender or asset downloads.
 
 The PR is based directly on `origin/main` at `91f6d3a8464842846153f0d621b5ba2360ccabd0`. It excludes the source checkout's pre-existing light-mode/design-generation commit `94c9f17` and local merge `e31566a`. Those changes and all source-workspace files are retained unchanged in `/Users/shaun/.codex/worktrees/7237/agent-harness-ui`.
 
@@ -9,7 +9,8 @@ The PR is based directly on `origin/main` at `91f6d3a8464842846153f0d621b5ba2360
 - `src/frontier/`, the dedicated Vite configuration, dependencies and frontend/API tests.
 - Canonical attention projection, project rename/archive/restore admission, task role-policy snapshots and candidate-bound repair/retry checks used by Frontier.
 - `public/frontier/`: all runtime textures, registration metadata and content hashes. The cinematic presentation remains opt-in using `art=cinematic`.
-- The complete original screen study and reference images, current Goal 3 browser captures, measured performance summaries and milestone acceptance documents.
+- The complete original screen study and reference images, Goal 3 and living-world browser captures, measured performance summaries and milestone acceptance documents.
+- Living-world lighting, idle patrols, six role illustrations, registered walking/scanning/console frames and an observatory light layer. Scan and console poses load on demand.
 - Authored image-processing and Blender scripts, selected production metadata, pack acquisition checksums and the publishers' Standard CC0 licence files.
 
 ## Retained locally
@@ -29,7 +30,7 @@ npm run lint
 npm run format:check
 npm run build
 npm run build:frontier
-node --test tests/*.test.mjs tests/frontier/*.test.mjs tests/frontier/api/*.test.mjs
+node --test --test-concurrency=2 tests/*.test.mjs tests/frontier/*.test.mjs tests/frontier/api/*.test.mjs
 ```
 
 Build before the combined test command because the preserved Sites worker tests inspect the packaged output. `npm run dev:frontier` serves the independent app on loopback port 5199. Open `?mode=fixture&art=cinematic#world` for sample data. Live mode requires a compatible local Node companion; it does not run in hosted static previews.
