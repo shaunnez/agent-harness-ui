@@ -1,5 +1,7 @@
 # Goal 2 — complete v1
 
+**9 September living-world update:** Idle robot patrols, six role animations and the configurable day/night cycle are implemented and qualified in an isolated review checkout. See [the living-world handoff](LIVING-WORLD/HANDOFF.md) for the design, 1,065-test qualification, fresh captures and performance, preview links and explicit browser limits. This visual pass does not restart the companion or change the live database. The earlier checkpoints below remain historical.
+
 Goal 3 is complete and ready for review; its final checkpoint is [VISUAL-FIDELITY/progress.md](VISUAL-FIDELITY/progress.md). The completed Goal 2 record below remains historical.
 
 **Complete: M4–M7.** Shaun accepted the first playable on 6 September 2026, said current feedback can wait, and requested continuing. Preserve the accepted visual direction. No v2 features or publication.

@@ -1,5 +1,7 @@
 # Mission Frontier — complete v1 handoff
 
+**9 September living-world update:** Idle robot patrols, six role animations and the configurable day/night cycle are implemented and qualified in an isolated review checkout. See [the living-world handoff](LIVING-WORLD/HANDOFF.md) for the design, 1,065-test qualification, fresh captures and performance, preview links and explicit browser limits. This visual pass does not restart the companion or change the live database. The earlier checkpoints below remain historical.
+
 **PR publication update:** [PR #73](https://github.com/shaunnez/agent-harness-ui/pull/73) is open against `main` from the isolated `codex/mission-frontier-v1` branch. The PR checkout passed 1,041 tests and both builds. See [the current PR handoff](../PR-HANDOFF.md). Statements below about uncommitted work describe the earlier Goal 2 checkpoint; the original source workspace remains preserved.
 
 Goal 3 visual qualification has passed; see [VISUAL-FIDELITY/progress.md](VISUAL-FIDELITY/progress.md). This document retains the completed v1 qualification record.

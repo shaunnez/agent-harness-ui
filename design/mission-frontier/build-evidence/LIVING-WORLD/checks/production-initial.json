@@ -1,0 +1,262 @@
+{
+  "capturedAt": "2026-09-08T16:24:52.829Z",
+  "viewport": {
+    "width": 1488,
+    "height": 1058,
+    "dpr": 1
+  },
+  "mode": "fixture",
+  "projects": 3,
+  "tasks": 12,
+  "refresh": {
+    "cycles": 27,
+    "summaryReads": 1,
+    "selectedReads": 1,
+    "failures": 0
+  },
+  "renderer": {
+    "artDirection": "cinematic",
+    "textures": 62,
+    "decodedBytes": 132317184,
+    "compressedBytes": 20039006,
+    "reconciliations": 1,
+    "rebuiltEntities": 5,
+    "handoffs": 0,
+    "phase": "Sunset",
+    "worldHour": 18.951366666704416,
+    "lamps": 19,
+    "lightingSurfaces": 80,
+    "frameSamples": 3177,
+    "measuredSeconds": 25.27469999998808,
+    "medianFps": 129.87012906588438,
+    "p95FrameMs": 10.100000023841858,
+    "entities": 5,
+    "workers": 6,
+    "activeWorkers": 2,
+    "ambientCrew": 6,
+    "roamingWorkers": 6,
+    "workerActions": [
+      "fabricate",
+      "fabricate"
+    ],
+    "tickerListeners": 2,
+    "actorSamples": [
+      {
+        "id": "PC-142",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": 250,
+        "y": 635,
+        "textureFrame": 39
+      },
+      {
+        "id": "PC-153",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 312,
+        "y": 635,
+        "textureFrame": 39
+      },
+      {
+        "id": "plancheck-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 298,
+        "y": 659,
+        "textureFrame": 39
+      },
+      {
+        "id": "plancheck-1",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 334,
+        "y": 671,
+        "textureFrame": 39
+      },
+      {
+        "id": "AH-051",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 310,
+        "y": 145,
+        "textureFrame": 39
+      },
+      {
+        "id": "AH-054",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": 372,
+        "y": 145,
+        "textureFrame": 39
+      },
+      {
+        "id": "harness-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 358,
+        "y": 169,
+        "textureFrame": 39
+      },
+      {
+        "id": "harness-1",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 394,
+        "y": 181,
+        "textureFrame": 39
+      },
+      {
+        "id": "MS-086",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 1060,
+        "y": 585,
+        "textureFrame": 39
+      },
+      {
+        "id": "MS-090",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 1122,
+        "y": 585,
+        "textureFrame": 39
+      },
+      {
+        "id": "mystrata-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 998.5059844528902,
+        "y": 604.1245785402932,
+        "textureFrame": 23
+      },
+      {
+        "id": "mystrata-1",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 1037.4677897608544,
+        "y": 617.4248833096434,
+        "textureFrame": 22
+      }
+    ],
+    "tickerRunning": true,
+    "documentHidden": false,
+    "backgroundSuspensions": 0,
+    "camera": {
+      "x": 105.44378698224853,
+      "y": 283.26627218934914,
+      "zoom": 0.7029585798816568
+    }
+  },
+  "selectionAckMs": [],
+  "selectionMeasurement": "Selection event to the second animation frame after committed state and scene effects",
+  "pageTransfer": {
+    "requests": 16,
+    "transferBytes": 594105,
+    "encodedBytes": 589305
+  },
+  "artworkNetwork": [
+    {
+      "path": "/assets/index-B6a9Xkg9.js",
+      "transferBytes": 315523,
+      "encodedBytes": 315223,
+      "decodedBodyBytes": 1070272
+    },
+    {
+      "path": "/assets/index-BNhVVv7Y.css",
+      "transferBytes": 13611,
+      "encodedBytes": 13311,
+      "decodedBodyBytes": 63467
+    },
+    {
+      "path": "/assets/inter-latin-400-normal-C38fXH4l.woff2",
+      "transferBytes": 23964,
+      "encodedBytes": 23664,
+      "decodedBodyBytes": 23664
+    },
+    {
+      "path": "/assets/inter-latin-500-normal-Cerq10X2.woff2",
+      "transferBytes": 24572,
+      "encodedBytes": 24272,
+      "decodedBodyBytes": 24272
+    },
+    {
+      "path": "/assets/WebGLRenderer-Bd28PGcV.js",
+      "transferBytes": 20010,
+      "encodedBytes": 19710,
+      "decodedBodyBytes": 72275
+    },
+    {
+      "path": "/assets/BufferResource-BpxC5nrZ.js",
+      "transferBytes": 2908,
+      "encodedBytes": 2608,
+      "decodedBodyBytes": 10037
+    },
+    {
+      "path": "/assets/Filter-IAlIbEnM.js",
+      "transferBytes": 1204,
+      "encodedBytes": 904,
+      "decodedBodyBytes": 904
+    },
+    {
+      "path": "/assets/RenderTargetSystem-C_glSKOQ.js",
+      "transferBytes": 14974,
+      "encodedBytes": 14674,
+      "decodedBodyBytes": 53013
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.portrait-2b3815b7e1.png",
+      "transferBytes": 139509,
+      "encodedBytes": 139209,
+      "decodedBodyBytes": 139209
+    },
+    {
+      "path": "/assets/browserAll-DMUsk-eB.js",
+      "transferBytes": 11684,
+      "encodedBytes": 11384,
+      "decodedBodyBytes": 43328
+    },
+    {
+      "path": "/assets/CanvasPool-CRQKVrK_.js",
+      "transferBytes": 1082,
+      "encodedBytes": 782,
+      "decodedBodyBytes": 782
+    },
+    {
+      "path": "/assets/webworkerAll-BspoKjr5.js",
+      "transferBytes": 5388,
+      "encodedBytes": 5088,
+      "decodedBodyBytes": 15962
+    },
+    {
+      "path": "/assets/manifest.json",
+      "transferBytes": 13303,
+      "encodedBytes": 13003,
+      "decodedBodyBytes": 71785
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "transferBytes": 2662,
+      "encodedBytes": 2362,
+      "decodedBodyBytes": 20101
+    },
+    {
+      "path": "/assets/living/manifest.json",
+      "transferBytes": 2819,
+      "encodedBytes": 2519,
+      "decodedBodyBytes": 23887
+    }
+  ],
+  "network": []
+}
