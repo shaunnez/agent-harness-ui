@@ -1,0 +1,340 @@
+/* Work-window dimensions are device preferences, independent of task state. */
+.work-overlay.sized-window {
+  width: var(--window-width);
+  height: var(--window-height);
+  max-width: calc(100vw - 16px);
+  max-height: calc(100svh - 16px);
+  container-type: inline-size;
+}
+.work-overlay.compact-window {
+  width: min(660px, calc(100vw - 24px));
+}
+.work-overlay .overlay-header {
+  padding: 9px 14px;
+  gap: 12px;
+}
+.overlay-header > div:first-child {
+  min-width: 0;
+  flex: 1;
+}
+.overlay-header h1 {
+  font-size: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.overlay-window-actions,
+.window-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.window-controls button,
+.overlay-header .icon-button {
+  min-height: 34px;
+  padding: 6px 9px;
+}
+.window-size-editor {
+  position: absolute;
+  z-index: 10;
+  top: 52px;
+  right: 12px;
+  max-width: calc(100% - 24px);
+  padding: 10px;
+  border: 1px solid #7895a4;
+  border-radius: 7px;
+  background: #0b2533;
+  box-shadow: 0 8px 24px #0008;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.window-size-editor span {
+  font-size: 12px;
+}
+.window-size-editor button {
+  font-size: 14px;
+}
+.window-resize {
+  position: absolute;
+  z-index: 8;
+  touch-action: none;
+}
+.resize-n,
+.resize-s {
+  left: 10px;
+  right: 10px;
+  height: 7px;
+  cursor: ns-resize;
+}
+.resize-n {
+  top: 0;
+}
+.resize-s {
+  bottom: 0;
+}
+.resize-w,
+.resize-e {
+  top: 10px;
+  bottom: 10px;
+  width: 7px;
+  cursor: ew-resize;
+}
+.resize-w {
+  left: 0;
+}
+.resize-e {
+  right: 0;
+}
+.resize-ne,
+.resize-nw,
+.resize-se,
+.resize-sw {
+  width: 16px;
+  height: 16px;
+}
+.resize-ne,
+.resize-se {
+  right: 0;
+}
+.resize-nw,
+.resize-sw {
+  left: 0;
+}
+.resize-ne,
+.resize-nw {
+  top: 0;
+}
+.resize-se,
+.resize-sw {
+  bottom: 0;
+}
+.resize-ne,
+.resize-sw {
+  cursor: nesw-resize;
+}
+.resize-nw,
+.resize-se {
+  cursor: nwse-resize;
+}
+.resize-se {
+  background: repeating-linear-gradient(135deg, transparent 0 4px, #72919b 4px 6px);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+.work-overlay .sample-mode-banner {
+  margin: 0;
+  padding: 6px 14px;
+  font-size: 12px;
+}
+.work-overlay .overlay-body {
+  padding: 14px;
+}
+.scroll-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.scroll-region {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: #7298ab #102b39;
+}
+.scroll-region:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.scroll-cue {
+  position: absolute;
+  right: 16px;
+  bottom: 4px;
+  font-size: 12px;
+  color: #d6e8f0;
+  background: #123a4fef;
+  padding: 3px 7px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+.work-overlay .overlay-body,
+.work-overlay .settings-editor-scroll,
+.work-overlay .settings-nav {
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: #7298ab #102b39;
+  overscroll-behavior: contain;
+}
+.work-overlay .task-layout {
+  grid-template-columns: 168px minmax(0, 1fr) 270px;
+  gap: 12px;
+  overflow: hidden;
+}
+.task-layout .stage-navigation {
+  padding: 5px;
+}
+.stage-navigation button {
+  min-height: 54px;
+  padding: 7px 5px;
+  font-size: 14px;
+}
+.stage-navigation small {
+  margin-top: 3px;
+}
+.stage-number {
+  flex-shrink: 0;
+}
+.task-layout .task-main {
+  padding: 0;
+  max-height: none;
+  overflow: hidden;
+}
+.task-layout .task-fixed-actions {
+  max-height: 55%;
+  padding-bottom: 8px;
+  scrollbar-gutter: stable;
+}
+.task-layout .task-utility-bar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 0 0 7px;
+  position: static;
+}
+.task-utility-bar h2 {
+  font-size: 17px;
+  margin: 0 auto 0 0;
+}
+.task-utility-bar button {
+  min-height: 34px;
+  padding: 6px 9px;
+  font-size: 14px;
+}
+.task-layout .workflow-command {
+  padding: 10px 12px;
+  margin: 0;
+}
+.task-layout .workflow-command-row > span {
+  gap: 3px;
+}
+.workflow-secondary-actions:empty {
+  display: none;
+}
+.task-stage-content-frame {
+  flex: 1;
+}
+.task-layout .task-stage-content {
+  padding-bottom: 24px;
+}
+.task-layout .task-brief {
+  margin: 0;
+  max-height: none;
+  padding: 12px;
+}
+.task-brief h2 {
+  font-size: 18px;
+  margin: 6px 0;
+}
+.task-brief section {
+  margin-top: 14px;
+  padding-top: 12px;
+}
+.task-layout .workflow-card {
+  padding: 14px;
+}
+.package-workbench .section-heading {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.package-workbench .section-heading h3 {
+  font-size: 16px;
+}
+.package-detail {
+  padding: 12px;
+  margin-top: 8px;
+}
+.task-layout .package-detail dl {
+  grid-template-columns: 115px minmax(0, 1fr);
+}
+@container (max-width: 1050px) {
+  .work-overlay .task-layout {
+    grid-template-columns: 150px minmax(0, 1fr);
+    overflow: auto;
+    display: grid;
+  }
+  .task-layout .task-main {
+    overflow: visible;
+  }
+  .task-stage-content-frame,
+  .task-layout .task-stage-content,
+  .task-layout .task-fixed-actions {
+    overflow: visible;
+    max-height: none;
+  }
+  .task-layout .task-brief-frame {
+    grid-column: 1 / -1;
+  }
+  .task-layout .scroll-frame {
+    overflow: visible;
+  }
+  .task-layout .task-brief {
+    overflow: visible;
+  }
+  .task-layout .scroll-cue {
+    display: none;
+  }
+  .new-task-layout,
+  .settings-body,
+  .grill-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@container (max-width: 700px) {
+  .work-overlay .task-layout {
+    display: block;
+  }
+  .task-layout .stage-navigation {
+    display: flex;
+    overflow-x: auto;
+    padding: 4px;
+    margin: 0 0 12px;
+  }
+  .stage-navigation button {
+    min-width: 145px;
+    width: auto;
+    flex-shrink: 0;
+  }
+  .task-layout .task-main,
+  .task-layout .task-brief {
+    display: block;
+  }
+  .task-utility-bar {
+    flex-wrap: wrap;
+  }
+  .task-utility-bar h2 {
+    flex-basis: 100%;
+  }
+  .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .overlay-footer {
+    flex-wrap: wrap;
+    padding: 10px;
+  }
+}
+.window-scroll-hint {
+  flex-shrink: 0;
+  color: #bad7e5;
+  background: #0b2533;
+  padding: 4px 14px;
+  font-size: 12px;
+  text-align: right;
+}

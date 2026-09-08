@@ -15,6 +15,8 @@ export function createFixtureGateway(
   stationReview = false,
 ): FrontierGateway & {
   setDisconnected(value: boolean): void;
+  appendActivity(id: string, count: number): void;
+  setUsageState(id: string, state: "pending" | "zero"): void;
   setDeliveryOutcome(id: string, outcome: "merged" | "closed" | "drift"): void;
 } {
   const initial = structuredClone(
@@ -69,6 +71,40 @@ export function createFixtureGateway(
   const workflow = fixtureWorkflow(tasks, get, changed);
   return {
     mode: "fixture",
+    appendActivity(id, count) {
+      const task = get(id);
+      const run = task.runs?.find(
+        (item) => item.status === "running" && task.activeRunIds?.includes(item.id),
+      );
+      if (!run) throw new Error("Select a sample task with an active run.");
+      const first = task.events.length;
+      for (let index = 0; index < Math.min(30, Math.max(1, count)); index++) {
+        task.events.push({
+          id: `qa-${first + index}`,
+          at: new Date(Date.now() + index).toISOString(),
+          runId: run.id,
+          stage: run.stage,
+          category: "activity",
+          tone: "info",
+          title: `Sample activity ${first + index + 1}`,
+          detail:
+            "A recorded demonstration event for reading-position checks. No model or repository operation took place.",
+        });
+      }
+      changed(task);
+    },
+    setUsageState(id, state) {
+      const task = get(id);
+      const run = task.runs?.find(
+        (item) => item.status === "running" && task.activeRunIds?.includes(item.id),
+      );
+      if (!run) throw new Error("Select a sample task with an active run.");
+      run.usage =
+        state === "pending"
+          ? null
+          : { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, totalTokens: 0 };
+      changed(task);
+    },
     ...workflow,
     ...management.methods,
     setDisconnected(value) {

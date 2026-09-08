@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Binoculars } from "@phosphor-icons/react";
-import { useState } from "react";
+import { usePanelState } from "../app/panel-state";
 import type { RuntimeRun, RuntimeWorkPackage } from "../../domain";
 import { packageState } from "../runtime/presentation";
 
@@ -7,12 +7,23 @@ export function WorkPackages({
   packages,
   runs,
   onWatch,
+  taskId,
+  stage,
 }: {
   packages: RuntimeWorkPackage[];
   runs: RuntimeRun[];
   onWatch(runId: string): void;
+  taskId: string;
+  stage: string;
 }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = usePanelState<string | null>(
+    `package:${taskId}:${stage}`,
+    stage === "implement"
+      ? (packages.find((item) => item.status === "failed")?.id ??
+          packages.find((item) => item.status === "running")?.id ??
+          null)
+      : null,
+  );
   const selected = packages.find((item) => item.id === selectedId);
   const run = [...runs]
     .filter((item) => item.workPackageId === selectedId)

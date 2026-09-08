@@ -26,6 +26,61 @@ export function BuildDiagnostics({
       <a href={previewLink("")}>Return to twelve-task sample</a>
       <a href={previewLink("&scenario=workflow")}>Full workflow scenarios</a>
       <a href={previewLink("&scenario=stations", "project/station-qa")}>All eleven station compositions</a>
+      {runtime.gateway.mode === "fixture" &&
+        "appendActivity" in runtime.gateway &&
+        "setUsageState" in runtime.gateway && (
+          <div>
+            <p>Watch QA · select a running sample task.</p>
+            {[1, 30].map((count) => (
+              <button
+                type="button"
+                key={count}
+                onClick={() => {
+                  const id = runtime.getSnapshot().selectedId;
+                  if (
+                    !id ||
+                    !("appendActivity" in runtime.gateway) ||
+                    typeof runtime.gateway.appendActivity !== "function"
+                  )
+                    return;
+                  try {
+                    runtime.gateway.appendActivity(id, count);
+                    setDeliveryError(null);
+                    runtime.retry();
+                  } catch (error) {
+                    setDeliveryError(error instanceof Error ? error.message : "Sample event failed");
+                  }
+                }}
+              >
+                Add {count} sample {count === 1 ? "event" : "events"}
+              </button>
+            ))}
+            {(["pending", "zero"] as const).map((state) => (
+              <button
+                type="button"
+                key={state}
+                onClick={() => {
+                  const id = runtime.getSnapshot().selectedId;
+                  if (
+                    !id ||
+                    !("setUsageState" in runtime.gateway) ||
+                    typeof runtime.gateway.setUsageState !== "function"
+                  )
+                    return;
+                  try {
+                    runtime.gateway.setUsageState(id, state);
+                    setDeliveryError(null);
+                    runtime.retry();
+                  } catch (error) {
+                    setDeliveryError(error instanceof Error ? error.message : "Sample usage update failed");
+                  }
+                }}
+              >
+                Sample usage {state}
+              </button>
+            ))}
+          </div>
+        )}
       {runtime.gateway.mode === "fixture" && "setDeliveryOutcome" in runtime.gateway && (
         <>
           <p>Delivery QA applies only to the selected sample task with an open PR.</p>

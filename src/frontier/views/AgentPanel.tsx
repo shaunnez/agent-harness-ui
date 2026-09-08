@@ -1,18 +1,24 @@
-import { ArrowRight, Clock, FileText, Info, LockSimple, MagnifyingGlass, Robot } from "@phosphor-icons/react";
+import { ArrowRight, FileText, GearSix, MagnifyingGlass } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { RuntimeRun } from "../../domain";
 import type { TaskEvidence } from "../runtime/contracts";
 import {
+  attentionAction,
+  attentionFor,
   formatCount,
   formatDuration,
   isActiveRun,
   latestRun,
   modelLabel,
   reasoningLabel,
+  runDuration,
   stageLabels,
 } from "../runtime/presentation";
-import { Attention } from "../ui/Attention";
+import { currentRecordedTool, eventAge, runEvents } from "../runtime/agent-activity";
+import { ScrollArea } from "../ui/ScrollArea";
+import { ResizeHandles, useWindowSizing, WindowSizeControls } from "../ui/WindowSizing";
 import { workAction, workActions } from "../world/worker-behavior";
+import { AgentActivity } from "./AgentActivity";
 
 export function AgentPanel({
   evidence,
@@ -27,6 +33,7 @@ export function AgentPanel({
   requestedRunId,
   portrait = "/assets/mf.worker.standard.portrait.r1.png",
   motion = true,
+  now = Date.now(),
 }: {
   evidence: TaskEvidence;
   run: RuntimeRun | undefined;
@@ -40,263 +47,283 @@ export function AgentPanel({
   requestedRunId?: string | null;
   portrait?: string;
   motion?: boolean;
+  now?: number;
 }) {
   const [tab, setTab] = useState("activity");
+  const sizing = useWindowSizing("agent");
   const task = evidence.core;
   const active = Boolean(run && isActiveRun(task, run));
   const latest = latestRun(evidence.runs.items, task.activeRunIds);
-  const previous = run && latest && run.id !== latest.id;
-  const events = evidence.activity.items.filter(
-    (event) => !run || event.runId === run.id || (!event.runId && event.stage === run.stage),
-  );
+  const previous = Boolean(run && !active && latest && run.id !== latest.id);
+  const events = runEvents(evidence.activity.items, run);
+  const exactLatest = [...events].reverse().find((event) => event.runId === run?.id);
+  const tool = currentRecordedTool(run, events, active && connected);
+  const age = eventAge(exactLatest?.at, now);
   const usage = run?.usage;
+  const attention = attentionFor(task);
+  const tabs = ["activity", "output", "context"];
   return (
-    <aside className="agent-panel panel" aria-label="Watch agent">
+    <aside
+      className={`agent-panel panel sized-agent ${sizing.maximised ? "expanded-agent" : ""}`}
+      style={sizing.style}
+      aria-label="Watch agent"
+    >
       <header className="agent-heading">
         <img src={portrait} alt="Worker role" />
-        <div>
-          <h1>
-            {run?.stage === "dev-review"
-              ? "Review agent"
-              : run
-                ? `${stageLabels[run.stage]} agent`
-                : "Task crew"}
+        <div className="agent-identity">
+          <h1 title={task.title}>
+            {task.id} · {run ? stageLabels[run.stage] : "Task crew"}
           </h1>
-          <dl className="inline-metadata">
-            <div>
-              <dt>Skill</dt>
-              <dd>
-                <Robot size={15} />
-                {run?.role ?? "Not recorded"}
-              </dd>
-            </div>
-            <div>
-              <dt>Model</dt>
-              <dd>{modelLabel(run?.model)}</dd>
-            </div>
-            <div>
-              <dt>Reasoning</dt>
-              <dd>
-                {reasoningLabel(run?.reasoning)}
-                <LockSimple size={14} />
-              </dd>
-            </div>
-          </dl>
+          <p title={task.title}>{task.title}</p>
+          <small>
+            {run?.role ?? "Role not recorded"} · {modelLabel(run?.model)} · {reasoningLabel(run?.reasoning)}
+            {run?.workPackageId && ` · ${run.workPackageId}`}
+          </small>
         </div>
+        <WindowSizeControls sizing={sizing} />
       </header>
-      <div className="agent-motion-note">
-        <strong>
-          {!connected
-            ? "Connection unknown · worker parked"
-            : !active
-              ? "Worker parked"
-              : !motion
-                ? "World motion paused"
-                : `${workActions[workAction(run?.stage ?? task.currentStage, run?.role)].label} · role animation`}
-        </strong>
-        {!active
-          ? "This run is not executing. Task attention and the next action remain below."
-          : "An illustration of the recorded role. Activity and evidence below show what the agent actually reports."}
-      </div>
-      {requestedRunId && !run && (
-        <p role="status" className="notice">
-          Requested run {requestedRunId} is not in the loaded evidence.
-          {evidence.runs.nextCursor ? (
-            <button type="button" onClick={() => onMore("runs")}>
-              Load earlier runs
-            </button>
-          ) : (
-            " No more recorded runs are available."
+      <label className="run-picker">
+        Recorded run
+        <select
+          aria-label="Recorded run"
+          value={run?.id ?? ""}
+          onChange={(event) => onRun(event.target.value)}
+        >
+          {!run && (
+            <option value="">{requestedRunId ? "Requested run not loaded" : "No recorded run"}</option>
           )}
-        </p>
-      )}
-      {previous && (
-        <p className="notice">
-          <Info size={18} />
-          Viewing a previous run. Current task attention is shown below.
-          {latest && task.activeRunIds?.includes(latest.id) && (
-            <button type="button" className="link-button" onClick={() => onRun(latest.id)}>
-              View active worker
-            </button>
-          )}
-        </p>
-      )}
-      <Attention task={task} connected={connected} onAction={onAction} />
-      <p className="notice">
-        <Info size={20} />
-        {!run
-          ? "No recorded agent run is available."
-          : active && connected
-            ? "This worker is executing. Watching does not pause it."
-            : run.status === "completed"
-              ? `${run.stage === "grill" ? "Question-generation" : "Agent"} run finished. This worker is parked.`
-              : `Run ${run.status}. This worker is parked.`}
-      </p>
-      <div className="tab-bar" role="tablist" aria-label="Agent evidence">
-        {["activity", "output", "context"].map((id) => (
-          <button type="button" key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>
-            {id[0]?.toUpperCase()}
-            {id.slice(1)}
-          </button>
-        ))}
-      </div>
-      <section className="agent-evidence" role="tabpanel" aria-label={tab}>
-        {tab === "activity" ? (
-          events.length ? (
-            <ol className="activity-list">
-              {events.map((event) => (
-                <li key={event.id}>
-                  <time>
-                    {new Date(event.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </time>
-                  <div>
-                    <strong>{event.title}</strong>
-                    <p>{event.detail}</p>
-                    {!event.runId && <small>Stage activity · not bound to this run</small>}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <p className="quiet">No observed activity is loaded for this run.</p>
-          )
-        ) : tab === "output" ? (
-          <div className="artifact-list">
-            {task.artifacts
-              .filter((artifact) => !run || artifact.id === run.artifactId)
-              .map((artifact) => (
-                <button type="button" key={artifact.id} onClick={() => onArtifact(artifact.id)}>
-                  <FileText size={19} />
-                  <span>{artifact.name}</span>
-                  <ArrowRight size={18} />
-                </button>
-              ))}
-            {run?.artifactId && !task.artifacts.some((artifact) => artifact.id === run.artifactId) && (
-              <button type="button" onClick={() => run.artifactId && onArtifact(run.artifactId)}>
-                Open recorded output · {run.artifactId}
-              </button>
-            )}
-            {run && !run.artifactId && <p className="quiet">This run has no linked output artifact.</p>}
-          </div>
-        ) : (
-          <div>
-            <h3>Repository access</h3>
-            <p className="repository-path">{task.repositoryPath}</p>
-            <p>
-              {run?.stage === "implement" || run?.kind === "repair"
-                ? "Writes are limited to the isolated candidate worktree."
-                : "Read-only investigation or review."}
-            </p>
-            <p className="quiet">
-              Open a retained artifact to inspect its recorded context manifest. Access permission does not
-              prove which context the model used.
-            </p>
-          </div>
-        )}
-      </section>
-      {tab === "activity" && run?.toolCalls.length ? (
-        <section className="agent-tools">
-          <h3>Observed tools</h3>
-          {run.toolCalls.map((tool, index) => (
-            <details key={tool.id ?? `${tool.name}:${index}`}>
-              <summary>
-                {tool.name} · {tool.phase}
-                {tool.commandFailed ? " · failed" : ""}
-              </summary>
-              <pre>{tool.result ?? "No result payload recorded."}</pre>
-            </details>
+          {evidence.runs.items.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.id} · {item.status}
+              {task.activeRunIds?.includes(item.id) && item.status === "running" ? " · active" : ""}
+            </option>
           ))}
-        </section>
-      ) : null}
-      {tab === "activity" && evidence.activity.nextCursor && (
-        <button type="button" onClick={() => onMore("activity")}>
-          Load earlier activity
+        </select>
+        {evidence.runs.nextCursor && (
+          <button type="button" onClick={() => onMore("runs")}>
+            Earlier runs
+          </button>
+        )}
+      </label>
+      <section
+        className={`agent-status tone-${connected ? attention.kind : "unavailable"}`}
+        aria-label="Task and run state"
+      >
+        <div>
+          <strong>{connected ? attention.label : "Connection lost"}</strong>
+          <span>
+            {!connected
+              ? "Last known run state"
+              : active
+                ? "Run executing"
+                : run
+                  ? run.status === "running"
+                    ? "Run not confirmed active · parked"
+                    : `Run ${run.status} · parked`
+                  : "No run loaded"}
+            {previous ? " · historical" : ""}
+          </span>
+        </div>
+        <button type="button" className="primary" onClick={onAction}>
+          {attentionAction(task)}
+          <ArrowRight size={16} />
         </button>
-      )}
-      <section className="run-metadata">
-        <h3>{active && connected ? "Current execution" : "Recorded execution"}</h3>
-        <dl className="inline-metadata">
-          <div>
-            <dt>Stage</dt>
-            <dd>{run ? stageLabels[run.stage] : "Not recorded"}</dd>
-          </div>
-          <div>
-            <dt>Run</dt>
-            <dd>{run?.id ?? "Not recorded"}</dd>
-          </div>
-          {run?.workPackageId && (
-            <div>
-              <dt>Package</dt>
-              <dd>{run.workPackageId}</dd>
-            </div>
-          )}
-        </dl>
-        {run && (
+        <small>
+          Task: {stageLabels[attention.stage]} · Next:{" "}
+          {connected ? (attention.nextActor ?? "No action pending") : "Reconnect"}
+        </small>
+        {attention.reason && <p>{attention.reason}</p>}
+        {run?.error && run.error !== attention.reason && <p>Run detail: {run.error}</p>}
+        {!connected && <p>Showing last known evidence; current execution is unconfirmed.</p>}
+        {requestedRunId && !run && (
           <p>
-            <Clock size={15} />
-            {run.status === "completed" ? "Finished" : run.status} ·{" "}
-            {active
-              ? "Started " +
-                (run.startedAt ? new Date(run.startedAt).toLocaleTimeString() : "time not recorded")
-              : `Recorded runtime ${formatDuration(run.durationMs)}`}
+            Run {requestedRunId} is not in the loaded evidence.
+            {!evidence.runs.nextCursor && " No earlier runs are available."}
           </p>
         )}
+        {previous && latest && isActiveRun(task, latest) && (
+          <button type="button" className="link-button" onClick={() => onRun(latest.id)}>
+            View active worker
+          </button>
+        )}
       </section>
-      <section className="usage-strip">
-        <dl className="inline-metadata">
-          <div>
-            <dt>Input</dt>
-            <dd>{usage ? formatCount(usage.inputTokens) : "—"}</dd>
-          </div>
-          <div>
-            <dt>Cached</dt>
-            <dd>{usage ? formatCount(usage.cachedInputTokens) : "—"}</dd>
-          </div>
-          <div>
-            <dt>Output</dt>
-            <dd>{usage ? formatCount(usage.outputTokens) : "—"}</dd>
-          </div>
-          <div>
-            <dt>Cache rate</dt>
-            <dd>
-              {usage?.inputTokens
-                ? `${Math.round((usage.cachedInputTokens / usage.inputTokens) * 100)}%`
-                : "—"}
-            </dd>
-          </div>
-        </dl>
-        <p className="quiet">
-          Approx. cost{" "}
-          {run?.apiEstimate != null && usage?.pricingVersion
-            ? `$${run.apiEstimate.toFixed(run.apiEstimate > 0 && run.apiEstimate < 0.01 ? 4 : 2)} · API-rate estimate · ${usage.pricingVersion}`
-            : "— unavailable"}
-        </p>
-      </section>
-      {evidence.runs.items.length > 1 && (
-        <label className="run-picker">
-          Recorded run
-          <select value={run?.id ?? ""} onChange={(event) => onRun(event.target.value)}>
-            {evidence.runs.items.map((item) => (
-              <option key={item.id} value={item.id}>
-                {stageLabels[item.stage]} · {item.status} · {item.id}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-      {evidence.runs.nextCursor && (
-        <button type="button" onClick={() => onMore("runs")}>
-          Load earlier runs
+      <dl className="agent-metrics">
+        <div>
+          <dt>{active ? "Elapsed" : "Runtime"}</dt>
+          <dd>{run ? formatDuration(runDuration(run, now, active)) : "Not recorded"}</dd>
+        </div>
+        <div>
+          <dt>Recorded tokens</dt>
+          <dd
+            title={
+              usage
+                ? `Input ${usage.inputTokens} · Cached ${usage.cachedInputTokens} · Output ${usage.outputTokens}`
+                : undefined
+            }
+          >
+            {usage ? formatCount(usage.totalTokens) : active ? "Not yet reported" : "Not reported"}
+          </dd>
+        </div>
+        <div>
+          <dt>
+            Approx. cost
+            {run?.apiEstimate != null && usage?.pricingVersion && (
+              <small className="estimate-label">API-rate estimate</small>
+            )}
+          </dt>
+          <dd
+            title={
+              run?.apiEstimate != null && usage?.pricingVersion
+                ? `API-rate estimate · ${usage.pricingVersion}. Not an attributable ChatGPT-plan charge.`
+                : "No recorded usage with a supported rate card. Attributable ChatGPT-plan charges are unavailable."
+            }
+          >
+            {run?.apiEstimate != null && usage?.pricingVersion
+              ? `$${run.apiEstimate.toFixed(4)}`
+              : "Unavailable"}
+          </dd>
+        </div>
+        <div>
+          <dt>Last event</dt>
+          <dd>{age == null ? "Not recorded" : `${formatDuration(age)} ago`}</dd>
+        </div>
+      </dl>
+      <p className="agent-animation-label">
+        {!connected || !active
+          ? "Worker parked"
+          : !motion
+            ? "World motion paused"
+            : `${workActions[workAction(run?.stage ?? task.currentStage, run?.role)].label} · role animation`}
+      </p>
+      <div className="agent-latest">
+        <small>{tool ? "Current recorded tool" : "Latest recorded activity"}</small>
+        <strong>{tool?.name ?? exactLatest?.title ?? "Awaiting a recorded event"}</strong>
+      </div>
+      <div className="agent-tabs">
+        <div className="tab-bar" role="tablist" aria-label="Agent evidence">
+          {tabs.map((id) => (
+            <button
+              type="button"
+              key={id}
+              id={`agent-tab-${id}`}
+              role="tab"
+              aria-selected={tab === id}
+              aria-controls={`agent-${id}`}
+              tabIndex={tab === id ? 0 : -1}
+              onClick={() => setTab(id)}
+              onKeyDown={(event) => {
+                if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                event.preventDefault();
+                const index =
+                  event.key === "Home"
+                    ? 0
+                    : event.key === "End"
+                      ? 2
+                      : (tabs.indexOf(id) + (event.key === "ArrowRight" ? 1 : 2)) % 3;
+                const next = tabs[index] ?? "activity";
+                setTab(next);
+                document.getElementById(`agent-tab-${next}`)?.focus();
+              }}
+            >
+              {id[0]?.toUpperCase()}
+              {id.slice(1)}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Inspect task"
+          title="Inspect task"
+          onClick={onInspect}
+        >
+          <MagnifyingGlass size={18} />
         </button>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Configure future task roles"
+          title="Configure future task roles"
+          onClick={onPolicies}
+        >
+          <GearSix size={18} />
+        </button>
+      </div>
+      {tab === "activity" ? (
+        <AgentActivity
+          key={run?.id ?? "unloaded"}
+          events={events}
+          run={run}
+          more={Boolean(evidence.activity.nextCursor)}
+          onMore={() => onMore("activity")}
+        />
+      ) : (
+        <ScrollArea className="agent-evidence" label={`Agent ${tab}`}>
+          <div role="tabpanel" id={`agent-${tab}`} aria-labelledby={`agent-tab-${tab}`}>
+            {tab === "output" ? (
+              <div className="artifact-list">
+                {task.artifacts
+                  .filter((artifact) => run && artifact.id === run.artifactId)
+                  .map((artifact) => (
+                    <button type="button" key={artifact.id} onClick={() => onArtifact(artifact.id)}>
+                      <FileText size={19} />
+                      <span>{artifact.name}</span>
+                      <ArrowRight size={18} />
+                    </button>
+                  ))}
+                {run?.artifactId && !task.artifacts.some((artifact) => artifact.id === run.artifactId) && (
+                  <button type="button" onClick={() => run.artifactId && onArtifact(run.artifactId)}>
+                    Open recorded output · {run.artifactId}
+                  </button>
+                )}
+                {!run?.artifactId && <p className="quiet">This run has no linked output artifact.</p>}
+              </div>
+            ) : (
+              <div>
+                <h3>Recorded execution</h3>
+                <p>
+                  {run?.id ?? "No run loaded"} · {run?.status ?? "unavailable"}
+                </p>
+                <p>
+                  Recorded policy: {modelLabel(run?.model)} · {reasoningLabel(run?.reasoning)}. Editing future
+                  roles leaves this run unchanged.
+                </p>
+                <h3>Recorded usage</h3>
+                <p>
+                  {usage
+                    ? `Input ${formatCount(usage.inputTokens)} · Cached ${formatCount(usage.cachedInputTokens)} · Output ${formatCount(usage.outputTokens)} · ${usage.inputTokens ? `${Math.round((usage.cachedInputTokens / usage.inputTokens) * 100)}% cache rate` : "Cache rate unavailable"}`
+                    : active
+                      ? "Not yet reported"
+                      : "Not reported"}
+                </p>
+                {run?.apiEstimate != null && usage?.pricingVersion ? (
+                  <p>
+                    Approx. cost ${run.apiEstimate.toFixed(4)} · API-rate estimate · {usage.pricingVersion}.
+                    This is not an attributable ChatGPT-plan charge.
+                  </p>
+                ) : (
+                  <p>
+                    Approx. cost is unavailable without recorded usage and a supported rate card. Attributable
+                    ChatGPT-plan charges are unavailable.
+                  </p>
+                )}
+                <h3>Repository access</h3>
+                <p className="repository-path">{task.repositoryPath}</p>
+                <p>
+                  {run?.stage === "implement" || run?.kind === "repair"
+                    ? "Writes are limited to the isolated candidate worktree."
+                    : "Read-only investigation or review."}
+                </p>
+                <p>
+                  Open retained output to inspect its context manifest. Repository permission alone does not
+                  prove which context the model used.
+                </p>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
       )}
-      <button type="button" className="wide-button" onClick={onInspect}>
-        <MagnifyingGlass size={20} />
-        Inspect task
-      </button>
-      <small className="quiet">Recorded run policies are read-only.</small>
-      <button type="button" className="wide-button" onClick={onPolicies}>
-        Configure future task roles
-      </button>
+      <ResizeHandles sizing={sizing} />
     </aside>
   );
 }

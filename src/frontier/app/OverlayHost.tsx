@@ -321,6 +321,21 @@ export function OverlayHost(props: Props) {
     );
   return (
     <Modal
+      family={
+        ["task", "findings", "approve"].includes(overlay.kind)
+          ? "task"
+          : ["artifact", "diff"].includes(overlay.kind)
+            ? "evidence"
+            : ["new-task", "project-setup", "grill"].includes(overlay.kind)
+              ? "form"
+              : "management"
+      }
+      resizable={overlay.kind !== "lifecycle"}
+      heading={
+        matches && ["task", "findings", "approve"].includes(overlay.kind)
+          ? `${task.id} · ${task.title}`
+          : undefined
+      }
       focusKey={`${overlay.kind}:${"taskId" in overlay ? overlay.taskId : ""}:${"artifactId" in overlay ? overlay.artifactId : ""}`}
       title={
         overlay.kind === "findings" && task && attentionFor(task).kind !== "repair"

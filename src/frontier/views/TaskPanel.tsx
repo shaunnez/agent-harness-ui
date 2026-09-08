@@ -10,6 +10,7 @@ import { DesignReview } from "./DesignReview";
 import { StageEvidence } from "./StageEvidence";
 import { WorkflowCommand } from "./WorkflowCommand";
 import { WorkPackages } from "./WorkPackages";
+import { ScrollArea } from "../ui/ScrollArea";
 
 export function TaskPanel({
   evidence,
@@ -57,7 +58,7 @@ export function TaskPanel({
   const policy = task.agentConfig?.stagePolicies?.[viewedStage];
   return (
     <div className="overlay-body task-layout">
-      <nav className="stage-navigation" aria-label="Task stages">
+      <ScrollArea className="stage-navigation" label="Task stages">
         {stageIds.map((stage, index) => (
           <button
             type="button"
@@ -84,10 +85,16 @@ export function TaskPanel({
             Design directions<small>{task.designRequest.status}</small>
           </button>
         )}
-      </nav>
+      </ScrollArea>
       <section className="task-main">
         <div className="task-fixed-actions">
           <div className="task-utility-bar">
+            <h2>{design ? "Design review" : stageLabels[viewedStage]}</h2>
+            {viewedStage !== task.currentStage && (
+              <button type="button" onClick={() => selectStage(null)}>
+                Current stage
+              </button>
+            )}
             <button type="button" onClick={onPolicies}>
               Role policies
             </button>
@@ -111,15 +118,11 @@ export function TaskPanel({
             </p>
           )}
         </div>
-        <div className="task-stage-content">
-          <div className="task-command-bar">
-            <h2>{design ? "Design review" : stageLabels[viewedStage]}</h2>
-            {viewedStage !== task.currentStage && (
-              <button type="button" onClick={() => selectStage(null)}>
-                Return to current stage
-              </button>
-            )}
-          </div>
+        <ScrollArea
+          key={viewedStage}
+          className="task-stage-content"
+          label={`${stageLabels[viewedStage]} stage content`}
+        >
           {viewedStage !== task.currentStage && (
             <p className="history-notice">
               Viewing recorded {stageLabels[viewedStage]} evidence. Current work remains at{" "}
@@ -138,7 +141,14 @@ export function TaskPanel({
                   </button>
                 )}
               {["plan", "implement"].includes(viewedStage) && (
-                <WorkPackages packages={task.workPackages} runs={evidence.runs.items} onWatch={onWatch} />
+                <WorkPackages
+                  key={`packages:${task.id}:${viewedStage}`}
+                  taskId={task.id}
+                  stage={viewedStage}
+                  packages={task.workPackages}
+                  runs={evidence.runs.items}
+                  onWatch={onWatch}
+                />
               )}
               {viewedStage === "approval" && <DeliveryEvidence task={task} />}
               {["final-review", "approval"].includes(viewedStage) && (
@@ -171,9 +181,9 @@ export function TaskPanel({
               />
             </>
           )}
-        </div>
+        </ScrollArea>
       </section>
-      <aside className="task-brief">
+      <ScrollArea className="task-brief" label="Task inspector">
         <small>Task brief</small>
         <h2>{task.id}</h2>
         <h3>{task.title}</h3>
@@ -260,7 +270,7 @@ export function TaskPanel({
             )}
           </section>
         )}
-      </aside>
+      </ScrollArea>
     </div>
   );
 }

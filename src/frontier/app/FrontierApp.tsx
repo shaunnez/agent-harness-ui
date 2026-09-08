@@ -414,6 +414,7 @@ export function FrontierApp() {
       )}
       {location.view === "agent" && snapshot.selected && (
         <AgentPanel
+          now={snapshot.updatedAt ?? Date.now()}
           motion={sceneInput.motion}
           portrait={portrait}
           evidence={snapshot.selected}
