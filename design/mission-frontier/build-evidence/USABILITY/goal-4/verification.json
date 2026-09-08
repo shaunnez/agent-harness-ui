@@ -39,5 +39,7 @@
   "runtime": {
     "frontendPort": 5204,
     "disposableApiPort": 4324
-  }
+  },
+  "journalPublished": true,
+  "journalArticle": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/room-to-work/"
 }
