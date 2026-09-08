@@ -32,7 +32,9 @@
       "failed": 0
     }
   },
-  "nativeZoom": "pending-control-interrupted",
+  "nativeZoom": "200-percent-setting-confirmed-destination-walkthrough-pending",
+  "execution": "paused-at-user-request",
+  "publicationBranch": "codex/mission-frontier-goal-4",
   "gamePublished": false,
   "pushedToPr": false,
   "paidRunsStarted": 0,

@@ -2,7 +2,7 @@
 
 9 September 2026 · Application commit `b8f6915169f9bf9232b05f02946d193973893bb9` · branch `codex/mission-frontier-goal-4`.
 
-Laptop windows and the activity-first agent view are implemented and ready to review. **Native 200% zoom remains an open acceptance item**, because native Chrome control was interrupted. The complete U0–U2 gate is therefore not marked passed. See the [acceptance table, screenshots and exact test results](acceptance.md).
+Laptop windows and the activity-first agent view are implemented and ready to review. **The walkthrough at native 200% zoom remains an open acceptance item.** Chrome's native View menu subsequently reached a confirmed `Zoom: 200%`, but page inspection then timed out before the destination walkthrough could be completed. The user requested committing, pushing and pausing at this point. The complete U0–U2 gate is therefore not marked passed. See the [acceptance table, screenshots and exact test results](acceptance.md).
 
 ## Review it
 
@@ -31,6 +31,8 @@ Native 200% zoom is pending. Narrow 375 × 720 and 640 × 360 reflow were tested
 
 This branch starts from the verified open PR #73 head `fdbe171a8545a6b9ae206b67ce01fe79606496f1`; the implementation is a separate local commit and has **not been pushed to PR #73**. The root hosting identity, backend, dependency files and artwork remain unchanged. No database migration or asset agent was needed.
 
-Complete native zoom when Chrome is available. Then review or transfer this commit into the PR through a separate explicit integration step. Goal 5 is the next independently started build: decision navigation, a return briefing and up to four pins, including UB1's bounded retained-history read contract. Goal 6 owns incremental recorded activity and meaningful world feedback. Neither has started.
+Paused at the user's request on 9 September 2026. This checkpoint's publication destination is `origin/codex/mission-frontier-goal-4`; PR #73 still points to `codex/mission-frontier-v1` at `fdbe171` and is unchanged by publishing the separate Goal 4 branch.
+
+On resumption, finish the native 200% walkthrough across Task command, Watch, New task, Projects, Settings/policies, approval, artifacts and diffs. Verify reachable controls, scroll access and bounded reflow, record captures, then restore the preview's normal zoom. The confirmed zoom setting alone is not a passed accessibility walkthrough. Review or transfer Goal 4 into PR #73 through a separate explicit integration step. Goal 5 is the next independently started build: decision navigation, a return briefing and up to four pins, including UB1's bounded retained-history read contract. Goal 6 owns incremental recorded activity and meaningful world feedback. Neither has started.
 
 Rollback is selecting the existing PR build; Goal 4 has no backend migration or server compatibility requirement. If resuming, inspect ownership of ports 5204/4324 before starting anything, retain this worktree and continue from the open check instead of rebuilding U0–U2.

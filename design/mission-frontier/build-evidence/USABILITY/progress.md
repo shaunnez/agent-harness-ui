@@ -9,4 +9,6 @@ Source: PR #73, open at fdbe171a8545a6b9ae206b67ce01fe79606496f1. Isolated branc
 - [Automated checks](goal-4/checks.json)
 - Local review: http://127.0.0.1:5204/?mode=fixture&art=cinematic#world
 
-Next: close the native zoom check when browser controls are available. Goal 5 is the separate next build: decision navigation, an accurate return briefing and watch pins, including UB1's bounded read contract.
+Paused at the user's request on 9 September 2026, with the checkpoint being committed and pushed to the separate Goal 4 branch. Chrome's native menu confirmed 200% zoom, but the destination walkthrough at that setting remains pending after page-control interruption. PR #73 remains unchanged.
+
+Next on resumption: complete the native 200% destination walkthrough and restore normal preview zoom, then integrate the reviewed Goal 4 branch into the PR. Goal 5 is the separate next build: decision navigation, an accurate return briefing and watch pins, including UB1's bounded read contract.
