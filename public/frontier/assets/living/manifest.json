@@ -1,0 +1,942 @@
+{
+  "revision": "living-world-v1",
+  "assets": [
+    {
+      "id": "mf.living.worker.walk.0",
+      "file": "/assets/living/mf.living.worker.walk.0-3472e1ca1d.png",
+      "bytes": 68480,
+      "sha256": "3472e1ca1d782b4ced23ac7171188dbb4d6e7fe565c4d20671493b5a5f3de517",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        135,
+        80,
+        281,
+        374
+      ],
+      "sockets": {
+        "probeTip": [
+          73.605,
+          145.3315
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "initial",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-walk-00.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.walk.1",
+      "file": "/assets/living/mf.living.worker.walk.1-ce58580c5f.png",
+      "bytes": 67635,
+      "sha256": "ce58580c5f4a6f27291fb1efe71eb3482ed3aca88ca0bd1ed112b112c1dfdbab",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        137,
+        80,
+        276,
+        357
+      ],
+      "sockets": {
+        "probeTip": [
+          76.835,
+          146.9985
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "initial",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-walk-01.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.walk.2",
+      "file": "/assets/living/mf.living.worker.walk.2-e6d55ae093.png",
+      "bytes": 66281,
+      "sha256": "e6d55ae093c71b87df58a58d27c7572357191005690d2f7bbd0b5447800e920a",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        80,
+        265,
+        342
+      ],
+      "sockets": {
+        "probeTip": [
+          84.5605,
+          149.6545
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "initial",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-walk-02.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.walk.3",
+      "file": "/assets/living/mf.living.worker.walk.3-79375349a9.png",
+      "bytes": 67181,
+      "sha256": "79375349a969cd18fcc334b3a89c1f0e29d16bae0c9ecc7fb241ebd14323789f",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        132,
+        80,
+        273,
+        352
+      ],
+      "sockets": {
+        "probeTip": [
+          91.9415,
+          150.3
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "initial",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-walk-03.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.walk.4",
+      "file": "/assets/living/mf.living.worker.walk.4-ddc444126a.png",
+      "bytes": 69303,
+      "sha256": "ddc444126a0bf900b3d541593e5a2cd9516cab2e71b5eb7befc47874c7e1bf84",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        123,
+        80,
+        282,
+        356
+      ],
+      "sockets": {
+        "probeTip": [
+          94.829,
+          149.9705
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "initial",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-walk-04.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.walk.5",
+      "file": "/assets/living/mf.living.worker.walk.5-3aa6be0760.png",
+      "bytes": 67832,
+      "sha256": "3aa6be076065ef2e721ed22859925be0e9eba4f9fe8732e05de4ad53f60ea61b",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        132,
+        80,
+        274,
+        350
+      ],
+      "sockets": {
+        "probeTip": [
+          91.9415,
+          150.3
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "initial",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-walk-05.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.walk.6",
+      "file": "/assets/living/mf.living.worker.walk.6-3ed936900a.png",
+      "bytes": 68280,
+      "sha256": "3ed936900a5535610563dd70663d9621fd83d121675fff6e3d28c3132ebb48c0",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        80,
+        265,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          84.5605,
+          149.6545
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "initial",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-walk-06.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.walk.7",
+      "file": "/assets/living/mf.living.worker.walk.7-fdb33486c5.png",
+      "bytes": 68893,
+      "sha256": "fdb33486c50dccb6134f9f2e78cd7dc877d9caa6fec62da588962a5d78fe4e15",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        137,
+        80,
+        276,
+        370
+      ],
+      "sockets": {
+        "probeTip": [
+          76.835,
+          146.9985
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "initial",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-walk-07.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.scan.0",
+      "file": "/assets/living/mf.living.worker.scan.0-31e641f05c.png",
+      "bytes": 70539,
+      "sha256": "31e641f05c7050669727079fefdf226504e1da50333fe2da5be8cca2345a1498",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        285,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          112.345,
+          125.9605
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-scan-00.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.scan.1",
+      "file": "/assets/living/mf.living.worker.scan.1-ef3b45a6aa.png",
+      "bytes": 70231,
+      "sha256": "ef3b45a6aaa20250358487729fe85c8ee766b0e4f97043c3155ade36221500d5",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        286,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          111.306,
+          129.7605
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-scan-01.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.scan.2",
+      "file": "/assets/living/mf.living.worker.scan.2-dfc9324cf7.png",
+      "bytes": 70537,
+      "sha256": "dfc9324cf7730c6672f964f06ca072b3df5af78bdaa8fa26b95721da5090564e",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        72,
+        288,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          111.004,
+          130.104
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-scan-02.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.scan.3",
+      "file": "/assets/living/mf.living.worker.scan.3-c777ececca.png",
+      "bytes": 70734,
+      "sha256": "c777ececcaf752092fe419eda73aa81ae69ae63ed50f89afb99e8104e5368d77",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        71,
+        290,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          111.6715,
+          126.8605
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-scan-03.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.scan.4",
+      "file": "/assets/living/mf.living.worker.scan.4-229b3d0435.png",
+      "bytes": 71073,
+      "sha256": "229b3d0435f539697cb9b2b26fc5b7e643f6a1bdd11ebe7d2ca45e105d80442a",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        137,
+        71,
+        291,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          112.376,
+          121.573
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-scan-04.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.scan.5",
+      "file": "/assets/living/mf.living.worker.scan.5-467bccea44.png",
+      "bytes": 71202,
+      "sha256": "467bccea4452acdf97fa768766479f9a94e08c9317d38ffc8a31ca53a490b187",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        135,
+        71,
+        290,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          112.647,
+          117.327
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-scan-05.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.scan.6",
+      "file": "/assets/living/mf.living.worker.scan.6-fa7b3950f0.png",
+      "bytes": 71127,
+      "sha256": "fa7b3950f0ce06b3f37133379ee0ff18dc85f23ffb182cdbe9401b14a1e78fb8",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        135,
+        72,
+        288,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          112.8685,
+          116.8885
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-scan-06.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.scan.7",
+      "file": "/assets/living/mf.living.worker.scan.7-ca7f83349f.png",
+      "bytes": 70838,
+      "sha256": "ca7f83349f2e31da1b4a242ba9445997a1c8aa1c1dc1930e94a14e669217b4c8",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        137,
+        72,
+        286,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          112.9695,
+          120.5775
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-scan-07.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.type.0",
+      "file": "/assets/living/mf.living.worker.type.0-2dd3f2f453.png",
+      "bytes": 70404,
+      "sha256": "2dd3f2f453525a7fb65c4523462f85d1185133c96e58763cd32901c8c1c99121",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        74,
+        302,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          112.4305,
+          123.7575
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-type-00.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.type.1",
+      "file": "/assets/living/mf.living.worker.type.1-869ae82adb.png",
+      "bytes": 70325,
+      "sha256": "869ae82adb275d7f3f3e792babe8ca4c1eab2876b447dc3d43c3642478cdd3d4",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        74,
+        302,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          111.81,
+          127.673
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-type-01.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.type.2",
+      "file": "/assets/living/mf.living.worker.type.2-9d6f3ab78d.png",
+      "bytes": 70353,
+      "sha256": "9d6f3ab78d23b290866073e163bb8146523542e2a6226d3e7418b696df8870e8",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        73,
+        302,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          111.5315,
+          128.6315
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-type-02.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.type.3",
+      "file": "/assets/living/mf.living.worker.type.3-0f5b8e59e3.png",
+      "bytes": 70557,
+      "sha256": "0f5b8e59e35ec5eb58aa1d10506242b0a5fbacb5057b2adb18e41d3142472bd9",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        73,
+        302,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          111.9395,
+          126.1975
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-type-03.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.type.4",
+      "file": "/assets/living/mf.living.worker.type.4-d860fefbed.png",
+      "bytes": 70556,
+      "sha256": "d860fefbedc4e26fa310a43f9986e969ee7a6c1e6a9378b6f3d93fdfdac222fd",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        73,
+        303,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          112.374,
+          121.5405
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-type-04.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.type.5",
+      "file": "/assets/living/mf.living.worker.type.5-7fc3b03786.png",
+      "bytes": 70571,
+      "sha256": "7fc3b03786e258e5906af7840f418830e08b03c9cf0b88aba09294b31cd87f3b",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        73,
+        303,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          112.399,
+          117.326
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-type-05.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.type.6",
+      "file": "/assets/living/mf.living.worker.type.6-4b3b33be35.png",
+      "bytes": 70426,
+      "sha256": "4b3b33be35745f0e69bb85e63687709a9925b85a3b46f1fd3e0dd782cb88f05c",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        73,
+        302,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          112.4205,
+          116.2245
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-type-06.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.worker.type.7",
+      "file": "/assets/living/mf.living.worker.type.7-dcd296fe56.png",
+      "bytes": 70435,
+      "sha256": "dcd296fe565de19772a30e71e3dc18d1a8f19b161ed2af27eea6f808ecdf626e",
+      "sourceSize": [
+        384,
+        384
+      ],
+      "logicalSize": [
+        192,
+        192
+      ],
+      "groundAnchor": [
+        96,
+        167
+      ],
+      "boundsSourcePixels": [
+        139,
+        74,
+        302,
+        360
+      ],
+      "sockets": {
+        "probeTip": [
+          112.607,
+          118.9575
+        ]
+      },
+      "frameDurationMs": 150,
+      "loadStage": "activity",
+      "production": {
+        "source": "design/mission-frontier/assets/staging/living-world/astra/renders/worker-type-07.png",
+        "generator": "Blender",
+        "sourceId": "original-authored-cinematic-worker",
+        "scriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff"
+      }
+    },
+    {
+      "id": "mf.living.observatory.lights",
+      "file": "/assets/living/mf.living.observatory.lights-3519429a1d.png",
+      "bytes": 585184,
+      "sha256": "3519429a1df844caf680b42504c9fe412a94bc8f3f2b8840a0163129fabdc6d5",
+      "sourceSize": [
+        1536,
+        1280
+      ],
+      "logicalSize": [
+        768,
+        640
+      ],
+      "groundAnchor": [
+        384,
+        522
+      ],
+      "loadStage": "initial",
+      "blendMode": "add",
+      "production": {
+        "generator": "Blender",
+        "sourceSha256": "cfac30974a669b30141e6c869b8bcfb98f6ff607c43635eb54e4d0440fdff0aa",
+        "scriptSha256": "99ef86d4b4190944f1129a4f9f49e5f14e38b9f086e70e1a1804c242f674b368"
+      }
+    }
+  ]
+}

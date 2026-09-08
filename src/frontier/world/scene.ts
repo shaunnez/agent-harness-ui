@@ -1,13 +1,17 @@
 import { Container, type Sprite, type TilingSprite } from "pixi.js";
-import type { RuntimeProject } from "../../domain";
+import type { RuntimeProject, StageId } from "../../domain";
 import type { WorldLocation } from "../app/navigation";
 import type { TaskSummary } from "../runtime/contracts";
 import { attentionFor, isOpen, needsYou, stageLabels } from "../runtime/presentation";
-import type { WorldAssets } from "./assets";
-import { createWorker, type WorkerMotion } from "./workers";
 import { featuredProjectId } from "./asset-policy";
+import type { WorldAssets } from "./assets";
+import { WorldEnvironment } from "./environment";
+import { defaultEnvironment, type EnvironmentPreferences } from "./environment-model";
 import { ProjectPlacement, TransitionTracker, taskSite, tasksInProject } from "./layout";
 import { islandAnchor, islandScale, projectRoutes } from "./routes";
+import { placeCompound, placeStation, placeVegetation, type SceneryContext } from "./scenery";
+import { basePatrol, workerBehavior } from "./worker-behavior";
+import { createBaseCrew, createWorker, tickWorker, type WorkerMotion } from "./workers";
 
 export interface WorldLabel {
   id: string;
@@ -32,6 +36,10 @@ export interface SceneInput {
   motion: boolean;
   watchedRunActive: boolean;
   cameraSensitivity?: number;
+  idleRoaming?: boolean;
+  environment?: EnvironmentPreferences;
+  watchedStage?: StageId;
+  watchedRole?: string | null;
 }
 interface SceneEntity {
   container: Container;
@@ -43,6 +51,8 @@ interface SceneEntity {
 export class FrontierScene {
   readonly root = new Container();
   readonly placement: ProjectPlacement;
+  readonly environment = new WorldEnvironment();
+  private input: SceneInput | null = null;
   labels: WorldLabel[] = [];
   motions: WorkerMotion[] = [];
   private foliage: Sprite[] = [];
@@ -79,10 +89,15 @@ export class FrontierScene {
     return this.bounds;
   }
   reconcile(input: SceneInput) {
+    this.input = input;
     this.metrics.reconciliations++;
     this.used.clear();
     this.order = 0;
     this.motionEnabled = input.motion && input.connected;
+    this.environment.configure(
+      input.environment ?? defaultEnvironment,
+      this.motionEnabled && !document.hidden,
+    );
     this.featuredProject =
       this.assets.direction === "cinematic" ? featuredProjectId(input.projects) : undefined;
     const transitions = this.transitions.reconcile(input.tasks, input.connected);
@@ -114,10 +129,13 @@ export class FrontierScene {
         this.entities.delete(key);
       }
     }
+    if (this.motionEnabled && !document.hidden)
+      for (const motion of this.motions) tickWorker(motion, this.assets, performance.now());
+    this.environment.update(0, true);
   }
   private entity(key: string, data: unknown, build: () => void, taskId?: string) {
     this.used.add(key);
-    const signature = JSON.stringify(data);
+    const signature = JSON.stringify([data, this.assets.activityReady]);
     const prior = this.entities.get(key);
     if (prior?.signature === signature) {
       prior.container.zIndex = this.order++;
@@ -156,7 +174,8 @@ export class FrontierScene {
     }
     const sprite = this.assets.sprite(id, x, y, scale);
     if (sprite) container.addChild(sprite);
-    if (sprite && id === "mf.cinematic.tree") this.foliage.push(sprite);
+    this.environment.surface(sprite);
+    if (sprite && ["mf.cinematic.tree", "mf.prop.purple-tree"].includes(id)) this.foliage.push(sprite);
     return sprite;
   }
   private selectable(sprite: Sprite | null, kind: "project" | "task", id: string) {
@@ -177,67 +196,21 @@ export class FrontierScene {
     }
   }
   private compound(x: number, y: number, scale: number, roof: boolean, id: string) {
-    this.selectable(this.art("mf.base.standard.floor", x, y, scale), "project", id);
-    this.art("mf.base.standard.back", x, y, scale);
-    const variant =
-      [...id].reduce((total, letter) => total + letter.charCodeAt(0), 0) % 3 === 0
-        ? "observatory"
-        : "standard";
-    if (roof)
-      this.selectable(
-        this.art(this.cinematic(id) ? "mf.cinematic.roof" : `mf.base.${variant}.roof`, x, y, scale),
-        "project",
-        id,
-      );
+    placeCompound(this.scenery(), x, y, scale, roof, id, this.cinematic(id));
   }
   private cinematic(id: string) {
     return id === this.featuredProject && this.assets.has("mf.cinematic.island");
   }
   private ocean(x: number, y: number, width: number, height: number) {
     this.water = this.assets.tiledWater(x, y, width, height);
+    this.environment.surface(this.water, "sea");
     if (this.water) this.target.addChild(this.water);
   }
   private front(x: number, y: number, scale: number) {
     this.art("mf.base.standard.front", x, y, scale);
   }
   private vegetation(x: number, y: number, large: boolean, foreground: boolean, cinematic = false) {
-    const trees = foreground
-      ? large
-        ? [
-            [-280, -20, 0.65],
-            [310, -35, 0.66],
-            [-170, 55, 0.5],
-            [230, 20, 0.48],
-          ]
-        : [
-            [-255, -55, 0.4],
-            [255, -50, 0.42],
-          ]
-      : large
-        ? [
-            [-135, -215, 0.6],
-            [-40, -265, 0.55],
-            [90, -250, 0.64],
-            [210, -175, 0.55],
-            [-310, -110, 0.7],
-          ]
-        : [
-            [0, -210, 0.42],
-            [-220, -120, 0.35],
-            [220, -115, 0.34],
-          ];
-    trees.forEach(([dx = 0, dy = 0, scale = 1], index) => {
-      this.art(
-        cinematic && index % 3 === 0 ? "mf.cinematic.tree" : "mf.prop.purple-tree",
-        x + dx,
-        y + dy,
-        scale,
-      );
-    });
-    if (foreground) {
-      this.art("mf.prop.rock", x - 150, y + 75, 0.8);
-      this.art("mf.prop.rock", x + 170, y + 35, 0.6);
-    }
+    placeVegetation(this.art.bind(this), x, y, large, foreground, cinematic);
   }
   private worker(
     task: TaskSummary,
@@ -250,6 +223,14 @@ export class FrontierScene {
     contact?: { x: number; y: number },
     cinematic = false,
   ) {
+    const input = this.input;
+    const behavior = workerBehavior(
+      task,
+      input?.connected ?? false,
+      active,
+      input?.idleRoaming ?? true,
+      detail && !active,
+    );
     const motion = createWorker(
       this.assets,
       this.target,
@@ -262,58 +243,53 @@ export class FrontierScene {
       active,
       detail,
       contact,
-      cinematic,
+      cinematic || this.assets.direction === "cinematic",
+      {
+        environment: this.environment,
+        behavior,
+        stage: detail ? input?.watchedStage : undefined,
+        role: detail ? input?.watchedRole : task.activeRunKind,
+      },
     );
     if (motion) this.motions.push(motion);
   }
-  private station(task: TaskSummary, x: number, y: number, scale: number, detail = false) {
-    const id = ["generating-designs", "awaiting-design-selection"].includes(task.status)
-      ? "projection"
-      : {
-          triage: "intake",
-          scouts: "survey",
-          grill: "communications",
-          specification: "blueprint",
-          plan: "planning",
-          implement: "fabrication",
-          "dev-review": "inspection",
-          test: "diagnostics",
-          "final-review": "delivery-inspection",
-          approval: "launchpad",
-        }[task.currentStage];
-    if (detail && id === "launchpad") {
-      x -= 35 * scale;
-      y += 60 * scale;
-    }
-    this.selectable(
-      this.art(`mf.station.${id}`, x + 28 * scale, y - 6 * scale, 0.95 * scale),
-      "task",
-      task.id,
-    );
-    const socket = this.assets.socket(`mf.station.${id}`, "frontToolPort", 0.95 * scale);
-    if (id === "launchpad") {
-      const dock = this.assets.socket("mf.station.launchpad", "shuttleDock", 0.95 * scale);
-      const shuttle = this.art(
-        "mf.vehicle.shuttle",
-        x + 28 * scale + dock.x,
-        y - 6 * scale + dock.y,
-        0.95 * scale * 0.7,
+  private crew(id: string, x: number, y: number, view: "world" | "project", count: number) {
+    if (!this.input?.idleRoaming) return;
+    for (let index = 0; index < count; index++) {
+      const motion = createBaseCrew(
+        this.assets,
+        this.environment,
+        this.target,
+        `${id}-${index}`,
+        basePatrol(x, y, index, view),
+        view === "world" ? 1.25 : 0.95,
       );
-      if (shuttle) {
-        const departing = task.status === "completed";
-        if (this.advanced.has(task.id))
+      if (motion) this.motions.push(motion);
+    }
+  }
+  private station(task: TaskSummary, x: number, y: number, scale: number, detail = false, stage?: StageId) {
+    return placeStation(this.scenery(), task, x, y, scale, detail, stage);
+  }
+  private scenery(): SceneryContext {
+    return {
+      assets: this.assets,
+      environment: this.environment,
+      container: this.target,
+      art: this.art.bind(this),
+      select: this.selectable.bind(this),
+      shuttle: (sprite, taskId, departing, scale) => {
+        if (this.advanced.has(taskId))
           this.flights.push({
-            sprite: shuttle,
-            x: shuttle.x,
-            y: shuttle.y,
+            sprite,
+            x: sprite.x,
+            y: sprite.y,
             started: performance.now(),
             distance: 95 * scale,
             departing,
           });
-        else if (departing) shuttle.alpha = 0;
-      }
-    }
-    return { x: x + 28 * scale + socket.x, y: y - 6 * scale + socket.y };
+        else if (departing) sprite.alpha = 0;
+      },
+    };
   }
   private overview(input: SceneInput, projects: (RuntimeProject & { position: { x: number; y: number } })[]) {
     const extent = Math.max(6000, ...projects.map(({ position }) => Math.max(position.x, position.y) + 3000));
@@ -326,7 +302,9 @@ export class FrontierScene {
         if (this.cinematic(id)) this.art("mf.cinematic.island", position.x, position.y - 60, 1.24);
         else this.art("mf.terrain.shore.rim", anchor.x, anchor.y, islandScale(position));
       }
-      this.target.addChild(projectRoutes(this.assets, projects));
+      const routes = projectRoutes(this.assets, projects);
+      this.environment.surfacesIn(routes);
+      this.target.addChild(routes);
     });
     for (const project of projects) {
       const projectTasks = tasksInProject(input.tasks, project);
@@ -338,6 +316,7 @@ export class FrontierScene {
           projectTasks.some((task) => task.id === input.selectedId) ? input.selectedId : null,
           input.connected,
           input.motion,
+          input.idleRoaming,
         ],
         () => {
           const { x, y } = project.position;
@@ -370,6 +349,9 @@ export class FrontierScene {
             projectTasks.find((task) => task.artifacts?.length);
           if (carrierTask) this.handoff(carrierTask, x - 110, y + 10, 0.7);
           this.vegetation(x, y, y < 1000, true, this.cinematic(project.id));
+          if (projects.indexOf(project) < 12)
+            this.crew(project.id, x, y, "world", projects.length > 15 ? 1 : 2);
+          this.environment.waterGlints(this.target, x + 345, y + 180, x);
           this.labels.push({
             id: `project-${project.id}`,
             kind: "project",
@@ -444,16 +426,17 @@ export class FrontierScene {
       this.art("mf.prop.purple-tree", right + 255, (top + bottom) / 2 - 90, 0.8);
     });
     if (!tasks.length)
-      this.entity(`hq-empty-${project.id}`, project.id, () => {
+      this.entity(`hq-empty-${project.id}`, [project.id, input.idleRoaming], () => {
         this.compound(0, 0, 1, false, project.id);
         this.front(0, 0, 1);
+        this.crew(project.id, 0, 0, "project", 2);
       });
     sites
       .sort((a, b) => a.site.y - b.site.y || a.site.x - b.site.x)
       .forEach(({ task, site }) => {
         this.entity(
           `hq-task-${task.id}`,
-          [task, site, input.selectedId === task.id, input.connected, input.motion],
+          [task, site, input.selectedId === task.id, input.connected, input.motion, input.idleRoaming],
           () => {
             this.compound(site.x, site.y, 0.6, false, project.id);
             const contact = this.station(task, site.x, site.y - 70, 0.85);
@@ -493,6 +476,7 @@ export class FrontierScene {
             });
             this.handoff(task, site.x - 82, site.y - 95, 0.85);
             this.front(site.x, site.y, 0.6);
+            if (site.y === bottom) this.crew(task.id, site.x, site.y, "project", 1);
           },
           task.id,
         );
@@ -505,7 +489,7 @@ export class FrontierScene {
     const task = input.tasks.find((entry) => entry.id === input.location.taskId);
     this.entity(
       `detail-${task?.id ?? project.id}`,
-      [task, input.connected, input.motion, input.watchedRunActive],
+      [task, input.connected, input.motion, input.watchedRunActive, input.watchedStage, input.watchedRole],
       () => {
         if (this.cinematic(project.id)) {
           this.ocean(-8000, -8000, 16000, 16000);
@@ -515,7 +499,7 @@ export class FrontierScene {
         } else this.art("mf.terrain.region", 864, 252, 3.6);
         this.compound(-80, 140, 1.3, false, project.id);
         if (task) {
-          const contact = this.station(task, -10, -75, 2.1, true);
+          const contact = this.station(task, -10, -75, 2.1, true, input.watchedStage);
           this.worker(
             task,
             -70,
@@ -532,10 +516,14 @@ export class FrontierScene {
             id: `task-${task.id}`,
             kind: "task",
             x: -80,
-            y: -290,
-            title: `${task.id} · ${stageLabels[task.currentStage]}`,
-            detail: attention.label,
-            attention: attention.kind,
+            y: -355,
+            title: `${task.id} · ${stageLabels[input.watchedStage ?? task.currentStage]}`,
+            detail: !input.connected
+              ? "Connection unknown"
+              : input.watchedRunActive
+                ? attention.label
+                : "Worker parked",
+            attention: !input.connected ? "unavailable" : input.watchedRunActive ? attention.kind : "idle",
             projectId: project.id,
             taskId: task.id,
           });
@@ -545,6 +533,7 @@ export class FrontierScene {
     this.bounds = { x: -420, y: -450, width: 730, height: 600 };
   }
   tick(time: number) {
+    this.environment.update(time);
     for (const tree of this.foliage) tree.skew.x = Math.sin(time / 4100 + tree.x) * 0.003;
     if (this.assets.direction === "cinematic" && this.water && !this.water.destroyed)
       this.water.tilePosition.set(Math.sin(time / 24000) * 7, Math.sin(time / 31000) * 4);
@@ -565,21 +554,10 @@ export class FrontierScene {
       item.container.alpha = 0.55 + progress * 0.45;
       return progress < 1;
     });
-    for (const item of this.motions) {
-      if (item.active) {
-        item.light.alpha = 0.6 + Math.sin(time * 0.005 + item.offset) * 0.4;
-        if (item.tool) item.tool.rotation = (Math.sin(time * 0.0025 + item.offset) * Math.PI) / 45;
-        if (item.animation) {
-          const { sprite, frames, frameDurationMs } = item.animation;
-          this.assets.setFrame(
-            sprite,
-            frames[Math.floor((time + item.offset) / frameDurationMs) % frames.length] ?? frames[0] ?? "",
-          );
-        }
-      }
-    }
+    for (const item of this.motions) tickWorker(item, this.assets, time);
   }
   destroy() {
     this.root.destroy({ children: true });
+    this.environment.destroy();
   }
 }

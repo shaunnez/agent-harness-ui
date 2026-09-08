@@ -1,15 +1,15 @@
 import {
   ArrowLeft,
   ArrowRight,
+  Books,
   Buildings,
+  ChartBar,
+  GearSix,
   GlobeHemisphereWest,
   ListBullets,
   Plus,
-  RocketLaunch,
   Robot,
-  Books,
-  ChartBar,
-  GearSix,
+  RocketLaunch,
 } from "@phosphor-icons/react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { NewTaskDraft } from "../../domain";
@@ -26,13 +26,13 @@ import {
   WorldActions,
   WorldClock,
 } from "../views/WorldHud";
-import { tasksInProject } from "../world/layout";
-import { artDirection, featuredProjectId } from "../world/asset-policy";
+import { artDirection } from "../world/asset-policy";
 import { cinematicWorker } from "../world/cinematic-catalog";
+import { tasksInProject } from "../world/layout";
 import type { WorldRenderer } from "../world/renderer";
 import { WorldCanvas } from "../world/WorldCanvas";
-import { BuildDiagnostics } from "./BuildDiagnostics";
 import { ArtPreview } from "./ArtPreview";
+import { BuildDiagnostics } from "./BuildDiagnostics";
 import { useNavigation, worldLocation } from "./navigation";
 import { type Overlay, OverlayHost } from "./OverlayHost";
 import { PanelMemoryProvider } from "./panel-state";
@@ -138,7 +138,11 @@ export function FrontierApp() {
       connected,
       motion: preferences.motion && !reduced,
       cameraSensitivity: preferences.cameraSensitivity,
+      idleRoaming: preferences.idleRoaming,
+      environment: preferences.environment,
       watchedRunActive: Boolean(task && run && isActiveRun(task, run)),
+      watchedStage: run?.stage,
+      watchedRole: run?.role,
     }),
     [
       runtime.gateway.mode,
@@ -149,6 +153,8 @@ export function FrontierApp() {
       connected,
       preferences.motion,
       preferences.cameraSensitivity,
+      preferences.idleRoaming,
+      preferences.environment,
       reduced,
       task,
       run,
@@ -323,17 +329,12 @@ export function FrontierApp() {
     return () => window.removeEventListener("keydown", keydown);
   });
   const selectedForHud = task ?? selected;
-  const artworkProject = snapshot.projects.find(
-    (entry) => entry.id === featuredProjectId(snapshot.projects.filter((item) => !item.archivedAt)),
-  );
   const portrait =
-    artDirection(window.location.search) === "cinematic" &&
-    artworkProject?.repositoryPath === selectedForHud?.repositoryPath
-      ? cinematicWorker.portrait
-      : undefined;
+    artDirection(window.location.search) === "cinematic" ? cinematicWorker.portrait : undefined;
   return (
     <main className={`frontier-shell view-${location.view}`}>
       <WorldCanvas
+        onWorldSettings={() => open({ kind: "world-settings" })}
         input={sceneInput}
         preferences={preferences}
         onSelect={choose}
@@ -413,6 +414,7 @@ export function FrontierApp() {
       )}
       {location.view === "agent" && snapshot.selected && (
         <AgentPanel
+          motion={sceneInput.motion}
           portrait={portrait}
           evidence={snapshot.selected}
           run={run}
@@ -526,6 +528,7 @@ export function FrontierApp() {
       )}
       <PanelMemoryProvider>
         <OverlayHost
+          readWorldHour={() => renderer.current?.worldHour}
           stack={stack}
           snapshot={snapshot}
           scopedTasks={scopedTasks}

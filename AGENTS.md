@@ -27,6 +27,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Approved product-design direction
 
+- On 9 September 2026 the user authorized designing and implementing a living-world pass: idle robot wandering, distinct room/agent actions, and a configurable day/night cycle (one real hour per world day by default), including darker sea, changing dawn/dusk hues and more lights after dark. Preserve the accepted Mission Frontier composition. Unassigned base crew are ambient scenery and must not count as task execution. Explicit idle tasks may wander; blocked, waiting, failed, disconnected and historical-run workers remain parked. Keep all work loops bound to recorded active runs and keep lighting controls local to this browser. See `design/mission-frontier/LIVING-WORLD.md`.
+
 - Use the selected “Evidence Gate” direction as the shared visual system for every screen and workflow state: warm ink surfaces, compact full sidebar, horizontal stage navigator, structured evidence, restrained semantic colour, and an event ledger that stays out of the way until opened.
 - Provide a low-fatigue **Operator** view across all ten task stages. Each stage should answer five questions at a glance: current state, health, what changed, the material decision or readiness signal, and the next safe action.
 - Keep the detailed workflow available through a neighbouring **Evidence** view rather than removing it. The prototype may make every stage clickable for review only when it is explicitly labelled as non-persisted visual QA state.

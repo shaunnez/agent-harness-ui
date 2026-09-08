@@ -1,7 +1,9 @@
 import { ArrowsOut, Crosshair, MapPin, Minus, Plus, Question, WarningCircle } from "@phosphor-icons/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { WorldPreferences } from "../app/preferences";
+import { WorldTime } from "../views/WorldTime";
 import { type Camera, pointInContainedImage, worldToScreen } from "./camera";
+import { lightingAt, worldHour } from "./environment-model";
 import { WorldRenderer } from "./renderer";
 import type { SceneInput, WorldLabel } from "./scene";
 
@@ -12,6 +14,7 @@ interface Props {
   onEnterProject(id: string): void;
   onArtifact(taskId: string, artifactId: string): void;
   rendererRef: React.RefObject<WorldRenderer | null>;
+  onWorldSettings(): void;
 }
 export function WorldCanvas({
   input,
@@ -20,6 +23,7 @@ export function WorldCanvas({
   onEnterProject,
   onArtifact,
   rendererRef,
+  onWorldSettings,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const labelHost = useRef<HTMLElement>(null);
@@ -30,6 +34,7 @@ export function WorldCanvas({
   const [minimap, setMinimap] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
+  const [lighting, setLighting] = useState(() => lightingAt(worldHour(preferences.environment, Date.now())));
   const moveLabels = useCallback((camera: Camera) => {
     cameraRef.current = camera;
     for (const element of labelHost.current?.querySelectorAll<HTMLElement>("[data-world-x]") ?? []) {
@@ -65,6 +70,7 @@ export function WorldCanvas({
       camera: moveLabels,
       minimap: setMinimap,
       problem: setError,
+      lighting: setLighting,
     });
     rendererRef.current = renderer;
     setError(null);
@@ -87,6 +93,12 @@ export function WorldCanvas({
   return (
     <>
       <div ref={host} className="world-canvas" />
+      <WorldTime
+        lighting={lighting}
+        preferences={preferences}
+        moving={input.motion && input.connected}
+        onSettings={onWorldSettings}
+      />
       <nav
         ref={labelHost}
         className={`world-labels label-size-${preferences.labelSize}`}

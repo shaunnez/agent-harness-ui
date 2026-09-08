@@ -1,7 +1,7 @@
 import { Application, Rectangle } from "pixi.js";
 import { WorldAssets } from "./assets";
-import { featuredProjectId } from "./asset-policy";
 import { type Camera, constrainCamera, coverBackdrop, fitCamera, type Point, zoomAround } from "./camera";
+import type { WorldLighting } from "./environment-model";
 import { FrontierScene, type SceneInput, type WorldLabel } from "./scene";
 import { AnimationVisibility } from "./visibility";
 
@@ -11,6 +11,7 @@ interface RendererCallbacks {
   camera(camera: Camera): void;
   minimap(data: string): void;
   problem(message: string | null): void;
+  lighting(value: WorldLighting): void;
 }
 export class WorldRenderer {
   private app = new Application();
@@ -32,6 +33,9 @@ export class WorldRenderer {
   private viewTransition = 0;
   private initialized = false;
   private loadingDetail = false;
+  private loadingActivity = false;
+  private failedActivity = false;
+  private lastLightingNotice = 0;
   private backgroundSuspensions = 0;
   private animation: AnimationVisibility | null = null;
   constructor(
@@ -96,10 +100,30 @@ export class WorldRenderer {
   update(input: SceneInput) {
     this.input = input;
     if (!this.ready || !this.scene) return;
-    const artProject = input.projects.find((project) => project.id === featuredProjectId(input.projects));
-    const viewedTask = input.tasks.find((task) => task.id === input.location.taskId);
-    const cinematicDetail =
-      this.assets.direction === "cinematic" && artProject?.repositoryPath === viewedTask?.repositoryPath;
+    if (
+      this.assets.direction === "cinematic" &&
+      input.location.view !== "world" &&
+      !this.assets.activityReady &&
+      !this.failedActivity &&
+      !this.loadingActivity
+    ) {
+      this.loadingActivity = true;
+      void this.assets
+        .loadActivity()
+        .then(() => {
+          this.loadingActivity = false;
+          if (!this.stopped && this.input) this.update(this.input);
+        })
+        .catch((error: unknown) => {
+          this.loadingActivity = false;
+          this.failedActivity = true;
+          if (!this.stopped)
+            this.callbacks.problem(
+              error instanceof Error ? error.message : "Worker motion could not be loaded.",
+            );
+        });
+    }
+    const cinematicDetail = this.assets.direction === "cinematic";
     if (input.location.view === "agent" && !cinematicDetail && !this.assets.detailReady) {
       if (!this.loadingDetail) {
         this.loadingDetail = true;
@@ -120,6 +144,7 @@ export class WorldRenderer {
       return;
     }
     this.scene.reconcile(input);
+    this.callbacks.lighting(this.scene.environment.lighting);
     this.callbacks.labels(this.scene.labels);
     const resolved =
       input.location.view === "world" ||
@@ -206,19 +231,37 @@ export class WorldRenderer {
     return {
       ...this.assets.metrics,
       ...this.scene?.metrics,
+      ...this.scene?.environment.metrics,
       frameSamples: sorted.length,
       measuredSeconds: (performance.now() - this.measurementStarted) / 1000,
       medianFps: median ? 1000 / median : null,
       p95FrameMs: sorted[Math.floor(sorted.length * 0.95)] ?? null,
       entities: this.scene?.root.children.length ?? 0,
-      workers: this.scene?.motions.length ?? 0,
+      workers: this.scene?.motions.filter((worker) => !worker.ambient).length ?? 0,
       activeWorkers: this.scene?.motions.filter((worker) => worker.active).length ?? 0,
+      ambientCrew: this.scene?.motions.filter((worker) => worker.ambient).length ?? 0,
+      roamingWorkers: this.scene?.motions.filter((worker) => worker.patrol).length ?? 0,
+      workerActions:
+        this.scene?.motions.filter((worker) => worker.active).map((worker) => worker.action) ?? [],
       tickerListeners: this.app.ticker?.count ?? 0,
+      actorSamples:
+        this.scene?.motions.slice(0, 30).map((worker) => ({
+          id: worker.id,
+          ambient: worker.ambient === true,
+          active: worker.active,
+          patrol: Boolean(worker.patrol),
+          x: worker.root.x,
+          y: worker.root.y,
+          textureFrame: worker.body?.texture.uid,
+        })) ?? [],
       tickerRunning: this.app.ticker?.started ?? false,
       documentHidden: document.hidden,
       backgroundSuspensions: this.backgroundSuspensions,
       camera: this.camera,
     };
+  }
+  get worldHour() {
+    return this.scene?.environment.lighting.hour;
   }
   beginMeasurement() {
     this.frameTimes = [];
@@ -297,6 +340,8 @@ export class WorldRenderer {
   private setAnimation = (animate: boolean) => {
     if (!this.ready) return;
     this.lastFrame = 0;
+    this.scene?.environment.setAnimating(animate);
+    if (this.scene) this.callbacks.lighting(this.scene.environment.lighting);
     if (!animate) {
       if (document.hidden) this.backgroundSuspensions++;
       if (this.scene) this.scene.root.alpha = 1;
@@ -313,6 +358,10 @@ export class WorldRenderer {
     }
     this.lastFrame = now;
     this.scene?.tick(now);
+    if (this.scene && now - this.lastLightingNotice > 1000) {
+      this.callbacks.lighting(this.scene.environment.lighting);
+      this.lastLightingNotice = now;
+    }
     if (this.scene && this.viewTransition) {
       this.scene.root.alpha = Math.min(1, 0.4 + (now - this.viewTransition) / 500);
       if (this.scene.root.alpha === 1) this.viewTransition = 0;
@@ -336,6 +385,7 @@ export class WorldRenderer {
   }
   private disposeApplication() {
     if (!this.initialized) return;
+    this.scene?.environment.destroy();
     this.app.destroy(true, { children: true });
     this.initialized = false;
   }

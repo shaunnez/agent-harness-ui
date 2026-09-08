@@ -21,12 +21,13 @@ export interface GameAsset {
   sockets?: Record<string, [number, number]>;
   parts?: AssetPart[];
   motionContract?: string;
-  loadStage?: "initial" | "detail";
+  loadStage?: "initial" | "detail" | "activity";
 }
 export class WorldAssets {
   private entries = new Map<string, GameAsset>();
   private textures = new Map<string, Texture>();
   detailReady = false;
+  activityReady = false;
   readonly direction = artDirection(window.location.search);
   async load() {
     const response = await fetch("/assets/manifest.json");
@@ -37,6 +38,10 @@ export class WorldAssets {
       if (!cinematic.ok) throw new Error("The cinematic artwork could not be loaded. Retry the world.");
       const additions = (await cinematic.json()) as { assets: GameAsset[] };
       manifest.assets.push(...additions.assets);
+      const living = await fetch("/assets/living/manifest.json");
+      if (!living.ok) throw new Error("The living-world artwork could not be loaded. Retry the world.");
+      const motion = (await living.json()) as { assets: GameAsset[] };
+      manifest.assets.push(...motion.assets);
     }
     for (const entry of manifest.assets) {
       // Occlusion frames share the parent texture; only exported parts load another image.
@@ -62,12 +67,20 @@ export class WorldAssets {
     await this.loadEntries([...this.entries.values()].filter(isDetailAsset));
     this.detailReady = true;
   }
+  async loadActivity() {
+    await this.loadEntries([...this.entries.values()].filter((entry) => entry.loadStage === "activity"));
+    this.activityReady = true;
+  }
   has(id: string) {
     return this.textures.has(id);
   }
   setFrame(sprite: Sprite, id: string) {
     const texture = this.textures.get(id);
-    if (texture) sprite.texture = texture;
+    if (texture && sprite.texture !== texture) {
+      sprite.texture = texture;
+      const entry = this.entries.get(id);
+      if (entry) this.hitBounds(sprite, entry);
+    }
   }
   bounds(id: string, x: number, y: number, scale: number) {
     const entry = this.entries.get(id);
@@ -125,6 +138,10 @@ export class WorldAssets {
       entry.groundAnchor[1] / entry.logicalSize[1],
     );
     sprite.position.set(x, y);
+    this.hitBounds(sprite, entry);
+    return sprite;
+  }
+  private hitBounds(sprite: Sprite, entry: GameAsset) {
     if (entry.boundsSourcePixels) {
       const [left, top, right, bottom] = entry.boundsSourcePixels;
       sprite.hitArea = new Rectangle(
@@ -133,8 +150,7 @@ export class WorldAssets {
         right - left,
         bottom - top,
       );
-    }
-    return sprite;
+    } else sprite.hitArea = null;
   }
   get metrics() {
     return {

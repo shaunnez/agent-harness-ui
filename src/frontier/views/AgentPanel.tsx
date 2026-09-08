@@ -12,6 +12,7 @@ import {
   stageLabels,
 } from "../runtime/presentation";
 import { Attention } from "../ui/Attention";
+import { workAction, workActions } from "../world/worker-behavior";
 
 export function AgentPanel({
   evidence,
@@ -25,6 +26,7 @@ export function AgentPanel({
   onPolicies,
   requestedRunId,
   portrait = "/assets/mf.worker.standard.portrait.r1.png",
+  motion = true,
 }: {
   evidence: TaskEvidence;
   run: RuntimeRun | undefined;
@@ -37,6 +39,7 @@ export function AgentPanel({
   onPolicies(): void;
   requestedRunId?: string | null;
   portrait?: string;
+  motion?: boolean;
 }) {
   const [tab, setTab] = useState("activity");
   const task = evidence.core;
@@ -81,6 +84,20 @@ export function AgentPanel({
           </dl>
         </div>
       </header>
+      <div className="agent-motion-note">
+        <strong>
+          {!connected
+            ? "Connection unknown · worker parked"
+            : !active
+              ? "Worker parked"
+              : !motion
+                ? "World motion paused"
+                : `${workActions[workAction(run?.stage ?? task.currentStage, run?.role)].label} · role animation`}
+        </strong>
+        {!active
+          ? "This run is not executing. Task attention and the next action remain below."
+          : "An illustration of the recorded role. Activity and evidence below show what the agent actually reports."}
+      </div>
       {requestedRunId && !run && (
         <p role="status" className="notice">
           Requested run {requestedRunId} is not in the loaded evidence.

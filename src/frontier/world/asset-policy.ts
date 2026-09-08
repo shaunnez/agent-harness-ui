@@ -5,16 +5,17 @@ export function artDirection(search: string): ArtDirection {
   return new URLSearchParams(search).get("art") === "cinematic" ? "cinematic" : "classic";
 }
 
-export function isDetailAsset(asset: { id: string; loadStage?: "initial" | "detail" }) {
+export function isDetailAsset(asset: { id: string; loadStage?: "initial" | "detail" | "activity" }) {
   return asset.loadStage === "detail" || asset.id.includes(".detail.") || asset.id === "mf.terrain.region";
 }
 
 export function isInitialAsset(
-  asset: { id: string; loadStage?: "initial" | "detail" },
+  asset: { id: string; loadStage?: "initial" | "detail" | "activity" },
   direction: ArtDirection,
 ) {
   return (
     !isDetailAsset(asset) &&
+    asset.loadStage !== "activity" &&
     !asset.id.endsWith(".portrait") &&
     !(direction === "cinematic" && asset.id === "mf.terrain.water")
   );

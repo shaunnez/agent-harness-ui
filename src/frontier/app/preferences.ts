@@ -1,3 +1,9 @@
+import {
+  defaultEnvironment,
+  type EnvironmentPreferences,
+  normalizeEnvironment,
+} from "../world/environment-model.ts";
+
 export interface WorldPreferences {
   motion: boolean;
   labels: boolean;
@@ -6,6 +12,8 @@ export interface WorldPreferences {
   followSelection: boolean;
   ambientAudio: boolean;
   effectsAudio: boolean;
+  idleRoaming: boolean;
+  environment: EnvironmentPreferences;
 }
 export const defaultPreferences: WorldPreferences = {
   motion: true,
@@ -15,6 +23,8 @@ export const defaultPreferences: WorldPreferences = {
   followSelection: false,
   ambientAudio: false,
   effectsAudio: false,
+  idleRoaming: true,
+  environment: defaultEnvironment,
 };
 const key = "mission-frontier.preferences.v1";
 export function readPreferences(): WorldPreferences {
@@ -32,6 +42,8 @@ export function readPreferences(): WorldPreferences {
       followSelection: value?.followSelection === true,
       ambientAudio: value?.ambientAudio === true,
       effectsAudio: value?.effectsAudio === true,
+      idleRoaming: value?.idleRoaming !== false,
+      environment: normalizeEnvironment(value?.environment),
     };
   } catch {
     return { ...defaultPreferences };

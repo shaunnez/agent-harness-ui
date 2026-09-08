@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { WorldPreferences } from "../app/preferences";
 import type { FrontierGateway, FrontierSnapshot } from "../runtime/contracts";
+import { EnvironmentSettings } from "./EnvironmentSettings";
 import { RetainedWorktrees } from "./RetainedWorktrees";
 
 export function WorldSettings({
@@ -16,6 +17,7 @@ export function WorldSettings({
   command,
   onExecution,
   onAddProject,
+  readWorldHour,
 }: {
   preferences: WorldPreferences;
   onChange(value: WorldPreferences): void;
@@ -29,6 +31,7 @@ export function WorldSettings({
   command(action: () => Promise<unknown>, then?: () => void): Promise<void>;
   onExecution(): void;
   onAddProject(): void;
+  readWorldHour?(): number | undefined;
 }) {
   const [tab, setTab] = useState("world");
   return (
@@ -61,6 +64,11 @@ export function WorldSettings({
             <>
               <h2>World & controls</h2>
               <p>Display choices save immediately on this device. They never pause backend execution.</p>
+              <EnvironmentSettings
+                preferences={preferences}
+                onChange={onChange}
+                readWorldHour={readWorldHour}
+              />
               <div className="world-controls-columns">
                 <section>
                   <label className="setting-row">

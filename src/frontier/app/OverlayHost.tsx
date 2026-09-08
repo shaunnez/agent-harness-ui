@@ -52,6 +52,7 @@ interface Props {
   setDraft(value: NewTaskDraft): void;
   preferences: WorldPreferences;
   onPreferences(value: WorldPreferences): void;
+  readWorldHour?(): number | undefined;
   busy: boolean;
   error: string | null;
   run?: RuntimeRun;
@@ -193,6 +194,7 @@ export function OverlayHost(props: Props) {
   else if (overlay.kind === "world-settings")
     content = (
       <WorldSettings
+        readWorldHour={props.readWorldHour}
         preferences={props.preferences}
         onChange={props.onPreferences}
         snapshot={snapshot}
