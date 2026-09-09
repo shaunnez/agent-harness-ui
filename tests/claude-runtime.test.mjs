@@ -789,7 +789,7 @@ test("publishes a bundled Claude catalogue attributed to its provider", async ()
   assert.equal(catalog.fetchedAt, null);
   assert.deepEqual(
     catalog.models.map((model) => model.id),
-    ["claude-opus-5", "claude-sonnet-5", "claude-fable-5", "claude-haiku-4-5"],
+    ["claude-opus-5", "claude-sonnet-5", "claude-fable-5", "claude-fable-5-1", "claude-haiku-4-5"],
   );
   for (const model of catalog.models) {
     assert.equal(model.provider, "claude", model.id);
@@ -818,6 +818,18 @@ test("publishes a bundled Claude catalogue attributed to its provider", async ()
   // silently downgrading.
   assert.throws(() => assertSupportedReasoning("claude-opus-5", "ultra"), /does not support ultra/);
   assert.throws(() => assertSupportedReasoning("gpt-5.6-sol", "high"), /Unknown model/);
+
+  // Fable 5.1 is additive alongside Fable 5: selectable everywhere Fable 5 is,
+  // with the same full reasoning-effort range.
+  const fable51 = catalog.models.find((model) => model.id === "claude-fable-5-1");
+  assert.equal(fable51.label, "Claude Fable 5.1");
+  assert.deepEqual(fable51.reasoningLevels, ["low", "medium", "high", "xhigh", "max"]);
+  assert.equal(providerForModelId("claude-fable-5-1"), "claude");
+  assert.equal(assertSupportedReasoning("claude-fable-5-1", "xhigh"), "xhigh");
+  assert.throws(
+    () => assertSupportedReasoning("claude-fable-5-1", NO_REASONING_EFFORT),
+    /does not support none/,
+  );
 });
 
 test("attributes model ids to providers and leaves unknown ids unattributed", () => {
