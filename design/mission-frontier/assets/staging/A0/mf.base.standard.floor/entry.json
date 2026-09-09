@@ -1,0 +1,87 @@
+{
+  "id": "mf.base.standard.floor",
+  "revision": 1,
+  "status": "delivered-pending-coordinator-integration-review",
+  "file": "exports/base-standard-floor-r1.png",
+  "sourceSize": [
+    1536,
+    1024
+  ],
+  "logicalSize": [
+    768,
+    512
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    384,
+    422
+  ],
+  "anchorConvention": "front top-surface corner as assigned; physical bottom bevel is lower",
+  "footprint": [
+    [
+      384,
+      70
+    ],
+    [
+      736,
+      246
+    ],
+    [
+      384,
+      422
+    ],
+    [
+      32,
+      246
+    ]
+  ],
+  "labelAnchor": [
+    384,
+    62
+  ],
+  "labelAnchorMethod": "8 logical pixels above back top-surface corner; placement aid only",
+  "occlusionClass": "floor",
+  "layer": "floor",
+  "sockets": {
+    "surfaceBack": [
+      384,
+      70
+    ],
+    "surfaceRight": [
+      736,
+      246
+    ],
+    "surfaceFront": [
+      384,
+      422
+    ],
+    "surfaceLeft": [
+      32,
+      246
+    ]
+  },
+  "physicalFrontBottomBevel": [
+    383.9747,
+    439.4466
+  ],
+  "surfaceToBottomBevelLogicalY": 17.4466,
+  "sourceId": "exec-c871c81d-2430-4acf-a75b-ef3aa2c40860",
+  "sha256": "863ce265015fb0742e9d4031a29c2b49ec546b004effafbe78e6ef6258edd25e",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/hq-logical-scale-r1.png",
+    "qa/overview-scale-r1.png",
+    "qa/registered-corners-r1.png",
+    "qa/source-corner-measurements-r1.png",
+    "qa/measurements-r1.json"
+  ],
+  "limits": [
+    "One fixed projection, no animation or walls/roof.",
+    "Source corners manually measured within approximately 3 pixels; geometry projected to exact target landmarks.",
+    "New generated layers require individual verification against this registered export; old source homography is not a guarantee of shared geometry.",
+    "Not accepted until coordinator integration review."
+  ]
+}

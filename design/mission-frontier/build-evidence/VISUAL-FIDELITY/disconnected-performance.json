@@ -1,0 +1,172 @@
+{
+  "capturedAt": "2026-09-06T11:07:33.328Z",
+  "viewport": {
+    "width": 1568,
+    "height": 1003,
+    "dpr": 1
+  },
+  "mode": "fixture",
+  "projects": 3,
+  "tasks": 12,
+  "refresh": {
+    "cycles": 55,
+    "summaryReads": 1,
+    "selectedReads": 22,
+    "failures": 1
+  },
+  "renderer": {
+    "artDirection": "cinematic",
+    "textures": 53,
+    "decodedBytes": 119734272,
+    "compressedBytes": 18909937,
+    "reconciliations": 54,
+    "rebuiltEntities": 49,
+    "handoffs": 0,
+    "frameSamples": 217,
+    "measuredSeconds": 3.3685999999940397,
+    "medianFps": 123.45678976006923,
+    "p95FrameMs": 9.199999988079071,
+    "entities": 4,
+    "workers": 3,
+    "activeWorkers": 0,
+    "tickerListeners": 2,
+    "tickerRunning": false,
+    "documentHidden": false,
+    "backgroundSuspensions": 0,
+    "camera": {
+      "x": 784,
+      "y": 758.2047872340426,
+      "zoom": 1.449468085106383
+    }
+  },
+  "selectionAckMs": [
+    1.300000011920929,
+    1.2000000178813934,
+    0.699999988079071,
+    0.5,
+    0.6000000238418579,
+    0.7999999821186066,
+    0.5,
+    0.5999999940395355,
+    1.300000011920929,
+    0.800000011920929,
+    0.9000000059604645,
+    1.2000000178813934,
+    0.5999999940395355,
+    1.2000000178813934,
+    1.0999999940395355,
+    0.5,
+    1.399999976158142,
+    0.7999999821186066,
+    0.800000011920929,
+    0.5999999940395355,
+    1,
+    0.7999999821186066,
+    0.7000000178813934,
+    0.800000011920929,
+    0.7000000178813934,
+    1,
+    1,
+    0.7999999821186066,
+    1,
+    1.100000023841858
+  ],
+  "pageTransfer": {
+    "requests": 16,
+    "transferBytes": 605313,
+    "encodedBytes": 601105
+  },
+  "artworkNetwork": [
+    {
+      "path": "/assets/index-CzpN2PhT.js",
+      "transferBytes": 305929,
+      "encodedBytes": 305629,
+      "decodedBodyBytes": 1041085
+    },
+    {
+      "path": "/assets/index-BmWXtIwn.css",
+      "transferBytes": 12967,
+      "encodedBytes": 12667,
+      "decodedBodyBytes": 60627
+    },
+    {
+      "path": "/assets/inter-latin-400-normal-C38fXH4l.woff2",
+      "transferBytes": 23964,
+      "encodedBytes": 23664,
+      "decodedBodyBytes": 23664
+    },
+    {
+      "path": "/assets/inter-latin-500-normal-Cerq10X2.woff2",
+      "transferBytes": 24572,
+      "encodedBytes": 24272,
+      "decodedBodyBytes": 24272
+    },
+    {
+      "path": "/assets/WebGLRenderer-DYk53b6Y.js",
+      "transferBytes": 19963,
+      "encodedBytes": 19663,
+      "decodedBodyBytes": 72275
+    },
+    {
+      "path": "/assets/BufferResource-DInZAbfP.js",
+      "transferBytes": 2903,
+      "encodedBytes": 2603,
+      "decodedBodyBytes": 10037
+    },
+    {
+      "path": "/assets/Filter-Dhhf5Qn8.js",
+      "transferBytes": 1204,
+      "encodedBytes": 904,
+      "decodedBodyBytes": 904
+    },
+    {
+      "path": "/assets/RenderTargetSystem-Ds4wxPB3.js",
+      "transferBytes": 14976,
+      "encodedBytes": 14676,
+      "decodedBodyBytes": 53013
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.portrait-2b3815b7e1.png",
+      "transferBytes": 139509,
+      "encodedBytes": 139209,
+      "decodedBodyBytes": 139209
+    },
+    {
+      "path": "/assets/inter-latin-600-normal-LgqL8muc.woff2",
+      "transferBytes": 24752,
+      "encodedBytes": 24452,
+      "decodedBodyBytes": 24452
+    },
+    {
+      "path": "/assets/browserAll-RACUpceU.js",
+      "transferBytes": 11691,
+      "encodedBytes": 11391,
+      "decodedBodyBytes": 43328
+    },
+    {
+      "path": "/assets/CanvasPool-E4Z4EZtM.js",
+      "transferBytes": 1082,
+      "encodedBytes": 782,
+      "decodedBodyBytes": 782
+    },
+    {
+      "path": "/assets/webworkerAll-DTSgxPQ6.js",
+      "transferBytes": 5400,
+      "encodedBytes": 5100,
+      "decodedBodyBytes": 15962
+    },
+    {
+      "path": "/assets/manifest.json",
+      "transferBytes": 13388,
+      "encodedBytes": 13088,
+      "decodedBodyBytes": 71785
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "transferBytes": 2713,
+      "encodedBytes": 2413,
+      "decodedBodyBytes": 20117
+    }
+  ],
+  "network": []
+}

@@ -3,6 +3,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import path from "node:path";
 import { cleanupOrphanAttachmentSets } from "./attachment-storage.mjs";
 import { acquireJsonStoreLock } from "./json-store-lock.mjs";
+import { assertProjectAcceptsTask, changeProject } from "./project-policy.mjs";
 import {
   DEFAULT_DESIGN_POLICIES,
   LEGACY_DESIGN_POLICIES,
@@ -258,6 +259,10 @@ export class JsonTaskStore {
       updater(state.settings);
       return state.settings;
     });
+  }
+
+  async updateProject(id, change) {
+    return this.#mutate((state) => changeProject(state.settings.projects ?? [], state.tasks, id, change));
   }
 
   async create(input) {
@@ -631,6 +636,7 @@ export function migratePersistedTaskState(state) {
 }
 
 export function createTaskRecord(state, input) {
+  assertProjectAcceptsTask(state.settings, input.repositoryPath);
   const now = new Date().toISOString();
   const designPolicies = snapshotDesignPolicies(
     input.designPolicies ?? state.settings.designPolicies ?? DEFAULT_DESIGN_POLICIES,
@@ -679,6 +685,8 @@ export function createTaskRecord(state, input) {
       stagePolicies,
       profileStagePolicies,
       policySnapshotVersion: 2,
+      ...(input.rolePolicySources ? { rolePolicySources: clone(input.rolePolicySources) } : {}),
+      ...(input.rolePolicyOverrides ? { rolePolicyOverrides: clone(input.rolePolicyOverrides) } : {}),
     },
     attachments: clone(input.attachments ?? continuation?.attachments ?? []),
     closure: null,

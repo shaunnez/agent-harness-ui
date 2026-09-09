@@ -1,0 +1,141 @@
+{
+  "sourceSize": [
+    1024,
+    768
+  ],
+  "logicalSize": [
+    512,
+    384
+  ],
+  "groundAnchor": [
+    256,
+    290
+  ],
+  "partition": "Interior abs(x-512)/360+abs(y-355)/180<=1. Outside interior: nw x<512,y<355; ne x>=512,y<355; se x>=512,y>=355; sw x<512,y>=355. All source pixels assigned exactly once.",
+  "innerDiamondSource": [
+    [
+      512,
+      175
+    ],
+    [
+      872,
+      355
+    ],
+    [
+      512,
+      535
+    ],
+    [
+      152,
+      355
+    ]
+  ],
+  "shoreSockets": {
+    "nw": {
+      "registeredSurfaceEndpointsSource": [
+        [
+          62,
+          355
+        ],
+        [
+          512,
+          130
+        ]
+      ],
+      "nearestOpaqueOwnedEndpointsSource": [
+        [
+          62,
+          354
+        ],
+        [
+          511,
+          130
+        ]
+      ],
+      "approachSource": [
+        287,
+        242
+      ]
+    },
+    "ne": {
+      "registeredSurfaceEndpointsSource": [
+        [
+          512,
+          130
+        ],
+        [
+          962,
+          355
+        ]
+      ],
+      "nearestOpaqueOwnedEndpointsSource": [
+        [
+          512,
+          130
+        ],
+        [
+          962,
+          354
+        ]
+      ],
+      "approachSource": [
+        737,
+        242
+      ]
+    },
+    "se": {
+      "registeredSurfaceEndpointsSource": [
+        [
+          962,
+          355
+        ],
+        [
+          512,
+          580
+        ]
+      ],
+      "nearestOpaqueOwnedEndpointsSource": [
+        [
+          962,
+          355
+        ],
+        [
+          512,
+          580
+        ]
+      ],
+      "approachSource": [
+        737,
+        467
+      ]
+    },
+    "sw": {
+      "registeredSurfaceEndpointsSource": [
+        [
+          512,
+          580
+        ],
+        [
+          62,
+          355
+        ]
+      ],
+      "nearestOpaqueOwnedEndpointsSource": [
+        [
+          511,
+          580
+        ],
+        [
+          62,
+          355
+        ]
+      ],
+      "approachSource": [
+        287,
+        467
+      ]
+    }
+  },
+  "endpointMethod": "Nearest fully opaque pixel owned by the requested shore part to approved registered surface corner; approach uses nearest opaque owned pixel to edge midpoint. Raster measurements, not new geometry.",
+  "reuseBoundary": "Each part uses source geometry and translation only. Neighbor/bridge joins must align sockets; this derivative does not invent matching external tiles or alter terrain edges."
+}

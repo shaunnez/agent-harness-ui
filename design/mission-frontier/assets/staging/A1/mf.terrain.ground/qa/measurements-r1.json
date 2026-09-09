@@ -1,0 +1,14 @@
+{
+  "alphaRange": [
+    0,
+    255
+  ],
+  "alphaBounds": [
+    46,
+    123,
+    975,
+    613
+  ],
+  "borderNontransparent": 0,
+  "frontDropSourcePixels": 29.53301126582562
+}

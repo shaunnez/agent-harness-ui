@@ -1,0 +1,38 @@
+{
+  "date": "2026-09-06",
+  "scope": "Goal 3 frontier, frontier API and preserved Sites worker suites",
+  "suites": [
+    {
+      "log": "frontier-tests.log",
+      "sha256": "f65eb06f910ddd7557630ba5283a7c3028e839e5835649ea5f8394291cf2e37f",
+      "tests": {
+        "passed": 45,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "log": "frontier-api-tests.log",
+      "sha256": "58764491efe1c73de8a8d9d569e06782eddf04fdc57a22783b53fca53fc84341",
+      "tests": {
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "log": "sites-tests.log",
+      "sha256": "2cfa33c74562f9049cac572189ac1fe5eaa9f0861f91c94955a87e51f04235f5",
+      "tests": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      }
+    }
+  ],
+  "tests": {
+    "passed": 57,
+    "failed": 0,
+    "skipped": 0
+  }
+}

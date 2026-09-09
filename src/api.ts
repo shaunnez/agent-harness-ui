@@ -1,3 +1,5 @@
+import type { CompanionContext } from "./companion/contracts";
+import type { OnboardingProposal, OnboardingReview } from "./domain/onboarding";
 import type {
   AgentRoleId,
   NewTaskDraft,
@@ -22,7 +24,6 @@ import type {
   RuntimeUsage,
   RuntimeWorktreeInventoryRow,
 } from "./domain";
-import type { CompanionContext } from "./companion/contracts";
 
 export interface CandidateDiffResponse {
   candidateId: string;
@@ -53,6 +54,10 @@ export class RuntimeApiError extends Error {
     this.code = code;
     this.evidence = evidence;
   }
+}
+
+export interface ReadRequestOptions {
+  signal?: AbortSignal;
 }
 
 export interface MutationRequestOptions {
@@ -116,8 +121,8 @@ async function request<T>(path: string, init?: RequestInit, options: RequestOpti
 
 let runtimeCsrfToken: string | null = null;
 
-export async function getRuntimeStatus() {
-  const status = await request<RuntimeStatus>("/api/runtime/status");
+export async function getRuntimeStatus(options: ReadRequestOptions = {}) {
+  const status = await request<RuntimeStatus>("/api/runtime/status", options);
   runtimeCsrfToken = status.csrfToken ?? null;
   return status;
 }
@@ -165,8 +170,8 @@ export async function getRepositoryContract(repositoryPath: string) {
   ).contract;
 }
 
-export async function listProjects() {
-  return (await request<{ projects: RuntimeProject[] }>("/api/projects")).projects;
+export async function listProjects(options: ReadRequestOptions = {}) {
+  return (await request<{ projects: RuntimeProject[] }>("/api/projects", options)).projects;
 }
 
 export async function createProject(input: { name: string; repositoryPath: string }) {
@@ -176,6 +181,45 @@ export async function createProject(input: { name: string; repositoryPath: strin
       body: JSON.stringify(input),
     })
   ).project;
+}
+
+export async function changeProject(
+  id: string,
+  change: { kind: "rename" | "archive" | "restore"; name?: string },
+) {
+  const suffix = change.kind === "rename" ? "" : `/${change.kind}`;
+  return (
+    await request<{ project: RuntimeProject }>(
+      `/api/projects/${encodeURIComponent(id)}${suffix}`,
+      {
+        method: change.kind === "rename" ? "PATCH" : "POST",
+        body: JSON.stringify(change.kind === "rename" ? { name: change.name } : {}),
+      },
+      { retryOnCsrf: false },
+    )
+  ).project;
+}
+
+export async function proposeRepositorySetup(repositoryPath: string) {
+  return request<OnboardingReview>(
+    "/api/runtime/onboarding/propose",
+    {
+      method: "POST",
+      body: JSON.stringify({ repositoryPath }),
+    },
+    { retryOnCsrf: false },
+  );
+}
+
+export async function approveRepositorySetup(repositoryPath: string, proposal: OnboardingProposal) {
+  return request<{ repositoryRoot: string; manifestPath: string }>(
+    "/api/runtime/onboarding/approve",
+    {
+      method: "POST",
+      body: JSON.stringify({ repositoryPath, proposal }),
+    },
+    { retryOnCsrf: false },
+  );
 }
 
 export async function getRuntimeWorktreeInventory(taskId?: string) {
@@ -260,12 +304,12 @@ export async function getCandidateDiff(taskId: string, candidateId: string, head
   );
 }
 
-export async function listTasks() {
-  return (await request<{ tasks: RuntimeTaskSummary[] }>("/api/tasks")).tasks;
+export async function listTasks(options: ReadRequestOptions = {}) {
+  return (await request<{ tasks: RuntimeTaskSummary[] }>("/api/tasks", options)).tasks;
 }
 
-export async function listTaskPollStates() {
-  return (await request<{ tasks: RuntimeTaskPollState[] }>("/api/tasks?view=poll")).tasks;
+export async function listTaskPollStates(options: ReadRequestOptions = {}) {
+  return (await request<{ tasks: RuntimeTaskPollState[] }>("/api/tasks?view=poll", options)).tasks;
 }
 
 export async function getTaskPollState(id: string) {
@@ -277,23 +321,29 @@ export async function getTask(id: string) {
   return (await request<{ task: RuntimeTask }>(`/api/tasks/${encodeURIComponent(id)}?view=full`)).task;
 }
 
-export async function getTaskCore(id: string) {
-  return (await request<{ task: RuntimeTaskCore }>(`/api/tasks/${encodeURIComponent(id)}?view=core`)).task;
+export async function getTaskCore(id: string, options: ReadRequestOptions = {}) {
+  return (await request<{ task: RuntimeTaskCore }>(`/api/tasks/${encodeURIComponent(id)}?view=core`, options))
+    .task;
 }
 
 export async function getTaskActivity(id: string, options: PageOptions = {}) {
   return request<RuntimePage<RuntimeEvent>>(
     `/api/tasks/${encodeURIComponent(id)}/activity?${pageParams(options)}`,
+    { signal: options.signal },
   );
 }
 
 export async function getTaskRuns(id: string, options: PageOptions = {}) {
-  return request<RuntimePage<RuntimeRun>>(`/api/tasks/${encodeURIComponent(id)}/runs?${pageParams(options)}`);
+  return request<RuntimePage<RuntimeRun>>(
+    `/api/tasks/${encodeURIComponent(id)}/runs?${pageParams(options)}`,
+    { signal: options.signal },
+  );
 }
 
 export async function getTaskArtifacts(id: string, options: PageOptions = {}) {
   return request<RuntimePage<RuntimeArtifactMetadata>>(
     `/api/tasks/${encodeURIComponent(id)}/artifacts?${pageParams(options)}`,
+    { signal: options.signal },
   );
 }
 
@@ -305,15 +355,16 @@ export async function getTaskArtifactContents(id: string, options: PageOptions =
   );
 }
 
-export async function getTaskArtifact(id: string, artifactId: string) {
+export async function getTaskArtifact(id: string, artifactId: string, options: ReadRequestOptions = {}) {
   return (
     await request<{ artifact: RuntimeArtifact }>(
       `/api/tasks/${encodeURIComponent(id)}/artifacts/${encodeURIComponent(artifactId)}`,
+      options,
     )
   ).artifact;
 }
 
-interface PageOptions {
+interface PageOptions extends ReadRequestOptions {
   cursor?: string | null;
   limit?: number;
   filter?: "all" | "activity" | "agent" | "test" | "decision";

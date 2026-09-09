@@ -1,0 +1,93 @@
+{
+  "id": "mf.base.standard.back",
+  "revision": 1,
+  "status": "delivered-pending-coordinator-integration-review",
+  "file": "exports/base-standard-back-r1.png",
+  "sourceSize": [
+    1536,
+    1024
+  ],
+  "logicalSize": [
+    768,
+    512
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    384,
+    422
+  ],
+  "anchorConvention": "Inherited floor front top-surface anchor; independent of wall bounds",
+  "footprint": [
+    [
+      384,
+      70
+    ],
+    [
+      736,
+      246
+    ],
+    [
+      384,
+      422
+    ],
+    [
+      32,
+      246
+    ]
+  ],
+  "footprintUse": "shared alignment reference only; not a wall hit area",
+  "attachmentPolyline": [
+    [
+      48.0787,
+      249.9606
+    ],
+    [
+      384.0,
+      82.0
+    ],
+    [
+      719.9213,
+      249.9606
+    ]
+  ],
+  "labelAnchor": [
+    384,
+    19
+  ],
+  "labelAnchorMethod": "Above measured center wall top; placement aid only",
+  "occlusionClass": "back-structure",
+  "layer": "back-structure",
+  "sockets": {
+    "leftEnd": [
+      48.0787,
+      249.9606
+    ],
+    "backJoint": [
+      384.0,
+      82.0
+    ],
+    "rightEnd": [
+      719.9213,
+      249.9606
+    ]
+  },
+  "socketCoordinateUnits": "logical-pixels-untrimmed",
+  "sourceId": "exec-14af2a67-be75-4fc0-9b03-942745d8f2d2",
+  "sha256": "0c37dbd69b833bf76694c210cb9b8997942e7219097ba01ff39a1d3a20cbee54",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/floor-back-composite-r1.png",
+    "qa/hq-composite-logical-scale-r1.png",
+    "qa/registration-composite-r1.png",
+    "qa/measurements-r1.json",
+    "qa/contact-coverage-r1.json"
+  ],
+  "limits": [
+    "One fixed rear wall pair, no floor/front/roof or moving parts.",
+    "Two affine planar mappings correct source alignment; source landmarks are manually measured, not recovered 3D geometry.",
+    "Full integrated visual gate remains with coordinator."
+  ]
+}

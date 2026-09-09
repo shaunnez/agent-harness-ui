@@ -1,0 +1,50 @@
+{
+  "assetId": "mf.base.standard.roof",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "classification": "original generated roof cap using supplied/generated project reference images",
+  "sourceId": "exec-6d4b39ed-52e8-43ea-9691-49f66bdd9a19",
+  "generationPath": "/Users/shaun/.codex/generated_images/01a0749d-4c28-78f1-ba94-00501ef2ade3/exec-6d4b39ed-52e8-43ea-9691-49f66bdd9a19.png",
+  "sourceFile": "source/base-standard-roof-master-r1.png",
+  "sourceSha256": "52e0434b750227321249ad8332543802e175d70c764abd283db19892577973af",
+  "masterDimensions": [
+    1374,
+    1145
+  ],
+  "prompt": "Use case: stylized-concept.\nAsset: removable ROOF ONLY for a Mission Frontier sci-fi headquarters, an independent game layer.\nReference1 (selected world) is the strongest architectural design source: ceramic-white tiered rounded headquarters with blue glass accents, dark structural metal, warm daylight and memorable domed silhouettes. Reference2 is the exact open compound to receive the roof, defining footprint and supporting rear wall height. Reference3 supplies the same padded floor registration.\nCreate one convincing closed-headquarters roof cap for that square compound. Broad square/chamfered ceramic-white roof base in fixed orthographic2:1 isometric, with a substantial tiered rounded central dome/tower that gives the landmark identity of reference1. Short dark-blue glass window belts, recessed slate structural bands, crisp ceramic panels, subtle ventilation details. Friendly substantial modern sci-fi architecture, no aggressive weapon-like silhouette. The central rounded superstructure is PART OF THE ROOF and may rise around180\u2013220image pixels above the broad roof deck. No dish or spire that clips the image.\nCanvas1536x1280, same projection as the references. Physical ground footprint corners are back(768,340), right(1472,692), front(768,1044), left(64,692). Roof DECK sits220source pixels above that floor: its top/deck perimeter diamond is back(768,120), right(1472,472), front(768,824), left(64,472). A shallow26pixel structural underside/fascia extends below the roof deck to seat on the existing tall rear walls. Rounded/chamfered corner manufacturing bevels are fine, but do not change the overall square2:1 footprint or camera rotation. Keep every top and edge within frame.\nThe roof deck covers the entire compound from above. It is not a tiny circular gazebo roof and it is not another separate floor or building. A coherent low stepped ceramic roof silhouette leads into the central dome/tower; no huge forests of rooftop machinery.\nGenerate ONLY the floating roof assembly against perfectly uniform saturated green #00FF00. The underside is a shallow dark/ceramic structural lip, no tall walls continuing down to ground. No lower building, floor, terrain, island, sky, water, props, robots, occupied task sites, labels, signs, text, numbers, UI, status lights or selection ring. Do not copy the floor or rear/front walls into this roof export. No cast ground shadow, no green reflection.\nMaterial and lighting fidelity matter: warm upper-left daylight, believable ceramic-white shell, blue glass, dark steel recesses, restrained wear, softly realistic rendered strategy-game art. Avoid low-poly/cartoon/pixel style or a generic flat warehouse roof.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/reference/selected-world.png",
+      "sha256": "929dba738d20981573cfe52b951a45bd18357991a70adb82b92b622399f29758",
+      "role": "Primary selected-world dome/material identity"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.base.standard.front/qa/compound-composite-r1.png",
+      "sha256": "aa7460529412c131e06ae5505c3fa0e8a4874272ae83fdeb72ecf274c24c64ea",
+      "role": "Accepted open compound tallbackr2 architecture"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.base.standard.back/source/floor-padded-guidance-r2.png",
+      "sha256": "ff3a52198d01b6801d5a7b016487fc1c4d027813aab4ca474f0a1a29520463ea",
+      "role": "Registered paddedfloor footprint"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    {
+      "script": "process.py",
+      "operations": [
+        "Preserve original source",
+        "Chroma key/spill cleanup",
+        "One projective registration from measured deck/chamfer landmarks to elevated floor footprint",
+        "Post-resample edge cleanup",
+        "QA-only closed/open composites over accepted base layers"
+      ]
+    }
+  ],
+  "exportSha256": "3187c645988fc55645cf818f06021d4f6d1acf8016f0a04006d7109e718a8c78",
+  "exportBytes": 1549206,
+  "decodedRgbaBytes": 7864320,
+  "review": "Coordinator inspected closed/open and retained deeper fascia as P3 pendingM1; no regeneration requested",
+  "rightsNote": "Supplied/generated project references only; provenance is not legal clearance."
+}

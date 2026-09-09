@@ -1,0 +1,22 @@
+{
+  "assetId": "mf.worker.standard.se.working",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-23b61b7a-46da-4c8a-b03f-89a905540a75",
+  "sourceSha256": "6650a858f2ac1312f4432fe1455af3f2382c60722d3b96e3fc50e443f8e52d2f",
+  "generationPrompt": "Use case: stylized-concept. Mission Frontier working worker sprite for real modest articulated motion.\nSame exact friendly ivory ceramic white/dark steel/blue eye robot identity as reference. Full body facing three-quarter FRONT SE (screen lower right), standing planted feet, neutral focused face. One arm (on IMAGE RIGHT) reaches diagonally toward lower right with a COMPACT diagnostic fabrication probe in hand; the other arm relaxed at side. Probe is attached only to the reaching hand, short dark steel with a small cyan tip, no beam.\nCRITICAL SEPARABLE ANATOMY: image-right upper arm angles away from torso to an EXPOSED ROUND ELBOW HINGE well clear of body silhouette. Forearm extends horizontally/diagonally right from that elbow, hand and probe at far right. Forearm and probe silhouette must be isolated against background, never overlap torso, legs, other arm. The round elbow is a broad dark circular mechanical pivot; a short forearm cuff overlaps its center and can rotate a few degrees. Give this clear functional joint, not a giant shoulder. Keep complete reaching arm, probe, body and both feet inside square canvas with generous margins.\nCrisp high detail game rendered art, same ceramic armor joints blue eyes and warm top-left light. Match proportions of reference, no redesign, face visible. No stationary workbench/background/floor/chair/cast shadow/status UI/names/text/selection ring/extra tools/extra limbs. Full body single pose only.\nBackground perfectly flat saturated green #00FF00 for deterministic removal, including between arm and body/legs; no green reflections. Output square highresolution intended768x768 export, full subject within50..718 all edges. This is one assembled static source, not multiple frames or split pieces; part separation follows later.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.worker.standard.detail.neutral/exports/worker-standard-detail-neutral-r1.png",
+      "sha256": "9f27605d39c50d3a9c1cc6551b218bd2764575c36eabc1e1a20ba32584104be7"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Green key/spill cleanup",
+    "Source pixel body/part masks with overlapping original elbow bearing",
+    "Uniform fit640visible height in768canvas",
+    "QA-only\u00b14degree rotation;32frame GIF at62ms each"
+  ],
+  "rightsNote": "Supplied generated project reference only. No external art introduced."
+}

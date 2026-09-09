@@ -1,0 +1,26 @@
+{
+  "id": "mf.base.observatory.roof",
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-0308d1a3-9ed5-4bd0-bb9d-10b01d51567c",
+  "sourceSha256": "757a5682a409b81dfbe8af374d81aa67c981f01b2fd4b78bc7030b64ecdeffc3",
+  "prompt": "Generate ONE isolated architectural component for an observatory variant of the supplied sci-fi headquarters roof: a restrained compact shallow parabolic observatory dish on a short stout mechanical swivel pedestal, ceramic-white bowl with slate steel ribs and a neutral dark sensor feed, a small circular mounting shoe at bottom. Match supplied roof's fixed orthographic isometric camera, warm upper-left daylight, white/slate material palette. Dish looks upward toward screen upper right, seen three-quarter with its concave surface visible. Width about twice total height, low restrained silhouette, not an enormous radio tower. Fine credible panel seams, physically plausible bracket and dish support, no wires beyond base. Component will be mounted on the central dome cap: do NOT render the roof, floor, wall, ground, workers, labels, text, logos, or lights. No glowing beam, activity signal or semantic colored lights. Full component isolated with clear visible flat bottom mounting shoe and ample margins. Transparent background if reliably possible; otherwise perfectly flat vivid green RGB(0,255,0), no checkerboard or shadow.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.base.standard.roof/exports/base-standard-roof-r1.png",
+      "sha256": "3187c645988fc55645cf818f06021d4f6d1acf8016f0a04006d7109e718a8c78"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827"
+    }
+  ],
+  "transforms": [
+    "Preserve native source alpha; remove alpha below4 to discard near-transparent fringe specks",
+    "Uniformly resize dish to210source pixels high",
+    "Register manually measured mounting shoe contact to source[768,238]",
+    "Alpha composite onto exact approved standard roof; no perimeter/fascia transformation"
+  ],
+  "correctiveGenerations": 0,
+  "exportSha256": "77e16d3c838dfba9a3b182496588240fd642e83d9abc12c0400ecfeb1a1cfb17",
+  "rightsNote": "Project supplied/generated references; provenance is not legal clearance."
+}

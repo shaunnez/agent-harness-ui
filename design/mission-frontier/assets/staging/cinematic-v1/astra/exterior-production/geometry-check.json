@@ -1,0 +1,12 @@
+{
+  "exterior-calibration": {
+    "meshCount": 346,
+    "geometrySha256": "862191bdc2aee2e18d50f81b5412e7e77170d586d988b320f816b4be978d826b"
+  },
+  "exterior-production": {
+    "meshCount": 346,
+    "geometrySha256": "862191bdc2aee2e18d50f81b5412e7e77170d586d988b320f816b4be978d826b"
+  },
+  "differences": [],
+  "equivalentWithin1e6": true
+}

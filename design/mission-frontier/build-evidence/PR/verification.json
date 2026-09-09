@@ -1,0 +1,113 @@
+{
+  "qualifiedAtUtc": "2026-09-06T11:55:59.686052+00:00",
+  "baseRevision": "91f6d3a8464842846153f0d621b5ba2360ccabd0",
+  "branch": "codex/mission-frontier-v1",
+  "runtime": "Node 24.19.0 for tests, static checks and both builds",
+  "install": "Fresh npm ci completed using the host Node 26.4.0/npm; lockfile unchanged",
+  "checks": [
+    {
+      "name": "focused",
+      "command": "node --test tests/frontier/*.test.mjs tests/frontier/api/*.test.mjs tests/api-companion-actions.test.mjs",
+      "status": "passed",
+      "log": "focused.txt",
+      "sha256": "30fada05f80c32df718e3d9f011e389340fff0ff81bf920f5cfc12d54acd2d30",
+      "counts": {
+        "tests": 78,
+        "pass": 78,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "name": "full-tests",
+      "command": "node --test tests/*.test.mjs tests/frontier/*.test.mjs tests/frontier/api/*.test.mjs",
+      "status": "passed",
+      "log": "full-tests.txt",
+      "sha256": "9e1a5cd9c1038b7d8634902df0790f16dddb1e1011f01651dcdc317d1c551879",
+      "counts": {
+        "tests": 1041,
+        "pass": 1041,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "name": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "log": "typecheck.txt",
+      "sha256": "c9e4a5ee249828a63340bea8ba8166993e3626ef7d4b6963357c19b3202fd8e0"
+    },
+    {
+      "name": "lint",
+      "command": "npm run lint",
+      "status": "passed",
+      "log": "lint.txt",
+      "sha256": "8484a857799be68635ff32bf923f3efb273b1d6a6b488af7a925f5e0a1226438"
+    },
+    {
+      "name": "format",
+      "command": "npm run format:check",
+      "status": "passed",
+      "log": "format.txt",
+      "sha256": "e35fa777da788b4e46886bd8d95dc8d66889682b933a6f53b2d243d86fd8a7f1"
+    },
+    {
+      "name": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "log": "build.txt",
+      "sha256": "2aaea8d1abab4447673c0df387b891547329c9cf645d65ba7e9b7f726d7d6306"
+    },
+    {
+      "name": "frontier-build",
+      "command": "npm run build:frontier",
+      "status": "passed",
+      "log": "frontier-build.txt",
+      "sha256": "56bd8f84e4fc4f4258833506d0e4bb423c8ad08f0eb16777107febf5cba4526d"
+    }
+  ],
+  "distinctTests": 1041,
+  "focusedTestsAreSubset": true,
+  "cinematicManifestSha256": "f517b44b9726712d60e115b782ee46a5277eaab303867d96c3c0d32855d626ca",
+  "limits": [
+    "Existing Vite large-chunk warnings retained.",
+    "Native hidden-tab, OS reduced-motion switching and export receipt remain unverified.",
+    "Real implementation/repair/PR journey is a separate follow-up; no paid model execution was launched for this PR.",
+    "Browser screenshots/performance are the retained Goal 3 captures; this PR reran automated checks in the isolated source checkout."
+  ],
+  "packagingWhitespaceNormalization": [
+    {
+      "path": "design/mission-frontier/ATTENTION-CONTRACT.md",
+      "beforeSha256": "846f43dbe275afda271a674af27fe4e78c8a176344ec8e6fbb67b1bb92f3ce5b",
+      "afterSha256": "da2b97ea22fcd1b816f3bae85ca7d7455b334470397935080c52a8c3fa41cf27",
+      "change": "Whitespace only; original retained in source workspace or /tmp test output."
+    },
+    {
+      "path": "scripts/frontier/blender/astra_vegetation_albedo.py",
+      "beforeSha256": "1afcbc787a0980f64a3160bbd3cef07de60a7eecf41acab42ee6c7f337393645",
+      "afterSha256": "652f88864bb9bf0e9c7594bd9eb8dbac8dc4973fe047951e6ca8b603eb55d58f",
+      "change": "Whitespace only; original retained in source workspace or /tmp test output."
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/PR/typecheck.txt",
+      "beforeSha256": "0de190a1b717d16f6eac63f1e1b0282a46b4a1f92da6d05e7aa9d0675611f9f5",
+      "afterSha256": "c9e4a5ee249828a63340bea8ba8166993e3626ef7d4b6963357c19b3202fd8e0",
+      "change": "Whitespace only; original retained in source workspace or /tmp test output."
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/License_Standard.txt",
+      "beforeSha256": "120710e542c3ebaf83856c4eb55b4a1e680593b39302eba7fdc5d942dfe78c58",
+      "afterSha256": "5de0412f4f694f3d8cfa2b334a3ddb7ebbdc3ac5b1e9c262ff4870d0564341db",
+      "change": "Whitespace only; original retained in source workspace or /tmp test output."
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/cinematic-v1/astra/sources/modular-sci-fi-megakit/Modular SciFi MegaKit[Standard]/License_Standard.txt",
+      "beforeSha256": "885b700f02932c08a41163b35cc97d1abe0895a05de29d9a9062fde5132969a8",
+      "afterSha256": "124510397e3320be1735ecc67a39e3d574dd759b9ba196a52d4a92be18eb27d2",
+      "change": "Whitespace only; original retained in source workspace or /tmp test output."
+    }
+  ]
+}

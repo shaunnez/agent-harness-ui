@@ -1,0 +1,86 @@
+{
+  "logicalAnchor": [
+    128,
+    128
+  ],
+  "endpoints": {
+    "nw": [
+      80,
+      104
+    ],
+    "ne": [
+      176,
+      104
+    ],
+    "se": [
+      176,
+      152
+    ],
+    "sw": [
+      80,
+      152
+    ]
+  },
+  "crossSections": {
+    "nw": [
+      [
+        68,
+        110
+      ],
+      [
+        92,
+        98
+      ]
+    ],
+    "ne": [
+      [
+        164,
+        98
+      ],
+      [
+        188,
+        110
+      ]
+    ],
+    "se": [
+      [
+        164,
+        158
+      ],
+      [
+        188,
+        146
+      ]
+    ],
+    "sw": [
+      [
+        68,
+        146
+      ],
+      [
+        92,
+        158
+      ]
+    ]
+  },
+  "construction": "Crop each accepted full road to longitudinal interval[0.2,0.8], preserving original pixel positions. Where strips overlap, choose darker existing RGB pixel to retain slate and suppress interior cream curb crossings. No colors or geometry drawn.",
+  "registeredOpeningGeometry": "Inherited exact road axes and width; crop planes yield required centers.",
+  "armOffsetsFromJunctionLogical": {
+    "nw": [
+      -128,
+      -64
+    ],
+    "ne": [
+      128,
+      -64
+    ],
+    "se": [
+      128,
+      64
+    ],
+    "sw": [
+      -128,
+      64
+    ]
+  }
+}

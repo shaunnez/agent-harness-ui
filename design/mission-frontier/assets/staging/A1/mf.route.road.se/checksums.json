@@ -1,0 +1,17 @@
+{
+  "entry.json": "af5d6e03c8dffd42898dec2a3acbd736e27c4b18c461f9cd6bc2c235dfa092b3",
+  "exports/road-se-r1.png": "2304520e709f8239a2ded113eb895b6e7a0b84cc69df33ca019fe857de99df77",
+  "geometry.json": "4f6d7f6d47d9a4f21b04cf0015c07706d8da508f8d155bff2cdc49bec9db3bdd",
+  "process.py": "eac667bf9d7c5be331fc38ac6aa26a5af08c615a0f18079f09c709a948db57b5",
+  "provenance.json": "e3188b2f50337c0f5a432924d4d50f18e7fdace364723c4ffc30b53051fd934d",
+  "qa/QA.md": "cffe136a3e3d39e4c7f04c8965c875dc49213f6fdaac3b150f550539d32f4770",
+  "qa/alpha-backgrounds-r1.png": "223a4cb0408a47c14b2df496a41e882e7d53324abba8d01a92b5f82ee27cd9ac",
+  "qa/join-contact-magnified-r1.png": "b7948d0db0b91a634255abba7a139a4d735ab306f7d3d1fc1b0094ddd54c09e7",
+  "qa/join-measurements-r1.json": "467666773b386ccb9270ab148702d16711d0c4d93b0149a203723997aa612e61",
+  "qa/joined-consumer-scales-r1.png": "b808f0e9c7402a9afb89549a6c257022cc303f89b85a9eb2a9b34340d4ab8816",
+  "qa/joined-native-r1.png": "a14a932bc6f662781cd85ff60a1f397af75fdb4cb91944dc7badd6513508837d",
+  "source/end-section-mask-r1.png": "f2cc388ece7421564807383a107b42a612e283019b7a8aecf5d8ac66550eca9d",
+  "source/generation-prompt.txt": "391f09fb61eea2b8be057e363f61ba4a2380c799baf465431d9371b54277988b",
+  "source/road-alpha-master-r1.png": "2efcf072d7634bfc391a3a05349e8f5ab347fcc72be8802a029a116a2127e67b",
+  "source/road-master-r1.png": "6af36f2b93cf7379f37e450a56cdb037f08a762a186d75b60eda331a73c741f8"
+}

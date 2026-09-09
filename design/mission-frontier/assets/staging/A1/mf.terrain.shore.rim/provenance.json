@@ -1,0 +1,17 @@
+{
+  "assetId": "mf.terrain.shore.rim",
+  "revision": 1,
+  "production": "Deterministic exclusive alpha partition; no ImageGen or repaint",
+  "sourceAssetId": "mf.terrain.ground",
+  "sourceRevision": 1,
+  "sourcePath": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.terrain.ground/exports/terrain-ground-r1.png",
+  "sourceSha256": "12bec3d7f9d85f2e42a1c617d2574e7ad2b697ff38fee93a0f6256389e7fb731",
+  "sourceProvenance": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.terrain.ground/provenance.json",
+  "transforms": [
+    "Assign every original pixel to exactly one interior/shore part",
+    "Copy original RGBA pixel values without color edits or resampling",
+    "Assemble five parts for exact equality verification",
+    "QA-only native source1x/logical2x crops"
+  ],
+  "exportSha256": "12bec3d7f9d85f2e42a1c617d2574e7ad2b697ff38fee93a0f6256389e7fb731"
+}

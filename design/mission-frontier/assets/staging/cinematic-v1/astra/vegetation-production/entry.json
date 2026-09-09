@@ -1,0 +1,70 @@
+{
+  "id": "mf.prop.purple-tree",
+  "revision": 1,
+  "status": "production-pending-review",
+  "sourceSize": [
+    768,
+    768
+  ],
+  "logicalSize": [
+    384,
+    384
+  ],
+  "groundAnchor": [
+    192,
+    340
+  ],
+  "camera": {
+    "elevationDegrees": 30,
+    "azimuthDegrees": 45,
+    "location": [
+      10.70547866821289,
+      10.70547866821289,
+      12.968875885009766
+    ],
+    "orthoScale": 9.5
+  },
+  "samples": 64,
+  "usedMeshes": [
+    "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/TwistedTree_3.gltf",
+    "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/TwistedTree_5.gltf",
+    "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Bush_Common.gltf"
+  ],
+  "transforms": "TwistedTree3 broad5.7x5.75x5.5, companion TwistedTree5 2.9x2.9x3, lower-trunk taper53percent interpolating to unchanged branching at48percent height. Purple leaf noise coloration and alpha-preserving translucency.",
+  "lighting": {
+    "key": [
+      10,
+      -6,
+      16
+    ],
+    "keyWatts": 4800,
+    "fillWatts": 1300,
+    "worldStrength": 0.55
+  },
+  "buildScriptSha256": "722d3b33a6fdbdb040181a9aef459e06973a905a40fd4a14cff086956d70dcc9",
+  "provenance": "Quaternius Nature FREE STANDARD CC0; original acquisition/license/archive evidence in sibling sources. No baked ground or shadow.",
+  "shadow": {
+    "entry": "shadow-entry.json",
+    "file": "renders/spreading-grove-shadow-final.png",
+    "groundAnchor": [
+      384,
+      340
+    ],
+    "sourceSize": [
+      1536,
+      768
+    ]
+  },
+  "file": "renders/spreading-grove.png",
+  "alphaBoundsSource": [
+    110,
+    266,
+    689,
+    746
+  ],
+  "visibleSizeLogical": [
+    289.5,
+    240.0
+  ],
+  "sha256": "ab399f630214af8a7fefc9e80c79b63f3c5e72706eb23b5c70560b7c6bc46f27"
+}

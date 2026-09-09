@@ -1,0 +1,51 @@
+{
+  "assetId": "mf.base.standard.front",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "classification": "original generated foreground architectural layer using supplied/generated project references",
+  "sourceId": "exec-89f74e05-a783-4b4d-8430-4d296793336b",
+  "generationPath": "/Users/shaun/.codex/generated_images/01a0749d-4c28-78f1-ba94-00501ef2ade3/exec-89f74e05-a783-4b4d-8430-4d296793336b.png",
+  "sourceFile": "source/base-standard-front-master-r1.png",
+  "sourceSha256": "c4b064716420023a1ab86e30c41c7e25024a5f87dccdd43ddaa9a03a1d4cf8ee",
+  "masterDimensions": [
+    1374,
+    1145
+  ],
+  "prompt": "Use case: stylized-concept.\nAsset: Mission Frontier headquarters FRONT CUTAWAY architecture only, separate layer.\nReference1 is the registered floor+rear-wall compound whose materials and exact ground footprint must match. Reference2 is the empty padded floor for coordinates. Reference3 is the original HQ architecture, especially its wide open implementation entrance.\nGenerate ONLY two disconnected low front-side parapet/wall segments, leaving an especially wide central entrance with no threshold bar. No floor, rear walls, roof, internal partitions or complete building. Surround the TWO segments with perfectly flat saturated green #00FF00 including every gap and the whole empty interior.\nCanvas is1536x1280. Fixed orthographic2:1 isometric. Full footprint corners are left(64,692), front(768,1044), right(1472,692), back(768,340). Front segments run ONLY on these two front edges: LEFT segment foot runs from(64,692) towards front but STOPS around(490,905). RIGHT segment begins around(1046,905) and runs to(1472,692). Leave ALL space between the two inner ends, including the front corner(768,1044), entirely GREEN and empty. Thus the central entrance is at least550source pixels wide; no center pillar, stairs, doorway beam or connecting foreground railing.\nHeight of the low parapet segments above their contact path is about90\u2013100source pixels. Their inner gate-end piers may be110pixels high; no tall towers. The already-existing tall rear-wall corner posts will be separate; do not duplicate them. Keep the large central working floor visible above and between these low segments. The segments have thick white ceramic shell/rim, dark slate mechanical inset faces, slim inset utility seams, bevels and wear that match reference1. Clearly architectural building fronts, not a wooden fence or generic garden wall. Restrained detail, cohesive large shapes. No tiny decorative clutter.\nLighting warm upper-left daylight with neutral fill, same original HQ. Softly realistic high-quality game render, not cartoon/low-poly/voxel. No colored semantic lights or activity indicators.\nEverything except these TWO LOW FRONT STRUCTURAL SEGMENTS must be plain green. Do not include any floor, backwalls, interiorwalls, roof, machinery stations, robots/people, crates, props, signage, numbers, text, UI, labels, selection rings, terrain, islands or cast ground shadow. Keep all tips/endposts fully within frame. Green backdrop must not tint the white material.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.base.standard.back/qa/floor-back-composite-r2.png",
+      "sha256": "a91c95dd08190d9bcbb32bdbd99ab59aacf93224ab440b01a7125315674b8fac",
+      "role": "accepted compound material and geometry"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.base.standard.back/source/floor-padded-guidance-r2.png",
+      "sha256": "ff3a52198d01b6801d5a7b016487fc1c4d027813aab4ca474f0a1a29520463ea",
+      "role": "accepted floor padding and footprint"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827",
+      "role": "primary HQ architecture and open hangar reference"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    {
+      "script": "process.py",
+      "operations": [
+        "Retain original",
+        "Chroma key green and clamp edge spill; zero RGB under alpha0",
+        "Register two disconnected segments with recorded independent affine matrices and0.90 height scale",
+        "Post-resample edge cleanup",
+        "QA composites over floor/back and two approved58px workers; those assets not included in runtime export",
+        "Normal/faded foreground comparison is static QA only"
+      ]
+    }
+  ],
+  "exportSha256": "d893aedaa181ef2848b3bc31da06b864e0ab2761005476098f935d2060a30448",
+  "exportBytes": 236367,
+  "decodedRgbaBytes": 7864320,
+  "approval": "Pending coordinator scene review",
+  "rightsNote": "Supplied/generated project references only. Generated provenance is not a legal-clearance assertion."
+}

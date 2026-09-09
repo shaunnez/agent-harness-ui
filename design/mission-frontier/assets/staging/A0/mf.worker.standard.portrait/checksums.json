@@ -1,0 +1,12 @@
+{
+  "entry.json": "6b890da3156b8be8248cf5d55d3d02947433fd8545066df21cdac5738c0d57b5",
+  "exports/worker-standard-portrait-r1.png": "e1e3384a7603cd8a46c6666d9ad356f88a6359b9467c7e804b9faeb58930afb1",
+  "process.py": "2482c1290c77a1cc3039694a8063a5d2f1f3cd4ff0b37378af75ce7fb9e34cd9",
+  "provenance.json": "4232c31f9fb730afcc61a72c9aa979c3309fdb6b45bbfd6b969562b874cbb152",
+  "qa/QA.md": "a62e111ca353a3aa26af3cdfec99a4e6c9322ca2713de8d66feeb29f6bcf950a",
+  "qa/alpha-backgrounds-r1.png": "06f90e3bf0b07337e5c49436fc9dc97ca2cac7c9eee8ef9489f27bf639c15b78",
+  "qa/hud-actual-scale-r1.png": "52e58c76915f3bf9b6cf301df37465d7fa9c9037852e4a6d0ed6fc040b7a8f03",
+  "qa/measurements-r1.json": "922df922378d8c091e0b99a16763a3a4d6b0b9e0ea15f8c8f1bacb9eb23624e4",
+  "qa/slot-64x86-r1.png": "f3a83d503b03af664cf2d695e6b78f1533b7b36d76ecf01c93aac99e5fc563b5",
+  "qa/slot-80x122-r1.png": "08cb5a5c202aaa864536b0a4c82acfc9baf7473354a558267614a540cf092a70"
+}

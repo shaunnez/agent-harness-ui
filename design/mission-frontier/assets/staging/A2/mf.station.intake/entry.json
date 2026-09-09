@@ -1,0 +1,68 @@
+{
+  "id": "mf.station.intake",
+  "revision": 1,
+  "status": "pending-coordinator-A2-review",
+  "file": "exports/station-intake-r1.png",
+  "sourceSize": [
+    512,
+    512
+  ],
+  "logicalSize": [
+    256,
+    256
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    145.18395,
+    213.38745
+  ],
+  "footprint": [
+    [
+      56.7153,
+      175.73075
+    ],
+    [
+      103.5807,
+      139.55395
+    ],
+    [
+      202.90235,
+      179.01955
+    ],
+    [
+      145.18395,
+      213.38745
+    ]
+  ],
+  "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+  "layer": "station",
+  "occlusionClass": "solid-station",
+  "sockets": {
+    "frontToolPort": [
+      71.35045,
+      163.2333
+    ],
+    "screenCenter": [
+      119.86025,
+      138.074
+    ],
+    "receiver": [
+      178.7297,
+      87.2621
+    ]
+  },
+  "sha256": "623461a3e441421299f869f0d664d8dc3c8b2d6e225d0ff9ed88873be9805cef",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/socket-registration-r1.png",
+    "qa/calibrated-scale-comparison-r1.png"
+  ],
+  "limits": [
+    "Static unlit glass briefing panel and beacon; illumination belongs to runtime.",
+    "No workers, floor, state labels or animated parts baked in.",
+    "A2 integrated scene review pending."
+  ]
+}

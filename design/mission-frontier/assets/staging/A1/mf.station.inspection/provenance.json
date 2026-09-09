@@ -1,0 +1,28 @@
+{
+  "assetId": "mf.station.inspection",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-4631d35e-baff-45ed-9d55-6042e1d8ae66",
+  "sourceSha256": "3a5412a264c5bcaafb7fd09e849698923589cc5c697e3c069cfabadcb94b4de3",
+  "prompt": "Create ONE Mission Frontier inspection/Dev Review/Test workbench game asset. Reference1 HQ upper-right inspection machinery defines identity; reference2 approved fabrication bench defines exact ceramic/slate materials, size and fixed2:1 orthographic isometric projection.\nFreestanding broad practical white ceramic and dark steel bench, operator side faces lower left. DISTINCT main feature: large circular RECESSED scan platter inset in the dark tabletop, a blue glass disk inside segmented ceramic/slate concentric mechanical rings, neutral blue hardware illumination only. Small unlabelled neutral metallic specimen in platter center if useful, but no robot or task crate. TWO upright blue glass readout screens behind platter, asymmetrical sizes, abstract fine grid/line patterns only, no letters/numbers/code/icons. A compact slender articulated inspection sensor arm mounted at rear/right leans over platter, tiny optical head, no giant crane. Recognizable inspection machinery, not communications desk or fabrication module.\nGround footprint approximately146\u00d780logical, bench surface38\u201340logical above front foot, same proportions as fabrication. Actual circular DIAGNOSTIC CONNECTOR on front-left face around tabletop height for independent worker probe contact. Screens powered blue do not signify task status; no alert/green/red/amber semantic lights. Keep details readable at small HQ scale and detailed closeup.\nWarm upper-left daylight, ceramic ivory rounded bevels, slate dark machinery joints, restrained wear, sophisticated game render. Full bench from all feet to upper screens entirely inside square frame with margins.512x512 finalRGBA intended, subject within~70..442 all axes. Exactly one isolated bench.\nPerfectly uniform saturated green#00FF00 for deterministic removal, no green reflections. No floor/wall/platform/ground/cast ground shadow, no worker/people/robot, names, task IDs, text, semantic badge, label, UI or selection ring. No animation frames, only single assembled neutral station.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.station.fabrication/source/station-fabrication-master-r1.png",
+      "sha256": "b64a45a2bf6557e212cafce5069888820c425386213e8e338775ca28d4c99145"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Green key and spill cleanup",
+    "Crop subject and uniformly fit320source pixels wide",
+    "Lanczos resize and register bottom at430source on512canvas",
+    "QA-only comparison at requested consumer factors"
+  ],
+  "exportSha256": "3f82240e5723017910af1e8795e08187ae6aabe2de05c412f985dda4948d0f1d",
+  "exportBytes": 183304,
+  "rightsNote": "Supplied/generated project references only; provenance is not legal clearance."
+}

@@ -1,0 +1,21 @@
+✔ living assets match qualified RGBA hashes, dimensions, bounds and registration (17.795542ms)
+✔ walking loads initially while the two richer work loops remain lazy (0.343958ms)
+✔ a world day defaults to exactly one real hour and wraps continuously across midnight (0.651041ms)
+✔ speed edits and cycle/fixed switches preserve phase; saved settings reproduce it (0.76525ms)
+✔ old or corrupt browser preferences keep bounded finite environment settings (1.677792ms)
+✔ lighting has distinct dawn, day, dusk and night, with darker sea and increasing evening lights (0.411333ms)
+✔ motion admission freezes light while explicit manual changes remain possible (0.1365ms)
+✔ active identity admits work, including a running sibling of a failed package (0.136708ms)
+✔ offline, completed and historical runs park even if stale active ids exist (0.105042ms)
+✔ only explicit idle allows task wandering; every decision, wait and error stays parked (0.109125ms)
+✔ recorded role and station select six distinct work rhythms (0.094792ms)
+✔ authored patrols remain bounded and deterministic, pause and turn without teleporting (6.56225ms)
+✔ headquarters ambient route stays inside the open front floor strip (0.156833ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 172.259375

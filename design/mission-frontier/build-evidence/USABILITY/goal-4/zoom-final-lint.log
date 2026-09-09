@@ -1,0 +1,5 @@
+
+> agent-harness-ui@0.0.0 lint
+> biome lint src server scripts tests worker
+
+Checked 404 files in 2s. No fixes applied.

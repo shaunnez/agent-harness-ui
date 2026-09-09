@@ -1,0 +1,43 @@
+{
+  "masterDimensions": [
+    1586,
+    992
+  ],
+  "exportDimensions": [
+    2048,
+    1280
+  ],
+  "logicalDimensions": [
+    1024,
+    640
+  ],
+  "groundAnchorLogical": [
+    512,
+    540
+  ],
+  "clearingCentersSourcePixels": [
+    [
+      824,
+      950
+    ],
+    [
+      544,
+      590
+    ],
+    [
+      1364,
+      750
+    ]
+  ],
+  "clearingExtentSourcePixels": [
+    450,
+    250
+  ],
+  "clearingAssessment": "Visual land/support assessment, not semantic segmentation or terrain collision geometry. Natural boundaries approximate.",
+  "qaBaseFootprintSourcePixels": [
+    440,
+    220
+  ],
+  "qaBaseCompositeScale": 0.3125,
+  "resampling": "Single full-frame Lanczos resize; no crop or painted terrain substitute."
+}

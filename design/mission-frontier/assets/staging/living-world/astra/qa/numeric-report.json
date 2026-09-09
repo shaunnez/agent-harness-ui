@@ -1,0 +1,534 @@
+{
+  "walk": {
+    "frames": [
+      {
+        "file": "renders/worker-walk-00.png",
+        "sha256": "3472e1ca1d782b4ced23ac7171188dbb4d6e7fe565c4d20671493b5a5f3de517",
+        "bytes": 68480,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          135,
+          80,
+          281,
+          374
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-walk-01.png",
+        "sha256": "ce58580c5f4a6f27291fb1efe71eb3482ed3aca88ca0bd1ed112b112c1dfdbab",
+        "bytes": 67635,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          137,
+          80,
+          276,
+          357
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-walk-02.png",
+        "sha256": "e6d55ae093c71b87df58a58d27c7572357191005690d2f7bbd0b5447800e920a",
+        "bytes": 66281,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          80,
+          265,
+          342
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-walk-03.png",
+        "sha256": "79375349a969cd18fcc334b3a89c1f0e29d16bae0c9ecc7fb241ebd14323789f",
+        "bytes": 67181,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          132,
+          80,
+          273,
+          352
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-walk-04.png",
+        "sha256": "ddc444126a0bf900b3d541593e5a2cd9516cab2e71b5eb7befc47874c7e1bf84",
+        "bytes": 69303,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          123,
+          80,
+          282,
+          356
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-walk-05.png",
+        "sha256": "3aa6be076065ef2e721ed22859925be0e9eba4f9fe8732e05de4ad53f60ea61b",
+        "bytes": 67832,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          132,
+          80,
+          274,
+          350
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-walk-06.png",
+        "sha256": "3ed936900a5535610563dd70663d9621fd83d121675fff6e3d28c3132ebb48c0",
+        "bytes": 68280,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          80,
+          265,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-walk-07.png",
+        "sha256": "fdb33486c50dccb6134f9f2e78cd7dc877d9caa6fec62da588962a5d78fe4e15",
+        "bytes": 68893,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          137,
+          80,
+          276,
+          370
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      }
+    ],
+    "totalBytes": 543885,
+    "distinctFrames": 8,
+    "clipping": false,
+    "decodedRgbaBytes": 4718592,
+    "anchorStable": true,
+    "supportFootGroundedEveryFrame": true
+  },
+  "scan": {
+    "frames": [
+      {
+        "file": "renders/worker-scan-00.png",
+        "sha256": "31e641f05c7050669727079fefdf226504e1da50333fe2da5be8cca2345a1498",
+        "bytes": 70539,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          72,
+          285,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-scan-01.png",
+        "sha256": "ef3b45a6aaa20250358487729fe85c8ee766b0e4f97043c3155ade36221500d5",
+        "bytes": 70231,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          72,
+          286,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-scan-02.png",
+        "sha256": "dfc9324cf7730c6672f964f06ca072b3df5af78bdaa8fa26b95721da5090564e",
+        "bytes": 70537,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          72,
+          288,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-scan-03.png",
+        "sha256": "c777ececcaf752092fe419eda73aa81ae69ae63ed50f89afb99e8104e5368d77",
+        "bytes": 70734,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          71,
+          290,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-scan-04.png",
+        "sha256": "229b3d0435f539697cb9b2b26fc5b7e643f6a1bdd11ebe7d2ca45e105d80442a",
+        "bytes": 71073,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          137,
+          71,
+          291,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-scan-05.png",
+        "sha256": "467bccea4452acdf97fa768766479f9a94e08c9317d38ffc8a31ca53a490b187",
+        "bytes": 71202,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          135,
+          71,
+          290,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-scan-06.png",
+        "sha256": "fa7b3950f0ce06b3f37133379ee0ff18dc85f23ffb182cdbe9401b14a1e78fb8",
+        "bytes": 71127,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          135,
+          72,
+          288,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-scan-07.png",
+        "sha256": "ca7f83349f2e31da1b4a242ba9445997a1c8aa1c1dc1930e94a14e669217b4c8",
+        "bytes": 70838,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          137,
+          72,
+          286,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      }
+    ],
+    "totalBytes": 566281,
+    "distinctFrames": 8,
+    "clipping": false,
+    "decodedRgbaBytes": 4718592,
+    "anchorStable": true
+  },
+  "type": {
+    "frames": [
+      {
+        "file": "renders/worker-type-00.png",
+        "sha256": "2dd3f2f453525a7fb65c4523462f85d1185133c96e58763cd32901c8c1c99121",
+        "bytes": 70404,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          74,
+          302,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-type-01.png",
+        "sha256": "869ae82adb275d7f3f3e792babe8ca4c1eab2876b447dc3d43c3642478cdd3d4",
+        "bytes": 70325,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          74,
+          302,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-type-02.png",
+        "sha256": "9d6f3ab78d23b290866073e163bb8146523542e2a6226d3e7418b696df8870e8",
+        "bytes": 70353,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          73,
+          302,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-type-03.png",
+        "sha256": "0f5b8e59e35ec5eb58aa1d10506242b0a5fbacb5057b2adb18e41d3142472bd9",
+        "bytes": 70557,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          73,
+          302,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-type-04.png",
+        "sha256": "d860fefbedc4e26fa310a43f9986e969ee7a6c1e6a9378b6f3d93fdfdac222fd",
+        "bytes": 70556,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          73,
+          303,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-type-05.png",
+        "sha256": "7fc3b03786e258e5906af7840f418830e08b03c9cf0b88aba09294b31cd87f3b",
+        "bytes": 70571,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          73,
+          303,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-type-06.png",
+        "sha256": "4b3b33be35745f0e69bb85e63687709a9925b85a3b46f1fd3e0dd782cb88f05c",
+        "bytes": 70426,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          73,
+          302,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      },
+      {
+        "file": "renders/worker-type-07.png",
+        "sha256": "dcd296fe565de19772a30e71e3dc18d1a8f19b161ed2af27eea6f808ecdf626e",
+        "bytes": 70435,
+        "size": [
+          384,
+          384
+        ],
+        "mode": "RGBA",
+        "alphaBoundsSource": [
+          139,
+          74,
+          302,
+          360
+        ],
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "nonzeroEdgeAlpha": false
+      }
+    ],
+    "totalBytes": 563627,
+    "distinctFrames": 8,
+    "clipping": false,
+    "decodedRgbaBytes": 4718592,
+    "anchorStable": true
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "assetId": "mf.worker.standard.sw.neutral",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-3431a31d-cbaa-4ef7-a16a-077068f7e7b3",
+  "sourceSha256": "4940940888422498578707ba452bd999cd6c9bcfbe669c40ae2c4f9360cd1608",
+  "prompt": "Create opposite-facing SOUTHWEST neutral parked sprite of the EXACT Mission Frontier worker in reference. Preserve its identity and proportions: friendly round ivory ceramic head, black faceplate with two tiny luminous cyan-blue eyes, circular ear hinge, white ceramic chest/limb plates over dark steel joints, slim practical mechanical torso, articulated hands, broad sturdy feet. NOT a new character, not chibi or human. Full body, both feet and all limbs intact.\nFacing screen LOWER LEFT (SW), three-quarter front view from the same slightly elevated fixed isometric camera. Head and chest turn together toward lower left; both blue eyes visible. Hands relaxed by sides, feet planted in neutral parked stance. Warm daylight remains upper LEFT in world lighting: do not simply mirror highlights to the right. Match reference material, seams, slight wear, proportions, no new accessory/badge/tool.\n384x384 intendedRGBA export,logical192square; subject roughly312source pixels visible height after registration for58px HQ render. Full head to soles with generous margins; exact crop/anchor measured later. No floor/ground/castshadow/platform, workstation, text/UI/name/status, selection ring, tool or other character.\nPerfect uniform saturated green#00FF00 removable background, including between limbs, no green reflections. Only one opposite-facing neutral worker, no posesheet/animation/portrait.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.worker.standard.se.neutral/exports/worker-standard-se-neutral-r1.png",
+      "sha256": "2fb35d56130d44035ec3962e640b03e994e716b8204e8e611bebbaade53941b0"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Green alpha/spill cleanup",
+    "Uniform fit312source visible height matching SE",
+    "Register manually measured sole-contact midpoint",
+    "QA-only both facings on accepted floor at58/80px"
+  ],
+  "exportSha256": "c4ee094fee3f1911592e27619dfb3c59044bccb404187d0aa17e1a02031f7b3a",
+  "exportBytes": 91802
+}

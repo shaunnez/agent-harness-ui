@@ -1,0 +1,23 @@
+{
+  "assetId": "mf.route.road.junction",
+  "revision": 1,
+  "production": "Authorized deterministic crop/composite of accepted road art; no ImageGen",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.route.road.se/exports/road-se-r1.png",
+      "sha256": "2304520e709f8239a2ded113eb895b6e7a0b84cc69df33ca019fe857de99df77"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.route.road.sw/exports/road-sw-r1.png",
+      "sha256": "66f586d89c5471a15b2473a9798ac754b1b6718c91eed99817cf4e8e5324f7a1"
+    }
+  ],
+  "transforms": [
+    "Clip road length to middle60percent",
+    "Select darker original pixel in crossing intersection, avoiding overlaid curb barriers",
+    "Retain alpha and exterior transparent boundary; no resampling",
+    "QA-only attach four original road arms at exact connector offsets"
+  ],
+  "exportSha256": "3126ea2ed43c4845b2daec9921cb11fe0fdc8f1ac469dd33f1b69257aeea3c1c",
+  "exportBytes": 45187
+}

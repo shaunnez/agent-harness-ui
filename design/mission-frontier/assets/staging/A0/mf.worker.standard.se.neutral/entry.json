@@ -1,0 +1,126 @@
+{
+  "id": "mf.worker.standard.se.neutral",
+  "revision": 1,
+  "status": "delivered-pending-coordinator-integration-review",
+  "file": "exports/worker-standard-se-neutral-r1.png",
+  "sourceSize": [
+    384,
+    384
+  ],
+  "logicalSize": [
+    192,
+    192
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    103.875,
+    163.8765
+  ],
+  "footprint": [
+    [
+      74.0,
+      162.0
+    ],
+    [
+      106.5,
+      155.0
+    ],
+    [
+      126.0,
+      157.5
+    ],
+    [
+      125.5,
+      158.0
+    ],
+    [
+      119.0,
+      160.5
+    ],
+    [
+      96.5,
+      167.5
+    ],
+    [
+      89.5,
+      169.5
+    ],
+    [
+      87.5,
+      169.5
+    ],
+    [
+      83.0,
+      168.0
+    ],
+    [
+      82.0,
+      167.5
+    ],
+    [
+      79.5,
+      166.0
+    ]
+  ],
+  "labelAnchor": [
+    96,
+    10
+  ],
+  "occlusionClass": "entity",
+  "layer": "entity",
+  "sockets": {},
+  "sourceId": "exec-0d136c05-5ba2-42b2-8bba-ad6d29bf2ee7",
+  "sha256": "2fb35d56130d44035ec3962e640b03e994e716b8204e8e611bebbaade53941b0",
+  "alpha": "straight RGBA",
+  "facing": "screen lower right (SE), authored orthographic-like view",
+  "boundsSourcePixels": [
+    122,
+    28,
+    263,
+    340
+  ],
+  "groundAnchorSourcePixels": [
+    207.75,
+    327.753
+  ],
+  "contactMeasurementsSourcePixels": {
+    "nearSoleContourColumns": [
+      165,
+      194
+    ],
+    "farSoleContourColumns": [
+      224,
+      248
+    ],
+    "nearMean": [
+      179.5,
+      336.6666666666667
+    ],
+    "farMean": [
+      236.0,
+      318.84
+    ],
+    "method": "Visually identify two front sole contour spans on registered raster; obtain lowest alpha >=128 pixel in each column; ground anchor is midpoint of mean contact points. Footprint is convex hull of lower sole contours x148..196 and x213..252. This is a projected raster support footprint, not recovered 3D geometry."
+  },
+  "labelAnchorMethod": "Source x192 at y20, 8px above visible bounds y28. Placement aid; not a physical attachment.",
+  "display": {
+    "hqVisibleHeightCssPx": 58,
+    "hqFullCanvasCssPx": 71.3846,
+    "detailVisibleHeightCssPx": 180,
+    "detailFullCanvasCssPx": 221.5385
+  },
+  "qa": [
+    "qa/alpha-and-hq-r1.png",
+    "qa/detail-actual-scale-r1.png",
+    "qa/registration-r1.png",
+    "qa/measurements-r1.json",
+    "qa/QA.md"
+  ],
+  "limits": [
+    "One parked pose only; no rig or independent animation parts.",
+    "Projected ground anchor is measured from visible sole silhouettes, not a 3D ground solve.",
+    "Actual worker is slimmer/taller than the squat close-up concept; coordinator must assess identity/proportions in scene.",
+    "58px display preserves silhouette and face; tiny eye separation and mechanical detail are reduced.",
+    "No cast shadow; renderer supplies separate ground shadow."
+  ]
+}

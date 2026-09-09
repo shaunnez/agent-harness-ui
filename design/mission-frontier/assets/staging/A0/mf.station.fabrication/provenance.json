@@ -1,0 +1,40 @@
+{
+  "assetId": "mf.station.fabrication",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "classification": "Original generated fabrication station using supplied project HQ reference",
+  "sourceId": "exec-cfd035fe-140f-4cd4-a3cd-3463319c22af",
+  "generationPath": "/Users/shaun/.codex/generated_images/01a0749d-4c28-78f1-ba94-00501ef2ade3/exec-cfd035fe-140f-4cd4-a3cd-3463319c22af.png",
+  "sourceFile": "source/station-fabrication-master-r1.png",
+  "sourceSha256": "b64a45a2bf6557e212cafce5069888820c425386213e8e338775ca28d4c99145",
+  "masterDimensions": [
+    1286,
+    1223
+  ],
+  "prompt": "Use case: stylized-concept.\nAsset: one compelling freestanding Mission Frontier fabrication workbench, independent game station sprite.\nUse the supplied HQ image as the primary design/material source. Match its detailed white ceramic and dark-steel machinery, cyan technology and restrained warm upper-left daylight. No worker baked into the station.\nSubject: a single broad practical sci-fi fabrication workbench with heavy white ceramic/steel chassis, a dark recessed work surface, fine layered panel construction and a few organized clamps. In the work cradle sits a SMALL INCOMPLETE ceramic machine module with a partial white rounded casing and exposed dark mechanical core; visibly a module under assembly, not a finished robot or creature. One angled illuminated cyan control screen rises at the back/side; its display is abstract light/grid shapes only, absolutely no letters/numbers/text/code. Integrated socket or tool-attachment mount on the front edge and a clear accessible operator side. No giant robotic arm, no separate tool hovering in air. Keep distinct materials, joints and sockets readable at small game scale and interesting in close-up.\nStation layout/projection: fixed orthographic2:1 isometric, view from above roughly30degrees; front operator edge faces lower-left. Physical ground footprint approximately150\u00d795logical pixels. Bench surface about35\u201345logical pixels above floor; tallest display/assembly feature about80\u201390logical pixels above ground, so a separate58px-high worker could operate the bench naturally. No legs taller than the worker. Target final sprite canvas512x512 (256x256logical): full station including feet within about(70,55)..(445,455), contact center near(256,415). Entire asset visible with margins.\nAppearance: rich believable game machinery, ceramic-white rounded/beveled chassis, charcoal structural frames, small utility pipes/cable conduits, subtle warm metal detail, glassy cyan screen. Familiar kinship with the HQ, not generic industrial warehouse equipment, not cartoon/low-poly/voxel. Do not add decorative visual noise or many unrelated loose props.\nBackground: perfectly flat saturated green #00FF00 everywhere except the single station, including the gap under it. No ground plane, floor slab, cast ground shadow, scenery, platform, building, people, robots, other stations, names, text, status icons, selection rings or UI. No green tint reflected onto the white material. All activity effects will be separate in the game; depict a neutral powered display and paused assembly only.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827",
+      "role": "Primary HQ machinery/material source"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    {
+      "script": "process.py",
+      "operations": [
+        "Preserve original source",
+        "Deterministic green key and spill cleanup",
+        "Crop alpha bounds, uniform scale to320source pixels wide, Lanczos resample",
+        "Paste on512x512 untrimmed export at96,137",
+        "Post-resample edge cleanup",
+        "QA composites with separate approved worker at58px visible height"
+      ]
+    }
+  ],
+  "exportSha256": "3bb80f14413e70b0398b4d6770e601affcf3d9b20d2a5553dd3f01cebf1d966d",
+  "exportBytes": 164157,
+  "decodedRgbaBytes": 1048576,
+  "rightsNote": "Supplied/generated project reference only; no external brand or artist imitation requested. Provenance is not legal clearance."
+}

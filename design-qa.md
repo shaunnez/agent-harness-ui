@@ -1,3 +1,65 @@
+# Mission Frontier Goal 3 — visual QA
+
+6 September 2026. Latest review for the separate `src/frontier` game. The historical Evidence Gate / Operator QA record is preserved unchanged below this review.
+
+**Findings**
+
+No actionable P0/P1/P2 finding remains in the approved one-island scope. The final presentation is ready for Shaun's review; it is not a claim that Shaun has accepted the art or that every concept frame has been reproduced.
+
+**Sources, implementation and normalization**
+
+Source visual truth: `design/mission-frontier/reference/selected-world.png`, `screens/project-base-attention-v1.1.png`, `screens/agent-work.png`, `screens/agent-work-blocked-v1.1.png`, `screens/agent-work-needs-input-v1.1.png` (screen paths share the same design root). All were inspected. Source World/Agent images are1568×1003pixels; HQ1567×1004. Implementation is `http://127.0.0.1:5200/?mode=fixture&art=cinematic#world` and its PlanCheck HQ / PC-142 agent routes. New manifest revision`cinematic-v1-final`.
+
+Browser CSS/pixel dimensions are identical atDPR1. Canonical before images: `design/mission-frontier/build-evidence/VISUAL-FIDELITY/before/world-1568-fit.png`, `hq-1567.png`, `agent-1568.png`. Final after images use the same names under`after/`, except World is`world-1568.png`. World uses Fit world with PC-142 selected; HQ uses default project camera with no selected task; Agent uses PC-142's running Implement run and automatic detail camera. Old/current image pairs are matched in viewport and fixture state; live sample clock labels differ. The source study has a different conceptual UI composition and illustrative data; it is not described as an identical runtime snapshot.
+
+Full-view combined inputs (source / baseline / current), all opened and visually reviewed: `comparisons/world-reference-before-after.jpg`, `hq-reference-before-after.jpg`, `agent-reference-before-after.jpg`, beneath the same evidence root. Focused before/current crops`world-focused.jpg`, `hq-focused.jpg`, `agent-focused.jpg` were also opened together to inspect roof mass, material boundaries, tree alpha, station contact and worker proportions. No browser chrome or device frame is included. Source/baseline/current images are aligned at equal dimensions for each comparison; the full collages may be downscaled in the viewer, so focused crops were required.
+
+**Comparison history and fixes**
+
+1. Calibration pass found a plain dome/slab HQ, overly dark foliage, coarse radial terrain shading, beaded vertical cliff rocks and an insufficient articulated worker loop. Evidence:`calibration-world.png`, `calibration-hq.png`, `calibration-agent.png`, plus retained Astra calibration packages. These were not accepted. Fixes: closed modular facade with terraced observatory, brighter measured purple leaf albedo, continuous dense terrain topology and staggered rock strata, and a12-frame articulated worker. Final`after/`and focused comparisons show the revised result.
+2. Integration refinement found bridge spans/orientations without convincing physical connections, periodic-water edge mismatch, tree-shadow crop/noise and an open floating cavity under the HQ drums. Fixes: two actual geometry orientations with measured span/anchor calibration; periodic material/crop compensation; independently registered wide Cycles shadow with documented deterministic alpha cleanup;18floor-reaching Sci-Fi wall/door modules. FinalWorld/HQ full comparisons show continuous routes, coherent shoreline overlap, supported architecture and no matte rectangle around foliage/shadows.
+3. Interaction pass found artifact transparent padding intercepted a nearby worker pick. Fix: source-pixel visible bounds for artifact capsule and cargo entries, preserving art bytes. Retest: direct canvas coordinates selected all three workers; clicking the actual artifact still opened retained evidence and Raw source. Evidence:`artifact-picking.txt`, `selection-performance.json`. The correction changes hit areas only, so the final art comparisons remain representative.
+4. Qualification corrected selection instrumentation from DOM commit to an intervening paint, and fixed exact shadow source provenance / repeatable grove metadata. No visual re-render was required. Final rendered selection p95=15.4ms. All source/hash/dimension checks pass.
+
+**Required fidelity surfaces**
+
+- Fonts/typography: retained Inter and established12px metadata /14–16px body/control hierarchy, readable in matched desktop images. No fallback-font substitution or new type scale was introduced. Task labels intentionally truncate long reasons at smaller sizes; selection/agent panels expose the full reason. No cramped primary action or clipped heading was found.
+- Spacing/layout rhythm: preserved v1 utility shell, independent semantic labels, camera controls and agent panel. Featured World labels move above/beside the observatory to reveal its silhouette. Scene scale/footprints remain compatible across the three views. At1280×720, constrained detail content scrolls locally; header/nav/actions remain reachable. The decorative edge of the agent portrait meets the navigation at this size (P3).
+- Colors/tokens: semantic blue running/selection, amber human input and red repair remain labelled beyond colour. Ceramic/slate/blue water/purple vegetation/warm light preserve the study identity. Grove r2 restores purple midtones while keeping occlusion depth; no task meaning is painted into the scenery. New ground/robot materials are cleaner than retained weathered interiors; this is an explicit reviewable art difference.
+- Image quality: final64/72sample double-density RGBAexports, independently placed props/shadows/workers, fixed upper-left illumination and aligned anchors. Full and focused comparisons show no visible matte halos or texture seams. Cliff strata and some repeated geometric forms remain stylised. Worker feet remain fixed while the hand works at the station. Sources are actual Blender geometry and approved meshes, not CSS/HTML/SVG picture substitutes.
+- Copy/content: Running, Needs your answer, Repair required, dependency waits, approval and completed runs preserve task/stage/reason/next actor. Fixture and visual-preview labels are explicit. Tokens/time/cache and Approx. cost stay recorded semantics; no invented success or progress is introduced by animation.
+- Icons: existing Phosphor family retained across navigation, camera controls, task actions and utility dialogs; visible alignment and optical weight checked in desktop and mobile captures. Portrait art is an actual matching worker render.
+
+**Interaction, viewport and accessibility evidence**
+
+Actual computer use exercised project entry, worker and artifact canvas picking, pan/zoom/minimap/Fit, Watch agent, answer and review action surfaces, package/dependency drill, retained Markdown/raw source, all utility overlays, task search/filter, historical/future policies, approval wait and completed run. Close-panel from task command restored focus to Inspect task. The 1,000-task fixture retained access to the last record/action surface.
+
+Additional screenshots under`after/`: World/HQ/Agent1488×1058 and1280×720, agent1280scrolled, Tasks/New task/role setup/review390×844. The small-screen task wizard reached final review; the local role table retains horizontal overflow rather than shrinking text into illegibility. No live task was started. The desktop composition remains the priority.
+
+Motion evidence:`animation/in-app-worker.gif`, ordered strip/frames over1.364s; feet and shadow remain stable. Explicit motion-off produces pixel-identical sample crops. Finished/approval workers park, and disconnection stops the ticker with last-known state retained. Native hidden-tab state and OS media-preference switching were unavailable in this embedded host; no native pass is claimed. Visibility/reduced-motion input logic is covered by tests separately.
+
+Console inspection on the final artifact returned no application errors (`console-errors.json`); cold wire capture includes one cosmeticfavicon404. Existing main-chunk warning is recorded. See `design/mission-frontier/build-evidence/VISUAL-FIDELITY/performance.md` and`acceptance.md`for measured gates and historical-evidence caveats.
+
+**Open questions / follow-up polish**
+
+- P3: Shaun should review the cleaner worker character and terrain beside retained v1 materials before the art kit expands. The source study still has richer environmental density and atmosphere.
+- P3: Keep broader island/interior replacement, compact portrait/nav overlap and bundle/favicon cleanup as separate refinements. No placement, progression or engine work belongs to this goal.
+- Environment limitation: native hidden-page and OS export receipt remain explicit verification gaps, not passing checks.
+
+**Implementation checklist**
+
+- Qualified one island and its shared worker/bridge/grove parts at all three scales.
+- Preserved independent interactions and truthful task/run state.
+- Fixed measured visual and hit-area defects; repeated affected checks.
+- Retained sources, exact rebuild chain and classic fallback.
+- Ready for user review before broad replacement.
+
+final result: passed
+
+---
+
+# Preserved historical QA record
+
 # Design QA
 
 > **Triage note (2026-08-05, #26):** Entirely historical. Every pass recorded in this

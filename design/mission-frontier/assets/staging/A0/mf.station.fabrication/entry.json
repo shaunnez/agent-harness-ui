@@ -1,0 +1,76 @@
+{
+  "id": "mf.station.fabrication",
+  "revision": 1,
+  "status": "pending-coordinator-integration-review",
+  "file": "exports/station-fabrication-r1.png",
+  "sourceSize": [
+    512,
+    512
+  ],
+  "logicalSize": [
+    256,
+    256
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    131.3846,
+    214.5
+  ],
+  "footprint": [
+    [
+      57.5384,
+      173.2692
+    ],
+    [
+      130.6154,
+      134.3461
+    ],
+    [
+      203.5385,
+      173.5769
+    ],
+    [
+      131.3846,
+      214.5
+    ]
+  ],
+  "footprintUse": "Approximate support polygon; rear point is occluded and estimated. Visible support span146x80 logical.",
+  "labelAnchor": [
+    128,
+    60
+  ],
+  "layer": "station",
+  "occlusionClass": "solid-station",
+  "sockets": {
+    "moduleCradle": [
+      130.6154,
+      133.8846
+    ],
+    "frontToolPort": [
+      83.6923,
+      170.6539
+    ],
+    "screenCenter": [
+      100.0,
+      91.5769
+    ]
+  },
+  "socketUse": "Fixed visible feature centers; independent worker/tools are renderer-owned. No rig or detachable parts supplied.",
+  "sourceId": "exec-cfd035fe-140f-4cd4-a3cd-3463319c22af",
+  "sha256": "3bb80f14413e70b0398b4d6770e601affcf3d9b20d2a5553dd3f01cebf1d966d",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/worker-comparison-r1.png",
+    "qa/station-logical-scale-r1.png",
+    "qa/sockets-registration-r1.png",
+    "qa/measurements-r1.json"
+  ],
+  "limits": [
+    "Single static powered workbench; cyan screen is not execution status.",
+    "Bench surface measured about38logical pixels above front foot. Full sprite silhouette146.5logical high includes isometric depth; tallest feature physical height cannot be directly verified from flattened raster.",
+    "Integrated M1 and station-worker action pose remain unverified."
+  ]
+}

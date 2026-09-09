@@ -1,0 +1,43 @@
+{
+  "coordinateTransform": "Continuous source-frame reflection x=512-x, y=y; raster pixel index x=511-x. Logical x=256-x.",
+  "groundAnchor": [
+    128,
+    128
+  ],
+  "endpoints": {
+    "ne": [
+      208,
+      88
+    ],
+    "sw": [
+      48,
+      168
+    ]
+  },
+  "crossSections": {
+    "ne": [
+      [
+        196,
+        82
+      ],
+      [
+        220,
+        94
+      ]
+    ],
+    "sw": [
+      [
+        36,
+        162
+      ],
+      [
+        60,
+        174
+      ]
+    ]
+  },
+  "sourceGroundAnchor": [
+    128,
+    128
+  ]
+}

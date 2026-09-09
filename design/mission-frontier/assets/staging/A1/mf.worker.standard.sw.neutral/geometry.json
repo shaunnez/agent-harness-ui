@@ -1,0 +1,54 @@
+{
+  "masterSize": [
+    1254,
+    1254
+  ],
+  "masterAlphaBounds": [
+    388,
+    85,
+    857,
+    1146
+  ],
+  "uniformScale": 0.294062205466541,
+  "scaledSize": [
+    138,
+    312
+  ],
+  "pasteOffset": [
+    133,
+    28
+  ],
+  "exportAlphaBounds": [
+    133,
+    28,
+    271,
+    340
+  ],
+  "soleContactMaster": [
+    [
+      500,
+      1074
+    ],
+    [
+      678,
+      1130
+    ]
+  ],
+  "soleContactsSourcePixels": [
+    [
+      165.935,
+      318.8275
+    ],
+    [
+      218.278,
+      335.295
+    ]
+  ],
+  "groundAnchorLogical": [
+    96.05324999999999,
+    163.530625
+  ],
+  "measurementMethod": "Manual lower-sole contact centers within6master pixels; anchor midpoint of the two measured contacts.",
+  "visibleHeightSourcePixels": 312,
+  "fullCanvasAt58VisiblePixels": 71.38461538461539
+}

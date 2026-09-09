@@ -527,6 +527,11 @@ export interface RuntimeTask {
     stagePolicies?: Record<string, RuntimeAgentPolicy>;
     profileStagePolicies?: Record<WorkflowProfileId, Record<string, RuntimeAgentPolicy>>;
     policySnapshotVersion?: number;
+    rolePolicyOverrides?: Record<string, RuntimeAgentPolicy>;
+    rolePolicySources?: Record<
+      string,
+      "settings-default" | "task-override" | "legacy-task-override" | "future-role-override"
+    >;
   };
   attachments?: Array<{ id: string; name: string; type: string; size: number; path: string }>;
   status: RuntimeTaskStatus;
@@ -795,6 +800,7 @@ export interface RuntimeProject {
   name: string;
   repositoryPath: string;
   createdAt: string | null;
+  archivedAt?: string | null;
 }
 
 export interface RuntimeAgentPolicy {

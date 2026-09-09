@@ -1,0 +1,17 @@
+{
+  "geometry.json": "9fa87c17f7bb4f550166ef841304fd6ffe822d8ccfd1388cdff9aa4abb34cb56",
+  "entry.json": "84e2f26742a57b9c1374201950957ac1c87b5e41b7c905adced9b185230c3cae",
+  "provenance.json": "85e28ca2818d969226d80ce8ede18c1839123d018c9e640f281af673fc42811d",
+  "process.py": "57462bde2b9ff8a27c4db95d712e8f2139caa1ae2547c9ac4629a9fec618269e",
+  "source/generation-prompt.txt": "84aee94fe2be7dddecc7174fb60026132c60ed206a6a3ca2102eb3a7da6986b0",
+  "source/base-standard-floor-alpha-master-r1.png": "393395f061c19ff9a75e1c9b0f5580e48d374230f71fd3dce2a70d826dd9fd13",
+  "source/base-standard-floor-master-r1.png": "40d2d3c4ff86e3200b8d73b26163dd5ab2b6a1fec92a16fc1893e6e631d72be6",
+  "qa/source-corner-measurements-r1.png": "a1dfd99e060530385756e6ca5717d76d5cdd783337254255c7e3f4f35c0487a7",
+  "qa/QA.md": "102eca9ac581a4a55b63822a6ee7b7a300aff157f9499490ba105189d5ca5499",
+  "qa/alpha-backgrounds-r1.png": "519dfc37f2bb8359965becc44e4b84869172d3800a1ce107b6936c9be3c28292",
+  "qa/measurements-r1.json": "9825c0e36ca5406118b9498389b879be117cd6cc3fc6ef50ea3e329735783645",
+  "qa/registered-corners-r1.png": "85a5a78e5adeef7d382c936c2a54a145c2c2f6062a0f61b67a3495dddb821aa3",
+  "qa/hq-logical-scale-r1.png": "bd71206e8401a2b46cb99d00dab49b86542a0af640aef84432f073488426c03a",
+  "qa/overview-scale-r1.png": "3282ae310317331b2390ab509f2d153391d231e66bfc3f288bbbd3357850c22c",
+  "exports/base-standard-floor-r1.png": "863ce265015fb0742e9d4031a29c2b49ec546b004effafbe78e6ef6258edd25e"
+}

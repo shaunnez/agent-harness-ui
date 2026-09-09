@@ -1,0 +1,23 @@
+{
+  "assetId": "mf.artifact.capsule",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-e9aed8a2-bb88-429d-a9a6-f28817edadd5",
+  "sourceSha256": "54171cef7037ae518bbe0d555eb345ca68fc880752781c2aca4a25d0bf49b151",
+  "prompt": "One small Mission Frontier DATA CAPSULE game prop. Upright slightly backward-slanted narrow sealed ceramic/slate data canister, clearly distinct from a wide rectangular cargo case. Tall compact rounded rectangular body with chamfered shoulders and a small stable integrated foot, white ivory ceramic shell around dark steel structural ribs, ONE narrow subtle blue-glass inset down front face (neutral material, not a glowing status bar). No words/numbers/letters/icons/logo/UI, no progress bar or semantic green/red/amber light. Simple memorable vertical silhouette, softly realistic strategy-game detail, physical seams and discreet fasteners, no giant antenna or handles. Fixed orthographic2:1 isometric view, warm upper-left daylight, matches supplied fabrication materials.\nTarget384x384RGBA intended,logical192\u00b2; object40\u201355logicalwide\u00d770\u201385high. Full independent capsule from top to stable foot, ground contact near(192,300)source. No surrounding stand/platform/land/floor/castshadow, no second item, worker, cable to outside, vehicle or scene. Closed inert artifact container only; not traveling or operating.\nPerfect flat saturated green#00FF00 removable background, no green reflection. Comfortable margin, all geometry in frame.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.station.fabrication/source/station-fabrication-master-r1.png",
+      "sha256": "b64a45a2bf6557e212cafce5069888820c425386213e8e338775ca28d4c99145"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Preserve generated real RGBA alpha; discard sub4/255 alpha background specks before bounds, no chroma key",
+    "Uniform fit170source pixels high",
+    "Register front ground corner near192,300source",
+    "QA-only instances at consumer scales on accepted floor"
+  ],
+  "exportSha256": "02efc6fe8323d74f83dc2587efbd0b93904947ff2a03da2aded62ef52ae77c08",
+  "exportBytes": 33960
+}

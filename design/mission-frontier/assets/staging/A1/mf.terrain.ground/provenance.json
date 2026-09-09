@@ -1,0 +1,24 @@
+{
+  "assetId": "mf.terrain.ground",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-378d1bc8-a186-4f42-83b2-e589891b99ad",
+  "sourceSha256": "2c176f785a4698098c21293b95f35e2ecb7fad7afa2ec6db02bb7773a8bec966",
+  "prompt": "Generate one isolated reusable Mission Frontier rocky ground plate, matching the supplied landscape's sunlit tan pale stone, dusty earth and sparse olive moss, high-quality softly realistic strategy game terrain. Fixed orthographic2:1 isometric view.\nOne BROAD LOW land plate, organic irregular but broadly diamond-shaped top footprint approximately900wide\u00d7450high in1024x768output. Top back near(512,130),right(962,355),front(512,580),left(62,355). The entire top surface is spacious mostly-clear flat tan stone/earth with quiet fine natural texture, sparse SHORT moss at perimeter, no tall rocks in central area. The center must support a separate headquarters and two workers. No worn trail that implies route, no painted project pad. Organic bevelled shoreline rim, small chipped rocks, low rock side/drop at front edges no more50imagepixels below the top surface. NO deep cliff floating island underside. Top surface must dominate, not rocky cliffs.\nWarm upper-left daylight; pale grey/beige stratified rock sides, modest realistic texture like reference, not over-sharpened wormlike strokes. Keep full plate comfortably inside frame, surrounding clean removable perfectly flat saturated magenta#FF00FF background (not green because moss is green). No reflected magenta. No water or foam baked around plate. No trees, buildings, floors, roads, bridges, workers, other islands, UI, labels, rings, status, text or ground shadow. One independent low natural land tile with transparent exterior intended after deterministic key. Opaque ground surface, not see-through moss.1024x768 desired landscape source.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.terrain.region/source/terrain-region-master-attempt1.png",
+      "sha256": "975e46beee2daaec1e9c7f989e35cd52ad9b011430b7c0ded7fdf4de6b295689"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Magenta key preserves green moss, source alpha mask retained",
+    "One projective registration from measured organic surface corners to900x450diamond",
+    "Post-resample spill cleanup, registered mask retained",
+    "QA-only independent base and two workers at overview dimensions"
+  ],
+  "exportSha256": "12bec3d7f9d85f2e42a1c617d2574e7ad2b697ff38fee93a0f6256389e7fb731",
+  "exportBytes": 763288,
+  "rightsNote": "Generated project reference only; no new external art."
+}

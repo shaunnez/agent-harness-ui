@@ -1,0 +1,17 @@
+{
+  "mode": "RGBA",
+  "size": [
+    512,
+    512
+  ],
+  "alphaRange": [
+    0,
+    255
+  ],
+  "transparentPixels": 200506,
+  "partialAlphaPixels": 3004,
+  "borderNontransparent": 0,
+  "greenDominantVisiblePixels": 0,
+  "pngBytes": 164157,
+  "decodedRgbaBytes": 1048576
+}

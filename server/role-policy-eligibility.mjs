@@ -1,4 +1,4 @@
-import { POLICY_IDS } from "./model-catalog.mjs";
+import { POLICY_IDS } from "./policy-ids.mjs";
 
 const ROLE_IDS = new Set(POLICY_IDS);
 const WORKFLOW_STAGES = Object.freeze([...POLICY_IDS]);

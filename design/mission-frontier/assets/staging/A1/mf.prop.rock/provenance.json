@@ -1,0 +1,24 @@
+{
+  "assetId": "mf.prop.rock",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-86e92dab-2f45-4f8c-9dc2-f287a7b9e9d0",
+  "sourceSha256": "a9955d433503465a3677e622a0a3ad7b3cdaabf320739c6ff2f903fa0cc8931a",
+  "prompt": "One isolated LOW natural rock cluster game prop for Mission Frontier, match supplied ground plate warm grey/beige stone palette and rugged weathering. Fixed orthographic2:1 isometric view, warm daylight upper left. Three or four connected squat angular stones of varied sizes forming ONE compact naturally bounded cluster, mostly pale warm-grey stone, subtle tan veins, tiny sparse moss in crevices. Low profile: broad footprint roughly twice maximum visible height, no towering boulder/monolith. Detailed softly realistic game render, not smooth cartoon or over-sharpened texture.\nTarget384x256RGBA export, logical192x128, visible width about200source pixels (100logical), height90\u2013120source. Small grounded contact aroundsource(192,210), margin all around. Single complete cluster with all edges/root contact visible. No surrounding soil mound, base, scenic tile, water, plants, tree, floor, cast ground shadow, text/UI/labels or other objects.\nPerfectly flat saturated magenta#FF00FF background for removable alpha, no magenta reflection. Only rock cluster, not an environment.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.terrain.ground/source/ground-master-r1.png",
+      "sha256": "2c176f785a4698098c21293b95f35e2ecb7fad7afa2ec6db02bb7773a8bec966"
+    }
+  ],
+  "derivativeDecision": "Ground-source rocks merge with shoreline rather than providing one complete bounded cluster, so authorized new generation used.",
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Magenta key preserves moss",
+    "Uniform fit200source px wide",
+    "Register manually measured contact near192,210source",
+    "QA-only instances on accepted ground and water"
+  ],
+  "exportSha256": "56518d649ca8c25a989059c0f84d57cb69289843f94e50ec68d2a7477081e237",
+  "exportBytes": 37388
+}

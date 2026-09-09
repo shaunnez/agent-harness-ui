@@ -1,0 +1,27 @@
+{
+  "assetId": "mf.prop.purple-tree",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-09133dc9-0333-4c15-8868-e599c7564075",
+  "sourceSha256": "6a8b70877ec4311e18026b528e89260ea8fd9a962c9ce22e7840ea09475d6c45",
+  "prompt": "Mission Frontier purple tree, single isolated reusable game prop. Match the purple flowering/leaf trees of supplied selectedworld and terrain region: natural clustered lavender/plum/mauve foliage, rugged grey-brown branching trunk, delicate sunlit leaves and believable irregular canopy. Warm upper-left daylight, softly realistic high-detail strategy-game render, fixed orthographic isometric view from above around30degrees. Organic mature tree with broad clustered canopy, visible dark branching below, sturdy root contact, not a mushroom, bonsai, cartoon or perfectly spherical blob.\nFull isolated tree head-to-root in square768x768intended export. Target broad canopy roughly520sourcepx wide, total600sourcepx high; trunk/root ground contact near(384,684). Comfortable margins all sides. Tree lush and substantial at100\u2013180px display height, individual leaf clusters remain legible. Muted purple/plum shadows and dusty lavender highlights, no neon.\nNo pot, land tile, soil mound, rocks, base, ground shadow, surrounding plants, buildings, objects, text/UI/labels. Roots terminate at one small clear ground-contact cluster, not a spreading ground platform. No detached leaf debris.\nBackground perfectly flat saturated green#00FF00 for deterministic alpha removal, including openings between branches/leaves, no green cast on foliage. Preserve fine leaf silhouette with clean separation from background. Only one tree, no variants or second instance.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/reference/selected-world.png",
+      "sha256": "929dba738d20981573cfe52b951a45bd18357991a70adb82b92b622399f29758"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.terrain.region/source/terrain-region-master-attempt1.png",
+      "sha256": "975e46beee2daaec1e9c7f989e35cd52ad9b011430b7c0ded7fdf4de6b295689"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Green chroma alpha/spill cleanup including branch openings",
+    "Uniform resample to560source pixel height preserving natural canopy width",
+    "Register measured root near[384,684]source",
+    "QA-only instances on accepted ground/water at consumer scales"
+  ],
+  "exportSha256": "5fe30e28efebc71ba0ce2269cfb3434a7f21b9915ed743fbec1adcd6b85eceed",
+  "exportBytes": 617075
+}

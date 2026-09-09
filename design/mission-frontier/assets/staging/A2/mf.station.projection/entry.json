@@ -1,0 +1,68 @@
+{
+  "id": "mf.station.projection",
+  "revision": 1,
+  "status": "pending-coordinator-A2-review",
+  "file": "exports/station-projection-r1.png",
+  "sourceSize": [
+    512,
+    512
+  ],
+  "logicalSize": [
+    256,
+    256
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    145.20825,
+    213.3112
+  ],
+  "footprint": [
+    [
+      56.97025,
+      177.4302
+    ],
+    [
+      97.0618,
+      132.2128
+    ],
+    [
+      202.1419,
+      180.90845
+    ],
+    [
+      145.20825,
+      213.3112
+    ]
+  ],
+  "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+  "layer": "station",
+  "occlusionClass": "solid-station",
+  "sockets": {
+    "frontToolPort": [
+      69.96795,
+      166.0801
+    ],
+    "screenCenter": [
+      141.1808,
+      103.10525
+    ],
+    "projectorLens": [
+      114.4531,
+      130.93135
+    ]
+  },
+  "sha256": "571c04b65818805e806d6824da07c4d2e6e825b92c9c898b62e6a3e68252b084",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/socket-registration-r1.png",
+    "qa/calibrated-scale-comparison-r1.png"
+  ],
+  "limits": [
+    "Static blank screen and unlit projector; no active hologram, beams, status lighting or articulated part.",
+    "No workers, floor, state labels or animated parts baked in.",
+    "A2 integrated scene review pending."
+  ]
+}

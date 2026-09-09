@@ -1,0 +1,17 @@
+{
+  "entry.json": "7b15a55f9690780c00dc4d9b09bbebf475bcc548b97dfd7729d6becefc6599d9",
+  "exports/worker-standard-detail-neutral-r1.png": "9f27605d39c50d3a9c1cc6551b218bd2764575c36eabc1e1a20ba32584104be7",
+  "geometry.json": "fb388f78b8f5c3b04eeb6caaf97286b68d9c6f0f7fcee9a7894c27569a77644e",
+  "process.py": "3271def8dd83e4ff0124e0b5df0428a01114904ef48c0e0ef32a2dda96792b83",
+  "provenance.json": "9e1f8f27e78fb4e9af41112b7a0b97ae04aa09b9e20e94cfb3b69ffa71af2a1b",
+  "qa/QA.md": "8be11ded7bb3098b11bd4516a0d038f0d9ea5a87553fb6b1a9d7f628ded08412",
+  "qa/actual-scale-r1.png": "d818be608ac1e1c09305b67d792118b9146103458f62cd2f833dca96c9470ae1",
+  "qa/alpha-backgrounds-r1.png": "9d4c893b546f044caf284dddd9938c3b130b10c543a080c1619d8f0ffbd282e3",
+  "qa/measurements-r1.json": "25d8986ba80301b6c97bdbea1b883f903f77e10f15d30a7d3be1885109499fd5",
+  "qa/registration-r1.png": "da12c46c8f707cfa75a059b806329b0c85fd5402c88e29ed74ca9c1fce569b0a",
+  "source/correction-prompt.txt": "7337d7fbe8820c1709e09fbeec05a4fe5de3048ba941960c9efcb4b94bcba419",
+  "source/detail-alpha-master-r1.png": "21cd90b5344453e7bf87653ce546a4ca2ec298f8270eab81de0f7e9aec9b51c0",
+  "source/detail-master-attempt1.png": "db158681329bbb1c35a8c5b9e66c5dad5b9233624e3fe79a32268fb9aa8ee6c1",
+  "source/detail-master-r1.png": "225bf32e3f4746f36a1fcf3cae90b5a1ea51a45c434b1ba381602b22e42ff38d",
+  "source/generation-prompt.txt": "306d5f5e8b47b545dc185817de4ff7ed431427b4f816be1094295c11ba0b164a"
+}

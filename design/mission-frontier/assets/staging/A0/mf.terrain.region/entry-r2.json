@@ -1,0 +1,55 @@
+{
+  "id": "mf.terrain.region",
+  "revision": 2,
+  "status": "pending-coordinator-integration-review",
+  "file": "exports/terrain-region-r2.png",
+  "sourceSize": [
+    2048,
+    1280
+  ],
+  "logicalSize": [
+    1024,
+    640
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    512,
+    540
+  ],
+  "footprint": [
+    [
+      0,
+      0
+    ],
+    [
+      1024,
+      0
+    ],
+    [
+      1024,
+      640
+    ],
+    [
+      0,
+      640
+    ]
+  ],
+  "layer": "terrain",
+  "occlusionClass": "background",
+  "sockets": {},
+  "sourceId": "exec-937b5774-80a6-425f-8f51-4a7f6caee8f2",
+  "sha256": "4e7548883ecf18ae6fc4f05e9dec3bf3afef4176f3fb1df68ece132c8f9f9ec0",
+  "alpha": "opaque RGB terrain",
+  "geometry": "geometry-r2.json",
+  "qa": [
+    "qa/QA-r2.md",
+    "qa/independent-bases-proof-r2.png",
+    "qa/placement-registration-r2.png",
+    "qa/scene-1568-r2.png"
+  ],
+  "limits": [
+    "Natural clearings determine runtime placements; original specified clearing centers superseded.",
+    "Not a seamless repeating tile; static scenery only.",
+    "Integrated M1 remains pending."
+  ]
+}

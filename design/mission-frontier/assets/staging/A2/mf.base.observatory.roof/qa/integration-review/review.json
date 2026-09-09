@@ -1,0 +1,588 @@
+{
+  "runtimeManifestSha256": "9f711487caae8673a21d8fca60ab9c5004556eb971cf5962c5d6852a608e8bc9",
+  "sceneSha256": "53667c837582ae4410739936171f07b7f7769ec395704435ad9ffcd9300a1a6b",
+  "runtimeAssets": 35,
+  "a2Count": 10,
+  "a2CompressedBytes": 2827843,
+  "a2DecodedBytes": 18612224,
+  "hashChecks": [
+    {
+      "id": "mf.worker.standard.se.neutral",
+      "shaMatches": true,
+      "bytes": 92595
+    },
+    {
+      "id": "mf.base.standard.floor",
+      "shaMatches": true,
+      "bytes": 1439654
+    },
+    {
+      "id": "mf.base.standard.back",
+      "shaMatches": true,
+      "bytes": 765877
+    },
+    {
+      "id": "mf.base.standard.front",
+      "shaMatches": true,
+      "bytes": 236367
+    },
+    {
+      "id": "mf.base.standard.roof",
+      "shaMatches": true,
+      "bytes": 1549206
+    },
+    {
+      "id": "mf.station.fabrication",
+      "shaMatches": true,
+      "bytes": 164157
+    },
+    {
+      "id": "mf.terrain.region",
+      "shaMatches": true,
+      "bytes": 5175963
+    },
+    {
+      "id": "mf.worker.standard.detail.neutral",
+      "shaMatches": true,
+      "bytes": 341635
+    },
+    {
+      "id": "mf.worker.standard.se.working",
+      "shaMatches": true,
+      "bytes": 367532
+    },
+    {
+      "id": "mf.worker.standard.portrait",
+      "shaMatches": true,
+      "bytes": 133331
+    },
+    {
+      "id": "mf.station.communications",
+      "shaMatches": true,
+      "bytes": 162859
+    },
+    {
+      "id": "mf.station.inspection",
+      "shaMatches": true,
+      "bytes": 183304
+    },
+    {
+      "id": "mf.terrain.ground",
+      "shaMatches": true,
+      "bytes": 763288
+    },
+    {
+      "id": "mf.terrain.shore.rim",
+      "shaMatches": true,
+      "bytes": 763288
+    },
+    {
+      "id": "mf.terrain.water",
+      "shaMatches": true,
+      "bytes": 492623
+    },
+    {
+      "id": "mf.route.road.se",
+      "shaMatches": true,
+      "bytes": 45066
+    },
+    {
+      "id": "mf.route.road.sw",
+      "shaMatches": true,
+      "bytes": 44982
+    },
+    {
+      "id": "mf.route.road.junction",
+      "shaMatches": true,
+      "bytes": 45187
+    },
+    {
+      "id": "mf.route.bridge.se",
+      "shaMatches": true,
+      "bytes": 50477
+    },
+    {
+      "id": "mf.route.bridge.sw",
+      "shaMatches": true,
+      "bytes": 50433
+    },
+    {
+      "id": "mf.prop.purple-tree",
+      "shaMatches": true,
+      "bytes": 617075
+    },
+    {
+      "id": "mf.prop.rock",
+      "shaMatches": true,
+      "bytes": 37388
+    },
+    {
+      "id": "mf.prop.cargo",
+      "shaMatches": true,
+      "bytes": 30534
+    },
+    {
+      "id": "mf.artifact.capsule",
+      "shaMatches": true,
+      "bytes": 33960
+    },
+    {
+      "id": "mf.worker.standard.sw.neutral",
+      "shaMatches": true,
+      "bytes": 91802
+    },
+    {
+      "id": "mf.station.intake",
+      "shaMatches": true,
+      "bytes": 137099
+    },
+    {
+      "id": "mf.station.survey",
+      "shaMatches": true,
+      "bytes": 144883
+    },
+    {
+      "id": "mf.station.projection",
+      "shaMatches": true,
+      "bytes": 154989
+    },
+    {
+      "id": "mf.station.blueprint",
+      "shaMatches": true,
+      "bytes": 132298
+    },
+    {
+      "id": "mf.station.planning",
+      "shaMatches": true,
+      "bytes": 135434
+    },
+    {
+      "id": "mf.station.diagnostics",
+      "shaMatches": true,
+      "bytes": 127137
+    },
+    {
+      "id": "mf.station.delivery-inspection",
+      "shaMatches": true,
+      "bytes": 129866
+    },
+    {
+      "id": "mf.station.launchpad",
+      "shaMatches": true,
+      "bytes": 174088
+    },
+    {
+      "id": "mf.vehicle.shuttle",
+      "shaMatches": true,
+      "bytes": 113303
+    },
+    {
+      "id": "mf.base.observatory.roof",
+      "shaMatches": true,
+      "bytes": 1578746
+    }
+  ],
+  "compositions": [
+    {
+      "mode": "hq",
+      "stage": "Triage",
+      "asset": "mf.station.intake",
+      "stationScale": 0.8075,
+      "workerScale": 0.16,
+      "contactWorld": [
+        -35.82055125000001,
+        -115.59947612499998
+      ],
+      "workerAnchorWorld": [
+        -67.09823125000001,
+        -91.92579612499998
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 1828
+    },
+    {
+      "mode": "hq",
+      "stage": "Repo scouts",
+      "asset": "mf.station.survey",
+      "stationScale": 0.8075,
+      "workerScale": 0.16,
+      "contactWorld": [
+        -32.037211875,
+        -113.27581412500001
+      ],
+      "workerAnchorWorld": [
+        -63.314891875,
+        -89.602134125
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 1828
+    },
+    {
+      "mode": "hq",
+      "stage": "Grill",
+      "asset": "mf.station.communications",
+      "stationScale": 0.8075,
+      "workerScale": 0.16,
+      "contactWorld": [
+        -51.60580350000001,
+        -123.13890175
+      ],
+      "workerAnchorWorld": [
+        -82.88348350000001,
+        -99.46522175
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 1828
+    },
+    {
+      "mode": "hq",
+      "stage": "Design",
+      "asset": "mf.station.projection",
+      "stationScale": 0.8075,
+      "workerScale": 0.16,
+      "contactWorld": [
+        -36.95654225,
+        -113.23911325000002
+      ],
+      "workerAnchorWorld": [
+        -68.23422225,
+        -89.56543325000001
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 1828
+    },
+    {
+      "mode": "hq",
+      "stage": "Specification",
+      "asset": "mf.station.blueprint",
+      "stationScale": 0.8075,
+      "workerScale": 0.16,
+      "contactWorld": [
+        -43.29578062499999,
+        -117.0058585
+      ],
+      "workerAnchorWorld": [
+        -74.573460625,
+        -93.3321785
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 1828
+    },
+    {
+      "mode": "hq",
+      "stage": "Planning",
+      "asset": "mf.station.planning",
+      "stationScale": 0.8075,
+      "workerScale": 0.16,
+      "contactWorld": [
+        -44.49532187499999,
+        -120.26525149999999
+      ],
+      "workerAnchorWorld": [
+        -75.77300187499999,
+        -96.59157149999999
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 1828
+    },
+    {
+      "mode": "hq",
+      "stage": "Implement",
+      "asset": "mf.station.fabrication",
+      "stationScale": 0.8075,
+      "workerScale": 0.16,
+      "contactWorld": [
+        -14.711532250000001,
+        -110.50572575
+      ],
+      "workerAnchorWorld": [
+        -45.98921225000001,
+        -86.83204574999999
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 1828
+    },
+    {
+      "mode": "hq",
+      "stage": "Dev Review",
+      "asset": "mf.station.inspection",
+      "stationScale": 0.8075,
+      "workerScale": 0.16,
+      "contactWorld": [
+        -28.38666587500001,
+        -126.020021375
+      ],
+      "workerAnchorWorld": [
+        -59.664345875000016,
+        -102.346341375
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 1828
+    },
+    {
+      "mode": "hq",
+      "stage": "Test",
+      "asset": "mf.station.diagnostics",
+      "stationScale": 0.8075,
+      "workerScale": 0.16,
+      "contactWorld": [
+        -51.379986125,
+        -114.18360562500001
+      ],
+      "workerAnchorWorld": [
+        -82.657666125,
+        -90.50992562500001
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 1828
+    },
+    {
+      "mode": "hq",
+      "stage": "Final Review",
+      "asset": "mf.station.delivery-inspection",
+      "stationScale": 0.8075,
+      "workerScale": 0.16,
+      "contactWorld": [
+        -27.48246775000001,
+        -107.69816937499999
+      ],
+      "workerAnchorWorld": [
+        -58.760147750000016,
+        -84.02448937499999
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 1828
+    },
+    {
+      "mode": "hq",
+      "stage": "Human Approval",
+      "asset": "mf.station.launchpad",
+      "stationScale": 0.8075,
+      "workerScale": 0.16,
+      "contactWorld": [
+        -19.978289500000006,
+        -113.15460837500002
+      ],
+      "workerAnchorWorld": [
+        -51.25596950000001,
+        -89.48092837500002
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 1828
+    },
+    {
+      "mode": "detail",
+      "stage": "Triage",
+      "asset": "mf.station.intake",
+      "stationScale": 1.9949999999999999,
+      "workerScale": 0.6,
+      "contactWorld": [
+        -98.49783250000002,
+        -187.65752924999998
+      ],
+      "workerAnchorWorld": [
+        -215.78913250000002,
+        -98.88122924999998
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 17090
+    },
+    {
+      "mode": "detail",
+      "stage": "Repo scouts",
+      "asset": "mf.station.survey",
+      "stationScale": 1.9949999999999999,
+      "workerScale": 0.6,
+      "contactWorld": [
+        -89.15075874999997,
+        -181.91671725000003
+      ],
+      "workerAnchorWorld": [
+        -206.44205874999997,
+        -93.14041725000003
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 17090
+    },
+    {
+      "mode": "detail",
+      "stage": "Grill",
+      "asset": "mf.station.communications",
+      "stationScale": 1.9949999999999999,
+      "workerScale": 0.6,
+      "contactWorld": [
+        -137.496691,
+        -206.28434550000003
+      ],
+      "workerAnchorWorld": [
+        -254.787991,
+        -117.50804550000002
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 17090
+    },
+    {
+      "mode": "detail",
+      "stage": "Design",
+      "asset": "mf.station.projection",
+      "stationScale": 1.9949999999999999,
+      "workerScale": 0.6,
+      "contactWorld": [
+        -101.30439849999996,
+        -181.82604450000002
+      ],
+      "workerAnchorWorld": [
+        -218.59569849999997,
+        -93.04974450000002
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 17090
+    },
+    {
+      "mode": "detail",
+      "stage": "Specification",
+      "asset": "mf.station.blueprint",
+      "stationScale": 1.9949999999999999,
+      "workerScale": 0.6,
+      "contactWorld": [
+        -116.96604624999995,
+        -191.13212099999998
+      ],
+      "workerAnchorWorld": [
+        -234.25734624999996,
+        -102.35582099999998
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 17090
+    },
+    {
+      "mode": "detail",
+      "stage": "Planning",
+      "asset": "mf.station.planning",
+      "stationScale": 1.9949999999999999,
+      "workerScale": 0.6,
+      "contactWorld": [
+        -119.92961874999995,
+        -199.18473899999998
+      ],
+      "workerAnchorWorld": [
+        -237.22091874999995,
+        -110.40843899999997
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 17090
+    },
+    {
+      "mode": "detail",
+      "stage": "Implement",
+      "asset": "mf.station.fabrication",
+      "stationScale": 1.9949999999999999,
+      "workerScale": 0.6,
+      "contactWorld": [
+        -46.3461385,
+        -175.0729695
+      ],
+      "workerAnchorWorld": [
+        -163.6374385,
+        -86.2966695
+      ],
+      "probeSocketErrorWorld": 7.105427357601002e-15,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 17090
+    },
+    {
+      "mode": "detail",
+      "stage": "Dev Review",
+      "asset": "mf.station.inspection",
+      "stationScale": 1.9949999999999999,
+      "workerScale": 0.6,
+      "contactWorld": [
+        -80.13176275000001,
+        -213.40240575
+      ],
+      "workerAnchorWorld": [
+        -197.42306275,
+        -124.62610575000001
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 17090
+    },
+    {
+      "mode": "detail",
+      "stage": "Test",
+      "asset": "mf.station.diagnostics",
+      "stationScale": 1.9949999999999999,
+      "workerScale": 0.6,
+      "contactWorld": [
+        -136.93878924999996,
+        -184.15949625000002
+      ],
+      "workerAnchorWorld": [
+        -254.23008924999996,
+        -95.38319625000001
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 17090
+    },
+    {
+      "mode": "detail",
+      "stage": "Final Review",
+      "asset": "mf.station.delivery-inspection",
+      "stationScale": 1.9949999999999999,
+      "workerScale": 0.6,
+      "contactWorld": [
+        -77.8978615,
+        -168.13665375
+      ],
+      "workerAnchorWorld": [
+        -195.1891615,
+        -79.36035374999999
+      ],
+      "probeSocketErrorWorld": 0.0,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 17090
+    },
+    {
+      "mode": "detail",
+      "stage": "Human Approval",
+      "asset": "mf.station.launchpad",
+      "stationScale": 1.9949999999999999,
+      "workerScale": 0.6,
+      "contactWorld": [
+        -59.358127,
+        -181.61726775000005
+      ],
+      "workerAnchorWorld": [
+        -176.649427,
+        -92.84096775000005
+      ],
+      "probeSocketErrorWorld": 7.105427357601002e-15,
+      "workerOpaquePixelsCoveredByFront": 0,
+      "workerOpaquePixels": 17090
+    }
+  ],
+  "limits": [
+    "Deterministic Pillow reconstruction of current sprite transforms, not a Pixi/browser screenshot.",
+    "Zero-angle worker pose only; in-app +/-4degree motion, attention effects, UI labels, actual camera fitting and event semantics remain to verify.",
+    "No new generated assets or runtime changes."
+  ]
+}

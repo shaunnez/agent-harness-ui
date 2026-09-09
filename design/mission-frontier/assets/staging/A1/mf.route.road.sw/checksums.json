@@ -1,0 +1,14 @@
+{
+  "entry.json": "7b504cfea9c1c11669939b454b94ee6f3e37c32af6683a78c7a8d919f0ef8135",
+  "exports/road-sw-r1.png": "66f586d89c5471a15b2473a9798ac754b1b6718c91eed99817cf4e8e5324f7a1",
+  "geometry.json": "a49a8b48dd5543b940e31b7a9e5714ba9491d6e9d31f87a022f78af114ea23e9",
+  "process.py": "4f8482f27ab56ccbd07509864e8b79ae8831fa868dafba7aa2c9644c56cea873",
+  "provenance.json": "d00082275699b06128875020457eb06eaec3e40ac3e27bf34a1f22145787d4d2",
+  "qa/QA.md": "15b66ae831c2f131ae77f08aec55191fc26f39734424115891c4d4408c4af9a4",
+  "qa/alpha-backgrounds-r1.png": "c2daffa8e1abeda4be419ee524a5dc8c1901a60fbfee7bdb7405993e313e726b",
+  "qa/both-axes-consumer-scales-r1.png": "9d6122d67cefa249ed59b247d4d66b4cf0af3c21558343d57358ee0013207538",
+  "qa/join-contact-magnified-r1.png": "992fa5fb5de81a0140182bd4cb1ad9a7dd77f7b568f0adf8c196f183ed41f5ce",
+  "qa/join-measurements-r1.json": "aa4e65a75e701781e0fb4f3da0780f9105a43898680f9a46a7c7a1aba1d951e6",
+  "qa/joined-se-native-r1.png": "a14a932bc6f662781cd85ff60a1f397af75fdb4cb91944dc7badd6513508837d",
+  "qa/joined-sw-native-r1.png": "df7c1933fee014cb1ff20de8e29f4f0112ed7b93ead0084643844da1bdb425fc"
+}

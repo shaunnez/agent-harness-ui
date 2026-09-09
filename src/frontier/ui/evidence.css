@@ -1,0 +1,117 @@
+.artifact-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+}
+.artifact-toolbar small {
+  display: block;
+  margin-top: 6px;
+}
+.artifact-provenance {
+  font-size: 12px;
+  color: #adc0cc;
+  padding: 14px 0;
+  border-bottom: 1px solid #2a4352;
+}
+.markdown-artifact {
+  max-width: 850px;
+  margin: 25px auto;
+  font-size: 15px;
+  line-height: 1.8;
+}
+.markdown-artifact h1 {
+  font-size: 27px;
+  margin-bottom: 24px;
+}
+.markdown-artifact h2 {
+  margin-top: 28px;
+}
+.markdown-artifact h3 {
+  font-size: 17px;
+  margin-top: 22px;
+}
+.markdown-artifact code {
+  background: #1b3544;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 13px;
+}
+.markdown-artifact pre,
+.raw-artifact {
+  overflow: auto;
+  background: #071721;
+  border: 1px solid #314b5a;
+  border-radius: 6px;
+  padding: 18px;
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+.context-manifest {
+  max-width: 850px;
+  margin: 32px auto;
+  border-top: 1px solid #314b5a;
+  padding-top: 20px;
+  font-size: 13px;
+}
+.settings-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 30px;
+}
+.settings-body section {
+  border: 1px solid #314b5a;
+  border-radius: 6px;
+  padding: 22px;
+}
+.settings-body p {
+  font-size: 14px;
+}
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 0;
+  border-top: 1px solid #304956;
+}
+.setting-row strong,
+.setting-row small {
+  display: block;
+}
+.setting-row small {
+  margin-top: 7px;
+}
+.keyboard-guide {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+.keyboard-guide dd {
+  margin: 0;
+  font-size: 13px;
+}
+.build-diagnostics {
+  position: absolute;
+  top: 115px;
+  left: 12px;
+  z-index: 15;
+  max-width: 440px;
+  padding: 10px;
+  font-size: 12px;
+}
+.build-diagnostics summary {
+  cursor: pointer;
+}
+.build-diagnostics pre {
+  max-height: 50vh;
+  overflow: auto;
+}
+.build-diagnostics a {
+  display: block;
+  margin: 10px 0;
+}
+.build-diagnostics button {
+  margin: 5px;
+}

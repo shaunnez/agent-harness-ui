@@ -1,0 +1,11 @@
+{
+  "joinInteriorCrossSectionSampleCount": 41,
+  "minimumAlphaAcrossJoinInterior": 255,
+  "zeroAlphaSamples": 0,
+  "registeredEndpointDisplacement": [
+    160,
+    80
+  ],
+  "slope": 0.5,
+  "samplingCorrection": "1.5percent longitudinal inset removed generated end cut gap; contract endpoint positions unchanged."
+}

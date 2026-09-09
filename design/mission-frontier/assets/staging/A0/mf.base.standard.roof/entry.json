@@ -1,0 +1,87 @@
+{
+  "id": "mf.base.standard.roof",
+  "revision": 1,
+  "status": "coordinator-reviewed-for-calibration-integration-pending-M1",
+  "file": "exports/base-standard-roof-r1.png",
+  "sourceSize": [
+    1536,
+    1280
+  ],
+  "logicalSize": [
+    768,
+    640
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    384,
+    522
+  ],
+  "footprint": [
+    [
+      384,
+      170
+    ],
+    [
+      736,
+      346
+    ],
+    [
+      384,
+      522
+    ],
+    [
+      32,
+      346
+    ]
+  ],
+  "footprintUse": "shared physical floor reference; roof deck is elevated110logical pixels",
+  "roofDeck": [
+    [
+      384,
+      60
+    ],
+    [
+      736,
+      236
+    ],
+    [
+      384,
+      412
+    ],
+    [
+      32,
+      236
+    ]
+  ],
+  "labelAnchor": [
+    384,
+    50
+  ],
+  "labelAnchorMethod": "label placement aid10logical pixels above roofback silhouette",
+  "layer": "roof",
+  "occlusionClass": "roof",
+  "sockets": {},
+  "sourceId": "exec-6d4b39ed-52e8-43ea-9691-49f66bdd9a19",
+  "sha256": "3187c645988fc55645cf818f06021d4f6d1acf8016f0a04006d7109e718a8c78",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/closed-compound-r1.png",
+    "qa/closed-overview-r1.png",
+    "qa/closed-open-logical-scale-r1.png",
+    "qa/closed-open-overview-r1.png",
+    "qa/roof-seat-registration-r1.png",
+    "qa/back-top-overlap-r1.json",
+    "qa/measurements-r1.json"
+  ],
+  "remainingP3": [
+    "Generated fascia~106.7153source pixels deep; coordinator reviewed and retained as a proportion detail pending integrated M1."
+  ],
+  "limits": [
+    "One fixed authored roof composition; no rotation/interior geometry.",
+    "Rear underside not directly visible/measurable in source.",
+    "Full scene M1 remains unverified."
+  ]
+}

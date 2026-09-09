@@ -1,0 +1,59 @@
+{
+  "id": "mf.terrain.ground",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/terrain-ground-r1.png",
+  "sourceSize": [
+    1024,
+    768
+  ],
+  "logicalSize": [
+    512,
+    384
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    256,
+    290
+  ],
+  "footprint": [
+    [
+      256.0,
+      65.0
+    ],
+    [
+      481.0,
+      177.5
+    ],
+    [
+      256.0,
+      290.0
+    ],
+    [
+      31.0,
+      177.5
+    ]
+  ],
+  "layer": "terrain",
+  "occlusionClass": "ground",
+  "sockets": {
+    "center": [
+      256,
+      177.5
+    ]
+  },
+  "sha256": "12bec3d7f9d85f2e42a1c617d2574e7ad2b697ff38fee93a0f6256389e7fb731",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/surface-registration-r1.png",
+    "qa/overview-placement-r1.png"
+  ],
+  "limits": [
+    "Organic edge is not seamless. Connectors/shore remain separately assigned.",
+    "Flat top surface supports object placement; rim has no independent collision mesh.",
+    "No water/background outside plate."
+  ]
+}

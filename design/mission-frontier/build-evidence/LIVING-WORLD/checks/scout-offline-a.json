@@ -1,0 +1,130 @@
+{
+  "capturedAt": "2026-09-08T16:20:13.386Z",
+  "viewport": {
+    "width": 1488,
+    "height": 1058,
+    "dpr": 1
+  },
+  "mode": "fixture",
+  "projects": 1,
+  "tasks": 11,
+  "refresh": {
+    "cycles": 671,
+    "summaryReads": 2,
+    "selectedReads": 2,
+    "failures": 267
+  },
+  "renderer": {
+    "artDirection": "cinematic",
+    "textures": 78,
+    "decodedBytes": 141754368,
+    "compressedBytes": 21168914,
+    "reconciliations": 7,
+    "rebuiltEntities": 5,
+    "handoffs": 0,
+    "phase": "Daylight",
+    "worldHour": 13.404423333333334,
+    "lamps": 0,
+    "lightingSurfaces": 8,
+    "frameSamples": 12000,
+    "measuredSeconds": 396.4048000000119,
+    "medianFps": 128.2051289888842,
+    "p95FrameMs": 9.600000023841858,
+    "entities": 1,
+    "workers": 1,
+    "activeWorkers": 0,
+    "ambientCrew": 0,
+    "roamingWorkers": 0,
+    "workerActions": [],
+    "tickerListeners": 2,
+    "actorSamples": [
+      {
+        "id": "ART-scouts",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": -70,
+        "y": -75,
+        "textureFrame": 38
+      }
+    ],
+    "tickerRunning": false,
+    "documentHidden": false,
+    "backgroundSuspensions": 0,
+    "camera": {
+      "x": 513.1857534246575,
+      "y": 695.8520547945205,
+      "zoom": 1.0790136986301369
+    }
+  },
+  "selectionAckMs": [],
+  "selectionMeasurement": "Selection event to the second animation frame after committed state and scene effects",
+  "pageTransfer": {
+    "requests": 152,
+    "transferBytes": 561125,
+    "encodedBytes": 13854280
+  },
+  "artworkNetwork": [
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.portrait-2b3815b7e1.png",
+      "transferBytes": 300,
+      "encodedBytes": 139209,
+      "decodedBodyBytes": 139209
+    },
+    {
+      "path": "/assets/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 71785,
+      "decodedBodyBytes": 71785
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 20101,
+      "decodedBodyBytes": 20101
+    },
+    {
+      "path": "/assets/living/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 23887,
+      "decodedBodyBytes": 23887
+    },
+    {
+      "path": "/assets/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 71785,
+      "decodedBodyBytes": 71785
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 20101,
+      "decodedBodyBytes": 20101
+    },
+    {
+      "path": "/assets/living/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 23887,
+      "decodedBodyBytes": 23887
+    },
+    {
+      "path": "/assets/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 71785,
+      "decodedBodyBytes": 71785
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 20101,
+      "decodedBodyBytes": 20101
+    },
+    {
+      "path": "/assets/living/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 23887,
+      "decodedBodyBytes": 23887
+    }
+  ],
+  "network": []
+}

@@ -1,0 +1,250 @@
+{
+  "id": "mf.terrain.shore.rim",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/shore-assembled-r1.png",
+  "sourceSize": [
+    1024,
+    768
+  ],
+  "logicalSize": [
+    512,
+    384
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    256,
+    290
+  ],
+  "layer": "terrain",
+  "occlusionClass": "ground",
+  "parts": [
+    {
+      "name": "interior",
+      "file": "exports/shore-interior-r1.png",
+      "sourceSize": [
+        1024,
+        768
+      ],
+      "logicalSize": [
+        512,
+        384
+      ],
+      "anchor": [
+        256,
+        290
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "c94965ebf4dcabdd5967874f6450b658751e20c58c7ceec0b651b596bb50ce21"
+    },
+    {
+      "name": "nw",
+      "file": "exports/shore-nw-r1.png",
+      "sourceSize": [
+        1024,
+        768
+      ],
+      "logicalSize": [
+        512,
+        384
+      ],
+      "anchor": [
+        256,
+        290
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "fcd91f7d53b64bc8a57b535f3e409d47dbe855e38ba92cba8898e368e86714fe",
+      "sockets": {
+        "start": [
+          31.0,
+          177.0
+        ],
+        "end": [
+          255.5,
+          65.0
+        ],
+        "approach": [
+          143.5,
+          121.0
+        ]
+      }
+    },
+    {
+      "name": "ne",
+      "file": "exports/shore-ne-r1.png",
+      "sourceSize": [
+        1024,
+        768
+      ],
+      "logicalSize": [
+        512,
+        384
+      ],
+      "anchor": [
+        256,
+        290
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "20fd1c86a08a2b6ba4decb11d6c02d6598a197d2006dcf925df8fae97b28b00a",
+      "sockets": {
+        "start": [
+          256.0,
+          65.0
+        ],
+        "end": [
+          481.0,
+          177.0
+        ],
+        "approach": [
+          368.5,
+          121.0
+        ]
+      }
+    },
+    {
+      "name": "se",
+      "file": "exports/shore-se-r1.png",
+      "sourceSize": [
+        1024,
+        768
+      ],
+      "logicalSize": [
+        512,
+        384
+      ],
+      "anchor": [
+        256,
+        290
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "06d4f9b784b89e96c567ba56dd01d80b445d6b171dc697e83011ddba2f15b1b8",
+      "sockets": {
+        "start": [
+          481.0,
+          177.5
+        ],
+        "end": [
+          256.0,
+          290.0
+        ],
+        "approach": [
+          368.5,
+          233.5
+        ]
+      }
+    },
+    {
+      "name": "sw",
+      "file": "exports/shore-sw-r1.png",
+      "sourceSize": [
+        1024,
+        768
+      ],
+      "logicalSize": [
+        512,
+        384
+      ],
+      "anchor": [
+        256,
+        290
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "05bddb799956757040555a06d5cc9e109a87d3e1b7df3f9d403995d664316c5b",
+      "sockets": {
+        "start": [
+          255.5,
+          290.0
+        ],
+        "end": [
+          31.0,
+          177.5
+        ],
+        "approach": [
+          143.5,
+          233.5
+        ]
+      }
+    }
+  ],
+  "sockets": {
+    "nwStart": [
+      31.0,
+      177.0
+    ],
+    "nwEnd": [
+      255.5,
+      65.0
+    ],
+    "nwApproach": [
+      143.5,
+      121.0
+    ],
+    "neStart": [
+      256.0,
+      65.0
+    ],
+    "neEnd": [
+      481.0,
+      177.0
+    ],
+    "neApproach": [
+      368.5,
+      121.0
+    ],
+    "seStart": [
+      481.0,
+      177.5
+    ],
+    "seEnd": [
+      256.0,
+      290.0
+    ],
+    "seApproach": [
+      368.5,
+      233.5
+    ],
+    "swStart": [
+      255.5,
+      290.0
+    ],
+    "swEnd": [
+      31.0,
+      177.5
+    ],
+    "swApproach": [
+      143.5,
+      233.5
+    ]
+  },
+  "sha256": "12bec3d7f9d85f2e42a1c617d2574e7ad2b697ff38fee93a0f6256389e7fb731",
+  "alpha": "straight RGBA; mutually exclusive source alpha ownership",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/reconstruction-r1.json",
+    "qa/reconstruction-at-scale2-r1.png",
+    "qa/joins-at-scale2-r1.png",
+    "qa/part-ownership-r1.png"
+  ],
+  "limits": [
+    "Do not draw assembled export beneath parts; choose assembled OR parts.",
+    "Part boundaries are registered to this plate, not a guarantee of arbitrary seamless island-to-island tiling.",
+    "No rotations baked; preserve lighting and use measured sockets for approach alignment.",
+    "Exact reconstruction is at registered native source pixels. Independently linear-filtered part edges can form fractional-alpha seams under zoom; assemble same-island parts at source resolution into one render texture before scene scaling, or validate an equivalent sampling approach."
+  ]
+}

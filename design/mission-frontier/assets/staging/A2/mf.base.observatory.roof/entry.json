@@ -1,0 +1,82 @@
+{
+  "id": "mf.base.observatory.roof",
+  "revision": 1,
+  "status": "pending-coordinator-A2-review",
+  "file": "exports/base-observatory-roof-r1.png",
+  "sourceSize": [
+    1536,
+    1280
+  ],
+  "logicalSize": [
+    768,
+    640
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    384,
+    522
+  ],
+  "footprint": [
+    [
+      384,
+      170
+    ],
+    [
+      736,
+      346
+    ],
+    [
+      384,
+      522
+    ],
+    [
+      32,
+      346
+    ]
+  ],
+  "footprintUse": "shared physical floor reference; roof deck is elevated110logical pixels",
+  "roofDeck": [
+    [
+      384,
+      60
+    ],
+    [
+      736,
+      236
+    ],
+    [
+      384,
+      412
+    ],
+    [
+      32,
+      236
+    ]
+  ],
+  "labelAnchor": [
+    384,
+    8.0
+  ],
+  "labelAnchorMethod": "10 logical pixels above full roof and dish alpha bounds",
+  "layer": "roof",
+  "occlusionClass": "roof",
+  "sockets": {},
+  "sourceId": "exec-0308d1a3-9ed5-4bd0-bb9d-10b01d51567c",
+  "sha256": "77e16d3c838dfba9a3b182496588240fd642e83d9abc12c0400ecfeb1a1cfb17",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/alpha-backgrounds-r1.png",
+    "qa/closed-compound-r1.png",
+    "qa/closed-open-logical-scale-r1.png",
+    "qa/overview-comparison-r1.png",
+    "qa/measurements-r1.json",
+    "qa/QA.md"
+  ],
+  "limits": [
+    "Original perimeter and fascia are retained pixel-for-pixel; new dish is an independent generated component baked into this roof export.",
+    "No dish motion or state lighting.",
+    "Dish bottom contact manually measured within6 master pixels.",
+    "Existing standard-roof fascia depth retained."
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "date": "2026-09-09",
+  "applicationCommit": "77b04f4d834170eb3e5a0a5c76ae358445b8d8d9",
+  "scope": "CSS reflow follow-up only; no backend, test or dependency edits",
+  "node": "24.19.0",
+  "logs": {
+    "typecheck": {
+      "file": "zoom-final-typecheck.log",
+      "sha256": "0de190a1b717d16f6eac63f1e1b0282a46b4a1f92da6d05e7aa9d0675611f9f5",
+      "exitCode": 0
+    },
+    "lint": {
+      "file": "zoom-final-lint.log",
+      "sha256": "faa76f3df6af4350f13d38762424f7e31230be4ce3e411c40fc46719a1b4dbc5",
+      "exitCode": 0
+    },
+    "format": {
+      "file": "zoom-final-format.log",
+      "sha256": "a0ec9ee9f6699650461c60e14463af988ab9178f2ddc6a26c16d3c76bc91f1af",
+      "exitCode": 0
+    },
+    "frontier": {
+      "file": "zoom-final-frontier.log",
+      "sha256": "b83ea6870cca353f23fbb305845a57f41fa3eaf6f2bc67356a47a81defc2ddb7",
+      "exitCode": 0
+    },
+    "build": {
+      "file": "zoom-final-build.log",
+      "sha256": "2ff036d2e221a42af8308341f70260f6b7b7f1e7a01edcad1632361dfa258fbd",
+      "exitCode": 0
+    },
+    "frontier-build": {
+      "file": "zoom-final-frontier-build.log",
+      "sha256": "48ad2699255346679acfb70a73edada0a01441ada3e1d7582386b568b233d38c",
+      "exitCode": 0
+    }
+  },
+  "tests": {
+    "total": 78,
+    "passed": 78,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "fullSuite": "Prior 1068-test output retained: 1064 pass, 4 timing failures. All 121 implicated tests passed sequential recheck. Full suite not repeated for this CSS-only follow-up."
+}

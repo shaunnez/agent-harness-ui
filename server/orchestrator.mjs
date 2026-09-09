@@ -125,8 +125,8 @@ export class TaskOrchestrator {
     return this.#core.candidates.restartImplementationFromTarget(id);
   }
 
-  async retryTestOnSameCandidate(id) {
-    return this.#core.candidates.retryTestOnSameCandidate(id);
+  async retryTestOnSameCandidate(id, expectedCandidate = null) {
+    return this.#core.candidates.retryTestOnSameCandidate(id, expectedCandidate);
   }
 
   async completeMergedTask(id, note = "") {

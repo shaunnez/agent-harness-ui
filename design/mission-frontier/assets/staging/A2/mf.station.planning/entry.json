@@ -1,0 +1,68 @@
+{
+  "id": "mf.station.planning",
+  "revision": 1,
+  "status": "pending-coordinator-A2-review",
+  "file": "exports/station-planning-r1.png",
+  "sourceSize": [
+    512,
+    512
+  ],
+  "logicalSize": [
+    256,
+    256
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    156.64405,
+    212.9322
+  ],
+  "footprint": [
+    [
+      57.8305,
+      182.7627
+    ],
+    [
+      101.5593,
+      137.67795
+    ],
+    [
+      200.71185,
+      181.0678
+    ],
+    [
+      156.64405,
+      212.9322
+    ]
+  ],
+  "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+  "layer": "station",
+  "occlusionClass": "solid-station",
+  "sockets": {
+    "frontToolPort": [
+      72.0678,
+      157.0
+    ],
+    "screenCenter": [
+      120.54235,
+      136.8305
+    ],
+    "assemblyCenter": [
+      120.54235,
+      136.8305
+    ]
+  },
+  "sha256": "db194aba70876e0fcfc930746c4572a665fb2067356d3f94d23a8897af3e4961",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/socket-registration-r1.png",
+    "qa/calibrated-scale-comparison-r1.png"
+  ],
+  "limits": [
+    "Static illustrative assembly layout, not live package count or dependency state. No execution lighting or articulated part.",
+    "No workers, floor, state labels or animated parts baked in.",
+    "A2 integrated scene review pending."
+  ]
+}

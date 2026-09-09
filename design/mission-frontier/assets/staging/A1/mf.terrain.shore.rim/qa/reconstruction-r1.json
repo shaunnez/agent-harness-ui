@@ -1,0 +1,10 @@
+{
+  "exactRgbaPixelEquality": true,
+  "maxChannelDifference": 0,
+  "differentPixels": 0,
+  "overlapPixels": 0,
+  "uncoveredOriginalAlphaPixels": 0,
+  "introducedAlphaPixels": 0,
+  "sourceSha256": "12bec3d7f9d85f2e42a1c617d2574e7ad2b697ff38fee93a0f6256389e7fb731",
+  "assembledSha256": "12bec3d7f9d85f2e42a1c617d2574e7ad2b697ff38fee93a0f6256389e7fb731"
+}

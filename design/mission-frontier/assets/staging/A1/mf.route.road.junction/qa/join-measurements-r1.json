@@ -1,0 +1,23 @@
+{
+  "nw": {
+    "samples": 29,
+    "minimumAlpha": 255,
+    "zeroAlphaSamples": 0
+  },
+  "ne": {
+    "samples": 29,
+    "minimumAlpha": 255,
+    "zeroAlphaSamples": 0
+  },
+  "se": {
+    "samples": 29,
+    "minimumAlpha": 255,
+    "zeroAlphaSamples": 0
+  },
+  "sw": {
+    "samples": 29,
+    "minimumAlpha": 255,
+    "zeroAlphaSamples": 0
+  },
+  "centerAlpha": 255
+}

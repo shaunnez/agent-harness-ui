@@ -1,0 +1,16 @@
+{
+  "mode": "RGBA",
+  "size": [
+    384,
+    384
+  ],
+  "alphaBounds": [
+    133,
+    28,
+    271,
+    340
+  ],
+  "visibleHeight": 312,
+  "borderNontransparent": 0,
+  "greenDominantVisiblePixels": 0
+}

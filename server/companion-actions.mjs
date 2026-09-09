@@ -121,8 +121,8 @@ export function resolveRolePolicyEligibility(task, input, settings, catalog, exp
 }
 
 /**
- * Apply exactly one task snapshot policy. The caller must have resolved the
- * policy first; this function deliberately does not touch global settings,
+ * Apply one role across this task's profile snapshots, retaining its explicit
+ * choice if the workflow later escalates. This does not touch global settings,
  * task-level fallback fields, models, runs, or historical artifacts.
  */
 export function applyTaskRolePolicy(task, role, policy) {
@@ -130,6 +130,13 @@ export function applyTaskRolePolicy(task, role, policy) {
     throw new Error("The selected task has no mutable stage-policy snapshot.");
   }
   task.agentConfig.stagePolicies[role] = { model: policy.model, reasoning: policy.reasoning };
+  for (const matrix of Object.values(task.agentConfig.profileStagePolicies ?? {})) {
+    matrix[role] = { model: policy.model, reasoning: policy.reasoning };
+  }
+  task.agentConfig.rolePolicySources ??= {};
+  task.agentConfig.rolePolicySources[role] = "future-role-override";
+  task.agentConfig.rolePolicyOverrides ??= {};
+  task.agentConfig.rolePolicyOverrides[role] = { model: policy.model, reasoning: policy.reasoning };
 }
 
 export async function updateTaskRolePolicy({ store, taskId, input, catalog, readCatalog } = {}) {

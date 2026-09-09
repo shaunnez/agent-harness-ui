@@ -1,0 +1,38 @@
+{
+  "assetId": "mf.base.standard.floor",
+  "revision": 1,
+  "classification": "original AI-generated art using supplied project reference",
+  "generator": "Built-in ImageGen",
+  "model": "not independently selected or asserted by the asset agent",
+  "sourceId": "exec-c871c81d-2430-4acf-a75b-ef3aa2c40860",
+  "generationPath": "/Users/shaun/.codex/generated_images/01a0749d-4c28-78f1-ba94-00501ef2ade3/exec-c871c81d-2430-4acf-a75b-ef3aa2c40860.png",
+  "sourceFile": "source/base-standard-floor-master-r1.png",
+  "sourceSha256": "40d2d3c4ff86e3200b8d73b26163dd5ab2b6a1fec92a16fc1893e6e631d72be6",
+  "prompt": "Use case: stylized-concept. Asset type: standalone isometric game floor platform, first layer of a modular base compound.\nUse the supplied Mission Frontier headquarters image ONLY as reference for ceramic white structural material, slate steel flooring, subtle realistic wear, and compatible warm daylight. Make a NEW clean floor layer; do not reproduce any walls, rooms, robots, consoles, buildings or UI.\nSubject: one single broad square platform viewed in fixed orthographic isometric projection, top surface as a precise 2:1 diamond. Dark slate modular steel interior floor panels with understated service grooves, recessed mechanical access plates and pale ceramic perimeter strips. A low shallow bevelled off-white foundation below the surface provides modest visible thickness on the lower-left and lower-right edges. Four spacious empty working regions across the same continuous floor, differentiated only by practical tile/groove layout, not walls or boxed bays. The center is open. No holes, inset light wells, tall objects, railings or elevated obstacles.\nComposition: landscape 3:2 canvas. Guidance in a virtual 1536x1024 canvas: surface back corner near (768,140), right corner near (1472,492), front corner near (768,844), left corner near (64,492). Four square corners are clear and measurable, tiny manufacturing chamfers permitted but not a rounded/oval island. Vertical bevel thickness about 30 pixels below surface front edge. The floor must occupy most of the width with all edges visible and generous transparent-cutout margins. All four top-surface corners define ONE consistent square in fixed 2:1 isometric view; no perspective convergence.\nLighting: gentle warm illumination from upper left with neutral fill, subtle baked self-shading only on the platform structure, no cast ground shadow. Crisp richly detailed game render, ceramic white/slate materials from reference, never cartoon/low-poly/pixel art.\nBackground: perfectly uniform saturated green #00FF00 for deterministic removal, without green bounce lighting on subject. No surrounding ground or island, no scenery, no water, no sky, no ground plane or horizon.\nStrict exclusions: no walls, roof, stations, furniture, props, workers, tools, crates, ramps, road connections, labels, text, icons, numbers, semantic selection/activity lights or emissive strips. Only this one empty low foundation and walkable floor asset.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827",
+      "role": "HQ ceramic/slate material and warm-light reference; no UI or occupancy copied"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    {
+      "script": "process.py",
+      "operations": [
+        "Original source copied without alteration",
+        "Green chroma key alpha=1-clamp((G-max(R,B)-20)/170,0,1)",
+        "Green-only spill clamp; zero RGB under alpha=0",
+        "One source-corner to target-diamond projective registration using coefficients in geometry.json, Bicubic resampling",
+        "Post-resample green spill cleanup",
+        "Dark/light/magenta and actual-scale QA; no painted geometry or inpainting"
+      ]
+    }
+  ],
+  "exportSha256": "863ce265015fb0742e9d4031a29c2b49ec546b004effafbe78e6ef6258edd25e",
+  "exportBytes": 1439654,
+  "decodedRgbaBytes": 6291456,
+  "approval": "Pending coordinator integration review",
+  "rightsNote": "Supplied project reference and built-in output only; no third-party asset imported. Generated provenance is not legal clearance."
+}

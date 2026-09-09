@@ -1,0 +1,65 @@
+{
+  "id": "mf.prop.cargo",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/cargo-r1.png",
+  "sourceSize": [
+    384,
+    384
+  ],
+  "logicalSize": [
+    192,
+    192
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    95.78875,
+    150.1459
+  ],
+  "footprint": [
+    [
+      71.79685,
+      137.9068
+    ],
+    [
+      123.347,
+      123.3171
+    ],
+    [
+      149.1221,
+      136.04255
+    ],
+    [
+      95.78875,
+      150.1459
+    ]
+  ],
+  "layer": "task-prop",
+  "occlusionClass": "low-prop",
+  "sockets": {
+    "handle": [
+      122.6986,
+      137.66365
+    ]
+  },
+  "sha256": "d9fcc471bf4d3f6fbf61d7043b4987d0bf166842a3fd85ea5d9ae96cdfe2e41b",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/basefloor-instances-r1.png",
+    "qa/actual-scales-r1.png"
+  ],
+  "limits": [
+    "Display eligibility and interaction are runtime-owned: show only for task with retained artifacts. No evidence semantics baked into art.",
+    "No text/logo/status light, shadow, floor or opening animation.",
+    "Rear footprint point estimated."
+  ],
+  "boundsSourcePixels": [
+    141,
+    204,
+    301,
+    302
+  ]
+}

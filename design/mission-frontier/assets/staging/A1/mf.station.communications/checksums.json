@@ -1,0 +1,15 @@
+{
+  "entry.json": "b19738127cb9c79d3de7a92155306b881ab108d2177bf7d83047e5b6696a255c",
+  "exports/station-communications-r1.png": "81a0c8c2e1f4de2f034afa0d3f36e86983f8bd348b0c9e69b20dd63d9656d6da",
+  "geometry.json": "33f6f40902c680721ce96faed0b50706f0e7b4d09b3399e2315ec0d5347d92ee",
+  "process.py": "27589af8a1ba3997939f4bcd9f17adb7948d4029159d2e86404840d7fed3d44c",
+  "provenance.json": "043f3a8d3fb80e2e31dfd3503e7ad25c6c51909480f2c478af58affa427ab884",
+  "qa/QA.md": "697de3a8d7a9faf7d33d867ff2ec55cff0d2617bd8fa88bb8c353c82f3c08d5b",
+  "qa/alpha-backgrounds-r1.png": "f2a1466487583713e86e6fc583db61827fe099504dd3825454559908a5be57ad",
+  "qa/calibrated-scale-comparison-r1.png": "3244568e28d2ebc5a9146799a0e07994fc2ef5826afc815ec86b820fbddd42b8",
+  "qa/measurements-r1.json": "44e79120eb6a51995c310f377f56aa7533d08639cf95140eb1309f29639f0799",
+  "qa/socket-registration-r1.png": "68bfe76a4ae0ba71208d75c148d0b890df28e0f51989e32c0c45b3c5898a3158",
+  "source/communications-alpha-master-r1.png": "156f24eeb45a7c374193ffb616716fd9017299bae06b906347fa10d92cf32462",
+  "source/communications-master-r1.png": "b4baa9e999bd3185517b6494e1921bb447709e8c9b5c6b1129111f42de409bb8",
+  "source/generation-prompt.txt": "5d5101acdb0d4eeb468053f4238d23e2984530ced51c62c49479ae6e0dd8f8eb"
+}

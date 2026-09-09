@@ -1,0 +1,28 @@
+{
+  "assetId": "mf.station.communications",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-82f9dfcb-af16-4df2-b588-919bd692a1c8",
+  "sourceSha256": "b4baa9e999bd3185517b6494e1921bb447709e8c9b5c6b1129111f42de409bb8",
+  "prompt": "Create one freestanding Mission Frontier communications/decision console game asset, not fabrication equipment. Reference1 HQ upper-left room consoles is the architectural identity; reference2 fabrication station gives exact compatible white ceramic/slate materials, size and projection.\nSingle broad sturdy ceramic-white and dark-slate desk chassis, low rectangular footprint in fixed orthographic2:1 isometric, front operator side facing lower left. Behind its tabletop, a distinctive upright bank of THREE connected blue/cyan glass screen panels: wide center and two narrower side panels, clean abstract luminous horizontal/grid shapes only, no letters/numbers/text/statusicons. Small tabletop radio/communications receiver: compact squat dark-steel/white device with short rounded antenna pair and a dial, not a robot or spacecraft. Organized real-looking communications hardware with restrained detail.\nKeep similar ground footprint146x80logical and desk surface38logical above ground as reference2. Tall screen bank may rise75\u201390logical above floor, coherent scale for a58px worker. A clearly visible circular diagnostic connector on FRONT-LEFT operator edge is needed, around tabletop height, so an independent worker probe can touch its center. No worker or independent tool in output. Screen blue is neutral powered hardware, not semantic execution/attention light; no amber/red/green state indicators.\nWarm upper-left daylight, realistic rendered strategy-game detail, ceramic rounded/beveled panels, dark exposed steel joints, slight wear, blue screen glow restrained. Same projection as fabrication, all feet and complete console visible with margin. Square source for512x512 finalRGBA, full object roughly80..440x50..450. No ground slab, floor/wall/background scene, cast ground shadow, text, labels, task ID, state icons, UI, selection rings, other stations, people or robots.\nPerfectly flat saturated green#00FF00 background for deterministic key; absolutely no green reflections. This is one assembled static console only.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.station.fabrication/source/station-fabrication-master-r1.png",
+      "sha256": "b64a45a2bf6557e212cafce5069888820c425386213e8e338775ca28d4c99145"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Green key and spill cleanup",
+    "Crop subject and uniformly fit320source pixels wide",
+    "Lanczos resize and register bottom at430source on512canvas",
+    "QA-only comparison at requested consumer factors"
+  ],
+  "exportSha256": "81a0c8c2e1f4de2f034afa0d3f36e86983f8bd348b0c9e69b20dd63d9656d6da",
+  "exportBytes": 162859,
+  "rightsNote": "Supplied/generated project references only; provenance is not legal clearance."
+}

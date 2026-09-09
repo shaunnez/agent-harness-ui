@@ -1,0 +1,65 @@
+{
+  "id": "mf.artifact.capsule",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/capsule-r1.png",
+  "sourceSize": [
+    384,
+    384
+  ],
+  "logicalSize": [
+    192,
+    192
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    96.25,
+    149.9375
+  ],
+  "footprint": [
+    [
+      75.7969,
+      141.7031
+    ],
+    [
+      93.3281,
+      133.29165
+    ],
+    [
+      111.9219,
+      142.2344
+    ],
+    [
+      96.25,
+      149.9375
+    ]
+  ],
+  "layer": "task-prop",
+  "occlusionClass": "low-prop",
+  "sockets": {
+    "glassInset": [
+      86.4219,
+      107.6146
+    ]
+  },
+  "sha256": "02efc6fe8323d74f83dc2587efbd0b93904947ff2a03da2aded62ef52ae77c08",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/basefloor-instances-r1.png",
+    "qa/actual-scales-r1.png"
+  ],
+  "limits": [
+    "Runtime binds capsule to one retained artifact and opens evidence. No progress or autonomous travel implied.",
+    "No text/logo/status symbols, shadow, floor or opening animation. Blue glass is non-semantic material; metallic brass fittings are not lights.",
+    "Rear footprint point estimated."
+  ],
+  "boundsSourcePixels": [
+    150,
+    132,
+    228,
+    302
+  ]
+}

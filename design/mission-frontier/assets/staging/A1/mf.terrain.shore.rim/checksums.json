@@ -1,0 +1,22 @@
+{
+  "entry.json": "15212f8f5b2ccfbe11fe8088e9a32cf39aa1bde0803d2e4b4e6b3a25a6c2ba19",
+  "exports/shore-assembled-r1.png": "12bec3d7f9d85f2e42a1c617d2574e7ad2b697ff38fee93a0f6256389e7fb731",
+  "exports/shore-interior-r1.png": "c94965ebf4dcabdd5967874f6450b658751e20c58c7ceec0b651b596bb50ce21",
+  "exports/shore-ne-r1.png": "20fd1c86a08a2b6ba4decb11d6c02d6598a197d2006dcf925df8fae97b28b00a",
+  "exports/shore-nw-r1.png": "fcd91f7d53b64bc8a57b535f3e409d47dbe855e38ba92cba8898e368e86714fe",
+  "exports/shore-se-r1.png": "06d4f9b784b89e96c567ba56dd01d80b445d6b171dc697e83011ddba2f15b1b8",
+  "exports/shore-sw-r1.png": "05bddb799956757040555a06d5cc9e109a87d3e1b7df3f9d403995d664316c5b",
+  "geometry.json": "26bc0b304dd7e063685ec7084c31f74baf8e5c1cad8c81ff88096ee93438e5c4",
+  "process.py": "b15a518fef6b03ff1e9d5f180ec27da0cabedd6f32e79a5f9a396fd2d8828a1f",
+  "provenance.json": "6a829ec9e1991d5473b7d87f25df67b44a5669f307fe130ef009145901d373e7",
+  "qa/QA.md": "45e5e7acf913c7d41827f1da555bcfe76cc1b57e21919c43f2ec193b102a6df5",
+  "qa/joins-at-scale2-r1.png": "b041781e8c8ba4a7e4ffe8bc2022db1b8fa20b1dce7f6a008c4451486832e9f0",
+  "qa/part-ownership-r1.png": "a9afcd87908eb9280049040b5a5b4f9a035ddef900409f5b5b666383a78c8103",
+  "qa/reconstruction-at-scale2-r1.png": "caf40cef666e8efb8871b0088321b6b9ffa67e7550a4fa6e9dfac7f86ef060ad",
+  "qa/reconstruction-r1.json": "ba19d274e7c6580eb159dde07866f86493c6be6fd33bcb5dbdac197225ef823e",
+  "source/partition-interior-mask-r1.png": "07955f9eeec82034c15444f8ebe9e4409d8208ea582bc58cb3256049e45bf2b8",
+  "source/partition-ne-mask-r1.png": "04e269d9d6d1be2365484aa41ca403e174e37b7e6945825336ab01e2db450e3f",
+  "source/partition-nw-mask-r1.png": "91050da874faef6bb2bd7b4323b948f6b9a49f2b456adab31175ecfbcd2ae5e6",
+  "source/partition-se-mask-r1.png": "56f15aa4971d80ef5defd4be505f17b004966d82669d8f295c328afeda3c6b64",
+  "source/partition-sw-mask-r1.png": "50051702c8105ea0559b20d33b617d5c91573a3df29eef219b87522f02fe91ef"
+}

@@ -1,0 +1,693 @@
+{
+  "id": "mf.worker.standard.se.living-motion",
+  "revision": 1,
+  "status": "production-pending-in-app-review",
+  "sourceSize": [
+    384,
+    384
+  ],
+  "logicalSize": [
+    192,
+    192
+  ],
+  "groundAnchor": [
+    96,
+    167
+  ],
+  "groundAnchorSource": [
+    192.0,
+    334.0
+  ],
+  "camera": {
+    "location": [
+      11.562016487121582,
+      11.562016487121582,
+      10.870794296264648
+    ],
+    "euler": [
+      1.0471974611282349,
+      4.447953827479978e-08,
+      2.356194496154785
+    ],
+    "orthoScale": 3.3499999046325684,
+    "elevationDegrees": 30,
+    "azimuthDegrees": 45
+  },
+  "samples": 64,
+  "blenderVersion": "5.2.1 LTS",
+  "footContactsSource": [
+    [
+      183.895,
+      347.779
+    ],
+    [
+      219.558,
+      329.947
+    ]
+  ],
+  "buildScriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff",
+  "lighting": {
+    "key": [
+      10,
+      -6,
+      16
+    ],
+    "keyWatts": 4800,
+    "keySize": 7,
+    "fillWatts": 550
+  },
+  "workFrames": [],
+  "provenance": "Existing original agent-authored Blender robot regenerated from retained source; articulated rigid mesh joints; no new textures or third-party assets.",
+  "sourceId": "original-authored-cinematic-worker",
+  "sourceScriptSha256": "fec1de1f7801fef41e5aa36b1eff49aaf1ecc5bd9da365f537102482c74d326d",
+  "animations": {
+    "walk": {
+      "durationMs": 1200,
+      "frameDurationMs": 150,
+      "frames": [
+        {
+          "file": "renders/worker-walk-00.png",
+          "frame": 0,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              73.605,
+              145.3315
+            ]
+          },
+          "probeTipSource": [
+            147.21,
+            290.663
+          ],
+          "footContactsSource": [
+            [
+              212.263,
+              361.963
+            ],
+            [
+              191.189,
+              315.763
+            ]
+          ],
+          "footHeightsWorld": [
+            -0.0,
+            0.0
+          ]
+        },
+        {
+          "file": "renders/worker-walk-01.png",
+          "frame": 1,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              76.835,
+              146.9985
+            ]
+          },
+          "probeTipSource": [
+            153.67,
+            293.997
+          ],
+          "footContactsSource": [
+            [
+              203.954,
+              345.174
+            ],
+            [
+              199.498,
+              319.917
+            ]
+          ],
+          "footHeightsWorld": [
+            0.127279,
+            -0.0
+          ]
+        },
+        {
+          "file": "renders/worker-walk-02.png",
+          "frame": 2,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              84.5605,
+              149.6545
+            ]
+          },
+          "probeTipSource": [
+            169.121,
+            299.309
+          ],
+          "footContactsSource": [
+            [
+              183.895,
+              329.91
+            ],
+            [
+              219.558,
+              329.947
+            ]
+          ],
+          "footHeightsWorld": [
+            0.18,
+            0.0
+          ]
+        },
+        {
+          "file": "renders/worker-walk-03.png",
+          "frame": 3,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              91.9415,
+              150.3
+            ]
+          },
+          "probeTipSource": [
+            183.883,
+            300.6
+          ],
+          "footContactsSource": [
+            [
+              163.835,
+              325.114
+            ],
+            [
+              239.618,
+              339.977
+            ]
+          ],
+          "footHeightsWorld": [
+            0.127279,
+            0.0
+          ]
+        },
+        {
+          "file": "renders/worker-walk-04.png",
+          "frame": 4,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              94.829,
+              149.9705
+            ]
+          },
+          "probeTipSource": [
+            189.658,
+            299.941
+          ],
+          "footContactsSource": [
+            [
+              155.526,
+              333.595
+            ],
+            [
+              247.927,
+              344.132
+            ]
+          ],
+          "footHeightsWorld": [
+            0.0,
+            -0.0
+          ]
+        },
+        {
+          "file": "renders/worker-walk-05.png",
+          "frame": 5,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              91.9415,
+              150.3
+            ]
+          },
+          "probeTipSource": [
+            183.883,
+            300.6
+          ],
+          "footContactsSource": [
+            [
+              163.835,
+              337.749
+            ],
+            [
+              239.618,
+              327.342
+            ]
+          ],
+          "footHeightsWorld": [
+            -0.0,
+            0.127279
+          ]
+        },
+        {
+          "file": "renders/worker-walk-06.png",
+          "frame": 6,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              84.5605,
+              149.6545
+            ]
+          },
+          "probeTipSource": [
+            169.121,
+            299.309
+          ],
+          "footContactsSource": [
+            [
+              183.895,
+              347.779
+            ],
+            [
+              219.558,
+              312.079
+            ]
+          ],
+          "footHeightsWorld": [
+            -0.0,
+            0.18
+          ]
+        },
+        {
+          "file": "renders/worker-walk-07.png",
+          "frame": 7,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              76.835,
+              146.9985
+            ]
+          },
+          "probeTipSource": [
+            153.67,
+            293.997
+          ],
+          "footContactsSource": [
+            [
+              203.954,
+              357.809
+            ],
+            [
+              199.498,
+              307.282
+            ]
+          ],
+          "footHeightsWorld": [
+            0.0,
+            0.127279
+          ]
+        }
+      ],
+      "staticFallbackFrame": 0,
+      "suggestedStrideLogicalPixels": 36
+    },
+    "scan": {
+      "durationMs": 1200,
+      "frameDurationMs": 150,
+      "frames": [
+        {
+          "file": "renders/worker-scan-00.png",
+          "frame": 0,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.345,
+              125.9605
+            ]
+          },
+          "probeTipSource": [
+            224.69,
+            251.921
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-scan-01.png",
+          "frame": 1,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              111.306,
+              129.7605
+            ]
+          },
+          "probeTipSource": [
+            222.612,
+            259.521
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-scan-02.png",
+          "frame": 2,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              111.004,
+              130.104
+            ]
+          },
+          "probeTipSource": [
+            222.008,
+            260.208
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-scan-03.png",
+          "frame": 3,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              111.6715,
+              126.8605
+            ]
+          },
+          "probeTipSource": [
+            223.343,
+            253.721
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-scan-04.png",
+          "frame": 4,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.376,
+              121.573
+            ]
+          },
+          "probeTipSource": [
+            224.752,
+            243.146
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-scan-05.png",
+          "frame": 5,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.647,
+              117.327
+            ]
+          },
+          "probeTipSource": [
+            225.294,
+            234.654
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-scan-06.png",
+          "frame": 6,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.8685,
+              116.8885
+            ]
+          },
+          "probeTipSource": [
+            225.737,
+            233.777
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-scan-07.png",
+          "frame": 7,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.9695,
+              120.5775
+            ]
+          },
+          "probeTipSource": [
+            225.939,
+            241.155
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        }
+      ],
+      "staticFallbackFrame": 0,
+      "suggestedStrideLogicalPixels": 0
+    },
+    "type": {
+      "durationMs": 1200,
+      "frameDurationMs": 150,
+      "frames": [
+        {
+          "file": "renders/worker-type-00.png",
+          "frame": 0,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.4305,
+              123.7575
+            ]
+          },
+          "probeTipSource": [
+            224.861,
+            247.515
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-type-01.png",
+          "frame": 1,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              111.81,
+              127.673
+            ]
+          },
+          "probeTipSource": [
+            223.62,
+            255.346
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-type-02.png",
+          "frame": 2,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              111.5315,
+              128.6315
+            ]
+          },
+          "probeTipSource": [
+            223.063,
+            257.263
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-type-03.png",
+          "frame": 3,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              111.9395,
+              126.1975
+            ]
+          },
+          "probeTipSource": [
+            223.879,
+            252.395
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-type-04.png",
+          "frame": 4,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.374,
+              121.5405
+            ]
+          },
+          "probeTipSource": [
+            224.748,
+            243.081
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-type-05.png",
+          "frame": 5,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.399,
+              117.326
+            ]
+          },
+          "probeTipSource": [
+            224.798,
+            234.652
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-type-06.png",
+          "frame": 6,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.4205,
+              116.2245
+            ]
+          },
+          "probeTipSource": [
+            224.841,
+            232.449
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        },
+        {
+          "file": "renders/worker-type-07.png",
+          "frame": 7,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.607,
+              118.9575
+            ]
+          },
+          "probeTipSource": [
+            225.214,
+            237.915
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": []
+        }
+      ],
+      "staticFallbackFrame": 0,
+      "suggestedStrideLogicalPixels": 0
+    }
+  },
+  "rootMotion": "none; caller translates walking actor",
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "alphaMode": "straight",
+  "walkStrideLogicalPixels": 36
+}

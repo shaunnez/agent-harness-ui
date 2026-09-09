@@ -1,0 +1,423 @@
+{
+  "capturedAt": "2026-09-08T16:27:43.982Z",
+  "viewport": {
+    "width": 1488,
+    "height": 1058,
+    "dpr": 1
+  },
+  "mode": "fixture",
+  "projects": 50,
+  "tasks": 1000,
+  "refresh": {
+    "cycles": 91,
+    "summaryReads": 1,
+    "selectedReads": 1,
+    "failures": 0
+  },
+  "renderer": {
+    "artDirection": "cinematic",
+    "textures": 62,
+    "decodedBytes": 132317184,
+    "compressedBytes": 20039006,
+    "reconciliations": 1,
+    "rebuiltEntities": 52,
+    "handoffs": 0,
+    "phase": "Dusk",
+    "worldHour": 20.092973332852125,
+    "lamps": 301,
+    "lightingSurfaces": 1056,
+    "frameSamples": 8282,
+    "measuredSeconds": 63.02880000001192,
+    "medianFps": 129.87013007119126,
+    "p95FrameMs": 9.5,
+    "entities": 52,
+    "workers": 50,
+    "activeWorkers": 1,
+    "ambientCrew": 12,
+    "roamingWorkers": 12,
+    "workerActions": [
+      "fabricate"
+    ],
+    "tickerListeners": 2,
+    "actorSamples": [
+      {
+        "id": "LOAD-1-1",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": 250,
+        "y": 635,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-1-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 271.39392772061973,
+        "y": 646.9948210446698,
+        "textureFrame": 16
+      },
+      {
+        "id": "LOAD-2-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 310,
+        "y": 145,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-2-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 266.7660214430231,
+        "y": 172.14118014571744,
+        "textureFrame": 18
+      },
+      {
+        "id": "LOAD-3-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 1060,
+        "y": 585,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-3-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 1080.1360507427178,
+        "y": 596.4272424082994,
+        "textureFrame": 14
+      },
+      {
+        "id": "LOAD-4-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 370,
+        "y": 1175,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-4-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 331.38086735518715,
+        "y": 1204.1672100583748,
+        "textureFrame": 16
+      },
+      {
+        "id": "LOAD-5-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 980,
+        "y": 1175,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-5-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 998.8781737648156,
+        "y": 1185.859663771929,
+        "textureFrame": 15
+      },
+      {
+        "id": "LOAD-6-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 1590,
+        "y": 1175,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-6-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 1555.9957132673512,
+        "y": 1206.1932399710322,
+        "textureFrame": 15
+      },
+      {
+        "id": "LOAD-7-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 2200,
+        "y": 1175,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-7-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 2217.6202967869135,
+        "y": 1185.2920851355586,
+        "textureFrame": 15
+      },
+      {
+        "id": "LOAD-8-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 2810,
+        "y": 1175,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-8-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 2780.6105591795153,
+        "y": 1208.2192698836895,
+        "textureFrame": 21
+      },
+      {
+        "id": "LOAD-9-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 370,
+        "y": 1675,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-9-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 386.36241980901167,
+        "y": 1684.7245064991882,
+        "textureFrame": 12
+      },
+      {
+        "id": "LOAD-10-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 980,
+        "y": 1675,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-10-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 978.2599293879001,
+        "y": 1676.5563096018573,
+        "textureFrame": 21
+      },
+      {
+        "id": "LOAD-11-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 1590,
+        "y": 2675,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-11-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 1577.2664848695676,
+        "y": 2715.5316275037126,
+        "textureFrame": 21
+      },
+      {
+        "id": "LOAD-12-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 2810,
+        "y": 2675,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-12-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 2807.002052409998,
+        "y": 2675.988730965487,
+        "textureFrame": 21
+      },
+      {
+        "id": "LOAD-13-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 980,
+        "y": 3175,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-14-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 2200,
+        "y": 3175,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-15-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 370,
+        "y": 3675,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-16-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 1590,
+        "y": 3675,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-17-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 2810,
+        "y": 3675,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-18-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 980,
+        "y": 4175,
+        "textureFrame": 39
+      }
+    ],
+    "tickerRunning": true,
+    "documentHidden": false,
+    "backgroundSuspensions": 0,
+    "camera": {
+      "x": 295.5,
+      "y": -396.5,
+      "zoom": 0.3
+    }
+  },
+  "selectionAckMs": [],
+  "selectionMeasurement": "Selection event to the second animation frame after committed state and scene effects",
+  "pageTransfer": {
+    "requests": 16,
+    "transferBytes": 5392,
+    "encodedBytes": 402160
+  },
+  "artworkNetwork": [
+    {
+      "path": "/assets/index-B6a9Xkg9.js",
+      "transferBytes": 300,
+      "encodedBytes": 315223,
+      "decodedBodyBytes": 1070272
+    },
+    {
+      "path": "/assets/index-BNhVVv7Y.css",
+      "transferBytes": 300,
+      "encodedBytes": 13311,
+      "decodedBodyBytes": 63467
+    },
+    {
+      "path": "/assets/inter-latin-400-normal-C38fXH4l.woff2",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/inter-latin-500-normal-Cerq10X2.woff2",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/BufferResource-BpxC5nrZ.js",
+      "transferBytes": 300,
+      "encodedBytes": 2608,
+      "decodedBodyBytes": 10037
+    },
+    {
+      "path": "/assets/WebGLRenderer-Bd28PGcV.js",
+      "transferBytes": 300,
+      "encodedBytes": 19710,
+      "decodedBodyBytes": 72275
+    },
+    {
+      "path": "/assets/Filter-IAlIbEnM.js",
+      "transferBytes": 300,
+      "encodedBytes": 904,
+      "decodedBodyBytes": 904
+    },
+    {
+      "path": "/assets/RenderTargetSystem-C_glSKOQ.js",
+      "transferBytes": 300,
+      "encodedBytes": 14674,
+      "decodedBodyBytes": 53013
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.portrait-2b3815b7e1.png",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/browserAll-DMUsk-eB.js",
+      "transferBytes": 300,
+      "encodedBytes": 11384,
+      "decodedBodyBytes": 43328
+    },
+    {
+      "path": "/assets/CanvasPool-CRQKVrK_.js",
+      "transferBytes": 300,
+      "encodedBytes": 782,
+      "decodedBodyBytes": 782
+    },
+    {
+      "path": "/assets/webworkerAll-BspoKjr5.js",
+      "transferBytes": 300,
+      "encodedBytes": 5088,
+      "decodedBodyBytes": 15962
+    },
+    {
+      "path": "/assets/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 13003,
+      "decodedBodyBytes": 71785
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 2362,
+      "decodedBodyBytes": 20101
+    },
+    {
+      "path": "/assets/living/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 2519,
+      "decodedBodyBytes": 23887
+    }
+  ],
+  "network": []
+}

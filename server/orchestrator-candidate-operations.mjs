@@ -1,4 +1,5 @@
 import { refreshGateFreshness, stageRunLimitFor } from "./run-activity.mjs";
+import { exactCandidateBinding } from "./companion-actions.mjs";
 
 import { now, activity } from "./orchestrator-stage-support.mjs";
 import { sameCandidateTestRetryContext, currentCandidate } from "./orchestrator-run-policy.mjs";
@@ -308,9 +309,18 @@ export class CandidateOperationsOrchestrator {
     }
   }
 
-  async retryTestOnSameCandidate(id) {
+  async retryTestOnSameCandidate(id, expectedCandidate = null) {
     const started = await this.start(id, "test", {
       canStart: (draft) => {
+        if (expectedCandidate) {
+          const binding = exactCandidateBinding(draft, expectedCandidate);
+          if (!binding.ok) {
+            const error = new Error(binding.reason);
+            error.statusCode = 409;
+            error.code = "STALE_CANDIDATE";
+            throw error;
+          }
+        }
         sameCandidateTestRetryContext(draft);
         return true;
       },

@@ -1,0 +1,82 @@
+{
+  "masterSize": [
+    1536,
+    1024
+  ],
+  "masterAlphaBounds": [
+    119,
+    209,
+    1424,
+    801
+  ],
+  "uniformScale": 0.3831417624521073,
+  "scaledSize": [
+    500,
+    227
+  ],
+  "pasteOffset": [
+    134,
+    433
+  ],
+  "exportAlphaBounds": [
+    134,
+    433,
+    634,
+    660
+  ],
+  "landmarksSourcePixels": {
+    "frontFoot": [
+      303.3487,
+      655.6054
+    ],
+    "leftFoot": [
+      145.4943,
+      563.2682
+    ],
+    "rightFoot": [
+      619.8238,
+      557.5211
+    ],
+    "frontSurface": [
+      303.3487,
+      621.8889
+    ],
+    "frontToolPort": [
+      194.9195,
+      561.3525
+    ],
+    "screenCenter": [
+      210.2452,
+      546.41
+    ],
+    "shuttleDock": [
+      396.069,
+      532.2337
+    ]
+  },
+  "groundAnchorSourcePixels": [
+    303.3487,
+    655.6054
+  ],
+  "approxSupportFootprintSourcePixels": [
+    [
+      145.4943,
+      563.2682
+    ],
+    [
+      486.1073,
+      452.1571
+    ],
+    [
+      619.8238,
+      557.5211
+    ],
+    [
+      303.3487,
+      655.6054
+    ]
+  ],
+  "footprintNote": "Visible left/right/front feet manually measured; rear support ground projection estimated beneath visible rear rim.",
+  "benchHeightLogical": 16.858249999999998,
+  "measurementToleranceMasterPixels": 6
+}

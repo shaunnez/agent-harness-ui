@@ -1,0 +1,138 @@
+{
+  "masterDimensions": [
+    1448,
+    1086
+  ],
+  "measuredMasterTopCorners": [
+    [
+      113.0,
+      315.0
+    ],
+    [
+      319.0,
+      193.0
+    ],
+    [
+      1341.0,
+      739.0
+    ],
+    [
+      1127.0,
+      859.0
+    ]
+  ],
+  "sampledInsetCorners": [
+    [
+      128.20999999999998,
+      323.15999999999997
+    ],
+    [
+      334.33,
+      201.19
+    ],
+    [
+      1325.67,
+      730.81
+    ],
+    [
+      1111.79,
+      850.84
+    ]
+  ],
+  "endSamplingInsetFraction": 0.015,
+  "registeredTopCornersSourcePixels": [
+    [
+      72.0,
+      188.0
+    ],
+    [
+      120.0,
+      164.0
+    ],
+    [
+      440.0,
+      324.0
+    ],
+    [
+      392.0,
+      348.0
+    ]
+  ],
+  "homography": [
+    [
+      0.2841319282365226,
+      0.08206409265231512,
+      8.839106026940746
+    ],
+    [
+      0.03382088998477564,
+      0.24552723569086227,
+      103.76436210921342
+    ],
+    [
+      1.8463890345149027e-05,
+      -1.645855079421701e-05,
+      1.0
+    ]
+  ],
+  "inverseHomography": [
+    [
+      3.6908109378663503,
+      -1.2272531334996364,
+      94.72166933892984
+    ],
+    [
+      -0.4762889017641744,
+      4.239184073208562,
+      -435.66626311787485
+    ],
+    [
+      -7.598575352384843e-05,
+      9.24306936776167e-05,
+      1.0
+    ]
+  ],
+  "logicalEndpoints": {
+    "nw": [
+      48,
+      88
+    ],
+    "se": [
+      208,
+      168
+    ]
+  },
+  "logicalCrossSections": {
+    "nw": [
+      [
+        36,
+        94
+      ],
+      [
+        60,
+        82
+      ]
+    ],
+    "se": [
+      [
+        196,
+        174
+      ],
+      [
+        220,
+        162
+      ]
+    ]
+  },
+  "logicalDisplacement": [
+    160,
+    80
+  ],
+  "logicalGroundAnchor": [
+    128,
+    128
+  ],
+  "endpointMask": "0<=((x-96)/640+(y-176)/320)<=1 in export source coordinates",
+  "measurementToleranceMasterPixels": 4,
+  "registrationNote": "Four manually measured top corners rectified to exact contract; organic generated geometry is not assumed exact before transform."
+}

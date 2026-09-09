@@ -1,0 +1,317 @@
+{
+  "id": "mf.worker.standard.se",
+  "revision": 1,
+  "status": "production-pending-in-app-review",
+  "sourceSize": [
+    384,
+    384
+  ],
+  "logicalSize": [
+    192,
+    192
+  ],
+  "groundAnchor": [
+    96,
+    167
+  ],
+  "groundAnchorSource": [
+    192.0,
+    334.0
+  ],
+  "camera": {
+    "location": [
+      11.562016487121582,
+      11.562016487121582,
+      10.870794296264648
+    ],
+    "euler": [
+      1.0471974611282349,
+      4.447953827479978e-08,
+      2.356194496154785
+    ],
+    "orthoScale": 3.3499999046325684,
+    "elevationDegrees": 30,
+    "azimuthDegrees": 45
+  },
+  "samples": 64,
+  "blenderVersion": "5.2.1 LTS",
+  "footContactsSource": [
+    [
+      183.895,
+      347.779
+    ],
+    [
+      219.558,
+      329.947
+    ]
+  ],
+  "buildScriptSha256": "fec1de1f7801fef41e5aa36b1eff49aaf1ecc5bd9da365f537102482c74d326d",
+  "lighting": {
+    "key": [
+      10,
+      -6,
+      16
+    ],
+    "keyWatts": 4800,
+    "keySize": 7,
+    "fillWatts": 550
+  },
+  "workFrames": [
+    {
+      "file": "renders/worker-work-00.png",
+      "frame": 1,
+      "durationMs": 100,
+      "upperArmRadians": -0.72,
+      "elbowRadians": -0.45,
+      "elbowPivotSource": [
+        178.813,
+        224.401
+      ],
+      "probeTipSource": [
+        221.945,
+        263.266
+      ],
+      "groundAnchorSource": [
+        192.0,
+        334.0
+      ]
+    },
+    {
+      "file": "renders/worker-work-01.png",
+      "frame": 2,
+      "durationMs": 100,
+      "upperArmRadians": -0.71,
+      "elbowRadians": -0.4382042978973546,
+      "elbowPivotSource": [
+        178.617,
+        224.617
+      ],
+      "probeTipSource": [
+        221.459,
+        264.528
+      ],
+      "groundAnchorSource": [
+        192.0,
+        334.0
+      ]
+    },
+    {
+      "file": "renders/worker-work-02.png",
+      "frame": 3,
+      "durationMs": 100,
+      "upperArmRadians": -0.7026794919243112,
+      "elbowRadians": -0.434864586963819,
+      "elbowPivotSource": [
+        178.472,
+        224.773
+      ],
+      "probeTipSource": [
+        221.164,
+        265.188
+      ],
+      "groundAnchorSource": [
+        192.0,
+        334.0
+      ]
+    },
+    {
+      "file": "renders/worker-work-03.png",
+      "frame": 4,
+      "durationMs": 100,
+      "upperArmRadians": -0.7,
+      "elbowRadians": -0.4408757400469875,
+      "elbowPivotSource": [
+        178.418,
+        224.829
+      ],
+      "probeTipSource": [
+        221.158,
+        265.088
+      ],
+      "groundAnchorSource": [
+        192.0,
+        334.0
+      ]
+    },
+    {
+      "file": "renders/worker-work-04.png",
+      "frame": 5,
+      "durationMs": 100,
+      "upperArmRadians": -0.7026794919243112,
+      "elbowRadians": -0.45462707353264525,
+      "elbowPivotSource": [
+        178.472,
+        224.773
+      ],
+      "probeTipSource": [
+        221.437,
+        264.249
+      ],
+      "groundAnchorSource": [
+        192.0,
+        334.0
+      ]
+    },
+    {
+      "file": "renders/worker-work-05.png",
+      "frame": 6,
+      "durationMs": 100,
+      "upperArmRadians": -0.71,
+      "elbowRadians": -0.4724339287184592,
+      "elbowPivotSource": [
+        178.617,
+        224.617
+      ],
+      "probeTipSource": [
+        221.904,
+        262.877
+      ],
+      "groundAnchorSource": [
+        192.0,
+        334.0
+      ]
+    },
+    {
+      "file": "renders/worker-work-06.png",
+      "frame": 7,
+      "durationMs": 100,
+      "upperArmRadians": -0.72,
+      "elbowRadians": -0.4895249731376525,
+      "elbowPivotSource": [
+        178.813,
+        224.401
+      ],
+      "probeTipSource": [
+        222.415,
+        261.324
+      ],
+      "groundAnchorSource": [
+        192.0,
+        334.0
+      ]
+    },
+    {
+      "file": "renders/worker-work-07.png",
+      "frame": 8,
+      "durationMs": 100,
+      "upperArmRadians": -0.73,
+      "elbowRadians": -0.5013206752402979,
+      "elbowPivotSource": [
+        179.007,
+        224.182
+      ],
+      "probeTipSource": [
+        222.839,
+        260.009
+      ],
+      "groundAnchorSource": [
+        192.0,
+        334.0
+      ]
+    },
+    {
+      "file": "renders/worker-work-08.png",
+      "frame": 9,
+      "durationMs": 100,
+      "upperArmRadians": -0.7373205080756887,
+      "elbowRadians": -0.5046603861738335,
+      "elbowPivotSource": [
+        179.147,
+        224.019
+      ],
+      "probeTipSource": [
+        223.083,
+        259.304
+      ],
+      "groundAnchorSource": [
+        192.0,
+        334.0
+      ]
+    },
+    {
+      "file": "renders/worker-work-09.png",
+      "frame": 10,
+      "durationMs": 100,
+      "upperArmRadians": -0.74,
+      "elbowRadians": -0.498649233090665,
+      "elbowPivotSource": [
+        179.198,
+        223.959
+      ],
+      "probeTipSource": [
+        223.102,
+        259.414
+      ],
+      "groundAnchorSource": [
+        192.0,
+        334.0
+      ]
+    },
+    {
+      "file": "renders/worker-work-10.png",
+      "frame": 11,
+      "durationMs": 100,
+      "upperArmRadians": -0.7373205080756887,
+      "elbowRadians": -0.4848978996050073,
+      "elbowPivotSource": [
+        179.147,
+        224.019
+      ],
+      "probeTipSource": [
+        222.885,
+        260.305
+      ],
+      "groundAnchorSource": [
+        192.0,
+        334.0
+      ]
+    },
+    {
+      "file": "renders/worker-work-11.png",
+      "frame": 12,
+      "durationMs": 100,
+      "upperArmRadians": -0.73,
+      "elbowRadians": -0.46709104441919336,
+      "elbowPivotSource": [
+        179.007,
+        224.182
+      ],
+      "probeTipSource": [
+        222.469,
+        261.722
+      ],
+      "groundAnchorSource": [
+        192.0,
+        334.0
+      ]
+    }
+  ],
+  "provenance": "Original agent-authored segmented Blender geometry, refined from accepted cinematic calibration model; no external model/texture in worker.",
+  "probeEnvelopeSource": {
+    "min": [
+      221.158,
+      259.304
+    ],
+    "max": [
+      223.102,
+      265.188
+    ]
+  },
+  "portrait": {
+    "file": "renders/worker-portrait.png",
+    "sourceSize": [
+      384,
+      384
+    ],
+    "faceCenterSource": [
+      249.597,
+      169.351
+    ],
+    "cameraLocation": [
+      11.425980567932129,
+      11.425980567932129,
+      11.20401382446289
+    ],
+    "orthoScale": 1.65
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "entry.json": "409b5616c54879fa024d15c1eb3578370441e0c8b1c6abcbe5769119ea0eeeec",
+  "exports/bridge-se-r1.png": "207100c9c01e3538834072ca0f1fdb9c885153944a80e6aa2799c47e228054d3",
+  "geometry.json": "ef8a88ffb17e4f966104dfa7a40bab03ad94b559a2e420835a39bccbe7c170e9",
+  "process.py": "8b76a1557ea8d78838351fbe8666cda31cbd7f18b1f22f5615d9b5ac0d326f93",
+  "provenance.json": "bd03b1987bd3138a14da7065ebb4821d06589fcb5c7f3bcea4684e79ad6522c1",
+  "qa/QA.md": "beb0f39484a9140e8ecbcb3f5a4c0874ed3b50dff0d71cf443ef5a75d5a38014",
+  "qa/alpha-backgrounds-r1.png": "6433240818be6678471c8e178104b30b23f72d7f7dba9f4df4ed0246a81f602b",
+  "qa/bridge-measurements-r1.json": "d935e0945fb5c6f238ac6a4e0b3f5eb3eb18dff19fc2f6280a8940e61f797f54",
+  "qa/join-contact-magnified-r1.png": "a673413867566bbb7bfed76c095f5b2faf048df1395a19e14ba9927823682b3a",
+  "qa/joined-consumer-scales-r1.png": "0a149a396a5ab9bbf13ec5c839e40de5fe78c3c5b5eb440a7d5c63899150d17f",
+  "qa/joined-native-r1.png": "d0f6b4c3b49954f603e14da964b8f8e395ff17289c84f86d0c61eacadc369ce6",
+  "source/bridge-alpha-master-r1.png": "556573cb6dcb954888bf860a1999cd3569cef3c8d5a0f3e8317c3b3160f2d574",
+  "source/bridge-master-r1.png": "e9f63fd118d568a3eb3b07da839f45b2e86117b48df5d68c7913d067e5d8fbf6",
+  "source/end-section-mask-r1.png": "f2cc388ece7421564807383a107b42a612e283019b7a8aecf5d8ac66550eca9d",
+  "source/generation-prompt.txt": "2e10637ecd4c19a1729d2772e814663c037a9f78a31a6b639fc28cab173497a0",
+  "source/registered-generated-underside-r1.png": "b7b62216264a02a7e597eced67c0f63ae853eb88201d15001880b7ccecfc61f2"
+}
