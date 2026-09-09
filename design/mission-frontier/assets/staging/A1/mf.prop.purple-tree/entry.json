@@ -1,0 +1,42 @@
+{
+  "id": "mf.prop.purple-tree",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/purple-tree-r1.png",
+  "sourceSize": [
+    768,
+    768
+  ],
+  "logicalSize": [
+    384,
+    384
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    192.0375670840787,
+    341.9910554561717
+  ],
+  "layer": "scenery-prop",
+  "occlusionClass": "foliage",
+  "sockets": {
+    "root": [
+      192.0375670840787,
+      341.9910554561717
+    ]
+  },
+  "sha256": "5fe30e28efebc71ba0ce2269cfb3434a7f21b9915ed743fbec1adcd6b85eceed",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/ground-water-instances-r1.png",
+    "qa/actual-scales-r1.png",
+    "qa/measurements-r1.json"
+  ],
+  "limits": [
+    "Natural canopy is broader than nominal target, approximately300logical wide and280logical tall; uniform scale preserves branches.",
+    "One static tree instance, repeated silhouette recognizable. No foliage animation or shadow asset.",
+    "Canopy can occlude workers; renderer owns depth/placement."
+  ]
+}

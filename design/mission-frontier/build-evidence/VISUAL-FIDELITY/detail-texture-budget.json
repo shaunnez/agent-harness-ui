@@ -1,0 +1,150 @@
+{
+  "capturedAt": "2026-09-06T11:15:30.417Z",
+  "viewport": {
+    "width": 1568,
+    "height": 1003,
+    "dpr": 1
+  },
+  "mode": "fixture",
+  "projects": 3,
+  "tasks": 12,
+  "refresh": {
+    "cycles": 72,
+    "summaryReads": 1,
+    "selectedReads": 4,
+    "failures": 0
+  },
+  "renderer": {
+    "artDirection": "cinematic",
+    "textures": 55,
+    "decodedBytes": 132579328,
+    "compressedBytes": 24427535,
+    "reconciliations": 11,
+    "rebuiltEntities": 20,
+    "handoffs": 0,
+    "frameSamples": 8221,
+    "measuredSeconds": 68.78280000001192,
+    "medianFps": 120.48192753780042,
+    "p95FrameMs": 9.300000011920929,
+    "entities": 1,
+    "workers": 1,
+    "activeWorkers": 0,
+    "tickerListeners": 2,
+    "tickerRunning": true,
+    "documentHidden": false,
+    "backgroundSuspensions": 0,
+    "camera": {
+      "x": 541.2624657534246,
+      "y": 678.3794520547945,
+      "zoom": 1.14586301369863
+    }
+  },
+  "selectionAckMs": [
+    17
+  ],
+  "selectionMeasurement": "Selection event to the second animation frame after committed state and scene effects",
+  "pageTransfer": {
+    "requests": 17,
+    "transferBytes": 5100,
+    "encodedBytes": 389607
+  },
+  "artworkNetwork": [
+    {
+      "path": "/assets/index-CDHe7laY.js",
+      "transferBytes": 300,
+      "encodedBytes": 305732,
+      "decodedBodyBytes": 1041369
+    },
+    {
+      "path": "/assets/index-BmWXtIwn.css",
+      "transferBytes": 300,
+      "encodedBytes": 12667,
+      "decodedBodyBytes": 60627
+    },
+    {
+      "path": "/assets/inter-latin-400-normal-C38fXH4l.woff2",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/inter-latin-500-normal-Cerq10X2.woff2",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/BufferResource-C55EdmXB.js",
+      "transferBytes": 300,
+      "encodedBytes": 2602,
+      "decodedBodyBytes": 10037
+    },
+    {
+      "path": "/assets/WebGLRenderer-CY3JNSaM.js",
+      "transferBytes": 300,
+      "encodedBytes": 19662,
+      "decodedBodyBytes": 72275
+    },
+    {
+      "path": "/assets/Filter-HLSKOUZ8.js",
+      "transferBytes": 300,
+      "encodedBytes": 904,
+      "decodedBodyBytes": 904
+    },
+    {
+      "path": "/assets/RenderTargetSystem-1TBtAHjR.js",
+      "transferBytes": 300,
+      "encodedBytes": 14677,
+      "decodedBodyBytes": 53013
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.portrait-2b3815b7e1.png",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/browserAll-NnMEuDKR.js",
+      "transferBytes": 300,
+      "encodedBytes": 11388,
+      "decodedBodyBytes": 43328
+    },
+    {
+      "path": "/assets/webworkerAll-gW82Acuz.js",
+      "transferBytes": 300,
+      "encodedBytes": 5100,
+      "decodedBodyBytes": 15962
+    },
+    {
+      "path": "/assets/CanvasPool-BL-zAmgG.js",
+      "transferBytes": 300,
+      "encodedBytes": 782,
+      "decodedBodyBytes": 782
+    },
+    {
+      "path": "/assets/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 13088,
+      "decodedBodyBytes": 71785
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 2413,
+      "decodedBodyBytes": 20117
+    },
+    {
+      "path": "/assets/mf.worker.standard.portrait.r1.png",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/inter-latin-600-normal-LgqL8muc.woff2",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    }
+  ],
+  "network": []
+}

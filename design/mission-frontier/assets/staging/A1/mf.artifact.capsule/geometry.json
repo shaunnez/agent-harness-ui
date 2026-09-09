@@ -1,0 +1,56 @@
+{
+  "masterSize": [
+    1448,
+    1086
+  ],
+  "sourceAlphaBounds": [
+    501,
+    50,
+    939,
+    1010
+  ],
+  "uniformScale": 0.17708333333333334,
+  "scaledSize": [
+    78,
+    170
+  ],
+  "pasteOffset": [
+    150,
+    132
+  ],
+  "exportAlphaBounds": [
+    150,
+    132,
+    228,
+    302
+  ],
+  "groundAnchorLogical": [
+    96.25,
+    149.9375
+  ],
+  "contactMaster": [
+    741,
+    998
+  ],
+  "footprintSourcePixels": [
+    [
+      151.5938,
+      283.4062
+    ],
+    [
+      186.6562,
+      266.5833
+    ],
+    [
+      223.8438,
+      284.4688
+    ],
+    [
+      192.5,
+      299.875
+    ]
+  ],
+  "measurementNote": "Visible left/right/front ground contacts manually measured within6master pixels. Rear contact occluded estimate. Anchor is front ground-contact corner.",
+  "actualVisibleWidthLogical": 39.0,
+  "actualVisibleHeightLogical": 85.0
+}

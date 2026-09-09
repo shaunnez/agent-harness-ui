@@ -1,0 +1,423 @@
+{
+  "capturedAt": "2026-09-08T16:28:03.026Z",
+  "viewport": {
+    "width": 1488,
+    "height": 1058,
+    "dpr": 1
+  },
+  "mode": "fixture",
+  "projects": 50,
+  "tasks": 1000,
+  "refresh": {
+    "cycles": 110,
+    "summaryReads": 1,
+    "selectedReads": 1,
+    "failures": 0
+  },
+  "renderer": {
+    "artDirection": "cinematic",
+    "textures": 62,
+    "decodedBytes": 132317184,
+    "compressedBytes": 20039006,
+    "reconciliations": 1,
+    "rebuiltEntities": 52,
+    "handoffs": 0,
+    "phase": "Dusk",
+    "worldHour": 20.219399999827147,
+    "lamps": 301,
+    "lightingSurfaces": 1056,
+    "frameSamples": 10832,
+    "measuredSeconds": 82.07309999996424,
+    "medianFps": 129.87013007119126,
+    "p95FrameMs": 9.5,
+    "entities": 52,
+    "workers": 50,
+    "activeWorkers": 1,
+    "ambientCrew": 12,
+    "roamingWorkers": 12,
+    "workerActions": [
+      "fabricate"
+    ],
+    "tickerListeners": 2,
+    "actorSamples": [
+      {
+        "id": "LOAD-1-1",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": 250,
+        "y": 635,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-1-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 269.0130099421076,
+        "y": 673.4934950289462,
+        "textureFrame": 21
+      },
+      {
+        "id": "LOAD-2-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 310,
+        "y": 145,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-2-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 276,
+        "y": 132,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-3-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 1060,
+        "y": 585,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-3-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 1075.336914187098,
+        "y": 625.331542906451,
+        "textureFrame": 15
+      },
+      {
+        "id": "LOAD-4-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 370,
+        "y": 1175,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-4-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 336,
+        "y": 1162,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-5-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 980,
+        "y": 1175,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-5-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 991.6608184320883,
+        "y": 1217.1695907839558,
+        "textureFrame": 16
+      },
+      {
+        "id": "LOAD-6-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 1590,
+        "y": 1175,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-6-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 1556,
+        "y": 1162,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-7-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 2200,
+        "y": 1175,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-7-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 2207.9847226770785,
+        "y": 1219.0076386614608,
+        "textureFrame": 20
+      },
+      {
+        "id": "LOAD-8-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 2810,
+        "y": 1175,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-8-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 2776,
+        "y": 1162,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-9-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 370,
+        "y": 1675,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-9-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 374.308626922069,
+        "y": 1720.8456865389655,
+        "textureFrame": 18
+      },
+      {
+        "id": "LOAD-10-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 980,
+        "y": 1675,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-10-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 988.6287102545986,
+        "y": 1718.6856448727008,
+        "textureFrame": 13
+      },
+      {
+        "id": "LOAD-11-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 1590,
+        "y": 2675,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-11-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 1510,
+        "y": 2686,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-12-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 2810,
+        "y": 2675,
+        "textureFrame": 39
+      },
+      {
+        "id": "load-project-12-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": 2814.952614499589,
+        "y": 2720.5236927502056,
+        "textureFrame": 18
+      },
+      {
+        "id": "LOAD-13-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 980,
+        "y": 3175,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-14-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 2200,
+        "y": 3175,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-15-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 370,
+        "y": 3675,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-16-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 1590,
+        "y": 3675,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-17-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 2810,
+        "y": 3675,
+        "textureFrame": 39
+      },
+      {
+        "id": "LOAD-18-3",
+        "ambient": false,
+        "active": false,
+        "patrol": false,
+        "x": 980,
+        "y": 4175,
+        "textureFrame": 39
+      }
+    ],
+    "tickerRunning": true,
+    "documentHidden": false,
+    "backgroundSuspensions": 0,
+    "camera": {
+      "x": 295.5,
+      "y": -396.5,
+      "zoom": 0.3
+    }
+  },
+  "selectionAckMs": [],
+  "selectionMeasurement": "Selection event to the second animation frame after committed state and scene effects",
+  "pageTransfer": {
+    "requests": 16,
+    "transferBytes": 5392,
+    "encodedBytes": 402160
+  },
+  "artworkNetwork": [
+    {
+      "path": "/assets/index-B6a9Xkg9.js",
+      "transferBytes": 300,
+      "encodedBytes": 315223,
+      "decodedBodyBytes": 1070272
+    },
+    {
+      "path": "/assets/index-BNhVVv7Y.css",
+      "transferBytes": 300,
+      "encodedBytes": 13311,
+      "decodedBodyBytes": 63467
+    },
+    {
+      "path": "/assets/inter-latin-400-normal-C38fXH4l.woff2",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/inter-latin-500-normal-Cerq10X2.woff2",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/BufferResource-BpxC5nrZ.js",
+      "transferBytes": 300,
+      "encodedBytes": 2608,
+      "decodedBodyBytes": 10037
+    },
+    {
+      "path": "/assets/WebGLRenderer-Bd28PGcV.js",
+      "transferBytes": 300,
+      "encodedBytes": 19710,
+      "decodedBodyBytes": 72275
+    },
+    {
+      "path": "/assets/Filter-IAlIbEnM.js",
+      "transferBytes": 300,
+      "encodedBytes": 904,
+      "decodedBodyBytes": 904
+    },
+    {
+      "path": "/assets/RenderTargetSystem-C_glSKOQ.js",
+      "transferBytes": 300,
+      "encodedBytes": 14674,
+      "decodedBodyBytes": 53013
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.portrait-2b3815b7e1.png",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/browserAll-DMUsk-eB.js",
+      "transferBytes": 300,
+      "encodedBytes": 11384,
+      "decodedBodyBytes": 43328
+    },
+    {
+      "path": "/assets/CanvasPool-CRQKVrK_.js",
+      "transferBytes": 300,
+      "encodedBytes": 782,
+      "decodedBodyBytes": 782
+    },
+    {
+      "path": "/assets/webworkerAll-BspoKjr5.js",
+      "transferBytes": 300,
+      "encodedBytes": 5088,
+      "decodedBodyBytes": 15962
+    },
+    {
+      "path": "/assets/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 13003,
+      "decodedBodyBytes": 71785
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 2362,
+      "decodedBodyBytes": 20101
+    },
+    {
+      "path": "/assets/living/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 2519,
+      "decodedBodyBytes": 23887
+    }
+  ],
+  "network": []
+}

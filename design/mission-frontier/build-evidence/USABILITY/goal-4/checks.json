@@ -1,0 +1,54 @@
+[
+  {
+    "name": "typecheck",
+    "command": "npm run typecheck",
+    "exitCode": 0,
+    "seconds": 2.92
+  },
+  {
+    "name": "lint",
+    "command": "npm run lint",
+    "exitCode": 0,
+    "seconds": 1.4
+  },
+  {
+    "name": "format",
+    "command": "npm run format:check",
+    "exitCode": 0,
+    "seconds": 0.67
+  },
+  {
+    "name": "legacy-build",
+    "command": "npm run build",
+    "exitCode": 0,
+    "seconds": 18.68
+  },
+  {
+    "name": "frontier-build",
+    "command": "npm run build:frontier",
+    "exitCode": 0,
+    "seconds": 24.74
+  },
+  {
+    "name": "complete-tests",
+    "command": "node --test --test-concurrency=2 tests/*.test.mjs tests/frontier/*.test.mjs tests/frontier/api/*.test.mjs",
+    "exitCode": 1,
+    "seconds": 384.96
+  },
+  {
+    "name": "orchestration-recheck",
+    "command": "node --test --test-concurrency=1 tests/orchestrator-investigation-grill.test.mjs tests/orchestrator-package-qualification.test.mjs tests/orchestrator.test.mjs",
+    "exitCode": 0,
+    "passed": 121,
+    "failed": 0,
+    "seconds": 31.22
+  },
+  {
+    "name": "final-frontier-api",
+    "command": "node --test --test-concurrency=2 tests/frontier/*.test.mjs tests/frontier/api/*.test.mjs",
+    "exitCode": 0,
+    "passed": 74,
+    "failed": 0,
+    "seconds": 5.993
+  }
+]

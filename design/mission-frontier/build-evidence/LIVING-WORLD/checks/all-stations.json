@@ -1,0 +1,270 @@
+{
+  "capturedAt": "2026-09-08T16:44:26.099Z",
+  "viewport": {
+    "width": 1488,
+    "height": 1058,
+    "dpr": 1
+  },
+  "mode": "fixture",
+  "projects": 1,
+  "tasks": 11,
+  "refresh": {
+    "cycles": 112,
+    "summaryReads": 1,
+    "selectedReads": 3,
+    "failures": 0
+  },
+  "renderer": {
+    "artDirection": "cinematic",
+    "textures": 78,
+    "decodedBytes": 141754368,
+    "compressedBytes": 21168914,
+    "reconciliations": 12,
+    "rebuiltEntities": 54,
+    "handoffs": 0,
+    "phase": "Daylight",
+    "worldHour": 12,
+    "lamps": 0,
+    "lightingSurfaces": 63,
+    "frameSamples": 12000,
+    "measuredSeconds": 109.45019999998807,
+    "medianFps": 126.58227790798291,
+    "p95FrameMs": 9.799999952316284,
+    "entities": 12,
+    "workers": 10,
+    "activeWorkers": 10,
+    "ambientCrew": 1,
+    "roamingWorkers": 1,
+    "workerActions": [
+      "inspect",
+      "fabricate",
+      "console",
+      "console",
+      "scan",
+      "inspect",
+      "diagnose",
+      "console",
+      "communicate",
+      "communicate"
+    ],
+    "tickerListeners": 2,
+    "actorSamples": [
+      {
+        "id": "ART-dev-review",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": -33.61706587500001,
+        "y": -535.287381375,
+        "textureFrame": 75
+      },
+      {
+        "id": "ART-implement",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": -230.70273225,
+        "y": -415.98828575,
+        "textureFrame": 27
+      },
+      {
+        "id": "ART-plan",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": -49.753081874999985,
+        "y": -317.6276515,
+        "textureFrame": 71
+      },
+      {
+        "id": "ART-design",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": 168.98569775,
+        "y": -205.00151325000002,
+        "textureFrame": 78
+      },
+      {
+        "id": "ART-scouts",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": -459.6676118749999,
+        "y": -100.143174125,
+        "textureFrame": 72
+      },
+      {
+        "id": "ART-final-review",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": -32.71286775000001,
+        "y": -94.56552937499998,
+        "textureFrame": 70
+      },
+      {
+        "id": "ART-test",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": 365.78961387500004,
+        "y": -101.050965625,
+        "textureFrame": 69
+      },
+      {
+        "id": "ART-specification",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": -259.75354062499997,
+        "y": 2.4317414999999905,
+        "textureFrame": 79
+      },
+      {
+        "id": "ART-triage",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": 170.12168875,
+        "y": 3.8381238750000115,
+        "textureFrame": 78
+      },
+      {
+        "id": "ART-grill",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": -56.863563500000005,
+        "y": 101.89869825,
+        "textureFrame": 82
+      },
+      {
+        "id": "ART-grill-0",
+        "ambient": true,
+        "active": false,
+        "patrol": true,
+        "x": -55.25556896218824,
+        "y": 160.8277844810941,
+        "textureFrame": 16
+      }
+    ],
+    "tickerRunning": true,
+    "documentHidden": false,
+    "backgroundSuspensions": 0,
+    "camera": {
+      "x": 744,
+      "y": 681.2358258011504,
+      "zoom": 0.7271980279375514
+    }
+  },
+  "selectionAckMs": [
+    15.900000035762787,
+    19.30000001192093
+  ],
+  "selectionMeasurement": "Selection event to the second animation frame after committed state and scene effects",
+  "pageTransfer": {
+    "requests": 17,
+    "transferBytes": 30144,
+    "encodedBytes": 426648
+  },
+  "artworkNetwork": [
+    {
+      "path": "/assets/index-DQ2_3qgg.js",
+      "transferBytes": 300,
+      "encodedBytes": 315269,
+      "decodedBodyBytes": 1070401
+    },
+    {
+      "path": "/assets/index-BNhVVv7Y.css",
+      "transferBytes": 300,
+      "encodedBytes": 13311,
+      "decodedBodyBytes": 63467
+    },
+    {
+      "path": "/assets/inter-latin-400-normal-C38fXH4l.woff2",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/inter-latin-500-normal-Cerq10X2.woff2",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/BufferResource-DVQmEmk4.js",
+      "transferBytes": 300,
+      "encodedBytes": 2608,
+      "decodedBodyBytes": 10037
+    },
+    {
+      "path": "/assets/Filter-CFsaygyu.js",
+      "transferBytes": 300,
+      "encodedBytes": 904,
+      "decodedBodyBytes": 904
+    },
+    {
+      "path": "/assets/RenderTargetSystem-D8SVLv7V.js",
+      "transferBytes": 300,
+      "encodedBytes": 14673,
+      "decodedBodyBytes": 53013
+    },
+    {
+      "path": "/assets/WebGLRenderer-BQBnD-Cy.js",
+      "transferBytes": 300,
+      "encodedBytes": 19710,
+      "decodedBodyBytes": 72275
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.portrait-2b3815b7e1.png",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/inter-latin-600-normal-LgqL8muc.woff2",
+      "transferBytes": 24752,
+      "encodedBytes": 24452,
+      "decodedBodyBytes": 24452
+    },
+    {
+      "path": "/assets/browserAll-QFuN95yN.js",
+      "transferBytes": 300,
+      "encodedBytes": 11381,
+      "decodedBodyBytes": 43328
+    },
+    {
+      "path": "/assets/webworkerAll-BsomkVuI.js",
+      "transferBytes": 300,
+      "encodedBytes": 5082,
+      "decodedBodyBytes": 15962
+    },
+    {
+      "path": "/assets/CanvasPool-DuqGdd_w.js",
+      "transferBytes": 300,
+      "encodedBytes": 782,
+      "decodedBodyBytes": 782
+    },
+    {
+      "path": "/assets/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 13003,
+      "decodedBodyBytes": 71785
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 2362,
+      "decodedBodyBytes": 20101
+    },
+    {
+      "path": "/assets/living/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 2519,
+      "decodedBodyBytes": 23887
+    }
+  ],
+  "network": []
+}

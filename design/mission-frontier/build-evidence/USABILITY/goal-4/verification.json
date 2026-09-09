@@ -1,0 +1,67 @@
+{
+  "date": "2026-09-09",
+  "applicationCommit": "77b04f4d834170eb3e5a0a5c76ae358445b8d8d9",
+  "baseCommit": "fdbe171a8545a6b9ae206b67ce01fe79606496f1",
+  "status": "accepted",
+  "goal4Complete": true,
+  "laterGoalsStarted": false,
+  "measuredPixels": {
+    "taskNormal": 425,
+    "taskMaximised": 457,
+    "agentActivity": 244
+  },
+  "checks": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "format": "passed",
+    "legacyBuild": "passed",
+    "frontierBuild": "passed",
+    "frontierApi": {
+      "passed": 74,
+      "failed": 0
+    },
+    "completeSuite": {
+      "total": 1068,
+      "passed": 1064,
+      "failed": 4,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "orchestrationRecheck": {
+      "passed": 121,
+      "failed": 0
+    },
+    "zoomFollowup": {
+      "typecheck": "passed",
+      "lint": "passed",
+      "format": "passed",
+      "legacyBuild": "passed",
+      "frontierBuild": "passed",
+      "targetedTests": {
+        "passed": 78,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "record": "zoom-final-checks.json"
+    }
+  },
+  "nativeZoom": "200-percent-destination-walkthrough-passed",
+  "execution": "ui-complete-pr-pushed",
+  "publicationBranch": "codex/mission-frontier-goal-4",
+  "gamePublished": false,
+  "pushedToPr": true,
+  "paidRunsStarted": 0,
+  "runtime": {
+    "frontendPort": 5204,
+    "disposableApiPort": 4324
+  },
+  "journalPublished": true,
+  "journalArticle": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/the-zoom-check-is-closed/",
+  "nativeZoomEvidence": "native-zoom-200.json",
+  "zoomRestored": 100,
+  "pr": "https://github.com/shaunnez/agent-harness-ui/pull/73",
+  "prReceipt": "pr-publication.json",
+  "journalVersion": 10,
+  "journalReceipt": "journal-publication.json"
+}

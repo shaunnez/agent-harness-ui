@@ -1,0 +1,13 @@
+{
+  "date": "2026-09-09",
+  "pr": "https://github.com/shaunnez/agent-harness-ui/pull/73",
+  "headBranch": "codex/mission-frontier-v1",
+  "headVerifiedAfterPush": "ea83e7de0956fe2db19135c6c4bb28961309c647",
+  "priorHead": "fdbe171a8545a6b9ae206b67ce01fe79606496f1",
+  "applicationCommit": "77b04f4d834170eb3e5a0a5c76ae358445b8d8d9",
+  "state": "OPEN",
+  "integration": "Fast-forwarded both PR and Goal 4 remote branches atomically; no force push",
+  "merged": false,
+  "gamePublished": false,
+  "note": "This receipt may be followed by documentation-only publication receipts; application source remains the qualified commit."
+}

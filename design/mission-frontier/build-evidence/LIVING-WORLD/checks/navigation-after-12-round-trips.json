@@ -1,0 +1,162 @@
+{
+  "capturedAt": "2026-09-08T16:41:29.521Z",
+  "viewport": {
+    "width": 1488,
+    "height": 1058,
+    "dpr": 1
+  },
+  "mode": "fixture",
+  "projects": 1,
+  "tasks": 11,
+  "refresh": {
+    "cycles": 143,
+    "summaryReads": 2,
+    "selectedReads": 1,
+    "failures": 0
+  },
+  "renderer": {
+    "artDirection": "cinematic",
+    "textures": 78,
+    "decodedBytes": 141754368,
+    "compressedBytes": 21168914,
+    "reconciliations": 26,
+    "rebuiltEntities": 50,
+    "handoffs": 0,
+    "phase": "Daylight",
+    "worldHour": 12,
+    "lamps": 0,
+    "lightingSurfaces": 8,
+    "frameSamples": 12000,
+    "measuredSeconds": 141.5977000000477,
+    "medianFps": 128.2051280091892,
+    "p95FrameMs": 9.600000023841858,
+    "entities": 1,
+    "workers": 1,
+    "activeWorkers": 1,
+    "ambientCrew": 0,
+    "roamingWorkers": 0,
+    "workerActions": [
+      "console"
+    ],
+    "tickerListeners": 2,
+    "actorSamples": [
+      {
+        "id": "ART-plan",
+        "ambient": false,
+        "active": true,
+        "patrol": false,
+        "x": -139.64621874999995,
+        "y": -147.29373899999996,
+        "textureFrame": 76
+      }
+    ],
+    "tickerRunning": true,
+    "documentHidden": false,
+    "backgroundSuspensions": 0,
+    "camera": {
+      "x": 513.1857534246575,
+      "y": 695.8520547945205,
+      "zoom": 1.0790136986301369
+    }
+  },
+  "selectionAckMs": [],
+  "selectionMeasurement": "Selection event to the second animation frame after committed state and scene effects",
+  "pageTransfer": {
+    "requests": 16,
+    "transferBytes": 594141,
+    "encodedBytes": 589341
+  },
+  "artworkNetwork": [
+    {
+      "path": "/assets/index-DQ2_3qgg.js",
+      "transferBytes": 315569,
+      "encodedBytes": 315269,
+      "decodedBodyBytes": 1070401
+    },
+    {
+      "path": "/assets/index-BNhVVv7Y.css",
+      "transferBytes": 13611,
+      "encodedBytes": 13311,
+      "decodedBodyBytes": 63467
+    },
+    {
+      "path": "/assets/inter-latin-400-normal-C38fXH4l.woff2",
+      "transferBytes": 23964,
+      "encodedBytes": 23664,
+      "decodedBodyBytes": 23664
+    },
+    {
+      "path": "/assets/inter-latin-500-normal-Cerq10X2.woff2",
+      "transferBytes": 24572,
+      "encodedBytes": 24272,
+      "decodedBodyBytes": 24272
+    },
+    {
+      "path": "/assets/BufferResource-DVQmEmk4.js",
+      "transferBytes": 2908,
+      "encodedBytes": 2608,
+      "decodedBodyBytes": 10037
+    },
+    {
+      "path": "/assets/WebGLRenderer-BQBnD-Cy.js",
+      "transferBytes": 20010,
+      "encodedBytes": 19710,
+      "decodedBodyBytes": 72275
+    },
+    {
+      "path": "/assets/RenderTargetSystem-D8SVLv7V.js",
+      "transferBytes": 14973,
+      "encodedBytes": 14673,
+      "decodedBodyBytes": 53013
+    },
+    {
+      "path": "/assets/Filter-CFsaygyu.js",
+      "transferBytes": 1204,
+      "encodedBytes": 904,
+      "decodedBodyBytes": 904
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.portrait-2b3815b7e1.png",
+      "transferBytes": 139509,
+      "encodedBytes": 139209,
+      "decodedBodyBytes": 139209
+    },
+    {
+      "path": "/assets/browserAll-QFuN95yN.js",
+      "transferBytes": 11681,
+      "encodedBytes": 11381,
+      "decodedBodyBytes": 43328
+    },
+    {
+      "path": "/assets/webworkerAll-BsomkVuI.js",
+      "transferBytes": 5382,
+      "encodedBytes": 5082,
+      "decodedBodyBytes": 15962
+    },
+    {
+      "path": "/assets/CanvasPool-DuqGdd_w.js",
+      "transferBytes": 1082,
+      "encodedBytes": 782,
+      "decodedBodyBytes": 782
+    },
+    {
+      "path": "/assets/manifest.json",
+      "transferBytes": 13303,
+      "encodedBytes": 13003,
+      "decodedBodyBytes": 71785
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "transferBytes": 2662,
+      "encodedBytes": 2362,
+      "decodedBodyBytes": 20101
+    },
+    {
+      "path": "/assets/living/manifest.json",
+      "transferBytes": 2819,
+      "encodedBytes": 2519,
+      "decodedBodyBytes": 23887
+    }
+  ],
+  "network": []
+}

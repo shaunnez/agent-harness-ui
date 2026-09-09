@@ -1,0 +1,68 @@
+{
+  "id": "mf.station.diagnostics",
+  "revision": 1,
+  "status": "pending-coordinator-A2-review",
+  "file": "exports/station-diagnostics-r1.png",
+  "sourceSize": [
+    512,
+    512
+  ],
+  "logicalSize": [
+    256,
+    256
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    156.36225,
+    213.3025
+  ],
+  "footprint": [
+    [
+      57.711,
+      182.31985
+    ],
+    [
+      97.9422,
+      137.6185
+    ],
+    [
+      201.0636,
+      181.8574
+    ],
+    [
+      156.36225,
+      213.3025
+    ]
+  ],
+  "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+  "layer": "station",
+  "occlusionClass": "solid-station",
+  "sockets": {
+    "frontToolPort": [
+      63.2601,
+      164.90175
+    ],
+    "screenCenter": [
+      137.24855,
+      125.13295
+    ],
+    "inspectionTray": [
+      120.7553,
+      145.78805
+    ]
+  },
+  "sha256": "bc217af03b9903766b4e12df7b71e49d0c8af1b63176554e9622d91eb599ebd2",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/socket-registration-r1.png",
+    "qa/calibrated-scale-comparison-r1.png"
+  ],
+  "limits": [
+    "Static neutral instruments; no pass/fail lights, literal test results or execution claims.",
+    "No workers, floor, state labels or animated parts baked in.",
+    "A2 integrated scene review pending."
+  ]
+}

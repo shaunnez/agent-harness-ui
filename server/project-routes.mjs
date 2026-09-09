@@ -20,6 +20,22 @@ export function createProjectRoutes({ store, suggestedRepository, send, readJson
       return true;
     }
 
+    const match = url.pathname.match(/^\/api\/projects\/([^/]+)(?:\/(archive|restore))?$/);
+    if (match && ((request.method === "PATCH" && !match[2]) || (request.method === "POST" && match[2]))) {
+      const input = await readJson(request);
+      if (!input || typeof input !== "object" || Array.isArray(input))
+        throw new Error("Provide a project change object.");
+      const allowed = match[2] ? [] : ["name"];
+      if (Object.keys(input).some((key) => !allowed.includes(key)))
+        throw new Error("Project repository and identity are immutable; only the display name may change.");
+      const project = await store.updateProject(decodeURIComponent(match[1]), {
+        kind: match[2] ?? "rename",
+        name: input.name,
+      });
+      send(response, project ? 200 : 404, project ? { project } : { error: "Registered project not found." });
+      return true;
+    }
+
     return false;
   };
 }

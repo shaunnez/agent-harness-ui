@@ -1,0 +1,44 @@
+{
+  "id": "mf.worker.standard.portrait",
+  "revision": 1,
+  "status": "pending-coordinator-integration-review",
+  "file": "exports/worker-standard-portrait-r1.png",
+  "sourceSize": [
+    256,
+    320
+  ],
+  "logicalSize": [
+    128,
+    160
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "layer": "hud-portrait",
+  "occlusionClass": "ui-image",
+  "groundAnchor": null,
+  "sockets": {},
+  "sha256": "e1e3384a7603cd8a46c6666d9ad356f88a6359b9467c7e804b9faeb58930afb1",
+  "alpha": "straight RGBA",
+  "displaySlots": [
+    [
+      80,
+      122
+    ],
+    [
+      64,
+      86
+    ]
+  ],
+  "displayFit": {
+    "objectFit": "cover",
+    "objectPosition": "center top"
+  },
+  "qa": [
+    "qa/QA.md",
+    "qa/hud-actual-scale-r1.png",
+    "qa/alpha-backgrounds-r1.png"
+  ],
+  "limits": [
+    "Portrait only; no world placement or ground anchor.",
+    "Bottom torso crop is intentional. No status/UI baked in."
+  ]
+}

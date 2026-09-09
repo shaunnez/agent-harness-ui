@@ -1,0 +1,35 @@
+{
+  "assetId": "mf.station.intake",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-9140f386-f87b-4184-a1fc-2e0ddfae7c6a",
+  "sourceSha256": "cf2d382f092882b25b6022cb66878a5408cbbb24b31e26cf03d955cff691b85b",
+  "initialSourceId": "exec-494dfb1f-4991-4f74-b3ca-23bfa63b5186",
+  "initialSourceSha256": "7bea2c079a58e84eff2be67925577305fc4c7cf13b3c293c89926fff3672ad7e",
+  "prompt": "Create ONE isolated production game sprite: a compact TRIAGE INTAKE AND BRIEFING STATION, in the same ceramic white and slate steel material family and fixed orthographic 2:1 isometric camera as the supplied fabrication/communications stations. New distinct silhouette: broad low bevelled rectangular workbench with a SINGLE slanted dark blue glass briefing tablet inset into its tabletop, plus one short upright ceramic intake receiver column at rear right, capped by an opaque neutral frosted glass beacon lens that is SWITCHED OFF, no glow. Small physical document/module intake slot below the column. Front left face has a clear circular dark diagnostic tool socket for later independent robot probe contact. Bench surface height about38 logical px, ground support footprint about146x80 logical, full width160 logical. Warm upper left daylight, believable crisp fine mechanical detailing and clean attractive substantial forms. Neutral STATIC hardware: no illuminated indicators, no status colors, no luminous beam, no screen text or symbols, no semantic lights. Blue glass is reflective daylight material only. NO people, robots, floor, scenery, background, labels, numbers, logos, UI, shadow plane. Transparent background cutout if possible; otherwise completely flat pure chroma green background with no gradient/shadow. Full object entirely visible with generous margin on square canvas. The references establish family and camera, not a request to copy their screen bank or fabrication module.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.station.fabrication/exports/station-fabrication-r1.png",
+      "sha256": "3bb80f14413e70b0398b4d6770e601affcf3d9b20d2a5553dd3f01cebf1d966d"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.station.communications/exports/station-communications-r1.png",
+      "sha256": "81a0c8c2e1f4de2f034afa0d3f36e86983f8bd348b0c9e69b20dd63d9656d6da"
+    }
+  ],
+  "correctiveGenerations": 1,
+  "correctionPrompt": "Keep this exact intake station, all geometry, materials, camera, dark unlit glass, socket and scale unchanged. Replace EVERY checkerboard background pixel outside the object with perfectly flat solid vivid green RGB(0,255,0), including gaps around its silhouette. No checkerboard, no gradient, no ground shadow, no floor. The object itself must retain its original white ceramic/slate colors. Full isolated object on uniform green. Do not add any lights, text, symbols or other objects.\n",
+  "transforms": [
+    "Green key and spill cleanup",
+    "Crop subject and uniformly fit320source pixels wide",
+    "Lanczos resize and register bottom at430source on512canvas",
+    "QA-only comparison at requested consumer factors"
+  ],
+  "exportSha256": "623461a3e441421299f869f0d664d8dc3c8b2d6e225d0ff9ed88873be9805cef",
+  "exportBytes": 137099,
+  "rightsNote": "Supplied/generated project references only; provenance is not legal clearance."
+}

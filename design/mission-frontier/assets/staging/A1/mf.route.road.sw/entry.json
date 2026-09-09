@@ -1,0 +1,88 @@
+{
+  "id": "mf.route.road.sw",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/road-sw-r1.png",
+  "sourceSize": [
+    512,
+    384
+  ],
+  "logicalSize": [
+    256,
+    192
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    128,
+    128
+  ],
+  "footprint": [
+    [
+      196,
+      82
+    ],
+    [
+      220,
+      94
+    ],
+    [
+      60,
+      174
+    ],
+    [
+      36,
+      162
+    ]
+  ],
+  "layer": "route",
+  "occlusionClass": "ground-route",
+  "sockets": {
+    "ne": [
+      208,
+      88
+    ],
+    "sw": [
+      48,
+      168
+    ]
+  },
+  "crossSections": {
+    "ne": [
+      [
+        196,
+        82
+      ],
+      [
+        220,
+        94
+      ]
+    ],
+    "sw": [
+      [
+        36,
+        162
+      ],
+      [
+        60,
+        174
+      ]
+    ]
+  },
+  "repeatDisplacement": [
+    -160,
+    80
+  ],
+  "sha256": "66f586d89c5471a15b2473a9798ac754b1b6718c91eed99817cf4e8e5324f7a1",
+  "alpha": "straight RGBA",
+  "qa": [
+    "qa/QA.md",
+    "qa/both-axes-consumer-scales-r1.png",
+    "qa/join-contact-magnified-r1.png",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/join-measurements-r1.json"
+  ],
+  "limits": [
+    "Permitted mirrored ground material; tiny curb-side shading reverses. No tall geometry or cast shadow is present.",
+    "Live scene filtering and connection composition remain coordinator verification."
+  ]
+}

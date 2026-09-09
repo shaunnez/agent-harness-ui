@@ -1,0 +1,18 @@
+{
+  "assetId": "mf.route.road.sw",
+  "revision": 1,
+  "production": "Authorized deterministic mirrored derivative; no ImageGen",
+  "sourceAssetId": "mf.route.road.se",
+  "sourceRevision": 1,
+  "sourcePath": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.route.road.se/exports/road-se-r1.png",
+  "sourceSha256": "2304520e709f8239a2ded113eb895b6e7a0b84cc69df33ca019fe857de99df77",
+  "sourceProvenance": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.route.road.se/provenance.json",
+  "transforms": [
+    "Lossless horizontal pixel reflection in512x384canvas",
+    "Reflect metadata coordinates around x256source/x128logical",
+    "QA-only exact[-320,160]source translations and requested scale rendering"
+  ],
+  "exportSha256": "66f586d89c5471a15b2473a9798ac754b1b6718c91eed99817cf4e8e5324f7a1",
+  "exportBytes": 44982,
+  "lightingReview": "Flat dark surface and pale curbs preserve material kinship; negligible curb-side highlight direction is mirrored, no tall object/shadow reversal."
+}

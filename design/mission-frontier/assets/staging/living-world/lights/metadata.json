@@ -1,0 +1,24 @@
+{
+  "source": "exterior.blend",
+  "sourceSha256": "cfac30974a669b30141e6c869b8bcfb98f6ff607c43635eb54e4d0440fdff0aa",
+  "blender": "5.2.1 LTS",
+  "materials": [
+    "amber inset",
+    "blue glass"
+  ],
+  "sourceSize": [
+    1536,
+    1280
+  ],
+  "logicalSize": [
+    768,
+    640
+  ],
+  "groundAnchor": [
+    384,
+    522
+  ],
+  "blendMode": "add",
+  "description": "Identical camera and occluding geometry; non-light surfaces are additive black.",
+  "scriptSha256": "99ef86d4b4190944f1129a4f9f49e5f14e38b9f086e70e1a1804c242f674b368"
+}

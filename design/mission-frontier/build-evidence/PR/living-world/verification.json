@@ -1,0 +1,60 @@
+{
+  "date": "2026-09-09",
+  "recordedAt": "2026-09-08T20:03:44.908631+00:00",
+  "sourceCommit": "efc0ba34db1c8dd0f3ac911755a43a2b307bb4c6",
+  "applicationCommit": "5eaa8b6f61d4e78ea3bd068120ed6e4c9feed3da",
+  "previousPrCommit": "02f6380dc48df63ab22614063eae904cc599aad9",
+  "scope": "PR #73 with living-world motion, lighting, assets and original visual evidence",
+  "node": "24.19.0",
+  "tests": {
+    "passed": 1060,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "focusedTests": {
+    "passed": 13,
+    "includedInFullSuite": true
+  },
+  "commands": {
+    "focused": "node --test tests/frontier/living-world.test.mjs tests/frontier/living-assets.test.mjs",
+    "full": "node --test --test-concurrency=2 tests/*.test.mjs tests/frontier/*.test.mjs tests/frontier/api/*.test.mjs",
+    "typecheck": "npm run typecheck",
+    "lint": "npm run lint",
+    "format": "npm run format:check",
+    "build": "npm run build",
+    "buildFrontier": "npm run build:frontier"
+  },
+  "durationMs": 78806.022166,
+  "checks": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "format": "passed",
+    "build": "passed",
+    "buildFrontier": "passed",
+    "protectedSitesOutputs": "passed",
+    "sourceIdentity": "passed"
+  },
+  "sourceIdentity": {
+    "originalApplicationCommit": "882e02b6727116a4ad45008d39c89e82b709a076",
+    "matchingSourceManifestFiles": 122,
+    "frontierSourceAssetsScriptsAndTestsIdentical": true,
+    "backendDependenciesAndProtectedSitesFilesUnchangedSincePreviousPr": true
+  },
+  "sha256": {
+    "build-frontier.txt": "3b06b91fbc0598a3c35bb555901d37ebf2f522e33b5cafc2a5514a2363bf14ff",
+    "build.txt": "8b24403aff71c22734d9fb3bbc242b81804660a8d035637dace34ce6b8ad3415",
+    "focused-tests.txt": "f8888a7acc8db5084f85e73e9e0786f7cf242e6b8ec9a975356ce33bd32b8fdb",
+    "format.txt": "16077062dc4acd1d90400f2c7c901ab0388930ee81f05de749c5f06f3b3272fa",
+    "full-tests.txt": "b8484b32780efdbfae1e6c794e7f776a29027d6324305d6d6ed2ae384da045c1",
+    "lint.txt": "3b3f225f7cd637784366753052fc506765538ec20fd51e3ac67e50b6a3b7fad0",
+    "typecheck.txt": "c9e4a5ee249828a63340bea8ba8166993e3626ef7d4b6963357c19b3202fd8e0"
+  },
+  "limits": [
+    "The 1,060-test PR suite includes the prior 1,047 tests plus 13 living-world tests. The earlier local 1,065-test source included unrelated local changes excluded from this PR.",
+    "Original living-world browser captures and performance measurements are retained and were not rerun during integration; the corresponding source and asset hashes match.",
+    "Native background-tab suspension, OS reduced-motion transitions and export receipt remain unverified.",
+    "Passing Vite test fixtures emitted HMR port-collision warnings on port 24678. No new browser-console qualification is claimed.",
+    "The existing Vite large-chunk warning remains; no live tasks, companion restart, database mutation, merge or game deployment occurred."
+  ]
+}

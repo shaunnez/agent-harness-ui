@@ -1,0 +1,15 @@
+{
+  "entry.json": "65075db8d3f8a8022fa163c2ec65b3966dee8c44205dc4573ca8945a21f57f9a",
+  "exports/worker-standard-sw-neutral-r1.png": "c4ee094fee3f1911592e27619dfb3c59044bccb404187d0aa17e1a02031f7b3a",
+  "geometry.json": "f7958ba74ba7482e23005f2453c72f40f80adbeef4eca27344851f6615af1b7c",
+  "process.py": "7066a081e8d017220a7fac12c766e36fc536eee7b2a953f1395ef5efffa48390",
+  "provenance.json": "771e068721d8260750ae9b57221a4a5cf2744c1bce6782067fb4aad0e79850b0",
+  "qa/QA.md": "32d82545d74cb63746ed86b79189f4db39668a1c8d27e66fb66ad4e6865d19a2",
+  "qa/alpha-backgrounds-r1.png": "8f2967f0f54200bd9534d155016300d97cfa7901eb2faf2f9e4565ced8ee54c9",
+  "qa/basefloor-contact-r1.png": "bafbdb45d29cc36f44935296bb11ff7bb0e4f9179d0ff3083d85fa131a9a1d16",
+  "qa/both-facings-actual-scale-r1.png": "5b7436469a4d2735ab7045bbcf8178ccbfc36dcdd5b4580c9a252a7a4751d0f9",
+  "qa/measurements-r1.json": "47513e7b3c1ba583b89f323fab13005851b8af088f6435759bf12ebbf7b7fe4c",
+  "source/generation-prompt.txt": "e74d0bb22720d8317efa656004200e7d1e03140b67f1e1377fb532b3c62d2863",
+  "source/worker-sw-alpha-master-r1.png": "65fef47c622e375a87bbff9a7381870997cf29869ae4dc97e2d9bdf277b22f47",
+  "source/worker-sw-master-r1.png": "4940940888422498578707ba452bd999cd6c9bcfbe669c40ae2c4f9360cd1608"
+}

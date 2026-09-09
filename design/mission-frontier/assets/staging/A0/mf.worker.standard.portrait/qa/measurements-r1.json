@@ -1,0 +1,20 @@
+{
+  "mode": "RGBA",
+  "dimensions": [
+    256,
+    320
+  ],
+  "visibleAlphaBounds": [
+    0,
+    15,
+    248,
+    320
+  ],
+  "alphaRange": [
+    0,
+    255
+  ],
+  "topBorderOccupiedPixels": 0,
+  "bottomBorderOccupiedPixels": 235,
+  "note": "Bottom torso intentionally extends through frame; full head remains inside crop."
+}

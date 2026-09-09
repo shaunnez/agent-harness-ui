@@ -1,0 +1,69 @@
+{
+  "id": "mf.terrain.region",
+  "revision": 1,
+  "status": "pending-coordinator-integration-review",
+  "file": "exports/terrain-region-r1.png",
+  "sourceSize": [
+    2048,
+    1280
+  ],
+  "logicalSize": [
+    1024,
+    640
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    512,
+    540
+  ],
+  "footprint": [
+    [
+      0,
+      0
+    ],
+    [
+      1024,
+      0
+    ],
+    [
+      1024,
+      640
+    ],
+    [
+      0,
+      640
+    ]
+  ],
+  "layer": "terrain",
+  "occlusionClass": "background",
+  "sockets": {},
+  "clearingCenters": [
+    [
+      412.0,
+      475.0
+    ],
+    [
+      272.0,
+      295.0
+    ],
+    [
+      682.0,
+      375.0
+    ]
+  ],
+  "sourceId": "exec-cf838e4f-cdf6-4307-ba34-6e2e35b6a8a4",
+  "sha256": "ccd93afa096e0d5e2e30697a27c8e4fb6b1cb3474603e73d63f064a7f005640a",
+  "alpha": "opaque RGB terrain",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/clearing-registration-r1.png",
+    "qa/scene-1568x1003-r1.png",
+    "qa/independent-bases-proof-r1.png"
+  ],
+  "limits": [
+    "Not a seamless repeating tile. Neighbor regions require authored continuation.",
+    "Water, trees and bridge are static scenery; no independent animation or foreground occluder layers.",
+    "Clearing support is visual; integrated M1 remains unverified."
+  ]
+}

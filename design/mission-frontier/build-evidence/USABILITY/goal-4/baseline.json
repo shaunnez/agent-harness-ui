@@ -1,0 +1,422 @@
+[
+  {
+    "label": "1280-task-before",
+    "regions": [
+      {
+        "clientHeight": 622,
+        "rect": {
+          "bottom": 672,
+          "height": 624,
+          "left": 40,
+          "right": 1240,
+          "top": 48,
+          "width": 1200,
+          "x": 40,
+          "y": 48
+        },
+        "scrollHeight": 622,
+        "selector": "work-overlay overlay-task"
+      },
+      {
+        "clientHeight": 469,
+        "rect": {
+          "bottom": 651,
+          "height": 471.40625,
+          "left": 61,
+          "right": 201,
+          "top": 179.59375,
+          "width": 140,
+          "x": 61,
+          "y": 179.59375
+        },
+        "scrollHeight": 713,
+        "selector": "stage-navigation"
+      },
+      {
+        "clientHeight": 307,
+        "rect": {
+          "bottom": 651,
+          "height": 307.1640625,
+          "left": 221,
+          "right": 949,
+          "top": 343.8359375,
+          "width": 728,
+          "x": 221,
+          "y": 343.8359375
+        },
+        "scrollHeight": 838,
+        "selector": "task-stage-content"
+      },
+      {
+        "clientHeight": 469,
+        "rect": {
+          "bottom": 651,
+          "height": 471.40625,
+          "left": 969,
+          "right": 1219,
+          "top": 179.59375,
+          "width": 250,
+          "x": 969,
+          "y": 179.59375
+        },
+        "scrollHeight": 996,
+        "selector": "task-brief"
+      }
+    ],
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    }
+  },
+  {
+    "label": "1280-agent-before",
+    "regions": [
+      {
+        "clientHeight": 617,
+        "rect": {
+          "bottom": 685,
+          "height": 619,
+          "left": 730.40625,
+          "right": 1268,
+          "top": 66,
+          "width": 537.59375,
+          "x": 730.40625,
+          "y": 66
+        },
+        "scrollHeight": 1150,
+        "selector": "agent-panel panel"
+      },
+      {
+        "clientHeight": 179,
+        "rect": {
+          "bottom": 781.15625,
+          "height": 181.375,
+          "left": 747.40625,
+          "right": 1251,
+          "top": 599.78125,
+          "width": 503.59375,
+          "x": 747.40625,
+          "y": 599.78125
+        },
+        "scrollHeight": 179,
+        "selector": "agent-evidence"
+      }
+    ],
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    }
+  },
+  {
+    "label": "1280-new-task-before",
+    "regions": [
+      {
+        "clientHeight": 622,
+        "rect": {
+          "bottom": 672,
+          "height": 624,
+          "left": 32,
+          "right": 1248,
+          "top": 48,
+          "width": 1216,
+          "x": 32,
+          "y": 48
+        },
+        "scrollHeight": 622,
+        "selector": "work-overlay overlay-new-task"
+      }
+    ],
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    }
+  },
+  {
+    "label": "1280-artifact-before",
+    "regions": [
+      {
+        "clientHeight": 618,
+        "rect": {
+          "bottom": 669.953125,
+          "height": 619.9140625,
+          "left": 32,
+          "right": 1248,
+          "top": 50.0390625,
+          "width": 1216,
+          "x": 32,
+          "y": 50.0390625
+        },
+        "scrollHeight": 618,
+        "selector": "work-overlay overlay-artifact"
+      }
+    ],
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    }
+  },
+  {
+    "label": "1280-repair-before",
+    "regions": [
+      {
+        "clientHeight": 622,
+        "rect": {
+          "bottom": 672,
+          "height": 624,
+          "left": 40,
+          "right": 1240,
+          "top": 48,
+          "width": 1200,
+          "x": 40,
+          "y": 48
+        },
+        "scrollHeight": 622,
+        "selector": "work-overlay overlay-task"
+      },
+      {
+        "clientHeight": 469,
+        "rect": {
+          "bottom": 651,
+          "height": 471.40625,
+          "left": 61,
+          "right": 201,
+          "top": 179.59375,
+          "width": 140,
+          "x": 61,
+          "y": 179.59375
+        },
+        "scrollHeight": 733,
+        "selector": "stage-navigation"
+      },
+      {
+        "clientHeight": 234,
+        "rect": {
+          "bottom": 651,
+          "height": 233.7734375,
+          "left": 221,
+          "right": 949,
+          "top": 417.2265625,
+          "width": 728,
+          "x": 221,
+          "y": 417.2265625
+        },
+        "scrollHeight": 885,
+        "selector": "task-stage-content"
+      },
+      {
+        "clientHeight": 469,
+        "rect": {
+          "bottom": 651,
+          "height": 471.40625,
+          "left": 969,
+          "right": 1219,
+          "top": 179.59375,
+          "width": 250,
+          "x": 969,
+          "y": 179.59375
+        },
+        "scrollHeight": 1036,
+        "selector": "task-brief"
+      }
+    ],
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    }
+  },
+  {
+    "label": "1280-waiting-before",
+    "regions": [
+      {
+        "clientHeight": 617,
+        "rect": {
+          "bottom": 685,
+          "height": 619,
+          "left": 730.40625,
+          "right": 1268,
+          "top": 66,
+          "width": 537.59375,
+          "x": 730.40625,
+          "y": 66
+        },
+        "scrollHeight": 1014,
+        "selector": "agent-panel panel"
+      },
+      {
+        "clientHeight": 93,
+        "rect": {
+          "bottom": 694.78125,
+          "height": 95,
+          "left": 747.40625,
+          "right": 1251,
+          "top": 599.78125,
+          "width": 503.59375,
+          "x": 747.40625,
+          "y": 599.78125
+        },
+        "scrollHeight": 93,
+        "selector": "agent-evidence"
+      }
+    ],
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    }
+  },
+  {
+    "label": "1440-task-before",
+    "regions": [
+      {
+        "clientHeight": 802,
+        "rect": {
+          "bottom": 852,
+          "height": 804,
+          "left": 40,
+          "right": 1400,
+          "top": 48,
+          "width": 1360,
+          "x": 40,
+          "y": 48
+        },
+        "scrollHeight": 802,
+        "selector": "work-overlay overlay-task"
+      },
+      {
+        "clientHeight": 649,
+        "rect": {
+          "bottom": 831,
+          "height": 651.40625,
+          "left": 61,
+          "right": 233,
+          "top": 179.59375,
+          "width": 172,
+          "x": 61,
+          "y": 179.59375
+        },
+        "scrollHeight": 713,
+        "selector": "stage-navigation"
+      },
+      {
+        "clientHeight": 487,
+        "rect": {
+          "bottom": 831,
+          "height": 487.1640625,
+          "left": 253,
+          "right": 1069,
+          "top": 343.8359375,
+          "width": 816,
+          "x": 253,
+          "y": 343.8359375
+        },
+        "scrollHeight": 815,
+        "selector": "task-stage-content"
+      },
+      {
+        "clientHeight": 649,
+        "rect": {
+          "bottom": 831,
+          "height": 651.40625,
+          "left": 1089,
+          "right": 1379,
+          "top": 179.59375,
+          "width": 290,
+          "x": 1089,
+          "y": 179.59375
+        },
+        "scrollHeight": 933,
+        "selector": "task-brief"
+      }
+    ],
+    "viewport": {
+      "height": 900,
+      "width": 1440
+    }
+  },
+  {
+    "label": "1440-agent-before",
+    "regions": [
+      {
+        "clientHeight": 797,
+        "rect": {
+          "bottom": 865,
+          "height": 799,
+          "left": 873.6015625,
+          "right": 1428,
+          "top": 66,
+          "width": 554.3984375,
+          "x": 873.6015625,
+          "y": 66
+        },
+        "scrollHeight": 1150,
+        "selector": "agent-panel panel"
+      },
+      {
+        "clientHeight": 179,
+        "rect": {
+          "bottom": 781.15625,
+          "height": 181.375,
+          "left": 890.6015625,
+          "right": 1411,
+          "top": 599.78125,
+          "width": 520.3984375,
+          "x": 890.6015625,
+          "y": 599.78125
+        },
+        "scrollHeight": 179,
+        "selector": "agent-evidence"
+      }
+    ],
+    "viewport": {
+      "height": 900,
+      "width": 1440
+    }
+  },
+  {
+    "label": "1440-new-task-before",
+    "regions": [
+      {
+        "clientHeight": 802,
+        "rect": {
+          "bottom": 852,
+          "height": 804,
+          "left": 60,
+          "right": 1380,
+          "top": 48,
+          "width": 1320,
+          "x": 60,
+          "y": 48
+        },
+        "scrollHeight": 802,
+        "selector": "work-overlay overlay-new-task"
+      }
+    ],
+    "viewport": {
+      "height": 900,
+      "width": 1440
+    }
+  },
+  {
+    "label": "1440-artifact-before",
+    "regions": [
+      {
+        "clientHeight": 618,
+        "rect": {
+          "bottom": 759.953125,
+          "height": 619.9140625,
+          "left": 95,
+          "right": 1345,
+          "top": 140.0390625,
+          "width": 1250,
+          "x": 95,
+          "y": 140.0390625
+        },
+        "scrollHeight": 618,
+        "selector": "work-overlay overlay-artifact"
+      }
+    ],
+    "viewport": {
+      "height": 900,
+      "width": 1440
+    }
+  }
+]

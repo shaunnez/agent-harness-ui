@@ -1,0 +1,1683 @@
+{
+  "id": "mf.worker.standard.se.living-motion",
+  "revision": 1,
+  "status": "measured-ready-for-builder-integration-review",
+  "sourceSize": [
+    384,
+    384
+  ],
+  "logicalSize": [
+    192,
+    192
+  ],
+  "groundAnchor": [
+    96,
+    167
+  ],
+  "groundAnchorSource": [
+    192.0,
+    334.0
+  ],
+  "camera": {
+    "location": [
+      11.562016487121582,
+      11.562016487121582,
+      10.870794296264648
+    ],
+    "euler": [
+      1.0471974611282349,
+      4.447953827479978e-08,
+      2.356194496154785
+    ],
+    "orthoScale": 3.3499999046325684,
+    "elevationDegrees": 30,
+    "azimuthDegrees": 45
+  },
+  "samples": 64,
+  "blenderVersion": "5.2.1 LTS",
+  "footContactsSource": [
+    [
+      183.895,
+      347.779
+    ],
+    [
+      219.558,
+      329.947
+    ]
+  ],
+  "buildScriptSha256": "5b89cede6d463c1aba7f3b889bb0934bfaccfa809d4ae0e32f3f787edf3c6cff",
+  "lighting": {
+    "key": [
+      10,
+      -6,
+      16
+    ],
+    "keyWatts": 4800,
+    "keySize": 7,
+    "fillWatts": 550
+  },
+  "workFrames": [],
+  "provenance": "Existing original agent-authored Blender robot regenerated from retained source; articulated rigid mesh joints; no new textures or third-party assets.",
+  "sourceId": "original-authored-cinematic-worker",
+  "sourceScriptSha256": "fec1de1f7801fef41e5aa36b1eff49aaf1ecc5bd9da365f537102482c74d326d",
+  "animations": {
+    "walk": {
+      "durationMs": 1200,
+      "frameDurationMs": 150,
+      "frames": [
+        {
+          "file": "renders/worker-walk-00.png",
+          "frame": 0,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              73.605,
+              145.3315
+            ]
+          },
+          "probeTipSource": [
+            147.21,
+            290.663
+          ],
+          "footContactsSource": [
+            [
+              212.263,
+              361.963
+            ],
+            [
+              191.189,
+              315.763
+            ]
+          ],
+          "footHeightsWorld": [
+            -0.0,
+            0.0
+          ],
+          "sha256": "3472e1ca1d782b4ced23ac7171188dbb4d6e7fe565c4d20671493b5a5f3de517",
+          "bytes": 68480,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            135,
+            80,
+            281,
+            374
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-01.png",
+          "frame": 1,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              76.835,
+              146.9985
+            ]
+          },
+          "probeTipSource": [
+            153.67,
+            293.997
+          ],
+          "footContactsSource": [
+            [
+              203.954,
+              345.174
+            ],
+            [
+              199.498,
+              319.917
+            ]
+          ],
+          "footHeightsWorld": [
+            0.127279,
+            -0.0
+          ],
+          "sha256": "ce58580c5f4a6f27291fb1efe71eb3482ed3aca88ca0bd1ed112b112c1dfdbab",
+          "bytes": 67635,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            137,
+            80,
+            276,
+            357
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-02.png",
+          "frame": 2,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              84.5605,
+              149.6545
+            ]
+          },
+          "probeTipSource": [
+            169.121,
+            299.309
+          ],
+          "footContactsSource": [
+            [
+              183.895,
+              329.91
+            ],
+            [
+              219.558,
+              329.947
+            ]
+          ],
+          "footHeightsWorld": [
+            0.18,
+            0.0
+          ],
+          "sha256": "e6d55ae093c71b87df58a58d27c7572357191005690d2f7bbd0b5447800e920a",
+          "bytes": 66281,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            80,
+            265,
+            342
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-03.png",
+          "frame": 3,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              91.9415,
+              150.3
+            ]
+          },
+          "probeTipSource": [
+            183.883,
+            300.6
+          ],
+          "footContactsSource": [
+            [
+              163.835,
+              325.114
+            ],
+            [
+              239.618,
+              339.977
+            ]
+          ],
+          "footHeightsWorld": [
+            0.127279,
+            0.0
+          ],
+          "sha256": "79375349a969cd18fcc334b3a89c1f0e29d16bae0c9ecc7fb241ebd14323789f",
+          "bytes": 67181,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            132,
+            80,
+            273,
+            352
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-04.png",
+          "frame": 4,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              94.829,
+              149.9705
+            ]
+          },
+          "probeTipSource": [
+            189.658,
+            299.941
+          ],
+          "footContactsSource": [
+            [
+              155.526,
+              333.595
+            ],
+            [
+              247.927,
+              344.132
+            ]
+          ],
+          "footHeightsWorld": [
+            0.0,
+            -0.0
+          ],
+          "sha256": "ddc444126a0bf900b3d541593e5a2cd9516cab2e71b5eb7befc47874c7e1bf84",
+          "bytes": 69303,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            123,
+            80,
+            282,
+            356
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-05.png",
+          "frame": 5,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              91.9415,
+              150.3
+            ]
+          },
+          "probeTipSource": [
+            183.883,
+            300.6
+          ],
+          "footContactsSource": [
+            [
+              163.835,
+              337.749
+            ],
+            [
+              239.618,
+              327.342
+            ]
+          ],
+          "footHeightsWorld": [
+            -0.0,
+            0.127279
+          ],
+          "sha256": "3aa6be076065ef2e721ed22859925be0e9eba4f9fe8732e05de4ad53f60ea61b",
+          "bytes": 67832,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            132,
+            80,
+            274,
+            350
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-06.png",
+          "frame": 6,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              84.5605,
+              149.6545
+            ]
+          },
+          "probeTipSource": [
+            169.121,
+            299.309
+          ],
+          "footContactsSource": [
+            [
+              183.895,
+              347.779
+            ],
+            [
+              219.558,
+              312.079
+            ]
+          ],
+          "footHeightsWorld": [
+            -0.0,
+            0.18
+          ],
+          "sha256": "3ed936900a5535610563dd70663d9621fd83d121675fff6e3d28c3132ebb48c0",
+          "bytes": 68280,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            80,
+            265,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-07.png",
+          "frame": 7,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              76.835,
+              146.9985
+            ]
+          },
+          "probeTipSource": [
+            153.67,
+            293.997
+          ],
+          "footContactsSource": [
+            [
+              203.954,
+              357.809
+            ],
+            [
+              199.498,
+              307.282
+            ]
+          ],
+          "footHeightsWorld": [
+            0.0,
+            0.127279
+          ],
+          "sha256": "fdb33486c50dccb6134f9f2e78cd7dc877d9caa6fec62da588962a5d78fe4e15",
+          "bytes": 68893,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            137,
+            80,
+            276,
+            370
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        }
+      ],
+      "staticFallbackFrame": 0,
+      "suggestedStrideLogicalPixels": 36
+    },
+    "scan": {
+      "durationMs": 1200,
+      "frameDurationMs": 150,
+      "frames": [
+        {
+          "file": "renders/worker-scan-00.png",
+          "frame": 0,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.345,
+              125.9605
+            ]
+          },
+          "probeTipSource": [
+            224.69,
+            251.921
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "31e641f05c7050669727079fefdf226504e1da50333fe2da5be8cca2345a1498",
+          "bytes": 70539,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            72,
+            285,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-01.png",
+          "frame": 1,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              111.306,
+              129.7605
+            ]
+          },
+          "probeTipSource": [
+            222.612,
+            259.521
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "ef3b45a6aaa20250358487729fe85c8ee766b0e4f97043c3155ade36221500d5",
+          "bytes": 70231,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            72,
+            286,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-02.png",
+          "frame": 2,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              111.004,
+              130.104
+            ]
+          },
+          "probeTipSource": [
+            222.008,
+            260.208
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "dfc9324cf7730c6672f964f06ca072b3df5af78bdaa8fa26b95721da5090564e",
+          "bytes": 70537,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            72,
+            288,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-03.png",
+          "frame": 3,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              111.6715,
+              126.8605
+            ]
+          },
+          "probeTipSource": [
+            223.343,
+            253.721
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "c777ececcaf752092fe419eda73aa81ae69ae63ed50f89afb99e8104e5368d77",
+          "bytes": 70734,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            71,
+            290,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-04.png",
+          "frame": 4,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.376,
+              121.573
+            ]
+          },
+          "probeTipSource": [
+            224.752,
+            243.146
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "229b3d0435f539697cb9b2b26fc5b7e643f6a1bdd11ebe7d2ca45e105d80442a",
+          "bytes": 71073,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            137,
+            71,
+            291,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-05.png",
+          "frame": 5,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.647,
+              117.327
+            ]
+          },
+          "probeTipSource": [
+            225.294,
+            234.654
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "467bccea4452acdf97fa768766479f9a94e08c9317d38ffc8a31ca53a490b187",
+          "bytes": 71202,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            135,
+            71,
+            290,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-06.png",
+          "frame": 6,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.8685,
+              116.8885
+            ]
+          },
+          "probeTipSource": [
+            225.737,
+            233.777
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "fa7b3950f0ce06b3f37133379ee0ff18dc85f23ffb182cdbe9401b14a1e78fb8",
+          "bytes": 71127,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            135,
+            72,
+            288,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-07.png",
+          "frame": 7,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.9695,
+              120.5775
+            ]
+          },
+          "probeTipSource": [
+            225.939,
+            241.155
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "ca7f83349f2e31da1b4a242ba9445997a1c8aa1c1dc1930e94a14e669217b4c8",
+          "bytes": 70838,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            137,
+            72,
+            286,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        }
+      ],
+      "staticFallbackFrame": 0,
+      "suggestedStrideLogicalPixels": 0
+    },
+    "type": {
+      "durationMs": 1200,
+      "frameDurationMs": 150,
+      "frames": [
+        {
+          "file": "renders/worker-type-00.png",
+          "frame": 0,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.4305,
+              123.7575
+            ]
+          },
+          "probeTipSource": [
+            224.861,
+            247.515
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "2dd3f2f453525a7fb65c4523462f85d1185133c96e58763cd32901c8c1c99121",
+          "bytes": 70404,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            74,
+            302,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-01.png",
+          "frame": 1,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              111.81,
+              127.673
+            ]
+          },
+          "probeTipSource": [
+            223.62,
+            255.346
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "869ae82adb275d7f3f3e792babe8ca4c1eab2876b447dc3d43c3642478cdd3d4",
+          "bytes": 70325,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            74,
+            302,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-02.png",
+          "frame": 2,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              111.5315,
+              128.6315
+            ]
+          },
+          "probeTipSource": [
+            223.063,
+            257.263
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "9d6f3ab78d23b290866073e163bb8146523542e2a6226d3e7418b696df8870e8",
+          "bytes": 70353,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            73,
+            302,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-03.png",
+          "frame": 3,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              111.9395,
+              126.1975
+            ]
+          },
+          "probeTipSource": [
+            223.879,
+            252.395
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "0f5b8e59e35ec5eb58aa1d10506242b0a5fbacb5057b2adb18e41d3142472bd9",
+          "bytes": 70557,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            73,
+            302,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-04.png",
+          "frame": 4,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.374,
+              121.5405
+            ]
+          },
+          "probeTipSource": [
+            224.748,
+            243.081
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "d860fefbedc4e26fa310a43f9986e969ee7a6c1e6a9378b6f3d93fdfdac222fd",
+          "bytes": 70556,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            73,
+            303,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-05.png",
+          "frame": 5,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.399,
+              117.326
+            ]
+          },
+          "probeTipSource": [
+            224.798,
+            234.652
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "7fc3b03786e258e5906af7840f418830e08b03c9cf0b88aba09294b31cd87f3b",
+          "bytes": 70571,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            73,
+            303,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-06.png",
+          "frame": 6,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.4205,
+              116.2245
+            ]
+          },
+          "probeTipSource": [
+            224.841,
+            232.449
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "4b3b33be35745f0e69bb85e63687709a9925b85a3b46f1fd3e0dd782cb88f05c",
+          "bytes": 70426,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            73,
+            302,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-07.png",
+          "frame": 7,
+          "durationMs": 150,
+          "groundAnchorSource": [
+            192.0,
+            334.0
+          ],
+          "sockets": {
+            "probeTip": [
+              112.607,
+              118.9575
+            ]
+          },
+          "probeTipSource": [
+            225.214,
+            237.915
+          ],
+          "footContactsSource": [],
+          "footHeightsWorld": [],
+          "sha256": "dcd296fe565de19772a30e71e3dc18d1a8f19b161ed2af27eea6f808ecdf626e",
+          "bytes": 70435,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            74,
+            302,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        }
+      ],
+      "staticFallbackFrame": 0,
+      "suggestedStrideLogicalPixels": 0
+    }
+  },
+  "rootMotion": "none; caller translates walking actor",
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "alphaMode": "straight",
+  "walkStrideLogicalPixels": 36,
+  "files": [
+    {
+      "file": "blend/worker-scan.blend",
+      "sha256": "545792f39ec4fd84f8d657217a6ac9434f6885b8afd45481e32b0c1d2eb7b4fb",
+      "bytes": 235426
+    },
+    {
+      "file": "blend/worker-type.blend",
+      "sha256": "00ebf1dd92a709dc6ac39e711c7bf9d8ffcd42ed8cb95117e188e69a445767bf",
+      "bytes": 233577
+    },
+    {
+      "file": "blend/worker-walk.blend",
+      "sha256": "60dacc60f962939705adc7f5b009de7c4873fad29adf6dad47f97c9a7c6ffead",
+      "bytes": 238924
+    },
+    {
+      "file": "source/original-worker-production.py",
+      "sha256": "fec1de1f7801fef41e5aa36b1eff49aaf1ecc5bd9da365f537102482c74d326d"
+    }
+  ],
+  "footprint": null,
+  "labelAnchor": null,
+  "occlusionClass": "entity",
+  "qa": {
+    "walk": {
+      "frames": [
+        {
+          "file": "renders/worker-walk-00.png",
+          "sha256": "3472e1ca1d782b4ced23ac7171188dbb4d6e7fe565c4d20671493b5a5f3de517",
+          "bytes": 68480,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            135,
+            80,
+            281,
+            374
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-01.png",
+          "sha256": "ce58580c5f4a6f27291fb1efe71eb3482ed3aca88ca0bd1ed112b112c1dfdbab",
+          "bytes": 67635,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            137,
+            80,
+            276,
+            357
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-02.png",
+          "sha256": "e6d55ae093c71b87df58a58d27c7572357191005690d2f7bbd0b5447800e920a",
+          "bytes": 66281,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            80,
+            265,
+            342
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-03.png",
+          "sha256": "79375349a969cd18fcc334b3a89c1f0e29d16bae0c9ecc7fb241ebd14323789f",
+          "bytes": 67181,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            132,
+            80,
+            273,
+            352
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-04.png",
+          "sha256": "ddc444126a0bf900b3d541593e5a2cd9516cab2e71b5eb7befc47874c7e1bf84",
+          "bytes": 69303,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            123,
+            80,
+            282,
+            356
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-05.png",
+          "sha256": "3aa6be076065ef2e721ed22859925be0e9eba4f9fe8732e05de4ad53f60ea61b",
+          "bytes": 67832,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            132,
+            80,
+            274,
+            350
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-06.png",
+          "sha256": "3ed936900a5535610563dd70663d9621fd83d121675fff6e3d28c3132ebb48c0",
+          "bytes": 68280,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            80,
+            265,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-walk-07.png",
+          "sha256": "fdb33486c50dccb6134f9f2e78cd7dc877d9caa6fec62da588962a5d78fe4e15",
+          "bytes": 68893,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            137,
+            80,
+            276,
+            370
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        }
+      ],
+      "totalBytes": 543885,
+      "distinctFrames": 8,
+      "clipping": false,
+      "decodedRgbaBytes": 4718592,
+      "anchorStable": true,
+      "supportFootGroundedEveryFrame": true
+    },
+    "scan": {
+      "frames": [
+        {
+          "file": "renders/worker-scan-00.png",
+          "sha256": "31e641f05c7050669727079fefdf226504e1da50333fe2da5be8cca2345a1498",
+          "bytes": 70539,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            72,
+            285,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-01.png",
+          "sha256": "ef3b45a6aaa20250358487729fe85c8ee766b0e4f97043c3155ade36221500d5",
+          "bytes": 70231,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            72,
+            286,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-02.png",
+          "sha256": "dfc9324cf7730c6672f964f06ca072b3df5af78bdaa8fa26b95721da5090564e",
+          "bytes": 70537,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            72,
+            288,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-03.png",
+          "sha256": "c777ececcaf752092fe419eda73aa81ae69ae63ed50f89afb99e8104e5368d77",
+          "bytes": 70734,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            71,
+            290,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-04.png",
+          "sha256": "229b3d0435f539697cb9b2b26fc5b7e643f6a1bdd11ebe7d2ca45e105d80442a",
+          "bytes": 71073,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            137,
+            71,
+            291,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-05.png",
+          "sha256": "467bccea4452acdf97fa768766479f9a94e08c9317d38ffc8a31ca53a490b187",
+          "bytes": 71202,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            135,
+            71,
+            290,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-06.png",
+          "sha256": "fa7b3950f0ce06b3f37133379ee0ff18dc85f23ffb182cdbe9401b14a1e78fb8",
+          "bytes": 71127,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            135,
+            72,
+            288,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-scan-07.png",
+          "sha256": "ca7f83349f2e31da1b4a242ba9445997a1c8aa1c1dc1930e94a14e669217b4c8",
+          "bytes": 70838,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            137,
+            72,
+            286,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        }
+      ],
+      "totalBytes": 566281,
+      "distinctFrames": 8,
+      "clipping": false,
+      "decodedRgbaBytes": 4718592,
+      "anchorStable": true
+    },
+    "type": {
+      "frames": [
+        {
+          "file": "renders/worker-type-00.png",
+          "sha256": "2dd3f2f453525a7fb65c4523462f85d1185133c96e58763cd32901c8c1c99121",
+          "bytes": 70404,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            74,
+            302,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-01.png",
+          "sha256": "869ae82adb275d7f3f3e792babe8ca4c1eab2876b447dc3d43c3642478cdd3d4",
+          "bytes": 70325,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            74,
+            302,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-02.png",
+          "sha256": "9d6f3ab78d23b290866073e163bb8146523542e2a6226d3e7418b696df8870e8",
+          "bytes": 70353,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            73,
+            302,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-03.png",
+          "sha256": "0f5b8e59e35ec5eb58aa1d10506242b0a5fbacb5057b2adb18e41d3142472bd9",
+          "bytes": 70557,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            73,
+            302,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-04.png",
+          "sha256": "d860fefbedc4e26fa310a43f9986e969ee7a6c1e6a9378b6f3d93fdfdac222fd",
+          "bytes": 70556,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            73,
+            303,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-05.png",
+          "sha256": "7fc3b03786e258e5906af7840f418830e08b03c9cf0b88aba09294b31cd87f3b",
+          "bytes": 70571,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            73,
+            303,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-06.png",
+          "sha256": "4b3b33be35745f0e69bb85e63687709a9925b85a3b46f1fd3e0dd782cb88f05c",
+          "bytes": 70426,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            73,
+            302,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        },
+        {
+          "file": "renders/worker-type-07.png",
+          "sha256": "dcd296fe565de19772a30e71e3dc18d1a8f19b161ed2af27eea6f808ecdf626e",
+          "bytes": 70435,
+          "size": [
+            384,
+            384
+          ],
+          "mode": "RGBA",
+          "alphaBoundsSource": [
+            139,
+            74,
+            302,
+            360
+          ],
+          "alphaExtrema": [
+            0,
+            255
+          ],
+          "nonzeroEdgeAlpha": false
+        }
+      ],
+      "totalBytes": 563627,
+      "distinctFrames": 8,
+      "clipping": false,
+      "decodedRgbaBytes": 4718592,
+      "anchorStable": true
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "assetId": "mf.route.bridge.sw",
+  "revision": 1,
+  "production": "Authorized deterministic mirror of accepted ImageGen-derived SE bridge; no new generation",
+  "sourceAssetId": "mf.route.bridge.se",
+  "sourceRevision": 1,
+  "sourcePath": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.route.bridge.se/exports/bridge-se-r1.png",
+  "sourceSha256": "207100c9c01e3538834072ca0f1fdb9c885153944a80e6aa2799c47e228054d3",
+  "sourceProvenance": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.route.bridge.se/provenance.json",
+  "transforms": [
+    "Lossless horizontal pixel reflection",
+    "Reflect connector geometry in frame center",
+    "QA-only SW roads before/after bridge over accepted tiled water"
+  ],
+  "exportSha256": "8d437a1d18c6afc7fd45554cb3fde89ebd77c037f42b3f67345599a22abbfbcb",
+  "exportBytes": 50433,
+  "lightingReversal": "Small underside/curb highlight direction reverses horizontally; geometry is only4.5logical deep, with no tall pillars or cast shadows."
+}

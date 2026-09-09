@@ -1,0 +1,995 @@
+{
+  "date": "2026-09-09",
+  "nativeZoomPercent": 200,
+  "nativeSettingEvidence": "Chrome accessibility tree exposed Zoom: 200% for the owned fixture tab. CSS viewport 756 x 370, DPR 4; no emulated viewport.",
+  "checks": [
+    {
+      "name": "task-inspector",
+      "detail": "End key reaches the final inspector section through the window scroll; content no longer overlaps.",
+      "geometry": {
+        "focused": "Task inspector",
+        "scrollAreas": [
+          {
+            "className": "overlay-body task-layout",
+            "height": 233,
+            "scrollHeight": 1728,
+            "scrollWidth": 722,
+            "top": 1494.5,
+            "width": 722
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Task command",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "role-policy",
+      "detail": "Future role model/reasoning selectors and review confirmation are reachable. No policy was saved.",
+      "geometry": {
+        "focused": "Review change",
+        "scrollAreas": [
+          {
+            "className": "overlay-body task-policies-body",
+            "height": 211,
+            "scrollHeight": 1272,
+            "scrollWidth": 828,
+            "top": 822.25,
+            "width": 722
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Task role policies",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "policy-confirmation",
+      "detail": "Keyboard focus reaches confirmation and Back to choices inside the bounded scroll area; table columns use local horizontal scrolling.",
+      "geometry": {
+        "focused": "Back to choices",
+        "scrollAreas": [
+          {
+            "className": "overlay-body task-policies-body",
+            "height": 233,
+            "scrollHeight": 1272,
+            "scrollWidth": 828,
+            "top": 1038.25,
+            "width": 722
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Task role policies",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "agent-top",
+      "detail": "Watch remains bounded; current task/run state and model identity are readable.",
+      "geometry": {
+        "focused": "\n    World time · 60 min day11:50 DaylightPC-142 · ImplementWorkingAgent HarnessProject scopeAll pro",
+        "scrollAreas": [
+          {
+            "className": "agent-evidence scroll-region",
+            "height": 118,
+            "scrollHeight": 201,
+            "scrollWidth": 512,
+            "top": 82.75,
+            "width": 512
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 198,
+            "clientWidth": 538,
+            "name": "Watch agent",
+            "rect": {
+              "bottom": 354,
+              "height": 200,
+              "left": 204,
+              "right": 744,
+              "top": 154,
+              "width": 540,
+              "x": 204,
+              "y": 154
+            },
+            "scrollHeight": 450,
+            "scrollTop": 0,
+            "scrollWidth": 538
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "agent-activity",
+      "detail": "End key brings the Activity region into view; its own scroll reaches the final event.",
+      "geometry": {
+        "focused": "11:43S2 began in its isolated worktreeSample activity: S1 is integrated. Revision comparison owns sr",
+        "scrollAreas": [
+          {
+            "className": "agent-evidence scroll-region",
+            "height": 118,
+            "scrollHeight": 201,
+            "scrollWidth": 512,
+            "top": 82.75,
+            "width": 512
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 198,
+            "clientWidth": 538,
+            "name": "Watch agent",
+            "rect": {
+              "bottom": 353.5,
+              "height": 200,
+              "left": 204,
+              "right": 744,
+              "top": 153.5,
+              "width": 540,
+              "x": 204,
+              "y": 153.5
+            },
+            "scrollHeight": 450,
+            "scrollTop": 252.5,
+            "scrollWidth": 538
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "agent-context",
+      "detail": "Activity, Output and Context tabs are reachable by scrolling the Watch panel.",
+      "geometry": {
+        "focused": "Context",
+        "scrollAreas": [
+          {
+            "className": "scroll-region agent-evidence",
+            "height": 118,
+            "scrollHeight": 465,
+            "scrollWidth": 512,
+            "top": 0,
+            "width": 512
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 198,
+            "clientWidth": 538,
+            "name": "Watch agent",
+            "rect": {
+              "bottom": 353.5,
+              "height": 200,
+              "left": 204,
+              "right": 744,
+              "top": 153.5,
+              "width": 540,
+              "x": 204,
+              "y": 153.5
+            },
+            "scrollHeight": 450,
+            "scrollTop": 204.5,
+            "scrollWidth": 538
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "new-task-brief",
+      "detail": "Title and description inputs accept text; Next remains visible in the footer.",
+      "geometry": {
+        "focused": "Fixture-only draft to verify form fields and footer actions remain reachable at native 200% zoom.",
+        "scrollAreas": [
+          {
+            "className": "overlay-body new-task-layout ",
+            "height": 62,
+            "scrollHeight": 1327,
+            "scrollWidth": 722,
+            "top": 211.25,
+            "width": 722
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "New task",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "new-task-review",
+      "detail": "Brief, final role selectors and Review task are reachable. The sample draft is not started.",
+      "geometry": {
+        "focused": "Create task",
+        "scrollAreas": [
+          {
+            "className": "overlay-body new-task-layout ",
+            "height": 62,
+            "scrollHeight": 1522,
+            "scrollWidth": 722,
+            "top": 0,
+            "width": 722
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "New task",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "new-task-policy-final",
+      "detail": "Compact short-height step navigation leaves the editable policy row visible; keyboard focus reaches the final role reset.",
+      "geometry": {
+        "focused": "Reset Final review to inherited policy",
+        "scrollAreas": [
+          {
+            "className": "overlay-body new-task-layout execution-layout",
+            "height": 102,
+            "scrollHeight": 946,
+            "scrollWidth": 722,
+            "top": 743.75,
+            "width": 722
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "New task",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "new-task-review-final",
+      "detail": "Review and Create task remain reachable after the compact-height adjustment. Draft not created or started.",
+      "geometry": {
+        "focused": "Create task",
+        "scrollAreas": [
+          {
+            "className": "overlay-body new-task-layout ",
+            "height": 102,
+            "scrollHeight": 1522,
+            "scrollWidth": 722,
+            "top": 0,
+            "width": 722
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "New task",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "project-management",
+      "detail": "Project search, selection, Manage project, rename input and archive-review control are reachable. No project mutation saved.",
+      "geometry": {
+        "focused": "Review archive",
+        "scrollAreas": [
+          {
+            "className": "overlay-body project-setup-layout",
+            "height": 145,
+            "scrollHeight": 926,
+            "scrollWidth": 722,
+            "top": 351,
+            "width": 722
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Project setup",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "settings-models",
+      "detail": "The editor collapsed to zero height. Superseded by settings-models-final and settings-design-final after the CSS fix.",
+      "geometry": {
+        "focused": "",
+        "scrollAreas": [
+          {
+            "className": "overlay-body execution-settings",
+            "height": 211,
+            "scrollHeight": 211,
+            "scrollWidth": 722,
+            "top": 0,
+            "width": 722
+          },
+          {
+            "className": "settings-editor-scroll",
+            "height": 0,
+            "scrollHeight": 1605,
+            "scrollWidth": 662,
+            "top": 1445,
+            "width": 662
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Execution settings",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "failed-before-fix"
+    },
+    {
+      "name": "settings-design",
+      "detail": "The editor collapsed to zero height. Superseded by settings-models-final and settings-design-final after the CSS fix.",
+      "geometry": {
+        "focused": "Design generation",
+        "scrollAreas": [
+          {
+            "className": "overlay-body execution-settings",
+            "height": 233,
+            "scrollHeight": 233,
+            "scrollWidth": 722,
+            "top": 0,
+            "width": 722
+          },
+          {
+            "className": "settings-editor-scroll",
+            "height": 0,
+            "scrollHeight": 487,
+            "scrollWidth": 662,
+            "top": 487,
+            "width": 662
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Execution settings",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "failed-before-fix"
+    },
+    {
+      "name": "settings-models-final",
+      "detail": "After the short-height fix, the editor retains its natural height and the window scroll reaches the final role and Grill controls.",
+      "geometry": {
+        "focused": "",
+        "scrollAreas": [
+          {
+            "className": "overlay-body execution-settings",
+            "height": 211,
+            "scrollHeight": 1922,
+            "scrollWidth": 722,
+            "top": 1520.25,
+            "width": 722
+          },
+          {
+            "className": "settings-editor-scroll",
+            "height": 1589,
+            "scrollHeight": 1589,
+            "scrollWidth": 662,
+            "top": 0,
+            "width": 662
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Execution settings",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "settings-footer-final",
+      "detail": "Keyboard reaches the settings footer and cycles back to the header without leaving the dialog.",
+      "geometry": {
+        "focused": "Adjust window size",
+        "scrollAreas": [
+          {
+            "className": "overlay-body execution-settings",
+            "height": 233,
+            "scrollHeight": 1922,
+            "scrollWidth": 722,
+            "top": 1688.25,
+            "width": 722
+          },
+          {
+            "className": "settings-editor-scroll",
+            "height": 1589,
+            "scrollHeight": 1589,
+            "scrollWidth": 662,
+            "top": 0,
+            "width": 662
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Execution settings",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "settings-design-final",
+      "detail": "Design model/reasoning controls and the footer remain reachable in the full-form scroll.",
+      "geometry": {
+        "focused": "Revert changes",
+        "scrollAreas": [
+          {
+            "className": "overlay-body execution-settings",
+            "height": 233,
+            "scrollHeight": 804,
+            "scrollWidth": 722,
+            "top": 570.5,
+            "width": 722
+          },
+          {
+            "className": "settings-editor-scroll",
+            "height": 471,
+            "scrollHeight": 471,
+            "scrollWidth": 662,
+            "top": 0,
+            "width": 662
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Execution settings",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "approval",
+      "detail": "Approval explanation, note and explicit confirmation are reachable at 200%. Confirmation was not submitted.",
+      "geometry": {
+        "focused": "Confirm approve investigation",
+        "scrollAreas": [
+          {
+            "className": "overlay-body task-layout",
+            "height": 211,
+            "scrollHeight": 2021,
+            "scrollWidth": 722,
+            "top": 461.5,
+            "width": 722
+          },
+          {
+            "className": "overlay-body artifact-body",
+            "height": 369,
+            "scrollHeight": 369,
+            "scrollWidth": 530,
+            "top": 0,
+            "width": 530
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Review specification",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "artifact-rendered",
+      "detail": "End reaches the bottom of rendered retained evidence; header and Back remain accessible.",
+      "geometry": {
+        "focused": "Raw source",
+        "scrollAreas": [
+          {
+            "className": "overlay-body artifact-body",
+            "height": 211,
+            "scrollHeight": 369,
+            "scrollWidth": 722,
+            "top": 134,
+            "width": 722
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Retained evidence",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "artifact-source",
+      "detail": "Raw source toggles from the rendered artifact in the same bounded window.",
+      "geometry": {
+        "focused": "Rendered document",
+        "scrollAreas": [
+          {
+            "className": "overlay-body artifact-body",
+            "height": 211,
+            "scrollHeight": 360,
+            "scrollWidth": 722,
+            "top": 0,
+            "width": 722
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Retained evidence",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "diff-final-file",
+      "detail": "Keyboard End reaches the final file: scrollTop 397.75 plus 233px viewport covers the 631px content.",
+      "geometry": {
+        "focused": "Raw source",
+        "scrollAreas": [
+          {
+            "className": "overlay-body artifact-body",
+            "height": 233,
+            "scrollHeight": 631,
+            "scrollWidth": 722,
+            "top": 397.75,
+            "width": 722
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Exact candidate diff",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "diff-source",
+      "detail": "Keyboard activation opens raw unified source.",
+      "geometry": {
+        "focused": "File diff",
+        "scrollAreas": [
+          {
+            "className": "overlay-body artifact-body",
+            "height": 211,
+            "scrollHeight": 533,
+            "scrollWidth": 722,
+            "top": 0,
+            "width": 722
+          }
+        ],
+        "viewport": {
+          "dpr": 4,
+          "height": 370,
+          "width": 756
+        },
+        "windows": [
+          {
+            "clientHeight": 320,
+            "clientWidth": 722,
+            "name": "Exact candidate diff",
+            "rect": {
+              "bottom": 346.25,
+              "height": 322,
+              "left": 16,
+              "right": 740,
+              "top": 24.25,
+              "width": 724,
+              "x": 16,
+              "y": 24.25
+            },
+            "scrollHeight": 320,
+            "scrollTop": 0,
+            "scrollWidth": 722
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "name": "nested-escape",
+      "detail": "Escape returns from the exact diff to Task command and restores focus to Open exact diff.",
+      "result": "passed"
+    }
+  ],
+  "zoomRestored": 100,
+  "regression": {
+    "taskNormal1280": 425,
+    "taskMaximised1280": 457,
+    "watch": {
+      "activityHeight": 244,
+      "viewport": [
+        1280,
+        720
+      ],
+      "window": {
+        "bottom": 684,
+        "height": 578,
+        "left": 728,
+        "right": 1268,
+        "top": 106,
+        "width": 540,
+        "x": 728,
+        "y": 106
+      }
+    },
+    "intermediate1024": {
+      "mainBottom": 989.3671875,
+      "inspectorTop": 1001.3671875,
+      "overlap": false
+    },
+    "narrow375": {
+      "bodyWidth": 375,
+      "dialogWidth": 343,
+      "inspectorEndReachable": true
+    }
+  }
+}

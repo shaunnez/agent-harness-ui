@@ -8,6 +8,7 @@ import {
 } from "../server/companion-actions.mjs";
 import { resolveRolePolicyLifecycleEligibility } from "../server/role-policy-eligibility.mjs";
 import { createTaskActionRoutes } from "../server/task-action-routes.mjs";
+import { CandidateOperationsOrchestrator } from "../server/orchestrator-candidate-operations.mjs";
 
 const modelCatalog = {
   models: [
@@ -33,6 +34,46 @@ const settings = {
   defaultModel: "gpt-5.6-luna",
   defaultReasoning: "medium",
 };
+
+test("repair confirmation binds the exact candidate before and during reservation", async () => {
+  const input = { candidateId: "C1", candidateRevision: 1, candidateHeadRevision: "b".repeat(40) };
+  const make = () =>
+    readyForReviewTask({
+      status: "repair-required",
+      candidates: [candidateFixture({ status: "repair_required" })],
+    });
+  const stale = routeHarness(memoryStore(make()));
+  assert.equal(
+    (await stale.invoke("/api/tasks/AH-001/repair", "POST", { ...input, candidateRevision: 2 })).status,
+    409,
+  );
+  assert.equal(stale.started(), null);
+  const accepted = routeHarness(memoryStore(make()));
+  assert.equal((await accepted.invoke("/api/tasks/AH-001/repair", "POST", input)).status, 202);
+  assert.deepEqual(accepted.started(), { id: "AH-001", kind: "repair" });
+  const raced = routeHarness(memoryStore(make()), { mutateBeforeReservation: true });
+  const result = await raced.invoke("/api/tasks/AH-001/repair", "POST", input);
+  assert.equal(result.status, 409);
+  assert.equal(result.body.code, "stale-candidate");
+});
+
+test("same-candidate retry refuses a different revision at its atomic reservation boundary", async () => {
+  const task = readyForReviewTask();
+  const expected = { candidateId: "C1", candidateRevision: 2, candidateHeadRevision: "b".repeat(40) };
+  let reserved = false;
+  const candidates = new CandidateOperationsOrchestrator({
+    start: async (_id, _kind, options) => {
+      options.canStart(task);
+      reserved = true;
+      return true;
+    },
+  });
+  await assert.rejects(
+    candidates.retryTestOnSameCandidate(task.id, expected),
+    (error) => error.code === "STALE_CANDIDATE" && error.statusCode === 409,
+  );
+  assert.equal(reserved, false);
+});
 
 function taskFixture(overrides = {}) {
   const stagePolicies = {

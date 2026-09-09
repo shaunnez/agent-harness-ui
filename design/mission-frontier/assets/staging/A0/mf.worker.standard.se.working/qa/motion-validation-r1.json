@@ -1,0 +1,14 @@
+{
+  "gifFrames": 32,
+  "gifDimensions": [
+    650,
+    300
+  ],
+  "frameDurationsMs": [
+    60
+  ],
+  "distinctDecodedFrames": 17,
+  "lowerBodyRgbaMaxDeltaAcrossExtremes": 0,
+  "elbowCoreAlphaMinimum": 255,
+  "assessment": "Decoded all animation frames, inspected extreme contact sheet and actual-scale static sample. Animated GIF supplied for coordinator playback; no browser used."
+}

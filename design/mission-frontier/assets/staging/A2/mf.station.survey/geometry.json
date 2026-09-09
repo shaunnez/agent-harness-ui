@@ -1,0 +1,82 @@
+{
+  "masterSize": [
+    1536,
+    1024
+  ],
+  "masterAlphaBounds": [
+    295,
+    104,
+    1246,
+    921
+  ],
+  "uniformScale": 0.33648790746582546,
+  "scaledSize": [
+    320,
+    275
+  ],
+  "pasteOffset": [
+    96,
+    155
+  ],
+  "exportAlphaBounds": [
+    96,
+    155,
+    416,
+    430
+  ],
+  "landmarksSourcePixels": {
+    "frontFoot": [
+      279.0494,
+      426.8822
+    ],
+    "leftFoot": [
+      113.4974,
+      352.1819
+    ],
+    "rightFoot": [
+      402.877,
+      355.8833
+    ],
+    "frontSurface": [
+      279.0494,
+      347.8076
+    ],
+    "frontToolPort": [
+      140.7529,
+      332.3291
+    ],
+    "screenCenter": [
+      176.0841,
+      253.9274
+    ],
+    "receiver": [
+      349.7119,
+      192.6866
+    ]
+  },
+  "groundAnchorSourcePixels": [
+    279.0494,
+    426.8822
+  ],
+  "approxSupportFootprintSourcePixels": [
+    [
+      113.4974,
+      352.1819
+    ],
+    [
+      212.7613,
+      276.8086
+    ],
+    [
+      402.877,
+      355.8833
+    ],
+    [
+      279.0494,
+      426.8822
+    ]
+  ],
+  "footprintNote": "Visible left/right/front feet manually measured; occluded rear support point estimated for layout, not recovered3D.",
+  "benchHeightLogical": 39.537300000000016,
+  "measurementToleranceMasterPixels": 6
+}

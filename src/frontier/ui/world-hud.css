@@ -1,0 +1,254 @@
+.project-hud {
+  position: absolute;
+  left: 22px;
+  bottom: 288px;
+  width: 235px;
+  padding: 16px;
+  z-index: 3;
+}
+.project-hud h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+.repository-path {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.project-counts {
+  margin: 12px 0;
+}
+.project-counts div {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 4px 0;
+}
+.project-counts dt,
+.project-counts dd {
+  margin: 0;
+  font-size: 13px;
+}
+.project-counts dd {
+  color: var(--blue);
+  width: 20px;
+  font-weight: 600;
+}
+.text-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  gap: 12px;
+  border-radius: 0;
+  border-width: 1px 0 0;
+  background: transparent;
+  text-align: left;
+  padding: 12px 0;
+}
+.text-row > svg:last-child {
+  margin-left: auto;
+}
+.text-row small,
+.text-row strong {
+  display: block;
+}
+.minimap {
+  position: absolute;
+  bottom: 35px;
+  left: 12px;
+  width: 250px;
+  padding: 8px;
+  z-index: 3;
+}
+.minimap-image {
+  width: 100%;
+  height: 150px;
+  border: 0;
+  padding: 0;
+  background: #142d37;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.minimap-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.camera-controls {
+  display: flex;
+  gap: 7px;
+  margin-top: 7px;
+}
+.camera-controls button {
+  flex: 1;
+  padding: 8px;
+  min-height: 35px;
+}
+.selection-hud {
+  position: absolute;
+  bottom: 35px;
+  left: 285px;
+  right: 350px;
+  padding: 18px;
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  z-index: 3;
+  min-height: 184px;
+}
+.view-project .selection-hud {
+  left: 330px;
+  right: 300px;
+}
+.worker-portrait {
+  width: 80px;
+  height: 122px;
+  object-fit: cover;
+  object-position: center top;
+  background: #162b35;
+  border-radius: 6px;
+}
+.selection-copy {
+  flex: 1;
+  min-width: 0;
+}
+.selection-copy h2 {
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+.selection-copy p {
+  font-size: 13px;
+  margin: 8px 0;
+  line-height: 1.5;
+}
+.selection-copy .state-copy {
+  font-size: 14px;
+}
+.selection-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  color: #bdc8cc;
+  border-top: 1px solid #273c45;
+  padding-top: 10px;
+  margin-top: 11px;
+}
+.selection-actions {
+  width: 190px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+}
+.selection-actions button {
+  min-height: 38px;
+  font-size: 13px;
+  padding: 8px 10px;
+}
+.dismiss-selection {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  border: 0;
+  background: transparent;
+  min-height: 25px;
+  width: 25px;
+  min-width: 25px;
+}
+.project-selection {
+  align-items: center;
+  justify-content: space-between;
+}
+.world-actions {
+  position: absolute;
+  bottom: 35px;
+  right: 12px;
+  width: 320px;
+  padding: 10px;
+  z-index: 3;
+}
+.world-actions .new-task {
+  width: 100%;
+  font-size: 17px;
+  min-height: 48px;
+}
+.secondary-actions {
+  display: flex;
+  gap: 6px;
+  margin: 7px 0 14px;
+}
+.secondary-actions button {
+  flex: 1;
+  min-height: 75px;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+}
+.world-actions > small {
+  font-size: 12px;
+}
+.hq-new-task {
+  position: absolute;
+  top: 64px;
+  right: 14px;
+  z-index: 4;
+  min-width: 180px;
+}
+.connection-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  z-index: 4;
+  color: #d8e2e5;
+  text-shadow: 0 1px 3px #000;
+  background: #071921d9;
+  padding: 4px 7px;
+  border-radius: 4px;
+}
+.connection-badge.offline {
+  color: #efd092;
+  border: 1px solid #8d713e;
+}
+.connection-badge button {
+  padding: 0 4px;
+  min-height: 22px;
+  font-size: 12px;
+}
+.empty-world,
+.world-error {
+  position: absolute;
+  top: 32%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, 88vw);
+  padding: 28px;
+  z-index: 5;
+}
+.empty-world button {
+  margin: 6px 8px 0 0;
+}
+.selection-error {
+  position: absolute;
+  bottom: 250px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 15px;
+  z-index: 6;
+  max-width: 70vw;
+}
+.selection-error button {
+  margin-left: 12px;
+}

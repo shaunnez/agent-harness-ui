@@ -1,0 +1,19 @@
+{
+  "geometry.json": "71c132bd3892ff3c6cc5b8505ae1265221336aa201274769d7dc8286530ab069",
+  "entry.json": "cb978791f93dd18abab7fae07dba1368ade04fe467b8a4f27651405e9cec0523",
+  "provenance.json": "70a5ccb8d41470720b1f7c0ec98590417015409d645717f0226ffab543a24e9b",
+  "process.py": "221180403ffe2f065064857fe0ff0cd1753e1e5052238b223286c40f27b9f4f8",
+  "source/base-standard-roof-master-r1.png": "52e0434b750227321249ad8332543802e175d70c764abd283db19892577973af",
+  "source/generation-prompt.txt": "9ee25dc8bbf86e5ac4fda46493ce28dfd2bf776538e03d8a3031be283f69a4da",
+  "source/base-standard-roof-alpha-master-r1.png": "4eb061107b7d51db3f0b633315dee538630f8bb1538b195d897bc4a339a9e71d",
+  "qa/QA.md": "94c37a9e37ebdd3795404608014876486933c58cb81f5c4894e2767b9f5c880e",
+  "qa/alpha-backgrounds-r1.png": "5294c02a8da7f85eb53a325a221980f6147ee24ce04b5d9318bf5c1a9fc54da5",
+  "qa/closed-open-overview-r1.png": "01ee46f40308d7fa8e1bb1f5b534f6dee30849ae23d571151d8cbda9e6048ce2",
+  "qa/measurements-r1.json": "32e7cb953f7d49e1bf54bb72835d9f252c4de7ca91bbb449f13e4e7ad321a5f9",
+  "qa/closed-overview-r1.png": "af7147d48bf7f6041b58fd4b51ec147b105c6a640186cf39db76a8aa70348a27",
+  "qa/closed-compound-r1.png": "93381ef2de8337232e766a3793b04d08dbe6e0aaa5eb3dbb89c3facd1a243eee",
+  "qa/roof-seat-registration-r1.png": "bab065168b76e778d09fa36740d22f1e1c59d1b75c7bcaf20d3b18580f89bf4a",
+  "qa/back-top-overlap-r1.json": "840734ab18e2a326acbb9757dd0ce68d014f5fbdbcb76a8c4dd1f76006d575c4",
+  "qa/closed-open-logical-scale-r1.png": "22e2fcedec15e7fe14e5b189ca95422275d6d043e3855747a5811c1b16cc9ca6",
+  "exports/base-standard-roof-r1.png": "3187c645988fc55645cf818f06021d4f6d1acf8016f0a04006d7109e718a8c78"
+}

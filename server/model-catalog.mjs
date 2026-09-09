@@ -50,18 +50,7 @@ export const MODEL_CREDIT_RATES = {
   "gpt-5.6-luna": { input: 5, cachedInput: 0.5, output: 30 },
 };
 
-export const POLICY_IDS = [
-  "triage",
-  "scouts",
-  "grill",
-  "specification",
-  "plan",
-  "implement",
-  "repair",
-  "dev-review",
-  "test",
-  "final-review",
-];
+export { POLICY_IDS } from "./policy-ids.mjs";
 
 export function defaultStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
   return defaultProfileStagePolicies(provider).standard;

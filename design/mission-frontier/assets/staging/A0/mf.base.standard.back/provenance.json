@@ -1,0 +1,42 @@
+{
+  "assetId": "mf.base.standard.back",
+  "revision": 1,
+  "classification": "original AI-generated layer using supplied and previously generated project references",
+  "generator": "Built-in ImageGen",
+  "model": "not independently selected or asserted by asset agent",
+  "sourceId": "exec-14af2a67-be75-4fc0-9b03-942745d8f2d2",
+  "generationPath": "/Users/shaun/.codex/generated_images/01a0749d-4c28-78f1-ba94-00501ef2ade3/exec-14af2a67-be75-4fc0-9b03-942745d8f2d2.png",
+  "sourceFile": "source/base-standard-back-master-r1.png",
+  "sourceSha256": "ccacc6239131a183b991d70ee21b6d522b0fbbb10c99628146b3718b506c520d",
+  "prompt": "Use case: stylized-concept.\nAsset type: rear walls ONLY of the Mission Frontier base; one registered transparent-layer source.\nReference 1 is the approved floor. Reference 2 supplies the actual architectural design/materials from Mission Frontier headquarters. Create a pair of connected rear architectural walls that fit the rear two edges of the floor in Reference1. DO NOT render the floor in the output: green must show through the entire large front/interior area.\nKeep precisely the same orthographic 2:1 isometric projection and 1536x1024 landscape canvas as reference1. The wall bottom attachment path is a shallow inverted V, screen LEFT (64,492) up to BACK (768,140) down to RIGHT (1472,492). These are floor-contact coordinates, not the tops of walls. Rear wall height is 110 image pixels vertically; so the back corner top reaches about y30 and side end tops reach about y382. Never crop any wall. Walls run ONLY along those two rear edges. The two front sides towards (768,844) remain completely open; no front walls, no roof, no floor.\nArchitecture: richly detailed modular sci-fi ceramic-white piers and coping, dark charcoal/steel interior wall panels, subtle warm inset utility illumination, small maintenance seams/vent panels/cabling. Match the reference HQ's high-quality softly realistic game render. Heavy practical layered structure, slight wear, no generic flat cartoon/low-poly look. White structural exterior and dark inner faces visible. Rear corner is physically joined and the two walls are symmetric in overall span and height. Ground-foot thickness about20 pixels, wall bodies about20-28px deep. No tall tower or elevated center piece; tops stay uniform height.\nLighting: warm upper-left daylight, same reference. Small dim warm inset utility strips are allowed, but no glowing activity/selection/status elements.\nOutput background: perfectly uniform saturated green #00FF00 over ALL areas outside these two connected walls, including interior and empty front. No green cast onto white walls. No cast ground shadow.\nStrict exclusions: no floor plate, no island/terrain, no roof, no front walls, no rooms inside, no consoles/screens/text, furniture, workstations, robots, props, crates, labels, counters, names, symbols or UI. Only the two rear perimeter walls joined at back, feet registered to the approved floor.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.base.standard.floor/exports/base-standard-floor-r1.png",
+      "sha256": "863ce265015fb0742e9d4031a29c2b49ec546b004effafbe78e6ef6258edd25e",
+      "role": "exact registered floor geometry"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827",
+      "role": "main architectural/material reference"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    {
+      "script": "process.py",
+      "operations": [
+        "Preserve generated master unchanged",
+        "Chroma key green background and remove green spill, zero RGB under alpha=0",
+        "Two joined per-face affine registrations using recorded coefficients; fit width/contact slope and .78 height scale",
+        "Post-resample edge cleanup",
+        "Composite over accepted floor for QA only; floor not included in runtime export"
+      ]
+    }
+  ],
+  "exportSha256": "0c37dbd69b833bf76694c210cb9b8997942e7219097ba01ff39a1d3a20cbee54",
+  "exportBytes": 449451,
+  "decodedRgbaBytes": 6291456,
+  "approval": "Pending coordinator scene proof",
+  "rightsNote": "Supplied project/generated references only; no third-party source imported. Provenance is not legal clearance."
+}

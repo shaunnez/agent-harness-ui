@@ -1,0 +1,153 @@
+{
+  "sourceCanvas": [
+    1374,
+    1145
+  ],
+  "exportCanvas": [
+    1536,
+    1280
+  ],
+  "logicalCanvas": [
+    768,
+    640
+  ],
+  "commonAnchorSource": [
+    768,
+    1044
+  ],
+  "commonAnchorLogical": [
+    384,
+    522
+  ],
+  "floorSurfaceCornersSource": [
+    [
+      768,
+      340
+    ],
+    [
+      1472,
+      692
+    ],
+    [
+      768,
+      1044
+    ],
+    [
+      64,
+      692
+    ]
+  ],
+  "sourceRoofDeckCornersApprox": [
+    [
+      687.0,
+      152.0
+    ],
+    [
+      1333.0,
+      498.0
+    ],
+    [
+      687.0,
+      856.0
+    ],
+    [
+      43.0,
+      498.0
+    ]
+  ],
+  "registeredRoofDeckCorners": [
+    [
+      768.0,
+      120.0
+    ],
+    [
+      1472.0,
+      472.0
+    ],
+    [
+      768.0,
+      824.0
+    ],
+    [
+      64.0,
+      472.0
+    ]
+  ],
+  "sourceFrontLowerFasciaApprox": [
+    687,
+    967
+  ],
+  "registeredFrontLowerFasciaApprox": [
+    768.0,
+    930.7153
+  ],
+  "sourceToExportHomography": [
+    [
+      1.1222460852622522,
+      0.03818506551174923,
+      -1.6812740651206015
+    ],
+    [
+      0.0011645652003390299,
+      1.050221888606138,
+      -39.323483912667044
+    ],
+    [
+      2.4672991532605917e-06,
+      4.972013738509017e-05,
+      1.0
+    ]
+  ],
+  "exportToSourceCoefficients": [
+    0.8927627258112516,
+    -0.0324706110980511,
+    0.22412126406415214,
+    -0.0010704460172198062,
+    0.9522191823222816,
+    37.44277598425634,
+    -2.1494899944172284e-06,
+    -4.7264353854514e-05
+  ],
+  "alphaBounds": [
+    63,
+    36,
+    1472,
+    931
+  ],
+  "landmarkMethod": "Manual visible deck perimeter/chamfer landmarks, estimated within5source pixels; one projective registration. Hidden rear underside is not directly measurable. Composite validation required.",
+  "heightConvention": "Deck perimeter is220source pixels above corresponding floor. Generated lower fascia is deeper than requested26px, measured separately.",
+  "derivation": "Exact accepted registered standard roof plus generated dish alpha overlay",
+  "dishSourceCanvas": [
+    1448,
+    1086
+  ],
+  "dishAlphaBounds": [
+    442,
+    46,
+    1108,
+    1044
+  ],
+  "dishUniformScale": 0.21042084168336672,
+  "dishResizedSize": [
+    140,
+    210
+  ],
+  "dishPasteOffset": [
+    715,
+    36
+  ],
+  "dishBottomContactMaster": [
+    695,
+    1008
+  ],
+  "dishContactTargetSource": [
+    768,
+    238
+  ],
+  "dishRegisteredAlphaBounds": [
+    715,
+    36,
+    855,
+    246
+  ]
+}

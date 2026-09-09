@@ -1,0 +1,242 @@
+[
+  {
+    "name": "keyboard agent widen",
+    "actual": 620,
+    "pass": true
+  },
+  {
+    "name": "agent width survives reload",
+    "actual": 620,
+    "pass": true
+  },
+  {
+    "name": "agent expanded reading",
+    "actual": 1264,
+    "pass": true
+  },
+  {
+    "name": "agent restore",
+    "actual": 620,
+    "pass": true
+  },
+  {
+    "name": "agent pointer resize",
+    "actual": 560,
+    "pass": true
+  },
+  {
+    "name": "agent reset",
+    "actual": 540,
+    "pass": true
+  },
+  {
+    "name": "one package workbench after refresh",
+    "actual": 1,
+    "pass": true
+  },
+  {
+    "name": "task corner resize",
+    "actual": {
+      "width": 1248,
+      "height": 672
+    },
+    "pass": false,
+    "resolution": "The initial pointer target was outside the visible rounded grip. The subsequent visible-grip drag passed."
+  },
+  {
+    "name": "task corner resize on visible grip",
+    "actual": {
+      "width": 1128,
+      "height": 632
+    },
+    "pass": true
+  },
+  {
+    "name": "maximised task main content target",
+    "actual": {
+      "documentScroll": 0,
+      "height": 457,
+      "width": 1262
+    },
+    "pass": true
+  },
+  {
+    "name": "task restores dragged size",
+    "actual": 1128,
+    "pass": true
+  },
+  {
+    "name": "dialog returns focus to opener",
+    "actual": "Inspect task",
+    "pass": true
+  },
+  {
+    "name": "task size survives reopening",
+    "actual": 1128,
+    "pass": true
+  },
+  {
+    "name": "task size survives reload",
+    "actual": 1128,
+    "pass": true
+  },
+  {
+    "name": "Shift Tab stays inside dialog",
+    "actual": {
+      "inDialog": true,
+      "text": "Watch agent"
+    },
+    "pass": true
+  },
+  {
+    "name": "Tab wraps to first control",
+    "actual": "Adjust window size",
+    "pass": true
+  },
+  {
+    "name": "keyboard page scroll in main content",
+    "actual": 23.5,
+    "pass": true
+  },
+  {
+    "name": "wheel scroll in main content",
+    "actual": 239.5,
+    "pass": false,
+    "resolution": "Immediate observation raced scroll settling. The subsequent settled measurement passed."
+  },
+  {
+    "name": "wheel scroll settled in main content",
+    "actual": 331.5,
+    "pass": true
+  },
+  {
+    "name": "Escape closes task dialog",
+    "actual": 0,
+    "pass": true
+  },
+  {
+    "name": "new events followed at end",
+    "actual": {
+      "height": 2703,
+      "top": 2459,
+      "viewport": 244
+    },
+    "pass": true
+  },
+  {
+    "name": "keyboard can read earlier agent activity",
+    "actual": {
+      "client": 244,
+      "height": 2703,
+      "top": 2459
+    },
+    "pass": false,
+    "resolution": "Control+Home did not navigate the macOS reading region. Home subsequently reached scrollTop 0."
+  },
+  {
+    "name": "agent Home key reaches earlier records",
+    "actual": 0,
+    "pass": true
+  },
+  {
+    "name": "new activity does not move the reader",
+    "actual": {
+      "before": 0,
+      "after": 0
+    },
+    "pass": true
+  },
+  {
+    "name": "new activity button resumes following",
+    "actual": -0.5,
+    "pass": true
+  },
+  {
+    "name": "pending usage is distinct",
+    "actual": "Not yet reported",
+    "pass": true
+  },
+  {
+    "name": "recorded zero remains zero",
+    "actual": "0",
+    "pass": true
+  },
+  {
+    "name": "disconnected state parks the worker",
+    "actual": true,
+    "pass": true
+  },
+  {
+    "name": "Escape returns from nested diff",
+    "actual": true,
+    "pass": true
+  },
+  {
+    "name": "nested Back restores evidence opener",
+    "actual": "Open exact diff",
+    "pass": true
+  },
+  {
+    "name": "new task draft survives nested project setup",
+    "actual": "Goal 4 laptop draft \u2014 preserve this text",
+    "pass": true
+  },
+  {
+    "name": "nested form returns focus to Add project",
+    "actual": "Add project",
+    "pass": true
+  },
+  {
+    "name": "model and effort preserved in review",
+    "actual": true,
+    "pass": true
+  },
+  {
+    "name": "sample task created",
+    "actual": "DEMO-13 \u00b7 Goal 4 laptop draft \u2014 preserve this text\n\nSample world \u00b7 Demonstration records and actions stay in this tab.\n\n1\nTriage\nCurrent\n2\nScouts\nNot started\n3\nGrill\nNot started\n4\nSpecification\nNot started\n5\nPlan\nNot started\n6\nImplement\nNot started\n7\nDev review\nNot started\n8\nTest\nNot started\n9\nFinal review\nNot started\n10\nApproval\nNot started\nScroll for more \u2193\nTriage\nRole policies\nManage task\nDEMO-13 \u00b7 Triage \u00b7 Next: you\nReady to dispatch\nStart task\nRisk & scope\n\nstandard \u00b7 Deterministic triage selected standard because the task does not prove a narrow fast-path scope or a high-risk boundary.\n\nThe selected and skipped scout set has not been recorded.\n\nEvidence\nActivity\nAgent runs\nDecisions\n\nNo retained output is loaded for Triage. Only retained records are shown.\n\nTask brief\nDEMO-13\nGoal 4 laptop draft \u2014 preserve this text\n\nCheck project setup, task policies, resizing and keyboard navigation using a disposable demonstration.\n\nViewed: Triage \u00b7 Active: Triage\nRole & worker\n\nLuna \u00b7 XHigh \u00b7 policy snapshot; no run loaded\n\nUsage\n\n0 tokens\n\nInput 0 \u00b7 Output 0\nCached 0 \u00b7 Cache rate unavailable\n\nApprox. cost \u2014 unavailable\n\nRun safeguards\n\nRead-only\n\nCodex reads the repository without writing to it in this stage.\n\nStage attempts: 0 / 3\n\nContext & repository\n\n/demo/eversor-plancheck\n\nRepository revision not recorded\n\nOpen each artifact to inspect its supplied-context manifest. Repository permission alone does not prove what an agent used.\n\nScroll for more \u2193",
+    "pass": true
+  },
+  {
+    "name": "narrow task inspector scrolls to the end; Close stays fixed",
+    "actual": {
+      "closeTop": 34,
+      "remaining": 0.5
+    },
+    "pass": true
+  },
+  {
+    "name": "final maximised task reading space",
+    "actual": 457,
+    "pass": true
+  },
+  {
+    "name": "final normal agent activity reading space",
+    "actual": 244,
+    "pass": true
+  },
+  {
+    "name": "historical completed run stays parked while task executes",
+    "actual": "Working\nRun completed \u00b7 parked \u00b7 historical\nInspect task\nTask: Implement \u00b7 Next: agents\nView active worker",
+    "pass": true
+  },
+  {
+    "name": "tab keyboard navigation opens Context",
+    "actual": "true",
+    "pass": true
+  },
+  {
+    "name": "failed run retains execution failure and parked worker",
+    "actual": "Execution stopped\nRun failed \u00b7 parked\nInspect blocker\nTask: Test \u00b7 Next: you\n\nThe verification command could not start in its isolated worktree.",
+    "pass": true
+  },
+  {
+    "name": "failed package revealed before running sibling",
+    "actual": true,
+    "pass": true
+  },
+  {
+    "name": "sample project setup returns to empty project controls",
+    "actual": "Goal 4 empty project sample\n\n/demo/goal-4-empty-project\n\n0\nActive tasks\n0\nExecuting\n0\nNeed you\n0\nRecorded tokens\n\nTask stages and agent activity come from retained runtime state.\n\nEnter base\nView tasks\nManage project",
+    "pass": true
+  }
+]

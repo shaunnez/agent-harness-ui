@@ -1,0 +1,29 @@
+{
+  "assetId": "mf.terrain.water",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-c01d7ea0-bc09-41cf-90df-a90a7cca0e95",
+  "sourceSha256": "51e6952e838d5b060a1cc2dff545692a7d6ccfc408261b75524d9c6ae42ed0bd",
+  "sourceDimensions": [
+    1254,
+    1254
+  ],
+  "prompt": "Generate one seamless tileable water surface texture for Mission Frontier, matching the blue/teal water in the supplied terrain reference. Water only, no land or shoreline. 512x512 square RGB intended. Fixed overhead/oblique strategy-game water surface under warm upper-left daylight: rich clear cyan-teal midtones, deeper sapphire blue troughs, softly realistic fine ripples and small restrained reflected highlights. Moderate low-frequency variation, no broad dark patch or bright spotlight. No breaking surf, foamy streaks or wavecrests, no bubbles, no objects, no islands, no borders, no UI/text. Tile must seamlessly repeat left/right and top/bottom; features continue naturally across both pairs of edges. Avoid directional gradient or vignette. Fine interesting flowing water texture at overview scale, no wormlike sharpened strokes and no photoreal ocean horizon. Fill every pixel opaque RGB water. Use the supplied image only for water color and material quality; remove all terrain and architecture.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.terrain.region/source/terrain-region-master-attempt1.png",
+      "sha256": "975e46beee2daaec1e9c7f989e35cd52ad9b011430b7c0ded7fdf4de6b295689"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Full-frame Lanczos resize to512RGB",
+    "Deterministic periodic-plus-smooth FFT decomposition to remove boundary-driven low-frequency difference",
+    "8pixel cosine endpoint closure both axes; no generated redraw",
+    "QuantizeRGB, verify opposed edges identical",
+    "Unaltered export repeated3x3 for QA"
+  ],
+  "exportSha256": "9ffb2f2cc97d044f4c237bb4832922a42c11a8f847ce6a49ce66d7df44ff3bb9",
+  "exportBytes": 492623,
+  "rightsNote": "Supplied/generated project reference only; no external texture source."
+}

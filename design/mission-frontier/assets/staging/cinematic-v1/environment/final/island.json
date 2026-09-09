@@ -1,0 +1,34 @@
+{
+  "id": "mf.cinematic.island",
+  "file": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/island.png",
+  "sourceSize": [
+    2048,
+    1536
+  ],
+  "logicalSize": [
+    1024.0,
+    768.0
+  ],
+  "groundAnchor": [
+    511.9999694824219,
+    372.0162048339844
+  ],
+  "seed": 602617,
+  "blenderVersion": "5.2.1 LTS",
+  "samples": 72,
+  "projection": {
+    "type": "orthographic",
+    "elevationDegrees": 30,
+    "azimuthDegrees": 45,
+    "orthoScale": 37.0
+  },
+  "sha256": "19544232075bcd540b1af4a7e20b89ed536a7428bddaeafa80fa2666ffc9fed9",
+  "bytes": 2680618,
+  "sources": [
+    "design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Rock_Medium_1.gltf",
+    "design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Rock_Medium_2.gltf",
+    "design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Rock_Medium_3.gltf"
+  ],
+  "sourceBlend": "design/mission-frontier/assets/staging/cinematic-v1/environment/final/island.blend",
+  "note": "Static scenery only. No task identity, semantic indicators or worker occupancy baked in."
+}

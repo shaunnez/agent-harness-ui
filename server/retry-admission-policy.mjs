@@ -1,3 +1,4 @@
+import { supportsRetainedPackageContinuation } from "../src/retained-package-continuation.ts";
 import {
   failedRepairAuthorizingGate,
   validRetryReservationCandidateBinding,
@@ -186,13 +187,11 @@ function actionEligibilityFor(task, action) {
       (workPackage) =>
         workPackage.status === "failed" &&
         workPackage.worktreePath &&
-        /run exceeded \d+ seconds|harness stopped while this task was running/i.test(
-          workPackage.error ?? task.error ?? "",
-        ),
+        supportsRetainedPackageContinuation(workPackage.error ?? task.error ?? ""),
     );
     return ["failed", "blocked"].includes(task.status) && task.currentStage === "implement" && retained
       ? allow()
-      : deny("No retained timed-out implementation package is available to continue.");
+      : deny("No interrupted, timed-out or ownership-blocked retained package is available to continue.");
   }
   if (action === "retry-test") {
     const verification = [...(candidate?.verificationRuns ?? [])]

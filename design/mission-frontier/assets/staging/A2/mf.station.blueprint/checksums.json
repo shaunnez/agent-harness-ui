@@ -1,0 +1,17 @@
+{
+  "entry.json": "fdac8ffe6016bbf3eedc878c6871912f5147e31b361efed94c88dea3675e05b8",
+  "exports/station-blueprint-r1.png": "4aaf5d64d8c4f536c4a460e10255e6de022c704af602e0a9b93b3f3ddc8b31f4",
+  "geometry.json": "4406f9db3c8c3d80a9d69db50a343c17ae44b76e26c363ab40ddffac6eb898aa",
+  "process.py": "c096c8919ba77aed7f273d7aae6fde52fc4d06e76925b6f056eed6506d42cd1f",
+  "provenance.json": "a76624461a826a2b20c5b715945aa8c4f6f68537468c360037b5fda59a534294",
+  "qa/QA.md": "f9be52dc56a378e67352fa03d8b4e31c330883dee4d4e724b2081c966ff2e3c2",
+  "qa/alpha-backgrounds-r1.png": "bbac018743ec20bd52f9424242c046ca0f616075e64eae5dede05db2367f85e8",
+  "qa/calibrated-scale-comparison-r1.png": "e7ad3cba7add7dc3cdbf161290bccbd477655b2e51c8f0abc165d46070ed11fe",
+  "qa/measurements-r1.json": "4879ce70824fc06830798860e25b577c7e995ae69086f01e06af65400a436fdf",
+  "qa/socket-registration-r1.png": "62a7fd6d807823646d89f27b67cd12d703cc920e004c9a01abdeceacc77427de",
+  "source/blueprint-alpha-master-r1.png": "ded80786f6dac204526c3711c35ca06f5b31decaeb14a2eb4db0faeab1d39cd3",
+  "source/blueprint-initial-shallow-bench.png": "976b6e7ee8056c2c7505ded63537099b4a766844a9be9ee6ef8425334b091ab6",
+  "source/blueprint-master-r1.png": "80f8696a0c7ae9450f4254a673e95bfc96942e59f38b0c8fec56ede20ae8bad5",
+  "source/correction-prompt.txt": "0405c0cadbac1e47f3d5ce3824121d129c8f7badc2209a4f75d3baaa604bbe27",
+  "source/generation-prompt.txt": "fa797c14948566f186e3d4af0e57441f99e0c5ca1ae43d8e539550eef1d9cb81"
+}

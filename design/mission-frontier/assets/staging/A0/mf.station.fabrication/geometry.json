@@ -1,0 +1,98 @@
+{
+  "masterCanvas": [
+    1286,
+    1223
+  ],
+  "sourceAlphaBounds": [
+    123,
+    112,
+    1163,
+    1064
+  ],
+  "uniformScale": 0.3076923076923077,
+  "scaledSize": [
+    320,
+    293
+  ],
+  "pasteOffset": [
+    96,
+    137
+  ],
+  "exportCanvas": [
+    512,
+    512
+  ],
+  "logicalCanvas": [
+    256,
+    256
+  ],
+  "exportAlphaBounds": [
+    96,
+    137,
+    416,
+    430
+  ],
+  "visibleLandmarksSourcePixels": {
+    "frontFoot": [
+      262.7692,
+      429.0
+    ],
+    "leftFoot": [
+      115.0769,
+      346.5385
+    ],
+    "rightFoot": [
+      407.0769,
+      347.1538
+    ],
+    "moduleCradle": [
+      261.2308,
+      267.7692
+    ],
+    "frontToolPort": [
+      167.3846,
+      341.3077
+    ],
+    "screenCenter": [
+      200.0,
+      183.1538
+    ],
+    "frontWorkSurface": [
+      262.7692,
+      352.6923
+    ],
+    "moduleTop": [
+      246.4615,
+      220.6923
+    ],
+    "screenTop": [
+      217.2308,
+      137.3077
+    ]
+  },
+  "groundAnchorSourcePixels": [
+    262.7692,
+    429.0
+  ],
+  "approxSupportFootprintSourcePixels": [
+    [
+      115.0769,
+      346.5385
+    ],
+    [
+      261.2308,
+      268.6923
+    ],
+    [
+      407.0769,
+      347.1538
+    ],
+    [
+      262.7692,
+      429.0
+    ]
+  ],
+  "supportFootprintNote": "Left/right/front visible foot landmarks measured on raster. Rear support corner is an estimated occluded location used for layout only, not a measured3D point.",
+  "approxPhysicalBenchHeightLogical": 38.154,
+  "socketMethod": "Visible fixed feature centers in generated image, manually measured within~5master pixels; no rig/animated part is included."
+}

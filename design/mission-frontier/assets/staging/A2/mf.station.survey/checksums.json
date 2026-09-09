@@ -1,0 +1,15 @@
+{
+  "entry.json": "25a72cd515a4536ba3f485a0bc971f58a7e91a0405439d98219e601a3230418e",
+  "exports/station-survey-r1.png": "24856ae21fcb67acb71cb12401c0194dda77aceb31a4eacf3fa796eb5788ec61",
+  "geometry.json": "e007afada5e34f37ad6132e8d32b42f89b1ae8600920c5768b66fb02cddc3988",
+  "process.py": "228b0a11f15031f6f1d0db8dfe38df3b240b6afcf624f1688a9d120167bc0fc7",
+  "provenance.json": "cb916192e67b983c394721f747cff9dcdd297c5f241af88a91b8a1b6b03fd07e",
+  "qa/QA.md": "01438125f13d4f2df60a761c25b960fd8b9182be4061b613757aca341521bff7",
+  "qa/alpha-backgrounds-r1.png": "cb9942e762b220dd909e848219d988dbdfa45e5412cb3fbfaa45b3fbcc786e31",
+  "qa/calibrated-scale-comparison-r1.png": "0126dd6180704e4a7755fae1fe3f752dcf6807883d41c1f178ef1a3d09e3ae94",
+  "qa/measurements-r1.json": "32c84d0c3790a202dd562ee175db4b7db77fae0bebbfdc6c0d56db6c76d707eb",
+  "qa/socket-registration-r1.png": "3d45cecb6dcb6f93e1239a3ad0c5bfaedef8ad6bd0841300e5b902871f908260",
+  "source/generation-prompt.txt": "47334f9abef2dd2b97e3c1cfc0dfc675b50fd3d8876b13f670f7599ffcd357d6",
+  "source/survey-alpha-master-r1.png": "7f2940cfc7e59dc6f1c0d293c90f38452658775fcea6cb86c6a9acbd851f99f9",
+  "source/survey-master-r1.png": "c38b82d491785fbdf02bed6086c20823d5c571ddaddcbc06f1e77b68ed770824"
+}

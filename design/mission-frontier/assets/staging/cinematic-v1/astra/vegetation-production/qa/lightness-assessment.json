@@ -1,0 +1,28 @@
+{
+  "retained-v1": {
+    "purpleOpaquePixels": 99022,
+    "sRgbLumaP10P50P90": [
+      27.34348,
+      58.827799999999996,
+      133.84156000000004
+    ],
+    "medianRgb": [
+      87.0,
+      47.0,
+      91.0
+    ]
+  },
+  "production-grove": {
+    "purpleOpaquePixels": 108949,
+    "sRgbLumaP10P50P90": [
+      6.2824,
+      41.0558,
+      112.81624
+    ],
+    "medianRgb": [
+      55.0,
+      35.0,
+      64.0
+    ]
+  }
+}

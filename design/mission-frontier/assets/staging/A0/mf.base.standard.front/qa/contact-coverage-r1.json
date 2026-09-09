@@ -1,0 +1,274 @@
+{
+  "samples": [
+    {
+      "x": 80,
+      "wallBottom": 700,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 96,
+      "wallBottom": 708,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 112,
+      "wallBottom": 716,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 128,
+      "wallBottom": 724,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 144,
+      "wallBottom": 732,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 160,
+      "wallBottom": 740,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 176,
+      "wallBottom": 748,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 192,
+      "wallBottom": 756,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 208,
+      "wallBottom": 763,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 224,
+      "wallBottom": 771,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 240,
+      "wallBottom": 779,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 256,
+      "wallBottom": 787,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 272,
+      "wallBottom": 795,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 288,
+      "wallBottom": 803,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 304,
+      "wallBottom": 811,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 320,
+      "wallBottom": 819,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 336,
+      "wallBottom": 827,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 352,
+      "wallBottom": 835,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 368,
+      "wallBottom": 843,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 384,
+      "wallBottom": 852,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 400,
+      "wallBottom": 860,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 416,
+      "wallBottom": 868,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 432,
+      "wallBottom": 875,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 448,
+      "wallBottom": 883,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 464,
+      "wallBottom": 891,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 480,
+      "wallBottom": 889,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1048,
+      "wallBottom": 889,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1064,
+      "wallBottom": 894,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1080,
+      "wallBottom": 888,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1096,
+      "wallBottom": 880,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1112,
+      "wallBottom": 872,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1128,
+      "wallBottom": 864,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1144,
+      "wallBottom": 856,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1160,
+      "wallBottom": 848,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1176,
+      "wallBottom": 840,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1192,
+      "wallBottom": 832,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1208,
+      "wallBottom": 824,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1224,
+      "wallBottom": 816,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1240,
+      "wallBottom": 808,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1256,
+      "wallBottom": 800,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1272,
+      "wallBottom": 792,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1288,
+      "wallBottom": 784,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1304,
+      "wallBottom": 776,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1320,
+      "wallBottom": 768,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1336,
+      "wallBottom": 760,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1352,
+      "wallBottom": 752,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1368,
+      "wallBottom": 744,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1384,
+      "wallBottom": 736,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1400,
+      "wallBottom": 728,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1416,
+      "wallBottom": 720,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1432,
+      "wallBottom": 712,
+      "floorAlphaBelow": 255
+    },
+    {
+      "x": 1448,
+      "wallBottom": 704,
+      "floorAlphaBelow": 255
+    }
+  ],
+  "sampleCount": 52,
+  "unsupportedContacts": 0,
+  "method": "Accepted padded floor alpha sampled two pixels below bottom wall alpha>=128, every16px across two segments.",
+  "openingCoreRect": [
+    506,
+    780,
+    1030,
+    1150
+  ],
+  "openingCoreNontransparentPixels": 0
+}

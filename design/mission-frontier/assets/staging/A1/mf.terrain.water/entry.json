@@ -1,0 +1,40 @@
+{
+  "id": "mf.terrain.water",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/terrain-water-r1.png",
+  "sourceSize": [
+    512,
+    512
+  ],
+  "logicalSize": [
+    256,
+    256
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    0,
+    0
+  ],
+  "layer": "water",
+  "occlusionClass": "background",
+  "sockets": {},
+  "repeat": [
+    "x",
+    "y"
+  ],
+  "sha256": "9ffb2f2cc97d044f4c237bb4832922a42c11a8f847ce6a49ce66d7df44ff3bb9",
+  "alpha": "opaque RGB",
+  "qa": [
+    "qa/QA.md",
+    "qa/tiled-3x3-r1.png",
+    "qa/tile-boundary-locations-r1.png",
+    "qa/wrap-junction-magnified-r1.png",
+    "qa/seam-measurements-r1.json"
+  ],
+  "limits": [
+    "Static texture, no animation or shoreline foam.",
+    "A512px repeating texture can reveal repeated motifs over large uninterrupted water areas.",
+    "Use repeat texture sampling; avoid independently filtered clamp-to-edge sprites."
+  ]
+}

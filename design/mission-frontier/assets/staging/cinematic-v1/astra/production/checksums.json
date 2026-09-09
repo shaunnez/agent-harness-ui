@@ -1,0 +1,19 @@
+{
+  "renders/worker-work-09.png": "20a5810ebe6de02faadc6f742575c4687c97602e0d4b1a79d6866fd4dcd76929",
+  "renders/worker-work-08.png": "5f9e2fd7191770255e0906e2232b42c526e558201f6b671f3aadd462f6d6c6f3",
+  "renders/worker-idle.png": "a39b395acd3bea3646b874f933f6c158564427ac81cbb5ac4a357f5d089acfb4",
+  "renders/worker-portrait.png": "2b3815b7e1420100f55ae87d02a2aaa50c41dc400555917d56f18d571d5aa71d",
+  "renders/worker-work-00.png": "169f2bc2b4f5155a23a349d98e4956047def017f7c17126633c6e11aebd5877c",
+  "renders/worker-work-01.png": "001a31d6669e0a324e7cb5b1950c5a6f3a11712a3fbd3402b69ac6d26e4b4c07",
+  "renders/worker-work-03.png": "bc43b5b15d473e19902bd645cbfe2d46e596c924c36521f695be8a50cbf86631",
+  "renders/worker-work-02.png": "b8def300d0ed4bfbaa13242ddbcb2ea862b47bfcde348ea1fd424b56eae8c344",
+  "renders/worker-work-06.png": "f68048aedbfb32c45dcd6528f2d90e0835711e0983064149f951f425f65bed24",
+  "renders/worker-work-07.png": "0165a965f03bfa245afaebf3403cdf6cdd0bbb2a1378351ed0522a7d5a3681a9",
+  "renders/worker-work-11.png": "4f72de4babb0bfebf9a088b15463fb901c13c1a21acc6cd39e884369cd811a70",
+  "renders/worker-work-05.png": "6c1d600afa9f95f6d34b6927e60572869d1727d6b24adc5c44794ea7dc4e5e42",
+  "renders/worker-work-04.png": "846af64219b13833eb84b15f277f8a578defd252b5e9b21a86cac2c19efd864d",
+  "renders/worker-work-10.png": "67c9a9ac8593c0db637a2c93538d6b6c4d1184702eb187a763e5548a3e77f2da",
+  "blend/worker-production.blend": "6830b874e747f4cf7a4335632264e0ef008b7c0e2ed0a29d693913848f56d637",
+  "rebuild-source.py": "fec1de1f7801fef41e5aa36b1eff49aaf1ecc5bd9da365f537102482c74d326d",
+  "worker-metadata.json": "016fdf80da279f5a0a1a4de3ad81b0cb5e44e2829a1a88a2ab7007e30e7f40f4"
+}

@@ -1,0 +1,68 @@
+{
+  "id": "mf.station.delivery-inspection",
+  "revision": 1,
+  "status": "pending-coordinator-A2-review",
+  "file": "exports/station-delivery-inspection-r1.png",
+  "sourceSize": [
+    512,
+    512
+  ],
+  "logicalSize": [
+    256,
+    256
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    128.57435,
+    213.6
+  ],
+  "footprint": [
+    [
+      55.7128,
+      185.04615
+    ],
+    [
+      128.41025,
+      146.15385
+    ],
+    [
+      201.2718,
+      188.6564
+    ],
+    [
+      128.57435,
+      213.6
+    ]
+  ],
+  "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+  "layer": "station",
+  "occlusionClass": "solid-station",
+  "sockets": {
+    "frontToolPort": [
+      65.06665,
+      173.23075
+    ],
+    "screenCenter": [
+      78.19485,
+      131.7128
+    ],
+    "inspectionCase": [
+      124.4718,
+      144.5128
+    ]
+  },
+  "sha256": "03f63172691e7d97af075705a374dad3291181a28de3c5b76eeea703af084daa",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/socket-registration-r1.png",
+    "qa/calibrated-scale-comparison-r1.png"
+  ],
+  "limits": [
+    "Static sealed case and passive scanner hood. Case does not indicate approval or retained artifact availability; brass hardware accents are non-semantic.",
+    "No workers, floor, state labels or animated parts baked in.",
+    "A2 integrated scene review pending."
+  ]
+}

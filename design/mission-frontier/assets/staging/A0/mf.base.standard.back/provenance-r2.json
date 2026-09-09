@@ -1,0 +1,49 @@
+{
+  "assetId": "mf.base.standard.back",
+  "revision": 2,
+  "revisionReason": "Coordinator corrected initial wall-height target from~110 to~210\u2013220 source pixels during M1 calibration",
+  "classification": "new original generated tall architectural layer, not r1 stretched",
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-97a67028-ee56-4f19-976c-e661ae25bff5",
+  "generationPath": "/Users/shaun/.codex/generated_images/01a0749d-4c28-78f1-ba94-00501ef2ade3/exec-97a67028-ee56-4f19-976c-e661ae25bff5.png",
+  "sourceFile": "source/base-standard-back-master-r2.png",
+  "sourceSha256": "9e899820cb187dbc3d1330a343781bb5aeb19440c74cf80d2c56b89d0b9a19a5",
+  "masterDimensions": [
+    1374,
+    1145
+  ],
+  "prompt": "Use case: stylized-concept.\nAsset: tall rear architectural walls ONLY for Mission Frontier headquarters, revision2.\nReference1 is an approved empty floor padded upward in a1536x1280 canvas. Reference2 is the selected HQ architectural style and proportions; it is the strongest design source.\nCreate new TALL headquarters rear walls, not low guardrail walls. Two connected walls run only on the rear two floor edges: screen left base corner(64,692), rear base corner(768,340), right base corner(1472,692). The front sides to(768,1044) remain OPEN. Floor-contact path is this inverted V. Preserve floor's fixed orthographic 2:1 diamond geometry. Wall HEIGHT is about220 SOURCE pixels straight upward from that contact path; rear corner top is around(768,120), end pier tops around y472. The wall must visibly tower about twice a small worker's height in the eventual game. Do not draw workers.\nArchitecture must resemble the enclosed substantial machinery headquarters in Reference2: tall chunky ceramic-white structural piers, layered deep dark-steel interior bay recesses, substantial overhead ceramic structural beams, inset mechanical vents/cabling/service panels in the recesses, recessed warm utility illumination. Vertical piers should be about one wall-height apart, creating tall convincing machine-room architectural bays. No thin fence, blank panels or decorative guardrail. Thick believable walls with clean top coping. Two rear sides joined in a coherent rear corner; no extra outer building or roof. Surface details cannot include words or readable screen displays.\nSource/output canvas1536x1280, landscape6:5. All wall tops and feet fully inside frame. Generate wall-only art against a perfectly uniform saturated green #00FF00 background. Entire interior/front is GREEN and empty: DO NOT reproduce the floor. Reference floor supplies registration only. Render no floor plate, no terrain, no roof, no front walls, no stations, people/robots, loose props, crates, free-standing consoles, doors leading into extra rooms, labels, names, counters, UI, text, selection rings or semantic status lights. Recesses are part of the wall, not separate floor stations.\nMaterials/style: same ceramic-white and slate/dark metal, friendly sophisticated sci-fi architecture, restrained realistic wear, warm upper-left daylight with neutral fill as HQ reference. Small warm utility lamps in recesses are static physical architecture, not status lighting. Detailed softly realistic game render, no cartoon, voxel or low-poly style. Green backdrop must not reflect onto walls. No cast ground shadow.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.base.standard.back/source/floor-padded-guidance-r2.png",
+      "sha256": "ff3a52198d01b6801d5a7b016487fc1c4d027813aab4ca474f0a1a29520463ea",
+      "role": "Accepted floor independently padded200px above for geometry guidance; original unchanged"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827",
+      "role": "Primary HQ architecture and material reference"
+    }
+  ],
+  "correctiveGenerationsWithinR2": 0,
+  "transforms": [
+    {
+      "script": "process-r2.py",
+      "operations": [
+        "Original generated source retained",
+        "Green chroma key/spill removal with zero RGB under alpha0",
+        "Two joined affine registrations fit new wall span, contact projection and220px center height; coefficients in geometry-r2.json",
+        "Post-resample alpha-edge spill cleanup",
+        "Composites over padded accepted floor only for QA; no floor pixels in export"
+      ]
+    },
+    {
+      "operation": "QA only: crop/resize approved worker to58px visible height and place on layered floor; compare with native HQ crop[399,150,1167,790]"
+    }
+  ],
+  "exportSha256": "1cf082700a88050c2a475c5e1ccb4596675312be9eb7f0421cc7366edd15b4fd",
+  "exportBytes": 765877,
+  "decodedRgbaBytes": 7864320,
+  "approval": "Pending coordinator scene review",
+  "rightsNote": "Supplied/generated project references only; generated provenance is not legal clearance."
+}

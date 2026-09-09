@@ -1,0 +1,20 @@
+{
+  "provenance-r2.json": "879c45d860d4ee57ba1c9a230f174c00c6abf9f97328cf0d763110eff100aaeb",
+  "process-r2.py": "fb762021daefcfc444ad435795406a8b7c09e3d753739c6b16b0c7e5af3516c1",
+  "geometry-r2.json": "662f1cfcef15daa833d4b3216a2cc453bdc2714d0550ef80b50463bdbb68ba54",
+  "entry-r2.json": "a24e7e6ac48cd4c9fff0cc72d0e8973241ba14ebe9227d89ad1497ea7599a53d",
+  "source/base-standard-back-master-r2.png": "9e899820cb187dbc3d1330a343781bb5aeb19440c74cf80d2c56b89d0b9a19a5",
+  "source/floor-padded-guidance-r2.png": "ff3a52198d01b6801d5a7b016487fc1c4d027813aab4ca474f0a1a29520463ea",
+  "source/base-standard-back-alpha-master-r2.png": "27c81936a1753399dc114125bb0efbff9d21d768a011777caa8052482816ed26",
+  "source/generation-prompt-r2.txt": "a524e1323c39a8a63af2312e88064fde618a53ff518ec92cb7b1d4d7f68bbef7",
+  "qa/hq-composite-logical-scale-r2.png": "55eeb97120b87468805954aa0805d3436b505861a48bf28d472f40b47d3376bb",
+  "qa/alpha-backgrounds-r2.png": "117247e1683b9b7927adf568b30559782e3ad4105c1de7768dedeb5802cc9217",
+  "qa/QA-r2.md": "27ceb762c8f64fbac0d2e665e0bc10afbafdfafb9a63852413fd4179409edcd4",
+  "qa/measurements-r2.json": "5368d8c34b32c054956db09716c3daa8709cb24a8d6a897e2d437924fcdbc824",
+  "qa/hq-reference-comparison-r2.png": "98bd0c6f74fba90eb753e125188750604709831a450adff66b720d20a6951e09",
+  "qa/floor-back-composite-r2.png": "a91c95dd08190d9bcbb32bdbd99ab59aacf93224ab440b01a7125315674b8fac",
+  "qa/registration-composite-r2.png": "44672cb9a28e7d1741d24581a69efd82cb0fd9a7374ef05f5f85843944048ad4",
+  "qa/contact-coverage-r2.json": "fa74a4280247c298c55d21dea79967840ce543ef2410be70a9491f5b7f840968",
+  "qa/hq-worker-scale-r2.png": "c3cd3e6c661396519d3cf7e571f79caf589aa46da86f0095afe58983e6b777cd",
+  "exports/base-standard-back-r2.png": "1cf082700a88050c2a475c5e1ccb4596675312be9eb7f0421cc7366edd15b4fd"
+}

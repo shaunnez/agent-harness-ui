@@ -1,0 +1,68 @@
+{
+  "id": "mf.station.communications",
+  "revision": 1,
+  "status": "pending-coordinator-A1-review",
+  "file": "exports/station-communications-r1.png",
+  "sourceSize": [
+    512,
+    512
+  ],
+  "logicalSize": [
+    256,
+    256
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    157.52725,
+    212.8818
+  ],
+  "footprint": [
+    [
+      64.43635,
+      177.97275
+    ],
+    [
+      107.7818,
+      142.1909
+    ],
+    [
+      200.87275,
+      186.55455
+    ],
+    [
+      157.52725,
+      212.8818
+    ]
+  ],
+  "footprintUse": "Approximate support footprint; rear point is occluded estimate.",
+  "layer": "station",
+  "occlusionClass": "solid-station",
+  "sockets": {
+    "frontToolPort": [
+      64.14545,
+      153.3909
+    ],
+    "screenCenter": [
+      135.85455,
+      100.73635
+    ],
+    "receiver": [
+      157.67275,
+      149.17275
+    ]
+  },
+  "sha256": "81a0c8c2e1f4de2f034afa0d3f36e86983f8bd348b0c9e69b20dd63d9656d6da",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/socket-registration-r1.png",
+    "qa/calibrated-scale-comparison-r1.png"
+  ],
+  "limits": [
+    "Static neutral powered screen bank; waiting/finished require no art variant.",
+    "No workers, floor, state labels or animated parts baked in.",
+    "A1 integrated scene review pending."
+  ]
+}

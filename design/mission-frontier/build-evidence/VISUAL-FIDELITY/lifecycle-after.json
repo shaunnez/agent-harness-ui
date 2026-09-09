@@ -1,0 +1,68 @@
+{
+  "roundTrips": 20,
+  "capturedAt": "2026-09-06T10:45:30.130Z",
+  "viewport": {
+    "width": 1568,
+    "height": 1003,
+    "dpr": 1
+  },
+  "mode": "fixture",
+  "projects": 3,
+  "tasks": 12,
+  "refresh": {
+    "cycles": 250,
+    "summaryReads": 2,
+    "selectedReads": 1,
+    "failures": 0
+  },
+  "renderer": {
+    "artDirection": "cinematic",
+    "textures": 53,
+    "decodedBytes": 119734272,
+    "compressedBytes": 18933949,
+    "reconciliations": 61,
+    "rebuiltEntities": 205,
+    "handoffs": 0,
+    "frameSamples": 12000,
+    "measuredSeconds": 248.098,
+    "medianFps": 120.48192753780042,
+    "p95FrameMs": 9.300000011920929,
+    "entities": 5,
+    "tickerListeners": 2,
+    "tickerRunning": true,
+    "documentHidden": false,
+    "backgroundSuspensions": 0,
+    "camera": {
+      "x": 163.8112244897959,
+      "y": 280.88775510204084,
+      "zoom": 0.676530612244898
+    }
+  },
+  "selectionAckMs": [],
+  "pageTransfer": {
+    "requests": 125,
+    "transferBytes": 122175,
+    "encodedBytes": 12706838
+  },
+  "artworkNetwork": [
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.portrait-2b3815b7e1.png",
+      "transferBytes": 300,
+      "encodedBytes": 0,
+      "decodedBodyBytes": 0
+    },
+    {
+      "path": "/assets/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 71680,
+      "decodedBodyBytes": 71680
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "transferBytes": 300,
+      "encodedBytes": 20109,
+      "decodedBodyBytes": 20109
+    }
+  ],
+  "network": []
+}

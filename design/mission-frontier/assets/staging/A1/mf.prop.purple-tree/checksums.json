@@ -1,0 +1,16 @@
+{
+  "entry.json": "6a7fb5ac7e5e3aaf44cf05d354e7fcd70ee0a06f2b7b41e5bbc72d650f467381",
+  "exports/purple-tree-r1.png": "5fe30e28efebc71ba0ce2269cfb3434a7f21b9915ed743fbec1adcd6b85eceed",
+  "geometry.json": "9a50f3c8df7bb6e26242526b97e4534c8ef1ee90ffd17ae68c1dc508655783d2",
+  "process.py": "9bf120aded76bcb7cc3dcf1ce55f04e9cef55ab648f7db353f9ae498b06e867c",
+  "provenance.json": "9c88d99cdec4accba98d689a2d44459eb7b833e69bf27e33664a47213d18568e",
+  "qa/QA.md": "972abea6e4e492a7dad5a4e0f2ed5d1d0f5ef8f51a69f4ffd8e0534bbf324a95",
+  "qa/actual-scales-r1.png": "f0bfd78a89dd7e0cb354cdf6e16963a0bf3a4a00b487013c200c28d7f0fa2d4d",
+  "qa/alpha-backgrounds-r1.png": "d2b25b058f40375101c15bac1041a38ac9ec83825db191ed77ae7f02273191d8",
+  "qa/ground-water-instances-r1.png": "37e292fc0eb6ded8d4c27d9798ecce28ca2f901dee8cecec21c9490a80af6fd8",
+  "qa/measurements-r1.json": "cd40d9b45be57f42696124591cc7bb438aceba97f6f9c3fae0ce9934b9da0399",
+  "source/generation-prompt.txt": "159cf5f6462da7c852f7460817fea85313a9bc1980d1668fa13ad1be9ed049b7",
+  "source/purple-tree-alpha-mask-r1.png": "b1d9114f48e2f27678967691c7511193363f142fc3737cb438e29ac5aab2ef85",
+  "source/purple-tree-alpha-master-r1.png": "93d520d65ca954e8802f8c6c1b9f8dcd45ab46b71db29bc6836a0e8ca5b58e9b",
+  "source/purple-tree-master-r1.png": "6a8b70877ec4311e18026b528e89260ea8fd9a962c9ce22e7840ea09475d6c45"
+}

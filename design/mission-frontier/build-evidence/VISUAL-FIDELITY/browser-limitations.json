@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-06",
+  "browser": "Codex embedded browser 2",
+  "visibilityCapabilityAfterSetFalse": {
+    "documentHidden": false,
+    "visibilityState": "visible"
+  },
+  "nativeHiddenPage": "unverified; host hides browser UI without exposing document hidden state",
+  "osReducedMotionSwitch": "not exposed by available browser capabilities",
+  "manualMotionOff": "verified via pixel-identical browser crop pair",
+  "osExportReceipt": "retained M7 limitation; not newly verified"
+}

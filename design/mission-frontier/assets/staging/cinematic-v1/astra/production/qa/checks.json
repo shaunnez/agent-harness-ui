@@ -1,0 +1,18 @@
+{
+  "frameCount": 12,
+  "uniqueFrameHashes": 12,
+  "uniqueProbeCoordinates": 12,
+  "maxProbeDistanceFromFrame0SourcePx": 4.122194561153122,
+  "maxProbeDistanceLogicalPx": 2.061097280576561,
+  "alphaFootRows300to383Identical": true,
+  "allAnchorsExact": true,
+  "samples": 64,
+  "sourceSizesCorrect": true,
+  "visibleBoundsSource": [
+    139,
+    72,
+    261,
+    360
+  ],
+  "status": "requires-coordinator-in-app-review"
+}

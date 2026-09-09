@@ -1,4 +1,5 @@
 import test from "node:test";
+import { withActionEligibility } from "../server/retry-admission-policy.mjs";
 import {
   assert,
   createTask,
@@ -794,3 +795,46 @@ test("renders merge reconciliation as Needs input without investigation or runni
     assert.doesNotMatch(markup, /spin/);
   });
 });
+
+test("offers ownership-blocked continuation before a generic retry and keeps unrelated failures ineligible", () =>
+  withWorkspace(async ({ nextAction }) => {
+    const task = createTask({
+      status: "blocked",
+      currentStage: "implement",
+      activeRunKind: null,
+      activeRunReservationId: null,
+      activeRunIds: [],
+      repositoryAuthorityStatus: "bound",
+      blocker: null,
+      candidates: [],
+      attemptsByStage: { implement: 6 },
+      stageRunLimits: { implement: 6 },
+      error:
+        "S2: Candidate changed src/outside.ts, which is outside the work package ownership (src/feature.ts).",
+      workPackages: [
+        {
+          id: "S2",
+          status: "failed",
+          worktreePath: "/tmp/retained-s2",
+          ownedPaths: ["src/feature.ts"],
+          error:
+            "Candidate changed src/outside.ts, which is outside the work package ownership (src/feature.ts).",
+        },
+      ],
+    });
+    const projected = withActionEligibility(task);
+    assert.equal(projected.actionEligibility.actions["continue-package"].allowed, true);
+    assert.equal(nextAction(projected).action, "continue-package");
+    assert.equal(nextAction(projected).label, "Continue retained S2");
+
+    for (const changed of [
+      { status: "running", activeRunKind: "implementation" },
+      { workPackages: [{ ...task.workPackages[0], worktreePath: null }] },
+      { error: "Provider failed", workPackages: [{ ...task.workPackages[0], error: "Provider failed" }] },
+      { currentStage: "test" },
+    ]) {
+      const denied = withActionEligibility({ ...task, ...changed });
+      assert.equal(denied.actionEligibility.actions["continue-package"].allowed, false);
+      assert.notEqual(nextAction(denied)?.action, "continue-package");
+    }
+  }));

@@ -1,0 +1,25 @@
+from pathlib import Path
+import json,shutil
+import numpy as np
+from PIL import Image,ImageDraw
+
+ROOT=Path(__file__).resolve().parent
+GEN=Path('/Users/shaun/.codex/generated_images/01a0749d-4c28-78f1-ba94-00501ef2ade3/exec-cfd035fe-140f-4cd4-a3cd-3463319c22af.png')
+MASTER=ROOT/'source/station-fabrication-master-r1.png'
+if not MASTER.exists():shutil.copy2(GEN,MASTER)
+im=Image.open(MASTER).convert('RGB');rgb=np.array(im).astype(float);ex=rgb[:,:,1]-np.maximum(rgb[:,:,0],rgb[:,:,2]);alpha=1-np.clip((ex-20)/170,0,1);rgb[:,:,1]=np.where(ex>20,np.minimum(rgb[:,:,1],np.maximum(rgb[:,:,0],rgb[:,:,2])+10),rgb[:,:,1]);rgba=np.dstack((rgb,alpha*255)).clip(0,255).astype(np.uint8);rgba[rgba[:,:,3]==0,:3]=0;cut=Image.fromarray(rgba);cut.save(ROOT/'source/station-fabrication-alpha-master-r1.png')
+bounds=cut.getbbox();subject=cut.crop(bounds);scale=320/subject.width;size=(320,round(subject.height*scale));offset=(96,430-size[1]);small=subject.resize(size,Image.Resampling.LANCZOS);out=Image.new('RGBA',(512,512));out.alpha_composite(small,offset);arr=np.array(out);extra=arr[:,:,1].astype(float)-np.maximum(arr[:,:,0],arr[:,:,2]);arr[:,:,1]=np.where(extra>20,np.minimum(arr[:,:,1],np.maximum(arr[:,:,0],arr[:,:,2]).astype(int)+10),arr[:,:,1]);arr[arr[:,:,3]==0,:3]=0;out=Image.fromarray(arr);exp=ROOT/'exports/station-fabrication-r1.png';out.save(exp)
+def project(p):return [round(offset[0]+(p[0]-bounds[0])*scale,4),round(offset[1]+(p[1]-bounds[1])*scale,4)]
+landmarks={'frontFoot':project([665,1061]),'leftFoot':project([185,793]),'rightFoot':project([1134,795]),'moduleCradle':project([660,537]),'frontToolPort':project([355,776]),'screenCenter':project([461,262]),'frontWorkSurface':project([665,813]),'moduleTop':project([612,384]),'screenTop':project([517,113])}
+geometry={'masterCanvas':list(im.size),'sourceAlphaBounds':bounds,'uniformScale':scale,'scaledSize':size,'pasteOffset':offset,'exportCanvas':[512,512],'logicalCanvas':[256,256],'exportAlphaBounds':out.getbbox(),'visibleLandmarksSourcePixels':landmarks,'groundAnchorSourcePixels':landmarks['frontFoot'],'approxSupportFootprintSourcePixels':[landmarks['leftFoot'],project([660,540]),landmarks['rightFoot'],landmarks['frontFoot']],'supportFootprintNote':'Left/right/front visible foot landmarks measured on raster. Rear support corner is an estimated occluded location used for layout only, not a measured3D point.','approxPhysicalBenchHeightLogical':round((landmarks['frontFoot'][1]-landmarks['frontWorkSurface'][1])/2,3),'socketMethod':'Visible fixed feature centers in generated image, manually measured within~5master pixels; no rig/animated part is included.'};(ROOT/'geometry.json').write_text(json.dumps(geometry,indent=2)+'\n')
+def bg(im,col,size):
+    plate=Image.new('RGBA',size,col);plate.alpha_composite(im.resize(size,Image.Resampling.LANCZOS));return plate.convert('RGB')
+sheet=Image.new('RGB',(1536,544),'#22303a');d=ImageDraw.Draw(sheet)
+for i,(name,col) in enumerate([('Dark','#071923'),('Light','#f0f3f5'),('Magenta','#d000cc')]):sheet.paste(bg(out,col,(512,512)),(i*512,28));d.text((i*512+12,8),name+' /512px export',fill='white')
+sheet.save(ROOT/'qa/alpha-backgrounds-r1.png');bg(out,'#071923',(256,256)).save(ROOT/'qa/station-logical-scale-r1.png')
+workerpath=Path('/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.worker.standard.se.neutral/exports/worker-standard-se-neutral-r1.png');worker=Image.open(workerpath).convert('RGBA');wb=worker.getbbox();worker=worker.crop(wb);worker=worker.resize((round(worker.width*58/worker.height),58),Image.Resampling.LANCZOS)
+scene=Image.new('RGBA',(512,350),'#071923');scene.alpha_composite(out.resize((256,256),Image.Resampling.LANCZOS),(180,28));operator=(216,240);worker_anchor=((207.75-wb[0])*58/312,(327.753-wb[1])*58/312);scene.alpha_composite(worker,(round(operator[0]-worker_anchor[0]),round(operator[1]-worker_anchor[1])));d=ImageDraw.Draw(scene);d.text((18,16),'Station logical256px canvas / separate worker58px visible',fill='white');d.text((18,306),'Bench surface~38px above visible front foot; powered display is static.',fill='white');scene.convert('RGB').save(ROOT/'qa/worker-comparison-r1.png')
+register=Image.new('RGBA',(512,512),'#071923');register.alpha_composite(out);d=ImageDraw.Draw(register)
+for k,(x,y) in landmarks.items():d.ellipse((x-3,y-3,x+3,y+3),fill='#ffb64c');d.text((min(x+6,390),y-12),k,fill='white')
+register.convert('RGB').save(ROOT/'qa/sockets-registration-r1.png')
+stats={'mode':out.mode,'size':list(out.size),'alphaRange':out.getchannel('A').getextrema(),'transparentPixels':int((arr[:,:,3]==0).sum()),'partialAlphaPixels':int(((arr[:,:,3]>0)&(arr[:,:,3]<255)).sum()),'borderNontransparent':int((arr[[0,-1],:,3]>0).sum()+(arr[:,[0,-1],3]>0).sum()),'greenDominantVisiblePixels':int(((arr[:,:,1].astype(float)-np.maximum(arr[:,:,0],arr[:,:,2])>30)&(arr[:,:,3]>16)).sum()),'pngBytes':exp.stat().st_size,'decodedRgbaBytes':512*512*4};(ROOT/'qa/measurements-r1.json').write_text(json.dumps(stats,indent=2)+'\n');print(json.dumps({'geometry':geometry,'qa':stats}))

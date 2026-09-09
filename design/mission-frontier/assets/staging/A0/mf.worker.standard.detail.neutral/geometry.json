@@ -1,0 +1,62 @@
+{
+  "masterDimensions": [
+    1254,
+    1254
+  ],
+  "sourceAlphaBounds": [
+    364,
+    65,
+    878,
+    1178
+  ],
+  "exportAlphaBounds": [
+    236,
+    64,
+    532,
+    704
+  ],
+  "uniformScale": 0.5750224618149147,
+  "scaledSize": [
+    296,
+    640
+  ],
+  "pasteOffset": [
+    236,
+    64
+  ],
+  "sourceSize": [
+    768,
+    768
+  ],
+  "logicalSize": [
+    384,
+    384
+  ],
+  "landmarksSourcePixels": {
+    "leftSole": [
+      345.829,
+      697.1
+    ],
+    "rightSole": [
+      468.309,
+      662.023
+    ],
+    "leftHand": [
+      273.376,
+      511.367
+    ],
+    "rightHand": [
+      507.986,
+      473.991
+    ],
+    "face": [
+      429.208,
+      207.756
+    ]
+  },
+  "groundAnchorSourcePixels": [
+    407.069,
+    679.562
+  ],
+  "measurementMethod": "Sole-contact center landmarks manually measured to approximately5master pixels; anchor is their midpoint. Other sockets are visible feature centers, not a rig."
+}

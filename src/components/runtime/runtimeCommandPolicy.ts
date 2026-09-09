@@ -1,8 +1,9 @@
-import { type RuntimeTask, type StageId, workflowStages } from "../../domain";
+import { type RuntimeTask, type RuntimeTaskCore, type StageId, workflowStages } from "../../domain";
+import { supportsRetainedPackageContinuation } from "../../retained-package-continuation";
 import { getEffectiveStageRunAttempts, getEffectiveStageRunLimit } from "../../runtime-stage-limits";
 import { candidateGateStages, getRuntimeGateFreshness } from "./workflow";
 
-export function nextAction(task: RuntimeTask) {
+export function nextAction(task: RuntimeTask | RuntimeTaskCore) {
   const next = deriveNextAction(task);
   if (!next?.action) {
     if (task.actionEligibility?.actions["grant-retry"]?.allowed) {
@@ -20,7 +21,7 @@ export function nextAction(task: RuntimeTask) {
   return task.actionEligibility.actions[next.action]?.allowed ? next : null;
 }
 
-export function deriveNextAction(task: RuntimeTask) {
+export function deriveNextAction(task: RuntimeTask | RuntimeTaskCore) {
   const currentAttempts = getEffectiveStageRunAttempts(task);
   const retryAllowanceExhausted = currentAttempts >= getEffectiveStageRunLimit(task);
   const candidate = task.candidates?.at(-1);
@@ -120,24 +121,18 @@ export function deriveNextAction(task: RuntimeTask) {
       detail:
         "Replay the retained candidate onto the latest target as a new revision. The prior revision remains inspectable and every candidate-bound gate must run again.",
     };
-  const retainedTimedOutPackage = [...(task.workPackages ?? [])]
+  const retainedPackage = [...(task.workPackages ?? [])]
     .reverse()
     .find(
       (workPackage) =>
         workPackage.status === "failed" &&
         Boolean(workPackage.worktreePath) &&
-        /run exceeded \d+ seconds|harness stopped while this task was running/i.test(
-          workPackage.error ?? task.error ?? "",
-        ),
+        supportsRetainedPackageContinuation(workPackage.error ?? task.error ?? ""),
     );
-  if (
-    retainedTimedOutPackage &&
-    ["failed", "blocked"].includes(task.status) &&
-    task.currentStage === "implement"
-  )
+  if (retainedPackage && ["failed", "blocked"].includes(task.status) && task.currentStage === "implement")
     return {
       action: "continue-package" as const,
-      label: `Continue retained ${retainedTimedOutPackage.id}`,
+      label: `Continue retained ${retainedPackage.id}`,
       title: "Resume the retained implementation package",
       detail:
         "Validate the exact retained branch and dirty files, continue without discarding in-scope progress, restore paths outside declared ownership, and use the bounded 30-minute continuation timeout.",
@@ -164,7 +159,9 @@ export function deriveNextAction(task: RuntimeTask) {
         artifact.candidateId === candidate?.id &&
         artifact.candidateRevision === candidate?.revisionNumber,
     );
-  const blockingCandidateDefect = latestTestArtifact?.gateResult?.findings?.some(
+  const detailedTestArtifact =
+    latestTestArtifact && "content" in latestTestArtifact ? latestTestArtifact : undefined;
+  const blockingCandidateDefect = detailedTestArtifact?.gateResult?.findings?.some(
     (finding) => finding.blocking === true && finding.kind === "candidate-defect",
   );
   const sameCandidateTestRetryUsed = task.sameCandidateTestRetries?.some(
@@ -183,7 +180,7 @@ export function deriveNextAction(task: RuntimeTask) {
   if (
     ["repair-required", "failed", "blocked"].includes(task.status) &&
     task.currentStage === "test" &&
-    (latestTestArtifact?.focusedTest?.status === "failed" || failedExactCandidateVerification) &&
+    (detailedTestArtifact?.focusedTest?.status === "failed" || failedExactCandidateVerification) &&
     !blockingCandidateDefect &&
     !sameCandidateTestRetryUsed
   )
@@ -381,7 +378,7 @@ export function deriveNextAction(task: RuntimeTask) {
   return null;
 }
 
-export function getAccessBoundaryCopy(task: RuntimeTask) {
+export function getAccessBoundaryCopy(task: RuntimeTask | RuntimeTaskCore) {
   const stage = workflowStages.find((entry) => entry.id === task.currentStage);
   const stageLabel = stage?.label ?? "Current stage";
   if (task.status === "awaiting-grill") {

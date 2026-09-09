@@ -1,0 +1,61 @@
+{
+  "id": "mf.worker.standard.detail.neutral",
+  "revision": 1,
+  "status": "pending-coordinator-integration-review",
+  "file": "exports/worker-standard-detail-neutral-r1.png",
+  "sourceSize": [
+    768,
+    768
+  ],
+  "logicalSize": [
+    384,
+    384
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    203.5345,
+    339.781
+  ],
+  "footprint": [
+    [
+      172.9145,
+      348.55
+    ],
+    [
+      234.1545,
+      331.0115
+    ]
+  ],
+  "footprintUse": "Two sole-contact centers only; renderer may expand a navigation footprint separately.",
+  "layer": "worker",
+  "occlusionClass": "actor",
+  "sockets": {
+    "leftHand": [
+      136.688,
+      255.6835
+    ],
+    "rightHand": [
+      253.993,
+      236.9955
+    ],
+    "face": [
+      214.604,
+      103.878
+    ]
+  },
+  "sourceId": "exec-00c48322-9b05-4aac-affd-745ba69e97e8",
+  "sha256": "9f27605d39c50d3a9c1cc6551b218bd2764575c36eabc1e1a20ba32584104be7",
+  "alpha": "straight RGBA",
+  "geometry": "geometry.json",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/actual-scale-r1.png",
+    "qa/registration-r1.png"
+  ],
+  "limits": [
+    "Single neutral full-body pose, no rig, tool, animation or portrait export.",
+    "Hand sockets are parked-pose feature centers; contact animation requires separate work proof.",
+    "Authored detail angle; not an exact scaling of HQ sprite. Integrated M1 pending."
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "entry.json": "636c4402c5b9d7477abba4c32902fd996a413000ed28692bc906e0793d14fbcf",
+  "exports/rock-r1.png": "56518d649ca8c25a989059c0f84d57cb69289843f94e50ec68d2a7477081e237",
+  "geometry.json": "c016055b4b0e7ef925a652817ecb8042f52014a13c106a70512beb2a3762b95c",
+  "process.py": "f8c44113f94dff5dcaf0dc551a01f0d1bd4e99512f692b83f23ff763a061335f",
+  "provenance.json": "51acc9817ee5b1d5e12ec4ef0fa155c4e560eb9be205e380fd466a0a2228e338",
+  "qa/QA.md": "b6ad40fa0625257e04b36dfa68a3b87e0626a2d79e3262aac59434adc46176bd",
+  "qa/actual-scales-r1.png": "8e9509280c42d370a9666ac5b3476917d4f52368ef7235040ba50494d5ce45e6",
+  "qa/alpha-backgrounds-r1.png": "3488ea3c31e5eac1e62ef9e3cb8cdd27761fe8ca1f78cb56eb612c2955db77c4",
+  "qa/ground-instances-r1.png": "42fe401a8199137b1c17b4f08a943351b218c6e5b33354c596046a1db866db18",
+  "qa/measurements-r1.json": "7cd4f51a6ccdd324982b6be0a415e1f8989f6538d13fa59586decfa029f5c936",
+  "source/generation-prompt.txt": "f21ee253008e3b1bc80939d7d20abbfb24c8df51d56cf81aa906a08c44c2736a",
+  "source/rock-alpha-master-r1.png": "b48db5b08a46b742de8aa59137a8b311e949597ebb4b71704f6fd576bc77c642",
+  "source/rock-master-r1.png": "a9955d433503465a3677e622a0a3ad7b3cdaabf320739c6ff2f903fa0cc8931a"
+}

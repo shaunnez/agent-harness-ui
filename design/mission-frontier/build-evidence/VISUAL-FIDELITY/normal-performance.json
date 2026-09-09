@@ -1,0 +1,135 @@
+{
+  "capturedAt": "2026-09-06T10:59:03.143Z",
+  "viewport": {
+    "width": 1568,
+    "height": 1003,
+    "dpr": 1
+  },
+  "mode": "fixture",
+  "projects": 10,
+  "tasks": 100,
+  "refresh": {
+    "cycles": 127,
+    "summaryReads": 1,
+    "selectedReads": 1,
+    "failures": 0
+  },
+  "renderer": {
+    "artDirection": "cinematic",
+    "textures": 53,
+    "decodedBytes": 119734272,
+    "compressedBytes": 18909937,
+    "reconciliations": 1,
+    "rebuiltEntities": 12,
+    "handoffs": 0,
+    "frameSamples": 11700,
+    "measuredSeconds": 102.88039999997616,
+    "medianFps": 119.04761896314534,
+    "p95FrameMs": 11.699999988079071,
+    "entities": 12,
+    "workers": 20,
+    "activeWorkers": 10,
+    "tickerListeners": 2,
+    "tickerRunning": true,
+    "documentHidden": false,
+    "backgroundSuspensions": 0,
+    "camera": {
+      "x": 269.4226519337017,
+      "y": 136.88397790055245,
+      "zoom": 0.3441988950276243
+    }
+  },
+  "selectionAckMs": [],
+  "pageTransfer": {
+    "requests": 16,
+    "transferBytes": 581448,
+    "encodedBytes": 576648
+  },
+  "artworkNetwork": [
+    {
+      "path": "/assets/index-CzpN2PhT.js",
+      "transferBytes": 305929,
+      "encodedBytes": 305629,
+      "decodedBodyBytes": 1041085
+    },
+    {
+      "path": "/assets/index-BmWXtIwn.css",
+      "transferBytes": 12967,
+      "encodedBytes": 12667,
+      "decodedBodyBytes": 60627
+    },
+    {
+      "path": "/assets/inter-latin-400-normal-C38fXH4l.woff2",
+      "transferBytes": 23964,
+      "encodedBytes": 23664,
+      "decodedBodyBytes": 23664
+    },
+    {
+      "path": "/assets/inter-latin-500-normal-Cerq10X2.woff2",
+      "transferBytes": 24572,
+      "encodedBytes": 24272,
+      "decodedBodyBytes": 24272
+    },
+    {
+      "path": "/assets/WebGLRenderer-DYk53b6Y.js",
+      "transferBytes": 19963,
+      "encodedBytes": 19663,
+      "decodedBodyBytes": 72275
+    },
+    {
+      "path": "/assets/BufferResource-DInZAbfP.js",
+      "transferBytes": 2903,
+      "encodedBytes": 2603,
+      "decodedBodyBytes": 10037
+    },
+    {
+      "path": "/assets/Filter-Dhhf5Qn8.js",
+      "transferBytes": 1204,
+      "encodedBytes": 904,
+      "decodedBodyBytes": 904
+    },
+    {
+      "path": "/assets/RenderTargetSystem-Ds4wxPB3.js",
+      "transferBytes": 14976,
+      "encodedBytes": 14676,
+      "decodedBodyBytes": 53013
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.portrait-2b3815b7e1.png",
+      "transferBytes": 139509,
+      "encodedBytes": 139209,
+      "decodedBodyBytes": 139209
+    },
+    {
+      "path": "/assets/browserAll-RACUpceU.js",
+      "transferBytes": 11691,
+      "encodedBytes": 11391,
+      "decodedBodyBytes": 43328
+    },
+    {
+      "path": "/assets/CanvasPool-E4Z4EZtM.js",
+      "transferBytes": 1082,
+      "encodedBytes": 782,
+      "decodedBodyBytes": 782
+    },
+    {
+      "path": "/assets/webworkerAll-DTSgxPQ6.js",
+      "transferBytes": 5400,
+      "encodedBytes": 5100,
+      "decodedBodyBytes": 15962
+    },
+    {
+      "path": "/assets/manifest.json",
+      "transferBytes": 13383,
+      "encodedBytes": 13083,
+      "decodedBodyBytes": 71680
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "transferBytes": 2713,
+      "encodedBytes": 2413,
+      "decodedBodyBytes": 20117
+    }
+  ],
+  "network": []
+}

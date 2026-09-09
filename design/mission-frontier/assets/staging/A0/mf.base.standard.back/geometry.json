@@ -1,0 +1,108 @@
+{
+  "canvas": [
+    1536,
+    1024
+  ],
+  "logicalCanvas": [
+    768,
+    512
+  ],
+  "commonAnchorSource": [
+    768,
+    844
+  ],
+  "commonAnchorLogical": [
+    384,
+    422
+  ],
+  "floorSurfaceCornersSource": [
+    [
+      768,
+      140
+    ],
+    [
+      1472,
+      492
+    ],
+    [
+      768,
+      844
+    ],
+    [
+      64,
+      492
+    ]
+  ],
+  "sourceInnerGroundPath": [
+    [
+      88.5,
+      598
+    ],
+    [
+      767.5,
+      270
+    ],
+    [
+      1446.5,
+      598
+    ]
+  ],
+  "registeredInnerGroundPath": [
+    [
+      96.1574,
+      499.9213
+    ],
+    [
+      768,
+      164
+    ],
+    [
+      1439.8426,
+      499.9213
+    ]
+  ],
+  "sourceWidthControl": [
+    56,
+    1479
+  ],
+  "targetWidthControl": [
+    64,
+    1472
+  ],
+  "sourceTopBackApprox": [
+    767.5,
+    129
+  ],
+  "registeredTopBackApprox": [
+    768,
+    54.02
+  ],
+  "heightScale": 0.78,
+  "horizontalScale": 0.9894588896697118,
+  "inverseAffineCoefficients": {
+    "left": [
+      1.0106534090909092,
+      0,
+      -8.681818181818244,
+      0.15281604134696913,
+      1.282051282051282,
+      -57.61913001088254
+    ],
+    "right": [
+      1.0106534090909092,
+      0,
+      -8.681818181818244,
+      -0.15281604134696913,
+      1.282051282051282,
+      177.10630949806205
+    ]
+  },
+  "alphaBounds": [
+    63,
+    53,
+    1473,
+    502
+  ],
+  "surfaceOffsetConvention": "Inner visible wall feet are 24 export pixels toward the floor interior relative to rear perimeter line. Outer wall structure/foot reaches the perimeter. Common anchor is inherited from floor, not wall bounding box.",
+  "measurementMethod": "Manual source foot and top landmarks within approximately 3 pixels, then two joined affine face registrations split at target x768. New exports share target floor landmarks; no new floor pixels synthesized."
+}

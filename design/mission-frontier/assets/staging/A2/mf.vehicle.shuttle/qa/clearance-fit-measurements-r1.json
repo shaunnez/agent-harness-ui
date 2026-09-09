@@ -1,0 +1,28 @@
+{
+  "relativeScale": 0.7,
+  "contactCentersInside": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "contactsLogical": [
+    [
+      160.639765,
+      270.372115
+    ],
+    [
+      201.90291000000002,
+      251.67473
+    ],
+    [
+      235.429235,
+      261.861585
+    ],
+    [
+      194.166055,
+      280.558935
+    ]
+  ],
+  "note": "Contact centres tested against conservative polygon; skid perimeter and visual deck fit also require visual inspection."
+}

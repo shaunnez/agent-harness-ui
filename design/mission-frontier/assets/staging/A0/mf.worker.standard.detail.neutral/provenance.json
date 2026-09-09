@@ -1,0 +1,32 @@
+{
+  "assetId": "mf.worker.standard.detail.neutral",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-00c48322-9b05-4aac-affd-745ba69e97e8",
+  "sourceSha256": "225bf32e3f4746f36a1fcf3cae90b5a1ea51a45c434b1ba381602b22e42ff38d",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.worker.standard.se.neutral/exports/worker-standard-se-neutral-r1.png",
+      "sha256": "2fb35d56130d44035ec3962e640b03e994e716b8204e8e611bebbaade53941b0"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/agent-work-blocked-v1.1.png",
+      "sha256": "a6ff3c3c26cdc4df7df355b0e091ba6acc59de28f07fed0034c09093d89b52b3"
+    }
+  ],
+  "generationPrompt": "Use case: stylized-concept. Asset mf.worker.standard.detail.neutral.\nCreate a single full-body detail-view sprite of exactly the friendly Mission Frontier worker in reference1, with the readability and gently fuller torso proportions of the agent-work reference2. Preserve identity: ceramic ivory-white rounded spherical head, glossy black faceplate with TWO small luminous blue eyes, circular dark/cyan ear joint, ceramic chest and limb armor over dark steel mechanical joints, small sturdy articulated hands and broad practical feet, restrained seams and warm wear. No redesign, no new accessories.\nThree-quarter FRONT view facing screen lower right (SE), slightly above eye level so both eyes and the broad chest are clearly visible. Neutral parked standing pose, hands relaxed by sides, feet firmly grounded. Full head to feet visible. Fuller readable chest and abdomen than slender first sprite but still the same compact mechanical worker, no muscular human anatomy, not chibi, no giant head exaggeration. Warm top-left daylight, soft studio/game rendered shading, crisp detailed ceramic and steel.\n768x768 square intended export, full subject within approximatelyx190..580,y55..700. Designed to look excellent at180\u2013220px total visible height. Actual transparent background if available; otherwise perfectly flat saturated green#00FF00 for clean deterministic removal, absolutely no green reflection. No ground, cast ground shadow, platform, chair, workstation, tool, status marker, selection ring, labels, text, name, UI, scene or other character. This is one static worker asset, no animation frames or portrait crop.\n",
+  "correctiveGenerations": 1,
+  "correctionPrompt": "Keep the worker pixel appearance, pose, proportions, identity, camera and framing as close as possible. Replace ONLY the white/gray checkerboard background with perfectly flat saturated green #00FF00, including all gaps between arms/body/legs. Do not add green reflected color on the worker. The checkerboard is unwanted baked image pixels, not transparency. No ground, shadow, labels, tools or props. Keep the full ceramic-white dark-joint blue-eye worker from head to both soles, unchanged. Output1254x1254 or a square high-resolution source.\n",
+  "correctionInput": "source/detail-master-attempt1.png",
+  "correctionReason": "Initial RGB source contained a baked checkerboard; regenerate only background as removable green.",
+  "transforms": [
+    "Preserve both masters",
+    "Deterministic green alpha and spill cleanup",
+    "Uniform fit to640source pixels visible height",
+    "Lanczos resize and paste on768x768 at recorded offset",
+    "Post-resample green cleanup; QA composites only"
+  ],
+  "exportSha256": "9f27605d39c50d3a9c1cc6551b218bd2764575c36eabc1e1a20ba32584104be7",
+  "exportBytes": 341635,
+  "rightsNote": "Supplied/generated project identity only; provenance is not legal clearance."
+}

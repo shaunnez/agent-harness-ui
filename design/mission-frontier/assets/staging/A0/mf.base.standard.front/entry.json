@@ -1,0 +1,98 @@
+{
+  "id": "mf.base.standard.front",
+  "revision": 1,
+  "status": "delivered-pending-coordinator-scene-review",
+  "file": "exports/base-standard-front-r1.png",
+  "sourceSize": [
+    1536,
+    1280
+  ],
+  "logicalSize": [
+    768,
+    640
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    384,
+    522
+  ],
+  "footprint": [
+    [
+      384,
+      170
+    ],
+    [
+      736,
+      346
+    ],
+    [
+      384,
+      522
+    ],
+    [
+      32,
+      346
+    ]
+  ],
+  "footprintUse": "shared alignment only, not solid foreground hit area",
+  "labelAnchor": [
+    384,
+    460
+  ],
+  "labelAnchorMethod": "open entrance label placement aid only",
+  "layer": "front-structure",
+  "occlusionClass": "foreground",
+  "sockets": {
+    "leftCorner": [
+      32,
+      346
+    ],
+    "rightCorner": [
+      736,
+      346
+    ],
+    "frontOpen": [
+      384,
+      522
+    ]
+  },
+  "parts": [
+    {
+      "name": "left-parapet",
+      "sourceFrame": [
+        0,
+        0,
+        768,
+        1280
+      ]
+    },
+    {
+      "name": "right-parapet",
+      "sourceFrame": [
+        768,
+        0,
+        768,
+        1280
+      ]
+    }
+  ],
+  "partsNote": "Frames reference one export; preserve full-canvas registration when splitting. Optional renderer-controlled selected-worker fade, no new asset IDs.",
+  "geometry": "geometry.json",
+  "sourceId": "exec-89f74e05-a783-4b4d-8430-4d296793336b",
+  "sha256": "d893aedaa181ef2848b3bc31da06b864e0ab2761005476098f935d2060a30448",
+  "alpha": "straight RGBA",
+  "qa": [
+    "qa/QA.md",
+    "qa/alpha-backgrounds-r1.png",
+    "qa/compound-composite-r1.png",
+    "qa/hq-compound-logical-scale-r1.png",
+    "qa/two-workers-occlusion-r1.png",
+    "qa/contact-coverage-r1.json",
+    "qa/measurements-r1.json"
+  ],
+  "limits": [
+    "Low front parts can partially occlude workers placed directly behind them; renderer owns layout and selection fade.",
+    "No roof/front beam/floor or internal partitions.",
+    "Visual gate awaits coordinator integration."
+  ]
+}

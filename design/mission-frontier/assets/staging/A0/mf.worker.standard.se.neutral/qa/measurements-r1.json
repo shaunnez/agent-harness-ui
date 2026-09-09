@@ -1,0 +1,34 @@
+{
+  "masterSize": [
+    1254,
+    1254
+  ],
+  "masterMode": "RGB",
+  "keyBoundsMaster": [
+    394,
+    113,
+    851,
+    1126
+  ],
+  "cropScale": 0.3079960513326752,
+  "scaledSize": [
+    141,
+    312
+  ],
+  "pasteOffset": [
+    122,
+    28
+  ],
+  "exportBoundsAlphaGt0": [
+    122,
+    28,
+    263,
+    340
+  ],
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "transparentPixelCount": 114811,
+  "partialAlphaPixelCount": 4463
+}

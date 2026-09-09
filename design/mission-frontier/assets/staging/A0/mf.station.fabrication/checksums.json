@@ -1,0 +1,17 @@
+{
+  "entry.json": "6f68b6d463c6ebb4025b9e24d2105348e6ae609c8c456107e20453f6b6eee89f",
+  "exports/station-fabrication-r1.png": "3bb80f14413e70b0398b4d6770e601affcf3d9b20d2a5553dd3f01cebf1d966d",
+  "finalize.py": "af842aba9271baedd7cbbefbb00e11c1c74071a6242ae5be2b3c91e688abbbae",
+  "geometry.json": "c0b0a7d411e3fcbbc5a9ad1ec03e6a7ce359ba15c73f4d5821d365a715aa4410",
+  "process.py": "d31e1a08f86224a754327d567d539962877b306a8473c7b120b5be2649d99c80",
+  "provenance.json": "0633b83c6e1058807a738278fea5584703ec7e2b4aed2ddaaf41a255137e41bc",
+  "qa/QA.md": "f660c07638a71454333dfe8c5feb8f7fe4b42c39ee1e5b9f463b075991618edb",
+  "qa/alpha-backgrounds-r1.png": "074f56d7db3fd9c92a867d89981a3eeeaffa724538fd6a3a7ba67f6e0d20539d",
+  "qa/measurements-r1.json": "e2c7cc28c5075b8ec33798ed669a5910406cb0c5a043663b7de33d05c0472d73",
+  "qa/sockets-registration-r1.png": "a74372a6b5014f23b8e397f6344af2b9de198a767b18f38d93415d69fe4e62ab",
+  "qa/station-logical-scale-r1.png": "70d044077cfdc4e936b955cb0e7fd4bd1c0e628949cf50f6fdb8653bdd6f91c4",
+  "qa/worker-comparison-r1.png": "aded011e8912cd7786934b3e16577fabb0c0e39a9635e50ae2dbe91b4959294a",
+  "source/generation-prompt.txt": "5ec37a82c5faa129b5d1e87488f0b11e8ab02167857f9abc7905f994f5ebc3f5",
+  "source/station-fabrication-alpha-master-r1.png": "3b96e120330a58236460e913e96f642e1ad9dc9322768201b0520acccb5d3b50",
+  "source/station-fabrication-master-r1.png": "b64a45a2bf6557e212cafce5069888820c425386213e8e338775ca28d4c99145"
+}

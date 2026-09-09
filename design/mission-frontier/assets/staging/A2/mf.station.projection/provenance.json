@@ -1,0 +1,36 @@
+{
+  "assetId": "mf.station.projection",
+  "revision": 1,
+  "generator": "Built-in ImageGen",
+  "sourceId": "exec-e11312ab-fad3-4794-aa36-2420f730a467",
+  "sourceSha256": "71aae72ae2fcf498504b56706b357a54d693b50a40c1c82d9fa79115da6c8794",
+  "prompt": "Create ONE isolated game production sprite: a DESIGN PROJECTION STATION. Match supplied ceramic-white/slate steel workstations in fixed orthographic 2:1 isometric projection and warm upper-left daylight. Same broad low rectangular bevelled bench, approximately146x80logical support footprint and40logical benchheight. Distinct recognizable apparatus: ONE medium-sized landscape dark smoky blue glass projection screen standing at the back of the bench in a sturdy white frame with two short supports; on the tabletop a small low circular optical projection lens on a mechanical adjustable mount pointed toward that screen, plus a narrow recessed physical control pad with no markings. Screen must be entirely blank inactive dark reflective glass, not a lit computer display. Lens is unlit dark optical glass. Accessible real circular diagnostic socket on front left bench face. Memorable clean substantial silhouette, crisp convincing ceramic panels and steel seams, restrained mechanical detail. NO hologram, projected content, beam, glowing lamps, status indicators, text, numbers, logos, UI, workers, people, floor, scenery or cast shadow plane. Full isolated object with generous margin on a completely flat vivid chroma green RGB(0,255,0) background for alpha extraction. No checkerboard or gradient. Preserve reference station family and camera, but do not copy their three-screen bank, tall sensor mast, or fabrication machine.\n",
+  "references": [
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A2/mf.station.intake/exports/station-intake-r1.png",
+      "sha256": "623461a3e441421299f869f0d664d8dc3c8b2d6e225d0ff9ed88873be9805cef"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/screens/project-base-attention-v1.1.png",
+      "sha256": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A0/mf.station.fabrication/exports/station-fabrication-r1.png",
+      "sha256": "3bb80f14413e70b0398b4d6770e601affcf3d9b20d2a5553dd3f01cebf1d966d"
+    },
+    {
+      "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/A1/mf.station.communications/exports/station-communications-r1.png",
+      "sha256": "81a0c8c2e1f4de2f034afa0d3f36e86983f8bd348b0c9e69b20dd63d9656d6da"
+    }
+  ],
+  "correctiveGenerations": 0,
+  "transforms": [
+    "Green key and spill cleanup",
+    "Crop subject and uniformly fit320source pixels wide",
+    "Lanczos resize and register bottom at430source on512canvas",
+    "QA-only comparison at requested consumer factors"
+  ],
+  "exportSha256": "571c04b65818805e806d6824da07c4d2e6e825b92c9c898b62e6a3e68252b084",
+  "exportBytes": 154989,
+  "rightsNote": "Supplied/generated project references only; provenance is not legal clearance."
+}

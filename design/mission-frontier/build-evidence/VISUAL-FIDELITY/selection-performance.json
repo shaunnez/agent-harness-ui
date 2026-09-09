@@ -1,0 +1,163 @@
+{
+  "capturedAt": "2026-09-06T11:12:32.491Z",
+  "viewport": {
+    "width": 1568,
+    "height": 1003,
+    "dpr": 1
+  },
+  "mode": "fixture",
+  "projects": 3,
+  "tasks": 12,
+  "refresh": {
+    "cycles": 28,
+    "summaryReads": 1,
+    "selectedReads": 11,
+    "failures": 0
+  },
+  "renderer": {
+    "artDirection": "cinematic",
+    "textures": 53,
+    "decodedBytes": 119734272,
+    "compressedBytes": 18909937,
+    "reconciliations": 31,
+    "rebuiltEntities": 24,
+    "handoffs": 0,
+    "frameSamples": 871,
+    "measuredSeconds": 7.650599999994039,
+    "medianFps": 120.48192753780042,
+    "p95FrameMs": 9.200000017881393,
+    "entities": 4,
+    "workers": 3,
+    "activeWorkers": 1,
+    "tickerListeners": 2,
+    "tickerRunning": true,
+    "documentHidden": false,
+    "backgroundSuspensions": 0,
+    "camera": {
+      "x": 783.9999999999999,
+      "y": 758.2047872340424,
+      "zoom": 1.449468085106383
+    }
+  },
+  "selectionAckMs": [
+    14.5,
+    14.400000005960464,
+    14.599999994039536,
+    14.800000011920929,
+    14.400000005960464,
+    14.5,
+    13,
+    13.899999976158142,
+    13.900000005960464,
+    13.099999994039536,
+    13.699999988079071,
+    15.5,
+    14.900000005960464,
+    14.700000017881393,
+    15.200000017881393,
+    14.599999994039536,
+    15.400000005960464,
+    14.099999994039536,
+    14.5,
+    13.800000011920929
+  ],
+  "selectionMeasurement": "Selection event to the second animation frame after committed state and scene effects",
+  "pageTransfer": {
+    "requests": 16,
+    "transferBytes": 606004,
+    "encodedBytes": 601204
+  },
+  "artworkNetwork": [
+    {
+      "path": "/assets/index-CDHe7laY.js",
+      "transferBytes": 306032,
+      "encodedBytes": 305732,
+      "decodedBodyBytes": 1041369
+    },
+    {
+      "path": "/assets/index-BmWXtIwn.css",
+      "transferBytes": 12967,
+      "encodedBytes": 12667,
+      "decodedBodyBytes": 60627
+    },
+    {
+      "path": "/assets/inter-latin-400-normal-C38fXH4l.woff2",
+      "transferBytes": 23964,
+      "encodedBytes": 23664,
+      "decodedBodyBytes": 23664
+    },
+    {
+      "path": "/assets/inter-latin-500-normal-Cerq10X2.woff2",
+      "transferBytes": 24572,
+      "encodedBytes": 24272,
+      "decodedBodyBytes": 24272
+    },
+    {
+      "path": "/assets/BufferResource-C55EdmXB.js",
+      "transferBytes": 2902,
+      "encodedBytes": 2602,
+      "decodedBodyBytes": 10037
+    },
+    {
+      "path": "/assets/Filter-HLSKOUZ8.js",
+      "transferBytes": 1204,
+      "encodedBytes": 904,
+      "decodedBodyBytes": 904
+    },
+    {
+      "path": "/assets/WebGLRenderer-CY3JNSaM.js",
+      "transferBytes": 19962,
+      "encodedBytes": 19662,
+      "decodedBodyBytes": 72275
+    },
+    {
+      "path": "/assets/RenderTargetSystem-1TBtAHjR.js",
+      "transferBytes": 14977,
+      "encodedBytes": 14677,
+      "decodedBodyBytes": 53013
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.portrait-2b3815b7e1.png",
+      "transferBytes": 139509,
+      "encodedBytes": 139209,
+      "decodedBodyBytes": 139209
+    },
+    {
+      "path": "/assets/inter-latin-600-normal-LgqL8muc.woff2",
+      "transferBytes": 24752,
+      "encodedBytes": 24452,
+      "decodedBodyBytes": 24452
+    },
+    {
+      "path": "/assets/browserAll-NnMEuDKR.js",
+      "transferBytes": 11688,
+      "encodedBytes": 11388,
+      "decodedBodyBytes": 43328
+    },
+    {
+      "path": "/assets/webworkerAll-gW82Acuz.js",
+      "transferBytes": 5400,
+      "encodedBytes": 5100,
+      "decodedBodyBytes": 15962
+    },
+    {
+      "path": "/assets/CanvasPool-BL-zAmgG.js",
+      "transferBytes": 1082,
+      "encodedBytes": 782,
+      "decodedBodyBytes": 782
+    },
+    {
+      "path": "/assets/manifest.json",
+      "transferBytes": 13388,
+      "encodedBytes": 13088,
+      "decodedBodyBytes": 71785
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "transferBytes": 2713,
+      "encodedBytes": 2413,
+      "decodedBodyBytes": 20117
+    }
+  ],
+  "network": []
+}

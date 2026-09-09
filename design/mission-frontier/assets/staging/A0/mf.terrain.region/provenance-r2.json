@@ -1,0 +1,18 @@
+{
+  "assetId": "mf.terrain.region",
+  "revision": 2,
+  "generator": "Built-in ImageGen original attempt1, deterministic export only for r2",
+  "sourceId": "exec-937b5774-80a6-425f-8f51-4a7f6caee8f2",
+  "sourceFile": "source/terrain-region-master-attempt1.png",
+  "sourceSha256": "975e46beee2daaec1e9c7f989e35cd52ad9b011430b7c0ded7fdf4de6b295689",
+  "originalGenerationProvenance": "provenance.json",
+  "promptFile": "source/generation-prompt.txt",
+  "transforms": [
+    "Single full-frame Lanczos resize to2048x1280 RGB",
+    "QA-only accepted base overlays using revised runtime positions"
+  ],
+  "creativeGenerationForThisRevision": false,
+  "reason": "Coordinator rejected high contrast texture after generative corrections; restore original natural terrain and adapt runtime positions.",
+  "exportSha256": "4e7548883ecf18ae6fc4f05e9dec3bf3afef4176f3fb1df68ece132c8f9f9ec0",
+  "exportBytes": 5175963
+}

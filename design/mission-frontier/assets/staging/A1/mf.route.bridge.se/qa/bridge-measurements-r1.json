@@ -1,0 +1,15 @@
+{
+  "maxVisibleUndersideBelowNearDeckSourcePixels": 9.0,
+  "maxVisibleUndersideLogical": 4.5,
+  "approvedOpaqueDeckPixelsEqual": true,
+  "joins": [
+    {
+      "minimumAlpha": 255,
+      "samples": 41
+    },
+    {
+      "minimumAlpha": 255,
+      "samples": 41
+    }
+  ]
+}

@@ -2,7 +2,8 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { validateDesignPolicies } from "./design-policies.mjs";
 import { hashTaskBrief, normalizeExperimentInput } from "./evaluation.mjs";
-import { normalizeModelId, POLICY_IDS, readExecutionProviderCatalog } from "./model-catalog.mjs";
+import { normalizeModelId, readExecutionProviderCatalog } from "./model-catalog.mjs";
+import { snapshotTaskPolicies } from "./task-policy-snapshot.mjs";
 import { selectWorkflowProfile, WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
 
 export function createTaskCreationRoutes({
@@ -55,23 +56,11 @@ export function createTaskCreationRoutes({
         description: input.description,
         requestedProfile: WORKFLOW_PROFILE_IDS.includes(input.workflowProfile) ? input.workflowProfile : null,
       });
-      const taskProfilePolicies =
-        input.model || input.reasoning
-          ? Object.fromEntries(
-              WORKFLOW_PROFILE_IDS.map((profile) => [
-                profile,
-                Object.fromEntries(
-                  POLICY_IDS.map((policyId) => [
-                    policyId,
-                    { model: requestedModel, reasoning: requestedReasoning },
-                  ]),
-                ),
-              ]),
-            )
-          : structuredClone(settings.profileStagePolicies);
-      const taskPolicies = structuredClone(
-        taskProfilePolicies?.[workflowProfile.selected] ?? settings.stagePolicies,
-      );
+      const policySnapshot = snapshotTaskPolicies(input, settings, knownModels, workflowProfile, {
+        model: requestedModel,
+        reasoning: requestedReasoning,
+      });
+      const taskPolicies = policySnapshot.stagePolicies;
       const repositoryPath = await validateRepository(input.repositoryPath);
       const priority = ["low", "medium", "high"].includes(input.priority) ? input.priority : "medium";
       let experiment = null;
@@ -125,8 +114,7 @@ export function createTaskCreationRoutes({
           designPolicyProvenance: input.designPolicies ? "task-selection" : "settings-default",
           model: requestedModel,
           reasoning: requestedReasoning,
-          stagePolicies: taskPolicies,
-          profileStagePolicies: taskProfilePolicies,
+          ...policySnapshot,
           workflowProfile,
           experiment,
           repositoryAuthority,

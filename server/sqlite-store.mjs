@@ -4,6 +4,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { cleanupOrphanAttachmentSets } from "./attachment-storage.mjs";
 import { defaultRuntimeSettings } from "./model-catalog.mjs";
+import { changeProject } from "./project-policy.mjs";
 import { retainRunActivityEvents, TASK_STORE_SCHEMA_VERSION } from "./run-activity.mjs";
 import {
   assertProjectIsUnique,
@@ -319,6 +320,19 @@ export class SqliteTaskStore {
         updater(settings);
         this.#db.prepare("UPDATE settings SET payload_json = ? WHERE id = 1").run(JSON.stringify(settings));
         return clone(settings);
+      }),
+    );
+  }
+
+  async updateProject(id, change) {
+    return this.#enqueue(() =>
+      this.#transaction(() => {
+        const settings = this.#readSettings();
+        const tasks = change.kind === "archive" ? this.#readAllTasks() : [];
+        const project = changeProject(settings.projects ?? [], tasks, id, change);
+        if (project)
+          this.#db.prepare("UPDATE settings SET payload_json = ? WHERE id = 1").run(JSON.stringify(settings));
+        return clone(project);
       }),
     );
   }

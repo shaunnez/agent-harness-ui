@@ -1,0 +1,17 @@
+{
+  "geometry.json": "509e3201dba0ef72aa5a1b60246c42f93f509e89d2800577af0e71a6d89ae26d",
+  "entry.json": "7ab9fbd3a641671cdea27fc046ad7a7dcfc7479a353406548309e1d56572bbaa",
+  "provenance.json": "e3fcc19764c4bd750ccc144e5c9ac6ad65adc8e11cf32dc55a7fd4283ecf20d8",
+  "process.py": "e5640486afb056f82a12685b2e076c9ebc4b0bfb7d753560e3bb8512212d3b0d",
+  "source/generation-prompt.txt": "4f71acaee9991d8a25567b9ed296db9989c292bb0dccf6fca67995d8094d6a07",
+  "source/base-standard-back-master-r1.png": "ccacc6239131a183b991d70ee21b6d522b0fbbb10c99628146b3718b506c520d",
+  "source/base-standard-back-alpha-master-r1.png": "1d2429ab5def63d001f0ea802bf027b99c473f394aeb55435e1e4587e9217fc9",
+  "qa/hq-composite-logical-scale-r1.png": "5ef1685d17a423a390491a7ab165df1ca1860b63db29f533ed0b20616835fecc",
+  "qa/contact-coverage-r1.json": "cd3f4f8e8681266ae872c7543869fd489e926670d5f84a80ee968902ca0f7b08",
+  "qa/QA.md": "3cd9554ce79a3fd5d07645d4cafff7419b001069ca6f600ea99ad18113d29ca5",
+  "qa/alpha-backgrounds-r1.png": "af98eee9438ced507c0474cf650d1a501265fa03def454c5fe5edd3c10d25a2d",
+  "qa/measurements-r1.json": "731e09b39162a63bc5c08b23ac296541e34cde56a78b725dde4041ee0bf0bf17",
+  "qa/floor-back-composite-r1.png": "a67726d8826ed2cf193434b866123138bceb2dae2794312a0abb7bb6eb7db6e5",
+  "qa/registration-composite-r1.png": "5ff366634ddf11e292ee2576fea772d950e5527f989ec296db21e9229cf6a06e",
+  "exports/base-standard-back-r1.png": "0c37dbd69b833bf76694c210cb9b8997942e7219097ba01ff39a1d3a20cbee54"
+}

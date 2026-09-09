@@ -1,0 +1,178 @@
+.work-overlay {
+  color: inherit;
+  background: #081c27f7;
+  border: 1px solid #47606c;
+  box-shadow: 0 12px 65px #0009;
+  border-radius: 10px;
+  width: min(1250px, calc(100vw - 64px));
+  max-width: none;
+  max-height: calc(100svh - 96px);
+  padding: 0;
+  overflow: hidden;
+}
+.work-overlay[open] {
+  display: flex;
+  flex-direction: column;
+}
+.work-overlay::backdrop {
+  background: #06101745;
+  backdrop-filter: blur(2px);
+}
+.overlay-header {
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #2a414a;
+  flex-shrink: 0;
+}
+.overlay-header > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.overlay-header h1 {
+  margin: 0;
+  font-size: 22px;
+}
+.overlay-body {
+  padding: 20px;
+  overflow: auto;
+  min-height: 0;
+}
+.overlay-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  border-top: 1px solid #2a414a;
+  padding: 15px 20px;
+  flex-shrink: 0;
+}
+.overlay-footer > .primary {
+  min-width: 210px;
+}
+.overlay-footer .quiet {
+  font-size: 12px;
+}
+.new-task-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.9fr);
+  gap: 18px;
+}
+.form-surface,
+.mission-briefing {
+  border: 1px solid #314a56;
+  border-radius: 6px;
+  padding: 22px;
+}
+.form-progress {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 27px;
+  color: #8e9ea6;
+}
+.form-progress .current {
+  color: #79bdff;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 135px 1fr;
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 24px;
+}
+.form-row > span {
+  padding-top: 11px;
+  font-size: 14px;
+}
+.form-row > input,
+.form-row > select,
+.form-row > textarea {
+  width: 100%;
+}
+.form-row p {
+  font-size: 12px;
+  margin: 7px 0 0;
+}
+.form-row:last-child {
+  padding-top: 24px;
+  border-top: 1px solid #263e48;
+}
+.mission-briefing h2 {
+  font-size: 16px;
+}
+.briefing-project {
+  display: flex;
+  gap: 13px;
+  border: 1px solid #38505c;
+  border-radius: 6px;
+  margin-bottom: 32px;
+  overflow: hidden;
+  padding: 12px;
+}
+.briefing-project img {
+  width: 130px;
+  object-fit: contain;
+}
+.briefing-project > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.workflow-checklist {
+  padding: 0;
+  list-style: none;
+  margin: 20px 0 30px;
+}
+.workflow-checklist li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  font-size: 14px;
+}
+.workflow-checklist svg {
+  color: var(--blue);
+}
+.draft-review h2 {
+  font-size: 22px;
+}
+.preserve-lines {
+  white-space: pre-wrap;
+}
+dl dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+dl dd {
+  margin: 5px 0 20px;
+  overflow-wrap: anywhere;
+}
+.policy-list > div {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #29414c;
+  padding: 10px 0;
+}
+.policy-list dd {
+  margin: 0;
+  font-size: 13px;
+}
+.form-error {
+  border-left: 3px solid #ed8279;
+  padding: 12px;
+  background: #3c2426;
+  color: #f7c4bb;
+  font-size: 14px;
+}
+.connection-notice {
+  margin: 0;
+  padding: 12px 20px;
+  background: #3f3020;
+  color: #ffe0a1;
+  border-bottom: 1px solid #735831;
+}

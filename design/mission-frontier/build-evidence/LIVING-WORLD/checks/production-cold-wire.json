@@ -1,0 +1,476 @@
+{
+  "capturedAt": "2026-09-08T16:45:21.905Z",
+  "method": "Fresh origin, connection-close per response; socket bytesWritten includes headers and worker-owned image requests.",
+  "requests": 78,
+  "wireBytes": 20648400,
+  "responses": [
+    {
+      "path": "/",
+      "status": 200,
+      "wireBytes": 814,
+      "durationMs": 5.245167000000038
+    },
+    {
+      "path": "/assets/index-BNhVVv7Y.css",
+      "status": 200,
+      "wireBytes": 13648,
+      "durationMs": 6.277874999999767
+    },
+    {
+      "path": "/assets/index-DQ2_3qgg.js",
+      "status": 200,
+      "wireBytes": 315859,
+      "durationMs": 26.74816699999974
+    },
+    {
+      "path": "/assets/inter-latin-400-normal-C38fXH4l.woff2",
+      "status": 200,
+      "wireBytes": 23956,
+      "durationMs": 2.185082999999395
+    },
+    {
+      "path": "/assets/inter-latin-500-normal-Cerq10X2.woff2",
+      "status": 200,
+      "wireBytes": 24564,
+      "durationMs": 2.8042500000001382
+    },
+    {
+      "path": "/assets/BufferResource-DVQmEmk4.js",
+      "status": 200,
+      "wireBytes": 2951,
+      "durationMs": 2.1997919999994338
+    },
+    {
+      "path": "/assets/Filter-CFsaygyu.js",
+      "status": 200,
+      "wireBytes": 1197,
+      "durationMs": 2.6601670000000013
+    },
+    {
+      "path": "/assets/WebGLRenderer-BQBnD-Cy.js",
+      "status": 200,
+      "wireBytes": 20061,
+      "durationMs": 4.329749999999876
+    },
+    {
+      "path": "/assets/RenderTargetSystem-D8SVLv7V.js",
+      "status": 200,
+      "wireBytes": 15017,
+      "durationMs": 5.849165999999968
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.portrait-2b3815b7e1.png",
+      "status": 200,
+      "wireBytes": 139450,
+      "durationMs": 1.8654999999998836
+    },
+    {
+      "path": "/assets/CanvasPool-DuqGdd_w.js",
+      "status": 200,
+      "wireBytes": 1075,
+      "durationMs": 2.8273750000007567
+    },
+    {
+      "path": "/assets/webworkerAll-BsomkVuI.js",
+      "status": 200,
+      "wireBytes": 5426,
+      "durationMs": 4.718166999999994
+    },
+    {
+      "path": "/assets/browserAll-QFuN95yN.js",
+      "status": 200,
+      "wireBytes": 11725,
+      "durationMs": 6.941125000000284
+    },
+    {
+      "path": "/assets/manifest.json",
+      "status": 200,
+      "wireBytes": 13296,
+      "durationMs": 1.886000000000422
+    },
+    {
+      "path": "/assets/cinematic/manifest.json",
+      "status": 200,
+      "wireBytes": 2654,
+      "durationMs": 1.02087500000016
+    },
+    {
+      "path": "/assets/living/manifest.json",
+      "status": 200,
+      "wireBytes": 2811,
+      "durationMs": 0.9752500000004147
+    },
+    {
+      "path": "/assets/mf.station.fabrication.r1.png",
+      "status": 200,
+      "wireBytes": 164398,
+      "durationMs": 3.2864589999999225
+    },
+    {
+      "path": "/assets/mf.worker.standard.se.working.r1.png",
+      "status": 200,
+      "wireBytes": 367773,
+      "durationMs": 3.9950410000001284
+    },
+    {
+      "path": "/assets/mf.base.standard.back.r2.png",
+      "status": 200,
+      "wireBytes": 766118,
+      "durationMs": 5.5376249999999345
+    },
+    {
+      "path": "/assets/mf.base.standard.front.r1.png",
+      "status": 200,
+      "wireBytes": 236608,
+      "durationMs": 5.413665999999466
+    },
+    {
+      "path": "/assets/mf.base.standard.floor.r1.png",
+      "status": 200,
+      "wireBytes": 1439897,
+      "durationMs": 7.825875000000451
+    },
+    {
+      "path": "/assets/mf.base.standard.roof.r1.png",
+      "status": 200,
+      "wireBytes": 1549449,
+      "durationMs": 8.965791999999965
+    },
+    {
+      "path": "/assets/mf.station.communications.r1.png",
+      "status": 200,
+      "wireBytes": 163100,
+      "durationMs": 3.047084000000723
+    },
+    {
+      "path": "/assets/mf.station.inspection.r1.png",
+      "status": 200,
+      "wireBytes": 183545,
+      "durationMs": 3.9932079999998678
+    },
+    {
+      "path": "/assets/mf.terrain.ground.r1.png",
+      "status": 200,
+      "wireBytes": 763529,
+      "durationMs": 5.050291999999899
+    },
+    {
+      "path": "/assets/mf.worker.standard.se.neutral.r1.png",
+      "status": 200,
+      "wireBytes": 92834,
+      "durationMs": 5.052833000000646
+    },
+    {
+      "path": "/assets/living/mf.living.observatory.lights-3519429a1d.png",
+      "status": 200,
+      "wireBytes": 585425,
+      "durationMs": 5.966457999999875
+    },
+    {
+      "path": "/assets/mf.terrain.shore.rim.r1.png",
+      "status": 200,
+      "wireBytes": 763529,
+      "durationMs": 7.30395899999985
+    },
+    {
+      "path": "/assets/mf.worker.standard.se.working.forearm-probe.r1.png",
+      "status": 200,
+      "wireBytes": 52832,
+      "durationMs": 3.1849590000001626
+    },
+    {
+      "path": "/assets/living/mf.living.worker.walk.7-fdb33486c5.png",
+      "status": 200,
+      "wireBytes": 69132,
+      "durationMs": 4.370832999999948
+    },
+    {
+      "path": "/assets/living/mf.living.worker.walk.6-3ed936900a.png",
+      "status": 200,
+      "wireBytes": 68519,
+      "durationMs": 7.055499999999483
+    },
+    {
+      "path": "/assets/living/mf.living.worker.walk.5-3aa6be0760.png",
+      "status": 200,
+      "wireBytes": 68071,
+      "durationMs": 7.061500000000706
+    },
+    {
+      "path": "/assets/mf.worker.standard.se.working.body.r1.png",
+      "status": 200,
+      "wireBytes": 329511,
+      "durationMs": 8.263332999999875
+    },
+    {
+      "path": "/assets/living/mf.living.worker.walk.4-ddc444126a.png",
+      "status": 200,
+      "wireBytes": 69542,
+      "durationMs": 8.328125
+    },
+    {
+      "path": "/assets/living/mf.living.worker.walk.3-79375349a9.png",
+      "status": 200,
+      "wireBytes": 67420,
+      "durationMs": 5.880667000000358
+    },
+    {
+      "path": "/assets/living/mf.living.worker.walk.2-e6d55ae093.png",
+      "status": 200,
+      "wireBytes": 66520,
+      "durationMs": 5.4192910000001575
+    },
+    {
+      "path": "/assets/living/mf.living.worker.walk.1-ce58580c5f.png",
+      "status": 200,
+      "wireBytes": 67874,
+      "durationMs": 1.7586670000000595
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.work.11-4f72de4bab.png",
+      "status": 200,
+      "wireBytes": 96229,
+      "durationMs": 1.7631250000004002
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.work.10-67c9a9ac85.png",
+      "status": 200,
+      "wireBytes": 96195,
+      "durationMs": 2.1824170000008962
+    },
+    {
+      "path": "/assets/living/mf.living.worker.walk.0-3472e1ca1d.png",
+      "status": 200,
+      "wireBytes": 68719,
+      "durationMs": 4.501916999999594
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.work.9-20a5810ebe.png",
+      "status": 200,
+      "wireBytes": 96315,
+      "durationMs": 2.453167000000576
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.tree.shadow-d4a629c247.png",
+      "status": 200,
+      "wireBytes": 253322,
+      "durationMs": 4.735834000000068
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.tree-9267c14619.png",
+      "status": 200,
+      "wireBytes": 515031,
+      "durationMs": 4.611417000000074
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.work.8-5f9e2fd719.png",
+      "status": 200,
+      "wireBytes": 96390,
+      "durationMs": 3.4199579999994967
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.work.7-0165a965f0.png",
+      "status": 200,
+      "wireBytes": 96217,
+      "durationMs": 3.4200000000000728
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.work.5-6c1d600afa.png",
+      "status": 200,
+      "wireBytes": 96206,
+      "durationMs": 4.397917000000234
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.work.6-f68048aedb.png",
+      "status": 200,
+      "wireBytes": 96242,
+      "durationMs": 4.955082999999831
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.work.4-846af64219.png",
+      "status": 200,
+      "wireBytes": 96240,
+      "durationMs": 4.4817919999995866
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.work.3-bc43b5b15d.png",
+      "status": 200,
+      "wireBytes": 96522,
+      "durationMs": 5.172750000000633
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.work.2-b8def300d0.png",
+      "status": 200,
+      "wireBytes": 96528,
+      "durationMs": 3.922458999999435
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.work.1-001a31d666.png",
+      "status": 200,
+      "wireBytes": 96443,
+      "durationMs": 2.7313340000000608
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.work.0-169f2bc2b4.png",
+      "status": 200,
+      "wireBytes": 96315,
+      "durationMs": 2.4270000000005894
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.worker.idle-a39b395acd.png",
+      "status": 200,
+      "wireBytes": 95760,
+      "durationMs": 3.094082999999955
+    },
+    {
+      "path": "/assets/cinematic/bridge-se-8c77d453b3.png",
+      "status": 200,
+      "wireBytes": 405107,
+      "durationMs": 3.8529170000001614
+    },
+    {
+      "path": "/assets/cinematic/mf.cinematic.roof-5680f12e66.png",
+      "status": 200,
+      "wireBytes": 1576958,
+      "durationMs": 5.148666000000048
+    },
+    {
+      "path": "/assets/cinematic/bridge-5fae2a2827.png",
+      "status": 200,
+      "wireBytes": 424343,
+      "durationMs": 4.118542000000161
+    },
+    {
+      "path": "/assets/cinematic/water-fc93cd013d.png",
+      "status": 200,
+      "wireBytes": 1062776,
+      "durationMs": 4.570749999999862
+    },
+    {
+      "path": "/assets/mf.vehicle.shuttle.r1.png",
+      "status": 200,
+      "wireBytes": 113544,
+      "durationMs": 4.5300829999996495
+    },
+    {
+      "path": "/assets/mf.base.observatory.roof.r1.png",
+      "status": 200,
+      "wireBytes": 1578989,
+      "durationMs": 5.991250000000036
+    },
+    {
+      "path": "/assets/mf.station.launchpad.r1.png",
+      "status": 200,
+      "wireBytes": 174329,
+      "durationMs": 6.536041999999725
+    },
+    {
+      "path": "/assets/cinematic/island-1954423207.png",
+      "status": 200,
+      "wireBytes": 2680861,
+      "durationMs": 9.384707999999591
+    },
+    {
+      "path": "/assets/mf.station.delivery-inspection.r1.png",
+      "status": 200,
+      "wireBytes": 130107,
+      "durationMs": 2.2746250000000146
+    },
+    {
+      "path": "/assets/mf.station.blueprint.r1.png",
+      "status": 200,
+      "wireBytes": 132539,
+      "durationMs": 2.2357090000004973
+    },
+    {
+      "path": "/assets/mf.station.diagnostics.r1.png",
+      "status": 200,
+      "wireBytes": 127378,
+      "durationMs": 2.81458400000065
+    },
+    {
+      "path": "/assets/mf.station.planning.r1.png",
+      "status": 200,
+      "wireBytes": 135675,
+      "durationMs": 3.020792000000256
+    },
+    {
+      "path": "/assets/mf.station.projection.r1.png",
+      "status": 200,
+      "wireBytes": 155230,
+      "durationMs": 3.3730420000001686
+    },
+    {
+      "path": "/assets/mf.station.survey.r1.png",
+      "status": 200,
+      "wireBytes": 145124,
+      "durationMs": 4.548041000000012
+    },
+    {
+      "path": "/assets/mf.artifact.capsule.r1.png",
+      "status": 200,
+      "wireBytes": 34199,
+      "durationMs": 1.2425419999999576
+    },
+    {
+      "path": "/assets/mf.station.intake.r1.png",
+      "status": 200,
+      "wireBytes": 137340,
+      "durationMs": 2.078042000000096
+    },
+    {
+      "path": "/assets/mf.worker.standard.sw.neutral.r1.png",
+      "status": 200,
+      "wireBytes": 92041,
+      "durationMs": 2.261750000000575
+    },
+    {
+      "path": "/assets/mf.prop.cargo.r1.png",
+      "status": 200,
+      "wireBytes": 30773,
+      "durationMs": 2.361291999999594
+    },
+    {
+      "path": "/assets/mf.prop.rock.r1.png",
+      "status": 200,
+      "wireBytes": 37627,
+      "durationMs": 2.559792000000016
+    },
+    {
+      "path": "/assets/mf.prop.purple-tree.r1.png",
+      "status": 200,
+      "wireBytes": 617316,
+      "durationMs": 3.3647909999999683
+    },
+    {
+      "path": "/assets/mf.route.bridge.sw.r1.png",
+      "status": 200,
+      "wireBytes": 50672,
+      "durationMs": 1.2555829999992056
+    },
+    {
+      "path": "/assets/mf.route.bridge.se.r1.png",
+      "status": 200,
+      "wireBytes": 50716,
+      "durationMs": 1.474500000000262
+    },
+    {
+      "path": "/assets/mf.route.road.junction.r1.png",
+      "status": 200,
+      "wireBytes": 45426,
+      "durationMs": 1.7969999999995707
+    },
+    {
+      "path": "/assets/mf.route.road.sw.r1.png",
+      "status": 200,
+      "wireBytes": 45221,
+      "durationMs": 2.1733329999997295
+    },
+    {
+      "path": "/assets/mf.route.road.se.r1.png",
+      "status": 200,
+      "wireBytes": 45305,
+      "durationMs": 2.5181249999996
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "entry.json": "01899f8455a283c625a8868a6710d96a0b55bcc0f2decc324d97d69ac2255559",
+  "exports/station-planning-r1.png": "db194aba70876e0fcfc930746c4572a665fb2067356d3f94d23a8897af3e4961",
+  "geometry.json": "cbc5f7ba079a6b926ae09d3331c04358b07c1e52e8880302b6da4ca70973ad79",
+  "process.py": "1a2d592d13ef540d14a6233449abef82912a4184a0634c17b4060647dbb4c000",
+  "provenance.json": "3231c49eff4ef0e83236b419c074dbbd5ac314094d40ac78ecbec96532b77b87",
+  "qa/QA.md": "3601ca866a247004083550a465ba83559d1f37836953a18cbb186466d134c647",
+  "qa/alpha-backgrounds-r1.png": "8b2fdcc95dae8c902eee3a8af75b2853460d189c7bb4772ab856380b450b204c",
+  "qa/calibrated-scale-comparison-r1.png": "b22636f41b1e4afadd7d1c7e017ff3d6f2418e9779efce61b799c7b525f8d647",
+  "qa/measurements-r1.json": "9e79b3980e72f3f2a19385b0d22d63e30b8a4025e61ffc838361479cd61a817a",
+  "qa/socket-registration-r1.png": "948665dbcfa6d139d533a5694c81ec3b03c29e96db72b31bdd2aec3b44946be3",
+  "source/correction-prompt.txt": "86f8c0277910316baf2374a04ffa48165dac8a3f71bd433e830b0ff85f52a29f",
+  "source/correction2-prompt.txt": "d16731a73c1ce7fdcd9fffbe93e958bba929767a521481c1149179327d9d9127",
+  "source/generation-prompt.txt": "1ae78b8f1245d0806fc202075919fe07bdeaee330a9c62ce581bb50456237277",
+  "source/planning-alpha-master-r1.png": "2f958a411a4da8923b4726e5f6851e2376780bccf204e2c9eac7a47d68d5a750",
+  "source/planning-initial-shallow-bench.png": "61749e5a6de2dd516d7fe220524486d39fda4fb8332e71fa1103b70cf5f149a7",
+  "source/planning-intermediate-clipped.png": "898824c4b348c66b0601ae6a11302a59fd7702a33cd8773768fe0fa6feb14008",
+  "source/planning-master-r1.png": "3151288bb160ff176bc3014e3dc735a3d2ab2be60c2ef1589e1317b9783c0004"
+}

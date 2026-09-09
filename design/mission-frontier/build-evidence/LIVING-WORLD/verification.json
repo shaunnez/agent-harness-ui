@@ -1,0 +1,50 @@
+{
+  "date": "2026-09-09",
+  "sourceCommit": "882e02b6727116a4ad45008d39c89e82b709a076",
+  "tests": {
+    "passed": 1065,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "newTests": 13,
+  "frontierTests": 58,
+  "checks": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "format": "passed",
+    "build": "passed",
+    "buildFrontier": "passed",
+    "diff": "passed"
+  },
+  "normal": {
+    "projects": 10,
+    "tasks": 100,
+    "measuredSeconds": 67.23019999998807,
+    "medianFps": 129.87013007119126,
+    "p95FrameMs": 9.600000023841858
+  },
+  "stress": {
+    "projects": 50,
+    "tasks": 1000,
+    "measuredSeconds": 63.02880000001192,
+    "medianFps": 129.87013007119126,
+    "p95FrameMs": 9.5
+  },
+  "initialWireBytes": 20648400,
+  "initialWireMiB": 19.691848754882812,
+  "initialTextureMiB": 126.1875,
+  "loadedTextureMiB": 135.1875,
+  "livingAssets": 25,
+  "livingInitialBytes": 1129069,
+  "livingTotalBytes": 2258977,
+  "nativeVisibility": "unverified-host-always-visible",
+  "osReducedMotion": "unverified",
+  "noLiveMutation": true,
+  "gamePublished": false,
+  "viewport": {
+    "width": 1488,
+    "height": 1058,
+    "dpr": 1
+  }
+}

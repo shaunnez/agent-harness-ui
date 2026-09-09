@@ -1,0 +1,16 @@
+{
+  "entry.json": "738290db188577e41a53af6c3f107fd8b0a584aa423ff6f01a0ef47b5d90986d",
+  "provenance.json": "2692be34732f46e61c1e1e6f5bbf67ad2f84684a302eaf4714b5938d78662768",
+  "finalize.py": "5b06fb65e52074d516bc531d59ecfabab50778a204431460748dc8f0f2809c5a",
+  "process.py": "3f7aacf9d97835cfdc45544622f23cd72e4c53646f4b6f1c0b2d09a6a9c13557",
+  "source/generation-prompt.txt": "5b3a7a91e04e78041d0ad706979f6c6d5b97c9d3572fad789d82625e63977925",
+  "source/worker-standard-se-neutral-alpha-master-r1.png": "b1abb04c58975a4859efd98d8b91bca5ff7a8111b22592aede1b96aae577d6ac",
+  "source/worker-standard-se-neutral-master-r1.png": "26bd0f5420c61cb9cdcb614c105121716ed4331df708a21b231d5ba7ddbf0f23",
+  "qa/QA.md": "6f55cbd03a00e302ee0eaea999bae12b9429f77ea1701ee912719e9d3c96b9f2",
+  "qa/measurements-r1.json": "515be13ab766a2651e7dc5c47eaf62c09a34ac74e2d64031a859a540060f5cab",
+  "qa/detail-actual-scale-r1.png": "fd2eb829a816a075369ad0be856911a900764b623d2360fe81b54253f0dd8894",
+  "qa/measurement-grid-r1.png": "0eb2d7721e30fa572ae693e39716d3af0f60086b53878bf14d111526af6054b6",
+  "qa/registration-r1.png": "ab66c8b9f58ca4fd24b83d6a0c53bc0c0cc8ca0d61749ae96c7651ceedb65b87",
+  "qa/alpha-and-hq-r1.png": "759137af934b7ba07f260ed74cb1742f61ba5651d7a05cc6d62f4d3c1b1c09c1",
+  "exports/worker-standard-se-neutral-r1.png": "2fb35d56130d44035ec3962e640b03e994e716b8204e8e611bebbaade53941b0"
+}
