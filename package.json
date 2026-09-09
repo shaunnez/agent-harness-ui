@@ -27,7 +27,8 @@
     "build:frontier": "vite build --config vite.frontier.config.mjs",
     "test:frontier": "node --test tests/frontier/*.test.mjs",
     "test:frontier-api": "node --test tests/frontier/api/*.test.mjs",
-    "dev:frontier-api": "node scripts/frontier/qa-server.mjs --codex"
+    "dev:frontier-api": "node scripts/frontier/dev-api.mjs",
+    "dev:frontier-api-smoke": "node scripts/frontier/qa-server.mjs --codex"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
