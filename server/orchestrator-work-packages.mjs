@@ -437,6 +437,16 @@ export class WorkPackageOrchestrator {
         const target = draft.workPackages.find((item) => item.id === workPackageId);
         target.status = "failed";
         target.error = error.message;
+        // Surface the block immediately rather than waiting for every package in this
+        // batch to settle. Sibling packages can keep running for a long time, and the
+        // operator otherwise has no resume/retry action while the task still reads
+        // "running" even though this package has already failed terminally. The batch
+        // completion handler still overwrites status/error with its authoritative,
+        // attempt-aware value once every package has settled.
+        if (!["failed", "blocked", "cancelled"].includes(draft.status)) {
+          draft.status = "blocked";
+          draft.error = `${workPackageId}: ${error.message}`;
+        }
         draft.events.push(
           activity("implement", `${workPackageId} failed`, error.message, "danger", "decision"),
         );

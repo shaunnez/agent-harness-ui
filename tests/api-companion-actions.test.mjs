@@ -632,12 +632,25 @@ test("gate promotion rejects unbound repository authority and ineligible gates",
   assert.equal(ineligibleResult.code, "ineligible");
 });
 
-test("gate promotion rejects candidate bases outside the bound repository revision", () => {
+test("gate promotion rejects an open-pr candidate based outside the bound repository revision", () => {
   const result = resolveGatePromotionEligibility(
     readyForReviewTask({ candidates: [candidateFixture({ baseRevision: "c".repeat(40) })] }),
-    { action: "review", candidateId: "C1", candidateRevision: 1, candidateHeadRevision: "b".repeat(40) },
+    { action: "open-pr", candidateId: "C1", candidateRevision: 1, candidateHeadRevision: "b".repeat(40) },
   );
   assert.equal(result.code, "repository-authority");
+});
+
+test("gate promotion does not reject review/test/final-review on a candidate base revision mismatch", () => {
+  for (const action of ["review", "test", "final-review"]) {
+    const result = resolveGatePromotionEligibility(
+      readyForReviewTask({ candidates: [candidateFixture({ baseRevision: "c".repeat(40) })] }),
+      { action, candidateId: "C1", candidateRevision: 1, candidateHeadRevision: "b".repeat(40) },
+    );
+    // Target drift for these read-only gates is caught by the git-aware
+    // `_blockCandidateGateOnTargetDrift` check at run-start time, which offers a
+    // refresh-candidate recovery instead of a dead-end "promotion" denial.
+    assert.notEqual(result.code, "repository-authority");
+  }
 });
 
 test("gate promotion rejects candidates without a base revision", () => {
