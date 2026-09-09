@@ -153,7 +153,7 @@ A failure produces a structured repair packet containing:
 
 A reviewer execution/tooling failure is a **review retry**, not a candidate repair. Failed telemetry remains retained and a fresh read-only review is required; the same reason gets one normal retry before a human must grant another attempt. Model-run shell commands are diagnostic telemetry, never authoritative verification. Only Harness-owned manifest rows can establish test success or failure. Review findings classify `candidate-defect` separately from `verification-gap`; a verification gap is routed to the Harness Test gate and cannot authorize source Repair. Candidate repair is authorized only by a confirmed candidate defect, an explicit acceptance gap, a security/data-integrity problem, or deterministic candidate verification failure. Reviewers inspect the complete candidate diff and return all blocking findings together. P2/P3 maintainability advice is non-blocking unless explicitly tied to an acceptance criterion.
 
-Development Review is a bounded static review: at most ten targeted repository commands, with test/build/lint/typecheck/package/manifest execution prohibited. Stage subprocesses use only repository-local commands and do not inspect global memory, skill, plugin, cache, configuration, or optional machine-specific paths.
+Development Review is a bounded static review: at most 10 targeted repository commands, with test/build/lint/typecheck/package/manifest execution prohibited. Stage subprocesses use only repository-local commands and do not inspect global memory, skill, plugin, cache, configuration, or optional machine-specific paths.
 
 Fast permits one automatic review-driven repair cycle. A further candidate defect stops for human direction. Every repair creates a new candidate revision, makes downstream evidence stale, and reruns every invalidated gate.
 
@@ -238,7 +238,7 @@ Recovery actions are selected from typed failure state rather than a generic ret
 
 Every new work package must name at least one command ID from the repository-owned `.agent-harness/verification.json` manifest. Planning validates both presence and membership before presenting the plan for approval, and approval revalidates the same contract for migrated or previously persisted plans.
 
-Fresh-context Development Review may use at most eight repository commands. Test and Final Review retain their two-command ceilings because their inputs are already candidate-bound and structured. Exceeding a ceiling still stops the model run and retains the failure; the higher Development Review allowance prevents ordinary candidate inspection from being misclassified as runaway review activity.
+Fresh-context Development Review may use at most 10 repository commands. Test and Final Review retain their two-command ceilings because their inputs are already candidate-bound and structured. Exceeding a ceiling still stops the model run and retains the failure; the higher Development Review allowance prevents ordinary candidate inspection from being misclassified as runaway review activity.
 
 ### Universal inspector
 
