@@ -299,7 +299,14 @@ export function resolveGatePromotionEligibility(task, input) {
       [`Bound repository revision: ${authority.authority.selectedRevision}.`],
     );
   }
-  if (binding.candidate.baseRevision !== authority.authority.selectedRevision) {
+  // Only true promotion (open-pr) requires the candidate's original base to
+  // exactly match the currently-bound authority revision. Review/test/final-review
+  // are protected against target drift by the git-aware `mergeState` check in
+  // `_blockCandidateGateOnTargetDrift`, which degrades into a refresh-candidate
+  // blocker instead of a dead-end denial; duplicating a strict string comparison
+  // here for those gates produced false-positive blocks whenever the authority
+  // pointer merely advanced without actually diverging from the candidate.
+  if (action === "open-pr" && binding.candidate.baseRevision !== authority.authority.selectedRevision) {
     return companionDenial(
       "repository-authority",
       "The candidate is based on a different repository revision than the task authority, so promotion is not permitted.",
