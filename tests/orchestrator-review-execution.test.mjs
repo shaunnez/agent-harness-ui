@@ -447,7 +447,7 @@ test("stops Development Review when it exceeds the hard repository-command budge
     const orchestrator = new TaskOrchestrator(store, {
       worktreeManager: { verifyCandidate: async () => {} },
       runCodex: async ({ onEvent }) => {
-        for (let index = 1; index <= 9; index += 1) {
+        for (let index = 1; index <= 12; index += 1) {
           onEvent?.({
             type: "activity",
             tone: "info",
@@ -471,7 +471,7 @@ test("stops Development Review when it exceeds the hard repository-command budge
 
     assert.equal(await orchestrator.start(task.id, "review"), true);
     const failed = await waitForStatus(store, task.id, "failed");
-    assert.match(failed.error, /hard 4-command review budget/i);
+    assert.match(failed.error, /hard 10-command review budget/i);
     assert.equal(failed.runs.at(-1).status, "failed");
     assert.ok(failed.events.some((event) => event.title === "Review command budget exceeded"));
   } finally {
