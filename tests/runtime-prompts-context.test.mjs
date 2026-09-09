@@ -127,7 +127,7 @@ test("candidate review prompts name the exact structured finding fields", () => 
     request.prompt,
     /Do not run tests, builds, linters, type checks, package scripts, or verification-manifest commands/,
   );
-  assert.match(request.prompt, /Use at most four targeted repository commands/);
+  assert.match(request.prompt, /Use at most 10 targeted repository commands/);
   assert.match(
     request.prompt,
     /Every command must be constructed to exit zero when the intended inspection succeeds/,

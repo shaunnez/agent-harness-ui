@@ -38,7 +38,7 @@ Selection and every escalation reason are persisted. Existing state migrates to 
 - Prompts are streamed over stdin so accumulated artifacts do not hit the Windows command-line length limit.
 - Codex stage runs use `--ephemeral --ignore-user-config --disable memories`: ChatGPT authentication still comes from `CODEX_HOME`, while optional global plugins, skills, memory instructions, and persisted child sessions do not enter the workflow. Every provider receives the same repository-local path/command policy in the stage prompt.
 - Investigation, planning, review, and final review use the `read-only` Codex sandbox. Implement and repair use `workspace-write` inside the isolated worktree. Focused Test uses `workspace-write` with its temp directory redirected below the candidate's ignored `.data/runtime-temp`; the orchestrator verifies the candidate SHA and a clean Git status both before and after the agent exits.
-- Development Review may use at most four targeted repository commands for diff/source inspection and is explicitly forbidden from running tests, builds, linters, type checks, package scripts, or manifest commands. The runtime stops a review that attempts a fifth command.
+- Development Review may use at most 10 targeted repository commands for diff/source inspection; Test and Final Review, whose inputs are already candidate-bound and structured, are capped at 2. All three are explicitly forbidden from running tests, builds, linters, type checks, package scripts, or manifest commands. The runtime stops a review that exceeds its ceiling.
 - Read-only runs have a four-minute timeout. Write runs have a ten-minute timeout. All runs retain bounded stdout/stderr and enforce a 2.5 MB evidence-output budget.
 
 ## Git safety contract
