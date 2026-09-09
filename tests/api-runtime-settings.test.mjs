@@ -1,4 +1,5 @@
 import test from "node:test";
+import { defaultProfileStagePolicies } from "../server/policy-defaults.mjs";
 import { assert, cleanup, createServer, createTask, fetch, nativeFetch } from "./api-test-support.mjs";
 
 test("new runtime settings default design generation to Opus High and Sol High", async () => {
@@ -170,6 +171,48 @@ test("rejects a task model outside the configured allowlist", async () => {
     });
     assert.equal(response.status, 400);
     assert.match((await response.json()).error, /allowed runtime list/i);
+  } finally {
+    await cleanup(server, directory);
+  }
+});
+
+test("accepts an all-Claude default matrix, the shape the settings editor's provider preset writes", async () => {
+  // The editor's "Use all Claude" preset writes a Claude fallback and a Claude policy for
+  // every role. The route validates against the whole execution-provider catalogue, so this
+  // is the contract the client's own pre-save check has to mirror rather than narrow.
+  const { directory, origin, server } = await createServer();
+  try {
+    const claude = defaultProfileStagePolicies("claude");
+    const response = await fetch(`${origin}/api/settings`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "claude-opus-5", "claude-sonnet-5"],
+        defaultModel: "claude-sonnet-5",
+        defaultReasoning: "xhigh",
+        stagePolicies: claude.standard,
+        profileStagePolicies: claude,
+      }),
+    });
+    assert.equal(response.status, 200);
+    const settings = (await response.json()).settings;
+    assert.equal(settings.defaultModel, "claude-sonnet-5");
+    assert.deepEqual(settings.profileStagePolicies.standard, claude.standard);
+    assert.equal(settings.stagePolicies.plan.model, "claude-opus-5");
+
+    // A mixed matrix stays valid: each stage runs on the runtime its own model belongs to.
+    const mixed = await fetch(`${origin}/api/settings`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "claude-opus-5", "claude-sonnet-5"],
+        defaultModel: "claude-sonnet-5",
+        defaultReasoning: "xhigh",
+        stagePolicies: { ...claude.standard, triage: { model: "gpt-5.6-luna", reasoning: "medium" } },
+      }),
+    });
+    assert.equal(mixed.status, 200);
+    assert.equal((await mixed.json()).settings.stagePolicies.triage.model, "gpt-5.6-luna");
   } finally {
     await cleanup(server, directory);
   }

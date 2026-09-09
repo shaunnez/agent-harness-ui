@@ -237,6 +237,10 @@
   padding: 28px;
   z-index: 5;
 }
+/* Wide enough for Create a task / Connection settings / Add a project on one row. */
+.empty-world {
+  width: min(660px, 92vw);
+}
 .empty-world button {
   margin: 6px 8px 0 0;
 }

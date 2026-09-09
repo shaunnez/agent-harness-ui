@@ -270,6 +270,21 @@
   overflow: auto;
   margin-bottom: 18px;
 }
+.policy-presets {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.policy-presets > span {
+  color: var(--muted);
+  font-size: 12px;
+  margin-right: 4px;
+}
+.section-title .policy-presets {
+  margin: 0 0 0 auto;
+}
 .policy-matrix {
   border-collapse: collapse;
   width: 100%;

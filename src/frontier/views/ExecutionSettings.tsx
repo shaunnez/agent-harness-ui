@@ -6,6 +6,7 @@ import {
   ShieldCheck,
 } from "@phosphor-icons/react";
 import { useState } from "react";
+import { providerRuntimeDefaults } from "../../../server/policy-defaults.mjs";
 import type {
   RolePolicyId,
   RuntimeAgentPolicy,
@@ -15,9 +16,9 @@ import type {
 } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { FrontierGateway } from "../runtime/contracts";
-import { policyRoles } from "../runtime/policies";
+import { policyRoles, providerPolicyMatrix } from "../runtime/policies";
 import { type SettingsInput, settingsInput, settingsIssue } from "../runtime/settings";
-import { PolicyChoice } from "./PolicyMatrix";
+import { PolicyChoice, ProviderPresets } from "./PolicyMatrix";
 
 export function ExecutionSettings(props: {
   status: RuntimeStatus | null;
@@ -78,6 +79,19 @@ function SettingsEditor({
       [profile]: { ...draft.profileStagePolicies[profile], [role]: policy },
     };
     update({ ...draft, stagePolicies: matrices.standard, profileStagePolicies: matrices });
+  }
+  function useProvider(provider: "codex" | "claude") {
+    const roles = providerPolicyMatrix(provider, profile, editingStatus);
+    if (!roles) return;
+    const fallback = providerRuntimeDefaults(provider);
+    const matrices = { ...draft.profileStagePolicies, [profile]: roles };
+    update({
+      ...draft,
+      defaultModel: fallback.model,
+      defaultReasoning: fallback.reasoning,
+      stagePolicies: matrices.standard,
+      profileStagePolicies: matrices,
+    });
   }
   async function save() {
     if (issue || stale) return;
@@ -188,6 +202,7 @@ function SettingsEditor({
               <section className="workflow-card">
                 <div className="section-title">
                   <h3>Workflow role defaults</h3>
+                  <ProviderPresets status={editingStatus} disabled={busy} onUseProvider={useProvider} />
                   <select
                     aria-label="Policy profile"
                     value={profile}

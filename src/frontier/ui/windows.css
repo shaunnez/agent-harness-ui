@@ -7,7 +7,7 @@
   container-type: inline-size;
 }
 .work-overlay.compact-window {
-  width: min(660px, calc(100vw - 24px));
+  width: min(820px, calc(100vw - 24px));
 }
 .work-overlay .overlay-header {
   padding: 9px 14px;

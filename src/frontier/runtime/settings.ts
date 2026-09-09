@@ -22,18 +22,23 @@ export function settingsInput(settings: RuntimeSettings): SettingsInput {
 }
 export function settingsIssue(input: SettingsInput, status: RuntimeStatus): string | null {
   const models = status.catalog?.models ?? [];
-  const valid = (modelId: string, reasoning: string | null, provider: string) => {
-    const model = models.find((item) => item.id === modelId && item.editable && item.provider === provider);
+  // Stage policies may mix providers — each stage runs on the runtime its own model
+  // belongs to — so a policy is checked against its model's own provider, matching what
+  // `PUT /api/settings` accepts. Only design policies pin a provider, and they say which.
+  const valid = (modelId: string, reasoning: string | null, provider?: string) => {
+    const model = models.find(
+      (item) => item.id === modelId && item.editable && (!provider || item.provider === provider),
+    );
     return (
       model && input.allowedModels.includes(modelId) && reasoning && model.reasoningLevels.includes(reasoning)
     );
   };
-  if (!valid(input.defaultModel, input.defaultReasoning, "codex"))
-    return "Choose an allowed Codex default model and supported effort.";
+  if (!valid(input.defaultModel, input.defaultReasoning))
+    return "Choose an allowed default model and supported effort.";
   for (const [profile, policies] of Object.entries(input.profileStagePolicies ?? {}))
     for (const role of policyRoles) {
       const policy = policies[role.id];
-      if (!policy || !valid(policy.model, policy.reasoning, "codex"))
+      if (!policy || !valid(policy.model, policy.reasoning))
         return `${profile} / ${role.label} needs an allowed model and supported effort.`;
     }
   for (const [provider, policy] of Object.entries(input.designPolicies))

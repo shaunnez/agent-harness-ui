@@ -161,7 +161,7 @@
 }
 .execution-settings {
   display: grid;
-  grid-template-columns: 190px minmax(0, 1fr);
+  grid-template-columns: 228px minmax(0, 1fr);
   gap: 0;
   padding: 0;
   overflow: hidden;
@@ -186,6 +186,10 @@
   padding: 13px 12px;
   gap: 9px;
   line-height: 1.5;
+}
+/* Section labels read as one line: the column is sized for the longest of them. */
+.settings-nav button {
+  white-space: nowrap;
 }
 .settings-nav button:hover,
 .skill-navigation button:hover {
@@ -464,7 +468,7 @@
     grid-template-columns: 190px minmax(0, 1fr) 240px;
   }
   .execution-settings {
-    grid-template-columns: 165px minmax(0, 1fr);
+    grid-template-columns: 204px minmax(0, 1fr);
   }
   .world-controls-columns {
     grid-template-columns: 1fr;

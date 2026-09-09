@@ -1,7 +1,7 @@
 import { ArrowRight, CheckCircle, Info, Plus } from "@phosphor-icons/react";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { NewTaskDraft, RuntimeProject, RuntimeStatus } from "../../domain";
-import { draftPolicies, draftProfile } from "../runtime/policies";
+import { draftPolicies, draftProfile, providerPolicyMatrix } from "../runtime/policies";
 import { PolicyChoice, PolicyMatrix } from "./PolicyMatrix";
 import { TaskAttachments } from "./TaskAttachments";
 
@@ -44,6 +44,10 @@ export function NewTask({
     const overrides = { ...draft.rolePolicyOverrides };
     delete overrides[role];
     setDraft({ ...draft, rolePolicyOverrides: overrides });
+  };
+  const useProvider = (provider: "codex" | "claude") => {
+    const matrix = providerPolicyMatrix(provider, profile.selected, status);
+    if (matrix) setDraft({ ...draft, rolePolicyOverrides: matrix });
   };
   return (
     <>
@@ -225,6 +229,7 @@ export function NewTask({
                   status={status}
                   onChange={savePolicy}
                   onReset={resetPolicy}
+                  onUseProvider={useProvider}
                 />
               ) : (
                 <p role="status">Waiting for the runtime’s role policies…</p>

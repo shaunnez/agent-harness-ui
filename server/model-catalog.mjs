@@ -2,6 +2,15 @@ import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+import {
+  DEFAULT_CODEX_MODEL,
+  DEFAULT_RUNTIME_MODEL,
+  DEFAULT_RUNTIME_REASONING,
+  defaultProfileStagePolicies,
+  defaultStagePolicies,
+  PROVIDER_RUNTIME_DEFAULTS,
+  providerRuntimeDefaults,
+} from "./policy-defaults.mjs";
 import { DEFAULT_EXECUTION_PROVIDER } from "./run-activity.mjs";
 
 export const PRICING_SOURCE_URL = "https://platform.openai.com/docs/pricing";
@@ -51,48 +60,6 @@ export const MODEL_CREDIT_RATES = {
 };
 
 export { POLICY_IDS } from "./policy-ids.mjs";
-
-export function defaultStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
-  return defaultProfileStagePolicies(provider).standard;
-}
-
-export function defaultProfileStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
-  if (provider === "claude") {
-    const opusHigh = { model: "claude-opus-5", reasoning: "high" };
-    const sonnetMedium = { model: "claude-sonnet-5", reasoning: "medium" };
-    const sonnetHigh = { model: "claude-sonnet-5", reasoning: "high" };
-    const sonnetXHigh = { model: "claude-sonnet-5", reasoning: "xhigh" };
-    return {
-      fast: profilePolicy(sonnetMedium, opusHigh, sonnetHigh, sonnetHigh, sonnetMedium),
-      standard: profilePolicy(sonnetXHigh, opusHigh, sonnetXHigh, sonnetXHigh, sonnetMedium),
-      "high-risk": profilePolicy(sonnetXHigh, opusHigh, sonnetXHigh, sonnetXHigh, sonnetMedium),
-    };
-  }
-  const lunaMedium = { model: "gpt-5.6-luna", reasoning: "medium" };
-  const lunaHigh = { model: "gpt-5.6-luna", reasoning: "high" };
-  const lunaXHigh = { model: "gpt-5.6-luna", reasoning: "xhigh" };
-  const solHigh = { model: "gpt-5.6-sol", reasoning: "high" };
-  return {
-    fast: profilePolicy(lunaMedium, solHigh, lunaHigh, lunaHigh, lunaMedium),
-    standard: profilePolicy(lunaXHigh, solHigh, lunaXHigh, lunaXHigh, lunaMedium),
-    "high-risk": profilePolicy(lunaXHigh, solHigh, lunaXHigh, lunaXHigh, lunaMedium),
-  };
-}
-
-function profilePolicy(gathering, planning, implementation, repair, finalReview) {
-  return {
-    triage: { ...gathering },
-    scouts: { ...gathering },
-    grill: { ...gathering },
-    specification: { ...gathering },
-    plan: { ...planning },
-    implement: { ...implementation },
-    repair: { ...repair },
-    "dev-review": { ...planning },
-    test: { ...gathering },
-    "final-review": { ...finalReview },
-  };
-}
 
 const FALLBACK_MODELS = [
   model("gpt-5.6-sol", "GPT-5.6 Sol", "Latest frontier agentic coding model.", "low", [
@@ -244,13 +211,18 @@ export function resolveTaskProvider(stagePolicies, fallbackModel, explicit = nul
   return providers.size === 1 ? [...providers][0] : DEFAULT_EXECUTION_PROVIDER;
 }
 
-/**
- * Single source for the runtime default policy. The settings store and the Codex
- * runtime both resolve their defaults from here so runtime status, allowed models,
- * and spawned agents cannot advertise different models.
- */
-export const DEFAULT_RUNTIME_MODEL = "gpt-5.6-luna";
-export const DEFAULT_RUNTIME_REASONING = "xhigh";
+// Default policy, provider fallbacks and default stage matrices live in
+// `policy-defaults.mjs` — a module with no Node built-in imports, so the browser
+// bundle can reuse them — and are re-exported here as the runtime's one catalogue entry point.
+export {
+  DEFAULT_CODEX_MODEL,
+  DEFAULT_RUNTIME_MODEL,
+  DEFAULT_RUNTIME_REASONING,
+  defaultProfileStagePolicies,
+  defaultStagePolicies,
+  PROVIDER_RUNTIME_DEFAULTS,
+  providerRuntimeDefaults,
+};
 
 export const DEFAULT_DESIGN_POLICIES = Object.freeze({
   "claude-design": Object.freeze({ provider: "claude", model: "claude-opus-5", reasoning: "high" }),
@@ -263,26 +235,6 @@ export const LEGACY_DESIGN_POLICIES = Object.freeze({
   "claude-design": Object.freeze({ provider: "claude", model: "claude-sonnet-5", reasoning: null }),
   "codex-design": Object.freeze({ provider: "codex", model: "gpt-5.6-luna", reasoning: "xhigh" }),
 });
-
-/** Codex's own default, which is not the global one and must not follow it. */
-export const DEFAULT_CODEX_MODEL = "gpt-5.6-luna";
-
-/**
- * Per-provider fallback defaults behind one selected provider. This keeps the
- * single-source-of-truth property: only the *fallback* becomes provider-aware. Each provider's
- * entry names its own model — a Codex stage must not inherit a Claude id just because the global
- * default moved.
- */
-export const PROVIDER_RUNTIME_DEFAULTS = Object.freeze({
-  codex: Object.freeze({ model: DEFAULT_CODEX_MODEL, reasoning: DEFAULT_RUNTIME_REASONING }),
-  claude: Object.freeze({ model: "claude-sonnet-5", reasoning: "xhigh" }),
-});
-
-export function providerRuntimeDefaults(providerId = DEFAULT_EXECUTION_PROVIDER) {
-  const defaults = PROVIDER_RUNTIME_DEFAULTS[providerId ?? DEFAULT_EXECUTION_PROVIDER];
-  if (!defaults) throw new Error(`No runtime defaults for execution provider: ${providerId}`);
-  return { ...defaults };
-}
 
 /**
  * Validate a reasoning level against a model's catalogue entry and return the

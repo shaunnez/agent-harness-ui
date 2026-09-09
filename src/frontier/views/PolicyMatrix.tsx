@@ -7,7 +7,7 @@ export function PolicyChoice({
   label,
   value,
   status,
-  provider = "codex",
+  provider,
   disabled,
   onChange,
 }: {
@@ -38,11 +38,21 @@ export function PolicyChoice({
         }}
       >
         {!selected && <option value={value.model}>{modelLabel(value.model)} · unavailable</option>}
-        {models.map((model) => (
-          <option key={model.id} value={model.id}>
-            {model.label}
-          </option>
-        ))}
+        {provider
+          ? models.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.label}
+              </option>
+            ))
+          : providerGroups(models).map(([group, entries]) => (
+              <optgroup key={group} label={group === "claude" ? "Claude" : "Codex"}>
+                {entries.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
       </select>
       <select
         aria-label={`${label} reasoning`}
@@ -63,6 +73,50 @@ export function PolicyChoice({
   );
 }
 
+/**
+ * Group a mixed-provider model list so one flat dropdown of Codex and Claude ids
+ * still reads as two catalogues. Codex leads because it is the default provider.
+ */
+function providerGroups(models: ReturnType<typeof selectableModels>) {
+  const groups: Array<["codex" | "claude", ReturnType<typeof selectableModels>]> = [
+    ["codex", models.filter((model) => model.provider !== "claude")],
+    ["claude", models.filter((model) => model.provider === "claude")],
+  ];
+  return groups.filter(([, entries]) => entries.length);
+}
+
+/**
+ * One-click provider presets. Each applies that provider's recommended per-role
+ * matrix rather than pinning every role to a single model, so the cheap roles stay
+ * cheap and planning and review keep the deeper model.
+ */
+export function ProviderPresets({
+  status,
+  disabled,
+  onUseProvider,
+}: {
+  status: RuntimeStatus | null;
+  disabled?: boolean;
+  onUseProvider(provider: "codex" | "claude"): void;
+}) {
+  return (
+    <div className="policy-presets">
+      <span>Apply a provider preset</span>
+      {(["codex", "claude"] as const).map((provider) => (
+        <button
+          key={provider}
+          type="button"
+          className="text-button"
+          disabled={disabled || !selectableModels(status, provider).length}
+          onClick={() => onUseProvider(provider)}
+        >
+          {provider === "codex" ? "Use all Codex" : "Use all Claude"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function PolicyMatrix({
   policies,
   overrides,
@@ -70,6 +124,7 @@ export function PolicyMatrix({
   readOnly,
   onChange,
   onReset,
+  onUseProvider,
 }: {
   policies: Record<string, RuntimeAgentPolicy>;
   overrides?: Partial<Record<RolePolicyId, RuntimeAgentPolicy>>;
@@ -77,9 +132,11 @@ export function PolicyMatrix({
   readOnly?: boolean;
   onChange(role: RolePolicyId, policy: RuntimeAgentPolicy): void;
   onReset(role: RolePolicyId): void;
+  onUseProvider?(provider: "codex" | "claude"): void;
 }) {
   return (
     <div className="policy-matrix-scroll">
+      {!readOnly && onUseProvider && <ProviderPresets status={status} onUseProvider={onUseProvider} />}
       <table className="policy-matrix">
         <thead>
           <tr>
