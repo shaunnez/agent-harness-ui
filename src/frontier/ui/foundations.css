@@ -85,6 +85,9 @@ select {
   min-height: 40px;
   max-width: 100%;
 }
+select {
+  padding-right: 28px;
+}
 input::placeholder,
 textarea::placeholder {
   color: #89989f;
