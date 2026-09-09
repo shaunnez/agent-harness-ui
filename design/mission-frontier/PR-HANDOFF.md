@@ -1,6 +1,10 @@
 # Mission Frontier — PR handoff
 
-The Mission Frontier v1 workspace, cinematic island, retained-package recovery and living-world pass are packaged in [PR #73](https://github.com/shaunnez/agent-harness-ui/pull/73), on `codex/mission-frontier-v1` against `main` at `91f6d3a8464842846153f0d621b5ba2360ccabd0`. The latest application change is `5eaa8b6f61d4e78ea3bd068120ed6e4c9feed3da`; qualification ran on `efc0ba34db1c8dd0f3ac911755a43a2b307bb4c6`, which adds its original evidence. The combined PR source passed **1,060 tests** on 9 September 2026. Later qualification-record changes are documentation only. No merge or game deployment is part of this handoff.
+Mission Frontier combines the strategy-game workspace, cinematic island, retained-package recovery, living-world motion/lighting and **Goal 4 laptop usability** for [PR #73](https://github.com/shaunnez/agent-harness-ui/pull/73). Goal 4 is based on the previously verified PR head `fdbe171`; its final application source is `77b04f4d834170eb3e5a0a5c76ae358445b8d8d9`. The user authorized updating the existing PR, with no merge or game deployment.
+
+Goal 4 provides resizable remembered work windows, clearer scrolling and an activity-first Watch panel. Native 200% zoom is now qualified after correcting intermediate task-row overlap and a short-height Settings collapse. At 1280 × 720, maximised Task command retains 457 px of stage content and normal Watch retains 244 px of activity.
+
+Final typing, lint, formatting, both builds and 78 targeted Frontier/API/Sites tests pass. The complete Goal 4 run recorded 1,064 passes and four unchanged orchestration timing failures; the implicated 121 tests pass in a sequential recheck. The older 1,060-test living-world result below remains historical, not the current full-suite verdict. [Goal 4 handoff and captures](build-evidence/USABILITY/goal-4/HANDOFF.md), [final source checks](build-evidence/USABILITY/goal-4/zoom-final-checks.json), [native zoom evidence](build-evidence/USABILITY/goal-4/native-zoom-200.json).
 
 ## Scope
 
@@ -54,13 +58,13 @@ Native background-tab suspension, OS reduced-motion preference switching and OS 
 
 ## Workspaces and running preview
 
-- PR checkout: `/Users/shaun/.codex/worktrees/7237/mission-frontier-pr`.
+- Current Goal 4 integration checkout: `/Users/shaun/.codex/worktrees/7237/mission-frontier-goal-4`. The earlier PR checkout path is historical.
 - Original source/design workspace: `/Users/shaun/.codex/worktrees/7237/agent-harness-ui`; its existing dirty files and the two pre-existing local commits were preserved. Those unrelated commits are excluded from the PR.
-- [Living-world preview](http://127.0.0.1:5199/?mode=fixture&art=cinematic#world) uses the separate `mission-frontier-living-world` checkout. Its Frontier source matches this PR. Existing preview and companion processes were not restarted during integration; recheck listener ownership before any restart.
+- [Current Goal 4 preview](http://127.0.0.1:5204/?mode=fixture&art=cinematic#world) uses the isolated Goal 4 checkout and disposable API4324. The earlier living-world preview is a historical build. Existing user companion processes were preserved; recheck listener ownership before any restart.
 - [Published journal](https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/) remains a separate Site with selected-audience access.
 
 The original workspace is deliberately not made clean by this publication. Resume review/fixes on the PR checkout and synchronize any desired preview changes deliberately; do not broadly stage or reset the original workspace.
 
 ## Next
 
-Review the PR and the three visual scales, address concrete findings, then qualify one bounded real implementation workflow using the existing explicit decision/approval gates. Do not merge or publish the game merely because automated checks pass. The earlier [project handoff](HANDOFF.md) retains the full Goals 1–3 history and local evidence map.
+Review the updated PR. Start Goal 5 separately for cross-project decisions, return briefing and watch pins. Qualify a bounded real implementation workflow as a separate operational checkpoint using the existing decision/approval gates. Do not merge or publish the game merely because automated checks pass. The earlier [project handoff](HANDOFF.md) retains the full Goals 1–3 history and local evidence map.

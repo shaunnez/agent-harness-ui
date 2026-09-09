@@ -1,14 +1,15 @@
 # Usability progress
 
-Goal 4 started 9 September 2026. U0 baseline, U1 window implementation and U2 Watch implementation are built. The measured laptop targets pass: 457 px maximised task content and 244 px normal agent activity. Native 200% browser zoom remains pending; this is not yet a claim that every U1 acceptance item passed. Goals 5 and 6 have not started.
+**Goal 4 U0–U2 complete — 9 September 2026.** Laptop window and Watch targets pass: 457 px maximised task content and 244 px normal agent activity at 1280 × 720. Native Chrome 200% zoom is qualified across the required destinations after fixing task-row overlap and the short-height Settings editor. Chrome is back at 100%. Goals 5 and 6 have not started.
 
-Source: PR #73, open at fdbe171a8545a6b9ae206b67ce01fe79606496f1. Isolated branch codex/mission-frontier-goal-4. Original dirty checkout and running services preserved.
+Isolated branch `codex/mission-frontier-goal-4` starts from PR #73 source `fdbe171`. The user resumed after the earlier commit/push/pause checkpoint and authorized finishing acceptance, PR integration and the journal update. Original dirty files and user services were preserved.
 
-- [Goal 4 acceptance, captures and limits](goal-4/acceptance.md)
-- [Goal 4 handoff](goal-4/HANDOFF.md)
-- [Automated checks](goal-4/checks.json)
-- Local review: http://127.0.0.1:5204/?mode=fixture&art=cinematic#world
+- [Acceptance, captures and limits](goal-4/acceptance.md)
+- [Handoff](goal-4/HANDOFF.md)
+- [Final checks](goal-4/zoom-final-checks.json)
+- [Native zoom walkthrough](goal-4/native-zoom-200.json)
+- [Local review](http://127.0.0.1:5204/?mode=fixture&art=cinematic#world)
 
-Paused at the user's request on 9 September 2026, with the checkpoint being committed and pushed to the separate Goal 4 branch. Chrome's native menu confirmed 200% zoom, but the destination walkthrough at that setting remains pending after page-control interruption. PR #73 remains unchanged.
+Final typing, lint, formatting, both builds and 78 targeted tests pass. The earlier full suite retains 1,064 passes and four orchestration timing failures; all 121 implicated tests passed the sequential recheck. That full run was not repeated for the final CSS-only fix.
 
-Next on resumption: complete the native 200% destination walkthrough and restore normal preview zoom, then integrate the reviewed Goal 4 branch into the PR. Goal 5 is the separate next build: decision navigation, an accurate return briefing and watch pins, including UB1's bounded read contract.
+Next is Goal 5: decision navigation, an accurate return briefing and watch pins with UB1's bounded read contract. It requires its own start instruction. Goal 6 and the real delivery-workflow checkpoint remain separate.

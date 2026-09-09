@@ -1,6 +1,6 @@
 # Mission Frontier — usability and command experience
 
-Revision 2 · 9 September 2026 · **Goal 4 implemented; native 200% zoom pending. Goals 5/6 remain planned.**
+Revision 3 · 9 September 2026 · **Goal 4 U0–U2 complete, including native 200% zoom. Goals 5/6 remain planned.**
 
 See the [Goal 4 acceptance and evidence](build-evidence/USABILITY/goal-4/acceptance.md). The scope below remains the approved plan; its historical baseline is not new qualification.
 

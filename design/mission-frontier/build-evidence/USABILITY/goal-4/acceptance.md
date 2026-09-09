@@ -1,12 +1,12 @@
 # Goal 4 — laptop usability checkpoint
 
-9 September 2026. U0–U2 are implemented. The measured laptop targets and the browser interactions below pass. **Native 200% browser zoom remains pending**: Chrome control was repeatedly interrupted by other activity, and page-level keyboard dispatch did not change browser zoom. The 640 × 360 reflow capture is explicitly a viewport test, not proof of native zoom. Goals 5 and 6 have not started.
+9 September 2026. **Goal 4 U0–U2 acceptance is complete.** Native Chrome 200% zoom was confirmed and exercised across Task, Watch, New task, Projects, Settings/policies, approvals, artifacts and diffs. The walkthrough found and fixed task-row overlap and a collapsed Settings editor; short-height task setup also gained a compact step bar. Chrome was restored to 100%. Goals 5 and 6 have not started.
 
 ## Source and isolation
 
 - Verified starting authority: open, unmerged [PR #73](https://github.com/shaunnez/agent-harness-ui/pull/73), `codex/mission-frontier-v1`, `fdbe171a8545a6b9ae206b67ce01fe79606496f1`.
 - Implementation branch: `codex/mission-frontier-goal-4` in `/Users/shaun/.codex/worktrees/7237/mission-frontier-goal-4`. The original dirty design/application checkout remains separate.
-- Application commit: `b8f6915169f9bf9232b05f02946d193973893bb9`. [Source manifest](source-manifest.json) binds the 97 Frontier source files used for qualification.
+- Application commit: `77b04f4d834170eb3e5a0a5c76ae358445b8d8d9`. [Source manifest](source-manifest.json) binds the 97 Frontier source files used for qualification.
 - Dedicated frontend: `http://127.0.0.1:5204`; deterministic API: `http://127.0.0.1:4324`. The API owns a disposable `mission-frontier-fixture-RzHhMU` store and repository. Existing user listeners were preserved.
 - Browser evidence uses `mode=fixture&art=cinematic`; extended dependency/candidate cases use `scenario=workflow`. These records and submitted sample actions remain in the browser. No paid model run, user-task resumption or user-companion restart occurred.
 - Fresh before captures use the same retained PR source and fixture definitions. Recorded timestamps and the local lighting phase naturally differ between captures. The earlier laptop review rounded the stage baseline to 308 px; this fresh measurement is 307 px client height (307.16 px bounding rectangle).
@@ -39,7 +39,7 @@ Measurements are client heights of the actual reading regions, not outer-window 
 | Activity-first Watch | Identity, task/run state, next action, elapsed/usage availability and event age appear above the 244 px activity viewport. Activity, Output, Context, run selector and future-policy entry remain accessible. Arrow/Home/End tab navigation verified. |
 | Truthful work and telemetry | Exact active-run/tool identity and terminal precedence have behavior tests. Completed historical run stays parked while its task executes; completed Grill run stays parked while the task needs an answer. Failure, repair and offline reasons remain distinct. Missing active usage reads Not yet reported; recorded zero stays 0. Unsupported cost is Unavailable, with the explanation accessible in Context. |
 | Follow new activity without stealing reading position | Bounded sample-event controls exercised in explicit QA mode. At the end, appended activity follows. After Home, an append preserved scrollTop 0 and offered New activity; clicking it resumed following. Earlier-page anchoring and exact-run event filtering have deterministic tests. |
-| Native 200% browser zoom | **Pending.** Narrow layout was tested independently at 375 × 720 and 640 × 360. Native Chrome actions were interrupted, so neither the attempted zoom shortcut nor the viewport proxy is recorded as a native zoom pass. |
+| Native 200% browser zoom | **Passed after corrections.** Native Chrome reports 200%; the real Retina window provides a 756 × 370 CSS viewport at DPR 4, without viewport emulation. All required destinations support input, scroll and action access. Task inspector, final policy rows, approval confirmation, artifact source and final diff file are reachable. Escape restores Open exact diff focus. [Native matrix](native-zoom-200.json), [native setting](native-zoom-setting.txt). |
 
 The raw browser record retains three unsuccessful test interactions: a pointer target outside the visible rounded corner grip, an immediate scroll measurement taken before it settled, and Control+Home on macOS. Retargeting the visible grip, checking the settled scroll, and using Home produced the corresponding passes. These are retained rather than silently rewriting the record.
 
@@ -58,6 +58,12 @@ The raw browser record retains three unsuccessful test interactions: a pointer t
 
 Additional captures: [repair](1280-repair-after.png), [waiting task / completed run](1280-waiting-after.png), [historical run](1280-agent-historical.png), [execution failure](1280-agent-failed.png), [failed package](1280-failed-package-after.png), [approval](1280-approval-after.png), [12 packages](1280-multiple-batches-after.png), [exact diff](1280-diff-after.png), [new activity](1280-agent-new-activity.png), [offline](1280-agent-disconnected.png), [empty project](1280-empty-project-after.png), [375 px task](375-task-after.png), [inspector end](375-task-inspector-bottom.png), [375 px Watch](375-agent-after.png), [640 × 360 reflow](640x360-agent-reflow.png), [1488 × 1058 task](1488-task-after.png) and [desktop Watch](1488-agent-after.png).
 
+## Native zoom follow-up
+
+The first native walkthrough exposed two CSS failures: an intermediate-width grid let task content overlap its inspector, and short-height Settings could collapse its inner editor to zero height. Natural grid rows and block content now put the inspector after the complete stage. Short Settings windows scroll the whole form; the task wizard step bar becomes one compact row. The original failed Settings observations remain labelled in the native record.
+
+Final captures: [task inspector](native-200-task-inspector.png), [Watch activity](native-200-agent-activity.png), [task policy](native-200-new-task-policy-final.png), [project management](native-200-project-management.png), [Settings](native-200-settings-models-final.png), [approval](native-200-approval.png), [artifact](native-200-artifact-source.png), [last diff file](native-200-diff-final-file.png). A 1024 × 720 regression shows a 12 px gap between stage and inspector. The 375 px view has no document horizontal overflow and reaches the inspector end. At 1280 × 720, the original 425 / 457 / 244 px measurements were reproduced after the corrections.
+
 ## Automated qualification
 
 Typing, lint, formatting and both builds passed on the implementation source. The complete root/Frontier/API suite recorded **1,064 passes and four failures**, with no cancellations or skips, in [checks.json](checks.json) and [complete-tests.log](complete-tests.log). All four failures were existing orchestration wait limits: two instances of the investigation handoff's 50 × 5 ms loop and two real-Git package qualifications using the shared 400 × 5 ms wait. The backend and those tests are byte-identical to the starting PR source.
@@ -66,10 +72,11 @@ All **121 tests** in the three implicated orchestration files passed when rerun 
 
 Protected Sites files, package manifest/lockfile, backend code, accepted art and world renderer were not changed. Both builds retain the existing large-chunk warning. Passing root UI fixtures can report development WebSocket port collisions; do not confuse those warnings with application runtime failures.
 
+The final CSS source also passed typing, lint, formatting, both builds and **78 targeted Frontier/API/Sites tests**, zero failures/cancellations/skips: [follow-up checks](zoom-final-checks.json). The full suite was not repeated for this CSS-only correction; its original result remains above.
+
 ## Remaining limits
 
-- Native 200% zoom is required to close the full U1 acceptance gate. The UI is ready for review while that host interaction remains pending.
 - Native OS scrollbar-thumb dragging, screen-reader behavior, background-tab suspension and operating-system motion transitions were not qualified in this run. Pointer wheel, keyboard scrolling, explicit overflow cues and the existing deterministic lifecycle tests are separate evidence.
 - No new performance, texture or cold-load qualification is claimed. These are frontend work-window changes with unchanged artwork and renderer; later Goals 5/6 own the expanded performance gates.
 - Live incremental event persistence remains Goal 6. The new view displays recorded activity; role animation and a quiet stream do not prove tool execution or failure.
-- The real implementation → repair → approval → PR journey remains a separate operational checkpoint. Goal 4 did not execute it, push this branch, merge PR #73 or publish the game.
+- The real implementation → repair → approval → PR journey remains a separate operational checkpoint. Goal 4 did not execute that workflow, merge PR #73 or publish the game. PR delivery is recorded separately from UI acceptance.

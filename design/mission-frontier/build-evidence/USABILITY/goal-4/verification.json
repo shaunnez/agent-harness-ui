@@ -1,9 +1,9 @@
 {
   "date": "2026-09-09",
-  "applicationCommit": "b8f6915169f9bf9232b05f02946d193973893bb9",
+  "applicationCommit": "77b04f4d834170eb3e5a0a5c76ae358445b8d8d9",
   "baseCommit": "fdbe171a8545a6b9ae206b67ce01fe79606496f1",
-  "status": "implemented-native-zoom-pending",
-  "goal4Complete": false,
+  "status": "accepted",
+  "goal4Complete": true,
   "laterGoalsStarted": false,
   "measuredPixels": {
     "taskNormal": 425,
@@ -30,10 +30,24 @@
     "orchestrationRecheck": {
       "passed": 121,
       "failed": 0
+    },
+    "zoomFollowup": {
+      "typecheck": "passed",
+      "lint": "passed",
+      "format": "passed",
+      "legacyBuild": "passed",
+      "frontierBuild": "passed",
+      "targetedTests": {
+        "passed": 78,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "record": "zoom-final-checks.json"
     }
   },
-  "nativeZoom": "200-percent-setting-confirmed-destination-walkthrough-pending",
-  "execution": "paused-at-user-request",
+  "nativeZoom": "200-percent-destination-walkthrough-passed",
+  "execution": "acceptance-complete-pr-delivery-in-progress",
   "publicationBranch": "codex/mission-frontier-goal-4",
   "gamePublished": false,
   "pushedToPr": false,
@@ -43,5 +57,7 @@
     "disposableApiPort": 4324
   },
   "journalPublished": true,
-  "journalArticle": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/room-to-work/"
+  "journalArticle": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/room-to-work/",
+  "nativeZoomEvidence": "native-zoom-200.json",
+  "zoomRestored": 100
 }

@@ -47,7 +47,7 @@
     "src/frontier/ui/management.css": "befb6222ad6ea6419da74f7c3a151fb9130a93e751f9bd0039cae9327a6f2085",
     "src/frontier/ui/responsive.css": "bb4207c309805d81bf1d9a702d6a4b94cd6a4deff3be37d442ce6393ab7b95a9",
     "src/frontier/ui/task-workflow.css": "7a1ace86743189894f49463be0c8f39172c261d3f5527d13457efe3f46d6e6f8",
-    "src/frontier/ui/windows.css": "f9ad47421877a858608ad817c50297e6a694a153858458636cadba6b1cfb88fd",
+    "src/frontier/ui/windows.css": "fc379019537e90ab37cf0642ed0c5dd7be785bceb83cb33c9663e78b7c82cb5a",
     "src/frontier/ui/workflow.css": "c0000f18b9d7a879a0a53f66078442c805733cc4fd50c9970c105483a03422cf",
     "src/frontier/ui/world-hud.css": "40843126b20ba149141466c619862f0a381e08ac8a738a9250dcb86f14c1423b",
     "src/frontier/ui/world-shell.css": "5318d4d69ec993699ca4dc3704d4f93639cc85e8c1df843faafb827350a3d112",
@@ -99,5 +99,7 @@
     "src/frontier/world/worker-behavior.ts": "e0cd98fd456b97a7fa1bf8c1e644005b447a635bc996306572cc8d3a51a19ca6",
     "src/frontier/world/workers.ts": "cdbcf1b77c24caab3db5a0dc144ae9edaa8a26044b4a62ec779583fc52f62475"
   },
-  "applicationCommit": "b8f6915169f9bf9232b05f02946d193973893bb9"
+  "applicationCommit": "77b04f4d834170eb3e5a0a5c76ae358445b8d8d9",
+  "priorApplicationCommit": "b8f6915169f9bf9232b05f02946d193973893bb9",
+  "qualificationNote": "Native zoom follow-up changes windows.css only; targeted checks and both builds rerun. Earlier full-suite and visual evidence remain dated."
 }

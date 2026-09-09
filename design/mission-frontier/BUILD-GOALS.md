@@ -1,6 +1,6 @@
 # Mission Frontier — prompts and goals
 
-Revision 5 · 9 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. The later living-world pass is recorded in [PR-HANDOFF.md](PR-HANDOFF.md). **Goal 4 is implemented, with native 200% zoom still pending. Goals 5 and 6 have not started.** See the [Goal 4 handoff](build-evidence/USABILITY/goal-4/HANDOFF.md). [USABILITY-PLAN.md](USABILITY-PLAN.md) defines their scope, dependencies and acceptance checks; the earlier plans remain the history for completed work.
+Revision 6 · 9 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. The later living-world pass is recorded in [PR-HANDOFF.md](PR-HANDOFF.md). **Goal 4 U0–U2 is complete, including the native 200% zoom walkthrough and its fixes. Goals 5 and 6 have not started.** See the [Goal 4 handoff](build-evidence/USABILITY/goal-4/HANDOFF.md). [USABILITY-PLAN.md](USABILITY-PLAN.md) defines their scope, dependencies and acceptance checks; the earlier plans remain the history for completed work.
 
 ## How to use
 
