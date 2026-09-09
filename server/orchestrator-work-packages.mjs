@@ -322,7 +322,14 @@ export class WorkPackageOrchestrator {
           squashFromBase: Boolean(retainedContinuation && workPackage.headRevision),
         },
       );
-      const packageHeadRevision = committed.headRevision ?? slice.baseRevision;
+      // `slice.baseRevision` predates any dependency commits cherry-picked into this
+      // worktree during `prepare()`. When this package made no commit of its own,
+      // `preparedRevision` (the worktree's actual HEAD right after those cherry-picks) is
+      // what verification will really find — falling back to `baseRevision` here made the
+      // headRevision check fail deterministically for every dependent work package that
+      // legitimately had nothing to add.
+      const packageHeadRevision =
+        committed.headRevision ?? slice.preparedRevision ?? slice.headRevision ?? slice.baseRevision;
       await this._store.update(id, (draft) => {
         const target = draft.workPackages.find((item) => item.id === workPackageId);
         target.headRevision = committed.headRevision;

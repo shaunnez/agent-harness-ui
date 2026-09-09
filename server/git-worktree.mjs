@@ -273,10 +273,16 @@ export class GitWorktreeManager {
         );
       }
     }
+    // `baseRevision` names the commit this worktree branched from, before any dependency
+    // work-package commits were cherry-picked into it above. A caller that has not made its
+    // own commit yet (a legitimate no-op) needs the worktree's actual current HEAD to verify
+    // against — which already includes those cherry-picks — not the pre-dependency base.
+    const preparedRevision = (await git(worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
     return {
       id: candidateId,
       revisionNumber: 1,
       baseRevision,
+      preparedRevision,
       baseBranch,
       baseRef,
       headRevision: null,
