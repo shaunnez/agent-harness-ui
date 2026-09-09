@@ -1,11 +1,14 @@
 {
-  "url": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/room-to-work/",
-  "versionNumber": 9,
-  "publishedAt": "2026-09-08T23:17:43.194460+00:00",
-  "journalCommit": "2a0608eab25284bfd49fb8230981c0f9b4206914",
+  "url": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/the-zoom-check-is-closed/",
+  "versionNumber": 10,
+  "versionId": "appgprj_6a9d2e96e0248191a66ccefcaad237d3~appgver_992a9eeb5a108191b32241dd5322d538",
+  "deploymentId": "appgdep_6aa0aad66e1c8191a8559b03b3e19744",
+  "publishedAt": "2026-09-09T00:40:08.427557+00:00",
+  "journalCommit": "b179997def57be78138560eb83466faa5ff38714",
   "access": "existing custom audience",
   "accessRevision": 3,
   "externalViewerCount": 2,
-  "applicationCommit": "b8f6915169f9bf9232b05f02946d193973893bb9",
+  "accessPolicyUnchanged": true,
+  "applicationCommit": "77b04f4d834170eb3e5a0a5c76ae358445b8d8d9",
   "status": "succeeded"
 }

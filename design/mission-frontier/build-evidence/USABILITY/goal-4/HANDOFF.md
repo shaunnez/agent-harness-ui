@@ -31,7 +31,9 @@ OS scrollbar-thumb dragging, screen readers and native background/motion lifecyc
 
 ## Delivery and next work
 
-This branch starts from the verified open PR #73 head `fdbe171a8545a6b9ae206b67ce01fe79606496f1`. The user resumed the paused checkpoint and authorized finishing acceptance, integrating Goal 4 into [PR #73](https://github.com/shaunnez/agent-harness-ui/pull/73), and updating the journal. PR delivery is in progress; the final verified receipt belongs in `pr-publication.json`. No PR merge or game publication is authorized here.
+This branch starts from the verified open PR #73 head `fdbe171a8545a6b9ae206b67ce01fe79606496f1`. The user resumed the paused checkpoint and authorized finishing acceptance, integrating Goal 4 into [PR #73](https://github.com/shaunnez/agent-harness-ui/pull/73), and updating the journal. Goal 4 was pushed into PR #73 and the remote head read back successfully. The PR remains open and unmerged; [verified delivery receipt](pr-publication.json). No PR merge or game publication is authorized here.
+
+The [final journal entry](https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/the-zoom-check-is-closed/) is published as version 10 for the unchanged selected audience; [publication receipt](journal-publication.json). Earlier journal entries remain dated and intact.
 
 The root hosting identity, backend, dependencies, artwork and renderer remain unchanged by Goal 4. No migration or asset agent was needed. The original dirty workspace is preserved. Rollback is selecting the previous PR application build; no database rollback is required.
 

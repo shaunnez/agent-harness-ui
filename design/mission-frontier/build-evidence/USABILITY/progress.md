@@ -2,7 +2,7 @@
 
 **Goal 4 U0–U2 complete — 9 September 2026.** Laptop window and Watch targets pass: 457 px maximised task content and 244 px normal agent activity at 1280 × 720. Native Chrome 200% zoom is qualified across the required destinations after fixing task-row overlap and the short-height Settings editor. Chrome is back at 100%. Goals 5 and 6 have not started.
 
-Isolated branch `codex/mission-frontier-goal-4` starts from PR #73 source `fdbe171`. The user resumed after the earlier commit/push/pause checkpoint and authorized finishing acceptance, PR integration and the journal update. Original dirty files and user services were preserved.
+Isolated branch `codex/mission-frontier-goal-4` starts from PR #73 source `fdbe171`. The user resumed after the earlier commit/push/pause checkpoint and authorized finishing acceptance, PR integration and the journal update. Goal 4 has been pushed into the existing open PR #73. Original dirty files and user services were preserved.
 
 - [Acceptance, captures and limits](goal-4/acceptance.md)
 - [Handoff](goal-4/HANDOFF.md)

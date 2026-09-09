@@ -47,17 +47,21 @@
     }
   },
   "nativeZoom": "200-percent-destination-walkthrough-passed",
-  "execution": "acceptance-complete-pr-delivery-in-progress",
+  "execution": "ui-complete-pr-pushed",
   "publicationBranch": "codex/mission-frontier-goal-4",
   "gamePublished": false,
-  "pushedToPr": false,
+  "pushedToPr": true,
   "paidRunsStarted": 0,
   "runtime": {
     "frontendPort": 5204,
     "disposableApiPort": 4324
   },
   "journalPublished": true,
-  "journalArticle": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/room-to-work/",
+  "journalArticle": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/the-zoom-check-is-closed/",
   "nativeZoomEvidence": "native-zoom-200.json",
-  "zoomRestored": 100
+  "zoomRestored": 100,
+  "pr": "https://github.com/shaunnez/agent-harness-ui/pull/73",
+  "prReceipt": "pr-publication.json",
+  "journalVersion": 10,
+  "journalReceipt": "journal-publication.json"
 }
