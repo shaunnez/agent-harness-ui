@@ -110,7 +110,11 @@ export function WorkflowCommand({
           </small>
           <strong>{attention.label}</strong>
         </span>
-        {task.status === "queued" && (
+        {(task.status === "queued" ||
+          (task.status === "failed" &&
+            !["specification", "plan", "implement", "dev-review", "test", "final-review"].includes(
+              task.currentStage,
+            ))) && (
           <button
             type="button"
             className="primary"
@@ -118,7 +122,7 @@ export function WorkflowCommand({
             onClick={() => void command(() => gateway.start(task.id))}
           >
             <Play size={17} />
-            Start task
+            {task.status === "failed" ? "Retry stage" : "Start task"}
           </button>
         )}
         {task.status === "awaiting-grill" && (

@@ -809,16 +809,27 @@ export function buildClaudeSandboxSettings(cwd, sandbox, networkAccess = false, 
     permissions: {
       allow: [
         "Bash(*)",
+        `Read(${cwd})`,
         `Read(${cwd}/**)`,
+        `Grep(${cwd})`,
         `Grep(${cwd}/**)`,
+        `Glob(${cwd})`,
         `Glob(${cwd}/**)`,
         // A dependency directory provisioned as a per-entry symlink (see
         // `symlinkedDependencySourceRoots`) resolves, for anything actually opened
         // through it, to the source checkout rather than `cwd`. Without a matching
         // permission rule here, the same gap documented above for `cwd` denies a Read/
         // Grep/Glob whose resolved path is one of these roots even though the sandbox
-        // below now allows it.
-        ...extraReadRoots.flatMap((root) => [`Read(${root}/**)`, `Grep(${root}/**)`, `Glob(${root}/**)`]),
+        // below now allows it. The bare (non-`/**`) form covers the same gap for a
+        // Grep/Read/Glob whose `path` is the directory itself, not an entry under it.
+        ...extraReadRoots.flatMap((root) => [
+          `Read(${root})`,
+          `Read(${root}/**)`,
+          `Grep(${root})`,
+          `Grep(${root}/**)`,
+          `Glob(${root})`,
+          `Glob(${root}/**)`,
+        ]),
         ...(writable ? [`Write(${cwd}/**)`, `Edit(${cwd}/**)`] : []),
       ],
     },
