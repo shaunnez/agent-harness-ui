@@ -12,6 +12,7 @@ import {
   parsePlanResult,
 } from "../server/structured-output.mjs";
 import { fastEscalation, selectWorkflowProfile } from "../server/workflow-profiles.mjs";
+import { waitForTaskStatus } from "./wait-support.mjs";
 
 const usage = { inputTokens: 100, cachedInputTokens: 60, outputTokens: 20, totalTokens: 120 };
 
@@ -147,15 +148,7 @@ function worktreeManager(directory) {
 }
 
 async function waitFor(store, id, expected) {
-  for (let attempt = 0; attempt < 300; attempt += 1) {
-    const task = await store.get(id);
-    if (task.status === expected) return task;
-    if (attempt > 5 && ["failed", "blocked", "cancelled"].includes(task.status) && task.status !== expected) {
-      assert.fail(`Task stopped at ${task.status}: ${task.error ?? "no error"}`);
-    }
-    await new Promise((resolve) => setTimeout(resolve, 5));
-  }
-  assert.fail(`Task did not reach ${expected}.`);
+  return waitForTaskStatus(store, id, expected);
 }
 
 test("selects deterministic profiles and escalates fast at explicit boundaries", () => {

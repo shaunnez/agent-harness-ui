@@ -13,6 +13,7 @@ import {
   selectScoutDispatch,
   TaskOrchestrator,
   waitForStatus,
+  waitUntil,
 } from "./orchestrator-test-support.mjs";
 
 test("parses grounded Grill questions and dependency batches", () => {
@@ -100,14 +101,8 @@ test("runs the investigation frontier and retains each stage handoff", async () 
     });
 
     assert.equal(await orchestrator.start(task.id), true);
-    let finished = null;
-    for (let attempt = 0; attempt < 50; attempt += 1) {
-      await new Promise((resolve) => setTimeout(resolve, 5));
-      finished = await store.get(task.id);
-      if (finished.status !== "running" && finished.status !== "queued") break;
-    }
+    let finished = await waitForStatus(store, task.id, "awaiting-grill");
 
-    assert.equal(finished.status, "awaiting-grill", finished.error);
     assert.equal(finished.grillPolicy, "manual");
     assert.deepEqual(finished.completedStages, ["triage", "scouts"]);
     assert.equal(finished.artifacts.length, 5);
@@ -398,8 +393,7 @@ test("specification retry cancellation does not advance beyond specification", a
     });
 
     assert.equal(await orchestrator.start(task.id, "specification"), true);
-    for (let attempt = 0; !request && attempt < 100; attempt += 1)
-      await new Promise((resolve) => setTimeout(resolve, 5));
+    await waitUntil(() => request, "the specification run to reach the runtime");
     assert.equal(typeof request?.signal?.aborted, "boolean");
     assert.equal(await orchestrator.cancel(task.id), true);
     const cancelled = await waitForStatus(store, task.id, "cancelled");
