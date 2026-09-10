@@ -5,6 +5,7 @@ import type { RuntimeProject, RuntimeStatus } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { FrontierGateway, TaskSummary } from "../runtime/contracts";
 import {
+  formatApproximateCost,
   formatCount,
   formatDuration,
   isActiveRun,
@@ -133,6 +134,7 @@ export function RunLibrary({
                     <th>State</th>
                     <th>Model / effort</th>
                     <th>Tokens</th>
+                    <th>Approx. cost</th>
                     <th>Agent time</th>
                   </tr>
                 </thead>
@@ -268,6 +270,7 @@ function RunRow({
         <small>{reasoningLabel(run.reasoning)}</small>
       </td>
       <td>{run.usage ? formatCount(run.usage.totalTokens) : "—"}</td>
+      <td>{formatApproximateCost(run.apiEstimate, run.usage?.pricingVersion)}</td>
       <td>{formatDuration(runTime(run, now, isActiveRun(task, run)))}</td>
     </tr>
   );
