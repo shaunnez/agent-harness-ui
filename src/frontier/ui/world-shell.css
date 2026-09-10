@@ -205,6 +205,11 @@ kbd {
   background: #3d201ceb;
   border-color: #af544a;
 }
+.view-project .world-label.tone-ready {
+  --tone: #5fd38d;
+  border-color: #4fca83;
+  box-shadow: 0 0 0 1px #4fca83, 0 3px 7px #0008;
+}
 .world-label svg,
 .state-copy,
 .state-badge,

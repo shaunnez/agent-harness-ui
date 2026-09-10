@@ -1,6 +1,23 @@
 import type { RuntimeRun, RuntimeWorkPackage, StageId } from "../../domain.ts";
 import type { Attention, TaskCore, TaskSummary } from "./contracts.ts";
 
+const readyStatuses = new Set([
+  "ready-for-implementation",
+  "ready-for-review",
+  "ready-for-test",
+  "ready-for-final-review",
+]);
+type ReadyAttention = Omit<Attention, "kind"> & { kind: "ready" };
+type PresentedAttention = Attention | ReadyAttention;
+
+function isReadyStatus(status: string) {
+  return readyStatuses.has(status);
+}
+
+function readyAttention(attention: Attention): ReadyAttention {
+  return { ...attention, kind: "ready" };
+}
+
 export const stageLabels: Record<StageId, string> = {
   triage: "Triage",
   scouts: "Scouts",
@@ -13,19 +30,27 @@ export const stageLabels: Record<StageId, string> = {
   "final-review": "Final review",
   approval: "Approval",
 };
-export function attentionFor(task: TaskSummary | TaskCore): Attention {
+export function attentionFor(task: TaskSummary | TaskCore): PresentedAttention {
   // Older companions have no shared projection. Keep the missing state explicit.
-  return (
-    task.attention ?? {
-      kind: "unavailable",
-      stage: task.currentStage,
-      label: task.status.replaceAll("-", " "),
-      reason: task.blocker?.detail ?? task.error ?? null,
-      nextActor: null,
-      since: task.blocker?.detectedAt ?? null,
-      questionId: null,
-    }
-  );
+  const attention = task.attention;
+  if (attention) {
+    // The companion's existing projection calls ready states idle. Adapt only
+    // that neutral state so blocker, failure, and active-run precedence stays
+    // owned by the projection that supplied it.
+    return isReadyStatus(task.status) && attention.kind === "idle"
+      ? readyAttention(attention)
+      : attention;
+  }
+  const fallback: Attention = {
+    kind: "unavailable",
+    stage: task.currentStage,
+    label: task.status.replaceAll("-", " "),
+    reason: task.blocker?.detail ?? task.error ?? null,
+    nextActor: null,
+    since: task.blocker?.detectedAt ?? null,
+    questionId: null,
+  };
+  return isReadyStatus(task.status) ? readyAttention(fallback) : fallback;
 }
 export function needsYou(task: TaskSummary | TaskCore) {
   return (
