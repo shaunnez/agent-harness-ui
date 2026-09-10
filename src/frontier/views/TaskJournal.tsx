@@ -4,6 +4,7 @@ import { usePanelState } from "../app/panel-state";
 import type { TaskSummary } from "../runtime/contracts";
 import {
   attentionFor,
+  formatApproximateCost,
   formatCount,
   formatDuration,
   isExecuting,
@@ -127,6 +128,7 @@ export function TaskJournal({
               <th>State</th>
               <th>Agents</th>
               <th>Tokens</th>
+              <th>Approx. cost</th>
               <th>Elapsed</th>
               <th>Updated</th>
               <th>
@@ -170,6 +172,7 @@ export function TaskJournal({
                   </span>
                 </td>
                 <td>{formatCount(task.usage.totalTokens)}</td>
+                <td>{formatApproximateCost(task.usage.cost, task.usage.pricingVersion)}</td>
                 <td>
                   {task.startedAt
                     ? formatDuration(
