@@ -10,6 +10,7 @@ import { GitWorktreeManager } from "../server/git-worktree.mjs";
 import { createApiServer } from "../server/api.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import { RepositoryAuthorityService } from "../server/repository-authority.mjs";
+import { withActionEligibility } from "../server/retry-admission-policy.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { parseWorkPackages } from "../server/structured-output.mjs";
 
@@ -223,6 +224,10 @@ test("stale plans fail approval and implementation before attempts, then revalid
     assert.equal(blocked.attemptsByStage.implement ?? 0, 0);
     assert.equal(blocked.candidates.length, 0);
 
+    await store.update(task.id, (draft) => {
+      draft.attemptsByStage.implement = draft.stageRunLimits.implement;
+    });
+
     assert.deepEqual(await orchestrator.revalidatePlan(task.id), { started: true });
     for (let count = 0; count < 200; count += 1) {
       const current = await store.get(task.id);
@@ -243,6 +248,22 @@ test("stale plans fail approval and implementation before attempts, then revalid
     assert.equal(replacementArtifact.contextManifest.repositoryRevision, advanced);
 
     await orchestrator.approvePlan(task.id);
+    const approved = await store.get(task.id);
+    assert.equal(approved.status, "ready-for-implementation");
+    assert.equal(approved.attemptsByStage.implement, 3);
+    assert.equal(approved.stageRunLimits.implement, 4);
+    assert.equal(withActionEligibility(approved).actionEligibility.actions.implement.allowed, true);
+    const authorization = approved.events
+      .filter((event) => event.title === "Implementation authorized")
+      .at(-1);
+    assert.equal(
+      authorization.detail,
+      "The approved replacement plan may now run in an isolated Git worktree. One bounded implementation attempt was reserved because prior attempts remain retained for audit.",
+    );
+    assert.equal(authorization.grantedStage, "implement");
+    assert.equal(authorization.previousLimit, 3);
+    assert.equal(authorization.newLimit, 4);
+    assert.equal(authorization.reason, "approved-replacement-plan");
     const secondAdvance = await advanceRemote(fixture, "advanced before implementation\n");
     await assert.rejects(
       orchestrator.start(task.id, "implementation"),
@@ -250,7 +271,8 @@ test("stale plans fail approval and implementation before attempts, then revalid
     );
     blocked = await store.get(task.id);
     assert.equal(blocked.blocker.currentRevision, secondAdvance);
-    assert.equal(blocked.attemptsByStage.implement ?? 0, 0);
+    assert.equal(blocked.attemptsByStage.implement, 3);
+    assert.equal(blocked.stageRunLimits.implement, 4);
     assert.equal(blocked.candidates.length, 0);
   } finally {
     await rm(fixture.root, { recursive: true, force: true });

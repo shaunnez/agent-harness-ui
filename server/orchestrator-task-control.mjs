@@ -471,15 +471,37 @@ export class TaskControlOrchestrator {
       (draft) => draft.status === "awaiting-plan-approval",
       (draft) => {
         recordApproval(draft, "plan", note);
+        const approvedReplacementPlan =
+          Boolean(draft.planRevalidation?.completedAt) &&
+          Boolean(draft.planRevalidation?.replacementArtifactId) &&
+          draft.planRevalidation.replacementArtifactId === draft.planResult?.artifactId;
+        const implementationAttempts = draft.attemptsByStage?.implement ?? 0;
+        const implementationLimit = stageRunLimitFor(draft, "implement");
+        const reserveReplacementAttempt =
+          approvedReplacementPlan && implementationAttempts >= implementationLimit;
+        if (reserveReplacementAttempt) {
+          draft.stageRunLimits ??= {};
+          draft.stageRunLimits.implement = implementationAttempts + 1;
+        }
         draft.status = "ready-for-implementation";
         draft.currentStage = "implement";
         draft.events.push(
           activity(
             "implement",
             "Implementation authorized",
-            "The approved plan may now run in an isolated Git worktree.",
+            reserveReplacementAttempt
+              ? "The approved replacement plan may now run in an isolated Git worktree. One bounded implementation attempt was reserved because prior attempts remain retained for audit."
+              : "The approved plan may now run in an isolated Git worktree.",
             "success",
             "decision",
+            reserveReplacementAttempt
+              ? {
+                  grantedStage: "implement",
+                  previousLimit: implementationLimit,
+                  newLimit: implementationAttempts + 1,
+                  reason: "approved-replacement-plan",
+                }
+              : {},
           ),
         );
       },
