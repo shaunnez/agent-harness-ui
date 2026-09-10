@@ -760,7 +760,13 @@ export const CLAUDE_STDOUT_BUDGET = 32 * 1024 * 1024;
  * commands run unsandboxed. Omitting it means silent unconfined execution on any
  * host missing the sandbox runtime.
  */
-export function buildClaudeSandboxSettings(cwd, sandbox, networkAccess = false, extraReadRoots = []) {
+export function buildClaudeSandboxSettings(
+  cwd,
+  sandbox,
+  networkAccess = false,
+  extraReadRoots = [],
+  extraReadFiles = [],
+) {
   if (!["read-only", "workspace-write"].includes(sandbox)) {
     throw new Error(`Unsupported Claude sandbox: ${sandbox}`);
   }
@@ -830,6 +836,7 @@ export function buildClaudeSandboxSettings(cwd, sandbox, networkAccess = false, 
           `Glob(${root})`,
           `Glob(${root}/**)`,
         ]),
+        ...extraReadFiles.map((file) => `Read(${file})`),
         ...(writable ? [`Write(${cwd}/**)`, `Edit(${cwd}/**)`] : []),
       ],
     },
@@ -839,7 +846,7 @@ export function buildClaudeSandboxSettings(cwd, sandbox, networkAccess = false, 
       allowUnsandboxedCommands: false,
       autoAllowBashIfSandboxed: true,
       filesystem: {
-        allowRead: [cwd, ...extraReadRoots],
+        allowRead: [cwd, ...extraReadRoots, ...extraReadFiles],
         ...(writable
           ? // Deliberately no denyWrite: the sandbox is default-deny, so the allow entry is
             // necessary and sufficient.
@@ -879,6 +886,7 @@ export function buildClaudeSpawn({
   sandbox = "read-only",
   networkAccess = false,
   extraReadRoots = [],
+  extraReadFiles = [],
   model,
   effort = null,
   sessionId,
@@ -906,7 +914,9 @@ export function buildClaudeSpawn({
     "--session-id",
     sessionId,
     "--settings",
-    JSON.stringify(buildClaudeSandboxSettings(cwd, sandbox, networkAccess, extraReadRoots)),
+    JSON.stringify(
+      buildClaudeSandboxSettings(cwd, sandbox, networkAccess, extraReadRoots, extraReadFiles),
+    ),
     "--system-prompt",
     CLAUDE_SYSTEM_PROMPT,
     // Auto-approves the permission rules above and nothing else: a Write outside the
@@ -927,6 +937,7 @@ export async function runClaude({
   sandbox = "read-only",
   networkAccess = false,
   extraReadRoots = [],
+  extraReadFiles = [],
   tools = null,
   tempDirectory = null,
   model,
@@ -956,6 +967,7 @@ export async function runClaude({
     sandbox,
     networkAccess,
     extraReadRoots,
+    extraReadFiles,
     model,
     effort,
     sessionId,
@@ -1021,7 +1033,14 @@ export async function runClaude({
     // read-only command here means the allowlist is wrong, not the agent.
     const denied = parsed.fatalPermissionDenials
       .map((denial) =>
-        [denial?.tool_name, formatCommand(denial?.tool_input?.command)].filter(Boolean).join(" "),
+        [
+          denial?.tool_name,
+          denial?.tool_input?.command
+            ? formatCommand(denial.tool_input.command)
+            : describeToolInput(denial?.tool_input ?? {}),
+        ]
+          .filter(Boolean)
+          .join(" "),
       )
       .filter(Boolean);
     throw new Error(

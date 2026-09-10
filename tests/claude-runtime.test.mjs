@@ -1208,7 +1208,15 @@ test("supplies a mandatory sandbox block through inline settings", () => {
   // present to answer) but no Write/Edit rule or acceptEdits, so the editing tools stay
   // unusable even if the tool allowlist were widened by mistake.
   assert.deepEqual(JSON.parse(args[args.indexOf("--settings") + 1]).permissions, {
-    allow: ["Bash(*)", "Read(/tmp/worktree/**)", "Grep(/tmp/worktree/**)", "Glob(/tmp/worktree/**)"],
+    allow: [
+      "Bash(*)",
+      "Read(/tmp/worktree)",
+      "Read(/tmp/worktree/**)",
+      "Grep(/tmp/worktree)",
+      "Grep(/tmp/worktree/**)",
+      "Glob(/tmp/worktree)",
+      "Glob(/tmp/worktree/**)",
+    ],
   });
   assert.equal(args.includes("--permission-mode"), false);
   assert.throws(
@@ -1311,8 +1319,8 @@ test("read-only settings pre-approve Grep over a directory, not just individual 
   // denial, not a sandbox one, even though that directory sits inside `allowRead`. Other
   // Grep/Read calls to individual files in the same run succeeded with no rule at all,
   // so file reads and directory reads apparently go through different checks. Read and
-  // Glob get the identical `${cwd}/**` rule for the same reason, even though only the
-  // Grep case has been observed live: they are the other two read-only tools in
+  // Glob get the identical `${cwd}` and `${cwd}/**` rules for the same reason, even
+  // though only the Grep case has been observed live: they are the other two read-only tools in
   // `CLAUDE_READ_ONLY_TOOLS`, and there is no reason to expect they are exempt from
   // whatever check singled out a directory-scoped Grep.
   const cwd = "/repo/.data/worktrees/AH-1/C1";
@@ -1320,10 +1328,31 @@ test("read-only settings pre-approve Grep over a directory, not just individual 
   const settings = JSON.parse(args[args.indexOf("--settings") + 1]);
   assert.deepEqual(settings.permissions.allow, [
     "Bash(*)",
+    `Read(${cwd})`,
     `Read(${cwd}/**)`,
+    `Grep(${cwd})`,
     `Grep(${cwd}/**)`,
+    `Glob(${cwd})`,
     `Glob(${cwd}/**)`,
   ]);
+});
+
+test("grants an attachment only exact-file read permission", () => {
+  const cwd = "/isolated/repository";
+  const attachment = "/harness/data/attachments/set-1/reference.png";
+  const { args } = buildClaudeSpawn({
+    cwd,
+    prompt: "x",
+    extraReadFiles: [attachment],
+    model: "claude-sonnet-5",
+    sessionId: "s",
+  });
+  const settings = JSON.parse(args[args.indexOf("--settings") + 1]);
+
+  assert.equal(settings.permissions.allow.includes(`Read(${attachment})`), true);
+  assert.equal(settings.permissions.allow.includes(`Read(${attachment}/**)`), false);
+  assert.equal(settings.permissions.allow.includes(`Grep(${attachment})`), false);
+  assert.deepEqual(settings.sandbox.filesystem.allowRead, [cwd, attachment]);
 });
 
 test("grants workspace-write through two gates and no ancestor denyWrite", () => {
@@ -1352,8 +1381,11 @@ test("grants workspace-write through two gates and no ancestor denyWrite", () =>
   // is still refused, because in -p there is nobody to approve it.
   assert.deepEqual(settings.permissions.allow, [
     "Bash(*)",
+    `Read(${cwd})`,
     `Read(${cwd}/**)`,
+    `Grep(${cwd})`,
     `Grep(${cwd}/**)`,
+    `Glob(${cwd})`,
     `Glob(${cwd}/**)`,
     `Write(${cwd}/**)`,
     `Edit(${cwd}/**)`,
@@ -1858,6 +1890,44 @@ test("names the denied call so an allowlist hole is not misread as agent misbeha
         assert.match(error.message, /First denied: Bash awk/);
         return true;
       },
+    );
+  } finally {
+    if (previousBin === undefined) delete process.env.CLAUDE_BIN;
+    else process.env.CLAUDE_BIN = previousBin;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("names the denied file path for a Read call", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-read-denial-detail-"));
+  const previousBin = process.env.CLAUDE_BIN;
+  try {
+    process.env.CLAUDE_BIN = await writeFakeClaudeCli(directory, [
+      JSON.stringify({ type: "system", subtype: "init", session_id: "sess-read-detail" }),
+      JSON.stringify({
+        type: "result",
+        subtype: "success",
+        is_error: false,
+        result: "Could not inspect the attachment.",
+        usage: { input_tokens: 10, output_tokens: 2 },
+        permission_denials: [
+          { tool_name: "Read", tool_use_id: "t1", tool_input: { file_path: "/outside/reference.png" } },
+        ],
+      }),
+    ]);
+
+    await assert.rejects(
+      () =>
+        runClaude({
+          cwd: directory,
+          prompt: "inspect the attachment",
+          sandbox: "read-only",
+          model: "claude-haiku-4-5",
+          reasoning: NO_REASONING_EFFORT,
+          tempDirectory: directory,
+          timeoutMs: 30_000,
+        }),
+      /First denied: Read \/outside\/reference\.png\./,
     );
   } finally {
     if (previousBin === undefined) delete process.env.CLAUDE_BIN;

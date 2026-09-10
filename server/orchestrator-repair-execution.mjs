@@ -1,6 +1,6 @@
 import path from "node:path";
 import os from "node:os";
-import { rm } from "node:fs/promises";
+import { copyFile, mkdir, rm } from "node:fs/promises";
 import {
   buildExecutionRequest,
   buildRepairRequest,
@@ -9,6 +9,7 @@ import {
   projectRepairFindings,
 } from "./prompts.mjs";
 import { candidateGateCommandLimit } from "./candidate-gate-policy.mjs";
+import { validatedAttachmentReadPaths } from "./attachment-storage.mjs";
 import { isProcessTimeoutError } from "./process-runtime.mjs";
 import { symlinkedDependencySourceRoots } from "./git-worktree.mjs";
 import { enrichUsage } from "./model-catalog.mjs";
@@ -233,7 +234,7 @@ export class RepairExecutionOrchestrator {
     // network, nothing provider-specific — which is precisely what made the stage impossible
     // on Claude (#40) and dependent on Codex credits.
     const effectiveSandbox = sandbox;
-    const agentRequest =
+    let agentRequest =
       promptOverride ??
       (candidate ? buildExecutionRequest(task, stageId, candidate) : buildStageRequest(task, stageId));
     const settings = await this._store.settings();
@@ -316,20 +317,53 @@ export class RepairExecutionOrchestrator {
       if (signal.aborted) runController.abort();
       else signal.addEventListener("abort", relayAbort, { once: true });
     }
-    // `cwd` is the operator's real checkout for stages that run there, which is already
-    // fully within its own allow-read scope. Only an isolated worktree (a candidate or a
-    // work-package slice) can carry the symlink-into-source-checkout gap described on
-    // `symlinkedDependencySourceRoots`.
-    const extraReadRoots =
-      cwd === task.repositoryPath
-        ? []
-        : await symlinkedDependencySourceRoots(
-            cwd,
-            typeof this._worktrees.repositoryRoot === "function"
-              ? await this._worktrees.repositoryRoot(task.repositoryPath)
-              : task.repositoryPath,
-          ).catch(() => []);
     try {
+      // `cwd` is the operator's real checkout for stages that run there, which is already
+      // fully within its own allow-read scope. Only an isolated worktree (a candidate or a
+      // work-package slice) can carry the symlink-into-source-checkout gap described on
+      // `symlinkedDependencySourceRoots`.
+      const dependencyReadRoots =
+        cwd === task.repositoryPath
+          ? []
+          : await symlinkedDependencySourceRoots(
+              cwd,
+              typeof this._worktrees.repositoryRoot === "function"
+                ? await this._worktrees.repositoryRoot(task.repositoryPath)
+                : task.repositoryPath,
+            ).catch(() => []);
+      const extraReadRoots = [...new Set(dependencyReadRoots)];
+      let extraReadFiles = [];
+      if (runProvider === "claude") {
+        const attachmentReadPaths = await validatedAttachmentReadPaths(
+          this._store.dataDirectory(),
+          task.attachments,
+        );
+        const stagedAttachments = path.join(runtimeTemp, "attachments");
+        await mkdir(stagedAttachments, { recursive: true });
+        const replacements = await Promise.all(
+          attachmentReadPaths.map(async (source, index) => {
+            const target = path.join(stagedAttachments, `attachment-${index + 1}${path.extname(source)}`);
+            await copyFile(source, target);
+            return [source, target];
+          }),
+        );
+        extraReadFiles = replacements.map(([, target]) => target);
+        if (replacements.length) {
+          const prompt = replacements.reduce(
+            (rewritten, [source, target]) => rewritten.replaceAll(source, target),
+            agentRequest.prompt,
+          );
+          agentRequest = {
+            ...agentRequest,
+            prompt,
+            contextManifest: {
+              ...agentRequest.contextManifest,
+              promptCharacters: prompt.length,
+              estimatedPromptTokens: Math.ceil(prompt.length / 4),
+            },
+          };
+        }
+      }
       await this._assertProviderConfinement(runProvider, effectiveSandbox, false, cwd);
       const result = await this._runAgent(runProvider, {
         cwd,
@@ -340,6 +374,7 @@ export class RepairExecutionOrchestrator {
         // it to run commands, and it no longer runs them.
         networkAccess: false,
         extraReadRoots,
+        extraReadFiles,
         model: policy.model,
         reasoning: policy.reasoning,
         tempDirectory: runtimeTemp,

@@ -1,9 +1,45 @@
-import { readdir, rm, stat } from "node:fs/promises";
+import { readdir, realpath, rm, stat } from "node:fs/promises";
 import path from "node:path";
 
 const ATTACHMENT_SET_PATTERN =
   /^set-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MIN_ORPHAN_AGE_MS = 5 * 60 * 1_000;
+
+export async function validatedAttachmentReadPaths(dataDirectory, attachments) {
+  const attachmentRoot = path.resolve(dataDirectory, "attachments");
+  let canonicalRoot;
+  try {
+    canonicalRoot = await realpath(attachmentRoot);
+  } catch (error) {
+    if (error.code === "ENOENT") return [];
+    throw error;
+  }
+
+  const permitted = new Set();
+  for (const attachment of attachments ?? []) {
+    if (typeof attachment?.path !== "string" || !attachment.path.trim()) continue;
+    const declaredPath = path.resolve(attachment.path);
+    if (!isWithin(attachmentRoot, declaredPath)) continue;
+    try {
+      const canonicalPath = await realpath(declaredPath);
+      const metadata = await stat(canonicalPath);
+      if (metadata.isFile() && isWithin(canonicalRoot, canonicalPath)) permitted.add(declaredPath);
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+  }
+  return [...permitted];
+}
+
+function isWithin(root, candidate) {
+  const relative = path.relative(root, candidate);
+  return (
+    relative !== "" &&
+    relative !== ".." &&
+    !relative.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(relative)
+  );
+}
 
 export async function cleanupOrphanAttachmentSets(dataDirectory, tasks) {
   const attachmentRoot = path.resolve(dataDirectory, "attachments");

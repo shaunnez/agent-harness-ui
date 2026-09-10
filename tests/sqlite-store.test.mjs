@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { access, mkdir, mkdtemp, readFile, rm, utimes, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, symlink, utimes, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -8,8 +8,39 @@ import test from "node:test";
 import { promisify } from "node:util";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
 import { JsonTaskStore, migratePersistedTaskState } from "../server/store.mjs";
+import { validatedAttachmentReadPaths } from "../server/attachment-storage.mjs";
 
 const exec = promisify(execFile);
+
+test("permits only existing task attachment files inside the managed attachment root", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-attachment-read-roots-"));
+  const attachmentSet = path.join(
+    directory,
+    "attachments",
+    "set-33333333-3333-4333-8333-333333333333",
+  );
+  const valid = path.join(attachmentSet, "reference.png");
+  const outside = path.join(directory, "outside.png");
+  const escapedLink = path.join(attachmentSet, "escaped.png");
+  try {
+    await mkdir(attachmentSet, { recursive: true });
+    await Promise.all([writeFile(valid, "valid"), writeFile(outside, "outside")]);
+    await symlink(outside, escapedLink);
+
+    assert.deepEqual(
+      await validatedAttachmentReadPaths(directory, [
+        { path: valid },
+        { path: valid },
+        { path: outside },
+        { path: escapedLink },
+        { path: path.join(attachmentSet, "missing.png") },
+      ]),
+      [valid],
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
 
 test("cleans orphaned attachment staging sets on SQLite store startup", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-sqlite-attachment-cleanup-"));
