@@ -37,6 +37,9 @@ export const MODEL_PRICING = {
   // `long` is null for every entry — these are 1M-context models at standard
   // rates, so the >272k long-context branch must never fire for them.
   "claude-fable-5": rate(10, 1, 20, 50),
+  // Placeholder — unconfirmed: reuses claude-fable-5's rate verbatim pending
+  // real Anthropic Fable 5.1 billing data. Update once actual pricing is known.
+  "claude-fable-5-1": rate(10, 1, 20, 50),
   "claude-opus-5": rate(5, 0.5, 10, 25),
   "claude-sonnet-5": rate(3, 0.3, 6, 15),
   "claude-haiku-4-5": rate(1, 0.1, 2, 5),
@@ -46,6 +49,7 @@ export const CLAUDE_MODEL_IDS = Object.freeze([
   "claude-opus-5",
   "claude-sonnet-5",
   "claude-fable-5",
+  "claude-fable-5-1",
   "claude-haiku-4-5",
 ]);
 
@@ -137,6 +141,13 @@ const CLAUDE_MODELS = [
     "claude-fable-5",
     "Claude Fable 5",
     "Highest-capability Claude model at a premium rate.",
+    "xhigh",
+    CLAUDE_EFFORT_LEVELS,
+  ),
+  claudeModel(
+    "claude-fable-5-1",
+    "Claude Fable 5.1",
+    "Highest-capability Claude model at a premium rate (5.1 revision; pricing placeholder pending confirmation).",
     "xhigh",
     CLAUDE_EFFORT_LEVELS,
   ),
