@@ -108,6 +108,12 @@ export function reasoningLabel(value: string | null | undefined) {
 export function formatCount(value: number) {
   return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(value);
 }
+export function formatApproximateCost(
+  estimate: number | null | undefined,
+  pricingVersion: string | null | undefined,
+) {
+  return estimate != null && Number.isFinite(estimate) && pricingVersion ? `$${estimate.toFixed(4)}` : "—";
+}
 export function formatDuration(value: number | null | undefined) {
   if (value == null || !Number.isFinite(value)) return "Not recorded";
   const seconds = Math.max(0, Math.floor(value / 1000));
