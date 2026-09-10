@@ -1,3 +1,4 @@
+import "./git-env.mjs";
 import test from "node:test";
 import {
   assert,
