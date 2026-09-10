@@ -148,3 +148,22 @@ export function attentionAction(task: TaskSummary | TaskCore) {
           ? "Inspect blocker"
           : "Inspect task";
 }
+
+/**
+ * Split a recorded reason into its verdict line and the command output beneath it.
+ *
+ * A qualification or gate failure carries the whole command output — a Playwright run is
+ * several thousand characters over dozens of lines. HTML collapses those newlines, so
+ * rendering the string straight into a `<p>` produced one unreadable run-on paragraph that
+ * pushed everything else off screen. The first line is always the verdict, which is what a
+ * summary needs; the rest belongs in a scrollable `<pre>` with its line breaks intact.
+ */
+export function splitRecordedDetail(text: string | null | undefined): {
+  headline: string;
+  body: string | null;
+} {
+  const trimmed = (text ?? "").trim();
+  const breakAt = trimmed.indexOf("\n");
+  if (breakAt < 0) return { headline: trimmed, body: null };
+  return { headline: trimmed.slice(0, breakAt).trim(), body: trimmed.slice(breakAt + 1).trim() || null };
+}

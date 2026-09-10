@@ -320,6 +320,47 @@
   border-radius: 6px;
   margin-top: 16px;
 }
+/*
+ * A qualification failure's first line is the verdict; the card shows only that. Two lines
+ * is the ceiling, so one failed package cannot push its siblings off screen.
+ */
+.package-headline {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+/*
+ * The rest of the command output, with its newlines intact. `<pre>` inside a scroll region
+ * rather than a bare `<p>`: several thousand characters of Playwright output is only
+ * readable as the lines the command actually printed.
+ */
+.recorded-detail-output-frame,
+.package-failure-output-frame {
+  margin: 12px 0 4px;
+  border: 1px solid #2b424f;
+  border-radius: 6px;
+  background: #0b1f2a;
+}
+.recorded-detail-output,
+.package-failure-output {
+  max-height: 320px;
+  padding: 12px 14px;
+}
+.recorded-detail-output pre,
+.package-failure-output pre {
+  margin: 0;
+  color: #c6d5dc;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
 .package-detail dl {
   display: grid;
   grid-template-columns: 140px 1fr;

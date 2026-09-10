@@ -83,6 +83,108 @@
 .setting-row small {
   margin-top: 7px;
 }
+/*
+ * Gate auto-run.
+ *
+ * One row per stage, each a two-option segmented control. The previous markup put
+ * `.setting-row` on the wrapping `<fieldset>`, so its two option labels became flex
+ * siblings and every radio landed at a different x — on top of the browser's default
+ * fieldset chrome. Reading three stages meant reading the same two sentences three times.
+ */
+.gate-policy-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+.gate-policy-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 0;
+  border-top: 1px solid #304956;
+}
+.gate-policy-row:first-child {
+  border-top: 0;
+}
+.gate-policy-stage {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/*
+ * A segmented control built from real radios: one tab stop, arrow keys move within the
+ * group, and the selection still submits as a form value. The input itself is hidden
+ * behind the label rather than removed, so focus lands somewhere visible.
+ */
+.segmented-radio {
+  display: flex;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.segmented-radio label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 104px;
+  padding: 7px 14px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+.segmented-radio label + label {
+  border-left: 1px solid var(--line);
+}
+.segmented-radio label:hover {
+  background: #1b3542;
+  color: #d8e2e6;
+}
+.segmented-radio input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.segmented-radio label.is-selected {
+  background: #174c85;
+  color: #ffffff;
+  font-weight: 600;
+}
+.segmented-radio label:focus-within {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segmented-radio label {
+    transition: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .gate-policy-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .segmented-radio {
+    width: 100%;
+  }
+  .segmented-radio label {
+    flex: 1;
+    min-width: 0;
+  }
+}
 .keyboard-guide {
   display: grid;
   grid-template-columns: 1fr 1fr;

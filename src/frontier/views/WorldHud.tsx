@@ -21,6 +21,7 @@ import {
   modelLabel,
   needsYou,
   reasoningLabel,
+  splitRecordedDetail,
   stageLabels,
 } from "../runtime/presentation";
 import { AttentionIcon } from "../ui/Attention";
@@ -152,7 +153,9 @@ export function SelectionHud({
           {task.id} · {stageLabels[task.currentStage]}
         </h2>
         <strong className="state-copy">{connected ? attention.label : "Last known state"}</strong>
-        <p>{attention.reason ?? task.title}</p>
+        {/* The HUD is a compact floating card: the verdict line only. Command output
+            belongs in the task window, which has room to scroll it. */}
+        <p className="hud-reason">{splitRecordedDetail(attention.reason).headline || task.title}</p>
         <small>
           {attention.since &&
             `Waiting since ${new Date(attention.since).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · `}

@@ -2,7 +2,8 @@ import { ArrowRight, Play, ShieldCheck } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { RuntimeAvailableAction } from "../../domain";
 import type { CandidateScope, FrontierGateway, TaskCore } from "../runtime/contracts";
-import { attentionFor, stageLabels } from "../runtime/presentation";
+import { attentionFor, stageLabels, splitRecordedDetail } from "../runtime/presentation";
+import { ScrollArea } from "../ui/ScrollArea";
 import { candidateScope, executable, proposedAction, reviewIdentity } from "../runtime/workflow";
 
 interface Review {
@@ -143,7 +144,20 @@ export function WorkflowCommand({
           </button>
         )}
       </div>
-      {(attention.reason || next?.detail) && <p>{attention.reason ?? next?.detail}</p>}
+      {(attention.reason || next?.detail) &&
+        (() => {
+          const { headline, body } = splitRecordedDetail(attention.reason ?? next?.detail);
+          return (
+            <>
+              <p>{headline}</p>
+              {body && (
+                <ScrollArea className="recorded-detail-output" label={`${task.id} recorded detail`}>
+                  <pre>{body}</pre>
+                </ScrollArea>
+              )}
+            </>
+          );
+        })()}
       {next?.action && !executable(task, next.action) && (
         <p className="quiet">
           {task.actionEligibility?.actions[next.action]?.reason ??
