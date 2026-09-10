@@ -47,6 +47,7 @@ export type RuntimeAvailableAction =
   | "open-pr"
   | "reconcile-pr"
   | "reconcile-merge"
+  | "reconcile-authority"
   | "complete-merged"
   | "refresh-candidate"
   | "rebuild-candidate"

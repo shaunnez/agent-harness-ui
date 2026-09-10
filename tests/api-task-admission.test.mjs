@@ -447,6 +447,7 @@ test("enforces one Host, Origin, content-type, CSRF, and missing-Origin policy a
       ["POST", "/api/tasks/AH-999/open-pr"],
       ["POST", "/api/tasks/AH-999/reconcile-pr"],
       ["POST", "/api/tasks/AH-999/refresh-candidate"],
+      ["POST", "/api/tasks/AH-999/reconcile-authority"],
       ["POST", "/api/tasks/AH-999/rebuild-candidate"],
       ["POST", "/api/tasks/AH-999/restart-implementation"],
       ["POST", "/api/tasks/AH-999/retry-test"],

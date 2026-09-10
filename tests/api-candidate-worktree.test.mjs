@@ -17,8 +17,15 @@ import {
   writeFile,
 } from "./api-test-support.mjs";
 
-test("dispatches candidate refresh and same-candidate Test retry actions", async () => {
-  const { directory, origin, server, refreshedCandidateTaskRef, retriedTestTaskRef } = await createServer();
+test("dispatches candidate authority, refresh, and same-candidate Test retry actions", async () => {
+  const {
+    directory,
+    origin,
+    server,
+    reconciledCandidateAuthorityTaskRef,
+    refreshedCandidateTaskRef,
+    retriedTestTaskRef,
+  } = await createServer();
   try {
     const createResponse = await createTask(origin, {
       title: "Recover a candidate",
@@ -34,6 +41,13 @@ test("dispatches candidate refresh and same-candidate Test retry actions", async
     assert.equal(refreshResponse.status, 200);
     assert.equal((await refreshResponse.json()).refreshed, true);
     assert.equal(refreshedCandidateTaskRef(), task.id);
+
+    const authorityResponse = await fetch(`${origin}/api/tasks/${task.id}/reconcile-authority`, {
+      method: "POST",
+    });
+    assert.equal(authorityResponse.status, 200);
+    assert.equal((await authorityResponse.json()).reconciled, true);
+    assert.equal(reconciledCandidateAuthorityTaskRef(), task.id);
 
     const retryResponse = await fetch(`${origin}/api/tasks/${task.id}/retry-test`, { method: "POST" });
     assert.equal(retryResponse.status, 202);

@@ -121,6 +121,19 @@ function actionEligibilityFor(task, action) {
       ? allow()
       : deny("This task does not have a retained GitHub PR intent that can be reconciled.");
   }
+  if (action === "reconcile-authority") {
+    const awaitingApproval =
+      task.status === "awaiting-human-approval" &&
+      task.currentStage === "approval" &&
+      candidate?.status === "awaiting_human_approval";
+    return awaitingApproval &&
+      candidate?.baseRevision &&
+      candidate.baseRevision !== task.repositoryAuthority?.selectedRevision
+      ? allow()
+      : deny(
+          "Candidate authority reconciliation is available only for an approval-ready candidate with a stale task authority binding.",
+        );
+  }
   if (action === "refresh-candidate") {
     return task.status === "blocked" && task.blocker?.code === "target-diverged"
       ? allow()

@@ -491,6 +491,13 @@ test("raises a GitHub PR at Human Approval and renders automatic merge tracking"
     const approvalTask = createTask({
       status: "awaiting-human-approval",
       currentStage: "approval",
+      repositoryAuthority: {
+        id: "approval-authority",
+        selectedRevision: candidate.baseRevision,
+        targetRef: "refs/remotes/origin/main",
+        source: "tracked-upstream",
+        capturedAt: "2026-08-01T12:00:00.000Z",
+      },
       candidates: [candidate],
       gateFreshness: {
         "dev-review": makeGateFreshness("dev-review", { fresh: true, candidateRevision: 3 }),

@@ -394,6 +394,26 @@ test("offers recovery actions that match target drift, invalid plans, and retrya
       />Refresh candidate from main</,
     );
 
+    const staleApprovalAuthority = withActionEligibility(
+      createTask({
+        status: "awaiting-human-approval",
+        currentStage: "approval",
+        repositoryAuthority: { id: "old-authority", selectedRevision: "0".repeat(40) },
+        candidates: [{ ...candidate, status: "awaiting_human_approval" }],
+      }),
+    );
+    assert.equal(nextAction(staleApprovalAuthority).action, "reconcile-authority");
+    assert.match(
+      renderToStaticMarkup(
+        React.createElement(RuntimeCommandBar, {
+          ...baseProps,
+          task: staleApprovalAuthority,
+          viewedStageId: "approval",
+        }),
+      ),
+      />Reconcile candidate authority</,
+    );
+
     const refreshConflict = createTask({
       status: "blocked",
       currentStage: "test",

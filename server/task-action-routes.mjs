@@ -173,6 +173,11 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson, re
         send(response, 200, { refreshed: true, task: refreshed });
         return true;
       }
+      if (action === "reconcile-authority") {
+        const reconciled = await orchestrator.reconcileCandidateAuthority(id);
+        send(response, 200, { reconciled: true, task: withActionEligibility(reconciled) });
+        return true;
+      }
       if (action === "rebuild-candidate") {
         const rebuilt = await orchestrator.rebuildCandidateFromTarget(id);
         send(response, 200, { rebuilt: true, task: rebuilt });

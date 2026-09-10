@@ -28,6 +28,7 @@ test("preserves the TaskOrchestrator public method signatures", () => {
     reconcileMerge: [1, true],
     recoverMergeIntents: [0, true],
     refreshCandidate: [1, true],
+    reconcileCandidateAuthority: [1, true],
     rebuildCandidateFromTarget: [1, true],
     restartImplementationFromTarget: [1, true],
     retryTestOnSameCandidate: [1, true],

@@ -121,6 +121,10 @@ export class TaskOrchestrator {
     return this.#core.candidates.refreshCandidate(id);
   }
 
+  async reconcileCandidateAuthority(id) {
+    return this.#core.candidates.reconcileCandidateAuthority(id);
+  }
+
   async rebuildCandidateFromTarget(id) {
     return this.#core.candidates.rebuildCandidateFromTarget(id);
   }

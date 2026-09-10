@@ -15,6 +15,103 @@ export class CandidateOperationsOrchestrator {
     this._repositoryAuthority = repositoryAuthority;
     this.start = start;
   }
+
+  async reconcileCandidateAuthority(id) {
+    if (this._refreshActive.has(id) || this._mergeActive.has(id)) {
+      throw new Error("This task already has a candidate or target reconciliation in progress.");
+    }
+    this._refreshActive.add(id);
+    try {
+      const task = await this._store.get(id);
+      if (!task) throw new Error("Task not found.");
+      const candidate = currentCandidate(task);
+      if (
+        task.status !== "awaiting-human-approval" ||
+        task.currentStage !== "approval" ||
+        candidate?.status !== "awaiting_human_approval" ||
+        !candidate.baseRevision ||
+        candidate.baseRevision === task.repositoryAuthority?.selectedRevision
+      ) {
+        throw new Error(
+          "Candidate authority reconciliation requires an approval-ready candidate with a stale task authority binding.",
+        );
+      }
+      if (task.activeRunKind || task.activeRunReservationId || task.activeRunIds?.length) {
+        throw new Error("Wait for the active run before reconciling candidate authority.");
+      }
+      const authority = await this._repositoryAuthority.capture(task.repositoryPath, {
+        frozenRevision: task.experiment?.frozenBaseSha ?? null,
+      });
+      if (!authority?.selectedRevision) {
+        throw new Error("The repository target did not produce a verified revision.");
+      }
+      if (authority.upstreamRef && authority.remoteVerification?.status !== "verified") {
+        throw new Error("The tracked repository target could not be verified remotely.");
+      }
+      const authorityMatchesCandidate = authority.selectedRevision === candidate.baseRevision;
+      return await this._store.transition(
+        id,
+        (draft) => {
+          const activeCandidate = currentCandidate(draft);
+          return (
+            draft.status === "awaiting-human-approval" &&
+            draft.currentStage === "approval" &&
+            !draft.activeRunKind &&
+            !draft.activeRunReservationId &&
+            !(draft.activeRunIds?.length ?? 0) &&
+            activeCandidate?.id === candidate.id &&
+            activeCandidate?.revisionNumber === candidate.revisionNumber &&
+            activeCandidate?.baseRevision === candidate.baseRevision &&
+            activeCandidate?.headRevision === candidate.headRevision
+          );
+        },
+        (draft) => {
+          draft.repositoryAuthority = structuredClone(authority);
+          draft.repositoryAuthorityHistory ??= [];
+          if (!draft.repositoryAuthorityHistory.some((entry) => entry.id === authority.id)) {
+            draft.repositoryAuthorityHistory.push(structuredClone(authority));
+          }
+          draft.repositoryAuthorityStatus = "bound";
+          if (authorityMatchesCandidate) {
+            draft.events.push(
+              activity(
+                "approval",
+                "Candidate authority reconciled",
+                `The verified target ${authority.selectedRevision.slice(0, 8)} exactly matches ${candidate.id} revision ${candidate.revisionNumber}. The candidate and its fresh gate evidence were preserved.`,
+                "success",
+                "decision",
+              ),
+            );
+            return;
+          }
+          const detail = `The verified target advanced from candidate base ${candidate.baseRevision.slice(0, 8)} to ${authority.selectedRevision.slice(0, 8)}.`;
+          draft.status = "blocked";
+          draft.error = detail;
+          draft.blocker = {
+            code: "target-diverged",
+            detail,
+            detectedAt: now(),
+            candidateId: candidate.id,
+            candidateRevision: candidate.revisionNumber,
+            candidateBaseRevision: candidate.baseRevision,
+            targetRevision: authority.selectedRevision,
+          };
+          draft.events.push(
+            activity(
+              "approval",
+              "Candidate refresh required",
+              `${detail} Preserve the retained candidate, refresh it onto the current target, and rerun candidate-bound gates.`,
+              "warning",
+              "decision",
+            ),
+          );
+        },
+      );
+    } finally {
+      this._refreshActive.delete(id);
+    }
+  }
+
   async refreshCandidate(id) {
     if (this._refreshActive.has(id) || this._mergeActive.has(id)) {
       throw new Error("This task already has a candidate or merge reconciliation in progress.");

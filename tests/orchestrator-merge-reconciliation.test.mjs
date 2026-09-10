@@ -265,6 +265,126 @@ test("refreshes a target-diverged candidate as a new revision and invalidates do
   }
 });
 
+test("reconciles a stale approval authority binding without invalidating an unchanged candidate", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-reconcile-authority-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Recover approval authority",
+      description: "Preserve qualified evidence when the candidate already uses the verified target.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const candidateBase = "b".repeat(40);
+    const candidateHead = "c".repeat(40);
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-human-approval";
+      draft.currentStage = "approval";
+      draft.repositoryAuthority = { id: "stale-authority", selectedRevision: "a".repeat(40) };
+      draft.repositoryAuthorityStatus = "bound";
+      draft.gateFreshness = { preserved: { fresh: true } };
+      draft.candidates = [
+        {
+          id: "C1",
+          revisionNumber: 4,
+          baseRevision: candidateBase,
+          headRevision: candidateHead,
+          status: "awaiting_human_approval",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          revisions: [],
+        },
+      ];
+    });
+    const authority = {
+      id: "verified-authority",
+      repositoryRoot: directory,
+      upstreamRef: "refs/remotes/origin/main",
+      selectedRevision: candidateBase,
+      targetRef: "refs/remotes/origin/main",
+      capturedAt: new Date().toISOString(),
+      remoteVerification: { status: "verified", error: null },
+    };
+    const orchestrator = new TaskOrchestrator(store, {
+      repositoryAuthorityService: { capture: async () => authority },
+    });
+
+    await orchestrator.reconcileCandidateAuthority(task.id);
+    const reconciled = await store.get(task.id);
+    assert.equal(reconciled.status, "awaiting-human-approval");
+    assert.equal(reconciled.currentStage, "approval");
+    assert.equal(reconciled.repositoryAuthority.selectedRevision, candidateBase);
+    assert.equal(reconciled.repositoryAuthorityHistory.at(-1).id, authority.id);
+    assert.deepEqual(reconciled.gateFreshness, { preserved: { fresh: true } });
+    assert.equal(reconciled.candidates[0].revisionNumber, 4);
+    assert.equal(reconciled.candidates[0].headRevision, candidateHead);
+    assert.match(reconciled.events.at(-1).detail, /gate evidence were preserved/i);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("routes approval authority reconciliation to candidate refresh when the verified target moved", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-reconcile-diverged-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Detect approval target drift",
+      description: "Never preserve approval after the target advances.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    const candidateBase = "b".repeat(40);
+    const targetHead = "d".repeat(40);
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-human-approval";
+      draft.currentStage = "approval";
+      draft.repositoryAuthority = { id: "stale-authority", selectedRevision: "a".repeat(40) };
+      draft.repositoryAuthorityStatus = "bound";
+      draft.candidates = [
+        {
+          id: "C1",
+          revisionNumber: 1,
+          baseRevision: candidateBase,
+          headRevision: "c".repeat(40),
+          status: "awaiting_human_approval",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          revisions: [],
+        },
+      ];
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      repositoryAuthorityService: {
+        capture: async () => ({
+          id: "advanced-authority",
+          repositoryRoot: directory,
+          upstreamRef: "refs/remotes/origin/main",
+          selectedRevision: targetHead,
+          targetRef: "refs/remotes/origin/main",
+          capturedAt: new Date().toISOString(),
+          remoteVerification: { status: "verified", error: null },
+        }),
+      },
+    });
+
+    await orchestrator.reconcileCandidateAuthority(task.id);
+    const blocked = await store.get(task.id);
+    assert.equal(blocked.status, "blocked");
+    assert.equal(blocked.currentStage, "approval");
+    assert.equal(blocked.blocker.code, "target-diverged");
+    assert.equal(blocked.blocker.targetRevision, targetHead);
+    assert.equal(blocked.candidates[0].revisionNumber, 1);
+    assert.match(blocked.events.at(-1).title, /refresh required/i);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("blocks a candidate gate on target drift before reserving an attempt", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-gate-target-drift-"));
   try {

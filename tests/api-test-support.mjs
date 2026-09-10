@@ -59,6 +59,7 @@ async function createServer(options = {}) {
   let completedMergedTask = null;
   let reconciledMergeTask = null;
   let refreshedCandidateTask = null;
+  let reconciledCandidateAuthorityTask = null;
   let rebuiltCandidateTask = null;
   let restartedImplementationTask = null;
   let retriedTestTask = null;
@@ -125,6 +126,10 @@ async function createServer(options = {}) {
     },
     async refreshCandidate(id) {
       refreshedCandidateTask = id;
+      return store.get(id);
+    },
+    async reconcileCandidateAuthority(id) {
+      reconciledCandidateAuthorityTask = id;
       return store.get(id);
     },
     async rebuildCandidateFromTarget(id) {
@@ -218,6 +223,7 @@ async function createServer(options = {}) {
     reconciledPullRequestTaskRef: () => reconciledPullRequestTask,
     completedMergedTaskRef: () => completedMergedTask,
     refreshedCandidateTaskRef: () => refreshedCandidateTask,
+    reconciledCandidateAuthorityTaskRef: () => reconciledCandidateAuthorityTask,
     rebuiltCandidateTaskRef: () => rebuiltCandidateTask,
     restartedImplementationTaskRef: () => restartedImplementationTask,
     retriedTestTaskRef: () => retriedTestTask,

@@ -20,6 +20,7 @@ export const PROJECTED_ACTIONS = Object.freeze([
   "open-pr",
   "reconcile-pr",
   "reconcile-merge",
+  "reconcile-authority",
   "complete-merged",
   "refresh-candidate",
   "rebuild-candidate",

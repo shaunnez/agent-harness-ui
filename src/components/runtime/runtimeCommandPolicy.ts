@@ -49,6 +49,20 @@ export function deriveNextAction(task: RuntimeTask | RuntimeTaskCore) {
       detail:
         "Review the concrete repository evidence. The harness will not close this task from model judgement alone.",
     };
+  if (
+    task.status === "awaiting-human-approval" &&
+    task.currentStage === "approval" &&
+    candidate?.status === "awaiting_human_approval" &&
+    candidate.baseRevision &&
+    candidate.baseRevision !== task.repositoryAuthority?.selectedRevision
+  )
+    return {
+      action: "reconcile-authority" as const,
+      label: "Reconcile candidate authority",
+      title: "Candidate authority binding is stale",
+      detail:
+        "Re-fetch the verified target. If it still equals the candidate base, preserve the exact candidate and its gates; if it moved, require candidate refresh.",
+    };
   if (task.status === "blocked" && task.currentStage === "plan" && task.blocker?.code === "plan-prerequisite")
     return {
       action: "plan" as const,
