@@ -52,10 +52,15 @@ test("ready projection does not replace exceptional or non-ready attention", () 
 
 test("ready headquarters labels use a project-scoped green border while selected stays an outline", () => {
   const css = readFileSync(new URL("../src/frontier/ui/world-shell.css", import.meta.url), "utf8");
+  const scene = readFileSync(new URL("../src/frontier/world/scene.ts", import.meta.url), "utf8");
   const worldCanvas = readFileSync(new URL("../src/frontier/world/WorldCanvas.tsx", import.meta.url), "utf8");
 
   assert.match(css, /\.view-project \.world-label\.tone-ready\s*\{[\s\S]*border-color:\s*#4fca83/);
   assert.match(css, /\.world-label\.selected\s*\{[\s\S]*outline:\s*2px solid #57b0ff/);
+  assert.match(
+    scene,
+    /const projectedAttention = attentionFor\(task\);[\s\S]*const attention = input\.connected[\s\S]*kind: "unavailable"[\s\S]*label: "Connection unknown"/,
+  );
   assert.match(worldCanvas, /world-label \$\{label\.kind\} tone-\$\{label\.attention\} \$\{label\.taskId === input\.selectedId/);
 });
 

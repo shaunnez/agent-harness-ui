@@ -451,7 +451,10 @@ export class FrontierScene {
               contact,
               this.cinematic(project.id),
             );
-            const attention = attentionFor(task);
+            const projectedAttention = attentionFor(task);
+            const attention = input.connected
+              ? projectedAttention
+              : { ...projectedAttention, kind: "unavailable" as const, label: "Connection unknown" };
             const running = task.workPackages.find((item) => item.status === "running");
             const failed = task.workPackages.find((item) => item.status === "failed");
             const waiting = task.workPackages.find(
