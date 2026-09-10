@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { isProcessTimeoutError, runProcess } from "./process-runtime.mjs";
+import { acquireVerificationSlot } from "./verification-concurrency.mjs";
 
 /**
  * Harness-executed verification.
@@ -347,6 +348,8 @@ export async function runRepositoryVerification({
   readHeadRevision = gitHeadRevision,
   commandIds = null,
   executionKind = "full-manifest",
+  onQueueWait = null,
+  acquireSlot = acquireVerificationSlot,
 }) {
   if (!candidate?.id || !Number.isInteger(candidate?.revisionNumber)) {
     throw new Error("Harness verification requires an active candidate identity.");
@@ -358,15 +361,27 @@ export async function runRepositoryVerification({
   // that does not name the tree it was produced from is evidence about nothing, and the test
   // stage is expected to dirty its worktree — so the commit must be what is pinned, and it
   // must still be pinned when the commands are done.
-  const headRevision = await assertCandidateHead(worktreePath, candidate, readHeadRevision);
-  const startedAt = now();
-  const started = Date.now();
-  const rows = [];
-  for (const command of resolved.commands) {
-    rows.push(await runCommand({ command, worktreePath, candidate, signal }));
-    // Stop at the first failure: later commands run against a tree a previous command may
-    // have left in a state nobody declared, and the verdict is already decided.
-    if (rows.at(-1).status !== "passed") break;
+  // Queue before the first head read, not after. A slot can be waited on for minutes, and
+  // evidence must be bound to the SHA the commands actually ran against rather than the one
+  // that was current when this run joined the queue.
+  const releaseSlot = await acquireSlot({ signal, onWait: onQueueWait });
+  let headRevision;
+  let startedAt;
+  let started;
+  let rows;
+  try {
+    headRevision = await assertCandidateHead(worktreePath, candidate, readHeadRevision);
+    startedAt = now();
+    started = Date.now();
+    rows = [];
+    for (const command of resolved.commands) {
+      rows.push(await runCommand({ command, worktreePath, candidate, signal }));
+      // Stop at the first failure: later commands run against a tree a previous command may
+      // have left in a state nobody declared, and the verdict is already decided.
+      if (rows.at(-1).status !== "passed") break;
+    }
+  } finally {
+    releaseSlot();
   }
   const completedAt = now();
   await assertCandidateHead(worktreePath, candidate, readHeadRevision);
