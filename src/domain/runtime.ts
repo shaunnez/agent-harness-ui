@@ -556,8 +556,13 @@ export interface RuntimeTask {
   repositoryAuthorityStatus?: "bound" | "legacy-unbound" | "legacy-readable";
   repositoryAuthorityHistory?: RuntimeRepositoryAuthority[];
   planResult?: {
-    disposition: "changes-required" | "already-satisfied";
+    disposition: "changes-required" | "already-satisfied" | "blocked-prerequisite";
     evidence: Array<{ path: string; detail: string }>;
+    blocker?: {
+      code: string;
+      detail: string;
+      requiredAction: string;
+    } | null;
     changesRemainNecessary: boolean;
     artifactId: string | null;
     repositoryAuthorityId: string | null;
@@ -625,6 +630,8 @@ export interface RuntimeTask {
     candidateRevision?: number | null;
     candidateBaseRevision?: string | null;
     targetRevision?: string | null;
+    prerequisiteCode?: string | null;
+    requiredAction?: string | null;
     source?: string | null;
     remoteName?: string | null;
   } | null;

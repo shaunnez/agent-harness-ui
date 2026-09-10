@@ -481,8 +481,10 @@ export function parseWorkPackages(text, repositoryPath = null) {
 export function parsePlanResult(text, repositoryPath = null) {
   const value = parseLabelledJson(text, "work-packages");
   const disposition = value.disposition == null ? "changes-required" : String(value.disposition).trim();
-  if (!["changes-required", "already-satisfied"].includes(disposition)) {
-    throw new Error("The plan disposition must be changes-required or already-satisfied.");
+  if (!["changes-required", "already-satisfied", "blocked-prerequisite"].includes(disposition)) {
+    throw new Error(
+      "The plan disposition must be changes-required, already-satisfied, or blocked-prerequisite.",
+    );
   }
   const evidence = Array.isArray(value.evidence)
     ? value.evidence
@@ -503,6 +505,29 @@ export function parsePlanResult(text, repositoryPath = null) {
       throw new Error("An already-satisfied plan requires concrete repository path evidence and detail.");
     }
     return { disposition, evidence, packages: [] };
+  }
+  if (disposition === "blocked-prerequisite") {
+    if (Array.isArray(value.packages) && value.packages.length) {
+      throw new Error("A blocked-prerequisite plan cannot contain work packages.");
+    }
+    const blocker = {
+      code: String(value.blocker?.code ?? "")
+        .trim()
+        .toLowerCase(),
+      detail: String(value.blocker?.detail ?? "")
+        .trim()
+        .slice(0, 2_000),
+      requiredAction: String(value.blocker?.requiredAction ?? "")
+        .trim()
+        .slice(0, 2_000),
+    };
+    if (!/^[a-z0-9][a-z0-9-]{0,79}$/.test(blocker.code)) {
+      throw new Error("A blocked-prerequisite plan requires a lowercase blocker code.");
+    }
+    if (!blocker.detail || !blocker.requiredAction) {
+      throw new Error("A blocked-prerequisite plan requires blocker detail and requiredAction.");
+    }
+    return { disposition, evidence, blocker, packages: [] };
   }
   return { disposition, evidence, packages: parseWorkPackageValue(value, repositoryPath) };
 }
@@ -623,6 +648,9 @@ function normalizeVerificationCommandIds(value, label, options = {}) {
 function normalizeOwnedPath(value, repositoryPath) {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
+  if (/\s/.test(raw)) {
+    throw new Error(`Owned path must be an exact repository path, not prose: ${raw}`);
+  }
   let normalized = raw.replaceAll("\\", "/");
   const pathApi = path.win32.isAbsolute(raw) ? path.win32 : path;
   if (pathApi.isAbsolute(raw)) {

@@ -253,6 +253,44 @@ test("offers revision revalidation and human-controlled already-satisfied closur
   });
 });
 
+test("offers only a planning recheck for a typed prerequisite blocker", () => {
+  return withWorkspace(async ({ nextAction }) => {
+    const task = withActionEligibility(
+      createTask({
+        status: "blocked",
+        currentStage: "plan",
+        blocker: {
+          code: "plan-prerequisite",
+          prerequisiteCode: "external-data-unavailable",
+          detail: "The required records are unavailable.",
+          requiredAction: "Attach a trusted read-only export.",
+          detectedAt: "2026-08-01T12:00:00.000Z",
+        },
+        planResult: {
+          disposition: "blocked-prerequisite",
+          evidence: [],
+          blocker: {
+            code: "external-data-unavailable",
+            detail: "The required records are unavailable.",
+            requiredAction: "Attach a trusted read-only export.",
+          },
+          changesRemainNecessary: true,
+        },
+        workPackages: [],
+        candidates: [],
+      }),
+    );
+
+    assert.equal(task.actionEligibility.actions.plan.allowed, true);
+    assert.equal(task.actionEligibility.actions["approve-plan"].allowed, false);
+    assert.equal(task.actionEligibility.actions.implement.allowed, false);
+    const action = nextAction(task);
+    assert.equal(action.action, "plan");
+    assert.equal(action.label, "Recheck prerequisite and revise plan");
+    assert.match(action.detail, /trusted read-only export/);
+  });
+});
+
 test("renders only backend-authorized failed Plan recovery and names the failed stage", () => {
   return withWorkspace(async ({ RuntimeCommandBar, RuntimeTaskWorkspace, nextAction }) => {
     const baseProps = {

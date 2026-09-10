@@ -85,6 +85,10 @@ export class TaskOrchestrator {
     return this.#core.tasks.correctInvalidPlan(id);
   }
 
+  async resumePlanningAfterPrerequisite(id) {
+    return this.#core.tasks.resumePlanningAfterPrerequisite(id);
+  }
+
   async continueRetainedPackage(id) {
     return this.#core.tasks.continueRetainedPackage(id);
   }

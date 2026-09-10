@@ -238,6 +238,8 @@ Recovery actions are selected from typed failure state rather than a generic ret
 
 Every new work package must name at least one command ID from the repository-owned `.agent-harness/verification.json` manifest. Planning validates both presence and membership before presenting the plan for approval, and approval revalidates the same contract for migrated or previously persisted plans.
 
+When required external evidence, access, credentials, approval, or another prerequisite is unavailable, Plan records a typed `blocked-prerequisite` disposition with no work packages. The task remains blocked at Plan with the recorded reason, responsible next action, and a recheck action. An escalation document is retained evidence, never an implementation candidate, and cannot advance to Development Review or Test.
+
 Fresh-context Development Review may use at most 10 repository commands. Test and Final Review retain their two-command ceilings because their inputs are already candidate-bound and structured. Exceeding a ceiling still stops the model run and retains the failure; the higher Development Review allowance prevents ordinary candidate inspection from being misclassified as runaway review activity.
 
 ### Universal inspector

@@ -127,7 +127,10 @@ test("candidate review prompts name the exact structured finding fields", () => 
     request.prompt,
     /Do not run tests, builds, linters, type checks, package scripts, or verification-manifest commands/,
   );
-  assert.match(request.prompt, /Use at most 10 targeted repository commands/);
+  assert.match(request.prompt, /hard limit of 10 repository-command invocations/);
+  assert.match(request.prompt, /plan the complete inspection within 8 commands and reserve 2 commands/);
+  assert.match(request.prompt, /After command 8, stop using repository tools/);
+  assert.match(request.prompt, /Never start command 11/);
   assert.match(
     request.prompt,
     /Every command must be constructed to exit zero when the intended inspection succeeds/,
@@ -140,6 +143,25 @@ test("candidate review prompts name the exact structured finding fields", () => 
   assert.match(request.prompt, /Full exact-candidate manifest verification belongs to the later Test gate/);
   assert.match(request.prompt, /Do not inspect global memory, skill, plugin, cache, configuration/);
   assert.doesNotMatch(request.prompt, /"path":/);
+});
+
+test("planning prompts keep unavailable prerequisites out of implementation candidates", () => {
+  const request = buildStageRequest(
+    createTask({
+      id: "AH-PLAN-BLOCKER",
+      title: "Analyse records that require external access",
+      description: "Stop if the required records cannot be read.",
+      workflow: "implement",
+      artifacts: [],
+      decisions: [],
+      attachments: [],
+    }),
+    "plan",
+  );
+
+  assert.match(request.prompt, /"disposition":"blocked-prerequisite"/);
+  assert.match(request.prompt, /do not turn an escalation document into a work package/);
+  assert.match(request.prompt, /"requiredAction"/);
 });
 
 test("implementation prompts make the no-change marker part of one unambiguous output contract", () => {
