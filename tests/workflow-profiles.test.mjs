@@ -6,7 +6,11 @@ import test from "node:test";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import { defaultProfileStagePolicies } from "../server/model-catalog.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
-import { parseGateEvidence } from "../server/structured-output.mjs";
+import {
+  parseFastChangeContract,
+  parseGateEvidence,
+  parsePlanResult,
+} from "../server/structured-output.mjs";
 import { fastEscalation, selectWorkflowProfile } from "../server/workflow-profiles.mjs";
 
 const usage = { inputTokens: 100, cachedInputTokens: 60, outputTokens: 20, totalTokens: 120 };
@@ -189,11 +193,70 @@ test("selects deterministic profiles and escalates fast at explicit boundaries",
     "high-risk",
   );
   assert.equal(fastEscalation({ profile: "fast", kind: "verification-failure" }).target, "standard");
+  assert.equal(
+    fastEscalation({
+      profile: "fast",
+      kind: "triage",
+      text: "No backend, schema, migration, or database changes are required.",
+      riskSignals: [],
+      ownedPaths: ["frontend/src/Label.tsx", "docs/i18n.json"],
+    }),
+    null,
+    "negated free-form prose must not override the structured empty risk set",
+  );
+  assert.equal(
+    fastEscalation({
+      profile: "fast",
+      kind: "triage",
+      riskSignals: ["A database migration is required."],
+      ownedPaths: ["db/migrations/change.sql"],
+    }).target,
+    "high-risk",
+  );
   const policies = defaultProfileStagePolicies();
   assert.deepEqual(policies.fast.triage, { model: "gpt-5.6-luna", reasoning: "medium" });
   assert.deepEqual(policies.fast.implement, { model: "gpt-5.6-luna", reasoning: "high" });
   assert.deepEqual(policies.standard.implement, { model: "gpt-5.6-luna", reasoning: "xhigh" });
   assert.deepEqual(policies["high-risk"].plan, { model: "gpt-5.6-sol", reasoning: "high" });
+});
+
+test("rejects prose ownership and parses a typed blocked prerequisite without packages", () => {
+  assert.throws(
+    () =>
+      parseFastChangeContract(
+        `<fast-change-contract>${JSON.stringify({
+          title: "Add attribution",
+          description: "Add one note.",
+          acceptanceCriteria: ["The note is visible."],
+          ownedPaths: ["frontend translation resource containing the namespace"],
+          verificationCommandIds: ["typecheck"],
+          unresolvedDecisions: [],
+          riskSignals: [],
+        })}</fast-change-contract>`,
+      ),
+    /exact repository path, not prose/,
+  );
+
+  const result = parsePlanResult(`<work-packages>${JSON.stringify({
+    disposition: "blocked-prerequisite",
+    evidence: [{ path: "scripts/export-records.py", detail: "This is the sanctioned read path." }],
+    blocker: {
+      code: "external-data-unavailable",
+      detail: "The required records cannot be read from the sandbox.",
+      requiredAction: "Attach a trusted read-only export of the required records.",
+    },
+    packages: [],
+  })}</work-packages>`);
+  assert.deepEqual(result, {
+    disposition: "blocked-prerequisite",
+    evidence: [{ path: "scripts/export-records.py", detail: "This is the sanctioned read path." }],
+    blocker: {
+      code: "external-data-unavailable",
+      detail: "The required records cannot be read from the sandbox.",
+      requiredAction: "Attach a trusted read-only export of the required records.",
+    },
+    packages: [],
+  });
 });
 
 test("keeps all blocking review findings and makes P2 advice non-blocking by default", () => {

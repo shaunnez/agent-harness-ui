@@ -71,7 +71,7 @@ export class SpecificationPlanningOrchestrator {
           for (const workPackage of workPackages) {
             selectVerificationCommands(verificationManifest, workPackage.verificationCommandIds);
           }
-        } else {
+        } else if (planResult.disposition === "already-satisfied") {
           for (const evidence of planResult.evidence) {
             const info = await stat(path.resolve(evidencePath, evidence.path)).catch(() => null);
             if (!info) throw new Error(`Already-satisfied evidence path does not exist: ${evidence.path}`);
@@ -133,7 +133,8 @@ export class SpecificationPlanningOrchestrator {
         draft.planResult = {
           disposition: planResult.disposition,
           evidence: planResult.evidence,
-          changesRemainNecessary: planResult.disposition === "changes-required",
+          changesRemainNecessary: planResult.disposition !== "already-satisfied",
+          blocker: planResult.blocker ?? null,
           artifactId: planArtifact?.id ?? null,
           repositoryAuthorityId: task.repositoryAuthority?.id ?? null,
           repositoryRevision: task.repositoryAuthority?.selectedRevision ?? null,
@@ -170,24 +171,40 @@ export class SpecificationPlanningOrchestrator {
           }
         }
         draft.workPackages = workPackages;
-        draft.status =
-          planResult.disposition === "already-satisfied"
+        const prerequisiteBlocked = planResult.disposition === "blocked-prerequisite";
+        draft.status = prerequisiteBlocked
+          ? "blocked"
+          : planResult.disposition === "already-satisfied"
             ? "awaiting-already-satisfied"
             : "awaiting-plan-approval";
         draft.currentStage = "plan";
         draft.activeRunKind = null;
         draft.activeRunReservationId = null;
+        draft.error = prerequisiteBlocked ? planResult.blocker.detail : null;
+        draft.blocker = prerequisiteBlocked
+          ? {
+              code: "plan-prerequisite",
+              prerequisiteCode: planResult.blocker.code,
+              detail: planResult.blocker.detail,
+              requiredAction: planResult.blocker.requiredAction,
+              detectedAt: now(),
+            }
+          : null;
         const batches = workPackages.length ? Math.max(...workPackages.map((item) => item.batch)) : 0;
         draft.events.push(
           activity(
             "plan",
-            planResult.disposition === "already-satisfied"
-              ? "Repository evidence indicates the request is already satisfied"
-              : "Implementation plan ready",
-            planResult.disposition === "already-satisfied"
-              ? "No work packages were created. A human must review the evidence and explicitly close the task."
-              : `${workPackages.length} work package${workPackages.length === 1 ? "" : "s"} across ${batches} dependency batch${batches === 1 ? "" : "es"}.`,
-            "success",
+            prerequisiteBlocked
+              ? "Planning blocked by a prerequisite"
+              : planResult.disposition === "already-satisfied"
+                ? "Repository evidence indicates the request is already satisfied"
+                : "Implementation plan ready",
+            prerequisiteBlocked
+              ? `${planResult.blocker.detail} Required action: ${planResult.blocker.requiredAction}`
+              : planResult.disposition === "already-satisfied"
+                ? "No work packages were created. A human must review the evidence and explicitly close the task."
+                : `${workPackages.length} work package${workPackages.length === 1 ? "" : "s"} across ${batches} dependency batch${batches === 1 ? "" : "es"}.`,
+            prerequisiteBlocked ? "warning" : "success",
             "decision",
           ),
         );

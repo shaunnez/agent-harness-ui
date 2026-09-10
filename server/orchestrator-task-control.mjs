@@ -487,6 +487,46 @@ export class TaskControlOrchestrator {
     return { started: true };
   }
 
+  async resumePlanningAfterPrerequisite(id) {
+    const task = await this._store.get(id);
+    if (!task) throw new Error("Task not found.");
+    if (
+      task.status !== "blocked" ||
+      task.currentStage !== "plan" ||
+      task.blocker?.code !== "plan-prerequisite"
+    ) {
+      throw new Error("The task is not blocked by a planning prerequisite.");
+    }
+    if ((task.attemptsByStage?.plan ?? 0) >= stageRunLimitFor(task, "plan")) {
+      throw new Error(
+        "The Plan retry allowance is exhausted; inspect the retained prerequisite evidence before granting another Plan attempt.",
+      );
+    }
+    const blockerSnapshot = JSON.stringify(task.blocker);
+    const started = await this.start(id, "planning", {
+      canStart: (draft) =>
+        draft.status === "blocked" &&
+        draft.currentStage === "plan" &&
+        draft.blocker?.code === "plan-prerequisite" &&
+        JSON.stringify(draft.blocker) === blockerSnapshot,
+      onReserve: (draft) => {
+        draft.blocker = null;
+        draft.error = null;
+        draft.events.push(
+          activity(
+            "plan",
+            "Planning prerequisite marked ready for recheck",
+            "A new read-only planning attempt will verify whether the retained prerequisite is now available.",
+            "info",
+            "decision",
+          ),
+        );
+      },
+    });
+    if (!started) throw new Error("Task is already running.");
+    return { started: true };
+  }
+
   async revalidatePlan(id) {
     return this._planAuthority.revalidatePlan(id);
   }

@@ -11,6 +11,87 @@ import {
   waitForStatus,
 } from "./orchestrator-test-support.mjs";
 
+test("a blocked planning prerequisite cannot create or advance an implementation candidate", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-plan-prerequisite-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Analyse protected records",
+      description: "Read the exact records before making a judgement.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "awaiting-spec-approval";
+      draft.currentStage = "specification";
+    });
+    let attempt = 0;
+    const blockedOutput = `<work-packages>${JSON.stringify({
+      disposition: "blocked-prerequisite",
+      evidence: [{ path: "scripts/export-records.py", detail: "The repository uses this exporter." }],
+      blocker: {
+        code: "external-data-unavailable",
+        detail: "The required database records are unavailable inside the sandbox.",
+        requiredAction: "Attach a trusted read-only export, then recheck planning.",
+      },
+      packages: [],
+    })}</work-packages>`;
+    const readyOutput = `<work-packages>${JSON.stringify({
+      disposition: "changes-required",
+      evidence: [],
+      packages: [
+        {
+          id: "S1",
+          title: "Produce the assessment",
+          description: "Use the supplied records to produce the requested assessment.",
+          dependencies: [],
+          ownedPaths: ["docs/assessment.md"],
+          verificationCommandIds: ["test"],
+        },
+      ],
+    })}</work-packages>`;
+    const orchestrator = new TaskOrchestrator(store, {
+      readVerificationManifest: async () => ({
+        source: ".agent-harness/verification.json",
+        commands: [{ id: "test", command: ["npm", "test"] }],
+      }),
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      runCodex: async () => ({
+        finalText: attempt++ === 0 ? blockedOutput : readyOutput,
+        model: "gpt-5.6-sol",
+        reasoning: "high",
+        usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    assert.deepEqual(await orchestrator.approveSpecification(task.id), {
+      started: true,
+      completed: false,
+    });
+    let current = await waitForStatus(store, task.id, "blocked");
+    assert.equal(current.currentStage, "plan");
+    assert.equal(current.blocker.code, "plan-prerequisite");
+    assert.equal(current.blocker.prerequisiteCode, "external-data-unavailable");
+    assert.match(current.blocker.requiredAction, /trusted read-only export/);
+    assert.equal(current.planResult.disposition, "blocked-prerequisite");
+    assert.equal(current.workPackages.length, 0);
+    assert.equal(current.candidates.length, 0);
+    assert.match(current.events.at(-1).title, /blocked by a prerequisite/);
+
+    assert.deepEqual(await orchestrator.resumePlanningAfterPrerequisite(task.id), { started: true });
+    current = await waitForStatus(store, task.id, "awaiting-plan-approval");
+    assert.equal(current.blocker, null);
+    assert.equal(current.error, null);
+    assert.equal(current.planResult.disposition, "changes-required");
+    assert.equal(current.workPackages.length, 1);
+    assert.equal(current.candidates.length, 0);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("a revised plan retains the rejected plan artifact and replaces package scope", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-revise-plan-"));
   try {

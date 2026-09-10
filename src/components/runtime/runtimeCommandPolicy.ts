@@ -49,6 +49,15 @@ export function deriveNextAction(task: RuntimeTask | RuntimeTaskCore) {
       detail:
         "Review the concrete repository evidence. The harness will not close this task from model judgement alone.",
     };
+  if (task.status === "blocked" && task.currentStage === "plan" && task.blocker?.code === "plan-prerequisite")
+    return {
+      action: "plan" as const,
+      label: "Recheck prerequisite and revise plan",
+      title: "Planning prerequisite unavailable",
+      detail:
+        task.blocker.requiredAction ??
+        "Complete the recorded prerequisite, then start a new read-only planning attempt.",
+    };
   if (
     (task.status === "merging" && task.pullRequestIntent?.status === "publishing") ||
     (task.status === "awaiting-pr-merge" && task.pullRequestIntent?.status === "open") ||

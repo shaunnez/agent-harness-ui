@@ -205,6 +205,16 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson, re
         send(response, 202, result);
         return true;
       }
+      if (
+        action === "plan" &&
+        task.status === "blocked" &&
+        task.currentStage === "plan" &&
+        task.blocker?.code === "plan-prerequisite"
+      ) {
+        const result = await orchestrator.resumePlanningAfterPrerequisite(id);
+        send(response, 202, result);
+        return true;
+      }
       if (action === "grant-retry") {
         const grant = retryGrantContext(task);
         if (grant.error) {

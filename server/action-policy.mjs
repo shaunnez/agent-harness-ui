@@ -36,7 +36,7 @@ const RUN_ACTIONS = Object.freeze({
   specification: { kind: "specification", statuses: ["failed", "cancelled"], stages: ["specification"] },
   plan: {
     kind: "planning",
-    statuses: ["awaiting-plan-approval", "failed", "cancelled"],
+    statuses: ["awaiting-plan-approval", "failed", "blocked", "cancelled"],
     stages: ["plan", "implement"],
   },
   implement: {
@@ -78,7 +78,19 @@ export function runActionAdmission(task, action) {
   if (action === "repair" && candidate?.status !== "repair_required") {
     return deny("The current candidate is not awaiting repair.");
   }
+  if (
+    action === "plan" &&
+    task.status === "blocked" &&
+    !(task.currentStage === "plan" && task.blocker?.code === "plan-prerequisite")
+  ) {
+    return deny("This blocker cannot be resolved by repeating planning.");
+  }
   const effectiveStage = action === "repair" ? "implement" : task.currentStage;
+  const prerequisitePlanningRecheck =
+    action === "plan" &&
+    task.status === "blocked" &&
+    task.currentStage === "plan" &&
+    task.blocker?.code === "plan-prerequisite";
   const allowanceExhausted =
     (task.attemptsByStage?.[effectiveStage] ?? 0) >= stageRunLimitFor(task, effectiveStage);
   if (CANDIDATE_GATE_ACTIONS.has(action)) {
@@ -96,7 +108,7 @@ export function runActionAdmission(task, action) {
   if (!configuration.statuses.includes(task.status)) {
     return deny(`Task cannot run ${action} while it is ${task.status}.`);
   }
-  if (task.status === "blocked" || allowanceExhausted) {
+  if ((task.status === "blocked" && !prerequisitePlanningRecheck) || allowanceExhausted) {
     return deny(`The ${effectiveStage} stage has exhausted its retry allowance.`, "retry-exhausted");
   }
   return { allowed: true, reason: null, mode: "execute", configuration };

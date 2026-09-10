@@ -102,10 +102,11 @@ export function fastEscalation(input = {}) {
   let target = "standard";
 
   if (input.kind === "triage") {
-    const highRisk = matchingSignals(
-      `${input.text ?? ""}\n${(input.riskSignals ?? []).join("\n")}`,
-      HIGH_RISK_SIGNALS,
-    );
+    // Triage has a structured riskSignals field. Scanning the surrounding prose made
+    // negated statements such as "No backend, schema, or migration changes" look like
+    // positive risk and escalated narrow copy tasks to high-risk. Treat the structured
+    // field as the boundary instead of reinterpreting free-form narrative.
+    const highRisk = matchingSignals((input.riskSignals ?? []).join("\n"), HIGH_RISK_SIGNALS);
     if (highRisk.length) {
       target = "high-risk";
       reasons.push(`triage discovered ${highRisk.join(", ")}`);
