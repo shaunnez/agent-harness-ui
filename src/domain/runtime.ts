@@ -267,6 +267,10 @@ export interface RuntimeGrillOption {
 
 export type RuntimeGrillPolicy = "manual" | "auto-accept-recommendations";
 
+export type RuntimeGatePolicy = "manual" | "auto-accept-recommendations";
+
+export type RuntimeGatePolicies = Partial<Record<RuntimeGateStage, RuntimeGatePolicy>>;
+
 export type RuntimeGrillAnswerSource =
   | "operator-answer"
   | "operator-accepted-recommendation"
@@ -882,6 +886,7 @@ export interface RuntimeModelCatalog {
 export interface RuntimeSettings {
   projects?: RuntimeProject[];
   grillPolicy: RuntimeGrillPolicy;
+  gatePolicies?: RuntimeGatePolicies;
   allowedModels: string[];
   defaultModel: string;
   defaultReasoning: string;

@@ -14,6 +14,7 @@ export function fixtureSettings(): { settings: RuntimeSettings; catalog: Runtime
   return {
     settings: {
       grillPolicy: "manual",
+      gatePolicies: {},
       allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "claude-opus-5"],
       defaultModel: "gpt-5.6-luna",
       defaultReasoning: "xhigh",

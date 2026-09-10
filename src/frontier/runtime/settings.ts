@@ -3,7 +3,13 @@ import { policyRoles } from "./policies.ts";
 
 export type SettingsInput = Pick<
   RuntimeSettings,
-  "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "grillPolicy" | "designPolicies"
+  | "allowedModels"
+  | "defaultModel"
+  | "defaultReasoning"
+  | "stagePolicies"
+  | "grillPolicy"
+  | "gatePolicies"
+  | "designPolicies"
 > & { profileStagePolicies: NonNullable<RuntimeSettings["profileStagePolicies"]> };
 export function settingsInput(settings: RuntimeSettings): SettingsInput {
   return structuredClone({
@@ -17,6 +23,7 @@ export function settingsInput(settings: RuntimeSettings): SettingsInput {
       "high-risk": settings.stagePolicies,
     },
     grillPolicy: settings.grillPolicy,
+    gatePolicies: { ...settings.gatePolicies },
     designPolicies: settings.designPolicies,
   });
 }
