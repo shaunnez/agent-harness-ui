@@ -17,7 +17,9 @@ import type {
 import { usePanelState } from "../app/panel-state";
 import type { FrontierGateway } from "../runtime/contracts";
 import { policyRoles, providerPolicyMatrix } from "../runtime/policies";
+import { stageLabels } from "../runtime/presentation";
 import { type SettingsInput, settingsInput, settingsIssue } from "../runtime/settings";
+import { candidateGateStages } from "../../components/runtime/workflow";
 import { PolicyChoice, ProviderPresets } from "./PolicyMatrix";
 
 export function ExecutionSettings(props: {
@@ -278,6 +280,56 @@ function SettingsEditor({
                     onChange={() => update({ ...draft, grillPolicy: "auto-accept-recommendations" })}
                   />
                 </label>
+              </section>
+              <section className="workflow-card">
+                <h3>Gate auto-run</h3>
+                <p className="quiet">
+                  Manual is the default for every gate. Opt a stage in to advance automatically instead of
+                  waiting for a continue click.
+                </p>
+                {candidateGateStages.map((stage) => {
+                  const policy = draft.gatePolicies?.[stage] ?? "manual";
+                  const label = stageLabels[stage];
+                  return (
+                    <fieldset className="setting-row" key={stage}>
+                      <legend>{label}</legend>
+                      <label className="setting-row">
+                        <span>
+                          <strong>Manual</strong>
+                          <small>Wait for an operator to continue {label.toLowerCase()}.</small>
+                        </span>
+                        <input
+                          type="radio"
+                          name={`gate-policy-${stage}`}
+                          checked={policy === "manual"}
+                          onChange={() =>
+                            update({
+                              ...draft,
+                              gatePolicies: { ...draft.gatePolicies, [stage]: "manual" },
+                            })
+                          }
+                        />
+                      </label>
+                      <label className="setting-row">
+                        <span>
+                          <strong>Automatically accept recommendations</strong>
+                          <small>Advance {label.toLowerCase()} without waiting for a manual continue.</small>
+                        </span>
+                        <input
+                          type="radio"
+                          name={`gate-policy-${stage}`}
+                          checked={policy === "auto-accept-recommendations"}
+                          onChange={() =>
+                            update({
+                              ...draft,
+                              gatePolicies: { ...draft.gatePolicies, [stage]: "auto-accept-recommendations" },
+                            })
+                          }
+                        />
+                      </label>
+                    </fieldset>
+                  );
+                })}
               </section>
             </>
           )}

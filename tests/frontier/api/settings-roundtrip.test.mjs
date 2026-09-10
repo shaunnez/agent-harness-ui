@@ -39,6 +39,7 @@ test("execution defaults round-trip through the real API without rewriting exist
     settings.profileStagePolicies.standard.grill = policy;
     settings.stagePolicies = structuredClone(settings.profileStagePolicies.standard);
     settings.grillPolicy = "auto-accept-recommendations";
+    settings.gatePolicies = { "dev-review": "auto-accept-recommendations" };
     const saved = await send("/api/settings", settings, "PUT");
     assert.equal(saved.status, 200, await saved.clone().text());
     assert.deepEqual(await api.store.get(task.id), prior);
@@ -51,6 +52,8 @@ test("execution defaults round-trip through the real API without rewriting exist
     assert.equal(next.runs.length, 0);
     const read = await (await fetch(`${api.origin}/api/settings`)).json();
     assert.deepEqual(read.settings.profileStagePolicies.standard.grill, policy);
+    assert.equal(read.settings.gatePolicies?.["dev-review"], "auto-accept-recommendations");
+    assert.equal(read.settings.gatePolicies?.test ?? "manual", "manual");
     const rejected = await send("/api/settings", { ...settings, defaultReasoning: "unsupported" }, "PUT");
     assert.ok(rejected.status >= 400);
     assert.deepEqual(await api.store.settings(), read.settings);

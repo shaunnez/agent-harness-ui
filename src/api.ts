@@ -145,7 +145,7 @@ export async function updateRuntimeSettings(
     RuntimeSettings,
     "allowedModels" | "defaultModel" | "defaultReasoning" | "stagePolicies" | "profileStagePolicies"
   > &
-    Partial<Pick<RuntimeSettings, "grillPolicy" | "designPolicies">>,
+    Partial<Pick<RuntimeSettings, "grillPolicy" | "gatePolicies" | "designPolicies">>,
 ) {
   return (
     await request<{ settings: RuntimeSettings }>("/api/settings", {

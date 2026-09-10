@@ -57,6 +57,7 @@ test("saved defaults affect new tasks only and failed settings validation preser
   settings.profileStagePolicies.standard.grill = { model: "gpt-5.6-sol", reasoning: "high" };
   settings.stagePolicies = structuredClone(settings.profileStagePolicies.standard);
   settings.grillPolicy = "auto-accept-recommendations";
+  settings.gatePolicies = { ...settings.gatePolicies, "dev-review": "auto-accept-recommendations" };
   await gateway.saveSettings(settings);
   const after = await gateway.core("PC-153");
   assert.deepEqual(after.agentConfig, before.agentConfig);
@@ -71,6 +72,8 @@ test("saved defaults affect new tasks only and failed settings validation preser
   });
   assert.deepEqual(task.agentConfig.stagePolicies.grill, settings.stagePolicies.grill);
   assert.equal(task.grillPolicy, "auto-accept-recommendations");
+  assert.equal((await gateway.status()).settings.gatePolicies?.["dev-review"], "auto-accept-recommendations");
+  assert.equal((await gateway.status()).settings.gatePolicies?.test ?? "manual", "manual");
   await assert.rejects(gateway.saveSettings({ ...settings, allowedModels: [] }), /allowed/);
   assert.deepEqual((await gateway.status()).settings.allowedModels, settings.allowedModels);
 });
