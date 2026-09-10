@@ -4,6 +4,7 @@ import type { RuntimeProject, RuntimeRun } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { FrontierGateway, TaskSummary } from "../runtime/contracts";
 import {
+  formatApproximateCost,
   formatCount,
   formatDuration,
   isActiveRun,
@@ -228,11 +229,7 @@ export function Usage({
                         <td>{formatCount(task.usage.cachedInputTokens)}</td>
                         <td>{formatCount(task.usage.outputTokens)}</td>
                         <td>{formatDuration(taskWallTime(task, now))}</td>
-                        <td>
-                          {task.usage.cost != null && task.usage.pricingVersion
-                            ? `$${task.usage.cost.toFixed(4)}`
-                            : "—"}
-                        </td>
+                        <td>{formatApproximateCost(task.usage.cost, task.usage.pricingVersion)}</td>
                       </tr>
                     ))
                   : records.map(({ task, run }) => (
@@ -261,11 +258,7 @@ export function Usage({
                         <td>{run.usage ? formatCount(run.usage.cachedInputTokens) : "—"}</td>
                         <td>{run.usage ? formatCount(run.usage.outputTokens) : "—"}</td>
                         <td>{formatDuration(runTime(run, now, isActiveRun(task, run)))}</td>
-                        <td>
-                          {run.apiEstimate != null && run.usage?.pricingVersion
-                            ? `$${run.apiEstimate.toFixed(4)}`
-                            : "—"}
-                        </td>
+                        <td>{formatApproximateCost(run.apiEstimate, run.usage?.pricingVersion)}</td>
                       </tr>
                     ))}
             </tbody>
