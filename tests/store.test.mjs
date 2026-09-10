@@ -3,6 +3,7 @@ import { access, mkdir, mkdtemp, readFile, rm, utimes, writeFile } from "node:fs
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { assertSupportedReasoning, defaultRuntimeSettings } from "../server/model-catalog.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 
 function continuationInput(source) {
@@ -586,4 +587,17 @@ test("migrates legacy design requests without rewriting recorded provider models
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("Claude Fable 5.1 is allowed and validates like claude-fable-5", () => {
+  const settings = defaultRuntimeSettings();
+  assert.ok(settings.allowedModels.includes("claude-fable-5-1"));
+  assert.ok(settings.allowedModels.includes("claude-fable-5"));
+
+  const fable5Policy = { model: "claude-fable-5", reasoning: "xhigh" };
+  const fable51Policy = { model: "claude-fable-5-1", reasoning: "xhigh" };
+  assert.equal(
+    assertSupportedReasoning(fable51Policy.model, fable51Policy.reasoning),
+    assertSupportedReasoning(fable5Policy.model, fable5Policy.reasoning),
+  );
 });
