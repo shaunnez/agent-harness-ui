@@ -256,3 +256,13 @@
 .selection-error button {
   margin-left: 12px;
 }
+
+/* The HUD card shows a failure's verdict line only; two lines is its ceiling. */
+.selection-copy .hud-reason {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}

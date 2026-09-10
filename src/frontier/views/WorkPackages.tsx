@@ -1,7 +1,9 @@
 import { ArrowLeft, ArrowRight, Binoculars } from "@phosphor-icons/react";
 import { usePanelState } from "../app/panel-state";
+import { ScrollArea } from "../ui/ScrollArea";
 import type { RuntimeRun, RuntimeWorkPackage } from "../../domain";
-import { packageState } from "../runtime/presentation";
+import { packageState, splitRecordedDetail } from "../runtime/presentation";
+
 
 export function WorkPackages({
   packages,
@@ -77,7 +79,11 @@ export function WorkPackages({
                         </span>
                         <ArrowRight size={18} />
                       </button>
-                      {["running", "failed"].includes(item.status) && <p>{item.error ?? item.description}</p>}
+                      {["running", "failed"].includes(item.status) && (
+                        <p className="package-headline">
+                          {splitRecordedDetail(item.error ?? item.description).headline}
+                        </p>
+                      )}
                       <small>
                         {item.dependencies.length
                           ? `Depends on ${item.dependencies.join(", ")}`
@@ -91,9 +97,24 @@ export function WorkPackages({
         </div>
       ) : (
         <section className="package-detail" aria-label={`Selected package ${selected.id}`}>
-          <p>
-            {packageState(selected, packages)} · {selected.error ?? selected.description}
-          </p>
+          {(() => {
+            const { headline, body } = splitRecordedDetail(selected.error ?? selected.description);
+            return (
+              <>
+                <p>
+                  {packageState(selected, packages)} · {headline}
+                </p>
+                {body && (
+                  <ScrollArea
+                    className="package-failure-output"
+                    label={`${selected.id} qualification output`}
+                  >
+                    <pre>{body}</pre>
+                  </ScrollArea>
+                )}
+              </>
+            );
+          })()}
           <dl>
             <dt>Owned paths</dt>
             <dd>{selected.ownedPaths.join(", ") || "Not recorded"}</dd>

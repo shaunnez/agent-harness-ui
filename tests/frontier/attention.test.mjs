@@ -9,6 +9,7 @@ import {
   needsYou,
   packageState,
   runDuration,
+  splitRecordedDetail,
 } from "../../src/frontier/runtime/presentation.ts";
 
 test("HQ counts decisions without counting a normal dependency wait", () => {
@@ -48,7 +49,12 @@ test("a failed package does not hide a healthy executing sibling", () => {
   const task = makeFixtureTasks().find((item) => item.id === "AH-054");
   assert.equal(isExecuting(task), true);
   assert.equal(projectTaskAttention(task).kind, "failed");
-  assert.equal(projectTaskAttention(task).reason, "A verification assertion failed.");
+  // The fixture's reason is a realistic multi-line qualification failure, so assert the
+  // verdict line the UI actually shows rather than pinning the whole command output.
+  assert.equal(
+    splitRecordedDetail(projectTaskAttention(task).reason).headline,
+    "S2 did not qualify: playwright-e2e failed — make e2e-native exited 2.",
+  );
 });
 
 test("missing evidence stays absent and unrelated updates never become waiting-since timestamps", () => {
@@ -104,5 +110,40 @@ test("terminal history does not revive an old blocker or failed package as a cur
     const attention = projectTaskAttention({ ...task, status, blocker: { detail: "Historical failure" } });
     assert.equal(attention.kind, "completed");
     assert.equal(attention.nextActor, null);
+  }
+});
+
+test("a recorded reason keeps its verdict line separate from the command output", () => {
+  // The shape a failed qualification actually persists: verdict, then the command's own
+  // output. HTML collapses the newlines, so a summary that renders the whole string is one
+  // unreadable paragraph — the split is what keeps the card to the verdict.
+  const recorded = [
+    "S1 did not qualify: playwright-e2e failed — make e2e-native exited 2.",
+    "3 unexpected, 0 flaky, 83 expected",
+    "Playwright unexpected results:",
+    "- 15-tenant-branding.spec.ts › two accounts remain isolated",
+  ].join("\n");
+  const { headline, body } = splitRecordedDetail(recorded);
+  assert.equal(headline, "S1 did not qualify: playwright-e2e failed — make e2e-native exited 2.");
+  assert.equal(body, "3 unexpected, 0 flaky, 83 expected\nPlaywright unexpected results:\n- 15-tenant-branding.spec.ts › two accounts remain isolated");
+  assert.ok(!headline.includes("\n"), "a headline never carries a line break into a summary row");
+});
+
+test("a single-line reason reports no output body, so nothing renders an empty box", () => {
+  for (const recorded of [
+    "S1 retained slice did not qualify under the corrected verification plan.",
+    "  Padded on both sides.  ",
+    "Trailing newline only.\n",
+    "Blank lines only after the verdict.\n\n   \n",
+  ]) {
+    const { body } = splitRecordedDetail(recorded);
+    assert.equal(body, null, `${JSON.stringify(recorded)} has no output beneath its verdict`);
+  }
+  assert.equal(splitRecordedDetail("  Padded on both sides.  ").headline, "Padded on both sides.");
+});
+
+test("an absent reason is not rendered as the string null", () => {
+  for (const missing of [null, undefined, ""]) {
+    assert.deepEqual(splitRecordedDetail(missing), { headline: "", body: null });
   }
 });

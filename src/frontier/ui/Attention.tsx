@@ -1,6 +1,7 @@
 import { ArrowRight, CheckCircle, Clock, Info, Question, WarningCircle } from "@phosphor-icons/react";
 import type { TaskCore, TaskSummary } from "../runtime/contracts";
-import { attentionAction, attentionFor, stageLabels } from "../runtime/presentation";
+import { attentionAction, attentionFor, splitRecordedDetail, stageLabels } from "../runtime/presentation";
+import { ScrollArea } from "./ScrollArea";
 
 export function AttentionIcon({ kind, size = 22 }: { kind: string; size?: number }) {
   return kind === "answer" || kind === "approval" ? (
@@ -41,7 +42,7 @@ export function Attention({
       </div>
       <p className="attention-reason">
         {connected
-          ? (attention.reason ??
+          ? (splitRecordedDetail(attention.reason).headline ||
             (attention.kind === "completed"
               ? "The recorded workflow is complete."
               : attention.kind === "idle"
@@ -51,6 +52,11 @@ export function Attention({
                   : "Reason not recorded. Inspect the retained task evidence."))
           : "Connection lost. The scene shows the last known task state."}
       </p>
+      {connected && splitRecordedDetail(attention.reason).body && (
+        <ScrollArea className="recorded-detail-output" label="Recorded detail">
+          <pre>{splitRecordedDetail(attention.reason).body}</pre>
+        </ScrollArea>
+      )}
       <div className="attention-meta">
         <span>Next: {connected ? (attention.nextActor ?? "No action pending") : "Reconnect"}</span>
         {attention.since && (

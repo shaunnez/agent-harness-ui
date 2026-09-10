@@ -10,6 +10,7 @@ import { providerRuntimeDefaults } from "../../../server/policy-defaults.mjs";
 import type {
   RolePolicyId,
   RuntimeAgentPolicy,
+  RuntimeGatePolicy,
   RuntimeSettings,
   RuntimeStatus,
   WorkflowProfileId,
@@ -21,6 +22,24 @@ import { stageLabels } from "../runtime/presentation";
 import { type SettingsInput, settingsInput, settingsIssue } from "../runtime/settings";
 import { candidateGateStages } from "../../components/runtime/workflow";
 import { PolicyChoice, ProviderPresets } from "./PolicyMatrix";
+
+/**
+ * Both gate choices, once. The stage name carries the context, so the segment text stays
+ * short enough for the three stages to align; `description` is the full wording a screen
+ * reader hears, which the visible label would only repeat six times over.
+ */
+const GATE_POLICY_CHOICES: ReadonlyArray<{
+  value: RuntimeGatePolicy;
+  label: string;
+  description: string;
+}> = [
+  { value: "manual", label: "Manual", description: "Wait for an operator to continue" },
+  {
+    value: "auto-accept-recommendations",
+    label: "Auto-accept",
+    description: "Automatically accept recommendations",
+  },
+];
 
 export function ExecutionSettings(props: {
   status: RuntimeStatus | null;
@@ -287,49 +306,42 @@ function SettingsEditor({
                   Manual is the default for every gate. Opt a stage in to advance automatically instead of
                   waiting for a continue click.
                 </p>
-                {candidateGateStages.map((stage) => {
-                  const policy = draft.gatePolicies?.[stage] ?? "manual";
-                  const label = stageLabels[stage];
-                  return (
-                    <fieldset className="setting-row" key={stage}>
-                      <legend>{label}</legend>
-                      <label className="setting-row">
-                        <span>
-                          <strong>Manual</strong>
-                          <small>Wait for an operator to continue {label.toLowerCase()}.</small>
+                <ul className="gate-policy-list">
+                  {candidateGateStages.map((stage) => {
+                    const policy = draft.gatePolicies?.[stage] ?? "manual";
+                    const label = stageLabels[stage];
+                    const labelId = `gate-policy-${stage}-label`;
+                    return (
+                      <li className="gate-policy-row" key={stage}>
+                        <span className="gate-policy-stage" id={labelId}>
+                          {label}
                         </span>
-                        <input
-                          type="radio"
-                          name={`gate-policy-${stage}`}
-                          checked={policy === "manual"}
-                          onChange={() =>
-                            update({
-                              ...draft,
-                              gatePolicies: { ...draft.gatePolicies, [stage]: "manual" },
-                            })
-                          }
-                        />
-                      </label>
-                      <label className="setting-row">
-                        <span>
-                          <strong>Automatically accept recommendations</strong>
-                          <small>Advance {label.toLowerCase()} without waiting for a manual continue.</small>
-                        </span>
-                        <input
-                          type="radio"
-                          name={`gate-policy-${stage}`}
-                          checked={policy === "auto-accept-recommendations"}
-                          onChange={() =>
-                            update({
-                              ...draft,
-                              gatePolicies: { ...draft.gatePolicies, [stage]: "auto-accept-recommendations" },
-                            })
-                          }
-                        />
-                      </label>
-                    </fieldset>
-                  );
-                })}
+                        <div className="segmented-radio" role="radiogroup" aria-labelledby={labelId}>
+                          {GATE_POLICY_CHOICES.map((choice) => (
+                            <label
+                              key={choice.value}
+                              className={policy === choice.value ? "is-selected" : undefined}
+                            >
+                              <input
+                                type="radio"
+                                name={`gate-policy-${stage}`}
+                                aria-label={choice.description}
+                                checked={policy === choice.value}
+                                onChange={() =>
+                                  update({
+                                    ...draft,
+                                    gatePolicies: { ...draft.gatePolicies, [stage]: choice.value },
+                                  })
+                                }
+                              />
+                              <span>{choice.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               </section>
             </>
           )}
