@@ -1,4 +1,5 @@
 import { validateDesignPolicies } from "./design-policies.mjs";
+import { validateGatePolicies } from "./gate-policies.mjs";
 import { normalizeModelId, readExecutionProviderCatalog } from "./model-catalog.mjs";
 import { inspectRepositoryContract } from "./repository-contract.mjs";
 import { projectTaskSummary } from "./task-projections.mjs";
@@ -54,6 +55,7 @@ export function createRuntimeSettingsRoutes({
       const grillPolicy =
         input.grillPolicy === undefined ? currentSettings.grillPolicy : String(input.grillPolicy);
       if (!GRILL_POLICIES.has(grillPolicy)) throw new Error("Choose a supported Grill interaction policy.");
+      const gatePolicies = validateGatePolicies(input.gatePolicies, currentSettings.gatePolicies);
       const stagePolicies = validateStagePolicies(
         input.stagePolicies,
         known,
@@ -82,6 +84,7 @@ export function createRuntimeSettingsRoutes({
         draft.defaultModel = defaultModel;
         draft.defaultReasoning = defaultReasoning;
         draft.grillPolicy = grillPolicy;
+        draft.gatePolicies = gatePolicies;
         draft.stagePolicies = stagePolicies;
         draft.profileStagePolicies = profileStagePolicies;
         draft.designPolicies = designPolicies;
