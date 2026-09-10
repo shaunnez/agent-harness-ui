@@ -94,6 +94,7 @@ test("keeps exact-candidate PR approval eligible in the SQLite compact task resp
       const candidate = {
         id: "C1",
         revisionNumber: 1,
+        baseRevision: draft.repositoryAuthority.selectedRevision,
         headRevision: "candidate-c1-r1",
         status: "awaiting_human_approval",
         revisions: [],

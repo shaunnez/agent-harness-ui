@@ -45,3 +45,10 @@ export function validateGatePolicies(input, current) {
 export function resolveGatePolicy(settings, stage) {
   return settings?.gatePolicies?.[stage] ?? "manual";
 }
+
+export const GATE_AUTO_ADVANCE = Object.freeze({
+  implementation: { readyStatus: "ready-for-review", stage: "dev-review", nextKind: "review" },
+  repair: { readyStatus: "ready-for-review", stage: "dev-review", nextKind: "review" },
+  review: { readyStatus: "ready-for-test", stage: "test", nextKind: "test" },
+  test: { readyStatus: "ready-for-final-review", stage: "final-review", nextKind: "final-review" },
+});

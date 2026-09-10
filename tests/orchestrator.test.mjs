@@ -13,5 +13,6 @@ import "./orchestrator-review-execution.test.mjs";
 import "./orchestrator-test-retry.test.mjs";
 import "./orchestrator-repair-freshness.test.mjs";
 import "./orchestrator-runtime-policy.test.mjs";
+import "./orchestrator-gate-auto-run.test.mjs";
 import "./orchestrator-candidate-lineage.test.mjs";
 import "./orchestrator-public-contract.test.mjs";

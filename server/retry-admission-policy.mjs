@@ -154,6 +154,9 @@ function actionEligibilityFor(task, action) {
   if (action === "approve-merge") {
     if (task.status !== "awaiting-human-approval" || candidate?.status !== "awaiting_human_approval")
       return deny();
+    if (candidate.baseRevision !== task.repositoryAuthority?.selectedRevision) {
+      return deny("Candidate promotion is blocked until its base matches the verified task authority.");
+    }
     const stale = CANDIDATE_GATE_STAGES.find((stage) => {
       const freshness = gateFreshnessForAdmission(task, stage, candidate);
       return (
@@ -169,6 +172,9 @@ function actionEligibilityFor(task, action) {
   if (action === "open-pr") {
     if (task.status !== "awaiting-human-approval" || candidate?.status !== "awaiting_human_approval")
       return deny();
+    if (candidate.baseRevision !== task.repositoryAuthority?.selectedRevision) {
+      return deny("Candidate promotion is blocked until its base matches the verified task authority.");
+    }
     const stale = CANDIDATE_GATE_STAGES.find((stage) => {
       const freshness = gateFreshnessForAdmission(task, stage, candidate);
       return (
@@ -191,7 +197,9 @@ function actionEligibilityFor(task, action) {
     );
     return ["failed", "blocked"].includes(task.status) && task.currentStage === "implement" && retained
       ? allow()
-      : deny("No interrupted, timed-out or ownership-blocked retained package is available to continue.");
+      : deny(
+          "No interrupted, timed-out, ownership-blocked or qualification-failed retained package is available to recover.",
+        );
   }
   if (action === "retry-test") {
     const verification = [...(candidate?.verificationRuns ?? [])]

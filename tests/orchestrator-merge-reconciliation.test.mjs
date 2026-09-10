@@ -202,6 +202,25 @@ test("refreshes a target-diverged candidate as a new revision and invalidates do
       draft.mergeIntent = { status: "failed", error: draft.error };
     });
     const orchestrator = new TaskOrchestrator(store, {
+      repositoryAuthorityService: {
+        capture: async () => ({
+          id: "refreshed-authority",
+          repositoryRoot: directory,
+          checkoutBranch: "main",
+          localBranchRef: "refs/heads/main",
+          localHead: targetHead,
+          upstreamBranch: "origin/main",
+          upstreamRef: "refs/remotes/origin/main",
+          fetchedRevision: targetHead,
+          selectedRevision: targetHead,
+          targetRef: "refs/remotes/origin/main",
+          source: "tracked-upstream",
+          checkoutDirty: false,
+          relationship: "equal",
+          capturedAt: new Date().toISOString(),
+          remoteVerification: { status: "verified", error: null },
+        }),
+      },
       worktreeManager: {
         refreshCandidate: async () => ({
           previousBaseRevision: oldBase,
@@ -226,6 +245,8 @@ test("refreshes a target-diverged candidate as a new revision and invalidates do
     assert.equal(candidate.baseRevision, targetHead);
     assert.equal(candidate.headRevision, refreshedHead);
     assert.equal(candidate.revisions.at(-1).reason, "target-refresh");
+    assert.equal(refreshed.repositoryAuthority.selectedRevision, targetHead);
+    assert.equal(refreshed.repositoryAuthorityHistory.at(-1).id, "refreshed-authority");
     assert.equal(refreshed.mergeIntent, null);
     assert.equal(refreshed.mergeIntentHistory.length, 1);
     assert.equal(refreshed.mergeIntentHistory[0].status, "failed");

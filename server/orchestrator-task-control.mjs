@@ -7,6 +7,7 @@ import { canOverrideWorkflowProfile, recordWorkflowProfile } from "./workflow-pr
 import { RUN_KINDS, now, activity, completeGrillSession } from "./orchestrator-stage-support.mjs";
 import { currentCandidate, canStartRun, reserveRun } from "./orchestrator-run-policy.mjs";
 import { recordApproval, stageForRun } from "./orchestrator-task-helpers.mjs";
+import { GATE_AUTO_ADVANCE, resolveGatePolicy } from "./gate-policies.mjs";
 
 export class TaskControlOrchestrator {
   _acceptingRuns = true;
@@ -86,7 +87,62 @@ export class TaskControlOrchestrator {
       if (this._active.get(id) === reservation) this._active.delete(id);
     });
     reservation.promise = promise;
+    promise.then(() => this._autoAdvanceGate(id, kind)).catch(() => {});
     return true;
+  }
+
+  async _autoAdvanceGate(id, kind) {
+    const transition = GATE_AUTO_ADVANCE[kind];
+    if (!transition) return;
+    let task;
+    try {
+      task = await this._store.get(id);
+      if (!task || task.status !== transition.readyStatus || task.currentStage !== transition.stage) return;
+      const settings = await this._store.settings();
+      if (resolveGatePolicy(settings, transition.stage) !== "auto-accept-recommendations") return;
+      const started = await this.start(id, transition.nextKind, {
+        canStart: (draft) =>
+          draft.status === transition.readyStatus && draft.currentStage === transition.stage,
+        onReserve: (draft) => {
+          draft.events.push(
+            activity(
+              transition.stage,
+              "Gate auto-run authorized",
+              `${transition.stage} advanced through the persisted automation policy.`,
+              "info",
+              "decision",
+            ),
+          );
+        },
+      });
+      if (!started) {
+        await this._recordGateAutoAdvanceFailure(
+          id,
+          transition.stage,
+          "The task changed before the automated gate run could be reserved.",
+        );
+      }
+    } catch (error) {
+      await this._recordGateAutoAdvanceFailure(id, transition.stage, error.message);
+    }
+  }
+
+  async _recordGateAutoAdvanceFailure(id, stage, detail) {
+    try {
+      await this._store.update(id, (draft) => {
+        draft.events.push(
+          activity(
+            stage,
+            "Gate auto-run could not start",
+            String(detail ?? "Unknown gate auto-run failure."),
+            "warning",
+            "decision",
+          ),
+        );
+      });
+    } catch {
+      // The task store itself is unavailable, so there is nowhere durable to record this failure.
+    }
   }
 
   async _blockCandidateGateOnTargetDrift(id, kind) {
@@ -442,19 +498,10 @@ export class TaskControlOrchestrator {
     } catch (error) {
       validationError = error;
     }
-    const failedQualification = task.workPackages?.find(
-      (workPackage) =>
-        workPackage.status === "failed" &&
-        workPackage.headRevision &&
-        workPackage.worktreePath &&
-        /did not qualify/i.test(workPackage.error ?? task.error ?? ""),
-    );
-    if (!validationError && !failedQualification) {
+    if (!validationError) {
       throw new Error("The retained approved plan is executable and does not require plan correction.");
     }
-    const correctionReason =
-      validationError?.message ??
-      `${failedQualification.id} needs a corrected ownership or verification plan after focused package qualification failed.`;
+    const correctionReason = validationError.message;
     const planAttempts = task.attemptsByStage?.plan ?? 0;
     if (planAttempts >= stageRunLimitFor(task, "plan")) {
       throw new Error(
@@ -551,13 +598,15 @@ export class TaskControlOrchestrator {
       );
     if (!workPackage)
       throw new Error(
-        "No interrupted, timed-out or ownership-blocked retained package is available to continue.",
+        "No interrupted, timed-out, ownership-blocked or qualification-failed retained package is available to recover.",
       );
     const retained = await this._worktrees.inspectRetainedSlice(workPackage, { requireClean: false });
-    if (retained.clean)
-      throw new Error(
-        "The retained package is clean; use exact retained-slice requalification or a new implementation attempt.",
-      );
+    const qualificationFailure = /(?:retained slice )?did not qualify/i.test(
+      workPackage.error ?? task.error ?? "",
+    );
+    if (retained.clean && !qualificationFailure) {
+      throw new Error("The retained package is clean and has no failed qualification to retry.");
+    }
     const outsideOwnership = retained.files.filter((file) => !isOwnedFile(file, workPackage.ownedPaths));
     const worktreeSnapshot = workPackage.worktreePath;
     const started = await this.start(id, "implementation", {
@@ -574,29 +623,38 @@ export class TaskControlOrchestrator {
         const attempts = draft.attemptsByStage?.implement ?? 0;
         draft.stageRunLimits ??= {};
         draft.stageRunLimits.implement = Math.max(stageRunLimitFor(draft, "implement"), attempts + 1);
-        draft.stageTimeoutOverridesMs ??= {};
-        draft.stageTimeoutOverridesMs.implement = Math.max(
-          draft.stageTimeoutOverridesMs.implement ?? 0,
-          1_800_000,
-        );
         const current = draft.workPackages.find((item) => item.id === workPackage.id);
-        current.retainedContinuation = {
-          requestedAt: now(),
-          files: retained.files,
-          outsideOwnership,
-        };
+        if (retained.clean) {
+          current.retainedForRequalification = true;
+          current.retainedContinuation = null;
+        } else {
+          draft.stageTimeoutOverridesMs ??= {};
+          draft.stageTimeoutOverridesMs.implement = Math.max(
+            draft.stageTimeoutOverridesMs.implement ?? 0,
+            1_800_000,
+          );
+          current.retainedContinuation = {
+            requestedAt: now(),
+            files: retained.files,
+            outsideOwnership,
+          };
+        }
         draft.events.push(
           activity(
             "implement",
-            "Retained package continuation authorized",
-            `${workPackage.id} will continue in ${workPackage.branch} with a 30-minute timeout. ${outsideOwnership.length ? `${outsideOwnership.length} path(s) outside declared ownership must be restored before qualification.` : "All retained paths are within declared ownership."}`,
+            retained.clean
+              ? "Exact retained package requalification authorized"
+              : "Retained package continuation authorized",
+            retained.clean
+              ? `${workPackage.id} will rerun repository qualification at ${retained.headRevision.slice(0, 8)} without another model implementation run.`
+              : `${workPackage.id} will continue in ${workPackage.branch} with a 30-minute timeout. ${outsideOwnership.length ? `${outsideOwnership.length} path(s) outside declared ownership must be restored before qualification.` : "All retained paths are within declared ownership."}`,
             "warning",
             "decision",
           ),
         );
       },
     });
-    if (!started) throw new Error("The retained package continuation could not be reserved.");
+    if (!started) throw new Error("The retained package recovery could not be reserved.");
     return { started: true };
   }
 

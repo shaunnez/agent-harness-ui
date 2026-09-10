@@ -1,4 +1,5 @@
 import test from "node:test";
+import { withActionEligibility } from "../server/retry-admission-policy.mjs";
 import {
   assert,
   JsonTaskStore,
@@ -238,7 +239,7 @@ test("corrects a blocked legacy plan and preserves an exact clean slice for requ
   }
 });
 
-test("returns a failed package qualification to Plan and retains its commit for scoped continuation", async () => {
+test("does not misclassify a failed package qualification as an invalid plan", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-correct-qualification-plan-"));
   try {
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
@@ -278,37 +279,28 @@ test("returns a failed package qualification to Plan and retains its commit for 
         },
       ];
     });
-    const revisedOutput = `<work-packages>{"packages":[{"id":"S1","title":"Change route contract","description":"Repair the route and its contract snapshot.","dependencies":[],"ownedPaths":["src","tests/contract.test.ts"],"verificationCommandIds":["test"]}]}</work-packages>`;
     const orchestrator = new TaskOrchestrator(store, {
       readVerificationManifest: async () => ({
         source: ".agent-harness/verification.json",
         commands: [{ id: "test", command: ["npm", "test"] }],
       }),
-      worktreeManager: {
-        base: async () => ({ repositoryRoot: directory, baseRevision: "c".repeat(40), baseBranch: "main" }),
-        retainedPatchDisposition: async () => "pending",
-      },
-      runCodex: async () => ({
-        finalText: revisedOutput,
-        model: "gpt-5.6-sol",
-        reasoning: "high",
-        usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5, totalTokens: 15 },
-      }),
     });
 
-    assert.deepEqual(await orchestrator.correctInvalidPlan(task.id), { started: true });
-    const revised = await waitForStatus(store, task.id, "awaiting-plan-approval");
-    assert.equal(revised.stageRunLimits.implement, 4);
-    assert.equal(revised.workPackages[0].retainedForRequalification, false);
-    assert.match(revised.workPackages[0].retainedContinuation.qualificationFailure, /did not qualify/);
-    assert.deepEqual(revised.workPackages[0].ownedPaths, ["src", "tests/contract.test.ts"]);
-    assert.equal(revised.workPackages[0].headRevision, "b".repeat(40));
+    await assert.rejects(
+      () => orchestrator.correctInvalidPlan(task.id),
+      /approved plan is executable and does not require plan correction/i,
+    );
+    await orchestrator._bindSyntheticPlan(task.id);
+    const retained = await store.get(task.id);
+    assert.equal(retained.currentStage, "implement");
+    assert.equal(retained.workPackages[0].headRevision, "b".repeat(40));
+    assert.equal(withActionEligibility(retained).actionEligibility.actions["continue-package"].allowed, true);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
 });
 
-test("requalifies an exact clean retained slice without rerunning model implementation", async () => {
+test("continues a clean qualification failure by requalifying without rerunning model implementation", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-requalify-retained-slice-"));
   try {
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
@@ -324,8 +316,9 @@ test("requalifies an exact clean retained slice without rerunning model implemen
     const packageRevision = "b".repeat(40);
     const candidateRevision = "c".repeat(40);
     await store.update(task.id, (draft) => {
-      draft.status = "ready-for-implementation";
+      draft.status = "failed";
       draft.currentStage = "implement";
+      draft.error = "S1 did not qualify: playwright-e2e failed.";
       draft.workPackages = [
         {
           id: "S1",
@@ -337,15 +330,15 @@ test("requalifies an exact clean retained slice without rerunning model implemen
           verification: [],
           verificationCommandIds: ["playwright-e2e"],
           verificationRuns: [],
-          status: "planned",
+          status: "failed",
           attempts: 6,
           branch: "agent-harness/requalify-s1-a6",
           worktreePath: "/tmp/requalify-s1-a6",
           baseRevision,
           headRevision: packageRevision,
           files: ["e2e/example.spec.ts"],
-          error: null,
-          retainedForRequalification: true,
+          error: draft.error,
+          retainedForRequalification: false,
         },
       ];
     });
@@ -399,7 +392,7 @@ test("requalifies an exact clean retained slice without rerunning model implemen
       },
     });
 
-    assert.equal(await orchestrator.start(task.id, "implementation"), true);
+    assert.deepEqual(await orchestrator.continueRetainedPackage(task.id), { started: true });
     const ready = await waitForStatus(store, task.id, "ready-for-review");
     assert.equal(modelCalls, 0);
     assert.equal(ready.workPackages[0].status, "integrated");

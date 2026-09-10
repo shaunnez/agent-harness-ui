@@ -428,8 +428,17 @@ test("offers recovery actions that match target drift, invalid plans, and retrya
       status: "blocked",
       currentStage: "implement",
       error: "S1 did not qualify: backend-test failed.",
+      workPackages: [
+        {
+          id: "S1",
+          status: "failed",
+          worktreePath: "/tmp/retained-s1",
+          error: "S1 did not qualify: backend-test failed.",
+        },
+      ],
     });
-    assert.equal(nextAction(failedQualification).action, "plan");
+    assert.equal(nextAction(failedQualification).action, "continue-package");
+    assert.match(nextAction(failedQualification).label, /Requalify retained S1/);
 
     const failedVerification = {
       candidateId: "C1",

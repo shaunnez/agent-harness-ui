@@ -171,6 +171,85 @@ test("restarts stopped pre-candidate packages from an advanced target", async ()
   }
 });
 
+test("replays one clean retained package onto an advanced target for zero-model requalification", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-replay-retained-package-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Replay retained package",
+      description: "Preserve the completed slice when the target advances during qualification.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+    });
+    const oldBase = "a".repeat(40);
+    const oldHead = "b".repeat(40);
+    const targetRevision = "c".repeat(40);
+    const replayedHead = "d".repeat(40);
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "implement";
+      draft.blocker = {
+        code: "implementation-target-diverged",
+        detail: "The target advanced while package qualification was settling.",
+        detectedAt: new Date().toISOString(),
+      };
+      draft.repositoryAuthority = { selectedRevision: targetRevision };
+      draft.workPackages = [
+        {
+          id: "S1",
+          title: "Retained slice",
+          description: "Replay this exact change.",
+          dependencies: [],
+          batch: 1,
+          ownedPaths: ["src/change.ts"],
+          verificationCommandIds: ["test"],
+          status: "failed",
+          attempts: 1,
+          baseRevision: oldBase,
+          branch: "agent-harness/old-slice",
+          worktreePath: directory,
+          headRevision: oldHead,
+          files: ["src/change.ts"],
+          error: "S1 did not qualify before the target moved.",
+          verificationRuns: [{ status: "failed", headRevision: oldHead }],
+        },
+      ];
+    });
+    let refreshOptions = null;
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        inspectRetainedSlice: async () => ({
+          clean: true,
+          branch: "agent-harness/old-slice",
+          worktreePath: directory,
+          headRevision: oldHead,
+          files: ["src/change.ts"],
+        }),
+        refreshCandidate: async (_package, options) => {
+          refreshOptions = options;
+          return {
+            targetRevision,
+            headRevision: replayedHead,
+            files: ["src/change.ts"],
+          };
+        },
+      },
+    });
+
+    await orchestrator.restartImplementationFromTarget(task.id);
+    const restarted = await store.get(task.id);
+    assert.deepEqual(refreshOptions, { targetRevision });
+    assert.equal(restarted.workPackages[0].baseRevision, targetRevision);
+    assert.equal(restarted.workPackages[0].headRevision, replayedHead);
+    assert.equal(restarted.workPackages[0].retainedForRequalification, true);
+    assert.match(restarted.events.at(-1).detail, /without another model implementation run/i);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 for (const scenario of [
   { name: "timed-out", error: "Codex run exceeded 900 seconds.", failsCommit: false },
   {

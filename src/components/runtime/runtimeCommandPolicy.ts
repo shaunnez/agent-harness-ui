@@ -141,15 +141,19 @@ export function deriveNextAction(task: RuntimeTask | RuntimeTaskCore) {
   if (retainedPackage && ["failed", "blocked"].includes(task.status) && task.currentStage === "implement")
     return {
       action: "continue-package" as const,
-      label: `Continue retained ${retainedPackage.id}`,
-      title: "Resume the retained implementation package",
+      label: /did not qualify/i.test(retainedPackage.error ?? task.error ?? "")
+        ? `Requalify retained ${retainedPackage.id}`
+        : `Continue retained ${retainedPackage.id}`,
+      title: /did not qualify/i.test(retainedPackage.error ?? task.error ?? "")
+        ? "Retry qualification on the exact retained commit"
+        : "Resume the retained implementation package",
       detail:
-        "Validate the exact retained branch and dirty files, continue without discarding in-scope progress, restore paths outside declared ownership, and use the bounded 30-minute continuation timeout.",
+        "Validate the exact retained branch. A clean commit is requalified without another model run; dirty in-scope work is continued without being discarded.",
     };
   const invalidApprovedPlan =
     ["failed", "blocked"].includes(task.status) &&
     task.currentStage === "implement" &&
-    /verification requires at least one repository manifest command id|approved plan does not contain executable work packages|did not qualify/i.test(
+    /verification requires at least one repository manifest command id|approved plan does not contain executable work packages/i.test(
       task.error ?? "",
     );
   if (invalidApprovedPlan)

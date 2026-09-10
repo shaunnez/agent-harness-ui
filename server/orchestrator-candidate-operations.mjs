@@ -6,12 +6,13 @@ import { sameCandidateTestRetryContext, currentCandidate } from "./orchestrator-
 import { recordApproval } from "./orchestrator-task-helpers.mjs";
 
 export class CandidateOperationsOrchestrator {
-  constructor({ store, github, mergeActive, refreshActive, worktrees, start }) {
+  constructor({ store, github, mergeActive, refreshActive, worktrees, repositoryAuthority, start }) {
     this._store = store;
     this._github = github;
     this._mergeActive = mergeActive;
     this._refreshActive = refreshActive;
     this._worktrees = worktrees;
+    this._repositoryAuthority = repositoryAuthority;
     this.start = start;
   }
   async refreshCandidate(id) {
@@ -46,6 +47,15 @@ export class CandidateOperationsOrchestrator {
           candidate,
           remoteTargetRevision ? { targetRevision: remoteTargetRevision } : undefined,
         );
+        const authority = await this._repositoryAuthority.capture(task.repositoryPath, {
+          frozenRevision: task.experiment?.frozenBaseSha ?? null,
+        });
+        if (authority.selectedRevision !== refreshed.targetRevision) {
+          throw new Error(
+            "The repository target advanced again while the candidate was refreshing. Retry from the newly verified authority.",
+          );
+        }
+        refreshed.repositoryAuthority = authority;
       } catch (error) {
         if (/candidate refresh conflicted/i.test(error.message)) {
           await this._store.update(id, (draft) => {
@@ -108,6 +118,14 @@ export class CandidateOperationsOrchestrator {
               baseRevision: refreshed.targetRevision,
               createdAt: now(),
             });
+            draft.repositoryAuthority = structuredClone(refreshed.repositoryAuthority);
+            draft.repositoryAuthorityHistory ??= [];
+            if (
+              !draft.repositoryAuthorityHistory.some((entry) => entry.id === refreshed.repositoryAuthority.id)
+            ) {
+              draft.repositoryAuthorityHistory.push(structuredClone(refreshed.repositoryAuthority));
+            }
+            draft.repositoryAuthorityStatus = "bound";
             draft.status = "ready-for-review";
             draft.currentStage = "dev-review";
             draft.error = null;
@@ -270,6 +288,40 @@ export class CandidateOperationsOrchestrator {
       ) {
         throw new Error("The implementation packages already use the latest target revision.");
       }
+      let retainedReplay = null;
+      const onlyPackage = task.workPackages?.length === 1 ? task.workPackages[0] : null;
+      if (
+        onlyPackage?.headRevision &&
+        onlyPackage.worktreePath &&
+        onlyPackage.files?.length &&
+        typeof this._worktrees.inspectRetainedSlice === "function" &&
+        typeof this._worktrees.refreshCandidate === "function"
+      ) {
+        const retained = await this._worktrees.inspectRetainedSlice(onlyPackage, {
+          ownedPaths: onlyPackage.ownedPaths,
+          requireClean: true,
+        });
+        const replayed = await this._worktrees.refreshCandidate(
+          {
+            ...onlyPackage,
+            repositoryRoot: task.repositoryPath,
+            baseBranch: task.repositoryAuthority?.checkoutBranch ?? "main",
+            baseRef: task.repositoryAuthority?.targetRef ?? null,
+          },
+          { targetRevision },
+        );
+        if (replayed.targetRevision !== targetRevision) {
+          throw new Error("The retained package replay did not use the verified repository authority.");
+        }
+        retainedReplay = {
+          packageId: onlyPackage.id,
+          baseRevision: replayed.targetRevision,
+          headRevision: replayed.headRevision,
+          branch: retained.branch,
+          worktreePath: retained.worktreePath,
+          files: replayed.files ?? retained.files,
+        };
+      }
       return await this._store.transition(
         id,
         (draft) =>
@@ -283,9 +335,17 @@ export class CandidateOperationsOrchestrator {
             workPackage.status = "planned";
             workPackage.error = null;
             workPackage.retainedContinuation = null;
-            workPackage.retainedForRequalification = false;
+            workPackage.retainedForRequalification = workPackage.id === retainedReplay?.packageId;
             workPackage.retainedReplacementReason = null;
-            workPackage.verificationRuns = [];
+            if (workPackage.id === retainedReplay?.packageId) {
+              workPackage.baseRevision = retainedReplay.baseRevision;
+              workPackage.headRevision = retainedReplay.headRevision;
+              workPackage.branch = retainedReplay.branch;
+              workPackage.worktreePath = retainedReplay.worktreePath;
+              workPackage.files = retainedReplay.files;
+            } else {
+              workPackage.verificationRuns = [];
+            }
           }
           const attempts = draft.attemptsByStage?.implement ?? 0;
           draft.stageRunLimits ??= {};
@@ -296,8 +356,12 @@ export class CandidateOperationsOrchestrator {
           draft.events.push(
             activity(
               "implement",
-              "Implementation restart authorized from latest target",
-              `Prior slice artifacts remain retained. Approved packages will restart from ${targetRevision.slice(0, 8)} with bounded concurrency and fresh qualification.`,
+              retainedReplay
+                ? "Retained package replayed onto latest target"
+                : "Implementation restart authorized from latest target",
+              retainedReplay
+                ? `${retainedReplay.packageId} was replayed onto ${targetRevision.slice(0, 8)} and will be requalified without another model implementation run.`
+                : `Prior slice artifacts remain retained. Approved packages will restart from ${targetRevision.slice(0, 8)} with bounded concurrency and fresh qualification.`,
               "warning",
               "decision",
             ),

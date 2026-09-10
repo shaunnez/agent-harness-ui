@@ -136,6 +136,7 @@ export class TaskOrchestratorCore {
       mergeActive: runtime._mergeActive,
       refreshActive: runtime._refreshActive,
       worktrees: runtime._worktrees,
+      repositoryAuthority: runtime._repositoryAuthority,
       start: (...args) => taskControl.start(...args),
     });
     const mergeRecovery = new MergeRecoveryOrchestrator({
