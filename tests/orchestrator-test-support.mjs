@@ -4,6 +4,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import { TEST_WAIT_TIMEOUT_MS, waitForTaskStatus, waitUntil } from "./wait-support.mjs";
 import { ProcessTimeoutError } from "../server/codex-runtime.mjs";
 import {
   evaluationVerdict,
@@ -427,19 +428,8 @@ function pullRequestObservation({ state }) {
   };
 }
 
-async function waitForStatus(store, id, expected) {
-  // 400 * 5ms = 2s: comfortable for the fake-backed tests here, which settle almost
-  // immediately, and for the handful that exercise a real `GitWorktreeManager` against
-  // a real git repository, whose worktree/commit/assemble calls are not instant.
-  for (let attempt = 0; attempt < 400; attempt += 1) {
-    const task = await store.get(id);
-    if (task.status === expected) return task;
-    if (attempt > 5 && ["failed", "blocked", "cancelled", "repair-required"].includes(task.status)) {
-      assert.fail(`Task stopped at ${task.status}: ${task.error ?? "no error"}`);
-    }
-    await new Promise((resolve) => setTimeout(resolve, 5));
-  }
-  assert.fail(`Task did not reach ${expected}.`);
+async function waitForStatus(store, id, expected, options) {
+  return waitForTaskStatus(store, id, expected, options);
 }
 
 function escapeRegex(value) {
@@ -507,6 +497,9 @@ export {
   structuredEvidenceError,
   tryParseFocusedTestEvidence,
   validateFocusedTestEvidence,
+  TEST_WAIT_TIMEOUT_MS,
   waitForStatus,
+  waitForTaskStatus,
+  waitUntil,
   writeFile,
 };

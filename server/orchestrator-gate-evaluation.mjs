@@ -133,6 +133,21 @@ export class GateEvaluationOrchestrator {
           candidate,
           executionKind: "full-manifest",
           signal,
+          // A manifest can queue behind other tasks' verification for minutes. Record the
+          // wait, so a task holding a slot in a queue never presents as a hung stage.
+          onQueueWait: async ({ limit, position }) => {
+            await this._store.update(id, (draft) => {
+              draft.events.push(
+                activity(
+                  "test",
+                  "Waiting for a verification slot",
+                  `${candidate.id} revision ${candidate.revisionNumber} is queued at position ${position}; the harness runs at most ${limit} verification manifest${limit === 1 ? "" : "s"} at once.`,
+                  "info",
+                  "test",
+                ),
+              );
+            });
+          },
         });
         await this._store.update(id, (draft) => {
           const activeCandidate = currentCandidate(draft);

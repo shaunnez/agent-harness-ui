@@ -14,6 +14,7 @@ import {
   rm,
   TaskOrchestrator,
   waitForStatus,
+  waitUntil,
 } from "./orchestrator-test-support.mjs";
 
 test("malformed focused Test ingestion persists the exact reason and blocks approval", async () => {
@@ -384,20 +385,14 @@ test("candidate command failure overrides a Development Review PASS and remains 
     assert.match(finished.events.at(-1).title, /rerun required/i);
 
     assert.equal(await orchestrator.start(task.id, "review"), true);
-    let repeated = null;
-    for (let attempt = 0; attempt < 200; attempt += 1) {
+    const repeated = await waitUntil(async () => {
       const current = await store.get(task.id);
-      if (
-        current.status === "review-retry-required" &&
+      return current.status === "review-retry-required" &&
         current.attemptsByStage["dev-review"] === 2 &&
         current.activeRunIds.length === 0
-      ) {
-        repeated = current;
-        break;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    }
-    assert.ok(repeated);
+        ? current
+        : null;
+    }, "the second dev-review attempt to settle at review-retry-required");
     assert.equal(repeated.status, "review-retry-required");
     assert.equal(repeated.reviewRetries.length, 2);
     assert.equal(repeated.stageRunLimits["dev-review"], 2, "the same failure stops after one bounded retry");

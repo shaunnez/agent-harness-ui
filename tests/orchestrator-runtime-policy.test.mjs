@@ -23,6 +23,7 @@ import {
   TASK_STORE_SCHEMA_VERSION,
   TaskOrchestrator,
   waitForStatus,
+  waitUntil,
 } from "./orchestrator-test-support.mjs";
 
 test("backfills the default execution provider while migrating through schema 9", () => {
@@ -175,9 +176,7 @@ test("reserves a run exactly once across concurrent start requests", async () =>
         candidateHeadRevision: null,
       },
     );
-    for (let attempt = 0; !release && attempt < 100; attempt += 1) {
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    }
+    await waitUntil(() => release, "the triage run to reserve its release handle");
     assert.equal(typeof release, "function");
     const running = await store.get(task.id);
     assert.equal(running.runs[0].workflowReservationId, reserved.activeRunReservationId);

@@ -44,6 +44,7 @@ import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "./orchestrator-test-support.mjs";
 import { parseGateEvidence } from "../server/structured-output.mjs";
 import { runtimeTaskToRecentTask } from "../src/domain.ts";
+import { waitUntil as sharedWaitUntil } from "./wait-support.mjs";
 
 function attachRepairAuthorizerFixture(draft, candidate, findings = null) {
   const reservationId = `reservation-${candidate.id.toLowerCase()}-repair-authorizer-1`;
@@ -122,11 +123,7 @@ function attachRepairAuthorizerFixture(draft, candidate, findings = null) {
 }
 
 async function waitUntil(predicate) {
-  for (let attempt = 0; attempt < 100; attempt += 1) {
-    if (await predicate()) return;
-    await new Promise((resolve) => setTimeout(resolve, 5));
-  }
-  throw new Error("Timed out waiting for condition.");
+  return sharedWaitUntil(predicate);
 }
 
 function createTask(overrides = {}) {

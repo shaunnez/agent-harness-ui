@@ -13,6 +13,7 @@ import {
   parseUrl,
 } from "../server/prototype-generator.mjs";
 import { parseGrillQuestions } from "../server/structured-output.mjs";
+import { waitForTaskStatus } from "./wait-support.mjs";
 
 const GRILL = `<grill-questions>{"questions":[{"question":"How safe?","whyItMatters":"A human gate is required.","options":[{"label":"Confirm first","description":"Require confirmation.","recommended":true},{"label":"Execute immediately","description":"Skip confirmation.","recommended":false}],"allowCustom":true}]}</grill-questions>`;
 
@@ -192,15 +193,7 @@ test("invokes Codex Design with the exact snapshotted model and reasoning", asyn
 });
 
 async function waitForStatus(store, id, status) {
-  for (let attempt = 0; attempt < 1_000; attempt += 1) {
-    const task = await store.get(id);
-    if (task.status === status) return task;
-    if (["failed", "blocked"].includes(task.status) && task.status !== status) {
-      throw new Error(task.error ?? `Task stopped at ${task.status}.`);
-    }
-    await new Promise((resolve) => setTimeout(resolve, 10));
-  }
-  throw new Error(`Timed out waiting for ${status}.`);
+  return waitForTaskStatus(store, id, status);
 }
 
 test("generates two retained designs, selects one exact revision, and supplies it to Task Spec", async () => {
