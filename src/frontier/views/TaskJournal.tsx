@@ -138,12 +138,19 @@ export function TaskJournal({
           </thead>
           <tbody>
             {visible.map((task) => (
-              <tr key={task.id} className={task.id === selected?.id ? "selected" : ""}>
+              <tr
+                key={task.id}
+                className={task.id === selected?.id ? "selected" : ""}
+                onClick={() => select(task.id)}
+              >
                 <td>
                   <button
                     type="button"
                     className="table-task"
-                    onClick={() => select(task.id)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      select(task.id);
+                    }}
                     aria-pressed={task.id === selected?.id}
                   >
                     <strong>{task.id}</strong>
@@ -198,7 +205,10 @@ export function TaskJournal({
                     type="button"
                     className="icon-button"
                     aria-label={`Inspect ${task.id}`}
-                    onClick={() => onInspect(task.id)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onInspect(task.id);
+                    }}
                   >
                     <ArrowRight size={20} />
                   </button>
