@@ -235,6 +235,8 @@ start Goal 6, merge a PR or publish the game.
 
 ## Goal 6 — recorded activity and meaningful world feedback
 
+Latest visual steering: [World depth and quieter controls](WORLD-DEPTH-AND-HUD.md) records the recommended fidelity work before this goal. That brief is planning, not a new goal start.
+
 **Planned, not started.** Start after the Goal 5 handoff. Complete UB2, U6 and the combined qualification.
 
 ```text
@@ -263,7 +265,8 @@ authoritative. Preserve attention clarity, camera controls and immediate actions
 
 Use isolated provider/API fixtures for timing, duplicate/late-event, cancellation,
 concurrent-package and store-failure tests. Complete real computer-use checks,
-matched screenshots, request/latency and normal/stress performance measurements.
+matched screenshots and normal laptop/desktop usability checks. Performance
+benchmarks and extreme-zoom experiments remain waived by Shaun’s later steering.
 Run the final complete root, Frontier and Frontier API suite after both builds,
 plus typing, lint and formatting. Do not substitute these checks for the separate
 real end-to-end implementation-to-PR qualification or restart live tasks for QA.
