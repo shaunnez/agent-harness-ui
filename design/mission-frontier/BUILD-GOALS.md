@@ -2,6 +2,8 @@
 
 Revision 8 · 15 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. The later living-world pass is recorded in [PR-HANDOFF.md](PR-HANDOFF.md). **Goal 4 U0–U2 is complete and PR #73 is merged. Goal 5 functional acceptance is complete; delivery and journal receipts are in its current handoff. Goal 6 has not started.** See the [Goal 5 handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) and retained [Goal 4 handoff](build-evidence/USABILITY/goal-4/HANDOFF.md). [USABILITY-PLAN.md](USABILITY-PLAN.md) defines scope, dependencies and acceptance checks; the earlier plans remain the history for completed work.
 
+Preparation update, 15 September 2026: PRs #86 and #87 are merged. The fidelity worktree now includes main `aca587e`. [Art checkpoint 1](ART-CHECKPOINT-1.md) is prepared for an explicit post-compaction start; no art production has begun.
+
 ## How to use
 
 Run the selected goal in this task or a task with the build repository and the complete `design/mission-frontier/` pack available. The known planning copy is `/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/IMPLEMENTATION-PLAN.md`; if using another checkout, copy/attach the complete pack first and revalidate the repository. Keep local compute/network/browser tools available. Goal mode does not grant broader access or guarantee progress through missing credentials or offline dependencies.
@@ -231,6 +233,16 @@ tests, typing, lint, formatting and both builds. Leave the working preview open
 with a reviewable diff, acceptance evidence and an updated dated journal entry.
 Preserve journal access. Do not mutate unrelated live tasks, launch paid runs,
 start Goal 6, merge a PR or publish the game.
+```
+
+## Art checkpoint 1 — connected coastal base
+
+**Prepared, not started.** Before Goal 6, run the bounded [Art checkpoint 1](ART-CHECKPOINT-1.md) to prove one detailed exterior, courtyard, elevated bridge and animated shoreline. Includes one Astra scene producer; the HUD is Sol's separate assignment. HQ/Watch rebuilding and broader world production follow review of this checkpoint.
+
+```text
+Run Art checkpoint 1 from design/mission-frontier/ART-CHECKPOINT-1.md,
+including the Astra asset producer. Execute its build/check/browser/fix loop
+until the acceptance matrix passes, then leave it ready for my review.
 ```
 
 ## Goal 6 — recorded activity and meaningful world feedback
