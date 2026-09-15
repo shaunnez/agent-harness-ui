@@ -1,0 +1,1 @@
+Quaternius Stylized Nature MegaKit FREE STANDARD, CC0. Existing owned/downloaded archive reused read-only from cinematic-v1/astra/sources. Original source: https://quaternius.com/packs/stylizednaturemegakit.html . Trees retained; leaf colour adapted to Mission Frontier.

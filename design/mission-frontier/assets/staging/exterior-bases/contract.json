@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "source": "../3d-visual-proof/astra-scene/scene.blend (read-only accepted proof)",
+  "units": "metres; glTF X right Y up Z front; same origin as proof",
+  "baseOrigin": [0,4.2,0],
+  "producerOutput": "astra-kit/** only",
+  "builderOwnership": "shared contract, public exports, application, tests, browser evidence and journal",
+  "variants": ["command","relay","foundry"],
+  "assets": {
+    "environment.glb": "Only terrain, planting, bridge/far landing, and environmental practicals; no base/robots/labels/cargo on court. Reuse existing environment geometry/materials.",
+    "base-command.glb": "Existing curved twin bays with illuminated roof identity and added station detailing.",
+    "base-relay.glb": "Asymmetric communications silhouette, taller rear service/communications section and stepped offset roof, same occupied floor/socket contract.",
+    "base-foundry.glb": "Broader hangar/service crown with low utility shoulder/silo arrangement; visibly distinct at world size, same occupied floor/socket contract."
+  },
+  "baseGroups": ["MF_BaseFixed","MF_Roof","MF_ShellCutaway","MF_Interior","MF_Court","MF_Props","MF_Practicals"],
+  "environmentGroups": ["MF_Terrain","MF_Bridge","MF_Planting"],
+  "roofColorMaterials": ["identity_roof_inset","identity_roof_ring","identity_trim"],
+  "ambientMaterials": "ambient_screen_* and ambient_sensor_* for gentle pulse; practical_* for warm window/entry/marker illumination. Keep materials distinct from task status.",
+  "materialRequirements": "Portable embedded PBR, real small modeled lights/sensors/computer housings. Coloured recessed roof disc/ring like annotation, plus warm window and entry detail. Builder applies project palette and runtime pulse; neutral material source for recolouring.",
+  "worker": {"sourceHeight":1.8,"runtimeHeight":3.1,"runtimeScale":1.7222222222,"origin":"feet; builder owns scaling, rings and label height"},
+  "cargo": {"targetCrateHeight":2.0,"cartScale":1.35,"requirement":"Enlarge source objects from their ground contact; preserve readable handles/recesses and keep sockets/routes unobstructed"},
+  "sockets": {
+    "court_implement":[-4,4.25,16],"court_review":[3,4.25,14],"court_answer":[-10,4.25,11],
+    "interior_implement":[-5,4.3,0],"interior_review":[5,4.3,0],"interior_answer":[-5,4.3,-5],
+    "base_label":[0,16,-2]
+  },
+  "walkableRoutes":{"court":[[-8,4.25,13],[-4,4.25,18],[3,4.25,17],[7,4.25,12]]},
+  "footprintLimit":{"width":31,"depth":25,"heightAboveFloor":14,"courtyard":"retain existing 27m wide front court; grounded plinth; no bridge connection changes"},
+  "metadata":"kit-metadata.json: per asset filename, bounds, group/material inventory, baseLightPositions, environmentLightPositions; retain original cameras/shoreline/routes/sockets or explicitly record adjusted sockets. Merge static geometry by group/material only during export; editable .blend stays separate.",
+  "preserve":"Existing accepted coastal environment; no new rock/plant campaign. Two-area cutaway remains valid in each base. No actors, fixture IDs or progress baked into assets.",
+  "proof":"Three different structures across projects, independent colour choices, daylight/night and close exterior detail evidence from actual browser. Offline rendering is only producer QA."
+}

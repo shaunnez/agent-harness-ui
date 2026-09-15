@@ -1,0 +1,53 @@
+{
+  "license": "Original derivative authoring; inherited source licenses remain CC0 as recorded in accepted proof",
+  "baselineProvenance": "../../3d-visual-proof/astra-scene/HANDOFF.md",
+  "newThirdPartyAssets": false,
+  "paidGeneration": false,
+  "inputs": [
+    {
+      "path": "design/mission-frontier/assets/staging/3d-visual-proof/astra-scene/scene.blend",
+      "bytes": 64137337,
+      "sha256": "83cd30ba50fd1f25e1e235e3e7e507183ede6f2564e30a10235de4cc1aa1b974"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/3d-visual-proof/astra-scene/scene-metadata.json",
+      "bytes": 137931,
+      "sha256": "a90929280bb8236ecf703af2502fc26f15ad55944a2d373e597d0c9b49ad245b"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/exterior-bases/contract.json",
+      "bytes": 3282,
+      "sha256": "df3d93db1fab0d437131665eae038467625c99bc2a8aeaa68f7656ac17656232"
+    }
+  ],
+  "sourceScripts": [
+    {
+      "file": "source/audit_authoring.py",
+      "sha256": "45be4a3629aa6571beddcd349b8bfb00c598ca74e79e36d8f4f2f847c66467e7"
+    },
+    {
+      "file": "source/build_kit.py",
+      "sha256": "49cc9936291a996bfc43d04d23775aec1d631fb31ec5ff5352f04cb43984c418"
+    },
+    {
+      "file": "source/export_kit.py",
+      "sha256": "44ac303ac031c30cfb43a87b6ed83bb88d8eef40c7b93175878207d2da6103ae"
+    },
+    {
+      "file": "source/export_saved.py",
+      "sha256": "48c324002ddad8a4c23ebe29432d210a29f0597f2a402981e7af65b69b442894"
+    },
+    {
+      "file": "source/merge_geometry.py",
+      "sha256": "84e28f29a51430661aa59f249e4c974baffbf9656be0dede3b2495c49f48d815"
+    },
+    {
+      "file": "source/package_glbs.py",
+      "sha256": "5d3c7381b0a2270a3a724044accef4334bc2a79412767163dfc0ed083dc9ec1d"
+    },
+    {
+      "file": "source/validate_kit.py",
+      "sha256": "35dd5761281af3fd4bf97bee5e65d8b2331666766ea518e63017d179ee862774"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "height": 1.8,
+  "forward": "+Z",
+  "origin": "feet",
+  "provenance": "Existing cinematic-v1 authored worker geometry; no character redesign",
+  "meshObjects": 80,
+  "animation": "worker_tool_work: 1.2-second original tool arm motion, feet stationary; runtime plays only for admitted active run"
+}

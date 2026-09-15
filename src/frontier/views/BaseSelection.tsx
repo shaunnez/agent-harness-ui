@@ -13,7 +13,7 @@ export function BaseSelection({
 }: {
   project: RuntimeProject;
   tasks: TaskSummary[];
-  rendererRef: React.RefObject<WorldRenderer | null>;
+  rendererRef: React.RefObject<Pick<WorldRenderer, "headquartersPreview"> | null>;
   onEnter(): void;
 }) {
   const [preview, setPreview] = useState<{ projectId: string; image: string } | null>(null);

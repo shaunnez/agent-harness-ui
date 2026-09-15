@@ -1,0 +1,38 @@
+{
+  "id": "appgdep_6aa94c678ba881919a838bad0ddb919d",
+  "project_id": "appgprj_6a9d2e96e0248191a66ccefcaad237d3",
+  "title": "Mission Frontier — Project journal",
+  "version_id": "appgprj_6a9d2e96e0248191a66ccefcaad237d3~appgver_b6053a752ef08191b4e7acfed57920a2",
+  "type": "publish",
+  "status": "succeeded",
+  "url": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site",
+  "screenshot_asset_pointer": "sediment://file_00000000849081f8949a8f70fcbdeeb4",
+  "provider_deployment_id": "site---6a9d2e96e0248191a66ccefcaad237d3",
+  "failure_message": null,
+  "env_set_revision": 0,
+  "updated_at": "2026-09-15T13:48:18.836364+00:00",
+  "version_number": 21,
+  "source_commit_sha": "f18e300fc2cee6deec95822c9f356b7b2af165a4",
+  "article": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/one-place-in-3d/",
+  "archive": {
+    "archive_format": "tar",
+    "sediment_file_id": "file_0000000064a8820abc432dc162194ea9",
+    "content_hash": "sha256:d00caa3ab262b085e3812465551326fa0dc68869bd42b0af2fba1683590ae964",
+    "size_bytes": 24944640,
+    "file_count": 313
+  },
+  "local_archive": {
+    "path": "/tmp/mission-frontier-3d-journal.tar",
+    "bytes": 25364480,
+    "sha256": "addfea7b6bccbbc19dc30760e133fe82eacd589299a57e8103d67dc457bbd5c0"
+  },
+  "audience": "Existing owner-only audience preserved; private deployment operation succeeded.",
+  "verification": "Published article opened in browser and showed Note 22 dated 16 September 2026, proof images and scoped qualification.",
+  "checks": {
+    "tests": 5,
+    "typecheck": "passed",
+    "lint": "passed",
+    "build": "passed"
+  },
+  "gamePublication": false
+}

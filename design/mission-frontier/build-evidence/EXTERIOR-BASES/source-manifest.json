@@ -1,0 +1,92 @@
+{
+  "capturedAt": "2026-09-15T15:25:54.206411+00:00",
+  "branch": "codex/mission-frontier-3d-proof",
+  "baseline": "a6f637fe796bfedae3df476adae97f007ad7b2e0",
+  "uncommitted": true,
+  "files": [
+    {
+      "path": "public/frontier/assets/3d-proof/manifest.json",
+      "sha256": "2ed84ee96894c34e9986268b7051b29022cfe3fe4082c1a62616a6c648fad921"
+    },
+    {
+      "path": "scripts/frontier/integrate-3d-proof.mjs",
+      "sha256": "c0296dacecc0b9ad8b536bc1e5b596fffb0eccbd58eff86bcb7598cfde879adf"
+    },
+    {
+      "path": "src/frontier/app/FrontierApp.tsx",
+      "sha256": "c36e6a90ae2812b3ec3918838be43eea659300c4df822b32c6e4939246f59c6a"
+    },
+    {
+      "path": "src/frontier/world-3d/BaseAppearancePicker.tsx",
+      "sha256": "3fcf753fd6e7d12a8c8d07049928747daf4e3e8e6dae99ea167b4ff74b60b57c"
+    },
+    {
+      "path": "src/frontier/world-3d/ProofBase.tsx",
+      "sha256": "dc0c6b404ea5049c99e620a5643a0f06f616767e4cb9dc42b198d4b47920c00d"
+    },
+    {
+      "path": "src/frontier/world-3d/ProofCamera.tsx",
+      "sha256": "976081dad51fce462547587228b95e3c461d7cd4f21d848eb7dcf0688d0d5eb2"
+    },
+    {
+      "path": "src/frontier/world-3d/ProofLabels.tsx",
+      "sha256": "7165fb178995e2b38060c284358773e860718398727999352e2164989f1ec55d"
+    },
+    {
+      "path": "src/frontier/world-3d/ProofScene.tsx",
+      "sha256": "d24ab232eaa2a7b924bbd951c3ef7d80f831671518b2afab2a56d842f2b4b28c"
+    },
+    {
+      "path": "src/frontier/world-3d/ProofWorker.tsx",
+      "sha256": "2cf487db814d1a5a3eb92c4b6b508932e642ceeec03ae3279a6aef9017c5fb5b"
+    },
+    {
+      "path": "src/frontier/world-3d/ProofWorld.tsx",
+      "sha256": "9b24d8e58760a4e02b3c763683977293d9e107ad57ef9d9fbfe9dba0c0e5bf81"
+    },
+    {
+      "path": "src/frontier/world-3d/SceneFinish.tsx",
+      "sha256": "57962ad1b6db0fcb7778de0f9c003867318bc19e28a60a9e655d03e39b063b12"
+    },
+    {
+      "path": "src/frontier/world-3d/appearance.ts",
+      "sha256": "6a65bf87376cd7a19186b382cade60c208e69ed5d839230be24f940019e060ad"
+    },
+    {
+      "path": "src/frontier/world-3d/capture.ts",
+      "sha256": "33421ef7f2bd0ece040a7968bf176c80474337b812f932e21e45e2a48d9e98b9"
+    },
+    {
+      "path": "src/frontier/world-3d/finish.ts",
+      "sha256": "defab06c2f68605d19a32e4c2caf2f6dda030e488b1f1f092e674e8c01ad2020"
+    },
+    {
+      "path": "src/frontier/world-3d/labels.ts",
+      "sha256": "296c97ca2ebb6756effee4990f96f547774af9fe56f4f406095ce23f1d88fcd2"
+    },
+    {
+      "path": "src/frontier/world-3d/layout.ts",
+      "sha256": "c0f4863fbca83e5d50f62e71be2a110e8d65b1f4eb4e42ae271583f0bef63af7"
+    },
+    {
+      "path": "src/frontier/world-3d/model.ts",
+      "sha256": "ff5a9277466c31bf37c90ad0bf561e1f99337156146cc1bb48c2cc3a925a9d35"
+    },
+    {
+      "path": "src/frontier/world-3d/proof.css",
+      "sha256": "916cf6f28d2a8b206d55982a40e338afaf38433ff0919919227a4d19e14f0435"
+    },
+    {
+      "path": "src/frontier/world-3d/useBaseAppearance.ts",
+      "sha256": "581daa2e8f136f12a2a71487f5a706e977ad01ac2c75734499d741d4b9dc02a6"
+    },
+    {
+      "path": "src/frontier/world-3d/water.ts",
+      "sha256": "f71c53cab750b4981c6a2e0df72ed1a0f916a75d67c40a9f11e59557b3e769c1"
+    },
+    {
+      "path": "tests/frontier/3d-proof.test.mjs",
+      "sha256": "59cae7d5ee3ceaf0721517211832b20c75705f2e0bf1779f432baddcad2dab6b"
+    }
+  ]
+}

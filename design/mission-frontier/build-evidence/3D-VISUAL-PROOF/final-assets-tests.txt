@@ -1,0 +1,16 @@
+✔ 3D proof is opt-in and never admits live data or another project's location (3.563125ms)
+✔ workers preserve running, answer, repair and completed distinctions without changing fixture data (1.9635ms)
+✔ historical Watch parks only that worker; active sibling evidence remains authoritative (0.482ms)
+✔ connection and motion admission stop every worker loop, without inventing task completion (0.492417ms)
+✔ idle workers use the outdoor court height in the cutaway, while work remains inside (0.356833ms)
+✔ projected labels separate crowded cards without moving their horizontal worker anchors (8.617291ms)
+✔ scene manifest rejects missing sockets, foreign assets and invalid shoreline geometry (0.661416ms)
+✔ browser GLBs retain portable PBR, named cutaway groups and the existing worker animation (28.96575ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 194.142542

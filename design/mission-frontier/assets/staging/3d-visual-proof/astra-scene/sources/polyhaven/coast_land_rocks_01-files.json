@@ -1,0 +1,846 @@
+{
+  "Diffuse": {
+    "8k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/coast_land_rocks_01/coast_land_rocks_01_diff_8k.jpg",
+        "size": 31280039,
+        "md5": "50d8e3c940e5eab5b8d882ff23eabc5a"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/8k/coast_land_rocks_01/coast_land_rocks_01_diff_8k.png",
+        "size": 299900450,
+        "md5": "108be581b542f78c0f6999d7ace630d4"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/8k/coast_land_rocks_01/coast_land_rocks_01_diff_8k.exr",
+        "size": 48707704,
+        "md5": "b49e594e68a4344a115543699580eecc"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_land_rocks_01/coast_land_rocks_01_diff_4k.jpg",
+        "size": 11507632,
+        "md5": "7dd14b5c8ae851339a3d1916330c74bb"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/coast_land_rocks_01/coast_land_rocks_01_diff_4k.png",
+        "size": 87006689,
+        "md5": "1215432ba28f02cda551fcfbeb2abb94"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/4k/coast_land_rocks_01/coast_land_rocks_01_diff_4k.exr",
+        "size": 17767103,
+        "md5": "09670d378d8f201065dac45ceb9c50ab"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_land_rocks_01/coast_land_rocks_01_diff_2k.jpg",
+        "size": 3567190,
+        "md5": "2a403a10fc0b12830881f5f9cc0279d1"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/coast_land_rocks_01/coast_land_rocks_01_diff_2k.png",
+        "size": 22666768,
+        "md5": "ef1645c7077048ae5e5928e63d6009ce"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/2k/coast_land_rocks_01/coast_land_rocks_01_diff_2k.exr",
+        "size": 5914430,
+        "md5": "1aa2af874b8e98e60595522c987f5ae6"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_land_rocks_01/coast_land_rocks_01_diff_1k.jpg",
+        "size": 917320,
+        "md5": "6b3c612d679da7ae8132f46e121e3d03"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/coast_land_rocks_01/coast_land_rocks_01_diff_1k.png",
+        "size": 5692746,
+        "md5": "d65239ffa630f7780bbd2a808eb72d4b"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/1k/coast_land_rocks_01/coast_land_rocks_01_diff_1k.exr",
+        "size": 1761614,
+        "md5": "dbc01be8f5ba24c500f92e83ded088bc"
+      }
+    }
+  },
+  "nor_dx": {
+    "8k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/coast_land_rocks_01/coast_land_rocks_01_nor_dx_8k.jpg",
+        "size": 61307137,
+        "md5": "91fd6034f1f98306cdf747ed176f3bd5"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/8k/coast_land_rocks_01/coast_land_rocks_01_nor_dx_8k.png",
+        "size": 167773353,
+        "md5": "b736bda79f606aafc1dabd2b2e232ca0"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/8k/coast_land_rocks_01/coast_land_rocks_01_nor_dx_8k.exr",
+        "size": 117857047,
+        "md5": "af15e9b68df54c18b0364675844a69f9"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_land_rocks_01/coast_land_rocks_01_nor_dx_4k.jpg",
+        "size": 18375210,
+        "md5": "bdaf60ca9d41769cb5068616823a0836"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/coast_land_rocks_01/coast_land_rocks_01_nor_dx_4k.png",
+        "size": 88511667,
+        "md5": "7ed5334bcbe92c66e022d28a48fb51ef"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/4k/coast_land_rocks_01/coast_land_rocks_01_nor_dx_4k.exr",
+        "size": 36124242,
+        "md5": "aed63cf6de5ccdb3c58c438f833c55f8"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_land_rocks_01/coast_land_rocks_01_nor_dx_2k.jpg",
+        "size": 4942557,
+        "md5": "02050bbb0a5bf30b30beb88dcec925ca"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/coast_land_rocks_01/coast_land_rocks_01_nor_dx_2k.png",
+        "size": 23480426,
+        "md5": "79447b755f20e49cbc1f88338faf73cf"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/2k/coast_land_rocks_01/coast_land_rocks_01_nor_dx_2k.exr",
+        "size": 9733265,
+        "md5": "fb27ec95905d5bd53bce7e054efc939f"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_land_rocks_01/coast_land_rocks_01_nor_dx_1k.jpg",
+        "size": 1258389,
+        "md5": "44401dcc68d361d7b867fabb5fee67a3"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/coast_land_rocks_01/coast_land_rocks_01_nor_dx_1k.png",
+        "size": 5912675,
+        "md5": "ece650a3786b34eb49589957a12f844d"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/1k/coast_land_rocks_01/coast_land_rocks_01_nor_dx_1k.exr",
+        "size": 2492236,
+        "md5": "0d83885e5277d6dd8c665a2a941dc111"
+      }
+    }
+  },
+  "blend": {
+    "8k": {
+      "blend": {
+        "include": {
+          "textures/coast_land_rocks_01_rough_8k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/8k/coast_land_rocks_01/coast_land_rocks_01_rough_8k.exr",
+            "size": 25501776,
+            "md5": "17b3c6bcf87f9cfb69de80c6296f0c4a"
+          },
+          "textures/coast_land_rocks_01_disp_8k.png": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/8k/coast_land_rocks_01/coast_land_rocks_01_disp_8k.png",
+            "size": 87118355,
+            "md5": "e12f6b10c6ff6a62dc9a077e0dc87114"
+          },
+          "textures/coast_land_rocks_01_nor_gl_8k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/8k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_8k.exr",
+            "size": 117770720,
+            "md5": "5e4fc00296fd7328aec18edfa5fc69f1"
+          },
+          "textures/coast_land_rocks_01_diff_8k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/coast_land_rocks_01/coast_land_rocks_01_diff_8k.jpg",
+            "size": 31280039,
+            "md5": "50d8e3c940e5eab5b8d882ff23eabc5a"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/blend/8k/coast_land_rocks_01/coast_land_rocks_01_8k.blend",
+        "size": 223070,
+        "md5": "7d682d6ec60d156a47a601f8870dfa29"
+      }
+    },
+    "4k": {
+      "blend": {
+        "include": {
+          "textures/coast_land_rocks_01_nor_gl_4k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/4k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_4k.exr",
+            "size": 36105959,
+            "md5": "29f54d646015616f7f8236f8ea6c69bb"
+          },
+          "textures/coast_land_rocks_01_rough_4k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/4k/coast_land_rocks_01/coast_land_rocks_01_rough_4k.exr",
+            "size": 9180421,
+            "md5": "54da734f714c04e9c3796a2f19d97aff"
+          },
+          "textures/coast_land_rocks_01_diff_4k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_land_rocks_01/coast_land_rocks_01_diff_4k.jpg",
+            "size": 11507632,
+            "md5": "7dd14b5c8ae851339a3d1916330c74bb"
+          },
+          "textures/coast_land_rocks_01_disp_4k.png": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/coast_land_rocks_01/coast_land_rocks_01_disp_4k.png",
+            "size": 24302780,
+            "md5": "ff9d86c9ec4362a68986498d200ce587"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/blend/4k/coast_land_rocks_01/coast_land_rocks_01_4k.blend",
+        "size": 222787,
+        "md5": "88ae017be5ecc309c17317bc250636fe"
+      }
+    },
+    "2k": {
+      "blend": {
+        "include": {
+          "textures/coast_land_rocks_01_nor_gl_2k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/2k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_2k.exr",
+            "size": 9729398,
+            "md5": "c11ccc2ea08dfb5b86043a04310facd6"
+          },
+          "textures/coast_land_rocks_01_rough_2k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/2k/coast_land_rocks_01/coast_land_rocks_01_rough_2k.exr",
+            "size": 2674600,
+            "md5": "dd8ca01e12321b207fc7d78184e4ce79"
+          },
+          "textures/coast_land_rocks_01_diff_2k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_land_rocks_01/coast_land_rocks_01_diff_2k.jpg",
+            "size": 3567190,
+            "md5": "2a403a10fc0b12830881f5f9cc0279d1"
+          },
+          "textures/coast_land_rocks_01_disp_2k.png": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/coast_land_rocks_01/coast_land_rocks_01_disp_2k.png",
+            "size": 6349788,
+            "md5": "7f9acfaee5370594b0e29269b9d00daa"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/blend/2k/coast_land_rocks_01/coast_land_rocks_01_2k.blend",
+        "size": 222875,
+        "md5": "429e60b40ed6d2201cc4d61c81936f01"
+      }
+    },
+    "1k": {
+      "blend": {
+        "include": {
+          "textures/coast_land_rocks_01_nor_gl_1k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/1k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_1k.exr",
+            "size": 2491895,
+            "md5": "f666510b1100ba3b30a8ecf0e2724820"
+          },
+          "textures/coast_land_rocks_01_rough_1k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/1k/coast_land_rocks_01/coast_land_rocks_01_rough_1k.exr",
+            "size": 648802,
+            "md5": "372fb0e8c8fde98d0c24459cbe4c9d24"
+          },
+          "textures/coast_land_rocks_01_diff_1k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_land_rocks_01/coast_land_rocks_01_diff_1k.jpg",
+            "size": 917320,
+            "md5": "6b3c612d679da7ae8132f46e121e3d03"
+          },
+          "textures/coast_land_rocks_01_disp_1k.png": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/coast_land_rocks_01/coast_land_rocks_01_disp_1k.png",
+            "size": 1669471,
+            "md5": "d898dce0aff26980636704ca0be10981"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/blend/1k/coast_land_rocks_01/coast_land_rocks_01_1k.blend",
+        "size": 222995,
+        "md5": "04f4e9292f94894f9e8bdd47fb091bb1"
+      }
+    }
+  },
+  "gltf": {
+    "8k": {
+      "gltf": {
+        "include": {
+          "textures/coast_land_rocks_01_rough_8k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/coast_land_rocks_01/coast_land_rocks_01_rough_8k.jpg",
+            "size": 26881494,
+            "md5": "e493d08396c1c45fd5ef4da1ddb1ca3d"
+          },
+          "coast_land_rocks_01.bin": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/gltf/8k/coast_land_rocks_01/coast_land_rocks_01.bin",
+            "size": 2369332,
+            "md5": "0d5f05484b261edc3ae4e0b0d28055c3"
+          },
+          "textures/coast_land_rocks_01_nor_gl_8k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_8k.jpg",
+            "size": 61639620,
+            "md5": "c7711a0a35c1f03e96039cdfae7bc9f6"
+          },
+          "textures/coast_land_rocks_01_diff_8k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/coast_land_rocks_01/coast_land_rocks_01_diff_8k.jpg",
+            "size": 31280039,
+            "md5": "50d8e3c940e5eab5b8d882ff23eabc5a"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/gltf/8k/coast_land_rocks_01/coast_land_rocks_01_8k.gltf",
+        "size": 2749,
+        "md5": "8bf9cf376dd68e6e6761a59edba899c0"
+      }
+    },
+    "4k": {
+      "gltf": {
+        "include": {
+          "textures/coast_land_rocks_01_nor_gl_4k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_4k.jpg",
+            "size": 18473783,
+            "md5": "3b647c5cf6b108c19613b11b42420ef2"
+          },
+          "coast_land_rocks_01.bin": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/gltf/8k/coast_land_rocks_01/coast_land_rocks_01.bin",
+            "size": 2369332,
+            "md5": "0d5f05484b261edc3ae4e0b0d28055c3"
+          },
+          "textures/coast_land_rocks_01_rough_4k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_land_rocks_01/coast_land_rocks_01_rough_4k.jpg",
+            "size": 9458509,
+            "md5": "fbc5062b247c62263c73324c33749896"
+          },
+          "textures/coast_land_rocks_01_diff_4k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_land_rocks_01/coast_land_rocks_01_diff_4k.jpg",
+            "size": 11507632,
+            "md5": "7dd14b5c8ae851339a3d1916330c74bb"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/gltf/4k/coast_land_rocks_01/coast_land_rocks_01_4k.gltf",
+        "size": 2749,
+        "md5": "aa25e0ff72b92f004c19b71d5380ead4"
+      }
+    },
+    "2k": {
+      "gltf": {
+        "include": {
+          "coast_land_rocks_01.bin": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/gltf/8k/coast_land_rocks_01/coast_land_rocks_01.bin",
+            "size": 2369332,
+            "md5": "0d5f05484b261edc3ae4e0b0d28055c3"
+          },
+          "textures/coast_land_rocks_01_nor_gl_2k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_2k.jpg",
+            "size": 4960096,
+            "md5": "f72b71a65d2506bfd6be4d5e3725d1a1"
+          },
+          "textures/coast_land_rocks_01_rough_2k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_land_rocks_01/coast_land_rocks_01_rough_2k.jpg",
+            "size": 2659983,
+            "md5": "56c9704f22c7f13bb341dd45d123a195"
+          },
+          "textures/coast_land_rocks_01_diff_2k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_land_rocks_01/coast_land_rocks_01_diff_2k.jpg",
+            "size": 3567190,
+            "md5": "2a403a10fc0b12830881f5f9cc0279d1"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/gltf/2k/coast_land_rocks_01/coast_land_rocks_01_2k.gltf",
+        "size": 2749,
+        "md5": "5c8afb3618b7e2f2c8a36e80d06461d3"
+      }
+    },
+    "1k": {
+      "gltf": {
+        "include": {
+          "coast_land_rocks_01.bin": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/gltf/8k/coast_land_rocks_01/coast_land_rocks_01.bin",
+            "size": 2369332,
+            "md5": "0d5f05484b261edc3ae4e0b0d28055c3"
+          },
+          "textures/coast_land_rocks_01_diff_1k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_land_rocks_01/coast_land_rocks_01_diff_1k.jpg",
+            "size": 917320,
+            "md5": "6b3c612d679da7ae8132f46e121e3d03"
+          },
+          "textures/coast_land_rocks_01_rough_1k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_land_rocks_01/coast_land_rocks_01_rough_1k.jpg",
+            "size": 613103,
+            "md5": "ce2337f5149d8be339c66384238185d0"
+          },
+          "textures/coast_land_rocks_01_nor_gl_1k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_1k.jpg",
+            "size": 1258018,
+            "md5": "81ebf7b1bfd38d9b4c011278ab43cbad"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/gltf/1k/coast_land_rocks_01/coast_land_rocks_01_1k.gltf",
+        "size": 2749,
+        "md5": "20e700b3bccae4119366f49e8f3c0e3c"
+      }
+    }
+  },
+  "AO": {
+    "8k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/coast_land_rocks_01/coast_land_rocks_01_ao_8k.jpg",
+        "size": 44257126,
+        "md5": "1ea5af4450521f937cd6bb411ca52d40"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/8k/coast_land_rocks_01/coast_land_rocks_01_ao_8k.png",
+        "size": 108187691,
+        "md5": "b3aa1ecfd4d4190a063ffa5143295c0d"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/8k/coast_land_rocks_01/coast_land_rocks_01_ao_8k.exr",
+        "size": 77182761,
+        "md5": "19309a2d6a6b726dabb6b1ae88828739"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_land_rocks_01/coast_land_rocks_01_ao_4k.jpg",
+        "size": 12390244,
+        "md5": "22847d45e8c7abadfc3c56798e4998f0"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/coast_land_rocks_01/coast_land_rocks_01_ao_4k.png",
+        "size": 30017375,
+        "md5": "6fb79f48b0e666979047e1dac4be901d"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/4k/coast_land_rocks_01/coast_land_rocks_01_ao_4k.exr",
+        "size": 19994942,
+        "md5": "845a635be7665ec76ba688363f8726b9"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_land_rocks_01/coast_land_rocks_01_ao_2k.jpg",
+        "size": 3117753,
+        "md5": "03138cfee5bd9dbe515c2e442f92a76d"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/coast_land_rocks_01/coast_land_rocks_01_ao_2k.png",
+        "size": 7685947,
+        "md5": "8d72688a5641bf3535c18bd4d98719a1"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/2k/coast_land_rocks_01/coast_land_rocks_01_ao_2k.exr",
+        "size": 5024648,
+        "md5": "f27193f57c06729a915f2c7dfcb59895"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_land_rocks_01/coast_land_rocks_01_ao_1k.jpg",
+        "size": 766533,
+        "md5": "d259ac9dd4ec0c089f8d7dde8f7b20bd"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/coast_land_rocks_01/coast_land_rocks_01_ao_1k.png",
+        "size": 1918499,
+        "md5": "c5676bfee34eec1f16aa7f89c850dca5"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/1k/coast_land_rocks_01/coast_land_rocks_01_ao_1k.exr",
+        "size": 1251609,
+        "md5": "740ae440aabb3f6dc3aef080ebb7f5b3"
+      }
+    }
+  },
+  "Displacement": {
+    "8k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/coast_land_rocks_01/coast_land_rocks_01_disp_8k.jpg",
+        "size": 9849605,
+        "md5": "102ebef5ac8f61b40ab7f59a98eb383f"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/8k/coast_land_rocks_01/coast_land_rocks_01_disp_8k.png",
+        "size": 87118355,
+        "md5": "e12f6b10c6ff6a62dc9a077e0dc87114"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/8k/coast_land_rocks_01/coast_land_rocks_01_disp_8k.exr",
+        "size": 42115146,
+        "md5": "214e54aded7e07db554bdbb7f5eedd1b"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_land_rocks_01/coast_land_rocks_01_disp_4k.jpg",
+        "size": 3192529,
+        "md5": "436dfc108701705821b45a34bf09866a"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/coast_land_rocks_01/coast_land_rocks_01_disp_4k.png",
+        "size": 24302780,
+        "md5": "ff9d86c9ec4362a68986498d200ce587"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/4k/coast_land_rocks_01/coast_land_rocks_01_disp_4k.exr",
+        "size": 12989542,
+        "md5": "fb9b3658f086e754920f1ac913a48520"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_land_rocks_01/coast_land_rocks_01_disp_2k.jpg",
+        "size": 1028647,
+        "md5": "47f36123f9458832a2d896d1c111dc67"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/coast_land_rocks_01/coast_land_rocks_01_disp_2k.png",
+        "size": 6349788,
+        "md5": "7f9acfaee5370594b0e29269b9d00daa"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/2k/coast_land_rocks_01/coast_land_rocks_01_disp_2k.exr",
+        "size": 3784801,
+        "md5": "185f666364257964bd583899e829ec73"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_land_rocks_01/coast_land_rocks_01_disp_1k.jpg",
+        "size": 339102,
+        "md5": "71c32b82043cc937c1e0c1e3f417a1d7"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/coast_land_rocks_01/coast_land_rocks_01_disp_1k.png",
+        "size": 1669471,
+        "md5": "d898dce0aff26980636704ca0be10981"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/1k/coast_land_rocks_01/coast_land_rocks_01_disp_1k.exr",
+        "size": 1055124,
+        "md5": "491dc0b10f12d3e2870184bb38c1a207"
+      }
+    }
+  },
+  "Rough": {
+    "8k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/coast_land_rocks_01/coast_land_rocks_01_rough_8k.jpg",
+        "size": 26881494,
+        "md5": "e493d08396c1c45fd5ef4da1ddb1ca3d"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/8k/coast_land_rocks_01/coast_land_rocks_01_rough_8k.png",
+        "size": 213772570,
+        "md5": "c3a23467b4eb1b18e36bd0eb56a60bbe"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/8k/coast_land_rocks_01/coast_land_rocks_01_rough_8k.exr",
+        "size": 25501776,
+        "md5": "17b3c6bcf87f9cfb69de80c6296f0c4a"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_land_rocks_01/coast_land_rocks_01_rough_4k.jpg",
+        "size": 9458509,
+        "md5": "fbc5062b247c62263c73324c33749896"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/coast_land_rocks_01/coast_land_rocks_01_rough_4k.png",
+        "size": 39755309,
+        "md5": "3c9209c466821ddafd80a6cbe3394db4"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/4k/coast_land_rocks_01/coast_land_rocks_01_rough_4k.exr",
+        "size": 9180421,
+        "md5": "54da734f714c04e9c3796a2f19d97aff"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_land_rocks_01/coast_land_rocks_01_rough_2k.jpg",
+        "size": 2659983,
+        "md5": "56c9704f22c7f13bb341dd45d123a195"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/coast_land_rocks_01/coast_land_rocks_01_rough_2k.png",
+        "size": 10086323,
+        "md5": "4ee987dbd4e792b0ee619ee312457c14"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/2k/coast_land_rocks_01/coast_land_rocks_01_rough_2k.exr",
+        "size": 2674600,
+        "md5": "dd8ca01e12321b207fc7d78184e4ce79"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_land_rocks_01/coast_land_rocks_01_rough_1k.jpg",
+        "size": 613103,
+        "md5": "ce2337f5149d8be339c66384238185d0"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/coast_land_rocks_01/coast_land_rocks_01_rough_1k.png",
+        "size": 2502520,
+        "md5": "c48cf03b87b366f98ae6ad8415097ee6"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/1k/coast_land_rocks_01/coast_land_rocks_01_rough_1k.exr",
+        "size": 648802,
+        "md5": "372fb0e8c8fde98d0c24459cbe4c9d24"
+      }
+    }
+  },
+  "nor_gl": {
+    "8k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_8k.jpg",
+        "size": 61639620,
+        "md5": "c7711a0a35c1f03e96039cdfae7bc9f6"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/8k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_8k.png",
+        "size": 167773292,
+        "md5": "397265df4fb85c7cf6fac698383c4623"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/8k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_8k.exr",
+        "size": 117770720,
+        "md5": "5e4fc00296fd7328aec18edfa5fc69f1"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_4k.jpg",
+        "size": 18473783,
+        "md5": "3b647c5cf6b108c19613b11b42420ef2"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_4k.png",
+        "size": 88532527,
+        "md5": "6928a98396a817115f949cbfc6c3d07f"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/4k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_4k.exr",
+        "size": 36105959,
+        "md5": "29f54d646015616f7f8236f8ea6c69bb"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_2k.jpg",
+        "size": 4960096,
+        "md5": "f72b71a65d2506bfd6be4d5e3725d1a1"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_2k.png",
+        "size": 23481174,
+        "md5": "de515687bf09fa21a1f1e3bb96aa9745"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/2k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_2k.exr",
+        "size": 9729398,
+        "md5": "c11ccc2ea08dfb5b86043a04310facd6"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_1k.jpg",
+        "size": 1258018,
+        "md5": "81ebf7b1bfd38d9b4c011278ab43cbad"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_1k.png",
+        "size": 5912990,
+        "md5": "cd56f1c61cb9a5cea7f032ac3ba6026a"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/1k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_1k.exr",
+        "size": 2491895,
+        "md5": "f666510b1100ba3b30a8ecf0e2724820"
+      }
+    }
+  },
+  "arm": {
+    "8k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/coast_land_rocks_01/coast_land_rocks_01_arm_8k.jpg",
+        "size": 47935245,
+        "md5": "168b19c72ab898a14330708532625ffd"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/8k/coast_land_rocks_01/coast_land_rocks_01_arm_8k.png",
+        "size": 253611717,
+        "md5": "8e36c464cef55e0023d22fab05f33d7f"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/8k/coast_land_rocks_01/coast_land_rocks_01_arm_8k.exr",
+        "size": 79725186,
+        "md5": "0b179a8b15cdaa09d14023f718ac068e"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_land_rocks_01/coast_land_rocks_01_arm_4k.jpg",
+        "size": 13688156,
+        "md5": "58d7866ae8584d6b1faa0efdcf8c3f8c"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/coast_land_rocks_01/coast_land_rocks_01_arm_4k.png",
+        "size": 69703704,
+        "md5": "bf54c33744831f272cf85d114bd6a31c"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/4k/coast_land_rocks_01/coast_land_rocks_01_arm_4k.exr",
+        "size": 25547922,
+        "md5": "bb799d09476ba7d1ab7841cd3798f15b"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_land_rocks_01/coast_land_rocks_01_arm_2k.jpg",
+        "size": 3429431,
+        "md5": "a52a353e24f47d616ff7ae961d62fec1"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/coast_land_rocks_01/coast_land_rocks_01_arm_2k.png",
+        "size": 17884468,
+        "md5": "ea4c937e2281e9eb9431404e24524625"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/2k/coast_land_rocks_01/coast_land_rocks_01_arm_2k.exr",
+        "size": 6929793,
+        "md5": "b9527adb842855314a3d505b1642654c"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_land_rocks_01/coast_land_rocks_01_arm_1k.jpg",
+        "size": 810497,
+        "md5": "2fd69f98a833d834b72b3dcaf6e7ae98"
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/coast_land_rocks_01/coast_land_rocks_01_arm_1k.png",
+        "size": 4439237,
+        "md5": "0e1df7ec8601397d3f0a3f9857496637"
+      },
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/1k/coast_land_rocks_01/coast_land_rocks_01_arm_1k.exr",
+        "size": 1670116,
+        "md5": "f3b1afb5da0b15fd77cb1101f9c69366"
+      }
+    }
+  },
+  "mtlx": {
+    "8k": {
+      "mtlx": {
+        "include": {
+          "textures/coast_land_rocks_01_rough_8k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/8k/coast_land_rocks_01/coast_land_rocks_01_rough_8k.exr",
+            "size": 25501776,
+            "md5": "17b3c6bcf87f9cfb69de80c6296f0c4a"
+          },
+          "textures/coast_land_rocks_01_disp_8k.png": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/8k/coast_land_rocks_01/coast_land_rocks_01_disp_8k.png",
+            "size": 87118355,
+            "md5": "e12f6b10c6ff6a62dc9a077e0dc87114"
+          },
+          "textures/coast_land_rocks_01_nor_gl_8k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/8k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_8k.exr",
+            "size": 117770720,
+            "md5": "5e4fc00296fd7328aec18edfa5fc69f1"
+          },
+          "textures/coast_land_rocks_01_diff_8k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/coast_land_rocks_01/coast_land_rocks_01_diff_8k.jpg",
+            "size": 31280039,
+            "md5": "50d8e3c940e5eab5b8d882ff23eabc5a"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/mtlx/8k/coast_land_rocks_01/coast_land_rocks_01_8k.mtlx",
+        "size": 4794,
+        "md5": "10b4b4c395555eb910993092aa64e551"
+      }
+    },
+    "4k": {
+      "mtlx": {
+        "include": {
+          "textures/coast_land_rocks_01_nor_gl_4k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/4k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_4k.exr",
+            "size": 36105959,
+            "md5": "29f54d646015616f7f8236f8ea6c69bb"
+          },
+          "textures/coast_land_rocks_01_rough_4k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/4k/coast_land_rocks_01/coast_land_rocks_01_rough_4k.exr",
+            "size": 9180421,
+            "md5": "54da734f714c04e9c3796a2f19d97aff"
+          },
+          "textures/coast_land_rocks_01_diff_4k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_land_rocks_01/coast_land_rocks_01_diff_4k.jpg",
+            "size": 11507632,
+            "md5": "7dd14b5c8ae851339a3d1916330c74bb"
+          },
+          "textures/coast_land_rocks_01_disp_4k.png": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/coast_land_rocks_01/coast_land_rocks_01_disp_4k.png",
+            "size": 24302780,
+            "md5": "ff9d86c9ec4362a68986498d200ce587"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/mtlx/4k/coast_land_rocks_01/coast_land_rocks_01_4k.mtlx",
+        "size": 4794,
+        "md5": "253b1ff06a45357a11a06ac4e841c269"
+      }
+    },
+    "2k": {
+      "mtlx": {
+        "include": {
+          "textures/coast_land_rocks_01_nor_gl_2k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/2k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_2k.exr",
+            "size": 9729398,
+            "md5": "c11ccc2ea08dfb5b86043a04310facd6"
+          },
+          "textures/coast_land_rocks_01_rough_2k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/2k/coast_land_rocks_01/coast_land_rocks_01_rough_2k.exr",
+            "size": 2674600,
+            "md5": "dd8ca01e12321b207fc7d78184e4ce79"
+          },
+          "textures/coast_land_rocks_01_diff_2k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/coast_land_rocks_01/coast_land_rocks_01_diff_2k.jpg",
+            "size": 3567190,
+            "md5": "2a403a10fc0b12830881f5f9cc0279d1"
+          },
+          "textures/coast_land_rocks_01_disp_2k.png": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/coast_land_rocks_01/coast_land_rocks_01_disp_2k.png",
+            "size": 6349788,
+            "md5": "7f9acfaee5370594b0e29269b9d00daa"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/mtlx/2k/coast_land_rocks_01/coast_land_rocks_01_2k.mtlx",
+        "size": 4794,
+        "md5": "f73ee8872c1e9e2a72da4388cbe78283"
+      }
+    },
+    "1k": {
+      "mtlx": {
+        "include": {
+          "textures/coast_land_rocks_01_nor_gl_1k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/1k/coast_land_rocks_01/coast_land_rocks_01_nor_gl_1k.exr",
+            "size": 2491895,
+            "md5": "f666510b1100ba3b30a8ecf0e2724820"
+          },
+          "textures/coast_land_rocks_01_rough_1k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/1k/coast_land_rocks_01/coast_land_rocks_01_rough_1k.exr",
+            "size": 648802,
+            "md5": "372fb0e8c8fde98d0c24459cbe4c9d24"
+          },
+          "textures/coast_land_rocks_01_diff_1k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_land_rocks_01/coast_land_rocks_01_diff_1k.jpg",
+            "size": 917320,
+            "md5": "6b3c612d679da7ae8132f46e121e3d03"
+          },
+          "textures/coast_land_rocks_01_disp_1k.png": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/coast_land_rocks_01/coast_land_rocks_01_disp_1k.png",
+            "size": 1669471,
+            "md5": "d898dce0aff26980636704ca0be10981"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/mtlx/1k/coast_land_rocks_01/coast_land_rocks_01_1k.mtlx",
+        "size": 4794,
+        "md5": "b016e7b660191ad750913aa57bbe0b8b"
+      }
+    }
+  }
+}

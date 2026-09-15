@@ -1,0 +1,214 @@
+[
+  {
+    "check": "Historical run",
+    "time": "2026-09-15T12:54:41.176Z",
+    "url": "http://127.0.0.1:5207/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d#agent/PC-142/R-PC-142-plan-1",
+    "labels": [
+      {
+        "behavior": null,
+        "id": "base",
+        "label": null,
+        "moving": null
+      },
+      {
+        "behavior": "park",
+        "id": "PC-142",
+        "label": "PC-142 · Plan · Recorded run · completed",
+        "moving": "false"
+      },
+      {
+        "behavior": "park",
+        "id": "PC-153",
+        "label": "PC-153 · Grill · Needs your answer · Should revision labels be normalised before comparison?",
+        "moving": "false"
+      },
+      {
+        "behavior": "park",
+        "id": "PC-148",
+        "label": "PC-148 · Dev review · Repair required · Revision history can fail when no revision exists.",
+        "moving": "false"
+      }
+    ]
+  },
+  {
+    "check": "Needs-answer action",
+    "time": "2026-09-15T12:55:30.987Z",
+    "url": "http://127.0.0.1:5207/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d#grill/PC-153",
+    "result": "PC-153 opens existing Decision room with recorded question and next action; no answer submitted."
+  },
+  {
+    "check": "Model and reasoning controls",
+    "time": "2026-09-15T12:56:01.511Z",
+    "url": "http://127.0.0.1:5207/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d#task-policies/PC-153",
+    "result": "Existing Task role policies retain historical locks; Specification exposes Luna/Sol/Opus 5 and Low to Max reasoning. No policy submitted."
+  },
+  {
+    "check": "Repair with completed run",
+    "time": "2026-09-15T12:58:29.915Z",
+    "url": "http://127.0.0.1:5207/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d#agent/PC-148/R-PC-148-dev-review-1",
+    "labels": [
+      {
+        "behavior": null,
+        "id": "base",
+        "label": null,
+        "moving": null
+      },
+      {
+        "behavior": "work",
+        "id": "PC-142",
+        "label": "PC-142 · Implement · Working",
+        "moving": "true"
+      },
+      {
+        "behavior": "park",
+        "id": "PC-153",
+        "label": "PC-153 · Grill · Needs your answer · Should revision labels be normalised before comparison?",
+        "moving": "false"
+      },
+      {
+        "behavior": "park",
+        "id": "PC-148",
+        "label": "PC-148 · Dev review · Recorded run · completed · Revision history can fail when no revision exists.",
+        "moving": "false"
+      }
+    ],
+    "result": "PC-148 Watch shows Repair required, Run completed / parked, persisted reason and Review findings."
+  },
+  {
+    "check": "3D ray picking",
+    "time": "2026-09-15T12:59:53.473Z",
+    "url": "http://127.0.0.1:5207/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d#world",
+    "result": "Click on visible court robot changed selection from PC-148 to PC-142 and updated HUD."
+  },
+  {
+    "check": "Keyboard pan",
+    "time": "2026-09-15T12:59:54.809Z",
+    "before": "transform: translate(406.064px, 383.484px) translate(-50%, -100%); --proof-leader: 40.17636240372957px;",
+    "after": "transform: translate(406.064px, 383.484px) translate(-50%, -100%); --proof-leader: 40.17636240372957px;",
+    "changed": false
+  },
+  {
+    "check": "Space follow",
+    "time": "2026-09-15T13:00:08.783Z",
+    "position": "transform: translate(406.064px, 383.484px) translate(-50%, -100%); --proof-leader: 40.17636240372957px;"
+  },
+  {
+    "check": "Keyboard camera fixed",
+    "time": "2026-09-15T13:02:11.209Z",
+    "panPersistedAfterRefresh": "transform: translate(336.064px, 383.484px) translate(-50%, -100%); --proof-leader: 40.17636240372951px;",
+    "followPosition": "transform: translate(719px, 350.161px) translate(-50%, -100%); --proof-leader: 40.17636240372957px;",
+    "result": "Stable Canvas construction options and size dependencies preserve camera through fixture refreshes."
+  },
+  {
+    "check": "Actual WebGL context loss",
+    "time": "2026-09-15T13:04:42.946Z",
+    "url": "http://127.0.0.1:5207/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d&qa=1#world",
+    "message": "3D scene unavailable\n\nThe 3D graphics connection was lost. Retry the scene or return to the existing world.\n\nRetry 3D sceneReturn to existing world"
+  },
+  {
+    "check": "Context recovery",
+    "time": "2026-09-15T13:05:23.914Z",
+    "result": "Retry loaded scene again after actual WebGL context loss."
+  },
+  {
+    "check": "Disconnected fixture",
+    "time": "2026-09-15T13:05:54.341Z",
+    "url": "http://127.0.0.1:5207/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d&qa=1#world",
+    "labels": [
+      {
+        "behavior": null,
+        "id": "base",
+        "label": null,
+        "moving": null
+      },
+      {
+        "behavior": "park",
+        "id": "PC-142",
+        "label": "PC-142 · Implement · Connection unknown",
+        "moving": "false"
+      },
+      {
+        "behavior": "park",
+        "id": "PC-153",
+        "label": "PC-153 · Grill · Connection unknown · Should revision labels be normalised before comparison?",
+        "moving": "false"
+      },
+      {
+        "behavior": "park",
+        "id": "PC-148",
+        "label": "PC-148 · Dev review · Connection unknown · Revision history can fail when no revision exists.",
+        "moving": "false"
+      }
+    ],
+    "result": "Every worker stops; connection unknown and last known Working remain distinct."
+  },
+  {
+    "check": "Laptop task creation",
+    "time": "2026-09-15T13:10:33.698Z",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "result": "New task retains PlanCheck scope, local scrollable brief, Cancel and next-step controls; no task created."
+  },
+  {
+    "check": "Missing GLB",
+    "time": "2026-09-15T13:11:05.703Z",
+    "url": "http://127.0.0.1:5207/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d&proofAssetFailure=1#world",
+    "message": "3D scene unavailable\n\nThe 3D artwork could not be loaded or rendered. Retry the scene or return to the existing world.\n\nRetry 3D sceneReturn to existing world"
+  },
+  {
+    "check": "Default renderer recovery",
+    "time": "2026-09-15T13:11:37.098Z",
+    "url": "http://127.0.0.1:5207/?mode=fixture&scenario=workflow&art=cinematic#world",
+    "proofCanvasCount": 0,
+    "result": "Return link removes the 3D opt-in and preserves the existing all-project Pixi world, HUD and minimap."
+  },
+  {
+    "check": "Other project with 3D opt-in",
+    "time": "2026-09-15T13:14:55.267Z",
+    "url": "http://127.0.0.1:5207/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d#project/mystrata",
+    "proofCanvasCount": 0,
+    "result": "MyStrataAssist retains its Pixi headquarters and MS task labels even when renderer=3d remains in URL."
+  },
+  {
+    "check": "Motion off",
+    "time": "2026-09-15T13:17:26.934Z",
+    "labels": [
+      {
+        "behavior": null,
+        "id": "base",
+        "moving": null
+      },
+      {
+        "behavior": "work",
+        "id": "PC-142",
+        "moving": "false"
+      },
+      {
+        "behavior": "park",
+        "id": "PC-153",
+        "moving": "false"
+      },
+      {
+        "behavior": "park",
+        "id": "PC-148",
+        "moving": "false"
+      }
+    ]
+  },
+  {
+    "check": "keyboard Tab then Enter selects visible worker",
+    "at": "2026-09-15T13:31:36.830Z",
+    "result": "pass",
+    "detail": "Tabbed from PC-153 to PC-148, Enter selected PC-148 Dev review with Repair required and Review findings."
+  },
+  {
+    "check": "mouse drag and wheel zoom",
+    "at": "2026-09-15T13:31:58.758Z",
+    "result": "pass",
+    "detail": "Drag moved projected worker +90px,+30px; scroll changed camera projection.",
+    "wheelBefore": "transform: translate(496.064px, 413.484px) translate(-50%, -100%); --proof-leader: 40.17636240372951px;",
+    "wheelAfter": "transform: translate(415.443px, 426.859px) translate(-50%, -100%); --proof-leader: 31.19937249758715px;"
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "publishedAt": "2026-09-15T15:36:25.917062+00:00",
+  "projectId": "appgprj_6a9d2e96e0248191a66ccefcaad237d3",
+  "versionId": "appgprj_6a9d2e96e0248191a66ccefcaad237d3~appgver_9461af7b892481918eaa759c38aa501f",
+  "versionNumber": 22,
+  "deploymentId": "appgdep_6aa965b901d08191937cccc24570ef0f",
+  "status": "succeeded",
+  "commitSha": "635224241af8c9ec88a55db9ce3c6474978d34b4",
+  "url": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site",
+  "articleUrl": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/three-projects-three-bases/",
+  "audience": "existing owner-only audience preserved",
+  "browserVerified": true,
+  "qualification": "5 journal tests, typecheck, lint, build; source snapshot unchanged",
+  "commitSigning": "Journal commit unsigned after local 1Password signing failed; global Git configuration unchanged.",
+  "gameDelivery": "Game remains local and uncommitted; no game PR or publication."
+}

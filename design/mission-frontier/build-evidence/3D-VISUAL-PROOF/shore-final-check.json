@@ -1,0 +1,61 @@
+{
+  "comparison": [
+    "shore-final-1.jpg",
+    "shore-final-3.jpg"
+  ],
+  "meaning": "Actual browser frames show moving sea and shoreline; parked repair robot crop is unchanged. This is not an FPS benchmark or video.",
+  "regions": {
+    "shoreWash": {
+      "regionXYXY": [
+        1210,
+        270,
+        1360,
+        520
+      ],
+      "meanRgbDelta": [
+        1.7849866666666667,
+        1.6694133333333334,
+        1.7133333333333334
+      ],
+      "changedBounds": [
+        0,
+        0,
+        150,
+        250
+      ]
+    },
+    "offshoreWater": {
+      "regionXYXY": [
+        1340,
+        300,
+        1510,
+        670
+      ],
+      "meanRgbDelta": [
+        1.19120826709062,
+        1.358235294117647,
+        1.3636883942766296
+      ],
+      "changedBounds": [
+        0,
+        0,
+        170,
+        370
+      ]
+    },
+    "parkedRepair": {
+      "regionXYXY": [
+        521,
+        461,
+        558,
+        506
+      ],
+      "meanRgbDelta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "changedBounds": null
+    }
+  }
+}

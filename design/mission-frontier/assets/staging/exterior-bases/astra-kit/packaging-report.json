@@ -1,0 +1,214 @@
+[
+  {
+    "file": "base-command.glb",
+    "before": 20927956,
+    "after": 20505940,
+    "imagesReencoded": [
+      {
+        "image": "court_weathered_basalt_normal",
+        "before": 117613,
+        "after": 45356
+      },
+      {
+        "image": "court_weathered_basalt_albedo",
+        "before": 84255,
+        "after": 15203
+      },
+      {
+        "image": "structure_graphite_joints_normal",
+        "before": 117684,
+        "after": 45517
+      },
+      {
+        "image": "structure_graphite_joints_albedo",
+        "before": 77159,
+        "after": 9670
+      },
+      {
+        "image": "structure_ivory_ceramic_normal",
+        "before": 117648,
+        "after": 45399
+      },
+      {
+        "image": "structure_ivory_ceramic_albedo",
+        "before": 90235,
+        "after": 21445
+      }
+    ],
+    "sha256": "e0b24a9fdbc874570507ac33107a7490005fd538120fb4025fa977d5f192e60d"
+  },
+  {
+    "file": "base-foundry.glb",
+    "before": 17899428,
+    "after": 17477428,
+    "imagesReencoded": [
+      {
+        "image": "court_weathered_basalt_normal",
+        "before": 117613,
+        "after": 45356
+      },
+      {
+        "image": "court_weathered_basalt_albedo",
+        "before": 84255,
+        "after": 15203
+      },
+      {
+        "image": "structure_graphite_joints_normal",
+        "before": 117684,
+        "after": 45517
+      },
+      {
+        "image": "structure_graphite_joints_albedo",
+        "before": 77159,
+        "after": 9670
+      },
+      {
+        "image": "structure_ivory_ceramic_normal",
+        "before": 117648,
+        "after": 45399
+      },
+      {
+        "image": "structure_ivory_ceramic_albedo",
+        "before": 90235,
+        "after": 21445
+      }
+    ],
+    "sha256": "24df624f32170d08a80b6a493e0dc17a5e9e73574e79390d677e60f75547973e"
+  },
+  {
+    "file": "base-relay.glb",
+    "before": 17377988,
+    "after": 16955980,
+    "imagesReencoded": [
+      {
+        "image": "court_weathered_basalt_normal",
+        "before": 117613,
+        "after": 45356
+      },
+      {
+        "image": "court_weathered_basalt_albedo",
+        "before": 84255,
+        "after": 15203
+      },
+      {
+        "image": "structure_graphite_joints_normal",
+        "before": 117684,
+        "after": 45517
+      },
+      {
+        "image": "structure_graphite_joints_albedo",
+        "before": 77159,
+        "after": 9670
+      },
+      {
+        "image": "structure_ivory_ceramic_normal",
+        "before": 117648,
+        "after": 45399
+      },
+      {
+        "image": "structure_ivory_ceramic_albedo",
+        "before": 90235,
+        "after": 21445
+      }
+    ],
+    "sha256": "9bc6293b75355e113e518545016c544f87152f2f5fb542433703544e93aff4cb"
+  },
+  {
+    "file": "environment.glb",
+    "before": 81626268,
+    "after": 58413356,
+    "imagesReencoded": [
+      {
+        "image": "court_weathered_basalt_normal",
+        "before": 117613,
+        "after": 45356
+      },
+      {
+        "image": "court_weathered_basalt_albedo",
+        "before": 84255,
+        "after": 15203
+      },
+      {
+        "image": "structure_graphite_joints_normal",
+        "before": 117684,
+        "after": 45517
+      },
+      {
+        "image": "structure_graphite_joints_albedo",
+        "before": 77159,
+        "after": 9670
+      },
+      {
+        "image": "nor_gl",
+        "before": 4527854,
+        "after": 3213547
+      },
+      {
+        "image": "Diffuse",
+        "before": 3883057,
+        "after": 2585068
+      },
+      {
+        "image": "Rough",
+        "before": 3198188,
+        "after": 804160
+      },
+      {
+        "image": "Bark_TwistedTree_Normal",
+        "before": 5728199,
+        "after": 1714286
+      },
+      {
+        "image": "Bark_TwistedTree",
+        "before": 4630805,
+        "after": 950743
+      },
+      {
+        "image": "coastal_cliff_01_nor_gl_2k",
+        "before": 3054804,
+        "after": 2055625
+      },
+      {
+        "image": "coastal_cliff_01_diff_2k",
+        "before": 2465846,
+        "after": 1602996
+      },
+      {
+        "image": "coastal_cliff_01_arm_2k",
+        "before": 2181608,
+        "after": 1402940
+      },
+      {
+        "image": "coastal_cliff_02_nor_gl_2k",
+        "before": 4057806,
+        "after": 2839163
+      },
+      {
+        "image": "coastal_cliff_02_diff_2k",
+        "before": 2655313,
+        "after": 1761281
+      },
+      {
+        "image": "coastal_cliff_02_arm_2k",
+        "before": 2299007,
+        "after": 1511822
+      },
+      {
+        "image": "nor_gl",
+        "before": 4960096,
+        "after": 3613672
+      },
+      {
+        "image": "Diffuse",
+        "before": 3567190,
+        "after": 2391771
+      },
+      {
+        "image": "Rough",
+        "before": 4271312,
+        "after": 2102078
+      }
+    ],
+    "sha256": "450a464c1478d7f356ee0b30fada58205f827b2a3ea88a584b3324cf6fa2e9a9"
+  }
+]

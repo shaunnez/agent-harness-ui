@@ -1,0 +1,35 @@
+{
+  "status": "pass",
+  "checks": {
+    "meshCount": true,
+    "materialCount": true,
+    "embeddedImages": true,
+    "triangles": true,
+    "cameras": true,
+    "sockets": true,
+    "groups": true,
+    "materials": true,
+    "shorelineXZ": true,
+    "walkableRoutes": true,
+    "practicalLightPositions": true
+  },
+  "delivered": {
+    "file": "scene.glb",
+    "bytes": 76790764,
+    "sha256": "a69efbdd9ca192ae5044ee0604d8aa7e02b46a6b2e2cb30f306ab1f4e7ecee40",
+    "meshCount": 55,
+    "materialCount": 29,
+    "embeddedImages": 21,
+    "triangles": 817748
+  },
+  "rebuilt": {
+    "file": "scene.glb",
+    "bytes": 76790764,
+    "sha256": "d80c209f68f2df13097d27bbbf49bdb569921d53b71224f3eb40e993f536b801",
+    "meshCount": 55,
+    "materialCount": 29,
+    "embeddedImages": 21,
+    "triangles": 817748
+  },
+  "note": "Independent full authoring build, GLB export, packaging and structural audit; byte identity not required."
+}
