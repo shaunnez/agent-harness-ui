@@ -1,0 +1,67 @@
+{
+  "id": "mf.fidelity.room.ground-contact",
+  "sourceSize": [
+    1536,
+    1280
+  ],
+  "logicalSize": [
+    768,
+    640
+  ],
+  "groundAnchor": [
+    384,
+    522
+  ],
+  "groundAnchorSourceMeasured": [
+    768.0,
+    1043.999996
+  ],
+  "roomFloorCornersSourceMeasured": [
+    [
+      768.0,
+      339.999924
+    ],
+    [
+      1471.999878,
+      691.999931
+    ],
+    [
+      768.0,
+      1043.999996
+    ],
+    [
+      64.000076,
+      692.000008
+    ]
+  ],
+  "slabBottomWorldZ": -0.6,
+  "groundSkinWorldZ": -0.655,
+  "shadowCasterOnly": "original slab volume, camera-invisible; no wall shadow and no external shadow-catcher plane",
+  "embeddedStoneCount": 444,
+  "outerEdge": "irregular feathered flat mesh, no raised rim",
+  "renderThreads": 4,
+  "samples": 48,
+  "seed": 915640,
+  "blenderVersion": "5.2.1 LTS",
+  "unchangedRoomFileHashes": {
+    "entries.json": "5d89ab46cae891101e797911f77d2f99d760b65ba34c6564a913fbd67ff07aa8",
+    "provenance.json": "8f499cd707c0351827ebe7d9b148c0a8b1f9b7291b9142723d3fbfbd09750e8c",
+    "renders/room-floor-r1.png": "339ecea5fab4b28201932830ceccf031cc5667c4185fa85711c573f2dca44ecb",
+    "renders/room-back-r1.png": "9b2f33decb5c9cfbfe9f2435ba79fa7cab4c65144465dbae890d816c008f6efe",
+    "renders/room-front-r1.png": "fdfa511c0b1b05c3511e4ca66331ce00d5f2c899003d228585ed4a9ae0f5876d",
+    "renders/room-lights-r1.png": "9c0f3ecd28b929e314b557fd326438e245a581cc1649fbf4536bbc7481bb16b1"
+  },
+  "camera": {
+    "location": [
+      11.815340042114258,
+      11.815340042114258,
+      10.250280380249023
+    ],
+    "orthoScale": 15.427783966064453,
+    "rotationEuler": [
+      1.0471974611282349,
+      4.447953827479978e-08,
+      2.356194496154785
+    ]
+  }
+}

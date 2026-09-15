@@ -1,0 +1,381 @@
+{
+  "version": 2,
+  "assets": [
+    {
+      "id": "mf.cinematic.island",
+      "revision": 3,
+      "file": "/assets/fidelity/mf.cinematic.island.2d2186c63cab.png",
+      "sourceSize": [
+        2048,
+        1536
+      ],
+      "logicalSize": [
+        1024,
+        768
+      ],
+      "groundAnchor": [
+        511.9999694824219,
+        372.0162048339844
+      ],
+      "sha256": "2d2186c63cab97ebdce83b1cc8feb9ec8985abed762580c5b39d7c2b7f445821",
+      "bytes": 2616003,
+      "sourceBlend": "design/mission-frontier/assets/staging/design-fidelity-v2/environment/island-r3.blend",
+      "originalBlend": "design/mission-frontier/assets/staging/design-fidelity-v2/environment/source-island.blend",
+      "originalSha256": "43fc4b5de35064ef736e6a6323a8a39f1fa2b31f1a6934e23451606bb7ec022f",
+      "blenderVersion": "5.2.1 LTS",
+      "samples": 48,
+      "provenance": "Derived from Goal3 procedural Blender environment and retained Quaternius CC0 rock geometry. Island mesh and camera retained; coastal meadow palette, softer microtexture, reduced interior gravel and shorter tufts. Water retains revision 2 palette."
+    },
+    {
+      "id": "mf.cinematic.water",
+      "revision": 2,
+      "file": "/assets/fidelity/mf.cinematic.water.f9cc32d60912.png",
+      "sourceSize": [
+        1024,
+        1024
+      ],
+      "logicalSize": [
+        512,
+        512
+      ],
+      "groundAnchor": [
+        256,
+        256
+      ],
+      "sha256": "f9cc32d609129c0231189729295c99870fcf9288b0b4cc4872da3c99c460d86a",
+      "bytes": 1001274,
+      "sourceBlend": "design/mission-frontier/assets/staging/design-fidelity-v2/environment/water-r2.blend",
+      "originalBlend": "design/mission-frontier/assets/staging/design-fidelity-v2/environment/source-water.blend",
+      "originalSha256": "2a5f317e2d481e8c8f334ce153652525fc8100fa11a4823669e16b283097cde7",
+      "blenderVersion": "5.2.1 LTS",
+      "samples": 48,
+      "provenance": "Derived from Goal3 procedural Blender environment and retained Quaternius CC0 rock geometry. Geometry/camera unchanged; coastal palette and light refinement only."
+    },
+    {
+      "id": "mf.fidelity.room.floor",
+      "revision": 1,
+      "file": "/assets/fidelity/mf.fidelity.room.floor.339ecea5fab4.png",
+      "sourceSize": [
+        1536,
+        1280
+      ],
+      "logicalSize": [
+        768,
+        640
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        384,
+        522
+      ],
+      "footprint": [
+        [
+          384,
+          170
+        ],
+        [
+          736,
+          346
+        ],
+        [
+          384,
+          522
+        ],
+        [
+          32,
+          346
+        ]
+      ],
+      "labelAnchor": null,
+      "labelAnchorNote": "Runtime task labels have separate task/station anchors; no baked architectural label socket",
+      "occlusionClass": "floor",
+      "sourceId": "astra-original-blender-room-20260915-r1",
+      "sha256": "339ecea5fab4b28201932830ceccf031cc5667c4185fa85711c573f2dca44ecb",
+      "status": "static-qa-passed-pending-builder-in-app-review",
+      "alphaBoundsSource": [
+        63,
+        340,
+        1473,
+        1093
+      ],
+      "alphaBoundsLogical": [
+        31.5,
+        170,
+        736.5,
+        546.5
+      ],
+      "bytes": 1134029,
+      "decodedRGBABytes": 7864320,
+      "qa": [
+        "qa/static-checks.json",
+        "qa/alpha-backgrounds.png",
+        "qa/registration.png"
+      ],
+      "loadStage": "detail"
+    },
+    {
+      "id": "mf.fidelity.room.back",
+      "revision": 1,
+      "file": "/assets/fidelity/mf.fidelity.room.back.9b2f33decb5c.png",
+      "sourceSize": [
+        1536,
+        1280
+      ],
+      "logicalSize": [
+        768,
+        640
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        384,
+        522
+      ],
+      "footprint": [
+        [
+          384,
+          170
+        ],
+        [
+          736,
+          346
+        ],
+        [
+          384,
+          522
+        ],
+        [
+          32,
+          346
+        ]
+      ],
+      "labelAnchor": null,
+      "labelAnchorNote": "Runtime task labels have separate task/station anchors; no baked architectural label socket",
+      "occlusionClass": "back",
+      "sourceId": "astra-original-blender-room-20260915-r1",
+      "sha256": "9b2f33decb5c9cfbfe9f2435ba79fa7cab4c65144465dbae890d816c008f6efe",
+      "status": "static-qa-passed-pending-builder-in-app-review",
+      "alphaBoundsSource": [
+        60,
+        117,
+        1476,
+        710
+      ],
+      "alphaBoundsLogical": [
+        30,
+        58.5,
+        738,
+        355
+      ],
+      "bytes": 1237885,
+      "decodedRGBABytes": 7864320,
+      "qa": [
+        "qa/static-checks.json",
+        "qa/alpha-backgrounds.png",
+        "qa/registration.png"
+      ],
+      "loadStage": "detail"
+    },
+    {
+      "id": "mf.fidelity.room.front",
+      "revision": 1,
+      "file": "/assets/fidelity/mf.fidelity.room.front.fdfa511c0b1b.png",
+      "sourceSize": [
+        1536,
+        1280
+      ],
+      "logicalSize": [
+        768,
+        640
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        384,
+        522
+      ],
+      "footprint": [
+        [
+          384,
+          170
+        ],
+        [
+          736,
+          346
+        ],
+        [
+          384,
+          522
+        ],
+        [
+          32,
+          346
+        ]
+      ],
+      "labelAnchor": null,
+      "labelAnchorNote": "Runtime task labels have separate task/station anchors; no baked architectural label socket",
+      "occlusionClass": "front",
+      "sourceId": "astra-original-blender-room-20260915-r1",
+      "sha256": "fdfa511c0b1b05c3511e4ca66331ce00d5f2c899003d228585ed4a9ae0f5876d",
+      "status": "static-qa-passed-pending-builder-in-app-review",
+      "alphaBoundsSource": [
+        80,
+        632,
+        1456,
+        1031
+      ],
+      "alphaBoundsLogical": [
+        40,
+        316,
+        728,
+        515.5
+      ],
+      "bytes": 601682,
+      "decodedRGBABytes": 7864320,
+      "qa": [
+        "qa/static-checks.json",
+        "qa/alpha-backgrounds.png",
+        "qa/registration.png"
+      ],
+      "loadStage": "detail"
+    },
+    {
+      "id": "mf.fidelity.room.lights",
+      "revision": 1,
+      "file": "/assets/fidelity/mf.fidelity.room.lights.9c0f3ecd28b9.png",
+      "sourceSize": [
+        1536,
+        1280
+      ],
+      "logicalSize": [
+        768,
+        640
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        384,
+        522
+      ],
+      "footprint": [
+        [
+          384,
+          170
+        ],
+        [
+          736,
+          346
+        ],
+        [
+          384,
+          522
+        ],
+        [
+          32,
+          346
+        ]
+      ],
+      "labelAnchor": null,
+      "labelAnchorNote": "Runtime task labels have separate task/station anchors; no baked architectural label socket",
+      "occlusionClass": "effects",
+      "sourceId": "astra-original-blender-room-20260915-r1",
+      "sha256": "9c0f3ecd28b929e314b557fd326438e245a581cc1649fbf4536bbc7481bb16b1",
+      "status": "static-qa-passed-pending-builder-in-app-review",
+      "alphaBoundsSource": [
+        88,
+        208,
+        1448,
+        1007
+      ],
+      "alphaBoundsLogical": [
+        44,
+        104,
+        724,
+        503.5
+      ],
+      "bytes": 75040,
+      "decodedRGBABytes": 7864320,
+      "qa": [
+        "qa/static-checks.json",
+        "qa/alpha-backgrounds.png",
+        "qa/registration.png"
+      ],
+      "loadStage": "detail"
+    },
+    {
+      "id": "mf.fidelity.room.ground-contact",
+      "revision": 1,
+      "file": "/assets/fidelity/mf.fidelity.room.ground-contact.15817fbfd218.png",
+      "sourceSize": [
+        1536,
+        1280
+      ],
+      "logicalSize": [
+        768,
+        640
+      ],
+      "coordinateUnits": "logical-pixels-untrimmed",
+      "groundAnchor": [
+        384,
+        522
+      ],
+      "footprint": [
+        [
+          384,
+          170
+        ],
+        [
+          736,
+          346
+        ],
+        [
+          384,
+          522
+        ],
+        [
+          32,
+          346
+        ]
+      ],
+      "footprintNote": "Existing room ground plane z=0 registration; visible contact surface is 0.655 world units lower, matching slab thickness.",
+      "labelAnchor": null,
+      "occlusionClass": "ground",
+      "sourceId": "astra-original-blender-ground-contact-20260915-r1",
+      "sha256": "15817fbfd2181ad966c540fbf12278a9357b5e3b4711d50d386c8c3539360d2d",
+      "status": "static-qa-passed-pending-builder-in-app-review",
+      "alphaBoundsSource": [
+        28,
+        376,
+        1509,
+        1120
+      ],
+      "alphaBoundsLogical": [
+        14,
+        188,
+        754.5,
+        560
+      ],
+      "bytes": 692923,
+      "decodedRGBABytes": 7864320,
+      "qa": [
+        "qa/ground-contact-checks.json",
+        "qa/ground-contact-alpha.png",
+        "qa/ground-contact-tiled-0.6.png"
+      ],
+      "provenance": {
+        "tool": "Blender 5.2.1 LTS",
+        "source": "original procedural gravel/stone geometry and materials; reused read-only room camera and lighting",
+        "renderSamples": 48,
+        "renderThreads": 4,
+        "seed": 915640,
+        "referenceImages": [
+          "design/mission-frontier/build-evidence/DESIGN-FIDELITY/grounding/before-hq.png",
+          "design/mission-frontier/screens/project-base-attention-v1.1.png"
+        ],
+        "sourceFiles": {
+          "source/build_ground_contact.py": "64f0c44045f4d9ee2c1b8ecb60792660f7e9a68902483ad3b2ae932ab3d1cb7b",
+          "source/qa_ground_contact.py": "f77fa5da1442613704c3918a688de23af612d5bbe22af00b1bf229ddc2ab51aa",
+          "blend/ground-contact.blend": "6c3de9f11352ff81f10e9fb4e0e9e6b34862ae35d11e46590398a4a3108f189b"
+        }
+      },
+      "loadStage": "detail"
+    }
+  ]
+}

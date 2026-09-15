@@ -14,6 +14,26 @@ export interface SceneryContext {
   shuttle(sprite: Sprite, taskId: string, departing: boolean, scale: number): void;
 }
 
+/** Uninhabited landscape carries no project, task or execution identity. */
+export function placeCoastalBackdrop(ctx: SceneryContext, x: number, y: number) {
+  ctx.art("mf.cinematic.island", x, y, 0.86);
+  for (const [dx, dy, scale] of [
+    [-100, -70, 0.62],
+    [45, -60, 0.68],
+    [-230, -5, 0.48],
+    [-60, 0, 0.58],
+    [140, 5, 0.6],
+    [-145, 55, 0.6],
+    [15, 75, 0.64],
+    [190, 80, 0.48],
+    [-65, 130, 0.42],
+    [95, 135, 0.4],
+  ] as const)
+    ctx.art("mf.prop.purple-tree", x + dx, y + dy, scale);
+  ctx.art("mf.cinematic.tree", x + 205, y + 25, 0.4);
+  ctx.art("mf.prop.rock", x - 105, y + 80, 0.8);
+}
+
 export function placeCompound(
   ctx: SceneryContext,
   x: number,
@@ -23,8 +43,18 @@ export function placeCompound(
   id: string,
   cinematic: boolean,
 ) {
-  ctx.select(ctx.art("mf.base.standard.floor", x, y, scale), "project", id);
-  ctx.art("mf.base.standard.back", x, y, scale);
+  const room = cinematic && !roof && ctx.assets.has("mf.fidelity.room.floor");
+  const prefix = room ? "mf.fidelity.room" : "mf.base.standard";
+  ctx.select(ctx.art(`${prefix}.floor`, x, y, scale), "project", id);
+  ctx.art(`${prefix}.back`, x, y, scale);
+  if (room) {
+    const lights = ctx.assets.sprite("mf.fidelity.room.lights", x, y, scale);
+    if (lights) {
+      lights.eventMode = "none";
+      ctx.container.addChild(lights);
+      ctx.environment.emission(lights, 0.15, 0.65);
+    }
+  }
   const variant =
     [...id].reduce((total, letter) => total + letter.charCodeAt(0), 0) % 3 === 0 ? "observatory" : "standard";
   if (roof)
@@ -42,9 +72,11 @@ export function placeCompound(
       ctx.environment.emission(windows, 0.18, 0.8);
     }
   }
-  ctx.environment.lamp(ctx.container, x - 145 * scale, y - 75 * scale, scale, 0);
-  ctx.environment.lamp(ctx.container, x + 145 * scale, y - 75 * scale, scale, 2);
-  ctx.environment.lamp(ctx.container, x, y + 9 * scale, scale, 1);
+  if (!room) {
+    ctx.environment.lamp(ctx.container, x - 145 * scale, y - 75 * scale, scale, 0);
+    ctx.environment.lamp(ctx.container, x + 145 * scale, y - 75 * scale, scale, 2);
+    ctx.environment.lamp(ctx.container, x, y + 9 * scale, scale, 1);
+  }
 }
 
 export function placeVegetation(
@@ -86,6 +118,29 @@ export function placeVegetation(
   if (foreground) {
     art("mf.prop.rock", x - 150, y + 75, 0.8);
     art("mf.prop.rock", x + 170, y + 35, 0.6);
+  }
+}
+
+/** Tree trunks stay outside the occupied room footprint; canopies frame the clearing. */
+export function placeHeadquartersVegetation(
+  art: SceneryContext["art"],
+  bounds: { left: number; right: number; top: number; bottom: number },
+  cinematic: boolean,
+) {
+  const { left, right, top, bottom } = bounds;
+  const center = (left + right) / 2;
+  for (const [dx, dy] of [
+    [-90, -20],
+    [80, -10],
+    [0, -60],
+  ] as const)
+    art("mf.prop.purple-tree", center + dx, top - 210 + dy, cinematic ? 0.6 : 0.75);
+  if (cinematic) {
+    art("mf.prop.purple-tree", left - 280, top + 5, 0.5);
+    art("mf.prop.purple-tree", right + 275, top + 15, 0.52);
+  } else {
+    art("mf.prop.purple-tree", left - 260, (top + bottom) / 2 - 70, 0.85);
+    art("mf.prop.purple-tree", right + 255, (top + bottom) / 2 - 90, 0.8);
   }
 }
 

@@ -1,0 +1,47 @@
+{
+  "sourceId": "astra-original-blender-room-20260915-r1",
+  "tool": "Blender 5.2.1 LTS",
+  "sourceType": "original procedural geometry and materials",
+  "referenceImages": [
+    "design/mission-frontier/screens/project-base-attention-v1.1.png",
+    "design/mission-frontier/screens/agent-work-blocked-v1.1.png"
+  ],
+  "referenceSHA256": {
+    "design/mission-frontier/screens/project-base-attention-v1.1.png": "2e4715ea12fee6deed8a60ad967ce0ef77f541a90e7e7e922fd95bfe6ac52827",
+    "design/mission-frontier/screens/agent-work-blocked-v1.1.png": "a6ff3c3c26cdc4df7df355b0e091ba6acc59de28f07fed0034c09093d89b52b3"
+  },
+  "geometryInstructions": "Modular ceramic-white cinematic cutaway room, 10\u00d710 ground plane; graphite inset bays with amber practicals, blue unlabelled screens, grilles, cables, bolts, floor panels, platform depth, restrained wear. No workers, labels, semantic lights or artifacts. Open centre and low interrupted front parapets.",
+  "seed": 9152026,
+  "renderSettings": {
+    "engine": "Cycles",
+    "samples": 64,
+    "denoising": true,
+    "threads": 4,
+    "colorManagement": "AgX",
+    "alpha": "transparent straight RGBA PNG",
+    "camera": {
+      "azimuthDegrees": 45,
+      "elevationDegrees": 30,
+      "orthoScale": 15.427783966064453,
+      "location": [
+        11.815340042114258,
+        11.815340042114258,
+        10.250280380249023
+      ]
+    }
+  },
+  "transformHistory": [
+    "Original Blender geometry rendered untrimmed at 2\u00d7 logical raster density.",
+    "Layer rendering uses camera visibility, retaining shared physical shadows.",
+    "Pillow alpha-composites QA sheets and preview; floor/back/front production layer pixels are untouched. Lights alpha is derived from the physically occluded emission render: discard <=4/255 black dither; alpha=max(RGB)*sourceAlpha, RGB normalized by max(RGB), zero RGB outside nonzero alpha."
+  ],
+  "files": {
+    "source/build_room.py": "7b4ea916df62a7f6f617edd44c7fe845afafa576e2192580d1a3b8c8bf4478f8",
+    "source/qa_room.py": "6ae3f1f61abd486b8d613c6a336422637dd6f99344886abb3a9c36653002cad3",
+    "blend/room-final.blend": "e483290b20d519f6ed9c091c75d7c98c2f50c108b791be0ef2032cfb0ec74313",
+    "renders/room-floor-r1.png": "339ecea5fab4b28201932830ceccf031cc5667c4185fa85711c573f2dca44ecb",
+    "renders/room-back-r1.png": "9b2f33decb5c9cfbfe9f2435ba79fa7cab4c65144465dbae890d816c008f6efe",
+    "renders/room-front-r1.png": "fdfa511c0b1b05c3511e4ca66331ce00d5f2c899003d228585ed4a9ae0f5876d",
+    "renders/room-lights-r1.png": "9c0f3ecd28b929e314b557fd326438e245a581cc1649fbf4536bbc7481bb16b1"
+  }
+}

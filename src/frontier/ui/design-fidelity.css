@@ -1,0 +1,153 @@
+/* World-first framing, with management access in the native keyboard-aware popover. */
+.management-menu {
+  position: fixed;
+  inset: 105px auto auto 12px;
+  margin: 0;
+  padding: 8px;
+  width: 320px;
+  color: #e7eef1;
+  background: #0b1a22f5;
+  border: 1px solid #4c6169;
+  box-shadow: 0 14px 48px #0008;
+}
+.management-menu::backdrop {
+  background: transparent;
+}
+.management-menu header {
+  padding: 8px 10px 12px;
+  color: #9dafb7;
+  font-size: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.world-navigation .management-menu button {
+  width: 100%;
+  min-height: 60px;
+  gap: 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  text-align: left;
+}
+.world-navigation .management-menu button:hover {
+  background: #213945;
+}
+.management-menu button > span {
+  flex: 1;
+}
+.management-menu strong,
+.management-menu small {
+  display: block;
+}
+.management-menu small {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #adbec6;
+}
+.attention-queue {
+  width: 302px;
+  padding: 10px;
+}
+.attention-rows {
+  max-height: min(350px, 46vh);
+  scrollbar-gutter: stable;
+  scrollbar-color: #66808b #10232c;
+  scrollbar-width: thin;
+}
+.attention-row {
+  margin: 0;
+  padding: 10px 5px;
+  border: 0;
+  border-bottom: 1px solid #ffffff14;
+  border-radius: 0;
+  gap: 9px;
+}
+.attention-row.tone-answer,
+.attention-row.tone-approval,
+.attention-row.tone-failed,
+.attention-row.tone-repair,
+.attention-row.tone-blocked {
+  background: transparent;
+}
+.attention-row:hover {
+  background: #273b46;
+}
+.attention-row .queue-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 9px;
+}
+.queue-heading > small {
+  color: #a9bcc5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.queue-state {
+  margin-top: 4px;
+  font-weight: 600;
+}
+.attention-row .queue-reason {
+  margin: 3px 0;
+  color: #d3dde1;
+}
+.attention-row > span > small:last-child {
+  color: #94aab5;
+}
+.queue-expand {
+  width: 100%;
+  justify-content: space-between;
+  min-height: 34px;
+  padding: 8px 5px 2px;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  color: #99c8ec;
+}
+@media (min-width: 1051px) {
+  .selection-hud {
+    padding: 14px 18px;
+    min-height: 150px;
+    left: 246px;
+    right: 290px;
+  }
+  .selection-hud .worker-portrait {
+    width: 68px;
+    height: 104px;
+  }
+  .selection-actions {
+    width: 172px;
+  }
+  .minimap {
+    width: 216px;
+  }
+  .minimap-image {
+    height: 125px;
+  }
+  .world-actions {
+    width: 260px;
+  }
+  .secondary-actions {
+    margin-bottom: 8px;
+  }
+  .secondary-actions button {
+    min-height: 48px;
+    flex-direction: row;
+    font-size: 12px;
+  }
+  .world-actions .new-task {
+    min-height: 42px;
+    font-size: 15px;
+  }
+  .world-actions > small {
+    display: block;
+    color: #96aeb8;
+    font-size: 12px;
+  }
+  .view-project .selection-hud {
+    left: 282px;
+    right: 22px;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+}

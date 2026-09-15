@@ -123,8 +123,10 @@ export class WorldRenderer {
             );
         });
     }
-    const cinematicDetail = this.assets.direction === "cinematic";
-    if (input.location.view === "agent" && !cinematicDetail && !this.assets.detailReady) {
+    const needsDetail =
+      input.location.view === "agent" ||
+      (this.assets.direction === "cinematic" && input.location.view === "project");
+    if (needsDetail && !this.assets.detailReady) {
       if (!this.loadingDetail) {
         this.loadingDetail = true;
         void this.assets

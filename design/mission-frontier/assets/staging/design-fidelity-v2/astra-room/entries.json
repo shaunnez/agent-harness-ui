@@ -1,0 +1,246 @@
+[
+  {
+    "id": "mf.fidelity.room.floor",
+    "revision": 1,
+    "file": "renders/room-floor-r1.png",
+    "sourceSize": [
+      1536,
+      1280
+    ],
+    "logicalSize": [
+      768,
+      640
+    ],
+    "coordinateUnits": "logical-pixels-untrimmed",
+    "groundAnchor": [
+      384,
+      522
+    ],
+    "footprint": [
+      [
+        384,
+        170
+      ],
+      [
+        736,
+        346
+      ],
+      [
+        384,
+        522
+      ],
+      [
+        32,
+        346
+      ]
+    ],
+    "labelAnchor": null,
+    "labelAnchorNote": "Runtime task labels have separate task/station anchors; no baked architectural label socket",
+    "occlusionClass": "floor",
+    "sourceId": "astra-original-blender-room-20260915-r1",
+    "sha256": "339ecea5fab4b28201932830ceccf031cc5667c4185fa85711c573f2dca44ecb",
+    "status": "static-qa-passed-pending-builder-in-app-review",
+    "alphaBoundsSource": [
+      63,
+      340,
+      1473,
+      1093
+    ],
+    "alphaBoundsLogical": [
+      31.5,
+      170.0,
+      736.5,
+      546.5
+    ],
+    "bytes": 1134029,
+    "decodedRGBABytes": 7864320,
+    "qa": [
+      "qa/static-checks.json",
+      "qa/alpha-backgrounds.png",
+      "qa/registration.png"
+    ]
+  },
+  {
+    "id": "mf.fidelity.room.back",
+    "revision": 1,
+    "file": "renders/room-back-r1.png",
+    "sourceSize": [
+      1536,
+      1280
+    ],
+    "logicalSize": [
+      768,
+      640
+    ],
+    "coordinateUnits": "logical-pixels-untrimmed",
+    "groundAnchor": [
+      384,
+      522
+    ],
+    "footprint": [
+      [
+        384,
+        170
+      ],
+      [
+        736,
+        346
+      ],
+      [
+        384,
+        522
+      ],
+      [
+        32,
+        346
+      ]
+    ],
+    "labelAnchor": null,
+    "labelAnchorNote": "Runtime task labels have separate task/station anchors; no baked architectural label socket",
+    "occlusionClass": "back",
+    "sourceId": "astra-original-blender-room-20260915-r1",
+    "sha256": "9b2f33decb5c9cfbfe9f2435ba79fa7cab4c65144465dbae890d816c008f6efe",
+    "status": "static-qa-passed-pending-builder-in-app-review",
+    "alphaBoundsSource": [
+      60,
+      117,
+      1476,
+      710
+    ],
+    "alphaBoundsLogical": [
+      30.0,
+      58.5,
+      738.0,
+      355.0
+    ],
+    "bytes": 1237885,
+    "decodedRGBABytes": 7864320,
+    "qa": [
+      "qa/static-checks.json",
+      "qa/alpha-backgrounds.png",
+      "qa/registration.png"
+    ]
+  },
+  {
+    "id": "mf.fidelity.room.front",
+    "revision": 1,
+    "file": "renders/room-front-r1.png",
+    "sourceSize": [
+      1536,
+      1280
+    ],
+    "logicalSize": [
+      768,
+      640
+    ],
+    "coordinateUnits": "logical-pixels-untrimmed",
+    "groundAnchor": [
+      384,
+      522
+    ],
+    "footprint": [
+      [
+        384,
+        170
+      ],
+      [
+        736,
+        346
+      ],
+      [
+        384,
+        522
+      ],
+      [
+        32,
+        346
+      ]
+    ],
+    "labelAnchor": null,
+    "labelAnchorNote": "Runtime task labels have separate task/station anchors; no baked architectural label socket",
+    "occlusionClass": "front",
+    "sourceId": "astra-original-blender-room-20260915-r1",
+    "sha256": "fdfa511c0b1b05c3511e4ca66331ce00d5f2c899003d228585ed4a9ae0f5876d",
+    "status": "static-qa-passed-pending-builder-in-app-review",
+    "alphaBoundsSource": [
+      80,
+      632,
+      1456,
+      1031
+    ],
+    "alphaBoundsLogical": [
+      40.0,
+      316.0,
+      728.0,
+      515.5
+    ],
+    "bytes": 601682,
+    "decodedRGBABytes": 7864320,
+    "qa": [
+      "qa/static-checks.json",
+      "qa/alpha-backgrounds.png",
+      "qa/registration.png"
+    ]
+  },
+  {
+    "id": "mf.fidelity.room.lights",
+    "revision": 1,
+    "file": "renders/room-lights-r1.png",
+    "sourceSize": [
+      1536,
+      1280
+    ],
+    "logicalSize": [
+      768,
+      640
+    ],
+    "coordinateUnits": "logical-pixels-untrimmed",
+    "groundAnchor": [
+      384,
+      522
+    ],
+    "footprint": [
+      [
+        384,
+        170
+      ],
+      [
+        736,
+        346
+      ],
+      [
+        384,
+        522
+      ],
+      [
+        32,
+        346
+      ]
+    ],
+    "labelAnchor": null,
+    "labelAnchorNote": "Runtime task labels have separate task/station anchors; no baked architectural label socket",
+    "occlusionClass": "effects",
+    "sourceId": "astra-original-blender-room-20260915-r1",
+    "sha256": "9c0f3ecd28b929e314b557fd326438e245a581cc1649fbf4536bbc7481bb16b1",
+    "status": "static-qa-passed-pending-builder-in-app-review",
+    "alphaBoundsSource": [
+      88,
+      208,
+      1448,
+      1007
+    ],
+    "alphaBoundsLogical": [
+      44.0,
+      104.0,
+      724.0,
+      503.5
+    ],
+    "bytes": 75040,
+    "decodedRGBABytes": 7864320,
+    "qa": [
+      "qa/static-checks.json",
+      "qa/alpha-backgrounds.png",
+      "qa/registration.png"
+    ]
+  }
+]

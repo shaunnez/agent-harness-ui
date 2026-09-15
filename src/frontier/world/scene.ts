@@ -9,7 +9,14 @@ import { WorldEnvironment } from "./environment";
 import { defaultEnvironment, type EnvironmentPreferences } from "./environment-model";
 import { ProjectPlacement, TransitionTracker, taskSite, tasksInProject } from "./layout";
 import { islandAnchor, islandScale, projectRoutes } from "./routes";
-import { placeCompound, placeStation, placeVegetation, type SceneryContext } from "./scenery";
+import {
+  placeCoastalBackdrop,
+  placeCompound,
+  placeHeadquartersVegetation,
+  placeStation,
+  placeVegetation,
+  type SceneryContext,
+} from "./scenery";
 import { basePatrol, workerBehavior } from "./worker-behavior";
 import { createBaseCrew, createWorker, tickWorker, type WorkerMotion } from "./workers";
 
@@ -135,7 +142,7 @@ export class FrontierScene {
   }
   private entity(key: string, data: unknown, build: () => void, taskId?: string) {
     this.used.add(key);
-    const signature = JSON.stringify([data, this.assets.activityReady]);
+    const signature = JSON.stringify([data, this.assets.activityReady, this.assets.detailReady]);
     const prior = this.entities.get(key);
     if (prior?.signature === signature) {
       prior.container.zIndex = this.order++;
@@ -206,8 +213,9 @@ export class FrontierScene {
     this.environment.surface(this.water, "sea");
     if (this.water) this.target.addChild(this.water);
   }
-  private front(x: number, y: number, scale: number) {
-    this.art("mf.base.standard.front", x, y, scale);
+  private front(x: number, y: number, scale: number, projectId?: string) {
+    const room = projectId && this.cinematic(projectId) && this.assets.has("mf.fidelity.room.front");
+    this.art(room ? "mf.fidelity.room.front" : "mf.base.standard.front", x, y, scale);
   }
   private vegetation(x: number, y: number, large: boolean, foreground: boolean, cinematic = false) {
     placeVegetation(this.art.bind(this), x, y, large, foreground, cinematic);
@@ -297,6 +305,19 @@ export class FrontierScene {
       this.ocean(-4000, -4000, extent + 4000, extent + 4000);
     });
     this.entity("world-islands", [this.featuredProject, projects.map(({ position }) => position)], () => {
+      if (
+        this.featuredProject &&
+        this.assets.has("mf.cinematic.island") &&
+        projects.length > 1 &&
+        projects.length <= 3
+      ) {
+        const right = Math.max(...projects.map(({ position }) => position.x));
+        const top = Math.min(...projects.map(({ position }) => position.y));
+        const x = right + 100,
+          y = top - 400;
+        if (projects.every(({ position }) => Math.hypot((x - position.x) / 650, (y - position.y) / 460) > 1))
+          placeCoastalBackdrop(this.scenery(), x, y);
+      }
       for (const { id, position } of projects) {
         const anchor = islandAnchor(position);
         if (this.cinematic(id)) this.art("mf.cinematic.island", position.x, position.y - 60, 1.24);
@@ -405,30 +426,34 @@ export class FrontierScene {
     const top = Math.min(0, ...ys),
       bottom = Math.max(0, ...ys);
     this.bounds = { x: left - 240, y: top - 315, width: right - left + 480, height: bottom - top + 340 };
-    this.entity("hq-terrain", [project.id, this.bounds, this.featuredProject], () => {
-      this.ocean(-8000, -8000, 16000, 16000);
-      const scale = Math.max(2.7, this.bounds.width / 400, (this.bounds.height + 80) / 220);
-      if (this.cinematic(project.id))
-        this.art("mf.cinematic.island", (left + right) / 2, (top + bottom) / 2 - 80, scale * 0.53);
-      else this.art("mf.terrain.ground", (left + right) / 2, bottom + 130, scale);
-      for (const [dx = 0, dy = 0] of [
-        [-90, -20],
-        [80, -10],
-        [0, -60],
-      ])
-        this.art("mf.prop.purple-tree", (left + right) / 2 + dx, top - 210 + dy, 0.75);
-      this.art(
-        this.cinematic(project.id) ? "mf.cinematic.tree" : "mf.prop.purple-tree",
-        left - 260,
-        (top + bottom) / 2 - 70,
-        0.85,
-      );
-      this.art("mf.prop.purple-tree", right + 255, (top + bottom) / 2 - 90, 0.8);
-    });
+    this.entity(
+      "hq-terrain",
+      [project.id, this.bounds, this.featuredProject, sites.map(({ site }) => site)],
+      () => {
+        this.ocean(-8000, -8000, 16000, 16000);
+        const scale = Math.max(2.7, this.bounds.width / 400, (this.bounds.height + 80) / 220);
+        if (this.cinematic(project.id))
+          this.art("mf.cinematic.island", (left + right) / 2, (top + bottom) / 2 - 80, scale * 0.53);
+        else this.art("mf.terrain.ground", (left + right) / 2, bottom + 130, scale);
+        if (this.cinematic(project.id)) {
+          // All foundation surrounds sit below every room, including adjoining tiles.
+          const foundations = sites.length
+            ? sites.map(({ site }) => ({ ...site, scale: 0.6 }))
+            : [{ x: 0, y: 0, scale: 1 }];
+          for (const site of foundations)
+            this.art("mf.fidelity.room.ground-contact", site.x, site.y, site.scale);
+        }
+        placeHeadquartersVegetation(
+          this.art.bind(this),
+          { left, right, top, bottom },
+          this.cinematic(project.id),
+        );
+      },
+    );
     if (!tasks.length)
       this.entity(`hq-empty-${project.id}`, [project.id, input.idleRoaming], () => {
         this.compound(0, 0, 1, false, project.id);
-        this.front(0, 0, 1);
+        this.front(0, 0, 1, project.id);
         this.crew(project.id, 0, 0, "project", 2);
       });
     sites
@@ -478,7 +503,7 @@ export class FrontierScene {
               taskId: task.id,
             });
             this.handoff(task, site.x - 82, site.y - 95, 0.85);
-            this.front(site.x, site.y, 0.6);
+            this.front(site.x, site.y, 0.6, project.id);
             if (site.y === bottom) this.crew(task.id, site.x, site.y, "project", 1);
           },
           task.id,
@@ -497,8 +522,9 @@ export class FrontierScene {
         if (this.cinematic(project.id)) {
           this.ocean(-8000, -8000, 16000, 16000);
           this.art("mf.cinematic.island", 0, -40, 2.65);
-          this.art("mf.cinematic.tree", -420, -170, 1.35);
-          this.art("mf.prop.purple-tree", 380, -160, 1.25);
+          this.art("mf.fidelity.room.ground-contact", -80, 140, 1.3);
+          this.art("mf.prop.purple-tree", -665, -115, 0.85);
+          this.art("mf.prop.purple-tree", 510, -100, 0.8);
         } else this.art("mf.terrain.region", 864, 252, 3.6);
         this.compound(-80, 140, 1.3, false, project.id);
         if (task) {
@@ -531,6 +557,8 @@ export class FrontierScene {
             taskId: task.id,
           });
         }
+        if (this.cinematic(project.id) && this.assets.has("mf.fidelity.room.front"))
+          this.front(-80, 140, 1.3, project.id);
       },
     );
     this.bounds = { x: -420, y: -450, width: 730, height: 600 };

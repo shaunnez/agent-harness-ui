@@ -42,13 +42,19 @@ export class WorldAssets {
       if (!living.ok) throw new Error("The living-world artwork could not be loaded. Retry the world.");
       const motion = (await living.json()) as { assets: GameAsset[] };
       manifest.assets.push(...motion.assets);
+      const fidelity = await fetch("/assets/fidelity/manifest.json");
+      if (!fidelity.ok) throw new Error("The coastal artwork could not be loaded. Retry the world.");
+      const coastal = (await fidelity.json()) as { assets: GameAsset[] };
+      manifest.assets.push(...coastal.assets);
     }
     for (const entry of manifest.assets) {
       // Occlusion frames share the parent texture; only exported parts load another image.
       entry.parts = entry.parts?.filter((part) => typeof part.file === "string");
       this.entries.set(entry.id, entry);
     }
-    await this.loadEntries(manifest.assets.filter((entry) => isInitialAsset(entry, this.direction)));
+    await this.loadEntries(
+      [...this.entries.values()].filter((entry) => isInitialAsset(entry, this.direction)),
+    );
   }
   private async loadEntries(entries: GameAsset[]) {
     await Promise.all(
@@ -64,7 +70,12 @@ export class WorldAssets {
     );
   }
   async loadDetail() {
-    await this.loadEntries([...this.entries.values()].filter(isDetailAsset));
+    await this.loadEntries(
+      [...this.entries.values()].filter(
+        (entry) =>
+          isDetailAsset(entry) && (this.direction === "classic" || entry.id.startsWith("mf.fidelity.room.")),
+      ),
+    );
     this.detailReady = true;
   }
   async loadActivity() {

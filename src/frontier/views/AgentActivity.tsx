@@ -80,9 +80,7 @@ export function AgentActivity({
             ))}
           </ol>
         ) : (
-          <p className="quiet">
-            No recorded activity is loaded for this run. Events may arrive when the run finishes.
-          </p>
+          <p className="quiet">No recorded activity is loaded for this run.</p>
         )}
         {!!run?.toolCalls.length && (
           <section className="agent-tools">

@@ -1,3 +1,34 @@
+# Grounding follow-up — 15 September 2026
+
+User review accepted the first pass overall but identified noisy grass, a floating slab and tree overlap. A separate registered Blender footing now meets the slab underside; all surrounds render before all tiled rooms. Trees frame a clearing outside the walls. Meadow microcontrast and gravel density are reduced. Normal desktop HQ/Watch/World, night contact and fitted laptop Watch were inspected. No camera code changed.
+
+Original and actual HQ were inspected together in build-evidence/DESIGN-FIDELITY/grounding/comparison-hq.jpg at equal 1567x1004 source dimensions. The direct contact fix also has tiled 0.6-scale asset QA. The original still has more irregular architecture, wear and environmental density. This scoped correction is locally qualified; final artistic preference remains Shaun's. See grounding/HANDOFF.md for exact checks and camera-state qualification. Historical QA follows unchanged.
+
+# Design QA — original-design fidelity slice
+
+Date: 15 September 2026. Final result: passed for the scoped material/room/HUD slice; artistic review remains with Shaun. This does not claim a pixel-identical conversion of the historical concept or completion of Goal 6.
+
+## Sources and normalization
+
+The selected reference is design/mission-frontier/reference/selected-world.png (1568×1003), with screens/project-base-attention-v1.1.png (1567×1004) and screens/agent-work-blocked-v1.1.png (1568×1003). Actual captures live in design/mission-frontier/build-evidence/DESIGN-FIDELITY. Original and current images were opened and then compared together in comparison-world.jpg, comparison-hq.jpg and comparison-watch.jpg. Combined files use full images side by side with a 36px label strip, without cropping, stretching or recoloring. Equal dimensions were asserted. HQ/Watch select the same PC-148 repair task; World contains the current richer eight-decision fixture, with a different selected task. Dynamic counts, date/time and runtime evidence are not copied from the concept.
+
+## Findings and corrections
+
+- Layout / P2 resolved: long management navigation occupied the world. World/Tasks stay immediate; native Manage popover preserves Projects, Agents, Skills, Usage and Settings with their shortcuts. Escape dismisses it and management destinations open correctly.
+- Material coherence / P2 resolved for featured project: sparse sand and the old painted shell did not match the Blender exterior/worker. Coastal meadow/limestone and blue water now share a controlled palette; new registered layered architecture adds physical wall equipment and warm practicals across HQ/Watch. A forested backdrop fills some open sea without changing camera/project placement or adding fake task activity.
+- Occlusion / P2 resolved: the new floor's baked parapet shadows were visible without its foreground in Watch. The foreground now renders after workers/stations. The normal-alpha light mask renders before runtime entities, so it cannot illuminate through workers.
+- Copy / P2 resolved: an empty completed-run view promised events when the run finished. It now says no recorded activity/event, while the task reason and next eligible action remain separate.
+- Typography, controls, icons: existing Inter type, 12px metadata floor, readable body text and Phosphor icon family are retained. Semantic colours remain attached to real task state. No image-generated controls or baked status labels were introduced.
+- Responsiveness/access: normal 1280×720 Watch and menu checked, with no document overflow; task creation and settings remain scrollable overlays. Native popover, named controls and keyboard dismissal checked. Existing reduced-motion behavior and agent activity gating remain intact and covered by Frontier tests. No extreme zoom or mobile polish pass was requested.
+
+## P3 artistic follow-up and evidence limits
+
+The historical image has more asymmetric architecture, weathering, prop density, shore variation and dramatic local light. The new room is deliberately regular and cleaner; broader silhouette/texture work should follow user review. The other islands and robot retain earlier assets. This slice improves coherence and management density without matching every historical composition. Screenshots cannot prove runtime execution: checks used sample data, and animations remain role illustrations. No native screen-reader, browser matrix, performance benchmark or paid execution was run. Existing bundle warning retained.
+
+---
+
+## Historical QA retained unchanged
+
 # Mission Frontier Goal 3 — visual QA
 
 6 September 2026. Latest review for the separate `src/frontier` game. The historical Evidence Gate / Operator QA record is preserved unchanged below this review.

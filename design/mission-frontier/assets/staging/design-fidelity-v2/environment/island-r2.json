@@ -1,0 +1,25 @@
+{
+  "id": "mf.cinematic.island",
+  "revision": 2,
+  "file": "design/mission-frontier/assets/staging/design-fidelity-v2/environment/island-r2.png",
+  "sourceSize": [
+    2048,
+    1536
+  ],
+  "logicalSize": [
+    1024.0,
+    768.0
+  ],
+  "groundAnchor": [
+    511.9999694824219,
+    372.0162048339844
+  ],
+  "sha256": "deb4b0986b2b2f83f93554499ab624bc2b33ec1a7d85e5a8dfbaf6981364bd80",
+  "bytes": 2956742,
+  "sourceBlend": "design/mission-frontier/assets/staging/design-fidelity-v2/environment/island-r2.blend",
+  "originalBlend": "design/mission-frontier/assets/staging/design-fidelity-v2/environment/source-island.blend",
+  "originalSha256": "43fc4b5de35064ef736e6a6323a8a39f1fa2b31f1a6934e23451606bb7ec022f",
+  "blenderVersion": "5.2.1 LTS",
+  "samples": 48,
+  "provenance": "Derived from Goal3 procedural Blender environment and retained Quaternius CC0 rock geometry. Geometry/camera unchanged; coastal palette and light refinement only."
+}

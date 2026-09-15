@@ -1,0 +1,41 @@
+{
+  "status": "static-qa-passed-pending-builder-in-app-review",
+  "sourceSize": [
+    1536,
+    1280
+  ],
+  "alphaBoundsSource": [
+    28,
+    376,
+    1509,
+    1120
+  ],
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "allCanvasEdgesTransparent": true,
+  "groundAnchorSourceMeasured": [
+    768.0,
+    1043.999996
+  ],
+  "unchangedExistingRoomFiles": {
+    "entries.json": true,
+    "provenance.json": true,
+    "renders/room-floor-r1.png": true,
+    "renders/room-back-r1.png": true,
+    "renders/room-front-r1.png": true,
+    "renders/room-lights-r1.png": true
+  },
+  "qaScale": 0.6,
+  "drawOrder": "all contact surrounds before any room floor/back/entity/front layers",
+  "contactWorldZ": {
+    "slabBottom": -0.6,
+    "groundSurface": -0.655
+  },
+  "sha256": "15817fbfd2181ad966c540fbf12278a9357b5e3b4711d50d386c8c3539360d2d",
+  "bytes": 692923,
+  "decodedRGBABytes": 7864320,
+  "noBroadShadowHalo": "only slab casts shadow, received by narrow gravel apron; no external shadow-catcher plane",
+  "limits": "static image registration and 0.6-scale tiled composition; actual terrain blend/contact is builder-owned"
+}

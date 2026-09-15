@@ -1,6 +1,7 @@
 import { ArrowRight, FileText, GearSix, MagnifyingGlass } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { RuntimeRun } from "../../domain";
+import { currentRecordedTool, eventAge, runEvents } from "../runtime/agent-activity";
 import type { TaskEvidence } from "../runtime/contracts";
 import {
   attentionAction,
@@ -14,7 +15,6 @@ import {
   runDuration,
   stageLabels,
 } from "../runtime/presentation";
-import { currentRecordedTool, eventAge, runEvents } from "../runtime/agent-activity";
 import { ScrollArea } from "../ui/ScrollArea";
 import { ResizeHandles, useWindowSizing, WindowSizeControls } from "../ui/WindowSizing";
 import { workAction, workActions } from "../world/worker-behavior";
@@ -198,7 +198,9 @@ export function AgentPanel({
       </p>
       <div className="agent-latest">
         <small>{tool ? "Current recorded tool" : "Latest recorded activity"}</small>
-        <strong>{tool?.name ?? exactLatest?.title ?? "Awaiting a recorded event"}</strong>
+        <strong>
+          {tool?.name ?? exactLatest?.title ?? (active ? "Awaiting a recorded event" : "No recorded event")}
+        </strong>
       </div>
       <div className="agent-tabs">
         <div className="tab-bar" role="tablist" aria-label="Agent evidence">

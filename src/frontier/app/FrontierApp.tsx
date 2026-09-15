@@ -1,27 +1,14 @@
-import {
-  ArrowLeft,
-  ArrowRight,
-  Books,
-  Buildings,
-  ChartBar,
-  GearSix,
-  GlobeHemisphereWest,
-  ListBullets,
-  Plus,
-  Robot,
-  RocketLaunch,
-} from "@phosphor-icons/react";
+import { ArrowLeft, ArrowRight, Plus, RocketLaunch } from "@phosphor-icons/react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { NewTaskDraft } from "../../domain";
 import { createFixtureGateway } from "../fixtures/gateway";
 import { errorMessage, RefreshCoordinator } from "../runtime/coordinator";
+import { createDecisionSession } from "../runtime/decision-session";
 import { liveGateway } from "../runtime/live-gateway";
 import { commandDestination, isActiveRun, latestRun, needsYou } from "../runtime/presentation";
-import { createDecisionSession } from "../runtime/decision-session";
+import { AgentPanel } from "../views/AgentPanel";
 import { DecisionNavigation } from "../views/DecisionNavigation";
 import { CommandDock } from "../views/WatchPins";
-import { CommandWorkspaceProvider } from "./command-context";
-import { AgentPanel } from "../views/AgentPanel";
 import {
   AttentionQueue,
   ConnectionBadge,
@@ -30,6 +17,7 @@ import {
   WorldActions,
   WorldClock,
 } from "../views/WorldHud";
+import { WorldNavigation } from "../views/WorldNavigation";
 import { artDirection } from "../world/asset-policy";
 import { cinematicWorker } from "../world/cinematic-catalog";
 import { tasksInProject } from "../world/layout";
@@ -37,6 +25,7 @@ import type { WorldRenderer } from "../world/renderer";
 import { WorldCanvas } from "../world/WorldCanvas";
 import { ArtPreview } from "./ArtPreview";
 import { BuildDiagnostics } from "./BuildDiagnostics";
+import { CommandWorkspaceProvider } from "./command-context";
 import { useNavigation, worldLocation } from "./navigation";
 import { type Overlay, OverlayHost } from "./OverlayHost";
 import { PanelMemoryProvider } from "./panel-state";
@@ -430,37 +419,11 @@ export function FrontierApp() {
           </button>
         )}
       </header>
-      <nav className="world-navigation" aria-label="Main navigation">
-        <button type="button" className="selected" onClick={() => navigate(worldLocation)}>
-          <GlobeHemisphereWest size={18} />
-          World
-        </button>
-        <button type="button" onClick={() => open({ kind: "tasks" })}>
-          <ListBullets size={18} />
-          Tasks<kbd>J</kbd>
-        </button>
-        <button type="button" onClick={() => open({ kind: "projects" })}>
-          <Buildings size={18} />
-          Projects
-        </button>
-        <button type="button" onClick={() => open({ kind: "agents" })}>
-          <Robot size={18} />
-          Agents
-        </button>
-        <button type="button" onClick={() => open({ kind: "skills" })}>
-          <Books size={18} />
-          Skills
-        </button>
-        <button type="button" onClick={() => open({ kind: "usage" })}>
-          <ChartBar size={18} />
-          Usage
-        </button>
-        <button type="button" onClick={() => open({ kind: "settings" })}>
-          <GearSix size={18} />
-          Settings
-        </button>
-        {location.view === "project" && <span className="breadcrumb">/ {project?.name}</span>}
-      </nav>
+      <WorldNavigation
+        onWorld={() => navigate(worldLocation)}
+        onOpen={(kind) => open({ kind })}
+        projectName={location.view === "project" ? project?.name : undefined}
+      />
       {location.view !== "agent" && (
         <AttentionQueue tasks={scopedTasks} projects={snapshot.projects} onSelect={actOn} />
       )}

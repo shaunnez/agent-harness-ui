@@ -1,0 +1,77 @@
+{
+  "id": "mf.fidelity.room.ground-contact",
+  "revision": 1,
+  "file": "renders/ground-contact.png",
+  "sourceSize": [
+    1536,
+    1280
+  ],
+  "logicalSize": [
+    768,
+    640
+  ],
+  "coordinateUnits": "logical-pixels-untrimmed",
+  "groundAnchor": [
+    384,
+    522
+  ],
+  "footprint": [
+    [
+      384,
+      170
+    ],
+    [
+      736,
+      346
+    ],
+    [
+      384,
+      522
+    ],
+    [
+      32,
+      346
+    ]
+  ],
+  "footprintNote": "Existing room ground plane z=0 registration; visible contact surface is 0.655 world units lower, matching slab thickness.",
+  "labelAnchor": null,
+  "occlusionClass": "ground",
+  "sourceId": "astra-original-blender-ground-contact-20260915-r1",
+  "sha256": "15817fbfd2181ad966c540fbf12278a9357b5e3b4711d50d386c8c3539360d2d",
+  "status": "static-qa-passed-pending-builder-in-app-review",
+  "alphaBoundsSource": [
+    28,
+    376,
+    1509,
+    1120
+  ],
+  "alphaBoundsLogical": [
+    14.0,
+    188.0,
+    754.5,
+    560.0
+  ],
+  "bytes": 692923,
+  "decodedRGBABytes": 7864320,
+  "qa": [
+    "qa/ground-contact-checks.json",
+    "qa/ground-contact-alpha.png",
+    "qa/ground-contact-tiled-0.6.png"
+  ],
+  "provenance": {
+    "tool": "Blender 5.2.1 LTS",
+    "source": "original procedural gravel/stone geometry and materials; reused read-only room camera and lighting",
+    "renderSamples": 48,
+    "renderThreads": 4,
+    "seed": 915640,
+    "referenceImages": [
+      "design/mission-frontier/build-evidence/DESIGN-FIDELITY/grounding/before-hq.png",
+      "design/mission-frontier/screens/project-base-attention-v1.1.png"
+    ],
+    "sourceFiles": {
+      "source/build_ground_contact.py": "64f0c44045f4d9ee2c1b8ecb60792660f7e9a68902483ad3b2ae932ab3d1cb7b",
+      "source/qa_ground_contact.py": "f77fa5da1442613704c3918a688de23af612d5bbe22af00b1bf229ddc2ab51aa",
+      "blend/ground-contact.blend": "6c3de9f11352ff81f10e9fb4e0e9e6b34862ae35d11e46590398a4a3108f189b"
+    }
+  }
+}
