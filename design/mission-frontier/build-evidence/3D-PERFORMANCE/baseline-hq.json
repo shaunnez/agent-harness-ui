@@ -1,0 +1,13 @@
+{
+  "url": "/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d&profile=1#project/plancheck",
+  "capturedAt": "2026-09-15T20:15:35.198Z",
+  "viewport": {"width":1280,"height":800,"pixelRatio":1.5},
+  "frames":97,"fps":9.7,
+  "frameMs":{"mean":103.17,"p50":103.4,"p95":140.6,"max":156.5},
+  "cpuSubmitMs":{"mean":32.13,"p50":29.5,"p95":50.7,"max":66.1},
+  "labelMs":{"mean":29.27,"p50":27,"p95":45.7,"max":59.6},
+  "renderCalls":{"mean":1472,"p50":1472,"p95":1472,"max":1472},
+  "submittedTriangles":{"mean":8575482,"p50":8575482,"p95":8575482,"max":8575482},
+  "geometries":243,"textures":62,"firstFrameMs":15572,
+  "note":"Same loaded scene as baseline-world.json; frame intervals and CPU submission, not GPU timings."
+}

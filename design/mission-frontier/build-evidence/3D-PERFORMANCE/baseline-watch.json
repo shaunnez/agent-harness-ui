@@ -1,0 +1,13 @@
+{
+  "url": "/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d&profile=1#agent/PC-142",
+  "capturedAt":"2026-09-15T20:17:06.110Z",
+  "viewport":{"width":1280,"height":800,"pixelRatio":1.5},
+  "frames":102,"fps":10.2,
+  "frameMs":{"mean":98.13,"p50":96.8,"p95":130.2,"max":135.4},
+  "cpuSubmitMs":{"mean":30.99,"p50":29.2,"p95":46.4,"max":63.1},
+  "labelMs":{"mean":28.35,"p50":26,"p95":43.3,"max":57.1},
+  "renderCalls":{"mean":1472,"p50":1472,"p95":1472,"max":1472},
+  "submittedTriangles":{"mean":8575482,"p50":8575482,"p95":8575482,"max":8575482},
+  "geometries":243,"textures":62,"firstFrameMs":15572,
+  "note":"Same loaded scene as baseline-world.json; frame intervals and CPU submission, not GPU timings."
+}

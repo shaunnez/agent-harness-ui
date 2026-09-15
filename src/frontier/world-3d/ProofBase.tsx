@@ -86,7 +86,11 @@ export function ProofBase({
       else if (material.name.startsWith("ambient_")) material.emissiveIntensity = (0.75 + dark * 1.4) * pulse;
       else if (material.name.startsWith("practical_")) material.emissiveIntensity = 0.38 + dark * 3.0;
     }
-    for (const lamp of lamps.current.values()) lamp.intensity = 0.1 + dark * 16;
+    for (const lamp of lamps.current.values()) {
+      // Daylight instruments retain their emissive lenses without dozens of negligible light calculations.
+      lamp.visible = dark > 0.01;
+      lamp.intensity = 0.1 + dark * 16;
+    }
   });
   return (
     <group position={base.position}>

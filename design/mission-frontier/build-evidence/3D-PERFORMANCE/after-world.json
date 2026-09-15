@@ -1,0 +1,73 @@
+{
+  "url": "/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d&profile=1#world",
+  "capturedAt": "2026-09-15T20:35:11.624Z",
+  "viewport": {
+    "width": 1280,
+    "height": 799.9934692382812,
+    "pixelRatio": 1.5
+  },
+  "frames": 793,
+  "fps": 79.2,
+  "frameMs": {
+    "mean": 12.62,
+    "p50": 12.3,
+    "p95": 14.1,
+    "max": 36.2
+  },
+  "cpuSubmitMs": {
+    "mean": 1.83,
+    "p50": 1.7,
+    "p95": 2.5,
+    "max": 6.6
+  },
+  "labelMs": {
+    "mean": 0.06,
+    "p50": 0.1,
+    "p95": 0.1,
+    "max": 0.2
+  },
+  "renderCalls": {
+    "mean": 616.45,
+    "p50": 572,
+    "p95": 837,
+    "max": 837
+  },
+  "submittedTriangles": {
+    "mean": 6320729.42,
+    "p50": 5849682,
+    "p95": 8658258,
+    "max": 8658258
+  },
+  "geometries": 177,
+  "textures": 73,
+  "graphicsRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+  "firstFrameMs": 2170,
+  "assetRequests": [
+    {
+      "name": "environment.450a464c1478.glb",
+      "durationMs": 74,
+      "bytes": 58413356
+    },
+    {
+      "name": "worker.aee069a9823b.glb",
+      "durationMs": 5,
+      "bytes": 1118716
+    },
+    {
+      "name": "base-relay.9bc6293b7535.glb",
+      "durationMs": 27,
+      "bytes": 16955980
+    },
+    {
+      "name": "base-command.e0b24a9fdbc8.glb",
+      "durationMs": 30,
+      "bytes": 20505940
+    },
+    {
+      "name": "base-foundry.24df624f3217.glb",
+      "durationMs": 32,
+      "bytes": 17477428
+    }
+  ],
+  "note": "Frame intervals and CPU submission measured locally; not GPU timings or a device guarantee."
+}

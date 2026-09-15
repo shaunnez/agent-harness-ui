@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { type AnimationClip, AnimationMixer, type Group, type Object3D } from "three";
 import { actorSeed, patrolPose, workActions } from "../world/worker-behavior";
 import { type Point3, proofWorkerScale, type ProofWorker as Worker } from "./model";
+import { cloneWorker, disposeWorker } from "./worker-batching";
 
 export function ProofWorker({
   worker,
@@ -21,7 +22,7 @@ export function ProofWorker({
   positions: Map<string, Object3D>;
   clips: AnimationClip[];
 }) {
-  const body = useMemo(() => source.clone(true), [source]);
+  const body = useMemo(() => cloneWorker(source), [source]);
   const root = useRef<Group>(null);
   const time = useRef(0);
   const action = workActions[worker.action];
@@ -38,6 +39,7 @@ export function ProofWorker({
     () => () => {
       positions.delete(worker.task.id);
       mixer.uncacheRoot(body);
+      disposeWorker(body);
     },
     [body, mixer, positions, worker.task.id],
   );

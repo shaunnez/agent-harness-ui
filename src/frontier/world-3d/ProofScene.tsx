@@ -1,6 +1,6 @@
 import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { Color, type DirectionalLight, type HemisphereLight, Mesh, type Object3D } from "three";
+import { Color, type DirectionalLight, type HemisphereLight, type Object3D } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import {
   defaultEnvironment,
@@ -17,6 +17,8 @@ import { ProofLabels } from "./ProofLabels";
 import { ProofWorker } from "./ProofWorker";
 import { SceneFinish } from "./SceneFinish";
 import { createCoastalWater } from "./water";
+import { PerformanceProbe, profiling } from "./PerformanceProbe";
+import { batchWorker } from "./worker-batching";
 
 interface Props {
   input: ProofInput;
@@ -40,18 +42,23 @@ export function ProofScene(props: Props) {
     ...baseVariants.map((id) => manifest.bases?.[id].src ?? manifest.scene),
   ];
   const [environment, workerGltf, ...baseGltfs] = useLoader(GLTFLoader, sources);
-  const { scene } = useThree();
+  const { scene, gl } = useThree();
   const workerModel = useMemo(() => {
     if (!workerGltf) throw new Error("The worker export is missing.");
-    const clone = workerGltf.scene.clone(true);
-    clone.traverse((object) => {
-      if (object instanceof Mesh) object.castShadow = object.receiveShadow = true;
-    });
-    return clone;
+    return batchWorker(workerGltf.scene);
   }, [workerGltf]);
+  useEffect(() => () => workerModel.dispose(), [workerModel]);
+  useEffect(() => {
+    const previous = gl.shadowMap.autoUpdate;
+    gl.shadowMap.autoUpdate = false;
+    return () => {
+      gl.shadowMap.autoUpdate = previous;
+    };
+  }, [gl]);
   const clock = useRef(new LightingClock());
   const light = useRef<SceneLight>({ lamps: 0, time: 0 });
   const reported = useRef(-1);
+  const shadowUpdated = useRef(0);
   const sun = useRef<DirectionalLight>(null);
   const sky = useRef<HemisphereLight>(null);
   const actors = useRef(new Map<string, Object3D>());
@@ -90,6 +97,12 @@ export function ProofScene(props: Props) {
     minimapCapture.current?.();
   }, [appearanceKey, cutaway]);
   useFrame((_, delta) => {
+    // Architecture is static; small worker shadows can refresh at 15 Hz while motion stays full-rate.
+    const now = performance.now();
+    if (now - shadowUpdated.current > 1000 / 15) {
+      gl.shadowMap.needsUpdate = true;
+      shadowUpdated.current = now;
+    }
     const current = latest.current;
     const moving = current.input.motion && current.input.connected && !document.hidden;
     clock.current.configure(current.input.environment ?? defaultEnvironment, moving, Date.now());
@@ -163,7 +176,7 @@ export function ProofScene(props: Props) {
         <ProofWorker
           key={worker.task.id}
           worker={worker}
-          source={workerModel}
+          source={workerModel.scene}
           clips={workerGltf?.animations ?? []}
           selected={worker.task.id === input.selectedId}
           route={worker.route}
@@ -181,6 +194,7 @@ export function ProofScene(props: Props) {
         worldHour={() => clock.current.hour(Date.now())}
       />
       <ProofLabels
+        sceneKey={`${appearanceKey}:${layoutKey}:${cutaway}:${activeFocus}`}
         labels={labels}
         manifest={manifest}
         bases={visibleBases(bases, input)}
@@ -188,6 +202,7 @@ export function ProofScene(props: Props) {
         roots={roots.current}
       />
       <SceneFinish />
+      {profiling && <PerformanceProbe />}
     </>
   );
 }

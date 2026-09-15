@@ -1,0 +1,78 @@
+{
+  "date": "2026-09-16",
+  "sourceManifest": "source-manifest.json",
+  "checks": {
+    "frontierTests": {
+      "passed": 103,
+      "failed": 0,
+      "skipped": 0,
+      "receipt": "frontier-tests.txt"
+    },
+    "sitesTests": {
+      "passed": 4,
+      "failed": 0
+    },
+    "typecheck": "passed",
+    "lint": "passed",
+    "format": "passed",
+    "mainBuild": "passed; existing large-chunk warning",
+    "frontierBuild": "passed; existing large-chunk warning"
+  },
+  "browser": {
+    "viewport": [
+      1280,
+      800
+    ],
+    "renderer": "ANGLE Metal Apple M5",
+    "dpr": 1.5,
+    "sampleSeconds": 10,
+    "comparisons": [
+      {
+        "view": "world",
+        "before": "controlled-baseline-world.json",
+        "after": "after-world.json"
+      },
+      {
+        "view": "hq",
+        "before": "controlled-baseline-hq.json",
+        "after": "after-hq.json"
+      },
+      {
+        "view": "watch",
+        "before": "controlled-baseline-watch.json",
+        "after": "after-watch.json"
+      }
+    ],
+    "night": "after-night.json",
+    "historicalRun": {
+      "id": "R-PC-142-plan-1",
+      "state": "completed / parked / historical",
+      "moving": false
+    },
+    "activeRun": {
+      "id": "R-PC-142-implement-1",
+      "state": "executing",
+      "moving": true
+    },
+    "waitingAndRepair": {
+      "PC-153": "parked",
+      "PC-148": "parked"
+    },
+    "motionOff": "All exposed workers moving=false",
+    "appearance": "Command/Purple selected then Foundry/Orange restored",
+    "navigation": "Pan, normal zoom, minimap reframe, World/HQ/Watch",
+    "contextLoss": "Actionable unavailable state then Retry ready=true; minimap naturalWidth=400; no remaining alert",
+    "diagnostics": "Absent without profile=1"
+  },
+  "notClaimed": [
+    "GPU timing",
+    "sustained thermal or cross-device performance",
+    "large 3D colony performance",
+    "OS-level reduced-motion retest",
+    "backend suite",
+    "remote CI",
+    "live model execution",
+    "game deployment",
+    "main merge"
+  ]
+}

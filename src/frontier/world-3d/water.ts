@@ -9,7 +9,7 @@ import {
 } from "three";
 
 export function shoreDistance(x: number, z: number, loops: [number, number][][]) {
-  let distance = 40;
+  let distanceSquared = 40 * 40;
   let land = false;
   for (const loop of loops) {
     let inside = false;
@@ -20,12 +20,14 @@ export function shoreDistance(x: number, z: number, loops: [number, number][][])
       const dx = b[0] - a[0],
         dz = b[1] - a[1];
       const t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / (dx * dx + dz * dz || 1)));
-      distance = Math.min(distance, Math.hypot(x - a[0] - t * dx, z - a[1] - t * dz));
+      const px = x - a[0] - t * dx,
+        pz = z - a[1] - t * dz;
+      distanceSquared = Math.min(distanceSquared, px * px + pz * pz);
       if (a[1] > z !== b[1] > z && x < ((b[0] - a[0]) * (z - a[1])) / (b[1] - a[1]) + a[0]) inside = !inside;
     }
     land ||= inside;
   }
-  return { distance, land };
+  return { distance: Math.sqrt(distanceSquared), land };
 }
 export function createCoastalWater(loops: [number, number][][]) {
   const points = loops.flat();

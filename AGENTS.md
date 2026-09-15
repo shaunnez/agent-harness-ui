@@ -1,5 +1,7 @@
 # Prototype Instructions
 
+- On 16 September 2026 Shaun reported severe slowness in the merged 3D preview and authorized a focused performance improvement. Measure normal laptop/desktop World, HQ and Watch behavior, reduce unnecessary rendering/loading work, and preserve the accepted art, project/worker identity, appearance choices and truthful activity states. This supersedes the earlier performance waiver for this observed regression; it does not start new scenery, live 3D adoption or Goal 6.
+
 Run the local server yourself and open the preview in the browser available to this environment. Do not give the user server-start instructions when you can run it.
 
 Before making substantial visual changes, use the Product Design plugin's `get-context` skill when the visual source is unclear or no longer matches the current goal. When the user gives durable prototype-specific design feedback, preferences, or decisions, record them in `AGENTS.md`.

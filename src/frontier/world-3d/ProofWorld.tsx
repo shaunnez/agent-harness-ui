@@ -22,11 +22,12 @@ import {
 import { ProofScene } from "./ProofScene";
 import { useBaseAppearance } from "./useBaseAppearance";
 import "./proof.css";
+import { PerformancePanel, profiling } from "./PerformanceProbe";
 
 // Stable construction options keep runtime refreshes from resetting a user-moved camera.
 const initialCamera = { position: [56, 49, 70] as [number, number, number], near: 0.1, far: 850, zoom: 15 };
 const shadowOptions = { type: PCFShadowMap };
-const rendererOptions = { antialias: true, alpha: false, preserveDrawingBuffer: true };
+const rendererOptions = { antialias: true, alpha: false, preserveDrawingBuffer: false };
 
 interface Props {
   input: ProofInput;
@@ -165,6 +166,7 @@ export function ProofWorld(props: Props) {
   );
   return (
     <>
+      {profiling && <PerformancePanel ready={ready} />}
       <div className="world-canvas proof-canvas" data-renderer="three" data-ready={ready}>
         {error ? (
           unavailable
