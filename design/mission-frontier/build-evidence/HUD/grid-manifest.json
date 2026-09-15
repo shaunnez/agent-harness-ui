@@ -1,0 +1,46 @@
+{
+  "date": "2026-09-15",
+  "baseCommit": "346715a",
+  "branch": "codex/mission-frontier-hud",
+  "checks": {
+    "frontierTests": {
+      "passed": 85,
+      "failed": 0,
+      "skipped": 0
+    },
+    "typecheck": "passed",
+    "lint": "passed",
+    "format": "passed",
+    "frontierBuild": "passed",
+    "rootBuild": "passed"
+  },
+  "viewports": [
+    [
+      1280,
+      720
+    ],
+    [
+      1488,
+      1058
+    ]
+  ],
+  "evidence": [
+    "grid-before-world-1280.png",
+    "grid-comparison.png",
+    "grid-hq-artifact-history-1280.png",
+    "grid-hq-blocked-1280.png",
+    "grid-hq-blocked-1488.png",
+    "grid-hq-no-selection-1280.png",
+    "grid-world-base-1280.png",
+    "grid-world-expanded-1280.png",
+    "grid-world-expanded-1488.png",
+    "grid-world-no-selection-1488.png",
+    "grid-world-pins-expanded-1280.png"
+  ],
+  "limitations": [
+    "existing bundle warnings",
+    "API and Sites not repeated",
+    "no full suite/remote CI/real model or approval",
+    "no benchmarks/extreme zoom/game publication"
+  ]
+}

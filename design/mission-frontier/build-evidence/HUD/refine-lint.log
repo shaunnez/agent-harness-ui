@@ -1,0 +1,22 @@
+
+> agent-harness-ui@0.0.0 lint
+> biome lint src server scripts tests worker
+
+src/frontier/app/FrontierApp.tsx:1:21 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━
+
+  ! Several of these imports are unused.
+
+  > 1 │ import { ArrowLeft, ArrowRight, Plus, RocketLaunch } from "@phosphor-icons/react";
+      │                     ^^^^^^^^^^
+    2 │ import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+    3 │ import type { NewTaskDraft } from "../../domain";
+
+  i Unused imports might be the result of an incomplete refactoring.
+
+  i Unsafe fix: Remove the unused imports.
+
+    1 │ import·{·ArrowLeft,·ArrowRight,·Plus,·RocketLaunch·}·from·"@phosphor-icons/react";
+      │                     ------------
+
+Checked 454 files in 466ms. No fixes applied.
+Found 1 warning.

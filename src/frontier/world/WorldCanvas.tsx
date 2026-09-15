@@ -1,10 +1,11 @@
-import { ArrowsOut, Crosshair, MapPin, Minus, Plus, Question, WarningCircle } from "@phosphor-icons/react";
+import { Crosshair, MapPin, Question, WarningCircle } from "@phosphor-icons/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { WorldPreferences } from "../app/preferences";
+import { splitRecordedDetail } from "../runtime/presentation";
 import { WorldTime } from "../views/WorldTime";
 import { type Camera, pointInContainedImage, worldToScreen } from "./camera";
 import { lightingAt, worldHour } from "./environment-model";
-import { WorldRenderer } from "./renderer";
+import { type MinimapCapture, WorldRenderer } from "./renderer";
 import type { SceneInput, WorldLabel } from "./scene";
 
 interface Props {
@@ -26,12 +27,13 @@ export function WorldCanvas({
   onWorldSettings,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
+  const mapHost = useRef<HTMLElement>(null);
   const labelHost = useRef<HTMLElement>(null);
   const latest = useRef({ onSelect, onEnterProject, onArtifact, input });
   latest.current = { onSelect, onEnterProject, onArtifact, input };
   const cameraRef = useRef<Camera>({ x: 0, y: 0, zoom: 1 });
   const [labels, setLabels] = useState<WorldLabel[]>([]);
-  const [minimap, setMinimap] = useState<string | null>(null);
+  const [minimap, setMinimap] = useState<MinimapCapture | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
   const [lighting, setLighting] = useState(() => lightingAt(worldHour(preferences.environment, Date.now())));
@@ -73,6 +75,13 @@ export function WorldCanvas({
       lighting: setLighting,
     });
     rendererRef.current = renderer;
+    const resizeMap = () => {
+      const map = mapHost.current;
+      if (map) renderer.resizeMinimap(map.clientWidth, map.clientHeight);
+    };
+    const mapObserver = new ResizeObserver(resizeMap);
+    if (mapHost.current) mapObserver.observe(mapHost.current);
+    resizeMap();
     setError(null);
     renderer.update(latest.current.input);
     renderer.initialize().catch((error: unknown) => {
@@ -80,6 +89,7 @@ export function WorldCanvas({
     });
     return () => {
       disposed = true;
+      mapObserver.disconnect();
       renderer.destroy();
       rendererRef.current = null;
     };
@@ -110,6 +120,7 @@ export function WorldCanvas({
             type="button"
             key={label.id}
             className={`world-label ${label.kind} tone-${label.attention} ${label.taskId === input.selectedId ? "selected" : ""}`}
+            aria-label={`${label.title} · ${label.detail}${label.reason ? ` · ${splitRecordedDetail(label.reason).headline}` : ""}`}
             data-world-x={label.x}
             data-world-y={label.y}
             data-label-kind={label.kind}
@@ -128,11 +139,6 @@ export function WorldCanvas({
             <span>
               <strong>{label.title}</strong>
               <small>{label.detail}</small>
-              {label.reason && (
-                <small className="label-reason" title={label.reason}>
-                  {label.reason}
-                </small>
-              )}
             </span>
           </button>
         ))}
@@ -146,7 +152,7 @@ export function WorldCanvas({
           </button>
         </div>
       )}
-      <aside className="minimap panel" aria-label="Minimap and camera controls">
+      <aside ref={mapHost} className="minimap panel" aria-label="World map">
         <button
           type="button"
           className="minimap-image"
@@ -167,32 +173,28 @@ export function WorldCanvas({
             if (point) rendererRef.current?.minimapClick(point.x, point.y);
           }}
         >
-          {minimap && <img src={minimap} alt="Current world map" />}
+          {minimap && (
+            <span className="minimap-content">
+              <img src={minimap.image} alt="Current world map" />
+              {minimap.projects.map((project) => (
+                <span
+                  key={project.id}
+                  className="minimap-landmark"
+                  title={project.name}
+                  style={{ left: `${project.x * 100}%`, top: `${project.y * 100}%` }}
+                >
+                  {project.name
+                    .replace(/([a-z])([A-Z])/g, "$1 $2")
+                    .split(/\s+/)
+                    .map((word) => word[0])
+                    .join("")
+                    .slice(0, 3)
+                    .toUpperCase()}
+                </span>
+              ))}
+            </span>
+          )}
         </button>
-        <div className="camera-controls">
-          <button
-            type="button"
-            aria-label="Fit world"
-            title="Fit world"
-            onClick={() => rendererRef.current?.reset()}
-          >
-            <ArrowsOut size={19} />
-          </button>
-          <button
-            type="button"
-            aria-label="Follow selected task"
-            title="Follow selected task"
-            onClick={() => input.selectedId && rendererRef.current?.follow(input.selectedId)}
-          >
-            <Crosshair size={19} />
-          </button>
-          <button type="button" aria-label="Zoom out" onClick={() => rendererRef.current?.zoom(0.8)}>
-            <Minus size={19} />
-          </button>
-          <button type="button" aria-label="Zoom in" onClick={() => rendererRef.current?.zoom(1.25)}>
-            <Plus size={19} />
-          </button>
-        </div>
       </aside>
     </>
   );

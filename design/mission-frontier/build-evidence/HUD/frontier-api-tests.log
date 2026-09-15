@@ -1,0 +1,30 @@
+
+> agent-harness-ui@0.0.0 test:frontier-api
+> node --test tests/frontier/api/*.test.mjs
+
+✔ creation persists exact per-role overrides across profiles and rejects invalid matrices atomically (893.286166ms)
+✔ a provider preset snapshots profile-aware inheritance and rejects cross-provider pins (254.575833ms)
+✔ future role choice survives profile escalation while historical evidence is immutable (11.106417ms)
+✔ Frontier origin, CSRF, persisted questions and denied stale answers use the real isolated API (1203.596625ms)
+✔ an existing directory cannot be adopted as a test data store without its marker (0.657209ms)
+✔ JSON: project management retains identity/history and serializes archive versus creation (36.609542ms)
+✔ SQLite: project management retains identity/history and serializes archive versus creation (27.021125ms)
+✔ project routes preserve repository identity and reject archived task admission (709.198583ms)
+✔ execution defaults round-trip through the real API without rewriting existing task or run policies (1103.929042ms)
+✔ workspace observation ordering is independent of equal or late provider times; pagination is bounded (20.885041ms)
+✔ material state history survives completion, repair and renewed blocking between reads (16.632792ms)
+✔ completed run records are idempotent, preserve missing/zero usage and exclude transcript contents (17.673542ms)
+✔ source identity survives restart but not a copied database or rollback-compatible JSON import (28.277125ms)
+✔ pruning during pagination reports incomplete coverage; invalid and cross-source cursors fail closed (18.980667ms)
+✔ workspace API uses the existing HTTP boundary and exact run reads do not hydrate task histories (547.788792ms)
+✔ schema-2 upgrade starts at an explicit baseline and leaves canonical task data intact (22.480584ms)
+✔ undated terminal runs remain inspectable without acquiring an invented completion time (9.030167ms)
+✔ watch summaries park waiting runs and candidate gate observations retain exact identity and reason (9.868875ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1357.859875

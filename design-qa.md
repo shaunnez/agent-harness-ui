@@ -1,3 +1,53 @@
+# Map/grid/artifact design QA — 15 September 2026
+
+Source visual truth: prior qualified HUD plus Shaun’s latest explicit steering. Before: `design/mission-frontier/build-evidence/HUD/grid-before-world-1280.png`; after: `grid-world-base-1280.png` in the same evidence directory. Full-view and focused right-column/artifact comparison opened together in `grid-comparison.png`. Both World/base captures are 1280×720 CSS/pixels at 1× density; board previews use identical 0.5 scale. Cycling light and retained/reinitialized scene framing differ, so this qualifies HUD geometry/content, not scenery fidelity.
+
+No actionable P0/P1/P2 differences remain in the requested scope. Fonts retain Inter and existing body/metadata floors; shortcut labels increased to 14px and stay unwrapped. Matching 2×2 tracks and 340px attention/control widths align; expanded decisions/pins use the remaining right-column height with 12px gap and local scrolling. Count is centered within 24px. Existing dark panels and semantic colors remain readable. Actual map assets fill the observed aspect ratio without cropping bases or stretching imagery. Content is truthful: latest createdAt artifact only, conditional See more, no empty artifacts, no project breadcrumb.
+
+Comparison history: caught expanded World state leaving a mostly empty tall HQ panel for two decisions; constrained effective expansion to more than three decisions. Corrected post-fix evidence: grid-hq-blocked-1280.png / grid-hq-blocked-1488.png. Additional evidence includes grid-world-expanded-1280.png / 1488.png, grid-world-pins-expanded-1280.png and grid-hq-artifact-history-1280.png.
+
+Primary interactions: all four shortcuts, New task by Enter, Escape dismissing overlay/selection, map marker click, local decision scroll, two pins, latest artifact/See more and older stage evidence. Captured browser console has no errors. Zero-decision/long-title/connection semantics remain covered by existing Frontier contract checks and the dated earlier HUD acceptance; no new native screen-reader/OS qualification. API and Sites suites were not rerun for this HUD slice.
+
+final result: passed
+
+---
+
+# Bottom-row height design QA — 15 September 2026
+
+Result: passed for the latest three layout requests at normal laptop and desktop sizes. Inspected before/after: design/mission-frontier/build-evidence/HUD/height-comparison.png. Source is the prior qualified HQ repair-task capture; implementation is the corrected current HQ repair-task capture. Scene lighting differs because the existing local cycle continued.
+
+Verified 8px added above day/night; HQ details card removed; World/HQ map and bottom-right controls match actual selected dock height through local observation. All three top/bottom edges measured equal at 1280×720 and 1488×1058. No-selection, task/base selection, viewport resize and Escape were checked. Maps remain aspect-contained; Agent-view sizing is preserved. No scenery, camera or lighting behavior change.
+
+---
+
+# HUD refinement design QA — 15 September 2026
+
+Result: passed for the latest explicitly requested HUD scope at normal 1488×1058 and 1280×720 sizes. Inspected before/after repair-task comparison: design/mission-frontier/build-evidence/HUD/refine-comparison.png. Full corrected captures include refine-hq-blocked-1280.png, refine-hq-blocked-1488.png, refine-world-base-1280.png and refine-world-base-1488.png.
+
+Verified: plain thin-border map; removed preview footers; darker outer gradients and inner panels; unframed portrait; no task-dock close button or Recorded details; far-right artifact caret; 340px action panel with unwrapped labels; current base task counts and actual same-scene headquarters capture at current lighting; shared 236px dock minimum height; day/night under date/time; top-aligned Needs you with borderless final row; HQ return button removed. Keyboard disclosure/dismissal, lighting settings and Inspect reason/safeguards remain accessible.
+
+Fixed during inspection: preview incorrectly captured daylight while the main scene was at night, and a shared CSS selector had accidentally inherited minimap padding/height. Both were corrected; final captures were inspected afterward. Camera source, scenery and animation remain unchanged. Source fixtures reset timestamps on explicit QA reload, so usage elapsed values and cycle time can differ between captures. Original concept map artwork remains a separate art pass.
+
+---
+
+# HUD depth design QA — 15 September 2026
+
+Result: passed for the requested HUD component scope at normal 1488×1058 and 1280×720 viewports.
+
+Reference/implementation comparison: [depth-comparison.png](design/mission-frontier/build-evidence/HUD/depth-comparison.png). Full laptop and desktop captures: depth-hq-answer-1280.png and depth-hq-answer-1488.png in the same evidence directory. Both were inspected after the final column alignment and control-width corrections.
+
+Implemented anatomy: nested identity/actions/artifacts panel, inset Usage row, horizontal Skill/Model divider and vertical field divider, existing portrait, eligible primary action, Inspect and existing policy destination. Headquarters and World share the bottom-right New task/Agent roster/Skills/Settings controls. Both left panels use x=12px and width=235px; all bottom controls share the bottom=35px baseline. Minimap preserves the actual scene with aspect containment, a dark framed surface, higher-resolution capture and actual project-position markers.
+
+Corrected during inspection: headquarters dock inherited an 880px cap, primary controls wrapped too tightly, project counts wrapped inconsistently, a landmark used the floating label coordinate, and the screenshot clipping output was unsuitable. Final comparison uses a crop of the inspected full screenshot.
+
+Intentional differences: the reference task, usage values and future artifact tiles are concept data. Runtime data remains authoritative; no empty artifact placeholders or invented costs were added. The reference's connected coastal cartography is different artwork from the actual world. This pass improves its HUD presentation without altering scenery, assets, animation, camera or lighting behavior.
+
+Keyboard dismissal, running/blocked selection, artifact viewer, Configure agent safeguards, HQ project defaults in New task, and the three management destinations were checked through computer use. Earlier full HUD acceptance remains dated in build-evidence/HUD/ACCEPTANCE.md. No performance benchmark or extreme zoom was used.
+
+---
+
+## Preserved prior design QA checkpoints
+
 # Grounding follow-up — 15 September 2026
 
 User review accepted the first pass overall but identified noisy grass, a floating slab and tree overlap. A separate registered Blender footing now meets the slab underside; all surrounds render before all tiled rooms. Trees frame a clearing outside the walls. Meadow microcontrast and gravel density are reduced. Normal desktop HQ/Watch/World, night contact and fitted laptop Watch were inspected. No camera code changed.

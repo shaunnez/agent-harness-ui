@@ -1,0 +1,124 @@
+
+> agent-harness-ui@0.0.0 test:frontier-api
+> node --test tests/frontier/api/*.test.mjs
+
+✔ creation persists exact per-role overrides across profiles and rejects invalid matrices atomically (6638.031709ms)
+✔ a provider preset snapshots profile-aware inheritance and rejects cross-provider pins (698.24625ms)
+✔ future role choice survives profile escalation while historical evidence is immutable (24.938458ms)
+✖ Frontier origin, CSRF, persisted questions and denied stale answers use the real isolated API (1010.575417ms)
+✔ an existing directory cannot be adopted as a test data store without its marker (7.924625ms)
+✔ JSON: project management retains identity/history and serializes archive versus creation (90.117084ms)
+✔ SQLite: project management retains identity/history and serializes archive versus creation (85.357958ms)
+✖ project routes preserve repository identity and reject archived task admission (818.593083ms)
+✖ execution defaults round-trip through the real API without rewriting existing task or run policies (983.634125ms)
+✔ workspace observation ordering is independent of equal or late provider times; pagination is bounded (47.391083ms)
+✔ material state history survives completion, repair and renewed blocking between reads (31.501ms)
+✔ completed run records are idempotent, preserve missing/zero usage and exclude transcript contents (56.932666ms)
+✔ source identity survives restart but not a copied database or rollback-compatible JSON import (83.691ms)
+✔ pruning during pagination reports incomplete coverage; invalid and cross-source cursors fail closed (62.216375ms)
+✖ workspace API uses the existing HTTP boundary and exact run reads do not hydrate task histories (711.741292ms)
+✔ schema-2 upgrade starts at an explicit baseline and leaves canonical task data intact (37.569042ms)
+✔ undated terminal runs remain inspectable without acquiring an invented completion time (19.08675ms)
+✔ watch summaries park waiting runs and candidate gate observations retain exact identity and reason (18.10775ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 14
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7898.598708
+
+✖ failing tests:
+
+test at tests/frontier/api/isolated-api.test.mjs:6:1
+✖ Frontier origin, CSRF, persisted questions and denied stale answers use the real isolated API (1010.575417ms)
+  Error: Command failed: git -c user.name=Frontier QA -c user.email=frontier-qa@localhost commit -m Create disposable investigation fixture
+  error: 1Password: agent returned an error
+
+  fatal: failed to write commit object
+
+      at genericNodeError (node:internal/errors:999:15)
+      at wrappedFn (node:internal/errors:544:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:20)
+      at maybeClose (node:internal/child_process:1125:16)
+      at Socket.<anonymous> (node:internal/child_process:497:11)
+      at Socket.emit (node:events:514:20)
+      at Pipe.<anonymous> (node:net:362:12) {
+    code: 128,
+    killed: false,
+    signal: null,
+    cmd: 'git -c user.name=Frontier QA -c user.email=frontier-qa@localhost commit -m Create disposable investigation fixture',
+    stdout: '',
+    stderr: 'error: 1Password: agent returned an error\n\nfatal: failed to write commit object\n'
+  }
+
+test at tests/frontier/api/project-management.test.mjs:115:1
+✖ project routes preserve repository identity and reject archived task admission (818.593083ms)
+  Error: Command failed: git -c user.name=Frontier QA -c user.email=frontier-qa@localhost commit -m Create disposable investigation fixture
+  error: 1Password: agent returned an error
+
+  fatal: failed to write commit object
+
+      at genericNodeError (node:internal/errors:999:15)
+      at wrappedFn (node:internal/errors:544:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:20)
+      at maybeClose (node:internal/child_process:1125:16)
+      at Socket.<anonymous> (node:internal/child_process:497:11)
+      at Socket.emit (node:events:514:20)
+      at Pipe.<anonymous> (node:net:362:12) {
+    code: 128,
+    killed: false,
+    signal: null,
+    cmd: 'git -c user.name=Frontier QA -c user.email=frontier-qa@localhost commit -m Create disposable investigation fixture',
+    stdout: '',
+    stderr: 'error: 1Password: agent returned an error\n\nfatal: failed to write commit object\n'
+  }
+
+test at tests/frontier/api/settings-roundtrip.test.mjs:6:1
+✖ execution defaults round-trip through the real API without rewriting existing task or run policies (983.634125ms)
+  Error: Command failed: git -c user.name=Frontier QA -c user.email=frontier-qa@localhost commit -m Create disposable investigation fixture
+  error: 1Password: agent returned an error
+
+  fatal: failed to write commit object
+
+      at genericNodeError (node:internal/errors:999:15)
+      at wrappedFn (node:internal/errors:544:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:20)
+      at maybeClose (node:internal/child_process:1125:16)
+      at Socket.<anonymous> (node:internal/child_process:497:11)
+      at Socket.emit (node:events:514:20)
+      at Pipe.<anonymous> (node:net:362:12) {
+    code: 128,
+    killed: false,
+    signal: null,
+    cmd: 'git -c user.name=Frontier QA -c user.email=frontier-qa@localhost commit -m Create disposable investigation fixture',
+    stdout: '',
+    stderr: 'error: 1Password: agent returned an error\n\nfatal: failed to write commit object\n'
+  }
+
+test at tests/frontier/api/workspace-history.test.mjs:189:1
+✖ workspace API uses the existing HTTP boundary and exact run reads do not hydrate task histories (711.741292ms)
+  Error: Command failed: git -c user.name=Frontier QA -c user.email=frontier-qa@localhost commit -m Create disposable investigation fixture
+  error: 1Password: agent returned an error
+
+  fatal: failed to write commit object
+
+      at genericNodeError (node:internal/errors:999:15)
+      at wrappedFn (node:internal/errors:544:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:20)
+      at maybeClose (node:internal/child_process:1125:16)
+      at Socket.<anonymous> (node:internal/child_process:497:11)
+      at Socket.emit (node:events:514:20)
+      at Pipe.<anonymous> (node:net:362:12) {
+    code: 128,
+    killed: false,
+    signal: null,
+    cmd: 'git -c user.name=Frontier QA -c user.email=frontier-qa@localhost commit -m Create disposable investigation fixture',
+    stdout: '',
+    stderr: 'error: 1Password: agent returned an error\n\nfatal: failed to write commit object\n'
+  }

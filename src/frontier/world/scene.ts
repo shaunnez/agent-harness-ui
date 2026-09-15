@@ -31,6 +31,7 @@ export interface WorldLabel {
   attention: string;
   projectId: string;
   taskId?: string;
+  mapPosition?: { x: number; y: number };
 }
 export interface SceneInput {
   mode: "fixture" | "live";
@@ -376,6 +377,7 @@ export class FrontierScene {
           this.labels.push({
             id: `project-${project.id}`,
             kind: "project",
+            mapPosition: { x, y },
             x,
             y: y - (this.cinematic(project.id) ? 310 : 210),
             title: project.name,
@@ -492,9 +494,9 @@ export class FrontierScene {
               y: site.y - 190,
               title: `${task.id} · ${stageLabels[task.currentStage]}`,
               detail:
-                running && failed
+                attention.kind === "running" && running && failed
                   ? `${running.id} running · ${failed.id} ${failed.status}`
-                  : running && waiting
+                  : attention.kind === "running" && running && waiting
                     ? `${running.id} running · ${waiting.id} waits on ${waiting.dependencies.join(", ")}`
                     : attention.label,
               reason: attention.reason,
