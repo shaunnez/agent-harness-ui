@@ -1,6 +1,8 @@
 # Mission Frontier — usability and command experience
 
-Revision 3 · 9 September 2026 · **Goal 4 U0–U2 complete, including native 200% zoom. Goals 5/6 remain planned.**
+Revision 4 · 9 September 2026 · **Goal 4 U0–U2 complete and merged, including native 200% zoom. Goal 5 is implemented but paused before acceptance; Goal 6 remains planned.** See the [Goal 5 handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) for current evidence and unfinished checks.
+
+**10 September steering:** Shaun requested synchronizing Goal 5 with current main and waived further performance benchmarking because the game runs well. Existing performance evidence remains historical; new benchmark runs are not a Goal 5 completion gate. Functional correctness, bounded refresh behavior and usable controls remain requirements. Goal 6 has not started.
 
 See the [Goal 4 acceptance and evidence](build-evidence/USABILITY/goal-4/acceptance.md). The scope below remains the approved plan; its historical baseline is not new qualification.
 

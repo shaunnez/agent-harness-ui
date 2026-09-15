@@ -42,14 +42,14 @@ export function Attention({
       </div>
       <p className="attention-reason">
         {connected
-          ? (splitRecordedDetail(attention.reason).headline ||
+          ? splitRecordedDetail(attention.reason).headline ||
             (attention.kind === "completed"
               ? "The recorded workflow is complete."
               : attention.kind === "idle"
                 ? "Review the task brief before starting execution."
                 : attention.kind === "running"
                   ? "Follow the recorded worker activity below."
-                  : "Reason not recorded. Inspect the retained task evidence."))
+                  : "Reason not recorded. Inspect the retained task evidence.")
           : "Connection lost. The scene shows the last known task state."}
       </p>
       {connected && splitRecordedDetail(attention.reason).body && (

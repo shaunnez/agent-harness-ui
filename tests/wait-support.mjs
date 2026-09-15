@@ -36,7 +36,11 @@ function progressSignature(task) {
 }
 
 /** Poll `predicate` until it is truthy, then return its value. */
-export async function waitUntil(predicate, describe = "condition", { timeoutMs = TEST_WAIT_TIMEOUT_MS } = {}) {
+export async function waitUntil(
+  predicate,
+  describe = "condition",
+  { timeoutMs = TEST_WAIT_TIMEOUT_MS } = {},
+) {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
     const value = await predicate();

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { type Overlay, overlayHash, parseOverlay } from "./routes";
+import type { DecisionSession } from "../runtime/decision-session.ts";
 
 export interface WorldLocation {
   view: "world" | "project" | "agent";
@@ -32,8 +33,24 @@ function readNavigation() {
           .filter((entry: Overlay | null): entry is Overlay => Boolean(entry))
       : [];
   const last = stored.at(-1);
+  const rawReview = prior?.review;
+  const review: DecisionSession | null =
+    overlay &&
+    rawReview &&
+    Array.isArray(rawReview.ids) &&
+    rawReview.ids.every((id: unknown) => typeof id === "string") &&
+    typeof rawReview.selectedId === "string"
+      ? {
+          sourceId: typeof rawReview.sourceId === "string" ? rawReview.sourceId : null,
+          ids: rawReview.ids.slice(0, 1000),
+          selectedId: rawReview.selectedId,
+          originSelectedId:
+            typeof rawReview.originSelectedId === "string" ? rawReview.originSelectedId : null,
+        }
+      : null;
   return {
     location,
+    review,
     stack: overlay ? (last && overlayHash(last) === overlayHash(overlay) ? stored : [overlay]) : [],
   };
 }
@@ -62,18 +79,27 @@ export function useNavigation() {
           ? `agent/${encodeURIComponent(next.location.taskId ?? "")}/${encodeURIComponent(next.location.runId ?? "")}`
           : "world";
     const panels = next.stack.map(overlayHash);
-    history.pushState({ frontierNavigation: { worldHash, panels } }, "", `#${panels.at(-1) ?? worldHash}`);
+    history.pushState(
+      { frontierNavigation: { worldHash, panels, review: next.review } },
+      "",
+      `#${panels.at(-1) ?? worldHash}`,
+    );
     current.current = next;
     setState(next);
   }
   function navigate(location: WorldLocation) {
-    commit({ location, stack: [] });
+    commit({ location, stack: [], review: null });
   }
   function setStack(update: Overlay[] | ((prior: Overlay[]) => Overlay[])) {
+    const nextStack = typeof update === "function" ? update(current.current.stack) : update;
     commit({
       ...current.current,
-      stack: typeof update === "function" ? update(current.current.stack) : update,
+      stack: nextStack,
+      review: nextStack.length ? current.current.review : null,
     });
   }
-  return { ...state, navigate, setStack };
+  function reviewDecision(review: DecisionSession, overlay: Overlay) {
+    commit({ ...current.current, review, stack: [overlay] });
+  }
+  return { ...state, navigate, setStack, reviewDecision };
 }

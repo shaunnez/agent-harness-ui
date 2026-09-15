@@ -1,0 +1,270 @@
+
+> agent-harness-ui@0.0.0 format:check
+> biome format src server scripts tests worker
+
+server/claude-runtime.mjs format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     915  915 │       sessionId,
+     916  916 │       "--settings",
+     917      │ - ····JSON.stringify(
+     918      │ - ······buildClaudeSandboxSettings(cwd,·sandbox,·networkAccess,·extraReadRoots,·extraReadFiles),
+     919      │ - ····),
+          917 │ + ····JSON.stringify(buildClaudeSandboxSettings(cwd,·sandbox,·networkAccess,·extraReadRoots,·extraReadFiles)),
+     920  918 │       "--system-prompt",
+     921  919 │       CLAUDE_SYSTEM_PROMPT,
+  
+
+src/frontier/fixtures/scenarios.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    302 302 │             // representative multi-line failure in the fixtures is how the summary/detail
+    303 303 │             // split stays covered by visual QA.
+    304     │ - ··········error:·"S2·did·not·qualify:·playwright-e2e·failed·\u2014·make·e2e-native·exited·2.\n"·+
+    305     │ - ··"3·unexpected,·0·flaky,·83·expected\n"·+
+    306     │ - ··"Playwright·unexpected·results:\n"·+
+    307     │ - ··"-·15-tenant-branding.spec.ts·\u203a·two·accounts·remain·isolated·across·admin·and·sessions\n"·+
+    308     │ - ··"··Error:·expect(page).toHaveTitle(expected)·failed\n"·+
+    309     │ - ··"··Expected:·\"Harbour\"\n"·+
+    310     │ - ··"··Received:·\"MyPropertyAssist\"\n"·+
+    311     │ - ··"··Timeout:·5000ms\n"·+
+    312     │ - ··"-·21-obligation-calendar.spec.ts·\u203a·activating·a·deck·item·resolves·the·exposure\n"·+
+    313     │ - ··"··Error:·expect(page).toHaveURL(expected)·failed\n"·+
+    314     │ - ··"··Expected·pattern:·/obligation=/\n"·+
+    315     │ - ··"3·failed,·24·skipped,·83·passed·(5.8m)",
+        304 │ + ··········error:
+        305 │ + ············"S2·did·not·qualify:·playwright-e2e·failed·\u2014·make·e2e-native·exited·2.\n"·+
+        306 │ + ············"3·unexpected,·0·flaky,·83·expected\n"·+
+        307 │ + ············"Playwright·unexpected·results:\n"·+
+        308 │ + ············"-·15-tenant-branding.spec.ts·\u203a·two·accounts·remain·isolated·across·admin·and·sessions\n"·+
+        309 │ + ············"··Error:·expect(page).toHaveTitle(expected)·failed\n"·+
+        310 │ + ············'··Expected:·"Harbour"\n'·+
+        311 │ + ············'··Received:·"MyPropertyAssist"\n'·+
+        312 │ + ············"··Timeout:·5000ms\n"·+
+        313 │ + ············"-·21-obligation-calendar.spec.ts·\u203a·activating·a·deck·item·resolves·the·exposure\n"·+
+        314 │ + ············"··Error:·expect(page).toHaveURL(expected)·failed\n"·+
+        315 │ + ············"··Expected·pattern:·/obligation=/\n"·+
+        316 │ + ············"3·failed,·24·skipped,·83·passed·(5.8m)",
+    316 317 │           },
+    317 318 │         ],
+    ······· │ 
+    320 321 │           {
+    321 322 │             ...workPackage("S2", "failed"),
+    322     │ - ··········error:·"S2·did·not·qualify:·playwright-e2e·failed·\u2014·make·e2e-native·exited·2.\n"·+
+    323     │ - ··"3·unexpected,·0·flaky,·83·expected\n"·+
+    324     │ - ··"Playwright·unexpected·results:\n"·+
+    325     │ - ··"-·15-tenant-branding.spec.ts·\u203a·two·accounts·remain·isolated·across·admin·and·sessions\n"·+
+    326     │ - ··"··Error:·expect(page).toHaveTitle(expected)·failed\n"·+
+    327     │ - ··"··Expected:·\"Harbour\"\n"·+
+    328     │ - ··"··Received:·\"MyPropertyAssist\"\n"·+
+    329     │ - ··"··Timeout:·5000ms\n"·+
+    330     │ - ··"-·21-obligation-calendar.spec.ts·\u203a·activating·a·deck·item·resolves·the·exposure\n"·+
+    331     │ - ··"··Error:·expect(page).toHaveURL(expected)·failed\n"·+
+    332     │ - ··"··Expected·pattern:·/obligation=/\n"·+
+    333     │ - ··"3·failed,·24·skipped,·83·passed·(5.8m)",
+        323 │ + ··········error:
+        324 │ + ············"S2·did·not·qualify:·playwright-e2e·failed·\u2014·make·e2e-native·exited·2.\n"·+
+        325 │ + ············"3·unexpected,·0·flaky,·83·expected\n"·+
+        326 │ + ············"Playwright·unexpected·results:\n"·+
+        327 │ + ············"-·15-tenant-branding.spec.ts·\u203a·two·accounts·remain·isolated·across·admin·and·sessions\n"·+
+        328 │ + ············"··Error:·expect(page).toHaveTitle(expected)·failed\n"·+
+        329 │ + ············'··Expected:·"Harbour"\n'·+
+        330 │ + ············'··Received:·"MyPropertyAssist"\n'·+
+        331 │ + ············"··Timeout:·5000ms\n"·+
+        332 │ + ············"-·21-obligation-calendar.spec.ts·\u203a·activating·a·deck·item·resolves·the·exposure\n"·+
+        333 │ + ············"··Error:·expect(page).toHaveURL(expected)·failed\n"·+
+        334 │ + ············"··Expected·pattern:·/obligation=/\n"·+
+        335 │ + ············"3·failed,·24·skipped,·83·passed·(5.8m)",
+    334 336 │           },
+    335 337 │         ],
+  
+
+src/frontier/runtime/presentation.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     38  38 │       // that neutral state so blocker, failure, and active-run precedence stays
+     39  39 │       // owned by the projection that supplied it.
+     40     │ - ····return·isReadyStatus(task.status)·&&·attention.kind·===·"idle"
+     41     │ - ······?·readyAttention(attention)
+     42     │ - ······:·attention;
+         40 │ + ····return·isReadyStatus(task.status)·&&·attention.kind·===·"idle"·?·readyAttention(attention)·:·attention;
+     43  41 │     }
+     44  42 │     const fallback: Attention = {
+  
+
+src/frontier/ui/Attention.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    43 43 │         <p className="attention-reason">
+    44 44 │           {connected
+    45    │ - ··········?·(splitRecordedDetail(attention.reason).headline·||
+       45 │ + ··········?·splitRecordedDetail(attention.reason).headline·||
+    46 46 │               (attention.kind === "completed"
+    47 47 │                 ? "The recorded workflow is complete."
+    ····· │ 
+    50 50 │                   : attention.kind === "running"
+    51 51 │                     ? "Follow the recorded worker activity below."
+    52    │ - ··················:·"Reason·not·recorded.·Inspect·the·retained·task·evidence."))
+       52 │ + ··················:·"Reason·not·recorded.·Inspect·the·retained·task·evidence.")
+    53 53 │             : "Connection lost. The scene shows the last known task state."}
+    54 54 │         </p>
+  
+
+src/frontier/ui/world-shell.css format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    209 209 │     --tone: #5fd38d;
+    210 210 │     border-color: #4fca83;
+    211     │ - ··box-shadow:·0·0·0·1px·#4fca83,·0·3px·7px·#0008;
+        211 │ + ··box-shadow:
+        212 │ + ····0·0·0·1px·#4fca83,
+        213 │ + ····0·3px·7px·#0008;
+    212 214 │   }
+    213 215 │   .world-label svg,
+  
+
+src/frontier/views/WorkPackages.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      5   5 │   import { packageState, splitRecordedDetail } from "../runtime/presentation";
+      6   6 │   
+      7     │ - 
+      8   7 │   export function WorkPackages({
+      9   8 │     packages,
+  
+
+tests/frontier-ready-task-presentation.test.mjs format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    42 42 │     assert.equal(attentionFor(exceptional).kind, "blocked");
+    43 43 │   
+    44    │ - ··for·(const·kind·of·["running",·"answer",·"approval",·"failed",·"repair",·"blocked",·"dependency",·"external",·"completed"])·{
+       44 │ + ··for·(const·kind·of·[
+       45 │ + ····"running",
+       46 │ + ····"answer",
+       47 │ + ····"approval",
+       48 │ + ····"failed",
+       49 │ + ····"repair",
+       50 │ + ····"blocked",
+       51 │ + ····"dependency",
+       52 │ + ····"external",
+       53 │ + ····"completed",
+       54 │ + ··])·{
+    45 55 │       const task = fixtureTask(`state-${kind}`, `${kind} task`, "/demo/project", {
+    46 56 │         status: kind === "completed" ? "completed" : "queued",
+    ····· │ 
+    62 72 │       /const projectedAttention = attentionFor\(task\);[\s\S]*const attention = input\.connected[\s\S]*kind: "unavailable"[\s\S]*label: "Connection unknown"/,
+    63 73 │     );
+    64    │ - ··assert.match(worldCanvas,·/world-label·\$\{label\.kind\}·tone-\$\{label\.attention\}·\$\{label\.taskId·===·input\.selectedId/);
+       74 │ + ··assert.match(
+       75 │ + ····worldCanvas,
+       76 │ + ····/world-label·\$\{label\.kind\}·tone-\$\{label\.attention\}·\$\{label\.taskId·===·input\.selectedId/,
+       77 │ + ··);
+    65 78 │   });
+    66 79 │   
+  
+
+tests/frontier/attention.test.mjs format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    126 126 │     const { headline, body } = splitRecordedDetail(recorded);
+    127 127 │     assert.equal(headline, "S1 did not qualify: playwright-e2e failed — make e2e-native exited 2.");
+    128     │ - ··assert.equal(body,·"3·unexpected,·0·flaky,·83·expected\nPlaywright·unexpected·results:\n-·15-tenant-branding.spec.ts·›·two·accounts·remain·isolated");
+        128 │ + ··assert.equal(
+        129 │ + ····body,
+        130 │ + ····"3·unexpected,·0·flaky,·83·expected\nPlaywright·unexpected·results:\n-·15-tenant-branding.spec.ts·›·two·accounts·remain·isolated",
+        131 │ + ··);
+    129 132 │     assert.ok(!headline.includes("\n"), "a headline never carries a line break into a summary row");
+    130 133 │   });
+  
+
+tests/sqlite-store.test.mjs format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     15  15 │   test("permits only existing task attachment files inside the managed attachment root", async () => {
+     16  16 │     const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-attachment-read-roots-"));
+     17     │ - ··const·attachmentSet·=·path.join(
+     18     │ - ····directory,
+     19     │ - ····"attachments",
+     20     │ - ····"set-33333333-3333-4333-8333-333333333333",
+     21     │ - ··);
+         17 │ + ··const·attachmentSet·=·path.join(directory,·"attachments",·"set-33333333-3333-4333-8333-333333333333");
+     22  18 │     const valid = path.join(attachmentSet, "reference.png");
+     23  19 │     const outside = path.join(directory, "outside.png");
+  
+
+tests/wait-support.mjs format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    37 37 │   
+    38 38 │   /** Poll `predicate` until it is truthy, then return its value. */
+    39    │ - export·async·function·waitUntil(predicate,·describe·=·"condition",·{·timeoutMs·=·TEST_WAIT_TIMEOUT_MS·}·=·{})·{
+       39 │ + export·async·function·waitUntil(
+       40 │ + ··predicate,
+       41 │ + ··describe·=·"condition",
+       42 │ + ··{·timeoutMs·=·TEST_WAIT_TIMEOUT_MS·}·=·{},
+       43 │ + )·{
+    40 44 │     const deadline = Date.now() + timeoutMs;
+    41 45 │     for (;;) {
+  
+
+tests/workflow-profiles.test.mjs format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      7   7 │   import { defaultProfileStagePolicies } from "../server/model-catalog.mjs";
+      8   8 │   import { JsonTaskStore } from "../server/store.mjs";
+      9     │ - import·{
+     10     │ - ··parseFastChangeContract,
+     11     │ - ··parseGateEvidence,
+     12     │ - ··parsePlanResult,
+     13     │ - }·from·"../server/structured-output.mjs";
+          9 │ + import·{·parseFastChangeContract,·parseGateEvidence,·parsePlanResult·}·from·"../server/structured-output.mjs";
+     14  10 │   import { fastEscalation, selectWorkflowProfile } from "../server/workflow-profiles.mjs";
+     15  11 │   import { waitForTaskStatus } from "./wait-support.mjs";
+    ······· │ 
+    231 227 │     );
+    232 228 │   
+    233     │ - ··const·result·=·parsePlanResult(`<work-packages>${JSON.stringify({
+    234     │ - ····disposition:·"blocked-prerequisite",
+    235     │ - ····evidence:·[{·path:·"scripts/export-records.py",·detail:·"This·is·the·sanctioned·read·path."·}],
+    236     │ - ····blocker:·{
+    237     │ - ······code:·"external-data-unavailable",
+    238     │ - ······detail:·"The·required·records·cannot·be·read·from·the·sandbox.",
+    239     │ - ······requiredAction:·"Attach·a·trusted·read-only·export·of·the·required·records.",
+    240     │ - ····},
+    241     │ - ····packages:·[],
+    242     │ - ··})}</work-packages>`);
+        229 │ + ··const·result·=·parsePlanResult(
+        230 │ + ····`<work-packages>${JSON.stringify({
+        231 │ + ······disposition:·"blocked-prerequisite",
+        232 │ + ······evidence:·[{·path:·"scripts/export-records.py",·detail:·"This·is·the·sanctioned·read·path."·}],
+        233 │ + ······blocker:·{
+        234 │ + ········code:·"external-data-unavailable",
+        235 │ + ········detail:·"The·required·records·cannot·be·read·from·the·sandbox.",
+        236 │ + ········requiredAction:·"Attach·a·trusted·read-only·export·of·the·required·records.",
+        237 │ + ······},
+        238 │ + ······packages:·[],
+        239 │ + ····})}</work-packages>`,
+        240 │ + ··);
+    243 241 │     assert.deepEqual(result, {
+    244 242 │       disposition: "blocked-prerequisite",
+  
+
+Checked 435 files in 86ms. No fixes applied.
+Found 11 errors.
+format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

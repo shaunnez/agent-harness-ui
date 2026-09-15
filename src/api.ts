@@ -1,4 +1,10 @@
 import type { CompanionContext } from "./companion/contracts";
+import type {
+  WorkspaceHead,
+  WorkspaceHistoryRequest,
+  WorkspaceHistoryPage,
+  WatchedRun,
+} from "./domain/workspace-history";
 import type { OnboardingProposal, OnboardingReview } from "./domain/onboarding";
 import type {
   AgentRoleId,
@@ -24,6 +30,39 @@ import type {
   RuntimeUsage,
   RuntimeWorktreeInventoryRow,
 } from "./domain";
+
+export function getWorkspaceHead(options?: ReadRequestOptions) {
+  return request<WorkspaceHead>("/api/workspace/history?view=head", options);
+}
+export function getWorkspaceHistory(input: WorkspaceHistoryRequest, options?: ReadRequestOptions) {
+  const params = new URLSearchParams({
+    sourceId: input.sourceId,
+    after: String(input.after),
+    through: String(input.through),
+    limit: String(input.limit ?? 100),
+  });
+  if (input.cursor) params.set("cursor", input.cursor);
+  return request<WorkspaceHistoryPage>(`/api/workspace/history?${params}`, options);
+}
+export function getWatchedRun(taskId: string, runId: string, sourceId: string, options?: ReadRequestOptions) {
+  return request<WatchedRun>(
+    `/api/tasks/${encodeURIComponent(taskId)}/runs/${encodeURIComponent(runId)}?sourceId=${encodeURIComponent(sourceId)}`,
+    options,
+  );
+}
+export async function getExactRun(
+  taskId: string,
+  runId: string,
+  sourceId: string,
+  options?: ReadRequestOptions,
+) {
+  return (
+    await request<{ run: RuntimeRun | null }>(
+      `/api/tasks/${encodeURIComponent(taskId)}/runs/${encodeURIComponent(runId)}?view=full&sourceId=${encodeURIComponent(sourceId)}`,
+      options,
+    )
+  ).run;
+}
 
 export interface CandidateDiffResponse {
   candidateId: string;

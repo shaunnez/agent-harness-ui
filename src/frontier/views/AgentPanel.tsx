@@ -19,6 +19,7 @@ import { ScrollArea } from "../ui/ScrollArea";
 import { ResizeHandles, useWindowSizing, WindowSizeControls } from "../ui/WindowSizing";
 import { workAction, workActions } from "../world/worker-behavior";
 import { AgentActivity } from "./AgentActivity";
+import { PinButton } from "./WatchPins";
 
 export function AgentPanel({
   evidence,
@@ -248,6 +249,7 @@ export function AgentPanel({
         >
           <GearSix size={18} />
         </button>
+        {run && <PinButton taskId={task.id} runId={run.id} compact />}
       </div>
       {tab === "activity" ? (
         <AgentActivity

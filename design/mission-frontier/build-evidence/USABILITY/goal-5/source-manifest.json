@@ -1,0 +1,153 @@
+{
+  "capturedAt": "2026-09-09T02:26:40.147184+00:00",
+  "status": "paused-before-acceptance",
+  "baseCommit": "196ec7d369670592dab059f2e8610e8465742c90",
+  "branch": "codex/mission-frontier-goal-5",
+  "scope": "Changed implementation, scripts, and tests only; not a full-tree acceptance manifest. No implementation edits were made during the handoff turn.",
+  "files": [
+    {
+      "path": "scripts/frontier/measure-command-refresh.mjs",
+      "sha256": "a0ed6eb73ae8d9f9550e0f23fc5456ba53eb8a9857b4e350a38d5392d7850a4f"
+    },
+    {
+      "path": "server/retained-evidence-routes.mjs",
+      "sha256": "6b9d82ee74652ad25eba292f8995c636aebaac89dd27478aab8c3ae28cc2b7b3"
+    },
+    {
+      "path": "server/sqlite-storage.mjs",
+      "sha256": "01805d752c8f2394b99e7a44fd930b4a58b16d7cdf1bf809bd5e953bbcb3c54f"
+    },
+    {
+      "path": "server/sqlite-store.mjs",
+      "sha256": "8a31d077d705087e580555cb17bdbbe6fc0b51e9e84c5bbca42003960bfdc4fc"
+    },
+    {
+      "path": "server/workspace-history-projection.d.mts",
+      "sha256": "5eb5e3ee8b2ccf679c3380638532af63bd3e477ae2493a8dc6fda804542f18b6"
+    },
+    {
+      "path": "server/workspace-history-projection.mjs",
+      "sha256": "4857998c67859a1413b9ef69be30119790f40c63a3ac3fe23bb367741dc24dbd"
+    },
+    {
+      "path": "server/workspace-history.mjs",
+      "sha256": "de5034cd2c49162e7546bc3cc44069bb4bc36ab21344b8ce89db11aa10a20677"
+    },
+    {
+      "path": "src/api.ts",
+      "sha256": "8fa7f363a97869128091dea1925795c416f626487fb285dc2627e1ab98d8645a"
+    },
+    {
+      "path": "src/domain/workspace-history.ts",
+      "sha256": "7c488e1ac410c8320aa0ce31b976065c2be6c2cbd2b9c35fb81cb89c4561c411"
+    },
+    {
+      "path": "src/frontier/app/BuildDiagnostics.tsx",
+      "sha256": "4106cd13b4a858364d45ca008c8d7d4937b3b8b7dcd425646cdde1b51ac0107f"
+    },
+    {
+      "path": "src/frontier/app/FrontierApp.tsx",
+      "sha256": "522d40ea3f8479ebcac611ffa3b7c77756b7ca669bc9a406c65d387a33ed44c6"
+    },
+    {
+      "path": "src/frontier/app/OverlayHost.tsx",
+      "sha256": "0084fe54e55fced2c2baac709c8a5049589c5a17ed7777c428a9efe0f28eab6c"
+    },
+    {
+      "path": "src/frontier/app/command-context.tsx",
+      "sha256": "a46dd0125116f229870bf7ae4cfab1f09b2c19a6b2012522d1359e1067165a12"
+    },
+    {
+      "path": "src/frontier/app/command-memory.ts",
+      "sha256": "fcb42a96cca8543ee7f97f13a909d6030fce354f196e2df68aa8f6a19ddc2b55"
+    },
+    {
+      "path": "src/frontier/app/navigation.ts",
+      "sha256": "904b77691d949b01a5610694c9e73c14eccc0f407af4b7ea60c0edac2886868d"
+    },
+    {
+      "path": "src/frontier/app/routes.ts",
+      "sha256": "0bc5040f527375d64ece76fce814d5d426eb37021d423dcc786d60f0d4a34b3f"
+    },
+    {
+      "path": "src/frontier/app/use-briefing.ts",
+      "sha256": "6a676dc89ec9103163e8e059b9dc2f039391d444ad6630e82bfc56e0a8202f47"
+    },
+    {
+      "path": "src/frontier/app/use-command-memory.ts",
+      "sha256": "e9949384057e3e0734ce8b597c582dc0312bb26e6b0e82cf8dbf8192208f74e1"
+    },
+    {
+      "path": "src/frontier/fixtures/gateway.ts",
+      "sha256": "588c65955cd5b3910f67ad13e8782642ffb96d6ff09af98e7c27c9f322e6503f"
+    },
+    {
+      "path": "src/frontier/fixtures/history.ts",
+      "sha256": "37069826c4fae34436cafee68627989ee337083b42e5088c93c590f5a572119d"
+    },
+    {
+      "path": "src/frontier/runtime/briefing.ts",
+      "sha256": "299ebec0959ec5cb2c25401446b36fdfa758dc16772f23a7e36f7d5a1c1c83c0"
+    },
+    {
+      "path": "src/frontier/runtime/contracts.ts",
+      "sha256": "c4ce91efb444c62846f3c5ef0b32937d2cff2f30c185769071225b05e0c350b9"
+    },
+    {
+      "path": "src/frontier/runtime/coordinator.ts",
+      "sha256": "f9664706a04869244780377f5189ba18f6fea3a70f594aca55cea3c98253bf20"
+    },
+    {
+      "path": "src/frontier/runtime/decision-session.ts",
+      "sha256": "f3dddbf85faf560a39305dc29e324f2b46466a2dbd9d8cdea1561949a097dde3"
+    },
+    {
+      "path": "src/frontier/runtime/live-gateway.ts",
+      "sha256": "ecb54da1cf24244396e23ab2ea1035ed551b4363d58b9ee0b30a92209d5fb733"
+    },
+    {
+      "path": "src/frontier/ui/command-workflow.css",
+      "sha256": "e792bb216c400c9e664ae216ed1fcfd6eb970a512b589191360b70d589a7c472"
+    },
+    {
+      "path": "src/frontier/ui/frontier.css",
+      "sha256": "0c78aa561070d6ba8004a5e0bbaa23f3d259aa6881e9af35fdbffb09e057137f"
+    },
+    {
+      "path": "src/frontier/views/AgentPanel.tsx",
+      "sha256": "e3411650586bd2ad773f717d760662cdfd7cef6e0b1a0e965c8a8e2dad165ad5"
+    },
+    {
+      "path": "src/frontier/views/DecisionNavigation.tsx",
+      "sha256": "01b680508d51d5cfab5966ba8a39ffed687ec7fc3b3c1261c40f19c1f6491fdd"
+    },
+    {
+      "path": "src/frontier/views/ReturnBriefing.tsx",
+      "sha256": "bf02acbafe7a8e1c0d5a6307c0ce854f73a0571562b95089c619c47fd58e52b4"
+    },
+    {
+      "path": "src/frontier/views/TaskPanel.tsx",
+      "sha256": "16e1119d85af9d23b6b29b0ba0d16701b1d8c3ffc2b93555895aa32f9c2ced3e"
+    },
+    {
+      "path": "src/frontier/views/WatchPins.tsx",
+      "sha256": "eafd8ed90df2fd6f97e7f7c0acfcd99e49a967b615041346c63cb738d768bc60"
+    },
+    {
+      "path": "src/frontier/views/WorkflowCommand.tsx",
+      "sha256": "77ef816eea23b5f32b84ac226df4d3a9e132a69f4f9fc5924d8121de823d5ebd"
+    },
+    {
+      "path": "src/frontier/views/WorldHud.tsx",
+      "sha256": "a826fbb7587bf9d8861cb6b4c01107b88cda08ab7fd2c60edd38872021561f96"
+    },
+    {
+      "path": "tests/frontier/api/workspace-history.test.mjs",
+      "sha256": "ff5320343abff2c1b69f1c81aabc3be124b9764622aa8823bc97d51d4dd021d7"
+    },
+    {
+      "path": "tests/frontier/command-workflow.test.mjs",
+      "sha256": "14281f672f60f1059fecfc255225b07c73fdc2247f5970cfea079b2654f24d92"
+    }
+  ]
+}

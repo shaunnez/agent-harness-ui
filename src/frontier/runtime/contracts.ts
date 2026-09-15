@@ -21,6 +21,12 @@ import type {
   StageId,
 } from "../../domain.ts";
 import type { SettingsInput } from "./settings.ts";
+import type {
+  WorkspaceHead,
+  WorkspaceHistoryPage,
+  WorkspaceHistoryRequest,
+  WatchedRun,
+} from "../../domain/workspace-history.ts";
 
 export type AttentionKind =
   | "running"
@@ -53,6 +59,10 @@ export interface TaskEvidence {
 
 export interface FrontierGateway {
   readonly mode: "live" | "fixture";
+  workspaceHead(): Promise<WorkspaceHead>;
+  workspaceHistory(input: WorkspaceHistoryRequest): Promise<WorkspaceHistoryPage>;
+  watchedRun(taskId: string, runId: string, sourceId: string): Promise<WatchedRun>;
+  exactRun(taskId: string, runId: string, sourceId: string): Promise<RuntimeRun | null>;
   status(): Promise<RuntimeStatus>;
   saveSettings(input: SettingsInput): Promise<RuntimeSettings>;
   worktrees(taskId: string): Promise<RuntimeWorktreeInventoryRow[]>;
@@ -105,6 +115,9 @@ export interface CandidateScope {
 
 export type ConnectionState = "connecting" | "connected" | "offline";
 export interface FrontierSnapshot {
+  workspace: WorkspaceHead | null;
+  workspaceError: string | null;
+  watchedRuns: Record<string, WatchedRun | { error: string }>;
   connection: ConnectionState;
   error: string | null;
   status: RuntimeStatus | null;

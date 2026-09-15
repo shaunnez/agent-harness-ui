@@ -1,0 +1,33 @@
+✔ Development Review keeps a materially higher command ceiling than Test and Final Review (1.108084ms)
+✖ the reviewer instruction names the exact per-stage ceiling and is empty outside the candidate gates (0.576667ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 60.318459
+
+✖ failing tests:
+
+test at ../../../../projects/agent-harness-ui/tests/candidate-gate-policy.test.mjs:21:1
+✖ the reviewer instruction names the exact per-stage ceiling and is empty outside the candidate gates (0.576667ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Use at most 10 targeted repository commands/. Input:
+  
+  'You have a hard limit of 10 repository-command invocations. Before using tools, plan the complete inspection within 8 commands and reserve 2 commands for unexpected follow-up. Start with one command that reads the complete candidate diff and stat. Inspect only changed files and directly relevant surrounding contracts; do not inventory or broadly search the repository. Reuse the supplied specification, plan, package qualification, and candidate metadata. After command 8, stop using repository tools and produce the best evidence-bound verdict available. Never start command 11. Every command must be constructed to exit zero when the intended inspection succeeds: verify file paths before passing them to search tools, and use an explicit no-match allowance such as `rg ... || true` only when finding nothing is a valid result. Insufficient source evidence is a non-blocking verification gap unless a concrete candidate defect has already been established. A non-zero diagnostic command invalidates an otherwise-PASS review and consumes a bounded same-candidate retry; it never proves a candidate defect.'
+  
+      at TestContext.<anonymous> (file:///Users/shaun/projects/agent-harness-ui/tests/candidate-gate-policy.test.mjs:22:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'You have a hard limit of 10 repository-command invocations. Before using tools, plan the complete inspection within 8 commands and reserve 2 commands for unexpected follow-up. Start with one command that reads the complete candidate diff and stat. Inspect only changed files and directly relevant surrounding contracts; do not inventory or broadly search the repository. Reuse the supplied specification, plan, package qualification, and candidate metadata. After command 8, stop using repository tools and produce the best evidence-bound verdict available. Never start command 11. Every command must be constructed to exit zero when the intended inspection succeeds: verify file paths before passing them to search tools, and use an explicit no-match allowance such as `rg ... || true` only when finding nothing is a valid result. Insufficient source evidence is a non-blocking verification gap unless a concrete candidate defect has already been established. A non-zero diagnostic command invalidates an otherwise-PASS review and consumes a bounded same-candidate retry; it never proves a candidate defect.',
+    expected: /Use at most 10 targeted repository commands/,
+    operator: 'match',
+    diff: 'simple'
+  }

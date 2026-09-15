@@ -16,7 +16,11 @@ import type { NewTaskDraft } from "../../domain";
 import { createFixtureGateway } from "../fixtures/gateway";
 import { errorMessage, RefreshCoordinator } from "../runtime/coordinator";
 import { liveGateway } from "../runtime/live-gateway";
-import { commandDestination, isActiveRun, latestRun } from "../runtime/presentation";
+import { commandDestination, isActiveRun, latestRun, needsYou } from "../runtime/presentation";
+import { createDecisionSession } from "../runtime/decision-session";
+import { DecisionNavigation } from "../views/DecisionNavigation";
+import { CommandDock } from "../views/WatchPins";
+import { CommandWorkspaceProvider } from "./command-context";
 import { AgentPanel } from "../views/AgentPanel";
 import {
   AttentionQueue,
@@ -61,7 +65,7 @@ export function FrontierApp() {
     [],
   );
   const snapshot = useSyncExternalStore(runtime.subscribe, runtime.getSnapshot);
-  const { location, navigate, stack, setStack } = useNavigation();
+  const { location, navigate, stack, setStack, review, reviewDecision } = useNavigation();
   const [preferences, setPreferences] = useState(readPreferences);
   const [reduced, setReduced] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [pickedProject, setPickedProject] = useState<string | null>(null);
@@ -195,6 +199,37 @@ export function FrontierApp() {
   useEffect(() => {
     if (location.taskId) runtime.select(location.taskId);
   }, [location.taskId, runtime]);
+  useEffect(() => {
+    runtime.selectRun(location.runId);
+  }, [runtime, location.runId]);
+  const priorSource = useRef<string | null | undefined>(undefined);
+  const previousReview = useRef(review);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: A source change invalidates remembered navigation and drafts; callbacks are render-local.
+  useLayoutEffect(() => {
+    if (!snapshot.workspace) return;
+    const source = snapshot.workspace.sourceId;
+    const replaced = priorSource.current !== undefined && priorSource.current !== source;
+    priorSource.current = source;
+    if (replaced || (review && review.sourceId !== source)) {
+      previousReview.current = null;
+      runtime.select(null);
+      setPickedProject(null);
+      setDraft({
+        title: "",
+        description: "",
+        repositoryPath: "",
+        workflow: "investigate",
+        priority: "medium",
+      });
+      navigate(worldLocation);
+    }
+  }, [snapshot.workspace?.sourceId, review?.sourceId, runtime]);
+  useEffect(() => {
+    const previous = previousReview.current;
+    previousReview.current = review;
+    if (previous && !review && !stack.length && location.view !== "agent")
+      runtime.select(previous.originSelectedId);
+  }, [review, stack.length, location.view, runtime]);
   const overlay = stack.at(-1);
   const overlayTaskId = overlay && "taskId" in overlay ? overlay.taskId : null;
   useEffect(() => {
@@ -215,11 +250,13 @@ export function FrontierApp() {
   function close() {
     commandContext.current++;
     setCommandError(null);
+    if (review) runtime.select(review.originSelectedId);
     setStack([]);
   }
   function back() {
     commandContext.current++;
     setCommandError(null);
+    if (review && stack.length === 1) runtime.select(review.originSelectedId);
     setStack((current) => current.slice(0, -1));
   }
   function inspect(id: string, kind: "task" | "grill" | "findings" = "task") {
@@ -227,7 +264,23 @@ export function FrontierApp() {
   }
   function actOn(id: string) {
     const item = snapshot.tasks.find((entry) => entry.id === id);
-    if (item) inspect(id, commandDestination(item));
+    if (!item) return;
+    if (needsYou(item)) {
+      runtime.select(id);
+      reviewDecision(
+        createDecisionSession(snapshot.tasks, id, snapshot.selectedId, snapshot.workspace?.sourceId ?? null),
+        { kind: commandDestination(item), taskId: id },
+      );
+    } else inspect(id, commandDestination(item));
+  }
+  function moveDecision(id: string, ids = review?.ids) {
+    if (!review || !ids) return;
+    const item = snapshot.tasks.find((entry) => entry.id === id);
+    runtime.select(id);
+    reviewDecision(
+      { ...review, ids, selectedId: id },
+      { kind: item ? commandDestination(item) : "task", taskId: id },
+    );
   }
   function watch(id: string, runId: string | null = null) {
     close();
@@ -331,7 +384,7 @@ export function FrontierApp() {
   const selectedForHud = task ?? selected;
   const portrait =
     artDirection(window.location.search) === "cinematic" ? cinematicWorker.portrait : undefined;
-  return (
+  const workspace = (
     <main className={`frontier-shell view-${location.view}`}>
       <WorldCanvas
         onWorldSettings={() => open({ kind: "world-settings" })}
@@ -408,7 +461,12 @@ export function FrontierApp() {
         </button>
         {location.view === "project" && <span className="breadcrumb">/ {project?.name}</span>}
       </nav>
-      {location.view !== "agent" && <AttentionQueue tasks={scopedTasks} onSelect={actOn} />}
+      {location.view !== "agent" && (
+        <AttentionQueue tasks={scopedTasks} projects={snapshot.projects} onSelect={actOn} />
+      )}
+      {location.view !== "agent" && (
+        <CommandDock onBriefing={() => open({ kind: "briefing" })} onTask={inspect} onWatch={watch} />
+      )}
       {project && location.view === "project" && (
         <ProjectHud project={project} tasks={scopedTasks} onTasks={() => open({ kind: "tasks" })} />
       )}
@@ -527,8 +585,26 @@ export function FrontierApp() {
           </button>
         </p>
       )}
-      <PanelMemoryProvider>
+      <PanelMemoryProvider key={snapshot.workspace?.sourceId ?? runtime.gateway.mode}>
         <OverlayHost
+          onDecision={actOn}
+          decisionNavigation={
+            review &&
+            overlay &&
+            "taskId" in overlay &&
+            overlay.taskId === review.selectedId &&
+            ["task", "grill", "findings", "approve"].includes(overlay.kind) ? (
+              <DecisionNavigation
+                session={review}
+                tasks={snapshot.tasks}
+                projects={snapshot.projects}
+                busy={busy}
+                onMove={moveDecision}
+                onInclude={(ids) => moveDecision(review.selectedId, ids)}
+                onReturn={close}
+              />
+            ) : undefined
+          }
           readWorldHour={() => renderer.current?.worldHour}
           stack={stack}
           snapshot={snapshot}
@@ -567,5 +643,10 @@ export function FrontierApp() {
         />
       </PanelMemoryProvider>
     </main>
+  );
+  return (
+    <CommandWorkspaceProvider runtime={runtime} snapshot={snapshot}>
+      {workspace}
+    </CommandWorkspaceProvider>
   );
 }

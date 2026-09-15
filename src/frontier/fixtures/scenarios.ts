@@ -301,36 +301,38 @@ export function makeFixtureTasks() {
           // A real qualification failure carries the command's whole output. Keeping one
           // representative multi-line failure in the fixtures is how the summary/detail
           // split stays covered by visual QA.
-          error: "S2 did not qualify: playwright-e2e failed \u2014 make e2e-native exited 2.\n" +
-  "3 unexpected, 0 flaky, 83 expected\n" +
-  "Playwright unexpected results:\n" +
-  "- 15-tenant-branding.spec.ts \u203a two accounts remain isolated across admin and sessions\n" +
-  "  Error: expect(page).toHaveTitle(expected) failed\n" +
-  "  Expected: \"Harbour\"\n" +
-  "  Received: \"MyPropertyAssist\"\n" +
-  "  Timeout: 5000ms\n" +
-  "- 21-obligation-calendar.spec.ts \u203a activating a deck item resolves the exposure\n" +
-  "  Error: expect(page).toHaveURL(expected) failed\n" +
-  "  Expected pattern: /obligation=/\n" +
-  "3 failed, 24 skipped, 83 passed (5.8m)",
+          error:
+            "S2 did not qualify: playwright-e2e failed \u2014 make e2e-native exited 2.\n" +
+            "3 unexpected, 0 flaky, 83 expected\n" +
+            "Playwright unexpected results:\n" +
+            "- 15-tenant-branding.spec.ts \u203a two accounts remain isolated across admin and sessions\n" +
+            "  Error: expect(page).toHaveTitle(expected) failed\n" +
+            '  Expected: "Harbour"\n' +
+            '  Received: "MyPropertyAssist"\n' +
+            "  Timeout: 5000ms\n" +
+            "- 21-obligation-calendar.spec.ts \u203a activating a deck item resolves the exposure\n" +
+            "  Error: expect(page).toHaveURL(expected) failed\n" +
+            "  Expected pattern: /obligation=/\n" +
+            "3 failed, 24 skipped, 83 passed (5.8m)",
         },
       ],
       workPackages: [
         workPackage("S1", "running"),
         {
           ...workPackage("S2", "failed"),
-          error: "S2 did not qualify: playwright-e2e failed \u2014 make e2e-native exited 2.\n" +
-  "3 unexpected, 0 flaky, 83 expected\n" +
-  "Playwright unexpected results:\n" +
-  "- 15-tenant-branding.spec.ts \u203a two accounts remain isolated across admin and sessions\n" +
-  "  Error: expect(page).toHaveTitle(expected) failed\n" +
-  "  Expected: \"Harbour\"\n" +
-  "  Received: \"MyPropertyAssist\"\n" +
-  "  Timeout: 5000ms\n" +
-  "- 21-obligation-calendar.spec.ts \u203a activating a deck item resolves the exposure\n" +
-  "  Error: expect(page).toHaveURL(expected) failed\n" +
-  "  Expected pattern: /obligation=/\n" +
-  "3 failed, 24 skipped, 83 passed (5.8m)",
+          error:
+            "S2 did not qualify: playwright-e2e failed \u2014 make e2e-native exited 2.\n" +
+            "3 unexpected, 0 flaky, 83 expected\n" +
+            "Playwright unexpected results:\n" +
+            "- 15-tenant-branding.spec.ts \u203a two accounts remain isolated across admin and sessions\n" +
+            "  Error: expect(page).toHaveTitle(expected) failed\n" +
+            '  Expected: "Harbour"\n' +
+            '  Received: "MyPropertyAssist"\n' +
+            "  Timeout: 5000ms\n" +
+            "- 21-obligation-calendar.spec.ts \u203a activating a deck item resolves the exposure\n" +
+            "  Error: expect(page).toHaveURL(expected) failed\n" +
+            "  Expected pattern: /obligation=/\n" +
+            "3 failed, 24 skipped, 83 passed (5.8m)",
         },
       ],
     }),

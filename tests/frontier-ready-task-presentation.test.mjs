@@ -41,7 +41,17 @@ test("ready projection does not replace exceptional or non-ready attention", () 
   });
   assert.equal(attentionFor(exceptional).kind, "blocked");
 
-  for (const kind of ["running", "answer", "approval", "failed", "repair", "blocked", "dependency", "external", "completed"]) {
+  for (const kind of [
+    "running",
+    "answer",
+    "approval",
+    "failed",
+    "repair",
+    "blocked",
+    "dependency",
+    "external",
+    "completed",
+  ]) {
     const task = fixtureTask(`state-${kind}`, `${kind} task`, "/demo/project", {
       status: kind === "completed" ? "completed" : "queued",
       attention: { ...projectedAttention, kind },
@@ -61,7 +71,10 @@ test("ready headquarters labels use a project-scoped green border while selected
     scene,
     /const projectedAttention = attentionFor\(task\);[\s\S]*const attention = input\.connected[\s\S]*kind: "unavailable"[\s\S]*label: "Connection unknown"/,
   );
-  assert.match(worldCanvas, /world-label \$\{label\.kind\} tone-\$\{label\.attention\} \$\{label\.taskId === input\.selectedId/);
+  assert.match(
+    worldCanvas,
+    /world-label \$\{label\.kind\} tone-\$\{label\.attention\} \$\{label\.taskId === input\.selectedId/,
+  );
 });
 
 test("a completed run on a ready task remains parked without active worker presentation", () => {

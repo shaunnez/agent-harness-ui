@@ -19,12 +19,14 @@ import { ExecutionSettings } from "../views/ExecutionSettings";
 import { RunLibrary } from "../views/RunLibrary";
 import { Skills } from "../views/Skills";
 import { Usage } from "../views/Usage";
+import { ReturnBriefing } from "../views/ReturnBriefing";
 import type { WorldPreferences } from "./preferences";
 import type { Overlay } from "./routes";
 
 export type { Overlay } from "./routes";
 
 const titles = {
+  briefing: "While you were away",
   tasks: "Task journal",
   "new-task": "New task",
   settings: "Execution settings",
@@ -44,6 +46,8 @@ const titles = {
   diff: "Exact candidate diff",
 };
 interface Props {
+  decisionNavigation?: ReactNode;
+  onDecision(id: string): void;
   stack: Overlay[];
   snapshot: FrontierSnapshot;
   scopedTasks: TaskSummary[];
@@ -76,7 +80,9 @@ export function OverlayHost(props: Props) {
   const connected = snapshot.connection === "connected";
   const fixture = runtime.gateway.mode === "fixture";
   let content: ReactNode;
-  if (overlay.kind === "tasks")
+  if (overlay.kind === "briefing")
+    content = <ReturnBriefing onOpen={open} onWatch={watch} onDecision={props.onDecision} onClose={back} />;
+  else if (overlay.kind === "tasks")
     content = (
       <TaskJournal
         key={overlay.projectId ?? "all"}
@@ -356,6 +362,7 @@ export function OverlayHost(props: Props) {
           Sample world · Demonstration records and actions stay in this tab.
         </p>
       )}
+      {props.decisionNavigation}
       {content}
     </Modal>
   );

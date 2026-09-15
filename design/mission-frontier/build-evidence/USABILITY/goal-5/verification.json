@@ -1,0 +1,68 @@
+{
+  "capturedAt": "2026-09-09T02:26:40.147184+00:00",
+  "status": "paused-before-acceptance",
+  "sourceManifest": "source-manifest.json",
+  "tests": {
+    "status": "passed",
+    "passed": 225,
+    "failed": 0,
+    "skipped": 0,
+    "node": "24.19.0",
+    "log": "qualified-tests.log",
+    "scope": "Frontier, Frontier API, SQLite/store, orchestration, API characterization, task projections; not complete root suite"
+  },
+  "typecheck": {
+    "status": "passed",
+    "evidence": "Final sequential quality command advanced from npm run typecheck to npm run lint."
+  },
+  "lint": {
+    "status": "failed",
+    "file": "scripts/frontier/measure-command-refresh.mjs",
+    "line": 31,
+    "rule": "lint/suspicious/noAssignInExpressions"
+  },
+  "format": {
+    "status": "not-reached-final-source"
+  },
+  "frontierBuild": {
+    "status": "not-reached-final-source"
+  },
+  "rootBuild": {
+    "status": "not-reached-final-source"
+  },
+  "sitesTests": {
+    "status": "not-reached-final-source"
+  },
+  "requestVolume": {
+    "status": "passed",
+    "evidence": "request-volume.json",
+    "limit": "Fixture gateway requests and serialized JSON bytes; not HTTP bandwidth or browser frame measurements."
+  },
+  "browserAcceptance": {
+    "status": "partial",
+    "details": "HANDOFF.md"
+  },
+  "cleanup": {
+    "chromeZoomPercent": 100,
+    "verifiedViewport": {
+      "width": 1920,
+      "height": 873,
+      "dpr": 1
+    },
+    "temporaryChromeTabClosed": true,
+    "iabViewportOverrideReset": true,
+    "previewOpen": "http://127.0.0.1:5205/?mode=fixture&art=cinematic#world"
+  },
+  "journal": {
+    "status": "not-updated",
+    "localReceiptVersion": 10,
+    "remoteAccessRechecked": false
+  },
+  "delivery": {
+    "committed": false,
+    "pushed": false,
+    "prCreated": false,
+    "gamePublished": false,
+    "goal6Started": false
+  }
+}

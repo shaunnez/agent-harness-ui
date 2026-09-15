@@ -125,7 +125,10 @@ test("a recorded reason keeps its verdict line separate from the command output"
   ].join("\n");
   const { headline, body } = splitRecordedDetail(recorded);
   assert.equal(headline, "S1 did not qualify: playwright-e2e failed — make e2e-native exited 2.");
-  assert.equal(body, "3 unexpected, 0 flaky, 83 expected\nPlaywright unexpected results:\n- 15-tenant-branding.spec.ts › two accounts remain isolated");
+  assert.equal(
+    body,
+    "3 unexpected, 0 flaky, 83 expected\nPlaywright unexpected results:\n- 15-tenant-branding.spec.ts › two accounts remain isolated",
+  );
   assert.ok(!headline.includes("\n"), "a headline never carries a line break into a summary row");
 });
 

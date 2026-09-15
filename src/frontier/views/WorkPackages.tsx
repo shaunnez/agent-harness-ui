@@ -4,7 +4,6 @@ import { ScrollArea } from "../ui/ScrollArea";
 import type { RuntimeRun, RuntimeWorkPackage } from "../../domain";
 import { packageState, splitRecordedDetail } from "../runtime/presentation";
 
-
 export function WorkPackages({
   packages,
   runs,

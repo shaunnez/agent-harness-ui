@@ -7,6 +7,7 @@ import { fixtureArtifact, fixtureProjects, fixtureTask, makeFixtureTasks } from 
 import { fixtureWorkflow, sampleEligibility } from "./workflow.ts";
 import { enrichWorkflowScenarios } from "./workflow-scenarios.ts";
 import { stationFixtures } from "./stations.ts";
+import { fixtureHistory } from "./history.ts";
 
 /** In-memory demonstrations have no import or call path to the live mutation gateway. */
 export function createFixtureGateway(
@@ -17,6 +18,10 @@ export function createFixtureGateway(
   setDisconnected(value: boolean): void;
   appendActivity(id: string, count: number): void;
   setUsageState(id: string, state: "pending" | "zero"): void;
+  sampleHistoryChange(id: string, status: "blocked" | "completed" | "repair-required"): void;
+  resetSource(): void;
+  sampleExternalChange(id: string, kind: "resolve" | "remove" | "candidate"): void;
+  pruneHistory(): void;
   setDeliveryOutcome(id: string, outcome: "merged" | "closed" | "drift"): void;
 } {
   const initial = structuredClone(
@@ -30,11 +35,13 @@ export function createFixtureGateway(
   if (workflowScenarios && !scale && !stationReview) enrichWorkflowScenarios(initial.tasks);
   let version = 1;
   let disconnected = false;
+  let managementChanged = () => {};
   const online = () => {
     if (disconnected) throw new Error("Simulated connection lost. Sample records are retained.");
   };
   const management = fixtureManagement(initial.projects, tasks, online, () => {
     version++;
+    managementChanged();
   });
   for (const task of tasks.values()) {
     for (const run of task.runs ?? [])
@@ -64,13 +71,79 @@ export function createFixtureGateway(
     pollVersion: `fixture-${version}`,
     actionEligibility: sampleEligibility(task),
   });
+  const history = fixtureHistory(tasks, initial.projects, online);
+  managementChanged = () => {
+    for (const task of tasks.values()) history.observe(task);
+  };
   const changed = (task: RuntimeTask) => {
     task.updatedAt = new Date().toISOString();
     version++;
+    history.observe(task);
   };
   const workflow = fixtureWorkflow(tasks, get, changed);
   return {
     mode: "fixture",
+    workspaceHead: history.workspaceHead,
+    workspaceHistory: history.workspaceHistory,
+    watchedRun: history.watchedRun,
+    async exactRun(id, runId, sourceId) {
+      if (sourceId !== (await history.workspaceHead()).sourceId) throw new Error("Sample source changed.");
+      return structuredClone(get(id).runs?.find((run) => run.id === runId) ?? null);
+    },
+    resetSource() {
+      history.reset();
+      version++;
+    },
+    pruneHistory: history.prune,
+    sampleExternalChange(id, kind) {
+      const task = get(id);
+      if (kind === "remove") {
+        tasks.delete(id);
+        version++;
+        return;
+      }
+      if (kind === "resolve") {
+        task.status = "completed";
+        task.currentStage = "approval";
+        task.blocker = null;
+        task.error = null;
+      } else {
+        const candidate = task.candidates.at(-1);
+        if (!candidate) throw new Error("Select a sample task with a candidate.");
+        candidate.revisionNumber++;
+        candidate.headRevision = "b".repeat(40);
+        candidate.status = "ready_for_review";
+        task.status = "ready-for-review";
+        task.blocker = null;
+        task.error = null;
+        task.currentStage = "dev-review";
+        task.gateFreshness = null;
+      }
+      task.activeRunIds = [];
+      task.activeRunKind = null;
+      changed(task);
+    },
+    sampleHistoryChange(id, status) {
+      const task = get(id);
+      task.status = status;
+      task.activeRunIds = [];
+      task.activeRunKind = null;
+      task.blocker =
+        status === "completed"
+          ? null
+          : {
+              code: "sample-attention",
+              detail: "A recorded sample change for catch-up review. No real work ran.",
+              detectedAt: new Date().toISOString(),
+            };
+      task.completedAt = status === "completed" ? new Date().toISOString() : null;
+      for (const run of task.runs ?? [])
+        if (run.status === "running") {
+          run.status = status === "completed" ? "completed" : "interrupted";
+          run.completedAt = new Date().toISOString();
+        }
+      changed(task);
+    },
     appendActivity(id, count) {
       const task = get(id);
       const run = task.runs?.find(

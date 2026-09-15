@@ -19,8 +19,14 @@ test("Development Review keeps a materially higher command ceiling than Test and
 });
 
 test("the reviewer instruction names the exact per-stage ceiling and is empty outside the candidate gates", () => {
-  assert.match(candidateGateCommandInstruction("dev-review"), /Use at most 10 targeted repository commands/);
-  assert.match(candidateGateCommandInstruction("test"), /Use at most 2 targeted repository commands/);
-  assert.match(candidateGateCommandInstruction("final-review"), /Use at most 2 targeted repository commands/);
+  assert.match(
+    candidateGateCommandInstruction("dev-review"),
+    /hard limit of 10 repository-command invocations/,
+  );
+  assert.match(candidateGateCommandInstruction("dev-review"), /Never start command 11/);
+  for (const stage of ["test", "final-review"]) {
+    assert.match(candidateGateCommandInstruction(stage), /hard limit of 2 repository-command invocations/);
+    assert.match(candidateGateCommandInstruction(stage), /Never start command 3/);
+  }
   assert.equal(candidateGateCommandInstruction("implement"), "");
 });

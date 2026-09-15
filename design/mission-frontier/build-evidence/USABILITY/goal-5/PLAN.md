@@ -1,0 +1,15 @@
+# Goal 5 execution plan
+
+9 September 2026. Shaun explicitly started Goal 5 after PR #73 merged. Base: `196ec7d369670592dab059f2e8610e8465742c90`; its tree is identical to the qualified Goal 4 delivery `bdbd404`. Worktree: `mission-frontier-goal-5`, branch `codex/mission-frontier-goal-5`. Existing checkouts, services and databases remain user-owned.
+
+1. **UB1: bounded catch-up contract.** Add an indexed, bounded read projection of material task transitions and retained artifact/completed-run records, updated inside the existing SQLite transaction. Persist opaque source identity and monotonic observation order; never order catch-up by provider timestamps. Establish a baseline when upgrading existing stores. Do not backfill guessed history. Keep stable bounded pagination and explicit retention gaps, validate cursors, and qualify export/import and the explicitly unavailable legacy path. Expose exact run summaries for watch pins without full-history reads.
+2. **U3: decision sessions.** Extend Needs you with deterministic priority/age/ID ordering, project and reason, stable Previous/Next navigation, preserved drafts and originating world state. Keep current action admission and candidate confirmation authoritative; navigation never mutates a task.
+3. **U4–U5: briefing and pins.** Add source-scoped browser checkpoints and up to four task/exact-run pins. Load catch-up pages on demand, acknowledge only a fully loaded captured boundary, preserve unread state on close/failure, and label late/incomplete/missing usage honestly. Use the existing refresh coordinator for shared summaries and bounded selected/pinned reads.
+4. **Qualification.** Contract tests for ordering, concurrent writes, pruning, replay, source replacement, stale actions and migration/export. Browser checks for the cross-project journey, drafts, keyboard/Back, restoration, pins, briefing coverage, offline/reconnect and laptop/reflow. Measure zero/four-pin refresh requests and payloads at 100/1,000 tasks. Run relevant API/store/orchestration tests, typing, lint, formatting and both builds. Preserve Goal 4 space targets.
+5. **Handoff.** Record acceptance and screenshots, leave a disposable local preview, and update the separate published journal for its existing selected audience. Goal 6, PR merge, game publication and paid/live task execution remain outside this run.
+
+## Boundary decision
+
+The existing SQLite tables have task-local revision and provider-time paging, but no workspace commit order or retained material-state history. UB1 therefore needs a small transactional read projection, capped by a documented record count. It stores typed operational facts and minimal identities/usage, not transcripts or an immutable event ledger. Legacy records establish an explicit coverage baseline; the JSON-only backend reports catch-up unavailable. A newly created/imported or physically replaced database has a different opaque identity, so browser checkpoints and pins cannot silently cross stores.
+
+No checks below are implied passed by this plan; completion evidence belongs in acceptance.md.

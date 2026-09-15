@@ -25,6 +25,7 @@ import {
   stageLabels,
 } from "../runtime/presentation";
 import { AttentionIcon } from "../ui/Attention";
+import { orderedDecisions } from "../runtime/decision-session";
 
 export function WorldClock() {
   const [now, setNow] = useState(() => new Date());
@@ -42,15 +43,16 @@ export function WorldClock() {
     </div>
   );
 }
-export function AttentionQueue({ tasks, onSelect }: { tasks: TaskSummary[]; onSelect(id: string): void }) {
-  const attention = tasks.filter(needsYou).sort((a, b) => {
-    const severity = (task: TaskSummary) =>
-      ["repair", "failed", "blocked"].includes(attentionFor(task).kind) ? 0 : 1;
-    return (
-      severity(a) - severity(b) ||
-      (attentionFor(a).since ?? a.createdAt).localeCompare(attentionFor(b).since ?? b.createdAt)
-    );
-  });
+export function AttentionQueue({
+  tasks,
+  projects,
+  onSelect,
+}: {
+  tasks: TaskSummary[];
+  projects: RuntimeProject[];
+  onSelect(id: string): void;
+}) {
+  const attention = orderedDecisions(tasks);
   return (
     <aside className="attention-queue panel">
       <header>
@@ -68,10 +70,23 @@ export function AttentionQueue({ tasks, onSelect }: { tasks: TaskSummary[]; onSe
             >
               <AttentionIcon kind={attentionFor(task).kind} />
               <span>
+                <small>
+                  {projects.find((project) => project.repositoryPath === task.repositoryPath)?.name ??
+                    "Project unavailable"}
+                </small>
                 <strong>
                   {task.id} · {stageLabels[task.currentStage]}
                 </strong>
                 <small>{attentionFor(task).label}</small>
+                <small className="queue-reason">
+                  {splitRecordedDetail(attentionFor(task).reason).headline || "Open the recorded decision"}
+                </small>
+                <small>
+                  Next: {attentionFor(task).nextActor ?? "Not recorded"} ·{" "}
+                  {attentionFor(task).since
+                    ? `Since ${new Date(attentionFor(task).since ?? 0).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                    : "Wait age not recorded"}
+                </small>
               </span>
               <ArrowRight size={18} />
             </button>

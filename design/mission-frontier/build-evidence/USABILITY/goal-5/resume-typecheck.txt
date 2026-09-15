@@ -1,0 +1,5 @@
+
+> agent-harness-ui@0.0.0 typecheck
+> tsc --noEmit
+
+src/frontier/fixtures/gateway.ts(120,9): error TS2739: Type '{}' is missing the following properties from type 'Record<RuntimeGateStage, RuntimeRunFreshness>': "dev-review", "final-review", test
