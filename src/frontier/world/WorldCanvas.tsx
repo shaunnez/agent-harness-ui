@@ -1,6 +1,7 @@
 import { ArrowsOut, Crosshair, MapPin, Minus, Plus, Question, WarningCircle } from "@phosphor-icons/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { WorldPreferences } from "../app/preferences";
+import { splitRecordedDetail } from "../runtime/presentation";
 import { WorldTime } from "../views/WorldTime";
 import { type Camera, pointInContainedImage, worldToScreen } from "./camera";
 import { lightingAt, worldHour } from "./environment-model";
@@ -110,6 +111,7 @@ export function WorldCanvas({
             type="button"
             key={label.id}
             className={`world-label ${label.kind} tone-${label.attention} ${label.taskId === input.selectedId ? "selected" : ""}`}
+            aria-label={`${label.title} · ${label.detail}${label.reason ? ` · ${splitRecordedDetail(label.reason).headline}` : ""}`}
             data-world-x={label.x}
             data-world-y={label.y}
             data-label-kind={label.kind}
@@ -128,11 +130,6 @@ export function WorldCanvas({
             <span>
               <strong>{label.title}</strong>
               <small>{label.detail}</small>
-              {label.reason && (
-                <small className="label-reason" title={label.reason}>
-                  {label.reason}
-                </small>
-              )}
             </span>
           </button>
         ))}

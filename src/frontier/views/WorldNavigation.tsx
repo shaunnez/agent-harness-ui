@@ -2,6 +2,7 @@ import {
   Books,
   Buildings,
   ChartBar,
+  ClockCounterClockwise,
   DotsNine,
   GearSix,
   GlobeHemisphereWest,
@@ -9,6 +10,7 @@ import {
   Robot,
 } from "@phosphor-icons/react";
 import { useRef } from "react";
+import { useCommandWorkspace } from "../app/command-context";
 
 type Destination = "tasks" | "projects" | "agents" | "skills" | "usage" | "settings";
 const destinations = [
@@ -34,13 +36,23 @@ const destinations = [
 export function WorldNavigation({
   onWorld,
   onOpen,
+  onBriefing,
   projectName,
 }: {
   onWorld(): void;
   onOpen(destination: Destination): void;
+  onBriefing(): void;
   projectName?: string;
 }) {
   const menu = useRef<HTMLElement>(null);
+  const context = useCommandWorkspace();
+  const head = context?.snapshot.workspace;
+  const pending = Boolean(
+    head?.available &&
+      !context?.snapshot.workspaceError &&
+      context?.memory.checkpoint &&
+      head.upper > context.memory.checkpoint.sequence,
+  );
   return (
     <nav className="world-navigation" aria-label="Main navigation">
       <button type="button" className="selected" onClick={onWorld}>
@@ -66,6 +78,21 @@ export function WorldNavigation({
         }}
       >
         <header>Command menu</header>
+        <button
+          type="button"
+          onClick={() => {
+            menu.current?.hidePopover();
+            context?.briefing.begin();
+            onBriefing();
+          }}
+        >
+          <ClockCounterClockwise size={22} />
+          <span>
+            <strong>While you were away</strong>
+            <small>Recorded workspace briefing</small>
+          </span>
+          {pending && <span className="update-dot" role="img" aria-label="Unreviewed changes" />}
+        </button>
         {destinations.map(({ kind, label, detail, icon: Icon, shortcut }) => (
           <button
             key={kind}

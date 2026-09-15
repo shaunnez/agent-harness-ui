@@ -492,9 +492,9 @@ export class FrontierScene {
               y: site.y - 190,
               title: `${task.id} · ${stageLabels[task.currentStage]}`,
               detail:
-                running && failed
+                attention.kind === "running" && running && failed
                   ? `${running.id} running · ${failed.id} ${failed.status}`
-                  : running && waiting
+                  : attention.kind === "running" && running && waiting
                     ? `${running.id} running · ${waiting.id} waits on ${waiting.dependencies.join(", ")}`
                     : attention.label,
               reason: attention.reason,

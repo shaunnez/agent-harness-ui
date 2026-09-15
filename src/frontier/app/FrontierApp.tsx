@@ -8,7 +8,7 @@ import { liveGateway } from "../runtime/live-gateway";
 import { commandDestination, isActiveRun, latestRun, needsYou } from "../runtime/presentation";
 import { AgentPanel } from "../views/AgentPanel";
 import { DecisionNavigation } from "../views/DecisionNavigation";
-import { CommandDock } from "../views/WatchPins";
+import { PinnedWork } from "../views/WatchPins";
 import {
   AttentionQueue,
   ConnectionBadge,
@@ -422,13 +422,14 @@ export function FrontierApp() {
       <WorldNavigation
         onWorld={() => navigate(worldLocation)}
         onOpen={(kind) => open({ kind })}
+        onBriefing={() => open({ kind: "briefing" })}
         projectName={location.view === "project" ? project?.name : undefined}
       />
       {location.view !== "agent" && (
-        <AttentionQueue tasks={scopedTasks} projects={snapshot.projects} onSelect={actOn} />
-      )}
-      {location.view !== "agent" && (
-        <CommandDock onBriefing={() => open({ kind: "briefing" })} onTask={inspect} onWatch={watch} />
+        <aside className="attention-stack" aria-label="Decisions and pinned work">
+          <AttentionQueue tasks={scopedTasks} projects={snapshot.projects} onSelect={actOn} />
+          <PinnedWork onTask={inspect} onWatch={watch} />
+        </aside>
       )}
       {project && location.view === "project" && (
         <ProjectHud project={project} tasks={scopedTasks} onTasks={() => open({ kind: "tasks" })} />
@@ -460,6 +461,7 @@ export function FrontierApp() {
           onAction={() => actOn(selectedForHud.id)}
           onInspect={() => inspect(selectedForHud.id)}
           onWatch={() => watch(selectedForHud.id, run?.id)}
+          onArtifact={(artifactId) => open({ kind: "artifact", taskId: selectedForHud.id, artifactId })}
           onClose={() => runtime.select(null)}
         />
       )}

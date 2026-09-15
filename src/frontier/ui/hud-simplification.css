@@ -1,0 +1,186 @@
+.attention-stack {
+  position: absolute;
+  top: 116px;
+  right: 14px;
+  width: 302px;
+  max-height: calc(100svh - 300px);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  z-index: 3;
+}
+.view-world .attention-stack {
+  top: 14px;
+  max-height: calc(100svh - 230px);
+}
+.attention-stack .attention-queue {
+  position: static;
+  width: 100%;
+}
+.attention-rows {
+  max-height: 240px;
+}
+.attention-row {
+  padding: 9px 5px;
+  min-height: 54px;
+}
+.attention-row strong {
+  font-size: 14px;
+}
+.attention-row > span > .queue-state:last-child {
+  color: var(--tone);
+  font-size: 12px;
+  margin-top: 3px;
+}
+.pinned-work {
+  margin-top: 8px;
+  padding: 10px;
+}
+.pinned-work header {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 4px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.pinned-rows {
+  max-height: 160px;
+  overflow-y: auto;
+}
+.pinned-work .watch-pin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  border-right: 0;
+  border-bottom: 1px solid var(--line);
+}
+.watch-pin > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.watch-pin-actions {
+  margin: 0;
+}
+.watch-pin-actions button {
+  min-height: 34px;
+}
+.world-label.task {
+  padding: 7px 10px;
+  max-width: 245px;
+  min-width: 0;
+}
+.world-label.task strong,
+.world-label.task small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.selection-hud {
+  min-height: 0;
+  padding: 12px 42px 12px 12px;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-height: min(340px, 46svh);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.selection-hud .worker-portrait {
+  display: block;
+  width: 48px;
+  height: 64px;
+}
+.selection-copy h2 {
+  font-size: 16px;
+}
+.selection-meta {
+  border: 0;
+  margin-top: 6px;
+  padding-top: 0;
+  gap: 6px;
+}
+.selection-actions {
+  width: auto;
+  flex-shrink: 0;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.selection-actions button {
+  font-size: 14px;
+  min-height: 38px;
+  max-width: 220px;
+}
+.selection-details {
+  margin-top: 5px;
+  font-size: 12px;
+}
+.selection-details summary,
+.selection-artifacts summary {
+  cursor: pointer;
+  color: #add2ee;
+  padding: 5px 0;
+}
+.selection-details summary:hover,
+.selection-artifacts summary:hover {
+  color: #fff;
+}
+.selection-copy .selection-details p {
+  max-height: 80px;
+  overflow-y: auto;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.selection-details .link-button {
+  display: flex;
+  margin-top: 6px;
+}
+.selection-artifacts {
+  flex-basis: 100%;
+  font-size: 12px;
+}
+.selection-artifacts > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.selection-artifacts button {
+  font-size: 14px;
+  min-height: 34px;
+  max-width: 100%;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.selection-hud .dismiss-selection {
+  min-height: 34px;
+  min-width: 34px;
+  width: 34px;
+}
+.management-menu {
+  max-height: calc(100svh - 130px);
+  overflow-y: auto;
+}
+.management-menu button > .update-dot {
+  flex: 0 0 8px;
+}
+@media (max-width: 1280px) {
+  .attention-stack {
+    width: 270px;
+  }
+  .selection-hud .worker-portrait {
+    width: 40px;
+    height: 54px;
+  }
+}
+@media (max-width: 760px) {
+  .attention-stack {
+    top: 154px;
+    width: 240px;
+    max-height: calc(100svh - 400px);
+  }
+  .view-world .attention-stack {
+    top: 154px;
+    max-height: calc(100svh - 400px);
+  }
+  .attention-stack .attention-queue {
+    display: block;
+  }
+}

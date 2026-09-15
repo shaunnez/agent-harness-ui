@@ -10,7 +10,7 @@ import {
   X,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
-import type { RuntimeProject, RuntimeRun } from "../../domain";
+import type { RuntimeArtifactMetadata, RuntimeProject, RuntimeRun } from "../../domain";
 import type { FrontierSnapshot, TaskSummary } from "../runtime/contracts";
 import { orderedDecisions } from "../runtime/decision-session";
 import {
@@ -71,6 +71,7 @@ export function AttentionQueue({
               type="button"
               key={task.id}
               className={`attention-row tone-${attentionFor(task).kind}`}
+              aria-label={`${task.id} · ${task.title} · ${attentionFor(task).label}`}
               onClick={() => onSelect(task.id)}
             >
               <AttentionIcon kind={attentionFor(task).kind} />
@@ -85,15 +86,6 @@ export function AttentionQueue({
                   </small>
                 </span>
                 <small className="queue-state">{attentionFor(task).label}</small>
-                <small className="queue-reason">
-                  {splitRecordedDetail(attentionFor(task).reason).headline || "Open the recorded decision"}
-                </small>
-                <small>
-                  Next: {attentionFor(task).nextActor ?? "Not recorded"} ·{" "}
-                  {attentionFor(task).since
-                    ? `Since ${new Date(attentionFor(task).since ?? 0).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-                    : "Wait age not recorded"}
-                </small>
               </span>
               <ArrowRight size={18} />
             </button>
@@ -165,6 +157,7 @@ export function SelectionHud({
   onInspect,
   onWatch,
   onClose,
+  onArtifact,
   portrait = "/assets/mf.worker.standard.portrait.r1.png",
 }: {
   task: TaskSummary;
@@ -176,8 +169,12 @@ export function SelectionHud({
   onWatch(): void;
   onClose(): void;
   portrait?: string;
+  onArtifact(id: string): void;
 }) {
   const attention = attentionFor(task);
+  const action = attentionAction(task);
+  const watchPrimary = connected && action === "Inspect task" && Boolean(run);
+  const artifacts: RuntimeArtifactMetadata[] = task.artifacts ?? [];
   return (
     <section className={`selection-hud panel tone-${attention.kind}`} aria-label="Selected task">
       <img className="worker-portrait" src={portrait} alt="Worker role" />
@@ -185,17 +182,24 @@ export function SelectionHud({
         <h2>
           {task.id} · {stageLabels[task.currentStage]}
         </h2>
-        <strong className="state-copy">{connected ? attention.label : "Last known state"}</strong>
-        {/* The HUD is a compact floating card: the verdict line only. Command output
-            belongs in the task window, which has room to scroll it. */}
-        <p className="hud-reason">{splitRecordedDetail(attention.reason).headline || task.title}</p>
-        <small>
-          {attention.since &&
-            `Waiting since ${new Date(attention.since).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · `}
-          {attention.nextActor && `Next: ${attention.nextActor}`}
-          {run &&
-            ` · ${run.status === "running" && task.activeRunIds?.includes(run.id) ? "Run executing" : `Run ${run.status}`}`}
-        </small>
+        <strong className="state-copy">
+          {connected ? attention.label : `Last known · ${attention.label}`}
+        </strong>
+        {attention.reason && (
+          <details className="selection-details">
+            <summary>Recorded details</summary>
+            <p>{splitRecordedDetail(attention.reason).headline}</p>
+            <small>
+              {attention.since ? `Waiting since ${new Date(attention.since).toLocaleString()} · ` : ""}
+              {attention.nextActor && `Next: ${attention.nextActor}`}
+              {run &&
+                ` · Run ${run.status === "running" && task.activeRunIds?.includes(run.id) ? "executing" : run.status}`}
+            </small>
+            <button type="button" className="link-button" onClick={onInspect}>
+              Full task details
+            </button>
+          </details>
+        )}
         <div className="selection-meta">
           <Robot size={17} />
           <span>
@@ -209,22 +213,38 @@ export function SelectionHud({
         </div>
       </div>
       <div className="selection-actions">
-        {attentionAction(task) !== "Inspect task" && (
-          <button type="button" onClick={onInspect}>
-            <Binoculars size={18} />
-            Inspect task
+        {(watchPrimary || action !== "Inspect task") && (
+          <button type="button" className="primary" onClick={watchPrimary ? onWatch : onAction}>
+            {watchPrimary ? "Watch agent" : action}
+            <ArrowRight size={18} />
           </button>
         )}
-        <button type="button" className="primary" onClick={onAction}>
-          {attentionAction(task)}
-          <ArrowRight size={18} />
+        <button
+          type="button"
+          className={action === "Inspect task" && !watchPrimary ? "primary" : undefined}
+          onClick={onInspect}
+        >
+          <Binoculars size={18} />
+          Inspect
         </button>
-        {run && (
-          <button type="button" className="link-button" onClick={onWatch}>
-            Watch agent
-          </button>
-        )}
       </div>
+      {artifacts.length > 0 && (
+        <details className="selection-artifacts">
+          <summary>Artifacts · {artifacts.length}</summary>
+          <div>
+            {artifacts.map((artifact) => (
+              <button
+                key={artifact.id}
+                type="button"
+                className="link-button"
+                onClick={() => onArtifact(artifact.id)}
+              >
+                {artifact.name}
+              </button>
+            ))}
+          </div>
+        </details>
+      )}
       <button
         type="button"
         className="icon-button dismiss-selection"
