@@ -1,18 +1,18 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { setTimeout as delay } from "node:timers/promises";
 import path from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import { cleanupOrphanAttachmentSets } from "./attachment-storage.mjs";
 import { acquireJsonStoreLock } from "./json-store-lock.mjs";
-import { assertProjectAcceptsTask, changeProject } from "./project-policy.mjs";
 import {
   DEFAULT_DESIGN_POLICIES,
-  LEGACY_DESIGN_POLICIES,
   defaultRuntimeSettings,
   enrichUsage,
+  LEGACY_DESIGN_POLICIES,
   normalizeModelId,
   providerForModelId,
   resolveTaskProvider,
 } from "./model-catalog.mjs";
+import { assertProjectAcceptsTask, changeProject } from "./project-policy.mjs";
 import {
   CANONICAL_RUN_STAGES,
   DEFAULT_STAGE_RUN_LIMIT,
@@ -21,8 +21,8 @@ import {
   retainRunActivityEvents,
   TASK_STORE_SCHEMA_VERSION,
 } from "./run-activity.mjs";
-import { migratedStandardProfile } from "./workflow-profiles.mjs";
 import { projectTaskPollState, projectTaskSummary } from "./task-projections.mjs";
+import { migratedStandardProfile } from "./workflow-profiles.mjs";
 
 const EMPTY_STATE = {
   schemaVersion: TASK_STORE_SCHEMA_VERSION,
@@ -499,7 +499,7 @@ export function migratePersistedTaskState(state) {
       };
       changed = true;
     }
-    if (![1, 2].includes(task.agentConfig.policySnapshotVersion)) {
+    if (![1, 2, 3].includes(task.agentConfig.policySnapshotVersion)) {
       task.agentConfig.stagePolicies = Object.fromEntries(
         Object.keys(state.settings.stagePolicies).map((policyId) => [
           policyId,
@@ -513,6 +513,18 @@ export function migratePersistedTaskState(state) {
       task.agentConfig.profileStagePolicies = clone(state.settings.profileStagePolicies);
       task.agentConfig.profileStagePolicies.standard = clone(task.agentConfig.stagePolicies);
       task.agentConfig.policySnapshotVersion = 2;
+      changed = true;
+    }
+    if (task.agentConfig.policySnapshotVersion < 3) {
+      if (!task.agentConfig.rolePolicySources) {
+        task.agentConfig.rolePolicySources = Object.fromEntries(
+          Object.keys(task.agentConfig.stagePolicies ?? {}).map((role) => [role, "legacy-task-override"]),
+        );
+        task.agentConfig.rolePolicyOverrides = clone(task.agentConfig.stagePolicies ?? {});
+      }
+      task.agentConfig.providerConstraint ??= null;
+      task.agentConfig.repairEscalationPolicies ??= {};
+      task.agentConfig.policySnapshotVersion = 3;
       changed = true;
     }
     const configured = configuredModels(task.agentConfig.stagePolicies);
@@ -648,7 +660,25 @@ export function createTaskRecord(state, input) {
     input.stagePolicies ?? profileStagePolicies?.[workflowProfile.selected] ?? state.settings.stagePolicies,
   );
   const model = normalizeModelId(input.model ?? state.settings.defaultModel);
-  const provider = resolveTaskProvider(stagePolicies, model, input.provider ?? null);
+  const provider = resolveTaskProvider(
+    stagePolicies,
+    model,
+    input.provider ?? input.providerConstraint ?? null,
+  );
+  const implicitLegacyPins = input.stagePolicies && !input.rolePolicySources;
+  const rolePolicySources = input.rolePolicySources
+    ? clone(input.rolePolicySources)
+    : Object.fromEntries(
+        Object.keys(stagePolicies ?? {}).map((role) => [
+          role,
+          implicitLegacyPins ? "legacy-task-override" : "settings-default",
+        ]),
+      );
+  const rolePolicyOverrides = input.rolePolicyOverrides
+    ? clone(input.rolePolicyOverrides)
+    : implicitLegacyPins
+      ? clone(stagePolicies)
+      : {};
   const continuation = clone(input.continuation ?? null);
   const importedArtifacts = clone(continuation?.artifacts ?? []);
   const importedDecisions = clone(continuation?.decisions ?? []);
@@ -684,9 +714,11 @@ export function createTaskRecord(state, input) {
       reasoning: input.reasoning ?? state.settings.defaultReasoning,
       stagePolicies,
       profileStagePolicies,
-      policySnapshotVersion: 2,
-      ...(input.rolePolicySources ? { rolePolicySources: clone(input.rolePolicySources) } : {}),
-      ...(input.rolePolicyOverrides ? { rolePolicyOverrides: clone(input.rolePolicyOverrides) } : {}),
+      policySnapshotVersion: 3,
+      providerConstraint: input.providerConstraint ?? null,
+      repairEscalationPolicies: clone(input.repairEscalationPolicies ?? {}),
+      rolePolicySources,
+      rolePolicyOverrides,
     },
     attachments: clone(input.attachments ?? continuation?.attachments ?? []),
     closure: null,

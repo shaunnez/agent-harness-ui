@@ -7,6 +7,7 @@ import "./runtime-candidate-workspace.test.mjs";
 import "./runtime-activity-routing.test.mjs";
 import "./runtime-command-dispatch.test.mjs";
 import "./runtime-repair-policy.test.mjs";
+import "./effective-policy.test.mjs";
 import "./runtime-persistence-policy.test.mjs";
 import "./runtime-task-presentation.test.mjs";
 import "./server-lifecycle.test.mjs";

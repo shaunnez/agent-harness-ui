@@ -6,11 +6,7 @@ import test from "node:test";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import { defaultProfileStagePolicies } from "../server/model-catalog.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
-import {
-  parseFastChangeContract,
-  parseGateEvidence,
-  parsePlanResult,
-} from "../server/structured-output.mjs";
+import { parseFastChangeContract, parseGateEvidence, parsePlanResult } from "../server/structured-output.mjs";
 import { fastEscalation, selectWorkflowProfile } from "../server/workflow-profiles.mjs";
 import { waitForTaskStatus } from "./wait-support.mjs";
 
@@ -230,16 +226,18 @@ test("rejects prose ownership and parses a typed blocked prerequisite without pa
     /exact repository path, not prose/,
   );
 
-  const result = parsePlanResult(`<work-packages>${JSON.stringify({
-    disposition: "blocked-prerequisite",
-    evidence: [{ path: "scripts/export-records.py", detail: "This is the sanctioned read path." }],
-    blocker: {
-      code: "external-data-unavailable",
-      detail: "The required records cannot be read from the sandbox.",
-      requiredAction: "Attach a trusted read-only export of the required records.",
-    },
-    packages: [],
-  })}</work-packages>`);
+  const result = parsePlanResult(
+    `<work-packages>${JSON.stringify({
+      disposition: "blocked-prerequisite",
+      evidence: [{ path: "scripts/export-records.py", detail: "This is the sanctioned read path." }],
+      blocker: {
+        code: "external-data-unavailable",
+        detail: "The required records cannot be read from the sandbox.",
+        requiredAction: "Attach a trusted read-only export of the required records.",
+      },
+      packages: [],
+    })}</work-packages>`,
+  );
   assert.deepEqual(result, {
     disposition: "blocked-prerequisite",
     evidence: [{ path: "scripts/export-records.py", detail: "This is the sanctioned read path." }],

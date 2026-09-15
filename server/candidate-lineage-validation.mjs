@@ -1,15 +1,15 @@
 import {
-  CANDIDATE_GATE_STAGES,
-  readExecutionProvider,
-  resolvePersistedRunFreshness,
-} from "./run-activity.mjs";
-import {
   validCandidateAssemblyMembership,
   validInitialCandidateProducer,
   validPersistedTimestamp,
   validRetryCandidate,
   validRetryRunTuple,
 } from "./retry-reservation-validation.mjs";
+import {
+  CANDIDATE_GATE_STAGES,
+  readExecutionProvider,
+  resolvePersistedRunFreshness,
+} from "./run-activity.mjs";
 
 export function candidateGateAuthorizerEvidence(
   task,
@@ -25,13 +25,7 @@ export function candidateGateAuthorizerEvidence(
     : [];
   const sourceArtifact = sourceArtifacts[0] ?? null;
   const freshness = sourceRun
-    ? resolvePersistedRunFreshness(
-        sourceRun,
-        sourceArtifact,
-        target,
-        gateReservation.stage,
-        readExecutionProvider(gateReservation),
-      )
+    ? resolvePersistedRunFreshness(sourceRun, sourceArtifact, target, gateReservation.stage, gateReservation)
     : null;
   // Recorded live (AH-002 dev-review): a completed run whose gate finding was
   // non-blocking (P2/P3) and lacked its own explicit `candidateId`/`candidateRevision`

@@ -184,10 +184,22 @@ export function RunLibrary({
                     <dd>{selected.run.id}</dd>
                     <dt>Package</dt>
                     <dd>{selected.run.workPackageId ?? "Whole stage"}</dd>
-                    <dt>Model / effort</dt>
+                    <dt>Actual recorded policy</dt>
                     <dd>
                       {modelLabel(selected.run.model)} · {reasoningLabel(selected.run.reasoning)}
                     </dd>
+                    {selected.run.policySource && (
+                      <>
+                        <dt>Policy source</dt>
+                        <dd>{selected.run.policySource.replaceAll("-", " ")}</dd>
+                      </>
+                    )}
+                    {selected.run.policyEscalationReason && (
+                      <>
+                        <dt>Escalation</dt>
+                        <dd>{selected.run.policyEscalationReason}</dd>
+                      </>
+                    )}
                     <dt>Agent time</dt>
                     <dd>
                       {formatDuration(runTime(selected.run, now, isActiveRun(selected.task, selected.run)))}

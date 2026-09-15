@@ -1,6 +1,6 @@
 # Model policy, Astra evaluation and automatic routing plan
 
-Date: 11 September 2026  
+Date: 11 September 2026
 Status: proposed delivery plan; implementation and evaluation runs have not started.
 
 ## Outcome

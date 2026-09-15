@@ -11,16 +11,16 @@ import {
   type WorkflowProfileId,
   workflowStages,
 } from "../../domain";
-import { MarkdownContent } from "../MarkdownContent";
-import { Button } from "../Primitives";
-import { ApprovalHistorySection, getApprovalHistory } from "../runtimeApprovalHistory.js";
 import {
   getEffectiveRunStage,
   getEffectiveStageRunAttempts,
   getEffectiveStageRunLimit,
 } from "../../runtime-stage-limits";
-import { getAccessBoundaryCopy } from "./RuntimeCommandBar";
+import { MarkdownContent } from "../MarkdownContent";
+import { Button } from "../Primitives";
+import { ApprovalHistorySection, getApprovalHistory } from "../runtimeApprovalHistory.js";
 import type { RuntimeTaskWorkspaceProps } from "./contracts";
+import { getAccessBoundaryCopy } from "./RuntimeCommandBar";
 import { DecisionFrontier, RuntimeContextDisclosure } from "./RuntimeEvidencePanels";
 import { TaskEvaluation } from "./RuntimeInspectorPanels";
 import { InspectorSection, RuntimeRow } from "./RuntimeInspectorPrimitives";
@@ -219,6 +219,18 @@ export function RuntimeTaskInspector({
           label="Escalations / overrides"
           value={`${Math.max(0, (task.workflowProfile?.history.length ?? 1) - 1)} recorded`}
         />
+        {task.workflowProfile?.policyImpact ? (
+          <>
+            <RuntimeRow
+              label="Future roles changed"
+              value={task.workflowProfile.policyImpact.changedRoles.join(", ") || "None"}
+            />
+            <RuntimeRow
+              label="Pins retained"
+              value={task.workflowProfile.policyImpact.pinnedRoles.join(", ") || "None"}
+            />
+          </>
+        ) : null}
         <RuntimeRow
           label="Override boundary"
           value={canOverrideProfile ? "Available before implementation" : "Locked after implementation began"}

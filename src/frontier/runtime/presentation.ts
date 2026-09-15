@@ -37,9 +37,7 @@ export function attentionFor(task: TaskSummary | TaskCore): PresentedAttention {
     // The companion's existing projection calls ready states idle. Adapt only
     // that neutral state so blocker, failure, and active-run precedence stays
     // owned by the projection that supplied it.
-    return isReadyStatus(task.status) && attention.kind === "idle"
-      ? readyAttention(attention)
-      : attention;
+    return isReadyStatus(task.status) && attention.kind === "idle" ? readyAttention(attention) : attention;
   }
   const fallback: Attention = {
     kind: "unavailable",

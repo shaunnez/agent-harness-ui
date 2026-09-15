@@ -14,11 +14,7 @@ const exec = promisify(execFile);
 
 test("permits only existing task attachment files inside the managed attachment root", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-attachment-read-roots-"));
-  const attachmentSet = path.join(
-    directory,
-    "attachments",
-    "set-33333333-3333-4333-8333-333333333333",
-  );
+  const attachmentSet = path.join(directory, "attachments", "set-33333333-3333-4333-8333-333333333333");
   const valid = path.join(attachmentSet, "reference.png");
   const outside = path.join(directory, "outside.png");
   const escapedLink = path.join(attachmentSet, "escaped.png");

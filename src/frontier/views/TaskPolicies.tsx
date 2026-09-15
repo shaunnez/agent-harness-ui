@@ -56,7 +56,8 @@ export function TaskPolicies({
           <small>{task.id} · Task snapshot</small>
           <h2>{task.title}</h2>
           <p className="quiet">
-            Running and historical roles are frozen. Future-role changes apply across this task’s risk
+            Upcoming effective policies use this task’s snapshotted profile and provider constraint.
+            Historical runs keep the policy actually dispatched. Future-role changes apply across risk
             profiles.
           </p>
         </div>
@@ -81,7 +82,7 @@ export function TaskPolicies({
         <thead>
           <tr>
             <th>Role</th>
-            <th>Recorded policy</th>
+            <th>Upcoming effective policy</th>
             <th>Source / eligibility</th>
             <th>Action</th>
           </tr>
@@ -104,6 +105,7 @@ export function TaskPolicies({
                         label={role.label}
                         value={selection.policy}
                         status={discoveryStatus}
+                        provider={task.agentConfig?.providerConstraint ?? undefined}
                         disabled={busy || confirm}
                         onChange={(value) => select({ role: role.id, policy: value })}
                       />

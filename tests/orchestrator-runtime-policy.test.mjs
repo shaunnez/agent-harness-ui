@@ -370,8 +370,13 @@ test("binds each stage's runs to that stage's own provider across a mixed task",
     // and the run's provider matches its reservation — a run can never execute on a
     // provider its reservation did not reserve.
     assert.equal(reservation.provider, "codex");
+    assert.equal(reservation.effectivePolicy.model, "gpt-5.6-sol");
+    assert.equal(reservation.effectivePolicy.role, "dev-review");
     assert.equal(run.provider, "codex");
     assert.equal(run.model, "gpt-5.6-sol");
+    assert.equal(run.effectiveModel, reservation.effectivePolicy.model);
+    assert.equal(run.selectedModel, reservation.effectivePolicy.selectedModel);
+    assert.equal(run.policySource, reservation.effectivePolicy.source);
     assert.equal(finished.agentConfig.stagePolicies.triage.model, "claude-sonnet-5");
 
     // Provider identity binds like candidate identity, so the gate is fresh only while
@@ -382,6 +387,12 @@ test("binds each stage's runs to that stage's own provider across a mixed task",
     const recomputed = refreshGateFreshness(tampered);
     assert.equal(recomputed["dev-review"].fresh, false);
     assert.equal(recomputed["dev-review"].reasonCode, "provider_mismatch");
+
+    const wrongPolicy = await store.get(task.id);
+    wrongPolicy.runs.find((entry) => entry.stage === "dev-review").model = "gpt-5.6-terra";
+    const policyMismatch = refreshGateFreshness(wrongPolicy);
+    assert.equal(policyMismatch["dev-review"].fresh, false);
+    assert.equal(policyMismatch["dev-review"].reasonCode, "policy_mismatch");
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }

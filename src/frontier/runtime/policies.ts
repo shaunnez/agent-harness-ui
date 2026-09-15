@@ -34,7 +34,9 @@ export function draftProfile(draft: NewTaskDraft) {
 }
 export function draftPolicies(draft: NewTaskDraft, settings: RuntimeSettings) {
   const profile = draftProfile(draft);
-  const inherited = settings.profileStagePolicies?.[profile.selected] ?? settings.stagePolicies;
+  const inherited = draft.providerConstraint
+    ? defaultProfileStagePolicies(draft.providerConstraint)[profile.selected]
+    : (settings.profileStagePolicies?.[profile.selected] ?? settings.stagePolicies);
   return Object.fromEntries(
     policyRoles.map(({ id }) => [id, draft.rolePolicyOverrides?.[id] ?? inherited[id]]),
   ) as Record<RolePolicyId, RuntimeAgentPolicy>;
@@ -51,11 +53,9 @@ export function selectableModels(status: RuntimeStatus | null, provider?: "codex
 }
 
 /**
- * The recommended policy matrix for one execution provider, clamped to what the
- * runtime will actually accept. Server defaults name the provider's own models,
- * but an operator may have removed one from the allowlist, so every role falls
- * back to a selectable model of the same provider and a reasoning level that
- * model declares.
+ * The recommended policy matrix for one execution provider. Every server default
+ * must be selectable exactly; an unavailable model refuses the preset rather than
+ * silently substituting a different treatment.
  */
 export function providerPolicyMatrix(
   provider: "codex" | "claude",
@@ -63,17 +63,22 @@ export function providerPolicyMatrix(
   status: RuntimeStatus | null,
 ): Record<RolePolicyId, RuntimeAgentPolicy> | null {
   const models = selectableModels(status, provider);
-  const first = models[0];
-  if (!first) return null;
+  if (!models.length) return null;
   const defaults = defaultProfileStagePolicies(provider)[profile];
-  return Object.fromEntries(
-    policyRoles.map(({ id }) => {
-      const wanted = defaults[id];
-      const model = models.find((item) => item.id === wanted?.model) ?? first;
-      const reasoning = model.reasoningLevels.includes(wanted?.reasoning ?? "")
-        ? (wanted?.reasoning ?? model.defaultReasoning)
-        : model.defaultReasoning;
-      return [id, { model: model.id, reasoning }];
-    }),
-  ) as Record<RolePolicyId, RuntimeAgentPolicy>;
+  const entries: Array<readonly [RolePolicyId, RuntimeAgentPolicy]> = [];
+  for (const { id } of policyRoles) {
+    const wanted = defaults[id];
+    const model = models.find((item) => item.id === wanted?.model);
+    if (!model?.reasoningLevels.includes(wanted?.reasoning ?? "")) return null;
+    entries.push([id, { model: model.id, reasoning: wanted.reasoning }]);
+  }
+  return Object.fromEntries(entries) as Record<RolePolicyId, RuntimeAgentPolicy>;
+}
+
+export function providerProfilePolicyMatrices(provider: "codex" | "claude", status: RuntimeStatus | null) {
+  const profiles = (["fast", "standard", "high-risk"] as const).map(
+    (profile) => [profile, providerPolicyMatrix(provider, profile, status)] as const,
+  );
+  if (profiles.some(([, matrix]) => matrix === null)) return null;
+  return Object.fromEntries(profiles) as Record<WorkflowProfileId, Record<RolePolicyId, RuntimeAgentPolicy>>;
 }
