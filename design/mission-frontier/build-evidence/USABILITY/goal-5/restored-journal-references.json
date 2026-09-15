@@ -1,0 +1,20 @@
+{
+  "date": "2026-09-15",
+  "note": "Historical references absent from recovered worktree, copied byte-for-byte only after matching the prior journal source snapshot. These are not new qualification evidence.",
+  "files": {
+    "design/mission-frontier/LIVE-RUNTIME.md": "e6f4c2544bc66278400ed28fa941ca00e69c9a8e01ca1c555ca924a74323334a",
+    "design/mission-frontier/assets/runtime-asset-manifest.json": "6ad9ebfa1f2afe3b0d1dab92516637bd3664ec44096d3d4776349fbad52fba82",
+    "design/mission-frontier/build-evidence/LIVE/full-tests.log": "cb0a38cb6f8cef63887ae7c7fd3084b02525825ecaed6e75eb0e7020eedeeabc",
+    "design/mission-frontier/build-evidence/LIVE/verification.json": "8a2bc9f48cf300021df01548a160efde5f6361184041db0d12f5710a67fb4e07",
+    "design/mission-frontier/build-evidence/M3/agent-needs-answer-final.png": "6f63cf01c23409aeff083df6cb72f994313742bab01a1c01ee80c2e3891ca4da",
+    "design/mission-frontier/build-evidence/M3/world-final.png": "79a111b5ca77c2fe45be1c2cef32f2de4563a27d166ea1dff1c4e70ce82dbbb9",
+    "design/mission-frontier/build-evidence/M5/approval-ready-final.jpg": "092a876fc15dfb46d060cdfacda27e6febf2470d4b6da216ad0370db3fc5469c",
+    "design/mission-frontier/build-evidence/M5/plan-twelve.jpg": "e30bff2fb6fface6d59b8fadaa9048027e17210261132f9d434543415dc2c97b",
+    "design/mission-frontier/build-evidence/M6/usage-filtered.jpg": "744c457c7ee1db962286e3e94de71fd8917afbe1ab932c6b57235c0c845985f0",
+    "design/mission-frontier/build-evidence/M7/full-tests.log": "a37fd6238df059a8a8fdf3a76dd778a7d50d41bcb643e203f379da9fa11caa7b",
+    "design/mission-frontier/build-evidence/M7/hq-final.jpg": "4f4b8fa74a4a4e11ade2351a2f1347c4b1e0f63b5f93b0b00c07260e436ce9e1",
+    "design/mission-frontier/build-evidence/M7/normal-world.jpg": "92e6682ccdcb549f71c0fd4348337ee4fcf17092bf00d5f785ac79739189891c",
+    "design/mission-frontier/build-evidence/PR/living-world/publication.json": "cb13deffe12e3e64ffa6c47cb6bc31acecc1dc6f38d8082dc17dad87ac33b9ec",
+    "design/mission-frontier/build-evidence/VISUAL-FIDELITY/qualification.log": "ed89376bbedc2ebf66655ca567ac2e3d60af325e6a8a232baca99d69215d4530"
+  }
+}

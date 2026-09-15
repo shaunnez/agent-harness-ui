@@ -1,6 +1,14 @@
+## 15 September 2026 — Goal 5 resumed and functionally qualified
+
+Recovered the preserved Goal 5 delta, integrated published main `424f8f1`, and completed normal laptop/desktop browser acceptance. Stable decision navigation, bounded return briefing and four source-scoped pins work with sample and isolated API data. Fixed stale cached forms after deletion, fixture authority drift at approval, compact failure headlines and the single-pin strip width. Browser storage writes require Web Locks; unsupported browsers report the limitation explicitly. See [Goal 5 acceptance](goal-5/acceptance.md) and [current handoff](goal-5/HANDOFF.md) for verification and delivery state.
+
+Shaun removed extreme-zoom design work as a target on 15 September; the newly added zoom-only rule was removed. No further performance benchmarks were run. Next: focused original-design fidelity pass with Astra asset support after this handoff, then Goal 6's recorded activity and world feedback. Neither later pass has started.
+
+---
+
 # Usability progress
 
-**Current checkpoint — 10 September 2026: paused, servers stopped at Shaun's request.** Goal 5 is restored on `dcd474e`, with staged/unstaged uncommitted work and no PR. Local main advanced one further commit to `04517df` (stale approval authority); integrate it on the next explicit resume. [Current handoff, screenshots and continuation](goal-5/HANDOFF.md). The synchronized-source selection reports 261 passes / one inherited main failure; typing, lint, both builds and four Sites tests pass. Formatting flags three unchanged main files. Further performance benchmarking is waived. The journal connection could not resolve the existing Site at its last check. Goal 6 has not started.
+**Historical checkpoint — 10 September 2026: paused, servers stopped at Shaun's request.** Goal 5 is restored on `dcd474e`, with staged/unstaged uncommitted work and no PR. Local main advanced one further commit to `04517df` (stale approval authority); integrate it on the next explicit resume. [Historical handoff](goal-5/HANDOFF-2026-09-10.md). The synchronized-source selection reports 261 passes / one inherited main failure; typing, lint, both builds and four Sites tests pass. Formatting flags three unchanged main files. Further performance benchmarking is waived. The journal connection could not resolve the existing Site at its last check. Goal 6 has not started.
 
 ## Retained 9 September pause
 
@@ -28,4 +36,4 @@ Isolated branch `codex/mission-frontier-goal-4` started from PR #73 source `fdbe
 
 Final typing, lint, formatting, both builds and 78 targeted tests pass. The earlier full suite retains 1,064 passes and four orchestration timing failures; all 121 implicated tests passed the sequential recheck. That full run was not repeated for the final CSS-only fix.
 
-Goal 5 was subsequently authorized and started; use its paused handoff above. Goal 6 and the real delivery-workflow checkpoint remain separate.
+Goal 5 was subsequently authorized and started; use its current handoff above. Goal 6 and the real delivery-workflow checkpoint remain separate.

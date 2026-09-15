@@ -1,6 +1,6 @@
 # Mission Frontier — usability and command experience
 
-Revision 4 · 9 September 2026 · **Goal 4 U0–U2 complete and merged, including native 200% zoom. Goal 5 is implemented but paused before acceptance; Goal 6 remains planned.** See the [Goal 5 handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) for current evidence and unfinished checks.
+Revision 5 · 15 September 2026 · **Goal 4 U0–U2 complete and merged, including native 200% zoom. Goal 5 functional acceptance is complete; delivery receipts are in its current handoff. Goal 6 remains planned.** See the [Goal 5 handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) for current evidence and unfinished checks.
 
 **10 September steering:** Shaun requested synchronizing Goal 5 with current main and waived further performance benchmarking because the game runs well. Existing performance evidence remains historical; new benchmark runs are not a Goal 5 completion gate. Functional correctness, bounded refresh behavior and usable controls remain requirements. Goal 6 has not started.
 
@@ -206,3 +206,7 @@ The outstanding real implementation → repair → approval → PR journey remai
 - [Laptop review and captures](build-evidence/LAPTOP-REVIEW/REVIEW.md), [selected design](reference/selected-world.png), [original implementation plan](IMPLEMENTATION-PLAN.md), [attention contract](ATTENTION-CONTRACT.md), [living-world brief](LIVING-WORLD.md) and [PR handoff](PR-HANDOFF.md).
 - Source inspected at retained revision `fdbe171`: `ui/Modal.tsx`, task/agent styles and views, `app/navigation.ts`, `app/panel-state.tsx`, `app/preferences.ts`, `runtime/contracts.ts`, `runtime/coordinator.ts`, `world/scene.ts`, `world/activity-effects.ts`, `server/task-projections.mjs`, `server/run-activity.mjs`, `server/sqlite-store.mjs`, `server/orchestrator-repair-execution.mjs` and `server/orchestrator-retention.mjs`. Recheck current source before implementation.
 - [WAI modal dialog pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/), inspected during the laptop review, for existing focus, Escape and return behavior.
+
+## Current acceptance steering — 15 September 2026
+
+Shaun resumed Goal 5 and explicitly removed extreme browser zoom as a design target. Qualify normal laptop and desktop sizes. Do not make new changes solely for 200% zoom or treat it as an acceptance gate. Previously accepted responsive layouts remain intact. Further performance benchmarks remain waived.

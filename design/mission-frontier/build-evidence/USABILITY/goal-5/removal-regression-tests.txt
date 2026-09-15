@@ -1,0 +1,17 @@
+✔ source-scoped memory merges sequential writes, monotonic acknowledgement and the four-pin cap (1.752167ms)
+✔ malformed local preferences cannot create bogus checkpoints or unbounded pins (0.161ms)
+✔ decision order is stable through new arrivals, resolution and deletion (22.330583ms)
+✔ briefing deduplicates observations and run totals, preserving late, zero and missing usage (1.214083ms)
+✔ four run pins share bounded concurrency and cache unchanged versions; task pins fetch no details (47.485084ms)
+✔ history captures a stable upper boundary and old-source requests cannot enter a replacement workspace (10.95425ms)
+✔ an exact pinned run opens without paging and disappears when no longer retained (14.437833ms)
+✔ external fixture changes preserve frozen decisions and replace candidate identity (7.208625ms)
+✔ a removed selected task loses actionable cached evidence but retains navigation identity (19.953ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 386.77275

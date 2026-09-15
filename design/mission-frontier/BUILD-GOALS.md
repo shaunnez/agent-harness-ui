@@ -1,6 +1,6 @@
 # Mission Frontier — prompts and goals
 
-Revision 7 · 9 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. The later living-world pass is recorded in [PR-HANDOFF.md](PR-HANDOFF.md). **Goal 4 U0–U2 is complete and PR #73 is merged. Goal 5 is implemented but paused before acceptance; Goal 6 has not started.** See the [Goal 5 handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) and retained [Goal 4 handoff](build-evidence/USABILITY/goal-4/HANDOFF.md). [USABILITY-PLAN.md](USABILITY-PLAN.md) defines scope, dependencies and acceptance checks; the earlier plans remain the history for completed work.
+Revision 8 · 15 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. The later living-world pass is recorded in [PR-HANDOFF.md](PR-HANDOFF.md). **Goal 4 U0–U2 is complete and PR #73 is merged. Goal 5 functional acceptance is complete; delivery and journal receipts are in its current handoff. Goal 6 has not started.** See the [Goal 5 handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) and retained [Goal 4 handoff](build-evidence/USABILITY/goal-4/HANDOFF.md). [USABILITY-PLAN.md](USABILITY-PLAN.md) defines scope, dependencies and acceptance checks; the earlier plans remain the history for completed work.
 
 ## How to use
 
@@ -195,9 +195,9 @@ scope do not require further approval; report material blockers with evidence.
 
 ## Goal 5 — decision navigation, return briefing and watch pins
 
-**Started 9 September 2026; paused before acceptance.** On 10 September the saved implementation was restored on current local main (`dcd474e`) at the user's request. See the [current synchronization note](build-evidence/USABILITY/goal-5/MAIN-SYNC.md) and [original handoff](build-evidence/USABILITY/goal-5/HANDOFF-2026-09-09.md). The implementation remains uncommitted. The new 262-test selection has 261 passes and one failure reproduced on main; typing, lint, both builds and four Sites tests pass. Three unchanged main files fail formatting. Browser acceptance and journal publication remain open; further performance benchmarking was waived. This prompt is scope, not a completion claim.
+**Resumed and qualified on 15 September 2026.** Current source integrates published main `424f8f1`. The [acceptance record](build-evidence/USABILITY/goal-5/acceptance.md) and [handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) distinguish current checks, historical evidence and delivery status. Performance benchmarks and extreme-zoom design changes are waived by the user's explicit steering; normal laptop and desktop usability remain required.
 
-**Latest handoff:** servers are stopped at Shaun's request. Local main subsequently advanced to `04517df` (stale approval authority); that change is not integrated here. Use the [current handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) and wait for an explicit resume before restarting work or services. The earlier "leave the preview open" instruction below is superseded while paused.
+The following prompt is retained as the goal's scope.
 
 ```text
 Run Goal 5 from design/mission-frontier/BUILD-GOALS.md. Read USABILITY-PLAN.md,

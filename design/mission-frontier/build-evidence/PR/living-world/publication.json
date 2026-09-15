@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-09-08T20:05:32.444282+00:00",
+  "url": "https://github.com/shaunnez/agent-harness-ui/pull/73",
+  "state": "OPEN",
+  "branch": "codex/mission-frontier-v1",
+  "headCommit": "fdbe171a8545a6b9ae206b67ce01fe79606496f1",
+  "sourceCommit": "efc0ba34db1c8dd0f3ac911755a43a2b307bb4c6",
+  "applicationCommit": "5eaa8b6f61d4e78ea3bd068120ed6e4c9feed3da",
+  "push": "confirmed",
+  "merged": false,
+  "gameDeployed": false
+}

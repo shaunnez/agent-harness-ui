@@ -1,0 +1,67 @@
+{
+  "date": "2026-09-07",
+  "scope": "Local shared-runtime recovery qualification; separate PR and candidate checks are explicitly scoped",
+  "runtimeRevision": "c6f43e5442fc2680073ac5f9b275998571a003c4",
+  "sourceRevisions": [
+    "e31566a36ed871cdb3743b8aaadaf08e7f19c6fd",
+    "dec1226773d8a6c4e52db74fbf3158758dfe0730"
+  ],
+  "tests": {
+    "passed": 1052,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "focusedTests": 28,
+  "focusedIsSubset": true,
+  "checks": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "format": "passed",
+    "originalBuild": "passed",
+    "frontierBuild": "passed"
+  },
+  "testLogSha256": "cb0a38cb6f8cef63887ae7c7fd3084b02525825ecaed6e75eb0e7020eedeeabc",
+  "preConnection": {
+    "tasks": 50,
+    "artifacts": 639,
+    "events": 17731,
+    "runs": 700,
+    "activeRuns": 0,
+    "backupIntegrity": "ok",
+    "completeTaskAndSettingsParity": true
+  },
+  "liveParity": {
+    "interfaces": 2,
+    "companion": 1,
+    "taskRecords": 50,
+    "projects": 2,
+    "excludedDynamicField": "task.actionEligibility.generatedAt"
+  },
+  "limitations": [
+    "The game PR remains open and unmerged.",
+    "No real task candidate has completed its delivery gates at this checkpoint.",
+    "Default npm test lists files explicitly; newly created test files need explicit verification.",
+    "Native browser and performance measurements were not repeated.",
+    "Agent command activity is persisted when the run finishes, rather than incrementally during execution."
+  ],
+  "prQualification": {
+    "head": "02f6380dc48df63ab22614063eae904cc599aad9",
+    "testsPassed": 1047,
+    "state": "OPEN",
+    "merged": false
+  },
+  "recoveredCandidate": {
+    "status": "ready-for-review",
+    "head": "5fc79d353c9247eff0490f2d94236de1bcefdf80",
+    "integratedPackages": 4,
+    "explicitNewTestsPassed": 17,
+    "failed": 0,
+    "remainingGates": [
+      "Dev Review",
+      "Test",
+      "Final Review",
+      "Human Approval"
+    ]
+  }
+}

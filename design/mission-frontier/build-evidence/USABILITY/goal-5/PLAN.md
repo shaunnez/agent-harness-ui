@@ -13,3 +13,7 @@
 The existing SQLite tables have task-local revision and provider-time paging, but no workspace commit order or retained material-state history. UB1 therefore needs a small transactional read projection, capped by a documented record count. It stores typed operational facts and minimal identities/usage, not transcripts or an immutable event ledger. Legacy records establish an explicit coverage baseline; the JSON-only backend reports catch-up unavailable. A newly created/imported or physically replaced database has a different opaque identity, so browser checkpoints and pins cannot silently cross stores.
 
 No checks below are implied passed by this plan; completion evidence belongs in acceptance.md.
+
+## 15 September scope update
+
+Functional acceptance is complete; see acceptance.md. The user waived performance benchmarks and explicitly removed extreme browser zoom as a design target. Qualification uses normal laptop and desktop sizes. The newly added zoom-only CSS rule was removed; accepted Goal 4 responsive behavior remains. No asset work or Goal 6 implementation was started.
