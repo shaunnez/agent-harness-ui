@@ -914,9 +914,7 @@ export function buildClaudeSpawn({
     "--session-id",
     sessionId,
     "--settings",
-    JSON.stringify(
-      buildClaudeSandboxSettings(cwd, sandbox, networkAccess, extraReadRoots, extraReadFiles),
-    ),
+    JSON.stringify(buildClaudeSandboxSettings(cwd, sandbox, networkAccess, extraReadRoots, extraReadFiles)),
     "--system-prompt",
     CLAUDE_SYSTEM_PROMPT,
     // Auto-approves the permission rules above and nothing else: a Write outside the
