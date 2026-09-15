@@ -84,6 +84,7 @@ export interface NewTaskDraft {
   workflowProfile?: "auto" | "fast" | "standard" | "high-risk";
   model?: string;
   reasoning?: string;
+  providerConstraint?: "codex" | "claude" | null;
   rolePolicyOverrides?: Partial<Record<RolePolicyId, import("./domain/runtime.ts").RuntimeAgentPolicy>>;
   experiment?: {
     groupId: string;

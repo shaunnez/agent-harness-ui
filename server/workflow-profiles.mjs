@@ -81,18 +81,40 @@ export function recordWorkflowProfile(task, selected, reason, source = "automati
   if (prior === selected && task.workflowProfile) return false;
   const at = now();
   const history = Array.isArray(task.workflowProfile?.history) ? task.workflowProfile.history : [];
+  const previousPolicies = task.agentConfig?.stagePolicies ?? {};
+  const configuredPolicies = task.agentConfig?.profileStagePolicies?.[selected];
+  const nextPolicies = configuredPolicies ? structuredClone(configuredPolicies) : null;
+  const pinnedRoles = Object.keys(task.agentConfig?.rolePolicyOverrides ?? {}).sort();
+  if (nextPolicies) {
+    for (const [role, policy] of Object.entries(task.agentConfig.rolePolicyOverrides ?? {})) {
+      nextPolicies[role] = structuredClone(policy);
+    }
+  }
+  const changedRoles = nextPolicies
+    ? Object.keys(nextPolicies)
+        .filter((role) => JSON.stringify(previousPolicies[role]) !== JSON.stringify(nextPolicies[role]))
+        .sort()
+    : [];
+  const policyImpact = { changedRoles, pinnedRoles };
   task.workflowProfile = {
     selected,
     reason: String(reason).trim().slice(0, 2_000),
     source,
     selectedAt: at,
+    policyImpact,
     history: [
       ...history,
-      { from: prior, to: selected, reason: String(reason).trim().slice(0, 2_000), source, at },
+      {
+        from: prior,
+        to: selected,
+        reason: String(reason).trim().slice(0, 2_000),
+        source,
+        at,
+        policyImpact,
+      },
     ],
   };
-  const policies = task.agentConfig?.profileStagePolicies?.[selected];
-  if (policies) task.agentConfig.stagePolicies = structuredClone(policies);
+  if (nextPolicies) task.agentConfig.stagePolicies = nextPolicies;
   return true;
 }
 

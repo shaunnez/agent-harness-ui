@@ -1,5 +1,10 @@
 import { runActionAdmission } from "./action-policy.mjs";
-import { normalizeModelId, POLICY_IDS, readExecutionProviderCatalog } from "./model-catalog.mjs";
+import {
+  normalizeModelId,
+  POLICY_IDS,
+  providerForModelId,
+  readExecutionProviderCatalog,
+} from "./model-catalog.mjs";
 import { withActionEligibility } from "./retry-admission-policy.mjs";
 import { resolveRolePolicyLifecycleEligibility } from "./role-policy-eligibility.mjs";
 
@@ -109,6 +114,15 @@ export function resolveRolePolicyEligibility(task, input, settings, catalog, exp
       400,
     );
   }
+  const providerConstraint = task.agentConfig.providerConstraint ?? null;
+  if (providerConstraint && providerForModelId(modelId) !== providerConstraint) {
+    return companionDenial(
+      "invalid-policy",
+      `This task is ${providerConstraint}-only. Choose a ${providerConstraint} model or reset the provider preset.`,
+      [`Requested model: ${modelId}.`],
+      400,
+    );
+  }
 
   return companionSuccess({
     role: input.role,
@@ -137,6 +151,9 @@ export function applyTaskRolePolicy(task, role, policy) {
   task.agentConfig.rolePolicySources[role] = "future-role-override";
   task.agentConfig.rolePolicyOverrides ??= {};
   task.agentConfig.rolePolicyOverrides[role] = { model: policy.model, reasoning: policy.reasoning };
+  task.models = [
+    ...new Set(Object.values(task.agentConfig.stagePolicies).map((entry) => normalizeModelId(entry.model))),
+  ].map((model) => ({ provider: providerForModelId(model) === "claude" ? "anthropic" : "openai", model }));
 }
 
 export async function updateTaskRolePolicy({ store, taskId, input, catalog, readCatalog } = {}) {

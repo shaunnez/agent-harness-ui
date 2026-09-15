@@ -1,5 +1,14 @@
+import { resolveEffectiveRunPolicy } from "./effective-policy.mjs";
+import { policyIdForRun } from "./model-catalog.mjs";
+import { repairAuthorizerSnapshot, timestampAfter } from "./orchestrator-repair-authority.mjs";
+import { activity, now } from "./orchestrator-stage-support.mjs";
+import {
+  applyStageRunReservation,
+  labelForRun,
+  runDetail,
+  stageForRun,
+} from "./orchestrator-task-helpers.mjs";
 import { getStageMetadata } from "./prompts.mjs";
-import { policyIdForRun, resolveAgentPolicy } from "./model-catalog.mjs";
 import {
   CANDIDATE_GATE_STAGES,
   RUNTIME_FRESHNESS_REASONS,
@@ -7,16 +16,6 @@ import {
   stageRunLimitFor,
 } from "./run-activity.mjs";
 import { isCandidateEvidenceError } from "./structured-output.mjs";
-import { isArchitecturalRisk } from "./workflow-profiles.mjs";
-
-import { activity, now } from "./orchestrator-stage-support.mjs";
-import { repairAuthorizerSnapshot, timestampAfter } from "./orchestrator-repair-authority.mjs";
-import {
-  applyStageRunReservation,
-  labelForRun,
-  runDetail,
-  stageForRun,
-} from "./orchestrator-task-helpers.mjs";
 
 export function removeStageArtifacts(task, stageId) {
   const removedIds = new Set(
@@ -106,24 +105,8 @@ export function currentCandidate(task) {
 }
 
 export function resolveRunAgentPolicy(task, policyId, settings) {
-  if (policyId !== "repair") return resolveAgentPolicy(task, policyId, settings);
-  const candidate = task.candidates?.at(-1);
-  const failingGate = [...(task.runs ?? [])]
-    .reverse()
-    .find(
-      (run) =>
-        CANDIDATE_GATE_STAGES.includes(run.stage) &&
-        run.candidateId === candidate?.id &&
-        run.candidateRevision === candidate?.revisionNumber &&
-        run.gateResult?.verdict === "REPAIR",
-    );
-  const priorRepairFailed = (task.runs ?? []).some(
-    (run) => run.kind === "repair" && run.status !== "completed",
-  );
-  if (priorRepairFailed || isArchitecturalRisk(failingGate?.gateResult?.findings ?? [])) {
-    return { provider: "codex", model: "gpt-5.6-sol", reasoning: "high" };
-  }
-  return resolveAgentPolicy(task, "implement", settings);
+  void settings;
+  return resolveEffectiveRunPolicy(task, policyId);
 }
 
 export function stageTimeoutMs(stageId, sandbox, task = null) {
@@ -227,12 +210,7 @@ export function reserveRun(task, kind) {
   task.events.push(activity(stage, `${labelForRun(kind)} started`, runDetail(kind), "info", "agent"));
 }
 
-export function createStageRunReservation(
-  task,
-  kind,
-  stage,
-  provider = reservationProviderFor(task, kind, stage),
-) {
+export function createStageRunReservation(task, kind, stage, provider = null) {
   const candidate = kind === "implementation" ? null : (task.candidates?.at(-1) ?? null);
   const repairAuthorizer = kind === "repair" ? repairAuthorizerSnapshot(task, candidate) : null;
   const reservedAt = repairAuthorizer
@@ -244,11 +222,18 @@ export function createStageRunReservation(
           .filter((workPackage) => !["ready_for_integration", "integrated"].includes(workPackage.status))
           .map((workPackage) => workPackage.id)
       : [];
+  const effectivePolicy = resolveRunAgentPolicy(task, policyIdForRun(kind, stage));
+  if (provider != null && provider !== effectivePolicy.provider) {
+    throw new Error(
+      `Stage ${stage} requested provider ${provider}, but its effective policy requires ${effectivePolicy.provider}.`,
+    );
+  }
   return {
     id: crypto.randomUUID(),
     stage,
     kind,
-    provider,
+    provider: effectivePolicy.provider,
+    effectivePolicy,
     workflowAttempt: (task.attemptsByStage?.[stage] ?? 0) + 1,
     candidateId: candidate?.id ?? null,
     candidateRevision: candidate?.revisionNumber ?? null,

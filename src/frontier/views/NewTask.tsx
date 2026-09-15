@@ -47,7 +47,7 @@ export function NewTask({
   };
   const useProvider = (provider: "codex" | "claude") => {
     const matrix = providerPolicyMatrix(provider, profile.selected, status);
-    if (matrix) setDraft({ ...draft, rolePolicyOverrides: matrix });
+    if (matrix) setDraft({ ...draft, providerConstraint: provider, rolePolicyOverrides: {} });
   };
   return (
     <>
@@ -213,11 +213,22 @@ export function NewTask({
               <div className="section-heading">
                 <div>
                   <h2>Agent setup</h2>
-                  <p className="quiet">{profile.selected} profile · overrides apply to this task only.</p>
+                  <p className="quiet">
+                    {profile.selected} profile
+                    {draft.providerConstraint ? ` · ${draft.providerConstraint}-only preset` : ""} · overrides
+                    apply to this task only.
+                  </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setDraft({ ...draft, rolePolicyOverrides: {}, designPolicies: undefined })}
+                  onClick={() =>
+                    setDraft({
+                      ...draft,
+                      providerConstraint: null,
+                      rolePolicyOverrides: {},
+                      designPolicies: undefined,
+                    })
+                  }
                 >
                   Use defaults
                 </button>
@@ -230,6 +241,13 @@ export function NewTask({
                   onChange={savePolicy}
                   onReset={resetPolicy}
                   onUseProvider={useProvider}
+                  inheritedLabel={
+                    draft.providerConstraint ? `${draft.providerConstraint} preset` : "Inherited"
+                  }
+                  providerConstraint={draft.providerConstraint}
+                  providerAvailable={(provider) =>
+                    providerPolicyMatrix(provider, profile.selected, status) !== null
+                  }
                 />
               ) : (
                 <p role="status">Waiting for the runtime’s role policies…</p>
@@ -297,6 +315,7 @@ export function NewTask({
                   readOnly
                   onChange={savePolicy}
                   onReset={resetPolicy}
+                  providerConstraint={draft.providerConstraint}
                 />
               )}
               {draft.designRequested && (

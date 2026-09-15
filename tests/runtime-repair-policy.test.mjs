@@ -338,6 +338,13 @@ test("persists typed findings requested by the gate on each repair revision", as
       },
     ];
     await store.update(task.id, (draft) => {
+      const repairPolicy = { model: "gpt-5.6-terra", reasoning: "max" };
+      draft.agentConfig.stagePolicies.repair = repairPolicy;
+      for (const matrix of Object.values(draft.agentConfig.profileStagePolicies)) {
+        matrix.repair = repairPolicy;
+      }
+      draft.agentConfig.rolePolicyOverrides.repair = repairPolicy;
+      draft.agentConfig.rolePolicySources.repair = "future-role-override";
       draft.status = "repair-required";
       draft.currentStage = "dev-review";
       draft.stageRunLimits = { implement: 2, "dev-review": 3, test: 3, "final-review": 3 };
@@ -357,10 +364,12 @@ test("persists typed findings requested by the gate on each repair revision", as
       attachRepairAuthorizerFixture(draft, draft.candidates[0], findings);
     });
     let repairPrompt = "";
+    let dispatchedPolicy = null;
     const orchestrator = new TaskOrchestrator(store, {
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
-      runCodex: async ({ prompt }) => {
+      runCodex: async ({ prompt, model, reasoning }) => {
         repairPrompt = prompt;
+        dispatchedPolicy = { model, reasoning };
         return {
           finalText: "## Outcome\n\nRepaired",
           usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
@@ -379,6 +388,11 @@ test("persists typed findings requested by the gate on each repair revision", as
     assert.equal(await orchestrator.start(task.id, "repair"), true);
     await waitUntil(() => !orchestrator.isRunning(task.id));
     const repaired = await store.get(task.id);
+    assert.deepEqual(dispatchedPolicy, { model: "gpt-5.6-terra", reasoning: "max" });
+    const repairRun = repaired.runs.find((run) => run.kind === "repair");
+    assert.equal(repairRun.model, "gpt-5.6-terra");
+    assert.equal(repairRun.policySource, "future-role-override");
+    assert.deepEqual(repaired.stageRunReservations.implement.effectivePolicy.model, "gpt-5.6-terra");
     assert.deepEqual(repaired.candidates[0].revisions[1].requestedFindings, [
       {
         kind: "candidate-defect",

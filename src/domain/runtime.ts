@@ -409,13 +409,20 @@ export interface RuntimeWorkflowProfile {
   reason: string;
   source: "automatic" | "operator" | "migration" | "automatic-escalation";
   selectedAt: string;
+  policyImpact?: RuntimeWorkflowPolicyImpact;
   history: Array<{
     from: WorkflowProfileId | null;
     to: WorkflowProfileId;
     reason: string;
     source: string;
     at: string;
+    policyImpact?: RuntimeWorkflowPolicyImpact;
   }>;
+}
+
+export interface RuntimeWorkflowPolicyImpact {
+  changedRoles: string[];
+  pinnedRoles: string[];
 }
 
 export type RuntimeDesignGenerator = "claude-design" | "codex-design";
@@ -528,15 +535,22 @@ export interface RuntimeTask {
     requestedAt: string;
   }>;
   agentConfig?: {
+    provider?: "codex" | "claude";
     model: string;
     reasoning: string;
     stagePolicies?: Record<string, RuntimeAgentPolicy>;
     profileStagePolicies?: Record<WorkflowProfileId, Record<string, RuntimeAgentPolicy>>;
     policySnapshotVersion?: number;
+    providerConstraint?: "codex" | "claude" | null;
+    repairEscalationPolicies?: Partial<Record<WorkflowProfileId, RuntimeAgentPolicy>>;
     rolePolicyOverrides?: Record<string, RuntimeAgentPolicy>;
     rolePolicySources?: Record<
       string,
-      "settings-default" | "task-override" | "legacy-task-override" | "future-role-override"
+      | "settings-default"
+      | "provider-preset"
+      | "task-override"
+      | "legacy-task-override"
+      | "future-role-override"
     >;
   };
   attachments?: Array<{ id: string; name: string; type: string; size: number; path: string }>;

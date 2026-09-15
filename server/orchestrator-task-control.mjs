@@ -1,13 +1,13 @@
-import { stageRunLimitFor } from "./run-activity.mjs";
 import { supportsRetainedPackageContinuation } from "../src/retained-package-continuation.ts";
+import { GATE_AUTO_ADVANCE, resolveGatePolicy } from "./gate-policies.mjs";
+import { providerForModelId } from "./model-catalog.mjs";
+import { canStartRun, currentCandidate, reserveRun } from "./orchestrator-run-policy.mjs";
+import { activity, completeGrillSession, now, RUN_KINDS } from "./orchestrator-stage-support.mjs";
+import { recordApproval, stageForRun } from "./orchestrator-task-helpers.mjs";
+import { stageRunLimitFor } from "./run-activity.mjs";
 import { isOwnedFile } from "./structured-output.mjs";
 import { selectVerificationCommands } from "./verification.mjs";
 import { canOverrideWorkflowProfile, recordWorkflowProfile } from "./workflow-profiles.mjs";
-
-import { RUN_KINDS, now, activity, completeGrillSession } from "./orchestrator-stage-support.mjs";
-import { currentCandidate, canStartRun, reserveRun } from "./orchestrator-run-policy.mjs";
-import { recordApproval, stageForRun } from "./orchestrator-task-helpers.mjs";
-import { GATE_AUTO_ADVANCE, resolveGatePolicy } from "./gate-policies.mjs";
 
 export class TaskControlOrchestrator {
   _acceptingRuns = true;
@@ -317,7 +317,10 @@ export class TaskControlOrchestrator {
       if (!changed) return;
       draft.models = [
         ...new Set(Object.values(draft.agentConfig.stagePolicies ?? {}).map((policy) => policy.model)),
-      ].map((model) => ({ provider: "openai", model }));
+      ].map((model) => ({
+        provider: providerForModelId(model) === "claude" ? "anthropic" : "openai",
+        model,
+      }));
       if (
         prior === "fast" &&
         profile !== "fast" &&

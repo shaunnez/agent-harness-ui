@@ -19,6 +19,8 @@ export type RuntimeFreshnessReasonCode =
   | "mixed_evidence"
   | "candidate_mismatch"
   | "revision_change"
+  | "provider_mismatch"
+  | "policy_mismatch"
   | "missing_authoritative_summary"
   | "contradictory_evidence"
   | "repair_required"
@@ -89,11 +91,23 @@ export interface RuntimeRunTestSummary {
 export interface RuntimeRun {
   id: string;
   kind: string;
+  provider?: "codex" | "claude";
   status: RuntimeRunStatus;
   stage: StageId;
   role: string | null;
   model: string | null;
   reasoning: string | null;
+  policyVersion?: number | null;
+  policyProfile?: string | null;
+  policyRole?: string | null;
+  policySource?: string | null;
+  providerConstraint?: "codex" | "claude" | null;
+  selectedProvider?: "codex" | "claude" | null;
+  selectedModel?: string | null;
+  selectedReasoning?: string | null;
+  effectiveModel?: string | null;
+  effectiveReasoning?: string | null;
+  policyEscalationReason?: string | null;
   startedAt: string | null;
   completedAt: string | null;
   durationMs: number | null;

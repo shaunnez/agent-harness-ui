@@ -84,3 +84,55 @@ test("creation persists exact per-role overrides across profiles and rejects inv
     await rm(api.root, { recursive: true, force: true });
   }
 });
+
+test("a provider preset snapshots profile-aware inheritance and rejects cross-provider pins", async () => {
+  const api = await createIsolatedApi();
+  try {
+    const status = await (await fetch(`${api.origin}/api/runtime/status`)).json();
+    const headers = {
+      origin: "http://127.0.0.1:5199",
+      "content-type": "application/json",
+      "x-agent-harness-csrf": status.csrfToken,
+    };
+    const send = (extra) =>
+      fetch(`${api.origin}/api/tasks`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          title: "Provider constrained task",
+          description: "Keep every inherited role on the selected provider.",
+          workflow: "investigate",
+          workflowProfile: "standard",
+          repositoryPath: api.repositoryPath,
+          providerConstraint: "claude",
+          rolePolicyOverrides: {},
+          ...extra,
+        }),
+      });
+
+    const response = await send({});
+    assert.equal(response.status, 201, await response.clone().text());
+    const { task } = await response.json();
+    assert.equal(task.agentConfig.providerConstraint, "claude");
+    assert.equal(task.agentConfig.provider, "claude");
+    assert.equal(task.agentConfig.model, task.agentConfig.stagePolicies.triage.model);
+    assert.equal(task.agentConfig.policySnapshotVersion, 3);
+    assert.equal(task.agentConfig.rolePolicySources.triage, "provider-preset");
+    assert.notDeepEqual(
+      task.agentConfig.profileStagePolicies.fast.triage,
+      task.agentConfig.profileStagePolicies.standard.triage,
+    );
+    for (const matrix of Object.values(task.agentConfig.profileStagePolicies)) {
+      assert.ok(Object.values(matrix).every((policy) => policy.model.startsWith("claude-")));
+    }
+
+    const rejected = await send({
+      rolePolicyOverrides: { repair: { model: "gpt-5.6-sol", reasoning: "high" } },
+    });
+    assert.equal(rejected.status, 400);
+    assert.match((await rejected.json()).error, /must use a claude model/i);
+  } finally {
+    await api.close();
+    await rm(api.root, { recursive: true, force: true });
+  }
+});
