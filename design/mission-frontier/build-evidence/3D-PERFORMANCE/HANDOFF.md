@@ -2,7 +2,7 @@
 
 The fixture-only 3D preview now meets this pass's measured 30 FPS target in World, headquarters and Watch at normal laptop scale. The accepted geometry, textures, camera, DPR 1.5 cap and full-resolution GTAO/bloom are retained. No live renderer migration or new scenery is included.
 
-Implementation branch: `codex/mission-frontier-3d-performance`, based on merged main `82ecc7196d025773de6758c6384f0184335b346b` (PRs #90 and #89). Review preview: `http://127.0.0.1:5208/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d#world`. The user's main checkout and existing services remain separate; port 5199 does not contain this unmerged branch.
+Implementation branch: `codex/mission-frontier-3d-performance`, based on merged main `82ecc7196d025773de6758c6384f0184335b346b` (PRs #90 and #89). Review preview: `http://127.0.0.1:5208/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d#world`. The user has now requested integration into local main. Port 5199 serves the main checkout; port 5208 remains the isolated review preview.
 
 ## What changed
 
@@ -46,8 +46,8 @@ Use `controlled-baseline-*.json` versus `after-{world,hq,watch}.json`. Earlier `
 
 ## Next
 
-Review this branch at port 5208 before merging it. After that, resume the agreed colony and hexagonal headquarters layout discussion in `NEXT-PHASE-HANDOFF.md`: connected land/bridges, richer terrain, fixed rooms with variable robot occupancy, and a shared spaceport. Those are separate design/build slices. Asset compression and night-light culling can be scoped later if actual usage warrants them.
+After the requested local main integration, resume the agreed colony and hexagonal headquarters layout discussion in `NEXT-PHASE-HANDOFF.md`: connected land/bridges, richer terrain, fixed rooms with variable robot occupancy, and a shared spaceport. Those are separate design/build slices. Asset compression and night-light culling can be scoped later if actual usage warrants them.
 
-Delivery is pending: the configured 1Password SSH signer returned `failed to fill whole buffer`, so no performance commit or PR was created. Changes remain staged, and the user's signing preference has not been overridden. Resume the scoped commit and push after signing is available; do not merge main automatically.
+The initial 1Password signing attempt failed. The retry succeeded without overriding signing: implementation commit `fdcf054` contains the qualified changes. The user subsequently requested a local main merge. That request does not include a remote push, PR or deployment.
 
-The independent journal's article 25, current status, source snapshot and three fresh captures are prepared in the existing journal checkout. Its five tests, typecheck, lint and 54-route build passed. Publication is pending the signed source commit/push; the live journal is still version 23. Preserve its verified owner-only audience. Publishing that journal never publishes the game.
+The independent journal's article 25, current status, source snapshot and three fresh captures are prepared in the existing journal checkout. Its five tests, typecheck, lint and 54-route build passed. Journal publication remains pending its separate source commit/push; the live journal was version 23 at the last check. Preserve its verified owner-only audience. Publishing that journal never publishes the game.
