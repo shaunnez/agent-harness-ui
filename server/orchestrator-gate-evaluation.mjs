@@ -1,19 +1,23 @@
+import {
+  candidateRepairCircuitReason,
+  candidateRepairCount,
+  candidateRepairLimit,
+} from "../src/workflow-recovery-policy.ts";
+import {
+  candidateGateFailure,
+  currentCandidate,
+  evaluationRerunState,
+  evaluationVerdict,
+  modelCommandFailed,
+  reserveRun,
+  structuredEvidenceError,
+  throwIfAborted,
+} from "./orchestrator-run-policy.mjs";
+import { activity, now } from "./orchestrator-stage-support.mjs";
 import { buildTestInterpretationRequest, getStageMetadata } from "./prompts.mjs";
 import { RUNTIME_FRESHNESS_REASONS, runEventMetadata, stageRunLimitFor } from "./run-activity.mjs";
 import { parseGateEvidence, validateFocusedTestEvidence } from "./structured-output.mjs";
 import { fastEscalation, isArchitecturalRisk, recordWorkflowProfile } from "./workflow-profiles.mjs";
-
-import { now, activity } from "./orchestrator-stage-support.mjs";
-import {
-  throwIfAborted,
-  candidateGateFailure,
-  currentCandidate,
-  evaluationVerdict,
-  modelCommandFailed,
-  structuredEvidenceError,
-  evaluationRerunState,
-  reserveRun,
-} from "./orchestrator-run-policy.mjs";
 
 export class GateEvaluationOrchestrator {
   constructor({
@@ -369,19 +373,28 @@ export class GateEvaluationOrchestrator {
           if (escalation)
             recordWorkflowProfile(draft, escalation.target, escalation.reason, "automatic-escalation");
         }
-        const repairCount = activeCandidate.revisions.filter(
-          (revision) => revision.reason === "repair",
-        ).length;
-        if (stageId === "dev-review" && draft.workflowProfile?.selected === "fast" && repairCount >= 1) {
+        const repairCount = candidateRepairCount(draft, activeCandidate);
+        const repairLimit = candidateRepairLimit(draft);
+        if (repairCount >= repairLimit) {
           activeCandidate.status = "repair_required";
           draft.status = "blocked";
           draft.currentStage = stageId;
-          draft.error =
-            "Fast profile exhausted its one automatic candidate-repair cycle. Human direction or a profile override is required before more code changes.";
+          draft.error = candidateRepairCircuitReason(draft, activeCandidate);
+          draft.blocker = {
+            code: "repair-loop-exhausted",
+            detail: draft.error,
+            requiredAction:
+              "Review the retained findings and run a corrected implementation plan before creating another candidate.",
+            detectedAt: now(),
+            candidateId: activeCandidate.id,
+            candidateRevision: activeCandidate.revisionNumber,
+            repairCount,
+            repairLimit,
+          };
           draft.events.push(
             activity(
               stageId,
-              "Fast repair limit reached",
+              "Candidate repair circuit breaker opened",
               draft.error,
               "danger",
               "decision",

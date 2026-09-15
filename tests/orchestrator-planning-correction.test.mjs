@@ -239,6 +239,158 @@ test("corrects a blocked legacy plan and preserves an exact clean slice for requ
   }
 });
 
+test("routes an ownership-blocked package through planning and preserves its dirty slice", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-correct-ownership-plan-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Correct package ownership",
+      description: "Keep the implementation and its required contract test together.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+    });
+    const ownershipError =
+      "Candidate changed tests/runtime.test.mjs, which is outside the work package ownership (server/runtime.mjs).";
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "implement";
+      draft.error = `S1: ${ownershipError}`;
+      draft.attemptsByStage.plan = 1;
+      draft.attemptsByStage.implement = 3;
+      draft.stageRunLimits.implement = 3;
+      draft.workPackages = [
+        {
+          id: "S1",
+          title: "Runtime contract",
+          description: "Update the runtime and add tests covering the behavior.",
+          dependencies: [],
+          batch: 1,
+          ownedPaths: ["server/runtime.mjs"],
+          verificationCommandIds: ["test"],
+          verificationRuns: [],
+          status: "failed",
+          attempts: 1,
+          branch: "agent-harness/ownership-s1-a1",
+          worktreePath: "/tmp/ownership-s1-a1",
+          baseRevision: "a".repeat(40),
+          headRevision: null,
+          files: [],
+          error: ownershipError,
+          retainedContinuation: {
+            requestedAt: new Date().toISOString(),
+            files: ["server/runtime.mjs", "tests/runtime.test.mjs"],
+            outsideOwnership: ["tests/runtime.test.mjs"],
+          },
+        },
+      ];
+    });
+    const revisedOutput = `<work-packages>{"packages":[{"id":"S1","title":"Runtime contract","description":"Update the runtime and add tests covering the behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs","tests/runtime.test.mjs"],"verificationCommandIds":["test"]}]}</work-packages>`;
+    const orchestrator = new TaskOrchestrator(store, {
+      readVerificationManifest: async () => ({
+        source: ".agent-harness/verification.json",
+        commands: [{ id: "test", command: ["npm", "test"] }],
+      }),
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      runCodex: async () => ({
+        finalText: revisedOutput,
+        model: "gpt-5.6-sol",
+        reasoning: "high",
+        usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    assert.deepEqual(await orchestrator.correctInvalidPlan(task.id), { started: true });
+    const revised = await waitForStatus(store, task.id, "awaiting-plan-approval");
+    assert.deepEqual(revised.workPackages[0].ownedPaths, ["server/runtime.mjs", "tests/runtime.test.mjs"]);
+    assert.equal(revised.workPackages[0].worktreePath, "/tmp/ownership-s1-a1");
+    assert.equal(revised.workPackages[0].branch, "agent-harness/ownership-s1-a1");
+    assert.deepEqual(revised.workPackages[0].retainedContinuation.outsideOwnership, []);
+    assert.equal(revised.workPackages[0].attempts, 1);
+    assert.equal(revised.stageRunLimits.implement, 4);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("returns an exhausted candidate repair lineage to planning without erasing the candidate", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-replan-repair-circuit-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Correct repeated candidate defects",
+      description: "Replace the implementation strategy after bounded repairs fail.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "repair-required";
+      draft.currentStage = "dev-review";
+      draft.workflowProfile = { selected: "standard" };
+      draft.attemptsByStage.plan = 1;
+      draft.attemptsByStage.implement = 3;
+      draft.stageRunLimits.implement = 3;
+      draft.candidates = [
+        {
+          id: "C1",
+          revisionNumber: 3,
+          status: "repair_required",
+          baseRevision: "a".repeat(40),
+          headRevision: "d".repeat(40),
+          revisions: [
+            { number: 1, reason: "assembly", headRevision: "b".repeat(40) },
+            { number: 2, reason: "repair", headRevision: "c".repeat(40) },
+            { number: 3, reason: "repair", headRevision: "d".repeat(40) },
+          ],
+        },
+      ];
+      draft.workPackages = [
+        {
+          id: "S1",
+          title: "Old strategy",
+          description: "The bounded repair strategy did not converge.",
+          dependencies: [],
+          batch: 1,
+          ownedPaths: ["src/old.ts"],
+          verificationCommandIds: ["test"],
+          verificationRuns: [],
+          status: "integrated",
+          attempts: 3,
+        },
+      ];
+    });
+    const revisedOutput = `<work-packages>{"packages":[{"id":"S1","title":"Replacement strategy","description":"Replace the faulty boundary as one coherent slice.","dependencies":[],"ownedPaths":["src/replacement.ts"],"verificationCommandIds":["test"]}]}</work-packages>`;
+    const orchestrator = new TaskOrchestrator(store, {
+      readVerificationManifest: async () => ({
+        source: ".agent-harness/verification.json",
+        commands: [{ id: "test", command: ["npm", "test"] }],
+      }),
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      runCodex: async () => ({
+        finalText: revisedOutput,
+        model: "gpt-5.6-sol",
+        reasoning: "high",
+        usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    assert.deepEqual(await orchestrator.correctInvalidPlan(task.id), { started: true });
+    const revised = await waitForStatus(store, task.id, "awaiting-plan-approval");
+    assert.equal(revised.currentStage, "plan");
+    assert.equal(revised.candidates.length, 1);
+    assert.equal(revised.candidates[0].revisionNumber, 3);
+    assert.equal(revised.candidates[0].status, "repair_required");
+    assert.equal(revised.workPackages[0].title, "Replacement strategy");
+    assert.deepEqual(revised.workPackages[0].ownedPaths, ["src/replacement.ts"]);
+    assert.equal(revised.stageRunLimits.implement, 4);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("does not misclassify a failed package qualification as an invalid plan", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-correct-qualification-plan-"));
   try {
@@ -294,7 +446,10 @@ test("does not misclassify a failed package qualification as an invalid plan", a
     const retained = await store.get(task.id);
     assert.equal(retained.currentStage, "implement");
     assert.equal(retained.workPackages[0].headRevision, "b".repeat(40));
-    assert.equal(withActionEligibility(retained).actionEligibility.actions["continue-package"].allowed, true);
+    const eligibility = withActionEligibility(retained).actionEligibility.actions;
+    assert.equal(eligibility.plan.allowed, false);
+    assert.equal(eligibility["continue-package"].allowed, false);
+    assert.match(eligibility["continue-package"].reason, /exhausted its retry allowance/i);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -344,7 +499,7 @@ test("continues a clean qualification failure by requalifying without rerunning 
     });
     let modelCalls = 0;
     const qualification = {
-      ...makeFocusedTestSummary({ candidateId: "S1", candidateRevision: 6 }),
+      ...makeFocusedTestSummary({ candidateId: "S1", candidateRevision: 7 }),
       headRevision: packageRevision,
       executionKind: "focused-package",
     };
@@ -396,6 +551,7 @@ test("continues a clean qualification failure by requalifying without rerunning 
     const ready = await waitForStatus(store, task.id, "ready-for-review");
     assert.equal(modelCalls, 0);
     assert.equal(ready.workPackages[0].status, "integrated");
+    assert.equal(ready.workPackages[0].attempts, 7);
     const retainedRun = ready.runs.find((run) => run.source === "harness-requalification");
     assert.equal(retainedRun.status, "completed");
     assert.equal(ready.artifacts.find((artifact) => artifact.runId === retainedRun.id).model, null);

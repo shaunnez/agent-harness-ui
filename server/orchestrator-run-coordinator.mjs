@@ -1,6 +1,6 @@
-import { refreshGateFreshness, stageRunLimitFor } from "./run-activity.mjs";
-import { now, activity } from "./orchestrator-stage-support.mjs";
+import { activity, now } from "./orchestrator-stage-support.mjs";
 import { stageForRun } from "./orchestrator-task-helpers.mjs";
+import { refreshGateFreshness, stageRunLimitFor } from "./run-activity.mjs";
 
 export class OrchestratorRunCoordinator {
   constructor({
@@ -59,12 +59,15 @@ export class OrchestratorRunCoordinator {
         const stage = stageForRun(failedKind, draft.currentStage);
         const attempts = draft.attemptsByStage?.[stage] ?? 1;
         const fastReplanRequired = error?.code === "FAST_PROFILE_REPLAN_REQUIRED";
+        const repositoryBaselineFailure = error?.code === "REPOSITORY_BASELINE_FAILURE";
         draft.currentStage = fastReplanRequired ? "scouts" : stage;
         draft.status = signal.aborted
           ? "cancelled"
-          : attempts >= stageRunLimitFor(draft, stage)
+          : repositoryBaselineFailure
             ? "blocked"
-            : "failed";
+            : attempts >= stageRunLimitFor(draft, stage)
+              ? "blocked"
+              : "failed";
         if (fastReplanRequired) {
           draft.stageDispositions = {};
           const affectedPackage = draft.workPackages?.find(
@@ -83,6 +86,17 @@ export class OrchestratorRunCoordinator {
             detail: `The target advanced to ${implementationTargetDrift}. Restart approved packages from the latest target instead of continuing historical slices.`,
             detectedAt: now(),
             targetRevision: implementationTargetDrift,
+          };
+        }
+        if (repositoryBaselineFailure) {
+          draft.blocker = {
+            code: "repository-baseline-verification",
+            detail: error.message,
+            requiredAction:
+              "Fix or advance the repository baseline, then recheck the exact retained package. Do not repair the candidate for an unchanged baseline failure.",
+            detectedAt: now(),
+            workPackageId: error.workPackageId ?? null,
+            baselineVerification: error.baselineVerification ?? null,
           };
         }
         draft.activeRunKind = null;

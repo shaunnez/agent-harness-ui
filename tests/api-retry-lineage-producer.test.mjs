@@ -143,13 +143,13 @@ test("rejects exact-current gate grants when the retained candidate history or p
   }
 });
 
-test("grants an exact-current repaired candidate only with distinct gate and current producer reservations", async () => {
+test("grants one bounded gate recovery after legacy auto-run exceeded its allowance", async () => {
   const { directory, origin, server, store } = await createServer();
   try {
     const response = await createTask(origin, {
       title: "Exact current repaired candidate",
       description:
-        "Authorize a gate retry only when the current repair producer matches the Implement counter.",
+        "Recover one legacy over-limit gate only when the current producer and reservation remain exact.",
       repositoryPath: directory,
       workflow: "implement",
     });
@@ -158,7 +158,7 @@ test("grants an exact-current repaired candidate only with distinct gate and cur
       draft.status = "ready-for-review";
       draft.currentStage = "dev-review";
       draft.attemptsByStage.implement = 3;
-      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"];
+      draft.attemptsByStage["dev-review"] = draft.stageRunLimits["dev-review"] + 1;
       const candidate = threeRevisionCandidate();
       draft.candidates.push(candidate);
       attachCandidateProducerEvidence(draft, candidate);
@@ -174,10 +174,10 @@ test("grants an exact-current repaired candidate only with distinct gate and cur
         reservedAt: "2026-08-04T00:01:30.000Z",
       };
       draft.stageRunReservations["dev-review"] = {
-        id: "reservation-c1-r3-review-3",
+        id: "reservation-c1-r3-review-4",
         stage: "dev-review",
         kind: "review",
-        workflowAttempt: 3,
+        workflowAttempt: 4,
         candidateId: "C1",
         candidateRevision: 3,
         candidateHeadRevision: "candidate-c1-r3",
@@ -190,8 +190,8 @@ test("grants an exact-current repaired candidate only with distinct gate and cur
     assert.equal(grantResponse.status, 200, JSON.stringify(await grantResponse.clone().json()));
     assert.deepEqual(await grantResponse.json(), { granted: true });
     const updated = await store.get(task.id);
-    assert.equal(updated.stageRunLimits["dev-review"], 4);
-    assert.equal(updated.decisions.at(-1).workflowReservationId, "reservation-c1-r3-review-3");
+    assert.equal(updated.stageRunLimits["dev-review"], 5);
+    assert.equal(updated.decisions.at(-1).workflowReservationId, "reservation-c1-r3-review-4");
     assert.equal(updated.decisions.at(-1).candidateAuthorizerReservationIds.length, 2);
     assert.equal(updated.decisions.at(-1).candidateAuthorizerRunIds.length, 2);
     assert.equal(updated.decisions.at(-1).candidateAuthorizerArtifactIds.length, 2);

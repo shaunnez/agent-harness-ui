@@ -2,8 +2,8 @@ import { spawn } from "node:child_process";
 import {
   lstat,
   mkdir,
-  readFile,
   readdir,
+  readFile,
   realpath,
   rm,
   stat,
@@ -132,19 +132,25 @@ export class GitWorktreeManager {
       throw new Error(`The evidence worktree already exists at ${worktreePath}.`);
     }
     await mkdir(path.dirname(worktreePath), { recursive: true });
+    let dependenciesProvisioned = false;
     try {
       await git(repositoryRoot, ["worktree", "add", "--detach", worktreePath, revision]);
+      if (authority?.provisionDependencies === true) {
+        await provisionDependencies(repositoryRoot, worktreePath);
+        dependenciesProvisioned = true;
+      }
       const actualRevision = (await git(worktreePath, ["rev-parse", "HEAD"])).stdout.trim();
       if (actualRevision !== revision) {
         throw new Error("The evidence worktree did not resolve to the authority revision.");
       }
     } catch (error) {
+      if (dependenciesProvisioned) await deprovisionDependencies(worktreePath).catch(() => []);
       await git(repositoryRoot, ["worktree", "remove", "--force", worktreePath], {
         allowFailure: true,
       });
       throw error;
     }
-    return { repositoryRoot, worktreePath, revision };
+    return { repositoryRoot, worktreePath, revision, dependenciesProvisioned };
   }
 
   removeEvidence(workspace) {
@@ -163,6 +169,7 @@ export class GitWorktreeManager {
     if (!worktreePath.startsWith(`${this.#root}${path.sep}`)) {
       throw new Error("Evidence cleanup refused a worktree outside harness storage.");
     }
+    if (workspace.dependenciesProvisioned) await deprovisionDependencies(worktreePath).catch(() => []);
     const result = await git(repositoryRoot, ["worktree", "remove", "--force", worktreePath], {
       allowFailure: true,
     });

@@ -1,20 +1,20 @@
+import { currentCandidate, throwIfAborted } from "./orchestrator-run-policy.mjs";
+import {
+  activity,
+  allSettledWithConcurrency,
+  FastProfileReplanError,
+  now,
+  workPackageVerificationMarkdown,
+} from "./orchestrator-stage-support.mjs";
+import {
+  dependencyClosure,
+  parseNoChangesNeeded,
+  requireActiveRunReservation,
+} from "./orchestrator-task-helpers.mjs";
+import { packageQualificationFailure } from "./package-qualification-policy.mjs";
 import { buildWorkPackageRequest } from "./prompts.mjs";
 import { refreshGateFreshness } from "./run-activity.mjs";
 import { fastEscalation } from "./workflow-profiles.mjs";
-
-import {
-  now,
-  FastProfileReplanError,
-  allSettledWithConcurrency,
-  workPackageVerificationMarkdown,
-  activity,
-} from "./orchestrator-stage-support.mjs";
-import { throwIfAborted, currentCandidate } from "./orchestrator-run-policy.mjs";
-import {
-  requireActiveRunReservation,
-  parseNoChangesNeeded,
-  dependencyClosure,
-} from "./orchestrator-task-helpers.mjs";
 
 export class WorkPackageOrchestrator {
   constructor({
@@ -233,7 +233,7 @@ export class WorkPackageOrchestrator {
       return;
     }
     const retainedContinuation = workPackage.retainedContinuation ?? null;
-    const attempt = retainedContinuation ? workPackage.attempts : workPackage.attempts + 1;
+    const attempt = workPackage.attempts + 1;
     const dependencyIds = dependencyClosure(workPackage, task.workPackages);
     const dependencyRevisions = task.workPackages
       .filter((item) => dependencyIds.includes(item.id))
@@ -275,7 +275,7 @@ export class WorkPackageOrchestrator {
       await this._store.update(id, (draft) => {
         const target = draft.workPackages.find((item) => item.id === workPackageId);
         target.status = "running";
-        if (!retainedContinuation) target.attempts = attempt;
+        target.attempts = attempt;
         target.branch = slice.branch;
         target.worktreePath = slice.worktreePath;
         target.baseRevision = slice.baseRevision;
@@ -350,11 +350,13 @@ export class WorkPackageOrchestrator {
       let qualification = null;
       if (this._runPackageVerification) {
         qualification = await this._qualifyPackage({
+          task,
           worktreePath: slice.worktreePath,
           workPackage: currentPackage,
           workPackageId,
           attempt,
           headRevision: packageHeadRevision,
+          baselineRevision: slice.preparedRevision ?? slice.baseRevision,
           signal,
         });
         throwIfAborted(signal);
@@ -393,10 +395,7 @@ export class WorkPackageOrchestrator {
               workPackageId,
             );
           }
-          const failed = qualification.rows?.find((row) => row.status !== "passed");
-          throw new Error(
-            `${workPackageId} did not qualify: ${failed?.id ?? "repository verification"} failed${failed?.failureDetails ? ` — ${failed.failureDetails}` : "."}`,
-          );
+          throw packageQualificationFailure(workPackageId, qualification);
         }
       }
       // The branch (or, for a no-op, the unchanged base) is all downstream assembly
@@ -453,6 +452,18 @@ export class WorkPackageOrchestrator {
         if (!["failed", "blocked", "cancelled"].includes(draft.status)) {
           draft.status = "blocked";
           draft.error = `${workPackageId}: ${error.message}`;
+        }
+        if (error.code === "REPOSITORY_BASELINE_FAILURE") {
+          draft.status = "blocked";
+          draft.blocker = {
+            code: "repository-baseline-verification",
+            detail: error.message,
+            requiredAction:
+              "Fix or advance the repository baseline, then recheck the exact retained package. Do not repair the candidate for an unchanged baseline failure.",
+            detectedAt: now(),
+            workPackageId,
+            baselineVerification: error.baselineVerification,
+          };
         }
         draft.events.push(
           activity("implement", `${workPackageId} failed`, error.message, "danger", "decision"),

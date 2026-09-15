@@ -1,6 +1,11 @@
 import { type RuntimeTask, type RuntimeTaskCore, type StageId, workflowStages } from "../../domain";
 import { supportsRetainedPackageContinuation } from "../../retained-package-continuation";
 import { getEffectiveStageRunAttempts, getEffectiveStageRunLimit } from "../../runtime-stage-limits";
+import {
+  candidateRepairCircuitExhausted,
+  candidateRepairCircuitReason,
+  isInvalidApprovedPlanFailure,
+} from "../../workflow-recovery-policy";
 import { candidateGateStages, getRuntimeGateFreshness } from "./workflow";
 
 export function nextAction(task: RuntimeTask | RuntimeTaskCore) {
@@ -144,6 +149,29 @@ export function deriveNextAction(task: RuntimeTask | RuntimeTaskCore) {
       detail:
         "Replay the retained candidate onto the latest target as a new revision. The prior revision remains inspectable and every candidate-bound gate must run again.",
     };
+  if (
+    ["repair-required", "failed", "blocked"].includes(task.status) &&
+    candidate?.status === "repair_required" &&
+    candidateRepairCircuitExhausted(task, candidate)
+  )
+    return {
+      action: "plan" as const,
+      label: "Correct plan before another candidate",
+      title: "Candidate repair circuit breaker opened",
+      detail: candidateRepairCircuitReason(task, candidate),
+    };
+  const invalidApprovedPlan =
+    ["failed", "blocked"].includes(task.status) &&
+    task.currentStage === "implement" &&
+    isInvalidApprovedPlanFailure(task.error);
+  if (invalidApprovedPlan)
+    return {
+      action: "plan" as const,
+      label: "Correct implementation plan",
+      title: "Approved package scope is not executable",
+      detail:
+        "Return to read-only planning and correct package ownership or verification before another implementation attempt.",
+    };
   const retainedPackage = [...(task.workPackages ?? [])]
     .reverse()
     .find(
@@ -163,20 +191,6 @@ export function deriveNextAction(task: RuntimeTask | RuntimeTaskCore) {
         : "Resume the retained implementation package",
       detail:
         "Validate the exact retained branch. A clean commit is requalified without another model run; dirty in-scope work is continued without being discarded.",
-    };
-  const invalidApprovedPlan =
-    ["failed", "blocked"].includes(task.status) &&
-    task.currentStage === "implement" &&
-    /verification requires at least one repository manifest command id|approved plan does not contain executable work packages/i.test(
-      task.error ?? "",
-    );
-  if (invalidApprovedPlan)
-    return {
-      action: "plan" as const,
-      label: "Correct implementation plan",
-      title: "Approved plan is not executable",
-      detail:
-        "Return to read-only planning and produce valid repository manifest command IDs before another implementation attempt.",
     };
   const latestTestArtifact = [...task.artifacts]
     .reverse()
@@ -225,7 +239,7 @@ export function deriveNextAction(task: RuntimeTask | RuntimeTaskCore) {
   ) {
     if (task.designRequest?.status === "failed") {
       return {
-        action: "specification" as const,
+        action: "retry-design" as const,
         label: "Retry failed design",
         title: "Retry the failed design provider",
         detail:

@@ -50,6 +50,18 @@ test("parses Codex final messages and usage", () => {
     ).commandFailed,
     true,
   );
+  const searchMiss = parseCodexEvent(
+    JSON.stringify({
+      type: "item.completed",
+      item: {
+        type: "command_execution",
+        command: "git show HEAD:file.ts | nl -ba | rg readiness",
+        exit_code: 1,
+      },
+    }),
+  );
+  assert.equal(searchMiss.commandFailed, false);
+  assert.equal(searchMiss.title, "Repository search returned no matches");
   const memoryPreflight = parseCodexEvent(
     JSON.stringify({
       type: "item.completed",

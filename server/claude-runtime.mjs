@@ -22,6 +22,7 @@ import {
   readClaudeModelCatalog,
 } from "./model-catalog.mjs";
 import { conciseToolResult, formatCommand, runProcess } from "./process-runtime.mjs";
+import { commandExitCode, isExpectedReadOnlySearchMiss } from "./shell-command-outcome.mjs";
 
 /**
  * Claude Code `--output-format stream-json` parsing.
@@ -528,12 +529,19 @@ export function createClaudeStreamParser() {
           },
         };
       }
+      const result = claudeCommandResult(block.content);
+      const expectedSearchMiss =
+        !succeeded && isExpectedReadOnlySearchMiss(entry.detail, commandExitCode(result));
       return {
         type: "activity",
-        tone: succeeded ? "success" : "warning",
-        title: succeeded ? "Repository command completed" : "Repository command returned a warning",
+        tone: succeeded || expectedSearchMiss ? "success" : "warning",
+        title: succeeded
+          ? "Repository command completed"
+          : expectedSearchMiss
+            ? "Repository search returned no matches"
+            : "Repository command returned a warning",
         detail: entry.detail,
-        commandFailed: !succeeded,
+        commandFailed: !succeeded && !expectedSearchMiss,
         // Claude has no context-preflight exemption; that whitelist is Codex-specific.
         runtimeScope: "agent-diagnostic",
         toolCall: {
@@ -541,7 +549,7 @@ export function createClaudeStreamParser() {
           name: "command_execution",
           category: "repository-command",
           phase: "completed",
-          result: claudeCommandResult(block.content),
+          result,
         },
       };
     }
@@ -914,9 +922,7 @@ export function buildClaudeSpawn({
     "--session-id",
     sessionId,
     "--settings",
-    JSON.stringify(
-      buildClaudeSandboxSettings(cwd, sandbox, networkAccess, extraReadRoots, extraReadFiles),
-    ),
+    JSON.stringify(buildClaudeSandboxSettings(cwd, sandbox, networkAccess, extraReadRoots, extraReadFiles)),
     "--system-prompt",
     CLAUDE_SYSTEM_PROMPT,
     // Auto-approves the permission rules above and nothing else: a Write outside the

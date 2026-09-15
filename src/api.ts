@@ -478,7 +478,7 @@ export async function retryTaskDesigns(id: string) {
 
 export async function runTaskAction(
   id: string,
-  action: Exclude<RuntimeAvailableAction, "continue-implementation">,
+  action: Exclude<RuntimeAvailableAction, "continue-implementation" | "retry-design">,
   note = "",
   candidateScope?: {
     candidateId: string;

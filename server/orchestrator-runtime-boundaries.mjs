@@ -1,6 +1,5 @@
-import path from "node:path";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { buildOnboardingRequest } from "./prompts.mjs";
+import path from "node:path";
 import { resolveExecutionProvider } from "./execution-providers.mjs";
 import {
   CREDIT_SOURCE_URL,
@@ -11,8 +10,6 @@ import {
   validatePricingRates,
   withConfiguredModels,
 } from "./model-catalog.mjs";
-import { scoutCatalog } from "./scouts.mjs";
-import { DEFAULT_EXECUTION_PROVIDER } from "./run-activity.mjs";
 import {
   discoverVerificationEvidence,
   OnboardingError,
@@ -20,10 +17,12 @@ import {
   renderManifestFile,
   VERIFICATION_MANIFEST_PATH,
 } from "./onboarding.mjs";
-import { gitHeadRevision } from "./verification.mjs";
-
-import { now } from "./orchestrator-stage-support.mjs";
 import { throwIfAborted } from "./orchestrator-run-policy.mjs";
+import { now } from "./orchestrator-stage-support.mjs";
+import { buildOnboardingRequest } from "./prompts.mjs";
+import { DEFAULT_EXECUTION_PROVIDER } from "./run-activity.mjs";
+import { scoutCatalog } from "./scouts.mjs";
+import { gitHeadRevision } from "./verification.mjs";
 
 export class RuntimeBoundariesOrchestrator {
   constructor({
@@ -46,9 +45,64 @@ export class RuntimeBoundariesOrchestrator {
     this._packageConcurrency = packageConcurrency;
   }
   _qualifyPackage(input) {
-    const run = () => {
+    const run = async () => {
       throwIfAborted(input.signal);
-      return this._runPackageVerification(input);
+      const qualification = await this._runPackageVerification(input);
+      const failedCommandIds = (qualification.rows ?? [])
+        .filter((row) => row.status !== "passed")
+        .map((row) => row.id);
+      if (
+        qualification.status === "passed" ||
+        !failedCommandIds.length ||
+        !input.task ||
+        !input.baselineRevision ||
+        typeof this._worktrees.prepareEvidence !== "function" ||
+        typeof this._worktrees.removeEvidence !== "function"
+      ) {
+        return qualification;
+      }
+      let workspace = null;
+      try {
+        workspace = await this._worktrees.prepareEvidence(
+          input.task,
+          { selectedRevision: input.baselineRevision, provisionDependencies: true },
+          `baseline-${input.workPackageId}-${input.attempt}-${crypto.randomUUID()}`,
+        );
+        const baselineVerification = await this._runPackageVerification({
+          ...input,
+          worktreePath: workspace.worktreePath,
+          headRevision: input.baselineRevision,
+          workPackage: {
+            ...input.workPackage,
+            verificationCommandIds: failedCommandIds,
+          },
+        });
+        const baselineFailedIds = new Set(
+          (baselineVerification.rows ?? []).filter((row) => row.status !== "passed").map((row) => row.id),
+        );
+        if (failedCommandIds.every((commandId) => baselineFailedIds.has(commandId))) {
+          return {
+            ...qualification,
+            failureKind: "repository-baseline",
+            baselineVerification: {
+              revision: input.baselineRevision,
+              commandIds: failedCommandIds,
+              rows: baselineVerification.rows ?? [],
+            },
+          };
+        }
+      } catch (error) {
+        return {
+          ...qualification,
+          baselineVerification: {
+            revision: input.baselineRevision,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        };
+      } finally {
+        if (workspace) await this._worktrees.removeEvidence(workspace).catch(() => {});
+      }
+      return qualification;
     };
     const pending = this._packageVerificationQueue.then(run, run);
     this._packageVerificationQueue = pending.then(

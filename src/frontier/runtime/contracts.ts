@@ -83,7 +83,7 @@ export interface FrontierGateway {
   diff(id: string, candidateId: string, headRevision: string): Promise<CandidateDiffResponse>;
   action(
     id: string,
-    action: Exclude<RuntimeAvailableAction, "continue-implementation">,
+    action: Exclude<RuntimeAvailableAction, "continue-implementation" | "retry-design">,
     note?: string,
     scope?: CandidateScope,
   ): Promise<unknown>;

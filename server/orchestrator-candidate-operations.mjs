@@ -1,9 +1,9 @@
-import { refreshGateFreshness, stageRunLimitFor } from "./run-activity.mjs";
 import { exactCandidateBinding } from "./companion-actions.mjs";
+import { currentCandidate, sameCandidateTestRetryContext } from "./orchestrator-run-policy.mjs";
 
-import { now, activity } from "./orchestrator-stage-support.mjs";
-import { sameCandidateTestRetryContext, currentCandidate } from "./orchestrator-run-policy.mjs";
+import { activity, now } from "./orchestrator-stage-support.mjs";
 import { recordApproval } from "./orchestrator-task-helpers.mjs";
+import { refreshGateFreshness, stageRunLimitFor } from "./run-activity.mjs";
 
 export class CandidateOperationsOrchestrator {
   constructor({ store, github, mergeActive, refreshActive, worktrees, repositoryAuthority, start }) {
@@ -132,18 +132,41 @@ export class CandidateOperationsOrchestrator {
       }
       if (!candidate?.headRevision)
         throw new Error("The task does not have a refreshable candidate revision.");
+      let recoveredCandidateWorktree = false;
+      if (typeof this._worktrees.verifyCandidate === "function") {
+        try {
+          await this._worktrees.verifyCandidate(candidate);
+        } catch (error) {
+          if (
+            !/candidate worktree no longer matches its recorded revision/i.test(error.message) ||
+            typeof this._worktrees.recoverCandidate !== "function"
+          ) {
+            throw error;
+          }
+          recoveredCandidateWorktree = await this._worktrees.recoverCandidate(candidate);
+          await this._worktrees.verifyCandidate(candidate);
+        }
+      }
       let refreshed;
       try {
+        const requestedAuthority = await this._repositoryAuthority.capture(task.repositoryPath, {
+          frozenRevision: task.experiment?.frozenBaseSha ?? null,
+        });
+        if (!requestedAuthority?.selectedRevision) {
+          throw new Error("The repository target did not produce a verified revision.");
+        }
+        if (requestedAuthority.upstreamRef && requestedAuthority.remoteVerification?.status !== "verified") {
+          throw new Error("The tracked repository target could not be verified remotely.");
+        }
         const remoteTargetRevision =
           task.blocker?.source === "github" && typeof this._github.fetchTarget === "function"
             ? await this._github.fetchTarget(candidate, {
                 remoteName: task.pullRequestIntent?.remoteName ?? task.blocker?.remoteName ?? "origin",
               })
             : null;
-        refreshed = await this._worktrees.refreshCandidate(
-          candidate,
-          remoteTargetRevision ? { targetRevision: remoteTargetRevision } : undefined,
-        );
+        refreshed = await this._worktrees.refreshCandidate(candidate, {
+          targetRevision: remoteTargetRevision ?? requestedAuthority.selectedRevision,
+        });
         const authority = await this._repositoryAuthority.capture(task.repositoryPath, {
           frozenRevision: task.experiment?.frozenBaseSha ?? null,
         });
@@ -154,6 +177,9 @@ export class CandidateOperationsOrchestrator {
         }
         refreshed.repositoryAuthority = authority;
       } catch (error) {
+        if (refreshed && typeof this._worktrees.recoverCandidate === "function") {
+          await this._worktrees.recoverCandidate(candidate);
+        }
         if (/candidate refresh conflicted/i.test(error.message)) {
           await this._store.update(id, (draft) => {
             const activeCandidate = currentCandidate(draft);
@@ -268,6 +294,17 @@ export class CandidateOperationsOrchestrator {
                 "decision",
               ),
             );
+            if (recoveredCandidateWorktree) {
+              draft.events.push(
+                activity(
+                  "implement",
+                  "Interrupted candidate refresh recovered",
+                  `${candidate.id} was restored to its recorded ${refreshed.previousHeadRevision.slice(0, 8)} revision before the refresh was retried.`,
+                  "success",
+                  "decision",
+                ),
+              );
+            }
           },
         );
       } catch (error) {

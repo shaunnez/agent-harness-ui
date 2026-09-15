@@ -1,3 +1,4 @@
+import { candidateRepairCircuitExhausted } from "../src/workflow-recovery-policy.ts";
 import { PROJECTED_ACTIONS, runActionAdmission } from "./action-policy.mjs";
 import {
   companionActionResponse,
@@ -14,7 +15,7 @@ import {
 import { stageRunLimitFor } from "./run-activity.mjs";
 
 const ROUTED_TASK_ACTIONS = new Set([
-  ...PROJECTED_ACTIONS.filter((action) => action !== "continue-implementation"),
+  ...PROJECTED_ACTIONS.filter((action) => !["continue-implementation", "retry-design"].includes(action)),
   "cancel",
 ]);
 
@@ -203,8 +204,10 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson, re
       }
       if (
         action === "plan" &&
-        ["failed", "blocked"].includes(task.status) &&
-        task.currentStage === "implement"
+        ((["failed", "blocked"].includes(task.status) && task.currentStage === "implement") ||
+          (["repair-required", "failed", "blocked"].includes(task.status) &&
+            task.candidates.at(-1)?.status === "repair_required" &&
+            candidateRepairCircuitExhausted(task, task.candidates.at(-1))))
       ) {
         const result = await orchestrator.correctInvalidPlan(id);
         send(response, 202, result);
@@ -266,7 +269,7 @@ export function createTaskActionRoutes({ store, orchestrator, send, readJson, re
               workflowCandidateRevision,
               workflowReservationId,
             } = reservedGrant;
-            const nextStageLimit = currentLimit + 1;
+            const nextStageLimit = Math.max(currentLimit, reservedGrant.currentAttempts) + 1;
             draft.stageRunLimits ??= {};
             draft.stageRunLimits[grantedStage] = nextStageLimit;
             draft.status = "failed";

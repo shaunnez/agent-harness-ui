@@ -73,7 +73,7 @@ test("renders and dispatches the bounded specification retry action", () => {
       },
     });
     const designRetryAction = nextAction(failedDesign);
-    assert.equal(designRetryAction.action, "specification");
+    assert.equal(designRetryAction.action, "retry-design");
     assert.equal(designRetryAction.label, "Retry failed design");
     assert.match(designRetryAction.detail, /published URL/);
 
@@ -642,6 +642,36 @@ test("uses the Implement repair allowance when the failing gate remains the view
   });
 });
 
+test("routes an exhausted standard repair circuit to a corrected plan", () =>
+  withWorkspace(async ({ nextAction }) => {
+    const task = createTask({
+      status: "repair-required",
+      currentStage: "dev-review",
+      workflowProfile: { selected: "standard" },
+      attemptsByStage: { implement: 3, "dev-review": 3 },
+      stageRunLimits: { implement: 3, "dev-review": 3, plan: 3 },
+      candidates: [
+        {
+          id: "C1",
+          revisionNumber: 3,
+          status: "repair_required",
+          baseRevision: "a".repeat(40),
+          headRevision: "d".repeat(40),
+          revisions: [
+            { number: 1, reason: "assembly", headRevision: "b".repeat(40) },
+            { number: 2, reason: "repair", headRevision: "c".repeat(40) },
+            { number: 3, reason: "repair", headRevision: "d".repeat(40) },
+          ],
+        },
+      ],
+    });
+    const projected = withActionEligibility(task);
+    assert.equal(projected.actionEligibility.actions["grant-retry"].allowed, false);
+    assert.equal(projected.actionEligibility.actions.plan.allowed, true);
+    assert.equal(nextAction(projected).action, "plan");
+    assert.equal(nextAction(projected).label, "Correct plan before another candidate");
+  }));
+
 test("renders retry grant provenance in activity and decision surfaces without fabricating legacy audit", () => {
   return withWorkspace(async ({ RuntimeTaskWorkspace, RuntimeActivity, RunActivity }) => {
     const auditEvent = {
@@ -863,7 +893,7 @@ test("renders merge reconciliation as Needs input without investigation or runni
   });
 });
 
-test("offers ownership-blocked continuation before a generic retry and keeps unrelated failures ineligible", () =>
+test("routes ownership-blocked work back to plan correction and keeps it out of retained continuation", () =>
   withWorkspace(async ({ nextAction }) => {
     const task = createTask({
       status: "blocked",
@@ -890,9 +920,12 @@ test("offers ownership-blocked continuation before a generic retry and keeps unr
       ],
     });
     const projected = withActionEligibility(task);
-    assert.equal(projected.actionEligibility.actions["continue-package"].allowed, true);
-    assert.equal(nextAction(projected).action, "continue-package");
-    assert.equal(nextAction(projected).label, "Continue retained S2");
+    assert.equal(projected.actionEligibility.actions["continue-package"].allowed, false);
+    assert.equal(projected.actionEligibility.actions["grant-retry"].allowed, false);
+    assert.match(projected.actionEligibility.actions["grant-retry"].reason, /require a corrected plan/i);
+    assert.equal(projected.actionEligibility.actions.plan.allowed, true);
+    assert.equal(nextAction(projected).action, "plan");
+    assert.equal(nextAction(projected).label, "Correct implementation plan");
 
     for (const changed of [
       { status: "running", activeRunKind: "implementation" },
