@@ -1,0 +1,14 @@
+{
+  "kind": "synthetic shader qualification, not coastal art acceptance",
+  "dryRegionChangedPixels": 0,
+  "offshoreRegionChangedPixels": 0,
+  "wetRegionChangedPixels": 56311,
+  "earlyBrightestX": 576,
+  "lateBrightestX": 400,
+  "dayBrightestRGBSum": 257,
+  "nightBrightestRGBSum": 173,
+  "consoleErrors": [],
+  "captureEncoding": "JPEG",
+  "dryRegion": "x0..289, 10px guard band from synthetic boundary at300",
+  "captureLimit": "Browser screenshot is JPEG despite retained filename. A +/-3 RGB ringing artifact occurs within4px of the hard synthetic boundary; exclude10px in pixel-difference check. Actual coast is occluded by terrain; inspect registered masks independently."
+}

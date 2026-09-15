@@ -1,0 +1,9 @@
+{
+  "status": "pass",
+  "unchangedHashes": {
+    "base-foundry.glb": "24df624f32170d08a80b6a493e0dc17a5e9e73574e79390d677e60f75547973e",
+    "environment.glb": "450a464c1478d7f356ee0b30fada58205f827b2a3ea88a584b3324cf6fa2e9a9",
+    "base-relay.glb": "9bc6293b75355e113e518545016c544f87152f2f5fb542433703544e93aff4cb",
+    "base-command.glb": "e0b24a9fdbc874570507ac33107a7490005fd538120fb4025fa977d5f192e60d"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "provenance": "See PROVENANCE.md and License_Standard.txt",
+  "assets": [
+    {
+      "file": "Bark_TwistedTree.png",
+      "bytes": 4630805,
+      "sha256": "01608a96c42954eb725b32824530b51e67a2f3d85432d21a8d8adff958d2084a"
+    },
+    {
+      "file": "Bark_TwistedTree_Normal.png",
+      "bytes": 5728199,
+      "sha256": "692da2f58909263f074cb17b36defd09f56bf89ab7efda567a9a3e59261747b3"
+    },
+    {
+      "file": "Bush_Common.bin",
+      "bytes": 91800,
+      "sha256": "a5e1a773c8ba78fd9c05a8b342131eba4879302a8fddd2c5186cab9ee1ef4966"
+    },
+    {
+      "file": "Bush_Common.gltf",
+      "bytes": 2101,
+      "sha256": "77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90"
+    },
+    {
+      "file": "Leaves_TwistedTree_C.png",
+      "bytes": 70353,
+      "sha256": "0e459b56b14c0e81b1b7cf3d1e8c6f0bb71790eb6c46bb02a76a922d8df646ea"
+    },
+    {
+      "file": "License_Standard.txt",
+      "bytes": 852,
+      "sha256": "120710e542c3ebaf83856c4eb55b4a1e680593b39302eba7fdc5d942dfe78c58"
+    },
+    {
+      "file": "PROVENANCE.md",
+      "bytes": 271,
+      "sha256": "a6c6f63fa3a425a5aabab5d6e998ac36cc89479c51b63d0a0595282aa3f6813f"
+    },
+    {
+      "file": "TwistedTree_3.bin",
+      "bytes": 771176,
+      "sha256": "04ad394055b72a3d3717d8e3617ae733ea155580330d94d7387238928755eaca"
+    },
+    {
+      "file": "TwistedTree_3.gltf",
+      "bytes": 3817,
+      "sha256": "c719e6f2f26bb5f4a32f92194b71f432e2444870cb0f3b41989e05c7ad3b9ecd"
+    },
+    {
+      "file": "TwistedTree_5.bin",
+      "bytes": 811680,
+      "sha256": "687fe8183da031a2c6b66668081bf1bc8e5c408b49f165a2b13b45742280e07b"
+    },
+    {
+      "file": "TwistedTree_5.gltf",
+      "bytes": 3822,
+      "sha256": "c193b23d5dc52e7b9c9d5ddda2bc0b89cd1cbbd4b8f1c08fae3216424bd1e982"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "environmentVariable": "MF_COASTAL_FREE_SOURCE_ROOT",
+  "defaultLookup": [
+    "sibling staging/cinematic-v1/astra",
+    "original retained local worktree source path (legacy fallback)"
+  ],
+  "licence": "Quaternius free Standard assets, CC0, retained acquisition evidence; no paid generation or new acquisition",
+  "records": [
+    {
+      "relativeToFreeSourceRoot": "sources/acquisition.json",
+      "sha256": "bcd02629fec9f24131f7e3081a88f471dc3a35c1c433c1a550122d7d23caf3f7",
+      "bytes": 878
+    },
+    {
+      "relativeToFreeSourceRoot": "sources/stylized-nature-megakit/glTF/Rock_Medium_1.bin",
+      "sha256": "ea79527d4c2b3bdb7a28bf589bf0c1fd96d192a4d0738636753911dd58681e99",
+      "bytes": 13284
+    },
+    {
+      "relativeToFreeSourceRoot": "sources/stylized-nature-megakit/glTF/Rock_Medium_1.gltf",
+      "sha256": "5d1ab1fa03218f4a908728ed0eabe6486344a7e4f510b0d3d6f837fd1d011bd8",
+      "bytes": 1831
+    },
+    {
+      "relativeToFreeSourceRoot": "sources/stylized-nature-megakit/glTF/Rock_Medium_2.bin",
+      "sha256": "76b60bf8349f71abdb0ed462b3223d93c2dcabdfb5754bc132e18b021cc6c805",
+      "bytes": 9432
+    },
+    {
+      "relativeToFreeSourceRoot": "sources/stylized-nature-megakit/glTF/Rock_Medium_2.gltf",
+      "sha256": "fac2d05a05f2d0d2098de59c09b58f42cc875c9caca4fd4c4bd57f3d36e7b12e",
+      "bytes": 1825
+    },
+    {
+      "relativeToFreeSourceRoot": "sources/stylized-nature-megakit/glTF/Rock_Medium_3.bin",
+      "sha256": "63f94bce2d3fb3fe25b2d6c843a828b1bec76855dbaac93fcf5d43582309caad",
+      "bytes": 20124
+    },
+    {
+      "relativeToFreeSourceRoot": "sources/stylized-nature-megakit/glTF/Rock_Medium_3.gltf",
+      "sha256": "9a575b911372cf91693aa3a56aea8137ec2251c2b99fb34a31272ee64503047f",
+      "bytes": 1832
+    },
+    {
+      "relativeToFreeSourceRoot": "sources/stylized-nature-megakit/glTF/Rocks_Diffuse.png",
+      "sha256": "b813696df6081f469a127092eb0ce45cc39d56f3ccc0699152bfcd3804810b48",
+      "bytes": 2517398
+    },
+    {
+      "relativeToFreeSourceRoot": "vegetation-production/blend/spreading-grove-r2.blend",
+      "sha256": "5c331957742e5fb3053e54ae4a269eae4a0104f8ecb18000141cf6fb38507c65",
+      "bytes": 11628995
+    }
+  ],
+  "standaloneExport": "Packed blend/coastal-detailed.blend contains all geometry and textures. source/export_layers.py does not access these rebuild inputs."
+}

@@ -1,0 +1,147 @@
+{
+  "packedExternalImages": [
+    {
+      "name": "Bark_TwistedTree",
+      "packed": true,
+      "filepath": "//../../../../../../../../agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Bark_TwistedTree.png"
+    },
+    {
+      "name": "Bark_TwistedTree_Normal",
+      "packed": true,
+      "filepath": "//../../../../../../../../agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Bark_TwistedTree_Normal.png"
+    },
+    {
+      "name": "Leaves_TwistedTree_C",
+      "packed": true,
+      "filepath": "//../../../../../../../../agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Leaves_TwistedTree_C.png"
+    },
+    {
+      "name": "Rocks_Diffuse",
+      "packed": true,
+      "filepath": "//../../../../../../../../agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Rocks_Diffuse.png"
+    }
+  ],
+  "terrainNormals": {
+    "main headland undulating upper surface": {
+      "faces": 2356,
+      "downwardFaces": 0
+    },
+    "far compact abutment undulating upper surface": {
+      "faces": 992,
+      "downwardFaces": 0
+    }
+  },
+  "staticCourtFixtures": [
+    {
+      "name": "fixed apron electrical pedestal",
+      "groundFootprintLogical": [
+        152.12000274658203,
+        24.799999237060547,
+        176.12000274658203,
+        36.79999923706055
+      ],
+      "overlapsPatrolZone": false
+    },
+    {
+      "name": "fixed apron protective bollard",
+      "groundFootprintLogical": [
+        -158.88000106811523,
+        20.559999465942383,
+        -153.11999893188477,
+        23.440000534057617
+      ],
+      "overlapsPatrolZone": false
+    },
+    {
+      "name": "fixed apron protective bollard.001",
+      "groundFootprintLogical": [
+        155.11999702453613,
+        49.559998512268066,
+        160.88000297546387,
+        52.440001487731934
+      ],
+      "overlapsPatrolZone": false
+    },
+    {
+      "name": "low apron corner kerb",
+      "groundFootprintLogical": [
+        -36.79999542236328,
+        91.00000381469727,
+        -8.000007629394531,
+        105.39999771118164
+      ],
+      "overlapsPatrolZone": false
+    },
+    {
+      "name": "low apron corner kerb.001",
+      "groundFootprintLogical": [
+        9.920005798339844,
+        91.96000289916992,
+        38.719993591308594,
+        106.3599967956543
+      ],
+      "overlapsPatrolZone": false
+    }
+  ],
+  "projectedOriginLogical": [
+    640.0,
+    599.9999713897705
+  ],
+  "projectedBasisLogical": {
+    "x": [
+      -32.00000762939453,
+      16.00001335144043
+    ],
+    "y": [
+      31.999969482421875,
+      16.00001335144043
+    ],
+    "z": [
+      0.0,
+      -39.191837310791016
+    ]
+  },
+  "areaLights": [
+    {
+      "name": "warm upper left",
+      "location": [
+        10.0,
+        -6.0,
+        16.0
+      ],
+      "rotationEuler": [
+        0.6298394203186035,
+        7.936246504414157e-08,
+        1.0303767919540405
+      ],
+      "energy": 4200.0,
+      "color": [
+        1.0,
+        0.8299999833106995,
+        0.6600000262260437
+      ],
+      "size": 7.0
+    },
+    {
+      "name": "cool sky fill",
+      "location": [
+        4.0,
+        1.0,
+        8.0
+      ],
+      "rotationEuler": [
+        0.4758822023868561,
+        -3.862894359940583e-08,
+        1.8157750368118286
+      ],
+      "energy": 600.0,
+      "color": [
+        0.6499999761581421,
+        0.7799999713897705,
+        1.0
+      ],
+      "size": 9.0
+    }
+  ],
+  "standaloneExportInput": "blend/coastal-detailed.blend; all textures packed; export_layers.py reads no acquisition inputs"
+}

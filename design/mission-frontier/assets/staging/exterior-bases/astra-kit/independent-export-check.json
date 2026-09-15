@@ -1,0 +1,86 @@
+{
+  "status": "pass",
+  "checks": {
+    "environment": true,
+    "command": true,
+    "relay": true,
+    "foundry": true
+  },
+  "delivered": {
+    "environment": {
+      "file": "environment.glb",
+      "bytes": 58413356,
+      "sha256": "450a464c1478d7f356ee0b30fada58205f827b2a3ea88a584b3324cf6fa2e9a9",
+      "meshes": 27,
+      "materials": 26,
+      "images": 19,
+      "triangles": 622264
+    },
+    "command": {
+      "file": "base-command.glb",
+      "bytes": 20505940,
+      "sha256": "e0b24a9fdbc874570507ac33107a7490005fd538120fb4025fa977d5f192e60d",
+      "meshes": 39,
+      "materials": 15,
+      "images": 6,
+      "triangles": 217400
+    },
+    "relay": {
+      "file": "base-relay.glb",
+      "bytes": 16955980,
+      "sha256": "9bc6293b75355e113e518545016c544f87152f2f5fb542433703544e93aff4cb",
+      "meshes": 39,
+      "materials": 15,
+      "images": 6,
+      "triangles": 180152
+    },
+    "foundry": {
+      "file": "base-foundry.glb",
+      "bytes": 17477428,
+      "sha256": "24df624f32170d08a80b6a493e0dc17a5e9e73574e79390d677e60f75547973e",
+      "meshes": 40,
+      "materials": 15,
+      "images": 6,
+      "triangles": 189328
+    }
+  },
+  "independentlyExported": {
+    "environment": {
+      "file": "environment.glb",
+      "bytes": 81626268,
+      "sha256": "7befac2e2f14d782d35f4302073ae3caaaed593e7f854b2b3b46ddde99a96887",
+      "meshes": 27,
+      "materials": 26,
+      "images": 19,
+      "triangles": 622264
+    },
+    "command": {
+      "file": "base-command.glb",
+      "bytes": 20927956,
+      "sha256": "2a6e74bc1e7c89e909cb79f69e3b55193ed3b324b0acb114500a89db6f17c7a8",
+      "meshes": 39,
+      "materials": 15,
+      "images": 6,
+      "triangles": 217400
+    },
+    "relay": {
+      "file": "base-relay.glb",
+      "bytes": 17377988,
+      "sha256": "208137bfd826a682993783ae8d97eeb113f24509218c84dce4da8547665aa209",
+      "meshes": 39,
+      "materials": 15,
+      "images": 6,
+      "triangles": 180152
+    },
+    "foundry": {
+      "file": "base-foundry.glb",
+      "bytes": 17899428,
+      "sha256": "dcf9974e534dee85575a3d3d1bda295565b62f96cb28a26fbe32c7f571c1b0a5",
+      "meshes": 40,
+      "materials": 15,
+      "images": 6,
+      "triangles": 189328
+    }
+  },
+  "note": "Reopened saved editable blends and independently exported. Geometry/material/image counts match; byte identity is reported separately by hashes."
+}

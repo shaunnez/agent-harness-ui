@@ -1,0 +1,5 @@
+
+> agent-harness-ui@0.0.0 format:check
+> biome format src server scripts tests worker
+
+Checked 472 files in 137ms. No fixes applied.

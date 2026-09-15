@@ -1,5 +1,14 @@
 import { ArrowLeft, Plus, RocketLaunch } from "@phosphor-icons/react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import type { NewTaskDraft } from "../../domain";
 import { createFixtureGateway } from "../fixtures/gateway";
 import { errorMessage, RefreshCoordinator } from "../runtime/coordinator";
@@ -7,6 +16,7 @@ import { createDecisionSession } from "../runtime/decision-session";
 import { liveGateway } from "../runtime/live-gateway";
 import { commandDestination, isActiveRun, latestRun, needsYou } from "../runtime/presentation";
 import { AgentPanel } from "../views/AgentPanel";
+import { BaseSelection } from "../views/BaseSelection";
 import { DecisionNavigation } from "../views/DecisionNavigation";
 import { PinnedWork } from "../views/WatchPins";
 import { AttentionQueue, ConnectionBadge, SelectionHud, WorldActions, WorldClock } from "../views/WorldHud";
@@ -16,7 +26,7 @@ import { cinematicWorker } from "../world/cinematic-catalog";
 import { tasksInProject } from "../world/layout";
 import type { WorldRenderer } from "../world/renderer";
 import { WorldCanvas } from "../world/WorldCanvas";
-import { BaseSelection } from "../views/BaseSelection";
+import { type ProofControls, proofRequested, proofVisible } from "../world-3d/model";
 import { BuildDiagnostics } from "./BuildDiagnostics";
 import { useBottomHudLayout } from "./bottom-hud-layout";
 import { CommandWorkspaceProvider } from "./command-context";
@@ -25,6 +35,10 @@ import { type Overlay, OverlayHost } from "./OverlayHost";
 import { PanelMemoryProvider } from "./panel-state";
 import { readPreferences, savePreferences } from "./preferences";
 import { WorldAudio } from "./world-audio";
+
+const ProofWorld = lazy(() =>
+  import("../world-3d/ProofWorld").then((module) => ({ default: module.ProofWorld })),
+);
 
 export function FrontierApp() {
   const runtime = useMemo(
@@ -62,6 +76,7 @@ export function FrontierApp() {
     priority: "medium",
   });
   const renderer = useRef<WorldRenderer | null>(null);
+  const proofRenderer = useRef<ProofControls | null>(null);
   const worldAudio = useRef<WorldAudio | null>(null);
   const [audioError, setAudioError] = useState<string | null>(null);
   useEffect(() => {
@@ -130,6 +145,7 @@ export function FrontierApp() {
       watchedRunActive: Boolean(task && run && isActiveRun(task, run)),
       watchedStage: run?.stage,
       watchedRole: run?.role,
+      watchedRunStatus: run?.status ?? null,
     }),
     [
       runtime.gateway.mode,
@@ -147,6 +163,8 @@ export function FrontierApp() {
       run,
     ],
   );
+  const renderProof = proofVisible(window.location.search, sceneInput);
+  const activeRenderer = () => (renderProof ? proofRenderer.current : renderer.current);
   // Measure after scene effects and an intervening paint, including the visible selection frame.
   useEffect(() => {
     const started = selectionTiming.current.started;
@@ -169,6 +187,7 @@ export function FrontierApp() {
     if (fixture && !initialSelection.current && snapshot.tasks.length) {
       initialSelection.current = true;
       if (runtime.getSnapshot().selectedId) return;
+      if (proofRequested(window.location.search) && !location.taskId) return;
       runtime.select(
         location.taskId ??
           (snapshot.tasks.some((item) => item.id === "PC-142") ? "PC-142" : (snapshot.tasks[0]?.id ?? null)),
@@ -284,7 +303,7 @@ export function FrontierApp() {
     if (kind === "task") {
       runtime.select(id);
       setPickedProject(null);
-      if (preferences.followSelection) renderer.current?.follow(id);
+      if (preferences.followSelection) activeRenderer()?.follow(id);
     } else if (pickedProject === id) navigate({ ...worldLocation, view: "project", projectId: id });
     else {
       setPickedProject(id);
@@ -351,15 +370,15 @@ export function FrontierApp() {
         setPickedProject(null);
       } else if (event.key === " " && snapshot.selectedId) {
         event.preventDefault();
-        renderer.current?.follow(snapshot.selectedId);
+        activeRenderer()?.follow(snapshot.selectedId);
       } else if (event.key.startsWith("Arrow")) {
         event.preventDefault();
-        renderer.current?.pan(
+        activeRenderer()?.pan(
           event.key === "ArrowLeft" ? 70 : event.key === "ArrowRight" ? -70 : 0,
           event.key === "ArrowUp" ? 70 : event.key === "ArrowDown" ? -70 : 0,
         );
-      } else if (event.key === "+" || event.key === "=") renderer.current?.zoom(1.2);
-      else if (event.key === "-") renderer.current?.zoom(0.8);
+      } else if (event.key === "+" || event.key === "=") activeRenderer()?.zoom(1.2);
+      else if (event.key === "-") activeRenderer()?.zoom(0.8);
     };
     window.addEventListener("keydown", keydown);
     return () => window.removeEventListener("keydown", keydown);
@@ -370,15 +389,36 @@ export function FrontierApp() {
   const shell = useBottomHudLayout(Boolean(selectedForHud), Boolean(pickedProject), location.view);
   const workspace = (
     <main ref={shell} className={`frontier-shell view-${location.view}`}>
-      <WorldCanvas
-        onWorldSettings={() => open({ kind: "world-settings" })}
-        input={sceneInput}
-        preferences={preferences}
-        onSelect={choose}
-        onEnterProject={(id) => navigate({ ...worldLocation, view: "project", projectId: id })}
-        onArtifact={(taskId, artifactId) => open({ kind: "artifact", taskId, artifactId })}
-        rendererRef={renderer}
-      />
+      {renderProof ? (
+        <Suspense
+          fallback={
+            <p className="world-error panel" role="status">
+              Loading 3D preview…
+            </p>
+          }
+        >
+          <ProofWorld
+            input={sceneInput}
+            selectedProjectId={pickedProject}
+            preferences={preferences}
+            controlsRef={proofRenderer}
+            onSelect={choose}
+            onExterior={() => navigate(worldLocation)}
+            onEnterProject={(id) => navigate({ ...worldLocation, view: "project", projectId: id })}
+            onWorldSettings={() => open({ kind: "world-settings" })}
+          />
+        </Suspense>
+      ) : (
+        <WorldCanvas
+          onWorldSettings={() => open({ kind: "world-settings" })}
+          input={sceneInput}
+          preferences={preferences}
+          onSelect={choose}
+          onEnterProject={(id) => navigate({ ...worldLocation, view: "project", projectId: id })}
+          onArtifact={(taskId, artifactId) => open({ kind: "artifact", taskId, artifactId })}
+          rendererRef={renderer}
+        />
+      )}
       <header className="top-hud">
         <button type="button" className="brand panel" onClick={() => navigate(worldLocation)}>
           <RocketLaunch size={26} weight="duotone" />
@@ -388,13 +428,13 @@ export function FrontierApp() {
           <span className="sr-only">Project scope</span>
           <select
             value={location.projectId ?? "all"}
-            onChange={(event) =>
+            onChange={(event) => {
               navigate(
                 event.target.value === "all"
                   ? worldLocation
                   : { ...worldLocation, view: "project", projectId: event.target.value },
-              )
-            }
+              );
+            }}
           >
             <option value="all">All projects</option>
             {snapshot.projects
@@ -460,7 +500,7 @@ export function FrontierApp() {
         <BaseSelection
           project={project}
           tasks={tasksInProject(snapshot.tasks, project)}
-          rendererRef={renderer}
+          rendererRef={renderProof ? proofRenderer : renderer}
           onEnter={() => navigate({ ...worldLocation, view: "project", projectId: project.id })}
         />
       )}
@@ -546,7 +586,7 @@ export function FrontierApp() {
               />
             ) : undefined
           }
-          readWorldHour={() => renderer.current?.worldHour}
+          readWorldHour={() => activeRenderer()?.worldHour}
           stack={stack}
           snapshot={snapshot}
           scopedTasks={scopedTasks}

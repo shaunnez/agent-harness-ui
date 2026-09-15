@@ -1,0 +1,30 @@
+
+> agent-harness-ui@0.0.0 test:frontier-api
+> node --test tests/frontier/api/*.test.mjs
+
+✔ creation persists exact per-role overrides across profiles and rejects invalid matrices atomically (1025.0615ms)
+✔ a provider preset snapshots profile-aware inheritance and rejects cross-provider pins (351.3635ms)
+✔ future role choice survives profile escalation while historical evidence is immutable (8.844833ms)
+✔ Frontier origin, CSRF, persisted questions and denied stale answers use the real isolated API (1428.057791ms)
+✔ an existing directory cannot be adopted as a test data store without its marker (0.460917ms)
+✔ JSON: project management retains identity/history and serializes archive versus creation (44.344708ms)
+✔ SQLite: project management retains identity/history and serializes archive versus creation (20.660375ms)
+✔ project routes preserve repository identity and reject archived task admission (738.886125ms)
+✔ execution defaults round-trip through the real API without rewriting existing task or run policies (1330.143334ms)
+✔ workspace observation ordering is independent of equal or late provider times; pagination is bounded (17.411625ms)
+✔ material state history survives completion, repair and renewed blocking between reads (10.204875ms)
+✔ completed run records are idempotent, preserve missing/zero usage and exclude transcript contents (16.113791ms)
+✔ source identity survives restart but not a copied database or rollback-compatible JSON import (28.765167ms)
+✔ pruning during pagination reports incomplete coverage; invalid and cross-source cursors fail closed (23.183167ms)
+✔ workspace API uses the existing HTTP boundary and exact run reads do not hydrate task histories (558.0215ms)
+✔ schema-2 upgrade starts at an explicit baseline and leaves canonical task data intact (40.642ms)
+✔ undated terminal runs remain inspectable without acquiring an invented completion time (24.499625ms)
+✔ watch summaries park waiting runs and candidate gate observations retain exact identity and reason (29.732667ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1601.44875

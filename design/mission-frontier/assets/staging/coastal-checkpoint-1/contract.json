@@ -1,0 +1,171 @@
+{
+  "revision": 2,
+  "status": "Blockout integrated and compared at normal World camera. Approved for detail with recorded geometry corrections.",
+  "projection": {
+    "kind": "orthographic",
+    "azimuthDegrees": 45,
+    "elevationDegrees": 30,
+    "groundRatio": "2:1",
+    "pixelDensity": 2,
+    "logicalSize": [
+      1280,
+      960
+    ],
+    "sourceSize": [
+      2560,
+      1920
+    ],
+    "groundAnchor": [
+      640,
+      600
+    ],
+    "placementScale": 1,
+    "projectOrigin": [
+      0,
+      0
+    ],
+    "calibration": "Use camera target/shift so chosen courtyard ground origin projects to [640,600] logical. Derive and report projected basis vectors using world_to_camera_view. Existing 2:1 route axes must align.",
+    "measuredBasisLogical": {
+      "x": [
+        -32.000008,
+        16.000014
+      ],
+      "y": [
+        31.999969,
+        16.000014
+      ],
+      "z": [
+        0,
+        -39.191837
+      ]
+    }
+  },
+  "composition": {
+    "worldFootprint": {
+      "left": -540,
+      "right": 590,
+      "top": -420,
+      "bottom": 300
+    },
+    "buildingZone": {
+      "left": -235,
+      "right": 170,
+      "top": -360,
+      "bottom": -15
+    },
+    "openCourtZone": {
+      "left": -160,
+      "right": 170,
+      "top": -20,
+      "bottom": 100
+    },
+    "workers": [
+      [
+        -30,
+        25
+      ],
+      [
+        32,
+        25
+      ]
+    ],
+    "ambientCrew": "inspect basePatrol world paths; keep forward ground clear",
+    "entrance": [
+      0,
+      10
+    ],
+    "bridgeNear": [
+      250,
+      -115
+    ],
+    "bridgeFar": [
+      430,
+      -205
+    ],
+    "routeJoin": [
+      520,
+      -250
+    ],
+    "routeAxis": [
+      1,
+      -0.5
+    ],
+    "routeWidthLogical": 42,
+    "bridgeDeckHeightNote": "Road and bridge deck meet same projected z=0 ground plane at named sockets; sea below by substantial cliff elevation. Inlet under bridge with near/far abutments; terrain spur at join. Preserve x/y project positions.",
+    "routeWidthNote": "Widen hero crossing/approach to42 logical px for normal-scale legibility; taper far-end to existing26.4-width junction in last70logical px. Keep sockets fixed.",
+    "courtFeedback": "Widen loading court/asymmetric service apron; keep all worker points and patrol clear. Fix coplanar road/court overlap. Model modular edge/drains/curbs and a few static service props outside patrol, no baked task cargo.",
+    "terrainFeedback": "Keep main left silhouette within-540 to avoid excess normal-camera clipping; jagged cliff faces/strata, interrupted terraces/sheltered coves, less uninterrupted empty plateau. Reference material organic density, not simple extruded rings."
+  },
+  "placement": {
+    "featuredPolicy": "featuredProjectId sorts createdAt then id",
+    "fixtureOrigin": [
+      280,
+      610
+    ],
+    "fixtureNeighbor": [
+      340,
+      120
+    ],
+    "existingRouteJoint": [
+      800,
+      360
+    ],
+    "existingRouteSegmentRelative": [
+      [
+        0,
+        10
+      ],
+      [
+        520,
+        -250
+      ]
+    ],
+    "consumer": "World cinematic featured exterior only, keep HQ/Watch current",
+    "variableLayout": "Builder replaces only matching real route section; separate bridge layer may be omitted for other route geometry. Never create a phantom project connection."
+  },
+  "layers": [
+    {
+      "id": "mf.coastal.shallows",
+      "order": 0,
+      "purpose": "terrain-derived submerged water colour/depth, transparent outside coverage, no arbitrary rectangle edges"
+    },
+    {
+      "id": "mf.coastal.terrain",
+      "order": 1,
+      "purpose": "terraces cliffs ground roads/court, with base contact shadows; no architecture/bridge in this layer"
+    },
+    {
+      "id": "mf.coastal.base",
+      "order": 3,
+      "purpose": "articulated base behind open live court, transparent everywhere else"
+    },
+    {
+      "id": "mf.coastal.bridge",
+      "order": 2,
+      "purpose": "elevated connected deck rails supports abutments; separate from terrain"
+    },
+    {
+      "id": "mf.coastal.front",
+      "order": 5,
+      "purpose": "only necessary foreground occlusion; keep worker court unobstructed"
+    },
+    {
+      "id": "mf.coastal.lights",
+      "order": 6,
+      "purpose": "registered practical emission only, day/night controlled"
+    }
+  ],
+  "masks": {
+    "shore": "registered straight-alpha RGBA; red channel encodes normalized offshore distance 0 at rocks to 1 outer surf extent; alpha encodes water visibility excluding land/supports. No baked white outline",
+    "depth": "registered RGBA; R water depth (0 shallow,1 deep), alpha water coverage. Can combine with shore channels if producer documents exact encoding.",
+    "foam": "Builder uses shore distance and coverage to animate crest advancing/receding without translating mask"
+  },
+  "export": {
+    "alpha": "straight RGBA PNG transparent, no matte",
+    "metadata": "entries.json each asset id/file/sourceSize/logicalSize/groundAnchor/sha256/bytes/boundsSourcePixels/sockets; all hashes measured",
+    "source": "source Blender/scripts + assembled blockout.png before material detail + final assembled preview + measurement json",
+    "light": "compatible upper-left warm daylight with cool ambient; report actual Blender area-light transform",
+    "workers": "No baked robots, labels, task state, artifacts or semantic lights"
+  },
+  "producerOwnership": "astra-scene/** only"
+}

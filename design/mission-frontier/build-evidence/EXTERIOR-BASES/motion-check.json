@@ -1,0 +1,91 @@
+{
+  "regions": {
+    "roof_identity": [
+      643,
+      152,
+      799,
+      219
+    ],
+    "sensor": [
+      803,
+      166,
+      847,
+      217
+    ],
+    "active_worker": [
+      383,
+      417,
+      440,
+      487
+    ],
+    "repair_worker": [
+      516,
+      443,
+      566,
+      509
+    ],
+    "sea": [
+      1320,
+      400,
+      1550,
+      680
+    ]
+  },
+  "measurements": {
+    "on": {
+      "roof_identity": {
+        "changedPixels": 5489,
+        "maxChannelChange": 15,
+        "meanChannelChange": 0.891982395713739
+      },
+      "sensor": {
+        "changedPixels": 1786,
+        "maxChannelChange": 10,
+        "meanChannelChange": 1.3810160427807487
+      },
+      "active_worker": {
+        "changedPixels": 1433,
+        "maxChannelChange": 20,
+        "meanChannelChange": 0.6899749373433584
+      },
+      "repair_worker": {
+        "changedPixels": 769,
+        "maxChannelChange": 7,
+        "meanChannelChange": 0.3406060606060606
+      },
+      "sea": {
+        "changedPixels": 39014,
+        "maxChannelChange": 5,
+        "meanChannelChange": 0.6684109730848862
+      }
+    },
+    "off": {
+      "roof_identity": {
+        "changedPixels": 0,
+        "maxChannelChange": 0,
+        "meanChannelChange": 0.0
+      },
+      "sensor": {
+        "changedPixels": 0,
+        "maxChannelChange": 0,
+        "meanChannelChange": 0.0
+      },
+      "active_worker": {
+        "changedPixels": 0,
+        "maxChannelChange": 0,
+        "meanChannelChange": 0.0
+      },
+      "repair_worker": {
+        "changedPixels": 0,
+        "maxChannelChange": 0,
+        "meanChannelChange": 0.0
+      },
+      "sea": {
+        "changedPixels": 0,
+        "maxChannelChange": 0,
+        "meanChannelChange": 0.0
+      }
+    }
+  },
+  "scope": "Actual screenshot differences at fixed night light and camera; changing HUD text is excluded."
+}

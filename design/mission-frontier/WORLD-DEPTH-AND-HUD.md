@@ -48,6 +48,7 @@ Verify actual browser scenes at normal desktop and 1280x720 laptop sizes, togeth
 
 Goal 6 remains bounded incremental operational activity persistence and meaningful recorded-event feedback. Its events can later drive deliveries and transitions. It does not replace the art-direction work above. Building placement, upgrades, unlocks and persistent names remain v2.
 
+
 ## HUD checkpoint — 15 September 2026
 
 The user subsequently started only Confirmed HUD steering. Its local implementation and acceptance are in `build-evidence/HUD/HANDOFF.md`. The proposed art and motion sections above remain planning; this HUD slice does not start them or Goal 6.

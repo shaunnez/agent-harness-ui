@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "status": "composition contract; producer may propose measured revisions before detail",
+  "units": "metres",
+  "axes": { "blender": "X right, Y back, Z up; front = -Y", "gltf": "X right, Y up, Z front; Blender export converts (x,y,z) to (x,z,-y)" },
+  "baseOrigin": [0, 4.2, 0],
+  "seaLevel": 0,
+  "groundLevel": 4,
+  "building": { "width": 24, "depth": 20, "height": 10, "front": "+Z", "courtyard": "open front court plus recessed central court; avoid monolithic box" },
+  "composition": { "terrainBoundsXZ": [-34, -32, 25, 31], "bridgeStart": [12, 4.2, 14], "bridgeEnd": [33, 4.2, 14], "farLanding": [37, 4, 14], "comment": "Irregular coast with terraced rear and rocky foreground; cove and bridge clear of worker court. Small far landing is scenery, not another project." },
+  "cameras": { "exterior": { "position": [56, 49, 70], "target": [5, 3, 2], "verticalSpan": 50 }, "cutaway": { "position": [38, 43, 52], "target": [0, 5, 1], "verticalSpan": 34 } },
+  "groups": ["MF_Terrain", "MF_BaseFixed", "MF_Roof", "MF_ShellCutaway", "MF_Interior", "MF_Court", "MF_Bridge", "MF_Props", "MF_Planting", "MF_Practicals"],
+  "worker": { "height": 1.8, "origin": "between feet at ground", "forward": "+Z", "file": "worker.glb", "requirement": "reuse existing worker source/type; no worker instances baked into scene" },
+  "sockets": {
+    "court_implement": [-4, 4.25, 16], "court_review": [3, 4.25, 14], "court_answer": [-10, 4.25, 11],
+    "interior_implement": [-5, 4.3, 0], "interior_review": [5, 4.3, 0], "interior_answer": [-5, 4.3, -5],
+    "base_label": [0, 14.5, -2]
+  },
+  "walkableRoutes": { "court": [[-8,4.25,13],[-4,4.25,18],[3,4.25,17],[7,4.25,12]] },
+  "selectionBounds": { "base": { "center": [0, 8, 0], "size": [24, 10, 20] }, "workerRadius": 1 },
+  "materialRoles": { "structure": "warm ivory ceramic/paint with recesses, dark joints, wear and real PBR detail", "ground": "varied rock, soil, short ground cover; no smooth green carpet", "practical": "material names prefixed practical_; runtime controls emissive intensity", "taskStatus": "runtime only; no task progress or fixture identity in scenery" },
+  "deliverables": ["scene.blend", "scene.glb", "worker.glb", "scene-metadata.json", "source/build_scene.py", "source/export_scene.py", "HANDOFF.md"],
+  "metadata": "Must contain actual exported camera, socket, bounds and shorelineXZ coordinates, material and named group inventory. Builder updates this shared contract if composition adjustments are agreed.",
+  "portableMaterials": "GLB PBR with embedded color/roughness/normal textures as needed. No Cycles holdouts, lights baked into base color, or unexported procedural detail.",
+  "ownership": { "producer": "astra-scene/** only", "builder": "shared contract, app, public assets, tests, evidence and integration" }
+}

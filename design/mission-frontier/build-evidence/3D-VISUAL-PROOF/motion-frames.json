@@ -1,0 +1,37 @@
+[
+  {
+    "file": "motion-running-1.jpg",
+    "time": "2026-09-15T13:16:18.894Z",
+    "view": "cutaway",
+    "lighting": "fixed daylight",
+    "motion": true
+  },
+  {
+    "file": "motion-running-2.jpg",
+    "time": "2026-09-15T13:16:19.162Z",
+    "view": "cutaway",
+    "lighting": "fixed daylight",
+    "motion": true
+  },
+  {
+    "file": "motion-running-3.jpg",
+    "time": "2026-09-15T13:16:19.466Z",
+    "view": "cutaway",
+    "lighting": "fixed daylight",
+    "motion": true
+  },
+  {
+    "file": "motion-off-1.jpg",
+    "time": "2026-09-15T13:17:26.131Z",
+    "view": "cutaway",
+    "lighting": "fixed daylight",
+    "motion": false
+  },
+  {
+    "file": "motion-off-2.jpg",
+    "time": "2026-09-15T13:17:26.501Z",
+    "view": "cutaway",
+    "lighting": "fixed daylight",
+    "motion": false
+  }
+]

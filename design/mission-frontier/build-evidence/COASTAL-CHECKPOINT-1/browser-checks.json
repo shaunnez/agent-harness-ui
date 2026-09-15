@@ -1,0 +1,15 @@
+{
+  "viewport": [
+    1280,
+    720
+  ],
+  "scrollSize": [
+    1280,
+    720
+  ],
+  "consoleErrors": [],
+  "source": "Actual CUA browser observations on 15 September 2026",
+  "connection": "Forced fixture disconnected -> Last known, Watch removed; QA toggle restored connection. Reconnect does not override forced fixture condition.",
+  "navigation": "World project label -> HQ -> repair Inspect -> Watch -> World",
+  "motion": "Off and forced disconnection shore crops identical; existing system reduced-motion path retained."
+}

@@ -1,0 +1,303 @@
+[
+  {
+    "id": "mf.coastal.terrain",
+    "file": "renders/terrain.png",
+    "sourceSize": [
+      2560,
+      1920
+    ],
+    "logicalSize": [
+      1280,
+      960
+    ],
+    "groundAnchor": [
+      640,
+      600
+    ],
+    "sha256": "c49c5f61b8c2e7196b2fe374a71ce4bdddabc4c7eca87d6da6a8ffd8ce68396d",
+    "bytes": 2142776,
+    "boundsSourcePixels": [
+      251,
+      481,
+      2434,
+      1787
+    ],
+    "sockets": {
+      "entrance": [
+        640.0,
+        609.99999
+      ],
+      "bridgeNear": [
+        890.0,
+        484.999981
+      ],
+      "bridgeFar": [
+        1070.0,
+        394.999981
+      ],
+      "routeJoin": [
+        1159.999924,
+        349.999981
+      ]
+    }
+  },
+  {
+    "id": "mf.coastal.base",
+    "file": "renders/base.png",
+    "sourceSize": [
+      2560,
+      1920
+    ],
+    "logicalSize": [
+      1280,
+      960
+    ],
+    "groundAnchor": [
+      640,
+      600
+    ],
+    "sha256": "084fcde0cabaaa68b4f76ddac8195bca62ca71c3951fe24b2394b3d4917760ca",
+    "bytes": 498377,
+    "boundsSourcePixels": [
+      813,
+      517,
+      1603,
+      1158
+    ],
+    "sockets": {
+      "entrance": [
+        640.0,
+        609.99999
+      ],
+      "bridgeNear": [
+        890.0,
+        484.999981
+      ],
+      "bridgeFar": [
+        1070.0,
+        394.999981
+      ],
+      "routeJoin": [
+        1159.999924,
+        349.999981
+      ]
+    }
+  },
+  {
+    "id": "mf.coastal.bridge",
+    "file": "renders/bridge.png",
+    "sourceSize": [
+      2560,
+      1920
+    ],
+    "logicalSize": [
+      1280,
+      960
+    ],
+    "groundAnchor": [
+      640,
+      600
+    ],
+    "sha256": "36441a90b2a5c80b92902f3799bedcd3e20586480b447cb3ff2c397beb04cac5",
+    "bytes": 149692,
+    "boundsSourcePixels": [
+      1709,
+      720,
+      2214,
+      1182
+    ],
+    "sockets": {
+      "entrance": [
+        640.0,
+        609.99999
+      ],
+      "bridgeNear": [
+        890.0,
+        484.999981
+      ],
+      "bridgeFar": [
+        1070.0,
+        394.999981
+      ],
+      "routeJoin": [
+        1159.999924,
+        349.999981
+      ]
+    }
+  },
+  {
+    "id": "mf.coastal.front",
+    "file": "renders/front.png",
+    "sourceSize": [
+      2560,
+      1920
+    ],
+    "logicalSize": [
+      1280,
+      960
+    ],
+    "groundAnchor": [
+      640,
+      600
+    ],
+    "sha256": "0307198f323f84c183c52e6ecb3fd6bd85fa7beb2ce1faec9fd85870a8015e33",
+    "bytes": 26644,
+    "boundsSourcePixels": [
+      1209,
+      1368,
+      1355,
+      1411
+    ],
+    "sockets": {
+      "entrance": [
+        640.0,
+        609.99999
+      ],
+      "bridgeNear": [
+        890.0,
+        484.999981
+      ],
+      "bridgeFar": [
+        1070.0,
+        394.999981
+      ],
+      "routeJoin": [
+        1159.999924,
+        349.999981
+      ]
+    }
+  },
+  {
+    "id": "mf.coastal.lights",
+    "file": "renders/lights.png",
+    "sourceSize": [
+      2560,
+      1920
+    ],
+    "logicalSize": [
+      1280,
+      960
+    ],
+    "groundAnchor": [
+      640,
+      600
+    ],
+    "sha256": "4f00bf3fc82c921fca5d7260c2ecb19dd7a52248b4c031cbdbae58bfbf4060c3",
+    "bytes": 25059,
+    "boundsSourcePixels": [
+      998,
+      757,
+      2165,
+      978
+    ],
+    "sockets": {
+      "entrance": [
+        640.0,
+        609.99999
+      ],
+      "bridgeNear": [
+        890.0,
+        484.999981
+      ],
+      "bridgeFar": [
+        1070.0,
+        394.999981
+      ],
+      "routeJoin": [
+        1159.999924,
+        349.999981
+      ]
+    }
+  },
+  {
+    "id": "mf.coastal.shallows",
+    "file": "renders/shallows.png",
+    "sourceSize": [
+      2560,
+      1920
+    ],
+    "logicalSize": [
+      1280,
+      960
+    ],
+    "groundAnchor": [
+      640,
+      600
+    ],
+    "sha256": "af15c065afe0caaf4dd10d6e974fe6051db80d3c4b940655ade358b0e5d618cb",
+    "bytes": 230694,
+    "boundsSourcePixels": [
+      114,
+      661,
+      2553,
+      1852
+    ],
+    "sockets": {
+      "entrance": [
+        640.0,
+        609.99999
+      ],
+      "bridgeNear": [
+        890.0,
+        484.999981
+      ],
+      "bridgeFar": [
+        1070.0,
+        394.999981
+      ],
+      "routeJoin": [
+        1159.999924,
+        349.999981
+      ]
+    }
+  },
+  {
+    "id": "mf.coastal.shore",
+    "file": "masks/shore.png",
+    "sourceSize": [
+      2560,
+      1920
+    ],
+    "logicalSize": [
+      1280,
+      960
+    ],
+    "groundAnchor": [
+      640,
+      600
+    ],
+    "sha256": "c1048aea28311c3338ea12aff5f543ba8a45451e9fecfb710e27e5d174793804",
+    "bytes": 260342,
+    "boundsSourcePixels": [
+      128,
+      682,
+      2539,
+      1845
+    ],
+    "sockets": {
+      "entrance": [
+        640.0,
+        609.99999
+      ],
+      "bridgeNear": [
+        890.0,
+        484.999981
+      ],
+      "bridgeFar": [
+        1070.0,
+        394.999981
+      ],
+      "routeJoin": [
+        1159.999924,
+        349.999981
+      ]
+    },
+    "encoding": {
+      "R": "linear normalized offshore distance; 0 shoreline, 1 at 1.35 world units offshore",
+      "G": 0,
+      "B": 0,
+      "alpha": "water-only visibility times soft surf extent, irregular breaking patches and shoreline exposure",
+      "colourSpace": "raw PNG data; no colour conversion"
+    }
+  }
+]

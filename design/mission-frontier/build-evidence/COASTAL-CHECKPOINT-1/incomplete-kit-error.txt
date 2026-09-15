@@ -1,0 +1,111 @@
+- main:
+  - 'button "World time: 12:00, Daylight. Open lighting settings"':
+    - strong: 12:00 Daylight
+  - navigation "World selection":
+    - button "PlanCheck 3 open · 2 need you":
+      - strong: PlanCheck
+      - generic: 3 open · 2 need you
+    - button "PC-148 · Dev review Repair required Revision history can fail when no revision exists.":
+      - strong: PC-148 · Dev review
+      - generic: Repair required
+      - generic "Revision history can fail when no revision exists."
+    - button "Agent Harness 4 open · 3 need you":
+      - strong: Agent Harness
+      - generic: 4 open · 3 need you
+    - button "AH-051 · Test Execution stopped The verification command could not start in its isolated worktree.":
+      - strong: AH-051 · Test
+      - generic: Execution stopped
+      - generic "The verification command could not start in its isolated worktree."
+    - button "MyStrataAssist 4 open · 3 need you":
+      - strong: MyStrataAssist
+      - generic: 4 open · 3 need you
+    - button "MS-086 · Grill Needs your answer Which channel should receive a meeting notice first?":
+      - strong: MS-086 · Grill
+      - generic: Needs your answer
+      - generic "Which channel should receive a meeting notice first?"
+  - alert:
+    - heading "World unavailable" [level=2]
+    - paragraph: The coastal base artwork is incomplete. Retry the world.
+    - button "Retry artwork"
+  - complementary "Minimap and camera controls":
+    - button "Move camera using minimap":
+      - img "Current world map"
+    - button "Fit world":
+    - button "Follow selected task":
+    - button "Zoom out":
+    - button "Zoom in":
+  - button "Agent Harness":
+    - strong: Agent Harness
+  - generic: Project scope
+  - combobox "Project scope":
+    - option "All projects" [selected]
+    - option "PlanCheck"
+    - option "Agent Harness"
+    - option "MyStrataAssist"
+  - generic: 15 September 2026 · 19:08
+  - generic: Pacific/Auckland
+  - navigation "Main navigation":
+    - button "World":
+      - text: World
+    - button "Tasks J":
+      - text: Tasks
+      - generic: J
+    - button "Open command menu":
+      - text: Manage
+  - complementary "Tasks needing your attention":
+    - strong: Needs you
+    - generic: "8"
+    - 'button "AH-051 · Test Agent Harness Execution stopped The verification command could not start in its isolated worktree. Next: you · Wait age not recorded"':
+      - strong: AH-051 · Test
+      - generic: Agent Harness
+      - generic: Execution stopped
+      - generic: The verification command could not start in its isolated worktree.
+      - generic: "Next: you · Wait age not recorded"
+    - 'button "AH-054 · Implement Agent Harness S2 failed S2 did not qualify: playwright-e2e failed — make e2e-native exited 2. Next: you · Wait age not recorded"':
+      - strong: AH-054 · Implement
+      - generic: Agent Harness
+      - generic: S2 failed
+      - generic: "S2 did not qualify: playwright-e2e failed — make e2e-native exited 2."
+      - generic: "Next: you · Wait age not recorded"
+    - 'button "PC-148 · Dev review PlanCheck Repair required Revision history can fail when no revision exists. Next: you · Since 18:21"':
+      - strong: PC-148 · Dev review
+      - generic: PlanCheck
+      - generic: Repair required
+      - generic: Revision history can fail when no revision exists.
+      - generic: "Next: you · Since 18:21"
+    - button "Show all 8 decisions":
+      - text: Show all 8 decisions
+  - complementary "Workspace catch-up and watch list":
+    - button "While you were away":
+      - text: While you were away
+    - button "Watch list · 0/4" [expanded]:
+      - text: Watch list · 0/4
+    - region "Pinned work":
+      - paragraph: Pin a task or a recorded run to keep it within reach.
+  - region "Selected task":
+    - img "Worker role"
+    - heading "PC-148 · Dev review" [level=2]
+    - strong: Repair required
+    - paragraph: Revision history can fail when no revision exists.
+    - generic: "Waiting since 18:21 · Next: you · Run completed"
+    - generic: Sol · High
+    - generic: 72K tokens
+    - button "Inspect task":
+      - text: Inspect task
+    - button "Review findings":
+      - text: Review findings
+    - button "Watch agent"
+    - button "Clear selection":
+  - complementary:
+    - button "New task":
+      - text: New task
+    - button "Tasks":
+      - text: Tasks
+    - button "World settings":
+      - text: World settings
+    - generic: Drag to pan · Scroll to zoom · Space to follow
+  - generic: Sample world · local demonstration
+  - complementary "Visual preview":
+    - generic: Cinematic island · visual preview
+    - link "Compare original":
+      - /url: "?mode=fixture&scenario=workflow&art=classic#world"

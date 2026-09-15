@@ -1,0 +1,96 @@
+{
+  "assetCount": 7,
+  "socketMaximumErrorsLogical": {
+    "entrance": 9.999999974752427e-06,
+    "bridgeNear": 1.900000000887303e-05,
+    "bridgeFar": 1.900000000887303e-05,
+    "routeJoin": 7.600000003549212e-05
+  },
+  "actualAlphaBounds": [
+    {
+      "id": "mf.coastal.terrain",
+      "boundsRelativeLogical": [
+        -514.5,
+        -359.5,
+        577.0,
+        293.5
+      ]
+    },
+    {
+      "id": "mf.coastal.base",
+      "boundsRelativeLogical": [
+        -233.5,
+        -341.5,
+        161.5,
+        -21.0
+      ]
+    },
+    {
+      "id": "mf.coastal.bridge",
+      "boundsRelativeLogical": [
+        214.5,
+        -240.0,
+        467.0,
+        -9.0
+      ]
+    },
+    {
+      "id": "mf.coastal.front",
+      "boundsRelativeLogical": [
+        -35.5,
+        84.0,
+        37.5,
+        105.5
+      ]
+    },
+    {
+      "id": "mf.coastal.lights",
+      "boundsRelativeLogical": [
+        -141.0,
+        -221.5,
+        442.5,
+        -111.0
+      ]
+    },
+    {
+      "id": "mf.coastal.shallows",
+      "boundsRelativeLogical": [
+        -583.0,
+        -269.5,
+        636.5,
+        326.0
+      ]
+    },
+    {
+      "id": "mf.coastal.shore",
+      "boundsRelativeLogical": [
+        -576.0,
+        -259.0,
+        629.5,
+        322.5
+      ]
+    }
+  ],
+  "footprintWarnings": [],
+  "opaqueGeometryShoreOverlapPixels": 0,
+  "lightBlackMattePixels": 0,
+  "sourceHashes": {
+    "source/audit_blend.py": "d5d158ab62142b1a55b6c686b12fc48e0e1a58394282ee92ef8030d32181da18",
+    "source/blockout.py": "b7d5fc3b0f7d1bb71331925e10eb9bc41013872139052074890f61c58fc6dd58",
+    "source/build_detail.py": "55723de70e5e837403e06dbc42c5db5782f8ecc6ccb6edf694263fe5a592c218",
+    "source/coastal_architecture.py": "6acef1f1e36f175643ff0aed90e04f923fe80b3ee18d9df6a4f6f38df7c89aa4",
+    "source/coastal_common.py": "4530fd765ff6316986188f4c997eb7849536ada46c563ecbcf6af535e1c32c44",
+    "source/coastal_landscape.py": "c9aaf8f78ba2b55ba3b6e93bd7b1d514e926b7bb8702118d89422a3085e32a96",
+    "source/edt.cpp": "abff33b478dbaa6848202d3cd79911f20b34a345de3912e666f3aaefeeca3fee",
+    "source/export_layers.py": "f215e91fddeda5e3b3348ff9fcfecf58dd606326f35d6f361c7ee99bf38d2c25",
+    "source/package_outputs.py": "937e5b019533eced7b0be0953b9b9f7a0322e9bf13b774a0b63d4b354e80f57b",
+    "source/preview_blockout.py": "484ab1365d246a7d08cc695df2b7f415b964b536dbe9791eabb934566462688f",
+    "source/qa_blockout.py": "ed61c37fb6e40e91d301df8ce76baa0fab3fa4d630681c88eee2a16713186305",
+    "source/rebuild-inputs.json": "50c6be34680dd52396fcc33371e30984093acf5375c7ec4498d2943f1dd533e1",
+    "source/repair_terrain_normals.py": "29dc9ec82e57855fa0192313bdff67ace3046ed91a1362248a67fc02e88cfe1b",
+    "source/shore-geometry.json": "4ee53dc3d5687522faef677493ad38779fab961a0536aa0158f29bda80c8277d",
+    "source/verify_registration.py": "77a55db9afd25cc3d8205ce1c9ef8821fb1ec18858d6c5ff3abc1f68be446bd7"
+  },
+  "blendSHA256": "64358d442c38a24c2476f7a660fb567e29e8503433996b93fe21ef06b6869b0a",
+  "contractSHA256": "cb06962a209358cb03f35e48ef04d9f5d59c13e2dae4511aaf269f4fbdc75bfc"
+}

@@ -1,0 +1,13 @@
+{
+  "date": "2026-09-15",
+  "journalTests": {
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0
+  },
+  "typecheck": "passed",
+  "lint": "passed",
+  "build": "passed; 50 routes prerendered",
+  "browser": "Built static article and home inspected at normal 1280x720. Day/night/comparison images render, article anchor navigation and Original study/Connected coast tabs work. No console errors.",
+  "gamePR": "https://github.com/shaunnez/agent-harness-ui/pull/89"
+}

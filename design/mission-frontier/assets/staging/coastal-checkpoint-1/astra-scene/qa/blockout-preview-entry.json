@@ -1,0 +1,109 @@
+{
+  "id": "mf.coastal.blockout-preview",
+  "status": "composition-review-only-not-final-art",
+  "file": "renders/blockout-transparent.png",
+  "sourceSize": [
+    2560,
+    1920
+  ],
+  "logicalSize": [
+    1280,
+    960
+  ],
+  "groundAnchor": [
+    640,
+    600
+  ],
+  "sha256": "6f5960600c069d7032979b3d71e08eb06176de75f975c5cc47bfed44b931c1d2",
+  "bytes": 3126985,
+  "boundsSourcePixels": [
+    42,
+    395,
+    2437,
+    1797
+  ],
+  "allCanvasEdgesTransparent": true,
+  "sockets": {
+    "entrance": {
+      "relativeLogicalRequested": [
+        0,
+        10
+      ],
+      "world": [
+        0.3125,
+        0.3125,
+        0
+      ],
+      "logicalMeasured": [
+        640.0,
+        609.99999
+      ],
+      "relativeLogicalMeasured": [
+        0.0,
+        10.000019
+      ]
+    },
+    "bridgeNear": {
+      "relativeLogicalRequested": [
+        250,
+        -115
+      ],
+      "world": [
+        -7.5,
+        0.3125,
+        0
+      ],
+      "logicalMeasured": [
+        890.0,
+        484.999981
+      ],
+      "relativeLogicalMeasured": [
+        250.0,
+        -114.99999
+      ]
+    },
+    "bridgeFar": {
+      "relativeLogicalRequested": [
+        430,
+        -205
+      ],
+      "world": [
+        -13.125,
+        0.3125,
+        0
+      ],
+      "logicalMeasured": [
+        1070.0,
+        394.999981
+      ],
+      "relativeLogicalMeasured": [
+        430.0,
+        -204.99999
+      ]
+    },
+    "routeJoin": {
+      "relativeLogicalRequested": [
+        520,
+        -250
+      ],
+      "world": [
+        -15.9375,
+        0.3125,
+        0
+      ],
+      "logicalMeasured": [
+        1159.999924,
+        349.999981
+      ],
+      "relativeLogicalMeasured": [
+        519.999924,
+        -249.99999
+      ]
+    }
+  },
+  "limits": [
+    "coarse material and vegetation placeholders",
+    "road/court coplanar overlap needs correction",
+    "terrain left and roof top exceed proposed composition bounds; builder feedback pending"
+  ]
+}

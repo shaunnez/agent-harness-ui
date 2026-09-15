@@ -1,0 +1,10 @@
+<!doctype html><html><head><title>Coastal mask qualification</title></head><body style="margin:0;background:#092e40;color:white;font:16px sans-serif"><p>Technical mask test: left is dry and must stay unchanged. Right is offshore; the white crest should approach the left boundary.</p><button id="early">Early</button><button id="late">Late</button><button id="night">Night</button><div id="result"></div><script type="module">
+import {Application,Sprite,Texture} from 'pixi.js';
+import {CoastalSurf} from './world/coastal-surf.ts';
+const canvas=document.createElement('canvas');canvas.width=800;canvas.height=300;
+const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(800,300);
+for(let y=0;y<300;y++)for(let x=300;x<700;x++){const i=(y*800+x)*4;pixels.data[i]=Math.round((x-300)/400*255);pixels.data[i+3]=(y>40&&y<260)?255:0;}
+ctx.putImageData(pixels,0,0);const app=new Application();await app.init({width:800,height:300,preference:'webgl',background:0x123e52});document.getElementById('result').append(app.canvas);
+const sprite=new Sprite(Texture.from(canvas)),surf=new CoastalSurf(sprite);app.stage.addChild(sprite);app.stop();
+const render=(t,l)=>{surf.update(t,l);app.render();};document.getElementById('early').onclick=()=>render(1.5,0);document.getElementById('late').onclick=()=>render(5,0);document.getElementById('night').onclick=()=>render(1.5,1);render(1.5,0);
+</script></body></html>

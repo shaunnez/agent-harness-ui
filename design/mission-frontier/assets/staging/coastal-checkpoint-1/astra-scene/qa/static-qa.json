@@ -1,0 +1,98 @@
+{
+  "assets": {
+    "terrain": {
+      "alphaBounds": [
+        251,
+        481,
+        2434,
+        1787
+      ],
+      "edgeNonzero": 0,
+      "nonzeroAlphaPixels": 1478149
+    },
+    "base": {
+      "alphaBounds": [
+        813,
+        517,
+        1603,
+        1158
+      ],
+      "edgeNonzero": 0,
+      "nonzeroAlphaPixels": 322459
+    },
+    "bridge": {
+      "alphaBounds": [
+        1709,
+        720,
+        2214,
+        1182
+      ],
+      "edgeNonzero": 0,
+      "nonzeroAlphaPixels": 64528
+    },
+    "front": {
+      "alphaBounds": [
+        1209,
+        1368,
+        1355,
+        1411
+      ],
+      "edgeNonzero": 0,
+      "nonzeroAlphaPixels": 2574
+    },
+    "lights": {
+      "alphaBounds": [
+        998,
+        757,
+        2165,
+        978
+      ],
+      "edgeNonzero": 0,
+      "nonzeroAlphaPixels": 1351
+    },
+    "shallows": {
+      "alphaBounds": [
+        114,
+        661,
+        2553,
+        1852
+      ],
+      "edgeNonzero": 0,
+      "nonzeroAlphaPixels": 367297
+    },
+    "shore": {
+      "alphaBounds": [
+        128,
+        682,
+        2539,
+        1845
+      ],
+      "edgeNonzero": 0,
+      "nonzeroAlphaPixels": 269904
+    }
+  },
+  "edtBruteForceMaxErrorPixels": 4.745102888392694e-07,
+  "maskWorldGrid": {
+    "size": 2048,
+    "origin": [
+      -21.73702839545284,
+      -21.46920271740592
+    ],
+    "step": 0.017190261425202392
+  },
+  "maskWaterAlphaOverlapWithOpaqueGeometry": 0,
+  "shaderQualification": "builder owned; see main acceptance evidence",
+  "sourceSize": [
+    2560,
+    1920
+  ],
+  "logicalSize": [
+    1280,
+    960
+  ],
+  "groundAnchor": [
+    640,
+    600
+  ],
+  "decodedRGBABytesSevenLayers": 137625600
+}
