@@ -462,6 +462,7 @@ export function FrontierApp() {
           onInspect={() => inspect(selectedForHud.id)}
           onWatch={() => watch(selectedForHud.id, run?.id)}
           onArtifact={(artifactId) => open({ kind: "artifact", taskId: selectedForHud.id, artifactId })}
+          onPolicies={() => open({ kind: "task-policies", taskId: selectedForHud.id })}
           onClose={() => runtime.select(null)}
         />
       )}
@@ -482,18 +483,13 @@ export function FrontierApp() {
           </button>
         </section>
       )}
-      {location.view === "world" && (
+      {location.view !== "agent" && (
         <WorldActions
           onNew={newTask}
-          onTasks={() => open({ kind: "tasks" })}
-          onSettings={() => open({ kind: "world-settings" })}
+          onAgents={() => open({ kind: "agents" })}
+          onSkills={() => open({ kind: "skills" })}
+          onSettings={() => open({ kind: "settings" })}
         />
-      )}
-      {location.view === "project" && (
-        <button type="button" className="primary hq-new-task" onClick={newTask}>
-          <Plus size={20} />
-          New task
-        </button>
       )}
       <ConnectionBadge snapshot={snapshot} fixture={fixture} onRetry={() => runtime.retry()} />
       {!stack.length && <ArtPreview />}

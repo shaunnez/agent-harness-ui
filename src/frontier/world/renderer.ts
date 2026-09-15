@@ -5,11 +5,18 @@ import type { WorldLighting } from "./environment-model";
 import { FrontierScene, type SceneInput, type WorldLabel } from "./scene";
 import { AnimationVisibility } from "./visibility";
 
+export interface MinimapCapture {
+  image: string;
+  width: number;
+  height: number;
+  projects: Array<{ id: string; name: string; x: number; y: number }>;
+}
+
 interface RendererCallbacks {
   select(kind: "project" | "task" | "artifact", id: string, artifactId?: string): void;
   labels(labels: WorldLabel[]): void;
   camera(camera: Camera): void;
-  minimap(data: string): void;
+  minimap(data: MinimapCapture): void;
   problem(message: string | null): void;
   lighting(value: WorldLighting): void;
 }
@@ -298,13 +305,26 @@ export class WorldRenderer {
     const canvas = this.app.renderer.extract.canvas({
       target: this.scene.root,
       frame: new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height),
-      resolution: Math.min(260 / bounds.width, 180 / bounds.height),
-      clearColor: "#142d37",
+      resolution: Math.min(520 / bounds.width, 360 / bounds.height),
+      clearColor: "#0a1c25",
     });
     this.scene.root.position.set(saved.x, saved.y);
     this.scene.root.scale.set(saved.scale);
     if (!this.stopped && generation === this.minimapGeneration && "toDataURL" in canvas)
-      this.callbacks.minimap((canvas as HTMLCanvasElement).toDataURL("image/png"));
+      this.callbacks.minimap({
+        image: (canvas as HTMLCanvasElement).toDataURL("image/png"),
+        width: canvas.width,
+        height: canvas.height,
+        projects: this.scene.labels
+          .filter((label) => label.kind === "project")
+          .map((label) => ({
+            id: label.projectId,
+            name:
+              this.input?.projects.find((project) => project.id === label.projectId)?.name ?? label.projectId,
+            x: ((label.mapPosition?.x ?? label.x) - bounds.x) / bounds.width,
+            y: ((label.mapPosition?.y ?? label.y) - bounds.y) / bounds.height,
+          })),
+      });
   }
   private pointerDown = (event: PointerEvent) => {
     if (event.button !== 0) return;

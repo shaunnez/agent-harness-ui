@@ -5,7 +5,7 @@ import { splitRecordedDetail } from "../runtime/presentation";
 import { WorldTime } from "../views/WorldTime";
 import { type Camera, pointInContainedImage, worldToScreen } from "./camera";
 import { lightingAt, worldHour } from "./environment-model";
-import { WorldRenderer } from "./renderer";
+import { type MinimapCapture, WorldRenderer } from "./renderer";
 import type { SceneInput, WorldLabel } from "./scene";
 
 interface Props {
@@ -32,7 +32,7 @@ export function WorldCanvas({
   latest.current = { onSelect, onEnterProject, onArtifact, input };
   const cameraRef = useRef<Camera>({ x: 0, y: 0, zoom: 1 });
   const [labels, setLabels] = useState<WorldLabel[]>([]);
-  const [minimap, setMinimap] = useState<string | null>(null);
+  const [minimap, setMinimap] = useState<MinimapCapture | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
   const [lighting, setLighting] = useState(() => lightingAt(worldHour(preferences.environment, Date.now())));
@@ -144,6 +144,10 @@ export function WorldCanvas({
         </div>
       )}
       <aside className="minimap panel" aria-label="Minimap and camera controls">
+        <header className="minimap-heading">
+          <MapPin size={16} />
+          <span>{input.location.view === "world" ? "World map" : "Headquarters map"}</span>
+        </header>
         <button
           type="button"
           className="minimap-image"
@@ -164,7 +168,33 @@ export function WorldCanvas({
             if (point) rendererRef.current?.minimapClick(point.x, point.y);
           }}
         >
-          {minimap && <img src={minimap} alt="Current world map" />}
+          {minimap && (
+            <span
+              className="minimap-content"
+              style={{
+                aspectRatio: `${minimap.width} / ${minimap.height}`,
+                maxWidth: `calc(var(--minimap-image-height, 150px) * ${minimap.width / minimap.height})`,
+              }}
+            >
+              <img src={minimap.image} alt="Current world map" />
+              {minimap.projects.map((project) => (
+                <span
+                  key={project.id}
+                  className="minimap-landmark"
+                  title={project.name}
+                  style={{ left: `${project.x * 100}%`, top: `${project.y * 100}%` }}
+                >
+                  {project.name
+                    .replace(/([a-z])([A-Z])/g, "$1 $2")
+                    .split(/\s+/)
+                    .map((word) => word[0])
+                    .join("")
+                    .slice(0, 3)
+                    .toUpperCase()}
+                </span>
+              ))}
+            </span>
+          )}
         </button>
         <div className="camera-controls">
           <button

@@ -1,0 +1,157 @@
+import { ArrowRight, Binoculars, FileText, GearSix, Info, X } from "@phosphor-icons/react";
+import type { RuntimeRun } from "../../domain";
+import { workflowStages } from "../../domain";
+import type { TaskSummary } from "../runtime/contracts";
+import {
+  attentionAction,
+  attentionFor,
+  formatApproximateCost,
+  formatCount,
+  formatDuration,
+  modelLabel,
+  reasoningLabel,
+  splitRecordedDetail,
+  stageLabels,
+} from "../runtime/presentation";
+import { taskWallTime } from "../runtime/usage";
+
+export function SelectionHud({
+  task,
+  run,
+  loading,
+  connected,
+  onAction,
+  onInspect,
+  onWatch,
+  onClose,
+  onArtifact,
+  onPolicies,
+  portrait = "/assets/mf.worker.standard.portrait.r1.png",
+}: {
+  task: TaskSummary;
+  run?: RuntimeRun;
+  loading: boolean;
+  connected: boolean;
+  onAction(): void;
+  onInspect(): void;
+  onWatch(): void;
+  onClose(): void;
+  onArtifact(id: string): void;
+  onPolicies(): void;
+  portrait?: string;
+}) {
+  const attention = attentionFor(task);
+  const action = attentionAction(task);
+  const watchPrimary = connected && action === "Inspect task" && Boolean(run);
+  const artifacts = task.artifacts ?? [];
+  const skill = workflowStages.find((stage) => stage.id === task.currentStage)?.skill;
+  const elapsed = taskWallTime(task, Date.now());
+  return (
+    <section className={`selection-hud panel tone-${attention.kind}`} aria-label="Selected task">
+      <div className={`selection-main ${artifacts.length ? "with-artifacts" : ""}`}>
+        <div className="selection-identity">
+          <img className="worker-portrait" src={portrait} alt="Worker role" />
+          <div className="selection-copy">
+            <h2>
+              {task.id} · {stageLabels[task.currentStage]}
+            </h2>
+            <p className="selection-title" title={task.title}>
+              {task.title}
+            </p>
+            <strong className="state-copy">
+              {connected ? attention.label : `Last known · ${attention.label}`}
+            </strong>
+            <dl className="selection-fields">
+              <div>
+                <dt>Skill</dt>
+                <dd title="Configured stage skill">{skill ?? "Not configured"}</dd>
+              </div>
+              <div>
+                <dt>Model</dt>
+                <dd title={run ? `Recorded ${stageLabels[run.stage]} run` : undefined}>
+                  {run
+                    ? `${modelLabel(run.model)} · ${reasoningLabel(run.reasoning)}`
+                    : loading
+                      ? "Loading recorded worker…"
+                      : "No recorded run"}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+        <div className="selection-actions">
+          {(watchPrimary || action !== "Inspect task") && (
+            <button type="button" className="primary" onClick={watchPrimary ? onWatch : onAction}>
+              {watchPrimary ? "Watch agent" : action}
+              <ArrowRight size={18} />
+            </button>
+          )}
+          <button
+            type="button"
+            className={action === "Inspect task" && !watchPrimary ? "primary" : undefined}
+            onClick={onInspect}
+          >
+            <Binoculars size={18} />
+            Inspect
+          </button>
+          <button type="button" onClick={onPolicies}>
+            <GearSix size={18} />
+            Configure agent
+          </button>
+        </div>
+        {artifacts.length > 0 && (
+          <details className="selection-artifacts" open>
+            <summary>Artifacts · {artifacts.length}</summary>
+            <div className="selection-artifact-cards">
+              {artifacts.map((artifact) => (
+                <button
+                  key={artifact.id}
+                  type="button"
+                  className={`selection-artifact stage-${artifact.stage}`}
+                  onClick={() => onArtifact(artifact.id)}
+                >
+                  <FileText size={23} />
+                  <strong>{artifact.name}</strong>
+                  <small>{stageLabels[artifact.stage]}</small>
+                </button>
+              ))}
+            </div>
+          </details>
+        )}
+      </div>
+      {attention.reason && (
+        <details className="selection-details">
+          <summary>Recorded details</summary>
+          <p>{splitRecordedDetail(attention.reason).headline}</p>
+          <small>
+            {attention.since ? `Waiting since ${new Date(attention.since).toLocaleString()} · ` : ""}
+            {attention.nextActor && `Next: ${attention.nextActor}`}
+            {run &&
+              ` · Run ${run.status === "running" && task.activeRunIds?.includes(run.id) ? "executing" : run.status}`}
+          </small>
+          <button type="button" className="link-button" onClick={onInspect}>
+            Full task details
+          </button>
+        </details>
+      )}
+      <section className="selection-usage" aria-label="Recorded task usage">
+        <span>Usage</span>
+        <strong>{formatCount(task.usage.totalTokens)} tokens</strong>
+        <span title="Task elapsed time">{formatDuration(elapsed)}</span>
+        <span>Approx. cost {formatApproximateCost(task.usage.cost, task.usage.pricingVersion)}</span>
+        <Info size={17} aria-label="API-rate estimates are not attributable ChatGPT-plan charges" />
+        <small title={task.usage.pricingVersion ?? "No recorded usage with a supported rate card"}>
+          {task.usage.pricingVersion ? "API-rate estimate" : "Rate card unavailable"}
+        </small>
+      </section>
+      <button
+        type="button"
+        className="icon-button dismiss-selection"
+        aria-label="Clear selection"
+        onClick={onClose}
+      >
+        <X size={18} />
+      </button>
+    </section>
+  );
+}

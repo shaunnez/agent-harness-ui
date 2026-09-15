@@ -23,6 +23,7 @@ test("compact HUD retains decisions, inspection, recorded details and real artif
       onWatch() {},
       onClose() {},
       onArtifact() {},
+      onPolicies() {},
       loading: false,
       connected: true,
     };
@@ -50,7 +51,11 @@ test("compact HUD retains decisions, inspection, recorded details and real artif
         run: (await gateway.runs("PC-142")).items.at(-1),
       }),
     );
-    assert.doesNotMatch(compact, /selection-artifacts|Build revision checks/);
+    assert.doesNotMatch(compact, /selection-artifacts/);
+    assert.match(compact, /Build revision checks/);
+    assert.match(compact, /Configure agent/);
+    assert.match(compact, /selection-fields/);
+    assert.match(compact, /selection-usage/);
     assert.match(compact, /tokens/);
     assert.match(compact, /Watch agent/);
     const artifact = renderToStaticMarkup(
@@ -60,6 +65,15 @@ test("compact HUD retains decisions, inspection, recorded details and real artif
       }),
     );
     assert.match(artifact, /Recorded plan/);
+    assert.match(artifact, /selection-artifact-cards/);
+    const priced = renderToStaticMarkup(
+      React.createElement(SelectionHud, {
+        ...props,
+        task: { ...running, usage: { ...running.usage, cost: 0.2, pricingVersion: "recorded-card" } },
+      }),
+    );
+    assert.match(priced, /\$0.2000/);
+    assert.match(priced, /API-rate estimate/);
     const disconnected = renderToStaticMarkup(
       React.createElement(SelectionHud, { ...props, connected: false, task: blocked }),
     );

@@ -1,30 +1,18 @@
 import {
   ArrowRight,
-  Binoculars,
   Crosshair,
   GearSix,
+  Books,
   GlobeHemisphereWest,
   ListBullets,
   Plus,
   Robot,
-  X,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
-import type { RuntimeArtifactMetadata, RuntimeProject, RuntimeRun } from "../../domain";
+import type { RuntimeProject } from "../../domain";
 import type { FrontierSnapshot, TaskSummary } from "../runtime/contracts";
 import { orderedDecisions } from "../runtime/decision-session";
-import {
-  attentionAction,
-  attentionFor,
-  formatCount,
-  isExecuting,
-  isOpen,
-  modelLabel,
-  needsYou,
-  reasoningLabel,
-  splitRecordedDetail,
-  stageLabels,
-} from "../runtime/presentation";
+import { attentionFor, isExecuting, isOpen, needsYou, stageLabels } from "../runtime/presentation";
 import { AttentionIcon } from "../ui/Attention";
 
 export function WorldClock() {
@@ -148,121 +136,16 @@ export function ProjectHud({
     </aside>
   );
 }
-export function SelectionHud({
-  task,
-  run,
-  loading,
-  connected,
-  onAction,
-  onInspect,
-  onWatch,
-  onClose,
-  onArtifact,
-  portrait = "/assets/mf.worker.standard.portrait.r1.png",
-}: {
-  task: TaskSummary;
-  run?: RuntimeRun;
-  loading: boolean;
-  connected: boolean;
-  onAction(): void;
-  onInspect(): void;
-  onWatch(): void;
-  onClose(): void;
-  portrait?: string;
-  onArtifact(id: string): void;
-}) {
-  const attention = attentionFor(task);
-  const action = attentionAction(task);
-  const watchPrimary = connected && action === "Inspect task" && Boolean(run);
-  const artifacts: RuntimeArtifactMetadata[] = task.artifacts ?? [];
-  return (
-    <section className={`selection-hud panel tone-${attention.kind}`} aria-label="Selected task">
-      <img className="worker-portrait" src={portrait} alt="Worker role" />
-      <div className="selection-copy">
-        <h2>
-          {task.id} · {stageLabels[task.currentStage]}
-        </h2>
-        <strong className="state-copy">
-          {connected ? attention.label : `Last known · ${attention.label}`}
-        </strong>
-        {attention.reason && (
-          <details className="selection-details">
-            <summary>Recorded details</summary>
-            <p>{splitRecordedDetail(attention.reason).headline}</p>
-            <small>
-              {attention.since ? `Waiting since ${new Date(attention.since).toLocaleString()} · ` : ""}
-              {attention.nextActor && `Next: ${attention.nextActor}`}
-              {run &&
-                ` · Run ${run.status === "running" && task.activeRunIds?.includes(run.id) ? "executing" : run.status}`}
-            </small>
-            <button type="button" className="link-button" onClick={onInspect}>
-              Full task details
-            </button>
-          </details>
-        )}
-        <div className="selection-meta">
-          <Robot size={17} />
-          <span>
-            {run
-              ? `${modelLabel(run.model)} · ${reasoningLabel(run.reasoning)}`
-              : loading
-                ? "Loading recorded worker…"
-                : "No selected run"}
-          </span>
-          <span>{formatCount(task.usage.totalTokens)} tokens</span>
-        </div>
-      </div>
-      <div className="selection-actions">
-        {(watchPrimary || action !== "Inspect task") && (
-          <button type="button" className="primary" onClick={watchPrimary ? onWatch : onAction}>
-            {watchPrimary ? "Watch agent" : action}
-            <ArrowRight size={18} />
-          </button>
-        )}
-        <button
-          type="button"
-          className={action === "Inspect task" && !watchPrimary ? "primary" : undefined}
-          onClick={onInspect}
-        >
-          <Binoculars size={18} />
-          Inspect
-        </button>
-      </div>
-      {artifacts.length > 0 && (
-        <details className="selection-artifacts">
-          <summary>Artifacts · {artifacts.length}</summary>
-          <div>
-            {artifacts.map((artifact) => (
-              <button
-                key={artifact.id}
-                type="button"
-                className="link-button"
-                onClick={() => onArtifact(artifact.id)}
-              >
-                {artifact.name}
-              </button>
-            ))}
-          </div>
-        </details>
-      )}
-      <button
-        type="button"
-        className="icon-button dismiss-selection"
-        aria-label="Clear selection"
-        onClick={onClose}
-      >
-        <X size={18} />
-      </button>
-    </section>
-  );
-}
+export { SelectionHud } from "./SelectionDock";
 export function WorldActions({
   onNew,
-  onTasks,
+  onAgents,
+  onSkills,
   onSettings,
 }: {
   onNew(): void;
-  onTasks(): void;
+  onAgents(): void;
+  onSkills(): void;
   onSettings(): void;
 }) {
   return (
@@ -272,13 +155,17 @@ export function WorldActions({
         New task
       </button>
       <div className="secondary-actions">
-        <button type="button" onClick={onTasks}>
-          <ListBullets size={23} />
-          Tasks
+        <button type="button" onClick={onAgents}>
+          <Robot size={23} />
+          Agent roster
+        </button>
+        <button type="button" onClick={onSkills}>
+          <Books size={23} />
+          Skills
         </button>
         <button type="button" onClick={onSettings}>
           <GearSix size={23} />
-          World settings
+          Settings
         </button>
       </div>
       <small>Drag to pan · Scroll to zoom · Space to follow</small>

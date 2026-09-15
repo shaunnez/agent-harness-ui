@@ -31,6 +31,7 @@ export interface WorldLabel {
   attention: string;
   projectId: string;
   taskId?: string;
+  mapPosition?: { x: number; y: number };
 }
 export interface SceneInput {
   mode: "fixture" | "live";
@@ -376,6 +377,7 @@ export class FrontierScene {
           this.labels.push({
             id: `project-${project.id}`,
             kind: "project",
+            mapPosition: { x, y },
             x,
             y: y - (this.cinematic(project.id) ? 310 : 210),
             title: project.name,
