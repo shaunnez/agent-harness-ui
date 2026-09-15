@@ -1,0 +1,1 @@
+Author one coherent coastal base scene under astra-scene only. Read contract.json and ART-CHECKPOINT-1.md. First return measured assembled blockout for builder review; do not begin detailed production until builder responds. Preserve live court ground. Use Blender, existing assets, original references. Builder handles app and shared manifests.

@@ -1,23 +1,18 @@
-# Coastal checkpoint 1 — visual QA in progress
+# Coastal checkpoint 1 — final visual QA
 
-15 September 2026. Source: `design/mission-frontier/reference/selected-world.png`; current composition: `design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/blockout-world.png`; combined comparison: `blockout-comparison.jpg` in the same evidence folder. Desktop CSS viewport1568×1003, source1568×1003; browser capture1568×1003 at1×. Browser screenshot bytes use JPEG encoding despite historical `.png` filenames.
+15 September 2026. **Passed for the scoped connected-exterior checkpoint; artistic review pending.** Source: `design/mission-frontier/reference/selected-world.png` at 1568×1003. Actual app: `build-evidence/COASTAL-CHECKPOINT-1/world-day.jpg` at the same CSS/pixel size, normal World camera. Full-view and focused original/current comparison opened in `final-comparison.jpg`. Laptop captures are 1280×720. No extreme zoom or performance benchmark.
 
-The blockout is inside the actual World, with sample workflow data, daylight and normal Fit camera. Original study has different task counts and surrounding art. This is an approved intermediate composition, not final acceptance.
+Inspected final base/court/shore/crossing together with neighboring projects and live entities. Fixed bridge pier bleed, foliage termination pixels, ground normals, duplicate approach/junction stubs and far-abutment canopy obstruction. No unresolved P0/P1/P2 defect in the bounded registration, masking or operational-access contract was found. Remaining artistic differences are recorded, not presented as an exact clone.
 
-- Fonts/typography: current readable UI retained; Sol owns separate HUD improvements. Art-specific label anchors move with the taller roof and clear the new crossing.
-- Spacing/layout: main base and live court register, but left terrain clip and narrow crossing require corrections from contract revision2.
-- Colors/tokens: blockout swatches are temporary; detailed terrain/ceramic/steel/light treatment pending. Operational colors unchanged.
-- Image quality: proxy cliffs/tree crowns and plain facade are not accepted final assets. Producer is replacing them with authored layers and measured water masks.
-- Copy/content: current task data and actions retained; original study copy is not treated as persisted task evidence.
+Typography, UI density, spacing and colors retain merged HUD PR #88. Art-specific labels clear the taller roof/crossing. Current task copy/state remains authoritative; original concept data is not fabricated. Ceramic/steel facade depth and open court improve the featured base; terrain has actual relief, though grass remains smoother, rocks broader and composition less dense/weathered than the original. Those differences require Shaun's artistic judgment before expansion.
 
-P2 composition fixes: reduce excessive left silhouette; fix coplanar court/approach black patch; widen hero bridge and taper road join; enlarge/articulate loading court. Detailed production approved with these corrections. Source/current review history is in `build-evidence/COASTAL-CHECKPOINT-1/BLOCKOUT-REVIEW.md`.
+Day/dusk/night, shore contact, motion-off, active/repair/disconnected state and HQ/Watch navigation inspected. Local scrollbar bounds are 1280×720 at laptop size. Existing selected dock covers lower scenery at that size; Escape restores the court view. No camera or HUD redesign was added to this art pass.
 
-Synthetic shoreline shader check has shoreward crest travel and lower night exposure with no console errors. It does not establish authored mask correctness. Actual day/dusk/night, motion-off, browser access and final layers remain pending.
+All 88 Frontier, 18 API and 4 Sites checks, types/lint/format and both sequential builds passed after final assets/main integration. Browser error log empty. No real model execution, remote CI or OS-level screen-reader/reduced-motion qualification claimed. Full matrix, historical attempts and source inventory: `design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/`.
 
-**final result: blocked** — detailed art production and final integrated checks pending.
+final result: passed
 
 ---
-
 
 # Map/grid/artifact design QA — 15 September 2026
 

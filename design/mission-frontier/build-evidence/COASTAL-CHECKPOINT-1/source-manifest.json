@@ -1,0 +1,557 @@
+{
+  "date": "2026-09-15",
+  "baseMain": "0f877a9",
+  "scope": "Final exported coastal kit and local qualification; delivery documents may receive links after this snapshot.",
+  "files": [
+    {
+      "path": "design/mission-frontier/ART-CHECKPOINT-1.md",
+      "bytes": 10793,
+      "sha256": "09310ec21fb797a8ce886a3759b223022ff4e1ec1b33e83d3887c58d1a9ee9c1"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/ASSIGNMENT.md",
+      "bytes": 346,
+      "sha256": "cc3e943aee2b135882c5899425ec1ce57f9a5651ecfe50004be99652ae633129"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/BLOCKOUT-HANDOFF.md",
+      "bytes": 2892,
+      "sha256": "e943069f29c4339dd682704d896c966430dfa17a11e765de9764a318f9e358eb"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/blend/coastal-blockout.blend",
+      "bytes": 165336,
+      "sha256": "7c2b81ace4ca6c763a26c78b203c373cd7f0d7e1591b5dd84cd9858dfde5435d"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/blend/coastal-detailed.blend",
+      "bytes": 14693415,
+      "sha256": "64358d442c38a24c2476f7a660fb567e29e8503433996b93fe21ef06b6869b0a"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/entries.json",
+      "bytes": 5157,
+      "sha256": "af59451788f01b20b9c34497fe1b5cd703af0b60bc7821a2ec2d3a96828b0545"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/masks/depth.png",
+      "bytes": 184759,
+      "sha256": "962497a7f4669f01f9e0781c86590feab1025d854060962b08575fa64e6b39af"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/masks/shore.png",
+      "bytes": 260342,
+      "sha256": "c1048aea28311c3338ea12aff5f543ba8a45451e9fecfb710e27e5d174793804"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/masks/source-world-waterline.png",
+      "bytes": 13766,
+      "sha256": "9aa83fa99b63da45bad79aa6249cf31d84c483a2a0b2c999c60962255b3921f0"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/ACCEPTANCE.md",
+      "bytes": 3096,
+      "sha256": "21d92ef8935d2717fd4577ddf65d785862a93502186659e265c9a2d0964d20ce"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/assembled-dark.jpg",
+      "bytes": 438978,
+      "sha256": "bc134429deef5e61c31ded860a7b4866b2d0508fed5f82db874c043d1314402e"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/assembled-light.jpg",
+      "bytes": 469900,
+      "sha256": "b7f78b2f8c23b4ab5005a4740059dfd3d276746fe2fb1cbd266628160b450794"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/blend-audit.json",
+      "bytes": 3720,
+      "sha256": "4858d5b72fa434e56044448f432d7e6d8f079b7e02347da60ae726da59bb7c68"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/blockout-calibration.json",
+      "bytes": 6006,
+      "sha256": "56df391849c0aea54789927da5e07189749a77d48a1e1365bd23e1e9d65e3f3c"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/blockout-preview-entry.json",
+      "bytes": 1958,
+      "sha256": "9577205bf0326f3f9ea88a47c2893744c0ac53b92f47e070bc58a2a5256bd3d4"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/blockout-registration.png",
+      "bytes": 518995,
+      "sha256": "8810e245341078e2b91c740dd7f72864cdbbe339824abeeee18165848769b95a"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/cutout-holdout-calibration.json",
+      "bytes": 247,
+      "sha256": "890400ed21e607cfe9f1e9f24eae9a17fd5cd3b4b8ae782fd9815d54e41c408a"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/cutout-holdout-calibration.png",
+      "bytes": 160107,
+      "sha256": "954c28904c170abc9aced7427b190e7abb3c77f36911e95fe80fc8c439a23fde"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/detail-calibration.json",
+      "bytes": 3777,
+      "sha256": "392487f6140bb05df66c3214085547af3d243320a720a3c58d2a6dfdb2b7fc3a"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/detail-corrective-r2.png",
+      "bytes": 5965696,
+      "sha256": "a50bf131f78889d82db02e4e240d5761d50b48d6fe50ed93f859480da4878608"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/detail-first.png",
+      "bytes": 5816826,
+      "sha256": "e39b05e0b3ea5241f5f6f3d7728709329e064ce36bb43d4b70ca2854b09f0418"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/final-geometry-bounds.json",
+      "bytes": 749,
+      "sha256": "414f201c148dc4fd2f466033fa7623c9be8118645d4de57fbcf850330cbb5599"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/occlusion-light-review.jpg",
+      "bytes": 529631,
+      "sha256": "e54182e2174bed62f9f4fe8c36127441a25a3185affa08721d310a019627288f"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/registration-audit.json",
+      "bytes": 3078,
+      "sha256": "0ef5d1900ab351adafbd989a95cb55514d12bfbaa188bc9fe3996fef91520fe4"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/shore-distance-review.jpg",
+      "bytes": 102384,
+      "sha256": "40a655737d94e32bcd150bad96df2e3fe1e455d3a1fe9b15957107dcf18709a6"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/static-qa.json",
+      "bytes": 1684,
+      "sha256": "6c3606a445a364553133180d2efec640d071c8211f3059127857055e34741a86"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/qa/terrain-normal-correction.json",
+      "bytes": 206,
+      "sha256": "b074a82eb07adf515b10d43a58f2897441472b4ab52549b1271e6873e6f7f8f4"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/renders/base.png",
+      "bytes": 498377,
+      "sha256": "084fcde0cabaaa68b4f76ddac8195bca62ca71c3951fe24b2394b3d4917760ca"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/renders/blockout.png",
+      "bytes": 5061093,
+      "sha256": "7edf498dead716eaa6a3949b87515311a3c8d3238d2cd9e428e274ac60182928"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/renders/bridge.png",
+      "bytes": 149692,
+      "sha256": "36441a90b2a5c80b92902f3799bedcd3e20586480b447cb3ff2c397beb04cac5"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/renders/front.png",
+      "bytes": 26644,
+      "sha256": "0307198f323f84c183c52e6ecb3fd6bd85fa7beb2ce1faec9fd85870a8015e33"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/renders/lights.png",
+      "bytes": 25059,
+      "sha256": "4f00bf3fc82c921fca5d7260c2ecb19dd7a52248b4c031cbdbae58bfbf4060c3"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/renders/shallows.png",
+      "bytes": 230694,
+      "sha256": "af15c065afe0caaf4dd10d6e974fe6051db80d3c4b940655ade358b0e5d618cb"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/renders/terrain.png",
+      "bytes": 2142776,
+      "sha256": "c49c5f61b8c2e7196b2fe374a71ce4bdddabc4c7eca87d6da6a8ffd8ce68396d"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/audit_blend.py",
+      "bytes": 2000,
+      "sha256": "d5d158ab62142b1a55b6c686b12fc48e0e1a58394282ee92ef8030d32181da18"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/blockout.py",
+      "bytes": 13286,
+      "sha256": "b7d5fc3b0f7d1bb71331925e10eb9bc41013872139052074890f61c58fc6dd58"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/build_detail.py",
+      "bytes": 2469,
+      "sha256": "55723de70e5e837403e06dbc42c5db5782f8ecc6ccb6edf694263fe5a592c218"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/coastal_architecture.py",
+      "bytes": 15552,
+      "sha256": "6acef1f1e36f175643ff0aed90e04f923fe80b3ee18d9df6a4f6f38df7c89aa4"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/coastal_common.py",
+      "bytes": 5485,
+      "sha256": "4530fd765ff6316986188f4c997eb7849536ada46c563ecbcf6af535e1c32c44"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/coastal_landscape.py",
+      "bytes": 10492,
+      "sha256": "c9aaf8f78ba2b55ba3b6e93bd7b1d514e926b7bb8702118d89422a3085e32a96"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/edt.cpp",
+      "bytes": 1368,
+      "sha256": "abff33b478dbaa6848202d3cd79911f20b34a345de3912e666f3aaefeeca3fee"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/export_layers.py",
+      "bytes": 4594,
+      "sha256": "f215e91fddeda5e3b3348ff9fcfecf58dd606326f35d6f361c7ee99bf38d2c25"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/package_outputs.py",
+      "bytes": 6504,
+      "sha256": "937e5b019533eced7b0be0953b9b9f7a0322e9bf13b774a0b63d4b354e80f57b"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/preview_blockout.py",
+      "bytes": 1665,
+      "sha256": "484ab1365d246a7d08cc695df2b7f415b964b536dbe9791eabb934566462688f"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/qa_blockout.py",
+      "bytes": 1945,
+      "sha256": "ed61c37fb6e40e91d301df8ce76baa0fab3fa4d630681c88eee2a16713186305"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/rebuild-inputs.json",
+      "bytes": 2357,
+      "sha256": "50c6be34680dd52396fcc33371e30984093acf5375c7ec4498d2943f1dd533e1"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/repair_terrain_normals.py",
+      "bytes": 970,
+      "sha256": "29dc9ec82e57855fa0192313bdff67ace3046ed91a1362248a67fc02e88cfe1b"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/shore-geometry.json",
+      "bytes": 73392,
+      "sha256": "4ee53dc3d5687522faef677493ad38779fab961a0536aa0158f29bda80c8277d"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/astra-scene/source/verify_registration.py",
+      "bytes": 3048,
+      "sha256": "77a55db9afd25cc3d8205ce1c9ef8821fb1ec18858d6c5ff3abc1f68be446bd7"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/contract.json",
+      "bytes": 5411,
+      "sha256": "cb06962a209358cb03f35e48ef04d9f5d59c13e2dae4511aaf269f4fbdc75bfc"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/BLOCKOUT-REVIEW.md",
+      "bytes": 5390,
+      "sha256": "f853ca1e6cf06b1d96afa117336d7577803eefa37f56df7865d7470e6f197c9c"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/api-tests.txt",
+      "bytes": 2178,
+      "sha256": "0ed7c8bf4ee1a019d572df25fa8cae015bab87af0adcad267ed77843d3b2a610"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/before-world.png",
+      "bytes": 289719,
+      "sha256": "88d61c67e5100608a8743af9b339d9b2c1b557016eeec624f356f825c559309a"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/blockout-comparison.jpg",
+      "bytes": 287802,
+      "sha256": "a91db4369640a323e6ccaac7474b9b0cafe40c18701fb0099130612fdaa53ee6"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/blockout-world.png",
+      "bytes": 248903,
+      "sha256": "0cb093d949c896dee7b0465c1d705a4ac2d6d7a6ec7e89ab5312a8a22f66b929"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/browser-checks.json",
+      "bytes": 530,
+      "sha256": "295f9544c2166f56f548a5dc62394af86bc3b6088147357667a666ef941ca6f5"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/final-comparison.jpg",
+      "bytes": 601003,
+      "sha256": "217060b1bafbb5399e48a74caf1c367416bc8e8cbdeb3da94ab1f7a610ac98f9"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/first-integrated-day.jpg",
+      "bytes": 265939,
+      "sha256": "743367dc546c72c6e533d64bd9b463806fa411da892dffefa9e26bb84522b5bb"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/first-integrated-laptop.jpg",
+      "bytes": 144467,
+      "sha256": "764f883106425140060c43d05d56751c103d2bbfd969db7bcbac4e22f272cdcb"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/format.txt",
+      "bytes": 133,
+      "sha256": "51f1dbb323800622169a2e3cdd7bca211528417cd370640f1c8b03678ab35881"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/frontier-build.txt",
+      "bytes": 6903,
+      "sha256": "7bc4468e4b58b7983cffcdc3d4ec08107bbc5d1acf1400a247d11a45ba3b49f3"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/hq-repair.jpg",
+      "bytes": 264262,
+      "sha256": "7aee826537a7339ee7e75b59051ac8d6669cc3595e0c0a0414732a05aba95aa3"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/incomplete-kit-error.txt",
+      "bytes": 4720,
+      "sha256": "0c06fe9af6ff7ef72c84d32147857ee637e59d075e43d878dce2e98c6d9f93e3"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/lint.txt",
+      "bytes": 123,
+      "sha256": "54697d20385de4ccbd86102278a969df6b48a5e6667056a46d7e54a5b1281fc2"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/main-build.txt",
+      "bytes": 6043,
+      "sha256": "a3a8d6fc90f81a6c6a874e2166e38d39314a7d84c2cd8175882a6d18fc62e710"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/motion-pixel-check.json",
+      "bytes": 542,
+      "sha256": "9d21552912b0505e2896312c0a7a55b6336d5d344e88376bae3e2d7b997fd4fb"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/pre-art-tests.txt",
+      "bytes": 8353,
+      "sha256": "7b1971fdbfca95eca400ec2013fd67233819e5b1eb9e045e4f9a2c04bc3890fb"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/shader-early.png",
+      "bytes": 18008,
+      "sha256": "7fbcbcdca5992f7530ea53245a8752704060f711574e2a75a2e7a069c16cb25b"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/shader-harness.html",
+      "bytes": 1403,
+      "sha256": "82f895c2d90d0ba839fb4e3234e17a755e5937c95e5575367cd16ec699cf8043"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/shader-late.png",
+      "bytes": 17502,
+      "sha256": "52a2b1a6d80ca993276945ed8a081eb824e5b58c207c5f8a33ea851b322fc21e"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/shader-night.png",
+      "bytes": 16919,
+      "sha256": "00106b1924af8192ec6a7dbc8431bea1ca09b4d49d1cf96231020fd81b047198"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/shader-qa.json",
+      "bytes": 681,
+      "sha256": "6c85aab66d5ea8f71c759354a6dd1efed6b3c3f31ef81ceec0088e526d8786cf"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/shore-0.jpg",
+      "bytes": 252980,
+      "sha256": "4d31125dbfeefc955d5daeb89ea8511ff3e9fde8028390317ca8d86d3519272f"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/shore-1.jpg",
+      "bytes": 253086,
+      "sha256": "9fab800c7c0f1031b91cb265f74d55829430eb92fb33cd63f30aa02dc0993d42"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/shore-2.jpg",
+      "bytes": 253039,
+      "sha256": "43a9a1bb8a06a1fe9e97c53930bacfd0b0f44250695966823813d5d29a8c8a09"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/shore-3.jpg",
+      "bytes": 252994,
+      "sha256": "b0f3914f2a7df663fb814ebf6e67c7ae3354a20a5df7315f1f87661db3ea240d"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/shore-contact-sheet.jpg",
+      "bytes": 199401,
+      "sha256": "c84f29a4a6fae270b860d9f30c1820da8631312320a3f9493f37381f3a856aa5"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/shore-sequence.json",
+      "bytes": 326,
+      "sha256": "536ba389ad757ecffa28826de30ca3fb15cd305b61f7ae647d5d0ef46d4fa2fe"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/sites-tests.txt",
+      "bytes": 469,
+      "sha256": "ad3a12a6b65ea82a5449d2a63bf39d077663e0ee62c03f6396c8c793a1d75402"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/tests.txt",
+      "bytes": 8626,
+      "sha256": "248a4070b386e2cef7b22fe51b775f5a347304ea4d12d6ec343900b87aa181ea"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/typecheck.txt",
+      "bytes": 51,
+      "sha256": "c9e4a5ee249828a63340bea8ba8166993e3626ef7d4b6963357c19b3202fd8e0"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/watch-repair.jpg",
+      "bytes": 192386,
+      "sha256": "697c2274f3dc6d587a3f33f3edff55c11d01f8b5871fd297e910e26fa0ab05e6"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/world-blocked.jpg",
+      "bytes": 255951,
+      "sha256": "f4f7c6f97f02db4661fb5e2dbd55f7d03263fc4da7eee503bdce1c78f040a674"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/world-day.jpg",
+      "bytes": 253011,
+      "sha256": "a645895fee7ca644e618ecd8e2c05cfc9fe8ebc915904a49e15015d079848d01"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/world-disconnected-later.jpg",
+      "bytes": 259202,
+      "sha256": "fbbae6f74a1fe64d4df7c19ab600d3b9e2a9b129b106ddd47e3c38280949ed3c"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/world-disconnected.jpg",
+      "bytes": 259232,
+      "sha256": "cbd3fb68b4fe1e881315c972949a75380c788b143498217c53c49438889bc61c"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/world-dusk.jpg",
+      "bytes": 184541,
+      "sha256": "d5b203a5b019a061b4f267a3c608883ee3073d4a394b8b7722da2369d3955697"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/world-laptop-active.jpg",
+      "bytes": 129079,
+      "sha256": "2feef6bc946cf346bcddbc194d33d03e6544cc5e7b187af72b120636be86d367"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/world-laptop.jpg",
+      "bytes": 134977,
+      "sha256": "cc6eb12e0c3eae6fdd8d92f4fc041ac767141ad92365de6dad7a53afa89be950"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/world-motion-off-later.jpg",
+      "bytes": 253263,
+      "sha256": "449ad7f77854fdc3ff543f4a3e77e973f9ea51c4e4be9f8bbd2afa652238b522"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/world-motion-off.jpg",
+      "bytes": 253263,
+      "sha256": "449ad7f77854fdc3ff543f4a3e77e973f9ea51c4e4be9f8bbd2afa652238b522"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/world-night.jpg",
+      "bytes": 183911,
+      "sha256": "effdb80280060812eb7f2067f977dbf76afbd157e9198822ed686594a4926a7d"
+    },
+    {
+      "path": "design-qa.md",
+      "bytes": 58957,
+      "sha256": "c46acb325f4f793801148f3162e765c228daa9766a3084bf7e0920af251d567e"
+    },
+    {
+      "path": "public/frontier/assets/coastal/manifest.json",
+      "bytes": 6187,
+      "sha256": "d31e86c321e7dd4c19be7ee114771d33c55c9f4faba494d39649458b4b076baf"
+    },
+    {
+      "path": "public/frontier/assets/coastal/mf.coastal.base.084fcde0caba.png",
+      "bytes": 498377,
+      "sha256": "084fcde0cabaaa68b4f76ddac8195bca62ca71c3951fe24b2394b3d4917760ca"
+    },
+    {
+      "path": "public/frontier/assets/coastal/mf.coastal.bridge.36441a90b2a5.png",
+      "bytes": 149692,
+      "sha256": "36441a90b2a5c80b92902f3799bedcd3e20586480b447cb3ff2c397beb04cac5"
+    },
+    {
+      "path": "public/frontier/assets/coastal/mf.coastal.front.0307198f323f.png",
+      "bytes": 26644,
+      "sha256": "0307198f323f84c183c52e6ecb3fd6bd85fa7beb2ce1faec9fd85870a8015e33"
+    },
+    {
+      "path": "public/frontier/assets/coastal/mf.coastal.lights.4f00bf3fc82c.png",
+      "bytes": 25059,
+      "sha256": "4f00bf3fc82c921fca5d7260c2ecb19dd7a52248b4c031cbdbae58bfbf4060c3"
+    },
+    {
+      "path": "public/frontier/assets/coastal/mf.coastal.shallows.af15c065afe0.png",
+      "bytes": 230694,
+      "sha256": "af15c065afe0caaf4dd10d6e974fe6051db80d3c4b940655ade358b0e5d618cb"
+    },
+    {
+      "path": "public/frontier/assets/coastal/mf.coastal.shore.c1048aea2831.png",
+      "bytes": 260342,
+      "sha256": "c1048aea28311c3338ea12aff5f543ba8a45451e9fecfb710e27e5d174793804"
+    },
+    {
+      "path": "public/frontier/assets/coastal/mf.coastal.terrain.c49c5f61b8c2.png",
+      "bytes": 2142776,
+      "sha256": "c49c5f61b8c2e7196b2fe374a71ce4bdddabc4c7eca87d6da6a8ffd8ce68396d"
+    },
+    {
+      "path": "scripts/frontier/integrate-coastal-assets.mjs",
+      "bytes": 2628,
+      "sha256": "b1ea77b6fd975755d740697a63e0a3e9243f348a3a3d25d05e9059912ce0bd91"
+    },
+    {
+      "path": "src/frontier/world/assets.ts",
+      "bytes": 8213,
+      "sha256": "889f5490ac3299f32a585acd966668dcaa67eb8f8d87216d2283b81c463501d6"
+    },
+    {
+      "path": "src/frontier/world/coastal-layout.ts",
+      "bytes": 2632,
+      "sha256": "2677edf4a40acc714c60150db715cbe2013d1b4be10f2cacc14e04701a2aba6b"
+    },
+    {
+      "path": "src/frontier/world/coastal-surf.ts",
+      "bytes": 2124,
+      "sha256": "8c7441390034d9a60603a3d84f72fbb671eee71f2df4382de756a0c20e3494df"
+    },
+    {
+      "path": "src/frontier/world/environment.ts",
+      "bytes": 5528,
+      "sha256": "9e964abe122a04b0ce68396e60c621a2a2bf6961baca6be0d4c429ef7479be93"
+    },
+    {
+      "path": "src/frontier/world/routes.ts",
+      "bytes": 3717,
+      "sha256": "b757f94999d59804433b85d49e729dfbd13b9b64698e651671aa6dc0f3489db4"
+    },
+    {
+      "path": "src/frontier/world/scene.ts",
+      "bytes": 25632,
+      "sha256": "52c232a446c9154d9991e6591f3feaac4d64dcaec8f5f675d1222b52d2c6f021"
+    },
+    {
+      "path": "tests/frontier/coastal-assets.test.mjs",
+      "bytes": 1845,
+      "sha256": "700a813c1b8f4fd9de770b7a97c4a58591522d83a22bfe79ef2fec0fd1aaf8da"
+    },
+    {
+      "path": "tests/frontier/coastal-layout.test.mjs",
+      "bytes": 1855,
+      "sha256": "6689bc8104fac3a3c56d3efcacf7c099a138bc287cc8399311898ce9bc37e371"
+    }
+  ]
+}

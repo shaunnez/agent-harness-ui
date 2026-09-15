@@ -25,5 +25,14 @@ test("coastal runtime layers form the complete registered scene with unchanged e
     assert.deepEqual(asset.logicalSize, [1280, 960]);
     assert.deepEqual(asset.groundAnchor, [640, 600]);
     assert.equal(asset.loadStage, "initial");
+    if (asset.id === "mf.coastal.base") {
+      const [left, top, right, bottom] = asset.boundsSourcePixels.map(
+        (value, index) => value / 2 - asset.groundAnchor[index % 2],
+      );
+      assert.ok(
+        left >= -235 && top >= -360 && right <= 170 && bottom <= -15,
+        "Base selection bounds must exclude residual foliage and stay inside the authored building zone",
+      );
+    }
   }
 });

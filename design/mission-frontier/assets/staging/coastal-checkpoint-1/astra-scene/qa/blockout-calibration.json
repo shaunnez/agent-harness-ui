@@ -1,0 +1,362 @@
+{
+  "status": "assembled-blockout-awaiting-composition-review",
+  "contractRevision": 1,
+  "contractSHA256": "41f7ebaa19506b3a2d7d091145a9f90a41e1abd6f715e9f5b2d0c89f8a790fc1",
+  "sourceSize": [
+    2560,
+    1920
+  ],
+  "logicalSize": [
+    1280,
+    960
+  ],
+  "groundAnchorMeasured": [
+    640.0,
+    599.999971
+  ],
+  "projectedBasisLogical": {
+    "x": [
+      -32.000008,
+      16.000014
+    ],
+    "y": [
+      31.999969,
+      16.000014
+    ],
+    "z": [
+      0.0,
+      -39.191837
+    ]
+  },
+  "camera": {
+    "location": [
+      19.062498092651367,
+      19.062498092651367,
+      18.62632942199707
+    ],
+    "rotationEuler": [
+      1.0471974611282349,
+      2.063460691204e-08,
+      2.356194496154785
+    ],
+    "orthoScale": 28.284271240234375
+  },
+  "lightTransforms": [
+    {
+      "name": "warm upper left",
+      "location": [
+        10,
+        -6,
+        16
+      ],
+      "energy": 4200,
+      "color": [
+        1,
+        0.83,
+        0.66
+      ],
+      "size": 7,
+      "rotationEuler": [
+        0.6298394203186035,
+        7.936246504414157e-08,
+        1.0303767919540405
+      ]
+    },
+    {
+      "name": "cool sky fill",
+      "location": [
+        4,
+        1,
+        8
+      ],
+      "energy": 600,
+      "color": [
+        0.65,
+        0.78,
+        1
+      ],
+      "size": 9,
+      "rotationEuler": [
+        0.4758822023868561,
+        -3.862894359940583e-08,
+        1.8157750368118286
+      ]
+    }
+  ],
+  "sockets": {
+    "entrance": {
+      "relativeLogicalRequested": [
+        0,
+        10
+      ],
+      "world": [
+        0.3125,
+        0.3125,
+        0
+      ],
+      "logicalMeasured": [
+        640.0,
+        609.99999
+      ],
+      "relativeLogicalMeasured": [
+        0.0,
+        10.000019
+      ]
+    },
+    "bridgeNear": {
+      "relativeLogicalRequested": [
+        250,
+        -115
+      ],
+      "world": [
+        -7.5,
+        0.3125,
+        0
+      ],
+      "logicalMeasured": [
+        890.0,
+        484.999981
+      ],
+      "relativeLogicalMeasured": [
+        250.0,
+        -114.99999
+      ]
+    },
+    "bridgeFar": {
+      "relativeLogicalRequested": [
+        430,
+        -205
+      ],
+      "world": [
+        -13.125,
+        0.3125,
+        0
+      ],
+      "logicalMeasured": [
+        1070.0,
+        394.999981
+      ],
+      "relativeLogicalMeasured": [
+        430.0,
+        -204.99999
+      ]
+    },
+    "routeJoin": {
+      "relativeLogicalRequested": [
+        520,
+        -250
+      ],
+      "world": [
+        -15.9375,
+        0.3125,
+        0
+      ],
+      "logicalMeasured": [
+        1159.999924,
+        349.999981
+      ],
+      "relativeLogicalMeasured": [
+        519.999924,
+        -249.99999
+      ]
+    }
+  },
+  "workerSockets": {
+    "task": [
+      {
+        "relative": [
+          -30,
+          25
+        ],
+        "measured": [
+          610.0,
+          624.99999
+        ]
+      },
+      {
+        "relative": [
+          32,
+          25
+        ],
+        "measured": [
+          671.999969,
+          624.99999
+        ]
+      }
+    ],
+    "ambientPatrolSource": "src/frontier/world/worker-behavior.ts:112; full 2-crew World loops preserved in open court"
+  },
+  "bridge": {
+    "deckTopZ": 0,
+    "waterTopZ": -2.82,
+    "deckWorldWidth": 0.978279740156158,
+    "near": [
+      -7.5,
+      0.3125,
+      0.0
+    ],
+    "far": [
+      -13.125,
+      0.3125,
+      0.0
+    ],
+    "actualInlet": "separate main headland and far rock polygons; water under central span"
+  },
+  "geometrySources": {
+    "mainPlateauUV": [
+      [
+        -520,
+        -100
+      ],
+      [
+        -465,
+        -250
+      ],
+      [
+        -335,
+        -330
+      ],
+      [
+        -195,
+        -335
+      ],
+      [
+        -100,
+        -275
+      ],
+      [
+        35,
+        -275
+      ],
+      [
+        150,
+        -235
+      ],
+      [
+        220,
+        -195
+      ],
+      [
+        275,
+        -140
+      ],
+      [
+        272,
+        -95
+      ],
+      [
+        240,
+        -30
+      ],
+      [
+        283,
+        24
+      ],
+      [
+        235,
+        102
+      ],
+      [
+        124,
+        155
+      ],
+      [
+        -22,
+        157
+      ],
+      [
+        -144,
+        117
+      ],
+      [
+        -285,
+        132
+      ],
+      [
+        -450,
+        41
+      ],
+      [
+        -555,
+        -31
+      ]
+    ],
+    "farAbutmentUV": [
+      [
+        385,
+        -220
+      ],
+      [
+        433,
+        -285
+      ],
+      [
+        520,
+        -315
+      ],
+      [
+        565,
+        -284
+      ],
+      [
+        566,
+        -221
+      ],
+      [
+        491,
+        -172
+      ],
+      [
+        421,
+        -151
+      ],
+      [
+        391,
+        -174
+      ]
+    ]
+  },
+  "placeholders": [
+    "tree crowns/trunks are composition masses",
+    "dish is a roof-volume proxy",
+    "materials are blockout swatches; no detailed production started"
+  ],
+  "layerObjectCounts": {
+    "terrain": 27,
+    "base": 25,
+    "bridge": 31,
+    "front": 0,
+    "lights": 1,
+    "water": 1
+  },
+  "evaluatedGeometryBoundsRelativeLogical": {
+    "terrain": {
+      "left": -618.6861944198608,
+      "right": 578.2849884033203,
+      "top": -401.7963981628418,
+      "bottom": 297.84132957458496
+    },
+    "base": {
+      "left": -227.12448120117188,
+      "right": 160.63156127929688,
+      "top": -340.9027290344238,
+      "bottom": -21.328182220458984
+    },
+    "bridge": {
+      "left": 222.41775512695312,
+      "right": 457.58216857910156,
+      "top": -232.39625930786133,
+      "bottom": 0.3252983093261719
+    },
+    "lights": {
+      "left": -140.57186126708984,
+      "right": -96.82014465332031,
+      "top": -135.17738342285156,
+      "bottom": -111.61837577819824
+    }
+  },
+  "boundsNotes": {
+    "base": "Building and dish silhouette is compared against the proposed buildingZone. Any exceedance requires composition feedback before detail.",
+    "terrain": "Includes vegetation composition placeholders and lower shore ledges."
+  }
+}

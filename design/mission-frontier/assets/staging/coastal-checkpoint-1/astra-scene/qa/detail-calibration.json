@@ -1,0 +1,166 @@
+{
+  "status": "detailed-assembled-preview-pending-builder-inspection",
+  "contractRevision": 2,
+  "sourceSize": [
+    2560,
+    1920
+  ],
+  "logicalSize": [
+    1280,
+    960
+  ],
+  "groundAnchorMeasured": [
+    640.0,
+    599.999971
+  ],
+  "sockets": {
+    "entrance": {
+      "world": [
+        0.3125,
+        0.3125,
+        0.0
+      ],
+      "logicalMeasured": [
+        640.0,
+        609.99999
+      ]
+    },
+    "bridgeNear": {
+      "world": [
+        -7.5,
+        0.3125,
+        0.0
+      ],
+      "logicalMeasured": [
+        890.0,
+        484.999981
+      ]
+    },
+    "bridgeFar": {
+      "world": [
+        -13.125,
+        0.3125,
+        0.0
+      ],
+      "logicalMeasured": [
+        1070.0,
+        394.999981
+      ]
+    },
+    "routeJoin": {
+      "world": [
+        -15.9375,
+        0.3125,
+        0.0
+      ],
+      "logicalMeasured": [
+        1159.999924,
+        349.999981
+      ]
+    }
+  },
+  "roads": {
+    "approachStartWorld": [
+      -2.081249952316284,
+      0.3125,
+      0.0
+    ],
+    "bridgeWidthWorld": 1.467419610234237,
+    "projectedWidthLogical": 42,
+    "farJunctionWidthLogical": 26.4,
+    "farTaperLengthLogical": 70,
+    "socketsWorld": {
+      "entrance": [
+        0.3125,
+        0.3125,
+        0.0
+      ],
+      "bridgeNear": [
+        -7.5,
+        0.3125,
+        0.0
+      ],
+      "bridgeFar": [
+        -13.125,
+        0.3125,
+        0.0
+      ],
+      "routeJoin": [
+        -15.9375,
+        0.3125,
+        0.0
+      ]
+    }
+  },
+  "vegetation": {
+    "blendPath": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/vegetation-production/blend/spreading-grove-r2.blend",
+    "sha256": "5c331957742e5fb3053e54ae4a269eae4a0104f8ecb18000141cf6fb38507c65",
+    "licenceEvidence": "Existing Quaternius FREE Standard CC0 acquisition evidence in original cinematic-v1/astra/sources/acquisition.json; no new acquisition",
+    "placements": [
+      [
+        -326,
+        -239,
+        0.5,
+        0.2
+      ],
+      [
+        -415,
+        -106,
+        0.46,
+        1.6
+      ],
+      [
+        -374,
+        11,
+        0.36,
+        0.9
+      ],
+      [
+        -149,
+        -289,
+        0.4,
+        2.8
+      ],
+      [
+        150,
+        -217,
+        0.32,
+        1.1
+      ],
+      [
+        -292,
+        82,
+        0.26,
+        2.3
+      ]
+    ],
+    "packedIntoFinalBlend": true,
+    "rockSources": [
+      {
+        "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Rock_Medium_2.gltf",
+        "sha256": "fac2d05a05f2d0d2098de59c09b58f42cc875c9caca4fd4c4bd57f3d36e7b12e"
+      },
+      {
+        "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Rock_Medium_3.gltf",
+        "sha256": "9a575b911372cf91693aa3a56aea8137ec2251c2b99fb34a31272ee64503047f"
+      },
+      {
+        "path": "/Users/shaun/.codex/worktrees/7237/agent-harness-ui/design/mission-frontier/assets/staging/cinematic-v1/astra/sources/stylized-nature-megakit/glTF/Rock_Medium_1.gltf",
+        "sha256": "5d1ab1fa03218f4a908728ed0eabe6486344a7e4f510b0d3d6f837fd1d011bd8"
+      }
+    ]
+  },
+  "sourceSHA256": {
+    "coastal_architecture.py": "6acef1f1e36f175643ff0aed90e04f923fe80b3ee18d9df6a4f6f38df7c89aa4",
+    "coastal_landscape.py": "0b2098203724a430b852f68bb2e65b0cff4f0963153f779e3f05673ed567cb87",
+    "coastal_common.py": "84abc995a5f14351c4cf109b2907e8e7aa65f76869a981f428f36baea88ae24e"
+  },
+  "blenderVersion": "5.2.1 LTS",
+  "layerObjectCounts": {
+    "terrain": 864,
+    "base": 297,
+    "bridge": 55,
+    "front": 2,
+    "lights": 18
+  }
+}

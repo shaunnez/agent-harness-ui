@@ -1,0 +1,32 @@
+{
+  "motionOff": {
+    "files": [
+      "world-motion-off.jpg",
+      "world-motion-off-later.jpg"
+    ],
+    "shoreCrop": [
+      244,
+      790,
+      550,
+      905
+    ],
+    "maxChannelDifference": 0,
+    "meanChannelDifference": 0.0,
+    "changedPixels": 0
+  },
+  "disconnected": {
+    "files": [
+      "world-disconnected.jpg",
+      "world-disconnected-later.jpg"
+    ],
+    "shoreCrop": [
+      244,
+      790,
+      550,
+      905
+    ],
+    "maxChannelDifference": 0,
+    "meanChannelDifference": 0.0,
+    "changedPixels": 0
+  }
+}

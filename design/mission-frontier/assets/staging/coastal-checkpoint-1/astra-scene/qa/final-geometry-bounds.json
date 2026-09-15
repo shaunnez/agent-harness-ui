@@ -1,0 +1,30 @@
+{
+  "boundsRelativeLogical": {
+    "terrain": [
+      -514.8286819458008,
+      -360.1703453063965,
+      576.2755584716797,
+      301.0182559490204
+    ],
+    "base": [
+      -233.15994262695312,
+      -340.5639839172363,
+      160.93597412109375,
+      -20.288114547729492
+    ],
+    "bridge": [
+      213.56124877929688,
+      -239.59510803222656,
+      466.4386749267578,
+      8.932228088378906
+    ],
+    "front": [
+      -35.20000457763672,
+      83.96161079406738,
+      37.11997985839844,
+      105.55998802185059
+    ]
+  },
+  "method": "projected source mesh vertices; runtime bounds measured from occluded raster alpha",
+  "occlusion": "camera-only material holdouts preserve all non-camera light transport and original source opacity"
+}

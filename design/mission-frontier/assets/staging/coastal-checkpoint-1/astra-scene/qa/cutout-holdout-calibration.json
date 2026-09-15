@@ -1,0 +1,12 @@
+{
+  "size": [
+    614,
+    1209
+  ],
+  "alphaNonzeroPixels": 0,
+  "alphaMax": 0,
+  "rgbMax": 1,
+  "transparentMaxBounces": 64,
+  "purpose": "8-sample base-only camera matte over foliage outside base footprint",
+  "expectedAlphaNonzeroPixels": 0
+}
