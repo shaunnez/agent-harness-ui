@@ -12,6 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import type { RuntimeProject, RuntimeRun } from "../../domain";
 import type { FrontierSnapshot, TaskSummary } from "../runtime/contracts";
+import { orderedDecisions } from "../runtime/decision-session";
 import {
   attentionAction,
   attentionFor,
@@ -25,7 +26,6 @@ import {
   stageLabels,
 } from "../runtime/presentation";
 import { AttentionIcon } from "../ui/Attention";
-import { orderedDecisions } from "../runtime/decision-session";
 
 export function WorldClock() {
   const [now, setNow] = useState(() => new Date());
@@ -53,15 +53,20 @@ export function AttentionQueue({
   onSelect(id: string): void;
 }) {
   const attention = orderedDecisions(tasks);
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? attention : attention.slice(0, 3);
   return (
-    <aside className="attention-queue panel">
+    <aside
+      className={`attention-queue panel ${expanded ? "attention-expanded" : ""}`}
+      aria-label="Tasks needing your attention"
+    >
       <header>
         <strong>Needs you</strong>
         <span className="count">{attention.length}</span>
       </header>
       {attention.length ? (
         <div className="attention-rows">
-          {attention.map((task) => (
+          {visible.map((task) => (
             <button
               type="button"
               key={task.id}
@@ -70,14 +75,16 @@ export function AttentionQueue({
             >
               <AttentionIcon kind={attentionFor(task).kind} />
               <span>
-                <small>
-                  {projects.find((project) => project.repositoryPath === task.repositoryPath)?.name ??
-                    "Project unavailable"}
-                </small>
-                <strong>
-                  {task.id} · {stageLabels[task.currentStage]}
-                </strong>
-                <small>{attentionFor(task).label}</small>
+                <span className="queue-heading">
+                  <strong>
+                    {task.id} · {stageLabels[task.currentStage]}
+                  </strong>
+                  <small>
+                    {projects.find((project) => project.repositoryPath === task.repositoryPath)?.name ??
+                      "Project unavailable"}
+                  </small>
+                </span>
+                <small className="queue-state">{attentionFor(task).label}</small>
                 <small className="queue-reason">
                   {splitRecordedDetail(attentionFor(task).reason).headline || "Open the recorded decision"}
                 </small>
@@ -94,6 +101,17 @@ export function AttentionQueue({
         </div>
       ) : (
         <p className="quiet">No decisions are waiting for you.</p>
+      )}
+      {attention.length > 3 && (
+        <button
+          type="button"
+          className="queue-expand"
+          aria-expanded={expanded}
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? "Show priority decisions" : `Show all ${attention.length} decisions`}
+          <ArrowRight size={16} />
+        </button>
       )}
     </aside>
   );

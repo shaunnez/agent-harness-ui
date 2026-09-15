@@ -1,0 +1,112 @@
+{
+  "status": "pass",
+  "scope": "static asset QA; in-app fidelity, worker occlusion and application integration remain builder-owned",
+  "layerChecks": [
+    {
+      "layer": "floor",
+      "dimensionsPass": true,
+      "trueAlphaPass": true,
+      "canvasEdgesAllTransparent": true,
+      "alphaBoundsSource": [
+        63,
+        340,
+        1473,
+        1093
+      ],
+      "sha256": "339ecea5fab4b28201932830ceccf031cc5667c4185fa85711c573f2dca44ecb"
+    },
+    {
+      "layer": "back",
+      "dimensionsPass": true,
+      "trueAlphaPass": true,
+      "canvasEdgesAllTransparent": true,
+      "alphaBoundsSource": [
+        60,
+        117,
+        1476,
+        710
+      ],
+      "sha256": "9b2f33decb5c9cfbfe9f2435ba79fa7cab4c65144465dbae890d816c008f6efe"
+    },
+    {
+      "layer": "front",
+      "dimensionsPass": true,
+      "trueAlphaPass": true,
+      "canvasEdgesAllTransparent": true,
+      "alphaBoundsSource": [
+        80,
+        632,
+        1456,
+        1031
+      ],
+      "sha256": "fdfa511c0b1b05c3511e4ca66331ce00d5f2c899003d228585ed4a9ae0f5876d"
+    },
+    {
+      "layer": "lights",
+      "dimensionsPass": true,
+      "trueAlphaPass": true,
+      "canvasEdgesAllTransparent": true,
+      "alphaBoundsSource": [
+        88,
+        208,
+        1448,
+        1007
+      ],
+      "sha256": "9c0f3ecd28b929e314b557fd326438e245a581cc1649fbf4536bbc7481bb16b1"
+    }
+  ],
+  "anchorSourceMeasured": [
+    768.0,
+    1044.0
+  ],
+  "measuredFootprintSource": {
+    "back": [
+      768.0,
+      339.99992
+    ],
+    "right": [
+      1471.99988,
+      691.99993
+    ],
+    "front": [
+      768.0,
+      1044.0
+    ],
+    "left": [
+      64.00008,
+      692.00001
+    ]
+  },
+  "requestedFootprintSource": {
+    "back": [
+      768,
+      340
+    ],
+    "right": [
+      1472,
+      692
+    ],
+    "front": [
+      768,
+      1044
+    ],
+    "left": [
+      64,
+      692
+    ]
+  },
+  "registrationToleranceSourcePixels": 0.002,
+  "sameCameraAndCanvasAllLayers": true,
+  "drawOrder": [
+    "floor",
+    "back",
+    "live task stations and workers",
+    "front"
+  ],
+  "noBakedDynamicObjects": true,
+  "originalAuthoredGeometry": true,
+  "thirdPartyMeshOrTextureSources": [],
+  "optionalLightsOverlay": "Emission geometry only, occlusion-correct; apply at restrained opacity after back and before runtime entities over night treatment. Do not double-compose into the daytime base. No semantic state.",
+  "totalDecodedRGBABytes": 31457280,
+  "totalPNGBytes": 3048636
+}

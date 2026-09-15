@@ -1,0 +1,25 @@
+{
+  "id": "mf.cinematic.water",
+  "revision": 2,
+  "file": "design/mission-frontier/assets/staging/design-fidelity-v2/environment/water-r2.png",
+  "sourceSize": [
+    1024,
+    1024
+  ],
+  "logicalSize": [
+    512.0,
+    512.0
+  ],
+  "groundAnchor": [
+    256.0,
+    256.0
+  ],
+  "sha256": "f9cc32d609129c0231189729295c99870fcf9288b0b4cc4872da3c99c460d86a",
+  "bytes": 1001274,
+  "sourceBlend": "design/mission-frontier/assets/staging/design-fidelity-v2/environment/water-r2.blend",
+  "originalBlend": "design/mission-frontier/assets/staging/design-fidelity-v2/environment/source-water.blend",
+  "originalSha256": "2a5f317e2d481e8c8f334ce153652525fc8100fa11a4823669e16b283097cde7",
+  "blenderVersion": "5.2.1 LTS",
+  "samples": 48,
+  "provenance": "Derived from Goal3 procedural Blender environment and retained Quaternius CC0 rock geometry. Geometry/camera unchanged; coastal palette and light refinement only."
+}

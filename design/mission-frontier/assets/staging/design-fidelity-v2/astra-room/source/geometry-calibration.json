@@ -1,0 +1,66 @@
+{
+  "camera": {
+    "azimuthDegrees": 45,
+    "elevationDegrees": 30,
+    "orthoScale": 15.427783966064453,
+    "location": [
+      11.815340042114258,
+      11.815340042114258,
+      10.250280380249023
+    ]
+  },
+  "sourceSize": [
+    1536,
+    1280
+  ],
+  "logicalSize": [
+    768,
+    640
+  ],
+  "groundAnchor": [
+    384,
+    522
+  ],
+  "groundAnchorSourceMeasured": [
+    768.0,
+    1044.0
+  ],
+  "floorCornersSourceMeasured": {
+    "back": [
+      768.0,
+      339.99992
+    ],
+    "right": [
+      1471.99988,
+      691.99993
+    ],
+    "front": [
+      768.0,
+      1044.0
+    ],
+    "left": [
+      64.00008,
+      692.00001
+    ]
+  },
+  "objectCounts": {
+    "floor": 620,
+    "back": 449,
+    "front": 64
+  },
+  "samples": 24,
+  "seed": 9152026,
+  "blenderVersion": "5.2.1 LTS",
+  "layering": "floor then back then live stations and workers then front",
+  "renderLayerIsolation": "Camera visibility only; other layers still cast physically registered shadows. Front walls never exceed 0.67 world units.",
+  "centralFloorClearWorldBounds": [
+    [
+      -3.6,
+      -3.6
+    ],
+    [
+      3.6,
+      3.6
+    ]
+  ]
+}
