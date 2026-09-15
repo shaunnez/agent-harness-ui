@@ -69,16 +69,23 @@
   font-size: 12px;
 }
 .runtime-prototype-preview {
+  position: relative;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: light-dark(var(--bg-deep), #11110f);
 }
-.runtime-prototype-preview iframe {
+.runtime-prototype-preview iframe,
+.runtime-prototype-preview img {
   width: 100%;
   height: 100%;
   border: 0;
   background: white;
+}
+.runtime-prototype-preview img {
+  display: block;
+  object-fit: cover;
+  object-position: top;
 }
 .runtime-prototype-state {
   display: grid;
@@ -91,6 +98,12 @@
 }
 .runtime-prototype-state--failed {
   color: var(--red);
+}
+.runtime-prototype-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: light-dark(var(--bg-deep), #11110f);
 }
 .runtime-prototype-grid article > p {
   color: var(--muted);

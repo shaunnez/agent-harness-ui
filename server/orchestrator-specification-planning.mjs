@@ -1,12 +1,12 @@
 import { stat } from "node:fs/promises";
 import path from "node:path";
-import { parsePlanResult } from "./structured-output.mjs";
+import { isWorkPackageOwnershipFailure } from "../src/workflow-recovery-policy.ts";
+import { throwIfAborted } from "./orchestrator-run-policy.mjs";
+import { activity, now } from "./orchestrator-stage-support.mjs";
+import { retainedSliceCanBeRequalified } from "./orchestrator-task-helpers.mjs";
+import { isOwnedFile, parsePlanResult } from "./structured-output.mjs";
 import { selectVerificationCommands } from "./verification.mjs";
 import { fastEscalation } from "./workflow-profiles.mjs";
-
-import { now, activity } from "./orchestrator-stage-support.mjs";
-import { throwIfAborted } from "./orchestrator-run-policy.mjs";
-import { retainedSliceCanBeRequalified } from "./orchestrator-task-helpers.mjs";
 
 export class SpecificationPlanningOrchestrator {
   constructor({
@@ -70,6 +70,19 @@ export class SpecificationPlanningOrchestrator {
           const verificationManifest = await this._readVerificationManifest(evidencePath);
           for (const workPackage of workPackages) {
             selectVerificationCommands(verificationManifest, workPackage.verificationCommandIds);
+          }
+          for (const prior of task.workPackages ?? []) {
+            if (!isWorkPackageOwnershipFailure(prior.error ?? task.error)) continue;
+            const retainedFiles = prior.retainedContinuation?.files ?? [];
+            const revised = workPackages.find((item) => item.id === prior.id);
+            const uncovered = retainedFiles.filter(
+              (file) => !revised || !isOwnedFile(file, revised.ownedPaths),
+            );
+            if (uncovered.length) {
+              throw new Error(
+                `${prior.id}: Corrected plan still excludes retained changed path(s): ${uncovered.join(", ")}.`,
+              );
+            }
           }
         } else if (planResult.disposition === "already-satisfied") {
           for (const evidence of planResult.evidence) {
@@ -168,6 +181,27 @@ export class SpecificationPlanningOrchestrator {
                 qualificationFailure: prior.error,
               };
             }
+          } else if (
+            prior.status === "failed" &&
+            prior.worktreePath &&
+            prior.branch &&
+            prior.baseRevision &&
+            isWorkPackageOwnershipFailure(prior.error ?? draft.error) &&
+            (prior.retainedContinuation?.files?.length ?? 0) > 0 &&
+            (prior.retainedContinuation?.files ?? []).every((file) =>
+              isOwnedFile(file, workPackage.ownedPaths),
+            )
+          ) {
+            workPackage.branch = prior.branch;
+            workPackage.worktreePath = prior.worktreePath;
+            workPackage.baseRevision = prior.baseRevision;
+            workPackage.headRevision = prior.headRevision;
+            workPackage.files = [...(prior.files ?? [])];
+            workPackage.retainedContinuation = {
+              requestedAt: now(),
+              files: [...(prior.retainedContinuation?.files ?? [])],
+              outsideOwnership: [],
+            };
           }
         }
         draft.workPackages = workPackages;

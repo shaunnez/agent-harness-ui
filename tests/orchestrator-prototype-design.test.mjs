@@ -7,9 +7,11 @@ import { JsonTaskStore } from "../server/store.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import {
   buildPrototypePrompt,
+  captureClaudePreview,
   claudeDesignArgs,
   createClaudeDesignUrlCollector,
   createPrototypeGenerator,
+  parseClaudeServedPreviewUrl,
   parseUrl,
 } from "../server/prototype-generator.mjs";
 import { parseGrillQuestions } from "../server/structured-output.mjs";
@@ -45,8 +47,68 @@ test("confines non-interactive Claude Design publication to DesignSync", () => {
 test("extracts a Claude Design URL without Markdown emphasis", () => {
   assert.equal(
     parseUrl("**https://claude.ai/design/project-123** — published"),
-    "https://claude.ai/design/project-123",
+    "https://claude.ai/design/p/project-123",
   );
+});
+
+test("retains a signed Claude served-preview URL separately from the durable project URL", () => {
+  const served =
+    "https://project-123.claudeusercontent.com/v1/design/projects/project-123/serve/app/index.html?t=signed-token&theme=light";
+  assert.equal(parseClaudeServedPreviewUrl(`Preview: ${served}`), served);
+  const collector = createClaudeDesignUrlCollector();
+  collector.parse(
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "tool_use",
+            id: "design-create",
+            name: "DesignSync",
+            input: { method: "create_project" },
+          },
+        ],
+      },
+    }),
+  );
+  collector.parse(
+    JSON.stringify({
+      type: "user",
+      message: {
+        content: [{ type: "tool_result", tool_use_id: "design-create", content: served }],
+      },
+      toolUseResult: { projectId: "project-123", previewUrl: served },
+    }),
+  );
+  assert.equal(collector.result(), "https://claude.ai/design/p/project-123");
+  assert.equal(collector.servedPreviewUrl(), served);
+});
+
+test("captures a Claude served preview into the retained variant bundle", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-design-preview-"));
+  const served =
+    "https://project-123.claudeusercontent.com/v1/design/projects/project-123/serve/app/index.html?t=signed-token";
+  try {
+    let invocation = null;
+    const captured = await captureClaudePreview({
+      servedPreviewUrl: served,
+      bundlePath: directory,
+      signal: new AbortController().signal,
+      locateChromeImpl: async () => "/test/chrome",
+      runProcessImpl: async (command, args, options) => {
+        invocation = { command, args, options };
+        const screenshotArg = args.find((arg) => arg.startsWith("--screenshot="));
+        await writeFile(screenshotArg.slice("--screenshot=".length), "png");
+        return { code: 0, stdout: "", stderr: "" };
+      },
+    });
+    assert.equal(captured, true);
+    assert.equal(invocation.command, "/test/chrome");
+    assert.equal(invocation.args.at(-1), served);
+    assert.equal(invocation.options.label, "Claude Design preview capture");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test("retains the published URL from the DesignSync tool result", () => {
@@ -71,7 +133,7 @@ test("retains the published URL from the DesignSync tool result", () => {
       },
     }),
   );
-  assert.equal(collector.result(), "https://claude.ai/design/task-light-mode");
+  assert.equal(collector.result(), "https://claude.ai/design/p/task-light-mode");
 });
 
 test("derives the canonical Claude Design URL from a correlated create_project result", () => {

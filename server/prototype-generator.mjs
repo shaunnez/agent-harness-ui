@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { buildClaudeEnvironment, createClaudeStreamParser, locateClaude } from "./claude-runtime.mjs";
@@ -8,6 +8,7 @@ import { assertSupportedReasoning, providerForModelId } from "./model-catalog.mj
 import { runProcess } from "./process-runtime.mjs";
 
 const MAX_PROTOTYPE_BYTES = 2_000_000;
+const MAX_PROTOTYPE_SCREENSHOT_BYTES = 8_000_000;
 const MAX_DESIGN_ARTIFACT_CHARACTERS = 18_000;
 const DESIGN_ARTIFACT_NAMES = ["triage.md", "repository-scout.md", "decision-brief.md"];
 
@@ -100,7 +101,7 @@ ${designBrief(task)}`;
 
 ${shared}
 
-After DesignSync creates the project, finish the prototype and reply with its published Claude Design URL, a short title, a two-sentence summary, and a detailed implementation contract covering layout, component anatomy, interaction states, accessibility, and task-specific trade-offs. The contract must be sufficient for a downstream coding agent that cannot open the hosted prototype.`;
+After DesignSync creates the project, finish the prototype and reply with its canonical published Claude Design project URL (/design/p/<project-id>) and, when DesignSync exposes one, its claudeusercontent.com served-preview URL. Then include a short title, a two-sentence summary, and a detailed implementation contract covering layout, component anatomy, interaction states, accessibility, and task-specific trade-offs. The contract must be sufficient for a downstream coding agent that cannot open the hosted prototype.`;
   }
 
   return `${shared}
@@ -113,8 +114,33 @@ Write exactly these files in the current directory:
 Use realistic sample data only where the task requires it. Do not edit any other directory. Finish with a short confirmation.`;
 }
 
+export function canonicalClaudeDesignUrl(value) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    const match = url.pathname.match(/^\/design\/(?:p\/)?([a-z0-9_-]{8,100})\/?$/i);
+    if (url.protocol !== "https:" || url.hostname !== "claude.ai" || !match) return null;
+    return `https://claude.ai/design/p/${encodeURIComponent(match[1])}`;
+  } catch {
+    return null;
+  }
+}
+
 export function parseUrl(text) {
-  return text.match(/https:\/\/claude\.ai\/design\/(?:p\/)?[^\s)\]}>"'`*]+/i)?.[0] ?? null;
+  const value = text.match(/https:\/\/claude\.ai\/design\/(?:p\/)?[^\s)\]}>"'`*]+/i)?.[0] ?? null;
+  return canonicalClaudeDesignUrl(value);
+}
+
+export function parseClaudeServedPreviewUrl(text) {
+  const value = text.match(/https:\/\/[a-z0-9-]+\.claudeusercontent\.com\/[^\s)\]}>"'`*]+/i)?.[0];
+  if (!value) return null;
+  try {
+    const url = new URL(value.replaceAll("&amp;", "&"));
+    if (url.protocol !== "https:" || !url.hostname.endsWith(".claudeusercontent.com")) return null;
+    return url.href;
+  } catch {
+    return null;
+  }
 }
 
 export function createClaudeDesignUrlCollector() {
@@ -123,16 +149,22 @@ export function createClaudeDesignUrlCollector() {
   let callsObserved = 0;
   let resultsObserved = 0;
   let projectId = null;
+  let servedPreviewUrl = null;
+
+  function textValues(text) {
+    try {
+      return [text, JSON.parse(text)];
+    } catch {
+      return [text];
+    }
+  }
 
   function resultValues(event, block) {
     return [block.content, event.toolUseResult, event.tool_use_result].flatMap((value) => {
       if (value == null) return [];
-      if (typeof value === "string") {
-        try {
-          return [value, JSON.parse(value)];
-        } catch {
-          return [value];
-        }
+      if (typeof value === "string") return textValues(value);
+      if (Array.isArray(value)) {
+        return value.flatMap((entry) => (typeof entry?.text === "string" ? textValues(entry.text) : [entry]));
       }
       return [value];
     });
@@ -173,13 +205,20 @@ export function createClaudeDesignUrlCollector() {
         const values = resultValues(event, block);
         const url = values.map((value) => parseUrl(JSON.stringify(value))).find(Boolean);
         if (url) publishedUrl = url;
+        const previewUrl = values
+          .map((value) => parseClaudeServedPreviewUrl(JSON.stringify(value)))
+          .find(Boolean);
+        if (previewUrl) servedPreviewUrl = previewUrl;
         if (method === "create_project") projectId = extractProjectId(values) ?? projectId;
       }
     },
     result() {
       return (
-        publishedUrl ?? (projectId ? `https://claude.ai/design/p/${encodeURIComponent(projectId)}` : null)
+        (projectId ? `https://claude.ai/design/p/${encodeURIComponent(projectId)}` : null) ?? publishedUrl
       );
+    },
+    servedPreviewUrl() {
+      return servedPreviewUrl;
     },
     diagnostics() {
       if (!callsObserved) return "DesignSync was not invoked.";
@@ -190,6 +229,80 @@ export function createClaudeDesignUrlCollector() {
       return `DesignSync returned ${resultsObserved} correlated result(s).`;
     },
   };
+}
+
+async function locateChrome() {
+  const candidates = [
+    process.env.AGENT_HARNESS_CHROME,
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/usr/bin/google-chrome",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+  ].filter(Boolean);
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // Try the next known browser location.
+    }
+  }
+  return null;
+}
+
+export async function captureClaudePreview({
+  servedPreviewUrl,
+  bundlePath,
+  signal,
+  runProcessImpl = runProcess,
+  locateChromeImpl = locateChrome,
+}) {
+  if (!parseClaudeServedPreviewUrl(servedPreviewUrl)) return false;
+  const chrome = await locateChromeImpl();
+  if (!chrome) return false;
+  await mkdir(bundlePath, { recursive: true });
+  const profile = await mkdtemp(path.join(os.tmpdir(), "agent-harness-preview-"));
+  const screenshotPath = path.join(bundlePath, "preview.png");
+  try {
+    const result = await runProcessImpl(
+      chrome,
+      [
+        "--headless=new",
+        "--disable-gpu",
+        "--hide-scrollbars",
+        "--window-size=1440,1000",
+        "--virtual-time-budget=10000",
+        "--dump-dom",
+        `--user-data-dir=${profile}`,
+        `--screenshot=${screenshotPath}`,
+        servedPreviewUrl,
+      ],
+      {
+        timeoutMs: 60_000,
+        signal,
+        label: "Claude Design preview capture",
+        stdoutBudgetBytes: MAX_PROTOTYPE_BYTES,
+      },
+    );
+    if (
+      result.code !== 0 ||
+      /performing security verification|challenge-platform|cf-chl-/i.test(result.stdout)
+    ) {
+      await rm(screenshotPath, { force: true });
+      return false;
+    }
+    const screenshot = await stat(screenshotPath);
+    if (screenshot.size <= 0 || screenshot.size > MAX_PROTOTYPE_SCREENSHOT_BYTES) {
+      await rm(screenshotPath, { force: true });
+      return false;
+    }
+    return true;
+  } catch {
+    await rm(screenshotPath, { force: true });
+    return false;
+  } finally {
+    await rm(profile, { recursive: true, force: true });
+  }
 }
 
 function zeroUsage() {
@@ -239,7 +352,7 @@ export function claudeDesignArgs(sessionId, policy) {
   ];
 }
 
-export async function runClaudeDesign({ task, variant, signal }) {
+export async function runClaudeDesign({ task, variant, bundlePath, signal }) {
   const policy = policyForVariant(variant);
   const binary = await locateClaude();
   if (!binary) throw new Error("Claude CLI was not found. Install Claude Code and sign in first.");
@@ -276,7 +389,7 @@ export async function runClaudeDesign({ task, variant, signal }) {
     error.prototypeEvidence = partialEvidence;
     throw error;
   }
-  const externalUrl = parseUrl(parsed.finalText) ?? designUrlCollector.result();
+  const externalUrl = designUrlCollector.result() ?? parseUrl(parsed.finalText);
   if (!externalUrl) {
     const error = new Error(
       `Claude Design could not retain a published prototype. ${designUrlCollector.diagnostics()}`,
@@ -284,11 +397,17 @@ export async function runClaudeDesign({ task, variant, signal }) {
     error.prototypeEvidence = partialEvidence;
     throw error;
   }
+  const servedPreviewUrl =
+    designUrlCollector.servedPreviewUrl() ?? parseClaudeServedPreviewUrl(parsed.finalText);
+  const previewImageAvailable = servedPreviewUrl
+    ? await captureClaudePreview({ servedPreviewUrl, bundlePath, signal })
+    : false;
   return {
     title: "Claude Design direction",
     summary: parsed.finalText.slice(0, 1_500),
     designContract: parsed.finalText.slice(0, 50_000),
     externalUrl,
+    previewImageAvailable,
     model: policy.model,
     reasoning: policy.reasoning,
     usage: parsed.usage ?? zeroUsage(),

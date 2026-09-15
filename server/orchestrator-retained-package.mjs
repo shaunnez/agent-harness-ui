@@ -1,7 +1,8 @@
-import { beginAgentRun, completeAgentRun } from "./run-activity.mjs";
-import { now, activity, workPackageVerificationMarkdown } from "./orchestrator-stage-support.mjs";
 import { throwIfAborted } from "./orchestrator-run-policy.mjs";
+import { activity, now, workPackageVerificationMarkdown } from "./orchestrator-stage-support.mjs";
 import { requireActiveRunReservation } from "./orchestrator-task-helpers.mjs";
+import { packageQualificationFailure } from "./package-qualification-policy.mjs";
+import { beginAgentRun, completeAgentRun } from "./run-activity.mjs";
 
 export class RetainedPackageOrchestrator {
   constructor({ store, worktrees, readVerificationManifestAtRevision, qualifyPackage, retainAgentResult }) {
@@ -23,17 +24,24 @@ export class RetainedPackageOrchestrator {
       requireClean: true,
     });
     throwIfAborted(signal);
+    const attempt = workPackage.attempts + 1;
+    await this._store.update(id, (draft) => {
+      const target = draft.workPackages.find((item) => item.id === workPackageId);
+      target.attempts = attempt;
+    });
     const manifestSourceRevision = (await this._worktrees.base(task, { allowDirty: true })).baseRevision;
     const manifest = await this._readVerificationManifestAtRevision(
       task.repositoryPath,
       manifestSourceRevision,
     );
     const qualification = await this._qualifyPackage({
+      task,
       worktreePath: retained.worktreePath,
       workPackage,
       workPackageId,
-      attempt: workPackage.attempts,
+      attempt,
       headRevision: retained.headRevision,
+      baselineRevision: workPackage.baseRevision,
       signal,
       manifest,
     });
@@ -47,10 +55,7 @@ export class RetainedPackageOrchestrator {
         target.status = "failed";
         target.error = `${workPackageId} retained slice did not qualify under the corrected verification plan.`;
       });
-      const failed = qualification.rows?.find((row) => row.status !== "passed");
-      throw new Error(
-        `${workPackageId} retained slice did not qualify: ${failed?.id ?? "repository verification"} failed${failed?.failureDetails ? ` — ${failed.failureDetails}` : "."}`,
-      );
+      throw packageQualificationFailure(workPackageId, qualification, true);
     }
     const startedAt = now();
     let runId = null;

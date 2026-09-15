@@ -1055,6 +1055,12 @@ export function App() {
                   );
                   return;
                 }
+                if (action === "retry-design") {
+                  await retryTaskDesigns(activeRuntimeTask.id);
+                  await refreshActiveTask(activeRuntimeTask.id);
+                  showToast("success", "Failed design direction retry started.");
+                  return;
+                }
                 await runTaskAction(activeRuntimeTask.id, action, note);
                 await refreshActiveTask(activeRuntimeTask.id);
                 showToast(

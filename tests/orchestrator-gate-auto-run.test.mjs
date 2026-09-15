@@ -27,8 +27,9 @@ function controlFor({ task, settings = {}, startResult = true }) {
   const starts = [];
   control.start = async (_id, kind, options) => {
     starts.push(kind);
-    if (startResult) options.onReserve?.(current);
-    return startResult;
+    const admissible = options.canStart?.(current) ?? true;
+    if (startResult && admissible) options.onReserve?.(current);
+    return startResult && admissible;
   };
   return { control, current, starts };
 }
@@ -54,6 +55,8 @@ for (const scenario of [
       status: scenario.status,
       currentStage: scenario.stage,
       workflowProfile: { selected: "high-risk" },
+      attemptsByStage: { [scenario.stage]: 0 },
+      stageRunLimits: { [scenario.stage]: 3 },
       events: [],
     };
     const { control, current, starts } = controlFor({
@@ -76,6 +79,30 @@ test("manual and unrelated gate policies leave the task waiting", async () => {
     await control._autoAdvanceGate(task.id, "implementation");
     assert.deepEqual(starts, []);
   }
+});
+
+test("auto-run cannot bypass an exhausted gate allowance", async () => {
+  const task = {
+    id: "AH-EXHAUSTED-AUTO",
+    status: "ready-for-review",
+    currentStage: "dev-review",
+    workflowProfile: { selected: "standard" },
+    attemptsByStage: { "dev-review": 3 },
+    stageRunLimits: { "dev-review": 3 },
+    events: [],
+  };
+  const { control, current, starts } = controlFor({
+    task,
+    settings: { gatePolicies: { "dev-review": "auto-accept-recommendations" } },
+  });
+
+  await control._autoAdvanceGate(task.id, "implementation");
+
+  assert.deepEqual(starts, ["review"]);
+  assert.equal(
+    current.events.some((event) => /auto-run authorized/i.test(event.title)),
+    false,
+  );
 });
 
 test("records a failed automatic reservation instead of swallowing it", async () => {

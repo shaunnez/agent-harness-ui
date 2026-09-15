@@ -30,6 +30,7 @@ export type RuntimeTaskStatus =
 
 export type RuntimeAvailableAction =
   | "continue-implementation"
+  | "retry-design"
   | "approve-spec"
   | "approve-plan"
   | "revalidate-plan"
@@ -443,6 +444,7 @@ export interface RuntimePrototypeVariant {
   summary: string;
   designContract?: string;
   previewUrl: string | null;
+  previewImageAvailable?: boolean;
   externalUrl: string | null;
   bundleHash: string | null;
   model: string | null;
