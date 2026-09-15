@@ -37,12 +37,10 @@ export function WorldNavigation({
   onWorld,
   onOpen,
   onBriefing,
-  projectName,
 }: {
   onWorld(): void;
   onOpen(destination: Destination): void;
   onBriefing(): void;
-  projectName?: string;
 }) {
   const menu = useRef<HTMLElement>(null);
   const context = useCommandWorkspace();
@@ -111,7 +109,6 @@ export function WorldNavigation({
           </button>
         ))}
       </section>
-      {projectName && <span className="breadcrumb">/ {projectName}</span>}
     </nav>
   );
 }

@@ -42,10 +42,11 @@ export function AttentionQueue({
 }) {
   const attention = orderedDecisions(tasks);
   const [expanded, setExpanded] = useState(false);
-  const visible = expanded ? attention : attention.slice(0, 3);
+  const showAll = expanded && attention.length > 3;
+  const visible = showAll ? attention : attention.slice(0, 3);
   return (
     <aside
-      className={`attention-queue panel ${expanded ? "attention-expanded" : ""}`}
+      className={`attention-queue panel ${showAll ? "attention-expanded" : ""}`}
       aria-label="Tasks needing your attention"
     >
       <header>
@@ -86,10 +87,10 @@ export function AttentionQueue({
         <button
           type="button"
           className="queue-expand"
-          aria-expanded={expanded}
+          aria-expanded={showAll}
           onClick={() => setExpanded(!expanded)}
         >
-          {expanded ? "Show priority decisions" : `Show all ${attention.length} decisions`}
+          {showAll ? "Show priority decisions" : `Show all ${attention.length} decisions`}
           <ArrowRight size={16} />
         </button>
       )}
@@ -150,11 +151,11 @@ export function WorldActions({
 }) {
   return (
     <aside className="world-actions panel">
-      <button type="button" className="primary new-task" onClick={onNew}>
-        <Plus size={22} />
-        New task
-      </button>
       <div className="secondary-actions">
+        <button type="button" onClick={onNew}>
+          <Plus size={23} />
+          New task
+        </button>
         <button type="button" onClick={onAgents}>
           <Robot size={23} />
           Agent roster

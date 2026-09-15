@@ -3,6 +3,7 @@ import { WorldAssets } from "./assets";
 import { type Camera, constrainCamera, coverBackdrop, fitCamera, type Point, zoomAround } from "./camera";
 import type { WorldLighting } from "./environment-model";
 import { FrontierScene, type SceneInput, type WorldLabel } from "./scene";
+import { minimapFrame } from "./minimap-layout";
 import { AnimationVisibility } from "./visibility";
 
 export interface MinimapCapture {
@@ -37,6 +38,8 @@ export class WorldRenderer {
   private measurementStarted = performance.now();
   private lastFrame = 0;
   private minimapGeneration = 0;
+  private minimapAspectRatio = 1;
+  private minimapBounds: ReturnType<typeof minimapFrame> | null = null;
   private viewTransition = 0;
   private initialized = false;
   private loadingDetail = false;
@@ -258,8 +261,15 @@ export class WorldRenderer {
     this.camera.y = this.host.clientHeight * 0.45 - point.y * this.camera.zoom;
     this.applyCamera();
   }
+  resizeMinimap(width: number, height: number) {
+    if (width <= 0 || height <= 0) return;
+    const ratio = width / height;
+    if (Math.abs(ratio - this.minimapAspectRatio) < 0.001) return;
+    this.minimapAspectRatio = ratio;
+    void this.captureMinimap();
+  }
   minimapClick(x: number, y: number) {
-    const bounds = this.scene?.worldBounds;
+    const bounds = this.minimapBounds;
     if (bounds) this.focus({ x: bounds.x + x * bounds.width, y: bounds.y + y * bounds.height });
   }
   follow(taskId: string) {
@@ -330,7 +340,8 @@ export class WorldRenderer {
   private async captureMinimap() {
     if (!this.scene) return;
     const generation = ++this.minimapGeneration;
-    const bounds = this.scene.worldBounds;
+    const bounds = minimapFrame(this.scene.worldBounds, this.minimapAspectRatio);
+    this.minimapBounds = bounds;
     const saved = { x: this.scene.root.x, y: this.scene.root.y, scale: this.scene.root.scale.x };
     this.scene.root.position.set(0, 0);
     this.scene.root.scale.set(1);

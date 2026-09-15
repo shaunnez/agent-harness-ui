@@ -41,6 +41,11 @@ export function SelectionHud({
   const action = attentionAction(task);
   const watchPrimary = connected && action === "Inspect task" && Boolean(run);
   const artifacts = task.artifacts ?? [];
+  const latestArtifact = artifacts.reduce<(typeof artifacts)[number] | undefined>(
+    (latest, artifact) =>
+      !latest || Date.parse(artifact.createdAt) >= Date.parse(latest.createdAt) ? artifact : latest,
+    undefined,
+  );
   const skill = workflowStages.find((stage) => stage.id === task.currentStage)?.skill;
   const elapsed = taskWallTime(task, Date.now());
   return (
@@ -96,29 +101,28 @@ export function SelectionHud({
             Configure agent
           </button>
         </div>
-        {artifacts.length > 0 && (
-          <details className="selection-artifacts" open>
-            <summary>
-              <span>Artifacts · {artifacts.length}</span>
-              <span className="artifact-caret" aria-hidden="true">
-                ⌄
-              </span>
-            </summary>
-            <div className="selection-artifact-cards">
-              {artifacts.map((artifact) => (
-                <button
-                  key={artifact.id}
-                  type="button"
-                  className={`selection-artifact stage-${artifact.stage}`}
-                  onClick={() => onArtifact(artifact.id)}
-                >
-                  <FileText size={23} />
-                  <strong>{artifact.name}</strong>
-                  <small>{stageLabels[artifact.stage]}</small>
+        {latestArtifact && (
+          <section className="selection-artifacts" aria-label="Latest task artifact">
+            <header>
+              <span>Artifacts</span>
+              {artifacts.length > 1 && (
+                <button type="button" className="link-button" onClick={onInspect}>
+                  See more
                 </button>
-              ))}
+              )}
+            </header>
+            <div className="selection-artifact-cards">
+              <button
+                type="button"
+                className={`selection-artifact stage-${latestArtifact.stage}`}
+                onClick={() => onArtifact(latestArtifact.id)}
+              >
+                <FileText size={23} />
+                <strong>{latestArtifact.name}</strong>
+                <small>{stageLabels[latestArtifact.stage]}</small>
+              </button>
             </div>
-          </details>
+          </section>
         )}
       </div>
       <section className="selection-usage" aria-label="Recorded task usage">

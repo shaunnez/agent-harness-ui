@@ -67,6 +67,21 @@ test("compact HUD retains decisions, inspection and real artifacts", async () =>
     );
     assert.match(artifact, /Recorded plan/);
     assert.match(artifact, /selection-artifact-cards/);
+    assert.doesNotMatch(artifact, /See more|<details|<summary|artifact-caret/);
+    const history = [
+      { id: "latest", name: "Latest handoff", stage: "plan", createdAt: "2026-09-15T01:00:00Z" },
+      { id: "older", name: "Old handoff", stage: "plan", createdAt: "2026-09-14T01:00:00Z" },
+    ];
+    const multiple = renderToStaticMarkup(
+      React.createElement(SelectionHud, { ...props, task: { ...running, artifacts: history } }),
+    );
+    assert.match(multiple, /Latest handoff/);
+    assert.doesNotMatch(multiple, /Old handoff|<details|<summary|artifact-caret/);
+    assert.match(multiple, /See more/);
+    assert.deepEqual(
+      history.map((item) => item.id),
+      ["latest", "older"],
+    );
     const priced = renderToStaticMarkup(
       React.createElement(SelectionHud, {
         ...props,

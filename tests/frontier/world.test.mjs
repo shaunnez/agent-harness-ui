@@ -136,3 +136,18 @@ test("task rooms retain their slots as headquarters grows beyond the opening tri
   assert.deepEqual(sites[3], { x: 0, y: -211.2 });
   assert.ok(Math.max(...sites.map(({ x }) => Math.abs(x))) < 3000);
 });
+
+test("minimap framing fills its panel without cropping bases or moving world bounds", async () => {
+  const { minimapFrame } = await import("../../src/frontier/world/minimap-layout.ts");
+  const bounds = { x: 100, y: 200, width: 1200, height: 600 };
+  for (const ratio of [1, 235 / 236, 235 / 300, 2.4]) {
+    const frame = minimapFrame(bounds, ratio);
+    assert.ok(Math.abs(frame.width / frame.height - ratio) < 0.0001);
+    assert.ok(frame.x <= bounds.x && frame.y <= bounds.y);
+    assert.ok(frame.x + frame.width >= bounds.x + bounds.width);
+    assert.ok(frame.y + frame.height >= bounds.y + bounds.height);
+    assert.equal(frame.x + frame.width / 2, bounds.x + bounds.width / 2);
+    assert.equal(frame.y + frame.height / 2, bounds.y + bounds.height / 2);
+  }
+  assert.deepEqual(bounds, { x: 100, y: 200, width: 1200, height: 600 });
+});

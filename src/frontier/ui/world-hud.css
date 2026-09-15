@@ -176,11 +176,6 @@
   padding: 10px;
   z-index: 3;
 }
-.world-actions .new-task {
-  width: 100%;
-  font-size: 17px;
-  min-height: 48px;
-}
 .secondary-actions {
   display: flex;
   gap: 6px;

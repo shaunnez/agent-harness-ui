@@ -27,6 +27,7 @@ export function WorldCanvas({
   onWorldSettings,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
+  const mapHost = useRef<HTMLElement>(null);
   const labelHost = useRef<HTMLElement>(null);
   const latest = useRef({ onSelect, onEnterProject, onArtifact, input });
   latest.current = { onSelect, onEnterProject, onArtifact, input };
@@ -74,6 +75,13 @@ export function WorldCanvas({
       lighting: setLighting,
     });
     rendererRef.current = renderer;
+    const resizeMap = () => {
+      const map = mapHost.current;
+      if (map) renderer.resizeMinimap(map.clientWidth, map.clientHeight);
+    };
+    const mapObserver = new ResizeObserver(resizeMap);
+    if (mapHost.current) mapObserver.observe(mapHost.current);
+    resizeMap();
     setError(null);
     renderer.update(latest.current.input);
     renderer.initialize().catch((error: unknown) => {
@@ -81,6 +89,7 @@ export function WorldCanvas({
     });
     return () => {
       disposed = true;
+      mapObserver.disconnect();
       renderer.destroy();
       rendererRef.current = null;
     };
@@ -143,7 +152,7 @@ export function WorldCanvas({
           </button>
         </div>
       )}
-      <aside className="minimap panel" aria-label="World map">
+      <aside ref={mapHost} className="minimap panel" aria-label="World map">
         <button
           type="button"
           className="minimap-image"
@@ -165,13 +174,7 @@ export function WorldCanvas({
           }}
         >
           {minimap && (
-            <span
-              className="minimap-content"
-              style={{
-                aspectRatio: `${minimap.width} / ${minimap.height}`,
-                maxWidth: `calc(var(--minimap-image-height, 150px) * ${minimap.width / minimap.height})`,
-              }}
-            >
+            <span className="minimap-content">
               <img src={minimap.image} alt="Current world map" />
               {minimap.projects.map((project) => (
                 <span

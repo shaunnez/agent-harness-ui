@@ -418,7 +418,6 @@ export function FrontierApp() {
         onWorld={() => navigate(worldLocation)}
         onOpen={(kind) => open({ kind })}
         onBriefing={() => open({ kind: "briefing" })}
-        projectName={location.view === "project" ? project?.name : undefined}
       />
       {location.view !== "agent" && (
         <aside className="attention-stack" aria-label="Decisions and pinned work">

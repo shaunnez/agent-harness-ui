@@ -1,3 +1,17 @@
+# Map/grid/artifact design QA — 15 September 2026
+
+Source visual truth: prior qualified HUD plus Shaun’s latest explicit steering. Before: `design/mission-frontier/build-evidence/HUD/grid-before-world-1280.png`; after: `grid-world-base-1280.png` in the same evidence directory. Full-view and focused right-column/artifact comparison opened together in `grid-comparison.png`. Both World/base captures are 1280×720 CSS/pixels at 1× density; board previews use identical 0.5 scale. Cycling light and retained/reinitialized scene framing differ, so this qualifies HUD geometry/content, not scenery fidelity.
+
+No actionable P0/P1/P2 differences remain in the requested scope. Fonts retain Inter and existing body/metadata floors; shortcut labels increased to 14px and stay unwrapped. Matching 2×2 tracks and 340px attention/control widths align; expanded decisions/pins use the remaining right-column height with 12px gap and local scrolling. Count is centered within 24px. Existing dark panels and semantic colors remain readable. Actual map assets fill the observed aspect ratio without cropping bases or stretching imagery. Content is truthful: latest createdAt artifact only, conditional See more, no empty artifacts, no project breadcrumb.
+
+Comparison history: caught expanded World state leaving a mostly empty tall HQ panel for two decisions; constrained effective expansion to more than three decisions. Corrected post-fix evidence: grid-hq-blocked-1280.png / grid-hq-blocked-1488.png. Additional evidence includes grid-world-expanded-1280.png / 1488.png, grid-world-pins-expanded-1280.png and grid-hq-artifact-history-1280.png.
+
+Primary interactions: all four shortcuts, New task by Enter, Escape dismissing overlay/selection, map marker click, local decision scroll, two pins, latest artifact/See more and older stage evidence. Captured browser console has no errors. Zero-decision/long-title/connection semantics remain covered by existing Frontier contract checks and the dated earlier HUD acceptance; no new native screen-reader/OS qualification. API and Sites suites were not rerun for this HUD slice.
+
+final result: passed
+
+---
+
 # Bottom-row height design QA — 15 September 2026
 
 Result: passed for the latest three layout requests at normal laptop and desktop sizes. Inspected before/after: design/mission-frontier/build-evidence/HUD/height-comparison.png. Source is the prior qualified HQ repair-task capture; implementation is the corrected current HQ repair-task capture. Scene lighting differs because the existing local cycle continued.

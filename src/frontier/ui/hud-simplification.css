@@ -113,14 +113,12 @@
   margin-top: 5px;
   font-size: 12px;
 }
-.selection-details summary,
-.selection-artifacts summary {
+.selection-details summary {
   cursor: pointer;
   color: #add2ee;
   padding: 5px 0;
 }
-.selection-details summary:hover,
-.selection-artifacts summary:hover {
+.selection-details summary:hover {
   color: #fff;
 }
 .selection-copy .selection-details p {
