@@ -475,6 +475,73 @@ test("stops Development Review when it exceeds the hard repository-command budge
   }
 });
 
+test("opens the standard repair circuit after two repaired candidate revisions", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-repair-circuit-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Stop repeated candidate repair",
+      description: "Escalate repeated review failures back to planning.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-review";
+      draft.currentStage = "dev-review";
+      draft.workflowProfile = { selected: "standard" };
+      draft.candidates = [
+        {
+          id: "C1",
+          revisionNumber: 3,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          headRevision: "d".repeat(40),
+          branch: "agent-harness/repair-circuit",
+          repositoryRoot: directory,
+          worktreePath: directory,
+          status: "ready_for_review",
+          createdAt: "2026-08-01T12:00:00.000Z",
+          updatedAt: "2026-08-01T12:00:00.000Z",
+          revisions: [
+            { number: 1, reason: "assembly", headRevision: "b".repeat(40) },
+            { number: 2, reason: "repair", headRevision: "c".repeat(40) },
+            { number: 3, reason: "repair", headRevision: "d".repeat(40) },
+          ],
+        },
+      ];
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
+      worktreeManager: { verifyCandidate: async () => {} },
+      runCodex: async () => ({
+        finalText: gateOutput(3, "REPAIR", [
+          {
+            severity: "P1",
+            title: "Another blocking defect",
+            detail: "The corrected plan must address the recurring boundary failure.",
+            candidateId: "C1",
+            candidateRevision: 3,
+          },
+        ]),
+        usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    assert.equal(await orchestrator.start(task.id, "review"), true);
+    const blocked = await waitForStatus(store, task.id, "blocked");
+    assert.equal(blocked.candidates[0].status, "repair_required");
+    assert.equal(blocked.blocker.code, "repair-loop-exhausted");
+    assert.equal(blocked.blocker.repairCount, 2);
+    assert.equal(blocked.blocker.repairLimit, 2);
+    assert.match(blocked.error, /circuit breaker reached 2\/2/i);
+    assert.equal(blocked.events.at(-1).title, "Candidate repair circuit breaker opened");
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
 test("reviewer command failure never authorizes candidate Repair even when the reviewer reports REPAIR", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-review-command-repair-"));
   try {

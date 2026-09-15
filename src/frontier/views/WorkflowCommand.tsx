@@ -115,7 +115,7 @@ export function WorkflowCommand({
       () =>
         gateway.action(
           task.id,
-          actionReview.action as Exclude<RuntimeAvailableAction, "continue-implementation">,
+          actionReview.action as Exclude<RuntimeAvailableAction, "continue-implementation" | "retry-design">,
           actionNote,
           actionReview.scope,
         ),
@@ -229,15 +229,21 @@ export function WorkflowCommand({
             className="primary"
             disabled={busy || !connected || !executable(task, next.action)}
             title={task.actionEligibility?.actions[next.action]?.reason ?? ""}
-            aria-haspopup={next.action === "continue-implementation" ? undefined : "menu"}
+            aria-haspopup={
+              next.action === "continue-implementation" || next.action === "retry-design" ? undefined : "menu"
+            }
             aria-expanded={
-              next.action === "continue-implementation" ? undefined : menu?.action === next.action
+              next.action === "continue-implementation" || next.action === "retry-design"
+                ? undefined
+                : menu?.action === next.action
             }
             aria-controls={
-              next.action === "continue-implementation" ? undefined : `workflow-action-menu-${task.id}`
+              next.action === "continue-implementation" || next.action === "retry-design"
+                ? undefined
+                : `workflow-action-menu-${task.id}`
             }
             onKeyDown={
-              next.action === "continue-implementation"
+              next.action === "continue-implementation" || next.action === "retry-design"
                 ? undefined
                 : (event) =>
                     triggerKeyDown(event, next.action as RuntimeAvailableAction, next.label, next.detail)
@@ -253,6 +259,8 @@ export function WorkflowCommand({
                     if (id) onContinue(id);
                   },
                 );
+              } else if (next.action === "retry-design") {
+                void command(() => gateway.retryDesign(task.id));
               } else
                 propose(next.action as RuntimeAvailableAction, next.label, next.detail, event.currentTarget);
             }}

@@ -1,4 +1,9 @@
 import { supportsRetainedPackageContinuation } from "../src/retained-package-continuation.ts";
+import {
+  candidateRepairCircuitExhausted,
+  candidateRepairCircuitReason,
+  isInvalidApprovedPlanFailure,
+} from "../src/workflow-recovery-policy.ts";
 import { GATE_AUTO_ADVANCE, resolveGatePolicy } from "./gate-policies.mjs";
 import { providerForModelId } from "./model-catalog.mjs";
 import { canStartRun, currentCandidate, reserveRun } from "./orchestrator-run-policy.mjs";
@@ -102,7 +107,9 @@ export class TaskControlOrchestrator {
       if (resolveGatePolicy(settings, transition.stage) !== "auto-accept-recommendations") return;
       const started = await this.start(id, transition.nextKind, {
         canStart: (draft) =>
-          draft.status === transition.readyStatus && draft.currentStage === transition.stage,
+          draft.status === transition.readyStatus &&
+          draft.currentStage === transition.stage &&
+          canStartRun(draft, transition.nextKind),
         onReserve: (draft) => {
           draft.events.push(
             activity(
@@ -514,14 +521,27 @@ export class TaskControlOrchestrator {
   async correctInvalidPlan(id) {
     const task = await this._store.get(id);
     if (!task) throw new Error("Task not found.");
-    if (!["failed", "blocked"].includes(task.status) || task.currentStage !== "implement") {
+    const candidate = task.candidates?.at(-1) ?? null;
+    const implementationCorrectionCandidate =
+      ["failed", "blocked"].includes(task.status) && task.currentStage === "implement";
+    const exhaustedCandidateRepair =
+      ["repair-required", "failed", "blocked"].includes(task.status) &&
+      candidate?.status === "repair_required" &&
+      candidateRepairCircuitExhausted(task, candidate);
+    if (!implementationCorrectionCandidate && !exhaustedCandidateRepair) {
       throw new Error("The task is not blocked by an invalid approved plan.");
     }
     let validationError = null;
-    try {
-      await this._assertExecutablePlan(task);
-    } catch (error) {
-      validationError = error;
+    if (implementationCorrectionCandidate && isInvalidApprovedPlanFailure(task.error)) {
+      validationError = new Error(task.error);
+    } else if (exhaustedCandidateRepair) {
+      validationError = new Error(candidateRepairCircuitReason(task, candidate));
+    } else {
+      try {
+        await this._assertExecutablePlan(task);
+      } catch (error) {
+        validationError = error;
+      }
     }
     if (!validationError) {
       throw new Error("The retained approved plan is executable and does not require plan correction.");
@@ -534,11 +554,15 @@ export class TaskControlOrchestrator {
       );
     }
     const workPackageSnapshot = JSON.stringify(task.workPackages ?? []);
+    const candidateSnapshot = JSON.stringify(task.candidates ?? []);
     const started = await this.start(id, "planning", {
       canStart: (draft) =>
-        ["failed", "blocked"].includes(draft.status) &&
-        draft.currentStage === "implement" &&
-        JSON.stringify(draft.workPackages ?? []) === workPackageSnapshot,
+        JSON.stringify(draft.workPackages ?? []) === workPackageSnapshot &&
+        JSON.stringify(draft.candidates ?? []) === candidateSnapshot &&
+        ((["failed", "blocked"].includes(draft.status) && draft.currentStage === "implement") ||
+          (["repair-required", "failed", "blocked"].includes(draft.status) &&
+            draft.candidates?.at(-1)?.status === "repair_required" &&
+            candidateRepairCircuitExhausted(draft, draft.candidates?.at(-1)))),
       onReserve: (draft) => {
         const attempts = draft.attemptsByStage?.implement ?? 0;
         draft.stageRunLimits ??= {};
@@ -623,7 +647,7 @@ export class TaskControlOrchestrator {
       );
     if (!workPackage)
       throw new Error(
-        "No interrupted, timed-out, ownership-blocked or qualification-failed retained package is available to recover.",
+        "No interrupted, timed-out or qualification-failed retained package is available to recover.",
       );
     const retained = await this._worktrees.inspectRetainedSlice(workPackage, { requireClean: false });
     const qualificationFailure = /(?:retained slice )?did not qualify/i.test(
@@ -645,9 +669,6 @@ export class TaskControlOrchestrator {
         );
       },
       onReserve: (draft) => {
-        const attempts = draft.attemptsByStage?.implement ?? 0;
-        draft.stageRunLimits ??= {};
-        draft.stageRunLimits.implement = Math.max(stageRunLimitFor(draft, "implement"), attempts + 1);
         const current = draft.workPackages.find((item) => item.id === workPackage.id);
         if (retained.clean) {
           current.retainedForRequalification = true;

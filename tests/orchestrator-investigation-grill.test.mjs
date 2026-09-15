@@ -71,6 +71,18 @@ test("parses grounded Grill questions and dependency batches", () => {
       ),
     /repository manifest command ID/i,
   );
+  assert.throws(
+    () =>
+      parseWorkPackages(
+        `<work-packages>{"packages":[{"id":"S1","title":"Incomplete ownership","description":"Update the runtime and add tests covering the new behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verificationCommandIds":["test"]}]}</work-packages>`,
+      ),
+    /requires test changes.*no explicit test file or test directory/i,
+  );
+  assert.doesNotThrow(() =>
+    parseWorkPackages(
+      `<work-packages>{"packages":[{"id":"S1","title":"Complete ownership","description":"Update the runtime and add tests covering the new behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs","tests/runtime.test.mjs"],"verificationCommandIds":["test"]}]}</work-packages>`,
+    ),
+  );
 });
 
 test("runs the investigation frontier and retains each stage handoff", async () => {

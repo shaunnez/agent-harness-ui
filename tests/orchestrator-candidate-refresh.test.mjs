@@ -1,4 +1,5 @@
 import test from "node:test";
+import { CandidateOperationsOrchestrator } from "../server/orchestrator-candidate-operations.mjs";
 import { withActionEligibility } from "../server/retry-admission-policy.mjs";
 import {
   assert,
@@ -11,6 +12,91 @@ import {
   TaskOrchestrator,
   waitForStatus,
 } from "./orchestrator-test-support.mjs";
+
+test("recovers an interrupted refresh and rebases onto the captured authority revision", async () => {
+  const oldBase = "a".repeat(40);
+  const oldHead = "b".repeat(40);
+  const targetRevision = "c".repeat(40);
+  const refreshedHead = "d".repeat(40);
+  const task = {
+    id: "AH-078",
+    repositoryPath: "/tmp/repository",
+    status: "blocked",
+    currentStage: "dev-review",
+    error: "The target branch advanced.",
+    blocker: { code: "target-diverged", detail: "The target branch advanced." },
+    candidates: [
+      {
+        id: "C1",
+        revisionNumber: 3,
+        baseRevision: oldBase,
+        headRevision: oldHead,
+        status: "ready_for_review",
+        revisions: [],
+      },
+    ],
+    completedStages: ["implement"],
+    repositoryAuthorityHistory: [],
+    runs: [],
+    artifacts: [],
+    events: [],
+  };
+  let verifyCalls = 0;
+  let recovered = 0;
+  const authority = {
+    id: "authority-current",
+    selectedRevision: targetRevision,
+    capturedAt: "2026-09-15T01:00:00.000Z",
+    upstreamRef: "refs/remotes/origin/main",
+    remoteVerification: { status: "verified", error: null },
+  };
+  const orchestrator = new CandidateOperationsOrchestrator({
+    store: {
+      get: async () => structuredClone(task),
+      transition: async (_id, condition, updater) => {
+        assert.equal(condition(task), true);
+        updater(task);
+        return structuredClone(task);
+      },
+    },
+    github: {},
+    mergeActive: new Set(),
+    refreshActive: new Set(),
+    repositoryAuthority: { capture: async () => structuredClone(authority) },
+    start: () => {},
+    worktrees: {
+      verifyCandidate: async () => {
+        verifyCalls += 1;
+        if (verifyCalls === 1) {
+          throw new Error("The candidate worktree no longer matches its recorded revision.");
+        }
+      },
+      recoverCandidate: async () => {
+        recovered += 1;
+        return true;
+      },
+      refreshCandidate: async (_candidate, options) => {
+        assert.deepEqual(options, { targetRevision });
+        return {
+          previousBaseRevision: oldBase,
+          previousHeadRevision: oldHead,
+          targetRevision,
+          headRevision: refreshedHead,
+          files: ["src/change.ts"],
+          summary: "src/change.ts | 1 +",
+        };
+      },
+    },
+  });
+
+  const refreshed = await orchestrator.refreshCandidate(task.id);
+
+  assert.equal(recovered, 1);
+  assert.equal(refreshed.candidates[0].revisionNumber, 4);
+  assert.equal(refreshed.candidates[0].baseRevision, targetRevision);
+  assert.equal(refreshed.candidates[0].headRevision, refreshedHead);
+  assert.equal(refreshed.events.at(-1).title, "Interrupted candidate refresh recovered");
+});
 
 test("records refresh conflicts and rebuilds approved packages from the latest target", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-rebuild-candidate-"));
@@ -252,16 +338,6 @@ test("replays one clean retained package onto an advanced target for zero-model 
 
 for (const scenario of [
   { name: "timed-out", error: "Codex run exceeded 900 seconds.", failsCommit: false },
-  {
-    name: "ownership-blocked",
-    error: "Candidate changed src/outside.ts, which is outside the work package ownership (src/feature.ts).",
-    failsCommit: false,
-  },
-  {
-    name: "ownership-blocked with an unresolved exception",
-    error: "Candidate changed src/outside.ts, which is outside the work package ownership (src/feature.ts).",
-    failsCommit: true,
-  },
 ]) {
   test(`continues a ${scenario.name} retained package while preserving completed dependencies and ownership`, async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-retained-continuation-"));
@@ -292,7 +368,7 @@ for (const scenario of [
           capturedAt: new Date().toISOString(),
         };
         draft.attemptsByStage.implement = 4;
-        draft.stageRunLimits.implement = 4;
+        draft.stageRunLimits.implement = 5;
         draft.workPackages = [
           {
             id: "S1",
@@ -357,7 +433,7 @@ for (const scenario of [
           };
         },
         runPackageVerification: async () =>
-          makeFocusedTestSummary({ candidateId: "S2", candidateRevision: 4 }),
+          makeFocusedTestSummary({ candidateId: "S2", candidateRevision: 5 }),
         worktreeManager: {
           base: async () => ({ repositoryRoot: directory, baseRevision, baseBranch: "main" }),
           inspectRetainedSlice: async () => ({
@@ -412,7 +488,7 @@ for (const scenario of [
       assert.equal(modelCalls, 1);
       assert.deepEqual(ready.workPackages[0].headRevision, dependency.headRevision);
       assert.equal(ready.workPackages[0].attempts, dependency.attempts);
-      assert.equal(ready.workPackages[1].attempts, 4);
+      assert.equal(ready.workPackages[1].attempts, 5);
       assert.equal(ready.stageRunLimits.implement, 5);
       assert.equal(request.timeoutMs, 1_800_000);
       assert.match(

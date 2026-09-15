@@ -30,6 +30,7 @@ export type RuntimeTaskStatus =
 
 export type RuntimeAvailableAction =
   | "continue-implementation"
+  | "retry-design"
   | "approve-spec"
   | "approve-plan"
   | "revalidate-plan"

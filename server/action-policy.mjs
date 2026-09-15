@@ -1,8 +1,13 @@
+import {
+  candidateRepairCircuitExhausted,
+  isInvalidApprovedPlanFailure,
+} from "../src/workflow-recovery-policy.ts";
 import { stageRunLimitFor } from "./run-activity.mjs";
 
 export const PROJECTED_ACTIONS = Object.freeze([
   "run",
   "continue-implementation",
+  "retry-design",
   "approve-spec",
   "approve-plan",
   "revalidate-plan",
@@ -37,8 +42,18 @@ const RUN_ACTIONS = Object.freeze({
   specification: { kind: "specification", statuses: ["failed", "cancelled"], stages: ["specification"] },
   plan: {
     kind: "planning",
-    statuses: ["awaiting-plan-approval", "failed", "blocked", "cancelled"],
-    stages: ["plan", "implement"],
+    statuses: [
+      "awaiting-plan-approval",
+      "ready-for-review",
+      "review-retry-required",
+      "ready-for-test",
+      "ready-for-final-review",
+      "repair-required",
+      "failed",
+      "blocked",
+      "cancelled",
+    ],
+    stages: ["plan", "implement", "dev-review", "test", "final-review"],
   },
   implement: {
     kind: "implementation",
@@ -82,11 +97,22 @@ export function runActionAdmission(task, action) {
   if (
     action === "plan" &&
     task.status === "blocked" &&
-    !(task.currentStage === "plan" && task.blocker?.code === "plan-prerequisite")
+    !(
+      (task.currentStage === "plan" && task.blocker?.code === "plan-prerequisite") ||
+      (task.currentStage === "implement" && isInvalidApprovedPlanFailure(task.error)) ||
+      task.blocker?.code === "repair-loop-exhausted"
+    )
   ) {
     return deny("This blocker cannot be resolved by repeating planning.");
   }
-  const effectiveStage = action === "repair" ? "implement" : task.currentStage;
+  if (
+    action === "plan" &&
+    !["plan", "implement"].includes(task.currentStage) &&
+    !candidateRepairCircuitExhausted(task, candidate)
+  ) {
+    return deny("Candidate replanning is available only after the repair circuit breaker opens.");
+  }
+  const effectiveStage = action === "repair" ? "implement" : action === "plan" ? "plan" : task.currentStage;
   const prerequisitePlanningRecheck =
     action === "plan" &&
     task.status === "blocked" &&

@@ -18,6 +18,7 @@ import {
   ProcessTimeoutError,
   runProcess,
 } from "./process-runtime.mjs";
+import { isExpectedReadOnlySearchMiss } from "./shell-command-outcome.mjs";
 
 // Re-exported so existing importers keep a single Codex-runtime entry point while
 // the implementations live in the shared, provider-agnostic module.
@@ -151,16 +152,22 @@ export function parseCodexEvent(line) {
 
   if (event.type === "item.completed" && event.item?.type === "command_execution") {
     const succeeded = event.item.status === "completed" || event.item.exit_code === 0;
-    const runtimeScope =
-      !succeeded && isRuntimeContextPreflightCommand(event.item.command)
-        ? "context-preflight"
-        : "agent-diagnostic";
+    const contextPreflight = !succeeded && isRuntimeContextPreflightCommand(event.item.command);
+    const expectedSearchMiss =
+      !succeeded &&
+      !contextPreflight &&
+      isExpectedReadOnlySearchMiss(event.item.command, event.item.exit_code);
+    const runtimeScope = contextPreflight ? "context-preflight" : "agent-diagnostic";
     return {
       type: "activity",
-      tone: succeeded ? "success" : "warning",
-      title: succeeded ? "Repository command completed" : "Repository command returned a warning",
+      tone: succeeded || expectedSearchMiss ? "success" : "warning",
+      title: succeeded
+        ? "Repository command completed"
+        : expectedSearchMiss
+          ? "Repository search returned no matches"
+          : "Repository command returned a warning",
       detail: formatCommand(event.item.command),
-      commandFailed: !succeeded,
+      commandFailed: !succeeded && !expectedSearchMiss,
       runtimeScope,
       toolCall: {
         id: event.item.id ?? null,

@@ -1,9 +1,10 @@
 import { supportsRetainedPackageContinuation } from "../src/retained-package-continuation.ts";
 import {
-  failedRepairAuthorizingGate,
-  validRetryReservationCandidateBinding,
-  validateGlobalRetryIdentities,
-} from "./retry-authority-validation.mjs";
+  candidateRepairCircuitExhausted,
+  candidateRepairCircuitReason,
+  isInvalidApprovedPlanFailure,
+} from "../src/workflow-recovery-policy.ts";
+import { PROJECTED_ACTIONS, runActionAdmission } from "./action-policy.mjs";
 import {
   adjacentRepairAuthorizingGate,
   candidateRevisionLineage,
@@ -11,14 +12,11 @@ import {
   replacedCandidateMatchesReservation,
   targetRefreshesDescendFromReservation,
 } from "./candidate-lineage-validation.mjs";
-import { PROJECTED_ACTIONS, runActionAdmission } from "./action-policy.mjs";
 import {
-  CANONICAL_RUN_STAGES,
-  CANDIDATE_GATE_STAGES,
-  readExecutionProvider,
-  resolveGateFreshness,
-  stageRunLimitFor,
-} from "./run-activity.mjs";
+  failedRepairAuthorizingGate,
+  validateGlobalRetryIdentities,
+  validRetryReservationCandidateBinding,
+} from "./retry-authority-validation.mjs";
 import {
   orderRetrySourceRuns,
   validateRetryRunScopes,
@@ -28,6 +26,13 @@ import {
   validRetryRunTuple,
   validRetryWorkflowIdentities,
 } from "./retry-reservation-validation.mjs";
+import {
+  CANDIDATE_GATE_STAGES,
+  CANONICAL_RUN_STAGES,
+  readExecutionProvider,
+  resolveGateFreshness,
+  stageRunLimitFor,
+} from "./run-activity.mjs";
 
 export function withActionEligibility(task) {
   return {
@@ -95,6 +100,13 @@ function actionEligibilityFor(task, action) {
     if (task.workflow !== "investigate" || task.status !== "completed")
       return deny("Only a completed investigate-only task can continue to implementation.");
     return allow();
+  }
+  if (action === "retry-design") {
+    return ["failed", "cancelled"].includes(task.status) &&
+      task.currentStage === "specification" &&
+      task.designRequest?.status === "failed"
+      ? allow()
+      : deny("Design generation is not awaiting retry.");
   }
   if (action === "reconcile-merge") {
     const retainedPending = task.status === "merging" && task.mergeIntent?.status === "pending";
@@ -208,11 +220,14 @@ function actionEligibilityFor(task, action) {
         workPackage.worktreePath &&
         supportsRetainedPackageContinuation(workPackage.error ?? task.error ?? ""),
     );
-    return ["failed", "blocked"].includes(task.status) && task.currentStage === "implement" && retained
+    if (!["failed", "blocked"].includes(task.status) || task.currentStage !== "implement" || !retained) {
+      return deny(
+        "No interrupted, timed-out or qualification-failed retained package is available to recover.",
+      );
+    }
+    return (task.attemptsByStage?.implement ?? 0) < stageRunLimitFor(task, "implement")
       ? allow()
-      : deny(
-          "No interrupted, timed-out, ownership-blocked or qualification-failed retained package is available to recover.",
-        );
+      : deny("The Implement stage has exhausted its retry allowance; grant one bounded attempt first.");
   }
   if (action === "retry-test") {
     const verification = [...(candidate?.verificationRuns ?? [])]
@@ -249,6 +264,15 @@ function actionEligibilityFor(task, action) {
       : deny("The exact candidate is not eligible for a same-revision Test retry.");
   }
   if (action === "plan" && ["failed", "blocked"].includes(task.status) && task.currentStage === "implement")
+    return isInvalidApprovedPlanFailure(task.error)
+      ? allow()
+      : deny("The implementation failure does not require a corrected plan.");
+  if (
+    action === "plan" &&
+    ["repair-required", "failed", "blocked"].includes(task.status) &&
+    candidate?.status === "repair_required" &&
+    candidateRepairCircuitExhausted(task, candidate)
+  )
     return allow();
   if (action === "plan" && task.status === "awaiting-plan-approval") {
     const latestPlan = task.artifacts?.filter((artifact) => artifact.stage === "plan").at(-1);
@@ -269,28 +293,28 @@ function actionEligibilityFor(task, action) {
 
 export function retryGrantContext(task) {
   const candidate = task.candidates?.at(-1);
-  if (
-    task.workflowProfile?.selected === "fast" &&
-    candidate?.status === "repair_required" &&
-    (task.automaticRepairCycles ?? 0) >= 1
-  ) {
+  if (task.blocker?.code === "repository-baseline-verification") {
     return {
       error:
-        "Fast tasks permit one automatic review-driven candidate repair. A further candidate defect requires human direction, not another repair-loop grant.",
+        "The same verification command fails on the repository baseline. Fix or advance that baseline before authorizing candidate work.",
     };
   }
+  if (task.currentStage === "implement" && isInvalidApprovedPlanFailure(task.error)) {
+    return {
+      error:
+        "Structural package-scope failures require a corrected plan; another implementation retry is not allowed.",
+    };
+  }
+  const exhaustedCircuitReason =
+    candidate && candidate.status === "repair_required" && candidateRepairCircuitExhausted(task, candidate)
+      ? candidateRepairCircuitReason(task, candidate)
+      : null;
   const grantedStage = candidate?.status === "repair_required" ? "implement" : task.currentStage;
   if (!CANONICAL_RUN_STAGES.includes(grantedStage)) {
     return { error: "The current stage cannot receive a retry grant." };
   }
   const currentAttempts = task.attemptsByStage?.[grantedStage] ?? 0;
   const currentLimit = stageRunLimitFor(task, grantedStage);
-  if (currentAttempts > currentLimit) {
-    return {
-      error:
-        "The recorded attempts exceed this stage's allowance; resolve the inconsistent task state before granting a retry.",
-    };
-  }
   const exhaustedRepair =
     ["repair-required", "failed"].includes(task.status) &&
     candidate?.status === "repair_required" &&
@@ -307,6 +331,12 @@ export function retryGrantContext(task) {
     task.currentStage === readyGateTuple.stage &&
     candidate?.status === readyGateTuple.candidateStatus &&
     currentAttempts >= currentLimit;
+  if (currentAttempts > currentLimit && !exhaustedReadyGate) {
+    return {
+      error:
+        "The recorded attempts exceed this stage's allowance; resolve the inconsistent task state before granting a retry.",
+    };
+  }
   const exhaustedPlanApproval =
     task.status === "awaiting-plan-approval" &&
     task.currentStage === "plan" &&
@@ -472,6 +502,7 @@ export function retryGrantContext(task) {
         "The exhausted candidate is missing exact producer evidence; resolve the inconsistent history before granting a retry.",
     };
   }
+  if (exhaustedCircuitReason) return { error: exhaustedCircuitReason };
   const candidateProducerRunIds = producerEvidence?.runs.map((run) => run.id) ?? [];
   const candidateProducerArtifactIds = producerEvidence?.artifacts.map((artifact) => artifact.id) ?? [];
   const candidateAuthorizerRunIds = producerEvidence?.authorizerRuns.map((run) => run.id) ?? [];

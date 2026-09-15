@@ -1,8 +1,8 @@
 import path from "node:path";
 import {
   isCanonicalIsoTimestamp,
-  readExplicitCandidateBinding,
   RUNTIME_FRESHNESS_REASONS,
+  readExplicitCandidateBinding,
 } from "./run-activity.mjs";
 
 class CandidateEvidenceError extends Error {
@@ -597,6 +597,19 @@ function parseWorkPackageValue(value, repositoryPath) {
   }
   if (packages.some((item) => item.verificationCommandIds.length === 0)) {
     throw new Error("Every work package needs at least one repository manifest command ID.");
+  }
+  for (const item of packages) {
+    const testEditRequired =
+      /\b(?:add|create|write|update|extend)\b[^.\n]{0,100}\btests?\b/i.test(item.description) ||
+      /\btests?\b[^.\n]{0,100}\b(?:add|create|write|update|extend)\b/i.test(item.description);
+    const ownsTestPath = item.ownedPaths.some((ownedPath) =>
+      /(?:^|\/)(?:tests?|__tests__)(?:\/|$)|\.(?:test|spec)\.[^/]+$/i.test(ownedPath),
+    );
+    if (testEditRequired && !ownsTestPath) {
+      throw new Error(
+        `${item.id}: Package requires test changes but ownedPaths contains no explicit test file or test directory.`,
+      );
+    }
   }
   const byId = new Map(packages.map((item) => [item.id, item]));
   const visiting = new Set();

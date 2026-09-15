@@ -294,10 +294,14 @@ export class PrototypeDesignOrchestrator {
       canStart: (draft) => {
         const currentVariants = activeVariants(draft.designRequest);
         const variant = currentVariants.find((item) => item.id === variantId);
-        if (
-          draft.status !== "awaiting-design-selection" ||
-          draft.designRequest?.status !== "awaiting-selection"
-        ) {
+        const awaitingSelection =
+          draft.status === "awaiting-design-selection" &&
+          draft.designRequest?.status === "awaiting-selection";
+        const partiallyFailedWithReadyVariant =
+          draft.status === "failed" &&
+          draft.designRequest?.status === "failed" &&
+          currentVariants.some((item) => item.status === "ready");
+        if (!awaitingSelection && !partiallyFailedWithReadyVariant) {
           throw new Error("This task is not awaiting a design selection.");
         }
         if (variant?.status !== "ready") throw new Error("Select a completed prototype revision.");
