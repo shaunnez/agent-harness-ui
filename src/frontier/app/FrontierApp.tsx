@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Plus, RocketLaunch } from "@phosphor-icons/react";
+import { ArrowLeft, Plus, RocketLaunch } from "@phosphor-icons/react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { NewTaskDraft } from "../../domain";
 import { createFixtureGateway } from "../fixtures/gateway";
@@ -8,23 +8,17 @@ import { liveGateway } from "../runtime/live-gateway";
 import { commandDestination, isActiveRun, latestRun, needsYou } from "../runtime/presentation";
 import { AgentPanel } from "../views/AgentPanel";
 import { DecisionNavigation } from "../views/DecisionNavigation";
-import { CommandDock } from "../views/WatchPins";
-import {
-  AttentionQueue,
-  ConnectionBadge,
-  ProjectHud,
-  SelectionHud,
-  WorldActions,
-  WorldClock,
-} from "../views/WorldHud";
+import { PinnedWork } from "../views/WatchPins";
+import { AttentionQueue, ConnectionBadge, SelectionHud, WorldActions, WorldClock } from "../views/WorldHud";
 import { WorldNavigation } from "../views/WorldNavigation";
 import { artDirection } from "../world/asset-policy";
 import { cinematicWorker } from "../world/cinematic-catalog";
 import { tasksInProject } from "../world/layout";
 import type { WorldRenderer } from "../world/renderer";
 import { WorldCanvas } from "../world/WorldCanvas";
-import { ArtPreview } from "./ArtPreview";
+import { BaseSelection } from "../views/BaseSelection";
 import { BuildDiagnostics } from "./BuildDiagnostics";
+import { useBottomHudLayout } from "./bottom-hud-layout";
 import { CommandWorkspaceProvider } from "./command-context";
 import { useNavigation, worldLocation } from "./navigation";
 import { type Overlay, OverlayHost } from "./OverlayHost";
@@ -373,8 +367,9 @@ export function FrontierApp() {
   const selectedForHud = task ?? selected;
   const portrait =
     artDirection(window.location.search) === "cinematic" ? cinematicWorker.portrait : undefined;
+  const shell = useBottomHudLayout(Boolean(selectedForHud), Boolean(pickedProject), location.view);
   const workspace = (
-    <main className={`frontier-shell view-${location.view}`}>
+    <main ref={shell} className={`frontier-shell view-${location.view}`}>
       <WorldCanvas
         onWorldSettings={() => open({ kind: "world-settings" })}
         input={sceneInput}
@@ -412,7 +407,7 @@ export function FrontierApp() {
           </select>
         </label>
         <WorldClock />
-        {location.view !== "world" && (
+        {location.view === "agent" && (
           <button type="button" className="return-world" onClick={() => navigate(worldLocation)}>
             <ArrowLeft size={18} />
             Return to world
@@ -422,16 +417,13 @@ export function FrontierApp() {
       <WorldNavigation
         onWorld={() => navigate(worldLocation)}
         onOpen={(kind) => open({ kind })}
-        projectName={location.view === "project" ? project?.name : undefined}
+        onBriefing={() => open({ kind: "briefing" })}
       />
       {location.view !== "agent" && (
-        <AttentionQueue tasks={scopedTasks} projects={snapshot.projects} onSelect={actOn} />
-      )}
-      {location.view !== "agent" && (
-        <CommandDock onBriefing={() => open({ kind: "briefing" })} onTask={inspect} onWatch={watch} />
-      )}
-      {project && location.view === "project" && (
-        <ProjectHud project={project} tasks={scopedTasks} onTasks={() => open({ kind: "tasks" })} />
+        <aside className="attention-stack" aria-label="Decisions and pinned work">
+          <AttentionQueue tasks={scopedTasks} projects={snapshot.projects} onSelect={actOn} />
+          <PinnedWork onTask={inspect} onWatch={watch} />
+        </aside>
       )}
       {location.view === "agent" && snapshot.selected && (
         <AgentPanel
@@ -460,41 +452,27 @@ export function FrontierApp() {
           onAction={() => actOn(selectedForHud.id)}
           onInspect={() => inspect(selectedForHud.id)}
           onWatch={() => watch(selectedForHud.id, run?.id)}
-          onClose={() => runtime.select(null)}
+          onArtifact={(artifactId) => open({ kind: "artifact", taskId: selectedForHud.id, artifactId })}
+          onPolicies={() => open({ kind: "task-policies", taskId: selectedForHud.id })}
         />
       )}
       {location.view === "world" && pickedProject && project && !selected && (
-        <section className="selection-hud panel project-selection">
-          <div>
-            <small>Project headquarters</small>
-            <h2>{project.name}</h2>
-            <p>{project.repositoryPath.split("/").at(-1)}</p>
-          </div>
-          <button
-            type="button"
-            className="primary"
-            onClick={() => navigate({ ...worldLocation, view: "project", projectId: project.id })}
-          >
-            Enter base
-            <ArrowRight size={20} />
-          </button>
-        </section>
-      )}
-      {location.view === "world" && (
-        <WorldActions
-          onNew={newTask}
-          onTasks={() => open({ kind: "tasks" })}
-          onSettings={() => open({ kind: "world-settings" })}
+        <BaseSelection
+          project={project}
+          tasks={tasksInProject(snapshot.tasks, project)}
+          rendererRef={renderer}
+          onEnter={() => navigate({ ...worldLocation, view: "project", projectId: project.id })}
         />
       )}
-      {location.view === "project" && (
-        <button type="button" className="primary hq-new-task" onClick={newTask}>
-          <Plus size={20} />
-          New task
-        </button>
+      {location.view !== "agent" && (
+        <WorldActions
+          onNew={newTask}
+          onAgents={() => open({ kind: "agents" })}
+          onSkills={() => open({ kind: "skills" })}
+          onSettings={() => open({ kind: "settings" })}
+        />
       )}
       <ConnectionBadge snapshot={snapshot} fixture={fixture} onRetry={() => runtime.retry()} />
-      {!stack.length && <ArtPreview />}
       {!snapshot.tasks.length && (
         <section className="empty-world panel">
           <h1>

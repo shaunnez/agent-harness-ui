@@ -47,3 +47,8 @@ Acceptance checkpoints: (1) quieter HUD with all decisions/pins/briefing accessi
 Verify actual browser scenes at normal desktop and 1280x720 laptop sizes, together with the original references. Check occlusion, ground contact, bridge endpoints, shoreline masks, selected/blocked states, keyboard access and local scroll behavior. Run relevant contracts, typing, lint and builds. No performance benchmarking or extreme-zoom acceptance gate; the user explicitly waived them.
 
 Goal 6 remains bounded incremental operational activity persistence and meaningful recorded-event feedback. Its events can later drive deliveries and transitions. It does not replace the art-direction work above. Building placement, upgrades, unlocks and persistent names remain v2.
+
+
+## HUD checkpoint — 15 September 2026
+
+The user subsequently started only Confirmed HUD steering. Its local implementation and acceptance are in `build-evidence/HUD/HANDOFF.md`. The proposed art and motion sections above remain planning; this HUD slice does not start them or Goal 6.

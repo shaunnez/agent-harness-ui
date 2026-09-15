@@ -1,5 +1,7 @@
 # Goal 2 — complete v1
 
+**15 September — HUD checkpoint:** The confirmed HUD simplification is locally qualified in a separate branch; see [HUD/HANDOFF.md](HUD/HANDOFF.md). PRs #86 and #87 were independently merged and their current state was verified. This task did not merge or publish the game. The subsequent art-depth plan and Goal 6 remain separate. Earlier entries below retain their dated evidence.
+
 **15 September — current checkpoint:** Goal 5 is qualified in open PR #86. The separate original-design fidelity slice is implemented and locally qualified; see [its handoff](DESIGN-FIDELITY/HANDOFF.md). Goal 6 has not started. Older checkpoints and zoom measurements below remain historical.
 
 **9 September — Goal 4 complete:** Resizable laptop work windows and activity-first Watch pass their reading-space targets and native 200% zoom walkthrough. Two reflow defects found at zoom are fixed. Final targeted checks and both builds pass; the earlier four full-suite timing failures remain recorded. See [the Goal 4 handoff](USABILITY/goal-4/HANDOFF.md). Goals 5/6 have not started. Earlier checkpoints below remain historical.

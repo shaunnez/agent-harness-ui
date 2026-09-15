@@ -1,30 +1,18 @@
 import {
   ArrowRight,
-  Binoculars,
   Crosshair,
   GearSix,
+  Books,
   GlobeHemisphereWest,
   ListBullets,
   Plus,
   Robot,
-  X,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
-import type { RuntimeProject, RuntimeRun } from "../../domain";
+import type { RuntimeProject } from "../../domain";
 import type { FrontierSnapshot, TaskSummary } from "../runtime/contracts";
 import { orderedDecisions } from "../runtime/decision-session";
-import {
-  attentionAction,
-  attentionFor,
-  formatCount,
-  isExecuting,
-  isOpen,
-  modelLabel,
-  needsYou,
-  reasoningLabel,
-  splitRecordedDetail,
-  stageLabels,
-} from "../runtime/presentation";
+import { attentionFor, isExecuting, isOpen, needsYou, stageLabels } from "../runtime/presentation";
 import { AttentionIcon } from "../ui/Attention";
 
 export function WorldClock() {
@@ -54,10 +42,11 @@ export function AttentionQueue({
 }) {
   const attention = orderedDecisions(tasks);
   const [expanded, setExpanded] = useState(false);
-  const visible = expanded ? attention : attention.slice(0, 3);
+  const showAll = expanded && attention.length > 3;
+  const visible = showAll ? attention : attention.slice(0, 3);
   return (
     <aside
-      className={`attention-queue panel ${expanded ? "attention-expanded" : ""}`}
+      className={`attention-queue panel ${showAll ? "attention-expanded" : ""}`}
       aria-label="Tasks needing your attention"
     >
       <header>
@@ -71,6 +60,7 @@ export function AttentionQueue({
               type="button"
               key={task.id}
               className={`attention-row tone-${attentionFor(task).kind}`}
+              aria-label={`${task.id} · ${task.title} · ${attentionFor(task).label}`}
               onClick={() => onSelect(task.id)}
             >
               <AttentionIcon kind={attentionFor(task).kind} />
@@ -85,15 +75,6 @@ export function AttentionQueue({
                   </small>
                 </span>
                 <small className="queue-state">{attentionFor(task).label}</small>
-                <small className="queue-reason">
-                  {splitRecordedDetail(attentionFor(task).reason).headline || "Open the recorded decision"}
-                </small>
-                <small>
-                  Next: {attentionFor(task).nextActor ?? "Not recorded"} ·{" "}
-                  {attentionFor(task).since
-                    ? `Since ${new Date(attentionFor(task).since ?? 0).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-                    : "Wait age not recorded"}
-                </small>
               </span>
               <ArrowRight size={18} />
             </button>
@@ -106,10 +87,10 @@ export function AttentionQueue({
         <button
           type="button"
           className="queue-expand"
-          aria-expanded={expanded}
+          aria-expanded={showAll}
           onClick={() => setExpanded(!expanded)}
         >
-          {expanded ? "Show priority decisions" : `Show all ${attention.length} decisions`}
+          {showAll ? "Show priority decisions" : `Show all ${attention.length} decisions`}
           <ArrowRight size={16} />
         </button>
       )}
@@ -156,109 +137,36 @@ export function ProjectHud({
     </aside>
   );
 }
-export function SelectionHud({
-  task,
-  run,
-  loading,
-  connected,
-  onAction,
-  onInspect,
-  onWatch,
-  onClose,
-  portrait = "/assets/mf.worker.standard.portrait.r1.png",
-}: {
-  task: TaskSummary;
-  run?: RuntimeRun;
-  loading: boolean;
-  connected: boolean;
-  onAction(): void;
-  onInspect(): void;
-  onWatch(): void;
-  onClose(): void;
-  portrait?: string;
-}) {
-  const attention = attentionFor(task);
-  return (
-    <section className={`selection-hud panel tone-${attention.kind}`} aria-label="Selected task">
-      <img className="worker-portrait" src={portrait} alt="Worker role" />
-      <div className="selection-copy">
-        <h2>
-          {task.id} · {stageLabels[task.currentStage]}
-        </h2>
-        <strong className="state-copy">{connected ? attention.label : "Last known state"}</strong>
-        {/* The HUD is a compact floating card: the verdict line only. Command output
-            belongs in the task window, which has room to scroll it. */}
-        <p className="hud-reason">{splitRecordedDetail(attention.reason).headline || task.title}</p>
-        <small>
-          {attention.since &&
-            `Waiting since ${new Date(attention.since).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · `}
-          {attention.nextActor && `Next: ${attention.nextActor}`}
-          {run &&
-            ` · ${run.status === "running" && task.activeRunIds?.includes(run.id) ? "Run executing" : `Run ${run.status}`}`}
-        </small>
-        <div className="selection-meta">
-          <Robot size={17} />
-          <span>
-            {run
-              ? `${modelLabel(run.model)} · ${reasoningLabel(run.reasoning)}`
-              : loading
-                ? "Loading recorded worker…"
-                : "No selected run"}
-          </span>
-          <span>{formatCount(task.usage.totalTokens)} tokens</span>
-        </div>
-      </div>
-      <div className="selection-actions">
-        {attentionAction(task) !== "Inspect task" && (
-          <button type="button" onClick={onInspect}>
-            <Binoculars size={18} />
-            Inspect task
-          </button>
-        )}
-        <button type="button" className="primary" onClick={onAction}>
-          {attentionAction(task)}
-          <ArrowRight size={18} />
-        </button>
-        {run && (
-          <button type="button" className="link-button" onClick={onWatch}>
-            Watch agent
-          </button>
-        )}
-      </div>
-      <button
-        type="button"
-        className="icon-button dismiss-selection"
-        aria-label="Clear selection"
-        onClick={onClose}
-      >
-        <X size={18} />
-      </button>
-    </section>
-  );
-}
+export { SelectionHud } from "./SelectionDock";
 export function WorldActions({
   onNew,
-  onTasks,
+  onAgents,
+  onSkills,
   onSettings,
 }: {
   onNew(): void;
-  onTasks(): void;
+  onAgents(): void;
+  onSkills(): void;
   onSettings(): void;
 }) {
   return (
     <aside className="world-actions panel">
-      <button type="button" className="primary new-task" onClick={onNew}>
-        <Plus size={22} />
-        New task
-      </button>
       <div className="secondary-actions">
-        <button type="button" onClick={onTasks}>
-          <ListBullets size={23} />
-          Tasks
+        <button type="button" onClick={onNew}>
+          <Plus size={23} />
+          New task
+        </button>
+        <button type="button" onClick={onAgents}>
+          <Robot size={23} />
+          Agent roster
+        </button>
+        <button type="button" onClick={onSkills}>
+          <Books size={23} />
+          Skills
         </button>
         <button type="button" onClick={onSettings}>
           <GearSix size={23} />
-          World settings
+          Settings
         </button>
       </div>
       <small>Drag to pan · Scroll to zoom · Space to follow</small>
@@ -275,12 +183,13 @@ export function ConnectionBadge({
   onRetry(): void;
 }) {
   const apiFixture = snapshot.status?.authMethod === "deterministic-fixture";
+  if (fixture && snapshot.connection !== "offline") return null;
   return (
     <div className={`connection-badge ${snapshot.connection === "offline" ? "offline" : ""}`}>
       <GlobeHemisphereWest size={15} />
       <span>
         {fixture
-          ? "Sample world · local demonstration"
+          ? "Connection lost · last known state"
           : apiFixture
             ? "Isolated API fixture · no model execution"
             : snapshot.connection === "connected"
@@ -288,7 +197,6 @@ export function ConnectionBadge({
               : snapshot.connection === "connecting"
                 ? "Connecting…"
                 : "Connection lost · last known state"}
-        {fixture && snapshot.connection === "offline" && " · Connection lost · last known state"}
       </span>
       {snapshot.connection === "offline" && (
         <button type="button" className="link-button" onClick={onRetry}>

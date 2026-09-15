@@ -1,0 +1,16 @@
+# Map fill, shortcut grid and artifact focus — 15 September 2026
+
+From clean 346715a on codex/mission-frontier-hud, implemented the latest HUD steering only:
+
+- Actual minimap captures are framed to the observed map panel aspect ratio, adding scene space around the existing world bounds rather than cropping bases or distorting art. The capture fills the entire inner panel. Marker positions and click focus use the same capture frame; the main scene/camera logic is unchanged.
+- New task, Agent roster, Skills and Settings use a matching 2×2 grid. The project breadcrumb beside Manage is removed; project scope and base identity remain available.
+- Needs you has a centered count badge and the same right edge/340px width as the shortcut panel. Show all expands the decisions/pins column to 12px above the bottom controls. Decision scrolling remains local; conditional pins stay accessible beneath it. A scope with three or fewer decisions stays compact even after World expansion.
+- Artifact heading is static with no accordion or caret. Only the latest recorded createdAt artifact appears; See more appears at the far right only for multiple artifacts and opens the existing task inspector. The latest card opens the artifact viewer, and older artifacts remain available through recorded stage inspection. No empty placeholders.
+
+Computer use: 1280×720 and 1488×1058 World base/running/no selection, expanded eight decisions, HQ repair/no selection, and laptop multiple-artifact sample flow. At laptop size the expanded decision panel spans y=12..437, above bottom controls y=449..685; desktop y=12..775, above controls y=787..1023. Width/right edges match at 340px. Map content fills 233×234 inside the 235×236 panel. All bottom panels continue tracking real selection height, including a wrapping primary action. Two locally saved sample pins were checked with expanded decisions and removed afterward. Local scroll, Enter activation of New task, all four shortcut destinations, artifact See more/older Scouts evidence, resize and Escape dismissal passed. A map click on the PC marker centered its base horizontally at x=640.32 on the laptop. Captured console logs contained no errors.
+
+The multiple-artifact check used the tab-local demonstration's manual Grill answer/Create specification actions; no live task, model, repository or approval was mutated. Reload restored the sample workflow. Current screenshots are grid-*.png; grid-comparison.png contains before/after World base captures and focused right-column/artifact anatomy. Existing cycling light and retained/reinitialized framing differ between captures; no scenery/main camera changes are part of the diff.
+
+Latest local checks: 85 Frontier tests, typecheck, lint, formatting and Frontier/root builds passed. Existing bundle warnings remain. API/Sites suites, full repository suite, remote CI, real model execution/approvals, extreme zoom and benchmarks were not repeated. Earlier API/Sites evidence remains dated.
+
+Preview is running on 5207 with task-owned deterministic companion 4327. Original fidelity checkout and user services are preserved. No scenery/assets, robot animation, day/night behavior, Goal 6, game merge or game publication. The independent journal uses its existing private publication workflow.

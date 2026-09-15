@@ -3,13 +3,21 @@ import { WorldAssets } from "./assets";
 import { type Camera, constrainCamera, coverBackdrop, fitCamera, type Point, zoomAround } from "./camera";
 import type { WorldLighting } from "./environment-model";
 import { FrontierScene, type SceneInput, type WorldLabel } from "./scene";
+import { minimapFrame } from "./minimap-layout";
 import { AnimationVisibility } from "./visibility";
+
+export interface MinimapCapture {
+  image: string;
+  width: number;
+  height: number;
+  projects: Array<{ id: string; name: string; x: number; y: number }>;
+}
 
 interface RendererCallbacks {
   select(kind: "project" | "task" | "artifact", id: string, artifactId?: string): void;
   labels(labels: WorldLabel[]): void;
   camera(camera: Camera): void;
-  minimap(data: string): void;
+  minimap(data: MinimapCapture): void;
   problem(message: string | null): void;
   lighting(value: WorldLighting): void;
 }
@@ -30,6 +38,8 @@ export class WorldRenderer {
   private measurementStarted = performance.now();
   private lastFrame = 0;
   private minimapGeneration = 0;
+  private minimapAspectRatio = 1;
+  private minimapBounds: ReturnType<typeof minimapFrame> | null = null;
   private viewTransition = 0;
   private initialized = false;
   private loadingDetail = false;
@@ -165,6 +175,38 @@ export class WorldRenderer {
     void this.captureMinimap();
     this.animation?.update(input.motion, input.connected);
   }
+  async headquartersPreview(projectId: string): Promise<string | null> {
+    if (!this.ready || !this.input || this.stopped) return null;
+    if (!this.assets.detailReady) await this.assets.loadDetail();
+    if (this.stopped || !this.input) return null;
+    const input = this.input;
+    const preview = new FrontierScene(this.assets, () => {}, input.placementNamespace ?? input.mode);
+    try {
+      preview.reconcile({
+        ...input,
+        location: { ...input.location, view: "project", projectId, taskId: null, runId: null },
+        selectedId: null,
+        environment: input.environment
+          ? {
+              ...input.environment,
+              mode: "fixed",
+              hour: this.scene?.environment.lighting.hour ?? input.environment.hour,
+            }
+          : undefined,
+        motion: false,
+      });
+      const bounds = preview.worldBounds;
+      const canvas = this.app.renderer.extract.canvas({
+        target: preview.root,
+        frame: new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height),
+        resolution: Math.min(520 / bounds.width, 300 / bounds.height),
+        clearColor: "#05141d",
+      });
+      return "toDataURL" in canvas ? (canvas as HTMLCanvasElement).toDataURL("image/png") : null;
+    } finally {
+      preview.destroy();
+    }
+  }
   private fit() {
     if (this.input?.location.view === "world" && this.input.projects.length <= 3) {
       const zoom = Math.max(
@@ -219,8 +261,15 @@ export class WorldRenderer {
     this.camera.y = this.host.clientHeight * 0.45 - point.y * this.camera.zoom;
     this.applyCamera();
   }
+  resizeMinimap(width: number, height: number) {
+    if (width <= 0 || height <= 0) return;
+    const ratio = width / height;
+    if (Math.abs(ratio - this.minimapAspectRatio) < 0.001) return;
+    this.minimapAspectRatio = ratio;
+    void this.captureMinimap();
+  }
   minimapClick(x: number, y: number) {
-    const bounds = this.scene?.worldBounds;
+    const bounds = this.minimapBounds;
     if (bounds) this.focus({ x: bounds.x + x * bounds.width, y: bounds.y + y * bounds.height });
   }
   follow(taskId: string) {
@@ -291,20 +340,34 @@ export class WorldRenderer {
   private async captureMinimap() {
     if (!this.scene) return;
     const generation = ++this.minimapGeneration;
-    const bounds = this.scene.worldBounds;
+    const bounds = minimapFrame(this.scene.worldBounds, this.minimapAspectRatio);
+    this.minimapBounds = bounds;
     const saved = { x: this.scene.root.x, y: this.scene.root.y, scale: this.scene.root.scale.x };
     this.scene.root.position.set(0, 0);
     this.scene.root.scale.set(1);
     const canvas = this.app.renderer.extract.canvas({
       target: this.scene.root,
       frame: new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height),
-      resolution: Math.min(260 / bounds.width, 180 / bounds.height),
-      clearColor: "#142d37",
+      resolution: Math.min(520 / bounds.width, 360 / bounds.height),
+      clearColor: "#0a1c25",
     });
     this.scene.root.position.set(saved.x, saved.y);
     this.scene.root.scale.set(saved.scale);
     if (!this.stopped && generation === this.minimapGeneration && "toDataURL" in canvas)
-      this.callbacks.minimap((canvas as HTMLCanvasElement).toDataURL("image/png"));
+      this.callbacks.minimap({
+        image: (canvas as HTMLCanvasElement).toDataURL("image/png"),
+        width: canvas.width,
+        height: canvas.height,
+        projects: this.scene.labels
+          .filter((label) => label.kind === "project")
+          .map((label) => ({
+            id: label.projectId,
+            name:
+              this.input?.projects.find((project) => project.id === label.projectId)?.name ?? label.projectId,
+            x: ((label.mapPosition?.x ?? label.x) - bounds.x) / bounds.width,
+            y: ((label.mapPosition?.y ?? label.y) - bounds.y) / bounds.height,
+          })),
+      });
   }
   private pointerDown = (event: PointerEvent) => {
     if (event.button !== 0) return;
