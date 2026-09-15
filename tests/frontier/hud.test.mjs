@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { createServer } from "vite";
 import { createFixtureGateway } from "../../src/frontier/fixtures/gateway.ts";
 
-test("compact HUD retains decisions, inspection, recorded details and real artifacts", async () => {
+test("compact HUD retains decisions, inspection and real artifacts", async () => {
   const vite = await createServer({
     configFile: false,
     logLevel: "error",
@@ -13,7 +13,9 @@ test("compact HUD retains decisions, inspection, recorded details and real artif
     server: { middlewareMode: true, hmr: false, ws: false },
   });
   try {
-    const { AttentionQueue, SelectionHud } = await vite.ssrLoadModule("/src/frontier/views/WorldHud.tsx");
+    const { AttentionQueue, SelectionHud, ConnectionBadge } = await vite.ssrLoadModule(
+      "/src/frontier/views/WorldHud.tsx",
+    );
     const { WorldNavigation } = await vite.ssrLoadModule("/src/frontier/views/WorldNavigation.tsx");
     const gateway = createFixtureGateway(undefined, true);
     const tasks = await gateway.summaries();
@@ -38,11 +40,10 @@ test("compact HUD retains decisions, inspection, recorded details and real artif
     assert.match(empty, /No decisions/);
     const blocked = await gateway.core("PC-148");
     const dock = renderToStaticMarkup(React.createElement(SelectionHud, { ...props, task: blocked }));
-    assert.match(dock, /Recorded details/);
-    assert.match(dock, /Revision history can fail/);
+    assert.doesNotMatch(dock, /Recorded details|Revision history can fail/);
     assert.match(dock, /Review findings/);
     assert.match(dock, />Inspect</);
-    assert.match(dock, /Clear selection/);
+    assert.doesNotMatch(dock, /Clear selection/);
     const running = await gateway.core("PC-142");
     const compact = renderToStaticMarkup(
       React.createElement(SelectionHud, {
@@ -78,6 +79,40 @@ test("compact HUD retains decisions, inspection, recorded details and real artif
       React.createElement(SelectionHud, { ...props, connected: false, task: blocked }),
     );
     assert.match(disconnected, /Last known · Repair required/);
+    const { BaseSelection } = await vite.ssrLoadModule("/src/frontier/views/BaseSelection.tsx");
+    const projects = await gateway.projects();
+    const base = renderToStaticMarkup(
+      React.createElement(BaseSelection, {
+        project: projects.find((project) => project.id === "plancheck"),
+        tasks: tasks.filter((task) => task.repositoryPath === "/demo/eversor-plancheck"),
+        rendererRef: { current: null },
+        onEnter() {},
+      }),
+    );
+    assert.match(base, /Selected base/);
+    assert.match(base, /Open tasks<\/dt><dd>3/);
+    assert.match(base, /Executing<\/dt><dd>1/);
+    assert.match(base, /Needs you<\/dt><dd>2/);
+    assert.match(base, /Enter base/);
+    assert.equal(
+      renderToStaticMarkup(
+        React.createElement(ConnectionBadge, {
+          snapshot: { connection: "connected" },
+          fixture: true,
+          onRetry() {},
+        }),
+      ),
+      "",
+    );
+    const offline = renderToStaticMarkup(
+      React.createElement(ConnectionBadge, {
+        snapshot: { connection: "offline" },
+        fixture: true,
+        onRetry() {},
+      }),
+    );
+    assert.match(offline, /Connection lost · last known state/);
+    assert.match(offline, /Reconnect/);
     const menu = renderToStaticMarkup(
       React.createElement(WorldNavigation, { onWorld() {}, onOpen() {}, onBriefing() {} }),
     );

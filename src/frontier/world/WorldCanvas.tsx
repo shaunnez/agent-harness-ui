@@ -1,4 +1,4 @@
-import { ArrowsOut, Crosshair, MapPin, Minus, Plus, Question, WarningCircle } from "@phosphor-icons/react";
+import { Crosshair, MapPin, Question, WarningCircle } from "@phosphor-icons/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { WorldPreferences } from "../app/preferences";
 import { splitRecordedDetail } from "../runtime/presentation";
@@ -143,11 +143,7 @@ export function WorldCanvas({
           </button>
         </div>
       )}
-      <aside className="minimap panel" aria-label="Minimap and camera controls">
-        <header className="minimap-heading">
-          <MapPin size={16} />
-          <span>{input.location.view === "world" ? "World map" : "Headquarters map"}</span>
-        </header>
+      <aside className="minimap panel" aria-label="World map">
         <button
           type="button"
           className="minimap-image"
@@ -196,30 +192,6 @@ export function WorldCanvas({
             </span>
           )}
         </button>
-        <div className="camera-controls">
-          <button
-            type="button"
-            aria-label="Fit world"
-            title="Fit world"
-            onClick={() => rendererRef.current?.reset()}
-          >
-            <ArrowsOut size={19} />
-          </button>
-          <button
-            type="button"
-            aria-label="Follow selected task"
-            title="Follow selected task"
-            onClick={() => input.selectedId && rendererRef.current?.follow(input.selectedId)}
-          >
-            <Crosshair size={19} />
-          </button>
-          <button type="button" aria-label="Zoom out" onClick={() => rendererRef.current?.zoom(0.8)}>
-            <Minus size={19} />
-          </button>
-          <button type="button" aria-label="Zoom in" onClick={() => rendererRef.current?.zoom(1.25)}>
-            <Plus size={19} />
-          </button>
-        </div>
       </aside>
     </>
   );

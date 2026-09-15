@@ -1,6 +1,6 @@
 .frontier-shell {
   --world-left-width: 235px;
-  --world-right-width: 260px;
+  --world-right-width: 340px;
 }
 .project-hud,
 .view-project .project-hud,
@@ -11,7 +11,7 @@
 }
 .project-hud,
 .view-project .project-hud {
-  bottom: 291px;
+  bottom: 222px;
 }
 .project-hud .project-counts {
   display: grid;
@@ -24,40 +24,24 @@
   font-size: 14px;
 }
 .minimap {
-  --minimap-image-height: 150px;
-  height: 244px;
-  padding: 10px;
-  display: grid;
-  grid-template-rows: 22px 150px 38px;
-  gap: 8px;
-  border-color: #3b5963;
-  background: #071a23f2;
-  box-shadow:
-    inset 0 0 0 3px #102b35,
-    0 5px 15px #0005;
-}
-.minimap-heading {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  color: #beced2;
+  --minimap-image-height: 173px;
+  height: 175px;
+  padding: 0;
+  display: block;
+  border: 1px solid #30434a;
+  background: #05141d;
+  box-shadow: none;
+  overflow: hidden;
 }
 .minimap-image {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
-  border: 1px solid #304a54;
-  background: #0a1c25;
-  border-radius: 5px;
-}
-.camera-controls {
-  margin: 0;
-}
-.camera-controls button {
-  padding: 6px;
-  min-height: 38px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
 }
 .selection-hud,
 .view-project .selection-hud {
@@ -69,6 +53,7 @@
   margin: 0;
   padding: 12px;
   max-height: min(390px, 52svh);
+  min-height: 236px;
   border-color: #36515c;
   box-shadow:
     inset 0 0 0 3px #102831,
@@ -78,10 +63,10 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 160px;
   gap: 12px;
-  padding: 12px 22px 12px 12px;
+  padding: 12px;
   border: 1px solid #253e48;
   border-radius: 6px;
-  background: #0b2028b3;
+  background: linear-gradient(150deg, #07151b, #040e13);
 }
 .selection-main.with-artifacts {
   grid-template-columns: minmax(230px, 1.1fr) 180px minmax(130px, 0.8fr);
@@ -96,7 +81,10 @@
   width: 78px;
   height: 124px;
   flex-shrink: 0;
-  border: 1px solid #2d4650;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
 }
 .selection-copy h2 {
   font-size: 16px;
@@ -153,8 +141,25 @@
   min-width: 0;
 }
 .selection-artifacts summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 0 0 9px;
-  font-size: 12px;
+  font-size: 14px;
+  list-style: none;
+}
+.selection-artifacts summary::marker,
+.selection-artifacts summary::-webkit-details-marker {
+  display: none;
+  content: "";
+}
+.artifact-caret {
+  font-size: 21px;
+  line-height: 1;
+  transform: rotate(-90deg);
+}
+.selection-artifacts[open] .artifact-caret {
+  transform: none;
 }
 .selection-artifacts > .selection-artifact-cards {
   display: grid;
@@ -170,13 +175,13 @@
   gap: 6px;
   min-height: 100px;
   padding: 10px;
-  background: #173340;
+  background: linear-gradient(145deg, #142a34, #0b1b24);
   border: 1px solid #37515d;
   border-radius: 5px;
   text-align: left;
 }
 .selection-artifact.stage-plan {
-  background: #16392f;
+  background: linear-gradient(145deg, #102c23, #091b17);
 }
 .selection-artifact strong {
   font-size: 14px;
@@ -196,7 +201,7 @@
   gap: 8px 12px;
   margin-top: 10px;
   padding: 11px 14px;
-  background: #071a21;
+  background: linear-gradient(150deg, #061319, #030c11);
   border: 1px solid #29424c;
   border-radius: 5px;
   font-size: 12px;
@@ -226,9 +231,11 @@
   min-height: 76px;
   font-size: 12px;
   padding: 8px 5px;
+  white-space: nowrap;
 }
 .world-actions > small {
   display: block;
+  white-space: nowrap;
   border-top: 1px solid #29424c;
   padding-top: 10px;
 }
@@ -246,9 +253,8 @@
     --world-left-width: 144px;
   }
   .minimap {
-    --minimap-image-height: 82px;
-    height: 212px;
-    grid-template-rows: 22px 82px 64px;
+    --minimap-image-height: 106px;
+    height: 108px;
   }
   .camera-controls button {
     min-height: 30px;
@@ -310,4 +316,84 @@
   font-size: 12px;
   line-height: 16px;
   box-shadow: 0 2px 5px #0009;
+}
+
+.selection-hud,
+.world-actions,
+.project-hud,
+.attention-queue,
+.pinned-work {
+  background: linear-gradient(145deg, #081b24f5, #030e15fa);
+}
+.attention-stack,
+.view-world .attention-stack {
+  top: 12px;
+}
+.attention-row:last-child {
+  border-bottom: 0;
+}
+.world-clock {
+  display: flex;
+  top: 12px;
+}
+.world-time,
+.view-world .world-time,
+.view-project .world-time {
+  left: 50%;
+  top: 58px;
+  transform: translateX(-50%);
+  min-width: 0;
+}
+.project-selection .selection-main {
+  min-height: 210px;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.8fr);
+  align-items: center;
+}
+.base-selection-copy h2 {
+  margin: 5px 0;
+  font-size: 18px;
+}
+.base-selection-copy p {
+  margin: 5px 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.base-selection-counts {
+  display: flex;
+  gap: 16px;
+  margin: 12px 0;
+}
+.base-selection-counts dt {
+  font-size: 12px;
+  color: #b0c0c7;
+}
+.base-selection-counts dd {
+  margin: 5px 0 0;
+  color: var(--blue);
+  font-size: 16px;
+  font-weight: 600;
+}
+.base-headquarters-preview {
+  width: 100%;
+  max-height: 176px;
+  object-fit: contain;
+}
+@media (max-width: 760px) {
+  .world-clock {
+    display: flex;
+    top: 110px;
+    width: max-content;
+  }
+  .world-time,
+  .view-world .world-time,
+  .view-project .world-time {
+    top: 152px;
+  }
+  .attention-stack,
+  .view-world .attention-stack {
+    top: 202px;
+  }
+  .world-actions > small {
+    white-space: normal;
+  }
 }

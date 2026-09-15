@@ -1,4 +1,4 @@
-import { ArrowRight, Binoculars, FileText, GearSix, Info, X } from "@phosphor-icons/react";
+import { ArrowRight, Binoculars, FileText, GearSix, Info } from "@phosphor-icons/react";
 import type { RuntimeRun } from "../../domain";
 import { workflowStages } from "../../domain";
 import type { TaskSummary } from "../runtime/contracts";
@@ -10,7 +10,6 @@ import {
   formatDuration,
   modelLabel,
   reasoningLabel,
-  splitRecordedDetail,
   stageLabels,
 } from "../runtime/presentation";
 import { taskWallTime } from "../runtime/usage";
@@ -23,7 +22,6 @@ export function SelectionHud({
   onAction,
   onInspect,
   onWatch,
-  onClose,
   onArtifact,
   onPolicies,
   portrait = "/assets/mf.worker.standard.portrait.r1.png",
@@ -35,7 +33,6 @@ export function SelectionHud({
   onAction(): void;
   onInspect(): void;
   onWatch(): void;
-  onClose(): void;
   onArtifact(id: string): void;
   onPolicies(): void;
   portrait?: string;
@@ -101,7 +98,12 @@ export function SelectionHud({
         </div>
         {artifacts.length > 0 && (
           <details className="selection-artifacts" open>
-            <summary>Artifacts · {artifacts.length}</summary>
+            <summary>
+              <span>Artifacts · {artifacts.length}</span>
+              <span className="artifact-caret" aria-hidden="true">
+                ⌄
+              </span>
+            </summary>
             <div className="selection-artifact-cards">
               {artifacts.map((artifact) => (
                 <button
@@ -119,21 +121,6 @@ export function SelectionHud({
           </details>
         )}
       </div>
-      {attention.reason && (
-        <details className="selection-details">
-          <summary>Recorded details</summary>
-          <p>{splitRecordedDetail(attention.reason).headline}</p>
-          <small>
-            {attention.since ? `Waiting since ${new Date(attention.since).toLocaleString()} · ` : ""}
-            {attention.nextActor && `Next: ${attention.nextActor}`}
-            {run &&
-              ` · Run ${run.status === "running" && task.activeRunIds?.includes(run.id) ? "executing" : run.status}`}
-          </small>
-          <button type="button" className="link-button" onClick={onInspect}>
-            Full task details
-          </button>
-        </details>
-      )}
       <section className="selection-usage" aria-label="Recorded task usage">
         <span>Usage</span>
         <strong>{formatCount(task.usage.totalTokens)} tokens</strong>
@@ -144,14 +131,6 @@ export function SelectionHud({
           {task.usage.pricingVersion ? "API-rate estimate" : "Rate card unavailable"}
         </small>
       </section>
-      <button
-        type="button"
-        className="icon-button dismiss-selection"
-        aria-label="Clear selection"
-        onClick={onClose}
-      >
-        <X size={18} />
-      </button>
     </section>
   );
 }

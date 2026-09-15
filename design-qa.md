@@ -1,3 +1,13 @@
+# HUD refinement design QA — 15 September 2026
+
+Result: passed for the latest explicitly requested HUD scope at normal 1488×1058 and 1280×720 sizes. Inspected before/after repair-task comparison: design/mission-frontier/build-evidence/HUD/refine-comparison.png. Full corrected captures include refine-hq-blocked-1280.png, refine-hq-blocked-1488.png, refine-world-base-1280.png and refine-world-base-1488.png.
+
+Verified: plain thin-border map; removed preview footers; darker outer gradients and inner panels; unframed portrait; no task-dock close button or Recorded details; far-right artifact caret; 340px action panel with unwrapped labels; current base task counts and actual same-scene headquarters capture at current lighting; shared 236px dock minimum height; day/night under date/time; top-aligned Needs you with borderless final row; HQ return button removed. Keyboard disclosure/dismissal, lighting settings and Inspect reason/safeguards remain accessible.
+
+Fixed during inspection: preview incorrectly captured daylight while the main scene was at night, and a shared CSS selector had accidentally inherited minimap padding/height. Both were corrected; final captures were inspected afterward. Camera source, scenery and animation remain unchanged. Source fixtures reset timestamps on explicit QA reload, so usage elapsed values and cycle time can differ between captures. Original concept map artwork remains a separate art pass.
+
+---
+
 # HUD depth design QA — 15 September 2026
 
 Result: passed for the requested HUD component scope at normal 1488×1058 and 1280×720 viewports.

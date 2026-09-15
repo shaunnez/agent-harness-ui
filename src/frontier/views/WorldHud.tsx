@@ -182,12 +182,13 @@ export function ConnectionBadge({
   onRetry(): void;
 }) {
   const apiFixture = snapshot.status?.authMethod === "deterministic-fixture";
+  if (fixture && snapshot.connection !== "offline") return null;
   return (
     <div className={`connection-badge ${snapshot.connection === "offline" ? "offline" : ""}`}>
       <GlobeHemisphereWest size={15} />
       <span>
         {fixture
-          ? "Sample world · local demonstration"
+          ? "Connection lost · last known state"
           : apiFixture
             ? "Isolated API fixture · no model execution"
             : snapshot.connection === "connected"
@@ -195,7 +196,6 @@ export function ConnectionBadge({
               : snapshot.connection === "connecting"
                 ? "Connecting…"
                 : "Connection lost · last known state"}
-        {fixture && snapshot.connection === "offline" && " · Connection lost · last known state"}
       </span>
       {snapshot.connection === "offline" && (
         <button type="button" className="link-button" onClick={onRetry}>

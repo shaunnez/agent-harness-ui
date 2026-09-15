@@ -1,0 +1,16 @@
+{
+  "date": "2026-09-15",
+  "baseline": "d0d20fc",
+  "files": {
+    "AGENTS.md": "7d7d45ed00334330a1c99f02ad0f4fb77a6face80b127190e6ae8c9b264b2ea7",
+    "design-qa.md": "fe3683965ec1349cba12d3a7607aa8bcbb076b137b4fdba59eab7ca32e882e07",
+    "src/frontier/app/FrontierApp.tsx": "bf815158b6d2b6a0076faf76a62b1701a0da59c53a6e068c4d72867722005b87",
+    "src/frontier/ui/hud-depth.css": "0a1ad10632653a0dc8713cd019217d8b527acac03edbdf00975ccf1d00296c81",
+    "src/frontier/views/SelectionDock.tsx": "54a989831c6235ee1bf7b6a89f4571a03c0cfe32899e3720045a815f221ba977",
+    "src/frontier/views/WorldHud.tsx": "82d3e5b0694c22bc346d96b122a06545f526ddd38469f709edb5a6d9f84f5193",
+    "src/frontier/world/WorldCanvas.tsx": "1d3b2697270bfe3e79ef74829d0d6f963b446b01ba270528df384fee7d3ec9bf",
+    "src/frontier/world/renderer.ts": "635e5bad3d80cb85cf900650bd13e6587a30cd395de0026ce0135d5e4f80f78c",
+    "tests/frontier/hud.test.mjs": "36c80d91264ae1ec7e008cc5924cb513b21bac489e42f1de4085d31922234991",
+    "src/frontier/views/BaseSelection.tsx": "267e054543ac9fb077a2b3322615b5a7b52cec4e2c2ff359cdb464a4d6d6ecd4"
+  }
+}

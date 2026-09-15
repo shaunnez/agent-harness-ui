@@ -172,6 +172,38 @@ export class WorldRenderer {
     void this.captureMinimap();
     this.animation?.update(input.motion, input.connected);
   }
+  async headquartersPreview(projectId: string): Promise<string | null> {
+    if (!this.ready || !this.input || this.stopped) return null;
+    if (!this.assets.detailReady) await this.assets.loadDetail();
+    if (this.stopped || !this.input) return null;
+    const input = this.input;
+    const preview = new FrontierScene(this.assets, () => {}, input.placementNamespace ?? input.mode);
+    try {
+      preview.reconcile({
+        ...input,
+        location: { ...input.location, view: "project", projectId, taskId: null, runId: null },
+        selectedId: null,
+        environment: input.environment
+          ? {
+              ...input.environment,
+              mode: "fixed",
+              hour: this.scene?.environment.lighting.hour ?? input.environment.hour,
+            }
+          : undefined,
+        motion: false,
+      });
+      const bounds = preview.worldBounds;
+      const canvas = this.app.renderer.extract.canvas({
+        target: preview.root,
+        frame: new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height),
+        resolution: Math.min(520 / bounds.width, 300 / bounds.height),
+        clearColor: "#05141d",
+      });
+      return "toDataURL" in canvas ? (canvas as HTMLCanvasElement).toDataURL("image/png") : null;
+    } finally {
+      preview.destroy();
+    }
+  }
   private fit() {
     if (this.input?.location.view === "world" && this.input.projects.length <= 3) {
       const zoom = Math.max(

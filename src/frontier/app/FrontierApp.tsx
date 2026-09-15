@@ -23,7 +23,7 @@ import { cinematicWorker } from "../world/cinematic-catalog";
 import { tasksInProject } from "../world/layout";
 import type { WorldRenderer } from "../world/renderer";
 import { WorldCanvas } from "../world/WorldCanvas";
-import { ArtPreview } from "./ArtPreview";
+import { BaseSelection } from "../views/BaseSelection";
 import { BuildDiagnostics } from "./BuildDiagnostics";
 import { CommandWorkspaceProvider } from "./command-context";
 import { useNavigation, worldLocation } from "./navigation";
@@ -412,7 +412,7 @@ export function FrontierApp() {
           </select>
         </label>
         <WorldClock />
-        {location.view !== "world" && (
+        {location.view === "agent" && (
           <button type="button" className="return-world" onClick={() => navigate(worldLocation)}>
             <ArrowLeft size={18} />
             Return to world
@@ -463,25 +463,15 @@ export function FrontierApp() {
           onWatch={() => watch(selectedForHud.id, run?.id)}
           onArtifact={(artifactId) => open({ kind: "artifact", taskId: selectedForHud.id, artifactId })}
           onPolicies={() => open({ kind: "task-policies", taskId: selectedForHud.id })}
-          onClose={() => runtime.select(null)}
         />
       )}
       {location.view === "world" && pickedProject && project && !selected && (
-        <section className="selection-hud panel project-selection">
-          <div>
-            <small>Project headquarters</small>
-            <h2>{project.name}</h2>
-            <p>{project.repositoryPath.split("/").at(-1)}</p>
-          </div>
-          <button
-            type="button"
-            className="primary"
-            onClick={() => navigate({ ...worldLocation, view: "project", projectId: project.id })}
-          >
-            Enter base
-            <ArrowRight size={20} />
-          </button>
-        </section>
+        <BaseSelection
+          project={project}
+          tasks={tasksInProject(snapshot.tasks, project)}
+          rendererRef={renderer}
+          onEnter={() => navigate({ ...worldLocation, view: "project", projectId: project.id })}
+        />
       )}
       {location.view !== "agent" && (
         <WorldActions
@@ -492,7 +482,6 @@ export function FrontierApp() {
         />
       )}
       <ConnectionBadge snapshot={snapshot} fixture={fixture} onRetry={() => runtime.retry()} />
-      {!stack.length && <ArtPreview />}
       {!snapshot.tasks.length && (
         <section className="empty-world panel">
           <h1>
