@@ -1,7 +1,73 @@
-import { ArrowSquareOut, CheckCircle, Warning } from "@phosphor-icons/react";
+import { ArrowSquareOut, CircleNotch, Warning } from "@phosphor-icons/react";
 import { useState } from "react";
+import type { RuntimePrototypeVariant } from "../../domain";
+import { canonicalClaudeDesignUrl, claudePreviewImageUrl } from "../../prototype-design";
 import type { FrontierGateway, TaskCore } from "../runtime/contracts";
 import { modelLabel, reasoningLabel } from "../runtime/presentation";
+
+function DesignMedia({ taskId, variant }: { taskId: string; variant: RuntimePrototypeVariant }) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+  if (variant.status === "failed") {
+    return (
+      <div className="design-preview-state">
+        <Warning size={34} />
+        <h3>Provider failed</h3>
+        <p>{variant.error}</p>
+      </div>
+    );
+  }
+  if (variant.status !== "ready") {
+    return (
+      <div className="design-preview-state" aria-live="polite">
+        <CircleNotch className="spin" size={34} />
+        <h3>{variant.status === "queued" ? "Queued" : "Generation in progress"}</h3>
+        <p>Retained output appears when this provider finishes.</p>
+      </div>
+    );
+  }
+  const isClaude = variant.generator === "claude-design";
+  const source = isClaude ? claudePreviewImageUrl(taskId, variant.id) : variant.previewUrl;
+  if (!source || failed) {
+    return (
+      <div className="design-preview-state">
+        <Warning size={34} />
+        <h3>Preview unavailable</h3>
+        <p>
+          {isClaude
+            ? "Open the retained Claude project to inspect this design."
+            : "No retained preview is available."}
+        </p>
+      </div>
+    );
+  }
+  return (
+    <>
+      {!loaded && (
+        <div className="design-preview-state design-preview-loading" aria-live="polite">
+          <CircleNotch className="spin" size={34} />
+          <h3>Loading preview</h3>
+        </div>
+      )}
+      {isClaude ? (
+        <img
+          src={source}
+          alt={`${variant.title} screenshot`}
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <iframe
+          title={`${variant.title} r${variant.revision}`}
+          src={source}
+          sandbox="allow-scripts"
+          referrerPolicy="no-referrer"
+          onLoad={() => setLoaded(true)}
+        />
+      )}
+    </>
+  );
+}
 
 export function DesignReview({
   task,
@@ -23,12 +89,7 @@ export function DesignReview({
   const latest = new Map(request.variants.map((variant) => [variant.generator, variant]));
   const maySelect = ["awaiting-selection", "failed"].includes(request.status) && task.activeRunKind == null;
   const hasPreview = (url: string | null) =>
-    Boolean(
-      url &&
-        (/^\/api\//.test(url) ||
-          /^https:\/\//.test(url) ||
-          (gateway.mode === "fixture" && url === "/assets/fixture-evidence-desk.html")),
-    );
+    Boolean(url && (/^\/api\//.test(url) || (gateway.mode === "fixture" && url.startsWith("/assets/"))));
   return (
     <section className="design-review">
       <div className="section-heading">
@@ -67,32 +128,25 @@ export function DesignReview({
               {variant.policy.provenance.replaceAll("-", " ")}
             </small>
             <div className="design-preview">
-              {variant.status === "ready" && variant.previewUrl && hasPreview(variant.previewUrl) ? (
-                <iframe
-                  title={`${variant.title} r${variant.revision}`}
-                  src={variant.previewUrl}
-                  sandbox="allow-scripts"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div>
-                  {variant.status === "failed" ? <Warning size={34} /> : <CheckCircle size={34} />}
-                  <h3>
-                    {variant.status === "failed"
-                      ? "Provider failed"
-                      : variant.status === "ready"
-                        ? "Preview unavailable"
-                        : "Generation in progress"}
-                  </h3>
-                  <p>{variant.error ?? "Retained output appears when this provider finishes."}</p>
-                </div>
-              )}
+              <DesignMedia taskId={task.id} variant={variant} />
             </div>
             <h3>{variant.title}</h3>
             <p>{variant.summary}</p>
             <div className="review-actions">
-              {variant.previewUrl && hasPreview(variant.previewUrl) && (
-                <a href={variant.previewUrl} target="_blank" rel="noreferrer">
+              {(variant.generator === "claude-design"
+                ? canonicalClaudeDesignUrl(variant.externalUrl ?? variant.previewUrl)
+                : variant.previewUrl && hasPreview(variant.previewUrl)
+                  ? variant.previewUrl
+                  : null) && (
+                <a
+                  href={
+                    variant.generator === "claude-design"
+                      ? (canonicalClaudeDesignUrl(variant.externalUrl ?? variant.previewUrl) ?? undefined)
+                      : (variant.previewUrl ?? undefined)
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   Open full preview <ArrowSquareOut size={17} />
                 </a>
               )}

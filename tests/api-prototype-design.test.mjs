@@ -66,6 +66,28 @@ test("persists the design option and serves only the retained prototype asset", 
     assert.match(preview.headers.get("content-security-policy"), /connect-src 'none'/);
     assert.match(await preview.text(), /Prototype/);
 
+    const claudeVariantId = "variant-claude";
+    const claudeBundlePath = path.join(directory, "prototypes", task.id, claudeVariantId);
+    await mkdir(claudeBundlePath, { recursive: true });
+    await writeFile(path.join(claudeBundlePath, "preview.jpg"), "retained-jpeg");
+    await store.update(task.id, (draft) => {
+      draft.designRequest.variants.push({
+        ...draft.designRequest.variants[0],
+        id: claudeVariantId,
+        generator: "claude-design",
+        provider: "claude",
+        previewUrl: `/api/tasks/${task.id}/designs/${claudeVariantId}/preview-image`,
+        externalUrl: "https://claude.ai/design/p/project-123",
+        bundlePath: claudeBundlePath,
+      });
+    });
+    const previewImage = await fetch(
+      `${origin}/api/tasks/${task.id}/designs/${claudeVariantId}/preview-image`,
+    );
+    assert.equal(previewImage.status, 200);
+    assert.equal(previewImage.headers.get("content-type"), "image/jpeg");
+    assert.equal(await previewImage.text(), "retained-jpeg");
+
     const detail = await fetch(`${origin}/api/tasks/${task.id}`);
     const projected = await detail.json();
     assert.equal(projected.task.designRequest.variants[0].bundlePath, undefined);

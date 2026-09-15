@@ -443,6 +443,7 @@ export interface RuntimePrototypeVariant {
   summary: string;
   designContract?: string;
   previewUrl: string | null;
+  previewImageAvailable?: boolean;
   externalUrl: string | null;
   bundleHash: string | null;
   model: string | null;

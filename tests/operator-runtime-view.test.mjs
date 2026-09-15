@@ -312,7 +312,7 @@ test("legacy design evidence renders recorded model provenance without policy sn
             title: "Legacy Claude direction",
             summary: "Retained before policy snapshots were introduced.",
             previewUrl: null,
-            externalUrl: "https://claude.ai/design/legacy",
+            externalUrl: "https://claude.ai/design/legacy-project",
             bundleHash: null,
             model: "claude-sonnet-5",
             reasoning: "high",
@@ -347,6 +347,9 @@ test("legacy design evidence renders recorded model provenance without policy sn
       }),
     );
     assert.match(html, /claude-sonnet-5 · High · recorded model/);
+    assert.match(html, /href="https:\/\/claude\.ai\/design\/p\/legacy-project"/);
+    assert.match(html, /designs\/legacy-claude-variant\/preview-image/);
+    assert.match(html, /Loading preview/);
     assert.match(html, /Codex Design[\s\S]*Not recorded/);
     assert.match(html, /Legacy recorded models retained · no automatic substitution/);
   });

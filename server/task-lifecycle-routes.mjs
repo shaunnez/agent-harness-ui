@@ -16,6 +16,49 @@ export function createTaskLifecycleRoutes({
   repositoryAuthorityService,
 }) {
   return async function handleTaskLifecycleRoute(request, response, url) {
+    const designPreviewImageMatch = url.pathname.match(
+      /^\/api\/tasks\/([^/]+)\/designs\/([^/]+)\/preview-image$/,
+    );
+    if (request.method === "GET" && designPreviewImageMatch) {
+      const id = decodeURIComponent(designPreviewImageMatch[1]);
+      const variantId = decodeURIComponent(designPreviewImageMatch[2]);
+      const task = await store.get(id);
+      const variant = task?.designRequest?.variants.find((item) => item.id === variantId);
+      if (!variant?.bundlePath || variant.status !== "ready" || variant.generator !== "claude-design") {
+        send(response, 404, { error: "Prototype preview image not found." });
+        return true;
+      }
+      const prototypeRoot = path.resolve(store.dataDirectory(), "prototypes", id, variant.id);
+      if (path.resolve(variant.bundlePath) !== prototypeRoot) {
+        send(response, 409, { error: "Prototype asset path does not match its persisted identity." });
+        return true;
+      }
+      try {
+        let screenshot;
+        let contentType;
+        try {
+          screenshot = await readFile(path.join(prototypeRoot, "preview.png"));
+          contentType = "image/png";
+        } catch (error) {
+          if (error?.code !== "ENOENT") throw error;
+          screenshot = await readFile(path.join(prototypeRoot, "preview.jpg"));
+          contentType = "image/jpeg";
+        }
+        response.writeHead(200, {
+          "content-type": contentType,
+          "content-length": screenshot.length,
+          "cache-control": "private, no-store",
+          "content-security-policy": "default-src 'none'; frame-ancestors 'self'",
+          "x-content-type-options": "nosniff",
+        });
+        response.end(screenshot);
+      } catch (error) {
+        if (error?.code !== "ENOENT") throw error;
+        send(response, 404, { error: "Prototype preview image not found." });
+      }
+      return true;
+    }
+
     const designPreviewMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/designs\/([^/]+)\/preview$/);
     if (request.method === "GET" && designPreviewMatch) {
       const id = decodeURIComponent(designPreviewMatch[1]);

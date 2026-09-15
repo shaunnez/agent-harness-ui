@@ -1,10 +1,73 @@
 import { ArrowSquareOut, Check, CircleNotch, Palette, WarningCircle } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { RuntimeDesignPolicySnapshot, RuntimePrototypeVariant, RuntimeTask } from "../../domain";
+import { canonicalClaudeDesignUrl, claudePreviewImageUrl } from "../../prototype-design";
 import { Button } from "../Primitives";
 
 function providerLabel(variant: RuntimePrototypeVariant) {
   return variant.generator === "claude-design" ? "Claude Design" : "Codex Design";
+}
+
+function RuntimePrototypeMedia({ taskId, variant }: { taskId: string; variant: RuntimePrototypeVariant }) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+  if (variant.status === "failed") {
+    return (
+      <span className="runtime-prototype-state runtime-prototype-state--failed">
+        <WarningCircle size={22} />
+        <strong>Generation failed</strong>
+        <small>{variant.error}</small>
+      </span>
+    );
+  }
+  if (variant.status !== "ready") {
+    return (
+      <span className="runtime-prototype-state">
+        <CircleNotch className="spin" size={22} />
+        <strong>{variant.status === "queued" ? "Queued" : "Generating prototype"}</strong>
+        <small>The other provider runs independently.</small>
+      </span>
+    );
+  }
+  const isClaude = variant.generator === "claude-design";
+  const source = isClaude ? claudePreviewImageUrl(taskId, variant.id) : variant.previewUrl;
+  if (!source || failed) {
+    return (
+      <span className="runtime-prototype-state runtime-prototype-state--failed">
+        <WarningCircle size={22} />
+        <strong>Preview unavailable</strong>
+        <small>
+          {isClaude ? "Open the retained Claude project to inspect it." : "No preview was retained."}
+        </small>
+      </span>
+    );
+  }
+  return (
+    <>
+      {!loaded ? (
+        <span className="runtime-prototype-state runtime-prototype-loading" aria-live="polite">
+          <CircleNotch className="spin" size={22} />
+          <strong>Loading preview</strong>
+        </span>
+      ) : null}
+      {isClaude ? (
+        <img
+          src={source}
+          alt={`${providerLabel(variant)} prototype screenshot`}
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <iframe
+          title={`${providerLabel(variant)} prototype revision ${variant.revision}`}
+          src={source}
+          sandbox="allow-scripts allow-popups"
+          referrerPolicy="no-referrer"
+          onLoad={() => setLoaded(true)}
+        />
+      )}
+    </>
+  );
 }
 
 export function RuntimePrototypeComparison({
@@ -98,26 +161,7 @@ export function RuntimePrototypeComparison({
                 <code>r{variant.revision}</code>
               </header>
               <div className="runtime-prototype-preview">
-                {ready && variant.previewUrl ? (
-                  <iframe
-                    title={`${providerLabel(variant)} prototype revision ${variant.revision}`}
-                    src={variant.previewUrl}
-                    sandbox="allow-scripts allow-popups"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : variant.status === "failed" ? (
-                  <span className="runtime-prototype-state runtime-prototype-state--failed">
-                    <WarningCircle size={22} />
-                    <strong>Generation failed</strong>
-                    <small>{variant.error}</small>
-                  </span>
-                ) : (
-                  <span className="runtime-prototype-state">
-                    <CircleNotch className="spin" size={22} />
-                    <strong>{variant.status === "queued" ? "Queued" : "Generating prototype"}</strong>
-                    <small>The other provider runs independently.</small>
-                  </span>
-                )}
+                <RuntimePrototypeMedia taskId={task.id} variant={variant} />
               </div>
               <p>{variant.summary || "A retained summary will appear when this provider completes."}</p>
               <footer>
@@ -126,8 +170,20 @@ export function RuntimePrototypeComparison({
                   {variant.bundleHash ? ` · ${variant.bundleHash.slice(0, 10)}` : " · provider-hosted"}
                 </small>
                 <span>
-                  {variant.previewUrl ? (
-                    <a href={variant.previewUrl} target="_blank" rel="noreferrer">
+                  {(
+                    variant.generator === "claude-design"
+                      ? canonicalClaudeDesignUrl(variant.externalUrl ?? variant.previewUrl)
+                      : variant.previewUrl
+                  ) ? (
+                    <a
+                      href={
+                        variant.generator === "claude-design"
+                          ? (canonicalClaudeDesignUrl(variant.externalUrl ?? variant.previewUrl) ?? undefined)
+                          : (variant.previewUrl ?? undefined)
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       Open <ArrowSquareOut size={14} />
                     </a>
                   ) : null}

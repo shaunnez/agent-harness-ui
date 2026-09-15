@@ -7,10 +7,11 @@ const DIRECTIONS = [
 ];
 
 function publicPreviewUrl(taskId, variant) {
-  return (
-    variant.externalUrl ??
-    `/api/tasks/${encodeURIComponent(taskId)}/designs/${encodeURIComponent(variant.id)}/preview`
-  );
+  const base = `/api/tasks/${encodeURIComponent(taskId)}/designs/${encodeURIComponent(variant.id)}`;
+  if (variant.generator === "claude-design") {
+    return variant.previewImageAvailable ? `${base}/preview-image` : null;
+  }
+  return `${base}/preview`;
 }
 
 function variantRecord(direction, revision, policy) {
