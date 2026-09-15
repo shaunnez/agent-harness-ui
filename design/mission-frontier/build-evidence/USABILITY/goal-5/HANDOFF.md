@@ -8,7 +8,8 @@
 - Branch: `codex/mission-frontier-goal-5-resumed`
 - Remote: `origin`, `https://github.com/shaunnez/agent-harness-ui.git`
 - Verified application source: `92f69a8b396c473bb2dc2714f1274053f0953a84`; integrated published main `424f8f1a632f32785a1ca0e2394f9d6dd3180499`.
-- Focused PR and journal publication receipts will be recorded in `delivery.json` after confirmation. No PR merge or game publication is authorized by this handoff.
+- [PR #86](https://github.com/shaunnez/agent-harness-ui/pull/86) is open and was reported mergeable, with no CI checks returned at inspection. Local checks are recorded separately. No merge was performed.
+- [Journal entry](https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/a-world-you-can-work-from/) is published as version 11; authenticated production HTTP returned 200 with the new article, test count and PR reference. Access revision 5 remains owner-only. [Delivery receipt](delivery.json). No game publication occurred.
 
 The removed worktree was recovered from snapshot `82d557dcbd061ce160beed2b890f2f0a1aefe6ff` by replaying only its delta from `dcd474e`. Published main was integrated, including current approval authority and model policy. The user's original checkout, uncommitted work and databases were preserved. Fourteen missing historical journal references were restored byte-for-byte against the prior journal snapshot; see `restored-journal-references.json`. They remain dated historical evidence. The dated [10 September handoff](HANDOFF-2026-09-10.md) remains historical.
 
