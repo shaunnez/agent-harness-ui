@@ -1,0 +1,32 @@
+{
+  "date": "2026-09-15",
+  "baseline": "65b18d6d62e6d2558034e90b40a43e2d18cd3ad9",
+  "files": {
+    "src/frontier/ui/hud-simplification.css": "07937d96422d790327f3db46a88967bc9f840b080d3ea80e684df5a119e6a9c1"
+  },
+  "checks": {
+    "frontier": 84,
+    "typecheck": "passed",
+    "lint": "passed",
+    "format": "passed",
+    "frontierBuild": "passed"
+  },
+  "browser": [
+    {
+      "viewport": "1280x720",
+      "panelX": 12,
+      "mapX": 12,
+      "panelWidth": 235,
+      "mapWidth": 235,
+      "gap": 12.5
+    },
+    {
+      "viewport": "1488x1058",
+      "panelX": 12,
+      "mapX": 12,
+      "panelWidth": 235,
+      "mapWidth": 235,
+      "gap": 12.5
+    }
+  ]
+}

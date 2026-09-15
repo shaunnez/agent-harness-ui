@@ -161,6 +161,16 @@
 .management-menu button > .update-dot {
   flex: 0 0 8px;
 }
+@media (min-width: 1051px) {
+  .view-project .project-hud,
+  .view-project .minimap {
+    left: 12px;
+    width: 235px;
+  }
+  .view-project .project-hud {
+    bottom: 238px;
+  }
+}
 @media (max-width: 1280px) {
   .attention-stack {
     width: 270px;
