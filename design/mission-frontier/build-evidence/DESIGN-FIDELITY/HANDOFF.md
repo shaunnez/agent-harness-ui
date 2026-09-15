@@ -1,3 +1,5 @@
+> Follow-up: terrain, ground contact and vegetation refined after user review. See [grounding/HANDOFF.md](grounding/HANDOFF.md) for current evidence and remaining limits. Earlier first-pass evidence below is preserved.
+
 # Original-design fidelity — review handoff
 
 15 September 2026. The first scoped fidelity pass is implemented and locally qualified. Goal 6 has not started.

@@ -1,3 +1,9 @@
+# Grounding follow-up — 15 September 2026
+
+User review accepted the first pass overall but identified noisy grass, a floating slab and tree overlap. A separate registered Blender footing now meets the slab underside; all surrounds render before all tiled rooms. Trees frame a clearing outside the walls. Meadow microcontrast and gravel density are reduced. Normal desktop HQ/Watch/World, night contact and fitted laptop Watch were inspected. No camera code changed.
+
+Original and actual HQ were inspected together in build-evidence/DESIGN-FIDELITY/grounding/comparison-hq.jpg at equal 1567x1004 source dimensions. The direct contact fix also has tiled 0.6-scale asset QA. The original still has more irregular architecture, wear and environmental density. This scoped correction is locally qualified; final artistic preference remains Shaun's. See grounding/HANDOFF.md for exact checks and camera-state qualification. Historical QA follows unchanged.
+
 # Design QA — original-design fidelity slice
 
 Date: 15 September 2026. Final result: passed for the scoped material/room/HUD slice; artistic review remains with Shaun. This does not claim a pixel-identical conversion of the historical concept or completion of Goal 6.

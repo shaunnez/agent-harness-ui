@@ -10,7 +10,7 @@ const { assets } = JSON.parse(await readFile(path.join(root, "assets/fidelity/ma
 const original = JSON.parse(await readFile(path.join(root, "assets/cinematic/manifest.json"), "utf8"));
 
 test("fidelity exports preserve measured PNG identity and a common room ground plane", async () => {
-  assert.equal(new Set(assets.map((asset) => asset.id)).size, 6);
+  assert.equal(new Set(assets.map((asset) => asset.id)).size, 7);
   for (const asset of assets) {
     assert.ok(asset.file.startsWith("/assets/fidelity/"));
     const bytes = await readFile(path.join(root, asset.file));

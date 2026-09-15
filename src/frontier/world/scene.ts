@@ -12,6 +12,7 @@ import { islandAnchor, islandScale, projectRoutes } from "./routes";
 import {
   placeCoastalBackdrop,
   placeCompound,
+  placeHeadquartersVegetation,
   placeStation,
   placeVegetation,
   type SceneryContext,
@@ -425,26 +426,30 @@ export class FrontierScene {
     const top = Math.min(0, ...ys),
       bottom = Math.max(0, ...ys);
     this.bounds = { x: left - 240, y: top - 315, width: right - left + 480, height: bottom - top + 340 };
-    this.entity("hq-terrain", [project.id, this.bounds, this.featuredProject], () => {
-      this.ocean(-8000, -8000, 16000, 16000);
-      const scale = Math.max(2.7, this.bounds.width / 400, (this.bounds.height + 80) / 220);
-      if (this.cinematic(project.id))
-        this.art("mf.cinematic.island", (left + right) / 2, (top + bottom) / 2 - 80, scale * 0.53);
-      else this.art("mf.terrain.ground", (left + right) / 2, bottom + 130, scale);
-      for (const [dx = 0, dy = 0] of [
-        [-90, -20],
-        [80, -10],
-        [0, -60],
-      ])
-        this.art("mf.prop.purple-tree", (left + right) / 2 + dx, top - 210 + dy, 0.75);
-      this.art(
-        this.cinematic(project.id) ? "mf.cinematic.tree" : "mf.prop.purple-tree",
-        left - 260,
-        (top + bottom) / 2 - 70,
-        0.85,
-      );
-      this.art("mf.prop.purple-tree", right + 255, (top + bottom) / 2 - 90, 0.8);
-    });
+    this.entity(
+      "hq-terrain",
+      [project.id, this.bounds, this.featuredProject, sites.map(({ site }) => site)],
+      () => {
+        this.ocean(-8000, -8000, 16000, 16000);
+        const scale = Math.max(2.7, this.bounds.width / 400, (this.bounds.height + 80) / 220);
+        if (this.cinematic(project.id))
+          this.art("mf.cinematic.island", (left + right) / 2, (top + bottom) / 2 - 80, scale * 0.53);
+        else this.art("mf.terrain.ground", (left + right) / 2, bottom + 130, scale);
+        if (this.cinematic(project.id)) {
+          // All foundation surrounds sit below every room, including adjoining tiles.
+          const foundations = sites.length
+            ? sites.map(({ site }) => ({ ...site, scale: 0.6 }))
+            : [{ x: 0, y: 0, scale: 1 }];
+          for (const site of foundations)
+            this.art("mf.fidelity.room.ground-contact", site.x, site.y, site.scale);
+        }
+        placeHeadquartersVegetation(
+          this.art.bind(this),
+          { left, right, top, bottom },
+          this.cinematic(project.id),
+        );
+      },
+    );
     if (!tasks.length)
       this.entity(`hq-empty-${project.id}`, [project.id, input.idleRoaming], () => {
         this.compound(0, 0, 1, false, project.id);
@@ -517,8 +522,9 @@ export class FrontierScene {
         if (this.cinematic(project.id)) {
           this.ocean(-8000, -8000, 16000, 16000);
           this.art("mf.cinematic.island", 0, -40, 2.65);
-          this.art("mf.cinematic.tree", -420, -170, 1.35);
-          this.art("mf.prop.purple-tree", 380, -160, 1.25);
+          this.art("mf.fidelity.room.ground-contact", -80, 140, 1.3);
+          this.art("mf.prop.purple-tree", -665, -115, 0.85);
+          this.art("mf.prop.purple-tree", 510, -100, 0.8);
         } else this.art("mf.terrain.region", 864, 252, 3.6);
         this.compound(-80, 140, 1.3, false, project.id);
         if (task) {

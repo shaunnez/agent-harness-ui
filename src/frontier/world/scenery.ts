@@ -121,6 +121,29 @@ export function placeVegetation(
   }
 }
 
+/** Tree trunks stay outside the occupied room footprint; canopies frame the clearing. */
+export function placeHeadquartersVegetation(
+  art: SceneryContext["art"],
+  bounds: { left: number; right: number; top: number; bottom: number },
+  cinematic: boolean,
+) {
+  const { left, right, top, bottom } = bounds;
+  const center = (left + right) / 2;
+  for (const [dx, dy] of [
+    [-90, -20],
+    [80, -10],
+    [0, -60],
+  ] as const)
+    art("mf.prop.purple-tree", center + dx, top - 210 + dy, cinematic ? 0.6 : 0.75);
+  if (cinematic) {
+    art("mf.prop.purple-tree", left - 280, top + 5, 0.5);
+    art("mf.prop.purple-tree", right + 275, top + 15, 0.52);
+  } else {
+    art("mf.prop.purple-tree", left - 260, (top + bottom) / 2 - 70, 0.85);
+    art("mf.prop.purple-tree", right + 255, (top + bottom) / 2 - 90, 0.8);
+  }
+}
+
 export function placeStation(
   ctx: SceneryContext,
   task: TaskSummary,
