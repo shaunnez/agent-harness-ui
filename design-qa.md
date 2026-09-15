@@ -1,3 +1,11 @@
+# Bottom-row height design QA — 15 September 2026
+
+Result: passed for the latest three layout requests at normal laptop and desktop sizes. Inspected before/after: design/mission-frontier/build-evidence/HUD/height-comparison.png. Source is the prior qualified HQ repair-task capture; implementation is the corrected current HQ repair-task capture. Scene lighting differs because the existing local cycle continued.
+
+Verified 8px added above day/night; HQ details card removed; World/HQ map and bottom-right controls match actual selected dock height through local observation. All three top/bottom edges measured equal at 1280×720 and 1488×1058. No-selection, task/base selection, viewport resize and Escape were checked. Maps remain aspect-contained; Agent-view sizing is preserved. No scenery, camera or lighting behavior change.
+
+---
+
 # HUD refinement design QA — 15 September 2026
 
 Result: passed for the latest explicitly requested HUD scope at normal 1488×1058 and 1280×720 sizes. Inspected before/after repair-task comparison: design/mission-frontier/build-evidence/HUD/refine-comparison.png. Full corrected captures include refine-hq-blocked-1280.png, refine-hq-blocked-1488.png, refine-world-base-1280.png and refine-world-base-1488.png.

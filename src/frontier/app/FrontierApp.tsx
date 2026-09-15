@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Plus, RocketLaunch } from "@phosphor-icons/react";
+import { ArrowLeft, Plus, RocketLaunch } from "@phosphor-icons/react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { NewTaskDraft } from "../../domain";
 import { createFixtureGateway } from "../fixtures/gateway";
@@ -9,14 +9,7 @@ import { commandDestination, isActiveRun, latestRun, needsYou } from "../runtime
 import { AgentPanel } from "../views/AgentPanel";
 import { DecisionNavigation } from "../views/DecisionNavigation";
 import { PinnedWork } from "../views/WatchPins";
-import {
-  AttentionQueue,
-  ConnectionBadge,
-  ProjectHud,
-  SelectionHud,
-  WorldActions,
-  WorldClock,
-} from "../views/WorldHud";
+import { AttentionQueue, ConnectionBadge, SelectionHud, WorldActions, WorldClock } from "../views/WorldHud";
 import { WorldNavigation } from "../views/WorldNavigation";
 import { artDirection } from "../world/asset-policy";
 import { cinematicWorker } from "../world/cinematic-catalog";
@@ -25,6 +18,7 @@ import type { WorldRenderer } from "../world/renderer";
 import { WorldCanvas } from "../world/WorldCanvas";
 import { BaseSelection } from "../views/BaseSelection";
 import { BuildDiagnostics } from "./BuildDiagnostics";
+import { useBottomHudLayout } from "./bottom-hud-layout";
 import { CommandWorkspaceProvider } from "./command-context";
 import { useNavigation, worldLocation } from "./navigation";
 import { type Overlay, OverlayHost } from "./OverlayHost";
@@ -373,8 +367,9 @@ export function FrontierApp() {
   const selectedForHud = task ?? selected;
   const portrait =
     artDirection(window.location.search) === "cinematic" ? cinematicWorker.portrait : undefined;
+  const shell = useBottomHudLayout(Boolean(selectedForHud), Boolean(pickedProject), location.view);
   const workspace = (
-    <main className={`frontier-shell view-${location.view}`}>
+    <main ref={shell} className={`frontier-shell view-${location.view}`}>
       <WorldCanvas
         onWorldSettings={() => open({ kind: "world-settings" })}
         input={sceneInput}
@@ -430,9 +425,6 @@ export function FrontierApp() {
           <AttentionQueue tasks={scopedTasks} projects={snapshot.projects} onSelect={actOn} />
           <PinnedWork onTask={inspect} onWatch={watch} />
         </aside>
-      )}
-      {project && location.view === "project" && (
-        <ProjectHud project={project} tasks={scopedTasks} onTasks={() => open({ kind: "tasks" })} />
       )}
       {location.view === "agent" && snapshot.selected && (
         <AgentPanel

@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-15",
+  "baseline": "e3724d3",
+  "files": {
+    "AGENTS.md": "b0a03ce7fa2fcfcbd62252f1382017fe481edeaf18fec5a104186db3d3956504",
+    "design-qa.md": "33de4c3053fcec9e493faffb5f04bb931763107435ec9d4909df007063a08a16",
+    "src/frontier/app/FrontierApp.tsx": "2d37402c0f5ac83ee54fec42c65af66fbdbb1c848f4e30d19dc6e9ed6b0c4e69",
+    "src/frontier/ui/hud-depth.css": "f3b5c8f341d407324b78a3d60ae841dc6ffd35b522b01c344d06ccb32ebdc560",
+    "src/frontier/app/bottom-hud-layout.ts": "fa0581dfc2696b8dce1df3b8a6129d0d1c33fc5c2b821537925aecab164144e8"
+  }
+}

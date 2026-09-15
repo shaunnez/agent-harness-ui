@@ -24,14 +24,18 @@
   font-size: 14px;
 }
 .minimap {
-  --minimap-image-height: 173px;
-  height: 175px;
+  --minimap-image-height: calc(var(--bottom-hud-height, 236px) - 2px);
+  height: var(--bottom-hud-height, 236px);
   padding: 0;
   display: block;
   border: 1px solid #30434a;
   background: #05141d;
   box-shadow: none;
   overflow: hidden;
+}
+.view-agent .minimap {
+  --minimap-image-height: 173px;
+  height: 175px;
 }
 .minimap-image {
   display: flex;
@@ -218,12 +222,16 @@
   width: var(--world-right-width, 260px);
   bottom: 35px;
   right: 12px;
+  height: var(--bottom-hud-height, 236px);
+  display: flex;
+  flex-direction: column;
   border-color: #36515c;
   box-shadow:
     inset 0 0 0 3px #102831,
     0 5px 15px #0005;
 }
 .secondary-actions {
+  flex: 1;
   margin-bottom: 12px;
 }
 .secondary-actions button {
@@ -253,8 +261,8 @@
     --world-left-width: 144px;
   }
   .minimap {
-    --minimap-image-height: 106px;
-    height: 108px;
+    --minimap-image-height: calc(var(--bottom-hud-height, 236px) - 2px);
+    height: var(--bottom-hud-height, 236px);
   }
   .camera-controls button {
     min-height: 30px;
@@ -340,7 +348,7 @@
 .view-world .world-time,
 .view-project .world-time {
   left: 50%;
-  top: 58px;
+  top: 66px;
   transform: translateX(-50%);
   min-width: 0;
 }
