@@ -1,4 +1,5 @@
 import { type Container, Sprite, Texture, type TilingSprite } from "pixi.js";
+import { CoastalSurf } from "./coastal-surf";
 import {
   defaultEnvironment,
   type EnvironmentPreferences,
@@ -31,6 +32,9 @@ export class WorldEnvironment {
   private surfaces = new Map<Sprite | TilingSprite, "land" | "sea">();
   private lights: { sprite: Sprite; threshold: number; strength: number }[] = [];
   private glints: { sprite: Sprite; offset: number }[] = [];
+  private shores: CoastalSurf[] = [];
+  private surfSeconds = 1.8;
+  private lastSurfTime: number | null = null;
   lighting = lightingAt(9);
 
   configure(preferences: EnvironmentPreferences, animate: boolean) {
@@ -40,6 +44,7 @@ export class WorldEnvironment {
   setAnimating(animate: boolean) {
     this.clock.configure(this.preferences, animate, Date.now());
     this.animate = animate;
+    if (!animate) this.lastSurfTime = null;
     this.update(0, true);
   }
   surface(sprite: Sprite | TilingSprite | null, kind: "land" | "sea" = "land") {
@@ -78,6 +83,9 @@ export class WorldEnvironment {
     this.lights.push({ sprite, threshold, strength });
     sprite.alpha = Math.max(0, (this.lighting.lamps - threshold) / (1 - threshold)) * strength;
   }
+  shore(sprite: Sprite | null) {
+    if (sprite) this.shores.push(new CoastalSurf(sprite));
+  }
   waterGlints(container: Container, x: number, y: number, seed: number) {
     for (let index = 0; index < 6; index++) {
       const sprite = this.glow(
@@ -96,6 +104,11 @@ export class WorldEnvironment {
     // Sun/sea exposure needs 8 updates per second, not a new scene or React render every frame.
     if (!force && time - this.lastUpdate < 125) return;
     this.lastUpdate = time;
+    if (this.animate && time > 0) {
+      if (this.lastSurfTime !== null)
+        this.surfSeconds += Math.min(0.25, Math.max(0, time - this.lastSurfTime) / 1000);
+      this.lastSurfTime = time;
+    }
     this.lighting = lightingAt(this.clock.hour(Date.now()));
     for (const [sprite, kind] of this.surfaces) {
       if (sprite.destroyed) this.surfaces.delete(sprite);
@@ -104,6 +117,11 @@ export class WorldEnvironment {
     this.lights = this.lights.filter(({ sprite, threshold, strength }) => {
       if (sprite.destroyed) return false;
       sprite.alpha = Math.max(0, (this.lighting.lamps - threshold) / (1 - threshold)) * strength;
+      return true;
+    });
+    this.shores = this.shores.filter((shore) => {
+      if (shore.sprite.destroyed) return false;
+      shore.update(this.surfSeconds, this.lighting.lamps);
       return true;
     });
     this.glints = this.glints.filter(({ sprite, offset }) => {
@@ -126,6 +144,7 @@ export class WorldEnvironment {
     this.surfaces.clear();
     this.lights = [];
     this.glints = [];
+    this.shores = [];
     if (this.texture !== Texture.WHITE) this.texture.destroy(true);
   }
 }

@@ -1,3 +1,23 @@
+# Coastal checkpoint 1 — visual QA in progress
+
+15 September 2026. Source: `design/mission-frontier/reference/selected-world.png`; current composition: `design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/blockout-world.png`; combined comparison: `blockout-comparison.jpg` in the same evidence folder. Desktop CSS viewport1568×1003, source1568×1003; browser capture1568×1003 at1×. Browser screenshot bytes use JPEG encoding despite historical `.png` filenames.
+
+The blockout is inside the actual World, with sample workflow data, daylight and normal Fit camera. Original study has different task counts and surrounding art. This is an approved intermediate composition, not final acceptance.
+
+- Fonts/typography: current readable UI retained; Sol owns separate HUD improvements. Art-specific label anchors move with the taller roof and clear the new crossing.
+- Spacing/layout: main base and live court register, but left terrain clip and narrow crossing require corrections from contract revision2.
+- Colors/tokens: blockout swatches are temporary; detailed terrain/ceramic/steel/light treatment pending. Operational colors unchanged.
+- Image quality: proxy cliffs/tree crowns and plain facade are not accepted final assets. Producer is replacing them with authored layers and measured water masks.
+- Copy/content: current task data and actions retained; original study copy is not treated as persisted task evidence.
+
+P2 composition fixes: reduce excessive left silhouette; fix coplanar court/approach black patch; widen hero bridge and taper road join; enlarge/articulate loading court. Detailed production approved with these corrections. Source/current review history is in `build-evidence/COASTAL-CHECKPOINT-1/BLOCKOUT-REVIEW.md`.
+
+Synthetic shoreline shader check has shoreward crest travel and lower night exposure with no console errors. It does not establish authored mask correctness. Actual day/dusk/night, motion-off, browser access and final layers remain pending.
+
+**final result: blocked** — detailed art production and final integrated checks pending.
+
+---
+
 # Grounding follow-up — 15 September 2026
 
 User review accepted the first pass overall but identified noisy grass, a floating slab and tree overlap. A separate registered Blender footing now meets the slab underside; all surrounds render before all tiled rooms. Trees frame a clearing outside the walls. Meadow microcontrast and gravel density are reduced. Normal desktop HQ/Watch/World, night contact and fitted laptop Watch were inspected. No camera code changed.

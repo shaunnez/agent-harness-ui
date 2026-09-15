@@ -5,6 +5,7 @@ import type { TaskSummary } from "../runtime/contracts";
 import { attentionFor, isOpen, needsYou, stageLabels } from "../runtime/presentation";
 import { featuredProjectId } from "./asset-policy";
 import type { WorldAssets } from "./assets";
+import { coastalSite } from "./coastal-layout";
 import { WorldEnvironment } from "./environment";
 import { defaultEnvironment, type EnvironmentPreferences } from "./environment-model";
 import { ProjectPlacement, TransitionTracker, taskSite, tasksInProject } from "./layout";
@@ -217,8 +218,33 @@ export class FrontierScene {
     const room = projectId && this.cinematic(projectId) && this.assets.has("mf.fidelity.room.front");
     this.art(room ? "mf.fidelity.room.front" : "mf.base.standard.front", x, y, scale);
   }
-  private vegetation(x: number, y: number, large: boolean, foreground: boolean, cinematic = false) {
-    placeVegetation(this.art.bind(this), x, y, large, foreground, cinematic);
+  private vegetation(
+    x: number,
+    y: number,
+    large: boolean,
+    foreground: boolean,
+    cinematic = false,
+    crossing?: { x: number; y: number },
+  ) {
+    placeVegetation(
+      (id, tx, ty, scale) => {
+        // Clear neighbouring canopies from the authored far abutment and its real road junction.
+        if (
+          crossing &&
+          id.includes("tree") &&
+          Math.abs(tx - crossing.x) < 100 &&
+          ty > crossing.y - 40 &&
+          ty < crossing.y + 220
+        )
+          return null;
+        return this.art(id, tx, ty, scale);
+      },
+      x,
+      y,
+      large,
+      foreground,
+      cinematic,
+    );
   }
   private worker(
     task: TaskSummary,
@@ -300,39 +326,66 @@ export class FrontierScene {
     };
   }
   private overview(input: SceneInput, projects: (RuntimeProject & { position: { x: number; y: number } })[]) {
+    const coastal = this.assets.has("mf.coastal.terrain")
+      ? coastalSite(projects, this.featuredProject)
+      : null;
     const extent = Math.max(6000, ...projects.map(({ position }) => Math.max(position.x, position.y) + 3000));
     this.entity("world-terrain", extent, () => {
       this.ocean(-4000, -4000, extent + 4000, extent + 4000);
     });
-    this.entity("world-islands", [this.featuredProject, projects.map(({ position }) => position)], () => {
-      if (
-        this.featuredProject &&
-        this.assets.has("mf.cinematic.island") &&
-        projects.length > 1 &&
-        projects.length <= 3
-      ) {
-        const right = Math.max(...projects.map(({ position }) => position.x));
-        const top = Math.min(...projects.map(({ position }) => position.y));
-        const x = right + 100,
-          y = top - 400;
-        if (projects.every(({ position }) => Math.hypot((x - position.x) / 650, (y - position.y) / 460) > 1))
-          placeCoastalBackdrop(this.scenery(), x, y);
-      }
-      for (const { id, position } of projects) {
-        const anchor = islandAnchor(position);
-        if (this.cinematic(id)) this.art("mf.cinematic.island", position.x, position.y - 60, 1.24);
-        else this.art("mf.terrain.shore.rim", anchor.x, anchor.y, islandScale(position));
-      }
-      const routes = projectRoutes(this.assets, projects);
-      this.environment.surfacesIn(routes);
-      this.target.addChild(routes);
-    });
+    this.entity(
+      "world-islands",
+      [this.featuredProject, coastal, projects.map(({ position }) => position)],
+      () => {
+        if (
+          this.featuredProject &&
+          this.assets.has("mf.cinematic.island") &&
+          projects.length > 1 &&
+          projects.length <= 3
+        ) {
+          const right = Math.max(...projects.map(({ position }) => position.x));
+          const top = Math.min(...projects.map(({ position }) => position.y));
+          const x = right + 100,
+            y = top - 400;
+          if (
+            projects.every(({ position }) => Math.hypot((x - position.x) / 650, (y - position.y) / 460) > 1)
+          )
+            placeCoastalBackdrop(this.scenery(), x, y);
+        }
+        if (coastal) {
+          const { x, y } = coastal.origin;
+          const water = this.art("mf.coastal.shallows", x, y);
+          this.environment.surface(water, "sea");
+          const shore = this.assets.sprite("mf.coastal.shore", x, y);
+          if (shore) {
+            this.target.addChild(shore);
+            this.environment.shore(shore);
+          }
+        }
+        for (const { id, position } of projects) {
+          const anchor = islandAnchor(position);
+          if (id === coastal?.projectId) continue;
+          if (this.cinematic(id)) this.art("mf.cinematic.island", position.x, position.y - 60, 1.24);
+          else this.art("mf.terrain.shore.rim", anchor.x, anchor.y, islandScale(position));
+        }
+        if (coastal) {
+          // The connected foreground headland owns its far abutment, ahead of neighbouring ground.
+          const { x, y } = coastal.origin;
+          this.art("mf.coastal.terrain", x, y);
+          this.art("mf.coastal.bridge", x, y);
+        }
+        const routes = projectRoutes(this.assets, projects, coastal);
+        this.environment.surfacesIn(routes);
+        this.target.addChild(routes);
+      },
+    );
     for (const project of projects) {
       const projectTasks = tasksInProject(input.tasks, project);
       this.entity(
         `world-${project.id}`,
         [
           project,
+          coastal,
           projectTasks,
           projectTasks.some((task) => task.id === input.selectedId) ? input.selectedId : null,
           input.connected,
@@ -341,8 +394,12 @@ export class FrontierScene {
         ],
         () => {
           const { x, y } = project.position;
-          this.vegetation(x, y, y < 1000, false, this.cinematic(project.id));
-          this.compound(x, y, 0.55, true, project.id);
+          const coastalBase = coastal?.projectId === project.id;
+          if (coastalBase) this.selectable(this.art("mf.coastal.base", x, y), "project", project.id);
+          else {
+            this.vegetation(x, y, y < 1000, false, this.cinematic(project.id), coastal?.join);
+            this.compound(x, y, 0.55, true, project.id);
+          }
           const tasks = projectTasks.filter(isOpen);
           const representatives = [...tasks]
             .sort(
@@ -364,20 +421,27 @@ export class FrontierScene {
               this.cinematic(project.id),
             );
           });
-          this.front(x, y, 0.55);
+          if (!coastalBase) this.front(x, y, 0.55);
           const carrierTask =
             projectTasks.find((task) => task.id === input.selectedId && task.artifacts?.length) ??
             projectTasks.find((task) => task.artifacts?.length);
           if (carrierTask) this.handoff(carrierTask, x - 110, y + 10, 0.7);
-          this.vegetation(x, y, y < 1000, true, this.cinematic(project.id));
+          if (!coastalBase) this.vegetation(x, y, y < 1000, true, this.cinematic(project.id), coastal?.join);
           if (projects.indexOf(project) < 12)
             this.crew(project.id, x, y, "world", projects.length > 15 ? 1 : 2);
-          this.environment.waterGlints(this.target, x + 345, y + 180, x);
+          if (coastalBase) {
+            this.art("mf.coastal.front", x, y);
+            const lights = this.assets.sprite("mf.coastal.lights", x, y);
+            if (lights) {
+              this.target.addChild(lights);
+              this.environment.emission(lights, 0.1, 0.9);
+            }
+          } else this.environment.waterGlints(this.target, x + 345, y + 180, x);
           this.labels.push({
             id: `project-${project.id}`,
             kind: "project",
             x,
-            y: y - (this.cinematic(project.id) ? 310 : 210),
+            y: y - (coastalBase ? 330 : this.cinematic(project.id) ? 310 : 210),
             title: project.name,
             detail: `${tasks.length} open · ${tasks.filter(needsYou).length} need you`,
             attention: "project",
@@ -389,8 +453,8 @@ export class FrontierScene {
             this.labels.push({
               id: `task-${keyTask.id}`,
               kind: "task",
-              x: x + (this.cinematic(project.id) ? 320 : 75),
-              y: y - (this.cinematic(project.id) ? 45 : 80),
+              x: x + (coastalBase ? 385 : this.cinematic(project.id) ? 320 : 75),
+              y: y - (coastalBase ? 300 : this.cinematic(project.id) ? 45 : 80),
               title: `${keyTask.id} · ${stageLabels[keyTask.currentStage]}`,
               detail: attention.label,
               reason: attention.reason,

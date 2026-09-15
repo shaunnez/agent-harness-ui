@@ -46,6 +46,17 @@ export class WorldAssets {
       if (!fidelity.ok) throw new Error("The coastal artwork could not be loaded. Retry the world.");
       const coastal = (await fidelity.json()) as { assets: GameAsset[] };
       manifest.assets.push(...coastal.assets);
+      const exterior = await fetch("/assets/coastal/manifest.json");
+      if (!exterior.ok) throw new Error("The coastal base artwork could not be loaded. Retry the world.");
+      const kit = (await exterior.json()) as { assets: GameAsset[] };
+      if (
+        !Array.isArray(kit.assets) ||
+        ["terrain", "base", "bridge", "front", "lights", "shallows", "shore"].some(
+          (layer) => !kit.assets.some(({ id }) => id === `mf.coastal.${layer}`),
+        )
+      )
+        throw new Error("The coastal base artwork is incomplete. Retry the world.");
+      manifest.assets.push(...kit.assets);
     }
     for (const entry of manifest.assets) {
       // Occlusion frames share the parent texture; only exported parts load another image.

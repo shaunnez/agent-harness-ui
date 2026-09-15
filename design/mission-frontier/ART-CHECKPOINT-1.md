@@ -1,6 +1,6 @@
 # Art checkpoint 1 — connected coastal base
 
-Prepared 15 September 2026. **Ready to run after compaction; not started.** This is a bounded art checkpoint before Goal 6. The HUD simplification has a separate Sol assignment. The user requested this prompt and a main merge, not immediate asset production.
+Prepared and explicitly started 15 September 2026. **In progress** on `codex/mission-frontier-coastal-checkpoint-1`. This is a bounded art checkpoint before Goal 6. The HUD simplification has a separate Sol assignment. The preparation-only instruction below is historical; Shaun has now started the run after compaction.
 
 ## Resume location and baseline
 

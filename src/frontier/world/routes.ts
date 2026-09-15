@@ -1,6 +1,7 @@
 import { Container, Matrix } from "pixi.js";
 import type { WorldAssets } from "./assets";
 import type { Point } from "./camera";
+import { coastalJoint, coastalSegment, projectConnections, type CoastalSite } from "./coastal-layout";
 
 export interface Island {
   position: Point;
@@ -25,13 +26,14 @@ function onIsland(point: Point, islands: Island[]) {
 }
 
 /** Fixed infrastructure connects project entrances; it never encodes task progress. */
-export function projectRoutes(assets: WorldAssets, islands: Island[]) {
+export function projectRoutes(assets: WorldAssets, islands: Island[], coastal: CoastalSite | null = null) {
   const container = new Container();
   const add = (id: string, x: number, y: number, scale = 1) => {
     const sprite = assets.sprite(id, x, y, scale);
     if (sprite) container.addChild(sprite);
   };
-  const segment = (from: Point, to: Point) => {
+  const segment = (from: Point, to: Point, onAuthoredLand = false) => {
+    if (coastalSegment(from, to, coastal)) return;
     const dx = to.x - from.x,
       dy = to.y - from.y;
     if (Math.abs(dx) < 2) return;
@@ -41,7 +43,7 @@ export function projectRoutes(assets: WorldAssets, islands: Island[]) {
     const widthScale = 1.1;
     for (let index = 0; index < count; index++) {
       const middle = { x: from.x + (dx * (index + 0.5)) / count, y: from.y + (dy * (index + 0.5)) / count };
-      const land = onIsland(middle, islands);
+      const land = onAuthoredLand || onIsland(middle, islands);
       const cinematic = !land && assets.direction === "cinematic" && assets.has("mf.cinematic.bridge");
       const art = assets.sprite(
         cinematic
@@ -63,31 +65,14 @@ export function projectRoutes(assets: WorldAssets, islands: Island[]) {
       container.addChild(piece);
     }
   };
-  islands.forEach((island, index) => {
-    if (!index) return;
-    const prior = islands
-      .slice(0, index)
-      .reduce((nearest, candidate) =>
-        Math.hypot(candidate.position.x - island.position.x, candidate.position.y - island.position.y) <
-        Math.hypot(nearest.position.x - island.position.x, nearest.position.y - island.position.y)
-          ? candidate
-          : nearest,
-      );
-    const [upper, lower] = [prior.position, island.position].sort((a, b) => a.y - b.y);
-    if (!upper || !lower) return;
-    const from = { x: upper.x, y: upper.y + 10 },
-      to = { x: lower.x, y: lower.y + 10 };
-    const dx = to.x - from.x,
-      dy = to.y - from.y;
-    const se = dy + dx / 2,
-      sw = dy - dx / 2;
-    const joint = se >= 0 ? { x: from.x + se, y: from.y + se / 2 } : { x: from.x - sw, y: from.y + sw / 2 };
+  projectConnections(islands).forEach(({ from, to, joint }) => {
     if (Math.abs(joint.x - from.x) < 65 || Math.abs(to.x - joint.x) < 65) {
       segment(from, joint);
       segment(joint, to);
       return;
     }
-    if (!onIsland(joint, islands)) add("mf.terrain.shore.rim", joint.x, joint.y + 67.5, 0.6);
+    if (!onIsland(joint, islands) && !coastalJoint(joint, coastal))
+      add("mf.terrain.shore.rim", joint.x, joint.y + 67.5, 0.6);
     const firstEnd = {
       x: joint.x - Math.sign(joint.x - from.x) * 52.8,
       y: joint.y - Math.sign(joint.y - from.y) * 26.4,
@@ -98,7 +83,9 @@ export function projectRoutes(assets: WorldAssets, islands: Island[]) {
     };
     segment(from, firstEnd);
     segment(secondStart, to);
-    add("mf.route.road.junction", joint.x, joint.y, 1.1);
+    // This authored landing is a two-arm bend, not a four-way road projecting off the cliff.
+    if (coastalJoint(joint, coastal)) segment(firstEnd, joint, true);
+    else add("mf.route.road.junction", joint.x, joint.y, 1.1);
   });
   return container;
 }
