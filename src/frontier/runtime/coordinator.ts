@@ -221,6 +221,15 @@ export class RefreshCoordinator {
           const tasks = await this.gateway.summaries();
           this.metrics.summaryReads++;
           this.set({ tasks });
+          if (this.snapshot.selectedId && !tasks.some((task) => task.id === this.snapshot.selectedId)) {
+            this.selectedVersion = null;
+            this.set({
+              selected: null,
+              selectedLoading: false,
+              selectedError:
+                "This task is no longer available. Choose another decision or return to the world.",
+            });
+          }
           // Use versions from the fetched summaries, not an older marker response.
           this.versions = new Map(tasks.map((task) => [task.id, task.pollVersion ?? task.updatedAt]));
         }
@@ -235,7 +244,11 @@ export class RefreshCoordinator {
         });
         this.globalDue = now + 2_000;
       }
-      if (selectedId && (force || this.selectedVersion !== this.versions.get(selectedId))) {
+      if (
+        selectedId &&
+        this.versions.has(selectedId) &&
+        (force || this.selectedVersion !== this.versions.get(selectedId))
+      ) {
         try {
           const [core, runs, activity] = await Promise.all([
             this.gateway.core(selectedId),

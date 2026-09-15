@@ -52,6 +52,8 @@
 }
 .watch-strip {
   display: flex;
+  width: fit-content;
+  max-width: 100%;
   gap: 0;
   overflow-x: auto;
   scrollbar-gutter: stable;
@@ -64,7 +66,7 @@
   font-size: 12px;
 }
 .watch-pin {
-  flex: 1 0 200px;
+  flex: 0 0 220px;
   min-width: 0;
   padding: 10px 12px;
   border-right: 1px solid var(--line);

@@ -286,3 +286,23 @@ test("external fixture changes preserve frozen decisions and replace candidate i
   assert.deepEqual(after.activeRunIds, []);
   assert.equal(after.blocker, null);
 });
+
+test("a removed selected task loses actionable cached evidence but retains navigation identity", async () => {
+  const gateway = createFixtureGateway(undefined, true);
+  const runtime = new RefreshCoordinator(gateway);
+  runtime.start();
+  try {
+    await until(() => runtime.getSnapshot().connection === "connected");
+    runtime.select("MS-086");
+    await until(() => runtime.getSnapshot().selected?.core.id === "MS-086");
+    gateway.sampleExternalChange("MS-086", "remove");
+    runtime.retry();
+    await until(() => !runtime.getSnapshot().tasks.some((task) => task.id === "MS-086"));
+    assert.equal(runtime.getSnapshot().selectedId, "MS-086");
+    assert.equal(runtime.getSnapshot().selected, null);
+    assert.match(runtime.getSnapshot().selectedError, /no longer available/);
+    assert.equal(runtime.getSnapshot().connection, "connected");
+  } finally {
+    runtime.stop();
+  }
+});
