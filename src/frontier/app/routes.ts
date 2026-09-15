@@ -2,7 +2,7 @@ import type { StageId } from "../../domain";
 
 export type Overlay =
   | { kind: "tasks"; projectId?: string }
-  | { kind: "projects" | "new-task" | "settings" | "world-settings" | "agents" | "usage" }
+  | { kind: "projects" | "new-task" | "settings" | "world-settings" | "agents" | "usage" | "briefing" }
   | { kind: "skills"; role?: string }
   | { kind: "project-setup"; projectId?: string }
   | {
@@ -45,7 +45,8 @@ export function parseOverlay(hash: string): Overlay | null {
       kind === "settings" ||
       kind === "world-settings" ||
       kind === "agents" ||
-      kind === "usage"
+      kind === "usage" ||
+      kind === "briefing"
     )
       return { kind };
     if (kind === "skills") return { kind, role: id || undefined };

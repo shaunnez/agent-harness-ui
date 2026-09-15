@@ -1,0 +1,14 @@
+0 standard window Mission Frontier · Agent Harness – Part of group 🔎 Goal 5 zoom - Google Chrome, URL: 127.0.0.1:5205/?mode=fixture&art=cinematic#world, Secondary Actions: Raise
+	1 container Mission Frontier · Agent Harness – Part of group 🔎 Goal 5 zoom - Google Chrome, URL: 127.0.0.1:5205/?mode=fixture&art=cinematic#world
+					10 button Zoom: 200%
+					22 saved tab group button  🔎 Goal 5 zoom group – Opened
+						42 image Mission Frontier game world. Drag terrain to pan; scroll to zoom. Project and task selection is also available in the world labels.
+							64 button Zoom out
+							66 button Zoom in
+						182 text Drag to pan · Scroll to zoom · Space to follow
+						200 button Close
+					212 tab group  group 🔎 Goal 5 zoom – 1 Tab, •  Mission Frontier · Agent Harness – Expanded
+					213 tab (selected, settable, boolean) Description: Mission Frontier · Agent Harness – Part of group 🔎 Goal 5 zoom - Memory usage - 408 MB, Value: on
+		217 container Zoom: 100%
+					220 container Zoom: 200%
+	225 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window

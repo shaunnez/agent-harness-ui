@@ -1,0 +1,5 @@
+15 September 2026. Disposable deterministic API at 4325, two browser tabs on 5205.
+Pins AH-001 and AH-002 created in separate tabs; both visible in each tab and retained through application reload.
+First tab captured interval through 14:12:52. Second tab captured and acknowledged through 14:13:25 after deterministic investigation. First tab then acknowledged its older interval; next briefing began at 14:13:25, proving no checkpoint rewind.
+Two exact completed runs were then pinned. Fifth pin rejected with explicit four-pin message; old run labelled historical, worker parked while task awaiting Grill.
+Concurrent UI click attempt was inconclusive, so this is stale-tab and propagation evidence, not a simultaneous write race benchmark.

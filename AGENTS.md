@@ -33,7 +33,13 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 - On 9 September 2026 the user explicitly started Goal 4 (U0–U2) from BUILD-GOALS.md. Use the isolated `codex/mission-frontier-goal-4` implementation and its `build-evidence/USABILITY/goal-4/` acceptance record. Preserve the original dirty checkout and user services. Goals 5 and 6 require a separate start instruction; no asset agent is needed for Goal 4.
 
+- On 9 September 2026, after PR #73 merged, Shaun explicitly started Goal 5 (U3–U5 and UB1). Implement decision navigation, the return briefing and source-scoped watch pins in the isolated `codex/mission-frontier-goal-5` worktree from merged main. Preserve the accepted Goal 4 source and laptop acceptance, original dirty checkout and user services. Goal 6 still requires a separate start instruction. No asset agent is needed.
+
 ## Approved product-design direction
+
+- On 10 September 2026 the user requested bringing Goal 5 up to date with main and waived further performance benchmarking because the game runs well on their machine. Retain existing measurements as historical evidence, preserve bounded refresh behavior, and focus remaining qualification on functional correctness, approvals, drafts, reconnects and usable controls. Revisit performance only if an observed regression warrants it. This does not start Goal 6.
+
+- Later on 10 September the user requested stopping the Goal 5 server and writing a handoff. Goal 5 is paused; its frontend and isolated API ports 5205/4325 are stopped. Do not restart them for a handoff or journal update. Resume implementation/services only on a new explicit continuation request; read `design/mission-frontier/build-evidence/USABILITY/goal-5/HANDOFF.md` first.
 
 - Use the selected “Evidence Gate” direction as the shared visual system for every screen and workflow state: warm ink surfaces, compact full sidebar, horizontal stage navigator, structured evidence, restrained semantic colour, and an event ledger that stays out of the way until opened.
 - Keep generated design directions task-specific. When a task asks to restyle or theme the existing app, preserve the current product shell, information architecture, component anatomy, density, content hierarchy, and interactions; do not turn it into a new product concept or inject unrelated companion workflows.
@@ -111,3 +117,5 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Treat the attributable ChatGPT-plan dollar charge as unavailable. Show real token counts and cache rate; when a model has a verified rate card, show a clearly labeled API-rate estimate after cached-input discounts rather than presenting it as the user's actual billed charge.
 - The hosted Sites build is a UI artifact only. Local Codex execution and repository access require the Node companion.
 - Keep real and preview states truthful: the local runtime schedules approved 1–N implementation packages by dependency batch with bounded concurrency, qualifies each isolated slice before integration, and assembles their persisted commits in stable order into the exact candidate used by downstream gates and GitHub PR publication. Hosted preview fixtures remain read-only demonstrations and must not imply that a fixture action mutated the local runtime.
+
+- On 15 September 2026 the user clarified that extreme browser zoom is not a design target. Do not add or retain new changes solely for 200% or similarly extreme zoom. Prioritize normal laptop and desktop usability; retain previously accepted responsive behavior. Goal 5 resumes under this scope, and further performance benchmarking remains waived.

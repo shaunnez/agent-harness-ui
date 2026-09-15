@@ -5,6 +5,10 @@ const readOptions = () => ({ signal: AbortSignal.timeout(12_000) });
 
 export const liveGateway: FrontierGateway = {
   mode: "live",
+  workspaceHead: () => api.getWorkspaceHead(readOptions()),
+  workspaceHistory: (input) => api.getWorkspaceHistory(input, readOptions()),
+  watchedRun: (id, runId, sourceId) => api.getWatchedRun(id, runId, sourceId, readOptions()),
+  exactRun: (id, runId, sourceId) => api.getExactRun(id, runId, sourceId, readOptions()),
   status: () => api.getRuntimeStatus(readOptions()),
   saveSettings: api.updateRuntimeSettings,
   worktrees: async (id) => (await api.getRuntimeWorktreeInventory(id)).rows,

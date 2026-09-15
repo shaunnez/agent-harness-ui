@@ -1,6 +1,6 @@
 # Mission Frontier — prompts and goals
 
-Revision 6 · 9 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. The later living-world pass is recorded in [PR-HANDOFF.md](PR-HANDOFF.md). **Goal 4 U0–U2 is complete, including the native 200% zoom walkthrough and its fixes. Goals 5 and 6 have not started.** See the [Goal 4 handoff](build-evidence/USABILITY/goal-4/HANDOFF.md). [USABILITY-PLAN.md](USABILITY-PLAN.md) defines their scope, dependencies and acceptance checks; the earlier plans remain the history for completed work.
+Revision 8 · 15 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. The later living-world pass is recorded in [PR-HANDOFF.md](PR-HANDOFF.md). **Goal 4 U0–U2 is complete and PR #73 is merged. Goal 5 functional acceptance is complete; delivery and journal receipts are in its current handoff. Goal 6 has not started.** See the [Goal 5 handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) and retained [Goal 4 handoff](build-evidence/USABILITY/goal-4/HANDOFF.md). [USABILITY-PLAN.md](USABILITY-PLAN.md) defines scope, dependencies and acceptance checks; the earlier plans remain the history for completed work.
 
 ## How to use
 
@@ -155,7 +155,7 @@ active. Leave the working preview ready for my review.
 
 ## Goal 4 — laptop windows and an activity-first agent view
 
-**Started 9 September 2026; implementation built and reviewed in the browser. Native 200% zoom remains pending.** See [acceptance and limits](build-evidence/USABILITY/goal-4/acceptance.md). Complete U0–U2 only; Goals 5/6 remain separate. No new art or asset agent is required.
+**Completed 9 September 2026, including native 200% zoom; PR #73 is merged.** See [acceptance and limits](build-evidence/USABILITY/goal-4/acceptance.md). This retained prompt covers U0–U2 only; Goals 5/6 remain separate. No new art or asset agent is required.
 
 ```text
 Run Goal 4 from design/mission-frontier/BUILD-GOALS.md. Read
@@ -195,7 +195,9 @@ scope do not require further approval; report material blockers with evidence.
 
 ## Goal 5 — decision navigation, return briefing and watch pins
 
-**Planned, not started.** Start after the Goal 4 handoff. Complete U3–U5 and UB1.
+**Resumed and qualified on 15 September 2026.** Current source integrates published main `424f8f1`. The [acceptance record](build-evidence/USABILITY/goal-5/acceptance.md) and [handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) distinguish current checks, historical evidence and delivery status. Performance benchmarks and extreme-zoom design changes are waived by the user's explicit steering; normal laptop and desktop usability remain required.
+
+The following prompt is retained as the goal's scope.
 
 ```text
 Run Goal 5 from design/mission-frontier/BUILD-GOALS.md. Read USABILITY-PLAN.md,
@@ -218,8 +220,10 @@ migration/export path. This does not authorize a replacement event ledger.
 
 Use deterministic isolated fixtures to verify changing queues, stale approvals,
 duplicates, late events, reconnect, source replacement, retention gaps, multiple
-tabs and large workspaces. Measure request counts and payloads with zero and four
-pins. Keep the laptop space and accessibility checks from Goal 4 passing.
+tabs and large workspaces. Shaun waived further performance benchmarking on
+10 September 2026; retain the existing request/payload measurements as historical
+evidence rather than a new acceptance gate. Keep bounded refresh behavior and the
+laptop space and accessibility checks from Goal 4 passing.
 
 Continue through the plan's build/check/browser/fix loop until U3–U5 and UB1 pass.
 Keep goal-5 evidence and the shared progress file current; run relevant API/store

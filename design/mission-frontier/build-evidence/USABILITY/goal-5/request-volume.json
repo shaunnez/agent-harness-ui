@@ -1,0 +1,161 @@
+{
+  "capturedAt": "2026-09-09T02:16:05.997Z",
+  "platform": "darwin arm64",
+  "cpu": "Apple M5",
+  "node": "v24.19.0",
+  "method": "Same-machine shared coordinator, real-time 10.2-second fixture windows. Counts are gateway reads; bytes are uncompressed serialized responses, excluding HTTP framing. Fixtures make zero network or provider calls. Browser viewport and frame checks are recorded separately.",
+  "results": [
+    {
+      "size": "normal",
+      "projects": 10,
+      "tasks": 100,
+      "pinCount": 0,
+      "windowMs": 10200,
+      "reads": {
+        "status": {
+          "requests": 1,
+          "jsonBytes": 3853
+        },
+        "workspaceHead": {
+          "requests": 6,
+          "jsonBytes": 1170
+        },
+        "projects": {
+          "requests": 6,
+          "jsonBytes": 7158
+        },
+        "markers": {
+          "requests": 6,
+          "jsonBytes": 26526
+        },
+        "summaries": {
+          "requests": 1,
+          "jsonBytes": 380996
+        }
+      },
+      "maxConcurrentRuns": 0,
+      "refresh": {
+        "cycles": 11,
+        "summaryReads": 1,
+        "selectedReads": 0,
+        "failures": 0
+      }
+    },
+    {
+      "size": "normal",
+      "projects": 10,
+      "tasks": 100,
+      "pinCount": 4,
+      "windowMs": 10200,
+      "reads": {
+        "status": {
+          "requests": 1,
+          "jsonBytes": 3853
+        },
+        "workspaceHead": {
+          "requests": 6,
+          "jsonBytes": 1170
+        },
+        "projects": {
+          "requests": 6,
+          "jsonBytes": 7158
+        },
+        "markers": {
+          "requests": 6,
+          "jsonBytes": 26526
+        },
+        "summaries": {
+          "requests": 1,
+          "jsonBytes": 380996
+        },
+        "watchedRun": {
+          "requests": 4,
+          "jsonBytes": 1324
+        }
+      },
+      "maxConcurrentRuns": 2,
+      "refresh": {
+        "cycles": 12,
+        "summaryReads": 1,
+        "selectedReads": 0,
+        "failures": 0
+      }
+    },
+    {
+      "size": "stress",
+      "projects": 50,
+      "tasks": 1000,
+      "pinCount": 0,
+      "windowMs": 10200,
+      "reads": {
+        "status": {
+          "requests": 1,
+          "jsonBytes": 3853
+        },
+        "workspaceHead": {
+          "requests": 6,
+          "jsonBytes": 1170
+        },
+        "projects": {
+          "requests": 6,
+          "jsonBytes": 36198
+        },
+        "markers": {
+          "requests": 6,
+          "jsonBytes": 272226
+        },
+        "summaries": {
+          "requests": 1,
+          "jsonBytes": 3708696
+        }
+      },
+      "maxConcurrentRuns": 0,
+      "refresh": {
+        "cycles": 11,
+        "summaryReads": 1,
+        "selectedReads": 0,
+        "failures": 0
+      }
+    },
+    {
+      "size": "stress",
+      "projects": 50,
+      "tasks": 1000,
+      "pinCount": 4,
+      "windowMs": 10200,
+      "reads": {
+        "status": {
+          "requests": 1,
+          "jsonBytes": 3853
+        },
+        "workspaceHead": {
+          "requests": 6,
+          "jsonBytes": 1170
+        },
+        "projects": {
+          "requests": 6,
+          "jsonBytes": 36198
+        },
+        "markers": {
+          "requests": 6,
+          "jsonBytes": 272226
+        },
+        "summaries": {
+          "requests": 1,
+          "jsonBytes": 3708696
+        },
+        "watchedRun": {
+          "requests": 4,
+          "jsonBytes": 1324
+        }
+      },
+      "maxConcurrentRuns": 2,
+      "refresh": {
+        "cycles": 12,
+        "summaryReads": 1,
+        "selectedReads": 0,
+        "failures": 0
+      }
+    }
+  ]
+}

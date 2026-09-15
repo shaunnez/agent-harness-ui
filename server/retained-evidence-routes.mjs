@@ -12,6 +12,54 @@ import {
 
 export function createRetainedEvidenceRoutes({ store, send, withActionEligibility }) {
   return async function handleRetainedEvidenceRoute(request, response, url) {
+    if (request.method === "GET" && url.pathname === "/api/workspace/history") {
+      if (typeof store.workspaceHead !== "function" || typeof store.workspaceHistory !== "function") {
+        send(response, 200, {
+          available: false,
+          sourceId: null,
+          upper: 0,
+          floor: 0,
+          coverageStartAt: null,
+          capturedAt: new Date().toISOString(),
+          reason: "Workspace catch-up and remembered pins are unavailable for this legacy store.",
+        });
+      } else
+        send(
+          response,
+          200,
+          url.searchParams.get("view") === "head"
+            ? await store.workspaceHead()
+            : await store.workspaceHistory(url.searchParams),
+        );
+      return true;
+    }
+    const watchedRunMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/runs\/([^/]+)$/);
+    if (request.method === "GET" && watchedRunMatch) {
+      if (typeof store.watchedRun !== "function") {
+        send(response, 501, { error: "Exact run summaries are unavailable for this legacy store." });
+      } else {
+        const source = url.searchParams.get("sourceId");
+        if (source && source !== (await store.workspaceHead()).sourceId) {
+          send(response, 409, { error: "Workspace source changed. Refresh before watching this run." });
+        } else if (url.searchParams.get("view") === "full") {
+          send(response, 200, {
+            run: await store.getRun(
+              decodeURIComponent(watchedRunMatch[1]),
+              decodeURIComponent(watchedRunMatch[2]),
+            ),
+          });
+        } else
+          send(
+            response,
+            200,
+            await store.watchedRun(
+              decodeURIComponent(watchedRunMatch[1]),
+              decodeURIComponent(watchedRunMatch[2]),
+            ),
+          );
+      }
+      return true;
+    }
     if (request.method === "GET" && url.pathname === "/api/tasks") {
       if (url.searchParams.get("view") === "poll") {
         const tasks =

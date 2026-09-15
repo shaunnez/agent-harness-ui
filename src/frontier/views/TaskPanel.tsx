@@ -11,6 +11,7 @@ import { StageEvidence } from "./StageEvidence";
 import { WorkflowCommand } from "./WorkflowCommand";
 import { WorkPackages } from "./WorkPackages";
 import { ScrollArea } from "../ui/ScrollArea";
+import { PinButton } from "./WatchPins";
 
 export function TaskPanel({
   evidence,
@@ -101,6 +102,7 @@ export function TaskPanel({
             <button type="button" onClick={onManage}>
               Manage task
             </button>
+            <PinButton taskId={task.id} />
           </div>
           <WorkflowCommand
             key={task.id}

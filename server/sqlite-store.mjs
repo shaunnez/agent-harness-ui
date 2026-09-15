@@ -1,9 +1,18 @@
 import { createHash } from "node:crypto";
-import { access, readFile, rename, writeFile } from "node:fs/promises";
+import { access, readFile, rename, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { cleanupOrphanAttachmentSets } from "./attachment-storage.mjs";
 import { defaultRuntimeSettings } from "./model-catalog.mjs";
+import {
+  initializeWorkspaceHistory,
+  observeWorkspaceCore,
+  observeWorkspaceRecords,
+  pageWorkspaceHistory,
+  pruneWorkspaceHistory,
+  readWatchedRun,
+  workspaceHistoryHead,
+} from "./workspace-history.mjs";
 import { changeProject } from "./project-policy.mjs";
 import { retainRunActivityEvents, TASK_STORE_SCHEMA_VERSION } from "./run-activity.mjs";
 import {
@@ -33,6 +42,7 @@ export class SqliteTaskStore {
   #legacyJsonPath;
   #db = null;
   #queue = Promise.resolve();
+  #sourceId = null;
 
   constructor(filePath, { legacyJsonPath = null } = {}) {
     this.#filePath = filePath;
@@ -60,6 +70,12 @@ export class SqliteTaskStore {
         await this.#assertLegacySourceUnchanged();
       } else this.#initializeEmptyState();
     } else await this.#assertLegacySourceUnchanged();
+    const source = this.#transaction(() => initializeWorkspaceHistory(this.#db));
+    const file = await stat(this.#filePath);
+    // Logical identity survives restart; replacing/copying the physical store starts a new namespace.
+    this.#sourceId = createHash("sha256")
+      .update(`${source}:${file.dev}:${file.ino}:${file.birthtimeMs}`)
+      .digest("hex");
     await this.recoverInterrupted();
     await cleanupOrphanAttachmentSets(this.dataDirectory(), this.#readAttachmentOwners());
     this.#db.exec("PRAGMA optimize");
@@ -72,6 +88,25 @@ export class SqliteTaskStore {
 
   async list() {
     return clone(this.#readAllTasks());
+  }
+
+  async workspaceHead() {
+    return workspaceHistoryHead(this.#db, this.#sourceId);
+  }
+
+  async workspaceHistory(params) {
+    return pageWorkspaceHistory(this.#db, this.#sourceId, params);
+  }
+
+  async watchedRun(taskId, runId) {
+    return readWatchedRun(this.#db, taskId, runId);
+  }
+
+  async getRun(taskId, runId) {
+    const row = this.#db
+      .prepare("SELECT payload_json FROM runs WHERE task_id = ? AND id = ?")
+      .get(taskId, runId);
+    return row ? JSON.parse(row.payload_json) : null;
   }
 
   async listPullRequestTasks() {
@@ -488,6 +523,7 @@ export class SqliteTaskStore {
     this.#db.exec("BEGIN IMMEDIATE");
     try {
       const result = operation();
+      pruneWorkspaceHistory(this.#db);
       this.#db.exec("COMMIT");
       return result;
     } catch (error) {
@@ -627,6 +663,7 @@ export class SqliteTaskStore {
       VALUES (?, ?, ?, ?, ?, 1, ?)
     `)
       .run(task.id, task.createdAt, task.updatedAt, task.status, task.currentStage, JSON.stringify(core));
+    observeWorkspaceCore(this.#db, null, task);
     this.#syncCollections(task);
   }
 
@@ -636,6 +673,9 @@ export class SqliteTaskStore {
   }
 
   #updateTaskCore(task, expectedRevision) {
+    const previous = JSON.parse(
+      this.#db.prepare("SELECT core_json FROM tasks WHERE id = ?").get(task.id).core_json,
+    );
     const result = this.#db
       .prepare(`
       UPDATE tasks
@@ -657,9 +697,11 @@ export class SqliteTaskStore {
       error.statusCode = 409;
       throw error;
     }
+    observeWorkspaceCore(this.#db, previous, task);
   }
 
   #syncCollections(task) {
+    observeWorkspaceRecords(this.#db, task);
     syncTaskCollection(this.#db, "artifacts", task.id, task.artifacts ?? [], (artifact, ordinal) => ({
       id: artifact.id,
       ordinal,

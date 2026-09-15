@@ -1,6 +1,7 @@
 import { ArrowRight, Play, ShieldCheck } from "@phosphor-icons/react";
 import type { KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import { usePanelState } from "../app/panel-state";
 import type { RuntimeAvailableAction } from "../../domain";
 import type { CandidateScope, FrontierGateway, TaskCore } from "../runtime/contracts";
 import { attentionFor, splitRecordedDetail, stageLabels } from "../runtime/presentation";
@@ -42,10 +43,10 @@ export function WorkflowCommand({
   onGrill(): void;
   onContinue(id: string): void;
 }) {
-  const [review, setReview] = useState<Review | null>(null);
   const [menu, setMenu] = useState<Review | null>(null);
-  const [note, setNote] = useState("");
-  const [feedback, setFeedback] = useState(false);
+  const [review, setReview] = usePanelState<Review | null>(`command-review:${task.id}`, null);
+  const [note, setNote] = usePanelState(`command-note:${task.id}`, "");
+  const [feedback, setFeedback] = usePanelState(`command-feedback:${task.id}`, false);
   const [recorded, setRecorded] = useState(false);
   const noteRef = useRef<HTMLTextAreaElement>(null);
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);

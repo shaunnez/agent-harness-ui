@@ -1,0 +1,15 @@
+✔ sample full workflow keeps creation, approvals, assembly, gates and PR merge separate (14.697625ms)
+✔ sample closed and identity-drifted PRs retain the candidate and remain incomplete (4.548709ms)
+✔ provider retry retains its original policy and successful sibling (6.90175ms)
+✔ sample test retry retains failed evidence and the exact unchanged candidate (15.17725ms)
+✔ repair retains prior findings and exact historical diffs (1.816459ms)
+✔ candidate display fails closed on mismatched binding; future stages stay inert (142.0655ms)
+✔ late artifact paging cannot enter another selected task (13.2005ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 557.6115

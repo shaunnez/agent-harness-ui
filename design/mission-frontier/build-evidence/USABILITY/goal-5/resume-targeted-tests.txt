@@ -1,0 +1,18 @@
+✔ Development Review keeps a materially higher command ceiling than Test and Final Review (1.846917ms)
+✔ the reviewer instruction names the exact per-stage ceiling and is empty outside the candidate gates (0.400333ms)
+✔ source-scoped memory merges sequential writes, monotonic acknowledgement and the four-pin cap (2.183084ms)
+✔ malformed local preferences cannot create bogus checkpoints or unbounded pins (0.194709ms)
+✔ decision order is stable through new arrivals, resolution and deletion (66.432417ms)
+✔ briefing deduplicates observations and run totals, preserving late, zero and missing usage (0.773542ms)
+✔ four run pins share bounded concurrency and cache unchanged versions; task pins fetch no details (92.630208ms)
+✔ history captures a stable upper boundary and old-source requests cannot enter a replacement workspace (11.805583ms)
+✔ an exact pinned run opens without paging and disappears when no longer retained (14.855917ms)
+✔ external fixture changes preserve frozen decisions and replace candidate identity (8.799833ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 603.3655

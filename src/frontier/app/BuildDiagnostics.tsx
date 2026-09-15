@@ -12,6 +12,7 @@ export function BuildDiagnostics({
   runtime: RefreshCoordinator;
   selectionTiming: React.RefObject<{ samples: number[] }>;
 }) {
+  const [qaTaskId, setQaTaskId] = useState("");
   const [sample, setSample] = useState<unknown>(null);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
   if (new URLSearchParams(window.location.search).get("qa") !== "1") return null;
@@ -26,6 +27,102 @@ export function BuildDiagnostics({
       <a href={previewLink("")}>Return to twelve-task sample</a>
       <a href={previewLink("&scenario=workflow")}>Full workflow scenarios</a>
       <a href={previewLink("&scenario=stations", "project/station-qa")}>All eleven station compositions</a>
+      {runtime.gateway.mode === "fixture" && (
+        <label>
+          Sample task for QA
+          <select value={qaTaskId} onChange={(event) => setQaTaskId(event.target.value)}>
+            <option value="">Use selected world task</option>
+            {runtime.getSnapshot().tasks.map((task) => (
+              <option key={task.id} value={task.id}>
+                {task.id} · {task.title}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {runtime.gateway.mode === "fixture" && "sampleExternalChange" in runtime.gateway && (
+        <div>
+          <p>Another-client simulation: select a sample task, schedule a change, then open its decision.</p>
+          {(["resolve", "remove", "candidate"] as const).map((kind) => (
+            <button
+              type="button"
+              key={kind}
+              onClick={() => {
+                const id = qaTaskId || runtime.getSnapshot().selectedId;
+                const gateway = runtime.gateway;
+                if (
+                  !id ||
+                  !("sampleExternalChange" in gateway) ||
+                  typeof gateway.sampleExternalChange !== "function"
+                )
+                  return;
+                const change = gateway.sampleExternalChange;
+                const source = runtime.getSnapshot().workspace?.sourceId;
+                setDeliveryError(`Sample ${kind} for ${id} scheduled in 30 seconds.`);
+                setTimeout(() => {
+                  if (runtime.gateway !== gateway || runtime.getSnapshot().workspace?.sourceId !== source)
+                    return;
+                  try {
+                    change(id, kind);
+                    runtime.retry();
+                    setDeliveryError(`Sample ${kind} applied to ${id}. No live task changed.`);
+                  } catch (error) {
+                    setDeliveryError(error instanceof Error ? error.message : "Sample change failed.");
+                  }
+                }, 30_000);
+              }}
+            >
+              Schedule sample {kind}
+            </button>
+          ))}
+        </div>
+      )}
+      {runtime.gateway.mode === "fixture" && "sampleHistoryChange" in runtime.gateway && (
+        <div>
+          <p>Catch-up QA · changes apply only to the selected sample task.</p>
+          {(["completed", "repair-required", "blocked"] as const).map((status) => (
+            <button
+              type="button"
+              key={status}
+              onClick={() => {
+                const id = qaTaskId || runtime.getSnapshot().selectedId;
+                if (
+                  id &&
+                  "sampleHistoryChange" in runtime.gateway &&
+                  typeof runtime.gateway.sampleHistoryChange === "function"
+                ) {
+                  runtime.gateway.sampleHistoryChange(id, status);
+                  runtime.retry();
+                }
+              }}
+            >
+              Sample history {status}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              if ("pruneHistory" in runtime.gateway && typeof runtime.gateway.pruneHistory === "function") {
+                runtime.gateway.pruneHistory();
+                runtime.retry();
+              }
+            }}
+          >
+            Prune sample history
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if ("resetSource" in runtime.gateway && typeof runtime.gateway.resetSource === "function") {
+                runtime.gateway.resetSource();
+                runtime.retry();
+              }
+            }}
+          >
+            Replace sample source
+          </button>
+        </div>
+      )}
       {runtime.gateway.mode === "fixture" &&
         "appendActivity" in runtime.gateway &&
         "setUsageState" in runtime.gateway && (
@@ -36,7 +133,7 @@ export function BuildDiagnostics({
                 type="button"
                 key={count}
                 onClick={() => {
-                  const id = runtime.getSnapshot().selectedId;
+                  const id = qaTaskId || runtime.getSnapshot().selectedId;
                   if (
                     !id ||
                     !("appendActivity" in runtime.gateway) ||
@@ -60,7 +157,7 @@ export function BuildDiagnostics({
                 type="button"
                 key={state}
                 onClick={() => {
-                  const id = runtime.getSnapshot().selectedId;
+                  const id = qaTaskId || runtime.getSnapshot().selectedId;
                   if (
                     !id ||
                     !("setUsageState" in runtime.gateway) ||
@@ -89,7 +186,7 @@ export function BuildDiagnostics({
               type="button"
               key={outcome}
               onClick={() => {
-                const id = runtime.getSnapshot().selectedId;
+                const id = qaTaskId || runtime.getSnapshot().selectedId;
                 if (!id) {
                   setDeliveryError("Select a sample task first.");
                   return;

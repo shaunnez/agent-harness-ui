@@ -143,6 +143,21 @@ test("candidate display fails closed on mismatched binding; future stages stay i
     assert.equal(proposedAction(failedTest).action, "retry-test");
     failedTest.actionEligibility.actions.test = { allowed: true, mode: "execute" };
     assert.equal(proposedAction(failedTest).action, "test");
+    for (const action of ["repair", "review", "test", "final-review"])
+      await gateway.action("PC-148", action, "Sample acceptance", scope(await gateway.core("PC-148")));
+    const approval = await gateway.core("PC-148");
+    assert.equal(
+      proposedAction(approval).action,
+      "open-pr",
+      "sample candidate authority supports the real approval UI",
+    );
+    assert.equal(executable(approval, "open-pr"), true);
+    approval.repositoryAuthority.selectedRevision = sampleHead(99);
+    assert.equal(
+      proposedAction(approval).action,
+      "reconcile-authority",
+      "authority drift still requires reconciliation",
+    );
   } finally {
     await vite.close();
   }

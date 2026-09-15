@@ -1,0 +1,7 @@
+Goal 3 aggregate of independently successful test commands. Source log hashes are in qualification.json.
+frontier-tests.log: 45 passed, 0 failed, 0 skipped
+frontier-api-tests.log: 8 passed, 0 failed, 0 skipped
+sites-tests.log: 4 passed, 0 failed, 0 skipped
+ℹ pass 57
+ℹ fail 0
+ℹ skipped 0

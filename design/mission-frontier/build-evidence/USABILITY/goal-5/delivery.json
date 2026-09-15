@@ -1,0 +1,58 @@
+{
+  "date": "2026-09-15",
+  "pr": {
+    "number": 86,
+    "url": "https://github.com/shaunnez/agent-harness-ui/pull/86",
+    "state": "OPEN",
+    "mergeable": "MERGEABLE",
+    "headAtFirstPublication": "a795df4ee9518d8a25b86a646bbb36d563e01099",
+    "ciChecksReported": [],
+    "note": "Subsequent documentation-only receipt commit does not change verified application source."
+  },
+  "verifiedApplicationHead": "92f69a8b396c473bb2dc2714f1274053f0953a84",
+  "journal": {
+    "siteId": "appgprj_6a9d2e96e0248191a66ccefcaad237d3",
+    "url": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site",
+    "article": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/a-world-you-can-work-from/",
+    "versionId": "appgprj_6a9d2e96e0248191a66ccefcaad237d3~appgver_e67c873e90f4819198e0690e844286a2",
+    "versionNumber": 11,
+    "deploymentId": "appgdep_6aa8b2eb56a881919a29b0ef2b33f79b",
+    "commit": "7a4dd06e62815f86efb59126d8a429654c9febf4",
+    "publishedAt": "2026-09-15T02:52:39.101681+00:00",
+    "access": "custom-owner-only",
+    "accessRevision": 5,
+    "externalViewerCount": 0,
+    "accessPolicyUnchanged": true,
+    "gamePr": "https://github.com/shaunnez/agent-harness-ui/pull/86",
+    "gamePrHead": "a795df4ee9518d8a25b86a646bbb36d563e01099",
+    "sourceFingerprint": "542965490d21e9c971cfb39388c03037b2738ce402473b7462d2cdf08137d6bb",
+    "archiveSha256": "sha256:c2e7775c40d1e677f6619c9e83a8d01dc2df71a0ec4aefc22aed3428eba5ecb4",
+    "localArchiveSha256": "1e0d2a72c9715dd731bfd15f1d234832ac29c85f976322d9fa4ded599b1b7c08",
+    "packaging": "Validated static build and .openai/hosting.json packaged with local tarfile fallback; standard Sites helper was unavailable.",
+    "checks": {
+      "contentTests": 5,
+      "typecheck": "passed",
+      "lint": "passed",
+      "build": "passed",
+      "previousArticlesPreserved": 11,
+      "sourceSnapshotCurrent": true,
+      "deployment": "succeeded",
+      "authenticatedProductionArticleHTTP": 200,
+      "productionTitleCountAndPrVerified": true,
+      "localPackagedPageVisuallyInspected": true
+    },
+    "limits": [
+      "Game PR is open; no CI checks reported at inspection. Game is not published.",
+      "Goal 5 qualification uses 307 focused tests plus four packaging tests, not a full suite or real candidate delivery.",
+      "Extreme zoom and further performance benchmarks are not acceptance gates.",
+      "Original-design fidelity and Goal 6 remain separate work."
+    ]
+  },
+  "preview": {
+    "frontend": "http://127.0.0.1:5205/?mode=fixture&scenario=workflow&art=cinematic#world",
+    "api": "http://127.0.0.1:4325",
+    "provider": "deterministic-api-fixture",
+    "restartedAfterFinalMainIntegration": true,
+    "temporaryJournalServerStopped": true
+  }
+}

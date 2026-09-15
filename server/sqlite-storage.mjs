@@ -1,6 +1,7 @@
 import { decodePageCursor, encodePageCursor, normalizePageLimit } from "./task-projections.mjs";
+import { createWorkspaceHistorySchema } from "./workspace-history.mjs";
 
-export const DATABASE_SCHEMA_VERSION = 2;
+export const DATABASE_SCHEMA_VERSION = 3;
 
 export function migrateSqliteSchema(db) {
   db.exec(`
@@ -61,6 +62,7 @@ export function migrateSqliteSchema(db) {
     CREATE INDEX IF NOT EXISTS events_page_idx ON events(task_id, occurred_at DESC, id DESC);
     CREATE INDEX IF NOT EXISTS runs_page_idx ON runs(task_id, started_at DESC, id DESC);
   `);
+  createWorkspaceHistorySchema(db);
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (?, ?)").run(
     DATABASE_SCHEMA_VERSION,
     new Date().toISOString(),

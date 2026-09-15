@@ -1,0 +1,44 @@
+{
+  "capturedAt": "2026-09-10T04:04:22.931411+00:00",
+  "status": "paused-servers-stopped",
+  "worktree": "/Users/shaun/.codex/worktrees/7237/mission-frontier-goal-5",
+  "branch": "codex/mission-frontier-goal-5",
+  "baseCommit": "dcd474eace2e43ac1f25b248e1aa57af708a0c85",
+  "localMainAtHandoff": "04517df238ea04dacb07dc5f11d20d3b51ff19fb",
+  "remoteMainReadAtHandoff": "0bf77b0f598b06e6fc7a2f3d36ab4f2ce706620f",
+  "newMainCommitPending": "04517df238ea04dacb07dc5f11d20d3b51ff19fb",
+  "sourceManifest": "main-sync-source-manifest.json",
+  "verifiedImplementationHashes": 36,
+  "verifiedEvidenceHashes": 4,
+  "checksRerunDuringHandoff": false,
+  "latestRetainedTests": {
+    "total": 262,
+    "passed": 261,
+    "failed": 1,
+    "skipped": 0,
+    "failureReproducedOnMain": true
+  },
+  "latestRetainedQuality": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "format": "three-unchanged-main-files-fail",
+    "frontierBuild": "passed",
+    "rootBuild": "passed",
+    "sitesTestsPassed": 4
+  },
+  "services": {
+    "frontend5205": "stopped",
+    "fixtureApi4325": "no-listener",
+    "restartRequiresExplicitResume": true
+  },
+  "performanceBenchmarks": "waived-by-user",
+  "browserAcceptance": "remaining-functional-walkthrough",
+  "journal": "last-lookup-project-not-found; no update or publication",
+  "goal6": "not-started",
+  "delivery": {
+    "implementationCommitted": false,
+    "pushed": false,
+    "prCreated": false
+  },
+  "localDocumentLinks": "passed"
+}

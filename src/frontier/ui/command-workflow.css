@@ -1,0 +1,347 @@
+.command-dock {
+  position: absolute;
+  top: 111px;
+  left: 14px;
+  right: 330px;
+  max-width: 1000px;
+  z-index: 4;
+  pointer-events: none;
+}
+.command-dock > * {
+  pointer-events: auto;
+}
+.view-world .world-time,
+.view-project .world-time {
+  top: 111px;
+  left: 410px;
+  min-width: 0;
+  height: 36px;
+  padding: 5px 10px;
+  z-index: 5;
+}
+.view-world .world-time small,
+.view-project .world-time small {
+  display: none;
+}
+.build-diagnostics {
+  top: auto;
+  bottom: 32px;
+  left: 12px;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+}
+.command-dock-controls {
+  display: flex;
+  gap: 8px;
+  width: max-content;
+  max-width: 100%;
+}
+.command-dock-controls button {
+  min-height: 36px;
+  padding: 7px 12px;
+  font-size: 14px;
+}
+.briefing-entry.has-updates {
+  border-color: #bd9d61;
+}
+.update-dot {
+  width: 8px;
+  height: 8px;
+  background: #f2c573;
+  border-radius: 50%;
+}
+.watch-strip {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+  margin-top: 8px;
+  max-height: 124px;
+}
+.watch-strip > .quiet {
+  margin: 0;
+  padding: 12px;
+  font-size: 12px;
+}
+.watch-pin {
+  flex: 0 0 220px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-right: 1px solid var(--line);
+}
+.watch-pin:last-child {
+  border-right: 0;
+}
+.watch-pin strong,
+.watch-pin span,
+.watch-pin small {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 235px;
+}
+.watch-pin strong,
+.watch-pin span {
+  font-size: 14px;
+  line-height: 1.4;
+}
+.watch-pin small {
+  font-size: 12px;
+}
+.watch-pin-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 5px;
+}
+.watch-pin-actions button {
+  padding: 3px 8px;
+  min-height: 27px;
+  font-size: 12px;
+}
+.pin-error,
+.pin-inline-error {
+  color: #ffce8b;
+  font-size: 12px;
+  padding: 6px;
+}
+.pin-inline-error {
+  max-width: 260px;
+}
+.attention-row > span {
+  min-width: 0;
+}
+.attention-row svg {
+  flex-shrink: 0;
+}
+.attention-row small {
+  white-space: normal;
+}
+.queue-reason {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 205px;
+}
+.decision-navigation {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--line);
+  background: #142833;
+}
+.decision-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 14px;
+}
+.decision-context strong {
+  flex-basis: 100%;
+}
+.decision-context span {
+  flex: 1;
+  min-width: 0;
+}
+.decision-context small {
+  font-size: 12px;
+}
+.decision-navigation nav {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.decision-navigation button {
+  font-size: 14px;
+  min-height: 32px;
+  padding: 5px 9px;
+}
+.decision-navigation button:last-child {
+  margin-left: auto;
+}
+.return-briefing {
+  display: block;
+  overflow-y: auto;
+}
+.briefing-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.briefing-heading h2 {
+  font-size: 22px;
+}
+.briefing-heading p,
+.briefing-coverage {
+  font-size: 14px;
+  color: #c2d0d5;
+}
+.briefing-coverage {
+  padding: 10px 12px;
+  border-left: 3px solid #729eb5;
+  background: #172d39;
+}
+.briefing-usage {
+  margin: 20px 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.briefing-usage dl {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.briefing-usage dt {
+  font-size: 12px;
+}
+.briefing-usage dd {
+  font-size: 20px;
+  margin: 5px 0;
+}
+.briefing-usage p {
+  font-size: 12px;
+  color: #b1c3cd;
+  margin: 0;
+}
+.catchup-project {
+  margin: 24px 0;
+}
+.catchup-project > h3 {
+  color: #91c5e8;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+  font-size: 18px;
+}
+.briefing-task h4 {
+  font-size: 16px;
+  margin: 16px 0 8px;
+}
+.briefing-task ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.briefing-task li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #283f4d;
+}
+.briefing-task li > div {
+  flex: 1;
+  min-width: 0;
+}
+.briefing-task li strong {
+  font-size: 14px;
+}
+.briefing-task li small {
+  display: block;
+  font-size: 12px;
+  margin: 4px 0;
+  overflow-wrap: anywhere;
+}
+.briefing-task li p {
+  font-size: 14px;
+  margin: 6px 0;
+}
+.briefing-task li button {
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 6px 10px;
+}
+.briefing-decisions {
+  margin-top: 24px;
+}
+.briefing-decisions > p {
+  font-size: 14px;
+}
+.briefing-gap {
+  display: flex;
+  gap: 12px;
+  margin: 18px 0;
+  color: #f2c573;
+}
+.briefing-gap input {
+  width: auto;
+}
+@media (max-width: 1100px) {
+  .command-dock {
+    right: 290px;
+  }
+  .watch-pin {
+    flex-basis: 185px;
+  }
+}
+@media (max-width: 760px) {
+  .command-dock {
+    top: 108px;
+    left: 8px;
+    right: 8px;
+  }
+  .command-dock-controls button {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+  .view-world .world-time,
+  .view-project .world-time {
+    top: 108px;
+    left: 350px;
+  }
+  .watch-strip {
+    max-height: 120px;
+  }
+  .decision-navigation {
+    padding: 8px 12px;
+  }
+  .decision-context span {
+    display: none;
+  }
+  .decision-navigation nav {
+    gap: 6px;
+  }
+  .decision-navigation button {
+    font-size: 12px;
+  }
+  .briefing-task li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (max-width: 520px) {
+  .command-dock-controls {
+    max-width: calc(100% - 112px);
+    flex-wrap: wrap;
+  }
+  .view-world .world-time,
+  .view-project .world-time {
+    left: auto;
+    right: 8px;
+    gap: 5px;
+    padding: 4px 6px;
+  }
+  .view-world .world-time strong,
+  .view-project .world-time strong {
+    font-size: 12px;
+  }
+}
+@media (max-height: 520px) {
+  .decision-context span,
+  .decision-context small {
+    display: none;
+  }
+  .decision-navigation {
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  .decision-navigation nav {
+    margin-top: 4px;
+  }
+  .watch-strip {
+    max-height: 96px;
+  }
+}
