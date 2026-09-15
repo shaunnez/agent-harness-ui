@@ -64,10 +64,13 @@ export function ProofCamera({
     controls.enableRotate = false;
     controls.screenSpacePanning = true;
     controls.enableDamping = false;
-    controls.minZoom = size.height / Math.max(200, view.verticalSpan * 1.4);
+    controls.minZoom =
+      size.height /
+      (focusId ? view.verticalSpan * 1.4 : Math.max(200, view.verticalSpan * 1.4));
     controls.maxZoom = size.height / 25;
     controls.update();
-  }, [layoutKey, focusId, cutaway, manifest, camera, controls, size.width, size.height]);
+    captureRef.current?.();
+  }, [layoutKey, focusId, cutaway, manifest, camera, controls, size.width, size.height, captureRef]);
   useEffect(() => {
     controls.connect(gl.domElement);
     gl.shadowMap.type = PCFShadowMap;
@@ -92,7 +95,7 @@ export function ProofCamera({
     const capture = () => {
       cancelAnimationFrame(scheduled);
       scheduled = requestAnimationFrame(() => {
-        const view = viewCamera(latest.current.bases, manifest, null, false);
+        const view = viewCamera(latest.current.bases, manifest, latest.current.focusId, false);
         const half = view.verticalSpan * 0.8;
         const mapCamera = new OrthographicCamera(-half, half, half, -half, 0.1, 650);
         mapCamera.position.set(view.target[0], 260, view.target[2] + 85);
