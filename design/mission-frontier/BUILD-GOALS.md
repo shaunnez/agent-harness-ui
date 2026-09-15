@@ -1,8 +1,10 @@
 # Mission Frontier — prompts and goals
 
-Revision 8 · 15 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. The later living-world pass is recorded in [PR-HANDOFF.md](PR-HANDOFF.md). **Goal 4 U0–U2 is complete and PR #73 is merged. Goal 5 functional acceptance is complete; delivery and journal receipts are in its current handoff. Goal 6 has not started.** See the [Goal 5 handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) and retained [Goal 4 handoff](build-evidence/USABILITY/goal-4/HANDOFF.md). [USABILITY-PLAN.md](USABILITY-PLAN.md) defines scope, dependencies and acceptance checks; the earlier plans remain the history for completed work.
+Revision 10 · 16 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. The later living-world pass is recorded in [PR-HANDOFF.md](PR-HANDOFF.md). **Goal 4 U0–U2 is complete and PR #73 is merged. Goal 5 functional acceptance is complete; delivery and journal receipts are in its current handoff. Goal 6 has not started.** See the [Goal 5 handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) and retained [Goal 4 handoff](build-evidence/USABILITY/goal-4/HANDOFF.md). [USABILITY-PLAN.md](USABILITY-PLAN.md) defines scope, dependencies and acceptance checks; the earlier plans remain the history for completed work.
 
 Delivery update, 15 September 2026: PRs #86–#88 are merged. [Art checkpoint 1](ART-CHECKPOINT-1.md) is delivered for artistic review in draft PR #89, including one Astra-produced exterior, the merged HUD, passing local qualification and journal version 20. See its [handoff](build-evidence/COASTAL-CHECKPOINT-1/HANDOFF.md).
+
+The [3D visual proof](3D-VISUAL-PROOF.md) and subsequent [three-project exterior extension](EXTERIOR-BASES.md) are implemented and locally qualified for review. Shaun requested PR publication on 16 September; see [PR qualification](build-evidence/PR-3D-PROOF/HANDOFF.md). The next connected-colony/hexagonal-HQ brief is recorded in [NEXT-PHASE-HANDOFF.md](NEXT-PHASE-HANDOFF.md) and remains at design stage. Goal 6 and live 3D adoption have not started.
 
 ## How to use
 
@@ -245,9 +247,22 @@ including the Astra asset producer. Execute its build/check/browser/fix loop
 until the acceptance matrix passes, then leave it ready for my review.
 ```
 
+## 3D visual proof — delivered fixture preview
+
+**Implemented and locally qualified, 16 September 2026.** [3D-VISUAL-PROOF.md](3D-VISUAL-PROOF.md) defined the initial PlanCheck exterior/cutaway, coastal terrain, bridge, planting, worker scale, portable materials and runtime water/light. The subsequent [exterior extension](EXTERIOR-BASES.md) adds one base per fixture project, three structural choices and local project colours. Three.js/React Three Fiber remains opt-in for fixtures; the default Pixi path, accepted HUD and backend are preserved. One builder and one Astra asset producer delivered the measured kit and browser evidence.
+
+This changes the earlier art passes' renderer boundary only for the isolated proof. The original/current/browser comparison is the acceptance surface; technical qualification does not establish full concept parity or authorize wider migration. The original execution prompt below is retained as history, not an instruction to repeat the completed proof:
+
+```text
+Run the 3D visual proof from design/mission-frontier/3D-VISUAL-PROOF.md,
+including the Astra asset producer alongside the Sol builder. Create and
+execute its bounded goal in an isolated worktree. Complete the scoped
+build/check/browser/fix loop and leave the result ready for my artistic review.
+```
+
 ## Goal 6 — recorded activity and meaningful world feedback
 
-Latest visual steering: [World depth and quieter controls](WORLD-DEPTH-AND-HUD.md) records the recommended fidelity work before this goal. That brief is planning, not a new goal start.
+Latest visual steering: the [3D visual proof](3D-VISUAL-PROOF.md) and exterior extension are delivered fixture previews. [NEXT-PHASE-HANDOFF.md](NEXT-PHASE-HANDOFF.md) records the proposed connected colony, fixed hexagonal HQ and spacecraft arrivals. Reconcile those designs with this goal before a future start; neither the visual proof nor its PR starts Goal 6 or its activity-persistence work.
 
 **Planned, not started.** Start after the Goal 5 handoff. Complete UB2, U6 and the combined qualification.
 
@@ -307,3 +322,7 @@ verification loop; do not create a duplicate goal or restart the implementation.
 ```
 
 If no active goal exists, select the appropriate goal prompt above instead of implying that a paused/finished goal is still running. Goal controls belong to the app; the agent should not invent a cron or heartbeat to bypass a review checkpoint.
+
+## 16 September exterior-base follow-up
+
+The user accepted the physical 3D foundation and explicitly expanded it to one base per project, with three selectable structures, project colours, larger workers/cargo and illuminated station details. This fixture-only follow-up is ready for artistic review in the same `mission-frontier-3d-proof` worktree; see `EXTERIOR-BASES.md` and `build-evidence/EXTERIOR-BASES/HANDOFF.md`. It supersedes the earlier one-PlanCheck restriction for this preview only. Goal 6, full live renderer adoption and backend appearance persistence remain separate.

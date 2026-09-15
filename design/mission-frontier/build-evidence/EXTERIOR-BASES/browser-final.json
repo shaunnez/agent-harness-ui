@@ -1,0 +1,42 @@
+{
+  "projects": [
+    {
+      "colour": "rgb(63, 157, 255)",
+      "hidden": false,
+      "name": "PlanCheck"
+    },
+    {
+      "colour": "rgb(238, 98, 93)",
+      "hidden": false,
+      "name": "Agent Harness"
+    },
+    {
+      "colour": "rgb(182, 133, 255)",
+      "hidden": false,
+      "name": "MyStrataAssist"
+    }
+  ],
+  "ready": "true",
+  "tasks": [
+    {
+      "behavior": "park",
+      "moving": "false",
+      "name": "PC-153 · Grill · Needs your answer · Should revision labels be normalised before comparison?"
+    },
+    {
+      "behavior": "park",
+      "moving": "false",
+      "name": "AH-051 · Test · Execution stopped · The verification command could not start in its isolated worktree."
+    },
+    {
+      "behavior": "park",
+      "moving": "false",
+      "name": "MS-086 · Grill · Needs your answer · Which channel should receive a meeting notice first?"
+    }
+  ],
+  "url": "http://127.0.0.1:5207/?mode=fixture&scenario=workflow&art=cinematic&renderer=3d#world",
+  "viewport": {
+    "height": 720,
+    "width": 1280
+  }
+}

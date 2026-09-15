@@ -1,0 +1,74 @@
+{
+  "method": "Pixel comparison of ordered, unmodified browser captures at 1568x1003; scene crops exclude live clock and elapsed text. Values are mean absolute 8-bit RGB differences, not performance or fidelity scores.",
+  "artVersion": "iteration 3; worker and renderer motion implementation unchanged in final coast join pass",
+  "regions": {
+    "activeWorker": [
+      586,
+      340,
+      650,
+      414
+    ],
+    "repairWorker": [
+      825,
+      436,
+      880,
+      512
+    ],
+    "sea": [
+      1300,
+      300,
+      1500,
+      700
+    ]
+  },
+  "results": [
+    {
+      "mode": "moving",
+      "frames": [
+        "motion-running-1.jpg",
+        "motion-running-3.jpg"
+      ],
+      "meanAbsoluteRgbDifference": {
+        "activeWorker": [
+          1.9083614864864864,
+          1.863597972972973,
+          1.9425675675675675
+        ],
+        "repairWorker": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sea": [
+          0.1165,
+          0.1172,
+          0.1285625
+        ]
+      }
+    },
+    {
+      "mode": "off",
+      "frames": [
+        "motion-off-1.jpg",
+        "motion-off-2.jpg"
+      ],
+      "meanAbsoluteRgbDifference": {
+        "activeWorker": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "repairWorker": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sea": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,834 @@
+{
+  "Diffuse": {
+    "8k": {
+      "jpg": {
+        "size": 22839752,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/coastal_cliff_01/coastal_cliff_01_diff_8k.jpg",
+        "md5": "3b973b9b78e3d2a52b8780b748ec3c79"
+      },
+      "png": {
+        "size": 174685140,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/coastal_cliff_01/coastal_cliff_01_diff_8k.png",
+        "md5": "7a103426495baa2fb6d68563d9bd7228"
+      },
+      "exr": {
+        "size": 46224742,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/coastal_cliff_01/coastal_cliff_01_diff_8k.exr",
+        "md5": "dc7c31e1d6ffe6703575d4a526937e3a"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 7803431,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/coastal_cliff_01/coastal_cliff_01_diff_4k.jpg",
+        "md5": "14298d23d36e717111e2f6a208f61565"
+      },
+      "png": {
+        "size": 67272307,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/coastal_cliff_01/coastal_cliff_01_diff_4k.png",
+        "md5": "1e12e74bc6730b04129265856ab772ef"
+      },
+      "exr": {
+        "size": 14152262,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/coastal_cliff_01/coastal_cliff_01_diff_4k.exr",
+        "md5": "2cb8dbb7c5fbdbb9a17a2b0eb6027ea3"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2465846,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coastal_cliff_01/coastal_cliff_01_diff_2k.jpg",
+        "md5": "9e1adf2e9f996d85c40f7dde57a97de8"
+      },
+      "png": {
+        "size": 19610328,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/coastal_cliff_01/coastal_cliff_01_diff_2k.png",
+        "md5": "f513eb05f8075a2616157d7492c18593"
+      },
+      "exr": {
+        "size": 4426628,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/coastal_cliff_01/coastal_cliff_01_diff_2k.exr",
+        "md5": "2794693f4b1e30dd615575ca1ef8d695"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 699457,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/coastal_cliff_01/coastal_cliff_01_diff_1k.jpg",
+        "md5": "a43df03bd9b94f0594551a42b7a24f1b"
+      },
+      "png": {
+        "size": 5231192,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/coastal_cliff_01/coastal_cliff_01_diff_1k.png",
+        "md5": "d5329c1b0de3de13c886266952d43fff"
+      },
+      "exr": {
+        "size": 1292681,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/coastal_cliff_01/coastal_cliff_01_diff_1k.exr",
+        "md5": "3489dcab8f5b2657ba056ae1cb9e9dd0"
+      }
+    }
+  },
+  "nor_dx": {
+    "8k": {
+      "jpg": {
+        "size": 30680055,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/coastal_cliff_01/coastal_cliff_01_nor_dx_8k.jpg",
+        "md5": "2bf4056ea7e053755947d161a50b8253"
+      },
+      "png": {
+        "size": 238438307,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/coastal_cliff_01/coastal_cliff_01_nor_dx_8k.png",
+        "md5": "d845f49da39553196f6c8b460800c6de"
+      },
+      "exr": {
+        "size": 58029807,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/coastal_cliff_01/coastal_cliff_01_nor_dx_8k.exr",
+        "md5": "849d9faf8257ba7d6b71ee3510cbaa82"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 9864984,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/coastal_cliff_01/coastal_cliff_01_nor_dx_4k.jpg",
+        "md5": "1de7f0a7bc5cfe55b91d36569d0a8a45"
+      },
+      "png": {
+        "size": 70294341,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/coastal_cliff_01/coastal_cliff_01_nor_dx_4k.png",
+        "md5": "c5eafd22ea07cf4ff472717aba694ac3"
+      },
+      "exr": {
+        "size": 19222205,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/coastal_cliff_01/coastal_cliff_01_nor_dx_4k.exr",
+        "md5": "851e5746f4744ea930b43617257c01f7"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 3052675,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coastal_cliff_01/coastal_cliff_01_nor_dx_2k.jpg",
+        "md5": "26be4f6ce720e9a27d6d5d52eb33fe60"
+      },
+      "png": {
+        "size": 19512480,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/coastal_cliff_01/coastal_cliff_01_nor_dx_2k.png",
+        "md5": "87153d8f67c93ab32e31ba56f1b6bcea"
+      },
+      "exr": {
+        "size": 6312455,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/coastal_cliff_01/coastal_cliff_01_nor_dx_2k.exr",
+        "md5": "5a6be120126158247f2355ed569fddcc"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 850958,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/coastal_cliff_01/coastal_cliff_01_nor_dx_1k.jpg",
+        "md5": "67496e88dbdc31223f4e2d7950da86fb"
+      },
+      "png": {
+        "size": 5222446,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/coastal_cliff_01/coastal_cliff_01_nor_dx_1k.png",
+        "md5": "731491230c106498229865edb4299195"
+      },
+      "exr": {
+        "size": 1874716,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/coastal_cliff_01/coastal_cliff_01_nor_dx_1k.exr",
+        "md5": "c24a1060501b7b48bdb64f6e54d6a487"
+      }
+    }
+  },
+  "nor_gl": {
+    "8k": {
+      "jpg": {
+        "size": 30669508,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/coastal_cliff_01/coastal_cliff_01_nor_gl_8k.jpg",
+        "md5": "c8a4e0708dad54e62d193e59799da245"
+      },
+      "png": {
+        "size": 238440558,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/coastal_cliff_01/coastal_cliff_01_nor_gl_8k.png",
+        "md5": "d8510ced43c8545e4029b8818be70fb7"
+      },
+      "exr": {
+        "size": 57994841,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/coastal_cliff_01/coastal_cliff_01_nor_gl_8k.exr",
+        "md5": "81d1a882103cd3807f80b890fc2f909e"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 9866914,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/coastal_cliff_01/coastal_cliff_01_nor_gl_4k.jpg",
+        "md5": "e962b55e2917e36969889f6d265ec688"
+      },
+      "png": {
+        "size": 70292884,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/coastal_cliff_01/coastal_cliff_01_nor_gl_4k.png",
+        "md5": "82782ddfba4557e084701c3e155f9ee1"
+      },
+      "exr": {
+        "size": 19216478,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/coastal_cliff_01/coastal_cliff_01_nor_gl_4k.exr",
+        "md5": "865cf1dd8a04235647c3150a8ab34925"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 3054804,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coastal_cliff_01/coastal_cliff_01_nor_gl_2k.jpg",
+        "md5": "54f0fed4e2ee6893c8c114c4ec1bf66a"
+      },
+      "png": {
+        "size": 19510767,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/coastal_cliff_01/coastal_cliff_01_nor_gl_2k.png",
+        "md5": "7c05c7b8a78e3a888c25fa6e4db9ee79"
+      },
+      "exr": {
+        "size": 6313621,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/coastal_cliff_01/coastal_cliff_01_nor_gl_2k.exr",
+        "md5": "2fcc6f39c3320d44e0af5a0d4b46a5c9"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 853524,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/coastal_cliff_01/coastal_cliff_01_nor_gl_1k.jpg",
+        "md5": "9257a41db772c4680a8b3cb87d0eaf04"
+      },
+      "png": {
+        "size": 5222143,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/coastal_cliff_01/coastal_cliff_01_nor_gl_1k.png",
+        "md5": "de7bf4eea82ab87d8f0f6373fa701daf"
+      },
+      "exr": {
+        "size": 1875758,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/coastal_cliff_01/coastal_cliff_01_nor_gl_1k.exr",
+        "md5": "4c446e771cc0028e36f68470289d38ee"
+      }
+    }
+  },
+  "gltf": {
+    "8k": {
+      "gltf": {
+        "include": {
+          "textures/coastal_cliff_01_arm_8k.jpg": {
+            "size": 29756229,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/coastal_cliff_01/coastal_cliff_01_arm_8k.jpg",
+            "md5": "4b3febf8239e04bd8b559ccdc72da89c"
+          },
+          "coastal_cliff_01.bin": {
+            "size": 13179840,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/coastal_cliff_01/coastal_cliff_01.bin",
+            "md5": "d9f1e368b18c018e158d06ab9d924646"
+          },
+          "textures/coastal_cliff_01_diff_8k.jpg": {
+            "size": 22839752,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/coastal_cliff_01/coastal_cliff_01_diff_8k.jpg",
+            "md5": "3b973b9b78e3d2a52b8780b748ec3c79"
+          },
+          "textures/coastal_cliff_01_nor_gl_8k.jpg": {
+            "size": 30669508,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/coastal_cliff_01/coastal_cliff_01_nor_gl_8k.jpg",
+            "md5": "c8a4e0708dad54e62d193e59799da245"
+          }
+        },
+        "size": 2825,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/coastal_cliff_01/coastal_cliff_01_8k.gltf",
+        "md5": "835245ee9e1f68f076b5d17e4bfb91e3"
+      }
+    },
+    "4k": {
+      "gltf": {
+        "include": {
+          "coastal_cliff_01.bin": {
+            "size": 13179840,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/coastal_cliff_01/coastal_cliff_01.bin",
+            "md5": "d9f1e368b18c018e158d06ab9d924646"
+          },
+          "textures/coastal_cliff_01_diff_4k.jpg": {
+            "size": 7803431,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/coastal_cliff_01/coastal_cliff_01_diff_4k.jpg",
+            "md5": "14298d23d36e717111e2f6a208f61565"
+          },
+          "textures/coastal_cliff_01_arm_4k.jpg": {
+            "size": 7590209,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/coastal_cliff_01/coastal_cliff_01_arm_4k.jpg",
+            "md5": "b92548e874e430a44cf9dc0c40c941a8"
+          },
+          "textures/coastal_cliff_01_nor_gl_4k.jpg": {
+            "size": 9866914,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/coastal_cliff_01/coastal_cliff_01_nor_gl_4k.jpg",
+            "md5": "e962b55e2917e36969889f6d265ec688"
+          }
+        },
+        "size": 2825,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/coastal_cliff_01/coastal_cliff_01_4k.gltf",
+        "md5": "25bc1756f311d07e321aafe07f8c03f7"
+      }
+    },
+    "2k": {
+      "gltf": {
+        "include": {
+          "coastal_cliff_01.bin": {
+            "size": 13179840,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/coastal_cliff_01/coastal_cliff_01.bin",
+            "md5": "d9f1e368b18c018e158d06ab9d924646"
+          },
+          "textures/coastal_cliff_01_nor_gl_2k.jpg": {
+            "size": 3054804,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coastal_cliff_01/coastal_cliff_01_nor_gl_2k.jpg",
+            "md5": "54f0fed4e2ee6893c8c114c4ec1bf66a"
+          },
+          "textures/coastal_cliff_01_diff_2k.jpg": {
+            "size": 2465846,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coastal_cliff_01/coastal_cliff_01_diff_2k.jpg",
+            "md5": "9e1adf2e9f996d85c40f7dde57a97de8"
+          },
+          "textures/coastal_cliff_01_arm_2k.jpg": {
+            "size": 2181608,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coastal_cliff_01/coastal_cliff_01_arm_2k.jpg",
+            "md5": "b4c23c612a9c38fa794d05a67857a645"
+          }
+        },
+        "size": 2825,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/coastal_cliff_01/coastal_cliff_01_2k.gltf",
+        "md5": "b740b84cdc6d7acb5274361b594f5e3a"
+      }
+    },
+    "1k": {
+      "gltf": {
+        "include": {
+          "textures/coastal_cliff_01_diff_1k.jpg": {
+            "size": 699457,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/coastal_cliff_01/coastal_cliff_01_diff_1k.jpg",
+            "md5": "a43df03bd9b94f0594551a42b7a24f1b"
+          },
+          "coastal_cliff_01.bin": {
+            "size": 13179840,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/coastal_cliff_01/coastal_cliff_01.bin",
+            "md5": "d9f1e368b18c018e158d06ab9d924646"
+          },
+          "textures/coastal_cliff_01_arm_1k.jpg": {
+            "size": 640985,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/coastal_cliff_01/coastal_cliff_01_arm_1k.jpg",
+            "md5": "ebd8e7dd1877230886bde89da565828e"
+          },
+          "textures/coastal_cliff_01_nor_gl_1k.jpg": {
+            "size": 853524,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/coastal_cliff_01/coastal_cliff_01_nor_gl_1k.jpg",
+            "md5": "9257a41db772c4680a8b3cb87d0eaf04"
+          }
+        },
+        "size": 2825,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/coastal_cliff_01/coastal_cliff_01_1k.gltf",
+        "md5": "da3cb728c6ce195ecc0261d976251c40"
+      }
+    }
+  },
+  "usd": {
+    "8k": {
+      "usd": {
+        "include": {
+          "textures/coastal_cliff_01_nor_gl_8k.exr": {
+            "size": 57994841,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/coastal_cliff_01/coastal_cliff_01_nor_gl_8k.exr",
+            "md5": "81d1a882103cd3807f80b890fc2f909e"
+          },
+          "textures/coastal_cliff_01_diff_8k.jpg": {
+            "size": 22839752,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/coastal_cliff_01/coastal_cliff_01_diff_8k.jpg",
+            "md5": "3b973b9b78e3d2a52b8780b748ec3c79"
+          },
+          "textures/coastal_cliff_01_rough_8k.exr": {
+            "size": 21550914,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/coastal_cliff_01/coastal_cliff_01_rough_8k.exr",
+            "md5": "1903d84cbed82020f4ed75e15984e6ab"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/8k/coastal_cliff_01/coastal_cliff_01_8k.usdc",
+        "size": 33750604,
+        "md5": "9dc9b4188cc8e24a0e0b619cc0904a6c"
+      }
+    },
+    "4k": {
+      "usd": {
+        "include": {
+          "textures/coastal_cliff_01_diff_4k.jpg": {
+            "size": 7803431,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/coastal_cliff_01/coastal_cliff_01_diff_4k.jpg",
+            "md5": "14298d23d36e717111e2f6a208f61565"
+          },
+          "textures/coastal_cliff_01_rough_4k.exr": {
+            "size": 9425232,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/coastal_cliff_01/coastal_cliff_01_rough_4k.exr",
+            "md5": "8d2f82889785ee8b7ec1903fad4c1e31"
+          },
+          "textures/coastal_cliff_01_nor_gl_4k.exr": {
+            "size": 19216478,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/coastal_cliff_01/coastal_cliff_01_nor_gl_4k.exr",
+            "md5": "865cf1dd8a04235647c3150a8ab34925"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/4k/coastal_cliff_01/coastal_cliff_01_4k.usdc",
+        "size": 33750604,
+        "md5": "e98bbb9b0e98595aeed6666213243c94"
+      }
+    },
+    "2k": {
+      "usd": {
+        "include": {
+          "textures/coastal_cliff_01_nor_gl_2k.exr": {
+            "size": 6313621,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/coastal_cliff_01/coastal_cliff_01_nor_gl_2k.exr",
+            "md5": "2fcc6f39c3320d44e0af5a0d4b46a5c9"
+          },
+          "textures/coastal_cliff_01_diff_2k.jpg": {
+            "size": 2465846,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coastal_cliff_01/coastal_cliff_01_diff_2k.jpg",
+            "md5": "9e1adf2e9f996d85c40f7dde57a97de8"
+          },
+          "textures/coastal_cliff_01_rough_2k.exr": {
+            "size": 3086698,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/coastal_cliff_01/coastal_cliff_01_rough_2k.exr",
+            "md5": "055facd30d43ba0f4338563313646e52"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/2k/coastal_cliff_01/coastal_cliff_01_2k.usdc",
+        "size": 33750604,
+        "md5": "f59959e901b157875ec60ae41893a095"
+      }
+    },
+    "1k": {
+      "usd": {
+        "include": {
+          "textures/coastal_cliff_01_diff_1k.jpg": {
+            "size": 699457,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/coastal_cliff_01/coastal_cliff_01_diff_1k.jpg",
+            "md5": "a43df03bd9b94f0594551a42b7a24f1b"
+          },
+          "textures/coastal_cliff_01_rough_1k.exr": {
+            "size": 853754,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/coastal_cliff_01/coastal_cliff_01_rough_1k.exr",
+            "md5": "c680d3de52d88f0d783756ad78c95974"
+          },
+          "textures/coastal_cliff_01_nor_gl_1k.exr": {
+            "size": 1875758,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/coastal_cliff_01/coastal_cliff_01_nor_gl_1k.exr",
+            "md5": "4c446e771cc0028e36f68470289d38ee"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/1k/coastal_cliff_01/coastal_cliff_01_1k.usdc",
+        "size": 33750626,
+        "md5": "4ce5d150e6ff35fb5aa5cf5e9431f1d6"
+      }
+    }
+  },
+  "arm": {
+    "8k": {
+      "jpg": {
+        "size": 29756229,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/coastal_cliff_01/coastal_cliff_01_arm_8k.jpg",
+        "md5": "4b3febf8239e04bd8b559ccdc72da89c"
+      },
+      "png": {
+        "size": 67716984,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/coastal_cliff_01/coastal_cliff_01_arm_8k.png",
+        "md5": "32ab0b22df4b664f4d06879c691ab717"
+      },
+      "exr": {
+        "size": 50956420,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/coastal_cliff_01/coastal_cliff_01_arm_8k.exr",
+        "md5": "1f3fd0de3c051a714fdff8958d376a60"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 7590209,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/coastal_cliff_01/coastal_cliff_01_arm_4k.jpg",
+        "md5": "b92548e874e430a44cf9dc0c40c941a8"
+      },
+      "png": {
+        "size": 35773240,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/coastal_cliff_01/coastal_cliff_01_arm_4k.png",
+        "md5": "78eaecef6cf4e4f4de6b604e552c7173"
+      },
+      "exr": {
+        "size": 12663207,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/coastal_cliff_01/coastal_cliff_01_arm_4k.exr",
+        "md5": "26c127f8081b5d0f2da8dd633110b1c9"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2181608,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coastal_cliff_01/coastal_cliff_01_arm_2k.jpg",
+        "md5": "b4c23c612a9c38fa794d05a67857a645"
+      },
+      "png": {
+        "size": 13060241,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/coastal_cliff_01/coastal_cliff_01_arm_2k.png",
+        "md5": "ba7caba7be5bf80665fbb87ac40b1553"
+      },
+      "exr": {
+        "size": 3753845,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/coastal_cliff_01/coastal_cliff_01_arm_2k.exr",
+        "md5": "416f0de3f3da8c725a948c2b8ca0f4eb"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 640985,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/coastal_cliff_01/coastal_cliff_01_arm_1k.jpg",
+        "md5": "ebd8e7dd1877230886bde89da565828e"
+      },
+      "png": {
+        "size": 3814548,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/coastal_cliff_01/coastal_cliff_01_arm_1k.png",
+        "md5": "6a895697be7e1659383a7a3b7bfb8b58"
+      },
+      "exr": {
+        "size": 1159712,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/coastal_cliff_01/coastal_cliff_01_arm_1k.exr",
+        "md5": "5e1e89a06ca02014e72e27980db771ac"
+      }
+    }
+  },
+  "fbx": {
+    "8k": {
+      "fbx": {
+        "include": {
+          "textures/coastal_cliff_01_nor_gl_8k.exr": {
+            "size": 57994841,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/coastal_cliff_01/coastal_cliff_01_nor_gl_8k.exr",
+            "md5": "81d1a882103cd3807f80b890fc2f909e"
+          },
+          "textures/coastal_cliff_01_diff_8k.jpg": {
+            "size": 22839752,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/coastal_cliff_01/coastal_cliff_01_diff_8k.jpg",
+            "md5": "3b973b9b78e3d2a52b8780b748ec3c79"
+          },
+          "textures/coastal_cliff_01_rough_8k.exr": {
+            "size": 21550914,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/coastal_cliff_01/coastal_cliff_01_rough_8k.exr",
+            "md5": "1903d84cbed82020f4ed75e15984e6ab"
+          }
+        },
+        "size": 36700252,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/8k/coastal_cliff_01/coastal_cliff_01_8k.fbx",
+        "md5": "342133f375f58b344a75575ee7531ba8"
+      }
+    },
+    "4k": {
+      "fbx": {
+        "include": {
+          "textures/coastal_cliff_01_diff_4k.jpg": {
+            "size": 7803431,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/coastal_cliff_01/coastal_cliff_01_diff_4k.jpg",
+            "md5": "14298d23d36e717111e2f6a208f61565"
+          },
+          "textures/coastal_cliff_01_rough_4k.exr": {
+            "size": 9425232,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/coastal_cliff_01/coastal_cliff_01_rough_4k.exr",
+            "md5": "8d2f82889785ee8b7ec1903fad4c1e31"
+          },
+          "textures/coastal_cliff_01_nor_gl_4k.exr": {
+            "size": 19216478,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/coastal_cliff_01/coastal_cliff_01_nor_gl_4k.exr",
+            "md5": "865cf1dd8a04235647c3150a8ab34925"
+          }
+        },
+        "size": 36700732,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/4k/coastal_cliff_01/coastal_cliff_01_4k.fbx",
+        "md5": "011713b6ab89fd1b7a4ba141ef475249"
+      }
+    },
+    "2k": {
+      "fbx": {
+        "include": {
+          "textures/coastal_cliff_01_nor_gl_2k.exr": {
+            "size": 6313621,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/coastal_cliff_01/coastal_cliff_01_nor_gl_2k.exr",
+            "md5": "2fcc6f39c3320d44e0af5a0d4b46a5c9"
+          },
+          "textures/coastal_cliff_01_diff_2k.jpg": {
+            "size": 2465846,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coastal_cliff_01/coastal_cliff_01_diff_2k.jpg",
+            "md5": "9e1adf2e9f996d85c40f7dde57a97de8"
+          },
+          "textures/coastal_cliff_01_rough_2k.exr": {
+            "size": 3086698,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/coastal_cliff_01/coastal_cliff_01_rough_2k.exr",
+            "md5": "055facd30d43ba0f4338563313646e52"
+          }
+        },
+        "size": 36700684,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/2k/coastal_cliff_01/coastal_cliff_01_2k.fbx",
+        "md5": "15cd1aab141c8a222403e2d7051c3693"
+      }
+    },
+    "1k": {
+      "fbx": {
+        "include": {
+          "textures/coastal_cliff_01_diff_1k.jpg": {
+            "size": 699457,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/coastal_cliff_01/coastal_cliff_01_diff_1k.jpg",
+            "md5": "a43df03bd9b94f0594551a42b7a24f1b"
+          },
+          "textures/coastal_cliff_01_rough_1k.exr": {
+            "size": 853754,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/coastal_cliff_01/coastal_cliff_01_rough_1k.exr",
+            "md5": "c680d3de52d88f0d783756ad78c95974"
+          },
+          "textures/coastal_cliff_01_nor_gl_1k.exr": {
+            "size": 1875758,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/coastal_cliff_01/coastal_cliff_01_nor_gl_1k.exr",
+            "md5": "4c446e771cc0028e36f68470289d38ee"
+          }
+        },
+        "size": 36700428,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/1k/coastal_cliff_01/coastal_cliff_01_1k.fbx",
+        "md5": "036f16b12da4b86939ffe68f15aa9975"
+      }
+    }
+  },
+  "AO": {
+    "8k": {
+      "jpg": {
+        "size": 31008324,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/coastal_cliff_01/coastal_cliff_01_ao_8k.jpg",
+        "md5": "371fa894a2607735cb2e6b0272bde358"
+      },
+      "png": {
+        "size": 38257722,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/coastal_cliff_01/coastal_cliff_01_ao_8k.png",
+        "md5": "925affd22f38e48cceda860280bd50be"
+      },
+      "exr": {
+        "size": 41562295,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/coastal_cliff_01/coastal_cliff_01_ao_8k.exr",
+        "md5": "4fce6f0cc520a46551fa430961bf88b8"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 7397016,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/coastal_cliff_01/coastal_cliff_01_ao_4k.jpg",
+        "md5": "e8570359a4dd7428514fc50dfb69ef14"
+      },
+      "png": {
+        "size": 17188170,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/coastal_cliff_01/coastal_cliff_01_ao_4k.png",
+        "md5": "b667767c00785835b66fd314c67ac40a"
+      },
+      "exr": {
+        "size": 13614455,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/coastal_cliff_01/coastal_cliff_01_ao_4k.exr",
+        "md5": "3b98772ed45aa8486d8620367c6e8e25"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1998711,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coastal_cliff_01/coastal_cliff_01_ao_2k.jpg",
+        "md5": "a7b035ab5d9c267920443b37a0e18789"
+      },
+      "png": {
+        "size": 6303875,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/coastal_cliff_01/coastal_cliff_01_ao_2k.png",
+        "md5": "0459132eb78bb0a7a1cb5cbd59a0d6cb"
+      },
+      "exr": {
+        "size": 4055753,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/coastal_cliff_01/coastal_cliff_01_ao_2k.exr",
+        "md5": "0073dc83c6848f5d1f1351454fa6cb9d"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 591437,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/coastal_cliff_01/coastal_cliff_01_ao_1k.jpg",
+        "md5": "df90f121e2b9a91f0637534275235e6b"
+      },
+      "png": {
+        "size": 1750629,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/coastal_cliff_01/coastal_cliff_01_ao_1k.png",
+        "md5": "f9b66cdc875b9143df382a50957ac4a8"
+      },
+      "exr": {
+        "size": 1122614,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/coastal_cliff_01/coastal_cliff_01_ao_1k.exr",
+        "md5": "09646de9cedf2fb4103219c9c94948b4"
+      }
+    }
+  },
+  "Rough": {
+    "8k": {
+      "jpg": {
+        "size": 13575718,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/coastal_cliff_01/coastal_cliff_01_rough_8k.jpg",
+        "md5": "30fb88f8d25fc2f3fb216d7d2c6f10a9"
+      },
+      "png": {
+        "size": 19792621,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/coastal_cliff_01/coastal_cliff_01_rough_8k.png",
+        "md5": "daa438f1b7ae0769eadda75dfe379a5d"
+      },
+      "exr": {
+        "size": 21550914,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/coastal_cliff_01/coastal_cliff_01_rough_8k.exr",
+        "md5": "1903d84cbed82020f4ed75e15984e6ab"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 4303682,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/coastal_cliff_01/coastal_cliff_01_rough_4k.jpg",
+        "md5": "e7ece04f2ca6f5b580c8b426b7818cc5"
+      },
+      "png": {
+        "size": 12400893,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/coastal_cliff_01/coastal_cliff_01_rough_4k.png",
+        "md5": "67f030a6fca19fdd9c3ae6fdefbe349c"
+      },
+      "exr": {
+        "size": 9425232,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/coastal_cliff_01/coastal_cliff_01_rough_4k.exr",
+        "md5": "8d2f82889785ee8b7ec1903fad4c1e31"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1330842,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coastal_cliff_01/coastal_cliff_01_rough_2k.jpg",
+        "md5": "e2b315f3295b02c04cfb8434469f48d8"
+      },
+      "png": {
+        "size": 4984327,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/coastal_cliff_01/coastal_cliff_01_rough_2k.png",
+        "md5": "6300de5c52f7f3d6eef7b75bccbbaab4"
+      },
+      "exr": {
+        "size": 3086698,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/coastal_cliff_01/coastal_cliff_01_rough_2k.exr",
+        "md5": "055facd30d43ba0f4338563313646e52"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 373477,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/coastal_cliff_01/coastal_cliff_01_rough_1k.jpg",
+        "md5": "30ca2a0fae2b35dd761dccbea5616308"
+      },
+      "png": {
+        "size": 1529493,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/coastal_cliff_01/coastal_cliff_01_rough_1k.png",
+        "md5": "a807b67462d110136f8e762f66dfd7b6"
+      },
+      "exr": {
+        "size": 853754,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/coastal_cliff_01/coastal_cliff_01_rough_1k.exr",
+        "md5": "c680d3de52d88f0d783756ad78c95974"
+      }
+    }
+  },
+  "blend": {
+    "8k": {
+      "blend": {
+        "include": {
+          "textures/coastal_cliff_01_nor_gl_8k.exr": {
+            "size": 57994841,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/coastal_cliff_01/coastal_cliff_01_nor_gl_8k.exr",
+            "md5": "81d1a882103cd3807f80b890fc2f909e"
+          },
+          "textures/coastal_cliff_01_diff_8k.jpg": {
+            "size": 22839752,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/coastal_cliff_01/coastal_cliff_01_diff_8k.jpg",
+            "md5": "3b973b9b78e3d2a52b8780b748ec3c79"
+          },
+          "textures/coastal_cliff_01_rough_8k.exr": {
+            "size": 21550914,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/coastal_cliff_01/coastal_cliff_01_rough_8k.exr",
+            "md5": "1903d84cbed82020f4ed75e15984e6ab"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/8k/coastal_cliff_01/coastal_cliff_01_8k.blend",
+        "size": 31489820,
+        "md5": "ddd50d15be24724208df7fbcec6e7710"
+      }
+    },
+    "4k": {
+      "blend": {
+        "include": {
+          "textures/coastal_cliff_01_diff_4k.jpg": {
+            "size": 7803431,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/coastal_cliff_01/coastal_cliff_01_diff_4k.jpg",
+            "md5": "14298d23d36e717111e2f6a208f61565"
+          },
+          "textures/coastal_cliff_01_rough_4k.exr": {
+            "size": 9425232,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/coastal_cliff_01/coastal_cliff_01_rough_4k.exr",
+            "md5": "8d2f82889785ee8b7ec1903fad4c1e31"
+          },
+          "textures/coastal_cliff_01_nor_gl_4k.exr": {
+            "size": 19216478,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/coastal_cliff_01/coastal_cliff_01_nor_gl_4k.exr",
+            "md5": "865cf1dd8a04235647c3150a8ab34925"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/4k/coastal_cliff_01/coastal_cliff_01_4k.blend",
+        "size": 31489908,
+        "md5": "0604ff4d2d4b5c4981b0dcf492f21b9a"
+      }
+    },
+    "2k": {
+      "blend": {
+        "include": {
+          "textures/coastal_cliff_01_nor_gl_2k.exr": {
+            "size": 6313621,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/coastal_cliff_01/coastal_cliff_01_nor_gl_2k.exr",
+            "md5": "2fcc6f39c3320d44e0af5a0d4b46a5c9"
+          },
+          "textures/coastal_cliff_01_diff_2k.jpg": {
+            "size": 2465846,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/coastal_cliff_01/coastal_cliff_01_diff_2k.jpg",
+            "md5": "9e1adf2e9f996d85c40f7dde57a97de8"
+          },
+          "textures/coastal_cliff_01_rough_2k.exr": {
+            "size": 3086698,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/coastal_cliff_01/coastal_cliff_01_rough_2k.exr",
+            "md5": "055facd30d43ba0f4338563313646e52"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/2k/coastal_cliff_01/coastal_cliff_01_2k.blend",
+        "size": 31489924,
+        "md5": "ede20f84e68bbcbc294bf1ffdbbaf94f"
+      }
+    },
+    "1k": {
+      "blend": {
+        "include": {
+          "textures/coastal_cliff_01_diff_1k.jpg": {
+            "size": 699457,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/coastal_cliff_01/coastal_cliff_01_diff_1k.jpg",
+            "md5": "a43df03bd9b94f0594551a42b7a24f1b"
+          },
+          "textures/coastal_cliff_01_rough_1k.exr": {
+            "size": 853754,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/coastal_cliff_01/coastal_cliff_01_rough_1k.exr",
+            "md5": "c680d3de52d88f0d783756ad78c95974"
+          },
+          "textures/coastal_cliff_01_nor_gl_1k.exr": {
+            "size": 1875758,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/coastal_cliff_01/coastal_cliff_01_nor_gl_1k.exr",
+            "md5": "4c446e771cc0028e36f68470289d38ee"
+          }
+        },
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/coastal_cliff_01/coastal_cliff_01_1k.blend",
+        "size": 31489884,
+        "md5": "68cf49306148589ceac39c7d4d4a9811"
+      }
+    }
+  }
+}

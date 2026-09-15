@@ -1,0 +1,108 @@
+{
+  "file": "scene.glb",
+  "before": 100144724,
+  "after": 76790764,
+  "imagesReencoded": [
+    {
+      "image": "court_weathered_basalt_normal",
+      "before": 117613,
+      "after": 45356
+    },
+    {
+      "image": "court_weathered_basalt_albedo",
+      "before": 84255,
+      "after": 15203
+    },
+    {
+      "image": "structure_graphite_joints_normal",
+      "before": 117684,
+      "after": 45517
+    },
+    {
+      "image": "structure_graphite_joints_albedo",
+      "before": 77159,
+      "after": 9670
+    },
+    {
+      "image": "structure_ivory_ceramic_normal",
+      "before": 117648,
+      "after": 45399
+    },
+    {
+      "image": "structure_ivory_ceramic_albedo",
+      "before": 90235,
+      "after": 21445
+    },
+    {
+      "image": "nor_gl",
+      "before": 4527854,
+      "after": 3213547
+    },
+    {
+      "image": "Diffuse",
+      "before": 3883057,
+      "after": 2585068
+    },
+    {
+      "image": "Rough",
+      "before": 3198188,
+      "after": 804160
+    },
+    {
+      "image": "Bark_TwistedTree_Normal",
+      "before": 5728199,
+      "after": 1714286
+    },
+    {
+      "image": "Bark_TwistedTree",
+      "before": 4630805,
+      "after": 950743
+    },
+    {
+      "image": "coastal_cliff_01_nor_gl_2k",
+      "before": 3054804,
+      "after": 2055625
+    },
+    {
+      "image": "coastal_cliff_01_diff_2k",
+      "before": 2465846,
+      "after": 1602996
+    },
+    {
+      "image": "coastal_cliff_01_arm_2k",
+      "before": 2181608,
+      "after": 1402940
+    },
+    {
+      "image": "coastal_cliff_02_nor_gl_2k",
+      "before": 4057806,
+      "after": 2839163
+    },
+    {
+      "image": "coastal_cliff_02_diff_2k",
+      "before": 2655313,
+      "after": 1761281
+    },
+    {
+      "image": "coastal_cliff_02_arm_2k",
+      "before": 2299007,
+      "after": 1511822
+    },
+    {
+      "image": "nor_gl",
+      "before": 4960096,
+      "after": 3613672
+    },
+    {
+      "image": "Diffuse",
+      "before": 3567190,
+      "after": 2391771
+    },
+    {
+      "image": "Rough",
+      "before": 4271312,
+      "after": 2102078
+    }
+  ],
+  "sha256": "d80c209f68f2df13097d27bbbf49bdb569921d53b71224f3eb40e993f536b801"
+}

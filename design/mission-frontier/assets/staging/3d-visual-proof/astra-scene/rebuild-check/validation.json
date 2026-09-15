@@ -1,0 +1,23 @@
+{
+  "status": "pass",
+  "scope": "GLB headers/buffers/images, groups/cameras/sockets, metadata bounds/shore loops, PBR normals, retained vertex color/alpha, original worker animation",
+  "scene": {
+    "file": "scene.glb",
+    "bytes": 76790764,
+    "sha256": "d80c209f68f2df13097d27bbbf49bdb569921d53b71224f3eb40e993f536b801",
+    "meshCount": 55,
+    "materialCount": 29,
+    "embeddedImages": 21,
+    "triangles": 817748
+  },
+  "worker": {
+    "file": "worker.glb",
+    "bytes": 1118716,
+    "sha256": "aee069a9823b79f201ba7a615313acea18ac83e5844a8f7b3149190262aa370a",
+    "meshCount": 80,
+    "materialCount": 6,
+    "embeddedImages": 0,
+    "triangles": 32264
+  },
+  "browserAcceptance": "Builder-owned; not established by this structural audit"
+}

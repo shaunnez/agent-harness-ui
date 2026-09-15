@@ -1,0 +1,75 @@
+{
+  "capturedAt": "2026-09-15T14:59:11.755Z",
+  "assets": [
+    {
+      "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.glb",
+      "filename": "environment.450a464c1478.glb",
+      "sha256": "450a464c1478d7f356ee0b30fada58205f827b2a3ea88a584b3324cf6fa2e9a9",
+      "bytes": 58413356,
+      "meshes": 27,
+      "materials": 26,
+      "textures": 19,
+      "animations": []
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/3d-visual-proof/astra-scene/worker.glb",
+      "filename": "worker.aee069a9823b.glb",
+      "sha256": "aee069a9823b79f201ba7a615313acea18ac83e5844a8f7b3149190262aa370a",
+      "bytes": 1118716,
+      "meshes": 80,
+      "materials": 6,
+      "textures": 0,
+      "animations": [
+        "worker_tool_work"
+      ]
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/base-command.glb",
+      "filename": "base-command.e0b24a9fdbc8.glb",
+      "sha256": "e0b24a9fdbc874570507ac33107a7490005fd538120fb4025fa977d5f192e60d",
+      "bytes": 20505940,
+      "meshes": 39,
+      "materials": 15,
+      "textures": 6,
+      "animations": []
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/previews/command.png",
+      "filename": "preview-command.764b44a973d6.png",
+      "sha256": "764b44a973d6358addf2cd3b1bad5cfc7094789007d827e47223b1977a9817b6",
+      "bytes": 1027946
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/base-relay.glb",
+      "filename": "base-relay.9bc6293b7535.glb",
+      "sha256": "9bc6293b75355e113e518545016c544f87152f2f5fb542433703544e93aff4cb",
+      "bytes": 16955980,
+      "meshes": 39,
+      "materials": 15,
+      "textures": 6,
+      "animations": []
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/previews/relay.png",
+      "filename": "preview-relay.10cbdc43dd7b.png",
+      "sha256": "10cbdc43dd7bc4abd133a46abc45265c16af81545e056794298181ffd1eeade7",
+      "bytes": 998976
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/base-foundry.glb",
+      "filename": "base-foundry.24df624f3217.glb",
+      "sha256": "24df624f32170d08a80b6a493e0dc17a5e9e73574e79390d677e60f75547973e",
+      "bytes": 17477428,
+      "meshes": 40,
+      "materials": 15,
+      "textures": 6,
+      "animations": []
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/previews/foundry.png",
+      "filename": "preview-foundry.d2f997f5741c.png",
+      "sha256": "d2f997f5741c9c02e0e19700eed01f261d2647e70dd2983608943dcb0727d816",
+      "bytes": 1001850
+    }
+  ]
+}
