@@ -33,3 +33,7 @@ The separate HUD task is still adding journal history. To avoid editing its acti
 ## Final integration — 15 September 2026
 
 Final Astra hashes frozen and integrated. Main #88 merged. 88 Frontier / 18 API / 4 Sites and all required source/build checks passed. Final day/dusk/night, laptop, shore/motion/connection and HQ/Watch evidence retained. See acceptance.md and HANDOFF.md for current status; earlier pending notes above are historical.
+
+## Delivery complete
+
+Draft PR #89 is open. Journal version 20 / article 21 is published with unchanged owner-only access and verified in the browser. All required checkpoint work is complete; artistic review is next. Preview port 5206 remains running.

@@ -37,4 +37,6 @@ Do not automatically multiply this kit or start Goal 6. After artistic feedback,
 
 ## Delivery record
 
-Draft PR and journal publication are being packaged; append only confirmed links/receipts. Game preview remains local and fixture-only. No game merge or publication.
+Draft PR #89: https://github.com/shaunnez/agent-harness-ui/pull/89 — open, draft and mergeable at source 55001c68a6706485e6fb2e15d13619b3cda31570. GitHub returned no CI checks when inspected. Journal version 20 is published at https://mission-frontier-journal.shaunnesbittuk.chatgpt.site/notes/connected-to-the-coast/ (article 21). Existing owner-only access is preserved. Saved source e928e34aee28a2effe9a39b841ad3879ce0a1f71; the deployment succeeded and the published article was inspected. Exact receipt: `journal-publication.json`. Journal tests (5), typecheck, lint and static build passed; the article, comparison tabs and images were checked in the browser. Game preview remains local and fixture-only. No game merge or publication.
+
+All required implementation, qualification and delivery work for this checkpoint is complete. Artistic approval remains the next gate. The final follow-up commit contains delivery documentation only; game code/assets were qualified at 55001c6.

@@ -2,7 +2,7 @@
 
 Revision 8 · 15 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. The later living-world pass is recorded in [PR-HANDOFF.md](PR-HANDOFF.md). **Goal 4 U0–U2 is complete and PR #73 is merged. Goal 5 functional acceptance is complete; delivery and journal receipts are in its current handoff. Goal 6 has not started.** See the [Goal 5 handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) and retained [Goal 4 handoff](build-evidence/USABILITY/goal-4/HANDOFF.md). [USABILITY-PLAN.md](USABILITY-PLAN.md) defines scope, dependencies and acceptance checks; the earlier plans remain the history for completed work.
 
-Preparation update, 15 September 2026: PRs #86 and #87 are merged. The fidelity worktree now includes main `aca587e`. [Art checkpoint 1](ART-CHECKPOINT-1.md) is prepared for an explicit post-compaction start; no art production has begun.
+Delivery update, 15 September 2026: PRs #86–#88 are merged. [Art checkpoint 1](ART-CHECKPOINT-1.md) is delivered for artistic review in draft PR #89, including one Astra-produced exterior, the merged HUD, passing local qualification and journal version 20. See its [handoff](build-evidence/COASTAL-CHECKPOINT-1/HANDOFF.md).
 
 ## How to use
 
@@ -237,7 +237,7 @@ start Goal 6, merge a PR or publish the game.
 
 ## Art checkpoint 1 — connected coastal base
 
-**Prepared, not started.** Before Goal 6, run the bounded [Art checkpoint 1](ART-CHECKPOINT-1.md) to prove one detailed exterior, courtyard, elevated bridge and animated shoreline. Includes one Astra scene producer; the HUD is Sol's separate assignment. HQ/Watch rebuilding and broader world production follow review of this checkpoint.
+**Delivered for review, 15 September 2026.** [Art checkpoint 1](ART-CHECKPOINT-1.md) proves one detailed exterior, courtyard, elevated bridge and animated shoreline. One Astra producer delivered the registered scene; merged HUD PR #88 is included. Draft PR #89 and journal version 20 are ready. HQ/Watch rebuilding, broader world production and Goal 6 remain separate after review.
 
 ```text
 Run Art checkpoint 1 from design/mission-frontier/ART-CHECKPOINT-1.md,

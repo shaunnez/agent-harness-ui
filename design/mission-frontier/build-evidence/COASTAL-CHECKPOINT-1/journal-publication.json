@@ -1,0 +1,21 @@
+{
+  "date": "2026-09-15",
+  "project_id": "appgprj_6a9d2e96e0248191a66ccefcaad237d3",
+  "version_id": "appgprj_6a9d2e96e0248191a66ccefcaad237d3~appgver_7a5abc0b1f948191af647908f7e54822",
+  "version_number": 20,
+  "deployment_id": "appgdep_6aa8fba6c77c8191beb957eeb30bedfc",
+  "status": "succeeded",
+  "url": "https://mission-frontier-journal.shaunnesbittuk.chatgpt.site",
+  "source_commit": "e928e34aee28a2effe9a39b841ad3879ce0a1f71",
+  "access": "Existing owner-only audience preserved; private deployment succeeded",
+  "article": "/notes/connected-to-the-coast/",
+  "article_number": 21,
+  "browser": "Published article inspected successfully",
+  "archive": {
+    "archive_format": "tar",
+    "sediment_file_id": "file_000000003ea081faaec0f63a5e0cc7f7",
+    "content_hash": "sha256:3b89af973f89a54450aa28a71fe7454ec3be6bfd352688c65b72366552b79ab9",
+    "size_bytes": 23777280,
+    "file_count": 303
+  }
+}

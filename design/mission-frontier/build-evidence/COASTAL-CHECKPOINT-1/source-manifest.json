@@ -1,12 +1,22 @@
 {
   "date": "2026-09-15",
   "baseMain": "0f877a9",
-  "scope": "Final exported coastal kit and local qualification; delivery documents may receive links after this snapshot.",
+  "scope": "Final exported coastal kit, local qualification and confirmed delivery evidence. Handoff and acceptance are excluded from the inventory to avoid self-referential delivery updates.",
   "files": [
     {
+      "path": "design-qa.md",
+      "bytes": 58957,
+      "sha256": "c46acb325f4f793801148f3162e765c228daa9766a3084bf7e0920af251d567e"
+    },
+    {
       "path": "design/mission-frontier/ART-CHECKPOINT-1.md",
-      "bytes": 10793,
-      "sha256": "09310ec21fb797a8ce886a3759b223022ff4e1ec1b33e83d3887c58d1a9ee9c1"
+      "bytes": 10773,
+      "sha256": "384f6f32c606b185c1d31e40e82f8574c75535de99d493a8a9ca6a343347662b"
+    },
+    {
+      "path": "design/mission-frontier/BUILD-GOALS.md",
+      "bytes": 20833,
+      "sha256": "274e9f9d2d8f447d4cca170fecd3264f52c503da10c84d9efa00e15741984e81"
     },
     {
       "path": "design/mission-frontier/assets/staging/coastal-checkpoint-1/ASSIGNMENT.md",
@@ -319,6 +329,26 @@
       "sha256": "0c06fe9af6ff7ef72c84d32147857ee637e59d075e43d878dce2e98c6d9f93e3"
     },
     {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/journal-build.txt",
+      "bytes": 1572,
+      "sha256": "a5afd116a2863c6764781a90a65b0ceaec8103316129f323a562c32e3b5ec56e"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/journal-comparison.jpg",
+      "bytes": 50293,
+      "sha256": "7598ce811dde9e02797449ceb41d34eb2bace24eabdfe02a1e2acf7f0b38dc05"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/journal-publication.json",
+      "bytes": 907,
+      "sha256": "33ca882f14876ddcd8c04c3f2884df6b45e3173c617e190193bc3abe93afe4e2"
+    },
+    {
+      "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/journal-qualification.json",
+      "bytes": 463,
+      "sha256": "f98e3956edf71f4ca9b588444027c7d393b91d33895af9119f5b6e50000da2d4"
+    },
+    {
       "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/lint.txt",
       "bytes": 123,
       "sha256": "54697d20385de4ccbd86102278a969df6b48a5e6667056a46d7e54a5b1281fc2"
@@ -462,11 +492,6 @@
       "path": "design/mission-frontier/build-evidence/COASTAL-CHECKPOINT-1/world-night.jpg",
       "bytes": 183911,
       "sha256": "effdb80280060812eb7f2067f977dbf76afbd157e9198822ed686594a4926a7d"
-    },
-    {
-      "path": "design-qa.md",
-      "bytes": 58957,
-      "sha256": "c46acb325f4f793801148f3162e765c228daa9766a3084bf7e0920af251d567e"
     },
     {
       "path": "public/frontier/assets/coastal/manifest.json",

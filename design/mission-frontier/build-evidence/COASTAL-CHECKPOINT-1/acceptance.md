@@ -1,6 +1,6 @@
 # Coastal checkpoint 1 — acceptance
 
-15 September 2026. **Visual and technical matrix passed for this bounded checkpoint; delivery packaging in progress. Artistic approval remains with Shaun.**
+15 September 2026. **Visual, technical and delivery matrix passed for this bounded checkpoint. Artistic approval remains with Shaun.**
 
 Branch `codex/mission-frontier-coastal-checkpoint-1` includes main `0f877a9` / merged HUD PR #88 through merge `aeec649`. Final seven-layer Astra export is integrated; earlier blockouts and first-detail captures are historical.
 
@@ -15,7 +15,7 @@ Branch `codex/mission-frontier-coastal-checkpoint-1` includes main `0f877a9` / m
 | Runtime truth and access | Pass. Active task selection; repair selection → Inspect → Watch shows completed run, parked worker, reason and eligible action; World → HQ → Watch → World works. `hq-repair.jpg`, `watch-repair.jpg`, `world-blocked.jpg`. Disconnection shows Last known and removes Watch, then sample connection restoration recovers Working. `world-disconnected.jpg`. Fixture Reconnect alone does not change the deliberately forced sample connection; QA toggle restores it. |
 | Export correctness | Pass. Seven hashes/dimensions/anchors checked on integration and in tests. Packed Blender source, reproducible exporter, provenance and independent registration audit retained. Missing required art produces recoverable World unavailable / Retry artwork; `incomplete-kit-error.txt`. |
 | Regression checks | Pass after final assets and main/HUD merge: 88 Frontier, 18 Frontier API, 4 Sites tests; typecheck, lint, format, main build, then Frontier build. Named logs in this folder. Browser error log empty. |
-| Delivery | Final handoff and source inventory prepared. Draft PR and separate journal publication recorded in HANDOFF when confirmed. Preview on port 5206. No merge or game publication. |
+| Delivery | Pass. Draft PR #89 open and mergeable; journal version 20 published with existing owner-only access; published article verified. HANDOFF and journal-publication.json retain receipts. Preview on port 5206 is running and open. No merge or game publication. |
 
 ## Limits and remaining visual difference
 
