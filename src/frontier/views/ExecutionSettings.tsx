@@ -7,6 +7,7 @@ import {
 } from "@phosphor-icons/react";
 import { useState } from "react";
 import { providerRuntimeDefaults } from "../../../server/policy-defaults.mjs";
+import { candidateGateStages } from "../../components/runtime/workflow";
 import type {
   RolePolicyId,
   RuntimeAgentPolicy,
@@ -17,10 +18,9 @@ import type {
 } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { FrontierGateway } from "../runtime/contracts";
-import { policyRoles, providerPolicyMatrix } from "../runtime/policies";
+import { policyRoles, providerProfilePolicyMatrices } from "../runtime/policies";
 import { stageLabels } from "../runtime/presentation";
 import { type SettingsInput, settingsInput, settingsIssue } from "../runtime/settings";
-import { candidateGateStages } from "../../components/runtime/workflow";
 import { PolicyChoice, ProviderPresets } from "./PolicyMatrix";
 
 /**
@@ -102,10 +102,9 @@ function SettingsEditor({
     update({ ...draft, stagePolicies: matrices.standard, profileStagePolicies: matrices });
   }
   function useProvider(provider: "codex" | "claude") {
-    const roles = providerPolicyMatrix(provider, profile, editingStatus);
-    if (!roles) return;
+    const matrices = providerProfilePolicyMatrices(provider, editingStatus);
+    if (!matrices) return;
     const fallback = providerRuntimeDefaults(provider);
-    const matrices = { ...draft.profileStagePolicies, [profile]: roles };
     update({
       ...draft,
       defaultModel: fallback.model,
@@ -223,7 +222,14 @@ function SettingsEditor({
               <section className="workflow-card">
                 <div className="section-title">
                   <h3>Workflow role defaults</h3>
-                  <ProviderPresets status={editingStatus} disabled={busy} onUseProvider={useProvider} />
+                  <ProviderPresets
+                    status={editingStatus}
+                    disabled={busy}
+                    onUseProvider={useProvider}
+                    providerAvailable={(provider) =>
+                      providerProfilePolicyMatrices(provider, editingStatus) !== null
+                    }
+                  />
                   <select
                     aria-label="Policy profile"
                     value={profile}

@@ -1,6 +1,20 @@
-import path from "node:path";
-import os from "node:os";
 import { copyFile, mkdir, rm } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { validatedAttachmentReadPaths } from "./attachment-storage.mjs";
+import { candidateGateCommandLimit } from "./candidate-gate-policy.mjs";
+import { effectivePolicyFromReservation } from "./effective-policy.mjs";
+import { symlinkedDependencySourceRoots } from "./git-worktree.mjs";
+import { enrichUsage } from "./model-catalog.mjs";
+import {
+  assertRepairAuthorizerUnchanged,
+  sameRepairReservationAuthority,
+} from "./orchestrator-repair-authority.mjs";
+import { currentCandidate, stageTimeoutMs, throwIfAborted } from "./orchestrator-run-policy.mjs";
+
+import { activity, now } from "./orchestrator-stage-support.mjs";
+import { parseNoChangesNeeded, requireActiveRunReservation } from "./orchestrator-task-helpers.mjs";
+import { isProcessTimeoutError } from "./process-runtime.mjs";
 import {
   buildExecutionRequest,
   buildRepairRequest,
@@ -8,11 +22,6 @@ import {
   getStageMetadata,
   projectRepairFindings,
 } from "./prompts.mjs";
-import { candidateGateCommandLimit } from "./candidate-gate-policy.mjs";
-import { validatedAttachmentReadPaths } from "./attachment-storage.mjs";
-import { isProcessTimeoutError } from "./process-runtime.mjs";
-import { symlinkedDependencySourceRoots } from "./git-worktree.mjs";
-import { enrichUsage } from "./model-catalog.mjs";
 import {
   beginAgentRun,
   DEFAULT_EXECUTION_PROVIDER,
@@ -21,19 +30,6 @@ import {
   runEventMetadata,
   runKindFor,
 } from "./run-activity.mjs";
-
-import { now, activity } from "./orchestrator-stage-support.mjs";
-import {
-  throwIfAborted,
-  currentCandidate,
-  resolveRunAgentPolicy,
-  stageTimeoutMs,
-} from "./orchestrator-run-policy.mjs";
-import {
-  assertRepairAuthorizerUnchanged,
-  sameRepairReservationAuthority,
-} from "./orchestrator-repair-authority.mjs";
-import { requireActiveRunReservation, parseNoChangesNeeded } from "./orchestrator-task-helpers.mjs";
 
 export class RepairExecutionOrchestrator {
   constructor({
@@ -237,13 +233,15 @@ export class RepairExecutionOrchestrator {
     let agentRequest =
       promptOverride ??
       (candidate ? buildExecutionRequest(task, stageId, candidate) : buildStageRequest(task, stageId));
-    const settings = await this._store.settings();
-    const policy = resolveRunAgentPolicy(task, policyId, settings);
     const runId = crypto.randomUUID();
     const startedAt = now();
     const runRole = runScopeId ?? policyId;
     const runKind = runKindFor(stageId, runRole, workPackageId);
     const runtimeTemp = path.join(os.tmpdir(), "agent-harness", task.id, runId);
+    const reservedAttempt = Object.values(task.stageRunReservations ?? {}).find(
+      (entry) => entry?.id === task.activeRunReservationId,
+    );
+    const reservedPolicy = effectivePolicyFromReservation(reservedAttempt, policyId);
     // Stages against `task.repositoryPath` run in the operator's real working tree,
     // where there is no existing check, so it is snapshotted and required to come back
     // identical. `candidate` was the wrong proxy for that: a work package (`candidate`
@@ -252,8 +250,11 @@ export class RepairExecutionOrchestrator {
     // would fail every successful implementation. The real distinguishing fact is
     // whether `cwd` is the operator's real checkout at all.
     const sourceSnapshot =
-      cwd === task.repositoryPath ? await this._snapshotSource(policy.provider, cwd, effectiveSandbox) : null;
+      cwd === task.repositoryPath
+        ? await this._snapshotSource(reservedPolicy.provider, cwd, effectiveSandbox)
+        : null;
     let runProvider = DEFAULT_EXECUTION_PROVIDER;
+    let policy = reservedPolicy;
     await this._store.update(task.id, (draft) => {
       const reservation = Object.values(draft.stageRunReservations ?? {}).find(
         (entry) => entry?.id === draft.activeRunReservationId,
@@ -261,15 +262,12 @@ export class RepairExecutionOrchestrator {
       if (!reservation || reservation.kind !== draft.activeRunKind || reservation.stage !== stageId) {
         throw new Error("The active workflow attempt is missing its persisted run reservation.");
       }
-      // The reservation owns provider identity for the attempt. A run may never
-      // execute on a provider other than the one its reservation reserved, so a
-      // resolved policy that disagrees refuses to spawn instead of falling back.
-      const reservationProvider = readExecutionProvider(reservation);
-      if (policy.provider !== reservationProvider) {
-        throw new Error(
-          `Stage ${stageId} resolved provider ${policy.provider} but its workflow reservation is bound to ${reservationProvider}.`,
-        );
+      const persistedPolicy = effectivePolicyFromReservation(reservation, policyId);
+      if (JSON.stringify(persistedPolicy) !== JSON.stringify(reservedPolicy)) {
+        throw new Error("The active workflow reservation policy changed before execution could start.");
       }
+      policy = persistedPolicy;
+      const reservationProvider = readExecutionProvider(reservation);
       runProvider = reservationProvider;
       draft.currentStage = stageId;
       const detail =
@@ -295,6 +293,17 @@ export class RepairExecutionOrchestrator {
         workPackageId,
         workflowAttempt: reservation?.workflowAttempt ?? null,
         workflowReservationId: reservation?.id ?? null,
+        policyVersion: policy.policyVersion,
+        policyProfile: policy.profile,
+        policyRole: policy.role,
+        policySource: policy.source,
+        providerConstraint: policy.providerConstraint,
+        selectedProvider: policy.selectedProvider,
+        selectedModel: policy.selectedModel,
+        selectedReasoning: policy.selectedReasoning,
+        effectiveModel: policy.model,
+        effectiveReasoning: policy.reasoning,
+        policyEscalationReason: policy.escalationReason,
       });
       draft.events.push(
         activity(
@@ -420,11 +429,12 @@ export class RepairExecutionOrchestrator {
       result.startedAt = startedAt;
       result.completedAt = completedAt;
       result.durationMs = Math.max(0, new Date(completedAt).getTime() - new Date(startedAt).getTime());
+      const pricingSettings = await this._store.settings();
       result.usage = enrichUsage(
         result.model,
         result.usage,
-        settings.pricing?.rates,
-        settings.pricing?.version,
+        pricingSettings.pricing?.rates,
+        pricingSettings.pricing?.version,
       );
       result.runtimeEvents = runtimeEvents;
       await this._finishAgentRun(task.id, stageId, eventLabel ?? metadata.label, result, "completed");

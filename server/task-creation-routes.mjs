@@ -61,6 +61,9 @@ export function createTaskCreationRoutes({
         reasoning: requestedReasoning,
       });
       const taskPolicies = policySnapshot.stagePolicies;
+      const taskFallbackPolicy = policySnapshot.providerConstraint
+        ? taskPolicies.triage
+        : { model: requestedModel, reasoning: requestedReasoning };
       const repositoryPath = await validateRepository(input.repositoryPath);
       const priority = ["low", "medium", "high"].includes(input.priority) ? input.priority : "medium";
       let experiment = null;
@@ -112,8 +115,8 @@ export function createTaskCreationRoutes({
           designRequested: input.designRequested === true,
           designPolicies,
           designPolicyProvenance: input.designPolicies ? "task-selection" : "settings-default",
-          model: requestedModel,
-          reasoning: requestedReasoning,
+          model: taskFallbackPolicy.model,
+          reasoning: taskFallbackPolicy.reasoning,
           ...policySnapshot,
           workflowProfile,
           experiment,

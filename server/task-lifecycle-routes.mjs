@@ -1,7 +1,7 @@
-import { normalizeEvaluationInput } from "./evaluation.mjs";
-import { selectWorkflowProfile, WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { normalizeEvaluationInput } from "./evaluation.mjs";
+import { selectWorkflowProfile, WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
 
 export function createTaskLifecycleRoutes({
   store,
@@ -513,6 +513,10 @@ export function createTaskLifecycleRoutes({
             profileStagePolicies: structuredClone(
               source.agentConfig?.profileStagePolicies ?? settings.profileStagePolicies,
             ),
+            providerConstraint: source.agentConfig?.providerConstraint ?? null,
+            repairEscalationPolicies: structuredClone(source.agentConfig?.repairEscalationPolicies ?? {}),
+            rolePolicySources: structuredClone(source.agentConfig?.rolePolicySources ?? {}),
+            rolePolicyOverrides: structuredClone(source.agentConfig?.rolePolicyOverrides ?? {}),
             workflowProfile,
             repositoryAuthority,
             continuation: {

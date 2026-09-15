@@ -5,6 +5,7 @@ import {
   isInvalidApprovedPlanFailure,
 } from "../src/workflow-recovery-policy.ts";
 import { GATE_AUTO_ADVANCE, resolveGatePolicy } from "./gate-policies.mjs";
+import { providerForModelId } from "./model-catalog.mjs";
 import { canStartRun, currentCandidate, reserveRun } from "./orchestrator-run-policy.mjs";
 import { activity, completeGrillSession, now, RUN_KINDS } from "./orchestrator-stage-support.mjs";
 import { recordApproval, stageForRun } from "./orchestrator-task-helpers.mjs";
@@ -323,7 +324,10 @@ export class TaskControlOrchestrator {
       if (!changed) return;
       draft.models = [
         ...new Set(Object.values(draft.agentConfig.stagePolicies ?? {}).map((policy) => policy.model)),
-      ].map((model) => ({ provider: "openai", model }));
+      ].map((model) => ({
+        provider: providerForModelId(model) === "claude" ? "anthropic" : "openai",
+        model,
+      }));
       if (
         prior === "fast" &&
         profile !== "fast" &&

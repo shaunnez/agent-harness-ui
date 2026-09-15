@@ -1,10 +1,11 @@
+import { defaultProfileStagePolicies } from "../../../server/policy-defaults.mjs";
 import { resolveRolePolicyLifecycleEligibility } from "../../../server/role-policy-eligibility.mjs";
 import type { RuntimeProject, RuntimeTask } from "../../domain.ts";
 import type { FrontierGateway } from "../runtime/contracts.ts";
 import { draftPolicies, draftProfile, policyRoles } from "../runtime/policies.ts";
 import { isExecuting } from "../runtime/presentation.ts";
-import { fixtureSettings } from "./settings.ts";
 import { settingsIssue } from "../runtime/settings.ts";
+import { fixtureSettings } from "./settings.ts";
 
 /** Local sample management never writes a repository, store, or model configuration. */
 export function fixtureManagement(
@@ -165,6 +166,9 @@ export function fixtureManagement(
       };
       task.agentConfig.rolePolicyOverrides = { ...task.agentConfig.rolePolicyOverrides, [role]: policy };
       for (const matrix of Object.values(task.agentConfig.profileStagePolicies ?? {})) matrix[role] = policy;
+      task.models = [
+        ...new Set(Object.values(task.agentConfig.stagePolicies).map((entry) => entry.model)),
+      ].map((model) => ({ provider: model.startsWith("claude-") ? "anthropic" : "openai", model }));
       changed();
     },
     async cancel(id) {
@@ -215,22 +219,36 @@ export function fixtureManagement(
     methods,
     snapshotPolicies(draft: Parameters<FrontierGateway["create"]>[0]) {
       const workflowProfile = draftProfile(draft);
-      const profiles = structuredClone(configuration.settings.profileStagePolicies);
+      const stagePolicies = draftPolicies(draft, configuration.settings);
+      const profiles = structuredClone(
+        draft.providerConstraint
+          ? defaultProfileStagePolicies(draft.providerConstraint)
+          : configuration.settings.profileStagePolicies,
+      );
       for (const matrix of Object.values(profiles ?? {}))
         Object.assign(matrix, structuredClone(draft.rolePolicyOverrides ?? {}));
       return {
         workflowProfile,
         grillPolicy: configuration.settings.grillPolicy,
         agentConfig: {
-          model: configuration.settings.defaultModel,
-          reasoning: configuration.settings.defaultReasoning,
-          stagePolicies: draftPolicies(draft, configuration.settings),
+          provider: draft.providerConstraint ?? "codex",
+          model: draft.providerConstraint ? stagePolicies.triage.model : configuration.settings.defaultModel,
+          reasoning: draft.providerConstraint
+            ? stagePolicies.triage.reasoning
+            : configuration.settings.defaultReasoning,
+          stagePolicies,
           profileStagePolicies: profiles,
+          policySnapshotVersion: 3,
+          providerConstraint: draft.providerConstraint ?? null,
           rolePolicyOverrides: structuredClone(draft.rolePolicyOverrides ?? {}),
           rolePolicySources: Object.fromEntries(
             policyRoles.map(({ id }) => [
               id,
-              draft.rolePolicyOverrides?.[id] ? ("task-override" as const) : ("settings-default" as const),
+              draft.rolePolicyOverrides?.[id]
+                ? ("task-override" as const)
+                : draft.providerConstraint
+                  ? ("provider-preset" as const)
+                  : ("settings-default" as const),
             ]),
           ),
         },

@@ -63,6 +63,8 @@ export const RUNTIME_FRESHNESS_REASONS = Object.freeze({
   revision_change: "Candidate evidence belongs to a previous candidate revision.",
   provider_mismatch:
     "Candidate evidence was produced by a different execution provider than the stage reservation.",
+  policy_mismatch:
+    "Candidate evidence was produced with a different model or reasoning level than the stage reservation.",
   missing_authoritative_summary:
     "No authoritative persisted terminal run summary is available for this gate.",
   contradictory_evidence: "Candidate evidence contains contradictory result fields.",
@@ -282,6 +284,17 @@ export function beginAgentRun(task, input) {
     workPackageId: input.workPackageId ?? null,
     workflowAttempt: input.workflowAttempt ?? null,
     workflowReservationId: input.workflowReservationId ?? null,
+    policyVersion: input.policyVersion ?? null,
+    policyProfile: input.policyProfile ?? null,
+    policyRole: input.policyRole ?? null,
+    policySource: input.policySource ?? null,
+    providerConstraint: input.providerConstraint ?? null,
+    selectedProvider: input.selectedProvider ?? null,
+    selectedModel: input.selectedModel ?? input.model ?? null,
+    selectedReasoning: input.selectedReasoning ?? input.reasoning ?? null,
+    effectiveModel: input.effectiveModel ?? input.model ?? null,
+    effectiveReasoning: input.effectiveReasoning ?? input.reasoning ?? null,
+    policyEscalationReason: input.policyEscalationReason ?? null,
     attempt: relatedRuns.length + 1,
     retryOfRunId,
     repairOfRunId,
@@ -390,7 +403,7 @@ export function resolveGateFreshness(task, stage) {
     return createFreshness(stage, null, null, null, targetResult.code, null);
   }
   const stageRuns = terminalStageRuns(task, stage);
-  const expectedProvider = expectedStageProvider(task, stage);
+  const expectedReservation = task?.stageRunReservations?.[stage] ?? null;
   const selection = selectAuthoritativeRun(candidateRelevantRuns(task, stageRuns, target, stage));
   if (selection.reasonCode) {
     return createFreshness(stage, target, null, null, selection.reasonCode, null);
@@ -409,16 +422,16 @@ export function resolveGateFreshness(task, stage) {
       findRunArtifact(task, diagnostic.run),
       target,
       stage,
-      expectedProvider,
+      expectedReservation,
     );
   }
   const artifact = findRunArtifact(task, selected);
-  return evaluateRunFreshness(selected, artifact, target, stage, expectedProvider);
+  return evaluateRunFreshness(selected, artifact, target, stage, expectedReservation);
 }
 
-export function resolvePersistedRunFreshness(run, artifact, target, stage, expectedProvider = null) {
+export function resolvePersistedRunFreshness(run, artifact, target, stage, expectedReservation = null) {
   if (!CANDIDATE_GATE_STAGES.includes(stage)) return null;
-  return evaluateRunFreshness(run, artifact, target, stage, expectedProvider);
+  return evaluateRunFreshness(run, artifact, target, stage, expectedReservation);
 }
 
 /** Recompute the authoritative task projection and every gate run's audit state. */
@@ -430,12 +443,12 @@ export function refreshGateFreshness(task) {
     const selected = target
       ? selectAuthoritativeRun(candidateRelevantRuns(task, terminalStageRuns(task, stage), target, stage)).run
       : null;
-    const expectedProvider = expectedStageProvider(task, stage);
+    const expectedReservation = task?.stageRunReservations?.[stage] ?? null;
     projection[stage] = resolveGateFreshness(task, stage);
     for (const run of task.runs ?? []) {
       if (run.stage !== stage) continue;
       const artifact = findRunArtifact(task, run);
-      const runFreshness = evaluateRunFreshness(run, artifact, target, stage, expectedProvider);
+      const runFreshness = evaluateRunFreshness(run, artifact, target, stage, expectedReservation);
       run.freshness = runFreshness;
       if (selected?.id === run.id && runFreshness.fresh) continue;
       if (selected?.id !== run.id && runFreshness.fresh) {
@@ -505,7 +518,7 @@ function isLegacyCandidateGateEvent(event) {
   );
 }
 
-function evaluateRunFreshness(run, artifact, target, stage, expectedProvider = null) {
+function evaluateRunFreshness(run, artifact, target, stage, expectedReservation = null) {
   const sourceRunId = run?.id ?? null;
   const sourceArtifactId = run?.artifactId ?? artifact?.id ?? null;
   if (!target) {
@@ -531,8 +544,25 @@ function evaluateRunFreshness(run, artifact, target, stage, expectedProvider = n
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, identityReason, null);
   // Provider identity binds exactly like candidate identity: evidence produced by
   // a provider other than the one the stage reserved is stale, never a fallback.
+  const expectedProvider =
+    typeof expectedReservation === "string"
+      ? expectedReservation
+      : expectedReservation
+        ? readExecutionProvider(expectedReservation)
+        : null;
   if (expectedProvider != null && readExecutionProvider(run) !== expectedProvider) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "provider_mismatch", null);
+  }
+  const expectedPolicy =
+    typeof expectedReservation === "object" ? expectedReservation?.effectivePolicy : null;
+  // Deterministic Test and Final Review records deliberately have no model. For
+  // model-authored evidence, bind the run to the exact reserved model and effort.
+  if (
+    run.model != null &&
+    expectedPolicy &&
+    (run.model !== expectedPolicy.model || run.reasoning !== expectedPolicy.reasoning)
+  ) {
+    return createFreshness(stage, target, sourceRunId, sourceArtifactId, "policy_mismatch", null);
   }
   if (artifact && artifact.stage !== stage) {
     return createFreshness(stage, target, sourceRunId, sourceArtifactId, "contradictory_evidence", null);

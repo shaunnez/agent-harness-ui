@@ -94,25 +94,32 @@ export function ProviderPresets({
   status,
   disabled,
   onUseProvider,
+  providerAvailable,
 }: {
   status: RuntimeStatus | null;
   disabled?: boolean;
   onUseProvider(provider: "codex" | "claude"): void;
+  providerAvailable?(provider: "codex" | "claude"): boolean;
 }) {
   return (
     <div className="policy-presets">
       <span>Apply a provider preset</span>
-      {(["codex", "claude"] as const).map((provider) => (
-        <button
-          key={provider}
-          type="button"
-          className="text-button"
-          disabled={disabled || !selectableModels(status, provider).length}
-          onClick={() => onUseProvider(provider)}
-        >
-          {provider === "codex" ? "Use all Codex" : "Use all Claude"}
-        </button>
-      ))}
+      {(["codex", "claude"] as const).map((provider) => {
+        const available =
+          selectableModels(status, provider).length > 0 && (providerAvailable?.(provider) ?? true);
+        return (
+          <button
+            key={provider}
+            type="button"
+            className="text-button"
+            disabled={disabled || !available}
+            title={available ? undefined : `The complete ${provider} preset is unavailable in the allowlist.`}
+            onClick={() => onUseProvider(provider)}
+          >
+            {provider === "codex" ? "Use all Codex" : "Use all Claude"}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -125,6 +132,9 @@ export function PolicyMatrix({
   onChange,
   onReset,
   onUseProvider,
+  inheritedLabel = "Inherited",
+  providerAvailable,
+  providerConstraint,
 }: {
   policies: Record<string, RuntimeAgentPolicy>;
   overrides?: Partial<Record<RolePolicyId, RuntimeAgentPolicy>>;
@@ -133,10 +143,19 @@ export function PolicyMatrix({
   onChange(role: RolePolicyId, policy: RuntimeAgentPolicy): void;
   onReset(role: RolePolicyId): void;
   onUseProvider?(provider: "codex" | "claude"): void;
+  inheritedLabel?: string;
+  providerAvailable?(provider: "codex" | "claude"): boolean;
+  providerConstraint?: "codex" | "claude" | null;
 }) {
   return (
     <div className="policy-matrix-scroll">
-      {!readOnly && onUseProvider && <ProviderPresets status={status} onUseProvider={onUseProvider} />}
+      {!readOnly && onUseProvider && (
+        <ProviderPresets
+          status={status}
+          onUseProvider={onUseProvider}
+          providerAvailable={providerAvailable}
+        />
+      )}
       <table className="policy-matrix">
         <thead>
           <tr>
@@ -169,13 +188,14 @@ export function PolicyMatrix({
                             label={role.label}
                             value={policy}
                             status={status}
+                            provider={providerConstraint ?? undefined}
                             onChange={(value) => onChange(role.id, value)}
                           />
                         </div>
                       </td>
                     )}
                     <td>
-                      <span>{overrides?.[role.id] ? "Task override" : "Inherited"}</span>
+                      <span>{overrides?.[role.id] ? "Task pin" : inheritedLabel}</span>
                       {overrides?.[role.id] && !readOnly && (
                         <button
                           type="button"

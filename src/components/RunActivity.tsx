@@ -341,9 +341,22 @@ function RunDetails({ run }: { run: RuntimeRun }) {
       <Detail label="Kind / status" value={`${run.kind} · ${run.status}`} />
       <Detail label="Role" value={run.role ?? "Unavailable"} />
       <Detail
-        label="Model / reasoning"
+        label="Actual recorded policy"
         value={run.model ? `${run.model} · ${run.reasoning ?? "reasoning unavailable"}` : "Unavailable"}
       />
+      {run.selectedModel &&
+      (run.selectedModel !== run.effectiveModel || run.selectedReasoning !== run.effectiveReasoning) ? (
+        <Detail
+          label="Selected policy"
+          value={`${run.selectedModel} · ${run.selectedReasoning ?? "reasoning unavailable"}`}
+        />
+      ) : null}
+      {run.policySource ? (
+        <Detail label="Policy source" value={run.policySource.replaceAll("-", " ")} />
+      ) : null}
+      {run.policyEscalationReason ? (
+        <Detail label="Escalation reason" value={run.policyEscalationReason} />
+      ) : null}
       <Detail label="Started" value={formatDate(run.startedAt)} />
       <Detail
         label="Ended / duration"

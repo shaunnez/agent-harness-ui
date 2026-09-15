@@ -444,6 +444,10 @@ test("migrates existing task state to the compatibility-safe standard workflow p
       delete draft.reviewRetries;
       delete draft.automaticRepairCycles;
       delete draft.agentConfig.profileStagePolicies;
+      delete draft.agentConfig.rolePolicySources;
+      delete draft.agentConfig.rolePolicyOverrides;
+      delete draft.agentConfig.providerConstraint;
+      delete draft.agentConfig.repairEscalationPolicies;
       draft.agentConfig.policySnapshotVersion = 1;
     });
 
@@ -456,7 +460,9 @@ test("migrates existing task state to the compatibility-safe standard workflow p
     assert.deepEqual(migrated.reviewRetries, []);
     assert.equal(migrated.automaticRepairCycles, 0);
     assert.deepEqual(migrated.agentConfig.stagePolicies, migrated.agentConfig.profileStagePolicies.standard);
-    assert.equal(migrated.agentConfig.policySnapshotVersion, 2);
+    assert.equal(migrated.agentConfig.policySnapshotVersion, 3);
+    assert.equal(migrated.agentConfig.rolePolicySources.triage, "legacy-task-override");
+    assert.deepEqual(migrated.agentConfig.rolePolicyOverrides, migrated.agentConfig.stagePolicies);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
