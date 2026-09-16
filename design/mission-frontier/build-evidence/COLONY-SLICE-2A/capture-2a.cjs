@@ -170,7 +170,107 @@ async function stressCutaway(browser, out, prefix) {
   }
 }
 
+// Minimal PNG decoder (8-bit RGB/RGBA, non-interlaced) for pixel comparisons.
+const zlib = require("node:zlib");
+function decodePNG(buffer) {
+  let offset = 8;
+  const idat = [];
+  let width = 0;
+  let height = 0;
+  let colorType = 6;
+  while (offset < buffer.length) {
+    const length = buffer.readUInt32BE(offset);
+    const type = buffer.toString("ascii", offset + 4, offset + 8);
+    const data = buffer.subarray(offset + 8, offset + 8 + length);
+    if (type === "IHDR") {
+      width = data.readUInt32BE(0);
+      height = data.readUInt32BE(4);
+      colorType = data[9];
+    } else if (type === "IDAT") idat.push(data);
+    offset += 12 + length;
+  }
+  const channels = colorType === 6 ? 4 : colorType === 2 ? 3 : colorType === 4 ? 2 : 1;
+  const raw = zlib.inflateSync(Buffer.concat(idat));
+  const stride = width * channels;
+  const out = Buffer.alloc(height * stride);
+  for (let y = 0, pos = 0; y < height; y++) {
+    const filter = raw[pos++];
+    const line = raw.subarray(pos, pos + stride);
+    pos += stride;
+    const prev = y ? out.subarray((y - 1) * stride, y * stride) : null;
+    const cur = out.subarray(y * stride, (y + 1) * stride);
+    for (let i = 0; i < stride; i++) {
+      const a = i >= channels ? cur[i - channels] : 0;
+      const b = prev ? prev[i] : 0;
+      const c = prev && i >= channels ? prev[i - channels] : 0;
+      let value = line[i];
+      if (filter === 1) value += a;
+      else if (filter === 2) value += b;
+      else if (filter === 3) value += (a + b) >> 1;
+      else if (filter === 4) {
+        const pp = a + b - c;
+        const pa = Math.abs(pp - a);
+        const pb = Math.abs(pp - b);
+        const pc = Math.abs(pp - c);
+        value += pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+      }
+      cur[i] = value & 255;
+    }
+  }
+  return { width, height, channels, data: out };
+}
+function diffPixels(fileA, fileB, region) {
+  const a = decodePNG(fs.readFileSync(path.join(OUT, fileA)));
+  const b = decodePNG(fs.readFileSync(path.join(OUT, fileB)));
+  let changed = 0;
+  let total = 0;
+  for (let y = region.y; y < region.y + region.h; y++)
+    for (let x = region.x; x < region.x + region.w; x++) {
+      const i = (y * a.width + x) * a.channels;
+      total++;
+      if (Math.abs(a.data[i] - b.data[i]) + Math.abs(a.data[i + 1] - b.data[i + 1]) + Math.abs(a.data[i + 2] - b.data[i + 2]) > 24) changed++;
+    }
+  return { changed, total };
+}
+
 const steps = {
+  /** Acceptance pass: palette tint on every crown, scatter stable across a fresh load, legacy look without the flag. */
+  async acceptance(browser, out) {
+    const size = SIZES[0];
+    const { context, page } = await openPage(browser, size);
+    await prime(page, url("workflow", "world", true), DAY);
+    await page.click("nav.proof-navigation button:has-text('Appearance')");
+    await sleep(600);
+    const shots = {};
+    for (const variant of ["command", "relay"]) {
+      await page.click(`.proof-building-options button:has-text('${variant[0].toUpperCase()}${variant.slice(1)}')`);
+      await sleep(300);
+      await page.click("nav.proof-navigation button:has-text('Exterior')");
+      await sleep(600);
+      for (const palette of ["blue", "red", "orange", "purple"]) {
+        await page.click(`.proof-palette-options button:has-text('${palette[0].toUpperCase()}${palette.slice(1)}')`);
+        await sleep(2200);
+        shots[`${variant}-${palette}`] = await shot(page, `acceptance-palette-${variant}-${palette}-${size.tag}`);
+      }
+    }
+    await context.close();
+    // The same stress world twice in fresh contexts: identical scatter means the seeded layout survives reload.
+    const worlds = [];
+    for (const pass of [1, 2]) {
+      const fresh = await openPage(browser, size);
+      await prime(fresh.page, url("colony-stress", "world", true), DAY);
+      worlds.push(await shot(fresh.page, `acceptance-stress-world-pass${pass}-${size.tag}`));
+      await fresh.context.close();
+    }
+    // Compare the scene band between the HUD panels (below the clock, above the dock, right of the minimap).
+    const region = { x: 260, y: 150, w: 940, h: 560 };
+    const stability = diffPixels(worlds[0], worlds[1], region);
+    // Two different projects' parcels must differ in the same band: compare PlanCheck's exterior with Agent Harness's.
+    const distinct = diffPixels("step4-exterior-day-1568x1003.png", "step4-exterior-harness-day-1568x1003.png", region);
+    out.palette = shots;
+    out.stability = { shots: worlds, region, ...stability, identical: stability.changed === 0 };
+    out.distinctParcels = { compared: ["step4-exterior-day-1568x1003.png", "step4-exterior-harness-day-1568x1003.png"], region, ...distinct };
+  },
   /** Step 4: cliff rims, baked AO and seeded scatter; ten distinct parcels, day and night, both sizes. */
   async step4(browser, out) {
     for (const size of SIZES) {
