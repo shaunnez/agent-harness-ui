@@ -2,7 +2,13 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { type AnimationClip, AnimationMixer, type Group, type Object3D } from "three";
 import { actorSeed, patrolPose, workActions } from "../world/worker-behavior";
-import { type Point3, proofWorkerScale, type ProofWorker as Worker } from "./model";
+import {
+  type Point3,
+  type ProofView,
+  type ProofWorker as Worker,
+  workerScale,
+  workerViewScale,
+} from "./model";
 import { cloneWorker, disposeWorker } from "./worker-batching";
 import { applyGait, buildGait, gaitBob, gaitStrideCycle, restGait } from "./worker-gait";
 
@@ -11,6 +17,7 @@ const roamSpeed = 1.1;
 
 export function ProofWorker({
   worker,
+  view,
   source,
   selected,
   route,
@@ -19,6 +26,7 @@ export function ProofWorker({
   clips,
 }: {
   worker: Worker;
+  view: ProofView;
   source: Object3D;
   selected: boolean;
   route: Point3[];
@@ -93,23 +101,30 @@ export function ProofWorker({
       : ["repair", "blocked", "failed"].includes(worker.tone)
         ? "#ee7463"
         : "#68bbff";
+  // Ring, work light and picking scale with the body; the group origin stays at the true standing point.
+  const factor = workerViewScale[view];
   return (
     <group ref={root} position={worker.position}>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: Three ray picking mirrors the accessible DOM worker button. */}
       <primitive
         object={body}
-        scale={proofWorkerScale}
+        scale={workerScale(view)}
         onClick={(event: { stopPropagation(): void }) => {
           event.stopPropagation();
           onSelect();
         }}
       />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} scale={factor}>
         <ringGeometry args={[selected ? 1.55 : 1.32, selected ? 1.66 : 1.4, 48]} />
         <meshBasicMaterial color={selected ? "#79ccff" : status} toneMapped={false} />
       </mesh>
       {worker.behavior === "work" && worker.moving && (
-        <pointLight color={action.color} intensity={2.5} distance={2.5} position={[0, 1.1, 1]} />
+        <pointLight
+          color={action.color}
+          intensity={2.5 * factor}
+          distance={2.5 * factor}
+          position={[0, 1.1 * factor, 1 * factor]}
+        />
       )}
     </group>
   );

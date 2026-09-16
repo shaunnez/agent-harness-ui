@@ -14,7 +14,14 @@ import {
 } from "../world/environment-model";
 import { LampPool, lampBudget, type PooledLamp } from "./lamp-pool";
 import { locatedProject, occupiedSlots, type ProjectBase, visibleBases } from "./layout";
-import { type Point3, type ProofControls, type ProofInput, type ProofManifest, proofWorkers } from "./model";
+import {
+  type Point3,
+  type ProofControls,
+  type ProofInput,
+  type ProofManifest,
+  proofView,
+  proofWorkers,
+} from "./model";
 import { PerformanceProbe, profiling } from "./PerformanceProbe";
 import { ProofBase, type SceneLight } from "./ProofBase";
 import { ProofCamera } from "./ProofCamera";
@@ -105,6 +112,7 @@ export function ProofScene(props: Props) {
   const workers = proofWorkers(input, manifest, bases);
   const cutaway = input.location.view !== "world";
   const activeFocus = cutaway ? (locatedProject(input)?.id ?? null) : focusId;
+  const view = proofView(input, focusId);
   const latest = useRef({ input, onLighting });
   latest.current = { input, onLighting };
   useEffect(
@@ -242,6 +250,7 @@ export function ProofScene(props: Props) {
         <ProofWorker
           key={worker.id}
           worker={worker}
+          view={view}
           source={workerModel.scene}
           clips={workerGltf?.animations ?? []}
           selected={worker.task.id === input.selectedId}
@@ -264,6 +273,7 @@ export function ProofScene(props: Props) {
         labels={labels}
         bases={visibleBases(bases, input)}
         baseLabel={colony ? baseLabelAnchor : (manifest.sockets.base_label ?? [0, 16, -2])}
+        robotView={view}
         actors={actors.current}
         roots={roots.current}
       />

@@ -98,6 +98,22 @@ export function existingWorldUrl(search: string) {
 
 export const proofWorkerScale = 3.1 / 1.8;
 export const proofWorkerHeight = 3.1;
+export type ProofView = "world" | "exterior" | "cutaway";
+/**
+ * Robots read at a glance from every distance: 2.5x in the World view, 1.4x on a focused exterior,
+ * true size in the cutaway. Rings, labels and picking follow the same factor; standing positions,
+ * spacing and gait speed stay in true world units.
+ */
+export const workerViewScale: Record<ProofView, number> = { world: 2.5, exterior: 1.4, cutaway: 1 };
+export function proofView(input: Pick<ProofInput, "location">, focusId: string | null): ProofView {
+  return input.location.view !== "world" ? "cutaway" : focusId ? "exterior" : "world";
+}
+export function workerScale(view: ProofView) {
+  return proofWorkerScale * workerViewScale[view];
+}
+export function workerHeight(view: ProofView) {
+  return proofWorkerHeight * workerViewScale[view];
+}
 export function proofWorkers(
   input: ProofInput,
   manifest: ProofManifest,

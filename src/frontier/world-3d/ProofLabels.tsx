@@ -5,7 +5,7 @@ import { type Intersection, Matrix4, type Object3D, Raycaster, Vector2, Vector3 
 import type { Point3 } from "./colony";
 import { type ScreenRect, separateLabels } from "./labels";
 import { type ProjectBase, translated } from "./layout";
-import { proofWorkerHeight } from "./model";
+import { type ProofView, workerHeight } from "./model";
 import { profiling, recordLabelTime } from "./PerformanceProbe";
 import { isOccluded, visibleOccluders } from "./occlusion";
 
@@ -13,6 +13,7 @@ export function ProofLabels({
   labels,
   bases,
   baseLabel,
+  robotView,
   actors,
   roots,
   sceneKey,
@@ -21,6 +22,8 @@ export function ProofLabels({
   bases: ProjectBase[];
   /** Base-local anchor of the project label: the contract's for the colony, the manifest socket otherwise. */
   baseLabel: Point3;
+  /** Task cards sit above the robot's head, which grows with the view's robot scale. */
+  robotView: ProofView;
   actors: Map<string, Object3D>;
   roots: Map<string, Object3D>;
   sceneKey: string;
@@ -81,7 +84,7 @@ export function ProofLabels({
           continue;
         }
         actor.getWorldPosition(world);
-        world.y += proofWorkerHeight + 1.1;
+        world.y += workerHeight(robotView) + 1.1;
       }
       projected.copy(world).project(camera);
       const x = (projected.x * 0.5 + 0.5) * size.width;

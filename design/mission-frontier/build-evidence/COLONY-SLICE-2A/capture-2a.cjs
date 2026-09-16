@@ -147,7 +147,43 @@ async function prime(page, target, prefs, appearance) {
   await ready(page);
 }
 
+async function stressCutaway(browser, out, prefix) {
+  for (const size of SIZES) {
+    const { context, page } = await openPage(browser, size);
+    await prime(page, url("colony-stress", "project/plancheck", true), DAY);
+    const shot1 = await shot(page, `${prefix}-cutaway-${size.tag}`);
+    const cards = await cardCheck(page, size);
+    const picks = await pickAll(page);
+    await goHash(page, "project/plancheck", 800);
+    await context.close();
+    out[size.tag] = { shot: shot1, cards, picks: { ok: picks.ok, total: picks.total, failed: picks.results.filter((r) => !r.ok) } };
+  }
+}
+
 const steps = {
+  /** Step 1: robots at 2.5x (World), 1.4x (Exterior), 1x (Cutaway) with the colony flag. */
+  async step1(browser, out) {
+    for (const size of SIZES) {
+      const { context, page } = await openPage(browser, size);
+      await prime(page, url("workflow", "world", true), DAY);
+      const shots = { world: await shot(page, `step1-world-${size.tag}`) };
+      await page.click("nav.proof-navigation button:has-text('Exterior')");
+      await sleep(3000);
+      shots.exterior = await shot(page, `step1-exterior-${size.tag}`);
+      await goHash(page, "project/plancheck", 3500);
+      shots.cutaway = await shot(page, `step1-cutaway-${size.tag}`);
+      const cutaway = await cardCheck(page, size);
+      await context.close();
+      out[size.tag] = { shots, cutaway };
+    }
+  },
+  /** Step 2 (before/after): the fourteen-task cutaway at both sizes; every card clickable at its centre. */
+  async step2before(browser, out) {
+    await stressCutaway(browser, out, "step2-before");
+  },
+  async step2(browser, out) {
+    await stressCutaway(browser, out, "step2-after");
+  },
   /** Step 0: without ?colony=1 the archipelago is unchanged; with it the colony renders. */
   async step0(browser, out) {
     for (const size of SIZES) {
