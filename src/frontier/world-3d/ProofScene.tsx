@@ -1,6 +1,6 @@
 import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { Color, type DirectionalLight, type HemisphereLight, type Object3D } from "three";
+import { Color, type DirectionalLight, type HemisphereLight, type Object3D, type PointLight } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import {
   defaultEnvironment,
@@ -9,8 +9,9 @@ import {
   type WorldLighting,
 } from "../world/environment-model";
 import { baseVariants } from "./appearance";
+import { LampPool, lampBudget, type PooledLamp } from "./lamp-pool";
 import { locatedProject, type ProjectBase, visibleBases } from "./layout";
-import { type ProofControls, type ProofInput, type ProofManifest, proofWorkers } from "./model";
+import { type Point3, type ProofControls, type ProofInput, type ProofManifest, proofWorkers } from "./model";
 import { PerformanceProbe, profiling } from "./PerformanceProbe";
 import { ProofBase, type SceneLight } from "./ProofBase";
 import { ProofCamera } from "./ProofCamera";
@@ -60,6 +61,8 @@ export function ProofScene(props: Props) {
   const light = useRef<SceneLight>({ lamps: 0, time: 0 });
   const reported = useRef(-1);
   const shadowCadence = useRef(new ShadowCadence());
+  const lampPool = useRef(new LampPool());
+  const lampNodes = useRef<(PointLight | null)[]>([]);
   const sun = useRef<DirectionalLight>(null);
   const sky = useRef<HemisphereLight>(null);
   const actors = useRef(new Map<string, Object3D>());
@@ -93,11 +96,30 @@ export function ProofScene(props: Props) {
     [water],
   );
   const appearanceKey = bases.map((base) => `${base.appearance.variant}:${base.appearance.palette}`).join();
+  const lampSlots = useMemo(() => Array.from({ length: lampBudget }, (_, slot) => `lamp:${slot}`), []);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Lamp placement follows layout and variant, not identity.
+  const lampsWorld = useMemo<PooledLamp[]>(
+    () =>
+      bases.flatMap((base) =>
+        [
+          ...(manifest.environmentLightPositions ?? []),
+          ...(manifest.bases?.[base.appearance.variant].lightPositions ?? []),
+        ].map((position, index) => ({
+          key: `${base.project.id}:${index}`,
+          position: [
+            position[0] + base.position[0],
+            position[1] + base.position[1],
+            position[2] + base.position[2],
+          ] as Point3,
+        })),
+      ),
+    [manifest, layoutKey, appearanceKey],
+  );
   // biome-ignore lint/correctness/useExhaustiveDependencies: New appearance should refresh the actual scene minimap.
   useEffect(() => {
     minimapCapture.current?.();
   }, [appearanceKey, cutaway]);
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     // Small worker shadows can lag; motion stays full-rate.
     if (shadowCadence.current.expired(performance.now())) gl.shadowMap.needsUpdate = true;
     const current = latest.current;
@@ -115,6 +137,16 @@ export function ProofScene(props: Props) {
     }
     if (sky.current) sky.current.intensity = 0.95 - lighting.lamps * 0.55;
     scene.environmentIntensity = 0.28 - lighting.lamps * 0.18;
+    // Only the lamps nearest the viewer are given a real light; the rest keep their emissive lenses.
+    const lit = lighting.lamps > 0.01;
+    if (lit) lampPool.current.update(lampsWorld, state.camera.position, Math.min(delta, 0.1));
+    lampPool.current.slots.forEach((slot, index) => {
+      const node = lampNodes.current[index];
+      if (!node) return;
+      node.visible = lit;
+      node.position.set(...slot.position);
+      node.intensity = (0.1 + lighting.lamps * 16) * slot.level;
+    });
     const phase = Math.floor(lighting.hour * 2);
     if (phase !== mapPhase.current) {
       mapPhase.current = phase;
@@ -158,14 +190,23 @@ export function ProofScene(props: Props) {
             cutaway={cutaway && base.project.id === activeFocus}
             light={light}
             roots={roots.current}
-            lights={[
-              ...(manifest.environmentLightPositions ?? []),
-              ...(manifest.bases?.[base.appearance.variant].lightPositions ?? []),
-            ]}
             onSelect={() => onSelect("project", base.project.id)}
           />
         );
       })}
+      {lampSlots.map((slot, index) => (
+        <pointLight
+          key={slot}
+          color="#ffc37f"
+          intensity={0}
+          distance={5}
+          decay={2}
+          visible={false}
+          ref={(node) => {
+            lampNodes.current[index] = node;
+          }}
+        />
+      ))}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} material={water.material}>
         <planeGeometry args={[1200, 1200, 240, 240]} />
       </mesh>
