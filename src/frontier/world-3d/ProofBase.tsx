@@ -1,4 +1,5 @@
 import { hiddenEdgeGroups } from "./colony";
+import { cutawayGroups } from "./cutaway";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo } from "react";
 import { Mesh, type MeshStandardMaterial, type Object3D } from "three";
@@ -59,10 +60,7 @@ export function ProofBase({
           object.visible = !hidden.has(object.name);
       });
     }
-    for (const name of ["MF_Roof", "MF_ShellCutaway"]) {
-      const group = models.base.getObjectByName(name);
-      if (group) group.visible = !cutaway;
-    }
+    for (const group of cutawayGroups(models.base)) group.visible = !cutaway;
     return () => {
       roots.delete(base.project.id);
     };

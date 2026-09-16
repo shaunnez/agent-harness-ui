@@ -1,6 +1,8 @@
-# Frozen input contract — colony parcels and hexagonal HQ (v1.0.0)
+# Frozen input contract — colony parcels and hexagonal HQ (v1.0.1)
 
 Frozen 16 September 2026. The machine-readable contract is [assets/staging/colony-hq-v1/contract.json](../assets/staging/colony-hq-v1/contract.json); this page explains how to read it. The JSON wins over prose. The asset producer and the terrain builder build against it independently; the lead integrates. **Changes go through the lead, bump the version, and both sides re-read the file before continuing.**
+
+Version 1.0.1 corrects edge angles derived from prematurely rounded unit vectors. Exact directions now align the 27 m spans with both abutments; the parcel slots, HQ geometry, levels and approved layout decisions are unchanged. The correction and producer notifications are recorded in the slice-1 journal.
 
 ## Shared basics
 

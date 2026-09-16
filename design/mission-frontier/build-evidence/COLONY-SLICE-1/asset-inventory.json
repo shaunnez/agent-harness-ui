@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-16T02:58:37.654Z",
+  "capturedAt": "2026-09-16T03:00:55.522Z",
   "assets": [
     {
       "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.glb",
@@ -76,6 +76,66 @@
       "filename": "colony-contract.7a2e1a500879.json",
       "sha256": "7a2e1a5008796dc507cd21f4ef0cfd71a43ee6eada56b19e7122649fab35b20d",
       "bytes": 34471
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/colony-hq-v1/producer/hq-shell.glb",
+      "filename": "hq-shell.4b47f1786639.glb",
+      "sha256": "4b47f1786639b0b4f45e4a1152cd9e79aaf1fc0fe9ccd7eca2eeece1e09efdfa",
+      "bytes": 2767696,
+      "meshes": 59,
+      "materials": 19,
+      "textures": 6,
+      "animations": []
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/colony-hq-v1/producer/crown-command.glb",
+      "filename": "crown-command.2f4ae068d9f6.glb",
+      "sha256": "2f4ae068d9f6d4d1a667cacbf4e5ef29db73375717f9f8d6bc2a3333dccedecf",
+      "bytes": 1707568,
+      "meshes": 12,
+      "materials": 8,
+      "textures": 4,
+      "animations": []
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/colony-hq-v1/producer/bridge-span-27.glb",
+      "filename": "bridge-span-27.61fa0489a831.glb",
+      "sha256": "61fa0489a83173b13d44d036a245290a1b5ac928620a9f5487046b0212dd0eaf",
+      "bytes": 988788,
+      "meshes": 5,
+      "materials": 5,
+      "textures": 6,
+      "animations": []
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/colony-hq-v1/producer/bridge-end.glb",
+      "filename": "bridge-end.50920a684920.glb",
+      "sha256": "50920a68492033482a3f2debc705a87ecea074ad027be17a0f51ae386f72ef18",
+      "bytes": 432896,
+      "meshes": 3,
+      "materials": 3,
+      "textures": 4,
+      "animations": []
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/colony-hq-v1/terrain/parcel-hub.glb",
+      "filename": "parcel-hub.b7034821f9a7.glb",
+      "sha256": "b7034821f9a7095213b6747a113ec9e151fc8c6342f5243ebcea748aceb75798",
+      "bytes": 4182108,
+      "meshes": 120,
+      "materials": 11,
+      "textures": 6,
+      "animations": []
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/colony-hq-v1/terrain/parcel-a.glb",
+      "filename": "parcel-a.60b73e1b6956.glb",
+      "sha256": "60b73e1b69565220cd60e985e2ca4e2213639e7eb3d2cabe4017b60dc3dd813a",
+      "bytes": 4133044,
+      "meshes": 109,
+      "materials": 11,
+      "textures": 6,
+      "animations": []
     }
   ]
 }

@@ -404,13 +404,7 @@ def preview_lighting():
 
 def render(path, cam, transparent=True, samples=48, res=(1400, 1000), hide_groups=()):
     S = bpy.context.scene; S.camera = cam; S.render.engine = 'CYCLES'; S.cycles.samples = samples; S.cycles.use_denoising = True
-    try:
-        prefs = bpy.context.preferences.addons['cycles'].preferences; prefs.compute_device_type = 'METAL'
-        prefs.get_devices()
-        for d in prefs.devices: d.use = True
-        S.cycles.device = 'GPU'
-    except Exception as e:   # CPU fallback keeps the build reproducible on machines without Metal
-        print('cycles GPU unavailable, CPU render:', e); S.cycles.device = 'CPU'
+    S.cycles.device = 'CPU'  # Deterministic headless QA; Blender -t 2 bounds contention.
     S.render.resolution_x, S.render.resolution_y = res; S.render.resolution_percentage = 100
     S.render.film_transparent = transparent; S.render.image_settings.file_format = 'PNG'; S.render.image_settings.color_mode = 'RGBA' if transparent else 'RGB'
     hidden = []

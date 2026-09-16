@@ -4,6 +4,7 @@ import { type Object3D, OrthographicCamera, PCFShadowMap, Vector3 } from "three"
 import { MapControls } from "three/addons/controls/MapControls.js";
 import { captureScene } from "./capture";
 import { minimapFrame } from "./colony";
+import { cutawayGroups } from "./cutaway";
 import { occupiedSlots, type ProjectBase, viewCamera } from "./layout";
 import type { ProofControls, ProofInput, ProofManifest } from "./model";
 
@@ -187,10 +188,10 @@ export function ProofCamera({
         const preview = new OrthographicCamera(-half * 1.8, half * 1.8, half, -half, 0.1, 650);
         preview.position.set(...view.position);
         preview.lookAt(...view.target);
-        const groups = ["MF_Roof", "MF_ShellCutaway"].flatMap((name) => {
-          const object = roots.get(projectId)?.getObjectByName(name);
-          return object ? [{ object, visible: object.visible }] : [];
-        });
+        const groups = cutawayGroups(roots.get(projectId)).map((object) => ({
+          object,
+          visible: object.visible,
+        }));
         try {
           for (const { object } of groups) object.visible = false;
           return captureScene(gl, scene, preview, 540, 300);

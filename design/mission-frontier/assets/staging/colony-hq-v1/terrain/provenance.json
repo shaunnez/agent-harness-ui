@@ -1,0 +1,19 @@
+{
+  "sourceBlend": {
+    "path": "../../exterior-bases/astra-kit/environment.blend",
+    "sha256": "f5224910c0eb95951d3d86a887478a66eb3e8ae3452c661f5d690aac328e0a17"
+  },
+  "contractVersion": "1.0.1-frozen",
+  "contractSha256": "7a2e1a5008796dc507cd21f4ef0cfd71a43ee6eada56b19e7122649fab35b20d",
+  "generated": {
+    "parcel-hub.glb": "b7034821f9a7095213b6747a113ec9e151fc8c6342f5243ebcea748aceb75798",
+    "parcel-a.glb": "60b73e1b69565220cd60e985e2ca4e2213639e7eb3d2cabe4017b60dc3dd813a",
+    "parcel-a.blend": "135709b772c7d1b07add5b78940d431eaa1085ecc9e1e8a0b892772f1ba4933e",
+    "parcel-hub.blend": "ce1aedbd39e7a42696a8f6dc99c174bf5ef1d48722df648d3ea13dfe59ee8547",
+    "build_terrain.py": "52f80f51b727f34578252d6d0f3842b94b084fde21bf9512c111019a75f17283",
+    "compact_sources.py": "3a72576254b75bc619dd547165d91da4a0cfbb87819af3d248bbadc64771b7f6",
+    "finalize_metadata.py": "1c08ddda355f2597d762c76001e7e0ffd351a4d7efca924e04b888b4ebd0598a",
+    "validate_parcels.py": "c6152625cc67939a68b84a523aef3a9f5367204fb9b397a0d22e029cd61ca7bf",
+    "validate_export_geometry.py": "860441ebb3ea06ab0a9dbc7d17c98656b7484d60a2180052a100c75fcf40c461"
+  }
+}
