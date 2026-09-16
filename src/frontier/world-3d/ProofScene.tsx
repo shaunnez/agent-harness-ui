@@ -11,13 +11,14 @@ import {
 import { baseVariants } from "./appearance";
 import { locatedProject, type ProjectBase, visibleBases } from "./layout";
 import { type ProofControls, type ProofInput, type ProofManifest, proofWorkers } from "./model";
+import { PerformanceProbe, profiling } from "./PerformanceProbe";
 import { ProofBase, type SceneLight } from "./ProofBase";
 import { ProofCamera } from "./ProofCamera";
 import { ProofLabels } from "./ProofLabels";
 import { ProofWorker } from "./ProofWorker";
 import { SceneFinish } from "./SceneFinish";
+import { ShadowCadence } from "./shadow-cadence";
 import { createCoastalWater } from "./water";
-import { PerformanceProbe, profiling } from "./PerformanceProbe";
 import { batchWorker } from "./worker-batching";
 
 interface Props {
@@ -58,7 +59,7 @@ export function ProofScene(props: Props) {
   const clock = useRef(new LightingClock());
   const light = useRef<SceneLight>({ lamps: 0, time: 0 });
   const reported = useRef(-1);
-  const shadowUpdated = useRef(0);
+  const shadowCadence = useRef(new ShadowCadence());
   const sun = useRef<DirectionalLight>(null);
   const sky = useRef<HemisphereLight>(null);
   const actors = useRef(new Map<string, Object3D>());
@@ -97,12 +98,8 @@ export function ProofScene(props: Props) {
     minimapCapture.current?.();
   }, [appearanceKey, cutaway]);
   useFrame((_, delta) => {
-    // Architecture is static; small worker shadows can refresh at 15 Hz while motion stays full-rate.
-    const now = performance.now();
-    if (now - shadowUpdated.current > 1000 / 15) {
-      gl.shadowMap.needsUpdate = true;
-      shadowUpdated.current = now;
-    }
+    // Small worker shadows can lag; motion stays full-rate.
+    if (shadowCadence.current.expired(performance.now())) gl.shadowMap.needsUpdate = true;
     const current = latest.current;
     const moving = current.input.motion && current.input.connected && !document.hidden;
     clock.current.configure(current.input.environment ?? defaultEnvironment, moving, Date.now());
