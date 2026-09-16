@@ -127,14 +127,14 @@ contract = {
                          "note": "corners, apothem, doors, partitions and rooms are unchanged; only the envelope reads differently"},
            "massing": {
                "principle": "hex-influenced organisation, not a hex block: six curved bays of different heights around a taller hub drum",
-               "bays": {"radiusFromHubCentre": [16.5, 19.0], "parapets": [8.4, 9.2, 10.0, 10.8], "implementationDoubleBay": "one wider, lower bay across 210-270",
+               "bays": {"radiusFromHubCentre": [16.6, 17.4], "parapets": [8.6, 8.9, 9.6, 10.6, 11.6], "tiers": "upper set-back tiers of 1.6 to 2.2 m on testing, planning and review", "implementationDoubleBay": "one wider, lower bay across 210-270",
                         "dispatchBay": "projecting front bay, recessed shutter entrance, apron canopy"},
-               "hubDrum": {"radius": 12.4, "top": 11.6, "clerestory": "warm glass band 9.6 to 10.6"},
+               "hubDrum": {"radius": 9.0, "top": 13.8, "clerestory": "warm glass band 12.0 to 12.6"},
                "spines": "structural joints between bays at the corner radials, recessed 0.6 m, with service ladders and warm strip",
                "roofEquipment": "vent banks, hatches, antenna, tanks on the lower bays; nothing over the crown envelope",
                "windows": "framed bays of practical_warm_window_glass at 6.8 to 8.0 on every lobe; recessed 0.3 m",
                "eaves": 19.5,
-               "envelope": {"maxRadius": 19.5, "crownFitRadius": 11.5, "crownBase": 11.6, "maxHeight": 18.5, "labelAnchor": LABEL_Y},
+               "envelope": {"maxRadius": 19.5, "crownFitRadius": 8.6, "crownBase": 13.85, "maxHeight": 18.5, "labelAnchor": LABEL_Y},
            }},
     "materials": v1["materials"],
     "cameras": {

@@ -355,36 +355,68 @@ export function fitColonyView(
     }
   }
   if (!Number.isFinite(labels.minX)) Object.assign(labels, land);
-  const safeWidth = Math.max(200, viewport.width - hudSafeInsets.left - hudSafeInsets.right);
-  const safeHeight = Math.max(160, viewport.height - hudSafeInsets.top - hudSafeInsets.bottom);
   const frameWidth = viewport.width - worldFrameMargin * 2;
   const frameHeight = viewport.height - worldFrameMargin * 2;
-  const pixelsPerMetre = Math.min(
+  let pixelsPerMetre = Math.min(
     frameWidth / (land.maxX - land.minX + worldFitMargin * 2),
     frameHeight / (land.maxY - land.minY + worldFitMargin * 2),
-    safeWidth / Math.max(1, labels.maxX - labels.minX + 4),
-    safeHeight / Math.max(1, labels.maxY - labels.minY + 4),
   );
-  const verticalSpan = viewport.height / pixelsPerMetre;
-  // Centre the land in the frame, then nudge so every label stays inside the safe box.
-  const safeCentreX = (hudSafeInsets.left + (viewport.width - hudSafeInsets.right)) / 2 - viewport.width / 2;
-  const safeCentreY =
-    (hudSafeInsets.top + (viewport.height - hudSafeInsets.bottom)) / 2 - viewport.height / 2;
-  let centreX = (land.minX + land.maxX) / 2,
+  // Labels (a pill about 190 x 46 px, its bottom 6 m above the anchor) must clear the corner panels.
+  const centreX = (land.minX + land.maxX) / 2,
     centreY = (land.minY + land.maxY) / 2;
-  const labelHalfW = (labels.maxX - labels.minX) / 2 + 2,
-    labelHalfH = (labels.maxY - labels.minY) / 2 + 2;
-  const labelCentreX = (labels.minX + labels.maxX) / 2,
-    labelCentreY = (labels.minY + labels.maxY) / 2;
-  // Safe box in metres relative to the frame centre (screen y up).
-  const safeLeft = centreX + (safeCentreX - safeWidth / 2) / pixelsPerMetre;
-  const safeRight = centreX + (safeCentreX + safeWidth / 2) / pixelsPerMetre;
-  const safeBottom = centreY - (safeCentreY + safeHeight / 2) / pixelsPerMetre;
-  const safeTop = centreY - (safeCentreY - safeHeight / 2) / pixelsPerMetre;
-  if (labelCentreX - labelHalfW < safeLeft) centreX -= safeLeft - (labelCentreX - labelHalfW);
-  else if (labelCentreX + labelHalfW > safeRight) centreX += labelCentreX + labelHalfW - safeRight;
-  if (labelCentreY - labelHalfH < safeBottom) centreY -= safeBottom - (labelCentreY - labelHalfH);
-  else if (labelCentreY + labelHalfH > safeTop) centreY += labelCentreY + labelHalfH - safeTop;
+  const corners = contractJson.cameras.world.hudSafeInsets1280x800;
+  const panels = [
+    { x0: 0, y0: 0, x1: corners.topLeft[0] ?? 520, y1: corners.topLeft[1] ?? 150 },
+    {
+      x0: viewport.width - (corners.topRight[0] ?? 340),
+      y0: 0,
+      x1: viewport.width,
+      y1: corners.topRight[1] ?? 300,
+    },
+    {
+      x0: viewport.width - (corners.bottomRight[0] ?? 340),
+      y0: viewport.height - (corners.bottomRight[1] ?? 260),
+      x1: viewport.width,
+      y1: viewport.height,
+    },
+    {
+      x0: 0,
+      y0: viewport.height - (corners.bottomLeft[0] ?? 250),
+      x1: corners.bottomLeft[0] ?? 250,
+      y1: viewport.height,
+    },
+  ];
+  const labelPoints = slots
+    .filter((slot) => slot.id !== hubSlot.id)
+    .map((slot) => [
+      dot([slot.world[0], baseLabelAnchor[1] + labelHeight, slot.world[1]], axes.right),
+      dot([slot.world[0], baseLabelAnchor[1] + labelHeight, slot.world[1]], axes.up),
+    ]);
+  // HQ plateaus (a disc of the plateau radius at ground level) must stay clear of the two bottom panels,
+  // which would otherwise hide a whole base at 1280 x 720; the top panels may cover land.
+  const bottomPanels = panels.slice(2);
+  const hqPoints = slots
+    .filter((slot) => slot.id !== hubSlot.id)
+    .map((slot) => [
+      dot([slot.world[0], ground, slot.world[1]], axes.right),
+      dot([slot.world[0], ground, slot.world[1]], axes.up),
+    ]);
+  const hit = (rect: { x0: number; y0: number; x1: number; y1: number }, list: typeof panels) =>
+    list.some((p) => rect.x0 < p.x1 && p.x0 < rect.x1 && rect.y0 < p.y1 && p.y0 < rect.y1);
+  const collides = (ppm: number) =>
+    labelPoints.some(([lx, ly]) => {
+      const px = viewport.width / 2 + ((lx ?? 0) - centreX) * ppm;
+      const py = viewport.height / 2 - ((ly ?? 0) - centreY) * ppm;
+      return hit({ x0: px - 95, y0: py - 46, x1: px + 95, y1: py }, panels);
+    }) ||
+    hqPoints.some(([hx, hy]) => {
+      const px = viewport.width / 2 + ((hx ?? 0) - centreX) * ppm;
+      const py = viewport.height / 2 - ((hy ?? 0) - centreY) * ppm;
+      const r = parcelPlateauRadius * ppm;
+      return hit({ x0: px - r, y0: py - r * 0.55, x1: px + r, y1: py + r * 0.55 }, bottomPanels);
+    });
+  for (let i = 0; i < 24 && collides(pixelsPerMetre); i++) pixelsPerMetre *= 0.96;
+  const verticalSpan = viewport.height / pixelsPerMetre;
   // The ground point that projects to the frame centre becomes the orbit target.
   const groundV: Point3 = [vx, 0, vz];
   const along = (centreY - ground * axes.up[1]) / dot(groundV, axes.up);

@@ -1,0 +1,237 @@
+{
+  "step": "gate",
+  "capturedAt": "2026-09-16T16:26:27.165Z",
+  "base": "http://127.0.0.1:5243/",
+  "shots": {
+    "gate-world-day-1568x1003": {
+      "file": "gate-world-day-1568x1003.png",
+      "fill": {
+        "width": 1568,
+        "height": 1003,
+        "box": {
+          "minX": 1568,
+          "maxX": -1,
+          "minY": 1003,
+          "maxY": -1
+        },
+        "litFraction": 0
+      },
+      "labels": [
+        {
+          "text": "PlanCheck",
+          "x": 712.4609375,
+          "y": 347.3721618652344,
+          "width": 143.078125,
+          "height": 42.9375
+        },
+        {
+          "text": "Agent Harness",
+          "x": 1254.0191650390625,
+          "y": 500.77606201171875,
+          "width": 176.625,
+          "height": 42.9375
+        },
+        {
+          "text": "MyStrataAssist",
+          "x": 135.9808807373047,
+          "y": 500.81695556640625,
+          "width": 179.37501525878906,
+          "height": 42.9375
+        },
+        {
+          "text": "PC-153 · GrillNeeds your answer",
+          "x": 679.659423828125,
+          "y": 458.8184814453125,
+          "width": 137.046875,
+          "height": 40
+        },
+        {
+          "text": "AH-051 · TestExecution stopped",
+          "x": 1144.6195068359375,
+          "y": 579.4918823242188,
+          "width": 140.40625,
+          "height": 40
+        },
+        {
+          "text": "MS-086 · GrillNeeds your answer",
+          "x": 26.53443145751953,
+          "y": 579.5327758789062,
+          "width": 143.25,
+          "height": 40
+        }
+      ]
+    },
+    "gate-exterior-day-1568x1003": {
+      "file": "gate-exterior-day-1568x1003.png",
+      "fill": {
+        "width": 1568,
+        "height": 1003,
+        "box": {
+          "minX": 1568,
+          "maxX": -1,
+          "minY": 1003,
+          "maxY": -1
+        },
+        "litFraction": 0
+      }
+    },
+    "gate-cutaway-day-1568x1003": {
+      "file": "gate-cutaway-day-1568x1003.png",
+      "fill": {
+        "width": 1568,
+        "height": 1003,
+        "box": {
+          "minX": 1568,
+          "maxX": -1,
+          "minY": 1003,
+          "maxY": -1
+        },
+        "litFraction": 0
+      },
+      "labels": [
+        {
+          "text": "PC-142 · ImplementWorking",
+          "x": 420.5178527832031,
+          "y": 182.2046661376953,
+          "width": 177.56246948242188,
+          "height": 57.078125
+        },
+        {
+          "text": "PC-153 · GrillNeeds your answer",
+          "x": 398.5993957519531,
+          "y": 366.517333984375,
+          "width": 160.06246948242188,
+          "height": 57.078125
+        },
+        {
+          "text": "PC-148 · Dev reviewRepair required",
+          "x": 919.6038818359375,
+          "y": 275.1013488769531,
+          "width": 185.359375,
+          "height": 57.078125
+        }
+      ]
+    },
+    "gate-world-dusk-1568x1003": {
+      "file": "gate-world-dusk-1568x1003.png"
+    },
+    "gate-exterior-dusk-1568x1003": {
+      "file": "gate-exterior-dusk-1568x1003.png"
+    },
+    "gate-world-day-1280x720": {
+      "file": "gate-world-day-1280x720.png",
+      "fill": {
+        "width": 1280,
+        "height": 720,
+        "box": {
+          "minX": 1280,
+          "maxX": -1,
+          "minY": 720,
+          "maxY": -1
+        },
+        "litFraction": 0
+      },
+      "labels": [
+        {
+          "text": "PlanCheck",
+          "x": 568.4609375,
+          "y": 267.8800354003906,
+          "width": 143.078125,
+          "height": 42.9375
+        },
+        {
+          "text": "Agent Harness",
+          "x": 797.89599609375,
+          "y": 321.0935974121094,
+          "width": 176.625,
+          "height": 42.9375
+        },
+        {
+          "text": "MyStrataAssist",
+          "x": 304.10400390625,
+          "y": 321.11163330078125,
+          "width": 179.375,
+          "height": 42.9375
+        },
+        {
+          "text": "PC-153 · GrillNeeds your answer",
+          "x": 555.6822509765625,
+          "y": 318.8175354003906,
+          "width": 137.046875,
+          "height": 40
+        },
+        {
+          "text": "AH-051 · TestExecution stopped",
+          "x": 759.7775268554688,
+          "y": 372.0310974121094,
+          "width": 140.40625,
+          "height": 40
+        },
+        {
+          "text": "MS-086 · GrillNeeds your answer",
+          "x": 265.9386291503906,
+          "y": 372.04913330078125,
+          "width": 143.25,
+          "height": 40
+        }
+      ]
+    },
+    "gate-exterior-day-1280x720": {
+      "file": "gate-exterior-day-1280x720.png",
+      "fill": {
+        "width": 1280,
+        "height": 720,
+        "box": {
+          "minX": 1280,
+          "maxX": -1,
+          "minY": 720,
+          "maxY": -1
+        },
+        "litFraction": 0
+      }
+    },
+    "gate-cutaway-day-1280x720": {
+      "file": "gate-cutaway-day-1280x720.png",
+      "fill": {
+        "width": 1280,
+        "height": 720,
+        "box": {
+          "minX": 1280,
+          "maxX": -1,
+          "minY": 720,
+          "maxY": -1
+        },
+        "litFraction": 0
+      },
+      "labels": [
+        {
+          "text": "PC-142 · ImplementWorking",
+          "x": 335.6856994628906,
+          "y": 454.5938720703125,
+          "width": 177.56246948242188,
+          "height": 57.078125
+        },
+        {
+          "text": "PC-153 · GrillNeeds your answer",
+          "x": 322.42047119140625,
+          "y": 214.27615356445312,
+          "width": 160.0625,
+          "height": 57.078125
+        },
+        {
+          "text": "PC-148 · Dev reviewRepair required",
+          "x": 692.8528442382812,
+          "y": 234.446533203125,
+          "width": 185.359375,
+          "height": 57.078125
+        }
+      ]
+    },
+    "gate-world-dusk-1280x720": {
+      "file": "gate-world-dusk-1280x720.png"
+    },
+    "gate-exterior-dusk-1280x720": {
+      "file": "gate-exterior-dusk-1280x720.png"
+    }
+  }
+}

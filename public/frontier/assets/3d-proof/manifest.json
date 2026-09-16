@@ -1,17 +1,23 @@
 {
   "version": 3,
   "colony": {
-    "contract": "/assets/3d-proof/colony-contract.7bd0d0e596b4.json",
+    "contract": "/assets/3d-proof/colony-contract.d71fad7e8d8d.json",
     "crowns": {
-      "bastion": "/assets/3d-proof/crown-bastion.9ce974411e91.glb",
-      "command": "/assets/3d-proof/crown-command.2f4ae068d9f6.glb",
-      "relay": "/assets/3d-proof/crown-relay.ddd0551d9e28.glb",
-      "foundry": "/assets/3d-proof/crown-foundry.6d549b2535b0.glb"
+      "bastion": "/assets/3d-proof/crown-bastion.859ac38eec11.glb",
+      "command": "/assets/3d-proof/crown-command.ed1cd04d215e.glb",
+      "relay": "/assets/3d-proof/crown-relay.1913db15dbe6.glb",
+      "foundry": "/assets/3d-proof/crown-foundry.a9c0c35790d0.glb"
     },
-    "shell": "/assets/3d-proof/hq-shell.4b47f1786639.glb",
+    "shell": "/assets/3d-proof/hq-shell.2bee0db2c11e.glb",
     "bridgeSpan": "/assets/3d-proof/bridge-span-27.61fa0489a831.glb",
     "bridgeEnd": "/assets/3d-proof/bridge-end.50920a684920.glb",
     "scatterKit": "/assets/3d-proof/scatter-kit.8d5ecbfe8cc6.glb",
+    "crownPreviews": {
+      "bastion": "/assets/3d-proof/crown-preview-bastion.ee20cd747535.png",
+      "command": "/assets/3d-proof/crown-preview-command.e0a83a69635e.png",
+      "relay": "/assets/3d-proof/crown-preview-relay.201c7983b043.png",
+      "foundry": "/assets/3d-proof/crown-preview-foundry.1a96e6e5944c.png"
+    },
     "terrainTextures": {
       "gravel": "/assets/3d-proof/terrain-gravel-albedo.3e82bc8c5ea9.jpg",
       "limestone": "/assets/3d-proof/terrain-limestone-albedo.b09636eff1da.jpg",
@@ -21,24 +27,79 @@
     },
     "hqLightPositions": [
       [
-        -16,
-        5.44,
-        17
+        12.557,
+        10.4,
+        7.25
       ],
       [
-        -16,
-        5.44,
-        26
+        -12.817,
+        11.7,
+        7.4
       ],
       [
-        16,
-        5.44,
-        17
+        12.99,
+        12.6,
+        -7.5
       ],
       [
-        16,
+        16.52,
+        6.9,
+        0
+      ],
+      [
+        8.26,
+        6.9,
+        14.307
+      ],
+      [
+        -8.26,
+        6.9,
+        14.307
+      ],
+      [
+        -16.52,
+        6.9,
+        0
+      ],
+      [
+        8.26,
+        6.9,
+        -14.307
+      ],
+      [
+        0,
+        12.3,
+        9
+      ],
+      [
+        -8.457,
+        12.3,
+        -3.078
+      ],
+      [
+        0,
+        8.52,
+        21.8
+      ],
+      [
+        -11.8,
         5.44,
-        26
+        16
+      ],
+      [
+        -11.8,
+        5.44,
+        26.6
+      ],
+      [
+        11.8,
+        5.44,
+        16
+      ],
+      [
+        11.8,
+        5.44,
+        26.6
       ],
       [
         4.9,

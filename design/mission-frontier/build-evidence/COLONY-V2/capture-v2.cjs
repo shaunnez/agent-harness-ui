@@ -119,6 +119,7 @@ async function run(step) {
         };
         await setPrefs(page, hour(20));
         await page.goto(url(scenario, "world"));
+        await page.reload();
         await ready(page);
         measurements.shots[`gate-world-dusk-${size.tag}`] = { file: await shot(page, `gate-world-dusk-${size.tag}`) };
         await goHash(page, "project/plancheck");
