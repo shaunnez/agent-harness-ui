@@ -35,15 +35,25 @@ export function createCoastalWater(loops: [number, number][][]) {
   const minZ = Math.min(...points.map((p) => p[1])) - 45;
   const spanX = Math.max(...points.map((p) => p[0])) + 45 - minX;
   const spanZ = Math.max(...points.map((p) => p[1])) + 45 - minZ;
+  // Pixels farther than the shader's 40m shore reach do not need polygon edge tests.
+  // With many parcels this avoids scanning every island for every water texel.
+  const bounded = loops.map((loop) => ({
+    loop,
+    minX: Math.min(...loop.map((p) => p[0])) - 40,
+    maxX: Math.max(...loop.map((p) => p[0])) + 40,
+    minZ: Math.min(...loop.map((p) => p[1])) - 40,
+    maxZ: Math.max(...loop.map((p) => p[1])) + 40,
+  }));
   const size = 512;
   const bytes = new Uint8Array(size * size * 4);
   for (let row = 0; row < size; row++)
     for (let column = 0; column < size; column++) {
-      const { distance, land } = shoreDistance(
-        (column / (size - 1)) * spanX + minX,
-        (row / (size - 1)) * spanZ + minZ,
-        loops,
-      );
+      const x = (column / (size - 1)) * spanX + minX;
+      const z = (row / (size - 1)) * spanZ + minZ;
+      const nearby = bounded
+        .filter((bounds) => x >= bounds.minX && x <= bounds.maxX && z >= bounds.minZ && z <= bounds.maxZ)
+        .map((bounds) => bounds.loop);
+      const { distance, land } = shoreDistance(x, z, nearby);
       const index = (row * size + column) * 4;
       bytes[index] = Math.round(Math.min(1, distance / 40) * 255);
       bytes[index + 1] = land ? 255 : 0;

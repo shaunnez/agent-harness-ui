@@ -1,3 +1,4 @@
+import { colonyStressFixtures } from "./colony.ts";
 import { projectTaskAttention } from "../../../server/task-attention.mjs";
 import type { RuntimeTask } from "../../domain.ts";
 import type { FrontierGateway, TaskCore } from "../runtime/contracts.ts";
@@ -14,6 +15,7 @@ export function createFixtureGateway(
   scale?: "normal" | "stress",
   workflowScenarios = false,
   stationReview = false,
+  colonyStress = false,
 ): FrontierGateway & {
   setDisconnected(value: boolean): void;
   appendActivity(id: string, count: number): void;
@@ -25,14 +27,16 @@ export function createFixtureGateway(
   setDeliveryOutcome(id: string, outcome: "merged" | "closed" | "drift"): void;
 } {
   const initial = structuredClone(
-    stationReview
-      ? stationFixtures()
-      : scale
-        ? loadFixture(scale)
-        : { projects: fixtureProjects, tasks: makeFixtureTasks() },
+    colonyStress
+      ? colonyStressFixtures()
+      : stationReview
+        ? stationFixtures()
+        : scale
+          ? loadFixture(scale)
+          : { projects: fixtureProjects, tasks: makeFixtureTasks() },
   );
   const tasks = new Map<string, RuntimeTask>(initial.tasks.map((task) => [task.id, task]));
-  if (workflowScenarios && !scale && !stationReview) enrichWorkflowScenarios(initial.tasks);
+  if (workflowScenarios && !scale && !stationReview && !colonyStress) enrichWorkflowScenarios(initial.tasks);
   let version = 1;
   let disconnected = false;
   let managementChanged = () => {};

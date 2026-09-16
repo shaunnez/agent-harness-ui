@@ -1,0 +1,95 @@
+{
+  "capturedAt": "2026-09-16T08:49:52.523Z",
+  "base": "http://127.0.0.1:5243/",
+  "chromium": "149.0.7827.55",
+  "1568x1003": {
+    "shots": {
+      "world": "step0-legacy-world-1568x1003.png",
+      "exterior": "step0-legacy-exterior-1568x1003.png",
+      "cutaway": "step0-legacy-cutaway-1568x1003.png",
+      "colonyWorld": "step0-colony-world-1568x1003.png"
+    },
+    "legacy": {
+      "projectLabels": [
+        "PlanCheck",
+        "Agent Harness",
+        "MyStrataAssist"
+      ],
+      "roomLabels": 0,
+      "assets": {
+        "totalBytes": 1140659,
+        "totalMB": 1.14,
+        "files": {
+          "manifest.json": 21943,
+          "worker.aee069a9823b.glb": 1118716
+        }
+      }
+    },
+    "colony": {
+      "projectLabels": [
+        "PlanCheck",
+        "Agent Harness",
+        "MyStrataAssist"
+      ],
+      "assets": {
+        "totalBytes": 15352759,
+        "totalMB": 15.35,
+        "files": {
+          "manifest.json": 21943,
+          "bridge-end.50920a684920.glb": 432896,
+          "worker.aee069a9823b.glb": 1118716,
+          "bridge-span-27.61fa0489a831.glb": 988788,
+          "parcel-hub.b7034821f9a7.glb": 4182108,
+          "hq-shell.4b47f1786639.glb": 2767696,
+          "crown-command.2f4ae068d9f6.glb": 1707568,
+          "parcel-a.60b73e1b6956.glb": 4133044
+        }
+      }
+    }
+  },
+  "1280x720": {
+    "shots": {
+      "world": "step0-legacy-world-1280x720.png",
+      "exterior": "step0-legacy-exterior-1280x720.png",
+      "cutaway": "step0-legacy-cutaway-1280x720.png",
+      "colonyWorld": "step0-colony-world-1280x720.png"
+    },
+    "legacy": {
+      "projectLabels": [
+        "PlanCheck",
+        "Agent Harness",
+        "MyStrataAssist"
+      ],
+      "roomLabels": 0,
+      "assets": {
+        "totalBytes": 1140659,
+        "totalMB": 1.14,
+        "files": {
+          "manifest.json": 21943,
+          "worker.aee069a9823b.glb": 1118716
+        }
+      }
+    },
+    "colony": {
+      "projectLabels": [
+        "PlanCheck",
+        "Agent Harness",
+        "MyStrataAssist"
+      ],
+      "assets": {
+        "totalBytes": 15352759,
+        "totalMB": 15.35,
+        "files": {
+          "manifest.json": 21943,
+          "bridge-end.50920a684920.glb": 432896,
+          "worker.aee069a9823b.glb": 1118716,
+          "bridge-span-27.61fa0489a831.glb": 988788,
+          "parcel-hub.b7034821f9a7.glb": 4182108,
+          "hq-shell.4b47f1786639.glb": 2767696,
+          "parcel-a.60b73e1b6956.glb": 4133044,
+          "crown-command.2f4ae068d9f6.glb": 1707568
+        }
+      }
+    }
+  }
+}

@@ -56,6 +56,7 @@ export function FrontierApp() {
               new URLSearchParams(window.location.search).get("scenario") === "workflow",
               new URLSearchParams(window.location.search).get("qa") === "1" &&
                 new URLSearchParams(window.location.search).get("scenario") === "stations",
+              new URLSearchParams(window.location.search).get("scenario") === "colony-stress",
             )
           : liveGateway,
       ),

@@ -1,9 +1,10 @@
+import { hiddenEdgeGroups } from "./colony";
+import { cutawayGroups } from "./cutaway";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { Mesh, type MeshStandardMaterial, type Object3D, type PointLight } from "three";
+import { useEffect, useLayoutEffect, useMemo } from "react";
+import { Mesh, type MeshStandardMaterial, type Object3D } from "three";
 import { basePalettes } from "./appearance";
 import type { ProjectBase } from "./layout";
-import type { Point3 } from "./model";
 
 export interface SceneLight {
   lamps: number;
@@ -11,19 +12,19 @@ export interface SceneLight {
 }
 export function ProofBase({
   base,
+  occupiedSlots,
   source,
   environment,
   cutaway,
-  lights,
   light,
   roots,
   onSelect,
 }: {
   base: ProjectBase;
+  occupiedSlots?: string[];
   source: Object3D;
   environment: Object3D;
   cutaway: boolean;
-  lights: Point3[];
   light: React.RefObject<SceneLight>;
   roots: Map<string, Object3D>;
   onSelect(): void;
@@ -50,17 +51,20 @@ export function ProofBase({
     };
     return { base: clone(source), environment: clone(environment), materials };
   }, [source, environment]);
-  const lamps = useRef(new Map<number, PointLight>());
   useLayoutEffect(() => {
     roots.set(base.project.id, models.base);
-    for (const name of ["MF_Roof", "MF_ShellCutaway"]) {
-      const group = models.base.getObjectByName(name);
-      if (group) group.visible = !cutaway;
+    if (occupiedSlots && base.slot) {
+      const hidden = new Set(hiddenEdgeGroups(base.slot, occupiedSlots));
+      models.environment.traverse((object) => {
+        if (object.name.startsWith("MF_Road_Spur_") || object.name.startsWith("MF_Pad_"))
+          object.visible = !hidden.has(object.name);
+      });
     }
+    for (const group of cutawayGroups(models.base)) group.visible = !cutaway;
     return () => {
       roots.delete(base.project.id);
     };
-  }, [models, roots, base.project.id, cutaway]);
+  }, [models, roots, base.project.id, base.slot, occupiedSlots, cutaway]);
   useLayoutEffect(() => {
     const tint = basePalettes[base.appearance.palette].color;
     for (const material of models.materials.values()) {
@@ -86,11 +90,6 @@ export function ProofBase({
       else if (material.name.startsWith("ambient_")) material.emissiveIntensity = (0.75 + dark * 1.4) * pulse;
       else if (material.name.startsWith("practical_")) material.emissiveIntensity = 0.38 + dark * 3.0;
     }
-    for (const lamp of lamps.current.values()) {
-      // Daylight instruments retain their emissive lenses without dozens of negligible light calculations.
-      lamp.visible = dark > 0.01;
-      lamp.intensity = 0.1 + dark * 16;
-    }
   });
   return (
     <group position={base.position}>
@@ -103,20 +102,6 @@ export function ProofBase({
           onSelect();
         }}
       />
-      {lights.map((position, index) => (
-        <pointLight
-          key={position.join()}
-          position={position}
-          color="#ffc37f"
-          intensity={8}
-          distance={5}
-          decay={2}
-          ref={(lamp) => {
-            if (lamp) lamps.current.set(index, lamp);
-            else lamps.current.delete(index);
-          }}
-        />
-      ))}
     </group>
   );
 }

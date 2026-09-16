@@ -1,0 +1,44 @@
+{
+  "capturedAt": "2026-09-16T09:59:20.735Z",
+  "base": "http://127.0.0.1:5243/",
+  "chromium": "149.0.7827.55",
+  "palette": {
+    "command-blue": "acceptance-palette-command-blue-1568x1003.png",
+    "command-red": "acceptance-palette-command-red-1568x1003.png",
+    "command-orange": "acceptance-palette-command-orange-1568x1003.png",
+    "command-purple": "acceptance-palette-command-purple-1568x1003.png",
+    "relay-blue": "acceptance-palette-relay-blue-1568x1003.png",
+    "relay-red": "acceptance-palette-relay-red-1568x1003.png",
+    "relay-orange": "acceptance-palette-relay-orange-1568x1003.png",
+    "relay-purple": "acceptance-palette-relay-purple-1568x1003.png"
+  },
+  "stability": {
+    "shots": [
+      "acceptance-stress-world-pass1-1568x1003.png",
+      "acceptance-stress-world-pass2-1568x1003.png"
+    ],
+    "region": {
+      "x": 260,
+      "y": 150,
+      "w": 940,
+      "h": 560
+    },
+    "changed": 5,
+    "total": 526400,
+    "identical": false
+  },
+  "distinctParcels": {
+    "compared": [
+      "step4-exterior-day-1568x1003.png",
+      "step4-exterior-harness-day-1568x1003.png"
+    ],
+    "region": {
+      "x": 260,
+      "y": 150,
+      "w": 940,
+      "h": 560
+    },
+    "changed": 98392,
+    "total": 526400
+  }
+}

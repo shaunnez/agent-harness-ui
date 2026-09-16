@@ -2,7 +2,13 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { type AnimationClip, AnimationMixer, type Group, type Object3D } from "three";
 import { actorSeed, patrolPose, workActions } from "../world/worker-behavior";
-import { type Point3, proofWorkerScale, type ProofWorker as Worker } from "./model";
+import {
+  type Point3,
+  type ProofView,
+  type ProofWorker as Worker,
+  workerScale,
+  workerViewScale,
+} from "./model";
 import { cloneWorker, disposeWorker } from "./worker-batching";
 import { applyGait, buildGait, gaitBob, gaitStrideCycle, restGait } from "./worker-gait";
 
@@ -11,6 +17,7 @@ const roamSpeed = 1.1;
 
 export function ProofWorker({
   worker,
+  view,
   source,
   selected,
   route,
@@ -19,6 +26,7 @@ export function ProofWorker({
   clips,
 }: {
   worker: Worker;
+  view: ProofView;
   source: Object3D;
   selected: boolean;
   route: Point3[];
@@ -41,11 +49,11 @@ export function ProofWorker({
   }, [clips, mixer, worker.behavior]);
   useEffect(
     () => () => {
-      positions.delete(worker.task.id);
+      positions.delete(worker.id);
       mixer.uncacheRoot(body);
       disposeWorker(body);
     },
-    [body, mixer, positions, worker.task.id],
+    [body, mixer, positions, worker.id],
   );
   const patrol = useMemo(() => route.map((p) => ({ x: p[0], y: p[2] })), [route]);
   const gait = useMemo(() => buildGait(body), [body]);
@@ -53,7 +61,7 @@ export function ProofWorker({
   const stepping = useRef(0);
   useFrame((_, delta) => {
     if (!root.current) return;
-    positions.set(worker.task.id, root.current);
+    positions.set(worker.id, root.current);
     const step = worker.moving && !document.hidden ? Math.min(delta, 0.1) : 0;
     if (step) {
       time.current += step;
@@ -66,7 +74,7 @@ export function ProofWorker({
       body.rotation.y = pose.facing > 0 ? 0.9 : -0.9;
       if (pose.walking) walked.current += step * roamSpeed;
       // Ease the cycle in and out so a worker settles rather than snapping at a patrol waypoint.
-      stepping.current += ((pose.walking ? 1 : 0) - stepping.current) * Math.min(1, delta * 8);
+      if (step) stepping.current += ((pose.walking ? 1 : 0) - stepping.current) * Math.min(1, step * 8);
       if (gait) {
         const cycle = (walked.current / gaitStrideCycle) * Math.PI * 2;
         applyGait(gait, cycle, stepping.current);
@@ -80,7 +88,12 @@ export function ProofWorker({
         body.position.y = 0;
       }
     }
-    body.rotation.y = worker.behavior === "work" ? Math.sin(phase * 0.7) * 0.04 : body.rotation.y;
+    body.rotation.y =
+      worker.behavior === "work"
+        ? worker.facing + Math.sin(phase * 0.7) * 0.04
+        : worker.behavior === "park"
+          ? worker.facing
+          : body.rotation.y;
   });
   const status =
     worker.tone === "answer"
@@ -88,23 +101,30 @@ export function ProofWorker({
       : ["repair", "blocked", "failed"].includes(worker.tone)
         ? "#ee7463"
         : "#68bbff";
+  // Ring, work light and picking scale with the body; the group origin stays at the true standing point.
+  const factor = workerViewScale[view];
   return (
     <group ref={root} position={worker.position}>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: Three ray picking mirrors the accessible DOM worker button. */}
       <primitive
         object={body}
-        scale={proofWorkerScale}
+        scale={workerScale(view)}
         onClick={(event: { stopPropagation(): void }) => {
           event.stopPropagation();
           onSelect();
         }}
       />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} scale={factor}>
         <ringGeometry args={[selected ? 1.55 : 1.32, selected ? 1.66 : 1.4, 48]} />
         <meshBasicMaterial color={selected ? "#79ccff" : status} toneMapped={false} />
       </mesh>
       {worker.behavior === "work" && worker.moving && (
-        <pointLight color={action.color} intensity={2.5} distance={2.5} position={[0, 1.1, 1]} />
+        <pointLight
+          color={action.color}
+          intensity={2.5 * factor}
+          distance={2.5 * factor}
+          position={[0, 1.1 * factor, 1 * factor]}
+        />
       )}
     </group>
   );

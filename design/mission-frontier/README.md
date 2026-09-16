@@ -14,6 +14,7 @@ The user accepted the world/overlay balance, project/base and task/crew mapping,
 - [BUILD-GOALS.md](BUILD-GOALS.md): paste-ready first-playable goal (M0–M3), full-v1 goal (M4–M7 after review), and continuation instructions.
 - [ASSET-PRODUCTION.md](ASSET-PRODUCTION.md): Astra asset-agent ownership, calibration/first-playable/full kits, layer/anchor/alpha/animation requirements and dispatch prompt.
 - [PLAN-VERIFICATION.md](PLAN-VERIFICATION.md): checks performed on this planning handoff, distinct from future product acceptance.
+- [colony/README.md](colony/README.md): 16 September 2026 colony design pack — top-down colony plan, hexagonal HQ floor plan and cutaway, frozen producer/terrain input contract (`assets/staging/colony-hq-v1/contract.json`), terrain-holes diagnosis and slice-1 proposal. Design only; see [NEXT-PHASE-HANDOFF.md](NEXT-PHASE-HANDOFF.md).
 
 The initial packaging proposal is an independent `src/frontier` entry/build inside this repository, using the existing backend and preserving the current frontend. PixiJS world rendering is subject to a first integrated visual gate. The first build goal ends at a playable review checkpoint; it does not claim full-v1 completion.
 

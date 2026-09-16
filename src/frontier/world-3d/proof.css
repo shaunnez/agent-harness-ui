@@ -75,6 +75,25 @@
   border-left: 1px solid #a3cce080;
   pointer-events: none;
 }
+.proof-labels .world-label[data-leader="up"]::after {
+  top: auto;
+  bottom: 100%;
+}
+/* Crowded rooms: plain working cards collapse to a pickable dot marker with the card as its tooltip. */
+.proof-labels .world-label.task[data-compact="true"] {
+  min-width: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+}
+.proof-labels .world-label.task[data-compact="true"] .proof-status-dot {
+  width: 10px;
+  height: 10px;
+  margin: 0;
+}
 @media (max-width: 1300px) {
   .proof-navigation {
     top: 101px;
@@ -148,6 +167,13 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
 }
+.proof-building-options[data-count="4"] {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+.proof-building-options[data-count="4"] img {
+  height: 56px;
+}
 .proof-building-options button {
   display: grid;
   padding: 5px 2px 8px;
@@ -200,4 +226,19 @@
 }
 .proof-labels.exterior .world-label.task small {
   display: none;
+}
+
+.proof-room-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 4px 7px;
+  background: #17272de8;
+  border: 1px solid #99bdc358;
+  border-radius: 4px;
+  color: #dde7e6;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  pointer-events: none;
 }

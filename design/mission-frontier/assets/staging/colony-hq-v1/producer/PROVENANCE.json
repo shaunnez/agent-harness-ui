@@ -1,0 +1,27 @@
+{
+  "contract": "../contract.json",
+  "generator": "source/build_hq.py + source/build_structures.py",
+  "software": "Blender 5.2.1 LTS; portable glTF2.0 PBR",
+  "sources": [
+    {
+      "path": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/base-command.blend",
+      "sha256": "250b320738198abbf354e6db396979e1ff8edd99204de960fab3bb44b575a157",
+      "access": "read-only"
+    },
+    {
+      "path": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.blend",
+      "sha256": "f5224910c0eb95951d3d86a887478a66eb3e8ae3452c661f5d690aac328e0a17",
+      "access": "read-only"
+    }
+  ],
+  "newWork": [
+    "Frozen-contract hex shell, room partitions, six sets of functional room equipment, bay and court authored procedurally in Blender.",
+    "Command centre drum, radial armour, clerestory and neutral identity assembly re-seated from the accepted source. New hex roof and curved side bays fit frozen envelope.",
+    "Span and end reuse actual accepted editable MF_Bridge components; dimensions and positions regenerated from contract. Pier uses shared ivory ceramic to satisfy 2MB budget."
+  ],
+  "excluded": [
+    "No generated imagery, paid services, downloaded assets or runtime actors.",
+    "No project identity, task status, counters, progress or fixture identifiers baked into assets."
+  ],
+  "licenseNote": "Existing repository-authored Astra kit derivatives; upstream material provenance retained in exterior-bases/astra-kit and 3d-visual-proof/astra-scene records. No new license introduced."
+}

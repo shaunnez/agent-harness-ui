@@ -1,9 +1,10 @@
+import { colonyWorkers } from "./colony-workers.ts";
 import type { RuntimeProject } from "../../domain.ts";
 import type { TaskSummary } from "../runtime/contracts.ts";
 import { attentionFor, isOpen, stageLabels } from "../runtime/presentation.ts";
 import type { SceneInput } from "../world/scene.ts";
 import { workAction, workerBehavior } from "../world/worker-behavior.ts";
-import { type BaseVariant, baseVariants } from "./appearance.ts";
+import { type BaseVariant, type LegacyBaseVariant, legacyBaseVariants } from "./appearance.ts";
 import { type ProjectBase, projectBases, translated, visibleBases } from "./layout.ts";
 
 export type Point3 = [number, number, number];
@@ -14,8 +15,25 @@ export interface ProofCamera {
   verticalSpan: number;
 }
 export interface ProofManifest {
-  version: 1 | 2;
-  bases?: Record<BaseVariant, { src: string; preview?: string; lightPositions: Point3[] }>;
+  version: 1 | 2 | 3;
+  colony?: {
+    contract: string;
+    shell?: string;
+    crowns?: Partial<Record<BaseVariant, string>>;
+    /** Picker thumbnails of each crown on the shared shell. */
+    crownPreviews?: Partial<Record<BaseVariant, string>>;
+    /** Shared scatter kit (trees, boulders, lanterns, vehicles) instanced per parcel from a seeded layout. */
+    scatterKit?: string;
+    parcelHub?: string;
+    parcelA?: string;
+    bridgeSpan?: string;
+    bridgeEnd?: string;
+    obstacles?: { name: string; min: Point3; max: Point3 }[];
+    hqLightPositions?: Point3[];
+    parcelLightPositions?: Point3[];
+    hubShorelineXZ?: [number, number][][];
+  };
+  bases?: Record<LegacyBaseVariant, { src: string; preview?: string; lightPositions: Point3[] }>;
   environmentLightPositions?: Point3[];
   scene: string;
   worker: string;
@@ -40,6 +58,20 @@ export function proofRequested(search: string) {
   const query = new URLSearchParams(search);
   return query.get("mode") === "fixture" && query.get("renderer") === "3d";
 }
+/** The colony (hex HQ, parcels, bridges) renders only behind `?colony=1`; without it the world keeps the archipelago look. */
+export function colonyRequested(search: string) {
+  return new URLSearchParams(search).get("colony") === "1";
+}
+/** A v3 manifest still carries the v2 kit; without the colony flag it is consumed as v2 so main's look is unchanged. */
+export function withoutColony(manifest: ProofManifest): ProofManifest {
+  if (manifest.version !== 3) return manifest;
+  if (!manifest.bases || !manifest.environmentLightPositions)
+    throw new Error(
+      "The archipelago kit is missing from the 3D scene manifest. Add ?colony=1 or retry the artwork.",
+    );
+  const { colony: _colony, ...legacy } = manifest;
+  return { ...legacy, version: 2 };
+}
 export function proofProject(projects: RuntimeProject[]) {
   return (
     projects.find((project) => project.id === "plancheck" && !project.archivedAt) ??
@@ -49,7 +81,7 @@ export function proofProject(projects: RuntimeProject[]) {
 export function proofVisible(search: string, input: SceneInput) {
   if (input.mode !== "fixture" || !proofRequested(search)) return false;
   const projects = input.projects.filter((project) => !project.archivedAt);
-  if (input.location.view === "world") return projects.length > 0;
+  if (input.location.view === "world") return input.projects.length > 0;
   if (input.location.view === "project")
     return projects.some((project) => project.id === input.location.projectId);
   return (
@@ -70,11 +102,28 @@ export function existingWorldUrl(search: string) {
 
 export const proofWorkerScale = 3.1 / 1.8;
 export const proofWorkerHeight = 3.1;
+export type ProofView = "world" | "exterior" | "cutaway";
+/**
+ * Robots read at a glance from every distance: 2.5x in the World view, 1.4x on a focused exterior,
+ * true size in the cutaway. Rings, labels and picking follow the same factor; standing positions,
+ * spacing and gait speed stay in true world units.
+ */
+export const workerViewScale: Record<ProofView, number> = { world: 2.5, exterior: 1.4, cutaway: 1 };
+export function proofView(input: Pick<ProofInput, "location">, focusId: string | null): ProofView {
+  return input.location.view !== "world" ? "cutaway" : focusId ? "exterior" : "world";
+}
+export function workerScale(view: ProofView) {
+  return proofWorkerScale * workerViewScale[view];
+}
+export function workerHeight(view: ProofView) {
+  return proofWorkerHeight * workerViewScale[view];
+}
 export function proofWorkers(
   input: ProofInput,
   manifest: ProofManifest,
   bases: ProjectBase[] = projectBases(input.projects),
 ) {
+  if (manifest.version === 3) return colonyWorkers(input, bases, manifest);
   const cutaway = input.location.view !== "world";
   return visibleBases(bases, input).flatMap((base) => {
     const tasks = input.tasks.filter(
@@ -121,6 +170,12 @@ export function proofWorkers(
       occupied.push(local);
       const attention = attentionFor(task);
       return {
+        id: task.id,
+        facing: 0,
+        room: undefined,
+        overflow: false,
+        packageId: undefined,
+        packageCount: 0,
         task,
         projectId: base.project.id,
         position: translated(local, base.position),
@@ -157,9 +212,12 @@ export function visibleWorkerLabels(
   input: ProofInput,
   focusedProjectId: string | null,
 ) {
-  if (input.location.view !== "world" || focusedProjectId) return workers;
+  const taskWorkers = workers.filter(
+    (worker, index) => workers.findIndex((other) => other.task.id === worker.task.id) === index,
+  );
+  if (input.location.view !== "world" || focusedProjectId) return taskWorkers;
   const chosen = new Map<string, ProofWorker>();
-  for (const worker of workers) {
+  for (const worker of taskWorkers) {
     const previous = chosen.get(worker.projectId);
     const priority = (value: ProofWorker) =>
       value.task.id === input.selectedId
@@ -172,6 +230,41 @@ export function visibleWorkerLabels(
     if (!previous || priority(worker) > priority(previous)) chosen.set(worker.projectId, worker);
   }
   return [...chosen.values()];
+}
+
+/** Tones that always earn a full card: the robot needs the operator or is in trouble. */
+const attentionTones = new Set(["answer", "approval", "repair", "failed", "blocked", "ready"]);
+/**
+ * Crowded rooms collapse their plain cards to dot markers. Once a room (or a focused exterior court)
+ * shows more than `limit` cards, only attention, selected and watched robots keep full cards; every
+ * plain "Working" or idle card becomes a compact marker that is still labelled and pickable, and
+ * selecting a marker expands it. Fourteen 57 px cards cannot all stand above one room at 1280 x 720
+ * beside the selection panel; fourteen markers can.
+ */
+export function compactWorkerLabels(
+  workers: ProofWorker[],
+  input: ProofInput,
+  focusedProjectId: string | null,
+  limit = 4,
+) {
+  const compact = new Set<string>();
+  if (input.location.view === "world" && !focusedProjectId) return compact;
+  const groups = new Map<string, ProofWorker[]>();
+  for (const worker of workers) {
+    const key = `${worker.projectId}:${worker.room ?? "court"}`;
+    groups.set(key, [...(groups.get(key) ?? []), worker]);
+  }
+  for (const group of groups.values()) {
+    if (group.length <= limit) continue;
+    for (const worker of group) {
+      const kept =
+        worker.task.id === input.selectedId ||
+        worker.task.id === input.location.taskId ||
+        attentionTones.has(worker.tone);
+      if (!kept) compact.add(worker.task.id);
+    }
+  }
+  return compact;
 }
 
 function areaFor(task: TaskSummary) {
@@ -192,7 +285,7 @@ export function parseProofManifest(value: unknown): ProofManifest {
     v && point(v.position) && point(v.target) && Number.isFinite(v.verticalSpan) && v.verticalSpan > 0;
   const asset = (v: unknown) => typeof v === "string" && /^\/assets\/3d-proof\/[\w.-]+\.glb$/.test(v);
   if (
-    ![1, 2].includes(data?.version ?? 0) ||
+    ![1, 2, 3].includes(data?.version ?? 0) ||
     !asset(data.scene) ||
     !asset(data.worker) ||
     !camera(data.cameras?.exterior) ||
@@ -220,9 +313,9 @@ export function parseProofManifest(value: unknown): ProofManifest {
   )
     throw new Error("The 3D scene export is incomplete. Return to the existing world or retry the artwork.");
   if (
-    data.version === 2 &&
+    (data.version === 2 || (data.version === 3 && data.bases)) &&
     (!data.bases ||
-      !baseVariants.every((key) => {
+      !legacyBaseVariants.every((key) => {
         const base = data.bases?.[key];
         return (
           base &&
@@ -238,5 +331,54 @@ export function parseProofManifest(value: unknown): ProofManifest {
     throw new Error(
       "The exterior base kit is incomplete. Retry the artwork or return to the existing world.",
     );
+  if (data.version === 3) {
+    const colony = data.colony;
+    if (
+      !colony ||
+      (colony.obstacles !== undefined &&
+        (!Array.isArray(colony.obstacles) ||
+          !colony.obstacles.every(
+            (o) =>
+              typeof o.name === "string" &&
+              point(o.min) &&
+              point(o.max) &&
+              o.min.every((v, i) => v <= (o.max[i] ?? -Infinity)),
+          ))) ||
+      !/^\/assets\/3d-proof\/[\w.-]+\.json$/.test(colony.contract) ||
+      [
+        colony.shell,
+        colony.parcelHub,
+        colony.parcelA,
+        colony.bridgeSpan,
+        colony.bridgeEnd,
+        colony.scatterKit,
+        ...Object.values(colony.crowns ?? {}),
+      ].some((value) => value !== undefined && !asset(value)) ||
+      Object.values(colony.crownPreviews ?? {}).some(
+        (value) => typeof value !== "string" || !/^\/assets\/3d-proof\/[\w.-]+\.(png|webp)$/.test(value),
+      ) ||
+      [colony.hqLightPositions, colony.parcelLightPositions].some(
+        (points) => points !== undefined && (!Array.isArray(points) || !points.every((p) => point(p))),
+      ) ||
+      (colony.hubShorelineXZ !== undefined &&
+        (!Array.isArray(colony.hubShorelineXZ) ||
+          !colony.hubShorelineXZ.every(
+            (loop) => Array.isArray(loop) && loop.length >= 4 && loop.every((p) => point(p, 2)),
+          )))
+    )
+      throw new Error("The colony asset manifest is incomplete or references an unsafe asset.");
+  }
   return data as ProofManifest;
+}
+
+/** Allocation failure must stay inside the preview boundary; task records remain inspectable. */
+export function proofWorkerState(input: ProofInput, manifest: ProofManifest | null, bases: ProjectBase[]) {
+  try {
+    return { workers: manifest ? proofWorkers(input, manifest, bases) : [], problem: null };
+  } catch (cause) {
+    return {
+      workers: [],
+      problem: cause instanceof Error ? cause.message : "The colony crew could not be placed safely.",
+    };
+  }
 }

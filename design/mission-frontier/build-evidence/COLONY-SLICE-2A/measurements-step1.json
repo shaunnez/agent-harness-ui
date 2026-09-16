@@ -1,0 +1,85 @@
+{
+  "capturedAt": "2026-09-16T08:57:37.065Z",
+  "base": "http://127.0.0.1:5243/",
+  "chromium": "149.0.7827.55",
+  "1568x1003": {
+    "shots": {
+      "world": "step1-world-1568x1003.png",
+      "exterior": "step1-exterior-1568x1003.png",
+      "cutaway": "step1-cutaway-1568x1003.png"
+    },
+    "cutaway": {
+      "cards": [
+        {
+          "id": "PC-142",
+          "compact": null,
+          "x": 366,
+          "y": 40,
+          "w": 178,
+          "h": 57
+        },
+        {
+          "id": "PC-153",
+          "compact": null,
+          "x": 338,
+          "y": 376,
+          "w": 160,
+          "h": 57
+        },
+        {
+          "id": "PC-148",
+          "compact": null,
+          "x": 960,
+          "y": 261,
+          "w": 185,
+          "h": 57
+        }
+      ],
+      "count": 3,
+      "compactCount": 0,
+      "pairsOverlapping": [],
+      "overPanels": [],
+      "outsideViewport": []
+    }
+  },
+  "1280x720": {
+    "shots": {
+      "world": "step1-world-1280x720.png",
+      "exterior": "step1-exterior-1280x720.png",
+      "cutaway": "step1-cutaway-1280x720.png"
+    },
+    "cutaway": {
+      "cards": [
+        {
+          "id": "PC-142",
+          "compact": null,
+          "x": 296,
+          "y": 474,
+          "w": 178,
+          "h": 57
+        },
+        {
+          "id": "PC-153",
+          "compact": null,
+          "x": 279,
+          "y": 206,
+          "w": 160,
+          "h": 57
+        },
+        {
+          "id": "PC-148",
+          "compact": null,
+          "x": 722,
+          "y": 224,
+          "w": 185,
+          "h": 57
+        }
+      ],
+      "count": 3,
+      "compactCount": 0,
+      "pairsOverlapping": [],
+      "overPanels": [],
+      "outsideViewport": []
+    }
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "file": "scatter-kit.glb",
+  "sha256": "8d5ecbfe8cc6de6db22e5ac33a0b8737ac4e884871dfa3f609b5a98836668b27",
+  "bytes": 2582416,
+  "triangles": 17001,
+  "images": 2,
+  "items": {
+    "MF_Tree_Purple_A": {
+      "footprintRadius": 2.8,
+      "height": 6.122,
+      "meshes": [
+        "MF_Tree_Purple_A_bark",
+        "MF_Tree_Purple_A_leaves"
+      ]
+    },
+    "MF_Tree_Purple_B": {
+      "footprintRadius": 3.525,
+      "height": 6.628,
+      "meshes": [
+        "MF_Tree_Purple_B_bark",
+        "MF_Tree_Purple_B_leaves"
+      ]
+    },
+    "MF_Tree_Purple_C": {
+      "footprintRadius": 3.26,
+      "height": 7.126,
+      "meshes": [
+        "MF_Tree_Purple_C_bark",
+        "MF_Tree_Purple_C_leaves"
+      ]
+    },
+    "MF_Tree_Purple_D": {
+      "footprintRadius": 3.578,
+      "height": 6.728,
+      "meshes": [
+        "MF_Tree_Purple_D_bark",
+        "MF_Tree_Purple_D_leaves"
+      ]
+    },
+    "MF_Tree_Olive_A": {
+      "footprintRadius": 1.974,
+      "height": 4.316,
+      "meshes": [
+        "MF_Tree_Olive_A_bark",
+        "MF_Tree_Olive_A_leaves"
+      ]
+    },
+    "MF_Boulder_A": {
+      "footprintRadius": 1.08,
+      "height": 1.229,
+      "meshes": [
+        "MF_Boulder_A_rock"
+      ]
+    },
+    "MF_Boulder_B": {
+      "footprintRadius": 1.456,
+      "height": 2.104,
+      "meshes": [
+        "MF_Boulder_B_rock"
+      ]
+    },
+    "MF_Boulder_C": {
+      "footprintRadius": 0.663,
+      "height": 0.789,
+      "meshes": [
+        "MF_Boulder_C_rock"
+      ]
+    },
+    "MF_Lantern": {
+      "footprintRadius": 0.21,
+      "height": 2.76,
+      "meshes": [
+        "MF_Lantern_base",
+        "MF_Lantern_cap",
+        "MF_Lantern_head",
+        "MF_Lantern_post"
+      ],
+      "lampOffset": [
+        0,
+        2.72,
+        0
+      ]
+    },
+    "MF_Vehicle_Rover": {
+      "footprintRadius": 1.8,
+      "height": 1.925,
+      "meshes": [
+        "rover_cab",
+        "rover_cargo",
+        "rover_chassis",
+        "rover_deck",
+        "rover_glass",
+        "rover_roll_bar",
+        "rover_wheel",
+        "rover_wheel.001",
+        "rover_wheel.002",
+        "rover_wheel.003",
+        "rover_wheel.004",
+        "rover_wheel.005"
+      ]
+    },
+    "MF_Vehicle_Cart": {
+      "footprintRadius": 1.363,
+      "height": 1.225,
+      "meshes": [
+        "cart_bed",
+        "cart_cargo",
+        "cart_handle",
+        "cart_wheel",
+        "cart_wheel.001",
+        "cart_wheel.002",
+        "cart_wheel.003"
+      ]
+    }
+  },
+  "budget": {
+    "bytes": 3000000,
+    "triangles": 30000
+  },
+  "source": "exterior-bases/astra-kit/environment.blend (retained CC0 twisted trees), deterministic Blender geometry otherwise"
+}

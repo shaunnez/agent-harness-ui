@@ -1,3 +1,5 @@
+import { proofAssetUrls } from "./colony-assets";
+import { roomIds, roomNames } from "./rooms";
 import { ArrowLeft, Cube, MapPin, Question, WarningCircle } from "@phosphor-icons/react";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { Component, type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from "react";
@@ -7,17 +9,20 @@ import type { WorldPreferences } from "../app/preferences";
 import { splitRecordedDetail } from "../runtime/presentation";
 import { WorldTime } from "../views/WorldTime";
 import { lightingAt, type WorldLighting } from "../world/environment-model";
-import { basePalettes, baseVariants } from "./appearance";
+import { basePalettes } from "./appearance";
 import { BaseAppearancePicker } from "./BaseAppearancePicker";
-import { locatedProject, projectBases, visibleBases } from "./layout";
+import { archipelagoBases, locatedProject, projectBases, visibleBases } from "./layout";
 import {
+  colonyRequested,
+  compactWorkerLabels,
   existingWorldUrl,
   type ProofControls,
   type ProofInput,
   type ProofManifest,
   parseProofManifest,
-  proofWorkers,
+  proofWorkerState,
   visibleWorkerLabels,
+  withoutColony,
 } from "./model";
 import { ProofScene } from "./ProofScene";
 import { useBaseAppearance } from "./useBaseAppearance";
@@ -75,13 +80,20 @@ export function ProofWorld(props: Props) {
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [appearanceProjectId, setAppearanceProjectId] = useState<string | null>(null);
   const { appearances, choose, storageProblem } = useBaseAppearance(input.projects);
-  const bases = projectBases(input.projects, appearances);
+  // Without ?colony=1 the world keeps main's archipelago: one island tile per project, no lattice.
+  const colony = colonyRequested(window.location.search);
+  const bases = colony
+    ? projectBases(input.projects, appearances, true)
+    : archipelagoBases(input.projects, appearances);
   const contextId =
     input.location.view === "world"
       ? (props.selectedProjectId ?? focusId ?? locatedProject(input)?.id)
       : locatedProject(input)?.id;
   const project = bases.find((base) => base.project.id === contextId)?.project ?? bases[0]?.project;
-  const workers = manifest ? visibleWorkerLabels(proofWorkers(input, manifest, bases), input, focusId) : [];
+  const { workers: allWorkers, problem: allocationProblem } = proofWorkerState(input, manifest, bases);
+  const sceneProblem = error ?? allocationProblem;
+  const workers = visibleWorkerLabels(allWorkers, input, focusId);
+  const compact = compactWorkerLabels(workers, input, focusId);
   const frameWorld = () => {
     if (!focusId && input.location.view === "world") props.controlsRef.current?.frame();
     setFocusId(null);
@@ -119,9 +131,11 @@ export function ProofWorld(props: Props) {
         return response.json();
       })
       .then((value: unknown) => {
-        const parsed = parseProofManifest(value);
-        if (new URLSearchParams(window.location.search).get("proofAssetFailure") === "1")
-          parsed.scene = "/assets/3d-proof/missing-scene.glb";
+        const parsed = colony ? parseProofManifest(value) : withoutColony(parseProofManifest(value));
+        if (new URLSearchParams(window.location.search).get("proofAssetFailure") === "1") {
+          if (parsed.colony) parsed.colony.shell = "/assets/3d-proof/missing-scene.glb";
+          else parsed.scene = "/assets/3d-proof/missing-scene.glb";
+        }
         if (!controller.signal.aborted) setManifest(parsed);
       })
       .catch((problem: unknown) => {
@@ -146,16 +160,11 @@ export function ProofWorld(props: Props) {
   const unavailable = (
     <section className="world-error panel proof-error" role="alert">
       <h2>3D scene unavailable</h2>
-      <p>{error ?? "This browser could not render the scene or load its artwork."}</p>
+      <p>{sceneProblem ?? "This browser could not render the scene or load its artwork."}</p>
       <button
         type="button"
         onClick={() => {
-          if (manifest)
-            useLoader.clear(GLTFLoader, [
-              manifest.scene,
-              manifest.worker,
-              ...baseVariants.map((id) => manifest.bases?.[id].src ?? manifest.scene),
-            ]);
+          if (manifest) useLoader.clear(GLTFLoader, proofAssetUrls(manifest));
           setRetry((value) => value + 1);
         }}
       >
@@ -168,7 +177,7 @@ export function ProofWorld(props: Props) {
     <>
       {profiling && <PerformancePanel ready={ready} />}
       <div className="world-canvas proof-canvas" data-renderer="three" data-ready={ready}>
-        {error ? (
+        {sceneProblem ? (
           unavailable
         ) : manifest ? (
           <SceneBoundary key={retry} fallback={unavailable} onError={problem}>
@@ -199,7 +208,7 @@ export function ProofWorld(props: Props) {
           </SceneBoundary>
         ) : null}
       </div>
-      {!ready && !error && (
+      {!ready && !sceneProblem && (
         <p className="proof-loading panel" role="status">
           Loading project bases…
         </p>
@@ -273,10 +282,23 @@ export function ProofWorld(props: Props) {
           >
             <MapPin size={20} color={basePalettes[base.appearance.palette].color} />
             <span>
-              <strong>{base.project.name}</strong>
+              <strong>
+                {base.project.name}
+                {base.project.archivedAt ? " · Dormant" : ""}
+              </strong>
             </span>
           </button>
         ))}
+        {manifest?.version === 3 &&
+          input.location.view !== "world" &&
+          roomIds.map((room) => (
+            <span key={room} className="proof-room-label" data-proof-id={`room:${room}`}>
+              {roomNames[room]}
+              {allWorkers.filter((worker) => worker.room === room && worker.overflow).length > 0
+                ? ` +${allWorkers.filter((worker) => worker.room === room && worker.overflow).length}`
+                : ""}
+            </span>
+          ))}
         {workers.map((worker) => (
           <button
             type="button"
@@ -284,8 +306,10 @@ export function ProofWorld(props: Props) {
             data-proof-id={worker.task.id}
             data-behavior={worker.behavior}
             data-moving={worker.moving}
+            data-compact={compact.has(worker.task.id)}
             className={`world-label task tone-${worker.tone} ${worker.task.id === input.selectedId ? "selected" : ""}`}
             aria-label={`${worker.title} · ${worker.detail}${worker.task.attention?.reason ? ` · ${splitRecordedDetail(worker.task.attention.reason).headline}` : ""}`}
+            title={compact.has(worker.task.id) ? `${worker.title} · ${worker.detail}` : undefined}
             onClick={() => onSelect("task", worker.task.id)}
           >
             {worker.tone === "answer" ? (
@@ -295,10 +319,12 @@ export function ProofWorld(props: Props) {
             ) : (
               <span className="proof-status-dot" />
             )}
-            <span>
-              <strong>{worker.title}</strong>
-              <small>{worker.detail}</small>
-            </span>
+            {!compact.has(worker.task.id) && (
+              <span>
+                <strong>{worker.title}</strong>
+                <small>{worker.detail}</small>
+              </span>
+            )}
           </button>
         ))}
       </nav>

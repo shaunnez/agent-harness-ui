@@ -1,31 +1,75 @@
 import type { RuntimeProject } from "../../domain.ts";
 import type { SceneInput } from "../world/scene.ts";
-import { type BaseAppearances, defaultAppearance, projectAppearanceKey } from "./appearance.ts";
-import type { Point3, ProofCamera, ProofManifest } from "./model.ts";
+import { type BaseAppearances, defaultAppearance, projectAppearanceKey, savedSlots } from "./appearance.ts";
+import {
+  assignSlots,
+  type ColonyCamera,
+  colonyCameras,
+  fitColonyView,
+  hubSlot,
+  type Point3,
+  slotPosition,
+  type Viewport,
+  type WorldFit,
+} from "./colony.ts";
+import type { ProofManifest } from "./model.ts";
 
-export function projectBases(projects: RuntimeProject[], appearances: BaseAppearances = {}) {
-  const ordered = projects
-    .filter((project) => !project.archivedAt)
-    .sort((a, b) => {
-      if (a.id === "plancheck") return -1;
-      if (b.id === "plancheck") return 1;
-      return a.id.localeCompare(b.id);
-    });
-  return ordered.map((project, index) => {
-    // A staggered coastal archipelago in the camera's ground-plane axes.
+/**
+ * One base per project on the colony lattice. The slot comes from the persisted appearance record
+ * when it has one and from the contract fill rule otherwise, so the same projects always land on
+ * the same parcels whatever order they arrive in.
+ */
+export function projectBases(
+  projects: RuntimeProject[],
+  appearances: BaseAppearances = {},
+  includeArchived = false,
+) {
+  const listed = projects.filter((project) => includeArchived || !project.archivedAt);
+  const slots = assignSlots(listed, savedSlots(appearances));
+  return orderedProjects(listed).flatMap((project) => {
+    const key = projectAppearanceKey(project);
+    const appearance = appearances[key] ?? defaultAppearance(project);
+    const slot: string | undefined = slots[key];
+    if (!slot) return [];
+    return [{ project, position: slotPosition(slot), appearance: { ...appearance, slot }, slot }];
+  });
+}
+/**
+ * The archipelago that main renders without `?colony=1`: a staggered coastal grid in the camera's
+ * ground-plane axes, one island tile per project, no slots and no bridges.
+ */
+export function archipelagoBases(projects: RuntimeProject[], appearances: BaseAppearances = {}) {
+  return orderedProjects(projects.filter((project) => !project.archivedAt)).map((project, index) => {
     const column = index % 3;
     const row = Math.floor(index / 3);
     const horizontal = ([-22, -37, 40][column] ?? -37) + (row % 2) * 20;
     const depth = ([-30, 64, 21][column] ?? -30) + row * 108;
     const position: Point3 = [horizontal * 0.781 - depth * 0.625, 0, -horizontal * 0.625 - depth * 0.781];
+    const slot: string | undefined = undefined;
     return {
       project,
       position,
       appearance: appearances[projectAppearanceKey(project)] ?? defaultAppearance(project),
+      slot,
     };
   });
 }
-export type ProjectBase = ReturnType<typeof projectBases>[number];
+function orderedProjects(projects: RuntimeProject[]) {
+  return [...projects].sort((a, b) => {
+    if (a.id === "plancheck") return -1;
+    if (b.id === "plancheck") return 1;
+    return a.id.localeCompare(b.id);
+  });
+}
+export type ProjectBase =
+  | ReturnType<typeof projectBases>[number]
+  | ReturnType<typeof archipelagoBases>[number];
+/** The hub parcel is always rendered at H with an empty landing pad. */
+export const hubParcel = { slot: hubSlot.id, position: slotPosition(hubSlot.id) };
+/** Colony slots in use; archipelago bases have none. */
+export function occupiedSlots(bases: ProjectBase[]) {
+  return bases.flatMap((base) => (base.slot ? [base.slot] : []));
+}
 export function locatedProject(input: SceneInput) {
   if (input.location.projectId) return input.projects.find((p) => p.id === input.location.projectId);
   const task = input.tasks.find((item) => item.id === (input.location.taskId ?? input.selectedId));
@@ -39,21 +83,37 @@ export function visibleBases(bases: ProjectBase[], input: SceneInput) {
 export function translated(point: Point3, offset: Point3): Point3 {
   return [point[0] + offset[0], point[1] + offset[1], point[2] + offset[2]];
 }
+/**
+ * Exterior and cutaway cameras are the contract's, translated to the parcel being looked at; the
+ * world camera fits every occupied parcel plus the hub into the HUD-safe box. With a legacy (v2)
+ * manifest the cameras are the manifest's and the world camera is the archipelago fit.
+ */
 export function viewCamera(
   bases: ProjectBase[],
-  manifest: ProofManifest,
   projectId: string | null,
   cutaway: boolean,
-): ProofCamera {
+  viewport?: Viewport,
+  legacy?: ProofManifest,
+): ColonyCamera & Partial<Pick<WorldFit, "viewOffset">> {
   const base = bases.find((entry) => entry.project.id === projectId);
   if (base) {
-    const camera = cutaway ? manifest.cameras.cutaway : manifest.cameras.exterior;
+    const camera = legacy
+      ? cutaway
+        ? legacy.cameras.cutaway
+        : legacy.cameras.exterior
+      : cutaway
+        ? colonyCameras.cutaway
+        : colonyCameras.exterior;
     return {
       ...camera,
       position: translated(camera.position, base.position),
       target: translated(camera.target, base.position),
     };
   }
+  if (legacy) return archipelagoView(bases);
+  return fitColonyView(occupiedSlots(bases), viewport);
+}
+function archipelagoView(bases: ProjectBase[]): ColonyCamera {
   const center: Point3 = [
     bases.reduce((sum, entry) => sum + entry.position[0], 0) / Math.max(1, bases.length),
     3,
