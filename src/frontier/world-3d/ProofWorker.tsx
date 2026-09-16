@@ -4,6 +4,10 @@ import { type AnimationClip, AnimationMixer, type Group, type Object3D } from "t
 import { actorSeed, patrolPose, workActions } from "../world/worker-behavior";
 import { type Point3, proofWorkerScale, type ProofWorker as Worker } from "./model";
 import { cloneWorker, disposeWorker } from "./worker-batching";
+import { applyGait, buildGait, gaitBob, gaitStrideCycle, restGait } from "./worker-gait";
+
+/** Matches the patrol speed below, so the stride covers the ground the worker actually crosses. */
+const roamSpeed = 1.1;
 
 export function ProofWorker({
   worker,
@@ -44,19 +48,38 @@ export function ProofWorker({
     [body, mixer, positions, worker.task.id],
   );
   const patrol = useMemo(() => route.map((p) => ({ x: p[0], y: p[2] })), [route]);
+  const gait = useMemo(() => buildGait(body), [body]);
+  const walked = useRef(0);
+  const stepping = useRef(0);
   useFrame((_, delta) => {
     if (!root.current) return;
     positions.set(worker.task.id, root.current);
-    if (worker.moving && !document.hidden) {
-      time.current += Math.min(delta, 0.1);
-      if (worker.behavior === "work") mixer.update(Math.min(delta, 0.1));
+    const step = worker.moving && !document.hidden ? Math.min(delta, 0.1) : 0;
+    if (step) {
+      time.current += step;
+      if (worker.behavior === "work") mixer.update(step);
     }
     const phase = time.current;
     if (worker.behavior === "roam") {
-      const pose = patrolPose(patrol, phase * 1000, actorSeed(worker.task.id), 1.1);
+      const pose = patrolPose(patrol, phase * 1000, actorSeed(worker.task.id), roamSpeed);
       root.current.position.set(pose.x, worker.position[1], pose.y);
       body.rotation.y = pose.facing > 0 ? 0.9 : -0.9;
-    } else root.current.position.set(...worker.position);
+      if (pose.walking) walked.current += step * roamSpeed;
+      // Ease the cycle in and out so a worker settles rather than snapping at a patrol waypoint.
+      stepping.current += ((pose.walking ? 1 : 0) - stepping.current) * Math.min(1, delta * 8);
+      if (gait) {
+        const cycle = (walked.current / gaitStrideCycle) * Math.PI * 2;
+        applyGait(gait, cycle, stepping.current);
+        body.position.y = gaitBob(cycle, stepping.current);
+      }
+    } else {
+      root.current.position.set(...worker.position);
+      if (gait && stepping.current !== 0) {
+        stepping.current = 0;
+        restGait(gait);
+        body.position.y = 0;
+      }
+    }
     body.rotation.y = worker.behavior === "work" ? Math.sin(phase * 0.7) * 0.04 : body.rotation.y;
   });
   const status =
