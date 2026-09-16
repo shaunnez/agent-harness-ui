@@ -1,4 +1,3 @@
-import { hiddenEdgeGroups } from "./colony";
 import { cutawayGroups } from "./cutaway";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo } from "react";
@@ -12,7 +11,6 @@ export interface SceneLight {
 }
 export function ProofBase({
   base,
-  occupiedSlots,
   source,
   environment,
   cutaway,
@@ -21,9 +19,9 @@ export function ProofBase({
   onSelect,
 }: {
   base: ProjectBase;
-  occupiedSlots?: string[];
   source: Object3D;
-  environment: Object3D;
+  /** Legacy archipelago only: the island tile under this base. Contract 2.0 land is the shared field. */
+  environment?: Object3D;
   cutaway: boolean;
   light: React.RefObject<SceneLight>;
   roots: Map<string, Object3D>;
@@ -49,22 +47,15 @@ export function ProofBase({
       });
       return result;
     };
-    return { base: clone(source), environment: clone(environment), materials };
+    return { base: clone(source), environment: environment ? clone(environment) : null, materials };
   }, [source, environment]);
   useLayoutEffect(() => {
     roots.set(base.project.id, models.base);
-    if (occupiedSlots && base.slot) {
-      const hidden = new Set(hiddenEdgeGroups(base.slot, occupiedSlots));
-      models.environment.traverse((object) => {
-        if (object.name.startsWith("MF_Road_Spur_") || object.name.startsWith("MF_Pad_"))
-          object.visible = !hidden.has(object.name);
-      });
-    }
     for (const group of cutawayGroups(models.base)) group.visible = !cutaway;
     return () => {
       roots.delete(base.project.id);
     };
-  }, [models, roots, base.project.id, base.slot, occupiedSlots, cutaway]);
+  }, [models, roots, base.project.id, cutaway]);
   useLayoutEffect(() => {
     const tint = basePalettes[base.appearance.palette].color;
     for (const material of models.materials.values()) {
@@ -93,7 +84,7 @@ export function ProofBase({
   });
   return (
     <group position={base.position}>
-      <primitive object={models.environment} />
+      {models.environment && <primitive object={models.environment} />}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: Three ray picking mirrors the accessible project label. */}
       <primitive
         object={models.base}

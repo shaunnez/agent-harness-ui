@@ -1,29 +1,15 @@
 import { useEffect, useMemo } from "react";
 import { Mesh, type Object3D } from "three";
-import { colonyBridges, hiddenEdgeGroups } from "./colony";
+import { colonyBridges, slotPosition } from "./colony";
 import { occupiedSlots, type ProjectBase } from "./layout";
 
-export function ColonyGround({
-  bases,
-  hub,
-  span,
-  end,
-}: {
-  bases: ProjectBase[];
-  hub: Object3D;
-  span: Object3D;
-  end: Object3D;
-}) {
+/** Bridges and their abutments between occupied lattice neighbours; the land itself is the height field. */
+export function ColonyGround({ bases, span, end }: { bases: ProjectBase[]; span: Object3D; end: Object3D }) {
   const key = occupiedSlots(bases).join();
   // biome-ignore lint/correctness/useExhaustiveDependencies: Geometry placement only depends on occupied slots.
   const objects = useMemo(() => {
     const slots = occupiedSlots(bases);
-    const centre = hub.clone(true);
-    for (const name of hiddenEdgeGroups("H", slots)) {
-      const object = centre.getObjectByName(name);
-      if (object) object.visible = false;
-    }
-    const objects = [centre];
+    const objects: Object3D[] = [];
     for (const bridge of colonyBridges(slots)) {
       const model = span.clone(true);
       model.position.set(bridge.start[0], 0, bridge.start[1]);
@@ -33,14 +19,9 @@ export function ColonyGround({
         [bridge.from, bridge.fromEdge],
         [bridge.to, bridge.toEdge],
       ] as const) {
-        const base = bases.find((base) => base.slot === slot);
-        const position = base?.position ?? [0, 0, 0];
+        const position = slotPosition(slot);
         const abutment = end.clone(true);
-        abutment.position.set(
-          (position[0] ?? 0) + edge.padCentre[0],
-          0,
-          (position[2] ?? 0) + edge.padCentre[1],
-        );
+        abutment.position.set(position[0] + edge.padCentre[0], 0, position[2] + edge.padCentre[1]);
         abutment.rotation.y = (-edge.worldAngleDeg * Math.PI) / 180;
         objects.push(abutment);
       }
@@ -50,7 +31,7 @@ export function ColonyGround({
         if (node instanceof Mesh) node.castShadow = node.receiveShadow = true;
       });
     return objects;
-  }, [key, hub, span, end]);
+  }, [key, span, end]);
   useEffect(() => {
     for (const object of objects) object.updateMatrixWorld(true);
   }, [objects]);

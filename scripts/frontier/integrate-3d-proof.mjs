@@ -74,7 +74,9 @@ const manifest = parseProofManifest({
   cameras: metadata.cameras,
   sockets: metadata.sockets,
   walkableRoutes: metadata.walkableRoutes,
-  shorelineXZ: shoreline,
+  shorelineXZ:
+    shoreline ??
+    (typeof metadata.shorelineXZ[0]?.[0] === "number" ? [metadata.shorelineXZ] : metadata.shorelineXZ),
   practicalLightPositions: [],
   environmentLightPositions: metadata.environmentLightPositions,
 });

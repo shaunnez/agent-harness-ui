@@ -1,10 +1,10 @@
 import type { RuntimeProject } from "../../domain.ts";
-import contractJson from "../../../design/mission-frontier/assets/staging/colony-hq-v1/contract.json" with {
+import contractJson from "../../../design/mission-frontier/assets/staging/colony-v2/contract.json" with {
   type: "json",
 };
 
 /**
- * The frozen colony contract is the placement authority: slot table, edge lines, bridge geometry
+ * Contract 2.0 is the placement authority: slot table, edge lines, bridge geometry
  * and cameras all come from it, so the runtime cannot drift from what the terrain builder and the
  * asset producer are building against. Never edit the JSON here; changes go through the lead.
  */
@@ -92,9 +92,9 @@ export const colonyEdges: ColonyEdge[] = contractJson.colony.edges.map((edge) =>
 }));
 export const abutmentRadius = Math.hypot(...(colonyEdges[0]?.abutmentFace ?? [0, 0]));
 export const bridgeSpan = contractJson.colony.bridge.span;
-export const parcelCoastRadius = contractJson.colony.landRules.coastMaxRadius;
-export const parcelPlateauRadius = contractJson.colony.landRules.plateauFlatRadius;
-export const channelWidth = 16;
+export const parcelCoastRadius = contractJson.terrain.coast.max;
+export const parcelPlateauRadius = contractJson.terrain.plateau.flatRadius;
+export const channelWidth = contractJson.terrain.relief.channelMin;
 
 const latticeTolerance = 0.5;
 export function latticeNeighbours(a: Point2, b: Point2) {
@@ -265,7 +265,7 @@ export const hudSafeInsets = {
   top: contractJson.cameras.world.hudSafeInsets1280x800.topLeft[1] ?? 150,
   bottom: contractJson.cameras.world.hudSafeInsets1280x800.bottomRight[1] ?? 260,
 };
-export const worldFitMargin = 10;
+export const worldFitMargin = contractJson.cameras.worldFitMargin;
 /** Screen axes of the exterior azimuth: right is the ground basis u, up is the camera's tilted up. */
 function screenAxes() {
   const exterior = colonyCameras.exterior;
@@ -289,54 +289,103 @@ export interface WorldFit extends ColonyCamera {
   /** Pixels to shift the frustum so the colony centres in the HUD-safe box (setViewOffset x, y). */
   viewOffset: { x: number; y: number };
 }
+/** Pixels of frame edge the land may not cross; panels may overlap land but never a base label. */
+export const worldFrameMargin = 12;
+interface Box {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+const emptyBox = (): Box => ({
+  minX: Number.POSITIVE_INFINITY,
+  maxX: Number.NEGATIVE_INFINITY,
+  minY: Number.POSITIVE_INFINITY,
+  maxY: Number.NEGATIVE_INFINITY,
+});
 /**
- * The world camera fits the union of occupied parcel discs (radius 46) plus the hub, with a 10 m
- * margin and the base label height, into the HUD-safe box. Azimuth and elevation are the exterior
- * camera's, so World, exterior and cutaway describe one place.
+ * The world camera fits the occupied land into the frame and every base label into the HUD-safe box.
+ * Land may run under the corner panels (they are translucent and the reference world does the same);
+ * labels may not. Azimuth and elevation are the exterior camera's, so World, exterior and cutaway
+ * describe one place.
  */
 export function fitColonyView(
   occupiedSlotIds: Iterable<string>,
   viewport: Viewport = { width: 1280, height: 800 },
   labelHeight = 6,
 ): WorldFit {
-  const centres = [...new Set([hubSlot.id, ...occupiedSlotIds])]
+  const slots = [...new Set([hubSlot.id, ...occupiedSlotIds])]
     .map((id) => colonySlot(id))
-    .filter((slot): slot is ColonySlot => Boolean(slot))
-    .map((slot) => slot.world);
+    .filter((slot): slot is ColonySlot => Boolean(slot));
   const axes = screenAxes();
   const ground = contractJson.levels.plateauGround;
-  let minX = Number.POSITIVE_INFINITY,
-    maxX = Number.NEGATIVE_INFINITY,
-    minY = Number.POSITIVE_INFINITY,
-    maxY = Number.NEGATIVE_INFINITY;
-  const include = (point: Point3) => {
+  // The world is a window onto the landmass: frame the HQ plateaus and the landing pad, let the
+  // coasts and cliffs run off the edges the way the reference world does.
+  const landing = contractJson.terrain.landing.padRadius + 4;
+  const plateau = parcelPlateauRadius + 4;
+  const land = emptyBox(),
+    labels = emptyBox();
+  const include = (target: Box, point: Point3) => {
     const x = dot(point, axes.right),
       y = dot(point, axes.up);
-    minX = Math.min(minX, x);
-    maxX = Math.max(maxX, x);
-    minY = Math.min(minY, y);
-    maxY = Math.max(maxY, y);
+    target.minX = Math.min(target.minX, x);
+    target.maxX = Math.max(target.maxX, x);
+    target.minY = Math.min(target.minY, y);
+    target.maxY = Math.max(target.maxY, y);
   };
-  for (const centre of centres) {
+  for (const slot of slots) {
+    const radius = slot.id === hubSlot.id ? landing : plateau;
     for (let i = 0; i < 24; i++) {
       const angle = (i / 24) * Math.PI * 2;
-      include([
-        centre[0] + parcelCoastRadius * Math.cos(angle),
+      include(land, [
+        slot.world[0] + radius * Math.cos(angle),
         ground,
-        centre[1] + parcelCoastRadius * Math.sin(angle),
+        slot.world[1] + radius * Math.sin(angle),
       ]);
     }
-    include([centre[0], baseLabelAnchor[1] + labelHeight, centre[1]]);
+    if (slot.id !== hubSlot.id) {
+      // A label is a pill roughly 14 m wide at world scale; keep its whole width inside the safe box.
+      for (const side of [-7, 7])
+        include(labels, [
+          slot.world[0] + side * ux,
+          baseLabelAnchor[1] + labelHeight,
+          slot.world[1] + side * uz,
+        ]);
+      include(labels, [slot.world[0], baseLabelAnchor[1], slot.world[1]]);
+    }
   }
-  const width = maxX - minX + worldFitMargin * 2;
-  const height = maxY - minY + worldFitMargin * 2;
+  if (!Number.isFinite(labels.minX)) Object.assign(labels, land);
   const safeWidth = Math.max(200, viewport.width - hudSafeInsets.left - hudSafeInsets.right);
   const safeHeight = Math.max(160, viewport.height - hudSafeInsets.top - hudSafeInsets.bottom);
-  const pixelsPerMetre = Math.min(safeWidth / width, safeHeight / height);
+  const frameWidth = viewport.width - worldFrameMargin * 2;
+  const frameHeight = viewport.height - worldFrameMargin * 2;
+  const pixelsPerMetre = Math.min(
+    frameWidth / (land.maxX - land.minX + worldFitMargin * 2),
+    frameHeight / (land.maxY - land.minY + worldFitMargin * 2),
+    safeWidth / Math.max(1, labels.maxX - labels.minX + 4),
+    safeHeight / Math.max(1, labels.maxY - labels.minY + 4),
+  );
   const verticalSpan = viewport.height / pixelsPerMetre;
-  // The ground point that projects to the centre of the fitted bounds becomes the orbit target.
-  const centreX = (minX + maxX) / 2,
-    centreY = (minY + maxY) / 2;
+  // Centre the land in the frame, then nudge so every label stays inside the safe box.
+  const safeCentreX = (hudSafeInsets.left + (viewport.width - hudSafeInsets.right)) / 2 - viewport.width / 2;
+  const safeCentreY =
+    (hudSafeInsets.top + (viewport.height - hudSafeInsets.bottom)) / 2 - viewport.height / 2;
+  let centreX = (land.minX + land.maxX) / 2,
+    centreY = (land.minY + land.maxY) / 2;
+  const labelHalfW = (labels.maxX - labels.minX) / 2 + 2,
+    labelHalfH = (labels.maxY - labels.minY) / 2 + 2;
+  const labelCentreX = (labels.minX + labels.maxX) / 2,
+    labelCentreY = (labels.minY + labels.maxY) / 2;
+  // Safe box in metres relative to the frame centre (screen y up).
+  const safeLeft = centreX + (safeCentreX - safeWidth / 2) / pixelsPerMetre;
+  const safeRight = centreX + (safeCentreX + safeWidth / 2) / pixelsPerMetre;
+  const safeBottom = centreY - (safeCentreY + safeHeight / 2) / pixelsPerMetre;
+  const safeTop = centreY - (safeCentreY - safeHeight / 2) / pixelsPerMetre;
+  if (labelCentreX - labelHalfW < safeLeft) centreX -= safeLeft - (labelCentreX - labelHalfW);
+  else if (labelCentreX + labelHalfW > safeRight) centreX += labelCentreX + labelHalfW - safeRight;
+  if (labelCentreY - labelHalfH < safeBottom) centreY -= safeBottom - (labelCentreY - labelHalfH);
+  else if (labelCentreY + labelHalfH > safeTop) centreY += labelCentreY + labelHalfH - safeTop;
+  // The ground point that projects to the frame centre becomes the orbit target.
   const groundV: Point3 = [vx, 0, vz];
   const along = (centreY - ground * axes.up[1]) / dot(groundV, axes.up);
   const target: Point3 = [centreX * ux + along * vx, ground, centreX * uz + along * vz];
@@ -351,10 +400,53 @@ export function fitColonyView(
     target,
     position: [target[0] + offset[0] * reach, target[1] + offset[1] * reach, target[2] + offset[2] * reach],
     verticalSpan,
-    viewOffset: {
-      x: (hudSafeInsets.right - hudSafeInsets.left) / 2,
-      y: (hudSafeInsets.bottom - hudSafeInsets.top) / 2,
-    },
+    viewOffset: { x: 0, y: 0 },
+  };
+}
+/**
+ * Cutaway framing: the shell, bay and court apron fill `fill` of the viewport height. Same azimuth
+ * and elevation as the contract cutaway camera; only the span and the orbit target move.
+ */
+export function fitCutawayView(base: Point3, viewport: Viewport, fill = 0.92): ColonyCamera {
+  const camera = colonyCameras.cutaway;
+  const d: Point3 = [
+    camera.position[0] - camera.target[0],
+    camera.position[1] - camera.target[1],
+    camera.position[2] - camera.target[2],
+  ];
+  const length = Math.hypot(...d);
+  const view = d.map((n) => n / length) as Point3;
+  const upRaw: Point3 = [-view[1] * view[0], 1 - view[1] * view[1], -view[1] * view[2]];
+  const upLength = Math.hypot(...upRaw);
+  const up = upRaw.map((n) => n / upLength) as Point3;
+  const massing = contractJson.hq.massing.envelope;
+  const radius = massing.maxRadius;
+  const apron = contractJson.terrain.plateau.courtApron;
+  const top = contractJson.levels.hqCeilingClear + 1.2;
+  let minY = Number.POSITIVE_INFINITY,
+    maxY = Number.NEGATIVE_INFINITY;
+  for (const x of [-radius, radius])
+    for (const z of [-radius, apron.z[1] ?? 26])
+      for (const y of [contractJson.levels.plateauGround, top]) {
+        const p = dot([x, y, z], up);
+        minY = Math.min(minY, p);
+        maxY = Math.max(maxY, p);
+      }
+  const verticalSpan = (maxY - minY) / fill;
+  // Orbit target: the ground point that projects to the centre of the fitted height.
+  const centreY = (minY + maxY) / 2;
+  const ground = contractJson.levels.plateauGround;
+  const forward: Point3 = [-view[0], 0, -view[2]];
+  const forwardLength = Math.hypot(...forward);
+  const ahead = forward.map((n) => n / forwardLength) as Point3;
+  const along = (centreY - ground * up[1]) / dot(ahead, up);
+  const target: Point3 = [base[0] + ahead[0] * along, ground, base[2] + ahead[2] * along];
+  const reach = verticalSpan / camera.verticalSpan;
+  void viewport;
+  return {
+    target,
+    position: [target[0] + d[0] * reach, target[1] + d[1] * reach, target[2] + d[2] * reach],
+    verticalSpan,
   };
 }
 /** Top-down minimap: colony centroid, span 2 x (max occupied slot radius + 46 + 20). */

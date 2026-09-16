@@ -1,12 +1,6 @@
 import { Group, type Object3D } from "three";
 import { baseVariants, legacyBaseVariants } from "./appearance.ts";
-import {
-  greyboxBridge,
-  greyboxBridgeEnd,
-  greyboxCrown,
-  greyboxParcel,
-  greyboxShell,
-} from "./colony-greybox.ts";
+import { greyboxBridge, greyboxBridgeEnd, greyboxCrown, greyboxShell } from "./colony-greybox.ts";
 import type { ProofManifest } from "./model.ts";
 
 /** Only assets used by this renderer are requested; all projects share the same GLTF source. */
@@ -23,8 +17,6 @@ export function proofAssetUrls(manifest: ProofManifest) {
       [
         manifest.worker,
         colony?.shell,
-        colony?.parcelA,
-        colony?.parcelHub,
         colony?.bridgeSpan,
         colony?.bridgeEnd,
         colony?.scatterKit,
@@ -56,11 +48,9 @@ export function colonyModels(manifest: ProofManifest, loaded: Map<string, Object
   return {
     bases,
     owned,
-    parcel: get(colony?.parcelA, () => greyboxParcel()),
-    hub: get(colony?.parcelHub, () => greyboxParcel(true)),
     span: get(colony?.bridgeSpan, greyboxBridge),
     end: get(colony?.bridgeEnd, greyboxBridgeEnd),
-    /** No kit means no scatter; the parcels still render. */
+    /** No kit means no scatter; the land still renders. */
     kit: colony?.scatterKit ? (loaded.get(colony.scatterKit) ?? null) : null,
   };
 }

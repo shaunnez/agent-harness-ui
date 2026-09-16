@@ -59,6 +59,83 @@ export function createCoastalWater(loops: [number, number][][]) {
       bytes[index + 1] = land ? 255 : 0;
       bytes[index + 3] = 255;
     }
+  return buildWater(bytes, size, minX, minZ, spanX, spanZ, 0.22);
+}
+/**
+ * Water for a height field: land is wherever the field is above sea level, and the shore distance is
+ * a chamfer distance transform over a 512-cell grid (about half a metre per cell for a small colony).
+ */
+export function createWaterFromField(
+  bounds: { minX: number; maxX: number; minZ: number; maxZ: number },
+  heightAt: (x: number, z: number) => number,
+  seaLevel = 0,
+) {
+  const margin = 45;
+  const minX = bounds.minX - margin,
+    minZ = bounds.minZ - margin;
+  const spanX = bounds.maxX + margin - minX,
+    spanZ = bounds.maxZ + margin - minZ;
+  const size = 512;
+  const cellX = spanX / (size - 1),
+    cellZ = spanZ / (size - 1);
+  const land = new Uint8Array(size * size);
+  const distance = new Float32Array(size * size).fill(1e9);
+  for (let row = 0; row < size; row++)
+    for (let column = 0; column < size; column++) {
+      const x = column * cellX + minX,
+        z = row * cellZ + minZ;
+      const index = row * size + column;
+      if (heightAt(x, z) > seaLevel) {
+        land[index] = 1;
+        distance[index] = 0;
+      }
+    }
+  // Two-pass chamfer (3-4 weights) in cell units; anisotropic cells are close enough for wash.
+  const cell = (cellX + cellZ) / 2;
+  const relax = (index: number, other: number, cost: number) => {
+    const candidate = (distance[other] ?? 1e9) + cost;
+    if (candidate < (distance[index] ?? 1e9)) distance[index] = candidate;
+  };
+  for (let row = 0; row < size; row++)
+    for (let column = 0; column < size; column++) {
+      const index = row * size + column;
+      if (column > 0) relax(index, index - 1, 3);
+      if (row > 0) {
+        relax(index, index - size, 3);
+        if (column > 0) relax(index, index - size - 1, 4);
+        if (column < size - 1) relax(index, index - size + 1, 4);
+      }
+    }
+  for (let row = size - 1; row >= 0; row--)
+    for (let column = size - 1; column >= 0; column--) {
+      const index = row * size + column;
+      if (column < size - 1) relax(index, index + 1, 3);
+      if (row < size - 1) {
+        relax(index, index + size, 3);
+        if (column < size - 1) relax(index, index + size + 1, 4);
+        if (column > 0) relax(index, index + size - 1, 4);
+      }
+    }
+  const bytes = new Uint8Array(size * size * 4);
+  for (let index = 0; index < size * size; index++) {
+    const metres = ((distance[index] ?? 0) / 3) * cell;
+    bytes[index * 4] = Math.round(Math.min(1, metres / 40) * 255);
+    bytes[index * 4 + 1] = land[index] ? 255 : 0;
+    bytes[index * 4 + 3] = 255;
+  }
+  // A tighter shallow band than the archipelago: the reference sea is deep teal right up to the rocks.
+  return buildWater(bytes, size, minX, minZ, spanX, spanZ, 0.55);
+}
+/** Shared water material: shore-distance texture (r = distance / 40, g = land) over the sea plane. */
+function buildWater(
+  bytes: Uint8Array,
+  size: number,
+  minX: number,
+  minZ: number,
+  spanX: number,
+  spanZ: number,
+  shallowDecay: number,
+) {
   const texture = new DataTexture(bytes, size, size, RGBAFormat, UnsignedByteType);
   texture.minFilter = texture.magFilter = LinearFilter;
   texture.needsUpdate = true;
@@ -69,6 +146,7 @@ export function createCoastalWater(loops: [number, number][][]) {
     uTime: { value: 0 },
     uSea: { value: new Color(0xffffff) },
     uLamps: { value: 0 },
+    uShallow: { value: shallowDecay },
   };
   const material = new ShaderMaterial({
     uniforms,
@@ -89,6 +167,7 @@ export function createCoastalWater(loops: [number, number][][]) {
       uniform vec2 uShoreSpan;
       uniform float uTime;
       uniform float uLamps;
+      uniform float uShallow;
       uniform vec3 uSea;
       float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       float noise(vec2 p) {
@@ -107,7 +186,7 @@ export function createCoastalWater(loops: [number, number][][]) {
         vec2 p = vWorld.xz;
         vec2 data = texture2D(uShore, (p - uShoreMin) / uShoreSpan).rg;
         float distance = data.r * 40.0;
-        float shallow = exp(-distance * .22);
+        float shallow = exp(-distance * uShallow);
         vec3 deep = vec3(.013, .075, .115);
         vec3 coast = vec3(.045, .30, .29);
         float w = wave(p);

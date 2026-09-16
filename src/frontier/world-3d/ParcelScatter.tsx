@@ -1,44 +1,23 @@
 import { useEffect, useMemo } from "react";
-import { Group, InstancedMesh, Matrix4, Mesh, type Object3D, Quaternion, Raycaster, Vector3 } from "three";
+import { Group, InstancedMesh, Matrix4, Mesh, type Object3D, Quaternion, Vector3 } from "three";
 import type { Point3 } from "./colony";
 import type { ScatterPlacement } from "./scatter";
 
 export interface ParcelScatterPlan {
   /** World position of the parcel origin. */
   origin: Point3;
-  /** Terrain object the pieces stand on (the shared parcel or hub source, untranslated). */
-  terrain: Object3D;
+  /** Parcel-local ground height under a piece. */
+  groundAt(x: number, z: number): number;
   placements: ScatterPlacement[];
 }
 /**
  * Instanced scatter: every kit item mesh becomes one InstancedMesh carrying that item's instances
- * across all parcels, so ten planted islands cost a dozen draw calls. Each piece is dropped onto the
- * terrain by a downward ray against the shared parcel mesh in parcel-local space, which is identical
- * for every parcel, so the heights are cached per placement point.
+ * across all parcels, so ten planted islands cost a dozen draw calls. Each piece stands on the height
+ * the plan reports for its point, which is the same analytic field the terrain mesh was built from.
  */
 export function buildScatter(kit: Object3D, plans: ParcelScatterPlan[]) {
   const root = new Group();
   root.name = "MF_Scatter";
-  const ray = new Raycaster();
-  const down = new Vector3(0, -1, 0);
-  const heights = new Map<Object3D, Map<string, number>>();
-  const groundAt = (terrain: Object3D, x: number, z: number) => {
-    let cache = heights.get(terrain);
-    if (!cache) {
-      terrain.updateMatrixWorld(true);
-      cache = new Map();
-      heights.set(terrain, cache);
-    }
-    const key = `${x.toFixed(2)},${z.toFixed(2)}`;
-    const cached = cache.get(key);
-    if (cached !== undefined) return cached;
-    ray.set(new Vector3(x, 60, z), down);
-    ray.far = 120;
-    const hit = ray.intersectObject(terrain, true).find((entry) => entry.point.y > -2.5);
-    const y = hit ? hit.point.y : 4;
-    cache.set(key, y);
-    return y;
-  };
   const byItem = new Map<string, { plan: ParcelScatterPlan; placement: ScatterPlacement }[]>();
   for (const plan of plans)
     for (const placement of plan.placements)
@@ -65,7 +44,9 @@ export function buildScatter(kit: Object3D, plans: ParcelScatterPlan[]) {
       instanced.castShadow = true;
       instanced.receiveShadow = item.startsWith("MF_Boulder") || item.startsWith("MF_Vehicle");
       entries.forEach(({ plan, placement }, index) => {
-        const y = groundAt(plan.terrain, placement.x, placement.z);
+        // Boulders sit into the ground a little so they never hover on a slope.
+        const sink = placement.kind === "boulder" ? 0.25 * placement.scale : 0;
+        const y = plan.groundAt(placement.x, placement.z) - sink;
         position.set(plan.origin[0] + placement.x, plan.origin[1] + y, plan.origin[2] + placement.z);
         quaternion.setFromAxisAngle(up, placement.rotation);
         scale.setScalar(placement.scale);

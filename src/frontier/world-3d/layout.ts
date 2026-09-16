@@ -6,6 +6,7 @@ import {
   type ColonyCamera,
   colonyCameras,
   fitColonyView,
+  fitCutawayView,
   hubSlot,
   type Point3,
   slotPosition,
@@ -96,6 +97,7 @@ export function viewCamera(
   legacy?: ProofManifest,
 ): ColonyCamera & Partial<Pick<WorldFit, "viewOffset">> {
   const base = bases.find((entry) => entry.project.id === projectId);
+  if (base && cutaway && !legacy && viewport) return fitCutawayView(base.position, viewport);
   if (base) {
     const camera = legacy
       ? cutaway

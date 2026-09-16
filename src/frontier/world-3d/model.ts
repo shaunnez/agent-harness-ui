@@ -24,6 +24,8 @@ export interface ProofManifest {
     crownPreviews?: Partial<Record<BaseVariant, string>>;
     /** Shared scatter kit (trees, boulders, lanterns, vehicles) instanced per parcel from a seeded layout. */
     scatterKit?: string;
+    /** Contract 2.0 land is a runtime height field; these textures dress it (tri-planar in the shader). */
+    terrainTextures?: Partial<Record<"gravel" | "limestone" | "cliff" | "cliffNormal" | "basalt", string>>;
     parcelHub?: string;
     parcelA?: string;
     bridgeSpan?: string;
@@ -356,6 +358,9 @@ export function parseProofManifest(value: unknown): ProofManifest {
       ].some((value) => value !== undefined && !asset(value)) ||
       Object.values(colony.crownPreviews ?? {}).some(
         (value) => typeof value !== "string" || !/^\/assets\/3d-proof\/[\w.-]+\.(png|webp)$/.test(value),
+      ) ||
+      Object.values(colony.terrainTextures ?? {}).some(
+        (value) => typeof value !== "string" || !/^\/assets\/3d-proof\/[\w.-]+\.(jpg|png|webp)$/.test(value),
       ) ||
       [colony.hqLightPositions, colony.parcelLightPositions].some(
         (points) => points !== undefined && (!Array.isArray(points) || !points.every((p) => point(p))),

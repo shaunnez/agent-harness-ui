@@ -66,17 +66,17 @@ test("colony slots persist across reorder/archive, remain distinct, and extend b
     for (const b of Object.values(saved).slice(i + 1)) {
       const aa = slotPosition(a),
         bb = slotPosition(b);
-      assert.ok(Math.hypot(aa[0] - bb[0], aa[2] - bb[2]) > 107.9);
+      assert.ok(Math.hypot(aa[0] - bb[0], aa[2] - bb[2]) > 89.9);
     }
   const bridges = colonyBridges(Object.values(saved));
   for (const id of Object.values(saved)) assert.ok(bridges.some((b) => b.from === id || b.to === id));
   assert.throws(() => slotPosition("bad"));
   assert.equal(saved[projectKey(projects[0])], "P1");
 });
-test("three bases connect only to hub and hidden spurs track actual neighbors", () => {
-  assert.equal(colonyBridges(["P1", "P2", "P3"]).length, 3);
-  assert.equal(builtEdges("H", ["P1", "P2", "P3"]).size, 3);
-  assert.equal(builtEdges("P1", ["P1", "P2", "P3"]).size, 1);
+test("three bases read as a chain through the centre cell, with the landing terrace off to the side", () => {
+  assert.equal(colonyBridges(["P1", "P2", "P3"]).length, 4);
+  assert.equal(builtEdges("H", ["P1", "P2", "P3"]).size, 2);
+  assert.equal(builtEdges("P1", ["P1", "P2", "P3"]).size, 3);
   assert.ok(colonyBridges(Array.from({ length: 10 }, (_, i) => `P${i + 1}`)).length > 10);
   assert.ok(Math.abs(cameraElevationDeg(colonyCameras.cutaway) - 40) < 0.1);
   assert.ok(Math.abs(cameraElevationDeg(colonyCameras.exterior) - 28.4) < 0.1);

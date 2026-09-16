@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-16T09:54:10.542Z",
+  "capturedAt": "2026-09-16T15:49:13.651Z",
   "assets": [
     {
       "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.glb",
@@ -72,10 +72,10 @@
       "bytes": 1001850
     },
     {
-      "source": "design/mission-frontier/assets/staging/colony-hq-v1/contract.json",
-      "filename": "colony-contract.7a2e1a500879.json",
-      "sha256": "7a2e1a5008796dc507cd21f4ef0cfd71a43ee6eada56b19e7122649fab35b20d",
-      "bytes": 34471
+      "source": "design/mission-frontier/assets/staging/colony-v2/contract.json",
+      "filename": "colony-contract.7bd0d0e596b4.json",
+      "sha256": "7bd0d0e596b4d0add82c7a39c36d589faacccbef6be1af2b2b7bc8093a51df08",
+      "bytes": 45096
     },
     {
       "source": "design/mission-frontier/assets/staging/colony-hq-v1/producer/hq-shell.glb",
@@ -148,26 +148,6 @@
       "animations": []
     },
     {
-      "source": "design/mission-frontier/assets/staging/colony-hq-v1/terrain/parcel-hub.glb",
-      "filename": "parcel-hub.8849332f217e.glb",
-      "sha256": "8849332f217ee377dcd85caf01991fe13104786a03b9a8223e597aaa6556c896",
-      "bytes": 2562888,
-      "meshes": 114,
-      "materials": 10,
-      "textures": 5,
-      "animations": []
-    },
-    {
-      "source": "design/mission-frontier/assets/staging/colony-hq-v1/terrain/parcel-a.glb",
-      "filename": "parcel-a.0537f0988e5e.glb",
-      "sha256": "0537f0988e5ec06e22e6570c4504830a17c842d77770173ec0ea1eb3b0e25f7d",
-      "bytes": 2514712,
-      "meshes": 103,
-      "materials": 10,
-      "textures": 5,
-      "animations": []
-    },
-    {
       "source": "design/mission-frontier/assets/staging/colony-hq-v1/terrain/scatter-kit.glb",
       "filename": "scatter-kit.8d5ecbfe8cc6.glb",
       "sha256": "8d5ecbfe8cc6de6db22e5ac33a0b8737ac4e884871dfa3f609b5a98836668b27",
@@ -178,28 +158,34 @@
       "animations": []
     },
     {
-      "source": "design/mission-frontier/assets/staging/colony-hq-v1/producer/previews/crown-bastion.png",
-      "filename": "crown-preview-bastion.4ec702f26675.png",
-      "sha256": "4ec702f26675df6ea7e5815466bc1644438497c76ce6fa07651aad1e5ec86aae",
-      "bytes": 312432
+      "source": "design/mission-frontier/assets/staging/colony-v2/terrain-textures/gravel-albedo.jpg",
+      "filename": "terrain-gravel-albedo.3e82bc8c5ea9.jpg",
+      "sha256": "3e82bc8c5ea9c5c5cbc0a849138920b1b8155b33ff594f1791dd69e60fd25130",
+      "bytes": 310790
     },
     {
-      "source": "design/mission-frontier/assets/staging/colony-hq-v1/producer/previews/crown-command.png",
-      "filename": "crown-preview-command.72966bd8db5b.png",
-      "sha256": "72966bd8db5b9e7e7220ffe47f841167e072737f561599f91fa549b59d6d7c1c",
-      "bytes": 312661
+      "source": "design/mission-frontier/assets/staging/colony-v2/terrain-textures/limestone-albedo.jpg",
+      "filename": "terrain-limestone-albedo.b09636eff1da.jpg",
+      "sha256": "b09636eff1daf1765af55b3bafe3150316dc5e0545641113819541c24fa5fecd",
+      "bytes": 338957
     },
     {
-      "source": "design/mission-frontier/assets/staging/colony-hq-v1/producer/previews/crown-relay.png",
-      "filename": "crown-preview-relay.c744a191508e.png",
-      "sha256": "c744a191508e9d8ba47b7807060a6e5f1a9bd158ce42817099176fc851bb61b3",
-      "bytes": 305306
+      "source": "design/mission-frontier/assets/staging/colony-v2/terrain-textures/cliff-albedo.jpg",
+      "filename": "terrain-cliff-albedo.ffc4f1d624e9.jpg",
+      "sha256": "ffc4f1d624e986783bef7a41ae8559c6cd7de070edbb10a4f52725ff021ea559",
+      "bytes": 237839
     },
     {
-      "source": "design/mission-frontier/assets/staging/colony-hq-v1/producer/previews/crown-foundry.png",
-      "filename": "crown-preview-foundry.e1e5e539cf67.png",
-      "sha256": "e1e5e539cf672513a2f3dbc14eb4c5b591ec6bb97f0cac33ecd51921fe3a329c",
-      "bytes": 310871
+      "source": "design/mission-frontier/assets/staging/colony-v2/terrain-textures/cliff-normal.jpg",
+      "filename": "terrain-cliff-normal.dfdefb8c4c60.jpg",
+      "sha256": "dfdefb8c4c60057ee9dd0cb087a1408a2cd16017b2ccbbd46549bd0e78bdc246",
+      "bytes": 324072
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/colony-v2/terrain-textures/basalt-albedo.jpg",
+      "filename": "terrain-basalt-albedo.7f6f92ce0c84.jpg",
+      "sha256": "7f6f92ce0c84974305a61c405589fac2b2299bf754403251dda999fa42473c3a",
+      "bytes": 6145
     }
   ]
 }

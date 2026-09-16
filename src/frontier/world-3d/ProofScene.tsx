@@ -3,6 +3,7 @@ import { baseLabelAnchor, hubSlot, projectKey } from "./colony";
 import { colonyModels, proofAssetUrls } from "./colony-assets";
 import { disposeGreybox } from "./colony-greybox";
 import { ColonyGround } from "./ColonyGround";
+import { ColonyTerrain } from "./ColonyTerrain";
 import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { Color, type DirectionalLight, type HemisphereLight, type Object3D, type PointLight } from "three";
@@ -32,7 +33,8 @@ import { ParcelScatter, type ParcelScatterPlan } from "./ParcelScatter";
 import { lanternLampOffset, scatterLayout } from "./scatter";
 import { SceneFinish } from "./SceneFinish";
 import { ShadowCadence } from "./shadow-cadence";
-import { createCoastalWater } from "./water";
+import { createCoastalWater, createWaterFromField } from "./water";
+import { buildField, coastRadius, heightAt, slopeAt, type TerrainField } from "./terrain-field";
 import { batchWorker } from "./worker-batching";
 
 interface Props {
@@ -99,18 +101,26 @@ export function ProofScene(props: Props) {
   const minimapCapture = useRef<(() => void) | null>(null);
   const mapPhase = useRef(-1);
   const layoutKey = bases.map((base) => base.position.join()).join("|");
+  const occupiedKey = occupiedSlots(bases).join();
+  // Contract 2.0 land: one analytic height field for every occupied slot plus the landing terrace.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: The field depends on the occupied slot set only.
+  const field = useMemo<TerrainField | null>(
+    () => (colony ? buildField(occupiedSlots(bases)) : null),
+    [colony, occupiedKey],
+  );
   // biome-ignore lint/correctness/useExhaustiveDependencies: Water depends on placement, not appearance or runtime refresh.
   const water = useMemo(
     () =>
-      createCoastalWater([
-        ...(colony ? (manifest.colony?.hubShorelineXZ ?? manifest.shorelineXZ) : []),
-        ...bases.flatMap((base) =>
-          manifest.shorelineXZ.map((loop) =>
-            loop.map(([x, z]): [number, number] => [x + base.position[0], z + base.position[2]]),
+      field
+        ? createWaterFromField(field.bounds, (x, z) => heightAt(field, x, z))
+        : createCoastalWater(
+            bases.flatMap((base) =>
+              manifest.shorelineXZ.map((loop) =>
+                loop.map(([x, z]): [number, number] => [x + base.position[0], z + base.position[2]]),
+              ),
+            ),
           ),
-        ),
-      ]),
-    [manifest, layoutKey, colony],
+    [manifest, layoutKey, field],
   );
   const workers = proofWorkers(input, manifest, bases);
   const cutaway = input.location.view !== "world";
@@ -129,24 +139,34 @@ export function ProofScene(props: Props) {
   // Seeded scatter per parcel: trees, boulders, lantern posts and parked vehicles from the shared kit.
   const scatterKey = bases.map((base) => `${projectKey(base.project)}@${base.position.join()}`).join("|");
   // biome-ignore lint/correctness/useExhaustiveDependencies: Scatter follows the parcel set, not appearance or runtime refresh.
-  const scatterPlans = useMemo<ParcelScatterPlan[]>(
-    () =>
-      colony
-        ? [
-            {
-              origin: hubParcel.position,
-              terrain: colony.hub,
-              placements: scatterLayout(hubSlot.id, { hub: true }),
-            },
-            ...bases.map((base) => ({
-              origin: base.position,
-              terrain: colony.parcel,
-              placements: scatterLayout(projectKey(base.project)),
-            })),
-          ]
-        : [],
-    [colony, scatterKey],
-  );
+  const scatterPlans = useMemo<ParcelScatterPlan[]>(() => {
+    if (!field) return [];
+    const plan = (slotId: string, origin: Point3, key: string): ParcelScatterPlan[] => {
+      const profile = field.profiles.find((entry) => entry.id === slotId);
+      if (!profile) return [];
+      const groundAt = (x: number, z: number) => heightAt(field, origin[0] + x, origin[2] + z);
+      return [
+        {
+          origin,
+          groundAt,
+          placements: scatterLayout(key, {
+            hub: profile.hub,
+            flatRadius: profile.flatRadius,
+            coast: (angleDeg) => coastRadius(profile, angleDeg),
+            ground: (x, z) => ({
+              height: groundAt(x, z),
+              slope: slopeAt(field, origin[0] + x, origin[2] + z),
+            }),
+            builtEdgeAngles: profile.built.map((edge) => edge.worldAngleDeg),
+          }),
+        },
+      ];
+    };
+    return [
+      ...plan(hubSlot.id, hubParcel.position, hubSlot.id),
+      ...bases.flatMap((base) => (base.slot ? plan(base.slot, base.position, projectKey(base.project)) : [])),
+    ];
+  }, [field, scatterKey]);
   const lampSlots = useMemo(() => Array.from({ length: lampBudget }, (_, slot) => `lamp:${slot}`), []);
   // biome-ignore lint/correctness/useExhaustiveDependencies: Lamp placement follows layout and variant, not identity.
   const lampsWorld = useMemo<PooledLamp[]>(
@@ -165,9 +185,7 @@ export function ProofScene(props: Props) {
       ),
       ...bases.flatMap((base) =>
         [
-          ...(manifest.version === 3
-            ? (manifest.colony?.parcelLightPositions ?? [])
-            : (manifest.environmentLightPositions ?? [])),
+          ...(manifest.version === 3 ? [] : (manifest.environmentLightPositions ?? [])),
           ...(manifest.version === 3
             ? (manifest.colony?.hqLightPositions ?? [])
             : (manifest.bases?.[legacyVariant(base.appearance.variant)].lightPositions ?? [])),
@@ -225,8 +243,8 @@ export function ProofScene(props: Props) {
       current.onLighting(lighting);
     }
   });
-  const parcel = colony?.parcel ?? environment?.scene;
-  if (!parcel) throw new Error("The coastal export is missing.");
+  const islandTile = colony ? undefined : environment?.scene;
+  if (!colony && !islandTile) throw new Error("The coastal export is missing.");
   return (
     <>
       <color attach="background" args={["#173e4a"]} />
@@ -257,8 +275,7 @@ export function ProofScene(props: Props) {
             key={base.project.id}
             base={base}
             source={source}
-            environment={parcel}
-            occupiedSlots={colony ? occupiedSlots(bases) : undefined}
+            environment={islandTile}
             cutaway={cutaway && base.project.id === activeFocus}
             light={light}
             roots={roots.current}
@@ -266,7 +283,8 @@ export function ProofScene(props: Props) {
           />
         );
       })}
-      {colony && <ColonyGround bases={bases} hub={colony.hub} span={colony.span} end={colony.end} />}
+      {colony && field && <ColonyTerrain field={field} textures={manifest.colony?.terrainTextures} />}
+      {colony && <ColonyGround bases={bases} span={colony.span} end={colony.end} />}
       {colony?.kit && <ParcelScatter kit={colony.kit} plans={scatterPlans} />}
       {lampSlots.map((slot, index) => (
         <pointLight
