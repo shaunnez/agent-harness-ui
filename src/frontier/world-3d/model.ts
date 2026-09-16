@@ -297,3 +297,15 @@ export function parseProofManifest(value: unknown): ProofManifest {
   }
   return data as ProofManifest;
 }
+
+/** Allocation failure must stay inside the preview boundary; task records remain inspectable. */
+export function proofWorkerState(input: ProofInput, manifest: ProofManifest | null, bases: ProjectBase[]) {
+  try {
+    return { workers: manifest ? proofWorkers(input, manifest, bases) : [], problem: null };
+  } catch (cause) {
+    return {
+      workers: [],
+      problem: cause instanceof Error ? cause.message : "The colony crew could not be placed safely.",
+    };
+  }
+}

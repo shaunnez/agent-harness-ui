@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import type { Object3D } from "three";
+import { Mesh, type Object3D } from "three";
 import { colonyBridges, hiddenEdgeGroups } from "./colony";
 import type { ProjectBase } from "./layout";
 
@@ -45,6 +45,10 @@ export function ColonyGround({
         objects.push(abutment);
       }
     }
+    for (const object of objects)
+      object.traverse((node) => {
+        if (node instanceof Mesh) node.castShadow = node.receiveShadow = true;
+      });
     return objects;
   }, [key, hub, span, end]);
   useEffect(() => {

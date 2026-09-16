@@ -18,7 +18,7 @@ import {
   type ProofInput,
   type ProofManifest,
   parseProofManifest,
-  proofWorkers,
+  proofWorkerState,
   visibleWorkerLabels,
 } from "./model";
 import { ProofScene } from "./ProofScene";
@@ -83,14 +83,7 @@ export function ProofWorld(props: Props) {
       ? (props.selectedProjectId ?? focusId ?? locatedProject(input)?.id)
       : locatedProject(input)?.id;
   const project = bases.find((base) => base.project.id === contextId)?.project ?? bases[0]?.project;
-  let allocationProblem: string | null = null;
-  let allWorkers: ReturnType<typeof proofWorkers> = [];
-  try {
-    if (manifest) allWorkers = proofWorkers(input, manifest, bases);
-  } catch (cause) {
-    allocationProblem =
-      cause instanceof Error ? cause.message : "The colony crew could not be placed safely.";
-  }
+  const { workers: allWorkers, problem: allocationProblem } = proofWorkerState(input, manifest, bases);
   const sceneProblem = error ?? allocationProblem;
   const workers = visibleWorkerLabels(allWorkers, input, focusId);
   const frameWorld = () => {

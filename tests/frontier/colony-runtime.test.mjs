@@ -13,7 +13,12 @@ import {
 } from "../../src/frontier/world-3d/colony.ts";
 import { allocateSockets, roomForStage, roomForTask } from "../../src/frontier/world-3d/rooms.ts";
 import { clearStandingPoint } from "../../src/frontier/world-3d/room-clearance.ts";
-import { proofWorkers, parseProofManifest, visibleWorkerLabels } from "../../src/frontier/world-3d/model.ts";
+import {
+  proofWorkers,
+  proofWorkerState,
+  parseProofManifest,
+  visibleWorkerLabels,
+} from "../../src/frontier/world-3d/model.ts";
 import { proofAssetUrls } from "../../src/frontier/world-3d/colony-assets.ts";
 import { colonyStressFixtures } from "../../src/frontier/fixtures/colony.ts";
 import { projectBases } from "../../src/frontier/world-3d/layout.ts";
@@ -191,4 +196,49 @@ test("every bridge reaches the opposite face within 5cm through ring three", () 
       `${bridge.from}-${bridge.to}`,
     );
   }
+});
+
+test("over-capacity fixture reports a preview problem without throwing or mutating tasks", () => {
+  const source = fixtures.tasks.find((task) => task.id === "COL-001");
+  const tasks = Array.from({ length: 300 }, (_, i) => ({ ...source, id: `over-${i}`, workPackages: [] }));
+  const state = { ...input, tasks };
+  const before = structuredClone(tasks);
+  const result = proofWorkerState(state, manifest, projectBases(fixtures.projects));
+  assert.match(result.problem, /no clear standing position/);
+  assert.deepEqual(result.workers, []);
+  assert.deepEqual(tasks, before);
+});
+
+test("bounded shoreline sampling retains exact coast/land values across separate parcels", async () => {
+  const { createCoastalWater, shoreDistance } = await import("../../src/frontier/world-3d/water.ts");
+  const loops = [
+    [
+      [0, 0],
+      [12, 0],
+      [12, 12],
+      [0, 12],
+      [0, 0],
+    ],
+    [
+      [200, 200],
+      [212, 200],
+      [212, 212],
+      [200, 212],
+      [200, 200],
+    ],
+  ];
+  const water = createCoastalWater(loops),
+    size = water.texture.image.width,
+    bytes = water.texture.image.data;
+  for (let row = 0; row < size; row += 31)
+    for (let col = 0; col < size; col += 29) {
+      const x = (col / (size - 1)) * water.uniforms.uShoreSpan.value.x + water.uniforms.uShoreMin.value.x;
+      const z = (row / (size - 1)) * water.uniforms.uShoreSpan.value.y + water.uniforms.uShoreMin.value.y;
+      const expected = shoreDistance(x, z, loops),
+        offset = (row * size + col) * 4;
+      assert.equal(bytes[offset], Math.round(Math.min(1, expected.distance / 40) * 255));
+      assert.equal(bytes[offset + 1], expected.land ? 255 : 0);
+    }
+  water.material.dispose();
+  water.texture.dispose();
 });
