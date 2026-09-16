@@ -278,7 +278,8 @@ test("appearance defaults distribute all three buildings and persist without ove
   assert.deepEqual(readAppearances(storage)[key], selected);
   assert.deepEqual(readAppearances(storage)[otherKey], { variant: "foundry", palette: "purple" });
   const refreshed = assignMissingAppearances([...fixtureProjects].reverse(), { ...saved, [key]: selected });
-  assert.deepEqual(refreshed[key], selected);
+  // A saved choice keeps its building and colour; the colony slot is completed alongside it.
+  assert.deepEqual(refreshed[key], { ...selected, slot: "P1" });
   assert.deepEqual(refreshed[otherKey], saved[otherKey]);
   assert.deepEqual(
     parseAppearances({ version: 1, projects: { bad: { variant: "castle", palette: "green" } } }),

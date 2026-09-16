@@ -1,4 +1,5 @@
 import type { RuntimeProject } from "../../domain.ts";
+import { assignSlots, projectKey, projectSlotIds, type SlotAssignments } from "./colony.ts";
 
 export const baseVariants = ["command", "relay", "foundry"] as const;
 export type BaseVariant = (typeof baseVariants)[number];
@@ -17,12 +18,12 @@ export const baseNames: Record<BaseVariant, string> = {
 export interface BaseAppearance {
   variant: BaseVariant;
   palette: BasePalette;
+  /** Colony slot (P1..P18). Persisted with the appearance so a base never moves once placed. */
+  slot?: string;
 }
 export type BaseAppearances = Record<string, BaseAppearance>;
 export const appearanceStorageKey = "mission-frontier.3d-project-appearance.v1";
-export function projectAppearanceKey(project: Pick<RuntimeProject, "id" | "repositoryPath">) {
-  return `${project.id}:${project.repositoryPath}`;
-}
+export const projectAppearanceKey = projectKey;
 export function parseAppearances(value: unknown): BaseAppearances {
   const data = value as { version?: number; projects?: unknown } | null;
   if (data?.version !== 1 || !data.projects || typeof data.projects !== "object") return {};
@@ -34,8 +35,19 @@ export function parseAppearances(value: unknown): BaseAppearances {
       baseVariants.includes(entry.variant as BaseVariant) &&
       Object.hasOwn(basePalettes, entry.palette ?? "")
     )
-      result[key] = { variant: entry.variant as BaseVariant, palette: entry.palette as BasePalette };
+      result[key] = {
+        variant: entry.variant as BaseVariant,
+        palette: entry.palette as BasePalette,
+        ...(typeof entry.slot === "string" && projectSlotIds.has(entry.slot) ? { slot: entry.slot } : {}),
+      };
   }
+  return result;
+}
+/** Slot assignments already recorded, including those of projects no longer listed. */
+export function savedSlots(appearances: BaseAppearances): SlotAssignments {
+  const result: SlotAssignments = {};
+  for (const [key, appearance] of Object.entries(appearances))
+    if (appearance.slot) result[key] = appearance.slot;
   return result;
 }
 export function readAppearances(storage: Pick<Storage, "getItem">): BaseAppearances {
@@ -59,8 +71,10 @@ export function defaultAppearance(project: RuntimeProject): BaseAppearance {
     palette: palettes[(n >>> 8) % palettes.length] ?? "blue",
   };
 }
+/** Fills in variant, palette and colony slot for projects that lack them; saved values never change. */
 export function assignMissingAppearances(projects: RuntimeProject[], saved: BaseAppearances) {
   const result = { ...saved };
+  const slots = assignSlots(projects, savedSlots(saved));
   const counts = Object.fromEntries(baseVariants.map((variant) => [variant, 0])) as Record<
     BaseVariant,
     number
@@ -71,15 +85,22 @@ export function assignMissingAppearances(projects: RuntimeProject[], saved: Base
   }
   for (const project of [...projects].sort((a, b) => a.id.localeCompare(b.id))) {
     const key = projectAppearanceKey(project);
-    if (result[key]) continue;
+    const existing = result[key];
+    if (existing) {
+      if (!existing.slot && slots[key]) result[key] = { ...existing, slot: slots[key] };
+      continue;
+    }
     const fallback = defaultAppearance(project);
     const least = Math.min(...Object.values(counts));
     const available = baseVariants.filter((variant) => counts[variant] === least);
     const variant = available[hash(key) % available.length] ?? "command";
-    result[key] = { ...fallback, variant };
+    result[key] = { ...fallback, variant, ...(slots[key] ? { slot: slots[key] } : {}) };
     counts[variant]++;
   }
   return result;
+}
+export function appearanceComplete(appearance: BaseAppearance | undefined): appearance is BaseAppearance {
+  return Boolean(appearance?.slot);
 }
 export function saveAppearance(
   storage: Pick<Storage, "getItem" | "setItem">,
@@ -87,7 +108,12 @@ export function saveAppearance(
   appearance: BaseAppearance,
 ) {
   const current = readAppearances(storage);
-  const next = { ...current, [key]: appearance };
+  // A colour or building choice never moves a base: the recorded slot survives the new choice.
+  const slot = appearance.slot ?? current[key]?.slot;
+  const next = {
+    ...current,
+    [key]: slot ? { ...appearance, slot } : { variant: appearance.variant, palette: appearance.palette },
+  };
   storage.setItem(appearanceStorageKey, JSON.stringify({ version: 1, projects: next }));
   return next;
 }
