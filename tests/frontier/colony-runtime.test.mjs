@@ -22,7 +22,7 @@ import {
 import { proofAssetUrls } from "../../src/frontier/world-3d/colony-assets.ts";
 import { colonyStressFixtures } from "../../src/frontier/fixtures/colony.ts";
 import { projectBases } from "../../src/frontier/world-3d/layout.ts";
-import { parseAppearances } from "../../src/frontier/world-3d/appearance.ts";
+import { parseAppearances, assignMissingAppearances } from "../../src/frontier/world-3d/appearance.ts";
 
 const exported = JSON.parse(
   await readFile(new URL("../../public/frontier/assets/3d-proof/manifest.json", import.meta.url), "utf8"),
@@ -241,4 +241,17 @@ test("bounded shoreline sampling retains exact coast/land values across separate
     }
   water.material.dispose();
   water.texture.dispose();
+});
+
+test("duplicate stored slots are repaired deterministically before laying out project bases", () => {
+  const projects = fixtures.projects.slice(0, 2);
+  const saved = Object.fromEntries(
+    projects.map((project) => [projectKey(project), { variant: "command", palette: "blue", slot: "P1" }]),
+  );
+  const bases = projectBases(projects, saved, true);
+  assert.equal(new Set(bases.map((base) => base.slot)).size, 2);
+  const repaired = assignMissingAppearances(projects, saved);
+  assert.equal(repaired[projectKey(projects[0])].slot, "P1");
+  assert.equal(repaired[projectKey(projects[1])].slot, "P2");
+  assert.equal(repaired[projectKey(projects[1])].palette, "blue");
 });

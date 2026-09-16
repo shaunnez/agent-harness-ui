@@ -33,7 +33,7 @@ export function projectBases(
   return ordered.flatMap((project) => {
     const key = projectAppearanceKey(project);
     const appearance = appearances[key] ?? defaultAppearance(project);
-    const slot = appearance.slot ?? slots[key];
+    const slot = slots[key];
     if (!slot) return [];
     return [{ project, position: slotPosition(slot), appearance: { ...appearance, slot }, slot }];
   });

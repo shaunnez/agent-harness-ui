@@ -63,7 +63,7 @@ export function proofProject(projects: RuntimeProject[]) {
 export function proofVisible(search: string, input: SceneInput) {
   if (input.mode !== "fixture" || !proofRequested(search)) return false;
   const projects = input.projects.filter((project) => !project.archivedAt);
-  if (input.location.view === "world") return projects.length > 0;
+  if (input.location.view === "world") return input.projects.length > 0;
   if (input.location.view === "project")
     return projects.some((project) => project.id === input.location.projectId);
   return (

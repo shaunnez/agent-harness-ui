@@ -87,7 +87,7 @@ export function assignMissingAppearances(projects: RuntimeProject[], saved: Base
     const key = projectAppearanceKey(project);
     const existing = result[key];
     if (existing) {
-      if (!existing.slot && slots[key]) result[key] = { ...existing, slot: slots[key] };
+      if (slots[key] && existing.slot !== slots[key]) result[key] = { ...existing, slot: slots[key] };
       continue;
     }
     const fallback = defaultAppearance(project);

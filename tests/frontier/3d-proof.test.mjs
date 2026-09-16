@@ -260,7 +260,8 @@ test("one base per project has separate routes and stable placement under refres
   }
   const archived = { ...fixtureProjects[0], archivedAt: "2026-09-16" };
   assert.equal(projectBases([archived]).length, 0);
-  assert.equal(proofVisible(search, input({ projects: [archived] })), false);
+  // The colony retains archived parcels as dormant scenery, including an archived-only world.
+  assert.equal(proofVisible(search, input({ projects: [archived] })), true);
 });
 
 test("appearance defaults distribute all three buildings and persist without overwriting another project", () => {
