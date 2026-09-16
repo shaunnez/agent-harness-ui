@@ -133,3 +133,47 @@ test("land has relief and cliffs, never exceeds the label anchor, and is determi
         Math.abs(heightAt(before, ...radial(p2, r, angle)) - heightAt(after, ...radial(p2, r, angle))) < 1e-9,
       );
 });
+
+test("streams are seeded per slot, carve descending channels on a camera-facing flank and fall into the sea clear of every bridge", () => {
+  const field = buildField(occupied);
+  const withWater = field.profiles.filter((profile) => profile.water);
+  assert.ok(
+    withWater.length >= 1 && withWater.length < field.profiles.length,
+    "some parcels have a stream, some do not",
+  );
+  assert.equal(parcelProfile("P2", occupied).water, null);
+  const edgeAngles = colonyContract.colony.edges.map((edge) => edge.worldAngleDeg);
+  const angularGap = (a, b) => Math.abs(((((a - b) % 360) + 540) % 360) - 180);
+  for (const profile of withWater) {
+    const water = profile.water;
+    for (let i = 1; i < water.path.length; i++) {
+      assert.ok(water.path[i].bed <= water.path[i - 1].bed + 1e-9, `${profile.id} bed descends`);
+      assert.ok(water.path[i].water <= water.path[i - 1].water + 1e-9, `${profile.id} water descends`);
+      assert.ok(water.path[i].water > water.path[i].bed, `${profile.id} water above the bed`);
+    }
+    for (const pool of water.pools) {
+      const r = Math.hypot(pool.x, pool.z);
+      assert.ok(r - pool.radius > profile.flatRadius + 1.2, `${profile.id} pool clear of the HQ plateau`);
+      const ground = heightAt(field, profile.centre[0] + pool.x, profile.centre[1] + pool.z);
+      assert.ok(
+        ground < pool.water && ground > pool.bed - 0.05,
+        `${profile.id} pool is cut into the land: ${ground}`,
+      );
+    }
+    for (const edge of edgeAngles)
+      assert.ok(
+        angularGap(water.fall.angleDeg, edge) >= 19,
+        `${profile.id} fall ${water.fall.angleDeg} near edge ${edge}`,
+      );
+    const lip = heightAt(field, profile.centre[0] + water.fall.x, profile.centre[1] + water.fall.z);
+    assert.ok(lip < water.fall.top && lip > seaLevel + 1, `${profile.id} lip cut at ${lip}`);
+    assert.ok(
+      heightAt(field, profile.centre[0] + water.fall.base[0], profile.centre[1] + water.fall.base[1]) <
+        seaLevel,
+      `${profile.id} fall lands in the sea`,
+    );
+    // The world and exterior cameras look from +x, +z: the fall is on a flank they see.
+    const a = (water.fall.angleDeg * Math.PI) / 180;
+    assert.ok(0.6 * Math.cos(a) + 0.8 * Math.sin(a) > -0.25, `${profile.id} fall faces the camera side`);
+  }
+});

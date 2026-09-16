@@ -1,11 +1,12 @@
 // Contract 2.0 colony evidence. Drives a Frontier dev server with headless Chromium (SwiftShader WebGL) and
 // writes PNGs plus measurements-<step>.json. Usage: FRONTIER_BASE=http://127.0.0.1:5243/ node capture-v2.cjs <step>
-// Steps: gate (world / exterior / cutaway, day and dusk, both sizes), stress (ten-project world).
+// Steps: gate (world / exterior / cutaway, day and dusk, both sizes), stress (ten-project world),
+// peek (world and exterior by day at 1568 only; set FRONTIER_OUT to keep the PNGs out of the evidence folder).
 const { chromium } = require("/Users/shaun/projects/eversor-mystrataassist/e2e/node_modules/playwright-core");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const OUT = __dirname;
+const OUT = process.env.FRONTIER_OUT ?? __dirname;
 const BASE = process.env.FRONTIER_BASE ?? "http://127.0.0.1:5243/";
 const SIZES = [
   { w: 1568, h: 1003, tag: "1568x1003" },
@@ -88,7 +89,7 @@ async function run(step) {
   });
   const measurements = { step, capturedAt: new Date().toISOString(), base: BASE, shots: {} };
   try {
-    for (const size of SIZES) {
+    for (const size of step === "peek" ? SIZES.slice(0, 1) : SIZES) {
       const context = await browser.newContext({ viewport: { width: size.w, height: size.h }, deviceScaleFactor: 1 });
       const page = await context.newPage();
       page.on("pageerror", (error) => console.error("pageerror", error.message));
@@ -102,6 +103,12 @@ async function run(step) {
         fill: await canvasFill(page),
         labels: await rects(page, ".world-label"),
       };
+      if (step === "peek") {
+        await goHash(page, "project/plancheck");
+        await page.click("button:has-text('Exterior')").catch(() => {});
+        await sleep(3000);
+        measurements.shots[`peek-exterior-day-${size.tag}`] = { file: await shot(page, `peek-exterior-day-${size.tag}`) };
+      }
       if (step === "gate") {
         await goHash(page, "project/plancheck");
         await page.click("button:has-text('Exterior')").catch(() => {});

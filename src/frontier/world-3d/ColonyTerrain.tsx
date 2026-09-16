@@ -20,14 +20,15 @@ export interface TerrainTextureUrls {
   basalt: string;
 }
 
-/** Grid mesh over the field bounds; `aSurface` = (road, flat, shelf, land) drives the shader blend. */
-export function buildTerrainGeometry(field: TerrainField, resolution = 1.2) {
+/** Grid mesh over the field bounds; `aSurface` = (road, flat, shelf, land) and `aWet` drive the shader blend. */
+export function buildTerrainGeometry(field: TerrainField, resolution = 1.0) {
   const { minX, maxX, minZ, maxZ } = field.bounds;
   const columns = Math.ceil((maxX - minX) / resolution) + 1;
   const rows = Math.ceil((maxZ - minZ) / resolution) + 1;
   const count = columns * rows;
   const positions = new Float32Array(count * 3);
   const surface = new Float32Array(count * 4);
+  const wet = new Float32Array(count);
   const uvs = new Float32Array(count * 2);
   for (let row = 0; row < rows; row++)
     for (let column = 0; column < columns; column++) {
@@ -42,6 +43,7 @@ export function buildTerrainGeometry(field: TerrainField, resolution = 1.2) {
       surface[index * 4 + 1] = sample.flat;
       surface[index * 4 + 2] = sample.shelf;
       surface[index * 4 + 3] = sample.land;
+      wet[index] = sample.wet;
       uvs[index * 2] = x / 8;
       uvs[index * 2 + 1] = z / 8;
     }
@@ -73,6 +75,7 @@ export function buildTerrainGeometry(field: TerrainField, resolution = 1.2) {
   const geometry = new BufferGeometry();
   geometry.setAttribute("position", new BufferAttribute(positions, 3));
   geometry.setAttribute("aSurface", new BufferAttribute(surface, 4));
+  geometry.setAttribute("aWet", new BufferAttribute(wet, 1));
   geometry.setAttribute("uv", new BufferAttribute(uvs, 2));
   geometry.setIndex(new BufferAttribute(indices, 1));
   geometry.computeVertexNormals();
@@ -110,7 +113,7 @@ export function createTerrainMaterial(textures: {
   prepare(textures.cliff);
   prepare(textures.basalt);
   if (textures.cliffNormal) prepare(textures.cliffNormal, false);
-  material.customProgramCacheKey = () => "colony_terrain_v2";
+  material.customProgramCacheKey = () => "colony_terrain_v2_wet";
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uLimestone = { value: textures.limestone };
     shader.uniforms.uCliff = { value: textures.cliff };
@@ -120,7 +123,9 @@ export function createTerrainMaterial(textures: {
         "#include <common>",
         `#include <common>
         attribute vec4 aSurface;
+        attribute float aWet;
         varying vec4 vSurface;
+        varying float vWet;
         varying vec3 vWorldPos;
         varying vec3 vNormalW;`,
       )
@@ -128,6 +133,7 @@ export function createTerrainMaterial(textures: {
         "#include <begin_vertex>",
         `#include <begin_vertex>
         vSurface = aSurface;
+        vWet = aWet;
         vWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
         vNormalW = normalize(mat3(modelMatrix) * normal);`,
       );
@@ -136,6 +142,7 @@ export function createTerrainMaterial(textures: {
         "#include <common>",
         `#include <common>
         varying vec4 vSurface;
+        varying float vWet;
         varying vec3 vWorldPos;
         varying vec3 vNormalW;
         uniform sampler2D uLimestone;
@@ -177,8 +184,9 @@ export function createTerrainMaterial(textures: {
         // Paving on spurs, pads and the court apron.
         vec3 basalt = texture2D(uBasalt, wp.xz / 4.0).rgb;
         col = mix(col, basalt, clamp(vSurface.x, 0.0, 1.0));
-        // Splash zone: wet, dark rock just above the water line.
-        float wet = 1.0 - smoothstep(0.1, 1.5, wp.y);
+        // Splash zone and stream banks: wet, dark rock; the stream bed is bare limestone under the water.
+        float wet = max(1.0 - smoothstep(0.1, 1.5, wp.y), clamp(vWet, 0.0, 1.0) * (1.0 - vSurface.x));
+        col = mix(col, lime * vec3(0.9, 0.88, 0.82), clamp(vWet, 0.0, 1.0) * 0.6);
         col *= mix(1.0, 0.42, wet);
         // Seabed under shallow water reads as sand so the shallows glow.
         float sea = 1.0 - smoothstep(-2.6, -0.4, wp.y);
@@ -188,7 +196,7 @@ export function createTerrainMaterial(textures: {
       .replace(
         "#include <roughnessmap_fragment>",
         `#include <roughnessmap_fragment>
-        roughnessFactor = mix(roughnessFactor, 0.38, 1.0 - smoothstep(0.1, 1.5, vWorldPos.y));`,
+        roughnessFactor = mix(roughnessFactor, 0.38, max(1.0 - smoothstep(0.1, 1.5, vWorldPos.y), clamp(vWet, 0.0, 1.0)));`,
       );
   };
   return material;

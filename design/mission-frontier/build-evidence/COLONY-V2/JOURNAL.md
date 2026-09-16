@@ -5,6 +5,10 @@ Branch `claude/mission-frontier-colony-v2` (worktree `mission-frontier-colony-v2
 and literal hex shell are a regression; rebuild toward a premium rocky archipelago with hex logic as organisation only.
 Priority: macro composition and silhouette first, then a visual gate, then interiors and lighting.
 
+Gate 1 passed 17 September 2026. Second brief: environmental quality (water, cliffs and rocks, vegetation, crystals) with
+a second visual gate, then interiors, then palette lighting. World layout, HQ massing, bridge logic and camera framing are
+frozen unless integration forces a change.
+
 ## Steps
 
 | Step | What | State |
@@ -14,7 +18,13 @@ Priority: macro composition and silhouette first, then a visual gate, then inter
 | 2 | HQ massing: lobed shell + hub drum + re-fitted crowns (`colony-v2/producer/source/*_v2.py`) | done, awaiting gate |
 | 3 | Camera: exterior span 46, world frames the bases, cutaway fit 80 % | done |
 | gate | `capture-v2.cjs gate` at 1568×1003 and 1280×720, day and dusk | captured |
-| 4, 5 | interiors, palette lighting | not started (after the gate) |
+| gate 1 | macro composition accepted by Shaun, 17 Sep 2026: world layout, HQ massing, bridge logic and camera framing frozen | accepted |
+| 6a | Water polish: shoreline foam, depth-based colour, wave-normal sun glint, seeded stream / pools / waterfall / mist on 60 % of project parcels (`terrain-field.ts` water feature, `ColonyWater.tsx`, sea shader style 1) | done |
+| 6b | Cliff and terrain dressing: scanned cliff pieces (undercuts), large / medium / shoreline rock clusters, wet rock near water | pending |
+| 6c | Vegetation: 2–3 tree silhouettes, one bare tree, sparse scrub, grass and reeds | pending |
+| 6d | Crystals: 2–3 cluster variants, subtle emissive, tint hook for palette | pending |
+| gate 2 | environment pass captures before the interior pass | pending |
+| 7, 8 | interiors (room identity, dead floor, practicals, signage, 1280 label pile-up), palette lighting | after gate 2 |
 
 ## Assumptions (cheapest to reverse, recorded as made)
 
@@ -37,6 +47,10 @@ Priority: macro composition and silhouette first, then a visual gate, then inter
    structural spines at 15.2 m. Interior plan, sockets and doors are 1.0.1.
 9. Bridge span and end GLBs stay the 1.0.1 producer's (receipts read from the 1.0.1 metadata).
 10. Commits are unsigned (1Password SSH signing still fails); re-sign before merge if it matters.
+11. **Streams sit on the flanks the cameras see** (world angles 13–33 or 133–153, 20 deg clear of every edge line),
+    not on the rear shoulder where the outcrops are: a waterfall behind the HQ would never be in a capture. A
+    right-flank stream replaces that parcel's wave-cut shelf. 60 % of project parcels get one; the landing never does.
+12. The legacy archipelago sea keeps its 2A look (shader style 0); foam, depth colour and glints are colony-only.
 
 ## Blockers / notes
 

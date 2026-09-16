@@ -8,6 +8,8 @@ import type { ProjectBase } from "./layout";
 export interface SceneLight {
   lamps: number;
   time: number;
+  /** Sea tint of the hour (hex), shared by the sea and the fresh water. */
+  sea?: number;
 }
 export function ProofBase({
   base,

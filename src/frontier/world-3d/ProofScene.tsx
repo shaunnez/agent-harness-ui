@@ -33,7 +33,8 @@ import { ParcelScatter, type ParcelScatterPlan } from "./ParcelScatter";
 import { lanternLampOffset, scatterLayout } from "./scatter";
 import { SceneFinish } from "./SceneFinish";
 import { ShadowCadence } from "./shadow-cadence";
-import { createCoastalWater, createWaterFromField } from "./water";
+import { createCoastalWater, createWaterFromField, setWaterSplashes, type WaterSplash } from "./water";
+import { ColonyWater } from "./ColonyWater";
 import { buildField, coastRadius, heightAt, slopeAt, type TerrainField } from "./terrain-field";
 import { batchWorker } from "./worker-batching";
 
@@ -135,6 +136,22 @@ export function ProofScene(props: Props) {
     },
     [water],
   );
+  // The sea foams where each parcel's waterfall lands.
+  useEffect(() => {
+    const splashes: WaterSplash[] = (field?.profiles ?? []).flatMap((profile) =>
+      profile.water
+        ? [
+            [
+              profile.centre[0] + profile.water.fall.base[0],
+              profile.centre[1] + profile.water.fall.base[1],
+              2.6,
+              1,
+            ] as WaterSplash,
+          ]
+        : [],
+    );
+    setWaterSplashes(water, splashes);
+  }, [water, field]);
   const appearanceKey = bases.map((base) => `${base.appearance.variant}:${base.appearance.palette}`).join();
   // Seeded scatter per parcel: trees, boulders, lantern posts and parked vehicles from the shared kit.
   const scatterKey = bases.map((base) => `${projectKey(base.project)}@${base.position.join()}`).join("|");
@@ -214,6 +231,7 @@ export function ProofScene(props: Props) {
     if (moving) light.current.time += Math.min(delta, 0.1);
     const lighting = lightingAt(clock.current.hour(Date.now()));
     light.current.lamps = lighting.lamps;
+    light.current.sea = lighting.sea;
     water.uniforms.uTime.value = light.current.time;
     water.uniforms.uSea.value.setHex(lighting.sea);
     water.uniforms.uLamps.value = lighting.lamps;
@@ -284,6 +302,7 @@ export function ProofScene(props: Props) {
         );
       })}
       {colony && field && <ColonyTerrain field={field} textures={manifest.colony?.terrainTextures} />}
+      {colony && field && <ColonyWater field={field} light={light} />}
       {colony && <ColonyGround bases={bases} span={colony.span} end={colony.end} />}
       {colony?.kit && <ParcelScatter kit={colony.kit} plans={scatterPlans} />}
       {lampSlots.map((slot, index) => (
