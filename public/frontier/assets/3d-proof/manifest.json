@@ -1,5 +1,504 @@
 {
-  "version": 2,
+  "version": 3,
+  "colony": {
+    "contract": "/assets/3d-proof/colony-contract.1208f732d6c7.json",
+    "crowns": {
+      "bastion": "/assets/3d-proof/crown-bastion.859ac38eec11.glb",
+      "command": "/assets/3d-proof/crown-command.ed1cd04d215e.glb",
+      "relay": "/assets/3d-proof/crown-relay.1913db15dbe6.glb",
+      "foundry": "/assets/3d-proof/crown-foundry.a9c0c35790d0.glb"
+    },
+    "shell": "/assets/3d-proof/hq-shell.2bee0db2c11e.glb",
+    "bridgeSpan": "/assets/3d-proof/bridge-span-27.61fa0489a831.glb",
+    "bridgeEnd": "/assets/3d-proof/bridge-end.50920a684920.glb",
+    "scatterKit": "/assets/3d-proof/scatter-kit.6ecb016f3954.glb",
+    "crownPreviews": {
+      "bastion": "/assets/3d-proof/crown-preview-bastion.ee20cd747535.png",
+      "command": "/assets/3d-proof/crown-preview-command.e0a83a69635e.png",
+      "relay": "/assets/3d-proof/crown-preview-relay.201c7983b043.png",
+      "foundry": "/assets/3d-proof/crown-preview-foundry.1a96e6e5944c.png"
+    },
+    "terrainTextures": {
+      "gravel": "/assets/3d-proof/terrain-gravel-albedo.3e82bc8c5ea9.jpg",
+      "limestone": "/assets/3d-proof/terrain-limestone-albedo.b09636eff1da.jpg",
+      "cliff": "/assets/3d-proof/terrain-cliff-albedo.ffc4f1d624e9.jpg",
+      "cliffNormal": "/assets/3d-proof/terrain-cliff-normal.dfdefb8c4c60.jpg",
+      "basalt": "/assets/3d-proof/terrain-basalt-albedo.7f6f92ce0c84.jpg"
+    },
+    "hqLightPositions": [
+      [
+        12.557,
+        10.4,
+        7.25
+      ],
+      [
+        -12.817,
+        11.7,
+        7.4
+      ],
+      [
+        12.99,
+        12.6,
+        -7.5
+      ],
+      [
+        16.52,
+        6.9,
+        0
+      ],
+      [
+        8.26,
+        6.9,
+        14.307
+      ],
+      [
+        -8.26,
+        6.9,
+        14.307
+      ],
+      [
+        -16.52,
+        6.9,
+        0
+      ],
+      [
+        8.26,
+        6.9,
+        -14.307
+      ],
+      [
+        0,
+        12.3,
+        9
+      ],
+      [
+        -8.457,
+        12.3,
+        -3.078
+      ],
+      [
+        0,
+        8.52,
+        21.8
+      ],
+      [
+        -11.8,
+        5.44,
+        16
+      ],
+      [
+        -11.8,
+        5.44,
+        26.6
+      ],
+      [
+        11.8,
+        5.44,
+        16
+      ],
+      [
+        11.8,
+        5.44,
+        26.6
+      ],
+      [
+        4.9,
+        8.6,
+        20.7
+      ],
+      [
+        -12.384,
+        6.5,
+        7.15
+      ],
+      [
+        -12.384,
+        6.5,
+        -7.15
+      ],
+      [
+        0,
+        6.5,
+        -14.3
+      ],
+      [
+        12.384,
+        6.5,
+        -7.15
+      ],
+      [
+        12.384,
+        6.5,
+        7.15
+      ]
+    ],
+    "obstacles": [
+      {
+        "name": "hub_table",
+        "min": [
+          -1.5,
+          4.3,
+          -1.5
+        ],
+        "max": [
+          1.5,
+          5.34,
+          1.5
+        ]
+      },
+      {
+        "name": "planning_wall_console_150_0",
+        "min": [
+          -11.1035,
+          4.31,
+          11.0431
+        ],
+        "max": [
+          -9.7772,
+          5.61,
+          12.7904
+        ]
+      },
+      {
+        "name": "planning_wall_console_150_1",
+        "min": [
+          -12.8035,
+          4.31,
+          8.0986
+        ],
+        "max": [
+          -11.4772,
+          5.61,
+          9.8459
+        ]
+      },
+      {
+        "name": "planning_wall_console_150_2",
+        "min": [
+          -14.5035,
+          4.31,
+          5.1541
+        ],
+        "max": [
+          -13.1772,
+          5.61,
+          6.9014
+        ]
+      },
+      {
+        "name": "planning_wall_console_150_3",
+        "min": [
+          -16.2035,
+          4.31,
+          2.2096
+        ],
+        "max": [
+          -14.8772,
+          5.61,
+          3.9569
+        ]
+      },
+      {
+        "name": "implementation_wall_console_210_0",
+        "min": [
+          -16.2035,
+          4.31,
+          -3.9569
+        ],
+        "max": [
+          -14.8772,
+          5.61,
+          -2.2096
+        ]
+      },
+      {
+        "name": "implementation_wall_console_210_1",
+        "min": [
+          -14.5035,
+          4.31,
+          -6.9014
+        ],
+        "max": [
+          -13.1772,
+          5.61,
+          -5.1541
+        ]
+      },
+      {
+        "name": "implementation_wall_console_210_2",
+        "min": [
+          -12.8035,
+          4.31,
+          -9.8459
+        ],
+        "max": [
+          -11.4772,
+          5.61,
+          -8.0986
+        ]
+      },
+      {
+        "name": "implementation_wall_console_210_3",
+        "min": [
+          -11.1035,
+          4.31,
+          -12.7904
+        ],
+        "max": [
+          -9.7772,
+          5.61,
+          -11.0431
+        ]
+      },
+      {
+        "name": "implementation_wall_console_270_0",
+        "min": [
+          -5.95,
+          4.31,
+          -15.275
+        ],
+        "max": [
+          -4.25,
+          5.61,
+          -14.725
+        ]
+      },
+      {
+        "name": "implementation_wall_console_270_1",
+        "min": [
+          -2.55,
+          4.31,
+          -15.275
+        ],
+        "max": [
+          -0.85,
+          5.61,
+          -14.725
+        ]
+      },
+      {
+        "name": "implementation_wall_console_270_2",
+        "min": [
+          0.85,
+          4.31,
+          -15.275
+        ],
+        "max": [
+          2.55,
+          5.61,
+          -14.725
+        ]
+      },
+      {
+        "name": "implementation_wall_console_270_3",
+        "min": [
+          4.25,
+          4.31,
+          -15.275
+        ],
+        "max": [
+          5.95,
+          5.61,
+          -14.725
+        ]
+      },
+      {
+        "name": "review_wall_console_330_0",
+        "min": [
+          9.7772,
+          4.31,
+          -12.7904
+        ],
+        "max": [
+          11.1035,
+          5.61,
+          -11.0431
+        ]
+      },
+      {
+        "name": "review_wall_console_330_1",
+        "min": [
+          11.4772,
+          4.31,
+          -9.8459
+        ],
+        "max": [
+          12.8035,
+          5.61,
+          -8.0986
+        ]
+      },
+      {
+        "name": "review_wall_console_330_2",
+        "min": [
+          13.1772,
+          4.31,
+          -6.9014
+        ],
+        "max": [
+          14.5035,
+          5.61,
+          -5.1541
+        ]
+      },
+      {
+        "name": "review_wall_console_330_3",
+        "min": [
+          14.8772,
+          4.31,
+          -3.9569
+        ],
+        "max": [
+          16.2035,
+          5.61,
+          -2.2096
+        ]
+      },
+      {
+        "name": "testing_wall_console_30_0",
+        "min": [
+          14.8772,
+          4.31,
+          2.2096
+        ],
+        "max": [
+          16.2035,
+          5.61,
+          3.9569
+        ]
+      },
+      {
+        "name": "testing_wall_console_30_1",
+        "min": [
+          13.1772,
+          4.31,
+          5.1541
+        ],
+        "max": [
+          14.5035,
+          5.61,
+          6.9014
+        ]
+      },
+      {
+        "name": "testing_wall_console_30_2",
+        "min": [
+          11.4772,
+          4.31,
+          8.0986
+        ],
+        "max": [
+          12.8035,
+          5.61,
+          9.8459
+        ]
+      },
+      {
+        "name": "testing_wall_console_30_3",
+        "min": [
+          9.7772,
+          4.31,
+          11.0431
+        ],
+        "max": [
+          11.1035,
+          5.61,
+          12.7904
+        ]
+      },
+      {
+        "name": "planning_central_equipment",
+        "min": [
+          -10.3995,
+          4.3,
+          3.8876
+        ],
+        "max": [
+          -8.1335,
+          5.8,
+          6.8124
+        ]
+      },
+      {
+        "name": "review_central_equipment",
+        "min": [
+          7.9165,
+          4.3,
+          -6.7
+        ],
+        "max": [
+          10.6165,
+          4.6,
+          -4
+        ]
+      },
+      {
+        "name": "testing_central_equipment",
+        "min": [
+          8.1335,
+          4.3,
+          3.8876
+        ],
+        "max": [
+          10.3995,
+          5.8,
+          6.8124
+        ]
+      },
+      {
+        "name": "implementation_fabrication_bench",
+        "min": [
+          -8.1356,
+          4.3,
+          -11.0912
+        ],
+        "max": [
+          -2.2644,
+          5.8,
+          -6.9221
+        ]
+      },
+      {
+        "name": "briefing_qa_console",
+        "min": [
+          -7.9,
+          4.3,
+          13.35
+        ],
+        "max": [
+          -5.7,
+          5.9,
+          14.05
+        ]
+      },
+      {
+        "name": "cargo_crates",
+        "min": [
+          -4.7,
+          4.3,
+          16.3
+        ],
+        "max": [
+          -3.3,
+          5.9,
+          17.7
+        ]
+      },
+      {
+        "name": "cargo_cart",
+        "min": [
+          2.875,
+          4.53,
+          19.55
+        ],
+        "max": [
+          5.125,
+          4.93,
+          20.85
+        ]
+      }
+    ]
+  },
   "scene": "/assets/3d-proof/environment.450a464c1478.glb",
   "worker": "/assets/3d-proof/worker.aee069a9823b.glb",
   "bases": {

@@ -1,0 +1,62 @@
+{
+  "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.glb",
+  "license": "Poly Haven CC0 (see 3d-visual-proof/astra-scene/sources/polyhaven/provenance.json)",
+  "files": {
+    "gravel-albedo.jpg": {
+      "material": "terrain_gravel_sand",
+      "channel": "baseColorTexture",
+      "sourceImage": "Diffuse",
+      "size": [
+        1024,
+        1024
+      ],
+      "bytes": 310790,
+      "sha256": "3e82bc8c5ea9c5c5cbc0a849138920b1b8155b33ff594f1791dd69e60fd25130"
+    },
+    "limestone-albedo.jpg": {
+      "material": "terrain_stratified_warm_limestone",
+      "channel": "baseColorTexture",
+      "sourceImage": "Diffuse",
+      "size": [
+        1024,
+        1024
+      ],
+      "bytes": 338957,
+      "sha256": "b09636eff1daf1765af55b3bafe3150316dc5e0545641113819541c24fa5fecd"
+    },
+    "cliff-albedo.jpg": {
+      "material": "coastal_cliff_01",
+      "channel": "baseColorTexture",
+      "sourceImage": "coastal_cliff_01_diff_2k",
+      "size": [
+        1024,
+        1024
+      ],
+      "bytes": 237839,
+      "sha256": "ffc4f1d624e986783bef7a41ae8559c6cd7de070edbb10a4f52725ff021ea559"
+    },
+    "cliff-normal.jpg": {
+      "material": "coastal_cliff_01",
+      "channel": "normalTexture",
+      "sourceImage": "coastal_cliff_01_nor_gl_2k",
+      "size": [
+        1024,
+        1024
+      ],
+      "bytes": 324072,
+      "sha256": "dfdefb8c4c60057ee9dd0cb087a1408a2cd16017b2ccbbd46549bd0e78bdc246"
+    },
+    "basalt-albedo.jpg": {
+      "material": "court_weathered_basalt",
+      "channel": "baseColorTexture",
+      "sourceImage": "court_weathered_basalt_albedo",
+      "size": [
+        256,
+        256
+      ],
+      "bytes": 6145,
+      "sha256": "7f6f92ce0c84974305a61c405589fac2b2299bf754403251dda999fa42473c3a"
+    }
+  },
+  "totalBytes": 1217803
+}

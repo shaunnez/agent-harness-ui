@@ -3,9 +3,12 @@ import type { CSSProperties } from "react";
 import {
   type BaseAppearance,
   type BasePalette,
+  type BaseVariant,
   baseNames,
   basePalettes,
   baseVariants,
+  legacyBaseVariants,
+  legacyVariant,
   randomAppearance,
 } from "./appearance";
 import type { ProjectBase } from "./layout";
@@ -30,6 +33,12 @@ export function BaseAppearancePicker({
 }) {
   const base = bases.find((entry) => entry.project.id === projectId) ?? bases[0];
   if (!base) return null;
+  // The colony offers four crowns on one shell; the archipelago kit behind the flag has three buildings.
+  const colony = manifest?.version === 3;
+  const variants: readonly BaseVariant[] = colony ? baseVariants : legacyBaseVariants;
+  const preview = (variant: BaseVariant) =>
+    colony ? manifest?.colony?.crownPreviews?.[variant] : manifest?.bases?.[legacyVariant(variant)]?.preview;
+  const chosen = colony ? base.appearance.variant : legacyVariant(base.appearance.variant);
   return (
     <section className="proof-appearance panel" aria-label="Base appearance">
       <header>
@@ -50,15 +59,15 @@ export function BaseAppearancePicker({
       </label>
       <fieldset>
         <legend>Building</legend>
-        <div className="proof-building-options">
-          {baseVariants.map((variant) => (
+        <div className="proof-building-options" data-count={variants.length}>
+          {variants.map((variant) => (
             <button
               type="button"
               key={variant}
-              aria-pressed={base.appearance.variant === variant}
+              aria-pressed={chosen === variant}
               onClick={() => onChoose(base, { ...base.appearance, variant })}
             >
-              {manifest?.bases?.[variant].preview && <img src={manifest.bases[variant].preview} alt="" />}
+              {preview(variant) && <img src={preview(variant)} alt="" />}
               <span>{baseNames[variant]}</span>
             </button>
           ))}

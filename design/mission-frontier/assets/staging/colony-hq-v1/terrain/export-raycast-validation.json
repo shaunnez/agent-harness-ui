@@ -1,0 +1,26 @@
+{
+  "parcel-hub.glb": {
+    "boundaryEdges": 0,
+    "nonManifoldEdges": 0,
+    "signedVolume": 42435.548490960464,
+    "downwardExposedFaces": 0,
+    "gridPitch": 0.5,
+    "gridCells": 25003,
+    "rayCount": 50006,
+    "seeThroughCells": [],
+    "backFaceHits": [],
+    "seabedBottomFacesExemptFromUpwardCheck": true
+  },
+  "parcel-a.glb": {
+    "boundaryEdges": 0,
+    "nonManifoldEdges": 0,
+    "signedVolume": 42435.54849008287,
+    "downwardExposedFaces": 0,
+    "gridPitch": 0.5,
+    "gridCells": 25005,
+    "rayCount": 50010,
+    "seeThroughCells": [],
+    "backFaceHits": [],
+    "seabedBottomFacesExemptFromUpwardCheck": true
+  }
+}

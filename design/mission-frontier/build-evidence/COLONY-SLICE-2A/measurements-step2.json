@@ -1,0 +1,263 @@
+{
+  "capturedAt": "2026-09-16T09:14:20.772Z",
+  "base": "http://127.0.0.1:5243/",
+  "chromium": "149.0.7827.55",
+  "1568x1003": {
+    "shot": "step2-after-cutaway-1568x1003.png",
+    "cards": {
+      "cards": [
+        {
+          "id": "COL-001",
+          "compact": "true",
+          "x": 442,
+          "y": 167,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-002",
+          "compact": "true",
+          "x": 599,
+          "y": 124,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-003",
+          "compact": "true",
+          "x": 791,
+          "y": 114,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-004",
+          "compact": "true",
+          "x": 928,
+          "y": 177,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-005",
+          "compact": "true",
+          "x": 996,
+          "y": 210,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-006",
+          "compact": "true",
+          "x": 557,
+          "y": 213,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-007",
+          "compact": "true",
+          "x": 650,
+          "y": 124,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-008",
+          "compact": "true",
+          "x": 868,
+          "y": 237,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-009",
+          "compact": "true",
+          "x": 612,
+          "y": 295,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-010",
+          "compact": "true",
+          "x": 704,
+          "y": 270,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-011",
+          "compact": "true",
+          "x": 784,
+          "y": 308,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-012",
+          "compact": "true",
+          "x": 165,
+          "y": 463,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-013",
+          "compact": "true",
+          "x": 246,
+          "y": 502,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-014",
+          "compact": "true",
+          "x": 566,
+          "y": 657,
+          "w": 24,
+          "h": 40
+        }
+      ],
+      "count": 14,
+      "compactCount": 14,
+      "pairsOverlapping": [],
+      "overPanels": [],
+      "outsideViewport": []
+    },
+    "picks": {
+      "ok": 14,
+      "total": 14,
+      "failed": []
+    }
+  },
+  "1280x720": {
+    "shot": "step2-after-cutaway-1280x720.png",
+    "cards": {
+      "cards": [
+        {
+          "id": "COL-001",
+          "compact": "true",
+          "x": 373,
+          "y": 162,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-002",
+          "compact": "true",
+          "x": 486,
+          "y": 53,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-003",
+          "compact": "true",
+          "x": 624,
+          "y": 121,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-004",
+          "compact": "true",
+          "x": 721,
+          "y": 169,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-005",
+          "compact": "true",
+          "x": 770,
+          "y": 193,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-006",
+          "compact": "true",
+          "x": 456,
+          "y": 195,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-007",
+          "compact": "true",
+          "x": 522,
+          "y": 121,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-008",
+          "compact": "true",
+          "x": 678,
+          "y": 212,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-009",
+          "compact": "true",
+          "x": 495,
+          "y": 254,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-010",
+          "compact": "true",
+          "x": 561,
+          "y": 235,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-011",
+          "compact": "true",
+          "x": 618,
+          "y": 263,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-012",
+          "compact": "true",
+          "x": 174,
+          "y": 374,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-013",
+          "compact": "true",
+          "x": 232,
+          "y": 401,
+          "w": 24,
+          "h": 40
+        },
+        {
+          "id": "COL-014",
+          "compact": "true",
+          "x": 462,
+          "y": 513,
+          "w": 24,
+          "h": 40
+        }
+      ],
+      "count": 14,
+      "compactCount": 14,
+      "pairsOverlapping": [],
+      "overPanels": [],
+      "outsideViewport": []
+    },
+    "picks": {
+      "ok": 14,
+      "total": 14,
+      "failed": []
+    }
+  }
+}

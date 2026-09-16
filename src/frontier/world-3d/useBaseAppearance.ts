@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { RuntimeProject } from "../../domain";
 import {
+  appearanceComplete,
   appearanceStorageKey,
   assignMissingAppearances,
   type BaseAppearance,
@@ -20,7 +21,8 @@ export function useBaseAppearance(projects: RuntimeProject[]) {
   const [storageProblem, setStorageProblem] = useState(false);
   const appearances = assignMissingAppearances(projects, saved);
   useEffect(() => {
-    const missing = projects.filter((project) => !saved[projectAppearanceKey(project)]);
+    // Records saved before colony slots existed are completed in place; their choices stay.
+    const missing = projects.filter((project) => !appearanceComplete(saved[projectAppearanceKey(project)]));
     if (!missing.length) return;
     const next = assignMissingAppearances(projects, saved);
     try {
@@ -43,7 +45,10 @@ export function useBaseAppearance(projects: RuntimeProject[]) {
   }, []);
   const choose = useCallback((project: RuntimeProject, appearance: BaseAppearance) => {
     const key = projectAppearanceKey(project);
-    setSaved((current) => ({ ...current, [key]: appearance }));
+    setSaved((current) => ({
+      ...current,
+      [key]: { ...appearance, slot: current[key]?.slot ?? appearance.slot },
+    }));
     try {
       saveAppearance(localStorage, key, appearance);
       setStorageProblem(false);
