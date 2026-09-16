@@ -18,8 +18,12 @@ import {
  * when it has one and from the contract fill rule otherwise, so the same projects always land on
  * the same parcels whatever order they arrive in.
  */
-export function projectBases(projects: RuntimeProject[], appearances: BaseAppearances = {}) {
-  const listed = projects.filter((project) => !project.archivedAt);
+export function projectBases(
+  projects: RuntimeProject[],
+  appearances: BaseAppearances = {},
+  includeArchived = false,
+) {
+  const listed = projects.filter((project) => includeArchived || !project.archivedAt);
   const slots = assignSlots(listed, savedSlots(appearances));
   const ordered = [...listed].sort((a, b) => {
     if (a.id === "plancheck") return -1;

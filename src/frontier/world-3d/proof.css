@@ -201,3 +201,18 @@
 .proof-labels.exterior .world-label.task small {
   display: none;
 }
+
+.proof-room-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 4px 7px;
+  background: #17272de8;
+  border: 1px solid #99bdc358;
+  border-radius: 4px;
+  color: #dde7e6;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  pointer-events: none;
+}

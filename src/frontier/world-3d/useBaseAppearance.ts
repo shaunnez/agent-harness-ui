@@ -45,7 +45,10 @@ export function useBaseAppearance(projects: RuntimeProject[]) {
   }, []);
   const choose = useCallback((project: RuntimeProject, appearance: BaseAppearance) => {
     const key = projectAppearanceKey(project);
-    setSaved((current) => ({ ...current, [key]: appearance }));
+    setSaved((current) => ({
+      ...current,
+      [key]: { ...appearance, slot: current[key]?.slot ?? appearance.slot },
+    }));
     try {
       saveAppearance(localStorage, key, appearance);
       setStorageProblem(false);

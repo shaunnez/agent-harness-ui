@@ -51,11 +51,35 @@ export const hubSlot = colonySlots[0] as ColonySlot;
 /** P1..P18 in fill order. */
 export const projectSlots = colonySlots.filter((slot) => slot.id !== hubSlot.id);
 const slotsById = new Map(colonySlots.map((slot) => [slot.id, slot]));
+export function isProjectSlot(id: string) {
+  return /^P[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id.slice(1)));
+}
+/** Extend the same hex lattice clockwise, beginning each outer ring at phi=90. */
+function ensureSlots(count: number) {
+  let ring = colonySlots.at(-1)?.ring ?? 2;
+  while (projectSlots.length < count) {
+    ring++;
+    const vertices = Array.from({ length: 6 }, (_, i) => colonyToWorld(ring * cellPitch, 90 - i * 60));
+    for (let side = 0; side < 6; side++)
+      for (let step = 0; step < ring; step++) {
+        const a = vertices[side],
+          b = vertices[(side + 1) % 6];
+        if (!a || !b) continue;
+        const world: Point2 = [a[0] + ((b[0] - a[0]) * step) / ring, a[1] + ((b[1] - a[1]) * step) / ring];
+        const slot: ColonySlot = { id: `P${projectSlots.length + 1}`, ring, phi: null, world };
+        colonySlots.push(slot);
+        projectSlots.push(slot);
+        slotsById.set(slot.id, slot);
+      }
+  }
+}
 export function colonySlot(id: string) {
+  if (isProjectSlot(id)) ensureSlots(Number(id.slice(1)));
   return slotsById.get(id);
 }
 export function slotPosition(id: string): Point3 {
-  const slot = slotsById.get(id) ?? hubSlot;
+  const slot = colonySlot(id);
+  if (!slot) throw new Error(`Unknown colony slot ${id}`);
   return [slot.world[0], 0, slot.world[1]];
 }
 
@@ -115,7 +139,8 @@ export function assignSlots(
   const result: SlotAssignments = {};
   const taken = new Set<string>();
   for (const [key, slot] of Object.entries(saved)) {
-    if (!projectSlotIds.has(slot) || taken.has(slot)) continue;
+    if (!isProjectSlot(slot) || taken.has(slot)) continue;
+    ensureSlots(Number(slot.slice(1)));
     result[key] = slot;
     taken.add(slot);
   }
@@ -125,6 +150,7 @@ export function assignSlots(
   for (const project of arrivals) {
     const key = projectKey(project);
     if (result[key]) continue;
+    ensureSlots(taken.size + 1);
     const free = projectSlots.find((slot) => !taken.has(slot.id));
     if (!free) break;
     result[key] = free.id;
@@ -151,7 +177,7 @@ const slotOrder = (id: string) => (id === hubSlot.id ? -1 : Number(id.slice(1)))
  */
 export function colonyBridges(occupiedSlotIds: Iterable<string>): ColonyBridge[] {
   const occupied = [...new Set([hubSlot.id, ...occupiedSlotIds])]
-    .map((id) => slotsById.get(id))
+    .map((id) => colonySlot(id))
     .filter((slot): slot is ColonySlot => Boolean(slot))
     .sort((a, b) => slotOrder(a.id) - slotOrder(b.id));
   const bridges: ColonyBridge[] = [];
@@ -274,7 +300,7 @@ export function fitColonyView(
   labelHeight = 6,
 ): WorldFit {
   const centres = [...new Set([hubSlot.id, ...occupiedSlotIds])]
-    .map((id) => slotsById.get(id))
+    .map((id) => colonySlot(id))
     .filter((slot): slot is ColonySlot => Boolean(slot))
     .map((slot) => slot.world);
   const axes = screenAxes();
@@ -334,7 +360,7 @@ export function fitColonyView(
 /** Top-down minimap: colony centroid, span 2 x (max occupied slot radius + 46 + 20). */
 export function minimapFrame(occupiedSlotIds: Iterable<string>) {
   const centres = [...new Set([hubSlot.id, ...occupiedSlotIds])]
-    .map((id) => slotsById.get(id))
+    .map((id) => colonySlot(id))
     .filter((slot): slot is ColonySlot => Boolean(slot))
     .map((slot) => slot.world);
   const centre: Point2 = [

@@ -1,5 +1,5 @@
 import type { RuntimeProject } from "../../domain.ts";
-import { assignSlots, projectKey, projectSlotIds, type SlotAssignments } from "./colony.ts";
+import { assignSlots, projectKey, isProjectSlot, type SlotAssignments } from "./colony.ts";
 
 export const baseVariants = ["command", "relay", "foundry"] as const;
 export type BaseVariant = (typeof baseVariants)[number];
@@ -38,7 +38,7 @@ export function parseAppearances(value: unknown): BaseAppearances {
       result[key] = {
         variant: entry.variant as BaseVariant,
         palette: entry.palette as BasePalette,
-        ...(typeof entry.slot === "string" && projectSlotIds.has(entry.slot) ? { slot: entry.slot } : {}),
+        ...(typeof entry.slot === "string" && isProjectSlot(entry.slot) ? { slot: entry.slot } : {}),
       };
   }
   return result;

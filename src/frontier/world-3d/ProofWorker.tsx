@@ -41,11 +41,11 @@ export function ProofWorker({
   }, [clips, mixer, worker.behavior]);
   useEffect(
     () => () => {
-      positions.delete(worker.task.id);
+      positions.delete(worker.id);
       mixer.uncacheRoot(body);
       disposeWorker(body);
     },
-    [body, mixer, positions, worker.task.id],
+    [body, mixer, positions, worker.id],
   );
   const patrol = useMemo(() => route.map((p) => ({ x: p[0], y: p[2] })), [route]);
   const gait = useMemo(() => buildGait(body), [body]);
@@ -53,7 +53,7 @@ export function ProofWorker({
   const stepping = useRef(0);
   useFrame((_, delta) => {
     if (!root.current) return;
-    positions.set(worker.task.id, root.current);
+    positions.set(worker.id, root.current);
     const step = worker.moving && !document.hidden ? Math.min(delta, 0.1) : 0;
     if (step) {
       time.current += step;
@@ -66,7 +66,7 @@ export function ProofWorker({
       body.rotation.y = pose.facing > 0 ? 0.9 : -0.9;
       if (pose.walking) walked.current += step * roamSpeed;
       // Ease the cycle in and out so a worker settles rather than snapping at a patrol waypoint.
-      stepping.current += ((pose.walking ? 1 : 0) - stepping.current) * Math.min(1, delta * 8);
+      if (step) stepping.current += ((pose.walking ? 1 : 0) - stepping.current) * Math.min(1, step * 8);
       if (gait) {
         const cycle = (walked.current / gaitStrideCycle) * Math.PI * 2;
         applyGait(gait, cycle, stepping.current);
@@ -80,7 +80,12 @@ export function ProofWorker({
         body.position.y = 0;
       }
     }
-    body.rotation.y = worker.behavior === "work" ? Math.sin(phase * 0.7) * 0.04 : body.rotation.y;
+    body.rotation.y =
+      worker.behavior === "work"
+        ? worker.facing + Math.sin(phase * 0.7) * 0.04
+        : worker.behavior === "park"
+          ? worker.facing
+          : body.rotation.y;
   });
   const status =
     worker.tone === "answer"

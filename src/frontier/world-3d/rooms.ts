@@ -1,3 +1,4 @@
+import { clearStandingPoint, clearOfObstacles, type StandingObstacle } from "./room-clearance.ts";
 import type { StageId } from "../../domain.ts";
 import type { TaskSummary } from "../runtime/contracts.ts";
 import { colonyContract, type Point3 } from "./colony.ts";
@@ -101,16 +102,16 @@ export function hubSocketsForRoom(room: Room): RoomSocket[] {
 
 const laneStart = 7.4;
 const lanePitch = 1.6;
-const laneWallClearance = 0.8;
+const laneWallClearance = 0.8 + 0.15;
 const laneInnerEnd = 16.6;
-const plateauEnd = 33;
+
 /**
  * The approved overflow lane: standing positions at 1.6 m pitch along the room's inner partition,
  * 0.8 m off the wall. The first partition fills first, then the second; if even those are full the
  * lane continues out along the room midline onto the plateau, so no robot is ever dropped.
  */
 export function lanePositions(room: Room, count: number): RoomSocket[] {
-  const midline = (room.cornerRadials[0] + room.cornerRadials[1]) / 2;
+  const midline = room.cornerRadials[0] + normalise(room.cornerRadials[1] - room.cornerRadials[0]) / 2;
   const result: RoomSocket[] = [];
   const along = (angleDeg: number, offsetDeg: number, from: number, to: number, y: number) => {
     const a = toRadians(angleDeg);
@@ -132,19 +133,26 @@ export function lanePositions(room: Room, count: number): RoomSocket[] {
     const towardRoom = normalise(midline - radial) < 180 ? radial + 90 : radial - 90;
     along(radial, towardRoom, laneStart, laneInnerEnd, hqFloor);
   }
-  along(midline, midline, 19.5, plateauEnd, colonyContract.levels.plateauGround);
+
   return result;
 }
-/** Extra court standing rows for exterior views, at 1.6 m pitch in front of the court sockets. */
-export function courtLanePositions(count: number): RoomSocket[] {
+/** Clear fallback lanes remain on the existing plateau and outside the HQ/court. */
+export function plateauLanePositions(): RoomSocket[] {
   const result: RoomSocket[] = [];
-  for (const z of [29.5, 31.5, 33]) for (let x = -16; x <= 16 && result.length < count; x += lanePitch)
-    result.push({
-      id: `lane_court_${result.length + 1}`,
-      position: [x, colonyContract.levels.plateauGround, z],
-      facingDeg: 270,
-    });
+  for (const radius of [22, 25.5]) {
+    for (let degrees = 145; degrees <= 395; degrees += 9) {
+      const a = toRadians(degrees);
+      result.push({
+        id: `plateau_${radius}_${degrees}`,
+        position: [radius * Math.cos(a), colonyContract.levels.plateauGround, radius * Math.sin(a)],
+        facingDeg: degrees + 180,
+      });
+    }
+  }
   return result;
+}
+export function courtLanePositions(count: number): RoomSocket[] {
+  return plateauLanePositions().slice(0, count);
 }
 
 export interface AllocationRequest {
@@ -171,7 +179,11 @@ const spacingOk = (point: Point3, occupied: Point3[], spacing: number) =>
  * never by dropping a worker; workers of one request take consecutive candidates so packages of one
  * task stand together.
  */
-export function allocateSockets(requests: AllocationRequest[], spacing = minRobotSpacing): Allocation {
+export function allocateSockets(
+  requests: AllocationRequest[],
+  spacing = minRobotSpacing,
+  obstacles: StandingObstacle[] = [],
+): Allocation {
   const occupied: Point3[] = [];
   const used = new Set<string>();
   const overflow = Object.fromEntries([...roomIds, "court"].map((id) => [id, 0])) as Allocation["overflow"];
@@ -186,15 +198,20 @@ export function allocateSockets(requests: AllocationRequest[], spacing = minRobo
             ...hubSocketsForRoom(rooms[request.room]),
             ...courtSockets,
             ...lanePositions(rooms[request.room], total * 3).map((entry) => ({ ...entry, lane: true })),
+            ...plateauLanePositions().map((entry) => ({ ...entry, lane: true })),
           ];
     for (let index = 0; index < Math.max(1, request.workers); index++) {
-      const chosen =
-        candidates.find(
-          (entry) => !used.has(entry.id) && spacingOk(entry.position, occupied, spacing),
-        ) ??
-        candidates.find((entry) => !used.has(entry.id)) ??
-        candidates.at(-1);
-      if (!chosen) continue;
+      const chosen = candidates.find(
+        (entry) =>
+          !used.has(entry.id) &&
+          clearStandingPoint(entry.position, entry.id) &&
+          clearOfObstacles(entry.position, obstacles) &&
+          spacingOk(entry.position, occupied, spacing),
+      );
+      if (!chosen)
+        throw new Error(
+          `The colony has no clear standing position for ${request.id}. Reduce the fixture crew before previewing this project.`,
+        );
       used.add(chosen.id);
       occupied.push(chosen.position);
       const lane = "lane" in chosen && Boolean(chosen.lane);

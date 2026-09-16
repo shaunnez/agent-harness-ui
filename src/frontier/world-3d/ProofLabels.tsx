@@ -1,10 +1,11 @@
+import { rooms, type RoomId } from "./rooms";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { type Intersection, Matrix4, type Object3D, Raycaster, Vector2, Vector3 } from "three";
 import { baseLabelAnchor } from "./colony";
 import { separateLabels } from "./labels";
 import { type ProjectBase, translated } from "./layout";
-import { type ProofManifest, proofWorkerHeight } from "./model";
+import { proofWorkerHeight } from "./model";
 import { profiling, recordLabelTime } from "./PerformanceProbe";
 import { isOccluded, visibleOccluders } from "./occlusion";
 
@@ -13,14 +14,12 @@ export function ProofLabels({
   bases,
   actors,
   roots,
-  manifest,
   sceneKey,
 }: {
   labels: React.RefObject<HTMLElement | null>;
   bases: ProjectBase[];
   actors: Map<string, Object3D>;
   roots: Map<string, Object3D>;
-  manifest: ProofManifest;
   sceneKey: string;
 }) {
   const { camera, size } = useThree();
@@ -55,7 +54,16 @@ export function ProofLabels({
       if (!id) continue;
       present.add(id);
       const isBase = id.startsWith("base:");
-      if (isBase) {
+      const isRoom = id.startsWith("room:");
+      if (isRoom) {
+        const room = rooms[id.slice(5) as RoomId];
+        const base = bases[0];
+        if (!base || !room) {
+          label.hidden = true;
+          continue;
+        }
+        world.set(...translated(room.labelAnchor, base.position));
+      } else if (isBase) {
         const base = bases.find((entry) => `base:${entry.project.id}` === id);
         if (!base) {
           label.hidden = true;
@@ -78,7 +86,7 @@ export function ProofLabels({
         x < 10 || x > size.width - 10 || y < 100 || y > size.height - 65 || Math.abs(projected.z) > 1;
       if (label.hidden) continue;
       let obscured = false;
-      if (!isBase) {
+      if (!isBase && !isRoom) {
         const cached = visibility.current.get(id);
         if (
           cached &&

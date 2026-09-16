@@ -1,3 +1,4 @@
+import { colonyWorkers } from "./colony-workers.ts";
 import type { RuntimeProject } from "../../domain.ts";
 import type { TaskSummary } from "../runtime/contracts.ts";
 import { attentionFor, isOpen, stageLabels } from "../runtime/presentation.ts";
@@ -14,7 +15,20 @@ export interface ProofCamera {
   verticalSpan: number;
 }
 export interface ProofManifest {
-  version: 1 | 2;
+  version: 1 | 2 | 3;
+  colony?: {
+    contract: string;
+    shell?: string;
+    crowns?: Partial<Record<BaseVariant, string>>;
+    parcelHub?: string;
+    parcelA?: string;
+    bridgeSpan?: string;
+    bridgeEnd?: string;
+    obstacles?: { name: string; min: Point3; max: Point3 }[];
+    hqLightPositions?: Point3[];
+    parcelLightPositions?: Point3[];
+    hubShorelineXZ?: [number, number][][];
+  };
   bases?: Record<BaseVariant, { src: string; preview?: string; lightPositions: Point3[] }>;
   environmentLightPositions?: Point3[];
   scene: string;
@@ -75,6 +89,7 @@ export function proofWorkers(
   manifest: ProofManifest,
   bases: ProjectBase[] = projectBases(input.projects),
 ) {
+  if (manifest.version === 3) return colonyWorkers(input, bases, manifest);
   const cutaway = input.location.view !== "world";
   return visibleBases(bases, input).flatMap((base) => {
     const tasks = input.tasks.filter(
@@ -121,6 +136,12 @@ export function proofWorkers(
       occupied.push(local);
       const attention = attentionFor(task);
       return {
+        id: task.id,
+        facing: 0,
+        room: undefined,
+        overflow: false,
+        packageId: undefined,
+        packageCount: 0,
         task,
         projectId: base.project.id,
         position: translated(local, base.position),
@@ -157,9 +178,12 @@ export function visibleWorkerLabels(
   input: ProofInput,
   focusedProjectId: string | null,
 ) {
-  if (input.location.view !== "world" || focusedProjectId) return workers;
+  const taskWorkers = workers.filter(
+    (worker, index) => workers.findIndex((other) => other.task.id === worker.task.id) === index,
+  );
+  if (input.location.view !== "world" || focusedProjectId) return taskWorkers;
   const chosen = new Map<string, ProofWorker>();
-  for (const worker of workers) {
+  for (const worker of taskWorkers) {
     const previous = chosen.get(worker.projectId);
     const priority = (value: ProofWorker) =>
       value.task.id === input.selectedId
@@ -192,7 +216,7 @@ export function parseProofManifest(value: unknown): ProofManifest {
     v && point(v.position) && point(v.target) && Number.isFinite(v.verticalSpan) && v.verticalSpan > 0;
   const asset = (v: unknown) => typeof v === "string" && /^\/assets\/3d-proof\/[\w.-]+\.glb$/.test(v);
   if (
-    ![1, 2].includes(data?.version ?? 0) ||
+    ![1, 2, 3].includes(data?.version ?? 0) ||
     !asset(data.scene) ||
     !asset(data.worker) ||
     !camera(data.cameras?.exterior) ||
@@ -220,7 +244,7 @@ export function parseProofManifest(value: unknown): ProofManifest {
   )
     throw new Error("The 3D scene export is incomplete. Return to the existing world or retry the artwork.");
   if (
-    data.version === 2 &&
+    (data.version === 2 || (data.version === 3 && data.bases)) &&
     (!data.bases ||
       !baseVariants.every((key) => {
         const base = data.bases?.[key];
@@ -238,5 +262,38 @@ export function parseProofManifest(value: unknown): ProofManifest {
     throw new Error(
       "The exterior base kit is incomplete. Retry the artwork or return to the existing world.",
     );
+  if (data.version === 3) {
+    const colony = data.colony;
+    if (
+      !colony ||
+      (colony.obstacles !== undefined &&
+        (!Array.isArray(colony.obstacles) ||
+          !colony.obstacles.every(
+            (o) =>
+              typeof o.name === "string" &&
+              point(o.min) &&
+              point(o.max) &&
+              o.min.every((v, i) => v <= (o.max[i] ?? -Infinity)),
+          ))) ||
+      !/^\/assets\/3d-proof\/[\w.-]+\.json$/.test(colony.contract) ||
+      [
+        colony.shell,
+        colony.parcelHub,
+        colony.parcelA,
+        colony.bridgeSpan,
+        colony.bridgeEnd,
+        ...Object.values(colony.crowns ?? {}),
+      ].some((value) => value !== undefined && !asset(value)) ||
+      [colony.hqLightPositions, colony.parcelLightPositions].some(
+        (points) => points !== undefined && (!Array.isArray(points) || !points.every((p) => point(p))),
+      ) ||
+      (colony.hubShorelineXZ !== undefined &&
+        (!Array.isArray(colony.hubShorelineXZ) ||
+          !colony.hubShorelineXZ.every(
+            (loop) => Array.isArray(loop) && loop.length >= 4 && loop.every((p) => point(p, 2)),
+          )))
+    )
+      throw new Error("The colony asset manifest is incomplete or references an unsafe asset.");
+  }
   return data as ProofManifest;
 }

@@ -1,3 +1,4 @@
+import { integrateColonyAssets } from "./integrate-colony-assets.mjs";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -63,21 +64,24 @@ for (const variant of baseVariants) {
   const preview = await asset(path.join(source, `previews/${variant}.png`), `preview-${variant}`);
   bases[variant] = { src, preview, lightPositions: metadata.baseLightPositions[variant] };
 }
+const { colony, shoreline } = await integrateColonyAssets(root, asset);
 const manifest = parseProofManifest({
-  version: 2,
+  version: 3,
+  colony,
   scene,
   worker,
   bases,
   cameras: metadata.cameras,
   sockets: metadata.sockets,
   walkableRoutes: metadata.walkableRoutes,
-  shorelineXZ: metadata.shorelineXZ,
+  shorelineXZ: shoreline,
   practicalLightPositions: [],
   environmentLightPositions: metadata.environmentLightPositions,
 });
 await writeFile(path.join(destination, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+await mkdir(path.join(root, "design/mission-frontier/build-evidence/COLONY-SLICE-1"), { recursive: true });
 await writeFile(
-  path.join(root, "design/mission-frontier/build-evidence/EXTERIOR-BASES/asset-inventory.json"),
+  path.join(root, "design/mission-frontier/build-evidence/COLONY-SLICE-1/asset-inventory.json"),
   `${JSON.stringify({ capturedAt: new Date().toISOString(), assets: inventory }, null, 2)}\n`,
 );
 console.log(

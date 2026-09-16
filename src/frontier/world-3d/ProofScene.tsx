@@ -1,3 +1,6 @@
+import { colonyModels, proofAssetUrls } from "./colony-assets";
+import { disposeGreybox } from "./colony-greybox";
+import { ColonyGround } from "./ColonyGround";
 import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { Color, type DirectionalLight, type HemisphereLight, type Object3D, type PointLight } from "three";
@@ -8,7 +11,6 @@ import {
   lightingAt,
   type WorldLighting,
 } from "../world/environment-model";
-import { baseVariants } from "./appearance";
 import { LampPool, lampBudget, type PooledLamp } from "./lamp-pool";
 import { locatedProject, type ProjectBase, visibleBases } from "./layout";
 import { type Point3, type ProofControls, type ProofInput, type ProofManifest, proofWorkers } from "./model";
@@ -38,12 +40,27 @@ interface Props {
 }
 export function ProofScene(props: Props) {
   const { input, manifest, bases, focusId, labels, onSelect, onLighting } = props;
-  const sources = [
-    manifest.scene,
-    manifest.worker,
-    ...baseVariants.map((id) => manifest.bases?.[id].src ?? manifest.scene),
-  ];
-  const [environment, workerGltf, ...baseGltfs] = useLoader(GLTFLoader, sources);
+  const sources = useMemo(() => proofAssetUrls(manifest), [manifest]);
+  const gltfs = useLoader(GLTFLoader, sources);
+  const loaded = useMemo(() => new Map(sources.map((url, index) => [url, gltfs[index]])), [sources, gltfs]);
+  const workerGltf = loaded.get(manifest.worker);
+  const environment = loaded.get(manifest.scene);
+  const colony = useMemo(
+    () =>
+      manifest.version === 3
+        ? colonyModels(
+            manifest,
+            new Map([...loaded].flatMap(([url, gltf]) => (gltf ? [[url, gltf.scene]] : []))),
+          )
+        : null,
+    [manifest, loaded],
+  );
+  useEffect(
+    () => () => {
+      for (const model of colony?.owned ?? []) disposeGreybox(model);
+    },
+    [colony],
+  );
   const { scene, gl } = useThree();
   const workerModel = useMemo(() => {
     if (!workerGltf) throw new Error("The worker export is missing.");
@@ -74,14 +91,15 @@ export function ProofScene(props: Props) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: Water depends on placement, not appearance or runtime refresh.
   const water = useMemo(
     () =>
-      createCoastalWater(
-        bases.flatMap((base) =>
+      createCoastalWater([
+        ...(colony ? (manifest.colony?.hubShorelineXZ ?? manifest.shorelineXZ) : []),
+        ...bases.flatMap((base) =>
           manifest.shorelineXZ.map((loop) =>
             loop.map(([x, z]): [number, number] => [x + base.position[0], z + base.position[2]]),
           ),
         ),
-      ),
-    [manifest, layoutKey],
+      ]),
+    [manifest, layoutKey, colony],
   );
   const workers = proofWorkers(input, manifest, bases);
   const cutaway = input.location.view !== "world";
@@ -102,8 +120,12 @@ export function ProofScene(props: Props) {
     () =>
       bases.flatMap((base) =>
         [
-          ...(manifest.environmentLightPositions ?? []),
-          ...(manifest.bases?.[base.appearance.variant].lightPositions ?? []),
+          ...(manifest.version === 3
+            ? (manifest.colony?.parcelLightPositions ?? [])
+            : (manifest.environmentLightPositions ?? [])),
+          ...(manifest.version === 3
+            ? (manifest.colony?.hqLightPositions ?? [])
+            : (manifest.bases?.[base.appearance.variant].lightPositions ?? [])),
         ].map((position, index) => ({
           key: `${base.project.id}:${index}`,
           position: [
@@ -157,7 +179,8 @@ export function ProofScene(props: Props) {
       current.onLighting(lighting);
     }
   });
-  if (!environment) throw new Error("The coastal export is missing.");
+  const parcel = colony?.parcel ?? environment?.scene;
+  if (!parcel) throw new Error("The coastal export is missing.");
   return (
     <>
       <color attach="background" args={["#173e4a"]} />
@@ -179,14 +202,17 @@ export function ProofScene(props: Props) {
         shadow-normalBias={0.04}
       />
       {bases.map((base) => {
-        const source = baseGltfs[baseVariants.indexOf(base.appearance.variant)]?.scene;
+        const source =
+          colony?.bases[base.appearance.variant] ??
+          loaded.get(manifest.bases?.[base.appearance.variant].src ?? manifest.scene)?.scene;
         if (!source) throw new Error(`The ${base.appearance.variant} base export is missing.`);
         return (
           <ProofBase
             key={base.project.id}
             base={base}
             source={source}
-            environment={environment.scene}
+            environment={parcel}
+            occupiedSlots={colony ? bases.map((base) => base.slot) : undefined}
             cutaway={cutaway && base.project.id === activeFocus}
             light={light}
             roots={roots.current}
@@ -194,6 +220,7 @@ export function ProofScene(props: Props) {
           />
         );
       })}
+      {colony && <ColonyGround bases={bases} hub={colony.hub} span={colony.span} end={colony.end} />}
       {lampSlots.map((slot, index) => (
         <pointLight
           key={slot}
@@ -212,7 +239,7 @@ export function ProofScene(props: Props) {
       </mesh>
       {workers.map((worker) => (
         <ProofWorker
-          key={worker.task.id}
+          key={worker.id}
           worker={worker}
           source={workerModel.scene}
           clips={workerGltf?.animations ?? []}
@@ -234,7 +261,6 @@ export function ProofScene(props: Props) {
       <ProofLabels
         sceneKey={`${appearanceKey}:${layoutKey}:${cutaway}:${activeFocus}`}
         labels={labels}
-        manifest={manifest}
         bases={visibleBases(bases, input)}
         actors={actors.current}
         roots={roots.current}

@@ -23,11 +23,13 @@ import {
 } from "../../src/frontier/world-3d/model.ts";
 import { shoreDistance } from "../../src/frontier/world-3d/water.ts";
 
-const manifest = parseProofManifest(
-  JSON.parse(
+// The original v2 contract stays supported after the colony v3 export replaces the public manifest.
+const manifest = parseProofManifest({
+  ...JSON.parse(
     await readFile(new URL("../../public/frontier/assets/3d-proof/manifest.json", import.meta.url), "utf8"),
   ),
-);
+  version: 2,
+});
 const input = (changes = {}) => ({
   mode: "fixture",
   projects: fixtureProjects,

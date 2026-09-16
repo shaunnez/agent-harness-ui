@@ -1,4 +1,4 @@
-import { useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { type Object3D, OrthographicCamera, PCFShadowMap, Vector3 } from "three";
 import { MapControls } from "three/addons/controls/MapControls.js";
@@ -41,6 +41,25 @@ export function ProofCamera({
   const controls = useMemo(() => new MapControls(camera), [camera]);
   const latest = useRef({ bases, focusId, cutaway, onFocus, worldHour });
   latest.current = { bases, focusId, cutaway, onFocus, worldHour };
+  const followed = useRef("");
+  useFrame(() => {
+    const key =
+      input.location.view === "agent"
+        ? `${input.location.taskId}:${input.location.runId}:${input.watchedStage}`
+        : "";
+    if (!key) {
+      followed.current = "";
+      return;
+    }
+    if (followed.current === key) return;
+    const actor = actors.get(input.location.taskId ?? "");
+    if (!actor) return;
+    const delta = actor.getWorldPosition(new Vector3()).sub(controls.target);
+    camera.position.add(delta);
+    controls.target.add(delta);
+    controls.update();
+    followed.current = key;
+  });
   const layoutKey = bases.map((base) => `${base.project.id}:${base.position.join()}`).join("|");
   // Palette/asset changes and runtime polling must preserve a user-moved camera.
   // biome-ignore lint/correctness/useExhaustiveDependencies: layoutKey captures only spatial layout, independently of appearance.
@@ -61,6 +80,7 @@ export function ProofCamera({
         size.width,
         size.height,
       );
+      camera.far = Math.max(850, camera.position.distanceTo(controls.target) + view.verticalSpan * 2);
       camera.updateProjectionMatrix();
     }
     controls.enableRotate = false;
