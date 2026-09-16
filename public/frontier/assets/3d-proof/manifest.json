@@ -1,7 +1,7 @@
 {
   "version": 3,
   "colony": {
-    "contract": "/assets/3d-proof/colony-contract.d71fad7e8d8d.json",
+    "contract": "/assets/3d-proof/colony-contract.1208f732d6c7.json",
     "crowns": {
       "bastion": "/assets/3d-proof/crown-bastion.859ac38eec11.glb",
       "command": "/assets/3d-proof/crown-command.ed1cd04d215e.glb",
@@ -11,7 +11,7 @@
     "shell": "/assets/3d-proof/hq-shell.2bee0db2c11e.glb",
     "bridgeSpan": "/assets/3d-proof/bridge-span-27.61fa0489a831.glb",
     "bridgeEnd": "/assets/3d-proof/bridge-end.50920a684920.glb",
-    "scatterKit": "/assets/3d-proof/scatter-kit.8d5ecbfe8cc6.glb",
+    "scatterKit": "/assets/3d-proof/scatter-kit.6ecb016f3954.glb",
     "crownPreviews": {
       "bastion": "/assets/3d-proof/crown-preview-bastion.ee20cd747535.png",
       "command": "/assets/3d-proof/crown-preview-command.e0a83a69635e.png",

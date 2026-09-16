@@ -3,11 +3,14 @@ import test from "node:test";
 import { colonyStressFixtures } from "../../src/frontier/fixtures/colony.ts";
 import { colonyEdges, hubSlot, projectKey, projectSlots } from "../../src/frontier/world-3d/colony.ts";
 import {
+  angularGap,
   corridorDistance,
+  edgeGap,
   scatterFingerprint,
   scatterItems,
   scatterLayout,
   scatterRules,
+  waterDistance,
 } from "../../src/frontier/world-3d/scatter.ts";
 import { buildField, coastRadius, heightAt, slopeAt } from "../../src/frontier/world-3d/terrain-field.ts";
 
@@ -23,6 +26,15 @@ function groundFor(slotId) {
     coast: (angle) => coastRadius(profile, angle),
     ground: (x, z) => ({ height: heightAt(field, cx + x, cz + z), slope: slopeAt(field, cx + x, cz + z) }),
     builtEdgeAngles: profile.built.map((edge) => edge.worldAngleDeg),
+    water: profile.water
+      ? {
+          fallAngleDeg: profile.water.fall.angleDeg,
+          pools: profile.water.pools,
+          path: profile.water.path,
+          halfWidth: profile.water.halfWidth,
+        }
+      : null,
+    shelf: profile.shelf,
   };
 }
 const layoutFor = (project, index) => scatterLayout(projectKey(project), groundFor(slots[index]));
@@ -93,6 +105,85 @@ test("purple copses stand on the shoulder: off the flat ground, short of the lip
     }
     assert.ok(placements.filter((p) => p.kind === "boulder").length >= 5, `${project.id} boulders`);
   }
+});
+
+test("cliff pieces hang from the lip clear of every bridge line and the fall; shoreline rocks sit in the toe water off the bridge lines", () => {
+  for (const [index, project] of projects.entries()) {
+    const ground = groundFor(slots[index]);
+    const placements = layoutFor(project, index);
+    const cliffs = placements.filter((p) => p.kind === "cliff");
+    assert.ok(cliffs.length >= 4, `${project.id} has cliff pieces (${cliffs.length})`);
+    for (const cliff of cliffs) {
+      const angle = (Math.atan2(cliff.z, cliff.x) * 180) / Math.PI;
+      assert.ok(
+        edgeGap(angle, ground.builtEdgeAngles) >= scatterRules.cliffEdgeClearanceDeg - 1e-9,
+        `${project.id} cliff near a bridge`,
+      );
+      assert.ok(
+        edgeGap(angle) >= scatterRules.cliffLineClearanceDeg - 1e-9,
+        `${project.id} cliff on an edge line`,
+      );
+      if (ground.water)
+        assert.ok(
+          angularGap(angle, ground.water.fallAngleDeg) >= scatterRules.cliffFallClearanceDeg,
+          `${project.id} cliff in the fall`,
+        );
+      assert.ok(
+        Math.abs(Math.hypot(cliff.x, cliff.z) - (ground.coast(angle) - scatterRules.cliffInset)) < 1e-6,
+        `${project.id} cliff at the lip`,
+      );
+      assert.ok(cliff.scale >= scatterRules.cliffScale[0] && cliff.scale <= scatterRules.cliffScale[1]);
+    }
+    const shore = placements.filter((p) => p.kind === "shore");
+    assert.ok(shore.length >= 4, `${project.id} shoreline rocks (${shore.length})`);
+    for (const rock of shore) {
+      const angle = (Math.atan2(rock.z, rock.x) * 180) / Math.PI;
+      const r = Math.hypot(rock.x, rock.z);
+      assert.ok(
+        r > ground.coast(angle) + scatterRules.shoreReach[0] - 1e-6 &&
+          r < ground.coast(angle) + scatterRules.shoreReach[1] + 1e-6,
+        `${project.id} shore rock in the toe`,
+      );
+      assert.ok(
+        edgeGap(angle, ground.builtEdgeAngles) >= scatterRules.shoreEdgeClearanceDeg - 1e-9,
+        `${project.id} shore rock on a bridge line`,
+      );
+    }
+  }
+});
+
+test("vegetation and crystals are sparse, off the stream, and crystals never crowd a parcel", () => {
+  let reedsSeen = 0;
+  for (const [index, project] of projects.entries()) {
+    const ground = groundFor(slots[index]);
+    const placements = layoutFor(project, index);
+    const crystals = placements.filter((p) => p.kind === "crystal");
+    assert.ok(
+      crystals.length >= 1 && crystals.length <= scatterRules.crystals[1],
+      `${project.id} crystals ${crystals.length}`,
+    );
+    for (const crystal of crystals)
+      assert.ok(
+        Math.hypot(crystal.x, crystal.z) >= ground.flatRadius + 1.5,
+        `${project.id} crystal on the plateau`,
+      );
+    assert.ok(
+      placements.filter((p) => p.kind === "scrub").length <= 10 &&
+        placements.filter((p) => p.kind === "grass").length <= 22,
+      `${project.id} not overfilled`,
+    );
+    for (const p of placements)
+      if (["tree", "scrub", "boulder", "rock"].includes(p.kind))
+        assert.ok(
+          waterDistance(ground.water, p.x, p.z) >= Math.min(scatterRules.waterClearance, 2.5) - 1e-9,
+          `${project.id} ${p.kind} in the stream`,
+        );
+    const reeds = placements.filter((p) => p.kind === "reed");
+    reedsSeen += reeds.length;
+    if (!ground.water && !ground.shelf) assert.equal(reeds.length, 0, `${project.id} reeds without water`);
+    if (ground.water) assert.ok(reeds.length >= 3, `${project.id} reeds at the pools`);
+  }
+  assert.ok(reedsSeen > 0);
 });
 
 test("corridor distance measures from the spur centre lines only beyond the flat ground", () => {

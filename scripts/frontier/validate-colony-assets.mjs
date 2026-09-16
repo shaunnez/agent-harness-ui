@@ -15,6 +15,21 @@ const requiredGroups = {
   span: ["MF_Bridge"],
   end: ["MF_Bridge_End"],
   scatter: ["MF_Tree_Purple_A", "MF_Boulder_A", "MF_Lantern", "MF_Vehicle_Rover"],
+  /** The environment-pass kit: the 2A items plus cliffs, rocks, scrub, grass, reeds and crystals. */
+  scatter2: [
+    "MF_Tree_Purple_A",
+    "MF_Tree_Bare_A",
+    "MF_Scrub_Purple_A",
+    "MF_Grass_A",
+    "MF_Reed_A",
+    "MF_Cliff_A",
+    "MF_Rock_Large_A",
+    "MF_Rock_Shore_A",
+    "MF_Boulder_A",
+    "MF_Crystal_A",
+    "MF_Lantern",
+    "MF_Vehicle_Rover",
+  ],
   parcel: [
     "MF_Terrain",
     "MF_Planting",
@@ -277,13 +292,18 @@ export function validateColonyGlb(bytes, { kind, contract, expectedSha256 }) {
     }
   }
   if (!triangles) throw new Error("Colony asset has no triangles");
-  // The scatter kit budget (slice 2A decision) is not in the frozen contract: 3 MB, 30k triangles.
+  // The 2A scatter kit budget was not in the frozen 1.0.1 contract: 3 MB, 30k triangles. Contract 2.0
+  // carries the environment-pass kit budget.
   const budget =
     kind === "scatter"
       ? { triangles: 30000, bytes: 3000000 }
-      : contract.budgets[
-          { shell: "hqShell", crown: "crown", parcel: "parcel", span: "bridgeSpan", end: "bridgeSpan" }[kind]
-        ];
+      : kind === "scatter2"
+        ? (contract.budgets.scatterKit ?? { triangles: 90000, bytes: 6000000 })
+        : contract.budgets[
+            { shell: "hqShell", crown: "crown", parcel: "parcel", span: "bridgeSpan", end: "bridgeSpan" }[
+              kind
+            ]
+          ];
   if (triangles > budget.triangles || bytes.length > budget.bytes)
     throw new Error(`Colony ${kind} exceeds triangle or byte budget`);
   if (kind === "shell") {

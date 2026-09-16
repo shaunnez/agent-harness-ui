@@ -118,7 +118,9 @@ contract = {
         "surfaces": {"rule": "material weights by slope and height in the shader: plateau gravel-grass, worn basalt road on spurs and the court apron, stratified limestone on faces steeper than 50 deg, wet dark rock in the splash zone y < 1.2, shingle on shelves",
                      "textureSets": ["terrain_gravel_sand (Coast Land Rocks 01)", "terrain_stratified_warm_limestone (Seaside Rock)", "coastal_cliff_01", "coastal_cliff_02"],
                      "source": "exterior-bases/astra-kit/environment.glb embedded images (Poly Haven CC0), extracted to public assets"},
-        "scatter": {"kit": "terrain/scatter-kit.glb from 2A, unchanged", "rules": "trees on the shoulder between plateau+1.5 and coast-2.5, off spur corridors and the court arc; boulders at cliff lips; lanterns along built spurs and the court edge; vehicles on the court apron"},
+        "scatter": {"kit": "colony-v2/producer/scatter-kit.glb (environment pass; the 2A kit is its base)",
+                    "rules": "trees on the shoulder between plateau+1.5 and coast-2.5, off spur corridors and the court arc; scanned cliff pieces hung from the lip clear of pads and falls; large rocks on the shoulder, medium at lips and outcrop feet, shoreline rocks in the toe water clear of bridge lines; scrub and grass sparse on the shoulder; reeds at pools and shelves; two to four crystal clusters at cliff shoulders, rocks and the spring pool; lanterns along built spurs and the court edge; vehicles on the court apron"},
+        "water": {"chance": 0.6, "bands": [[13, 33], [133, 153]], "rule": "seeded per slot: spring pool at radial 24.6-27.6 on the highest ground of a camera-facing band, channel cut 0.65 m descending at least 6 cm/m to a fall at the lip 20 deg clear of every edge line; a right-flank stream replaces the wave-cut shelf"},
         "validation": ["height field is single-valued so it cannot leak", "every built pad is flat at 4.25 within 0.02 m", "plateau flat at 4.0 under the HQ footprint and court apron", "channel between neighbours >= channelMin at the bridge line", "no vertex above 15.0 (label anchor 19.5 stays clear)"],
     },
     "hq": {**v1["hq"],
@@ -152,6 +154,7 @@ contract = {
                  "court": {"y": COURT, "polygon": [[-12.5, 15.59], [-5.4, 15.59], [-5.4, 21.6], [5.4, 21.6], [5.4, 15.59], [12.5, 15.59], [12.5, 27.0], [-12.5, 27.0]],
                            "note": "court apron x +-12.5, z 15.59 to 27 (was +-18 to 27.5 in 1.0.1); court_edge sockets moved inside"}},
     "budgets": {**v1["budgets"], "terrainTextures": "<= 6 MB total after extraction, 2048 max", "hqShell": {"triangles": 150000, "bytes": 8000000},
+                "scatterKit": {"triangles": 90000, "bytes": 6000000, "note": "environment pass: trees, scrub, grass, reeds, three scanned cliff pieces, rocks, crystals, lantern, vehicles"},
                 "colonyTotal": "<= 25 MB fetched for the colony set at any project count (shell, crowns, previews, bridge parts, scatter kit, terrain textures, worker)"},
     "deliverables": {
         "assetProducer": ["hq-shell.glb (new lobed envelope on the retained plan)", "crown-bastion/command/relay/foundry.glb re-fitted to the hub drum", "bridge-span-27.glb and bridge-end.glb unchanged", "hq-metadata.json", "editable .blend + scripts"],

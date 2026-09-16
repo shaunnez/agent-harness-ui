@@ -175,6 +175,15 @@ export function ProofScene(props: Props) {
               slope: slopeAt(field, origin[0] + x, origin[2] + z),
             }),
             builtEdgeAngles: profile.built.map((edge) => edge.worldAngleDeg),
+            water: profile.water
+              ? {
+                  fallAngleDeg: profile.water.fall.angleDeg,
+                  pools: profile.water.pools,
+                  path: profile.water.path,
+                  halfWidth: profile.water.halfWidth,
+                }
+              : null,
+            shelf: profile.shelf,
           }),
         },
       ];

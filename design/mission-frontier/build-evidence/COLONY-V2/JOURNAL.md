@@ -20,10 +20,10 @@ frozen unless integration forces a change.
 | gate | `capture-v2.cjs gate` at 1568×1003 and 1280×720, day and dusk | captured |
 | gate 1 | macro composition accepted by Shaun, 17 Sep 2026: world layout, HQ massing, bridge logic and camera framing frozen | accepted |
 | 6a | Water polish: shoreline foam, depth-based colour, wave-normal sun glint, seeded stream / pools / waterfall / mist on 60 % of project parcels (`terrain-field.ts` water feature, `ColonyWater.tsx`, sea shader style 1) | done |
-| 6b | Cliff and terrain dressing: scanned cliff pieces (undercuts), large / medium / shoreline rock clusters, wet rock near water | pending |
-| 6c | Vegetation: 2–3 tree silhouettes, one bare tree, sparse scrub, grass and reeds | pending |
-| 6d | Crystals: 2–3 cluster variants, subtle emissive, tint hook for palette | pending |
-| gate 2 | environment pass captures before the interior pass | pending |
+| 6b | Cliff and terrain dressing: three decimated Poly Haven cliff scans hung from the lip and leaning outward, large rocks cut from them, medium boulders and shoreline rocks in the same material, wet-rock darkening near the water line (`build_scatter_kit_v2.py`, `scatter.ts`, `ParcelScatter.tsx`) | done |
+| 6c | Vegetation: three more purple silhouettes (tall, broad, seventh retained tree) and a bare trunk, purple and olive scrub, dry grass tufts, reeds at pools, banks and shelves | done |
+| 6d | Crystals: three shard clusters on rock feet, one `crystal_glow` material tuned at runtime, two to four per parcel at cliff shoulders, large rocks and the spring pool | done (palette tint deferred to step 8) |
+| gate 2 | `capture-v2.cjs gate2` and `stress`; `GATE-2.md` | captured |
 | 7, 8 | interiors (room identity, dead floor, practicals, signage, 1280 label pile-up), palette lighting | after gate 2 |
 
 ## Assumptions (cheapest to reverse, recorded as made)
@@ -51,6 +51,12 @@ frozen unless integration forces a change.
     not on the rear shoulder where the outcrops are: a waterfall behind the HQ would never be in a capture. A
     right-flank stream replaces that parcel's wave-cut shelf. 60 % of project parcels get one; the landing never does.
 12. The legacy archipelago sea keeps its 2A look (shader style 0); foam, depth colour and glints are colony-only.
+13. **One kit, 6 MB / 90k triangles** (`budgets.scatterKit` in Contract 2.0; the 2A kit was 3 MB / 30k). Six embedded
+    images: bark 512, leaves 1024, two cliff albedo + normal pairs at 1024. Colony total stays under 25 MB.
+14. **Cliff pieces avoid built edges by 24 deg but other edge lines by only 9 deg**, so a parcel can carry five to
+    seven pieces; when a neighbour arrives and an edge is built, that parcel's scatter re-seeds (lanterns already did).
+15. **Crystal palette tinting is a step-8 item.** The material is shared by every instance, so per-parcel colour
+    needs an instance attribute in the emissive path; the material name `crystal_glow` is the hook.
 
 ## Blockers / notes
 

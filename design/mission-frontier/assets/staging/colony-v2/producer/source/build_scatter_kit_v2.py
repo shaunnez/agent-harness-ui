@@ -126,6 +126,41 @@ for item, leaf_name, scale, recolour in [('MF_Scrub_Purple_A', 'retained_twisted
     r = root(item); o = tree_copy(bpy.data.objects[leaf_name], r, item, scale, recolour); decimate(o, .55)
     anchor_children(r); keep.append(r); keep.extend(r.children)
 
+
+# --- scanned cliff pieces: Poly Haven coastal cliffs, decimated, top-anchored, face toward -Y ------------------
+cliff_sources = {'MF_Cliff_A': ('interlocking_scanned_cliff_0', .13, (1, 1, 1)),
+                 'MF_Cliff_B': ('interlocking_scanned_cliff_1', .13, (1, 1, 1.15)),
+                 'MF_Cliff_C': ('rear_rocky_terrace', .12, (1.1, 1, 1.25))}
+cliff_materials = {}
+def cliff_material(src_mat):
+    """Re-author the scanned material as albedo + normal only (roughness fixed), shared across pieces."""
+    key = src_mat.name.split('.')[0]
+    if key in cliff_materials: return cliff_materials[key]
+    m = material('rock_' + key, (1, 1, 1), .92); m.use_backface_culling = False
+    p = m.node_tree.nodes['Principled BSDF']
+    for n in src_mat.node_tree.nodes:
+        if n.type != 'TEX_IMAGE' or not n.image: continue
+        name = n.image.name
+        if '_diff' in name or '_nor_gl' in name:
+            im = n.image.copy(); im.name = 'rock_' + key + ('_albedo' if '_diff' in name else '_normal'); im.scale(1024, 1024); im.pack()
+            node = m.node_tree.nodes.new('ShaderNodeTexImage'); node.image = im
+            if '_diff' in name: m.node_tree.links.new(node.outputs['Color'], p.inputs['Base Color'])
+            else:
+                node.image.colorspace_settings.name = 'Non-Color'
+                nm = m.node_tree.nodes.new('ShaderNodeNormalMap'); m.node_tree.links.new(node.outputs['Color'], nm.inputs['Color'])
+                m.node_tree.links.new(nm.outputs['Normal'], p.inputs['Normal'])
+    cliff_materials[key] = m; return m
+for item, (src_name, ratio, scale) in cliff_sources.items():
+    src = bpy.data.objects[src_name]
+    o = src.copy(); o.data = src.data.copy(); scene.collection.objects.link(o); o.matrix_world = src.matrix_world.copy()
+    r = root(item); o.parent = None
+    # On the Astra island every scanned piece faced outward from the island centre; turn that outward
+    # direction to -Y so the runtime only has to align -Y (glTF +Z) with the coast normal.
+    outward = math.atan2(o.location.y, o.location.x)
+    apply_all(o); decimate(o, ratio)
+    o.rotation_euler = (0, 0, -math.pi / 2 - outward); apply_all(o); o.scale = scale; apply_all(o)
+    o.data.materials[0] = cliff_material(o.data.materials[0]); o.parent = r; o.name = item + '_rock'
+    anchor_children(r, 'top'); keep.append(r); keep.extend(r.children)
 # Drop every other object from the environment now; the rest is authored here.
 for o in list(scene.objects):
     if o not in keep: bpy.data.objects.remove(o, do_unlink=True)
@@ -141,7 +176,8 @@ def blades(parent, name, mat, count, height, spread, width, lean):
         bx, by = math.cos(a) * spread * rng.uniform(.2, 1), math.sin(a) * spread * rng.uniform(.2, 1)
         tip = Vector((bx + math.cos(a) * lean * h, by + math.sin(a) * lean * h, h))
         side = Vector((-math.sin(a), math.cos(a), 0)) * width
-        v0 = bm.verts.new((bx, by, 0) - side); v1 = bm.verts.new((bx, by, 0) + side)
+        foot = Vector((bx, by, 0))
+        v0 = bm.verts.new(foot - side); v1 = bm.verts.new(foot + side)
         v2 = bm.verts.new(tip + side * .25); v3 = bm.verts.new(tip - side * .25)
         bm.faces.new((v0, v1, v2, v3))
     me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free(); me.update()
@@ -155,65 +191,25 @@ for item, count, height in [('MF_Reed_A', 7, 1.6), ('MF_Reed_B', 10, 1.95)]:
         cyl(r, item + '_head', (math.cos(a) * .18 + math.cos(a) * .12 * h, h - .12, math.sin(a) * .18 + math.sin(a) * .12 * h), .035, .26, reed_head, 6)
     keep.append(r)
 
-# --- scanned cliff pieces: Poly Haven coastal cliffs, decimated, top-anchored, face toward -Y ------------------
-def append_astra(names):
-    with bpy.data.libraries.load(str(ASTRA), link=False) as (src, dst):
-        dst.objects = [n for n in src.objects if n in names]
-    out = []
-    for o in dst.objects:
-        if o is None: continue
-        scene.collection.objects.link(o); mw = o.matrix_world.copy(); o.parent = None; o.matrix_world = mw; out.append(o)
-    return out
-cliff_sources = {'MF_Cliff_A': ('interlocking_scanned_cliff_0', .16, (0, 0, 0), (1, 1, 1)),
-                 'MF_Cliff_B': ('interlocking_scanned_cliff_1', .16, (0, 0, math.pi), (1, 1, 1.15)),
-                 'MF_Cliff_C': ('rear_rocky_terrace', .14, (0, 0, math.pi / 2), (1.1, 1, 1.25))}
-cliff_materials = {}
-def cliff_material(src_mat):
-    """Re-author the scanned material as albedo + normal only (roughness fixed), shared across pieces."""
-    key = src_mat.name.split('.')[0]
-    if key in cliff_materials: return cliff_materials[key]
-    m = material('rock_' + key, (1, 1, 1), .92); m.use_backface_culling = True
-    p = m.node_tree.nodes['Principled BSDF']
-    for n in src_mat.node_tree.nodes:
-        if n.type != 'TEX_IMAGE' or not n.image: continue
-        name = n.image.name
-        if '_diff' in name or '_nor_gl' in name:
-            im = n.image.copy(); im.name = 'rock_' + key + ('_albedo' if '_diff' in name else '_normal'); im.scale(1024, 1024); im.pack()
-            node = m.node_tree.nodes.new('ShaderNodeTexImage'); node.image = im
-            if '_diff' in name: m.node_tree.links.new(node.outputs['Color'], p.inputs['Base Color'])
-            else:
-                node.image.colorspace_settings.name = 'Non-Color'
-                nm = m.node_tree.nodes.new('ShaderNodeNormalMap'); m.node_tree.links.new(node.outputs['Color'], nm.inputs['Color'])
-                m.node_tree.links.new(nm.outputs['Normal'], p.inputs['Normal'])
-    cliff_materials[key] = m; return m
-for item, (src_name, ratio, rot, scale) in cliff_sources.items():
-    (o,) = append_astra([src_name])
-    r = root(item); o.parent = None
-    apply_all(o); decimate(o, ratio); o.rotation_euler = rot; apply_all(o); o.scale = scale; apply_all(o)
-    # Longest horizontal axis along X, then the face toward -Y: the runtime rotates the piece to the coast tangent.
-    d = o.dimensions
-    if d.y > d.x: o.rotation_euler = (0, 0, math.pi / 2); apply_all(o)
-    o.data.materials[0] = cliff_material(o.data.materials[0]); o.parent = r; o.name = item + '_rock'
-    anchor_children(r, 'top'); keep.append(r)
 rock_a = cliff_materials['coastal_cliff_01']; rock_b = cliff_materials['coastal_cliff_02']
 
 # --- rocks: large chunks cut from the scanned cliffs; medium and shoreline boulders in the same material --------
 def chunk(item, src_item, box_min, box_max, mat, scale):
     src = next(c for c in bpy.data.objects[src_item].children if c.type == 'MESH')
     o = src.copy(); o.data = src.data.copy(); scene.collection.objects.link(o); o.matrix_world = src.matrix_world.copy(); o.parent = None
+    apply_all(o)   # bake the top anchor so the cut box is in the piece's anchored frame
     bm = bmesh.new(); bm.from_mesh(o.data)
     for axis in range(3):
         for sign, bound in ((1, box_max[axis]), (-1, box_min[axis])):
             normal = Vector([0, 0, 0]); normal[axis] = sign
             geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
-            res = bmesh.ops.bisect_plane(bm, geom=geom, plane_co=Vector([0, 0, 0]) + normal * abs(bound) * sign if False else Vector([bound if i == axis else 0 for i in range(3)]), plane_no=normal, clear_outer=True)
+            bmesh.ops.bisect_plane(bm, geom=geom, plane_co=Vector([bound if i == axis else 0 for i in range(3)]), plane_no=normal, clear_outer=True)
     bm.to_mesh(o.data); bm.free(); o.data.update()
     r = root(item); o.parent = r; o.name = item + '_rock'; o.data.materials.clear(); o.data.materials.append(mat)
     o.scale = scale; apply_all(o)
-    # Close the cut with a flat base by dropping a filled bottom slab (the runtime sinks rocks into the ground).
     anchor_children(r); keep.append(r); return r
-chunk('MF_Rock_Large_A', 'MF_Cliff_A', (-4.5, -3.2, -6.5), (2.5, 3.2, 0.5), rock_a, (.85, .85, .9))
-chunk('MF_Rock_Large_B', 'MF_Cliff_C', (-3.0, -3.0, -5.5), (4.0, 2.4, 0.5), rock_b, (.9, .95, 1.0))
+chunk('MF_Rock_Large_A', 'MF_Cliff_A', (-4.5, -3.2, -4.6), (2.5, 3.2, 0.5), rock_a, (.85, .85, .9))
+chunk('MF_Rock_Large_B', 'MF_Cliff_C', (-3.0, -3.0, -3.8), (4.0, 2.4, 0.5), rock_b, (.9, .95, 1.0))
 for j, (name, radius, sub, squash, mat) in enumerate([('MF_Boulder_A', 1.0, 2, .8, rock_a), ('MF_Boulder_B', 1.35, 2, .9, rock_b), ('MF_Boulder_C', .7, 1, .75, rock_a),
                                                        ('MF_Rock_Shore_A', 1.5, 2, .38, rock_b), ('MF_Rock_Shore_B', 2.1, 2, .32, rock_a), ('MF_Rock_Shore_C', .9, 1, .45, rock_b)]):
     r = root(name); bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=sub, radius=radius, location=(0, 0, radius * .7)); o = bpy.context.object
@@ -226,18 +222,18 @@ for j, (name, radius, sub, squash, mat) in enumerate([('MF_Boulder_A', 1.0, 2, .
 # --- crystals: hexagonal prisms with pointed tips on a rock foot, one emissive material for runtime tinting ------
 crystal = material('crystal_glow', (.58, .38, .92), .18, 0.0, 1.4, (.72, .48, 1.0)); crystal.use_backface_culling = True
 def prism(parent, name, base, height, radius, tilt, yaw):
-    bpy.ops.mesh.primitive_cylinder_add(vertices=6, radius=radius, depth=height, location=(0, 0, height / 2)); o = bpy.context.object
-    bm = bmesh.new(); bm.from_mesh(o.data)
-    top = [v for v in bm.verts if v.co.z > height / 2 - 1e-4]
-    for v in top: v.co.z += height * .38 * (1 - (v.co.xy.length / radius) ** 2 if radius else 0); v.co.xy *= .55
-    tip = bm.verts.new((0, 0, height * 1.32)); bm.faces.new
-    for f in [f for f in bm.faces if all(v in top for v in f.verts)]: bm.faces.remove(f)
-    bmesh.ops.contextual_create(bm, geom=top) if False else None
-    for i in range(len(top)):
-        a, b = top[i], top[(i + 1) % len(top)]
-        try: bm.faces.new((a, b, tip))
-        except ValueError: pass
-    bm.to_mesh(o.data); bm.free(); o.data.update()
+    """Six-sided shard: a prism that narrows into a pointed tip."""
+    bm = bmesh.new(); angles = [i / 6 * math.pi * 2 for i in range(6)]
+    ring0 = [bm.verts.new((math.cos(a) * radius, math.sin(a) * radius, 0)) for a in angles]
+    ring1 = [bm.verts.new((math.cos(a) * radius * .6, math.sin(a) * radius * .6, height)) for a in angles]
+    tip = bm.verts.new((0, 0, height * 1.3))
+    bm.faces.new(ring0[::-1])
+    for i in range(6):
+        bm.faces.new((ring0[i], ring0[(i + 1) % 6], ring1[(i + 1) % 6], ring1[i]))
+        bm.faces.new((ring1[i], ring1[(i + 1) % 6], tip))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free(); me.update()
+    o = bpy.data.objects.new(name, me); scene.collection.objects.link(o)
     o.rotation_euler = (tilt, 0, yaw); o.location = base; apply_all(o); flat_shade(o); return attach(o, parent, name, crystal)
 for item, count, tall in [('MF_Crystal_A', 5, 1.9), ('MF_Crystal_B', 3, 1.3), ('MF_Crystal_C', 7, 2.4)]:
     r = root(item)

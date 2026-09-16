@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-16T16:23:15.892Z",
+  "capturedAt": "2026-09-16T17:12:27.473Z",
   "assets": [
     {
       "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.glb",
@@ -73,9 +73,9 @@
     },
     {
       "source": "design/mission-frontier/assets/staging/colony-v2/contract.json",
-      "filename": "colony-contract.d71fad7e8d8d.json",
-      "sha256": "d71fad7e8d8df8c1dde7fcf759af619526286c95f3f63c80f76617e699bd683a",
-      "bytes": 45314
+      "filename": "colony-contract.1208f732d6c7.json",
+      "sha256": "1208f732d6c7ba123d7e982820f194a45b2e092ef54f815b6ca3dea6951d3602",
+      "bytes": 46280
     },
     {
       "source": "design/mission-frontier/assets/staging/colony-v2/producer/hq-shell.glb",
@@ -148,13 +148,13 @@
       "animations": []
     },
     {
-      "source": "design/mission-frontier/assets/staging/colony-hq-v1/terrain/scatter-kit.glb",
-      "filename": "scatter-kit.8d5ecbfe8cc6.glb",
-      "sha256": "8d5ecbfe8cc6de6db22e5ac33a0b8737ac4e884871dfa3f609b5a98836668b27",
-      "bytes": 2582416,
-      "meshes": 36,
-      "materials": 13,
-      "textures": 2,
+      "source": "design/mission-frontier/assets/staging/colony-v2/producer/scatter-kit.glb",
+      "filename": "scatter-kit.6ecb016f3954.glb",
+      "sha256": "6ecb016f39548f2507b2b8bfeb7cbb1483416b6f31f4637f478c324c668d1faf",
+      "bytes": 5845124,
+      "meshes": 84,
+      "materials": 18,
+      "textures": 6,
       "animations": []
     },
     {

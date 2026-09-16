@@ -1,6 +1,6 @@
 // Contract 2.0 colony evidence. Drives a Frontier dev server with headless Chromium (SwiftShader WebGL) and
 // writes PNGs plus measurements-<step>.json. Usage: FRONTIER_BASE=http://127.0.0.1:5243/ node capture-v2.cjs <step>
-// Steps: gate (world / exterior / cutaway, day and dusk, both sizes), stress (ten-project world),
+// Steps: gate / gate2 (world / exterior / cutaway, day and dusk, both sizes; the step name prefixes the files), stress (ten-project world),
 // peek (world and exterior by day at 1568 only; set FRONTIER_OUT to keep the PNGs out of the evidence folder).
 const { chromium } = require("/Users/shaun/projects/eversor-mystrataassist/e2e/node_modules/playwright-core");
 const fs = require("node:fs");
@@ -109,18 +109,18 @@ async function run(step) {
         await sleep(3000);
         measurements.shots[`peek-exterior-day-${size.tag}`] = { file: await shot(page, `peek-exterior-day-${size.tag}`) };
       }
-      if (step === "gate") {
+      if (step.startsWith("gate")) {
         await goHash(page, "project/plancheck");
         await page.click("button:has-text('Exterior')").catch(() => {});
         await sleep(3000);
-        measurements.shots[`gate-exterior-day-${size.tag}`] = {
-          file: await shot(page, `gate-exterior-day-${size.tag}`),
+        measurements.shots[`${step}-exterior-day-${size.tag}`] = {
+          file: await shot(page, `${step}-exterior-day-${size.tag}`),
           fill: await canvasFill(page),
         };
         await page.click("button:has-text('Cutaway')").catch(() => {});
         await sleep(3000);
-        measurements.shots[`gate-cutaway-day-${size.tag}`] = {
-          file: await shot(page, `gate-cutaway-day-${size.tag}`),
+        measurements.shots[`${step}-cutaway-day-${size.tag}`] = {
+          file: await shot(page, `${step}-cutaway-day-${size.tag}`),
           fill: await canvasFill(page),
           labels: await rects(page, ".world-label"),
         };
@@ -128,11 +128,11 @@ async function run(step) {
         await page.goto(url(scenario, "world"));
         await page.reload();
         await ready(page);
-        measurements.shots[`gate-world-dusk-${size.tag}`] = { file: await shot(page, `gate-world-dusk-${size.tag}`) };
+        measurements.shots[`${step}-world-dusk-${size.tag}`] = { file: await shot(page, `${step}-world-dusk-${size.tag}`) };
         await goHash(page, "project/plancheck");
         await page.click("button:has-text('Exterior')").catch(() => {});
         await sleep(3000);
-        measurements.shots[`gate-exterior-dusk-${size.tag}`] = { file: await shot(page, `gate-exterior-dusk-${size.tag}`) };
+        measurements.shots[`${step}-exterior-dusk-${size.tag}`] = { file: await shot(page, `${step}-exterior-dusk-${size.tag}`) };
       }
       await context.close();
     }

@@ -45,7 +45,7 @@ export async function integrateColonyAssets(root, asset) {
   const bridgeReceipts = producer2
     ? await optionalJson(path.join(v1, "producer/hq-metadata.json"))
     : producer;
-  for (const [dir, file, key, kind] of [
+  for (let [dir, file, key, kind] of [
     ["producer", "hq-shell.glb", "shell", "shell"],
     ["producer", "crown-bastion.glb", "bastion", "crown"],
     ["producer", "crown-command.glb", "command", "crown"],
@@ -55,8 +55,13 @@ export async function integrateColonyAssets(root, asset) {
     ["producer", "bridge-end.glb", "bridgeEnd", "end"],
     ["terrain", "scatter-kit.glb", "scatterKit", "scatter"],
   ]) {
-    const filePath =
-      dir === "producer" && !file.startsWith("bridge-")
+    // The environment-pass kit in colony-v2/producer replaces the 2A kit once it exists.
+    const kit2 =
+      kind === "scatter" ? await optionalJson(path.join(v2, "producer/scatter-metadata.json")) : null;
+    if (kit2) kind = "scatter2";
+    const filePath = kit2
+      ? path.join(v2, "producer", file)
+      : dir === "producer" && !file.startsWith("bridge-")
         ? path.join(producerDir, file)
         : path.join(v1, dir, file);
     let bytes;
@@ -70,7 +75,7 @@ export async function integrateColonyAssets(root, asset) {
     const fromV1 = file.startsWith("bridge-") && producer2;
     const entry =
       file === "scatter-kit.glb"
-        ? await optionalJson(path.join(v1, "terrain/scatter-metadata.json"))
+        ? (kit2 ?? (await optionalJson(path.join(v1, "terrain/scatter-metadata.json"))))
         : (fromV1 ? bridgeReceipts : producer)?.assets?.[stem];
     const expectedSha256 = entry?.glb?.sha256 ?? entry?.sha256;
     if (!expectedSha256) throw new Error(`${file}: missing producer hash receipt`);
