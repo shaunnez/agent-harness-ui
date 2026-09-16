@@ -87,11 +87,15 @@ Schema version **4**. Six new tables, created through `createResearchSchema()` i
 
 Design points:
 
+- **Source identity is run-scoped.** `research_sources` is keyed `(run_id, id)`, and `research_evidence` carries `FOREIGN KEY (run_id, source_id) REFERENCES research_sources(run_id, id)`. Two runs that both number their first source `source-1` hold two rows, and a citation cannot reach across runs even if a future writer forgets to scope its lookup.
+- **`quote_verified` is written by the host, never read from a result.** `recordResult()` writes the constant `0`. A runtime claiming `quoteVerified: true` is asserting something only the host can know; the claim is discarded and the rest of the evidence kept.
 - **Claims and evidence are rows, not a blob.** Audit §10 names the missing claim → source → locator → verification chain as a core gap; nesting it inside a run payload would reproduce the gap in a new table.
 - **Events are append-only with a store-assigned ordinal.** The runtime proposes an ordinal; the store assigns the real one, so a runtime cannot renumber the stream a UI is paging through.
 - **Runs carry `revision`** and every update is guarded by it, the same optimistic-concurrency shape `tasks` uses.
 - **`cancellation_requested_at`** persists the operator's intent separately from `status`, so it survives the transition to `cancelled` and a companion restart in between.
 - **One connection.** `ResearchStore` takes `SqliteTaskStore.databaseHandle()`. Every transaction on either side runs to COMMIT synchronously, so the two can never interleave on the event loop.
+
+A database opened on the pre-review slice-1 branch (globally unique `research_sources.id`) is rebuilt forward on open: the two affected tables are renamed aside, recreated in the run-scoped shape, and copied back with `quote_verified` reset to `0`. No released schema version ever carried the old shape, so the version stays **4**.
 
 No checkpoint table, no runtime state table, no vector store, no queue.
 
@@ -135,7 +139,7 @@ cancel    queued → running → cancelling → cancelled
 
 ## 8. Tests
 
-23 new assertions-bearing tests across four files, all four registered in `npm test`.
+26 new assertion-bearing tests across four files, all four registered in `npm test`.
 
 | Required proof | Test |
 |---|---|
@@ -148,9 +152,17 @@ cancel    queued → running → cancelling → cancelled
 | 7. Normalized usage persisted | success, failure and cancellation tests all assert `usage` including `partial` |
 | 8. Result/findings/evidence retrievable | `claims, evidence and sources are separate rows, not a blob`; API `result` and `sources` |
 | 9. No runtime data in public contracts | `no runtime vocabulary leaks into the public research contracts` + the compile-time assertions |
-| 10. Existing SDLC tests green | `npm test` — 558 pass |
+| 10. Existing SDLC tests green | `npm test` — 561 pass |
 | 11. Cannot reserve/start SDLC work | `a research run cannot reserve or start SDLC work` |
 | 12. Budget survives persistence unchanged | `a research run round-trips through SQLite with its budget unchanged` |
+
+Three further tests were added during review (§14):
+
+| Review fix | Test |
+|---|---|
+| Host owns verification | `a runtime cannot mark its own evidence verified` |
+| Run-scoped source identity | `source identity is scoped to its run` |
+| Forward migration of the pre-review shape | `a database carrying the pre-review global source id migrates forward` |
 
 Compile-time tests live in `src/research-runtime-contract.ts` and run under `npm run typecheck`:
 
@@ -171,14 +183,14 @@ $ npx tsc --noEmit
 (clean)
 
 $ npm run lint
-Checked 501 files in 184ms. No fixes applied.
+Checked 501 files in 252ms. No fixes applied.
 
 $ node --test tests/research-contracts.test.mjs tests/research-fake-runtime.test.mjs \
              tests/research-routes.test.mjs tests/research-store.test.mjs
-ℹ tests 23   ℹ pass 23   ℹ fail 0   ℹ duration_ms 192.450417
+ℹ tests 26   ℹ pass 26   ℹ fail 0   ℹ duration_ms 226.7025
 
 $ npm test
-ℹ tests 558  ℹ pass 558  ℹ fail 0   ℹ duration_ms 15469.651625
+ℹ tests 561  ℹ pass 561  ℹ fail 0   ℹ duration_ms 20402.961541
 
 $ npm run test:frontier
 ℹ tests 111  ℹ pass 111  ℹ fail 0
@@ -214,7 +226,7 @@ Yes. No table, column or index names a runtime. The only runtime-touched column 
 Not that either half of the check can find. The compile-time blocklist covers the contract types; the runtime test scans `src/domain/research.ts` for runtime vocabulary including in comments — it caught two comments in my own first draft that named LangGraph and Deep Agents while explaining that they must not be named, and both were rewritten. `runtimeMetadata` is the deliberate, bounded exception: flat strings, adapter-only access, not in `ResearchRunRecord`. The registry additionally refuses a runtime that exposes `resume()`.
 
 **4. Did the implementation alter existing SDLC execution?**
-No. No orchestrator file, execution provider or existing route factory was edited. The four touched files gain additive DDL, an accessor, an optional parameter and a shutdown participant. All 558 tests in `npm test`, all 111 frontier tests and all 18 frontier-API tests pass unchanged. `a research run cannot reserve or start SDLC work` asserts the negative directly: after a completed research run the task list is empty, the worktree inventory is empty, and a request carrying `workflow` or `repositoryPath` is rejected with a 400 rather than quietly ignored.
+No. No orchestrator file, execution provider or existing route factory was edited. The four touched files gain additive DDL, an accessor, an optional parameter and a shutdown participant. All 561 tests in `npm test`, all 111 frontier tests and all 18 frontier-API tests pass unchanged. `a research run cannot reserve or start SDLC work` asserts the negative directly: after a completed research run the task list is empty, the worktree inventory is empty, and a request carrying `workflow` or `repositoryPath` is rejected with a 400 rather than quietly ignored.
 
 **5. Did we create infrastructure that belongs in the external runtime instead?**
 Reviewed each piece. Budget policy, run identity, the event ledger, claim/evidence rows and cancellation intent are Eversor's by the §3 ownership matrix — a runtime that owned any of them could not be swapped. The one judgement call is the event ordinal: the store assigns it rather than trusting the runtime's. That is deliberate, because a UI cursor must not be renumberable by a runtime. Nothing here reimplements planning, delegation, context control, tool calling or checkpointing — the four things §1 of the architecture says Eversor should stop building. The fake runtime's step machinery is a test double living behind the interface, not infrastructure in front of it.
@@ -255,4 +267,41 @@ What slice 2 must add on top of that: `server/research/deepagents/worker.mjs` as
 
 ---
 
-`SLICE_1_READY_FOR_REVIEW`
+## 14. Review fixes applied before merge
+
+Two findings from the slice-1 review, both about who owns a fact rather than about the shape of the seam.
+
+### 14.1 The host owns evidence verification
+
+`ResearchStore.recordResult()` previously copied `reference.quoteVerified` out of the runtime's result. That made the one field in the evidence chain that exists to be *independent* of the runtime a field the runtime could set. It now writes a single host-owned constant:
+
+```js
+/** The only value `recordResult` may write to `quote_verified`. See the call site. */
+const UNVERIFIED = 0;
+```
+
+Everything else in the evidence row — locator, excerpt, authority, snapshot reference — is still taken from the runtime, because those are claims about what the runtime saw. `quote_verified` is a claim about what the host checked, and until slice 7 the host has checked nothing. The column is not dropped or constrained to zero: the host-side verifier will write it through a path Eversor owns.
+
+The regression test wires a `HostileResearchRuntime` through the real `ResearchService` and has it return `quoteVerified: true` on an otherwise well-formed result. The persisted row reads `0`, `getResult()` returns `quoteVerified: false`, and the excerpt survives intact.
+
+### 14.2 Source identity is scoped to the run
+
+`research_sources.id` was a global primary key. Two runs — or two runtimes — that each number their sources from one would collide: the second run's `source-1` would silently update the first run's row through the `ON CONFLICT(id)` clause, and the first run's result would then resolve the second run's URL and title. That is cross-run evidence corruption, not merely an id clash.
+
+Changes:
+
+- `research_sources` is keyed `PRIMARY KEY (run_id, id)`.
+- `research_evidence` gains `FOREIGN KEY (run_id, source_id) REFERENCES research_sources(run_id, id) ON DELETE CASCADE`, so a citation reaching into another run is refused by the database rather than by convention.
+- `upsertSource`, the `recordResult` backfill and `#readSource` are all run-scoped, with `ON CONFLICT(run_id, id)`.
+- `FakeResearchRuntime` now emits unscoped ids (`source-1`, `source-2`, `source-3`) instead of `${runId}-SRC-n`. It was previously doing the host's job for it, which hid the defect; a real runtime numbers its own sources.
+- `createResearchSchema()` rebuilds a database carrying the old shape (§5).
+
+The regression test creates two runs that both cite `source-1` with different URLs and titles, then proves both rows survive, each `getResult()` resolves its own source metadata, `listSources()` returns only the run's own source, and a hand-written insert citing another run's source throws.
+
+### Not changed
+
+No other architectural change. `src/domain/research.ts` is untouched — both fixes are persistence-layer ownership, and neither is visible in the neutral types. `EvidenceRef.quoteVerified` remains a required boolean, because a consumer always needs an answer to "has the host checked this?", and before slice 7 that answer is always `false`.
+
+---
+
+`SLICE_1_READY_TO_MERGE`

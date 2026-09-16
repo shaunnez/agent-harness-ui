@@ -13,6 +13,9 @@
 
 const RUN_ID_PREFIX = "RSCH";
 
+/** The only value `recordResult` may write to `quote_verified`. See the call site. */
+const UNVERIFIED = 0;
+
 export class ResearchStore {
   #db;
 
@@ -143,10 +146,10 @@ export class ResearchStore {
       this.#db
         .prepare(`
         INSERT INTO research_sources(
-          id, run_id, source_type, url, title, retrieved_at, content_sha256, content_bytes,
+          run_id, id, source_type, url, title, retrieved_at, content_sha256, content_bytes,
           media_type, metadata_json)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET
+        ON CONFLICT(run_id, id) DO UPDATE SET
           url = excluded.url,
           title = excluded.title,
           retrieved_at = excluded.retrieved_at,
@@ -156,8 +159,8 @@ export class ResearchStore {
           metadata_json = COALESCE(excluded.metadata_json, research_sources.metadata_json)
       `)
         .run(
-          source.id,
           runId,
+          source.id,
           source.sourceType ?? "other",
           source.url ?? null,
           source.title ?? null,
@@ -167,7 +170,7 @@ export class ResearchStore {
           source.mediaType ?? null,
           source.metadata ? JSON.stringify(source.metadata) : null,
         );
-      return this.#readSource(source.id);
+      return this.#readSource(runId, source.id);
     });
   }
 
@@ -228,13 +231,13 @@ export class ResearchStore {
           if (!known.has(reference.sourceId)) {
             this.#db
               .prepare(`
-              INSERT INTO research_sources(id, run_id, source_type, url, title, retrieved_at)
+              INSERT INTO research_sources(run_id, id, source_type, url, title, retrieved_at)
               VALUES (?, ?, ?, ?, ?, ?)
-              ON CONFLICT(id) DO NOTHING
+              ON CONFLICT(run_id, id) DO NOTHING
             `)
               .run(
-                reference.sourceId,
                 runId,
+                reference.sourceId,
                 reference.sourceType ?? "other",
                 reference.url ?? null,
                 reference.title ?? null,
@@ -251,9 +254,11 @@ export class ResearchStore {
             reference.locator ? JSON.stringify(reference.locator) : null,
             reference.excerpt ?? null,
             reference.snapshotRef ?? null,
-            // Host-owned. A runtime cannot mark its own quote verified: until a host-side
-            // snapshot check exists (slice 7) this is 0 for everything.
-            reference.quoteVerified === true ? 1 : 0,
+            // Host-owned, and deliberately not read from the result. A runtime asserting
+            // `quoteVerified: true` is asserting something only the host can know, so the claim
+            // is discarded rather than trusted. The column moves off 0 when a host-side snapshot
+            // check writes it through a verification path Eversor owns (slice 7).
+            UNVERIFIED,
             reference.authority ?? null,
           );
         }
@@ -358,8 +363,10 @@ export class ResearchStore {
     return row ? runRecord(row) : null;
   }
 
-  #readSource(sourceId) {
-    const row = this.#db.prepare("SELECT * FROM research_sources WHERE id = ?").get(sourceId);
+  #readSource(runId, sourceId) {
+    const row = this.#db
+      .prepare("SELECT * FROM research_sources WHERE run_id = ? AND id = ?")
+      .get(runId, sourceId);
     return row ? sourceRecord(row) : null;
   }
 

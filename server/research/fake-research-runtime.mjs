@@ -253,7 +253,9 @@ export class FakeResearchRuntime {
     }
     for (let index = 1; index <= run.workers; index += 1) {
       steps.push(() => {
-        const sourceId = `${runId}-SRC-${index}`;
+        // Deliberately not namespaced by run. A real runtime numbers its own sources from
+        // one, and the host is what makes two runs' `source-1` two different sources.
+        const sourceId = `source-${index}`;
         const retrievedAt = new Date(run.startedAtMs + index * STEP_INTERVAL_MS).toISOString();
         this.#emit(run, runId, "worker.started", { worker: index, role: "researcher" });
         this.#emit(run, runId, "tool.called", { tool: "web_search", worker: index });

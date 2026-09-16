@@ -4,8 +4,12 @@
 // Claims and evidence are first-class rows rather than JSON nested inside a run blob. Audit
 // §10 identifies the missing claim -> source -> locator -> verification chain as a core gap;
 // nesting it would reproduce the gap in a new table.
+//
+// Source identity is run-scoped. A runtime is free to number its own sources `source-1`, and
+// two runs that both do so are two different sources, not one row the second run overwrites.
 
 export function createResearchSchema(db) {
+  const rebuilding = renameLegacySourceIdentity(db);
   db.exec(`
     CREATE TABLE IF NOT EXISTS research_runs (
       id TEXT PRIMARY KEY,
@@ -33,8 +37,8 @@ export function createResearchSchema(db) {
       PRIMARY KEY (run_id, id)
     );
     CREATE TABLE IF NOT EXISTS research_sources (
-      id TEXT PRIMARY KEY,
       run_id TEXT NOT NULL REFERENCES research_runs(id) ON DELETE CASCADE,
+      id TEXT NOT NULL,
       source_type TEXT NOT NULL,
       url TEXT,
       title TEXT,
@@ -42,7 +46,8 @@ export function createResearchSchema(db) {
       content_sha256 TEXT,
       content_bytes INTEGER,
       media_type TEXT,
-      metadata_json TEXT
+      metadata_json TEXT,
+      PRIMARY KEY (run_id, id)
     );
     CREATE TABLE IF NOT EXISTS research_findings (
       run_id TEXT NOT NULL REFERENCES research_runs(id) ON DELETE CASCADE,
@@ -65,7 +70,10 @@ export function createResearchSchema(db) {
       snapshot_ref TEXT,
       quote_verified INTEGER NOT NULL,
       authority TEXT,
-      PRIMARY KEY (run_id, id)
+      PRIMARY KEY (run_id, id),
+      -- Evidence can only cite a source belonging to the same run. The database, not the
+      -- writer, is what makes cross-run citation impossible.
+      FOREIGN KEY (run_id, source_id) REFERENCES research_sources(run_id, id) ON DELETE CASCADE
     );
     CREATE TABLE IF NOT EXISTS research_artifacts (
       run_id TEXT NOT NULL REFERENCES research_runs(id) ON DELETE CASCADE,
@@ -84,5 +92,46 @@ export function createResearchSchema(db) {
     CREATE INDEX IF NOT EXISTS research_findings_page_idx ON research_findings(run_id, ordinal ASC);
     CREATE INDEX IF NOT EXISTS research_evidence_find_idx ON research_evidence(run_id, finding_id);
     CREATE INDEX IF NOT EXISTS research_sources_run_idx   ON research_sources(run_id, retrieved_at DESC);
+  `);
+  if (rebuilding) copyLegacySourceIdentity(db);
+}
+
+/** Slice 1 briefly gave `research_sources` a globally unique id. No released schema version
+ *  carries that shape, but a database opened on the slice-1 branch does, so it is renamed out
+ *  of the way here and copied into the run-scoped tables below. */
+function renameLegacySourceIdentity(db) {
+  const existing = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'research_sources'")
+    .get();
+  if (!existing || existing.sql.includes("PRIMARY KEY (run_id, id)")) return false;
+  db.exec(`
+    DROP INDEX IF EXISTS research_sources_run_idx;
+    DROP INDEX IF EXISTS research_evidence_find_idx;
+    ALTER TABLE research_sources RENAME TO research_sources_legacy;
+    ALTER TABLE research_evidence RENAME TO research_evidence_legacy;
+  `);
+  return true;
+}
+
+function copyLegacySourceIdentity(db) {
+  db.exec(`
+    INSERT INTO research_sources(
+      run_id, id, source_type, url, title, retrieved_at, content_sha256, content_bytes,
+      media_type, metadata_json)
+    SELECT run_id, id, source_type, url, title, retrieved_at, content_sha256, content_bytes,
+           media_type, metadata_json
+    FROM research_sources_legacy;
+    INSERT INTO research_evidence(
+      run_id, finding_id, id, ordinal, source_id, locator_json, excerpt, snapshot_ref,
+      quote_verified, authority)
+    SELECT evidence.run_id, evidence.finding_id, evidence.id, evidence.ordinal, evidence.source_id,
+           evidence.locator_json, evidence.excerpt, evidence.snapshot_ref, 0, evidence.authority
+    FROM research_evidence_legacy AS evidence
+    WHERE EXISTS (
+      SELECT 1 FROM research_sources
+      WHERE research_sources.run_id = evidence.run_id AND research_sources.id = evidence.source_id
+    );
+    DROP TABLE research_evidence_legacy;
+    DROP TABLE research_sources_legacy;
   `);
 }
