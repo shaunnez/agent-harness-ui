@@ -164,6 +164,68 @@ test("projected labels separate crowded cards without moving their horizontal wo
   assert.deepEqual(boxes, original);
 });
 
+test("crowded labels near the top edge drop below their neighbours instead of leaving the viewport", () => {
+  const boxes = Array.from({ length: 6 }, (_, index) => ({
+    id: `w${index}`,
+    x: 400 + index * 4,
+    y: 150 + index * 6,
+    width: 240,
+    height: 57,
+  }));
+  // A pinned room name sits in the stack's path and a HUD panel covers the top-left corner.
+  const room = { id: "room:planning", x: 410, y: 320, width: 90, height: 26, pinned: true };
+  const panel = { x: 0, y: 0, width: 520, height: 140 };
+  const limits = { bounds: { top: 8, bottom: 900 }, obstacles: [panel] };
+  const bounded = separateLabels([...boxes, room], limits);
+  const clear = (label, other) =>
+    !(
+      Math.abs(label.x - other.x) < (label.width + other.width) / 2 &&
+      label.bottom > other.bottom - other.height &&
+      label.bottom - label.height < other.bottom
+    );
+  assert.equal(bounded.length, boxes.length + 1);
+  assert.equal(bounded.find((label) => label.id === room.id).bottom, room.y);
+  for (const label of bounded) {
+    assert.ok(
+      label.bottom - label.height >= 8,
+      `${label.id} leaves the top at ${label.bottom - label.height}`,
+    );
+    assert.ok(label.bottom <= 900);
+    assert.equal(label.x, [...boxes, room].find((box) => box.id === label.id).x);
+    assert.ok(
+      clear(label, {
+        x: panel.x + panel.width / 2,
+        width: panel.width,
+        bottom: panel.height,
+        height: panel.height,
+      }),
+      `${label.id} covers the HUD panel`,
+    );
+    for (const other of bounded.filter((box) => box.id !== label.id))
+      assert.ok(clear(label, other), `${label.id} overlaps ${other.id}`);
+  }
+  assert.ok(separateLabels(boxes).some((label) => label.bottom - label.height < 100));
+});
+
+test("a card walking below a fractional-height room name clears every later card too", () => {
+  // Live values from the fourteen-task cutaway: the room label bottom is 196.796875, cards are 57 tall.
+  const room = { id: "room:implementation", x: 735, y: 196.796875, width: 105, height: 24, pinned: true };
+  const cards = [
+    { id: "low", x: 569, y: 253, width: 189, height: 57 },
+    { id: "mid", x: 624, y: 335, width: 189, height: 57 },
+    { id: "high", x: 662, y: 227.7, width: 188, height: 57 },
+  ];
+  const panel = { x: 697.5, y: 66, width: 173, height: 40 };
+  const placed = separateLabels([room, ...cards], { bounds: { top: 8, bottom: 995 }, obstacles: [panel] });
+  for (const label of placed)
+    for (const other of placed.filter((box) => box.id !== label.id)) {
+      const overlapX = Math.abs(label.x - other.x) < (label.width + other.width) / 2;
+      const overlapY =
+        label.bottom > other.bottom - other.height && label.bottom - label.height < other.bottom;
+      assert.equal(overlapX && overlapY, false, `${label.id} overlaps ${other.id}`);
+    }
+});
+
 test("scene manifest rejects missing sockets, foreign assets and invalid shoreline geometry", () => {
   assert.throws(() => parseProofManifest({ ...manifest, worker: "https://example.com/robot.glb" }));
   assert.throws(() => parseProofManifest({ ...manifest, sockets: {} }));

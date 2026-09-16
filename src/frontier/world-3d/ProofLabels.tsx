@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { type Intersection, Matrix4, type Object3D, Raycaster, Vector2, Vector3 } from "three";
 import { baseLabelAnchor } from "./colony";
-import { separateLabels } from "./labels";
+import { type ScreenRect, separateLabels } from "./labels";
 import { type ProjectBase, translated } from "./layout";
 import { proofWorkerHeight } from "./model";
 import { profiling, recordLabelTime } from "./PerformanceProbe";
@@ -33,6 +33,7 @@ export function ProofLabels({
   );
   const view = useMemo(() => new Matrix4(), []);
   const previous = useRef({ matrix: new Matrix4(), version: 0, sceneKey });
+  const obstacles = useRef<{ time: number; rects: ScreenRect[] }>({ time: -1000, rects: [] });
   useFrame(() => {
     const start = profiling ? performance.now() : 0;
     const now = performance.now();
@@ -48,7 +49,7 @@ export function ProofLabels({
     let occluders: ReturnType<typeof visibleOccluders> | undefined;
     const present = new Set<string>();
     const elements = new Map<string, HTMLElement>();
-    const boxes: Array<{ id: string; x: number; y: number; width: number; height: number }> = [];
+    const boxes: Parameters<typeof separateLabels>[0] = [];
     for (const label of labels.current?.querySelectorAll<HTMLElement>("[data-proof-id]") ?? []) {
       const id = label.dataset.proofId;
       if (!id) continue;
@@ -109,14 +110,30 @@ export function ProofLabels({
       label.dataset.occluded = String(obscured);
       if (!label.hidden && !obscured) {
         elements.set(id, label);
-        boxes.push({ id, x, y, width: label.offsetWidth, height: label.offsetHeight });
+        boxes.push({ id, x, y, width: label.offsetWidth, height: label.offsetHeight, pinned: isRoom });
       }
     }
-    for (const box of separateLabels(boxes)) {
+    // Cards stay inside the viewport and off the HUD panels (navigation, decisions, dock, minimap).
+    if (now - obstacles.current.time > 250) {
+      obstacles.current = {
+        time: now,
+        rects: Array.from(document.querySelectorAll<HTMLElement>(".panel, .attention-stack"), (panel) => {
+          const rect = panel.getBoundingClientRect();
+          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+        }).filter((rect) => rect.width > 0 && rect.height > 0),
+      };
+    }
+    const limits = { bounds: { top: 8, bottom: size.height - 8 }, obstacles: obstacles.current.rects };
+    for (const box of separateLabels(boxes, limits)) {
       const label = elements.get(box.id);
       if (!label) continue;
+      const below = box.bottom > box.y;
       label.style.transform = `translate(${box.x}px, ${box.bottom}px) translate(-50%, -100%)`;
-      label.style.setProperty("--proof-leader", `${box.y - box.bottom}px`);
+      label.dataset.leader = below ? "up" : "down";
+      label.style.setProperty(
+        "--proof-leader",
+        `${Math.max(0, below ? box.bottom - box.height - box.y : box.y - box.bottom)}px`,
+      );
     }
     for (const id of visibility.current.keys()) if (!present.has(id)) visibility.current.delete(id);
     recordLabelTime(start);
