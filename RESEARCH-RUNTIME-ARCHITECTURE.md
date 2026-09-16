@@ -5,12 +5,15 @@
 **Repository baseline:** `agent-harness-ui` @ `main` (`6773f41`), working tree as inspected on 16 September 2026
 **Audit baseline consumed:** `HARNESS-RESEARCH-AUDIT.md` (audited `0f877a90`)
 **Status:** design only. No production code was modified.
+**Revision:** rev 2, 16 September 2026 — amended with the results of gate G3 (`RESEARCH-RUNTIME-G3-COMPATIBILITY.md`, verdict `G3_PASS_WITH_CHANGES`). Changes in this revision: §8.1/§8.4 subagent composition corrected, §9.1 ceilings marked demonstrated and `exitBehavior` policy set, §10.2 tool-isolation model corrected, §7.2/§13 R5 downgraded and the hand-written checkpointer struck, §6 dependency-weight argument withdrawn. **No decision changed** — process boundary, persistence split, LangSmith stance and runtime recommendation all stand.
 
 ---
 
 ## 0. Evidence standard and a note on the spike pack
 
-Everything labelled **VERIFIED** below was checked in this session, either by reading repository source or by reading the current published package metadata / type declarations / official docs. Everything labelled **INFERRED** is a reasoned conclusion that the spike must confirm empirically. Everything labelled **UNVERIFIED** is a claim I could not ground and which must not be designed against.
+Everything labelled **VERIFIED** below was checked by reading repository source or the current published package metadata / type declarations / official docs. Everything labelled **INFERRED** is a reasoned conclusion that the spike must confirm empirically. Everything labelled **UNVERIFIED** is a claim I could not ground and which must not be designed against.
+
+Rev 2 adds a fourth and stronger label: **DEMONSTRATED** means gate G3 executed code that exercised the behaviour — typically by scripting a model to breach a limit and observing the failure. A demonstrated claim outranks a verified one, because "the option exists in the type declarations" and "the option stops the thing it claims to stop" turned out to be different questions in two places (§8.4, §10.2).
 
 External facts were taken from the npm registry and from the published `.d.ts` of the exact versions named, not from memory. Where the prose docs and the type declarations disagreed, the type declarations win.
 
@@ -39,6 +42,11 @@ Concretely, and this is the finding that shapes sections 9 and 10:
 
 Fan-out width and delegation depth are therefore **model discretion by default**. Guardrail 5 ("worker count, depth and runtime have enforceable ceilings") is not satisfied out of the box. It *can* be satisfied technically — section 9 shows how, using three independent mechanisms — but the architecture must do that work deliberately and the adversarial review must check it.
 
+**G3 update (16 Sep 2026).** This has now been tested rather than reasoned about. See `RESEARCH-RUNTIME-G3-COMPATIBILITY.md`. Every ceiling in §9.1 was demonstrated enforcing against a model scripted to breach it, so guardrail 5 is met — but two composition details in this document were wrong and are corrected below:
+
+- `createDeepAgent({ subagents })` silently admits a working `general-purpose` worker, so the shorthand **does not** meet the fan-out ceiling. Bounded fan-out requires `createSubAgentMiddleware({ generalPurposeAgent: false })` (§8.1, §8.4).
+- `tools: []` does **not** strip middleware-provided filesystem tools. The tool boundary is the backend plus the middleware set, not the `tools` array (§10.2).
+
 ### What we are explicitly *not* deciding
 
 This does not select a production research runtime. Deep Agents JS is arm A of the evaluation plan. The managed-research-API arm (B) and the existing-frontier-approach arm (C) remain live, and the `ResearchRuntime` interface exists precisely so that the answer can be "buy, not build" without a refactor.
@@ -47,11 +55,12 @@ This does not select a production research runtime. Deep Agents JS is arm A of t
 
 | Question | Answer |
 |---|---|
-| Proceed to spike? | **Yes**, gated on section 14 |
-| Process boundary | **Child process, one per run** |
-| LangSmith required? | **No** — but the `langsmith` *package* is a mandatory peer dependency; tracing must be explicitly disabled |
-| Checkpointing | `MemorySaver` + `durability:"exit"` for slices 1–2; official `@langchain/langgraph-checkpoint-sqlite` in the child for slice 3, with a documented native-dependency risk |
-| `resume()` | **Not implemented** until slice 3 demonstrates genuine continuation experimentally |
+| Proceed to spike? | **Yes** — §14 gates G1, G2, G4, G5 remain; **G3 satisfied** |
+| Process boundary | **Child process, one per run** — fault isolation, cancellation control, security boundary, protecting the SDLC companion |
+| LangSmith required? | **No** — the `langsmith` *package* is a mandatory peer dependency, but G3 recorded zero network attempts with tracing env unset |
+| Checkpointing | `MemorySaver` + `durability:"exit"` for slices 1–2; official `@langchain/langgraph-checkpoint-sqlite` in the child from slice 3 — **installs prebuilt on Node 26, restart-durable (G3)** |
+| Worker ceiling | `createSubAgentMiddleware({ generalPurposeAgent: false })` + `toolCallLimitMiddleware({ toolName: "task", runLimit: N, exitBehavior: "continue" })` |
+| `resume()` | **Not implemented** until slice 3 demonstrates genuine *mid-node* continuation; thread-level restart already demonstrated |
 
 ---
 
@@ -455,10 +464,12 @@ tests/research-deepagents-adapter.test.mjs    (slice 2+)
 
 | Option | Verdict |
 |---|---|
-| **In current Node process** | **No.** The companion today has zero server-side runtime dependencies beyond Node builtins and the React/Vite frontend tree (VERIFIED: `package.json` `dependencies` are fonts, icons, three, pixi, react, vite, markdown). Loading LangChain + LangGraph + deepagents into it inverts that. Worse, audit §17.2: a companion crash loses all in-memory promise and controller state and may require manual lock intervention. A multi-hour research graph — unbounded model output, large fetched documents, a dependency tree we do not control — must not be able to OOM the process that owns the SDLC pipeline and the exclusive database lock. |
+| **In current Node process** | **No.** Audit §17.2: a companion crash loses all in-memory promise and controller state and may require manual lock intervention. A multi-hour research graph — unbounded model output, large fetched documents, third-party execution we do not control — must not be able to OOM or wedge the process that owns the SDLC pipeline and the exclusive database lock. In-process also forfeits the process-tree kill that makes cancellation reliable (§9.4), and it puts untrusted-content processing inside the same address space as the SDLC plane's credentials and store handle. |
 | **Worker thread** | **No.** Shares the heap and therefore shares the OOM. Buys concurrency, not isolation. |
 | **Separate long-lived local HTTP service** | **Not yet.** Adds a second listener, its own auth surface, its own lifecycle, its own lock, its own deployment story. Buys nothing over a child process for a single-host spike, and the audit is clear the platform has no service-authentication model to reuse (§13). Revisit if and when research becomes multi-tenant. |
-| **Child process per run** ✅ | **Yes.** Crash isolation. The child's OOM kills one run. Cancellation reuses `terminateProcessTree`, already proven for process groups and Windows task trees. Event transport is NDJSON on stdout — structurally identical to what `codex-runtime.mjs` and `claude-runtime.mjs` already do, so it fits the codebase's grain rather than fighting it. The `deepagents` dependency tree is installed but **never loaded** into the companion. |
+| **Child process per run** ✅ | **Yes**, on four grounds: **fault isolation** (the child's OOM or crash kills one run, not the companion); **cancellation control** (reuses `terminateProcessTree`, already proven for process groups and Windows task trees, so a wedged graph still dies — see R3); **security boundary** (untrusted web content is processed in a separate address space under an explicit env allowlist); and **protecting the SDLC companion** from long-running research failures, which is the asset with the least tolerance for collateral damage. Event transport is NDJSON on stdout — structurally identical to what `codex-runtime.mjs` and `claude-runtime.mjs` already do, so it fits the codebase's grain rather than fighting it. |
+
+**Dependency weight is not a reason.** An earlier draft argued the companion should stay free of the LangChain tree. G3 measured it: **47 packages, zero native, zero install scripts** for the main set. That is modest, and the argument is withdrawn. The four grounds above carry the decision on their own.
 
 ### Costs of the choice, stated plainly
 
@@ -567,15 +578,26 @@ Note the deliberate divergence from the `tasks` pattern: **claims and evidence a
 
 `.data/research-checkpoints.sqlite3`. **Eversor never opens it.** It is the runtime's private state, and keeping it in a separate file makes "can we replace Deep Agents?" answerable by deleting a file.
 
-**The native-dependency problem (VERIFIED, and it is a real decision).** `@langchain/langgraph-checkpoint-sqlite@1.0.4` depends on `better-sqlite3@^12.10.0` — a native module. This repository currently has **zero native dependencies** and uses Node's built-in `node:sqlite` `DatabaseSync` (VERIFIED, `server/sqlite-store.mjs:4`). Whether `better-sqlite3` ships prebuilt binaries for Node 26 on this platform is **UNVERIFIED** and is a go/no-go check (§14).
+**The native dependency — resolved by G3, no longer a blocker.** `@langchain/langgraph-checkpoint-sqlite@1.0.4` depends on `better-sqlite3` (resolved **12.11.1**), a native module, where this repository currently has **zero native dependencies** and uses Node's built-in `node:sqlite` `DatabaseSync` (`server/sqlite-store.mjs:4`).
 
-Three options, in preference order:
+G3 tested it on this host (Node v26.8.1, ABI 147, darwin-arm64) and it works:
 
-1. **Slices 1–2: `MemorySaver` with `durability: "exit"`.** No native dependency, no resume, and `resume()` is absent from the interface anyway. Correct and honest for the first two slices.
-2. **Slice 3: official `@langchain/langgraph-checkpoint-sqlite`**, declared an `optionalDependency`, loaded **only in the child**. If the native build fails, the adapter falls back to `MemorySaver` and reports `resumable: false` in its capabilities. Containment is why the child-process boundary pays for itself twice.
-3. **Fallback if (2) is unworkable: a `BaseCheckpointSaver` over `node:sqlite`.** ~150 lines. I list it last on purpose — it is custom persistence machinery the runtime already provides, which §01-GOALS non-goals warn against. Only if (2) proves impossible.
+- **Prebuilt binary installed; `node-gyp` never ran** (no `Makefile` in `build/`). Install took 3 s.
+- **Upstream prebuilds exist for ABI v147 on all nine relevant platform triples** — `darwin-{arm64,x64}`, `linux-{x64,arm64,arm}`, `linuxmusl-{x64,arm64,arm}`, `win32-{x64,arm64}` — so a clean machine or CI runner will not compile either.
+- **A trivial checkpoint written, read back, and re-read from a fresh Node process.**
+- **A full Deep Agents thread survived process restart**: state restored from disk and the conversation continued. `durability: "sync"` accepted.
+- **`node:sqlite` and `better-sqlite3` coexist in one process** without conflict — not needed given the child boundary, but one less unknown.
 
-`durability` is `"exit" | "async" | "sync"`, default `"async"` (VERIFIED in `@langchain/langgraph@1.4.15` `pregel/types.d.ts:20,222`). Slice 3 should test `"sync"` for crash-resume and measure the write cost.
+The plan, now two options rather than three:
+
+1. **Slices 1–2: `MemorySaver` with `durability: "exit"`.** No resume, and `resume()` is absent from the interface anyway. Correct and honest while the adapter is still taking shape.
+2. **Slice 3: official `@langchain/langgraph-checkpoint-sqlite`**, loaded **only in the child**. Verified working end-to-end.
+
+**The hand-written `BaseCheckpointSaver` over `node:sqlite` is struck.** It existed solely as insurance against a native build failure that does not occur, and it was custom persistence machinery the runtime already provides — which the §01-GOALS non-goals warn against.
+
+**The one real cost to record:** `better-sqlite3` becomes **the repository's first dependency with an install script** (`prebuild-install || node-gyp rebuild --release`). npm 11 flags it — `1 package has install scripts not yet covered by allowScripts` — so any environment with a strict `allowScripts` policy needs an explicit approval step. The repository `.npmrc` (`fund=false`, `audit=false`) sets no such policy today. Also noted: `prebuild-install@7.1.3` is deprecated upstream; if it ever stops working the fallback is compilation, not failure.
+
+`durability` is `"exit" | "async" | "sync"`, default `"async"` (VERIFIED in `@langchain/langgraph@1.4.15` `pregel/types.d.ts:20,222`). Slice 3 should still measure the `"sync"` write cost and — the question G3 did **not** answer — whether a node interrupted *mid-execution* resumes or re-executes (R6).
 
 ### 7.3 Runtime working files — `StateBackend`, in-state
 
@@ -608,13 +630,34 @@ interface SubAgent {
 }
 ```
 
-(VERIFIED in `deepagents@1.13.4` published declarations.) Per-subagent `model` and per-subagent `tools` are both first-class. The requested topology maps cleanly:
+(VERIFIED in `deepagents@1.13.4` published declarations, and per-role routing **demonstrated** in G3: three distinct model instances were each invoked the expected number of times — planner 2 calls, each worker 1.)
+
+> **Do not use the `createDeepAgent({ subagents })` shorthand where a bounded worker count is required.** G3 proved it silently admits a working `general-purpose` subagent: invoking `subagent_type: "general-purpose"` on a shorthand-built agent was **ACCEPTED**. `createDeepAgent` has no `generalPurposeAgent` option of its own. Bounded fan-out therefore requires composing `createSubAgentMiddleware({ generalPurposeAgent: false, … })` explicitly and passing it as `middleware` — which, when tested, correctly **REJECTED** the call: `invoked agent of type general-purpose, the only allowed types are \`researcher-1\``.
 
 ```ts
 // server/research/deepagents/graph.mjs  (child process only)
+import { createDeepAgent, StateBackend, createSubAgentMiddleware } from "deepagents";
+import { toolCallLimitMiddleware, modelCallLimitMiddleware } from "langchain";
+
 const researcherTools = [readContext, webSearch, fetchSource, submitFinding];
-// NOTE: `task` is absent from every child's tool list. Explicit `tools` replaces
-// inherited tools entirely, so this is what makes depth structurally 1. (§9.1)
+// `task` is absent from every child's tool list, which is what makes depth
+// structurally 1 (§9.1 — VERIFIED). Note this does NOT strip the filesystem
+// tools that middleware injects; see §10.2 for what actually bounds those.
+
+const subagents = [
+  ...Array.from({ length: n }, (_, i) => ({
+    name: `researcher-${i + 1}`,
+    description: "Investigate one bounded sub-question and submit findings with evidence.",
+    mode: "isolated",                     // default; stated for clarity
+    systemPrompt: RESEARCHER_PROMPT,
+    model: researcherModel,               // cheap / open, OpenAI-compatible
+    tools: researcherTools,
+  })),
+  { name: "verifier",    description: "...", model: verifierModel,
+    tools: [readContext, fetchSource], systemPrompt: VERIFIER_PROMPT },
+  { name: "synthesiser", description: "...", model: synthesiserModel,
+    tools: [readContext],              systemPrompt: SYNTHESISER_PROMPT },
+];
 
 const agent = createDeepAgent({
   model: plannerModel,                    // frontier
@@ -622,23 +665,21 @@ const agent = createDeepAgent({
   tools: [readContext],                   // the planner does not fetch
   backend: new StateBackend(),
   checkpointer,
-  subagents: [
-    ...Array.from({ length: n }, (_, i) => ({
-      name: `researcher-${i + 1}`,
-      description: "Investigate one bounded sub-question and submit findings with evidence.",
-      mode: "isolated",                   // default; stated for clarity
-      systemPrompt: RESEARCHER_PROMPT,
-      model: researcherModel,             // cheap / open, OpenAI-compatible
-      tools: researcherTools,
-    })),
-    { name: "verifier",     description: "...", model: verifierModel,
-      tools: [readContext, fetchSource], systemPrompt: VERIFIER_PROMPT },
-    { name: "synthesiser",  description: "...", model: synthesiserModel,
-      tools: [readContext],               systemPrompt: SYNTHESISER_PROMPT },
+  // Subagents are composed through explicit middleware, NOT the `subagents`
+  // shorthand, so that generalPurposeAgent can be turned off.
+  middleware: [
+    createSubAgentMiddleware({
+      defaultModel: researcherModel,
+      generalPurposeAgent: false,         // ← only honoured on this path
+      subagents,
+    }),
+    toolCallLimitMiddleware({ toolName: "task", runLimit: n, exitBehavior: "continue" }),
+    modelCallLimitMiddleware({ runLimit: budget.maxModelCalls, exitBehavior: "error" }),
   ],
-  middleware: [ /* §9.1 */ ],
 });
 ```
+
+One residual wrinkle to handle in the prompt rather than the config: even with `generalPurposeAgent: false`, the `task` tool's *description* still advertises `general-purpose` as an available type. Enforcement is real — the call is rejected — but the planner will be told the worker exists and will waste calls attempting it. The planner prompt should name the permitted `subagent_type` values explicitly.
 
 ### 8.2 Cheap / open worker models
 
@@ -655,7 +696,17 @@ Any OpenAI-compatible endpoint. No GPU work in the spike, per constraints. Note 
 
 ### 8.4 Disable the default general-purpose subagent
 
-`SubAgentMiddlewareOptions.generalPurposeAgent?: boolean` (VERIFIED). A `general-purpose` subagent is added automatically and, per the docs, "has filesystem tools by default". Set it `false`. An unaudited extra worker with an unintended tool set defeats both the count ceiling and the tool allowlist.
+A `general-purpose` subagent is added automatically and, per the docs, "has filesystem tools by default". An unaudited extra worker defeats the count ceiling, so it must be turned off.
+
+`generalPurposeAgent?: boolean` exists **only on `SubAgentMiddlewareOptions`** — not on `CreateDeepAgentParams`. G3 measured all three paths:
+
+| Construction | Invoking `general-purpose` |
+|---|---|
+| `createDeepAgent({ subagents: [...] })` | **ACCEPTED** — worker silently available |
+| `createSubAgentMiddleware({ generalPurposeAgent: false })` | **REJECTED** — `the only allowed types are \`researcher-1\`` |
+| `createSubAgentMiddleware({ generalPurposeAgent: true })` | **ACCEPTED** |
+
+So the rule is: **wherever a bounded worker count is required, subagents are composed through `createSubAgentMiddleware({ generalPurposeAgent: false })`.** The `subagents` shorthand is convenient and wrong for our purposes. A test asserting that `task({ subagent_type: "general-purpose" })` is rejected belongs in slice 4 — it is the cheapest possible guard against someone later simplifying the construction back to the shorthand.
 
 ---
 
@@ -665,15 +716,26 @@ The distinction the adversarial review will press on (its Q7 and Q8): **what is 
 
 ### 9.1 Hard — technically enforced, not model discretion
 
-| Ceiling | Mechanism | Why it holds |
+**All of these were executed against a model scripted to breach them** (G3 §7). "Demonstrated" below means a test drove the breach and observed the stated failure, not that the option exists.
+
+| Ceiling | Mechanism | G3 result |
 |---|---|---|
-| **Max researchers** | `toolCallLimitMiddleware({ toolName: "task", runLimit: N, exitBehavior: "error" })` (VERIFIED export, `langchain`) **and** registering exactly N named subagents **and** `generalPurposeAgent: false` | Three independent layers. Even if the planner asks for twenty, the middleware refuses past N. |
-| **Max depth = 1** | Every subagent's `tools` array **omits `task`**. Per the docs, an explicit `tools` array "overrides inherited tools entirely". | **Structural, not policy.** A child physically has no delegation tool. This is the strongest control in the design. Reinforced by `recursionLimit`. |
-| **Max concurrency** | `maxConcurrency` on `RunnableConfig` (VERIFIED, `@langchain/core@1.2.11` `runnables/types.d.ts:8,58`) | Caps simultaneous branches. Addresses audit §6's "no global model admission" for the research plane. |
-| **Max model calls** | `modelCallLimitMiddleware({ runLimit, exitBehavior: "error" })` (VERIFIED) | Deterministic counter. |
-| **Max tool / search calls** | `toolCallLimitMiddleware` per tool name, **plus counters inside our own tool implementations** | The tools are our code. The in-tool counter is the real enforcement; the middleware is defence in depth. |
-| **Timeout** | `AbortSignal.timeout()` in the child, **plus** parent-side `runProcess` timeout and `terminateProcessTree` | Two independent clocks in two processes. Survives a wedged event loop in the child. |
-| **Graph runaway** | `recursionLimit` on `RunnableConfig` (VERIFIED, `runnables/types.d.ts:56`); exceeding it raises `GraphRecursionError` (VERIFIED, exported from `@langchain/langgraph`) | Backstop against a cyclic plan. |
+| **Max researchers** | `toolCallLimitMiddleware({ toolName: "task", runLimit: N, exitBehavior: "continue" })` **and** registering exactly N named subagents **and** `generalPurposeAgent: false` via explicit middleware (§8.4) | **Demonstrated.** Planner scripted for 6 `task` calls with `runLimit: 3`: exactly 3 subagents executed, 3 blocked with `"Tool call limit exceeded. Do not call 'task' again."` With `exitBehavior: "error"` the same setup threw `ToolCallLimitExceededError: … (6/3 calls)`. |
+| **Max depth = 1** | Every subagent's `tools` array **omits `task`** | **Demonstrated.** Parent bound tools included `task`; subagent bound tools did not. A researcher has no delegation tool. Strongest control in the design; reinforced by `recursionLimit`. *(Note: this works because `task` is injected by subagent middleware the children do not receive — **not** because `tools` replaces inherited tools. See §10.2.)* |
+| **Max concurrency** | `maxConcurrency` on `RunnableConfig` | Accepted on the invoke config. Caps simultaneous branches; addresses audit §6's "no global model admission" for the research plane. |
+| **Max model calls** | `modelCallLimitMiddleware({ runLimit, exitBehavior: "error" })` | **Demonstrated.** `runLimit: 2` against a model scripted for 4 turns threw `ModelCallLimitMiddlewareError` after exactly 2 calls. |
+| **Max tool / search calls** | `toolCallLimitMiddleware` per tool name, **plus counters inside our own tool implementations** | Same middleware as the fan-out ceiling, demonstrated above. The in-tool counter remains the real enforcement; the middleware is defence in depth. |
+| **Timeout** | `AbortSignal.timeout()` in the child, **plus** parent-side `runProcess` timeout and `terminateProcessTree` | **Abort demonstrated.** A pre-aborted `AbortController` passed as `signal` threw `DOMException: This operation was aborted`. Two independent clocks in two processes; survives a wedged event loop in the child. |
+| **Graph runaway** | `recursionLimit` on `RunnableConfig` | **Demonstrated.** An infinite tool loop under `recursionLimit: 4` threw `GraphRecursionError`. |
+
+#### Exit behaviour: `"continue"` is the default for research fan-out
+
+`toolCallLimitMiddleware` takes `exitBehavior: "continue" | "error" | "end"`. The choice is not cosmetic and G3 showed both modes working, so the architecture picks deliberately:
+
+- **`"continue"` — the default for the worker ceiling.** Excess `task` calls are blocked individually and the model receives a corrective tool message; the bounded run proceeds to completion with N workers. A planner that over-asks produces a *bounded, usable result* rather than a failed run. This is what research work should do.
+- **`"error"` — reserved for breaches that should invalidate the whole run.** Use it where exceeding the ceiling means the result can no longer be trusted or afforded: the model-call ceiling (a runaway loop) and the cost ceiling (§9.2). There, aborting is the correct outcome.
+
+When a `"continue"` ceiling is hit, the run still records `budget.ceiling_hit` and sets `ResearchResult.truncatedBy`, so a bounded result is never silently mistaken for an exhaustive one.
 
 ### 9.2 Soft — post-hoc, bounded overshoot
 
@@ -717,13 +779,20 @@ Both model output **and** fetched web content are untrusted. Guardrail 9 and the
 
 ### 10.2 Controls
 
+> **Correction from G3 — the tool-isolation model in an earlier draft was wrong.** That draft claimed an explicit `tools` array "replaces, not extends" inherited tools. It does not. A subagent declared with `tools: []` was still bound **eight** tools — `delete`, `edit_file`, `glob`, `grep`, `ls`, `read_file`, `write_file` (and `task` on the parent). Filesystem tools arrive from **middleware**, not from the `tools` list, so `tools` does not control them. Note also `delete`, which is not in the documented filesystem tool set and must be accounted for in any allowlist review.
+>
+> **Why the design still holds:** the security boundary was never really the `tools` array. It is the **backend**. `StateBackend` keeps every one of those eight tools operating on thread-scoped state inside the checkpoint — nothing touches the host filesystem, so there is no disk to escape to. And the depth-1 control is unaffected: `task` genuinely is absent from subagents, because it is injected by the subagent middleware that children do not receive.
+>
+> **What this changes in practice:** the `tools` array bounds *which Eversor-authored tools* an agent can call. It does **not** bound middleware-provided tools. To remove filesystem tools entirely, compose the agent from explicit middleware rather than relying on `tools: []`. Slice 4 should assert the *actual* bound tool list per agent rather than assuming it from config — that assertion is what would have caught this.
+
 | Control | Implementation | Enforcement |
 |---|---|---|
-| No host filesystem | `backend: new StateBackend()` | **Technical.** No filesystem tool reaches disk. |
+| No host filesystem | `backend: new StateBackend()` | **Technical, and load-bearing.** Filesystem tools exist but operate only on thread-scoped state. This is the primary boundary, not a secondary one. |
 | No shell | Never construct `LocalShellBackend`; never expose `execute` | **Technical.** The tool does not exist. |
-| No repository write | Nothing in the tool list writes to a repo path | **Technical.** |
-| Tool allowlist | Explicit `tools: []` per agent and per subagent | **Technical.** `tools` replaces, not extends. |
-| Defence in depth | `permissions: FilesystemPermission[]` — `{ operations, paths, mode: "allow" \| "deny" }` (VERIFIED) | **Technical**, second layer. |
+| No repository write | No repo path is reachable — `StateBackend` exposes no host path at all | **Technical.** |
+| Eversor tool allowlist | Explicit `tools: []` per agent and per subagent | **Technical, but partial.** Bounds Eversor-authored tools only; middleware tools are unaffected (see box above). |
+| Middleware tool set | Compose middleware explicitly; audit the resulting bound tool list per agent | **Technical.** The control that actually bounds `ls`/`read_file`/`write_file`/`edit_file`/`glob`/`grep`/`delete`. |
+| Defence in depth | `permissions: FilesystemPermission[]` — `{ operations, paths, mode: "allow" \| "deny" }` (VERIFIED) | **Technical**, further layer over whatever the backend exposes. |
 | Scoped secrets | Child spawned with an explicit env allowlist | **Technical.** Mirrors `execution-providers.mjs`. |
 | No LangSmith egress | `LANGSMITH_TRACING` unset/false; `LANGSMITH_API_KEY` excluded from the child env | **Technical**, via the same allowlist. |
 | Web content containment | Fetched content is written to a snapshot and referenced; never concatenated into a system prompt | **Technical.** |
@@ -772,7 +841,7 @@ Each slice is independently mergeable and leaves the SDLC suite green.
 | **1** | **Neutral contracts + fake runtime** | `src/domain/research.ts`, budget policy, `ResearchStore`, schema v4, registry, `FakeResearchRuntime`, routes, orphan-pid reaping, tests | Fake runtime deterministically drives queued→running→completed, →cancelled, →failed. No LangChain anywhere. Existing suite green. |
 | **2** | **Minimal Deep Agents adapter, one agent, no subagents** | `worker.mjs`, NDJSON protocol, `MemorySaver`, `StateBackend`, `read_context` + `submit_finding` only, `modelCallLimitMiddleware`, abort | One agent runs end-to-end; usage normalised; **cancellation kills the process**; import-containment test passes. |
 | **3** | **Checkpoint persistence** | `@langchain/langgraph-checkpoint-sqlite` as optionalDependency in the child, separate DB file, `durability` experiments, restart tests | Empirical answer to "is resume genuine continuation or a rerun?" `resume()` added to the interface **only if** the answer is continuation. |
-| **4** | **Bounded subagents** | ≤3 researchers, depth structurally 1, `toolCallLimitMiddleware`, `maxConcurrency`, `generalPurposeAgent: false`, child-failure tests | Adversarial test: a planner instructed to spawn 10 workers spawns 3. Depth-2 delegation is impossible. |
+| **4** | **Bounded subagents** | ≤3 researchers via `createSubAgentMiddleware({ generalPurposeAgent: false })`, depth structurally 1, `toolCallLimitMiddleware` (`"continue"`), `maxConcurrency`, child-failure tests | Adversarial tests: a planner instructed to spawn 10 workers spawns 3; depth-2 delegation is impossible; `task({ subagent_type: "general-purpose" })` is **rejected**; the *observed* bound tool list per agent is snapshotted (R11). |
 | **5** | **Cheap worker endpoint** | `ChatOpenAI` + `baseURL`, role→model routing, usage-metadata fidelity per endpoint, rate-card entries | Planner and researchers demonstrably run different models; token reporting per endpoint documented, including gaps. |
 | **6** | **Research tools** | `web_search`, `fetch_source`, snapshot store, pagination, robots/size/timeout limits | A real web research run completes within its ceilings. |
 | **7** | **Evidence contract** | Quote verification, verifier role, contradiction capture | Hallucinated quote is rejected by the tool. Unsupported-claim rate is measurable. |
@@ -803,6 +872,8 @@ Each slice is independently mergeable and leaves the SDLC suite green.
 
 The distinction that matters: *installed* ≠ *active*. Tracing activates on environment variables (`LANGSMITH_TRACING` / `LANGSMITH_API_KEY`). Since the child process receives an explicit env allowlist, the spike simply does not pass them — the same technique `execution-providers.mjs` already uses to keep API keys away from CLI runs.
 
+**G3 proved this empirically, not by argument.** A sentinel patched `globalThis.fetch`, `http.request` and `https.request` to record and throw on any outbound attempt, and every scenario ran with `LANGSMITH_*`/`LANGCHAIN_*` stripped from the environment: minimal graph, subagent fan-out, SQLite-backed graph turn 1, and SQLite-backed graph after restart. **Zero network attempts in all four.** Supporting evidence: `langsmith`'s OpenTelemetry and `openai` integrations resolve as *optional* peers and are unmet, so the tracing and provider paths are opt-in at the dependency level too.
+
 **Avoid** `ContextHubBackend` (stores the agent filesystem in a LangSmith Context Hub repository) and `LangSmithSandbox` (the shipped sandbox backend). Both are genuine lock-in vectors, and both are how LangSmith becomes an accidental hard dependency (adversarial Q20). The design avoids them for independent reasons anyway: `StateBackend` is stronger, and there is no `execute` tool.
 
 **What we give up:** trace visualisation, which is genuinely good for debugging multi-agent graphs. **What we gain:** no external egress of research content, no vendor account in the critical path, no second observability system alongside the existing run/event/artifact store. If debugging proves painful in slice 4, revisit — but as a developer-machine opt-in, never as a runtime requirement, and never with customer research content.
@@ -815,11 +886,12 @@ A test asserting the child env contains no `LANGSMITH_*` and no `LANGCHAIN_*` va
 
 | # | Risk | L | I | Mitigation | Verify in |
 |---|---|---|---|---|---|
-| **R1** | **No native fan-out/depth ceiling in `SubAgentMiddlewareOptions`.** Confirmed absent. Width and depth are model discretion by default; guardrail 5 is not met out of the box. | Certain | High | Three independent mechanisms (§9.1); depth is structural via tool omission | Slice 4, adversarially |
+| **R1** | **No native fan-out/depth ceiling in `SubAgentMiddlewareOptions`.** Confirmed absent. Width and depth are model discretion by default; guardrail 5 is not met out of the box. | Certain | ~~High~~ **Medium** | Three independent mechanisms (§9.1), **all demonstrated enforcing in G3** against a model scripted to breach them. Residual: the ceilings only hold if the agent is composed correctly — hence R11. | ~~Slice 4~~ **G3 ✅**; re-assert in slice 4 |
+| **R11** | **Mis-composition silently removes a ceiling.** Two ways found in G3: the `createDeepAgent({ subagents })` shorthand re-admits `general-purpose`, and `tools: []` does not bound middleware tools. Both look correct in review. | Medium | High | Slice 4 asserts *observed* behaviour — reject `subagent_type: "general-purpose"`, and snapshot the actual bound tool list per agent — rather than trusting config | Slice 4 |
 | **R2** | **Developer-velocity package churn.** `deepagents` published 1.13.4 on **2026-09-09** — one week before this document — with 67 versions total; `@langchain/langgraph` 1.4.15 on 2026-09-12. Breaking changes between spike and benchmark are likely. | High | Medium | Pin exact versions; confine every import to `worker.mjs`; the adapter is the only thing that breaks | Continuous |
 | **R3** | **Abort reliability in LangGraph JS.** Open issues on "Controller is already closed" races in aborted parallel streaming, and historical abort-propagation reports. Status at 1.4.15 UNVERIFIED. | Medium | High | Layer 3: kill the process. Test asserts the *process* is gone. | Slice 2 |
 | **R4** | **Orphaned children on companion death.** Pre-existing (audit §6) but worse for long-lived research children. | Medium | Medium | Persist child pid; reap on startup; startup marks `running` research runs `failed` with `usage.partial: true` | Slice 1 |
-| **R5** | **`better-sqlite3` native dependency.** Breaks the repo's zero-native-deps property. Node 26 prebuild availability UNVERIFIED. | Medium | Medium | optionalDependency, child-only, `MemorySaver` fallback reporting `resumable: false` | §14 gate G3 |
+| **R5** | ~~`better-sqlite3` may need native compilation on Node 26.~~ **Resolved by G3.** Residual risk restated: it becomes **the repository's first install-script dependency**, so environments with a strict npm `allowScripts` policy need an approval step. | ~~Medium~~ **Low** | ~~Medium~~ **Low** | Prebuilt binary installed on Node 26 / ABI 147 / darwin-arm64 with no `node-gyp`; upstream prebuilds exist for all nine relevant platform triples. Hand-written checkpointer fallback struck. | **G3 ✅** |
 | **R6** | **Resume may be rerun, not continuation.** A checkpoint restores *state*; whether an interrupted node re-executes from its start is UNVERIFIED for this version. | Medium | High | `resume()` is absent from the interface until proven. Do not name it `resume` if it reruns. | Slice 3 |
 | **R7** | **Usage fidelity on OpenAI-compatible endpoints.** Missing or approximate token reporting biases the economics arm toward the cheap worker. | High | Medium | `priced: boolean`, `partial: boolean`; document per endpoint; never treat absent as zero | Slice 5 |
 | **R8** | **Prompt injection from fetched content.** In-scope by design (guardrail 9, evaluation corpus). | High | Low–Med | No privileged tool exists to escalate into; content never enters a system prompt; injection cases are corpus items | Slice 6–7 |
@@ -834,7 +906,7 @@ Before slice 1:
 
 - **G1** — Product decision recorded on audit §19 Q1 (single trusted host vs. multi-customer) and Q5 (what "hard budget" means operationally). Both change the persistence and enforcement design, and both are outside what the repository can answer.
 - **G2** — Confirm a cheap/open OpenAI-compatible endpoint with credentials is actually available in development. Without it, arm A cannot be evaluated and the economic premise is untested.
-- **G3** — Run `npm install deepagents@1.13.4 @langchain/langgraph@1.4.15 langchain@1.5.11 @langchain/core@1.2.11 langsmith @langchain/langgraph-sdk @langchain/langgraph-checkpoint` on this Node 26 host in a scratch directory. Confirm installation, and separately confirm whether `@langchain/langgraph-checkpoint-sqlite@1.0.4` builds (R5). Record the result before designing slice 3.
+- **G3 — ✅ SATISFIED, 16 Sep 2026.** `RESEARCH-RUNTIME-G3-COMPATIBILITY.md`, verdict `G3_PASS_WITH_CHANGES`. Main set installs clean on Node v26.8.1 (43 packages, 0 vulnerabilities, no unmet *required* peers); 27/27 API checks pass; all §9.1 ceilings demonstrated enforcing; zero network without LangSmith config; `@langchain/langgraph-checkpoint-sqlite@1.0.4` installs **prebuilt** and survives process restart at both checkpoint and full-thread level. The three required changes — §8.1/§8.4 composition, §9.1/§10.2 tool boundary, §13/§7.2 R5 — are applied in this revision.
 - **G4** — Accept the additive-only schema change (v3 → v4) and confirm a backup/restore path for `.data/tasks.sqlite3` exists (audit §19 Q6 notes none is established by the runtime code).
 - **G5** — Accept that this document's answer to guardrail 5 is *Eversor enforces the ceilings*, not *the runtime provides them*. If that is unacceptable, the boundary must change before implementation, not after.
 
@@ -853,15 +925,17 @@ Before benchmarking:
 
 ### 1. Recommended process boundary
 
-**Child process, one per research run.** NDJSON events on stdout; cancellation via the existing `terminateProcessTree` escalation plus an in-child `AbortSignal`. The companion process never loads LangChain, LangGraph or `deepagents`. Rejected: in-process (a research OOM would kill the SDLC companion, which holds the exclusive store lock and all in-memory run state), worker thread (shares the heap, so shares the OOM), and a separate long-lived HTTP service (new listener, new auth surface, new lifecycle, no benefit at single-host scale).
+**Child process, one per research run**, on four grounds: fault isolation, cancellation/process-tree control, the security boundary around untrusted content, and protecting the SDLC companion from long-running research failures and OOMs. NDJSON events on stdout; cancellation via the existing `terminateProcessTree` escalation plus an in-child `AbortSignal`. Rejected: in-process (a research OOM or wedge would take down the companion, which holds the exclusive store lock and all in-memory run state, and it forfeits the process-tree kill that makes cancellation reliable), worker thread (shares the heap, so shares the OOM), and a separate long-lived HTTP service (new listener, new auth surface, new lifecycle, no benefit at single-host scale).
+
+Dependency weight is **not** part of this argument — G3 measured the tree at 47 packages, zero native, zero install scripts, and that earlier justification is withdrawn.
 
 ### 2. Is LangSmith required?
 
-**No.** But `langsmith` is a **mandatory peer dependency** of `deepagents@1.13.4` and must be installed. Tracing is env-activated, so the child's env allowlist simply omits `LANGSMITH_*` and `LANGCHAIN_*`. Avoid `ContextHubBackend` and `LangSmithSandbox` — those are the real lock-in, and the design avoids them for independent reasons.
+**No — proven, not assumed.** `langsmith` is a **mandatory peer dependency** of `deepagents@1.13.4` and must be installed, but G3 recorded **zero outbound network attempts** across four scenarios with `LANGSMITH_*`/`LANGCHAIN_*` stripped and `fetch`/`http.request`/`https.request` instrumented. Tracing is env-activated, so the child's env allowlist simply omits those variables. Avoid `ContextHubBackend` and `LangSmithSandbox` — those are the real lock-in, and the design avoids them for independent reasons.
 
 ### 3. Recommended checkpoint / persistence approach
 
-**Four separate stores.** Eversor run metadata, findings, evidence and sources as **new tables in the existing `.data/tasks.sqlite3`** (additive DDL, schema v3 → v4, no existing table touched). LangGraph checkpoints in a **separate file** the companion never opens: `MemorySaver` + `durability: "exit"` for slices 1–2, then the official `@langchain/langgraph-checkpoint-sqlite` as a child-only `optionalDependency` in slice 3, falling back to `MemorySaver` if its native `better-sqlite3` dependency will not build. Working files in `StateBackend` (no host filesystem). Source snapshots content-addressed under `.data/research-sources/<sha256>`. **`resume()` stays out of the interface until slice 3 proves genuine continuation.**
+**Four separate stores.** Eversor run metadata, findings, evidence and sources as **new tables in the existing `.data/tasks.sqlite3`** (additive DDL, schema v3 → v4, no existing table touched). LangGraph checkpoints in a **separate file** the companion never opens: `MemorySaver` + `durability: "exit"` for slices 1–2, then the official `@langchain/langgraph-checkpoint-sqlite` in the child from slice 3 — **G3 verified it installs prebuilt on Node 26 (no `node-gyp`) and that both a raw checkpoint and a full Deep Agents thread survive process restart**, so the hand-written `node:sqlite` checkpointer fallback is struck. Its one real cost: `better-sqlite3` becomes the repository's first install-script dependency. Working files in `StateBackend` (no host filesystem, and per §10.2 this is the primary tool boundary). Source snapshots content-addressed under `.data/research-sources/<sha256>`. **`resume()` stays out of the interface until slice 3 proves genuine mid-node continuation** — G3 proved thread continuation across restart, which is not the same thing.
 
 ### 4. First three implementation slices
 
@@ -871,11 +945,13 @@ Before benchmarking:
 
 ### 5. Five biggest architectural risks
 
-1. **`SubAgentMiddlewareOptions` provides no fan-out or depth ceiling** (verified absent). Guardrail 5 is met only because Eversor enforces it through three independent mechanisms, with depth made *structural* by omitting `task` from every child's tool list.
-2. **Developer-velocity churn** — `deepagents` shipped 1.13.4 seven days ago across 67 versions; LangGraph 1.4.15 three days later. Confining every import to `worker.mjs` is what keeps a breaking change an adapter problem rather than a platform problem.
-3. **Abort reliability in LangGraph JS** — open "Controller is already closed" races and historical abort-propagation issues, unverified at 1.4.15. Reliable cancellation depends on killing the process, not on the library behaving.
-4. **Resume may be rerun, not continuation** — a checkpoint restores state, but whether an interrupted node re-executes is unproven here. Naming a rerun `resume()` would be the single most damaging thing this architecture could do to the SDLC plane's credibility.
-5. **Usage fidelity on OpenAI-compatible endpoints** — inconsistent token reporting would silently bias the economic comparison toward the cheap arm, which is the one thing the entire evaluation exists to measure.
+*Re-ranked after G3. R5 (native build) has left this list; mis-composition has entered it.*
+
+1. **Mis-composition silently removes a ceiling (R11).** G3 found two instances where the obvious, readable construction quietly loses a guarantee: `createDeepAgent({ subagents })` re-admits the `general-purpose` worker, and `tools: []` does not bound middleware-provided filesystem tools. Both pass review by eye. The ceilings themselves are verified to work — the risk is now that someone simplifies the composition back. Slice 4 must assert *observed* behaviour, not config.
+2. **Developer-velocity churn (R2)** — `deepagents` shipped 1.13.4 seven days before this document, across 67 versions; LangGraph 1.4.15 three days later. Confining every import to `worker.mjs` is what keeps a breaking change an adapter problem rather than a platform problem.
+3. **Abort reliability in LangGraph JS (R3)** — a pre-aborted signal was honoured in G3, but the open "Controller is already closed" races apply to *aborting mid-flight parallel* work, which G3 did not exercise. Reliable cancellation still depends on killing the process, not on the library behaving.
+4. **Resume may be rerun, not continuation (R6)** — G3 proved a thread resumes across process restart, which is the easy half. Whether a node interrupted *mid-execution* re-executes is still unproven. Naming a rerun `resume()` would be the single most damaging thing this architecture could do to the SDLC plane's credibility.
+5. **Usage fidelity on OpenAI-compatible endpoints (R7)** — `usage_metadata` propagated correctly in G3 from a model that reports it, which proves the plumbing, not the endpoints. Inconsistent real-world token reporting would silently bias the economic comparison toward the cheap arm — the one thing the entire evaluation exists to measure.
 
 ---
 
@@ -899,6 +975,30 @@ Before benchmarking:
 | `RunnableConfig` controls | `recursionLimit?`, `maxConcurrency?`, `timeout?`, `signal?: AbortSignal` | `@langchain/core` `runnables/types.d.ts` |
 | Limit middleware | `modelCallLimitMiddleware({ threadLimit?, runLimit?, exitBehavior?: "end"\|"error" })`; `toolCallLimitMiddleware({ toolName?, threadLimit?, runLimit?, exitBehavior?: "continue"\|"error"\|"end" })` — both from `langchain` | LangChain docs |
 | Deep Agents trust model | "The agent can do anything its tools allow. Enforce boundaries at the tool/sandbox level, not by expecting the model to self-police." | `deepagentsjs` README |
+
+### Appendix A.1 — Facts added by G3 (executed, not read)
+
+Full detail in `RESEARCH-RUNTIME-G3-COMPATIBILITY.md`.
+
+| Fact | Value |
+|---|---|
+| Install, main set | 43 packages, 7 s, 0 vulnerabilities, no native, no install scripts, **no unmet required peers** (5 unmet *optional*: react, react-dom, 3× otel, openai, ws) |
+| Resolved floating versions | `langsmith@0.9.0`, `@langchain/langgraph-sdk@1.11.0`, `@langchain/langgraph-checkpoint@1.1.5` |
+| Total transitive tree | **47 packages** |
+| `createDeepAgent` return | `ReactAgent` — has `invoke`/`stream`/`getState`/`checkpointer`, **no** `getGraph`. The README's "compiled LangGraph graph" is loose; every method the design uses is present. |
+| Per-role model routing | **Demonstrated** — 3 distinct model instances, planner 2 calls, each worker 1 |
+| Depth-1 containment | **Demonstrated** — `task` on parent, absent from subagents |
+| Fan-out ceiling | **Demonstrated** both modes — `"error"` → `ToolCallLimitExceededError (6/3)`; `"continue"` → 3 executed, 3 blocked |
+| Model-call ceiling | **Demonstrated** — `ModelCallLimitMiddlewareError` after exactly 2 of 4 |
+| `recursionLimit` | **Demonstrated** — `GraphRecursionError` |
+| `AbortSignal` | **Demonstrated** — pre-aborted signal throws `DOMException` |
+| `generalPurposeAgent: false` | Honoured **only** via `createSubAgentMiddleware`; the `createDeepAgent({ subagents })` shorthand admits the worker |
+| Subagent bound tools with `tools: []` | `delete`, `edit_file`, `glob`, `grep`, `ls`, `read_file`, `write_file` — middleware-provided, **not** removed by `tools` |
+| LangSmith network | **0 attempts** across 4 scenarios with `fetch`/`http.request`/`https.request` instrumented |
+| `better-sqlite3` | 12.11.1, **prebuilt** for ABI v147 / darwin-arm64, no `node-gyp`; upstream prebuilds for all 9 relevant triples |
+| Checkpoint durability | Raw checkpoint and full Deep Agents thread both survived process restart; `durability: "sync"` accepted |
+| `node:sqlite` + `better-sqlite3` | Coexist in one process without conflict |
+| npm warnings | `prebuild-install@7.1.3` deprecated; `better-sqlite3` flagged by `allowScripts` policy |
 
 ## Appendix B — Verified repository facts
 
