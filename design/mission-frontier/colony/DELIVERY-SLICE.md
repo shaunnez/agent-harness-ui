@@ -1,6 +1,6 @@
 # Delivery slice proposal — reuse, new art, backend, Goal 6, acceptance
 
-16 September 2026. Proposal for review; the build starts only on Shaun's request. Assignments are prepared here so two workstreams can begin the day the contract is approved.
+16 September 2026. Approved by Shaun the same day; slice 1 started 16 September 2026 (see build-evidence/COLONY-SLICE-1/JOURNAL.md).
 
 ## Reuse (no new production)
 
