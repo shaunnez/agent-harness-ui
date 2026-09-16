@@ -10,6 +10,7 @@ import type { ProofControls, ProofInput, ProofManifest } from "./model";
 
 export function ProofCamera({
   input,
+  manifest,
   bases,
   focusId,
   cutaway,
@@ -40,8 +41,10 @@ export function ProofCamera({
 }) {
   const { camera, gl, size, scene } = useThree();
   const controls = useMemo(() => new MapControls(camera), [camera]);
-  const latest = useRef({ bases, focusId, cutaway, onFocus, worldHour });
-  latest.current = { bases, focusId, cutaway, onFocus, worldHour };
+  // A legacy (v2) manifest keeps main's archipelago cameras; the colony reads the contract's.
+  const legacy = manifest.version === 3 ? undefined : manifest;
+  const latest = useRef({ bases, focusId, cutaway, onFocus, worldHour, legacy });
+  latest.current = { bases, focusId, cutaway, onFocus, worldHour, legacy };
   const followed = useRef("");
   useFrame(() => {
     const key =
@@ -65,7 +68,7 @@ export function ProofCamera({
   // Palette/asset changes and runtime polling must preserve a user-moved camera.
   // biome-ignore lint/correctness/useExhaustiveDependencies: layoutKey captures only spatial layout, independently of appearance.
   useLayoutEffect(() => {
-    const view = viewCamera(latest.current.bases, focusId, cutaway, size);
+    const view = viewCamera(latest.current.bases, focusId, cutaway, size, latest.current.legacy);
     camera.position.set(...view.position);
     controls.target.set(...view.target);
     if (camera instanceof OrthographicCamera) {
@@ -119,16 +122,17 @@ export function ProofCamera({
       scheduled = requestAnimationFrame(() => {
         // A focused base keeps its own map; the colony map is top-down on the colony centroid with
         // span 2 x (max occupied slot radius + 46 + 20) per the contract.
-        const focused = latest.current.focusId;
-        const frame = focused
+        const { focusId: focused, legacy } = latest.current;
+        const fromView = focused || legacy;
+        const frame = fromView
           ? (() => {
-              const view = viewCamera(latest.current.bases, focused, false);
+              const view = viewCamera(latest.current.bases, focused, false, undefined, legacy);
               return { centre: [view.target[0], view.target[2]], halfSpan: view.verticalSpan * 0.8 };
             })()
           : minimapFrame(occupiedSlots(latest.current.bases));
         const half = frame.halfSpan;
         const mapCamera = new OrthographicCamera(-half, half, half, -half, 0.1, 900);
-        mapCamera.position.set(frame.centre[0] ?? 0, 420, (frame.centre[1] ?? 0) + (focused ? 85 : 0.01));
+        mapCamera.position.set(frame.centre[0] ?? 0, 420, (frame.centre[1] ?? 0) + (fromView ? 85 : 0.01));
         mapCamera.lookAt(frame.centre[0] ?? 0, 0, frame.centre[1] ?? 0);
         const image = captureScene(gl, scene, mapCamera, 400, 400);
         if (image) onMinimap(image);
@@ -140,11 +144,14 @@ export function ProofCamera({
         if (new URLSearchParams(window.location.search).get("qa") === "1") gl.forceContextLoss();
       },
       frame() {
-        const { bases, focusId, cutaway } = latest.current;
-        const view = viewCamera(bases, focusId, cutaway, {
-          width: gl.domElement.clientWidth,
-          height: gl.domElement.clientHeight,
-        });
+        const { bases, focusId, cutaway, legacy } = latest.current;
+        const view = viewCamera(
+          bases,
+          focusId,
+          cutaway,
+          { width: gl.domElement.clientWidth, height: gl.domElement.clientHeight },
+          legacy,
+        );
         camera.position.set(...view.position);
         controls.target.set(...view.target);
         if (camera instanceof OrthographicCamera) {
@@ -183,7 +190,7 @@ export function ProofCamera({
         return latest.current.worldHour();
       },
       async headquartersPreview(projectId) {
-        const view = viewCamera(latest.current.bases, projectId, true);
+        const view = viewCamera(latest.current.bases, projectId, true, undefined, latest.current.legacy);
         const half = view.verticalSpan / 2;
         const preview = new OrthographicCamera(-half * 1.8, half * 1.8, half, -half, 0.1, 650);
         preview.position.set(...view.position);

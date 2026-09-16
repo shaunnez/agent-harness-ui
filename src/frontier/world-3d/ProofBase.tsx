@@ -53,7 +53,7 @@ export function ProofBase({
   }, [source, environment]);
   useLayoutEffect(() => {
     roots.set(base.project.id, models.base);
-    if (occupiedSlots) {
+    if (occupiedSlots && base.slot) {
       const hidden = new Set(hiddenEdgeGroups(base.slot, occupiedSlots));
       models.environment.traverse((object) => {
         if (object.name.startsWith("MF_Road_Spur_") || object.name.startsWith("MF_Pad_"))

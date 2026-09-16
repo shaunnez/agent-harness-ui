@@ -1,3 +1,4 @@
+import { baseLabelAnchor } from "./colony";
 import { colonyModels, proofAssetUrls } from "./colony-assets";
 import { disposeGreybox } from "./colony-greybox";
 import { ColonyGround } from "./ColonyGround";
@@ -12,7 +13,7 @@ import {
   type WorldLighting,
 } from "../world/environment-model";
 import { LampPool, lampBudget, type PooledLamp } from "./lamp-pool";
-import { locatedProject, type ProjectBase, visibleBases } from "./layout";
+import { locatedProject, occupiedSlots, type ProjectBase, visibleBases } from "./layout";
 import { type Point3, type ProofControls, type ProofInput, type ProofManifest, proofWorkers } from "./model";
 import { PerformanceProbe, profiling } from "./PerformanceProbe";
 import { ProofBase, type SceneLight } from "./ProofBase";
@@ -212,7 +213,7 @@ export function ProofScene(props: Props) {
             base={base}
             source={source}
             environment={parcel}
-            occupiedSlots={colony ? bases.map((base) => base.slot) : undefined}
+            occupiedSlots={colony ? occupiedSlots(bases) : undefined}
             cutaway={cutaway && base.project.id === activeFocus}
             light={light}
             roots={roots.current}
@@ -262,6 +263,7 @@ export function ProofScene(props: Props) {
         sceneKey={`${appearanceKey}:${layoutKey}:${cutaway}:${activeFocus}`}
         labels={labels}
         bases={visibleBases(bases, input)}
+        baseLabel={colony ? baseLabelAnchor : (manifest.sockets.base_label ?? [0, 16, -2])}
         actors={actors.current}
         roots={roots.current}
       />

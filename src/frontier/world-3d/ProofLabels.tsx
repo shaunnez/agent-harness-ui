@@ -2,7 +2,7 @@ import { rooms, type RoomId } from "./rooms";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { type Intersection, Matrix4, type Object3D, Raycaster, Vector2, Vector3 } from "three";
-import { baseLabelAnchor } from "./colony";
+import type { Point3 } from "./colony";
 import { type ScreenRect, separateLabels } from "./labels";
 import { type ProjectBase, translated } from "./layout";
 import { proofWorkerHeight } from "./model";
@@ -12,12 +12,15 @@ import { isOccluded, visibleOccluders } from "./occlusion";
 export function ProofLabels({
   labels,
   bases,
+  baseLabel,
   actors,
   roots,
   sceneKey,
 }: {
   labels: React.RefObject<HTMLElement | null>;
   bases: ProjectBase[];
+  /** Base-local anchor of the project label: the contract's for the colony, the manifest socket otherwise. */
+  baseLabel: Point3;
   actors: Map<string, Object3D>;
   roots: Map<string, Object3D>;
   sceneKey: string;
@@ -70,7 +73,7 @@ export function ProofLabels({
           label.hidden = true;
           continue;
         }
-        world.set(...translated(baseLabelAnchor, base.position));
+        world.set(...translated(baseLabel, base.position));
       } else {
         const actor = actors.get(id);
         if (!actor) {

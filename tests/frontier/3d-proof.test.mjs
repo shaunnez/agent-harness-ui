@@ -398,3 +398,50 @@ test("larger fixture crews stay clear of the analysis bench and each other insid
     }
   }
 });
+
+test("without ?colony=1 the v3 manifest is consumed as v2 and the archipelago layout is unchanged", async () => {
+  const { colonyRequested, withoutColony } = await import("../../src/frontier/world-3d/model.ts");
+  const { archipelagoBases } = await import("../../src/frontier/world-3d/layout.ts");
+  const { proofAssetUrls } = await import("../../src/frontier/world-3d/colony-assets.ts");
+  const search = "?mode=fixture&renderer=3d&art=cinematic";
+  assert.equal(colonyRequested(search), false);
+  assert.equal(colonyRequested(`${search}&colony=1`), true);
+  const published = parseProofManifest(
+    JSON.parse(
+      await readFile(new URL("../../public/frontier/assets/3d-proof/manifest.json", import.meta.url), "utf8"),
+    ),
+  );
+  assert.equal(published.version, 3);
+  const legacy = withoutColony(published);
+  assert.equal(legacy.version, 2);
+  assert.equal("colony" in legacy, false);
+  assert.deepEqual(legacy.bases, published.bases);
+  // The legacy kit is fetched, the colony kit is not.
+  const urls = proofAssetUrls(legacy);
+  assert.ok(urls.includes(published.scene) && urls.includes(published.bases.command.src));
+  assert.ok(!urls.some((url) => url.includes("hq-shell") || url.includes("parcel-")));
+  assert.equal(withoutColony({ ...published, version: 2 }).version, 2);
+  assert.throws(() => withoutColony({ ...published, bases: undefined }), /archipelago kit/);
+  // Main's staggered coastal grid: plancheck first, then id order; no slots, no bridges.
+  const bases = archipelagoBases(fixtureProjects, {});
+  assert.equal(bases.length, fixtureProjects.length);
+  assert.equal(bases[0].project.id, "plancheck");
+  assert.ok(bases.every((base) => base.slot === undefined));
+  assert.deepEqual(
+    bases.map((base) => base.position.map((n) => Number(n.toFixed(3)))),
+    [
+      [1.568, 0, 37.18],
+      [-68.897, 0, -26.859],
+      [18.115, 0, -41.401],
+    ],
+  );
+  assert.deepEqual(archipelagoBases([...fixtureProjects].reverse(), {}), bases);
+  assert.equal(archipelagoBases([{ ...fixtureProjects[0], archivedAt: "2026-09-16" }], {}).length, 0);
+  // Cameras come from the manifest, not the colony contract, and the world fit is the archipelago's.
+  const cutaway = viewCamera(bases, "plancheck", true, undefined, legacy);
+  assert.deepEqual(cutaway.target, translated(legacy.cameras.cutaway.target, bases[0].position));
+  const world = viewCamera(bases, null, false, { width: 1280, height: 720 }, legacy);
+  assert.equal(world.verticalSpan, 137);
+  assert.equal(world.viewOffset, undefined);
+  assert.notDeepEqual(viewCamera(bases, "plancheck", true).target, cutaway.target);
+});

@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { Mesh, type Object3D } from "three";
 import { colonyBridges, hiddenEdgeGroups } from "./colony";
-import type { ProjectBase } from "./layout";
+import { occupiedSlots, type ProjectBase } from "./layout";
 
 export function ColonyGround({
   bases,
@@ -14,10 +14,10 @@ export function ColonyGround({
   span: Object3D;
   end: Object3D;
 }) {
-  const key = bases.map((base) => base.slot).join();
+  const key = occupiedSlots(bases).join();
   // biome-ignore lint/correctness/useExhaustiveDependencies: Geometry placement only depends on occupied slots.
   const objects = useMemo(() => {
-    const slots = bases.map((base) => base.slot);
+    const slots = occupiedSlots(bases);
     const centre = hub.clone(true);
     for (const name of hiddenEdgeGroups("H", slots)) {
       const object = centre.getObjectByName(name);

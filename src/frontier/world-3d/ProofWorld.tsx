@@ -11,8 +11,9 @@ import { WorldTime } from "../views/WorldTime";
 import { lightingAt, type WorldLighting } from "../world/environment-model";
 import { basePalettes } from "./appearance";
 import { BaseAppearancePicker } from "./BaseAppearancePicker";
-import { locatedProject, projectBases, visibleBases } from "./layout";
+import { archipelagoBases, locatedProject, projectBases, visibleBases } from "./layout";
 import {
+  colonyRequested,
   existingWorldUrl,
   type ProofControls,
   type ProofInput,
@@ -20,6 +21,7 @@ import {
   parseProofManifest,
   proofWorkerState,
   visibleWorkerLabels,
+  withoutColony,
 } from "./model";
 import { ProofScene } from "./ProofScene";
 import { useBaseAppearance } from "./useBaseAppearance";
@@ -77,7 +79,11 @@ export function ProofWorld(props: Props) {
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [appearanceProjectId, setAppearanceProjectId] = useState<string | null>(null);
   const { appearances, choose, storageProblem } = useBaseAppearance(input.projects);
-  const bases = projectBases(input.projects, appearances, manifest?.version === 3);
+  // Without ?colony=1 the world keeps main's archipelago: one island tile per project, no lattice.
+  const colony = colonyRequested(window.location.search);
+  const bases = colony
+    ? projectBases(input.projects, appearances, true)
+    : archipelagoBases(input.projects, appearances);
   const contextId =
     input.location.view === "world"
       ? (props.selectedProjectId ?? focusId ?? locatedProject(input)?.id)
@@ -123,7 +129,7 @@ export function ProofWorld(props: Props) {
         return response.json();
       })
       .then((value: unknown) => {
-        const parsed = parseProofManifest(value);
+        const parsed = colony ? parseProofManifest(value) : withoutColony(parseProofManifest(value));
         if (new URLSearchParams(window.location.search).get("proofAssetFailure") === "1") {
           if (parsed.colony) parsed.colony.shell = "/assets/3d-proof/missing-scene.glb";
           else parsed.scene = "/assets/3d-proof/missing-scene.glb";
