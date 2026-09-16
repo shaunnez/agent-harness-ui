@@ -26,7 +26,7 @@
 
 ## Backend work
 
-None for the slice. It stays fixture-only. For later live adoption the list is unchanged from the exterior handoff plus one item: persist project appearance **and colony slot** per project (backend project setting or per-user preference; decision pending), expose `createdAt` ordering (already available), keep archived flag semantics. No new transport is needed; task `currentStage` and status already drive room placement.
+None for the slice. It stays fixture-only. For later live adoption the list is unchanged from the exterior handoff plus one item: persist project appearance **and colony slot** per project (browser-local with the appearance record for the slice; backend project setting later, decided 16 September 2026), expose `createdAt` ordering (already available), keep archived flag semantics. No new transport is needed; task `currentStage` and status already drive room placement.
 
 ## Goal 6 (UB2 / U6) dependencies
 
@@ -41,7 +41,7 @@ None for the slice. It stays fixture-only. For later live adoption the list is u
 
 1. Terrain: hub parcel plus parcel A, the 27 m span and end asset; all occupied slots use parcel A until B and C exist.
 2. HQ: hex shell, hub, six rooms with equipment set v1, Command crown; Relay and Foundry crowns follow in slice 2 unless the producer finishes early.
-3. Runtime: slot placement from the contract, stage-to-room mapping, socket allocation and overflow order (up to the court; the overflow lane waits for approval), cutaway groups, exterior/cutaway/world cameras, labels, minimap, bridge and spur visibility by occupancy, manifest v3 and validator extensions, tests.
+3. Runtime: slot placement from the contract, stage-to-room mapping, socket allocation and overflow order (sockets, then court, then the approved overflow lane with "+N" labels), cutaway groups, exterior/cutaway/world cameras, labels, minimap, bridge and spur visibility by occupancy, manifest v3 and validator extensions, tests.
 4. Browser acceptance at 1568 × 1003 and 1280 × 720 with the 3-project workflow fixture, the 10-project stress fixture (rings 1 and 2 with hidden spurs) and one fixture project carrying 14 open tasks with parallel packages.
 
 **Scope out**: shuttle and arrivals, Goal 6 events, live adoption and backend persistence, crystals, parcel variants B and C, robot travel between parcels, placement editor, upgrades, economy.
@@ -72,9 +72,11 @@ None for the slice. It stays fixture-only. For later live adoption the list is u
 
 Concurrency note for today: two other agents are editing `src/frontier/world-3d/`. The runtime builder assignment must be rebased on their merged result; this design pack does not touch that directory.
 
-## Risks and open decisions for Shaun
+## Decisions taken (Shaun, 16 September 2026)
 
-1. Overflow lane and "+N" room labels: approve, or keep the court as the only overflow.
-2. Hub parcel shown from day one with an empty landing pad, or hidden until the shuttle exists (recommended: shown; it anchors the three-project composition).
-3. Cutaway elevation 40 degrees for HQ only, while World and exterior stay at 28.4 (recommended; needed for room readability).
-4. Colony slot persistence location for live mode (browser-local now, backend later).
+1. Overflow lane and "+N" room labels: **approved**. The lane is in scope for slice 1 (see HQ-FLOOR-PLAN.md, occupancy).
+2. Hub parcel: **shown from day one** with an empty landing pad. It anchors the three-project composition.
+3. Cutaway elevation **40 degrees for HQ only**; World and exterior stay at 28.4.
+4. Colony slot persistence: **browser-local now** (with the appearance record), backend later. No backend work enters slice 1.
+
+Design basis confirmed: everything here extends the cinematic 3D renderer (`renderer=3d&art=cinematic`, `src/frontier/world-3d/`), not the 2D world.

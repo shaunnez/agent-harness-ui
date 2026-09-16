@@ -9,7 +9,7 @@ Authority: Shaun's accepted layout brief in [NEXT-PHASE-HANDOFF.md](../NEXT-PHAS
 The colony is a hexagonal lattice of **parcels** with a centre-to-centre pitch of **108 m**. The centre cell is the shared **hub parcel** (spaceport plaza, reserved for the later arrival sequence). Project bases occupy the ring cells around it.
 
 - Ring 1 has six cells, ring 2 has twelve, ring 3 has eighteen. Nothing caps the count.
-- A project takes the lowest free slot in the fixed fill order the first time it is seen (fixture: sorted by `createdAt`, then id). The slot is persisted with the project's appearance record and is never reassigned while the project exists. Archived projects keep their slot; the base is drawn dormant. Existing positions therefore never move as the colony grows.
+- A project takes the lowest free slot in the fixed fill order the first time it is seen (fixture: sorted by `createdAt`, then id). The slot is persisted browser-local with the project's appearance record (backend later) and is never reassigned while the project exists. Archived projects keep their slot; the base is drawn dormant. Existing positions therefore never move as the colony grows.
 - Fill order, ring 1: **P1 phi 210** (screen bottom-left), **P2 phi 330** (bottom-right), **P3 phi 90** (top), P4 phi 150 (top-left), P5 phi 30 (top-right), P6 phi 270 (bottom-centre, nearest the camera, filled last so the selected-task dock area stays clear in small colonies).
 - Fill order, ring 2: P7 phi 90 at 2D, then the phi 60 / 120 cells at D·√3, phi 30 / 150 at 2D, phi 0 / 180 at D·√3, phi 330 / 210 at 2D, phi 300 / 240 at D·√3, phi 270 at 2D. Far cells fill first so labels stay away from the HUD.
 

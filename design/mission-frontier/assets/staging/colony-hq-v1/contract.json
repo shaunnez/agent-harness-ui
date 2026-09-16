@@ -241,7 +241,7 @@
     ]
    }
   ],
-  "fillRule": "A project takes the lowest free project slot P1, P2, ... at first sighting (fixture: sorted by createdAt then id). The slot is persisted with the project appearance record and never reassigned while the project exists. Archived projects keep their slot; their base is shown dormant. Beyond P18, continue ring 3 clockwise from phi=90 at 3D.",
+  "fillRule": "A project takes the lowest free project slot P1, P2, ... at first sighting (fixture: sorted by createdAt then id). The slot is persisted browser-local with the project appearance record (backend later) and never reassigned while the project exists. Archived projects keep their slot; their base is shown dormant. Beyond P18, continue ring 3 clockwise from phi=90 at 3D.",
   "edges": [
    {
     "edge": "E30",
@@ -1225,7 +1225,7 @@
     "1. room primary sockets in listed order (wall row first, then bench/inner row)",
     "2. hub overflow sockets adjacent to that room's hub door (the two hub corners flanking the door)",
     "3. court sockets (court_side, court_front, court_edge)",
-    "4. overflow lane: a straight line of standing positions at 1.6 m pitch along the room's inner partition, 0.8 m off the wall, every robot still pickable; room label gains '+N' (design proposal, needs Shaun's approval before build)"
+    "4. overflow lane: a straight line of standing positions at 1.6 m pitch along the room's inner partition, 0.8 m off the wall, every robot still pickable; room label gains '+N' (approved 16 September 2026)"
    ],
    "workersPerTask": "one robot per running work package; packages of one task take adjacent sockets in the same room and share one task label with 'xN packages'",
    "capacityPerHq": {

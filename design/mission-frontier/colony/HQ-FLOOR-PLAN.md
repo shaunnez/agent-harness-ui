@@ -62,7 +62,7 @@ Typical load is under ten tasks per project, but parallel packages mean several 
 
 Allocation order per room: primary sockets in listed order (wall row, then bench row) → the two hub overflow positions flanking that room's door → court sockets. Robots of one task's packages take adjacent sockets in the same room and share one task label with an "×N packages" suffix, so task count never masquerades as worker capacity.
 
-Beyond that, the **overflow lane** is a proposal that needs Shaun's approval before build: a straight line of standing positions at 1.6 m pitch along the room's inner partition, 0.8 m off the wall, every robot still pickable, and the room label gains "+N". Nothing is dropped, no active worker becomes a queue graphic, and parked, blocked and historical workers stay parked at their own sockets. If the overflow lane is not wanted, the fallback is the court, which already holds ten.
+Beyond that, the **overflow lane** (approved by Shaun, 16 September 2026) is: a straight line of standing positions at 1.6 m pitch along the room's inner partition, 0.8 m off the wall, every robot still pickable, and the room label gains "+N". Nothing is dropped, no active worker becomes a queue graphic, and parked, blocked and historical workers stay parked at their own sockets. Allocation order: room sockets, then court, then overflow lane.
 
 ## Cutaway composition
 
