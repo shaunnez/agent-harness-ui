@@ -228,6 +228,41 @@ export function visibleWorkerLabels(
   return [...chosen.values()];
 }
 
+/** Tones that always earn a full card: the robot needs the operator or is in trouble. */
+const attentionTones = new Set(["answer", "approval", "repair", "failed", "blocked", "ready"]);
+/**
+ * Crowded rooms collapse their plain cards to dot markers. Once a room (or a focused exterior court)
+ * shows more than `limit` cards, only attention, selected and watched robots keep full cards; every
+ * plain "Working" or idle card becomes a compact marker that is still labelled and pickable, and
+ * selecting a marker expands it. Fourteen 57 px cards cannot all stand above one room at 1280 x 720
+ * beside the selection panel; fourteen markers can.
+ */
+export function compactWorkerLabels(
+  workers: ProofWorker[],
+  input: ProofInput,
+  focusedProjectId: string | null,
+  limit = 4,
+) {
+  const compact = new Set<string>();
+  if (input.location.view === "world" && !focusedProjectId) return compact;
+  const groups = new Map<string, ProofWorker[]>();
+  for (const worker of workers) {
+    const key = `${worker.projectId}:${worker.room ?? "court"}`;
+    groups.set(key, [...(groups.get(key) ?? []), worker]);
+  }
+  for (const group of groups.values()) {
+    if (group.length <= limit) continue;
+    for (const worker of group) {
+      const kept =
+        worker.task.id === input.selectedId ||
+        worker.task.id === input.location.taskId ||
+        attentionTones.has(worker.tone);
+      if (!kept) compact.add(worker.task.id);
+    }
+  }
+  return compact;
+}
+
 function areaFor(task: TaskSummary) {
   return task.currentStage === "grill"
     ? "answer"

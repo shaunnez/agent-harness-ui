@@ -17,6 +17,7 @@ export function ProofLabels({
   actors,
   roots,
   sceneKey,
+  hudKey,
 }: {
   labels: React.RefObject<HTMLElement | null>;
   bases: ProjectBase[];
@@ -27,6 +28,8 @@ export function ProofLabels({
   actors: Map<string, Object3D>;
   roots: Map<string, Object3D>;
   sceneKey: string;
+  /** Changes when a HUD panel may have appeared or moved (selection, Watch), forcing an obstacle refresh. */
+  hudKey: string;
 }) {
   const { camera, size } = useThree();
   const ray = useMemo(() => new Raycaster(), []);
@@ -40,7 +43,12 @@ export function ProofLabels({
   const view = useMemo(() => new Matrix4(), []);
   const previous = useRef({ matrix: new Matrix4(), version: 0, sceneKey });
   const obstacles = useRef<{ time: number; rects: ScreenRect[] }>({ time: -1000, rects: [] });
+  const lastHud = useRef(hudKey);
   useFrame(() => {
+    if (lastHud.current !== hudKey) {
+      lastHud.current = hudKey;
+      obstacles.current.time = -1000;
+    }
     const start = profiling ? performance.now() : 0;
     const now = performance.now();
     view.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
@@ -119,14 +127,17 @@ export function ProofLabels({
         boxes.push({ id, x, y, width: label.offsetWidth, height: label.offsetHeight, pinned: isRoom });
       }
     }
-    // Cards stay inside the viewport and off the HUD panels (navigation, decisions, dock, minimap).
+    // Cards stay inside the viewport and off the HUD (panels, decisions, dock, minimap and the world clock text).
     if (now - obstacles.current.time > 250) {
       obstacles.current = {
         time: now,
-        rects: Array.from(document.querySelectorAll<HTMLElement>(".panel, .attention-stack"), (panel) => {
-          const rect = panel.getBoundingClientRect();
-          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
-        }).filter((rect) => rect.width > 0 && rect.height > 0),
+        rects: Array.from(
+          document.querySelectorAll<HTMLElement>(".panel, .attention-stack, .world-clock"),
+          (panel) => {
+            const rect = panel.getBoundingClientRect();
+            return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+          },
+        ).filter((rect) => rect.width > 0 && rect.height > 0),
       };
     }
     const limits = { bounds: { top: 8, bottom: size.height - 8 }, obstacles: obstacles.current.rects };

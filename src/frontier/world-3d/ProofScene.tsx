@@ -274,6 +274,7 @@ export function ProofScene(props: Props) {
         bases={visibleBases(bases, input)}
         baseLabel={colony ? baseLabelAnchor : (manifest.sockets.base_label ?? [0, 16, -2])}
         robotView={view}
+        hudKey={`${input.selectedId}:${input.location.taskId}:${input.location.view}`}
         actors={actors.current}
         roots={roots.current}
       />

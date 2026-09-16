@@ -14,6 +14,7 @@ import { BaseAppearancePicker } from "./BaseAppearancePicker";
 import { archipelagoBases, locatedProject, projectBases, visibleBases } from "./layout";
 import {
   colonyRequested,
+  compactWorkerLabels,
   existingWorldUrl,
   type ProofControls,
   type ProofInput,
@@ -92,6 +93,7 @@ export function ProofWorld(props: Props) {
   const { workers: allWorkers, problem: allocationProblem } = proofWorkerState(input, manifest, bases);
   const sceneProblem = error ?? allocationProblem;
   const workers = visibleWorkerLabels(allWorkers, input, focusId);
+  const compact = compactWorkerLabels(workers, input, focusId);
   const frameWorld = () => {
     if (!focusId && input.location.view === "world") props.controlsRef.current?.frame();
     setFocusId(null);
@@ -304,8 +306,10 @@ export function ProofWorld(props: Props) {
             data-proof-id={worker.task.id}
             data-behavior={worker.behavior}
             data-moving={worker.moving}
+            data-compact={compact.has(worker.task.id)}
             className={`world-label task tone-${worker.tone} ${worker.task.id === input.selectedId ? "selected" : ""}`}
             aria-label={`${worker.title} · ${worker.detail}${worker.task.attention?.reason ? ` · ${splitRecordedDetail(worker.task.attention.reason).headline}` : ""}`}
+            title={compact.has(worker.task.id) ? `${worker.title} · ${worker.detail}` : undefined}
             onClick={() => onSelect("task", worker.task.id)}
           >
             {worker.tone === "answer" ? (
@@ -315,10 +319,12 @@ export function ProofWorld(props: Props) {
             ) : (
               <span className="proof-status-dot" />
             )}
-            <span>
-              <strong>{worker.title}</strong>
-              <small>{worker.detail}</small>
-            </span>
+            {!compact.has(worker.task.id) && (
+              <span>
+                <strong>{worker.title}</strong>
+                <small>{worker.detail}</small>
+              </span>
+            )}
           </button>
         ))}
       </nav>

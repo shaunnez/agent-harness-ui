@@ -118,13 +118,23 @@ async function pickAll(page) {
   const ids = (await rects(page, ".proof-labels .world-label.task")).map((c) => c.id);
   const results = [];
   for (const id of ids) {
-    const card = (await rects(page, `.proof-labels .world-label.task[data-proof-id="${id}"]`))[0];
+    // Wait for the card layout to settle (SwiftShader frames are slow) before reading the centre.
+    let card = null;
+    for (let attempt = 0; attempt < 15; attempt++) {
+      const next = (await rects(page, `.proof-labels .world-label.task[data-proof-id="${id}"]`))[0];
+      if (card && next && Math.abs(next.x - card.x) < 0.5 && Math.abs(next.y - card.y) < 0.5) {
+        card = next;
+        break;
+      }
+      card = next;
+      await sleep(250);
+    }
     if (!card) {
       results.push({ id, ok: false, reason: "hidden" });
       continue;
     }
     await page.mouse.click(card.x + card.width / 2, card.y + card.height / 2);
-    await sleep(350);
+    await sleep(400);
     const selected = await page.$$eval(".proof-labels .world-label.task.selected", (els) =>
       els.map((el) => el.getAttribute("data-proof-id")),
     );

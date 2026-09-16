@@ -467,3 +467,82 @@ test("robots render 2.5x in World, 1.4x on a focused exterior and true size in t
     positions,
   );
 });
+
+test("crowded rooms collapse plain working cards to compact markers but never attention or selection", async () => {
+  const { compactWorkerLabels } = await import("../../src/frontier/world-3d/model.ts");
+  const worker = (id, overrides = {}) => ({
+    task: { id },
+    projectId: "plancheck",
+    room: "implementation",
+    tone: "working",
+    behavior: "work",
+    ...overrides,
+  });
+  const crowd = Array.from({ length: 14 }, (_, i) => worker(`COL-${String(i + 1).padStart(3, "0")}`));
+  const cutaway = {
+    location: { view: "project", projectId: "plancheck", taskId: null },
+    selectedId: "COL-009",
+  };
+  const compact = compactWorkerLabels(crowd, cutaway, null);
+  // Every plain card collapses; the selected task stays full.
+  assert.equal(compact.size, 13);
+  assert.equal(compact.has("COL-009"), false);
+  const mixed = [
+    ...crowd.slice(0, 6),
+    worker("COL-ANS", { tone: "answer" }),
+    worker("COL-FIX", { tone: "repair", behavior: "park" }),
+    worker("COL-WATCH"),
+  ];
+  const watched = compactWorkerLabels(mixed, { location: { view: "agent", taskId: "COL-WATCH" } }, null);
+  assert.deepEqual(
+    [...watched].sort(),
+    crowd.slice(0, 6).map((w) => w.task.id),
+  );
+  // Small rooms and other rooms are untouched; the World overview never compacts.
+  assert.equal(compactWorkerLabels(crowd.slice(0, 4), cutaway, null).size, 0);
+  const rooms = [...crowd.slice(0, 5), ...crowd.slice(5, 8).map((w) => ({ ...w, room: "review" }))];
+  assert.deepEqual(
+    [...compactWorkerLabels(rooms, cutaway, null)],
+    ["COL-001", "COL-002", "COL-003", "COL-004", "COL-005"],
+  );
+  assert.equal(compactWorkerLabels(crowd, { location: { view: "world" } }, null).size, 0);
+  // A focused exterior groups its court like a room.
+  assert.equal(
+    compactWorkerLabels(
+      crowd.map((w) => ({ ...w, room: undefined })),
+      { location: { view: "world" } },
+      "plancheck",
+    ).size,
+    14,
+  );
+});
+
+test("a card that fits nowhere covers another card before it covers a HUD panel", () => {
+  // Live 1280 x 720 shape: navigation panel top-left, selection panel across the bottom, two pinned room
+  // names and three wide cards anchored inside the only free gap.
+  const nav = { x: 12, y: 101, width: 500, height: 42 };
+  const selection = { x: 259, y: 449, width: 657, height: 236 };
+  const rooms = [
+    { id: "room:implementation", x: 586, y: 194, width: 108, height: 25, pinned: true },
+    { id: "room:planning", x: 351, y: 297, width: 67, height: 25, pinned: true },
+    { id: "room:briefing", x: 361, y: 388, width: 62, height: 25, pinned: true },
+  ];
+  const cards = [
+    { id: "COL-001", x: 385, y: 202, width: 245, height: 57 },
+    { id: "COL-002", x: 498, y: 171, width: 245, height: 57 },
+    { id: "COL-003", x: 636, y: 162, width: 245, height: 57 },
+  ];
+  const placed = separateLabels([...rooms, ...cards], {
+    bounds: { top: 8, bottom: 712 },
+    obstacles: [nav, selection],
+  });
+  const covers = (label, rect) =>
+    Math.abs(label.x - (rect.x + rect.width / 2)) < (label.width + rect.width) / 2 &&
+    label.bottom > rect.y &&
+    label.bottom - label.height < rect.y + rect.height;
+  for (const label of placed.filter((entry) => entry.id.startsWith("COL"))) {
+    assert.ok(label.bottom - label.height >= 8 && label.bottom <= 712, `${label.id} leaves the viewport`);
+    assert.equal(covers(label, nav), false, `${label.id} covers the navigation panel`);
+    assert.equal(covers(label, selection), false, `${label.id} covers the selection panel`);
+  }
+});
