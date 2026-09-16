@@ -27,8 +27,16 @@ current implementation is kept where it does not compromise the new look.
 Lower priority afterwards: crystals and rock accents, shoulder relief, tree variety, optional water features
 (stream, pool, waterfall, mist), ambient vehicles.
 
-**Visual gate** after 1–3: `build-evidence/COLONY-V2/GATE.md`. Items 4 and 5 start only if the macro composition is
-right.
+**Visual gate** after 1–3: `build-evidence/COLONY-V2/GATE.md`. Passed 17 September 2026: world layout, HQ massing,
+bridge logic and camera framing frozen.
+
+## Environment pass (after gate 1)
+
+Shaun's second brief, in order: water polish (foam, depth colour, movement, optional stream / pool / waterfall /
+mist), cliff and terrain dressing (scanned pieces with undercuts, rock clusters, wet rock), vegetation (silhouette
+variants, a bare tree, sparse scrub, grass, reeds), crystals (reusable clusters, subtle glow, later palette tint); then
+interiors (room identity in the environment, less dead floor, warm practicals, the 1280 label pile-up); then palette
+lighting. **Gate 2** after water, cliffs, vegetation and crystals: `build-evidence/COLONY-V2/GATE-2.md`.
 
 ## Preserved
 
