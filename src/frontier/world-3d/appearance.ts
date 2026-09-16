@@ -1,8 +1,15 @@
 import type { RuntimeProject } from "../../domain.ts";
 import { assignSlots, projectKey, isProjectSlot, type SlotAssignments } from "./colony.ts";
 
-export const baseVariants = ["command", "relay", "foundry"] as const;
+/** Four crowns on the shared hex shell; the archipelago kit behind the colony flag knows only the last three. */
+export const baseVariants = ["bastion", "command", "relay", "foundry"] as const;
 export type BaseVariant = (typeof baseVariants)[number];
+export const legacyBaseVariants = ["command", "relay", "foundry"] as const;
+export type LegacyBaseVariant = (typeof legacyBaseVariants)[number];
+/** The archipelago has no hex Bastion; a Bastion project renders its Command building there. */
+export function legacyVariant(variant: BaseVariant): LegacyBaseVariant {
+  return variant === "bastion" ? "command" : variant;
+}
 export const basePalettes = {
   blue: { label: "Blue", color: "#3f9dff" },
   red: { label: "Red", color: "#ee625d" },
@@ -11,6 +18,7 @@ export const basePalettes = {
 } as const;
 export type BasePalette = keyof typeof basePalettes;
 export const baseNames: Record<BaseVariant, string> = {
+  bastion: "Bastion",
   command: "Command",
   relay: "Relay",
   foundry: "Foundry",
@@ -120,7 +128,10 @@ export function saveAppearance(
 export function randomAppearance(random = Math.random): BaseAppearance {
   const palettes = Object.keys(basePalettes) as BasePalette[];
   return {
-    variant: baseVariants[Math.min(2, Math.max(0, Math.floor(random() * baseVariants.length)))] ?? "command",
+    variant:
+      baseVariants[
+        Math.min(baseVariants.length - 1, Math.max(0, Math.floor(random() * baseVariants.length)))
+      ] ?? "command",
     palette: palettes[Math.min(3, Math.max(0, Math.floor(random() * palettes.length)))] ?? "blue",
   };
 }

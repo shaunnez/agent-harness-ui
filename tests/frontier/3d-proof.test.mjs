@@ -5,6 +5,8 @@ import { fixtureProjects, makeFixtureTasks } from "../../src/frontier/fixtures/s
 import {
   assignMissingAppearances,
   baseVariants,
+  legacyBaseVariants,
+  legacyVariant,
   parseAppearances,
   projectAppearanceKey,
   randomAppearance,
@@ -265,7 +267,7 @@ test("browser GLBs retain portable PBR, named cutaway groups and the existing wo
   for (const [kind, url] of [
     ["scene", manifest.scene],
     ["worker", manifest.worker],
-    ...baseVariants.map((variant) => [variant, manifest.bases[variant].src]),
+    ...legacyBaseVariants.map((variant) => [variant, manifest.bases[variant].src]),
   ]) {
     const bytes = await readFile(new URL(`../../public/frontier${url}`, import.meta.url));
     assert.equal(bytes.readUInt32LE(0), 0x46546c67);
@@ -326,9 +328,20 @@ test("one base per project has separate routes and stable placement under refres
   assert.equal(proofVisible(search, input({ projects: [archived] })), true);
 });
 
-test("appearance defaults distribute all three buildings and persist without overwriting another project", () => {
+test("appearance defaults spread the buildings and persist without overwriting another project", () => {
   const saved = assignMissingAppearances(fixtureProjects, {});
   assert.equal(new Set(Object.values(saved).map((appearance) => appearance.variant)).size, 3);
+  assert.deepEqual(baseVariants, ["bastion", "command", "relay", "foundry"]);
+  assert.equal(legacyVariant("bastion"), "command");
+  assert.equal(legacyVariant("relay"), "relay");
+  assert.deepEqual(
+    randomAppearance(() => 0),
+    { variant: "bastion", palette: "blue" },
+  );
+  assert.deepEqual(
+    parseAppearances({ version: 1, projects: { hex: { variant: "bastion", palette: "red" } } }),
+    { hex: { variant: "bastion", palette: "red" } },
+  );
   const first = fixtureProjects[0],
     second = fixtureProjects[1];
   const selected = { variant: "relay", palette: "blue" };

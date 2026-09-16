@@ -1,3 +1,4 @@
+import { legacyVariant } from "./appearance";
 import { baseLabelAnchor } from "./colony";
 import { colonyModels, proofAssetUrls } from "./colony-assets";
 import { disposeGreybox } from "./colony-greybox";
@@ -134,7 +135,7 @@ export function ProofScene(props: Props) {
             : (manifest.environmentLightPositions ?? [])),
           ...(manifest.version === 3
             ? (manifest.colony?.hqLightPositions ?? [])
-            : (manifest.bases?.[base.appearance.variant].lightPositions ?? [])),
+            : (manifest.bases?.[legacyVariant(base.appearance.variant)].lightPositions ?? [])),
         ].map((position, index) => ({
           key: `${base.project.id}:${index}`,
           position: [
@@ -213,7 +214,7 @@ export function ProofScene(props: Props) {
       {bases.map((base) => {
         const source =
           colony?.bases[base.appearance.variant] ??
-          loaded.get(manifest.bases?.[base.appearance.variant].src ?? manifest.scene)?.scene;
+          loaded.get(manifest.bases?.[legacyVariant(base.appearance.variant)].src ?? manifest.scene)?.scene;
         if (!source) throw new Error(`The ${base.appearance.variant} base export is missing.`);
         return (
           <ProofBase

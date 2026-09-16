@@ -171,6 +171,71 @@ async function stressCutaway(browser, out, prefix) {
 }
 
 const steps = {
+  /** Step 3: four crowns on one shell; picker shows four tiles; palette tints all four; switching never moves a base. */
+  async step3(browser, out) {
+    const variants = ["bastion", "command", "relay", "foundry"];
+    const palettes = ["blue", "red", "orange", "purple"];
+    const projects = ["plancheck", "harness", "mystrata"];
+    for (const size of SIZES) {
+      const { context, page } = await openPage(browser, size);
+      const assets = trackAssets(page);
+      // Three projects wear three different crowns from the start; PlanCheck is the picker subject.
+      await prime(page, url("workflow", "world", true), DAY, {
+        version: 1,
+        projects: {
+          "plancheck:/demo/eversor-plancheck": { variant: "bastion", palette: "blue", slot: "P1" },
+          "harness:/demo/agent-harness-ui": { variant: "relay", palette: "orange", slot: "P2" },
+          "mystrata:/demo/eversor-mystrataassist": { variant: "foundry", palette: "purple", slot: "P3" },
+        },
+      });
+      const shots = { world: await shot(page, `step3-world-${size.tag}`) };
+      const before = (await rects(page, ".proof-labels .world-label.project")).map((l) => [l.text, Math.round(l.x), Math.round(l.y)]);
+      await page.click("nav.proof-navigation button:has-text('Appearance')");
+      await sleep(800);
+      const tiles = await page.$$eval(".proof-building-options button", (els) =>
+        els.map((el) => ({ label: el.textContent.trim(), pressed: el.getAttribute("aria-pressed"), img: Boolean(el.querySelector("img")) })),
+      );
+      shots.picker = await shot(page, `step3-picker-${size.tag}`);
+      const exteriors = {};
+      for (const variant of variants) {
+        await page.click(`.proof-building-options button:has-text('${variant[0].toUpperCase()}${variant.slice(1)}')`);
+        await sleep(600);
+        await page.click("nav.proof-navigation button:has-text('Exterior')");
+        await sleep(2600);
+        exteriors[variant] = await shot(page, `step3-exterior-${variant}-${size.tag}`);
+      }
+      if (size.tag === "1568x1003") {
+        // Palette tint on the Foundry crown, then Bastion, so both an appended kit crown and the new crown are covered.
+        for (const [variant, palette] of [["foundry", "red"], ["foundry", "purple"], ["bastion", "orange"], ["bastion", "red"]]) {
+          await page.click(`.proof-building-options button:has-text('${variant[0].toUpperCase()}${variant.slice(1)}')`);
+          await sleep(300);
+          await page.click(`.proof-palette-options button:has-text('${palette[0].toUpperCase()}${palette.slice(1)}')`);
+          await sleep(2200);
+          exteriors[`${variant}-${palette}`] = await shot(page, `step3-palette-${variant}-${palette}-${size.tag}`);
+        }
+        await page.click(`.proof-building-options button:has-text('Bastion')`);
+        await page.click(`.proof-palette-options button:has-text('Blue')`);
+        await sleep(400);
+      }
+      await page.click("button[aria-label='Close base appearance']");
+      await page.click("nav.proof-navigation button:has-text('World')");
+      await sleep(2600);
+      const after = (await rects(page, ".proof-labels .world-label.project")).map((l) => [l.text, Math.round(l.x), Math.round(l.y)]);
+      // A base never moves with its building: the label's horizontal anchor and the stored slot are the evidence
+      // (the label's vertical position also depends on which HUD panels are open at the time).
+      const stored = await storage(page, APPEARANCE_KEY);
+      await context.close();
+      out[size.tag] = {
+        shots: { ...shots, ...exteriors },
+        tiles,
+        baseLabelsBefore: before,
+        baseLabelsAfter: after,
+        basesMoved: JSON.stringify(before.map((l) => [l[0], l[1]])) !== JSON.stringify(after.map((l) => [l[0], l[1]])),
+        stored: stored?.projects,
+        assets: assets(),
+      };
+    }
+  },
   /** Step 1: robots at 2.5x (World), 1.4x (Exterior), 1x (Cutaway) with the colony flag. */
   async step1(browser, out) {
     for (const size of SIZES) {

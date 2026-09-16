@@ -3,13 +3,22 @@
   "colony": {
     "contract": "/assets/3d-proof/colony-contract.7a2e1a500879.json",
     "crowns": {
-      "command": "/assets/3d-proof/crown-command.2f4ae068d9f6.glb"
+      "bastion": "/assets/3d-proof/crown-bastion.9ce974411e91.glb",
+      "command": "/assets/3d-proof/crown-command.2f4ae068d9f6.glb",
+      "relay": "/assets/3d-proof/crown-relay.ddd0551d9e28.glb",
+      "foundry": "/assets/3d-proof/crown-foundry.6d549b2535b0.glb"
     },
     "shell": "/assets/3d-proof/hq-shell.4b47f1786639.glb",
     "bridgeSpan": "/assets/3d-proof/bridge-span-27.61fa0489a831.glb",
     "bridgeEnd": "/assets/3d-proof/bridge-end.50920a684920.glb",
     "parcelHub": "/assets/3d-proof/parcel-hub.b7034821f9a7.glb",
     "parcelA": "/assets/3d-proof/parcel-a.60b73e1b6956.glb",
+    "crownPreviews": {
+      "bastion": "/assets/3d-proof/crown-preview-bastion.4ec702f26675.png",
+      "command": "/assets/3d-proof/crown-preview-command.72966bd8db5b.png",
+      "relay": "/assets/3d-proof/crown-preview-relay.c744a191508e.png",
+      "foundry": "/assets/3d-proof/crown-preview-foundry.e1e5e539cf67.png"
+    },
     "hqLightPositions": [
       [
         -16,

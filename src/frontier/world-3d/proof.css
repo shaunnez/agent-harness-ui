@@ -167,6 +167,13 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
 }
+.proof-building-options[data-count="4"] {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+.proof-building-options[data-count="4"] img {
+  height: 56px;
+}
 .proof-building-options button {
   display: grid;
   padding: 5px 2px 8px;

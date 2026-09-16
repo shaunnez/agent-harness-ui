@@ -29,6 +29,7 @@ export async function integrateColonyAssets(root, asset) {
   const colony = { contract: await asset(path.join(source, "contract.json"), "colony-contract"), crowns: {} };
   for (const [dir, file, key, kind] of [
     ["producer", "hq-shell.glb", "shell", "shell"],
+    ["producer", "crown-bastion.glb", "bastion", "crown"],
     ["producer", "crown-command.glb", "command", "crown"],
     ["producer", "crown-relay.glb", "relay", "crown"],
     ["producer", "crown-foundry.glb", "foundry", "crown"],
@@ -53,6 +54,18 @@ export async function integrateColonyAssets(root, asset) {
     const url = await asset(filePath, file.replace(/\.glb$/, ""));
     if (kind === "crown") colony.crowns[key] = url;
     else colony[key] = url;
+  }
+  // Picker thumbnails: each crown rendered on the shared shell by the producer.
+  for (const variant of Object.keys(colony.crowns)) {
+    const preview = path.join(source, "producer/previews", `crown-${variant}.png`);
+    try {
+      await readFile(preview);
+    } catch (error) {
+      if (error.code === "ENOENT") continue;
+      throw error;
+    }
+    colony.crownPreviews ??= {};
+    colony.crownPreviews[variant] = await asset(preview, `crown-preview-${variant}`);
   }
   const a = terrain?.files?.["parcel-a.glb"];
   const hub = terrain?.files?.["parcel-hub.glb"];

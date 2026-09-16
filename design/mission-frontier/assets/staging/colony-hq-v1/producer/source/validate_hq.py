@@ -46,7 +46,7 @@ for name,a in meta['assets'].items():
             require(max(abs(p[i]-expected[i]) for i in range(3))<=.05,'socket coordinates '+s['id'])
         for name2 in ['MF_ShellCutaway_FrontFlats','MF_ShellCutaway_PartitionGlass']:
             o=bpy.data.objects.get(name2);require(o and o.parent.name=='MF_ShellCutaway','cutaway ownership '+name2)
-    elif name=='crown-command':
+    elif name.startswith('crown-'):
         require(lo[1]>=C['levels']['hqCeilingClear']-.01 and hi[1]<=18.5,'crown sits over shell within height envelope')
         for o in meshes:
             for v in o.data.vertices:

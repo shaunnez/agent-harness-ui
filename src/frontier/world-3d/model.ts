@@ -4,7 +4,7 @@ import type { TaskSummary } from "../runtime/contracts.ts";
 import { attentionFor, isOpen, stageLabels } from "../runtime/presentation.ts";
 import type { SceneInput } from "../world/scene.ts";
 import { workAction, workerBehavior } from "../world/worker-behavior.ts";
-import { type BaseVariant, baseVariants } from "./appearance.ts";
+import { type BaseVariant, type LegacyBaseVariant, legacyBaseVariants } from "./appearance.ts";
 import { type ProjectBase, projectBases, translated, visibleBases } from "./layout.ts";
 
 export type Point3 = [number, number, number];
@@ -20,6 +20,8 @@ export interface ProofManifest {
     contract: string;
     shell?: string;
     crowns?: Partial<Record<BaseVariant, string>>;
+    /** Picker thumbnails of each crown on the shared shell. */
+    crownPreviews?: Partial<Record<BaseVariant, string>>;
     parcelHub?: string;
     parcelA?: string;
     bridgeSpan?: string;
@@ -29,7 +31,7 @@ export interface ProofManifest {
     parcelLightPositions?: Point3[];
     hubShorelineXZ?: [number, number][][];
   };
-  bases?: Record<BaseVariant, { src: string; preview?: string; lightPositions: Point3[] }>;
+  bases?: Record<LegacyBaseVariant, { src: string; preview?: string; lightPositions: Point3[] }>;
   environmentLightPositions?: Point3[];
   scene: string;
   worker: string;
@@ -311,7 +313,7 @@ export function parseProofManifest(value: unknown): ProofManifest {
   if (
     (data.version === 2 || (data.version === 3 && data.bases)) &&
     (!data.bases ||
-      !baseVariants.every((key) => {
+      !legacyBaseVariants.every((key) => {
         const base = data.bases?.[key];
         return (
           base &&
@@ -349,6 +351,9 @@ export function parseProofManifest(value: unknown): ProofManifest {
         colony.bridgeEnd,
         ...Object.values(colony.crowns ?? {}),
       ].some((value) => value !== undefined && !asset(value)) ||
+      Object.values(colony.crownPreviews ?? {}).some(
+        (value) => typeof value !== "string" || !/^\/assets\/3d-proof\/[\w.-]+\.(png|webp)$/.test(value),
+      ) ||
       [colony.hqLightPositions, colony.parcelLightPositions].some(
         (points) => points !== undefined && (!Array.isArray(points) || !points.every((p) => point(p))),
       ) ||

@@ -191,11 +191,13 @@ def finish(stem, roots, extra=None):
 
 if __name__=='__main__':
     from build_structures import crown, bridge
+    from build_crowns import CROWNS
     results={}
     args=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else []
-    kinds=[x for x in args if x in ['shell','command','bridge','end']] or ['shell','command','bridge','end']
+    known=['shell','command','bridge','end',*CROWNS]
+    kinds=[x for x in args if x in known] or ['shell','command','bridge','end']
     for kind in kinds:
-        result=shell() if kind=='shell' else crown() if kind=='command' else bridge(kind=='end')
+        result=shell() if kind=='shell' else crown() if kind=='command' else CROWNS[kind]() if kind in CROWNS else bridge(kind=='end')
         results[result['file'].removesuffix('.glb')]=result
     path=R/'hq-metadata.json'; old=json.loads(path.read_text()) if path.exists() else {}
     old.update({'version':'1.0.0','contractVersion':C['version'],'contractSha256':hashlib.sha256(CONTRACT_PATH.read_bytes()).hexdigest()})

@@ -2,7 +2,7 @@ import { integrateColonyAssets } from "./integrate-colony-assets.mjs";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { baseVariants } from "../../src/frontier/world-3d/appearance.ts";
+import { legacyBaseVariants } from "../../src/frontier/world-3d/appearance.ts";
 import { parseProofManifest } from "../../src/frontier/world-3d/model.ts";
 
 const root = process.cwd();
@@ -54,7 +54,7 @@ const scene = await asset(path.join(source, "environment.glb"), "environment", [
 ]);
 const worker = await asset(path.join(original, "worker.glb"), "worker");
 const bases = {};
-for (const variant of baseVariants) {
+for (const variant of legacyBaseVariants) {
   const src = await asset(
     path.join(source, `base-${variant}.glb`),
     `base-${variant}`,

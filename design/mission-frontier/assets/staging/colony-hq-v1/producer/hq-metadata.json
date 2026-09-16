@@ -2056,6 +2056,410 @@
       ],
       "deckY": 4.25,
       "length": 8
+    },
+    "crown-relay": {
+      "file": "crown-relay.glb",
+      "editableSource": "crown-relay.blend",
+      "rootGroups": [
+        "MF_Roof"
+      ],
+      "bounds": {
+        "min": [
+          -18.337,
+          9.22,
+          -15.8916
+        ],
+        "max": [
+          18.337,
+          16.175,
+          15.8916
+        ],
+        "size": [
+          36.674,
+          6.955,
+          31.7832
+        ]
+      },
+      "groups": {
+        "MF_Roof": {
+          "parent": null,
+          "children": [
+            "MF_Roof_Crown",
+            "MF_Roof__ambient_sensor_navigation",
+            "MF_Roof__brushed_titanium",
+            "MF_Roof__identity_trim",
+            "MF_Roof__structure_graphite_joints",
+            "MF_Roof__structure_ivory_ceramic"
+          ],
+          "bounds": {
+            "min": [
+              -18.337,
+              9.22,
+              -15.8916
+            ],
+            "max": [
+              18.337,
+              16.175,
+              15.8916
+            ],
+            "size": [
+              36.674,
+              6.955,
+              31.7832
+            ]
+          }
+        },
+        "MF_Roof_Crown": {
+          "parent": "MF_Roof",
+          "children": [
+            "MF_Roof_Crown__ambient_sensor_navigation",
+            "MF_Roof_Crown__brushed_titanium",
+            "MF_Roof_Crown__identity_roof_inset",
+            "MF_Roof_Crown__identity_roof_ring",
+            "MF_Roof_Crown__practical_warm_window_glass",
+            "MF_Roof_Crown__structure_graphite_joints",
+            "MF_Roof_Crown__structure_ivory_ceramic"
+          ],
+          "bounds": {
+            "min": [
+              -9.975,
+              9.82,
+              -7.8875
+            ],
+            "max": [
+              9.975,
+              16.175,
+              7.8875
+            ],
+            "size": [
+              19.95,
+              6.355,
+              15.775
+            ]
+          }
+        }
+      },
+      "materials": [
+        "ambient_sensor_navigation",
+        "brushed_titanium",
+        "identity_roof_inset",
+        "identity_roof_ring",
+        "identity_trim",
+        "practical_warm_window_glass",
+        "structure_graphite_joints",
+        "structure_ivory_ceramic"
+      ],
+      "sourceComponents": {
+        "MF_Roof": [
+          "hex_roof_deck",
+          "hex_roof_gasket",
+          "relay_mast",
+          "relay_mast_head",
+          "roof_neutral_identity_trim",
+          "roof_perimeter_reveal",
+          "roof_sector_seam"
+        ],
+        "MF_Roof_Crown": [
+          "identity_coloured_disc",
+          "identity_illuminated_ring",
+          "identity_radial_marker",
+          "identity_recess_socket",
+          "relay_asymmetric_service_tower",
+          "relay_dish_pedestal",
+          "relay_feed_mast",
+          "relay_feed_sensor",
+          "relay_front_clerestory_recess",
+          "relay_front_clerestory_window",
+          "relay_parabolic_dish",
+          "relay_receiver_rim",
+          "relay_roof_service_fin",
+          "relay_roof_service_housing",
+          "relay_side_clerestory_recess",
+          "relay_side_clerestory_window",
+          "relay_tower_clerestory",
+          "relay_tower_crown",
+          "relay_tower_front_service_panel",
+          "relay_tower_warm_window"
+        ]
+      },
+      "componentCounts": {
+        "MF_Roof": 23,
+        "MF_Roof_Crown": 45
+      },
+      "glb": {
+        "bytes": 1114440,
+        "sha256": "ddd0551d9e280284d5791ed81963677b837dcd0ca98f56a80d711ea108c08460",
+        "triangles": 14124,
+        "meshes": 12,
+        "materials": 8,
+        "images": 4,
+        "nodes": 14
+      },
+      "reseatScale": 1.0
+    },
+    "crown-foundry": {
+      "file": "crown-foundry.glb",
+      "editableSource": "crown-foundry.blend",
+      "rootGroups": [
+        "MF_Roof"
+      ],
+      "bounds": {
+        "min": [
+          -18.337,
+          9.22,
+          -15.8916
+        ],
+        "max": [
+          18.337,
+          13.3274,
+          15.8916
+        ],
+        "size": [
+          36.674,
+          4.1074,
+          31.7832
+        ]
+      },
+      "groups": {
+        "MF_Roof": {
+          "parent": null,
+          "children": [
+            "MF_Roof_Crown",
+            "MF_Roof__brushed_titanium",
+            "MF_Roof__identity_trim",
+            "MF_Roof__structure_graphite_joints",
+            "MF_Roof__structure_ivory_ceramic"
+          ],
+          "bounds": {
+            "min": [
+              -18.337,
+              9.22,
+              -15.8916
+            ],
+            "max": [
+              18.337,
+              13.3274,
+              15.8916
+            ],
+            "size": [
+              36.674,
+              4.1074,
+              31.7832
+            ]
+          }
+        },
+        "MF_Roof_Crown": {
+          "parent": "MF_Roof",
+          "children": [
+            "MF_Roof_Crown__ambient_sensor_navigation",
+            "MF_Roof_Crown__brushed_titanium",
+            "MF_Roof_Crown__identity_roof_inset",
+            "MF_Roof_Crown__identity_roof_ring",
+            "MF_Roof_Crown__identity_trim",
+            "MF_Roof_Crown__structure_graphite_joints",
+            "MF_Roof_Crown__structure_ivory_ceramic"
+          ],
+          "bounds": {
+            "min": [
+              -12.3685,
+              9.82,
+              -8.4864
+            ],
+            "max": [
+              12.3685,
+              13.3274,
+              8.4864
+            ],
+            "size": [
+              24.737,
+              3.5074,
+              16.9728
+            ]
+          }
+        }
+      },
+      "materials": [
+        "ambient_sensor_navigation",
+        "brushed_titanium",
+        "identity_roof_inset",
+        "identity_roof_ring",
+        "identity_trim",
+        "structure_graphite_joints",
+        "structure_ivory_ceramic"
+      ],
+      "sourceComponents": {
+        "MF_Roof": [
+          "hex_roof_deck",
+          "hex_roof_gasket",
+          "roof_heat_exchanger_fin",
+          "roof_neutral_identity_trim",
+          "roof_perimeter_reveal",
+          "roof_sector_seam",
+          "roof_service_housing"
+        ],
+        "MF_Roof_Crown": [
+          "foundry_closed_gable",
+          "foundry_crown_identity_seam",
+          "foundry_identity_platform",
+          "foundry_rear_utility_silo",
+          "foundry_segmented_barrel_vault",
+          "foundry_silo_cap",
+          "foundry_silo_collar",
+          "foundry_silo_marker",
+          "foundry_vent_bank",
+          "foundry_vent_louver",
+          "identity_coloured_disc",
+          "identity_illuminated_ring",
+          "identity_radial_marker",
+          "identity_recess_socket"
+        ]
+      },
+      "componentCounts": {
+        "MF_Roof": 30,
+        "MF_Roof_Crown": 70
+      },
+      "glb": {
+        "bytes": 1494032,
+        "sha256": "6d549b2535b0a26a0c2e9db59a61b2fcf0446f47f7959d911697acc0be0811d4",
+        "triangles": 23636,
+        "meshes": 11,
+        "materials": 7,
+        "images": 4,
+        "nodes": 13
+      },
+      "reseatScale": 0.9028
+    },
+    "crown-bastion": {
+      "file": "crown-bastion.glb",
+      "editableSource": "crown-bastion.blend",
+      "rootGroups": [
+        "MF_Roof"
+      ],
+      "bounds": {
+        "min": [
+          -18.337,
+          9.22,
+          -15.8916
+        ],
+        "max": [
+          18.337,
+          16.65,
+          15.8916
+        ],
+        "size": [
+          36.674,
+          7.43,
+          31.7832
+        ]
+      },
+      "groups": {
+        "MF_Roof": {
+          "parent": null,
+          "children": [
+            "MF_Roof_Crown",
+            "MF_Roof__ambient_sensor_navigation",
+            "MF_Roof__brushed_titanium",
+            "MF_Roof__practical_station_marker",
+            "MF_Roof__structure_graphite_joints",
+            "MF_Roof__structure_ivory_ceramic"
+          ],
+          "bounds": {
+            "min": [
+              -18.337,
+              9.22,
+              -15.8916
+            ],
+            "max": [
+              18.337,
+              16.65,
+              15.8916
+            ],
+            "size": [
+              36.674,
+              7.43,
+              31.7832
+            ]
+          }
+        },
+        "MF_Roof_Crown": {
+          "parent": "MF_Roof",
+          "children": [
+            "MF_Roof_Crown__brushed_titanium",
+            "MF_Roof_Crown__identity_roof_inset",
+            "MF_Roof_Crown__identity_roof_ring",
+            "MF_Roof_Crown__identity_trim",
+            "MF_Roof_Crown__practical_warm_window_glass",
+            "MF_Roof_Crown__structure_graphite_joints",
+            "MF_Roof_Crown__structure_ivory_ceramic"
+          ],
+          "bounds": {
+            "min": [
+              -9.85,
+              9.8,
+              -9.735
+            ],
+            "max": [
+              9.85,
+              14.39,
+              9.735
+            ],
+            "size": [
+              19.7,
+              4.59,
+              19.47
+            ]
+          }
+        }
+      },
+      "materials": [
+        "ambient_sensor_navigation",
+        "brushed_titanium",
+        "identity_roof_inset",
+        "identity_roof_ring",
+        "identity_trim",
+        "practical_station_marker",
+        "practical_warm_window_glass",
+        "structure_graphite_joints",
+        "structure_ivory_ceramic"
+      ],
+      "sourceComponents": {
+        "MF_Roof": [
+          "bastion_mast",
+          "bastion_mast_beacon",
+          "bastion_turret",
+          "bastion_turret_collar",
+          "bastion_turret_lamp",
+          "hex_roof_deck",
+          "hex_roof_gasket",
+          "roof_perimeter_reveal",
+          "roof_sector_seam"
+        ],
+        "MF_Roof_Crown": [
+          "bastion_buttress",
+          "bastion_clerestory_glass",
+          "bastion_clerestory_recess",
+          "bastion_identity_trim",
+          "bastion_keep_band",
+          "bastion_keep_cap",
+          "bastion_keep_lower",
+          "bastion_keep_upper",
+          "identity_coloured_disc",
+          "identity_illuminated_ring"
+        ]
+      },
+      "componentCounts": {
+        "MF_Roof": 34,
+        "MF_Roof_Crown": 54
+      },
+      "glb": {
+        "bytes": 901732,
+        "sha256": "9ce974411e914c0ad852f5caf95b0ad222ad26c08180def35ee031e342c3fc58",
+        "triangles": 10804,
+        "meshes": 12,
+        "materials": 9,
+        "images": 4,
+        "nodes": 14
+      }
     }
   },
   "lights": [

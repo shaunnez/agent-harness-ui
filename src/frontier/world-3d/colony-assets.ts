@@ -1,5 +1,5 @@
 import { Group, type Object3D } from "three";
-import { baseVariants } from "./appearance.ts";
+import { baseVariants, legacyBaseVariants } from "./appearance.ts";
 import {
   greyboxBridge,
   greyboxBridgeEnd,
@@ -15,7 +15,7 @@ export function proofAssetUrls(manifest: ProofManifest) {
     return [
       manifest.scene,
       manifest.worker,
-      ...baseVariants.map((id) => manifest.bases?.[id].src ?? manifest.scene),
+      ...legacyBaseVariants.map((id) => manifest.bases?.[id].src ?? manifest.scene),
     ];
   const colony = manifest.colony;
   return [

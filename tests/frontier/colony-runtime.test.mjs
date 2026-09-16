@@ -255,3 +255,71 @@ test("duplicate stored slots are repaired deterministically before laying out pr
   assert.equal(repaired[projectKey(projects[1])].slot, "P2");
   assert.equal(repaired[projectKey(projects[1])].palette, "blue");
 });
+
+test("four crowns render on one shell and a missing crown falls back to Command", async () => {
+  const { Group } = await import("three");
+  const { colonyModels } = await import("../../src/frontier/world-3d/colony-assets.ts");
+  const { baseVariants } = await import("../../src/frontier/world-3d/appearance.ts");
+  const named = (name) => {
+    const group = new Group();
+    group.name = name;
+    return group;
+  };
+  const value = {
+    ...manifest,
+    colony: {
+      contract: "/assets/3d-proof/contract.json",
+      shell: "/assets/3d-proof/hq-shell.glb",
+      crowns: {
+        bastion: "/assets/3d-proof/crown-bastion.glb",
+        command: "/assets/3d-proof/crown-command.glb",
+        relay: "/assets/3d-proof/crown-relay.glb",
+        foundry: "/assets/3d-proof/crown-foundry.glb",
+      },
+      crownPreviews: { bastion: "/assets/3d-proof/crown-preview-bastion.png" },
+      parcelHub: "/assets/3d-proof/parcel-hub.glb",
+      parcelA: "/assets/3d-proof/parcel-a.glb",
+      bridgeSpan: "/assets/3d-proof/bridge-span-27.glb",
+      bridgeEnd: "/assets/3d-proof/bridge-end.glb",
+    },
+  };
+  assert.equal(parseProofManifest(value).version, 3);
+  assert.throws(() =>
+    parseProofManifest({
+      ...value,
+      colony: { ...value.colony, crownPreviews: { relay: "https://example.com/relay.png" } },
+    }),
+  );
+  const urls = proofAssetUrls(value);
+  assert.equal(urls.filter((url) => url.includes("crown-")).length, 4);
+  const loaded = new Map(urls.map((url) => [url, named(url.split("/").pop())]));
+  const models = colonyModels(value, loaded);
+  assert.deepEqual(Object.keys(models.bases).sort(), [...baseVariants].sort());
+  for (const variant of baseVariants) {
+    const [shell, crown] = models.bases[variant].children;
+    assert.equal(shell.name, "hq-shell.glb", `${variant} shares the shell`);
+    assert.equal(crown.name, `crown-${variant}.glb`, `${variant} wears its own crown`);
+  }
+  assert.equal(models.owned.length, 0);
+  // Without a Relay crown the Relay pick still renders (Command crown) rather than failing.
+  const partial = { ...value, colony: { ...value.colony, crowns: { command: value.colony.crowns.command } } };
+  const fallback = colonyModels(
+    partial,
+    new Map(proofAssetUrls(partial).map((url) => [url, named(url.split("/").pop())])),
+  );
+  assert.equal(fallback.bases.relay.children[1].name, "crown-command.glb");
+});
+
+test("one room table serves every crown: room assignment never reads the building variant", async () => {
+  const { roomForTask, allocateSockets } = await import("../../src/frontier/world-3d/rooms.ts");
+  const { baseVariants } = await import("../../src/frontier/world-3d/appearance.ts");
+  const requests = [
+    { id: "a", room: roomForTask({ status: "running", stage: "implement" }), workers: 2 },
+    { id: "b", room: roomForTask({ status: "running", stage: "dev-review" }), workers: 1 },
+    { id: "c", room: roomForTask({ status: "completed", stage: "implement" }), workers: 1 },
+  ];
+  const reference = allocateSockets(requests);
+  assert.equal(reference.workers.length, 4);
+  // The allocation has no variant input at all; every crown shares the same sockets and overflow.
+  for (const variant of baseVariants) assert.deepEqual(allocateSockets(requests), reference, variant);
+});
