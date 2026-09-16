@@ -9,3 +9,10 @@
   2. Asset producer → `assets/staging/colony-hq-v1/producer/` (hq-shell, crown-command, bridge-span-27, bridge-end, metadata; relay/foundry crowns if time allows).
   3. Runtime builder → separate worktree/branch from 2e3667c (colony.ts slots, rooms.ts allocation, grey boxes, manifest v3, fixtures, tests, browser captures under `runtime-greybox/`).
 - Lead integration follows: merge runtime branch, run `integrate-3d-proof.mjs` with real assets, browser acceptance against the ten criteria in DELIVERY-SLICE.md.
+
+## 16 September 2026 — stopped
+
+- Shaun stopped the build. All three agents killed; no servers or Blender jobs left running.
+- Runtime branch `worktree-agent-aa898a862c65647f8` has two commits (colony loader, slot placement) and an uncommitted `rooms.ts`. Producer has a script scaffold only. Terrain has nothing.
+- Main moved to `6773f41` (shadow cadence, lamp pool). Merge it before resuming world-3d work.
+- Resume from `HANDOFF.md` in this directory.
