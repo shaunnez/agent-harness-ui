@@ -30,7 +30,8 @@ def audit(path):
                     core_faces+=1
                     vv=[tuple(round(v,4) for v in pt) for pt in [a,b,c]]
                     for j in range(3):edges[tuple(sorted((vv[j],vv[(j+1)%3])))]+=1
-                    if face[1]<-.00001 and min(a[1],b[1],c[1])>-2.999:core_down+=1
+                    # Slice 2A: the wave-cut notch leans 0.25 m over the waterline (normal y about -0.43); only steeper undersides are defects.
+                    if face[1]<-.5*math.sqrt(dot(face,face)) and min(a[1],b[1],c[1])>-2.999:core_down+=1
     report={'file':path.name,'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw),'triangles':triangles,'images':len(doc.get('images',[])),'missingGroups':missing,'doubleSidedMaterials':material_errors,'normalWindingDisagreements':len(normals_bad),'normalWindingMeshes':dict(Counter(normals_bad)),'coreTriangles':core_faces,'coreBoundaryEdges':sum(n==1 for n in edges.values()),'coreNonManifoldEdges':sum(n!=2 for n in edges.values()),'coreDownwardExposedFaces':core_down,'degenerateTriangles':degenerate}
     assert not missing and not material_errors and not normals_bad and not core_down,report
     assert all(n==2 for n in edges.values()) and core_faces>0,report

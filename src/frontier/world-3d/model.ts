@@ -22,6 +22,8 @@ export interface ProofManifest {
     crowns?: Partial<Record<BaseVariant, string>>;
     /** Picker thumbnails of each crown on the shared shell. */
     crownPreviews?: Partial<Record<BaseVariant, string>>;
+    /** Shared scatter kit (trees, boulders, lanterns, vehicles) instanced per parcel from a seeded layout. */
+    scatterKit?: string;
     parcelHub?: string;
     parcelA?: string;
     bridgeSpan?: string;
@@ -349,6 +351,7 @@ export function parseProofManifest(value: unknown): ProofManifest {
         colony.parcelA,
         colony.bridgeSpan,
         colony.bridgeEnd,
+        colony.scatterKit,
         ...Object.values(colony.crowns ?? {}),
       ].some((value) => value !== undefined && !asset(value)) ||
       Object.values(colony.crownPreviews ?? {}).some(

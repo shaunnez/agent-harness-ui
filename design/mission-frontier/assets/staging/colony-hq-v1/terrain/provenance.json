@@ -6,14 +6,17 @@
   "contractVersion": "1.0.1-frozen",
   "contractSha256": "7a2e1a5008796dc507cd21f4ef0cfd71a43ee6eada56b19e7122649fab35b20d",
   "generated": {
-    "parcel-hub.glb": "b7034821f9a7095213b6747a113ec9e151fc8c6342f5243ebcea748aceb75798",
-    "parcel-a.glb": "60b73e1b69565220cd60e985e2ca4e2213639e7eb3d2cabe4017b60dc3dd813a",
-    "parcel-a.blend": "135709b772c7d1b07add5b78940d431eaa1085ecc9e1e8a0b892772f1ba4933e",
-    "parcel-hub.blend": "ce1aedbd39e7a42696a8f6dc99c174bf5ef1d48722df648d3ea13dfe59ee8547",
-    "build_terrain.py": "52f80f51b727f34578252d6d0f3842b94b084fde21bf9512c111019a75f17283",
+    "parcel-hub.glb": "8849332f217ee377dcd85caf01991fe13104786a03b9a8223e597aaa6556c896",
+    "parcel-a.glb": "0537f0988e5ec06e22e6570c4504830a17c842d77770173ec0ea1eb3b0e25f7d",
+    "scatter-kit.glb": "627e64cd7ebbc361ee8f922ea8446e33babf6402305711a87256d8cb628043af",
+    "parcel-a.blend": "0449014b0be7644ba001a350bc1024630054d7db138b745b56da1ec33a34c0a6",
+    "scatter-kit.blend": "9feab9730e634296dc34f437a71588981fa1c725786acb2db573a287027c9722",
+    "parcel-hub.blend": "e1694aa14e3dc253d01a9341d62594430ba25c830b2759832645b6242432d26c",
+    "build_terrain.py": "92118691ff6d3ce6afc6298e1c5d5694390927533e06cf2c377222f66968a9a6",
+    "build_scatter_kit.py": "f28a2ba1b8ea32c305f05ecc69e91532fb99a8b730eb38c950be75a3967a783a",
     "compact_sources.py": "3a72576254b75bc619dd547165d91da4a0cfbb87819af3d248bbadc64771b7f6",
-    "finalize_metadata.py": "1c08ddda355f2597d762c76001e7e0ffd351a4d7efca924e04b888b4ebd0598a",
-    "validate_parcels.py": "c6152625cc67939a68b84a523aef3a9f5367204fb9b397a0d22e029cd61ca7bf",
+    "finalize_metadata.py": "4eb36782d83714e7eecdebda659df35ca97b3a45b7b7f6f6dd995e382cc42172",
+    "validate_parcels.py": "cc6b092e4291d74b00032fc1dbbd8144c4a0b3690cc66268e152b367e53df697",
     "validate_export_geometry.py": "860441ebb3ea06ab0a9dbc7d17c98656b7484d60a2180052a100c75fcf40c461"
   }
 }

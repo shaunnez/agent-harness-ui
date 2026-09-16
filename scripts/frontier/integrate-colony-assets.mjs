@@ -37,6 +37,7 @@ export async function integrateColonyAssets(root, asset) {
     ["producer", "bridge-end.glb", "bridgeEnd", "end"],
     ["terrain", "parcel-hub.glb", "parcelHub", "parcel"],
     ["terrain", "parcel-a.glb", "parcelA", "parcel"],
+    ["terrain", "scatter-kit.glb", "scatterKit", "scatter"],
   ]) {
     const filePath = path.join(source, dir, file);
     let bytes;
@@ -47,7 +48,10 @@ export async function integrateColonyAssets(root, asset) {
       throw error;
     }
     const metadata = dir === "producer" ? producer : terrain;
-    const entry = metadata?.assets?.[file.replace(/\.glb$/, "")] ?? metadata?.files?.[file];
+    const entry =
+      file === "scatter-kit.glb"
+        ? await optionalJson(path.join(source, "terrain/scatter-metadata.json"))
+        : (metadata?.assets?.[file.replace(/\.glb$/, "")] ?? metadata?.files?.[file]);
     const expectedSha256 = entry?.glb?.sha256 ?? entry?.sha256;
     if (!expectedSha256) throw new Error(`${file}: missing producer hash receipt`);
     validateColonyGlb(bytes, { kind, contract, expectedSha256 });

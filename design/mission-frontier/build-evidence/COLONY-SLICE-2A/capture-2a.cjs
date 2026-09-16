@@ -171,6 +171,45 @@ async function stressCutaway(browser, out, prefix) {
 }
 
 const steps = {
+  /** Step 4: cliff rims, baked AO and seeded scatter; ten distinct parcels, day and night, both sizes. */
+  async step4(browser, out) {
+    for (const size of SIZES) {
+      const { context, page } = await openPage(browser, size);
+      const assets = trackAssets(page);
+      await prime(page, url("colony-stress", "world", true), DAY);
+      const shots = { stressWorldDay: await shot(page, `step4-stress-world-day-${size.tag}`) };
+      await page.click("nav.proof-navigation button:has-text('Exterior')");
+      await sleep(3000);
+      shots.exteriorDay = await shot(page, `step4-exterior-day-${size.tag}`);
+      await goHash(page, "project/plancheck", 3500);
+      shots.cutawayDay = await shot(page, `step4-cutaway-day-${size.tag}`);
+      const dayAssets = assets();
+      await context.close();
+      const night = await openPage(browser, size);
+      await prime(night.page, url("colony-stress", "world", true), NIGHT);
+      shots.stressWorldNight = await shot(night.page, `step4-stress-world-night-${size.tag}`);
+      await night.page.click("nav.proof-navigation button:has-text('Exterior')");
+      await sleep(3000);
+      shots.exteriorNight = await shot(night.page, `step4-exterior-night-${size.tag}`);
+      await night.context.close();
+      if (size.tag === "1568x1003") {
+        // Three-project world for the close look at planting variety, plus a second project's exterior.
+        const trio = await openPage(browser, size);
+        await prime(trio.page, url("workflow", "world", true), DAY);
+        shots.worldDay = await shot(trio.page, `step4-world-day-${size.tag}`);
+        await trio.page.selectOption("select", "harness").catch(() => {});
+        await trio.page.click("nav.proof-navigation button:has-text('Appearance')");
+        await sleep(500);
+        await trio.page.selectOption(".proof-appearance select", "harness");
+        await sleep(3000);
+        await trio.page.click("button[aria-label='Close base appearance']");
+        await sleep(600);
+        shots.exteriorHarness = await shot(trio.page, `step4-exterior-harness-day-${size.tag}`);
+        await trio.context.close();
+      }
+      out[size.tag] = { shots, assets: dayAssets };
+    }
+  },
   /** Step 3: four crowns on one shell; picker shows four tiles; palette tints all four; switching never moves a base. */
   async step3(browser, out) {
     const variants = ["bastion", "command", "relay", "foundry"];

@@ -27,6 +27,7 @@ export function proofAssetUrls(manifest: ProofManifest) {
         colony?.parcelHub,
         colony?.bridgeSpan,
         colony?.bridgeEnd,
+        colony?.scatterKit,
         ...Object.values(colony?.crowns ?? {}),
       ].filter((value): value is string => Boolean(value)),
     ),
@@ -59,5 +60,7 @@ export function colonyModels(manifest: ProofManifest, loaded: Map<string, Object
     hub: get(colony?.parcelHub, () => greyboxParcel(true)),
     span: get(colony?.bridgeSpan, greyboxBridge),
     end: get(colony?.bridgeEnd, greyboxBridgeEnd),
+    /** No kit means no scatter; the parcels still render. */
+    kit: colony?.scatterKit ? (loaded.get(colony.scatterKit) ?? null) : null,
   };
 }

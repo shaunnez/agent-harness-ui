@@ -1,5 +1,5 @@
 import { legacyVariant } from "./appearance";
-import { baseLabelAnchor } from "./colony";
+import { baseLabelAnchor, hubSlot, projectKey } from "./colony";
 import { colonyModels, proofAssetUrls } from "./colony-assets";
 import { disposeGreybox } from "./colony-greybox";
 import { ColonyGround } from "./ColonyGround";
@@ -14,7 +14,7 @@ import {
   type WorldLighting,
 } from "../world/environment-model";
 import { LampPool, lampBudget, type PooledLamp } from "./lamp-pool";
-import { locatedProject, occupiedSlots, type ProjectBase, visibleBases } from "./layout";
+import { hubParcel, locatedProject, occupiedSlots, type ProjectBase, visibleBases } from "./layout";
 import {
   type Point3,
   type ProofControls,
@@ -28,6 +28,8 @@ import { ProofBase, type SceneLight } from "./ProofBase";
 import { ProofCamera } from "./ProofCamera";
 import { ProofLabels } from "./ProofLabels";
 import { ProofWorker } from "./ProofWorker";
+import { ParcelScatter, type ParcelScatterPlan } from "./ParcelScatter";
+import { lanternLampOffset, scatterLayout } from "./scatter";
 import { SceneFinish } from "./SceneFinish";
 import { ShadowCadence } from "./shadow-cadence";
 import { createCoastalWater } from "./water";
@@ -124,11 +126,44 @@ export function ProofScene(props: Props) {
     [water],
   );
   const appearanceKey = bases.map((base) => `${base.appearance.variant}:${base.appearance.palette}`).join();
+  // Seeded scatter per parcel: trees, boulders, lantern posts and parked vehicles from the shared kit.
+  const scatterKey = bases.map((base) => `${projectKey(base.project)}@${base.position.join()}`).join("|");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Scatter follows the parcel set, not appearance or runtime refresh.
+  const scatterPlans = useMemo<ParcelScatterPlan[]>(
+    () =>
+      colony
+        ? [
+            {
+              origin: hubParcel.position,
+              terrain: colony.hub,
+              placements: scatterLayout(hubSlot.id, { hub: true }),
+            },
+            ...bases.map((base) => ({
+              origin: base.position,
+              terrain: colony.parcel,
+              placements: scatterLayout(projectKey(base.project)),
+            })),
+          ]
+        : [],
+    [colony, scatterKey],
+  );
   const lampSlots = useMemo(() => Array.from({ length: lampBudget }, (_, slot) => `lamp:${slot}`), []);
   // biome-ignore lint/correctness/useExhaustiveDependencies: Lamp placement follows layout and variant, not identity.
   const lampsWorld = useMemo<PooledLamp[]>(
-    () =>
-      bases.flatMap((base) =>
+    () => [
+      ...scatterPlans.flatMap((plan, planIndex) =>
+        plan.placements
+          .filter((placement) => placement.kind === "lantern")
+          .map((placement, index) => ({
+            key: `lantern:${planIndex}:${index}`,
+            position: [
+              plan.origin[0] + placement.x + lanternLampOffset[0],
+              plan.origin[1] + 4 + lanternLampOffset[1],
+              plan.origin[2] + placement.z + lanternLampOffset[2],
+            ] as Point3,
+          })),
+      ),
+      ...bases.flatMap((base) =>
         [
           ...(manifest.version === 3
             ? (manifest.colony?.parcelLightPositions ?? [])
@@ -145,7 +180,8 @@ export function ProofScene(props: Props) {
           ] as Point3,
         })),
       ),
-    [manifest, layoutKey, appearanceKey],
+    ],
+    [manifest, layoutKey, appearanceKey, scatterPlans],
   );
   // biome-ignore lint/correctness/useExhaustiveDependencies: New appearance should refresh the actual scene minimap.
   useEffect(() => {
@@ -231,6 +267,7 @@ export function ProofScene(props: Props) {
         );
       })}
       {colony && <ColonyGround bases={bases} hub={colony.hub} span={colony.span} end={colony.end} />}
+      {colony?.kit && <ParcelScatter kit={colony.kit} plans={scatterPlans} />}
       {lampSlots.map((slot, index) => (
         <pointLight
           key={slot}

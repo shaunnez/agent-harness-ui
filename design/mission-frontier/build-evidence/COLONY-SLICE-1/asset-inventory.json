@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-16T09:28:47.291Z",
+  "capturedAt": "2026-09-16T09:54:10.542Z",
   "assets": [
     {
       "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.glb",
@@ -149,22 +149,32 @@
     },
     {
       "source": "design/mission-frontier/assets/staging/colony-hq-v1/terrain/parcel-hub.glb",
-      "filename": "parcel-hub.b7034821f9a7.glb",
-      "sha256": "b7034821f9a7095213b6747a113ec9e151fc8c6342f5243ebcea748aceb75798",
-      "bytes": 4182108,
-      "meshes": 120,
-      "materials": 11,
-      "textures": 6,
+      "filename": "parcel-hub.8849332f217e.glb",
+      "sha256": "8849332f217ee377dcd85caf01991fe13104786a03b9a8223e597aaa6556c896",
+      "bytes": 2562888,
+      "meshes": 114,
+      "materials": 10,
+      "textures": 5,
       "animations": []
     },
     {
       "source": "design/mission-frontier/assets/staging/colony-hq-v1/terrain/parcel-a.glb",
-      "filename": "parcel-a.60b73e1b6956.glb",
-      "sha256": "60b73e1b69565220cd60e985e2ca4e2213639e7eb3d2cabe4017b60dc3dd813a",
-      "bytes": 4133044,
-      "meshes": 109,
-      "materials": 11,
-      "textures": 6,
+      "filename": "parcel-a.0537f0988e5e.glb",
+      "sha256": "0537f0988e5ec06e22e6570c4504830a17c842d77770173ec0ea1eb3b0e25f7d",
+      "bytes": 2514712,
+      "meshes": 103,
+      "materials": 10,
+      "textures": 5,
+      "animations": []
+    },
+    {
+      "source": "design/mission-frontier/assets/staging/colony-hq-v1/terrain/scatter-kit.glb",
+      "filename": "scatter-kit.8d5ecbfe8cc6.glb",
+      "sha256": "8d5ecbfe8cc6de6db22e5ac33a0b8737ac4e884871dfa3f609b5a98836668b27",
+      "bytes": 2582416,
+      "meshes": 36,
+      "materials": 13,
+      "textures": 2,
       "animations": []
     },
     {

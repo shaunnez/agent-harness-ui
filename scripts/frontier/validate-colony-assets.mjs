@@ -14,6 +14,7 @@ const requiredGroups = {
   crown: ["MF_Roof"],
   span: ["MF_Bridge"],
   end: ["MF_Bridge_End"],
+  scatter: ["MF_Tree_Purple_A", "MF_Boulder_A", "MF_Lantern", "MF_Vehicle_Rover"],
   parcel: [
     "MF_Terrain",
     "MF_Planting",
@@ -276,10 +277,13 @@ export function validateColonyGlb(bytes, { kind, contract, expectedSha256 }) {
     }
   }
   if (!triangles) throw new Error("Colony asset has no triangles");
+  // The scatter kit budget (slice 2A decision) is not in the frozen contract: 3 MB, 30k triangles.
   const budget =
-    contract.budgets[
-      { shell: "hqShell", crown: "crown", parcel: "parcel", span: "bridgeSpan", end: "bridgeSpan" }[kind]
-    ];
+    kind === "scatter"
+      ? { triangles: 30000, bytes: 3000000 }
+      : contract.budgets[
+          { shell: "hqShell", crown: "crown", parcel: "parcel", span: "bridgeSpan", end: "bridgeSpan" }[kind]
+        ];
   if (triangles > budget.triangles || bytes.length > budget.bytes)
     throw new Error(`Colony ${kind} exceeds triangle or byte budget`);
   if (kind === "shell") {
