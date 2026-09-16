@@ -1,6 +1,6 @@
 {
  "name": "Mission Frontier colony + hexagonal HQ input contract",
- "version": "1.0.0-frozen",
+ "version": "1.0.1-frozen",
  "frozenOn": "2026-09-16",
  "status": "FROZEN. Changes go through the lead, are versioned here, and both workstreams re-read this file before continuing.",
  "authority": "design/mission-frontier/NEXT-PHASE-HANDOFF.md (accepted layout brief) and design/mission-frontier/colony/*.md",
@@ -246,20 +246,20 @@
    {
     "edge": "E30",
     "phi": 30,
-    "worldAngleDeg": -67.03,
+    "worldAngleDeg": -66.869898,
     "abutmentFace": [
-     15.81,
-     -37.29
+     15.91,
+     -37.24
     ],
     "padCentre": [
-     14.24,
-     -33.61
+     14.34,
+     -33.57
     ]
    },
    {
     "edge": "E90",
     "phi": 90,
-    "worldAngleDeg": -126.87,
+    "worldAngleDeg": -126.869898,
     "abutmentFace": [
      -24.3,
      -32.4
@@ -272,33 +272,33 @@
    {
     "edge": "E150",
     "phi": 150,
-    "worldAngleDeg": 173.09,
+    "worldAngleDeg": 173.130102,
     "abutmentFace": [
      -40.21,
-     4.87
+     4.84
     ],
     "padCentre": [
-     -36.23,
-     4.39
+     -36.24,
+     4.37
     ]
    },
    {
     "edge": "E210",
     "phi": 210,
-    "worldAngleDeg": 112.97,
+    "worldAngleDeg": 113.130102,
     "abutmentFace": [
-     -15.81,
-     37.29
+     -15.91,
+     37.24
     ],
     "padCentre": [
-     -14.24,
-     33.61
+     -14.34,
+     33.57
     ]
    },
    {
     "edge": "E270",
     "phi": 270,
-    "worldAngleDeg": 53.13,
+    "worldAngleDeg": 53.130102,
     "abutmentFace": [
      24.3,
      32.4
@@ -311,14 +311,14 @@
    {
     "edge": "E330",
     "phi": 330,
-    "worldAngleDeg": -6.91,
+    "worldAngleDeg": -6.869898,
     "abutmentFace": [
      40.21,
-     -4.87
+     -4.84
     ],
     "padCentre": [
-     36.23,
-     -4.39
+     36.24,
+     -4.37
     ]
    }
   ],
@@ -1717,7 +1717,7 @@
     "fromRadius": 32.5,
     "toRadius": 32.5,
     "width": 5.0,
-    "worldAngleDeg": -67.03
+    "worldAngleDeg": -66.869898
    },
    {
     "edge": "E90",
@@ -1725,7 +1725,7 @@
     "fromRadius": 32.5,
     "toRadius": 32.5,
     "width": 5.0,
-    "worldAngleDeg": -126.87
+    "worldAngleDeg": -126.869898
    },
    {
     "edge": "E150",
@@ -1733,7 +1733,7 @@
     "fromRadius": 32.5,
     "toRadius": 32.5,
     "width": 5.0,
-    "worldAngleDeg": 173.09
+    "worldAngleDeg": 173.130102
    },
    {
     "edge": "E210",
@@ -1741,7 +1741,7 @@
     "fromRadius": 32.5,
     "toRadius": 32.5,
     "width": 5.0,
-    "worldAngleDeg": 112.97
+    "worldAngleDeg": 113.130102
    },
    {
     "edge": "E270",
@@ -1749,7 +1749,7 @@
     "fromRadius": 32.5,
     "toRadius": 32.5,
     "width": 5.0,
-    "worldAngleDeg": 53.13
+    "worldAngleDeg": 53.130102
    },
    {
     "edge": "E330",
@@ -1757,7 +1757,7 @@
     "fromRadius": 32.5,
     "toRadius": 32.5,
     "width": 5.0,
-    "worldAngleDeg": -6.91
+    "worldAngleDeg": -6.869898
    }
   ],
   "pads": [
@@ -1767,7 +1767,7 @@
     "fromRadius": 32.5,
     "toRadius": 40.5,
     "width": 6.0,
-    "worldAngleDeg": -67.03
+    "worldAngleDeg": -66.869898
    },
    {
     "edge": "E90",
@@ -1775,7 +1775,7 @@
     "fromRadius": 32.5,
     "toRadius": 40.5,
     "width": 6.0,
-    "worldAngleDeg": -126.87
+    "worldAngleDeg": -126.869898
    },
    {
     "edge": "E150",
@@ -1783,7 +1783,7 @@
     "fromRadius": 32.5,
     "toRadius": 40.5,
     "width": 6.0,
-    "worldAngleDeg": 173.09
+    "worldAngleDeg": 173.130102
    },
    {
     "edge": "E210",
@@ -1791,7 +1791,7 @@
     "fromRadius": 32.5,
     "toRadius": 40.5,
     "width": 6.0,
-    "worldAngleDeg": 112.97
+    "worldAngleDeg": 113.130102
    },
    {
     "edge": "E270",
@@ -1799,7 +1799,7 @@
     "fromRadius": 32.5,
     "toRadius": 40.5,
     "width": 6.0,
-    "worldAngleDeg": 53.13
+    "worldAngleDeg": 53.130102
    },
    {
     "edge": "E330",
@@ -1807,7 +1807,7 @@
     "fromRadius": 32.5,
     "toRadius": 40.5,
     "width": 6.0,
-    "worldAngleDeg": -6.91
+    "worldAngleDeg": -6.869898
    }
   ],
   "bridge_deck": {

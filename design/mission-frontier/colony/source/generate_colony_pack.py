@@ -40,7 +40,11 @@ def colony_to_world(phi_deg, r):
     c, s = math.cos(math.radians(phi_deg)), math.sin(math.radians(phi_deg))
     return (round(r * (c * U[0] + s * V[0]), 2), round(r * (c * U[1] + s * V[1]), 2))
 def world_angle_of_phi(phi):   # world XZ angle (x=cos, z=sin) of colony direction phi
-    x, z = colony_to_world(phi, 1.0); return round(math.degrees(math.atan2(z, x)), 2)
+    # Derive the unit direction before rounding positions. Rounding at radius 1
+    # introduced up to 0.30 m transverse error across a 108 m colony edge.
+    c, s = math.cos(math.radians(phi)), math.sin(math.radians(phi))
+    x, z = c * U[0] + s * V[0], c * U[1] + s * V[1]
+    return round(math.degrees(math.atan2(z, x)), 6)
 def sector_point(theta, radial, tangential):
     n = rot(theta, 1.0); t = (-n[1], n[0])
     return (round(radial * n[0] + tangential * t[0], 2), round(radial * n[1] + tangential * t[1], 2))
@@ -135,7 +139,7 @@ movement = {
 
 contract = {
   "name": "Mission Frontier colony + hexagonal HQ input contract",
-  "version": "1.0.0-frozen",
+  "version": "1.0.1-frozen",
   "frozenOn": "2026-09-16",
   "status": "FROZEN. Changes go through the lead, are versioned here, and both workstreams re-read this file before continuing.",
   "authority": "design/mission-frontier/NEXT-PHASE-HANDOFF.md (accepted layout brief) and design/mission-frontier/colony/*.md",
