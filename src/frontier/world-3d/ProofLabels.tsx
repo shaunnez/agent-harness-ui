@@ -1,6 +1,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { type Intersection, Matrix4, type Object3D, Raycaster, Vector2, Vector3 } from "three";
+import { baseLabelAnchor } from "./colony";
 import { separateLabels } from "./labels";
 import { type ProjectBase, translated } from "./layout";
 import { type ProofManifest, proofWorkerHeight } from "./model";
@@ -60,7 +61,7 @@ export function ProofLabels({
           label.hidden = true;
           continue;
         }
-        world.set(...translated(manifest.sockets.base_label ?? [0, 16, -2], base.position));
+        world.set(...translated(baseLabelAnchor, base.position));
       } else {
         const actor = actors.get(id);
         if (!actor) {

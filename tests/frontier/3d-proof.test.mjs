@@ -11,6 +11,7 @@ import {
   readAppearances,
   saveAppearance,
 } from "../../src/frontier/world-3d/appearance.ts";
+import { colonyCameras } from "../../src/frontier/world-3d/colony.ts";
 import { separateLabels } from "../../src/frontier/world-3d/labels.ts";
 import { projectBases, translated, viewCamera } from "../../src/frontier/world-3d/layout.ts";
 import {
@@ -252,8 +253,8 @@ test("one base per project has separate routes and stable placement under refres
       bases,
     );
     assert.ok(cutaway.length > 0 && cutaway.every((worker) => worker.projectId === base.project.id));
-    const camera = viewCamera(bases, manifest, base.project.id, true);
-    assert.deepEqual(camera.target, translated(manifest.cameras.cutaway.target, base.position));
+    const camera = viewCamera(bases, base.project.id, true);
+    assert.deepEqual(camera.target, translated(colonyCameras.cutaway.target, base.position));
   }
   const archived = { ...fixtureProjects[0], archivedAt: "2026-09-16" };
   assert.equal(projectBases([archived]).length, 0);
