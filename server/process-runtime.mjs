@@ -82,6 +82,7 @@ export function runProcess(command, args, options = {}) {
       resolveClose = resolveClosePromise;
     });
 
+    options.onSpawn?.(child);
     if (options.input !== undefined) child.stdin.end(options.input);
 
     const finish = (callback, value) => {
