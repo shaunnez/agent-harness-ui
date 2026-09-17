@@ -11,6 +11,7 @@ import { createChangelogRoutes } from "./changelog-routes.mjs";
 import { createCompanionChatRoutes } from "./companion-chat.mjs";
 import { createRetainedEvidenceRoutes } from "./retained-evidence-routes.mjs";
 import { createProjectRoutes } from "./project-routes.mjs";
+import { createResearchRoutes } from "./research/research-routes.mjs";
 import { createRuntimeSettingsRoutes } from "./runtime-settings-routes.mjs";
 import { createTaskCreationRoutes } from "./task-creation-routes.mjs";
 import { createTaskActionRoutes } from "./task-action-routes.mjs";
@@ -195,6 +196,7 @@ export function createApiServer({
   reportHttpMetric = () => {},
   repositoryAuthorityService = orchestrator?._repositoryAuthority ?? new RepositoryAuthorityService(),
   runCompanionAgent,
+  researchService = null,
 }) {
   // Reads resolve each entry's recorded absolute path, so this root only matters for
   // `prepare`, which the API never calls. It still uses the shared default rather than a
@@ -261,6 +263,11 @@ export function createApiServer({
     repositoryAuthorityService,
   });
   const taskActionRoutes = createTaskActionRoutes({ store, orchestrator, send, readJson });
+  // The research plane is optional: without a service the paths simply do not exist, which is
+  // what keeps the JSON-store companion and the existing API tests unaffected by it.
+  const researchRoutes = researchService
+    ? createResearchRoutes({ researchService, send, readJson })
+    : () => false;
   const companionChatRoutes = createCompanionChatRoutes({
     store,
     send,
@@ -298,6 +305,7 @@ export function createApiServer({
       if (await taskLifecycleRoutes(request, response, url)) return;
       if (await taskActionRoutes(request, response, url)) return;
       if (await companionChatRoutes(request, response, url)) return;
+      if (await researchRoutes(request, response, url)) return;
       send(response, 404, { error: "Not found." });
     } catch (error) {
       sendError(response, error);
