@@ -17,17 +17,17 @@ test("a live Deep Agents run against the real Anthropic model completes with a r
   await withDeepAgentsRuntime(
     async ({ runtime }) => {
       const request = testRequest("RSCH-DA-LIVE", {
-        objective: "In one sentence, state what a checksum is used for.",
-        budget: { maxRuntimeMs: 60_000, maxModelCalls: 8 },
+        objective: "Explain the main factors that affect the installed cost of commercial waterproofing membranes in New Zealand.",
+        budget: { maxRuntimeMs: 200_000, maxModelCalls: 30 },
       });
       await runtime.start(request);
-      const terminal = await waitForTerminal(runtime, request.id, 60_000);
+      const terminal = await waitForTerminal(runtime, request.id, 200_000);
       assert.equal(terminal.status, "completed");
       assert.ok(terminal.usage.modelCalls > 0);
       assert.ok(terminal.usage.inputTokens > 0, "a real provider reports real token usage");
 
       const result = await runtime.result(request.id);
-      assert.equal(result.findings.length, 1);
+      assert.ok(result.findings.length >= 1, "a real research objective should produce at least one finding");
       assert.ok(result.summary);
       const [byModel] = Object.values(result.usage.byModel ?? {});
       assert.equal(

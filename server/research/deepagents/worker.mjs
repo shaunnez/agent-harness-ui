@@ -20,6 +20,7 @@ import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 import { ChatOpenAI } from "@langchain/openai";
 import { createDeepAgent, createSubAgentMiddleware, StateBackend } from "deepagents";
 import { modelCallLimitMiddleware, tool, toolCallLimitMiddleware } from "langchain";
+import { graphRecursionLimitForBudget } from "../../../src/research-budget-policy.ts";
 import { encodeWorkerMessage } from "./event-protocol.mjs";
 
 const startedAtMs = Date.now();
@@ -336,7 +337,7 @@ async function main() {
   try {
     await agent.invoke(
       { messages: [{ role: "user", content: buildPrompt(config) }] },
-      { ...threadConfig, recursionLimit: 25, signal, durability: "sync" },
+      { ...threadConfig, recursionLimit: graphRecursionLimitForBudget(config.budget), signal, durability: "sync" },
     );
   } catch (error) {
     errorInfo = classifyError(error, { cancelled });
