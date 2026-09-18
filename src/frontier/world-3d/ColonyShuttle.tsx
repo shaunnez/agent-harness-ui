@@ -18,6 +18,13 @@ import { shuttleOffset, shuttleYaw } from "./shuttle-placement";
  * reads task or run state: the shuttle and its pad are scenery, never status.
  */
 const pad = colonyContract.terrain.landing;
+/**
+ * The deck is authored with its top face at y=0, which put it exactly coplanar with the terrain's
+ * flat pad level. Coplanar surfaces z-fight, and the further the camera pulls back the coarser the
+ * depth buffer gets there, so the pad flickered when the world view zoomed out. Seven centimetres of
+ * lift separates them at every distance; the kerb below stays buried in the ground.
+ */
+const PAD_LIFT = 0.07;
 /** Practical lamps the pad beacons imply, kept to two so the scene's light budget is unchanged. */
 const LAMPS: { position: Point3; intensity: number; distance: number }[] = [
   { position: [6.5, 3.2, -5.5], intensity: 26, distance: 26 },
@@ -52,7 +59,7 @@ export function ColonyShuttle({ model, origin }: { model: Object3D; origin: Poin
       dress(body, true);
       root.add(body);
     }
-    root.position.set(origin[0], origin[1] + pad.padTop, origin[2]);
+    root.position.set(origin[0], origin[1] + pad.padTop + PAD_LIFT, origin[2]);
     return root;
   }, [model, origin]);
   useEffect(
@@ -75,7 +82,7 @@ export function ColonyShuttle({ model, origin }: { model: Object3D; origin: Poin
           decay={2}
           position={[
             origin[0] + lamp.position[0],
-            origin[1] + pad.padTop + lamp.position[1],
+            origin[1] + pad.padTop + PAD_LIFT + lamp.position[1],
             origin[2] + lamp.position[2],
           ]}
         />

@@ -188,3 +188,45 @@ oversized hull. At true size it is visible on the terrace but small, as a 18 m o
 that framing. Probes were reverted; typecheck, lint, format and 155 Frontier tests pass.
 
 Texture residency and the production performance gate remain unmeasured.
+
+---
+
+# Slice 4 — three water and pad defects
+
+## Waterfall opacity seam
+
+The curtain is sampled down the cliff radial, and each sample was clamped with `y = min(y, last)`.
+Where the face juts outward, `face + 0.28` rose above the previous sample, so `y` held flat and the
+strip folded into a horizontal sheet part way down. The fall material is `DoubleSide` with
+`depthWrite: false`, so that sheet blended against itself and read as the hard-edged opacity step in
+the review capture.
+
+Each sample now drops by at least 0.22 m, floored at sea level, with the sample count raised from 10
+to 14 so a tall face still resolves smoothly. The curtain can no longer fold.
+
+## Pool perched on rock
+
+Two causes, both fixed:
+
+- The spring took the **highest** of seven candidate points, which put a flat disc of water on top of
+  an outcrop. It now takes the third-highest of nine: still a source above the run, on ground that
+  sits rather than crowns.
+- The second pool sat at 55% along the run. It now sits at the head of the fall, set back by its own
+  radius plus 0.6 m so the disc stays on land behind the edge rather than overhanging the face. The
+  stream visibly gathers before going over.
+
+## Landing pad flicker on zoom out
+
+The deck is authored with its top face at y=0 and was placed at exactly `terrain.landing.padTop`,
+so deck and terrain were coplanar. Coplanar surfaces z-fight, and depth precision coarsens with
+distance, which is why it only showed when the world view pulled back. The pad group now sits 7 cm
+above `padTop`; the kerb below stays buried in the ground, and the shuttle rides with it.
+
+## Not done
+
+The reeds, grass and scrub in the review captures are still the procedural pieces. Scrub could take
+`tree_04_coastal_shrub_small_tree`, but there is no scanned grass or reed in `meshy_output` at all,
+so that set cannot be finished from what exists today. Left for the next pass along with the four
+remaining hero props and two unused crystal scans.
+
+Typecheck, lint, format pass; 155 Frontier tests pass.

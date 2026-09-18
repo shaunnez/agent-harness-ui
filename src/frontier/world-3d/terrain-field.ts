@@ -269,22 +269,21 @@ function buildWaterFeature(profile: ParcelProfile, bandIndex: number, random: ()
   const between = (low: number, high: number) => low + random() * (high - low);
   const band = waterRules.bands[bandIndex] ?? [133, 153];
   const [b0, b1] = band;
-  // The spring sits on the highest ground the band offers (an outcrop flank when there is one), so
-  // the stream has somewhere to fall from; the fall is at the far side of the band for a long run.
-  let springAngle = between(b0 + 3, b1 - 3);
-  let springRadial = waterRules.springRadial;
-  let best = Number.NEGATIVE_INFINITY;
-  for (let i = 0; i < 7; i++) {
+  // The spring needs high ground to fall from, but taking the highest sample outright perched the
+  // pool on top of an outcrop, where a flat disc of water reads as a puddle balanced on a boulder.
+  // Take the upper-middle of the candidates instead: still a source above the run, on ground that
+  // sits rather than crowns.
+  const candidates: { angle: number; radial: number; ground: number }[] = [];
+  for (let i = 0; i < 9; i++) {
     const angle = between(b0 + 3, b1 - 3);
     const radial = between(waterRules.springRadial - 0.6, waterRules.springRadial + 2.4);
     const point = polarPoint(radial, angle);
-    const ground = coreLand(profile, point[0], point[1]).land;
-    if (ground > best) {
-      best = ground;
-      springAngle = angle;
-      springRadial = radial;
-    }
+    candidates.push({ angle, radial, ground: coreLand(profile, point[0], point[1]).land });
   }
+  candidates.sort((p, q) => q.ground - p.ground);
+  const chosenSpring = candidates[Math.min(2, candidates.length - 1)] ?? candidates[0];
+  const springAngle = chosenSpring?.angle ?? between(b0 + 3, b1 - 3);
+  const springRadial = chosenSpring?.radial ?? waterRules.springRadial;
   const toward = springAngle - b0 < b1 - springAngle ? 1 : -1;
   const fallAngle = Math.min(b1 - 3, Math.max(b0 + 3, springAngle + toward * between(12, 22)));
   const lipRadius = coastRadius(profile, fallAngle) - 0.6;
@@ -326,8 +325,6 @@ function buildWaterFeature(profile: ParcelProfile, bandIndex: number, random: ()
     current.water = Math.min(previous.water, current.water);
   }
   const first = path[0] as WaterPath;
-  const midIndex = Math.round(samples * 0.55);
-  const mid = path[midIndex] as WaterPath;
   const pools: WaterPool[] = [
     {
       x: first.x,
@@ -337,19 +334,31 @@ function buildWaterFeature(profile: ParcelProfile, bandIndex: number, random: ()
       water: first.water,
     },
   ];
-  // A second pool only where the run is long enough for the two cuts not to merge.
+  const lip = path[samples] as WaterPath;
+  // The second pool sits at the head of the fall rather than half way down the run, so the stream
+  // visibly gathers before it goes over the lip. Set back by its own radius so the disc stays on the
+  // land behind the edge instead of overhanging the face.
+  const lipDistance = Math.hypot(lip.x, lip.z);
+  const setBack = waterRules.poolRadius[1] + 0.6;
+  const lipPool =
+    lipDistance > 0
+      ? {
+          x: (lip.x / lipDistance) * (lipDistance - setBack),
+          z: (lip.z / lipDistance) * (lipDistance - setBack),
+        }
+      : { x: lip.x, z: lip.z };
+  // Only where the run is long enough for the two cuts not to merge.
   if (
-    Math.hypot(mid.x - first.x, mid.z - first.z) >
+    Math.hypot(lipPool.x - first.x, lipPool.z - first.z) >
     waterRules.poolRadius[0] + waterRules.poolRadius[1] + 1.8
   )
     pools.push({
-      x: mid.x,
-      z: mid.z,
+      x: lipPool.x,
+      z: lipPool.z,
       radius: waterRules.poolRadius[1],
-      bed: mid.bed - ((waterRules.poolDepth[1] ?? 0.9) - waterRules.channelDepth),
-      water: mid.water,
+      bed: lip.bed - ((waterRules.poolDepth[1] ?? 0.9) - waterRules.channelDepth),
+      water: lip.water,
     });
-  const lip = path[samples] as WaterPath;
   const margin = waterRules.halfWidth + 2.2;
   const xs = [...path.map((p) => p.x), ...pools.map((p) => p.x)];
   const zs = [...path.map((p) => p.z), ...pools.map((p) => p.z)];
