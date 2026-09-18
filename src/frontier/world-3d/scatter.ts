@@ -3,24 +3,13 @@ import { shuttleKeepOut } from "./shuttle-placement.ts";
 
 /**
  * Seeded parcel scatter for Contract 2.0 land (environment pass). Every project gets its own
- * arrangement of purple trees, scrub, grass, reeds, scanned cliff pieces, rocks, crystal clusters,
+ * arrangement of blossom trees, scanned cliff pieces, rocks, crystal clusters,
  * lantern posts and parked vehicles from one shared kit, placed on its rocky parcel from a hash of the
  * project key so the layout is stable across reloads and different for every neighbour. The ground is
  * described to the layout, not baked into it: coast radius per angle, the flat radius, a height/slope
  * sampler, the stream and the shelf, all parcel-local. Nothing here reads task or run state.
  */
-export type ScatterKind =
-  | "tree"
-  | "scrub"
-  | "grass"
-  | "reed"
-  | "cliff"
-  | "rock"
-  | "boulder"
-  | "shore"
-  | "crystal"
-  | "lantern"
-  | "vehicle";
+export type ScatterKind = "tree" | "cliff" | "rock" | "boulder" | "shore" | "crystal" | "lantern" | "vehicle";
 export interface ScatterPlacement {
   kind: ScatterKind;
   /** Kit root name, e.g. `MF_Tree_Purple_A`. */
@@ -65,22 +54,22 @@ export const treeItems = [
   "MF_Tree_Purple_D",
 ] as const;
 export const bareTreeItem = "MF_Tree_Bare_A";
-export const scrubItems = ["MF_Scrub_Purple_A", "MF_Scrub_Purple_B", "MF_Scrub_Olive_A"] as const;
-export const grassItems = ["MF_Grass_A", "MF_Grass_B"] as const;
-export const reedItems = ["MF_Reed_A", "MF_Reed_B"] as const;
 export const cliffItems = ["MF_Cliff_A", "MF_Cliff_B", "MF_Cliff_C"] as const;
 export const largeRockItems = ["MF_Rock_Large_A", "MF_Rock_Large_B"] as const;
 export const boulderItems = ["MF_Boulder_A", "MF_Boulder_B", "MF_Boulder_C"] as const;
 export const shoreRockItems = ["MF_Rock_Shore_A", "MF_Rock_Shore_B", "MF_Rock_Shore_C"] as const;
-export const crystalItems = ["MF_Crystal_A", "MF_Crystal_B", "MF_Crystal_C"] as const;
+export const crystalItems = [
+  "MF_Crystal_A",
+  "MF_Crystal_B",
+  "MF_Crystal_C",
+  "MF_Crystal_D",
+  "MF_Crystal_E",
+] as const;
 export const lanternItem = "MF_Lantern";
 export const vehicleItems = ["MF_Vehicle_Rover", "MF_Vehicle_Cart"] as const;
 export const scatterItems = [
   ...treeItems,
   bareTreeItem,
-  ...scrubItems,
-  ...grassItems,
-  ...reedItems,
   ...cliffItems,
   ...largeRockItems,
   ...boulderItems,
@@ -124,7 +113,7 @@ export const scatterRules = {
   shoreEdgeClearanceDeg: 16,
   /** Crystal clusters per project parcel. */
   crystals: [2, 4] as [number, number],
-  /** Nothing but reeds within this distance of the stream or its pools. */
+  /** Nothing within this distance of the stream or its pools. */
   waterClearance: 2.5,
 };
 
@@ -330,78 +319,9 @@ export function scatterLayout(key: string, ground: ScatterGround): ScatterPlacem
     place("shore", pick(shoreRockItems), x, z, random() * Math.PI * 2, between(0.8, 1.6));
     placed++;
   }
-  // Scrub: low bushes near the copses and rocks, never in the front arc.
-  const scrub = Math.round(between(ground.hub ? 3 : 6, ground.hub ? 4 : 10));
-  for (let attempt = 0, placed = 0; attempt < scrub * 10 && placed < scrub; attempt++) {
-    const angle = between(0, 360);
-    if (!ground.hub && inFrontArc(angle)) continue;
-    const [x, z] = polar(between(ground.flatRadius + 1.0, ground.coast(angle) - 1.5), angle);
-    if (corridorDistance(x, z, ground.flatRadius) < 3.5) continue;
-    if (waterDistance(water, x, z) < scatterRules.waterClearance) continue;
-    const at = ground.ground(x, z);
-    if (at.height < 3.2 || at.slope > 38) continue;
-    if (near(x, z, 1.3)) continue;
-    place("scrub", pick(scrubItems), x, z, random() * Math.PI * 2, between(0.8, 1.3));
-    placed++;
-  }
-  // Grass tufts anywhere on the shoulder ground, sparse.
-  const grass = Math.round(between(ground.hub ? 5 : 14, ground.hub ? 8 : 22));
-  for (let attempt = 0, placed = 0; attempt < grass * 6 && placed < grass; attempt++) {
-    const angle = between(0, 360);
-    const [x, z] = polar(between(ground.flatRadius + 0.8, ground.coast(angle) - 1.2), angle);
-    if (corridorDistance(x, z, ground.flatRadius) < 3.5) continue;
-    if (waterDistance(water, x, z) < 1.0) continue;
-    const at = ground.ground(x, z);
-    if (at.height < 3.4 || at.slope > 30) continue;
-    if (near(x, z, 0.9)) continue;
-    place("grass", pick(grassItems), x, z, random() * Math.PI * 2, between(0.8, 1.3));
-    placed++;
-  }
-  // Reeds at the pools, along the channel banks and on the wave-cut shelf.
-  if (water) {
-    for (const pool of water.pools) {
-      const count = Math.round(between(3, 5));
-      for (let attempt = 0, placed = 0; attempt < count * 6 && placed < count; attempt++) {
-        const angle = between(0, 360);
-        const [dx, dz] = polar(pool.radius + between(0.3, 1.0), angle);
-        const x = pool.x + dx,
-          z = pool.z + dz;
-        // The channel leaves the pool: no reeds in the water there.
-        if (waterDistance({ ...water, pools: [] }, x, z) < 0.3) continue;
-        if (near(x, z, 0.8)) continue;
-        const at = ground.ground(x, z);
-        if (at.slope > 50) continue;
-        place("reed", pick(reedItems), x, z, random() * Math.PI * 2, between(0.8, 1.2));
-        placed++;
-      }
-    }
-    for (let i = 2; i < water.path.length - 1; i += 3) {
-      const p = water.path[i] as { x: number; z: number };
-      const q = water.path[i + 1] as { x: number; z: number };
-      const length = Math.hypot(q.x - p.x, q.z - p.z) || 1;
-      const side = random() < 0.5 ? 1 : -1;
-      const offset = water.halfWidth + between(0.4, 0.9);
-      const x = p.x + (-(q.z - p.z) / length) * offset * side;
-      const z = p.z + ((q.x - p.x) / length) * offset * side;
-      if (Math.hypot(x, z) > ground.coast(angleOf(x, z)) - 1.5) continue;
-      if (near(x, z, 0.8)) continue;
-      place("reed", pick(reedItems), x, z, random() * Math.PI * 2, between(0.8, 1.15));
-    }
-  }
-  if (ground.shelf) {
-    const [s0, s1] = ground.shelf;
-    const count = Math.round(between(3, 5));
-    for (let attempt = 0, placed = 0; attempt < count * 8 && placed < count; attempt++) {
-      const angle = between(s0 + 3, s1 - 3);
-      const [x, z] = polar(between(ground.flatRadius + 5, ground.coast(angle) - 2), angle);
-      if (corridorDistance(x, z, ground.flatRadius) < 3.5) continue;
-      const at = ground.ground(x, z);
-      if (at.height < 1.2 || at.height > 3.2 || at.slope > 30) continue;
-      if (near(x, z, 1.0)) continue;
-      place("reed", pick(reedItems), x, z, random() * Math.PI * 2, between(0.9, 1.25));
-      placed++;
-    }
-  }
+  // Scrub, grass and reeds are gone from the kit: beside the scanned canopies and rock their
+  // flat-card geometry read as painted blobs, and there is no scanned grass or reed to replace them
+  // with. Ground dressing returns when those scans exist.
   // Crystal clusters, sparingly: at the cliff shoulder, beside a large rock, at the spring pool.
   if (!ground.hub) {
     const wanted = Math.round(between(scatterRules.crystals[0], scatterRules.crystals[1]));

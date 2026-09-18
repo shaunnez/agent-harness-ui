@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-18T22:56:28.294Z",
+  "capturedAt": "2026-09-18T23:40:41.796Z",
   "assets": [
     {
       "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.glb",
@@ -149,12 +149,12 @@
     },
     {
       "source": "design/mission-frontier/assets/staging/meshy-kit/producer/scatter-kit.glb",
-      "filename": "scatter-kit.e2bcf93d02c1.glb",
-      "sha256": "e2bcf93d02c16e32545b273e01ca6c478d22fb55120177e6a39aa795dcc43960",
-      "bytes": 4975480,
-      "meshes": 57,
-      "materials": 28,
-      "textures": 52,
+      "filename": "scatter-kit.081fb25b8d9a.glb",
+      "sha256": "081fb25b8d9ae99417dbac6ac02581d84b5d75cc4c035220b2dca1159cbaf93c",
+      "bytes": 5336648,
+      "meshes": 44,
+      "materials": 24,
+      "textures": 57,
       "animations": []
     },
     {

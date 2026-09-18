@@ -45,9 +45,21 @@ SUBSTITUTIONS = {
 }
 # Procedural pieces with no scanned replacement worth keeping: the remaining flat-card trees read as
 # blobs next to the scans, so they are dropped from the kit rather than left to be picked.
-# MF_Tree_Purple_E is dropped rather than filled: its slot height is 9 m and the only unused scan
-# is a coastal shrub, which stretches badly at that size.
-REMOVED = ['MF_Tree_Purple_E', 'MF_Tree_Purple_F', 'MF_Tree_Purple_G', 'MF_Tree_Olive_A']
+# Dropped outright, geometry and textures deleted from the kit rather than left unreferenced.
+# MF_Tree_Purple_E: its slot height is 9 m and the only unused tree scan is a coastal shrub, which
+# stretches badly at that size. The scrub, grass and reed cards read as painted blobs beside the
+# scanned canopies, and meshy_output has no scanned grass or reed to put in their place.
+REMOVED = [
+    'MF_Tree_Purple_E', 'MF_Tree_Purple_F', 'MF_Tree_Purple_G', 'MF_Tree_Olive_A',
+    'MF_Scrub_Purple_A', 'MF_Scrub_Purple_B', 'MF_Scrub_Olive_A',
+    'MF_Grass_A', 'MF_Grass_B',
+    'MF_Reed_A', 'MF_Reed_B',
+]
+# Slots with no v2 ancestor: a fresh root is created and the scan scaled to this height in metres.
+NEW_SLOTS = {
+    'MF_Crystal_D': ('crystal_01_large_cluster',  8000, 512, 2.6),
+    'MF_Crystal_E': ('crystal_02_embedded_vein',  7000, 512, 1.9),
+}
 BUDGET_BYTES = 6_000_000; BUDGET_TRIS = 90_000
 
 v2meta = json.loads((V2 / 'scatter-metadata.json').read_text())
@@ -90,8 +102,14 @@ for name in REMOVED:
         bpy.data.objects.remove(stale, do_unlink=True)
         print(f'DROPPED {name}')
 
+for slot in NEW_SLOTS:
+    fresh_root = bpy.data.objects.new(slot, None)
+    bpy.context.scene.collection.objects.link(fresh_root)
+    v2items[slot] = {'height': NEW_SLOTS[slot][3]}
+    print(f'CREATED {slot}')
+
 report = {}
-for slot, (asset, tris, px) in SUBSTITUTIONS.items():
+for slot, (asset, tris, px) in {**SUBSTITUTIONS, **{k: v[:3] for k, v in NEW_SLOTS.items()}}.items():
     src = MESHY / asset / f'{asset}.glb'
     assert src.exists(), src
     root = purge(slot)

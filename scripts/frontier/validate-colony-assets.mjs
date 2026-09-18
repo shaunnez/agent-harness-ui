@@ -30,18 +30,20 @@ const requiredGroups = {
     "MF_Lantern",
     "MF_Vehicle_Rover",
   ],
-  /** The Meshy substitution kit: the environment-pass item set, scanned bodies in the same slots. */
+  /**
+   * The Meshy substitution kit: scanned bodies in the environment-pass slots. Scrub, grass and reeds
+   * are deliberately absent — their flat-card geometry read as painted blobs beside the scans, and
+   * there is no scanned grass or reed to replace them with yet.
+   */
   scatter3: [
     "MF_Tree_Purple_A",
     "MF_Tree_Bare_A",
-    "MF_Scrub_Purple_A",
-    "MF_Grass_A",
-    "MF_Reed_A",
     "MF_Cliff_A",
     "MF_Rock_Large_A",
     "MF_Rock_Shore_A",
     "MF_Boulder_A",
     "MF_Crystal_A",
+    "MF_Crystal_D",
     "MF_Lantern",
     "MF_Vehicle_Rover",
   ],

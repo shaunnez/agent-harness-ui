@@ -1,8 +1,8 @@
 {
   "file": "scatter-kit.glb",
-  "sha256": "e2bcf93d02c16e32545b273e01ca6c478d22fb55120177e6a39aa795dcc43960",
-  "bytes": 4975480,
-  "images": 52,
+  "sha256": "081fb25b8d9ae99417dbac6ac02581d84b5d75cc4c035220b2dca1159cbaf93c",
+  "bytes": 5336648,
+  "images": 57,
   "items": {
     "MF_Boulder_A": {
       "footprintRadius": 1.632,
@@ -130,34 +130,6 @@
       ],
       "triangles": 7000
     },
-    "MF_Grass_A": {
-      "footprintRadius": 0.417,
-      "height": 0.609,
-      "size": [
-        0.758,
-        0.609,
-        0.834
-      ],
-      "anchor": "ground",
-      "meshes": [
-        "MF_Grass_A_blades"
-      ],
-      "triangles": 18
-    },
-    "MF_Grass_B": {
-      "footprintRadius": 0.652,
-      "height": 0.802,
-      "size": [
-        1.304,
-        0.802,
-        1.172
-      ],
-      "anchor": "ground",
-      "meshes": [
-        "MF_Grass_B_blades"
-      ],
-      "triangles": 24
-    },
     "MF_Lantern": {
       "footprintRadius": 0.21,
       "height": 2.76,
@@ -179,42 +151,6 @@
         2.72,
         0
       ]
-    },
-    "MF_Reed_A": {
-      "footprintRadius": 0.404,
-      "height": 1.54,
-      "size": [
-        0.807,
-        1.54,
-        0.743
-      ],
-      "anchor": "ground",
-      "meshes": [
-        "MF_Reed_A_blades",
-        "MF_Reed_A_head",
-        "MF_Reed_A_head.001",
-        "MF_Reed_A_head.002"
-      ],
-      "triangles": 74
-    },
-    "MF_Reed_B": {
-      "footprintRadius": 0.437,
-      "height": 2.21,
-      "size": [
-        0.873,
-        2.21,
-        0.841
-      ],
-      "anchor": "ground",
-      "meshes": [
-        "MF_Reed_B_blades",
-        "MF_Reed_B_head",
-        "MF_Reed_B_head.001",
-        "MF_Reed_B_head.002",
-        "MF_Reed_B_head.003",
-        "MF_Reed_B_head.004"
-      ],
-      "triangles": 120
     },
     "MF_Rock_Large_A": {
       "footprintRadius": 1.385,
@@ -285,48 +221,6 @@
         "MF_Rock_Shore_C_rock"
       ],
       "triangles": 20
-    },
-    "MF_Scrub_Olive_A": {
-      "footprintRadius": 0.981,
-      "height": 0.96,
-      "size": [
-        1.963,
-        0.96,
-        1.864
-      ],
-      "anchor": "ground",
-      "meshes": [
-        "MF_Scrub_Olive_A_leaves"
-      ],
-      "triangles": 531
-    },
-    "MF_Scrub_Purple_A": {
-      "footprintRadius": 1.169,
-      "height": 1.135,
-      "size": [
-        2.339,
-        1.135,
-        2.222
-      ],
-      "anchor": "ground",
-      "meshes": [
-        "MF_Scrub_Purple_A_leaves"
-      ],
-      "triangles": 531
-    },
-    "MF_Scrub_Purple_B": {
-      "footprintRadius": 1.539,
-      "height": 1.145,
-      "size": [
-        2.333,
-        1.145,
-        3.078
-      ],
-      "anchor": "ground",
-      "meshes": [
-        "MF_Scrub_Purple_B_leaves"
-      ],
-      "triangles": 531
     },
     "MF_Tree_Bare_A": {
       "footprintRadius": 4.769,
@@ -442,6 +336,34 @@
         "rover_wheel.005"
       ],
       "triangles": 384
+    },
+    "MF_Crystal_D": {
+      "footprintRadius": 1.503,
+      "height": 2.6,
+      "size": [
+        3.005,
+        2.6,
+        2.858
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Crystal_D_body"
+      ],
+      "triangles": 8000
+    },
+    "MF_Crystal_E": {
+      "footprintRadius": 1.225,
+      "height": 1.9,
+      "size": [
+        2.342,
+        1.9,
+        2.45
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Crystal_E_body"
+      ],
+      "triangles": 6999
     }
   },
   "budget": {
@@ -535,6 +457,18 @@
       "asset": "crystal_03_crystal_boulder",
       "triangles": 7000,
       "height": 3.582,
+      "texturePx": 512
+    },
+    "MF_Crystal_D": {
+      "asset": "crystal_01_large_cluster",
+      "triangles": 8000,
+      "height": 2.6,
+      "texturePx": 512
+    },
+    "MF_Crystal_E": {
+      "asset": "crystal_02_embedded_vein",
+      "triangles": 6999,
+      "height": 1.9,
       "texturePx": 512
     }
   },

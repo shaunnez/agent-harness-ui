@@ -153,7 +153,6 @@ test("cliff pieces hang from the lip clear of every bridge line and the fall; sh
 });
 
 test("vegetation and crystals are sparse, off the stream, and crystals never crowd a parcel", () => {
-  let reedsSeen = 0;
   for (const [index, project] of projects.entries()) {
     const ground = groundFor(slots[index]);
     const placements = layoutFor(project, index);
@@ -167,23 +166,17 @@ test("vegetation and crystals are sparse, off the stream, and crystals never cro
         Math.hypot(crystal.x, crystal.z) >= ground.flatRadius + 1.5,
         `${project.id} crystal on the plateau`,
       );
-    assert.ok(
-      placements.filter((p) => p.kind === "scrub").length <= 10 &&
-        placements.filter((p) => p.kind === "grass").length <= 22,
-      `${project.id} not overfilled`,
-    );
+    // Scrub, grass and reeds were dropped from the kit: flat-card geometry beside the scans, with no
+    // scanned replacement available. Nothing should place them any more.
+    for (const kind of ["scrub", "grass", "reed"])
+      assert.equal(placements.filter((p) => p.kind === kind).length, 0, `${project.id} still places ${kind}`);
     for (const p of placements)
-      if (["tree", "scrub", "boulder", "rock"].includes(p.kind))
+      if (["tree", "boulder", "rock"].includes(p.kind))
         assert.ok(
           waterDistance(ground.water, p.x, p.z) >= Math.min(scatterRules.waterClearance, 2.5) - 1e-9,
           `${project.id} ${p.kind} in the stream`,
         );
-    const reeds = placements.filter((p) => p.kind === "reed");
-    reedsSeen += reeds.length;
-    if (!ground.water && !ground.shelf) assert.equal(reeds.length, 0, `${project.id} reeds without water`);
-    if (ground.water) assert.ok(reeds.length >= 3, `${project.id} reeds at the pools`);
   }
-  assert.ok(reedsSeen > 0);
 });
 
 test("corridor distance measures from the spur centre lines only beyond the flat ground", () => {

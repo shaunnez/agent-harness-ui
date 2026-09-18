@@ -230,3 +230,47 @@ so that set cannot be finished from what exists today. Left for the next pass al
 remaining hero props and two unused crystal scans.
 
 Typecheck, lint, format pass; 155 Frontier tests pass.
+
+---
+
+# Slice 5 — old cards deleted, snow ground, remaining crystal scans
+
+## Deleted from the kit
+
+`MF_Scrub_Purple_A/B`, `MF_Scrub_Olive_A`, `MF_Grass_A/B` and `MF_Reed_A/B` are removed, along with
+the earlier `MF_Tree_Purple_E/F/G` and `MF_Tree_Olive_A`. Their geometry and textures are gone from
+the GLB rather than left unreferenced, and their placement rules are gone from `scatter.ts`, so
+nothing tries to position an item the kit no longer carries.
+
+There is no scanned grass or reed in `meshy_output`, so this set cannot be refilled from what exists
+today. Ground dressing returns when Shaun generates those scans.
+
+## Snow
+
+The terrain shader now lays snow over the existing ground blend. It keys on how squarely a surface
+faces the sky, so the flat shoulder reads as a clean white field while the cliff faces stay bare
+rock and the island keeps its relief. It thins over paving (spurs, pads, court apron) and stops
+short of the splash zone where spray would wash it away, with a low-frequency drift break and a
+sparkle term so it is not a flat white.
+
+This also resolves the review note about the world reading busy: the removed flat-card vegetation
+and the snow together leave the scanned trees, rock and crystals as the only ground detail.
+
+## Remaining crystal scans
+
+`crystal_01_large_cluster` and `crystal_02_embedded_vein` are added as `MF_Crystal_D` and
+`MF_Crystal_E`. These are the first slots with no v2 ancestor, so the builder creates fresh roots and
+scales each scan to a stated metre height rather than inheriting one. All five crystal slots are now
+scanned.
+
+| Measure | Slice 3 | Now |
+| --- | --- | --- |
+| Kit bytes | 4.74 MiB | 5.09 MiB |
+| Kit triangles | 182,775 | 195,945 |
+| Kit images | 52 | 57 |
+| Kit items | 29 | 24 |
+
+Still inside the raised 200,000 triangle / 64 texture budgets, and still under the 5.57 MiB v2 kit.
+
+Typecheck, lint, format pass; 155 Frontier tests pass. The vegetation test now asserts scrub, grass
+and reeds are never placed, rather than asserting they are.
