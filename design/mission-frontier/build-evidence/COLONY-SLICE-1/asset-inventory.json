@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-18T22:33:08.835Z",
+  "capturedAt": "2026-09-18T22:56:28.294Z",
   "assets": [
     {
       "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.glb",
@@ -149,21 +149,21 @@
     },
     {
       "source": "design/mission-frontier/assets/staging/meshy-kit/producer/scatter-kit.glb",
-      "filename": "scatter-kit.d4373aa02960.glb",
-      "sha256": "d4373aa02960a7f7ad2e6a99f5fa45751debe0de4f8ad01869e2e83bb9555ce9",
-      "bytes": 4191976,
-      "meshes": 81,
+      "filename": "scatter-kit.e2bcf93d02c1.glb",
+      "sha256": "e2bcf93d02c16e32545b273e01ca6c478d22fb55120177e6a39aa795dcc43960",
+      "bytes": 4975480,
+      "meshes": 57,
       "materials": 28,
-      "textures": 40,
+      "textures": 52,
       "animations": []
     },
     {
       "source": "design/mission-frontier/assets/staging/meshy-kit/producer/shuttle.glb",
-      "filename": "shuttle.6f176692e343.glb",
-      "sha256": "6f176692e343d29390b84e4869d0872b599e801ec99ff2bdeb774ad5065e49e8",
-      "bytes": 934340,
-      "meshes": 1,
-      "materials": 1,
+      "filename": "shuttle.0f334b8d4889.glb",
+      "sha256": "0f334b8d48893da74a57d29d18bd44b56840af4a314bd9d34b4a628b2a1dddc6",
+      "bytes": 998460,
+      "meshes": 30,
+      "materials": 6,
       "textures": 4,
       "animations": []
     },

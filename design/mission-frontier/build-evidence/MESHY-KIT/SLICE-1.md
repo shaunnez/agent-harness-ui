@@ -114,3 +114,77 @@ The shuttle is scenery. It reads no task or run state, and nothing about it enco
   at close range.
 - Texture residency still not re-estimated across both slices.
 - The formal production-build performance gate has not been re-run.
+
+---
+
+# Slice 3 — review response
+
+Seven items from Shaun's review of slices 1 and 2.
+
+| # | Item | Change |
+| --- | --- | --- |
+| 1 | Shuttle too small | 12 m → 18 m nose to tail |
+| 2 | Put it on a landing pad | Built one; there is no scanned pad in the Meshy set |
+| 3 | Parked too close to a service truck | Hub vehicles moved off the pad and held clear of the hull |
+| 4 | Shuttle needs lighting | Emissive pad beacons and strips, plus two warm point lights |
+| 5 | Old trees still present, clustered too tightly | Four flat-card slots dropped, two more replaced, spacing raised |
+| 6 | Crystals are poor | Three procedural crystals replaced with scans |
+| 7 | Robots too large in World | `workerViewScale.world` 2.5 → 2.0 |
+
+## The pad
+
+No scanned landing pad exists in `meshy_output`, so it is built in `build_shuttle.py` in the same
+deterministic Blender style as the rest of the colony kit: deck, graphite kerb, ochre ring and
+touchdown cross, eight beacon posts and eight edge strips. It ships as a second root (`MF_Pad`) in
+`shuttle.glb`, centred on the contract's `spaceport_pad`; the shuttle stands on it at an offset.
+
+Beacon and strip materials use the colony's existing `practical_` naming, and the renderer marks
+those `toneMapped = false` so they hold up at dusk. Two point lights carry the light the beacons
+imply; the scene's lamp pool is untouched.
+
+## Clustering
+
+The copse density had a real bug. Minimum trunk spacing was 1.6 m, which was fine for the old
+flat-card trees but not for scanned canopies spanning 5.3 m to 9.5 m — every cluster interlocked into
+a single mass. Spacing is now 4.0 m, cluster size drops from 5–12 to 3–7, and the spread widens from
+3–5.5 m to 4.5–7.5 m. Wider spacing rejects more candidate points, so the planting loop gets 16
+tries per tree instead of 8; without that, tight parcels stopped carrying a copse at all and
+`colony-scatter` caught it.
+
+## Trees dropped
+
+`MF_Tree_Purple_E`, `F`, `G` and `MF_Tree_Olive_A` are removed from the kit rather than refilled. E's
+slot height is 9 m and the only unused scan is a coastal shrub, which stretches badly at that size.
+Four scanned blossom silhouettes plus the bare evergreen now carry the planting.
+
+## Crystals
+
+`crystal.largeCluster.A`, `crystal_04_shard_formation` and `crystal_03_crystal_boulder` replace the
+86–174 triangle procedural shards. They deliberately do **not** use the `crystal_glow` material name:
+the runtime repaints anything with that name flat violet, which would discard the scan's own colour.
+They carry `crystal_scan_*` names with emission baked from their base colour instead.
+
+## Budgets raised
+
+On Shaun's approval. They live in `validate-colony-assets.mjs`, not `contract.json`: the contract is
+frozen and its sha256 is bound into the HQ producer receipt, so editing it to carry a budget breaks
+the guard that catches the contract drifting from the geometry it produced. Triangles 200,000;
+textures 64.
+
+| Measure | Slice 1 | Now |
+| --- | --- | --- |
+| Kit bytes | 4.00 MiB | 4.74 MiB |
+| Kit triangles | 157,306 | 182,775 |
+| Kit images | 40 | 52 |
+| Shuttle + pad | 0.89 MiB | 0.95 MiB |
+
+Still below the 5.57 MiB v2 kit.
+
+## Verification note
+
+The shuttle's absence in early World-view captures was my misreading, not a defect: a 4× probe showed
+its world bounds spanning 84 m across the terrace, and the pale mass I had read as bare pad was the
+oversized hull. At true size it is visible on the terrace but small, as a 18 m object should be at
+that framing. Probes were reverted; typecheck, lint, format and 155 Frontier tests pass.
+
+Texture residency and the production performance gate remain unmeasured.

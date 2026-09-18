@@ -1,4 +1,5 @@
 import { colonyEdges, parcelPlateauRadius } from "./colony.ts";
+import { shuttleKeepOut } from "./shuttle-placement.ts";
 
 /**
  * Seeded parcel scatter for Contract 2.0 land (environment pass). Every project gets its own
@@ -55,16 +56,14 @@ export interface ScatterGround {
   /** World angle range (deg) of the low wave-cut shelf, if any. */
   shelf?: [number, number] | null;
 }
+/** Four scanned blossom silhouettes. The flat-card E, F, G and olive trees were dropped from the kit
+ * when the scans landed: beside a scanned canopy they read as painted blobs rather than foliage. */
 export const treeItems = [
   "MF_Tree_Purple_A",
   "MF_Tree_Purple_B",
   "MF_Tree_Purple_C",
   "MF_Tree_Purple_D",
-  "MF_Tree_Purple_E",
-  "MF_Tree_Purple_F",
-  "MF_Tree_Purple_G",
 ] as const;
-export const oliveTreeItem = "MF_Tree_Olive_A";
 export const bareTreeItem = "MF_Tree_Bare_A";
 export const scrubItems = ["MF_Scrub_Purple_A", "MF_Scrub_Purple_B", "MF_Scrub_Olive_A"] as const;
 export const grassItems = ["MF_Grass_A", "MF_Grass_B"] as const;
@@ -78,7 +77,6 @@ export const lanternItem = "MF_Lantern";
 export const vehicleItems = ["MF_Vehicle_Rover", "MF_Vehicle_Cart"] as const;
 export const scatterItems = [
   ...treeItems,
-  oliveTreeItem,
   bareTreeItem,
   ...scrubItems,
   ...grassItems,
@@ -102,7 +100,10 @@ export const scatterRules = {
   corridorHalfWidth: 4.5,
   /** No trees in the front arc so the court and bay stay readable from the exterior camera. */
   frontArcDeg: [55, 125] as [number, number],
-  clusterSize: [5, 12] as [number, number],
+  clusterSize: [3, 7] as [number, number],
+  /** Trunk-to-trunk minimum. Scanned canopies span 5.3 m to 9.5 m across, so anything under about
+   * four metres interlocks them into one mass instead of reading as separate trees. */
+  treeSpacing: 4.0,
   /** Trees need ground, not rock face or splash shelf. */
   treeMinHeight: 3.2,
   treeMaxSlopeDeg: 32,
@@ -238,9 +239,10 @@ export function scatterLayout(key: string, ground: ScatterGround): ScatterPlacem
     const size = ground.hub
       ? Math.round(between(3, 5))
       : Math.round(between(scatterRules.clusterSize[0], scatterRules.clusterSize[1]));
-    const spread = between(3, 5.5);
+    const spread = between(4.5, 7.5);
     let planted = 0;
-    for (let attempt = 0; attempt < size * 8 && planted < size; attempt++) {
+    // Wider spacing rejects more candidates, so a tight parcel needs more tries to still carry a copse.
+    for (let attempt = 0; attempt < size * 16 && planted < size; attempt++) {
       const angle = random() * Math.PI * 2;
       const distance = Math.sqrt(random()) * spread;
       const x = centre[0] + Math.cos(angle) * distance;
@@ -254,19 +256,16 @@ export function scatterLayout(key: string, ground: ScatterGround): ScatterPlacem
       if (waterDistance(water, x, z) < scatterRules.waterClearance) continue;
       const at = ground.ground(x, z);
       if (at.height < scatterRules.treeMinHeight || at.slope > scatterRules.treeMaxSlopeDeg) continue;
-      if (near(x, z, 1.6, "tree")) continue;
-      // Mostly the four classic silhouettes; the tall, broad and seventh trees, olives and a bare
-      // trunk or two keep a copse from repeating itself.
+      if (near(x, z, scatterRules.treeSpacing, "tree")) continue;
+      // The four blossom silhouettes, with a bare trunk or two per parcel so a copse does not repeat.
       const roll = random();
       let item: string;
-      if (roll < 0.6) item = treeItems[Math.floor(random() * 4)] as string;
-      else if (roll < 0.82) item = treeItems[4 + Math.floor(random() * 3)] as string;
-      else if (roll < 0.93 || bare >= 2) item = oliveTreeItem;
+      if (roll < 0.88 || bare >= 2) item = treeItems[Math.floor(random() * treeItems.length)] as string;
       else {
         item = bareTreeItem;
         bare++;
       }
-      place("tree", item, x, z, random() * Math.PI * 2, between(0.8, 1.25));
+      place("tree", item, x, z, random() * Math.PI * 2, between(0.85, 1.1));
       planted++;
     }
   }
@@ -472,7 +471,10 @@ export function scatterLayout(key: string, ground: ScatterGround): ScatterPlacem
     if (ground.hub) {
       const angle = between(0, 360);
       if (ground.builtEdgeAngles.some((edge) => angularGap(angle, edge) < 25)) continue;
-      [x, z] = polar(ground.flatRadius - 2.5, angle);
+      // Beyond the pad, not on it: the hub's flat radius is the pad itself, and a service truck
+      // parked against an 18 m transport reads as a collision rather than a working apron.
+      [x, z] = polar(ground.flatRadius + 3.5, angle);
+      if (Math.hypot(x - shuttleKeepOut.x, z - shuttleKeepOut.z) < shuttleKeepOut.radius) continue;
     } else {
       const side = parked === 0 ? -1 : 1;
       x = side * between(8.2, 10.2);

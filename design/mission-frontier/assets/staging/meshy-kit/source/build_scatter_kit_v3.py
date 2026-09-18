@@ -29,6 +29,7 @@ SUBSTITUTIONS = {
     'MF_Tree_Purple_A':  ('tree.pinkCoastal.A',              20000, 512),
     'MF_Tree_Purple_B':  ('tree.purpleCoastal.A',            20000, 512),
     'MF_Tree_Purple_C':  ('tree_02_violet_blossom',          20000, 512),
+    'MF_Tree_Purple_D':  ('tree_01_pink_coastal_blossom',    20000, 512),
     'MF_Tree_Bare_A':    ('tree_03_wind_bent_evergreen',     16000, 512),
     'MF_Rock_Large_A':   ('rock.tallOutcrop.A',              10000, 512),
     'MF_Rock_Large_B':   ('rock_02_tall_rock_outcrop',       10000, 512),
@@ -36,7 +37,17 @@ SUBSTITUTIONS = {
     'MF_Cliff_A':        ('cliff.coastalLarge.A',            12000, 512),
     'MF_Cliff_B':        ('rock_04_undercut_arch_module',    12000, 512),
     'MF_Cliff_C':        ('rock_01_large_coastal_cliff',     12000, 512),
+    # Crystals keep their scanned colour: the runtime's `crystal_glow` override would repaint them
+    # flat violet, so these carry a different material name and their own baked emission instead.
+    'MF_Crystal_A':      ('crystal.largeCluster.A',           8000, 512),
+    'MF_Crystal_B':      ('crystal_04_shard_formation',       7000, 512),
+    'MF_Crystal_C':      ('crystal_03_crystal_boulder',       7000, 512),
 }
+# Procedural pieces with no scanned replacement worth keeping: the remaining flat-card trees read as
+# blobs next to the scans, so they are dropped from the kit rather than left to be picked.
+# MF_Tree_Purple_E is dropped rather than filled: its slot height is 9 m and the only unused scan
+# is a coastal shrub, which stretches badly at that size.
+REMOVED = ['MF_Tree_Purple_E', 'MF_Tree_Purple_F', 'MF_Tree_Purple_G', 'MF_Tree_Olive_A']
 BUDGET_BYTES = 6_000_000; BUDGET_TRIS = 90_000
 
 v2meta = json.loads((V2 / 'scatter-metadata.json').read_text())
@@ -70,6 +81,14 @@ def bounds(o):
     lo = Vector([min(p[i] for p in pts) for i in range(3)])
     hi = Vector([max(p[i] for p in pts) for i in range(3)])
     return lo, hi
+
+for name in REMOVED:
+    stale = bpy.data.objects.get(name)
+    if stale:
+        for child in list(stale.children_recursive):
+            bpy.data.objects.remove(child, do_unlink=True)
+        bpy.data.objects.remove(stale, do_unlink=True)
+        print(f'DROPPED {name}')
 
 report = {}
 for slot, (asset, tris, px) in SUBSTITUTIONS.items():
@@ -111,8 +130,23 @@ for slot, (asset, tris, px) in SUBSTITUTIONS.items():
     o.matrix_parent_inverse = root.matrix_world.inverted()
     # The runtime attaches its wet-rock shader to materials named rock_*, so rock-like slots opt in.
     mat = o.data.materials[0]
-    kind = 'tree' if 'Tree' in slot else 'rock'
-    mat.name = f'{kind}_meshy_{slot.lower()}' if kind == 'tree' else f'rock_meshy_{slot.lower()}'
+    if 'Crystal' in slot:
+        # Not `crystal_glow`: that name triggers the runtime's flat-violet repaint. Emission is baked
+        # from the scan's own base colour so the shards glow in their real hues at dusk.
+        mat.name = f'crystal_scan_{slot.lower()}'
+        nodes = mat.node_tree.nodes
+        principled = nodes.get('Principled BSDF')
+        base = next((n for n in nodes if n.type == 'TEX_IMAGE' and n.image
+                     and 'normal' not in n.image.name.lower()
+                     and 'metallic' not in n.image.name.lower()
+                     and 'rough' not in n.image.name.lower()), None)
+        if principled and base:
+            mat.node_tree.links.new(base.outputs['Color'], principled.inputs['Emission Color'])
+            principled.inputs['Emission Strength'].default_value = 0.55
+    elif 'Tree' in slot:
+        mat.name = f'tree_meshy_{slot.lower()}'
+    else:
+        mat.name = f'rock_meshy_{slot.lower()}'
     for im in list(bpy.data.images):
         if im.users == 0: continue
         if im.size[0] > px or im.size[1] > px:

@@ -58,9 +58,17 @@ const requiredGroups = {
  * per-vertex against contract sockets and so must stay readable.
  */
 const dracoInspectable = new Set(["scatter", "scatter2", "scatter3"]);
-/** Texture count ceiling by kind: one shared atlas set for authored kit pieces, per-piece PBR maps
- * for scanned ones, which cannot share a UV layout. */
-const textureCeiling = { scatter3: 48 };
+/**
+ * Texture count ceiling by kind: one shared atlas set for authored kit pieces, per-piece PBR maps for
+ * scanned ones, which cannot share a UV layout.
+ *
+ * The scanned budgets live here rather than in `contract.json` deliberately. The contract is frozen
+ * and its sha256 is bound into the HQ producer receipt, so editing it to carry a budget would break
+ * the guard that catches the contract drifting from the geometry it produced. Raised on Shaun's
+ * approval, 19 September 2026; the case is in build-evidence/MESHY-KIT.
+ */
+const textureCeiling = { scatter3: 64 };
+const scannedKitBudget = { triangles: 200000, bytes: 6000000 };
 const identityRoles = new Set(["identity_roof_inset", "identity_roof_ring", "identity_trim"]);
 const practicalRoles = new Set([
   "practical_warm_strip",
@@ -366,7 +374,7 @@ export function validateColonyGlb(bytes, { kind, contract, expectedSha256 }) {
       : kind === "scatter2"
         ? (contract.budgets.scatterKit ?? { triangles: 90000, bytes: 6000000 })
         : kind === "scatter3"
-          ? (contract.budgets.scatterKitScanned ?? { triangles: 180000, bytes: 6000000 })
+          ? (contract.budgets.scatterKitScanned ?? scannedKitBudget)
           : contract.budgets[
               { shell: "hqShell", crown: "crown", parcel: "parcel", span: "bridgeSpan", end: "bridgeSpan" }[
                 kind

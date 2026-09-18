@@ -1,23 +1,28 @@
 {
   "file": "shuttle.glb",
-  "sha256": "6f176692e343d29390b84e4869d0872b599e801ec99ff2bdeb774ad5065e49e8",
-  "bytes": 934340,
+  "sha256": "0f334b8d48893da74a57d29d18bd44b56840af4a314bd9d34b4a628b2a1dddc6",
+  "bytes": 998460,
   "triangles": 24000,
   "sourceTriangles": 114008,
   "images": 4,
   "assets": {
     "shuttle": {
       "glb": {
-        "sha256": "6f176692e343d29390b84e4869d0872b599e801ec99ff2bdeb774ad5065e49e8"
+        "sha256": "0f334b8d48893da74a57d29d18bd44b56840af4a314bd9d34b4a628b2a1dddc6"
       }
     }
   },
   "size": [
-    12.0,
-    3.949,
-    7.519
+    18.0,
+    5.924,
+    11.278
   ],
   "anchor": "ground: landing gear contact plane at y=0, fuselage centred on the root",
+  "padRadius": 11.5,
+  "roots": [
+    "MF_Shuttle",
+    "MF_Pad"
+  ],
   "texturePx": 1024,
   "compression": {
     "geometry": "KHR_draco_mesh_compression",
