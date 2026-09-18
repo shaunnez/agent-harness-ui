@@ -24,6 +24,8 @@ export interface ProofManifest {
     crownPreviews?: Partial<Record<BaseVariant, string>>;
     /** Shared scatter kit (trees, boulders, lanterns, vehicles) instanced per parcel from a seeded layout. */
     scatterKit?: string;
+    /** Transport standing on the hub landing terrace (contract `spaceport_pad`). */
+    shuttle?: string;
     /** Contract 2.0 land is a runtime height field; these textures dress it (tri-planar in the shader). */
     terrainTextures?: Partial<Record<"gravel" | "limestone" | "cliff" | "cliffNormal" | "basalt", string>>;
     parcelHub?: string;
@@ -354,6 +356,7 @@ export function parseProofManifest(value: unknown): ProofManifest {
         colony.bridgeSpan,
         colony.bridgeEnd,
         colony.scatterKit,
+        colony.shuttle,
         ...Object.values(colony.crowns ?? {}),
       ].some((value) => value !== undefined && !asset(value)) ||
       Object.values(colony.crownPreviews ?? {}).some(

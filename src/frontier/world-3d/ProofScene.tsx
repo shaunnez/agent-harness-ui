@@ -3,6 +3,7 @@ import { baseLabelAnchor, hubSlot, projectKey } from "./colony";
 import { colonyModels, proofAssetUrls } from "./colony-assets";
 import { disposeGreybox } from "./colony-greybox";
 import { ColonyGround } from "./ColonyGround";
+import { ColonyShuttle } from "./ColonyShuttle";
 import { ColonyTerrain } from "./ColonyTerrain";
 import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
@@ -315,6 +316,7 @@ export function ProofScene(props: Props) {
       {colony && field && <ColonyWater field={field} light={light} />}
       {colony && <ColonyGround bases={bases} span={colony.span} end={colony.end} />}
       {colony?.kit && <ParcelScatter kit={colony.kit} plans={scatterPlans} />}
+      {colony?.shuttle && <ColonyShuttle model={colony.shuttle} origin={hubParcel.position} />}
       {lampSlots.map((slot, index) => (
         <pointLight
           key={slot}

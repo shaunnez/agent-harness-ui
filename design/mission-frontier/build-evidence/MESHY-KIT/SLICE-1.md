@@ -76,3 +76,41 @@ crowns still validate unchanged through the uncompressed path.
   checkable without a decoder. The per-vertex sweep cannot run on compressed geometry, and the kinds
   that need it — shell, crown, parcel, bridge — still require uncompressed geometry.
 - WebP dimension parsing added alongside PNG and JPEG (VP8, VP8L and VP8X).
+
+---
+
+# Slice 2 — the transport on the landing terrace
+
+Contract 2.0 already reserved this spot: `interactionSockets.spaceport_pad` (centre [0, 4.25, 0],
+radius 14) and slot H, "landing terrace: shared shuttle pad on a small rocky spit". Both notes add
+"shuttle itself is Goal 6 scope", so placing it now is ahead of the contract's own staging. The pad
+rendered as bare ground until this change — the greybox calls it `empty_landing_pad`.
+
+`spaceship.transport.A` is a hero object, not a kit item: it is seen at close range from the exterior
+camera, so it keeps 1024px maps where scatter pieces drop to 512, and it is published as its own GLB
+rather than folded into the kit.
+
+| Measure | Value |
+| --- | --- |
+| Source | 16.0 MB, 114,008 triangles, four 4K maps |
+| Published | 0.89 MB, 24,000 triangles, four 1024px WebP maps, Draco geometry |
+| Size | 11.98 m long, 7.52 m wide, 3.94 m tall |
+
+Placement checks, read from the published GLB against the contract:
+
+- Landing gear contact plane at y = 0.007, so it stands on `padTop` with no per-scene offset.
+- Furthest extent 10.80 m from the pad centre against a 12 m pad radius, offset 3.2 m and turned
+  −0.42 rad so it reads as parked rather than centred and square.
+
+Scale was judged against a 1.8 m reference figure on a 12 m pad disc before the length was fixed.
+
+The shuttle is scenery. It reads no task or run state, and nothing about it encodes status.
+
+## Not done
+
+- No close-up in-app capture of the shuttle on the terrace. The World view uses fixed framing and
+  will not push the camera onto the hub parcel, and the hub is not a project so it has no exterior
+  view. Placement above is verified numerically and in an isolated render, not in the running scene
+  at close range.
+- Texture residency still not re-estimated across both slices.
+- The formal production-build performance gate has not been re-run.

@@ -20,6 +20,7 @@ export function proofAssetUrls(manifest: ProofManifest) {
         colony?.bridgeSpan,
         colony?.bridgeEnd,
         colony?.scatterKit,
+        colony?.shuttle,
         ...Object.values(colony?.crowns ?? {}),
       ].filter((value): value is string => Boolean(value)),
     ),
@@ -52,5 +53,7 @@ export function colonyModels(manifest: ProofManifest, loaded: Map<string, Object
     end: get(colony?.bridgeEnd, greyboxBridgeEnd),
     /** No kit means no scatter; the land still renders. */
     kit: colony?.scatterKit ? (loaded.get(colony.scatterKit) ?? null) : null,
+    /** The transport on the hub landing terrace; absent until the shuttle asset is published. */
+    shuttle: colony?.shuttle ? (loaded.get(colony.shuttle) ?? null) : null,
   };
 }

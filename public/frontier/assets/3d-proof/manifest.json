@@ -12,6 +12,7 @@
     "bridgeSpan": "/assets/3d-proof/bridge-span-27.61fa0489a831.glb",
     "bridgeEnd": "/assets/3d-proof/bridge-end.50920a684920.glb",
     "scatterKit": "/assets/3d-proof/scatter-kit.d4373aa02960.glb",
+    "shuttle": "/assets/3d-proof/shuttle.6f176692e343.glb",
     "terrainTextures": {
       "gravel": "/assets/3d-proof/terrain-gravel-albedo.3e82bc8c5ea9.jpg",
       "limestone": "/assets/3d-proof/terrain-limestone-albedo.b09636eff1da.jpg",

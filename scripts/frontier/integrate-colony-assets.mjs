@@ -96,6 +96,16 @@ export async function integrateColonyAssets(root, asset) {
     if (kind === "crown") colony.crowns[key] = url;
     else colony[key] = url;
   }
+  // The transport on the hub landing terrace: a single hero object, not a kit item, so it is
+  // published on its own and loaded with the rest of the colony set.
+  const shuttle = await optionalJson(path.join(staging, "meshy-kit/producer/shuttle-metadata.json"));
+  if (shuttle) {
+    const file = path.join(staging, "meshy-kit/producer/shuttle.glb");
+    const bytes = await readFile(file);
+    if (shuttle.sha256 !== sha256(bytes))
+      throw new Error("shuttle.glb: bytes do not match the producer receipt");
+    colony.shuttle = await asset(file, "shuttle");
+  }
   // Picker thumbnails: each crown rendered on the shared shell by the producer.
   for (const variant of Object.keys(colony.crowns)) {
     const preview = path.join(producerDir, "previews", `crown-${variant}.png`);
