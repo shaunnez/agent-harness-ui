@@ -11,13 +11,7 @@
     "shell": "/assets/3d-proof/hq-shell.2bee0db2c11e.glb",
     "bridgeSpan": "/assets/3d-proof/bridge-span-27.61fa0489a831.glb",
     "bridgeEnd": "/assets/3d-proof/bridge-end.50920a684920.glb",
-    "scatterKit": "/assets/3d-proof/scatter-kit.6ecb016f3954.glb",
-    "crownPreviews": {
-      "bastion": "/assets/3d-proof/crown-preview-bastion.ee20cd747535.png",
-      "command": "/assets/3d-proof/crown-preview-command.e0a83a69635e.png",
-      "relay": "/assets/3d-proof/crown-preview-relay.201c7983b043.png",
-      "foundry": "/assets/3d-proof/crown-preview-foundry.1a96e6e5944c.png"
-    },
+    "scatterKit": "/assets/3d-proof/scatter-kit.d4373aa02960.glb",
     "terrainTextures": {
       "gravel": "/assets/3d-proof/terrain-gravel-albedo.3e82bc8c5ea9.jpg",
       "limestone": "/assets/3d-proof/terrain-limestone-albedo.b09636eff1da.jpg",

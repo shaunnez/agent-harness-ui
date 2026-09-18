@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontier",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:frontier"],
+      "port": 5199
+    }
+  ]
+}

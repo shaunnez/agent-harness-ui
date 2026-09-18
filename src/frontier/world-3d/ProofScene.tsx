@@ -8,6 +8,7 @@ import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { Color, type DirectionalLight, type HemisphereLight, type Object3D, type PointLight } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { configureGltfLoader } from "./gltf-loader";
 import {
   defaultEnvironment,
   LightingClock,
@@ -55,7 +56,7 @@ interface Props {
 export function ProofScene(props: Props) {
   const { input, manifest, bases, focusId, labels, onSelect, onLighting } = props;
   const sources = useMemo(() => proofAssetUrls(manifest), [manifest]);
-  const gltfs = useLoader(GLTFLoader, sources);
+  const gltfs = useLoader(GLTFLoader, sources, configureGltfLoader);
   const loaded = useMemo(() => new Map(sources.map((url, index) => [url, gltfs[index]])), [sources, gltfs]);
   const workerGltf = loaded.get(manifest.worker);
   const environment = loaded.get(manifest.scene);

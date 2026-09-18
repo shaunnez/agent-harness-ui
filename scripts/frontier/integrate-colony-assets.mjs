@@ -45,6 +45,9 @@ export async function integrateColonyAssets(root, asset) {
   const bridgeReceipts = producer2
     ? await optionalJson(path.join(v1, "producer/hq-metadata.json"))
     : producer;
+  // The Meshy substitution kit replaces the environment-pass kit once it exists; it keeps the same
+  // item names and metre heights, so only the bytes behind each slot change.
+  const meshyKit = await optionalJson(path.join(staging, "meshy-kit/producer/scatter-metadata.json"));
   for (let [dir, file, key, kind] of [
     ["producer", "hq-shell.glb", "shell", "shell"],
     ["producer", "crown-bastion.glb", "bastion", "crown"],
@@ -55,15 +58,20 @@ export async function integrateColonyAssets(root, asset) {
     ["producer", "bridge-end.glb", "bridgeEnd", "end"],
     ["terrain", "scatter-kit.glb", "scatterKit", "scatter"],
   ]) {
-    // The environment-pass kit in colony-v2/producer replaces the 2A kit once it exists.
+    // The environment-pass kit in colony-v2/producer replaces the 2A kit once it exists, and the
+    // scanned kit in meshy-kit/producer replaces that in turn.
     const kit2 =
       kind === "scatter" ? await optionalJson(path.join(v2, "producer/scatter-metadata.json")) : null;
-    if (kit2) kind = "scatter2";
-    const filePath = kit2
-      ? path.join(v2, "producer", file)
-      : dir === "producer" && !file.startsWith("bridge-")
-        ? path.join(producerDir, file)
-        : path.join(v1, dir, file);
+    const kit3 = kind === "scatter" ? meshyKit : null;
+    if (kit3) kind = "scatter3";
+    else if (kit2) kind = "scatter2";
+    const filePath = kit3
+      ? path.join(staging, "meshy-kit/producer", file)
+      : kit2
+        ? path.join(v2, "producer", file)
+        : dir === "producer" && !file.startsWith("bridge-")
+          ? path.join(producerDir, file)
+          : path.join(v1, dir, file);
     let bytes;
     try {
       bytes = await readFile(filePath);
@@ -75,7 +83,7 @@ export async function integrateColonyAssets(root, asset) {
     const fromV1 = file.startsWith("bridge-") && producer2;
     const entry =
       file === "scatter-kit.glb"
-        ? (kit2 ?? (await optionalJson(path.join(v1, "terrain/scatter-metadata.json"))))
+        ? (kit3 ?? kit2 ?? (await optionalJson(path.join(v1, "terrain/scatter-metadata.json"))))
         : (fromV1 ? bridgeReceipts : producer)?.assets?.[stem];
     const expectedSha256 = entry?.glb?.sha256 ?? entry?.sha256;
     if (!expectedSha256) throw new Error(`${file}: missing producer hash receipt`);
