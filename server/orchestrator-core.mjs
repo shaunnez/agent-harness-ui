@@ -59,6 +59,10 @@ export class TaskOrchestratorCore {
       repositoryAuthority: runtime._repositoryAuthority,
     });
     let taskControl;
+    // Late-bound on purpose: `candidates` needs `taskControl.start` and `taskControl`
+    // needs `candidates.refreshCandidate`, so each reaches the other through an arrow
+    // that is only called once both exist.
+    let candidates;
     const retainedPackages = new RetainedPackageOrchestrator({
       store: runtime._store,
       worktrees: runtime._worktrees,
@@ -117,6 +121,7 @@ export class TaskOrchestratorCore {
       planAuthority,
       run: (...args) => runCoordinator.run(...args),
       startDesigns: (...args) => designs.startAfterGrill(...args),
+      refreshCandidate: (...args) => candidates.refreshCandidate(...args),
     });
     designs = new PrototypeDesignOrchestrator({
       store: runtime._store,
@@ -130,7 +135,7 @@ export class TaskOrchestratorCore {
       mergeActive: runtime._mergeActive,
       worktrees: runtime._worktrees,
     });
-    const candidates = new CandidateOperationsOrchestrator({
+    candidates = new CandidateOperationsOrchestrator({
       store: runtime._store,
       github: runtime._github,
       mergeActive: runtime._mergeActive,

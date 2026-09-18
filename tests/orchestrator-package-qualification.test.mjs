@@ -600,3 +600,58 @@ test("keeps implementation reservations candidate-unbound across assembly retrie
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 });
+
+test("a dirty source checkout refuses Implement before a stage attempt is spent", async () => {
+  // `GitWorktreeManager.base()` already rejects a dirty tree, but only several steps into
+  // the run — after the stage is reserved and the attempt counted. All 13 recorded
+  // "uncommitted changes" stage failures were at Implement, each one spending an attempt
+  // against the stage run limit for a condition visible before any model ran.
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-dirty-preflight-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Refuse a dirty checkout",
+      description: "An uncommitted tree must not cost a stage attempt.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-implementation";
+      draft.currentStage = "implement";
+      draft.workPackages = parseWorkPackages(
+        `<work-packages>{"packages":[{"id":"S1","title":"Runtime","description":"Implement runtime behavior.","dependencies":[],"ownedPaths":["server/runtime.mjs"],"verificationCommandIds":["test"]}]}</work-packages>`,
+      );
+    });
+    const before = await store.get(task.id);
+    const attemptsBefore = before.attemptsByStage?.implement ?? 0;
+
+    let codexRuns = 0;
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        uncommittedEntries: async () => ["src/scratch.ts", "notes.md"],
+        base: async () => {
+          throw new Error("base() must not be reached for a dirty checkout");
+        },
+      },
+      runCodex: async () => {
+        codexRuns += 1;
+        return { finalText: "", usage: {} };
+      },
+    });
+
+    await assert.rejects(
+      () => orchestrator.start(task.id, "implementation"),
+      /2 uncommitted changes \(src\/scratch\.ts, notes\.md\)\. Commit or stash them/,
+    );
+
+    const after = await store.get(task.id);
+    assert.equal(codexRuns, 0, "no model may run for a checkout that cannot produce a candidate");
+    assert.equal(after.attemptsByStage?.implement ?? 0, attemptsBefore, "no stage attempt was spent");
+    assert.equal(after.status, "ready-for-implementation", "the task stays runnable once the tree is clean");
+    assert.equal(after.activeRunKind, null);
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});

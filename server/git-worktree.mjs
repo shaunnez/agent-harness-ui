@@ -241,18 +241,8 @@ export class GitWorktreeManager {
       options.baseBranch ??
       ((await git(repositoryRoot, ["branch", "--show-current"])).stdout.trim() || "detached");
     const baseRef = options.baseRef ?? (baseBranch === "detached" ? null : `refs/heads/${baseBranch}`);
-    const branch = `agent-harness/${task.id.toLowerCase()}-${safeSegment(options.branchId ?? candidateId).toLowerCase()}`;
-    const branchCheck = await git(
-      repositoryRoot,
-      ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`],
-      {
-        allowFailure: true,
-      },
-    );
-    if (branchCheck.code === 0)
-      throw new Error(
-        `The candidate branch ${branch} already exists. Remove it manually or start a new task.`,
-      );
+    const preferredBranch = `agent-harness/${task.id.toLowerCase()}-${safeSegment(options.branchId ?? candidateId).toLowerCase()}`;
+    const branch = await firstFreeBranch(repositoryRoot, preferredBranch);
 
     const worktreePath = path.resolve(this.#root, safeSegment(task.id), safeSegment(candidateId));
     if (!worktreePath.startsWith(`${this.#root}${path.sep}`))
@@ -887,6 +877,27 @@ export class GitWorktreeManager {
     return { repositoryRoot, headRevision, status };
   }
 
+  /**
+   * The uncommitted entries that would stop a candidate being created, or an empty array
+   * when the tree is clean enough to start.
+   *
+   * Same rule as `assertClean` — provisioned dependency directories do not count — but it
+   * reports instead of throwing, so admission can refuse a run before reserving it. All
+   * 13 recorded "The selected repository has uncommitted changes" stage failures happened
+   * at Implement, which means each one had already spent a stage attempt on a condition
+   * visible before any model ran.
+   */
+  async uncommittedEntries(repositoryPath) {
+    const repositoryRoot = await this.repositoryRoot(repositoryPath).catch(() => null);
+    if (!repositoryRoot) return [];
+    const provisioned = await provisionedDependencies(repositoryRoot);
+    const status = (await git(repositoryRoot, ["status", "--porcelain=v1", "--untracked-files=normal"]))
+      .stdout;
+    return statusEntries(status)
+      .filter((entry) => !isProvisionedPath(entry.file, provisioned))
+      .map((entry) => entry.file);
+  }
+
   async assertRepositoryUnchanged(repositoryPath, before) {
     if (!before) return null;
     const after = await this.snapshotRepository(repositoryPath);
@@ -909,6 +920,38 @@ function normalizeLifecycleState(value) {
   if (["active", "running", "retained", "stale", "missing", "cleaning", "ready"].includes(normalized))
     return normalized;
   return "retained";
+}
+
+/**
+ * How many suffixed candidate branches one preferred name may accumulate before the
+ * harness stops guessing. A repository that has reached this has a real problem — a
+ * cleanup loop, or a task restarted dozens of times — and silently adding branch 51 would
+ * hide it.
+ */
+const MAX_BRANCH_SUFFIX_ATTEMPTS = 50;
+
+/**
+ * The first branch name in `<preferred>`, `<preferred>-2`, `<preferred>-3`… that does not
+ * already exist.
+ *
+ * A collision means an earlier attempt for this task left its branch behind — after a
+ * cancelled run, a failed stage, or a worktree that was cleaned while its ref survived.
+ * That used to fail the stage with "Remove it manually or start a new task", which cost
+ * an operator retry for a condition the harness can resolve itself: the existing branch
+ * is retained evidence and the new candidate simply needs a name of its own. 7 of the
+ * recorded `Stage failed` events were this exact collision.
+ */
+async function firstFreeBranch(repositoryRoot, preferred) {
+  for (let attempt = 1; attempt <= MAX_BRANCH_SUFFIX_ATTEMPTS; attempt += 1) {
+    const branch = attempt === 1 ? preferred : `${preferred}-${attempt}`;
+    const existing = await git(repositoryRoot, ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`], {
+      allowFailure: true,
+    });
+    if (existing.code !== 0) return branch;
+  }
+  throw new Error(
+    `The candidate branch ${preferred} and its first ${MAX_BRANCH_SUFFIX_ATTEMPTS} suffixes all exist. Remove the stale agent-harness branches for this task before starting another candidate.`,
+  );
 }
 
 async function assertClean(repositoryRoot) {

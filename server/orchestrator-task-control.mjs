@@ -28,6 +28,7 @@ export class TaskControlOrchestrator {
     planAuthority,
     run,
     startDesigns,
+    refreshCandidate,
   }) {
     this._store = store;
     this._active = active;
@@ -39,6 +40,7 @@ export class TaskControlOrchestrator {
     this._planAuthority = planAuthority;
     this._run = run;
     this._startDesigns = startDesigns;
+    this._refreshCandidate = refreshCandidate;
   }
   isRunning(id) {
     return this._active.has(id);
@@ -62,7 +64,19 @@ export class TaskControlOrchestrator {
           "Repository authority changed or could not be verified. Revalidate the retained plan before implementation.",
         );
       }
-      if (await this._blockCandidateGateOnTargetDrift(id, kind)) {
+      if (implementationCanStart) await this._assertSourceReadyForImplementation(preflightTask);
+      const drift = await this._blockCandidateGateOnTargetDrift(id, kind, {
+        allowAutoRefresh: options.allowAutoRefresh !== false,
+      });
+      if (drift === "refreshed") {
+        // The candidate is now a new revision on the new target, so every candidate-bound
+        // gate is stale and the requested one is no longer the right run: Dev Review is.
+        // Release this reservation first — `start` refuses a task that is already active,
+        // including itself. `allowAutoRefresh: false` bounds this to a single retry.
+        this._active.delete(id);
+        return await this.start(id, "review", { allowAutoRefresh: false });
+      }
+      if (drift) {
         throw new Error(
           "The target branch advanced. Refresh the candidate before spending another candidate-bound gate attempt.",
         );
@@ -152,7 +166,34 @@ export class TaskControlOrchestrator {
     }
   }
 
-  async _blockCandidateGateOnTargetDrift(id, kind) {
+  /**
+   * Refuse an Implement run whose source checkout is already in a state that will fail.
+   *
+   * `GitWorktreeManager.base()` rejects a dirty tree, but it does so several steps into
+   * the run, after the stage has been reserved and the attempt counted. Every one of the
+   * 13 recorded "uncommitted changes" stage failures was at Implement, and each spent a
+   * stage attempt — enough of them in a row and the task blocks on its stage run limit
+   * for a condition the operator could have fixed in a second. Checking here throws
+   * before `reserveRun`, so the operator sees the reason and the attempt is not spent.
+   */
+  async _assertSourceReadyForImplementation(task) {
+    if (typeof this._worktrees.uncommittedEntries !== "function") return;
+    const dirty = await this._worktrees.uncommittedEntries(task.repositoryPath).catch(() => []);
+    if (!dirty.length) return;
+    const named = dirty.slice(0, 5).join(", ");
+    throw new Error(
+      `The selected repository has ${dirty.length} uncommitted change${dirty.length === 1 ? "" : "s"} (${named}${dirty.length > 5 ? ", …" : ""}). Commit or stash them, then start Implement again. No stage attempt was spent.`,
+    );
+  }
+
+  /**
+   * Resolve a candidate whose target branch moved out from under it.
+   *
+   * Returns `false` when there is nothing to resolve, `"refreshed"` when the candidate
+   * was rebased onto the new target and the caller should restart from Dev Review, and
+   * `true` when the task is blocked and needs an operator.
+   */
+  async _blockCandidateGateOnTargetDrift(id, kind, { allowAutoRefresh = true } = {}) {
     if (
       !["review", "test", "final-review"].includes(kind) ||
       typeof this._worktrees.mergeState !== "function"
@@ -182,7 +223,31 @@ export class TaskControlOrchestrator {
     if ((await this._worktrees.mergeState(candidate)) !== "diverged") return false;
     const message =
       "The target branch advanced after this candidate was created. Refresh the candidate before running another candidate-bound gate.";
-    const blocked = await this._store.transition(
+    const blocked = await this._blockOnTargetDrift(id, candidate, message);
+    if (!blocked) return false;
+    // Merging anything into the target used to leave every in-flight candidate sitting at
+    // `blocked`, waiting for an operator to press Refresh — 76 recorded `Candidate gate
+    // paused for target refresh` events against 73 manual refreshes. The refresh itself is
+    // mechanical: rebase the retained patch onto the new target, bump the revision, and
+    // let the candidate-bound gates rerun. Only a genuine content conflict needs a human,
+    // and `refreshCandidate` already blocks with `target-refresh-conflict` for that. So the
+    // harness now does the mechanical part itself and asks only for the judgement.
+    //
+    // `allowAutoRefresh: false` on the retry after a refresh: if the target advanced again
+    // in the seconds between refreshing and restarting, that is a moving target the
+    // operator should see, not something to chase in a loop.
+    if (
+      allowAutoRefresh &&
+      typeof this._refreshCandidate === "function" &&
+      typeof this._worktrees.refreshCandidate === "function"
+    ) {
+      return (await this._autoRefreshAfterTargetDrift(id, candidate)) ? "refreshed" : true;
+    }
+    return true;
+  }
+
+  async _blockOnTargetDrift(id, candidate, message) {
+    return await this._store.transition(
       id,
       (draft) => {
         const current = currentCandidate(draft);
@@ -216,7 +281,48 @@ export class TaskControlOrchestrator {
         );
       },
     );
-    return Boolean(blocked);
+  }
+
+  /**
+   * Rebase a drifted candidate onto the advanced target without an operator click.
+   *
+   * True when the candidate now sits on the new target and the gates may rerun. False
+   * when the task stays blocked — a content conflict the operator has to resolve, a
+   * refresh already in flight, or a target that moved again mid-refresh. Every one of
+   * those already records its own blocker and evidence, so the failure path deliberately
+   * leaves the task exactly as `refreshCandidate` left it.
+   */
+  async _autoRefreshAfterTargetDrift(id, candidate) {
+    try {
+      await this._refreshCandidate(id);
+    } catch (error) {
+      await this._store
+        .update(id, (draft) => {
+          draft.events.push(
+            activity(
+              draft.currentStage,
+              "Automatic target refresh needs an operator",
+              `${candidate.id} could not be rebased onto the advanced target automatically: ${error.message}`,
+              "warning",
+              "decision",
+            ),
+          );
+        })
+        .catch(() => {});
+      return false;
+    }
+    await this._store.update(id, (draft) => {
+      draft.events.push(
+        activity(
+          draft.currentStage,
+          "Candidate refreshed automatically after the target advanced",
+          `${candidate.id} was rebased onto the advanced target without an operator retry. Every candidate-bound gate reruns against the new revision.`,
+          "success",
+          "decision",
+        ),
+      );
+    });
+    return true;
   }
 
   async cancel(id) {
