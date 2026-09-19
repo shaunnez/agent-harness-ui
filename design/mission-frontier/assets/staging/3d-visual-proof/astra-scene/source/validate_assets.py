@@ -15,7 +15,11 @@ assert len(s['cameras'])==2;assert all('socket_'+n in names for n in m['sockets'
 assert all(loop[0]==loop[-1] for loop in m['shorelineXZ'])
 assert max(m['shorelineSimplification']['maxDeviationMetres'])<=.15
 assert {x['name'] for x in s['materials']}=={x['name'] for x in m['materials']}
-assert [a['name'] for a in w['animations']]==['worker_tool_work'];assert len(w['animations'][0]['channels'])==32
+# The rigged export: four clips on a real joint hierarchy, not one clip on 80 loose parts.
+assert [a['name'] for a in w['animations']]==['worker_walk','worker_scan','worker_type','worker_tool_work']
+assert all(a['channels'] for a in w['animations'])
+rig={n['name'] for n in w['nodes'] if n.get('name','').startswith('rig_')}
+assert rig=={'rig_body','rig_head'}|{f'rig_{part}_{side}' for side in 'LR' for part in ['thigh','shin','foot','shoulder','forearm']},rig
 assert any('normalTexture' in mt for mt in s['materials']);assert any(mt.get('alphaMode')=='MASK' for mt in s['materials']);assert any('COLOR_0' in p['attributes'] for me in s['meshes'] for p in me['primitives'])
-result={'status':'pass','scope':'GLB headers/buffers/images, groups/cameras/sockets, metadata bounds/shore loops, PBR normals, retained vertex color/alpha, original worker animation','scene':ss,'worker':ww,'browserAcceptance':'Builder-owned; not established by this structural audit'}
+result={'status':'pass','scope':'GLB headers/buffers/images, groups/cameras/sockets, metadata bounds/shore loops, PBR normals, retained vertex color/alpha, rigged worker clips and joint hierarchy','scene':ss,'worker':ww,'browserAcceptance':'Builder-owned; not established by this structural audit'}
 (R/'validation.json').write_text(json.dumps(result,indent=2));print(json.dumps(result,indent=2))

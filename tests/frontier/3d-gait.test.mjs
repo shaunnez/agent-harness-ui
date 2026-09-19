@@ -1,19 +1,18 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { AnimationMixer, Vector3 } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { proofWorkerScale } from "../../src/frontier/world-3d/model.ts";
-import {
-  applyGait,
-  buildGait,
-  gaitBob,
-  gaitStrideCycle,
-  restGait,
-} from "../../src/frontier/world-3d/worker-gait.ts";
 import { batchWorker, cloneWorker } from "../../src/frontier/world-3d/worker-batching.ts";
+import {
+  walkCycleSeconds,
+  walkCycleSpeed,
+  walkStrideMetres,
+  workerClips,
+} from "../../src/frontier/world-3d/worker-clips.ts";
 
 /** The runtime body: the actual export, batched and cloned exactly as a worker receives it. */
-async function workerBody() {
+async function workerExport() {
   const manifest = JSON.parse(
     await readFile(new URL("../../public/frontier/assets/3d-proof/manifest.json", import.meta.url), "utf8"),
   );
@@ -22,120 +21,120 @@ async function workerBody() {
     bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
     "",
   );
-  return cloneWorker(batchWorker(gltf.scene).scene);
+  return { body: cloneWorker(batchWorker(gltf.scene).scene), clips: gltf.animations };
 }
 
-/** Sample one full cycle, returning each foot's fore/aft offset within the body. */
-function walkCycle(gait, body, steps = 48) {
-  const feet = gait.parts.filter((part) => part.node.name.startsWith("segmented_foot"));
-  const samples = [];
+function jointsOf(body) {
+  const found = new Map();
+  body.traverse((node) => {
+    if (node.name.startsWith("rig_")) found.set(node.name, node);
+  });
+  return found;
+}
+
+/** Drive one clip over `steps` samples of a full cycle, reading world positions each time. */
+function sample(body, clips, name, read, steps = 48, scale = 1) {
+  const clip = clips.find((entry) => entry.name === name);
+  assert.ok(clip, `${name} is missing from the export`);
+  const mixer = new AnimationMixer(body);
+  const action = mixer.clipAction(clip);
+  action.timeScale = scale;
+  action.play();
+  const out = [];
   for (let i = 0; i < steps; i++) {
-    const walked = (i / steps) * gaitStrideCycle;
-    applyGait(gait, (walked / gaitStrideCycle) * Math.PI * 2, 1);
+    mixer.update(i === 0 ? 0 : (clip.duration / scale / steps) * 1);
     body.updateMatrixWorld(true);
-    samples.push({
-      walked,
-      feet: feet.map((part) => ({ name: part.node.name, z: part.node.position.z, y: part.node.position.y })),
-    });
+    out.push(read(i / steps));
   }
-  return { feet, samples };
+  mixer.stopAllAction();
+  return out;
 }
 
-test("the actual worker export exposes a complete two-sided leg rig for the procedural gait", async () => {
-  const body = await workerBody();
-  const gait = buildGait(body);
-  assert.ok(gait, "the flat worker export should still resolve a leg rig");
-  // Nine parts a side: thigh, thigh armour, knee, knee pin, shin, shell, seam, foot, toe.
-  assert.equal(gait.parts.length, 18);
-  assert.equal(gait.parts.filter((part) => part.right).length, 9);
-  assert.equal(gait.parts.filter((part) => !part.right).length, 9);
-  // The hip must sit above the knee it swings, on both sides.
-  assert.ok(gait.hip.left.y > gait.knee.left.y);
-  assert.ok(gait.hip.right.y > gait.knee.right.y);
+test("the export carries every clip the work actions name, on a real joint hierarchy", async () => {
+  const { body, clips } = await workerExport();
+  assert.deepEqual(
+    clips.map((clip) => clip.name).sort(),
+    [...workerClips].sort(),
+    "every named clip is exported",
+  );
+  const joints = jointsOf(body);
+  for (const side of ["L", "R"])
+    for (const part of ["thigh", "shin", "foot", "shoulder", "forearm"])
+      assert.ok(joints.has(`rig_${part}_${side}`), `rig_${part}_${side} exists`);
+  // The point of the rig: a shin hangs off its thigh, so swinging the hip carries the lower leg.
+  const thigh = joints.get("rig_thigh_L");
+  let node = joints.get("rig_foot_L");
+  const ancestors = [];
+  while (node) {
+    ancestors.push(node.name);
+    node = node.parent;
+  }
+  assert.ok(ancestors.includes("rig_shin_L"), "the foot hangs off the shin");
+  assert.ok(ancestors.includes(thigh.name), "the shin hangs off the thigh");
 });
 
 test("both feet swing through a real stride in antiphase", async () => {
-  const body = await workerBody();
-  const gait = buildGait(body);
-  const { feet, samples } = walkCycle(gait, body);
-  assert.equal(feet.length, 2);
-  const series = {};
-  for (const sample of samples)
-    for (const foot of sample.feet) {
-      series[foot.name] ??= [];
-      series[foot.name].push(foot.z);
-    }
-  const names = Object.keys(series);
-  for (const name of names) {
-    const span = Math.max(...series[name]) - Math.min(...series[name]);
-    // A visible stride, but never longer than the worker is tall.
-    assert.ok(span > 0.4, `${name} swings ${span.toFixed(3)}, which reads as sliding rather than walking`);
-    assert.ok(span < 1.2, `${name} swings ${span.toFixed(3)}, which over-strides`);
+  const { body, clips } = await workerExport();
+  const joints = jointsOf(body);
+  const feet = ["rig_foot_L", "rig_foot_R"].map((name) => joints.get(name));
+  const samples = sample(body, clips, "worker_walk", () =>
+    feet.map((foot) => foot.getWorldPosition(new Vector3()).clone()),
+  );
+  for (let index = 0; index < feet.length; index++) {
+    const lift = samples.map((frame) => frame[index].y);
+    assert.ok(Math.max(...lift) - Math.min(...lift) > 0.05, `foot ${index} leaves the ground`);
+    const reach = samples.map((frame) => frame[index].z);
+    assert.ok(Math.max(...reach) - Math.min(...reach) > 0.3, `foot ${index} covers ground`);
   }
-  const [left, right] = names.map((name) => series[name]);
-  const mean = (values) => values.reduce((sum, value) => sum + value, 0) / values.length;
-  const ml = mean(left),
-    mr = mean(right);
-  let product = 0,
-    sqL = 0,
-    sqR = 0;
-  for (let i = 0; i < left.length; i++) {
-    product += (left[i] - ml) * (right[i] - mr);
-    sqL += (left[i] - ml) ** 2;
-    sqR += (right[i] - mr) ** 2;
-  }
-  // One leg reaches while the other trails; in step would read as hopping.
-  assert.ok(product / Math.sqrt(sqL * sqR) < -0.8, "the legs should swing in opposition");
+  // Antiphase: when one foot is at its highest the other is near the floor.
+  const lifts = samples.map((frame) => frame.map((p) => p.y));
+  const peak = lifts.reduce((best, row, i) => (row[0] > lifts[best][0] ? i : best), 0);
+  assert.ok(lifts[peak][1] < lifts[peak][0], "the feet do not lift together");
 });
 
 test("a planted foot stays put on the ground rather than skating with the body", async () => {
-  const body = await workerBody();
-  const gait = buildGait(body);
+  const { body, clips } = await workerExport();
+  const joints = jointsOf(body);
+  const foot = joints.get("rig_foot_L");
   const steps = 48;
-  const { feet, samples } = walkCycle(gait, body, steps);
-  const travelPerStep = (gaitStrideCycle / steps) * 1000;
-  for (const foot of feet) {
-    const ground = samples.map(
-      // The body advances along the world while the foot offset moves within it.
-      (sample) =>
-        sample.walked * 1000 +
-        sample.feet.find((entry) => entry.name === foot.node.name).z * proofWorkerScale * 1000,
-    );
-    let slowest = Infinity;
-    for (let i = 1; i < ground.length; i++) slowest = Math.min(slowest, Math.abs(ground[i] - ground[i - 1]));
-    // During stance the foot should barely move across the ground the body is crossing.
-    assert.ok(
-      slowest < travelPerStep * 0.2,
-      `the slowest ground movement was ${slowest.toFixed(1)} against ${travelPerStep.toFixed(1)} of travel`,
-    );
+  // Advance the body at the speed the clip is authored for, and the planted foot should hold still.
+  const samples = sample(
+    body,
+    clips,
+    "worker_walk",
+    (fraction) => {
+      const travelled = fraction * walkCycleSpeed * walkCycleSeconds;
+      const local = foot.getWorldPosition(new Vector3());
+      return { y: local.y, ground: local.z + travelled };
+    },
+    steps,
+  );
+  // `rig_foot_L` is the ankle pivot, which rides ~0.2 m above the floor; planted means at its lowest.
+  // Only the longest unbroken run counts: a cycle's first and last samples are the same pose, so a
+  // set that spans the loop seam would compare a foot against a body a whole stride further on.
+  const floor = Math.min(...samples.map((entry) => entry.y));
+  const down = samples.map((entry) => entry.y < floor + 0.02);
+  let best = [];
+  let run = [];
+  for (const [index, grounded] of down.entries()) {
+    run = grounded ? [...run, samples[index]] : [];
+    if (run.length > best.length) best = run;
   }
+  assert.ok(best.length > steps / 4, "the foot spends a real share of the cycle on the ground");
+  const drift = Math.max(...best.map((p) => p.ground)) - Math.min(...best.map((p) => p.ground));
+  assert.ok(drift < 0.12, `a planted foot holds its ground point (drifted ${drift.toFixed(3)} m)`);
 });
 
-test("a worker standing still returns to the exact authored rest pose", async () => {
-  const body = await workerBody();
-  const gait = buildGait(body);
-  const rest = gait.parts.map((part) => ({
-    position: part.node.position.clone(),
-    quaternion: part.node.quaternion.clone(),
-  }));
-  applyGait(gait, 1.7, 1);
-  assert.ok(
-    gait.parts.some((part, index) => part.node.position.distanceTo(rest[index].position) > 1e-6),
-    "the walk should actually move the legs before it is cleared",
+test("the published stride matches the clip the runtime scales against", async () => {
+  const meta = JSON.parse(
+    await readFile(
+      new URL(
+        "../../design/mission-frontier/assets/staging/3d-visual-proof/astra-scene/worker-metadata.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
   );
-  restGait(gait);
-  gait.parts.forEach((part, index) => {
-    assert.ok(part.node.position.distanceTo(rest[index].position) < 1e-9);
-    // Compared component-wise: the export's quaternions are not exactly unit length, so a
-    // self dot product lands a rounding step away from one even for an identical pose.
-    for (const field of ["x", "y", "z", "w"])
-      assert.equal(part.node.quaternion[field], rest[index].quaternion[field]);
-  });
-  // A faded-out blend is the same as standing, so a paused worker never drifts.
-  applyGait(gait, 1.7, 0);
-  gait.parts.forEach((part, index) => {
-    assert.ok(part.node.position.distanceTo(rest[index].position) < 1e-9);
-  });
-  assert.equal(gaitBob(1.7, 0), 0);
-  assert.ok(gaitBob(Math.PI / 2, 1) > 0);
+  assert.equal(meta.walk.strideMetresPerCycle, walkStrideMetres);
+  assert.equal(meta.animations.worker_walk.durationSeconds, walkCycleSeconds);
 });

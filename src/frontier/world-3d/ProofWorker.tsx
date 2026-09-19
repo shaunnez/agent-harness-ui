@@ -10,7 +10,7 @@ import {
   workerViewScale,
 } from "./model";
 import { cloneWorker, disposeWorker } from "./worker-batching";
-import { applyGait, buildGait, gaitBob, gaitStrideCycle, restGait } from "./worker-gait";
+import { clipForWorker, walkCycleSpeed } from "./worker-clips";
 
 /** Matches the patrol speed below, so the stride covers the ground the worker actually crosses. */
 const roamSpeed = 1.1;
@@ -39,14 +39,28 @@ export function ProofWorker({
   const time = useRef(0);
   const action = workActions[worker.action];
   const mixer = useMemo(() => new AnimationMixer(body), [body]);
+  /**
+   * One clip at a time: the walk while roaming, and the pose the work action names while working.
+   * Parking plays nothing, so the mixer leaves the authored rest pose alone.
+   */
+  const clipName = clipForWorker(worker.behavior, action.pose);
+  const playing = useMemo(() => {
+    const clip = clipName ? clips.find((entry) => entry.name === clipName) : undefined;
+    return clip ? mixer.clipAction(clip) : null;
+  }, [clipName, clips, mixer]);
   useEffect(() => {
-    const clip = clips.find((entry) => entry.name === "worker_tool_work");
-    if (clip && worker.behavior === "work") mixer.clipAction(clip).play();
-    else mixer.stopAllAction();
-    return () => {
+    if (!playing) {
       mixer.stopAllAction();
+      return;
+    }
+    playing.reset();
+    // The walk is authored at one cycle per 0.8 s; hold it to the ground speed or the feet skate.
+    playing.timeScale = clipName === "worker_walk" ? roamSpeed / walkCycleSpeed : 1;
+    playing.play();
+    return () => {
+      playing.stop();
     };
-  }, [clips, mixer, worker.behavior]);
+  }, [playing, clipName, mixer]);
   useEffect(
     () => () => {
       positions.delete(worker.id);
@@ -56,8 +70,6 @@ export function ProofWorker({
     [body, mixer, positions, worker.id],
   );
   const patrol = useMemo(() => route.map((p) => ({ x: p[0], y: p[2] })), [route]);
-  const gait = useMemo(() => buildGait(body), [body]);
-  const walked = useRef(0);
   const stepping = useRef(0);
   useFrame((_, delta) => {
     if (!root.current) return;
@@ -65,28 +77,20 @@ export function ProofWorker({
     const step = worker.moving && !document.hidden ? Math.min(delta, 0.1) : 0;
     if (step) {
       time.current += step;
-      if (worker.behavior === "work") mixer.update(step);
+      if (playing) mixer.update(step);
     }
     const phase = time.current;
     if (worker.behavior === "roam") {
       const pose = patrolPose(patrol, phase * 1000, actorSeed(worker.task.id), roamSpeed);
       root.current.position.set(pose.x, worker.position[1], pose.y);
       body.rotation.y = pose.facing > 0 ? 0.9 : -0.9;
-      if (pose.walking) walked.current += step * roamSpeed;
       // Ease the cycle in and out so a worker settles rather than snapping at a patrol waypoint.
       if (step) stepping.current += ((pose.walking ? 1 : 0) - stepping.current) * Math.min(1, step * 8);
-      if (gait) {
-        const cycle = (walked.current / gaitStrideCycle) * Math.PI * 2;
-        applyGait(gait, cycle, stepping.current);
-        body.position.y = gaitBob(cycle, stepping.current);
-      }
+      // Under full weight the mixer blends the clip back towards the authored rest pose.
+      if (playing) playing.setEffectiveWeight(stepping.current);
     } else {
       root.current.position.set(...worker.position);
-      if (gait && stepping.current !== 0) {
-        stepping.current = 0;
-        restGait(gait);
-        body.position.y = 0;
-      }
+      stepping.current = 0;
     }
     body.rotation.y =
       worker.behavior === "work"
