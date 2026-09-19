@@ -164,7 +164,7 @@ export function createTerrainMaterial(textures: {
         float macro = tNoise(wp.xz * 0.045);
         // Ground: gravel-sand with drifts of dry grass on the flatter shoulder, never on paving.
         vec3 gravel = texture2D(map, wp.xz / 7.5).rgb * (0.9 + 0.2 * macro) * vec3(0.88, 0.82, 0.72);
-        vec3 grass = gravel * vec3(0.72, 0.86, 0.50);
+        vec3 grass = gravel * vec3(0.78, 0.80, 0.74);
         float grassMask = smoothstep(0.50, 0.78, tNoise(wp.xz * 0.11 + 3.0)) * (1.0 - cliff) * smoothstep(3.2, 3.9, wp.y) * (1.0 - vSurface.y * 0.7);
         vec3 ground = mix(gravel, grass, grassMask * 0.6);
         vec3 lime = texture2D(uLimestone, wp.xz / 5.5).rgb;
@@ -184,6 +184,17 @@ export function createTerrainMaterial(textures: {
         // Paving on spurs, pads and the court apron.
         vec3 basalt = texture2D(uBasalt, wp.xz / 4.0).rgb;
         col = mix(col, basalt, clamp(vSurface.x, 0.0, 1.0));
+        // Snow settles on whatever faces the sky and thins as the ground tilts, so the shoulder reads
+        // as a clean white field while the cliff faces stay bare rock and keep the island's relief.
+        // It keeps clear of the paving, and of the splash zone where spray would wash it away.
+        float snowFacing = smoothstep(0.52, 0.88, nw.y);
+        float drift = tNoise(wp.xz * 0.16 + 5.0);
+        float snowMask = snowFacing * smoothstep(0.30, 0.66, 0.58 + drift * 0.42);
+        snowMask *= 1.0 - clamp(vSurface.x, 0.0, 1.0) * 0.82;
+        snowMask *= smoothstep(0.45, 1.9, wp.y);
+        vec3 snow = vec3(0.90, 0.93, 0.99) * (0.93 + 0.10 * macro);
+        snow += vec3(0.06, 0.06, 0.05) * smoothstep(0.84, 1.0, tNoise(wp.xz * 2.6));
+        col = mix(col, snow, snowMask);
         // Splash zone and stream banks: wet, dark rock; the stream bed is bare limestone under the water.
         float wet = max(1.0 - smoothstep(0.1, 1.5, wp.y), clamp(vWet, 0.0, 1.0) * (1.0 - vSurface.x));
         col = mix(col, lime * vec3(0.9, 0.88, 0.82), clamp(vWet, 0.0, 1.0) * 0.6);

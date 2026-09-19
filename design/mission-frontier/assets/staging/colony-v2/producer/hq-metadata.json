@@ -323,7 +323,7 @@
           "bounds": {
             "min": [
               -17.3363,
-              4.3,
+              4.302,
               -0.035
             ],
             "max": [
@@ -333,7 +333,7 @@
             ],
             "size": [
               14.1926,
-              2.82,
+              2.818,
               15.0385
             ]
           }
@@ -409,7 +409,7 @@
           "bounds": {
             "min": [
               3.1437,
-              4.3,
+              4.302,
               -0.035
             ],
             "max": [
@@ -419,7 +419,7 @@
             ],
             "size": [
               14.1926,
-              2.82,
+              2.818,
               15.0385
             ]
           }
@@ -468,12 +468,12 @@
             ],
             "max": [
               8.6763,
-              6.0,
+              5.31,
               21.6
             ],
             "size": [
               13.7763,
-              1.73,
+              1.04,
               16.135
             ]
           }
@@ -657,9 +657,7 @@
           "planning_floor_reveal",
           "planning_instrument_trace",
           "planning_monitor",
-          "planning_monitor_housing",
-          "planning_table",
-          "planning_table_surface"
+          "planning_monitor_housing"
         ],
         "MF_Interior_implementation": [
           "fabrication_module",
@@ -691,15 +689,11 @@
           "testing_console_base",
           "testing_console_key",
           "testing_console_top",
-          "testing_diagnostic_rig",
           "testing_floor_inlay",
           "testing_floor_reveal",
           "testing_instrument_trace",
           "testing_monitor",
-          "testing_monitor_housing",
-          "testing_sensor_collar",
-          "testing_table",
-          "testing_table_surface"
+          "testing_monitor_housing"
         ],
         "MF_Interior_briefing": [
           "briefing_console_control",
@@ -711,9 +705,6 @@
         ],
         "MF_Interior_dispatch": [
           "bay_floor",
-          "cargo_crate",
-          "cargo_lid",
-          "cargo_retaining_band",
           "cart_cargo",
           "cart_wheel",
           "dispatch_cart",
@@ -762,20 +753,20 @@
         "MF_BaseFixed": 429,
         "MF_ShellCutaway_FrontFlats": 123,
         "MF_Roof": 221,
-        "MF_Interior_planning": 47,
+        "MF_Interior_planning": 45,
         "MF_Interior_implementation": 99,
         "MF_Interior_review": 47,
-        "MF_Interior_testing": 51,
+        "MF_Interior_testing": 45,
         "MF_Interior_briefing": 13,
-        "MF_Interior_dispatch": 16,
+        "MF_Interior_dispatch": 12,
         "MF_ShellCutaway_PartitionGlass": 56,
         "MF_Court": 20,
         "MF_Practicals": 9
       },
       "glb": {
-        "bytes": 6806112,
-        "sha256": "2bee0db2c11e05dc70f1a454d67e5a47a458b73d212151050ed14bddbbb099bf",
-        "triangles": 127624,
+        "bytes": 6746264,
+        "sha256": "fe699c2301f0c77e2a670f25a5aba6c129b9a2c5d0b24230d3f5ee23da9c8238",
+        "triangles": 125936,
         "meshes": 63,
         "materials": 20,
         "images": 6,
@@ -1056,19 +1047,6 @@
           ]
         },
         {
-          "name": "planning_central_equipment",
-          "min": [
-            -10.3995,
-            4.3,
-            3.8876
-          ],
-          "max": [
-            -8.1335,
-            5.8,
-            6.8124
-          ]
-        },
-        {
           "name": "review_central_equipment",
           "min": [
             7.9165,
@@ -1079,19 +1057,6 @@
             10.6165,
             4.6,
             -4.0
-          ]
-        },
-        {
-          "name": "testing_central_equipment",
-          "min": [
-            8.1335,
-            4.3,
-            3.8876
-          ],
-          "max": [
-            10.3995,
-            5.8,
-            6.8124
           ]
         },
         {
@@ -1118,19 +1083,6 @@
             -5.7,
             5.9,
             14.05
-          ]
-        },
-        {
-          "name": "cargo_crates",
-          "min": [
-            -4.7,
-            4.3,
-            16.3
-          ],
-          "max": [
-            -3.3,
-            5.9,
-            17.7
           ]
         },
         {
@@ -3344,19 +3296,6 @@
       ]
     },
     {
-      "name": "planning_central_equipment",
-      "min": [
-        -10.3995,
-        4.3,
-        3.8876
-      ],
-      "max": [
-        -8.1335,
-        5.8,
-        6.8124
-      ]
-    },
-    {
       "name": "review_central_equipment",
       "min": [
         7.9165,
@@ -3367,19 +3306,6 @@
         10.6165,
         4.6,
         -4.0
-      ]
-    },
-    {
-      "name": "testing_central_equipment",
-      "min": [
-        8.1335,
-        4.3,
-        3.8876
-      ],
-      "max": [
-        10.3995,
-        5.8,
-        6.8124
       ]
     },
     {
@@ -3406,19 +3332,6 @@
         -5.7,
         5.9,
         14.05
-      ]
-    },
-    {
-      "name": "cargo_crates",
-      "min": [
-        -4.7,
-        4.3,
-        16.3
-      ],
-      "max": [
-        -3.3,
-        5.9,
-        17.7
       ]
     },
     {

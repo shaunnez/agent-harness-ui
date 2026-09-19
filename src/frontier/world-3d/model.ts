@@ -24,6 +24,10 @@ export interface ProofManifest {
     crownPreviews?: Partial<Record<BaseVariant, string>>;
     /** Shared scatter kit (trees, boulders, lanterns, vehicles) instanced per parcel from a seeded layout. */
     scatterKit?: string;
+    /** Transport standing on the hub landing terrace (contract `spaceport_pad`). */
+    shuttle?: string;
+    /** Scanned interior hero props, anchored to the room sockets that already name them. */
+    props?: string;
     /** Contract 2.0 land is a runtime height field; these textures dress it (tri-planar in the shader). */
     terrainTextures?: Partial<Record<"gravel" | "limestone" | "cliff" | "cliffNormal" | "basalt", string>>;
     parcelHub?: string;
@@ -110,7 +114,8 @@ export type ProofView = "world" | "exterior" | "cutaway";
  * true size in the cutaway. Rings, labels and picking follow the same factor; standing positions,
  * spacing and gait speed stay in true world units.
  */
-export const workerViewScale: Record<ProofView, number> = { world: 2.5, exterior: 1.4, cutaway: 1 };
+/** World view read 20% too large against the scanned kit and the 18 m shuttle; 2.5 -> 2.0. */
+export const workerViewScale: Record<ProofView, number> = { world: 2, exterior: 1.4, cutaway: 1 };
 export function proofView(input: Pick<ProofInput, "location">, focusId: string | null): ProofView {
   return input.location.view !== "world" ? "cutaway" : focusId ? "exterior" : "world";
 }
@@ -354,6 +359,8 @@ export function parseProofManifest(value: unknown): ProofManifest {
         colony.bridgeSpan,
         colony.bridgeEnd,
         colony.scatterKit,
+        colony.shuttle,
+        colony.props,
         ...Object.values(colony.crowns ?? {}),
       ].some((value) => value !== undefined && !asset(value)) ||
       Object.values(colony.crownPreviews ?? {}).some(

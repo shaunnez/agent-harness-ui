@@ -6,6 +6,7 @@ recessed structural spines, a roof drum that carries the crown, framed warm wind
 attached service wing. Run through build_all_v2.py under Blender 5.2.1 headless.
 """
 import math
+import re
 from v2_lib import *  # noqa: F401,F403
 from v2_lib import B, C2, DRUM_R, DRUM_TOP, APRON, ENVELOPE_R, finish_v2
 
@@ -66,6 +67,41 @@ def windows(prefix, phi0, phi1, r, y, height, skip=(), pitch_deg=5.0, margin=4.0
             B.b(prefix + '_window_mullion', (x - n[0] * .03, y, z - n[1] * .03), (.08, height, .07), 'brushed_titanium', .01, a + 90)
             B.b(prefix + '_window_sill', (x + n[0] * .12, y - height / 2 - .18, z + n[1] * .12), (2.1, .09, .32), 'brushed_titanium', .02, a + 90)
         a += pitch_deg
+
+
+# Greybox room equipment the scanned hero props replace. The 1.0.1 `equipment()` recipe is otherwise
+# retained in full -- wall consoles, review dais, fabrication bench, briefing console and the cart all
+# stay, because no scan exists for them yet.
+#
+# The v1 producer directory is read-only history, so this strips the pieces after the shared recipe
+# has run rather than forking it: the parts that remain keep one source of truth, and a future scan
+# is added here by name instead of by re-copying fifty lines.
+REPLACED_BY_SCANS = {
+    # planningHoloTable.V2 -> MF_Prop_PlanningTable
+    'planning_table', 'planning_table_surface',
+    # testingRig.V2 -> MF_Prop_TestRig
+    'testing_table', 'testing_table_surface', 'testing_diagnostic_rig', 'testing_sensor_collar',
+    # cargoBattery.V2 -> MF_Prop_CargoBattery, on the same frozen cargo pad
+    'cargo_crate', 'cargo_retaining_band', 'cargo_lid',
+}
+# Their obstacle entries go with them: `prop-placement.ts` publishes the scanned footprints instead,
+# and leaving these would keep robots out of floor that no longer has anything standing on it.
+REPLACED_OBSTACLES = {'planning_central_equipment', 'testing_central_equipment', 'cargo_crates'}
+
+
+def equipment_v2():
+    """The retained equipment recipe, less the pieces the Meshy scans now stand in for."""
+    B.equipment()
+    removed = 0
+    for o in list(bpy.data.objects):
+        if o.type == 'MESH' and re.sub(r'\.\d{3}$', '', o.name) in REPLACED_BY_SCANS:
+            bpy.data.objects.remove(o, do_unlink=True)
+            removed += 1
+    kept = [x for x in B.OBSTACLES if x['name'] not in REPLACED_OBSTACLES]
+    dropped = len(B.OBSTACLES) - len(kept)
+    B.OBSTACLES[:] = kept
+    assert removed and dropped == len(REPLACED_OBSTACLES), (removed, dropped)
+    print(f'GREYBOX_REPLACED meshes={removed} obstacles={dropped}')
 
 
 def lobe(spec):
@@ -245,7 +281,7 @@ def interior():
         B.b('court_bollard_cap', (x, 5.39, z), (.36, .08, .36), 'practical_station_marker')
         light('practical_station_marker', (x, 5.44, z))
     B.b('delivery_beacon', (4.9, 8.47, 20.7), (.22, .42, .22), 'practical_delivery_beacon'); light('practical_delivery_beacon', (4.9, 8.6, 20.7))
-    B.equipment()
+    equipment_v2()
     for room in C['hq']['rooms'].values():
         for s in room['sockets']: socket(s['id'], (s['xz'][0], s['y'], s['xz'][1]), s['facingDeg'])
     for s in C2['hq']['hubOverflowSockets'] + C2['hq']['courtSockets']: socket(s['id'], (s['xz'][0], s['y'], s['xz'][1]), s['facingDeg'])

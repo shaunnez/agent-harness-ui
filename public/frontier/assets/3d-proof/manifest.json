@@ -8,16 +8,12 @@
       "relay": "/assets/3d-proof/crown-relay.1913db15dbe6.glb",
       "foundry": "/assets/3d-proof/crown-foundry.a9c0c35790d0.glb"
     },
-    "shell": "/assets/3d-proof/hq-shell.2bee0db2c11e.glb",
+    "shell": "/assets/3d-proof/hq-shell.fe699c2301f0.glb",
     "bridgeSpan": "/assets/3d-proof/bridge-span-27.61fa0489a831.glb",
     "bridgeEnd": "/assets/3d-proof/bridge-end.50920a684920.glb",
-    "scatterKit": "/assets/3d-proof/scatter-kit.6ecb016f3954.glb",
-    "crownPreviews": {
-      "bastion": "/assets/3d-proof/crown-preview-bastion.ee20cd747535.png",
-      "command": "/assets/3d-proof/crown-preview-command.e0a83a69635e.png",
-      "relay": "/assets/3d-proof/crown-preview-relay.201c7983b043.png",
-      "foundry": "/assets/3d-proof/crown-preview-foundry.1a96e6e5944c.png"
-    },
+    "scatterKit": "/assets/3d-proof/scatter-kit.6bd4b53f8fc3.glb",
+    "shuttle": "/assets/3d-proof/shuttle.0f334b8d4889.glb",
+    "props": "/assets/3d-proof/props-kit.c2969382a8c8.glb",
     "terrainTextures": {
       "gravel": "/assets/3d-proof/terrain-gravel-albedo.3e82bc8c5ea9.jpg",
       "limestone": "/assets/3d-proof/terrain-limestone-albedo.b09636eff1da.jpg",
@@ -407,19 +403,6 @@
         ]
       },
       {
-        "name": "planning_central_equipment",
-        "min": [
-          -10.3995,
-          4.3,
-          3.8876
-        ],
-        "max": [
-          -8.1335,
-          5.8,
-          6.8124
-        ]
-      },
-      {
         "name": "review_central_equipment",
         "min": [
           7.9165,
@@ -430,19 +413,6 @@
           10.6165,
           4.6,
           -4
-        ]
-      },
-      {
-        "name": "testing_central_equipment",
-        "min": [
-          8.1335,
-          4.3,
-          3.8876
-        ],
-        "max": [
-          10.3995,
-          5.8,
-          6.8124
         ]
       },
       {
@@ -469,19 +439,6 @@
           -5.7,
           5.9,
           14.05
-        ]
-      },
-      {
-        "name": "cargo_crates",
-        "min": [
-          -4.7,
-          4.3,
-          16.3
-        ],
-        "max": [
-          -3.3,
-          5.9,
-          17.7
         ]
       },
       {

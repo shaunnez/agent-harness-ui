@@ -3,11 +3,14 @@ import { baseLabelAnchor, hubSlot, projectKey } from "./colony";
 import { colonyModels, proofAssetUrls } from "./colony-assets";
 import { disposeGreybox } from "./colony-greybox";
 import { ColonyGround } from "./ColonyGround";
+import { ColonyProps } from "./ColonyProps";
+import { ColonyShuttle } from "./ColonyShuttle";
 import { ColonyTerrain } from "./ColonyTerrain";
 import { useFrame, useLoader, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { Fragment, useEffect, useMemo, useRef } from "react";
 import { Color, type DirectionalLight, type HemisphereLight, type Object3D, type PointLight } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { configureGltfLoader } from "./gltf-loader";
 import {
   defaultEnvironment,
   LightingClock,
@@ -55,7 +58,7 @@ interface Props {
 export function ProofScene(props: Props) {
   const { input, manifest, bases, focusId, labels, onSelect, onLighting } = props;
   const sources = useMemo(() => proofAssetUrls(manifest), [manifest]);
-  const gltfs = useLoader(GLTFLoader, sources);
+  const gltfs = useLoader(GLTFLoader, sources, configureGltfLoader);
   const loaded = useMemo(() => new Map(sources.map((url, index) => [url, gltfs[index]])), [sources, gltfs]);
   const workerGltf = loaded.get(manifest.worker);
   const environment = loaded.get(manifest.scene);
@@ -298,22 +301,26 @@ export function ProofScene(props: Props) {
           loaded.get(manifest.bases?.[legacyVariant(base.appearance.variant)].src ?? manifest.scene)?.scene;
         if (!source) throw new Error(`The ${base.appearance.variant} base export is missing.`);
         return (
-          <ProofBase
-            key={base.project.id}
-            base={base}
-            source={source}
-            environment={islandTile}
-            cutaway={cutaway && base.project.id === activeFocus}
-            light={light}
-            roots={roots.current}
-            onSelect={() => onSelect("project", base.project.id)}
-          />
+          <Fragment key={base.project.id}>
+            <ProofBase
+              base={base}
+              source={source}
+              environment={islandTile}
+              cutaway={cutaway && base.project.id === activeFocus}
+              light={light}
+              roots={roots.current}
+              onSelect={() => onSelect("project", base.project.id)}
+            />
+            {/* Every HQ is the same shell, so every HQ carries the same room props. */}
+            {colony?.props && <ColonyProps model={colony.props} origin={base.position} />}
+          </Fragment>
         );
       })}
       {colony && field && <ColonyTerrain field={field} textures={manifest.colony?.terrainTextures} />}
       {colony && field && <ColonyWater field={field} light={light} />}
       {colony && <ColonyGround bases={bases} span={colony.span} end={colony.end} />}
       {colony?.kit && <ParcelScatter kit={colony.kit} plans={scatterPlans} />}
+      {colony?.shuttle && <ColonyShuttle model={colony.shuttle} origin={hubParcel.position} />}
       {lampSlots.map((slot, index) => (
         <pointLight
           key={slot}
