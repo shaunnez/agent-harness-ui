@@ -30,6 +30,29 @@ const requiredGroups = {
     "MF_Lantern",
     "MF_Vehicle_Rover",
   ],
+  /**
+   * The Meshy substitution kit: scanned bodies in the environment-pass slots. Scrub, grass and reeds
+   * are deliberately absent — their flat-card geometry read as painted blobs beside the scans, and
+   * there is no scanned grass or reed to replace them with yet.
+   */
+  scatter3: [
+    "MF_Tree_Purple_A",
+    "MF_Tree_Bare_A",
+    "MF_Cliff_A",
+    "MF_Rock_Large_A",
+    "MF_Rock_Shore_A",
+    "MF_Boulder_A",
+    "MF_Crystal_A",
+    "MF_Crystal_D",
+    "MF_Lantern",
+    "MF_Vehicle_Rover",
+  ],
+  /**
+   * The three scanned interior hero props. They ship as their own kit rather than inside the shell,
+   * whose producer receipt is hash-bound; the runtime anchors each to the contract socket that
+   * already names it.
+   */
+  props: ["MF_Prop_PlanningTable", "MF_Prop_TestRig", "MF_Prop_CargoBattery"],
   parcel: [
     "MF_Terrain",
     "MF_Planting",
@@ -37,6 +60,25 @@ const requiredGroups = {
     ...[30, 90, 150, 210, 270, 330].flatMap((edge) => [`MF_Road_Spur_E${edge}`, `MF_Pad_E${edge}`]),
   ],
 };
+/**
+ * Kinds whose geometry may arrive Draco-compressed. Scanned scatter pieces are checked on triangle
+ * totals, bounds and node names only; the shell, crowns, parcels and bridge parts are checked
+ * per-vertex against contract sockets and so must stay readable.
+ */
+const dracoInspectable = new Set(["scatter", "scatter2", "scatter3", "props"]);
+/**
+ * Texture count ceiling by kind: one shared atlas set for authored kit pieces, per-piece PBR maps for
+ * scanned ones, which cannot share a UV layout.
+ *
+ * The scanned budgets live here rather than in `contract.json` deliberately. The contract is frozen
+ * and its sha256 is bound into the HQ producer receipt, so editing it to carry a budget would break
+ * the guard that catches the contract drifting from the geometry it produced. Raised on Shaun's
+ * approval, 19 September 2026; the case is in build-evidence/MESHY-KIT.
+ */
+const textureCeiling = { scatter3: 64, props: 16 };
+const scannedKitBudget = { triangles: 200000, bytes: 6000000 };
+/** Three scanned props, each read at conversational distance inside a room rather than across the bay. */
+const propsKitBudget = { triangles: 20000, bytes: 2500000 };
 const identityRoles = new Set(["identity_roof_inset", "identity_roof_ring", "identity_trim"]);
 const practicalRoles = new Set([
   "practical_warm_strip",
@@ -186,7 +228,21 @@ function imageDimensions(bytes) {
       offset += length;
     }
   }
-  throw new Error("Colony textures must be embedded PNG or JPEG");
+  // RIFF....WEBP: VP8L and VP8X carry their size differently from lossy VP8.
+  if (
+    bytes.length >= 30 &&
+    bytes.subarray(0, 4).toString() === "RIFF" &&
+    bytes.subarray(8, 12).toString() === "WEBP"
+  ) {
+    const chunk = bytes.subarray(12, 16).toString();
+    if (chunk === "VP8 ") return [bytes.readUInt16LE(26) & 0x3fff, bytes.readUInt16LE(28) & 0x3fff];
+    if (chunk === "VP8L") {
+      const bits = bytes.readUInt32LE(21);
+      return [(bits & 0x3fff) + 1, ((bits >> 14) & 0x3fff) + 1];
+    }
+    if (chunk === "VP8X") return [bytes.readUIntLE(24, 3) + 1, bytes.readUIntLE(27, 3) + 1];
+  }
+  throw new Error("Colony textures must be embedded PNG, JPEG or WebP");
 }
 
 export function validateColonyGlb(bytes, { kind, contract, expectedSha256 }) {
@@ -210,7 +266,9 @@ export function validateColonyGlb(bytes, { kind, contract, expectedSha256 }) {
   if (kind === "crown")
     for (const role of identityRoles)
       if (!materials.some((m) => m.name === role)) throw new Error(`Colony crown missing ${role}`);
-  if ((json.images?.length ?? 0) > 8) throw new Error("Colony texture count exceeds eight");
+  const maxTextures = textureCeiling[kind] ?? 8;
+  if ((json.images?.length ?? 0) > maxTextures)
+    throw new Error(`Colony texture count exceeds ${maxTextures}`);
   for (const image of json.images ?? []) {
     const view = json.bufferViews?.[image.bufferView];
     if (image.uri || !view || view.buffer !== 0)
@@ -228,8 +286,34 @@ export function validateColonyGlb(bytes, { kind, contract, expectedSha256 }) {
     const node = json.nodes[index];
     if (node.mesh === undefined) continue;
     for (const primitive of json.meshes?.[node.mesh]?.primitives ?? []) {
-      if ((primitive.mode ?? 4) !== 4 || primitive.extensions)
-        throw new Error("Colony geometry must use uncompressed triangles");
+      if ((primitive.mode ?? 4) !== 4) throw new Error("Colony geometry must use triangles");
+      const draco = primitive.extensions?.KHR_draco_mesh_compression;
+      const otherExtensions = Object.keys(primitive.extensions ?? {}).filter(
+        (name) => name !== "KHR_draco_mesh_compression",
+      );
+      if (otherExtensions.length)
+        throw new Error(`Unsupported colony geometry extension: ${otherExtensions.join(", ")}`);
+      // Draco keeps `count` on the index accessor and `min`/`max` on POSITION even with the
+      // bufferView dropped, so triangle totals and bounds stay checkable without a decoder. The
+      // per-vertex sweep below cannot run on compressed geometry; only the scanned scatter kits are
+      // compressed, and they are not the kinds that need horizontal-face or socket inspection.
+      if (draco) {
+        if (!dracoInspectable.has(kind)) throw new Error(`Colony ${kind} must use uncompressed geometry`);
+        const indexAccessor = json.accessors?.[primitive.indices];
+        const positionAccessor = json.accessors?.[primitive.attributes?.POSITION];
+        if (!indexAccessor || !positionAccessor?.min || !positionAccessor?.max)
+          throw new Error("Draco primitive is missing its accessor count and bounds");
+        if (indexAccessor.count % 3) throw new Error("Incomplete colony triangle");
+        triangles += indexAccessor.count / 3;
+        for (const corner of [positionAccessor.min, positionAccessor.max]) {
+          const point = new Vector3(...corner).applyMatrix4(transform).toArray();
+          for (let axis = 0; axis < 3; axis += 1) {
+            min[axis] = Math.min(min[axis], point[axis]);
+            max[axis] = Math.max(max[axis], point[axis]);
+          }
+        }
+        continue;
+      }
       const positions = accessorReader(json, binary, primitive.attributes?.POSITION);
       const indices =
         primitive.indices === undefined ? null : accessorReader(json, binary, primitive.indices);
@@ -299,11 +383,15 @@ export function validateColonyGlb(bytes, { kind, contract, expectedSha256 }) {
       ? { triangles: 30000, bytes: 3000000 }
       : kind === "scatter2"
         ? (contract.budgets.scatterKit ?? { triangles: 90000, bytes: 6000000 })
-        : contract.budgets[
-            { shell: "hqShell", crown: "crown", parcel: "parcel", span: "bridgeSpan", end: "bridgeSpan" }[
-              kind
-            ]
-          ];
+        : kind === "scatter3"
+          ? (contract.budgets.scatterKitScanned ?? scannedKitBudget)
+          : kind === "props"
+            ? propsKitBudget
+            : contract.budgets[
+                { shell: "hqShell", crown: "crown", parcel: "parcel", span: "bridgeSpan", end: "bridgeSpan" }[
+                  kind
+                ]
+              ];
   if (triangles > budget.triangles || bytes.length > budget.bytes)
     throw new Error(`Colony ${kind} exceeds triangle or byte budget`);
   if (kind === "shell") {

@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-16T17:12:27.473Z",
+  "capturedAt": "2026-09-19T03:26:24.957Z",
   "assets": [
     {
       "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.glb",
@@ -79,9 +79,9 @@
     },
     {
       "source": "design/mission-frontier/assets/staging/colony-v2/producer/hq-shell.glb",
-      "filename": "hq-shell.2bee0db2c11e.glb",
-      "sha256": "2bee0db2c11e05dc70f1a454d67e5a47a458b73d212151050ed14bddbbb099bf",
-      "bytes": 6806112,
+      "filename": "hq-shell.fe699c2301f0.glb",
+      "sha256": "fe699c2301f0c77e2a670f25a5aba6c129b9a2c5d0b24230d3f5ee23da9c8238",
+      "bytes": 6746264,
       "meshes": 63,
       "materials": 20,
       "textures": 6,
@@ -148,38 +148,34 @@
       "animations": []
     },
     {
-      "source": "design/mission-frontier/assets/staging/colony-v2/producer/scatter-kit.glb",
-      "filename": "scatter-kit.6ecb016f3954.glb",
-      "sha256": "6ecb016f39548f2507b2b8bfeb7cbb1483416b6f31f4637f478c324c668d1faf",
-      "bytes": 5845124,
-      "meshes": 84,
-      "materials": 18,
-      "textures": 6,
+      "source": "design/mission-frontier/assets/staging/meshy-kit/producer/scatter-kit.glb",
+      "filename": "scatter-kit.6bd4b53f8fc3.glb",
+      "sha256": "6bd4b53f8fc3b1b37d038048dd964fa88007bed1ac4953f3132b582f3df76c31",
+      "bytes": 5532412,
+      "meshes": 33,
+      "materials": 23,
+      "textures": 61,
       "animations": []
     },
     {
-      "source": "design/mission-frontier/assets/staging/colony-v2/producer/previews/crown-bastion.png",
-      "filename": "crown-preview-bastion.ee20cd747535.png",
-      "sha256": "ee20cd7475356785df955afb9952a9e84deb7afbdd9e48283a6103916161278f",
-      "bytes": 293968
+      "source": "design/mission-frontier/assets/staging/meshy-kit/producer/shuttle.glb",
+      "filename": "shuttle.0f334b8d4889.glb",
+      "sha256": "0f334b8d48893da74a57d29d18bd44b56840af4a314bd9d34b4a628b2a1dddc6",
+      "bytes": 998460,
+      "meshes": 30,
+      "materials": 6,
+      "textures": 4,
+      "animations": []
     },
     {
-      "source": "design/mission-frontier/assets/staging/colony-v2/producer/previews/crown-command.png",
-      "filename": "crown-preview-command.e0a83a69635e.png",
-      "sha256": "e0a83a69635ec5d87147ac39e50576e135dbedafbc67087074c0171de8756bc3",
-      "bytes": 289404
-    },
-    {
-      "source": "design/mission-frontier/assets/staging/colony-v2/producer/previews/crown-relay.png",
-      "filename": "crown-preview-relay.201c7983b043.png",
-      "sha256": "201c7983b043d17fcfc5fb5bfbd83c52dff86429b087f32c19c3144e5f02182b",
-      "bytes": 292440
-    },
-    {
-      "source": "design/mission-frontier/assets/staging/colony-v2/producer/previews/crown-foundry.png",
-      "filename": "crown-preview-foundry.1a96e6e5944c.png",
-      "sha256": "1a96e6e5944c9d49145d0c2e4b3e24870c835f73a0af90cb1b7be3cdcabcac8f",
-      "bytes": 290163
+      "source": "design/mission-frontier/assets/staging/meshy-kit/producer/props-kit.glb",
+      "filename": "props-kit.c2969382a8c8.glb",
+      "sha256": "c2969382a8c84ac92cade619d69a3690679a8face65235e12f25cefa161aec15",
+      "bytes": 595356,
+      "meshes": 3,
+      "materials": 3,
+      "textures": 12,
+      "animations": []
     },
     {
       "source": "design/mission-frontier/assets/staging/colony-v2/terrain-textures/gravel-albedo.jpg",

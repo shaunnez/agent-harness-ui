@@ -45,6 +45,9 @@ export async function integrateColonyAssets(root, asset) {
   const bridgeReceipts = producer2
     ? await optionalJson(path.join(v1, "producer/hq-metadata.json"))
     : producer;
+  // The Meshy substitution kit replaces the environment-pass kit once it exists; it keeps the same
+  // item names and metre heights, so only the bytes behind each slot change.
+  const meshyKit = await optionalJson(path.join(staging, "meshy-kit/producer/scatter-metadata.json"));
   for (let [dir, file, key, kind] of [
     ["producer", "hq-shell.glb", "shell", "shell"],
     ["producer", "crown-bastion.glb", "bastion", "crown"],
@@ -55,15 +58,20 @@ export async function integrateColonyAssets(root, asset) {
     ["producer", "bridge-end.glb", "bridgeEnd", "end"],
     ["terrain", "scatter-kit.glb", "scatterKit", "scatter"],
   ]) {
-    // The environment-pass kit in colony-v2/producer replaces the 2A kit once it exists.
+    // The environment-pass kit in colony-v2/producer replaces the 2A kit once it exists, and the
+    // scanned kit in meshy-kit/producer replaces that in turn.
     const kit2 =
       kind === "scatter" ? await optionalJson(path.join(v2, "producer/scatter-metadata.json")) : null;
-    if (kit2) kind = "scatter2";
-    const filePath = kit2
-      ? path.join(v2, "producer", file)
-      : dir === "producer" && !file.startsWith("bridge-")
-        ? path.join(producerDir, file)
-        : path.join(v1, dir, file);
+    const kit3 = kind === "scatter" ? meshyKit : null;
+    if (kit3) kind = "scatter3";
+    else if (kit2) kind = "scatter2";
+    const filePath = kit3
+      ? path.join(staging, "meshy-kit/producer", file)
+      : kit2
+        ? path.join(v2, "producer", file)
+        : dir === "producer" && !file.startsWith("bridge-")
+          ? path.join(producerDir, file)
+          : path.join(v1, dir, file);
     let bytes;
     try {
       bytes = await readFile(filePath);
@@ -75,7 +83,7 @@ export async function integrateColonyAssets(root, asset) {
     const fromV1 = file.startsWith("bridge-") && producer2;
     const entry =
       file === "scatter-kit.glb"
-        ? (kit2 ?? (await optionalJson(path.join(v1, "terrain/scatter-metadata.json"))))
+        ? (kit3 ?? kit2 ?? (await optionalJson(path.join(v1, "terrain/scatter-metadata.json"))))
         : (fromV1 ? bridgeReceipts : producer)?.assets?.[stem];
     const expectedSha256 = entry?.glb?.sha256 ?? entry?.sha256;
     if (!expectedSha256) throw new Error(`${file}: missing producer hash receipt`);
@@ -87,6 +95,27 @@ export async function integrateColonyAssets(root, asset) {
     const url = await asset(filePath, file.replace(/\.glb$/, ""));
     if (kind === "crown") colony.crowns[key] = url;
     else colony[key] = url;
+  }
+  // The transport on the hub landing terrace: a single hero object, not a kit item, so it is
+  // published on its own and loaded with the rest of the colony set.
+  const shuttle = await optionalJson(path.join(staging, "meshy-kit/producer/shuttle-metadata.json"));
+  if (shuttle) {
+    const file = path.join(staging, "meshy-kit/producer/shuttle.glb");
+    const bytes = await readFile(file);
+    if (shuttle.sha256 !== sha256(bytes))
+      throw new Error("shuttle.glb: bytes do not match the producer receipt");
+    colony.shuttle = await asset(file, "shuttle");
+  }
+  // The three scanned interior props. The HQ shell reserved an empty `MF_Props` root for these, but
+  // the shell's producer receipt is hash-bound, so they ship as their own kit and the runtime
+  // anchors each to the contract socket that already names it.
+  const props = await optionalJson(path.join(staging, "meshy-kit/producer/props-metadata.json"));
+  if (props) {
+    const file = path.join(staging, "meshy-kit/producer/props-kit.glb");
+    const bytes = await readFile(file);
+    if (props.sha256 !== sha256(bytes)) throw new Error("props.glb: bytes do not match the producer receipt");
+    validateColonyGlb(bytes, { kind: "props", contract, expectedSha256: props.sha256 });
+    colony.props = await asset(file, "props-kit");
   }
   // Picker thumbnails: each crown rendered on the shared shell by the producer.
   for (const variant of Object.keys(colony.crowns)) {

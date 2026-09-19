@@ -218,13 +218,19 @@ export function waterRibbons(field: TerrainField, profile: ParcelProfile, featur
   const curtain: [number, number, number][] = [[cx + lip.x, lip.water + lift, cz + lip.z]];
   const widths = [feature.halfWidth - 0.25];
   let last = lip.water + lift;
-  for (let k = 1; k <= 10; k++) {
+  // Every sample must drop. Clamping only to `last` let a face that juts outward hold the curtain at
+  // one height, which folded the strip into a horizontal sheet part way down: with DoubleSide and no
+  // depth write that sheet blended against itself and read as a hard-edged opacity seam.
+  const minimumDrop = 0.22;
+  for (let k = 1; k <= 14; k++) {
     const radial = lipRadius + k * 0.55;
     const x = cx + Math.cos(a) * radial,
       z = cz + Math.sin(a) * radial;
     const face = heightAt(field, x, z);
-    let y = Math.max(face + 0.28, seaLevel + 0.03);
-    y = Math.min(y, last);
+    const floor = seaLevel + 0.03;
+    let y = Math.max(face + 0.28, floor);
+    y = Math.min(y, last - minimumDrop);
+    if (y < floor) y = floor;
     last = y;
     curtain.push([x, y, z]);
     widths.push(feature.halfWidth - 0.25 + k * 0.08);

@@ -1,0 +1,53 @@
+{
+  "file": "props-kit.glb",
+  "sha256": "c2969382a8c84ac92cade619d69a3690679a8face65235e12f25cefa161aec15",
+  "bytes": 595356,
+  "images": 12,
+  "props": {
+    "MF_Prop_PlanningTable": {
+      "asset": "planningHoloTable.V2",
+      "triangles": 5999,
+      "texturePx": 512,
+      "size": [
+        3.049,
+        1.05,
+        3.058
+      ],
+      "footprintRadius": 1.529,
+      "material": "ambient_screen_service"
+    },
+    "MF_Prop_TestRig": {
+      "asset": "testingRig.V2",
+      "triangles": 7000,
+      "texturePx": 512,
+      "size": [
+        3.509,
+        1.7,
+        3.199
+      ],
+      "footprintRadius": 1.755,
+      "material": "practical_console_cyan"
+    },
+    "MF_Prop_CargoBattery": {
+      "asset": "cargoBattery.V2",
+      "triangles": 4000,
+      "texturePx": 512,
+      "size": [
+        1.547,
+        1.06,
+        1.065
+      ],
+      "footprintRadius": 0.773,
+      "material": "practical_warm_strip"
+    }
+  },
+  "budget": {
+    "bytes": 2500000,
+    "triangles": 20000
+  },
+  "compression": {
+    "geometry": "KHR_draco_mesh_compression",
+    "textures": "EXT_texture_webp q85"
+  },
+  "origin": "Meshy scans (meshy_output) for the three interior hero props the HQ shell reserved MF_Props for"
+}
