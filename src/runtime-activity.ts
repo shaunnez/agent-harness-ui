@@ -12,6 +12,13 @@ export type RuntimeRunStatus =
   | "timeout";
 
 export type RuntimeGateStage = "dev-review" | "test" | "final-review";
+
+/**
+ * A stage that can be advanced by the persisted auto-run policy. Deliberately separate
+ * from `RuntimeGateStage`, which means "candidate-bound evidence gate" and carries
+ * freshness — Specification, Plan and Implement have no candidate and no freshness.
+ */
+export type AutoRunStage = RuntimeGateStage | "specification" | "plan" | "implement";
 export type RuntimeFreshnessReasonCode =
   | "fresh"
   | "missing_binding"

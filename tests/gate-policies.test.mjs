@@ -1,15 +1,80 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  APPROVAL_GATE_STAGES,
+  GATE_APPROVAL_ADVANCE,
+  GATE_AUTO_ADVANCE,
   GATE_POLICIES,
   GATE_STAGES,
+  RUN_GATE_STAGES,
   resolveGatePolicy,
   validateGatePolicies,
 } from "../server/gate-policies.mjs";
 
-test("GATE_STAGES and GATE_POLICIES name the three gate stages and the two supported policies", () => {
-  assert.deepEqual([...GATE_STAGES].sort(), ["dev-review", "final-review", "test"]);
+test("GATE_STAGES covers both gate kinds and GATE_POLICIES names the two supported policies", () => {
+  assert.deepEqual([...RUN_GATE_STAGES].sort(), ["dev-review", "final-review", "implement", "test"]);
+  assert.deepEqual([...APPROVAL_GATE_STAGES].sort(), ["plan", "specification"]);
+  assert.deepEqual([...GATE_STAGES].sort(), [
+    "dev-review",
+    "final-review",
+    "implement",
+    "plan",
+    "specification",
+    "test",
+  ]);
   assert.deepEqual([...GATE_POLICIES].sort(), ["auto-accept-recommendations", "manual"]);
+});
+
+test("the two advance maps are keyed by parked status and never claim the same status", () => {
+  assert.deepEqual(Object.keys(GATE_AUTO_ADVANCE).sort(), [
+    "ready-for-final-review",
+    "ready-for-implementation",
+    "ready-for-review",
+    "ready-for-test",
+  ]);
+  assert.deepEqual(Object.keys(GATE_APPROVAL_ADVANCE).sort(), [
+    "awaiting-plan-approval",
+    "awaiting-spec-approval",
+  ]);
+  for (const status of Object.keys(GATE_APPROVAL_ADVANCE)) {
+    assert.equal(GATE_AUTO_ADVANCE[status], undefined);
+  }
+});
+
+test("every advance map entry names a stage that is settable in gatePolicies", () => {
+  for (const transition of Object.values(GATE_AUTO_ADVANCE)) {
+    assert.ok(RUN_GATE_STAGES.has(transition.stage), `${transition.stage} is not a run gate`);
+  }
+  for (const transition of Object.values(GATE_APPROVAL_ADVANCE)) {
+    assert.ok(APPROVAL_GATE_STAGES.has(transition.stage), `${transition.stage} is not an approval gate`);
+  }
+});
+
+test("validateGatePolicies accepts the approval gate stages", () => {
+  assert.deepEqual(
+    validateGatePolicies(
+      {
+        specification: "auto-accept-recommendations",
+        plan: "manual",
+        implement: "auto-accept-recommendations",
+      },
+      undefined,
+    ),
+    {
+      specification: "auto-accept-recommendations",
+      plan: "manual",
+      implement: "auto-accept-recommendations",
+    },
+  );
+});
+
+test("resolveGatePolicy defaults the approval gates to manual", () => {
+  assert.equal(resolveGatePolicy({ gatePolicies: {} }, "specification"), "manual");
+  assert.equal(resolveGatePolicy({ gatePolicies: { specification: "manual" } }, "plan"), "manual");
+  assert.equal(
+    resolveGatePolicy({ gatePolicies: { plan: "auto-accept-recommendations" } }, "plan"),
+    "auto-accept-recommendations",
+  );
 });
 
 test("validateGatePolicies accepts a partial map and leaves unspecified stages absent", () => {

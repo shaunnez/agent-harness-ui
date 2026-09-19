@@ -3,7 +3,7 @@ import test from "node:test";
 import { TaskControlOrchestrator } from "../server/orchestrator-task-control.mjs";
 import { withActionEligibility } from "../server/retry-admission-policy.mjs";
 
-function controlFor({ task, settings = {}, startResult = true }) {
+function controlFor({ task, settings = {}, startResult = true, stalePlan = false }) {
   const current = structuredClone(task);
   const store = {
     async get() {
@@ -16,14 +16,27 @@ function controlFor({ task, settings = {}, startResult = true }) {
       updater(current);
       return structuredClone(current);
     },
+    async transition(_id, condition, updater) {
+      if (!condition(current)) {
+        const error = new Error("Task state changed before the requested action could be reserved.");
+        error.code = "TASK_TRANSITION_CONFLICT";
+        throw error;
+      }
+      updater(current);
+      return structuredClone(current);
+    },
   };
   const control = new TaskControlOrchestrator({
     store,
     active: new Map(),
     worktrees: {},
-    planAuthority: {},
+    planAuthority: { blockStalePlan: async () => stalePlan },
     run: async () => {},
   });
+  // The manifest read is repository I/O; the plan's own executability rules are what
+  // these tests are about, so only the read is replaced.
+  control._readVerificationManifestInjected = true;
+  control._readVerificationManifest = async () => ({ commands: [{ id: "lint", command: ["make", "lint"] }] });
   const starts = [];
   control.start = async (_id, kind, options) => {
     starts.push(kind);
@@ -64,7 +77,7 @@ for (const scenario of [
       settings: { gatePolicies: { [scenario.stage]: "auto-accept-recommendations" } },
     });
 
-    await control._autoAdvanceGate(task.id, scenario.completedKind);
+    await control._autoAdvanceGate(task.id);
 
     assert.deepEqual(starts, [scenario.nextKind]);
     assert.match(current.events.at(-1).title, /auto-run authorized/i);
@@ -76,7 +89,7 @@ test("manual and unrelated gate policies leave the task waiting", async () => {
   for (const gatePolicies of [{}, { "dev-review": "manual" }, { test: "auto-accept-recommendations" }]) {
     const task = { id: "AH-MANUAL", status: "ready-for-review", currentStage: "dev-review", events: [] };
     const { control, starts } = controlFor({ task, settings: { gatePolicies } });
-    await control._autoAdvanceGate(task.id, "implementation");
+    await control._autoAdvanceGate(task.id);
     assert.deepEqual(starts, []);
   }
 });
@@ -96,7 +109,7 @@ test("auto-run cannot bypass an exhausted gate allowance", async () => {
     settings: { gatePolicies: { "dev-review": "auto-accept-recommendations" } },
   });
 
-  await control._autoAdvanceGate(task.id, "implementation");
+  await control._autoAdvanceGate(task.id);
 
   assert.deepEqual(starts, ["review"]);
   assert.equal(
@@ -140,4 +153,128 @@ test("does not advertise PR promotion when candidate and task authority differ",
 
   assert.equal(projected.actionEligibility.actions["open-pr"].allowed, false);
   assert.match(projected.actionEligibility.actions["open-pr"].reason, /base matches/i);
+});
+
+// --- approval gates -------------------------------------------------------------
+
+function planReadyTask(overrides = {}) {
+  return {
+    id: "AH-PLAN-AUTO",
+    status: "awaiting-plan-approval",
+    currentStage: "plan",
+    workflowProfile: { selected: "standard" },
+    workPackages: [{ id: "WP-1", dependencies: [], verificationCommandIds: ["lint"] }],
+    attemptsByStage: {},
+    stageRunLimits: {},
+    approvals: [],
+    artifacts: [],
+    events: [],
+    ...overrides,
+  };
+}
+
+test("an automatic specification approval starts planning and is marked as automatic", async () => {
+  const task = {
+    id: "AH-SPEC-AUTO",
+    status: "awaiting-spec-approval",
+    currentStage: "specification",
+    workflow: "implement",
+    approvals: [],
+    artifacts: [],
+    events: [],
+  };
+  const { control, current, starts } = controlFor({
+    task,
+    settings: { gatePolicies: { specification: "auto-accept-recommendations" } },
+  });
+
+  await control._autoAdvanceGate(task.id);
+
+  assert.deepEqual(starts, ["planning"]);
+  assert.equal(current.approvals.length, 1);
+  assert.equal(current.approvals[0].stage, "specification");
+  assert.equal(current.approvals[0].automatic, true);
+  const approvalEvent = current.events.find((event) => /auto-approved/i.test(event.title));
+  assert.ok(approvalEvent, "the automatic approval is recorded as such in the activity log");
+  assert.match(approvalEvent.detail, /No person reviewed this artifact\./);
+});
+
+test("an automatic plan approval chains straight into implementation when implement is opted in", async () => {
+  const { control, current, starts } = controlFor({
+    task: planReadyTask(),
+    settings: {
+      gatePolicies: { plan: "auto-accept-recommendations", implement: "auto-accept-recommendations" },
+    },
+  });
+
+  await control._autoAdvanceGate("AH-PLAN-AUTO");
+
+  assert.deepEqual(starts, ["implementation"]);
+  assert.equal(current.approvals.at(-1).stage, "plan");
+  assert.equal(current.approvals.at(-1).automatic, true);
+});
+
+test("an automatic plan approval stops at ready-for-implementation when implement stays manual", async () => {
+  const { control, current, starts } = controlFor({
+    task: planReadyTask(),
+    settings: { gatePolicies: { plan: "auto-accept-recommendations" } },
+  });
+
+  await control._autoAdvanceGate("AH-PLAN-AUTO");
+
+  assert.deepEqual(starts, []);
+  assert.equal(current.status, "ready-for-implementation");
+  assert.equal(current.approvals.at(-1).automatic, true);
+});
+
+test("a manually approved plan still starts implementation when implement is opted in", async () => {
+  const { control, current, starts } = controlFor({
+    task: planReadyTask(),
+    settings: { gatePolicies: { implement: "auto-accept-recommendations" } },
+  });
+
+  await control.approvePlan("AH-PLAN-AUTO", "Looks right.");
+
+  assert.deepEqual(starts, ["implementation"]);
+  assert.equal(current.approvals.at(-1).automatic, false);
+  assert.equal(current.approvals.at(-1).note, "Looks right.");
+});
+
+test("manual approval gates leave the task parked with no approval invented", async () => {
+  for (const gatePolicies of [{}, { plan: "manual" }, { specification: "auto-accept-recommendations" }]) {
+    const { control, current, starts } = controlFor({ task: planReadyTask(), settings: { gatePolicies } });
+    await control._autoAdvanceGate("AH-PLAN-AUTO");
+    assert.deepEqual(starts, []);
+    assert.equal(current.status, "awaiting-plan-approval");
+    assert.deepEqual(current.approvals, []);
+  }
+});
+
+test("auto-approval fails closed on a stale plan and records why", async () => {
+  const { control, current, starts } = controlFor({
+    task: planReadyTask(),
+    settings: { gatePolicies: { plan: "auto-accept-recommendations" } },
+    stalePlan: true,
+  });
+
+  await control._autoAdvanceGate("AH-PLAN-AUTO");
+
+  assert.deepEqual(starts, []);
+  assert.equal(current.status, "awaiting-plan-approval");
+  assert.deepEqual(current.approvals, [], "a refused gate must not leave an approval behind");
+  assert.match(current.events.at(-1).title, /could not start/i);
+  assert.match(current.events.at(-1).detail, /Revalidate the retained plan\./);
+});
+
+test("auto-approval fails closed on a plan with no verifiable work package", async () => {
+  const { control, current } = controlFor({
+    task: planReadyTask({ workPackages: [{ id: "WP-1", dependencies: [], verificationCommandIds: [] }] }),
+    settings: { gatePolicies: { plan: "auto-accept-recommendations" } },
+  });
+
+  await control._autoAdvanceGate("AH-PLAN-AUTO");
+
+  assert.equal(current.status, "awaiting-plan-approval");
+  assert.deepEqual(current.approvals, []);
+  assert.match(current.events.at(-1).detail, /at least one repository manifest command id/i);
 });

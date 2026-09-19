@@ -1,5 +1,11 @@
 import type { StageId } from "../domain";
-import type { RuntimeEvent, RuntimeGateFreshness, RuntimeGateStage, RuntimeRun } from "../runtime-activity";
+import type {
+  AutoRunStage,
+  RuntimeEvent,
+  RuntimeGateFreshness,
+  RuntimeGateStage,
+  RuntimeRun,
+} from "../runtime-activity";
 
 export type RuntimeTaskStatus =
   | "queued"
@@ -271,7 +277,7 @@ export type RuntimeGrillPolicy = "manual" | "auto-accept-recommendations";
 
 export type RuntimeGatePolicy = "manual" | "auto-accept-recommendations";
 
-export type RuntimeGatePolicies = Partial<Record<RuntimeGateStage, RuntimeGatePolicy>>;
+export type RuntimeGatePolicies = Partial<Record<AutoRunStage, RuntimeGatePolicy>>;
 
 export type RuntimeGrillAnswerSource =
   | "operator-answer"
