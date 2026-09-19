@@ -32,9 +32,9 @@ PLATEAU_R = 20.0               # flat HQ ground at y 4.0 (eaves reach 17.1 + mar
 COURT_APRON = {"x": [-12.5, 12.5], "z": [14.0, 27.0]}   # flat court ground in front of the bay (court sockets and idle loop inside)
 PAD = (27.5, 31.5); PAD_W = 6.0; SPUR_W = 5.0            # abutment pad along each built edge line
 SPAN = D - 2 * PAD[1]          # 27.0: one bridge asset still fits every edge
-COAST = {"min": 26.0, "typical": 30.5, "max": 35.0, "edgeCorridorMax": PAD[1], "edgeCorridorHalfAngleDeg": 10,
+COAST = {"min": 28.5, "typical": 33.5, "max": 37.0, "edgeCorridorMax": PAD[1], "edgeCorridorHalfAngleDeg": 10,
          "frontArcMin": 30.0, "frontArcDeg": [60, 120]}
-CHANNEL_MIN = D - 2 * COAST["max"]                        # 20 m of open water at the narrowest
+CHANNEL_MIN = D - 2 * COAST["max"]                        # 16 m of open water at the narrowest
 SEA, SEABED, GROUND, COURT, DECK, FLOOR = 0.0, -3.0, 4.0, 4.25, 4.25, 4.30
 LABEL_Y = 19.5
 assert abs(SPAN - 27.0) < 1e-9, SPAN
