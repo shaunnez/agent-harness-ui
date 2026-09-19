@@ -64,10 +64,13 @@ export function ProofWorker({
   useEffect(
     () => () => {
       positions.delete(worker.id);
-      mixer.uncacheRoot(body);
+      // No `mixer.uncacheRoot(body)` here. The mixer is built from this clone and dies with it, so
+      // the cache has no one to outlive. Clearing it is what broke the rig under StrictMode: the
+      // remount reuses the `useMemo` body and action, but their `_cacheIndex` now points into a
+      // binding array the uncache emptied, and the next `play()` throws in `_lendBinding`.
       disposeWorker(body);
     },
-    [body, mixer, positions, worker.id],
+    [body, positions, worker.id],
   );
   const patrol = useMemo(() => route.map((p) => ({ x: p[0], y: p[2] })), [route]);
   const stepping = useRef(0);
