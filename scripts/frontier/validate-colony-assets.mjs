@@ -47,6 +47,12 @@ const requiredGroups = {
     "MF_Lantern",
     "MF_Vehicle_Rover",
   ],
+  /**
+   * The three scanned interior hero props. They ship as their own kit rather than inside the shell,
+   * whose producer receipt is hash-bound; the runtime anchors each to the contract socket that
+   * already names it.
+   */
+  props: ["MF_Prop_PlanningTable", "MF_Prop_TestRig", "MF_Prop_CargoBattery"],
   parcel: [
     "MF_Terrain",
     "MF_Planting",
@@ -59,7 +65,7 @@ const requiredGroups = {
  * totals, bounds and node names only; the shell, crowns, parcels and bridge parts are checked
  * per-vertex against contract sockets and so must stay readable.
  */
-const dracoInspectable = new Set(["scatter", "scatter2", "scatter3"]);
+const dracoInspectable = new Set(["scatter", "scatter2", "scatter3", "props"]);
 /**
  * Texture count ceiling by kind: one shared atlas set for authored kit pieces, per-piece PBR maps for
  * scanned ones, which cannot share a UV layout.
@@ -69,8 +75,10 @@ const dracoInspectable = new Set(["scatter", "scatter2", "scatter3"]);
  * the guard that catches the contract drifting from the geometry it produced. Raised on Shaun's
  * approval, 19 September 2026; the case is in build-evidence/MESHY-KIT.
  */
-const textureCeiling = { scatter3: 64 };
+const textureCeiling = { scatter3: 64, props: 16 };
 const scannedKitBudget = { triangles: 200000, bytes: 6000000 };
+/** Three scanned props, each read at conversational distance inside a room rather than across the bay. */
+const propsKitBudget = { triangles: 20000, bytes: 2500000 };
 const identityRoles = new Set(["identity_roof_inset", "identity_roof_ring", "identity_trim"]);
 const practicalRoles = new Set([
   "practical_warm_strip",
@@ -377,11 +385,13 @@ export function validateColonyGlb(bytes, { kind, contract, expectedSha256 }) {
         ? (contract.budgets.scatterKit ?? { triangles: 90000, bytes: 6000000 })
         : kind === "scatter3"
           ? (contract.budgets.scatterKitScanned ?? scannedKitBudget)
-          : contract.budgets[
-              { shell: "hqShell", crown: "crown", parcel: "parcel", span: "bridgeSpan", end: "bridgeSpan" }[
-                kind
-              ]
-            ];
+          : kind === "props"
+            ? propsKitBudget
+            : contract.budgets[
+                { shell: "hqShell", crown: "crown", parcel: "parcel", span: "bridgeSpan", end: "bridgeSpan" }[
+                  kind
+                ]
+              ];
   if (triangles > budget.triangles || bytes.length > budget.bytes)
     throw new Error(`Colony ${kind} exceeds triangle or byte budget`);
   if (kind === "shell") {

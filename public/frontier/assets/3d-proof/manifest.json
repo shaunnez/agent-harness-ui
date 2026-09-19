@@ -11,8 +11,9 @@
     "shell": "/assets/3d-proof/hq-shell.2bee0db2c11e.glb",
     "bridgeSpan": "/assets/3d-proof/bridge-span-27.61fa0489a831.glb",
     "bridgeEnd": "/assets/3d-proof/bridge-end.50920a684920.glb",
-    "scatterKit": "/assets/3d-proof/scatter-kit.081fb25b8d9a.glb",
+    "scatterKit": "/assets/3d-proof/scatter-kit.6bd4b53f8fc3.glb",
     "shuttle": "/assets/3d-proof/shuttle.0f334b8d4889.glb",
+    "props": "/assets/3d-proof/props-kit.c2969382a8c8.glb",
     "terrainTextures": {
       "gravel": "/assets/3d-proof/terrain-gravel-albedo.3e82bc8c5ea9.jpg",
       "limestone": "/assets/3d-proof/terrain-limestone-albedo.b09636eff1da.jpg",

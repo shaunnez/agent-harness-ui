@@ -1,8 +1,8 @@
 {
   "file": "scatter-kit.glb",
-  "sha256": "081fb25b8d9ae99417dbac6ac02581d84b5d75cc4c035220b2dca1159cbaf93c",
-  "bytes": 5336648,
-  "images": 57,
+  "sha256": "6bd4b53f8fc3b1b37d038048dd964fa88007bed1ac4953f3132b582f3df76c31",
+  "bytes": 5532412,
+  "images": 61,
   "items": {
     "MF_Boulder_A": {
       "footprintRadius": 1.632,
@@ -313,29 +313,18 @@
       "triangles": 212
     },
     "MF_Vehicle_Rover": {
-      "footprintRadius": 1.8,
+      "footprintRadius": 1.233,
       "height": 1.925,
       "size": [
-        3.6,
+        2.466,
         1.925,
-        2.4
+        1.809
       ],
       "anchor": "ground",
       "meshes": [
-        "rover_cab",
-        "rover_cargo",
-        "rover_chassis",
-        "rover_deck",
-        "rover_glass",
-        "rover_roll_bar",
-        "rover_wheel",
-        "rover_wheel.001",
-        "rover_wheel.002",
-        "rover_wheel.003",
-        "rover_wheel.004",
-        "rover_wheel.005"
+        "MF_Vehicle_Rover_body"
       ],
-      "triangles": 384
+      "triangles": 4000
     },
     "MF_Crystal_D": {
       "footprintRadius": 1.503,
@@ -459,6 +448,12 @@
       "height": 3.582,
       "texturePx": 512
     },
+    "MF_Vehicle_Rover": {
+      "asset": "serviceRover.V2",
+      "triangles": 4000,
+      "height": 1.925,
+      "texturePx": 512
+    },
     "MF_Crystal_D": {
       "asset": "crystal_01_large_cluster",
       "triangles": 8000,
@@ -472,5 +467,5 @@
       "texturePx": 512
     }
   },
-  "origin": "Meshy scans (meshy_output) substituted into v2 slots; procedural grass, reeds, lantern, vehicles and scrub retained from v2"
+  "origin": "Meshy scans (meshy_output) substituted into v2 slots; procedural lantern and cart retained from v2"
 }

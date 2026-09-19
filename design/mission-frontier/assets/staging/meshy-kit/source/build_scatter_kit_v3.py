@@ -42,6 +42,11 @@ SUBSTITUTIONS = {
     'MF_Crystal_A':      ('crystal.largeCluster.A',           8000, 512),
     'MF_Crystal_B':      ('crystal_04_shard_formation',       7000, 512),
     'MF_Crystal_C':      ('crystal_03_crystal_boulder',       7000, 512),
+    # The v2 rover is a 132-triangle box on wheels; the scan carries a real cab, deck and running gear.
+    # 4k rather than the rock budget: a 2.5 m vehicle is instanced once per parcel and is never the
+    # camera subject, and 4k keeps the kit inside its 200k budget. Height stays at the v2 slot's
+    # 1.925 m so the scatter layout and keep-out radius hold.
+    'MF_Vehicle_Rover':  ('serviceRover.V2',                  4000, 512),
 }
 # Procedural pieces with no scanned replacement worth keeping: the remaining flat-card trees read as
 # blobs next to the scans, so they are dropped from the kit rather than left to be picked.
@@ -163,6 +168,9 @@ for slot, (asset, tris, px) in {**SUBSTITUTIONS, **{k: v[:3] for k, v in NEW_SLO
             principled.inputs['Emission Strength'].default_value = 0.55
     elif 'Tree' in slot:
         mat.name = f'tree_meshy_{slot.lower()}'
+    elif 'Vehicle' in slot:
+        # Plain name: `rock_*` would attach the runtime's wet-rock shader to a painted hull.
+        mat.name = f'vehicle_meshy_{slot.lower()}'
     else:
         mat.name = f'rock_meshy_{slot.lower()}'
     for im in list(bpy.data.images):
@@ -206,7 +214,7 @@ summary = {'file': 'scatter-kit.glb', 'sha256': hashlib.sha256(raw).hexdigest(),
            'budget': {'bytes': BUDGET_BYTES, 'triangles': BUDGET_TRIS},
            'compression': {'geometry': 'KHR_draco_mesh_compression', 'textures': 'EXT_texture_webp q85'},
            'substitutions': report,
-           'origin': 'Meshy scans (meshy_output) substituted into v2 slots; procedural grass, reeds, lantern, vehicles and scrub retained from v2'}
+           'origin': 'Meshy scans (meshy_output) substituted into v2 slots; procedural lantern and cart retained from v2'}
 (OUT / 'scatter-metadata.json').write_text(json.dumps(summary, indent=2) + '\n')
 print('KIT_COMPLETE', json.dumps({'bytes': len(raw), 'MB': round(len(raw)/1048576, 2),
       'images': summary['images'], 'extensions': gltf.get('extensionsUsed', [])}))

@@ -106,6 +106,17 @@ export async function integrateColonyAssets(root, asset) {
       throw new Error("shuttle.glb: bytes do not match the producer receipt");
     colony.shuttle = await asset(file, "shuttle");
   }
+  // The three scanned interior props. The HQ shell reserved an empty `MF_Props` root for these, but
+  // the shell's producer receipt is hash-bound, so they ship as their own kit and the runtime
+  // anchors each to the contract socket that already names it.
+  const props = await optionalJson(path.join(staging, "meshy-kit/producer/props-metadata.json"));
+  if (props) {
+    const file = path.join(staging, "meshy-kit/producer/props-kit.glb");
+    const bytes = await readFile(file);
+    if (props.sha256 !== sha256(bytes)) throw new Error("props.glb: bytes do not match the producer receipt");
+    validateColonyGlb(bytes, { kind: "props", contract, expectedSha256: props.sha256 });
+    colony.props = await asset(file, "props-kit");
+  }
   // Picker thumbnails: each crown rendered on the shared shell by the producer.
   for (const variant of Object.keys(colony.crowns)) {
     const preview = path.join(producerDir, "previews", `crown-${variant}.png`);

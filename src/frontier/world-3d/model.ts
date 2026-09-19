@@ -26,6 +26,8 @@ export interface ProofManifest {
     scatterKit?: string;
     /** Transport standing on the hub landing terrace (contract `spaceport_pad`). */
     shuttle?: string;
+    /** Scanned interior hero props, anchored to the room sockets that already name them. */
+    props?: string;
     /** Contract 2.0 land is a runtime height field; these textures dress it (tri-planar in the shader). */
     terrainTextures?: Partial<Record<"gravel" | "limestone" | "cliff" | "cliffNormal" | "basalt", string>>;
     parcelHub?: string;
@@ -358,6 +360,7 @@ export function parseProofManifest(value: unknown): ProofManifest {
         colony.bridgeEnd,
         colony.scatterKit,
         colony.shuttle,
+        colony.props,
         ...Object.values(colony.crowns ?? {}),
       ].some((value) => value !== undefined && !asset(value)) ||
       Object.values(colony.crownPreviews ?? {}).some(

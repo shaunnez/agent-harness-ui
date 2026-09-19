@@ -274,3 +274,74 @@ Still inside the raised 200,000 triangle / 64 texture budgets, and still under t
 
 Typecheck, lint, format pass; 155 Frontier tests pass. The vegetation test now asserts scrub, grass
 and reeds are never placed, rather than asserting they are.
+
+# Slice 6 — the four hero props
+
+`serviceRover.V2`, `planningHoloTable.V2`, `testingRig.V2` and `cargoBattery.V2` were the four scans
+left unintegrated after slice 5. They divide into two different jobs.
+
+## The rover was already a slot
+
+`MF_Vehicle_Rover` has existed in the scatter kit since the 2A pass, at **132 triangles** — a box on
+wheels with six cylinders. `scatter.ts` already parks one or two vehicles on each court apron, clear
+of the bay doors and the robots' court sockets. So the rover is a substitution in the existing
+builder, not new code: same slot, same 1.925 m height, same footprint radius, same seeded layout.
+
+It is decimated to 4,000 rather than the 6–12k the rock slots get. A 2.5 m vehicle is instanced once
+per parcel and is never the camera subject, and 4k keeps the kit inside its 200,000 triangle budget
+with the rover in it. Its material is named `vehicle_meshy_*`: `rock_*` would have attached the
+runtime's wet-rock shader to a painted hull.
+
+## The three interior props ship as their own kit
+
+`hq-shell.glb` carries an `MF_Props` root with no children — the plan always reserved these pieces
+and the greybox stood in for them. They are **not** added to the shell, because the shell's producer
+receipt is hash-bound: re-exporting it to carry three props would break the guard that catches the
+shell drifting from the contract that produced it. They ship as `props-kit.glb` and the runtime
+anchors each to the socket the contract already names.
+
+Placement is read off the floor plan rather than invented. `generate_colony_pack.py` specifies the
+planning room's equipment as a *"plan holo-table 3.0x2.0 at radial 9 on the 150 deg midline"*,
+testing's as a *"diagnostic bench at radial 9"*, and dispatch's as a *"crate stack pad"* with a
+1.6 × 1.6 footprint at (-4, 17). Each prop's authored height is chosen so the scan lands on those
+numbers:
+
+| Prop | Scan | Height | Footprint | Plan entry it fills |
+| --- | --- | --- | --- | --- |
+| `MF_Prop_PlanningTable` | planningHoloTable.V2 | 1.05 m | 3.05 × 3.06 | holo-table 3.0x2.0, radial 9 @ 150° |
+| `MF_Prop_TestRig` | testingRig.V2 | 1.70 m | 3.51 × 3.20 | diagnostic bench, radial 9 @ 30° |
+| `MF_Prop_CargoBattery` | cargoBattery.V2 | 1.06 m | 1.55 × 1.07 | crate stack pad 1.6 × 1.6 |
+
+The inner-row sockets either side of radial 9 face inward at the prop, which is what those socket
+pairs were for: `clearStandingPoint` already excludes a robot from standing on the furniture between
+them. The props are also registered as `StandingObstacle`s, because the manifest's obstacle list was
+authored before they existed.
+
+Emissive parts are renamed into the colony's material conventions — `ambient_screen_service`,
+`practical_console_cyan`, `practical_warm_strip` — so `ProofBase` drives them with the same dusk
+response as the rest of the interior and the renderer needs no special case. Nothing here reads task
+or run state: a prop is fixture, never status.
+
+## Result
+
+| Measure | Slice 5 | Now |
+| --- | --- | --- |
+| Scatter kit bytes | 5.09 MiB | 5.28 MiB |
+| Scatter kit triangles | 195,945 | 199,561 |
+| Scatter kit images | 57 | 61 |
+| Props kit | — | 0.57 MiB, 16,999 triangles, 12 images |
+
+The scatter kit stays inside its 200,000 triangle / 6 MB / 64 texture budgets. The props kit gets its
+own budget in the validator (20,000 triangles, 2.5 MB, 16 textures) and a `props` asset kind with
+required groups, so a future build cannot quietly drop one of the three.
+
+Typecheck, lint, format pass; 155 Frontier tests pass. Verified in the running app: the holo table
+stands in planning, the rig in testing, the battery on the bay pad, and the scanned rover parks on
+the court.
+
+## Not done
+
+The greybox room equipment is still in the shell. It is merged per material into whole-room meshes
+(`MF_Interior_planning__console_blue_glass` spans the entire room), so an individual console cannot
+be hidden at runtime — removing it means rebuilding `hq-shell.glb`. That is the interior slice, not
+this one.

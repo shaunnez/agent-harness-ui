@@ -3,6 +3,7 @@ import { workAction, workerBehavior } from "../world/worker-behavior.ts";
 import type { ProjectBase } from "./layout.ts";
 import { translated, visibleBases } from "./layout.ts";
 import type { ProofInput, ProofManifest } from "./model.ts";
+import { propObstacles } from "./prop-placement.ts";
 import { allocateSockets, courtIdleLoop, roomForTask } from "./rooms.ts";
 
 /** Every actor is grounded in task/run/package state. Package count never becomes task count. */
@@ -41,7 +42,8 @@ export function colonyWorkers(input: ProofInput, bases: ProjectBase[], manifest:
           workers: Math.max(1, s.packages.length),
         })),
         undefined,
-        manifest.colony?.obstacles,
+        // The scanned props stand on floor the plan reserved but the obstacle list predates them.
+        [...(manifest.colony?.obstacles ?? []), ...(manifest.colony?.props ? propObstacles : [])],
       );
       return allocation.workers.map((allocated) => {
         const state = states.find((s) => s.task.id === allocated.requestId);

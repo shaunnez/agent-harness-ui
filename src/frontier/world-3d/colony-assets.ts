@@ -21,6 +21,7 @@ export function proofAssetUrls(manifest: ProofManifest) {
         colony?.bridgeEnd,
         colony?.scatterKit,
         colony?.shuttle,
+        colony?.props,
         ...Object.values(colony?.crowns ?? {}),
       ].filter((value): value is string => Boolean(value)),
     ),
@@ -55,5 +56,7 @@ export function colonyModels(manifest: ProofManifest, loaded: Map<string, Object
     kit: colony?.scatterKit ? (loaded.get(colony.scatterKit) ?? null) : null,
     /** The transport on the hub landing terrace; absent until the shuttle asset is published. */
     shuttle: colony?.shuttle ? (loaded.get(colony.shuttle) ?? null) : null,
+    /** Scanned interior props; absent until the props kit is published, and the rooms stay bare. */
+    props: colony?.props ? (loaded.get(colony.props) ?? null) : null,
   };
 }
