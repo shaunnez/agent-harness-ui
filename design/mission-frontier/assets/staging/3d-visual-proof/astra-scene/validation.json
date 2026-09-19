@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "scope": "GLB headers/buffers/images, groups/cameras/sockets, metadata bounds/shore loops, PBR normals, retained vertex color/alpha, original worker animation",
+  "scope": "GLB headers/buffers/images, groups/cameras/sockets, metadata bounds/shore loops, PBR normals, retained vertex color/alpha, rigged worker clips and joint hierarchy",
   "scene": {
     "file": "scene.glb",
     "bytes": 76790764,
@@ -12,8 +12,8 @@
   },
   "worker": {
     "file": "worker.glb",
-    "bytes": 1118716,
-    "sha256": "aee069a9823b79f201ba7a615313acea18ac83e5844a8f7b3149190262aa370a",
+    "bytes": 1117948,
+    "sha256": "f922e5eed0fa889bce01239c52e4ee1f131937bd79adc340fa81df04e2cefec9",
     "meshCount": 80,
     "materialCount": 6,
     "embeddedImages": 0,

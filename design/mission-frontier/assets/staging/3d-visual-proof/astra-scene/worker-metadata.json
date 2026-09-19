@@ -2,7 +2,48 @@
   "height": 1.8,
   "forward": "+Z",
   "origin": "feet",
-  "provenance": "Existing cinematic-v1 authored worker geometry; no character redesign",
+  "provenance": "Existing cinematic-v1 authored worker geometry; no character redesign. Joint hierarchy and clips built from the pivots and poses already owned by original-worker-production.py and rebuild-living-worker.py.",
+  "sourceScriptSha256": "fec1de1f7801fef41e5aa36b1eff49aaf1ecc5bd9da365f537102482c74d326d",
+  "buildScriptSha256": "7e1aa2cef668b28b6fab4a573703a26f44104a47d859c06a592dacdccd985f70",
   "meshObjects": 80,
-  "animation": "worker_tool_work: 1.2-second original tool arm motion, feet stationary; runtime plays only for admitted active run"
+  "rigJoints": [
+    "rig_body",
+    "rig_foot_L",
+    "rig_foot_R",
+    "rig_forearm_L",
+    "rig_forearm_R",
+    "rig_head",
+    "rig_shin_L",
+    "rig_shin_R",
+    "rig_shoulder_L",
+    "rig_shoulder_R",
+    "rig_thigh_L",
+    "rig_thigh_R"
+  ],
+  "animations": {
+    "worker_walk": {
+      "channels": 9,
+      "durationSeconds": 0.8,
+      "loops": true
+    },
+    "worker_scan": {
+      "channels": 4,
+      "durationSeconds": 0.8,
+      "loops": true
+    },
+    "worker_type": {
+      "channels": 5,
+      "durationSeconds": 0.8,
+      "loops": true
+    },
+    "worker_tool_work": {
+      "channels": 2,
+      "durationSeconds": 1.2,
+      "loops": true
+    }
+  },
+  "walk": {
+    "strideMetresPerCycle": 0.9882,
+    "note": "Ground covered by one full worker_walk cycle. Scale the clip by speed / (strideMetresPerCycle / durationSeconds) so the feet do not skate."
+  }
 }

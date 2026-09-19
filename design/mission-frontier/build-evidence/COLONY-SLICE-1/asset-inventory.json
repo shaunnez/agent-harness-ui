@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-19T03:26:24.957Z",
+  "capturedAt": "2026-09-19T04:10:34.015Z",
   "assets": [
     {
       "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.glb",
@@ -13,13 +13,16 @@
     },
     {
       "source": "design/mission-frontier/assets/staging/3d-visual-proof/astra-scene/worker.glb",
-      "filename": "worker.aee069a9823b.glb",
-      "sha256": "aee069a9823b79f201ba7a615313acea18ac83e5844a8f7b3149190262aa370a",
-      "bytes": 1118716,
+      "filename": "worker.f922e5eed0fa.glb",
+      "sha256": "f922e5eed0fa889bce01239c52e4ee1f131937bd79adc340fa81df04e2cefec9",
+      "bytes": 1117948,
       "meshes": 80,
       "materials": 6,
       "textures": 0,
       "animations": [
+        "worker_walk",
+        "worker_scan",
+        "worker_type",
         "worker_tool_work"
       ]
     },
