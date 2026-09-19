@@ -26,21 +26,38 @@ export function requireActiveRunReservation(task, kind, stage) {
   return reservation;
 }
 
-export function recordApproval(task, stage, note) {
+/**
+ * `automatic` is retained on the approval itself rather than inferred from the note,
+ * because the product claim attached to an approval is that a person saw the work. An
+ * automatic approval is a real approval — every validation the human path runs has
+ * already passed — but it is not that evidence, and the two must stay distinguishable
+ * for every historical record, not just the new ones.
+ */
+export function recordApproval(task, stage, note, { automatic = false } = {}) {
   const approvalNote = note.trim().slice(0, 5_000);
   task.approvals ??= [];
   const artifactId =
     [...(task.artifacts ?? [])].reverse().find((artifact) => artifact.stage === stage)?.id ?? null;
-  const approval = { id: crypto.randomUUID(), stage, note: approvalNote, createdAt: now(), artifactId };
+  const approval = {
+    id: crypto.randomUUID(),
+    stage,
+    note: approvalNote,
+    createdAt: now(),
+    artifactId,
+    automatic,
+  };
   task.approvals.push(approval);
+  const label = getStageMetadata(stage)?.label ?? stage;
   task.events.push(
     activity(
       stage,
-      `${getStageMetadata(stage)?.label ?? stage} approved`,
-      approvalNote || "Approved without an additional note.",
+      automatic ? `${label} auto-approved` : `${label} approved`,
+      automatic
+        ? `${approvalNote || "Approved without an additional note."} No person reviewed this artifact.`
+        : approvalNote || "Approved without an additional note.",
       "success",
       "decision",
-      { approvalId: approval.id },
+      { approvalId: approval.id, automatic },
     ),
   );
 }

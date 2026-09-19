@@ -112,6 +112,13 @@
   font-weight: 600;
 }
 
+/* Distinguishes a gate that records an approval from one that only starts the next run. */
+.gate-policy-kind {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
 /*
  * A segmented control built from real radios: one tab stop, arrow keys move within the
  * group, and the selection still submits as a form value. The input itself is hidden

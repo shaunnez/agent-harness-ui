@@ -4,7 +4,7 @@ import {
   candidateRepairCircuitReason,
   isInvalidApprovedPlanFailure,
 } from "../src/workflow-recovery-policy.ts";
-import { GATE_AUTO_ADVANCE, resolveGatePolicy } from "./gate-policies.mjs";
+import { GATE_APPROVAL_ADVANCE, GATE_AUTO_ADVANCE, resolveGatePolicy } from "./gate-policies.mjs";
 import { providerForModelId } from "./model-catalog.mjs";
 import { canStartRun, currentCandidate, reserveRun } from "./orchestrator-run-policy.mjs";
 import { activity, completeGrillSession, now, RUN_KINDS } from "./orchestrator-stage-support.mjs";
@@ -106,22 +106,29 @@ export class TaskControlOrchestrator {
       if (this._active.get(id) === reservation) this._active.delete(id);
     });
     reservation.promise = promise;
-    promise.then(() => this._autoAdvanceGate(id, kind)).catch(() => {});
+    promise.then(() => this._autoAdvanceGate(id)).catch(() => {});
     return true;
   }
 
-  async _autoAdvanceGate(id, kind) {
-    const transition = GATE_AUTO_ADVANCE[kind];
-    if (!transition) return;
+  /**
+   * Approval gates are settled before run gates because approving the plan is what
+   * produces `ready-for-implementation`: the two run back to back on one completed run,
+   * and the run gate reads the task again so it sees the status the approval just wrote.
+   */
+  async _autoAdvanceGate(id) {
+    await this._autoApproveGate(id);
     let task;
     try {
       task = await this._store.get(id);
-      if (!task || task.status !== transition.readyStatus || task.currentStage !== transition.stage) return;
+      if (!task) return;
+      const transition = GATE_AUTO_ADVANCE[task.status];
+      if (!transition || task.currentStage !== transition.stage) return;
+      const readyStatus = task.status;
       const settings = await this._store.settings();
       if (resolveGatePolicy(settings, transition.stage) !== "auto-accept-recommendations") return;
       const started = await this.start(id, transition.nextKind, {
         canStart: (draft) =>
-          draft.status === transition.readyStatus &&
+          draft.status === readyStatus &&
           draft.currentStage === transition.stage &&
           canStartRun(draft, transition.nextKind),
         onReserve: (draft) => {
@@ -145,6 +152,34 @@ export class TaskControlOrchestrator {
       }
     } catch (error) {
       await this._recordGateAutoAdvanceFailure(id, transition.stage, error.message);
+    }
+  }
+
+  /**
+   * Auto-approval goes through `approveSpecification` / `approvePlan` rather than
+   * writing the transition itself, so a stale plan, a non-executable plan and the fast
+   * profile's single-package requirement all still refuse. Those refusals throw, which
+   * leaves the task parked exactly where a manual operator would find it, with the
+   * reason recorded — the gate fails closed, never open.
+   */
+  async _autoApproveGate(id) {
+    let stage = null;
+    try {
+      const task = await this._store.get(id);
+      if (!task) return;
+      const transition = GATE_APPROVAL_ADVANCE[task.status];
+      if (!transition) return;
+      stage = transition.stage;
+      const settings = await this._store.settings();
+      if (resolveGatePolicy(settings, transition.stage) !== "auto-accept-recommendations") return;
+      const note = "Approved by the persisted gate auto-run policy without human review.";
+      if (transition.approval === "specification") {
+        await this.approveSpecification(id, note, { automatic: true });
+      } else {
+        await this.approvePlan(id, note, { automatic: true });
+      }
+    } catch (error) {
+      await this._recordGateAutoAdvanceFailure(id, stage ?? "specification", error.message);
     }
   }
 
@@ -530,7 +565,7 @@ export class TaskControlOrchestrator {
     return { started: true };
   }
 
-  async approveSpecification(id, note = "") {
+  async approveSpecification(id, note = "", { automatic = false } = {}) {
     const task = await this._store.get(id);
     if (!task) throw new Error("Task not found.");
     if (!["awaiting-spec-approval", "awaiting-approval"].includes(task.status)) {
@@ -541,7 +576,7 @@ export class TaskControlOrchestrator {
         id,
         (draft) => ["awaiting-spec-approval", "awaiting-approval"].includes(draft.status),
         (draft) => {
-          recordApproval(draft, "specification", note);
+          recordApproval(draft, "specification", note, { automatic });
           draft.status = "completed";
           draft.completedAt = now();
           draft.events.push(
@@ -559,13 +594,13 @@ export class TaskControlOrchestrator {
     }
     const started = await this.start(id, "planning", {
       canStart: (draft) => ["awaiting-spec-approval", "awaiting-approval"].includes(draft.status),
-      onReserve: (draft) => recordApproval(draft, "specification", note),
+      onReserve: (draft) => recordApproval(draft, "specification", note, { automatic }),
     });
     if (!started) throw new Error("Task is already running.");
     return { started: true, completed: false };
   }
 
-  async approvePlan(id, note = "") {
+  async approvePlan(id, note = "", { automatic = false } = {}) {
     let task = await this._store.get(id);
     if (!task) throw new Error("Task not found.");
     if (task.status !== "awaiting-plan-approval") throw new Error("The task is not awaiting plan approval.");
@@ -582,11 +617,17 @@ export class TaskControlOrchestrator {
         throw new Error("Fast requires at least one validated focused repository manifest command ID.");
       }
     }
-    return this._store.transition(
+    // Plan approval parks on `ready-for-implementation` instead of starting a run, so
+    // unlike every other gate nothing else would consult the implement auto-run policy.
+    // The kick below is what lets a manually approved plan still start implementation
+    // automatically when the operator has opted that stage in. An automatic approval
+    // skips it: that call is already inside `_autoAdvanceGate`, which reads the task
+    // again and settles the run gate itself, so kicking here would start the run twice.
+    const approved = await this._store.transition(
       id,
       (draft) => draft.status === "awaiting-plan-approval",
       (draft) => {
-        recordApproval(draft, "plan", note);
+        recordApproval(draft, "plan", note, { automatic });
         const approvedReplacementPlan =
           Boolean(draft.planRevalidation?.completedAt) &&
           Boolean(draft.planRevalidation?.replacementArtifactId) &&
@@ -622,6 +663,8 @@ export class TaskControlOrchestrator {
         );
       },
     );
+    if (!automatic) await this._autoAdvanceGate(id);
+    return approved;
   }
 
   async correctInvalidPlan(id) {
