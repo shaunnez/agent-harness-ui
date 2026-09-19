@@ -1,0 +1,122 @@
+{
+  "groupId": "model-baseline-2026-09-phase0",
+  "notes": [
+    "Phase 0 of docs/model-eval-baseline-proposal.md: baseline run-to-run variance only.",
+    "One arm, one brief, one base, three repetitions. No arm is compared to anything here.",
+    "Purpose: until the baseline spread on an identical brief is known, no Phase A difference",
+    "can be called a difference rather than noise. Read the spread in deterministic delivery,",
+    "repair count, retry count and wall time across the three identical runs.",
+    "If the baseline is bimodal on an identical brief, Phase A needs more repetitions or",
+    "narrower cases - and learning that costs 6 runs here instead of 24 there."
+  ],
+  "arms": {
+    "B0-baseline": {
+      "description": "Shipped Codex standard matrix. Reference arm.",
+      "providerConstraint": "codex",
+      "stagePolicies": {
+        "triage": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "scouts": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "grill": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "specification": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "plan": {
+          "model": "gpt-5.6-sol",
+          "reasoning": "high"
+        },
+        "implement": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "repair": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "dev-review": {
+          "model": "gpt-5.6-sol",
+          "reasoning": "high"
+        },
+        "test": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "final-review": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "medium"
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "caseId": "C1-narrow",
+      "shape": "narrow single-surface UI behaviour",
+      "sourceTaskId": "AH-082",
+      "repositoryPath": "/Users/shaun/projects/agent-harness-ui",
+      "frozenBaseSha": "f18c567374e9ec42f2e4d4ac2598948ec0698100",
+      "workflow": "implement",
+      "workflowProfile": "standard",
+      "priority": "medium",
+      "repetitions": 3,
+      "title": "Tasks  selection in task modal window",
+      "description": "IN the frontier ui, in the tasks table, i can only select the task by clicking the first cell in the row, as I hover over the entire row it should be showing a proper hover state and i should be able to click anywhere to select it",
+      "acceptanceCriteria": [
+        "Hovering anywhere on a task row in the Frontier tasks table shows a row hover state.",
+        "Clicking anywhere in a task row selects that task, not only the first cell.",
+        "No other table's selection or keyboard behaviour regresses."
+      ],
+      "verificationCommands": [
+        "lint",
+        "typecheck",
+        "test",
+        "build",
+        "test-sites"
+      ],
+      "arms": [
+        "B0-baseline"
+      ]
+    },
+    {
+      "caseId": "C4-backend",
+      "shape": "consequential backend aggregation following an existing pattern",
+      "sourceTaskId": "AH-058",
+      "repositoryPath": "/Users/shaun/projects/eversor-plancheck",
+      "frozenBaseSha": "21b63f5c6f3d686e6142cc82276a565cd425909a",
+      "workflow": "implement",
+      "workflowProfile": "high-risk",
+      "priority": "medium",
+      "repetitions": 3,
+      "title": "Prompt A — shared-remedy fee grouping",
+      "description": "Implement shared-remedy fee grouping in eversor-plancheck. Branch off\nevesor-plancheck/main (the remote is `evesor-plancheck`, NOT origin).\n\nProblem: when six claims are all closed by one deliverable — one Schedule of\nPrices, one responsibility matrix — each claim currently carries its own\nPRODUCE_SCHEDULE fee and the tender's remedy subtotal bills it six times. Every\nclaim must be retained; only the fee is counted once.\n\nFOLLOW THE EXISTING PATTERN, do not invent one. Construction pricing already\nsolved the equivalent problem: read backend/variation_costs/aggregation.py,\nwhich groups by `change_group_id` (a reviewer-set group) falling back to\n`event_key`, counts one amount per event, reports `shared_claims`, and marks a\ngroup `disputed` when members disagree rather than silently picking one.\nMirror that design and its safety property.\n\nRequirements:\n- A reviewer attaches claims to a named remedy group with one common\n  deliverable and one editable fee. Append-only revisions, consistent with\n  backend/remedy_prices' existing revision model.\n- The fee counts ONCE per group in every subtotal. Separately-priced extra work\n  on a member claim is preserved and still counted.\n- No claim is deleted, hidden or merged. A grouped claim still renders.\n- Where members disagree, follow aggregation.py: report it, do not pick one.\n- Surface the group and the shared count on Review, All Tenders and Command\n  Deck, and make the three agree. Read backend/deck/ and backend/tenders/\n  measurements.py (`cost_to_close`) — they must not double-count.\n- dbmate migration for any new table. Never create tables from Python.\n\nRead AGENTS.md and backend/AGENTS.md first. backend/remedy_prices/models.py's\ndocstring states the invariants — the table prices the FIX, never what the\nvariation is worth unfixed. Do not add a confidence, probability or expected\nvalue field.\n\nVerify: python -m pytest, make integration-test (asserts zero skips),\ncd frontend && npm run test, make backend-quality, npm run api:types.\n`make e2e-native` has a floor of 2 failed (03-tender-parity colspan, broken on\nmain too) — that is not your regression.\n\nReport before/after remedy subtotals per tender. Do not merge. No detection,\nREMEDY, adjudication or model runs. No Azure changes.",
+      "acceptanceCriteria": [
+        "A shared remedy group counts its deliverable fee exactly once in every subtotal.",
+        "No claim is deleted, hidden or merged; a grouped claim still renders.",
+        "Disagreeing group members are reported as disputed rather than silently resolved.",
+        "Review, All Tenders and Command Deck agree on the group and its shared count.",
+        "Any new table arrives via a dbmate migration, never from Python."
+      ],
+      "verificationCommands": [
+        "frontend-lint",
+        "frontend-test",
+        "frontend-build",
+        "runtime-ports",
+        "backend-quality",
+        "backend-compile",
+        "backend-test"
+      ],
+      "arms": [
+        "B0-baseline"
+      ]
+    }
+  ]
+}

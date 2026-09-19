@@ -1,4 +1,4 @@
-import { CaretDown } from "@phosphor-icons/react";
+import { CaretDown, Warning } from "@phosphor-icons/react";
 import {
   formatApproximateCost,
   type RuntimeEvaluationSummary,
@@ -14,6 +14,41 @@ function duration(milliseconds: number | null) {
   const minutes = Math.floor(milliseconds / 60_000);
   const seconds = Math.round((milliseconds % 60_000) / 1_000);
   return minutes ? `${minutes}m ${seconds}s` : `${seconds}s`;
+}
+
+/**
+ * The summary is fetched at runtime from a separately started harness process, which may be
+ * older than this bundle. Reading a field it does not send would crash the whole settings
+ * screen, so every field added after the original scorecard is read through a default.
+ */
+const NO_OUTCOMES = { passed: 0, failed: 0, incomplete: 0, unknown: 0 };
+
+function outcomesOf(variant: RuntimeExperimentVariant) {
+  return variant.deterministicOutcomes ?? NO_OUTCOMES;
+}
+
+function confoundsOf(variant: RuntimeExperimentVariant) {
+  return [
+    ...(variant.comparability?.reasons ?? []),
+    ...(variant.policyDivergences ?? []).map(
+      (divergence) =>
+        `${divergence.taskId} ${divergence.role ?? "unknown role"}: selected ${divergence.selected}, executed ${divergence.effective} — ${divergence.reason}`,
+    ),
+  ];
+}
+
+/**
+ * Deterministic delivery is the primary outcome: the full verification manifest passing
+ * on the exact final candidate revision. `unknown` samples stay out of the denominator,
+ * so the cell reports coverage rather than implying a failure the evidence cannot support.
+ */
+function delivered(variant: RuntimeExperimentVariant) {
+  const outcomes = outcomesOf(variant);
+  const samples = variant.deterministicEvidenceSamples ?? 0;
+  if (!samples) return "No evidence";
+  const rate = Math.round((variant.deterministicDeliveryRate ?? 0) * 100);
+  const suffix = outcomes.unknown ? ` · ${outcomes.unknown} unmeasured` : "";
+  return `${outcomes.passed}/${samples} (${rate}%)${suffix}`;
 }
 
 function quality(variant: RuntimeExperimentVariant) {
@@ -41,8 +76,8 @@ export function EvaluationScorecard({ summary }: { summary: RuntimeEvaluationSum
         <div className="evaluation-table__header">
           <span>Variant</span>
           <span>Samples</span>
-          <span>First pass</span>
-          <span>Eventual</span>
+          <span>Delivered</span>
+          <span>Gates first pass</span>
           <span>Repairs</span>
           <span>Quality</span>
         </div>
@@ -52,24 +87,23 @@ export function EvaluationScorecard({ summary }: { summary: RuntimeEvaluationSum
               <strong>
                 {variant.groupId} · {variant.variantId}
               </strong>
-              <small title={variant.frozenBaseSha}>
+              <small title={(variant.frozenBaseShas ?? [variant.frozenBaseSha]).join(", ")}>
                 Base {variant.frozenBaseSha.slice(0, 8)} · {variant.taskBriefHashes.length} brief hash
                 {variant.taskBriefHashes.length === 1 ? "" : "es"}
               </small>
+              {variant.comparability?.status === "mixed-identity" ? (
+                <small className="evaluation-table__warning" title={confoundsOf(variant).join("\n")}>
+                  <Warning size={13} /> Mixed identity — not a comparison
+                </small>
+              ) : null}
             </span>
             <code>{variant.sampleCount}</code>
+            <code>{delivered(variant)}</code>
             <code>
               {percentage(
                 variant.firstPassGateSuccesses,
                 variant.gateAttempts,
                 variant.firstPassGateSuccessRate,
-              )}
-            </code>
-            <code>
-              {percentage(
-                variant.eventualGateSuccesses,
-                variant.gateAttempts,
-                variant.eventualGateSuccessRate,
               )}
             </code>
             <code>
@@ -129,13 +163,39 @@ export function EvaluationScorecard({ summary }: { summary: RuntimeEvaluationSum
               <small>Est. context</small>
               <strong>{variant.estimatedContextTokens.toLocaleString()} tokens</strong>
             </span>
+            <span>
+              <small>Deterministic outcomes</small>
+              <strong>
+                {outcomesOf(variant).passed} passed · {outcomesOf(variant).failed} failed ·{" "}
+                {outcomesOf(variant).incomplete} incomplete · {outcomesOf(variant).unknown} unmeasured
+              </strong>
+            </span>
+            <span>
+              <small>Eventual gate pass</small>
+              <strong>
+                {percentage(
+                  variant.eventualGateSuccesses,
+                  variant.gateAttempts,
+                  variant.eventualGateSuccessRate,
+                )}
+              </strong>
+            </span>
           </div>
+          {confoundsOf(variant).length ? (
+            <ul className="evaluation-evidence__confounds">
+              {confoundsOf(variant).map((confound) => (
+                <li key={confound}>{confound}</li>
+              ))}
+            </ul>
+          ) : null}
           <p>
             {variant.policyMatrices.length} policy snapshot{variant.policyMatrices.length === 1 ? "" : "s"} ·{" "}
             {variant.acceptanceDefinitions.length} acceptance definition
             {variant.acceptanceDefinitions.length === 1 ? "" : "s"} · {variant.verificationDefinitions.length}{" "}
             verification definition{variant.verificationDefinitions.length === 1 ? "" : "s"}. Differences
-            within a variant signal a confound; this view does not claim statistical significance.
+            within a variant signal a confound; this view does not claim statistical significance. Gate
+            columns measure reviewer strictness, not delivery: three gate stages are themselves model runs, so
+            a laxer reviewer policy scores more passes.
           </p>
         </details>
       ))}

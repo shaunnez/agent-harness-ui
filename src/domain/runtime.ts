@@ -1005,13 +1005,49 @@ export interface RuntimeExperimentDecision {
   note: string | null;
 }
 
+export interface RuntimeDeterministicOutcomes {
+  passed: number;
+  failed: number;
+  incomplete: number;
+  unknown: number;
+}
+
+export interface RuntimeVariantComparability {
+  status: "comparable" | "mixed-identity";
+  reasons: string[];
+  briefHashCount: number;
+  baseShaCount: number;
+  policyMatrixCount: number;
+  acceptanceDefinitionCount: number;
+  verificationDefinitionCount: number;
+}
+
+export interface RuntimePolicyDivergence {
+  taskId: string;
+  role: string | null;
+  selected: string;
+  effective: string;
+  reason: string;
+}
+
 export interface RuntimeExperimentVariant {
   groupId: string;
   variantId: string;
   frozenBaseSha: string;
+  /**
+   * Fields below are optional because this summary is fetched from a separately started
+   * harness process that may predate this bundle. The scorecard reads each through a
+   * default rather than crashing the settings screen on an older payload.
+   */
+  frozenBaseShas?: string[];
   taskIds: string[];
   sampleCount: number;
   taskBriefHashes: string[];
+  comparability?: RuntimeVariantComparability;
+  policyDivergences?: RuntimePolicyDivergence[];
+  deterministicOutcomes?: RuntimeDeterministicOutcomes;
+  deterministicEvidenceSamples?: number;
+  deterministicDeliveryRate?: number | null;
   policyMatrices: Array<Record<string, RuntimeAgentPolicy>>;
   acceptanceDefinitions: string[][];
   verificationDefinitions: string[][];
