@@ -459,19 +459,19 @@ test("without ?colony=1 the v3 manifest is consumed as v2 and the archipelago la
   assert.notDeepEqual(viewCamera(bases, "plancheck", true).target, cutaway.target);
 });
 
-test("robots render 2x in World, 1.4x on a focused exterior and true size in the cutaway", async () => {
+test("robots render 1.6x in World, 1.3x on a focused exterior and slightly over true size in the cutaway", async () => {
   const { proofView, workerScale, workerHeight, proofWorkerScale, proofWorkerHeight, workerViewScale } =
     await import("../../src/frontier/world-3d/model.ts");
-  assert.deepEqual(workerViewScale, { world: 2, exterior: 1.4, cutaway: 1 });
+  assert.deepEqual(workerViewScale, { world: 1.6, exterior: 1.3, cutaway: 1.15 });
   const world = { location: { view: "world", projectId: null, taskId: null, runId: null } };
   assert.equal(proofView(world, null), "world");
   assert.equal(proofView(world, "plancheck"), "exterior");
   assert.equal(proofView({ location: { view: "project", projectId: "plancheck" } }, null), "cutaway");
   assert.equal(proofView({ location: { view: "agent", taskId: "PC-142" } }, "plancheck"), "cutaway");
-  assert.equal(workerScale("cutaway"), proofWorkerScale);
-  assert.equal(workerHeight("cutaway"), proofWorkerHeight);
-  assert.ok(Math.abs(workerScale("world") - proofWorkerScale * 2) < 1e-12);
-  assert.ok(Math.abs(workerHeight("exterior") - 3.1 * 1.4) < 1e-12);
+  assert.ok(Math.abs(workerScale("cutaway") - proofWorkerScale * 1.15) < 1e-12);
+  assert.ok(Math.abs(workerHeight("cutaway") - proofWorkerHeight * 1.15) < 1e-12);
+  assert.ok(Math.abs(workerScale("world") - proofWorkerScale * 1.6) < 1e-12);
+  assert.ok(Math.abs(workerHeight("exterior") - 3.1 * 1.3) < 1e-12);
   // Standing positions and spacing are unchanged by the view: allocation stays at true size.
   const scene = input({ location: { view: "world", projectId: null, taskId: null, runId: null } });
   const positions = proofWorkers(scene, manifest).map((worker) => worker.position.join());

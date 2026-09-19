@@ -115,7 +115,7 @@ export type ProofView = "world" | "exterior" | "cutaway";
  * spacing and gait speed stay in true world units.
  */
 /** World view read 20% too large against the scanned kit and the 18 m shuttle; 2.5 -> 2.0. */
-export const workerViewScale: Record<ProofView, number> = { world: 2, exterior: 1.4, cutaway: 1 };
+export const workerViewScale: Record<ProofView, number> = { world: 1.6, exterior: 1.3, cutaway: 1.15 };
 export function proofView(input: Pick<ProofInput, "location">, focusId: string | null): ProofView {
   return input.location.view !== "world" ? "cutaway" : focusId ? "exterior" : "world";
 }
