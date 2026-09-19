@@ -34,6 +34,9 @@ PAD = (27.5, 31.5); PAD_W = 6.0; SPUR_W = 5.0            # abutment pad along ea
 SPAN = D - 2 * PAD[1]          # 27.0: one bridge asset still fits every edge
 COAST = {"min": 28.5, "typical": 33.5, "max": 37.0, "edgeCorridorMax": PAD[1], "edgeCorridorHalfAngleDeg": 10,
          "frontArcMin": 30.0, "frontArcDeg": [60, 120]}
+RING_R, RING_W, RING_WOBBLE, RING_EDGE = 24.0, 4.0, 0.6, 1.0
+# Ring road band: 24.0 +/- 0.6 wobble +/- 2.0 half-width +/- 1.0 soft edge = 20.4 .. 27.6.
+# Bounded inside by the flat plateau the HQ needs (20.0) and outside by the narrowest coast (28.5).
 CHANNEL_MIN = D - 2 * COAST["max"]                        # 16 m of open water at the narrowest
 SEA, SEABED, GROUND, COURT, DECK, FLOOR = 0.0, -3.0, 4.0, 4.25, 4.25, 4.30
 LABEL_Y = 19.5
@@ -101,6 +104,8 @@ contract = {
                    "assets": ["bridge-span-27.glb", "bridge-end.glb"], "note": "unchanged assets from 1.0.1"},
         "pads": {"radial": list(PAD), "width": PAD_W, "top": COURT, "rule": "only on built edges; the seaward face is vertical to the seabed"},
         "spurs": {"width": SPUR_W, "level": GROUND, "rampToPad": "4.0 to 4.25 over the last 2 m", "rule": "plateau edge to pad along the edge line, built edges only"},
+        "ringRoad": {"radius": RING_R, "width": RING_W, "wobble": RING_WOBBLE, "edge": RING_EDGE,
+                     "rule": "paved loop on the shoulder linking every built spur, so a parcel reads as connected on all sides; follows the contour at constant radius, seeded wobble per slot, project parcels only"},
     },
     "terrain": {
         "method": "runtime height field: h(x,z) = max over occupied parcels of the parcel profile; watertight by construction, no tile seams, no baked variants",

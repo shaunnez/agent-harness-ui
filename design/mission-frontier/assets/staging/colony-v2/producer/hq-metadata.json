@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "contractVersion": "2.0.0",
-  "contractSha256": "42a83c6dfd534d4abe66144207e0563a104f3542cde75a3acb97487029f5acbe",
+  "contractSha256": "32c7ef3e70e038440d7bd9c9bd4e7cf2f511eee9cbcbd9080498bcf0aceb3b14",
   "assets": {
     "hq-shell": {
       "file": "hq-shell.glb",

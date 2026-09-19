@@ -367,6 +367,13 @@
       "level": 4.0,
       "rampToPad": "4.0 to 4.25 over the last 2 m",
       "rule": "plateau edge to pad along the edge line, built edges only"
+    },
+    "ringRoad": {
+      "radius": 24.0,
+      "width": 4.0,
+      "wobble": 0.6,
+      "edge": 1.0,
+      "rule": "paved loop on the shoulder linking every built spur, so a parcel reads as connected on all sides; follows the contour at constant radius, seeded wobble per slot, project parcels only"
     }
   },
   "terrain": {

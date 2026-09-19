@@ -27,6 +27,8 @@ const apron = terrain.plateau.courtApron;
 const padRadial: [number, number] = [terrain.coast.edgeCorridorMax - 4, terrain.coast.edgeCorridorMax];
 const padHalfWidth = colonyContract.colony.pads.width / 2;
 const spurHalfWidth = colonyContract.colony.spurs.width / 2;
+const ringRoad = colonyContract.colony.ringRoad;
+const ringHalfWidth = ringRoad.width / 2;
 const cliffDrop = terrain.relief.cliff.dropOver;
 /** Nothing on land rises above this (the label anchor is 19.5). */
 export const landCap = 14.6;
@@ -534,6 +536,38 @@ function sampleParcel(profile: ParcelProfile, dx: number, dz: number): SurfaceSa
     if (along > padRadial[1] && across < padHalfWidth + 1.5) {
       const drop = smooth((along - padRadial[1]) / 1.6);
       height = Math.min(height, lerp(padLevel, seabed, drop));
+    }
+  }
+  // A ring road links every built spur around the plateau, so a parcel reads as one connected place
+  // rather than separate stubs pointing at bridges. It sits outside the HQ corners (18 m) and inside
+  // the narrowest coast, and holds a constant radius -- which on this shoulder is close to a contour,
+  // so it is paving rather than a cut. A seeded wobble keeps it off a drawn-compass circle.
+  // The apron already paves the whole court front at its own level, so the loop runs into it rather
+  // than across it: levelling the ring through the apron would lift its far corners off plateau level.
+  const inApron =
+    dx >= (apron.x[0] ?? -12.5) - 1 &&
+    dx <= (apron.x[1] ?? 12.5) + 1 &&
+    dz >= (apron.z[0] ?? 14) - 1 &&
+    dz <= (apron.z[1] ?? 27) + 1;
+  if (!profile.hub && !inApron && profile.built.length > 0) {
+    const a = toRadians(angleDeg);
+    // valueNoise is already [-1, 1], so the wobble is symmetric and never exceeds ringRoad.wobble --
+    // which is what keeps the inner edge off the flat plateau the HQ stands on.
+    const wobble = valueNoise(Math.cos(a) * 3, Math.sin(a) * 3, profile.salt + 57) * ringRoad.wobble;
+    const ringR = ringRoad.radius + wobble;
+    // A stream cuts the loop rather than being paved over: the road fords it. Where a spur already
+    // holds the ground at plateau level the ring yields to it, so the junction is the spur's height
+    // and the loop reads as joining the approach rather than crossing over it.
+    const on =
+      (1 - smooth((Math.abs(r - ringR) - ringHalfWidth) / ringRoad.edge)) *
+      (1 - clamp01(wet)) *
+      (1 - clamp01(road));
+    if (on > 0) {
+      // A road is level across its width. Carry the centreline height across the band so the surface
+      // faces the sky like the court apron does, instead of tilting with the shoulder: the paving is
+      // the same basalt either way, and it was the tilt alone that made the ring read darker.
+      height = lerp(height, coreLand(profile, Math.cos(a) * ringR, Math.sin(a) * ringR).land, on);
+      road = Math.max(road, on);
     }
   }
   // The court apron is paving, not gravel.
