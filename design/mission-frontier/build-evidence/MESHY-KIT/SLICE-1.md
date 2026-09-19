@@ -345,3 +345,65 @@ The greybox room equipment is still in the shell. It is merged per material into
 (`MF_Interior_planning__console_blue_glass` spans the entire room), so an individual console cannot
 be hidden at runtime — removing it means rebuilding `hq-shell.glb`. That is the interior slice, not
 this one.
+
+# Slice 7 — the greybox room equipment removed from the shell
+
+Slice 6 put the scanned props in the rooms, but the greybox pieces they replace were still standing
+beside them: two consoles in planning, two in testing, a crate and a battery on the same cargo pad.
+The interior meshes are merged per material into whole-room objects, so no individual console can be
+hidden at runtime. The shell had to be rebuilt.
+
+## Rebuilding was safe
+
+The concern that stopped this in slice 6 was the contract-hash guard. It turns out to point the
+other way: `hq-metadata.json` binds the sha256 of `contract.json`, and the contract is untouched
+here, so a rebuild regenerates its own asset receipts and the guard stays satisfied. What would have
+broken the guard is editing the contract — which is what happened when the scatter budget was first
+raised, and why those budgets live in the validator instead.
+
+## What was removed
+
+`build_hq.py`'s `equipment()` authors all the room fixtures. The v1 producer directory is read-only
+history, so `build_hq_v2.py` now calls `equipment_v2()`, which runs the shared recipe and then strips
+the pieces the scans stand in for, by name:
+
+| Removed | Replaced by |
+| --- | --- |
+| `planning_table`, `planning_table_surface` | `MF_Prop_PlanningTable` |
+| `testing_table`, `testing_table_surface`, `testing_diagnostic_rig`, `testing_sensor_collar` | `MF_Prop_TestRig` |
+| `cargo_crate`, `cargo_retaining_band`, `cargo_lid` | `MF_Prop_CargoBattery` |
+
+Stripping after the recipe rather than forking it keeps one source of truth for everything that
+stays, and means a future scan is added by name instead of by re-copying fifty lines. The obstacle
+entries `planning_central_equipment`, `testing_central_equipment` and `cargo_crates` go with them,
+because `prop-placement.ts` now publishes the scanned footprints and leaving the old boxes would keep
+robots out of floor with nothing standing on it. The build asserts that it removed something and that
+it dropped exactly three obstacles, so a rename upstream fails the build rather than silently leaving
+the greybox in.
+
+**Kept, because no scan exists for them yet:** the wall consoles in all four rooms, the review dais,
+the implementation fabrication bench, the briefing Q&A console and the dispatch cart.
+
+## A drift the removal exposed
+
+The plan specifies the planning holo-table and the testing bench "at radial 9". The greybox authored
+both at `radial(phi, 10.7)`. The scans are placed at radial 9, per the plan, which is also where the
+inner-row sockets straddle the midline — so the props now sit between the two sockets that face them,
+which is what those socket pairs were always for. The greybox was the thing that had drifted.
+
+`room-clearance.ts` still carries a 2.2 m exclusion around the review dais at radial 9 while the dais
+itself is built at 10.7. That is the same drift, on a piece this slice keeps, so it is left alone.
+
+## Result
+
+| Measure | Before | After |
+| --- | --- | --- |
+| `hq-shell.glb` | 6,806,112 B | 6,746,264 B |
+| Triangles | — | 125,936 |
+| Obstacles | 28 | 25 |
+
+Inside the 8 MB / 150,000 triangle `hqShell` budget. The producer's own independent re-import
+validator passes **191 checks**. Typecheck, lint, format pass; 155 Frontier tests pass.
+
+Verified in the running app at noon and at dusk: planning holds the scanned holo-table alone, testing
+the scanned rig alone, and the wall consoles, review dais and fabrication bench are undisturbed.
