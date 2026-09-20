@@ -1,16 +1,16 @@
 # EXPERIMENT-REGISTER.md — model policy evaluation
 
-One entry per experiment. An entry is written **before** any spend and is not
+One entry per experiment. An entry is written **before** anything runs and is not
 edited once an outcome is known; a new dated block is appended instead. An
 experiment with no preregistered decision rule produces an anecdote, not a
 result.
 
-Statuses: `PROPOSED` (no spend) · `RUNNING` · `COMPLETE` · `REFUTED` (ran, did
+Statuses: `PROPOSED` (nothing run) · `RUNNING` · `COMPLETE` · `REFUTED` (ran, did
 not hold — refutations are results) · `ABANDONED` (say what blocked it).
 
 **Every entry must carry before it leaves `RUNNING`:** the manifest path plus
 its SHA-256; the preregistered prediction and decision rule; what would refute
-it; and actual spend in dollars and provider calls.
+it; and realised cost as an API-rate estimate, with the provider call count.
 
 ## Standing measurement rules
 
@@ -31,6 +31,16 @@ These apply to every entry below.
    a policy other than the one selected — and is excluded until re-run.
 5. **Cost is reported alongside every outcome.** An arm that delivers the same
    and costs more is a worse arm.
+6. **No dollars are billed and no API key is used.** Both providers run the
+   operator's local CLI session — Codex against `CODEX_HOME`, Claude against the
+   OAuth profile under `CLAUDE_CONFIG_DIR` — and `server/claude-runtime.mjs`
+   denylists `ANTHROPIC_API_KEY`/`ANTHROPIC_AUTH_TOKEN`/`ANTHROPIC_BASE_URL`
+   while `server/codex-runtime.mjs` builds its child env from an allowlist that
+   omits `OPENAI_API_KEY`. Every dollar figure below is therefore the
+   **API-rate estimate** from `server/model-catalog.mjs` (`PRICING_VERSION`
+   2026-08-02), used as a comparable unit of work across arms. The real
+   exhaustible resource is plan quota and rate limits, so a ceiling breach means
+   stop and re-plan, not an unexpected charge.
 
 ---
 
@@ -38,14 +48,14 @@ These apply to every entry below.
 
 | | |
 |---|---|
-| Status | **PROPOSED**, 20 Sep 2026. No task created, no spend |
+| Status | **PROPOSED**, 20 Sep 2026. No task created, nothing run |
 | Manifest | `docs/experiments/model-baseline-2026-09-phase0.json` · sha256 `555fa4b532aa97c51f34675ece7e0ab5f64a5d84ec9cb0a6b5081970540f6e70` |
 | Runner | `scripts/experiment-run.mjs` · sha256 `829fac7e67a74f7a82bb6f6190566919c57769c00ec7eff082bd45a99503c4c8` |
 | Group id | `model-baseline-2026-09-phase0` |
 | Design | Baseline arm `B0-baseline` only. 2 cases × 3 repetitions = **6 tasks**. `C1-narrow` (AH-082 replay, `standard`), `C4-backend` (AH-058 replay, `high-risk`) |
 | Bases | `C1-narrow` f18c5673… · `C4-backend` 21b63f5c… Both pinned in dedicated eval worktrees under `/Users/shaun/projects/.worktrees/eval-baseline-2026-09-*` |
-| Spend ceiling | **$60.** Historical cost per task in this store: median $1.40, p75 $4.13, p90 $7.20, max $25.65 across 77 tasks with a recorded estimate. 6 × p90 ≈ $43 |
-| Abort rule | Stop and re-plan if realised spend passes $60, or if any single task passes $15 |
+| Cost ceiling (API-rate estimate, see rule 6 — not billed) | **$60.** Historical cost per task in this store: median $1.40, p75 $4.13, p90 $7.20, max $25.65 across 77 tasks with a recorded estimate. 6 × p90 ≈ $43 |
+| Abort rule | Stop and re-plan if the realised estimate passes $60, or if any single task passes $15 |
 
 ### What this measures
 
@@ -100,8 +110,8 @@ real migration constraint, so it is the more likely to split.
 | Group id | `model-baseline-2026-09` |
 | Design | 6 cases × 4 arms = **24 tasks**, 1 repetition, subject to EXP-001's decision rule |
 | Arms | `B0-baseline` (shipped Codex matrix) · `A1-build` (build bundle → Sonnet 5 xhigh) · `A2-decide` (decide bundle → Opus 5 xhigh) · `A3-understand-cheap` (understand bundle xhigh → high) |
-| Spend ceiling | **$400.** 24 × p90 ≈ $173 at historical rates; `A2-decide` runs Opus on three roles, so the ceiling carries roughly a 2× margin |
-| Abort rule | Stop after any 8 consecutive tasks if realised spend projects past $400, or if more than 2 tasks report `unknown` delivery |
+| Cost ceiling (API-rate estimate, see rule 6 — not billed) | **$400.** 24 × p90 ≈ $173 at historical rates; `A2-decide` runs Opus on three roles, so the ceiling carries roughly a 2× margin |
+| Abort rule | Stop after any 8 consecutive tasks if the realised estimate projects past $400, or if more than 2 tasks report `unknown` delivery |
 
 ### Why one bundle at a time
 
@@ -134,7 +144,7 @@ An arm replaces the baseline **only** if both hold:
   divergence.
 
 An arm is adopted **as a cost reduction** if delivery is equal on every case at
-**≤ 70%** of baseline dollar cost.
+**≤ 70%** of the baseline's API-rate estimate.
 
 Anything else is recorded as **no effect detected at this sample size** — which
 is a result, and is not to be reported as "the models are equivalent".
