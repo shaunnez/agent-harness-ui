@@ -10,6 +10,7 @@ import {
   colonyBridges,
   colonyCameras,
   colonySlot,
+  hubSlot,
   projectKey,
   slotPosition,
 } from "../../src/frontier/world-3d/colony.ts";
@@ -54,7 +55,13 @@ test("colony slots persist across reorder/archive, remain distinct, and extend b
   assert.equal(Object.keys(saved).length, 40);
   assert.equal(new Set(Object.values(saved)).size, 40);
   assert.deepEqual(assignSlots([...projects].reverse(), saved), saved);
-  assert.deepEqual(assignSlots(projects.slice(1), saved), saved);
+  // Dropping a project releases its land and disturbs nobody else's: the slot map is the colony as
+  // it stands, not every project this browser has ever seen.
+  const withoutFirst = assignSlots(projects.slice(1), saved);
+  assert.equal(withoutFirst[projectKey(projects[0])], undefined);
+  assert.equal(Object.keys(withoutFirst).length, 39);
+  for (const project of projects.slice(1))
+    assert.equal(withoutFirst[projectKey(project)], saved[projectKey(project)]);
   assert.equal(colonySlot("P19").ring, 3);
   assert.equal(colonySlot("P37").ring, 4);
   assert.deepEqual(
@@ -325,4 +332,35 @@ test("one room table serves every crown: room assignment never reads the buildin
   assert.equal(reference.workers.length, 4);
   // The allocation has no variant input at all; every crown shares the same sockets and overflow.
   for (const variant of baseVariants) assert.deepEqual(allocateSockets(requests), reference, variant);
+});
+
+test("every base reaches the colony: stale slots are released and growth stays connected", () => {
+  const project = (id) => ({ id, repositoryPath: `/r/${id}`, createdAt: `2026-01-${id.padStart(2, "0")}` });
+  const reachable = (slots) => {
+    const ids = Object.values(slots);
+    const bridges = colonyBridges(ids);
+    const seen = new Set([hubSlot.id]);
+    for (let pass = 0; pass < ids.length + 2; pass++)
+      for (const bridge of bridges) {
+        if (seen.has(bridge.from)) seen.add(bridge.to);
+        if (seen.has(bridge.to)) seen.add(bridge.from);
+      }
+    return ids.every((id) => seen.has(id));
+  };
+  // The saved map is every project this browser has ever seen. Entries for projects that are gone
+  // used to keep their land reserved, pushing the ones still here outward until one landed with no
+  // occupied neighbour and so no bridge to anywhere.
+  const live = [project("11"), project("12"), project("13")];
+  const stale = { "old-1:/r/old-1": "P1", "old-2:/r/old-2": "P2", "old-3:/r/old-3": "P5" };
+  const assigned = assignSlots(live, stale);
+  assert.deepEqual(Object.values(assigned).sort(), ["P1", "P2", "P3"]);
+  assert.ok(reachable(assigned));
+  // A project that is still here keeps the slot it had, stale neighbours or not.
+  const kept = assignSlots(live, { ...stale, [projectKey(live[1])]: "P6" });
+  assert.equal(kept[projectKey(live[1])], "P6");
+  assert.ok(reachable(kept));
+  for (let count = 1; count <= 14; count++) {
+    const set = Array.from({ length: count }, (_, i) => project(String(i + 1)));
+    assert.ok(reachable(assignSlots(set, {})), `${count} projects must all reach the colony`);
+  }
 });
