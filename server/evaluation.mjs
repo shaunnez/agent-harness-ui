@@ -1,4 +1,11 @@
 import { createHash } from "node:crypto";
+import {
+  buildExperimentDecisions,
+  classifyTaskBudget,
+  DEFAULT_DECISION_METRIC,
+  normalizeDecisionMetric,
+  normalizeExperimentBudget,
+} from "./experiment-decision.mjs";
 
 const GATE_STAGES = ["dev-review", "test", "final-review"];
 const TERMINAL_STATUSES = new Set([
@@ -79,6 +86,8 @@ export function normalizeExperimentInput(input, { taskBriefHash, policyMatrix, f
     .slice(0, 120);
   const acceptanceCriteria = cleanStringList(input.acceptanceCriteria, "acceptance criteria");
   const verificationCommands = cleanStringList(input.verificationCommands, "verification commands");
+  const decisionMetric = normalizeDecisionMetric(input.decisionMetric);
+  const budget = normalizeExperimentBudget(input.budget);
   if (!groupId || !variantId) throw new Error("Controlled experiments require group and variant IDs.");
   if (!/^[a-f0-9]{40,64}$/i.test(frozenBaseSha ?? ""))
     throw new Error("Controlled experiments require a verified frozen base commit SHA.");
@@ -93,6 +102,8 @@ export function normalizeExperimentInput(input, { taskBriefHash, policyMatrix, f
     policyMatrix: structuredClone(policyMatrix),
     acceptanceCriteria,
     verificationCommands,
+    decisionMetric,
+    budget,
     createdAt: new Date().toISOString(),
   };
 }
@@ -221,6 +232,13 @@ function observationalSummary(tasks) {
     .sort((left, right) => left.role.localeCompare(right.role) || right.runs - left.runs);
 }
 
+function totalTokensOf(usage = {}) {
+  if (usage.totalTokens != null) return Number(usage.totalTokens) || 0;
+  const input = Number(usage.inputTokens ?? 0) || 0;
+  const output = Number(usage.outputTokens ?? 0) || 0;
+  return input + output ? input + output : null;
+}
+
 function experimentTaskMetrics(task) {
   const gateResults = GATE_STAGES.map((stage) => {
     const attempts = (task.artifacts ?? []).filter(
@@ -265,6 +283,13 @@ function experimentTaskMetrics(task) {
   };
 }
 
+function experimentBudgetStatus(group) {
+  if (group.budgetExceededTaskIds.length) return "exceeded";
+  const declared = [...group.budgets.values()].some((budget) => budget != null);
+  if (!declared) return "not-declared";
+  return group.budgetMeasuredSamples ? "within" : "unmeasured";
+}
+
 function controlledSummary(tasks) {
   const groups = new Map();
   for (const task of tasks.filter((item) => item.experiment)) {
@@ -278,6 +303,10 @@ function controlledSummary(tasks) {
       policyMatrices: new Map(),
       acceptanceDefinitions: new Set(),
       verificationDefinitions: new Set(),
+      decisionMetrics: new Set(),
+      budgets: new Map(),
+      budgetExceededTaskIds: [],
+      budgetMeasuredSamples: 0,
       taskIds: [],
       gateAttempts: 0,
       firstPassGateSuccesses: 0,
@@ -305,6 +334,14 @@ function controlledSummary(tasks) {
     group.policyMatrices.set(JSON.stringify(experiment.policyMatrix), experiment.policyMatrix);
     group.acceptanceDefinitions.add(JSON.stringify(experiment.acceptanceCriteria));
     group.verificationDefinitions.add(JSON.stringify(experiment.verificationCommands));
+    group.decisionMetrics.add(experiment.decisionMetric ?? DEFAULT_DECISION_METRIC);
+    group.budgets.set(JSON.stringify(experiment.budget ?? null), experiment.budget ?? null);
+    const taskBudget = classifyTaskBudget(experiment.budget ?? null, {
+      wallTimeMs: metrics.wallTimeMs,
+      totalTokens: totalTokensOf(task.usage),
+    });
+    if (taskBudget.exceeded) group.budgetExceededTaskIds.push(task.id);
+    if (taskBudget.status === "within" || taskBudget.status === "exceeded") group.budgetMeasuredSamples += 1;
     group.gateAttempts += metrics.gateResults.length;
     group.firstPassGateSuccesses += metrics.gateResults.filter((gate) => gate.firstPassSuccess).length;
     group.eventualGateSuccesses += metrics.gateResults.filter((gate) => gate.eventualSuccess).length;
@@ -334,6 +371,12 @@ function controlledSummary(tasks) {
       policyMatrices: [...group.policyMatrices.values()],
       acceptanceDefinitions: [...group.acceptanceDefinitions].map(JSON.parse),
       verificationDefinitions: [...group.verificationDefinitions].map(JSON.parse),
+      decisionMetric: group.decisionMetrics.size === 1 ? [...group.decisionMetrics][0] : null,
+      decisionMetricDrift: group.decisionMetrics.size > 1,
+      budget: group.budgets.size === 1 ? [...group.budgets.values()][0] : null,
+      budgetDrift: group.budgets.size > 1,
+      budgetStatus: experimentBudgetStatus(group),
+      budgetExceededTaskIds: group.budgetExceededTaskIds,
       gateAttempts: group.gateAttempts,
       firstPassGateSuccesses: group.firstPassGateSuccesses,
       firstPassGateSuccessRate: group.gateAttempts ? group.firstPassGateSuccesses / group.gateAttempts : null,
@@ -385,6 +428,9 @@ export function buildEvaluationSummary(tasks) {
         "Controlled task variants grouped by explicit experiment and variant IDs with frozen briefs, bases, policies, acceptance criteria, and verification commands.",
       taskCount: tasks.filter((task) => task.experiment).length,
       variants: experiments,
+      decisions: buildExperimentDecisions(experiments),
+      decisionMethodology:
+        "Each group is ranked on the single decision metric declared before the run. Remaining metrics are diagnostics. A leader is named only when every arm shares the same brief, base, acceptance criteria, verification commands and budget, and no arm exceeded it.",
     },
   };
 }
