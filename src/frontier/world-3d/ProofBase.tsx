@@ -11,8 +11,8 @@ import type { ProjectBase } from "./layout";
  * practicals are excluded entirely -- the rooms keep their authored warm light whatever the palette.
  */
 const palettePractical: Record<string, number> = {
-  practical_warm_window_glass: 0.62,
-  practical_warm_strip: 0.85,
+  practical_warm_window_glass: 0.85,
+  practical_warm_strip: 1,
   practical_station_marker: 1,
   practical_delivery_beacon: 1,
 };
@@ -63,6 +63,10 @@ export function ProofBase({
           const owned = material.clone();
           owned.userData.interior = interior;
           owned.userData.warm = owned.emissive.clone();
+          // The authored albedo matters as much as the emissive here: practical_warm_strip is
+          // [1, 0.49, 0.14] on both, so tinting only the emissive left a warm orange surface lit by
+          // warm lamps, and every base's strips read the same pale amber whatever the palette.
+          owned.userData.albedo = owned.color.clone();
           materials.set(key, owned);
           return owned;
         };
