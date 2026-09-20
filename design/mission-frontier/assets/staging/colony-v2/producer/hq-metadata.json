@@ -72,19 +72,19 @@
           ],
           "bounds": {
             "min": [
-              -15.24,
+              -16.65,
               4.0,
-              -13.2282
+              -15.1804
             ],
             "max": [
               17.1859,
-              10.02,
+              11.6,
               21.83
             ],
             "size": [
-              32.4259,
-              6.02,
-              35.0582
+              33.8359,
+              7.6,
+              37.0104
             ]
           }
         },
@@ -243,17 +243,17 @@
           ],
           "bounds": {
             "min": [
-              -16.7152,
+              -17.318,
               7.35,
               -18.4461
             ],
             "max": [
-              16.9148,
+              17.5179,
               16.23,
               23.7
             ],
             "size": [
-              33.63,
+              34.8359,
               8.88,
               42.1461
             ]
@@ -270,19 +270,19 @@
           ],
           "bounds": {
             "min": [
-              -7.4628,
+              -16.65,
               4.0,
-              0.9495
+              -15.1804
             ],
             "max": [
               17.1859,
-              10.02,
+              11.6,
               21.83
             ],
             "size": [
-              24.6487,
-              6.02,
-              20.8805
+              33.8359,
+              7.6,
+              37.0104
             ]
           }
         },
@@ -576,6 +576,7 @@
           "front_window_mullion",
           "front_window_recess",
           "front_window_sill",
+          "spine_infill",
           "testing_bay_wall",
           "testing_parapet_cap",
           "testing_parapet_reveal",
@@ -637,6 +638,9 @@
           "roof_vent_louver",
           "service_wing_tank",
           "service_wing_unit",
+          "spine_parapet_cap",
+          "spine_roof_gasket",
+          "spine_roof_infill",
           "testing_roof_deck",
           "testing_roof_gasket",
           "testing_roof_seam",
@@ -748,8 +752,8 @@
       },
       "componentCounts": {
         "MF_BaseFixed": 426,
-        "MF_ShellCutaway_FrontFlats": 126,
-        "MF_Roof": 221,
+        "MF_ShellCutaway_FrontFlats": 151,
+        "MF_Roof": 236,
         "MF_Interior_planning": 45,
         "MF_Interior_implementation": 99,
         "MF_Interior_review": 47,
@@ -761,9 +765,9 @@
         "MF_Practicals": 9
       },
       "glb": {
-        "bytes": 6746280,
-        "sha256": "4d0e7c579d64000b006208777682ea7486293b4ec305b1655d5679004a074df3",
-        "triangles": 125936,
+        "bytes": 7058852,
+        "sha256": "69514f1567b1034fb55e5f9ac17aa1474a54bc771b1d5588621d1b247d655190",
+        "triangles": 131696,
         "meshes": 63,
         "materials": 20,
         "images": 6,
