@@ -1,11 +1,11 @@
 import { type Container, Sprite, Texture, type TilingSprite } from "pixi.js";
-import { CoastalSurf } from "./coastal-surf";
 import {
   defaultEnvironment,
   type EnvironmentPreferences,
   LightingClock,
   lightingAt,
-} from "./environment-model";
+} from "../scene/environment-model";
+import { CoastalSurf } from "./coastal-surf";
 
 /** One reusable radial light texture, not a substitute for authored world objects. */
 function lightTexture() {

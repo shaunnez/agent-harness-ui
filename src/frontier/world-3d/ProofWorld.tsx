@@ -5,8 +5,8 @@ import { PCFShadowMap, WebGLRenderer, type WebGLRendererParameters } from "three
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import type { WorldPreferences } from "../app/preferences";
 import { splitRecordedDetail } from "../runtime/presentation";
+import { lightingAt, type WorldLighting } from "../scene/environment-model";
 import { WorldTime } from "../views/WorldTime";
-import { lightingAt, type WorldLighting } from "../world/environment-model";
 import { basePalettes } from "./appearance";
 import { BaseAppearancePicker } from "./BaseAppearancePicker";
 import { proofAssetUrls } from "./colony-assets";

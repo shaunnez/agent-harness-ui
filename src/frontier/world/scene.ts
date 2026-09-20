@@ -3,11 +3,12 @@ import type { RuntimeProject, StageId } from "../../domain";
 import type { WorldLocation } from "../app/navigation";
 import type { TaskSummary } from "../runtime/contracts";
 import { attentionFor, isOpen, needsYou, stageLabels } from "../runtime/presentation";
+import { defaultEnvironment, type EnvironmentPreferences } from "../scene/environment-model";
+import { basePatrol, workerBehavior } from "../scene/worker-behavior";
 import { featuredProjectId } from "./asset-policy";
 import type { WorldAssets } from "./assets";
 import { coastalSite } from "./coastal-layout";
 import { WorldEnvironment } from "./environment";
-import { defaultEnvironment, type EnvironmentPreferences } from "./environment-model";
 import { ProjectPlacement, TransitionTracker, taskSite, tasksInProject } from "./layout";
 import { islandAnchor, islandScale, projectRoutes } from "./routes";
 import {
@@ -18,7 +19,6 @@ import {
   placeVegetation,
   type SceneryContext,
 } from "./scenery";
-import { basePatrol, workerBehavior } from "./worker-behavior";
 import { createBaseCrew, createWorker, tickWorker, type WorkerMotion } from "./workers";
 
 export interface WorldLabel {

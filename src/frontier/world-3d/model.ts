@@ -1,8 +1,8 @@
 import type { RuntimeProject } from "../../domain.ts";
 import type { TaskSummary } from "../runtime/contracts.ts";
 import { attentionFor, isOpen, stageLabels } from "../runtime/presentation.ts";
+import { workAction, workerBehavior } from "../scene/worker-behavior.ts";
 import type { SceneInput } from "../world/scene.ts";
-import { workAction, workerBehavior } from "../world/worker-behavior.ts";
 import { type BaseVariant, type LegacyBaseVariant, legacyBaseVariants } from "./appearance.ts";
 import { colonyWorkers } from "./colony-workers.ts";
 import { type ProjectBase, projectBases, translated, visibleBases } from "./layout.ts";

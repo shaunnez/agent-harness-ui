@@ -2,9 +2,9 @@ import { Crosshair, MapPin, Question, WarningCircle } from "@phosphor-icons/reac
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { WorldPreferences } from "../app/preferences";
 import { splitRecordedDetail } from "../runtime/presentation";
+import { lightingAt, worldHour } from "../scene/environment-model";
 import { WorldTime } from "../views/WorldTime";
 import { type Camera, pointInContainedImage, worldToScreen } from "./camera";
-import { lightingAt, worldHour } from "./environment-model";
 import { type MinimapCapture, WorldRenderer } from "./renderer";
 import type { SceneInput, WorldLabel } from "./scene";
 

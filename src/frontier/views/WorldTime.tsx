@@ -1,6 +1,6 @@
 import { MoonStars, Sun, SunHorizon } from "@phosphor-icons/react";
 import type { WorldPreferences } from "../app/preferences";
-import { formatWorldHour, type WorldLighting } from "../world/environment-model";
+import { formatWorldHour, type WorldLighting } from "../scene/environment-model";
 
 export function WorldTime({
   lighting,

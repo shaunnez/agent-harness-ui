@@ -7,7 +7,7 @@ import {
   LightingClock,
   lightingAt,
   type WorldLighting,
-} from "../world/environment-model";
+} from "../scene/environment-model";
 import { basePalettes } from "./appearance";
 import { ColonyGround } from "./ColonyGround";
 import { ColonyProps } from "./ColonyProps";

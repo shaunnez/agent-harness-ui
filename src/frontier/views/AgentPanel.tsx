@@ -15,9 +15,9 @@ import {
   runDuration,
   stageLabels,
 } from "../runtime/presentation";
+import { workAction, workActions } from "../scene/worker-behavior";
 import { ScrollArea } from "../ui/ScrollArea";
 import { ResizeHandles, useWindowSizing, WindowSizeControls } from "../ui/WindowSizing";
-import { workAction, workActions } from "../world/worker-behavior";
 import { AgentActivity } from "./AgentActivity";
 import { PinButton } from "./WatchPins";
 

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { fixtureRun, fixtureTask } from "../src/frontier/fixtures/scenarios.ts";
 import { attentionFor, isActiveRun } from "../src/frontier/runtime/presentation.ts";
-import { workerBehavior } from "../src/frontier/world/worker-behavior.ts";
+import { workerBehavior } from "../src/frontier/scene/worker-behavior.ts";
 
 const readyStages = {
   "ready-for-implementation": "implement",

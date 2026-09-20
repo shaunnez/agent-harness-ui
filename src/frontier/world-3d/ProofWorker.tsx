@@ -9,7 +9,7 @@ import {
   type MeshBasicMaterial,
   type Object3D,
 } from "three";
-import { actorSeed, patrolPose, workActions } from "../world/worker-behavior";
+import { actorSeed, patrolPose, workActions } from "../scene/worker-behavior";
 import {
   type Point3,
   type ProofView,

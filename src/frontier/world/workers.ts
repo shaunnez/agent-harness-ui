@@ -1,11 +1,6 @@
 import { Container, Graphics, type Sprite } from "pixi.js";
 import type { StageId } from "../../domain";
 import type { TaskSummary } from "../runtime/contracts";
-import { ActivityEffect } from "./activity-effects";
-import type { WorldAssets } from "./assets";
-import { cinematicWorker } from "./cinematic-catalog";
-import type { WorldEnvironment } from "./environment";
-import { livingWorker } from "./living-catalog";
 import {
   actorSeed,
   type PatrolPoint,
@@ -14,7 +9,12 @@ import {
   type WorkerBehavior,
   workAction,
   workActions,
-} from "./worker-behavior";
+} from "../scene/worker-behavior";
+import { ActivityEffect } from "./activity-effects";
+import type { WorldAssets } from "./assets";
+import { cinematicWorker } from "./cinematic-catalog";
+import type { WorldEnvironment } from "./environment";
+import { livingWorker } from "./living-catalog";
 
 export interface WorkerMotion {
   id: string;

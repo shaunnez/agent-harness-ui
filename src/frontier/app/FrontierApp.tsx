@@ -15,6 +15,7 @@ import { errorMessage, RefreshCoordinator } from "../runtime/coordinator";
 import { createDecisionSession } from "../runtime/decision-session";
 import { liveGateway } from "../runtime/live-gateway";
 import { commandDestination, isActiveRun, latestRun, needsYou } from "../runtime/presentation";
+import { tasksInProject } from "../scene/tasks";
 import { AgentPanel } from "../views/AgentPanel";
 import { BaseSelection } from "../views/BaseSelection";
 import { DecisionNavigation } from "../views/DecisionNavigation";
@@ -23,7 +24,6 @@ import { AttentionQueue, ConnectionBadge, SelectionHud, WorldActions, WorldClock
 import { WorldNavigation } from "../views/WorldNavigation";
 import { artDirection } from "../world/asset-policy";
 import { cinematicWorker } from "../world/cinematic-catalog";
-import { tasksInProject } from "../world/layout";
 import type { WorldRenderer } from "../world/renderer";
 import { WorldCanvas } from "../world/WorldCanvas";
 import { type ProofControls, proofVisible } from "../world-3d/model";

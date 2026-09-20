@@ -1,5 +1,5 @@
 import { Container, Graphics } from "pixi.js";
-import { type WorkAction, workActions } from "./worker-behavior";
+import { type WorkAction, workActions } from "../scene/worker-behavior";
 
 /** Illustrative tool feedback. These effects never represent file/test progress. */
 export class ActivityEffect {

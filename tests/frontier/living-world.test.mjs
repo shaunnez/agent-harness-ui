@@ -9,14 +9,14 @@ import {
   lightingAt,
   normalizeEnvironment,
   worldHour,
-} from "../../src/frontier/world/environment-model.ts";
+} from "../../src/frontier/scene/environment-model.ts";
 import {
   actorSeed,
   basePatrol,
   patrolPose,
   workAction,
   workerBehavior,
-} from "../../src/frontier/world/worker-behavior.ts";
+} from "../../src/frontier/scene/worker-behavior.ts";
 
 test("a world day defaults to exactly one real hour and wraps continuously across midnight", () => {
   const start = { ...defaultEnvironment, hour: 9, anchorMs: 5000 };
