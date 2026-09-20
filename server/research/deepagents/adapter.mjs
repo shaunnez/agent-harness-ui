@@ -3,9 +3,10 @@
 // No `deepagents`, `langchain`, `@langchain/*` or `langsmith` import may appear in this file
 // — `worker.mjs` is the only file in the repository permitted to import those
 // (`tests/research-deepagents-import-containment.test.mjs` checks this mechanically). This
-// file only spawns a child, parses the NDJSON it writes to stdout, and normalizes what comes
-// back into the neutral `ResearchRuntime` shape. Everything Deep Agents/LangGraph-shaped —
-// the graph, the checkpoint, the thread id — stays on the far side of that pipe.
+// file spawns a child, dispatches its explicitly named host-tool requests, parses the NDJSON
+// it writes to stdout, and normalizes what comes back into the neutral `ResearchRuntime`
+// shape. Everything Deep Agents/LangGraph-shaped — the graph, checkpoint and thread id —
+// stays on the far side of that pipe.
 
 import { randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
@@ -14,8 +15,10 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { runProcess } from "../../process-runtime.mjs";
+import { DEFAULT_RESEARCH_SOURCE_DIRECTORY, ResearchWebTools } from "../research-web-tools.mjs";
+import { resolveSearchProvider } from "../tavily-search-provider.mjs";
 import { buildChildEnvironment } from "./child-env.mjs";
-import { decodeWorkerLine } from "./event-protocol.mjs";
+import { decodeWorkerLine, encodeHostMessage } from "./event-protocol.mjs";
 import { resolveModelConfig, splitModelConfigForChild } from "./model-config.mjs";
 
 const WORKER_ENTRYPOINT = fileURLToPath(new URL("./worker.mjs", import.meta.url));
@@ -32,6 +35,9 @@ export class DeepAgentsResearchRuntime {
   #env;
   #nodeBin;
   #now;
+  #sourceSnapshotDirectory;
+  #searchProvider;
+  #webToolsOptions;
 
   constructor({
     id = "deepagents",
@@ -39,12 +45,18 @@ export class DeepAgentsResearchRuntime {
     env = process.env,
     nodeBin = process.execPath,
     now = () => Date.now(),
+    sourceSnapshotDirectory = DEFAULT_RESEARCH_SOURCE_DIRECTORY,
+    searchProvider = null,
+    webToolsOptions = {},
   } = {}) {
     this.#id = id;
     this.#checkpointDbPath = checkpointDbPath;
     this.#env = env;
     this.#nodeBin = nodeBin;
     this.#now = now;
+    this.#sourceSnapshotDirectory = sourceSnapshotDirectory;
+    this.#searchProvider = searchProvider;
+    this.#webToolsOptions = webToolsOptions;
   }
 
   get id() {
@@ -55,6 +67,7 @@ export class DeepAgentsResearchRuntime {
     if (this.#runs.has(request.id)) throw new Error(`Research run ${request.id} has already started.`);
     await mkdir(path.dirname(this.#checkpointDbPath), { recursive: true }).catch(() => undefined);
     const modelConfig = resolveModelConfig(this.#env);
+    const searchProvider = this.#searchProvider ?? resolveSearchProvider(this.#env);
     const { forChild: modelForChild, apiKey } = splitModelConfigForChild(modelConfig);
     const workingDirectory = await mkdtemp(path.join(os.tmpdir(), "research-deepagents-"));
     const controller = new AbortController();
@@ -70,6 +83,7 @@ export class DeepAgentsResearchRuntime {
       controller,
       workingDirectory,
       childPid: null,
+      childStdin: null,
       usage: null,
       budgetState: null,
       truncatedBy: null,
@@ -77,7 +91,20 @@ export class DeepAgentsResearchRuntime {
       error: null,
       cancelRequested: false,
       startedAtMs,
+      webTools: null,
     };
+    run.webTools = new ResearchWebTools({
+      runId: request.id,
+      budget: request.budget,
+      context: request.context ?? [],
+      searchProvider,
+      snapshotDirectory: this.#sourceSnapshotDirectory,
+      signal: controller.signal,
+      onEvent: (type, data) => {
+        if (!run.closed) this.#emit(run, request.id, type, data);
+      },
+      ...this.#webToolsOptions,
+    });
     this.#runs.set(request.id, run);
 
     const childConfig = {
@@ -102,12 +129,20 @@ export class DeepAgentsResearchRuntime {
     runProcess(this.#nodeBin, [WORKER_ENTRYPOINT], {
       cwd: workingDirectory,
       env,
-      input: JSON.stringify(childConfig),
+      input: `${JSON.stringify(childConfig)}\n`,
+      keepStdinOpen: true,
       signal: controller.signal,
       timeoutMs: request.budget.maxRuntimeMs,
       label: RUN_LABEL,
       onSpawn: (child) => {
         run.childPid = child.pid ?? null;
+        run.childStdin = child.stdin;
+        child.stdin.on("error", (error) => {
+          if (!run.closed && error?.code !== "EPIPE")
+            this.#emit(run, request.id, "log", {
+              message: `Research worker input failed: ${error?.message ?? error}`,
+            });
+        });
       },
       onStdoutLine: (line) => this.#handleLine(run, request.id, line),
     }).then(
@@ -223,8 +258,40 @@ export class DeepAgentsResearchRuntime {
       case "log":
         this.#emit(run, runId, "log", { message: message.message });
         break;
+      case "tool_request":
+        void this.#handleToolRequest(run, runId, message);
+        break;
       default:
         break;
+    }
+  }
+
+  async #handleToolRequest(run, runId, message) {
+    if (run.closed || !run.childStdin || !message.requestId) return;
+    let response;
+    try {
+      const payload = await run.webTools.invoke(message.tool, message.input ?? {});
+      response = { type: "tool_response", requestId: message.requestId, ok: true, ...payload };
+    } catch (error) {
+      response = {
+        type: "tool_response",
+        requestId: message.requestId,
+        ok: false,
+        error: {
+          code: error?.code ?? "host_tool_failed",
+          message: error?.message ?? String(error),
+          ...(error?.ceiling ? { ceiling: error.ceiling } : {}),
+        },
+        budgetState: run.webTools.budgetState(),
+      };
+    }
+    if (run.closed || !run.childStdin) return;
+    try {
+      run.childStdin.write(encodeHostMessage(response));
+    } catch (error) {
+      this.#emit(run, runId, "log", {
+        message: `Could not reply to host tool request ${message.requestId}: ${error?.message ?? error}`,
+      });
     }
   }
 
@@ -269,6 +336,7 @@ export class DeepAgentsResearchRuntime {
       });
     }
     run.closed = true;
+    if (!run.controller.signal.aborted) run.controller.abort();
     for (const resolve of run.waiters.splice(0)) resolve();
     void rm(run.workingDirectory, { recursive: true, force: true }).catch(() => undefined);
   }

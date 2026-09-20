@@ -17,7 +17,8 @@ test("a live Deep Agents run against the real Anthropic model completes with a r
   await withDeepAgentsRuntime(
     async ({ runtime }) => {
       const request = testRequest("RSCH-DA-LIVE", {
-        objective: "Explain the main factors that affect the installed cost of commercial waterproofing membranes in New Zealand.",
+        objective:
+          "Explain the main factors that affect the installed cost of commercial waterproofing membranes in New Zealand.",
         budget: { maxRuntimeMs: 200_000, maxModelCalls: 30 },
       });
       await runtime.start(request);

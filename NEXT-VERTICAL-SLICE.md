@@ -1,5 +1,10 @@
 # Next Vertical Slice: One Useful Research Agent
 
+> Implementation status, 21 September 2026: completed on
+> `codex/research-runtime-vertical-slice` with deterministic acceptance. The opt-in live Tavily
+> demonstration remains pending because no Tavily credential was available in the environment.
+> See `RESEARCH-RUNTIME-VERTICAL-SLICE.md`.
+
 ## Recommendation
 
 The next PR should make the current Deep Agents runtime do one genuinely useful research task.

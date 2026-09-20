@@ -26,21 +26,52 @@ export const TEST_BUDGET = Object.freeze({
   maxRuntimeMs: 20_000,
   maxModelCalls: 10,
   maxToolCalls: 10,
-  maxSearchCalls: 0,
+  maxSearchCalls: 10,
 });
 
 /** A runtime over a throwaway checkpoint database, defaulting to the fake model. */
-export async function withDeepAgentsRuntime(body, { envOverrides } = {}) {
+export async function withDeepAgentsRuntime(
+  body,
+  { envOverrides, searchProvider = fixtureSearchProvider(), webToolsOptions = {} } = {},
+) {
   const directory = await mkdtemp(path.join(os.tmpdir(), "research-deepagents-test-"));
   const runtime = new DeepAgentsResearchRuntime({
     checkpointDbPath: path.join(directory, "checkpoints.sqlite3"),
+    sourceSnapshotDirectory: path.join(directory, "sources"),
     env: safeChildEnv(envOverrides),
+    searchProvider,
+    webToolsOptions: {
+      lookup: async () => [{ address: "93.184.216.34", family: 4 }],
+      fetchImpl: async () =>
+        new Response(
+          "<html><head><title>Fixture manufacturer guide</title></head><body><h1>Application</h1><p>Apply two coats of the tested membrane to the prepared substrate.</p></body></html>",
+          { headers: { "content-type": "text/html" } },
+        ),
+      ...webToolsOptions,
+    },
   });
   try {
     return await body({ runtime, directory });
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+}
+
+export function fixtureSearchProvider() {
+  return {
+    async search(query) {
+      return {
+        results: [
+          {
+            title: "Fixture manufacturer guide",
+            url: "https://manufacturer.example.test/application",
+            snippet: "Application requirements for the tested membrane.",
+          },
+        ],
+        metadata: { provider: "fixture", query },
+      };
+    },
+  };
 }
 
 export function testRequest(id, overrides = {}) {

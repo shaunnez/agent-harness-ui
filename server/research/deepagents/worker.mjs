@@ -5,7 +5,9 @@
 // (`event-protocol.mjs`) and nothing else — any stray `console.log` from here or a dependency
 // would corrupt that stream, so diagnostics that are not a protocol message go to stderr.
 //
-// One Deep Agents agent. No subagents, no web search, no RAG (non-goals, task §"Non-goals").
+// One Deep Agents agent. No subagents and no RAG. Search, fetch and evidence verification are
+// requested over the parent-owned protocol; this process receives neither a search credential
+// nor a general HTTP tool.
 // `createSubAgentMiddleware({ generalPurposeAgent: false, subagents: [] })` is still present
 // and deliberate: `deepagents` adds a working general-purpose subagent automatically even when
 // no `subagents` option is given at all (G3 D2), and "no general-purpose subagent" is a
@@ -19,9 +21,10 @@ import { AIMessage } from "@langchain/core/messages";
 import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 import { ChatOpenAI } from "@langchain/openai";
 import { createDeepAgent, createSubAgentMiddleware, StateBackend } from "deepagents";
-import { modelCallLimitMiddleware, tool, toolCallLimitMiddleware } from "langchain";
+import { modelCallLimitMiddleware, tool } from "langchain";
 import { graphRecursionLimitForBudget } from "../../../src/research-budget-policy.ts";
 import { encodeWorkerMessage } from "./event-protocol.mjs";
+import { openHostToolChannel } from "./host-tool-client.mjs";
 
 const startedAtMs = Date.now();
 
@@ -44,12 +47,6 @@ function sendError(error) {
   send({ type: "error", error });
 }
 
-async function readStdin() {
-  const chunks = [];
-  for await (const chunk of process.stdin) chunks.push(chunk);
-  return Buffer.concat(chunks).toString("utf8");
-}
-
 /** No API key, no network, no provider package. Deterministic so tests need neither a
  *  credential nor a live model to prove the runtime plumbing (task §5: "prove runtime
  *  plumbing", not sophisticated prompting). One synthetic finding, then a final answer. */
@@ -61,6 +58,8 @@ class FakeToolCallingModel extends BaseChatModel {
     this.misbehavior = misbehavior;
     this.calls = 0;
     this.submittedFinding = false;
+    this.stage = 0;
+    this.misbehaviorHandled = false;
   }
   _llmType() {
     return "fake-research-model";
@@ -73,13 +72,14 @@ class FakeToolCallingModel extends BaseChatModel {
     this.boundTools = tools;
     return this.withConfig({ ...(kwargs ?? {}) });
   }
-  async _generate() {
+  async _generate(messages) {
     if (this.delayMs) await new Promise((resolve) => setTimeout(resolve, this.delayMs));
     this.calls += 1;
     const usage_metadata = { input_tokens: 120, output_tokens: 40, total_tokens: 160 };
     const response_metadata = { model_name: this.label };
     let message;
-    if (this.misbehavior === "general_purpose_subagent" && this.calls === 1) {
+    if (this.misbehavior === "general_purpose_subagent" && !this.misbehaviorHandled) {
+      this.misbehaviorHandled = true;
       // Probes the non-goal "no general-purpose subagent" directly (task §9, §11): even with
       // zero subagents configured, `deepagents` admits a working general-purpose worker unless
       // `createSubAgentMiddleware({ generalPurposeAgent: false })` says otherwise (G3 D2).
@@ -96,7 +96,8 @@ class FakeToolCallingModel extends BaseChatModel {
         usage_metadata,
         response_metadata,
       });
-    } else if (this.misbehavior === "invalid_finding" && this.calls === 1) {
+    } else if (this.misbehavior === "invalid_finding" && !this.misbehaviorHandled) {
+      this.misbehaviorHandled = true;
       // Deliberately fails `submitFindingTool`'s zod schema (`claim` must be a non-empty
       // string): proves a malformed tool call is rejected at the tool boundary rather than
       // crashing the graph (task §11.5), and that the model can recover afterwards.
@@ -106,7 +107,43 @@ class FakeToolCallingModel extends BaseChatModel {
         usage_metadata,
         response_metadata,
       });
-    } else if (!this.submittedFinding) {
+    } else if (this.stage === 0) {
+      this.stage = 1;
+      message = new AIMessage({
+        content: "",
+        tool_calls: [
+          {
+            name: "web_search",
+            args: { query: "fixture waterproofing installation requirements" },
+            id: `fake-call-${this.calls}`,
+            type: "tool_call",
+          },
+        ],
+        usage_metadata,
+        response_metadata,
+      });
+    } else if (this.stage === 1) {
+      const search = latestToolJson(messages);
+      this.stage = 2;
+      message = new AIMessage({
+        content: "",
+        tool_calls: [
+          {
+            name: "fetch_source",
+            args: { url: search?.results?.[0]?.url ?? "https://example.invalid/no-search-result" },
+            id: `fake-call-${this.calls}`,
+            type: "tool_call",
+          },
+        ],
+        usage_metadata,
+        response_metadata,
+      });
+    } else if (this.stage === 2) {
+      const fetched = latestToolJson(messages);
+      const excerpt = String(fetched?.content ?? "")
+        .slice(0, 180)
+        .trim();
+      this.stage = 3;
       this.submittedFinding = true;
       message = new AIMessage({
         content: "",
@@ -114,10 +151,16 @@ class FakeToolCallingModel extends BaseChatModel {
           {
             name: "submit_finding",
             args: {
-              claim:
-                "The Deep Agents runtime executed one model call and one tool call behind the Eversor boundary.",
-              confidence: 0.6,
-              assumptions: ["Synthetic finding produced by the slice-2 proof-of-plumbing agent."],
+              claim: "The retained fixture source states the tested installation requirement.",
+              evidence: [
+                {
+                  sourceId: fetched?.source?.id ?? "missing-source",
+                  excerpt,
+                  authority: "primary",
+                  locator: { section: "Application" },
+                },
+              ],
+              confidence: 0.9,
             },
             id: `fake-call-${this.calls}`,
             type: "tool_call",
@@ -135,6 +178,20 @@ class FakeToolCallingModel extends BaseChatModel {
     }
     return { generations: [{ text: message.content, message }], llmOutput: {} };
   }
+}
+
+function latestToolJson(messages) {
+  for (let index = (messages ?? []).length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    const type = typeof message?.getType === "function" ? message.getType() : message?._getType?.();
+    if (type !== "tool" || typeof message.content !== "string") continue;
+    try {
+      return JSON.parse(message.content);
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 async function buildModel(modelConfig) {
@@ -169,10 +226,11 @@ function buildPrompt(config) {
   const lines = [
     `Research objective: ${config.objective}`,
     "",
-    "You are the sole research agent for this run. There are no other agents to delegate to, " +
-      "and no web search or document retrieval tools exist yet — call read_context to see the " +
-      "supplied context references, then call submit_finding one or more times to record what " +
-      "you conclude, then give a short final answer.",
+    "You are the sole research agent for this run. There are no other agents to delegate to. " +
+      "Use web_search to discover relevant primary or authoritative public sources, fetch_source " +
+      "before relying on a result, and submit_finding with exact excerpts from retained sources. " +
+      "Surface uncertainty and conflicting evidence. Never invent a price or specification. Stop " +
+      "when the evidence is sufficient or a host budget ceiling is reached, then give a short answer.",
   ];
   if (config.context?.length) {
     lines.push("", `Supplied context references: ${JSON.stringify(config.context)}`);
@@ -225,6 +283,13 @@ function classifyError(error, { cancelled }) {
   if (cancelled) return { code: "research_cancelled", message: "The run was cancelled." };
   const name = error?.constructor?.name ?? error?.name ?? "";
   const message = error?.message ?? String(error);
+  const ceiling = error?.ceiling ?? message.match(/\[research_ceiling:([^\]]+)\]/)?.[1];
+  if (ceiling)
+    return {
+      code: error?.code ?? "research_ceiling_exceeded",
+      message: message.replace(/\[research_ceiling:[^\]]+\]\s*/, ""),
+      truncatedBy: ceiling,
+    };
   if (/ModelCallLimit/i.test(name))
     return { code: "model_call_ceiling_exceeded", message, truncatedBy: "maxModelCalls" };
   if (/GraphRecursionError/i.test(name))
@@ -247,48 +312,82 @@ async function main() {
   const leakedTracingEnv = Object.keys(process.env).filter((key) => /^(LANGSMITH_|LANGCHAIN_)/.test(key));
   sendLog(`langsmith/langchain tracing env vars present in child: ${leakedTracingEnv.length}`);
 
-  const config = JSON.parse(await readStdin());
+  const host = await openHostToolChannel();
+  const config = host.config;
   const findings = [];
+  let hostBudgetState = null;
 
-  const readContextTool = tool(
-    async () => {
-      sendEvent("tool.called", { tool: "read_context" });
-      return JSON.stringify(config.context ?? []);
-    },
-    {
-      name: "read_context",
-      description:
-        "Return the research objective's supplied context references. There is no content " +
-        "fetching or RAG yet — each reference is only a {type, id} pair.",
-      schema: z.object({}).strict(),
-    },
-  );
+  const callHostTool = async (toolName, input) => {
+    try {
+      const response = await host.invoke(toolName, input);
+      if (response.budgetState) hostBudgetState = response.budgetState;
+      return response.result;
+    } catch (error) {
+      if (error?.budgetState) hostBudgetState = error.budgetState;
+      throw error;
+    }
+  };
+
+  const readContextTool = tool(async () => JSON.stringify(await callHostTool("read_context", {})), {
+    name: "read_context",
+    description:
+      "Return the research objective's supplied context references. Each reference is only a {type, id} pair.",
+    schema: z.object({}).strict(),
+  });
+
+  const webSearchTool = tool(async (input) => JSON.stringify(await callHostTool("web_search", input)), {
+    name: "web_search",
+    description:
+      "Discover public web sources. Search snippets are discovery hints only; fetch a source before citing it.",
+    schema: z.object({ query: z.string().min(1).max(500) }).strict(),
+  });
+
+  const fetchSourceTool = tool(async (input) => JSON.stringify(await callHostTool("fetch_source", input)), {
+    name: "fetch_source",
+    description:
+      "Ask the host to safely fetch and retain an HTTP/HTTPS source. Returns bounded normalized text and a source id.",
+    schema: z.object({ url: z.string().url().max(4_000) }).strict(),
+  });
 
   const submitFindingTool = tool(
     async (input) => {
-      sendEvent("tool.called", { tool: "submit_finding" });
-      const findingId = `${config.runId}-F${findings.length + 1}`;
-      findings.push({
-        id: findingId,
-        claim: input.claim,
-        producedBy: "researcher",
-        evidence: [],
-        ...(input.confidence == null ? {} : { confidence: input.confidence }),
-        ...(input.assumptions?.length ? { assumptions: input.assumptions } : {}),
-      });
-      sendEvent("finding.created", { findingId });
-      return `Recorded finding ${findingId}.`;
+      const finding = await callHostTool("submit_finding", input);
+      findings.push(finding);
+      return JSON.stringify({ findingId: finding.id, accepted: true });
     },
     {
       name: "submit_finding",
       description:
-        "Submit one research finding. There is no fetch_source tool yet, so a finding carries " +
-        "no cited evidence in this slice — evidence.length is legitimately 0.",
-      schema: z.object({
-        claim: z.string().min(1).max(2_000),
-        confidence: z.number().min(0).max(1).optional(),
-        assumptions: z.array(z.string().max(500)).max(10).optional(),
-      }),
+        "Submit one finding with exact excerpts from sources retained by fetch_source. The host verifies every excerpt.",
+      schema: z
+        .object({
+          claim: z.string().min(1).max(2_000),
+          evidence: z
+            .array(
+              z
+                .object({
+                  sourceId: z.string().min(1).max(200),
+                  excerpt: z.string().min(1).max(2_000),
+                  locator: z
+                    .object({
+                      page: z.number().int().positive().optional(),
+                      section: z.string().max(500).optional(),
+                      selector: z.string().max(500).optional(),
+                      charStart: z.number().int().nonnegative().optional(),
+                      charEnd: z.number().int().nonnegative().optional(),
+                    })
+                    .strict()
+                    .optional(),
+                  authority: z.enum(["primary", "secondary", "unknown"]).optional(),
+                })
+                .strict(),
+            )
+            .min(1)
+            .max(10),
+          confidence: z.number().min(0).max(1).optional(),
+          assumptions: z.array(z.string().max(500)).max(10).optional(),
+        })
+        .strict(),
     },
   );
 
@@ -300,7 +399,7 @@ async function main() {
     model,
     systemPrompt:
       "You are a bounded, single-agent research worker running behind the Eversor research runtime.",
-    tools: [readContextTool, submitFindingTool],
+    tools: [readContextTool, webSearchTool, fetchSourceTool, submitFindingTool],
     backend: new StateBackend(),
     checkpointer,
     middleware: [
@@ -308,16 +407,6 @@ async function main() {
       // general-purpose subagent by default unless this is explicit (G3 D2).
       createSubAgentMiddleware({ generalPurposeAgent: false, subagents: [] }),
       modelCallLimitMiddleware({ runLimit: config.budget.maxModelCalls, exitBehavior: "error" }),
-      toolCallLimitMiddleware({
-        toolName: "read_context",
-        runLimit: config.budget.maxToolCalls,
-        exitBehavior: "continue",
-      }),
-      toolCallLimitMiddleware({
-        toolName: "submit_finding",
-        runLimit: config.budget.maxToolCalls,
-        exitBehavior: "continue",
-      }),
     ],
   });
 
@@ -337,7 +426,12 @@ async function main() {
   try {
     await agent.invoke(
       { messages: [{ role: "user", content: buildPrompt(config) }] },
-      { ...threadConfig, recursionLimit: graphRecursionLimitForBudget(config.budget), signal, durability: "sync" },
+      {
+        ...threadConfig,
+        recursionLimit: graphRecursionLimitForBudget(config.budget),
+        signal,
+        durability: "sync",
+      },
     );
   } catch (error) {
     errorInfo = classifyError(error, { cancelled });
@@ -357,7 +451,8 @@ async function main() {
   const summary = summarizeMessages(messages);
   const usage = {
     modelCalls: summary.modelCalls,
-    toolCalls: summary.toolCalls,
+    toolCalls: hostBudgetState?.toolCallsUsed ?? summary.toolCalls,
+    searchCalls: hostBudgetState?.searchCallsUsed ?? 0,
     inputTokens: summary.inputTokens,
     outputTokens: summary.outputTokens,
     byModel: summary.byModel,
@@ -365,10 +460,10 @@ async function main() {
   };
   sendUsage(usage, {
     modelCallsUsed: summary.modelCalls,
-    toolCallsUsed: summary.toolCalls,
-    searchCallsUsed: 0,
+    toolCallsUsed: hostBudgetState?.toolCallsUsed ?? summary.toolCalls,
+    searchCallsUsed: hostBudgetState?.searchCallsUsed ?? 0,
     researchersStarted: findings.length ? 1 : 0,
-    elapsedMs: Date.now() - startedAtMs,
+    elapsedMs: hostBudgetState?.elapsedMs ?? Date.now() - startedAtMs,
     ...(errorInfo?.truncatedBy ? { ceilingHit: errorInfo.truncatedBy } : {}),
   });
 
@@ -390,6 +485,7 @@ async function main() {
       : {}),
     ...(errorInfo?.truncatedBy ? { truncatedBy: errorInfo.truncatedBy } : {}),
   });
+  host.close();
 }
 
 main()
@@ -400,5 +496,6 @@ main()
     // A structural failure — bad config, a model/checkpoint that could not even be
     // constructed — before any graph ever ran. Nothing partial to preserve.
     sendError({ code: "worker_startup_failed", message: error?.message ?? String(error) });
+    process.stdin.destroy();
     process.exitCode = 1;
   });
