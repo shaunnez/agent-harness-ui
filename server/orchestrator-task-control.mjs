@@ -4,7 +4,7 @@ import {
   candidateRepairCircuitReason,
   isInvalidApprovedPlanFailure,
 } from "../src/workflow-recovery-policy.ts";
-import { GATE_AUTO_ADVANCE, resolveGatePolicy } from "./gate-policies.mjs";
+import { GATE_APPROVAL_ADVANCE, GATE_AUTO_ADVANCE, resolveGatePolicy } from "./gate-policies.mjs";
 import { providerForModelId } from "./model-catalog.mjs";
 import { canStartRun, currentCandidate, reserveRun } from "./orchestrator-run-policy.mjs";
 import { activity, completeGrillSession, now, RUN_KINDS } from "./orchestrator-stage-support.mjs";
@@ -28,6 +28,7 @@ export class TaskControlOrchestrator {
     planAuthority,
     run,
     startDesigns,
+    refreshCandidate,
   }) {
     this._store = store;
     this._active = active;
@@ -39,6 +40,7 @@ export class TaskControlOrchestrator {
     this._planAuthority = planAuthority;
     this._run = run;
     this._startDesigns = startDesigns;
+    this._refreshCandidate = refreshCandidate;
   }
   isRunning(id) {
     return this._active.has(id);
@@ -62,7 +64,19 @@ export class TaskControlOrchestrator {
           "Repository authority changed or could not be verified. Revalidate the retained plan before implementation.",
         );
       }
-      if (await this._blockCandidateGateOnTargetDrift(id, kind)) {
+      if (implementationCanStart) await this._assertSourceReadyForImplementation(preflightTask);
+      const drift = await this._blockCandidateGateOnTargetDrift(id, kind, {
+        allowAutoRefresh: options.allowAutoRefresh !== false,
+      });
+      if (drift === "refreshed") {
+        // The candidate is now a new revision on the new target, so every candidate-bound
+        // gate is stale and the requested one is no longer the right run: Dev Review is.
+        // Release this reservation first — `start` refuses a task that is already active,
+        // including itself. `allowAutoRefresh: false` bounds this to a single retry.
+        this._active.delete(id);
+        return await this.start(id, "review", { allowAutoRefresh: false });
+      }
+      if (drift) {
         throw new Error(
           "The target branch advanced. Refresh the candidate before spending another candidate-bound gate attempt.",
         );
@@ -92,22 +106,29 @@ export class TaskControlOrchestrator {
       if (this._active.get(id) === reservation) this._active.delete(id);
     });
     reservation.promise = promise;
-    promise.then(() => this._autoAdvanceGate(id, kind)).catch(() => {});
+    promise.then(() => this._autoAdvanceGate(id)).catch(() => {});
     return true;
   }
 
-  async _autoAdvanceGate(id, kind) {
-    const transition = GATE_AUTO_ADVANCE[kind];
-    if (!transition) return;
+  /**
+   * Approval gates are settled before run gates because approving the plan is what
+   * produces `ready-for-implementation`: the two run back to back on one completed run,
+   * and the run gate reads the task again so it sees the status the approval just wrote.
+   */
+  async _autoAdvanceGate(id) {
+    await this._autoApproveGate(id);
     let task;
     try {
       task = await this._store.get(id);
-      if (!task || task.status !== transition.readyStatus || task.currentStage !== transition.stage) return;
+      if (!task) return;
+      const transition = GATE_AUTO_ADVANCE[task.status];
+      if (!transition || task.currentStage !== transition.stage) return;
+      const readyStatus = task.status;
       const settings = await this._store.settings();
       if (resolveGatePolicy(settings, transition.stage) !== "auto-accept-recommendations") return;
       const started = await this.start(id, transition.nextKind, {
         canStart: (draft) =>
-          draft.status === transition.readyStatus &&
+          draft.status === readyStatus &&
           draft.currentStage === transition.stage &&
           canStartRun(draft, transition.nextKind),
         onReserve: (draft) => {
@@ -134,6 +155,34 @@ export class TaskControlOrchestrator {
     }
   }
 
+  /**
+   * Auto-approval goes through `approveSpecification` / `approvePlan` rather than
+   * writing the transition itself, so a stale plan, a non-executable plan and the fast
+   * profile's single-package requirement all still refuse. Those refusals throw, which
+   * leaves the task parked exactly where a manual operator would find it, with the
+   * reason recorded — the gate fails closed, never open.
+   */
+  async _autoApproveGate(id) {
+    let stage = null;
+    try {
+      const task = await this._store.get(id);
+      if (!task) return;
+      const transition = GATE_APPROVAL_ADVANCE[task.status];
+      if (!transition) return;
+      stage = transition.stage;
+      const settings = await this._store.settings();
+      if (resolveGatePolicy(settings, transition.stage) !== "auto-accept-recommendations") return;
+      const note = "Approved by the persisted gate auto-run policy without human review.";
+      if (transition.approval === "specification") {
+        await this.approveSpecification(id, note, { automatic: true });
+      } else {
+        await this.approvePlan(id, note, { automatic: true });
+      }
+    } catch (error) {
+      await this._recordGateAutoAdvanceFailure(id, stage ?? "specification", error.message);
+    }
+  }
+
   async _recordGateAutoAdvanceFailure(id, stage, detail) {
     try {
       await this._store.update(id, (draft) => {
@@ -152,7 +201,34 @@ export class TaskControlOrchestrator {
     }
   }
 
-  async _blockCandidateGateOnTargetDrift(id, kind) {
+  /**
+   * Refuse an Implement run whose source checkout is already in a state that will fail.
+   *
+   * `GitWorktreeManager.base()` rejects a dirty tree, but it does so several steps into
+   * the run, after the stage has been reserved and the attempt counted. Every one of the
+   * 13 recorded "uncommitted changes" stage failures was at Implement, and each spent a
+   * stage attempt — enough of them in a row and the task blocks on its stage run limit
+   * for a condition the operator could have fixed in a second. Checking here throws
+   * before `reserveRun`, so the operator sees the reason and the attempt is not spent.
+   */
+  async _assertSourceReadyForImplementation(task) {
+    if (typeof this._worktrees.uncommittedEntries !== "function") return;
+    const dirty = await this._worktrees.uncommittedEntries(task.repositoryPath).catch(() => []);
+    if (!dirty.length) return;
+    const named = dirty.slice(0, 5).join(", ");
+    throw new Error(
+      `The selected repository has ${dirty.length} uncommitted change${dirty.length === 1 ? "" : "s"} (${named}${dirty.length > 5 ? ", …" : ""}). Commit or stash them, then start Implement again. No stage attempt was spent.`,
+    );
+  }
+
+  /**
+   * Resolve a candidate whose target branch moved out from under it.
+   *
+   * Returns `false` when there is nothing to resolve, `"refreshed"` when the candidate
+   * was rebased onto the new target and the caller should restart from Dev Review, and
+   * `true` when the task is blocked and needs an operator.
+   */
+  async _blockCandidateGateOnTargetDrift(id, kind, { allowAutoRefresh = true } = {}) {
     if (
       !["review", "test", "final-review"].includes(kind) ||
       typeof this._worktrees.mergeState !== "function"
@@ -182,7 +258,31 @@ export class TaskControlOrchestrator {
     if ((await this._worktrees.mergeState(candidate)) !== "diverged") return false;
     const message =
       "The target branch advanced after this candidate was created. Refresh the candidate before running another candidate-bound gate.";
-    const blocked = await this._store.transition(
+    const blocked = await this._blockOnTargetDrift(id, candidate, message);
+    if (!blocked) return false;
+    // Merging anything into the target used to leave every in-flight candidate sitting at
+    // `blocked`, waiting for an operator to press Refresh — 76 recorded `Candidate gate
+    // paused for target refresh` events against 73 manual refreshes. The refresh itself is
+    // mechanical: rebase the retained patch onto the new target, bump the revision, and
+    // let the candidate-bound gates rerun. Only a genuine content conflict needs a human,
+    // and `refreshCandidate` already blocks with `target-refresh-conflict` for that. So the
+    // harness now does the mechanical part itself and asks only for the judgement.
+    //
+    // `allowAutoRefresh: false` on the retry after a refresh: if the target advanced again
+    // in the seconds between refreshing and restarting, that is a moving target the
+    // operator should see, not something to chase in a loop.
+    if (
+      allowAutoRefresh &&
+      typeof this._refreshCandidate === "function" &&
+      typeof this._worktrees.refreshCandidate === "function"
+    ) {
+      return (await this._autoRefreshAfterTargetDrift(id, candidate)) ? "refreshed" : true;
+    }
+    return true;
+  }
+
+  async _blockOnTargetDrift(id, candidate, message) {
+    return await this._store.transition(
       id,
       (draft) => {
         const current = currentCandidate(draft);
@@ -216,7 +316,48 @@ export class TaskControlOrchestrator {
         );
       },
     );
-    return Boolean(blocked);
+  }
+
+  /**
+   * Rebase a drifted candidate onto the advanced target without an operator click.
+   *
+   * True when the candidate now sits on the new target and the gates may rerun. False
+   * when the task stays blocked — a content conflict the operator has to resolve, a
+   * refresh already in flight, or a target that moved again mid-refresh. Every one of
+   * those already records its own blocker and evidence, so the failure path deliberately
+   * leaves the task exactly as `refreshCandidate` left it.
+   */
+  async _autoRefreshAfterTargetDrift(id, candidate) {
+    try {
+      await this._refreshCandidate(id);
+    } catch (error) {
+      await this._store
+        .update(id, (draft) => {
+          draft.events.push(
+            activity(
+              draft.currentStage,
+              "Automatic target refresh needs an operator",
+              `${candidate.id} could not be rebased onto the advanced target automatically: ${error.message}`,
+              "warning",
+              "decision",
+            ),
+          );
+        })
+        .catch(() => {});
+      return false;
+    }
+    await this._store.update(id, (draft) => {
+      draft.events.push(
+        activity(
+          draft.currentStage,
+          "Candidate refreshed automatically after the target advanced",
+          `${candidate.id} was rebased onto the advanced target without an operator retry. Every candidate-bound gate reruns against the new revision.`,
+          "success",
+          "decision",
+        ),
+      );
+    });
+    return true;
   }
 
   async cancel(id) {
@@ -424,7 +565,7 @@ export class TaskControlOrchestrator {
     return { started: true };
   }
 
-  async approveSpecification(id, note = "") {
+  async approveSpecification(id, note = "", { automatic = false } = {}) {
     const task = await this._store.get(id);
     if (!task) throw new Error("Task not found.");
     if (!["awaiting-spec-approval", "awaiting-approval"].includes(task.status)) {
@@ -435,7 +576,7 @@ export class TaskControlOrchestrator {
         id,
         (draft) => ["awaiting-spec-approval", "awaiting-approval"].includes(draft.status),
         (draft) => {
-          recordApproval(draft, "specification", note);
+          recordApproval(draft, "specification", note, { automatic });
           draft.status = "completed";
           draft.completedAt = now();
           draft.events.push(
@@ -453,13 +594,13 @@ export class TaskControlOrchestrator {
     }
     const started = await this.start(id, "planning", {
       canStart: (draft) => ["awaiting-spec-approval", "awaiting-approval"].includes(draft.status),
-      onReserve: (draft) => recordApproval(draft, "specification", note),
+      onReserve: (draft) => recordApproval(draft, "specification", note, { automatic }),
     });
     if (!started) throw new Error("Task is already running.");
     return { started: true, completed: false };
   }
 
-  async approvePlan(id, note = "") {
+  async approvePlan(id, note = "", { automatic = false } = {}) {
     let task = await this._store.get(id);
     if (!task) throw new Error("Task not found.");
     if (task.status !== "awaiting-plan-approval") throw new Error("The task is not awaiting plan approval.");
@@ -476,11 +617,17 @@ export class TaskControlOrchestrator {
         throw new Error("Fast requires at least one validated focused repository manifest command ID.");
       }
     }
-    return this._store.transition(
+    // Plan approval parks on `ready-for-implementation` instead of starting a run, so
+    // unlike every other gate nothing else would consult the implement auto-run policy.
+    // The kick below is what lets a manually approved plan still start implementation
+    // automatically when the operator has opted that stage in. An automatic approval
+    // skips it: that call is already inside `_autoAdvanceGate`, which reads the task
+    // again and settles the run gate itself, so kicking here would start the run twice.
+    const approved = await this._store.transition(
       id,
       (draft) => draft.status === "awaiting-plan-approval",
       (draft) => {
-        recordApproval(draft, "plan", note);
+        recordApproval(draft, "plan", note, { automatic });
         const approvedReplacementPlan =
           Boolean(draft.planRevalidation?.completedAt) &&
           Boolean(draft.planRevalidation?.replacementArtifactId) &&
@@ -516,6 +663,8 @@ export class TaskControlOrchestrator {
         );
       },
     );
+    if (!automatic) await this._autoAdvanceGate(id);
+    return approved;
   }
 
   async correctInvalidPlan(id) {

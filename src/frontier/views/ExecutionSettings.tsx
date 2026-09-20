@@ -7,7 +7,7 @@ import {
 } from "@phosphor-icons/react";
 import { useState } from "react";
 import { providerRuntimeDefaults } from "../../../server/policy-defaults.mjs";
-import { candidateGateStages } from "../../components/runtime/workflow";
+import { approvalGateStages, autoRunStages } from "../../components/runtime/workflow";
 import type {
   RolePolicyId,
   RuntimeAgentPolicy,
@@ -310,10 +310,13 @@ function SettingsEditor({
                 <h3>Gate auto-run</h3>
                 <p className="quiet">
                   Manual is the default for every gate. Opt a stage in to advance automatically instead of
-                  waiting for a continue click.
+                  waiting for a continue click. Specification and Plan are approval gates: automatic there
+                  records the approval without a person reading the artifact, and the approval is marked as
+                  automatic so it is never counted as human review. Every validation still runs, so a stale or
+                  unexecutable plan still stops the task.
                 </p>
                 <ul className="gate-policy-list">
-                  {candidateGateStages.map((stage) => {
+                  {autoRunStages.map((stage) => {
                     const policy = draft.gatePolicies?.[stage] ?? "manual";
                     const label = stageLabels[stage];
                     const labelId = `gate-policy-${stage}-label`;
@@ -321,6 +324,9 @@ function SettingsEditor({
                       <li className="gate-policy-row" key={stage}>
                         <span className="gate-policy-stage" id={labelId}>
                           {label}
+                          {approvalGateStages.includes(stage) ? (
+                            <small className="gate-policy-kind"> approval gate</small>
+                          ) : null}
                         </span>
                         <div className="segmented-radio" role="radiogroup" aria-labelledby={labelId}>
                           {GATE_POLICY_CHOICES.map((choice) => (

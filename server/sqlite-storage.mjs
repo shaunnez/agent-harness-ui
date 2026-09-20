@@ -1,7 +1,10 @@
+import { createResearchSchema } from "./research/research-schema.mjs";
 import { decodePageCursor, encodePageCursor, normalizePageLimit } from "./task-projections.mjs";
 import { createWorkspaceHistorySchema } from "./workspace-history.mjs";
 
-export const DATABASE_SCHEMA_VERSION = 3;
+// 4 adds the research plane's six tables. Additive DDL only: no existing table, column or
+// index changes, so an older database opens and migrates forward without a backup step.
+export const DATABASE_SCHEMA_VERSION = 4;
 
 export function migrateSqliteSchema(db) {
   db.exec(`
@@ -63,6 +66,7 @@ export function migrateSqliteSchema(db) {
     CREATE INDEX IF NOT EXISTS runs_page_idx ON runs(task_id, started_at DESC, id DESC);
   `);
   createWorkspaceHistorySchema(db);
+  createResearchSchema(db);
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (?, ?)").run(
     DATABASE_SCHEMA_VERSION,
     new Date().toISOString(),

@@ -9,6 +9,7 @@ import {
   os,
   path,
   rm,
+  gateOutput,
   TaskOrchestrator,
   waitForStatus,
 } from "./orchestrator-test-support.mjs";
@@ -508,3 +509,100 @@ for (const scenario of [
     }
   });
 }
+
+test("an advanced target refreshes the candidate and restarts Dev Review without an operator retry", async () => {
+  // Merging anything into the target used to park every in-flight candidate at `blocked`
+  // until an operator pressed Refresh: 76 recorded "Candidate gate paused for target
+  // refresh" events against 73 manual refreshes. The rebase is mechanical, so the harness
+  // does it and reruns the candidate-bound gates from Dev Review.
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-auto-refresh-"));
+  const targetRevision = "c".repeat(40);
+  const refreshedHead = "d".repeat(40);
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Survive an advanced target",
+      description: "A merge into the target must not cost an operator retry.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-test";
+      draft.currentStage = "test";
+      draft.completedStages = [
+        "triage",
+        "scouts",
+        "grill",
+        "specification",
+        "plan",
+        "implement",
+        "dev-review",
+      ];
+      draft.candidates = [
+        {
+          id: "C1",
+          revisionNumber: 1,
+          baseRevision: "a".repeat(40),
+          baseBranch: "main",
+          baseRef: "refs/heads/main",
+          headRevision: "b".repeat(40),
+          branch: "agent-harness/auto-refresh",
+          repositoryRoot: directory,
+          worktreePath: directory,
+          status: "ready_for_test",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          revisions: [],
+        },
+      ];
+    });
+
+    let refreshes = 0;
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        verifyCandidate: async () => {},
+        // Diverged until the rebase lands, then sitting on the target like a real one.
+        mergeState: async () => (refreshes === 0 ? "diverged" : "pending"),
+        refreshCandidate: async (candidate) => {
+          refreshes += 1;
+          return {
+            targetRevision,
+            headRevision: refreshedHead,
+            previousBaseRevision: candidate.baseRevision,
+            previousHeadRevision: candidate.headRevision,
+            alreadyApplied: false,
+          };
+        },
+      },
+      repositoryAuthorityService: {
+        capture: async () => ({ id: "auth-1", selectedRevision: targetRevision, upstreamRef: null }),
+      },
+      runCodex: async () => ({
+        finalText: gateOutput(2),
+        usage: { inputTokens: 10, cachedInputTokens: 4, outputTokens: 5, totalTokens: 15 },
+      }),
+    });
+
+    // The operator asked for Test. The target had moved, so the candidate is rebased and
+    // Dev Review runs instead — the gate that a new revision actually has to clear first.
+    assert.equal(await orchestrator.start(task.id, "test"), true);
+    const after = await waitForStatus(store, task.id, "ready-for-test");
+
+    assert.equal(refreshes, 1);
+    assert.equal(after.candidates[0].revisionNumber, 2);
+    assert.equal(after.candidates[0].baseRevision, targetRevision);
+    assert.equal(after.candidates[0].headRevision, refreshedHead);
+    // The task never needed a human: it is runnable, not blocked.
+    assert.equal(after.blocker, null);
+    assert.ok(
+      after.events.some(
+        (event) => event.title === "Candidate refreshed automatically after the target advanced",
+      ),
+      "the automatic refresh must be recorded as evidence",
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});

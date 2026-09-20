@@ -4,6 +4,11 @@ import { fileURLToPath } from "node:url";
 import { createApiServer } from "./api.mjs";
 import { TaskOrchestrator } from "./orchestrator.mjs";
 import { startPullRequestPolling } from "./pull-request-poller.mjs";
+import { DeepAgentsResearchRuntime } from "./research/deepagents/adapter.mjs";
+import { FakeResearchRuntime } from "./research/fake-research-runtime.mjs";
+import { createResearchRuntimeRegistry } from "./research/research-runtime-registry.mjs";
+import { ResearchService } from "./research/research-service.mjs";
+import { ResearchStore } from "./research/research-store.mjs";
 import { JsonTaskStore } from "./store.mjs";
 import { SqliteTaskStore } from "./sqlite-store.mjs";
 import { acquireRuntimeLock } from "./runtime-lock.mjs";
@@ -40,6 +45,17 @@ try {
   await runtimeLock.release();
   throw error;
 }
+// The research plane needs the SQLite tables, so the legacy JSON store simply has no research
+// surface. Nothing else changes for that configuration.
+// `fake` remains the default (`DEFAULT_RESEARCH_RUNTIME_ID`); registering `deepagents`
+// alongside it only makes the runtime *selectable* by an explicit `runtimeId` on the request,
+// it does not change what an ordinary request without one gets (architecture §11 slice 2).
+const researchService = jsonStore
+  ? null
+  : new ResearchService({
+      store: new ResearchStore(store.databaseHandle()),
+      registry: createResearchRuntimeRegistry([new FakeResearchRuntime(), new DeepAgentsResearchRuntime()]),
+    });
 const configuredPullRequestPollIntervalMs = Number(process.env.AGENT_HARNESS_GITHUB_POLL_MS ?? 30_000);
 const pullRequestPollIntervalMs = Number.isFinite(configuredPullRequestPollIntervalMs)
   ? Math.max(5_000, configuredPullRequestPollIntervalMs)
@@ -49,6 +65,7 @@ const server = createApiServer({
   store,
   orchestrator,
   suggestedRepository,
+  researchService,
   reportHttpMetric(metric) {
     if (
       process.env.AGENT_HARNESS_HTTP_METRICS === "1" ||
@@ -83,12 +100,16 @@ async function shutdown(exitCode) {
       })
     : Promise.resolve();
   const failures = [];
-  const [orchestratorResult, serverResult] = await Promise.allSettled([
+  // Research runs are cancelled before the store closes, so an in-flight run cannot outlive
+  // the companion or write to a handle that has already gone.
+  const [orchestratorResult, serverResult, researchResult] = await Promise.allSettled([
     orchestrator.shutdown(),
     serverClosed,
+    researchService?.shutdown() ?? Promise.resolve(),
   ]);
   if (orchestratorResult.status === "rejected") failures.push(orchestratorResult.reason);
   if (serverResult.status === "rejected") failures.push(serverResult.reason);
+  if (researchResult.status === "rejected") failures.push(researchResult.reason);
   try {
     await store.close?.();
   } catch (error) {

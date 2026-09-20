@@ -25,3 +25,8 @@ output/
 /design/mission-frontier/assets/staging/**/*.html
 __pycache__/
 *.pyc
+
+
+meshy_output/
+.DS_Store
+latest-mesh
