@@ -1,13 +1,95 @@
 import { ArrowRight, Buildings, Clock, MagnifyingGlass, Plus } from "@phosphor-icons/react";
+import { type RefObject, useEffect, useMemo, useState } from "react";
 import type { RuntimeProject } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { TaskSummary } from "../runtime/contracts";
 import { formatCount, isExecuting, isOpen, needsYou } from "../runtime/presentation";
 import { tasksInProject } from "../scene/tasks";
+import { type BaseAppearance, baseNames, basePalettes, projectAppearanceKey } from "../world-3d/appearance";
+import type { ProofControls } from "../world-3d/model";
+import { useBaseAppearance } from "../world-3d/useBaseAppearance";
+
+function nextFrame() {
+  return new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+}
+
+function useProjectPreviews(
+  projects: RuntimeProject[],
+  appearances: Record<string, BaseAppearance>,
+  rendererRef: RefObject<ProofControls | null>,
+) {
+  const signature = useMemo(
+    () =>
+      JSON.stringify(
+        projects.map((project) => {
+          const appearance = appearances[projectAppearanceKey(project)];
+          return {
+            id: project.id,
+            variant: appearance?.variant ?? "",
+            palette: appearance?.palette ?? "",
+          };
+        }),
+      ),
+    [projects, appearances],
+  );
+  const [previews, setPreviews] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let active = true;
+    setPreviews({});
+    void (async () => {
+      const targets = JSON.parse(signature) as Array<{ id: string }>;
+      await nextFrame();
+      for (let attempt = 0; active && attempt < 20 && !rendererRef.current; attempt++)
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      if (!active || !rendererRef.current) return;
+      for (const project of targets) {
+        const image = await rendererRef.current?.basePreview(project.id);
+        if (!active) return;
+        if (image) setPreviews((current) => ({ ...current, [project.id]: image }));
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [rendererRef, signature]);
+  return previews;
+}
+
+function ProjectBasePreview({
+  project,
+  appearance,
+  image,
+  compact = false,
+}: {
+  project: RuntimeProject;
+  appearance: BaseAppearance;
+  image?: string;
+  compact?: boolean;
+}) {
+  const palette = basePalettes[appearance.palette];
+  return (
+    <div className={`captured-base-preview ${compact ? "compact" : "base-preview-art"}`}>
+      {image ? (
+        <img src={image} alt={`${project.name} ${baseNames[appearance.variant]} headquarters`} />
+      ) : (
+        <span className="captured-base-loading" role="status">
+          Rendering 3D base…
+        </span>
+      )}
+      <span className="captured-base-labels" aria-hidden="true">
+        <span>{baseNames[appearance.variant]}</span>
+        <span>
+          <i style={{ background: palette.color }} /> {palette.label}
+        </span>
+      </span>
+    </div>
+  );
+}
 
 export function Projects({
   projects,
   tasks,
+  rendererRef,
   onAdd,
   onManage,
   onEnter,
@@ -15,6 +97,7 @@ export function Projects({
 }: {
   projects: RuntimeProject[];
   tasks: TaskSummary[];
+  rendererRef: RefObject<ProofControls | null>;
   onAdd(): void;
   onManage(id: string): void;
   onEnter(id: string): void;
@@ -23,6 +106,8 @@ export function Projects({
   const [query, setQuery] = usePanelState("projects-query", "");
   const [archived, setArchived] = usePanelState("projects-archived", false);
   const [selectedId, select] = usePanelState<string | null>("projects-selected", null);
+  const { appearances } = useBaseAppearance(projects);
+  const previews = useProjectPreviews(projects, appearances, rendererRef);
   const visible = projects.filter(
     (project) =>
       Boolean(project.archivedAt) === archived &&
@@ -30,6 +115,7 @@ export function Projects({
   );
   const selected = visible.find((project) => project.id === selectedId) ?? visible[0];
   const selectedTasks = selected ? tasksInProject(tasks, selected) : [];
+  const selectedAppearance = selected ? appearances[projectAppearanceKey(selected)] : undefined;
   return (
     <div className="overlay-body projects-layout">
       <section className="project-directory">
@@ -69,6 +155,8 @@ export function Projects({
               (latest, task) => (task.updatedAt > latest ? task.updatedAt : latest),
               project.createdAt ?? "",
             );
+            const appearance = appearances[projectAppearanceKey(project)];
+            if (!appearance) return null;
             return (
               <button
                 type="button"
@@ -77,7 +165,12 @@ export function Projects({
                 onClick={() => select(project.id)}
                 aria-pressed={selected?.id === project.id}
               >
-                <img src="/assets/mf.ui.project-thumbnail.png" alt="" />
+                <ProjectBasePreview
+                  project={project}
+                  appearance={appearance}
+                  image={previews[project.id]}
+                  compact
+                />
                 <span className="project-row-identity">
                   <strong>{project.name}</strong>
                   <small>{project.repositoryPath}</small>
@@ -127,11 +220,13 @@ export function Projects({
             <h2>{selected.name}</h2>
             <Buildings size={22} />
           </div>
-          <img
-            className="base-preview-art"
-            src="/assets/mf.ui.project-thumbnail.png"
-            alt={`${selected.name} headquarters`}
-          />
+          {selectedAppearance && (
+            <ProjectBasePreview
+              project={selected}
+              appearance={selectedAppearance}
+              image={previews[selected.id]}
+            />
+          )}
           <p className="repository-path">{selected.repositoryPath}</p>
           <div className="metric-grid">
             <div>

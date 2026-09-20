@@ -1,7 +1,16 @@
 # FabCell and ServiceCart retopology — 21 September 2026
 
 Continuation of PR #107 from `458862c`, in `claude/meshy-models-frontier-ui-b8527f`.
-Changes are local; no PR push, merge, deployment, or paid generation was performed.
+Initial asset qualification was local, before commit or push. No deployment or paid generation
+was performed. The later conflict-resolution qualification is recorded below.
+
+## PR #107 conflict resolution — 21 September 2026
+
+Preserved the qualified prop work in `3ce5f62`, then merged main at `91f7753` into the PR branch.
+The only conflict was the generated asset manifest: retained main's four crown preview image
+references alongside the rebuilt shell and props references. All six referenced files exist.
+Post-merge qualification: 144 Frontier tests passed, typecheck passed, and the Frontier build
+passed (the existing large-chunk advisory remains). No main-branch merge or deployment is implied.
 
 ## Result
 

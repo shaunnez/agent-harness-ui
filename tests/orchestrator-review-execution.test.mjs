@@ -17,6 +17,7 @@ import {
   waitForStatus,
   waitUntil,
 } from "./orchestrator-test-support.mjs";
+import { candidateGateCommandLimit } from "../server/candidate-gate-policy.mjs";
 
 test("malformed focused Test ingestion persists the exact reason and blocks approval", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-malformed-test-evidence-"));
@@ -409,6 +410,7 @@ test("candidate command failure overrides a Development Review PASS and remains 
 });
 
 test("stops Development Review when it exceeds the hard repository-command budget", async () => {
+  const devReviewCommandLimit = candidateGateCommandLimit("dev-review");
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-review-command-budget-"));
   try {
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
@@ -443,7 +445,9 @@ test("stops Development Review when it exceeds the hard repository-command budge
     const orchestrator = new TaskOrchestrator(store, {
       worktreeManager: { verifyCandidate: async () => {} },
       runCodex: async ({ onEvent }) => {
-        for (let index = 1; index <= 12; index += 1) {
+        // Derived from the policy, not hardcoded: the budget is a cost ceiling that gets
+        // retuned, and a hardcoded count silently stops exercising the abort when it moves.
+        for (let index = 1; index <= devReviewCommandLimit + 2; index += 1) {
           onEvent?.({
             type: "activity",
             tone: "info",
@@ -467,7 +471,7 @@ test("stops Development Review when it exceeds the hard repository-command budge
 
     assert.equal(await orchestrator.start(task.id, "review"), true);
     const failed = await waitForStatus(store, task.id, "failed");
-    assert.match(failed.error, /hard 10-command review budget/i);
+    assert.match(failed.error, new RegExp(`hard ${devReviewCommandLimit}-command review budget`, "i"));
     assert.equal(failed.runs.at(-1).status, "failed");
     assert.ok(failed.events.some((event) => event.title === "Review command budget exceeded"));
   } finally {

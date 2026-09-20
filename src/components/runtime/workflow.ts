@@ -6,9 +6,39 @@ import {
   type TaskRunState,
   workflowStages,
 } from "../../domain";
-import type { RuntimeGateFreshness, RuntimeGateStage, RuntimeRunFreshness } from "../../runtime-activity";
+import type {
+  AutoRunStage,
+  RuntimeGateFreshness,
+  RuntimeGateStage,
+  RuntimeRunFreshness,
+} from "../../runtime-activity";
 
 export const candidateGateStages: RuntimeGateStage[] = ["dev-review", "test", "final-review"];
+
+/**
+ * Every stage whose advance can be automated, in workflow order. This is wider than
+ * `candidateGateStages`: those three are candidate-bound evidence gates that also carry
+ * freshness, whereas Specification and Plan are human approval gates and Implement is a
+ * run the operator would otherwise start by hand. Mirrors `GATE_STAGES`
+ * (server/gate-policies.mjs).
+ */
+export const autoRunStages: AutoRunStage[] = [
+  "specification",
+  "plan",
+  "implement",
+  "dev-review",
+  "test",
+  "final-review",
+  // Last because it is not a position in the workflow: repair is what happens when one
+  // of the gates above rejects a candidate, wherever that happens.
+  "repair",
+];
+
+/** Stages whose automation records an approval rather than starting the next run. */
+export const approvalGateStages: AutoRunStage[] = ["specification", "plan"];
+
+/** Automation here acts on a rejection rather than advancing a passing candidate. */
+export const repairGateStages: AutoRunStage[] = ["repair"];
 
 type RuntimeTaskView = RuntimeTask | RuntimeTaskSummary;
 

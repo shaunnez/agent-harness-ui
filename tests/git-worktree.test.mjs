@@ -847,3 +847,46 @@ test("places candidate worktrees outside the repository, at a short path", () =>
   // Resolved, never used as given: a relative override would move with the process cwd.
   assert.ok(path.isAbsolute(defaultWorktreeRoot({ AGENT_HARNESS_WORKTREE_ROOT: "relative/root" })));
 });
+
+test("a leftover candidate branch does not block the next candidate", async () => {
+  // A cancelled run or a cleaned worktree can leave its branch ref behind. That used to
+  // fail the stage with "Remove it manually or start a new task" — an operator retry for
+  // a condition the harness can resolve itself. The leftover branch is retained evidence,
+  // so it stays; the new candidate takes the next free name.
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-branch-collision-"));
+  const repository = path.join(directory, "repository");
+  try {
+    await git(directory, ["init", "repository"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await writeFile(path.join(repository, ".gitignore"), ".data/\n", "utf8");
+    await git(repository, ["add", "README.md", ".gitignore"]);
+    await git(repository, ["commit", "-m", "base"]);
+
+    const manager = new GitWorktreeManager(path.join(repository, ".data", "worktrees"));
+    const task = { id: "AH-050", repositoryPath: repository };
+    const base = await manager.base(task);
+
+    const first = await manager.prepare(task, "S1-A1", { baseRevision: base.baseRevision });
+    assert.equal(first.branch, "agent-harness/ah-050-s1-a1");
+    // Release the worktree but leave the branch ref exactly as an abandoned run would.
+    await manager.removeWorktree(first);
+
+    const second = await manager.prepare(task, "S1-A1", { baseRevision: base.baseRevision });
+    assert.equal(second.branch, "agent-harness/ah-050-s1-a1-2");
+    await manager.removeWorktree(second);
+
+    const third = await manager.prepare(task, "S1-A1", { baseRevision: base.baseRevision });
+    assert.equal(third.branch, "agent-harness/ah-050-s1-a1-3");
+
+    // The abandoned branches are still there: the harness renamed around them, it did not
+    // delete evidence.
+    const branches = (await git(repository, ["branch", "--list", "agent-harness/ah-050-*"])).stdout;
+    for (const suffix of ["", "-2", "-3"]) {
+      assert.match(branches, new RegExp(`agent-harness/ah-050-s1-a1${suffix}(\\s|$)`, "m"));
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

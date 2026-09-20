@@ -86,6 +86,14 @@ export class SqliteTaskStore {
     this.#db = null;
   }
 
+  /** The research plane owns its own tables in this same file and shares this handle rather
+   *  than opening a second connection: one lock, one backup unit, one transaction boundary.
+   *  Safe because every transaction on either side runs to COMMIT synchronously, so the two
+   *  can never interleave on a single-threaded event loop. */
+  databaseHandle() {
+    return this.#db;
+  }
+
   async list() {
     return clone(this.#readAllTasks());
   }

@@ -1,5 +1,11 @@
 import type { StageId } from "../domain";
-import type { RuntimeEvent, RuntimeGateFreshness, RuntimeGateStage, RuntimeRun } from "../runtime-activity";
+import type {
+  AutoRunStage,
+  RuntimeEvent,
+  RuntimeGateFreshness,
+  RuntimeGateStage,
+  RuntimeRun,
+} from "../runtime-activity";
 
 export type RuntimeTaskStatus =
   | "queued"
@@ -271,7 +277,7 @@ export type RuntimeGrillPolicy = "manual" | "auto-accept-recommendations";
 
 export type RuntimeGatePolicy = "manual" | "auto-accept-recommendations";
 
-export type RuntimeGatePolicies = Partial<Record<RuntimeGateStage, RuntimeGatePolicy>>;
+export type RuntimeGatePolicies = Partial<Record<AutoRunStage, RuntimeGatePolicy>>;
 
 export type RuntimeGrillAnswerSource =
   | "operator-answer"
@@ -836,6 +842,19 @@ export interface RuntimeAgentPolicy {
   reasoning: string;
 }
 
+export type RuntimeExperimentDecisionMetric =
+  | "first-pass-gate-success-rate"
+  | "eventual-gate-success-rate"
+  | "repairs-per-task"
+  | "average-blind-score"
+  | "average-human-score";
+
+/** Equal per-arm allowance. Declared before the run so a variant cannot win by spending more. */
+export interface RuntimeExperimentBudget {
+  maxWallTimeMs: number | null;
+  maxTotalTokens: number | null;
+}
+
 export interface RuntimeExperimentSnapshot {
   groupId: string;
   variantId: string;
@@ -844,6 +863,9 @@ export interface RuntimeExperimentSnapshot {
   policyMatrix: Record<string, RuntimeAgentPolicy>;
   acceptanceCriteria: string[];
   verificationCommands: string[];
+  /** The single metric that decides the group. Everything else is a diagnostic. */
+  decisionMetric: RuntimeExperimentDecisionMetric;
+  budget: RuntimeExperimentBudget | null;
   createdAt: string;
 }
 
@@ -952,7 +974,35 @@ export interface RuntimeEvaluationSummary {
     methodology: string;
     taskCount: number;
     variants: RuntimeExperimentVariant[];
+    decisions: RuntimeExperimentDecision[];
+    decisionMethodology: string;
   };
+}
+
+/** `budgetStatus` is a scoring-time classification, not a run-time abort. */
+export type RuntimeExperimentBudgetStatus = "not-declared" | "unmeasured" | "within" | "exceeded";
+
+export interface RuntimeExperimentDecisionEntry {
+  variantId: string;
+  sampleCount: number;
+  value: number | null;
+  budgetStatus: RuntimeExperimentBudgetStatus;
+  budgetExceededTaskIds: string[];
+  eligible: boolean;
+  ineligibleReason: string | null;
+}
+
+export interface RuntimeExperimentDecision {
+  groupId: string;
+  decisionMetric: RuntimeExperimentDecisionMetric;
+  metricLabel: string;
+  metricDescription: string;
+  direction: "higher" | "lower";
+  comparable: boolean;
+  comparabilityIssues: string[];
+  variants: RuntimeExperimentDecisionEntry[];
+  leader: { variantId: string; value: number } | null;
+  note: string | null;
 }
 
 export interface RuntimeExperimentVariant {
@@ -965,6 +1015,13 @@ export interface RuntimeExperimentVariant {
   policyMatrices: Array<Record<string, RuntimeAgentPolicy>>;
   acceptanceDefinitions: string[][];
   verificationDefinitions: string[][];
+  /** `null` when the arm's tasks disagree; `*Drift` then reports the disagreement. */
+  decisionMetric: RuntimeExperimentDecisionMetric | null;
+  decisionMetricDrift: boolean;
+  budget: RuntimeExperimentBudget | null;
+  budgetDrift: boolean;
+  budgetStatus: RuntimeExperimentBudgetStatus;
+  budgetExceededTaskIds: string[];
   gateAttempts: number;
   firstPassGateSuccesses: number;
   firstPassGateSuccessRate: number | null;

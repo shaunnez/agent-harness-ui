@@ -7,7 +7,8 @@ import {
 } from "@phosphor-icons/react";
 import { useState } from "react";
 import { providerRuntimeDefaults } from "../../../server/policy-defaults.mjs";
-import { candidateGateStages } from "../../components/runtime/workflow";
+import { approvalGateStages, autoRunStages, repairGateStages } from "../../components/runtime/workflow";
+import type { AutoRunStage } from "../../runtime-activity";
 import type {
   RolePolicyId,
   RuntimeAgentPolicy,
@@ -28,6 +29,14 @@ import { PolicyChoice, ProviderPresets } from "./PolicyMatrix";
  * short enough for the three stages to align; `description` is the full wording a screen
  * reader hears, which the visible label would only repeat six times over.
  */
+/**
+ * `stageLabels` only covers the ten workflow stages, and Repair is deliberately not
+ * one of them — it is a decision about a rejected candidate, not a position in the
+ * pipeline. Naming it here keeps that distinction in the type system rather than
+ * widening `StageId` to accommodate a settings row.
+ */
+const autoRunStageLabels: Record<AutoRunStage, string> = { ...stageLabels, repair: "Repair" };
+
 const GATE_POLICY_CHOICES: ReadonlyArray<{
   value: RuntimeGatePolicy;
   label: string;
@@ -310,17 +319,32 @@ function SettingsEditor({
                 <h3>Gate auto-run</h3>
                 <p className="quiet">
                   Manual is the default for every gate. Opt a stage in to advance automatically instead of
-                  waiting for a continue click.
+                  waiting for a continue click. Specification and Plan are approval gates: automatic there
+                  records the approval without a person reading the artifact, and the approval is marked as
+                  automatic so it is never counted as human review. Every validation still runs, so a stale or
+                  unexecutable plan still stops the task.
+                </p>
+                <p className="quiet">
+                  Repair is the one gate that acts on a rejection rather than on a pass: automatic there
+                  rebuilds a candidate a gate turned down, without a person reading the findings first. It
+                  stays bounded — a repair spends an Implement attempt, and a candidate that exhausts the
+                  repair circuit breaker is blocked, which no policy can advance.
                 </p>
                 <ul className="gate-policy-list">
-                  {candidateGateStages.map((stage) => {
+                  {autoRunStages.map((stage) => {
                     const policy = draft.gatePolicies?.[stage] ?? "manual";
-                    const label = stageLabels[stage];
+                    const label = autoRunStageLabels[stage];
                     const labelId = `gate-policy-${stage}-label`;
                     return (
                       <li className="gate-policy-row" key={stage}>
                         <span className="gate-policy-stage" id={labelId}>
                           {label}
+                          {approvalGateStages.includes(stage) ? (
+                            <small className="gate-policy-kind"> approval gate</small>
+                          ) : null}
+                          {repairGateStages.includes(stage) ? (
+                            <small className="gate-policy-kind"> rejection gate</small>
+                          ) : null}
                         </span>
                         <div className="segmented-radio" role="radiogroup" aria-labelledby={labelId}>
                           {GATE_POLICY_CHOICES.map((choice) => (

@@ -428,3 +428,84 @@ test("distinguishes discovered, configured, fallback, and unsupported model prov
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("a failed Codex command retains its output tail and a passing one retains nothing", () => {
+  const failed = parseCodexEvent(
+    JSON.stringify({
+      type: "item.completed",
+      item: {
+        type: "command_execution",
+        command: "npm run check:manifest",
+        exit_code: 1,
+        aggregated_output: "> check:manifest\nError: manifest command 'lint' is not declared\n",
+      },
+    }),
+  );
+  // Without this the operator is handed `Exit code 1` and told to inspect telemetry
+  // that does not exist. The tail is that telemetry.
+  assert.match(failed.toolCall.failureOutput, /manifest command 'lint' is not declared/);
+
+  const passed = parseCodexEvent(
+    JSON.stringify({
+      type: "item.completed",
+      item: {
+        type: "command_execution",
+        command: "npm run check:manifest",
+        exit_code: 0,
+        aggregated_output: "Verified 6 commands\n",
+      },
+    }),
+  );
+  assert.equal(passed.toolCall.failureOutput, null);
+});
+
+test("a Codex search miss and a context preflight retain nothing", () => {
+  const searchMiss = parseCodexEvent(
+    JSON.stringify({
+      type: "item.completed",
+      item: {
+        type: "command_execution",
+        command: "git show HEAD:file.ts | nl -ba | rg readiness",
+        exit_code: 1,
+        aggregated_output: "",
+      },
+    }),
+  );
+  // Finding nothing is an answer, not a fault, so there is no question to retain
+  // output against.
+  assert.equal(searchMiss.toolCall.failureOutput, null);
+
+  const memoryFile = path.join(
+    process.env.CODEX_HOME ?? path.join(os.homedir(), ".codex"),
+    "memories",
+    "MEMORY.md",
+  );
+  const preflight = parseCodexEvent(
+    JSON.stringify({
+      type: "item.completed",
+      item: {
+        type: "command_execution",
+        command: `/bin/zsh -lc "rg -n AH-100 ${memoryFile}"`,
+        exit_code: 1,
+        aggregated_output: "no matches",
+      },
+    }),
+  );
+  assert.equal(preflight.toolCall.failureOutput, null, "the harness's own probe is not candidate evidence");
+});
+
+test("a secret printed by a failing Codex command never reaches the retained tail", () => {
+  const failed = parseCodexEvent(
+    JSON.stringify({
+      type: "item.completed",
+      item: {
+        type: "command_execution",
+        command: "npm publish",
+        exit_code: 1,
+        aggregated_output: "npm ERR! 401 Unauthorized\nusing npm_abcdefghijklmnopqrstuvwxyz0123456789ab\n",
+      },
+    }),
+  );
+  assert.ok(!failed.toolCall.failureOutput.includes("npm_abcdefghijklmnopqrstuvwxyz0123456789ab"));
+  assert.match(failed.toolCall.failureOutput, /npm ERR! 401 Unauthorized/);
+});

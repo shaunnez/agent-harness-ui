@@ -35,6 +35,7 @@ import {
   createClaudeStreamParser,
   extractClaudeFailure,
   hostCheckCacheKey,
+  isNonEscalatingDenial,
   readClaudeAuthProbe,
   runClaude,
 } from "../server/claude-runtime.mjs";
@@ -142,12 +143,24 @@ test("maps recorded Claude tool calls onto the internal event shape", async () =
   assert.equal(firstCompletion.title, "Repository command returned a warning");
   assert.equal(firstCompletion.runtimeScope, "agent-diagnostic");
   assert.equal(firstCompletion.toolCall.result, "Exit code 1");
+  // `Exit code 1` on its own cannot be diagnosed, and the gate that kills a task on a
+  // repeated failure tells the operator to go and inspect the telemetry. The tail is
+  // the only record of what actually went wrong.
+  assert.match(
+    firstCompletion.toolCall.failureOutput,
+    /cat: nonexistent-file\.txt: No such file or directory/,
+  );
 
   assert.equal(secondCompletion.detail, "wc -l a.txt");
   assert.equal(secondCompletion.toolCall.id, bashStarted[0].toolCall.id);
   assert.equal(secondCompletion.commandFailed, false);
   assert.equal(secondCompletion.tone, "success");
   assert.equal(secondCompletion.toolCall.result, "Text result · 1 characters (content not retained)");
+  assert.equal(
+    secondCompletion.toolCall.failureOutput,
+    null,
+    "a command that succeeded retains nothing: the exception is for failures only",
+  );
 
   assert.deepEqual(events.at(-2), { type: "message", text: "DONE" });
   assert.equal(parsed.finalText, "DONE");
@@ -1911,7 +1924,11 @@ test("names the denied call so an allowlist hole is not misread as agent misbeha
   }
 });
 
-test("names the denied file path for a Read call", async () => {
+test("names the denied file path for a Read call without failing the stage", async () => {
+  // A denied `Read` used to fail the whole stage. It cannot mutate anything, so the
+  // refusal means the permission scope is narrower than the tool surface, not that the
+  // agent tried to escape it. The path is still named — in the activity, where an
+  // operator can see it — and the stage keeps the output it produced.
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-read-denial-detail-"));
   const previousBin = process.env.CLAUDE_BIN;
   try {
@@ -1929,19 +1946,25 @@ test("names the denied file path for a Read call", async () => {
       }),
     ]);
 
-    await assert.rejects(
-      () =>
-        runClaude({
-          cwd: directory,
-          prompt: "inspect the attachment",
-          sandbox: "read-only",
-          model: "claude-haiku-4-5",
-          reasoning: NO_REASONING_EFFORT,
-          tempDirectory: directory,
-          timeoutMs: 30_000,
-        }),
-      /First denied: Read \/outside\/reference\.png\./,
+    const seen = [];
+    const result = await runClaude({
+      cwd: directory,
+      prompt: "inspect the attachment",
+      sandbox: "read-only",
+      model: "claude-haiku-4-5",
+      reasoning: NO_REASONING_EFFORT,
+      tempDirectory: directory,
+      timeoutMs: 30_000,
+      onEvent: (event) => seen.push(event),
+    });
+
+    assert.equal(result.finalText, "Could not inspect the attachment.");
+    const denial = seen.find(
+      (event) => event.type === "activity" && /Read denied by permission scope/.test(event.title),
     );
+    assert.ok(denial, "the refused read must still be reported as activity");
+    assert.equal(denial.tone, "warning");
+    assert.match(denial.detail, /Read · \/outside\/reference\.png/);
   } finally {
     if (previousBin === undefined) delete process.env.CLAUDE_BIN;
     else process.env.CLAUDE_BIN = previousBin;
@@ -2520,4 +2543,76 @@ test("referencing a discovered model in settings does not make it unselectable",
   // An id in settings that the catalog never reported is still surfaced as unsupported.
   assert.equal(byId("claude-opus-5").editable, false);
   assert.equal(byId("claude-opus-5").availability, "unsupported");
+});
+
+test("a refused read is reported but does not fail the stage", () => {
+  // Measured against the recorded task store, `Read`/`Grep` denials during read-only
+  // stages were the largest single sandbox failure: 26 of 79 recorded sandbox stage
+  // failures were a stage killed for reaching a path its permission scope did not cover.
+  // A read cannot mutate anything, so the honest reading is a narrow scope, not an
+  // escape attempt.
+  const parser = createClaudeStreamParser();
+  const events = parser.parse(
+    JSON.stringify({
+      type: "result",
+      subtype: "success",
+      is_error: false,
+      result: "done",
+      permission_denials: [
+        { tool_name: "Read", tool_use_id: "t1", tool_input: { file_path: "/outside/scope.md" } },
+        { tool_name: "Grep", tool_use_id: "t2", tool_input: { pattern: "TODO" } },
+      ],
+    }),
+  );
+
+  // The raw count still reflects everything the CLI reported...
+  assert.equal(parser.result().permissionDenials.length, 2);
+  // ...but neither refused read is fatal evidence, so `runClaude` keeps the stage.
+  assert.equal(parser.result().fatalPermissionDenials.length, 0);
+  const activity = events.filter((event) => event.type === "activity");
+  assert.equal(activity.length, 2);
+  for (const event of activity) {
+    assert.equal(event.tone, "warning");
+    assert.match(event.title, /Read denied by permission scope/);
+  }
+});
+
+test("a denied mutation stays fatal even though refused reads do not", () => {
+  const parser = createClaudeStreamParser();
+  const events = parser.parse(
+    JSON.stringify({
+      type: "result",
+      subtype: "success",
+      is_error: false,
+      result: "done",
+      permission_denials: [
+        { tool_name: "Read", tool_use_id: "t1", tool_input: { file_path: "/outside/scope.md" } },
+        { tool_name: "Write", tool_use_id: "t2", tool_input: { file_path: "guarded.txt" } },
+        { tool_name: "Bash", tool_use_id: "t3", tool_input: { command: "rm -rf dist" } },
+      ],
+    }),
+  );
+
+  // Only the read drops out. A denied `Write` is an attempted mutation, and a denied
+  // `Bash` could be either — the command string does not decide it — so both stay fatal.
+  const fatal = parser.result().fatalPermissionDenials;
+  assert.equal(fatal.length, 2);
+  assert.deepEqual(
+    fatal.map((denial) => denial.tool_name),
+    ["Write", "Bash"],
+  );
+  const danger = events.filter((event) => event.type === "activity" && event.tone === "danger");
+  assert.equal(danger.length, 2);
+});
+
+test("isNonEscalatingDenial covers exactly the non-mutating filesystem tools", () => {
+  for (const tool of ["Read", "Grep", "Glob"]) {
+    assert.equal(isNonEscalatingDenial({ tool_name: tool }), true, `${tool} cannot mutate`);
+  }
+  // `Bash` is deliberately excluded: a shell string can read or write and the difference
+  // is not decidable from the string.
+  for (const tool of ["Bash", "Write", "Edit", "NotebookEdit", "WebFetch", "Task", undefined]) {
+    assert.equal(isNonEscalatingDenial({ tool_name: tool }), false, `${tool} must stay fatal`);
+  }
+  assert.equal(isNonEscalatingDenial(null), false);
 });

@@ -21,6 +21,7 @@ import {
   providerRuntimeDefaults,
   readClaudeModelCatalog,
 } from "./model-catalog.mjs";
+import { retainFailedCommandOutput } from "./command-output-retention.mjs";
 import { conciseToolResult, formatCommand, runProcess } from "./process-runtime.mjs";
 import { commandExitCode, isExpectedReadOnlySearchMiss } from "./shell-command-outcome.mjs";
 
@@ -526,12 +527,20 @@ export function createClaudeStreamParser() {
             category: "repository-command",
             phase: "completed",
             result: SHELL_START_FAILURE_RESULT,
+            // The host's refusal message names the limit that was hit, which is the
+            // only way to tell an oversized argv from an oversized environment.
+            failureOutput: retainFailedCommandOutput(block.content),
           },
         };
       }
       const result = claudeCommandResult(block.content);
       const expectedSearchMiss =
         !succeeded && isExpectedReadOnlySearchMiss(entry.detail, commandExitCode(result));
+      // A search that found nothing is not a fault and has no output worth keeping;
+      // anything else that exited non-zero is exactly what an operator is later told
+      // to inspect, so its tail is retained under the rules in
+      // `command-output-retention.mjs`.
+      const failureOutput = succeeded || expectedSearchMiss ? null : retainFailedCommandOutput(block.content);
       return {
         type: "activity",
         tone: succeeded || expectedSearchMiss ? "success" : "warning",
@@ -550,6 +559,7 @@ export function createClaudeStreamParser() {
           category: "repository-command",
           phase: "completed",
           result,
+          failureOutput,
         },
       };
     }
@@ -594,14 +604,32 @@ export function createClaudeStreamParser() {
       const isRepeatOfAnswered = state.answeredCallSignatures.has(
         toolCallSignature(denial?.tool_name, denial?.tool_input),
       );
-      if (!isRepeatOfAnswered) fatalDenials.push(denial);
+      // A refused read is the harness's own permission scope biting, not an escape
+      // attempt, so it is reported and survived rather than failing the stage. See
+      // `isNonEscalatingDenial`.
+      const isRefusedRead = !isRepeatOfAnswered && isNonEscalatingDenial(denial);
+      if (!isRepeatOfAnswered && !isRefusedRead) fatalDenials.push(denial);
       events.push({
         type: "activity",
-        tone: isRepeatOfAnswered ? "warning" : "danger",
+        tone: isRepeatOfAnswered || isRefusedRead ? "warning" : "danger",
         title: isRepeatOfAnswered
           ? "Permission denied (ignored — repeat of a call already answered)"
-          : "Permission denied",
-        detail: [denial?.tool_name, formatCommand(denial?.tool_input?.command)].filter(Boolean).join(" · "),
+          : isRefusedRead
+            ? "Read denied by permission scope (stage continued)"
+            : "Permission denied",
+        // `formatCommand` substitutes the placeholder "Repository inspection" for a
+        // missing command, so passing a non-Bash denial straight through hid the one
+        // detail an operator needs: which path was refused. Name the command when there
+        // is one and the tool's own input when there is not, exactly as the fatal-denial
+        // message below does.
+        detail: [
+          denial?.tool_name,
+          denial?.tool_input?.command
+            ? formatCommand(denial.tool_input.command)
+            : describeToolInput(denial?.tool_input ?? {}),
+        ]
+          .filter(Boolean)
+          .join(" · "),
       });
     }
     state.fatalPermissionDenials = fatalDenials;
@@ -746,6 +774,30 @@ export const CLAUDE_READ_ONLY_TOOLS = Object.freeze(["Read", "Grep", "Glob", "Ba
  * shell, so they avoid the profile-size limit without widening access.
  */
 export const CLAUDE_FILESYSTEM_READ_ONLY_TOOLS = Object.freeze(["Read", "Grep", "Glob"]);
+
+/**
+ * A denial of one of these tools cannot be a sandbox escape: they read, they never
+ * mutate, and they are on the allowlist for every stage including read-only ones. So a
+ * denial here means the permission scope is narrower than the tool surface — the agent
+ * reached for a path outside the stage cwd, or the allowlist has a hole — and the honest
+ * reading is that the harness refused a legitimate read, not that the agent misbehaved.
+ *
+ * `Bash` is deliberately absent. A shell command string can read or mutate and the
+ * difference is not decidable from the string, so a denied Bash call stays fatal.
+ */
+const CLAUDE_NON_ESCALATING_DENIAL_TOOLS = Object.freeze(["Read", "Grep", "Glob"]);
+
+/**
+ * True when a recorded permission denial is a refused read rather than a refused
+ * mutation. Measured against the recorded task store, refused reads were the single
+ * largest sandbox failure: `Read` and `Grep` denials during read-only stages accounted
+ * for 26 of the 79 recorded sandbox stage failures, each one killing a stage that had
+ * done nothing wrong. These stay visible as warnings and are reported in the run's
+ * activity, but they no longer fail the stage on their own.
+ */
+export function isNonEscalatingDenial(denial) {
+  return CLAUDE_NON_ESCALATING_DENIAL_TOOLS.includes(denial?.tool_name);
+}
 
 /**
  * Write stages add exactly the two editing tools. `NotebookEdit`, `WebFetch`,
@@ -1023,14 +1075,15 @@ export async function runClaude({
   const failure = extractClaudeFailure(parsed);
   if (failure) throw new Error(failure);
   if (result.code !== 0) throw new Error(`Claude exited with code ${result.code}.`);
-  // A denial is never a verdict. In a read-only stage it means the agent attempted a
-  // mutation; either way the run is untrustworthy evidence, so it routes through the
-  // failed-run path instead of producing a REPAIR or a PASS. Exception: a denial that
-  // is an exact repeat of a call that already succeeded earlier in the same run is the
-  // CLI's own duplicate-call guard, not a new refusal — the harness already has that
-  // call's real result, so it is dropped from `fatalPermissionDenials` upstream and
-  // never reaches here. `parsed.permissionDenials` (the unfiltered count) still surfaces
-  // through the per-denial activity events for visibility.
+  // A denial of a mutating call is never a verdict. In a read-only stage it means the
+  // agent attempted a mutation; either way the run is untrustworthy evidence, so it
+  // routes through the failed-run path instead of producing a REPAIR or a PASS. Two
+  // kinds of denial are dropped from `fatalPermissionDenials` upstream and never reach
+  // here: an exact repeat of a call already answered in the same run (the CLI's own
+  // duplicate-call guard, not a new refusal), and a refused read (`Read`/`Grep`/`Glob` —
+  // the permission scope biting a legitimate read, not an escape attempt; see
+  // `isNonEscalatingDenial`). `parsed.permissionDenials` (the unfiltered count) still
+  // surfaces through the per-denial activity events for visibility.
   if (parsed.fatalPermissionDenials.length) {
     // Name what was denied. Read on its own, "attempted N denied tool calls" reads as
     // the agent trying to escape its sandbox, and a real read-only-stage failure was

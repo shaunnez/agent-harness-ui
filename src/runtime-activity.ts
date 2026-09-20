@@ -12,6 +12,17 @@ export type RuntimeRunStatus =
   | "timeout";
 
 export type RuntimeGateStage = "dev-review" | "test" | "final-review";
+
+/**
+ * A stage that can be advanced by the persisted auto-run policy. Deliberately separate
+ * from `RuntimeGateStage`, which means "candidate-bound evidence gate" and carries
+ * freshness — Specification, Plan and Implement have no candidate and no freshness.
+ */
+/**
+ * `"repair"` is a policy key, not a stage: a rejected candidate is repaired at
+ * whichever gate rejected it. Mirrors `GATE_STAGES` (server/gate-policies.mjs).
+ */
+export type AutoRunStage = RuntimeGateStage | "specification" | "plan" | "implement" | "repair";
 export type RuntimeFreshnessReasonCode =
   | "fresh"
   | "missing_binding"
@@ -73,6 +84,12 @@ export interface RuntimeToolCall {
   result: string | null;
   commandFailed?: boolean;
   runtimeScope?: "candidate" | "context-preflight";
+  /**
+   * Bounded, redacted tail of a failed repository command. Present only when the
+   * command failed — see `server/command-output-retention.mjs` for why this is the
+   * one exception to the "content not retained" discipline.
+   */
+  failureOutput?: string | null;
 }
 
 export interface RuntimeRunTestSummary {

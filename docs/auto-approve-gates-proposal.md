@@ -1,7 +1,16 @@
 # P2-11 — per-gate auto-approve: design proposal
 
-Not implemented. The spec flags this as a trust-model change rather than a settings
-toggle, and it is. This is the proposal the operator decides on.
+**Partly implemented, 2026-09-19.** Specification, Plan and Implement are now settable in
+the existing `gatePolicies` map alongside the three evidence gates, with `manual` still
+the default for every one of them. The trust-model concern this proposal raises is
+answered rather than waived: an automatic approval is recorded through the same
+`approveSpecification` / `approvePlan` path a person uses — so a stale plan, an
+unexecutable plan and the fast profile's single-package rule all still refuse and leave
+the task parked — and the approval carries `automatic: true`, so an automatic approval
+is never counted as evidence that a person read the artifact.
+
+Candidate and Merge remain manual and are not settable. They are the gates this document
+argues are qualitatively different, and nothing below is withdrawn for them.
 
 ## What the gates are today
 

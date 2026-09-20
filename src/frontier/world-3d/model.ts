@@ -57,6 +57,7 @@ export interface ProofControls {
   zoom(factor: number): void;
   simulateContextLoss(): void;
   readonly worldHour: number;
+  basePreview(projectId: string): Promise<string | null>;
   headquartersPreview(projectId: string): Promise<string | null>;
 }
 

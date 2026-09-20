@@ -7,6 +7,7 @@ import {
   buildWorkPackageRequest,
   createTask,
 } from "./runtime-test-support.mjs";
+import { candidateGateCommandLimit } from "../server/candidate-gate-policy.mjs";
 
 test("context manifests report description truncation independently across every prompt shape", () => {
   for (const length of [5_999, 6_000, 6_001, 10_000, 10_001]) {
@@ -127,10 +128,18 @@ test("candidate review prompts name the exact structured finding fields", () => 
     request.prompt,
     /Do not run tests, builds, linters, type checks, package scripts, or verification-manifest commands/,
   );
-  assert.match(request.prompt, /hard limit of 10 repository-command invocations/);
-  assert.match(request.prompt, /plan the complete inspection within 8 commands and reserve 2 commands/);
-  assert.match(request.prompt, /After command 8, stop using repository tools/);
-  assert.match(request.prompt, /Never start command 11/);
+  // Derived from the policy: these budgets are cost ceilings that get retuned, and the
+  // assertion is that the prompt states the live one coherently, not that it is any
+  // particular number.
+  const devReviewLimit = candidateGateCommandLimit("dev-review");
+  const planningAllowance = devReviewLimit - 2;
+  assert.match(request.prompt, new RegExp(`hard limit of ${devReviewLimit} repository-command invocations`));
+  assert.match(
+    request.prompt,
+    new RegExp(`plan the complete inspection within ${planningAllowance} commands and reserve 2 commands`),
+  );
+  assert.match(request.prompt, new RegExp(`After command ${planningAllowance}, stop using repository tools`));
+  assert.match(request.prompt, new RegExp(`Never start command ${devReviewLimit + 1}`));
   assert.match(
     request.prompt,
     /Every command must be constructed to exit zero when the intended inspection succeeds/,

@@ -5,6 +5,7 @@
     { "id": "typecheck", "title": "TypeScript", "command": ["npm", "run", "typecheck"] },
     { "id": "test", "title": "Node test suite", "command": ["npm", "test"] },
     { "id": "build", "title": "Vite build and Sites packaging", "command": ["npm", "run", "build"] },
-    { "id": "test-sites", "title": "Sites worker tests", "command": ["npm", "run", "test:sites"] }
+    { "id": "test-sites", "title": "Sites worker tests", "command": ["npm", "run", "test:sites"] },
+    { "id": "manifest-integrity", "title": "Verification manifest integrity", "command": ["npm", "run", "check:manifest"] }
   ]
 }

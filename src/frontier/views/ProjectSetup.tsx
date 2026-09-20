@@ -4,7 +4,26 @@ import type { RuntimeProject, RuntimeRepositoryContract } from "../../domain";
 import type { OnboardingReview } from "../../domain/onboarding";
 import type { FrontierGateway } from "../runtime/contracts";
 import { errorMessage } from "../runtime/coordinator";
+import {
+  type BaseAppearance,
+  baseNames,
+  defaultAppearance,
+  projectAppearanceKey,
+  readAppearances,
+} from "../world-3d/appearance";
+import { BaseAppearanceControls } from "../world-3d/BaseAppearancePicker";
+import { BaseModelPreview, usePreviewManifest } from "../world-3d/BaseModelPreview";
+import { chooseProjectAppearance } from "../world-3d/useBaseAppearance";
 import { RepositoryReadiness } from "./RepositoryReadiness";
+
+function startingAppearance(project?: RuntimeProject): BaseAppearance {
+  if (!project) return { variant: "command", palette: "blue" };
+  try {
+    return readAppearances(localStorage)[projectAppearanceKey(project)] ?? defaultAppearance(project);
+  } catch {
+    return defaultAppearance(project);
+  }
+}
 
 export function ProjectSetup({
   project,
@@ -34,6 +53,8 @@ export function ProjectSetup({
   const [proposal, setProposal] = useState<OnboardingReview | null>(null);
   const [confirmedCommands, setConfirmedCommands] = useState(false);
   const [archiveReview, setArchiveReview] = useState(false);
+  const [appearance, setAppearance] = useState<BaseAppearance>(() => startingAppearance(project));
+  const appearanceManifest = usePreviewManifest();
   const registered = project && !project.id.startsWith("suggested:");
   const canSave = Boolean(name.trim() && contract && !busy && !checking && connected);
   async function validate() {
@@ -79,16 +100,16 @@ export function ProjectSetup({
               event.preventDefault();
               if (!review) void validate();
               else if (canSave)
-                void command(
-                  () =>
-                    registered
-                      ? gateway.changeProject(project.id, { kind: "rename", name: name.trim() })
-                      : gateway.createProject({
-                          name: name.trim(),
-                          repositoryPath: contract?.repositoryRoot ?? path,
-                        }),
-                  onDone,
-                );
+                void command(async () => {
+                  const savedProject = registered
+                    ? await gateway.changeProject(project.id, { kind: "rename", name: name.trim() })
+                    : await gateway.createProject({
+                        name: name.trim(),
+                        repositoryPath: contract?.repositoryRoot ?? path,
+                      });
+                  if (!registered) chooseProjectAppearance(savedProject, appearance);
+                  return savedProject;
+                }, onDone);
             }}
           >
             <label className="form-row">
@@ -123,6 +144,20 @@ export function ProjectSetup({
             </p>
             {contract && <RepositoryReadiness contract={contract} />}
           </form>
+          {!registered && (
+            <section className="project-appearance-fields" aria-labelledby="project-appearance-heading">
+              <h3 id="project-appearance-heading">Base appearance</h3>
+              <BaseAppearanceControls
+                appearance={appearance}
+                manifest={appearanceManifest}
+                onChoose={setAppearance}
+              />
+              <p className="quiet appearance-save-note">
+                Your model and colour are saved for this project in this browser and can be changed from the
+                world later.
+              </p>
+            </section>
+          )}
           {contract && !contract.verification.valid && (
             <section className="setup-verification">
               <h3>Set up verification</h3>
@@ -235,13 +270,12 @@ export function ProjectSetup({
         </section>
         <aside className="mission-briefing project-preview">
           <div className="section-heading">
-            <h2>Project headquarters</h2>
+            <h2>Base preview</h2>
             <Buildings size={23} />
           </div>
-          <img
-            className="base-preview-art"
-            src="/assets/mf.ui.project-thumbnail.png"
-            alt="Project headquarters platform"
+          <BaseModelPreview
+            appearance={appearance}
+            alt={`${name.trim() || "Project"} ${baseNames[appearance.variant]} headquarters`}
           />
           <h2>{name.trim() || "Your project"}</h2>
           <p className="repository-path">
@@ -250,9 +284,6 @@ export function ProjectSetup({
           <p className="notice">
             <CheckCircle size={21} />
             One base for this project’s tasks, agents and handoffs.
-          </p>
-          <p className="quiet">
-            Bases are placed automatically in v1. This screen manages the project’s repository and readiness.
           </p>
           {gateway.mode === "fixture" && (
             <p className="sample-note">Sample setup only. No local repository is inspected or changed.</p>

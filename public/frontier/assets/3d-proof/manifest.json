@@ -8,6 +8,12 @@
       "relay": "/assets/3d-proof/crown-relay.1913db15dbe6.glb",
       "foundry": "/assets/3d-proof/crown-foundry.a9c0c35790d0.glb"
     },
+    "crownPreviews": {
+      "bastion": "/assets/3d-proof/crown-preview-bastion.4ec702f26675.png",
+      "command": "/assets/3d-proof/crown-preview-command.72966bd8db5b.png",
+      "relay": "/assets/3d-proof/crown-preview-relay.c744a191508e.png",
+      "foundry": "/assets/3d-proof/crown-preview-foundry.e1e5e539cf67.png"
+    },
     "shell": "/assets/3d-proof/hq-shell.f0e1eeb73c82.glb",
     "bridgeSpan": "/assets/3d-proof/bridge-span-27.61fa0489a831.glb",
     "bridgeEnd": "/assets/3d-proof/bridge-end.50920a684920.glb",
