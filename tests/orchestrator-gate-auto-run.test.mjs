@@ -278,3 +278,31 @@ test("auto-approval fails closed on a plan with no verifiable work package", asy
   assert.deepEqual(current.approvals, []);
   assert.match(current.events.at(-1).detail, /at least one repository manifest command id/i);
 });
+
+test("a run gate whose start throws records why instead of stalling the task in silence", async () => {
+  const task = {
+    id: "AH-THROW",
+    status: "ready-for-implementation",
+    currentStage: "implement",
+    workflowProfile: { selected: "fast" },
+    attemptsByStage: { implement: 0 },
+    stageRunLimits: { implement: 3 },
+    events: [],
+  };
+  const { control, current, starts } = controlFor({
+    task,
+    settings: { gatePolicies: { implement: "auto-accept-recommendations" } },
+  });
+  // A stray uncommitted file in the operator's checkout is what throws here in practice.
+  // Whatever the cause, the task must not stop with nothing written explaining it.
+  control.start = async () => {
+    throw new Error("The selected repository has 1 uncommitted change (.DS_Store).");
+  };
+
+  await control._autoAdvanceGate(task.id);
+
+  assert.deepEqual(starts, []);
+  assert.equal(current.status, "ready-for-implementation");
+  const recorded = current.events.map((event) => `${event.title} ${event.detail ?? ""}`).join(" ");
+  assert.match(recorded, /uncommitted change/);
+});

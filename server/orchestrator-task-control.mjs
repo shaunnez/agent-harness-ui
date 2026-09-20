@@ -117,11 +117,17 @@ export class TaskControlOrchestrator {
    */
   async _autoAdvanceGate(id) {
     await this._autoApproveGate(id);
+    // `transition` is declared out here, not inside the `try`, because the `catch` needs the
+    // stage to record the failure against. Scoped to the `try` it was invisible to the
+    // handler, so every thrown failure became a ReferenceError inside the handler itself and
+    // was swallowed by the caller's `.catch(() => {})` — the task simply stopped, with no
+    // event explaining why. A gate that fails must always say so.
     let task;
+    let transition;
     try {
       task = await this._store.get(id);
       if (!task) return;
-      const transition = GATE_AUTO_ADVANCE[task.status];
+      transition = GATE_AUTO_ADVANCE[task.status];
       if (!transition || task.currentStage !== transition.stage) return;
       const readyStatus = task.status;
       const settings = await this._store.settings();
@@ -151,7 +157,7 @@ export class TaskControlOrchestrator {
         );
       }
     } catch (error) {
-      await this._recordGateAutoAdvanceFailure(id, transition.stage, error.message);
+      await this._recordGateAutoAdvanceFailure(id, transition?.stage ?? "implement", error.message);
     }
   }
 
