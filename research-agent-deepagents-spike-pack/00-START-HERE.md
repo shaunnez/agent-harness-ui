@@ -100,5 +100,5 @@ Later benchmark against:
 ## Current vertical-slice evaluation
 
 - `04-SEARCH-PROVIDER-BENCHMARK.md` compares public-web discovery.
-- `05-CAPTURE-AND-PDF-BENCHMARK.md` compares local extraction, Firecrawl, and Exa Contents for
-  public NZ/AU pages and PDFs, including the first live result and updated capture proposal.
+- `05-CAPTURE-AND-PDF-BENCHMARK.md` records both live gates: the broad local/Firecrawl/Exa comparison and
+  the difficult Firecrawl-versus-PlanCheck PDF gate, including the final public/private capture boundary.

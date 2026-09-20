@@ -204,7 +204,7 @@ export class FirecrawlRetrievalProvider {
             parsers: [
               {
                 type: "pdf",
-                mode: "auto",
+                mode: testCase.pdfMode ?? "auto",
                 maxPages: testCase.maxPages,
                 pages: true,
                 blocks: true,
@@ -230,6 +230,8 @@ export class FirecrawlRetrievalProvider {
       content: page.markdown ?? page.content ?? "",
     }));
     const parsedPages = Number(data.metadata?.numPages ?? pages.length) || null;
+    const totalPages = Number(data.metadata?.totalPages ?? 0) || null;
+    const expectedPages = Math.min(testCase.maxPages ?? totalPages ?? 0, totalPages ?? Infinity);
     const estimatedCredits = testCase.kind === "pdf" ? 1 + (parsedPages ?? testCase.maxPages) : 1;
     const sourceLooksLikePdf = (data.metadata?.sourceURL ?? "").toLowerCase().includes(".pdf");
     return result({
@@ -243,7 +245,8 @@ export class FirecrawlRetrievalProvider {
         mediaType: data.metadata?.contentType ?? (sourceLooksLikePdf ? "application/pdf" : null),
         finalUrl: data.metadata?.sourceURL ?? data.metadata?.url ?? testCase.url,
         parsedPages,
-        totalPages: Number(data.metadata?.totalPages ?? 0) || null,
+        totalPages,
+        extractionComplete: testCase.kind !== "pdf" || (parsedPages !== null && parsedPages >= expectedPages),
         layoutBlockPages: Array.isArray(data.blocks) ? data.blocks.length : 0,
         estimatedCredits,
         estimatedCostUsdAtHobbyTopUpRate: estimatedCredits * 0.005,

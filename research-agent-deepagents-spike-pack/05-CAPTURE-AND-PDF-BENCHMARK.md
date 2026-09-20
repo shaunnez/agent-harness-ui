@@ -160,15 +160,56 @@ also fit inside Hobby. LLM reasoning is separate from these capture costs.
 The architecture must deduplicate at the source-snapshot level. These numbers assume each source is captured
 once and shared by every research agent; paying again for every agent would erase the cost advantage.
 
-## Remaining gate before production selection
+## Second PDF gate outcome — 21 September 2026
 
-Run one second, deliberately difficult corpus before replacing the runtime's current provider:
+The difficult public-PDF gate compared Firecrawl directly with PlanCheck's real text-plus-vision extractor.
+It used the first 30 pages of NZ H1/AS1, the first 30 pages of the diagram-heavy NZ E2/AS1, and the first
+19 pages of an Australian heritage assessment containing a degraded 1951 building plan. The run made no
+provider retries and sent no private or customer document to Firecrawl. The owner-only report is under
+`.data/research-pdf-gates/2026-09-20T23-39-20-270Z/report.md`.
 
-1. A scanned or image-only building document to exercise OCR.
-2. A 20–100 page technical specification with a strict page cap.
-3. A diagram or drawing-heavy PDF where layout blocks and bounding boxes matter.
-4. A blocked or JavaScript-heavy NZ/AU product page.
-5. A data-governance review covering retention, customer documents, DPA availability, and failure handling.
+| Route | Complete | Partial | Native-text checks | Scanned-plan checks | Scanned-plan time | Estimated run usage |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| PlanCheck | 2/3 | 1 | 100% terms, anchors, and tables | 2/5 terms, 0/3 page anchors, 8/19 pages missing | 493 seconds | 19 attempted vision pages; 11 outputs returned |
+| Firecrawl | 3/3 | 0 | 100% terms, anchors, and tables | 4/5 terms, 2/3 page anchors, all 19 pages returned | 13 seconds | 82 credits / about US$0.41 marginal equivalent |
 
-That second gate should compare Firecrawl with the existing PlanCheck text-plus-vision path, not rerun every
-provider. The current evidence is already enough to narrow the managed candidate to Firecrawl.
+PlanCheck remains the better local route for native-text PDFs: it completed both 30-page extracts in about
+half a second each with every checked term, physical-page anchor, and table. Firecrawl returned the same
+checked evidence, but took about 10 seconds for E2 and 52 seconds for H1.
+
+Firecrawl clearly won the scanned-document comparison, but did not produce perfect OCR. It missed faint
+`Plan of Garage` wording and did not keep `City of Perth` on the expected physical page. The research host
+must therefore continue to validate required evidence and fail closed when page grounding or material text
+is absent.
+
+The current PlanCheck scan path failed more seriously. It returned only 11 bodies from 19 attempted pages
+after about eight minutes. Its merge step associates returned vision bodies with the requested pages by
+list position even after per-page failures are swallowed, so page identities after the first failure may be
+shifted. That partial output is not safe for citation or reasoning. The benchmark reports it as partial,
+not successful. Repairing that extractor is separate work.
+
+The gate also found that ordinary server-side downloads of both building.govt.nz PDFs were rejected in this
+environment, although a browser and Firecrawl could retrieve them. A fully local public route would need a
+browser or proxy fetch fallback as well as PDF extraction.
+
+## Final recommendation
+
+Use Firecrawl Search plus Scrape/PDF Parse as the default public-source discovery and capture route behind
+the Eversor-owned provider boundary. Retain the extracted snapshot, its SHA-256 hash, canonical URL,
+capture time, provider metadata, and page/layout grounding. Share that content-addressed snapshot between
+agents so each unique source is captured once. Keep Serper as the search fallback for NZ/AU ranking and
+local PlanCheck extraction as the private-document boundary.
+
+Do not send private PlanCheck material through Firecrawl's self-serve service. Its published standard
+privacy terms permit caching/indexing and describe US storage, while zero-data-retention for parsed
+documents is presented as an Enterprise control. A private-document route requires an explicitly accepted
+DPA, retention, residency, and deletion arrangement. Until then:
+
+- private native-text PDFs stay on the proven local PlanCheck path;
+- private scanned PDFs fail closed until the local per-page OCR path preserves identity and reports every
+  failure accurately;
+- public Firecrawl results fall back to local or a second extraction when pages, required terms, or citation
+  grounding are incomplete.
+
+This selects a capture candidate; it does not change the research runtime from Tavily. Implementing the
+Firecrawl runtime adapter is the next separately testable vertical slice.
