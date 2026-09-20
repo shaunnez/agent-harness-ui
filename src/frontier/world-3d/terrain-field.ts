@@ -469,6 +469,16 @@ function flatDistance(profile: ParcelProfile, dx: number, dz: number) {
   return Math.min(disc, rect);
 }
 
+/**
+ * Centreline radius of the ring road at this angle. Exported so the painted band in the height field
+ * and the kerb geometry laid on top are the same curve: two copies of this would drift apart.
+ * valueNoise is already [-1, 1], so the wobble is symmetric and never exceeds ringRoad.wobble.
+ */
+export function ringRoadRadius(profile: ParcelProfile, angleDeg: number) {
+  const a = toRadians(angleDeg);
+  return ringRoad.radius + valueNoise(Math.cos(a) * 3, Math.sin(a) * 3, profile.salt + 57) * ringRoad.wobble;
+}
+
 /** One parcel's contribution at a parcel-local point. */
 function sampleParcel(profile: ParcelProfile, dx: number, dz: number): SurfaceSample {
   // Land core: flat ground, then a gently rising shoulder with terraced relief, outcrops behind,
@@ -553,8 +563,7 @@ function sampleParcel(profile: ParcelProfile, dx: number, dz: number): SurfaceSa
     const a = toRadians(angleDeg);
     // valueNoise is already [-1, 1], so the wobble is symmetric and never exceeds ringRoad.wobble --
     // which is what keeps the inner edge off the flat plateau the HQ stands on.
-    const wobble = valueNoise(Math.cos(a) * 3, Math.sin(a) * 3, profile.salt + 57) * ringRoad.wobble;
-    const ringR = ringRoad.radius + wobble;
+    const ringR = ringRoadRadius(profile, angleDeg);
     // A stream cuts the loop rather than being paved over: the road fords it. Where a spur already
     // holds the ground at plateau level the ring yields to it, so the junction is the spur's height
     // and the loop reads as joining the approach rather than crossing over it.
