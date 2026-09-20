@@ -6,7 +6,6 @@ import {
   assignMissingAppearances,
   baseVariants,
   legacyBaseVariants,
-  legacyVariant,
   parseAppearances,
   projectAppearanceKey,
   randomAppearance,
@@ -332,8 +331,6 @@ test("appearance defaults spread the buildings and persist without overwriting a
   const saved = assignMissingAppearances(fixtureProjects, {});
   assert.equal(new Set(Object.values(saved).map((appearance) => appearance.variant)).size, 3);
   assert.deepEqual(baseVariants, ["bastion", "command", "relay", "foundry"]);
-  assert.equal(legacyVariant("bastion"), "command");
-  assert.equal(legacyVariant("relay"), "relay");
   assert.deepEqual(
     randomAppearance(() => 0),
     { variant: "bastion", palette: "blue" },
@@ -412,51 +409,20 @@ test("larger fixture crews stay clear of the analysis bench and each other insid
   }
 });
 
-test("without ?colony=1 the v3 manifest is consumed as v2 and the archipelago layout is unchanged", async () => {
-  const { colonyRequested, withoutColony } = await import("../../src/frontier/world-3d/model.ts");
-  const { archipelagoBases } = await import("../../src/frontier/world-3d/layout.ts");
+test("the colony is the only layout: every published manifest is v3 and carries the colony kit", async () => {
   const { proofAssetUrls } = await import("../../src/frontier/world-3d/colony-assets.ts");
-  const search = "?mode=fixture&renderer=3d&art=cinematic";
-  assert.equal(colonyRequested(search), false);
-  assert.equal(colonyRequested(`${search}&colony=1`), true);
   const published = parseProofManifest(
     JSON.parse(
       await readFile(new URL("../../public/frontier/assets/3d-proof/manifest.json", import.meta.url), "utf8"),
     ),
   );
+  // `?colony=1` and the v2 archipelago it selected are gone; there is one world and this is it.
   assert.equal(published.version, 3);
-  const legacy = withoutColony(published);
-  assert.equal(legacy.version, 2);
-  assert.equal("colony" in legacy, false);
-  assert.deepEqual(legacy.bases, published.bases);
-  // The legacy kit is fetched, the colony kit is not.
-  const urls = proofAssetUrls(legacy);
-  assert.ok(urls.includes(published.scene) && urls.includes(published.bases.command.src));
-  assert.ok(!urls.some((url) => url.includes("hq-shell") || url.includes("parcel-")));
-  assert.equal(withoutColony({ ...published, version: 2 }).version, 2);
-  assert.throws(() => withoutColony({ ...published, bases: undefined }), /archipelago kit/);
-  // Main's staggered coastal grid: plancheck first, then id order; no slots, no bridges.
-  const bases = archipelagoBases(fixtureProjects, {});
-  assert.equal(bases.length, fixtureProjects.length);
-  assert.equal(bases[0].project.id, "plancheck");
-  assert.ok(bases.every((base) => base.slot === undefined));
-  assert.deepEqual(
-    bases.map((base) => base.position.map((n) => Number(n.toFixed(3)))),
-    [
-      [1.568, 0, 37.18],
-      [-68.897, 0, -26.859],
-      [18.115, 0, -41.401],
-    ],
-  );
-  assert.deepEqual(archipelagoBases([...fixtureProjects].reverse(), {}), bases);
-  assert.equal(archipelagoBases([{ ...fixtureProjects[0], archivedAt: "2026-09-16" }], {}).length, 0);
-  // Cameras come from the manifest, not the colony contract, and the world fit is the archipelago's.
-  const cutaway = viewCamera(bases, "plancheck", true, undefined, legacy);
-  assert.deepEqual(cutaway.target, translated(legacy.cameras.cutaway.target, bases[0].position));
-  const world = viewCamera(bases, null, false, { width: 1280, height: 720 }, legacy);
-  assert.equal(world.verticalSpan, 137);
-  assert.equal(world.viewOffset, undefined);
-  assert.notDeepEqual(viewCamera(bases, "plancheck", true).target, cutaway.target);
+  assert.ok(published.colony);
+  const urls = proofAssetUrls(published);
+  assert.ok(urls.some((url) => url.includes("hq-shell")));
+  assert.ok(urls.includes(published.colony.scatterKit));
+  assert.ok(!urls.includes(published.scene));
 });
 
 test("robots render 1.6x in World, 1.3x on a focused exterior and slightly over true size in the cutaway", async () => {

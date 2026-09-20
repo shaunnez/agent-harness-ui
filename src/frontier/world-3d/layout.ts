@@ -13,7 +13,6 @@ import {
   type Viewport,
   type WorldFit,
 } from "./colony.ts";
-import type { ProofManifest } from "./model.ts";
 
 /**
  * One base per project on the colony lattice. The slot comes from the persisted appearance record
@@ -35,26 +34,6 @@ export function projectBases(
     return [{ project, position: slotPosition(slot), appearance: { ...appearance, slot }, slot }];
   });
 }
-/**
- * The archipelago that main renders without `?colony=1`: a staggered coastal grid in the camera's
- * ground-plane axes, one island tile per project, no slots and no bridges.
- */
-export function archipelagoBases(projects: RuntimeProject[], appearances: BaseAppearances = {}) {
-  return orderedProjects(projects.filter((project) => !project.archivedAt)).map((project, index) => {
-    const column = index % 3;
-    const row = Math.floor(index / 3);
-    const horizontal = ([-22, -37, 40][column] ?? -37) + (row % 2) * 20;
-    const depth = ([-30, 64, 21][column] ?? -30) + row * 108;
-    const position: Point3 = [horizontal * 0.781 - depth * 0.625, 0, -horizontal * 0.625 - depth * 0.781];
-    const slot: string | undefined = undefined;
-    return {
-      project,
-      position,
-      appearance: appearances[projectAppearanceKey(project)] ?? defaultAppearance(project),
-      slot,
-    };
-  });
-}
 function orderedProjects(projects: RuntimeProject[]) {
   return [...projects].sort((a, b) => {
     if (a.id === "plancheck") return -1;
@@ -62,12 +41,10 @@ function orderedProjects(projects: RuntimeProject[]) {
     return a.id.localeCompare(b.id);
   });
 }
-export type ProjectBase =
-  | ReturnType<typeof projectBases>[number]
-  | ReturnType<typeof archipelagoBases>[number];
+export type ProjectBase = ReturnType<typeof projectBases>[number];
 /** The hub parcel is always rendered at H with an empty landing pad. */
 export const hubParcel = { slot: hubSlot.id, position: slotPosition(hubSlot.id) };
-/** Colony slots in use; archipelago bases have none. */
+/** Colony slots in use. */
 export function occupiedSlots(bases: ProjectBase[]) {
   return bases.flatMap((base) => (base.slot ? [base.slot] : []));
 }
@@ -94,36 +71,16 @@ export function viewCamera(
   projectId: string | null,
   cutaway: boolean,
   viewport?: Viewport,
-  legacy?: ProofManifest,
 ): ColonyCamera & Partial<Pick<WorldFit, "viewOffset">> {
   const base = bases.find((entry) => entry.project.id === projectId);
-  if (base && cutaway && !legacy && viewport) return fitCutawayView(base.position, viewport);
+  if (base && cutaway && viewport) return fitCutawayView(base.position, viewport);
   if (base) {
-    const camera = legacy
-      ? cutaway
-        ? legacy.cameras.cutaway
-        : legacy.cameras.exterior
-      : cutaway
-        ? colonyCameras.cutaway
-        : colonyCameras.exterior;
+    const camera = cutaway ? colonyCameras.cutaway : colonyCameras.exterior;
     return {
       ...camera,
       position: translated(camera.position, base.position),
       target: translated(camera.target, base.position),
     };
   }
-  if (legacy) return archipelagoView(bases);
   return fitColonyView(occupiedSlots(bases), viewport);
-}
-function archipelagoView(bases: ProjectBase[]): ColonyCamera {
-  const center: Point3 = [
-    bases.reduce((sum, entry) => sum + entry.position[0], 0) / Math.max(1, bases.length),
-    3,
-    bases.reduce((sum, entry) => sum + entry.position[2], 0) / Math.max(1, bases.length),
-  ];
-  return {
-    position: translated([140, 122.5, 175], center),
-    target: center,
-    verticalSpan: bases.length < 2 ? 62 : 137 + Math.max(0, Math.ceil(bases.length / 3) - 1) * 64,
-  };
 }

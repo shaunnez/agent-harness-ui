@@ -7,8 +7,6 @@ import {
   baseNames,
   basePalettes,
   baseVariants,
-  legacyBaseVariants,
-  legacyVariant,
   randomAppearance,
 } from "./appearance";
 import type { ProjectBase } from "./layout";
@@ -33,12 +31,10 @@ export function BaseAppearancePicker({
 }) {
   const base = bases.find((entry) => entry.project.id === projectId) ?? bases[0];
   if (!base) return null;
-  // The colony offers four crowns on one shell; the archipelago kit behind the flag has three buildings.
-  const colony = manifest?.version === 3;
-  const variants: readonly BaseVariant[] = colony ? baseVariants : legacyBaseVariants;
-  const preview = (variant: BaseVariant) =>
-    colony ? manifest?.colony?.crownPreviews?.[variant] : manifest?.bases?.[legacyVariant(variant)]?.preview;
-  const chosen = colony ? base.appearance.variant : legacyVariant(base.appearance.variant);
+  // Four crowns on one shared shell.
+  const variants: readonly BaseVariant[] = baseVariants;
+  const preview = (variant: BaseVariant) => manifest?.colony?.crownPreviews?.[variant];
+  const chosen = base.appearance.variant;
   return (
     <section className="proof-appearance panel" aria-label="Base appearance">
       <header>

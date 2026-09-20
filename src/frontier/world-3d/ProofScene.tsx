@@ -8,7 +8,7 @@ import {
   lightingAt,
   type WorldLighting,
 } from "../world/environment-model";
-import { basePalettes, legacyVariant } from "./appearance";
+import { basePalettes } from "./appearance";
 import { ColonyGround } from "./ColonyGround";
 import { ColonyProps } from "./ColonyProps";
 import { ColonyRingRoad } from "./ColonyRingRoad";
@@ -94,12 +94,10 @@ export function ProofScene(props: Props) {
   const environment = loaded.get(manifest.scene);
   const colony = useMemo(
     () =>
-      manifest.version === 3
-        ? colonyModels(
-            manifest,
-            new Map([...loaded].flatMap(([url, gltf]) => (gltf ? [[url, gltf.scene]] : []))),
-          )
-        : null,
+      colonyModels(
+        manifest,
+        new Map([...loaded].flatMap(([url, gltf]) => (gltf ? [[url, gltf.scene]] : []))),
+      ),
     [manifest, loaded],
   );
   useEffect(
@@ -261,12 +259,7 @@ export function ProofScene(props: Props) {
           })),
       ),
       ...bases.flatMap((base) =>
-        [
-          ...(manifest.version === 3 ? [] : (manifest.environmentLightPositions ?? [])),
-          ...(manifest.version === 3
-            ? (manifest.colony?.hqLightPositions ?? [])
-            : (manifest.bases?.[legacyVariant(base.appearance.variant)].lightPositions ?? [])),
-        ].map((position, index) => ({
+        (manifest.colony?.hqLightPositions ?? []).map((position, index) => ({
           key: `${base.project.id}:${index}`,
           color: lampColour(basePalettes[base.appearance.palette].light),
           position: [
@@ -346,9 +339,7 @@ export function ProofScene(props: Props) {
         shadow-normalBias={0.04}
       />
       {bases.map((base) => {
-        const source =
-          colony?.bases[base.appearance.variant] ??
-          loaded.get(manifest.bases?.[legacyVariant(base.appearance.variant)].src ?? manifest.scene)?.scene;
+        const source = colony.bases[base.appearance.variant];
         if (!source) throw new Error(`The ${base.appearance.variant} base export is missing.`);
         return (
           <Fragment key={base.project.id}>

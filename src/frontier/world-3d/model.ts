@@ -64,20 +64,6 @@ export function proofRequested(search: string) {
   const query = new URLSearchParams(search);
   return query.get("mode") === "fixture" && query.get("renderer") === "3d";
 }
-/** The colony (hex HQ, parcels, bridges) renders only behind `?colony=1`; without it the world keeps the archipelago look. */
-export function colonyRequested(search: string) {
-  return new URLSearchParams(search).get("colony") === "1";
-}
-/** A v3 manifest still carries the v2 kit; without the colony flag it is consumed as v2 so main's look is unchanged. */
-export function withoutColony(manifest: ProofManifest): ProofManifest {
-  if (manifest.version !== 3) return manifest;
-  if (!manifest.bases || !manifest.environmentLightPositions)
-    throw new Error(
-      "The archipelago kit is missing from the 3D scene manifest. Add ?colony=1 or retry the artwork.",
-    );
-  const { colony: _colony, ...legacy } = manifest;
-  return { ...legacy, version: 2 };
-}
 export function proofProject(projects: RuntimeProject[]) {
   return (
     projects.find((project) => project.id === "plancheck" && !project.archivedAt) ??

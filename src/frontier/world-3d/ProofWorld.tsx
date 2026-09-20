@@ -10,9 +10,8 @@ import { lightingAt, type WorldLighting } from "../world/environment-model";
 import { basePalettes } from "./appearance";
 import { BaseAppearancePicker } from "./BaseAppearancePicker";
 import { proofAssetUrls } from "./colony-assets";
-import { archipelagoBases, locatedProject, projectBases, visibleBases } from "./layout";
+import { locatedProject, projectBases, visibleBases } from "./layout";
 import {
-  colonyRequested,
   compactWorkerLabels,
   existingWorldUrl,
   type ProofControls,
@@ -21,7 +20,6 @@ import {
   parseProofManifest,
   proofWorkerState,
   visibleWorkerLabels,
-  withoutColony,
 } from "./model";
 import { ProofScene } from "./ProofScene";
 import { roomIds, roomNames } from "./rooms";
@@ -80,11 +78,7 @@ export function ProofWorld(props: Props) {
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [appearanceProjectId, setAppearanceProjectId] = useState<string | null>(null);
   const { appearances, choose, storageProblem } = useBaseAppearance(input.projects);
-  // Without ?colony=1 the world keeps main's archipelago: one island tile per project, no lattice.
-  const colony = colonyRequested(window.location.search);
-  const bases = colony
-    ? projectBases(input.projects, appearances, true)
-    : archipelagoBases(input.projects, appearances);
+  const bases = projectBases(input.projects, appearances, true);
   const contextId =
     input.location.view === "world"
       ? (props.selectedProjectId ?? focusId ?? locatedProject(input)?.id)
@@ -131,7 +125,7 @@ export function ProofWorld(props: Props) {
         return response.json();
       })
       .then((value: unknown) => {
-        const parsed = colony ? parseProofManifest(value) : withoutColony(parseProofManifest(value));
+        const parsed = parseProofManifest(value);
         if (new URLSearchParams(window.location.search).get("proofAssetFailure") === "1") {
           if (parsed.colony) parsed.colony.shell = "/assets/3d-proof/missing-scene.glb";
           else parsed.scene = "/assets/3d-proof/missing-scene.glb";
