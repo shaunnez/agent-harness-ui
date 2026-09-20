@@ -11,10 +11,10 @@ import type { ProjectBase } from "./layout";
  * practicals are excluded entirely -- the rooms keep their authored warm light whatever the palette.
  */
 const palettePractical: Record<string, number> = {
-  practical_warm_window_glass: 0.35,
-  practical_warm_strip: 0.5,
-  practical_station_marker: 0.7,
-  practical_delivery_beacon: 0.7,
+  practical_warm_window_glass: 0.62,
+  practical_warm_strip: 0.85,
+  practical_station_marker: 1,
+  practical_delivery_beacon: 1,
 };
 
 export interface SceneLight {
@@ -85,14 +85,19 @@ export function ProofBase({
     () => new Color(basePalettes[base.appearance.palette].color),
     [base.appearance.palette],
   );
+  /** What the base emits: deep enough to keep its hue once multiplied by the emissive intensity. */
+  const paletteLight = useMemo(
+    () => new Color(basePalettes[base.appearance.palette].light),
+    [base.appearance.palette],
+  );
   useLayoutEffect(() => {
     for (const material of models.materials.values()) {
       if (material.name.startsWith("identity_")) {
         material.color.copy(palette);
-        material.emissive.copy(palette);
+        material.emissive.copy(paletteLight);
       }
     }
-  }, [models, palette]);
+  }, [models, palette, paletteLight]);
   useEffect(
     () => () => {
       for (const material of models.materials.values()) material.dispose();
@@ -108,11 +113,14 @@ export function ProofBase({
       if (material.name.startsWith("identity_")) material.emissiveIntensity = (0.48 + dark * 0.65) * pulse;
       else if (material.name.startsWith("ambient_")) material.emissiveIntensity = (0.75 + dark * 1.4) * pulse;
       else if (material.name.startsWith("practical_")) {
-        material.emissiveIntensity = 0.38 + dark * 3.0;
-        // After dark the exterior practicals drift toward the project palette, so a base is
-        // identifiable by its own light at night. `dark` is 0 in daylight, so this is a no-op by day.
+        // After dark the exterior practicals take the project palette, so a base is identifiable by
+        // its own light at night. `dark` is 0 in daylight, so this is a no-op by day.
         const mix = material.userData.interior ? 0 : (palettePractical[material.name] ?? 0);
-        if (mix > 0) material.emissive.copy(material.userData.warm as Color).lerp(palette, dark * mix);
+        // Intensity is pulled back in step with the mix. Emissive is multiplied channel by channel,
+        // so a coloured light driven at the white lamps' gain clips to white and loses the hue that
+        // is the whole point of it -- the more palette a lamp carries, the dimmer it has to run.
+        material.emissiveIntensity = (0.38 + dark * 3.0) * (1 - 0.5 * mix * dark);
+        if (mix > 0) material.emissive.copy(material.userData.warm as Color).lerp(paletteLight, dark * mix);
       }
     }
   });
