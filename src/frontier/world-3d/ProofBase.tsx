@@ -1,17 +1,32 @@
-import { cutawayGroups } from "./cutaway";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useLayoutEffect, useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Color, Mesh, type MeshStandardMaterial, type Object3D } from "three";
 import { basePalettes } from "./appearance";
+import { cutawayGroups, setCutawayVisible } from "./cutaway";
+import {
+  driveFixture,
+  driveRoomInlay,
+  lendFloorSurface,
+  patchScreens,
+  planarFloorUVs,
+  tintRoomInlay,
+} from "./interior";
 import type { ProjectBase } from "./layout";
+import { roomIds } from "./rooms";
 
 /**
- * How far each exterior practical carries the project palette after dark. Windows stay mostly warm
- * so a base still reads as lived in; the markers are identity signals, so they go furthest. Interior
- * practicals are excluded entirely -- the rooms keep their authored warm light whatever the palette.
+ * How far each exterior practical carries the project palette after dark.
+ *
+ * All the way, for all of them. Holding the windows back at 0.85 left 15% of their authored amber in
+ * the mix, and because the pull-back on intensity scales with this number it also ran them brighter
+ * than the strips beside them -- so the wide window bands read pale pink while the thin wall strips
+ * on the same building read saturated. Two values here means two colours on one base.
+ *
+ * Interior practicals are excluded entirely: the rooms keep their authored warm light whatever the
+ * project colour, which is what stops the cutaway going monochrome.
  */
 const palettePractical: Record<string, number> = {
-  practical_warm_window_glass: 0.85,
+  practical_warm_window_glass: 1,
   practical_warm_strip: 1,
   practical_station_marker: 1,
   practical_delivery_beacon: 1,
@@ -73,6 +88,8 @@ export function ProofBase({
         object.material = Array.isArray(object.material)
           ? object.material.map(prepare)
           : prepare(object.material);
+        // Shared geometry, so this runs once for the whole colony however many bases there are.
+        if (object.name.includes("__room_inlay_")) planarFloorUVs(object.geometry);
       });
       return result;
     };
@@ -80,11 +97,13 @@ export function ProofBase({
   }, [source, environment]);
   useLayoutEffect(() => {
     roots.set(base.project.id, models.base);
-    for (const group of cutawayGroups(models.base)) group.visible = !cutaway;
+    for (const group of cutawayGroups(models.base)) setCutawayVisible(group, !cutaway);
     return () => {
       roots.delete(base.project.id);
     };
   }, [models, roots, base.project.id, cutaway]);
+  /** One shared uniform object, so every screen in this base scrolls off the same clock. */
+  const screenClock = useRef({ value: 0 }).current;
   const palette = useMemo(
     () => new Color(basePalettes[base.appearance.palette].color),
     [base.appearance.palette],
@@ -102,6 +121,17 @@ export function ProofBase({
       }
     }
   }, [models, palette, paletteLight]);
+  /** Runs once per clone: room tones are fixed by the floor plan and never change with appearance. */
+  useLayoutEffect(() => {
+    const basalt = [...models.materials.values()].find((entry) => entry.name === "court_weathered_basalt");
+    for (const material of models.materials.values()) {
+      const room = roomIds.find((id) => material.name === `room_inlay_${id}`);
+      if (room) {
+        tintRoomInlay(material, room);
+        if (basalt) lendFloorSurface(material, basalt);
+      } else if (material.name === "ambient_screen_service") patchScreens(material, screenClock);
+    }
+  }, [models, screenClock]);
   useEffect(
     () => () => {
       for (const material of models.materials.values()) material.dispose();
@@ -110,22 +140,27 @@ export function ProofBase({
   );
   useFrame(() => {
     const { lamps: dark, time } = light.current;
+    screenClock.value = time;
     let index = 0;
     for (const material of models.materials.values()) {
       // These are ambient station instruments, never task-progress signals.
       const pulse = 1 + Math.sin(time * 0.65 + index++ * 1.7) * 0.075;
-      if (material.name.startsWith("identity_")) material.emissiveIntensity = (0.48 + dark * 0.65) * pulse;
-      else if (material.name.startsWith("ambient_")) material.emissiveIntensity = (0.75 + dark * 1.4) * pulse;
-      else if (material.name.startsWith("practical_")) {
+      const mix = material.userData.interior ? 0 : (palettePractical[material.name] ?? 0);
+      if (material.name.startsWith("room_inlay_")) driveRoomInlay(material, dark);
+      else if (material.name.startsWith("identity_"))
+        material.emissiveIntensity = (0.48 + dark * 0.65) * pulse;
+      else if (mix > 0) {
         // After dark the exterior practicals take the project palette, so a base is identifiable by
         // its own light at night. `dark` is 0 in daylight, so this is a no-op by day.
-        const mix = material.userData.interior ? 0 : (palettePractical[material.name] ?? 0);
+        //
         // Intensity is pulled back in step with the mix. Emissive is multiplied channel by channel,
         // so a coloured light driven at the white lamps' gain clips to white and loses the hue that
         // is the whole point of it -- the more palette a lamp carries, the dimmer it has to run.
         material.emissiveIntensity = (0.38 + dark * 3.0) * (1 - 0.5 * mix * dark);
-        if (mix > 0) material.emissive.copy(material.userData.warm as Color).lerp(paletteLight, dark * mix);
+        material.emissive.copy(material.userData.warm as Color).lerp(paletteLight, dark * mix);
       }
+      // Everything left is an interior fixture, and lights exactly as the props kit's does.
+      else driveFixture(material, dark, pulse);
     }
   });
   return (

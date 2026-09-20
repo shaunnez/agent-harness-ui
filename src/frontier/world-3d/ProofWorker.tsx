@@ -1,11 +1,12 @@
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { type AnimationClip, AnimationMixer, type Group, type Object3D } from "three";
+import { type AnimationClip, AnimationMixer, type Group, Mesh, type Object3D } from "three";
 import { actorSeed, patrolPose, workActions } from "../world/worker-behavior";
 import {
   type Point3,
   type ProofView,
   type ProofWorker as Worker,
+  workerHeight,
   workerScale,
   workerViewScale,
 } from "./model";
@@ -34,7 +35,24 @@ export function ProofWorker({
   positions: Map<string, Object3D>;
   clips: AnimationClip[];
 }) {
-  const body = useMemo(() => cloneWorker(source), [source]);
+  const body = useMemo(() => {
+    const clone = cloneWorker(source);
+    // The body itself is taken out of picking; the proxy box below is what a pointer hits.
+    //
+    // Since the rig landed, every part of a worker is a `SkinnedMesh`, and three's
+    // `SkinnedMesh.raycast` tests against `this.boundingSphere` -- computed by CPU-skinning every
+    // vertex the first time a ray reaches the mesh, at whatever pose the skeleton happened to hold,
+    // and then cached for the life of the mesh. A robot that later reaches further than that first
+    // pose stops being hit, and the ray falls through to the floor behind it, which selects the base
+    // instead of the agent. It also skins every vertex on the CPU on the frame it is computed.
+    //
+    // A box is exact enough for a figure you click at this camera distance, costs nothing, and does
+    // not care what the skeleton is doing.
+    clone.traverse((node) => {
+      if (node instanceof Mesh) node.raycast = () => {};
+    });
+    return clone;
+  }, [source]);
   const root = useRef<Group>(null);
   const time = useRef(0);
   const action = workActions[worker.action];
@@ -112,15 +130,20 @@ export function ProofWorker({
   const factor = workerViewScale[view];
   return (
     <group ref={root} position={worker.position}>
+      <primitive object={body} scale={workerScale(view)} />
       {/* biome-ignore lint/a11y/noStaticElementInteractions: Three ray picking mirrors the accessible DOM worker button. */}
-      <primitive
-        object={body}
-        scale={workerScale(view)}
+      <mesh
+        position={[0, workerHeight(view) / 2, 0]}
         onClick={(event: { stopPropagation(): void }) => {
           event.stopPropagation();
           onSelect();
         }}
-      />
+      >
+        {/* The authored worker is 0.93 m across at 1.80 m tall, so the box follows at 0.52 of height. */}
+        <boxGeometry args={[workerHeight(view) * 0.52, workerHeight(view), workerHeight(view) * 0.52]} />
+        {/* Never drawn, never occludes, still raycast: `visible={false}` would drop it from picking. */}
+        <meshBasicMaterial colorWrite={false} depthWrite={false} />
+      </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} scale={factor}>
         <ringGeometry args={[selected ? 1.55 : 1.32, selected ? 1.66 : 1.4, 48]} />
         <meshBasicMaterial color={selected ? "#79ccff" : status} toneMapped={false} />

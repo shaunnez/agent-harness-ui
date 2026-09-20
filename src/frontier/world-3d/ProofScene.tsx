@@ -1,23 +1,25 @@
-import { legacyVariant } from "./appearance";
-import { baseLabelAnchor, hubSlot, projectKey } from "./colony";
-import { colonyModels, proofAssetUrls } from "./colony-assets";
-import { disposeGreybox } from "./colony-greybox";
-import { ColonyGround } from "./ColonyGround";
-import { ColonyRingRoad } from "./ColonyRingRoad";
-import { ColonyProps } from "./ColonyProps";
-import { ColonyShuttle } from "./ColonyShuttle";
-import { ColonyTerrain } from "./ColonyTerrain";
 import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { Fragment, useEffect, useMemo, useRef } from "react";
 import { Color, type DirectionalLight, type HemisphereLight, type Object3D, type PointLight } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { configureGltfLoader } from "./gltf-loader";
 import {
   defaultEnvironment,
   LightingClock,
   lightingAt,
   type WorldLighting,
 } from "../world/environment-model";
+import { basePalettes, legacyVariant } from "./appearance";
+import { ColonyGround } from "./ColonyGround";
+import { ColonyProps } from "./ColonyProps";
+import { ColonyRingRoad } from "./ColonyRingRoad";
+import { ColonyRoomLights } from "./ColonyRoomLights";
+import { ColonyShuttle } from "./ColonyShuttle";
+import { ColonyTerrain } from "./ColonyTerrain";
+import { ColonyWater } from "./ColonyWater";
+import { baseLabelAnchor, hubSlot, projectKey } from "./colony";
+import { colonyModels, proofAssetUrls } from "./colony-assets";
+import { disposeGreybox } from "./colony-greybox";
+import { configureGltfLoader } from "./gltf-loader";
 import { LampPool, lampBudget, type PooledLamp } from "./lamp-pool";
 import { hubParcel, locatedProject, occupiedSlots, type ProjectBase, visibleBases } from "./layout";
 import {
@@ -28,17 +30,15 @@ import {
   proofView,
   proofWorkers,
 } from "./model";
+import { ParcelScatter, type ParcelScatterPlan } from "./ParcelScatter";
 import { PerformanceProbe, profiling } from "./PerformanceProbe";
 import { ProofBase, type SceneLight } from "./ProofBase";
 import { ProofCamera } from "./ProofCamera";
 import { ProofLabels } from "./ProofLabels";
 import { ProofWorker } from "./ProofWorker";
-import { ParcelScatter, type ParcelScatterPlan } from "./ParcelScatter";
-import { lanternLampOffset, scatterLayout } from "./scatter";
 import { SceneFinish } from "./SceneFinish";
+import { lanternLampOffset, scatterLayout } from "./scatter";
 import { ShadowCadence } from "./shadow-cadence";
-import { createCoastalWater, createWaterFromField, setWaterSplashes, type WaterSplash } from "./water";
-import { ColonyWater } from "./ColonyWater";
 import {
   buildField,
   coastRadius,
@@ -48,7 +48,28 @@ import {
   slopeAt,
   type TerrainField,
 } from "./terrain-field";
+import { createCoastalWater, createWaterFromField, setWaterSplashes, type WaterSplash } from "./water";
 import { batchWorker } from "./worker-batching";
+
+/** The station's authored practical white, and what a lamp is before a project claims it. */
+const warmLamp = new Color("#ffc37f");
+const lampPalette = new Color();
+/**
+ * A pooled lamp still has to light the ground, so it only travels part way to the project colour:
+ * far enough that a base's own lamps read as its own, not so far that the court goes monochrome.
+ */
+function lampColour(palette: string | null | undefined) {
+  if (!palette) return undefined;
+  return lampPalette.copy(warmLamp).lerp(colourOf(palette), 0.4).getHex();
+}
+const colourCache = new Map<string, Color>();
+function colourOf(hex: string) {
+  const existing = colourCache.get(hex);
+  if (existing) return existing;
+  const colour = new Color(hex);
+  colourCache.set(hex, colour);
+  return colour;
+}
 
 interface Props {
   input: ProofInput;
@@ -170,7 +191,12 @@ export function ProofScene(props: Props) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: Scatter follows the parcel set, not appearance or runtime refresh.
   const scatterPlans = useMemo<ParcelScatterPlan[]>(() => {
     if (!field) return [];
-    const plan = (slotId: string, origin: Point3, key: string): ParcelScatterPlan[] => {
+    const plan = (
+      slotId: string,
+      origin: Point3,
+      key: string,
+      palette: string | null,
+    ): ParcelScatterPlan[] => {
       const profile = field.profiles.find((entry) => entry.id === slotId);
       if (!profile) return [];
       const groundAt = (x: number, z: number) => heightAt(field, origin[0] + x, origin[2] + z);
@@ -178,6 +204,7 @@ export function ProofScene(props: Props) {
         {
           origin,
           groundAt,
+          palette,
           placements: scatterLayout(key, {
             hub: profile.hub,
             flatRadius: profile.flatRadius,
@@ -202,10 +229,20 @@ export function ProofScene(props: Props) {
       ];
     };
     return [
-      ...plan(hubSlot.id, hubParcel.position, hubSlot.id),
-      ...bases.flatMap((base) => (base.slot ? plan(base.slot, base.position, projectKey(base.project)) : [])),
+      // The landing terrace belongs to no project, so its kit keeps the authored colour.
+      ...plan(hubSlot.id, hubParcel.position, hubSlot.id, null),
+      ...bases.flatMap((base) =>
+        base.slot
+          ? plan(
+              base.slot,
+              base.position,
+              projectKey(base.project),
+              basePalettes[base.appearance.palette].light,
+            )
+          : [],
+      ),
     ];
-  }, [field, scatterKey]);
+  }, [field, scatterKey, appearanceKey]);
   const lampSlots = useMemo(() => Array.from({ length: lampBudget }, (_, slot) => `lamp:${slot}`), []);
   // biome-ignore lint/correctness/useExhaustiveDependencies: Lamp placement follows layout and variant, not identity.
   const lampsWorld = useMemo<PooledLamp[]>(
@@ -215,6 +252,7 @@ export function ProofScene(props: Props) {
           .filter((placement) => placement.kind === "lantern")
           .map((placement, index) => ({
             key: `lantern:${planIndex}:${index}`,
+            color: lampColour(plan.palette),
             position: [
               plan.origin[0] + placement.x + lanternLampOffset[0],
               plan.origin[1] + 4 + lanternLampOffset[1],
@@ -230,6 +268,7 @@ export function ProofScene(props: Props) {
             : (manifest.bases?.[legacyVariant(base.appearance.variant)].lightPositions ?? [])),
         ].map((position, index) => ({
           key: `${base.project.id}:${index}`,
+          color: lampColour(basePalettes[base.appearance.palette].light),
           position: [
             position[0] + base.position[0],
             position[1] + base.position[1],
@@ -272,6 +311,7 @@ export function ProofScene(props: Props) {
       node.visible = lit;
       node.position.set(...slot.position);
       node.intensity = (0.1 + lighting.lamps * 16) * slot.level;
+      node.color.setHex(slot.color ?? 0xffc37f);
     });
     const phase = Math.floor(lighting.hour * 2);
     if (phase !== mapPhase.current) {
@@ -322,7 +362,12 @@ export function ProofScene(props: Props) {
               onSelect={() => onSelect("project", base.project.id)}
             />
             {/* Every HQ is the same shell, so every HQ carries the same room props. */}
-            {colony?.props && <ColonyProps model={colony.props} origin={base.position} />}
+            {colony?.props && <ColonyProps model={colony.props} origin={base.position} light={light} />}
+            {/* Only the opened base: with its roof on, a room's skirting is six draw calls of
+                geometry nobody can see. */}
+            {colony && cutaway && base.project.id === activeFocus && (
+              <ColonyRoomLights light={light} origin={base.position} />
+            )}
           </Fragment>
         );
       })}

@@ -1,7 +1,7 @@
-import type { RuntimeProject } from "../../domain.ts";
 import contractJson from "../../../design/mission-frontier/assets/staging/colony-v2/contract.json" with {
   type: "json",
 };
+import type { RuntimeProject } from "../../domain.ts";
 
 /**
  * Contract 2.0 is the placement authority: slot table, edge lines, bridge geometry

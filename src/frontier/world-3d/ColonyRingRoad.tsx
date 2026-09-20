@@ -66,7 +66,14 @@ export function ColonyRingRoad({
       );
       if (candidate) found = candidate as MeshStandardMaterial;
     });
-    return found;
+    // Cloned, not borrowed. The kerb needs a depth bias to sit on paving without tearing against it,
+    // and the source material is the one the bridge decks are drawn with.
+    if (!found) return null;
+    const owned = (found as MeshStandardMaterial).clone();
+    owned.polygonOffset = true;
+    owned.polygonOffsetFactor = -2;
+    owned.polygonOffsetUnits = -2;
+    return owned;
   }, [span]);
   const slotKey = bases.map((base) => base.appearance.slot ?? "").join();
   // biome-ignore lint/correctness/useExhaustiveDependencies: The kerbs depend on the occupied slots and the field.
@@ -136,10 +143,22 @@ export function ColonyRingRoad({
           const positions: number[] = [];
           const indices: number[] = [];
           const steps = 24;
+          let previousSpur = false;
           for (let i = 0; i <= steps; i++) {
             const r = from + ((to - from) * i) / steps;
             const centreX = dx * r + px * offset;
             const centreZ = dz * r + pz * offset;
+            // The apron is paved at its own level, a quarter metre above the height field. A kerb
+            // laid on the field crosses under it and surfaces in broken dashes where the two graze.
+            if (
+              centreX >= (apron.x[0] ?? -12.5) - 1 &&
+              centreX <= (apron.x[1] ?? 12.5) + 1 &&
+              centreZ >= (apron.z[0] ?? 14) - 1 &&
+              centreZ <= (apron.z[1] ?? 27) + 1
+            ) {
+              previousSpur = false;
+              continue;
+            }
             const y = heightAt(field, cx + centreX, cz + centreZ) + lift;
             const half = kerbWidth / 2;
             const base = positions.length / 3;
@@ -151,8 +170,10 @@ export function ColonyRingRoad({
               y,
               centreZ + pz * half,
             );
-            if (i > 0) indices.push(base - 2, base - 1, base, base - 1, base + 1, base);
+            if (previousSpur) indices.push(base - 2, base - 1, base, base - 1, base + 1, base);
+            previousSpur = true;
           }
+          if (indices.length === 0) continue;
           result.push(
             ribbon(
               positions,
@@ -171,8 +192,9 @@ export function ColonyRingRoad({
   useEffect(
     () => () => {
       for (const mesh of meshes) mesh.geometry.dispose();
+      material?.dispose();
     },
-    [meshes],
+    [meshes, material],
   );
   return (
     <>

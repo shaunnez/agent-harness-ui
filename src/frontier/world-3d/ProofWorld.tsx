@@ -1,5 +1,3 @@
-import { proofAssetUrls } from "./colony-assets";
-import { roomIds, roomNames } from "./rooms";
 import { ArrowLeft, Cube, MapPin, Question, WarningCircle } from "@phosphor-icons/react";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { Component, type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from "react";
@@ -11,6 +9,7 @@ import { WorldTime } from "../views/WorldTime";
 import { lightingAt, type WorldLighting } from "../world/environment-model";
 import { basePalettes } from "./appearance";
 import { BaseAppearancePicker } from "./BaseAppearancePicker";
+import { proofAssetUrls } from "./colony-assets";
 import { archipelagoBases, locatedProject, projectBases, visibleBases } from "./layout";
 import {
   colonyRequested,
@@ -25,6 +24,7 @@ import {
   withoutColony,
 } from "./model";
 import { ProofScene } from "./ProofScene";
+import { roomIds, roomNames } from "./rooms";
 import { useBaseAppearance } from "./useBaseAppearance";
 import "./proof.css";
 import { PerformancePanel, profiling } from "./PerformanceProbe";

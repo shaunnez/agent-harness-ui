@@ -75,10 +75,22 @@ const dracoInspectable = new Set(["scatter", "scatter2", "scatter3", "props"]);
  * the guard that catches the contract drifting from the geometry it produced. Raised on Shaun's
  * approval, 19 September 2026; the case is in build-evidence/MESHY-KIT.
  */
-const textureCeiling = { scatter3: 64, props: 16 };
+const textureCeiling = { scatter3: 64 };
 const scannedKitBudget = { triangles: 200000, bytes: 6000000 };
-/** Three scanned props, each read at conversational distance inside a room rather than across the bay. */
-const propsKitBudget = { triangles: 20000, bytes: 2500000 };
+/**
+ * The props kit is budgeted per prop, not per file.
+ *
+ * It was a flat 20,000 triangles / 2.5 MB / 16 textures, which is three times what three props cost
+ * and means nothing at all about the fourth. Every prop added would have failed the build and been
+ * answered by picking a bigger number, which is how the scatter kit's ceilings went twice already.
+ *
+ * A prop is one scanned body with its own baked PBR set -- it cannot share a UV layout with the
+ * others, so cost genuinely scales with the count and a per-item figure is the one that carries
+ * information. These are set against what the first three actually cost (5,666 triangles, 4 textures
+ * and 199 KB each on average, the heaviest at 7,000 triangles) with room for a prop half again as
+ * heavy. A prop that misses this is a prop that needs decimating, whatever else is in the file.
+ */
+const propsBudgetPerItem = { triangles: 8000, bytes: 350000, textures: 5 };
 const identityRoles = new Set(["identity_roof_inset", "identity_roof_ring", "identity_trim"]);
 const practicalRoles = new Set([
   "practical_warm_strip",
@@ -253,6 +265,11 @@ export function validateColonyGlb(bytes, { kind, contract, expectedSha256 }) {
   const { json, binary } = readColonyGlb(bytes);
   const { transforms, paths } = nodeTransforms(json);
   const nodes = new Map([...transforms.keys()].map((i) => [json.nodes[i].name, i]));
+  // Scene roots, not every node: a prop's own child meshes are named off its root and would each
+  // buy the file another prop's worth of budget.
+  const propCount = (json.scenes?.[0]?.nodes ?? []).filter((index) =>
+    (json.nodes[index]?.name ?? "").startsWith("MF_Prop_"),
+  ).length;
   const required = [...requiredGroups[kind]];
   if (kind === "shell") required.push(...Object.keys(contract.hq.rooms).map((room) => `MF_Interior_${room}`));
   for (const name of required) if (!nodes.has(name)) throw new Error(`Colony ${kind} missing group ${name}`);
@@ -266,7 +283,8 @@ export function validateColonyGlb(bytes, { kind, contract, expectedSha256 }) {
   if (kind === "crown")
     for (const role of identityRoles)
       if (!materials.some((m) => m.name === role)) throw new Error(`Colony crown missing ${role}`);
-  const maxTextures = textureCeiling[kind] ?? 8;
+  const maxTextures =
+    kind === "props" ? propsBudgetPerItem.textures * propCount : (textureCeiling[kind] ?? 8);
   if ((json.images?.length ?? 0) > maxTextures)
     throw new Error(`Colony texture count exceeds ${maxTextures}`);
   for (const image of json.images ?? []) {
@@ -386,7 +404,10 @@ export function validateColonyGlb(bytes, { kind, contract, expectedSha256 }) {
         : kind === "scatter3"
           ? (contract.budgets.scatterKitScanned ?? scannedKitBudget)
           : kind === "props"
-            ? propsKitBudget
+            ? {
+                triangles: propsBudgetPerItem.triangles * propCount,
+                bytes: propsBudgetPerItem.bytes * propCount,
+              }
             : contract.budgets[
                 { shell: "hqShell", crown: "crown", parcel: "parcel", span: "bridgeSpan", end: "bridgeSpan" }[
                   kind

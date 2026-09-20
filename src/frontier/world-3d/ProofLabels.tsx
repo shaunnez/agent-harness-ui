@@ -1,4 +1,3 @@
-import { rooms, type RoomId } from "./rooms";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { type Intersection, Matrix4, type Object3D, Raycaster, Vector2, Vector3 } from "three";
@@ -6,8 +5,9 @@ import type { Point3 } from "./colony";
 import { type ScreenRect, separateLabels } from "./labels";
 import { type ProjectBase, translated } from "./layout";
 import { type ProofView, workerHeight } from "./model";
-import { profiling, recordLabelTime } from "./PerformanceProbe";
 import { isOccluded, visibleOccluders } from "./occlusion";
+import { profiling, recordLabelTime } from "./PerformanceProbe";
+import { type RoomId, rooms } from "./rooms";
 
 export function ProofLabels({
   labels,

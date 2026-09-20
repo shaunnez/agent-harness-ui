@@ -1,9 +1,9 @@
-import { integrateColonyAssets } from "./integrate-colony-assets.mjs";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { legacyBaseVariants } from "../../src/frontier/world-3d/appearance.ts";
 import { parseProofManifest } from "../../src/frontier/world-3d/model.ts";
+import { integrateColonyAssets } from "./integrate-colony-assets.mjs";
 
 const root = process.cwd();
 const original = path.join(root, "design/mission-frontier/assets/staging/3d-visual-proof/astra-scene");

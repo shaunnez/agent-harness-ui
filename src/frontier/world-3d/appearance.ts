@@ -1,5 +1,5 @@
 import type { RuntimeProject } from "../../domain.ts";
-import { assignSlots, projectKey, isProjectSlot, type SlotAssignments } from "./colony.ts";
+import { assignSlots, isProjectSlot, projectKey, type SlotAssignments } from "./colony.ts";
 
 /** Four crowns on the shared hex shell; the archipelago kit behind the colony flag knows only the last three. */
 export const baseVariants = ["bastion", "command", "relay", "foundry"] as const;

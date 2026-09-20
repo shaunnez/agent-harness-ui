@@ -119,6 +119,20 @@ export const scatterRules = {
   shoreEdgeClearanceDeg: 16,
   /** Crystal clusters per project parcel. */
   crystals: [2, 4] as [number, number],
+  /**
+   * Crystal cluster scale. The kit bodies run 1.90 m to 3.55 m tall, so at the old 0.7-1.2 the
+   * smallest landed at 1.3 m -- a pebble beside a 5 m robot, which is what the world camera reads it
+   * against. Raised so the bottom of the range is the whole body and the top is a formation.
+   */
+  crystalScale: [1.0, 1.5] as [number, number],
+  /**
+   * Parked vehicles, against the robots rather than against nothing. `MF_Vehicle_Rover` is 1.73 m
+   * tall and `MF_Vehicle_Cart` 1.23 m, while a robot stands 4.03 m in the focused exterior view --
+   * so a service truck came up below a robot's waist and the crate on the cart read as a lunchbox.
+   * 1.45 puts the rover at about 2.5 m, which is the two-thirds of robot height the original design
+   * shows, and the cart's crate at roughly chest height.
+   */
+  vehicleScale: 1.45,
   /** Nothing within this distance of the stream or its pools. */
   waterClearance: 2.5,
 };
@@ -347,10 +361,17 @@ export function scatterLayout(key: string, ground: ScatterGround): ScatterPlacem
       if (corridorDistance(x, z, ground.flatRadius) < 5) return false;
       if (ringDistance(ground, x, z) < ringClearance) return false;
       if (waterDistance(water, x, z) < 0.6) return false;
-      if (near(x, z, 2.4)) return false;
+      if (near(x, z, 3.2)) return false;
       const at = ground.ground(x, z);
       if (at.height < 2.5 || at.slope > 45) return false;
-      place("crystal", pick(crystalItems), x, z, random() * Math.PI * 2, between(0.7, 1.2));
+      place(
+        "crystal",
+        pick(crystalItems),
+        x,
+        z,
+        random() * Math.PI * 2,
+        between(scatterRules.crystalScale[0], scatterRules.crystalScale[1]),
+      );
       return true;
     };
     let placed = 0;
@@ -427,7 +448,7 @@ export function scatterLayout(key: string, ground: ScatterGround): ScatterPlacem
       x,
       z,
       (random() < 0.5 ? 0 : Math.PI) + between(-0.2, 0.2),
-      1,
+      scatterRules.vehicleScale,
     );
     parked++;
   }
