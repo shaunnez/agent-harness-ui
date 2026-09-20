@@ -411,6 +411,16 @@ function ToolDetails({ toolCall }: { toolCall: NonNullable<RuntimeEvent["toolCal
         value={toolCall.server ? `${toolCall.category} · ${toolCall.server}` : toolCall.category}
       />
       <Detail label="Result" value={toolCall.result ?? "Not exposed in this event"} />
+      {toolCall.failureOutput ? (
+        <div>
+          <dt>Retained output</dt>
+          <dd>
+            {/* Whitespace is the diagnostic here: a stack trace or a test failure block
+                is unreadable reflowed, so the tail keeps its own line breaks. */}
+            <pre className="mono retained-output">{toolCall.failureOutput}</pre>
+          </dd>
+        </div>
+      ) : null}
     </>
   );
 }

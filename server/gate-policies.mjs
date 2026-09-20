@@ -17,7 +17,23 @@ export const RUN_GATE_STAGES = new Set(["implement", "dev-review", "test", "fina
 // for evidence that a person read the artifact.
 export const APPROVAL_GATE_STAGES = new Set(["specification", "plan"]);
 
-export const GATE_STAGES = new Set([...RUN_GATE_STAGES, ...APPROVAL_GATE_STAGES]);
+/**
+ * The repair gate. Not a workflow stage: a candidate parks at `repair-required` on
+ * whichever gate rejected it, and the repair run itself spends the `implement`
+ * allowance. `"repair"` is a policy key that names a decision — may the harness
+ * rebuild a rejected candidate without being asked? — rather than a place in the
+ * pipeline, which is why it is settable but never appears in `workflowStages`.
+ *
+ * It is separated from `RUN_GATE_STAGES` because the question it asks an operator is
+ * a different one. Opting Implement in says "start the run I would have started".
+ * Opting Repair in says "act on a rejection I have not read". Two bounds keep that
+ * from running away, and both predate this key: the repair run consumes an Implement
+ * attempt, and the repair circuit breaker moves an over-repaired candidate to
+ * `blocked` — a status no policy can advance.
+ */
+export const REPAIR_GATE_STAGES = new Set(["repair"]);
+
+export const GATE_STAGES = new Set([...RUN_GATE_STAGES, ...APPROVAL_GATE_STAGES, ...REPAIR_GATE_STAGES]);
 
 export const GATE_POLICIES = new Set(["manual", "auto-accept-recommendations"]);
 
@@ -70,6 +86,26 @@ export const GATE_AUTO_ADVANCE = Object.freeze({
   "ready-for-test": { stage: "test", nextKind: "test" },
   "ready-for-final-review": { stage: "final-review", nextKind: "final-review" },
 });
+
+/**
+ * The gate a task is parked at, or `null` when it is not parked at one.
+ *
+ * `GATE_AUTO_ADVANCE` cannot answer this alone because `repair-required` is the one
+ * gate whose stage is not fixed by its status: a candidate can be rejected at
+ * dev-review, test or final-review and parks at whichever one rejected it. The
+ * returned `stage` is where the decision is recorded, `policyStage` is the key looked
+ * up in `gatePolicies`, and for every gate but repair the two are the same.
+ */
+export function resolveGateAutoAdvance(task) {
+  const parked = GATE_AUTO_ADVANCE[task?.status];
+  if (parked) return { ...parked, policyStage: parked.stage };
+  if (task?.status !== "repair-required") return null;
+  // A repair is only meaningful against a gate that judged a candidate. Any other
+  // stage reaching this status is a shape the orchestrator does not produce, and
+  // guessing a stage for it would attribute the run to the wrong budget.
+  if (!RUN_GATE_STAGES.has(task.currentStage)) return null;
+  return { stage: task.currentStage, nextKind: "repair", policyStage: "repair" };
+}
 
 /**
  * Approval gates are keyed by the status the task parks in rather than by the run kind
