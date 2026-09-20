@@ -53,9 +53,15 @@
   background: #10324f;
   box-shadow: inset 3px 0 #67b6ff;
 }
-.project-row img {
+.project-row > img,
+.project-row > .captured-base-preview {
   width: 114px;
   height: 100px;
+  flex: 0 0 114px;
+}
+.project-row .captured-base-preview img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 .project-row-identity {
@@ -91,7 +97,6 @@
 .base-preview-art {
   width: 100%;
   height: 260px;
-  object-fit: contain;
 }
 .project-detail,
 .project-preview {
@@ -452,9 +457,11 @@
   .project-updated {
     display: none;
   }
-  .project-row img {
+  .project-row > img,
+  .project-row > .captured-base-preview {
     width: 90px;
     height: 90px;
+    flex-basis: 90px;
   }
   .projects-layout,
   .project-setup-layout {
@@ -481,9 +488,11 @@
   .journal-detail-grid {
     grid-template-columns: 1fr;
   }
-  .project-row img {
+  .project-row > img,
+  .project-row > .captured-base-preview {
     width: 70px;
     height: 80px;
+    flex-basis: 70px;
   }
   .project-row {
     min-height: 100px;

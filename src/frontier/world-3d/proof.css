@@ -152,12 +152,12 @@
   width: 100%;
   font-size: 14px;
 }
-.proof-appearance fieldset {
+.proof-appearance-controls fieldset {
   padding: 0;
   margin: 16px 0;
   border: 0;
 }
-.proof-appearance legend {
+.proof-appearance-controls legend {
   margin-bottom: 8px;
   color: #c1d1d5;
   font-size: 12px;
@@ -184,7 +184,7 @@
   height: 78px;
   object-fit: contain;
 }
-.proof-appearance button[aria-pressed="true"] {
+.proof-appearance-controls button[aria-pressed="true"] {
   border-color: #81b9dd;
   background: #24485b;
 }

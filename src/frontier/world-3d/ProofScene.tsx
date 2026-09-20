@@ -20,7 +20,7 @@ import { baseLabelAnchor, hubSlot, projectKey } from "./colony";
 import { colonyModels, proofAssetUrls } from "./colony-assets";
 import { disposeGreybox } from "./colony-greybox";
 import { configureGltfLoader } from "./gltf-loader";
-import { LampPool, lampBudget, type PooledLamp } from "./lamp-pool";
+import { LampPool, lampBudget, lampColour, lampIntensity, type PooledLamp } from "./lamp-pool";
 import { hubParcel, locatedProject, occupiedSlots, type ProjectBase, visibleBases } from "./layout";
 import {
   type Point3,
@@ -50,26 +50,6 @@ import {
 } from "./terrain-field";
 import { createCoastalWater, createWaterFromField, setWaterSplashes, type WaterSplash } from "./water";
 import { batchWorker } from "./worker-batching";
-
-/** The station's authored practical white, and what a lamp is before a project claims it. */
-const warmLamp = new Color("#ffc37f");
-const lampPalette = new Color();
-/**
- * A pooled lamp still has to light the ground, so it only travels part way to the project colour:
- * far enough that a base's own lamps read as its own, not so far that the court goes monochrome.
- */
-function lampColour(palette: string | null | undefined) {
-  if (!palette) return undefined;
-  return lampPalette.copy(warmLamp).lerp(colourOf(palette), 0.4).getHex();
-}
-const colourCache = new Map<string, Color>();
-function colourOf(hex: string) {
-  const existing = colourCache.get(hex);
-  if (existing) return existing;
-  const colour = new Color(hex);
-  colourCache.set(hex, colour);
-  return colour;
-}
 
 interface Props {
   input: ProofInput;
@@ -303,7 +283,7 @@ export function ProofScene(props: Props) {
       if (!node) return;
       node.visible = lit;
       node.position.set(...slot.position);
-      node.intensity = (0.1 + lighting.lamps * 16) * slot.level;
+      node.intensity = lampIntensity(lighting.lamps, slot.level);
       node.color.setHex(slot.color ?? 0xffc37f);
     });
     const phase = Math.floor(lighting.hour * 2);
