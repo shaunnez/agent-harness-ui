@@ -70,8 +70,7 @@ def windows(prefix, phi0, phi1, r, y, height, skip=(), pitch_deg=5.0, margin=4.0
 
 
 # Greybox room equipment the scanned hero props replace. The 1.0.1 `equipment()` recipe is otherwise
-# retained in full -- wall consoles, review dais, fabrication bench, briefing console and the cart all
-# stay, because no scan exists for them yet.
+# retained for the floor and room fixtures; the eight scanned prop types replace their placeholders.
 #
 # The v1 producer directory is read-only history, so this strips the pieces after the shared recipe
 # has run rather than forking it: the parts that remain keep one source of truth, and a future scan
@@ -88,6 +87,9 @@ REPLACED_BY_SCANS = {
     'review_dais', 'review_dais_light',
     # MF_Prop_IntakeDesk, on the briefing console's own footprint
     'briefing_qa_console', 'briefing_scout_display', 'briefing_scout_panel', 'briefing_console_control',
+    # Three MF_Prop_FabCell instances and the MF_Prop_ServiceCart occupy the reserved equipment areas.
+    'implementation_fabrication_bench', 'implementation_bench_top',
+    'fabrication_module', 'fabrication_module_inlay', 'dispatch_cart', 'cart_cargo', 'cart_wheel',
 } | {
     # MF_Prop_WallConsole, twenty of them, on the same radial 15 row at the same 3.4 m pitch. The
     # `light()` call that goes with each radial is not here: the wall row's cyan practical lights the
@@ -102,6 +104,7 @@ REPLACED_BY_SCANS = {
 REPLACED_OBSTACLES = {
     'planning_central_equipment', 'testing_central_equipment', 'cargo_crates',
     'review_central_equipment', 'briefing_qa_console',
+    'implementation_fabrication_bench', 'cargo_cart',
 } | {f'{room}_wall_console_{phi}_{k}' for room, phis in WALL_ROOMS.items() for phi in phis
      for k in range(4)}
 

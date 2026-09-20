@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -14,6 +15,57 @@ const receipt = JSON.parse(
     "utf8",
   ),
 );
+
+test("the shipped props match the receipt and meet the 40k / 4MB kit and individual targets", async () => {
+  const manifest = JSON.parse(
+    await readFile(path.join(root, "public/frontier/assets/3d-proof/manifest.json"), "utf8"),
+  );
+  const bytes = await readFile(path.join(root, "public/frontier", manifest.colony.props));
+  assert.equal(createHash("sha256").update(bytes).digest("hex"), receipt.sha256);
+  assert.equal(bytes.length, receipt.bytes);
+  assert.ok(bytes.length <= 4_000_000);
+  const gltf = JSON.parse(bytes.subarray(20, 20 + bytes.readUInt32LE(12)));
+  let total = 0;
+  for (const [name, prop] of Object.entries(receipt.props)) {
+    const body = gltf.nodes.find((node) => node.name === `${name}_body`);
+    assert.ok(body && body.mesh !== undefined, name);
+    const triangles = gltf.meshes[body.mesh].primitives.reduce(
+      (sum, p) => sum + gltf.accessors[p.indices].count / 3,
+      0,
+    );
+    assert.equal(triangles, prop.triangles, `${name} exported count`);
+    const target = { MF_Prop_FabCell: 6000, MF_Prop_ServiceCart: 5000 }[name];
+    if (target) {
+      assert.equal(prop.preparation.targetTriangles, target);
+      assert.ok(triangles <= target, name);
+    }
+    total += triangles;
+  }
+  assert.ok(total <= 40_000, `${total} triangles`);
+  assert.equal(receipt.budget.triangles, 40_000);
+  assert.equal(receipt.budget.bytes, 4_000_000);
+  assert.ok(gltf.materials.every((material) => !/\.\d{3}$/.test(material.name)));
+  assert.equal(
+    new Set(gltf.materials.map((material) => material.pbrMetallicRoughness.baseColorTexture.index)).size,
+    8,
+    "normalizing material names must not merge the eight baked atlases",
+  );
+});
+
+test("the completed kit places three fabrication cells and a cart in the reserved floor areas", () => {
+  const cells = propPlacements.filter((prop) => prop.node === "MF_Prop_FabCell");
+  assert.equal(cells.length, 3);
+  for (const cell of cells) {
+    for (const [x, z] of corners(cell)) {
+      const along = x * -0.5 + (z * -Math.sqrt(3)) / 2;
+      const across = (x * Math.sqrt(3)) / 2 - z * 0.5;
+      assert.ok(along >= 8 && along <= 14 && Math.abs(across) <= 0.8);
+    }
+  }
+  const cart = propPlacements.find((prop) => prop.node === "MF_Prop_ServiceCart");
+  const pad = colonyContract.hq.rooms.dispatch.cargoPads.find((pad) => pad.id === "cargo_cart");
+  assert.deepEqual([cart.position[0], cart.position[2]], pad.xz);
+});
 
 /** The rotated plan corners of a placement, in the order the footprint is authored. */
 function corners(prop) {

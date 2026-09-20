@@ -1,6 +1,7 @@
 """Contract 2.0 hero props: the eight scanned interior pieces the HQ shell reserved room for.
 
-  /Applications/Blender.app/Contents/MacOS/Blender -b -t 4 --python build_props_kit.py -- <meshy_root> <out_dir>
+  Blender -b -t 4 --python prepare_complex_props.py -- <meshy_root> <prepared_dir>
+  Blender -b -t 4 --python build_props_kit.py -- <meshy_root> <out_dir> <prepared_dir>
 
 `hq-shell.glb` ships an `MF_Props` root with no children, and the contract already names the sockets
 these pieces belong on -- `hq_planning_table_*`, `hq_testing_bench_*`, `hq_dispatch_bay_*`. Rather
@@ -19,6 +20,10 @@ from mathutils import Vector, Matrix
 argv = sys.argv[sys.argv.index('--') + 1:]
 MESHY = Path(argv[0]); OUT = Path(argv[1])
 OUT.mkdir(parents=True, exist_ok=True)
+PREPARED = Path(argv[2]) if len(argv) > 2 else OUT / 'prepared'
+if not (PREPARED / 'preparation.json').exists():
+    raise RuntimeError(f'Run prepare_complex_props.py first; missing {PREPARED / "preparation.json"}')
+preparation = json.loads((PREPARED / 'preparation.json').read_text())
 
 # root -> (meshy asset, triangle target, texture px, height in metres, material name)
 #
@@ -61,8 +66,9 @@ OUT.mkdir(parents=True, exist_ok=True)
 # melted lumps -- no wheels on the cart, no recognisable machine in the cell -- because Meshy's
 # `should_remesh` defaults to *true* on meshy-7, which decimates to a game-ready shell before the
 # texture bake. Flat-fronted pieces survive that; a gantry, a robot arm and caster wheels do not.
-# Regenerated with `should_remesh: false`, they arrive at 3.2M and 1.5M triangles and decimate here
-# like the first three scans do. They need no metalness override for the same reason those three
+# Regenerated with `should_remesh: false`, they arrive at 3.2M and 1.5M triangles. Their high-genus
+# topology stalls collapse, so prepare_complex_props.py remeshes and rebakes them before this build.
+# They need no metalness override for the same reason those three
 # do not: the un-remeshed exports are plain 4k atlases with no `KHR_texture_transform` tiling.
 PROPS = {
     'MF_Prop_PlanningTable': ('planningHoloTable.V2',   6000,  512, 1.05, 'ambient_screen_service',  None),
@@ -94,11 +100,9 @@ def tri_count(o):
 def weld(o):
     """Merge coincident vertices, so collapse decimate has edges it can actually collapse.
 
-    Meshy splits vertices at every UV seam and shading break, and collapse cannot merge across a
-    split: the un-remeshed fab cell stalls at 70,000 triangles however many passes it is given,
-    because half its vertex pairs are in the same place but not joined. Welding at 10 microns in the
-    import's own ~2-unit box halves the vertex count and lets the target be reached. It is below any
-    distance the scan resolves, so it merges duplicates and nothing else.
+    Meshy splits vertices at UV seams and shading breaks. Welding these duplicates at 10 microns
+    in the import's ~2-unit box helps collapse, but cannot repair the FabCell / ServiceCart scan
+    topology. Those meshes require the separate remesh and bake preparation.
     """
     bpy.ops.object.select_all(action='DESELECT'); o.select_set(True)
     bpy.context.view_layer.objects.active = o
@@ -114,13 +118,12 @@ def decimate(o, target):
     One pass is not always enough. Blender's collapse decimate stalls well short of a very small
     ratio, and the un-remeshed scans arrive in the millions: 6,000 / 3,242,836 is a ratio of 0.0018
     and leaves the mesh an order of magnitude over target. Stepping down, never asking for more than
-    a 20x cut at a time, lands on the number. Anything that already reaches its target in one pass
+    a 20x cut at a time, avoids that single-pass limit. Anything that reaches its target in one pass
     -- which is every scan generated before this -- takes one pass and behaves exactly as it did.
 
-    Each collapse also introduces its own new coincident vertices along the edges it just merged --
-    the initial `weld()` before this loop starts only catches Meshy's original UV-seam splits, not
-    the ones the previous pass leaves behind. Re-welding before every pass but the first is what
-    gets the fab cell and the cart the rest of the way to target instead of stalling above it.
+    Re-welding between passes did not fix the FabCell / ServiceCart stalls (14,622 / 11,291).
+    Their scan topology must be rebuilt and rebaked by prepare_complex_props.py first. A stalled
+    reduction is an error, never permission to ship beyond the per-prop budget.
     """
     cur = tri_count(o)
     first = True
@@ -134,6 +137,8 @@ def decimate(o, target):
         got = tri_count(o)
         if got >= cur: break
         cur = got
+    if cur > target:
+        raise RuntimeError(f'{o.name}: decimation stalled at {cur} triangles; target {target}')
     return cur
 
 def bounds(o):
@@ -151,6 +156,14 @@ report = {}
 for root_name, (asset, tris, px, height, material, metal) in PROPS.items():
     src = MESHY / asset / f'{asset}.glb'
     assert src.exists(), src
+    prepared = None
+    if root_name in {'MF_Prop_FabCell', 'MF_Prop_ServiceCart'}:
+        prepared = preparation[root_name]
+        if hashlib.sha256(src.read_bytes()).hexdigest() != prepared['sourceSha256']:
+            raise RuntimeError(f'{root_name}: prepared mesh belongs to a different source scan')
+        src = PREPARED / f'{asset}.glb'
+        if hashlib.sha256(src.read_bytes()).hexdigest() != prepared['sha256']:
+            raise RuntimeError(f'{root_name}: prepared mesh hash mismatch')
     before = set(bpy.data.objects)
     bpy.ops.import_scene.gltf(filepath=str(src))
     fresh = [o for o in set(bpy.data.objects) - before if o.type == 'MESH']
@@ -207,6 +220,8 @@ for root_name, (asset, tris, px, height, material, metal) in PROPS.items():
                              size=[round(hi.x-lo.x,3), round(hi.z-lo.z,3), round(hi.y-lo.y,3)],
                              footprintRadius=round(max(hi.x-lo.x, hi.y-lo.y)/2, 3),
                              material=material, metalness=metal)
+    if prepared:
+        report[root_name]['preparation'] = prepared
     print(f'PROP {root_name:<24} {asset:<24} {got:>6} tris  {px}px  h={height:.2f}m')
 
     for im in list(bpy.data.images):
@@ -217,6 +232,9 @@ for im in bpy.data.images:
     if im.users: im.pack()
 
 bpy.context.view_layer.update()
+total_triangles = sum(p['triangles'] for p in report.values())
+if total_triangles > BUDGET_TRIS:
+    raise RuntimeError(f'Props kit has {total_triangles} triangles; budget {BUDGET_TRIS}')
 path = OUT / 'props-kit.glb'
 bpy.ops.export_scene.gltf(
     filepath=str(path), export_format='GLB', export_apply=True, export_yup=True,
@@ -227,9 +245,17 @@ bpy.ops.export_scene.gltf(
     export_draco_texcoord_quantization=12)
 
 raw = path.read_bytes()
+if len(raw) > BUDGET_BYTES:
+    raise RuntimeError(f'Props kit has {len(raw)} bytes; budget {BUDGET_BYTES}')
 json_len = struct.unpack_from('<I', raw, 12)[0]
 json_type = raw[16:20]
 gltf = json.loads(raw[20:20 + json_len])
+for node in gltf['nodes']:
+    root_name = node.get('name', '').removesuffix('_body')
+    if root_name in report and 'mesh' in node:
+        report[root_name]['triangles'] = sum(
+            gltf['accessors'][p['indices']]['count'] // 3
+            for p in gltf['meshes'][node['mesh']]['primitives'])
 
 # Six of these eight props share a material name with another prop (`ambient_screen_service` alone
 # covers four), and importing each into the same Blender session to keep its own baked texture means

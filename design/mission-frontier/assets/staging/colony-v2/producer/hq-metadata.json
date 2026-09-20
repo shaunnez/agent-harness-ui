@@ -106,12 +106,12 @@
             ],
             "max": [
               17.3363,
-              6.3425,
+              4.361,
               21.6
             ],
             "size": [
               34.6726,
-              2.0725,
+              0.091,
               36.625
             ]
           }
@@ -338,25 +338,22 @@
           "parent": "MF_Interior",
           "children": [
             "MF_Interior_implementation__brushed_titanium",
-            "MF_Interior_implementation__room_inlay_implementation",
-            "MF_Interior_implementation__structure_graphite_joints",
-            "MF_Interior_implementation__structure_ivory_ceramic",
-            "MF_Interior_implementation__utility_ochre"
+            "MF_Interior_implementation__room_inlay_implementation"
           ],
           "bounds": {
             "min": [
               -17.3363,
-              4.3,
+              4.302,
               -15.025
             ],
             "max": [
               8.6763,
-              6.3425,
+              4.361,
               0.035
             ],
             "size": [
               26.0126,
-              2.0425,
+              0.059,
               15.06
             ]
           }
@@ -437,9 +434,7 @@
           "parent": "MF_Interior",
           "children": [
             "MF_Interior_dispatch__brushed_titanium",
-            "MF_Interior_dispatch__room_inlay_dispatch",
-            "MF_Interior_dispatch__structure_graphite_joints",
-            "MF_Interior_dispatch__utility_ochre"
+            "MF_Interior_dispatch__room_inlay_dispatch"
           ],
           "bounds": {
             "min": [
@@ -449,12 +444,12 @@
             ],
             "max": [
               8.6763,
-              5.31,
+              4.361,
               21.6
             ],
             "size": [
               13.7763,
-              1.04,
+              0.091,
               16.135
             ]
           }
@@ -635,10 +630,6 @@
           "planning_floor_reveal"
         ],
         "MF_Interior_implementation": [
-          "fabrication_module",
-          "fabrication_module_inlay",
-          "implementation_bench_top",
-          "implementation_fabrication_bench",
           "implementation_floor_inlay",
           "implementation_floor_reveal"
         ],
@@ -656,9 +647,6 @@
         ],
         "MF_Interior_dispatch": [
           "bay_floor",
-          "cart_cargo",
-          "cart_wheel",
-          "dispatch_cart",
           "dispatch_floor_inlay",
           "dispatch_floor_reveal"
         ],
@@ -705,23 +693,23 @@
         "MF_ShellCutaway_FrontFlats": 151,
         "MF_Roof": 236,
         "MF_Interior_planning": 5,
-        "MF_Interior_implementation": 19,
+        "MF_Interior_implementation": 7,
         "MF_Interior_review": 5,
         "MF_Interior_testing": 5,
         "MF_Interior_briefing": 5,
-        "MF_Interior_dispatch": 12,
+        "MF_Interior_dispatch": 6,
         "MF_ShellCutaway_PartitionGlass": 56,
         "MF_Court": 20,
         "MF_Practicals": 9
       },
       "glb": {
-        "bytes": 6007092,
-        "sha256": "a3eb27a5ff3d8b961f760a6457b202b4247fc62202634f977316e7470e230cc8",
-        "triangles": 108404,
-        "meshes": 44,
+        "bytes": 5906608,
+        "sha256": "f0e1eeb73c824056aa618c5869e41ac0fb9c32c43dac0b3b14ae59a8af6ff3af",
+        "triangles": 106396,
+        "meshes": 39,
         "materials": 19,
         "images": 6,
-        "nodes": 114
+        "nodes": 109
       },
       "obstacles": [
         {
@@ -735,32 +723,6 @@
             1.5,
             5.34,
             1.5
-          ]
-        },
-        {
-          "name": "implementation_fabrication_bench",
-          "min": [
-            -8.1356,
-            4.3,
-            -11.0912
-          ],
-          "max": [
-            -2.2644,
-            5.8,
-            -6.9221
-          ]
-        },
-        {
-          "name": "cargo_cart",
-          "min": [
-            2.875,
-            4.53,
-            19.55
-          ],
-          "max": [
-            5.125,
-            4.93,
-            20.85
           ]
         }
       ],
@@ -2698,32 +2660,6 @@
         1.5,
         5.34,
         1.5
-      ]
-    },
-    {
-      "name": "implementation_fabrication_bench",
-      "min": [
-        -8.1356,
-        4.3,
-        -11.0912
-      ],
-      "max": [
-        -2.2644,
-        5.8,
-        -6.9221
-      ]
-    },
-    {
-      "name": "cargo_cart",
-      "min": [
-        2.875,
-        4.53,
-        19.55
-      ],
-      "max": [
-        5.125,
-        4.93,
-        20.85
       ]
     }
   ]

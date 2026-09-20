@@ -8,12 +8,12 @@
       "relay": "/assets/3d-proof/crown-relay.1913db15dbe6.glb",
       "foundry": "/assets/3d-proof/crown-foundry.a9c0c35790d0.glb"
     },
-    "shell": "/assets/3d-proof/hq-shell.a3eb27a5ff3d.glb",
+    "shell": "/assets/3d-proof/hq-shell.f0e1eeb73c82.glb",
     "bridgeSpan": "/assets/3d-proof/bridge-span-27.61fa0489a831.glb",
     "bridgeEnd": "/assets/3d-proof/bridge-end.50920a684920.glb",
     "scatterKit": "/assets/3d-proof/scatter-kit.6bd4b53f8fc3.glb",
     "shuttle": "/assets/3d-proof/shuttle.0f334b8d4889.glb",
-    "props": "/assets/3d-proof/props-kit.aca074e20ac5.glb",
+    "props": "/assets/3d-proof/props-kit.3f7eccc2db42.glb",
     "terrainTextures": {
       "gravel": "/assets/3d-proof/terrain-gravel-albedo.3e82bc8c5ea9.jpg",
       "limestone": "/assets/3d-proof/terrain-limestone-albedo.b09636eff1da.jpg",
@@ -140,32 +140,6 @@
           1.5,
           5.34,
           1.5
-        ]
-      },
-      {
-        "name": "implementation_fabrication_bench",
-        "min": [
-          -8.1356,
-          4.3,
-          -11.0912
-        ],
-        "max": [
-          -2.2644,
-          5.8,
-          -6.9221
-        ]
-      },
-      {
-        "name": "cargo_cart",
-        "min": [
-          2.875,
-          4.53,
-          19.55
-        ],
-        "max": [
-          5.125,
-          4.93,
-          20.85
         ]
       }
     ]

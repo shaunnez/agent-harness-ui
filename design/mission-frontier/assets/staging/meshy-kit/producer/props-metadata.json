@@ -1,12 +1,12 @@
 {
   "file": "props-kit.glb",
-  "sha256": "9d5a0a2e0403fa1adff078cec9454ab3fcdd91412537730bd11b0f275c5d3a38",
-  "bytes": 2895372,
+  "sha256": "3f7eccc2db4287b7f9ba88db1e907f76ade52c414deafbf589bf80873a7752d6",
+  "bytes": 2909480,
   "images": 32,
   "props": {
     "MF_Prop_PlanningTable": {
       "asset": "planningHoloTable.V2",
-      "triangles": 6000,
+      "triangles": 5990,
       "texturePx": 512,
       "size": [
         3.163,
@@ -19,7 +19,7 @@
     },
     "MF_Prop_TestRig": {
       "asset": "testingRig.V2",
-      "triangles": 7000,
+      "triangles": 6986,
       "texturePx": 512,
       "size": [
         3.554,
@@ -32,7 +32,7 @@
     },
     "MF_Prop_CargoBattery": {
       "asset": "cargoBattery.V2",
-      "triangles": 4000,
+      "triangles": 3997,
       "texturePx": 512,
       "size": [
         1.573,
@@ -45,7 +45,7 @@
     },
     "MF_Prop_WallConsole": {
       "asset": "MF_Prop_WallConsole",
-      "triangles": 1999,
+      "triangles": 1996,
       "texturePx": 1024,
       "size": [
         1.811,
@@ -58,7 +58,7 @@
     },
     "MF_Prop_IntakeDesk": {
       "asset": "MF_Prop_IntakeDesk",
-      "triangles": 2999,
+      "triangles": 2997,
       "texturePx": 1024,
       "size": [
         2.648,
@@ -84,29 +84,51 @@
     },
     "MF_Prop_FabCell": {
       "asset": "MF_Prop_FabCell",
-      "triangles": 14622,
+      "triangles": 5984,
       "texturePx": 1024,
       "size": [
-        1.984,
+        1.987,
         1.73,
-        1.209
+        1.239
       ],
-      "footprintRadius": 0.992,
+      "footprintRadius": 0.993,
       "material": "practical_console_cyan",
-      "metalness": null
+      "metalness": null,
+      "preparation": {
+        "sourceSha256": "489a1e3a7fedb63a764220ee7b7995857f121258d4e9ae64204af7b6ec1ce56a",
+        "sha256": "b44c0c7d8e7f1dcd88297d7a3298458a168ef0770642164acf353c4d58270264",
+        "triangles": 5984,
+        "targetTriangles": 6000,
+        "voxelSize": 0.004,
+        "texturePx": 1024,
+        "cageExtrusion": 0.025,
+        "maxRayDistance": 0.06,
+        "blenderVersion": "5.2.1 LTS"
+      }
     },
     "MF_Prop_ServiceCart": {
       "asset": "MF_Prop_ServiceCart",
-      "triangles": 11291,
+      "triangles": 4998,
       "texturePx": 1024,
       "size": [
-        2.26,
+        2.243,
         1.06,
-        1.351
+        1.388
       ],
-      "footprintRadius": 1.13,
+      "footprintRadius": 1.122,
       "material": "practical_warm_strip",
-      "metalness": null
+      "metalness": null,
+      "preparation": {
+        "sourceSha256": "dedead1c87192204f204abb90c215ce0e0ecd07c1e5a7e87a5150e677772904d",
+        "sha256": "8704b49aa305aa31351182e064917cf2d3a58927c0320504d719cea1c3eba654",
+        "triangles": 4998,
+        "targetTriangles": 5000,
+        "voxelSize": 0.004,
+        "texturePx": 1024,
+        "cageExtrusion": 0.025,
+        "maxRayDistance": 0.06,
+        "blenderVersion": "5.2.1 LTS"
+      }
     }
   },
   "budget": {

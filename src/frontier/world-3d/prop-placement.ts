@@ -64,7 +64,7 @@ const wallRow = (): PropPlacement[] => {
         ],
         // Out of the wall, into the room: the bearing the wall faces is the opposite of its radial.
         facingDeg: bearing + 180,
-        footprint: [1.831, 0.717],
+        footprint: [1.811, 0.701],
         height: 2.75,
       });
     }
@@ -79,7 +79,7 @@ export const propPlacements: PropPlacement[] = [
     position: onRadial(150, equipmentRadial),
     // Inward, so the face a robot reads is the face turned towards the hub door it enters by.
     facingDeg: 330,
-    footprint: [3.049, 3.058],
+    footprint: [3.163, 3.17],
     height: 1.05,
   },
   {
@@ -87,7 +87,7 @@ export const propPlacements: PropPlacement[] = [
     node: "MF_Prop_TestRig",
     position: onRadial(30, equipmentRadial),
     facingDeg: 210,
-    footprint: [3.509, 3.199],
+    footprint: [3.554, 3.248],
     height: 1.7,
   },
   {
@@ -98,7 +98,7 @@ export const propPlacements: PropPlacement[] = [
     node: "MF_Prop_ReviewStation",
     position: onRadial(330, equipmentRadial),
     facingDeg: 150,
-    footprint: [3.206, 3.204],
+    footprint: [3.204, 3.204],
     height: 1.36,
   },
   {
@@ -112,7 +112,7 @@ export const propPlacements: PropPlacement[] = [
     node: "MF_Prop_IntakeDesk",
     position: [-5.6, floor, 14.4],
     facingDeg: 270,
-    footprint: [2.656, 0.7],
+    footprint: [2.648, 0.699],
     height: 2.4,
   },
   {
@@ -121,10 +121,29 @@ export const propPlacements: PropPlacement[] = [
     position: [crateStack?.xz[0] ?? -4, floor, crateStack?.xz[1] ?? 17],
     // Square to the bay doors: a battery on a marked pad is stacked, not parked at an angle.
     facingDeg: 90,
-    footprint: [1.547, 1.065],
+    footprint: [1.573, 1.086],
     height: 1.06,
   },
   ...wallRow(),
+  // Three two-metre cells fill the contract's radial 8–14 fabrication bench reservation.
+  ...[9, 11, 13].map(
+    (radius): PropPlacement => ({
+      id: `MF_Prop_FabCell_${radius}`,
+      node: "MF_Prop_FabCell",
+      position: onRadial(240, radius),
+      facingDeg: 330,
+      footprint: [1.987, 1.239],
+      height: 1.73,
+    }),
+  ),
+  {
+    id: "MF_Prop_ServiceCart",
+    node: "MF_Prop_ServiceCart",
+    position: [4, floor, 20.2],
+    facingDeg: 90,
+    footprint: [2.243, 1.388],
+    height: 1.06,
+  },
 ];
 
 /**
