@@ -48,11 +48,21 @@ const requiredGroups = {
     "MF_Vehicle_Rover",
   ],
   /**
-   * The three scanned interior hero props. They ship as their own kit rather than inside the shell,
-   * whose producer receipt is hash-bound; the runtime anchors each to the contract socket that
-   * already names it.
+   * The scanned interior hero props. They ship as their own kit rather than inside the shell, whose
+   * producer receipt is hash-bound; the runtime anchors each to the contract socket that already
+   * names it. One root per distinct piece -- the wall console is listed once and stood up twenty
+   * times by `prop-placement.ts`, because the kit carries geometry, not a floor plan.
    */
-  props: ["MF_Prop_PlanningTable", "MF_Prop_TestRig", "MF_Prop_CargoBattery"],
+  props: [
+    "MF_Prop_PlanningTable",
+    "MF_Prop_TestRig",
+    "MF_Prop_CargoBattery",
+    "MF_Prop_ReviewStation",
+    "MF_Prop_IntakeDesk",
+    "MF_Prop_WallConsole",
+    "MF_Prop_FabCell",
+    "MF_Prop_ServiceCart",
+  ],
   parcel: [
     "MF_Terrain",
     "MF_Planting",
@@ -78,19 +88,12 @@ const dracoInspectable = new Set(["scatter", "scatter2", "scatter3", "props"]);
 const textureCeiling = { scatter3: 64 };
 const scannedKitBudget = { triangles: 200000, bytes: 6000000 };
 /**
- * The props kit is budgeted per prop, not per file.
- *
- * It was a flat 20,000 triangles / 2.5 MB / 16 textures, which is three times what three props cost
- * and means nothing at all about the fourth. Every prop added would have failed the build and been
- * answered by picking a bigger number, which is how the scatter kit's ceilings went twice already.
- *
- * A prop is one scanned body with its own baked PBR set -- it cannot share a UV layout with the
- * others, so cost genuinely scales with the count and a per-item figure is the one that carries
- * information. These are set against what the first three actually cost (5,666 triangles, 4 textures
- * and 199 KB each on average, the heaviest at 7,000 triangles) with room for a prop half again as
- * heavy. A prop that misses this is a prop that needs decimating, whatever else is in the file.
+ * Texture allowance scales with the number of separately baked props. Geometry and bytes also
+ * have the eight-prop producer's explicit 40k / 4 MB ceiling. The builder enforces each prop's
+ * smaller triangle target; the integration validator enforces this aggregate export contract.
  */
-const propsBudgetPerItem = { triangles: 8000, bytes: 350000, textures: 5 };
+const propsBudgetPerItem = { triangles: 8000, bytes: 500000, textures: 5 };
+const propsKitBudget = { triangles: 40000, bytes: 4000000 };
 const identityRoles = new Set(["identity_roof_inset", "identity_roof_ring", "identity_trim"]);
 const practicalRoles = new Set([
   "practical_warm_strip",
@@ -405,8 +408,8 @@ export function validateColonyGlb(bytes, { kind, contract, expectedSha256 }) {
           ? (contract.budgets.scatterKitScanned ?? scannedKitBudget)
           : kind === "props"
             ? {
-                triangles: propsBudgetPerItem.triangles * propCount,
-                bytes: propsBudgetPerItem.bytes * propCount,
+                triangles: Math.min(propsBudgetPerItem.triangles * propCount, propsKitBudget.triangles),
+                bytes: Math.min(propsBudgetPerItem.bytes * propCount, propsKitBudget.bytes),
               }
             : contract.budgets[
                 { shell: "hqShell", crown: "crown", parcel: "parcel", span: "bridgeSpan", end: "bridgeSpan" }[

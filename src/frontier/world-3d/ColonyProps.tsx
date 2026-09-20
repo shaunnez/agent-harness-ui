@@ -7,7 +7,7 @@ import type { SceneLight } from "./ProofBase";
 import { propPlacements } from "./prop-placement";
 
 /**
- * The three scanned hero props standing in the HQ rooms.
+ * The scanned hero props standing in the HQ rooms.
  *
  * `hq-shell.glb` ships an empty `MF_Props` root -- the plan always reserved these pieces, and the
  * greybox stood in for them. They arrive as their own kit rather than inside the shell because the
@@ -38,10 +38,14 @@ export function ColonyProps({
     const root = new Group();
     root.name = "MF_PropsGroup";
     const materials = new Map<string, MeshStandardMaterial>();
-    const source = model.clone(true);
     for (const placement of propPlacements) {
-      const prop = source.getObjectByName(placement.node);
-      if (!prop) continue;
+      const source = model.getObjectByName(placement.node);
+      if (!source) continue;
+      // Clone per placement, not per node: the wall row is one console standing in twenty places,
+      // and moving a single clone twenty times would leave nineteen of them nowhere. The clones
+      // share the kit's geometry and material by reference, so this is transforms, not meshes --
+      // and the `own()` map below still sees one source material per node and clones it once.
+      const prop = source.clone(true);
       prop.position.set(...placement.position);
       // Same convention as a room socket: a compass bearing, turned into a yaw about +Y.
       prop.rotation.y = ((90 - placement.facingDeg) * Math.PI) / 180;
@@ -66,9 +70,9 @@ export function ColonyProps({
   }, [model]);
   useEffect(
     () => () => {
-      built.root.traverse((object) => {
-        if (object instanceof Mesh) object.geometry.dispose();
-      });
+      // Only the materials belong to this base. The geometry under every clone is the kit's own,
+      // shared by reference across all of them and across every other base, so disposing it here
+      // would blank the props in each base that is still on screen.
       for (const material of built.materials) material.dispose();
     },
     [built],
