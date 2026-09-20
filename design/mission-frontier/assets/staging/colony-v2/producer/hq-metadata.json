@@ -504,9 +504,6 @@
       "sourceComponents": {
         "MF_BaseFixed": [
           "bay_foundation",
-          "bay_side",
-          "bay_side_band",
-          "bay_side_lamp",
           "dispatch_corridor",
           "foundation_plinth",
           "hq_floor",
@@ -750,8 +747,8 @@
         ]
       },
       "componentCounts": {
-        "MF_BaseFixed": 429,
-        "MF_ShellCutaway_FrontFlats": 123,
+        "MF_BaseFixed": 426,
+        "MF_ShellCutaway_FrontFlats": 126,
         "MF_Roof": 221,
         "MF_Interior_planning": 45,
         "MF_Interior_implementation": 99,
@@ -764,8 +761,8 @@
         "MF_Practicals": 9
       },
       "glb": {
-        "bytes": 6746264,
-        "sha256": "fe699c2301f0c77e2a670f25a5aba6c129b9a2c5d0b24230d3f5ee23da9c8238",
+        "bytes": 6746280,
+        "sha256": "4d0e7c579d64000b006208777682ea7486293b4ec305b1655d5679004a074df3",
         "triangles": 125936,
         "meshes": 63,
         "materials": 20,

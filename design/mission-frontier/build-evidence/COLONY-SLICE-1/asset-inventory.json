@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-20T00:13:22.868Z",
+  "capturedAt": "2026-09-20T03:47:39.346Z",
   "assets": [
     {
       "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.glb",
@@ -82,9 +82,9 @@
     },
     {
       "source": "design/mission-frontier/assets/staging/colony-v2/producer/hq-shell.glb",
-      "filename": "hq-shell.fe699c2301f0.glb",
-      "sha256": "fe699c2301f0c77e2a670f25a5aba6c129b9a2c5d0b24230d3f5ee23da9c8238",
-      "bytes": 6746264,
+      "filename": "hq-shell.4d0e7c579d64.glb",
+      "sha256": "4d0e7c579d64000b006208777682ea7486293b4ec305b1655d5679004a074df3",
+      "bytes": 6746280,
       "meshes": 63,
       "materials": 20,
       "textures": 6,

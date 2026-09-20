@@ -252,8 +252,12 @@ def interior():
     # Projecting loading bay with a recessed shutter entrance and canopy.
     use('MF_BaseFixed'); B.b('bay_foundation', (0, 4.11, 18.59), (10.8, .30, 6.02), 'structure_graphite_joints')
     use('MF_Interior_dispatch'); B.b('bay_floor', (0, 4.285, 18.59), (10.2, .03, 6.02), 'room_inlay_dispatch')
+    # Both bay sides are cutaway geometry. Only the camera-facing one used to be, which was right on
+    # its own terms -- you cannot see into the bay through it -- but the roof and the front wall lift
+    # with it, so the far wall was left standing on the apron as a slab attached to nothing. Either
+    # both go or neither does, and both going is what lets you see the bay floor and its cargo.
     for side in [-1, 1]:
-        use('MF_BaseFixed' if side == -1 else 'MF_ShellCutaway_FrontFlats')
+        use('MF_ShellCutaway_FrontFlats')
         wall('bay_side', (side * 5.1, 15.58), (side * 5.1, 21.6), FLOOR, 8.08, .6, B.M['structure_ivory_ceramic'])
         B.strip('bay_side_lamp', (side * 5.42, 16), (side * 5.42, 21), 7.55)
         B.b('bay_side_band', (side * 5.42, 4.27, 18.6), (.12, .5, 5.9), 'structure_graphite_joints', .02)
