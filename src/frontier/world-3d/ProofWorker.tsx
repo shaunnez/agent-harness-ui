@@ -144,9 +144,27 @@ export function ProofWorker({
         {/* Never drawn, never occludes, still raycast: `visible={false}` would drop it from picking. */}
         <meshBasicMaterial colorWrite={false} depthWrite={false} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} scale={factor}>
+      {/*
+        The ring sits higher than the 4 cm it used to, because a robot's standing socket is the bare
+        HQ floor and the floor it visibly stands on is not: the room inlay is 2.5 cm proud of it, the
+        reveal strips 2.6 cm and the room's skirting light 3.2 cm. That left the ring clearing the
+        dressing by millimetres, and it broke up wherever it crossed a strip. Robots on the court
+        never showed it, because out there the paving is the level they stand on.
+
+        The depth bias is the belt to that brace: a selection ring is a decal on whatever it is drawn
+        over, so it should never lose a depth comparison to it. Depth testing stays on, so a wall in
+        front still hides the ring behind it.
+      */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.09, 0]} scale={factor} renderOrder={1}>
         <ringGeometry args={[selected ? 1.55 : 1.32, selected ? 1.66 : 1.4, 48]} />
-        <meshBasicMaterial color={selected ? "#79ccff" : status} toneMapped={false} />
+        <meshBasicMaterial
+          color={selected ? "#79ccff" : status}
+          toneMapped={false}
+          depthWrite={false}
+          polygonOffset
+          polygonOffsetFactor={-4}
+          polygonOffsetUnits={-4}
+        />
       </mesh>
       {worker.behavior === "work" && worker.moving && (
         <pointLight
