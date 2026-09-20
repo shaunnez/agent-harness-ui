@@ -1,5 +1,5 @@
 import type { RuntimeProject } from "../../domain.ts";
-import type { SceneInput } from "../world/scene.ts";
+import type { SceneInput } from "../scene/input.ts";
 import { type BaseAppearances, defaultAppearance, projectAppearanceKey, savedSlots } from "./appearance.ts";
 import {
   assignSlots,

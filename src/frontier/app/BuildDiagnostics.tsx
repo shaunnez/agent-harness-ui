@@ -1,14 +1,11 @@
 import { useState } from "react";
 import type { RefreshCoordinator } from "../runtime/coordinator";
-import type { WorldRenderer } from "../world/renderer";
 
 /** Explicit QA-only entry; never opens in the ordinary product route. */
 export function BuildDiagnostics({
-  renderer,
   runtime,
   selectionTiming,
 }: {
-  renderer: React.RefObject<WorldRenderer | null>;
   runtime: RefreshCoordinator;
   selectionTiming: React.RefObject<{ samples: number[] }>;
 }) {
@@ -16,8 +13,7 @@ export function BuildDiagnostics({
   const [sample, setSample] = useState<unknown>(null);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
   if (new URLSearchParams(window.location.search).get("qa") !== "1") return null;
-  const previewLink = (query: string, hash = "world") =>
-    `/?mode=fixture&qa=1&art=${new URLSearchParams(window.location.search).get("art") === "cinematic" ? "cinematic" : "classic"}${query}#${hash}`;
+  const previewLink = (query: string, hash = "world") => `/?mode=fixture&qa=1${query}#${hash}`;
   return (
     <details className="build-diagnostics panel">
       <summary>Build diagnostics</summary>
@@ -213,7 +209,6 @@ export function BuildDiagnostics({
       <button
         type="button"
         onClick={() => {
-          renderer.current?.beginMeasurement();
           selectionTiming.current.samples = [];
           setSample(null);
         }}
@@ -247,7 +242,6 @@ export function BuildDiagnostics({
             projects: runtime.getSnapshot().projects.length,
             tasks: runtime.getSnapshot().tasks.length,
             refresh: runtime.metrics,
-            renderer: renderer.current?.metrics,
             selectionAckMs: selectionTiming.current.samples,
             selectionMeasurement:
               "Selection event to the second animation frame after committed state and scene effects",

@@ -1,6 +1,6 @@
+import { stat } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
-import { stat } from "node:fs/promises";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
 
 const databasePath = path.resolve(
