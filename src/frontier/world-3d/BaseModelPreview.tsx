@@ -9,12 +9,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { Group, OrthographicCamera, PCFShadowMap } from "three";
+import { Group, OrthographicCamera, PCFShadowMap, Vector3 } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import type { RuntimeProject } from "../../domain";
 import { type BaseAppearance, baseNames, basePalettes } from "./appearance";
 import { colonyCameras } from "./colony";
 import { configureGltfLoader } from "./gltf-loader";
+import { lampBudget, lampColour, lampIntensity, nearestLamps, type PooledLamp } from "./lamp-pool";
 import type { ProjectBase } from "./layout";
 import { type ProofManifest, parseProofManifest } from "./model";
 import { ProofBase, type SceneLight } from "./ProofBase";
@@ -82,6 +83,9 @@ const previewProject: RuntimeProject = {
   createdAt: null,
 };
 
+/** A night preview makes the same palette lighting used in the world legible in this small viewport. */
+const previewDark = 1;
+
 function PreviewModel({ manifest, appearance }: { manifest: ProofManifest; appearance: BaseAppearance }) {
   const invalidate = useThree((state) => state.invalidate);
   const shell = manifest.colony?.shell;
@@ -104,7 +108,16 @@ function PreviewModel({ manifest, appearance }: { manifest: ProofManifest; appea
       }) satisfies ProjectBase,
     [appearance],
   );
-  const light = useRef<SceneLight>({ lamps: 0.16, time: 12 });
+  const lamps = useMemo(() => {
+    const palette = basePalettes[appearance.palette].light;
+    const candidates: PooledLamp[] = (manifest.colony?.hqLightPositions ?? []).map((position, index) => ({
+      key: `preview:${index}`,
+      position,
+      color: lampColour(palette),
+    }));
+    return nearestLamps(candidates, new Vector3(...colonyCameras.exterior.position), lampBudget);
+  }, [manifest, appearance.palette]);
+  const light = useRef<SceneLight>({ lamps: previewDark, time: 12 });
   const roots = useMemo(() => new Map(), []);
   useEffect(() => {
     invalidate();
@@ -114,8 +127,18 @@ function PreviewModel({ manifest, appearance }: { manifest: ProofManifest; appea
   return (
     <>
       <color attach="background" args={["#102d39"]} />
-      <hemisphereLight args={["#d9edf2", "#49463e", 1.8]} />
-      <directionalLight position={[-52, 80, 48]} intensity={3.1} color="#fff1d3" />
+      <hemisphereLight args={["#d9edf2", "#49463e", 0.95 - previewDark * 0.55]} />
+      <directionalLight position={[-52, 80, 48]} intensity={2.8 - previewDark * 2.4} color="#fff1d3" />
+      {lamps.map((lamp) => (
+        <pointLight
+          key={lamp.key}
+          position={lamp.position}
+          color={lamp.color ?? 0xffc37f}
+          intensity={lampIntensity(previewDark)}
+          distance={5}
+          decay={2}
+        />
+      ))}
       <ProofBase
         base={base}
         source={source}

@@ -1,4 +1,4 @@
-import type { Vector3 } from "three";
+import { Color, type Vector3 } from "three";
 import type { Point3 } from "./model";
 
 /**
@@ -9,6 +9,33 @@ import type { Point3 } from "./model";
 export const lampBudget = 8;
 /** Seconds a slot takes to hand its light from one lamp to the next, so neither one pops. */
 const lampFade = 0.35;
+
+/** The station's authored practical white, and what a lamp is before a project claims it. */
+const warmLamp = new Color("#ffc37f");
+const lampPalette = new Color();
+const colourCache = new Map<string, Color>();
+
+function colourOf(hex: string) {
+  const existing = colourCache.get(hex);
+  if (existing) return existing;
+  const colour = new Color(hex);
+  colourCache.set(hex, colour);
+  return colour;
+}
+
+/**
+ * A real lamp still has to light the ground, so it only travels part way to the project colour:
+ * far enough that a base's own lamps read as its own, not so far that the court goes monochrome.
+ */
+export function lampColour(palette: string | null | undefined) {
+  if (!palette) return undefined;
+  return lampPalette.copy(warmLamp).lerp(colourOf(palette), 0.4).getHex();
+}
+
+/** Matches the world's night-cycle gain for a lamp at the supplied pool level. */
+export function lampIntensity(dark: number, level = 1) {
+  return (0.1 + dark * 16) * level;
+}
 
 export interface PooledLamp {
   key: string;
@@ -22,6 +49,15 @@ export interface LampSlot {
   level: number;
   /** Colour of the lamp currently held, carried so the renderer does not re-look it up each frame. */
   color?: number;
+}
+
+/** The same bounded nearest-light selection is used by the world and isolated base previews. */
+export function nearestLamps(lamps: PooledLamp[], viewer: Vector3, count = lampBudget) {
+  const near = (lamp: PooledLamp) =>
+    (lamp.position[0] - viewer.x) ** 2 +
+    (lamp.position[1] - viewer.y) ** 2 +
+    (lamp.position[2] - viewer.z) ** 2;
+  return [...lamps].sort((a, b) => near(a) - near(b)).slice(0, count);
 }
 
 function toward(level: number, target: number, step: number) {
@@ -43,11 +79,7 @@ export class LampPool {
     }));
   }
   update(lamps: PooledLamp[], viewer: Vector3, delta: number) {
-    const near = (lamp: PooledLamp) =>
-      (lamp.position[0] - viewer.x) ** 2 +
-      (lamp.position[1] - viewer.y) ** 2 +
-      (lamp.position[2] - viewer.z) ** 2;
-    const ranked = [...lamps].sort((a, b) => near(a) - near(b)).slice(0, this.slots.length);
+    const ranked = nearestLamps(lamps, viewer, this.slots.length);
     const wanted = new Map(ranked.map((lamp) => [lamp.key, lamp] as const));
     const held = new Set<string>();
     for (const slot of this.slots) if (slot.key !== null && wanted.has(slot.key)) held.add(slot.key);
