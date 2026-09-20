@@ -26,7 +26,7 @@ import { cinematicWorker } from "../world/cinematic-catalog";
 import { tasksInProject } from "../world/layout";
 import type { WorldRenderer } from "../world/renderer";
 import { WorldCanvas } from "../world/WorldCanvas";
-import { type ProofControls, proofRequested, proofVisible } from "../world-3d/model";
+import { type ProofControls, proofVisible } from "../world-3d/model";
 import { BuildDiagnostics } from "./BuildDiagnostics";
 import { useBottomHudLayout } from "./bottom-hud-layout";
 import { CommandWorkspaceProvider } from "./command-context";
@@ -164,7 +164,7 @@ export function FrontierApp() {
       run,
     ],
   );
-  const renderProof = proofVisible(window.location.search, sceneInput);
+  const renderProof = proofVisible(sceneInput);
   const activeRenderer = () => (renderProof ? proofRenderer.current : renderer.current);
   // Measure after scene effects and an intervening paint, including the visible selection frame.
   useEffect(() => {
@@ -188,7 +188,7 @@ export function FrontierApp() {
     if (fixture && !initialSelection.current && snapshot.tasks.length) {
       initialSelection.current = true;
       if (runtime.getSnapshot().selectedId) return;
-      if (proofRequested(window.location.search) && !location.taskId) return;
+      if (!location.taskId) return;
       runtime.select(
         location.taskId ??
           (snapshot.tasks.some((item) => item.id === "PC-142") ? "PC-142" : (snapshot.tasks[0]?.id ?? null)),

@@ -16,7 +16,6 @@ import { colonyCameras } from "../../src/frontier/world-3d/colony.ts";
 import { separateLabels } from "../../src/frontier/world-3d/labels.ts";
 import { projectBases, translated, viewCamera } from "../../src/frontier/world-3d/layout.ts";
 import {
-  existingWorldUrl,
   parseProofManifest,
   proofVisible,
   proofWorkers,
@@ -43,18 +42,18 @@ const input = (changes = {}) => ({
   watchedRunActive: false,
   ...changes,
 });
-const search = "?mode=fixture&scenario=workflow&renderer=3d";
 
-test("3D preview admits each fixture project while remaining opt-in and excluding live data", () => {
-  assert.equal(proofVisible(search, input()), true);
-  assert.equal(proofVisible("?mode=fixture", input()), false);
-  assert.equal(proofVisible("?mode=live&renderer=3d", input({ mode: "live" })), false);
-  assert.equal(proofVisible(search, input({ mode: "live" })), false);
-  assert.equal(proofVisible(search, input({ location: { view: "project", projectId: "harness" } })), true);
-  assert.equal(proofVisible(search, input({ location: { view: "agent", taskId: "AH-051" } })), true);
-  assert.equal(proofVisible(search, input({ location: { view: "project", projectId: "plancheck" } })), true);
-  assert.equal(proofVisible(search, input({ projects: [] })), false);
-  assert.equal(existingWorldUrl(search), "?mode=fixture&scenario=workflow#world");
+test("the world admits every project, live or fixture, and nothing when there is none", () => {
+  // No flag and no fixture requirement: the colony is the only world, and it draws whatever the
+  // gateway hands it. What is still asked is whether there is anything there to draw.
+  assert.equal(proofVisible(input()), true);
+  assert.equal(proofVisible(input({ mode: "live" })), true);
+  assert.equal(proofVisible(input({ location: { view: "project", projectId: "harness" } })), true);
+  assert.equal(proofVisible(input({ location: { view: "agent", taskId: "AH-051" } })), true);
+  assert.equal(proofVisible(input({ location: { view: "project", projectId: "plancheck" } })), true);
+  assert.equal(proofVisible(input({ projects: [] })), false);
+  assert.equal(proofVisible(input({ location: { view: "project", projectId: "gone" } })), false);
+  assert.equal(proofVisible(input({ location: { view: "agent", taskId: "nope" } })), false);
 });
 
 test("workers preserve running, answer, repair and completed distinctions without changing fixture data", () => {
@@ -324,7 +323,7 @@ test("one base per project has separate routes and stable placement under refres
   const archived = { ...fixtureProjects[0], archivedAt: "2026-09-16" };
   assert.equal(projectBases([archived]).length, 0);
   // The colony retains archived parcels as dormant scenery, including an archived-only world.
-  assert.equal(proofVisible(search, input({ projects: [archived] })), true);
+  assert.equal(proofVisible(input({ projects: [archived] })), true);
 });
 
 test("appearance defaults spread the buildings and persist without overwriting another project", () => {

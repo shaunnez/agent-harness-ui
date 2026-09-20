@@ -60,18 +60,21 @@ export interface ProofControls {
   headquartersPreview(projectId: string): Promise<string | null>;
 }
 
-export function proofRequested(search: string) {
-  const query = new URLSearchParams(search);
-  return query.get("mode") === "fixture" && query.get("renderer") === "3d";
-}
 export function proofProject(projects: RuntimeProject[]) {
   return (
     projects.find((project) => project.id === "plancheck" && !project.archivedAt) ??
     projects.find((project) => !project.archivedAt)
   );
 }
-export function proofVisible(search: string, input: SceneInput) {
-  if (input.mode !== "fixture" || !proofRequested(search)) return false;
+/**
+ * Whether the world has something to draw.
+ *
+ * It used to also ask for `?renderer=3d` and for fixture data. Both are gone: the colony is the only
+ * world there is, and it draws live projects on the same contracts the fixtures implement, so a
+ * renderer flag would only have offered a way to get the retired one back. What is left is the
+ * question that was always the real one -- is there a project, a located project, or a located task.
+ */
+export function proofVisible(input: SceneInput) {
   const projects = input.projects.filter((project) => !project.archivedAt);
   if (input.location.view === "world") return input.projects.length > 0;
   if (input.location.view === "project")
@@ -84,12 +87,6 @@ export function proofVisible(search: string, input: SceneInput) {
         projects.some((project) => project.repositoryPath === task.repositoryPath),
     )
   );
-}
-export function existingWorldUrl(search: string) {
-  const query = new URLSearchParams(search);
-  query.delete("renderer");
-  query.delete("proofAssetFailure");
-  return `?${query.toString()}#world`;
 }
 
 export const proofWorkerScale = 3.1 / 1.8;

@@ -1,4 +1,4 @@
-import { ArrowLeft, Cube, MapPin, Question, WarningCircle } from "@phosphor-icons/react";
+import { Cube, MapPin, Question, WarningCircle } from "@phosphor-icons/react";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { Component, type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { PCFShadowMap, WebGLRenderer, type WebGLRendererParameters } from "three";
@@ -13,7 +13,6 @@ import { proofAssetUrls } from "./colony-assets";
 import { locatedProject, projectBases, visibleBases } from "./layout";
 import {
   compactWorkerLabels,
-  existingWorldUrl,
   type ProofControls,
   type ProofInput,
   type ProofManifest,
@@ -51,9 +50,7 @@ class SceneBoundary extends Component<
     return { error: true };
   }
   componentDidCatch() {
-    this.props.onError(
-      "The 3D artwork could not be loaded or rendered. Retry the scene or return to the existing world.",
-    );
+    this.props.onError("The 3D artwork could not be loaded or rendered. Retry the scene.");
   }
   render() {
     return this.state.error ? this.props.fallback : this.props.children;
@@ -93,7 +90,6 @@ export function ProofWorld(props: Props) {
     setFocusId(null);
     onExterior();
   };
-  const existing = existingWorldUrl(window.location.search);
   const problem = useCallback((message: string) => {
     setReady(false);
     setError(message);
@@ -103,7 +99,7 @@ export function ProofWorld(props: Props) {
       try {
         return new WebGLRenderer({ ...options, ...rendererOptions });
       } catch (cause) {
-        problem("WebGL could not start. Retry the scene or return to the existing world.");
+        problem("WebGL could not start. This browser cannot draw the world; retry, or try another browser.");
         throw cause;
       }
     },
@@ -116,7 +112,7 @@ export function ProofWorld(props: Props) {
     setError(null);
     setReady(false);
     const timer = setTimeout(() => {
-      setError("The 3D scene request timed out. Retry the artwork or return to the existing world.");
+      setError("The 3D scene request timed out. Retry the artwork.");
       controller.abort();
     }, 20_000);
     fetch("/assets/3d-proof/manifest.json", { signal: controller.signal, cache: "no-cache" })
@@ -145,8 +141,7 @@ export function ProofWorld(props: Props) {
   useEffect(() => {
     if (!manifest || ready || error) return;
     const timer = setTimeout(
-      () =>
-        problem("The 3D artwork did not finish loading. Retry the scene or return to the existing world."),
+      () => problem("The 3D artwork did not finish loading. Retry the scene."),
       30_000,
     );
     return () => clearTimeout(timer);
@@ -164,7 +159,6 @@ export function ProofWorld(props: Props) {
       >
         Retry 3D scene
       </button>
-      <a href={existing}>Return to existing world</a>
     </section>
   );
   return (
@@ -249,9 +243,6 @@ export function ProofWorld(props: Props) {
         >
           Appearance
         </button>
-        <a href={existing} title="Return to the existing 2D world">
-          <ArrowLeft size={15} /> 2D world
-        </a>
         {new URLSearchParams(window.location.search).get("qa") === "1" && ready && (
           <button type="button" onClick={() => props.controlsRef.current?.simulateContextLoss()}>
             Simulate graphics loss (QA)
