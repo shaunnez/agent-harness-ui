@@ -1,9 +1,9 @@
-import test from "node:test";
 import assert from "node:assert/strict";
+import test from "node:test";
 import {
+  CANDIDATE_GATE_COMMAND_LIMITS,
   candidateGateCommandInstruction,
   candidateGateCommandLimit,
-  CANDIDATE_GATE_COMMAND_LIMITS,
 } from "../server/candidate-gate-policy.mjs";
 
 test("Development Review keeps a materially higher command ceiling than Test and Final Review", () => {

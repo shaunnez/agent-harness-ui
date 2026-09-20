@@ -1,8 +1,8 @@
 import { createContext, type ReactNode, useContext, useEffect } from "react";
 import type { FrontierSnapshot } from "../runtime/contracts.ts";
 import type { RefreshCoordinator } from "../runtime/coordinator.ts";
-import { useCommandMemory } from "./use-command-memory.ts";
 import { useBriefing } from "./use-briefing.ts";
+import { useCommandMemory } from "./use-command-memory.ts";
 
 interface CommandContext {
   memory: ReturnType<typeof useCommandMemory>;

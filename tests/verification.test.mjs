@@ -4,8 +4,9 @@ import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { promisify } from "node:util";
 import test from "node:test";
+import { promisify } from "node:util";
+import { validateFocusedTestEvidence } from "../server/structured-output.mjs";
 import {
   parsePlaywrightJsonReport,
   parseVerificationManifest,
@@ -17,7 +18,6 @@ import {
   VERIFICATION_MANIFEST_PATH,
   verificationSummaryCommand,
 } from "../server/verification.mjs";
-import { validateFocusedTestEvidence } from "../server/structured-output.mjs";
 
 const exec = promisify(execFile);
 const candidate = { id: "AH-001", revisionNumber: 2, headRevision: "a".repeat(40) };

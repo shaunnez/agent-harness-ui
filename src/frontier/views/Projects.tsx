@@ -3,7 +3,7 @@ import type { RuntimeProject } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { TaskSummary } from "../runtime/contracts";
 import { formatCount, isExecuting, isOpen, needsYou } from "../runtime/presentation";
-import { tasksInProject } from "../world/layout";
+import { tasksInProject } from "../scene/tasks";
 
 export function Projects({
   projects,

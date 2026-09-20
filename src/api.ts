@@ -1,12 +1,5 @@
 import type { CompanionContext } from "./companion/contracts";
 import type {
-  WorkspaceHead,
-  WorkspaceHistoryRequest,
-  WorkspaceHistoryPage,
-  WatchedRun,
-} from "./domain/workspace-history";
-import type { OnboardingProposal, OnboardingReview } from "./domain/onboarding";
-import type {
   AgentRoleId,
   NewTaskDraft,
   RuntimeArtifact,
@@ -30,6 +23,13 @@ import type {
   RuntimeUsage,
   RuntimeWorktreeInventoryRow,
 } from "./domain";
+import type { OnboardingProposal, OnboardingReview } from "./domain/onboarding";
+import type {
+  WatchedRun,
+  WorkspaceHead,
+  WorkspaceHistoryPage,
+  WorkspaceHistoryRequest,
+} from "./domain/workspace-history";
 
 export function getWorkspaceHead(options?: ReadRequestOptions) {
   return request<WorkspaceHead>("/api/workspace/history?view=head", options);

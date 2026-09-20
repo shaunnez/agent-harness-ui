@@ -1,6 +1,8 @@
 import { useEffect, useMemo } from "react";
 import {
+  Color,
   Group,
+  InstancedBufferAttribute,
   InstancedMesh,
   Matrix4,
   Mesh,
@@ -19,6 +21,11 @@ export interface ParcelScatterPlan {
   /** Parcel-local ground height under a piece. */
   groundAt(x: number, z: number): number;
   placements: ScatterPlacement[];
+  /**
+   * The project palette this parcel's lantern caps and crystals pick up, or null on the landing
+   * terrace, which belongs to no project and keeps the kit's authored colour.
+   */
+  palette?: string | null;
 }
 /** How far a piece sits into the ground, and where its anchor is, by kind. */
 function restingHeight(placement: ScatterPlacement, ground: number) {
@@ -57,6 +64,7 @@ const castsShadow = new Set([
  * Kit rock materials darken and go glossy near the water line, like the terrain's splash zone, so
  * cliff pieces and shoreline rocks read as one wet band with the land.
  */
+const white = new Color(1, 1, 1);
 const patched = new WeakSet<MeshStandardMaterial>();
 function wetRock(material: MeshStandardMaterial) {
   if (patched.has(material)) return;
@@ -92,6 +100,47 @@ function wetRock(material: MeshStandardMaterial) {
 }
 
 /** Crystal shards: a saturated violet body with a restrained glow that bloom lifts at dusk. */
+/**
+ * How far a kit material travels from its authored colour toward the parcel's project palette.
+ *
+ * Matched by prefix because the crystals were rescanned: the kit now carries
+ * `crystal_scan_mf_crystal_a` through `_e` where it used to carry one `crystal_glow`, and a name
+ * match against the old one silently stopped applying to anything. The lantern cap is a signal and
+ * goes most of the way; the crystals are scanned rock and only lean, or the tint buries the scan.
+ */
+function paletteTint(name: string) {
+  if (name === "practical_station_marker") return 0.7;
+  if (name.startsWith("crystal_")) return 0.45;
+  return 0;
+}
+
+/**
+ * Multiply emissive by the per-instance colour as well as albedo.
+ *
+ * Three already folds `instanceColor` into `diffuseColor`, so without this a tinted lantern cap goes
+ * the right colour while the glow coming off it stays the kit's, which reads as the wrong lamp
+ * behind the right lens. One InstancedMesh spans every parcel using the item, so the tint has to be
+ * per instance rather than per material.
+ */
+const instanceTinted = new WeakSet<MeshStandardMaterial>();
+function tintByInstance(material: MeshStandardMaterial) {
+  if (instanceTinted.has(material)) return;
+  instanceTinted.add(material);
+  const previousKey = material.customProgramCacheKey?.bind(material);
+  material.customProgramCacheKey = () => `${previousKey?.() ?? ""}|colony_instance_tint`;
+  const previousCompile = material.onBeforeCompile?.bind(material);
+  material.onBeforeCompile = (shader, renderer) => {
+    previousCompile?.(shader, renderer);
+    shader.fragmentShader = shader.fragmentShader.replace(
+      "#include <emissivemap_fragment>",
+      `#include <emissivemap_fragment>
+        #ifdef USE_INSTANCING_COLOR
+          totalEmissiveRadiance *= vColor;
+        #endif`,
+    );
+  };
+}
+
 function tuneCrystal(material: MeshStandardMaterial) {
   material.color.setRGB(0.4, 0.22, 0.8);
   material.emissive.setRGB(0.5, 0.26, 1.0);
@@ -120,6 +169,16 @@ export function buildScatter(kit: Object3D, plans: ParcelScatterPlan[]) {
   const up = new Vector3(0, 1, 0);
   const side = new Vector3(1, 0, 0);
   const meshes: InstancedMesh[] = [];
+  const tint = new Color();
+  const palettes = new Map<string, Color>();
+  const paletteOf = (plan: ParcelScatterPlan) => {
+    if (!plan.palette) return white;
+    const existing = palettes.get(plan.palette);
+    if (existing) return existing;
+    const colour = new Color(plan.palette);
+    palettes.set(plan.palette, colour);
+    return colour;
+  };
   for (const [item, entries] of byItem) {
     const source = kit.getObjectByName(item);
     if (!source) continue;
@@ -136,11 +195,18 @@ export function buildScatter(kit: Object3D, plans: ParcelScatterPlan[]) {
       instanced.name = `${item}:${part.name}`;
       instanced.castShadow = castsShadow.has(kind);
       instanced.receiveShadow = receivesShadow.has(kind);
+      let tinted = 0;
       for (const material of Array.isArray(part.material) ? part.material : [part.material]) {
         if (material instanceof MeshStandardMaterial && material.name.startsWith("rock_")) wetRock(material);
         if (material instanceof MeshStandardMaterial && material.name === "crystal_glow")
           tuneCrystal(material);
+        if (material instanceof MeshStandardMaterial && paletteTint(material.name) > 0) {
+          tintByInstance(material);
+          tinted = Math.max(tinted, paletteTint(material.name));
+        }
       }
+      if (tinted > 0)
+        instanced.instanceColor = new InstancedBufferAttribute(new Float32Array(entries.length * 3), 3);
       entries.forEach(({ plan, placement }, index) => {
         const y = restingHeight(placement, plan.groundAt(placement.x, placement.z));
         position.set(plan.origin[0] + placement.x, plan.origin[1] + y, plan.origin[2] + placement.z);
@@ -149,8 +215,11 @@ export function buildScatter(kit: Object3D, plans: ParcelScatterPlan[]) {
         scale.setScalar(placement.scale);
         matrix.compose(position, quaternion, scale).multiply(local);
         instanced.setMatrixAt(index, matrix);
+        // White leaves the authored colour alone, which is what the landing terrace gets.
+        if (tinted > 0) instanced.setColorAt(index, tint.setRGB(1, 1, 1).lerp(paletteOf(plan), tinted));
       });
       instanced.instanceMatrix.needsUpdate = true;
+      if (instanced.instanceColor) instanced.instanceColor.needsUpdate = true;
       instanced.frustumCulled = false;
       root.add(instanced);
       meshes.push(instanced);

@@ -1,28 +1,28 @@
 import assert from "node:assert/strict";
-import test from "node:test";
 import { readFile } from "node:fs/promises";
+import test from "node:test";
+import { colonyStressFixtures } from "../../src/frontier/fixtures/colony.ts";
+import { assignMissingAppearances, parseAppearances } from "../../src/frontier/world-3d/appearance.ts";
 import {
   assignSlots,
-  colonyBridges,
-  colonySlot,
   builtEdges,
-  slotPosition,
-  projectKey,
   cameraElevationDeg,
+  colonyBridges,
   colonyCameras,
+  colonySlot,
+  projectKey,
+  slotPosition,
 } from "../../src/frontier/world-3d/colony.ts";
-import { allocateSockets, roomForStage, roomForTask } from "../../src/frontier/world-3d/rooms.ts";
-import { clearStandingPoint } from "../../src/frontier/world-3d/room-clearance.ts";
+import { proofAssetUrls } from "../../src/frontier/world-3d/colony-assets.ts";
+import { projectBases } from "../../src/frontier/world-3d/layout.ts";
 import {
-  proofWorkers,
-  proofWorkerState,
   parseProofManifest,
+  proofWorkerState,
+  proofWorkers,
   visibleWorkerLabels,
 } from "../../src/frontier/world-3d/model.ts";
-import { proofAssetUrls } from "../../src/frontier/world-3d/colony-assets.ts";
-import { colonyStressFixtures } from "../../src/frontier/fixtures/colony.ts";
-import { projectBases } from "../../src/frontier/world-3d/layout.ts";
-import { parseAppearances, assignMissingAppearances } from "../../src/frontier/world-3d/appearance.ts";
+import { clearStandingPoint } from "../../src/frontier/world-3d/room-clearance.ts";
+import { allocateSockets, roomForStage, roomForTask } from "../../src/frontier/world-3d/rooms.ts";
 
 const exported = JSON.parse(
   await readFile(new URL("../../public/frontier/assets/3d-proof/manifest.json", import.meta.url), "utf8"),
@@ -138,7 +138,10 @@ test("colony stress has ten projects and fourteen open tasks; packages preserve 
   const workers = proofWorkers(input, manifest);
   assert.equal(workers.length, 17);
   assert.equal(new Set(workers.map((w) => w.id)).size, 17);
-  assert.equal(visibleWorkerLabels(workers, input, null).length, 14);
+  // Inside a base every robot is labelled, package robots included, so no agent stands in a room
+  // unidentified. The World overview still collapses to one card per project.
+  assert.equal(visibleWorkerLabels(workers, input, null).length, 17);
+  assert.equal(visibleWorkerLabels(workers, { ...input, location: { view: "world" } }, null).length, 1);
   const watch = proofWorkers(
     {
       ...input,

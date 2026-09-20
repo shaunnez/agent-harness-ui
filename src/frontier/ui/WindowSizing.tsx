@@ -6,10 +6,10 @@ import {
   readWindowSizes,
   resizedWindow,
   saveWindowSizes,
-  windowBounds,
   type WindowFamily,
   type WindowSize,
   type WindowSizes,
+  windowBounds,
 } from "../app/window-layout";
 
 export function useWindowSizing(family: WindowFamily) {

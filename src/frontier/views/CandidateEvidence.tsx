@@ -3,8 +3,8 @@ import { useState } from "react";
 import { type RuntimeCandidate, type RuntimeFocusedTestRow, stageIds } from "../../domain";
 import type { TaskCore, TaskEvidence } from "../runtime/contracts";
 import { formatCount, stageLabels } from "../runtime/presentation";
-import { gateStages, gateView, stageState } from "../runtime/workflow";
 import { sumRecorded } from "../runtime/usage";
+import { gateStages, gateView, stageState } from "../runtime/workflow";
 
 export function CandidateEvidence({
   task,

@@ -1,5 +1,5 @@
 import { attentionFor, isOpen, stageLabels } from "../runtime/presentation.ts";
-import { workAction, workerBehavior } from "../world/worker-behavior.ts";
+import { workAction, workerBehavior } from "../scene/worker-behavior.ts";
 import type { ProjectBase } from "./layout.ts";
 import { translated, visibleBases } from "./layout.ts";
 import type { ProofInput, ProofManifest } from "./model.ts";

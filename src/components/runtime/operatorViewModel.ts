@@ -5,8 +5,8 @@ import {
   type StageId,
   workflowStages,
 } from "../../domain";
-import { nextAction } from "./runtimeCommandPolicy";
 import { buildOperatorStageFacts } from "./operatorStageFacts";
+import { nextAction } from "./runtimeCommandPolicy";
 import {
   candidateGateStages,
   getRuntimeGateFreshness,

@@ -6,9 +6,9 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import { promisify } from "node:util";
+import { validatedAttachmentReadPaths } from "../server/attachment-storage.mjs";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
 import { JsonTaskStore, migratePersistedTaskState } from "../server/store.mjs";
-import { validatedAttachmentReadPaths } from "../server/attachment-storage.mjs";
 
 const exec = promisify(execFile);
 

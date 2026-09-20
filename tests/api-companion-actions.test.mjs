@@ -6,9 +6,9 @@ import {
   resolveRolePolicyEligibility,
   updateTaskRolePolicy,
 } from "../server/companion-actions.mjs";
+import { CandidateOperationsOrchestrator } from "../server/orchestrator-candidate-operations.mjs";
 import { resolveRolePolicyLifecycleEligibility } from "../server/role-policy-eligibility.mjs";
 import { createTaskActionRoutes } from "../server/task-action-routes.mjs";
-import { CandidateOperationsOrchestrator } from "../server/orchestrator-candidate-operations.mjs";
 
 const modelCatalog = {
   models: [

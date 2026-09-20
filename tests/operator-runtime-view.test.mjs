@@ -1,11 +1,11 @@
-import test from "node:test";
 import { readFile } from "node:fs/promises";
+import test from "node:test";
 import {
-  React,
   assert,
   createTask,
   createViteServer,
   makeGateFreshness,
+  React,
   renderToStaticMarkup,
 } from "./runtime-test-support.mjs";
 

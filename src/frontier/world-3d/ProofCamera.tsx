@@ -6,11 +6,10 @@ import { captureScene } from "./capture";
 import { minimapFrame } from "./colony";
 import { cutawayGroups } from "./cutaway";
 import { occupiedSlots, type ProjectBase, viewCamera } from "./layout";
-import type { ProofControls, ProofInput, ProofManifest } from "./model";
+import type { ProofControls, ProofInput } from "./model";
 
 export function ProofCamera({
   input,
-  manifest,
   bases,
   focusId,
   cutaway,
@@ -25,7 +24,6 @@ export function ProofCamera({
   worldHour,
 }: {
   input: ProofInput;
-  manifest: ProofManifest;
   bases: ProjectBase[];
   focusId: string | null;
   cutaway: boolean;
@@ -41,10 +39,8 @@ export function ProofCamera({
 }) {
   const { camera, gl, size, scene } = useThree();
   const controls = useMemo(() => new MapControls(camera), [camera]);
-  // A legacy (v2) manifest keeps main's archipelago cameras; the colony reads the contract's.
-  const legacy = manifest.version === 3 ? undefined : manifest;
-  const latest = useRef({ bases, focusId, cutaway, onFocus, worldHour, legacy });
-  latest.current = { bases, focusId, cutaway, onFocus, worldHour, legacy };
+  const latest = useRef({ bases, focusId, cutaway, onFocus, worldHour });
+  latest.current = { bases, focusId, cutaway, onFocus, worldHour };
   const followed = useRef("");
   useFrame(() => {
     const key =
@@ -68,7 +64,7 @@ export function ProofCamera({
   // Palette/asset changes and runtime polling must preserve a user-moved camera.
   // biome-ignore lint/correctness/useExhaustiveDependencies: layoutKey captures only spatial layout, independently of appearance.
   useLayoutEffect(() => {
-    const view = viewCamera(latest.current.bases, focusId, cutaway, size, latest.current.legacy);
+    const view = viewCamera(latest.current.bases, focusId, cutaway, size);
     camera.position.set(...view.position);
     controls.target.set(...view.target);
     if (camera instanceof OrthographicCamera) {
@@ -122,11 +118,11 @@ export function ProofCamera({
       scheduled = requestAnimationFrame(() => {
         // A focused base keeps its own map; the colony map is top-down on the colony centroid with
         // span 2 x (max occupied slot radius + 46 + 20) per the contract.
-        const { focusId: focused, legacy } = latest.current;
-        const fromView = focused || legacy;
+        const { focusId: focused } = latest.current;
+        const fromView = Boolean(focused);
         const frame = fromView
           ? (() => {
-              const view = viewCamera(latest.current.bases, focused, false, undefined, legacy);
+              const view = viewCamera(latest.current.bases, focused, false);
               return { centre: [view.target[0], view.target[2]], halfSpan: view.verticalSpan * 0.8 };
             })()
           : minimapFrame(occupiedSlots(latest.current.bases));
@@ -144,14 +140,11 @@ export function ProofCamera({
         if (new URLSearchParams(window.location.search).get("qa") === "1") gl.forceContextLoss();
       },
       frame() {
-        const { bases, focusId, cutaway, legacy } = latest.current;
-        const view = viewCamera(
-          bases,
-          focusId,
-          cutaway,
-          { width: gl.domElement.clientWidth, height: gl.domElement.clientHeight },
-          legacy,
-        );
+        const { bases, focusId, cutaway } = latest.current;
+        const view = viewCamera(bases, focusId, cutaway, {
+          width: gl.domElement.clientWidth,
+          height: gl.domElement.clientHeight,
+        });
         camera.position.set(...view.position);
         controls.target.set(...view.target);
         if (camera instanceof OrthographicCamera) {
@@ -190,7 +183,7 @@ export function ProofCamera({
         return latest.current.worldHour();
       },
       async headquartersPreview(projectId) {
-        const view = viewCamera(latest.current.bases, projectId, true, undefined, latest.current.legacy);
+        const view = viewCamera(latest.current.bases, projectId, true);
         const half = view.verticalSpan / 2;
         const preview = new OrthographicCamera(-half * 1.8, half * 1.8, half, -half, 0.1, 650);
         preview.position.set(...view.position);

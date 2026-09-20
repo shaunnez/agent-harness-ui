@@ -1,5 +1,5 @@
-import { agentRoleIds, type AgentRoleId, type AppScreen, type StageId, workflowStages } from "./domain.ts";
 import { isCanonicalCommitId } from "./commit-id.ts";
+import { type AgentRoleId, type AppScreen, agentRoleIds, type StageId, workflowStages } from "./domain.ts";
 
 export type TaskRouteDetail =
   | { kind: "artifact"; artifactId: string }

@@ -367,6 +367,13 @@
       "level": 4.0,
       "rampToPad": "4.0 to 4.25 over the last 2 m",
       "rule": "plateau edge to pad along the edge line, built edges only"
+    },
+    "ringRoad": {
+      "radius": 24.0,
+      "width": 5.0,
+      "wobble": 0.6,
+      "edge": 0.8,
+      "rule": "paved loop on the shoulder linking every built spur, so a parcel reads as connected on all sides; follows the contour at constant radius, seeded wobble per slot, project parcels only"
     }
   },
   "terrain": {
@@ -388,9 +395,9 @@
       "blend": 3.5
     },
     "coast": {
-      "min": 26.0,
-      "typical": 30.5,
-      "max": 35.0,
+      "min": 28.5,
+      "typical": 33.5,
+      "max": 37.0,
       "edgeCorridorMax": 31.5,
       "edgeCorridorHalfAngleDeg": 10,
       "frontArcMin": 30.0,
@@ -450,7 +457,7 @@
         "jaggedness": "angular noise on the drop distance, 1 to 3 m",
         "strata": "shader bands every 1.4 m below the lip"
       },
-      "channelMin": 20.0
+      "channelMin": 16.0
     },
     "surfaces": {
       "rule": "material weights by slope and height in the shader: plateau gravel-grass, worn basalt road on spurs and the court apron, stratified limestone on faces steeper than 50 deg, wet dark rock in the splash zone y < 1.2, shingle on shelves",
@@ -463,8 +470,22 @@
       "source": "exterior-bases/astra-kit/environment.glb embedded images (Poly Haven CC0), extracted to public assets"
     },
     "scatter": {
-      "kit": "terrain/scatter-kit.glb from 2A, unchanged",
-      "rules": "trees on the shoulder between plateau+1.5 and coast-2.5, off spur corridors and the court arc; boulders at cliff lips; lanterns along built spurs and the court edge; vehicles on the court apron"
+      "kit": "colony-v2/producer/scatter-kit.glb (environment pass; the 2A kit is its base)",
+      "rules": "trees on the shoulder between plateau+1.5 and coast-2.5, off spur corridors and the court arc; scanned cliff pieces hung from the lip clear of pads and falls; large rocks on the shoulder, medium at lips and outcrop feet, shoreline rocks in the toe water clear of bridge lines; scrub and grass sparse on the shoulder; reeds at pools and shelves; two to four crystal clusters at cliff shoulders, rocks and the spring pool; lanterns along built spurs and the court edge; vehicles on the court apron"
+    },
+    "water": {
+      "chance": 0.6,
+      "bands": [
+        [
+          13,
+          33
+        ],
+        [
+          133,
+          153
+        ]
+      ],
+      "rule": "seeded per slot: spring pool at radial 24.6-27.6 on the highest ground of a camera-facing band, channel cut 0.65 m descending at least 6 cm/m to a fall at the lip 20 deg clear of every edge line; a right-flank stream replaces the wave-cut shelf"
     },
     "validation": [
       "height field is single-valued so it cannot leak",
@@ -1995,6 +2016,11 @@
     "textures": "2048 max, shared library, no more than 8 per file",
     "colonyTotalAt8Projects": "<= 120 MB fetched, shared geometry instanced per parcel",
     "terrainTextures": "<= 6 MB total after extraction, 2048 max",
+    "scatterKit": {
+      "triangles": 90000,
+      "bytes": 6000000,
+      "note": "environment pass: trees, scrub, grass, reeds, three scanned cliff pieces, rocks, crystals, lantern, vehicles"
+    },
     "colonyTotal": "<= 25 MB fetched for the colony set at any project count (shell, crowns, previews, bridge parts, scatter kit, terrain textures, worker)"
   },
   "deliverables": {

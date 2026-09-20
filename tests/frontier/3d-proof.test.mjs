@@ -6,7 +6,6 @@ import {
   assignMissingAppearances,
   baseVariants,
   legacyBaseVariants,
-  legacyVariant,
   parseAppearances,
   projectAppearanceKey,
   randomAppearance,
@@ -17,7 +16,6 @@ import { colonyCameras } from "../../src/frontier/world-3d/colony.ts";
 import { separateLabels } from "../../src/frontier/world-3d/labels.ts";
 import { projectBases, translated, viewCamera } from "../../src/frontier/world-3d/layout.ts";
 import {
-  existingWorldUrl,
   parseProofManifest,
   proofVisible,
   proofWorkers,
@@ -44,18 +42,18 @@ const input = (changes = {}) => ({
   watchedRunActive: false,
   ...changes,
 });
-const search = "?mode=fixture&scenario=workflow&renderer=3d";
 
-test("3D preview admits each fixture project while remaining opt-in and excluding live data", () => {
-  assert.equal(proofVisible(search, input()), true);
-  assert.equal(proofVisible("?mode=fixture", input()), false);
-  assert.equal(proofVisible("?mode=live&renderer=3d", input({ mode: "live" })), false);
-  assert.equal(proofVisible(search, input({ mode: "live" })), false);
-  assert.equal(proofVisible(search, input({ location: { view: "project", projectId: "harness" } })), true);
-  assert.equal(proofVisible(search, input({ location: { view: "agent", taskId: "AH-051" } })), true);
-  assert.equal(proofVisible(search, input({ location: { view: "project", projectId: "plancheck" } })), true);
-  assert.equal(proofVisible(search, input({ projects: [] })), false);
-  assert.equal(existingWorldUrl(search), "?mode=fixture&scenario=workflow#world");
+test("the world admits every project, live or fixture, and nothing when there is none", () => {
+  // No flag and no fixture requirement: the colony is the only world, and it draws whatever the
+  // gateway hands it. What is still asked is whether there is anything there to draw.
+  assert.equal(proofVisible(input()), true);
+  assert.equal(proofVisible(input({ mode: "live" })), true);
+  assert.equal(proofVisible(input({ location: { view: "project", projectId: "harness" } })), true);
+  assert.equal(proofVisible(input({ location: { view: "agent", taskId: "AH-051" } })), true);
+  assert.equal(proofVisible(input({ location: { view: "project", projectId: "plancheck" } })), true);
+  assert.equal(proofVisible(input({ projects: [] })), false);
+  assert.equal(proofVisible(input({ location: { view: "project", projectId: "gone" } })), false);
+  assert.equal(proofVisible(input({ location: { view: "agent", taskId: "nope" } })), false);
 });
 
 test("workers preserve running, answer, repair and completed distinctions without changing fixture data", () => {
@@ -325,15 +323,13 @@ test("one base per project has separate routes and stable placement under refres
   const archived = { ...fixtureProjects[0], archivedAt: "2026-09-16" };
   assert.equal(projectBases([archived]).length, 0);
   // The colony retains archived parcels as dormant scenery, including an archived-only world.
-  assert.equal(proofVisible(search, input({ projects: [archived] })), true);
+  assert.equal(proofVisible(input({ projects: [archived] })), true);
 });
 
 test("appearance defaults spread the buildings and persist without overwriting another project", () => {
   const saved = assignMissingAppearances(fixtureProjects, {});
   assert.equal(new Set(Object.values(saved).map((appearance) => appearance.variant)).size, 3);
   assert.deepEqual(baseVariants, ["bastion", "command", "relay", "foundry"]);
-  assert.equal(legacyVariant("bastion"), "command");
-  assert.equal(legacyVariant("relay"), "relay");
   assert.deepEqual(
     randomAppearance(() => 0),
     { variant: "bastion", palette: "blue" },
@@ -412,66 +408,35 @@ test("larger fixture crews stay clear of the analysis bench and each other insid
   }
 });
 
-test("without ?colony=1 the v3 manifest is consumed as v2 and the archipelago layout is unchanged", async () => {
-  const { colonyRequested, withoutColony } = await import("../../src/frontier/world-3d/model.ts");
-  const { archipelagoBases } = await import("../../src/frontier/world-3d/layout.ts");
+test("the colony is the only layout: every published manifest is v3 and carries the colony kit", async () => {
   const { proofAssetUrls } = await import("../../src/frontier/world-3d/colony-assets.ts");
-  const search = "?mode=fixture&renderer=3d&art=cinematic";
-  assert.equal(colonyRequested(search), false);
-  assert.equal(colonyRequested(`${search}&colony=1`), true);
   const published = parseProofManifest(
     JSON.parse(
       await readFile(new URL("../../public/frontier/assets/3d-proof/manifest.json", import.meta.url), "utf8"),
     ),
   );
+  // `?colony=1` and the v2 archipelago it selected are gone; there is one world and this is it.
   assert.equal(published.version, 3);
-  const legacy = withoutColony(published);
-  assert.equal(legacy.version, 2);
-  assert.equal("colony" in legacy, false);
-  assert.deepEqual(legacy.bases, published.bases);
-  // The legacy kit is fetched, the colony kit is not.
-  const urls = proofAssetUrls(legacy);
-  assert.ok(urls.includes(published.scene) && urls.includes(published.bases.command.src));
-  assert.ok(!urls.some((url) => url.includes("hq-shell") || url.includes("parcel-")));
-  assert.equal(withoutColony({ ...published, version: 2 }).version, 2);
-  assert.throws(() => withoutColony({ ...published, bases: undefined }), /archipelago kit/);
-  // Main's staggered coastal grid: plancheck first, then id order; no slots, no bridges.
-  const bases = archipelagoBases(fixtureProjects, {});
-  assert.equal(bases.length, fixtureProjects.length);
-  assert.equal(bases[0].project.id, "plancheck");
-  assert.ok(bases.every((base) => base.slot === undefined));
-  assert.deepEqual(
-    bases.map((base) => base.position.map((n) => Number(n.toFixed(3)))),
-    [
-      [1.568, 0, 37.18],
-      [-68.897, 0, -26.859],
-      [18.115, 0, -41.401],
-    ],
-  );
-  assert.deepEqual(archipelagoBases([...fixtureProjects].reverse(), {}), bases);
-  assert.equal(archipelagoBases([{ ...fixtureProjects[0], archivedAt: "2026-09-16" }], {}).length, 0);
-  // Cameras come from the manifest, not the colony contract, and the world fit is the archipelago's.
-  const cutaway = viewCamera(bases, "plancheck", true, undefined, legacy);
-  assert.deepEqual(cutaway.target, translated(legacy.cameras.cutaway.target, bases[0].position));
-  const world = viewCamera(bases, null, false, { width: 1280, height: 720 }, legacy);
-  assert.equal(world.verticalSpan, 137);
-  assert.equal(world.viewOffset, undefined);
-  assert.notDeepEqual(viewCamera(bases, "plancheck", true).target, cutaway.target);
+  assert.ok(published.colony);
+  const urls = proofAssetUrls(published);
+  assert.ok(urls.some((url) => url.includes("hq-shell")));
+  assert.ok(urls.includes(published.colony.scatterKit));
+  assert.ok(!urls.includes(published.scene));
 });
 
-test("robots render 2x in World, 1.4x on a focused exterior and true size in the cutaway", async () => {
+test("robots render 1.6x in World, 1.3x on a focused exterior and slightly over true size in the cutaway", async () => {
   const { proofView, workerScale, workerHeight, proofWorkerScale, proofWorkerHeight, workerViewScale } =
     await import("../../src/frontier/world-3d/model.ts");
-  assert.deepEqual(workerViewScale, { world: 2, exterior: 1.4, cutaway: 1 });
+  assert.deepEqual(workerViewScale, { world: 1.6, exterior: 1.3, cutaway: 1.15 });
   const world = { location: { view: "world", projectId: null, taskId: null, runId: null } };
   assert.equal(proofView(world, null), "world");
   assert.equal(proofView(world, "plancheck"), "exterior");
   assert.equal(proofView({ location: { view: "project", projectId: "plancheck" } }, null), "cutaway");
   assert.equal(proofView({ location: { view: "agent", taskId: "PC-142" } }, "plancheck"), "cutaway");
-  assert.equal(workerScale("cutaway"), proofWorkerScale);
-  assert.equal(workerHeight("cutaway"), proofWorkerHeight);
-  assert.ok(Math.abs(workerScale("world") - proofWorkerScale * 2) < 1e-12);
-  assert.ok(Math.abs(workerHeight("exterior") - 3.1 * 1.4) < 1e-12);
+  assert.ok(Math.abs(workerScale("cutaway") - proofWorkerScale * 1.15) < 1e-12);
+  assert.ok(Math.abs(workerHeight("cutaway") - proofWorkerHeight * 1.15) < 1e-12);
+  assert.ok(Math.abs(workerScale("world") - proofWorkerScale * 1.6) < 1e-12);
+  assert.ok(Math.abs(workerHeight("exterior") - 3.1 * 1.3) < 1e-12);
   // Standing positions and spacing are unchanged by the view: allocation stays at true size.
   const scene = input({ location: { view: "world", projectId: null, taskId: null, runId: null } });
   const positions = proofWorkers(scene, manifest).map((worker) => worker.position.join());
@@ -483,7 +448,10 @@ test("robots render 2x in World, 1.4x on a focused exterior and true size in the
 
 test("crowded rooms collapse plain working cards to compact markers but never attention or selection", async () => {
   const { compactWorkerLabels } = await import("../../src/frontier/world-3d/model.ts");
+  // A worker carries its own id as well as its task's: one task can stand several package robots in
+  // a room, and each of them is a card the crowding rule weighs on its own.
   const worker = (id, overrides = {}) => ({
+    id,
     task: { id },
     projectId: "plancheck",
     room: "implementation",

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { CandidateDiffResponse } from "../../api";
-import { DiffDocument } from "./DiffDocument";
 import type { FrontierGateway } from "../runtime/contracts";
+import { DiffDocument } from "./DiffDocument";
 export function CandidateDiff({
   gateway,
   taskId,

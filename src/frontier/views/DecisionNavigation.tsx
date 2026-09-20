@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight, GlobeHemisphereWest } from "@phosphor-icons/react";
 import type { RuntimeProject } from "../../domain.ts";
 import type { TaskSummary } from "../runtime/contracts.ts";
-import { decisionSessionView, type DecisionSession } from "../runtime/decision-session.ts";
+import { type DecisionSession, decisionSessionView } from "../runtime/decision-session.ts";
 import { attentionFor, splitRecordedDetail, stageLabels } from "../runtime/presentation.ts";
 
 export function DecisionNavigation({

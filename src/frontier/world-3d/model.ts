@@ -1,10 +1,10 @@
-import { colonyWorkers } from "./colony-workers.ts";
 import type { RuntimeProject } from "../../domain.ts";
 import type { TaskSummary } from "../runtime/contracts.ts";
 import { attentionFor, isOpen, stageLabels } from "../runtime/presentation.ts";
-import type { SceneInput } from "../world/scene.ts";
-import { workAction, workerBehavior } from "../world/worker-behavior.ts";
+import type { SceneInput } from "../scene/input.ts";
+import { workAction, workerBehavior } from "../scene/worker-behavior.ts";
 import { type BaseVariant, type LegacyBaseVariant, legacyBaseVariants } from "./appearance.ts";
+import { colonyWorkers } from "./colony-workers.ts";
 import { type ProjectBase, projectBases, translated, visibleBases } from "./layout.ts";
 
 export type Point3 = [number, number, number];
@@ -60,32 +60,21 @@ export interface ProofControls {
   headquartersPreview(projectId: string): Promise<string | null>;
 }
 
-export function proofRequested(search: string) {
-  const query = new URLSearchParams(search);
-  return query.get("mode") === "fixture" && query.get("renderer") === "3d";
-}
-/** The colony (hex HQ, parcels, bridges) renders only behind `?colony=1`; without it the world keeps the archipelago look. */
-export function colonyRequested(search: string) {
-  return new URLSearchParams(search).get("colony") === "1";
-}
-/** A v3 manifest still carries the v2 kit; without the colony flag it is consumed as v2 so main's look is unchanged. */
-export function withoutColony(manifest: ProofManifest): ProofManifest {
-  if (manifest.version !== 3) return manifest;
-  if (!manifest.bases || !manifest.environmentLightPositions)
-    throw new Error(
-      "The archipelago kit is missing from the 3D scene manifest. Add ?colony=1 or retry the artwork.",
-    );
-  const { colony: _colony, ...legacy } = manifest;
-  return { ...legacy, version: 2 };
-}
 export function proofProject(projects: RuntimeProject[]) {
   return (
     projects.find((project) => project.id === "plancheck" && !project.archivedAt) ??
     projects.find((project) => !project.archivedAt)
   );
 }
-export function proofVisible(search: string, input: SceneInput) {
-  if (input.mode !== "fixture" || !proofRequested(search)) return false;
+/**
+ * Whether the world has something to draw.
+ *
+ * It used to also ask for `?renderer=3d` and for fixture data. Both are gone: the colony is the only
+ * world there is, and it draws live projects on the same contracts the fixtures implement, so a
+ * renderer flag would only have offered a way to get the retired one back. What is left is the
+ * question that was always the real one -- is there a project, a located project, or a located task.
+ */
+export function proofVisible(input: SceneInput) {
   const projects = input.projects.filter((project) => !project.archivedAt);
   if (input.location.view === "world") return input.projects.length > 0;
   if (input.location.view === "project")
@@ -99,12 +88,6 @@ export function proofVisible(search: string, input: SceneInput) {
     )
   );
 }
-export function existingWorldUrl(search: string) {
-  const query = new URLSearchParams(search);
-  query.delete("renderer");
-  query.delete("proofAssetFailure");
-  return `?${query.toString()}#world`;
-}
 
 export const proofWorkerScale = 3.1 / 1.8;
 export const proofWorkerHeight = 3.1;
@@ -115,7 +98,7 @@ export type ProofView = "world" | "exterior" | "cutaway";
  * spacing and gait speed stay in true world units.
  */
 /** World view read 20% too large against the scanned kit and the 18 m shuttle; 2.5 -> 2.0. */
-export const workerViewScale: Record<ProofView, number> = { world: 2, exterior: 1.4, cutaway: 1 };
+export const workerViewScale: Record<ProofView, number> = { world: 1.6, exterior: 1.3, cutaway: 1.15 };
 export function proofView(input: Pick<ProofInput, "location">, focusId: string | null): ProofView {
   return input.location.view !== "world" ? "cutaway" : focusId ? "exterior" : "world";
 }
@@ -213,16 +196,21 @@ export function proofWorkers(
   });
 }
 
-/** The overview mirrors the reference: one relevant task label per base, with every worker still pickable. */
+/**
+ * The overview mirrors the reference: one relevant task label per base, with every worker still
+ * pickable. Inside a base every robot carries its own card, because a robot standing in a room with
+ * nothing above its head is an agent you cannot identify without clicking it. The crowding guard
+ * that collapses cards to markers is `compactWorkerLabels`, not this.
+ */
 export function visibleWorkerLabels(
   workers: ProofWorker[],
   input: ProofInput,
   focusedProjectId: string | null,
 ) {
+  if (input.location.view !== "world" || focusedProjectId) return workers;
   const taskWorkers = workers.filter(
     (worker, index) => workers.findIndex((other) => other.task.id === worker.task.id) === index,
   );
-  if (input.location.view !== "world" || focusedProjectId) return taskWorkers;
   const chosen = new Map<string, ProofWorker>();
   for (const worker of taskWorkers) {
     const previous = chosen.get(worker.projectId);
@@ -268,7 +256,8 @@ export function compactWorkerLabels(
         worker.task.id === input.selectedId ||
         worker.task.id === input.location.taskId ||
         attentionTones.has(worker.tone);
-      if (!kept) compact.add(worker.task.id);
+      // Keyed by worker, not task: two package robots of one task are two cards to weigh separately.
+      if (!kept) compact.add(worker.id);
     }
   }
   return compact;

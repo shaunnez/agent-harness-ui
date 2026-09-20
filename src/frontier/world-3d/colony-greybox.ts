@@ -1,6 +1,6 @@
 import { BoxGeometry, CylinderGeometry, Group, Mesh, MeshStandardMaterial, RingGeometry } from "three";
-import { colonyContract, colonyEdges } from "./colony.ts";
 import type { BaseVariant } from "./appearance.ts";
+import { colonyContract, colonyEdges } from "./colony.ts";
 
 const material = (name: string, color: string) => {
   const result = new MeshStandardMaterial({ color, roughness: 0.85 });

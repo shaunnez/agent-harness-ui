@@ -1,13 +1,13 @@
 import { CheckCircle } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
+import { isModelRunArtifact, resolveScoutUsage, sumArtifactUsage } from "../artifactPresentation";
 import {
+  type AgentRoleId,
   formatApproximateCost,
   formatCacheRate,
   formatTokenCount,
-  type AgentRoleId,
   type RuntimeTaskSummary,
 } from "../domain";
-import { isModelRunArtifact, resolveScoutUsage, sumArtifactUsage } from "../artifactPresentation";
 
 export function Metric({ label, value }: { label: string; value: string }) {
   return (

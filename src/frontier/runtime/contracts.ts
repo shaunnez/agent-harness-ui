@@ -1,6 +1,12 @@
 import type { CandidateDiffResponse } from "../../api.ts";
 import type { OnboardingProposal, OnboardingReview } from "../../domain/onboarding.ts";
 import type {
+  WatchedRun,
+  WorkspaceHead,
+  WorkspaceHistoryPage,
+  WorkspaceHistoryRequest,
+} from "../../domain/workspace-history.ts";
+import type {
   NewTaskDraft,
   RolePolicyId,
   RuntimeAgentPolicy,
@@ -12,21 +18,15 @@ import type {
   RuntimeProject,
   RuntimeRepositoryContract,
   RuntimeRun,
-  RuntimeStatus,
   RuntimeSettings,
-  RuntimeWorktreeInventoryRow,
+  RuntimeStatus,
   RuntimeTaskCore,
   RuntimeTaskPollState,
   RuntimeTaskSummary,
+  RuntimeWorktreeInventoryRow,
   StageId,
 } from "../../domain.ts";
 import type { SettingsInput } from "./settings.ts";
-import type {
-  WorkspaceHead,
-  WorkspaceHistoryPage,
-  WorkspaceHistoryRequest,
-  WatchedRun,
-} from "../../domain/workspace-history.ts";
 
 export type AttentionKind =
   | "running"

@@ -3,10 +3,10 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { JsonTaskStore } from "../../../server/store.mjs";
-import { SqliteTaskStore } from "../../../server/sqlite-store.mjs";
-import { enrichUsage } from "../../../server/model-catalog.mjs";
 import { createIsolatedApi } from "../../../scripts/frontier/isolated-api.mjs";
+import { enrichUsage } from "../../../server/model-catalog.mjs";
+import { SqliteTaskStore } from "../../../server/sqlite-store.mjs";
+import { JsonTaskStore } from "../../../server/store.mjs";
 
 for (const [name, Store, filename] of [
   ["JSON", JsonTaskStore, "tasks.json"],

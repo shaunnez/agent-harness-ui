@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { VerificationSlots } from "../server/verification-concurrency.mjs";
 import { runRepositoryVerification } from "../server/verification.mjs";
+import { VerificationSlots } from "../server/verification-concurrency.mjs";
 
 const MANIFEST = {
   version: 1,

@@ -4,9 +4,9 @@ import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
+import { createIsolatedApi } from "../../../scripts/frontier/isolated-api.mjs";
 import { SqliteTaskStore } from "../../../server/sqlite-store.mjs";
 import { JsonTaskStore, migratePersistedTaskState } from "../../../server/store.mjs";
-import { createIsolatedApi } from "../../../scripts/frontier/isolated-api.mjs";
 import { WORKSPACE_HISTORY_LIMIT } from "../../../server/workspace-history.mjs";
 
 async function setup(t) {

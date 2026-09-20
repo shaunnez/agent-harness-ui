@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { type Overlay, overlayHash, parseOverlay } from "./routes";
 import type { DecisionSession } from "../runtime/decision-session.ts";
+import { type Overlay, overlayHash, parseOverlay } from "./routes";
 
 export interface WorldLocation {
   view: "world" | "project" | "agent";

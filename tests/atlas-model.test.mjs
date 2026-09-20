@@ -5,9 +5,9 @@ import {
   atlasRepairRoads,
   atlasRoads,
   atlasRooms,
-  getAtlasTransitionPath,
   getAtlasStatusLabel,
   getAtlasTaskTone,
+  getAtlasTransitionPath,
   getPackageOverview,
 } from "../src/components/atlas/atlasModel.ts";
 

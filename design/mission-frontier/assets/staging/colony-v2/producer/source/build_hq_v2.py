@@ -184,6 +184,59 @@ def drum():
     light('practical_warm_window_glass', radial(200, DRUM_R, 12.3))
 
 
+def spine_gaps():
+    """The wedges between lobes: spine phi -> (phi0, phi1, outer radius, lower top, upper top)."""
+    gaps = {}
+    for phi in SPINES:
+        before = min(LOBES, key=lambda l: abs(((phi - (l['phi'] + l['half'])) + 180) % 360 - 180))
+        after = min(LOBES, key=lambda l: abs((((l['phi'] - l['half']) - phi) + 180) % 360 - 180))
+        start = before['phi'] + before['half']
+        end = after['phi'] - after['half']
+        # The spine on the 0 deg radial runs 356 -> 4. `arc_points` steps forward from phi0, so an
+        # end below its start sweeps the long way round the building and throws the envelope check.
+        if end <= start:
+            end += 360
+        gaps[phi] = (start, end, max(before['r'], after['r']),
+                     min(before['top'], after['top']), max(before['top'], after['top']))
+    return gaps
+
+
+def spine_infill():
+    """Close the 8 deg wedge each spine stands in.
+
+    Lobes span 52 deg on a 60 deg pitch, so between every pair there is an 8 deg slot that the 1.5 m
+    spine pier stands in the middle of without filling: about 2.4 m of open arc at the wall line, and
+    above it a wedge of roof that was never decked at all. From the exterior camera you looked
+    straight down that wedge onto the room floor. It went unnoticed while the floors were the same
+    grey as everything else and became obvious the moment each room took a colour.
+
+    Both pieces follow the lobe recipe exactly -- same wall thickness, same deck thickness, same
+    materials -- and both live in groups the cutaway lifts, because the wedge is only ever seen from
+    outside and a wall left standing in an opened base is the thing this replaced.
+    """
+    for phi, (phi0, phi1, r_out, low, high) in spine_gaps().items():
+        # Recessed from the lobe wall line, and carried up to the taller neighbour's parapet so the
+        # step between two roof levels is closed by wall rather than left as a slot you see down.
+        use('MF_ShellCutaway_FrontFlats')
+        arc_wall('spine_infill', phi0 - .4, phi1 + .4, r_out - .55, WALL_T, FLOOR - .05, high,
+                 B.M['structure_ivory_ceramic'], (), step=2.0)
+        use('MF_Roof')
+        # Decked out past the lobe wall line, not short of it: stopping at r_out - .5 left the recess
+        # itself open, a half-metre slot you looked straight down onto the room floor through.
+        #
+        # The deck sits at the lower of the two neighbours. Raising it to the taller one closes the
+        # last of the wedge geometrically, and is not shipped: that build loads its GLB and then
+        # never reports the scene ready, with no error and no request left outstanding. The cause is
+        # not understood, so the shipped shell is the one that renders and two slivers of floor stay
+        # visible between roof levels.
+        arc_slab('spine_roof_infill', phi0 - .4, phi1 + .4, 8.6, r_out + .12, low - .28, low + .02,
+                 'structure_ivory_ceramic', .05, step=2.0)
+        arc_slab('spine_roof_gasket', phi0 - .4, phi1 + .4, 8.6, r_out - .45, low - .34, low - .28,
+                 'brushed_titanium', .02, step=2.0)
+        arc_slab('spine_parapet_cap', phi0 - .6, phi1 + .6, r_out - .95, r_out + .12, low, low + .36,
+                 'structure_ivory_ceramic', .06, step=2.0)
+
+
 def spines():
     use('MF_BaseFixed')
     for phi in SPINES:
@@ -252,8 +305,12 @@ def interior():
     # Projecting loading bay with a recessed shutter entrance and canopy.
     use('MF_BaseFixed'); B.b('bay_foundation', (0, 4.11, 18.59), (10.8, .30, 6.02), 'structure_graphite_joints')
     use('MF_Interior_dispatch'); B.b('bay_floor', (0, 4.285, 18.59), (10.2, .03, 6.02), 'room_inlay_dispatch')
+    # Both bay sides are cutaway geometry. Only the camera-facing one used to be, which was right on
+    # its own terms -- you cannot see into the bay through it -- but the roof and the front wall lift
+    # with it, so the far wall was left standing on the apron as a slab attached to nothing. Either
+    # both go or neither does, and both going is what lets you see the bay floor and its cargo.
     for side in [-1, 1]:
-        use('MF_BaseFixed' if side == -1 else 'MF_ShellCutaway_FrontFlats')
+        use('MF_ShellCutaway_FrontFlats')
         wall('bay_side', (side * 5.1, 15.58), (side * 5.1, 21.6), FLOOR, 8.08, .6, B.M['structure_ivory_ceramic'])
         B.strip('bay_side_lamp', (side * 5.42, 16), (side * 5.42, 21), 7.55)
         B.b('bay_side_band', (side * 5.42, 4.27, 18.6), (.12, .5, 5.9), 'structure_graphite_joints', .02)
@@ -300,7 +357,7 @@ def shell_v2():
     B.slab('foundation_plinth', arc_points(0, 360, 17.75, 4.0)[:-1], GROUND - .08, FLOOR - .14, 'structure_graphite_joints', .06)
     B.slab('hq_floor', arc_points(0, 360, 17.55, 4.0)[:-1], FLOOR - .17, FLOOR, 'court_weathered_basalt')
     for spec in LOBES: lobe(spec)
-    spines(); service_wing(); drum(); roof_equipment(); interior()
+    spines(); spine_infill(); service_wing(); drum(); roof_equipment(); interior()
     return finish_v2('hq-shell', ['MF_BaseFixed', 'MF_ShellCutaway', 'MF_Interior', 'MF_Court', 'MF_Props', 'MF_Practicals', 'MF_Sockets', 'MF_Roof'],
                      {'obstacles': list(B.OBSTACLES), 'lights': list(LIGHTS), 'doors': C2['hq']['doors'],
                       'sockets': [{'id': o.name, 'position': list(gl(o.location)), 'facingDeg': o.get('facingDeg', 90)} for o in bpy.data.objects['MF_Sockets'].children],

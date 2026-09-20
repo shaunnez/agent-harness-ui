@@ -1,7 +1,7 @@
-import { clearStandingPoint, clearOfObstacles, type StandingObstacle } from "./room-clearance.ts";
 import type { StageId } from "../../domain.ts";
 import type { TaskSummary } from "../runtime/contracts.ts";
 import { colonyContract, type Point3 } from "./colony.ts";
+import { clearOfObstacles, clearStandingPoint, type StandingObstacle } from "./room-clearance.ts";
 
 /**
  * Room geometry and occupancy come from the frozen HQ floor plan. Nothing here reads attention or

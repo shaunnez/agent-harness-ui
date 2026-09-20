@@ -11,7 +11,7 @@
   "checks": [
     "metadata binds Contract 2.0 SHA256",
     "hq-shell: hash matches export",
-    "hq-shell: 6746264 B / 125936 tris within budget",
+    "hq-shell: 7058852 B / 131696 tris within budget",
     "hq-shell: all textures embedded",
     "hq-shell: texture count <=8",
     "hq-shell: root MF_BaseFixed",

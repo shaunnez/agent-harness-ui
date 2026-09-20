@@ -1,11 +1,11 @@
 import { CheckCircle, CircleNotch, FileCode, Play, WarningCircle } from "@phosphor-icons/react";
 import { useState } from "react";
 import { type RuntimeTask, type StageId, workflowStages } from "../../domain";
-import { Button } from "../Primitives";
 import { getEffectiveStageRunAttempts, getEffectiveStageRunLimit } from "../../runtime-stage-limits";
+import { Button } from "../Primitives";
 import type { RuntimeWorkflowAction } from "./contracts";
-import { candidateGateStages, isStageComplete } from "./workflow";
 import { deriveNextAction, getAccessBoundaryCopy, nextAction } from "./runtimeCommandPolicy";
+import { candidateGateStages, isStageComplete } from "./workflow";
 
 export { getAccessBoundaryCopy, nextAction } from "./runtimeCommandPolicy";
 

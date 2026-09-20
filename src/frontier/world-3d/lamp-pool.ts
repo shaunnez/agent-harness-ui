@@ -13,11 +13,15 @@ const lampFade = 0.35;
 export interface PooledLamp {
   key: string;
   position: Point3;
+  /** Hex colour this lamp throws, or undefined for the station's authored warm white. */
+  color?: number;
 }
 export interface LampSlot {
   key: string | null;
   position: Point3;
   level: number;
+  /** Colour of the lamp currently held, carried so the renderer does not re-look it up each frame. */
+  color?: number;
 }
 
 function toward(level: number, target: number, step: number) {
@@ -60,7 +64,10 @@ export class LampPool {
       if (slot.level > 0) continue;
       const next = waiting.pop();
       slot.key = next?.key ?? null;
-      if (next) slot.position = next.position;
+      if (next) {
+        slot.position = next.position;
+        slot.color = next.color;
+      }
     }
   }
 }

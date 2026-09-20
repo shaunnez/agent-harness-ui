@@ -15,18 +15,15 @@ import { errorMessage, RefreshCoordinator } from "../runtime/coordinator";
 import { createDecisionSession } from "../runtime/decision-session";
 import { liveGateway } from "../runtime/live-gateway";
 import { commandDestination, isActiveRun, latestRun, needsYou } from "../runtime/presentation";
+import { workerPortrait } from "../scene/portrait";
+import { tasksInProject } from "../scene/tasks";
 import { AgentPanel } from "../views/AgentPanel";
 import { BaseSelection } from "../views/BaseSelection";
 import { DecisionNavigation } from "../views/DecisionNavigation";
 import { PinnedWork } from "../views/WatchPins";
 import { AttentionQueue, ConnectionBadge, SelectionHud, WorldActions, WorldClock } from "../views/WorldHud";
 import { WorldNavigation } from "../views/WorldNavigation";
-import { artDirection } from "../world/asset-policy";
-import { cinematicWorker } from "../world/cinematic-catalog";
-import { tasksInProject } from "../world/layout";
-import type { WorldRenderer } from "../world/renderer";
-import { WorldCanvas } from "../world/WorldCanvas";
-import { type ProofControls, proofRequested, proofVisible } from "../world-3d/model";
+import { type ProofControls, proofVisible } from "../world-3d/model";
 import { BuildDiagnostics } from "./BuildDiagnostics";
 import { useBottomHudLayout } from "./bottom-hud-layout";
 import { CommandWorkspaceProvider } from "./command-context";
@@ -76,7 +73,6 @@ export function FrontierApp() {
     workflow: "investigate",
     priority: "medium",
   });
-  const renderer = useRef<WorldRenderer | null>(null);
   const proofRenderer = useRef<ProofControls | null>(null);
   const worldAudio = useRef<WorldAudio | null>(null);
   const [audioError, setAudioError] = useState<string | null>(null);
@@ -164,8 +160,8 @@ export function FrontierApp() {
       run,
     ],
   );
-  const renderProof = proofVisible(window.location.search, sceneInput);
-  const activeRenderer = () => (renderProof ? proofRenderer.current : renderer.current);
+  const renderProof = proofVisible(sceneInput);
+  const activeRenderer = () => proofRenderer.current;
   // Measure after scene effects and an intervening paint, including the visible selection frame.
   useEffect(() => {
     const started = selectionTiming.current.started;
@@ -188,7 +184,7 @@ export function FrontierApp() {
     if (fixture && !initialSelection.current && snapshot.tasks.length) {
       initialSelection.current = true;
       if (runtime.getSnapshot().selectedId) return;
-      if (proofRequested(window.location.search) && !location.taskId) return;
+      if (!location.taskId) return;
       runtime.select(
         location.taskId ??
           (snapshot.tasks.some((item) => item.id === "PC-142") ? "PC-142" : (snapshot.tasks[0]?.id ?? null)),
@@ -385,8 +381,7 @@ export function FrontierApp() {
     return () => window.removeEventListener("keydown", keydown);
   });
   const selectedForHud = task ?? selected;
-  const portrait =
-    artDirection(window.location.search) === "cinematic" ? cinematicWorker.portrait : undefined;
+  const portrait = workerPortrait;
   const shell = useBottomHudLayout(Boolean(selectedForHud), Boolean(pickedProject), location.view);
   const workspace = (
     <main ref={shell} className={`frontier-shell view-${location.view}`}>
@@ -394,7 +389,7 @@ export function FrontierApp() {
         <Suspense
           fallback={
             <p className="world-error panel" role="status">
-              Loading 3D preview…
+              Loading the world…
             </p>
           }
         >
@@ -410,15 +405,9 @@ export function FrontierApp() {
           />
         </Suspense>
       ) : (
-        <WorldCanvas
-          onWorldSettings={() => open({ kind: "world-settings" })}
-          input={sceneInput}
-          preferences={preferences}
-          onSelect={choose}
-          onEnterProject={(id) => navigate({ ...worldLocation, view: "project", projectId: id })}
-          onArtifact={(taskId, artifactId) => open({ kind: "artifact", taskId, artifactId })}
-          rendererRef={renderer}
-        />
+        <p className="world-error panel" role="status">
+          No project to show yet. Create one and its base appears on the map.
+        </p>
       )}
       <header className="top-hud">
         <button type="button" className="brand panel" onClick={() => navigate(worldLocation)}>
@@ -501,7 +490,7 @@ export function FrontierApp() {
         <BaseSelection
           project={project}
           tasks={tasksInProject(snapshot.tasks, project)}
-          rendererRef={renderProof ? proofRenderer : renderer}
+          rendererRef={proofRenderer}
           onEnter={() => navigate({ ...worldLocation, view: "project", projectId: project.id })}
         />
       )}
@@ -558,7 +547,7 @@ export function FrontierApp() {
           </button>
         </p>
       )}
-      <BuildDiagnostics renderer={renderer} runtime={runtime} selectionTiming={selectionTiming} />
+      <BuildDiagnostics runtime={runtime} selectionTiming={selectionTiming} />
       {audioError && (
         <p role="alert" className="selection-error panel">
           {audioError}

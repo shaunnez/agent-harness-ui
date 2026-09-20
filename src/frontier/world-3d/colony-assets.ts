@@ -1,16 +1,10 @@
 import { Group, type Object3D } from "three";
-import { baseVariants, legacyBaseVariants } from "./appearance.ts";
+import { baseVariants } from "./appearance.ts";
 import { greyboxBridge, greyboxBridgeEnd, greyboxCrown, greyboxShell } from "./colony-greybox.ts";
 import type { ProofManifest } from "./model.ts";
 
 /** Only assets used by this renderer are requested; all projects share the same GLTF source. */
 export function proofAssetUrls(manifest: ProofManifest) {
-  if (manifest.version !== 3)
-    return [
-      manifest.scene,
-      manifest.worker,
-      ...legacyBaseVariants.map((id) => manifest.bases?.[id].src ?? manifest.scene),
-    ];
   const colony = manifest.colony;
   return [
     ...new Set(

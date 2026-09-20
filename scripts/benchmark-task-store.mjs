@@ -2,8 +2,8 @@ import { cp, mkdtemp, rm, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
-import { JsonTaskStore } from "../server/store.mjs";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
+import { JsonTaskStore } from "../server/store.mjs";
 import { projectTaskCore, projectTaskSummary } from "../server/task-projections.mjs";
 
 const requestedPath = process.argv[2] ?? process.env.AGENT_HARNESS_DATA ?? path.resolve(".data/tasks.json");

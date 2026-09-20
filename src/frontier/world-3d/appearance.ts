@@ -1,20 +1,24 @@
 import type { RuntimeProject } from "../../domain.ts";
-import { assignSlots, projectKey, isProjectSlot, type SlotAssignments } from "./colony.ts";
+import { assignSlots, isProjectSlot, projectKey, type SlotAssignments } from "./colony.ts";
 
-/** Four crowns on the shared hex shell; the archipelago kit behind the colony flag knows only the last three. */
+/** Four crowns on the shared hex shell. */
 export const baseVariants = ["bastion", "command", "relay", "foundry"] as const;
 export type BaseVariant = (typeof baseVariants)[number];
+/** Retained only by the manifest schema check: the published manifest still carries the old kit. */
 export const legacyBaseVariants = ["command", "relay", "foundry"] as const;
 export type LegacyBaseVariant = (typeof legacyBaseVariants)[number];
-/** The archipelago has no hex Bastion; a Bastion project renders its Command building there. */
-export function legacyVariant(variant: BaseVariant): LegacyBaseVariant {
-  return variant === "bastion" ? "command" : variant;
-}
+/**
+ * `color` is the daylight surface tint and the HUD swatch. `light` is what the base emits after dark,
+ * and it is a separate, far more saturated value on purpose: emissive is multiplied by an intensity
+ * near 3, so a pastel clips channel by channel toward white and loses its hue. At that gain #3f9dff
+ * reads lavender, #ee625d reads orange and #ffa64d reads yellow -- the colour has to start deep to
+ * survive being that bright.
+ */
 export const basePalettes = {
-  blue: { label: "Blue", color: "#3f9dff" },
-  red: { label: "Red", color: "#ee625d" },
-  orange: { label: "Orange", color: "#ffa64d" },
-  purple: { label: "Purple", color: "#b685ff" },
+  blue: { label: "Blue", color: "#3f9dff", light: "#0038ff" },
+  red: { label: "Red", color: "#ee625d", light: "#e00016" },
+  orange: { label: "Orange", color: "#ffa64d", light: "#ff5c00" },
+  purple: { label: "Purple", color: "#b685ff", light: "#6600cc" },
 } as const;
 export type BasePalette = keyof typeof basePalettes;
 export const baseNames: Record<BaseVariant, string> = {

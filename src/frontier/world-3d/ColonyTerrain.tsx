@@ -29,6 +29,7 @@ export function buildTerrainGeometry(field: TerrainField, resolution = 1.0) {
   const positions = new Float32Array(count * 3);
   const surface = new Float32Array(count * 4);
   const wet = new Float32Array(count);
+  const ring = new Float32Array(count);
   const uvs = new Float32Array(count * 2);
   for (let row = 0; row < rows; row++)
     for (let column = 0; column < columns; column++) {
@@ -44,6 +45,7 @@ export function buildTerrainGeometry(field: TerrainField, resolution = 1.0) {
       surface[index * 4 + 2] = sample.shelf;
       surface[index * 4 + 3] = sample.land;
       wet[index] = sample.wet;
+      ring[index] = sample.ring;
       uvs[index * 2] = x / 8;
       uvs[index * 2 + 1] = z / 8;
     }
@@ -76,6 +78,7 @@ export function buildTerrainGeometry(field: TerrainField, resolution = 1.0) {
   geometry.setAttribute("position", new BufferAttribute(positions, 3));
   geometry.setAttribute("aSurface", new BufferAttribute(surface, 4));
   geometry.setAttribute("aWet", new BufferAttribute(wet, 1));
+  geometry.setAttribute("aRing", new BufferAttribute(ring, 1));
   geometry.setAttribute("uv", new BufferAttribute(uvs, 2));
   geometry.setIndex(new BufferAttribute(indices, 1));
   geometry.computeVertexNormals();
@@ -124,8 +127,10 @@ export function createTerrainMaterial(textures: {
         `#include <common>
         attribute vec4 aSurface;
         attribute float aWet;
+        attribute float aRing;
         varying vec4 vSurface;
         varying float vWet;
+        varying float vRing;
         varying vec3 vWorldPos;
         varying vec3 vNormalW;`,
       )
@@ -134,6 +139,7 @@ export function createTerrainMaterial(textures: {
         `#include <begin_vertex>
         vSurface = aSurface;
         vWet = aWet;
+        vRing = aRing;
         vWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
         vNormalW = normalize(mat3(modelMatrix) * normal);`,
       );
@@ -143,6 +149,7 @@ export function createTerrainMaterial(textures: {
         `#include <common>
         varying vec4 vSurface;
         varying float vWet;
+        varying float vRing;
         varying vec3 vWorldPos;
         varying vec3 vNormalW;
         uniform sampler2D uLimestone;
@@ -184,6 +191,12 @@ export function createTerrainMaterial(textures: {
         // Paving on spurs, pads and the court apron.
         vec3 basalt = texture2D(uBasalt, wp.xz / 4.0).rgb;
         col = mix(col, basalt, clamp(vSurface.x, 0.0, 1.0));
+        // The ring road is a carriageway laid over that paving, not more of it: darker, and worn in
+        // two running strips so the loop reads as a road at world zoom rather than a pale band.
+        float ring = clamp(vRing, 0.0, 1.0);
+        vec3 tarmac = basalt * vec3(0.46, 0.47, 0.50);
+        tarmac *= 0.92 + 0.16 * tNoise(wp.xz * 0.9);
+        col = mix(col, tarmac, ring);
         // Snow settles on whatever faces the sky and thins as the ground tilts, so the shoulder reads
         // as a clean white field while the cliff faces stay bare rock and keep the island's relief.
         // It keeps clear of the paving, and of the splash zone where spray would wash it away.

@@ -1,5 +1,5 @@
-import type { StageId } from "./domain.ts";
 import type { RuntimeTask } from "./domain/runtime.ts";
+import type { StageId } from "./domain.ts";
 
 type StageLimitTask = Pick<
   RuntimeTask,
