@@ -1,6 +1,6 @@
+import type { WorkspaceHistoryPage, WorkspaceHistoryRequest } from "../../domain/workspace-history.ts";
 import type { FrontierGateway, FrontierSnapshot } from "./contracts.ts";
 import { refreshPage } from "./pages.ts";
-import type { WorkspaceHistoryRequest, WorkspaceHistoryPage } from "../../domain/workspace-history.ts";
 
 const initialSnapshot: FrontierSnapshot = {
   workspace: null,

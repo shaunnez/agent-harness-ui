@@ -10,8 +10,8 @@ import type {
   WorkflowProfileId,
 } from "../domain";
 import { AgentPolicyEditor } from "./AgentPolicyEditor";
-import { isDesignPolicyValid } from "./DesignPolicyEditor";
 import { agentRoles } from "./AgentRoles";
+import { isDesignPolicyValid } from "./DesignPolicyEditor";
 import { EvaluationScorecard } from "./EvaluationScorecard";
 import { SettingRow } from "./LibraryShared";
 import { Button, SectionHeader } from "./Primitives";

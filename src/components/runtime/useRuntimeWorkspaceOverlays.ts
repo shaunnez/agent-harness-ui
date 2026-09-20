@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getCandidateDiff, type CandidateDiffResponse } from "../../api";
-import { matchesCandidateDiffResponse } from "../../requestIdentity";
+import { type CandidateDiffResponse, getCandidateDiff } from "../../api";
 import type { RuntimeArtifact, StageId } from "../../domain";
+import { matchesCandidateDiffResponse } from "../../requestIdentity";
 import type { RuntimeTaskWorkspaceProps } from "./contracts";
 
 type Candidate = RuntimeTaskWorkspaceProps["task"]["candidates"][number];

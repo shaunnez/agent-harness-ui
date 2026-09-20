@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import type { WorkspaceHead } from "../../domain/workspace-history.ts";
 import {
   acknowledge,
+  type Checkpoint,
+  type CommandMemory,
   commandMemoryKey,
   establishBaseline,
   readCommandMemory,
   toggleWatchPin,
-  writeCommandMemory,
-  type Checkpoint,
-  type CommandMemory,
   type WatchPin,
+  writeCommandMemory,
 } from "./command-memory.ts";
 
 function browserStorage() {

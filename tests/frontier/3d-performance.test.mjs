@@ -12,8 +12,8 @@ import {
   Vector3,
 } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { batchWorker, cloneWorker, disposeWorker } from "../../src/frontier/world-3d/worker-batching.ts";
 import { isOccluded, visibleOccluders } from "../../src/frontier/world-3d/occlusion.ts";
+import { batchWorker, cloneWorker, disposeWorker } from "../../src/frontier/world-3d/worker-batching.ts";
 
 test("the actual worker batches 80 parts into six materials without changing any sampled animated vertex", async () => {
   const manifest = JSON.parse(

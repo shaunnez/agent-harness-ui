@@ -1,0 +1,471 @@
+{
+  "file": "scatter-kit.glb",
+  "sha256": "6bd4b53f8fc3b1b37d038048dd964fa88007bed1ac4953f3132b582f3df76c31",
+  "bytes": 5532412,
+  "images": 61,
+  "items": {
+    "MF_Boulder_A": {
+      "footprintRadius": 1.632,
+      "height": 1.267,
+      "size": [
+        2.911,
+        1.267,
+        3.263
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Boulder_A_body"
+      ],
+      "triangles": 6000
+    },
+    "MF_Boulder_B": {
+      "footprintRadius": 1.727,
+      "height": 2.19,
+      "size": [
+        2.564,
+        2.19,
+        3.453
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Boulder_B_rock"
+      ],
+      "triangles": 80
+    },
+    "MF_Boulder_C": {
+      "footprintRadius": 0.687,
+      "height": 0.838,
+      "size": [
+        1.173,
+        0.838,
+        1.375
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Boulder_C_rock"
+      ],
+      "triangles": 20
+    },
+    "MF_Cliff_A": {
+      "footprintRadius": 7.339,
+      "height": 6.974,
+      "size": [
+        14.677,
+        6.974,
+        11.49
+      ],
+      "anchor": "top",
+      "meshes": [
+        "MF_Cliff_A_body"
+      ],
+      "triangles": 12000
+    },
+    "MF_Cliff_B": {
+      "footprintRadius": 6.353,
+      "height": 7.659,
+      "size": [
+        12.707,
+        7.659,
+        5.182
+      ],
+      "anchor": "top",
+      "meshes": [
+        "MF_Cliff_B_body"
+      ],
+      "triangles": 11999
+    },
+    "MF_Cliff_C": {
+      "footprintRadius": 6.264,
+      "height": 7.778,
+      "size": [
+        12.528,
+        7.778,
+        9.452
+      ],
+      "anchor": "top",
+      "meshes": [
+        "MF_Cliff_C_body"
+      ],
+      "triangles": 12000
+    },
+    "MF_Crystal_A": {
+      "footprintRadius": 0.979,
+      "height": 2.053,
+      "size": [
+        1.958,
+        2.053,
+        1.834
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Crystal_A_body"
+      ],
+      "triangles": 8000
+    },
+    "MF_Crystal_B": {
+      "footprintRadius": 1.013,
+      "height": 2.078,
+      "size": [
+        2.026,
+        2.078,
+        1.178
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Crystal_B_body"
+      ],
+      "triangles": 7000
+    },
+    "MF_Crystal_C": {
+      "footprintRadius": 2.595,
+      "height": 3.582,
+      "size": [
+        5.191,
+        3.582,
+        4.959
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Crystal_C_body"
+      ],
+      "triangles": 7000
+    },
+    "MF_Lantern": {
+      "footprintRadius": 0.21,
+      "height": 2.76,
+      "size": [
+        0.42,
+        2.76,
+        0.42
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Lantern_base",
+        "MF_Lantern_cap",
+        "MF_Lantern_head",
+        "MF_Lantern_post"
+      ],
+      "triangles": 72,
+      "lampOffset": [
+        0,
+        2.72,
+        0
+      ]
+    },
+    "MF_Rock_Large_A": {
+      "footprintRadius": 1.385,
+      "height": 4.105,
+      "size": [
+        2.52,
+        4.105,
+        2.77
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Rock_Large_A_body"
+      ],
+      "triangles": 10000
+    },
+    "MF_Rock_Large_B": {
+      "footprintRadius": 1.31,
+      "height": 2.629,
+      "size": [
+        2.502,
+        2.629,
+        2.621
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Rock_Large_B_body"
+      ],
+      "triangles": 10000
+    },
+    "MF_Rock_Shore_A": {
+      "footprintRadius": 1.654,
+      "height": 1.044,
+      "size": [
+        3.216,
+        1.044,
+        3.308
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Rock_Shore_A_rock"
+      ],
+      "triangles": 80
+    },
+    "MF_Rock_Shore_B": {
+      "footprintRadius": 2.457,
+      "height": 1.115,
+      "size": [
+        3.92,
+        1.115,
+        4.914
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Rock_Shore_B_rock"
+      ],
+      "triangles": 80
+    },
+    "MF_Rock_Shore_C": {
+      "footprintRadius": 1.024,
+      "height": 0.608,
+      "size": [
+        2.048,
+        0.608,
+        1.12
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Rock_Shore_C_rock"
+      ],
+      "triangles": 20
+    },
+    "MF_Tree_Bare_A": {
+      "footprintRadius": 4.769,
+      "height": 8.72,
+      "size": [
+        9.539,
+        8.72,
+        6.173
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Bare_A_body"
+      ],
+      "triangles": 16000
+    },
+    "MF_Tree_Purple_A": {
+      "footprintRadius": 2.665,
+      "height": 6.122,
+      "size": [
+        5.329,
+        6.122,
+        3.591
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Purple_A_body"
+      ],
+      "triangles": 20000
+    },
+    "MF_Tree_Purple_B": {
+      "footprintRadius": 3.674,
+      "height": 6.628,
+      "size": [
+        7.349,
+        6.628,
+        2.528
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Purple_B_body"
+      ],
+      "triangles": 20000
+    },
+    "MF_Tree_Purple_C": {
+      "footprintRadius": 3.503,
+      "height": 7.126,
+      "size": [
+        7.006,
+        7.126,
+        4.373
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Purple_C_body"
+      ],
+      "triangles": 19999
+    },
+    "MF_Tree_Purple_D": {
+      "footprintRadius": 3.578,
+      "height": 6.728,
+      "size": [
+        7.156,
+        6.728,
+        4.884
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Purple_D_body"
+      ],
+      "triangles": 20000
+    },
+    "MF_Vehicle_Cart": {
+      "footprintRadius": 1.363,
+      "height": 1.225,
+      "size": [
+        2.725,
+        1.225,
+        1.3
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "cart_bed",
+        "cart_cargo",
+        "cart_handle",
+        "cart_wheel",
+        "cart_wheel.001",
+        "cart_wheel.002",
+        "cart_wheel.003"
+      ],
+      "triangles": 212
+    },
+    "MF_Vehicle_Rover": {
+      "footprintRadius": 1.233,
+      "height": 1.925,
+      "size": [
+        2.466,
+        1.925,
+        1.809
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Vehicle_Rover_body"
+      ],
+      "triangles": 4000
+    },
+    "MF_Crystal_D": {
+      "footprintRadius": 1.503,
+      "height": 2.6,
+      "size": [
+        3.005,
+        2.6,
+        2.858
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Crystal_D_body"
+      ],
+      "triangles": 8000
+    },
+    "MF_Crystal_E": {
+      "footprintRadius": 1.225,
+      "height": 1.9,
+      "size": [
+        2.342,
+        1.9,
+        2.45
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Crystal_E_body"
+      ],
+      "triangles": 6999
+    }
+  },
+  "budget": {
+    "bytes": 6000000,
+    "triangles": 90000
+  },
+  "compression": {
+    "geometry": "KHR_draco_mesh_compression",
+    "textures": "EXT_texture_webp q85"
+  },
+  "substitutions": {
+    "MF_Tree_Purple_A": {
+      "asset": "tree.pinkCoastal.A",
+      "triangles": 20000,
+      "height": 6.122,
+      "texturePx": 512
+    },
+    "MF_Tree_Purple_B": {
+      "asset": "tree.purpleCoastal.A",
+      "triangles": 20000,
+      "height": 6.628,
+      "texturePx": 512
+    },
+    "MF_Tree_Purple_C": {
+      "asset": "tree_02_violet_blossom",
+      "triangles": 19999,
+      "height": 7.126,
+      "texturePx": 512
+    },
+    "MF_Tree_Purple_D": {
+      "asset": "tree_01_pink_coastal_blossom",
+      "triangles": 20000,
+      "height": 6.728,
+      "texturePx": 512
+    },
+    "MF_Tree_Bare_A": {
+      "asset": "tree_03_wind_bent_evergreen",
+      "triangles": 16000,
+      "height": 8.72,
+      "texturePx": 512
+    },
+    "MF_Rock_Large_A": {
+      "asset": "rock.tallOutcrop.A",
+      "triangles": 10000,
+      "height": 4.105,
+      "texturePx": 512
+    },
+    "MF_Rock_Large_B": {
+      "asset": "rock_02_tall_rock_outcrop",
+      "triangles": 10000,
+      "height": 2.629,
+      "texturePx": 512
+    },
+    "MF_Boulder_A": {
+      "asset": "rock_03_large_boulder",
+      "triangles": 6000,
+      "height": 1.267,
+      "texturePx": 512
+    },
+    "MF_Cliff_A": {
+      "asset": "cliff.coastalLarge.A",
+      "triangles": 12000,
+      "height": 6.974,
+      "texturePx": 512
+    },
+    "MF_Cliff_B": {
+      "asset": "rock_04_undercut_arch_module",
+      "triangles": 11999,
+      "height": 7.659,
+      "texturePx": 512
+    },
+    "MF_Cliff_C": {
+      "asset": "rock_01_large_coastal_cliff",
+      "triangles": 12000,
+      "height": 7.778,
+      "texturePx": 512
+    },
+    "MF_Crystal_A": {
+      "asset": "crystal.largeCluster.A",
+      "triangles": 8000,
+      "height": 2.053,
+      "texturePx": 512
+    },
+    "MF_Crystal_B": {
+      "asset": "crystal_04_shard_formation",
+      "triangles": 7000,
+      "height": 2.078,
+      "texturePx": 512
+    },
+    "MF_Crystal_C": {
+      "asset": "crystal_03_crystal_boulder",
+      "triangles": 7000,
+      "height": 3.582,
+      "texturePx": 512
+    },
+    "MF_Vehicle_Rover": {
+      "asset": "serviceRover.V2",
+      "triangles": 4000,
+      "height": 1.925,
+      "texturePx": 512
+    },
+    "MF_Crystal_D": {
+      "asset": "crystal_01_large_cluster",
+      "triangles": 8000,
+      "height": 2.6,
+      "texturePx": 512
+    },
+    "MF_Crystal_E": {
+      "asset": "crystal_02_embedded_vein",
+      "triangles": 6999,
+      "height": 1.9,
+      "texturePx": 512
+    }
+  },
+  "origin": "Meshy scans (meshy_output) substituted into v2 slots; procedural lantern and cart retained from v2"
+}

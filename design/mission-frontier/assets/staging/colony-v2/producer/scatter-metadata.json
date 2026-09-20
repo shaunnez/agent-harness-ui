@@ -1,0 +1,533 @@
+{
+  "file": "scatter-kit.glb",
+  "sha256": "6ecb016f39548f2507b2b8bfeb7cbb1483416b6f31f4637f478c324c668d1faf",
+  "bytes": 5845124,
+  "triangles": 58750,
+  "images": 6,
+  "items": {
+    "MF_Tree_Purple_A": {
+      "footprintRadius": 2.8,
+      "height": 6.122,
+      "size": [
+        5.601,
+        6.122,
+        5.298
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Purple_A_bark",
+        "MF_Tree_Purple_A_leaves"
+      ],
+      "triangles": 3233
+    },
+    "MF_Tree_Purple_B": {
+      "footprintRadius": 3.525,
+      "height": 6.628,
+      "size": [
+        7.05,
+        6.628,
+        6.84
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Purple_B_bark",
+        "MF_Tree_Purple_B_leaves"
+      ],
+      "triangles": 3227
+    },
+    "MF_Tree_Purple_C": {
+      "footprintRadius": 3.26,
+      "height": 7.126,
+      "size": [
+        6.519,
+        7.126,
+        6.167
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Purple_C_bark",
+        "MF_Tree_Purple_C_leaves"
+      ],
+      "triangles": 3233
+    },
+    "MF_Tree_Purple_D": {
+      "footprintRadius": 3.578,
+      "height": 6.728,
+      "size": [
+        7.157,
+        6.728,
+        6.943
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Purple_D_bark",
+        "MF_Tree_Purple_D_leaves"
+      ],
+      "triangles": 3227
+    },
+    "MF_Tree_Olive_A": {
+      "footprintRadius": 1.974,
+      "height": 4.316,
+      "size": [
+        3.948,
+        4.316,
+        3.735
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Olive_A_bark",
+        "MF_Tree_Olive_A_leaves"
+      ],
+      "triangles": 3233
+    },
+    "MF_Tree_Purple_E": {
+      "footprintRadius": 2.397,
+      "height": 9.147,
+      "size": [
+        4.794,
+        9.147,
+        4.651
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Purple_E_bark",
+        "MF_Tree_Purple_E_leaves"
+      ],
+      "triangles": 3227
+    },
+    "MF_Tree_Purple_F": {
+      "footprintRadius": 4.724,
+      "height": 4.844,
+      "size": [
+        9.447,
+        4.844,
+        9.165
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Purple_F_bark",
+        "MF_Tree_Purple_F_leaves"
+      ],
+      "triangles": 3227
+    },
+    "MF_Tree_Purple_G": {
+      "footprintRadius": 3.99,
+      "height": 7.918,
+      "size": [
+        7.979,
+        7.918,
+        7.741
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Purple_G_bark",
+        "MF_Tree_Purple_G_leaves"
+      ],
+      "triangles": 3227
+    },
+    "MF_Tree_Bare_A": {
+      "footprintRadius": 3.507,
+      "height": 8.72,
+      "size": [
+        7.014,
+        8.72,
+        7.002
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Tree_Bare_A_bark"
+      ],
+      "triangles": 2363
+    },
+    "MF_Scrub_Purple_A": {
+      "footprintRadius": 1.176,
+      "height": 1.197,
+      "size": [
+        2.352,
+        1.197,
+        2.225
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Scrub_Purple_A_leaves"
+      ],
+      "triangles": 531
+    },
+    "MF_Scrub_Purple_B": {
+      "footprintRadius": 1.542,
+      "height": 1.207,
+      "size": [
+        2.347,
+        1.207,
+        3.083
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Scrub_Purple_B_leaves"
+      ],
+      "triangles": 531
+    },
+    "MF_Scrub_Olive_A": {
+      "footprintRadius": 0.987,
+      "height": 1.012,
+      "size": [
+        1.974,
+        1.012,
+        1.867
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Scrub_Olive_A_leaves"
+      ],
+      "triangles": 531
+    },
+    "MF_Cliff_A": {
+      "footprintRadius": 9.807,
+      "height": 6.974,
+      "size": [
+        19.614,
+        6.974,
+        10.97
+      ],
+      "anchor": "top",
+      "meshes": [
+        "MF_Cliff_A_rock"
+      ],
+      "triangles": 7804
+    },
+    "MF_Cliff_B": {
+      "footprintRadius": 9.952,
+      "height": 7.659,
+      "size": [
+        19.903,
+        7.659,
+        13.907
+      ],
+      "anchor": "top",
+      "meshes": [
+        "MF_Cliff_B_rock"
+      ],
+      "triangles": 7804
+    },
+    "MF_Cliff_C": {
+      "footprintRadius": 9.385,
+      "height": 7.778,
+      "size": [
+        18.769,
+        7.778,
+        10.581
+      ],
+      "anchor": "top",
+      "meshes": [
+        "MF_Cliff_C_rock"
+      ],
+      "triangles": 8489
+    },
+    "MF_Grass_A": {
+      "footprintRadius": 0.417,
+      "height": 0.609,
+      "size": [
+        0.758,
+        0.609,
+        0.834
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Grass_A_blades"
+      ],
+      "triangles": 9
+    },
+    "MF_Grass_B": {
+      "footprintRadius": 0.652,
+      "height": 0.802,
+      "size": [
+        1.304,
+        0.802,
+        1.172
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Grass_B_blades"
+      ],
+      "triangles": 12
+    },
+    "MF_Reed_A": {
+      "footprintRadius": 0.404,
+      "height": 1.54,
+      "size": [
+        0.807,
+        1.54,
+        0.743
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Reed_A_blades",
+        "MF_Reed_A_head",
+        "MF_Reed_A_head.001",
+        "MF_Reed_A_head.002"
+      ],
+      "triangles": 31
+    },
+    "MF_Reed_B": {
+      "footprintRadius": 0.437,
+      "height": 2.21,
+      "size": [
+        0.873,
+        2.21,
+        0.841
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Reed_B_blades",
+        "MF_Reed_B_head",
+        "MF_Reed_B_head.001",
+        "MF_Reed_B_head.002",
+        "MF_Reed_B_head.003",
+        "MF_Reed_B_head.004"
+      ],
+      "triangles": 50
+    },
+    "MF_Rock_Large_A": {
+      "footprintRadius": 2.975,
+      "height": 4.105,
+      "size": [
+        5.95,
+        4.105,
+        5.44
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Rock_Large_A_rock"
+      ],
+      "triangles": 1784
+    },
+    "MF_Rock_Large_B": {
+      "footprintRadius": 3.15,
+      "height": 2.629,
+      "size": [
+        6.3,
+        2.629,
+        4.384
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Rock_Large_B_rock"
+      ],
+      "triangles": 1166
+    },
+    "MF_Boulder_A": {
+      "footprintRadius": 1.225,
+      "height": 1.267,
+      "size": [
+        2.161,
+        1.267,
+        2.45
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Boulder_A_rock"
+      ],
+      "triangles": 80
+    },
+    "MF_Boulder_B": {
+      "footprintRadius": 1.727,
+      "height": 2.19,
+      "size": [
+        2.564,
+        2.19,
+        3.453
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Boulder_B_rock"
+      ],
+      "triangles": 80
+    },
+    "MF_Boulder_C": {
+      "footprintRadius": 0.687,
+      "height": 0.838,
+      "size": [
+        1.173,
+        0.838,
+        1.375
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Boulder_C_rock"
+      ],
+      "triangles": 20
+    },
+    "MF_Rock_Shore_A": {
+      "footprintRadius": 1.654,
+      "height": 1.044,
+      "size": [
+        3.216,
+        1.044,
+        3.308
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Rock_Shore_A_rock"
+      ],
+      "triangles": 80
+    },
+    "MF_Rock_Shore_B": {
+      "footprintRadius": 2.457,
+      "height": 1.115,
+      "size": [
+        3.92,
+        1.115,
+        4.914
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Rock_Shore_B_rock"
+      ],
+      "triangles": 80
+    },
+    "MF_Rock_Shore_C": {
+      "footprintRadius": 1.024,
+      "height": 0.608,
+      "size": [
+        2.048,
+        0.608,
+        1.12
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Rock_Shore_C_rock"
+      ],
+      "triangles": 20
+    },
+    "MF_Crystal_A": {
+      "footprintRadius": 0.966,
+      "height": 2.053,
+      "size": [
+        1.932,
+        2.053,
+        1.531
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Crystal_A_foot",
+        "MF_Crystal_A_shard",
+        "MF_Crystal_A_shard.001",
+        "MF_Crystal_A_shard.002",
+        "MF_Crystal_A_shard.003",
+        "MF_Crystal_A_shard.004"
+      ],
+      "triangles": 85
+    },
+    "MF_Crystal_B": {
+      "footprintRadius": 0.966,
+      "height": 2.078,
+      "size": [
+        1.932,
+        2.078,
+        1.531
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Crystal_B_foot",
+        "MF_Crystal_B_shard",
+        "MF_Crystal_B_shard.001",
+        "MF_Crystal_B_shard.002"
+      ],
+      "triangles": 59
+    },
+    "MF_Crystal_C": {
+      "footprintRadius": 1.036,
+      "height": 3.582,
+      "size": [
+        2.072,
+        3.582,
+        1.531
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Crystal_C_foot",
+        "MF_Crystal_C_shard",
+        "MF_Crystal_C_shard.001",
+        "MF_Crystal_C_shard.002",
+        "MF_Crystal_C_shard.003",
+        "MF_Crystal_C_shard.004",
+        "MF_Crystal_C_shard.005",
+        "MF_Crystal_C_shard.006"
+      ],
+      "triangles": 111
+    },
+    "MF_Lantern": {
+      "footprintRadius": 0.21,
+      "height": 2.76,
+      "size": [
+        0.42,
+        2.76,
+        0.42
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "MF_Lantern_base",
+        "MF_Lantern_cap",
+        "MF_Lantern_head",
+        "MF_Lantern_post"
+      ],
+      "triangles": 30,
+      "lampOffset": [
+        0,
+        2.72,
+        0
+      ]
+    },
+    "MF_Vehicle_Rover": {
+      "footprintRadius": 1.8,
+      "height": 1.925,
+      "size": [
+        3.6,
+        1.925,
+        2.4
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "rover_cab",
+        "rover_cargo",
+        "rover_chassis",
+        "rover_deck",
+        "rover_glass",
+        "rover_roll_bar",
+        "rover_wheel",
+        "rover_wheel.001",
+        "rover_wheel.002",
+        "rover_wheel.003",
+        "rover_wheel.004",
+        "rover_wheel.005"
+      ],
+      "triangles": 132
+    },
+    "MF_Vehicle_Cart": {
+      "footprintRadius": 1.363,
+      "height": 1.225,
+      "size": [
+        2.725,
+        1.225,
+        1.3
+      ],
+      "anchor": "ground",
+      "meshes": [
+        "cart_bed",
+        "cart_cargo",
+        "cart_handle",
+        "cart_wheel",
+        "cart_wheel.001",
+        "cart_wheel.002",
+        "cart_wheel.003"
+      ],
+      "triangles": 74
+    }
+  },
+  "budget": {
+    "bytes": 6000000,
+    "triangles": 90000
+  },
+  "cliffFacing": "each MF_Cliff_* piece is longest along +X and faces +Z in glTF; anchor at the top centre",
+  "origin": "exterior-bases/astra-kit/environment.blend (retained CC0 twisted trees, Poly Haven coastal_cliff_01 / 02 scans), deterministic Blender geometry otherwise"
+}

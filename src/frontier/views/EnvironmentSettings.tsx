@@ -6,7 +6,7 @@ import {
   type EnvironmentPreferences,
   formatWorldHour,
   worldHour,
-} from "../world/environment-model";
+} from "../scene/environment-model";
 
 export function EnvironmentSettings({
   preferences,

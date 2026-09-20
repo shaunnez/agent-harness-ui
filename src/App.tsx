@@ -1,8 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   answerGrillQuestion,
-  askCompanionQuestion,
   archiveTask,
+  askCompanionQuestion,
   cancelTask,
   closeTask,
   continueTaskToImplementation,
@@ -36,10 +36,10 @@ import {
 } from "./api";
 import {
   companionPolicyRoleIds,
-  rolePolicyReasoningOptions,
-  selectableRolePolicyModels,
   type RolePolicyFormOptions,
   type RolePolicyFormOptionsSource,
+  rolePolicyReasoningOptions,
+  selectableRolePolicyModels,
 } from "./companion/catalog";
 import { contextualAnswer, deriveCompanionContext } from "./companion/context";
 import {

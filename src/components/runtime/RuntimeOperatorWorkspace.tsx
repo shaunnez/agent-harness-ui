@@ -1,11 +1,11 @@
 import { FileText, GitCommit, WarningCircle } from "@phosphor-icons/react";
 import { type RuntimeArtifact, type RuntimeTask, type StageId, workflowStages } from "../../domain";
 import { Button } from "../Primitives";
+import type { RuntimeWorkflowAction } from "./contracts";
+import { buildOperatorViewModel } from "./operatorViewModel";
 import { RuntimeCommandBar } from "./RuntimeCommandBar";
 import { RuntimeOperatorFinalReview } from "./RuntimeOperatorFinalReview";
 import { RuntimeOperatorPackageFlow } from "./RuntimeOperatorPackageFlow";
-import type { RuntimeWorkflowAction } from "./contracts";
-import { buildOperatorViewModel } from "./operatorViewModel";
 
 export function RuntimeOperatorWorkspace({
   task,

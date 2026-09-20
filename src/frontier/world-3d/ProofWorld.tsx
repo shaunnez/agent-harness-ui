@@ -1,25 +1,27 @@
-import { ArrowLeft, Cube, MapPin, Question, WarningCircle } from "@phosphor-icons/react";
+import { Cube, MapPin, Question, WarningCircle } from "@phosphor-icons/react";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { Component, type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { PCFShadowMap, WebGLRenderer, type WebGLRendererParameters } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import type { WorldPreferences } from "../app/preferences";
 import { splitRecordedDetail } from "../runtime/presentation";
+import { lightingAt, type WorldLighting } from "../scene/environment-model";
 import { WorldTime } from "../views/WorldTime";
-import { lightingAt, type WorldLighting } from "../world/environment-model";
-import { basePalettes, baseVariants } from "./appearance";
+import { basePalettes } from "./appearance";
 import { BaseAppearancePicker } from "./BaseAppearancePicker";
+import { proofAssetUrls } from "./colony-assets";
 import { locatedProject, projectBases, visibleBases } from "./layout";
 import {
-  existingWorldUrl,
+  compactWorkerLabels,
   type ProofControls,
   type ProofInput,
   type ProofManifest,
   parseProofManifest,
-  proofWorkers,
+  proofWorkerState,
   visibleWorkerLabels,
 } from "./model";
 import { ProofScene } from "./ProofScene";
+import { roomIds, roomNames } from "./rooms";
 import { useBaseAppearance } from "./useBaseAppearance";
 import "./proof.css";
 import { PerformancePanel, profiling } from "./PerformanceProbe";
@@ -48,9 +50,7 @@ class SceneBoundary extends Component<
     return { error: true };
   }
   componentDidCatch() {
-    this.props.onError(
-      "The 3D artwork could not be loaded or rendered. Retry the scene or return to the existing world.",
-    );
+    this.props.onError("The 3D artwork could not be loaded or rendered. Retry the scene.");
   }
   render() {
     return this.state.error ? this.props.fallback : this.props.children;
@@ -75,19 +75,21 @@ export function ProofWorld(props: Props) {
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [appearanceProjectId, setAppearanceProjectId] = useState<string | null>(null);
   const { appearances, choose, storageProblem } = useBaseAppearance(input.projects);
-  const bases = projectBases(input.projects, appearances);
+  const bases = projectBases(input.projects, appearances, true);
   const contextId =
     input.location.view === "world"
       ? (props.selectedProjectId ?? focusId ?? locatedProject(input)?.id)
       : locatedProject(input)?.id;
   const project = bases.find((base) => base.project.id === contextId)?.project ?? bases[0]?.project;
-  const workers = manifest ? visibleWorkerLabels(proofWorkers(input, manifest, bases), input, focusId) : [];
+  const { workers: allWorkers, problem: allocationProblem } = proofWorkerState(input, manifest, bases);
+  const sceneProblem = error ?? allocationProblem;
+  const workers = visibleWorkerLabels(allWorkers, input, focusId);
+  const compact = compactWorkerLabels(workers, input, focusId);
   const frameWorld = () => {
     if (!focusId && input.location.view === "world") props.controlsRef.current?.frame();
     setFocusId(null);
     onExterior();
   };
-  const existing = existingWorldUrl(window.location.search);
   const problem = useCallback((message: string) => {
     setReady(false);
     setError(message);
@@ -97,7 +99,7 @@ export function ProofWorld(props: Props) {
       try {
         return new WebGLRenderer({ ...options, ...rendererOptions });
       } catch (cause) {
-        problem("WebGL could not start. Retry the scene or return to the existing world.");
+        problem("WebGL could not start. This browser cannot draw the world; retry, or try another browser.");
         throw cause;
       }
     },
@@ -110,7 +112,7 @@ export function ProofWorld(props: Props) {
     setError(null);
     setReady(false);
     const timer = setTimeout(() => {
-      setError("The 3D scene request timed out. Retry the artwork or return to the existing world.");
+      setError("The 3D scene request timed out. Retry the artwork.");
       controller.abort();
     }, 20_000);
     fetch("/assets/3d-proof/manifest.json", { signal: controller.signal, cache: "no-cache" })
@@ -120,8 +122,10 @@ export function ProofWorld(props: Props) {
       })
       .then((value: unknown) => {
         const parsed = parseProofManifest(value);
-        if (new URLSearchParams(window.location.search).get("proofAssetFailure") === "1")
-          parsed.scene = "/assets/3d-proof/missing-scene.glb";
+        if (new URLSearchParams(window.location.search).get("proofAssetFailure") === "1") {
+          if (parsed.colony) parsed.colony.shell = "/assets/3d-proof/missing-scene.glb";
+          else parsed.scene = "/assets/3d-proof/missing-scene.glb";
+        }
         if (!controller.signal.aborted) setManifest(parsed);
       })
       .catch((problem: unknown) => {
@@ -137,8 +141,7 @@ export function ProofWorld(props: Props) {
   useEffect(() => {
     if (!manifest || ready || error) return;
     const timer = setTimeout(
-      () =>
-        problem("The 3D artwork did not finish loading. Retry the scene or return to the existing world."),
+      () => problem("The 3D artwork did not finish loading. Retry the scene."),
       30_000,
     );
     return () => clearTimeout(timer);
@@ -146,29 +149,23 @@ export function ProofWorld(props: Props) {
   const unavailable = (
     <section className="world-error panel proof-error" role="alert">
       <h2>3D scene unavailable</h2>
-      <p>{error ?? "This browser could not render the scene or load its artwork."}</p>
+      <p>{sceneProblem ?? "This browser could not render the scene or load its artwork."}</p>
       <button
         type="button"
         onClick={() => {
-          if (manifest)
-            useLoader.clear(GLTFLoader, [
-              manifest.scene,
-              manifest.worker,
-              ...baseVariants.map((id) => manifest.bases?.[id].src ?? manifest.scene),
-            ]);
+          if (manifest) useLoader.clear(GLTFLoader, proofAssetUrls(manifest));
           setRetry((value) => value + 1);
         }}
       >
         Retry 3D scene
       </button>
-      <a href={existing}>Return to existing world</a>
     </section>
   );
   return (
     <>
       {profiling && <PerformancePanel ready={ready} />}
       <div className="world-canvas proof-canvas" data-renderer="three" data-ready={ready}>
-        {error ? (
+        {sceneProblem ? (
           unavailable
         ) : manifest ? (
           <SceneBoundary key={retry} fallback={unavailable} onError={problem}>
@@ -199,7 +196,7 @@ export function ProofWorld(props: Props) {
           </SceneBoundary>
         ) : null}
       </div>
-      {!ready && !error && (
+      {!ready && !sceneProblem && (
         <p className="proof-loading panel" role="status">
           Loading project bases…
         </p>
@@ -246,9 +243,6 @@ export function ProofWorld(props: Props) {
         >
           Appearance
         </button>
-        <a href={existing} title="Return to the existing 2D world">
-          <ArrowLeft size={15} /> 2D world
-        </a>
         {new URLSearchParams(window.location.search).get("qa") === "1" && ready && (
           <button type="button" onClick={() => props.controlsRef.current?.simulateContextLoss()}>
             Simulate graphics loss (QA)
@@ -273,19 +267,34 @@ export function ProofWorld(props: Props) {
           >
             <MapPin size={20} color={basePalettes[base.appearance.palette].color} />
             <span>
-              <strong>{base.project.name}</strong>
+              <strong>
+                {base.project.name}
+                {base.project.archivedAt ? " · Dormant" : ""}
+              </strong>
             </span>
           </button>
         ))}
+        {manifest?.version === 3 &&
+          input.location.view !== "world" &&
+          roomIds.map((room) => (
+            <span key={room} className="proof-room-label" data-proof-id={`room:${room}`}>
+              {roomNames[room]}
+              {allWorkers.filter((worker) => worker.room === room && worker.overflow).length > 0
+                ? ` +${allWorkers.filter((worker) => worker.room === room && worker.overflow).length}`
+                : ""}
+            </span>
+          ))}
         {workers.map((worker) => (
           <button
             type="button"
-            key={worker.task.id}
-            data-proof-id={worker.task.id}
+            key={worker.id}
+            data-proof-id={worker.id}
             data-behavior={worker.behavior}
             data-moving={worker.moving}
+            data-compact={compact.has(worker.id)}
             className={`world-label task tone-${worker.tone} ${worker.task.id === input.selectedId ? "selected" : ""}`}
             aria-label={`${worker.title} · ${worker.detail}${worker.task.attention?.reason ? ` · ${splitRecordedDetail(worker.task.attention.reason).headline}` : ""}`}
+            title={compact.has(worker.id) ? `${worker.title} · ${worker.detail}` : undefined}
             onClick={() => onSelect("task", worker.task.id)}
           >
             {worker.tone === "answer" ? (
@@ -295,10 +304,12 @@ export function ProofWorld(props: Props) {
             ) : (
               <span className="proof-status-dot" />
             )}
-            <span>
-              <strong>{worker.title}</strong>
-              <small>{worker.detail}</small>
-            </span>
+            {!compact.has(worker.id) && (
+              <span>
+                <strong>{worker.title}</strong>
+                <small>{worker.detail}</small>
+              </span>
+            )}
           </button>
         ))}
       </nav>

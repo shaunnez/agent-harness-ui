@@ -1,5 +1,5 @@
-import type { RuntimeProject } from "../../domain.ts";
 import type { WorkspaceChange, WorkspaceHistoryPage } from "../../domain/workspace-history.ts";
+import type { RuntimeProject } from "../../domain.ts";
 import type { TaskSummary } from "./contracts.ts";
 import { usageTotals } from "./usage.ts";
 

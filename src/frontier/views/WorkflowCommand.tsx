@@ -1,8 +1,8 @@
 import { ArrowRight, Play, ShieldCheck } from "@phosphor-icons/react";
 import type { KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
-import { usePanelState } from "../app/panel-state";
 import type { RuntimeAvailableAction } from "../../domain";
+import { usePanelState } from "../app/panel-state";
 import type { CandidateScope, FrontierGateway, TaskCore } from "../runtime/contracts";
 import { attentionFor, splitRecordedDetail, stageLabels } from "../runtime/presentation";
 import { candidateScope, executable, proposedAction, reviewIdentity } from "../runtime/workflow";

@@ -1,0 +1,3352 @@
+{
+  "version": "2.0.0",
+  "contractVersion": "2.0.0",
+  "contractSha256": "2edeb5ff4e561804f1b6db3b2657dad681052745288ca76a1aa5648acb9da66c",
+  "assets": {
+    "hq-shell": {
+      "file": "hq-shell.glb",
+      "editableSource": "hq-shell.blend",
+      "rootGroups": [
+        "MF_BaseFixed",
+        "MF_ShellCutaway",
+        "MF_Interior",
+        "MF_Court",
+        "MF_Props",
+        "MF_Practicals",
+        "MF_Sockets",
+        "MF_Roof"
+      ],
+      "bounds": {
+        "min": [
+          -17.75,
+          3.92,
+          -19.3698
+        ],
+        "max": [
+          17.75,
+          16.23,
+          27.0
+        ],
+        "size": [
+          35.5,
+          12.31,
+          46.3698
+        ]
+      },
+      "groups": {
+        "MF_BaseFixed": {
+          "parent": null,
+          "children": [
+            "MF_BaseFixed__brushed_titanium",
+            "MF_BaseFixed__console_blue_glass",
+            "MF_BaseFixed__court_weathered_basalt",
+            "MF_BaseFixed__practical_console_cyan",
+            "MF_BaseFixed__practical_warm_strip",
+            "MF_BaseFixed__practical_warm_window_glass",
+            "MF_BaseFixed__structure_graphite_joints",
+            "MF_BaseFixed__structure_ivory_ceramic"
+          ],
+          "bounds": {
+            "min": [
+              -17.75,
+              3.92,
+              -19.3698
+            ],
+            "max": [
+              17.75,
+              12.02,
+              21.6
+            ],
+            "size": [
+              35.5,
+              8.1,
+              40.9698
+            ]
+          }
+        },
+        "MF_ShellCutaway": {
+          "parent": null,
+          "children": [
+            "MF_ShellCutaway_FrontFlats",
+            "MF_ShellCutaway_PartitionGlass"
+          ],
+          "bounds": {
+            "min": [
+              -16.65,
+              4.0,
+              -15.1804
+            ],
+            "max": [
+              17.1859,
+              11.6,
+              21.83
+            ],
+            "size": [
+              33.8359,
+              7.6,
+              37.0104
+            ]
+          }
+        },
+        "MF_Interior": {
+          "parent": null,
+          "children": [
+            "MF_Interior_briefing",
+            "MF_Interior_dispatch",
+            "MF_Interior_implementation",
+            "MF_Interior_planning",
+            "MF_Interior_review",
+            "MF_Interior_testing"
+          ],
+          "bounds": {
+            "min": [
+              -17.3363,
+              4.27,
+              -15.36
+            ],
+            "max": [
+              17.3363,
+              7.125,
+              21.6
+            ],
+            "size": [
+              34.6726,
+              2.855,
+              36.96
+            ]
+          }
+        },
+        "MF_Court": {
+          "parent": null,
+          "children": [
+            "MF_Court__court_weathered_basalt",
+            "MF_Court__structure_graphite_joints",
+            "MF_Court__utility_ochre"
+          ],
+          "bounds": {
+            "min": [
+              -12.5,
+              3.96,
+              15.59
+            ],
+            "max": [
+              12.5,
+              4.303,
+              27.0
+            ],
+            "size": [
+              25.0,
+              0.343,
+              11.41
+            ]
+          }
+        },
+        "MF_Props": {
+          "parent": null,
+          "children": [],
+          "bounds": null
+        },
+        "MF_Practicals": {
+          "parent": null,
+          "children": [
+            "MF_Practicals__brushed_titanium",
+            "MF_Practicals__practical_delivery_beacon",
+            "MF_Practicals__practical_station_marker"
+          ],
+          "bounds": {
+            "min": [
+              -11.98,
+              4.25,
+              15.82
+            ],
+            "max": [
+              11.98,
+              8.68,
+              26.78
+            ],
+            "size": [
+              23.96,
+              4.43,
+              10.96
+            ]
+          }
+        },
+        "MF_Sockets": {
+          "parent": null,
+          "children": [
+            "base_label",
+            "court_edge_01",
+            "court_edge_02",
+            "court_front_01",
+            "court_front_02",
+            "court_front_03",
+            "court_front_04",
+            "court_side_01",
+            "court_side_02",
+            "court_side_03",
+            "court_side_04",
+            "hq_briefing_01",
+            "hq_briefing_02",
+            "hq_briefing_03",
+            "hq_dispatch_01",
+            "hq_dispatch_02",
+            "hq_dispatch_bay_01",
+            "hq_dispatch_bay_02",
+            "hq_hub_01",
+            "hq_hub_02",
+            "hq_hub_03",
+            "hq_hub_04",
+            "hq_hub_05",
+            "hq_hub_06",
+            "hq_implement_a_01",
+            "hq_implement_a_02",
+            "hq_implement_a_03",
+            "hq_implement_a_04",
+            "hq_implement_b_01",
+            "hq_implement_b_02",
+            "hq_implement_b_03",
+            "hq_implement_b_04",
+            "hq_implement_bench_a_01",
+            "hq_implement_bench_a_02",
+            "hq_implement_bench_b_01",
+            "hq_implement_bench_b_02",
+            "hq_planning_01",
+            "hq_planning_02",
+            "hq_planning_03",
+            "hq_planning_04",
+            "hq_planning_table_01",
+            "hq_planning_table_02",
+            "hq_review_01",
+            "hq_review_02",
+            "hq_review_03",
+            "hq_review_04",
+            "hq_review_dais_01",
+            "hq_review_dais_02",
+            "hq_testing_01",
+            "hq_testing_02",
+            "hq_testing_03",
+            "hq_testing_04",
+            "hq_testing_bench_01",
+            "hq_testing_bench_02"
+          ],
+          "bounds": null
+        },
+        "MF_Roof": {
+          "parent": null,
+          "children": [
+            "MF_Roof__ambient_sensor_navigation",
+            "MF_Roof__brushed_titanium",
+            "MF_Roof__practical_warm_window_glass",
+            "MF_Roof__structure_graphite_joints",
+            "MF_Roof__structure_ivory_ceramic",
+            "MF_Roof__utility_ochre"
+          ],
+          "bounds": {
+            "min": [
+              -17.318,
+              7.35,
+              -18.4461
+            ],
+            "max": [
+              17.5179,
+              16.23,
+              23.7
+            ],
+            "size": [
+              34.8359,
+              8.88,
+              42.1461
+            ]
+          }
+        },
+        "MF_ShellCutaway_FrontFlats": {
+          "parent": "MF_ShellCutaway",
+          "children": [
+            "MF_ShellCutaway_FrontFlats__brushed_titanium",
+            "MF_ShellCutaway_FrontFlats__practical_warm_strip",
+            "MF_ShellCutaway_FrontFlats__practical_warm_window_glass",
+            "MF_ShellCutaway_FrontFlats__structure_graphite_joints",
+            "MF_ShellCutaway_FrontFlats__structure_ivory_ceramic"
+          ],
+          "bounds": {
+            "min": [
+              -16.65,
+              4.0,
+              -15.1804
+            ],
+            "max": [
+              17.1859,
+              11.6,
+              21.83
+            ],
+            "size": [
+              33.8359,
+              7.6,
+              37.0104
+            ]
+          }
+        },
+        "MF_ShellCutaway_PartitionGlass": {
+          "parent": "MF_ShellCutaway",
+          "children": [
+            "MF_ShellCutaway_PartitionGlass__brushed_titanium",
+            "MF_ShellCutaway_PartitionGlass__glass_partition"
+          ],
+          "bounds": {
+            "min": [
+              -15.24,
+              5.5,
+              -13.2282
+            ],
+            "max": [
+              15.24,
+              8.6,
+              15.14
+            ],
+            "size": [
+              30.48,
+              3.1,
+              28.3682
+            ]
+          }
+        },
+        "MF_Interior_planning": {
+          "parent": "MF_Interior",
+          "children": [
+            "MF_Interior_planning__ambient_screen_service",
+            "MF_Interior_planning__brushed_titanium",
+            "MF_Interior_planning__console_blue_glass",
+            "MF_Interior_planning__practical_console_cyan",
+            "MF_Interior_planning__room_inlay_planning",
+            "MF_Interior_planning__structure_graphite_joints"
+          ],
+          "bounds": {
+            "min": [
+              -17.3363,
+              4.302,
+              -0.035
+            ],
+            "max": [
+              -3.1437,
+              7.12,
+              15.0035
+            ],
+            "size": [
+              14.1926,
+              2.818,
+              15.0385
+            ]
+          }
+        },
+        "MF_Interior_implementation": {
+          "parent": "MF_Interior",
+          "children": [
+            "MF_Interior_implementation__ambient_screen_service",
+            "MF_Interior_implementation__brushed_titanium",
+            "MF_Interior_implementation__console_blue_glass",
+            "MF_Interior_implementation__practical_console_cyan",
+            "MF_Interior_implementation__room_inlay_implementation",
+            "MF_Interior_implementation__structure_graphite_joints",
+            "MF_Interior_implementation__structure_ivory_ceramic",
+            "MF_Interior_implementation__utility_ochre"
+          ],
+          "bounds": {
+            "min": [
+              -17.3363,
+              4.3,
+              -15.36
+            ],
+            "max": [
+              8.6763,
+              7.12,
+              0.035
+            ],
+            "size": [
+              26.0126,
+              2.82,
+              15.395
+            ]
+          }
+        },
+        "MF_Interior_review": {
+          "parent": "MF_Interior",
+          "children": [
+            "MF_Interior_review__ambient_screen_service",
+            "MF_Interior_review__brushed_titanium",
+            "MF_Interior_review__console_blue_glass",
+            "MF_Interior_review__practical_console_cyan",
+            "MF_Interior_review__room_inlay_review",
+            "MF_Interior_review__structure_graphite_joints"
+          ],
+          "bounds": {
+            "min": [
+              3.1437,
+              4.3,
+              -15.0035
+            ],
+            "max": [
+              17.3363,
+              7.12,
+              0.035
+            ],
+            "size": [
+              14.1926,
+              2.82,
+              15.0385
+            ]
+          }
+        },
+        "MF_Interior_testing": {
+          "parent": "MF_Interior",
+          "children": [
+            "MF_Interior_testing__ambient_screen_service",
+            "MF_Interior_testing__brushed_titanium",
+            "MF_Interior_testing__console_blue_glass",
+            "MF_Interior_testing__practical_console_cyan",
+            "MF_Interior_testing__room_inlay_testing",
+            "MF_Interior_testing__structure_graphite_joints"
+          ],
+          "bounds": {
+            "min": [
+              3.1437,
+              4.302,
+              -0.035
+            ],
+            "max": [
+              17.3363,
+              7.12,
+              15.0035
+            ],
+            "size": [
+              14.1926,
+              2.818,
+              15.0385
+            ]
+          }
+        },
+        "MF_Interior_briefing": {
+          "parent": "MF_Interior",
+          "children": [
+            "MF_Interior_briefing__ambient_screen_service",
+            "MF_Interior_briefing__brushed_titanium",
+            "MF_Interior_briefing__console_blue_glass",
+            "MF_Interior_briefing__practical_console_cyan",
+            "MF_Interior_briefing__room_inlay_briefing",
+            "MF_Interior_briefing__structure_graphite_joints"
+          ],
+          "bounds": {
+            "min": [
+              -8.6763,
+              4.3,
+              5.465
+            ],
+            "max": [
+              -2.265,
+              7.125,
+              15.025
+            ],
+            "size": [
+              6.4113,
+              2.825,
+              9.56
+            ]
+          }
+        },
+        "MF_Interior_dispatch": {
+          "parent": "MF_Interior",
+          "children": [
+            "MF_Interior_dispatch__brushed_titanium",
+            "MF_Interior_dispatch__room_inlay_dispatch",
+            "MF_Interior_dispatch__structure_graphite_joints",
+            "MF_Interior_dispatch__utility_ochre"
+          ],
+          "bounds": {
+            "min": [
+              -5.1,
+              4.27,
+              5.465
+            ],
+            "max": [
+              8.6763,
+              5.31,
+              21.6
+            ],
+            "size": [
+              13.7763,
+              1.04,
+              16.135
+            ]
+          }
+        }
+      },
+      "materials": [
+        "ambient_screen_service",
+        "ambient_sensor_navigation",
+        "brushed_titanium",
+        "console_blue_glass",
+        "court_weathered_basalt",
+        "glass_partition",
+        "practical_console_cyan",
+        "practical_delivery_beacon",
+        "practical_station_marker",
+        "practical_warm_strip",
+        "practical_warm_window_glass",
+        "room_inlay_briefing",
+        "room_inlay_dispatch",
+        "room_inlay_implementation",
+        "room_inlay_planning",
+        "room_inlay_review",
+        "room_inlay_testing",
+        "structure_graphite_joints",
+        "structure_ivory_ceramic",
+        "utility_ochre"
+      ],
+      "sourceComponents": {
+        "MF_BaseFixed": [
+          "bay_foundation",
+          "dispatch_corridor",
+          "foundation_plinth",
+          "hq_floor",
+          "hub_column",
+          "hub_door_marker",
+          "hub_inlay",
+          "hub_parapet",
+          "hub_table",
+          "hub_table_edge",
+          "hub_table_plinth",
+          "implementation_bay_wall",
+          "implementation_bay_wall_lintel",
+          "implementation_parapet_cap",
+          "implementation_parapet_reveal",
+          "implementation_plinth_band",
+          "implementation_upper_band",
+          "implementation_window_glass",
+          "implementation_window_mullion",
+          "implementation_window_recess",
+          "implementation_window_sill",
+          "partition_0",
+          "partition_120",
+          "partition_180",
+          "partition_300",
+          "partition_60",
+          "planning_bay_wall",
+          "planning_parapet_cap",
+          "planning_parapet_reveal",
+          "planning_plinth_band",
+          "planning_upper_band",
+          "planning_window_glass",
+          "planning_window_mullion",
+          "planning_window_recess",
+          "planning_window_sill",
+          "review_bay_wall",
+          "review_parapet_cap",
+          "review_parapet_reveal",
+          "review_plinth_band",
+          "review_upper_band",
+          "review_window_glass",
+          "review_window_mullion",
+          "review_window_recess",
+          "review_window_sill",
+          "service_wing",
+          "service_wing_cap",
+          "service_wing_louver",
+          "service_wing_louver_frame",
+          "service_wing_plinth",
+          "spine_cap",
+          "spine_ladder_rung",
+          "spine_service_strip",
+          "structural_spine"
+        ],
+        "MF_ShellCutaway_FrontFlats": [
+          "bay_door_head",
+          "bay_door_jamb",
+          "bay_entry_strip",
+          "bay_front",
+          "bay_shutter_track",
+          "bay_side",
+          "bay_side_band",
+          "bay_side_lamp",
+          "front_bay_wall",
+          "front_bay_wall_lintel",
+          "front_parapet_cap",
+          "front_parapet_reveal",
+          "front_plinth_band",
+          "front_upper_band",
+          "front_window_glass",
+          "front_window_mullion",
+          "front_window_recess",
+          "front_window_sill",
+          "spine_infill",
+          "testing_bay_wall",
+          "testing_parapet_cap",
+          "testing_parapet_reveal",
+          "testing_plinth_band",
+          "testing_upper_band",
+          "testing_window_glass",
+          "testing_window_mullion",
+          "testing_window_recess",
+          "testing_window_sill"
+        ],
+        "MF_Roof": [
+          "bay_canopy",
+          "bay_canopy_stay",
+          "bay_roof",
+          "bay_roof_rib",
+          "drum_clerestory_glass",
+          "drum_clerestory_recess",
+          "drum_lower_recess",
+          "drum_rib",
+          "front_roof_deck",
+          "front_roof_gasket",
+          "front_roof_seam",
+          "front_roof_walkway",
+          "hub_drum",
+          "hub_drum_base_band",
+          "hub_drum_collar",
+          "hub_drum_deck_ring",
+          "hub_drum_mid_band",
+          "implementation_roof_deck",
+          "implementation_roof_gasket",
+          "implementation_roof_seam",
+          "implementation_roof_walkway",
+          "planning_roof_deck",
+          "planning_roof_gasket",
+          "planning_roof_seam",
+          "planning_roof_walkway",
+          "planning_tier",
+          "planning_tier_band",
+          "planning_tier_cap",
+          "planning_tier_clerestory",
+          "review_roof_deck",
+          "review_roof_gasket",
+          "review_roof_seam",
+          "review_roof_walkway",
+          "review_tier",
+          "review_tier_band",
+          "review_tier_cap",
+          "review_tier_clerestory",
+          "roof_access_hatch",
+          "roof_comms_head",
+          "roof_comms_mast",
+          "roof_condenser",
+          "roof_condenser_grille",
+          "roof_process_tank",
+          "roof_sensor_lens",
+          "roof_sensor_pod",
+          "roof_tank_collar",
+          "roof_vent_bank",
+          "roof_vent_louver",
+          "service_wing_tank",
+          "service_wing_unit",
+          "spine_parapet_cap",
+          "spine_roof_gasket",
+          "spine_roof_infill",
+          "testing_roof_deck",
+          "testing_roof_gasket",
+          "testing_roof_seam",
+          "testing_roof_walkway",
+          "testing_tier",
+          "testing_tier_band",
+          "testing_tier_cap",
+          "testing_tier_clerestory"
+        ],
+        "MF_Interior_planning": [
+          "planning_console_base",
+          "planning_console_key",
+          "planning_console_top",
+          "planning_floor_inlay",
+          "planning_floor_reveal",
+          "planning_instrument_trace",
+          "planning_monitor",
+          "planning_monitor_housing"
+        ],
+        "MF_Interior_implementation": [
+          "fabrication_module",
+          "fabrication_module_inlay",
+          "implementation_bench_top",
+          "implementation_console_base",
+          "implementation_console_key",
+          "implementation_console_top",
+          "implementation_fabrication_bench",
+          "implementation_floor_inlay",
+          "implementation_floor_reveal",
+          "implementation_instrument_trace",
+          "implementation_monitor",
+          "implementation_monitor_housing"
+        ],
+        "MF_Interior_review": [
+          "review_console_base",
+          "review_console_key",
+          "review_console_top",
+          "review_dais",
+          "review_dais_light",
+          "review_floor_inlay",
+          "review_floor_reveal",
+          "review_instrument_trace",
+          "review_monitor",
+          "review_monitor_housing"
+        ],
+        "MF_Interior_testing": [
+          "testing_console_base",
+          "testing_console_key",
+          "testing_console_top",
+          "testing_floor_inlay",
+          "testing_floor_reveal",
+          "testing_instrument_trace",
+          "testing_monitor",
+          "testing_monitor_housing"
+        ],
+        "MF_Interior_briefing": [
+          "briefing_console_control",
+          "briefing_floor_inlay",
+          "briefing_floor_reveal",
+          "briefing_qa_console",
+          "briefing_scout_display",
+          "briefing_scout_panel"
+        ],
+        "MF_Interior_dispatch": [
+          "bay_floor",
+          "cart_cargo",
+          "cart_wheel",
+          "dispatch_cart",
+          "dispatch_floor_inlay",
+          "dispatch_floor_reveal"
+        ],
+        "MF_ShellCutaway_PartitionGlass": [
+          "corridor_glass_head_rail",
+          "corridor_glass_mullion",
+          "corridor_glass_pane",
+          "corridor_glass_sill_rail",
+          "partition_glass_0_head_rail",
+          "partition_glass_0_mullion",
+          "partition_glass_0_pane",
+          "partition_glass_0_sill_rail",
+          "partition_glass_120_head_rail",
+          "partition_glass_120_mullion",
+          "partition_glass_120_pane",
+          "partition_glass_120_sill_rail",
+          "partition_glass_180_head_rail",
+          "partition_glass_180_mullion",
+          "partition_glass_180_pane",
+          "partition_glass_180_sill_rail",
+          "partition_glass_300_head_rail",
+          "partition_glass_300_mullion",
+          "partition_glass_300_pane",
+          "partition_glass_300_sill_rail",
+          "partition_glass_60_head_rail",
+          "partition_glass_60_mullion",
+          "partition_glass_60_pane",
+          "partition_glass_60_sill_rail"
+        ],
+        "MF_Court": [
+          "court_apron",
+          "court_cross_joint",
+          "court_edge_marker",
+          "court_paving_joint"
+        ],
+        "MF_Practicals": [
+          "court_bollard",
+          "court_bollard_cap",
+          "delivery_beacon"
+        ]
+      },
+      "componentCounts": {
+        "MF_BaseFixed": 426,
+        "MF_ShellCutaway_FrontFlats": 151,
+        "MF_Roof": 236,
+        "MF_Interior_planning": 45,
+        "MF_Interior_implementation": 99,
+        "MF_Interior_review": 47,
+        "MF_Interior_testing": 45,
+        "MF_Interior_briefing": 13,
+        "MF_Interior_dispatch": 12,
+        "MF_ShellCutaway_PartitionGlass": 56,
+        "MF_Court": 20,
+        "MF_Practicals": 9
+      },
+      "glb": {
+        "bytes": 7058852,
+        "sha256": "69514f1567b1034fb55e5f9ac17aa1474a54bc771b1d5588621d1b247d655190",
+        "triangles": 131696,
+        "meshes": 63,
+        "materials": 20,
+        "images": 6,
+        "nodes": 133
+      },
+      "obstacles": [
+        {
+          "name": "hub_table",
+          "min": [
+            -1.5,
+            4.3,
+            -1.5
+          ],
+          "max": [
+            1.5,
+            5.34,
+            1.5
+          ]
+        },
+        {
+          "name": "planning_wall_console_150_0",
+          "min": [
+            -11.1035,
+            4.31,
+            11.0431
+          ],
+          "max": [
+            -9.7772,
+            5.61,
+            12.7904
+          ]
+        },
+        {
+          "name": "planning_wall_console_150_1",
+          "min": [
+            -12.8035,
+            4.31,
+            8.0986
+          ],
+          "max": [
+            -11.4772,
+            5.61,
+            9.8459
+          ]
+        },
+        {
+          "name": "planning_wall_console_150_2",
+          "min": [
+            -14.5035,
+            4.31,
+            5.1541
+          ],
+          "max": [
+            -13.1772,
+            5.61,
+            6.9014
+          ]
+        },
+        {
+          "name": "planning_wall_console_150_3",
+          "min": [
+            -16.2035,
+            4.31,
+            2.2096
+          ],
+          "max": [
+            -14.8772,
+            5.61,
+            3.9569
+          ]
+        },
+        {
+          "name": "implementation_wall_console_210_0",
+          "min": [
+            -16.2035,
+            4.31,
+            -3.9569
+          ],
+          "max": [
+            -14.8772,
+            5.61,
+            -2.2096
+          ]
+        },
+        {
+          "name": "implementation_wall_console_210_1",
+          "min": [
+            -14.5035,
+            4.31,
+            -6.9014
+          ],
+          "max": [
+            -13.1772,
+            5.61,
+            -5.1541
+          ]
+        },
+        {
+          "name": "implementation_wall_console_210_2",
+          "min": [
+            -12.8035,
+            4.31,
+            -9.8459
+          ],
+          "max": [
+            -11.4772,
+            5.61,
+            -8.0986
+          ]
+        },
+        {
+          "name": "implementation_wall_console_210_3",
+          "min": [
+            -11.1035,
+            4.31,
+            -12.7904
+          ],
+          "max": [
+            -9.7772,
+            5.61,
+            -11.0431
+          ]
+        },
+        {
+          "name": "implementation_wall_console_270_0",
+          "min": [
+            -5.95,
+            4.31,
+            -15.275
+          ],
+          "max": [
+            -4.25,
+            5.61,
+            -14.725
+          ]
+        },
+        {
+          "name": "implementation_wall_console_270_1",
+          "min": [
+            -2.55,
+            4.31,
+            -15.275
+          ],
+          "max": [
+            -0.85,
+            5.61,
+            -14.725
+          ]
+        },
+        {
+          "name": "implementation_wall_console_270_2",
+          "min": [
+            0.85,
+            4.31,
+            -15.275
+          ],
+          "max": [
+            2.55,
+            5.61,
+            -14.725
+          ]
+        },
+        {
+          "name": "implementation_wall_console_270_3",
+          "min": [
+            4.25,
+            4.31,
+            -15.275
+          ],
+          "max": [
+            5.95,
+            5.61,
+            -14.725
+          ]
+        },
+        {
+          "name": "review_wall_console_330_0",
+          "min": [
+            9.7772,
+            4.31,
+            -12.7904
+          ],
+          "max": [
+            11.1035,
+            5.61,
+            -11.0431
+          ]
+        },
+        {
+          "name": "review_wall_console_330_1",
+          "min": [
+            11.4772,
+            4.31,
+            -9.8459
+          ],
+          "max": [
+            12.8035,
+            5.61,
+            -8.0986
+          ]
+        },
+        {
+          "name": "review_wall_console_330_2",
+          "min": [
+            13.1772,
+            4.31,
+            -6.9014
+          ],
+          "max": [
+            14.5035,
+            5.61,
+            -5.1541
+          ]
+        },
+        {
+          "name": "review_wall_console_330_3",
+          "min": [
+            14.8772,
+            4.31,
+            -3.9569
+          ],
+          "max": [
+            16.2035,
+            5.61,
+            -2.2096
+          ]
+        },
+        {
+          "name": "testing_wall_console_30_0",
+          "min": [
+            14.8772,
+            4.31,
+            2.2096
+          ],
+          "max": [
+            16.2035,
+            5.61,
+            3.9569
+          ]
+        },
+        {
+          "name": "testing_wall_console_30_1",
+          "min": [
+            13.1772,
+            4.31,
+            5.1541
+          ],
+          "max": [
+            14.5035,
+            5.61,
+            6.9014
+          ]
+        },
+        {
+          "name": "testing_wall_console_30_2",
+          "min": [
+            11.4772,
+            4.31,
+            8.0986
+          ],
+          "max": [
+            12.8035,
+            5.61,
+            9.8459
+          ]
+        },
+        {
+          "name": "testing_wall_console_30_3",
+          "min": [
+            9.7772,
+            4.31,
+            11.0431
+          ],
+          "max": [
+            11.1035,
+            5.61,
+            12.7904
+          ]
+        },
+        {
+          "name": "review_central_equipment",
+          "min": [
+            7.9165,
+            4.3,
+            -6.7
+          ],
+          "max": [
+            10.6165,
+            4.6,
+            -4.0
+          ]
+        },
+        {
+          "name": "implementation_fabrication_bench",
+          "min": [
+            -8.1356,
+            4.3,
+            -11.0912
+          ],
+          "max": [
+            -2.2644,
+            5.8,
+            -6.9221
+          ]
+        },
+        {
+          "name": "briefing_qa_console",
+          "min": [
+            -7.9,
+            4.3,
+            13.35
+          ],
+          "max": [
+            -5.7,
+            5.9,
+            14.05
+          ]
+        },
+        {
+          "name": "cargo_cart",
+          "min": [
+            2.875,
+            4.53,
+            19.55
+          ],
+          "max": [
+            5.125,
+            4.93,
+            20.85
+          ]
+        }
+      ],
+      "lights": [
+        {
+          "role": "practical_warm_window_glass",
+          "position": [
+            12.557,
+            10.4,
+            7.25
+          ]
+        },
+        {
+          "role": "practical_warm_window_glass",
+          "position": [
+            -12.817,
+            11.7,
+            7.4
+          ]
+        },
+        {
+          "role": "practical_warm_window_glass",
+          "position": [
+            12.99,
+            12.6,
+            -7.5
+          ]
+        },
+        {
+          "role": "practical_warm_strip",
+          "position": [
+            16.52,
+            6.9,
+            0.0
+          ]
+        },
+        {
+          "role": "practical_warm_strip",
+          "position": [
+            8.26,
+            6.9,
+            14.307
+          ]
+        },
+        {
+          "role": "practical_warm_strip",
+          "position": [
+            -8.26,
+            6.9,
+            14.307
+          ]
+        },
+        {
+          "role": "practical_warm_strip",
+          "position": [
+            -16.52,
+            6.9,
+            0.0
+          ]
+        },
+        {
+          "role": "practical_warm_strip",
+          "position": [
+            8.26,
+            6.9,
+            -14.307
+          ]
+        },
+        {
+          "role": "practical_warm_window_glass",
+          "position": [
+            0.0,
+            12.3,
+            9.0
+          ]
+        },
+        {
+          "role": "practical_warm_window_glass",
+          "position": [
+            -8.457,
+            12.3,
+            -3.078
+          ]
+        },
+        {
+          "role": "practical_warm_strip",
+          "position": [
+            0.0,
+            8.52,
+            21.8
+          ]
+        },
+        {
+          "role": "practical_station_marker",
+          "position": [
+            -11.8,
+            5.44,
+            16.0
+          ]
+        },
+        {
+          "role": "practical_station_marker",
+          "position": [
+            -11.8,
+            5.44,
+            26.6
+          ]
+        },
+        {
+          "role": "practical_station_marker",
+          "position": [
+            11.8,
+            5.44,
+            16.0
+          ]
+        },
+        {
+          "role": "practical_station_marker",
+          "position": [
+            11.8,
+            5.44,
+            26.6
+          ]
+        },
+        {
+          "role": "practical_delivery_beacon",
+          "position": [
+            4.9,
+            8.6,
+            20.7
+          ]
+        },
+        {
+          "role": "practical_console_cyan",
+          "position": [
+            -12.384,
+            6.5,
+            7.15
+          ]
+        },
+        {
+          "role": "practical_console_cyan",
+          "position": [
+            -12.384,
+            6.5,
+            -7.15
+          ]
+        },
+        {
+          "role": "practical_console_cyan",
+          "position": [
+            -0.0,
+            6.5,
+            -14.3
+          ]
+        },
+        {
+          "role": "practical_console_cyan",
+          "position": [
+            12.384,
+            6.5,
+            -7.15
+          ]
+        },
+        {
+          "role": "practical_console_cyan",
+          "position": [
+            12.384,
+            6.5,
+            7.15
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "door_hub_30",
+          "kind": "hub",
+          "flat": 30,
+          "centre": [
+            4.5,
+            2.6
+          ],
+          "width": 2.4,
+          "clearHeight": 3.8
+        },
+        {
+          "id": "door_hub_90",
+          "kind": "hub",
+          "flat": 90,
+          "centre": [
+            0.0,
+            5.2
+          ],
+          "width": 2.4,
+          "clearHeight": 3.8
+        },
+        {
+          "id": "door_hub_150",
+          "kind": "hub",
+          "flat": 150,
+          "centre": [
+            -4.5,
+            2.6
+          ],
+          "width": 2.4,
+          "clearHeight": 3.8
+        },
+        {
+          "id": "door_hub_210",
+          "kind": "hub",
+          "flat": 210,
+          "centre": [
+            -4.5,
+            -2.6
+          ],
+          "width": 2.4,
+          "clearHeight": 3.8
+        },
+        {
+          "id": "door_hub_270",
+          "kind": "hub",
+          "flat": 270,
+          "centre": [
+            -0.0,
+            -5.2
+          ],
+          "width": 2.4,
+          "clearHeight": 3.8
+        },
+        {
+          "id": "door_hub_330",
+          "kind": "hub",
+          "flat": 330,
+          "centre": [
+            4.5,
+            -2.6
+          ],
+          "width": 2.4,
+          "clearHeight": 3.8
+        },
+        {
+          "id": "door_front_bay",
+          "kind": "hex-to-bay",
+          "centre": [
+            0.0,
+            15.588
+          ],
+          "width": 4.0,
+          "clearHeight": 3.8
+        },
+        {
+          "id": "door_bay_court",
+          "kind": "bay-to-court",
+          "centre": [
+            0.0,
+            21.6
+          ],
+          "width": 4.0,
+          "clearHeight": 4.0
+        },
+        {
+          "id": "door_briefing_court",
+          "kind": "hex-to-court",
+          "centre": [
+            -6.0,
+            15.588
+          ],
+          "width": 2.4,
+          "clearHeight": 3.8
+        },
+        {
+          "id": "door_service_rear",
+          "kind": "hex-to-yard",
+          "centre": [
+            0.0,
+            -15.588
+          ],
+          "width": 4.0,
+          "clearHeight": 4.0
+        }
+      ],
+      "sockets": [
+        {
+          "id": "base_label",
+          "position": [
+            0.0,
+            19.5,
+            -0.0
+          ],
+          "facingDeg": 90.0
+        },
+        {
+          "id": "court_edge_01",
+          "position": [
+            -11.0,
+            4.25,
+            26.5
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "court_edge_02",
+          "position": [
+            11.0,
+            4.25,
+            26.5
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "court_front_01",
+          "position": [
+            -9.5,
+            4.25,
+            25.0
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "court_front_02",
+          "position": [
+            -3.5,
+            4.25,
+            25.0
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "court_front_03",
+          "position": [
+            3.5,
+            4.25,
+            25.0
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "court_front_04",
+          "position": [
+            9.5,
+            4.25,
+            25.0
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "court_side_01",
+          "position": [
+            -12.0,
+            4.25,
+            19.0
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "court_side_02",
+          "position": [
+            -8.0,
+            4.25,
+            19.0
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "court_side_03",
+          "position": [
+            8.0,
+            4.25,
+            19.0
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "court_side_04",
+          "position": [
+            12.0,
+            4.25,
+            19.0
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "hq_briefing_01",
+          "position": [
+            -4.199999809265137,
+            4.300000190734863,
+            13.399999618530273
+          ],
+          "facingDeg": 90.0
+        },
+        {
+          "id": "hq_briefing_02",
+          "position": [
+            -6.900000095367432,
+            4.300000190734863,
+            13.399999618530273
+          ],
+          "facingDeg": 90.0
+        },
+        {
+          "id": "hq_briefing_03",
+          "position": [
+            -4.400000095367432,
+            4.300000190734863,
+            9.0
+          ],
+          "facingDeg": 180.0
+        },
+        {
+          "id": "hq_dispatch_01",
+          "position": [
+            4.199999809265137,
+            4.300000190734863,
+            13.399999618530273
+          ],
+          "facingDeg": 90.0
+        },
+        {
+          "id": "hq_dispatch_02",
+          "position": [
+            4.400000095367432,
+            4.300000190734863,
+            9.0
+          ],
+          "facingDeg": 0.0
+        },
+        {
+          "id": "hq_dispatch_bay_01",
+          "position": [
+            -2.5999999046325684,
+            4.300000190734863,
+            18.600000381469727
+          ],
+          "facingDeg": 180.0
+        },
+        {
+          "id": "hq_dispatch_bay_02",
+          "position": [
+            2.5999999046325684,
+            4.300000190734863,
+            18.600000381469727
+          ],
+          "facingDeg": 0.0
+        },
+        {
+          "id": "hq_hub_01",
+          "position": [
+            4.0,
+            4.300000190734863,
+            0.0
+          ],
+          "facingDeg": 180.0
+        },
+        {
+          "id": "hq_hub_02",
+          "position": [
+            2.0,
+            4.300000190734863,
+            3.4600000381469727
+          ],
+          "facingDeg": 240.0
+        },
+        {
+          "id": "hq_hub_03",
+          "position": [
+            -2.0,
+            4.300000190734863,
+            3.4600000381469727
+          ],
+          "facingDeg": 300.0
+        },
+        {
+          "id": "hq_hub_04",
+          "position": [
+            -4.0,
+            4.300000190734863,
+            0.0
+          ],
+          "facingDeg": 0.0
+        },
+        {
+          "id": "hq_hub_05",
+          "position": [
+            -2.0,
+            4.300000190734863,
+            -3.4600000381469727
+          ],
+          "facingDeg": 60.0
+        },
+        {
+          "id": "hq_hub_06",
+          "position": [
+            2.0,
+            4.300000190734863,
+            -3.4600000381469727
+          ],
+          "facingDeg": 120.0
+        },
+        {
+          "id": "hq_implement_a_01",
+          "position": [
+            -14.149999618530273,
+            4.300000190734863,
+            -2.2799999713897705
+          ],
+          "facingDeg": 210.0
+        },
+        {
+          "id": "hq_implement_a_02",
+          "position": [
+            -12.449999809265137,
+            4.300000190734863,
+            -5.230000019073486
+          ],
+          "facingDeg": 210.0
+        },
+        {
+          "id": "hq_implement_a_03",
+          "position": [
+            -10.75,
+            4.300000190734863,
+            -8.170000076293945
+          ],
+          "facingDeg": 210.0
+        },
+        {
+          "id": "hq_implement_a_04",
+          "position": [
+            -9.050000190734863,
+            4.300000190734863,
+            -11.119999885559082
+          ],
+          "facingDeg": 210.0
+        },
+        {
+          "id": "hq_implement_b_01",
+          "position": [
+            -5.099999904632568,
+            4.300000190734863,
+            -13.399999618530273
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "hq_implement_b_02",
+          "position": [
+            -1.7000000476837158,
+            4.300000190734863,
+            -13.399999618530273
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "hq_implement_b_03",
+          "position": [
+            1.7000000476837158,
+            4.300000190734863,
+            -13.399999618530273
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "hq_implement_b_04",
+          "position": [
+            5.099999904632568,
+            4.300000190734863,
+            -13.399999618530273
+          ],
+          "facingDeg": 270.0
+        },
+        {
+          "id": "hq_implement_bench_a_01",
+          "position": [
+            -8.789999961853027,
+            4.300000190734863,
+            -2.7699999809265137
+          ],
+          "facingDeg": 30.0
+        },
+        {
+          "id": "hq_implement_bench_a_02",
+          "position": [
+            -6.789999961853027,
+            4.300000190734863,
+            -6.230000019073486
+          ],
+          "facingDeg": 30.0
+        },
+        {
+          "id": "hq_implement_bench_b_01",
+          "position": [
+            -2.0,
+            4.300000190734863,
+            -9.0
+          ],
+          "facingDeg": 90.0
+        },
+        {
+          "id": "hq_implement_bench_b_02",
+          "position": [
+            2.0,
+            4.300000190734863,
+            -9.0
+          ],
+          "facingDeg": 90.0
+        },
+        {
+          "id": "hq_planning_01",
+          "position": [
+            -9.050000190734863,
+            4.300000190734863,
+            11.119999885559082
+          ],
+          "facingDeg": 150.0
+        },
+        {
+          "id": "hq_planning_02",
+          "position": [
+            -10.75,
+            4.300000190734863,
+            8.170000076293945
+          ],
+          "facingDeg": 150.0
+        },
+        {
+          "id": "hq_planning_03",
+          "position": [
+            -12.449999809265137,
+            4.300000190734863,
+            5.230000019073486
+          ],
+          "facingDeg": 150.0
+        },
+        {
+          "id": "hq_planning_04",
+          "position": [
+            -14.149999618530273,
+            4.300000190734863,
+            2.2799999713897705
+          ],
+          "facingDeg": 150.0
+        },
+        {
+          "id": "hq_planning_table_01",
+          "position": [
+            -6.789999961853027,
+            4.300000190734863,
+            6.230000019073486
+          ],
+          "facingDeg": 330.0
+        },
+        {
+          "id": "hq_planning_table_02",
+          "position": [
+            -8.789999961853027,
+            4.300000190734863,
+            2.7699999809265137
+          ],
+          "facingDeg": 330.0
+        },
+        {
+          "id": "hq_review_01",
+          "position": [
+            9.050000190734863,
+            4.300000190734863,
+            -11.119999885559082
+          ],
+          "facingDeg": 330.0
+        },
+        {
+          "id": "hq_review_02",
+          "position": [
+            10.75,
+            4.300000190734863,
+            -8.170000076293945
+          ],
+          "facingDeg": 330.0
+        },
+        {
+          "id": "hq_review_03",
+          "position": [
+            12.449999809265137,
+            4.300000190734863,
+            -5.230000019073486
+          ],
+          "facingDeg": 330.0
+        },
+        {
+          "id": "hq_review_04",
+          "position": [
+            14.149999618530273,
+            4.300000190734863,
+            -2.2799999713897705
+          ],
+          "facingDeg": 330.0
+        },
+        {
+          "id": "hq_review_dais_01",
+          "position": [
+            6.789999961853027,
+            4.300000190734863,
+            -6.230000019073486
+          ],
+          "facingDeg": 150.0
+        },
+        {
+          "id": "hq_review_dais_02",
+          "position": [
+            8.789999961853027,
+            4.300000190734863,
+            -2.7699999809265137
+          ],
+          "facingDeg": 150.0
+        },
+        {
+          "id": "hq_testing_01",
+          "position": [
+            14.149999618530273,
+            4.300000190734863,
+            2.2799999713897705
+          ],
+          "facingDeg": 30.0
+        },
+        {
+          "id": "hq_testing_02",
+          "position": [
+            12.449999809265137,
+            4.300000190734863,
+            5.230000019073486
+          ],
+          "facingDeg": 30.0
+        },
+        {
+          "id": "hq_testing_03",
+          "position": [
+            10.75,
+            4.300000190734863,
+            8.170000076293945
+          ],
+          "facingDeg": 30.0
+        },
+        {
+          "id": "hq_testing_04",
+          "position": [
+            9.050000190734863,
+            4.300000190734863,
+            11.119999885559082
+          ],
+          "facingDeg": 30.0
+        },
+        {
+          "id": "hq_testing_bench_01",
+          "position": [
+            8.789999961853027,
+            4.300000190734863,
+            2.7699999809265137
+          ],
+          "facingDeg": 210.0
+        },
+        {
+          "id": "hq_testing_bench_02",
+          "position": [
+            6.789999961853027,
+            4.300000190734863,
+            6.230000019073486
+          ],
+          "facingDeg": 210.0
+        }
+      ],
+      "envelope": {
+        "maxRadius": 19.5,
+        "drumTop": 13.8
+      }
+    },
+    "crown-command": {
+      "file": "crown-command.glb",
+      "editableSource": "crown-command.blend",
+      "rootGroups": [
+        "MF_Roof"
+      ],
+      "bounds": {
+        "min": [
+          -8.4,
+          13.78,
+          -8.4
+        ],
+        "max": [
+          8.4,
+          16.7839,
+          8.4
+        ],
+        "size": [
+          16.8,
+          3.0039,
+          16.8
+        ]
+      },
+      "groups": {
+        "MF_Roof": {
+          "parent": null,
+          "children": [
+            "MF_Roof_Crown"
+          ],
+          "bounds": {
+            "min": [
+              -8.4,
+              13.78,
+              -8.4
+            ],
+            "max": [
+              8.4,
+              16.7839,
+              8.4
+            ],
+            "size": [
+              16.8,
+              3.0039,
+              16.8
+            ]
+          }
+        },
+        "MF_Roof_Crown": {
+          "parent": "MF_Roof",
+          "children": [
+            "MF_Roof_Crown__ambient_sensor_navigation",
+            "MF_Roof_Crown__identity_roof_inset",
+            "MF_Roof_Crown__identity_roof_ring",
+            "MF_Roof_Crown__identity_trim",
+            "MF_Roof_Crown__practical_warm_window_glass",
+            "MF_Roof_Crown__structure_graphite_joints",
+            "MF_Roof_Crown__structure_ivory_ceramic"
+          ],
+          "bounds": {
+            "min": [
+              -8.4,
+              13.78,
+              -8.4
+            ],
+            "max": [
+              8.4,
+              16.7839,
+              8.4
+            ],
+            "size": [
+              16.8,
+              3.0039,
+              16.8
+            ]
+          }
+        }
+      },
+      "materials": [
+        "ambient_sensor_navigation",
+        "identity_roof_inset",
+        "identity_roof_ring",
+        "identity_trim",
+        "practical_warm_window_glass",
+        "structure_graphite_joints",
+        "structure_ivory_ceramic"
+      ],
+      "sourceComponents": {
+        "MF_Roof_Crown": [
+          "central_roof_service_cap",
+          "command_clerestory_glass",
+          "command_clerestory_recess",
+          "core_dark_collar",
+          "core_ivory_drum",
+          "core_upper_recess",
+          "crown_identity_trim",
+          "crown_seat",
+          "identity_coloured_disc",
+          "identity_illuminated_ring",
+          "identity_radial_marker",
+          "identity_recess_socket",
+          "roof_sensor_beacon",
+          "roof_sensor_foot"
+        ]
+      },
+      "componentCounts": {
+        "MF_Roof_Crown": 41
+      },
+      "glb": {
+        "bytes": 991416,
+        "sha256": "ed1cd04d215e9d8a36b8603af6ae412c13063f6b960e445404f3a5e2e6b53486",
+        "triangles": 12644,
+        "meshes": 7,
+        "materials": 7,
+        "images": 4,
+        "nodes": 9
+      },
+      "reseatScale": 0.9214
+    },
+    "crown-relay": {
+      "file": "crown-relay.glb",
+      "editableSource": "crown-relay.blend",
+      "rootGroups": [
+        "MF_Roof"
+      ],
+      "bounds": {
+        "min": [
+          -8.4,
+          13.78,
+          -8.4
+        ],
+        "max": [
+          8.4,
+          18.1978,
+          8.4
+        ],
+        "size": [
+          16.8,
+          4.4178,
+          16.8
+        ]
+      },
+      "groups": {
+        "MF_Roof": {
+          "parent": null,
+          "children": [
+            "MF_Roof_Crown"
+          ],
+          "bounds": {
+            "min": [
+              -8.4,
+              13.78,
+              -8.4
+            ],
+            "max": [
+              8.4,
+              18.1978,
+              8.4
+            ],
+            "size": [
+              16.8,
+              4.4178,
+              16.8
+            ]
+          }
+        },
+        "MF_Roof_Crown": {
+          "parent": "MF_Roof",
+          "children": [
+            "MF_Roof_Crown__ambient_sensor_navigation",
+            "MF_Roof_Crown__brushed_titanium",
+            "MF_Roof_Crown__identity_roof_inset",
+            "MF_Roof_Crown__identity_roof_ring",
+            "MF_Roof_Crown__identity_trim",
+            "MF_Roof_Crown__practical_warm_window_glass",
+            "MF_Roof_Crown__structure_graphite_joints",
+            "MF_Roof_Crown__structure_ivory_ceramic"
+          ],
+          "bounds": {
+            "min": [
+              -8.4,
+              13.78,
+              -8.4
+            ],
+            "max": [
+              8.4,
+              18.1978,
+              8.4
+            ],
+            "size": [
+              16.8,
+              4.4178,
+              16.8
+            ]
+          }
+        }
+      },
+      "materials": [
+        "ambient_sensor_navigation",
+        "brushed_titanium",
+        "identity_roof_inset",
+        "identity_roof_ring",
+        "identity_trim",
+        "practical_warm_window_glass",
+        "structure_graphite_joints",
+        "structure_ivory_ceramic"
+      ],
+      "sourceComponents": {
+        "MF_Roof_Crown": [
+          "crown_identity_trim",
+          "crown_seat",
+          "identity_coloured_disc",
+          "identity_illuminated_ring",
+          "identity_radial_marker",
+          "identity_recess_socket",
+          "relay_asymmetric_service_tower",
+          "relay_dish_pedestal",
+          "relay_feed_mast",
+          "relay_feed_sensor",
+          "relay_front_clerestory_recess",
+          "relay_front_clerestory_window",
+          "relay_mast",
+          "relay_mast_head",
+          "relay_parabolic_dish",
+          "relay_receiver_rim",
+          "relay_roof_service_fin",
+          "relay_roof_service_housing",
+          "relay_side_clerestory_recess",
+          "relay_side_clerestory_window",
+          "relay_tower_clerestory",
+          "relay_tower_crown",
+          "relay_tower_front_service_panel",
+          "relay_tower_warm_window"
+        ]
+      },
+      "componentCounts": {
+        "MF_Roof_Crown": 53
+      },
+      "glb": {
+        "bytes": 1077604,
+        "sha256": "1913db15dbe63b88649c070861d462c1f444f01c2631581a2aa128777cc07c0a",
+        "triangles": 14348,
+        "meshes": 8,
+        "materials": 8,
+        "images": 4,
+        "nodes": 10
+      },
+      "reseatScale": 0.6763
+    },
+    "crown-foundry": {
+      "file": "crown-foundry.glb",
+      "editableSource": "crown-foundry.blend",
+      "rootGroups": [
+        "MF_Roof"
+      ],
+      "bounds": {
+        "min": [
+          -8.4,
+          13.78,
+          -8.4
+        ],
+        "max": [
+          8.4,
+          15.9109,
+          8.4
+        ],
+        "size": [
+          16.8,
+          2.1309,
+          16.8
+        ]
+      },
+      "groups": {
+        "MF_Roof": {
+          "parent": null,
+          "children": [
+            "MF_Roof_Crown"
+          ],
+          "bounds": {
+            "min": [
+              -8.4,
+              13.78,
+              -8.4
+            ],
+            "max": [
+              8.4,
+              15.9109,
+              8.4
+            ],
+            "size": [
+              16.8,
+              2.1309,
+              16.8
+            ]
+          }
+        },
+        "MF_Roof_Crown": {
+          "parent": "MF_Roof",
+          "children": [
+            "MF_Roof_Crown__ambient_sensor_navigation",
+            "MF_Roof_Crown__brushed_titanium",
+            "MF_Roof_Crown__identity_roof_inset",
+            "MF_Roof_Crown__identity_roof_ring",
+            "MF_Roof_Crown__identity_trim",
+            "MF_Roof_Crown__structure_graphite_joints",
+            "MF_Roof_Crown__structure_ivory_ceramic"
+          ],
+          "bounds": {
+            "min": [
+              -8.4,
+              13.78,
+              -8.4
+            ],
+            "max": [
+              8.4,
+              15.9109,
+              8.4
+            ],
+            "size": [
+              16.8,
+              2.1309,
+              16.8
+            ]
+          }
+        }
+      },
+      "materials": [
+        "ambient_sensor_navigation",
+        "brushed_titanium",
+        "identity_roof_inset",
+        "identity_roof_ring",
+        "identity_trim",
+        "structure_graphite_joints",
+        "structure_ivory_ceramic"
+      ],
+      "sourceComponents": {
+        "MF_Roof_Crown": [
+          "crown_identity_trim",
+          "crown_seat",
+          "foundry_closed_gable",
+          "foundry_crown_identity_seam",
+          "foundry_identity_platform",
+          "foundry_rear_utility_silo",
+          "foundry_segmented_barrel_vault",
+          "foundry_silo_cap",
+          "foundry_silo_collar",
+          "foundry_silo_marker",
+          "foundry_vent_bank",
+          "foundry_vent_louver",
+          "identity_coloured_disc",
+          "identity_illuminated_ring",
+          "identity_radial_marker",
+          "identity_recess_socket"
+        ]
+      },
+      "componentCounts": {
+        "MF_Roof_Crown": 72
+      },
+      "glb": {
+        "bytes": 1369244,
+        "sha256": "a9c0c35790d04de6d7e2b763a13ad9a19d897dc168ed8d0bec8ff3dc698430f1",
+        "triangles": 22456,
+        "meshes": 7,
+        "materials": 7,
+        "images": 4,
+        "nodes": 9
+      },
+      "reseatScale": 0.5176
+    },
+    "crown-bastion": {
+      "file": "crown-bastion.glb",
+      "editableSource": "crown-bastion.blend",
+      "rootGroups": [
+        "MF_Roof"
+      ],
+      "bounds": {
+        "min": [
+          -8.53,
+          13.78,
+          -8.4
+        ],
+        "max": [
+          8.53,
+          18.24,
+          8.4
+        ],
+        "size": [
+          17.06,
+          4.46,
+          16.8
+        ]
+      },
+      "groups": {
+        "MF_Roof": {
+          "parent": null,
+          "children": [
+            "MF_Roof_Crown"
+          ],
+          "bounds": {
+            "min": [
+              -8.53,
+              13.78,
+              -8.4
+            ],
+            "max": [
+              8.53,
+              18.24,
+              8.4
+            ],
+            "size": [
+              17.06,
+              4.46,
+              16.8
+            ]
+          }
+        },
+        "MF_Roof_Crown": {
+          "parent": "MF_Roof",
+          "children": [
+            "MF_Roof_Crown__ambient_sensor_navigation",
+            "MF_Roof_Crown__brushed_titanium",
+            "MF_Roof_Crown__identity_roof_inset",
+            "MF_Roof_Crown__identity_roof_ring",
+            "MF_Roof_Crown__identity_trim",
+            "MF_Roof_Crown__practical_station_marker",
+            "MF_Roof_Crown__practical_warm_window_glass",
+            "MF_Roof_Crown__structure_graphite_joints",
+            "MF_Roof_Crown__structure_ivory_ceramic"
+          ],
+          "bounds": {
+            "min": [
+              -8.53,
+              13.78,
+              -8.4
+            ],
+            "max": [
+              8.53,
+              18.24,
+              8.4
+            ],
+            "size": [
+              17.06,
+              4.46,
+              16.8
+            ]
+          }
+        }
+      },
+      "materials": [
+        "ambient_sensor_navigation",
+        "brushed_titanium",
+        "identity_roof_inset",
+        "identity_roof_ring",
+        "identity_trim",
+        "practical_station_marker",
+        "practical_warm_window_glass",
+        "structure_graphite_joints",
+        "structure_ivory_ceramic"
+      ],
+      "sourceComponents": {
+        "MF_Roof_Crown": [
+          "bastion_buttress",
+          "bastion_clerestory_glass",
+          "bastion_clerestory_recess",
+          "bastion_identity_trim",
+          "bastion_keep_band",
+          "bastion_keep_cap",
+          "bastion_keep_lower",
+          "bastion_keep_upper",
+          "bastion_mast",
+          "bastion_mast_beacon",
+          "bastion_turret",
+          "bastion_turret_collar",
+          "bastion_turret_lamp",
+          "crown_identity_trim",
+          "crown_seat",
+          "identity_coloured_disc",
+          "identity_illuminated_ring"
+        ]
+      },
+      "componentCounts": {
+        "MF_Roof_Crown": 76
+      },
+      "glb": {
+        "bytes": 859112,
+        "sha256": "859ac38eec11958827bb14f90ac9600d51ab2bb1ba2e602a12f8ad5e8cc1a103",
+        "triangles": 11352,
+        "meshes": 9,
+        "materials": 9,
+        "images": 4,
+        "nodes": 11
+      }
+    }
+  },
+  "lights": [
+    {
+      "role": "practical_warm_window_glass",
+      "position": [
+        12.557,
+        10.4,
+        7.25
+      ]
+    },
+    {
+      "role": "practical_warm_window_glass",
+      "position": [
+        -12.817,
+        11.7,
+        7.4
+      ]
+    },
+    {
+      "role": "practical_warm_window_glass",
+      "position": [
+        12.99,
+        12.6,
+        -7.5
+      ]
+    },
+    {
+      "role": "practical_warm_strip",
+      "position": [
+        16.52,
+        6.9,
+        0.0
+      ]
+    },
+    {
+      "role": "practical_warm_strip",
+      "position": [
+        8.26,
+        6.9,
+        14.307
+      ]
+    },
+    {
+      "role": "practical_warm_strip",
+      "position": [
+        -8.26,
+        6.9,
+        14.307
+      ]
+    },
+    {
+      "role": "practical_warm_strip",
+      "position": [
+        -16.52,
+        6.9,
+        0.0
+      ]
+    },
+    {
+      "role": "practical_warm_strip",
+      "position": [
+        8.26,
+        6.9,
+        -14.307
+      ]
+    },
+    {
+      "role": "practical_warm_window_glass",
+      "position": [
+        0.0,
+        12.3,
+        9.0
+      ]
+    },
+    {
+      "role": "practical_warm_window_glass",
+      "position": [
+        -8.457,
+        12.3,
+        -3.078
+      ]
+    },
+    {
+      "role": "practical_warm_strip",
+      "position": [
+        0.0,
+        8.52,
+        21.8
+      ]
+    },
+    {
+      "role": "practical_station_marker",
+      "position": [
+        -11.8,
+        5.44,
+        16.0
+      ]
+    },
+    {
+      "role": "practical_station_marker",
+      "position": [
+        -11.8,
+        5.44,
+        26.6
+      ]
+    },
+    {
+      "role": "practical_station_marker",
+      "position": [
+        11.8,
+        5.44,
+        16.0
+      ]
+    },
+    {
+      "role": "practical_station_marker",
+      "position": [
+        11.8,
+        5.44,
+        26.6
+      ]
+    },
+    {
+      "role": "practical_delivery_beacon",
+      "position": [
+        4.9,
+        8.6,
+        20.7
+      ]
+    },
+    {
+      "role": "practical_console_cyan",
+      "position": [
+        -12.384,
+        6.5,
+        7.15
+      ]
+    },
+    {
+      "role": "practical_console_cyan",
+      "position": [
+        -12.384,
+        6.5,
+        -7.15
+      ]
+    },
+    {
+      "role": "practical_console_cyan",
+      "position": [
+        -0.0,
+        6.5,
+        -14.3
+      ]
+    },
+    {
+      "role": "practical_console_cyan",
+      "position": [
+        12.384,
+        6.5,
+        -7.15
+      ]
+    },
+    {
+      "role": "practical_console_cyan",
+      "position": [
+        12.384,
+        6.5,
+        7.15
+      ]
+    }
+  ],
+  "sockets": [
+    {
+      "id": "base_label",
+      "position": [
+        0.0,
+        19.5,
+        -0.0
+      ],
+      "facingDeg": 90.0
+    },
+    {
+      "id": "court_edge_01",
+      "position": [
+        -11.0,
+        4.25,
+        26.5
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "court_edge_02",
+      "position": [
+        11.0,
+        4.25,
+        26.5
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "court_front_01",
+      "position": [
+        -9.5,
+        4.25,
+        25.0
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "court_front_02",
+      "position": [
+        -3.5,
+        4.25,
+        25.0
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "court_front_03",
+      "position": [
+        3.5,
+        4.25,
+        25.0
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "court_front_04",
+      "position": [
+        9.5,
+        4.25,
+        25.0
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "court_side_01",
+      "position": [
+        -12.0,
+        4.25,
+        19.0
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "court_side_02",
+      "position": [
+        -8.0,
+        4.25,
+        19.0
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "court_side_03",
+      "position": [
+        8.0,
+        4.25,
+        19.0
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "court_side_04",
+      "position": [
+        12.0,
+        4.25,
+        19.0
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "hq_briefing_01",
+      "position": [
+        -4.199999809265137,
+        4.300000190734863,
+        13.399999618530273
+      ],
+      "facingDeg": 90.0
+    },
+    {
+      "id": "hq_briefing_02",
+      "position": [
+        -6.900000095367432,
+        4.300000190734863,
+        13.399999618530273
+      ],
+      "facingDeg": 90.0
+    },
+    {
+      "id": "hq_briefing_03",
+      "position": [
+        -4.400000095367432,
+        4.300000190734863,
+        9.0
+      ],
+      "facingDeg": 180.0
+    },
+    {
+      "id": "hq_dispatch_01",
+      "position": [
+        4.199999809265137,
+        4.300000190734863,
+        13.399999618530273
+      ],
+      "facingDeg": 90.0
+    },
+    {
+      "id": "hq_dispatch_02",
+      "position": [
+        4.400000095367432,
+        4.300000190734863,
+        9.0
+      ],
+      "facingDeg": 0.0
+    },
+    {
+      "id": "hq_dispatch_bay_01",
+      "position": [
+        -2.5999999046325684,
+        4.300000190734863,
+        18.600000381469727
+      ],
+      "facingDeg": 180.0
+    },
+    {
+      "id": "hq_dispatch_bay_02",
+      "position": [
+        2.5999999046325684,
+        4.300000190734863,
+        18.600000381469727
+      ],
+      "facingDeg": 0.0
+    },
+    {
+      "id": "hq_hub_01",
+      "position": [
+        4.0,
+        4.300000190734863,
+        0.0
+      ],
+      "facingDeg": 180.0
+    },
+    {
+      "id": "hq_hub_02",
+      "position": [
+        2.0,
+        4.300000190734863,
+        3.4600000381469727
+      ],
+      "facingDeg": 240.0
+    },
+    {
+      "id": "hq_hub_03",
+      "position": [
+        -2.0,
+        4.300000190734863,
+        3.4600000381469727
+      ],
+      "facingDeg": 300.0
+    },
+    {
+      "id": "hq_hub_04",
+      "position": [
+        -4.0,
+        4.300000190734863,
+        0.0
+      ],
+      "facingDeg": 0.0
+    },
+    {
+      "id": "hq_hub_05",
+      "position": [
+        -2.0,
+        4.300000190734863,
+        -3.4600000381469727
+      ],
+      "facingDeg": 60.0
+    },
+    {
+      "id": "hq_hub_06",
+      "position": [
+        2.0,
+        4.300000190734863,
+        -3.4600000381469727
+      ],
+      "facingDeg": 120.0
+    },
+    {
+      "id": "hq_implement_a_01",
+      "position": [
+        -14.149999618530273,
+        4.300000190734863,
+        -2.2799999713897705
+      ],
+      "facingDeg": 210.0
+    },
+    {
+      "id": "hq_implement_a_02",
+      "position": [
+        -12.449999809265137,
+        4.300000190734863,
+        -5.230000019073486
+      ],
+      "facingDeg": 210.0
+    },
+    {
+      "id": "hq_implement_a_03",
+      "position": [
+        -10.75,
+        4.300000190734863,
+        -8.170000076293945
+      ],
+      "facingDeg": 210.0
+    },
+    {
+      "id": "hq_implement_a_04",
+      "position": [
+        -9.050000190734863,
+        4.300000190734863,
+        -11.119999885559082
+      ],
+      "facingDeg": 210.0
+    },
+    {
+      "id": "hq_implement_b_01",
+      "position": [
+        -5.099999904632568,
+        4.300000190734863,
+        -13.399999618530273
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "hq_implement_b_02",
+      "position": [
+        -1.7000000476837158,
+        4.300000190734863,
+        -13.399999618530273
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "hq_implement_b_03",
+      "position": [
+        1.7000000476837158,
+        4.300000190734863,
+        -13.399999618530273
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "hq_implement_b_04",
+      "position": [
+        5.099999904632568,
+        4.300000190734863,
+        -13.399999618530273
+      ],
+      "facingDeg": 270.0
+    },
+    {
+      "id": "hq_implement_bench_a_01",
+      "position": [
+        -8.789999961853027,
+        4.300000190734863,
+        -2.7699999809265137
+      ],
+      "facingDeg": 30.0
+    },
+    {
+      "id": "hq_implement_bench_a_02",
+      "position": [
+        -6.789999961853027,
+        4.300000190734863,
+        -6.230000019073486
+      ],
+      "facingDeg": 30.0
+    },
+    {
+      "id": "hq_implement_bench_b_01",
+      "position": [
+        -2.0,
+        4.300000190734863,
+        -9.0
+      ],
+      "facingDeg": 90.0
+    },
+    {
+      "id": "hq_implement_bench_b_02",
+      "position": [
+        2.0,
+        4.300000190734863,
+        -9.0
+      ],
+      "facingDeg": 90.0
+    },
+    {
+      "id": "hq_planning_01",
+      "position": [
+        -9.050000190734863,
+        4.300000190734863,
+        11.119999885559082
+      ],
+      "facingDeg": 150.0
+    },
+    {
+      "id": "hq_planning_02",
+      "position": [
+        -10.75,
+        4.300000190734863,
+        8.170000076293945
+      ],
+      "facingDeg": 150.0
+    },
+    {
+      "id": "hq_planning_03",
+      "position": [
+        -12.449999809265137,
+        4.300000190734863,
+        5.230000019073486
+      ],
+      "facingDeg": 150.0
+    },
+    {
+      "id": "hq_planning_04",
+      "position": [
+        -14.149999618530273,
+        4.300000190734863,
+        2.2799999713897705
+      ],
+      "facingDeg": 150.0
+    },
+    {
+      "id": "hq_planning_table_01",
+      "position": [
+        -6.789999961853027,
+        4.300000190734863,
+        6.230000019073486
+      ],
+      "facingDeg": 330.0
+    },
+    {
+      "id": "hq_planning_table_02",
+      "position": [
+        -8.789999961853027,
+        4.300000190734863,
+        2.7699999809265137
+      ],
+      "facingDeg": 330.0
+    },
+    {
+      "id": "hq_review_01",
+      "position": [
+        9.050000190734863,
+        4.300000190734863,
+        -11.119999885559082
+      ],
+      "facingDeg": 330.0
+    },
+    {
+      "id": "hq_review_02",
+      "position": [
+        10.75,
+        4.300000190734863,
+        -8.170000076293945
+      ],
+      "facingDeg": 330.0
+    },
+    {
+      "id": "hq_review_03",
+      "position": [
+        12.449999809265137,
+        4.300000190734863,
+        -5.230000019073486
+      ],
+      "facingDeg": 330.0
+    },
+    {
+      "id": "hq_review_04",
+      "position": [
+        14.149999618530273,
+        4.300000190734863,
+        -2.2799999713897705
+      ],
+      "facingDeg": 330.0
+    },
+    {
+      "id": "hq_review_dais_01",
+      "position": [
+        6.789999961853027,
+        4.300000190734863,
+        -6.230000019073486
+      ],
+      "facingDeg": 150.0
+    },
+    {
+      "id": "hq_review_dais_02",
+      "position": [
+        8.789999961853027,
+        4.300000190734863,
+        -2.7699999809265137
+      ],
+      "facingDeg": 150.0
+    },
+    {
+      "id": "hq_testing_01",
+      "position": [
+        14.149999618530273,
+        4.300000190734863,
+        2.2799999713897705
+      ],
+      "facingDeg": 30.0
+    },
+    {
+      "id": "hq_testing_02",
+      "position": [
+        12.449999809265137,
+        4.300000190734863,
+        5.230000019073486
+      ],
+      "facingDeg": 30.0
+    },
+    {
+      "id": "hq_testing_03",
+      "position": [
+        10.75,
+        4.300000190734863,
+        8.170000076293945
+      ],
+      "facingDeg": 30.0
+    },
+    {
+      "id": "hq_testing_04",
+      "position": [
+        9.050000190734863,
+        4.300000190734863,
+        11.119999885559082
+      ],
+      "facingDeg": 30.0
+    },
+    {
+      "id": "hq_testing_bench_01",
+      "position": [
+        8.789999961853027,
+        4.300000190734863,
+        2.7699999809265137
+      ],
+      "facingDeg": 210.0
+    },
+    {
+      "id": "hq_testing_bench_02",
+      "position": [
+        6.789999961853027,
+        4.300000190734863,
+        6.230000019073486
+      ],
+      "facingDeg": 210.0
+    }
+  ],
+  "obstacles": [
+    {
+      "name": "hub_table",
+      "min": [
+        -1.5,
+        4.3,
+        -1.5
+      ],
+      "max": [
+        1.5,
+        5.34,
+        1.5
+      ]
+    },
+    {
+      "name": "planning_wall_console_150_0",
+      "min": [
+        -11.1035,
+        4.31,
+        11.0431
+      ],
+      "max": [
+        -9.7772,
+        5.61,
+        12.7904
+      ]
+    },
+    {
+      "name": "planning_wall_console_150_1",
+      "min": [
+        -12.8035,
+        4.31,
+        8.0986
+      ],
+      "max": [
+        -11.4772,
+        5.61,
+        9.8459
+      ]
+    },
+    {
+      "name": "planning_wall_console_150_2",
+      "min": [
+        -14.5035,
+        4.31,
+        5.1541
+      ],
+      "max": [
+        -13.1772,
+        5.61,
+        6.9014
+      ]
+    },
+    {
+      "name": "planning_wall_console_150_3",
+      "min": [
+        -16.2035,
+        4.31,
+        2.2096
+      ],
+      "max": [
+        -14.8772,
+        5.61,
+        3.9569
+      ]
+    },
+    {
+      "name": "implementation_wall_console_210_0",
+      "min": [
+        -16.2035,
+        4.31,
+        -3.9569
+      ],
+      "max": [
+        -14.8772,
+        5.61,
+        -2.2096
+      ]
+    },
+    {
+      "name": "implementation_wall_console_210_1",
+      "min": [
+        -14.5035,
+        4.31,
+        -6.9014
+      ],
+      "max": [
+        -13.1772,
+        5.61,
+        -5.1541
+      ]
+    },
+    {
+      "name": "implementation_wall_console_210_2",
+      "min": [
+        -12.8035,
+        4.31,
+        -9.8459
+      ],
+      "max": [
+        -11.4772,
+        5.61,
+        -8.0986
+      ]
+    },
+    {
+      "name": "implementation_wall_console_210_3",
+      "min": [
+        -11.1035,
+        4.31,
+        -12.7904
+      ],
+      "max": [
+        -9.7772,
+        5.61,
+        -11.0431
+      ]
+    },
+    {
+      "name": "implementation_wall_console_270_0",
+      "min": [
+        -5.95,
+        4.31,
+        -15.275
+      ],
+      "max": [
+        -4.25,
+        5.61,
+        -14.725
+      ]
+    },
+    {
+      "name": "implementation_wall_console_270_1",
+      "min": [
+        -2.55,
+        4.31,
+        -15.275
+      ],
+      "max": [
+        -0.85,
+        5.61,
+        -14.725
+      ]
+    },
+    {
+      "name": "implementation_wall_console_270_2",
+      "min": [
+        0.85,
+        4.31,
+        -15.275
+      ],
+      "max": [
+        2.55,
+        5.61,
+        -14.725
+      ]
+    },
+    {
+      "name": "implementation_wall_console_270_3",
+      "min": [
+        4.25,
+        4.31,
+        -15.275
+      ],
+      "max": [
+        5.95,
+        5.61,
+        -14.725
+      ]
+    },
+    {
+      "name": "review_wall_console_330_0",
+      "min": [
+        9.7772,
+        4.31,
+        -12.7904
+      ],
+      "max": [
+        11.1035,
+        5.61,
+        -11.0431
+      ]
+    },
+    {
+      "name": "review_wall_console_330_1",
+      "min": [
+        11.4772,
+        4.31,
+        -9.8459
+      ],
+      "max": [
+        12.8035,
+        5.61,
+        -8.0986
+      ]
+    },
+    {
+      "name": "review_wall_console_330_2",
+      "min": [
+        13.1772,
+        4.31,
+        -6.9014
+      ],
+      "max": [
+        14.5035,
+        5.61,
+        -5.1541
+      ]
+    },
+    {
+      "name": "review_wall_console_330_3",
+      "min": [
+        14.8772,
+        4.31,
+        -3.9569
+      ],
+      "max": [
+        16.2035,
+        5.61,
+        -2.2096
+      ]
+    },
+    {
+      "name": "testing_wall_console_30_0",
+      "min": [
+        14.8772,
+        4.31,
+        2.2096
+      ],
+      "max": [
+        16.2035,
+        5.61,
+        3.9569
+      ]
+    },
+    {
+      "name": "testing_wall_console_30_1",
+      "min": [
+        13.1772,
+        4.31,
+        5.1541
+      ],
+      "max": [
+        14.5035,
+        5.61,
+        6.9014
+      ]
+    },
+    {
+      "name": "testing_wall_console_30_2",
+      "min": [
+        11.4772,
+        4.31,
+        8.0986
+      ],
+      "max": [
+        12.8035,
+        5.61,
+        9.8459
+      ]
+    },
+    {
+      "name": "testing_wall_console_30_3",
+      "min": [
+        9.7772,
+        4.31,
+        11.0431
+      ],
+      "max": [
+        11.1035,
+        5.61,
+        12.7904
+      ]
+    },
+    {
+      "name": "review_central_equipment",
+      "min": [
+        7.9165,
+        4.3,
+        -6.7
+      ],
+      "max": [
+        10.6165,
+        4.6,
+        -4.0
+      ]
+    },
+    {
+      "name": "implementation_fabrication_bench",
+      "min": [
+        -8.1356,
+        4.3,
+        -11.0912
+      ],
+      "max": [
+        -2.2644,
+        5.8,
+        -6.9221
+      ]
+    },
+    {
+      "name": "briefing_qa_console",
+      "min": [
+        -7.9,
+        4.3,
+        13.35
+      ],
+      "max": [
+        -5.7,
+        5.9,
+        14.05
+      ]
+    },
+    {
+      "name": "cargo_cart",
+      "min": [
+        2.875,
+        4.53,
+        19.55
+      ],
+      "max": [
+        5.125,
+        4.93,
+        20.85
+      ]
+    }
+  ]
+}

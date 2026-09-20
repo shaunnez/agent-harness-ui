@@ -1,5 +1,6 @@
 import { FileCode, Robot, X } from "@phosphor-icons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { isModelRunArtifact } from "../../artifactPresentation";
 import {
   formatApproximateCost,
   formatCacheRate,
@@ -9,11 +10,10 @@ import {
   type RuntimeTask,
   workflowStages,
 } from "../../domain";
-import { isModelRunArtifact } from "../../artifactPresentation";
 import { MarkdownContent } from "../MarkdownContent";
 import { Button } from "../Primitives";
-import { RuntimeContextDisclosure } from "./RuntimeEvidencePanels";
 import { RetryGrantAudit } from "./RetryGrantAudit";
+import { RuntimeContextDisclosure } from "./RuntimeEvidencePanels";
 import { stripEmbeddedCandidatePatch } from "./RuntimeStageArtifactPanels";
 
 // The server accepts an evaluation at any task status (server/api.mjs, POST

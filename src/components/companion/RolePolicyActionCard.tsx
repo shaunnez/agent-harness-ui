@@ -4,16 +4,16 @@ import {
   companionRoleOptions,
   isExactRolePolicyRequest,
   isTrustedRolePolicyRequest,
+  type RolePolicyFormOptions,
   resetInvalidRolePolicyReasoning,
   rolePolicyReasoningOptions,
   selectableRolePolicyModels,
-  type RolePolicyFormOptions,
 } from "../../companion/catalog";
 import {
   type ActionProposal,
+  assertActionProposal,
   type RoleModelProposal,
   type RolePolicyRequest,
-  assertActionProposal,
   updateRoleModelProposal,
 } from "../../companion/contracts";
 import type { AgentRoleId } from "../../domain";

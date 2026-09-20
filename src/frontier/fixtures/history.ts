@@ -4,8 +4,8 @@ import {
   projectWatchRun,
   workspaceIdentity,
 } from "../../../server/workspace-history-projection.mjs";
-import type { RuntimeProject, RuntimeTask } from "../../domain.ts";
 import type { WorkspaceChange, WorkspaceHistoryRequest } from "../../domain/workspace-history.ts";
+import type { RuntimeProject, RuntimeTask } from "../../domain.ts";
 
 export function fixtureHistory(
   tasks: Map<string, RuntimeTask>,

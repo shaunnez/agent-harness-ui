@@ -1,0 +1,61 @@
+{
+  "capturedAt": "2026-09-16T09:54:48.807Z",
+  "base": "http://127.0.0.1:5243/",
+  "chromium": "149.0.7827.55",
+  "1568x1003": {
+    "shots": {
+      "stressWorldDay": "step4-stress-world-day-1568x1003.png",
+      "exteriorDay": "step4-exterior-day-1568x1003.png",
+      "cutawayDay": "step4-cutaway-day-1568x1003.png",
+      "stressWorldNight": "step4-stress-world-night-1568x1003.png",
+      "exteriorNight": "step4-exterior-night-1568x1003.png",
+      "worldDay": "step4-world-day-1568x1003.png",
+      "exteriorHarness": "step4-exterior-harness-day-1568x1003.png"
+    },
+    "assets": {
+      "totalBytes": 18208427,
+      "totalMB": 18.21,
+      "files": {
+        "manifest.json": 22543,
+        "bridge-span-27.61fa0489a831.glb": 988788,
+        "bridge-end.50920a684920.glb": 432896,
+        "worker.aee069a9823b.glb": 1118716,
+        "hq-shell.4b47f1786639.glb": 2767696,
+        "parcel-a.0537f0988e5e.glb": 2514712,
+        "parcel-hub.8849332f217e.glb": 2562888,
+        "crown-bastion.9ce974411e91.glb": 901732,
+        "crown-command.2f4ae068d9f6.glb": 1707568,
+        "scatter-kit.8d5ecbfe8cc6.glb": 2582416,
+        "crown-relay.ddd0551d9e28.glb": 1114440,
+        "crown-foundry.6d549b2535b0.glb": 1494032
+      }
+    }
+  },
+  "1280x720": {
+    "shots": {
+      "stressWorldDay": "step4-stress-world-day-1280x720.png",
+      "exteriorDay": "step4-exterior-day-1280x720.png",
+      "cutawayDay": "step4-cutaway-day-1280x720.png",
+      "stressWorldNight": "step4-stress-world-night-1280x720.png",
+      "exteriorNight": "step4-exterior-night-1280x720.png"
+    },
+    "assets": {
+      "totalBytes": 18208427,
+      "totalMB": 18.21,
+      "files": {
+        "manifest.json": 22543,
+        "bridge-end.50920a684920.glb": 432896,
+        "bridge-span-27.61fa0489a831.glb": 988788,
+        "worker.aee069a9823b.glb": 1118716,
+        "parcel-hub.8849332f217e.glb": 2562888,
+        "hq-shell.4b47f1786639.glb": 2767696,
+        "parcel-a.0537f0988e5e.glb": 2514712,
+        "crown-bastion.9ce974411e91.glb": 901732,
+        "crown-command.2f4ae068d9f6.glb": 1707568,
+        "scatter-kit.8d5ecbfe8cc6.glb": 2582416,
+        "crown-relay.ddd0551d9e28.glb": 1114440,
+        "crown-foundry.6d549b2535b0.glb": 1494032
+      }
+    }
+  }
+}

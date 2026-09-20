@@ -1,8 +1,8 @@
 import { ArrowLeft, ArrowRight, Binoculars } from "@phosphor-icons/react";
-import { usePanelState } from "../app/panel-state";
-import { ScrollArea } from "../ui/ScrollArea";
 import type { RuntimeRun, RuntimeWorkPackage } from "../../domain";
+import { usePanelState } from "../app/panel-state";
 import { packageState, splitRecordedDetail } from "../runtime/presentation";
+import { ScrollArea } from "../ui/ScrollArea";
 
 export function WorkPackages({
   packages,

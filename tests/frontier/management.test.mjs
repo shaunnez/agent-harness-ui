@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createFixtureGateway } from "../../src/frontier/fixtures/gateway.ts";
 import { overlayHash, parseOverlay } from "../../src/frontier/app/routes.ts";
+import { createFixtureGateway } from "../../src/frontier/fixtures/gateway.ts";
 
 test("fixture project changes are isolated and archive blocks task creation until restored", async () => {
   const first = createFixtureGateway(),

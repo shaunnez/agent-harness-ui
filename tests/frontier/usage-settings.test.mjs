@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createFixtureGateway } from "../../src/frontier/fixtures/gateway.ts";
+import { fixtureRun, fixtureTask } from "../../src/frontier/fixtures/scenarios.ts";
 import { parseDiff } from "../../src/frontier/runtime/diff.ts";
 import { settingsInput } from "../../src/frontier/runtime/settings.ts";
 import { runTime, sumRecorded, taskWallTime, usageTotals } from "../../src/frontier/runtime/usage.ts";
-import { fixtureTask, fixtureRun } from "../../src/frontier/fixtures/scenarios.ts";
 
 test("usage preserves unknowns and reconciles cached input with recorded rates", () => {
   const known = {

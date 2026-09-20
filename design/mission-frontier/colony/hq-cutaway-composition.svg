@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000" viewBox="0 0 1400 1000" font-family="Inter, Helvetica, Arial, sans-serif">
+<title>HQ cutaway composition</title><rect width="1400" height="1000" fill="#0f2a33"/>
+<style>text{fill:#e6eef2} .dim{fill:#9fc3d0;font-size:11px} .k{font-size:12px} .h{font-size:18px;font-weight:600}</style>
+<text class="h" x="20" y="30">HQ cutaway composition: section through the hex (left) and screen framing at 1280x800 (right).</text>
+<line x1="60" y1="600.0" x2="970" y2="600.0" stroke="#3aa" stroke-width="1" stroke-dasharray="3 4"/>
+<text class="dim" x="976" y="604.0">sea 0.0</text>
+<line x1="60" y1="642.0" x2="970" y2="642.0" stroke="#578" stroke-width="1" stroke-dasharray="3 4"/>
+<text class="dim" x="976" y="646.0">seabed -3.0</text>
+<line x1="60" y1="544.0" x2="970" y2="544.0" stroke="#cbb88a" stroke-width="1" stroke-dasharray="3 4"/>
+<text class="dim" x="976" y="548.0">ground 4.0</text>
+<line x1="60" y1="540.5" x2="970" y2="540.5" stroke="#999" stroke-width="1" stroke-dasharray="3 4"/>
+<text class="dim" x="976" y="544.5">court/deck 4.25</text>
+<line x1="60" y1="539.8" x2="970" y2="539.8" stroke="#eee" stroke-width="1" stroke-dasharray="3 4"/>
+<text class="dim" x="976" y="543.8">floor 4.30</text>
+<line x1="60" y1="472.6" x2="970" y2="472.6" stroke="#eee" stroke-width="1" stroke-dasharray="3 4"/>
+<text class="dim" x="976" y="476.6">ceiling 9.10</text>
+<line x1="60" y1="465.6" x2="970" y2="465.6" stroke="#eee" stroke-width="1" stroke-dasharray="3 4"/>
+<text class="dim" x="976" y="469.6">parapet 9.60</text>
+<line x1="60" y1="483.79999999999995" x2="970" y2="483.79999999999995" stroke="#bbb" stroke-width="1" stroke-dasharray="3 4"/>
+<text class="dim" x="976" y="487.79999999999995">bay roof 8.30</text>
+<line x1="60" y1="341.0" x2="970" y2="341.0" stroke="#ffd37f" stroke-width="1" stroke-dasharray="3 4"/>
+<text class="dim" x="976" y="345.0">crown max 18.50</text>
+<line x1="60" y1="327.0" x2="970" y2="327.0" stroke="#ffd37f" stroke-width="1" stroke-dasharray="3 4"/>
+<text class="dim" x="976" y="331.0">label 19.50</text>
+<rect x="60" y="544.0" width="826" height="98.0" fill="#4a3f33"/>
+<rect x="886" y="600.0" width="84" height="42.0" fill="#164c5a"/>
+<rect x="187.56159824632144" y="465.6" width="8.4" height="78.39999999999999" fill="#d9d4c7" stroke="#333"/>
+<rect x="624.0384017536786" y="465.6" width="8.4" height="78.39999999999999" fill="#ff9f6f" stroke="#333"/>
+<rect x="710.3000000000001" y="483.79999999999995" width="4.2" height="60.20000000000001" fill="#ff9f6f" stroke="#333"/>
+<rect x="335.1538660821072" y="524.4" width="4.2" height="15.400000000000007" fill="#9fc3d0" stroke="#333"/>
+<rect x="480.6461339178929" y="524.4" width="4.2" height="15.400000000000007" fill="#9fc3d0" stroke="#333"/>
+<rect x="326.0" y="472.6" width="8.4" height="67.2" fill="#9fc3d0" stroke="#333"/>
+<rect x="485.59999999999997" y="472.6" width="8.4" height="67.2" fill="#9fc3d0" stroke="#333"/>
+<rect x="191.76159824632146" y="539.8" width="436.4768035073571" height="4.1999999999999975" fill="#bbb"/>
+<rect x="191.76159824632146" y="465.6" width="436.4768035073571" height="7.0" fill="#ff9f6f" stroke="#333"/>
+<rect x="628.2384017536785" y="483.79999999999995" width="84.16159824632147" height="5.6000000000000005" fill="#ff9f6f" stroke="#333"/>
+<path d="M284,465.6 Q410,299.0 536,465.6" fill="#ff9f6f" fill-opacity="0.35" stroke="#ffd37f" stroke-dasharray="4 3"/>
+<text class="dim" x="410" y="369.0" text-anchor="middle">crown variant (MF_Roof)</text>
+<rect x="247.6" y="496.4" width="16.8" height="43.4" fill="#eef" stroke="#333" rx="4"/>
+<rect x="352.59999999999997" y="496.4" width="16.8" height="43.4" fill="#eef" stroke="#333" rx="4"/>
+<rect x="527.5999999999999" y="496.4" width="16.8" height="43.4" fill="#eef" stroke="#333" rx="4"/>
+<rect x="662.0" y="496.4" width="16.8" height="43.4" fill="#eef" stroke="#333" rx="4"/>
+<rect x="737.6" y="497.1" width="16.8" height="43.4" fill="#eef" stroke="#333" rx="4"/>
+<rect x="375.7" y="523.0" width="4.2" height="16.800000000000004" fill="#d9d4c7" stroke="#333"/>
+<rect x="375.7" y="472.6" width="4.2" height="50.39999999999999" fill="#ff9f6f" stroke="#333"/>
+<rect x="440.09999999999997" y="523.0" width="4.2" height="16.800000000000004" fill="#d9d4c7" stroke="#333"/>
+<rect x="440.09999999999997" y="472.6" width="4.2" height="50.39999999999999" fill="#ff9f6f" stroke="#333"/>
+<text class="k" x="60" y="680">Orange = MF_ShellCutaway / MF_Roof (hidden in the cutaway). Cream = MF_BaseFixed. Blue = hub columns and parapets (always visible).</text>
+<line x1="494" y1="539.8" x2="789.5619204831831" y2="379.99026575238753" stroke="#9fe" stroke-width="2"/>
+<text class="dim" x="779.5619204831831" y="373.99026575238753" text-anchor="end" fill="#9fe">exterior 28.4 deg (span 58)</text>
+<text class="dim" x="502" y="571.8" fill="#9fe">hides 2.2 m of floor behind a 1.2 m partition, 8.9 m behind a 4.8 m wall</text>
+<line x1="396" y1="539.8" x2="653.3909328879766" y2="323.8233631453228" stroke="#ffd37f" stroke-width="2"/>
+<text class="dim" x="643.3909328879766" y="317.8233631453228" text-anchor="end" fill="#ffd37f">cutaway 40 deg (span 40)</text>
+<text class="dim" x="404" y="555.8" fill="#ffd37f">hides 1.4 m of floor behind a 1.2 m partition, 5.7 m behind a 4.8 m wall</text>
+<text class="k" x="60" y="705">Section is along Z through X=0 (rear at left, court and bay at right). Not to be used for widths; see the floor plan.</text>
+<rect x="860" y="80" width="512" height="320" fill="#173e4a" stroke="#eee"/>
+<rect x="860.0" y="80.0" width="208.0" height="60.0" fill="#0b1b22" fill-opacity="0.85" stroke="#9fc3d0" stroke-dasharray="3 3"/>
+<text class="dim" x="864.0" y="92.0">brand, tabs, 3D controls</text>
+<rect x="1236.0" y="80.0" width="136.0" height="120.0" fill="#0b1b22" fill-opacity="0.85" stroke="#9fc3d0" stroke-dasharray="3 3"/>
+<text class="dim" x="1240.0" y="92.0">Needs you</text>
+<rect x="1236.0" y="296.0" width="136.0" height="104.0" fill="#0b1b22" fill-opacity="0.85" stroke="#9fc3d0" stroke-dasharray="3 3"/>
+<text class="dim" x="1240.0" y="308.0">actions</text>
+<rect x="860.0" y="300.0" width="100.0" height="100.0" fill="#0b1b22" fill-opacity="0.85" stroke="#9fc3d0" stroke-dasharray="3 3"/>
+<text class="dim" x="864.0" y="312.0">minimap</text>
+<rect x="936.0" y="344.0" width="360.0" height="56.0" fill="#0b1b22" fill-opacity="0.85" stroke="#9fc3d0" stroke-dasharray="3 3"/>
+<text class="dim" x="940.0" y="356.0">selected-task dock (on selection)</text>
+<polygon points="1231.2,295.5 1098.8,331.9 983.6,276.4 1000.8,184.5 1133.2,148.1 1248.4,203.6" fill="#d9d4c7" fill-opacity="0.9" stroke="#333"/>
+<text class="k" x="860" y="418">Cutaway framing at 1280x800: the hex (36 m) spans about 570 px; target (0, 4.3, -1) sits at 50/50; the bay and court fall below centre, clear of the dock unless a task is selected.</text>
+<text class="k" x="860" y="438">Right-hand HUD keeps the review/testing side partially covered at laptop width; the cutaway camera view offset of 65 px (existing) shifts content left.</text>
+<text class="k" x="860" y="458">Exterior framing: target (0, 4.3, 6), span 58; the HQ and court occupy the middle 60 percent; base label at y 19.5 stays under the top HUD.</text>
+</svg>

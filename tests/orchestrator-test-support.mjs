@@ -5,17 +5,31 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { TEST_WAIT_TIMEOUT_MS, waitForTaskStatus, waitUntil } from "./wait-support.mjs";
 import { ProcessTimeoutError } from "../server/codex-runtime.mjs";
-import {
-  evaluationVerdict,
-  structuredEvidenceError,
-  TaskOrchestrator as RuntimeTaskOrchestrator,
-} from "../server/orchestrator.mjs";
-import { RepositoryAuthorityService } from "../server/repository-authority.mjs";
 import { defaultWorktreeRoot, GitWorktreeManager } from "../server/git-worktree.mjs";
 import { defaultStagePolicies } from "../server/model-catalog.mjs";
+import {
+  evaluationVerdict,
+  TaskOrchestrator as RuntimeTaskOrchestrator,
+  structuredEvidenceError,
+} from "../server/orchestrator.mjs";
 import { buildTestInterpretationRequest } from "../server/prompts.mjs";
+import { RepositoryAuthorityService } from "../server/repository-authority.mjs";
+import {
+  attachRunArtifact,
+  beginAgentRun,
+  CANONICAL_RUN_STAGES,
+  DEFAULT_EXECUTION_PROVIDER,
+  DEFAULT_STAGE_RUN_LIMIT,
+  migrateRunActivityState,
+  RUN_ACTIVITY_EVENT_LIMIT,
+  RUNTIME_FRESHNESS_REASONS,
+  readExplicitCandidateBinding,
+  refreshGateFreshness,
+  retainRunActivityEvents,
+  stageRunLimitFor,
+  TASK_STORE_SCHEMA_VERSION,
+} from "../server/run-activity.mjs";
 import { selectScoutDispatch } from "../server/scouts.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import {
@@ -26,21 +40,7 @@ import {
   tryParseFocusedTestEvidence,
   validateFocusedTestEvidence,
 } from "../server/structured-output.mjs";
-import {
-  attachRunArtifact,
-  beginAgentRun,
-  CANONICAL_RUN_STAGES,
-  DEFAULT_EXECUTION_PROVIDER,
-  DEFAULT_STAGE_RUN_LIMIT,
-  migrateRunActivityState,
-  readExplicitCandidateBinding,
-  refreshGateFreshness,
-  retainRunActivityEvents,
-  RUNTIME_FRESHNESS_REASONS,
-  RUN_ACTIVITY_EVENT_LIMIT,
-  stageRunLimitFor,
-  TASK_STORE_SCHEMA_VERSION,
-} from "../server/run-activity.mjs";
+import { TEST_WAIT_TIMEOUT_MS, waitForTaskStatus, waitUntil } from "./wait-support.mjs";
 
 const GRILL_OUTPUT = `## Settled facts\n\nGrounded.\n\n<grill-questions>\n{"questions":[{"question":"Compatibility?","whyItMatters":"Changes the public contract.","options":[{"label":"Preserve it","description":"Keep existing clients working.","recommended":true},{"label":"Break it","description":"Allow a clean break.","recommended":false}],"allowCustom":true}]}\n</grill-questions>`;
 
@@ -444,33 +444,25 @@ async function git(cwd, args) {
 }
 
 export {
-  CANONICAL_RUN_STAGES,
-  DEFAULT_EXECUTION_PROVIDER,
-  DEFAULT_STAGE_RUN_LIMIT,
-  GRILL_OUTPUT,
-  JsonTaskStore,
-  PLAN_OUTPUT,
-  ProcessTimeoutError,
-  RUNTIME_FRESHNESS_REASONS,
-  RUN_ACTIVITY_EVENT_LIMIT,
-  SCOUT_OUTPUT,
-  TASK_STORE_SCHEMA_VERSION,
-  TEST_OUTPUT,
-  TaskOrchestrator,
   assert,
   attachRunArtifact,
   beginAgentRun,
   buildTestInterpretationRequest,
+  CANONICAL_RUN_STAGES,
   claudeRunWithoutProvider,
   createApprovalReadyTask,
+  DEFAULT_EXECUTION_PROVIDER,
+  DEFAULT_STAGE_RUN_LIMIT,
   defaultStagePolicies,
   escapeRegex,
   evaluationVerdict,
   execFile,
   execFileAsync,
+  GRILL_OUTPUT,
   gateOutput,
   git,
   harnessEvidence,
+  JsonTaskStore,
   makeArtifact,
   makeFocusedTestSummary,
   makeGateResult,
@@ -481,6 +473,8 @@ export {
   migrateRunActivityState,
   mkdtemp,
   os,
+  PLAN_OUTPUT,
+  ProcessTimeoutError,
   parseFocusedTestEvidence,
   parseGateEvidence,
   parseGrillQuestions,
@@ -489,16 +483,22 @@ export {
   path,
   promisify,
   pullRequestObservation,
+  RUN_ACTIVITY_EVENT_LIMIT,
+  RUNTIME_FRESHNESS_REASONS,
   readExplicitCandidateBinding,
   refreshGateFreshness,
   retainRunActivityEvents,
   rm,
+  SCOUT_OUTPUT,
   selectScoutDispatch,
   stageRunLimitFor,
   structuredEvidenceError,
+  TASK_STORE_SCHEMA_VERSION,
+  TaskOrchestrator,
+  TEST_OUTPUT,
+  TEST_WAIT_TIMEOUT_MS,
   tryParseFocusedTestEvidence,
   validateFocusedTestEvidence,
-  TEST_WAIT_TIMEOUT_MS,
   waitForStatus,
   waitForTaskStatus,
   waitUntil,

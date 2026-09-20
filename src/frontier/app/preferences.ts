@@ -2,7 +2,7 @@ import {
   defaultEnvironment,
   type EnvironmentPreferences,
   normalizeEnvironment,
-} from "../world/environment-model.ts";
+} from "../scene/environment-model.ts";
 
 export interface WorldPreferences {
   motion: boolean;

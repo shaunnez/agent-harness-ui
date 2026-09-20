@@ -1,0 +1,329 @@
+{
+  "capturedAt": "2026-09-16T08:58:42.144Z",
+  "base": "http://127.0.0.1:5243/",
+  "chromium": "149.0.7827.55",
+  "1568x1003": {
+    "shot": "step2-before-cutaway-1568x1003.png",
+    "cards": {
+      "cards": [
+        {
+          "id": "COL-001",
+          "compact": null,
+          "x": 332,
+          "y": 347,
+          "w": 245,
+          "h": 57
+        },
+        {
+          "id": "COL-002",
+          "compact": null,
+          "x": 489,
+          "y": 705,
+          "w": 245,
+          "h": 57
+        },
+        {
+          "id": "COL-003",
+          "compact": null,
+          "x": 681,
+          "y": 547,
+          "w": 245,
+          "h": 57
+        },
+        {
+          "id": "COL-004",
+          "compact": null,
+          "x": 845,
+          "y": 393,
+          "w": 190,
+          "h": 57
+        },
+        {
+          "id": "COL-005",
+          "compact": null,
+          "x": 913,
+          "y": 155,
+          "w": 189,
+          "h": 57
+        },
+        {
+          "id": "COL-006",
+          "compact": null,
+          "x": 475,
+          "y": 161,
+          "w": 189,
+          "h": 57
+        },
+        {
+          "id": "COL-007",
+          "compact": null,
+          "x": 567,
+          "y": 421,
+          "w": 188,
+          "h": 57
+        },
+        {
+          "id": "COL-008",
+          "compact": null,
+          "x": 785,
+          "y": 220,
+          "w": 189,
+          "h": 57
+        },
+        {
+          "id": "COL-009",
+          "compact": null,
+          "x": 529,
+          "y": 226,
+          "w": 189,
+          "h": 57
+        },
+        {
+          "id": "COL-010",
+          "compact": null,
+          "x": 623,
+          "y": 356,
+          "w": 186,
+          "h": 57
+        },
+        {
+          "id": "COL-011",
+          "compact": null,
+          "x": 705,
+          "y": 291,
+          "w": 183,
+          "h": 57
+        },
+        {
+          "id": "COL-012",
+          "compact": null,
+          "x": 84,
+          "y": 420,
+          "w": 186,
+          "h": 57
+        },
+        {
+          "id": "COL-013",
+          "compact": null,
+          "x": 164,
+          "y": 485,
+          "w": 186,
+          "h": 57
+        },
+        {
+          "id": "COL-014",
+          "compact": null,
+          "x": 485,
+          "y": 640,
+          "w": 187,
+          "h": 57
+        }
+      ],
+      "count": 14,
+      "compactCount": 0,
+      "pairsOverlapping": [],
+      "overPanels": [],
+      "outsideViewport": []
+    },
+    "picks": {
+      "ok": 14,
+      "total": 14,
+      "failed": []
+    }
+  },
+  "1280x720": {
+    "shot": "step2-before-cutaway-1280x720.png",
+    "cards": {
+      "cards": [
+        {
+          "id": "COL-001",
+          "compact": null,
+          "x": 263,
+          "y": 8,
+          "w": 245,
+          "h": 57
+        },
+        {
+          "id": "COL-002",
+          "compact": null,
+          "x": 375,
+          "y": 8,
+          "w": 245,
+          "h": 57
+        },
+        {
+          "id": "COL-003",
+          "compact": null,
+          "x": 513,
+          "y": 8,
+          "w": 245,
+          "h": 57
+        },
+        {
+          "id": "COL-004",
+          "compact": null,
+          "x": 639,
+          "y": 337,
+          "w": 190,
+          "h": 57
+        },
+        {
+          "id": "COL-005",
+          "compact": null,
+          "x": 688,
+          "y": 176,
+          "w": 189,
+          "h": 57
+        },
+        {
+          "id": "COL-006",
+          "compact": null,
+          "x": 373,
+          "y": 626,
+          "w": 189,
+          "h": 57
+        },
+        {
+          "id": "COL-007",
+          "compact": null,
+          "x": 440,
+          "y": 8,
+          "w": 188,
+          "h": 57
+        },
+        {
+          "id": "COL-008",
+          "compact": null,
+          "x": 596,
+          "y": 448,
+          "w": 189,
+          "h": 57
+        },
+        {
+          "id": "COL-009",
+          "compact": null,
+          "x": 412,
+          "y": 311,
+          "w": 189,
+          "h": 57
+        },
+        {
+          "id": "COL-010",
+          "compact": null,
+          "x": 480,
+          "y": 561,
+          "w": 186,
+          "h": 57
+        },
+        {
+          "id": "COL-011",
+          "compact": null,
+          "x": 539,
+          "y": 246,
+          "w": 183,
+          "h": 57
+        },
+        {
+          "id": "COL-012",
+          "compact": null,
+          "x": 93,
+          "y": 357,
+          "w": 186,
+          "h": 57
+        },
+        {
+          "id": "COL-013",
+          "compact": null,
+          "x": 151,
+          "y": 206,
+          "w": 186,
+          "h": 57
+        },
+        {
+          "id": "COL-014",
+          "compact": null,
+          "x": 381,
+          "y": 496,
+          "w": 187,
+          "h": 57
+        }
+      ],
+      "count": 14,
+      "compactCount": 0,
+      "pairsOverlapping": [
+        [
+          "COL-001",
+          "COL-002"
+        ],
+        [
+          "COL-001",
+          "COL-007"
+        ],
+        [
+          "COL-002",
+          "COL-003"
+        ],
+        [
+          "COL-002",
+          "COL-007"
+        ],
+        [
+          "COL-003",
+          "COL-007"
+        ]
+      ],
+      "overPanels": [
+        "COL-001"
+      ],
+      "outsideViewport": []
+    },
+    "picks": {
+      "ok": 8,
+      "total": 14,
+      "failed": [
+        {
+          "id": "COL-001",
+          "ok": false,
+          "selected": [
+            "COL-002"
+          ]
+        },
+        {
+          "id": "COL-002",
+          "ok": false,
+          "selected": [
+            "COL-010"
+          ]
+        },
+        {
+          "id": "COL-003",
+          "ok": false,
+          "selected": [
+            "COL-010"
+          ]
+        },
+        {
+          "id": "COL-006",
+          "ok": false,
+          "selected": [
+            "COL-007"
+          ]
+        },
+        {
+          "id": "COL-007",
+          "ok": false,
+          "selected": [
+            "COL-010"
+          ]
+        },
+        {
+          "id": "COL-010",
+          "ok": false,
+          "selected": [
+            "COL-009"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,319 @@
+{
+  "step": "stress",
+  "capturedAt": "2026-09-16T17:20:01.298Z",
+  "base": "http://127.0.0.1:5243/",
+  "shots": {
+    "stress-world-day-1568x1003": {
+      "file": "stress-world-day-1568x1003.png",
+      "fill": {
+        "width": 1568,
+        "height": 1003,
+        "box": {
+          "minX": 1568,
+          "maxX": -1,
+          "minY": 1003,
+          "maxY": -1
+        },
+        "litFraction": 0
+      },
+      "labels": [
+        {
+          "text": "PlanCheck",
+          "x": 564.5547485351562,
+          "y": 480.25897216796875,
+          "width": 143.078125,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 10",
+          "x": 1159.9140625,
+          "y": 317.6937561035156,
+          "width": 135.59375,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 4",
+          "x": 275.9296569824219,
+          "y": 398.98541259765625,
+          "width": 128.71875,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 5",
+          "x": 572.1875610351562,
+          "y": 317.6937561035156,
+          "width": 127.8125,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 6",
+          "x": 571.9531860351562,
+          "y": 642.8278198242188,
+          "width": 128.28125,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 7",
+          "x": 572.4531860351562,
+          "y": 155.12130737304688,
+          "width": 127.28125,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 8",
+          "x": 867.7658081054688,
+          "y": 236.3948974609375,
+          "width": 128.265625,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 9",
+          "x": 276.1484069824219,
+          "y": 236.41656494140625,
+          "width": 128.28125,
+          "height": 42.9375
+        },
+        {
+          "text": "Agent Harness",
+          "x": 843.5861206054688,
+          "y": 561.5325927734375,
+          "width": 176.625,
+          "height": 42.9375
+        },
+        {
+          "text": "MyStrataAssist",
+          "x": 250.60153198242188,
+          "y": 561.5542602539062,
+          "width": 179.375,
+          "height": 42.9375
+        },
+        {
+          "text": "COL-001 · Implement ×2 packagesWorking",
+          "x": 446.0394287109375,
+          "y": 531.1964721679688,
+          "width": 245,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-10 · GrillReview recorded answers",
+          "x": 1065.8988037109375,
+          "y": 368.6312561035156,
+          "width": 188.515625,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-4 · GrillReview recorded answers",
+          "x": 181.312744140625,
+          "y": 449.92291259765625,
+          "width": 182.84375,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-5 · GrillReview recorded answers",
+          "x": 477.4847412109375,
+          "y": 368.6276550292969,
+          "width": 182.109375,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-6 · GrillReview recorded answers",
+          "x": 477.2972412109375,
+          "y": 693.7653198242188,
+          "width": 182.484375,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-7 · GrillReview recorded answers",
+          "x": 477.8831787109375,
+          "y": 206.05880737304688,
+          "width": 181.3125,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-8 · GrillReview recorded answers",
+          "x": 773.1098022460938,
+          "y": 287.3323974609375,
+          "width": 182.46875,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-9 · GrillReview recorded answers",
+          "x": 181.492431640625,
+          "y": 287.35406494140625,
+          "width": 182.484375,
+          "height": 40
+        },
+        {
+          "text": "AH-051 · TestExecution stopped",
+          "x": 794.1410522460938,
+          "y": 612.4700927734375,
+          "width": 140.40625,
+          "height": 40
+        },
+        {
+          "text": "MS-086 · GrillNeeds your answer",
+          "x": 201.109619140625,
+          "y": 612.4917602539062,
+          "width": 143.25,
+          "height": 40
+        }
+      ]
+    },
+    "stress-world-day-1280x720": {
+      "file": "stress-world-day-1280x720.png",
+      "fill": {
+        "width": 1280,
+        "height": 720,
+        "box": {
+          "minX": 1280,
+          "maxX": -1,
+          "minY": 720,
+          "maxY": -1
+        },
+        "litFraction": 0
+      },
+      "labels": [
+        {
+          "text": "PlanCheck",
+          "x": 500.7528076171875,
+          "y": 177.38833618164062,
+          "width": 143.078125,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 10",
+          "x": 775.3240356445312,
+          "y": 177.38833618164062,
+          "width": 135.59375,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 4",
+          "x": 372.51971435546875,
+          "y": 50.0625,
+          "width": 128.71875,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 5",
+          "x": 508.3856201171875,
+          "y": 522.3883666992188,
+          "width": 127.8125,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 6",
+          "x": 508.1512451171875,
+          "y": 375.3883361816406,
+          "width": 128.28125,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 7",
+          "x": 508.6512451171875,
+          "y": 177.38833618164062,
+          "width": 127.28125,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 8",
+          "x": 643.5718383789062,
+          "y": 426.3883361816406,
+          "width": 128.265625,
+          "height": 42.9375
+        },
+        {
+          "text": "Colony 9",
+          "x": 372.73846435546875,
+          "y": 573.3883666992188,
+          "width": 128.28125,
+          "height": 42.9375
+        },
+        {
+          "text": "Agent Harness",
+          "x": 619.3921508789062,
+          "y": 276.3883361816406,
+          "width": 176.625,
+          "height": 42.9375
+        },
+        {
+          "text": "MyStrataAssist",
+          "x": 347.19158935546875,
+          "y": 324.3883361816406,
+          "width": 179.375,
+          "height": 42.9375
+        },
+        {
+          "text": "COL-001 · Implement ×2 packagesWorking",
+          "x": 418.86700439453125,
+          "y": 228.32583618164062,
+          "width": 245,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-10 · GrillReview recorded answers",
+          "x": 717.938232421875,
+          "y": 228.32583618164062,
+          "width": 188.515625,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-4 · GrillReview recorded answers",
+          "x": 314.5323181152344,
+          "y": 276.3258361816406,
+          "width": 182.84375,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-5 · GrillReview recorded answers",
+          "x": 450.31231689453125,
+          "y": 474.32586669921875,
+          "width": 182.109375,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-6 · GrillReview recorded answers",
+          "x": 450.12481689453125,
+          "y": 426.3258361816406,
+          "width": 182.484375,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-7 · GrillReview recorded answers",
+          "x": 450.71075439453125,
+          "y": 624.3258666992188,
+          "width": 181.3125,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-8 · GrillReview recorded answers",
+          "x": 585.54541015625,
+          "y": 129.32583618164062,
+          "width": 182.46875,
+          "height": 40
+        },
+        {
+          "text": "COL-colony-9 · GrillReview recorded answers",
+          "x": 314.7120056152344,
+          "y": 522.3258666992188,
+          "width": 182.484375,
+          "height": 40
+        },
+        {
+          "text": "AH-051 · TestExecution stopped",
+          "x": 606.57666015625,
+          "y": 327.3258361816406,
+          "width": 140.40625,
+          "height": 40
+        },
+        {
+          "text": "MS-086 · GrillNeeds your answer",
+          "x": 334.3291931152344,
+          "y": 378.3258361816406,
+          "width": 143.25,
+          "height": 40
+        }
+      ]
+    }
+  }
+}

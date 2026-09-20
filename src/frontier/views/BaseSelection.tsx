@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import type { RuntimeProject } from "../../domain";
 import type { TaskSummary } from "../runtime/contracts";
 import { isExecuting, isOpen, needsYou } from "../runtime/presentation";
-import type { WorldRenderer } from "../world/renderer";
 
 export function BaseSelection({
   project,
@@ -13,7 +12,7 @@ export function BaseSelection({
 }: {
   project: RuntimeProject;
   tasks: TaskSummary[];
-  rendererRef: React.RefObject<Pick<WorldRenderer, "headquartersPreview"> | null>;
+  rendererRef: React.RefObject<{ headquartersPreview(projectId: string): Promise<string | null> } | null>;
   onEnter(): void;
 }) {
   const [preview, setPreview] = useState<{ projectId: string; image: string } | null>(null);

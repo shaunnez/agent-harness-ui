@@ -8,14 +8,14 @@ import {
   type RuntimeTask,
   type StageId,
 } from "../../domain";
-import { RuntimeGrillPanel } from "./RuntimeGrillPanel";
-import { RuntimePrototypeComparison } from "./RuntimePrototypeComparison";
-import { RuntimeFocusedTestEvidencePanel, RuntimeWorkPackages } from "./RuntimeEvidencePanels";
 import {
   RuntimeCandidateDesk,
   RuntimeFinalReviewSummary,
   RuntimePullRequestPanel,
 } from "./RuntimeCandidatePanels";
+import { RuntimeFocusedTestEvidencePanel, RuntimeWorkPackages } from "./RuntimeEvidencePanels";
+import { RuntimeGrillPanel } from "./RuntimeGrillPanel";
+import { RuntimePrototypeComparison } from "./RuntimePrototypeComparison";
 import {
   isRepositoryScoutHandoff,
   RuntimeArtifactCard,

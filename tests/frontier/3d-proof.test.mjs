@@ -5,16 +5,17 @@ import { fixtureProjects, makeFixtureTasks } from "../../src/frontier/fixtures/s
 import {
   assignMissingAppearances,
   baseVariants,
+  legacyBaseVariants,
   parseAppearances,
   projectAppearanceKey,
   randomAppearance,
   readAppearances,
   saveAppearance,
 } from "../../src/frontier/world-3d/appearance.ts";
+import { colonyCameras } from "../../src/frontier/world-3d/colony.ts";
 import { separateLabels } from "../../src/frontier/world-3d/labels.ts";
 import { projectBases, translated, viewCamera } from "../../src/frontier/world-3d/layout.ts";
 import {
-  existingWorldUrl,
   parseProofManifest,
   proofVisible,
   proofWorkers,
@@ -22,11 +23,13 @@ import {
 } from "../../src/frontier/world-3d/model.ts";
 import { shoreDistance } from "../../src/frontier/world-3d/water.ts";
 
-const manifest = parseProofManifest(
-  JSON.parse(
+// The original v2 contract stays supported after the colony v3 export replaces the public manifest.
+const manifest = parseProofManifest({
+  ...JSON.parse(
     await readFile(new URL("../../public/frontier/assets/3d-proof/manifest.json", import.meta.url), "utf8"),
   ),
-);
+  version: 2,
+});
 const input = (changes = {}) => ({
   mode: "fixture",
   projects: fixtureProjects,
@@ -39,18 +42,18 @@ const input = (changes = {}) => ({
   watchedRunActive: false,
   ...changes,
 });
-const search = "?mode=fixture&scenario=workflow&renderer=3d";
 
-test("3D preview admits each fixture project while remaining opt-in and excluding live data", () => {
-  assert.equal(proofVisible(search, input()), true);
-  assert.equal(proofVisible("?mode=fixture", input()), false);
-  assert.equal(proofVisible("?mode=live&renderer=3d", input({ mode: "live" })), false);
-  assert.equal(proofVisible(search, input({ mode: "live" })), false);
-  assert.equal(proofVisible(search, input({ location: { view: "project", projectId: "harness" } })), true);
-  assert.equal(proofVisible(search, input({ location: { view: "agent", taskId: "AH-051" } })), true);
-  assert.equal(proofVisible(search, input({ location: { view: "project", projectId: "plancheck" } })), true);
-  assert.equal(proofVisible(search, input({ projects: [] })), false);
-  assert.equal(existingWorldUrl(search), "?mode=fixture&scenario=workflow#world");
+test("the world admits every project, live or fixture, and nothing when there is none", () => {
+  // No flag and no fixture requirement: the colony is the only world, and it draws whatever the
+  // gateway hands it. What is still asked is whether there is anything there to draw.
+  assert.equal(proofVisible(input()), true);
+  assert.equal(proofVisible(input({ mode: "live" })), true);
+  assert.equal(proofVisible(input({ location: { view: "project", projectId: "harness" } })), true);
+  assert.equal(proofVisible(input({ location: { view: "agent", taskId: "AH-051" } })), true);
+  assert.equal(proofVisible(input({ location: { view: "project", projectId: "plancheck" } })), true);
+  assert.equal(proofVisible(input({ projects: [] })), false);
+  assert.equal(proofVisible(input({ location: { view: "project", projectId: "gone" } })), false);
+  assert.equal(proofVisible(input({ location: { view: "agent", taskId: "nope" } })), false);
 });
 
 test("workers preserve running, answer, repair and completed distinctions without changing fixture data", () => {
@@ -161,6 +164,68 @@ test("projected labels separate crowded cards without moving their horizontal wo
   assert.deepEqual(boxes, original);
 });
 
+test("crowded labels near the top edge drop below their neighbours instead of leaving the viewport", () => {
+  const boxes = Array.from({ length: 6 }, (_, index) => ({
+    id: `w${index}`,
+    x: 400 + index * 4,
+    y: 150 + index * 6,
+    width: 240,
+    height: 57,
+  }));
+  // A pinned room name sits in the stack's path and a HUD panel covers the top-left corner.
+  const room = { id: "room:planning", x: 410, y: 320, width: 90, height: 26, pinned: true };
+  const panel = { x: 0, y: 0, width: 520, height: 140 };
+  const limits = { bounds: { top: 8, bottom: 900 }, obstacles: [panel] };
+  const bounded = separateLabels([...boxes, room], limits);
+  const clear = (label, other) =>
+    !(
+      Math.abs(label.x - other.x) < (label.width + other.width) / 2 &&
+      label.bottom > other.bottom - other.height &&
+      label.bottom - label.height < other.bottom
+    );
+  assert.equal(bounded.length, boxes.length + 1);
+  assert.equal(bounded.find((label) => label.id === room.id).bottom, room.y);
+  for (const label of bounded) {
+    assert.ok(
+      label.bottom - label.height >= 8,
+      `${label.id} leaves the top at ${label.bottom - label.height}`,
+    );
+    assert.ok(label.bottom <= 900);
+    assert.equal(label.x, [...boxes, room].find((box) => box.id === label.id).x);
+    assert.ok(
+      clear(label, {
+        x: panel.x + panel.width / 2,
+        width: panel.width,
+        bottom: panel.height,
+        height: panel.height,
+      }),
+      `${label.id} covers the HUD panel`,
+    );
+    for (const other of bounded.filter((box) => box.id !== label.id))
+      assert.ok(clear(label, other), `${label.id} overlaps ${other.id}`);
+  }
+  assert.ok(separateLabels(boxes).some((label) => label.bottom - label.height < 100));
+});
+
+test("a card walking below a fractional-height room name clears every later card too", () => {
+  // Live values from the fourteen-task cutaway: the room label bottom is 196.796875, cards are 57 tall.
+  const room = { id: "room:implementation", x: 735, y: 196.796875, width: 105, height: 24, pinned: true };
+  const cards = [
+    { id: "low", x: 569, y: 253, width: 189, height: 57 },
+    { id: "mid", x: 624, y: 335, width: 189, height: 57 },
+    { id: "high", x: 662, y: 227.7, width: 188, height: 57 },
+  ];
+  const panel = { x: 697.5, y: 66, width: 173, height: 40 };
+  const placed = separateLabels([room, ...cards], { bounds: { top: 8, bottom: 995 }, obstacles: [panel] });
+  for (const label of placed)
+    for (const other of placed.filter((box) => box.id !== label.id)) {
+      const overlapX = Math.abs(label.x - other.x) < (label.width + other.width) / 2;
+      const overlapY =
+        label.bottom > other.bottom - other.height && label.bottom - label.height < other.bottom;
+      assert.equal(overlapX && overlapY, false, `${label.id} overlaps ${other.id}`);
+    }
+});
+
 test("scene manifest rejects missing sockets, foreign assets and invalid shoreline geometry", () => {
   assert.throws(() => parseProofManifest({ ...manifest, worker: "https://example.com/robot.glb" }));
   assert.throws(() => parseProofManifest({ ...manifest, sockets: {} }));
@@ -200,7 +265,7 @@ test("browser GLBs retain portable PBR, named cutaway groups and the existing wo
   for (const [kind, url] of [
     ["scene", manifest.scene],
     ["worker", manifest.worker],
-    ...baseVariants.map((variant) => [variant, manifest.bases[variant].src]),
+    ...legacyBaseVariants.map((variant) => [variant, manifest.bases[variant].src]),
   ]) {
     const bytes = await readFile(new URL(`../../public/frontier${url}`, import.meta.url));
     assert.equal(bytes.readUInt32LE(0), 0x46546c67);
@@ -252,17 +317,27 @@ test("one base per project has separate routes and stable placement under refres
       bases,
     );
     assert.ok(cutaway.length > 0 && cutaway.every((worker) => worker.projectId === base.project.id));
-    const camera = viewCamera(bases, manifest, base.project.id, true);
-    assert.deepEqual(camera.target, translated(manifest.cameras.cutaway.target, base.position));
+    const camera = viewCamera(bases, base.project.id, true);
+    assert.deepEqual(camera.target, translated(colonyCameras.cutaway.target, base.position));
   }
   const archived = { ...fixtureProjects[0], archivedAt: "2026-09-16" };
   assert.equal(projectBases([archived]).length, 0);
-  assert.equal(proofVisible(search, input({ projects: [archived] })), false);
+  // The colony retains archived parcels as dormant scenery, including an archived-only world.
+  assert.equal(proofVisible(input({ projects: [archived] })), true);
 });
 
-test("appearance defaults distribute all three buildings and persist without overwriting another project", () => {
+test("appearance defaults spread the buildings and persist without overwriting another project", () => {
   const saved = assignMissingAppearances(fixtureProjects, {});
   assert.equal(new Set(Object.values(saved).map((appearance) => appearance.variant)).size, 3);
+  assert.deepEqual(baseVariants, ["bastion", "command", "relay", "foundry"]);
+  assert.deepEqual(
+    randomAppearance(() => 0),
+    { variant: "bastion", palette: "blue" },
+  );
+  assert.deepEqual(
+    parseAppearances({ version: 1, projects: { hex: { variant: "bastion", palette: "red" } } }),
+    { hex: { variant: "bastion", palette: "red" } },
+  );
   const first = fixtureProjects[0],
     second = fixtureProjects[1];
   const selected = { variant: "relay", palette: "blue" };
@@ -278,7 +353,8 @@ test("appearance defaults distribute all three buildings and persist without ove
   assert.deepEqual(readAppearances(storage)[key], selected);
   assert.deepEqual(readAppearances(storage)[otherKey], { variant: "foundry", palette: "purple" });
   const refreshed = assignMissingAppearances([...fixtureProjects].reverse(), { ...saved, [key]: selected });
-  assert.deepEqual(refreshed[key], selected);
+  // A saved choice keeps its building and colour; the colony slot is completed alongside it.
+  assert.deepEqual(refreshed[key], { ...selected, slot: "P1" });
   assert.deepEqual(refreshed[otherKey], saved[otherKey]);
   assert.deepEqual(
     parseAppearances({ version: 1, projects: { bad: { variant: "castle", palette: "green" } } }),
@@ -329,5 +405,125 @@ test("larger fixture crews stay clear of the analysis bench and each other insid
           Math.hypot(worker.position[0] - other.position[0], worker.position[2] - other.position[2]) >= 3.3,
         );
     }
+  }
+});
+
+test("the colony is the only layout: every published manifest is v3 and carries the colony kit", async () => {
+  const { proofAssetUrls } = await import("../../src/frontier/world-3d/colony-assets.ts");
+  const published = parseProofManifest(
+    JSON.parse(
+      await readFile(new URL("../../public/frontier/assets/3d-proof/manifest.json", import.meta.url), "utf8"),
+    ),
+  );
+  // `?colony=1` and the v2 archipelago it selected are gone; there is one world and this is it.
+  assert.equal(published.version, 3);
+  assert.ok(published.colony);
+  const urls = proofAssetUrls(published);
+  assert.ok(urls.some((url) => url.includes("hq-shell")));
+  assert.ok(urls.includes(published.colony.scatterKit));
+  assert.ok(!urls.includes(published.scene));
+});
+
+test("robots render 1.6x in World, 1.3x on a focused exterior and slightly over true size in the cutaway", async () => {
+  const { proofView, workerScale, workerHeight, proofWorkerScale, proofWorkerHeight, workerViewScale } =
+    await import("../../src/frontier/world-3d/model.ts");
+  assert.deepEqual(workerViewScale, { world: 1.6, exterior: 1.3, cutaway: 1.15 });
+  const world = { location: { view: "world", projectId: null, taskId: null, runId: null } };
+  assert.equal(proofView(world, null), "world");
+  assert.equal(proofView(world, "plancheck"), "exterior");
+  assert.equal(proofView({ location: { view: "project", projectId: "plancheck" } }, null), "cutaway");
+  assert.equal(proofView({ location: { view: "agent", taskId: "PC-142" } }, "plancheck"), "cutaway");
+  assert.ok(Math.abs(workerScale("cutaway") - proofWorkerScale * 1.15) < 1e-12);
+  assert.ok(Math.abs(workerHeight("cutaway") - proofWorkerHeight * 1.15) < 1e-12);
+  assert.ok(Math.abs(workerScale("world") - proofWorkerScale * 1.6) < 1e-12);
+  assert.ok(Math.abs(workerHeight("exterior") - 3.1 * 1.3) < 1e-12);
+  // Standing positions and spacing are unchanged by the view: allocation stays at true size.
+  const scene = input({ location: { view: "world", projectId: null, taskId: null, runId: null } });
+  const positions = proofWorkers(scene, manifest).map((worker) => worker.position.join());
+  assert.deepEqual(
+    proofWorkers(scene, manifest).map((worker) => worker.position.join()),
+    positions,
+  );
+});
+
+test("crowded rooms collapse plain working cards to compact markers but never attention or selection", async () => {
+  const { compactWorkerLabels } = await import("../../src/frontier/world-3d/model.ts");
+  // A worker carries its own id as well as its task's: one task can stand several package robots in
+  // a room, and each of them is a card the crowding rule weighs on its own.
+  const worker = (id, overrides = {}) => ({
+    id,
+    task: { id },
+    projectId: "plancheck",
+    room: "implementation",
+    tone: "working",
+    behavior: "work",
+    ...overrides,
+  });
+  const crowd = Array.from({ length: 14 }, (_, i) => worker(`COL-${String(i + 1).padStart(3, "0")}`));
+  const cutaway = {
+    location: { view: "project", projectId: "plancheck", taskId: null },
+    selectedId: "COL-009",
+  };
+  const compact = compactWorkerLabels(crowd, cutaway, null);
+  // Every plain card collapses; the selected task stays full.
+  assert.equal(compact.size, 13);
+  assert.equal(compact.has("COL-009"), false);
+  const mixed = [
+    ...crowd.slice(0, 6),
+    worker("COL-ANS", { tone: "answer" }),
+    worker("COL-FIX", { tone: "repair", behavior: "park" }),
+    worker("COL-WATCH"),
+  ];
+  const watched = compactWorkerLabels(mixed, { location: { view: "agent", taskId: "COL-WATCH" } }, null);
+  assert.deepEqual(
+    [...watched].sort(),
+    crowd.slice(0, 6).map((w) => w.task.id),
+  );
+  // Small rooms and other rooms are untouched; the World overview never compacts.
+  assert.equal(compactWorkerLabels(crowd.slice(0, 4), cutaway, null).size, 0);
+  const rooms = [...crowd.slice(0, 5), ...crowd.slice(5, 8).map((w) => ({ ...w, room: "review" }))];
+  assert.deepEqual(
+    [...compactWorkerLabels(rooms, cutaway, null)],
+    ["COL-001", "COL-002", "COL-003", "COL-004", "COL-005"],
+  );
+  assert.equal(compactWorkerLabels(crowd, { location: { view: "world" } }, null).size, 0);
+  // A focused exterior groups its court like a room.
+  assert.equal(
+    compactWorkerLabels(
+      crowd.map((w) => ({ ...w, room: undefined })),
+      { location: { view: "world" } },
+      "plancheck",
+    ).size,
+    14,
+  );
+});
+
+test("a card that fits nowhere covers another card before it covers a HUD panel", () => {
+  // Live 1280 x 720 shape: navigation panel top-left, selection panel across the bottom, two pinned room
+  // names and three wide cards anchored inside the only free gap.
+  const nav = { x: 12, y: 101, width: 500, height: 42 };
+  const selection = { x: 259, y: 449, width: 657, height: 236 };
+  const rooms = [
+    { id: "room:implementation", x: 586, y: 194, width: 108, height: 25, pinned: true },
+    { id: "room:planning", x: 351, y: 297, width: 67, height: 25, pinned: true },
+    { id: "room:briefing", x: 361, y: 388, width: 62, height: 25, pinned: true },
+  ];
+  const cards = [
+    { id: "COL-001", x: 385, y: 202, width: 245, height: 57 },
+    { id: "COL-002", x: 498, y: 171, width: 245, height: 57 },
+    { id: "COL-003", x: 636, y: 162, width: 245, height: 57 },
+  ];
+  const placed = separateLabels([...rooms, ...cards], {
+    bounds: { top: 8, bottom: 712 },
+    obstacles: [nav, selection],
+  });
+  const covers = (label, rect) =>
+    Math.abs(label.x - (rect.x + rect.width / 2)) < (label.width + rect.width) / 2 &&
+    label.bottom > rect.y &&
+    label.bottom - label.height < rect.y + rect.height;
+  for (const label of placed.filter((entry) => entry.id.startsWith("COL"))) {
+    assert.ok(label.bottom - label.height >= 8 && label.bottom <= 712, `${label.id} leaves the viewport`);
+    assert.equal(covers(label, nav), false, `${label.id} covers the navigation panel`);
+    assert.equal(covers(label, selection), false, `${label.id} covers the selection panel`);
   }
 });

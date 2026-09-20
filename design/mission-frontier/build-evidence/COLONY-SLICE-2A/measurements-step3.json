@@ -1,0 +1,219 @@
+{
+  "capturedAt": "2026-09-16T09:30:09.373Z",
+  "base": "http://127.0.0.1:5243/",
+  "chromium": "149.0.7827.55",
+  "1568x1003": {
+    "shots": {
+      "world": "step3-world-1568x1003.png",
+      "picker": "step3-picker-1568x1003.png",
+      "bastion": "step3-exterior-bastion-1568x1003.png",
+      "command": "step3-exterior-command-1568x1003.png",
+      "relay": "step3-exterior-relay-1568x1003.png",
+      "foundry": "step3-exterior-foundry-1568x1003.png",
+      "foundry-red": "step3-palette-foundry-red-1568x1003.png",
+      "foundry-purple": "step3-palette-foundry-purple-1568x1003.png",
+      "bastion-orange": "step3-palette-bastion-orange-1568x1003.png",
+      "bastion-red": "step3-palette-bastion-red-1568x1003.png"
+    },
+    "tiles": [
+      {
+        "label": "Bastion",
+        "pressed": "true",
+        "img": true
+      },
+      {
+        "label": "Command",
+        "pressed": "false",
+        "img": true
+      },
+      {
+        "label": "Relay",
+        "pressed": "false",
+        "img": true
+      },
+      {
+        "label": "Foundry",
+        "pressed": "false",
+        "img": true
+      }
+    ],
+    "baseLabelsBefore": [
+      [
+        "PlanCheck",
+        361,
+        472
+      ],
+      [
+        "Agent Harness",
+        957,
+        468
+      ],
+      [
+        "MyStrataAssist",
+        649,
+        215
+      ]
+    ],
+    "baseLabelsAfter": [
+      [
+        "PlanCheck",
+        361,
+        54
+      ],
+      [
+        "Agent Harness",
+        957,
+        468
+      ],
+      [
+        "MyStrataAssist",
+        649,
+        215
+      ]
+    ],
+    "basesMoved": true,
+    "stored": {
+      "plancheck:/demo/eversor-plancheck": {
+        "variant": "bastion",
+        "palette": "blue",
+        "slot": "P1"
+      },
+      "harness:/demo/agent-harness-ui": {
+        "variant": "relay",
+        "palette": "orange",
+        "slot": "P2"
+      },
+      "mystrata:/demo/eversor-mystrataassist": {
+        "variant": "foundry",
+        "palette": "purple",
+        "slot": "P3"
+      }
+    },
+    "assets": {
+      "totalBytes": 20104762,
+      "totalMB": 20.1,
+      "files": {
+        "manifest.json": 22472,
+        "bridge-end.50920a684920.glb": 432896,
+        "worker.aee069a9823b.glb": 1118716,
+        "bridge-span-27.61fa0489a831.glb": 988788,
+        "hq-shell.4b47f1786639.glb": 2767696,
+        "crown-bastion.9ce974411e91.glb": 901732,
+        "parcel-hub.b7034821f9a7.glb": 4182108,
+        "crown-command.2f4ae068d9f6.glb": 1707568,
+        "parcel-a.60b73e1b6956.glb": 4133044,
+        "crown-relay.ddd0551d9e28.glb": 1114440,
+        "crown-foundry.6d549b2535b0.glb": 1494032,
+        "crown-preview-foundry.e1e5e539cf67.png": 310871,
+        "crown-preview-bastion.4ec702f26675.png": 312432,
+        "crown-preview-relay.c744a191508e.png": 305306,
+        "crown-preview-command.72966bd8db5b.png": 312661
+      }
+    }
+  },
+  "1280x720": {
+    "shots": {
+      "world": "step3-world-1280x720.png",
+      "picker": "step3-picker-1280x720.png",
+      "bastion": "step3-exterior-bastion-1280x720.png",
+      "command": "step3-exterior-command-1280x720.png",
+      "relay": "step3-exterior-relay-1280x720.png",
+      "foundry": "step3-exterior-foundry-1280x720.png"
+    },
+    "tiles": [
+      {
+        "label": "Bastion",
+        "pressed": "true",
+        "img": true
+      },
+      {
+        "label": "Command",
+        "pressed": "false",
+        "img": true
+      },
+      {
+        "label": "Relay",
+        "pressed": "false",
+        "img": true
+      },
+      {
+        "label": "Foundry",
+        "pressed": "false",
+        "img": true
+      }
+    ],
+    "baseLabelsBefore": [
+      [
+        "PlanCheck",
+        317,
+        292
+      ],
+      [
+        "Agent Harness",
+        713,
+        290
+      ],
+      [
+        "MyStrataAssist",
+        505,
+        219
+      ]
+    ],
+    "baseLabelsAfter": [
+      [
+        "PlanCheck",
+        317,
+        631
+      ],
+      [
+        "Agent Harness",
+        713,
+        290
+      ],
+      [
+        "MyStrataAssist",
+        505,
+        219
+      ]
+    ],
+    "basesMoved": true,
+    "stored": {
+      "plancheck:/demo/eversor-plancheck": {
+        "variant": "foundry",
+        "palette": "blue",
+        "slot": "P1"
+      },
+      "harness:/demo/agent-harness-ui": {
+        "variant": "relay",
+        "palette": "orange",
+        "slot": "P2"
+      },
+      "mystrata:/demo/eversor-mystrataassist": {
+        "variant": "foundry",
+        "palette": "purple",
+        "slot": "P3"
+      }
+    },
+    "assets": {
+      "totalBytes": 20104762,
+      "totalMB": 20.1,
+      "files": {
+        "manifest.json": 22472,
+        "bridge-end.50920a684920.glb": 432896,
+        "worker.aee069a9823b.glb": 1118716,
+        "bridge-span-27.61fa0489a831.glb": 988788,
+        "parcel-a.60b73e1b6956.glb": 4133044,
+        "crown-bastion.9ce974411e91.glb": 901732,
+        "hq-shell.4b47f1786639.glb": 2767696,
+        "crown-command.2f4ae068d9f6.glb": 1707568,
+        "parcel-hub.b7034821f9a7.glb": 4182108,
+        "crown-relay.ddd0551d9e28.glb": 1114440,
+        "crown-foundry.6d549b2535b0.glb": 1494032,
+        "crown-preview-foundry.e1e5e539cf67.png": 310871,
+        "crown-preview-relay.c744a191508e.png": 305306,
+        "crown-preview-bastion.4ec702f26675.png": 312432,
+        "crown-preview-command.72966bd8db5b.png": 312661
+      }
+    }
+  }
+}

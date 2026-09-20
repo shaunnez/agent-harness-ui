@@ -1,5 +1,5 @@
-import test from "node:test";
 import assert from "node:assert/strict";
+import test from "node:test";
 import {
   APPROVAL_GATE_STAGES,
   GATE_APPROVAL_ADVANCE,

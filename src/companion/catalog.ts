@@ -1,4 +1,11 @@
 import {
+  type AgentRoleId,
+  agentRoleIds,
+  type RuntimeAgentPolicy,
+  type RuntimeModelOption,
+  workflowStages,
+} from "../domain.ts";
+import {
   type ActionProposal,
   assertActionProposal,
   companionActionTypes,
@@ -6,13 +13,6 @@ import {
   type RoleModelProposal,
   type RolePolicyRequest,
 } from "./contracts.ts";
-import {
-  agentRoleIds,
-  type AgentRoleId,
-  type RuntimeAgentPolicy,
-  type RuntimeModelOption,
-  workflowStages,
-} from "../domain.ts";
 
 export interface TrustedActionCard {
   type: (typeof companionActionTypes)[number];

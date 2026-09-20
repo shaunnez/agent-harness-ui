@@ -1,8 +1,8 @@
 import {
   CheckCircle,
   FileText,
-  GithubLogo,
   GitBranch,
+  GithubLogo,
   SpinnerGap,
   TerminalWindow,
   WarningCircle,

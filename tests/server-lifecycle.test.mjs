@@ -4,8 +4,8 @@ import { access, mkdtemp, rm } from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
-import test from "node:test";
 import { DatabaseSync } from "node:sqlite";
+import test from "node:test";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
 
 function waitForOutput(child, pattern, timeoutMs = 5_000) {

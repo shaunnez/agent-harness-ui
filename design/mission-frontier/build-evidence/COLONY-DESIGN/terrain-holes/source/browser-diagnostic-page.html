@@ -1,0 +1,36 @@
+<!doctype html><title>terrain diag</title><style>body{margin:0;background:#173e4a}#info{position:fixed;top:4px;left:6px;color:#fff;font:13px monospace;background:#0008;padding:4px 6px}</style>
+<div id="info">loading…</div>
+<script type="importmap">{"imports":{"three":"./three/build/three.module.js","three/addons/":"./three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { GTAOPass } from "three/addons/postprocessing/GTAOPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+const q = new URLSearchParams(location.search);
+const ao = q.get("ao") === "1", flip = q.get("flip") === "1", wide = q.get("wide") === "1", wire = q.get("wire") === "1", bf = q.get("bf") === "1";
+const spanQ = Number(q.get("span")) || 0, tx = Number(q.get("tx")) || 5, tz = Number(q.get("tz")) || 2;
+const W = innerWidth, H = innerHeight;
+const gl = new THREE.WebGLRenderer({ antialias: true }); gl.setSize(W, H); gl.setPixelRatio(1); gl.shadowMap.enabled = true; gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.12; document.body.append(gl.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color("#173e4a");
+scene.add(new THREE.HemisphereLight("#c1d9e1", "#4d4840", 1.2));
+const sun = new THREE.DirectionalLight("#fff1d3", 3.0); sun.position.set(-105, 165, 90); sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
+Object.assign(sun.shadow.camera, { left: -120, right: 120, top: 120, bottom: -120, near: 1, far: 600 }); sun.shadow.bias = -0.00015; sun.shadow.normalBias = 0.04; scene.add(sun);
+const span = spanQ || (wide ? 90 : 50), aspect = W / H;
+const cam = new THREE.OrthographicCamera(-span * aspect / 2, span * aspect / 2, span / 2, -span / 2, 0.1, 800);
+cam.position.set(tx + 51, 3 + 46, tz + 68); cam.lookAt(tx, 3, tz);
+const water = new THREE.Mesh(new THREE.PlaneGeometry(1200, 1200), new THREE.MeshStandardMaterial({ color: "#0a3a4a", roughness: .4 })); water.rotation.x = -Math.PI / 2; scene.add(water);
+const gltf = await new GLTFLoader().loadAsync("./assets/3d-proof/environment.450a464c1478.glb");
+let flipped = 0;
+gltf.scene.traverse((o) => { if (!o.isMesh) return; o.castShadow = o.receiveShadow = true;
+  if (bf && o.name.startsWith("MF_Terrain")) { o.material = o.material.clone(); o.material.side = THREE.FrontSide; }
+  if (wire) o.material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+  if (flip && o.name === "MF_Terrain__terrain_gravel_sand") { const g = o.geometry; const idx = g.index.array; for (let i = 0; i < idx.length; i += 3) { const t = idx[i + 1]; idx[i + 1] = idx[i + 2]; idx[i + 2] = t; } g.index.needsUpdate = true; const n = g.attributes.normal.array; for (let i = 0; i < n.length; i++) n[i] = -n[i]; g.attributes.normal.needsUpdate = true; flipped++; } });
+scene.add(gltf.scene);
+let composer = null;
+if (ao) { composer = new EffectComposer(gl); const pass = new GTAOPass(scene, cam, W, H); pass.updateGtaoMaterial({ radius: 1.4, thickness: 1, distanceFallOff: 1, samples: 12 }); pass.blendIntensity = 0.72; composer.addPass(new RenderPass(scene, cam)); composer.addPass(pass); composer.addPass(new OutputPass()); }
+for (let i = 0; i < 3; i++) { if (composer) composer.render(); else gl.render(scene, cam); }
+document.getElementById("info").textContent = `ao=${ao} flip=${flip}(${flipped}) bf(frontside-only terrain)=${bf} span=${span} target=(${tx},${tz}) — environment.glb only, exterior camera`;
+window.__diagReady = true;
+</script>

@@ -1,0 +1,56 @@
+import { Group, type Object3D } from "three";
+import { baseVariants } from "./appearance.ts";
+import { greyboxBridge, greyboxBridgeEnd, greyboxCrown, greyboxShell } from "./colony-greybox.ts";
+import type { ProofManifest } from "./model.ts";
+
+/** Only assets used by this renderer are requested; all projects share the same GLTF source. */
+export function proofAssetUrls(manifest: ProofManifest) {
+  const colony = manifest.colony;
+  return [
+    ...new Set(
+      [
+        manifest.worker,
+        colony?.shell,
+        colony?.bridgeSpan,
+        colony?.bridgeEnd,
+        colony?.scatterKit,
+        colony?.shuttle,
+        colony?.props,
+        ...Object.values(colony?.crowns ?? {}),
+      ].filter((value): value is string => Boolean(value)),
+    ),
+  ];
+}
+export function colonyModels(manifest: ProofManifest, loaded: Map<string, Object3D>) {
+  const owned: Group[] = [];
+  const get = (url: string | undefined, fallback: () => Group) => {
+    const model = url ? loaded.get(url) : undefined;
+    if (model) return model;
+    const greybox = fallback();
+    owned.push(greybox);
+    return greybox;
+  };
+  const colony = manifest.colony;
+  const shell = get(colony?.shell, greyboxShell);
+  const bases = Object.fromEntries(
+    baseVariants.map((variant) => {
+      const crown = get(colony?.crowns?.[variant] ?? colony?.crowns?.command, () => greyboxCrown(variant));
+      const group = new Group();
+      group.add(shell.clone(true));
+      group.add(crown.clone(true));
+      return [variant, group];
+    }),
+  );
+  return {
+    bases,
+    owned,
+    span: get(colony?.bridgeSpan, greyboxBridge),
+    end: get(colony?.bridgeEnd, greyboxBridgeEnd),
+    /** No kit means no scatter; the land still renders. */
+    kit: colony?.scatterKit ? (loaded.get(colony.scatterKit) ?? null) : null,
+    /** The transport on the hub landing terrace; absent until the shuttle asset is published. */
+    shuttle: colony?.shuttle ? (loaded.get(colony.shuttle) ?? null) : null,
+    /** Scanned interior props; absent until the props kit is published, and the rooms stay bare. */
+    props: colony?.props ? (loaded.get(colony.props) ?? null) : null,
+  };
+}

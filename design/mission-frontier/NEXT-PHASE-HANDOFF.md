@@ -54,6 +54,10 @@ The supplied Word document remains a reference, not independent authority to exp
 
 The next design deliverable is a top-down colony plan showing expansion and connections, plus an HQ floor plan and simple cutaway composition. The lead owns the dimensions, route/door clearances, camera framing and occupancy proposal. Shaun has supplied the high-level layout and scale decisions; do not ask for those again. Detailed geometry and delivery acceptance are still to be prepared. His instruction remains **do not build, advise first**.
 
+## Colony design pack — 16 September 2026
+
+The layouts requested above are prepared for review in [colony/README.md](colony/README.md): top-down colony plan, hexagonal HQ floor plan and cutaway composition, the frozen producer/terrain input contract at `assets/staging/colony-hq-v1/contract.json`, the terrain-holes diagnosis (unclosed geometry inside the island asset, part of the terrain rebuild) and a bounded slice-1 proposal with acceptance criteria and prepared assignments. Nothing was built; the two `src/frontier/world-3d/` workstreams were not touched.
+
 ## Recommended next sequence — delivery scope still to be agreed
 
 1. **Prepare the layouts from the accepted brief.** Show World, HQ and Watch continuity, colony expansion and fixed-room occupancy. Resolve detailed stage grouping, robot representation and navigation using existing runtime semantics. Separate the next release from later experiments; keep this at design stage until the build is requested.

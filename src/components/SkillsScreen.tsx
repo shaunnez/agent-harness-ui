@@ -1,13 +1,13 @@
 import { ArrowLeft, ArrowRight, CaretDown, Code } from "@phosphor-icons/react";
-import domainRuntimeSource from "../domain/runtime.ts?raw";
-import type { RuntimeTaskSummary, StageId } from "../domain";
 import apiRuntimeSource from "../../server/api.mjs?raw";
 import promptRuntimeSource from "../../server/prompts.mjs?raw";
 import scoutRuntimeSource from "../../server/scouts.mjs?raw";
 import parserRuntimeSource from "../../server/structured-output.mjs?raw";
+import type { RuntimeTaskSummary, StageId } from "../domain";
+import { formatApproximateCost, formatTokenCount, workflowStages } from "../domain";
+import domainRuntimeSource from "../domain/runtime.ts?raw";
 import { stageUsage } from "./LibraryShared";
 import { SectionHeader } from "./Primitives";
-import { formatApproximateCost, formatTokenCount, workflowStages } from "../domain";
 
 type TypeReference = { label: string; file: string; description: string; code: string };
 type SourceReference = { label: string; file: string; symbol: string; description: string; code: string };

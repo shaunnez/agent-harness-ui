@@ -1,5 +1,5 @@
 import { ArrowLeft, X } from "@phosphor-icons/react";
-import { type ReactNode, useEffect, useRef, useLayoutEffect, useState } from "react";
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { WindowFamily } from "../app/window-layout";
 import { ResizeHandles, useWindowSizing, WindowSizeControls } from "./WindowSizing";
 

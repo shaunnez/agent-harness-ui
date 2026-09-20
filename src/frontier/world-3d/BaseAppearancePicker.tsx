@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import {
   type BaseAppearance,
   type BasePalette,
+  type BaseVariant,
   baseNames,
   basePalettes,
   baseVariants,
@@ -30,6 +31,10 @@ export function BaseAppearancePicker({
 }) {
   const base = bases.find((entry) => entry.project.id === projectId) ?? bases[0];
   if (!base) return null;
+  // Four crowns on one shared shell.
+  const variants: readonly BaseVariant[] = baseVariants;
+  const preview = (variant: BaseVariant) => manifest?.colony?.crownPreviews?.[variant];
+  const chosen = base.appearance.variant;
   return (
     <section className="proof-appearance panel" aria-label="Base appearance">
       <header>
@@ -50,15 +55,15 @@ export function BaseAppearancePicker({
       </label>
       <fieldset>
         <legend>Building</legend>
-        <div className="proof-building-options">
-          {baseVariants.map((variant) => (
+        <div className="proof-building-options" data-count={variants.length}>
+          {variants.map((variant) => (
             <button
               type="button"
               key={variant}
-              aria-pressed={base.appearance.variant === variant}
+              aria-pressed={chosen === variant}
               onClick={() => onChoose(base, { ...base.appearance, variant })}
             >
-              {manifest?.bases?.[variant].preview && <img src={manifest.bases[variant].preview} alt="" />}
+              {preview(variant) && <img src={preview(variant)} alt="" />}
               <span>{baseNames[variant]}</span>
             </button>
           ))}

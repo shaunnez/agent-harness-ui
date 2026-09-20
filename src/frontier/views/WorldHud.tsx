@@ -1,8 +1,8 @@
 import {
   ArrowRight,
+  Books,
   Crosshair,
   GearSix,
-  Books,
   GlobeHemisphereWest,
   ListBullets,
   Plus,
