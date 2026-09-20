@@ -606,6 +606,7 @@ export function FrontierApp() {
           locate={locate}
           watch={watch}
           create={() => void create()}
+          rendererRef={proofRenderer}
           enterProject={(id) => {
             close();
             navigate({ ...worldLocation, view: "project", projectId: id });

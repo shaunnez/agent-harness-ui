@@ -20,6 +20,7 @@ import { TaskPanel } from "../views/TaskPanel";
 import { TaskPolicies } from "../views/TaskPolicies";
 import { Usage } from "../views/Usage";
 import { WorldSettings } from "../views/WorldSettings";
+import type { ProofControls } from "../world-3d/model";
 import type { WorldPreferences } from "./preferences";
 import type { Overlay } from "./routes";
 
@@ -68,6 +69,7 @@ interface Props {
   watch(id: string, runId?: string | null): void;
   create(): void;
   enterProject(id: string): void;
+  rendererRef: React.RefObject<ProofControls | null>;
   command(action: () => Promise<unknown>, then?: () => void): Promise<void>;
 }
 export function OverlayHost(props: Props) {
@@ -99,6 +101,7 @@ export function OverlayHost(props: Props) {
       <Projects
         projects={snapshot.projects}
         tasks={snapshot.tasks}
+        rendererRef={props.rendererRef}
         onAdd={() => open({ kind: "project-setup" })}
         onManage={(projectId) => open({ kind: "project-setup", projectId })}
         onEnter={props.enterProject}

@@ -182,6 +182,14 @@ export function ProofCamera({
       get worldHour() {
         return latest.current.worldHour();
       },
+      async basePreview(projectId) {
+        const view = viewCamera(latest.current.bases, projectId, false);
+        const half = view.verticalSpan / 2;
+        const preview = new OrthographicCamera(-half * 1.8, half * 1.8, half, -half, 0.1, 650);
+        preview.position.set(...view.position);
+        preview.lookAt(...view.target);
+        return captureScene(gl, scene, preview, 540, 300);
+      },
       async headquartersPreview(projectId) {
         const view = viewCamera(latest.current.bases, projectId, true);
         const half = view.verticalSpan / 2;

@@ -367,6 +367,17 @@ test("appearance defaults spread the buildings and persist without overwriting a
   );
 });
 
+test("every selectable headquarters model has a published project preview", async () => {
+  const previews = manifest.colony?.crownPreviews ?? {};
+  assert.deepEqual(Object.keys(previews).sort(), [...baseVariants].sort());
+  for (const variant of baseVariants) {
+    const source = previews[variant];
+    assert.match(source, new RegExp(`/crown-preview-${variant}\\.[a-f0-9]{12}\\.png$`));
+    const bytes = await readFile(new URL(`../../public/frontier${source}`, import.meta.url));
+    assert.ok(bytes.length > 0, `${variant} preview is published`);
+  }
+});
+
 test("overview labels keep one relevant task per project, with full labels in the focused base", () => {
   const scene = input();
   const workers = proofWorkers(scene, manifest);
