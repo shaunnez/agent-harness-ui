@@ -96,3 +96,9 @@ Later benchmark against:
 4. `prompts/03-DEEP-AGENTS-JS-SPIKE.md` — Claude Sonnet, high effort
 5. `prompts/04-ADVERSARIAL-REVIEW.md` — preferably GPT-5.6 Sol High or another independent strong model
 6. run the evaluation plan before selecting production architecture
+
+## Current vertical-slice evaluation
+
+- `04-SEARCH-PROVIDER-BENCHMARK.md` compares public-web discovery.
+- `05-CAPTURE-AND-PDF-BENCHMARK.md` compares local extraction, Firecrawl, and Exa Contents for
+  public NZ/AU pages and PDFs, including the first live result and updated capture proposal.

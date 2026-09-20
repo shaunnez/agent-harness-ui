@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "description": "Small public-source capture benchmark for PlanCheck's likely NZ and Australian research inputs.",
+  "cases": [
+    {
+      "id": "nz-branz-appraisal-pdf",
+      "label": "NZ BRANZ product appraisal PDF",
+      "market": "NZ",
+      "kind": "pdf",
+      "url": "https://www.branz.co.nz/assets/certified-products/1211_2022_A2.pdf",
+      "maxPages": 6,
+      "expectedTerms": [
+        "Appraisal No. 1211",
+        "Axon Panel Cladding",
+        "Very High",
+        "Clause B1 STRUCTURE",
+        "Hardie CLD Structural Cavity Batten"
+      ],
+      "pageAnchors": [
+        { "page": 1, "text": "Appraisal No. 1211" },
+        { "page": 1, "text": "Very High" },
+        { "page": 2, "text": "Clause B1 STRUCTURE" }
+      ]
+    },
+    {
+      "id": "au-hardie-table-pdf",
+      "label": "Australian technical data sheet with dense table",
+      "market": "AU",
+      "kind": "pdf",
+      "url": "https://www.jameshardie.com.au/ContentfulCMS/Installation-Guide/Hardie_Wrap_Weather_Barrier_Installation_Guide.pdf",
+      "maxPages": 2,
+      "expectedTerms": [
+        "Hardie Weather Barrier",
+        "Water Vapour Permeance",
+        "THERMAL PERFORMANCE",
+        "AS/NZS4859.2:2018",
+        "1.93",
+        "2.04"
+      ],
+      "pageAnchors": [
+        { "page": 1, "text": "Water Vapour Permeance" },
+        { "page": 2, "text": "THERMAL PERFORMANCE" },
+        { "page": 2, "text": "1.93" }
+      ],
+      "tableChecks": [
+        { "label": "R2.0 direct-fixed summer/winter values", "cells": ["R2.0", "1.93", "2.04"] }
+      ]
+    },
+    {
+      "id": "nz-dynamic-price-html",
+      "label": "New Zealand retail product page",
+      "market": "NZ",
+      "kind": "html",
+      "url": "https://www.mitre10.co.nz/shop/gib-aqualine-plasterboard-sheet-10-x-2400-x-1200mm/p/433057",
+      "expectedTerms": ["GIB", "Aqualine", "2400", "1200", "433057"],
+      "pageAnchors": [],
+      "priceExpected": true
+    },
+    {
+      "id": "au-dynamic-price-html",
+      "label": "Australian retail product page",
+      "market": "AU",
+      "kind": "html",
+      "url": "https://www.bunnings.com.au/james-hardie-2-88m-villaboard-lining-2400-x-1200-x-6mm_p0714174",
+      "expectedTerms": ["James Hardie", "Villaboard", "2400", "1200", "6mm", "0714174"],
+      "pageAnchors": [],
+      "priceExpected": true
+    }
+  ]
+}
