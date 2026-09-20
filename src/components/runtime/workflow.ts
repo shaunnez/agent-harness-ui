@@ -29,10 +29,16 @@ export const autoRunStages: AutoRunStage[] = [
   "dev-review",
   "test",
   "final-review",
+  // Last because it is not a position in the workflow: repair is what happens when one
+  // of the gates above rejects a candidate, wherever that happens.
+  "repair",
 ];
 
 /** Stages whose automation records an approval rather than starting the next run. */
 export const approvalGateStages: AutoRunStage[] = ["specification", "plan"];
+
+/** Automation here acts on a rejection rather than advancing a passing candidate. */
+export const repairGateStages: AutoRunStage[] = ["repair"];
 
 type RuntimeTaskView = RuntimeTask | RuntimeTaskSummary;
 

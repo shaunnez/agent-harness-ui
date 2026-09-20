@@ -111,11 +111,16 @@ test("auto-run cannot bypass an exhausted gate allowance", async () => {
 
   await control._autoAdvanceGate(task.id);
 
-  assert.deepEqual(starts, ["review"]);
+  assert.deepEqual(starts, [], "a spent allowance is refused before a run is even reserved");
   assert.equal(
     current.events.some((event) => /auto-run authorized/i.test(event.title)),
     false,
   );
+  // This used to surface as "the task changed before the automated gate run could be
+  // reserved", which sent an operator looking for a race that never happened. Only a
+  // human can extend a spent budget, so the event has to name the budget.
+  assert.match(current.events.at(-1).detail, /used all 3 of its allowed attempts/);
+  assert.match(current.events.at(-1).detail, /Grant a retry/);
 });
 
 test("records a failed automatic reservation instead of swallowing it", async () => {
@@ -305,4 +310,102 @@ test("a run gate whose start throws records why instead of stalling the task in 
   assert.equal(current.status, "ready-for-implementation");
   const recorded = current.events.map((event) => `${event.title} ${event.detail ?? ""}`).join(" ");
   assert.match(recorded, /uncommitted change/);
+});
+
+// --- the repair gate ------------------------------------------------------------
+
+function rejectedTask(overrides = {}) {
+  return {
+    id: "AH-REPAIR-AUTO",
+    status: "repair-required",
+    currentStage: "dev-review",
+    workflowProfile: { selected: "standard" },
+    attemptsByStage: { implement: 1, "dev-review": 2 },
+    stageRunLimits: { implement: 3, "dev-review": 3 },
+    // `canStartRun` refuses a repair unless the candidate itself is marked for one, so
+    // a fixture without this would pass for the wrong reason.
+    candidates: [{ id: "C1", revisionNumber: 1, status: "repair_required" }],
+    events: [],
+    ...overrides,
+  };
+}
+
+test("an opted-in repair gate rebuilds a rejected candidate and says no person read the findings", async () => {
+  const { control, current, starts } = controlFor({
+    task: rejectedTask(),
+    settings: { gatePolicies: { repair: "auto-accept-recommendations" } },
+  });
+
+  await control._autoAdvanceGate("AH-REPAIR-AUTO");
+
+  assert.deepEqual(starts, ["repair"]);
+  const authorized = current.events.at(-1);
+  // Recorded against the gate that rejected the candidate, not against "repair":
+  // repair is a decision, not a place in the workflow.
+  assert.equal(authorized.stage, "dev-review");
+  assert.match(authorized.title, /auto-run authorized/i);
+  assert.match(authorized.detail, /No person read the findings\./);
+});
+
+test("the repair gate is opted in once and applies at whichever gate rejected the candidate", async () => {
+  for (const stage of ["dev-review", "test", "final-review"]) {
+    const { control, current, starts } = controlFor({
+      task: rejectedTask({ currentStage: stage }),
+      settings: { gatePolicies: { repair: "auto-accept-recommendations" } },
+    });
+    await control._autoAdvanceGate("AH-REPAIR-AUTO");
+    assert.deepEqual(starts, ["repair"], `repair did not start after ${stage} rejected the candidate`);
+    assert.equal(current.events.at(-1).stage, stage);
+  }
+});
+
+test("a manual repair gate leaves a rejected candidate alone", async () => {
+  for (const gatePolicies of [
+    {},
+    { repair: "manual" },
+    // Opting every *other* gate in must not imply repair: advancing a candidate that
+    // passed and rebuilding one that was rejected are different decisions.
+    {
+      implement: "auto-accept-recommendations",
+      "dev-review": "auto-accept-recommendations",
+      test: "auto-accept-recommendations",
+      "final-review": "auto-accept-recommendations",
+    },
+  ]) {
+    const { control, current, starts } = controlFor({ task: rejectedTask(), settings: { gatePolicies } });
+    await control._autoAdvanceGate("AH-REPAIR-AUTO");
+    assert.deepEqual(starts, []);
+    assert.equal(current.status, "repair-required");
+  }
+});
+
+test("automatic repair cannot outlive the Implement allowance it spends", async () => {
+  const { control, current, starts } = controlFor({
+    task: rejectedTask({ attemptsByStage: { implement: 3, "dev-review": 2 } }),
+    settings: { gatePolicies: { repair: "auto-accept-recommendations" } },
+  });
+
+  await control._autoAdvanceGate("AH-REPAIR-AUTO");
+
+  assert.deepEqual(starts, [], "a repair spends an Implement attempt and cannot exceed that budget");
+  assert.match(current.events.at(-1).detail, /implement has used all 3 of its allowed attempts/);
+});
+
+test("a candidate the repair circuit breaker blocked is never repaired automatically", async () => {
+  // `blocked` is where an over-repaired candidate lands. It is the outer bound on this
+  // whole feature: no policy advances a blocked task, so automatic repair terminates
+  // even when every gate is opted in.
+  const { control, current, starts } = controlFor({
+    task: rejectedTask({
+      status: "blocked",
+      blocker: { code: "repair-loop-exhausted" },
+    }),
+    settings: { gatePolicies: { repair: "auto-accept-recommendations" } },
+  });
+
+  await control._autoAdvanceGate("AH-REPAIR-AUTO");
+
+  assert.deepEqual(starts, []);
+  assert.equal(current.status, "blocked");
+  assert.deepEqual(current.events, [], "a blocked task is not a gate, so nothing is recorded against it");
 });
