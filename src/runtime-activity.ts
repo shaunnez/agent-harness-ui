@@ -80,6 +80,12 @@ export interface RuntimeToolCall {
   result: string | null;
   commandFailed?: boolean;
   runtimeScope?: "candidate" | "context-preflight";
+  /**
+   * Bounded, redacted tail of a failed repository command. Present only when the
+   * command failed — see `server/command-output-retention.mjs` for why this is the
+   * one exception to the "content not retained" discipline.
+   */
+  failureOutput?: string | null;
 }
 
 export interface RuntimeRunTestSummary {

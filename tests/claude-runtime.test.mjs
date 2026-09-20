@@ -143,12 +143,24 @@ test("maps recorded Claude tool calls onto the internal event shape", async () =
   assert.equal(firstCompletion.title, "Repository command returned a warning");
   assert.equal(firstCompletion.runtimeScope, "agent-diagnostic");
   assert.equal(firstCompletion.toolCall.result, "Exit code 1");
+  // `Exit code 1` on its own cannot be diagnosed, and the gate that kills a task on a
+  // repeated failure tells the operator to go and inspect the telemetry. The tail is
+  // the only record of what actually went wrong.
+  assert.match(
+    firstCompletion.toolCall.failureOutput,
+    /cat: nonexistent-file\.txt: No such file or directory/,
+  );
 
   assert.equal(secondCompletion.detail, "wc -l a.txt");
   assert.equal(secondCompletion.toolCall.id, bashStarted[0].toolCall.id);
   assert.equal(secondCompletion.commandFailed, false);
   assert.equal(secondCompletion.tone, "success");
   assert.equal(secondCompletion.toolCall.result, "Text result · 1 characters (content not retained)");
+  assert.equal(
+    secondCompletion.toolCall.failureOutput,
+    null,
+    "a command that succeeded retains nothing: the exception is for failures only",
+  );
 
   assert.deepEqual(events.at(-2), { type: "message", text: "DONE" });
   assert.equal(parsed.finalText, "DONE");

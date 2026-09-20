@@ -21,6 +21,7 @@ import {
   providerRuntimeDefaults,
   readClaudeModelCatalog,
 } from "./model-catalog.mjs";
+import { retainFailedCommandOutput } from "./command-output-retention.mjs";
 import { conciseToolResult, formatCommand, runProcess } from "./process-runtime.mjs";
 import { commandExitCode, isExpectedReadOnlySearchMiss } from "./shell-command-outcome.mjs";
 
@@ -526,12 +527,20 @@ export function createClaudeStreamParser() {
             category: "repository-command",
             phase: "completed",
             result: SHELL_START_FAILURE_RESULT,
+            // The host's refusal message names the limit that was hit, which is the
+            // only way to tell an oversized argv from an oversized environment.
+            failureOutput: retainFailedCommandOutput(block.content),
           },
         };
       }
       const result = claudeCommandResult(block.content);
       const expectedSearchMiss =
         !succeeded && isExpectedReadOnlySearchMiss(entry.detail, commandExitCode(result));
+      // A search that found nothing is not a fault and has no output worth keeping;
+      // anything else that exited non-zero is exactly what an operator is later told
+      // to inspect, so its tail is retained under the rules in
+      // `command-output-retention.mjs`.
+      const failureOutput = succeeded || expectedSearchMiss ? null : retainFailedCommandOutput(block.content);
       return {
         type: "activity",
         tone: succeeded || expectedSearchMiss ? "success" : "warning",
@@ -550,6 +559,7 @@ export function createClaudeStreamParser() {
           category: "repository-command",
           phase: "completed",
           result,
+          failureOutput,
         },
       };
     }

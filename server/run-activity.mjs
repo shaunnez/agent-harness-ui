@@ -1328,7 +1328,16 @@ function mergeToolCalls(existing, runtimeEvents) {
     if (event.runtimeScope != null) next.runtimeScope = event.runtimeScope;
     const index = next.id ? calls.findIndex((call) => call.id === next.id) : -1;
     if (index < 0) calls.push(next);
-    else calls[index] = { ...calls[index], ...next, result: next.result ?? calls[index].result ?? null };
+    else
+      calls[index] = {
+        ...calls[index],
+        ...next,
+        result: next.result ?? calls[index].result ?? null,
+        // Same rule as `result`: a later event for the same call must not erase
+        // evidence an earlier one captured. Only the completion carries a tail, so
+        // any subsequent merge would otherwise blank it back to null.
+        failureOutput: next.failureOutput ?? calls[index].failureOutput ?? null,
+      };
   }
   return calls;
 }
