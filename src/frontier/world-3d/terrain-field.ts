@@ -235,9 +235,13 @@ function coreLand(profile: ParcelProfile, dx: number, dz: number) {
   const rough = ridged(dx * 0.13, dz * 0.13, profile.salt + 41);
   const ledge = Math.floor(rough * 3) / 3;
   const relief = (lerp(rough, ledge, 0.6) - 0.5) * (profile.hub ? 1.2 : 2.4);
-  land += relief * smooth((flatD - 1.5) / 3);
   const r = Math.hypot(dx, dz);
   const angleDeg = (Math.atan2(dz, dx) * 180) / Math.PI;
+  // A road is cut and filled, not draped over what is already there. The terraced relief and the
+  // outcrops behind the HQ both stand down across the band, so the loop runs through a hill rather
+  // than climbing over the top of it.
+  const clear = 1 - ringRoadWeight(profile, r, angleDeg);
+  land += relief * smooth((flatD - 1.5) / 3) * clear;
   let shelf = 0;
   if (profile.shelf) {
     const [s0, s1] = profile.shelf;
@@ -263,7 +267,7 @@ function coreLand(profile: ParcelProfile, dx: number, dz: number) {
     const bump = Math.exp(-d2 * 1.6) * outcrop.height;
     // Rock, not a dune: ridged noise carves ledges into the blob, and it never rises on flat ground.
     const rock = 0.72 + 0.28 * ridged(dx * 0.19, dz * 0.19, profile.salt + 11);
-    land += bump * rock * shoulderT;
+    land += bump * rock * shoulderT * clear;
   }
   return { land, shelf, shoulderT, flatD, r, angleDeg };
 }
@@ -361,10 +365,21 @@ function buildWaterFeature(profile: ParcelProfile, bandIndex: number, random: ()
       bed: lip.bed - ((waterRules.poolDepth[1] ?? 0.9) - waterRules.channelDepth),
       water: lip.water,
     });
+  // A pool on the carriageway is a hole in the road. There is nowhere to move it to -- the shoulder
+  // is about 8.5 m between the plateau and the narrowest coast and the loop takes 5 of that -- so a
+  // pool that would sit on the band is dropped. The stream itself still crosses, and is forded.
+  if (hasRingRoad(profile))
+    for (let i = pools.length - 1; i >= 0; i--) {
+      const pool = pools[i] as WaterPool;
+      const radial = Math.hypot(pool.x, pool.z);
+      const angle = (Math.atan2(pool.z, pool.x) * 180) / Math.PI;
+      const clearance = ringRoad.width / 2 + pool.radius + 0.6;
+      if (Math.abs(radial - ringRoadRadius(profile, angle)) < clearance) pools.splice(i, 1);
+    }
   const margin = waterRules.halfWidth + 2.2;
   const xs = [...path.map((p) => p.x), ...pools.map((p) => p.x)];
   const zs = [...path.map((p) => p.z), ...pools.map((p) => p.z)];
-  const poolReach = Math.max(...pools.map((p) => p.radius));
+  const poolReach = Math.max(0, ...pools.map((p) => p.radius));
   return {
     path,
     pools,
@@ -451,6 +466,8 @@ export interface SurfaceSample {
   land: number;
   /** 1 in and beside a stream channel or pool: dark, wet rock. */
   wet: number;
+  /** 1 on the ring road, so the shader can lay a darker carriageway over the court's paving. */
+  ring: number;
 }
 
 /** Signed distance (metres, negative inside) to the flat HQ ground: plateau disc plus court apron. */
@@ -477,6 +494,24 @@ function flatDistance(profile: ParcelProfile, dx: number, dz: number) {
 export function ringRoadRadius(profile: ParcelProfile, angleDeg: number) {
   const a = toRadians(angleDeg);
   return ringRoad.radius + valueNoise(Math.cos(a) * 3, Math.sin(a) * 3, profile.salt + 57) * ringRoad.wobble;
+}
+
+/**
+ * True where a parcel carries a loop at all: the landing pad is not a parcel with a plateau, and an
+ * unconnected slot has no spurs for a loop to link.
+ */
+export function hasRingRoad(profile: ParcelProfile) {
+  return !profile.hub && profile.built.length > 0;
+}
+
+/**
+ * How much of the ring road covers this point, 0 off the band and 1 on it. Shared by the height
+ * field, the relief that has to get out of its way, and the scatter that has to stay off it.
+ */
+export function ringRoadWeight(profile: ParcelProfile, r: number, angleDeg: number) {
+  if (!hasRingRoad(profile)) return 0;
+  const across = Math.abs(r - ringRoadRadius(profile, angleDeg));
+  return 1 - smooth((across - ringRoad.width / 2) / ringRoad.edge);
 }
 
 /** One parcel's contribution at a parcel-local point. */
@@ -552,6 +587,7 @@ function sampleParcel(profile: ParcelProfile, dx: number, dz: number): SurfaceSa
   // rather than separate stubs pointing at bridges. It sits outside the HQ corners (18 m) and inside
   // the narrowest coast, and holds a constant radius -- which on this shoulder is close to a contour,
   // so it is paving rather than a cut. A seeded wobble keeps it off a drawn-compass circle.
+  let ring = 0;
   // The apron already paves the whole court front at its own level, so the loop runs into it rather
   // than across it: levelling the ring through the apron would lift its far corners off plateau level.
   const inApron =
@@ -571,6 +607,7 @@ function sampleParcel(profile: ParcelProfile, dx: number, dz: number): SurfaceSa
       (1 - smooth((Math.abs(r - ringR) - ringHalfWidth) / ringRoad.edge)) *
       (1 - clamp01(wet)) *
       (1 - clamp01(road));
+    ring = on;
     if (on > 0) {
       // A road is level across its width. Carry the centreline height across the band so the surface
       // faces the sky like the court apron does, instead of tilting with the shoulder: the paving is
@@ -587,7 +624,7 @@ function sampleParcel(profile: ParcelProfile, dx: number, dz: number): SurfaceSa
     road = Math.max(road, apronIn);
   }
   if (profile.hub) road = Math.max(road, 1 - smooth((r - profile.flatRadius) / 0.8));
-  return { height, road, flat, shelf: shelf * landMask, land: landMask, wet };
+  return { height, road, flat, shelf: shelf * landMask, land: landMask, wet, ring };
 }
 
 export interface TerrainField {
@@ -610,7 +647,7 @@ export function buildField(occupiedSlotIds: Iterable<string>): TerrainField {
   return { profiles, bounds, reach };
 }
 
-const seabedSample: SurfaceSample = { height: seabed, road: 0, flat: 0, shelf: 0, land: 0, wet: 0 };
+const seabedSample: SurfaceSample = { height: seabed, road: 0, flat: 0, shelf: 0, land: 0, wet: 0, ring: 0 };
 /** The colony surface at a world point: the highest parcel profile wins. */
 export function surfaceAt(field: TerrainField, x: number, z: number): SurfaceSample {
   let best: SurfaceSample = seabedSample;

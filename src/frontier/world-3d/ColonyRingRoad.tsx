@@ -6,6 +6,8 @@ import { heightAt, ringRoadRadius, type TerrainField } from "./terrain-field";
 
 const ringRoad = colonyContract.colony.ringRoad;
 const apron = colonyContract.terrain.plateau.courtApron;
+const spurHalfWidth = colonyContract.colony.spurs.width / 2;
+const padRadial = colonyContract.colony.pads.radial;
 /** Segments around the loop. At radius 24 this is a kerb vertex about every 0.5 m. */
 const segments = 288;
 /** Painted kerb width, and how far it sits inside the paved band's edge. */
@@ -25,6 +27,26 @@ const lift = 0.035;
  * Two thin ribbons rather than a full deck: the surface is already right, and geometry laid over the
  * whole band would z-fight the terrain across its entire area instead of along two 0.34 m strips.
  */
+/** One flat ribbon of kerb, positioned at its parcel centre. */
+function ribbon(
+  positions: number[],
+  indices: number[],
+  material: MeshStandardMaterial,
+  cx: number,
+  cz: number,
+  name: string,
+) {
+  const geometry = new BufferGeometry();
+  geometry.setAttribute("position", new BufferAttribute(new Float32Array(positions), 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  const mesh = new Mesh(geometry, material);
+  mesh.name = name;
+  mesh.position.set(cx, 0, cz);
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
 export function ColonyRingRoad({
   bases,
   field,
@@ -87,15 +109,61 @@ export function ColonyRingRoad({
           previous = true;
         }
         if (indices.length === 0) continue;
-        const geometry = new BufferGeometry();
-        geometry.setAttribute("position", new BufferAttribute(new Float32Array(positions), 3));
-        geometry.setIndex(indices);
-        geometry.computeVertexNormals();
-        const mesh = new Mesh(geometry, material);
-        mesh.name = `MF_RingRoad_${profile.id}_${side < 0 ? "inner" : "outer"}`;
-        mesh.position.set(cx, 0, cz);
-        mesh.receiveShadow = true;
-        result.push(mesh);
+        result.push(
+          ribbon(
+            positions,
+            indices,
+            material,
+            cx,
+            cz,
+            `MF_RingRoad_${profile.id}_${side < 0 ? "inner" : "outer"}`,
+          ),
+        );
+      }
+      // The loop has to arrive somewhere. Each built spur gets the same pair of lines running from
+      // the carriageway out to the bridge pad, so the ring turns onto the approach instead of
+      // sweeping past it and leaving the bridge joined to nothing.
+      for (const edge of profile.built) {
+        const a = (edge.worldAngleDeg * Math.PI) / 180;
+        const dx = Math.cos(a);
+        const dz = Math.sin(a);
+        const px = -Math.sin(a);
+        const pz = Math.cos(a);
+        const from = ringRoadRadius(profile, edge.worldAngleDeg);
+        const to = (padRadial[1] ?? 31.5) - 0.5;
+        for (const side of [-1, 1] as const) {
+          const offset = side * (spurHalfWidth - kerbInset);
+          const positions: number[] = [];
+          const indices: number[] = [];
+          const steps = 24;
+          for (let i = 0; i <= steps; i++) {
+            const r = from + ((to - from) * i) / steps;
+            const centreX = dx * r + px * offset;
+            const centreZ = dz * r + pz * offset;
+            const y = heightAt(field, cx + centreX, cz + centreZ) + lift;
+            const half = kerbWidth / 2;
+            const base = positions.length / 3;
+            positions.push(
+              centreX - px * half,
+              y,
+              centreZ - pz * half,
+              centreX + px * half,
+              y,
+              centreZ + pz * half,
+            );
+            if (i > 0) indices.push(base - 2, base - 1, base, base - 1, base + 1, base);
+          }
+          result.push(
+            ribbon(
+              positions,
+              indices,
+              material,
+              cx,
+              cz,
+              `MF_RingRoad_${profile.id}_${edge.id}_${side < 0 ? "left" : "right"}`,
+            ),
+          );
+        }
       }
     }
     return result;

@@ -40,6 +40,12 @@ export interface ScatterGround {
   ground(x: number, z: number): { height: number; slope: number };
   /** World angles (deg) of the edges with a spur and pad. */
   builtEdgeAngles: number[];
+  /**
+   * Centreline radius of the parcel's ring road at a parcel-local angle, or null where the parcel
+   * has no loop. Scatter keeps off the carriageway: a boulder standing in the road reads as a
+   * mistake, not as scenery.
+   */
+  ringRadius?: ((angleDeg: number) => number) | null;
   /** The parcel's stream, if it has one. */
   water?: ScatterWater | null;
   /** World angle range (deg) of the low wave-cut shelf, if any. */
@@ -134,6 +140,8 @@ function seeded(seed: number) {
   };
 }
 /** Distance from the nearest spur corridor centre line, measured only outside the flat ground. */
+/** Half the carriageway plus a shoulder, so nothing overhangs the running surface. */
+const ringClearance = 3.6;
 export function corridorDistance(x: number, z: number, flatRadius = parcelPlateauRadius) {
   let nearest = Number.POSITIVE_INFINITY;
   for (const edge of colonyEdges) {
@@ -142,6 +150,12 @@ export function corridorDistance(x: number, z: number, flatRadius = parcelPlatea
     if (along > flatRadius - 3) nearest = Math.min(nearest, Math.abs(-x * Math.sin(a) + z * Math.cos(a)));
   }
   return nearest;
+}
+/** Metres from a parcel-local point to the ring-road centreline; Infinity where there is no loop. */
+export function ringDistance(ground: Pick<ScatterGround, "ringRadius">, x: number, z: number) {
+  if (!ground.ringRadius) return Number.POSITIVE_INFINITY;
+  const angleDeg = (Math.atan2(z, x) * 180) / Math.PI;
+  return Math.abs(Math.hypot(x, z) - ground.ringRadius(angleDeg));
 }
 /** Shortest angular distance in degrees. */
 export const angularGap = (a: number, b: number) => Math.abs(((((a - b) % 360) + 540) % 360) - 180);
@@ -242,6 +256,7 @@ export function scatterLayout(key: string, ground: ScatterGround): ScatterPlacem
       if (!ground.hub && inFrontArc(angleDeg)) continue;
       if (r < (low ?? 0) || r > (high ?? 0)) continue;
       if (corridorDistance(x, z, ground.flatRadius) < scatterRules.corridorHalfWidth) continue;
+      if (ringDistance(ground, x, z) < ringClearance) continue;
       if (waterDistance(water, x, z) < scatterRules.waterClearance) continue;
       const at = ground.ground(x, z);
       if (at.height < scatterRules.treeMinHeight || at.slope > scatterRules.treeMaxSlopeDeg) continue;
@@ -286,6 +301,7 @@ export function scatterLayout(key: string, ground: ScatterGround): ScatterPlacem
     if (!ground.hub && inFrontArc(angle)) continue;
     const [x, z] = polar(between(ground.flatRadius + 3, ground.coast(angle) - 4.5), angle);
     if (corridorDistance(x, z, ground.flatRadius) < 5.5) continue;
+    if (ringDistance(ground, x, z) < ringClearance) continue;
     if (waterDistance(water, x, z) < 4) continue;
     const at = ground.ground(x, z);
     if (at.height < 3.2 || at.slope > 35) continue;
@@ -300,6 +316,7 @@ export function scatterLayout(key: string, ground: ScatterGround): ScatterPlacem
     const coast = ground.coast(angle);
     const [x, z] = polar(between(coast - 5.5, coast - 0.8), angle);
     if (corridorDistance(x, z, ground.flatRadius) < 4) continue;
+    if (ringDistance(ground, x, z) < ringClearance) continue;
     if (waterDistance(water, x, z) < scatterRules.waterClearance) continue;
     const at = ground.ground(x, z);
     if (at.height < 0.8 || at.slope > scatterRules.boulderMaxSlopeDeg) continue;
@@ -328,6 +345,7 @@ export function scatterLayout(key: string, ground: ScatterGround): ScatterPlacem
     const tryCrystal = (x: number, z: number) => {
       if (Math.hypot(x, z) < ground.flatRadius + 1.5) return false;
       if (corridorDistance(x, z, ground.flatRadius) < 5) return false;
+      if (ringDistance(ground, x, z) < ringClearance) return false;
       if (waterDistance(water, x, z) < 0.6) return false;
       if (near(x, z, 2.4)) return false;
       const at = ground.ground(x, z);
@@ -344,8 +362,10 @@ export function scatterLayout(key: string, ground: ScatterGround): ScatterPlacem
         if (tryCrystal(rock.x + dx, rock.z + dz)) placed++;
       }
     }
-    if (water && placed < wanted) {
-      const pool = water.pools[0] as { x: number; z: number; radius: number };
+    // A stream can now run without a pool at all: one that would have sat on the ring road is
+    // dropped, so this rule only applies where the parcel actually kept a pool to crowd.
+    const pool = water?.pools[0];
+    if (water && pool && placed < wanted) {
       for (let attempt = 0; attempt < 8 && placed < 2; attempt++) {
         const [dx, dz] = polar(pool.radius + between(1.3, 2.2), between(0, 360));
         if (tryCrystal(pool.x + dx, pool.z + dz)) placed++;

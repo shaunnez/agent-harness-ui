@@ -370,9 +370,9 @@
     },
     "ringRoad": {
       "radius": 24.0,
-      "width": 4.0,
+      "width": 5.0,
       "wobble": 0.6,
-      "edge": 1.0,
+      "edge": 0.8,
       "rule": "paved loop on the shoulder linking every built spur, so a parcel reads as connected on all sides; follows the contour at constant radius, seeded wobble per slot, project parcels only"
     }
   },

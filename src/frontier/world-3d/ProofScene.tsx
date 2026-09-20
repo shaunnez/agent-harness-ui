@@ -39,7 +39,15 @@ import { SceneFinish } from "./SceneFinish";
 import { ShadowCadence } from "./shadow-cadence";
 import { createCoastalWater, createWaterFromField, setWaterSplashes, type WaterSplash } from "./water";
 import { ColonyWater } from "./ColonyWater";
-import { buildField, coastRadius, heightAt, slopeAt, type TerrainField } from "./terrain-field";
+import {
+  buildField,
+  coastRadius,
+  hasRingRoad,
+  heightAt,
+  ringRoadRadius,
+  slopeAt,
+  type TerrainField,
+} from "./terrain-field";
 import { batchWorker } from "./worker-batching";
 
 interface Props {
@@ -179,6 +187,7 @@ export function ProofScene(props: Props) {
               slope: slopeAt(field, origin[0] + x, origin[2] + z),
             }),
             builtEdgeAngles: profile.built.map((edge) => edge.worldAngleDeg),
+            ringRadius: hasRingRoad(profile) ? (angleDeg) => ringRoadRadius(profile, angleDeg) : null,
             water: profile.water
               ? {
                   fallAngleDeg: profile.water.fall.angleDeg,

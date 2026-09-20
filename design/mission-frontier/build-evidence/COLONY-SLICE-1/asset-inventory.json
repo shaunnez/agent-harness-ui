@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-19T23:17:46.224Z",
+  "capturedAt": "2026-09-20T00:13:22.868Z",
   "assets": [
     {
       "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.glb",
@@ -76,8 +76,8 @@
     },
     {
       "source": "design/mission-frontier/assets/staging/colony-v2/contract.json",
-      "filename": "colony-contract.32c7ef3e70e0.json",
-      "sha256": "32c7ef3e70e038440d7bd9c9bd4e7cf2f511eee9cbcbd9080498bcf0aceb3b14",
+      "filename": "colony-contract.2edeb5ff4e56.json",
+      "sha256": "2edeb5ff4e561804f1b6db3b2657dad681052745288ca76a1aa5648acb9da66c",
       "bytes": 46586
     },
     {

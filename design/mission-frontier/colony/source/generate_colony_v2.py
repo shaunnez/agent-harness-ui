@@ -34,8 +34,8 @@ PAD = (27.5, 31.5); PAD_W = 6.0; SPUR_W = 5.0            # abutment pad along ea
 SPAN = D - 2 * PAD[1]          # 27.0: one bridge asset still fits every edge
 COAST = {"min": 28.5, "typical": 33.5, "max": 37.0, "edgeCorridorMax": PAD[1], "edgeCorridorHalfAngleDeg": 10,
          "frontArcMin": 30.0, "frontArcDeg": [60, 120]}
-RING_R, RING_W, RING_WOBBLE, RING_EDGE = 24.0, 4.0, 0.6, 1.0
-# Ring road band: 24.0 +/- 0.6 wobble +/- 2.0 half-width +/- 1.0 soft edge = 20.4 .. 27.6.
+RING_R, RING_W, RING_WOBBLE, RING_EDGE = 24.0, 5.0, 0.6, 0.8
+# Ring road band: 24.0 +/- 0.6 wobble +/- 2.5 half-width +/- 0.8 soft edge = 20.1 .. 27.9.
 # Bounded inside by the flat plateau the HQ needs (20.0) and outside by the narrowest coast (28.5).
 CHANNEL_MIN = D - 2 * COAST["max"]                        # 16 m of open water at the narrowest
 SEA, SEABED, GROUND, COURT, DECK, FLOOR = 0.0, -3.0, 4.0, 4.25, 4.25, 4.30
