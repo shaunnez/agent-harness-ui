@@ -48,11 +48,19 @@ const requiredGroups = {
     "MF_Vehicle_Rover",
   ],
   /**
-   * The three scanned interior hero props. They ship as their own kit rather than inside the shell,
-   * whose producer receipt is hash-bound; the runtime anchors each to the contract socket that
-   * already names it.
+   * The scanned interior hero props. They ship as their own kit rather than inside the shell, whose
+   * producer receipt is hash-bound; the runtime anchors each to the contract socket that already
+   * names it. One root per distinct piece -- the wall console is listed once and stood up twenty
+   * times by `prop-placement.ts`, because the kit carries geometry, not a floor plan.
    */
-  props: ["MF_Prop_PlanningTable", "MF_Prop_TestRig", "MF_Prop_CargoBattery"],
+  props: [
+    "MF_Prop_PlanningTable",
+    "MF_Prop_TestRig",
+    "MF_Prop_CargoBattery",
+    "MF_Prop_ReviewStation",
+    "MF_Prop_IntakeDesk",
+    "MF_Prop_WallConsole",
+  ],
   parcel: [
     "MF_Terrain",
     "MF_Planting",

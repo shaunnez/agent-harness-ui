@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-20T04:15:23.717Z",
+  "capturedAt": "2026-09-20T20:24:24.992Z",
   "assets": [
     {
       "source": "design/mission-frontier/assets/staging/exterior-bases/astra-kit/environment.glb",
@@ -82,11 +82,11 @@
     },
     {
       "source": "design/mission-frontier/assets/staging/colony-v2/producer/hq-shell.glb",
-      "filename": "hq-shell.69514f1567b1.glb",
-      "sha256": "69514f1567b1034fb55e5f9ac17aa1474a54bc771b1d5588621d1b247d655190",
-      "bytes": 7058852,
-      "meshes": 63,
-      "materials": 20,
+      "filename": "hq-shell.a3eb27a5ff3d.glb",
+      "sha256": "a3eb27a5ff3d8b961f760a6457b202b4247fc62202634f977316e7470e230cc8",
+      "bytes": 6007092,
+      "meshes": 44,
+      "materials": 19,
       "textures": 6,
       "animations": []
     },
@@ -172,12 +172,12 @@
     },
     {
       "source": "design/mission-frontier/assets/staging/meshy-kit/producer/props-kit.glb",
-      "filename": "props-kit.c2969382a8c8.glb",
-      "sha256": "c2969382a8c84ac92cade619d69a3690679a8face65235e12f25cefa161aec15",
-      "bytes": 595356,
-      "meshes": 3,
-      "materials": 3,
-      "textures": 12,
+      "filename": "props-kit.aca074e20ac5.glb",
+      "sha256": "aca074e20ac523e88288b131516947ee77d17b0d7e38df083de437d1bea35277",
+      "bytes": 1822920,
+      "meshes": 6,
+      "materials": 6,
+      "textures": 24,
       "animations": []
     },
     {

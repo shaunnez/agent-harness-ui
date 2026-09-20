@@ -76,6 +76,7 @@ def windows(prefix, phi0, phi1, r, y, height, skip=(), pitch_deg=5.0, margin=4.0
 # The v1 producer directory is read-only history, so this strips the pieces after the shared recipe
 # has run rather than forking it: the parts that remain keep one source of truth, and a future scan
 # is added here by name instead of by re-copying fifty lines.
+WALL_ROOMS = {'planning': [150], 'implementation': [210, 270], 'review': [330], 'testing': [30]}
 REPLACED_BY_SCANS = {
     # planningHoloTable.V2 -> MF_Prop_PlanningTable
     'planning_table', 'planning_table_surface',
@@ -83,10 +84,26 @@ REPLACED_BY_SCANS = {
     'testing_table', 'testing_table_surface', 'testing_diagnostic_rig', 'testing_sensor_collar',
     # cargoBattery.V2 -> MF_Prop_CargoBattery, on the same frozen cargo pad
     'cargo_crate', 'cargo_retaining_band', 'cargo_lid',
+    # MF_Prop_ReviewStation, moved to the contract's radial 9 from the greybox's 10.7
+    'review_dais', 'review_dais_light',
+    # MF_Prop_IntakeDesk, on the briefing console's own footprint
+    'briefing_qa_console', 'briefing_scout_display', 'briefing_scout_panel', 'briefing_console_control',
+} | {
+    # MF_Prop_WallConsole, twenty of them, on the same radial 15 row at the same 3.4 m pitch. The
+    # `light()` call that goes with each radial is not here: the wall row's cyan practical lights the
+    # room, not the console, and the scan carries no light of its own.
+    f'{room}_{part}'
+    for room in WALL_ROOMS
+    for part in ('console_base', 'console_top', 'monitor_housing', 'monitor', 'console_key',
+                 'instrument_trace')
 }
 # Their obstacle entries go with them: `prop-placement.ts` publishes the scanned footprints instead,
 # and leaving these would keep robots out of floor that no longer has anything standing on it.
-REPLACED_OBSTACLES = {'planning_central_equipment', 'testing_central_equipment', 'cargo_crates'}
+REPLACED_OBSTACLES = {
+    'planning_central_equipment', 'testing_central_equipment', 'cargo_crates',
+    'review_central_equipment', 'briefing_qa_console',
+} | {f'{room}_wall_console_{phi}_{k}' for room, phis in WALL_ROOMS.items() for phi in phis
+     for k in range(4)}
 
 
 def equipment_v2():

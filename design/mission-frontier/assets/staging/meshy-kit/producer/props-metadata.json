@@ -1,8 +1,8 @@
 {
   "file": "props-kit.glb",
-  "sha256": "c2969382a8c84ac92cade619d69a3690679a8face65235e12f25cefa161aec15",
-  "bytes": 595356,
-  "images": 12,
+  "sha256": "aca074e20ac523e88288b131516947ee77d17b0d7e38df083de437d1bea35277",
+  "bytes": 1822920,
+  "images": 24,
   "props": {
     "MF_Prop_PlanningTable": {
       "asset": "planningHoloTable.V2",
@@ -14,7 +14,8 @@
         3.058
       ],
       "footprintRadius": 1.529,
-      "material": "ambient_screen_service"
+      "material": "ambient_screen_service",
+      "metalness": null
     },
     "MF_Prop_TestRig": {
       "asset": "testingRig.V2",
@@ -26,7 +27,8 @@
         3.199
       ],
       "footprintRadius": 1.755,
-      "material": "practical_console_cyan"
+      "material": "practical_console_cyan",
+      "metalness": null
     },
     "MF_Prop_CargoBattery": {
       "asset": "cargoBattery.V2",
@@ -38,16 +40,56 @@
         1.065
       ],
       "footprintRadius": 0.773,
-      "material": "practical_warm_strip"
+      "material": "practical_warm_strip",
+      "metalness": null
+    },
+    "MF_Prop_WallConsole": {
+      "asset": "MF_Prop_WallConsole",
+      "triangles": 2000,
+      "texturePx": 1024,
+      "size": [
+        1.831,
+        2.75,
+        0.717
+      ],
+      "footprintRadius": 0.915,
+      "material": "ambient_screen_service",
+      "metalness": 0.0
+    },
+    "MF_Prop_IntakeDesk": {
+      "asset": "MF_Prop_IntakeDesk",
+      "triangles": 3000,
+      "texturePx": 1024,
+      "size": [
+        2.656,
+        2.4,
+        0.7
+      ],
+      "footprintRadius": 1.328,
+      "material": "ambient_screen_service",
+      "metalness": 0.0
+    },
+    "MF_Prop_ReviewStation": {
+      "asset": "MF_Prop_ReviewStation",
+      "triangles": 2998,
+      "texturePx": 1024,
+      "size": [
+        3.206,
+        1.36,
+        3.204
+      ],
+      "footprintRadius": 1.603,
+      "material": "ambient_screen_service",
+      "metalness": 0.0
     }
   },
   "budget": {
-    "bytes": 2500000,
-    "triangles": 20000
+    "bytes": 3500000,
+    "triangles": 28000
   },
   "compression": {
     "geometry": "KHR_draco_mesh_compression",
     "textures": "EXT_texture_webp q85"
   },
-  "origin": "Meshy scans (meshy_output) for the three interior hero props the HQ shell reserved MF_Props for"
+  "origin": "Meshy scans (meshy_output) for the six interior hero props the HQ shell reserved MF_Props for"
 }

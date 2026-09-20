@@ -102,17 +102,17 @@
             "min": [
               -17.3363,
               4.27,
-              -15.36
+              -15.025
             ],
             "max": [
               17.3363,
-              7.125,
+              6.3425,
               21.6
             ],
             "size": [
               34.6726,
-              2.855,
-              36.96
+              2.0725,
+              36.625
             ]
           }
         },
@@ -313,12 +313,8 @@
         "MF_Interior_planning": {
           "parent": "MF_Interior",
           "children": [
-            "MF_Interior_planning__ambient_screen_service",
             "MF_Interior_planning__brushed_titanium",
-            "MF_Interior_planning__console_blue_glass",
-            "MF_Interior_planning__practical_console_cyan",
-            "MF_Interior_planning__room_inlay_planning",
-            "MF_Interior_planning__structure_graphite_joints"
+            "MF_Interior_planning__room_inlay_planning"
           ],
           "bounds": {
             "min": [
@@ -328,12 +324,12 @@
             ],
             "max": [
               -3.1437,
-              7.12,
+              4.361,
               15.0035
             ],
             "size": [
               14.1926,
-              2.818,
+              0.059,
               15.0385
             ]
           }
@@ -341,10 +337,7 @@
         "MF_Interior_implementation": {
           "parent": "MF_Interior",
           "children": [
-            "MF_Interior_implementation__ambient_screen_service",
             "MF_Interior_implementation__brushed_titanium",
-            "MF_Interior_implementation__console_blue_glass",
-            "MF_Interior_implementation__practical_console_cyan",
             "MF_Interior_implementation__room_inlay_implementation",
             "MF_Interior_implementation__structure_graphite_joints",
             "MF_Interior_implementation__structure_ivory_ceramic",
@@ -354,44 +347,40 @@
             "min": [
               -17.3363,
               4.3,
-              -15.36
+              -15.025
             ],
             "max": [
               8.6763,
-              7.12,
+              6.3425,
               0.035
             ],
             "size": [
               26.0126,
-              2.82,
-              15.395
+              2.0425,
+              15.06
             ]
           }
         },
         "MF_Interior_review": {
           "parent": "MF_Interior",
           "children": [
-            "MF_Interior_review__ambient_screen_service",
             "MF_Interior_review__brushed_titanium",
-            "MF_Interior_review__console_blue_glass",
-            "MF_Interior_review__practical_console_cyan",
-            "MF_Interior_review__room_inlay_review",
-            "MF_Interior_review__structure_graphite_joints"
+            "MF_Interior_review__room_inlay_review"
           ],
           "bounds": {
             "min": [
               3.1437,
-              4.3,
+              4.302,
               -15.0035
             ],
             "max": [
               17.3363,
-              7.12,
+              4.361,
               0.035
             ],
             "size": [
               14.1926,
-              2.82,
+              0.059,
               15.0385
             ]
           }
@@ -399,12 +388,8 @@
         "MF_Interior_testing": {
           "parent": "MF_Interior",
           "children": [
-            "MF_Interior_testing__ambient_screen_service",
             "MF_Interior_testing__brushed_titanium",
-            "MF_Interior_testing__console_blue_glass",
-            "MF_Interior_testing__practical_console_cyan",
-            "MF_Interior_testing__room_inlay_testing",
-            "MF_Interior_testing__structure_graphite_joints"
+            "MF_Interior_testing__room_inlay_testing"
           ],
           "bounds": {
             "min": [
@@ -414,12 +399,12 @@
             ],
             "max": [
               17.3363,
-              7.12,
+              4.361,
               15.0035
             ],
             "size": [
               14.1926,
-              2.818,
+              0.059,
               15.0385
             ]
           }
@@ -427,27 +412,23 @@
         "MF_Interior_briefing": {
           "parent": "MF_Interior",
           "children": [
-            "MF_Interior_briefing__ambient_screen_service",
             "MF_Interior_briefing__brushed_titanium",
-            "MF_Interior_briefing__console_blue_glass",
-            "MF_Interior_briefing__practical_console_cyan",
-            "MF_Interior_briefing__room_inlay_briefing",
-            "MF_Interior_briefing__structure_graphite_joints"
+            "MF_Interior_briefing__room_inlay_briefing"
           ],
           "bounds": {
             "min": [
               -8.6763,
-              4.3,
+              4.302,
               5.465
             ],
             "max": [
               -2.265,
-              7.125,
+              4.361,
               15.025
             ],
             "size": [
               6.4113,
-              2.825,
+              0.059,
               9.56
             ]
           }
@@ -480,7 +461,6 @@
         }
       },
       "materials": [
-        "ambient_screen_service",
         "ambient_sensor_navigation",
         "brushed_titanium",
         "console_blue_glass",
@@ -651,58 +631,28 @@
           "testing_tier_clerestory"
         ],
         "MF_Interior_planning": [
-          "planning_console_base",
-          "planning_console_key",
-          "planning_console_top",
           "planning_floor_inlay",
-          "planning_floor_reveal",
-          "planning_instrument_trace",
-          "planning_monitor",
-          "planning_monitor_housing"
+          "planning_floor_reveal"
         ],
         "MF_Interior_implementation": [
           "fabrication_module",
           "fabrication_module_inlay",
           "implementation_bench_top",
-          "implementation_console_base",
-          "implementation_console_key",
-          "implementation_console_top",
           "implementation_fabrication_bench",
           "implementation_floor_inlay",
-          "implementation_floor_reveal",
-          "implementation_instrument_trace",
-          "implementation_monitor",
-          "implementation_monitor_housing"
+          "implementation_floor_reveal"
         ],
         "MF_Interior_review": [
-          "review_console_base",
-          "review_console_key",
-          "review_console_top",
-          "review_dais",
-          "review_dais_light",
           "review_floor_inlay",
-          "review_floor_reveal",
-          "review_instrument_trace",
-          "review_monitor",
-          "review_monitor_housing"
+          "review_floor_reveal"
         ],
         "MF_Interior_testing": [
-          "testing_console_base",
-          "testing_console_key",
-          "testing_console_top",
           "testing_floor_inlay",
-          "testing_floor_reveal",
-          "testing_instrument_trace",
-          "testing_monitor",
-          "testing_monitor_housing"
+          "testing_floor_reveal"
         ],
         "MF_Interior_briefing": [
-          "briefing_console_control",
           "briefing_floor_inlay",
-          "briefing_floor_reveal",
-          "briefing_qa_console",
-          "briefing_scout_display",
-          "briefing_scout_panel"
+          "briefing_floor_reveal"
         ],
         "MF_Interior_dispatch": [
           "bay_floor",
@@ -754,24 +704,24 @@
         "MF_BaseFixed": 426,
         "MF_ShellCutaway_FrontFlats": 151,
         "MF_Roof": 236,
-        "MF_Interior_planning": 45,
-        "MF_Interior_implementation": 99,
-        "MF_Interior_review": 47,
-        "MF_Interior_testing": 45,
-        "MF_Interior_briefing": 13,
+        "MF_Interior_planning": 5,
+        "MF_Interior_implementation": 19,
+        "MF_Interior_review": 5,
+        "MF_Interior_testing": 5,
+        "MF_Interior_briefing": 5,
         "MF_Interior_dispatch": 12,
         "MF_ShellCutaway_PartitionGlass": 56,
         "MF_Court": 20,
         "MF_Practicals": 9
       },
       "glb": {
-        "bytes": 7058852,
-        "sha256": "69514f1567b1034fb55e5f9ac17aa1474a54bc771b1d5588621d1b247d655190",
-        "triangles": 131696,
-        "meshes": 63,
-        "materials": 20,
+        "bytes": 6007092,
+        "sha256": "a3eb27a5ff3d8b961f760a6457b202b4247fc62202634f977316e7470e230cc8",
+        "triangles": 108404,
+        "meshes": 44,
+        "materials": 19,
         "images": 6,
-        "nodes": 133
+        "nodes": 114
       },
       "obstacles": [
         {
@@ -788,279 +738,6 @@
           ]
         },
         {
-          "name": "planning_wall_console_150_0",
-          "min": [
-            -11.1035,
-            4.31,
-            11.0431
-          ],
-          "max": [
-            -9.7772,
-            5.61,
-            12.7904
-          ]
-        },
-        {
-          "name": "planning_wall_console_150_1",
-          "min": [
-            -12.8035,
-            4.31,
-            8.0986
-          ],
-          "max": [
-            -11.4772,
-            5.61,
-            9.8459
-          ]
-        },
-        {
-          "name": "planning_wall_console_150_2",
-          "min": [
-            -14.5035,
-            4.31,
-            5.1541
-          ],
-          "max": [
-            -13.1772,
-            5.61,
-            6.9014
-          ]
-        },
-        {
-          "name": "planning_wall_console_150_3",
-          "min": [
-            -16.2035,
-            4.31,
-            2.2096
-          ],
-          "max": [
-            -14.8772,
-            5.61,
-            3.9569
-          ]
-        },
-        {
-          "name": "implementation_wall_console_210_0",
-          "min": [
-            -16.2035,
-            4.31,
-            -3.9569
-          ],
-          "max": [
-            -14.8772,
-            5.61,
-            -2.2096
-          ]
-        },
-        {
-          "name": "implementation_wall_console_210_1",
-          "min": [
-            -14.5035,
-            4.31,
-            -6.9014
-          ],
-          "max": [
-            -13.1772,
-            5.61,
-            -5.1541
-          ]
-        },
-        {
-          "name": "implementation_wall_console_210_2",
-          "min": [
-            -12.8035,
-            4.31,
-            -9.8459
-          ],
-          "max": [
-            -11.4772,
-            5.61,
-            -8.0986
-          ]
-        },
-        {
-          "name": "implementation_wall_console_210_3",
-          "min": [
-            -11.1035,
-            4.31,
-            -12.7904
-          ],
-          "max": [
-            -9.7772,
-            5.61,
-            -11.0431
-          ]
-        },
-        {
-          "name": "implementation_wall_console_270_0",
-          "min": [
-            -5.95,
-            4.31,
-            -15.275
-          ],
-          "max": [
-            -4.25,
-            5.61,
-            -14.725
-          ]
-        },
-        {
-          "name": "implementation_wall_console_270_1",
-          "min": [
-            -2.55,
-            4.31,
-            -15.275
-          ],
-          "max": [
-            -0.85,
-            5.61,
-            -14.725
-          ]
-        },
-        {
-          "name": "implementation_wall_console_270_2",
-          "min": [
-            0.85,
-            4.31,
-            -15.275
-          ],
-          "max": [
-            2.55,
-            5.61,
-            -14.725
-          ]
-        },
-        {
-          "name": "implementation_wall_console_270_3",
-          "min": [
-            4.25,
-            4.31,
-            -15.275
-          ],
-          "max": [
-            5.95,
-            5.61,
-            -14.725
-          ]
-        },
-        {
-          "name": "review_wall_console_330_0",
-          "min": [
-            9.7772,
-            4.31,
-            -12.7904
-          ],
-          "max": [
-            11.1035,
-            5.61,
-            -11.0431
-          ]
-        },
-        {
-          "name": "review_wall_console_330_1",
-          "min": [
-            11.4772,
-            4.31,
-            -9.8459
-          ],
-          "max": [
-            12.8035,
-            5.61,
-            -8.0986
-          ]
-        },
-        {
-          "name": "review_wall_console_330_2",
-          "min": [
-            13.1772,
-            4.31,
-            -6.9014
-          ],
-          "max": [
-            14.5035,
-            5.61,
-            -5.1541
-          ]
-        },
-        {
-          "name": "review_wall_console_330_3",
-          "min": [
-            14.8772,
-            4.31,
-            -3.9569
-          ],
-          "max": [
-            16.2035,
-            5.61,
-            -2.2096
-          ]
-        },
-        {
-          "name": "testing_wall_console_30_0",
-          "min": [
-            14.8772,
-            4.31,
-            2.2096
-          ],
-          "max": [
-            16.2035,
-            5.61,
-            3.9569
-          ]
-        },
-        {
-          "name": "testing_wall_console_30_1",
-          "min": [
-            13.1772,
-            4.31,
-            5.1541
-          ],
-          "max": [
-            14.5035,
-            5.61,
-            6.9014
-          ]
-        },
-        {
-          "name": "testing_wall_console_30_2",
-          "min": [
-            11.4772,
-            4.31,
-            8.0986
-          ],
-          "max": [
-            12.8035,
-            5.61,
-            9.8459
-          ]
-        },
-        {
-          "name": "testing_wall_console_30_3",
-          "min": [
-            9.7772,
-            4.31,
-            11.0431
-          ],
-          "max": [
-            11.1035,
-            5.61,
-            12.7904
-          ]
-        },
-        {
-          "name": "review_central_equipment",
-          "min": [
-            7.9165,
-            4.3,
-            -6.7
-          ],
-          "max": [
-            10.6165,
-            4.6,
-            -4.0
-          ]
-        },
-        {
           "name": "implementation_fabrication_bench",
           "min": [
             -8.1356,
@@ -1071,19 +748,6 @@
             -2.2644,
             5.8,
             -6.9221
-          ]
-        },
-        {
-          "name": "briefing_qa_console",
-          "min": [
-            -7.9,
-            4.3,
-            13.35
-          ],
-          "max": [
-            -5.7,
-            5.9,
-            14.05
           ]
         },
         {
@@ -3037,279 +2701,6 @@
       ]
     },
     {
-      "name": "planning_wall_console_150_0",
-      "min": [
-        -11.1035,
-        4.31,
-        11.0431
-      ],
-      "max": [
-        -9.7772,
-        5.61,
-        12.7904
-      ]
-    },
-    {
-      "name": "planning_wall_console_150_1",
-      "min": [
-        -12.8035,
-        4.31,
-        8.0986
-      ],
-      "max": [
-        -11.4772,
-        5.61,
-        9.8459
-      ]
-    },
-    {
-      "name": "planning_wall_console_150_2",
-      "min": [
-        -14.5035,
-        4.31,
-        5.1541
-      ],
-      "max": [
-        -13.1772,
-        5.61,
-        6.9014
-      ]
-    },
-    {
-      "name": "planning_wall_console_150_3",
-      "min": [
-        -16.2035,
-        4.31,
-        2.2096
-      ],
-      "max": [
-        -14.8772,
-        5.61,
-        3.9569
-      ]
-    },
-    {
-      "name": "implementation_wall_console_210_0",
-      "min": [
-        -16.2035,
-        4.31,
-        -3.9569
-      ],
-      "max": [
-        -14.8772,
-        5.61,
-        -2.2096
-      ]
-    },
-    {
-      "name": "implementation_wall_console_210_1",
-      "min": [
-        -14.5035,
-        4.31,
-        -6.9014
-      ],
-      "max": [
-        -13.1772,
-        5.61,
-        -5.1541
-      ]
-    },
-    {
-      "name": "implementation_wall_console_210_2",
-      "min": [
-        -12.8035,
-        4.31,
-        -9.8459
-      ],
-      "max": [
-        -11.4772,
-        5.61,
-        -8.0986
-      ]
-    },
-    {
-      "name": "implementation_wall_console_210_3",
-      "min": [
-        -11.1035,
-        4.31,
-        -12.7904
-      ],
-      "max": [
-        -9.7772,
-        5.61,
-        -11.0431
-      ]
-    },
-    {
-      "name": "implementation_wall_console_270_0",
-      "min": [
-        -5.95,
-        4.31,
-        -15.275
-      ],
-      "max": [
-        -4.25,
-        5.61,
-        -14.725
-      ]
-    },
-    {
-      "name": "implementation_wall_console_270_1",
-      "min": [
-        -2.55,
-        4.31,
-        -15.275
-      ],
-      "max": [
-        -0.85,
-        5.61,
-        -14.725
-      ]
-    },
-    {
-      "name": "implementation_wall_console_270_2",
-      "min": [
-        0.85,
-        4.31,
-        -15.275
-      ],
-      "max": [
-        2.55,
-        5.61,
-        -14.725
-      ]
-    },
-    {
-      "name": "implementation_wall_console_270_3",
-      "min": [
-        4.25,
-        4.31,
-        -15.275
-      ],
-      "max": [
-        5.95,
-        5.61,
-        -14.725
-      ]
-    },
-    {
-      "name": "review_wall_console_330_0",
-      "min": [
-        9.7772,
-        4.31,
-        -12.7904
-      ],
-      "max": [
-        11.1035,
-        5.61,
-        -11.0431
-      ]
-    },
-    {
-      "name": "review_wall_console_330_1",
-      "min": [
-        11.4772,
-        4.31,
-        -9.8459
-      ],
-      "max": [
-        12.8035,
-        5.61,
-        -8.0986
-      ]
-    },
-    {
-      "name": "review_wall_console_330_2",
-      "min": [
-        13.1772,
-        4.31,
-        -6.9014
-      ],
-      "max": [
-        14.5035,
-        5.61,
-        -5.1541
-      ]
-    },
-    {
-      "name": "review_wall_console_330_3",
-      "min": [
-        14.8772,
-        4.31,
-        -3.9569
-      ],
-      "max": [
-        16.2035,
-        5.61,
-        -2.2096
-      ]
-    },
-    {
-      "name": "testing_wall_console_30_0",
-      "min": [
-        14.8772,
-        4.31,
-        2.2096
-      ],
-      "max": [
-        16.2035,
-        5.61,
-        3.9569
-      ]
-    },
-    {
-      "name": "testing_wall_console_30_1",
-      "min": [
-        13.1772,
-        4.31,
-        5.1541
-      ],
-      "max": [
-        14.5035,
-        5.61,
-        6.9014
-      ]
-    },
-    {
-      "name": "testing_wall_console_30_2",
-      "min": [
-        11.4772,
-        4.31,
-        8.0986
-      ],
-      "max": [
-        12.8035,
-        5.61,
-        9.8459
-      ]
-    },
-    {
-      "name": "testing_wall_console_30_3",
-      "min": [
-        9.7772,
-        4.31,
-        11.0431
-      ],
-      "max": [
-        11.1035,
-        5.61,
-        12.7904
-      ]
-    },
-    {
-      "name": "review_central_equipment",
-      "min": [
-        7.9165,
-        4.3,
-        -6.7
-      ],
-      "max": [
-        10.6165,
-        4.6,
-        -4.0
-      ]
-    },
-    {
       "name": "implementation_fabrication_bench",
       "min": [
         -8.1356,
@@ -3320,19 +2711,6 @@
         -2.2644,
         5.8,
         -6.9221
-      ]
-    },
-    {
-      "name": "briefing_qa_console",
-      "min": [
-        -7.9,
-        4.3,
-        13.35
-      ],
-      "max": [
-        -5.7,
-        5.9,
-        14.05
       ]
     },
     {
