@@ -1,4 +1,4 @@
-"""Contract 2.0 hero props: the six scanned interior pieces the HQ shell reserved room for.
+"""Contract 2.0 hero props: the eight scanned interior pieces the HQ shell reserved room for.
 
   /Applications/Blender.app/Contents/MacOS/Blender -b -t 4 --python build_props_kit.py -- <meshy_root> <out_dir>
 
@@ -57,12 +57,13 @@ OUT.mkdir(parents=True, exist_ok=True)
 # first three scans came out dielectric and are left exactly as they were shipped. Roughness stays
 # on its texture either way -- it is metalness, not gloss variation, that is wrong.
 #
-# `MF_Prop_FabCell` and `MF_Prop_ServiceCart` were generated in the same batch as the three below
-# and are deliberately absent. Their Meshy previews are crisp, but the GLB behind them is a melted
-# lump -- the cart has no wheels and no drawer edges, the fab cell is not recognisable as a machine.
-# That is the mesh, not the material: it survives untextured, and decimation, Draco, metalness,
-# normal maps and a 4k texture swap were each ruled out in turn. The implementation bench and the
-# dispatch cart therefore stay greybox until those two are generated again.
+# `MF_Prop_FabCell` and `MF_Prop_ServiceCart` were generated twice. The first pass came back as
+# melted lumps -- no wheels on the cart, no recognisable machine in the cell -- because Meshy's
+# `should_remesh` defaults to *true* on meshy-7, which decimates to a game-ready shell before the
+# texture bake. Flat-fronted pieces survive that; a gantry, a robot arm and caster wheels do not.
+# Regenerated with `should_remesh: false`, they arrive at 3.2M and 1.5M triangles and decimate here
+# like the first three scans do. They need no metalness override for the same reason those three
+# do not: the un-remeshed exports are plain 4k atlases with no `KHR_texture_transform` tiling.
 PROPS = {
     'MF_Prop_PlanningTable': ('planningHoloTable.V2',   6000,  512, 1.05, 'ambient_screen_service',  None),
     'MF_Prop_TestRig':       ('testingRig.V2',          7000,  512, 1.70, 'practical_console_cyan',  None),
@@ -76,8 +77,13 @@ PROPS = {
     'MF_Prop_WallConsole':   ('MF_Prop_WallConsole',    2000, 1024, 2.75, 'ambient_screen_service',  0.0),
     'MF_Prop_IntakeDesk':    ('MF_Prop_IntakeDesk',     3000, 1024, 2.40, 'ambient_screen_service',  0.0),
     'MF_Prop_ReviewStation': ('MF_Prop_ReviewStation',  3000, 1024, 1.36, 'ambient_screen_service',  0.0),
+    # Richer silhouettes than the wall pieces and decimated from millions, so they get more budget:
+    #   FabCell      1.73 m -> 2.00 m wide, so three cells tile the plan's radial 8 to 14 on whole metres
+    #   ServiceCart  1.06 m -> 2.25 m long, the greybox cart, inside the 2.6 x 1.7 cart pad
+    'MF_Prop_FabCell':       ('MF_Prop_FabCell',        6000, 1024, 1.73, 'practical_console_cyan',  None),
+    'MF_Prop_ServiceCart':   ('MF_Prop_ServiceCart',    5000, 1024, 1.06, 'practical_warm_strip',    None),
 }
-BUDGET_BYTES = 3_500_000; BUDGET_TRIS = 28_000
+BUDGET_BYTES = 4_000_000; BUDGET_TRIS = 40_000
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
@@ -85,13 +91,50 @@ scene = bpy.context.scene
 def tri_count(o):
     o.data.calc_loop_triangles(); return len(o.data.loop_triangles)
 
-def decimate(o, target):
-    cur = tri_count(o)
-    if target >= cur: return cur
-    m = o.modifiers.new('dec', 'DECIMATE'); m.decimate_type = 'COLLAPSE'; m.ratio = target / cur
+def weld(o):
+    """Merge coincident vertices, so collapse decimate has edges it can actually collapse.
+
+    Meshy splits vertices at every UV seam and shading break, and collapse cannot merge across a
+    split: the un-remeshed fab cell stalls at 70,000 triangles however many passes it is given,
+    because half its vertex pairs are in the same place but not joined. Welding at 10 microns in the
+    import's own ~2-unit box halves the vertex count and lets the target be reached. It is below any
+    distance the scan resolves, so it merges duplicates and nothing else.
+    """
+    bpy.ops.object.select_all(action='DESELECT'); o.select_set(True)
     bpy.context.view_layer.objects.active = o
-    bpy.ops.object.modifier_apply(modifier=m.name)
-    return tri_count(o)
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.remove_doubles(threshold=1e-5)
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+
+def decimate(o, target):
+    """Collapse to a triangle target, in as many passes as it takes.
+
+    One pass is not always enough. Blender's collapse decimate stalls well short of a very small
+    ratio, and the un-remeshed scans arrive in the millions: 6,000 / 3,242,836 is a ratio of 0.0018
+    and leaves the mesh an order of magnitude over target. Stepping down, never asking for more than
+    a 20x cut at a time, lands on the number. Anything that already reaches its target in one pass
+    -- which is every scan generated before this -- takes one pass and behaves exactly as it did.
+
+    Each collapse also introduces its own new coincident vertices along the edges it just merged --
+    the initial `weld()` before this loop starts only catches Meshy's original UV-seam splits, not
+    the ones the previous pass leaves behind. Re-welding before every pass but the first is what
+    gets the fab cell and the cart the rest of the way to target instead of stalling above it.
+    """
+    cur = tri_count(o)
+    first = True
+    while cur > target:
+        if not first: weld(o)
+        first = False
+        m = o.modifiers.new('dec', 'DECIMATE'); m.decimate_type = 'COLLAPSE'
+        m.ratio = max(target / cur, 0.05)
+        bpy.context.view_layer.objects.active = o
+        bpy.ops.object.modifier_apply(modifier=m.name)
+        got = tri_count(o)
+        if got >= cur: break
+        cur = got
+    return cur
 
 def bounds(o):
     pts = [o.matrix_world @ Vector(v) for v in o.bound_box]
@@ -127,6 +170,7 @@ for root_name, (asset, tris, px, height, material, metal) in PROPS.items():
     bpy.context.view_layer.update()
     apply(o, scale=True)
 
+    weld(o)
     got = decimate(o, tris)
     # Meshy normalises every export into a ~2 unit box, so real scale is gone.
     lo, hi = bounds(o)
@@ -183,12 +227,39 @@ bpy.ops.export_scene.gltf(
     export_draco_texcoord_quantization=12)
 
 raw = path.read_bytes()
-gltf = json.loads(raw[20:20 + struct.unpack_from('<I', raw, 12)[0]])
+json_len = struct.unpack_from('<I', raw, 12)[0]
+json_type = raw[16:20]
+gltf = json.loads(raw[20:20 + json_len])
+
+# Six of these eight props share a material name with another prop (`ambient_screen_service` alone
+# covers four), and importing each into the same Blender session to keep its own baked texture means
+# Blender's own datablock-name uniqueness silently suffixes every repeat as `.001`, `.002`... The
+# glTF material array has no such constraint -- only Blender's internal bookkeeping does -- so this
+# strips the suffix back off the exported name. It is a rename in the JSON only: each entry still
+# points at its own image and its own mesh primitives, nothing here merges two props onto one
+# texture. Downstream code that matches these names exactly (`ProofBase.tsx`'s screen-content patch,
+# any future per-material lookup) would otherwise silently miss every prop but the first to claim a
+# given name.
+import re
+name_pattern = re.compile(r'\.\d{3}$')
+renamed = [m['name'] for m in gltf.get('materials', []) if name_pattern.search(m.get('name', ''))]
+for m in gltf.get('materials', []):
+    m['name'] = name_pattern.sub('', m.get('name', ''))
+if renamed:
+    new_json = json.dumps(gltf, separators=(',', ':')).encode('utf-8')
+    new_json += b' ' * ((4 - len(new_json) % 4) % 4)
+    rest = raw[20 + json_len:]
+    new_len = 12 + 8 + len(new_json) + len(rest)
+    raw = (raw[0:8] + struct.pack('<I', new_len)
+           + struct.pack('<I', len(new_json)) + json_type + new_json + rest)
+    path.write_bytes(raw)
+    print('RENAMED_MATERIALS', renamed)
+
 summary = {'file': 'props-kit.glb', 'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw),
            'images': len(gltf.get('images', [])), 'props': report,
            'budget': {'bytes': BUDGET_BYTES, 'triangles': BUDGET_TRIS},
            'compression': {'geometry': 'KHR_draco_mesh_compression', 'textures': 'EXT_texture_webp q85'},
-           'origin': 'Meshy scans (meshy_output) for the six interior hero props the HQ shell reserved MF_Props for'}
+           'origin': 'Meshy scans (meshy_output) for the eight interior hero props the HQ shell reserved MF_Props for'}
 (OUT / 'props-metadata.json').write_text(json.dumps(summary, indent=2) + '\n')
 print('PROPS_COMPLETE', json.dumps({'bytes': len(raw), 'MB': round(len(raw)/1048576, 2),
       'images': summary['images'], 'triangles': sum(p['triangles'] for p in report.values()),
