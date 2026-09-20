@@ -138,8 +138,12 @@ export function assignSlots(
 ): SlotAssignments {
   const result: SlotAssignments = {};
   const taken = new Set<string>();
+  // Only projects that still exist keep their slot. The saved map is every project this browser has
+  // ever seen, and honouring all of it reserved land for projects that are gone -- which pushed the
+  // ones still here outward until one landed with no occupied neighbour and no bridge to anywhere.
+  const present = new Set(projects.map((project) => projectKey(project)));
   for (const [key, slot] of Object.entries(saved)) {
-    if (!isProjectSlot(slot) || taken.has(slot)) continue;
+    if (!present.has(key) || !isProjectSlot(slot) || taken.has(slot)) continue;
     ensureSlots(Number(slot.slice(1)));
     result[key] = slot;
     taken.add(slot);
@@ -150,8 +154,15 @@ export function assignSlots(
   for (const project of arrivals) {
     const key = projectKey(project);
     if (result[key]) continue;
-    ensureSlots(taken.size + 1);
-    const free = projectSlots.find((slot) => !taken.has(slot.id));
+    ensureSlots(taken.size + 2);
+    // A colony grows by adding land to the land it already has. Filling the table in order happens to
+    // do that from empty, but not once a slot is held or freed out of order, so the rule is explicit:
+    // take the first free cell that touches an occupied one, and only then the first free cell at all.
+    const occupied = [hubSlot, ...projectSlots.filter((slot) => taken.has(slot.id))];
+    const free =
+      projectSlots.find(
+        (slot) => !taken.has(slot.id) && occupied.some((other) => latticeNeighbours(slot.world, other.world)),
+      ) ?? projectSlots.find((slot) => !taken.has(slot.id));
     if (!free) break;
     result[key] = free.id;
     taken.add(free.id);
