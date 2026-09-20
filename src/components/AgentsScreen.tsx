@@ -2,18 +2,18 @@ import { ArrowLeft, ArrowRight, Robot } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { getTaskArtifact } from "../api";
 import {
+  type AgentRoleId,
   formatApproximateCost,
   formatCacheRate,
   formatTokenCount,
-  type AgentRoleId,
   type RuntimeAgentPolicy,
+  type RuntimeArtifact,
   type RuntimeSettings,
   type RuntimeStatus,
-  type RuntimeArtifact,
   type RuntimeTaskSummary,
 } from "../domain";
 import { AgentPolicyEditor } from "./AgentPolicyEditor";
-import { agentRoles, policyIdForRole, rolePolicy, type AgentRoleDefinition } from "./AgentRoles";
+import { type AgentRoleDefinition, agentRoles, policyIdForRole, rolePolicy } from "./AgentRoles";
 import { Metric, stageUsage } from "./LibraryShared";
 import { Button, SectionHeader } from "./Primitives";
 

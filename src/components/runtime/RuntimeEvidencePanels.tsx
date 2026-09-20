@@ -19,8 +19,8 @@ import {
   type RuntimeWorktreeInventoryRow,
 } from "../../domain";
 import { Button } from "../Primitives";
-import { RuntimeRow } from "./RuntimeInspectorPrimitives";
 import { RetryGrantAudit } from "./RetryGrantAudit";
+import { RuntimeRow } from "./RuntimeInspectorPrimitives";
 
 export function RuntimeWorkPackages({ task }: { task: RuntimeTask }) {
   const batches = [...new Set(task.workPackages.map((item) => item.batch))].sort((a, b) => a - b);

@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { fixtureRun } from "../../src/frontier/fixtures/scenarios.ts";
 import {
   activityScroll,
   currentRecordedTool,
   eventAge,
   runEvents,
 } from "../../src/frontier/runtime/agent-activity.ts";
-import { fixtureRun } from "../../src/frontier/fixtures/scenarios.ts";
+
 const run = fixtureRun("A", "implement", "running");
 const tool = { id: "tool-1", name: "read_file", category: "file", phase: "started", result: null };
 const event = (id, extra = {}) => ({

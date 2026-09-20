@@ -5,8 +5,8 @@ import {
   lstat,
   mkdir,
   mkdtemp,
-  readFile,
   readdir,
+  readFile,
   realpath,
   rm,
   stat,
@@ -19,8 +19,8 @@ import test from "node:test";
 import { promisify } from "node:util";
 import {
   defaultWorktreeRoot,
-  GitWorktreeManager,
   discoverDependencyDirectories,
+  GitWorktreeManager,
   provisionedDependencyEntries,
 } from "../server/git-worktree.mjs";
 

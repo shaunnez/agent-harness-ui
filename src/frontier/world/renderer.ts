@@ -2,8 +2,8 @@ import { Application, Rectangle } from "pixi.js";
 import { WorldAssets } from "./assets";
 import { type Camera, constrainCamera, coverBackdrop, fitCamera, type Point, zoomAround } from "./camera";
 import type { WorldLighting } from "./environment-model";
-import { FrontierScene, type SceneInput, type WorldLabel } from "./scene";
 import { minimapFrame } from "./minimap-layout";
+import { FrontierScene, type SceneInput, type WorldLabel } from "./scene";
 import { AnimationVisibility } from "./visibility";
 
 export interface MinimapCapture {

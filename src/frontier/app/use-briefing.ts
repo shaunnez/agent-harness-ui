@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { WorkspaceChange, WorkspaceHead } from "../../domain/workspace-history.ts";
-import type { RefreshCoordinator } from "../runtime/coordinator.ts";
 import { mergeHistory } from "../runtime/briefing.ts";
+import type { RefreshCoordinator } from "../runtime/coordinator.ts";
 import type { Checkpoint } from "./command-memory.ts";
 
 interface BriefingState {

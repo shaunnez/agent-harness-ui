@@ -5,13 +5,13 @@ import { usePanelState } from "../app/panel-state";
 import type { FrontierGateway, TaskEvidence } from "../runtime/contracts";
 import { formatCount, modelLabel, reasoningLabel, stageLabels } from "../runtime/presentation";
 import { stageRecorded, stageState } from "../runtime/workflow";
+import { ScrollArea } from "../ui/ScrollArea";
 import { CandidateEvidence, DeliveryEvidence, JourneyEvidence, TestEvidence } from "./CandidateEvidence";
 import { DesignReview } from "./DesignReview";
 import { StageEvidence } from "./StageEvidence";
+import { PinButton } from "./WatchPins";
 import { WorkflowCommand } from "./WorkflowCommand";
 import { WorkPackages } from "./WorkPackages";
-import { ScrollArea } from "../ui/ScrollArea";
-import { PinButton } from "./WatchPins";
 
 export function TaskPanel({
   evidence,

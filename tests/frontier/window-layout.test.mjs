@@ -9,6 +9,7 @@ import {
   windowBounds,
   windowLayoutKey,
 } from "../../src/frontier/app/window-layout.ts";
+
 const laptop = { width: 1280, height: 720 };
 test("window dimensions survive storage and remain independent by family", () => {
   const data = new Map();

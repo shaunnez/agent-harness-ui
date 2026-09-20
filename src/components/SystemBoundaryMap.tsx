@@ -1,5 +1,5 @@
 import type { Icon } from "@phosphor-icons/react";
-import { Checks, Desktop, GithubLogo, GitBranch, Robot, User } from "@phosphor-icons/react";
+import { Checks, Desktop, GitBranch, GithubLogo, Robot, User } from "@phosphor-icons/react";
 import type { RuntimeStatus } from "../domain";
 import { useRepositoryContract } from "./RepositoryContractPanel";
 

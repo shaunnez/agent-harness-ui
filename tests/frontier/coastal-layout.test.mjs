@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  coastalSite,
-  coastalSegment,
   coastalJoint,
+  coastalSegment,
+  coastalSite,
   projectConnections,
 } from "../../src/frontier/world/coastal-layout.ts";
 

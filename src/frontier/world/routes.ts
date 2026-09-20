@@ -1,7 +1,7 @@
 import { Container, Matrix } from "pixi.js";
 import type { WorldAssets } from "./assets";
 import type { Point } from "./camera";
-import { coastalJoint, coastalSegment, projectConnections, type CoastalSite } from "./coastal-layout";
+import { type CoastalSite, coastalJoint, coastalSegment, projectConnections } from "./coastal-layout";
 
 export interface Island {
   position: Point;

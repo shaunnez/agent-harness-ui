@@ -1,14 +1,14 @@
-import { colonyStressFixtures } from "./colony.ts";
 import { projectTaskAttention } from "../../../server/task-attention.mjs";
 import type { RuntimeTask } from "../../domain.ts";
 import type { FrontierGateway, TaskCore } from "../runtime/contracts.ts";
+import { colonyStressFixtures } from "./colony.ts";
+import { fixtureHistory } from "./history.ts";
 import { loadFixture } from "./load.ts";
 import { fixtureManagement } from "./management.ts";
 import { fixtureArtifact, fixtureProjects, fixtureTask, makeFixtureTasks } from "./scenarios.ts";
+import { stationFixtures } from "./stations.ts";
 import { fixtureWorkflow, sampleEligibility } from "./workflow.ts";
 import { enrichWorkflowScenarios } from "./workflow-scenarios.ts";
-import { stationFixtures } from "./stations.ts";
-import { fixtureHistory } from "./history.ts";
 
 /** In-memory demonstrations have no import or call path to the live mutation gateway. */
 export function createFixtureGateway(
