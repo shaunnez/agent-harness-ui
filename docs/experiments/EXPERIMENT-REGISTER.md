@@ -20,7 +20,10 @@ These apply to every entry below.
    counts as delivered only when a `full-manifest` verification run whose
    `headRevision` equals the final candidate's head reports `passed` with every
    declared command executed. `unknown` samples are excluded from the
-   denominator and reported as coverage.
+   denominator and reported as coverage. Both manifests declare
+   `decisionMetric: "deterministic-delivery-rate"` explicitly, so the metric is
+   inside the hash recorded below rather than inherited from a default that
+   could later change.
 2. **Gate pass rate is not a quality metric.** `dev-review`, `test` and
    `final-review` are themselves model runs, so a laxer reviewer policy scores
    more passes. Gate columns are diagnostic only and may never be used to
@@ -49,8 +52,8 @@ These apply to every entry below.
 | | |
 |---|---|
 | Status | **PROPOSED**, 20 Sep 2026. No task created, nothing run |
-| Manifest | `docs/experiments/model-baseline-2026-09-phase0.json` · sha256 `555fa4b532aa97c51f34675ece7e0ab5f64a5d84ec9cb0a6b5081970540f6e70` |
-| Runner | `scripts/experiment-run.mjs` · sha256 `829fac7e67a74f7a82bb6f6190566919c57769c00ec7eff082bd45a99503c4c8` |
+| Manifest | `docs/experiments/model-baseline-2026-09-phase0.json` · sha256 `e7e29f890134b39056d804d85c3e6041d733419619df136217fb2fa72d128652` |
+| Runner | `scripts/experiment-run.mjs` · sha256 `4b4734ee258cfa9d67ff6ef8b4d93c354df796172c5ee7869bbaaff94ea5844c` |
 | Group id | `model-baseline-2026-09-phase0` |
 | Design | Baseline arm `B0-baseline` only. 2 cases × 3 repetitions = **6 tasks**. `C1-narrow` (AH-082 replay, `standard`), `C4-backend` (AH-058 replay, `high-risk`) |
 | Bases | `C1-narrow` f18c5673… · `C4-backend` 21b63f5c… Both pinned in dedicated eval worktrees under `/Users/shaun/projects/.worktrees/eval-baseline-2026-09-*` |
@@ -106,7 +109,7 @@ real migration constraint, so it is the more likely to split.
 | | |
 |---|---|
 | Status | **PROPOSED**, 20 Sep 2026. Blocked on EXP-001 |
-| Manifest | `docs/experiments/model-baseline-2026-09.json` · sha256 `d3d44670498ef53198fa41d7c1e6552e631ad5a7f8a35a0cdc1443d51d1aca81` |
+| Manifest | `docs/experiments/model-baseline-2026-09.json` · sha256 `11b3ea6bf2daeaeb09bbfa20b396262ebf7e2760d2dcdd1e3528d82abf0d93a6` |
 | Group id | `model-baseline-2026-09` |
 | Design | 6 cases × 4 arms = **24 tasks**, 1 repetition, subject to EXP-001's decision rule |
 | Arms | `B0-baseline` (shipped Codex matrix) · `A1-build` (build bundle → Sonnet 5 xhigh) · `A2-decide` (decide bundle → Opus 5 xhigh) · `A3-understand-cheap` (understand bundle xhigh → high) |

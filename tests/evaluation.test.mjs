@@ -147,6 +147,75 @@ function makeDecisionTask({ variantId, taskId, gates, experiment = {}, ...overri
   });
 }
 
+function manifestRun(status, headRevision = "head1") {
+  return {
+    executionKind: "full-manifest",
+    headRevision,
+    status,
+    declaredCommandIds: ["lint", "test"],
+    executedCommandIds: ["lint", "test"],
+  };
+}
+
+function makeDeliveryTask({ variantId, taskId, status, gates, decisionMetric }) {
+  return makeDecisionTask({
+    variantId,
+    taskId,
+    gates,
+    experiment: decisionMetric === undefined ? {} : { decisionMetric },
+    candidates: [
+      { id: "C1", revisionNumber: 1, headRevision: "head1", verificationRuns: [manifestRun(status)] },
+    ],
+  });
+}
+
+test("an undeclared experiment is decided on deterministic delivery, not gate passes", () => {
+  // The arm that delivers fails its gates; the arm that passes every gate delivers nothing.
+  // Defaulting to a gate rate would crown v2, which is the confound this default exists to avoid.
+  const summary = buildEvaluationSummary([
+    makeDeliveryTask({
+      variantId: "v1",
+      taskId: "AH-1",
+      status: "passed",
+      gates: ["REPAIR"],
+      decisionMetric: null,
+    }),
+    makeDeliveryTask({
+      variantId: "v2",
+      taskId: "AH-2",
+      status: "failed",
+      gates: ["PASS"],
+      decisionMetric: null,
+    }),
+  ]);
+  const [decision] = summary.experiments.decisions;
+  assert.equal(decision.decisionMetric, "deterministic-delivery-rate");
+  assert.deepEqual(decision.leader, { variantId: "v1", value: 1 });
+});
+
+test("an arm with no admissible delivery evidence is ineligible, not ranked at zero", () => {
+  const summary = buildEvaluationSummary([
+    makeDeliveryTask({
+      variantId: "v1",
+      taskId: "AH-1",
+      status: "passed",
+      gates: ["PASS"],
+      decisionMetric: null,
+    }),
+    makeDecisionTask({
+      variantId: "v2",
+      taskId: "AH-2",
+      gates: ["PASS"],
+      experiment: { decisionMetric: null },
+    }),
+  ]);
+  const [decision] = summary.experiments.decisions;
+  const unscored = decision.variants.find((variant) => variant.variantId === "v2");
+  assert.equal(unscored.value, null);
+  assert.equal(unscored.eligible, false);
+  assert.match(unscored.ineligibleReason, /no recorded value/);
+});
+
 test("names the leader on the declared decision metric alone", () => {
   const summary = buildEvaluationSummary([
     makeDecisionTask({ variantId: "v1", taskId: "AH-1", gates: ["PASS"] }),

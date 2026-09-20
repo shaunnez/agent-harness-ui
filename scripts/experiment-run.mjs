@@ -226,6 +226,11 @@ async function createTask(baseUrl, csrfToken, manifest, row) {
       frozenBaseSha: row.item.frozenBaseSha,
       acceptanceCriteria: row.item.acceptanceCriteria,
       verificationCommands: row.item.verificationCommands,
+      // Declared rather than defaulted. The server would supply the same value, but a
+      // preregistered campaign should carry its decision metric in the manifest whose
+      // hash is recorded, so the metric cannot be read as having been chosen later.
+      decisionMetric: manifest.decisionMetric ?? "deterministic-delivery-rate",
+      ...(manifest.budget ? { budget: manifest.budget } : {}),
     },
   };
   const response = await fetch(`${baseUrl}/api/tasks`, {

@@ -1,5 +1,6 @@
 {
   "groupId": "model-baseline-2026-09",
+  "decisionMetric": "deterministic-delivery-rate",
   "notes": [
     "Phase A of docs/model-eval-baseline-proposal.md. One role bundle varies per arm, so a",
     "measured difference can be attributed to a bundle rather than to ten simultaneous changes.",

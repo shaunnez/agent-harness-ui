@@ -843,6 +843,7 @@ export interface RuntimeAgentPolicy {
 }
 
 export type RuntimeExperimentDecisionMetric =
+  | "deterministic-delivery-rate"
   | "first-pass-gate-success-rate"
   | "eventual-gate-success-rate"
   | "repairs-per-task"

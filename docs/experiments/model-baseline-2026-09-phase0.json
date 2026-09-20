@@ -1,5 +1,6 @@
 {
   "groupId": "model-baseline-2026-09-phase0",
+  "decisionMetric": "deterministic-delivery-rate",
   "notes": [
     "Phase 0 of docs/model-eval-baseline-proposal.md: baseline run-to-run variance only.",
     "One arm, one brief, one base, three repetitions. No arm is compared to anything here.",
