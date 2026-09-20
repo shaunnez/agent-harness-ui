@@ -302,14 +302,14 @@ export function ProofWorld(props: Props) {
         {workers.map((worker) => (
           <button
             type="button"
-            key={worker.task.id}
-            data-proof-id={worker.task.id}
+            key={worker.id}
+            data-proof-id={worker.id}
             data-behavior={worker.behavior}
             data-moving={worker.moving}
-            data-compact={compact.has(worker.task.id)}
+            data-compact={compact.has(worker.id)}
             className={`world-label task tone-${worker.tone} ${worker.task.id === input.selectedId ? "selected" : ""}`}
             aria-label={`${worker.title} · ${worker.detail}${worker.task.attention?.reason ? ` · ${splitRecordedDetail(worker.task.attention.reason).headline}` : ""}`}
-            title={compact.has(worker.task.id) ? `${worker.title} · ${worker.detail}` : undefined}
+            title={compact.has(worker.id) ? `${worker.title} · ${worker.detail}` : undefined}
             onClick={() => onSelect("task", worker.task.id)}
           >
             {worker.tone === "answer" ? (
@@ -319,7 +319,7 @@ export function ProofWorld(props: Props) {
             ) : (
               <span className="proof-status-dot" />
             )}
-            {!compact.has(worker.task.id) && (
+            {!compact.has(worker.id) && (
               <span>
                 <strong>{worker.title}</strong>
                 <small>{worker.detail}</small>

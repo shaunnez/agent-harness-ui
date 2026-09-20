@@ -1,6 +1,14 @@
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { type AnimationClip, AnimationMixer, type Group, Mesh, type Object3D } from "three";
+import {
+  type AnimationClip,
+  AnimationMixer,
+  type BufferGeometry,
+  type Group,
+  Mesh,
+  type MeshBasicMaterial,
+  type Object3D,
+} from "three";
 import { actorSeed, patrolPose, workActions } from "../world/worker-behavior";
 import {
   type Point3,
@@ -92,6 +100,7 @@ export function ProofWorker({
   );
   const patrol = useMemo(() => route.map((p) => ({ x: p[0], y: p[2] })), [route]);
   const stepping = useRef(0);
+  const halo = useRef<Mesh<BufferGeometry, MeshBasicMaterial> | null>(null);
   useFrame((_, delta) => {
     if (!root.current) return;
     positions.set(worker.id, root.current);
@@ -112,6 +121,11 @@ export function ProofWorker({
     } else {
       root.current.position.set(...worker.position);
       stepping.current = 0;
+    }
+    if (halo.current) {
+      const breath = 0.5 + 0.5 * Math.sin(performance.now() / 620);
+      halo.current.scale.setScalar(1 + breath * 0.045);
+      halo.current.material.opacity = 0.35 + breath * 0.35;
     }
     body.rotation.y =
       worker.behavior === "work"
@@ -154,18 +168,54 @@ export function ProofWorker({
         The depth bias is the belt to that brace: a selection ring is a decal on whatever it is drawn
         over, so it should never lose a depth comparison to it. Depth testing stays on, so a wall in
         front still hides the ring behind it.
+
+        A selected robot gets a wash, a heavy ring and a wide outer halo that breathes. The breathing
+        is a selection affordance and nothing else -- it says "this is the one you picked", never
+        that work is happening, and an unselected robot's ring does not move at all.
       */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.09, 0]} scale={factor} renderOrder={1}>
-        <ringGeometry args={[selected ? 1.55 : 1.32, selected ? 1.66 : 1.4, 48]} />
-        <meshBasicMaterial
-          color={selected ? "#79ccff" : status}
-          toneMapped={false}
-          depthWrite={false}
-          polygonOffset
-          polygonOffsetFactor={-4}
-          polygonOffsetUnits={-4}
-        />
-      </mesh>
+      <group position={[0, 0.09, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={factor} renderOrder={1}>
+        {selected && (
+          <mesh>
+            <circleGeometry args={[1.62, 48]} />
+            <meshBasicMaterial
+              color="#79ccff"
+              toneMapped={false}
+              transparent
+              opacity={0.18}
+              depthWrite={false}
+              polygonOffset
+              polygonOffsetFactor={-4}
+              polygonOffsetUnits={-4}
+            />
+          </mesh>
+        )}
+        <mesh>
+          <ringGeometry args={selected ? [1.5, 1.78, 64] : [1.24, 1.46, 48]} />
+          <meshBasicMaterial
+            color={selected ? "#9bdcff" : status}
+            toneMapped={false}
+            depthWrite={false}
+            polygonOffset
+            polygonOffsetFactor={-4}
+            polygonOffsetUnits={-4}
+          />
+        </mesh>
+        {selected && (
+          <mesh ref={halo}>
+            <ringGeometry args={[1.92, 2.02, 64]} />
+            <meshBasicMaterial
+              color="#79ccff"
+              toneMapped={false}
+              transparent
+              opacity={0.6}
+              depthWrite={false}
+              polygonOffset
+              polygonOffsetFactor={-4}
+              polygonOffsetUnits={-4}
+            />
+          </mesh>
+        )}
+      </group>
       {worker.behavior === "work" && worker.moving && (
         <pointLight
           color={action.color}

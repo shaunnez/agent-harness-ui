@@ -213,16 +213,21 @@ export function proofWorkers(
   });
 }
 
-/** The overview mirrors the reference: one relevant task label per base, with every worker still pickable. */
+/**
+ * The overview mirrors the reference: one relevant task label per base, with every worker still
+ * pickable. Inside a base every robot carries its own card, because a robot standing in a room with
+ * nothing above its head is an agent you cannot identify without clicking it. The crowding guard
+ * that collapses cards to markers is `compactWorkerLabels`, not this.
+ */
 export function visibleWorkerLabels(
   workers: ProofWorker[],
   input: ProofInput,
   focusedProjectId: string | null,
 ) {
+  if (input.location.view !== "world" || focusedProjectId) return workers;
   const taskWorkers = workers.filter(
     (worker, index) => workers.findIndex((other) => other.task.id === worker.task.id) === index,
   );
-  if (input.location.view !== "world" || focusedProjectId) return taskWorkers;
   const chosen = new Map<string, ProofWorker>();
   for (const worker of taskWorkers) {
     const previous = chosen.get(worker.projectId);
@@ -268,7 +273,8 @@ export function compactWorkerLabels(
         worker.task.id === input.selectedId ||
         worker.task.id === input.location.taskId ||
         attentionTones.has(worker.tone);
-      if (!kept) compact.add(worker.task.id);
+      // Keyed by worker, not task: two package robots of one task are two cards to weigh separately.
+      if (!kept) compact.add(worker.id);
     }
   }
   return compact;

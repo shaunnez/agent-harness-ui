@@ -483,7 +483,10 @@ test("robots render 1.6x in World, 1.3x on a focused exterior and slightly over 
 
 test("crowded rooms collapse plain working cards to compact markers but never attention or selection", async () => {
   const { compactWorkerLabels } = await import("../../src/frontier/world-3d/model.ts");
+  // A worker carries its own id as well as its task's: one task can stand several package robots in
+  // a room, and each of them is a card the crowding rule weighs on its own.
   const worker = (id, overrides = {}) => ({
+    id,
     task: { id },
     projectId: "plancheck",
     room: "implementation",
