@@ -582,6 +582,101 @@ Doing none of these and re-running spends quota to reproduce a known result.
 
 ---
 
+## EXP-001 — run 6, `C4-backend` re-run, appended 22 Sep 2026
+
+Three `C4-backend` repetitions (AH-037..039) re-run after four harness fixes: the
+format-gate carve-out in the implement prompt, signing disabled on harness git calls, the
+isolated worktree root, and the hour-long runaway guard. `C1-narrow` was not re-run; its
+five deliveries stand.
+
+**`C4-backend` delivered for the first time**, at the 22nd attempt across six runs.
+
+| Variant | Outcome | Evidence | Repairs | Retries | Cost | Wall |
+|---|---|---|---|---|---|---|
+| r1 (AH-037) | **`failed`** | 1 | 2 | 4 | $10.50 | — |
+| r2 (AH-038) | `unknown` | 0 | 0 | 0 | $1.12 | 4,234 s |
+| r3 (AH-039) | **`passed`** | 1 | 1 | 2 | $7.81 | 6,457 s |
+
+Run 6 cost **$19.37**; **$36.01 across all 39 tasks** in six runs, against the $60
+ceiling. No task passed the $15 single-task abort rule; AH-037 came closest at $10.50 and
+was stopped by the harness's own attempt limit, not by cost.
+
+### The case was never the problem
+
+Every one of the 21 prior `C4-backend` failures was a defect in the harness or its
+environment. None was the model.
+
+| Cause | Samples lost |
+|---|---|
+| Manual gates | 6 |
+| Missing dependencies in the eval bases | 3 |
+| Detached-base `mergeState` | 3 |
+| 900s and 1800s run ceilings | 6 |
+| Stale worktree collisions in a shared root | 2 |
+| Commit signing | 4 |
+| "Do not rerun the manifest" against a mutating format gate | 2 |
+
+The earlier entries above twice recorded the `ruff format` failures as model output
+failures. They were not: the implement prompt forbade running the manifest and offered
+read-only diagnostics, which cannot satisfy a formatter. That claim is withdrawn.
+
+`C4-backend` is also far larger than the earlier runs could show. Its plans hold 4 to 6
+work packages, each its own agent run of 15 to 30 minutes, so a complete task is a
+multi-hour sequence — AH-039 took 6,457 s of wall time. Every previous attempt died
+inside S1, so "C4 never delivers" was really "C4 never finished step one of six".
+
+### What the two graded samples show
+
+Both reached a `full-manifest` run at their final candidate revision, so both count in
+the denominator. They disagree.
+
+- **AH-039 passed** all seven declared commands at head `14343c1bb398`, after one
+  dev-review rejection and one automatic repair.
+- **AH-037 failed** at head `3b6cfa2d249e`: the manifest stopped at `frontend-build`
+  having executed 3 of 7 commands. It had taken two dev-review rejections, two repairs
+  and a test-gate rejection, then exhausted `DEFAULT_STAGE_RUN_LIMIT` — "implement has
+  used all 3 of its allowed attempts" — and parked. No retry was granted by hand.
+
+Same brief hash, same base, same policy matrix, same arm. **This is the run-to-run
+variance EXP-001 exists to measure, and it is the first time the campaign has produced
+any.** Both `C4` candidates were rejected at first dev-review; one recovered, one did not.
+
+AH-038 remains `unknown`: it failed at S2 on two genuine mypy errors — a nullable
+assigned to a `str`, and an import of a name its module does not export — and never
+assembled a candidate. mypy is read-only and the prompt permits narrow read-only
+diagnostics, so this one *is* attributable to the model. It is the campaign's first such
+failure.
+
+### Cost, now measurable for the first time
+
+A `C1-narrow` delivery costs about $0.65. A `C4-backend` delivery cost $7.81, and the
+failed `C4` sample cost $10.50. `C4` is therefore roughly **12x the cost per delivered
+sample**, and a failing one costs more than a passing one because the repair cycles are
+where the money goes.
+
+This could not be measured before run 6, and it matters more than the delivery numbers:
+EXP-002 as designed runs `C4-backend` four times. At run 6 rates that is $30 to $40 for
+that case alone.
+
+### Decision: EXP-002 still does not run, for a new reason
+
+The blocker is no longer that the apparatus cannot produce evidence — it now can, on both
+cases. It is that the evidence contradicts the design's power assumption.
+
+`C4-backend` produced one pass and one fail from two identical repetitions. EXP-001's
+preregistered decision table calls this the "one case splits" row: raise that case's
+repetitions to 3 in EXP-002 and drop the weakest case, holding the run count near 24. But
+the table assumed a split would be observed against three clean samples, and here the
+third is `unknown`, so the split rests on n=2.
+
+Before EXP-002 is scheduled, the honest next step is a `C4-backend` re-run at 3
+repetitions to establish whether the split is real. That costs roughly $20 to $25 against
+$24 of headroom under the $60 ceiling, which means the ceiling has to be revisited in the
+same breath — a cost the original plan did not anticipate because it had never seen a
+`C4` task run to completion.
+
+---
+
 ## EXP-002 — Which role bundle actually pays for a better model (Phase A)
 
 | | |
