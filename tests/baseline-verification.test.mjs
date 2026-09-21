@@ -166,6 +166,8 @@ function gateOrchestrator({ baselineRows }) {
     stageRunLimits: { test: 3 },
     candidates: [{ ...CANDIDATE, status: "testing" }],
     events: [],
+    activeRunKind: "test",
+    activeRunReservationId: "reservation-1",
   };
   const store = {
     async get() {
@@ -214,6 +216,17 @@ test("a Test failure the baseline already had blocks the task instead of demandi
   assert.deepEqual(current.blocker.baselineVerification.commandIds, ["playwright-e2e"]);
   assert.match(current.events.at(-1).title, /baseline already fails/i);
   assert.match(current.events.at(-1).detail, /Repairing it cannot make an inherited failure pass/);
+  assert.equal(
+    current.activeRunKind,
+    null,
+    "the reservation must be released or every later workflow action reads the task as still running",
+  );
+  assert.equal(current.activeRunReservationId, null);
+  assert.equal(
+    current.candidates.at(-1).status,
+    "ready_for_test",
+    "left at 'testing' the candidate can never satisfy a same-revision Test retry's status check",
+  );
 });
 
 test("a Test failure the baseline did not have is left to the ordinary gate path", async () => {
