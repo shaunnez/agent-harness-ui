@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import {
+  parseCurrentPdfGateArguments,
+  renderCurrentPdfGateReport,
+} from "../scripts/research-current-pdf-gate.mjs";
 import { renderPdfGateReport, summarisePdfGate } from "../scripts/research-pdf-gate/benchmark.mjs";
 import { PlanCheckPdfProvider } from "../scripts/research-pdf-gate/providers.mjs";
 import { parsePdfGateArguments } from "../scripts/research-pdf-gate.mjs";
@@ -67,6 +71,80 @@ test("PDF gate has explicit paid-call ceilings", () => {
   assert.equal(options.maxFirecrawlCredits, 90);
   assert.equal(options.maxPlanCheckVisionPages, 25);
   assert.throws(() => parsePdfGateArguments(["--max-plancheck-vision-pages=201"]), /between 0 and 200/);
+});
+
+test("current PDF replacement gate is separately guarded and cost bounded", () => {
+  const options = parseCurrentPdfGateArguments(["--dry-run", "--max-usd=0.5"]);
+  assert.equal(options.dryRun, true);
+  assert.equal(options.maxUsd, 0.5);
+  assert.throws(() => parseCurrentPdfGateArguments(["--max-usd=0"]), /greater than zero/);
+  assert.throws(() => parseCurrentPdfGateArguments(["--max-usd=11"]), /no more than 10/);
+});
+
+test("current PDF replacement report distinguishes retained Firecrawl evidence and visual misses", () => {
+  const evaluation = {
+    expectedTermsFound: 1,
+    expectedTermsTotal: 2,
+    pageAnchorsFound: 1,
+    pageAnchorsTotal: 2,
+  };
+  const run = (provider, usage = {}) => ({
+    provider,
+    content: "Appendix 2: Plans",
+    evaluation,
+    metadata: {
+      durationMs: 10,
+      extractionComplete: true,
+      incompletePages: [],
+      policyBlocked: [],
+      usage,
+    },
+  });
+  const report = renderCurrentPdfGateReport({
+    generatedAt: "2026-09-21T00:00:00.000Z",
+    testCase: {
+      url: "https://example.com/public.pdf",
+      sourceSha256: "abc",
+      maxPages: 1,
+      expectedTerms: ["Appendix 2: Plans", "Plan of Garage"],
+    },
+    plancheck: {
+      totalPages: 1,
+      extractorRoute: "current-detection-transcription",
+      transcriptionModel: "claude-haiku-4-5",
+      escalationModel: "claude-sonnet-5",
+      maxUsd: 1,
+      cold: {
+        pages: [
+          {
+            pageNumber: 1,
+            source: "transcription",
+            textCharacters: 10,
+            truncated: false,
+            reproducible: true,
+          },
+        ],
+      },
+      warm: { pages: [{ pageNumber: 1, source: "transcription", fromCache: true }] },
+    },
+    cold: run("plancheck-current-detection-cold", {
+      providerCallsReturned: 1,
+      cacheHits: 0,
+      knownUsd: 0.01,
+      accountingComplete: true,
+    }),
+    warm: run("plancheck-current-detection-warm", {
+      providerCallsReturned: 0,
+      cacheHits: 1,
+      knownUsd: 0,
+      accountingComplete: true,
+    }),
+    firecrawl: run("firecrawl"),
+  });
+  assert.match(report, /made no new Firecrawl request/i);
+  assert.match(report, /current-detection-transcription/);
+  assert.match(report, /Plan of Garage.*City of Perth/s);
+  assert.match(report, /Equal automated scores.*not perfect OCR/i);
 });
 
 test("report preserves public-only and private-document boundaries", () => {

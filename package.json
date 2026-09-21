@@ -22,6 +22,7 @@
     "benchmark:research-search": "node scripts/research-search-benchmark.mjs",
     "benchmark:research-retrieval": "node scripts/research-retrieval-benchmark.mjs",
     "benchmark:research-pdf-gate": "node scripts/research-pdf-gate.mjs",
+    "benchmark:research-current-pdf-gate": "node scripts/research-current-pdf-gate.mjs",
     "test:orchestrator": "node --test tests/orchestrator.test.mjs",
     "test:runtime": "node --test tests/runtime.test.mjs tests/api.test.mjs",
     "test:sites": "node --test tests/sites-worker.test.mjs",

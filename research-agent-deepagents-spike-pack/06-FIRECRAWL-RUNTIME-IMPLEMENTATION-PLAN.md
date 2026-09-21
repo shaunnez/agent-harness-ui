@@ -3,8 +3,9 @@
 ## Status
 
 Planned, not implemented. This is the next bounded vertical slice after the search and capture benchmarks
-recorded in `04-SEARCH-PROVIDER-BENCHMARK.md` and `05-CAPTURE-AND-PDF-BENCHMARK.md`. Public PDF activation is
-gated on a corrected comparison with PlanCheck's current detection transcription path.
+recorded in `04-SEARCH-PROVIDER-BENCHMARK.md`, `05-CAPTURE-AND-PDF-BENCHMARK.md`, and
+`07-CURRENT-PDF-REPLACEMENT-GATE.md`. The corrected public-PDF comparison is complete and selects Firecrawl
+PDF Parse for public sources behind the owned provider boundary.
 
 ## Intended outcome
 
@@ -16,7 +17,7 @@ research objective
   -> Firecrawl Search (NZ by default; AU or US when requested)
      -> Serper Search only when the primary search is unavailable or returns no usable results
   -> Firecrawl Scrape
-     -> Firecrawl PDF Parse only after the current-PlanCheck replacement gate
+     -> Firecrawl PDF Parse for public PDFs
      -> existing safe local fetch only as an HTML fallback
      -> fail closed for an uncaptured PDF
   -> owner-only extracted snapshot + SHA-256 + capture/page metadata
@@ -36,15 +37,16 @@ The provider selection is based on the live benchmark evidence already retained 
   physical PDF page mapping.
 - Firecrawl matched the checked native-text PDF evidence and materially outperformed PlanCheck's legacy
   `run_check.py` assessment path on the degraded scanned plan, although its OCR was not perfect.
+- Against the current `run_tender_detection.py` transcription path, Firecrawl tied the checked scan quality
+  and completeness at 4/5 terms and 2/3 physical-page anchors. Firecrawl was faster cold (13.4 seconds versus
+  33.6 seconds); current PlanCheck cost US$0.073567 and replayed all 19 pages from cache in 3 ms at no charge.
 - Serper was slightly stronger for local NZ/AU discovery and is therefore the search fallback.
 - Serper does not capture sources and is not a capture fallback.
 - Exa Contents was fast and inexpensive but did not provide physical PDF page attribution.
 - Private or customer PlanCheck documents are outside Firecrawl's self-service data-processing boundary.
 
-The difficult-PDF benchmark did not exercise the current application's `run_tender_detection.py` path. That
-path uses transcription-only vision, preserves physical-page identity, records per-page failures and
-truncation, applies bounded concurrency, and caches successful page transcriptions. The existing gate cannot
-support a Firecrawl-versus-current-PlanCheck performance or quality conclusion.
+The legacy difficult-PDF benchmark did not exercise the current application's `run_tender_detection.py` path.
+That provenance error is now corrected by the replacement gate in `07-CURRENT-PDF-REPLACEMENT-GATE.md`.
 
 Firecrawl's current document parsing contract supports URL-based document detection from the extension or
 content type and a configured PDF `maxPages` limit. The implementation should still treat the provider
@@ -55,11 +57,10 @@ Provider references checked for this plan:
 - [Firecrawl Search](https://docs.firecrawl.dev/features/search)
 - [Firecrawl Document Parsing](https://docs.firecrawl.dev/features/document-parsing)
 
-## Required PDF re-evaluation
+## Completed PDF re-evaluation
 
-Before implementing or activating Firecrawl as the default public-PDF route, run a replacement gate against
-PlanCheck's current detection transcription path using the same degraded public scanned plan. Reuse the
-existing checked terms and physical-page anchors and additionally record:
+The replacement gate ran PlanCheck's current detection transcription path against the same degraded public
+scanned plan and reused the existing Firecrawl result. It recorded:
 
 - complete, partial, failed, policy-blocked, and truncated pages;
 - stable physical-page identity after any page failure;
@@ -68,8 +69,11 @@ existing checked terms and physical-page anchors and additionally record:
 - Firecrawl credits and latency on the same page cap; and
 - whether each required excerpt is present on the expected physical page.
 
-This is a narrow correction to the comparison baseline. Do not repeat the search or broad HTML capture
-benchmarks. The replacement run may incur PlanCheck model usage and requires separate execution approval.
+All 19 PlanCheck pages completed with stable physical identity, no failures, policy blocks, or truncation.
+The cold run took 33.6 seconds and cost US$0.073567; the isolated cache replay served all 19 pages in 3 ms at
+US$0. Both routes recovered 4/5 terms and 2/3 page-19 anchors. Firecrawl remains the selected public-PDF route
+because it tied checked quality, was faster cold, and avoids a second public capture integration. Current
+PlanCheck transcription remains the private-document route and a useful independent comparison path.
 
 ## Scope
 
@@ -78,8 +82,7 @@ This slice includes:
 1. Production Firecrawl search and capture adapters.
 2. A production Serper search adapter.
 3. Explicit, observable Firecrawl-to-Serper search fallback.
-4. Public HTML capture and a provider-neutral public-PDF path through the existing host-owned `fetch_source`
-   tool; Firecrawl PDF activation follows the replacement gate.
+4. Firecrawl public HTML and public-PDF capture through the existing host-owned `fetch_source` tool.
 5. A hard Firecrawl credit ceiling per run and a hard PDF page cap per capture.
 6. Content-addressed extracted snapshots, in-run URL deduplication, and physical-page evidence verification.
 7. Deterministic tests plus one bounded live provider acceptance run.
@@ -183,8 +186,8 @@ to Firecrawl `location` and Serper `gl`/`hl` settings; the child never construct
 ### 5. Capture policy
 
 Firecrawl Scrape is the primary capture path for public HTML. Keep public PDFs behind the same capture
-interface, but do not select Firecrawl PDF Parse as the default until the replacement gate passes. When
-Firecrawl PDF Parse is selected, configure it for Markdown content in `auto` mode with:
+interface and use Firecrawl PDF Parse for the public route. Configure it for Markdown content in `auto` mode
+with:
 
 - maximum 30 pages by default;
 - physical pages returned;
@@ -283,16 +286,12 @@ The existing `fake` research runtime remains the application default. A caller m
 
 ## Implementation sequence
 
-### S0 — Correct the public-PDF comparison baseline
+### S0 — Correct the public-PDF comparison baseline — complete
 
-Add a benchmark adapter for the EXTRACT portion of PlanCheck's current `run_tender_detection.py` path and run
-the single degraded scanned-plan case against that adapter and Firecrawl. Do not reuse
-`assessment_engine.extract_via_vision`, and do not label the legacy gate as the current application baseline.
-
-This step requires explicit approval before making paid PlanCheck transcription or Firecrawl calls.
-
-Exit condition: the report identifies both exact extractor routes, preserves page-level failures and usage,
-and supports an evidence-based choice between Firecrawl PDF Parse and current local transcription.
+Implemented by `scripts/research-pdf-gate/plancheck_current_extract.py` and
+`scripts/research-current-pdf-gate.mjs`. The run used the current EXTRACT route, a hash-pinned public PDF, a
+US$1 evaluation allowance, an isolated cache, and retained Firecrawl evidence without a new Firecrawl call. The outcome
+selects Firecrawl PDF Parse for public sources and preserves current local transcription for private material.
 
 ### S1 — Internal provider contracts, errors, and spend ledger
 
@@ -423,8 +422,7 @@ The slice is complete when all of the following are true:
 2. Search market is explicit and constrained, defaulting to NZ.
 3. Serper is used only for the documented fallback conditions, with the reason and both attempts recorded.
 4. Firecrawl or Serper credentials never enter the child process or retained artifacts.
-5. Public HTML uses Firecrawl capture. Public PDF behavior matches the S0 gate decision; if Firecrawl is
-   selected, the host does not download or store original PDF bytes.
+5. Public HTML and public PDFs use Firecrawl capture; the host does not download or store original PDF bytes.
 6. Every retained source has URL, retrieval time, media type, SHA-256, snapshot reference, provider metadata,
    and actual or estimated provider credits.
 7. Every PDF additionally records total/parsed pages, cap truncation, and physical-page mapping.
@@ -442,8 +440,8 @@ The slice is complete when all of the following are true:
 ## Rollout and rollback
 
 Roll out only through explicit runtime configuration and `runtimeId: "deepagents"`. Do not switch existing
-users or tasks implicitly. Start with public PlanCheck HTML research objectives. Enable the selected public-PDF
-route only after S0, then review provider credit events and page-grounded citations after each run.
+users or tasks implicitly. Start with public PlanCheck HTML research objectives, then enable the selected
+public-PDF route and review provider credit events and page-grounded citations after each run.
 
 Rollback is configuration-only for search: explicitly select Tavily again. Capture rollback disables the
 Firecrawl capture provider and restores the current HTML-only local path; PDF research then fails closed as it
@@ -451,18 +449,19 @@ does today. No source or evidence schema downgrade is required.
 
 ## Risks and follow-up gates
 
-- **The old PDF comparison used the wrong current baseline.** It compared Firecrawl with the legacy assessment
-  extractor, not the current application detection transcription worker. S0 must complete before public-PDF
-  activation.
-- **OCR is fallible.** Firecrawl missed one faint term and one expected page placement in the scanned-plan gate.
-  Required terms and physical-page evidence must still be checked; provider success is not evidence success.
+- **The old PDF comparison used the wrong current baseline.** S0 corrected that provenance error. Preserve the
+  legacy result as historical evidence, but use `07-CURRENT-PDF-REPLACEMENT-GATE.md` for the provider decision.
+- **OCR is fallible.** Firecrawl and current PlanCheck both missed the faint `Plan of Garage` term and failed to
+  retain one expected string on physical page 19. Required terms and physical-page evidence must still be
+  checked; provider success is not evidence success.
 - **Provider credit reporting may be incomplete.** Mark estimates as estimates and partial/uncertain usage as
   such; never present it as a billing receipt.
 - **A page cap can hide relevant evidence.** Surface truncation to the researcher and unresolved questions; do
   not imply that an entire long document was reviewed.
 - **Cross-run reuse needs freshness policy.** Add it only after defining safe age rules for prices, technical
   documents, and regulatory sources.
-- **Private documents remain blocked.** Enabling them requires an accepted DPA, retention, residency, deletion,
-  and zero-data-retention decision plus a repaired local scanned-PDF path.
+- **Private documents remain local.** Sending them to Firecrawl requires an accepted DPA, retention, residency,
+  deletion, and zero-data-retention decision. Current PlanCheck transcription is now proven complete on the
+  bounded scan case, but broader private-document quality remains governed by its normal coverage gates.
 - **Default-provider activation is separate.** Promote Deep Agents or Firecrawl to an application default only
   after the bounded live acceptance and an explicit product decision.

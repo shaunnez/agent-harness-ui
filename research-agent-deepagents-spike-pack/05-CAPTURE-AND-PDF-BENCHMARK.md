@@ -196,7 +196,7 @@ The gate also found that ordinary server-side downloads of both building.govt.nz
 environment, although a browser and Firecrawl could retrieve them. A fully local public route would need a
 browser or proxy fetch fallback as well as PDF extraction.
 
-## Material correction — current application path was not benchmarked
+## Material correction — current application path was not benchmarked in the legacy gate
 
 The current PlanCheck application detection worker uses a different transcription route through
 `run_tender_detection.py` and `backend/engine/geotech_vision_transcription.py`. That route:
@@ -206,23 +206,46 @@ The current PlanCheck application detection worker uses a different transcriptio
 - uses bounded concurrency and reassembles results in page order; and
 - caches successful transcriptions per content-addressed page.
 
-The legacy gate therefore does **not** establish that Firecrawl outperforms current PlanCheck extraction on
-scanned PDFs. Its Firecrawl measurements remain valid, and the broad public search/HTML findings remain
+The legacy gate therefore did **not** establish that Firecrawl outperformed current PlanCheck extraction on
+scanned PDFs. Its Firecrawl measurements remained valid, and the broad public search/HTML findings remained
 valid, but the local comparison baseline was wrong for the current application.
 
-Before selecting a default public-PDF route, re-run the degraded scanned-plan case against the current
-detection transcription path. Measure the same term recovery, physical-page anchors, completeness, latency,
-provider/model cost, and cache behavior. This replacement gate may require paid transcription calls and needs
-separate execution approval.
+## Replacement PDF gate outcome — current PlanCheck path, 21 September 2026
+
+The approved replacement gate ran the same first 19 physical pages of the same hash-pinned public Australian
+scan through the EXTRACT seam in `run_tender_detection.py`. It reused the retained Firecrawl output, so no new
+Firecrawl request was made and no private or customer document left Eversor's environment. The owner-only raw
+result is under `.data/research-current-pdf-gates/2026-09-21T00-58-43-628Z/`; the durable summary is
+`07-CURRENT-PDF-REPLACEMENT-GATE.md`.
+
+| Route | Complete within cap | Checked terms | Page-19 anchors | Cold time | Attributable cost | Cache replay |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| PlanCheck current detection transcription | yes, 19/19 pages | 4/5 | 2/3 | 33.6 seconds | US$0.073567 | 19/19 hits, 3 ms, US$0 |
+| Firecrawl retained OCR | yes, 19/19 pages | 4/5 | 2/3 | 13.4 seconds | 20 credits / about US$0.10 at the benchmark rate | not measured |
+
+PlanCheck's current path had none of the legacy path's page-loss or attribution defects. Every page returned,
+every result remained bound to its physical page, no output was truncated or policy-blocked, all 19 cold
+outputs were reproducible, and every page replayed from the isolated cache without another provider call.
+
+The quality result was a tie on this bounded case. Both routes found `HERITAGE ASSESSMENT`,
+`Appendix 2: Plans`, `City of Perth`, and `Building Licence Plans dated March 1951`; both missed the faint
+`Plan of Garage` wording, and neither retained `City of Perth` on physical page 19. Visual inspection confirms
+that both strings are present but degraded inside the page-19 drawing. Equal scores therefore mean equal
+checked coverage, not perfect OCR.
 
 ## Corrected recommendation
 
 Use Firecrawl Search as the default public-source discovery route, with Serper as the NZ/AU search fallback.
 Firecrawl remains the leading managed HTML capture candidate because the broad capture benchmark is
-unaffected. Keep PDF capture behind the Eversor-owned provider boundary and treat Firecrawl PDF Parse as
-provisional until the replacement current-PlanCheck gate is complete. Retain the extracted snapshot, its
-SHA-256 hash, canonical URL, capture time, provider metadata, and page/layout grounding. Share that
-content-addressed snapshot between agents so each unique source is captured once.
+unaffected. The replacement gate also supports Firecrawl PDF Parse as the default **public-source** PDF route:
+it matched the current local path on checked completeness and evidence recovery, was faster on a cold
+uncached document, and keeps search, HTML capture, and public-PDF capture behind one integration. This is an
+architecture and latency decision, not a claim that Firecrawl OCR is more accurate.
+
+Keep PDF capture behind the Eversor-owned provider boundary. Retain the extracted snapshot, its SHA-256 hash,
+canonical URL, capture time, provider metadata, and page/layout grounding. Share that content-addressed
+snapshot between agents so each unique source is captured once. Reject incomplete page maps and fail closed
+when required faint text or an exact physical-page citation is absent.
 
 Do not send private PlanCheck material through Firecrawl's self-serve service. Its published standard
 privacy terms permit caching/indexing and describe US storage, while zero-data-retention for parsed
@@ -232,9 +255,9 @@ DPA, retention, residency, and deletion arrangement. Until then:
 - private native-text PDFs stay on the proven local PlanCheck path;
 - private scanned PDFs stay on the current page-preserving local transcription path, subject to its normal
   completeness and coverage gates;
-- public Firecrawl results fall back to local or a second extraction when pages, required terms, or citation
-  grounding are incomplete.
+- public Firecrawl results fail closed when pages, required terms, or citation grounding are incomplete; any
+  local or second-provider re-extraction is an explicit follow-up, not a silent automatic fallback.
 
-This selects search and HTML capture candidates, not the final public-PDF default. It does not change the
-research runtime from Tavily. The replacement PDF gate is the first step in the implementation plan before
-activating a PDF route.
+This selects Firecrawl for public search, HTML capture, and public-PDF capture, with Serper as the constrained
+search fallback. It does not change the runtime from Tavily or activate any provider by itself; implementation,
+bounded live acceptance, and an explicit runtime-default decision remain separate.

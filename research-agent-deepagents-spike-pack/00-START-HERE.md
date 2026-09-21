@@ -103,6 +103,7 @@ Later benchmark against:
 - `05-CAPTURE-AND-PDF-BENCHMARK.md` records both live gates: the broad local/Firecrawl/Exa comparison and
   the difficult Firecrawl-versus-PlanCheck PDF gate, including the final public/private capture boundary.
 - `06-FIRECRAWL-RUNTIME-IMPLEMENTATION-PLAN.md` turns the Firecrawl-search, Serper-fallback route into the
-  next bounded production-enablement slice. Public PDF activation is gated on a corrected comparison with
-  PlanCheck's current transcription worker. The runtime still uses Tavily until the slice is implemented and
-  accepted.
+  next bounded production-enablement slice.
+- `07-CURRENT-PDF-REPLACEMENT-GATE.md` records the corrected current-PlanCheck comparison. It selects Firecrawl
+  PDF Parse for public sources while keeping private PDFs on PlanCheck's local transcription path.
+- The runtime still uses Tavily until the implementation slice is completed and accepted.
