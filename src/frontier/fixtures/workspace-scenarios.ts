@@ -1,4 +1,5 @@
 import type { RuntimeTask } from "../../domain";
+import { reviewScenarios } from "./review-scenarios.ts";
 import { fixtureArtifact, fixtureRun, fixtureTask, fixtureTime } from "./scenarios.ts";
 
 /** Explicit workflow QA records for long input, failed scouts and variable documents. */
@@ -135,5 +136,5 @@ export function workspaceScenarios(): RuntimeTask[] {
       ],
     },
   });
-  return [scouts, spec, grill];
+  return [scouts, spec, grill, ...reviewScenarios()];
 }

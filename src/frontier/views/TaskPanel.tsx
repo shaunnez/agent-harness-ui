@@ -1,6 +1,5 @@
 import {
   Binoculars,
-  ChartBar,
   Check,
   ClipboardText,
   FileText,
@@ -16,23 +15,20 @@ import { getAccessBoundaryCopy } from "../../components/runtime/runtimeCommandPo
 import { type RuntimeCandidate, type RuntimeRun, type StageId, stageIds } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { FrontierGateway, TaskEvidence } from "../runtime/contracts";
-import {
-  formatCount,
-  formatDuration,
-  latestRun,
-  modelLabel,
-  packageState,
-  reasoningLabel,
-  stageLabels,
-} from "../runtime/presentation";
-import { taskWallTime } from "../runtime/usage";
+import { latestRun, modelLabel, packageState, reasoningLabel, stageLabels } from "../runtime/presentation";
 import { stageHasError, stageRecorded, stageState } from "../runtime/workflow";
 import { ScrollArea } from "../ui/ScrollArea";
 import { CandidateDiff } from "./CandidateDiff";
-import { CandidateEvidence, DeliveryEvidence, JourneyEvidence, TestEvidence } from "./CandidateEvidence";
+import { CandidateEvidence } from "./CandidateEvidence";
+import { CandidateHistory, CandidateIdentity, CandidateReadiness } from "./CandidateReadiness";
+import { DeliveryEvidence } from "./DeliveryEvidence";
 import { DesignReview } from "./DesignReview";
 import { Grill, GrillActions, GrillDecisions, type GrillProps } from "./Grill";
+import { JourneyEvidence } from "./JourneyEvidence";
 import { StageEvidence } from "./StageEvidence";
+import { StageSummary } from "./StageSummary";
+import { TaskUsage } from "./TaskUsage";
+import { TestEvidence } from "./TestEvidence";
 import { PinButton } from "./WatchPins";
 import { WorkflowCommand } from "./WorkflowCommand";
 import { WorkPackages } from "./WorkPackages";
@@ -290,13 +286,31 @@ export function TaskPanel({
                   onWatch={onWatch}
                 />
               )}
-              {viewedStage === "approval" && <DeliveryEvidence task={task} />}
+              {["test", "final-review", "approval"].includes(viewedStage) &&
+                !(viewedStage === "approval" && task.pullRequestIntent) && (
+                  <StageSummary task={task} stage={viewedStage} run={viewedRun} />
+                )}
+              {["test", "final-review", "approval"].includes(viewedStage) &&
+                !(viewedStage === "approval" && task.pullRequestIntent) && (
+                  <CandidateIdentity task={task} onDiff={onDiff} />
+                )}
+              {viewedStage === "approval" && (
+                <div className={task.pullRequestIntent ? "delivery-stack" : "approval-evidence-grid"}>
+                  <DeliveryEvidence task={task} onDiff={onDiff} />
+                  <CandidateReadiness task={task} />
+                </div>
+              )}
               {["final-review", "approval"].includes(viewedStage) && (
-                <JourneyEvidence evidence={evidence} onStage={selectStage} />
+                <>
+                  {viewedStage === "final-review" && <CandidateReadiness task={task} />}
+                  <JourneyEvidence
+                    evidence={evidence}
+                    stage={viewedStage as "final-review" | "approval"}
+                    onStage={selectStage}
+                  />
+                </>
               )}
-              {["implement", "dev-review", "test", "final-review", "approval"].includes(viewedStage) && (
-                <CandidateEvidence task={task} onDiff={onDiff} compact={viewedStage !== "implement"} />
-              )}
+              {viewedStage === "implement" && <CandidateEvidence task={task} onDiff={onDiff} />}
               {viewedStage === "implement" && candidate?.headRevision && (
                 <section
                   className="workflow-card inline-candidate-diff"
@@ -333,6 +347,14 @@ export function TaskPanel({
                 onArtifact={onArtifact}
                 onWatch={onWatch}
                 onMore={onMore}
+                reviewIdentity={
+                  viewedStage === "dev-review" ? <CandidateIdentity task={task} onDiff={onDiff} /> : undefined
+                }
+                footer={
+                  ["dev-review", "test", "final-review", "approval"].includes(viewedStage) ? (
+                    <CandidateHistory task={task} onDiff={onDiff} />
+                  ) : undefined
+                }
               />
             </>
           )}
@@ -378,38 +400,7 @@ export function TaskPanel({
             </button>
           )}
         </section>
-        <section>
-          <h3>
-            <ChartBar size={18} />
-            Usage <small>· task total</small>
-          </h3>
-          <p className="inspector-metric">
-            {formatCount(task.usage.totalTokens)} <small>tokens</small>
-          </p>
-          <small>
-            Input {formatCount(task.usage.inputTokens)} · Output {formatCount(task.usage.outputTokens)}
-            <br />
-            Cached {formatCount(task.usage.cachedInputTokens)} ·{" "}
-            {task.usage.inputTokens
-              ? `${Math.round((task.usage.cachedInputTokens / task.usage.inputTokens) * 100)}% cache rate`
-              : "Cache rate unavailable"}
-          </small>
-          <dl className="inspector-key-values">
-            <dt>Elapsed</dt>
-            <dd>{formatDuration(taskWallTime(task, Date.now()))}</dd>
-            <dt>Approx. cost</dt>
-            <dd>
-              {task.usage.cost != null && task.usage.pricingVersion
-                ? `$${task.usage.cost.toFixed(4)}`
-                : "Unavailable"}
-            </dd>
-          </dl>
-          <small>
-            {task.usage.pricingVersion
-              ? `API-rate estimate · ${task.usage.pricingVersion}`
-              : "API-rate estimate needs a rate card."}
-          </small>
-        </section>
+        <TaskUsage evidence={evidence} stage={viewedStage} onMore={() => onMore("runs")} />
         <section>
           <h3>
             <ShieldCheck size={18} />
