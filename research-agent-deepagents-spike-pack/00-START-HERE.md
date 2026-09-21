@@ -131,14 +131,18 @@ context in this route; both queries and URLs leave the machine.
 
 ### Current live acceptance status
 
-The bounded S8 session on 21 September 2026 **failed and stopped**. The first attempt exposed a local Node
-ABI mismatch after a 6-credit Firecrawl upper bound. The authorized Node 22 retry reached both Firecrawl
-scenarios and stopped at the fail-closed PDF block-status check after a further 12-credit upper bound. The
-HTML search/capture and in-run reuse assertions passed; the PDF was not retained, Serper was not called,
-no live model ran, and the retained artifacts contained no provider credential values. The local retry
-receipt is `.data/research-runtime-acceptance/2026-09-21T02-47-05-734Z/report.json`.
+The bounded S8 sessions on 21 September 2026 **failed and stopped**. The first attempt exposed a local Node
+ABI mismatch after a 6-credit Firecrawl upper bound. The first authorized Node 22 retry reached both
+Firecrawl scenarios and stopped at the fail-closed PDF block-status check after a further 12-credit upper
+bound. A separately authorized diagnostic run used another 12-credit upper bound and proved Firecrawl's
+successful PDF layout-block status is `ok`; the implementation had accepted only `success` and `complete`.
+Across the three attempts, cumulative Firecrawl upper-bound exposure was 30 credits. The HTML search/capture
+and in-run reuse assertions passed each time; the PDF was not retained, Serper was not called, no live model
+ran, and the retained artifacts contained no provider credential values. The latest local receipt is
+`.data/research-runtime-acceptance/2026-09-21T04-25-43-465Z/report.json`.
 
 The follow-up code adds a native-dependency preflight before network dispatch, guaranteed failed-run cleanup,
-bounded block-status diagnostics, and underlying run-error reporting. That code is deterministically
+bounded block-status diagnostics, underlying run-error reporting, acceptance of the observed successful `ok`
+status, and deterministic CLI exit after its report flushes. The final correction is deterministically
 qualified but has not been exercised by another paid provider run. S8/A15 and the live PDF portion of A2
 remain failed; do not activate the provider profile or rerun S8 without a new explicit allowance.

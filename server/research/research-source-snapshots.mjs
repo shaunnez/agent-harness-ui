@@ -39,7 +39,7 @@ export function normalizePdfCapture({ pages, numPages, totalPages = null, pageCa
         throw incomplete("PDF block metadata referenced an invalid physical page.");
       if (block.status != null && String(block.status).trim() !== "") {
         const status = safeBlockStatus(block.status);
-        if (!["success", "complete"].includes(status))
+        if (!["ok", "success", "complete"].includes(status))
           throw incomplete(`PDF block metadata reported extraction failure (status: ${status}).`);
       }
     }

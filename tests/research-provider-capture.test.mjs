@@ -63,7 +63,7 @@ test("native and scanned PDF fixtures retain structural physical pages", async (
             { pageNumber: 1, markdown: `${label} page one` },
             { pageNumber: 2, markdown: "THERMAL PERFORMANCE" },
           ],
-          blocks: [{ pageNumber: 2, status: "success" }],
+          blocks: [{ pageNumber: 2, status: "ok" }],
           metadata: {
             contentType: "application/pdf",
             sourceURL: "https://example.com/document.pdf",

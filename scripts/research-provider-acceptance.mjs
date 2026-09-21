@@ -80,10 +80,12 @@ await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, {
   mode: 0o600,
   flag: "wx",
 });
-process.stdout.write(
+await writeAndFlush(
   `${JSON.stringify({ status: report.status, reportPath, usage: report.usage }, null, 2)}\n`,
 );
-if (report.status !== "passed") process.exitCode = 1;
+// This is a bounded one-shot CLI. Provider HTTP clients may retain idle connection handles after
+// the report and all owned runtime resources are closed, so exit only after durable output flushes.
+process.exit(report.status === "passed" ? 0 : 1);
 
 function assertManifest(value, ids) {
   if (value?.version !== 1 || !Array.isArray(value.scenarios))
@@ -103,4 +105,18 @@ function assertManifest(value, ids) {
 
 function assertUnique(values, label) {
   if (new Set(values).size !== values.length) throw new Error(`Acceptance ${label} must be unique.`);
+}
+
+function writeAndFlush(content) {
+  return new Promise((resolve, reject) => {
+    const onError = (error) => {
+      process.stdout.off("error", onError);
+      reject(error);
+    };
+    process.stdout.once("error", onError);
+    process.stdout.write(content, () => {
+      process.stdout.off("error", onError);
+      resolve();
+    });
+  });
 }

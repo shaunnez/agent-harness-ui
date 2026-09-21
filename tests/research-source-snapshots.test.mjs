@@ -68,6 +68,17 @@ test("failed PDF block status is reported safely without accepting provider-cont
   );
 });
 
+test("Firecrawl ok block status is accepted as successful extraction metadata", () => {
+  const pdf = normalizePdfCapture({
+    pages: [{ pageNumber: 1, content: "one" }],
+    numPages: 1,
+    totalPages: 1,
+    pageCap: 3,
+    blocks: [{ pageNumber: 1, status: "ok" }],
+  });
+  assert.equal(pdf.blockCoverage, "reported");
+});
+
 test("PDF evidence is checked on the exact page and forged marker text is inert", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "research-snapshot-test-"));
   try {
