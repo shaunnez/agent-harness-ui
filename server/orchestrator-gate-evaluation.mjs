@@ -120,6 +120,10 @@ export class GateEvaluationOrchestrator {
       draft.currentStage = "test";
       draft.error = blocker.detail;
       draft.blocker = { ...blocker, detectedAt: now(), candidateId: candidate?.id ?? null };
+      draft.activeRunKind = null;
+      draft.activeRunReservationId = null;
+      const draftCandidate = draft.candidates?.at(-1);
+      if (draftCandidate?.id === candidate?.id) draftCandidate.status = "ready_for_test";
       draft.events.push(
         activity(
           "test",
