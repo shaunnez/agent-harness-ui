@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "status": "case candidates; qualification required before dispatch",
+  "status": "12 selected cases; H02 live-qualified, H01/M01/P04 partially qualified; per-case remaining gates are authoritative",
   "cases": [
     {
       "id": "H01",
@@ -18,8 +18,24 @@
         "Unsupported entries cannot be newly selected",
         "Discovered metadata and uniqueness are preserved"
       ],
-      "qualification": "selected-not-qualified",
-      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+      "qualification": "behavior-and-command-baseline-qualified",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs",
+      "qualificationEvidence": {
+        "independentChecks": 9,
+        "basePasses": 3,
+        "referencePasses": 9,
+        "selectableMutantPasses": 3,
+        "referenceRegressionTests": 309,
+        "baseRegressionPasses": 308,
+        "baseExpectedFailure": "referencing a discovered model in settings does not make it unselectable",
+        "browser": "Actual SettingsScreen and AgentPolicyEditor exercised with synthetic server catalog",
+        "remaining": [
+          "Portable isolated runner/grader integration",
+          "Case-specific rubric calibration",
+          "Declare existing target-defect assertion as fail-to-pass; pass-to-pass checks must remain green"
+        ],
+        "privateEvidence": "evaluator/H01/qualification.json"
+      }
     },
     {
       "id": "H02",
@@ -55,7 +71,7 @@
           "task-snapshot",
           "automatic-provenance"
         ],
-        "rubricVersion": "delivery-rubric-v3",
+        "rubricVersion": "delivery-rubric-v4",
         "referenceRubric": "passed",
         "snapshotMutantRubric": "rejected"
       }
@@ -177,8 +193,29 @@
         "Known usage cannot be erased by a later empty receipt",
         "Every repair loop obeys the job deadline"
       ],
-      "qualification": "selected-not-qualified",
-      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+      "qualification": "behavior-qualified-delivery-baseline-blocked",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs",
+      "qualificationEvidence": {
+        "independentChecks": 10,
+        "basePasses": 1,
+        "referencePasses": 10,
+        "mutantsRejected": [
+          "latest-attempt",
+          "double-charge",
+          "expired-retry"
+        ],
+        "baseBackendTests": 5410,
+        "referenceBackendTests": 5414,
+        "documentedSkipsPerSide": 8,
+        "bootstrap": "Private AST-equivalent formatting, verified ancestor Git object and fresh synthetic PostgreSQL databases",
+        "blocker": "Seven pre-existing mypy errors in scripts/report_uplift_join.py and scripts/diagnose_worksheet_provider.py",
+        "remaining": [
+          "Green complete historical verification manifest",
+          "Portable isolated environment/grader integration",
+          "Case-specific rubric calibration"
+        ],
+        "privateEvidence": "evaluator/P04/qualification.json"
+      }
     },
     {
       "id": "M01",
@@ -196,8 +233,23 @@
         "Obligation sweep remains unchanged",
         "Tasks do not enter the obligation overdue tally"
       ],
-      "qualification": "selected-not-qualified",
-      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+      "qualification": "behavior-and-frontend-baseline-qualified",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs",
+      "qualificationEvidence": {
+        "independentChecks": 6,
+        "basePasses": 3,
+        "referencePasses": 6,
+        "mutantPasses": 1,
+        "baseFrontendTests": 1402,
+        "referenceFrontendTests": 1403,
+        "browser": "Actual calendar component checked with fixed date and synthetic overdue task/obligation",
+        "remaining": [
+          "Complete repository/backend/E2E manifest and isolated environment",
+          "Portable grader integration",
+          "Case-specific rubric calibration"
+        ],
+        "privateEvidence": "evaluator/M01/qualification.json"
+      }
     },
     {
       "id": "M02",

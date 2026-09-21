@@ -1,6 +1,6 @@
 # Model evaluation execution brief
 
-Updated: 22 September 2026. Status: evaluation foundation implemented in the isolated worktree; see [MODEL-EVALUATION-CHECKPOINT.md](MODEL-EVALUATION-CHECKPOINT.md) for current campaign state. The first attempt was invalidated for an apparatus failure.
+Updated: 22 September 2026. **Batch A complete: no challenger promoted; Batch B not launched.** Read [MODEL-EVALUATION-RESULTS.md](MODEL-EVALUATION-RESULTS.md) for the decision and [MODEL-EVALUATION-CHECKPOINT.md](MODEL-EVALUATION-CHECKPOINT.md) for retained receipts and continuation. The execution contract below remains the original scope.
 
 ## User intent and authority
 

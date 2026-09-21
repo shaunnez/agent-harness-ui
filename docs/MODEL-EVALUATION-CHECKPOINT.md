@@ -1,62 +1,60 @@
-# Evaluation checkpoint
+# Model evaluation checkpoint
 
-Updated: 22 September 2026. Phase: replacement Batch A apparatus qualified; ready to freeze. Two invalid apparatus attempts; no valid delivery results or production changes.
+Updated: 22 September 2026. **Batch A complete. No active evaluation workers or calls. No model policy promoted. Batch B was not launched.**
 
-## Authority and location
+Read [MODEL-EVALUATION-RESULTS.md](MODEL-EVALUATION-RESULTS.md) for the decision and [MODEL-EVALUATION-FOLLOW-UPS.md](MODEL-EVALUATION-FOLLOW-UPS.md) for concrete next work. Do not rerun the completed slots.
 
-- Implementation worktree `/Users/shaun/.codex/worktrees/model-evaluation/agent-harness-ui`, branch `codex/model-evaluation-20260922`, starting base `b585649795887356c25559ffd4a9c7f37316ba31`. Foundation committed at `b94109338722036b264e16b58e03dbd2ba3afe8e`; native-confinement correction is the next commit. Inspect Git before preparing the replacement campaign.
-- PR #101 remains open at `272c99e3c615de26b276cddf41dd0c7e529fade1`. Ported only evaluation scorer/decision/scorecard/types/styles/tests, then corrected their integrity gaps. No historical results or unrelated runtime patches merged.
-- Original dirty main, PlanCheck dirty files and user services preserved. Authority covers isolated existing subscription runtimes; no purchases, API-key fallback, production activation, merges or deployment.
+## Source and authority
 
-## Foundation qualified
+- Implementation: `/Users/shaun/.codex/worktrees/model-evaluation/agent-harness-ui`, branch `codex/model-evaluation-20260922`, based on `b585649795887356c25559ffd4a9c7f37316ba31`. Resolve current HEAD with Git; delivery freeze is `543d51c743432ec8326f8ad072b28d6d3ff57832` and corrected scorer is `2c4b9e1845bedd9476822fbe56608ce10bc11fe3`. Later documentation commits do not change trial inputs.
+- Original dirty Harness checkout, PlanCheck changes and user services were preserved. No production settings, database, merge or deployment changed. No new PR was published. PR #101 was inspected/attached and selected scorer changes reconciled; its branch was not updated.
+- Authority remains isolated development/evaluation with existing authenticated Codex/Claude subscriptions. Purchases, separately billed API fallback and production activation remain outside it.
 
-- Count pre-candidate failures, require exact candidate and complete frozen command definitions, reject divergent policies, retain invalid/pending/cancelled/ungraded trials, bind independent grades and scores to the final candidate.
-- Resource accounting includes failed calls and Claude adapter probes via a private provider ledger. Missing usage/cost stays unknown, never a fabricated zero/comparable price.
-- Atomic agent reservation checks task limits. Provider wrapper enforces call/time/measured-token limits, refuses further dispatch on unknown prior usage, and protects reference files. Normal provider sandbox/auth remains active. Existing evaluation metric default and production model defaults are unchanged; this campaign explicitly selects independent autonomous accepted delivery rate.
-- Foundation `npm test`: **749/749 passed**; native-confinement correction **752/752 passed**, with lint, typecheck and format passing; logs named `native-*`. Typecheck/lint/format/build passed; Sites 4/4; Frontier API 18/18 with process-scoped Git signing disabled. Logs `.data/evaluation-preflight/`. Native dependency installation is local, not shared with the dirty checkout.
-- Model IDs and reasoning checked against the local catalog. Codex uses ChatGPT authentication. Claude subscription status was verified with API-key variables removed from the status subprocess; runtime's normal environment already strips them. No keys read or supplied.
+## Completed comparison
 
-## Cases and qualification
+Private root: `/Users/shaun/.codex/model-evaluation/20260922`.
+Campaign: `batch-a-v4`; retained public trial checkouts: `/private/tmp/h-eval-a4`.
 
-- `evaluations/cases/delivery-v1.json`: 12 selected historical cases, four per repo/difficulty, six development/six heldout. Only **H02 is qualified**; other cases remain selected, not ready-to-run golden cases. Four readiness controls are separate.
-- H02: manual/opt-in Grill, base `4b303a8da4fafd7a78149ddad40cbf714411d08b`, reviewed change `a798c913988579149a77318db97faf7a850160bb`. Frozen public wire contract in `evaluations/cases/h02-public-contract.md` avoids undisclosed field-name grading.
-- Private references `/Users/shaun/.codex/model-evaluation/20260922/evaluator/H02/{base,reference,mutant}`. Reference HEAD `a85aed7dc30bd101dc5dd879904dd7db511ae9eb`, seeded snapshot mutant `804953140a036a5b55858798a772749c73e7baed`.
-- Nine independent behavior checks: reference 9/9, unchanged base fails eight, snapshot mutant fails task-snapshot and automatic-provenance while its UI passes. Public task-creation policy override also checked. Baseline regressions 371/371, reference regressions 374/374, both lint/typecheck/build/Sites pass.
-- Reference grader passes all nine under the real evaluation OS isolation profile, with a copied Playwright 1.61.1 outside source repositories. Module `/Users/shaun/.codex/model-evaluation/20260922/tools/node_modules/playwright/index.mjs`.
-- External fixed Sol High rubric **delivery-rubric-v4** qualified under working native tool confinement: `rubric-reference-native-v2/grade.json` accepts the reference (157,873 tokens); `rubric-mutant-native-v2/grade.json` rejects the seeded defect (137,114 tokens). Both have successful repository-read command evidence. Separate ceiling: 5 minutes/200,000 tokens/one call. Complete diff plus at most three focused reads replaces expensive repeated full-file reads.
-- All earlier calibration attempts remain retained. The v3 reference/mutant native reviewers reached the right verdict but exceeded 200,000 tokens (533,987 / 374,283); they are not valid budget-qualified grades. Earlier outer-sandbox calibrations lack reliable successful-tool evidence and are superseded.
-- Native Codex zero-inference check proves protected read/write denial, read-only write refusal and permitted workspace writes. Claude native read-only and workspace-write canaries pass, with helper consumption retained in `native-provider-preflight/ledger.json`. The isolated verifier passes all five baseline commands under its OS profile.
+| Policy | Valid final trials | Accepted | Recorded tokens including cache reads |
+| --- | ---: | ---: | ---: |
+| Incumbent high-risk | 3 | 0 | At least 8,721,635; one interrupted call unknown |
+| Balanced | 3 | 0 | 25,628,376 |
+| Balanced with Astra Plan | 3 | 0 | 15,024,013 |
 
-## Prepared execution tools
+One medium Harness UI/API/SQLite case, H02, under high-risk assurance. Equal limits: 30 minutes, 5M measured tokens, 24 agent runs, 40 provider calls. Existing Implement per-call limit: 900 seconds. Frozen role pins prevent capability escalation. In-flight overshoot is possible and recorded; new dispatch is refused. No candidate reached integrated review/Test/approval; passing packages are partial progress only.
 
-- `prepare-batch.mjs <new-private-root> <new-public-root> <source-repo>` requires clean committed harness, reads EVAL_PLAYWRIGHT_MODULE, prepares isolated shallow repos and freezes all nine slots, policy pins, case/grader/harness/environment versions and budgets.
-- `node scripts/evaluation/trial-worker.mjs <trial/config.json>` runs directly. Do not wrap the orchestrator in sandbox-exec: provider CLIs use their native sandbox, while repository verification runs in a separate OS-confined child using worker.sb. Normal API task creation/orchestration, isolated SQLite, fixed simulated benchmark-user answers, ordinary repair limits and no model escalation. Stops at quiescent terminal/wait state or ceiling; never approves/publishes a PR.
-- `finalize-trial.mjs <private-trial-directory>` checks candidate SHA/cleanliness, executes private checks and calibrated external rubric, then records the bound receipt. `report-batch.mjs <campaign-root>` includes unlaunched scheduled slots as pending and cannot rank an incomplete batch.
-- `provider-guard.py` wraps existing CLIs and counts helper calls. Codex extends its native read-only/workspace permissions with protected-path exclusions; Claude adds native denyRead and Read-tool exclusions while preserving failIfUnavailable enforcement. Source repositories, references, previous campaigns, sibling candidates and histories are excluded. Synthetic command-only fixtures use Seatbelt directly. Native provider sandboxes must never be nested inside an outer Seatbelt wrapper.
-- Dry-run `/Users/shaun/.codex/model-evaluation/20260922/dry-run-1`, public `/private/tmp/h-eval-dry1`: A1/A2 API snapshots pass with zero inference. A3 contains an anonymous reference for isolated grader preflight. These are **not delivery samples**.
+A1 failed type/caller compatibility; A3/A7 failed ownership; A2/A4/A5/A6/A9 exhausted token allowance; A8 hit the implementation-stage timeout. A3 also exceeded the token limit. A8's unknown usage was adjudicated without rerun: all calls had ended, the trial remains a valid failure, and A9 proceeded independently under the original freeze. All nine slots are finalized, with no human code rescue or policy drift.
 
-## Invalidated first batch
+Decision: retain production configuration pending qualification. The raw-token and stage allowances proved inadequate for the intended quality-first comparison. Fix/qualify bounded pre-candidate recovery and coupled-path planning, calibrate achievable limits without ranking models, then run a newly frozen small comparison. No universal model ranking or repository-wide reliability claim is supported.
 
-`/Users/shaun/.codex/model-evaluation/20260922/batch-a-v1`, public `/private/tmp/h-eval-a1`, was frozen at foundation commit b941093. A1 failed before provider startup: nesting the provider sandbox under the worker sandbox caused `sandbox_apply: Operation not permitted`. Its receipt is explicitly **invalid apparatus**; unknown usage remains unknown. A2–A9 were never launched. `adjudication.json` records the aborted batch. Never pool it with the replacement. The earlier claimed nested-denial test was inadequate; its corrected test canonicalizes macOS temporary paths and checks the actual denial.
+## Evidence and receipt-only correction
 
-## Next actions
+Every trial directory contains frozen config, SQLite/task snapshot, all-attempt provider ledger, delivery-end/finalization receipts, stage/package summaries, failure analysis and available base-to-slice patch/untracked copies. Solutions and grading inputs stay private.
 
-1. Commit the qualified native-confinement correction. Prepare `/Users/shaun/.codex/model-evaluation/20260922/batch-a-v2`, public `/private/tmp/h-eval-a2`, from original harness repo with EVAL_PLAYWRIGHT_MODULE set to the copied module above.
-2. Run A1 **directly with Node**, inspect telemetry/receipts before any retry. Grade and proceed in frozen rotating nine-slot order, one delivery at a time. Retain/version apparatus failures; do not rescue an arm manually or pool incompatible runs.
-3. Equal delivery limits: **30 minutes, 600,000 tokens, 24 agent runs, 40 total provider calls**. One trial/implementation package at a time; ordinary bounded scouts may overlap. In-flight token overshoot is recorded and disqualifies an over-budget arm. External grading consumption is separate.
-4. All arms use high-risk assurance. Control is the actual incumbent high-risk role matrix. Balanced: Luna High facts, Sol High reasoning/reviews, Sonnet High implement/repair, Luna Medium Test. Astra changes only Plan to Astra High. All roles pinned; same-provider repair escalation suppressed.
-5. Do not start 24 heldout runs unless Batch A justifies it. Report actual outcomes and limitations, not a model winner from calibration or setup. Production routing changes remain separate.
+- `batch-a-v4/freeze.json`: original task, policies, model IDs, manifests, environment and limits.
+- `report-frozen-543d51c.json`: original frozen scorer result.
+- `report-corrected-v1.json` and `report.json`: same receipts scored after requiring a completed workflow and fresh authoritative SHA-bound review/Test/final-review gates.
+- `scoring-replay-audit.json`: version, original/corrected hashes and unchanged outcomes. No trial receipt/candidate changed and no inference reran.
+- `delivery-summary.json`: final outcome/resource summary; repository copy `evaluations/results/batch-a-v4-summary.json`.
+- `accounting-current.json`: at least 51,789,171 tokens across 99 instrumented attempts for preparation and all campaigns; four usage totals unknown. Excludes this authoring conversation/unrelated account use. Actual subscription charges unavailable.
+- Earlier v1/v2 setup failures, v3 budget failure/eight cancelled slots and failed reviewer calibrations remain retained and separate. Historical checkpoint narrative is archived privately in `checkpoint-history-through-a9-launch.md`.
 
-No owned persistent server or inference process should remain from calibration. Inspect durable state after compaction before rerunning anything. Original-main copy of this checkpoint is the live continuation pointer; campaign state is authoritative over narrative notes.
+No provider calls remain active. Both serial controllers exited; do not resume their exec sessions. Owned evaluator UI servers/browser tabs were closed. Synthetic P04 PostgreSQL container `model-eval-p04-20260922` is stopped, with data retained. Trial checkouts and evidence are deliberately retained.
 
-## Second setup correction
+## Case bank and verification
 
-Batch A v2 at `1165a62` was also aborted before model startup: duplicate denied paths made the generated native permission TOML invalid. A1 is invalid apparatus, A2-A9 unlaunched. The wrapper now deduplicates protected paths, and campaign preparation runs the actual installed native permission parser and file-access checks for every generated configuration, with zero inference. Nine guard tests pass, including duplicate-path handling. The next campaign is batch-a-v3; do not pool earlier attempts.
+Twelve historical cases selected: four per repository and difficulty, six development/six held out. Four additional readiness controls selected, not executed.
 
-## Budget feasibility result and replacement
+- H02: nine independent behavior checks, failing base, passing reviewed reference and rejected seeded mutant; all five baseline commands and calibrated blind rubric passed. Only live-qualified delivery case.
+- H01: nine behavior checks and complete command-baseline qualification, including real Settings components. Reference 309 tests pass; the base's one existing target-defect failure must be explicitly declared fail-to-pass. Portable runner/grader and rubric remain.
+- M01: six checks, actual calendar browser confirmation and frontend baselines (1,402/1,403 tests). Complete backend/E2E/runner/rubric qualification remains.
+- P04: ten PostgreSQL/deadline checks, three rejected mutants, backend tests 5,410/5,414 with eight documented skips each. Seven pre-existing mypy errors block its complete delivery manifest; no P04 live model trial occurred.
 
-Batch A v3 at `ebd463b` performed the first valid delivery trial. Incumbent A1 completed triage, two scouts, Grill, specification and a four-package plan in 7m02s, then refused implementation at **604,207 / 600,000 tokens**. This remains a **valid budget failure**, not invalid apparatus. No candidate exists. The remaining eight slots were explicitly cancelled before dispatch; `adjudication.json` records the reason. Do not pool v3 with later budgets or claim a model ranking.
+Latest implementation verification: 761/761 repository tests; 51/51 focused eval tests; lint, formatting, typecheck, production build and Sites 4/4 pass. Expected `dist/client/index.html`, `dist/server/index.js`, `dist/.openai/hosting.json` exist. Earlier Frontier API 18/18 and browser scorecard qualification are retained. Logs: implementation `.data/evaluation-preflight/final-*.log`. No remote CI was run.
 
-Read-only historical diagnostic: ten completed approval-stage tasks range from 624,549 to 18,743,202 tokens; median 2,170,549. These heterogeneous observations inform allowance feasibility only, not model quality. Source receipt `historical-budget-diagnostic.json` in the private evaluation root.
+## Continuation
 
-The next campaign is **batch-a-v4**, public `/private/tmp/h-eval-a4`: **30 minutes, 5,000,000 tokens, 24 agent runs, 40 provider invocations** per trial. Policies, case, grading and sequential order stay fixed. All earlier attempts and unknown consumption remain retained. The wrapper blocks subsequent dispatch; an in-flight call may overshoot and disqualify its trial. The bounded external rubric remains 200,000 tokens separately.
+1. Review the results and prioritized follow-up issue specifications. The next unit is workflow reliability and allowance feasibility, not 24 more held-out runs.
+2. Keep completed receipts and failed slices intact. A changed model, prompt, context, recovery policy, environment or limit needs a new campaign/version.
+3. Use [evaluations/README.md](../evaluations/README.md) for runner scope and commands. The current runner is H02/macOS-specific; do not substitute another case ID and claim qualification.
+4. Before any new run, refresh repository/service state and actual model/provider availability. Declare total-task and stage limits and grade exact final candidates. Promotion remains explicit and evidence-based.

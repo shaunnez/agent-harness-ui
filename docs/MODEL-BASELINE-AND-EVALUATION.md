@@ -1,7 +1,7 @@
 # Model baseline and repeatable delivery evaluation
 
 Date: 22 September 2026.
-Status: baseline remains a hypothesis; the user has authorized case selection and evaluation across Agent Harness, PlanCheck and MyStrataAssist, to continue after compaction. No production policy has changed. Isolated evaluation is underway; current receipts and campaign versions are in MODEL-EVALUATION-CHECKPOINT.md. Resume from [MODEL-EVALUATION-RUN.md](MODEL-EVALUATION-RUN.md).
+Status: Batch A complete; all three policies delivered 0/3 accepted candidates. Retain the incumbent pending qualification. No production policy has changed. See [MODEL-EVALUATION-RESULTS.md](MODEL-EVALUATION-RESULTS.md) and [MODEL-EVALUATION-FOLLOW-UPS.md](MODEL-EVALUATION-FOLLOW-UPS.md). The baseline below remains a hypothesis, not an evaluated winner.
 
 ## Decision
 
