@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "description": "Bounded public Firecrawl runtime acceptance; one session, no reusable allowance.",
+  "limits": {
+    "firecrawlCredits": 40,
+    "serperCalls": 1,
+    "calculatedFirecrawlUpperBound": 12
+  },
+  "configuration": {
+    "searchProvider": "firecrawl",
+    "searchFallback": "serper",
+    "captureProvider": "firecrawl",
+    "pdfProvider": "firecrawl",
+    "defaultMarket": "NZ",
+    "pdfMode": "ocr",
+    "maxPdfPages": 3,
+    "maxAge": 0,
+    "storeInCache": false
+  },
+  "scenarios": [
+    {
+      "id": "nz-dynamic-price-html",
+      "kind": "html",
+      "market": "NZ",
+      "searchQuery": "site:mitre10.co.nz GIB Aqualine plasterboard 433057",
+      "url": "https://www.mitre10.co.nz/shop/gib-aqualine-plasterboard-sheet-10-x-2400-x-1200mm/p/433057",
+      "identityTerms": ["GIB", "Aqualine", "433057"],
+      "assertion": "product identity only; no hard-coded live price"
+    },
+    {
+      "id": "au-hardie-table-pdf",
+      "kind": "pdf",
+      "market": "AU",
+      "searchQuery": "site:jameshardie.com.au Hardie Wrap Weather Barrier installation guide thermal performance",
+      "url": "https://www.jameshardie.com.au/ContentfulCMS/Installation-Guide/Hardie_Wrap_Weather_Barrier_Installation_Guide.pdf",
+      "maxPages": 3,
+      "successPage": 2,
+      "successExcerpt": "THERMAL PERFORMANCE",
+      "negativePage": 3,
+      "expectedRetainedPages": 2
+    },
+    {
+      "id": "wrong-existing-page-fixture",
+      "kind": "deterministic-only",
+      "description": "Offline fixture proves an excerpt on page 2 is rejected when cited on existing page 1."
+    },
+    {
+      "id": "synthetic-firecrawl-failure-serper-fallback",
+      "kind": "fallback",
+      "market": "NZ",
+      "searchQuery": "New Zealand public building product source",
+      "primaryFailure": "synthetic pre-transport transient failure",
+      "maxSerperCalls": 1
+    }
+  ]
+}

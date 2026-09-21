@@ -99,11 +99,32 @@ Later benchmark against:
 
 ## Current vertical-slice evaluation
 
+- For the next implementation, read `06-FIRECRAWL-RUNTIME-IMPLEMENTATION-PLAN.md` v2 and use
+  `prompts/05-IMPLEMENT-FIRECRAWL-RUNTIME.md` only after an explicit start instruction. The current slice is
+  single-agent public research; earlier fan-out/model exploration above is not its implementation scope.
 - `04-SEARCH-PROVIDER-BENCHMARK.md` compares public-web discovery.
 - `05-CAPTURE-AND-PDF-BENCHMARK.md` records both live gates: the broad local/Firecrawl/Exa comparison and
   the difficult Firecrawl-versus-PlanCheck PDF gate, including the final public/private capture boundary.
-- `06-FIRECRAWL-RUNTIME-IMPLEMENTATION-PLAN.md` turns the Firecrawl-search, Serper-fallback route into the
-  next bounded production-enablement slice.
+- `06-FIRECRAWL-RUNTIME-IMPLEMENTATION-PLAN.md` v2 specifies the settled Firecrawl public capture route,
+  exact configuration/fallback rules, initial OCR mode, bounded snapshot reads, page verification,
+  credit accounting, ordered implementation steps, and separate deterministic/live acceptance gates.
 - `07-CURRENT-PDF-REPLACEMENT-GATE.md` records the corrected current-PlanCheck comparison. It selects Firecrawl
   PDF Parse for public sources while keeping private PDFs on PlanCheck's local transcription path.
 - The runtime still uses Tavily until the implementation slice is completed and accepted.
+
+## Firecrawl runtime launch and rollback
+
+Keep local research credentials in ignored `.env.research.local` with owner-only mode `0600`. The enabled
+public-only profile uses `RESEARCH_SEARCH_PROVIDER=firecrawl`, `RESEARCH_SEARCH_FALLBACK=serper`,
+`RESEARCH_CAPTURE_PROVIDER=firecrawl`, `RESEARCH_PDF_PROVIDER=firecrawl`, the bounded market/page/credit/call
+settings from the v2 plan, and host-only `FIRECRAWL_API_KEY` / `SERPER_API_KEY`. Never place private document
+context in this route; both queries and URLs leave the machine.
+
+- `npm run research:acceptance` validates the versioned S8 manifest and 12-credit upper bound without DNS,
+  provider or model calls. A live run additionally requires the explicit execution guard and public-only
+  acknowledgement; preparing this command is not permission to execute it.
+- `RUN_RESEARCH_DEMO=1 npm run research:demo:local -- "public objective"` runs the selected live model route
+  only after its separate guard and credential preflight pass.
+- Roll search back with `RESEARCH_SEARCH_PROVIDER=tavily` and `RESEARCH_SEARCH_FALLBACK=none`. Roll capture
+  back with `RESEARCH_CAPTURE_PROVIDER=local` and `RESEARCH_PDF_PROVIDER=disabled`. Rollback does not delete
+  retained snapshots or change historical evidence.

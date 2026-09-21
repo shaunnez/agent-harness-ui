@@ -1,5 +1,6 @@
 import process from "node:process";
 import { DeepAgentsResearchRuntime } from "../server/research/deepagents/adapter.mjs";
+import { parseResearchProviderConfig } from "../server/research/research-provider-contracts.mjs";
 import { resolveResearchBudget } from "../src/research-budget-policy.ts";
 
 if (process.env.RUN_RESEARCH_DEMO !== "1") {
@@ -10,9 +11,21 @@ if (process.env.RUN_RESEARCH_DEMO !== "1") {
 if (!process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY && !process.env.RESEARCH_MODEL_API_KEY) {
   throw new Error("Provide an approved model credential before running the live research demo.");
 }
-if (!process.env.TAVILY_API_KEY && !process.env.RESEARCH_SEARCH_API_KEY) {
-  throw new Error("Provide TAVILY_API_KEY or RESEARCH_SEARCH_API_KEY before running the live research demo.");
-}
+const providerConfig = parseResearchProviderConfig(process.env);
+if (
+  providerConfig.searchProvider === "tavily" &&
+  !process.env.TAVILY_API_KEY &&
+  !process.env.RESEARCH_SEARCH_API_KEY
+)
+  throw new Error("Tavily selection requires TAVILY_API_KEY or RESEARCH_SEARCH_API_KEY.");
+if (providerConfig.searchProvider === "firecrawl" && !process.env.FIRECRAWL_API_KEY)
+  throw new Error("Firecrawl selection requires FIRECRAWL_API_KEY.");
+if (providerConfig.searchFallback === "serper" && !process.env.SERPER_API_KEY)
+  throw new Error("Serper fallback selection requires SERPER_API_KEY.");
+if (providerConfig.captureProvider === "firecrawl" && process.env.RESEARCH_PUBLIC_ONLY_ACKNOWLEDGED !== "1")
+  throw new Error(
+    "Public Firecrawl capture requires RESEARCH_PUBLIC_ONLY_ACKNOWLEDGED=1; queries and URLs leave the machine.",
+  );
 
 const objective =
   process.argv.slice(2).join(" ").trim() ||

@@ -75,7 +75,8 @@ export class TavilySearchProvider {
 
 export function resolveSearchProvider(env = process.env) {
   const provider = env.RESEARCH_SEARCH_PROVIDER ?? "tavily";
-  if (provider !== "tavily") throw new Error(`Unsupported research search provider "${provider}".`);
+  if (provider !== "tavily")
+    throw new Error(`Use research-provider-resolver.mjs for configured provider "${provider}".`);
   return new TavilySearchProvider({
     apiKey: env.RESEARCH_SEARCH_API_KEY ?? env.TAVILY_API_KEY,
     endpoint: env.RESEARCH_SEARCH_BASE_URL ?? DEFAULT_ENDPOINT,

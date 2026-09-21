@@ -1,29 +1,43 @@
-import { createHash } from "node:crypto";
-import { lookup as dnsLookup } from "node:dns/promises";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import net from "node:net";
 import path from "node:path";
+import {
+  DEFAULT_SOURCE_BYTE_LIMIT,
+  DEFAULT_SOURCE_TIMEOUT_MS,
+  fetchValidatedSource,
+} from "./research-source-fetch.mjs";
+import {
+  PDF_SNAPSHOT_FORMAT,
+  readVerifiedSnapshot,
+  renderPdfPreview,
+  serializePdfSnapshot,
+  verifySnapshotEvidence,
+  writeResearchSnapshot,
+} from "./research-source-snapshots.mjs";
+import { normalizeRequestedUrl, validatePublicSourceUrl } from "./research-source-policy.mjs";
+import { validateMarket } from "./research-provider-contracts.mjs";
+import { ResearchToolError } from "./research-tool-errors.mjs";
+import {
+  asToolError,
+  assertStrictObject,
+  boundedConfidence,
+  containsQuoteVerified,
+  normalizeAuthority,
+  normalizeSourceContent,
+  optionalInteger,
+  requiredString,
+} from "./research-tool-validation.mjs";
 
+export { DEFAULT_SOURCE_BYTE_LIMIT, DEFAULT_SOURCE_TIMEOUT_MS, fetchValidatedSource, verifySnapshotEvidence };
+export { ResearchToolError } from "./research-tool-errors.mjs";
 export const DEFAULT_RESEARCH_SOURCE_DIRECTORY = path.resolve(".data", "research-sources");
-export const DEFAULT_SOURCE_BYTE_LIMIT = 1_000_000;
-export const DEFAULT_SOURCE_TIMEOUT_MS = 15_000;
 const MAX_MODEL_CONTENT_CHARS = 50_000;
-const MAX_REDIRECTS = 5;
-
-export class ResearchToolError extends Error {
-  constructor(code, message, { ceiling } = {}) {
-    super(message);
-    this.name = "ResearchToolError";
-    this.code = code;
-    this.ceiling = ceiling ?? null;
-  }
-}
 
 export class ResearchWebTools {
   #runId;
   #budget;
   #context;
   #searchProvider;
+  #captureProvider;
+  #providerConfig;
   #snapshotDirectory;
   #fetch;
   #lookup;
@@ -33,21 +47,31 @@ export class ResearchWebTools {
   #maxResponseBytes;
   #timeoutMs;
   #sources = new Map();
+  #captures = new Map();
   #findings = [];
   #toolCallsUsed = 0;
   #searchCallsUsed = 0;
+  #sourceSequence = 0;
   #startedAtMs;
   #searchMetadata = [];
   #signal;
+  #deadlineController = null;
+  #deadlineTimer = null;
+  #deadlineAtMs = null;
+  #ledgers;
+  #closed = false;
 
   constructor({
     runId,
     budget,
     context = [],
     searchProvider,
+    captureProvider = null,
+    providerConfig = { defaultMarket: "NZ", maxPdfPages: 30 },
+    providerLedgers = [],
     snapshotDirectory = DEFAULT_RESEARCH_SOURCE_DIRECTORY,
-    fetchImpl = globalThis.fetch,
-    lookup = dnsLookup,
+    fetchImpl = undefined,
+    lookup,
     now = () => new Date(),
     onEvent = () => {},
     allowPrivateNetwork = false,
@@ -56,10 +80,16 @@ export class ResearchWebTools {
     signal = null,
   }) {
     if (!searchProvider?.search) throw new Error("Research web tools require a search provider.");
+    if ((captureProvider || providerConfig.searchProvider === "firecrawl") && context.length)
+      throw new Error(
+        "Public Firecrawl research refuses non-empty document context; queries and URLs leave the machine.",
+      );
     this.#runId = runId;
     this.#budget = budget;
     this.#context = context;
     this.#searchProvider = searchProvider;
+    this.#captureProvider = captureProvider;
+    this.#providerConfig = providerConfig;
     this.#snapshotDirectory = snapshotDirectory;
     this.#fetch = fetchImpl;
     this.#lookup = lookup;
@@ -68,22 +98,40 @@ export class ResearchWebTools {
     this.#allowPrivateNetwork = allowPrivateNetwork;
     this.#maxResponseBytes = maxResponseBytes;
     this.#timeoutMs = timeoutMs;
-    this.#signal = signal;
+    if (Number.isFinite(budget.maxRuntimeMs) && budget.maxRuntimeMs > 0) {
+      this.#deadlineController = new AbortController();
+      this.#deadlineAtMs = Date.now() + budget.maxRuntimeMs;
+      this.#deadlineTimer = setTimeout(
+        () =>
+          this.#deadlineController.abort(
+            new DOMException("The research run deadline expired.", "TimeoutError"),
+          ),
+        budget.maxRuntimeMs,
+      );
+      this.#signal = signal
+        ? AbortSignal.any([signal, this.#deadlineController.signal])
+        : this.#deadlineController.signal;
+    } else this.#signal = signal;
+    this.#ledgers = providerLedgers.filter(Boolean);
     this.#startedAtMs = Date.now();
   }
 
   async invoke(toolName, input) {
-    if (this.#signal?.aborted)
+    if (this.#deadlineController?.signal.aborted) throw this.#deadlineError();
+    if (this.#closed || this.#signal?.aborted)
       throw new ResearchToolError("research_cancelled", "The research run was cancelled.");
     this.#reserveToolCall(toolName);
     this.#onEvent("tool.called", { tool: toolName });
     switch (toolName) {
       case "read_context":
+        assertStrictObject(input, []);
         return this.#response(this.#context);
       case "web_search":
         return this.#response(await this.#webSearch(input));
       case "fetch_source":
         return this.#response(await this.#fetchSource(input));
+      case "read_source":
+        return this.#response(await this.#readSource(input));
       case "submit_finding":
         return this.#response(this.#submitFinding(input));
       default:
@@ -105,88 +153,308 @@ export class ResearchWebTools {
     return [...this.#searchMetadata];
   }
 
+  providerAccounting() {
+    return this.#ledgers.map((ledger) => ledger.snapshot());
+  }
+
+  unresolvedCoverageWarnings() {
+    const warnings = [];
+    for (const retained of this.#sources.values()) {
+      if (retained.pdf?.coverage === "capped")
+        warnings.push(
+          `Source ${retained.source.id} represents only the configured physical-page range; evidence beyond page ${retained.pdf.parsedPages} remains unresolved.`,
+        );
+      if (retained.pdf?.coverage === "unknown")
+        warnings.push(
+          `Source ${retained.source.id} has unknown total-page coverage; absence from retained pages is not proof of absence from the document.`,
+        );
+    }
+    return warnings;
+  }
+
+  close() {
+    if (this.#closed) return this.providerAccounting();
+    this.#closed = true;
+    if (this.#deadlineTimer) clearTimeout(this.#deadlineTimer);
+    return this.#ledgers.map((ledger) => ledger.close());
+  }
+
   #response(result) {
     return { result, budgetState: this.budgetState() };
   }
 
   #reserveToolCall(toolName) {
-    if (this.#toolCallsUsed >= this.#budget.maxToolCalls) {
+    if (this.#toolCallsUsed >= this.#budget.maxToolCalls)
       throw new ResearchToolError(
         "tool_call_ceiling_exceeded",
         `The aggregate research tool-call ceiling (${this.#budget.maxToolCalls}) was reached.`,
         { ceiling: "maxToolCalls" },
       );
-    }
-    if (toolName === "web_search" && this.#searchCallsUsed >= this.#budget.maxSearchCalls) {
+    if (toolName === "web_search" && this.#searchCallsUsed >= this.#budget.maxSearchCalls)
       throw new ResearchToolError(
         "search_call_ceiling_exceeded",
         `The research search-call ceiling (${this.#budget.maxSearchCalls}) was reached.`,
         { ceiling: "maxSearchCalls" },
       );
-    }
     this.#toolCallsUsed += 1;
     if (toolName === "web_search") this.#searchCallsUsed += 1;
   }
 
   async #webSearch(input) {
-    const query = requiredString(input?.query, "Search query", 500);
+    assertStrictObject(input, ["query", "market"]);
+    const query = requiredString(input.query, "Search query", 500);
+    let market;
+    try {
+      market = validateMarket(input.market, this.#providerConfig.defaultMarket);
+    } catch (error) {
+      throw new ResearchToolError("invalid_tool_input", error.message);
+    }
     let response;
     try {
-      response = await this.#searchProvider.search(query, { maxResults: 5, signal: this.#signal });
+      response = await this.#searchProvider.search(query, {
+        market,
+        maxResults: 5,
+        signal: this.#signal,
+        remainingMs: this.#remainingMs(),
+      });
     } catch (error) {
-      throw new ResearchToolError("search_failed", `Web search failed: ${error?.message ?? String(error)}`);
+      if (this.#deadlineController?.signal.aborted) throw this.#deadlineError(error?.attempt);
+      throw asToolError(error, "search_failed", "Web search failed.");
     }
-    const results = (response?.results ?? [])
-      .filter((result) => isHttpUrl(result.url))
-      .map((result) => ({
-        title: String(result.title ?? "Untitled result").slice(0, 500),
-        url: String(result.url),
-        snippet: String(result.snippet ?? "").slice(0, 2_000),
-        ...(result.publishedAt ? { publishedAt: String(result.publishedAt) } : {}),
-      }));
-    const metadata = response?.metadata ?? {};
+    const results = [];
+    const seen = new Set();
+    for (const candidate of response?.results ?? []) {
+      if (results.length === 5) break;
+      try {
+        await validatePublicSourceUrl(candidate.url, {
+          lookup: this.#lookup,
+          signal: this.#signal,
+          allowPrivateNetwork: this.#allowPrivateNetwork,
+        });
+        const normalizedUrl = normalizeRequestedUrl(candidate.url);
+        if (seen.has(normalizedUrl)) continue;
+        seen.add(normalizedUrl);
+        results.push({
+          title: String(candidate.title ?? "Untitled result").slice(0, 500),
+          url: normalizedUrl,
+          snippet: String(candidate.snippet ?? "").slice(0, 2_000),
+          ...(candidate.publishedAt ? { publishedAt: String(candidate.publishedAt) } : {}),
+        });
+      } catch {
+        // Invalid/private result URLs never reach the model.
+      }
+    }
+    const metadata = {
+      ...(response?.metadata ?? {}),
+      requestedMarket: market,
+      resultCount: results.length,
+    };
     this.#searchMetadata.push(metadata);
     this.#onEvent("log", { message: "Web search completed.", search: metadata });
-    return { query, results };
+    return { query, market, results };
   }
 
   async #fetchSource(input) {
-    const requestedUrl = requiredString(input?.url, "Source URL", 4_000);
-    const response = await fetchValidatedSource(requestedUrl, {
-      fetchImpl: this.#fetch,
-      lookup: this.#lookup,
-      allowPrivateNetwork: this.#allowPrivateNetwork,
-      maxResponseBytes: this.#maxResponseBytes,
-      timeoutMs: this.#timeoutMs,
-      signal: this.#signal,
-    });
-    const normalized = normalizeSourceContent(response.body, response.mediaType);
-    if (!normalized.content)
-      throw new ResearchToolError("source_empty", "The fetched source had no usable text.");
-    const digest = sha256(normalized.content);
-    await mkdir(this.#snapshotDirectory, { recursive: true });
-    const snapshotPath = path.join(this.#snapshotDirectory, `${digest}.txt`);
-    await writeImmutable(snapshotPath, normalized.content);
-    const sourceId = `source-${this.#sources.size + 1}`;
+    assertStrictObject(input, ["url"]);
+    const requestedUrl = requiredString(input.url, "Source URL", 4_000);
+    try {
+      await validatePublicSourceUrl(requestedUrl, {
+        lookup: this.#lookup,
+        signal: this.#signal,
+        allowPrivateNetwork: this.#allowPrivateNetwork,
+      });
+    } catch (error) {
+      throw asToolError(error, "policy_rejected", "The source URL was rejected by public-source policy.");
+    }
+    const key = normalizeRequestedUrl(requestedUrl);
+    const existing = this.#captures.get(key);
+    if (existing) return existing;
+    const sourceId = `source-${++this.#sourceSequence}`;
+    const operation = this.#captureAndRetain(requestedUrl, sourceId);
+    this.#captures.set(key, operation);
+    operation.then(
+      (result) => {
+        const alias = normalizeRequestedUrl(result.source.url);
+        if (!this.#captures.has(alias)) this.#captures.set(alias, operation);
+      },
+      () => undefined,
+    );
+    return operation;
+  }
+
+  async #captureAndRetain(requestedUrl, sourceId) {
+    let captured;
+    if (this.#captureProvider) {
+      try {
+        captured = await this.#captureProvider.capture(requestedUrl, {
+          maxPdfPages: this.#providerConfig.maxPdfPages,
+          signal: this.#signal,
+          remainingMs: this.#remainingMs(),
+        });
+      } catch (error) {
+        if (this.#deadlineController?.signal.aborted) throw this.#deadlineError(error?.attempt);
+        const neverFallback = [
+          "cancelled",
+          "deadline_exceeded",
+          "budget_exhausted",
+          "policy_rejected",
+        ].includes(error?.category);
+        if (neverFallback || !error?.fallbackEligible || /\.pdf(?:$|[?#])/i.test(requestedUrl))
+          throw asToolError(error, error?.category ?? "capture_failed", "Source capture failed.");
+        captured = await this.#localCapture(requestedUrl, error?.attempt ? [error.attempt] : []);
+      }
+    } else captured = await this.#localCapture(requestedUrl);
+    if (this.#deadlineController?.signal.aborted) throw this.#deadlineError();
+    if (this.#closed || this.#signal?.aborted)
+      throw new ResearchToolError("research_cancelled", "The research run was cancelled.");
+
+    const isPdf = captured.mediaType === "application/pdf";
+    const snapshotContent = isPdf ? serializePdfSnapshot(captured.validatedPdf) : captured.content;
+    if (!snapshotContent)
+      throw new ResearchToolError("source_empty", "The captured source had no usable text.");
+    const snapshot = await writeResearchSnapshot(this.#snapshotDirectory, snapshotContent);
     const retrievedAt = this.#now().toISOString();
-    const snapshotRef = `sha256:${digest}`;
+    const metadata = {
+      ...(captured.metadata ?? {}),
+      snapshotRef: snapshot.snapshotRef,
+      ...(isPdf ? { snapshotFormat: PDF_SNAPSHOT_FORMAT } : {}),
+    };
     const source = {
       id: sourceId,
       sourceType: "web",
-      url: response.url,
-      title: normalized.title ?? response.url,
+      url: captured.metadata?.finalUrl ?? requestedUrl,
+      title: captured.metadata?.title ?? requestedUrl,
       retrievedAt,
-      contentSha256: digest,
-      contentBytes: Buffer.byteLength(normalized.content),
-      mediaType: response.mediaType,
-      metadata: { snapshotRef },
+      contentSha256: snapshot.digest,
+      contentBytes: snapshot.bytes,
+      mediaType: captured.mediaType,
+      metadata,
     };
-    this.#sources.set(sourceId, { source, content: normalized.content, snapshotRef });
+    const retained = {
+      source,
+      snapshotRef: snapshot.snapshotRef,
+      content: captured.content,
+      pdf: captured.validatedPdf ?? null,
+    };
+    this.#sources.set(sourceId, retained);
     this.#onEvent("source.retrieved", { source });
+    const preview = isPdf
+      ? renderPdfPreview(retained.pdf)
+      : {
+          content: captured.content.slice(0, MAX_MODEL_CONTENT_CHARS),
+          contentTruncated: captured.content.length > MAX_MODEL_CONTENT_CHARS,
+        };
     return {
-      source: { ...source, snapshotRef },
-      content: normalized.content.slice(0, MAX_MODEL_CONTENT_CHARS),
-      contentTruncated: normalized.content.length > MAX_MODEL_CONTENT_CHARS,
+      source: { ...source, snapshotRef: snapshot.snapshotRef },
+      ...preview,
+      coverage: retained.pdf?.coverage ?? "complete",
+      pages: retained.pdf ? retained.pdf.pages.map((page) => page.pageNumber) : null,
+    };
+  }
+
+  async #localCapture(url, priorAttempts = []) {
+    let response;
+    try {
+      response = await fetchValidatedSource(url, {
+        ...(this.#fetch ? { fetchImpl: this.#fetch } : {}),
+        lookup: this.#lookup,
+        allowPrivateNetwork: this.#allowPrivateNetwork,
+        maxResponseBytes: this.#maxResponseBytes,
+        timeoutMs: Math.min(this.#timeoutMs, this.#remainingMs()),
+        signal: this.#signal,
+      });
+    } catch (error) {
+      throw asToolError(error, error?.code ?? "source_fetch_failed", "Local source capture failed.");
+    }
+    const normalized = normalizeSourceContent(response.body, response.mediaType);
+    return {
+      mediaType: response.mediaType,
+      content: normalized.content,
+      pages: [],
+      metadata: {
+        provider: "local",
+        requestedUrl: url,
+        finalUrl: response.url,
+        title: normalized.title ?? response.url,
+        attempts: priorAttempts,
+        receiptTime: this.#now().toISOString(),
+        normalizationVersion: 1,
+      },
+    };
+  }
+
+  #remainingMs() {
+    return this.#deadlineAtMs == null
+      ? Number.MAX_SAFE_INTEGER
+      : Math.max(1, this.#deadlineAtMs - Date.now());
+  }
+
+  #deadlineError(providerAttempt = null) {
+    const error = new ResearchToolError(
+      "deadline_exceeded",
+      "The research run deadline expired during a host tool call.",
+    );
+    error.providerAttempt = providerAttempt;
+    return error;
+  }
+
+  async #readSource(input) {
+    assertStrictObject(input, ["sourceId", "page", "offset", "limit"]);
+    const sourceId = requiredString(input.sourceId, "Source id", 200);
+    const retained = this.#sources.get(sourceId);
+    if (!retained)
+      throw new ResearchToolError(
+        "source_not_in_run",
+        `Source ${sourceId} does not belong to research run ${this.#runId}.`,
+      );
+    const offset = optionalInteger(input.offset, 0, 0, Number.MAX_SAFE_INTEGER, "Source offset");
+    const limit = optionalInteger(input.limit, 12_000, 1, 50_000, "Source limit");
+    let verified;
+    try {
+      verified = await readVerifiedSnapshot(retained.source, this.#snapshotDirectory);
+    } catch {
+      throw new ResearchToolError(
+        "source_snapshot_invalid",
+        `Retained source ${sourceId} failed integrity verification.`,
+      );
+    }
+    let content;
+    let page = null;
+    let coverage = "complete";
+    if (verified.pdf) {
+      if (!Number.isInteger(input.page) || input.page < 1)
+        throw new ResearchToolError(
+          "invalid_tool_input",
+          "PDF source reads require a retained physical page.",
+        );
+      const selected = verified.pdf.pages.find((candidate) => candidate.pageNumber === input.page);
+      if (!selected)
+        throw new ResearchToolError(
+          "source_page_not_retained",
+          `Physical page ${input.page} is not retained for source ${sourceId}.`,
+        );
+      content = selected.content;
+      page = input.page;
+      coverage = verified.pdf.coverage;
+    } else {
+      if (input.page != null)
+        throw new ResearchToolError("invalid_tool_input", "HTML/text source reads must not include a page.");
+      content = verified.content;
+    }
+    if (offset >= content.length && !(offset === 0 && content.length === 0))
+      throw new ResearchToolError(
+        "source_offset_out_of_range",
+        `Offset ${offset} is outside retained source ${sourceId}.`,
+      );
+    const returned = content.slice(offset, offset + limit);
+    return {
+      sourceId,
+      ...(page == null ? {} : { page }),
+      offset,
+      content: returned,
+      nextOffset: offset + returned.length < content.length ? offset + returned.length : null,
+      totalCharacters: content.length,
+      coverage,
     };
   }
 
@@ -215,11 +483,36 @@ export class ResearchWebTools {
           `Source ${sourceId} does not belong to research run ${this.#runId}.`,
         );
       const excerpt = requiredString(reference?.excerpt, "Evidence excerpt", 2_000);
-      if (!retained.content.includes(excerpt))
-        throw new ResearchToolError(
-          "excerpt_not_found",
-          `The submitted excerpt is not an exact substring of retained source ${sourceId}.`,
-        );
+      if (retained.pdf) {
+        const keys = Object.keys(reference.locator ?? {});
+        if (
+          keys.length !== 1 ||
+          keys[0] !== "page" ||
+          !Number.isInteger(reference.locator.page) ||
+          reference.locator.page < 1
+        )
+          throw new ResearchToolError(
+            "pdf_page_required",
+            "PDF evidence requires only a positive physical-page locator.",
+          );
+        const page = retained.pdf.pages.find((candidate) => candidate.pageNumber === reference.locator.page);
+        if (!page?.content.includes(excerpt))
+          throw new ResearchToolError(
+            "excerpt_not_found",
+            `The submitted excerpt is not an exact substring of retained physical page ${reference.locator.page}.`,
+          );
+      } else {
+        if (reference.locator?.page != null)
+          throw new ResearchToolError(
+            "invalid_locator",
+            "HTML/text evidence must not include a page locator.",
+          );
+        if (!retained.content.includes(excerpt))
+          throw new ResearchToolError(
+            "excerpt_not_found",
+            `The submitted excerpt is not an exact substring of retained source ${sourceId}.`,
+          );
+      }
       return {
         sourceId,
         sourceType: retained.source.sourceType,
@@ -251,246 +544,4 @@ export class ResearchWebTools {
     this.#onEvent("finding.created", { findingId: finding.id });
     return finding;
   }
-}
-
-export async function verifySnapshotEvidence({
-  source,
-  reference,
-  snapshotDirectory = DEFAULT_RESEARCH_SOURCE_DIRECTORY,
-}) {
-  if (!source || !reference?.excerpt || !reference?.snapshotRef || !source.contentSha256) return false;
-  if (reference.snapshotRef !== `sha256:${source.contentSha256}`) return false;
-  if (!/^[a-f0-9]{64}$/.test(source.contentSha256)) return false;
-  try {
-    const content = await readFile(path.join(snapshotDirectory, `${source.contentSha256}.txt`), "utf8");
-    return sha256(content) === source.contentSha256 && content.includes(reference.excerpt);
-  } catch {
-    return false;
-  }
-}
-
-export async function fetchValidatedSource(
-  requestedUrl,
-  {
-    fetchImpl = globalThis.fetch,
-    lookup = dnsLookup,
-    allowPrivateNetwork = false,
-    maxResponseBytes = DEFAULT_SOURCE_BYTE_LIMIT,
-    timeoutMs = DEFAULT_SOURCE_TIMEOUT_MS,
-    signal: callerSignal = null,
-  } = {},
-) {
-  let current = new URL(requestedUrl);
-  const timeoutSignal = AbortSignal.timeout(timeoutMs);
-  const signal = callerSignal ? AbortSignal.any([callerSignal, timeoutSignal]) : timeoutSignal;
-  for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
-    await assertPublicHttpUrl(current, { lookup, allowPrivateNetwork });
-    let response;
-    try {
-      response = await fetchImpl(current, {
-        redirect: "manual",
-        signal,
-        headers: { "User-Agent": "EversorResearch/1.0 (+source-retention)" },
-      });
-    } catch (error) {
-      if (callerSignal?.aborted)
-        throw new ResearchToolError("research_cancelled", "The research run was cancelled.");
-      if (timeoutSignal.aborted || error?.name === "AbortError" || error?.name === "TimeoutError")
-        throw new ResearchToolError("source_timeout", `Source fetch exceeded ${timeoutMs}ms.`);
-      throw new ResearchToolError("source_fetch_failed", `Source fetch failed: ${error?.message ?? error}`);
-    }
-    if (response.status >= 300 && response.status < 400 && response.headers.get("location")) {
-      if (redirects === MAX_REDIRECTS)
-        throw new ResearchToolError("too_many_redirects", "Source fetch exceeded the redirect limit.");
-      current = new URL(response.headers.get("location"), current);
-      continue;
-    }
-    if (!response.ok)
-      throw new ResearchToolError("source_http_error", `Source fetch returned HTTP ${response.status}.`);
-    const mediaType = (response.headers.get("content-type") ?? "text/plain")
-      .split(";")[0]
-      .trim()
-      .toLowerCase();
-    if (!isSupportedMediaType(mediaType))
-      throw new ResearchToolError("unsupported_media_type", `Unsupported source media type "${mediaType}".`);
-    const declaredBytes = Number(response.headers.get("content-length") ?? 0);
-    if (declaredBytes > maxResponseBytes)
-      throw new ResearchToolError(
-        "source_too_large",
-        `Source declares ${declaredBytes} bytes, above the ${maxResponseBytes}-byte limit.`,
-      );
-    const body = await readBoundedBody(response, maxResponseBytes);
-    return { url: current.toString(), mediaType, body };
-  }
-  throw new ResearchToolError("too_many_redirects", "Source fetch exceeded the redirect limit.");
-}
-
-async function assertPublicHttpUrl(url, { lookup, allowPrivateNetwork }) {
-  if (!isHttpUrl(url.toString()))
-    throw new ResearchToolError("unsupported_url_scheme", "Only HTTP and HTTPS source URLs are allowed.");
-  if (url.username || url.password)
-    throw new ResearchToolError("url_credentials_blocked", "Source URLs must not contain credentials.");
-  if (allowPrivateNetwork) return;
-  const hostname = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
-  if (hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local"))
-    throw new ResearchToolError(
-      "private_network_url",
-      "Loopback and private-network source URLs are blocked.",
-    );
-  const directFamily = net.isIP(hostname);
-  let addresses;
-  try {
-    addresses = directFamily
-      ? [{ address: hostname, family: directFamily }]
-      : await lookup(hostname, { all: true });
-  } catch (error) {
-    throw new ResearchToolError(
-      "source_resolution_failed",
-      `Could not resolve source hostname ${hostname}: ${error?.message ?? error}`,
-    );
-  }
-  if (!addresses.length || addresses.some(({ address }) => isPrivateAddress(address)))
-    throw new ResearchToolError(
-      "private_network_url",
-      "Loopback and private-network source URLs are blocked.",
-    );
-}
-
-function isPrivateAddress(address) {
-  const normalized = String(address).toLowerCase();
-  if (normalized === "::" || normalized === "::1") return true;
-  if (
-    normalized.startsWith("fc") ||
-    normalized.startsWith("fd") ||
-    /^fe[89ab]/.test(normalized) ||
-    normalized.startsWith("ff") ||
-    normalized.startsWith("2001:db8")
-  )
-    return true;
-  if (normalized.startsWith("::ffff:")) return isPrivateAddress(normalized.slice(7));
-  if (net.isIP(normalized) !== 4) return false;
-  const [a, b] = normalized.split(".").map(Number);
-  return (
-    a === 0 ||
-    a === 10 ||
-    a === 127 ||
-    (a === 100 && b >= 64 && b <= 127) ||
-    (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 168) ||
-    (a === 198 && (b === 18 || b === 19)) ||
-    a >= 224
-  );
-}
-
-async function readBoundedBody(response, maxResponseBytes) {
-  if (!response.body) return "";
-  const reader = response.body.getReader();
-  const chunks = [];
-  let bytes = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    bytes += value.byteLength;
-    if (bytes > maxResponseBytes) {
-      await reader.cancel().catch(() => undefined);
-      throw new ResearchToolError(
-        "source_too_large",
-        `Source exceeded the ${maxResponseBytes}-byte response limit.`,
-      );
-    }
-    chunks.push(value);
-  }
-  return new TextDecoder("utf-8", { fatal: false }).decode(Buffer.concat(chunks));
-}
-
-function normalizeSourceContent(body, mediaType) {
-  if (mediaType === "text/html" || mediaType === "application/xhtml+xml") {
-    const titleMatch = body.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
-    const title = titleMatch ? normalizeWhitespace(decodeHtml(stripTags(titleMatch[1]))) : null;
-    const withoutNoise = body
-      .replace(/<(script|style|noscript|svg)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
-      .replace(/<(br|\/p|\/div|\/li|\/section|\/article|\/h[1-6]|\/tr)>/gi, "\n");
-    return { title, content: normalizeWhitespace(decodeHtml(stripTags(withoutNoise))) };
-  }
-  return { title: null, content: normalizeWhitespace(body) };
-}
-
-function stripTags(value) {
-  return value.replace(/<[^>]+>/g, " ");
-}
-
-function decodeHtml(value) {
-  const named = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
-  return value.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, entity) => {
-    if (entity[0] === "#") {
-      const hex = entity[1]?.toLowerCase() === "x";
-      const code = Number.parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10);
-      return Number.isFinite(code) ? String.fromCodePoint(code) : match;
-    }
-    return named[entity.toLowerCase()] ?? match;
-  });
-}
-
-function normalizeWhitespace(value) {
-  return String(value)
-    .normalize("NFC")
-    .replace(/\r/g, "")
-    .replace(/[\t ]+/g, " ")
-    .replace(/\n\s*\n+/g, "\n")
-    .trim();
-}
-
-function sha256(content) {
-  return createHash("sha256").update(content).digest("hex");
-}
-
-async function writeImmutable(filePath, content) {
-  try {
-    await writeFile(filePath, content, { encoding: "utf8", flag: "wx", mode: 0o600 });
-  } catch (error) {
-    if (error?.code !== "EEXIST") throw error;
-    const existing = await readFile(filePath, "utf8");
-    if (existing !== content) throw new Error(`Content-addressed snapshot collision at ${filePath}.`);
-  }
-}
-
-function isHttpUrl(value) {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-function isSupportedMediaType(mediaType) {
-  return mediaType === "text/html" || mediaType === "text/plain" || mediaType === "application/xhtml+xml";
-}
-
-function requiredString(value, label, maxLength) {
-  const normalized = typeof value === "string" ? value.trim() : "";
-  if (!normalized) throw new ResearchToolError("invalid_tool_input", `${label} is required.`);
-  if (normalized.length > maxLength)
-    throw new ResearchToolError("invalid_tool_input", `${label} must be ${maxLength} characters or fewer.`);
-  return normalized;
-}
-
-function boundedConfidence(value) {
-  const number = Number(value);
-  if (!Number.isFinite(number) || number < 0 || number > 1)
-    throw new ResearchToolError("invalid_tool_input", "Finding confidence must be between 0 and 1.");
-  return number;
-}
-
-function normalizeAuthority(value) {
-  return value === "primary" || value === "secondary" ? value : "unknown";
-}
-
-function containsQuoteVerified(value) {
-  if (!value || typeof value !== "object") return false;
-  if (Object.hasOwn(value, "quoteVerified")) return true;
-  return Object.values(value).some((item) =>
-    Array.isArray(item) ? item.some(containsQuoteVerified) : containsQuoteVerified(item),
-  );
 }

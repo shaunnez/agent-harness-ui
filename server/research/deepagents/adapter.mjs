@@ -16,7 +16,11 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { runProcess } from "../../process-runtime.mjs";
 import { DEFAULT_RESEARCH_SOURCE_DIRECTORY, ResearchWebTools } from "../research-web-tools.mjs";
-import { resolveSearchProvider } from "../tavily-search-provider.mjs";
+import {
+  parseResearchProviderConfig,
+  publicProviderConfigSnapshot,
+} from "../research-provider-contracts.mjs";
+import { resolveResearchProviders } from "../research-provider-resolver.mjs";
 import { buildChildEnvironment } from "./child-env.mjs";
 import { decodeWorkerLine, encodeHostMessage } from "./event-protocol.mjs";
 import { resolveModelConfig, splitModelConfigForChild } from "./model-config.mjs";
@@ -37,6 +41,9 @@ export class DeepAgentsResearchRuntime {
   #now;
   #sourceSnapshotDirectory;
   #searchProvider;
+  #captureProvider;
+  #providerConfig;
+  #providerLedgers;
   #webToolsOptions;
 
   constructor({
@@ -47,6 +54,9 @@ export class DeepAgentsResearchRuntime {
     now = () => Date.now(),
     sourceSnapshotDirectory = DEFAULT_RESEARCH_SOURCE_DIRECTORY,
     searchProvider = null,
+    captureProvider = null,
+    providerConfig = null,
+    providerLedgers = [],
     webToolsOptions = {},
   } = {}) {
     this.#id = id;
@@ -56,6 +66,9 @@ export class DeepAgentsResearchRuntime {
     this.#now = now;
     this.#sourceSnapshotDirectory = sourceSnapshotDirectory;
     this.#searchProvider = searchProvider;
+    this.#captureProvider = captureProvider;
+    this.#providerConfig = providerConfig;
+    this.#providerLedgers = providerLedgers;
     this.#webToolsOptions = webToolsOptions;
   }
 
@@ -67,7 +80,16 @@ export class DeepAgentsResearchRuntime {
     if (this.#runs.has(request.id)) throw new Error(`Research run ${request.id} has already started.`);
     await mkdir(path.dirname(this.#checkpointDbPath), { recursive: true }).catch(() => undefined);
     const modelConfig = resolveModelConfig(this.#env);
-    const searchProvider = this.#searchProvider ?? resolveSearchProvider(this.#env);
+    const config = this.#providerConfig ?? parseResearchProviderConfig(this.#env);
+    let searchProvider = this.#searchProvider;
+    let captureProvider = this.#captureProvider;
+    let providerLedgers = this.#providerLedgers;
+    if (!searchProvider) {
+      const resolved = resolveResearchProviders(this.#env, { config });
+      searchProvider = resolved.searchProvider;
+      captureProvider = resolved.captureProvider;
+      providerLedgers = [resolved.firecrawlLedger, resolved.serperLedger];
+    }
     const { forChild: modelForChild, apiKey } = splitModelConfigForChild(modelConfig);
     const workingDirectory = await mkdtemp(path.join(os.tmpdir(), "research-deepagents-"));
     const controller = new AbortController();
@@ -92,12 +114,16 @@ export class DeepAgentsResearchRuntime {
       cancelRequested: false,
       startedAtMs,
       webTools: null,
+      providerAccounting: [],
     };
     run.webTools = new ResearchWebTools({
       runId: request.id,
       budget: request.budget,
       context: request.context ?? [],
       searchProvider,
+      captureProvider,
+      providerConfig: config,
+      providerLedgers,
       snapshotDirectory: this.#sourceSnapshotDirectory,
       signal: controller.signal,
       onEvent: (type, data) => {
@@ -159,6 +185,7 @@ export class DeepAgentsResearchRuntime {
       runtimeMetadata: {
         threadId,
         checkpointDbPath: this.#checkpointDbPath,
+        providerConfig: publicProviderConfigSnapshot(config),
         ...(run.childPid ? { childPid: String(run.childPid) } : {}),
       },
     };
@@ -240,6 +267,13 @@ export class DeepAgentsResearchRuntime {
     }
     switch (message.type) {
       case "research_event":
+        if (message.event === "source.retrieved") {
+          run.error = {
+            code: "host_owned_event_rejected",
+            message: "The child attempted to emit a host-owned source event.",
+          };
+          break;
+        }
         this.#emit(run, runId, message.event, message.data ?? {});
         break;
       case "usage":
@@ -297,6 +331,18 @@ export class DeepAgentsResearchRuntime {
 
   #handleExit(run, runId, processResult, spawnError) {
     if (run.closed) return;
+    const warnings = run.webTools.unresolvedCoverageWarnings();
+    if (run.finalResult && warnings.length) {
+      run.finalResult.unresolvedQuestions = [
+        ...new Set([...(run.finalResult.unresolvedQuestions ?? []), ...warnings]),
+      ];
+    }
+    run.providerAccounting = run.webTools.close();
+    if (run.finalResult) run.finalResult.providerUsage = run.providerAccounting;
+    this.#emit(run, runId, "log", {
+      message: "External provider accounting finalized.",
+      providers: run.providerAccounting,
+    });
     if (run.cancelRequested) {
       run.state = "cancelled";
       this.#emit(run, runId, "run.cancelled", { reason: "operator" });

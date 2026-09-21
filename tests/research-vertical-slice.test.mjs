@@ -54,3 +54,80 @@ test("one agent completes the retained-source evidence loop through the durable 
     }
   });
 });
+
+test("one fake-model run reads a retained PDF page and persists page-verified evidence", async () => {
+  await withDeepAgentsRuntime(
+    async ({ runtime, directory }) => {
+      const db = new DatabaseSync(path.join(directory, "tasks.sqlite3"));
+      db.exec("PRAGMA foreign_keys = ON");
+      migrateSqliteSchema(db);
+      const store = new ResearchStore(db, {
+        sourceSnapshotDirectory: path.join(directory, "sources"),
+      });
+      const service = new ResearchService({
+        store,
+        registry: createResearchRuntimeRegistry([runtime]),
+      });
+      try {
+        const created = await service.createRun({
+          objective: "Find the retained PDF thermal performance heading.",
+          profile: "quick",
+          runtimeId: "deepagents",
+        });
+        await service.settled(created.id);
+        const run = await service.getRun(created.id);
+        assert.equal(run.status, "completed");
+        assert.equal(run.usage.toolCalls, 4);
+        const result = await service.getResult(created.id);
+        assert.equal(result.findings[0].evidence[0].locator.page, 2);
+        assert.equal(result.findings[0].evidence[0].quoteVerified, true);
+      } finally {
+        await service.shutdown();
+        db.close();
+      }
+    },
+    {
+      envOverrides: { RESEARCH_MODEL_FAKE_SCENARIO: "pdf" },
+      searchProvider: {
+        async search() {
+          return {
+            results: [
+              {
+                title: "Fixture guide",
+                url: "https://manufacturer.example.test/guide.pdf",
+                snippet: "Fixture PDF",
+              },
+            ],
+            metadata: { provider: "fixture" },
+          };
+        },
+      },
+      captureProvider: {
+        async capture() {
+          return {
+            mediaType: "application/pdf",
+            content: "",
+            pages: [],
+            validatedPdf: {
+              totalPages: 2,
+              parsedPages: 2,
+              pageCap: 3,
+              coverage: "complete",
+              capTruncated: false,
+              pages: [
+                { pageNumber: 1, content: `${"x".repeat(50_100)} page one` },
+                { pageNumber: 2, content: "THERMAL PERFORMANCE is the retained page heading." },
+              ],
+            },
+            metadata: {
+              provider: "fixture",
+              finalUrl: "https://manufacturer.example.test/guide.pdf",
+              title: "Fixture guide",
+            },
+          };
+        },
+      },
+      providerConfig: { defaultMarket: "NZ", maxPdfPages: 3 },
+    },
+  );
+});

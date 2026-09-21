@@ -32,7 +32,14 @@ export const TEST_BUDGET = Object.freeze({
 /** A runtime over a throwaway checkpoint database, defaulting to the fake model. */
 export async function withDeepAgentsRuntime(
   body,
-  { envOverrides, searchProvider = fixtureSearchProvider(), webToolsOptions = {} } = {},
+  {
+    envOverrides,
+    searchProvider = fixtureSearchProvider(),
+    captureProvider = null,
+    providerConfig = null,
+    providerLedgers = [],
+    webToolsOptions = {},
+  } = {},
 ) {
   const directory = await mkdtemp(path.join(os.tmpdir(), "research-deepagents-test-"));
   const runtime = new DeepAgentsResearchRuntime({
@@ -40,6 +47,9 @@ export async function withDeepAgentsRuntime(
     sourceSnapshotDirectory: path.join(directory, "sources"),
     env: safeChildEnv(envOverrides),
     searchProvider,
+    captureProvider,
+    providerConfig,
+    providerLedgers,
     webToolsOptions: {
       lookup: async () => [{ address: "93.184.216.34", family: 4 }],
       fetchImpl: async () =>

@@ -119,6 +119,13 @@ test("source fetching rejects unsupported schemes, private addresses, oversized 
     (error) => error.code === "source_too_large",
   );
   await assert.rejects(
+    fetchValidatedSource("https://example.test/disguised", {
+      lookup: PUBLIC_LOOKUP,
+      fetchImpl: async () => new Response("%PDF-disguised", { headers: { "content-type": "text/plain" } }),
+    }),
+    (error) => error.code === "unsupported_media_type",
+  );
+  await assert.rejects(
     fetchValidatedSource("https://example.test/slow", {
       lookup: PUBLIC_LOOKUP,
       timeoutMs: 20,
@@ -191,6 +198,244 @@ test("a search-provider failure is normalized and keeps observed call counts", a
       searchCallsUsed: tools.budgetState().searchCallsUsed,
     },
     { toolCallsUsed: 1, searchCallsUsed: 1 },
+  );
+});
+
+test("PDF capture is deduplicated, readable by physical page and page-grounded", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "research-pdf-tools-"));
+  let captures = 0;
+  try {
+    const tools = new ResearchWebTools({
+      runId: "RSCH-PDF",
+      budget: BUDGET,
+      searchProvider: fixtureSearchProvider(),
+      captureProvider: {
+        async capture() {
+          captures += 1;
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          return {
+            mediaType: "application/pdf",
+            content: "",
+            pages: [],
+            validatedPdf: {
+              totalPages: 2,
+              parsedPages: 2,
+              pageCap: 3,
+              coverage: "complete",
+              capTruncated: false,
+              pages: [
+                { pageNumber: 1, content: `${"x".repeat(50_100)} page one` },
+                { pageNumber: 2, content: "THERMAL PERFORMANCE is retained here." },
+              ],
+            },
+            metadata: { provider: "fixture", finalUrl: "https://example.test/guide.pdf", title: "Guide" },
+          };
+        },
+      },
+      providerConfig: { defaultMarket: "NZ", maxPdfPages: 3 },
+      snapshotDirectory: directory,
+      lookup: PUBLIC_LOOKUP,
+    });
+    const [first, second] = await Promise.all([
+      tools.invoke("fetch_source", { url: "https://example.test/guide.pdf#one" }),
+      tools.invoke("fetch_source", { url: "https://example.test/guide.pdf#two" }),
+    ]);
+    assert.equal(captures, 1);
+    assert.equal(first.result.source.id, second.result.source.id);
+    assert.equal(first.result.contentTruncated, true);
+
+    const late = await tools.invoke("read_source", { sourceId: first.result.source.id, page: 2 });
+    assert.match(late.result.content, /THERMAL PERFORMANCE/);
+    const finding = await tools.invoke("submit_finding", {
+      claim: "The guide includes thermal performance.",
+      evidence: [{ sourceId: first.result.source.id, excerpt: "THERMAL PERFORMANCE", locator: { page: 2 } }],
+    });
+    assert.equal(finding.result.evidence[0].quoteVerified, true);
+    await assert.rejects(
+      tools.invoke("submit_finding", {
+        claim: "Wrong page",
+        evidence: [
+          { sourceId: first.result.source.id, excerpt: "THERMAL PERFORMANCE", locator: { page: 1 } },
+        ],
+      }),
+      (error) => error.code === "excerpt_not_found",
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("capped PDF coverage keeps a missing OCR phrase unresolved rather than verified absent", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "research-capped-pdf-"));
+  try {
+    const tools = new ResearchWebTools({
+      runId: "RSCH-CAPPED-PDF",
+      budget: BUDGET,
+      searchProvider: fixtureSearchProvider(),
+      captureProvider: {
+        async capture() {
+          return {
+            mediaType: "application/pdf",
+            content: "",
+            pages: [],
+            validatedPdf: {
+              totalPages: 5,
+              parsedPages: 2,
+              pageCap: 2,
+              coverage: "capped",
+              capTruncated: true,
+              pages: [
+                { pageNumber: 1, content: "Cover" },
+                { pageNumber: 2, content: "Contents without the target phrase" },
+              ],
+            },
+            metadata: { provider: "fixture", finalUrl: "https://example.test/scan.pdf" },
+          };
+        },
+      },
+      providerConfig: { defaultMarket: "NZ", maxPdfPages: 2 },
+      snapshotDirectory: directory,
+      lookup: PUBLIC_LOOKUP,
+    });
+    const fetched = await tools.invoke("fetch_source", { url: "https://example.test/scan.pdf" });
+    await assert.rejects(
+      tools.invoke("submit_finding", {
+        claim: "The plan is present.",
+        evidence: [
+          {
+            sourceId: fetched.result.source.id,
+            excerpt: "Plan of Garage",
+            locator: { page: 2 },
+          },
+        ],
+      }),
+      (error) => error.code === "excerpt_not_found",
+    );
+    assert.match(tools.unresolvedCoverageWarnings()[0], /beyond page 2 remains unresolved/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("host tools classify their own run deadline and publish no late result", async () => {
+  const tools = new ResearchWebTools({
+    runId: "RSCH-DEADLINE",
+    budget: { ...BUDGET, maxRuntimeMs: 15 },
+    searchProvider: {
+      async search(_query, { signal }) {
+        return new Promise((_resolve, reject) => {
+          if (signal.aborted) reject(signal.reason);
+          else signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+        });
+      },
+    },
+    snapshotDirectory: os.tmpdir(),
+    lookup: PUBLIC_LOOKUP,
+  });
+  await assert.rejects(
+    tools.invoke("web_search", { query: "deadline" }),
+    (error) => error.code === "deadline_exceeded",
+  );
+  tools.close();
+});
+
+test("failed captures are retained per run and do not trigger a second paid attempt", async () => {
+  let captures = 0;
+  const tools = new ResearchWebTools({
+    runId: "RSCH-FAILED-DEDUPE",
+    budget: BUDGET,
+    searchProvider: fixtureSearchProvider(),
+    captureProvider: {
+      async capture() {
+        captures += 1;
+        const error = new Error("safe failure");
+        error.category = "invalid_response";
+        throw error;
+      },
+    },
+    providerConfig: { defaultMarket: "NZ", maxPdfPages: 3 },
+    snapshotDirectory: os.tmpdir(),
+    lookup: PUBLIC_LOOKUP,
+  });
+  await assert.rejects(tools.invoke("fetch_source", { url: "https://example.test/fail" }));
+  await assert.rejects(tools.invoke("fetch_source", { url: "https://example.test/fail" }));
+  assert.equal(captures, 1);
+});
+
+test("capture fallback is one safe local HTML attempt and never applies to PDFs or terminal failures", async () => {
+  let localCalls = 0;
+  const directory = await mkdtemp(path.join(os.tmpdir(), "research-fallback-"));
+  const transientCapture = {
+    async capture() {
+      const error = new Error("safe transient failure");
+      error.category = "transient";
+      error.fallbackEligible = true;
+      error.attempt = { provider: "firecrawl", operation: "capture" };
+      throw error;
+    },
+  };
+  const tools = new ResearchWebTools({
+    runId: "RSCH-CAPTURE-FALLBACK",
+    budget: BUDGET,
+    searchProvider: fixtureSearchProvider(),
+    captureProvider: transientCapture,
+    providerConfig: { defaultMarket: "NZ", maxPdfPages: 3 },
+    snapshotDirectory: directory,
+    lookup: PUBLIC_LOOKUP,
+    fetchImpl: async () => {
+      localCalls += 1;
+      return new Response(SOURCE_HTML, { headers: { "content-type": "text/html" } });
+    },
+  });
+  const captured = await tools.invoke("fetch_source", { url: "https://example.test/page" });
+  assert.equal(captured.result.source.metadata.provider, "local");
+  assert.equal(localCalls, 1);
+
+  await assert.rejects(
+    tools.invoke("fetch_source", { url: "https://example.test/document.pdf" }),
+    (error) => error.code === "transient",
+  );
+  assert.equal(localCalls, 1);
+
+  const cancelled = new ResearchWebTools({
+    runId: "RSCH-CAPTURE-CANCELLED",
+    budget: BUDGET,
+    searchProvider: fixtureSearchProvider(),
+    captureProvider: {
+      async capture() {
+        const error = new Error("cancelled");
+        error.category = "cancelled";
+        error.fallbackEligible = true;
+        throw error;
+      },
+    },
+    providerConfig: { defaultMarket: "NZ", maxPdfPages: 3 },
+    snapshotDirectory: os.tmpdir(),
+    lookup: PUBLIC_LOOKUP,
+    fetchImpl: async () => {
+      localCalls += 1;
+      return new Response(SOURCE_HTML, { headers: { "content-type": "text/html" } });
+    },
+  });
+  await assert.rejects(
+    cancelled.invoke("fetch_source", { url: "https://example.test/cancelled" }),
+    (error) => error.code === "cancelled",
+  );
+  assert.equal(localCalls, 1);
+  await rm(directory, { recursive: true, force: true });
+});
+
+test("public Firecrawl mode rejects document context before any capture", () => {
+  assert.throws(
+    () =>
+      new ResearchWebTools({
+        runId: "RSCH-PRIVATE",
+        budget: BUDGET,
+        context: [{ type: "document", id: "private" }],
+        searchProvider: fixtureSearchProvider(),
+        captureProvider: { capture: async () => null },
+      }),
+    /refuses non-empty document context/,
   );
 });
 

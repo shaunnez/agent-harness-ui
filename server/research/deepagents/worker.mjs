@@ -51,11 +51,12 @@ function sendError(error) {
  *  credential nor a live model to prove the runtime plumbing (task §5: "prove runtime
  *  plumbing", not sophisticated prompting). One synthetic finding, then a final answer. */
 class FakeToolCallingModel extends BaseChatModel {
-  constructor({ label = "fake-research-model", delayMs = 0, misbehavior = null } = {}) {
+  constructor({ label = "fake-research-model", delayMs = 0, misbehavior = null, scenario = "html" } = {}) {
     super({});
     this.label = label;
     this.delayMs = delayMs;
     this.misbehavior = misbehavior;
+    this.scenario = scenario;
     this.calls = 0;
     this.submittedFinding = false;
     this.stage = 0;
@@ -140,6 +141,23 @@ class FakeToolCallingModel extends BaseChatModel {
       });
     } else if (this.stage === 2) {
       const fetched = latestToolJson(messages);
+      if (this.scenario === "pdf") {
+        this.stage = 3;
+        message = new AIMessage({
+          content: "",
+          tool_calls: [
+            {
+              name: "read_source",
+              args: { sourceId: fetched?.source?.id ?? "missing-source", page: 2 },
+              id: `fake-call-${this.calls}`,
+              type: "tool_call",
+            },
+          ],
+          usage_metadata,
+          response_metadata,
+        });
+        return { generations: [{ text: message.content, message }], llmOutput: {} };
+      }
       const excerpt = String(fetched?.content ?? "")
         .slice(0, 180)
         .trim();
@@ -158,6 +176,37 @@ class FakeToolCallingModel extends BaseChatModel {
                   excerpt,
                   authority: "primary",
                   locator: { section: "Application" },
+                },
+              ],
+              confidence: 0.9,
+            },
+            id: `fake-call-${this.calls}`,
+            type: "tool_call",
+          },
+        ],
+        usage_metadata,
+        response_metadata,
+      });
+    } else if (this.stage === 3 && this.scenario === "pdf") {
+      const read = latestToolJson(messages);
+      const excerpt = String(read?.content ?? "")
+        .slice(0, 180)
+        .trim();
+      this.stage = 4;
+      this.submittedFinding = true;
+      message = new AIMessage({
+        content: "",
+        tool_calls: [
+          {
+            name: "submit_finding",
+            args: {
+              claim: "The retained PDF page states the tested requirement.",
+              evidence: [
+                {
+                  sourceId: read?.sourceId ?? "missing-source",
+                  excerpt,
+                  authority: "primary",
+                  locator: { page: 2 },
                 },
               ],
               confidence: 0.9,
@@ -219,6 +268,7 @@ async function buildModel(modelConfig) {
     label: modelConfig.model,
     delayMs: Number(modelConfig.fakeDelayMs ?? 0),
     misbehavior: modelConfig.fakeMisbehavior ?? null,
+    scenario: modelConfig.fakeScenario ?? "html",
   });
 }
 
@@ -228,7 +278,8 @@ function buildPrompt(config) {
     "",
     "You are the sole research agent for this run. There are no other agents to delegate to. " +
       "Use web_search to discover relevant primary or authoritative public sources, fetch_source " +
-      "before relying on a result, and submit_finding with exact excerpts from retained sources. " +
+      "before relying on a result, use read_source when the initial preview omits a needed page or text, " +
+      "and submit_finding with exact excerpts from retained sources and a physical page for PDFs. " +
       "Surface uncertainty and conflicting evidence. Never invent a price or specification. Stop " +
       "when the evidence is sufficient or a host budget ceiling is reached, then give a short answer.",
   ];
@@ -339,7 +390,12 @@ async function main() {
     name: "web_search",
     description:
       "Discover public web sources. Search snippets are discovery hints only; fetch a source before citing it.",
-    schema: z.object({ query: z.string().min(1).max(500) }).strict(),
+    schema: z
+      .object({
+        query: z.string().min(1).max(500),
+        market: z.enum(["NZ", "AU", "US", "GLOBAL"]).optional(),
+      })
+      .strict(),
   });
 
   const fetchSourceTool = tool(async (input) => JSON.stringify(await callHostTool("fetch_source", input)), {
@@ -347,6 +403,20 @@ async function main() {
     description:
       "Ask the host to safely fetch and retain an HTTP/HTTPS source. Returns bounded normalized text and a source id.",
     schema: z.object({ url: z.string().url().max(4_000) }).strict(),
+  });
+
+  const readSourceTool = tool(async (input) => JSON.stringify(await callHostTool("read_source", input)), {
+    name: "read_source",
+    description:
+      "Read a bounded range from a source already retained in this run. PDFs require a retained physical page. This never recaptures the source.",
+    schema: z
+      .object({
+        sourceId: z.string().min(1).max(200),
+        page: z.number().int().positive().optional(),
+        offset: z.number().int().nonnegative().optional(),
+        limit: z.number().int().min(1).max(50_000).optional(),
+      })
+      .strict(),
   });
 
   const submitFindingTool = tool(
@@ -399,7 +469,7 @@ async function main() {
     model,
     systemPrompt:
       "You are a bounded, single-agent research worker running behind the Eversor research runtime.",
-    tools: [readContextTool, webSearchTool, fetchSourceTool, submitFindingTool],
+    tools: [readContextTool, webSearchTool, fetchSourceTool, readSourceTool, submitFindingTool],
     backend: new StateBackend(),
     checkpointer,
     middleware: [

@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
+import { normalizePdfCapture, serializePdfSnapshot } from "../server/research/research-source-snapshots.mjs";
 import { createResearchRuntimeRegistry } from "../server/research/research-runtime-registry.mjs";
 import { ResearchService } from "../server/research/research-service.mjs";
 import { ResearchStore } from "../server/research/research-store.mjs";
@@ -357,6 +358,75 @@ test("the host marks evidence verified only after re-reading the matching retain
       artifacts: [],
     });
 
+    const result = await store.getResult(run.id);
+    assert.equal(result.findings[0].evidence[0].quoteVerified, true);
+    assert.equal(result.findings[1].evidence[0].quoteVerified, false);
+  });
+});
+
+test("the store verifies PDF excerpts only on the cited physical page", async () => {
+  await withResearchStore(async ({ store, sourceSnapshotDirectory }) => {
+    const run = await store.createRun({
+      runtimeId: "deepagents",
+      request: requestFor("Verify a PDF page"),
+      budget: resolveResearchBudget("standard"),
+    });
+    const envelope = serializePdfSnapshot(
+      normalizePdfCapture({
+        pages: [
+          { pageNumber: 1, content: "First page only" },
+          { pageNumber: 2, content: "THERMAL PERFORMANCE" },
+        ],
+        numPages: 2,
+        totalPages: 2,
+        pageCap: 3,
+      }),
+    );
+    const digest = createHash("sha256").update(envelope).digest("hex");
+    await mkdir(sourceSnapshotDirectory, { recursive: true });
+    await writeFile(path.join(sourceSnapshotDirectory, `${digest}.txt`), envelope, { mode: 0o600 });
+    await store.upsertSource(run.id, {
+      id: "source-pdf",
+      sourceType: "web",
+      url: "https://example.test/guide.pdf",
+      title: "Guide",
+      retrievedAt: "2026-09-21T00:00:00.000Z",
+      contentSha256: digest,
+      contentBytes: Buffer.byteLength(envelope),
+      mediaType: "application/pdf",
+      metadata: { snapshotRef: `sha256:${digest}`, snapshotFormat: "research-pdf-v1" },
+    });
+    await store.recordResult(run.id, {
+      findings: [
+        {
+          id: "F1",
+          claim: "Correct page",
+          producedBy: "researcher",
+          evidence: [
+            {
+              sourceId: "source-pdf",
+              excerpt: "THERMAL PERFORMANCE",
+              locator: { page: 2 },
+              snapshotRef: `sha256:${digest}`,
+            },
+          ],
+        },
+        {
+          id: "F2",
+          claim: "Wrong page",
+          producedBy: "researcher",
+          evidence: [
+            {
+              sourceId: "source-pdf",
+              excerpt: "THERMAL PERFORMANCE",
+              locator: { page: 1 },
+              snapshotRef: `sha256:${digest}`,
+            },
+          ],
+        },
+      ],
+      artifacts: [],
+    });
     const result = await store.getResult(run.id);
     assert.equal(result.findings[0].evidence[0].quoteVerified, true);
     assert.equal(result.findings[1].evidence[0].quoteVerified, false);

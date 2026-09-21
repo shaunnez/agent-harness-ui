@@ -11,7 +11,8 @@
 // COMMIT synchronously, so a task transaction and a research transaction can never interleave
 // on the single-threaded event loop.
 
-import { DEFAULT_RESEARCH_SOURCE_DIRECTORY, verifySnapshotEvidence } from "./research-web-tools.mjs";
+import { DEFAULT_RESEARCH_SOURCE_DIRECTORY } from "./research-web-tools.mjs";
+import { verifySnapshotEvidence } from "./research-source-snapshots.mjs";
 
 const RUN_ID_PREFIX = "RSCH";
 
