@@ -2,6 +2,8 @@
 
 21 September 2026. Prepared at Shaun's request after Slice 1 correction and PR authorization. This document prepares the next run; it does not start implementation or authorize merging Slice 1.
 
+Slice 1 is published as [draft PR #111](https://github.com/shaunnez/agent-harness-ui/pull/111), initially at implementation commit `12683e76c6bd8a218301f0f4c3999af755b90629`. GitHub reported it mergeable with no status checks listed at publication; no remote CI pass or merge is claimed. Refresh the PR state at kickoff.
+
 ## Resume after compaction
 
 1. Read `AGENTS.md`, this file, `TASK-WORKSPACE-MIGRATION.md`, `TASK-WORKSPACE-EVALUATION.md`, and `build-evidence/TASK-WORKSPACE/slice-1/refinement/REVIEW.md`.
