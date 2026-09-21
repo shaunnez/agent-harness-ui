@@ -14,20 +14,20 @@ for l in open(IDX):
          "section": " / ".join(h["text"] for h in (o.get("headings") or [])),
          "unit": o.get("unit_normalised"),
          "px": {k: (v or {}).get("scalar") for k, v in rv.items()},
-         "flags": o.get("flags") or [], "table": f"{doc}:{tbl}"}
+         "group": o.get("nearest_group") or "", "flags": o.get("flags") or [], "table": f"{doc}:{tbl}"}
     ROWS.append(r); TABLES[r["table"]].append(r)
 
 def toks(s): return [t for t in re.split(r"[^a-z0-9]+", s.lower()) if len(t) > 2]
 df = collections.Counter(); DOCS = []
 for r in ROWS:
-    t = set(toks(r["desc"] + " " + r["section"])); DOCS.append(t)
+    t = set(toks(r["desc"] + " " + r["section"] + " " + r["group"])); DOCS.append(t)
     for x in t: df[x] += 1
 N = len(ROWS)
 IDF = {t: math.log(1 + N / (1 + c)) for t, c in df.items()}
 
 def fmt(r):
     p = r["px"]
-    return (f"{r['id']} | {r['section']} | {r['desc']} | {r['unit']} | "
+    return (f"{r['id']} | {r['section']} | {r['group']} | {r['desc']} | {r['unit']} | "
             f"AKL {p.get('Auckland')} WLG {p.get('Wellington')} CHC {p.get('Christchurch')}"
             + (f" | FLAGS {','.join(r['flags'])}" if r["flags"] else ""))
 
