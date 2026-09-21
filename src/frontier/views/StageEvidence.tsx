@@ -1,4 +1,4 @@
-import { ArrowRight, Binoculars, FileText } from "@phosphor-icons/react";
+import { ArrowRight, Binoculars, CaretDown, FileText, Pulse } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import type { RuntimeArtifact, StageId } from "../../domain";
 import { usePanelState } from "../app/panel-state";
@@ -29,7 +29,7 @@ export function StageEvidence({
   const [detail, setDetail] = useState<RuntimeArtifact | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedFinding, selectFinding] = useState(0);
-  const [tab, setTab] = usePanelState<"output" | "activity" | "runs" | "decisions">(
+  const [savedTab, setTab] = usePanelState<"output" | "activity" | "runs" | "decisions">(
     `evidence-tab:${task.id}:${stage}`,
     "output",
   );
@@ -53,6 +53,96 @@ export function StageEvidence({
   }, [artifactId, task.id, gateway]);
   const findings = detail?.gateResult?.findings ?? [];
   const finding = findings[selectedFinding] ?? findings[0];
+  const separateActivity = stage === "implement";
+  const tab = separateActivity && savedTab === "output" ? "activity" : savedTab;
+  const tabs = (
+    <nav className="content-tabs" aria-label="Task evidence tabs">
+      {(separateActivity
+        ? (["activity", "runs", "decisions"] as const)
+        : (["output", "activity", "runs", "decisions"] as const)
+      ).map((key) => (
+        <button type="button" key={key} aria-pressed={tab === key} onClick={() => setTab(key)}>
+          {key === "output"
+            ? "Evidence"
+            : key === "runs"
+              ? "Agent runs"
+              : key[0]?.toUpperCase() + key.slice(1)}
+        </button>
+      ))}
+    </nav>
+  );
+  const telemetry = (
+    <>
+      {" "}
+      {tab === "runs" && (
+        <>
+          {runs.map((run) => (
+            <button type="button" key={run.id} className="text-row" onClick={() => onWatch(run.id)}>
+              <Binoculars size={20} />
+              <span>
+                <strong>
+                  {run.role ?? stageLabels[stage]} · {run.status}
+                </strong>
+                <small>
+                  {modelLabel(run.model)} · {reasoningLabel(run.reasoning)} · {run.id}
+                </small>
+                {run.error && <small className="form-error">{run.error}</small>}
+              </span>
+              <ArrowRight size={17} />
+            </button>
+          ))}
+          {!runs.length && <p>No run is loaded for this stage.</p>}
+          {evidence.runs.nextCursor && (
+            <button type="button" onClick={() => onMore("runs")}>
+              Load earlier runs
+            </button>
+          )}
+        </>
+      )}
+      {tab === "activity" && (
+        <>
+          {evidence.activity.items
+            .filter((event) => event.stage === stage)
+            .map((event) => (
+              <article className="activity-row" key={event.id}>
+                <time>{new Date(event.at).toLocaleTimeString()}</time>
+                <div>
+                  <strong>{event.title}</strong>
+                  <p>{event.detail}</p>
+                  {event.toolCall?.result && <pre>{event.toolCall.result}</pre>}
+                </div>
+              </article>
+            ))}
+          {!evidence.activity.items.some((event) => event.stage === stage) && (
+            <p>No activity loaded for this stage.</p>
+          )}
+          {evidence.activity.nextCursor && (
+            <button type="button" onClick={() => onMore("activity")}>
+              Load earlier activity
+            </button>
+          )}
+        </>
+      )}
+      {tab === "decisions" && (
+        <>
+          {task.decisions.map((decision) => (
+            <article className="workflow-card" key={decision.id}>
+              <strong>{decision.question}</strong>
+              <p>{decision.answer}</p>
+              <small>{new Date(decision.createdAt).toLocaleString()}</small>
+            </article>
+          ))}
+          {task.approvals.map((approval) => (
+            <p key={approval.id}>
+              {stageLabels[approval.stage]} approved · {new Date(approval.createdAt).toLocaleString()} ·{" "}
+              {approval.note || "No note"}
+            </p>
+          ))}
+          {!task.decisions.length && !task.approvals.length && <p>No operator decision has been recorded.</p>}
+        </>
+      )}
+    </>
+  );
   return (
     <section className="stage-evidence">
       {(stage === "triage" || stage === "scouts") && (
@@ -143,18 +233,8 @@ export function StageEvidence({
           )}
         </section>
       )}
-      <nav className="content-tabs" aria-label="Task evidence tabs">
-        {(["output", "activity", "runs", "decisions"] as const).map((key) => (
-          <button type="button" key={key} aria-pressed={tab === key} onClick={() => setTab(key)}>
-            {key === "output"
-              ? "Evidence"
-              : key === "runs"
-                ? "Agent runs"
-                : key[0]?.toUpperCase() + key.slice(1)}
-          </button>
-        ))}
-      </nav>
-      {tab === "output" && (
+      {!separateActivity && tabs}
+      {(separateActivity || tab === "output") && (
         <>
           {error && (
             <p role="alert" className="form-error">
@@ -202,72 +282,19 @@ export function StageEvidence({
             )}
         </>
       )}
-      {tab === "runs" && (
-        <>
-          {runs.map((run) => (
-            <button type="button" key={run.id} className="text-row" onClick={() => onWatch(run.id)}>
-              <Binoculars size={20} />
-              <span>
-                <strong>
-                  {run.role ?? stageLabels[stage]} · {run.status}
-                </strong>
-                <small>
-                  {modelLabel(run.model)} · {reasoningLabel(run.reasoning)} · {run.id}
-                </small>
-                {run.error && <small className="form-error">{run.error}</small>}
-              </span>
-              <ArrowRight size={17} />
-            </button>
-          ))}
-          {!runs.length && <p>No run is loaded for this stage.</p>}
-          {evidence.runs.nextCursor && (
-            <button type="button" onClick={() => onMore("runs")}>
-              Load earlier runs
-            </button>
-          )}
-        </>
-      )}
-      {tab === "activity" && (
-        <>
-          {evidence.activity.items
-            .filter((event) => event.stage === stage)
-            .map((event) => (
-              <article className="activity-row" key={event.id}>
-                <time>{new Date(event.at).toLocaleTimeString()}</time>
-                <div>
-                  <strong>{event.title}</strong>
-                  <p>{event.detail}</p>
-                  {event.toolCall?.result && <pre>{event.toolCall.result}</pre>}
-                </div>
-              </article>
-            ))}
-          {!evidence.activity.items.some((event) => event.stage === stage) && (
-            <p>No activity loaded for this stage.</p>
-          )}
-          {evidence.activity.nextCursor && (
-            <button type="button" onClick={() => onMore("activity")}>
-              Load earlier activity
-            </button>
-          )}
-        </>
-      )}
-      {tab === "decisions" && (
-        <>
-          {task.decisions.map((decision) => (
-            <article className="workflow-card" key={decision.id}>
-              <strong>{decision.question}</strong>
-              <p>{decision.answer}</p>
-              <small>{new Date(decision.createdAt).toLocaleString()}</small>
-            </article>
-          ))}
-          {task.approvals.map((approval) => (
-            <p key={approval.id}>
-              {stageLabels[approval.stage]} approved · {new Date(approval.createdAt).toLocaleString()} ·{" "}
-              {approval.note || "No note"}
-            </p>
-          ))}
-          {!task.decisions.length && !task.approvals.length && <p>No operator decision has been recorded.</p>}
-        </>
+      {separateActivity ? (
+        <details className="task-run-activity">
+          <summary>
+            <Pulse size={18} />
+            <strong>Run activity</strong>
+            <small>· recorded telemetry</small>
+            <CaretDown size={16} />
+          </summary>
+          {tabs}
+          {telemetry}
+        </details>
+      ) : (
+        telemetry
       )}
     </section>
   );

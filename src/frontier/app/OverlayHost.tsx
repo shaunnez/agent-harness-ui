@@ -342,7 +342,7 @@ export function OverlayHost(props: Props) {
       resizable={overlay.kind !== "lifecycle"}
       heading={
         matches && ["task", "findings", "approve"].includes(overlay.kind)
-          ? `${task.id} · ${task.title}`
+          ? `${task.id} · Task workspace`
           : undefined
       }
       focusKey={`${overlay.kind}:${"taskId" in overlay ? overlay.taskId : ""}:${"artifactId" in overlay ? overlay.artifactId : ""}`}

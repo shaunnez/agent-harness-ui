@@ -1,10 +1,10 @@
-import { ArrowRight, Play, ShieldCheck } from "@phosphor-icons/react";
+import { ArrowRight, Binoculars, Play, ShieldCheck } from "@phosphor-icons/react";
 import type { KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import type { RuntimeAvailableAction } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { CandidateScope, FrontierGateway, TaskCore } from "../runtime/contracts";
-import { attentionFor, splitRecordedDetail, stageLabels } from "../runtime/presentation";
+import { attentionFor, packageState, splitRecordedDetail, stageLabels } from "../runtime/presentation";
 import { candidateScope, executable, proposedAction, reviewIdentity } from "../runtime/workflow";
 import { ScrollArea } from "../ui/ScrollArea";
 
@@ -34,6 +34,8 @@ export function WorkflowCommand({
   command,
   onGrill,
   onContinue,
+  onWatch,
+  watchLabel,
 }: {
   task: TaskCore;
   gateway: FrontierGateway;
@@ -42,6 +44,8 @@ export function WorkflowCommand({
   command(action: () => Promise<unknown>, then?: () => void): Promise<void>;
   onGrill(): void;
   onContinue(id: string): void;
+  onWatch?: () => void;
+  watchLabel?: string;
 }) {
   const [menu, setMenu] = useState<Review | null>(null);
   const [review, setReview] = usePanelState<Review | null>(`command-review:${task.id}`, null);
@@ -53,6 +57,27 @@ export function WorkflowCommand({
   const menuItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const next = proposedAction(task);
   const attention = attentionFor(task);
+  const recordedDetail = splitRecordedDetail(attention.reason ?? next?.detail ?? "");
+  const implementationSummary = (() => {
+    if (task.currentStage !== "implement" || attention.kind !== "running" || !task.workPackages.length)
+      return null;
+    const running = task.workPackages.filter((item) => item.status === "running").map((item) => item.id);
+    const ready = task.workPackages
+      .filter((item) => item.status === "ready_for_integration")
+      .map((item) => item.id);
+    const waiting = task.workPackages.filter((item) => item.status === "planned");
+    const parts = [];
+    if (running.length) parts.push(`${running.join(" + ")} running`);
+    if (ready.length) parts.push(`${ready.join(" + ")} ready for integration`);
+    for (const item of waiting)
+      parts.push(
+        `${item.id} ${packageState(item, task.workPackages).replace(/^[A-Z]/, (letter) => letter.toLowerCase())}`,
+      );
+    return parts.length ? parts.join(" · ") : null;
+  })();
+  const commandSummary =
+    implementationSummary ??
+    (recordedDetail.headline || next?.detail || `Current stage: ${stageLabels[task.currentStage]}`);
   const candidate = task.candidates.at(-1);
   const options = [
     {
@@ -198,11 +223,12 @@ export function WorkflowCommand({
   return (
     <section className={`workflow-command tone-${attention.kind}`} aria-label="Current task actions">
       <div className="workflow-command-row">
-        <span>
-          <small>
-            {task.id} · {stageLabels[task.currentStage]} · Next: {attention.nextActor ?? "No action"}
-          </small>
-          <strong>{attention.label}</strong>
+        <span className="workflow-command-copy">
+          <span className="workflow-command-title">
+            <strong>{stageLabels[task.currentStage]}</strong>
+            <em>{attention.label}</em>
+          </span>
+          <small>{commandSummary}</small>
         </span>
         {(task.status === "queued" ||
           (task.status === "failed" &&
@@ -270,6 +296,12 @@ export function WorkflowCommand({
             <ArrowRight size={17} />
           </button>
         )}
+        {!next?.action && onWatch && (
+          <button type="button" className="primary" onClick={onWatch}>
+            <Binoculars size={17} />
+            {watchLabel ?? "Inspect run"}
+          </button>
+        )}
       </div>
       {menu && (
         <div
@@ -306,20 +338,11 @@ export function WorkflowCommand({
           ))}
         </div>
       )}
-      {(attention.reason || next?.detail) &&
-        (() => {
-          const { headline, body } = splitRecordedDetail(attention.reason ?? next?.detail);
-          return (
-            <>
-              <p>{headline}</p>
-              {body && (
-                <ScrollArea className="recorded-detail-output" label={`${task.id} recorded detail`}>
-                  <pre>{body}</pre>
-                </ScrollArea>
-              )}
-            </>
-          );
-        })()}
+      {recordedDetail.body && (
+        <ScrollArea className="recorded-detail-output" label={`${task.id} recorded detail`}>
+          <pre>{recordedDetail.body}</pre>
+        </ScrollArea>
+      )}
       {next?.action && !executable(task, next.action) && (
         <p className="quiet">
           {task.actionEligibility?.actions[next.action]?.reason ??
