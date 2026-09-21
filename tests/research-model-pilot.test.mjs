@@ -1282,6 +1282,33 @@ test("exceeding a frozen bound, or a provider charge contract, fails the case", 
   assert.match(score.checks.find((check) => check.id === "within_bounds").detail, /maxModelCalls/);
 });
 
+test("a provider outage leaves a case unassessed instead of failing the model", () => {
+  const outage = executedCase(PDF_CASE.id, { findings: [], sources: [], status: "failed" });
+  outage.error = { code: "provider_unavailable", message: "firecrawl capture is temporarily unavailable." };
+  const score = scoreCase({
+    entry: PDF_CASE,
+    executed: outage,
+    review: { claims: [], caseReview: [] },
+    artifactScan: CLEAN_SCAN,
+  });
+  assert.equal(score.notAssessed, true);
+  assert.equal(score.taskPassed, false);
+  assert.deepEqual(score.failed, [], "an outage is never recorded as a research failure");
+  assert.equal(score.checks[0].status, "not_assessed");
+
+  // A failure the model could have caused keeps failing, whatever else changed here.
+  const modelFailure = executedCase(PDF_CASE.id, { findings: [], sources: [], status: "failed" });
+  modelFailure.error = { code: "model_or_tool_error", message: "the model produced no result." };
+  const modelScore = scoreCase({
+    entry: PDF_CASE,
+    executed: modelFailure,
+    review: { claims: [], caseReview: [] },
+    artifactScan: CLEAN_SCAN,
+  });
+  assert.notEqual(modelScore.notAssessed, true);
+  assert.ok(modelScore.failed.includes("run_completed"));
+});
+
 test("a truncated or failed run never passes its case", () => {
   const truncated = executedCase(PDF_CASE.id, { findings: [pdfFinding()], sources: [PDF_SOURCE] });
   truncated.accounting.budgetState = { ceilingHit: "maxModelCalls" };

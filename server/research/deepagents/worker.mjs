@@ -64,6 +64,21 @@ const RECOVERABLE_TOOL_ERROR_CODES = new Set([
  *  Counted per code, so unrelated corrections never consume each other's budget. */
 const MAX_RECOVERABLE_STRIKES_PER_CODE = 2;
 
+/** Provider conditions that say nothing about the model or its research: the service is down,
+ *  throttling, out of quota, or not set up. These end the run — no reply from the model
+ *  resolves them — but they are reported separately from a research failure so a scorer can
+ *  record the case as unassessed rather than failed. Content-level problems with one URL are
+ *  deliberately absent: those are in `RECOVERABLE_TOOL_ERROR_CODES`, where the model routes
+ *  around them. */
+const PROVIDER_UNAVAILABLE_CODES = new Set([
+  "transient",
+  "timeout",
+  "rate_limit",
+  "quota",
+  "authentication",
+  "configuration",
+]);
+
 function send(message) {
   process.stdout.write(encodeWorkerMessage(message));
 }
@@ -402,6 +417,11 @@ function classifyError(error, { cancelled }) {
       truncatedBy: "maxRuntimeMs",
     };
   }
+  // A provider that is down, rate-limited, out of quota or misconfigured has not told us
+  // anything about the model. Reporting it as `model_or_tool_error` makes a Firecrawl outage
+  // read as a research-quality failure, which is measuring the provider's uptime rather than
+  // the model's work. It keeps its own code so a scorer can leave the case unassessed.
+  if (PROVIDER_UNAVAILABLE_CODES.has(error?.code)) return { code: "provider_unavailable", message };
   return { code: "model_or_tool_error", message };
 }
 

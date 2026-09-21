@@ -354,6 +354,10 @@ function stopDecision({ executed, accounting }) {
   if (status === "cancelled") return { stopSession: true, reason: "cancelled" };
   if (status === "failed") {
     const code = executed.run?.error?.code ?? "unknown";
+    // A provider that was briefly unavailable costs this case its assessment and nothing more.
+    // The remaining cases are still worth running, and the session still reports honestly that
+    // it could not assess every one.
+    if (code === "provider_unavailable") return { stopSession: false, reason: null };
     if (!QUALITY_FAILURE_CODES.has(code)) return { stopSession: true, reason: `structural_failure:${code}` };
   }
   return { stopSession: false, reason: null };

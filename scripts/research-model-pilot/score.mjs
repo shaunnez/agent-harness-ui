@@ -48,7 +48,31 @@ function normalizeAmountText(text) {
   return String(text).replace(/(?<=[\d.])\s+(?=[\d.])/g, "");
 }
 
+/** A case the provider prevented from running was never put to the model, so it cannot be
+ *  scored for or against it. It is reported as unassessed and left out of the metric's
+ *  denominator rather than recorded as a research failure. Only provider-side unavailability
+ *  reaches this code — nothing the model did can produce it. */
+export function caseNotAssessed(entry, executed) {
+  return {
+    caseId: entry.id,
+    capability: entry.capability,
+    checks: [
+      {
+        id: "run_completed",
+        status: "not_assessed",
+        detail: `The case was not assessed: ${executed?.error?.message ?? "the provider was unavailable."}`,
+      },
+    ],
+    taskPassed: false,
+    notAssessed: true,
+    pending: [],
+    failed: [],
+    diagnostics: null,
+  };
+}
+
 export function scoreCase({ entry, executed, review, artifactScan }) {
+  if (executed?.error?.code === "provider_unavailable") return caseNotAssessed(entry, executed);
   const findings = executed?.result?.findings ?? [];
   const evidence = findings.flatMap((finding) =>
     (finding.evidence ?? []).map((reference, index) => ({ finding, reference, index })),
@@ -124,12 +148,19 @@ export function scoreSession({ manifest, session, review, artifactScan }) {
     return scoreCase({ entry, executed, review, artifactScan });
   });
   const firstAttemptPasses = cases.filter((entry) => entry.taskPassed).length;
+  const notAssessed = cases.filter((entry) => entry.notAssessed).length;
+  const assessed = cases.length - notAssessed;
   const pendingReview = cases.some((entry) => entry.pending.length > 0) || !completeness.complete;
+  // A session that could not assess every case never reaches a verdict on its own. Calling a
+  // 3-of-3 session "passed" would answer a question the run did not ask, and the gate is
+  // deliberately a count of cases, not a rate.
   const verdict = pendingReview
     ? "pending_human_review"
-    : firstAttemptPasses === manifest.session.requiredFirstAttemptPasses
-      ? "passed"
-      : "failed";
+    : notAssessed > 0
+      ? "incomplete_provider_unavailable"
+      : firstAttemptPasses === manifest.session.requiredFirstAttemptPasses
+        ? "passed"
+        : "failed";
   return {
     version: 1,
     sessionId: session.sessionId,
@@ -142,6 +173,8 @@ export function scoreSession({ manifest, session, review, artifactScan }) {
       firstAttemptPasses,
       required: manifest.session.requiredFirstAttemptPasses,
       total: manifest.cases.length,
+      assessed,
+      notAssessed,
       retriesIncluded: false,
     },
     verdict,
@@ -401,6 +434,11 @@ export function renderReportMarkdown(report) {
     `- Session status: ${report.sessionStatus}`,
     `- Verdict: ${report.verdict}`,
     `- First-attempt task passes: ${report.primaryMetric.firstAttemptPasses} of ${report.primaryMetric.total} (requires ${report.primaryMetric.required})`,
+    ...(report.primaryMetric.notAssessed
+      ? [
+          `- Cases not assessed: ${report.primaryMetric.notAssessed} of ${report.primaryMetric.total} (a provider was unavailable; ${report.primaryMetric.assessed} case(s) were actually put to the model)`,
+        ]
+      : []),
     `- Activation recommended: ${report.activationRecommended ? "yes" : "no"}`,
     `- Human review: ${report.review.reviewedClaims}/${report.review.totalClaims} claims reviewed`,
     `- Manifest: ${report.manifestHash}`,
@@ -409,7 +447,8 @@ export function renderReportMarkdown(report) {
   if (report.stopped)
     lines.push(`The session stopped at ${report.stopped.caseId}: ${report.stopped.reason}.`, "");
   for (const entry of report.cases) {
-    lines.push(`## ${entry.caseId} — ${entry.taskPassed ? "passed" : "not passed"}`, "");
+    const heading = entry.notAssessed ? "not assessed" : entry.taskPassed ? "passed" : "not passed";
+    lines.push(`## ${entry.caseId} — ${heading}`, "");
     for (const check of entry.checks) lines.push(`- ${check.status}: **${check.id}** — ${check.detail}`);
     lines.push("");
   }
