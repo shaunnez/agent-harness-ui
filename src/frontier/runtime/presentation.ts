@@ -30,6 +30,15 @@ export const stageLabels: Record<StageId, string> = {
   "final-review": "Final review",
   approval: "Approval",
 };
+
+/** Paged companion artifacts are newest-first; fixture insertion order can differ. */
+export function latestStageArtifact(artifacts: TaskCore["artifacts"], stage: StageId) {
+  return artifacts
+    .filter((artifact) => artifact.stage === stage)
+    .sort(
+      (left, right) => right.createdAt.localeCompare(left.createdAt) || right.id.localeCompare(left.id),
+    )[0];
+}
 export function attentionFor(task: TaskSummary | TaskCore): PresentedAttention {
   // Older companions have no shared projection. Keep the missing state explicit.
   const attention = task.attention;

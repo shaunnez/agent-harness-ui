@@ -1,0 +1,170 @@
+[
+  {
+    "screen": "triage",
+    "frameTop": 16,
+    "h": 900,
+    "rootTop": 0,
+    "w": 1280
+  },
+  {
+    "screen": "scouts",
+    "frameTop": 16,
+    "h": 900,
+    "rootTop": 0,
+    "w": 1280
+  },
+  {
+    "screen": "grill",
+    "frameTop": 16,
+    "h": 900,
+    "rootTop": 0,
+    "w": 1280
+  },
+  {
+    "screen": "specification",
+    "frameTop": 16,
+    "h": 900,
+    "rootTop": 0,
+    "w": 1280
+  },
+  {
+    "screen": "plan",
+    "frameTop": 16,
+    "h": 900,
+    "rootTop": 0,
+    "w": 1280
+  },
+  {
+    "screen": "implement",
+    "frameTop": 16,
+    "h": 900,
+    "rootTop": 0,
+    "w": 1280
+  },
+  {
+    "screen": "review",
+    "frameTop": 16,
+    "h": 900,
+    "rootTop": 0,
+    "w": 1280
+  },
+  {
+    "screen": "test",
+    "frameTop": 16,
+    "h": 900,
+    "rootTop": 0,
+    "w": 1280
+  },
+  {
+    "screen": "final-review",
+    "frameTop": 16,
+    "h": 900,
+    "rootTop": 0,
+    "w": 1280
+  },
+  {
+    "screen": "approval",
+    "frameTop": 16,
+    "h": 900,
+    "rootTop": 0,
+    "w": 1280
+  },
+  {
+    "screen": "delivery",
+    "frameTop": 16,
+    "h": 900,
+    "rootTop": 0,
+    "w": 1280
+  },
+  {
+    "screen": "design",
+    "frameTop": 16,
+    "h": 900,
+    "rootTop": 0,
+    "w": 1280
+  },
+  {
+    "screen": "triage",
+    "frameTop": 16,
+    "h": 1000,
+    "rootTop": 0,
+    "w": 1440
+  },
+  {
+    "screen": "scouts",
+    "frameTop": 16,
+    "h": 1000,
+    "rootTop": 0,
+    "w": 1440
+  },
+  {
+    "screen": "grill",
+    "frameTop": 16,
+    "h": 1000,
+    "rootTop": 0,
+    "w": 1440
+  },
+  {
+    "screen": "specification",
+    "frameTop": 16,
+    "h": 1000,
+    "rootTop": 0,
+    "w": 1440
+  },
+  {
+    "screen": "plan",
+    "frameTop": 16,
+    "h": 1000,
+    "rootTop": 0,
+    "w": 1440
+  },
+  {
+    "screen": "implement",
+    "frameTop": 16,
+    "h": 1000,
+    "rootTop": 0,
+    "w": 1440
+  },
+  {
+    "screen": "review",
+    "frameTop": 16,
+    "h": 1000,
+    "rootTop": 0,
+    "w": 1440
+  },
+  {
+    "screen": "test",
+    "frameTop": 16,
+    "h": 1000,
+    "rootTop": 0,
+    "w": 1440
+  },
+  {
+    "screen": "final-review",
+    "frameTop": 16,
+    "h": 1000,
+    "rootTop": 0,
+    "w": 1440
+  },
+  {
+    "screen": "approval",
+    "frameTop": 16,
+    "h": 1000,
+    "rootTop": 0,
+    "w": 1440
+  },
+  {
+    "screen": "delivery",
+    "frameTop": 16,
+    "h": 1000,
+    "rootTop": 0,
+    "w": 1440
+  },
+  {
+    "screen": "design",
+    "frameTop": 16,
+    "h": 1000,
+    "rootTop": 0,
+    "w": 1440
+  }
+]

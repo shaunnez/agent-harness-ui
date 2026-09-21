@@ -1,0 +1,58 @@
+
+> agent-harness-ui@0.0.0 format:check
+> biome format src server scripts tests worker
+
+server/research/deepagents/worker.mjs format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+    338 338 │       await agent.invoke(
+    339 339 │         { messages: [{ role: "user", content: buildPrompt(config) }] },
+    340     │ - ······{·...threadConfig,·recursionLimit:·graphRecursionLimitForBudget(config.budget),·signal,·durability:·"sync"·},
+        340 │ + ······{
+        341 │ + ········...threadConfig,
+        342 │ + ········recursionLimit:·graphRecursionLimitForBudget(config.budget),
+        343 │ + ········signal,
+        344 │ + ········durability:·"sync",
+        345 │ + ······},
+    341 346 │       );
+    342 347 │     } catch (error) {
+
+
+src/research-budget-policy.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+     59  59 │    *  larger `maxModelCalls`/`maxToolCalls` (e.g. a higher profile, or a request override) can
+     60  60 │    *  never be silently capped by a stale recursion literal. */
+     61     │ - export·function·graphRecursionLimitForBudget(budget:·Pick<ResearchBudget,·"maxModelCalls"·|·"maxToolCalls">):·number·{
+     62     │ - ··return·(budget.maxModelCalls·+·budget.maxToolCalls)·*·RECURSION_STEPS_PER_MODEL_CALL_ESTIMATE·+·RECURSION_LIMIT_SAFETY_MARGIN;
+         61 │ + export·function·graphRecursionLimitForBudget(
+         62 │ + ··budget:·Pick<ResearchBudget,·"maxModelCalls"·|·"maxToolCalls">,
+         63 │ + ):·number·{
+         64 │ + ··return·(
+         65 │ + ····(budget.maxModelCalls·+·budget.maxToolCalls)·*·RECURSION_STEPS_PER_MODEL_CALL_ESTIMATE·+
+         66 │ + ····RECURSION_LIMIT_SAFETY_MARGIN
+         67 │ + ··);
+     63  68 │   }
+     64  69 │
+
+
+tests/research-deepagents-live.test.mjs format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+    18 18 │       async ({ runtime }) => {
+    19 19 │         const request = testRequest("RSCH-DA-LIVE", {
+    20    │ - ········objective:·"Explain·the·main·factors·that·affect·the·installed·cost·of·commercial·waterproofing·membranes·in·New·Zealand.",
+       20 │ + ········objective:
+       21 │ + ··········"Explain·the·main·factors·that·affect·the·installed·cost·of·commercial·waterproofing·membranes·in·New·Zealand.",
+    21 22 │           budget: { maxRuntimeMs: 200_000, maxModelCalls: 30 },
+    22 23 │         });
+
+
+Checked 551 files in 103ms. No fixes applied.
+Found 3 errors.
+format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.

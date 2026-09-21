@@ -1,8 +1,8 @@
 import {
   Binoculars,
-  ChartBar,
   Check,
   ClipboardText,
+  FileText,
   FolderOpen,
   GearSix,
   NotePencil,
@@ -16,27 +16,33 @@ import { type RuntimeCandidate, type RuntimeRun, type StageId, stageIds } from "
 import { usePanelState } from "../app/panel-state";
 import type { FrontierGateway, TaskEvidence } from "../runtime/contracts";
 import {
-  formatCount,
-  formatDuration,
   latestRun,
+  latestStageArtifact,
   modelLabel,
   packageState,
   reasoningLabel,
   stageLabels,
 } from "../runtime/presentation";
-import { taskWallTime } from "../runtime/usage";
-import { stageRecorded, stageState } from "../runtime/workflow";
+import { gateStages, stageHasError, stageRecorded, stageState } from "../runtime/workflow";
 import { ScrollArea } from "../ui/ScrollArea";
 import { CandidateDiff } from "./CandidateDiff";
-import { CandidateEvidence, DeliveryEvidence, JourneyEvidence, TestEvidence } from "./CandidateEvidence";
+import { CandidateEvidence } from "./CandidateEvidence";
+import { CandidateHistory, CandidateIdentity, CandidateReadiness } from "./CandidateReadiness";
+import { DeliveryEvidence } from "./DeliveryEvidence";
 import { DesignReview } from "./DesignReview";
+import { Grill, GrillActions, GrillDecisions, type GrillProps } from "./Grill";
+import { JourneyEvidence } from "./JourneyEvidence";
 import { StageEvidence } from "./StageEvidence";
+import { StageSummary } from "./StageSummary";
+import { TaskUsage } from "./TaskUsage";
+import { TestEvidence } from "./TestEvidence";
 import { PinButton } from "./WatchPins";
 import { WorkflowCommand } from "./WorkflowCommand";
 import { WorkPackages } from "./WorkPackages";
 
 export function TaskPanel({
   evidence,
+  grill,
   initialStage,
   busy,
   error,
@@ -53,6 +59,7 @@ export function TaskPanel({
   onContinue,
 }: {
   evidence: TaskEvidence;
+  grill: Pick<GrillProps, "answers" | "onDraft" | "onAnswer" | "onFinish">;
   initialStage?: StageId;
   run?: RuntimeRun;
   busy: boolean;
@@ -76,12 +83,13 @@ export function TaskPanel({
   );
   const viewedStage = selection && stageRecorded(evidence, selection) ? selection : task.currentStage;
   const [design, setDesign] = usePanelState(`task-design:${task.id}`, false);
+  const inspectorStage = design ? "specification" : viewedStage;
   const viewedRun = latestRun(
-    evidence.runs.items.filter((item) => item.stage === viewedStage),
+    evidence.runs.items.filter((item) => item.stage === inspectorStage),
     task.activeRunIds,
   );
   const access = getAccessBoundaryCopy(task);
-  const policy = task.agentConfig?.stagePolicies?.[viewedStage];
+  const policy = task.agentConfig?.stagePolicies?.[inspectorStage];
   const highlightedPackage =
     task.workPackages.find((item) => item.status === "failed") ??
     task.workPackages.find((item) => item.status === "running") ??
@@ -92,11 +100,12 @@ export function TaskPanel({
         task.activeRunIds,
       )
     : undefined;
-  const activeRun = latestRun(
-    evidence.runs.items.filter((item) => item.stage === task.currentStage),
-    task.activeRunIds,
-  );
-  const watchRun = task.currentStage === "implement" ? (packageRun ?? activeRun) : activeRun;
+  const retainedArtifact = latestStageArtifact(task.artifacts, viewedStage);
+  const artifactAction = retainedArtifact ? (
+    <button type="button" onClick={() => onArtifact(retainedArtifact.id)}>
+      <FileText size={17} /> Open retained artifact
+    </button>
+  ) : null;
   const candidate = task.candidates.at(-1);
   const repositoryName = task.repositoryPath.split("/").filter(Boolean).at(-1) ?? "Repository";
   return (
@@ -110,7 +119,13 @@ export function TaskPanel({
         </div>
         <div className="task-workspace-actions">
           {viewedStage !== task.currentStage && (
-            <button type="button" onClick={() => selectStage(null)}>
+            <button
+              type="button"
+              onClick={() => {
+                selectStage(null);
+                setDesign(false);
+              }}
+            >
               Current stage
             </button>
           )}
@@ -122,6 +137,11 @@ export function TaskPanel({
             <GearSix size={17} />
             Manage
           </button>
+          {task.designRequest?.requested && (
+            <button type="button" aria-pressed={design} onClick={() => setDesign(!design)}>
+              Design directions
+            </button>
+          )}
           <PinButton taskId={task.id} />
         </div>
       </header>
@@ -129,7 +149,13 @@ export function TaskPanel({
         {stageIds.map((stage, index) => {
           const state = stageRecorded(evidence, stage) ? stageState(task, stage) : "Not started";
           const stale = /Rerun/.test(state);
-          const completed = task.completedStages.includes(stage) && !stale;
+          const failed = stageHasError(evidence, stage);
+          const candidateGate = gateStages.some((gate) => gate === stage);
+          const completed =
+            task.completedStages.includes(stage) &&
+            !stale &&
+            !failed &&
+            (!candidateGate || state === "Fresh");
           return (
             <button
               type="button"
@@ -139,6 +165,7 @@ export function TaskPanel({
               }`}
               title={`${stageLabels[stage]} · ${state}${stage === task.currentStage ? " · Active stage" : ""}`}
               data-stale={stale || undefined}
+              data-error={failed || undefined}
               disabled={!stageRecorded(evidence, stage)}
               aria-current={stage === viewedStage && !design ? "step" : undefined}
               onClick={() => {
@@ -147,8 +174,8 @@ export function TaskPanel({
               }}
             >
               <span className="stage-number">
-                {stale ? (
-                  <WarningCircle size={16} aria-label="Rerun required" />
+                {stale || failed ? (
+                  <WarningCircle size={16} aria-label={stale ? "Rerun required" : "Stage error"} />
                 ) : completed ? (
                   <Check size={14} weight="bold" aria-hidden="true" />
                 ) : (
@@ -162,42 +189,72 @@ export function TaskPanel({
             </button>
           );
         })}
-        {task.designRequest?.requested && (
-          <button type="button" className={design ? "selected" : ""} onClick={() => setDesign(true)}>
-            Design directions<small>{task.designRequest.status}</small>
-          </button>
-        )}
       </nav>
       <div className="task-command-region">
-        <WorkflowCommand
-          key={task.id}
-          task={task}
-          gateway={gateway}
-          busy={busy}
-          connected={connected}
-          command={command}
-          onGrill={onAction}
-          onContinue={onContinue}
-          onWatch={watchRun ? () => onWatch(watchRun.id) : undefined}
-          watchLabel={
-            task.currentStage === "implement" && packageRun
-              ? `Watch ${highlightedPackage?.id} worker`
-              : "Inspect active run"
-          }
-        />
+        {design || viewedStage !== task.currentStage ? (
+          <section className="workflow-command" aria-label="Viewed stage actions">
+            <div className="workflow-command-row">
+              <span className="workflow-command-copy">
+                <span className="workflow-command-title">
+                  <strong>{design ? "Design review" : stageLabels[viewedStage]}</strong>
+                  <em>{design ? "Directions" : stageState(task, viewedStage)}</em>
+                </span>
+                <small>
+                  {design
+                    ? "Compare the retained design directions."
+                    : `Retained ${stageLabels[viewedStage]} evidence`}
+                </small>
+              </span>
+              {!design && artifactAction}
+            </div>
+          </section>
+        ) : viewedStage === "grill" &&
+          task.currentStage === "grill" &&
+          task.status === "awaiting-grill" &&
+          !design ? (
+          <section className="workflow-command tone-answer" aria-label="Current task actions">
+            <div className="workflow-command-row">
+              <span className="workflow-command-copy">
+                <span className="workflow-command-title">
+                  <strong>Grill</strong>
+                  <em>
+                    {task.grillSession?.questions.some((item) => !item.answer)
+                      ? "Needs your answer"
+                      : "Ready to continue"}
+                  </em>
+                </span>
+                <small>Review the evidence and record your decision.</small>
+              </span>
+              <GrillActions task={task} busy={busy} connected={connected} {...grill} />
+            </div>
+          </section>
+        ) : (
+          <WorkflowCommand
+            key={task.id}
+            task={task}
+            gateway={gateway}
+            busy={busy}
+            connected={connected}
+            command={command}
+            onGrill={onAction}
+            onContinue={onContinue}
+            hideGrillAction
+            retainedArtifactAction={artifactAction}
+          />
+        )}
         {error && (
           <p role="alert" className="form-error">
             {error}
           </p>
         )}
       </div>
-      <section className="task-main">
+      <section className={`task-main${design ? " workspace-design-scroll" : ""}`}>
         <ScrollArea
-          key={viewedStage}
+          key={design ? "design" : viewedStage}
           className="task-stage-content"
-          label={`${stageLabels[viewedStage]} stage content`}
+          label={design ? "Design review content" : `${stageLabels[viewedStage]} stage content`}
         >
-          {viewedStage !== task.currentStage && (
+          {!design && viewedStage !== task.currentStage && (
             <p className="history-notice">
               Viewing recorded {stageLabels[viewedStage]} evidence. Current work remains at{" "}
               {stageLabels[task.currentStage]}.
@@ -215,15 +272,7 @@ export function TaskPanel({
                   </button>
                 )}
               {viewedStage === "implement" && highlightedPackage && (
-                <section
-                  className="implementation-workshop"
-                  aria-label="Implementation workshop illustration"
-                >
-                  <img
-                    src="/assets/mf.task-workspace.workshop.r1.png"
-                    alt="Robot working at a blue holographic console in a science-fiction workshop"
-                  />
-                  <span className="workshop-label">Concept illustration</span>
+                <section className="implementation-workshop" aria-label="Implementation worker">
                   <div className="workshop-caption">
                     <img src="/assets/mf.worker.standard.portrait.r1.png" alt="Implementation worker" />
                     <span>
@@ -250,13 +299,31 @@ export function TaskPanel({
                   onWatch={onWatch}
                 />
               )}
-              {viewedStage === "approval" && <DeliveryEvidence task={task} />}
+              {["test", "final-review", "approval"].includes(viewedStage) &&
+                !(viewedStage === "approval" && task.pullRequestIntent) && (
+                  <StageSummary task={task} stage={viewedStage} run={viewedRun} />
+                )}
+              {["test", "final-review", "approval"].includes(viewedStage) &&
+                !(viewedStage === "approval" && task.pullRequestIntent) && (
+                  <CandidateIdentity task={task} onDiff={onDiff} />
+                )}
+              {viewedStage === "approval" && (
+                <div className={task.pullRequestIntent ? "delivery-stack" : "approval-evidence-grid"}>
+                  <DeliveryEvidence task={task} onDiff={onDiff} />
+                  <CandidateReadiness task={task} />
+                </div>
+              )}
               {["final-review", "approval"].includes(viewedStage) && (
-                <JourneyEvidence evidence={evidence} onStage={selectStage} />
+                <>
+                  {viewedStage === "final-review" && <CandidateReadiness task={task} />}
+                  <JourneyEvidence
+                    evidence={evidence}
+                    stage={viewedStage as "final-review" | "approval"}
+                    onStage={selectStage}
+                  />
+                </>
               )}
-              {["implement", "dev-review", "test", "final-review", "approval"].includes(viewedStage) && (
-                <CandidateEvidence task={task} onDiff={onDiff} compact={viewedStage !== "implement"} />
-              )}
+              {viewedStage === "implement" && <CandidateEvidence task={task} onDiff={onDiff} />}
               {viewedStage === "implement" && candidate?.headRevision && (
                 <section
                   className="workflow-card inline-candidate-diff"
@@ -274,16 +341,16 @@ export function TaskPanel({
               )}
               {viewedStage === "test" && <TestEvidence evidence={evidence} />}
               {viewedStage === "grill" && (
-                <div className="workflow-card">
-                  <h3>Decision room</h3>
-                  <p>
-                    {task.grillSession?.questions.filter((item) => !item.answer).length ?? 0} unanswered ·
-                    Policy: {task.grillPolicy ?? "manual"}
-                  </p>
-                  <button type="button" onClick={onAction}>
-                    Open questions & answers
-                  </button>
-                </div>
+                <Grill
+                  task={task}
+                  busy={busy}
+                  error={null}
+                  connected={connected}
+                  onArtifact={onArtifact}
+                  {...grill}
+                  run={viewedRun}
+                  embedded
+                />
               )}
               <StageEvidence
                 key={`${task.id}:${viewedStage}`}
@@ -293,6 +360,14 @@ export function TaskPanel({
                 onArtifact={onArtifact}
                 onWatch={onWatch}
                 onMore={onMore}
+                reviewIdentity={
+                  viewedStage === "dev-review" ? <CandidateIdentity task={task} onDiff={onDiff} /> : undefined
+                }
+                footer={
+                  ["dev-review", "test", "final-review", "approval"].includes(viewedStage) ? (
+                    <CandidateHistory task={task} onDiff={onDiff} />
+                  ) : undefined
+                }
               />
             </>
           )}
@@ -315,61 +390,35 @@ export function TaskPanel({
             <img src="/assets/mf.worker.standard.portrait.r1.png" alt="Worker role" />
             <span>
               <strong>
-                {viewedRun
-                  ? `${modelLabel(viewedRun.model)} · ${reasoningLabel(viewedRun.reasoning)}`
-                  : policy
-                    ? `${modelLabel(policy.model)} · ${reasoningLabel(policy.reasoning)}`
-                    : "Operator"}
+                {design
+                  ? "Design providers"
+                  : viewedRun
+                    ? `${modelLabel(viewedRun.model)} · ${reasoningLabel(viewedRun.reasoning)}`
+                    : policy
+                      ? `${modelLabel(policy.model)} · ${reasoningLabel(policy.reasoning)}`
+                      : "Operator"}
               </strong>
               <small>
-                {viewedRun?.status ?? (policy ? "Policy snapshot; no run loaded" : "Deterministic gate")}
+                {design
+                  ? "Each direction retains its own model, reasoning and status."
+                  : (viewedRun?.status ?? (policy ? "Policy snapshot; no run loaded" : "Deterministic gate"))}
               </small>
             </span>
           </div>
           <small>
-            Viewed: {stageLabels[viewedStage]}
+            Viewed: {design ? "Design review" : stageLabels[viewedStage]}
             <br />
             Active: {stageLabels[task.currentStage]}
           </small>
-          {viewedRun && (
+          {design && <p className="quiet">Usage below covers the parent Specification stage.</p>}
+          {!design && viewedRun && (
             <button type="button" onClick={() => onWatch(viewedRun.id)}>
               <Binoculars size={18} />
               Watch agent
             </button>
           )}
         </section>
-        <section>
-          <h3>
-            <ChartBar size={18} />
-            Usage <small>· task total</small>
-          </h3>
-          <p className="inspector-metric">
-            {formatCount(task.usage.totalTokens)} <small>tokens</small>
-          </p>
-          <small>
-            Input {formatCount(task.usage.inputTokens)} · Output {formatCount(task.usage.outputTokens)}
-            <br />
-            Cached {formatCount(task.usage.cachedInputTokens)} ·{" "}
-            {task.usage.inputTokens
-              ? `${Math.round((task.usage.cachedInputTokens / task.usage.inputTokens) * 100)}% cache rate`
-              : "Cache rate unavailable"}
-          </small>
-          <dl className="inspector-key-values">
-            <dt>Elapsed</dt>
-            <dd>{formatDuration(taskWallTime(task, Date.now()))}</dd>
-            <dt>Approx. cost</dt>
-            <dd>
-              {task.usage.cost != null && task.usage.pricingVersion
-                ? `$${task.usage.cost.toFixed(4)}`
-                : "Unavailable"}
-            </dd>
-          </dl>
-          <small>
-            {task.usage.pricingVersion
-              ? `API-rate estimate · ${task.usage.pricingVersion}`
-              : "API-rate estimate needs a rate card."}
-          </small>
-        </section>
+        <TaskUsage evidence={evidence} stage={inspectorStage} onMore={() => onMore("runs")} />
         <section>
           <h3>
             <ShieldCheck size={18} />
@@ -378,8 +427,9 @@ export function TaskPanel({
           <p>{access.sandbox}</p>
           <small>{access.detail}</small>
           <p>
-            Stage attempts: {task.attemptsByStage[viewedStage] ?? 0} /{" "}
-            {task.stageRunLimits?.[viewedStage] ?? task.stageRunLimit}
+            {design ? "Specification attempts" : "Stage attempts"}:{" "}
+            {task.attemptsByStage[inspectorStage] ?? 0} /{" "}
+            {task.stageRunLimits?.[inspectorStage] ?? task.stageRunLimit}
           </p>
         </section>
         <section>
@@ -403,6 +453,7 @@ export function TaskPanel({
             </p>
           ))}
         </section>
+        {viewedStage === "grill" && <GrillDecisions task={task} />}
         {task.decisions.length > 0 && (
           <section className="inspector-decisions">
             <h3>
