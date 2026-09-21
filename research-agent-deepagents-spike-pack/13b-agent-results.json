@@ -1,0 +1,2069 @@
+[
+ {
+  "id": "retaining-wall-construction",
+  "resolved_from": "qv+web",
+  "confidence": "low",
+  "components": [
+   {
+    "role": "face rate anchor - timber pole wall, tallest QV row",
+    "row_id": "f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t24:r6",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 697,
+     "high": 734
+    },
+    "centre": "AKL 727 / WLG 697 / CHC 734",
+    "caveat": "2.0m high only - table stops here, 3m is outside it. Unconfirmed whether excavation, drainage fill and backfill are included."
+   },
+   {
+    "role": "face rate anchor - interlocking units, top of QV envelope",
+    "row_id": "f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t23:r12",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 1550,
+     "high": 1550
+    },
+    "centre": "AKL/WLG/CHC 1550",
+    "caveat": "Tier sub-heading not captured. Four different prices exist for '1500 series' (618/1110/1550) - inclusions unknown. No centre variation, which is itself doubtful."
+   },
+   {
+    "role": "drainage layer (component - do NOT add to face rates above)",
+    "row_id": "d2f8402515bbdf813cdb14f78c04616b2379638bb82729718b17c996ec0683a1:t8:r22",
+    "source": null,
+    "unit": "m3",
+    "amount": {
+     "low": 117,
+     "high": 139
+    },
+    "centre": "AKL 131 / WLG 117 / CHC 139",
+    "caveat": "Sibling row t8:r7 'drainage fill 40mm' is AKL 56/m3 - r22 presumed placed and compacted, unconfirmed."
+   },
+   {
+    "role": "subsoil drain (component)",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t7:r13",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 45,
+     "high": 48.6
+    },
+    "centre": "AKL 47.80",
+    "caveat": "110mm land drain. Table has repeated tiers at same price, convention unconfirmed."
+   },
+   {
+    "role": "filter fabric (component)",
+    "row_id": "d2f8402515bbdf813cdb14f78c04616b2379638bb82729718b17c996ec0683a1:t12:r15",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 5.3,
+     "high": 5.6
+    },
+    "centre": "AKL 5.60",
+    "caveat": "Strength class D1. Supply/lay split unconfirmed."
+   },
+   {
+    "role": "excavation in clay (component)",
+    "row_id": "2d92fb333c379af3f3ef632920d6b11a6f53e11fd70fd767decdc8f8a7bf1f6f:t0:r22",
+    "source": null,
+    "unit": "m3",
+    "amount": {
+     "low": 25,
+     "high": 28
+    },
+    "centre": "AKL 28.00",
+    "caveat": "Tier heading not captured - haul distance and disposal basis unknown."
+   },
+   {
+    "role": "statutory - building consent exemption threshold",
+    "row_id": null,
+    "source": "https://www.building.govt.nz/projects-and-consents/planning-a-successful-build/scope-and-design/check-if-you-need-consents/building-work-that-doesnt-need-a-building-consent/technical-requirements-for-exempt-building-work/13-support-structures/13-2-retaining-walls-up-to-1-5-metres-depth-of-ground",
+    "unit": "n/a",
+    "amount": {
+     "low": 0,
+     "high": 0
+    },
+    "centre": "NZ",
+    "caveat": "Exemption 20 applies to <=1.5m with no surcharge; exemption 41 covers up to 3m under conditions. A 3m wall with surcharge needs consent and engineered design."
+   },
+   {
+    "role": "statutory - council building consent fee (excluded from band)",
+    "row_id": null,
+    "source": "https://buildersnearme.co.nz/retaining-walls/cost",
+    "unit": "per consent",
+    "amount": {
+     "low": 1000,
+     "high": 3000
+    },
+    "centre": "NZ, council-dependent",
+    "caveat": "Contractor marketing page, not a council fee schedule. GST treatment unstated. Confirm against your council's own schedule."
+   },
+   {
+    "role": "engineering design PS1/PS4 (explicitly out of scope, flagged)",
+    "row_id": null,
+    "source": "https://henareconstruction.co.nz/retaining-walls-northland-guide",
+    "unit": "per wall",
+    "amount": {
+     "low": 2000,
+     "high": 5000
+    },
+    "centre": "NZ",
+    "caveat": "Scope excludes specific engineering design, but a 3m wall cannot be built without it. Contractor guide figure, GST treatment unstated."
+   }
+  ],
+  "band": {
+   "unit": "m2 of retained face",
+   "low": 730,
+   "high": 1550,
+   "centre": "Auckland",
+   "basis": "Bracket only, not a rate. Low end = QV's tallest priced retaining wall row (2.0m timber pole, AKL 727) treated as an absolute floor for a 3m wall. High end = top of QV's interlocking-unit envelope (AKL 1550). Nominally covers excavation, foundation, wall structure, drainage layer, backfill and surface finish, but inclusions in both anchor rows are UNCONFIRMED. Excludes engineering design, geotechnical investigation, consent fees, temporary works/shoring to a 3m face, surcharge-specific strengthening, and piled foundations. WLG approx -4%, CHC approx line-ball on the pole anchor; interlocking rows show no centre variation."
+  },
+  "not_established": [
+   "Wall type - QV has no face rate at 3m for any type; pole, blockwork, interlocking, gabion and MSE do not converge at this height",
+   "Retained height 3m is outside both QV tables (pole stops at 2.0m)",
+   "Surcharge presence - a step change in embedment and reinforcement, not an increment",
+   "Foundation/ground conditions and whether piled or deepened foundations are required",
+   "What the four unlabelled price tiers in QV interlocking-unit table t23 actually distinguish",
+   "Whether QV face rates t24 and t23 include excavation, drainage fill, subsoil drain and backfill",
+   "Temporary works, battering or shoring to a 3m excavation face",
+   "Geotechnical investigation cost",
+   "Whether Schedule 1 exemption 41 applies or full consent is required",
+   "Specific council consent fee for a 3m retaining wall",
+   "GST treatment and lineal-vs-face-area basis of all web market figures"
+  ],
+  "suppliers_to_ring": [
+   "Firth Industries (Stonebloc / Keystone interlocking units)",
+   "Allied Concrete",
+   "Stevenson Concrete",
+   "Cirtex Industries (geogrid and MSE wall systems)",
+   "Reinforced Earth NZ",
+   "Hynds Pipe Systems (subsoil drainage)",
+   "Fulton Hogan",
+   "Higgins Contractors",
+   "Local council building control (consent fee confirmation)",
+   "A CPEng geotechnical/structural engineer for PS1 scope and fee"
+  ],
+  "qv_queries_tried": [
+   "retaining wall",
+   "gabion crib wall timber sleeper wall",
+   "reinforced concrete wall formwork both sides 200mm",
+   "concrete masonry block wall reinforced filled 190",
+   "subsoil drain novaflo perforated pipe filter cloth geotextile",
+   "excavation trenches foundations not exceeding 2m deep",
+   "subsoil drainage coil pipe 110mm land drain",
+   "soil nail ground anchor shotcrete sheet pile",
+   "H5 treated round pole 250mm diameter",
+   "reinforced concrete 25MPa walls thick",
+   "list_qv_sections: Retaining",
+   "list_qv_sections: External Works",
+   "list_qv_sections: Excavation",
+   "get_qv_table on t24 (pole), t23 (interlocking), t15 (gabions), t8 (bulk filling), t2 (structural blockwork)"
+  ],
+  "title": "Retaining wall construction",
+  "claim_count": 29,
+  "_meta": {
+   "turns": 8,
+   "web_searches": 8,
+   "in": 479673,
+   "out": 12290
+  }
+ },
+ {
+  "id": "channel-drain-installation",
+  "resolved_from": "qv",
+  "confidence": "medium",
+  "components": [
+   {
+    "role": "channel+grate installed, 100mm clear opening, lightest tier (inferred pedestrian/light duty)",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r11",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 297,
+     "high": 310
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Group sub-heading row r9 not captured; load class inferred from price ladder, not read"
+   },
+   {
+    "role": "channel+grate installed, 100mm, mid tier (inferred class C/D trafficable)",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r14",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 403,
+     "high": 416
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Sub-heading r13 missing; tier identity unconfirmed"
+   },
+   {
+    "role": "channel+grate installed, 100mm, top tier (inferred heavy duty class D/E)",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r17",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 543,
+     "high": 561
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Sub-heading r16 missing; tier identity unconfirmed"
+   },
+   {
+    "role": "channel+grate installed, 160mm clear opening, three tiers",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r12",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 393,
+     "high": 661
+    },
+    "centre": "AKL",
+    "caveat": "Range spans r12/r15/r18; do not average across tiers"
+   },
+   {
+    "role": "haunch concrete implied unit rate (CONDITIONAL - do not add unless t16 proven to exclude haunching)",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t8:r3",
+    "source": null,
+    "unit": "m3",
+    "amount": {
+     "low": 780,
+     "high": 785
+    },
+    "centre": "AKL",
+    "caveat": "Back-solved from $125/m at 0.16 m3/m; t16 almost certainly already includes surround, adding both double-counts"
+   },
+   {
+    "role": "connection - break into existing stormwater line 1.5m deep",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t9:r2",
+    "source": null,
+    "unit": "each",
+    "amount": {
+     "low": 583,
+     "high": 637
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "t9 has two identical duplicate depth groups; differentiator heading lost"
+   },
+   {
+    "role": "connection - break into existing line 3m deep",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t9:r3",
+    "source": null,
+    "unit": "each",
+    "amount": {
+     "low": 1460,
+     "high": 1590
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Depth band only; no pipe size stated"
+   },
+   {
+    "role": "lateral pipe to SW line, 150mm PVC",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t5:r5",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 77,
+     "high": 85
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Assumed lay-only; separate Trench Excavation table suggests excavation excluded but unconfirmed"
+   },
+   {
+    "role": "trench excavation, shallowest band, light soil to soft rock",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t0:r3",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 16.2,
+     "high": 32.3
+    },
+    "centre": "AKL",
+    "caveat": "Depth/width sub-heading not captured; spans r3-r5 soil types"
+   },
+   {
+    "role": "sawcut/breakout existing BITUMEN paving with basecourse",
+    "row_id": "d2f8402515bbdf813cdb14f78c04616b2379638bb82729718b17c996ec0683a1:t0:r14",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 6.7,
+     "high": 7.5
+    },
+    "centre": "CHC/WLG low / AKL high",
+    "caveat": "Concrete paving breakout rows t0:r8/r10/r12 are unpriced in our capture"
+   },
+   {
+    "role": "paving reinstatement, in-situ concrete 150mm thick",
+    "row_id": "f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t6:r14",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 144,
+     "high": 255
+    },
+    "centre": "AKL",
+    "caveat": "Three tiers r5/r10/r14 with headings lost; ~0.6 m2 per m of run assumed"
+   }
+  ],
+  "band": {
+   "unit": "m",
+   "low": 310,
+   "high": 561,
+   "centre": "Auckland",
+   "basis": "Per metre of run, 100mm clear-opening proprietary channel with grate, supplied and installed, believed inclusive of excavation, bedding and concrete haunching. Low = lightest grate tier (pedestrian/footpath), high = heaviest tier. 160mm clear opening runs 393-661/m. EXCLUDES connection to existing SW line, lateral pipe, trench excavation and paving breakout/reinstatement - all measured separately; an all-in retrofit composite lands near 620/m for a 20m run. GST exclusive."
+  },
+  "not_established": [
+   "Which QV tier equals which AS 3996 load class - sub-heading rows r9, r13, r16 of table t16 not captured; mapping inferred from the price ladder only",
+   "Whether t16 rates include concrete haunching and surround (strongly indicated by rate level, not confirmed)",
+   "What separates the two identical duplicate depth groups in t9 Breaking Into Existing Pipelines",
+   "Whether Stormwater PVC lay rates include trench excavation",
+   "Concrete paving breakout - QV rows exist but are unpriced",
+   "Trench Excavation depth and width bands - all group headings lost",
+   "Which of the three In Situ Concrete Paving tiers applies to reinstatement",
+   "No NZ vendor list pricing published to cross-check the load-class uplifts (all POA/quote-only)"
+  ],
+  "suppliers_to_ring": [
+   "Allproof Industries (Auckland North Shore + Christchurch) - polymer concrete and Commercial Channel, class A-E grate schedule",
+   "Hynds Pipe Systems (East Tamaki) - Hauraton Recyfix Standard C250 / Pro D400",
+   "Atlan Stormwater NZ - AtlanChannel polymer concrete, class D and above",
+   "Humes / Holcim precast - wide-format precast grated channel 225-450mm",
+   "Local drainlaying subcontractor for install-only rate per m against your actual class and run length"
+  ],
+  "qv_queries_tried": [
+   "channel drain grate",
+   "list_qv_sections: Drain",
+   "channel drains and gratings (section: Channel Drains)",
+   "get_qv_table t16 channel drains",
+   "cesspit sump connection stormwater (section: Drainage)",
+   "cesspit",
+   "concrete surround haunching to pipe bedding (section: Drainage)",
+   "get_qv_table t8 concrete surrounds",
+   "breaking into existing pipeline connection",
+   "stormwater PVC pipe 150mm laid in trench (section: Stormwater, PVC)",
+   "trench excavation backfill drain depth (section: Trench Excavation)",
+   "concrete paving slab interlocking block paving reinstatement (section: External Works)",
+   "saw cut break out existing concrete paving hardstanding",
+   "grating galvanised steel ductile iron heavy duty",
+   "get_qv_table site clearance t0"
+  ],
+  "title": "Channel drain installation to paving",
+  "claim_count": 23,
+  "_meta": {
+   "turns": 10,
+   "web_searches": 8,
+   "in": 473354,
+   "out": 13329
+  }
+ },
+ {
+  "id": "suspended-ceiling-tile-grid",
+  "resolved_from": "qv+web",
+  "confidence": "medium",
+  "components": [
+   {
+    "role": "grid only, economy 24mm standard exposed tee",
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t1:r2",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 30.4,
+     "high": 35.4
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Grid only, tile excluded. Unreviewed - unknown whether hangers and perimeter angle are included. Sits under an unlabelled sub-heading row t1:r1 I cannot read."
+   },
+   {
+    "role": "grid only, 24mm heavyweight exposed tee",
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t1:r3",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 34.4,
+     "high": 39.3
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Grid only. A second identical-description tier (t1:r7, AKL 46.90) prices ~18% higher for reasons not visible in the capture."
+   },
+   {
+    "role": "lay-in panel only, commodity mineral fibre 15mm Star",
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t2:r9",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 25.4,
+     "high": 26.4
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Panel supply and lay-in only, no grid. NRC not stated in the row."
+   },
+   {
+    "role": "lay-in panel only, 19mm acoustic",
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t2:r10",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 57.0,
+     "high": 58.0
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Panel only, no grid. NRC not stated."
+   },
+   {
+    "role": "complete system AGGREGATE - do not add to grid or panel rows",
+    "row_id": "81310588732937020e50ae66e1c909b338b2d4a2a9ccf31b80332d286c630fbb:t3:r2",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 155.0,
+     "high": 161.0
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Reconciles to t1:r3 + t2:r3 within 1% in all three centres, so this is grid plus premium AMF THERMATEX panel combined. Premium spec, not a default mineral fibre rate."
+   },
+   {
+    "role": "seismic back-bracing to AS/NZS 2785:2020 / NZS 1170.5",
+    "row_id": null,
+    "source": "https://www.tris.co.nz/products/components_estimator",
+    "unit": "m2 or per brace",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "centre": "n/a",
+    "caveat": "Absent from QV entirely. Vendor calculators give brace quantities only, no published prices. Brace count depends on zone factor, height above ground, importance level and plenum depth - none specified in this scenario."
+   },
+   {
+    "role": "specific seismic design / PS1",
+    "row_id": null,
+    "source": "https://www.building.govt.nz/building-code-compliance/b-stability/b1-structure/practice-advisory-19",
+    "unit": "lump sum",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "centre": "n/a",
+    "caveat": "MBIE advisory requires restraints be specifically designed to B1/VM1; AS/NZS 2785 alone is not an earthquake solution. Engineering fee not published."
+   }
+  ],
+  "band": {
+   "unit": "m2",
+   "low": 62,
+   "high": 100,
+   "centre": "Auckland",
+   "basis": "Exposed 24mm grid plus lay-in mineral fibre / acoustic panel, supply and install, economy tile at the low end (t1:r2 + t2:r9 = 61.80) and 19mm acoustic tile at the high end (t1:r3 + t2:r10 = 97.30). EXCLUDES seismic back-bracing, tile hold-down clips, specific seismic design and PS1/PS3, access equipment above normal reach, cutting and trimming to light fittings, diffusers and sprinkler droppers, bulkheads, shadowline or feature perimeter trims. Premium branded systems run to 161/m2 per the aggregate row. Wellington approx 6-8% below Auckland, Christchurch approx 2-3% below."
+  },
+  "not_established": [
+   "Seismic back-bracing cost - no rate in QV and none published by any NZ vendor; requires a brace layout from the ceiling system supplier or engineer",
+   "Tile NRC / acoustic performance - QV rows say 'Acoustic' and 'Alpha One' without stating NRC, so the $26 tile and the $58 tile cannot be compared on performance",
+   "Ceiling height and plenum depth - drives hanger length, compression-post brace length, brace count and whether access equipment is needed",
+   "What the second pricing tier in grid table t1 (rows r6-r8, ~18% higher) represents - the sub-heading row is not in the capture",
+   "Whether the QV grid rate includes hangers, perimeter angle and hanger fixing to structure, or tee sections only",
+   "Tile hold-down clips, recommended by AS/NZS 2785:2020 unless designed otherwise",
+   "Importance level and site seismic zone factor for the tender locations"
+  ],
+  "suppliers_to_ring": [
+   "T&R Interior Systems - Wellington 04 499 5915, Auckland 09 571 0395, Christchurch 03 366 2507 (CBI two-way grid, seismic bracing calculator and components estimator)",
+   "Potter Interior Systems (GRIDLOK / TRACKLOK seismic bracing, grid and tile systems)",
+   "Forman Building Systems (ceiling grid and tile distribution)",
+   "Asona (NZ acoustic ceiling panels, for NRC-rated tile substitution)",
+   "Knauf AMF distributor for THERMATEX panel pricing to verify the $118-122/m2 panel rows",
+   "Two local ceiling fixing subcontractors per centre for an installed m2 rate including braces and PS3",
+   "A CPEng structural / seismic consultant (e.g. Tino Seismic) for the B1/VM1 specific design fee"
+  ],
+  "qv_queries_tried": [
+   "suspended ceiling grid tile",
+   "list_qv_sections contains=Ceiling",
+   "get_qv_table on 2f69cd6f\u2026:t1:r2 (grid table, 6 rows)",
+   "get_qv_table on 2f69cd6f\u2026:t2:r9 (panel table, 9 rows)",
+   "get_qv_table on 81310588\u2026:t3:r2 (proprietary system table, 3 rows)",
+   "seismic restraint bracing ceiling",
+   "ceiling framing furring hanger (section=Ceiling Finishes)",
+   "mineral fibre tile 600 x 600 lay-in T-bar",
+   "Potter Armstrong Daiken exposed grid system perimeter angle shadowline",
+   "acoustic ceiling tile NRC absorption panel"
+  ],
+  "title": "Suspended tile ceiling supply install",
+  "claim_count": 19,
+  "_meta": {
+   "turns": 6,
+   "web_searches": 8,
+   "in": 350837,
+   "out": 12120
+  }
+ },
+ {
+  "id": "mains-and-feeder-cable-install",
+  "resolved_from": "qv+web",
+  "confidence": "medium",
+  "components": [
+   {
+    "role": "cable, copper 16mm2 + 6mm2 earth",
+    "row_id": "ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t7:r34",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 96,
+     "high": 118
+    },
+    "centre": "Auckland",
+    "caveat": "Two rows exist for same size ($96 r34, $118 r15) in different unlabelled sub-groups; construction/installation method for each group is UNKNOWN because header rows were lost in capture."
+   },
+   {
+    "role": "cable, copper 70mm2 + 25-35mm2 earth",
+    "row_id": "ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t7:r43",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 330,
+     "high": 340
+    },
+    "centre": "Auckland",
+    "caveat": "r43 $330 / r24 $340. Copper price basis date of the QV rate is unknown and unconfirmed."
+   },
+   {
+    "role": "cable, copper 120mm2 + 70mm2 earth",
+    "row_id": "ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t7:r28",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 559,
+     "high": 559
+    },
+    "centre": "Auckland",
+    "caveat": "Single unreviewed row; sub-group construction unknown."
+   },
+   {
+    "role": "cable, aluminium 240mm2 + 70mm2 Cu earth (alternative)",
+    "row_id": "ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t6:r11",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 218,
+     "high": 218
+    },
+    "centre": "Auckland",
+    "caveat": "Much cheaper than equivalent copper; requires bi-metal terminations not priced anywhere in QV."
+   },
+   {
+    "role": "containment, cable tray/ladder 150-300mm",
+    "row_id": "ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t3:r4",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 87,
+     "high": 174
+    },
+    "centre": "Auckland",
+    "caveat": "t3 has unlabelled sub-groups; 150mm appears at $110 (r4) and $87 (r8) - likely ladder vs tray, unconfirmed. Containment is SHARED between cables - do not load full rate onto each feeder."
+   },
+   {
+    "role": "aggregate cross-check, Service Mains 150A/phase",
+    "row_id": "ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t0:r7",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 409,
+     "high": 409
+    },
+    "centre": "Auckland",
+    "caveat": "AGGREGATE - appears to already include cable + containment. Must NOT be added to t7/t3 rows. Used only as a corroboration check."
+   },
+   {
+    "role": "terminations both ends",
+    "row_id": null,
+    "source": null,
+    "unit": "each",
+    "amount": {
+     "low": 0,
+     "high": 0
+    },
+    "centre": "n/a",
+    "caveat": "NOT ESTABLISHED. No gland, lug or switchboard-termination row exists anywhere in the QV capture. Must be priced as a per-end lump from supplier quote, not spread per metre."
+   },
+   {
+    "role": "copper commodity basis",
+    "row_id": null,
+    "source": "https://www.bloomberg.com/news/articles/2025-12-23/copper-hits-12-000-for-first-time",
+    "unit": "USD/tonne",
+    "amount": {
+     "low": 11200,
+     "high": 12000
+    },
+    "centre": "global LME",
+    "caveat": "Record levels late 2025. QV copper rows carry an unknown/undated copper basis - treat t7 rates as a floor."
+   },
+   {
+    "role": "network connection design fee (incoming main only)",
+    "row_id": null,
+    "source": "https://vector.co.nz/our-services/electricity/complex-connection",
+    "unit": "each",
+    "amount": {
+     "low": 3000,
+     "high": 3000
+    },
+    "centre": "Auckland (Vector)",
+    "caveat": "Complex connections only; final works cost set by Customer Works Agreement. Outside the per-metre rate. Other centres differ (Wellington Electricity, Orion)."
+   }
+  ],
+  "band": {
+   "unit": "m",
+   "low": 175,
+   "high": 515,
+   "centre": "Auckland",
+   "basis": "Submain feeder 16-70mm2 copper multicore + earth, supply and install, plus one run of cable tray/ladder containment 150-300mm. EXCLUDES terminations/glands at both ends, excludes trenching, excludes network connection fees, excludes switchboard works. Low = 16mm2+6E on 150mm tray; high = 70mm2+35E on 300mm ladder. WLG $167-504, CHC $173-512. Cross-checked against aggregate Service Mains band $140-493/m (t0:r6, t0:r7) which must not be summed with these components. For large incoming mains 300-800A/phase use aggregate rows t0:r17/r25 alone: $494-3700/m AKL."
+  },
+  "not_established": [
+   "Which of the nine unlabelled sub-groups in Cable: Copper (t7) corresponds to a given construction - single vs multicore, XLPE vs PVC, armoured vs unarmoured, in-conduit vs on-tray. Header rows were lost in capture; same conductor size carries up to five different rates.",
+   "Termination, gland and lug rates - absent from QV entirely, no NZ published rate found.",
+   "Copper price basis date embedded in the QV cable rates.",
+   "Core count and conductor size for the actual tender scope.",
+   "Route length, and whether containment is dedicated or shared between multiple feeders.",
+   "Whether Cable Carriers t3 sub-groups are tray, ladder, or trunking, and whether rates include supports, bends, tees and fire-stopping.",
+   "Trenching/underground route costs - no cable-trench row found in QV (Cable Protection Slabs t5 exists at $6.90-11.80/m but no trench excavation)."
+  ],
+  "suppliers_to_ring": [
+   "Ideal Electrical (cable and accessories, dated copper pricing)",
+   "Corys Electrical",
+   "ECS NZ (issued commodity cable price adjustment effective 1 March 2026)",
+   "Cable Services NZ",
+   "Prysmian / Olex NZ (cable manufacturer, drum pricing)",
+   "Cabac NZ (glands, lugs, bi-metal terminations)",
+   "Unistrut / NZ Tray (cable tray and ladder systems)",
+   "Electrix or Connetics (incoming main and network-side package)",
+   "Vector / Wellington Electricity / Orion (connection application and design fees)"
+  ],
+  "qv_queries_tried": [
+   "submain cable",
+   "list_qv_sections contains=Electrical",
+   "XLPE PVC copper cable 4 core (section: Cable: Copper)",
+   "service mains incoming supply (section: Service Mains)",
+   "cable tray ladder duct (section: Cable Carriers)",
+   "get_qv_table t7 (Cable: Copper, 72 rows)",
+   "get_qv_table t0 (Service Mains, 30 rows)",
+   "get_qv_table t3 (Cable Carriers, 14 rows)",
+   "get_qv_table t4 (Conduits, 11 rows)",
+   "cable gland termination lug connection switchboard",
+   "conduit PVC galvanised steel",
+   "aluminium cable (section: Cable: Aluminium)",
+   "busbar rising main busduct bus duct",
+   "conduit",
+   "trench excavate backfill cable duct",
+   "25mm (section: Conduits)",
+   "cable protection slab"
+  ],
+  "title": "Mains and feeder cable installation",
+  "claim_count": 17,
+  "_meta": {
+   "turns": 9,
+   "web_searches": 5,
+   "in": 349719,
+   "out": 11471
+  }
+ },
+ {
+  "id": "internal-doorset-supply-install",
+  "resolved_from": "qv",
+  "confidence": "medium",
+  "components": [
+   {
+    "role": "leaf, hollow core, paint grade",
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t4:r4",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 248,
+     "high": 331
+    },
+    "centre": "Auckland",
+    "caveat": "r4 MDF unclashed 248 to r10 MDF v-grooved 331. Fixed-in-place basis inferred, not stated. No regional variation in table."
+   },
+   {
+    "role": "leaf, hollow core, veneer",
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t4:r7",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 587,
+     "high": 618
+    },
+    "centre": "Auckland",
+    "caveat": "Economy rimu r6 587 / rimu r7 618."
+   },
+   {
+    "role": "leaf, solid core",
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t5:r3",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 368,
+     "high": 930
+    },
+    "centre": "Auckland",
+    "caveat": "Hardboard clashed 368 to rimu veneer 930. Acoustic/fire performance of core NOT stated in any row."
+   },
+   {
+    "role": "frame, timber, interior, 1980x810 single",
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t1:r3",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 169,
+     "high": 506
+    },
+    "centre": "Auckland",
+    "caveat": "EIGHT unlabelled tiers (r3,r6,r9,r12,r16,r19,r22,r26,r29,r32). Sub-heading rows not captured, so species/profile/architrave inclusion is unknown. Do not pick a tier without re-scrape."
+   },
+   {
+    "role": "door stop / planted bead (optional, if frame not rebated)",
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t3:r2",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 17.8,
+     "high": 27.7
+    },
+    "centre": "Auckland",
+    "caveat": "~5.4m per single leaf. Separate extra-over row t3:r10 for brass screw fixing implies base rate includes standard fixing labour."
+   },
+   {
+    "role": "AGGREGATE ALTERNATIVE - composite timber doorset 1980x760",
+    "row_id": "a20c277739416d6301f027a777e9b16c2218a524f4ca736d8e6646357aea9bab:t0:r3",
+    "source": null,
+    "unit": "ea (unconfirmed)",
+    "amount": {
+     "low": 1750,
+     "high": 1910
+    },
+    "centre": "Auckland",
+    "caveat": "DO NOT ADD to the component rows above - this is their aggregate. Four unlabelled tiers. missing_unit flag. ~3-4x the component build-up, so almost certainly includes hardware/architrave/decoration which this scope excludes."
+   },
+   {
+    "role": "AGGREGATE - fire door and frame, 1980x810 single",
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t20:r3",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 1690,
+     "high": 2430
+    },
+    "centre": "Auckland",
+    "caveat": "Three ascending tiers r3/r6/r9 = 1690/1990/2430. FRR labels NOT captured - cannot say which tier is -/30/30 vs -/60/60 vs -/90/90."
+   },
+   {
+    "role": "AGGREGATE - fire rated doorset, 1980x810 single (parallel series)",
+    "row_id": "a20c277739416d6301f027a777e9b16c2218a524f4ca736d8e6646357aea9bab:t2:r2",
+    "source": null,
+    "unit": "ea (unconfirmed)",
+    "amount": {
+     "low": 2140,
+     "high": 2960
+    },
+    "centre": "Auckland",
+    "caveat": "Second, higher fire ladder on a different basis to t20. Three tiers, all unlabelled, all missing_unit. Conflicts with t20 - basis difference unresolved."
+   },
+   {
+    "role": "AGGREGATE - acoustic door set, 1980x810 single",
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t21:r2",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 2060,
+     "high": 2720
+    },
+    "centre": "Auckland",
+    "caveat": "Two tiers, no STC rating stated on either. t21:r7 at 4600 is an acoustic LOBBY (2 leaves in series), not a single leaf."
+   },
+   {
+    "role": "carpenter labour, for adjust/allowances",
+    "row_id": "77a9ea2e8b0f174651de8bdceb3c87c8c288ba10a5f707ee5c36267bf7395a8e:t0:r5",
+    "source": null,
+    "unit": "hour",
+    "amount": {
+     "low": 72.7,
+     "high": 81.3
+    },
+    "centre": "WLG 72.70 / CHC 75.00 / AKL 81.30",
+    "caveat": "No door-hanging labour constant anywhere in QV Carpentry. Use only if pricing a fix-only variant; do not add to Family A rates, which appear labour-inclusive."
+   }
+  ],
+  "band": {
+   "unit": "ea",
+   "low": 420,
+   "high": 1440,
+   "centre": "Auckland",
+   "basis": "Single internal leaf 1980x810 + timber frame, hung and adjusted, component build-up within QV trade section 'Doors' only (leaf t4/t5 + frame t1). Excludes hardware, vision panels, architrave, decoration, GST. Sub-bands: paint-grade hollow core 420-560; veneer hollow core or paint-grade solid core 540-900; veneer solid core 1100-1440. Fire-rated single leaf sits 1690-2960 and acoustic 2060-2720 as AGGREGATE rates - quote as ranges only, never added to the component rows."
+  },
+  "not_established": [
+   "Which frame tier is which - 8 unlabelled price tiers from 169 to 506 for the identical 1980x810 description",
+   "Which fire tier carries which FRR - two conflicting ladders (1690/1990/2430 and 2140/2500/2960), no rating labels captured",
+   "STC rating against either acoustic door set tier",
+   "Steel / pressed-metal frames - absent from QV entirely; only timber and aluminium interior frames exist",
+   "Opening heights other than 1980mm (and 2000mm in the fire table) for normal internal doorsets; no height-adjustment factor",
+   "Whether Family A rates are supply-only or fixed-in-place - inferred fixed from the t3:r10 extra-over, not confirmed",
+   "Unit convention on all a20c rows (flagged missing_unit) and on the 11bf7578 'Isolated Doors and Frames' rows",
+   "Why the Doors, fire and acoustic tables show zero AKL/WLG/CHC variation while the a20c composites are regionalised",
+   "Reconciliation of the ~3-4x gap between the component build-up and the a20c composite doorset"
+  ],
+  "suppliers_to_ring": [
+   "Hume Doors & Timber NZ - leaf pricing by core and rating",
+   "Corinthian Doors NZ - interior leaf and pre-hung doorset schedules",
+   "Nuline Doors / NZ Panels Group - trade doorset pricing",
+   "Fire Door Systems / Fire & Sound Doors NZ - FRR doorsets by rating with tag and certification",
+   "Doorways NZ and Altherm / APL trade desks - pressed metal frame pricing and heights",
+   "Assa Abloy NZ - steel frame and doorset packages",
+   "PlaceMakers and ITM trade desks - regional installed doorset rates for the paint-grade end"
+  ],
+  "qv_queries_tried": [
+   "internal door leaf frame hung",
+   "list_qv_sections contains=Door",
+   "hollow core door interior timber (section: Doors, Timber, Hollow Core)",
+   "interior timber doors (section: Interior Doors)",
+   "get_qv_table a20c...:t0:r10 (Interior Doors / Timber Doors)",
+   "get_qv_table 78c8...:t4:r3 (Hollow Core)",
+   "get_qv_table a20c...:t2:r2 (Fire Rated Doorsets)",
+   "door frame timber interior rebated jamb (section: Door Frames, Timber, Interior)",
+   "solid core door (section: Doors, Timber, Solid Core)",
+   "fire door and frame rated (section: Doors & Frames, Fire) - no match, ampersand",
+   "fire rated door frame 30 minute 60 minute",
+   "acoustic door set STC (section: Door Sets, Acoustic)",
+   "get_qv_table 78c8...:t20:r21 (Doors & Frames, Fire)",
+   "steel pressed metal door frame",
+   "hang door labour carpenter fix only",
+   "isolated doors and frames",
+   "door 2400 high oversize leaf height",
+   "architrave scotia door surround",
+   "list_qv_sections contains=Carpentry",
+   "doors (section: Carpentry) - no match",
+   "doorset pre-hung door unit complete",
+   "door stop glazing bead (section: Door Stop/Glazing Beads)"
+  ],
+  "title": "Internal doorset supply and install",
+  "claim_count": 14,
+  "_meta": {
+   "turns": 12,
+   "web_searches": 3,
+   "in": 495857,
+   "out": 13758
+  }
+ },
+ {
+  "id": "solar-mounting-structural-design",
+  "resolved_from": "qv+web",
+  "confidence": "low",
+  "components": [
+   {
+    "role": "supplementary steel purlin 200/15",
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t7:r9",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 32.7,
+     "high": 32.7
+    },
+    "centre": "Auckland",
+    "caveat": "Unreviewed. Table has two parallel tiers for identical sizes (r2-r19 vs r21-r33) with no stated distinction; unknown whether rate is supply-only or supply-and-erect. If supply-and-erect, adding erector labour double-counts."
+   },
+   {
+    "role": "supplementary steel purlin 200/18 (upper tier)",
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t7:r26",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 38.3,
+     "high": 38.3
+    },
+    "centre": "Auckland",
+    "caveat": "Same tier ambiguity. Used for the heavy-strengthening case only."
+   },
+   {
+    "role": "purlin cleats, 120 hr fab/tonne",
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t2:r45",
+    "source": null,
+    "unit": "kg",
+    "amount": {
+     "low": 20.8,
+     "high": 20.8
+    },
+    "centre": "Auckland",
+    "caveat": "Unreviewed. Sibling row r46 prices the same item at 38.60/kg on a 250 hr/tonne assumption - 86% spread. Cleat mass per unit assumed 3 kg, not from QV."
+   },
+   {
+    "role": "purlin cleats, 250 hr fab/tonne",
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t2:r46",
+    "source": null,
+    "unit": "kg",
+    "amount": {
+     "low": 38.6,
+     "high": 38.6
+    },
+    "centre": "Auckland",
+    "caveat": "Unreviewed. Used for heavy case."
+   },
+   {
+    "role": "minor steelwork RHS trimmer",
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t4:r3",
+    "source": null,
+    "unit": "kg",
+    "amount": {
+     "low": 10.4,
+     "high": 10.4
+    },
+    "centre": "Auckland",
+    "caveat": "Unreviewed. Section titled 'Supply and Erect' but inclusions of connections, coatings and access unconfirmed."
+   },
+   {
+    "role": "timber rafter/purlin strengthening 150x50 SG8 H1.2",
+    "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t7:r19",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 23.1,
+     "high": 23.1
+    },
+    "centre": "Auckland",
+    "caveat": "Unreviewed. Alternative to steel route for timber-framed residential roofs; table repeats sizes across multiple tiers with unstated distinctions. Not added to the steel build-up."
+   },
+   {
+    "role": "steel erector labour",
+    "row_id": "77a9ea2e8b0f174651de8bdceb3c87c8c288ba10a5f707ee5c36267bf7395a8e:t0:r31",
+    "source": null,
+    "unit": "hour",
+    "amount": {
+     "low": 91.5,
+     "high": 91.5
+    },
+    "centre": "Auckland",
+    "caveat": "Unreviewed. Same rate all three centres, which is unusual. Unknown whether on-cost, supervision and margin are included. Hours per m2 (0.05-0.20) are my assumption, not QV."
+   },
+   {
+    "role": "carpenter labour (timber strengthening route)",
+    "row_id": "77a9ea2e8b0f174651de8bdceb3c87c8c288ba10a5f707ee5c36267bf7395a8e:t0:r5",
+    "source": null,
+    "unit": "hour",
+    "amount": {
+     "low": 81.3,
+     "high": 81.3
+    },
+    "centre": "Auckland",
+    "caveat": "Unreviewed. WLG 72.70, CHC 75.00. Not used in the steel-roof reference build-up."
+   },
+   {
+    "role": "EWP access, 12m working height",
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t8:r5",
+    "source": null,
+    "unit": "day",
+    "amount": {
+     "low": 163.0,
+     "high": 163.0
+    },
+    "centre": "Auckland",
+    "caveat": "Unreviewed. Hire rate only - excludes delivery, operator and traffic management. Duration 5-15 days is my assumption. QV capture contains no scaffold section, so a scaffolded alternative cannot be priced."
+   },
+   {
+    "role": "ground-mount isolated column pad (alternative to roof)",
+    "row_id": "f0968d722af3d033d91c79c47fe7ecbea989e5abaecc3422c66d853ac075ca53:t2:r1",
+    "source": null,
+    "unit": "m3",
+    "amount": {
+     "low": 2780.0,
+     "high": 2780.0
+    },
+    "centre": "Auckland",
+    "caveat": "Unreviewed. Only relevant if array is ground-mounted; not included in the roof-array band. Includes blinding, formwork, 100kg/m3 reo, shallow excavation."
+   },
+   {
+    "role": "PS1 structural design fee",
+    "row_id": null,
+    "source": "https://www.finesseeng.co.nz/pricing",
+    "unit": "sum",
+    "amount": {
+     "low": 2500,
+     "high": 8000
+    },
+    "centre": "Auckland",
+    "caveat": "EXTRAPOLATED, not a published solar PS1 fee. Source publishes CPEng at $300/hr excl GST and NZS3604 dwelling design at $3,000-$7,500. One NZ practice only - not a market survey. Excludes PS4 construction monitoring and council RFI time."
+   },
+   {
+    "role": "array sizing basis (9 m2 per kWp)",
+    "row_id": null,
+    "source": "https://www.mysolarquotes.co.nz/blog/how-solar-power-works/solar-panel-sizes-and-weights/",
+    "unit": "m2/kWp",
+    "amount": {
+     "low": 9,
+     "high": 9
+    },
+    "centre": "NZ",
+    "caveat": "Installer rule of thumb, not a design standard."
+   },
+   {
+    "role": "imposed roof load driving strengthening",
+    "row_id": null,
+    "source": "https://roofingexpert.co.nz/blog/solar-panel-roof-compatibility-nz/",
+    "unit": "kg/m2",
+    "amount": {
+     "low": 12,
+     "high": 18
+    },
+    "centre": "Auckland",
+    "caveat": "Commercial roofing blog, not a peer-reviewed or standards source. Wind uplift, not dead load, usually governs."
+   },
+   {
+    "role": "proprietary mounting rails, clamps and brackets - supply and install",
+    "row_id": null,
+    "source": null,
+    "unit": "sum",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "centre": "Auckland",
+    "caveat": "NOT ESTABLISHED. No NZ published commercial rate found. Only retail oddments (brackets $12.95-$45.00) and US per-watt figures, neither of which scale defensibly. This is the largest single element of the scope and must be quoted."
+   }
+  ],
+  "band": {
+   "unit": "sum (30 kWp / ~270 m2 roof array, steel-purlin roof)",
+   "low": 6980,
+   "high": 43230,
+   "centre": "Auckland",
+   "basis": "EXCLUDES proprietary mounting rail/clamp supply and installation, and excludes all electrical work. Includes only: (a) purlin/rafter strengthening built from QV component rows at $14/m2 (light - extra fixings and occasional purlin) to $119/m2 (heavy - new purlins at 900 ctrs plus cleats plus RHS trimmers) over 270 m2 of array; (b) PS1 structural design fee extrapolated from published NZ CPEng rates; (c) EWP access 5-15 days. Equates to $233-$1,441 per kWp. Sizing at 9 m2/kWp. Strengthening quantities per m2 are MY assumptions, not QV quantities. Not valid for ground-mount, for tile or membrane roofs, or for roofs requiring scaffold rather than EWP. The band must not be treated as a settled price - it is a pricing frame pending roof capacity assessment and a racking quote."
+  },
+  "not_established": [
+   "Proprietary PV mounting rail, clamp, foot and tilt-leg supply and install rates for NZ commercial arrays - the largest element of the scope",
+   "Ballasted flat-roof frame systems and their ballast weight/cost",
+   "Actual array size, module weight and layout - the scenario does not state them",
+   "Existing roof structure capacity, purlin size, spacing, span and age - governs whether strengthening is $14/m2 or $119/m2 or not required at all",
+   "Whether QV Proprietary Purlin rates are supply-only or supply-and-erect, and what separates the two price tiers",
+   "Scaffolding rates - no scaffold section exists in the QV capture",
+   "Roof penetration weatherproofing and flashing to mounting feet, and any roofing warranty implications",
+   "Building consent lodgement and processing fees (territorial authority specific; QV Building Levy rows are unitless and unusable)",
+   "PS4 construction monitoring fee",
+   "Wind zone / AS-NZS 1170.2 roof zone (corner, edge, intermediate, internal) which drives fixing density and therefore cost",
+   "Ground-mount option: pile or pad type, land area, geotech requirement"
+  ],
+  "suppliers_to_ring": [
+   "Clenergy NZ - PV-ezRack SolarRoof, publishes an AS/NZS 1170.2 NZ-specific install guide",
+   "Roar Power NZ - Chiko low-profile corrugated roof mounting systems",
+   "Fazcorp - solar mounting rail and L-bracket systems for corrugated roofs",
+   "Trans Marine Pro & Solar Solutions Northland - Clenergy rail, mid and end clamps",
+   "Dimond Roofing - purlin sizing, FastBrace and roof profile compatibility",
+   "Steel & Tube or Fletcher Easysteel - supplementary purlin and cleat supply",
+   "A local structural practice (e.g. Finesse Consulting Engineers, or any CPEng firm) for roof capacity assessment plus PS1",
+   "Sunergise or a comparable NZ commercial solar EPC for a combined structural-plus-racking package price"
+  ],
+  "qv_queries_tried": [
+   "solar panel photovoltaic array mounting",
+   "list_qv_sections (full)",
+   "proprietary purlin cold formed Z section supply erect",
+   "list_qv_sections contains 'Steel'",
+   "proprietary purlins (section filter: Proprietary Purlins)",
+   "roof framing purlin rafter SG8 H1.2 (section filter: Framing: Roof)",
+   "professional fees engineer design consultant",
+   "solar water heater collector renewable energy",
+   "coach screw bolt galvanised roof fixing bracket",
+   "carpenter steel erector hourly labour rate (section filter: Labour Rates)",
+   "scaffolding edge protection roof access hire",
+   "concrete pad footing plinth isolated base ground screw pile",
+   "list_qv_sections contains 'Preliminaries'",
+   "building levy consent (section filter: Building Levy)",
+   "elevated platform scissor boom lift hire (section filter: Elevated Platform)",
+   "get_qv_table on Minor Steel Works 52d4a068...:t4:r2"
+  ],
+  "title": "Solar array mounting structural support",
+  "claim_count": 12,
+  "_meta": {
+   "turns": 9,
+   "web_searches": 8,
+   "in": 530429,
+   "out": 13226
+  }
+ },
+ {
+  "id": "acp-facade-cladding-install",
+  "resolved_from": "qv",
+  "confidence": "low",
+  "components": [
+   {
+    "role": "panel and fix (proxy: solid aluminium sheet, NOT composite)",
+    "row_id": "5c692a5a1ee23430c4ed8c04e6ec20a57f0a82bfbf11ae7f5c9496df4374b5cc:t12:r8",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 357,
+     "high": 357
+    },
+    "centre": "Auckland (flat national)",
+    "caveat": "2mm solid sheet. Sits in an unlabelled second tier of the table (r6-r9) whose heading was lost in capture; inclusion of support framing and finish unconfirmed. Not an ACP rate."
+   },
+   {
+    "role": "panel and fix upper bound (proxy)",
+    "row_id": "5c692a5a1ee23430c4ed8c04e6ec20a57f0a82bfbf11ae7f5c9496df4374b5cc:t12:r9",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 453,
+     "high": 453
+    },
+    "centre": "Auckland (flat national)",
+    "caveat": "3mm solid sheet. Same unlabelled-tier caveat. Excludes ACP fabrication premium (routing, folding to cassette, FR core)."
+   },
+   {
+    "role": "subgirts, industrial steel girt, lower bound",
+    "row_id": "ad97526a9f2e9df8f44acad2f5da73798cfee57e55cb5d96bb1c070094ea1f25:t9:r6",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 25,
+     "high": 40.6
+    },
+    "centre": "Auckland (flat national)",
+    "caveat": "DHS 200/15 to 350/18. Spacing not stated in row; unit already m2 of wall, convention unverified. Industrial girt, likely light for an engineered ACP subframe."
+   },
+   {
+    "role": "subgirts, facade top-hat at 600 crs, upper bound",
+    "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t41:r21",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 86,
+     "high": 86
+    },
+    "centre": "Auckland",
+    "caveat": "Stated 2.5 m/m2 at 600mm crs. Component of the ExoTec build-up; used here standalone and NOT summed with any ExoTec total row."
+   },
+   {
+    "role": "standard flashings",
+    "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t30:r2",
+    "source": null,
+    "unit": "m (converted to m2 by assumption)",
+    "amount": {
+     "low": 6,
+     "high": 23
+    },
+    "centre": "Auckland",
+    "caveat": "QV prices flashings per lineal metre only. The 0.4-0.6 m/m2 extent is MY assumption, not QV's. Range spans r2 base closure $19.40/m to r7 horizontal Z $38.90/m."
+   },
+   {
+    "role": "cross-check: analogous rainscreen facade system total",
+    "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t41:r17",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 429,
+     "high": 557
+    },
+    "centre": "Auckland",
+    "caveat": "Fibre cement ExoTec, not ACP. Flagged total_or_build_up_check_components. Low is r17, high is r33. Used as an independent sanity check only; not added to the build-up."
+   },
+   {
+    "role": "QV's own ACP rows, unpriced (evidence of gap)",
+    "row_id": "d522ac53ad9c23661645bd7e308ced59c28dbe713af345ee7bc0b9699d6c53a5:t1:r7",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "centre": "n/a",
+    "caveat": "Reynobond / Alupanel straight and curved (r7, r9, r11) all return None for AKL, WLG and CHC. Entire 5-row table unpriced. QV treats ACP as quote-only."
+   },
+   {
+    "role": "access, EWP day rate (cannot convert to m2)",
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t8:r4",
+    "source": null,
+    "unit": "day",
+    "amount": {
+     "low": 120,
+     "high": 230
+    },
+    "centre": "Auckland (flat national)",
+    "caveat": "10m working height, r3 compact $120 to r7 large deck $230. No productivity basis in QV so no m2 rate derivable. QV capture contains NO scaffolding section at all. EXCLUDED from the band."
+   }
+  ],
+  "band": {
+   "unit": "m2",
+   "low": 390,
+   "high": 560,
+   "centre": "Auckland",
+   "basis": "Proxy build-up: solid aluminium sheet 2-3mm (t12:r8/r9) + subgirts at 600 crs (t9:r6 to t41:r21) + standard flashings at an assumed 0.4-0.6 m/m2. Independently corroborated by the ExoTec commercial facade system totals of $429-557/m2. EXCLUDES all access and scaffolding, and excludes the ACP-specific premium for cassette fabrication, FR core and engineered brackets. Planning band only, not a tender rate; treat $560 as a soft ceiling."
+  },
+  "not_established": [
+   "Actual ACP panel system rate - QV's Reynobond and Alupanel rows are blank, and no NZ vendor publishes $/m2",
+   "Cassette vs rout-and-return fixing method, which materially changes the rate",
+   "FR / mineral core grade and its supply premium, likely mandatory by spec at 10m",
+   "Engineered subframe and bracket design - QV girt rows are industrial, not facade-engineered",
+   "Flashing extent per m2 of face - QV prices flashings per lineal metre only; my 0.4-0.6 m/m2 is an assumption",
+   "Access method and cost - no scaffolding rows exist in the QV capture; EWP day rates cannot be converted without productivity data",
+   "Height premium above approx 6m",
+   "Panel module size, waste allowance and offcut factor",
+   "Fire engineering, PS3 and producer statement compliance cost",
+   "Which sub-heading each of the two unlabelled tiers in Metalwork/Aluminium Sheet Cladding belongs to"
+  ],
+  "suppliers_to_ring": [
+   "Symonite Panels Ltd (Alucobond PLUS; states it is NZ's largest and most experienced ACP contractor)",
+   "Nu-Wall Aluminium Cladding",
+   "Fairview Systems",
+   "Ullrich Aluminium",
+   "Kingspan Insulated Panels NZ",
+   "Metalcraft Insulated Panels",
+   "Architectural Profiles / Altus NZ",
+   "A local scaffolding contractor for the 10m access, priced per m2 of elevation"
+  ],
+  "qv_queries_tried": [
+   "aluminium composite panel cladding",
+   "list_qv_sections contains=Cladding",
+   "aluminium sheet cladding (section=Metalwork)",
+   "proprietary wall cladding system (section=Proprietary)",
+   "get_qv_table d522ac...:t1 (Proprietary Wall Cladding Systems - all rows blank)",
+   "get_qv_table 5c692a...:t12 (Aluminium Sheet Cladding - full 7 rows)",
+   "girts to metal cladding subgirt (section=Girts)",
+   "flashing cladding head jamb sill (section=Flashings for Cladding)",
+   "scaffolding elevated work platform access hire",
+   "wall cladding profiled metal tray panel (section=Roof Coverings)",
+   "Alucobond Alpolic rainscreen cassette - no rows matched",
+   "scaffolding erect dismantle elevation (section=Preliminaries)",
+   "powdercoated aluminium panel prefinished sheet fixed to framing",
+   "list_qv_sections contains=Preliminaries (confirmed no scaffolding section exists)"
+  ],
+  "title": "Aluminium composite panel cladding",
+  "claim_count": 10,
+  "_meta": {
+   "turns": 8,
+   "web_searches": 8,
+   "in": 352116,
+   "out": 11578
+  }
+ },
+ {
+  "id": "switchboard-fault-rating-protection",
+  "resolved_from": "qv+web",
+  "confidence": "low",
+  "components": [
+   {
+    "role": "MCB, 240V 16A-63A single pole, 4.5kA",
+    "row_id": "ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t29:r33",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 53,
+     "high": 53
+    },
+    "centre": "Auckland (WLG/CHC identical)",
+    "caveat": "Group heading not captured; supply-only vs supply-and-install unconfirmed. No regional variance is itself a flag."
+   },
+   {
+    "role": "MCB, 415V 6A-40A triple pole, 6kA",
+    "row_id": "ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t29:r36",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 201,
+     "high": 201
+    },
+    "centre": "Auckland (WLG/CHC identical)",
+    "caveat": "Highest kA rating anywhere in the 9,816-row capture. Unit convention unconfirmed."
+   },
+   {
+    "role": "MCB, 415V 50A-63A triple pole, stated 4.5kA",
+    "row_id": "ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t29:r37",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 257,
+     "high": 257
+    },
+    "centre": "Auckland (WLG/CHC identical)",
+    "caveat": "SUSPECTED ERROR - kA falls as frame size rises vs r36. Verify on live CostBuilder before use."
+   },
+   {
+    "role": "RCD/RCBO range, 10-30mA, 1P-3P, 10A-100A",
+    "row_id": "ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t29:r39",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 381,
+     "high": 760
+    },
+    "centre": "Auckland (WLG/CHC identical)",
+    "caveat": "Span across rows r39-r45. No kA withstand stated on RCD rows."
+   },
+   {
+    "role": "Remove existing switchboard or DB",
+    "row_id": "1e431d3e9f4822173217f03e52bdab07b323b92dd9046304b513b2875344218e:t7:r13",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 262,
+     "high": 262
+    },
+    "centre": "Auckland (WLG 239, CHC 260)",
+    "caveat": "Strip-out only. Only relevant if replacement is chosen over bracing upgrade."
+   },
+   {
+    "role": "CONTEXT ONLY - declared PFC ceiling, residential",
+    "row_id": null,
+    "source": "https://www.vector.co.nz/kentico_content/assets/c151470e-c08b-49b8-8198-e2b83e662704/ESA002_Electricity_Network_Connection_Standard.pdf",
+    "unit": "kA",
+    "amount": {
+     "low": 5,
+     "high": 5
+    },
+    "centre": "Auckland (Vector network)",
+    "caveat": "NOT A PRICE. Residential commitment only; commercial/industrial points of supply are not bounded by this. Site-specific PFC must be requested per ICP."
+   },
+   {
+    "role": "REJECTED - overseas arc flash/coordination study banding",
+    "row_id": null,
+    "source": "https://www.zechengineers.com/arc-flash-study-cost/",
+    "unit": "study",
+    "amount": {
+     "low": 0,
+     "high": 0
+    },
+    "centre": "n/a - USD, US market",
+    "caveat": "Deliberately not converted. NFPA 70E scope, USD, US labour market. Listed only to show the search was done and the result rejected."
+   }
+  ],
+  "band": {
+   "unit": "ea",
+   "low": null,
+   "high": null,
+   "centre": "Auckland",
+   "basis": "No composite band established. The three governing cost drivers - measured prospective fault current, busbar bracing upgrade, and the kA premium above 6kA - are absent from QV and unpublished in NZ. Only a partial sub-band is defensible: protection device supply/install at 6kA or below, approx NZD 53-257 per device (MCB) and 381-760 per RCD/RCBO, Auckland, GST exclusive, subject to the unit-convention caveat. Carry the full scope as a provisional sum plus a separate design fee allowance, not as a schedule rate."
+  },
+  "not_established": [
+   "Prospective fault current at the point of supply - site-specific per ICP, not a catalogue item, must be obtained from the lines company before any quantity exists",
+   "Busbar bracing upgrade to an existing switchboard - no QV row, no published NZ rate found",
+   "Any protection device rated above 6kA - no MCCB or ACB in the 9,816-row capture at 10/15/25/36/50kA",
+   "Discrimination / protective device coordination study fee, NZ market",
+   "Fault level assessment and protection design consultant fee, NZ market",
+   "Whether the t1 Switchboards Custom Built tiers (Small/Medium/Large) carry any stated kA withstand - all ~17 group headings missing from capture, table unusable for fault-rating selection",
+   "Whether t29 rates are supply-only or supply-and-install - conflicting signals between price level and absence of regional variance",
+   "Form of separation / segregation upgrade under AS/NZS 61439",
+   "Feasibility threshold at which bracing an existing board is abandoned in favour of full replacement"
+  ],
+  "suppliers_to_ring": [
+   "Vector (Auckland) - declared PFC at point of supply for the specific ICP",
+   "Wellington Electricity - declared PFC, Wellington",
+   "Orion New Zealand - declared PFC, Christchurch",
+   "Counties Energy / Powerco - declared PFC, other regions",
+   "NHP New Zealand - MCCB/ACB and kA-rated device pricing",
+   "Schneider Electric New Zealand - switchgear and board component pricing",
+   "ABB New Zealand - switchgear and board component pricing",
+   "Eaton New Zealand - switchgear and board component pricing",
+   "JA Russell - wholesale comparison pricing",
+   "Corys Electrical - wholesale comparison pricing",
+   "Ideal Electrical - wholesale comparison pricing",
+   "Beca - fault study, discrimination study and protection design fee",
+   "WSP New Zealand - fault study and protection coordination design fee",
+   "Aurecon - fault study and protection coordination design fee"
+  ],
+  "qv_queries_tried": [
+   "switchboard",
+   "list_qv_sections contains=Electrical",
+   "switchboard custom built busbar (section: Switchboards Custom Built)",
+   "distribution board proprietary (section: Switchboards Proprietary)",
+   "get_qv_table ac5fef...:t1:r3 (full 46-row custom switchboard table)",
+   "get_qv_table ac5fef...:t2:r3 (full 7-row proprietary board table)",
+   "circuit breaker MCB MCCB",
+   "kA fault rating short circuit",
+   "isolator main switch amp rated (section: Electrical)",
+   "control equipment starter contactor panel (section: Control Equipment)",
+   "busbar bracing chassis copper bar",
+   "design fee consultant engineer professional fees",
+   "service mains incoming supply transformer point of supply (section: Service Mains)",
+   "testing commissioning certification electrical alterations existing"
+  ],
+  "title": "Switchboard fault rating and protection",
+  "claim_count": 9,
+  "_meta": {
+   "turns": 8,
+   "web_searches": 7,
+   "in": 487358,
+   "out": 11435
+  }
+ },
+ {
+  "id": "solar-connection-switchboard-works",
+  "resolved_from": "qv+web",
+  "confidence": "low",
+  "components": [
+   {
+    "role": "Dedicated solar distribution board (enclosure/chassis proxy, 10 way)",
+    "row_id": "ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t2:r3",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 594,
+     "high": 649
+    },
+    "centre": "WLG-AKL",
+    "caveat": "Proprietary DB enclosure. Table t2 has two unexplained tiers (r3-r6 vs r8-r10) because the group caption rows were not captured; likely flush vs surface mount but unconfirmed. Unknown whether rate is supply-only or supply-and-fix, and it is NOT a solar board - no PV breaker, no solar supply switch, no 4777.1 labelling included."
+   },
+   {
+    "role": "Dedicated solar distribution board, larger (15 way)",
+    "row_id": "ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t2:r4",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 800,
+     "high": 920
+    },
+    "centre": "AKL",
+    "caveat": "Same caveats as t2:r3. Range spans both untitled tiers."
+   },
+   {
+    "role": "Electrician labour for tie-in, isolator fit, labelling, testing",
+    "row_id": "77a9ea2e8b0f174651de8bdceb3c87c8c288ba10a5f707ee5c36267bf7395a8e:t0:r10",
+    "source": null,
+    "unit": "hour",
+    "amount": {
+     "low": 68.7,
+     "high": 83.65
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Bare labour rate. Unreviewed whether it carries overhead, margin, vehicle or supervision. Web source indicates the inverter-to-board tie-in itself is only 1-2 hours; board works are the bulk."
+   },
+   {
+    "role": "Disconnect existing switchboard or DB",
+    "row_id": "1e431d3e9f4822173217f03e52bdab07b323b92dd9046304b513b2875344218e:t7:r13",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 239,
+     "high": 262
+    },
+    "centre": "WLG-AKL",
+    "caveat": "This is a DEMOLITION row - siblings in table t7 are sink, WC and pipework removal. It is disconnect/remove, NOT modify-existing-board-to-accept-solar-breaker. QV has no row for board modification."
+   },
+   {
+    "role": "AC submain cable, inverter to board, 6-16mm2",
+    "row_id": "ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t7:r66",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 21.3,
+     "high": 35.4
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Cable: Copper table also has missing group captions - the same 6mm2 size appears at 11.40, 14.00, 22.00 and 33.60 AKL across untitled tiers (different cable types/installation methods). Range shown covers 6mm2 t7:r66 to 16mm2 t7:r68 only. Do not use without establishing cable type and containment."
+   },
+   {
+    "role": "Network DG application fee, residential under 10kW",
+    "row_id": null,
+    "source": "https://www.mysolarquotes.co.nz/about-solar-power/residential/lines-companies-solar-application-fees/",
+    "unit": "ea",
+    "amount": {
+     "low": 0,
+     "high": 305
+    },
+    "centre": "national",
+    "caveat": "Nil on Vector, Powerco, Aurora, MainPower and ~5 others for residential under 10kW. Where charged, published range is $80-$350 GST-INCLUSIVE; I have converted to approx $70-$305 excl GST. Average ~$140 incl. Third-party aggregator, not the lines companies' own schedules - verify with the actual distributor."
+   },
+   {
+    "role": "Existing board upgrade, market-derived",
+    "row_id": null,
+    "source": "https://perlelectrical.co.nz/residential-switchboard-upgrade-cost-nz/",
+    "unit": "ea",
+    "amount": {
+     "low": 1300,
+     "high": 3900
+    },
+    "centre": "national",
+    "caveat": "Installer marketing pages, not a cost book. Source states $2,000-$4,500 INCLUDING GST for a straightforward residential replacement; two corroborating sources give $1,500-$3,500+ and $1,500-$4,000+ without stating GST basis, so I have treated all as GST-inclusive and converted. Residential scope only."
+   }
+  ],
+  "band": {
+   "unit": "ea",
+   "low": 2000,
+   "high": 6000,
+   "centre": "Auckland",
+   "basis": "Single-inverter, up to 10kW, domestic-scale PV grid connection: solar supply switch (Main Switch - Inverter Supply), dedicated solar distribution board, AS/NZS 4777.1 labelling and signage, short AC submain and tie-in, plus upgrade or replacement of ONE existing board. GST exclusive. Market-derived from three NZ installer sources, cross-checked against QV proprietary DB rows t2:r3/r4 and electrician labour t0:r10. EXCLUDES: inverter, panels, DC side, DC isolators, surge protection, export-limiting CTs or comms, network application fee, inspection and CoC/ESC, scaffolding, making good. NOT valid for multi-inverter or above 10kW."
+  },
+  "not_established": [
+   "Commercial / above-10kW switchboard package - no QV rows and no published NZ pricing found",
+   "Vector and other distributors' DG application fee schedule above 10kW (stated to vary by connection size, amount not published)",
+   "Solar supply switch / AC isolator - no QV row exists at any size or rating",
+   "DC isolator, PV array surge protection (SPD) - no QV row exists",
+   "Export-limiting CT metering and inverter comms for dynamic export management - no QV row, no published NZ rate",
+   "AS/NZS 4777.1 labelling, signage and single-line-diagram at the MSB - no QV row",
+   "Modification (as opposed to removal) of an existing switchboard - QV's only board row in Demolition and Alterations is a disconnect/remove row",
+   "Which board type each Small/Medium/Large price in QV table ac5fef...:t1 belongs to - all 15 group caption rows missing from the capture, making the $2,810-$278,000 custom-board table unusable",
+   "Whether QV switchboard rates are supply-only, supply-and-fix, or include connection and testing",
+   "Scenario's own open items: inverter capacity AND count, number of existing boards affected, applicable export limit, network approval outcome"
+  ],
+  "suppliers_to_ring": [
+   "Vector - DGinfo.Applications@vector.co.nz (Auckland DG application fee and export limit)",
+   "Wellington Electricity (DG application, historically tighter export limits)",
+   "Orion New Zealand (Christchurch DG application and generation application process)",
+   "Bremca Industries, Christchurch (custom switchboard builder)",
+   "Ashley Switchboards",
+   "Redpath Switchgear",
+   "Cuthbert Stewart (switchboard manufacture)",
+   "Ideal Electrical (solar supply switch, SPD, enclosures)",
+   "Corys Electrical",
+   "JA Russell",
+   "solarZero (installed package pricing)",
+   "Infinite Energy NZ",
+   "Lightforce Solar",
+   "SEANZ (Sustainable Energy Association NZ) for member commercial installers",
+   "Independent registered electrical inspector for 4777.1 inspection and CoC/ESC fees"
+  ],
+  "qv_queries_tried": [
+   "switchboard",
+   "list_qv_sections contains=Electrical",
+   "distribution board MCB chassis (section: Switchboards)",
+   "solar photovoltaic PV inverter",
+   "switchboard custom built",
+   "circuit breaker",
+   "get_qv_table ac5fef...:t1 (Switchboards Custom Built, 46 rows)",
+   "switchboard proprietary (section: Switchboards Proprietary)",
+   "main switch isolator meter box service mains",
+   "emergency power supply generator UPS",
+   "solar",
+   "subcircuit power commercial dedicated circuit",
+   "electrician labour hourly rate",
+   "cable copper TPS 6mm 10mm 16mm",
+   "get_qv_table 1e431d...:t7 (Work in Connection With Services)",
+   "surge protection earthing device metering",
+   "electrical alterations rewire existing board addition"
+  ],
+  "title": "Solar connection switchboard works",
+  "claim_count": 9,
+  "_meta": {
+   "turns": 10,
+   "web_searches": 8,
+   "in": 523378,
+   "out": 13272
+  }
+ },
+ {
+  "id": "facade-coating-application",
+  "resolved_from": "qv",
+  "confidence": "medium",
+  "components": [
+   {
+    "role": "2-coat acrylic to smooth wall (interior proxy for plaster)",
+    "row_id": "f3f4c6bb8054b7bf95afdcd863ce58fda6f7210961397ae49e65d1289cd15fa8:t0:r87",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 19.3,
+     "high": 22.9
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Interior Wall Finishes section; used as proxy because QV has no exterior 2-coat plaster row. Group header lost in capture."
+   },
+   {
+    "role": "exterior applied paint finish, plaster/concrete (3 coats)",
+    "row_id": "ad97526a9f2e9df8f44acad2f5da73798cfee57e55cb5d96bb1c070094ea1f25:t8:r3",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 24.5,
+     "high": 28.6
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "THREE coats, not two; elemental section, unknown whether trade or element rate. No priced 'additional coat acrylic' row exists to deduct a coat."
+   },
+   {
+    "role": "steel panel, degrease + etch prime + 2 coats, plain",
+    "row_id": "a4bbf7211339ad80044429f4a2aa721d5ac5c61f6fe4a34f6afb9ccae5475570:t7:r3",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 26.0,
+     "high": 29.8
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Aggregate 'combined rate' - do NOT also add t7:r1 degrease or t7:r2 paint. Section is titled Metal Roofing, applied to panels by analogy."
+   },
+   {
+    "role": "steel panel, profiled, combined rate",
+    "row_id": "a4bbf7211339ad80044429f4a2aa721d5ac5c61f6fe4a34f6afb9ccae5475570:t7:r19",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 36.9,
+     "high": 45.2
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Trough 400 profile; header lost, presumed combined degrease+paint. Corrugated equivalent t7:r16 is AKL 34.20."
+   },
+   {
+    "role": "substrate prep - water blast existing exterior",
+    "row_id": "a4bbf7211339ad80044429f4a2aa721d5ac5c61f6fe4a34f6afb9ccae5475570:t4:r19",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 8.0,
+     "high": 9.4
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "Requires min 200m2. Only applies to recoat of existing; omit for new substrate."
+   },
+   {
+    "role": "working-at-height labour allowance, <=9m",
+    "row_id": "a4bbf7211339ad80044429f4a2aa721d5ac5c61f6fe4a34f6afb9ccae5475570:t5:r3",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 2.4,
+     "high": 3.0
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "QV ladder stops at 9m; scenario says 10m. This is a productivity adder only and does NOT provide scaffold or EWP."
+   },
+   {
+    "role": "soffit coating (interior proxy)",
+    "row_id": "a4bbf7211339ad80044429f4a2aa721d5ac5c61f6fe4a34f6afb9ccae5475570:t1:r3",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 19.2,
+     "high": 22.8
+    },
+    "centre": "WLG low / AKL high",
+    "caveat": "No exterior soffit painting row exists in QV. Interior rate; exterior overhead work will price above this."
+   },
+   {
+    "role": "high-build exterior texture coating (alternative spec)",
+    "row_id": "a4bbf7211339ad80044429f4a2aa721d5ac5c61f6fe4a34f6afb9ccae5475570:t16:r8",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 50.0,
+     "high": 50.0
+    },
+    "centre": "all centres same",
+    "caveat": "Applies only if spec is a high-build/texture coating rather than paint. t16:r2 plain 45.80, t16:r9 textured 60.00, t16:r10 Flexitrowel 79.00."
+   },
+   {
+    "role": "access plant - EWP 10m working height (reference only)",
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t8:r4",
+    "source": null,
+    "unit": "day",
+    "amount": {
+     "low": 160.0,
+     "high": 160.0
+    },
+    "centre": "all centres same",
+    "caveat": "Day rate, not per m2. Cannot be converted to per-m2 without productivity data, which QV does not publish."
+   },
+   {
+    "role": "facade scaffold hire (web, context only)",
+    "row_id": null,
+    "source": "https://www.upwellscaffolding.co.nz/faq.html",
+    "unit": "m2/week",
+    "amount": {
+     "low": 1.33,
+     "high": 1.35
+    },
+    "centre": "Auckland",
+    "caveat": "Single supplier FAQ page, hire only, excludes erect/dismantle. Consumer-facing, not tender data. Not used in the band."
+   }
+  ],
+  "band": {
+   "unit": "m2",
+   "low": 26,
+   "high": 48,
+   "centre": "Auckland",
+   "basis": "Prepare and apply two-coat exterior coating to plastered/concrete/steel-panel surfaces up to ~10m, including the QV working-at-height labour allowance (t5:r3). Low = smooth sound plaster, seal + 2 coats acrylic, minimal prep. High = profiled steel panel with degrease and etch prime, or recoat of existing plaster including water blast. EXCLUDES provision of scaffold or EWP, excludes edge/trim linear items, excludes containment/encapsulation, excludes high-build texture coatings (use $46-79/m2), excludes durability-driven protective systems on steel. Wellington approx $22-42, Christchurch approx $26-48."
+  },
+  "not_established": [
+   "Coating system specification - QV has no exterior two-coat acrylic rate for plaster or concrete; only a three-coat row",
+   "Cost of providing access (scaffold wrap or EWP) per m2 of facade - QV has no scaffold-per-m2 row and no productivity data to convert day rates",
+   "Rates above 9m - QV height adders stop at 9m, scenario states 10m",
+   "Exterior soffit coating rate - no such row in QV; interior proxy used",
+   "Protective coating systems on steel panels (epoxy zinc, metalspray, poly-aspartic) - all rows in Structural Steelwork t12 are unpriced in our capture",
+   "What each QV painting rate includes - the group header rows stating system, coats and 'over primed or not' were lost in capture",
+   "Whether the elemental row ad97526a...t8:r3 is a trade rate or an element rate",
+   "Containment, sheeting, dust/overspray control and public protection for an occupied building"
+  ],
+  "suppliers_to_ring": [
+   "Resene Construction Systems",
+   "Dulux NZ Protective Coatings",
+   "Altex Coatings",
+   "Programmed Property Services NZ",
+   "Higgins Coatings NZ",
+   "Master Painters NZ (member applicators)",
+   "Upwell Scaffolding Auckland",
+   "PSL Scaffolding",
+   "Camelspace",
+   "SafeSmart Access",
+   "Hirepool / Access Solutions (EWP)"
+  ],
+  "qv_queries_tried": [
+   "exterior paint two coats plaster",
+   "list sections: Paint",
+   "exterior painting generally",
+   "specialist finishes walls exterior",
+   "painting metalwork galvanised steel primer two coats",
+   "scaffolding hire erect dismantle per m2",
+   "elevating work platform scissor lift hire",
+   "list sections: Preliminaries",
+   "scaffold",
+   "soffit lining eaves fibre cement paint exterior",
+   "acrylic sealer block filler masonry concrete coating exterior",
+   "Resene coating system",
+   "additional coat acrylic add extra",
+   "wash down clean down existing surfaces sugar soap",
+   "get_qv_table on painting t1,t3,t4,t5,t7,t8,t16; exterior walls t6,t8; prelims t8; steelwork t12"
+  ],
+  "title": "Facade and soffit coating",
+  "claim_count": 9,
+  "_meta": {
+   "turns": 13,
+   "web_searches": 4,
+   "in": 713964,
+   "out": 14047
+  }
+ },
+ {
+  "id": "glazed-vision-panel",
+  "resolved_from": "qv+web",
+  "confidence": "medium",
+  "components": [
+   {
+    "role": "aperture cut and framed in leaf (analogue: factory air-relief grille opening 600x300)",
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t5:r13",
+    "source": null,
+    "unit": "ea",
+    "amount": {
+     "low": 103,
+     "high": 155
+    },
+    "centre": "Auckland",
+    "caveat": "Aperture is for a grille not glass; 0.18m2 vs our 0.27m2 so high end is pro-rata by area. Flat across all three centres, which hints supply-only. Inclusions unconfirmed. Identical rate on hollow core table ...:t4:r20."
+   },
+   {
+    "role": "glazing beads, 2.4-4.8 lin m (one or both faces)",
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t3:r2",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 43,
+     "high": 158
+    },
+    "centre": "Auckland",
+    "caveat": "$17.80/m RP FJ to $27.70/m 30x10x6 RP Clears (...:t3:r5); high end adds brass screw-and-cup fixing at $5.20/m (...:t3:r10). Whether bead rates are supply-only or supply-and-fix is unconfirmed."
+   },
+   {
+    "role": "glass, 6mm toughened or 6.38 laminated, 0.27 m2",
+    "row_id": "2dc5b4497e75a669b63791e1bce6bc7b6b7822720171a44ad93080bdfe1b8237:t2:r13",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 76,
+     "high": 108
+    },
+    "centre": "Auckland",
+    "caveat": "AKL $283-398/m2 across 6mm annealed upper tier (...:t1:r13) to 6mm toughened (...:t2:r13); 6.38 laminated $375 (...:t5:r13). Safety glass mandatory in a door leaf. Unlabelled price tiers in every glazing table. No small-pane minimum captured."
+   },
+   {
+    "role": "site-cut labour alternative (carpenter 1.5-3.0 hr + glazier 0.5-1.0 hr)",
+    "row_id": "77a9ea2e8b0f174651de8bdceb3c87c8c288ba10a5f707ee5c36267bf7395a8e:t0:r5",
+    "source": null,
+    "unit": "hour",
+    "amount": {
+     "low": 170,
+     "high": 340
+    },
+    "centre": "Auckland",
+    "caveat": "Carpenter $81.30/hr (:t0:r5), Glazier $96.40/hr (:t0:r16). Hours are my judgement, not QV's. Replaces the factory aperture component; excludes dust protection and paint make-good."
+   },
+   {
+    "role": "fire glazing material indicator only (NOT a rated panel price)",
+    "row_id": "2dc5b4497e75a669b63791e1bce6bc7b6b7822720171a44ad93080bdfe1b8237:t8:r2",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 468,
+     "high": 468
+    },
+    "centre": "Auckland",
+    "caveat": "Pyroshield 6mm wired glass, AKL $468/m2. Integrity only, will not meet an insulating FRR. A material rate, not a tested assembly. QV's Fire Rated Windows rows (1d2e29eb...:t8:r2/r4/r6/r8) are all price-blank."
+   },
+   {
+    "role": "compliance geometry for rated leaves",
+    "row_id": null,
+    "source": "https://soteriadoors.co.nz/what-is-our-maximum-sized-vision-panel-for-each-fire-rating/",
+    "unit": "info",
+    "amount": {
+     "low": 0,
+     "high": 0
+    },
+    "centre": "NZ",
+    "caveat": "Max total glazed area 0.85m2, min 170mm from any leaf edge, min 50mm from hardware cut-outs. 300x900 = 0.27m2 complies and fits an 810 leaf."
+   },
+   {
+    "role": "rated retrofit feasibility / buy route",
+    "row_id": null,
+    "source": "https://soteriadoors.co.nz/vision-panel-60-minute-exterior-fire-door/",
+    "unit": "info",
+    "amount": {
+     "low": 0,
+     "high": 0
+    },
+    "centre": "NZ",
+    "caveat": "Vision panel cannot be retrofitted into a 60-min exterior fire door after manufacture; must be built in during manufacture to a tested configuration. Rated panels therefore price as a doorset variant, not as a per-panel rate."
+   },
+   {
+    "role": "tested rated system precedent (glass tied to leaf)",
+    "row_id": null,
+    "source": "https://www.bestdoors.co.nz/products/pc60p",
+    "unit": "info",
+    "amount": {
+     "low": 0,
+     "high": 0
+    },
+    "centre": "NZ",
+    "caveat": "PC60P is a door-and-glazing system approved using Pyrobel 16; confirms glass and leaf are certified as a pair. No price published."
+   }
+  ],
+  "band": {
+   "unit": "ea",
+   "low": 220,
+   "high": 430,
+   "centre": "Auckland",
+   "basis": "Non-rated door leaf, vision panel up to 300x900mm, factory-cut and glazed, extra over the plain leaf. Includes aperture forming, timber beads both faces, and 0.27m2 of 6mm toughened or 6.38 laminated safety glass. Excludes the door leaf, hanging, hardware, painting and make-good. Site-cut into an existing non-rated leaf instead: $300-600/ea (~1.4x). Wellington and Christchurch approx 3-8% below Auckland. NO fire-rated band established. GST exclusive."
+  },
+  "not_established": [
+   "Any fire-rated vision panel rate - QV's Fire Rated Windows table is entirely price-blank and no NZ vendor publishes a per-panel price",
+   "Leaf rating impact on cost - QV fire doorset tiers (a20c...:t2:r2/r5/r8 and 78c8...:t20:r3/r6/r9) are unlabelled and must not be differenced to derive a panel cost",
+   "Whether the $103 grille-aperture row includes a bead rebate or glazing liner, or is supply-only",
+   "What separates the two/three unlabelled price tiers in every QV glazing table",
+   "Whether QV bead $/m rates are supply-only or supply-and-fix",
+   "Glazier minimum charge on a 0.27m2 pane",
+   "Painting and make-good to new beads and reveal",
+   "Cost of a manufacturer field-of-application assessment where a rated leaf is modified"
+  ],
+  "suppliers_to_ring": [
+   "Pacific Doors (Pyropanel VP60) - factory-glazed rated leaves and field-of-application limits",
+   "Best Doors NZ (PC60P / Pyrobel 16) - rated doorset pricing",
+   "Soteria Doors - retrofit feasibility assessment and works pricing",
+   "Superior Doors - non-rated vision panel leaves, factory price",
+   "Glasscorp Architectural (AGC Pyrobel) - fire glass supply rate per m2 and minimum pane charge",
+   "Metro Performance Glass - toughened/laminated small pane rate incl. minimum",
+   "Viridian New Zealand - alternative glass supply rate"
+  ],
+  "qv_queries_tried": [
+   "vision panel door glazed",
+   "list_qv_sections contains=Door",
+   "glazing bead door stop (section Doors)",
+   "fire door frame rated FRR",
+   "6mm clear float glass glazing to timber (section Glazing)",
+   "interior timber door leaf solid core paint grade (section Interior Doors)",
+   "Pyran Pyrobel fire resistant glass intumescent",
+   "carpenter joiner hourly labour rate",
+   "cut opening in existing alterations form new opening",
+   "glazing labours putty beads sealant install glass small panes (section Glazing)",
+   "doors transparent vision lite sidelight borrowed light",
+   "Glazier labour rate hour (section Labour Rates)",
+   "get_qv_table on Door Stop/Glazing Beads t3, Solid Core t5, Hollow Core t4, Doors & Frames Fire t20, Fire Rated Doorsets t2, Fire Rated Windows t8, Wired Glass t8, Float Glass Annealed t1"
+  ],
+  "title": "Glazed vision panel to door",
+  "claim_count": 8,
+  "_meta": {
+   "turns": 10,
+   "web_searches": 8,
+   "in": 608734,
+   "out": 14297
+  }
+ },
+ {
+  "id": "site-establishment-relocation",
+  "resolved_from": "qv+web",
+  "confidence": "low",
+  "components": [
+   {
+    "role": "Temporary fence dismantle",
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t4:r4",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 2.9,
+     "high": 2.9
+    },
+    "centre": "AKL/WLG/CHC (identical)",
+    "caveat": "Same $ as the hire rows in the same table; time/operation convention unconfirmed"
+   },
+   {
+    "role": "Temporary fence re-install",
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t4:r3",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 2.9,
+     "high": 2.9
+    },
+    "centre": "AKL/WLG/CHC (identical)",
+    "caveat": "As above; unreviewed"
+   },
+   {
+    "role": "Fence relocation, market check",
+    "row_id": null,
+    "source": "https://temporaryfence.co.nz/temporary-fence-hire-price-the-things-you-need-to-know",
+    "unit": "m per operation",
+    "amount": {
+     "low": 0.9,
+     "high": 0.9
+    },
+    "centre": "NZ national",
+    "caveat": "Supplier marketing page, ~1/3 of QV rate; GST status not stated"
+   },
+   {
+    "role": "Fence transport to/from depot",
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t4:r5",
+    "source": null,
+    "unit": "each way",
+    "amount": {
+     "low": 204,
+     "high": 204
+    },
+    "centre": "AKL/WLG/CHC",
+    "caveat": "Only applies if panels leave site; an internal shift should not attract it"
+   },
+   {
+    "role": "Mobile crane / hiab for shed and container lifts",
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t9:r2",
+    "source": null,
+    "unit": "hour",
+    "amount": {
+     "low": 160,
+     "high": 180
+    },
+    "centre": "AKL/WLG/CHC (identical - national list)",
+    "caveat": "5/7/8t and 10/11t rows; operator inclusion not confirmed in capture"
+   },
+   {
+    "role": "Crane delivery and pickup per visit",
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t9:r18",
+    "source": null,
+    "unit": "each",
+    "amount": {
+     "low": 100,
+     "high": 100
+    },
+    "centre": "AKL/WLG/CHC",
+    "caveat": "Per visit; multiple moves means multiple visits"
+   },
+   {
+    "role": "Hiab market cross-check",
+    "row_id": null,
+    "source": "https://www.minihiabhiretransportation.co.nz/",
+    "unit": "hour",
+    "amount": {
+     "low": 180,
+     "high": 250
+    },
+    "centre": "Northland",
+    "caveat": "Regional small operator, first hour premium, GST status unstated; used only to sanity-check the QV crane row"
+   },
+   {
+    "role": "Wheel loader for stockpile/storage relocation",
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t10:r11",
+    "source": null,
+    "unit": "day",
+    "amount": {
+     "low": 536,
+     "high": 536
+    },
+    "centre": "AKL/WLG/CHC",
+    "caveat": "Presumed dry hire - operator added separately; do NOT also use the flagged wet-hire rows"
+   },
+   {
+    "role": "Tip truck 8t",
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t10:r14",
+    "source": null,
+    "unit": "day",
+    "amount": {
+     "low": 311,
+     "high": 311
+    },
+    "centre": "AKL/WLG/CHC",
+    "caveat": "Presumed dry hire"
+   },
+   {
+    "role": "General labourer",
+    "row_id": "77a9ea2e8b0f174651de8bdceb3c87c8c288ba10a5f707ee5c36267bf7395a8e:t0:r12",
+    "source": null,
+    "unit": "hour",
+    "amount": {
+     "low": 53.7,
+     "high": 60.55
+    },
+    "centre": "WLG low / AKL high; CHC 57.60",
+    "caveat": "All-up charge-out basis unconfirmed"
+   },
+   {
+    "role": "Plant operator",
+    "row_id": "77a9ea2e8b0f174651de8bdceb3c87c8c288ba10a5f707ee5c36267bf7395a8e:t0:r11",
+    "source": null,
+    "unit": "hour",
+    "amount": {
+     "low": 48.75,
+     "high": 63.4
+    },
+    "centre": "WLG low / AKL high; CHC 61.85",
+    "caveat": "Pair with dry plant only"
+   }
+  ],
+  "band": {
+   "unit": "per single compound relocation/reconfiguration move",
+   "low": 1400,
+   "high": 7200,
+   "centre": "Auckland (WLG 1350-6920, CHC 1380-7120)",
+   "basis": "Assembled build-up. Low = 100m fence relocated, one 8t hiab half-day incl. delivery/pickup, 2 labourers 4 hrs, daylight, no plant, nothing disconnected. High = 250m fence dismantle+reinstall plus transport both ways, 10/11t crane full day with 4 hrs after-hours and 2 crane crew, 3 own labourers full day, wheel loader + 8t tip truck + operator one day for stockpile and material storage shift. EXCLUDES new hardstand (out of scope), services disconnect/reconnect, traffic management, make-good of vacated area, site shed hire and shed relocation, standing/delay time, contractor margin and overhead."
+  },
+  "not_established": [
+   "Site office / shed / container hire and in-site relocation - no QV table exists and no NZ vendor publishes an in-site shift rate",
+   "Standing time and delay rates - not published by QV or any NZ hire company",
+   "Number of moves, fence length, shed sizes - all project variables the tenders did not state",
+   "Temporary power and data disconnect/reconnect for a moved compound - QV temp electrical rows are mostly blank and the one priced row is a new-connection charge",
+   "Traffic management if the compound gate relocates to a different frontage",
+   "Whether QV Site Fences rows r3/r4 are one-off operations or a hire convention",
+   "Whether QV mobile crane hourly rates are operated or bare"
+  ],
+  "suppliers_to_ring": [
+   "Portacom",
+   "Room2rent",
+   "Just Cabins",
+   "Coates Hire",
+   "Hirepool",
+   "Kennards Hire",
+   "SaveBuild NZ (temp fencing)",
+   "Temporary Fence NZ",
+   "Link Trans (Auckland hiab)",
+   "Tutill Carriers (Auckland hiab)",
+   "McIntosh Cranes",
+   "Smith Crane & Construction (Christchurch)",
+   "Hutt City Cranes (Wellington)",
+   "Jobsite Hire (portaloo)"
+  ],
+  "qv_queries_tried": [
+   "site establishment temporary fencing",
+   "list_qv_sections: Prelim",
+   "get_qv_table Site Fences t4",
+   "get_qv_table Mobile Crane Hire t9",
+   "site office shed hire portable cabin",
+   "hiab truck hire per hour",
+   "get_qv_table Plant Hire Rates t10",
+   "labourer hourly labour rate",
+   "get_qv_table Labour Rates t0",
+   "forklift telehandler container relocation move",
+   "hoarding temporary traffic management road cones",
+   "portaloo toilet sanitary temporary hire week"
+  ],
+  "title": "Site establishment and compound relocation",
+  "claim_count": 8,
+  "_meta": {
+   "turns": 7,
+   "web_searches": 8,
+   "in": 415268,
+   "out": 11369
+  }
+ }
+]
