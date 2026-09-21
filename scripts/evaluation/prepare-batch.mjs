@@ -1,18 +1,23 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { chmod, mkdir, readFile, readdir, realpath, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
-import { parseVerificationManifest, formatArgv } from "../../server/verification.mjs";
 import { readExecutionProviderCatalog } from "../../server/model-catalog.mjs";
+import { formatArgv, parseVerificationManifest } from "../../server/verification.mjs";
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const [campaignRoot, publicRoot, sourceRepository, mode = "prepare"] = process.argv.slice(2);
-if (!campaignRoot || !publicRoot || !sourceRepository || !["prepare", "dry-run"].includes(mode))
+if (
+  !campaignRoot ||
+  !publicRoot ||
+  !sourceRepository ||
+  !["prepare", "dry-run", "feasibility"].includes(mode)
+)
   throw new Error(
-    "Usage: prepare-batch.mjs <new-private-root> <new-public-root> <source-repository> [dry-run]",
+    "Usage: prepare-batch.mjs <new-private-root> <new-public-root> <source-repository> [dry-run|feasibility]",
   );
 const read = (relative) => readFile(path.join(root, relative), "utf8");
 const git = (cwd, args) => exec("git", args, { cwd, maxBuffer: 30_000_000 });
@@ -34,12 +39,15 @@ const balanced = {
   test: policy("gpt-5.6-luna", "medium"),
   "final-review": policy("gpt-5.6-sol"),
 };
+const feasibility = mode === "feasibility";
 // Pin the incumbent's real high-risk profile because every arm uses that assurance level.
-const policies = {
-  incumbent: incumbent.profileStagePolicies["high-risk"],
-  balanced,
-  "astra-plan": { ...balanced, plan: policy("gpt-6-astra") },
-};
+const policies = feasibility
+  ? { balanced }
+  : {
+      incumbent: incumbent.profileStagePolicies["high-risk"],
+      balanced,
+      "astra-plan": { ...balanced, plan: policy("gpt-6-astra") },
+    };
 const catalog = await readExecutionProviderCatalog();
 for (const matrix of Object.values(policies))
   for (const selected of Object.values(matrix)) {
@@ -61,19 +69,25 @@ if (mode !== "dry-run" && changed.trim())
 const harnessVersion = (await git(root, ["rev-parse", "HEAD"])).stdout.trim();
 // Historical completed delivery median is 2.17M tokens. The 600k feasibility
 // trial exhausted its allowance before implementation; keep its receipt separate.
-const budget = { maxWallTimeMs: 1800000, maxTotalTokens: 5000000 };
+// The feasibility limits were explicitly selected by the user after Batch A.
+const budget = feasibility
+  ? { maxWallTimeMs: 7200000, maxTotalTokens: 30000000 }
+  : { maxWallTimeMs: 1800000, maxTotalTokens: 5000000 };
+const stageTimeoutOverridesMs = feasibility ? { implement: 3600000, repair: 3600000 } : {};
 const limits = { maxAgentRuns: 24, maxProviderInvocations: 40 };
-const order = [
-  "incumbent",
-  "balanced",
-  "astra-plan",
-  "balanced",
-  "astra-plan",
-  "incumbent",
-  "astra-plan",
-  "incumbent",
-  "balanced",
-];
+const order = feasibility
+  ? ["balanced"]
+  : [
+      "incumbent",
+      "balanced",
+      "astra-plan",
+      "balanced",
+      "astra-plan",
+      "incumbent",
+      "astra-plan",
+      "incumbent",
+      "balanced",
+    ];
 const rubric = JSON.parse(await read("evaluations/rubric-v1.json"));
 const playwrightModule = process.env.EVAL_PLAYWRIGHT_MODULE;
 if (mode !== "dry-run" && !playwrightModule)
@@ -103,6 +117,7 @@ const environment = {
   gitSigning: "disabled only in isolated process/repositories",
   workflowProfile: "high-risk",
   grill: "manual with frozen benchmark-user answers",
+  stageTimeoutOverridesMs,
 };
 const deny = (paths) =>
   `(version 1)\n(allow default)\n${paths.map((entry) => `(deny file-read* (subpath ${JSON.stringify(entry)}))`).join("\n")}\n`;
@@ -123,7 +138,7 @@ const protectedPaths = [
 await mkdir(campaignRoot);
 await mkdir(publicRoot);
 const trials = order.map((variant, index) => ({
-  id: `A${index + 1}`,
+  id: `${feasibility ? "F" : "A"}${index + 1}`,
   variant,
   repetition: order.slice(0, index + 1).filter((value) => value === variant).length,
 }));
@@ -140,12 +155,13 @@ const freeze = {
   environment,
   budget,
   limits,
+  stageTimeoutOverridesMs,
   policies,
   trials,
   brief: contract,
   manifest,
   primaryMetric: "autonomous-accepted-delivery-rate",
-  maxWorkflowRuns: 9,
+  maxWorkflowRuns: trials.length,
   mode,
   preparedAt: new Date().toISOString(),
 };
@@ -230,6 +246,7 @@ for (const trial of trials) {
     wrappers[provider] = wrapper;
   }
   const config = {
+    stageTimeoutOverridesMs,
     playwrightModule,
     trialId: trial.id,
     privateRoot: privateTrial,

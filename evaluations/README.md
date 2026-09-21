@@ -30,6 +30,8 @@ node scripts/evaluation/report-batch.mjs PRIVATE_BATCH
 
 `prepare-batch.mjs ... dry-run` prepares zero-inference task-creation checks; it does not demonstrate model delivery. The worker must run directly with Node. Provider-native tool confinement is configured by the guard; verification runs in its own OS-confined child. Do not nest native provider sandboxes inside an outer `sandbox-exec` process.
 
+`prepare-batch.mjs ... feasibility` prepares one balanced-policy H02 trial (`F1`) with the user-selected two-hour task allowance, 30M total tokens and one-hour Implement/Repair calls. It preserves the prior model matrix, prompts, candidate checks and attempt limits. The stage overrides are frozen in the environment and persisted onto the isolated task before dispatch. This is a feasibility probe, not a policy ranking; inspect its result before preparing any repeats.
+
 Dispatch the frozen slots serially, finalizing each before the next. Inspect SQLite, provider-ledger.json, delivery-ended.json and task.json after disconnect/compaction. Stop for apparatus uncertainty or unknown active consumption. Keep invalid attempts, failed attempts and cancelled slots visible. No benchmark task publishes a PR or changes production policy.
 
 ## Interpretation and reruns

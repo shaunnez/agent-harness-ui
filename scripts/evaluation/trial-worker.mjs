@@ -2,14 +2,14 @@
 // provider-native profiles confine model tools; a child OS profile confines verification.
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { SqliteTaskStore } from "../../server/sqlite-store.mjs";
-import { TaskOrchestrator } from "../../server/orchestrator.mjs";
-import { GitWorktreeManager } from "../../server/git-worktree.mjs";
+import { fileURLToPath } from "node:url";
 import { createApiServer } from "../../server/api.mjs";
 import { normalizeEvaluationInput } from "../../server/evaluation.mjs";
+import { GitWorktreeManager } from "../../server/git-worktree.mjs";
 import { priceModelUsage, priceUsage } from "../../server/model-catalog.mjs";
+import { TaskOrchestrator } from "../../server/orchestrator.mjs";
 import { runProcess } from "../../server/process-runtime.mjs";
-import { fileURLToPath } from "node:url";
+import { SqliteTaskStore } from "../../server/sqlite-store.mjs";
 
 const [configurationPath] = process.argv.slice(2);
 const config = JSON.parse(await readFile(configurationPath, "utf8"));
@@ -95,6 +95,13 @@ try {
   const body = await response.json();
   if (!response.ok) throw new Error(`Task creation failed: ${body.error}`);
   taskId = body.task.id;
+  // Freeze the existing runtime override onto this isolated task before any run.
+  // Production defaults and all model/effort assignments remain unchanged.
+  if (Object.keys(config.stageTimeoutOverridesMs ?? {}).length) {
+    await store.update(taskId, (draft) => {
+      draft.stageTimeoutOverridesMs = { ...config.stageTimeoutOverridesMs };
+    });
+  }
   await writeFile(path.join(config.privateRoot, "task-id.txt"), taskId);
   await writeFile(
     config.ledger,
