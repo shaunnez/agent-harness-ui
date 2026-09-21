@@ -32,6 +32,10 @@ node scripts/evaluation/report-batch.mjs PRIVATE_BATCH
 
 `prepare-batch.mjs ... feasibility` prepares one balanced-policy H02 trial (`F1`) with the user-selected two-hour task allowance, 30M total tokens and one-hour Implement/Repair calls. It preserves the prior model matrix, prompts, candidate checks and attempt limits. The stage overrides are frozen in the environment and persisted onto the isolated task before dispatch. This is a feasibility probe, not a policy ranking; inspect its result before preparing any repeats.
 
+Run the complete required quality baseline on the exact isolated case revision before model dispatch, including linting and typing. Qualification of a different checkout is insufficient. PlanCheck and MyStrataAssist remain ineligible until their complete manifests, synthetic environments, references and graders pass; do not spend model calls against an unexplained broken baseline.
+
+On macOS launch long trials with a process-scoped idle-sleep assertion, for example `caffeinate -is node scripts/evaluation/trial-worker.mjs PRIVATE_TRIAL/config.json`. This does not prevent lid-closed sleep on battery. If the host suspends, retain power-log evidence and adjudicate the interrupted trial separately; elapsed sleep is not active model execution. Keep the original receipt and usage, including unknown usage, and prepare any replacement as a new frozen campaign.
+
 Dispatch the frozen slots serially, finalizing each before the next. Inspect SQLite, provider-ledger.json, delivery-ended.json and task.json after disconnect/compaction. Stop for apparatus uncertainty or unknown active consumption. Keep invalid attempts, failed attempts and cancelled slots visible. No benchmark task publishes a PR or changes production policy.
 
 ## Interpretation and reruns

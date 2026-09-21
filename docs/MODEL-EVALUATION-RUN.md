@@ -1,6 +1,6 @@
 # Model evaluation execution brief
 
-Updated: 22 September 2026. **Batch A complete: no challenger promoted; Batch B not launched.** Read [MODEL-EVALUATION-RESULTS.md](MODEL-EVALUATION-RESULTS.md) for the decision and [MODEL-EVALUATION-CHECKPOINT.md](MODEL-EVALUATION-CHECKPOINT.md) for retained receipts and continuation. The execution contract below remains the original scope.
+Updated: 22 September 2026. **Batch A complete; replacement feasibility run authorized after main rebase and fresh preflight.** The user selected two hours/task, 30M total measured tokens and one hour per Implement/Repair call. The first enlarged trial was interrupted by host sleep and is retained as invalid. Read [MODEL-EVALUATION-CHECKPOINT.md](MODEL-EVALUATION-CHECKPOINT.md) before continuing; no policy is promoted and Batch B remains unlaunched.
 
 ## User intent and authority
 
@@ -9,6 +9,8 @@ Shaun has asked the assistant to select realistic issues and carry out the model
 The detailed design is [MODEL-BASELINE-AND-EVALUATION.md](MODEL-BASELINE-AND-EVALUATION.md). Start with the fixed-policy comparison there; retry escalation is a subsequent bounded challenger. This instruction authorizes isolated evaluation using existing authenticated runtimes and local development/test environments. It does not authorize purchases, separately billed API fallback, production database changes, production policy activation, merges or deployments.
 
 This brief is durable context, not a scheduler. Resume in this thread when the user continues after compaction.
+
+Latest instruction: rebase onto merged main before further evaluation. Before any task against PlanCheck or MyStrataAssist, run the exact isolated base's full required lint/format/type/test/build checks and environment checks. Unknown or unexplained baseline failures block model dispatch. Revalidate after changing source, dependencies or environment; do not discover an existing lint failure after spending evaluation calls.
 
 ## Verified starting state — refresh before changing anything
 

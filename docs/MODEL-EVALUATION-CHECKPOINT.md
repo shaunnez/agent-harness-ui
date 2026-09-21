@@ -1,6 +1,18 @@
 # Model evaluation checkpoint
 
-Updated: 22 September 2026. **Batch A complete. No active evaluation workers or calls. No model policy promoted. Batch B was not launched.**
+Updated: 22 September 2026. **Preparing a replacement feasibility trial after rebasing onto merged main `3878a24`. No model policy promoted. Batch B was not launched.** Inspect the private live brief before dispatch; this checkpoint is written before the next frozen run.
+
+## Current continuation
+
+- User-selected allowances: two hours per task, 30M measured tokens including cache reads, one hour per Implement/Repair call. Keep the balanced models and reasoning unchanged.
+- `feasibility-v1/F1` is finalized as **invalid: host interruption**. Package S1 passed TypeScript and all 376 tests in about six minutes. S2 began at 08:15:36 NZST; macOS recorded Clamshell Sleep at 08:15:57. Its timeout fired during DarkWake at 09:25:56. S2 has no edits and there is no integrated candidate. This is not evidence of an hour of productive model execution or a valid model-quality failure.
+- Original receipt, power-log evidence and adjudication are retained in private `feasibility-v1/F1/apparatus-adjudication/`; normalized receipt history preserves the original failure. Known usage is 5,440,742 tokens; one interrupted call remains unknown. No manual code rescue or replacement was hidden in that trial.
+- Pre-rebase source is retained at `codex/model-evaluation-f1-frozen` (`47380d3`). The evaluation branch was rebased onto current `origin/main` (`3878a24`), including merged task-workspace branches. Only duplicated evaluation documents conflicted. Runtime/evaluation script contents match the earlier freeze.
+- Next campaign: `/Users/shaun/.codex/model-evaluation/20260922/feasibility-v2`, public `/private/tmp/h-eval-f2`. Read its `RUN.md` and inspect SQLite/ledger/delivery-ended receipt before any dispatch. Its F1 ID is local to this new campaign.
+- Required preflight: rebased harness checks, exact case-base full manifest, native provider confinement and zero-inference task configuration. Do not launch any PlanCheck or MyStrataAssist case until its exact isolated base passes all required quality checks and its reference/grader are qualified. An unexplained existing lint/type/test failure blocks model dispatch.
+- Launch the replacement under a task-scoped macOS sleep assertion (`caffeinate -is`). This prevents idle sleep; it cannot guarantee continued execution when the laptop lid is closed on battery. Preserve and invalidate any host-interrupted trial instead of blaming the selected model or silently extending its budget.
+
+The completed Batch A below is historical and remains unchanged.
 
 Read [MODEL-EVALUATION-RESULTS.md](MODEL-EVALUATION-RESULTS.md) for the decision and [MODEL-EVALUATION-FOLLOW-UPS.md](MODEL-EVALUATION-FOLLOW-UPS.md) for concrete next work. Do not rerun the completed slots.
 
