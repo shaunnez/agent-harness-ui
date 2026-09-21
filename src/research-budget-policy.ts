@@ -58,8 +58,13 @@ const RECURSION_LIMIT_SAFETY_MARGIN = 20;
 /** The `recursionLimit` a Deep Agents graph invocation should be given for this budget, so a
  *  larger `maxModelCalls`/`maxToolCalls` (e.g. a higher profile, or a request override) can
  *  never be silently capped by a stale recursion literal. */
-export function graphRecursionLimitForBudget(budget: Pick<ResearchBudget, "maxModelCalls" | "maxToolCalls">): number {
-  return (budget.maxModelCalls + budget.maxToolCalls) * RECURSION_STEPS_PER_MODEL_CALL_ESTIMATE + RECURSION_LIMIT_SAFETY_MARGIN;
+export function graphRecursionLimitForBudget(
+  budget: Pick<ResearchBudget, "maxModelCalls" | "maxToolCalls">,
+): number {
+  return (
+    (budget.maxModelCalls + budget.maxToolCalls) * RECURSION_STEPS_PER_MODEL_CALL_ESTIMATE +
+    RECURSION_LIMIT_SAFETY_MARGIN
+  );
 }
 
 export function researchBudgetForProfile(profile: ResearchProfile): ResearchBudget {

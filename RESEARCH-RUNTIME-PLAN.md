@@ -4,7 +4,7 @@
 
 This is the canonical implementation plan for adding a provider-neutral research capability to the existing Eversor agent harness.
 
-Current state as of 18 September 2026:
+Current state as of 21 September 2026:
 
 | Stage | Status |
 |---|---|
@@ -13,7 +13,7 @@ Current state as of 18 September 2026:
 | G3 Deep Agents compatibility gate | Complete |
 | Slice 1: Provider-neutral research foundation | Merged |
 | Slice 2: Minimal Deep Agents JS adapter | Merged |
-| Vertical research demo | **Next** |
+| Vertical research demo | Implemented; live Tavily acceptance pending |
 | Bounded subagents | Not started |
 | Cheap/open model workers | Not started |
 | PlanCheck benchmark | Not started |
@@ -306,7 +306,8 @@ It cannot yet perform useful external research because it does not have real sea
 
 # 9. Next: Vertical Research Demo
 
-Status: **next**.
+Status: implemented on `codex/research-runtime-vertical-slice`; deterministic acceptance complete,
+live Tavily demo pending a search credential.
 
 This deliberately comes before adding subagents.
 
@@ -738,7 +739,7 @@ Slice 1 neutral ResearchRuntime
 DONE
 Slice 2 Deep Agents adapter
       |
-NEXT
+IMPLEMENTED; LIVE ACCEPTANCE PENDING
 Vertical single-agent web research demo
       |
 THEN

@@ -278,7 +278,10 @@ export class FakeResearchRuntime {
           contradictions: [],
           // Slice 1 has no host-side snapshot to check a quote against, so nothing is verified
           // and nothing pretends to be. Slice 7 sets `quoteVerified` from a real substring test.
-          verification: { status: "unverified", notes: "Host-side quote verification lands in slice 7." },
+          verification: {
+            status: "unverified",
+            notes: "The deterministic fake runtime does not create host-retained source snapshots.",
+          },
           evidence: [
             {
               sourceId,

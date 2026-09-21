@@ -1,0 +1,66 @@
+{
+  "version": 2,
+  "description": "Small public-information discovery benchmark for PlanCheck's likely NZ, AU, technical-document, and overseas-price searches.",
+  "cases": [
+    {
+      "id": "nz-exact-price",
+      "label": "Exact New Zealand product price",
+      "market": "NZ",
+      "intent": "Find a current public NZ supplier price for an exact construction product.",
+      "query": "GIB Aqualine 10mm 1200 x 2400 price New Zealand",
+      "targetTerms": ["gib", "aqualine", "10mm"],
+      "referenceHosts": ["gib.co.nz"],
+      "localHostSuffixes": [".nz"]
+    },
+    {
+      "id": "nz-category-suppliers",
+      "label": "New Zealand category and supplier discovery",
+      "market": "NZ",
+      "intent": "Find locally available products and suppliers when the product is not fully specified.",
+      "query": "below ground waterproofing membrane suppliers price New Zealand",
+      "targetTerms": ["waterproofing", "membrane"],
+      "referenceHosts": ["sika.co.nz", "nzl.sika.com", "ardex.co.nz", "allnexconstruction.com"],
+      "localHostSuffixes": [".nz"]
+    },
+    {
+      "id": "au-exact-price",
+      "label": "Exact Australian product price",
+      "market": "AU",
+      "intent": "Find a current public Australian supplier price for an exact construction product.",
+      "query": "James Hardie Villaboard 6mm 1200 x 2400 price Australia",
+      "targetTerms": ["villaboard", "6mm", "1200"],
+      "referenceHosts": ["jameshardie.com.au"],
+      "localHostSuffixes": [".au"]
+    },
+    {
+      "id": "manufacturer-technical-document",
+      "label": "Manufacturer technical and installation document",
+      "market": "NZ",
+      "intent": "Find an authoritative product data sheet or installation guide, including PDFs.",
+      "query": "SikaProof A+ 12 installation guide product data sheet",
+      "targetTerms": ["sikaproof", "a+ 12", "installation"],
+      "referenceHosts": ["sika.com", "nzl.sika.com", "aus.sika.com"],
+      "localHostSuffixes": [".nz"]
+    },
+    {
+      "id": "us-overseas-price",
+      "label": "United States comparison price",
+      "market": "US",
+      "intent": "Find a public US price for an exact construction product or SKU.",
+      "query": "Simpson Strong-Tie HDU5-SDS2.5 price United States",
+      "targetTerms": ["simpson", "hdu5", "sds2.5"],
+      "referenceHosts": ["strongtie.com"],
+      "localHostSuffixes": []
+    },
+    {
+      "id": "nz-ambiguous-product",
+      "label": "Ambiguous New Zealand product description",
+      "market": "NZ",
+      "intent": "Test useful local discovery when the description is generic rather than a model number.",
+      "query": "250 micron DPM polythene price New Zealand construction",
+      "targetTerms": ["250 micron", "dpm", "polythene"],
+      "referenceHosts": [],
+      "localHostSuffixes": [".nz"]
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import test from "node:test";
 import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 import {
   drainEvents,
+  fixtureSearchProvider,
   safeChildEnv,
   testRequest,
   waitForTerminal,
@@ -38,7 +39,9 @@ test("a successful Deep Agents run completes with a normalized result and usage"
     const result = await runtime.result(request.id);
     assert.equal(result.findings.length, 1);
     assert.equal(result.findings[0].producedBy, "researcher");
-    assert.deepEqual(result.findings[0].evidence, []);
+    assert.equal(result.findings[0].evidence.length, 1);
+    assert.equal(result.findings[0].evidence[0].quoteVerified, true);
+    assert.match(result.findings[0].evidence[0].snapshotRef, /^sha256:[a-f0-9]{64}$/);
     assert.equal(result.usage.partial, false);
     assert.ok(result.summary);
 
@@ -118,11 +121,24 @@ test("the model-call ceiling invalidates the run but preserves partial usage and
     const result = await runtime.result(request.id);
     assert.equal(result.truncatedBy, "maxModelCalls");
     assert.equal(result.usage.partial, true);
-    assert.equal(
-      result.findings.length,
-      1,
-      "the one finding submitted before the ceiling hit is not discarded",
-    );
+    assert.equal(result.findings.length, 0, "no finding is invented before the evidence loop finishes");
+  });
+});
+
+test("the parent-owned aggregate tool ceiling stops the graph across different tool names", async () => {
+  await withDeepAgentsRuntime(async ({ runtime }) => {
+    const request = testRequest("RSCH-DA-TOOL-CEILING", { budget: { maxToolCalls: 1 } });
+    await runtime.start(request);
+    const terminal = await waitForTerminal(runtime, request.id);
+    assert.equal(terminal.status, "failed");
+    assert.equal(terminal.error.code, "tool_call_ceiling_exceeded");
+    assert.equal(terminal.budgetState.ceilingHit, "maxToolCalls");
+    assert.equal(terminal.usage.toolCalls, 1);
+    assert.equal(terminal.usage.searchCalls, 1);
+
+    const result = await runtime.result(request.id);
+    assert.equal(result.truncatedBy, "maxToolCalls");
+    assert.equal(result.findings.length, 0);
   });
 });
 
@@ -164,6 +180,7 @@ test("an abnormal child exit becomes a normalized research failure", async () =>
     const runtimeWithBadCheckpoint = new (Object.getPrototypeOf(runtime).constructor)({
       checkpointDbPath: directory, // a directory, not a file
       env: safeChildEnv(),
+      searchProvider: fixtureSearchProvider(),
     });
     await runtimeWithBadCheckpoint.start(request);
     const terminal = await waitForTerminal(runtimeWithBadCheckpoint, request.id);

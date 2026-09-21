@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
+import { normalizePdfCapture, serializePdfSnapshot } from "../server/research/research-source-snapshots.mjs";
 import { createResearchRuntimeRegistry } from "../server/research/research-runtime-registry.mjs";
 import { ResearchService } from "../server/research/research-service.mjs";
 import { ResearchStore } from "../server/research/research-store.mjs";
@@ -185,7 +187,7 @@ test("claims, evidence and sources are separate rows, not a blob", async () => {
       assert.ok(row.source_id, "evidence points at a source row");
       assert.ok(row.excerpt, "evidence retains the excerpt");
       assert.ok(row.locator_json, "evidence retains an exact locator");
-      // The host, not the runtime, owns this column, and slice 1 has nothing to verify against.
+      // The fake runtime has no host-retained snapshot to verify against.
       assert.equal(Number(row.quote_verified), 0);
     }
     const sources = await service.listSources(created.id);
@@ -298,6 +300,136 @@ test("a runtime cannot mark its own evidence verified", async () => {
     assert.equal(result.findings[0].evidence[0].quoteVerified, false, "and so does the returned result");
     // The rest of the evidence survives: only the verification verdict is host-owned.
     assert.equal(result.findings[0].evidence[0].excerpt, "A quote nobody on the host side has ever seen.");
+  });
+});
+
+test("the host marks evidence verified only after re-reading the matching retained snapshot", async () => {
+  await withResearchStore(async ({ store, sourceSnapshotDirectory }) => {
+    const run = await store.createRun({
+      runtimeId: "deepagents",
+      request: requestFor("Verify retained evidence"),
+      budget: resolveResearchBudget("standard"),
+    });
+    const content = "Application\nApply two coats to the prepared substrate.";
+    const digest = createHash("sha256").update(content).digest("hex");
+    await mkdir(sourceSnapshotDirectory, { recursive: true });
+    await writeFile(path.join(sourceSnapshotDirectory, `${digest}.txt`), content);
+    await store.upsertSource(run.id, {
+      id: "source-1",
+      sourceType: "web",
+      url: "https://manufacturer.example/application",
+      title: "Application guide",
+      retrievedAt: "2026-09-21T00:00:00.000Z",
+      contentSha256: digest,
+      contentBytes: Buffer.byteLength(content),
+      mediaType: "text/plain",
+      metadata: { snapshotRef: `sha256:${digest}` },
+    });
+    await store.recordResult(run.id, {
+      runId: run.id,
+      findings: [
+        {
+          id: "F1",
+          claim: "Two coats are required.",
+          producedBy: "researcher",
+          evidence: [
+            {
+              sourceId: "source-1",
+              excerpt: "Apply two coats to the prepared substrate.",
+              snapshotRef: `sha256:${digest}`,
+              quoteVerified: false,
+            },
+          ],
+        },
+        {
+          id: "F2",
+          claim: "A tampered reference is not verified.",
+          producedBy: "researcher",
+          evidence: [
+            {
+              sourceId: "source-1",
+              excerpt: "Apply three coats.",
+              snapshotRef: `sha256:${digest}`,
+              quoteVerified: true,
+            },
+          ],
+        },
+      ],
+      artifacts: [],
+    });
+
+    const result = await store.getResult(run.id);
+    assert.equal(result.findings[0].evidence[0].quoteVerified, true);
+    assert.equal(result.findings[1].evidence[0].quoteVerified, false);
+  });
+});
+
+test("the store verifies PDF excerpts only on the cited physical page", async () => {
+  await withResearchStore(async ({ store, sourceSnapshotDirectory }) => {
+    const run = await store.createRun({
+      runtimeId: "deepagents",
+      request: requestFor("Verify a PDF page"),
+      budget: resolveResearchBudget("standard"),
+    });
+    const envelope = serializePdfSnapshot(
+      normalizePdfCapture({
+        pages: [
+          { pageNumber: 1, content: "First page only" },
+          { pageNumber: 2, content: "THERMAL PERFORMANCE" },
+        ],
+        numPages: 2,
+        totalPages: 2,
+        pageCap: 3,
+      }),
+    );
+    const digest = createHash("sha256").update(envelope).digest("hex");
+    await mkdir(sourceSnapshotDirectory, { recursive: true });
+    await writeFile(path.join(sourceSnapshotDirectory, `${digest}.txt`), envelope, { mode: 0o600 });
+    await store.upsertSource(run.id, {
+      id: "source-pdf",
+      sourceType: "web",
+      url: "https://example.test/guide.pdf",
+      title: "Guide",
+      retrievedAt: "2026-09-21T00:00:00.000Z",
+      contentSha256: digest,
+      contentBytes: Buffer.byteLength(envelope),
+      mediaType: "application/pdf",
+      metadata: { snapshotRef: `sha256:${digest}`, snapshotFormat: "research-pdf-v1" },
+    });
+    await store.recordResult(run.id, {
+      findings: [
+        {
+          id: "F1",
+          claim: "Correct page",
+          producedBy: "researcher",
+          evidence: [
+            {
+              sourceId: "source-pdf",
+              excerpt: "THERMAL PERFORMANCE",
+              locator: { page: 2 },
+              snapshotRef: `sha256:${digest}`,
+            },
+          ],
+        },
+        {
+          id: "F2",
+          claim: "Wrong page",
+          producedBy: "researcher",
+          evidence: [
+            {
+              sourceId: "source-pdf",
+              excerpt: "THERMAL PERFORMANCE",
+              locator: { page: 1 },
+              snapshotRef: `sha256:${digest}`,
+            },
+          ],
+        },
+      ],
+      artifacts: [],
+    });
+    const result = await store.getResult(run.id);
+    assert.equal(result.findings[0].evidence[0].quoteVerified, true);
+    assert.equal(result.findings[1].evidence[0].quoteVerified, false);
   });
 });
 

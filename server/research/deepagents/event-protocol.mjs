@@ -8,9 +8,21 @@
 // any interleaved third-party log line would corrupt the stream, so worker.mjs routes
 // everything that is not one of these messages to stderr instead.
 
-export const WORKER_MESSAGE_TYPES = Object.freeze(["research_event", "usage", "result", "error", "log"]);
+export const WORKER_MESSAGE_TYPES = Object.freeze([
+  "research_event",
+  "usage",
+  "result",
+  "error",
+  "log",
+  "tool_request",
+]);
+export const HOST_MESSAGE_TYPES = Object.freeze(["tool_response"]);
 
 export function encodeWorkerMessage(message) {
+  return `${JSON.stringify(message)}\n`;
+}
+
+export function encodeHostMessage(message) {
   return `${JSON.stringify(message)}\n`;
 }
 
@@ -18,6 +30,14 @@ export function encodeWorkerMessage(message) {
  *  message — a stray line from a dependency that ignored the stdout contract, for instance —
  *  so the adapter can log it as noise instead of crashing the run over it. */
 export function decodeWorkerLine(line) {
+  return decodeLine(line, WORKER_MESSAGE_TYPES);
+}
+
+export function decodeHostLine(line) {
+  return decodeLine(line, HOST_MESSAGE_TYPES);
+}
+
+function decodeLine(line, allowedTypes) {
   let value;
   try {
     value = JSON.parse(line);
@@ -25,6 +45,6 @@ export function decodeWorkerLine(line) {
     return null;
   }
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  if (!WORKER_MESSAGE_TYPES.includes(value.type)) return null;
+  if (!allowedTypes.includes(value.type)) return null;
   return value;
 }
