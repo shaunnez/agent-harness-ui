@@ -83,7 +83,10 @@ export function runProcess(command, args, options = {}) {
     });
 
     options.onSpawn?.(child);
-    if (options.input !== undefined) child.stdin.end(options.input);
+    if (options.input !== undefined) {
+      if (options.keepStdinOpen) child.stdin.write(options.input);
+      else child.stdin.end(options.input);
+    }
 
     const finish = (callback, value) => {
       if (settled) return;

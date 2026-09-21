@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "description": "Public NZ/AU PDFs for the Firecrawl versus PlanCheck production gate.",
+  "cases": [
+    {
+      "id": "nz-long-specification",
+      "label": "NZ H1/AS1 long technical specification",
+      "market": "NZ",
+      "kind": "pdf",
+      "profile": "long-specification",
+      "url": "https://www.building.govt.nz/assets/Uploads/building-code-compliance/h1-energy-efficiency/asvm/h1-energy-efficiency-as1-sixth-edition.pdf",
+      "localFilename": "h1-energy-efficiency-as1-sixth-edition.pdf",
+      "sourceSha256": "aead7368878fd3e371a51de53aadddb9540a015cd091b3f2bf966da67e1b03a0",
+      "maxPages": 30,
+      "pdfMode": "auto",
+      "expectedTerms": [
+        "thermal envelope",
+        "construction R-value",
+        "New Zealand climate zones",
+        "Table 2.1.2.7",
+        "slab-on-ground floors"
+      ],
+      "pageAnchors": [
+        { "page": 9, "text": "Table 2.1.2.7" },
+        { "page": 20, "text": "New Zealand climate zones" },
+        { "page": 25, "text": "slab-on-ground floors" }
+      ],
+      "tableChecks": [
+        { "label": "reference heat-loss table", "cells": ["Table 2.1.2.7", "Reference building heat loss equations"] }
+      ]
+    },
+    {
+      "id": "nz-diagram-heavy-guidance",
+      "label": "NZ E2/AS1 diagram and risk-matrix guidance",
+      "market": "NZ",
+      "kind": "pdf",
+      "profile": "diagram-heavy",
+      "url": "https://www.building.govt.nz/assets/Uploads/building-code-compliance/e-moisture/e2-external-moisture/asvm/e2-external-moisture-as1-fourth-edition.pdf",
+      "localFilename": "e2-external-moisture-as1-fourth-edition.pdf",
+      "sourceSha256": "d027cd11af602eef8e5d3edd258b5b9c23b6534828cce9b9a838693b6213fccf",
+      "maxPages": 30,
+      "pdfMode": "auto",
+      "expectedTerms": [
+        "Figure 3.1.1.1",
+        "Building envelope risk matrix",
+        "Table 3.1.2.1",
+        "Table 3.1.3.2",
+        "Suitable wall claddings"
+      ],
+      "pageAnchors": [
+        { "page": 12, "text": "Figure 3.1.1.1" },
+        { "page": 13, "text": "Building envelope risk matrix" },
+        { "page": 15, "text": "Table 3.1.3.2" }
+      ],
+      "tableChecks": [
+        { "label": "risk matrix", "cells": ["Building envelope risk matrix", "risk score"] },
+        { "label": "wall claddings", "cells": ["Table 3.1.3.2", "Suitable wall claddings"] }
+      ]
+    },
+    {
+      "id": "au-scanned-building-plan",
+      "label": "Australian scanned heritage assessment and building plan",
+      "market": "AU",
+      "kind": "pdf",
+      "profile": "scanned-plan",
+      "url": "https://www.vincent.wa.gov.au/agenda/2009/20090210/att/pbsesBuxton126001.pdf",
+      "localFilename": "pbsesBuxton126001.pdf",
+      "sourceSha256": "179b7a508e405cef8bf1091c6ed9d01fecd1d33c4320784ba308ffc39868c84f",
+      "maxPages": 19,
+      "pdfMode": "ocr",
+      "expectedTerms": [
+        "HERITAGE ASSESSMENT",
+        "Appendix 2: Plans",
+        "Plan of Garage",
+        "City of Perth",
+        "Building Licence Plans dated March 1951"
+      ],
+      "pageAnchors": [
+        { "page": 19, "text": "Appendix 2: Plans" },
+        { "page": 19, "text": "City of Perth" },
+        { "page": 19, "text": "Building Licence Plans dated March 1951" }
+      ],
+      "tableChecks": []
+    }
+  ]
+}
