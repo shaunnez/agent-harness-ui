@@ -51,7 +51,7 @@ These apply to every entry below.
 
 | | |
 |---|---|
-| Status | **PROPOSED**, 20 Sep 2026. No task created, nothing run |
+| Status | **REFUTED**, 21 Sep 2026. Ran as AH-007..012; all six samples `unknown`, primary metric unusable for this run |
 | Manifest | `docs/experiments/model-baseline-2026-09-phase0.json` · sha256 `e7e29f890134b39056d804d85c3e6041d733419619df136217fb2fa72d128652` |
 | Runner | `scripts/experiment-run.mjs` · sha256 `4b4734ee258cfa9d67ff6ef8b4d93c354df796172c5ee7869bbaaff94ea5844c` |
 | Group id | `model-baseline-2026-09-phase0` |
@@ -117,8 +117,346 @@ per-task baseline, it has to come from a serial re-run, not from this one.
 
 ### Result
 
-*Running since 21 Sep 2026. AH-001 through AH-006 in the isolated store at
-`.claude/worktrees/frontier-3d-minimap-zoom-8efd8c/.data/tasks.sqlite3`.*
+**Recorded 21 Sep 2026.** Tasks AH-007 through AH-012 in the isolated store at
+`.claude/worktrees/frontier-3d-minimap-zoom-8efd8c/.data/tasks.sqlite3`. The
+earlier attempt, AH-001..006, stalled at manual gates, delivered nothing and is
+not a sample here; it is retained in the store and discussed under *Tooling
+defects* below.
+
+Run under all seven gate policies and `grillPolicy` set to
+`auto-accept-recommendations`, which held — **no task parked at a gate**, and no
+grill question or specification was answered by hand. The failure mode that
+ended the first attempt did not recur.
+
+#### Deterministic delivery per case
+
+Computed with `buildEvaluationSummary` (`server/evaluation.mjs`) over AH-007..012
+only.
+
+| Case | r1 | r2 | r3 | Unanimous? | Delivery rate |
+|---|---|---|---|---|---|
+| `C1-narrow` | `unknown` | `unknown` | `unknown` | yes, 3/3 `unknown` | `null` — no evidence samples |
+| `C4-backend` | `unknown` | `unknown` | `unknown` | yes, 3/3 `unknown` | `null` — no evidence samples |
+
+All six tasks reached terminal status `failed` with **zero candidates**, so no
+`full-manifest` verification ran at any final candidate revision and
+`deterministicEvidenceSamples` is 0 for every variant. Under standing rule 1 all
+six are excluded from the denominator; coverage is **0/6**.
+
+The unanimity is real but it is unanimity of *absent evidence*, not of a delivery
+outcome, and it does not satisfy the "both cases unanimous" row of the decision
+table below.
+
+#### Mixed-identity and policy divergence
+
+Neither condition fired.
+
+- **No `mixed-identity` label.** Every variant reports
+  `comparability.status = "comparable"`. Each case's three repetitions share one
+  brief hash (`C1` `bf7211612ebb…`, `C4` `c63d45c45992…`), one base, one policy
+  matrix, one acceptance definition and one verification definition.
+- **No policy divergence.** `policyDivergences` is empty for all six; no pinned
+  role escalated.
+- **No decision-metric drift.** All six carry
+  `decisionMetric: "deterministic-delivery-rate"`, `decisionMetricDrift: false`.
+
+So the creation path and `task-override` pinning both hold. The failure is not in
+the experiment tooling's identity or policy handling.
+
+#### Why every sample is `unknown`
+
+**Root cause: the frozen eval worktrees have no dependencies installed.** None of
+the three `eval-baseline-2026-09-*` worktrees contains `node_modules`. Every
+verification command the experiment declares was run against an unprovisioned
+checkout.
+
+This was established after two earlier misdiagnoses, both recorded here because
+the sequence matters: the failure was first read as a genuine defect at the base
+(three identical reproductions), then as contention from concurrent dispatch (a
+serial run came back green). Both were wrong, and the second was wrong in a way
+that would have wasted a re-run — dispatching serially into the same
+unprovisioned worktrees reproduces the failure exactly.
+
+**`C1-narrow` ×3 — missing dependencies, reported as a baseline defect.** All
+three parked on blocker `repository-baseline-verification`: *"Repository baseline
+verification failed for test at f18c567374e9. The same command fails before S1's
+changes."* All three recorded the identical signature,
+`tests=308 pass=304 fail=4`.
+
+The revision is sound. From a fresh clone at f18c5673 **with** `node_modules`
+present, `npm test` gives `524 tests / 524 pass / exit 0`, confirmed twice.
+Deleting `node_modules` from that same clone reproduces the harness result
+exactly:
+
+```
+not ok 2  - tests/api.test.mjs
+not ok 12 - tests/operator-prototype.test.mjs
+not ok 13 - tests/operator-runtime-view.test.mjs
+not ok 18 - tests/runtime.test.mjs
+# tests 308 / pass 304 / fail 4
+Cannot find package 'react'
+```
+
+The four failures are not assertions — they are four whole test *files* failing to
+import. The 308-vs-524 gap is exactly those files' tests never registering, not
+tests abandoned under load. The harness then correctly applied its rule (do not
+repair a candidate for an unchanged baseline failure) to a premise that was true
+of the environment and false of the revision, and failed all three tasks.
+
+The pinned worktree was never touched and remains clean at f18c5673; all
+reproduction ran in a scratch clone.
+
+**`C4-backend` ×3 — run timeouts, cause not established.** All three failed with
+`S<n>: Codex run exceeded 900 seconds` on their first work package (AH-011 on two
+packages), with every later package still `planned`. No candidate was ever
+assembled.
+
+`eversor-plancheck` is also unprovisioned, and its seven declared commands need
+`frontend/node_modules` and a Python virtualenv at `backend/.venv`
+(`test:backend` invokes `backend/.venv/bin/python -m pytest`). An implement run
+against a tree where nothing executes is a plausible way to burn 900 seconds, but
+**this is not confirmed** — no run records survive on these tasks, and CPU
+contention from six concurrent sessions remains an untested alternative. C4 stays
+unexplained until a provisioned serial run either clears it or reproduces it.
+
+#### What the concurrency deviation does and does not explain
+
+The deviation note above states that concurrent dispatch affects wall time only,
+and that deterministic delivery is unaffected because it does not depend on
+timing.
+
+For `C1` that claim **holds** — those three failures are fully explained by
+missing dependencies and would have occurred identically under serial dispatch.
+An earlier version of this entry concluded the note was refuted; that conclusion
+was based on the contention misdiagnosis and is withdrawn.
+
+For `C4` the claim is **untested**. A 900-second wall-clock run ceiling is by
+construction sensitive to contention, so concurrency cannot be ruled out as a
+contributing cause there. Whether it is the cause, or whether S1 simply exceeds
+900s against an unrunnable tree, is the open question a provisioned serial re-run
+has to answer.
+
+Recorded timing, for completeness: `C1` 581,743–1,141,054 ms (1.96×), `C4`
+1,491,570–1,669,198 ms (1.12×). Both within 3×, but per the deviation note these
+spreads remain unevaluable as a refutation condition.
+
+#### Realised cost
+
+**API-rate estimate, $2.85 total** — nothing was billed. Per standing rule 6 both
+providers ran the operator's local CLI session with no API key, so this is the
+`server/model-catalog.mjs` estimate (`PRICING_VERSION` 2026-08-02) used as a
+comparable unit of work.
+
+| Task | Variant | API-rate est. | Wall time | Cause |
+|---|---|---|---|---|
+| AH-007 | `C1-narrow` r1 | $0.460 | 755,627 ms | false baseline defect |
+| AH-008 | `C1-narrow` r2 | $0.398 | 1,141,054 ms | false baseline defect |
+| AH-009 | `C1-narrow` r3 | $0.272 | 581,743 ms | false baseline defect |
+| AH-010 | `C4-backend` r1 | $0.597 | 1,631,340 ms | S1 >900s |
+| AH-011 | `C4-backend` r2 | $0.600 | 1,669,198 ms | S1, S2 >900s |
+| AH-012 | `C4-backend` r3 | $0.525 | 1,491,570 ms | S1 >900s |
+
+Against the $60 ceiling and the $15 single-task abort rule, neither was
+approached — the run died on correctness, not cost. Every task failed early, so
+these figures are **not** a usable per-task cost baseline for EXP-002.
+
+Provider call count: the six tasks recorded stage runs through triage, scouts,
+grill, specification and plan before failing in implement; no run reached
+dev-review, test or final-review, so all gate columns are 0 and are diagnostic
+only under standing rule 2.
+
+#### Refutation conditions: which fired
+
+| Condition | Fired? |
+|---|---|
+| Any sample `unknown` | **Yes — all six.** |
+| Any variant `mixed-identity` | No |
+| Any policy divergence | No |
+| Wall time or cost varying >3× between repetitions | Unevaluable (see deviation note) |
+
+The first condition is preregistered as: *"the verification evidence the primary
+metric depends on is not being produced at the final candidate revision, and the
+metric is unusable until that is fixed."* It fired on 6 of 6 samples. **This entry
+is refuted.** The baseline variance question EXP-001 exists to answer is not
+answered — not answered either way.
+
+#### Defects found
+
+Four. None changes the result above; all should be fixed before a re-run.
+
+1. **The eval bases were never provisioned, and nothing checks.** This is the
+   defect that cost the run. All three `eval-baseline-2026-09-*` worktrees lack
+   `node_modules`; `eversor-plancheck` additionally needs `backend/.venv` for
+   four of its seven declared commands. The experiment design assumed the frozen
+   bases satisfy their own verification manifests and never verified it — there is
+   no precondition anywhere in `scripts/experiment-run.mjs` or the manifest that
+   requires a base to be green before cases are created from it.
+2. **Baseline verification cannot distinguish a broken revision from a broken
+   environment.** It ran the repository's `test` command in an unprovisioned
+   worktree and reported *"the same command fails before S1's changes"* — literally
+   true, and materially misleading. The verdict names a revision (`f18c567374e9`)
+   for a failure that has nothing to do with that revision. A check whose purpose
+   is to exonerate the candidate should separate "this revision is broken" from
+   "this checkout cannot run".
+3. **Retained verification output is truncated past the diagnosis.** Only a
+   4001-character tail of command output is kept, which cut off every `not ok`
+   line and the `Cannot find package 'react'` error. With those retained the root
+   cause would have been visible immediately instead of taking two wrong
+   diagnoses to reach.
+4. **The scorecard pools abandoned tasks.** `/api/evaluations/summary` groups by
+   `variantId`, so AH-007 is pooled with AH-001 from the abandoned first attempt
+   (`sampleCount: 2`, `unknown: 2`) despite AH-001 being a different run under a
+   different gate configuration. The table above was computed over AH-007..012
+   explicitly to avoid this. No task was deleted to make the number look better.
+
+#### Decision: what EXP-002 does
+
+EXP-001's decision table branches on the unanimity of *deterministic delivery*
+across repetitions. With `deterministicEvidenceSamples = 0` for both cases there
+is no delivery rate to be unanimous about, so **none of the three rows applies**
+and the table cannot be entered. The refutation clause governs instead.
+
+**EXP-002 does not run.** Not because an arm lost, and not because the sample
+size is too small — because this run produced no measurement at all. Running a
+24-task comparison on an apparatus that yielded 0/6 evidence samples would spend
+roughly an order of magnitude more quota to produce the same nothing.
+
+Phase 0 must be re-run, and the re-run must, in order:
+
+1. **Provision every eval base.** Install `node_modules` in each
+   `eval-baseline-2026-09-*` worktree, plus `frontend/node_modules` and
+   `backend/.venv` for `eversor-plancheck`. `node_modules` is gitignored in all
+   three, so the pins survive: HEAD unchanged, `dirty=0`.
+2. **Verify each base is green against its own declared manifest before creating
+   any task.** This should become a hard precondition of the runner, not a manual
+   step — a case whose base cannot pass its own verification commands is not a
+   case, and creating tasks from it can only produce `unknown`.
+3. **Dispatch serially.** Not as the fix for `C1` — provisioning is that fix, and
+   serial dispatch alone would have reproduced the `C1` failure exactly. Serial is
+   required for two other reasons: it removes contention as a variable so `C4`'s
+   900-second timeout can be attributed, and it produces the clean per-task cost
+   and timing baseline EXP-002's cost comparison needs and this run could not
+   supply. It also restores the >3× timing refutation condition, which a
+   concurrent run cannot evaluate.
+4. **Resolve `C4-backend`'s 900s ceiling if it survives provisioning.** If S1
+   still exceeds 900s when it is the only thing running against a working tree,
+   the case is too large for the ceiling and either the ceiling or the case must
+   change — and changing the case is a preregistered-design change, so it needs
+   its own register entry and a recomputed manifest hash.
+
+Only once a Phase 0 re-run yields six samples with admissible evidence does the
+decision table become answerable, and only then can EXP-002 be scheduled.
+
+---
+
+## EXP-001 — run 2 and run 3, appended 21 Sep 2026
+
+EXP-001's first result block above stands as written. This block appends what two
+further executions of the same preregistered design found, after the causes
+recorded there were fixed. The manifest, cases, arms and decision metric are
+unchanged; their SHA-256s are unchanged.
+
+### Run 2 — AH-013..018, bases provisioned
+
+`node_modules` was installed in `eval-baseline-2026-09-agent-harness-ui` and
+`frontend/node_modules` plus `backend/.venv` in `eval-baseline-2026-09-eversor-plancheck`
+(the latter through the repository's own `make backend-venv`). Both bases were then
+verified green against their declared manifests before any task was created — C1 5/5
+commands, C4 7/7. Both pins stayed clean; `npm install` was reverted in favour of
+`npm ci` after it rewrote a tracked lockfile.
+
+Result: **0/6 delivered.** Provisioning fixed C1's failure entirely — all three reps
+built candidates for the first time — but exposed the next blocker beneath it.
+
+| Case | Outcome | Cause |
+|---|---|---|
+| `C1-narrow` ×3 | parked at `ready-for-review` | `mergeState` cannot read a detached base |
+| `C4-backend` r1 | failed, implement | S1 >900s on a provisioned tree |
+| `C4-backend` r2, r3 | failed, plan | S3 declared test changes with no test path in `ownedPaths` |
+
+**The detached-base defect.** `RepositoryAuthority` records `commit:<sha>` as the target
+ref for a checkout with no branch to advance — which is what a frozen experiment base is.
+`GitWorktreeManager.mergeState` passed that string to `git rev-parse --verify`, where
+`<rev>:<path>` means a file lookup, so it reported "The candidate target ref no longer
+exists" for a commit that was present throughout. Every candidate built on a frozen base
+parked at dev-review permanently. Fixed in this branch with `parseCommitSentinel`, plus a
+regression test confirmed to fail with the exact production error when the fix is reverted.
+
+**The 900s ceiling.** C4's S1 exceeded it on all four attempts made of it across runs 1
+and 2 — three under concurrent load, one running effectively alone on a working tree with
+the agent observed running real backend tests at the cutoff. Raised to 1_800_000 for
+`implement` and `repair`, for every stage and arm equally rather than per task, so
+repetitions stay comparable.
+
+### Run 3 — AH-019..024, both fixes applied
+
+Result: **2/6 delivered.** The first deterministic deliveries the campaign has produced.
+
+| Variant | Outcome | Evidence | Repairs | Retries | Wall |
+|---|---|---|---|---|---|
+| `C1-narrow` r1 (AH-019) | `unknown` | 0 | 1 | 2 | — |
+| `C1-narrow` r2 (AH-020) | **`passed`** | 1 | 0 | 0 | 864 s |
+| `C1-narrow` r3 (AH-021) | **`passed`** | 1 | 0 | 1 | 1,256 s |
+| `C4-backend` r1 (AH-022) | `unknown` | 0 | 0 | 0 | 2,850 s |
+| `C4-backend` r2 (AH-023) | `unknown` | 0 | 0 | 0 | 569 s |
+| `C4-backend` r3 (AH-024) | `unknown` | 0 | 0 | 0 | 2,460 s |
+
+Both deliveries satisfy every clause of standing rule 1: `executionKind` `full-manifest`,
+`headRevision` equal to the final candidate's head, status `passed`, all five declared
+commands executed with none skipped. No variant is `mixed-identity`; every one reports
+`comparability: comparable`. No policy divergence in any of the six.
+
+Realised cost: **$5.18** API-rate estimate for run 3, **$10.13** across all eighteen tasks
+in the three runs, against a $60 ceiling. No task approached the $15 abort rule. Nothing
+was billed (standing rule 6).
+
+**The timeout fix is validated and C4 does not need splitting.** Both C4 reps that reached
+implement completed S1 — 1,616 s (AH-024) and 1,661 s (AH-022), about 27 minutes each.
+Under the old ceiling both would have been killed mid-work for the fourth and fifth time.
+S1 is a bounded ~27-minute package, not an unbounded one, so the timeout justification for
+reshaping the case is withdrawn. C4's remaining failures are upstream of the ceiling and
+splitting the case would not address them.
+
+### What still blocks a clean 6/6
+
+1. **`review-retry-required` is outside the gate-policy surface.** AH-019's candidate was
+   rejected at dev-review, auto-repaired under policy, then its second review could not
+   accept its own evidence — a reviewer diagnostic command failed — and the task parked at
+   `review-retry-required`. That status is not in `GATE_AUTO_ADVANCE` and not one of the
+   seven settable `GATE_STAGES`, so no policy value can advance it; `task-attention.mjs`
+   groups it with `failed`. This is a coverage gap, not a misconfiguration, and it is not
+   possible to run this experiment unattended until it is closed. The task was left parked
+   rather than advanced by hand.
+2. **The plan validator rejects `C4-backend` at roughly half of attempts.** Three of six
+   plan runs across runs 2 and 3 failed with "Package requires test changes but
+   `ownedPaths` contains no explicit test file or test directory" — S3, S3, S4. The package
+   number varies, so this is not one bad package: the planning model reliably omits a test
+   path on this brief. Either the plan prompt must require a test path whenever a package
+   declares test work, or the validator is stricter than the plan format guarantees. This
+   is the largest single threat to EXP-002, which runs `C4-backend` four times.
+
+Two run-3 failures were neither of the above and are recorded for completeness: AH-024
+completed S1 and then failed to write its commit object because the operator's 1Password
+agent could not supply the signing key — environmental, outside the harness; and AH-022
+completed S1 and failed `backend-quality`, where `ruff format --check` reported 8 files
+needing reformatting. The latter is a genuine model output failure and the only one in the
+campaign so far attributable to implementation quality rather than to environment or tooling.
+
+### Decision: EXP-002 still does not run
+
+With `C4-backend` at 0/3 and `C1-narrow` at 2/3 with one sample unreachable, neither case
+has three admissible samples. Four `unknown` outcomes remain, so the refutation clause in
+the first result block continues to govern and the decision table still cannot be entered.
+
+`C1-narrow` is close: two clean deliveries and one sample lost to a park that a gate-policy
+fix would prevent. AH-019 is also the first genuine run-to-run variance the campaign has
+produced — same brief, same base, same policy matrix, one reviewer rejection where two
+identical repetitions passed first time. That is the phenomenon EXP-001 exists to measure,
+and it cost $1.607 against $0.687 for a clean delivery, which is worth carrying into
+EXP-002's cost model.
+
+Before Phase 0 is run a fourth time, both blockers above should be closed. Re-running
+without them spends quota to rediscover them.
 
 ---
 
