@@ -47,6 +47,14 @@ const RECOVERABLE_TOOL_ERROR_CODES = new Set([
   "source_offset_out_of_range",
   "source_empty",
   "policy_rejected",
+  // Facts about one URL rather than about the provider: the page would not load, returned a
+  // type this run cannot read, or arrived truncated. A model answers those by choosing a
+  // different source, which is the same move as picking a page that exists. Provider-wide
+  // conditions — rate limits, timeouts, transient outages, quota and authentication — stay
+  // terminal, so an outage is never quietly rescored as model behaviour.
+  "source_http_error",
+  "unsupported_media_type",
+  "source_incomplete",
   "unknown_research_tool",
   "capture_ceiling_exceeded",
   "search_call_ceiling_exceeded",
