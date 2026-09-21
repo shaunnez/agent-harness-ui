@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { createServer } from "vite";
 import { createFixtureGateway } from "../../src/frontier/fixtures/gateway.ts";
 import { testAttempts } from "../../src/frontier/runtime/test-evidence.ts";
+import { latestStageArtifact } from "../../src/frontier/runtime/presentation.ts";
 
 async function views(run) {
   const vite = await createServer({
@@ -33,6 +34,36 @@ const render = (Component, props) => renderToStaticMarkup(React.createElement(Co
 async function evidenceFor(gateway, id) {
   return { core: await gateway.core(id), runs: await gateway.runs(id), activity: await gateway.activity(id) };
 }
+
+test("latest stage report and journey outcome are independent of artifact page order", async () =>
+  views(async ({ JourneyEvidence }) => {
+    const gateway = createFixtureGateway(undefined, true, false, false, true);
+    const evidence = await evidenceFor(gateway, "QA-205");
+    const older = evidence.core.artifacts.find((artifact) => artifact.stage === "dev-review");
+    older.name = "old-review.md";
+    const latest = {
+      ...older,
+      id: "latest-review",
+      name: "latest-review.md",
+      createdAt: new Date(Date.parse(older.createdAt) + 1000).toISOString(),
+    };
+    for (const artifacts of [
+      [latest, ...evidence.core.artifacts],
+      [...evidence.core.artifacts, latest],
+    ]) {
+      const before = [...artifacts];
+      assert.equal(latestStageArtifact(artifacts, "dev-review").id, latest.id);
+      assert.deepEqual(artifacts, before);
+      const markup = render(JourneyEvidence, {
+        evidence: { ...evidence, core: { ...evidence.core, artifacts } },
+        stage: "final-review",
+        onStage() {},
+      });
+      assert.match(markup, /latest-review.md/);
+      assert.doesNotMatch(markup, /old-review.md/);
+    }
+    assert.equal(latestStageArtifact([], "dev-review"), undefined);
+  }));
 
 test("stage inspector separates unknown stage measurements from recorded task totals", async () =>
   views(async ({ TaskUsage }) => {

@@ -38,6 +38,7 @@ export function reviewScenarios(): RuntimeTask[] {
         `# ${stage}\n\nRetained sample evidence for ${id}.\n\n## Outcome\nRevision checks preserve source labels and report missing revisions.\n\nThis is a demonstration; no command was executed.`,
       );
       const run = fixtureRun(id, stage, "completed");
+      if (stage === "implement") run.workPackageId = task.workPackages[0]?.id ?? null;
       run.artifactId = artifact.id;
       artifact.model = run.model;
       artifact.reasoning = run.reasoning;

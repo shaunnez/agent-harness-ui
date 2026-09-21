@@ -257,13 +257,22 @@ export function createFixtureGateway(
     async core(id) {
       return core(get(id));
     },
-    async runs(id) {
+    async runs(id, cursor) {
       const items = structuredClone(get(id).runs ?? []).sort(
         (a, b) =>
           String(b.startedAt ?? b.completedAt ?? "").localeCompare(
             String(a.startedAt ?? a.completedAt ?? ""),
           ) || b.id.localeCompare(a.id),
       );
+      if (workspaceReview && id === "QA-206") {
+        const offset = cursor ? Number(cursor) : 0;
+        if (!Number.isInteger(offset) || offset < 0) throw new Error("Invalid sample run cursor.");
+        return {
+          items: items.slice(offset, offset + 50),
+          total: items.length,
+          nextCursor: offset + 50 < items.length ? String(offset + 50) : null,
+        };
+      }
       return { items, total: items.length, nextCursor: null };
     },
     async activity(id) {
@@ -273,6 +282,12 @@ export function createFixtureGateway(
     async artifact(id, artifactId) {
       const artifact = get(id).artifacts.find((item) => item.id === artifactId);
       if (!artifact) throw new Error("This sample artifact does not exist.");
+      if (workspaceReview && id === "QA-207") {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        throw new Error(
+          "Sample retained evidence is unavailable. Retry reads evidence only; no worker runs.",
+        );
+      }
       return structuredClone(artifact);
     },
     async create(draft) {

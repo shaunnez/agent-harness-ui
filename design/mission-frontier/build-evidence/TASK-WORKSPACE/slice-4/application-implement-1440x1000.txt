@@ -1,0 +1,271 @@
+- main:
+  - generic "Project bases in the 3D coastal world. Select workers with the world labels or click their models."
+  - 'button "World time: 16:02, Golden hour. Open lighting settings"':
+    - strong: 16:02 Golden hour
+  - navigation "3D proof views":
+    - text: 3D preview
+    - button "World" [pressed]
+    - button "Exterior"
+    - button "Cutaway"
+    - button "Appearance"
+  - navigation "3D world selection":
+    - button "PlanCheck":
+      - strong: PlanCheck
+    - button "Agent Harness":
+      - strong: Agent Harness
+    - button "MyStrataAssist":
+      - strong: MyStrataAssist
+    - button "PC-142 · Implement · Working":
+      - strong: PC-142 · Implement
+    - button "AH-051 · Test · Execution stopped · The verification command could not start in its isolated worktree.":
+      - strong: AH-051 · Test
+    - button "MS-086 · Grill · Needs your answer · Which channel should receive a meeting notice first?":
+      - strong: MS-086 · Grill
+  - complementary "Project bases map":
+    - button "Frame all project bases":
+      - img "Current project bases across the coast"
+  - button "Agent Harness":
+    - strong: Agent Harness
+  - generic: Project scope
+  - combobox "Project scope":
+    - option "All projects" [selected]
+    - option "PlanCheck"
+    - option "Agent Harness"
+    - option "MyStrataAssist"
+  - generic: 21 September 2026 · 20:17
+  - generic: Pacific/Auckland
+  - navigation "Main navigation":
+    - button "World":
+      - text: World
+    - button "Tasks J":
+      - text: Tasks
+      - generic: J
+    - button "Open command menu":
+      - text: Manage
+  - complementary "Decisions and pinned work":
+    - complementary "Tasks needing your attention":
+      - strong: Needs you
+      - generic: "13"
+      - button "AH-051 · Verify worktree isolation · Execution stopped":
+        - strong: AH-051 · Test
+        - generic: Agent Harness
+        - generic: Execution stopped
+      - button "AH-054 · Qualify dependency batches · S2 failed":
+        - strong: AH-054 · Implement
+        - generic: Agent Harness
+        - generic: S2 failed
+      - button "PC-148 · Retain revision history · Repair required":
+        - strong: PC-148 · Dev review
+        - generic: PlanCheck
+        - generic: Repair required
+      - button "Show all 13 decisions":
+        - text: Show all 13 decisions
+  - region "Selected task":
+    - img "Worker role"
+    - heading "PC-142 · Implement" [level=2]
+    - paragraph: Build revision checks
+    - strong: Working
+    - term: Skill
+    - definition: implement
+    - term: Model
+    - definition: Luna · XHigh
+    - button "Watch agent":
+      - text: Watch agent
+    - button "Inspect":
+      - text: Inspect
+    - button "Configure agent":
+      - text: Configure agent
+    - region "Recorded task usage":
+      - generic: Usage
+      - strong: 144K tokens
+      - generic "Task elapsed time": 15m 9s
+      - generic: Approx. cost —
+      - img "API-rate estimates are not attributable ChatGPT-plan charges"
+      - generic "No recorded usage with a supported rate card": Rate card unavailable
+  - complementary:
+    - button "New task":
+      - text: New task
+    - button "Agent roster":
+      - text: Agent roster
+    - button "Skills":
+      - text: Skills
+    - button "Settings":
+      - text: Settings
+    - generic: Drag to pan · Scroll to zoom · Space to follow
+  - dialog "Task command":
+    - heading "PC-142 · Task workspace" [level=1]
+    - button "Adjust window size" [active]:
+    - button "Maximise window":
+    - button "Close panel":
+    - paragraph: Sample world · Demonstration records and actions stay in this tab.
+    - generic: Agent Harness / eversor-plancheck / PC-142
+    - heading "Build revision checks" [level=2]
+    - button "Role policies":
+      - text: Role policies
+    - button "Manage":
+      - text: Manage
+    - button "Pin task":
+      - generic: Pin task
+    - navigation "Task stages":
+      - button "Triage":
+        - generic: Triage
+      - button "Scouts":
+        - generic: Scouts
+      - button "Grill":
+        - generic: Grill
+      - button "Specification":
+        - generic: Specification
+      - button "Plan":
+        - generic: Plan
+      - button "6 Implement":
+        - generic: "6"
+        - generic: Implement
+      - button "7 Dev review" [disabled]:
+        - generic: "7"
+        - generic: Dev review
+      - button "8 Test" [disabled]:
+        - generic: "8"
+        - generic: Test
+      - button "9 Final review" [disabled]:
+        - generic: "9"
+        - generic: Final review
+      - button "10 Approval" [disabled]:
+        - generic: "10"
+        - generic: Approval
+    - region "Current task actions":
+      - strong: Implement
+      - emphasis: Working
+      - generic: S2 running · S3 waiting on S2
+    - region "Implement stage content":
+      - region "Implementation worker":
+        - img "Implementation worker"
+        - strong: S2 · Revision comparison
+        - generic: Luna · XHigh · implementation role
+        - emphasis: Running
+      - region "Work packages":
+        - heading "Work packages" [level=3]
+        - generic: 3 packages
+        - group "Work package totals":
+          - generic: Work package totals
+          - strong: "1"
+          - generic: Running
+          - strong: "0"
+          - generic: Ready to integrate
+          - strong: "1"
+          - generic: Integrated
+          - strong: "1"
+          - generic: Waiting
+        - region "Recorded package dependencies":
+          - heading "Batch 1 · Foundation" [level=4]:
+            - text: Batch 1
+            - generic: · Foundation
+          - article:
+            - 'button "Inspect package S1: History integration"':
+              - generic: S1
+              - strong: History integration
+              - generic: Integrated
+          - heading "Batch 2 · Dependent work" [level=4]:
+            - text: Batch 2
+            - generic: · Dependent work
+          - article:
+            - 'button "Inspect package S2: Revision comparison" [pressed]':
+              - generic: S2
+              - strong: Revision comparison
+              - generic: Running
+          - article:
+            - 'button "Inspect package S3: History integration"':
+              - generic: S3
+              - strong: History integration
+              - generic: Waiting on S2
+        - paragraph: Connections show recorded dependencies. Qualified slices still require candidate review and tests.
+        - region "Selected package S2":
+          - heading "Selected package" [level=3]
+          - heading "Revision comparison" [level=3]
+          - text: Running
+          - strong: S2
+          - paragraph: Fixture work package
+          - term: Owned paths
+          - definition:
+            - code: src/S2.ts
+          - term: Dependencies
+          - definition: S1 · History integration
+          - term: Verification
+          - definition:
+            - code: npm test
+            - generic: "Command IDs: Not recorded"
+          - term: Slice commit
+          - definition:
+            - code: Not recorded
+            - generic: "Changed files: Not recorded"
+          - term: Qualification
+          - definition: No result recorded yet
+          - term: Retained worktree
+          - definition:
+            - code: Not recorded
+          - generic: Attempt 1 · worker running
+          - button "Inspect package run":
+            - text: Inspect package run
+      - heading "Candidate assembly" [level=3]
+      - generic: Not assembled
+      - heading "Waiting for qualified slices" [level=3]
+      - paragraph: No integration candidate has been assembled.
+      - paragraph: Qualified slices remain distinct from an integrated, reviewed delivery.
+      - button "Open exact diff" [disabled]:
+        - text: Open exact diff
+      - generic: The candidate diff becomes available after assembly records a head revision.
+      - paragraph: No retained artifact is loaded for Implement. Only retained records are shown.
+      - generic "Run activity · recorded telemetry":
+        - strong: Run activity
+        - generic: · recorded telemetry
+    - generic: Scroll for more ↓
+    - region "Task inspector":
+      - heading "Task brief" [level=3]:
+        - text: Task brief
+      - paragraph: Build revision checks
+      - heading "Role & run" [level=3]:
+        - text: Role & run
+      - img "Worker role"
+      - strong: Luna · XHigh
+      - generic: running
+      - text: "Viewed: Implement"
+      - text: "Active: Implement"
+      - button "Watch agent":
+        - text: Watch agent
+      - region "Stage usage — Implement":
+        - heading "Stage usage — Implement" [level=3]:
+          - text: Stage usage — Implement
+        - term: Execution time
+        - definition: 15m 9s
+        - term: Input tokens
+        - definition: 62K
+        - term: Output tokens
+        - definition: 10K
+        - term: Cached tokens
+        - definition: 31K
+        - term: Cache rate
+        - definition: 50%
+        - term: Approx. cost
+        - definition: Unavailable
+        - generic: API-rate estimate · Recorded runs, including retries. Execution time sums agent runs; parallel work can overlap.
+        - generic: 1 stage runs loaded.
+      - region "Task total usage":
+        - heading "Task total" [level=3]:
+          - text: Task total
+        - term: Task elapsed
+        - definition: 15m 9s
+        - term: Total tokens
+        - definition: 144K
+        - term: Approx. cost
+        - definition: Unavailable
+        - generic: API-rate estimate · Rate card unavailable
+      - heading "Run safeguards" [level=3]:
+        - text: Run safeguards
+      - paragraph: Isolated candidate worktree
+      - generic: Codex may write only inside the isolated candidate worktree for this stage.
+      - paragraph: "Stage attempts: 1 / 3"
+      - heading "Context & repository" [level=3]:
+        - text: Context & repository
+      - paragraph: /demo/eversor-plancheck
+      - generic: Captured revision aaaaaaa0aaaa
+      - paragraph: Open each artifact to inspect its supplied-context manifest. Repository permission alone does not prove what an agent used.
+    - generic: Scroll for more ↓

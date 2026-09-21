@@ -1,4 +1,5 @@
 import type { RuntimeTask } from "../../domain";
+import { qualificationScenarios } from "./qualification-scenarios.ts";
 import { reviewScenarios } from "./review-scenarios.ts";
 import { fixtureArtifact, fixtureRun, fixtureTask, fixtureTime } from "./scenarios.ts";
 
@@ -136,5 +137,5 @@ export function workspaceScenarios(): RuntimeTask[] {
       ],
     },
   });
-  return [scouts, spec, grill, ...reviewScenarios()];
+  return [scouts, spec, grill, ...reviewScenarios(), ...qualificationScenarios()];
 }

@@ -1,7 +1,7 @@
 import { ClockCounterClockwise } from "@phosphor-icons/react";
 import { type StageId, stageIds } from "../../domain";
 import type { TaskEvidence } from "../runtime/contracts";
-import { formatCount, formatDuration, stageLabels } from "../runtime/presentation";
+import { formatCount, formatDuration, latestStageArtifact, stageLabels } from "../runtime/presentation";
 import { stageUsage } from "../runtime/usage";
 import { stageRecorded, stageState } from "../runtime/workflow";
 import { recordedMetric } from "./TaskUsage";
@@ -41,7 +41,7 @@ export function JourneyEvidence({
           <tbody>
             {stages.map((stage) => {
               const usage = stageUsage(evidence, stage, Date.now());
-              const artifact = task.artifacts.filter((item) => item.stage === stage).at(-1);
+              const artifact = latestStageArtifact(task.artifacts, stage);
               const recorded = stageRecorded(evidence, stage);
               const metric = (value: typeof usage.tokens, format = formatCount) =>
                 recordedMetric(value, format, usage.partialHistory);

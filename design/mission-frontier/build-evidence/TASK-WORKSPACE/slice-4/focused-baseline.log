@@ -1,0 +1,45 @@
+✔ source-scoped memory merges sequential writes, monotonic acknowledgement and the four-pin cap (1.709875ms)
+✔ malformed local preferences cannot create bogus checkpoints or unbounded pins (0.163583ms)
+✔ decision order is stable through new arrivals, resolution and deletion (30.59625ms)
+✔ briefing deduplicates observations and run totals, preserving late, zero and missing usage (0.69425ms)
+✔ four run pins share bounded concurrency and cache unchanged versions; task pins fetch no details (60.574334ms)
+✔ history captures a stable upper boundary and old-source requests cannot enter a replacement workspace (9.798375ms)
+✔ an exact pinned run opens without paging and disappears when no longer retained (13.890292ms)
+✔ external fixture changes preserve frozen decisions and replace candidate identity (8.176084ms)
+✔ a removed selected task loses actionable cached evidence but retains navigation identity (18.769291ms)
+✔ refresh preserves paged history, updates shared records, and closes a complete result (4.546334ms)
+✔ refresh without overlap restarts from its leading cursor instead of skipping unknown records (0.293375ms)
+✔ embedded Grill preserves custom drafts and disables mutation controls when unavailable (3098.304041ms)
+✔ a queued scout never borrows an unrelated running stage worker or its Inspect action (199.47925ms)
+✔ Plan labels unstarted packages as planned while Implement retains dependency eligibility (158.588ms)
+✔ historical stage commands follow selection without exposing active-stage shortcuts (159.696875ms)
+✔ workflow samples carry inspectable prior evidence without unlocking real future stages (157.392541ms)
+✔ stage inspector separates unknown stage measurements from recorded task totals (2871.693208ms)
+✔ test attempts remain separate across retries and candidate identities (1.962375ms)
+✔ retained review for a mismatched candidate cannot display current freshness (127.703291ms)
+✔ historical Final Review still shows eight prior stages with labelled partial usage (107.180333ms)
+✔ delivery stays incomplete for closed or drifted PRs and requires exact completed state (105.8525ms)
+✔ investigation approval does not promise candidate publication (85.296625ms)
+✔ window dimensions survive storage and remain independent by family (4.558584ms)
+✔ unavailable or malformed storage falls back without affecting work (0.5935ms)
+✔ resize respects centred drag, viewport changes and a restorable normal size (0.190292ms)
+✔ reason-capable shared actions expose an accessible menu trigger without an initial note field (2821.017666ms)
+✔ busy, disconnected, and ineligible shared actions remain disabled (98.833708ms)
+✔ continue-implementation bypasses the reason menu (78.0605ms)
+✔ Grill keeps its independent answer and specification controls (99.263917ms)
+✔ implementation package summaries preserve failures and distinguish ready work from dependency waits (83.254667ms)
+✔ sample full workflow keeps creation, approvals, assembly, gates and PR merge separate (10.582209ms)
+✔ sample closed and identity-drifted PRs retain the candidate and remain incomplete (7.496875ms)
+✔ provider retry retains its original policy and successful sibling (7.359125ms)
+✔ sample test retry retains failed evidence and the exact unchanged candidate (10.069125ms)
+✔ repair retains prior findings and exact historical diffs (2.855667ms)
+✔ candidate display fails closed on mismatched binding; future stages stay inert (163.685ms)
+✔ late artifact paging cannot enter another selected task (18.607291ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4257.9745

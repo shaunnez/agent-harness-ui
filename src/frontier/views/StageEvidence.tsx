@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import type { RuntimeArtifact, StageId } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { FrontierGateway, TaskEvidence } from "../runtime/contracts";
-import { modelLabel, reasoningLabel, stageLabels } from "../runtime/presentation";
+import { latestStageArtifact, modelLabel, reasoningLabel, stageLabels } from "../runtime/presentation";
 import { artifactState } from "../runtime/workflow";
 import { ArtifactViewer } from "./ArtifactViewer";
 import { InvestigationEvidence } from "./InvestigationEvidence";
@@ -30,7 +30,7 @@ export function StageEvidence({
 }) {
   const task = evidence.core;
   const artifacts = task.artifacts.filter((item) => item.stage === stage);
-  const latest = artifacts.at(-1);
+  const latest = latestStageArtifact(artifacts, stage);
   const runs = evidence.runs.items.filter((item) => item.stage === stage);
   const [detail, setDetail] = useState<RuntimeArtifact | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,11 +39,12 @@ export function StageEvidence({
     "output",
   );
   const artifactId = latest?.id;
+  const earlyStage = ["triage", "scouts", "grill", "specification", "plan"].includes(stage);
   useEffect(() => {
     let disposed = false;
     setDetail(null);
     setError(null);
-    if (artifactId)
+    if (artifactId && !earlyStage)
       gateway
         .artifact(task.id, artifactId)
         .then((value) => {
@@ -55,8 +56,7 @@ export function StageEvidence({
     return () => {
       disposed = true;
     };
-  }, [artifactId, task.id, gateway]);
-  const earlyStage = ["triage", "scouts", "grill", "specification", "plan"].includes(stage);
+  }, [artifactId, task.id, gateway, earlyStage]);
   const tab = savedTab === "output" ? "activity" : savedTab;
   const tabs = (
     <nav className="content-tabs" aria-label="Task evidence tabs">

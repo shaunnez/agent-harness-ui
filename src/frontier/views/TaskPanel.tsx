@@ -15,8 +15,15 @@ import { getAccessBoundaryCopy } from "../../components/runtime/runtimeCommandPo
 import { type RuntimeCandidate, type RuntimeRun, type StageId, stageIds } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { FrontierGateway, TaskEvidence } from "../runtime/contracts";
-import { latestRun, modelLabel, packageState, reasoningLabel, stageLabels } from "../runtime/presentation";
-import { stageHasError, stageRecorded, stageState } from "../runtime/workflow";
+import {
+  latestRun,
+  latestStageArtifact,
+  modelLabel,
+  packageState,
+  reasoningLabel,
+  stageLabels,
+} from "../runtime/presentation";
+import { gateStages, stageHasError, stageRecorded, stageState } from "../runtime/workflow";
 import { ScrollArea } from "../ui/ScrollArea";
 import { CandidateDiff } from "./CandidateDiff";
 import { CandidateEvidence } from "./CandidateEvidence";
@@ -76,12 +83,13 @@ export function TaskPanel({
   );
   const viewedStage = selection && stageRecorded(evidence, selection) ? selection : task.currentStage;
   const [design, setDesign] = usePanelState(`task-design:${task.id}`, false);
+  const inspectorStage = design ? "specification" : viewedStage;
   const viewedRun = latestRun(
-    evidence.runs.items.filter((item) => item.stage === viewedStage),
+    evidence.runs.items.filter((item) => item.stage === inspectorStage),
     task.activeRunIds,
   );
   const access = getAccessBoundaryCopy(task);
-  const policy = task.agentConfig?.stagePolicies?.[viewedStage];
+  const policy = task.agentConfig?.stagePolicies?.[inspectorStage];
   const highlightedPackage =
     task.workPackages.find((item) => item.status === "failed") ??
     task.workPackages.find((item) => item.status === "running") ??
@@ -92,7 +100,7 @@ export function TaskPanel({
         task.activeRunIds,
       )
     : undefined;
-  const retainedArtifact = task.artifacts.filter((item) => item.stage === viewedStage).at(-1);
+  const retainedArtifact = latestStageArtifact(task.artifacts, viewedStage);
   const artifactAction = retainedArtifact ? (
     <button type="button" onClick={() => onArtifact(retainedArtifact.id)}>
       <FileText size={17} /> Open retained artifact
@@ -142,7 +150,12 @@ export function TaskPanel({
           const state = stageRecorded(evidence, stage) ? stageState(task, stage) : "Not started";
           const stale = /Rerun/.test(state);
           const failed = stageHasError(evidence, stage);
-          const completed = task.completedStages.includes(stage) && !stale && !failed;
+          const candidateGate = gateStages.some((gate) => gate === stage);
+          const completed =
+            task.completedStages.includes(stage) &&
+            !stale &&
+            !failed &&
+            (!candidateGate || state === "Fresh");
           return (
             <button
               type="button"
@@ -377,14 +390,18 @@ export function TaskPanel({
             <img src="/assets/mf.worker.standard.portrait.r1.png" alt="Worker role" />
             <span>
               <strong>
-                {viewedRun
-                  ? `${modelLabel(viewedRun.model)} · ${reasoningLabel(viewedRun.reasoning)}`
-                  : policy
-                    ? `${modelLabel(policy.model)} · ${reasoningLabel(policy.reasoning)}`
-                    : "Operator"}
+                {design
+                  ? "Design providers"
+                  : viewedRun
+                    ? `${modelLabel(viewedRun.model)} · ${reasoningLabel(viewedRun.reasoning)}`
+                    : policy
+                      ? `${modelLabel(policy.model)} · ${reasoningLabel(policy.reasoning)}`
+                      : "Operator"}
               </strong>
               <small>
-                {viewedRun?.status ?? (policy ? "Policy snapshot; no run loaded" : "Deterministic gate")}
+                {design
+                  ? "Each direction retains its own model, reasoning and status."
+                  : (viewedRun?.status ?? (policy ? "Policy snapshot; no run loaded" : "Deterministic gate"))}
               </small>
             </span>
           </div>
@@ -393,14 +410,15 @@ export function TaskPanel({
             <br />
             Active: {stageLabels[task.currentStage]}
           </small>
-          {viewedRun && (
+          {design && <p className="quiet">Usage below covers the parent Specification stage.</p>}
+          {!design && viewedRun && (
             <button type="button" onClick={() => onWatch(viewedRun.id)}>
               <Binoculars size={18} />
               Watch agent
             </button>
           )}
         </section>
-        <TaskUsage evidence={evidence} stage={viewedStage} onMore={() => onMore("runs")} />
+        <TaskUsage evidence={evidence} stage={inspectorStage} onMore={() => onMore("runs")} />
         <section>
           <h3>
             <ShieldCheck size={18} />
@@ -409,8 +427,9 @@ export function TaskPanel({
           <p>{access.sandbox}</p>
           <small>{access.detail}</small>
           <p>
-            Stage attempts: {task.attemptsByStage[viewedStage] ?? 0} /{" "}
-            {task.stageRunLimits?.[viewedStage] ?? task.stageRunLimit}
+            {design ? "Specification attempts" : "Stage attempts"}:{" "}
+            {task.attemptsByStage[inspectorStage] ?? 0} /{" "}
+            {task.stageRunLimits?.[inspectorStage] ?? task.stageRunLimit}
           </p>
         </section>
         <section>
