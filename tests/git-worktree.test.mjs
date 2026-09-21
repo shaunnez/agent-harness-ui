@@ -27,6 +27,56 @@ import {
 
 const exec = promisify(execFile);
 
+test("frozen commit targets remain reviewable without becoming merge targets", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-frozen-target-"));
+  const repository = path.join(directory, "repository");
+  try {
+    await git(directory, ["init", "repository"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+    const manager = new GitWorktreeManager(path.join(directory, "worktrees"));
+    const task = { id: "AH-001", repositoryPath: repository };
+    const base = await manager.base(task);
+    const candidate = await manager.prepare(task, "C1", {
+      ...base,
+      baseRef: `commit:${base.baseRevision}`,
+    });
+    await writeFile(path.join(candidate.worktreePath, "feature.txt"), "candidate\n");
+    candidate.headRevision = (await manager.commit(candidate, "candidate")).headRevision;
+
+    assert.equal(await manager.mergeState(candidate), "pending");
+    await assert.rejects(() => manager.merge(candidate), /recorded target ref/);
+    assert.equal((await git(repository, ["rev-parse", "HEAD"])).stdout.trim(), base.baseRevision);
+    await assert.rejects(
+      () => manager.mergeState({ ...candidate, baseRef: `commit:${candidate.headRevision}` }),
+      /frozen target.*recorded base revision/i,
+    );
+    await assert.rejects(
+      () => manager.mergeState({ ...candidate, baseRef: "commit:HEAD" }),
+      /frozen target.*recorded base revision/i,
+    );
+    await assert.rejects(
+      () => manager.mergeState({ ...candidate, baseRef: "commit:" }),
+      /frozen target.*recorded base revision/i,
+    );
+    const absent = "f".repeat(40);
+    await assert.rejects(
+      () => manager.mergeState({ ...candidate, baseRef: `commit:${absent}`, baseRevision: absent }),
+      /target ref no longer exists/,
+    );
+    await writeFile(path.join(repository, "README.md"), "source advanced\n");
+    await git(repository, ["commit", "-am", "advance source"]);
+    assert.equal(await manager.mergeState(candidate), "pending");
+    await git(candidate.worktreePath, ["commit", "--allow-empty", "-m", "unreviewed drift"]);
+    await assert.rejects(() => manager.mergeState(candidate), /reviewed revision/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("creates, commits, and fast-forward merges an isolated candidate", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-git-"));
   const repository = path.join(directory, "repository");

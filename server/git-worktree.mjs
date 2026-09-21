@@ -515,19 +515,23 @@ export class GitWorktreeManager {
     if (!candidate.headRevision || candidateRevision !== candidate.headRevision) {
       throw new Error("The candidate worktree no longer matches the reviewed revision.");
     }
-    // `commit:<sha>` is a harness sentinel, not git syntax. `RepositoryAuthority` mints it
-    // for a checkout with no branch to advance — a frozen experiment base, or a detached
-    // HEAD — and `<rev>:<path>` means something else entirely to git, so passing it to
-    // `rev-parse --verify` looks for a *file* named after the SHA and always fails. A
-    // frozen base is pinned by definition, so the recorded commit is the target revision.
-    const frozenRevision = parseCommitSentinel(targetRef);
-    const targetResult = frozenRevision
-      ? await git(repositoryRoot, ["rev-parse", "--verify", `${frozenRevision}^{commit}`], {
-          allowFailure: true,
-        })
-      : await git(repositoryRoot, ["rev-parse", "--verify", targetRef], {
-          allowFailure: true,
-        });
+    // Frozen authorities carry a tagged identity rather than a Git ref. Resolve
+    // only the immutable commit already recorded as this candidate's base.
+    const frozenTarget = targetRef.startsWith("commit:");
+    const frozenRevision = frozenTarget ? targetRef.slice("commit:".length) : null;
+    if (
+      frozenTarget &&
+      (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(frozenRevision) || frozenRevision !== candidate.baseRevision)
+    ) {
+      throw new Error("The frozen target does not match the candidate's recorded base revision.");
+    }
+    const targetResult = await git(
+      repositoryRoot,
+      ["rev-parse", "--verify", frozenTarget ? `${frozenRevision}^{commit}` : targetRef],
+      {
+        allowFailure: true,
+      },
+    );
     if (targetResult.code !== 0) throw new Error("The candidate target ref no longer exists.");
     const targetRevision = targetResult.stdout.trim();
     if (targetRevision === candidate.headRevision) return "merged";

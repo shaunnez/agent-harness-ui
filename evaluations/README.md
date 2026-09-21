@@ -34,6 +34,8 @@ node scripts/evaluation/report-batch.mjs PRIVATE_BATCH
 
 Run the complete required quality baseline on the exact isolated case revision before model dispatch, including linting and typing. Qualification of a different checkout is insufficient. PlanCheck and MyStrataAssist remain ineligible until their complete manifests, synthetic environments, references and graders pass; do not spend model calls against an unexplained broken baseline.
 
+Also run the real-Git frozen-target regression in `tests/git-worktree.test.mjs`: a `commit:<SHA>` experiment authority must admit candidate review while retaining the exact base, candidate identity and merge restrictions. Passing a repository's baseline alone does not prove that the harness can advance an assembled candidate into review.
+
 On macOS launch long trials with a process-scoped idle-sleep assertion, for example `caffeinate -is node scripts/evaluation/trial-worker.mjs PRIVATE_TRIAL/config.json`. This does not prevent lid-closed sleep on battery. If the host suspends, retain power-log evidence and adjudicate the interrupted trial separately; elapsed sleep is not active model execution. Keep the original receipt and usage, including unknown usage, and prepare any replacement as a new frozen campaign.
 
 Dispatch the frozen slots serially, finalizing each before the next. Inspect SQLite, provider-ledger.json, delivery-ended.json and task.json after disconnect/compaction. Stop for apparatus uncertainty or unknown active consumption. Keep invalid attempts, failed attempts and cancelled slots visible. No benchmark task publishes a PR or changes production policy.
