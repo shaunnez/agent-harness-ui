@@ -122,116 +122,119 @@ export async function runResearchProviderAcceptance({ environment, manifest }) {
       },
     };
     const db = new DatabaseSync(path.join(sessionDirectory, "tasks.sqlite3"));
-    db.exec("PRAGMA foreign_keys = ON");
-    migrateSqliteSchema(db);
-    const store = new ResearchStore(db, {
-      sourceSnapshotDirectory: path.join(sessionDirectory, "sources"),
-    });
-    const runtime = new DeepAgentsResearchRuntime({
-      checkpointDbPath: path.join(sessionDirectory, "checkpoints.sqlite3"),
-      sourceSnapshotDirectory: path.join(sessionDirectory, "sources"),
-      env: {
-        PATH: process.env.PATH,
-        HOME: process.env.HOME,
-        RESEARCH_MODEL_PROVIDER: "fake",
-        RESEARCH_MODEL_FAKE_SCENARIO: "pdf",
-      },
-      searchProvider: controlledPdfSearch,
-      captureProvider: capture,
-      providerConfig: { defaultMarket: pdfCase.market, maxPdfPages: 3 },
-      providerLedgers: [firecrawlLedger],
-    });
-    const service = new ResearchService({
-      store,
-      registry: createResearchRuntimeRegistry([runtime]),
-    });
-    const created = await service.createRun({
-      objective: `Retain the public PDF and cite ${pdfCase.successExcerpt} on physical page ${pdfCase.successPage}.`,
-      profile: "quick",
-      runtimeId: "deepagents",
-      context: [],
-    });
-    await service.settled(created.id);
-    const run = await service.getRun(created.id);
-    assert(run.status === "completed", "The deterministic fake-model PDF run completed.", assertions);
-    const result = await service.getResult(created.id);
-    const sources = await service.listSources(created.id);
-    const pdfSource = sources.find((source) => source.mediaType === "application/pdf");
-    assert(Boolean(pdfSource), "The fake-model run retained a PDF source.", assertions);
-    const expectedReference = {
-      excerpt: pdfCase.successExcerpt,
-      locator: { page: pdfCase.successPage },
-      snapshotRef: `sha256:${pdfSource.contentSha256}`,
-    };
-    assert(
-      await verifySnapshotEvidence({
-        source: pdfSource,
-        reference: expectedReference,
-        snapshotDirectory: path.join(sessionDirectory, "sources"),
-      }),
-      "The expected PDF excerpt verified on physical page 2.",
-      assertions,
-    );
-    assert(
-      !(await verifySnapshotEvidence({
-        source: pdfSource,
-        reference: {
-          ...expectedReference,
-          locator: { page: pdfCase.negativePage },
+    let service = null;
+    try {
+      db.exec("PRAGMA foreign_keys = ON");
+      migrateSqliteSchema(db);
+      const store = new ResearchStore(db, {
+        sourceSnapshotDirectory: path.join(sessionDirectory, "sources"),
+      });
+      const runtime = new DeepAgentsResearchRuntime({
+        checkpointDbPath: path.join(sessionDirectory, "checkpoints.sqlite3"),
+        sourceSnapshotDirectory: path.join(sessionDirectory, "sources"),
+        env: {
+          PATH: process.env.PATH,
+          HOME: process.env.HOME,
+          RESEARCH_MODEL_PROVIDER: "fake",
+          RESEARCH_MODEL_FAKE_SCENARIO: "pdf",
         },
-        snapshotDirectory: path.join(sessionDirectory, "sources"),
-      })),
-      "The absent physical page 3 citation was rejected.",
-      assertions,
-    );
-    assert(
-      result.findings.some((finding) =>
-        finding.evidence.some(
-          (evidence) => evidence.locator?.page === pdfCase.successPage && evidence.quoteVerified,
-        ),
-      ),
-      "ResearchStore independently persisted page-verified PDF evidence.",
-      assertions,
-    );
-    const other = await store.createRun({
-      runtimeId: "fake",
-      request: {
-        id: "",
-        objective: "Cross-run evidence rejection",
+        searchProvider: controlledPdfSearch,
+        captureProvider: capture,
+        providerConfig: { defaultMarket: pdfCase.market, maxPdfPages: 3 },
+        providerLedgers: [firecrawlLedger],
+      });
+      service = new ResearchService({
+        store,
+        registry: createResearchRuntimeRegistry([runtime]),
+      });
+      const created = await service.createRun({
+        objective: `Retain the public PDF and cite ${pdfCase.successExcerpt} on physical page ${pdfCase.successPage}.`,
         profile: "quick",
+        runtimeId: "deepagents",
         context: [],
-        budget: toolBudget(),
-      },
-      budget: toolBudget(),
-    });
-    await store.recordResult(other.id, {
-      findings: [
-        {
-          id: "F1",
-          claim: "Cross-run source must not verify.",
-          producedBy: "researcher",
-          evidence: [{ sourceId: pdfSource.id, ...expectedReference }],
+      });
+      await service.settled(created.id);
+      const run = await service.getRun(created.id);
+      assertCompletedAcceptanceRun(run, assertions);
+      const result = await service.getResult(created.id);
+      const sources = await service.listSources(created.id);
+      const pdfSource = sources.find((source) => source.mediaType === "application/pdf");
+      assert(Boolean(pdfSource), "The fake-model run retained a PDF source.", assertions);
+      const expectedReference = {
+        excerpt: pdfCase.successExcerpt,
+        locator: { page: pdfCase.successPage },
+        snapshotRef: `sha256:${pdfSource.contentSha256}`,
+      };
+      assert(
+        await verifySnapshotEvidence({
+          source: pdfSource,
+          reference: expectedReference,
+          snapshotDirectory: path.join(sessionDirectory, "sources"),
+        }),
+        "The expected PDF excerpt verified on physical page 2.",
+        assertions,
+      );
+      assert(
+        !(await verifySnapshotEvidence({
+          source: pdfSource,
+          reference: {
+            ...expectedReference,
+            locator: { page: pdfCase.negativePage },
+          },
+          snapshotDirectory: path.join(sessionDirectory, "sources"),
+        })),
+        "The absent physical page 3 citation was rejected.",
+        assertions,
+      );
+      assert(
+        result.findings.some((finding) =>
+          finding.evidence.some(
+            (evidence) => evidence.locator?.page === pdfCase.successPage && evidence.quoteVerified,
+          ),
+        ),
+        "ResearchStore independently persisted page-verified PDF evidence.",
+        assertions,
+      );
+      const other = await store.createRun({
+        runtimeId: "fake",
+        request: {
+          id: "",
+          objective: "Cross-run evidence rejection",
+          profile: "quick",
+          context: [],
+          budget: toolBudget(),
         },
-      ],
-      artifacts: [],
-    });
-    const crossRun = await store.getResult(other.id);
-    assert(
-      crossRun.findings[0].evidence[0].quoteVerified === false,
-      "A source identity from another run did not verify.",
-      assertions,
-    );
-    report.scenarios.push({
-      id: pdfCase.id,
-      status: "passed",
-      runId: created.id,
-      source: publicSourceReceipt(pdfSource),
-      coverage: pdfSource.metadata?.coverage ?? null,
-      parserMode: pdfSource.metadata?.parserMode ?? null,
-      cacheState: pdfSource.metadata?.cacheState ?? "unknown",
-    });
-    await service.shutdown();
-    db.close();
+        budget: toolBudget(),
+      });
+      await store.recordResult(other.id, {
+        findings: [
+          {
+            id: "F1",
+            claim: "Cross-run source must not verify.",
+            producedBy: "researcher",
+            evidence: [{ sourceId: pdfSource.id, ...expectedReference }],
+          },
+        ],
+        artifacts: [],
+      });
+      const crossRun = await store.getResult(other.id);
+      assert(
+        crossRun.findings[0].evidence[0].quoteVerified === false,
+        "A source identity from another run did not verify.",
+        assertions,
+      );
+      report.scenarios.push({
+        id: pdfCase.id,
+        status: "passed",
+        runId: created.id,
+        source: publicSourceReceipt(pdfSource),
+        coverage: pdfSource.metadata?.coverage ?? null,
+        parserMode: pdfSource.metadata?.parserMode ?? null,
+        cacheState: pdfSource.metadata?.cacheState ?? "unknown",
+      });
+    } finally {
+      await closeAcceptanceResources(service, db);
+    }
 
     let syntheticPrimaryCalls = 0;
     const fallback = new FallbackSearchProvider({
@@ -356,6 +359,26 @@ function publicSourceReceipt(source) {
 function assert(condition, message, assertions) {
   assertions.push({ message, passed: Boolean(condition) });
   if (!condition) throw new Error(message);
+}
+
+export function assertCompletedAcceptanceRun(run, assertions) {
+  const message = "The deterministic fake-model PDF run completed.";
+  const passed = run?.status === "completed";
+  assertions.push({ message, passed });
+  if (passed) return;
+  const error = new Error(
+    `The deterministic fake-model PDF run failed: ${safeMessage(run?.error?.message ?? run?.status)}`,
+  );
+  error.code = run?.error?.code ?? "acceptance_pdf_run_failed";
+  throw error;
+}
+
+export async function closeAcceptanceResources(service, database) {
+  try {
+    await service?.shutdown();
+  } finally {
+    database.close();
+  }
 }
 
 function safeMessage(error) {

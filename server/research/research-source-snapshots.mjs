@@ -37,8 +37,11 @@ export function normalizePdfCapture({ pages, numPages, totalPages = null, pageCa
       const page = Number(block?.pageNumber ?? block?.page);
       if (!Number.isInteger(page) || page < 1 || page > normalizedPages.length)
         throw incomplete("PDF block metadata referenced an invalid physical page.");
-      if (block.status && !["success", "complete"].includes(String(block.status).toLowerCase()))
-        throw incomplete("PDF block metadata reported extraction failure.");
+      if (block.status != null && String(block.status).trim() !== "") {
+        const status = safeBlockStatus(block.status);
+        if (!["success", "complete"].includes(status))
+          throw incomplete(`PDF block metadata reported extraction failure (status: ${status}).`);
+      }
     }
     blockCoverage = blocks.length ? "reported" : "empty";
   }
@@ -170,4 +173,9 @@ function incomplete(message, code = "source_incomplete") {
   error.code = code;
   error.category = "source_incomplete";
   return error;
+}
+
+function safeBlockStatus(value) {
+  const status = String(value).trim().toLowerCase();
+  return /^[a-z0-9_.-]{1,40}$/.test(status) ? status : "unrecognized";
 }

@@ -61,6 +61,12 @@ if (!process.env.FIRECRAWL_API_KEY || !process.env.SERPER_API_KEY)
 if (process.env.RESEARCH_MODEL_PROVIDER && process.env.RESEARCH_MODEL_PROVIDER !== "fake")
   throw new Error("Provider acceptance rejects live-model selection; use the deterministic fake model.");
 
+// Prove that the native checkpoint dependency can execute in this exact Node process before
+// any paid provider is constructed. Worktrees can share node_modules while shells select a
+// different Node ABI, which must fail before the first search rather than after paid capture.
+const { preflightResearchAcceptanceRuntime } = await import("./research-provider-acceptance-preflight.mjs");
+await preflightResearchAcceptanceRuntime();
+
 // The guard above is intentionally the last point before importing the live runner. Dry runs
 // therefore cannot instantiate providers, resolve DNS, create acceptance directories or touch
 // credentials. The live runner owns the single shared ledger and writes one owner-only report.

@@ -39,6 +39,35 @@ test("missing, reordered, empty and contradictory PDF pages fail closed", () => 
     assert.throws(() => normalizePdfCapture(value));
 });
 
+test("failed PDF block status is reported safely without accepting provider-controlled text", () => {
+  const base = {
+    pages: [{ pageNumber: 1, content: "one" }],
+    numPages: 1,
+    totalPages: 1,
+    pageCap: 3,
+  };
+  assert.throws(
+    () => normalizePdfCapture({ ...base, blocks: [{ pageNumber: 1, status: "partial" }] }),
+    /status: partial/,
+  );
+  assert.throws(
+    () => normalizePdfCapture({ ...base, blocks: [{ pageNumber: 1, status: false }] }),
+    /status: false/,
+  );
+  assert.throws(
+    () =>
+      normalizePdfCapture({
+        ...base,
+        blocks: [{ pageNumber: 1, status: "failed\nAuthorization: secret" }],
+      }),
+    (error) => {
+      assert.match(error.message, /status: unrecognized/);
+      assert.equal(error.message.includes("Authorization"), false);
+      return true;
+    },
+  );
+});
+
 test("PDF evidence is checked on the exact page and forged marker text is inert", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "research-snapshot-test-"));
   try {
