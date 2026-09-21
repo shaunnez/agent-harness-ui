@@ -1,0 +1,190 @@
+{
+ "channel-drain-installation": {
+  "claude-haiku-4-5": {
+   "cost_usd": 0.25788819999999996,
+   "turns": 17,
+   "band": {
+    "unit": "m (of channel drain run)",
+    "low": null,
+    "high": null,
+    "centre": null,
+    "basis": "Cannot establish without proprietary product spec, haunch/trench dimensions, stormwater connection depth, and paving width."
+   },
+   "resolved_from": "qv+web",
+   "confidence": "low",
+   "qv_rows": 4,
+   "not_established": 4
+  },
+  "claude-opus-5": {
+   "cost_usd": 1.0734920000000001,
+   "turns": 17,
+   "band": {
+    "unit": "m",
+    "low": 425,
+    "high": 1080,
+    "centre": "AKL",
+    "basis": "Nominal 10m run. Low = residential/footpath 100mm channel (t16:r11, 310) + 5m lead-in amortised (53) + 1.5m-deep connection amortised (64), no reinstatement (channel set in new paving). High = heavy-transport 160mm channel (t16:r18, 661) + 10m lead-in (105) + 3m-deep connection amortised (159) + 1.2m reinstatement strip in 150mm concrete (153). Haunching not added - see caveat. Runs under ~6m push per-metre cost sharply higher as the fixed connection cost is spread thinner; a 4m run at the high end approaches 1500/m. WLG approx 3-4% under AKL, CHC approx 1-2% under, on these rows."
+   },
+   "resolved_from": "qv",
+   "confidence": "medium",
+   "qv_rows": 7,
+   "not_established": 7
+  },
+  "claude-sonnet-5": {
+   "cost_usd": 0.4352732,
+   "turns": 10,
+   "band": {
+    "unit": "m",
+    "low": 259,
+    "high": 661,
+    "centre": "Auckland",
+    "basis": "QV Channel Drains and Gratings table t16, residential (75mm) through heavy transport (100mm) load classes; excludes haunching, stormwater connection, and paving reinstatement"
+   },
+   "resolved_from": "qv",
+   "confidence": "medium",
+   "qv_rows": 3,
+   "not_established": 3
+  }
+ },
+ "internal-doorset-supply-install": {
+  "claude-haiku-4-5": {
+   "cost_usd": 0.36997065,
+   "turns": 30,
+   "band": {
+    "unit": "each, single internal door leaf + frame, hung & adjusted",
+    "low": null,
+    "high": null,
+    "centre": "AKL",
+    "basis": "Cannot form band; labour gap and variant coverage insufficient"
+   },
+   "resolved_from": "qv+web",
+   "confidence": "low",
+   "qv_rows": 4,
+   "not_established": 5
+  },
+  "claude-opus-5": {
+   "cost_usd": 0.9458255,
+   "turns": 16,
+   "band": {
+    "unit": "ea",
+    "low": 420,
+    "high": 1140,
+    "centre": "Auckland",
+    "basis": "Non-fire single internal leaf 1980x810 plus timber interior frame, hung and adjusted, excluding hardware, architraves, vision panels and painting. Low = MDF hollow core leaf (248) + 89x18 plain frame (169). High = solid core rimu veneer leaf (930) + 150x40 grooved frame (506) trimmed to a realistic pairing. Rated doorsets sit outside this band: half-hour fire 1690, one-hour 1990, two-hour steel-frame 2430, acoustic 2060-2720, all complete sets. GST exclusive. All rows unreviewed."
+   },
+   "resolved_from": "qv",
+   "confidence": "medium",
+   "qv_rows": 12,
+   "not_established": 5
+  },
+  "claude-sonnet-5": {
+   "cost_usd": 0.37982759999999993,
+   "turns": 20,
+   "band": {
+    "unit": "ea",
+    "low": 1750,
+    "high": 5400,
+    "centre": "Auckland",
+    "basis": "QV aggregate doorset rows, standard 1980mm height, single to pair, non-fire through two-hour fire rated, excl hardware/vision panel"
+   },
+   "resolved_from": "qv",
+   "confidence": "medium",
+   "qv_rows": 7,
+   "not_established": 2
+  }
+ },
+ "retaining-wall-construction": {
+  "claude-haiku-4-5": {
+   "cost_usd": 0.27692275,
+   "turns": 19,
+   "band": {
+    "unit": "m\u00b2 (wall face)",
+    "low": null,
+    "high": null,
+    "centre": "AKL",
+    "basis": "Unresolved. QV in-situ concrete $645\u2013920/m\u00b2 for shallow wall. Web indicates 3m engineered walls $1,200\u20133,500/m\u00b2, but scope excludes engineering design."
+   },
+   "resolved_from": "qv+web",
+   "confidence": "low",
+   "qv_rows": 6,
+   "not_established": 6
+  },
+  "claude-opus-5": {
+   "cost_usd": 1.5690705,
+   "turns": 27,
+   "band": {
+    "unit": "m2",
+    "low": 1900,
+    "high": 2500,
+    "centre": "AKL",
+    "basis": "Composed build-up, in-situ RC cantilever at 3.0m retained height, per m2 of retained face: QV component rows priced against my assumed section (300mm stem, 2.1m x 0.4m base, ~150kg/m3 reo, 400mm drainage zone, 110mm subsoil drain, 2-coat tanking), subtotal $5,221-$5,974 per lineal m / 3 m2 = $1,740-$1,991/m2, plus 10-25% for temporary works, P&G and margin. NOT a QV published rate. Excludes design, consent, geotech, surcharge cases, piled foundations and rock excavation. For walls at or below the published ceilings, use the QV rows direct: pole wall $522-$727/m2 (1.2-2.0m), interlocking units $374-$1,550/m2 (600-1500 series)."
+   },
+   "resolved_from": "qv+web",
+   "confidence": "low",
+   "qv_rows": 14,
+   "not_established": 9
+  },
+  "claude-sonnet-5": {
+   "cost_usd": 0.489871,
+   "turns": 15,
+   "band": {
+    "unit": "m2",
+    "low": null,
+    "high": null,
+    "centre": null,
+    "basis": "No QV row covers a single wall system at 3m retained height; band cannot be established without fixing wall type. Sub-3m options range roughly $374-$1550/m2 depending on type/height, none reaching 3m."
+   },
+   "resolved_from": "qv",
+   "confidence": "low",
+   "qv_rows": 7,
+   "not_established": 6
+  }
+ },
+ "switchboard-fault-rating-protection": {
+  "claude-haiku-4-5": {
+   "cost_usd": 0.2780007,
+   "turns": 17,
+   "band": {
+    "unit": "ea (whole project)",
+    "low": null,
+    "high": null,
+    "centre": "NZ",
+    "basis": "Cannot establish band without fault level (essential first input) and scope of busbar bracing"
+   },
+   "resolved_from": "qv+web",
+   "confidence": "low",
+   "qv_rows": 1,
+   "not_established": 5
+  },
+  "claude-opus-5": {
+   "cost_usd": 1.4572119999999997,
+   "turns": 24,
+   "band": {
+    "unit": "ea",
+    "low": null,
+    "high": null,
+    "centre": "Auckland",
+    "basis": "No defensible band. The cost is governed by the assessed prospective short-circuit current, which is unknown, and QV publishes no row above 6kA breaking capacity, no MCCB or ACB of any rating, and no busbar bracing or chassis upgrade item. The binary that dominates the price - re-brace the existing board vs build and install a new one - is not resolvable from any published NZ source. Components above are anchors for a build-up once the PSCC and the re-brace/replace decision are settled, not a rate for this scenario."
+   },
+   "resolved_from": "qv",
+   "confidence": "low",
+   "qv_rows": 7,
+   "not_established": 7
+  },
+  "claude-sonnet-5": {
+   "cost_usd": 0.4226896,
+   "turns": 18,
+   "band": {
+    "unit": "ea",
+    "low": null,
+    "high": null,
+    "centre": null,
+    "basis": "Cannot establish a defensible band without the prospective fault current and required breaker kA rating \u2014 cost is driven almost entirely by these unresolved inputs, and QV has no rows for fault-rated MCCB/ACB devices, busbar bracing upgrades, or discrimination studies at any price point."
+   },
+   "resolved_from": "not_established",
+   "confidence": "low",
+   "qv_rows": 3,
+   "not_established": 5
+  }
+ }
+}
