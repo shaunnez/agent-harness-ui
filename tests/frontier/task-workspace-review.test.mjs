@@ -118,6 +118,12 @@ test("retained review for a mismatched candidate cannot display current freshnes
     assert.match(markup, /Previous or unbound candidate/);
     assert.doesNotMatch(markup, />Fresh</);
     assert.match(markup, /Open review report/);
+    artifact.gateResult.candidateId = task.candidates.at(-1).id;
+    artifact.candidateId = "old-metadata-candidate";
+    assert.match(
+      render(ReviewEvidence, { task, artifact, onArtifact() {} }),
+      /Previous or unbound candidate/,
+    );
   }));
 
 test("historical Final Review still shows eight prior stages with labelled partial usage", async () =>
@@ -154,4 +160,40 @@ test("investigation approval does not promise candidate publication", async () =
     const markup = render(StageSummary, { task, stage: "approval" });
     assert.match(markup, /Approve the retained specification/);
     assert.doesNotMatch(markup, /publishes|pull request/);
+  }));
+
+test("test detail initially exposes a failed check but leaves passing-only and empty attempts unselected", async () =>
+  views(async ({ TestEvidence }) => {
+    const gateway = createFixtureGateway(undefined, true);
+    const evidence = await evidenceFor(gateway, "AH-051");
+    const markup = render(TestEvidence, { evidence });
+    const failed = testAttempts(evidence)[0].rows.find((row) => row.status === "failed");
+    assert.match(markup, /Back to results/);
+    assert.ok(markup.includes(failed.command));
+    assert.match(markup, /Exit code<\/dt><dd>127/);
+    assert.doesNotMatch(markup, /Select a check/);
+    for (const run of evidence.runs.items) {
+      if (run.test) run.test.rows = run.test.rows.map((row) => ({ ...row, status: "passed" }));
+    }
+    assert.match(render(TestEvidence, { evidence }), /Select a check/);
+    evidence.runs.items = [];
+    evidence.core.candidates = [];
+    const empty = render(TestEvidence, { evidence });
+    assert.match(empty, /No structured test rows loaded/);
+    assert.doesNotMatch(empty, /Back to results/);
+  }));
+
+test("compact review keeps verdict, failure state and every distinct blocking reason", async () =>
+  views(async ({ ReviewEvidence }) => {
+    const gateway = createFixtureGateway(undefined, true);
+    const task = await gateway.core("PC-148");
+    const metadata = task.artifacts.find((item) => item.stage === "dev-review");
+    const artifact = await gateway.artifact(task.id, metadata.id);
+    task.status = "review-retry-required";
+    artifact.gateResult.blockingReasons.push("Review process exited before completing verification.");
+    const markup = render(ReviewEvidence, { task, artifact, onArtifact() {} });
+    assert.match(markup, /Recorded verdict: REPAIR/);
+    assert.match(markup, /Execution failed/);
+    for (const reason of artifact.gateResult.blockingReasons) assert.ok(markup.includes(reason));
+    assert.match(markup, /Empty revision history/);
   }));

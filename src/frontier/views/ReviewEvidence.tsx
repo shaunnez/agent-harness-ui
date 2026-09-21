@@ -4,7 +4,7 @@ import type { RuntimeArtifact, RuntimeRun } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { TaskCore } from "../runtime/contracts";
 import { modelLabel, reasoningLabel, stageLabels } from "../runtime/presentation";
-import { artifactState } from "../runtime/workflow";
+import { gateStages, gateView } from "../runtime/workflow";
 
 export function ReviewEvidence({
   task,
@@ -24,7 +24,14 @@ export function ReviewEvidence({
   if (!gate) return null;
   const candidate = task.candidates.at(-1);
   const bindingMatches =
-    candidate && gate.candidateId === candidate.id && gate.candidateRevision === candidate.revisionNumber;
+    candidate &&
+    gate.candidateId === candidate.id &&
+    gate.candidateRevision === candidate.revisionNumber &&
+    (!artifact.candidateId ||
+      (artifact.candidateId === candidate.id && artifact.candidateRevision === candidate.revisionNumber));
+  const state = gateStages.includes(artifact.stage as (typeof gateStages)[number])
+    ? gateView(task, artifact.stage as (typeof gateStages)[number]).label
+    : "Retained evidence";
   const findings = gate.findings ?? [];
   const finding = findings[selected] ?? findings[0];
   return (
@@ -38,26 +45,18 @@ export function ReviewEvidence({
             {run ? ` · ${run.status}` : ""}
           </small>
           <h3>Recorded verdict: {gate.verdict}</h3>
-          <p>
-            {bindingMatches
-              ? artifactState(artifact, task)
-              : "Previous or unbound candidate · retained for audit"}
-          </p>
+          {gate.blockingReasons.map((reason) => (
+            <p className="review-blocking-reason" key={reason}>
+              {reason}
+            </p>
+          ))}
           <small>
+            {bindingMatches ? state : "Previous or unbound candidate · retained for audit"} ·{" "}
             {gate.candidateId} r{gate.candidateRevision} · {new Date(gate.evaluatedAt).toLocaleString()}
           </small>
         </div>
       </section>
       {candidateIdentity}
-      {gate.blockingReasons.length > 0 && (
-        <div className="review-blockers">
-          {gate.blockingReasons.map((reason) => (
-            <p className="form-error" key={reason}>
-              {reason}
-            </p>
-          ))}
-        </div>
-      )}
       {finding ? (
         <div className="review-finding-grid">
           <section className="workflow-card finding-list">

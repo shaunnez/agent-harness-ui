@@ -6,11 +6,19 @@ import { gateView } from "../runtime/workflow";
 
 export function TestEvidence({ evidence }: { evidence: TaskEvidence }) {
   const [attemptId, selectAttempt] = usePanelState<string | null>(`test-attempt:${evidence.core.id}`, null);
-  const [rowId, selectRow] = usePanelState<string | null>(`test-result:${evidence.core.id}`, null);
+  const [selections, setSelections] = usePanelState<Record<string, string | null>>(
+    `test-results:${evidence.core.id}`,
+    {},
+  );
   const attempts = testAttempts(evidence);
   const attempt = attempts.find((item) => item.id === attemptId) ?? attempts[0];
   const rows = attempt?.rows ?? [];
-  const chosen = rows.find((row) => row.id === rowId);
+  const rowId = attempt ? selections[attempt.id] : undefined;
+  const chosen =
+    rowId === undefined ? rows.find((row) => row.status === "failed") : rows.find((row) => row.id === rowId);
+  const selectRow = (id: string | null) => {
+    if (attempt) setSelections({ ...selections, [attempt.id]: id });
+  };
   const candidate = evidence.core.candidates.at(-1);
   const binding = (id: string | null, revision: number | null) =>
     id === candidate?.id &&
@@ -37,7 +45,6 @@ export function TestEvidence({ evidence }: { evidence: TaskEvidence }) {
                 value={attempt?.id ?? ""}
                 onChange={(event) => {
                   selectAttempt(event.target.value);
-                  selectRow(null);
                 }}
                 disabled={!attempts.length}
               >
