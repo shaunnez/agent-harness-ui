@@ -602,8 +602,24 @@ function parseWorkPackageValue(value, repositoryPath) {
     const testEditRequired =
       /\b(?:add|create|write|update|extend)\b[^.\n]{0,100}\btests?\b/i.test(item.description) ||
       /\btests?\b[^.\n]{0,100}\b(?:add|create|write|update|extend)\b/i.test(item.description);
-    const ownsTestPath = item.ownedPaths.some((ownedPath) =>
-      /(?:^|\/)(?:tests?|__tests__)(?:\/|$)|\.(?:test|spec)\.[^/]+$/i.test(ownedPath),
+    // A package owns a test path when it names one outright, and also when it owns a
+    // directory — everything beneath a directory belongs to it, colocated tests included.
+    //
+    // Requiring a literal test path rejected valid plans wherever a project keeps tests
+    // beside the code they cover. EXP-001's `C4-backend` case failed this way three times
+    // out of six plan attempts: a package owning
+    // `frontend/src/features/tender-assessment/` — 39 colocated `.test.tsx` files — was
+    // told it "contains no explicit test file or test directory" while naming the very
+    // files it owns. The check exists to stop a package promising test work it has no
+    // path to perform, and a directory is such a path.
+    const ownsTestPath = item.ownedPaths.some(
+      (ownedPath) =>
+        /(?:^|\/)(?:tests?|__tests__)(?:\/|$)|\.(?:test|spec)\.[^/]+$/i.test(ownedPath) ||
+        // A directory owns everything beneath it — `isOwnedFile` below already treats every
+        // owned path as a subtree prefix — so a package owning one can put tests in it.
+        // `normalizeOwnedPath` has already dropped any trailing slash by this point, so a
+        // directory is identified by its last segment carrying no file extension.
+        !/\.[^./]+$/.test(ownedPath.split("/").pop() ?? ""),
     );
     if (testEditRequired && !ownsTestPath) {
       throw new Error(
