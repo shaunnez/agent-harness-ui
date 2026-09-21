@@ -14,6 +14,7 @@
 // stated security requirement, not an incidental one.
 
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
@@ -24,6 +25,7 @@ import { createDeepAgent, createSubAgentMiddleware, StateBackend } from "deepage
 import { modelCallLimitMiddleware, tool } from "langchain";
 import { graphRecursionLimitForBudget } from "../../../src/research-budget-policy.ts";
 import { encodeWorkerMessage } from "./event-protocol.mjs";
+import { modelConstructorOptions } from "./model-config.mjs";
 import { openHostToolChannel } from "./host-tool-client.mjs";
 
 const startedAtMs = Date.now();
@@ -243,26 +245,18 @@ function latestToolJson(messages) {
   return null;
 }
 
-async function buildModel(modelConfig) {
-  if (modelConfig.provider === "anthropic") {
-    const apiKey = process.env[modelConfig.apiKeyEnvVar];
+/** Exported so a test can prove that a live constructor receives the configured maximum
+ *  output token count without a network call. The constructor arguments themselves are owned
+ *  by `model-config.mjs`; this function only decides which class they are handed to. */
+export async function buildModel(modelConfig, env = process.env) {
+  if (modelConfig.provider === "anthropic" || modelConfig.provider === "openai-compatible") {
+    const apiKey = env[modelConfig.apiKeyEnvVar];
     if (!apiKey)
       throw new Error(
-        `Anthropic model requested but ${modelConfig.apiKeyEnvVar} was not provided to the child.`,
+        `A ${modelConfig.provider} model was requested but ${modelConfig.apiKeyEnvVar} was not provided to the child.`,
       );
-    return new ChatAnthropic({ model: modelConfig.model, apiKey });
-  }
-  if (modelConfig.provider === "openai-compatible") {
-    const apiKey = process.env[modelConfig.apiKeyEnvVar];
-    if (!apiKey)
-      throw new Error(
-        `OpenAI-compatible model requested but ${modelConfig.apiKeyEnvVar} was not provided to the child.`,
-      );
-    return new ChatOpenAI({
-      model: modelConfig.model,
-      apiKey,
-      configuration: { baseURL: modelConfig.baseURL },
-    });
+    const { provider, options } = modelConstructorOptions(modelConfig, apiKey);
+    return provider === "anthropic" ? new ChatAnthropic(options) : new ChatOpenAI(options);
   }
   return new FakeToolCallingModel({
     label: modelConfig.model,
@@ -558,14 +552,19 @@ async function main() {
   host.close();
 }
 
-main()
-  .then(() => {
-    process.exitCode = 0;
-  })
-  .catch((error) => {
-    // A structural failure — bad config, a model/checkpoint that could not even be
-    // constructed — before any graph ever ran. Nothing partial to preserve.
-    sendError({ code: "worker_startup_failed", message: error?.message ?? String(error) });
-    process.stdin.destroy();
-    process.exitCode = 1;
-  });
+// Only when spawned as the child entrypoint. Importing this module — which a constructor test
+// does, because this is the one file allowed to import a chat-model integration — must not
+// start a graph or read stdin.
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  main()
+    .then(() => {
+      process.exitCode = 0;
+    })
+    .catch((error) => {
+      // A structural failure — bad config, a model/checkpoint that could not even be
+      // constructed — before any graph ever ran. Nothing partial to preserve.
+      sendError({ code: "worker_startup_failed", message: error?.message ?? String(error) });
+      process.stdin.destroy();
+      process.exitCode = 1;
+    });
+}

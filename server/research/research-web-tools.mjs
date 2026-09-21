@@ -48,6 +48,8 @@ export class ResearchWebTools {
   #timeoutMs;
   #sources = new Map();
   #captures = new Map();
+  #maxUniqueCaptures;
+  #uniqueCaptures = 0;
   #findings = [];
   #toolCallsUsed = 0;
   #searchCallsUsed = 0;
@@ -78,6 +80,11 @@ export class ResearchWebTools {
     maxResponseBytes = DEFAULT_SOURCE_BYTE_LIMIT,
     timeoutMs = DEFAULT_SOURCE_TIMEOUT_MS,
     signal = null,
+    // A parent-side ceiling on distinct captured URLs. `ResearchBudget` deliberately has no
+    // vocabulary for it: how many pages a provider charges for is a host concern, not a
+    // neutral research contract concern, so a caller that needs the ceiling passes it here.
+    // Null keeps the existing unlimited behaviour for every caller that does not.
+    maxUniqueCaptures = null,
   }) {
     if (!searchProvider?.search) throw new Error("Research web tools require a search provider.");
     if ((captureProvider || providerConfig.searchProvider === "firecrawl") && context.length)
@@ -112,6 +119,9 @@ export class ResearchWebTools {
         ? AbortSignal.any([signal, this.#deadlineController.signal])
         : this.#deadlineController.signal;
     } else this.#signal = signal;
+    if (maxUniqueCaptures != null && (!Number.isInteger(maxUniqueCaptures) || maxUniqueCaptures < 1))
+      throw new Error("maxUniqueCaptures must be a positive integer when supplied.");
+    this.#maxUniqueCaptures = maxUniqueCaptures;
     this.#ledgers = providerLedgers.filter(Boolean);
     this.#startedAtMs = Date.now();
   }
@@ -151,6 +161,11 @@ export class ResearchWebTools {
 
   searchMetadata() {
     return [...this.#searchMetadata];
+  }
+
+  /** Distinct URLs this run has attempted to capture, successfully or not. */
+  uniqueCaptureCount() {
+    return this.#uniqueCaptures;
   }
 
   providerAccounting() {
@@ -268,7 +283,15 @@ export class ResearchWebTools {
     }
     const key = normalizeRequestedUrl(requestedUrl);
     const existing = this.#captures.get(key);
+    // A repeated URL still costs a tool call, but never another capture slot or provider
+    // request, so a model cannot spend its capture allowance on the same page twice.
     if (existing) return existing;
+    if (this.#maxUniqueCaptures != null && this.#uniqueCaptures >= this.#maxUniqueCaptures)
+      throw new ResearchToolError(
+        "capture_ceiling_exceeded",
+        `This run may capture at most ${this.#maxUniqueCaptures} distinct source${this.#maxUniqueCaptures === 1 ? "" : "s"}; reuse a source already retained in this run.`,
+      );
+    this.#uniqueCaptures += 1;
     const sourceId = `source-${++this.#sourceSequence}`;
     const operation = this.#captureAndRetain(requestedUrl, sourceId);
     this.#captures.set(key, operation);
