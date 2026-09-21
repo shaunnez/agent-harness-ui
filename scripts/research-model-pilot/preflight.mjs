@@ -3,7 +3,7 @@
 // environment value: a preflight names variables and non-secret selections only.
 
 import { execFile } from "node:child_process";
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { promisify } from "node:util";
@@ -128,6 +128,42 @@ export function resolveSessionAllowance(environment, manifest) {
       `${MODEL_CALL_ALLOWANCE_VAR} (${modelCalls}) is below the manifest's ${maxModelCalls}-call maximum.`,
     );
   return { firecrawlCredits: credits, modelCalls };
+}
+
+/**
+ * Read the owner-only environment file and return it merged over `environment`.
+ *
+ * Deliberately not `--env-file-if-exists`: a missing or world-readable file must fail here,
+ * loudly, before any runtime is constructed — not silently leave the session credential-free
+ * and fail later for a confusing reason. Values are parsed and returned; none is ever logged.
+ */
+export async function loadOwnerEnvFile({
+  environment = process.env,
+  cwd = process.cwd(),
+  statFile = stat,
+} = {}) {
+  const file = path.resolve(cwd, environment.RESEARCH_PILOT_ENV_FILE ?? LIVE_ENV_FILE);
+  let info;
+  try {
+    info = await statFile(file);
+  } catch {
+    throw guardError(`A live pilot requires the owner-only environment file ${path.basename(file)}.`);
+  }
+  if ((info.mode & 0o077) !== 0)
+    throw guardError(`${path.basename(file)} must be mode 0600; it is readable by others.`);
+  const parsed = {};
+  for (const line of (await readFile(file, "utf8")).split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const separator = trimmed.indexOf("=");
+    if (separator < 1) continue;
+    const name = trimmed.slice(0, separator).trim();
+    const value = trimmed.slice(separator + 1).trim();
+    parsed[name] = value.replace(/^(["'])(.*)\1$/s, "$2");
+  }
+  // The file is the owner's deliberate selection for this session, so it wins over whatever
+  // happens to be exported in the shell.
+  return { ...environment, ...parsed };
 }
 
 /** Live-mode guards, in the order that fails cheapest first. */

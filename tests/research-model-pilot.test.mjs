@@ -29,6 +29,7 @@ import { assertManifestLineage, finalizeSession } from "../scripts/research-mode
 import {
   assertLiveGuards,
   buildPreflightReport,
+  loadOwnerEnvFile,
   probeNativeRuntime,
   resolvePilotModel,
   resolveSessionAllowance,
@@ -568,6 +569,45 @@ test("an owner-readable env file is refused before any spend", async () => {
         cwd: directory,
         git: { commit: "abc", dirty: false },
       }),
+      /mode 0600/,
+    );
+  });
+});
+
+test("the owner-only env file is read, wins over the shell, and never loosens its own mode", async () => {
+  await withTempDirectory(async (directory) => {
+    await writeFile(
+      path.join(directory, ".env.research.local"),
+      [
+        "# owner-only pilot credentials",
+        "RESEARCH_MODEL_API_KEY=file-model-key",
+        'FIRECRAWL_API_KEY="file-firecrawl-key"',
+        "",
+        "RESEARCH_MODEL_ID=claude-opus-5",
+      ].join("\n"),
+      { mode: 0o600 },
+    );
+    const merged = await loadOwnerEnvFile({
+      environment: {
+        PATH: "/usr/bin",
+        RESEARCH_MODEL_ID: "shell-model",
+        RESEARCH_PILOT_ENV_FILE: ".env.research.local",
+      },
+      cwd: directory,
+    });
+    assert.equal(merged.RESEARCH_MODEL_API_KEY, "file-model-key");
+    assert.equal(merged.FIRECRAWL_API_KEY, "file-firecrawl-key", "quotes are stripped");
+    assert.equal(merged.RESEARCH_MODEL_ID, "claude-opus-5", "the file wins over the shell");
+    assert.equal(merged.PATH, "/usr/bin");
+    assert.equal("# owner-only pilot credentials" in merged, false);
+
+    await assert.rejects(
+      loadOwnerEnvFile({ environment: { RESEARCH_PILOT_ENV_FILE: ".env.absent" }, cwd: directory }),
+      /owner-only environment file/,
+    );
+    await writeFile(path.join(directory, ".env.loose"), "RESEARCH_MODEL_API_KEY=x\n", { mode: 0o644 });
+    await assert.rejects(
+      loadOwnerEnvFile({ environment: { RESEARCH_PILOT_ENV_FILE: ".env.loose" }, cwd: directory }),
       /mode 0600/,
     );
   });

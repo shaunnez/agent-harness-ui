@@ -21,7 +21,9 @@ and additionally requires, before anything is constructed:
 - `RESEARCH_MODEL_PROVIDER` and `RESEARCH_MODEL_ID` — a model is never inherited from a stray
   credential — plus `RESEARCH_MODEL_MAX_OUTPUT_TOKENS=8192`;
 - `.env.research.local` present and mode `0600`, holding `RESEARCH_MODEL_API_KEY` and
-  `FIRECRAWL_API_KEY` (and `SERPER_API_KEY` for the bounded fallback);
+  `FIRECRAWL_API_KEY` (and `SERPER_API_KEY` for the bounded fallback). The live command reads
+  this file itself, before the runner is imported; a missing or world-readable file fails there
+  rather than leaving the session credential-free and failing later for a confusing reason;
 - `RESEARCH_MODEL_PILOT_FIRECRAWL_ALLOWANCE` and `RESEARCH_MODEL_PILOT_MODEL_CALL_ALLOWANCE`,
   the separately approved session allowance, which must admit the manifest exactly; and
 - a clean worktree, so the report's lineage is exact.

@@ -18,7 +18,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { writeArtifact, writeJsonArtifact } from "./research-model-pilot/artifacts.mjs";
 import { hashManifestText, parsePilotManifest, sessionBounds } from "./research-model-pilot/contracts.mjs";
-import { LIVE_ENV_FILE } from "./research-model-pilot/preflight.mjs";
+import { LIVE_ENV_FILE, loadOwnerEnvFile } from "./research-model-pilot/preflight.mjs";
 
 const LIVE_COMMAND =
   "RUN_RESEARCH_MODEL_PILOT=1 RESEARCH_PUBLIC_ONLY_ACKNOWLEDGED=1 npm run research:model-pilot";
@@ -33,17 +33,21 @@ if (live && process.env.RESEARCH_PUBLIC_ONLY_ACKNOWLEDGED !== "1")
   throw new Error(
     "A live pilot requires RESEARCH_PUBLIC_ONLY_ACKNOWLEDGED=1: objectives, queries, URLs and excerpts leave this machine.",
   );
-if (live && !process.env.RUN_RESEARCH_MODEL_PILOT_ALLOWANCE_REVIEWED)
+if (live)
   process.stderr.write(
-    `Reminder: execution authority must cover model calls and external provider calls, and ${LIVE_ENV_FILE} must be mode 0600.\n`,
+    `Reminder: execution authority must cover model calls and external provider calls. Reading ${LIVE_ENV_FILE}.\n`,
   );
+
+// The owner-only file is read here, before the runner is imported, so a missing or
+// world-readable file fails before any provider or model could be constructed.
+const environment = live ? await loadOwnerEnvFile({ environment: process.env }) : process.env;
 
 const { runModelPilotSession } = await import("./research-model-pilot/runner.mjs");
 const session = await runModelPilotSession({
   manifest,
   manifestHash,
   manifestPath: path.relative(process.cwd(), manifestPath),
-  environment: process.env,
+  environment,
   mode: live ? "live" : "dry-run",
 });
 
@@ -75,7 +79,7 @@ if (!live) {
 }
 
 const { finalizeSession } = await import("./research-model-pilot/finalize.mjs");
-const { report } = await finalizeSession({ manifest, session, environment: process.env });
+const { report } = await finalizeSession({ manifest, session, environment });
 process.stdout.write(
   `${JSON.stringify(
     {
