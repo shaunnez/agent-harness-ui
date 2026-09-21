@@ -234,6 +234,7 @@ export function WorkflowCommand({
           </span>
           <small>{commandSummary}</small>
         </span>
+        {retainedArtifactAction}
         {(task.status === "queued" ||
           (task.status === "failed" &&
             !["specification", "plan", "implement", "dev-review", "test", "final-review"].includes(
@@ -300,7 +301,6 @@ export function WorkflowCommand({
             <ArrowRight size={17} />
           </button>
         )}
-        {retainedArtifactAction}
         {!next?.action && onWatch && (
           <button type="button" className="primary" onClick={onWatch}>
             <Binoculars size={17} />

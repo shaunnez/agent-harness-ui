@@ -165,3 +165,39 @@ test("workflow samples carry inspectable prior evidence without unlocking real f
     const evidence = { core, runs: await gateway.runs(core.id), activity: { items: [], nextCursor: null } };
     assert.equal(stageRecorded(evidence, "specification"), false);
   }));
+
+test("candidate gates with unavailable verdicts never retain green completion markers", async () =>
+  views(async ({ TaskPanel }) => {
+    const gateway = createFixtureGateway(undefined, true, false, false, true);
+    const core = await gateway.core("QA-205");
+    const props = {
+      evidence: { core, runs: await gateway.runs(core.id), activity: await gateway.activity(core.id) },
+      gateway,
+      busy: false,
+      connected: true,
+      error: null,
+      grill: { answers: {}, onDraft() {}, onAnswer() {}, onFinish() {} },
+      command() {},
+      onAction() {},
+      onWatch() {},
+      onArtifact() {},
+      onPolicies() {},
+      onManage() {},
+      onDiff() {},
+      onMore() {},
+      onContinue() {},
+    };
+    const marker = (markup, stage) =>
+      markup.match(new RegExp(`<button[^>]*title="${stage} · [^"]*"[^>]*>`))?.[0];
+    const fresh = renderToStaticMarkup(React.createElement(TaskPanel, props));
+    for (const stage of ["Dev review", "Test", "Final review"])
+      assert.match(marker(fresh, stage), /class="[^"]*completed/);
+    core.candidates[0].revisionNumber++;
+    core.candidates[0].headRevision = "b".repeat(40);
+    core.gateFreshness = null;
+    const unavailable = renderToStaticMarkup(React.createElement(TaskPanel, props));
+    for (const stage of ["Dev review", "Test", "Final review"]) {
+      assert.match(marker(unavailable, stage), /Verdict unavailable/);
+      assert.doesNotMatch(marker(unavailable, stage), /class="[^"]*completed/);
+    }
+  }));

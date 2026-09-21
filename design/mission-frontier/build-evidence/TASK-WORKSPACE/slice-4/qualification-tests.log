@@ -1,0 +1,23 @@
+✔ embedded Grill preserves custom drafts and disables mutation controls when unavailable (6825.290166ms)
+✔ a queued scout never borrows an unrelated running stage worker or its Inspect action (888.1235ms)
+✔ Plan labels unstarted packages as planned while Implement retains dependency eligibility (473.181875ms)
+✔ historical stage commands follow selection without exposing active-stage shortcuts (641.903917ms)
+✔ workflow samples carry inspectable prior evidence without unlocking real future stages (487.789416ms)
+✔ candidate gates with unavailable verdicts never retain green completion markers (697.570791ms)
+✔ workspace paging removes partial usage only after all retained runs load and survives refresh (159.703125ms)
+✔ unavailable retained evidence preserves the task and does not start execution (1518.13775ms)
+✔ latest stage report and journey outcome are independent of artifact page order (5711.688333ms)
+✔ stage inspector separates unknown stage measurements from recorded task totals (480.29075ms)
+✔ test attempts remain separate across retries and candidate identities (6.3215ms)
+✔ retained review for a mismatched candidate cannot display current freshness (389.196042ms)
+✔ historical Final Review still shows eight prior stages with labelled partial usage (303.518459ms)
+✔ delivery stays incomplete for closed or drifted PRs and requires exact completed state (475.540334ms)
+✔ investigation approval does not promise candidate publication (256.622ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11549.813584

@@ -1,0 +1,202 @@
+- main:
+  - status: Loading the world…
+  - button "Agent Harness":
+    - strong: Agent Harness
+  - generic: Project scope
+  - combobox "Project scope":
+    - option "All projects" [selected]
+    - option "PlanCheck"
+    - option "Agent Harness"
+    - option "MyStrataAssist"
+  - generic: 21 September 2026 · 20:17
+  - generic: Pacific/Auckland
+  - navigation "Main navigation":
+    - button "World":
+      - text: World
+    - button "Tasks J":
+      - text: Tasks
+      - generic: J
+    - button "Open command menu":
+      - text: Manage
+  - complementary "Decisions and pinned work":
+    - complementary "Tasks needing your attention":
+      - strong: Needs you
+      - generic: "13"
+      - button "AH-051 · Verify worktree isolation · Execution stopped":
+        - strong: AH-051 · Test
+        - generic: Agent Harness
+        - generic: Execution stopped
+      - button "AH-054 · Qualify dependency batches · S2 failed":
+        - strong: AH-054 · Implement
+        - generic: Agent Harness
+        - generic: S2 failed
+      - button "PC-148 · Retain revision history · Repair required":
+        - strong: PC-148 · Dev review
+        - generic: PlanCheck
+        - generic: Repair required
+      - button "Show all 13 decisions":
+        - text: Show all 13 decisions
+  - region "Selected task":
+    - img "Worker role"
+    - heading "QA-205 · Approval" [level=2]
+    - paragraph: Sample approval of revision checks
+    - strong: Needs your approval
+    - term: Skill
+    - definition: request-approval
+    - term: Model
+    - definition: Luna · XHigh
+    - button "Review approval":
+      - text: Review approval
+    - button "Inspect":
+      - text: Inspect
+    - button "Configure agent":
+      - text: Configure agent
+    - region "Latest task artifact":
+      - generic: Artifacts
+      - button "See more"
+      - button "final-review.md Final review":
+        - strong: final-review.md
+        - generic: Final review
+    - region "Recorded task usage":
+      - generic: Usage
+      - strong: 648K tokens
+      - generic "Task elapsed time": 30m 0s
+      - generic: Approx. cost —
+      - img "API-rate estimates are not attributable ChatGPT-plan charges"
+      - generic "No recorded usage with a supported rate card": Rate card unavailable
+  - complementary:
+    - button "New task":
+      - text: New task
+    - button "Agent roster":
+      - text: Agent roster
+    - button "Skills":
+      - text: Skills
+    - button "Settings":
+      - text: Settings
+    - generic: Drag to pan · Scroll to zoom · Space to follow
+  - dialog "Task command":
+    - heading "QA-205 · Task workspace" [level=1]
+    - button "Adjust window size" [active]:
+    - button "Maximise window":
+    - button "Close panel":
+    - paragraph: Sample world · Demonstration records and actions stay in this tab.
+    - generic: Agent Harness / agent-harness-ui / QA-205
+    - heading "Sample approval of revision checks" [level=2]
+    - button "Current stage"
+    - button "Role policies":
+      - text: Role policies
+    - button "Manage":
+      - text: Manage
+    - button "Pin task":
+      - generic: Pin task
+    - navigation "Task stages":
+      - button "Triage":
+        - generic: Triage
+      - button "Scouts":
+        - generic: Scouts
+      - button "Grill":
+        - generic: Grill
+      - button "Specification":
+        - generic: Specification
+      - button "Plan":
+        - generic: Plan
+      - button "Implement":
+        - generic: Implement
+      - button "Dev review":
+        - generic: Dev review
+      - button "Test":
+        - generic: Test
+      - button "Final review":
+        - generic: Final review
+      - button "10 Approval":
+        - generic: "10"
+        - generic: Approval
+    - region "Viewed stage actions":
+      - strong: Triage
+      - emphasis: Recorded
+      - generic: Retained Triage evidence
+      - button "Open retained artifact":
+        - text: Open retained artifact
+    - region "Triage stage content":
+      - paragraph: Viewing recorded Triage evidence. Current work remains at Approval.
+      - heading "Task assessment" [level=3]
+      - heading "Requested outcome" [level=3]:
+        - text: Requested outcome
+      - paragraph: Sample approval of revision checks
+      - heading "Scope & risk" [level=3]:
+        - text: Scope & risk
+      - paragraph: No risk profile is recorded yet.
+      - heading "Recommended investigation" [level=3]:
+        - text: Recommended investigation
+      - paragraph: The selected and skipped scout set has not been recorded.
+      - strong:
+        - text: triage.md
+      - generic: QA-205 · QA-205-triage
+      - button "Raw source"
+      - paragraph: Recorded model Luna · XHigh · 21/09/2026, 20:17:26
+      - article:
+        - heading "triage" [level=1]
+        - paragraph: Retained sample evidence for QA-205.
+        - heading "Outcome" [level=2]:
+          - text: Outcome
+        - paragraph: Revision checks preserve source labels and report missing revisions.
+        - paragraph: This is a demonstration; no command was executed.
+      - heading "Retained artifacts" [level=3]
+      - button "triage.md Retained evidence · 21/09/2026, 20:17:26":
+        - strong: triage.md
+        - generic: Retained evidence · 21/09/2026, 20:17:26
+      - generic "Run activity · recorded telemetry":
+        - strong: Run activity
+        - generic: · recorded telemetry
+    - generic: Scroll for more ↓
+    - region "Task inspector":
+      - heading "Task brief" [level=3]:
+        - text: Task brief
+      - paragraph: Sample approval of revision checks
+      - heading "Role & run" [level=3]:
+        - text: Role & run
+      - img "Worker role"
+      - strong: Luna · XHigh
+      - generic: completed
+      - text: "Viewed: Triage"
+      - text: "Active: Approval"
+      - button "Watch agent":
+        - text: Watch agent
+      - region "Stage usage — Triage":
+        - heading "Stage usage — Triage" [level=3]:
+          - text: Stage usage — Triage
+        - term: Execution time
+        - definition: 6m 0s
+        - term: Input tokens
+        - definition: 62K
+        - term: Output tokens
+        - definition: 10K
+        - term: Cached tokens
+        - definition: 31K
+        - term: Cache rate
+        - definition: 50%
+        - term: Approx. cost
+        - definition: Unavailable
+        - generic: API-rate estimate · Recorded runs, including retries. Execution time sums agent runs; parallel work can overlap.
+        - generic: 1 stage runs loaded.
+      - region "Task total usage":
+        - heading "Task total" [level=3]:
+          - text: Task total
+        - term: Task elapsed
+        - definition: 30m 0s
+        - term: Total tokens
+        - definition: 648K
+        - term: Approx. cost
+        - definition: Unavailable
+        - generic: API-rate estimate · Rate card unavailable
+      - heading "Run safeguards" [level=3]:
+        - text: Run safeguards
+      - paragraph: Detached read-only evidence worktree
+      - generic: Codex reads a detached evidence worktree at aaaaaaa0. Operator checkout changes are excluded.
+      - paragraph: "Stage attempts: 1 / 3"
+      - heading "Context & repository" [level=3]:
+        - text: Context & repository
+      - paragraph: /demo/agent-harness-ui
+      - generic: Captured revision aaaaaaa0aaaa
+      - paragraph: Open each artifact to inspect its supplied-context manifest. Repository permission alone does not prove what an agent used.
+    - generic: Scroll for more ↓

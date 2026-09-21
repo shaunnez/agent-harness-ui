@@ -1,0 +1,22 @@
+✔ latest stage report and journey outcome are independent of artifact page order (2123.643041ms)
+✔ stage inspector separates unknown stage measurements from recorded task totals (121.708667ms)
+✔ test attempts remain separate across retries and candidate identities (1.959041ms)
+✔ retained review for a mismatched candidate cannot display current freshness (112.5065ms)
+✔ historical Final Review still shows eight prior stages with labelled partial usage (94.574791ms)
+✔ delivery stays incomplete for closed or drifted PRs and requires exact completed state (88.845417ms)
+✔ investigation approval does not promise candidate publication (80.130833ms)
+✔ test detail initially exposes a failed check but leaves passing-only and empty attempts unselected (90.129083ms)
+✔ compact review keeps verdict, failure state and every distinct blocking reason (74.521208ms)
+✔ reason-capable shared actions expose an accessible menu trigger without an initial note field (2065.253167ms)
+✔ busy, disconnected, and ineligible shared actions remain disabled (88.427167ms)
+✔ continue-implementation bypasses the reason menu (96.26475ms)
+✔ Grill keeps its independent answer and specification controls (88.306625ms)
+✔ implementation package summaries preserve failures and distinguish ready work from dependency waits (73.1175ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3128.008042

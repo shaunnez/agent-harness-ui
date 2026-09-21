@@ -1,0 +1,311 @@
+- main:
+  - generic "Project bases in the 3D coastal world. Select workers with the world labels or click their models."
+  - 'button "World time: 16:02, Golden hour. Open lighting settings"':
+    - strong: 16:02 Golden hour
+  - navigation "3D proof views":
+    - text: 3D preview
+    - button "World" [pressed]
+    - button "Exterior"
+    - button "Cutaway"
+    - button "Appearance"
+  - navigation "3D world selection":
+    - button "PlanCheck":
+      - strong: PlanCheck
+    - button "Agent Harness":
+      - strong: Agent Harness
+    - button "MyStrataAssist":
+      - strong: MyStrataAssist
+    - button "PC-153 · Grill · Needs your answer · Should revision labels be normalised before comparison?":
+      - strong: PC-153 · Grill
+    - button "AH-051 · Test · Execution stopped · The verification command could not start in its isolated worktree.":
+      - strong: AH-051 · Test
+    - button "MS-092 · Plan · Needs your approval · Review plan":
+      - strong: MS-092 · Plan
+  - complementary "Project bases map":
+    - button "Frame all project bases":
+      - img "Current project bases across the coast"
+  - button "Agent Harness":
+    - strong: Agent Harness
+  - generic: Project scope
+  - combobox "Project scope":
+    - option "All projects" [selected]
+    - option "PlanCheck"
+    - option "Agent Harness"
+    - option "MyStrataAssist"
+  - generic: 21 September 2026 · 20:17
+  - generic: Pacific/Auckland
+  - navigation "Main navigation":
+    - button "World":
+      - text: World
+    - button "Tasks J":
+      - text: Tasks
+      - generic: J
+    - button "Open command menu":
+      - text: Manage
+  - complementary "Decisions and pinned work":
+    - complementary "Tasks needing your attention":
+      - strong: Needs you
+      - generic: "13"
+      - button "AH-051 · Verify worktree isolation · Execution stopped":
+        - strong: AH-051 · Test
+        - generic: Agent Harness
+        - generic: Execution stopped
+      - button "AH-054 · Qualify dependency batches · S2 failed":
+        - strong: AH-054 · Implement
+        - generic: Agent Harness
+        - generic: S2 failed
+      - button "PC-148 · Retain revision history · Repair required":
+        - strong: PC-148 · Dev review
+        - generic: PlanCheck
+        - generic: Repair required
+      - button "Show all 13 decisions":
+        - text: Show all 13 decisions
+  - region "Selected task":
+    - img "Worker role"
+    - heading "MS-092 · Plan" [level=2]
+    - paragraph: Investigate meeting records
+    - strong: Needs your approval
+    - term: Skill
+    - definition: to-tickets
+    - term: Model
+    - definition: No recorded run
+    - button "Review plan":
+      - text: Review plan
+    - button "Inspect":
+      - text: Inspect
+    - button "Configure agent":
+      - text: Configure agent
+    - region "Latest task artifact":
+      - generic: Artifacts
+      - button "plan.md Plan":
+        - strong: plan.md
+        - generic: Plan
+    - region "Recorded task usage":
+      - generic: Usage
+      - strong: 0 tokens
+      - generic "Task elapsed time": Not recorded
+      - generic: Approx. cost —
+      - img "API-rate estimates are not attributable ChatGPT-plan charges"
+      - generic "No recorded usage with a supported rate card": Rate card unavailable
+  - complementary:
+    - button "New task":
+      - text: New task
+    - button "Agent roster":
+      - text: Agent roster
+    - button "Skills":
+      - text: Skills
+    - button "Settings":
+      - text: Settings
+    - generic: Drag to pan · Scroll to zoom · Space to follow
+  - dialog "Task command":
+    - heading "MS-092 · Task workspace" [level=1]
+    - button "Adjust window size" [active]:
+    - button "Maximise window":
+    - button "Close panel":
+    - paragraph: Sample world · Demonstration records and actions stay in this tab.
+    - generic: Agent Harness / eversor-mystrataassist / MS-092
+    - heading "Investigate meeting records" [level=2]
+    - button "Role policies":
+      - text: Role policies
+    - button "Manage":
+      - text: Manage
+    - button "Pin task":
+      - generic: Pin task
+    - navigation "Task stages":
+      - button "Triage":
+        - generic: Triage
+      - button "Scouts":
+        - generic: Scouts
+      - button "Grill":
+        - generic: Grill
+      - button "Specification":
+        - generic: Specification
+      - button "5 Plan":
+        - generic: "5"
+        - generic: Plan
+      - button "6 Implement" [disabled]:
+        - generic: "6"
+        - generic: Implement
+      - button "7 Dev review" [disabled]:
+        - generic: "7"
+        - generic: Dev review
+      - button "8 Test" [disabled]:
+        - generic: "8"
+        - generic: Test
+      - button "9 Final review" [disabled]:
+        - generic: "9"
+        - generic: Final review
+      - button "10 Approval" [disabled]:
+        - generic: "10"
+        - generic: Approval
+    - region "Current task actions":
+      - strong: Plan
+      - emphasis: Needs your approval
+      - generic: Review plan
+      - button "Approve plan":
+        - text: Approve plan
+      - button "Open retained artifact":
+        - text: Open retained artifact
+      - button "Revise plan"
+      - button "Record requested changes"
+    - region "Plan stage content":
+      - region "Work packages":
+        - heading "Plan overview" [level=3]
+        - generic: 12 packages
+        - region "Recorded package dependencies":
+          - heading "Batch 1 · Foundation" [level=4]:
+            - text: Batch 1
+            - generic: · Foundation
+          - article:
+            - 'button "Inspect package S1: Shared revision contract" [pressed]':
+              - generic: S1
+              - strong: Shared revision contract
+              - generic: Planned
+          - heading "Batch 2 · Parallel work" [level=4]:
+            - text: Batch 2
+            - generic: · Parallel work
+          - article:
+            - 'button "Inspect package S2: Revision boundary 1"':
+              - generic: S2
+              - strong: Revision boundary 1
+              - generic: Planned
+          - article:
+            - 'button "Inspect package S3: Revision boundary 2"':
+              - generic: S3
+              - strong: Revision boundary 2
+              - generic: Planned
+          - article:
+            - 'button "Inspect package S4: Revision boundary 3"':
+              - generic: S4
+              - strong: Revision boundary 3
+              - generic: Planned
+          - article:
+            - 'button "Inspect package S5: Revision boundary 4"':
+              - generic: S5
+              - strong: Revision boundary 4
+              - generic: Planned
+          - article:
+            - 'button "Inspect package S6: Revision boundary 5"':
+              - generic: S6
+              - strong: Revision boundary 5
+              - generic: Planned
+          - article:
+            - 'button "Inspect package S7: Revision boundary 6"':
+              - generic: S7
+              - strong: Revision boundary 6
+              - generic: Planned
+          - article:
+            - 'button "Inspect package S8: Revision boundary 7"':
+              - generic: S8
+              - strong: Revision boundary 7
+              - generic: Planned
+          - article:
+            - 'button "Inspect package S9: Revision boundary 8"':
+              - generic: S9
+              - strong: Revision boundary 8
+              - generic: Planned
+          - article:
+            - 'button "Inspect package S10: Revision boundary 9"':
+              - generic: S10
+              - strong: Revision boundary 9
+              - generic: Planned
+          - article:
+            - 'button "Inspect package S11: Revision boundary 10"':
+              - generic: S11
+              - strong: Revision boundary 10
+              - generic: Planned
+          - heading "Batch 3 · Dependency gate" [level=4]:
+            - text: Batch 3
+            - generic: · Dependency gate
+          - article:
+            - 'button "Inspect package S12: Integration & verification"':
+              - generic: S12
+              - strong: Integration & verification
+              - generic: Planned
+        - paragraph: Connections show recorded dependencies. Qualified slices still require candidate review and tests.
+        - region "Selected package S1":
+          - heading "Selected package" [level=3]
+          - heading "Shared revision contract" [level=3]
+          - text: Planned
+          - strong: S1
+          - paragraph: Sample scoped delivery package; no repository is changed.
+          - term: Owned paths
+          - definition:
+            - code: src/revisions/boundary-1.ts
+          - term: Dependencies
+          - definition: None
+          - term: Verification
+          - definition:
+            - code: npm test
+            - generic: "Command IDs: unit"
+          - generic: Attempt 0 · no loaded run
+      - strong:
+        - text: plan.md
+      - generic: MS-092 · MS-092-plan
+      - button "Raw source"
+      - paragraph: Recorded model Luna · XHigh · 21/09/2026, 20:17:26
+      - article:
+        - heading "Implementation plan" [level=1]
+        - heading "Contract" [level=2]:
+          - text: Contract
+        - paragraph: Twelve sample packages share one root contract and a final integration gate. Packages S2–S11 may run in parallel after S1.
+        - heading "Verification" [level=2]:
+          - text: Verification
+        - paragraph: Every slice owns one boundary file and qualifies through the unit command. Full candidate verification runs after assembly.
+      - heading "Retained artifacts" [level=3]
+      - button "plan.md Retained evidence · 21/09/2026, 20:17:26":
+        - strong: plan.md
+        - generic: Retained evidence · 21/09/2026, 20:17:26
+      - generic "Run activity · recorded telemetry":
+        - strong: Run activity
+        - generic: · recorded telemetry
+    - generic: Scroll for more ↓
+    - region "Task inspector":
+      - heading "Task brief" [level=3]:
+        - text: Task brief
+      - paragraph: Investigate meeting records
+      - heading "Role & run" [level=3]:
+        - text: Role & run
+      - img "Worker role"
+      - strong: Sol · High
+      - generic: Policy snapshot; no run loaded
+      - text: "Viewed: Plan"
+      - text: "Active: Plan"
+      - region "Stage usage — Plan":
+        - heading "Stage usage — Plan" [level=3]:
+          - text: Stage usage — Plan
+        - term: Execution time
+        - definition: Unavailable
+        - term: Input tokens
+        - definition: Unavailable
+        - term: Output tokens
+        - definition: Unavailable
+        - term: Cached tokens
+        - definition: Unavailable
+        - term: Cache rate
+        - definition: Unavailable
+        - term: Approx. cost
+        - definition: Unavailable
+        - generic: API-rate estimate · Recorded runs, including retries. Execution time sums agent runs; parallel work can overlap.
+        - generic: 0 stage runs loaded.
+      - region "Task total usage":
+        - heading "Task total" [level=3]:
+          - text: Task total
+        - term: Task elapsed
+        - definition: Unavailable
+        - term: Total tokens
+        - definition: "0"
+        - term: Approx. cost
+        - definition: Unavailable
+        - generic: API-rate estimate · Rate card unavailable
+      - heading "Run safeguards" [level=3]:
+        - text: Run safeguards
+      - paragraph: Detached read-only evidence worktree
+      - generic: Codex reads a detached evidence worktree at aaaaaaa0. Operator checkout changes are excluded.
+      - paragraph: "Stage attempts: 0 / 3"
+      - heading "Context & repository" [level=3]:
+        - text: Context & repository
+      - paragraph: /demo/eversor-mystrataassist
+      - generic: Captured revision aaaaaaa0aaaa
+      - paragraph: Open each artifact to inspect its supplied-context manifest. Repository permission alone does not prove what an agent used.
+    - generic: Scroll for more ↓

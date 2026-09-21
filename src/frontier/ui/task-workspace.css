@@ -189,6 +189,10 @@
 .task-layout-top .workflow-command-row > span {
   gap: 4px;
 }
+.task-layout-top .workflow-command-copy {
+  flex: 1;
+  min-width: 0;
+}
 .task-layout-top .workflow-command-title {
   display: flex;
   align-items: center;
