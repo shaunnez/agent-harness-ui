@@ -1,6 +1,6 @@
 # Task workspace handoff — after Slice 4
 
-21 September 2026. Slice 4 integrated parity and browser qualification is complete. Stop for Shaun's review; visual acceptance is not yet recorded. No merge, deployment or live task execution is authorized.
+21 September 2026. Slice 4 integrated parity and browser qualification is complete. Shaun accepted the direction of the bounded polish follow-up below and requested this handoff before compaction; resume implementation only after his continuation. Visual acceptance is not yet recorded. No merge, deployment or live task execution is authorized.
 
 ## Resume identity
 
@@ -8,7 +8,7 @@
 - Use existing isolated worktree: `/Users/shaun/.codex/worktrees/task-workspace-slice-3/agent-harness-ui`.
 - Branch: `codex/task-workspace-slice-3`.
 - Draft PR: **[#114](https://github.com/shaunnez/agent-harness-ui/pull/114)**, base `codex/task-workspace-slice-2`.
-- Qualified implementation commit: `b14b81319f220ff87ac5bec66c3f475287d60aa0`. The handoff commit after it contains documentation only; both Slice 4 commits are unsigned because the configured 1Password signer returned an error (global signing settings were not changed); verify current local/remote HEAD before changing anything.
+- Qualified implementation commit: `b14b81319f220ff87ac5bec66c3f475287d60aa0`. Handoff commit `6cf6f40d8c3db1f591c099d9043c1f7a02a56130` and the later pre-compaction handoff update contain documentation only. The Slice 4 commits are unsigned because the configured 1Password signer returned an error (global signing settings were not changed); verify current local/remote HEAD before changing anything.
 - Dependency stack: main ← Slice 1 [#111](https://github.com/shaunnez/agent-harness-ui/pull/111), branch `codex/task-workspace-slice-1` ← Slice 2 [#113](https://github.com/shaunnez/agent-harness-ui/pull/113), branch `codex/task-workspace-slice-2` ← Slice 3 #114.
 - Slice 2 published commit: `3d4e1156ccf7334a899e22d47e31de0a79935843`. PR111/113 were open at inspection; recheck before retargeting or rebasing. Do not merge the stack without instruction.
 - Original checkout `/Users/shaun/projects/agent-harness-ui` has unrelated dirty work and remains untouched. `node_modules` in this worktree is an untracked symlink to Slice 1 dependencies: preserve, never stage it.
@@ -60,6 +60,22 @@ Use the current session's browser tool documentation; do not assume handles surv
 
 ## Stop boundary and next continuation
 
+**There is no planned Slice 5.** The four migration slices are implemented and qualified. The remaining sequence is bounded polish, Shaun's visual sign-off, final code review, then separately authorized stack integration. Do not present the polish or merge as already completed.
+
+### Agreed direction for the next resumed turn
+
+Shaun said “Sounds good” to the following recommendation, then explicitly deferred resumption until after compaction. Do the handoff now; on his continuation, implement the smallest coherent polish pass in this same worktree/PR:
+
+1. **Consistent primary command placement.** In the current desktop captures, Dev review's Repair candidate action appears near the centre while Test's retry is right aligned. Align the primary action consistently within the existing command region without losing retained-artifact access, disabled explanations, menus, reason fields or confirmation.
+2. **Reduce repeated Dev review status.** The command description, recorded verdict panel and red message strip repeat related repair context, pushing findings lower than in the study. Consolidate redundant presentation, retaining authoritative verdict, candidate binding, actionable cause and execution-failure versus candidate-defect distinctions. Preserve distinct messages when they add information; do not suppress errors wholesale.
+3. **Consider a useful initial test selection.** Review immediately selects its first finding, but Test initially leaves the detail pane at “Select a check”, unlike the study's selected failed check. Prefer an initial failed result when present, scoped to the selected attempt. Preserve explicit user selection, saved return state and Back to results; a fallback must not immediately reselect a row after Back. Define the passing-only/empty-attempt behavior from existing conventions rather than adding requirements. This is a local interaction adjustment, not a change to test outcomes or retry eligibility.
+
+Inspect `TaskPanel.tsx`, `WorkflowCommand.tsx`, `ReviewEvidence.tsx`, `TestEvidence.tsx`, task-workspace styles and nearby tests before editing. Record a brief implementation plan. Compare actual Dev review and Test at 1280×900 and 1440×1000 against the frozen study and the Slice 4 captures; sanity-check command placement across another stage and approval confirmation. Test initial selection, Back to results, attempt switching and retained return selection if that behavior changes. Run focused checks followed by relevant Frontier/typing/lint/format/build checks. Keep any new evidence separate from immutable Slice 4 screenshots, update this handoff and draft PR, leave preview open and stop for review.
+
+The comparison discussion also identified extra laptop density from window chrome, historical banners and stage usage. This is an acknowledged tradeoff, not authorization for a shell redesign or removing usage. Suggested-code fields absent from the structured review contract should remain absent; do not invent them. Approval-form consolidation and routing changes remain separate.
+
+### Review and integration boundary
+
 Slice 4 is ready for review in draft PR #114, still stacked on open #113 → #111. Do not merge, rebase, retarget, deploy or resume live execution automatically. The preview stays running on 5293 and open at the QA-205 Approval fixture for Shaun. Browser viewport overrides are reset after qualification.
 
 On a new request, first verify the checkout, branch, dirty state, remote PR heads/checks/comments and current services. Read the Slice 4 review and address Shaun's specific feedback with the smallest bounded correction. Preserve the frozen reference, current accepted deltas, workflow authority and untracked dependency symlink. Any future publication/merge needs a separate instruction.
@@ -70,4 +86,4 @@ Separate follow-ups, not hidden Slice 4 acceptance gaps:
 - Confirmation-form consolidation remains a proposal; current explicit confirmation/reason and exact-head revalidation were preserved and exercised in fixtures.
 - Three baseline formatting errors and the browser's intermittent WebGL fallback remain. No 3D renderer qualification or remote CI pass is claimed.
 
-No new task/workflow/asset run, paid model call, real approval/publication, merge or deployment was performed. Shaun's visual review is the remaining decision.
+No new task/workflow/asset run, paid model call, real approval/publication, merge or deployment was performed. After the bounded polish, Shaun's visual review and final code review remain. Any eventual merge should follow #111 → #113 → #114 with current-base verification at each step, only after explicit authorization.
