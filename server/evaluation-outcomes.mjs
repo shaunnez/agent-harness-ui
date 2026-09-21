@@ -1,3 +1,4 @@
+import { CANDIDATE_GATE_STAGES, resolveGateFreshness } from "./run-activity.mjs";
 import { formatArgv, parseVerificationManifest } from "./verification.mjs";
 
 const FINISHED = new Set([
@@ -210,6 +211,21 @@ export function trialOutcome(task, verification, budget) {
   if (receipt?.status !== "completed" && (task.experiment?.evaluationContract || !FINISHED.has(task.status)))
     return "pending";
   if (verification.status !== "passed" || receipt?.humanRescue || budget.exceeded) return "failed";
+  // Artifact correctness is distinct from the workflow reaching its delivery boundary.
+  // Derive freshness from authoritative runs, never a cached UI projection.
+  if (
+    !FINISHED.has(task.status) ||
+    task.status === "failed" ||
+    task.activeRunKind ||
+    task.activeRunReservationId ||
+    task.activeRunIds?.length ||
+    CANDIDATE_GATE_STAGES.some((stage) => {
+      const freshness = resolveGateFreshness(task, stage);
+      const run = (task.runs ?? []).find((entry) => entry.id === freshness?.sourceRunId);
+      return !freshness?.fresh || run?.candidateHeadRevision !== task.candidates?.at(-1)?.headRevision;
+    })
+  )
+    return "failed";
   const grade = receipt?.acceptance;
   if (!grade || !matchesCandidate(grade, task)) return "ungraded";
   const contract = task.experiment?.evaluationContract;

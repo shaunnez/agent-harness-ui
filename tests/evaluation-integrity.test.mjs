@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { makeRuntimeRun, makeFocusedTestSummary } from "./orchestrator-test-support.mjs";
 import { trialResources } from "../server/evaluation-outcomes.mjs";
 import {
   buildEvaluationSummary,
@@ -115,6 +116,22 @@ test("omitting a frozen command is not a pass even when the run declares its own
 
 function controlled(id) {
   const value = delivered(id);
+  value.currentStage = "approval";
+  value.candidates[0].status = "awaiting_human_approval";
+  value.runs = ["dev-review", "test", "final-review"].map((stage) => ({
+    ...makeRuntimeRun({
+      id: `gate-${stage}`,
+      stage,
+      candidateId: "candidate",
+      candidateRevision: 1,
+      test:
+        stage === "test" ? makeFocusedTestSummary({ candidateId: "candidate", candidateRevision: 1 }) : null,
+    }),
+    model: null,
+    reasoning: null,
+    provider: "deterministic",
+    candidateHeadRevision: "b".repeat(40),
+  }));
   value.experiment.decisionMetric = "autonomous-accepted-delivery-rate";
   value.experiment.evaluationLimits = { maxAgentRuns: 24 };
   value.experiment.evaluationContract = {
@@ -166,6 +183,61 @@ test("only an independent complete grade earns autonomous acceptance", () => {
 });
 
 for (const [name, change] of [
+  [
+    "workflow failed after passing verification",
+    (value) => {
+      value.status = "failed";
+    },
+  ],
+  [
+    "workflow stopped before approval",
+    (value) => {
+      value.status = "ready-for-final-review";
+    },
+  ],
+  [
+    "missing final review",
+    (value) => {
+      value.runs = value.runs.filter((run) => run.stage !== "final-review");
+    },
+  ],
+  [
+    "stale final review",
+    (value) => {
+      value.runs.at(-1).candidateRevision = 0;
+    },
+  ],
+  [
+    "failed final review",
+    (value) => {
+      value.runs.at(-1).status = "failed";
+    },
+  ],
+  [
+    "review of a different SHA",
+    (value) => {
+      value.runs.at(-1).candidateHeadRevision = "c".repeat(40);
+    },
+  ],
+  [
+    "review without a recorded SHA",
+    (value) => {
+      delete value.runs.at(-1).candidateHeadRevision;
+    },
+  ],
+  [
+    "forged fresh projection",
+    (value) => {
+      value.gateFreshness = { "final-review": { fresh: true } };
+      value.runs = [];
+    },
+  ],
+  [
+    "active run reservation",
+    (value) => {
+      value.activeRunReservationId = "still-running";
+    },
+  ],
   [
     "stale candidate",
     (value) => {
@@ -237,6 +309,7 @@ test("adjudicated invalid trials remain in operational outcomes and resource tot
 test("a partly priced policy has no comparable total or cost per acceptance", () => {
   const value = controlled("partial");
   value.runs = [
+    ...value.runs,
     { model: "gpt-5.6-sol", reasoning: "high", usage: { totalTokens: 100, cost: 1 } },
     { model: "gpt-6-astra", reasoning: "high", usage: { totalTokens: 100, cost: null } },
   ];
