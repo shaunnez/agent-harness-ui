@@ -7,7 +7,6 @@ import { Modal } from "../ui/Modal";
 import { ArtifactViewer } from "../views/ArtifactViewer";
 import { CandidateDiff } from "../views/CandidateDiff";
 import { ExecutionSettings } from "../views/ExecutionSettings";
-import { Grill } from "../views/Grill";
 import { NewTask } from "../views/NewTask";
 import { ProjectSetup } from "../views/ProjectSetup";
 import { Projects } from "../views/Projects";
@@ -270,26 +269,6 @@ export function OverlayHost(props: Props) {
         onDone={back}
       />
     );
-  else if (overlay.kind === "grill")
-    content = (
-      <Grill
-        key={task.id}
-        task={task}
-        busy={busy}
-        error={error}
-        connected={connected}
-        answers={answerDrafts}
-        onDraft={(key, value) => setAnswerDrafts((current) => ({ ...current, [key]: value }))}
-        onAnswer={(qid, answer) => void command(() => runtime.gateway.answer(task.id, qid, answer))}
-        onFinish={(acceptRemaining) =>
-          void command(
-            () => runtime.gateway.finishGrill(task.id, acceptRemaining),
-            () => inspect(task.id),
-          )
-        }
-        onArtifact={(id) => open({ kind: "artifact", taskId: task.id, artifactId: id })}
-      />
-    );
   else
     content = (
       <TaskPanel
@@ -297,12 +276,24 @@ export function OverlayHost(props: Props) {
         evidence={snapshot.selected}
         initialStage={
           overlay.stage ??
-          (overlay.kind === "approve"
-            ? "specification"
-            : overlay.kind === "findings"
-              ? task.currentStage
-              : undefined)
+          (overlay.kind === "grill"
+            ? "grill"
+            : overlay.kind === "approve"
+              ? "specification"
+              : overlay.kind === "findings"
+                ? task.currentStage
+                : undefined)
         }
+        grill={{
+          answers: answerDrafts,
+          onDraft: (key, value) => setAnswerDrafts((current) => ({ ...current, [key]: value })),
+          onAnswer: (qid, answer) => void command(() => runtime.gateway.answer(task.id, qid, answer)),
+          onFinish: (acceptRemaining) =>
+            void command(
+              () => runtime.gateway.finishGrill(task.id, acceptRemaining),
+              () => inspect(task.id),
+            ),
+        }}
         run={run}
         busy={busy}
         error={error}
@@ -331,18 +322,18 @@ export function OverlayHost(props: Props) {
   return (
     <Modal
       family={
-        ["task", "findings", "approve"].includes(overlay.kind)
+        ["task", "findings", "approve", "grill"].includes(overlay.kind)
           ? "task"
           : ["artifact", "diff"].includes(overlay.kind)
             ? "evidence"
-            : ["new-task", "project-setup", "grill"].includes(overlay.kind)
+            : ["new-task", "project-setup"].includes(overlay.kind)
               ? "form"
               : "management"
       }
       resizable={overlay.kind !== "lifecycle"}
       heading={
-        matches && ["task", "findings", "approve"].includes(overlay.kind)
-          ? `${task.id} · ${task.title}`
+        matches && ["task", "findings", "approve", "grill"].includes(overlay.kind)
+          ? `${task.id} · Task workspace`
           : undefined
       }
       focusKey={`${overlay.kind}:${"taskId" in overlay ? overlay.taskId : ""}:${"artifactId" in overlay ? overlay.artifactId : ""}`}
@@ -365,7 +356,7 @@ export function OverlayHost(props: Props) {
           Sample world · Demonstration records and actions stay in this tab.
         </p>
       )}
-      {props.decisionNavigation}
+      {!["task", "grill", "findings", "approve"].includes(overlay.kind) && props.decisionNavigation}
       {content}
     </Modal>
   );

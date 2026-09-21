@@ -1,4 +1,4 @@
-import type { RuntimeDesignRequest, RuntimeTask } from "../../domain.ts";
+import type { RuntimeDesignRequest, RuntimeTask, StageId } from "../../domain.ts";
 import { fixtureArtifact, fixtureRun, fixtureTime, noUsage } from "./scenarios.ts";
 import { sampleCandidate, sampleHead, samplePackages, samplePendingGates } from "./workflow.ts";
 
@@ -200,7 +200,13 @@ export function enrichWorkflowScenarios(tasks: RuntimeTask[]) {
   ];
   const test = task("AH-051");
   test.workflow = "implement";
-  test.workPackages = samplePackages(1);
+  test.workPackages = samplePackages(1).map((item, index) => ({
+    ...item,
+    status: "integrated",
+    attempts: 1,
+    baseRevision: sampleHead(0),
+    headRevision: sampleHead(index + 10),
+  }));
   test.candidates = [sampleCandidate(test)];
   const c = test.candidates[0];
   if (c) {
@@ -247,6 +253,22 @@ export function enrichWorkflowScenarios(tasks: RuntimeTask[]) {
       ],
     };
     test.runs = [run];
+  }
+  // These demonstrations include explicit retained history; real tasks still require evidence.
+  for (const id of ["AH-054", "AH-051"]) {
+    const record = task(id);
+    const stages: StageId[] = ["triage", "scouts", "grill", "specification", "plan"];
+    if (id === "AH-051") stages.push("implement", "dev-review");
+    record.completedStages = stages;
+    for (const stage of stages) {
+      record.artifacts.push(
+        fixtureArtifact(
+          `${id}-${stage}-history`,
+          stage,
+          `# ${stage} — ${record.title}\n\nRetained demonstration history for ${id}.\n\n## Recorded outcome\n\n${stage === "plan" ? "The work packages and dependency batches were prepared for implementation." : stage === "dev-review" ? "The sample candidate was reviewed before verification was attempted." : `The ${stage} stage completed before the current ${record.currentStage} stage.`}\n\nThis is sample evidence for navigation review, not a live execution record.`,
+        ),
+      );
+    }
   }
   for (const record of tasks) {
     const starts = (record.runs ?? []).flatMap((run) => (run.startedAt ? [run.startedAt] : [])).sort();

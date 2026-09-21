@@ -1,20 +1,48 @@
-import { Binoculars, CheckCircle, Robot } from "@phosphor-icons/react";
+import {
+  Binoculars,
+  Check,
+  ClipboardText,
+  FileText,
+  FolderOpen,
+  GearSix,
+  NotePencil,
+  Robot,
+  ShieldCheck,
+  SlidersHorizontal,
+  WarningCircle,
+} from "@phosphor-icons/react";
 import { getAccessBoundaryCopy } from "../../components/runtime/runtimeCommandPolicy";
 import { type RuntimeCandidate, type RuntimeRun, type StageId, stageIds } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { FrontierGateway, TaskEvidence } from "../runtime/contracts";
-import { formatCount, modelLabel, reasoningLabel, stageLabels } from "../runtime/presentation";
-import { stageRecorded, stageState } from "../runtime/workflow";
+import {
+  latestRun,
+  latestStageArtifact,
+  modelLabel,
+  packageState,
+  reasoningLabel,
+  stageLabels,
+} from "../runtime/presentation";
+import { gateStages, stageHasError, stageRecorded, stageState } from "../runtime/workflow";
 import { ScrollArea } from "../ui/ScrollArea";
-import { CandidateEvidence, DeliveryEvidence, JourneyEvidence, TestEvidence } from "./CandidateEvidence";
+import { CandidateDiff } from "./CandidateDiff";
+import { CandidateEvidence } from "./CandidateEvidence";
+import { CandidateHistory, CandidateIdentity, CandidateReadiness } from "./CandidateReadiness";
+import { DeliveryEvidence } from "./DeliveryEvidence";
 import { DesignReview } from "./DesignReview";
+import { Grill, GrillActions, GrillDecisions, type GrillProps } from "./Grill";
+import { JourneyEvidence } from "./JourneyEvidence";
 import { StageEvidence } from "./StageEvidence";
+import { StageSummary } from "./StageSummary";
+import { TaskUsage } from "./TaskUsage";
+import { TestEvidence } from "./TestEvidence";
 import { PinButton } from "./WatchPins";
 import { WorkflowCommand } from "./WorkflowCommand";
 import { WorkPackages } from "./WorkPackages";
 
 export function TaskPanel({
   evidence,
+  grill,
   initialStage,
   busy,
   error,
@@ -31,6 +59,7 @@ export function TaskPanel({
   onContinue,
 }: {
   evidence: TaskEvidence;
+  grill: Pick<GrillProps, "answers" | "onDraft" | "onAnswer" | "onFinish">;
   initialStage?: StageId;
   run?: RuntimeRun;
   busy: boolean;
@@ -54,56 +83,152 @@ export function TaskPanel({
   );
   const viewedStage = selection && stageRecorded(evidence, selection) ? selection : task.currentStage;
   const [design, setDesign] = usePanelState(`task-design:${task.id}`, false);
-  const viewedRun = evidence.runs.items.find((item) => item.stage === viewedStage);
+  const inspectorStage = design ? "specification" : viewedStage;
+  const viewedRun = latestRun(
+    evidence.runs.items.filter((item) => item.stage === inspectorStage),
+    task.activeRunIds,
+  );
   const access = getAccessBoundaryCopy(task);
-  const policy = task.agentConfig?.stagePolicies?.[viewedStage];
+  const policy = task.agentConfig?.stagePolicies?.[inspectorStage];
+  const highlightedPackage =
+    task.workPackages.find((item) => item.status === "failed") ??
+    task.workPackages.find((item) => item.status === "running") ??
+    task.workPackages.at(-1);
+  const packageRun = highlightedPackage
+    ? latestRun(
+        evidence.runs.items.filter((item) => item.workPackageId === highlightedPackage.id),
+        task.activeRunIds,
+      )
+    : undefined;
+  const retainedArtifact = latestStageArtifact(task.artifacts, viewedStage);
+  const artifactAction = retainedArtifact ? (
+    <button type="button" onClick={() => onArtifact(retainedArtifact.id)}>
+      <FileText size={17} /> Open retained artifact
+    </button>
+  ) : null;
+  const candidate = task.candidates.at(-1);
+  const repositoryName = task.repositoryPath.split("/").filter(Boolean).at(-1) ?? "Repository";
   return (
-    <div className="overlay-body task-layout">
-      <ScrollArea className="stage-navigation" label="Task stages">
-        {stageIds.map((stage, index) => (
-          <button
-            type="button"
-            key={stage}
-            className={stage === viewedStage && !design ? "selected" : ""}
-            disabled={!stageRecorded(evidence, stage)}
-            onClick={() => {
-              selectStage(stage);
-              setDesign(false);
-            }}
-          >
-            <span className="stage-number">{index + 1}</span>
-            <span>
-              {stageLabels[stage]}
-              <small>{stageRecorded(evidence, stage) ? stageState(task, stage) : "Not started"}</small>
-            </span>
-            {task.completedStages.includes(stage) && !/Rerun/.test(stageState(task, stage)) && (
-              <CheckCircle size={17} />
-            )}
-          </button>
-        ))}
-        {task.designRequest?.requested && (
-          <button type="button" className={design ? "selected" : ""} onClick={() => setDesign(true)}>
-            Design directions<small>{task.designRequest.status}</small>
-          </button>
-        )}
-      </ScrollArea>
-      <section className="task-main">
-        <div className="task-fixed-actions">
-          <div className="task-utility-bar">
-            <h2>{design ? "Design review" : stageLabels[viewedStage]}</h2>
-            {viewedStage !== task.currentStage && (
-              <button type="button" onClick={() => selectStage(null)}>
-                Current stage
-              </button>
-            )}
-            <button type="button" onClick={onPolicies}>
-              Role policies
+    <div className="overlay-body task-layout task-layout-top">
+      <header className="task-workspace-header">
+        <div>
+          <small>
+            Agent Harness / {repositoryName} / {task.id}
+          </small>
+          <h2>{task.title}</h2>
+        </div>
+        <div className="task-workspace-actions">
+          {viewedStage !== task.currentStage && (
+            <button
+              type="button"
+              onClick={() => {
+                selectStage(null);
+                setDesign(false);
+              }}
+            >
+              Current stage
             </button>
-            <button type="button" onClick={onManage}>
-              Manage task
+          )}
+          <button type="button" onClick={onPolicies}>
+            <SlidersHorizontal size={17} />
+            Role policies
+          </button>
+          <button type="button" onClick={onManage}>
+            <GearSix size={17} />
+            Manage
+          </button>
+          {task.designRequest?.requested && (
+            <button type="button" aria-pressed={design} onClick={() => setDesign(!design)}>
+              Design directions
             </button>
-            <PinButton taskId={task.id} />
-          </div>
+          )}
+          <PinButton taskId={task.id} />
+        </div>
+      </header>
+      <nav className="stage-navigation" aria-label="Task stages">
+        {stageIds.map((stage, index) => {
+          const state = stageRecorded(evidence, stage) ? stageState(task, stage) : "Not started";
+          const stale = /Rerun/.test(state);
+          const failed = stageHasError(evidence, stage);
+          const candidateGate = gateStages.some((gate) => gate === stage);
+          const completed =
+            task.completedStages.includes(stage) &&
+            !stale &&
+            !failed &&
+            (!candidateGate || state === "Fresh");
+          return (
+            <button
+              type="button"
+              key={stage}
+              className={`${stage === viewedStage && !design ? "selected" : ""} ${
+                completed ? "completed" : ""
+              }`}
+              title={`${stageLabels[stage]} · ${state}${stage === task.currentStage ? " · Active stage" : ""}`}
+              data-stale={stale || undefined}
+              data-error={failed || undefined}
+              disabled={!stageRecorded(evidence, stage)}
+              aria-current={stage === viewedStage && !design ? "step" : undefined}
+              onClick={() => {
+                selectStage(stage);
+                setDesign(false);
+              }}
+            >
+              <span className="stage-number">
+                {stale || failed ? (
+                  <WarningCircle size={16} aria-label={stale ? "Rerun required" : "Stage error"} />
+                ) : completed ? (
+                  <Check size={14} weight="bold" aria-hidden="true" />
+                ) : (
+                  index + 1
+                )}
+              </span>
+              <span>
+                {stageLabels[stage]}
+                <small>{stageRecorded(evidence, stage) ? stageState(task, stage) : "Not started"}</small>
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+      <div className="task-command-region">
+        {design || viewedStage !== task.currentStage ? (
+          <section className="workflow-command" aria-label="Viewed stage actions">
+            <div className="workflow-command-row">
+              <span className="workflow-command-copy">
+                <span className="workflow-command-title">
+                  <strong>{design ? "Design review" : stageLabels[viewedStage]}</strong>
+                  <em>{design ? "Directions" : stageState(task, viewedStage)}</em>
+                </span>
+                <small>
+                  {design
+                    ? "Compare the retained design directions."
+                    : `Retained ${stageLabels[viewedStage]} evidence`}
+                </small>
+              </span>
+              {!design && artifactAction}
+            </div>
+          </section>
+        ) : viewedStage === "grill" &&
+          task.currentStage === "grill" &&
+          task.status === "awaiting-grill" &&
+          !design ? (
+          <section className="workflow-command tone-answer" aria-label="Current task actions">
+            <div className="workflow-command-row">
+              <span className="workflow-command-copy">
+                <span className="workflow-command-title">
+                  <strong>Grill</strong>
+                  <em>
+                    {task.grillSession?.questions.some((item) => !item.answer)
+                      ? "Needs your answer"
+                      : "Ready to continue"}
+                  </em>
+                </span>
+                <small>Review the evidence and record your decision.</small>
+              </span>
+              <GrillActions task={task} busy={busy} connected={connected} {...grill} />
+            </div>
+          </section>
+        ) : (
           <WorkflowCommand
             key={task.id}
             task={task}
@@ -113,19 +238,23 @@ export function TaskPanel({
             command={command}
             onGrill={onAction}
             onContinue={onContinue}
+            hideGrillAction
+            retainedArtifactAction={artifactAction}
           />
-          {error && (
-            <p role="alert" className="form-error">
-              {error}
-            </p>
-          )}
-        </div>
+        )}
+        {error && (
+          <p role="alert" className="form-error">
+            {error}
+          </p>
+        )}
+      </div>
+      <section className={`task-main${design ? " workspace-design-scroll" : ""}`}>
         <ScrollArea
-          key={viewedStage}
+          key={design ? "design" : viewedStage}
           className="task-stage-content"
-          label={`${stageLabels[viewedStage]} stage content`}
+          label={design ? "Design review content" : `${stageLabels[viewedStage]} stage content`}
         >
-          {viewedStage !== task.currentStage && (
+          {!design && viewedStage !== task.currentStage && (
             <p className="history-notice">
               Viewing recorded {stageLabels[viewedStage]} evidence. Current work remains at{" "}
               {stageLabels[task.currentStage]}.
@@ -142,6 +271,24 @@ export function TaskPanel({
                     Open design review
                   </button>
                 )}
+              {viewedStage === "implement" && highlightedPackage && (
+                <section className="implementation-workshop" aria-label="Implementation worker">
+                  <div className="workshop-caption">
+                    <img src="/assets/mf.worker.standard.portrait.r1.png" alt="Implementation worker" />
+                    <span>
+                      <strong>
+                        {highlightedPackage.id} · {highlightedPackage.title}
+                      </strong>
+                      <small>
+                        {packageRun
+                          ? `${modelLabel(packageRun.model)} · ${reasoningLabel(packageRun.reasoning)} · implementation role`
+                          : "Implementation role · no run loaded"}
+                      </small>
+                    </span>
+                    <em>{packageState(highlightedPackage, task.workPackages)}</em>
+                  </div>
+                </section>
+              )}
               {["plan", "implement"].includes(viewedStage) && (
                 <WorkPackages
                   key={`packages:${task.id}:${viewedStage}`}
@@ -152,25 +299,58 @@ export function TaskPanel({
                   onWatch={onWatch}
                 />
               )}
-              {viewedStage === "approval" && <DeliveryEvidence task={task} />}
-              {["final-review", "approval"].includes(viewedStage) && (
-                <JourneyEvidence evidence={evidence} onStage={selectStage} />
+              {["test", "final-review", "approval"].includes(viewedStage) &&
+                !(viewedStage === "approval" && task.pullRequestIntent) && (
+                  <StageSummary task={task} stage={viewedStage} run={viewedRun} />
+                )}
+              {["test", "final-review", "approval"].includes(viewedStage) &&
+                !(viewedStage === "approval" && task.pullRequestIntent) && (
+                  <CandidateIdentity task={task} onDiff={onDiff} />
+                )}
+              {viewedStage === "approval" && (
+                <div className={task.pullRequestIntent ? "delivery-stack" : "approval-evidence-grid"}>
+                  <DeliveryEvidence task={task} onDiff={onDiff} />
+                  <CandidateReadiness task={task} />
+                </div>
               )}
-              {["implement", "dev-review", "test", "final-review", "approval"].includes(viewedStage) && (
-                <CandidateEvidence task={task} onDiff={onDiff} compact={viewedStage !== "implement"} />
+              {["final-review", "approval"].includes(viewedStage) && (
+                <>
+                  {viewedStage === "final-review" && <CandidateReadiness task={task} />}
+                  <JourneyEvidence
+                    evidence={evidence}
+                    stage={viewedStage as "final-review" | "approval"}
+                    onStage={selectStage}
+                  />
+                </>
+              )}
+              {viewedStage === "implement" && <CandidateEvidence task={task} onDiff={onDiff} />}
+              {viewedStage === "implement" && candidate?.headRevision && (
+                <section
+                  className="workflow-card inline-candidate-diff"
+                  aria-label="Inline exact candidate diff"
+                >
+                  <CandidateDiff
+                    gateway={gateway}
+                    taskId={task.id}
+                    candidateId={candidate.id}
+                    revision={candidate.revisionNumber}
+                    headRevision={candidate.headRevision}
+                    embedded
+                  />
+                </section>
               )}
               {viewedStage === "test" && <TestEvidence evidence={evidence} />}
               {viewedStage === "grill" && (
-                <div className="workflow-card">
-                  <h3>Decision room</h3>
-                  <p>
-                    {task.grillSession?.questions.filter((item) => !item.answer).length ?? 0} unanswered ·
-                    Policy: {task.grillPolicy ?? "manual"}
-                  </p>
-                  <button type="button" onClick={onAction}>
-                    Open questions & answers
-                  </button>
-                </div>
+                <Grill
+                  task={task}
+                  busy={busy}
+                  error={null}
+                  connected={connected}
+                  onArtifact={onArtifact}
+                  {...grill}
+                  run={viewedRun}
+                  embedded
+                />
               )}
               <StageEvidence
                 key={`${task.id}:${viewedStage}`}
@@ -180,67 +360,83 @@ export function TaskPanel({
                 onArtifact={onArtifact}
                 onWatch={onWatch}
                 onMore={onMore}
+                reviewIdentity={
+                  viewedStage === "dev-review" ? <CandidateIdentity task={task} onDiff={onDiff} /> : undefined
+                }
+                footer={
+                  ["dev-review", "test", "final-review", "approval"].includes(viewedStage) ? (
+                    <CandidateHistory task={task} onDiff={onDiff} />
+                  ) : undefined
+                }
               />
             </>
           )}
         </ScrollArea>
       </section>
       <ScrollArea className="task-brief" label="Task inspector">
-        <small>Task brief</small>
-        <h2>{task.id}</h2>
-        <h3>{task.title}</h3>
-        <p>{task.description}</p>
-        <small>
-          Viewed: {stageLabels[viewedStage]} · Active: {stageLabels[task.currentStage]}
-        </small>
+        <section className="task-brief-summary">
+          <h3>
+            <ClipboardText size={18} />
+            Task brief
+          </h3>
+          <p>{task.description}</p>
+        </section>
         <section>
           <h3>
             <Robot size={18} />
-            Role & worker
+            Role & run
           </h3>
-          <p>
-            {viewedRun
-              ? `${modelLabel(viewedRun.model)} · ${reasoningLabel(viewedRun.reasoning)} · ${viewedRun.status}`
-              : policy
-                ? `${modelLabel(policy.model)} · ${reasoningLabel(policy.reasoning)} · policy snapshot; no run loaded`
-                : "Operator / deterministic gate"}
-          </p>
-          {viewedRun && (
+          <div className="inspector-worker">
+            <img src="/assets/mf.worker.standard.portrait.r1.png" alt="Worker role" />
+            <span>
+              <strong>
+                {design
+                  ? "Design providers"
+                  : viewedRun
+                    ? `${modelLabel(viewedRun.model)} · ${reasoningLabel(viewedRun.reasoning)}`
+                    : policy
+                      ? `${modelLabel(policy.model)} · ${reasoningLabel(policy.reasoning)}`
+                      : "Operator"}
+              </strong>
+              <small>
+                {design
+                  ? "Each direction retains its own model, reasoning and status."
+                  : (viewedRun?.status ?? (policy ? "Policy snapshot; no run loaded" : "Deterministic gate"))}
+              </small>
+            </span>
+          </div>
+          <small>
+            Viewed: {design ? "Design review" : stageLabels[viewedStage]}
+            <br />
+            Active: {stageLabels[task.currentStage]}
+          </small>
+          {design && <p className="quiet">Usage below covers the parent Specification stage.</p>}
+          {!design && viewedRun && (
             <button type="button" onClick={() => onWatch(viewedRun.id)}>
               <Binoculars size={18} />
               Watch agent
             </button>
           )}
         </section>
+        <TaskUsage evidence={evidence} stage={inspectorStage} onMore={() => onMore("runs")} />
         <section>
-          <h3>Usage</h3>
-          <p>{formatCount(task.usage.totalTokens)} tokens</p>
-          <small>
-            Input {formatCount(task.usage.inputTokens)} · Output {formatCount(task.usage.outputTokens)}
-            <br />
-            Cached {formatCount(task.usage.cachedInputTokens)} ·{" "}
-            {task.usage.inputTokens
-              ? `${Math.round((task.usage.cachedInputTokens / task.usage.inputTokens) * 100)}% cache rate`
-              : "Cache rate unavailable"}
-          </small>
-          <p className="quiet">
-            Approx. cost{" "}
-            {task.usage.cost != null && task.usage.pricingVersion
-              ? `$${task.usage.cost.toFixed(4)} · API-rate estimate · ${task.usage.pricingVersion}`
-              : "— unavailable"}
-          </p>
-        </section>
-        <section>
-          <h3>Run safeguards</h3>
+          <h3>
+            <ShieldCheck size={18} />
+            Run safeguards
+          </h3>
           <p>{access.sandbox}</p>
           <small>{access.detail}</small>
           <p>
-            Stage attempts: {task.attemptsByStage[viewedStage] ?? 0} /{" "}
-            {task.stageRunLimits?.[viewedStage] ?? task.stageRunLimit}
+            {design ? "Specification attempts" : "Stage attempts"}:{" "}
+            {task.attemptsByStage[inspectorStage] ?? 0} /{" "}
+            {task.stageRunLimits?.[inspectorStage] ?? task.stageRunLimit}
           </p>
         </section>
         <section>
-          <h3>Context & repository</h3>
+          <h3>
+            <FolderOpen size={18} />
+            Context & repository
+          </h3>
           <p className="repository-path">{task.repositoryPath}</p>
           <small>
             {task.repositoryAuthority?.selectedRevision
@@ -257,6 +453,22 @@ export function TaskPanel({
             </p>
           ))}
         </section>
+        {viewedStage === "grill" && <GrillDecisions task={task} />}
+        {task.decisions.length > 0 && (
+          <section className="inspector-decisions">
+            <h3>
+              <NotePencil size={18} />
+              Recorded decisions
+            </h3>
+            {task.decisions.map((decision) => (
+              <p key={decision.id}>
+                <strong>{decision.question}</strong>
+                <br />
+                {decision.answer}
+              </p>
+            ))}
+          </section>
+        )}
         {(task.artifactNextCursor || evidence.runs.nextCursor) && (
           <section>
             <h3>More evidence</h3>

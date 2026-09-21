@@ -1,3 +1,4 @@
+import { GitDiff } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import type { CandidateDiffResponse } from "../../api";
 import type { FrontierGateway } from "../runtime/contracts";
@@ -8,12 +9,14 @@ export function CandidateDiff({
   candidateId,
   headRevision,
   revision,
+  embedded = false,
 }: {
   gateway: FrontierGateway;
   taskId: string;
   candidateId: string;
   headRevision: string;
   revision: number;
+  embedded?: boolean;
 }) {
   const [value, setValue] = useState<CandidateDiffResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +48,15 @@ export function CandidateDiff({
     };
   }, [gateway, taskId, candidateId, headRevision, revision, attempt]);
   return (
-    <div className="overlay-body artifact-body">
+    <div className={`${embedded ? "embedded-diff" : "overlay-body"} artifact-body`}>
+      {embedded && (
+        <div className="panel-heading">
+          <span>
+            <GitDiff size={18} />
+            <h3>Candidate changes</h3>
+          </span>
+        </div>
+      )}
       <div className="artifact-toolbar">
         <div>
           <strong>
@@ -78,7 +89,7 @@ export function CandidateDiff({
           ) : raw ? (
             <pre className="raw-artifact">{value.diff}</pre>
           ) : (
-            <DiffDocument diff={value.diff} />
+            <DiffDocument diff={value.diff} selectable={embedded} />
           )}
         </>
       )}
