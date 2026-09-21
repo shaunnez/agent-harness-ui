@@ -1,5 +1,5 @@
 // One isolated normal harness workflow. The caller prepares/fingerprints the trial;
-// this worker runs under an OS profile that also confines repository verification.
+// provider-native profiles confine model tools; a child OS profile confines verification.
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { SqliteTaskStore } from "../../server/sqlite-store.mjs";
@@ -8,6 +8,8 @@ import { GitWorktreeManager } from "../../server/git-worktree.mjs";
 import { createApiServer } from "../../server/api.mjs";
 import { normalizeEvaluationInput } from "../../server/evaluation.mjs";
 import { priceModelUsage, priceUsage } from "../../server/model-catalog.mjs";
+import { runProcess } from "../../server/process-runtime.mjs";
+import { fileURLToPath } from "node:url";
 
 const [configurationPath] = process.argv.slice(2);
 const config = JSON.parse(await readFile(configurationPath, "utf8"));
@@ -26,7 +28,52 @@ await store.updateSettings((settings) => {
   settings.gatePolicies = config.gatePolicies;
 });
 const worktrees = new GitWorktreeManager(path.join(config.publicRoot, "w"));
-const orchestrator = new TaskOrchestrator(store, { worktreeManager: worktrees, packageConcurrency: 1 });
+const verificationEnvironment = Object.fromEntries(
+  Object.entries(process.env).filter(([key]) =>
+    [
+      "PATH",
+      "HOME",
+      "USER",
+      "LOGNAME",
+      "SHELL",
+      "TMPDIR",
+      "TMP",
+      "TEMP",
+      "LANG",
+      "LC_ALL",
+      "GIT_CONFIG_COUNT",
+      "GIT_CONFIG_KEY_0",
+      "GIT_CONFIG_VALUE_0",
+    ].includes(key),
+  ),
+);
+const runVerification = async ({ signal, onQueueWait: _onQueueWait, ...input }) => {
+  const result = await runProcess(
+    "/usr/bin/sandbox-exec",
+    [
+      "-f",
+      config.workerProfile,
+      process.execPath,
+      fileURLToPath(new URL("./verification-worker.mjs", import.meta.url)),
+    ],
+    {
+      cwd: input.worktreePath,
+      env: verificationEnvironment,
+      input: JSON.stringify(input),
+      signal,
+      timeoutMs: config.taskInput.experiment.budget.maxWallTimeMs,
+      stdoutBudgetBytes: 5_000_000,
+      label: "isolated-verification",
+    },
+  );
+  if (result.code !== 0) throw new Error(`Isolated verifier failed: ${result.stderr}`);
+  return JSON.parse(result.stdout.trim());
+};
+const orchestrator = new TaskOrchestrator(store, {
+  worktreeManager: worktrees,
+  packageConcurrency: 1,
+  runVerification,
+});
 const server = createApiServer({
   store,
   orchestrator,

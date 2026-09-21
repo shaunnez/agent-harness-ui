@@ -1,5 +1,5 @@
 {
-  "version": "delivery-rubric-v3",
+  "version": "delivery-rubric-v4",
   "model": "gpt-5.6-sol",
   "reasoning": "high",
   "maxWallTimeMs": 300000,

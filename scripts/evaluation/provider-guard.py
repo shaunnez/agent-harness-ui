@@ -50,13 +50,51 @@ def reserve(ledger):
     return ledger["deadline"] - started
 
 
+def native_args(arguments):
+    denied = config["deniedReadPaths"]
+    if not denied:
+        raise RuntimeError("Evaluation requires protected reference paths")
+    arguments = list(arguments)
+    if provider == "codex":
+        position = arguments.index("--sandbox")
+        posture = arguments[position + 1]
+        parent = {"read-only": ":read-only", "workspace-write": ":workspace"}[posture]
+        del arguments[position:position + 2]
+        if any("sandbox_workspace_write" in arg or "sandbox_mode" in arg for arg in arguments):
+            raise RuntimeError("Legacy sandbox overrides cannot mix with evaluation permissions")
+        paths = ",".join(json.dumps(entry) + '="deny"' for entry in denied)
+        profile = '{extends=' + json.dumps(parent) + ',filesystem={' + paths + '},network={enabled=false}}'
+        arguments[1:1] = ["-c", 'default_permissions="evaluation"', "-c", "permissions.evaluation=" + profile]
+    elif provider == "claude":
+        position = arguments.index("--settings") + 1
+        settings = json.loads(arguments[position])
+        sandbox = settings["sandbox"]
+        if sandbox.get("enabled") is not True or sandbox.get("failIfUnavailable") is not True:
+            raise RuntimeError("Claude evaluation requires its existing enforced sandbox")
+        filesystem = sandbox["filesystem"]
+        filesystem["denyRead"] = list(dict.fromkeys(filesystem.get("denyRead", []) + denied))
+        rules = settings.setdefault("permissions", {}).setdefault("deny", [])
+        rules.extend("Read(/" + entry + "/**)" for entry in denied)
+        arguments[position] = json.dumps(settings)
+    else:
+        raise RuntimeError("Unsupported evaluation provider")
+    return arguments
+
+
+# Real provider CLIs must apply one native sandbox. Wrapping the CLI in Seatbelt
+# prevents its own tool sandbox from starting on macOS. The command-only mode is
+# exclusively for synthetic CLI fixtures that do not start another sandbox.
+if config.get("confinement") == "native-provider":
+    command = [cli, *native_args(args)]
+elif config.get("confinement") == "command-only":
+    command = ["/usr/bin/sandbox-exec", "-f", config["profile"], cli, *args]
+else:
+    raise RuntimeError("An explicit evaluation confinement mode is required")
 try:
     remaining = update(reserve)
 except Exception as error:
     print(str(error), file=sys.stderr)
     sys.exit(75)
-
-command = ["/usr/bin/sandbox-exec", "-f", config["profile"], cli, *args]
 child_cwd = args[args.index("--cd") + 1] if "--cd" in args else os.getcwd()
 child = None
 usage = None
@@ -98,6 +136,8 @@ try:
         try:
             event = json.loads(line)
         except (json.JSONDecodeError, UnicodeDecodeError):
+            continue
+        if not isinstance(event, dict):
             continue
         raw = event.get("usage")
         if event.get("type") == "turn.completed" and isinstance(raw, dict):

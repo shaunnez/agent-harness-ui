@@ -11,7 +11,7 @@ const guard = new URL("../scripts/evaluation/provider-guard.py", import.meta.url
 const mac = process.platform === "darwin";
 
 async function fixture(body, script, { deadline = 60, count = 3, tokens = 100 } = {}) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "provider-guard-"));
+  const root = await realpath(await mkdtemp(path.join(os.tmpdir(), "provider-guard-")));
   const cli = path.join(root, "fake-cli");
   const configPath = path.join(root, "config.json");
   const ledger = path.join(root, "ledger.json");
@@ -29,6 +29,7 @@ async function fixture(body, script, { deadline = 60, count = 3, tokens = 100 } 
     configPath,
     JSON.stringify({
       executables: { codex: cli, claude: cli },
+      confinement: "command-only",
       ledger,
       profile,
       maxProviderInvocations: count,
@@ -38,7 +39,20 @@ async function fixture(body, script, { deadline = 60, count = 3, tokens = 100 } 
   const run = (provider = "codex", extra = []) =>
     exec("python3", [guard, configPath, provider, "--model", "fixture-model", ...extra]);
   try {
-    await body({ run, ledger: async () => JSON.parse(await readFile(ledger, "utf8")), secret, cli });
+    await body({
+      run,
+      ledger: async () => JSON.parse(await readFile(ledger, "utf8")),
+      secret,
+      cli,
+      async native(provider, args) {
+        const config = JSON.parse(await readFile(configPath, "utf8"));
+        await writeFile(
+          configPath,
+          JSON.stringify({ ...config, confinement: "native-provider", deniedReadPaths: [secret] }),
+        );
+        return exec("python3", [guard, configPath, provider, ...args]);
+      },
+    });
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -79,14 +93,11 @@ test("missing usage remains unknown and stops further dispatch", { skip: !mac },
   }, 'print("no usage")'),
 );
 
-test(
-  "the provider cannot read a protected reference, including through a nested sandbox",
-  { skip: !mac },
-  () =>
-    fixture(async ({ run, secret }) => {
-      const result = await run("codex", [secret]);
-      assert.match(result.stdout, /isolated/);
-    }, 'result = subprocess.run(["/usr/bin/sandbox-exec", "-p", "(version 1) (allow default)", "/bin/cat", sys.argv[-1]], capture_output=True)\nassert result.returncode != 0\nprint("isolated")'),
+test("the command fixture cannot read a protected reference", { skip: !mac }, () =>
+  fixture(async ({ run, secret }) => {
+    const result = await run("codex", [secret]);
+    assert.match(result.stdout, /isolated/);
+  }, 'result = subprocess.run(["/bin/cat", sys.argv[-1]], capture_output=True)\nassert result.returncode != 0\nassert b"Operation not permitted" in result.stderr\nprint("isolated")'),
 );
 
 test("the wall deadline terminates an active child and retains its missing usage", { skip: !mac }, () =>
@@ -109,3 +120,38 @@ test("Codex starts in its explicit repository, not the evaluator working directo
     assert.equal(result.stdout.trim(), await realpath(cwd));
   }, "print(os.getcwd())"),
 );
+
+test("native Codex profile preserves posture and adds protected paths without legacy overrides", () =>
+  fixture(async ({ native, secret }) => {
+    const result = await native("codex", ["exec", "--model", "fixture", "--sandbox", "read-only"]);
+    const args = JSON.parse(result.stdout);
+    assert.equal(args[0], "exec");
+    assert.ok(!args.includes("--sandbox"));
+    const profile = args.find((value) => value.startsWith("permissions.evaluation="));
+    assert.ok(profile.includes('extends=":read-only"'));
+    assert.ok(profile.includes(`${JSON.stringify(secret)}="deny"`));
+    assert.ok(profile.includes("network={enabled=false}"));
+  }, "print(json.dumps(sys.argv[1:]))"));
+
+test("native Claude profile retains enforcement and adds OS and Read exclusions", () =>
+  fixture(async ({ native, secret }) => {
+    const settings = {
+      sandbox: { enabled: true, failIfUnavailable: true, filesystem: { denyRead: ["/prior"] } },
+      permissions: { deny: ["WebFetch"] },
+    };
+    const result = await native("claude", ["--model", "fixture", "--settings", JSON.stringify(settings)]);
+    const args = JSON.parse(result.stdout);
+    const actual = JSON.parse(args[args.indexOf("--settings") + 1]);
+    assert.equal(actual.sandbox.failIfUnavailable, true);
+    assert.deepEqual(actual.sandbox.filesystem.denyRead, ["/prior", secret]);
+    assert.deepEqual(actual.permissions.deny, ["WebFetch", `Read(/${secret}/**)`]);
+  }, "print(json.dumps(sys.argv[1:]))"));
+
+test("a disabled native Claude sandbox is refused before a call is reserved", () =>
+  fixture(async ({ native, ledger }) => {
+    await assert.rejects(
+      native("claude", ["--model", "fixture", "--settings", JSON.stringify({ sandbox: { enabled: false } })]),
+      /requires its existing enforced sandbox/,
+    );
+    assert.equal((await ledger()).invocations.length, 0);
+  }, 'print("should not run")'));

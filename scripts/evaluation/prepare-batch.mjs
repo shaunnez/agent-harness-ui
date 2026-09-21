@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { chmod, mkdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, readdir, realpath, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
@@ -105,6 +105,13 @@ const environment = {
 const deny = (paths) =>
   `(version 1)\n(allow default)\n${paths.map((entry) => `(deny file-read* (subpath ${JSON.stringify(entry)}))`).join("\n")}\n`;
 const protectedPaths = [
+  "/private/tmp/h-review-vault",
+  ...(await readdir("/private/tmp"))
+    .filter((entry) => entry.startsWith("h-review-") || entry.startsWith("h-eval-"))
+    .map((entry) => path.join("/private/tmp", entry)),
+  ...(await readdir(path.dirname(campaignRoot)))
+    .filter((entry) => entry !== "tools")
+    .map((entry) => path.join(path.dirname(campaignRoot), entry)),
   "/Users/shaun/projects",
   "/Users/shaun/.codex/model-evaluation/20260922/evaluator",
   "/Users/shaun/.codex/memories",
@@ -119,7 +126,7 @@ const trials = order.map((variant, index) => ({
   repetition: order.slice(0, index + 1).filter((value) => value === variant).length,
 }));
 const freeze = {
-  version: "batch-a-v1",
+  version: path.basename(campaignRoot),
   harnessVersion,
   caseId: item.id,
   baseSha: item.baseSha,
@@ -127,7 +134,7 @@ const freeze = {
   graderVersion: `h02-${sha(await read("evaluations/graders/h02.mjs"))}`,
   rubricVersion: `${rubric.version}-${sha(JSON.stringify(rubric))}`,
   environmentVersion: sha(JSON.stringify(environment)),
-  executionVersion: "fixed-policy-v1",
+  executionVersion: "fixed-policy-native-permissions-v2",
   environment,
   budget,
   limits,
@@ -186,7 +193,23 @@ for (const trial of trials) {
   const guardConfig = path.join(privateTrial, "provider-config.json");
   await writeFile(
     guardConfig,
-    JSON.stringify({ executables, ledger, profile: providerProfile, ...budget, ...limits }, null, 2),
+    JSON.stringify(
+      {
+        executables,
+        ledger,
+        confinement: "native-provider",
+        deniedReadPaths: [
+          ...protectedPaths,
+          ...siblings,
+          path.dirname(campaignRoot),
+          "/Users/shaun/.codex/worktrees",
+        ],
+        ...budget,
+        ...limits,
+      },
+      null,
+      2,
+    ),
   );
   const wrappers = {};
   for (const provider of ["codex", "claude"]) {
@@ -221,7 +244,7 @@ for (const trial of trials) {
       workflowProfile: "high-risk",
       rolePolicyOverrides: policies[trial.variant],
       experiment: {
-        groupId: "h02-batch-a-v1",
+        groupId: `h02-${path.basename(campaignRoot)}`,
         variantId: trial.variant,
         frozenBaseSha: item.baseSha,
         acceptanceCriteria: item.acceptanceCriteria,

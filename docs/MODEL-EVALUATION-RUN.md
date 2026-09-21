@@ -1,6 +1,6 @@
 # Model evaluation execution brief
 
-Updated: 22 September 2026. Status: ready to resume preparation after compaction; no evaluation trials launched.
+Updated: 22 September 2026. Status: evaluation foundation implemented in the isolated worktree; see [MODEL-EVALUATION-CHECKPOINT.md](MODEL-EVALUATION-CHECKPOINT.md) for current campaign state. The first attempt was invalidated for an apparatus failure.
 
 ## User intent and authority
 
