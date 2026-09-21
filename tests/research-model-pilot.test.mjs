@@ -71,7 +71,7 @@ test("the shipped manifest declares four cases whose parts calculate the frozen 
   const bounds = sessionBounds(shippedManifest);
   assert.equal(bounds.maxModelCalls, 42);
   assert.equal(bounds.calculatedFirecrawlUpperBound, 42);
-  assert.equal(bounds.firecrawlSessionCeiling, 50);
+  assert.equal(bounds.firecrawlSessionCeiling, 100);
   assert.equal(bounds.serperCallCeiling, 2);
   assert.equal(bounds.maxUniqueCaptures, 5);
   assert.equal(bounds.modelMaxOutputTokens, 8_192);
@@ -507,7 +507,7 @@ test("a dry run reports the frozen bounds section 7 declares", async () => {
     const preflight = JSON.parse(await readFile(path.join(session.directory, "preflight.json"), "utf8"));
     assert.equal(preflight.bounds.maxModelCalls, 42);
     assert.equal(preflight.bounds.calculatedFirecrawlUpperBound, 42);
-    assert.equal(preflight.bounds.firecrawlSessionCeiling, 50);
+    assert.equal(preflight.bounds.firecrawlSessionCeiling, 100);
     assert.equal(preflight.bounds.serperCallCeiling, 2);
     assert.equal(preflight.allowance, null);
   });
@@ -546,7 +546,7 @@ test("live mode cannot be entered by credentials alone", async () => {
     await assert.rejects(guards({ FIRECRAWL_API_KEY: undefined }), /FIRECRAWL_API_KEY/);
     await assert.rejects(guards({ RESEARCH_MODEL_PILOT_FIRECRAWL_ALLOWANCE: undefined }), /must be supplied/);
     await assert.rejects(guards({ RESEARCH_MODEL_PILOT_FIRECRAWL_ALLOWANCE: "41" }), /below the manifest/);
-    await assert.rejects(guards({ RESEARCH_MODEL_PILOT_FIRECRAWL_ALLOWANCE: "51" }), /session ceiling/);
+    await assert.rejects(guards({ RESEARCH_MODEL_PILOT_FIRECRAWL_ALLOWANCE: "101" }), /session ceiling/);
     await assert.rejects(guards({ RESEARCH_MODEL_PILOT_MODEL_CALL_ALLOWANCE: "41" }), /below the manifest/);
     await assert.rejects(
       guards({}, { git: { commit: "abc", dirty: true, changedFiles: 3 } }),

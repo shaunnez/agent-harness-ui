@@ -2,7 +2,7 @@
   "version": 1,
   "description": "Frozen four-case live-model research quality pilot (08-LIVE-MODEL-QUALITY-PILOT-PLAN.md §4).",
   "session": {
-    "firecrawlSessionCeiling": 50,
+    "firecrawlSessionCeiling": 100,
     "serperCallCeiling": 2,
     "calculatedFirecrawlUpperBound": 42,
     "maxModelCalls": 42,
