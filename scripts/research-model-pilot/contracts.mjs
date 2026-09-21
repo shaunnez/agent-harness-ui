@@ -8,6 +8,10 @@
 // an edited total that no longer matches its parts fails parsing, not review.
 
 import { createHash } from "node:crypto";
+import {
+  MAX_MODEL_MAX_OUTPUT_TOKENS,
+  MIN_MODEL_MAX_OUTPUT_TOKENS,
+} from "../../server/research/deepagents/model-config.mjs";
 
 export const PILOT_MANIFEST_VERSION = 1;
 
@@ -79,8 +83,13 @@ function parseSession(raw) {
   const session = requireObject(raw, "manifest session");
   strictKeys(session, SESSION_KEYS, "manifest session");
   for (const key of SESSION_KEYS) requirePositiveInteger(session[key], `session ${key}`);
-  if (session.modelMaxOutputTokens < 256 || session.modelMaxOutputTokens > 2_048)
-    throw invalid("session modelMaxOutputTokens must be between 256 and 2048.");
+  if (
+    session.modelMaxOutputTokens < MIN_MODEL_MAX_OUTPUT_TOKENS ||
+    session.modelMaxOutputTokens > MAX_MODEL_MAX_OUTPUT_TOKENS
+  )
+    throw invalid(
+      `session modelMaxOutputTokens must be between ${MIN_MODEL_MAX_OUTPUT_TOKENS} and ${MAX_MODEL_MAX_OUTPUT_TOKENS}.`,
+    );
   if (session.calculatedFirecrawlUpperBound > session.firecrawlSessionCeiling)
     throw invalid("The calculated Firecrawl upper bound exceeds the session ceiling.");
   return Object.freeze(session);

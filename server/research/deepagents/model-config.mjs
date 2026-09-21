@@ -22,10 +22,14 @@ export const MODEL_API_KEY_ENV_VAR = "RESEARCH_MODEL_API_KEY";
 /** Bounded generated output per model call. This is a call-shape ceiling, not a billing
  *  guarantee: it caps what a model may generate, and says nothing about input token cost. It
  *  is deliberately absent unless configured, so ordinary runs and the deterministic fake model
- *  keep the behaviour they already had. */
+ *  keep the behaviour they already had.
+ *
+ *  The ceiling is 8,192 rather than a smaller number because a model that thinks before it
+ *  answers spends this same allowance on the thinking. Too low a cap truncates the answer, and
+ *  a truncated answer is a harness artifact that would be scored as a model-quality failure. */
 export const MODEL_MAX_OUTPUT_TOKENS_ENV_VAR = "RESEARCH_MODEL_MAX_OUTPUT_TOKENS";
 export const MIN_MODEL_MAX_OUTPUT_TOKENS = 256;
-export const MAX_MODEL_MAX_OUTPUT_TOKENS = 2_048;
+export const MAX_MODEL_MAX_OUTPUT_TOKENS = 8_192;
 
 export function resolveModelMaxOutputTokens(env = process.env) {
   const raw = env[MODEL_MAX_OUTPUT_TOKENS_ENV_VAR];

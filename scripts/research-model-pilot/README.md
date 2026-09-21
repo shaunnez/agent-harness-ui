@@ -19,7 +19,7 @@ RUN_RESEARCH_MODEL_PILOT=1 RESEARCH_PUBLIC_ONLY_ACKNOWLEDGED=1 npm run research:
 and additionally requires, before anything is constructed:
 
 - `RESEARCH_MODEL_PROVIDER` and `RESEARCH_MODEL_ID` — a model is never inherited from a stray
-  credential — plus `RESEARCH_MODEL_MAX_OUTPUT_TOKENS=1024`;
+  credential — plus `RESEARCH_MODEL_MAX_OUTPUT_TOKENS=8192`;
 - `.env.research.local` present and mode `0600`, holding `RESEARCH_MODEL_API_KEY` and
   `FIRECRAWL_API_KEY` (and `SERPER_API_KEY` for the bounded fallback);
 - `RESEARCH_MODEL_PILOT_FIRECRAWL_ALLOWANCE` and `RESEARCH_MODEL_PILOT_MODEL_CALL_ALLOWANCE`,

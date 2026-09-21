@@ -8,7 +8,7 @@
     "maxModelCalls": 42,
     "maxSearches": 5,
     "maxUniqueCaptures": 5,
-    "modelMaxOutputTokens": 1024,
+    "modelMaxOutputTokens": 8192,
     "requiredFirstAttemptPasses": 4
   },
   "cases": [

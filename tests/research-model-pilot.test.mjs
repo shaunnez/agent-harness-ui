@@ -73,7 +73,7 @@ test("the shipped manifest declares four cases whose parts calculate the frozen 
   assert.equal(bounds.firecrawlSessionCeiling, 50);
   assert.equal(bounds.serperCallCeiling, 2);
   assert.equal(bounds.maxUniqueCaptures, 5);
-  assert.equal(bounds.modelMaxOutputTokens, 1_024);
+  assert.equal(bounds.modelMaxOutputTokens, 8_192);
   for (const entry of shippedManifest.cases)
     assert.equal(
       entry.providerBound.calculatedFirecrawlUpperBound,
@@ -201,25 +201,25 @@ test("the manifest hash changes when any oracle value changes", () => {
 test("the maximum output token setting is validated and passed to both live constructors", () => {
   assert.equal(resolveModelMaxOutputTokens({}), null);
   assert.equal(resolveModelMaxOutputTokens({ RESEARCH_MODEL_MAX_OUTPUT_TOKENS: "1024" }), 1_024);
-  for (const invalid of ["0", "255", "2049", "1k", "-1"])
+  for (const invalid of ["0", "255", "8193", "1k", "-1"])
     assert.throws(
       () => resolveModelMaxOutputTokens({ RESEARCH_MODEL_MAX_OUTPUT_TOKENS: invalid }),
-      /must be an integer from 256 to 2048/,
+      /must be an integer from 256 to 8192/,
       invalid,
     );
   assert.equal(MIN_MODEL_MAX_OUTPUT_TOKENS, 256);
-  assert.equal(MAX_MODEL_MAX_OUTPUT_TOKENS, 2_048);
+  assert.equal(MAX_MODEL_MAX_OUTPUT_TOKENS, 8_192);
 
   const anthropic = resolveModelConfig({
     RESEARCH_MODEL_PROVIDER: "anthropic",
     RESEARCH_MODEL_ID: "claude-pilot",
     RESEARCH_MODEL_API_KEY: "model-sentinel",
-    RESEARCH_MODEL_MAX_OUTPUT_TOKENS: "1024",
+    RESEARCH_MODEL_MAX_OUTPUT_TOKENS: "8192",
   });
-  assert.equal(anthropic.maxOutputTokens, 1_024);
+  assert.equal(anthropic.maxOutputTokens, 8_192);
   assert.deepEqual(modelConstructorOptions(anthropic, "k"), {
     provider: "anthropic",
-    options: { model: "claude-pilot", apiKey: "k", maxTokens: 1_024 },
+    options: { model: "claude-pilot", apiKey: "k", maxTokens: 8_192 },
   });
 
   const openai = resolveModelConfig({
@@ -298,13 +298,13 @@ test("a recorded model snapshot names the credential variable but never its valu
     RESEARCH_MODEL_PROVIDER: "anthropic",
     RESEARCH_MODEL_ID: "claude-pilot",
     RESEARCH_MODEL_API_KEY: "model-sentinel",
-    RESEARCH_MODEL_MAX_OUTPUT_TOKENS: "1024",
+    RESEARCH_MODEL_MAX_OUTPUT_TOKENS: "8192",
   });
   const snapshot = modelIdentitySnapshot(config, {});
   assert.deepEqual(snapshot, {
     provider: "anthropic",
     model: "claude-pilot",
-    maxOutputTokens: 1_024,
+    maxOutputTokens: 8_192,
     apiKeyEnvVar: "RESEARCH_MODEL_API_KEY",
     apiKeyPresent: true,
   });
@@ -522,7 +522,7 @@ test("live mode cannot be entered by credentials alone", async () => {
       RESEARCH_MODEL_PROVIDER: "anthropic",
       RESEARCH_MODEL_ID: "claude-pilot",
       RESEARCH_MODEL_API_KEY: "model-sentinel",
-      RESEARCH_MODEL_MAX_OUTPUT_TOKENS: "1024",
+      RESEARCH_MODEL_MAX_OUTPUT_TOKENS: "8192",
       FIRECRAWL_API_KEY: "firecrawl-sentinel",
       RESEARCH_MODEL_PILOT_FIRECRAWL_ALLOWANCE: "42",
       RESEARCH_MODEL_PILOT_MODEL_CALL_ALLOWANCE: "42",
@@ -541,7 +541,7 @@ test("live mode cannot be entered by credentials alone", async () => {
     await assert.rejects(guards({ RESEARCH_PILOT_ENV_FILE: ".env.missing" }), /owner-only environment file/);
     await assert.rejects(guards({ RESEARCH_MODEL_ID: undefined }), /requires both/);
     await assert.rejects(guards({ RESEARCH_MODEL_PROVIDER: "fake" }), /fake model/);
-    await assert.rejects(guards({ RESEARCH_MODEL_MAX_OUTPUT_TOKENS: "2048" }), /must be 1024/);
+    await assert.rejects(guards({ RESEARCH_MODEL_MAX_OUTPUT_TOKENS: "2048" }), /must be 8192/);
     await assert.rejects(guards({ FIRECRAWL_API_KEY: undefined }), /FIRECRAWL_API_KEY/);
     await assert.rejects(guards({ RESEARCH_MODEL_PILOT_FIRECRAWL_ALLOWANCE: undefined }), /must be supplied/);
     await assert.rejects(guards({ RESEARCH_MODEL_PILOT_FIRECRAWL_ALLOWANCE: "41" }), /below the manifest/);
@@ -610,7 +610,7 @@ test("a preflight report names variables and selections, never environment conte
         RESEARCH_MODEL_PROVIDER: "anthropic",
         RESEARCH_MODEL_ID: "claude-pilot",
         RESEARCH_MODEL_API_KEY: "model-sentinel",
-        RESEARCH_MODEL_MAX_OUTPUT_TOKENS: "1024",
+        RESEARCH_MODEL_MAX_OUTPUT_TOKENS: "8192",
       },
       { live: true },
     ),
@@ -622,7 +622,7 @@ test("a preflight report names variables and selections, never environment conte
   const serialized = JSON.stringify(report);
   assert.equal(serialized.includes("model-sentinel"), false);
   assert.equal(report.model.apiKeyEnvVar, "RESEARCH_MODEL_API_KEY");
-  assert.equal(report.model.maxOutputTokens, 1_024);
+  assert.equal(report.model.maxOutputTokens, 8_192);
   assert.equal(report.guarantees.retriesIncluded, false);
 });
 
@@ -1446,7 +1446,7 @@ test("a run deadline during a tool call still closes every reservation and lets 
         maxModelCalls: 20,
         maxSearches: 2,
         maxUniqueCaptures: 2,
-        modelMaxOutputTokens: 1_024,
+        modelMaxOutputTokens: 8_192,
         requiredFirstAttemptPasses: 2,
       },
       cases: [
