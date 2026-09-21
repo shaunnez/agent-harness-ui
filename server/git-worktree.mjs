@@ -1338,9 +1338,28 @@ function safeSegment(value) {
     .slice(0, 80);
 }
 
+/**
+ * Config forced onto every harness git invocation.
+ *
+ * The harness writes machine commits on the operator's behalf, into worktrees of the
+ * operator's own repositories, so it inherits their `commit.gpgsign`. That puts an
+ * interactive signer in the middle of an unattended pipeline: with SSH signing backed by
+ * 1Password, a dropped lease fails the commit with "failed to fill whole buffer" *after*
+ * the implementation agent has finished its work, discarding the whole run. Four EXP-001
+ * samples died that way (AH-024, AH-026, AH-033, AH-034), each after a successful
+ * multi-minute agent run.
+ *
+ * A harness commit is not a claim of human authorship and should not carry the operator's
+ * signature, so signing is disabled for the commits this process creates rather than
+ * being made more reliable. Nothing in the operator's git configuration is modified: `-c`
+ * applies to this invocation only, and a person committing in the same repository still
+ * signs exactly as they configured.
+ */
+const GIT_FORCED_CONFIG = ["-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false"];
+
 function git(cwd, args, options = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn("git", args, {
+    const child = spawn("git", [...GIT_FORCED_CONFIG, ...args], {
       cwd,
       windowsHide: true,
       stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"],

@@ -847,11 +847,13 @@ export class TaskControlOrchestrator {
           current.retainedForRequalification = true;
           current.retainedContinuation = null;
         } else {
-          draft.stageTimeoutOverridesMs ??= {};
-          draft.stageTimeoutOverridesMs.implement = Math.max(
-            draft.stageTimeoutOverridesMs.implement ?? 0,
-            1_800_000,
-          );
+          // A continuation used to raise the implement ceiling here, because the stage
+          // default was 900_000 and resuming a slice that had already exhausted it needed
+          // headroom. The default is now 3_600_000 — the same value `stageTimeoutMs`
+          // clamps an override to — so there is no headroom left to grant and a write
+          // here would be silently ignored. The continuation gets the full hour by
+          // default; if the stage default is ever lowered again, restore an escalation
+          // that is expressed relative to it rather than as a second magic number.
           current.retainedContinuation = {
             requestedAt: now(),
             files: retained.files,

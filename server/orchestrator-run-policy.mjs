@@ -110,23 +110,28 @@ export function resolveRunAgentPolicy(task, policyId, settings) {
 }
 
 /**
- * Implement and repair get 30 minutes, not 15.
+ * Implement and repair get an hour. It is a runaway guard, not a work budget.
  *
- * EXP-001's `C4-backend` case timed out at the previous 900_000 ceiling on all four
- * attempts made of it (AH-010, AH-011, AH-012, AH-016) — three under concurrent load and
- * one running effectively alone, on a fully provisioned tree, with the agent observed
- * running real backend tests right up to the cutoff. A ceiling that a legitimate
- * high-risk package cannot finish under produces `unknown` delivery outcomes, which are
- * excluded from the primary metric, so the run costs quota and measures nothing.
+ * The previous 900_000 had no recorded derivation, and the 1_800_000 that replaced it was
+ * fitted to two observed runs — then immediately falsified by a third. Measured C4
+ * implement runs on one unchanged brief: 944s, 1031s, 1616s, 1661s, and one that passed
+ * 1800s. That spread is the model's path through the work, not the work's size, so any
+ * limit drawn through the middle of it silently decides the delivery rate. For an
+ * experiment whose primary outcome is delivery, a tuned timeout is a knob that sets the
+ * result.
  *
- * Raised for every stage and arm equally rather than pinned per task: a per-task override
- * would make one sample differ from its own repetitions and break comparability.
- * `stageTimeoutOverridesMs` below still allows a deliberate per-task extension, and the
- * 3_600_000 clamp still bounds it.
+ * So it is deliberately set where it stops a genuinely stuck agent and nothing else, and
+ * matches the 3_600_000 ceiling `stageTimeoutOverridesMs` is already clamped to below.
+ *
+ * A wall clock is the wrong instrument for bounding agent work, and this does not pretend
+ * otherwise — it only stops being the thing that decides experiment outcomes. Real work
+ * bounds (agent turns, token budget, package size) belong in the run policy; the
+ * experiment budget in `experiment-decision.mjs` already declares `maxWallTimeMs` and
+ * `maxTotalTokens`, but classifies a finished task rather than stopping a running one.
  */
 export function stageTimeoutMs(stageId, sandbox, task = null) {
   const defaultTimeout = ["implement", "repair"].includes(stageId)
-    ? 1_800_000
+    ? 3_600_000
     : sandbox === "workspace-write" || ["plan", "dev-review", "final-review"].includes(stageId)
       ? 600_000
       : 360_000;
