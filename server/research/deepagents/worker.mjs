@@ -43,6 +43,8 @@ const RECOVERABLE_TOOL_ERROR_CODES = new Set([
   "pdf_page_required",
   "invalid_locator",
   "excerpt_not_found",
+  "source_page_not_retained",
+  "source_offset_out_of_range",
   "source_empty",
   "policy_rejected",
   "unknown_research_tool",
