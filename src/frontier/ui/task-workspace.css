@@ -715,6 +715,56 @@
 .task-brief-summary p {
   margin: 0;
 }
+.collapsible-text {
+  color: #c5d3db;
+}
+.collapsible-text summary {
+  display: block;
+  cursor: pointer;
+  list-style: none;
+}
+.collapsible-text summary::-webkit-details-marker {
+  display: none;
+}
+.collapsible-text-preview {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  white-space: pre-line;
+}
+.collapsible-text-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  color: #81baff;
+  font-size: 12px;
+  font-weight: 500;
+}
+.collapsible-text-action svg {
+  transition: transform 160ms ease;
+}
+.collapsible-text-hide,
+.collapsible-text[open] .collapsible-text-preview,
+.collapsible-text[open] .collapsible-text-show {
+  display: none;
+}
+.collapsible-text[open] .collapsible-text-hide {
+  display: inline;
+}
+.collapsible-text[open] .collapsible-text-action svg {
+  transform: rotate(180deg);
+}
+.task-layout-top .collapsible-text-full {
+  margin: 10px 0 0;
+  white-space: pre-line;
+}
+.collapsible-text summary:hover .collapsible-text-action,
+.collapsible-text summary:focus-visible .collapsible-text-action {
+  color: #b7d9ff;
+}
 .inspector-worker {
   display: flex;
   align-items: center;

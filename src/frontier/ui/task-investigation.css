@@ -31,6 +31,9 @@
 .assessment-sections dl {
   margin: 0 0 0 30px;
 }
+.assessment-sections .collapsible-text {
+  margin-left: 30px;
+}
 .assessment-sections dl > div {
   display: grid;
   grid-template-columns: 34% 1fr;
@@ -51,6 +54,30 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+.scout-risk-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+}
+.scout-risk-banner svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+.scout-risk-banner span {
+  display: grid;
+  gap: 2px;
+}
+.scout-risk-banner strong {
+  color: #efd58a;
+  font-weight: 600;
+}
+.workspace-repository-scout .workspace-scout {
+  max-width: none;
+}
+.workspace-repository-scout .workspace-scout-body {
+  min-height: 190px;
 }
 .workspace-scout {
   min-width: 0;
@@ -91,6 +118,31 @@
 }
 .workspace-scout-activity > small {
   flex: 1;
+}
+.workspace-scout-activity > .scout-artifact-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  text-align: left;
+  color: #cfe4f2;
+  background: transparent;
+  border: 0;
+}
+.workspace-scout-activity > .scout-artifact-link:hover {
+  color: #ffffff;
+  background: transparent;
+}
+.scout-artifact-link > span {
+  display: grid;
+  flex: 1;
+}
+.scout-artifact-link strong {
+  color: #81baff;
+}
+.scout-artifact-link small {
+  color: #a7bdc9;
 }
 .task-layout-top .workspace-scout-activity button {
   font-size: 13px;
@@ -424,6 +476,21 @@
   color: #b4c4ce;
   background: #172a35;
   border-color: #34515f;
+}
+.workspace-status[data-status="not-used"] {
+  color: #a7bdc9;
+  background: #152731;
+  border-color: #3a505c;
+}
+.workspace-scout.is-unused {
+  background: #0b1d26;
+}
+.workspace-scout.is-unused .workspace-scout-portrait img {
+  filter: grayscale(0.65);
+  opacity: 0.58;
+}
+.workspace-scout.is-unused .workspace-scout-activity {
+  color: #849aa6;
 }
 .workspace-document [data-section="acceptance"] + ul {
   list-style: none;
