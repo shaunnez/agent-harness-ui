@@ -131,18 +131,19 @@ context in this route; both queries and URLs leave the machine.
 
 ### Current live acceptance status
 
-The bounded S8 sessions on 21 September 2026 **failed and stopped**. The first attempt exposed a local Node
-ABI mismatch after a 6-credit Firecrawl upper bound. The first authorized Node 22 retry reached both
-Firecrawl scenarios and stopped at the fail-closed PDF block-status check after a further 12-credit upper
-bound. A separately authorized diagnostic run used another 12-credit upper bound and proved Firecrawl's
-successful PDF layout-block status is `ok`; the implementation had accepted only `success` and `complete`.
-Across the three attempts, cumulative Firecrawl upper-bound exposure was 30 credits. The HTML search/capture
-and in-run reuse assertions passed each time; the PDF was not retained, Serper was not called, no live model
-ran, and the retained artifacts contained no provider credential values. The latest local receipt is
-`.data/research-runtime-acceptance/2026-09-21T04-25-43-465Z/report.json`.
+The final separately authorized S8 run on 21 September 2026 **passed** after three retained failed sessions
+identified and corrected a local Node ABI mismatch, missing failure cleanup, and Firecrawl's successful PDF
+layout-block status `ok`. The passing session committed a 12-credit Firecrawl upper bound against its
+40-credit ceiling and exactly one Serper call. Across all separately authorized attempts, cumulative
+Firecrawl upper-bound exposure was 42 credits; no individual session exceeded its allowance and no ledger
+reported a contract violation.
 
-The follow-up code adds a native-dependency preflight before network dispatch, guaranteed failed-run cleanup,
-bounded block-status diagnostics, underlying run-error reporting, acceptance of the observed successful `ok`
-status, and deterministic CLI exit after its report flushes. The final correction is deterministically
-qualified but has not been exercised by another paid provider run. S8/A15 and the live PDF portion of A2
-remain failed; do not activate the provider profile or rerun S8 without a new explicit allowance.
+The passing run verified public HTML search/capture and in-run reuse; a complete two-page OCR PDF snapshot;
+the expected excerpt on physical page 2; wrong-page and cross-run rejection; and exactly one real Serper
+fallback after a synthetic eligible Firecrawl failure. No live model ran, and a scan of all five retained
+artifacts found no provider credential values. The owner-only local receipt is
+`.data/research-runtime-acceptance/2026-09-21T04-36-37-498Z/report.json`.
+
+Implementation, deterministic qualification, S8, and A1-A15 are now complete. This acceptance does not
+activate the Firecrawl profile, change the application's fake default, merge the PR, deploy anything, or
+authorize private/customer documents to leave the existing PlanCheck-local path.
