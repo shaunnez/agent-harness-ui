@@ -42,7 +42,8 @@ function delivered(variant: RuntimeExperimentVariant) {
     const outcomes = variant.trialOutcomes;
     const samples = variant.deliverySamples ?? 0;
     const rate = Math.round((variant.acceptedDeliveryRate ?? 0) * 100);
-    return `${outcomes.accepted}/${samples} (${rate}%) · ${outcomes.pending} pending · ${outcomes.invalid} invalid · ${outcomes.cancelled} cancelled · ${outcomes.ungraded} ungraded`;
+    const accepted = samples ? `${outcomes.accepted}/${samples} (${rate}%)` : "No finalized trials";
+    return `${accepted} · ${outcomes.pending} pending · ${outcomes.invalid} invalid · ${outcomes.cancelled} cancelled · ${outcomes.ungraded} ungraded`;
   }
   const outcomes = outcomesOf(variant);
   const samples = variant.deterministicEvidenceSamples ?? 0;

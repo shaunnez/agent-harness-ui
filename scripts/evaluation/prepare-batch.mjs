@@ -59,7 +59,9 @@ const changed = (await git(root, ["status", "--porcelain"])).stdout;
 if (mode !== "dry-run" && changed.trim())
   throw new Error("Commit the qualified harness before preparing an inference campaign.");
 const harnessVersion = (await git(root, ["rev-parse", "HEAD"])).stdout.trim();
-const budget = { maxWallTimeMs: 1800000, maxTotalTokens: 600000 };
+// Historical completed delivery median is 2.17M tokens. The 600k feasibility
+// trial exhausted its allowance before implementation; keep its receipt separate.
+const budget = { maxWallTimeMs: 1800000, maxTotalTokens: 5000000 };
 const limits = { maxAgentRuns: 24, maxProviderInvocations: 40 };
 const order = [
   "incumbent",

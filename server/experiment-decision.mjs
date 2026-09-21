@@ -198,17 +198,17 @@ export function buildExperimentDecisions(variants) {
             ? "The variant mixed frozen identity or executed a divergent policy."
             : variant.trialOutcomes?.pending || variant.trialOutcomes?.cancelled
               ? "The variant has unresolved trials."
-              : metricId === "autonomous-accepted-delivery-rate" &&
-                  (variant.trialOutcomes?.ungraded || variant.budgetStatus !== "within")
-                ? "Independent grading or complete budget evidence is missing."
-                : variant.budgetStatus === "unmeasured"
-                  ? "Declared budget measurements are incomplete."
-                  : variant.sampleCount === 0
-                    ? "The variant has no recorded tasks."
-                    : value == null
-                      ? "The declared decision metric has no recorded value for this variant."
-                      : variant.budgetStatus === "exceeded"
-                        ? "The variant exceeded its declared budget."
+              : variant.budgetStatus === "exceeded"
+                ? "The variant exceeded its declared budget."
+                : metricId === "autonomous-accepted-delivery-rate" &&
+                    (variant.trialOutcomes?.ungraded || variant.budgetStatus !== "within")
+                  ? "Independent grading or complete budget evidence is missing."
+                  : variant.budgetStatus === "unmeasured"
+                    ? "Declared budget measurements are incomplete."
+                    : variant.sampleCount === 0
+                      ? "The variant has no recorded tasks."
+                      : value == null
+                        ? "The declared decision metric has no recorded value for this variant."
                         : null;
         return {
           variantId: variant.variantId,

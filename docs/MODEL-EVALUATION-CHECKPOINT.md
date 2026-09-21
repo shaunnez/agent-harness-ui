@@ -52,3 +52,11 @@ No owned persistent server or inference process should remain from calibration. 
 ## Second setup correction
 
 Batch A v2 at `1165a62` was also aborted before model startup: duplicate denied paths made the generated native permission TOML invalid. A1 is invalid apparatus, A2-A9 unlaunched. The wrapper now deduplicates protected paths, and campaign preparation runs the actual installed native permission parser and file-access checks for every generated configuration, with zero inference. Nine guard tests pass, including duplicate-path handling. The next campaign is batch-a-v3; do not pool earlier attempts.
+
+## Budget feasibility result and replacement
+
+Batch A v3 at `ebd463b` performed the first valid delivery trial. Incumbent A1 completed triage, two scouts, Grill, specification and a four-package plan in 7m02s, then refused implementation at **604,207 / 600,000 tokens**. This remains a **valid budget failure**, not invalid apparatus. No candidate exists. The remaining eight slots were explicitly cancelled before dispatch; `adjudication.json` records the reason. Do not pool v3 with later budgets or claim a model ranking.
+
+Read-only historical diagnostic: ten completed approval-stage tasks range from 624,549 to 18,743,202 tokens; median 2,170,549. These heterogeneous observations inform allowance feasibility only, not model quality. Source receipt `historical-budget-diagnostic.json` in the private evaluation root.
+
+The next campaign is **batch-a-v4**, public `/private/tmp/h-eval-a4`: **30 minutes, 5,000,000 tokens, 24 agent runs, 40 provider invocations** per trial. Policies, case, grading and sequential order stay fixed. All earlier attempts and unknown consumption remain retained. The wrapper blocks subsequent dispatch; an in-flight call may overshoot and disqualify its trial. The bounded external rubric remains 200,000 tokens separately.

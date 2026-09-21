@@ -12,6 +12,12 @@ if (freeze.mode === "dry-run") {
   process.exit(0);
 }
 const tasks = [];
+const adjudication = await readFile(path.join(campaignRoot, "adjudication.json"), "utf8")
+  .then(JSON.parse)
+  .catch((error) => {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  });
 for (const trial of freeze.trials) {
   const directory = path.join(campaignRoot, trial.id);
   try {
@@ -20,13 +26,17 @@ for (const trial of freeze.trials) {
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
     const config = JSON.parse(await readFile(path.join(directory, "config.json"), "utf8"));
+    const cancelled = adjudication?.notLaunched?.includes(trial.id);
     tasks.push({
-      id: `${trial.id}/pending`,
-      status: "pending",
+      id: `${trial.id}/${cancelled ? "cancelled" : "pending"}`,
+      status: cancelled ? "cancelled" : "pending",
       artifacts: [],
       candidates: [],
       runs: [],
       usage: {},
+      evaluation: cancelled
+        ? { trial: { status: "cancelled", reason: adjudication.reason, evaluator: "campaign-adjudication" } }
+        : null,
       experiment: normalizeExperimentInput(config.taskInput.experiment, {
         taskBriefHash: hashTaskBrief(config.taskInput),
         policyMatrix: config.taskInput.rolePolicyOverrides,
@@ -40,9 +50,12 @@ const report = {
   campaign: freeze.version,
   generatedAt: new Date().toISOString(),
   scheduledTrials: freeze.trials.length,
-  status: summary.experiments.variants.some((variant) => variant.trialOutcomes.pending)
-    ? "incomplete"
-    : "finalized",
+  status: adjudication?.notLaunched?.length
+    ? "stopped"
+    : summary.experiments.variants.some((variant) => variant.trialOutcomes.pending)
+      ? "incomplete"
+      : "finalized",
+  adjudication,
   summary,
 };
 await writeFile(path.join(campaignRoot, "report.json"), `${JSON.stringify(report, null, 2)}\n`);
