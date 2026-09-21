@@ -1,6 +1,6 @@
-# Task workspace handoff — after Slice 3
+# Task workspace handoff — after Slice 4
 
-21 September 2026. Requested by Shaun before moving to a new agent. Implementation is pushed; visual acceptance and integrated Slice 4 qualification remain.
+21 September 2026. Slice 4 integrated parity and browser qualification is complete. Stop for Shaun's review; visual acceptance is not yet recorded. No merge, deployment or live task execution is authorized.
 
 ## Resume identity
 
@@ -8,12 +8,14 @@
 - Use existing isolated worktree: `/Users/shaun/.codex/worktrees/task-workspace-slice-3/agent-harness-ui`.
 - Branch: `codex/task-workspace-slice-3`.
 - Draft PR: **[#114](https://github.com/shaunnez/agent-harness-ui/pull/114)**, base `codex/task-workspace-slice-2`.
-- Qualified implementation commit: `747783438c8bd2d67f4ffe3a869833e60f906dcf`. The handoff commit after it contains documentation only; verify current local/remote HEAD before changing anything.
+- Qualified implementation commit: `b14b81319f220ff87ac5bec66c3f475287d60aa0`. The handoff commit after it contains documentation only; both Slice 4 commits are unsigned because the configured 1Password signer returned an error (global signing settings were not changed); verify current local/remote HEAD before changing anything.
 - Dependency stack: main ← Slice 1 [#111](https://github.com/shaunnez/agent-harness-ui/pull/111), branch `codex/task-workspace-slice-1` ← Slice 2 [#113](https://github.com/shaunnez/agent-harness-ui/pull/113), branch `codex/task-workspace-slice-2` ← Slice 3 #114.
 - Slice 2 published commit: `3d4e1156ccf7334a899e22d47e31de0a79935843`. PR111/113 were open at inspection; recheck before retargeting or rebasing. Do not merge the stack without instruction.
 - Original checkout `/Users/shaun/projects/agent-harness-ui` has unrelated dirty work and remains untouched. `node_modules` in this worktree is an untracked symlink to Slice 1 dependencies: preserve, never stage it.
 
 ## What is done
+
+Slice 4 compared all ten stages, delivery and optional design review with the frozen study at both sizes (24 pairs), exercised exceptional states and inspected three existing live records read-only. It corrected newest-artifact selection, candidate-gate completion markers, optional design inspector identity and redundant early artifact reads. Bounded fixtures cover paged usage and delayed evidence failure. Workflow logic, commands and APIs are unchanged. See the Slice 4 review for the full capability/state matrix and read-only receipts.
 
 Slice 1: shared top-navigation task shell and Implement. Slice 2: early stages and optional design review, plus user-directed header/nav/image cleanup and truthful fixture history. Slice 3: findings/detail, independently inspectable test attempts, candidate history, final-review journey, approval and delivery panels. Existing workflow commands, confirmation/reason fields, eligibility and exact-head checks are preserved.
 
@@ -23,7 +25,7 @@ Usage now consistently shows **Stage usage — viewed stage** (execution time, i
 
 1. Worktree `AGENTS.md` and applicable nested instructions.
 2. `TASK-WORKSPACE-MIGRATION.md` and `TASK-WORKSPACE-EVALUATION.md`.
-3. `build-evidence/TASK-WORKSPACE/slice-3/REVIEW.md` and paired screenshots/logs.
+3. `build-evidence/TASK-WORKSPACE/slice-4/REVIEW.md` and paired screenshots/logs. Slice 3 evidence remains historical.
 4. Frozen `reference/task-workspace-study-2026-09-21.html`, SHA-256 `905e12d79d63cb1f63dd1ba15cff3125b1ab97e3742555c23b9d64450eccf812` (unchanged).
 
 Current user decisions override older study prose: proposed top navigation selected; header controls on the right; connected stage icons; historical title follows viewed stage; Open retained artifact where applicable; no giant Implement illustration; usage split described above. Do not reintroduce previous/next decision controls, Waiting since or Return to world in this task shell.
@@ -47,23 +49,25 @@ Use the current session's browser tool documentation; do not assume handles surv
 
 ## Validation at implementation commit
 
-- 158 Frontier tests passed; 4 Sites tests passed.
+- 162 Frontier tests passed; 4 Sites tests passed.
 - Typecheck, lint, changed-file formatting, both builds and diff whitespace check passed.
 - Full formatting still fails in three unchanged baseline files: `server/research/deepagents/worker.mjs`, `src/research-budget-policy.ts`, `tests/research-deepagents-live.test.mjs`. Do not silently fix unrelated code.
 - Build retains existing large-chunk warnings.
-- Ten reference/application screenshot pairs (five screens × two sizes) plus retry, repair, journey and usage details are committed with logs.
-- Browser exercised repair→r2 with retained r1 diff, same-candidate retry and prior test attempt, exact-diff inspection, optional-note approval confirmation→Awaiting PR merge, raw/rendered artifact return, keyboard stage navigation, maximize/restore and window size controls.
+- Twenty-four reference/application screenshot pairs (all ten stages, delivery and optional design × two sizes), eight comparison sheets and exceptional-state captures are committed with final logs.
+- Browser exercised repair→r2 with retained r1 diff, same-candidate retry and prior test attempt, exact-diff inspection, optional-note approval confirmation→Awaiting PR merge, candidate drift disabling confirmation, disconnected commands, paged usage, delayed evidence error, long title/output, one/many packages, not-required/completed investigation, raw/rendered artifact return, keyboard stage navigation and window controls.
+- Existing AH-025, AH-019 and AH-030 records were inspected through the verified companion on 4310. A temporary GET-only browser proxy on 4321 was stopped afterward; 252 logged requests were GET, with no live mutation. Live screenshots/raw records remain under `/tmp` and were not committed. The user-owned companion was never restarted.
 - No remote CI pass, live model execution, real task approval/publication, deployment or Shaun visual acceptance is claimed. Check PR checks afresh.
 
-## Next bounded work: Slice 4
+## Stop boundary and next continuation
 
-Start from current code and evidence, address Shaun's visual feedback first, then integrated parity/visual qualification from the migration plan. This is verification and targeted corrections, not a new redesign.
+Slice 4 is ready for review in draft PR #114, still stacked on open #113 → #111. Do not merge, rebase, retarget, deploy or resume live execution automatically. The preview stays running on 5293 and open at the QA-205 Approval fixture for Shaun. Browser viewport overrides are reset after qualification.
 
-1. Verify worktree/branch/dirty state, PR stack and source reference. Review PR checks/comments. Preserve all unrelated work.
-2. Compare actual UI with the frozen study and current approved deltas at both sizes. Pay attention to local scrolling, header density, portrait sizing, list/detail proportions and stage/task usage consistency. Do not claim pixel identity where contracts differ.
-3. Cover states across all stages: running, human input, dependency wait, failed, repair-required, stale, disconnected, loading/error, partial evidence, historical, not-required and completed. Exercise long titles/logs, one/many packages, drafts/return paths, disabled actions and exact candidate consistency. Prior automated tests are evidence, not a substitute for this integrated browser pass.
-4. Inspect representative existing live recorded tasks read-only if a live companion is available and its identity is verified. Do not start a model, retry/repair a live task, approve/publish a candidate or create a real task PR for acceptance. If read-only live evidence is unavailable, record the gap rather than changing live services.
-5. Add bounded fixtures/tests only for uncovered behavior; keep workflow state and API contracts authoritative. Confirmation-form consolidation was not approved or implemented and remains separate.
-6. Run relevant checks, update evidence/handoff, keep preview open and stop for review. No merge/deploy. Maintain stack order if dependencies have changed; explain conflicts before materially changing scope.
+On a new request, first verify the checkout, branch, dirty state, remote PR heads/checks/comments and current services. Read the Slice 4 review and address Shaun's specific feedback with the smallest bounded correction. Preserve the frozen reference, current accepted deltas, workflow authority and untracked dependency symlink. Any future publication/merge needs a separate instruction.
 
-Potential follow-up to assess during Slice 4: current route includes initial stage while in-panel stage selection is saved separately; returning to an already visited route can restore the saved selection. This behavior predates Slice 3. Do not confuse the URL alone with the stage visibly selected, or silently broaden this visual slice into routing changes.
+Separate follow-ups, not hidden Slice 4 acceptance gaps:
+
+- The current route includes the initial stage while in-panel selection is saved separately; returning to a visited route may restore that selection. Use the visibly selected stage for assertions. This behavior predates Slice 3 and was not changed.
+- Confirmation-form consolidation remains a proposal; current explicit confirmation/reason and exact-head revalidation were preserved and exercised in fixtures.
+- Three baseline formatting errors and the browser's intermittent WebGL fallback remain. No 3D renderer qualification or remote CI pass is claimed.
+
+No new task/workflow/asset run, paid model call, real approval/publication, merge or deployment was performed. Shaun's visual review is the remaining decision.
