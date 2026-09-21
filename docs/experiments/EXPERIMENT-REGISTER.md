@@ -98,9 +98,27 @@ real migration constraint, so it is the more likely to split.
 - Wall time or cost varying by more than 3× between repetitions of one case,
   which would make the cost comparison in EXP-002 meaningless.
 
+### Deviation from design, recorded 21 Sep 2026 before any result
+
+All 6 tasks were dispatched **concurrently** rather than serially, at the
+operator's decision, to get the delivery signal in one pass instead of over
+several hours.
+
+The consequence is recorded here rather than discovered later: six CLI sessions
+competing for CPU and provider rate limits inflate wall time unevenly, so the
+timing-spread refutation condition above **cannot be evaluated for this run**.
+A >3× spread between repetitions must be read as evidence about contention, not
+about the harness, and may not be used to refute the design.
+
+Deterministic delivery, `mixed-identity` and policy divergence are unaffected —
+none of them depends on timing — so the primary outcome and the other three
+refutation conditions stand. If EXP-002's cost comparison needs a clean
+per-task baseline, it has to come from a serial re-run, not from this one.
+
 ### Result
 
-*Not yet run.*
+*Running since 21 Sep 2026. AH-001 through AH-006 in the isolated store at
+`.claude/worktrees/frontier-3d-minimap-zoom-8efd8c/.data/tasks.sqlite3`.*
 
 ---
 
