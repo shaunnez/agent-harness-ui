@@ -4,6 +4,10 @@
 > Every figure here comes from retained artifacts under `.data/research-model-pilots/`, not from
 > recollection.
 >
+> **Revision 2**, after review. Section 4 and recommendation A were wrong in the first revision and
+> have been rewritten; section 9 records what changed and why. The receipts, PR contents, CI results
+> and spend below have been reviewed as claims but not independently verified by a second party.
+>
 > The plan this reports against is `08-LIVE-MODEL-QUALITY-PILOT-PLAN.md`, which is **not on this
 > branch**: it lives on `codex/research-live-model-pilot-plan` at commit `333c050` and has not been
 > merged. Read it alongside this document.
@@ -13,7 +17,9 @@
 Seven paid live sessions, $8.75 total, seven defects found and fixed. Opus 5, Sonnet 5 and Haiku 4.5
 now all pass every automated check on the frozen four-case manifest.
 
-That last sentence is the problem, not the result.
+That is not a pass. Those checks are eleven of twelve, the twelfth is human review and it has not
+been run on any session that scored 4/4, and the runs that scored it came after five rounds of
+harness repair on a metric the plan allows to be spent once.
 
 **Status against the plan's own gate: not passed, and not yet assessable.**
 
@@ -92,17 +98,28 @@ decisions before being written, rather than quietly applied after seeing results
 **Opus 5, Sonnet 5 and Haiku 4.5 all scored 4/4 on all eleven automated checks**, on the identical
 manifest, on the same four cases.
 
-The gate cannot distinguish a $0.55 model from a $1.92 one. That is a finding about *the pilot*, not
-about the models.
+The gate does not distinguish a $0.55 model from a $1.92 one.
 
-The four cases all ask the same kind of question: find a stated fact in a document and quote it
-exactly. That is retrieval, and any model that can read will do it. The one measurable difference the
-checks do not score is evidence density — Opus produced 17 claims across the four questions, Sonnet
-12, Haiku 7 — and whether that reads as concise or thin is a human judgement nobody has made.
+**That is not, by itself, a defect.** An acceptance test exists to decide whether a candidate meets a
+required quality bar, reliably and repeatably. It is under no obligation to rank candidates that all
+clear it. A gate that passes three adequate models is behaving correctly. These are two separate
+questions and the rest of this document keeps them apart:
 
-There is a real counter-reading worth holding: perhaps all three models genuinely *are* good enough
-for this work and the gate is fine. Four cases cannot distinguish "the test is too easy" from "the
-models are equivalent". That ambiguity is the single biggest open question in this handoff.
+- **Acceptance.** Does the harness reliably measure the quality this work requires? Unresolved — the
+  first-attempt metric is spent, the four cases are narrow, and the twelfth check is unrun on every
+  session that scored 4/4.
+- **Model selection.** Which model do we ship, at what cost? Not answered here, and not answerable
+  from an acceptance result whether or not it separates models.
+
+What remains genuinely open is whether these four cases measure the right thing. They all ask the
+same kind of question: find a stated fact in a document and quote it exactly. That is retrieval, and
+any model that can read will do it. The one measurable difference the checks do not score is evidence
+density — Opus produced 17 claims across the four questions, Sonnet 12, Haiku 7 — and whether that
+reads as concise or thin is a human judgement nobody has made.
+
+Four cases cannot distinguish "the test is too easy" from "the models are equivalent", and no number
+of runs on these four cases will. That ambiguity is the single biggest open question in this handoff,
+and it is an ambiguity about coverage, not about discrimination.
 
 ### Drafted but not run
 
@@ -129,22 +146,42 @@ that note 5 scopes to that cell; if that reading is wrong, every model fails it 
 
 Three coherent paths. They are not variations on one plan.
 
-### A. Make the instrument discriminate, then run a clean Q7 — *recommended*
+### A. Fix the instrument's coverage, then run a clean Q7 — *recommended*
 
-Run the three adversarial cases across all three models (~$2). If they separate the models, expand to
-roughly twelve cases and run one genuine first-attempt pilot on a new manifest revision. If they do
-not separate them, that is itself the answer: the work is easy enough that model choice is a cost
-decision, and Haiku ships.
+Four ordered steps. Nothing here is a model-selection decision.
 
-- **For:** either outcome is decision-useful; it is cheap; and it preserves the plan's integrity by
-  running a real first-attempt pilot on a fresh revision.
-- **Against:** another cycle before any operator sees anything, and the human review burden grows
-  with every case added.
+1. **Independent oracle review.** Someone other than the author checks the three drafted adversarial
+   cases against the retained source: the table coordinates, the scope of note 5, and whether the
+   published-absence reading is correct. Cases that survive are candidates; cases that do not are
+   rewritten or dropped.
+2. **Build a representative case set.** Not three cases against one document. Coverage is chosen
+   against the work the runtime is actually meant to do — multiple documents, multiple markets,
+   source selection as well as precision, and at least one case where the correct answer is that the
+   question cannot be answered from public sources. The four existing cases are candidates for
+   inclusion, not a foundation to extend.
+3. **Freeze a fresh manifest revision and the acceptance rules** — the case set, the checks, the
+   pass threshold and the human-review sample — *before* anything is run, and record the hash.
+4. **Run one newly authorized paid pilot** against that revision, scored as a genuine first attempt,
+   with the human entailment review completed as part of it.
+
+**Activation eligibility and model selection stay separate.** Step 4 answers "is this good enough to
+put in front of operators". It does not answer "which model", and a result in which several models
+pass is a normal outcome, not a finding. Model choice is a later decision, made on cost and on
+observed operator behaviour, and it needs its own comparison design if we want one.
+
+- **For:** it is the only path that produces a defensible acceptance result, and it fixes the
+  coverage gap rather than adding cases to a set already known to be narrow.
+- **Against:** it is the slowest path. Steps 1 and 2 are human work — call it a day of design plus
+  the review time — before any money is spent, and no operator sees anything until it finishes.
+- **Cost:** the paid run scales with the case set, not with the three drafted cases. Twelve cases
+  across one model is roughly $6; the earlier "~$2" figure covered only the three-case probe and
+  should not be quoted for this path.
 
 ### B. Accept the gate as met and move to operator activation
 
 Complete the human review on session 5 and, if it comes back clean, treat the pilot as passed in
-substance if not in letter. Proceed to the operator-only activation slice the plan describes:
+substance if not in letter. This is a deliberate decision to accept a weaker acceptance result, not a
+reinterpretation of the evidence. Proceed to the operator-only activation slice the plan describes:
 explicit `runtimeId`, no default change, kill switch, small named cohort.
 
 - **For:** real operator tasks will teach more than four synthetic cases ever will, and the plan
@@ -171,7 +208,8 @@ the automated checks as a regression net rather than an activation gate.
 | Q1-Q6 harness implementation | done | — |
 | Q7 — one clean paid pilot | spent | New manifest revision and a fresh first-attempt run |
 | Human entailment review, sessions 5-7 | not started | ~30 minutes of owner time per session |
-| Adversarial case expansion | drafted | Oracle review by someone other than the author |
+| Adversarial case expansion | drafted, 3 cases, one document | Independent oracle review, then a coverage design that is not built on one document |
+| Model selection (Opus / Sonnet / Haiku) | not started | A separate comparison design; not an output of the acceptance gate |
 | Operator activation slice | not started | A pilot outcome, under whichever gate survives this decision |
 | Subagents, Qwen, RAG | deferred by design | The roadmap defers all three until operator behaviour is observed |
 
@@ -196,3 +234,32 @@ session. It can be re-signed with `git commit --amend -S` if signature continuit
 merge.
 
 Rollback is unchanged and requires no database downgrade; the application default remains `fake`.
+
+## 9. Review response — what changed in revision 2
+
+This document was reviewed before any of its recommendations were acted on. One material objection
+was upheld and the document was corrected rather than defended.
+
+**The objection.** Recommendation A previously said that if three adversarial cases failed to
+separate the models, "that is itself the answer: the work is easy enough that model choice is a cost
+decision, and Haiku ships." Two errors:
+
+1. **A null result from three cases over one shared document proves nothing about equivalence.** It
+   is equally consistent with the cases being too narrow to discriminate. Treating it as a positive
+   finding inverts the burden of proof.
+2. **It conflated acceptance with model selection.** An acceptance test does not need to separate
+   models to be useful; it needs to measure the required quality reliably. "Ship Haiku" is not an
+   output an acceptance gate can produce.
+
+**What changed.** Section 4 now states explicitly that non-discrimination is not a defect and
+separates the two questions. Recommendation A is now a four-step path — independent oracle review,
+a representative case set built for coverage rather than extended from the existing four, a frozen
+manifest and acceptance rules, then one newly authorized pilot — and states that activation
+eligibility and model selection are decided separately. The remaining-slices table gains model
+selection as its own slice.
+
+**What was not verified.** The reviewer assessed the document's reasoning, not its receipts: PR
+contents, CI results, retained artifacts and spend figures have not been independently checked
+against the repository. Three follow-up tasks were proposed and none has been run: audit the evidence
+against the plan and receipts; independently review the three adversarial oracles against the source
+PDF; and draft the corrected next-pilot brief with its own budget and stop conditions.
