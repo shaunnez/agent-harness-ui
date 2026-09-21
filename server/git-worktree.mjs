@@ -54,6 +54,20 @@ const DEPENDENCY_DIRECTORY_NAMES = ["node_modules", ".venv", "venv", ".tox", "ve
 const DEPENDENCY_SCAN_DEPTH = 4;
 const PROVISION_MANIFEST = "agent-harness-provisioned-dependencies.json";
 
+/**
+ * Recognize the `commit:<sha>` target-ref sentinel written by `RepositoryAuthority`
+ * (server/repository-authority.mjs) for a checkout with no branch to advance: a frozen
+ * experiment base, or a detached HEAD with no upstream. It is harness notation, not a
+ * git revision expression, and must be unwrapped before it reaches git.
+ *
+ * Returns the bare SHA, or `null` when `ref` is an ordinary git ref.
+ */
+export function parseCommitSentinel(ref) {
+  if (typeof ref !== "string") return null;
+  const match = /^commit:([0-9a-f]{7,40})$/i.exec(ref.trim());
+  return match ? match[1] : null;
+}
+
 export class GitWorktreeManager {
   #root;
   #prepareQueue = Promise.resolve();
@@ -501,9 +515,19 @@ export class GitWorktreeManager {
     if (!candidate.headRevision || candidateRevision !== candidate.headRevision) {
       throw new Error("The candidate worktree no longer matches the reviewed revision.");
     }
-    const targetResult = await git(repositoryRoot, ["rev-parse", "--verify", targetRef], {
-      allowFailure: true,
-    });
+    // `commit:<sha>` is a harness sentinel, not git syntax. `RepositoryAuthority` mints it
+    // for a checkout with no branch to advance — a frozen experiment base, or a detached
+    // HEAD — and `<rev>:<path>` means something else entirely to git, so passing it to
+    // `rev-parse --verify` looks for a *file* named after the SHA and always fails. A
+    // frozen base is pinned by definition, so the recorded commit is the target revision.
+    const frozenRevision = parseCommitSentinel(targetRef);
+    const targetResult = frozenRevision
+      ? await git(repositoryRoot, ["rev-parse", "--verify", `${frozenRevision}^{commit}`], {
+          allowFailure: true,
+        })
+      : await git(repositoryRoot, ["rev-parse", "--verify", targetRef], {
+          allowFailure: true,
+        });
     if (targetResult.code !== 0) throw new Error("The candidate target ref no longer exists.");
     const targetRevision = targetResult.stdout.trim();
     if (targetRevision === candidate.headRevision) return "merged";

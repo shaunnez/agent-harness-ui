@@ -109,9 +109,24 @@ export function resolveRunAgentPolicy(task, policyId, settings) {
   return resolveEffectiveRunPolicy(task, policyId);
 }
 
+/**
+ * Implement and repair get 30 minutes, not 15.
+ *
+ * EXP-001's `C4-backend` case timed out at the previous 900_000 ceiling on all four
+ * attempts made of it (AH-010, AH-011, AH-012, AH-016) — three under concurrent load and
+ * one running effectively alone, on a fully provisioned tree, with the agent observed
+ * running real backend tests right up to the cutoff. A ceiling that a legitimate
+ * high-risk package cannot finish under produces `unknown` delivery outcomes, which are
+ * excluded from the primary metric, so the run costs quota and measures nothing.
+ *
+ * Raised for every stage and arm equally rather than pinned per task: a per-task override
+ * would make one sample differ from its own repetitions and break comparability.
+ * `stageTimeoutOverridesMs` below still allows a deliberate per-task extension, and the
+ * 3_600_000 clamp still bounds it.
+ */
 export function stageTimeoutMs(stageId, sandbox, task = null) {
   const defaultTimeout = ["implement", "repair"].includes(stageId)
-    ? 900_000
+    ? 1_800_000
     : sandbox === "workspace-write" || ["plan", "dev-review", "final-review"].includes(stageId)
       ? 600_000
       : 360_000;
