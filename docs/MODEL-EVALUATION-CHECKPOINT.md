@@ -1,6 +1,6 @@
 # Evaluation checkpoint
 
-Updated: 22 September 2026. Phase: replacement Batch A apparatus qualified; ready to freeze. One invalid apparatus attempt; no valid delivery results or production changes.
+Updated: 22 September 2026. Phase: replacement Batch A apparatus qualified; ready to freeze. Two invalid apparatus attempts; no valid delivery results or production changes.
 
 ## Authority and location
 
@@ -48,3 +48,7 @@ Updated: 22 September 2026. Phase: replacement Batch A apparatus qualified; read
 5. Do not start 24 heldout runs unless Batch A justifies it. Report actual outcomes and limitations, not a model winner from calibration or setup. Production routing changes remain separate.
 
 No owned persistent server or inference process should remain from calibration. Inspect durable state after compaction before rerunning anything. Original-main copy of this checkpoint is the live continuation pointer; campaign state is authoritative over narrative notes.
+
+## Second setup correction
+
+Batch A v2 at `1165a62` was also aborted before model startup: duplicate denied paths made the generated native permission TOML invalid. A1 is invalid apparatus, A2-A9 unlaunched. The wrapper now deduplicates protected paths, and campaign preparation runs the actual installed native permission parser and file-access checks for every generated configuration, with zero inference. Nine guard tests pass, including duplicate-path handling. The next campaign is batch-a-v3; do not pool earlier attempts.

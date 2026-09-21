@@ -51,7 +51,7 @@ def reserve(ledger):
 
 
 def native_args(arguments):
-    denied = config["deniedReadPaths"]
+    denied = list(dict.fromkeys(config["deniedReadPaths"]))
     if not denied:
         raise RuntimeError("Evaluation requires protected reference paths")
     arguments = list(arguments)

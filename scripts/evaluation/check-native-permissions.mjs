@@ -8,6 +8,8 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 const exec = promisify(execFile);
+const configFile = process.argv[2];
+const configured = configFile ? JSON.parse(await readFile(configFile, "utf8")) : null;
 const root = await mkdtemp(path.join(os.tmpdir(), "eval-native-"));
 const protectedFile = path.join(root, "reference.txt");
 await writeFile(protectedFile, "protected fixture");
@@ -15,11 +17,17 @@ const allowed = path.join(root, "readable.txt");
 await writeFile(allowed, "public fixture");
 try {
   for (const parent of [":read-only", ":workspace"]) {
-    const profile = `permissions.evaluation={extends=${JSON.stringify(parent)},filesystem={${JSON.stringify(protectedFile)}="deny"},network={enabled=false}}`;
+    const denied = [...new Set([...(configured?.deniedReadPaths ?? []), protectedFile])];
+    const entries = denied.map((entry) => `${JSON.stringify(entry)}="deny"`).join(",");
+    const profile = `permissions.evaluation={extends=${JSON.stringify(parent)},filesystem={${entries}},network={enabled=false}}`;
     const run = (command) =>
-      exec("codex", ["sandbox", "-P", "evaluation", "-c", profile, "-C", root, "--", ...command], {
-        cwd: root,
-      });
+      exec(
+        configured?.executables.codex ?? "codex",
+        ["sandbox", "-P", "evaluation", "-c", profile, "-C", root, "--", ...command],
+        {
+          cwd: root,
+        },
+      );
     assert.equal((await run(["/bin/cat", allowed])).stdout, "public fixture");
     await assert.rejects(run(["/bin/cat", protectedFile]), /Operation not permitted/);
     await assert.rejects(

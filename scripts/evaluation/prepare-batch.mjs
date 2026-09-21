@@ -212,6 +212,11 @@ for (const trial of trials) {
     ),
   );
   const wrappers = {};
+  const preflight = await exec(process.execPath, [
+    path.join(root, "scripts/evaluation/check-native-permissions.mjs"),
+    guardConfig,
+  ]);
+  await writeFile(path.join(privateTrial, "native-permissions-preflight.json"), preflight.stdout);
   for (const provider of ["codex", "claude"]) {
     const wrapper = path.join(privateTrial, provider);
     const quote = (value) => `'${value.replaceAll("'", "'\\''")}'`;

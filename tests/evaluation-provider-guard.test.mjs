@@ -48,7 +48,7 @@ async function fixture(body, script, { deadline = 60, count = 3, tokens = 100 } 
         const config = JSON.parse(await readFile(configPath, "utf8"));
         await writeFile(
           configPath,
-          JSON.stringify({ ...config, confinement: "native-provider", deniedReadPaths: [secret] }),
+          JSON.stringify({ ...config, confinement: "native-provider", deniedReadPaths: [secret, secret] }),
         );
         return exec("python3", [guard, configPath, provider, ...args]);
       },
@@ -130,6 +130,7 @@ test("native Codex profile preserves posture and adds protected paths without le
     const profile = args.find((value) => value.startsWith("permissions.evaluation="));
     assert.ok(profile.includes('extends=":read-only"'));
     assert.ok(profile.includes(`${JSON.stringify(secret)}="deny"`));
+    assert.equal(profile.split(JSON.stringify(secret)).length - 1, 1);
     assert.ok(profile.includes("network={enabled=false}"));
   }, "print(json.dumps(sys.argv[1:]))"));
 
