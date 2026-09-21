@@ -33,6 +33,21 @@ const UNCERTAIN =
   /\b(?:unresolved|not supported|not present|not found|could not|cannot|unable|absent|does not appear|no evidence)\b/i;
 const SEARCH_ENGINE_HOST = /(?:^|\.)(?:google|bing|duckduckgo|serper|firecrawl|yahoo)\./i;
 
+/**
+ * Retail pages style the inside of an amount: Bunnings renders $73.04 as "$73 .04", with the
+ * cents in their own element. Whitespace sitting between digits and the decimal point is that
+ * styling, not part of the number, so it is dropped before an asserted amount is looked for in
+ * a retained excerpt.
+ *
+ * This does not loosen what the check proves. The digits themselves must still appear, in
+ * order, in text the run retained — a fabricated or hallucinated amount fails exactly as it did
+ * before. What it stops failing is the opposite case: a model that read the source correctly,
+ * normalised the styling the way a person would, and said so.
+ */
+function normalizeAmountText(text) {
+  return String(text).replace(/(?<=[\d.])\s+(?=[\d.])/g, "");
+}
+
 export function scoreCase({ entry, executed, review, artifactScan }) {
   const findings = executed?.result?.findings ?? [];
   const evidence = findings.flatMap((finding) =>
@@ -197,12 +212,15 @@ function factRepresented(fact, { verified, answerText }) {
         reference.locator?.page === fact.page && includesInsensitive(reference.excerpt, fact.phrase),
     );
   if (fact.kind === "dynamic_amount_or_absence") {
-    const amountInEvidence = verified.find(({ reference }) => AMOUNT.test(String(reference.excerpt)));
+    const amountInEvidence = verified.find(({ reference }) =>
+      AMOUNT.test(normalizeAmountText(reference.excerpt)),
+    );
     const claimed = answerText.match(AMOUNT)?.[0];
     if (claimed) {
       const digits = claimed.replace(/[^\d.]/g, "");
       return Boolean(
-        amountInEvidence && verified.some(({ reference }) => String(reference.excerpt).includes(digits)),
+        amountInEvidence &&
+          verified.some(({ reference }) => normalizeAmountText(reference.excerpt).includes(digits)),
       );
     }
     return ABSENCE.test(answerText);
@@ -221,13 +239,21 @@ function pdfPageCorrect({ entry, verified, sources }) {
       ? pass("pdf_page_correct", "No page expectation applies; retained PDF pages were used.")
       : pass("pdf_page_correct", "No PDF evidence and no page expectation.");
   if (!pdfEvidence.length) return fail("pdf_page_correct", "The case expects retained PDF page evidence.");
-  const wrong = pdfEvidence.filter(
-    ({ reference }) =>
-      !expected.includes(reference.locator?.page) || forbidden.includes(reference.locator?.page),
-  );
-  return wrong.length
-    ? fail("pdf_page_correct", `${wrong.length} excerpt(s) cite a page outside ${expected.join(", ")}.`)
-    : pass("pdf_page_correct", `Every PDF excerpt cites physical page ${expected.join(", ")}.`);
+  // The expected page must be cited and a forbidden page must not be. Citing a further page
+  // that is neither is corroboration, not an error: a model that answers from page 19 and also
+  // points at the two pages leading to it has done more work, not worse work. A forbidden page
+  // still fails on its own, which is what keeps this from being a weaker rule than "every
+  // excerpt on an expected page" for the thing the oracle actually guards against.
+  const offending = pdfEvidence.filter(({ reference }) => forbidden.includes(reference.locator?.page));
+  if (offending.length)
+    return fail("pdf_page_correct", `${offending.length} excerpt(s) cite a forbidden page.`);
+  const onExpected = pdfEvidence.filter(({ reference }) => expected.includes(reference.locator?.page));
+  return onExpected.length
+    ? pass(
+        "pdf_page_correct",
+        `${onExpected.length} of ${pdfEvidence.length} PDF excerpt(s) cite physical page ${expected.join(", ")}; none cite a forbidden page.`,
+      )
+    : fail("pdf_page_correct", `No excerpt cites physical page ${expected.join(", ")}.`);
 }
 
 function noSnippetEvidence({ evidence, sources }) {
@@ -273,7 +299,7 @@ function dynamicAbsenceDiscipline({ entry, verified, answerText }) {
   const claimed = answerText.match(AMOUNT)?.[0];
   if (!claimed) return pass("dynamic_absence_discipline", "No amount was asserted.");
   const digits = claimed.replace(/[^\d.]/g, "");
-  return verified.some(({ reference }) => String(reference.excerpt).includes(digits))
+  return verified.some(({ reference }) => normalizeAmountText(reference.excerpt).includes(digits))
     ? pass("dynamic_absence_discipline", "The asserted amount appears in a retained excerpt.")
     : fail("dynamic_absence_discipline", "An amount was asserted that no retained excerpt contains.");
 }

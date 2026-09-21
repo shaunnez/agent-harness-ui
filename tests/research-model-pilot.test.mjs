@@ -895,6 +895,73 @@ test("the scorer keeps quote verification, claim support and authority separate"
   assert.equal(unsupported.taskPassed, false);
 });
 
+test("corroborating pages are allowed, a forbidden page is not, and the expected page is required", () => {
+  const corroborated = executedCase(PDF_CASE.id, {
+    findings: [
+      {
+        ...pdfFinding(),
+        evidence: [pdfFinding({ page: 2 }).evidence[0], pdfFinding({ page: 5 }).evidence[0]],
+      },
+    ],
+    sources: [PDF_SOURCE],
+  });
+  assert.equal(
+    checkStatus(
+      scoreCase({
+        entry: PDF_CASE,
+        executed: corroborated,
+        review: reviewFor([corroborated]),
+        artifactScan: CLEAN_SCAN,
+      }),
+      "pdf_page_correct",
+    ),
+    "passed",
+    "a second real page alongside the expected one is corroboration, not an error",
+  );
+
+  // A forbidden page still fails even when the expected page is cited too, which is the thing
+  // the oracle actually guards against.
+  const forbidden = executedCase(PDF_CASE.id, {
+    findings: [
+      {
+        ...pdfFinding(),
+        evidence: [pdfFinding({ page: 2 }).evidence[0], pdfFinding({ page: 3 }).evidence[0]],
+      },
+    ],
+    sources: [PDF_SOURCE],
+  });
+  assert.equal(
+    checkStatus(
+      scoreCase({
+        entry: PDF_CASE,
+        executed: forbidden,
+        review: reviewFor([forbidden]),
+        artifactScan: CLEAN_SCAN,
+      }),
+      "pdf_page_correct",
+    ),
+    "failed",
+  );
+
+  // Citing only pages that are neither expected nor forbidden never satisfies the expectation.
+  const neverExpected = executedCase(PDF_CASE.id, {
+    findings: [{ ...pdfFinding(), evidence: [pdfFinding({ page: 5 }).evidence[0]] }],
+    sources: [PDF_SOURCE],
+  });
+  assert.equal(
+    checkStatus(
+      scoreCase({
+        entry: PDF_CASE,
+        executed: neverExpected,
+        review: reviewFor([neverExpected]),
+        artifactScan: CLEAN_SCAN,
+      }),
+      "pdf_page_correct",
+    ),
+    "failed",
+  );
+});
+
 test("a wrong page, an unverifiable excerpt or a foreign host fails its own check", () => {
   const wrongPage = executedCase(PDF_CASE.id, {
     findings: [pdfFinding({ page: 3 })],
@@ -1024,6 +1091,75 @@ test("a missing price is neither invented nor reported as zero", () => {
         entry: PRICE_CASE,
         executed: zeroed,
         review: reviewFor([zeroed]),
+        artifactScan: CLEAN_SCAN,
+      }),
+      "dynamic_absence_discipline",
+    ),
+    "failed",
+  );
+});
+
+test("an amount styled with whitespace matches, while a fabricated one still fails", () => {
+  const htmlSource = {
+    id: "source-1",
+    url: "https://www.bunnings.co.nz/gib-aqualine/p/0899343",
+    mediaType: "text/html",
+    title: "GIB Aqualine",
+    retrievedAt: "2026-09-21T00:00:00.000Z",
+  };
+  const evidence = (excerpt) => ({
+    sourceId: "source-1",
+    url: htmlSource.url,
+    excerpt,
+    quoteVerified: true,
+    snapshotRef: "sha256:fixture",
+  });
+
+  // Bunnings renders $73.04 as "$73 .04", with the cents in their own element. A model that
+  // reads that correctly and writes the normalised number must not be scored as if it invented
+  // an amount the page never showed.
+  const styled = executedCase(PRICE_CASE.id, {
+    findings: [
+      {
+        id: "F1",
+        claim: "GIB Aqualine 2400 x 1200 is listed at $73.04.",
+        producedBy: "researcher",
+        evidence: [evidence("GIB Aqualine 10x2400x1200mm  $73 .04   In-store only")],
+      },
+    ],
+    sources: [htmlSource],
+  });
+  assert.equal(
+    checkStatus(
+      scoreCase({
+        entry: PRICE_CASE,
+        executed: styled,
+        review: reviewFor([styled]),
+        artifactScan: CLEAN_SCAN,
+      }),
+      "dynamic_absence_discipline",
+    ),
+    "passed",
+  );
+
+  // The same normalisation must not start admitting an amount the excerpt does not contain.
+  const invented = executedCase(PRICE_CASE.id, {
+    findings: [
+      {
+        id: "F1",
+        claim: "GIB Aqualine 2400 x 1200 is listed at $84.10.",
+        producedBy: "researcher",
+        evidence: [evidence("GIB Aqualine 10x2400x1200mm  $73 .04   In-store only")],
+      },
+    ],
+    sources: [htmlSource],
+  });
+  assert.equal(
+    checkStatus(
+      scoreCase({
+        entry: PRICE_CASE,
+        executed: invented,
+        review: reviewFor([invented]),
         artifactScan: CLEAN_SCAN,
       }),
       "dynamic_absence_discipline",
