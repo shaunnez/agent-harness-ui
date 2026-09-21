@@ -5,7 +5,8 @@
 ## Identity and scope
 
 - Base: Slice 2 commit `3d4e1156ccf7334a899e22d47e31de0a79935843`, pushed in draft PR [#113](https://github.com/shaunnez/agent-harness-ui/pull/113), based on Slice 1 PR #111.
-- Branch: `codex/task-workspace-slice-3`.
+- Branch: `codex/task-workspace-slice-3`; draft PR [#114](https://github.com/shaunnez/agent-harness-ui/pull/114), based on `codex/task-workspace-slice-2`.
+- Qualified implementation commit: `747783438c8bd2d67f4ffe3a869833e60f906dcf`; subsequent handoff commit changes documentation only.
 - Worktree: `/Users/shaun/.codex/worktrees/task-workspace-slice-3/agent-harness-ui`.
 - Preview: <http://127.0.0.1:5293/?mode=fixture&scenario=workspace#task/QA-205/approval>.
 - Frozen study: `design/mission-frontier/reference/task-workspace-study-2026-09-21.html`, SHA-256 `905e12d79d63cb1f63dd1ba15cff3125b1ab97e3742555c23b9d64450eccf812`, rechecked unchanged. Served study at port 5279.
