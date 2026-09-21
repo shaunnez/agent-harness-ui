@@ -1,0 +1,2560 @@
+{
+ "scenarios": [
+  {
+   "id": "paint-colour-selection-deferred",
+   "title": "Deferred paint colour selection",
+   "scope": "Late confirmation of wall and ceiling paint colours where the paint system, coats and areas are unchanged and work has not yet commenced.",
+   "unit": "m2",
+   "materiality": "low",
+   "materiality_note": "Same product and labour; only tint base differs.",
+   "merges": [
+    "paint colour selection and application",
+    "interior wall finish colour selection"
+   ],
+   "research_need": "Whether deep tint bases or repainting of completed work is involved.",
+   "family": "fitout",
+   "claim_count": 31
+  },
+  {
+   "id": "retaining-wall-construction",
+   "title": "Retaining wall construction",
+   "scope": "Construct retaining wall up to 3m retained height including excavation, foundation, wall structure, drainage layer, backfill and surface finish, excluding specific engineering design.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Structural element with foundation, drainage and backfill costs",
+   "merges": [
+    "retaining wall construction",
+    "retaining wall construction",
+    "retaining wall design and construction",
+    "retaining wall construction with fire rating",
+    "retaining wall construction"
+   ],
+   "research_need": "Wall type, retained height, surcharge, foundation conditions, drainage and consent requirements",
+   "family": "civil",
+   "claim_count": 29,
+   "merged_from": [
+    "Retaining wall design and construction",
+    "Retaining wall construction"
+   ]
+  },
+  {
+   "id": "channel-drain-installation",
+   "title": "Channel drain installation to paving",
+   "scope": "Supply and install proprietary polymer/concrete channel drain with grate to trafficable or footpath paving, including concrete haunching and connection to nearest stormwater line, per metre of run.",
+   "unit": "m",
+   "materiality": "high",
+   "materiality_note": "Grate class, haunching and connection drive real cost per metre",
+   "merges": [
+    "channel drain installation",
+    "channel drain installation to footpath"
+   ],
+   "research_need": "Channel/grate load class rates, haunch concrete quantity, connection depth and paving reinstatement",
+   "family": "drainage",
+   "claim_count": 23
+  },
+  {
+   "id": "suspended-ceiling-tile-grid",
+   "title": "Suspended tile ceiling supply install",
+   "scope": "Supply and install exposed-grid suspended ceiling with mineral fibre or similar lay-in tiles, including hangers and seismic bracing, to regular open ceiling areas.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Grid, tile and seismic hanger labour are substantial per m2.",
+   "merges": [
+    "ceiling finish installation",
+    "suspended ceiling tile supply and install",
+    "ceiling tile supply and install",
+    "suspended ceiling tile installation"
+   ],
+   "research_need": "Tile type/NRC, grid system, ceiling height and seismic restraint standard.",
+   "family": "fitout",
+   "claim_count": 19
+  },
+  {
+   "id": "mains-and-feeder-cable-install",
+   "title": "Mains and feeder cable installation",
+   "scope": "Supply and install main incoming and sub-main feeder cables with containment and terminations between switchboards, priced per metre of installed run.",
+   "unit": "m",
+   "materiality": "high",
+   "materiality_note": "Copper cable and containment are major cost drivers",
+   "merges": [
+    "electrical mains cable installation",
+    "electrical feeder cable installation"
+   ],
+   "research_need": "Cable size and type, route length, containment, termination and copper price basis",
+   "family": "electrical",
+   "claim_count": 17
+  },
+  {
+   "id": "resin-floor-colour-selection",
+   "title": "Resin floor colour selection",
+   "scope": "Late nomination of colour, pigment or flake blend for an otherwise specified resin/epoxy floor coating where the system, thickness and application remain unchanged.",
+   "unit": "m2",
+   "materiality": "low",
+   "materiality_note": "Same system and labour; only pigment differs unless bespoke.",
+   "merges": [
+    "resin flooring colour selection"
+   ],
+   "research_need": "Whether standard colour range applies or bespoke tint/flake attracts supplier premium.",
+   "family": "fitout",
+   "claim_count": 16
+  },
+  {
+   "id": "internal-doorset-supply-install",
+   "title": "Internal doorset supply and install",
+   "scope": "Supply and install a single internal door leaf with frame, hung and adjusted, priced per leaf type, frame material and opening height, excluding hardware and vision panels.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Fire rating, frame material and leaf core drive large rate swings",
+   "merges": [
+    "door frame type selection",
+    "door and frame specification selection",
+    "door frame and hardware selection",
+    "door frame and opening height selection",
+    "supply and install door leaf and frame",
+    "door installation"
+   ],
+   "research_need": "Rates by leaf core, fire/acoustic rating, timber vs steel frame, opening height",
+   "family": "joinery",
+   "claim_count": 14
+  },
+  {
+   "id": "solar-mounting-structural-design",
+   "title": "Solar array mounting structural support",
+   "scope": "Structural design, supply and installation of roof or ground mounting support for a solar PV array, including purlin or rafter strengthening and fixings, excluding electrical work.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Engineering plus roof strengthening across whole array is costly",
+   "merges": [
+    "solar panel mounting structural design"
+   ],
+   "research_need": "Array size and weight, roof structure capacity, strengthening extent, PS1 fee",
+   "family": "structure",
+   "claim_count": 12
+  },
+  {
+   "id": "acp-facade-cladding-install",
+   "title": "Aluminium composite panel cladding",
+   "scope": "Supply and fix aluminium composite or sheet wall cladding on existing framing/substrate up to 10m height, including fixings, subgirts and standard flashings, measured by cladding face area.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Panel supply, subframe and access drive substantial cost",
+   "merges": [
+    "aluminium composite panel cladding installation",
+    "wall cladding installation"
+   ],
+   "research_need": "Panel system rates, subgirt spacing, access method and flashing extent per m2",
+   "family": "envelope",
+   "claim_count": 10
+  },
+  {
+   "id": "switchboard-fault-rating-protection",
+   "title": "Switchboard fault rating and protection",
+   "scope": "Fault level assessment, busbar bracing upgrade and supply/installation of correctly rated protection devices to an existing or new switchboard.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "High-rated breakers and busbar work are costly",
+   "merges": [
+    "electrical protection device sizing and installation",
+    "switchboard fault rating upgrade",
+    "switchboard busbar and fault rating installation",
+    "switchboard fault level design"
+   ],
+   "research_need": "Prospective fault current, breaker kA ratings, discrimination study and design fees",
+   "family": "electrical",
+   "claim_count": 9
+  },
+  {
+   "id": "solar-connection-switchboard-works",
+   "title": "Solar connection switchboard works",
+   "scope": "Switchboard and distribution board works for PV grid connection including solar supply switch, dedicated solar board and associated upgrade of existing boards.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Board modifications and isolation gear carry real cost",
+   "merges": [
+    "switchboard upgrade for solar connection",
+    "solar supply switch installation",
+    "solar system electrical upgrade",
+    "solar distribution board installation",
+    "solar switchboard installation"
+   ],
+   "research_need": "Inverter capacity, board modification extent, export limits and network approval",
+   "family": "electrical",
+   "claim_count": 9
+  },
+  {
+   "id": "facade-coating-application",
+   "title": "Facade and soffit coating",
+   "scope": "Prepare and apply two-coat exterior coating system to plastered, concrete, steel panel or soffit surfaces up to 10m height, including access, measured by coated area.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Preparation, coats and external access are real labour cost",
+   "merges": [
+    "facade coating application",
+    "exterior paint finish application",
+    "soffit paint finish application",
+    "steel panel paint finish application"
+   ],
+   "research_need": "Coating system spec, substrate prep, number of coats and access type",
+   "family": "envelope",
+   "claim_count": 9
+  },
+  {
+   "id": "glazed-vision-panel",
+   "title": "Glazed vision panel to door",
+   "scope": "Cut, frame and glaze a vision panel into a door leaf, including beads and glass to rating, priced per panel up to 300x900mm.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Leaf modification and fire-rated glass carry real cost",
+   "merges": [
+    "supply and install glazed vision panel"
+   ],
+   "research_need": "Factory versus site cut cost, fire-rated glazing rates, leaf rating impact",
+   "family": "joinery",
+   "claim_count": 8
+  },
+  {
+   "id": "site-establishment-relocation",
+   "title": "Site establishment and compound relocation",
+   "scope": "Relocating or reconfiguring temporary site fencing, sheds, stockpile and material storage areas within an operating construction site, excluding new hardstand construction.",
+   "unit": "sum",
+   "materiality": "medium",
+   "materiality_note": "Plant, labour and downtime costs, but no permanent works",
+   "merges": [
+    "relocate site fencing and stockpile areas",
+    "relocate site shed",
+    "relocate construction site fence",
+    "adjust material storage zone extent",
+    "temporary site fencing relocation",
+    "stockpile area establishment and management"
+   ],
+   "research_need": "Fence length, shed size, crane/hiab needs, number of moves, standing time rates",
+   "family": "civil",
+   "claim_count": 8
+  },
+  {
+   "id": "door-hardware-sets",
+   "title": "Door hardware set installation",
+   "scope": "Supply and install ironmongery per leaf - locksets, closers, security and roller door hardware - fitted to an already hung door, excluding access control wiring.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Hardware set value ranges widely; fitting labour per leaf",
+   "merges": [
+    "door hardware supply and installation",
+    "supply and install door hardware",
+    "door hardware and lock selection",
+    "supply and install door closer",
+    "security door hardware installation",
+    "roller door hardware installation",
+    "door hardware supply and installation"
+   ],
+   "research_need": "Rates for standard, security and closer sets by grade and finish",
+   "family": "joinery",
+   "claim_count": 8,
+   "merged_from": [
+    "Door hardware supply and installation"
+   ]
+  },
+  {
+   "id": "concrete-paving-slab",
+   "title": "External concrete paving and slabs",
+   "scope": "Construct reinforced concrete external paving or yard slab on prepared subbase, including formwork, mesh, falls to design levels, joints and finish, up to 200mm thick.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Concrete, reinforcement, formwork and finishing all measurable cost",
+   "merges": [
+    "construct concrete paving",
+    "grade paving to design falls",
+    "construct concrete yard slab",
+    "external paving and civil works",
+    "hardstand construction for test outlet"
+   ],
+   "research_need": "Slab thickness, reinforcement, subbase depth, surface finish, joint layout and area size",
+   "family": "civil",
+   "claim_count": 8,
+   "merged_from": [
+    "Concrete hardstand pad construction"
+   ]
+  },
+  {
+   "id": "metering-control-instrumentation-wiring",
+   "title": "Metering and control wiring installation",
+   "scope": "Install and terminate small-gauge control, instrumentation and monitoring cabling to water meters, irrigation controllers and field devices, including containment within a site.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Modest cable cost but recurring termination and testing labour",
+   "merges": [
+    "water meter monitoring wiring installation",
+    "irrigation controller cabling installation",
+    "terminate control and instrumentation cabling"
+   ],
+   "research_need": "Cable type, run lengths, termination counts and BMS interface points",
+   "family": "electrical",
+   "claim_count": 7
+  },
+  {
+   "id": "garden-bed-planting",
+   "title": "Garden bed planting installation",
+   "scope": "Supply and planting of trees, shrubs and groundcover into prepared garden beds including topsoil, staking and establishment period, excluding turf, mulch and irrigation.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Plant supply, grades and maintenance period carry real cost.",
+   "merges": [
+    "tree planting supply and installation",
+    "shrub planting supply and installation",
+    "plant planting supply and installation",
+    "plant and shrub planting supply and installation",
+    "landscape planting supply and installation",
+    "landscape design and installation"
+   ],
+   "research_need": "Species schedule, plant grades, densities, topsoil depth and maintenance period length.",
+   "family": "external_works",
+   "claim_count": 7
+  },
+  {
+   "id": "steel-connection-fabrication",
+   "title": "Structural steel connection fabrication upgrades",
+   "scope": "Fabrication and installation of revised or added steel connections - cleats, brackets, weld plates, bolted and welded joints - on members already in the contract, priced per connection.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Engineering, shop fabrication and site welding add real cost",
+   "merges": [
+    "structural steel connection detailing and fabrication",
+    "structural steel gutter connection detailing",
+    "structural steel connection welding",
+    "structural steel column connection welding",
+    "structural steel weld plate fabrication",
+    "structural steel bracket fabrication and installation",
+    "structural steel bolted connection installation"
+   ],
+   "research_need": "Connection type, plate/weld size, shop versus site work, inspection requirements",
+   "family": "structure",
+   "claim_count": 7
+  },
+  {
+   "id": "glass-kitchen-splashback",
+   "title": "Glass splashback supply install",
+   "scope": "Supply and install toughened back-painted glass or tiled splashback to kitchen and kitchenette benches, including templating, cutouts for services and silicone fixing.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Toughened glass, templating and cutouts carry real cost.",
+   "merges": [
+    "glass splashback installation",
+    "kitchen splashback supply and installation",
+    "glass splashback supply and installation"
+   ],
+   "research_need": "Glass type/colour, panel sizes, number of cutouts and wall substrate.",
+   "family": "fitout",
+   "claim_count": 7
+  },
+  {
+   "id": "internal-stud-partition-walls",
+   "title": "Internal stud partition wall construction",
+   "scope": "Supply and erect steel or timber stud partitions to a documented wall type, including plasterboard both faces, insulation, stopping ready for decoration, floor to underside of ceiling or slab.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Framing, board, insulation and stopping labour per square metre.",
+   "merges": [
+    "partition wall construction",
+    "construct wall to documented wall type",
+    "partition system installation",
+    "interior wall framing installation",
+    "fire-rated store room construction"
+   ],
+   "research_need": "Wall type build-up, height, fire/acoustic rating and stopping level required.",
+   "family": "fitout",
+   "claim_count": 7,
+   "merged_from": [
+    "Internal framed and fire-rated partitions"
+   ]
+  },
+  {
+   "id": "deflection-head-acoustic-seal",
+   "title": "Deflection head and acoustic seal",
+   "scope": "Form head-of-wall deflection detail to timber or steel framed partitions with compressible acoustic seal and slip track, measured per linear metre of wall head.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Proprietary track, seal and fire/acoustic testing add cost",
+   "merges": [
+    "acoustic seal installation",
+    "deflection head detailing for timber framing",
+    "timber frame deflection head framing"
+   ],
+   "research_need": "Deflection allowance, acoustic/fire rating and proprietary head track system",
+   "family": "envelope",
+   "claim_count": 7,
+   "merged_from": [
+    "Deflection head to timber framing"
+   ]
+  },
+  {
+   "id": "benchtop-and-laminate-panel",
+   "title": "Benchtop and laminate panel",
+   "scope": "Supply and install benchtops and compact laminate panels to existing cabinetry or framing, including cutouts and edging, priced per lineal metre of run.",
+   "unit": "m",
+   "materiality": "high",
+   "materiality_note": "Substrate choice between laminate and stone shifts rate sharply",
+   "merges": [
+    "bench top supply and installation",
+    "compact laminate panel installation"
+   ],
+   "research_need": "Rates by benchtop material, thickness, edge detail and cutout count",
+   "family": "joinery",
+   "claim_count": 6
+  },
+  {
+   "id": "network-supply-connection-hv-metering",
+   "title": "Network supply connection and metering",
+   "scope": "Lines-company supply point connection, HV/LV metering unit installation and configuration including network fees, coordination and energisation for one connection.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Network fees and metering units are large lump costs",
+   "merges": [
+    "hv metering unit installation and configuration",
+    "network supply point connection works",
+    "electricity network supply connection works"
+   ],
+   "research_need": "Network operator fee schedule, metering CT class, connection lead times",
+   "family": "electrical",
+   "claim_count": 6
+  },
+  {
+   "id": "sprinkler-system-installation",
+   "title": "Fire sprinkler system installation",
+   "scope": "Supply and install wet pipe sprinkler system to an existing approved design within a single building, including pipework, heads, valve set and commissioning, excluding pump, tank and hydraulic design.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Full reticulated system, significant pipework and labour cost",
+   "merges": [
+    "fire sprinkler system installation to design",
+    "fire sprinkler system installation",
+    "install fire sprinkler system",
+    "sprinkler system installation",
+    "install fire protection system"
+   ],
+   "research_need": "NZS 4541 head spacing, hazard class, per m2 sprinkler rates by building type",
+   "family": "fire",
+   "claim_count": 6
+  },
+  {
+   "id": "interior-finishes-to-schedule",
+   "title": "Interior finishes to schedule",
+   "scope": "Supply and install of miscellaneous interior finishes nominated on a finishes schedule not covered by a dedicated trade, including wall, floor and feature finishes in fitout areas.",
+   "unit": "sum",
+   "materiality": "medium",
+   "materiality_note": "Scope breadth means variable but generally real cost.",
+   "merges": [
+    "interior finish selection and installation",
+    "interior finishes installation to schedule"
+   ],
+   "research_need": "Finishes schedule items, quantities and which trades are already covered.",
+   "family": "fitout",
+   "claim_count": 6
+  },
+  {
+   "id": "subgrade-prep-basecourse-replacement",
+   "title": "Subgrade preparation and basecourse replacement",
+   "scope": "Undercut of unsuitable subgrade, disposal and replacement with compacted GAP40/65 basecourse to 300mm, in trafficked pavement or slab areas.",
+   "unit": "m3",
+   "materiality": "high",
+   "materiality_note": "Cart, disposal and aggregate supply are all priced quantities",
+   "merges": [
+    "subgrade preparation and basecourse replacement",
+    "hardfill backfill placement under slab"
+   ],
+   "research_need": "GAP supply and cart rates, disposal costs and undercut depth assumptions",
+   "family": "ground",
+   "claim_count": 6,
+   "merged_from": [
+    "Hardfill backfill under slab"
+   ]
+  },
+  {
+   "id": "industrial-roller-doors",
+   "title": "Industrial roller and specialist doors",
+   "scope": "Supply and install industrial door units - roller, roller shutter, high speed or specialist - up to 5x5m opening including tracks, motor and commissioning, excluding structural opening works.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Unit and motor costs are major; wide rate spread by type",
+   "merges": [
+    "roller door installation",
+    "supply and install roller shutter door",
+    "supply and install high speed door",
+    "supply and install specialist door"
+   ],
+   "research_need": "Rates by door type, opening size, motorisation and cycle speed",
+   "family": "joinery",
+   "claim_count": 5
+  },
+  {
+   "id": "joinery-finishing-painting",
+   "title": "Joinery finishing and painting",
+   "scope": "Prepare, prime and finish coat site or factory joinery surfaces, priced per m2, covering paint, stain or clear lacquer systems on standard substrates.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Finish system change matters; like-for-like colour change does not",
+   "merges": [
+    "joinery finishing and painting"
+   ],
+   "research_need": "Rates per m2 for paint, stain and lacquer systems, factory versus site",
+   "family": "joinery",
+   "claim_count": 5
+  },
+  {
+   "id": "emergency-lighting-exit-signage",
+   "title": "Emergency lighting and exit signage",
+   "scope": "Supply, install and test maintained emergency luminaires and exit sign fittings including circuit wiring and AS/NZS 2293 discharge testing certification.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Fitting counts and compliance testing drive real cost",
+   "merges": [
+    "emergency lighting system testing",
+    "install emergency lighting system",
+    "exit sign fitting installation",
+    "exit sign fitting supply and install"
+   ],
+   "research_need": "Fitting type and count, wiring runs, 90-minute test and certification cost",
+   "family": "electrical",
+   "claim_count": 5
+  },
+  {
+   "id": "site-electrical-reticulation",
+   "title": "Site electrical reticulation and services",
+   "scope": "Installation of site-wide electrical reticulation, services layout equipment, pits, conduits and general electrical services fitout across an external site area.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Broad scope with trenching, conduit and equipment quantities",
+   "merges": [
+    "install site services layout and equipment",
+    "site services layout and equipment installation",
+    "install electrical reticulation systems",
+    "electrical services installation"
+   ],
+   "research_need": "Reticulation route lengths, conduit sizes, pit counts and excavation interface",
+   "family": "electrical",
+   "claim_count": 5
+  },
+  {
+   "id": "data-rack-and-network-hardware",
+   "title": "Data rack and network hardware",
+   "scope": "Supply and install communications rack, patch panels, network switches and rack-terminated structured cabling for one comms room or cabinet.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Active hardware and rack fitout are high value",
+   "merges": [
+    "install data rack and cabling",
+    "data rack installation",
+    "install data rack and network switches"
+   ],
+   "research_need": "Rack size, port counts, switch specification and cable certification testing",
+   "family": "electrical",
+   "claim_count": 5
+  },
+  {
+   "id": "perimeter-fencing-supply-install",
+   "title": "Perimeter security fencing supply install",
+   "scope": "Supply and installation of site perimeter fencing (mesh or steel palisade up to 2.4m high) on level ground including posts, footings and pedestrian access gates, excluding vehicle gates and automation.",
+   "unit": "m",
+   "materiality": "high",
+   "materiality_note": "Long runs, posts and footings; significant material and labour cost.",
+   "merges": [
+    "fence installation",
+    "security fence and access gate installation",
+    "steel fence supply and installation",
+    "perimeter fencing and gate installation",
+    "temporary and permanent site fencing installation"
+   ],
+   "research_need": "Fence type, height, footing detail, ground conditions, temporary versus permanent duration.",
+   "family": "external_works",
+   "claim_count": 5
+  },
+  {
+   "id": "landscape-irrigation-system",
+   "title": "Landscape irrigation system installation",
+   "scope": "Supply and installation of a pop-up and dripline irrigation system to landscaped areas including trenching, laterals, solenoid valves, controller and connection to an existing water supply point.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Trenching, valves and controller make this a substantial trade package.",
+   "merges": [
+    "irrigation system supply and installation",
+    "turf and irrigation system installation"
+   ],
+   "research_need": "Irrigated area, water supply point, backflow requirements, zoning and controller specification.",
+   "family": "external_works",
+   "claim_count": 5
+  },
+  {
+   "id": "steel-framing-purlins-bracing",
+   "title": "Primary steel framing and purlins",
+   "scope": "Supply, fabrication and erection of primary structural steel framing, purlins and bracing to revised member sizes or spacings within a single-storey portal or framed building.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Steel tonnage, fabrication and crane erection are major costs",
+   "merges": [
+    "structural steelwork fabrication and erection",
+    "install structural steel framing to spacing",
+    "install structural bracing",
+    "structural steel purlin sizing"
+   ],
+   "research_need": "Member sizes, tonnage, spacing change, crane access and erection duration",
+   "family": "structure",
+   "claim_count": 5
+  },
+  {
+   "id": "access-platforms-support-steel",
+   "title": "Access platforms and support steel",
+   "scope": "Secondary steelwork for roof access ladders, walkways, maintenance platforms and ceiling or services support framing, including handrails and fixings, within an existing structure.",
+   "unit": "sum",
+   "materiality": "medium",
+   "materiality_note": "Moderate steel quantity plus working-at-height labour",
+   "merges": [
+    "roof access ladder and walkway installation",
+    "structural platform sizing and construction",
+    "install structural ceiling support framing"
+   ],
+   "research_need": "Platform area, ladder height, loading, handrail standard and height access method",
+   "family": "structure",
+   "claim_count": 5
+  },
+  {
+   "id": "slab-redesign-reinforcement",
+   "title": "Slab redesign and reinforcement change",
+   "scope": "Reinforced concrete floor slab constructed to revised thickness, reinforcement or insulation design, including coldstore slabs, on prepared subgrade in an open area.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Concrete volume and steel tonnage change directly with design",
+   "merges": [
+    "structural slab reinforcement adjustment",
+    "reinforced concrete slab construction to revised design",
+    "construct reinforced concrete structure",
+    "coldstore floor slab design"
+   ],
+   "research_need": "Slab thickness, mesh or bar rate, insulation type and re-design fee",
+   "family": "structure",
+   "claim_count": 5
+  },
+  {
+   "id": "polished-concrete-floor-finish",
+   "title": "Polished concrete floor finish",
+   "scope": "Grinding, honing and polishing of existing slab to specified gloss level including densifier, sealer and integral colour or dye application, to open floor areas.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Grind passes, densifier and colour dye all carry rate impact.",
+   "merges": [
+    "polished concrete floor finish installation",
+    "polished concrete colour application"
+   ],
+   "research_need": "Grind level, aggregate exposure, gloss level and whether dye/oxide is specified.",
+   "family": "fitout",
+   "claim_count": 5
+  },
+  {
+   "id": "locker-supply-install",
+   "title": "Locker supply and installation",
+   "scope": "Supply and install banks of staff lockers including locks, plinths, end panels and wall noggings or blocking for fixing, in changing or amenity areas.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Unit cost per locker plus blocking and lock hardware.",
+   "merges": [
+    "locker supply and installation",
+    "supply and install lockers",
+    "locker lock and finish installation",
+    "locker fixing and nogging installation"
+   ],
+   "research_need": "Locker material, tier configuration, lock type and quantity per bank.",
+   "family": "fitout",
+   "claim_count": 5
+  },
+  {
+   "id": "tenant-signage-fabrication",
+   "title": "Tenant signage fabrication and installation",
+   "scope": "Fabrication and installation of tenant identification and wayfinding signage including substrate, graphics, fixings and installation access, excluding illuminated signage supply authority work.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Fabrication and install access give real per-sign cost.",
+   "merges": [
+    "tenant signage fabrication and installation"
+   ],
+   "research_need": "Sign type, size, illumination, substrate/finish and installation height.",
+   "family": "fitout",
+   "claim_count": 5
+  },
+  {
+   "id": "distribution-board-supply-install",
+   "title": "Distribution board supply and install",
+   "scope": "Supply, mount, wire and label a standard sub-distribution board up to circa 100A with chassis and final circuit breakers, excluding main switchboards.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Board, breakers and termination labour are priced items",
+   "merges": [
+    "distribution board supply and installation",
+    "install distribution board",
+    "distribution board installation",
+    "electrical distribution board installation"
+   ],
+   "research_need": "Board rating, way count, breaker schedule, IP rating and mounting method",
+   "family": "electrical",
+   "claim_count": 4
+  },
+  {
+   "id": "led-high-bay-luminaire",
+   "title": "LED high bay luminaire installation",
+   "scope": "Supply and install LED high bay luminaires at warehouse or industrial ceiling heights including suspension, final connection and access equipment.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Fitting cost plus elevated work access is significant",
+   "merges": [
+    "supply and install high bay led luminaire",
+    "led high bay luminaire supply and install"
+   ],
+   "research_need": "Luminaire wattage and spec, mounting height, EWP access requirement",
+   "family": "electrical",
+   "claim_count": 4
+  },
+  {
+   "id": "cladding-colour-selection",
+   "title": "Cladding colour selection change",
+   "scope": "Change of standard colour or finish selection on already specified cladding panels made before fabrication release, with no change to panel type, thickness or fixing.",
+   "unit": "m2",
+   "materiality": "low",
+   "materiality_note": "Same panel and labour; standard colour range carries no premium",
+   "merges": [
+    "cladding colour selection",
+    "aluminium composite panel colour finish"
+   ],
+   "research_need": "Whether selected colour sits outside standard range or delays fabrication release",
+   "family": "envelope",
+   "claim_count": 4
+  },
+  {
+   "id": "drainage-point-relocation",
+   "title": "Drainage point relocation and adjustment",
+   "scope": "Relocate or add a single drainage fixture or connection point with associated pipework up to about 6m, including bend or fall adjustments within an existing in-ground or in-slab run.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Breakout, refall and reinstatement cost more than pipe itself",
+   "merges": [
+    "relocate drainage fixture and pipework",
+    "install drainage connection point",
+    "relocate drainage point and pipework",
+    "drainage pipe bend adjustment"
+   ],
+   "research_need": "Breakout and reinstatement extent, drainlayer labour rates, fittings and re-testing requirements",
+   "family": "drainage",
+   "claim_count": 4
+  },
+  {
+   "id": "telecom-pit-installation",
+   "title": "Telecommunications pit installation",
+   "scope": "Supply and install precast telecommunications demarcation/service pits including excavation, bedding, lid, ducting connections and backfill in a trafficked or landscaped area.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Precast unit, excavation, ducting and utility coordination all priced",
+   "merges": [
+    "telecommunications demarcation pit installation",
+    "telecommunications pit installation"
+   ],
+   "research_need": "Pit size/class, lid loading rating, duct count, service provider standards and inspection fees",
+   "family": "civil",
+   "claim_count": 4
+  },
+  {
+   "id": "sprinkler-hydraulic-design",
+   "title": "Sprinkler hydraulic design and calculation",
+   "scope": "Fire engineer and sprinkler designer fees for hydraulic calculations, storage hazard classification and in-rack sprinkler connection design for a single warehouse or storage building.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Specialist design fees and hazard reclassification drive rework",
+   "merges": [
+    "sprinkler system design for storage hazard classification",
+    "fire sprinkler hydraulic design calculation",
+    "fire sprinkler rack connection design"
+   ],
+   "research_need": "Designer hourly rates, hazard classification scope, in-rack design fee benchmarks",
+   "family": "fire",
+   "claim_count": 4
+  },
+  {
+   "id": "fire-alarm-panel-cabling",
+   "title": "Fire alarm panel and cabling",
+   "scope": "Supply, install or upgrade a fire alarm control panel including relay, interface and FIP tie-in cabling to building services within one building.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Panel hardware plus cabling runs and recommissioning",
+   "merges": [
+    "fire alarm control panel installation",
+    "fire alarm panel replacement or upgrade",
+    "fire alarm interface wiring",
+    "fire alarm relay cabling installation"
+   ],
+   "research_need": "Panel type and loop count, cable run lengths, recommissioning and certification cost",
+   "family": "fire",
+   "claim_count": 4
+  },
+  {
+   "id": "acoustic-baffle-ceiling",
+   "title": "Acoustic baffle ceiling installation",
+   "scope": "Supply and suspend acoustic baffles, blades or rafts from soffit including wires, fixings and setout, to open-plan ceiling areas.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Proprietary baffles and access-equipment install are costly items.",
+   "merges": [
+    "acoustic baffle installation",
+    "acoustic baffle ceiling installation"
+   ],
+   "research_need": "Baffle product, size, quantity per m2, suspension height and access method.",
+   "family": "fitout",
+   "claim_count": 4
+  },
+  {
+   "id": "extract-supply-fan-ductwork",
+   "title": "Fan and ductwork installation",
+   "scope": "Supply and install small in-line or roof mounted supply/extract fan with associated galvanised ductwork, flexible connections, dampers and controls wiring for a single system run under 20m.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Plant, ductwork and controls all priced together",
+   "merges": [
+    "install air extract fan",
+    "install air supply fan",
+    "install extract air fan and ductwork",
+    "mechanical ductwork and equipment installation"
+   ],
+   "research_need": "Fan duty, duct size and length, insulation, acoustic and control requirements",
+   "family": "mechanical",
+   "claim_count": 4
+  },
+  {
+   "id": "mechanical-plant-relocation",
+   "title": "Relocation of mechanical plant",
+   "scope": "Disconnect, relocate and reconnect existing fans, condensers or similar mechanical plant within the same building including extended pipework, ductwork and power, plus re-commissioning.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Double handling, extended services and recommissioning per unit",
+   "merges": [
+    "extract fan relocation",
+    "mechanical equipment relocation",
+    "condenser unit relocation"
+   ],
+   "research_need": "Unit size, relocation distance, service extension lengths and downtime/access constraints",
+   "family": "mechanical",
+   "claim_count": 4
+  },
+  {
+   "id": "fall-arrest-anchor-system",
+   "title": "Roof fall arrest anchor system",
+   "scope": "Supply, install and certify fall arrest anchor points or static line on an existing roof, including structural fixing and load testing.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Certification and structural fixing exceed hardware cost",
+   "merges": [
+    "fall arrest anchor system installation",
+    "roof anchor and static line installation"
+   ],
+   "research_need": "Anchor type, substrate fixing, testing/certification and producer statement cost",
+   "family": "roofing",
+   "claim_count": 4,
+   "merged_from": [
+    "Roof anchor and static line"
+   ]
+  },
+  {
+   "id": "form-ventilation-opening-fabric",
+   "title": "Form ventilation opening in fabric",
+   "scope": "Cut, frame and weatherproof a new ventilation opening through existing wall or roof fabric including lintel/trimming, flashings and make-good, excluding fan and grille.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Structural trimming and weathertightness works per opening",
+   "merges": [
+    "form ventilation opening in wall or roof",
+    "form wall opening for mechanical plant"
+   ],
+   "research_need": "Existing fabric type, opening size, structural trimming and weatherproofing detail required",
+   "family": "mechanical",
+   "claim_count": 4,
+   "merged_from": [
+    "Form wall opening for plant"
+   ]
+  },
+  {
+   "id": "settlement-monitoring-installation",
+   "title": "Settlement monitoring installation and surveys",
+   "scope": "Supply and install settlement plates or monitoring instrumentation with baseline and periodic survey readings over a defined monitoring period.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Hardware cheap; repeat survey visits drive the cost",
+   "merges": [
+    "install settlement monitoring instrumentation",
+    "install settlement monitoring plates"
+   ],
+   "research_need": "Plate supply and install cost plus surveyor visit rate and monitoring duration",
+   "family": "ground",
+   "claim_count": 3
+  },
+  {
+   "id": "earthing-system-and-conductors",
+   "title": "Earthing system and conductor installation",
+   "scope": "Supply and install main and supplementary earthing conductors, earth electrodes, bonding and associated communications earth cabling within a single building or site.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Copper conductor and electrode quantities carry moderate cost",
+   "merges": [
+    "electrical earthing system installation",
+    "earthing and communications cable installation",
+    "earthing conductor installation"
+   ],
+   "research_need": "Conductor sizes, electrode counts, AS/NZS 3000 earth resistance test requirements",
+   "family": "electrical",
+   "claim_count": 3
+  },
+  {
+   "id": "main-switchboard-transformer-works",
+   "title": "Main switchboard and transformer works",
+   "scope": "Supply, install or upgrade a main switchboard and associated transformer, including planned shutdown, changeover and re-energisation of live services.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Major plant plus shutdown and out-of-hours labour",
+   "merges": [
+    "main switchboard and transformer installation",
+    "main switchboard upgrade and shutdown"
+   ],
+   "research_need": "Switchboard rating, transformer kVA, shutdown duration and out-of-hours access",
+   "family": "electrical",
+   "claim_count": 3
+  },
+  {
+   "id": "ev-charge-point-install",
+   "title": "EV charge point installation",
+   "scope": "Supply, mount, cable and commission an AC or DC EV charging unit including dedicated circuit, protection and load management to one bay.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Charger unit, submain and commissioning are high value",
+   "merges": [
+    "ev charge point supply and install"
+   ],
+   "research_need": "Charger kW and make, submain length, load management and network capacity",
+   "family": "electrical",
+   "claim_count": 3
+  },
+  {
+   "id": "security-cctv-access-control",
+   "title": "Security CCTV and access control",
+   "scope": "Supply, install and commission CCTV cameras, access control readers, door hardware interfaces and detection sensors with associated cabling for one building.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Devices, head-end and commissioning are high value",
+   "merges": [
+    "access control and cctv system installation",
+    "supply and install security cctv and access control system",
+    "install security detection sensors"
+   ],
+   "research_need": "Device counts, head-end platform, cabling runs and commissioning hours",
+   "family": "electrical",
+   "claim_count": 3
+  },
+  {
+   "id": "turf-supply-installation",
+   "title": "Turf supply and installation",
+   "scope": "Supply and laying of ready lawn or hydroseed over prepared subgrade in open areas including topsoil spreading, fine grading and initial establishment, excluding irrigation and planting beds.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Area-driven rate; topsoil import drives most of the cost.",
+   "merges": [
+    "turf supply and installation",
+    "plant and turf supply and installation"
+   ],
+   "research_need": "Turf type, topsoil depth and import source, area and establishment obligations.",
+   "family": "external_works",
+   "claim_count": 3
+  },
+  {
+   "id": "stormwater-line-upsizing",
+   "title": "Stormwater pipe and outlet resizing",
+   "scope": "Change in diameter of stormwater connection, discharge line or tank inlet/outlet opening from tendered size, priced as rate difference plus altered trench, fittings and penetrations.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Pipe upsizing changes trench, fittings and bedding cost",
+   "merges": [
+    "stormwater pipe connection sizing",
+    "stormwater tank opening sizing",
+    "stormwater discharge line sizing"
+   ],
+   "research_need": "Rate differentials per pipe diameter, fitting and tank penetration costs, trench width change",
+   "family": "drainage",
+   "claim_count": 3
+  },
+  {
+   "id": "stormwater-detention-tank",
+   "title": "Underground stormwater tank installation",
+   "scope": "Supply and install buried stormwater detention or storage tank including excavation, bedding, backfill, anti-flotation and inlet/outlet connections, for tanks up to around 30,000 litres.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Tank, deep excavation and craneage are significant cost items",
+   "merges": [
+    "supply and install stormwater tank",
+    "stormwater tank supply and installation",
+    "underground storage tank supply and installation"
+   ],
+   "research_need": "Tank supply rates by volume, excavation depth, dewatering, crane and backfill specification",
+   "family": "drainage",
+   "claim_count": 3
+  },
+  {
+   "id": "slab-edge-joint-detailing",
+   "title": "Slab edge and joint detailing",
+   "scope": "Formation of slab edge rebates, thickened or widened edge beams at penetrations and construction or control joints in a concrete floor slab, priced per linear metre of detail.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Extra formwork, bar and joint hardware over modest lengths",
+   "merges": [
+    "concrete slab edge rebate formation",
+    "concrete slab construction joint installation",
+    "edge beam width increase at penetration"
+   ],
+   "research_need": "Detail length, formwork complexity, dowel or joint product specified",
+   "family": "structure",
+   "claim_count": 3
+  },
+  {
+   "id": "fire-pump-set",
+   "title": "Fire pump set and testing",
+   "scope": "Supply, install, connect and flow test a diesel or electric fire pump set including controller, excluding pump room building and water storage tank.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Major plant item plus witnessed commissioning cost",
+   "merges": [
+    "fire pump set selection and installation",
+    "fire pump flow testing",
+    "fire pump installation and testing"
+   ],
+   "research_need": "Pump duty and drive type, supplier pricing, witnessed flow test costs",
+   "family": "fire",
+   "claim_count": 3
+  },
+  {
+   "id": "fire-pump-room-build",
+   "title": "Fire pump room construction",
+   "scope": "Construct a fire-rated pump room enclosure including slab, walls, roof, doors, ventilation and incoming power, water and drainage service connections, to a single plant room.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "New structure plus serviced connections, substantial builders work",
+   "merges": [
+    "fire pump room building construction",
+    "fire pump room services connections",
+    "fire pump room construction and installation"
+   ],
+   "research_need": "Room size, fire rating, service run distances and local authority requirements",
+   "family": "fire",
+   "claim_count": 3
+  },
+  {
+   "id": "fire-water-storage-tank",
+   "title": "Fire water storage tank",
+   "scope": "Supply and install a dedicated fire water storage tank with base, inlet, outlet and level controls, sized for sprinkler duration on a single site.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Large tank, foundation and connection works, high capital cost",
+   "merges": [
+    "fire water storage tank supply and installation"
+   ],
+   "research_need": "Required storage volume, tank material, foundation design and site access",
+   "family": "fire",
+   "claim_count": 3
+  },
+  {
+   "id": "site-water-main-and-meter-connection",
+   "title": "Site water main and meter",
+   "scope": "Supply and installation of buried site water main up to 100mm diameter with water meter assembly and connection to the network authority main, including trench, backfill and disinfection testing within the site boundary.",
+   "unit": "m",
+   "materiality": "high",
+   "materiality_note": "Excavation, authority fees and testing carry substantial cost",
+   "merges": [
+    "water main pipework supply and installation",
+    "water meter supply and installation",
+    "water supply connection works"
+   ],
+   "research_need": "Pipe diameter and material, main depth, network authority connection and meter fees",
+   "family": "hydraulic",
+   "claim_count": 3
+  },
+  {
+   "id": "roof-flashings-and-gutter-trims",
+   "title": "Metal flashing and gutter fabrication",
+   "scope": "Fabrication and installation of folded metal flashings, cappings and gutter trims to an existing roof, standard coated steel up to 0.55mm, excluding full roof sheet replacement.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Bespoke folding and labour on height adds real cost",
+   "merges": [
+    "metal flashing fabrication and installation",
+    "supply and install flashing and guttering finish"
+   ],
+   "research_need": "Folded girth bands, coating grade, crane/EWP access and jointing method",
+   "family": "roofing",
+   "claim_count": 3
+  },
+  {
+   "id": "roof-access-walkways-ladders",
+   "title": "Roof access walkway and ladder",
+   "scope": "Supply and install proprietary roof walkway, access ladder and handrail systems fixed to an existing structural roof, excluding structural steel strengthening.",
+   "unit": "m",
+   "materiality": "high",
+   "materiality_note": "Proprietary systems, engineering and height work are costly",
+   "merges": [
+    "roof access ladder and walkway installation",
+    "roof access walkway and handrail installation"
+   ],
+   "research_need": "System type, span, fixing to purlins, PS1 and compliance requirements",
+   "family": "roofing",
+   "claim_count": 3
+  },
+  {
+   "id": "condensate-drainage-works",
+   "title": "Condensate drainage and tundish",
+   "scope": "Install, connect or reroute condensate drain lines with tundish, trap and fall to nearest waste point within 15m, for air conditioning or refrigeration units.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Low material cost but ceiling access labour per unit",
+   "merges": [
+    "install condensate tundish",
+    "install condensate drain line connection",
+    "reroute condensate drain line"
+   ],
+   "research_need": "Drain run length, available fall, waste point location and ceiling access method",
+   "family": "mechanical",
+   "claim_count": 3
+  },
+  {
+   "id": "coordination-of-others-installations",
+   "title": "Coordination of others' installations",
+   "scope": "Main contractor attendance, programming, access and interface coordination for separate contractors installing pallet racking and loading dock equipment during the build.",
+   "unit": "sum",
+   "materiality": "medium",
+   "materiality_note": "Management time and attendance over weeks, no materials",
+   "merges": [
+    "coordinate dock equipment installation by others",
+    "coordinate pallet racking installation by others",
+    "coordinate racking and dock equipment installation by others"
+   ],
+   "research_need": "Attendance weeks, site management hourly rate, scaffold and power attendance scope",
+   "family": "contractual",
+   "claim_count": 3
+  },
+  {
+   "id": "protective-coating-structural",
+   "title": "Protective coating to structural elements",
+   "scope": "Application of specified protective coating systems to structural steel and exposed concrete surfaces, including surface preparation, priced per coated square metre.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Preparation and multi-coat systems add cost beyond base paint",
+   "merges": [
+    "protective coating application to structural steel",
+    "protective coating application to steel and concrete",
+    "protective coating application to pergola and exits"
+   ],
+   "research_need": "Coating system, durability class, surface area, shop versus site application",
+   "family": "structure",
+   "claim_count": 3,
+   "merged_from": [
+    "External protective coating application"
+   ]
+  },
+  {
+   "id": "geotech-testing-compaction-certification",
+   "title": "Geotechnical testing and compaction certification",
+   "scope": "Additional in-situ and laboratory earthworks testing (NDM, CBR, Scala, proof rolling) with engineer's compaction certification for a defined fill area.",
+   "unit": "sum",
+   "materiality": "medium",
+   "materiality_note": "Testing fees plus standby time add up on staged fills",
+   "merges": [
+    "geotechnical earthworks testing",
+    "earthworks compaction testing and certification"
+   ],
+   "research_need": "Typical NZ lab and field test unit rates plus engineer certification fees",
+   "family": "ground",
+   "claim_count": 2
+  },
+  {
+   "id": "exterior-aluminium-joinery",
+   "title": "Exterior window and door joinery",
+   "scope": "Supply and install exterior aluminium window and door units into prepared openings, including flashings and sealing, priced per m2 of joinery for standard commercial suites.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Glazing suite, IGU spec and flashings drive significant cost",
+   "merges": [
+    "door and window supply and installation",
+    "window installation"
+   ],
+   "research_need": "Suite and glazing spec rates per m2, flashing and sealing allowances",
+   "family": "joinery",
+   "claim_count": 2
+  },
+  {
+   "id": "kitchen-bathroom-fixtures",
+   "title": "Kitchen and bathroom fixture fitout",
+   "scope": "Supply and install kitchen and bathroom fixtures and cabinetry handles to completed joinery units, excluding plumbing and electrical connections.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Fixture supply cost varies; install labour modest per item",
+   "merges": [
+    "supply and install kitchen and bathroom fixtures",
+    "cabinet handle supply and installation"
+   ],
+   "research_need": "Fixture and handle supply rates by grade, fitting labour per item",
+   "family": "joinery",
+   "claim_count": 2
+  },
+  {
+   "id": "lighting-control-daylight-upgrade",
+   "title": "Lighting control system upgrade",
+   "scope": "Supply, install and commission lighting control gear (sensors, daylight dimming, DALI/relay controllers) added to existing or new luminaire circuits to meet compliance.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Control gear, cabling and commissioning are significant added cost",
+   "merges": [
+    "lighting control system installation",
+    "lighting and daylight compliance upgrade"
+   ],
+   "research_need": "Control protocol, sensor density, commissioning hours and NZBC H1/G8 compliance basis",
+   "family": "electrical",
+   "claim_count": 2
+  },
+  {
+   "id": "generator-supply-test-commission",
+   "title": "Generator provision testing and commissioning",
+   "scope": "Provision of temporary or standby generator plant including connection, load-bank or on-load testing, fuel and commissioning records for a single unit.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Hire, fuel and commissioning attendance are substantial",
+   "merges": [
+    "temporary generator provision and testing",
+    "standby generator testing and commissioning"
+   ],
+   "research_need": "Generator kVA, hire period, fuel rate, load bank and witness testing scope",
+   "family": "electrical",
+   "claim_count": 2
+  },
+  {
+   "id": "led-strip-lighting",
+   "title": "LED strip lighting supply install",
+   "scope": "Supply and install continuous or single LED strip/batten luminaires at normal ceiling heights including suspension and final connection.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Moderate per-metre rate, quantity driven",
+   "merges": [
+    "supply and install led strip lighting",
+    "led strip light supply and install"
+   ],
+   "research_need": "Strip type, driver, run lengths, mounting method and ceiling interface",
+   "family": "electrical",
+   "claim_count": 2
+  },
+  {
+   "id": "general-light-fitting-and-cabling",
+   "title": "General light fitting and cabling",
+   "scope": "Supply and install standard interior light fittings with associated final circuit cabling, ceiling penetrations and making good, excluding high bay and strip types.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Standard fittings and short cable runs, modest rates",
+   "merges": [
+    "light fitting supply and install",
+    "install light fitting cabling and penetrations"
+   ],
+   "research_need": "Fitting PC sum, cable run length, ceiling type and penetration method",
+   "family": "electrical",
+   "claim_count": 2
+  },
+  {
+   "id": "photovoltaic-array-installation",
+   "title": "Photovoltaic array supply and install",
+   "scope": "Supply and install roof-mounted PV modules, mounting rails, DC string cabling and inverters for a defined array capacity, excluding switchboard connection.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Panels and inverters are major supply items",
+   "merges": [
+    "photovoltaic system installation"
+   ],
+   "research_need": "Array kWp, roof type and fixing, inverter spec, DC cable runs",
+   "family": "electrical",
+   "claim_count": 2
+  },
+  {
+   "id": "cable-and-switchboard-upsizing",
+   "title": "Cable upsizing for voltage drop",
+   "scope": "Increase of cable and associated switchboard gear size above the base design to satisfy voltage drop or capacity compliance, priced as the differential.",
+   "unit": "m",
+   "materiality": "high",
+   "materiality_note": "Larger conductor differential and re-termination cost real money",
+   "merges": [
+    "cable upsizing for voltage drop compliance",
+    "switchboard and cabling upsizing"
+   ],
+   "research_need": "Original versus revised cable size, run length, and gear differential cost",
+   "family": "electrical",
+   "claim_count": 2
+  },
+  {
+   "id": "digital-print-panel-finish",
+   "title": "Digital print panel finish",
+   "scope": "Bespoke digitally printed graphic finish applied to facade or lining panels, including artwork setout, printing and protective coating, excluding panel supply and fixing.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Bespoke print and artwork carry premium over plain finish",
+   "merges": [
+    "digital print panel finish application"
+   ],
+   "research_need": "Print process, artwork setup charge, durability warranty and minimum order area",
+   "family": "envelope",
+   "claim_count": 2
+  },
+  {
+   "id": "glass-manifestation-application",
+   "title": "Glass manifestation to glazing",
+   "scope": "Design, supply and apply cut vinyl or frosted manifestation film to installed interior or facade glazing, including setout and edge trimming, measured per glazed pane area.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Bespoke design and site application add measurable cost",
+   "merges": [
+    "glass manifestation design and application",
+    "glazing manifestation application"
+   ],
+   "research_need": "Film type, design fee, pane sizes and whether applied after glazing install",
+   "family": "envelope",
+   "claim_count": 2
+  },
+  {
+   "id": "facade-sealant-weatherproofing",
+   "title": "Facade and window sealant joints",
+   "scope": "Supply and apply gun-grade sealant with backing rod to facade movement joints and window perimeters, including surface preparation and tooling, measured per joint length.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Sealant and access labour meaningful over long joint runs",
+   "merges": [
+    "apply sealant joint detail to facade",
+    "window sealant and weatherproofing installation"
+   ],
+   "research_need": "Joint width, sealant grade, total joint length and access requirements",
+   "family": "envelope",
+   "claim_count": 2
+  },
+  {
+   "id": "insulated-panel-penetration-seal",
+   "title": "Insulated panel service penetrations",
+   "scope": "Cut, trim, flash and seal service penetrations through installed insulated wall or roof panels and make good the panel facing, priced per penetration up to 300mm diameter.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Cutting, flashing kits and weathertightness make-good per opening",
+   "merges": [
+    "cut and seal service penetrations through insulated panels",
+    "insulated panel penetration make good"
+   ],
+   "research_need": "Penetration sizes, quantity, flashing details and panel warranty conditions",
+   "family": "envelope",
+   "claim_count": 2
+  },
+  {
+   "id": "vehicle-gate-and-automation",
+   "title": "Vehicle gate and automation",
+   "scope": "Supply and installation of a sliding or swing vehicular gate up to 6m clear opening including track, posts, motor, controls and power connection to a nearby supply point.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Gate hardware, motor and electrical connection are high value items.",
+   "merges": [
+    "automated gate installation",
+    "vehicular gate supply and installation"
+   ],
+   "research_need": "Opening width, gate type, automation spec, power/comms availability at gate.",
+   "family": "external_works",
+   "claim_count": 2
+  },
+  {
+   "id": "fence-gate-spares-supply",
+   "title": "Fence and gate spares",
+   "scope": "Supply only of manufacturer spare parts for installed fencing and gates (hinges, latches, motor components, mesh panels) handed over at practical completion, no installation.",
+   "unit": "sum",
+   "materiality": "low",
+   "materiality_note": "Small supply-only allowance, no labour or plant content.",
+   "merges": [
+    "fence and gate spares supply"
+   ],
+   "research_need": "Spares schedule required by specification and supplier list pricing.",
+   "family": "external_works",
+   "claim_count": 2
+  },
+  {
+   "id": "kerb-and-mowing-strip",
+   "title": "Concrete kerb and mowing strip",
+   "scope": "Supply and installation of precast or in-situ concrete kerb and mowing strip on prepared subgrade including excavation, bedding, haunching and jointing, in straight and gently curved runs.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Linear rate with excavation and concrete; moderate recurring value.",
+   "merges": [
+    "precast concrete kerb installation",
+    "mowing strip supply and installation"
+   ],
+   "research_need": "Kerb profile, precast versus in-situ, subgrade condition and total linear metres.",
+   "family": "external_works",
+   "claim_count": 2
+  },
+  {
+   "id": "external-paving-and-signage",
+   "title": "External paving and signage",
+   "scope": "Supply and installation of external paving surface finishes (unit pavers, exposed aggregate or applied surface treatment) to prepared bases plus associated wayfinding and site signage.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Finish selection and base preparation drive large rate variation.",
+   "merges": [
+    "pavement surface finish installation",
+    "external signage and paving installation"
+   ],
+   "research_need": "Paving finish type, base build-up, jointing, signage count and mounting detail.",
+   "family": "external_works",
+   "claim_count": 2
+  },
+  {
+   "id": "external-siteworks-scope-split",
+   "title": "External siteworks scope reallocation",
+   "scope": "Pricing of general external siteworks transferred across a contract or property boundary, covering earthworks, drainage and surfacing within a defined boundary strip, priced as a scope transfer.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Whole packages of civil work move; high value at stake.",
+   "merges": [
+    "external siteworks construction",
+    "civil works boundary reallocation"
+   ],
+   "research_need": "Boundary line definition, work items transferred, interface responsibilities and existing allowances.",
+   "family": "external_works",
+   "claim_count": 2
+  },
+  {
+   "id": "bollards-and-impact-barriers",
+   "title": "Bollards and impact barriers",
+   "scope": "Supply and installation of fixed or removable steel bollards and vehicle impact barriers set into concrete footings in existing or new hardstand, including core drilling and reinstatement.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Per-item cost modest but footings and coring add up.",
+   "merges": [
+    "install bollards and vehicle barriers",
+    "bollard and impact barrier installation"
+   ],
+   "research_need": "Bollard type, impact rating, footing detail, fixed or removable, existing surface reinstatement.",
+   "family": "external_works",
+   "claim_count": 2
+  },
+  {
+   "id": "manhole-lid-level-adjust",
+   "title": "Manhole lid level adjustment",
+   "scope": "Raise or lower existing manhole or chamber lid and frame to suit final surface level, including riser rings, mortar bedding and local surface reinstatement.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Small but real labour, risers and reinstatement per lid",
+   "merges": [
+    "manhole lid level adjustment"
+   ],
+   "research_need": "Riser and frame rates, breakout and reinstatement of surrounding surface finish",
+   "family": "drainage",
+   "claim_count": 2
+  },
+  {
+   "id": "plinths-and-cover-slabs",
+   "title": "Equipment plinths and cover slabs",
+   "scope": "Cast in-situ reinforced concrete equipment plinths and tank or pit cover slabs, including formwork, reinforcement and cast-in fixings, each under about 10m2.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Small volumes but formwork and reinforcement labour intensive",
+   "merges": [
+    "equipment plinth construction",
+    "concrete tank cover slab construction"
+   ],
+   "research_need": "Plinth dimensions, load and reinforcement, cast-in items, access for placement",
+   "family": "structure",
+   "claim_count": 2
+  },
+  {
+   "id": "timber-treatment-hazard-upgrade",
+   "title": "Timber treatment hazard class upgrade",
+   "scope": "Cost differential for supplying structural timber at a higher treatment hazard class than specified, for the same member sizes and installation labour.",
+   "unit": "m3",
+   "materiality": "medium",
+   "materiality_note": "Material rate differential only; labour unchanged unless lead time affected",
+   "merges": [
+    "timber treatment specification upgrade",
+    "timber treatment to hazard class"
+   ],
+   "research_need": "Timber volume, hazard class from and to, merchant rate gap and lead time",
+   "family": "structure",
+   "claim_count": 2
+  },
+  {
+   "id": "crash-rail-pedestrian-barrier",
+   "title": "Crash rails and pedestrian barriers",
+   "scope": "Supply and installation of steel crash rails, bollards and pedestrian guard barriers fixed to a concrete slab in traffic or loading areas, priced per linear metre.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Galvanised steel plus core-drilled fixings over modest lengths",
+   "merges": [
+    "steel crash rail installation",
+    "pedestrian barrier and crash rail installation"
+   ],
+   "research_need": "Rail profile, impact rating, fixing method into slab, finish and length",
+   "family": "structure",
+   "claim_count": 2
+  },
+  {
+   "id": "concrete-hardstand-ramp",
+   "title": "Concrete hardstand ramp construction",
+   "scope": "Construct graded concrete vehicle ramp including subgrade shaping, subbase, reinforced slab, kerb edges and non-slip finish, ramp area under 100m2.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Extra formwork, grading and finish over flat paving rates",
+   "merges": [
+    "construct concrete hardstand ramp"
+   ],
+   "research_need": "Gradient, slab thickness, edge restraint, surface texture and heavy vehicle loading",
+   "family": "civil",
+   "claim_count": 2
+  },
+  {
+   "id": "site-survey-setout",
+   "title": "Site survey and setout",
+   "scope": "Licensed surveyor attendance for existing conditions survey or construction grid setout of a single site, including marks, levels and as-built plan.",
+   "unit": "sum",
+   "materiality": "medium",
+   "materiality_note": "Surveyor day rates plus reporting; moderate but real cost",
+   "merges": [
+    "site grid setout survey",
+    "existing site conditions survey"
+   ],
+   "research_need": "Site area, survey accuracy, number of visits, deliverable format and surveyor day rates",
+   "family": "civil",
+   "claim_count": 2
+  },
+  {
+   "id": "foam-suppression-system",
+   "title": "Foam suppression system installation",
+   "scope": "Supply and install foam concentrate suppression system including tank, proportioner, foam-compatible heads and pipework to a hazardous goods or flammable liquid area.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Specialist proportioning equipment and concentrate carry high cost",
+   "merges": [
+    "sprinkler and foam suppression system installation",
+    "foam suppression system supply and installation"
+   ],
+   "research_need": "Foam concentrate type, proportioner sizing, supplier rates for hazardous goods areas",
+   "family": "fire",
+   "claim_count": 2
+  },
+  {
+   "id": "water-pressure-booster-pump-set",
+   "title": "Water pressure booster pump set",
+   "scope": "Supply, sizing and installation of a packaged domestic water booster pump set up to 2 pumps, including pipework connections, valves and electrical connection point within a plantroom.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Packaged plant, significant equipment and commissioning cost",
+   "merges": [
+    "install booster pump set",
+    "size and install booster pump for water pressure"
+   ],
+   "research_need": "Duty/flow and head required, pump set brand tiers, plantroom space and power availability",
+   "family": "hydraulic",
+   "claim_count": 2
+  },
+  {
+   "id": "ceiling-perimeter-seismic-detail",
+   "title": "Ceiling perimeter trim seismic detailing",
+   "scope": "Perimeter edge trim, shadowline angle and seismic movement gap detailing to suspended ceilings at walls, columns and penetrations, measured per lineal metre of perimeter.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Linear specialist labour and trim; adds up on long perimeters.",
+   "merges": [
+    "suspended ceiling grid edge trim installation",
+    "suspended ceiling seismic gap detailing"
+   ],
+   "research_need": "Trim profile, required seismic gap dimension and NZS 1170.5 restraint detail.",
+   "family": "fitout",
+   "claim_count": 2
+  },
+  {
+   "id": "vinyl-coving-cove-capping",
+   "title": "Vinyl coving and cove capping",
+   "scope": "Formation of coved vinyl skirting to walls including cove former, capping strip and welded junctions, measured along wall perimeter.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Skilled linear labour and cove/cap accessories, not trivial.",
+   "merges": [
+    "vinyl cove capping installation",
+    "vinyl covings installation"
+   ],
+   "research_need": "Cove height, former type, capping profile and number of internal/external corners.",
+   "family": "fitout",
+   "claim_count": 2
+  },
+  {
+   "id": "carpet-tile-flooring",
+   "title": "Carpet tile supply and lay",
+   "scope": "Supply and lay carpet tiles including subfloor preparation, tackifier adhesive, setout pattern and trimming to perimeters, in open office or circulation areas.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Tile grade drives large material cost differences per m2.",
+   "merges": [
+    "carpet tile supply and install",
+    "carpet tile laying and installation"
+   ],
+   "research_need": "Carpet tile grade/price band, laying pattern and subfloor preparation extent.",
+   "family": "fitout",
+   "claim_count": 2
+  },
+  {
+   "id": "interior-painting-application",
+   "title": "Interior painting to walls ceilings",
+   "scope": "Preparation and application of specified paint system to internal plasterboard walls and ceilings, including sealer and two topcoats, standard single colour per room.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Labour-driven per m2; extent and coats determine cost.",
+   "merges": [
+    "paint finish application",
+    "painting and decorating finish application"
+   ],
+   "research_need": "Paint system, number of coats, surface preparation level and access height.",
+   "family": "fitout",
+   "claim_count": 2
+  },
+  {
+   "id": "powdercoat-colour-selection",
+   "title": "Powdercoat colour selection supply",
+   "scope": "Nomination of powdercoat colour and finish for fabricated metalwork or joinery hardware where the substrate, preparation and coating process are unchanged.",
+   "unit": "sum",
+   "materiality": "low",
+   "materiality_note": "Standard-range colours price the same; only bespoke differs.",
+   "merges": [
+    "powdercoat colour selection and supply"
+   ],
+   "research_need": "Whether colour sits in standard range or attracts special/Dulux premium batch.",
+   "family": "fitout",
+   "claim_count": 2
+  },
+  {
+   "id": "service-roof-penetrations",
+   "title": "Framed and flashed roof penetrations",
+   "scope": "Forming, trimming and flashing new roof penetrations for services up to 600mm, including framing, soaker or proprietary flashing and weatherproofing.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Framing, flashing and weathertightness risk per penetration",
+   "merges": [
+    "form roof penetration opening",
+    "frame and flash roof penetrations for services"
+   ],
+   "research_need": "Penetration size range, roof type, framing extent and flashing system",
+   "family": "roofing",
+   "claim_count": 2
+  },
+  {
+   "id": "mechanical-plant-seismic-restraint",
+   "title": "Seismic restraint to mechanical plant",
+   "scope": "Supply and install NZS 1170.5 compliant seismic restraints, brackets and fixings to individual items of ceiling, roof or floor mounted mechanical plant and suspended services.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Engineered brackets, fixings and PS3 documentation per item",
+   "merges": [
+    "seismic restraint installation for mechanical plant",
+    "install seismic restraints for mechanical plant"
+   ],
+   "research_need": "Restraint type per plant weight/location and whether specific engineering design and PS3 required",
+   "family": "mechanical",
+   "claim_count": 2
+  },
+  {
+   "id": "low-level-air-inlet-install",
+   "title": "Low level air inlet installation",
+   "scope": "Supply and install low level supply or extract air inlet grille/louvre with frame, short duct spigot and wall make-good, per inlet in a lightweight or masonry wall.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Grille plus penetration and make-good per opening",
+   "merges": [
+    "install low level extract air inlet",
+    "install low level supply air inlet"
+   ],
+   "research_need": "Grille size, weatherproofing, insect screen and wall construction to be penetrated",
+   "family": "mechanical",
+   "claim_count": 2
+  },
+  {
+   "id": "process-plant-room-install",
+   "title": "Compressor and process plant installation",
+   "scope": "Install scheduled process or compressor room equipment onto prepared bases including alignment, service connections and pre-commissioning checks, plant supplied by client or others.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Heavy plant, rigging and specialist connection labour",
+   "merges": [
+    "compressor room equipment installation",
+    "process equipment installation to schedule"
+   ],
+   "research_need": "Equipment schedule, weights, rigging access and required service connection types",
+   "family": "mechanical",
+   "claim_count": 2
+  },
+  {
+   "id": "embedded-heating-pipework",
+   "title": "Underfloor and underground heating pipework",
+   "scope": "Supply and install embedded heating pipework in floor slab or buried trench including clipping, insulation, pressure testing and manifold connection, excluding heat source plant.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Significant pipe, insulation and programme-critical slab labour",
+   "merges": [
+    "install underground heating pipe",
+    "underfloor heating pipework installation"
+   ],
+   "research_need": "Pipe diameter, spacing, insulation, area or trench length and manifold locations",
+   "family": "mechanical",
+   "claim_count": 2
+  },
+  {
+   "id": "temporary-site-perimeter-fencing",
+   "title": "Temporary site perimeter fencing",
+   "scope": "Supply, install, maintain and remove temporary construction site perimeter fencing, including gates, bracing and shade cloth, for a typical build duration.",
+   "unit": "m",
+   "materiality": "high",
+   "materiality_note": "Linear hire and install rates over long perimeters add up",
+   "merges": [
+    "construction site fencing installation",
+    "temporary site fencing installation"
+   ],
+   "research_need": "Hire and install rates per metre for 1.8m temp fence, NZ regional",
+   "family": "contractual",
+   "claim_count": 2
+  },
+  {
+   "id": "extended-preliminaries-delayed-possession",
+   "title": "Extended preliminaries for delayed possession",
+   "scope": "Time-related preliminaries and general costs for site establishment held over a defined extension period caused by late site possession, excluding disruption or acceleration claims.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Weekly prelims run into thousands per week",
+   "merges": [
+    "extended preliminaries due to delayed site possession"
+   ],
+   "research_need": "Weekly time-related prelims rate and number of weeks of delay",
+   "family": "contractual",
+   "claim_count": 2
+  },
+  {
+   "id": "lime-cement-subgrade-stabilisation",
+   "title": "Lime cement subgrade stabilisation",
+   "scope": "In-situ stabilisation of soft subgrade with imported lime or cement binder to 300mm depth, including spreading, mixing, compaction and curing over an open area.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Specialist plant and binder supply carry substantial cost",
+   "merges": [
+    "subgrade stabilisation with lime cement binder"
+   ],
+   "research_need": "Binder application rates, specialist plant day rates and mixing depth assumptions",
+   "family": "ground",
+   "claim_count": 1
+  },
+  {
+   "id": "topsoil-stockpile-handling",
+   "title": "Topsoil stripping stockpiling and rehandling",
+   "scope": "Strip, stockpile, maintain and double-handle site topsoil within the site boundary, including stockpile erosion control, excluding offsite disposal.",
+   "unit": "m3",
+   "materiality": "medium",
+   "materiality_note": "Double-handling plant hours only; modest unless volumes large",
+   "merges": [
+    "topsoil stockpile handling and management"
+   ],
+   "research_need": "Excavator and truck hourly output for strip, stockpile and rehandle cycles",
+   "family": "ground",
+   "claim_count": 1
+  },
+  {
+   "id": "contaminated-soil-removal",
+   "title": "Contaminated soil removal and disposal",
+   "scope": "Excavation, classification, segregation and offsite disposal of contaminated or hazardous soil to a licensed landfill, including validation sampling, excluding remediation plant.",
+   "unit": "m3",
+   "materiality": "high",
+   "materiality_note": "Landfill acceptance fees and cartage dominate; very high per m3",
+   "merges": [
+    "contaminated soil and hazardous material removal"
+   ],
+   "research_need": "Class A/B landfill gate fees, cartage distance and validation sampling costs",
+   "family": "ground",
+   "claim_count": 1
+  },
+  {
+   "id": "rigid-inclusion-ground-improvement",
+   "title": "Rigid inclusion ground improvement",
+   "scope": "Installation of rigid inclusion or stone/grout columns to design depth including rig mobilisation, spoil handling and load transfer platform, excluding piling.",
+   "unit": "m",
+   "materiality": "high",
+   "materiality_note": "Specialist subcontract with large mobilisation and per-metre rates",
+   "merges": [
+    "rigid inclusion ground improvement works"
+   ],
+   "research_need": "Specialist subcontractor per-metre rates, rig mobilisation and load transfer platform cost",
+   "family": "ground",
+   "claim_count": 1
+  },
+  {
+   "id": "dock-leveller-and-shelter",
+   "title": "Dock leveller and shelter",
+   "scope": "Supply and install loading dock leveller with dock shelter and seals at one bay, including fixing and commissioning, excluding dock pit civil works.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "High value plant item with hydraulic commissioning",
+   "merges": [
+    "supply and install dock leveller and shelter"
+   ],
+   "research_need": "Leveller capacity and pit requirements, shelter type, commissioning cost per bay",
+   "family": "joinery",
+   "claim_count": 1
+  },
+  {
+   "id": "builders-work-electrical-interface",
+   "title": "Builders work for electrical services",
+   "scope": "Cutting, coring, chasing, penetrations, fire-stopping and making good by the builder to accommodate electrical services in an existing structure.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Coring and fire-stopping labour recur but per-item cost modest",
+   "merges": [
+    "builders work for electrical services interface"
+   ],
+   "research_need": "Penetration sizes, substrate type, fire rating and making-good standard",
+   "family": "electrical",
+   "claim_count": 1
+  },
+  {
+   "id": "door-track-hood-fabrication",
+   "title": "Door track hood fabrication",
+   "scope": "Fabricate and install folded metal hood or cover over exterior sliding door track and operator, including brackets, sealing and finish, per door opening.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Custom sheetmetal fabrication and fixing above door opening",
+   "merges": [
+    "fabricate and install door track hood"
+   ],
+   "research_need": "Hood profile, metal gauge and finish, door width and fixing substrate",
+   "family": "envelope",
+   "claim_count": 1
+  },
+  {
+   "id": "cladding-insulation-spec-upgrade",
+   "title": "Cladding insulation specification upgrade",
+   "scope": "Upgrade of cladding build-up and insulation thickness or type to achieve code compliance, priced as the differential cost over the tendered wall system per wall area.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "System substitution changes panel, fixing and thermal performance cost",
+   "merges": [
+    "adjust cladding and insulation specification for compliance"
+   ],
+   "research_need": "Original versus compliant build-up, R-value target and fixing/fire implications",
+   "family": "envelope",
+   "claim_count": 1
+  },
+  {
+   "id": "irrigation-controller-relocation",
+   "title": "Irrigation controller relocation",
+   "scope": "Disconnect, relocate and recommission an existing irrigation controller to a new position within 20m including extension of power and field wiring and retesting of zones.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Electrical and wiring extension work beyond simple unit shifting.",
+   "merges": [
+    "relocate irrigation controller"
+   ],
+   "research_need": "New location distance, power availability, number of zones requiring rewiring.",
+   "family": "external_works",
+   "claim_count": 1
+  },
+  {
+   "id": "mulch-and-weed-mat",
+   "title": "Mulch and weed mat",
+   "scope": "Supply and placement of weed matting and bark or pebble mulch to prepared garden beds at specified depth, including pinning and edging trim, over open accessible areas.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Material volume matters but rate is low and predictable.",
+   "merges": [
+    "landscape mulch and weed mat installation"
+   ],
+   "research_need": "Mulch type, depth, matting grade and total bed area.",
+   "family": "external_works",
+   "claim_count": 1
+  },
+  {
+   "id": "precast-concrete-wall",
+   "title": "Precast concrete wall construction",
+   "scope": "Supply, delivery and crane erection of precast concrete boundary or retaining wall panels up to 3m high including footings, grouting and panel jointing in an open crane-accessible area.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Precast supply, crane and footings are major cost items.",
+   "merges": [
+    "precast concrete wall construction"
+   ],
+   "research_need": "Panel size, wall height, footing design, crane access and connection details.",
+   "family": "external_works",
+   "claim_count": 1
+  },
+  {
+   "id": "manhole-with-orifice-control",
+   "title": "Stormwater manhole with orifice",
+   "scope": "Supply and install precast stormwater manhole to 2m depth complete with orifice plate flow control device, benching, lid and pipe connections.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Precast chamber, control device and deep excavation carry real money",
+   "merges": [
+    "install stormwater manhole with orifice control"
+   ],
+   "research_need": "Precast chamber rates by depth, orifice plate fabrication, council flow-control approval",
+   "family": "drainage",
+   "claim_count": 1
+  },
+  {
+   "id": "external-site-drainage-network",
+   "title": "External site drainage network installation",
+   "scope": "Site-wide external foul and stormwater reticulation beyond building perimeter, including trenching, bedded pipework, sumps and connection to council main, priced as a lump sum package.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Whole external drainage package, large quantities and civil plant",
+   "merges": [
+    "external drainage and stormwater installation"
+   ],
+   "research_need": "Pipe lengths and depths, sump counts, ground conditions, council connection fees",
+   "family": "drainage",
+   "claim_count": 1
+  },
+  {
+   "id": "wastewater-pump-station",
+   "title": "Wastewater pump station installation",
+   "scope": "Supply and install packaged wastewater pump station including chamber, duty/standby pumps, level controls, rising main connection and power/alarm provision.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Mechanical, electrical and deep chamber work is high value",
+   "merges": [
+    "wastewater pump station installation"
+   ],
+   "research_need": "Pump duty and chamber depth, electrical supply, controls, commissioning and council acceptance",
+   "family": "drainage",
+   "claim_count": 1
+  },
+  {
+   "id": "stainless-overflow-cover",
+   "title": "Stainless steel overflow cover fabrication",
+   "scope": "Bespoke fabrication and installation of stainless steel overflow or sump cover plate including frame, fixings and finish, for single custom-sized units.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Custom stainless fabrication priced well above standard grate",
+   "merges": [
+    "stainless steel overflow cover fabrication"
+   ],
+   "research_need": "Plate grade and thickness, fabrication hours, finish, template and site fit allowance",
+   "family": "drainage",
+   "claim_count": 1
+  },
+  {
+   "id": "civil-site-services",
+   "title": "Civil site services trenching works",
+   "scope": "Install below-ground site service runs including trench excavation, bedding, ducts/pipework, backfill and reinstatement across a site, excluding pits and building connections.",
+   "unit": "m",
+   "materiality": "high",
+   "materiality_note": "Excavation, bedding, pipe and reinstatement are substantial cost",
+   "merges": [
+    "construct civil site services works"
+   ],
+   "research_need": "Service types, trench depth, ground conditions, reinstatement surface and run lengths",
+   "family": "civil",
+   "claim_count": 1
+  },
+  {
+   "id": "loading-dock-pit",
+   "title": "Loading dock pit construction",
+   "scope": "Construct in-ground reinforced concrete loading dock or leveller pit including bulk excavation, shoring, base slab, walls, drainage and edge angles.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Deep excavation, structural concrete and drainage carry real money",
+   "merges": [
+    "loading dock pit construction"
+   ],
+   "research_need": "Pit dimensions, groundwater, shoring need, reinforcement, drainage and leveller embedment details",
+   "family": "civil",
+   "claim_count": 1
+  },
+  {
+   "id": "demolition-making-good",
+   "title": "Demolition and making good",
+   "scope": "Demolish existing minor civil structures or surfaces, remove debris off site, and make good adjoining surfaces to match existing.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Plant, disposal fees and reinstatement are significant",
+   "merges": [
+    "demolition and making good works"
+   ],
+   "research_need": "Element type and volume, hazardous material presence, disposal rates, reinstatement extent",
+   "family": "civil",
+   "claim_count": 1
+  },
+  {
+   "id": "pavement-deflection-testing",
+   "title": "Pavement deflection testing",
+   "scope": "Specialist non-destructive deflection testing of existing pavement (FWD or Benkelman beam) including mobilisation, test runs and interpretive report.",
+   "unit": "sum",
+   "materiality": "medium",
+   "materiality_note": "Specialist plant mobilisation and reporting, limited quantity exposure",
+   "merges": [
+    "pavement deflection testing"
+   ],
+   "research_need": "Test method, number of test points, traffic management need, reporting scope and mobilisation cost",
+   "family": "civil",
+   "claim_count": 1
+  },
+  {
+   "id": "fire-alarm-devices",
+   "title": "Fire alarm detection device installation",
+   "scope": "Supply and install additional smoke, heat or manual call point devices on an existing alarm loop, including local cabling and programming, per device.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Per-device cost modest but multiplies across a building",
+   "merges": [
+    "fire alarm detection device installation"
+   ],
+   "research_need": "Device types, loop spare capacity, cabling access and programming rates",
+   "family": "fire",
+   "claim_count": 1
+  },
+  {
+   "id": "fire-rated-door",
+   "title": "Fire rated door installation",
+   "scope": "Supply and install a fire rated door set with frame, hardware, seals and tagging into a new or existing rated wall opening.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Rated door sets cost well above standard doors",
+   "merges": [
+    "fire rated door installation"
+   ],
+   "research_need": "Fire rating, leaf size, hardware spec and any hold-open interface",
+   "family": "fire",
+   "claim_count": 1
+  },
+  {
+   "id": "fire-rated-wall-upgrade",
+   "title": "Fire rated wall panel upgrade",
+   "scope": "Upgrade existing wall linings or panels to achieve a specified fire resistance rating, including framing, rated board, penetrations sealing and finishing.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Rated lining, penetration sealing and inspection add real cost",
+   "merges": [
+    "fire rated panel wall upgrade"
+   ],
+   "research_need": "Required FRR, existing wall build-up, penetration count and tested system options",
+   "family": "fire",
+   "claim_count": 1
+  },
+  {
+   "id": "pressure-reducing-relief-valve-install",
+   "title": "In-line pressure relief valve",
+   "scope": "Supply and installation of a single in-line pressure relief or reducing valve on potable water pipework up to 50mm, including isolation valves, gauge and recommissioning of the affected section.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Modest valve cost but drain down and recommissioning labour",
+   "merges": [
+    "install pressure relief valve"
+   ],
+   "research_need": "Line size, set pressure, valve specification tier and required isolation/drain down",
+   "family": "hydraulic",
+   "claim_count": 1
+  },
+  {
+   "id": "condensate-drain-pipework",
+   "title": "Condensate drain pipework installation",
+   "scope": "Supply and installation of small-bore condensate drain pipework up to 40mm from HVAC units to nearest tundish or waste, including falls, brackets and insulation, within a serviced ceiling or riser.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Cheap material but access and coordination labour accumulates",
+   "merges": [
+    "condensate drain pipework installation"
+   ],
+   "research_need": "Run lengths, discharge points available, ceiling access and insulation requirement",
+   "family": "hydraulic",
+   "claim_count": 1
+  },
+  {
+   "id": "floor-waste-and-trap-primer",
+   "title": "Floor waste and trap primer",
+   "scope": "Supply and installation of a floor waste gully with trap primer line and connection to nearest waste stack in a wet area, including core drilling of suspended slab and flashing to waterproof membrane.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Core drilling and membrane interface drive cost beyond fitting",
+   "merges": [
+    "install floor waste and trap primer"
+   ],
+   "research_need": "Slab type and thickness, membrane interface detail, primer water source location",
+   "family": "hydraulic",
+   "claim_count": 1
+  },
+  {
+   "id": "pipework-acoustic-lagging",
+   "title": "Acoustic lagging to pipework",
+   "scope": "Supply and installation of mass-loaded acoustic lagging to exposed waste and water pipework up to 150mm in ceiling voids, risers or over habitable rooms, including sealing at joints and penetrations.",
+   "unit": "m",
+   "materiality": "medium",
+   "materiality_note": "Material rate modest, but retrofit access can dominate",
+   "merges": [
+    "acoustic lagging installation to pipework"
+   ],
+   "research_need": "Acoustic rating required, pipe diameters and lengths, new build versus retrofit access",
+   "family": "hydraulic",
+   "claim_count": 1
+  },
+  {
+   "id": "rainwater-harvesting-tank-fittings",
+   "title": "Rainwater harvesting tank fittings",
+   "scope": "Supply and installation of proprietary rainwater harvesting tank inlet/outlet fittings such as binder plugs, calmed inlets and overflow connections on an installed tank.",
+   "unit": "ea",
+   "materiality": "low",
+   "materiality_note": "Small proprietary fittings, minor labour, same trade rate",
+   "merges": [
+    "rainwater harvesting binder plug installation"
+   ],
+   "research_need": "Tank type and manufacturer fitting range, number of penetrations, warranty constraints",
+   "family": "hydraulic",
+   "claim_count": 1
+  },
+  {
+   "id": "wastewater-control-system",
+   "title": "Wastewater pump control system",
+   "scope": "Supply and installation of a wastewater pump station control system including control panel, level sensors, alarms and wiring to pumps, excluding the pump chamber civil works.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Control panel, sensors and commissioning are high value",
+   "merges": [
+    "wastewater control system installation"
+   ],
+   "research_need": "Pump duty and number, telemetry/BMS interface, council or specification control standard",
+   "family": "hydraulic",
+   "claim_count": 1
+  },
+  {
+   "id": "hydraulic-services-rough-in",
+   "title": "General hydraulic services rough-in",
+   "scope": "Supply and installation of general hydraulic rough-in to a defined building area, covering hot and cold water, waste and vent pipework to fixture points, excluding fixtures, plant and site mains.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Whole-of-area trade package, large labour and material content",
+   "merges": [
+    "hydraulic services installation"
+   ],
+   "research_need": "Fixture count and density per area, pipe materials specified, building type and storeys",
+   "family": "hydraulic",
+   "claim_count": 1
+  },
+  {
+   "id": "plywood-wall-lining",
+   "title": "Plywood feature wall lining",
+   "scope": "Supply and fix sheet plywood wall lining to existing framing including battens, fixings, joint treatment and clear sealer, to internal walls only.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Ply grade and visual-quality fixing drive real cost.",
+   "merges": [
+    "plywood wall lining installation"
+   ],
+   "research_need": "Ply grade, thickness, joint detail and finish (clear seal vs stain).",
+   "family": "fitout",
+   "claim_count": 1
+  },
+  {
+   "id": "vinyl-sheet-flooring",
+   "title": "Vinyl sheet flooring supply install",
+   "scope": "Supply and lay sheet or plank vinyl flooring including subfloor preparation, levelling compound, adhesive and welded seams, to internal floor areas.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Material, levelling and welding labour are significant per m2.",
+   "merges": [
+    "vinyl flooring supply and installation"
+   ],
+   "research_need": "Vinyl grade, slip rating, extent of levelling and welding requirement.",
+   "family": "fitout",
+   "claim_count": 1
+  },
+  {
+   "id": "entry-mat-system",
+   "title": "Recessed entry mat system",
+   "scope": "Supply and install proprietary entrance matting system in a recessed or surface-mounted frame at building entries, including frame, infill and setout.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Proprietary matting and recess frame carry moderate cost.",
+   "merges": [
+    "entry mat system installation"
+   ],
+   "research_need": "Mat system type, recess depth required and frame material/finish.",
+   "family": "fitout",
+   "claim_count": 1
+  },
+  {
+   "id": "floor-tile-edge-trim",
+   "title": "Floor tile edge trim installation",
+   "scope": "Supply and fix metal or PVC edge, transition and reducer trims at floor finish junctions and thresholds, measured per lineal metre.",
+   "unit": "m",
+   "materiality": "low",
+   "materiality_note": "Small linear quantities and low material cost.",
+   "merges": [
+    "floor tile edge trim installation"
+   ],
+   "research_need": "Trim material, profile and number of finish transitions.",
+   "family": "fitout",
+   "claim_count": 1
+  },
+  {
+   "id": "stainless-chequer-plate-floor",
+   "title": "Stainless chequer plate floor installation",
+   "scope": "Supply and install stainless steel chequer plate flooring to plant, wet or service areas including cutting, fixing and edge treatment over prepared substrate.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Stainless plate material and fabrication are high value.",
+   "merges": [
+    "stainless steel chequer plate flooring installation"
+   ],
+   "research_need": "Plate grade, thickness, fixing method and substrate/support requirements.",
+   "family": "fitout",
+   "claim_count": 1
+  },
+  {
+   "id": "toilet-cubicle-partitions",
+   "title": "Toilet cubicle partition installation",
+   "scope": "Supply and install proprietary toilet cubicle partition system including pilasters, doors, hardware and fixings, to amenity areas.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Cubicle systems are high-value proprietary items per unit.",
+   "merges": [
+    "supply and install toilet cubicle partitions"
+   ],
+   "research_need": "Cubicle system, panel material/finish, ceiling-hung vs floor-mounted, hardware spec.",
+   "family": "fitout",
+   "claim_count": 1
+  },
+  {
+   "id": "multi-colour-feature-painting",
+   "title": "Multi-colour feature painting tinting",
+   "scope": "Additional cost for multiple paint colours in one area including extra cut-ins, masking, setout of colour blocks and deep-tint base premiums.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Extra cut-ins, masking and part-pots add measurable labour.",
+   "merges": [
+    "multi-colour painting and tinting"
+   ],
+   "research_need": "Number of colours per room, cut-in lengths and tint base premiums.",
+   "family": "fitout",
+   "claim_count": 1
+  },
+  {
+   "id": "internal-blinds-supply-install",
+   "title": "Internal window blinds installation",
+   "scope": "Supply and install roller or venetian blinds to internal face of windows including brackets, pelmets and chain controls, standard commercial sizes.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Fabric grade and motorisation swing cost materially.",
+   "merges": [
+    "blinds supply and installation"
+   ],
+   "research_need": "Blind type, fabric openness, manual vs motorised, and window sizes.",
+   "family": "fitout",
+   "claim_count": 1
+  },
+  {
+   "id": "builders-work-specialist-fitout",
+   "title": "Builders work for specialist fitout",
+   "scope": "Attendance, blocking, penetrations, patching and general builders work in connection with a specialist contractor's fitout installation, within an existing fitout area.",
+   "unit": "sum",
+   "materiality": "medium",
+   "materiality_note": "Undefined attendance hours can accumulate significant labour.",
+   "merges": [
+    "builders work for specialist contractor fitout"
+   ],
+   "research_need": "Specialist scope, attendance hours, blocking extent and make-good obligations.",
+   "family": "fitout",
+   "claim_count": 1
+  },
+  {
+   "id": "roof-turbine-ventilator",
+   "title": "Roof turbine ventilator supply install",
+   "scope": "Supply and install proprietary turbine or passive roof ventilators including base, soaker flashing and weatherproofing on profiled metal roofing.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Proprietary unit plus flashed penetration per item",
+   "merges": [
+    "roof turbine ventilator installation"
+   ],
+   "research_need": "Ventilator size/type, roof pitch and profile, flashing base compatibility",
+   "family": "roofing",
+   "claim_count": 1
+  },
+  {
+   "id": "mech-plant-builderswork-power",
+   "title": "Builderswork and power connection",
+   "scope": "Builderswork plinths, penetrations, supports and final electrical connection/isolator to mechanical equipment supplied by others, excluding the plant itself.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Multi-trade interface labour, modest material content",
+   "merges": [
+    "mechanical equipment builderswork and electrical connection"
+   ],
+   "research_need": "Plant size, power rating, cable run length and who supplies isolator and submain",
+   "family": "mechanical",
+   "claim_count": 1
+  },
+  {
+   "id": "services-commissioning-tuning",
+   "title": "Services commissioning and tuning",
+   "scope": "Additional commissioning, air and water balancing, BMS tuning and witnessing of mechanical systems beyond the contract allowance, excluding defect rectification.",
+   "unit": "sum",
+   "materiality": "medium",
+   "materiality_note": "Specialist time-based cost, no material content",
+   "merges": [
+    "building services commissioning and tuning"
+   ],
+   "research_need": "Number of systems, balancing points, witnessing attendances and commissioning agent day rates",
+   "family": "mechanical",
+   "claim_count": 1
+  },
+  {
+   "id": "mechanical-installation-revision",
+   "title": "Mechanical services installation revision",
+   "scope": "Rework of installed mechanical services to a revised design including removal, re-routing and reinstatement within the same plant capacity, excluding new plant.",
+   "unit": "sum",
+   "materiality": "high",
+   "materiality_note": "Abortive work plus rework of installed services",
+   "research_need": "Extent of installed work affected, design change scope and abortive labour already expended",
+   "merges": [
+    "mechanical services installation revision"
+   ],
+   "family": "mechanical",
+   "claim_count": 1
+  },
+  {
+   "id": "refrigeration-pipework-termination",
+   "title": "Refrigeration pipework termination",
+   "scope": "Terminate and connect insulated refrigeration pipework to cabinets or plant including brazing, pressure test, evacuation and gas charge, per termination point.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Specialist refrigeration labour and gas charge per point",
+   "merges": [
+    "install refrigeration pipework termination"
+   ],
+   "research_need": "Refrigerant type, pipe sizes, insulation and certified technician rates per termination",
+   "family": "mechanical",
+   "claim_count": 1
+  },
+  {
+   "id": "glycol-circulation-pump",
+   "title": "Glycol circulation pump installation",
+   "scope": "Supply and install glycol circulation pump set with isolation valves, flexible connections, strainer and power/control connection to existing glycol circuit.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Packaged pump plus connections is significant plant cost",
+   "merges": [
+    "supply and install glycol circulation pump"
+   ],
+   "research_need": "Pump duty, glycol concentration, control interface and available power supply",
+   "family": "mechanical",
+   "claim_count": 1
+  },
+  {
+   "id": "laydown-storage-area-establishment",
+   "title": "Material laydown area establishment",
+   "scope": "Forming, surfacing and reinstating a hardstand material storage and laydown area within the site boundary, excluding fencing and site offices.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Hardstand metalling and reinstatement carries measurable cost",
+   "merges": [
+    "material storage area establishment"
+   ],
+   "research_need": "Area required, GAP metal depth, geotextile, and reinstatement obligation",
+   "family": "contractual",
+   "claim_count": 1
+  },
+  {
+   "id": "site-safety-signage-marking",
+   "title": "Site safety signage and marking",
+   "scope": "Supply and install assembly point signage, directional and hazard signs with associated ground marking for the construction site.",
+   "unit": "ea",
+   "materiality": "low",
+   "materiality_note": "Few low-cost signs, minimal labour content",
+   "merges": [
+    "site assembly point signage and marking"
+   ],
+   "research_need": "Sign count, sizes, mounting method and whether H&S plan mandates them",
+   "family": "contractual",
+   "claim_count": 1
+  },
+  {
+   "id": "insurance-endorsement-amendment",
+   "title": "Contract insurance endorsement amendment",
+   "scope": "Amending or endorsing contract works, public liability or professional indemnity cover to meet a changed client requirement, priced as premium adjustment plus broker fee.",
+   "unit": "sum",
+   "materiality": "medium",
+   "materiality_note": "Premium uplift varies with sum insured and cover change",
+   "merges": [
+    "insurance policy endorsement amendment"
+   ],
+   "research_need": "Broker fee plus premium rate percentage for cover type and sum insured",
+   "family": "contractual",
+   "claim_count": 1
+  },
+  {
+   "id": "client-supplied-goods-handling",
+   "title": "Client-supplied goods handling installation",
+   "scope": "Receiving, unloading, storing, protecting and installing free-issue client-supplied items, excluding the cost of the goods themselves and any warranty risk.",
+   "unit": "ea",
+   "materiality": "medium",
+   "materiality_note": "Labour, plant and storage real but goods cost excluded",
+   "merges": [
+    "handling and installation of client-supplied goods"
+   ],
+   "research_need": "Item weights, delivery programme, storage duration and craneage or handling plant",
+   "family": "contractual",
+   "claim_count": 1
+  },
+  {
+   "id": "substitution-design-review",
+   "title": "Engineering review of product substitutions",
+   "scope": "Structural and fire engineer hours to assess a proposed product or system substitution, re-issue calculations and PS1/PS4 documentation, excluding any redesign of the base building.",
+   "unit": "hour",
+   "materiality": "high",
+   "materiality_note": "Chargeable engineer hours plus producer statement reissue fees",
+   "merges": [
+    "structural and fire design review for substitutions"
+   ],
+   "research_need": "Current NZ structural and fire engineer hourly rates and PS1 reissue fee ranges",
+   "family": "professional",
+   "claim_count": 1
+  },
+  {
+   "id": "evacuation-scheme-design",
+   "title": "Evacuation scheme design and approval",
+   "scope": "Preparation of a building evacuation scheme, trial evacuation documentation and lodgement with Fire and Emergency NZ for approval, for a single building.",
+   "unit": "sum",
+   "materiality": "medium",
+   "materiality_note": "Fixed consultant fee plus statutory lodgement, modest but real",
+   "merges": [
+    "evacuation scheme design and approval"
+   ],
+   "research_need": "Fire consultant fee for evacuation scheme and FENZ approval lodgement costs",
+   "family": "professional",
+   "claim_count": 1
+  },
+  {
+   "id": "qa-software-licensing",
+   "title": "Quality assurance software licensing",
+   "scope": "Per-user subscription licences for site quality assurance and ITP software over the construction period, excluding hardware and configuration labour.",
+   "unit": "sum",
+   "materiality": "medium",
+   "materiality_note": "Per-seat monthly fees over long programmes accumulate",
+   "merges": [
+    "quality assurance software licensing"
+   ],
+   "research_need": "Typical per-user monthly licence rates and seat counts for NZ site QA platforms",
+   "family": "professional",
+   "claim_count": 1
+  },
+  {
+   "id": "vehicle-boom-gate-installation",
+   "title": "Vehicle boom gate installation",
+   "scope": "Supply and install a single motorised boom gate barrier with controller, loop detector and power/data connection to an existing paved access point.",
+   "unit": "ea",
+   "materiality": "high",
+   "materiality_note": "Proprietary hardware, power, controls and commissioning all add cost.",
+   "merges": [
+    "boom gate barrier installation"
+   ],
+   "research_need": "Boom arm length, access control interface, power/data availability, commissioning requirements",
+   "family": "specialist",
+   "claim_count": 1
+  },
+  {
+   "id": "coolstore-panel-thermal-upgrade",
+   "title": "Insulated panel thermal specification upgrade",
+   "scope": "Change of insulated sandwich panel core thickness or type to meet a revised design temperature, priced as a rate difference over the tendered panel across walls and ceiling.",
+   "unit": "m2",
+   "materiality": "medium",
+   "materiality_note": "Panel rate delta is real but fixings and labour largely unchanged.",
+   "merges": [
+    "adjust insulated panel specification for design temperature"
+   ],
+   "research_need": "Panel thickness/core options, R-value required, rate delta, flashing and fixing implications",
+   "family": "specialist",
+   "claim_count": 1
+  },
+  {
+   "id": "licensed-asbestos-removal",
+   "title": "Licensed asbestos removal and disposal",
+   "scope": "Licensed removal, containment, air monitoring, clearance certification and approved landfill disposal of identified asbestos-containing material in an existing building.",
+   "unit": "m2",
+   "materiality": "high",
+   "materiality_note": "Licensed trade, containment, monitoring and special disposal are costly.",
+   "merges": [
+    "asbestos removal and disposal"
+   ],
+   "research_need": "ACM type and friability, area, access, WorkSafe notification, clearance and disposal rates",
+   "family": "specialist",
+   "claim_count": 1
+  }
+ ],
+ "dedupe_groups": [
+  {
+   "keep": 15,
+   "merge": [
+    6,
+    12
+   ],
+   "why": "Identical retaining wall construction, m2, 3m height"
+  },
+  {
+   "keep": 81,
+   "merge": [
+    37
+   ],
+   "why": "Same head-of-wall deflection detail per metre"
+  },
+  {
+   "keep": 16,
+   "merge": [
+    155
+   ],
+   "why": "Door hardware set per leaf, same work"
+  },
+  {
+   "keep": 107,
+   "merge": [
+    100
+   ],
+   "why": "Roof anchor/static line install and certify"
+  },
+  {
+   "keep": 111,
+   "merge": [
+    83
+   ],
+   "why": "Cut and frame opening in existing fabric"
+  },
+  {
+   "keep": 23,
+   "merge": [
+    87
+   ],
+   "why": "Reinforced external concrete slab on basecourse"
+  },
+  {
+   "keep": 95,
+   "merge": [
+    128
+   ],
+   "why": "Protective coating to steel/concrete, per m2"
+  },
+  {
+   "keep": 38,
+   "merge": [
+    93
+   ],
+   "why": "Internal non-loadbearing framed lined partitions"
+  },
+  {
+   "keep": 117,
+   "merge": [
+    26
+   ],
+   "why": "Imported granular fill placed compacted per m3"
+  }
+ ]
+}
