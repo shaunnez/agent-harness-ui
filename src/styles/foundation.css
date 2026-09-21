@@ -194,3 +194,18 @@ small {
   height: 100dvh;
   overflow: hidden;
 }
+
+/*
+ * The retained tail of a failed repository command. Scrolls rather than grows:
+ * up to 40 lines land here and the surrounding panel is a detail list, not a log
+ * viewer, so an unbounded block would push every other field off screen.
+ */
+.retained-output {
+  margin: 4px 0 0;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.5;
+}

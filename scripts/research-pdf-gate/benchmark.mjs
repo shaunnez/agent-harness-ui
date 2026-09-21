@@ -50,7 +50,7 @@ export function summarisePdfGate(runs) {
 
 export function renderPdfGateReport({ benchmark, cases, plans, runs, summary }) {
   const lines = [
-    "# Firecrawl versus PlanCheck PDF gate",
+    "# Firecrawl versus PlanCheck legacy-assessment PDF gate",
     "",
     `Generated: ${benchmark.generatedAt}`,
     "",
@@ -60,14 +60,15 @@ export function renderPdfGateReport({ benchmark, cases, plans, runs, summary }) 
     "",
     `- Cases: ${cases.length}`,
     `- Firecrawl preflight ceiling: ${benchmark.estimatedFirecrawlCredits} credits`,
-    `- PlanCheck vision ceiling: ${benchmark.estimatedPlanCheckVisionCalls} page calls`,
+    `- PlanCheck legacy assessment vision ceiling: ${benchmark.estimatedPlanCheckVisionCalls} page calls`,
     "- Provider summaries and reasoning: disabled",
     "- Firecrawl retained result: extracted snapshot and metadata; no local duplicate of its response source",
-    "- PlanCheck benchmark retained public source bytes locally so the exact extractor input can be replayed",
+    "- The PlanCheck route is the legacy run_check.py assessment extractor, not the current detection worker",
+    "- The PlanCheck benchmark retained public source bytes locally so the exact extractor input can be replayed",
     "",
     "## Preflight",
     "",
-    "| Case | Source pages | Page cap | PlanCheck sparse/vision pages | Firecrawl mode |",
+    "| Case | Source pages | Page cap | PlanCheck legacy sparse/vision pages | Firecrawl mode |",
     "| --- | ---: | ---: | ---: | --- |",
   ];
   for (const testCase of cases) {
@@ -106,7 +107,7 @@ export function renderPdfGateReport({ benchmark, cases, plans, runs, summary }) 
     );
     for (const run of runs.filter((item) => item.caseId === testCase.id)) {
       const coverage =
-        run.provider === "plancheck"
+        run.provider === "plancheck-legacy-assessment"
           ? `${run.metadata.parsedPages ?? 0}/${run.metadata.pagesFromText ?? 0}/${run.metadata.pagesFromVision ?? 0}/${run.metadata.pagesMissing?.length ?? 0}`
           : `${run.metadata.parsedPages ?? 0}/—/—/—`;
       lines.push(
@@ -119,7 +120,7 @@ export function renderPdfGateReport({ benchmark, cases, plans, runs, summary }) 
   lines.push(
     "## Material reliability finding",
     "",
-    "PlanCheck's text-first path completed both native-text documents with all checked terms, page anchors, and tables. Its scanned path returned only 11 page bodies from 19 attempted pages after about eight minutes, leaving eight pages incomplete. The current extractor merges returned vision bodies by sequence after the provider has swallowed per-page failures, so page identities after the first failed call may shift. The partial scan output is therefore not safe for citation or reasoning and must fail closed.",
+    "PlanCheck's legacy run_check.py assessment path completed both native-text documents with all checked terms, page anchors, and tables. Its scanned path returned only 11 page bodies from 19 attempted pages after about eight minutes, leaving eight pages incomplete. That legacy extractor merges returned vision bodies by sequence after the provider has swallowed per-page failures, so page identities after the first failed call may shift. The partial scan output is therefore not safe for citation or reasoning and must fail closed.",
     "",
     "Firecrawl returned all 19 scanned pages in OCR mode in about 13 seconds. It recovered four of five checked scan terms and two of three page-19 anchors; it missed the faint `Plan of Garage` wording and did not preserve `City of Perth` on physical page 19. Managed OCR is materially stronger here, but it is still not perfect evidence extraction.",
     "",
@@ -131,7 +132,7 @@ export function renderPdfGateReport({ benchmark, cases, plans, runs, summary }) 
     "",
     "## Decision rule",
     "",
-    "This run supports Firecrawl as the public-source default behind the owned provider boundary: it completed every bounded document and materially outperformed the current local scan path. Treat its extraction as evidence to validate rather than perfect ground truth; fail closed or use a second extraction path when required terms, pages, or grounding are missing. Keep PlanCheck local extraction for private native-text documents. Do not rely on its current scanned path until page identity and partial-failure handling are repaired.",
+    "This run supports Firecrawl as a strong public-source candidate behind the owned provider boundary: it completed every bounded document and materially outperformed PlanCheck's legacy assessment scan path. It does not establish that Firecrawl outperforms the current application detection transcription path, which preserves page identity and records per-page failures. Re-run the scanned-PDF case against that current path before selecting the default public-PDF route. Treat every extraction as evidence to validate rather than perfect ground truth.",
     "",
   );
   return `${lines.join("\n")}\n`;

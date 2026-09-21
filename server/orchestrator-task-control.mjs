@@ -4,7 +4,7 @@ import {
   candidateRepairCircuitReason,
   isInvalidApprovedPlanFailure,
 } from "../src/workflow-recovery-policy.ts";
-import { GATE_APPROVAL_ADVANCE, GATE_AUTO_ADVANCE, resolveGatePolicy } from "./gate-policies.mjs";
+import { GATE_APPROVAL_ADVANCE, resolveGateAutoAdvance, resolveGatePolicy } from "./gate-policies.mjs";
 import { providerForModelId } from "./model-catalog.mjs";
 import { canStartRun, currentCandidate, reserveRun } from "./orchestrator-run-policy.mjs";
 import { activity, completeGrillSession, now, RUN_KINDS } from "./orchestrator-stage-support.mjs";
@@ -127,11 +127,27 @@ export class TaskControlOrchestrator {
     try {
       task = await this._store.get(id);
       if (!task) return;
-      transition = GATE_AUTO_ADVANCE[task.status];
+      transition = resolveGateAutoAdvance(task);
       if (!transition || task.currentStage !== transition.stage) return;
       const readyStatus = task.status;
       const settings = await this._store.settings();
-      if (resolveGatePolicy(settings, transition.stage) !== "auto-accept-recommendations") return;
+      // `policyStage`, not `stage`: Repair is settable as one decision but is recorded
+      // against whichever gate rejected the candidate, so the two differ there alone.
+      if (resolveGatePolicy(settings, transition.policyStage) !== "auto-accept-recommendations") return;
+      // `start` refuses an exhausted allowance exactly the way it refuses a task that
+      // moved underneath it, so without this both came back as "the task changed" and
+      // sent an operator looking for a race that never happened. Only a human can
+      // extend a spent budget, so the message has to name it.
+      if (!canStartRun(task, transition.nextKind)) {
+        const budgetStage = stageForRun(transition.nextKind, task.currentStage);
+        const limit = stageRunLimitFor(task, budgetStage);
+        await this._recordGateAutoAdvanceFailure(
+          id,
+          transition.stage,
+          `${budgetStage} has used all ${limit} of its allowed attempts, so the automation policy cannot start another. Grant a retry to allow one.`,
+        );
+        return;
+      }
       const started = await this.start(id, transition.nextKind, {
         canStart: (draft) =>
           draft.status === readyStatus &&
@@ -142,7 +158,9 @@ export class TaskControlOrchestrator {
             activity(
               transition.stage,
               "Gate auto-run authorized",
-              `${transition.stage} advanced through the persisted automation policy.`,
+              transition.nextKind === "repair"
+                ? `${transition.stage} rejected this candidate and the persisted automation policy authorized a repair. No person read the findings.`
+                : `${transition.stage} advanced through the persisted automation policy.`,
               "info",
               "decision",
             ),

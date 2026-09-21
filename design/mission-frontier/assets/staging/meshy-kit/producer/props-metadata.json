@@ -1,53 +1,143 @@
 {
   "file": "props-kit.glb",
-  "sha256": "c2969382a8c84ac92cade619d69a3690679a8face65235e12f25cefa161aec15",
-  "bytes": 595356,
-  "images": 12,
+  "sha256": "3f7eccc2db4287b7f9ba88db1e907f76ade52c414deafbf589bf80873a7752d6",
+  "bytes": 2909480,
+  "images": 32,
   "props": {
     "MF_Prop_PlanningTable": {
       "asset": "planningHoloTable.V2",
-      "triangles": 5999,
+      "triangles": 5990,
       "texturePx": 512,
       "size": [
-        3.049,
+        3.163,
         1.05,
-        3.058
+        3.17
       ],
-      "footprintRadius": 1.529,
-      "material": "ambient_screen_service"
+      "footprintRadius": 1.585,
+      "material": "ambient_screen_service",
+      "metalness": null
     },
     "MF_Prop_TestRig": {
       "asset": "testingRig.V2",
-      "triangles": 7000,
+      "triangles": 6986,
       "texturePx": 512,
       "size": [
-        3.509,
+        3.554,
         1.7,
-        3.199
+        3.248
       ],
-      "footprintRadius": 1.755,
-      "material": "practical_console_cyan"
+      "footprintRadius": 1.777,
+      "material": "practical_console_cyan",
+      "metalness": null
     },
     "MF_Prop_CargoBattery": {
       "asset": "cargoBattery.V2",
-      "triangles": 4000,
+      "triangles": 3997,
       "texturePx": 512,
       "size": [
-        1.547,
+        1.573,
         1.06,
-        1.065
+        1.086
       ],
-      "footprintRadius": 0.773,
-      "material": "practical_warm_strip"
+      "footprintRadius": 0.786,
+      "material": "practical_warm_strip",
+      "metalness": null
+    },
+    "MF_Prop_WallConsole": {
+      "asset": "MF_Prop_WallConsole",
+      "triangles": 1996,
+      "texturePx": 1024,
+      "size": [
+        1.811,
+        2.75,
+        0.701
+      ],
+      "footprintRadius": 0.906,
+      "material": "ambient_screen_service",
+      "metalness": 0.0
+    },
+    "MF_Prop_IntakeDesk": {
+      "asset": "MF_Prop_IntakeDesk",
+      "triangles": 2997,
+      "texturePx": 1024,
+      "size": [
+        2.648,
+        2.4,
+        0.699
+      ],
+      "footprintRadius": 1.324,
+      "material": "ambient_screen_service",
+      "metalness": 0.0
+    },
+    "MF_Prop_ReviewStation": {
+      "asset": "MF_Prop_ReviewStation",
+      "triangles": 2999,
+      "texturePx": 1024,
+      "size": [
+        3.204,
+        1.36,
+        3.204
+      ],
+      "footprintRadius": 1.602,
+      "material": "ambient_screen_service",
+      "metalness": 0.0
+    },
+    "MF_Prop_FabCell": {
+      "asset": "MF_Prop_FabCell",
+      "triangles": 5984,
+      "texturePx": 1024,
+      "size": [
+        1.987,
+        1.73,
+        1.239
+      ],
+      "footprintRadius": 0.993,
+      "material": "practical_console_cyan",
+      "metalness": null,
+      "preparation": {
+        "sourceSha256": "489a1e3a7fedb63a764220ee7b7995857f121258d4e9ae64204af7b6ec1ce56a",
+        "sha256": "b44c0c7d8e7f1dcd88297d7a3298458a168ef0770642164acf353c4d58270264",
+        "triangles": 5984,
+        "targetTriangles": 6000,
+        "voxelSize": 0.004,
+        "texturePx": 1024,
+        "cageExtrusion": 0.025,
+        "maxRayDistance": 0.06,
+        "blenderVersion": "5.2.1 LTS"
+      }
+    },
+    "MF_Prop_ServiceCart": {
+      "asset": "MF_Prop_ServiceCart",
+      "triangles": 4998,
+      "texturePx": 1024,
+      "size": [
+        2.243,
+        1.06,
+        1.388
+      ],
+      "footprintRadius": 1.122,
+      "material": "practical_warm_strip",
+      "metalness": null,
+      "preparation": {
+        "sourceSha256": "dedead1c87192204f204abb90c215ce0e0ecd07c1e5a7e87a5150e677772904d",
+        "sha256": "8704b49aa305aa31351182e064917cf2d3a58927c0320504d719cea1c3eba654",
+        "triangles": 4998,
+        "targetTriangles": 5000,
+        "voxelSize": 0.004,
+        "texturePx": 1024,
+        "cageExtrusion": 0.025,
+        "maxRayDistance": 0.06,
+        "blenderVersion": "5.2.1 LTS"
+      }
     }
   },
   "budget": {
-    "bytes": 2500000,
-    "triangles": 20000
+    "bytes": 4000000,
+    "triangles": 40000
   },
   "compression": {
     "geometry": "KHR_draco_mesh_compression",
     "textures": "EXT_texture_webp q85"
   },
-  "origin": "Meshy scans (meshy_output) for the three interior hero props the HQ shell reserved MF_Props for"
+  "origin": "Meshy scans (meshy_output) for the eight interior hero props the HQ shell reserved MF_Props for"
 }

@@ -3,6 +3,7 @@ import {
   candidateRepairCount,
   candidateRepairLimit,
 } from "../src/workflow-recovery-policy.ts";
+import { baselineBlocker, classifyAgainstBaseline } from "./baseline-verification.mjs";
 import {
   candidateGateFailure,
   currentCandidate,
@@ -94,6 +95,48 @@ export class GateEvaluationOrchestrator {
     await this._runEvaluation(id, "dev-review", signal);
   }
 
+  /**
+   * True when the Test failure belongs to the repository rather than the candidate, in
+   * which case the task is blocked instead of being sent round the repair loop.
+   *
+   * Blocked rather than failed: an inherited failure is a human's call about the
+   * repository, and `repository-baseline-verification` is the blocker the retry
+   * admission policy already recognises for exactly that.
+   */
+  async _stopOnRepositoryBaselineFailure(id, candidate, verification, signal) {
+    const baselineVerification = await classifyAgainstBaseline({
+      verification,
+      task: await this._store.get(id),
+      candidate,
+      baselineRevision: candidate?.baseRevision ?? null,
+      worktrees: this._worktrees,
+      runVerification: this._runVerification,
+      signal,
+    });
+    if (!baselineVerification) return false;
+    const blocker = baselineBlocker(baselineVerification, "Focused test");
+    await this._store.update(id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "test";
+      draft.error = blocker.detail;
+      draft.blocker = { ...blocker, detectedAt: now(), candidateId: candidate?.id ?? null };
+      draft.activeRunKind = null;
+      draft.activeRunReservationId = null;
+      const draftCandidate = draft.candidates?.at(-1);
+      if (draftCandidate?.id === candidate?.id) draftCandidate.status = "ready_for_test";
+      draft.events.push(
+        activity(
+          "test",
+          "Repository baseline already fails these commands",
+          blocker.detail,
+          "danger",
+          "decision",
+        ),
+      );
+    });
+    return true;
+  }
+
   async _runEvaluation(id, stageId, signal) {
     const task = await this._store.get(id);
     const candidate = currentCandidate(task);
@@ -169,6 +212,20 @@ export class GateEvaluationOrchestrator {
         });
       }
       throwIfAborted(signal);
+      // Before a failed manifest is handed to a model to interpret, ask whether the
+      // repository was already failing these commands. A model asked to explain an
+      // inherited failure will produce a candidate defect, because that is the only
+      // shape of answer the gate accepts — and the repair it triggers cannot fix a
+      // command the candidate never touched.
+      if (harnessVerification?.status !== "passed") {
+        const stopped = await this._stopOnRepositoryBaselineFailure(
+          id,
+          candidate,
+          harnessVerification,
+          signal,
+        );
+        if (stopped) return;
+      }
       if (task.workflowProfile?.selected === "fast") {
         await this._completeDeterministicFastGates(
           id,

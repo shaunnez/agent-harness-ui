@@ -407,3 +407,129 @@ validator passes **191 checks**. Typecheck, lint, format pass; 155 Frontier test
 
 Verified in the running app at noon and at dusk: planning holds the scanned holo-table alone, testing
 the scanned rig alone, and the wall consoles, review dais and fabrication bench are undisturbed.
+
+# Slice 9 — the wall row, the briefing desk and the review dais
+
+Five scans arrived in `latest-mesh/meshy_output`, one for each greybox piece slice 7 listed as
+"kept, because no scan exists for them yet". Three of them shipped. Two of them are unusable.
+
+## Two of the five scans are blobs
+
+`MF_Prop_FabCell` and `MF_Prop_ServiceCart` have crisp Meshy preview thumbnails and a mesh that is a
+melted lump behind them — the cart has no wheels and no drawer edges, the fab cell is not
+recognisable as a machine. Ruled out in turn, each by rebuilding and re-rendering:
+
+| Suspected | Test | Result |
+| --- | --- | --- |
+| Decimation | rebuilt with targets above source, 0 triangles removed | unchanged |
+| Draco | rebuilt with `export_draco_mesh_compression_enable=False` | unchanged |
+| Metalness | forced `metallicFactor` to 0 | unchanged |
+| Normal map | unlinked the normal input, then roughness too | unchanged |
+| Texture resolution | swapped the embedded 1024 atlas for Meshy's own 4096 `texture_urls` PNG | unchanged |
+| Geometry | rendered untextured in Workbench | **the lump is the mesh** |
+
+The shipped scans are the control: `planningHoloTable.V2` is 114,091 source triangles and renders
+crisp in the same probe. These five are 4,832–5,767 triangles *at source*. The earlier batch was
+generated high-poly and decimated here; this batch came back already low-poly, and there is nothing
+left to decimate from. Regenerating them is a Meshy job, not a pipeline job.
+
+The implementation fabrication bench and the dispatch cart therefore stay greybox.
+
+## Two builder bugs the new scans exposed
+
+**Dequantization was being thrown away.** The later Meshy exports use `KHR_mesh_quantization`, which
+carries its scale on the nodes above the mesh. `o.parent = None` drops that, and the height fit then
+*overwrote* `o.scale` rather than multiplying into it — so the first build produced props 16,000 m
+across and reported it as a size. The unparent now keeps the world matrix and bakes it, which leaves
+`o.scale` at 1, which is what the fit assumes. The three shipped props are unaffected: their scans
+are not quantized, so their scale was already 1.
+
+**`is` never matches a Blender socket.** The metalness override looked like it worked and changed
+nothing — `bsdf.inputs['Metallic']` hands back a fresh wrapper on every access, so
+`link.to_socket is bsdf.inputs['Metallic']` is always false and the link survived the removal. The
+tell was a byte-identical GLB. Matched by node and socket name instead.
+
+## What the scans replace
+
+| Scan | Contract `equipment` line | Greybox removed |
+| --- | --- | --- |
+| `MF_Prop_WallConsole` ×20 | "wall consoles behind the wall row" | `{room}_console_base/_console_top/_monitor_housing/_monitor/_console_key/_instrument_trace` in planning, implementation ×2, review, testing |
+| `MF_Prop_IntakeDesk` | "Q&A console on the front wall" + "scout display" | `briefing_qa_console`, `_scout_display`, `_scout_panel`, `_console_control` |
+| `MF_Prop_ReviewStation` | "circular review dais radius 1.6 at radial 9" | `review_dais`, `review_dais_light` |
+
+Heights are solved backwards from the greybox each scan replaces, because the scan's aspect is fixed
+and it is the *width* that has to keep the plan's spacing: the wall console at 2.75 m is 1.83 m wide
+against the greybox's 1.86 m on a 3.4 m pitch; the intake desk at 2.40 m is 2.66 m wide, which is the
+greybox scout display exactly; the review station at 1.36 m is 3.21 m across, which is the contract's
+"radius 1.6".
+
+The five keep their 1024 px textures where the first three were halved to 512. They are not the same
+kind of map — Meshy tiles them 16× through `KHR_texture_transform`, so a 1024 atlas is already only
+64 px per tile and halving it would show — and they are webp to begin with, at ~330 KB each.
+
+## One node, twenty places
+
+`PropPlacement.node` was the key, and the runtime moved the single kit object it named. The wall row
+is one console standing in twenty places, so placements now carry their own `id` and `ColonyProps`
+clones per placement rather than per node. The clones share the kit's geometry and material by
+reference, so this is twenty transforms, not twenty meshes.
+
+That change also fixed a latent bug: the unmount effect disposed the geometry under every clone,
+which is the *kit's* geometry, shared across every base. Closing one base would have blanked the
+props in every other one still on screen. Only the cloned materials belong to a base.
+
+## Obstacles follow the prop, not its longest side
+
+`propObstacles` squared each prop off on its largest dimension. That is fine for a holo-table and
+far too greedy for a wall console, which is 1.83 m across and 0.72 m deep: squaring it reserves a
+metre of floor behind the wall row that nothing stands on. The box is now the axis-aligned bound of
+the prop's *rotated* plan size.
+
+## A drift closed, and a socket recovered
+
+`room-clearance.ts` already reserved 2.2 m at **radial 9** on the 330 midline for the review dais
+while the greybox built it at 10.7 — recorded in slice 7 as a known drift, left alone because the
+dais was still greybox. The scan goes where the plan says, so the drift is closed.
+
+The briefing desk did *not* go on the greybox console's centre. Briefing is a wedge that narrows
+toward the hub, and a 2.66 m desk on that centre puts its front corner through the partition — which
+the first build did, visibly, in the app. Shifted right and back to `(-5.6, 14.4)`, where every
+corner is inside the room's walkable polygon and **both** briefing sockets clear the footprint by the
+0.6 m the clearance test wants. The greybox obstacle swallows `hq_briefing_02`; this does not.
+
+## Tests
+
+`tests/frontier/colony-props.test.mjs` is new — prop placement had no coverage at all, which is why
+a desk through a wall had to be caught by eye. Seven tests: every placement names a root the built
+kit carries *at the size the receipt states* (so a rebuild that resizes a prop fails here rather than
+leaving robots standing inside it), ids are unique, the wall row keeps radial 15 and the 3.4 m pitch
+and faces the room, no prop corner leaves the parapet (bay props are held to their frozen pad
+instead), the intake desk clears all three briefing sockets, the only sockets any prop blocks are the
+equipment sockets their own room's plan reserves, and the review station sits on the contract's own
+reservation.
+
+## Result
+
+| Measure | Before | After |
+| --- | --- | --- |
+| `props-kit.glb` | 595,356 B / 16,999 tris / 12 images | 1,822,920 B / 24,997 tris / 24 images |
+| `hq-shell.glb` | 7,058,852 B / 125,936 tris | 6,007,092 B / 108,404 tris |
+| Shell obstacles | 25 | 0 greybox equipment obstacles left in the four wall rooms |
+| Props standing per HQ | 3 | 25 |
+
+Greybox removed from the shell: **222 meshes, 25 obstacles**. The props kit is inside its per-prop
+budget (6 props × 8,000 tris / 350 KB / 5 textures). The producer's own independent re-import
+validator passes **191 checks**. Typecheck, lint and format pass; **140 Frontier tests** and 535
+repo tests pass.
+
+Verified in the running app at noon and at dusk: the wall row stands in planning, implementation,
+review and testing; the review station sits at radial 9 between the two sockets that face it; the
+intake desk stands inside briefing with its screen band lit at dusk. Implementation still shows the
+greybox fabrication bench and dispatch the greybox cart, which is what the two failed scans cost.
+
+## Not done
+
+- `MF_Prop_FabCell` and `MF_Prop_ServiceCart` need regenerating high-poly before the implementation
+  bench and the dispatch cart can be replaced.
+- Five superseded published GLBs predate this slice and are still tracked
+  (`hq-shell.4b47f1786639`, four `crown-*`). Not this slice's to prune.

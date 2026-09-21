@@ -132,7 +132,7 @@ async function main() {
     estimatedFirecrawlCredits,
     estimatedPlanCheckVisionCalls,
     repetitions: 1,
-    selectedProviders: ["plancheck", "firecrawl"],
+    selectedProviders: [plancheck.name, firecrawl.name],
   };
   const runs = await runRetrievalBenchmark({
     cases,

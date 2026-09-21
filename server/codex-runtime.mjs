@@ -10,6 +10,7 @@ import {
   normalizeModelId,
   readCodexModelCatalog,
 } from "./model-catalog.mjs";
+import { retainFailedCommandOutput } from "./command-output-retention.mjs";
 import {
   conciseToolResult,
   DEFAULT_STDOUT_BUDGET,
@@ -175,6 +176,15 @@ export function parseCodexEvent(line) {
         category: "repository-command",
         phase: "completed",
         result: commandResult(event.item),
+        // Only a genuine failure keeps its tail. A search miss is an expected answer
+        // and a context preflight is the harness's own probe, so neither leaves an
+        // operator with a question that retained output would answer.
+        failureOutput:
+          succeeded || expectedSearchMiss || contextPreflight
+            ? null
+            : retainFailedCommandOutput(
+                event.item.aggregated_output ?? event.item.output ?? event.item.stderr ?? event.item.stdout,
+              ),
       },
     };
   }

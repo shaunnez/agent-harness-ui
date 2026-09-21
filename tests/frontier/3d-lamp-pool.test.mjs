@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Vector3 } from "three";
-import { LampPool, lampBudget } from "../../src/frontier/world-3d/lamp-pool.ts";
+import {
+  LampPool,
+  lampBudget,
+  lampColour,
+  lampIntensity,
+  nearestLamps,
+} from "../../src/frontier/world-3d/lamp-pool.ts";
 
 /** Lamps in a line along +X, so distance order is the same as the order they are built in. */
 function line(count, spacing = 10) {
@@ -20,6 +26,18 @@ test("the station's lamps outnumber the lights the pool will ever run", () => {
   // The manifest gives three bases seven lamps each, plus two environment lamps apiece.
   assert.ok(lampBudget < 27, "the budget has to be a cut, or night pays for every lamp");
   assert.equal(new LampPool().slots.length, lampBudget);
+});
+
+test("isolated previews use the same bounded nearest project lights as the world", () => {
+  const lamps = line(10);
+  const nearest = nearestLamps(lamps, new Vector3(90, 0, 0), 3);
+  assert.deepEqual(
+    nearest.map((lamp) => lamp.key),
+    ["lamp-9", "lamp-8", "lamp-7"],
+  );
+  assert.notEqual(lampColour("#0038ff"), lampColour("#6600cc"));
+  assert.equal(lampColour(undefined), undefined);
+  assert.equal(lampIntensity(0.72, 0.5), (0.1 + 0.72 * 16) * 0.5);
 });
 
 test("the light count never changes, because it is a shader define", () => {

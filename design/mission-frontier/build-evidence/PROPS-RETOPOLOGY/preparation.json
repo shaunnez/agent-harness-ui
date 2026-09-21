@@ -1,0 +1,24 @@
+{
+  "MF_Prop_FabCell": {
+    "sourceSha256": "489a1e3a7fedb63a764220ee7b7995857f121258d4e9ae64204af7b6ec1ce56a",
+    "sha256": "b44c0c7d8e7f1dcd88297d7a3298458a168ef0770642164acf353c4d58270264",
+    "triangles": 5984,
+    "targetTriangles": 6000,
+    "voxelSize": 0.004,
+    "texturePx": 1024,
+    "cageExtrusion": 0.025,
+    "maxRayDistance": 0.06,
+    "blenderVersion": "5.2.1 LTS"
+  },
+  "MF_Prop_ServiceCart": {
+    "sourceSha256": "dedead1c87192204f204abb90c215ce0e0ecd07c1e5a7e87a5150e677772904d",
+    "sha256": "8704b49aa305aa31351182e064917cf2d3a58927c0320504d719cea1c3eba654",
+    "triangles": 4998,
+    "targetTriangles": 5000,
+    "voxelSize": 0.004,
+    "texturePx": 1024,
+    "cageExtrusion": 0.025,
+    "maxRayDistance": 0.06,
+    "blenderVersion": "5.2.1 LTS"
+  }
+}

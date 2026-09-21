@@ -108,9 +108,9 @@ an amount from an unavailable-price statement.
 The live smoke test plus the full run used an estimated 27 Firecrawl credits and US$0.009 of Exa Contents.
 The provider dashboards were not queried, so these remain rate-card estimates rather than billing receipts.
 
-## Updated proposal
+## Updated proposal after the broad capture run
 
-Use Firecrawl as the provisional single-provider default for public web search and capture, behind the
+Use Firecrawl as the provisional single-provider candidate for public web search and capture, behind the
 existing Eversor-owned provider boundary:
 
 ```text
@@ -160,9 +160,13 @@ also fit inside Hobby. LLM reasoning is separate from these capture costs.
 The architecture must deduplicate at the source-snapshot level. These numbers assume each source is captured
 once and shared by every research agent; paying again for every agent would erase the cost advantage.
 
-## Second PDF gate outcome — 21 September 2026
+## Second PDF gate outcome — legacy PlanCheck baseline, 21 September 2026
 
-The difficult public-PDF gate compared Firecrawl directly with PlanCheck's real text-plus-vision extractor.
+The difficult public-PDF gate compared Firecrawl directly with PlanCheck's legacy assessment extractor:
+`backend.engine.text_extraction.extract_pdf` plus `assessment_engine.extract_via_vision`, the path used by
+`run_check.py`. It did not exercise the current application's detection transcription path in
+`run_tender_detection.py`.
+
 It used the first 30 pages of NZ H1/AS1, the first 30 pages of the diagram-heavy NZ E2/AS1, and the first
 19 pages of an Australian heritage assessment containing a degraded 1951 building plan. The run made no
 provider retries and sent no private or customer document to Firecrawl. The owner-only report is under
@@ -170,35 +174,55 @@ provider retries and sent no private or customer document to Firecrawl. The owne
 
 | Route | Complete | Partial | Native-text checks | Scanned-plan checks | Scanned-plan time | Estimated run usage |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| PlanCheck | 2/3 | 1 | 100% terms, anchors, and tables | 2/5 terms, 0/3 page anchors, 8/19 pages missing | 493 seconds | 19 attempted vision pages; 11 outputs returned |
+| PlanCheck legacy assessment | 2/3 | 1 | 100% terms, anchors, and tables | 2/5 terms, 0/3 page anchors, 8/19 pages missing | 493 seconds | 19 attempted vision pages; 11 outputs returned |
 | Firecrawl | 3/3 | 0 | 100% terms, anchors, and tables | 4/5 terms, 2/3 page anchors, all 19 pages returned | 13 seconds | 82 credits / about US$0.41 marginal equivalent |
 
-PlanCheck remains the better local route for native-text PDFs: it completed both 30-page extracts in about
-half a second each with every checked term, physical-page anchor, and table. Firecrawl returned the same
-checked evidence, but took about 10 seconds for E2 and 52 seconds for H1.
+The legacy PlanCheck assessment route was better for native-text PDFs: it completed both 30-page extracts in
+about half a second each with every checked term, physical-page anchor, and table. Firecrawl returned the
+same checked evidence, but took about 10 seconds for E2 and 52 seconds for H1.
 
 Firecrawl clearly won the scanned-document comparison, but did not produce perfect OCR. It missed faint
 `Plan of Garage` wording and did not keep `City of Perth` on the expected physical page. The research host
 must therefore continue to validate required evidence and fail closed when page grounding or material text
 is absent.
 
-The current PlanCheck scan path failed more seriously. It returned only 11 bodies from 19 attempted pages
+The legacy PlanCheck assessment scan path failed more seriously. It returned only 11 bodies from 19 attempted pages
 after about eight minutes. Its merge step associates returned vision bodies with the requested pages by
 list position even after per-page failures are swallowed, so page identities after the first failure may be
 shifted. That partial output is not safe for citation or reasoning. The benchmark reports it as partial,
-not successful. Repairing that extractor is separate work.
+not successful. This is a finding about that legacy path, not the current application worker.
 
 The gate also found that ordinary server-side downloads of both building.govt.nz PDFs were rejected in this
 environment, although a browser and Firecrawl could retrieve them. A fully local public route would need a
 browser or proxy fetch fallback as well as PDF extraction.
 
-## Final recommendation
+## Material correction — current application path was not benchmarked
 
-Use Firecrawl Search plus Scrape/PDF Parse as the default public-source discovery and capture route behind
-the Eversor-owned provider boundary. Retain the extracted snapshot, its SHA-256 hash, canonical URL,
-capture time, provider metadata, and page/layout grounding. Share that content-addressed snapshot between
-agents so each unique source is captured once. Keep Serper as the search fallback for NZ/AU ranking and
-local PlanCheck extraction as the private-document boundary.
+The current PlanCheck application detection worker uses a different transcription route through
+`run_tender_detection.py` and `backend/engine/geotech_vision_transcription.py`. That route:
+
+- binds each result and failure to its physical page;
+- records truncation, policy blocks, provider failures, and usage explicitly;
+- uses bounded concurrency and reassembles results in page order; and
+- caches successful transcriptions per content-addressed page.
+
+The legacy gate therefore does **not** establish that Firecrawl outperforms current PlanCheck extraction on
+scanned PDFs. Its Firecrawl measurements remain valid, and the broad public search/HTML findings remain
+valid, but the local comparison baseline was wrong for the current application.
+
+Before selecting a default public-PDF route, re-run the degraded scanned-plan case against the current
+detection transcription path. Measure the same term recovery, physical-page anchors, completeness, latency,
+provider/model cost, and cache behavior. This replacement gate may require paid transcription calls and needs
+separate execution approval.
+
+## Corrected recommendation
+
+Use Firecrawl Search as the default public-source discovery route, with Serper as the NZ/AU search fallback.
+Firecrawl remains the leading managed HTML capture candidate because the broad capture benchmark is
+unaffected. Keep PDF capture behind the Eversor-owned provider boundary and treat Firecrawl PDF Parse as
+provisional until the replacement current-PlanCheck gate is complete. Retain the extracted snapshot, its
+SHA-256 hash, canonical URL, capture time, provider metadata, and page/layout grounding. Share that
+content-addressed snapshot between agents so each unique source is captured once.
 
 Do not send private PlanCheck material through Firecrawl's self-serve service. Its published standard
 privacy terms permit caching/indexing and describe US storage, while zero-data-retention for parsed
@@ -206,10 +230,11 @@ documents is presented as an Enterprise control. A private-document route requir
 DPA, retention, residency, and deletion arrangement. Until then:
 
 - private native-text PDFs stay on the proven local PlanCheck path;
-- private scanned PDFs fail closed until the local per-page OCR path preserves identity and reports every
-  failure accurately;
+- private scanned PDFs stay on the current page-preserving local transcription path, subject to its normal
+  completeness and coverage gates;
 - public Firecrawl results fall back to local or a second extraction when pages, required terms, or citation
   grounding are incomplete.
 
-This selects a capture candidate; it does not change the research runtime from Tavily. Implementing the
-Firecrawl runtime adapter is the next separately testable vertical slice.
+This selects search and HTML capture candidates, not the final public-PDF default. It does not change the
+research runtime from Tavily. The replacement PDF gate is the first step in the implementation plan before
+activating a PDF route.

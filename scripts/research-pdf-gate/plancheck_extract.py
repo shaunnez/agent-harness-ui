@@ -1,4 +1,10 @@
-"""Run the real PlanCheck text-first PDF extractor for the research PDF gate."""
+"""Run PlanCheck's legacy assessment PDF extractor for the research PDF gate.
+
+This deliberately exercises ``text_extraction.extract_pdf`` with
+``assessment_engine.extract_via_vision``, the path used by ``run_check.py``.
+It does not exercise the current application's detection transcription path in
+``run_tender_detection.py``.
+"""
 
 from __future__ import annotations
 
@@ -69,6 +75,7 @@ def main() -> None:
         plan = plan_pdf(subset, source_path.name)
     sparse_pages = [item.page for item in plan.page_plans if item.needs_vision]
     base = {
+        "extractorRoute": "legacy-assessment-text-extraction",
         "sourceSha256": original_sha256,
         "sourceBytes": len(original),
         "totalPages": total_pages,

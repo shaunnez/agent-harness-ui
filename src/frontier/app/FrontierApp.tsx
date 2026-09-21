@@ -22,6 +22,7 @@ import { BaseSelection } from "../views/BaseSelection";
 import { DecisionNavigation } from "../views/DecisionNavigation";
 import { PinnedWork } from "../views/WatchPins";
 import { AttentionQueue, ConnectionBadge, SelectionHud, WorldActions, WorldClock } from "../views/WorldHud";
+import { Welcome, shouldShowWelcome } from "../views/Welcome";
 import { WorldNavigation } from "../views/WorldNavigation";
 import { type ProofControls, proofVisible } from "../world-3d/model";
 import { BuildDiagnostics } from "./BuildDiagnostics";
@@ -61,6 +62,9 @@ export function FrontierApp() {
   );
   const snapshot = useSyncExternalStore(runtime.subscribe, runtime.getSnapshot);
   const { location, navigate, stack, setStack, review, reviewDecision } = useNavigation();
+  const [welcome, setWelcome] = useState(() =>
+    shouldShowWelcome(window.location.search, window.location.hash),
+  );
   const [preferences, setPreferences] = useState(readPreferences);
   const [reduced, setReduced] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [pickedProject, setPickedProject] = useState<string | null>(null);
@@ -349,6 +353,7 @@ export function FrontierApp() {
   }
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
+      if (welcome) return;
       if (
         event.target instanceof HTMLElement &&
         (event.target.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(event.target.tagName))
@@ -385,176 +390,210 @@ export function FrontierApp() {
   const shell = useBottomHudLayout(Boolean(selectedForHud), Boolean(pickedProject), location.view);
   const workspace = (
     <main ref={shell} className={`frontier-shell view-${location.view}`}>
-      {renderProof ? (
-        <Suspense
-          fallback={
-            <p className="world-error panel" role="status">
-              Loading the world…
-            </p>
-          }
-        >
-          <ProofWorld
-            input={sceneInput}
-            selectedProjectId={pickedProject}
-            preferences={preferences}
-            controlsRef={proofRenderer}
-            onSelect={choose}
-            onExterior={() => navigate(worldLocation)}
-            onEnterProject={(id) => navigate({ ...worldLocation, view: "project", projectId: id })}
-            onWorldSettings={() => open({ kind: "world-settings" })}
-          />
-        </Suspense>
+      {welcome ? (
+        <Welcome
+          snapshot={snapshot}
+          reduced={reduced || !preferences.motion}
+          onRetry={() => runtime.retry()}
+          onWorld={() => {
+            setWelcome(false);
+            navigate(worldLocation);
+          }}
+          onHelp={() => {
+            setWelcome(false);
+            open({ kind: "world-settings" });
+          }}
+          onAdd={() => {
+            setWelcome(false);
+            open({ kind: "project-setup" });
+          }}
+          onNew={() => {
+            setWelcome(false);
+            newTask();
+          }}
+          onProjects={() => {
+            setWelcome(false);
+            open({ kind: "projects" });
+          }}
+          onEnter={(id) => {
+            setWelcome(false);
+            navigate({ ...worldLocation, view: "project", projectId: id });
+          }}
+        />
       ) : (
-        <p className="world-error panel" role="status">
-          No project to show yet. Create one and its base appears on the map.
-        </p>
-      )}
-      <header className="top-hud">
-        <button type="button" className="brand panel" onClick={() => navigate(worldLocation)}>
-          <RocketLaunch size={26} weight="duotone" />
-          <strong>Agent Harness</strong>
-        </button>
-        <label className="project-picker panel">
-          <span className="sr-only">Project scope</span>
-          <select
-            value={location.projectId ?? "all"}
-            onChange={(event) => {
-              navigate(
-                event.target.value === "all"
-                  ? worldLocation
-                  : { ...worldLocation, view: "project", projectId: event.target.value },
-              );
-            }}
-          >
-            <option value="all">All projects</option>
-            {snapshot.projects
-              .filter((entry) => !entry.archivedAt)
-              .map((entry) => (
-                <option key={entry.id} value={entry.id}>
-                  {entry.name}
-                </option>
-              ))}
-          </select>
-        </label>
-        <WorldClock />
-        {location.view === "agent" && (
-          <button type="button" className="return-world" onClick={() => navigate(worldLocation)}>
-            <ArrowLeft size={18} />
-            Return to world
-          </button>
-        )}
-      </header>
-      <WorldNavigation
-        onWorld={() => navigate(worldLocation)}
-        onOpen={(kind) => open({ kind })}
-        onBriefing={() => open({ kind: "briefing" })}
-      />
-      {location.view !== "agent" && (
-        <aside className="attention-stack" aria-label="Decisions and pinned work">
-          <AttentionQueue tasks={scopedTasks} projects={snapshot.projects} onSelect={actOn} />
-          <PinnedWork onTask={inspect} onWatch={watch} />
-        </aside>
-      )}
-      {location.view === "agent" && snapshot.selected && (
-        <AgentPanel
-          now={snapshot.updatedAt ?? Date.now()}
-          motion={sceneInput.motion}
-          portrait={portrait}
-          evidence={snapshot.selected}
-          run={run}
-          connected={connected}
-          onAction={() => task && actOn(task.id)}
-          onInspect={() => task && inspect(task.id)}
-          onArtifact={(id) => task && open({ kind: "artifact", taskId: task.id, artifactId: id })}
-          onRun={(id) => task && watch(task.id, id)}
-          onMore={(kind) => void runtime.more(kind)}
-          onPolicies={() => task && open({ kind: "task-policies", taskId: task.id })}
-          requestedRunId={location.runId}
-        />
-      )}
-      {location.view !== "agent" && selectedForHud && (
-        <SelectionHud
-          portrait={portrait}
-          task={selectedForHud}
-          run={run}
-          loading={snapshot.selectedLoading}
-          connected={connected}
-          onAction={() => actOn(selectedForHud.id)}
-          onInspect={() => inspect(selectedForHud.id)}
-          onWatch={() => watch(selectedForHud.id, run?.id)}
-          onArtifact={(artifactId) => open({ kind: "artifact", taskId: selectedForHud.id, artifactId })}
-          onPolicies={() => open({ kind: "task-policies", taskId: selectedForHud.id })}
-        />
-      )}
-      {location.view === "world" && pickedProject && project && !selected && (
-        <BaseSelection
-          project={project}
-          tasks={tasksInProject(snapshot.tasks, project)}
-          rendererRef={proofRenderer}
-          onEnter={() => navigate({ ...worldLocation, view: "project", projectId: project.id })}
-        />
-      )}
-      {location.view !== "agent" && (
-        <WorldActions
-          onNew={newTask}
-          onAgents={() => open({ kind: "agents" })}
-          onSkills={() => open({ kind: "skills" })}
-          onSettings={() => open({ kind: "settings" })}
-        />
-      )}
-      <ConnectionBadge snapshot={snapshot} fixture={fixture} onRetry={() => runtime.retry()} />
-      {!snapshot.tasks.length && (
-        <section className="empty-world panel">
-          <h1>
-            {snapshot.connection === "connecting"
-              ? "Connecting to your world"
-              : snapshot.connection === "offline"
-                ? "Your world is offline"
-                : !snapshot.projects.length
-                  ? "Connect your projects"
-                  : "Your base is ready"}
-          </h1>
-          <p>
-            {snapshot.error ??
-              (snapshot.connection === "connecting"
-                ? "Connecting to the local runtime…"
-                : "Create a task to brief your first crew.")}
-          </p>
-          <button
-            type="button"
-            className="primary"
-            disabled={!connected || !snapshot.projects.length}
-            onClick={newTask}
-          >
-            Create a task
-            <Plus size={18} />
-          </button>
-          <button type="button" onClick={() => open({ kind: "world-settings" })}>
-            Connection settings
-          </button>
-          {connected && (
-            <button type="button" onClick={() => open({ kind: "project-setup" })}>
-              Add a project
-            </button>
+        <>
+          {renderProof ? (
+            <Suspense
+              fallback={
+                <p className="world-error panel" role="status">
+                  Loading the world…
+                </p>
+              }
+            >
+              <ProofWorld
+                input={sceneInput}
+                selectedProjectId={pickedProject}
+                preferences={preferences}
+                controlsRef={proofRenderer}
+                onSelect={choose}
+                onExterior={() => navigate(worldLocation)}
+                onEnterProject={(id) => navigate({ ...worldLocation, view: "project", projectId: id })}
+                onWorldSettings={() => open({ kind: "world-settings" })}
+              />
+            </Suspense>
+          ) : (
+            <p className="world-error panel" role="status">
+              No project to show yet. Create one and its base appears on the map.
+            </p>
           )}
-        </section>
-      )}
-      {snapshot.selectedError && !stack.length && (
-        <p className="selection-error panel" role="alert">
-          {snapshot.selectedError}
-          <button type="button" onClick={() => runtime.retry()}>
-            Retry task
-          </button>
-        </p>
-      )}
-      <BuildDiagnostics runtime={runtime} selectionTiming={selectionTiming} />
-      {audioError && (
-        <p role="alert" className="selection-error panel">
-          {audioError}
-          <button type="button" onClick={() => setAudioError(null)}>
-            Dismiss
-          </button>
-        </p>
+          <header className="top-hud">
+            <button type="button" className="brand panel" onClick={() => navigate(worldLocation)}>
+              <RocketLaunch size={26} weight="duotone" />
+              <strong>Agent Harness</strong>
+            </button>
+            <label className="project-picker panel">
+              <span className="sr-only">Project scope</span>
+              <select
+                value={location.projectId ?? "all"}
+                onChange={(event) => {
+                  navigate(
+                    event.target.value === "all"
+                      ? worldLocation
+                      : { ...worldLocation, view: "project", projectId: event.target.value },
+                  );
+                }}
+              >
+                <option value="all">All projects</option>
+                {snapshot.projects
+                  .filter((entry) => !entry.archivedAt)
+                  .map((entry) => (
+                    <option key={entry.id} value={entry.id}>
+                      {entry.name}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <WorldClock />
+            {location.view === "agent" && (
+              <button type="button" className="return-world" onClick={() => navigate(worldLocation)}>
+                <ArrowLeft size={18} />
+                Return to world
+              </button>
+            )}
+          </header>
+          <WorldNavigation
+            onWorld={() => navigate(worldLocation)}
+            onOpen={(kind) => open({ kind })}
+            onBriefing={() => open({ kind: "briefing" })}
+          />
+          {location.view !== "agent" && (
+            <aside className="attention-stack" aria-label="Decisions and pinned work">
+              <AttentionQueue tasks={scopedTasks} projects={snapshot.projects} onSelect={actOn} />
+              <PinnedWork onTask={inspect} onWatch={watch} />
+            </aside>
+          )}
+          {location.view === "agent" && snapshot.selected && (
+            <AgentPanel
+              now={snapshot.updatedAt ?? Date.now()}
+              motion={sceneInput.motion}
+              portrait={portrait}
+              evidence={snapshot.selected}
+              run={run}
+              connected={connected}
+              onAction={() => task && actOn(task.id)}
+              onInspect={() => task && inspect(task.id)}
+              onArtifact={(id) => task && open({ kind: "artifact", taskId: task.id, artifactId: id })}
+              onRun={(id) => task && watch(task.id, id)}
+              onMore={(kind) => void runtime.more(kind)}
+              onPolicies={() => task && open({ kind: "task-policies", taskId: task.id })}
+              requestedRunId={location.runId}
+            />
+          )}
+          {location.view !== "agent" && selectedForHud && (
+            <SelectionHud
+              portrait={portrait}
+              task={selectedForHud}
+              run={run}
+              loading={snapshot.selectedLoading}
+              connected={connected}
+              onAction={() => actOn(selectedForHud.id)}
+              onInspect={() => inspect(selectedForHud.id)}
+              onWatch={() => watch(selectedForHud.id, run?.id)}
+              onArtifact={(artifactId) => open({ kind: "artifact", taskId: selectedForHud.id, artifactId })}
+              onPolicies={() => open({ kind: "task-policies", taskId: selectedForHud.id })}
+            />
+          )}
+          {location.view === "world" && pickedProject && project && !selected && (
+            <BaseSelection
+              project={project}
+              tasks={tasksInProject(snapshot.tasks, project)}
+              rendererRef={proofRenderer}
+              onEnter={() => navigate({ ...worldLocation, view: "project", projectId: project.id })}
+            />
+          )}
+          {location.view !== "agent" && (
+            <WorldActions
+              onNew={newTask}
+              onAgents={() => open({ kind: "agents" })}
+              onSkills={() => open({ kind: "skills" })}
+              onSettings={() => open({ kind: "settings" })}
+            />
+          )}
+          <ConnectionBadge snapshot={snapshot} fixture={fixture} onRetry={() => runtime.retry()} />
+          {!snapshot.tasks.length && (
+            <section className="empty-world panel">
+              <h1>
+                {snapshot.connection === "connecting"
+                  ? "Connecting to your world"
+                  : snapshot.connection === "offline"
+                    ? "Your world is offline"
+                    : !snapshot.projects.length
+                      ? "Connect your projects"
+                      : "Your base is ready"}
+              </h1>
+              <p>
+                {snapshot.error ??
+                  (snapshot.connection === "connecting"
+                    ? "Connecting to the local runtime…"
+                    : "Create a task to brief your first crew.")}
+              </p>
+              <button
+                type="button"
+                className="primary"
+                disabled={!connected || !snapshot.projects.length}
+                onClick={newTask}
+              >
+                Create a task
+                <Plus size={18} />
+              </button>
+              <button type="button" onClick={() => open({ kind: "world-settings" })}>
+                Connection settings
+              </button>
+              {connected && (
+                <button type="button" onClick={() => open({ kind: "project-setup" })}>
+                  Add a project
+                </button>
+              )}
+            </section>
+          )}
+          {snapshot.selectedError && !stack.length && (
+            <p className="selection-error panel" role="alert">
+              {snapshot.selectedError}
+              <button type="button" onClick={() => runtime.retry()}>
+                Retry task
+              </button>
+            </p>
+          )}
+          <BuildDiagnostics runtime={runtime} selectionTiming={selectionTiming} />
+          {audioError && (
+            <p role="alert" className="selection-error panel">
+              {audioError}
+              <button type="button" onClick={() => setAudioError(null)}>
+                Dismiss
+              </button>
+            </p>
+          )}
+        </>
       )}
       <PanelMemoryProvider key={snapshot.workspace?.sourceId ?? runtime.gateway.mode}>
         <OverlayHost
@@ -606,6 +645,7 @@ export function FrontierApp() {
           locate={locate}
           watch={watch}
           create={() => void create()}
+          rendererRef={proofRenderer}
           enterProject={(id) => {
             close();
             navigate({ ...worldLocation, view: "project", projectId: id });

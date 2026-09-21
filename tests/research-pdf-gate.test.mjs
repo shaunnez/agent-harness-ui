@@ -11,7 +11,7 @@ const testCase = {
   maxPages: 3,
 };
 
-test("PlanCheck adapter validates source identity and does not expose credentials", async () => {
+test("legacy PlanCheck adapter validates source identity and does not expose credentials", async () => {
   const calls = [];
   const provider = new PlanCheckPdfProvider({
     repositoryPath: "/plancheck",
@@ -39,13 +39,15 @@ test("PlanCheck adapter validates source identity and does not expose credential
     },
   });
   const result = await provider.retrieve(testCase);
+  assert.equal(result.provider, "plancheck-legacy-assessment");
+  assert.equal(result.metadata.extractorRoute, "legacy-assessment-text-extraction");
   assert.equal(result.metadata.pagesFromVision, 1);
   assert.equal(result.metadata.originalSourceBytesRetained, true);
   assert.equal(calls[0].args.includes("--execute-vision"), true);
   assert.equal(JSON.stringify(result).includes("ANTHROPIC_API_KEY"), false);
 });
 
-test("PlanCheck adapter refuses path traversal and source drift", async () => {
+test("legacy PlanCheck adapter refuses path traversal and source drift", async () => {
   const provider = new PlanCheckPdfProvider({
     repositoryPath: "/plancheck",
     sourceDirectory: "/sources",
@@ -91,6 +93,8 @@ test("report preserves public-only and private-document boundaries", () => {
   assert.match(report, /No customer, tender, or private document/i);
   assert.match(report, /zero-data-retention for parsed documents is an Enterprise control/i);
   assert.match(report, /Private PlanCheck documents therefore remain local/i);
+  assert.match(report, /not the current detection worker/i);
+  assert.match(report, /does not establish that Firecrawl outperforms the current application/i);
 });
 
 test("PDF gate reports incomplete extraction as partial, not success", () => {
@@ -104,7 +108,7 @@ test("PDF gate reports incomplete extraction as partial, not success", () => {
   };
   const summary = summarisePdfGate([
     {
-      provider: "plancheck",
+      provider: "plancheck-legacy-assessment",
       evaluation,
       metadata: {
         durationMs: 100,

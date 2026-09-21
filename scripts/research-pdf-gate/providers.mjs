@@ -26,7 +26,7 @@ export class PlanCheckPdfProvider {
     executeVision = false,
     commandRunner = execFileAsync,
   }) {
-    this.name = "plancheck";
+    this.name = "plancheck-legacy-assessment";
     this.repositoryPath = path.resolve(repositoryPath);
     this.sourceDirectory = path.resolve(sourceDirectory);
     this.pythonPath = pythonPath ?? path.join(this.repositoryPath, "backend", ".venv", "bin", "python");
@@ -87,6 +87,7 @@ export class PlanCheckPdfProvider {
         durationMs: payload.durationMs,
         characterCount: payload.content.length,
         sourceSha256: payload.sourceSha256,
+        extractorRoute: payload.extractorRoute ?? "legacy-assessment-text-extraction",
         sourceBytes: payload.sourceBytes,
         totalPages: payload.totalPages,
         parsedPages: payload.parsedPageLimit,
