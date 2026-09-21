@@ -45,6 +45,36 @@ These apply to every entry below.
    exhaustible resource is plan quota and rate limits, so a ceiling breach means
    stop and re-plan, not an unexpected charge.
 
+7. **An experiment runs in its own store *and* its own worktree root.** The store is
+   isolated by pointing the server at a worktree-local
+   `.data/tasks.sqlite3`, but that alone is not isolation: candidate and slice
+   worktrees are named `<root>/<taskId>/<candidateId>` from a root that defaults to
+   `~/.ah/w` for every harness on the machine (`defaultWorktreeRoot`,
+   server/git-worktree.mjs). An experiment store numbers its tasks from AH-001, which
+   is the same namespace the operator's real tasks already occupy, so an experiment
+   task collides with any historical task of the same id that left a directory behind —
+   and `prepare` fails closed rather than writing into a directory it did not create.
+
+   This is not hypothetical. EXP-001's fourth run lost AH-027 to a `C1` directory
+   written on 16 Aug by the operator's own AH-027, and AH-028 to an `S1-A1` directory
+   from the same era. The failures look like harness faults, land at implement, and
+   depend only on which historical ids happen to have leftovers, so they are invisible
+   until a run finally gets far enough to assemble a candidate.
+
+   Every experiment server must therefore be started with an explicit
+   `AGENT_HARNESS_WORKTREE_ROOT`, outside both `~/.ah/w` and the project checkout:
+
+   ```
+   AGENT_HARNESS_WORKTREE_ROOT=~/hw/.data/worktrees npm run dev:api
+   ```
+
+   Outside the checkout deliberately. A worktree root inside the project puts harness
+   worktrees under the tree the experiment is measuring, where a repository scan, a
+   dependency discovery walk or a stray `git add` can reach them.
+
+   Nothing under `~/.ah/w` is deleted to make room. The operator's history is theirs;
+   the experiment simply stops sharing a namespace with it.
+
 ---
 
 ## EXP-001 — Baseline run-to-run variance (Phase 0)
@@ -457,6 +487,98 @@ EXP-002's cost model.
 
 Before Phase 0 is run a fourth time, both blockers above should be closed. Re-running
 without them spends quota to rediscover them.
+
+---
+
+## EXP-001 — runs 4 and 5, appended 21 Sep 2026
+
+### Run 4 — AH-025..030
+
+**1/6 delivered.** AH-025 passed the full manifest at its final candidate head.
+
+The other five failed for five *different* reasons, none of them model policy: AH-026
+and AH-033 on commit signing, AH-027 on a stale `C1` worktree, AH-028 on a stale
+`S1-A1` worktree, AH-029 on `ruff format`, AH-030 on the 1800s ceiling.
+
+**The worktree collisions are the finding.** Candidate worktrees are named
+`<root>/<taskId>/<candidateId>` from a root defaulting to `~/.ah/w` for every harness on
+the machine, and an experiment store numbers its tasks from AH-001 — the same namespace
+the operator's real tasks occupy. AH-027 collided with a `C1` directory written on 16 Aug
+by the operator's own AH-027; AH-028 with an `S1-A1` from the same era. `prepare` fails
+closed rather than writing into a directory it did not create, which is correct behaviour
+against an incorrect assumption about isolation. Recorded as standing rule 7; nothing
+under `~/.ah/w` was deleted.
+
+### Run 5 — AH-031..036, isolated worktree root
+
+Run with `AGENT_HARNESS_WORKTREE_ROOT` outside both `~/.ah/w` and the project checkout.
+**No collisions occurred.**
+
+| Variant | Outcome | Cause |
+|---|---|---|
+| `C1-narrow` r1 (AH-031) | **`passed`** | — |
+| `C1-narrow` r2 (AH-032) | **`passed`** | — |
+| `C1-narrow` r3 (AH-033) | `unknown` | commit signing |
+| `C4-backend` r1 (AH-034) | `unknown` | commit signing, after 1031s of successful work |
+| `C4-backend` r2 (AH-035) | `unknown` | exceeded 1800s |
+| `C4-backend` r3 (AH-036) | `unknown` | commit signing |
+
+No `mixed-identity`, no policy divergence, every variant `comparable`. Run 5 cost $3.04;
+**$16.63 across all 36 tasks** in five runs, against the $60 ceiling.
+
+### What five runs have established
+
+**`C1-narrow` is a stable case.** It has now delivered on every occasion it reached
+verification — AH-020, AH-021, AH-025, AH-031, AH-032 — five for five, each a
+`full-manifest` pass with all five declared commands executed at the exact final
+candidate head. Every `C1` non-delivery traces to an environmental cause or to the single
+dev-review rejection in AH-019. The case does what Phase 0 needs a case to do.
+
+**`C4-backend` has never delivered, across 15 attempts.** Its failures are not one
+problem: the plan validator (since fixed), the run ceiling, `ruff format`, and commit
+signing. Only `ruff format` is attributable to model output, and it is consistent —
+`ruff check` passes while `ruff format --check` fails, twice, on 8 and 2 files. The
+implementation model writes lint-clean, functionally plausible Python that is not
+formatted to the repository's standard.
+
+**Two measurement instruments were deciding outcomes.** Both are now removed rather than
+tuned, and both are recorded because a tuned instrument is worse than an absent one:
+
+- *Commit signing.* Four samples died at the commit that follows a successful agent run.
+  The harness now forces `commit.gpgsign=false` on its own git invocations. The operator's
+  configuration is unchanged; this was never a property of the model under test.
+- *The run ceiling.* Measured `C4` implement runs on one unchanged brief: 944s, 1031s,
+  1616s, 1661s, and two past 1800s. The spread is the model's path through the work, not
+  the work's size, so any limit drawn through it sets the delivery rate. Raised to
+  3_600_000 as a runaway guard, explicitly not a work budget.
+
+**There is no work-based budget.** `experiment-decision.mjs` declares `maxWallTimeMs` and
+`maxTotalTokens`, but `classifyTaskBudget` is called only from `evaluation.mjs`: it labels
+a finished task and stops nothing. `DEFAULT_STAGE_RUN_LIMIT` caps attempts, not effort.
+The only enforcing bound in the system is a stopwatch. Phase 0's manifest declares
+`budget: null` at every level, so even the reporting classification is inert. A token or
+turn ceiling is a new mechanism and is the honest prerequisite for EXP-002's cost
+comparison.
+
+### Decision: EXP-002 still does not run
+
+`C4-backend` remains at 0 admissible samples after five runs. The refutation clause
+continues to govern and the decision table cannot be entered.
+
+The open question is no longer about the harness. It is whether `C4-backend` is a usable
+case at all: it has consumed roughly half the campaign's spend and produced no delivery
+outcome, while `C1-narrow` has produced five. Before Phase 0 runs a sixth time, one of
+these has to happen:
+
+1. `ruff format` becomes something the implementation agent is told to satisfy — a change
+   to the repository's agent instructions, applying equally to every arm, and a
+   preregistered-design change requiring its own entry.
+2. `C4-backend` is replaced by a different high-risk case, keeping the design's intent
+   without reshaping a case to fit an instrument.
+3. `C4-backend` is dropped and Phase 0 answers its question on `C1-narrow` alone, with the
+   reduced power that implies stated explicitly rather than hidden.
+
+Doing none of these and re-running spends quota to reproduce a known result.
 
 ---
 
